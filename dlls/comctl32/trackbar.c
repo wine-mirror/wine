@@ -439,8 +439,7 @@ TRACKBAR_CalcSelection (TRACKBAR_INFO *infoPtr)
         }
     }
 
-    TRACE("selection[left=%d, top=%d, right=%d, bottom=%d]\n",
-	   selection->left, selection->top, selection->right, selection->bottom);
+    TRACE("selection[%s]\n", wine_dbgstr_rect(selection));
 }
 
 static BOOL

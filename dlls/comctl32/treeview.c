@@ -2033,8 +2033,7 @@ TREEVIEW_GetItemRect(const TREEVIEW_INFO *infoPtr, BOOL fTextRect, LPRECT lpRect
 	*lpRect = wineItem->rect;
     }
 
-    TRACE("%s [L:%d R:%d T:%d B:%d]\n", fTextRect ? "text" : "item",
-	  lpRect->left, lpRect->right, lpRect->top, lpRect->bottom);
+    TRACE("%s [%s]\n", fTextRect ? "text" : "item", wine_dbgstr_rect(lpRect));
 
     return TRUE;
 }
@@ -2580,9 +2579,8 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem
 	    rcText.left = wineItem->textOffset;
 	    rcText.right = rcText.left + wineItem->textWidth + 4;
 
-            TRACE("drawing text %s at (%d,%d)-(%d,%d)\n",
-		  debugstr_w(wineItem->pszText),
-		  rcText.left, rcText.top, rcText.right, rcText.bottom);
+            TRACE("drawing text %s at (%s)\n",
+                  debugstr_w(wineItem->pszText), wine_dbgstr_rect(&rcText));
 
 	    /* Draw it */
 	    ExtTextOutW(hdc, rcText.left + 2, rcText.top + 1,

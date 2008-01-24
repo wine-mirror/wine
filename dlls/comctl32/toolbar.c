@@ -283,11 +283,10 @@ TOOLBAR_DumpButton(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *bP, INT btn_
               bP->fsState, bP->fsStyle, bP->dwData, bP->iString);
 	TRACE("string %s\n", debugstr_w(TOOLBAR_GetText(infoPtr,bP)));
 	if (internal)
-            TRACE("button %d id %d, hot=%s, row=%d, rect=(%d,%d)-(%d,%d)\n",
+            TRACE("button %d id %d, hot=%s, row=%d, rect=(%s)\n",
 		  btn_num, bP->idCommand,
 		  (bP->bHot) ? "TRUE":"FALSE", bP->nRow,
-		  bP->rect.left, bP->rect.top,
-		  bP->rect.right, bP->rect.bottom);
+                  wine_dbgstr_rect(&bP->rect));
     }
 }
 
@@ -509,8 +508,7 @@ TOOLBAR_DrawDDFlatSeparator (const RECT *lpRect, HDC hdc, const TBUTTON_INFO *bt
 
     InflateRect (&myrect, -2, 0);
 
-    TRACE("rect=(%d,%d)-(%d,%d)\n",
-	  myrect.left, myrect.top, myrect.right, myrect.bottom);
+    TRACE("rect=(%s)\n", wine_dbgstr_rect(&myrect));
 
     newcolor = (infoPtr->clrBtnShadow == CLR_DEFAULT) ?
 	        comctl32_color.clrBtnShadow : infoPtr->clrBtnShadow;
@@ -568,8 +566,8 @@ TOOLBAR_DrawString (const TOOLBAR_INFO *infoPtr, RECT *rcText, LPCWSTR lpText,
 
     /* draw text */
     if (lpText) {
-	TRACE("string=%s rect=(%d,%d)-(%d,%d)\n", debugstr_w(lpText),
-	      rcText->left, rcText->top, rcText->right, rcText->bottom);
+        TRACE("string=%s rect=(%s)\n", debugstr_w(lpText),
+              wine_dbgstr_rect(rcText));
 
 	hOldFont = SelectObject (hdc, infoPtr->hFont);
 	if ((state & CDIS_HOT) && (dwItemCDFlag & TBCDRF_HILITEHOTTRACK )) {
@@ -5321,8 +5319,7 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    GetWindowRect(hwnd, &rc);
 	    MapWindowPoints(0, hwndParent, (LPPOINT)&rc, 2);
-            TRACE("mapped to (%d,%d)-(%d,%d)\n",
-		rc.left, rc.top, rc.right, rc.bottom);
+            TRACE("mapped to (%s)\n", wine_dbgstr_rect(&rc));
 	    lpsize->cx = max(rc.right-rc.left,
 			     infoPtr->rcBound.right - infoPtr->rcBound.left);
 	}
@@ -6462,9 +6459,7 @@ TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
 
     hdc = wParam==0 ? BeginPaint(hwnd, &ps) : (HDC)wParam;
 
-    TRACE("psrect=(%d,%d)-(%d,%d)\n",
-	  ps.rcPaint.left, ps.rcPaint.top,
-	  ps.rcPaint.right, ps.rcPaint.bottom);
+    TRACE("psrect=(%s)\n", wine_dbgstr_rect(&ps.rcPaint));
 
     TOOLBAR_Refresh (hwnd, hdc, &ps);
     if (!wParam) EndPaint (hwnd, &ps);

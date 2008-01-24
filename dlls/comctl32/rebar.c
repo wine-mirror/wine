@@ -409,15 +409,12 @@ REBAR_DumpBand (const REBAR_INFO *iP)
 		  i, (pB->lpText) ? debugstr_w(pB->lpText) : "(null)");
 	TRACE("band # %u: lcx=%u, cxEffective=%u, lcy=%u\n",
 	      i, pB->lcx, pB->cxEffective, pB->lcy);
-	TRACE("band # %u: fStatus=%08x, fDraw=%08x, Band=(%d,%d)-(%d,%d), Grip=(%d,%d)-(%d,%d)\n",
-	      i, pB->fStatus, pB->fDraw,
-	      pB->rcBand.left, pB->rcBand.top, pB->rcBand.right, pB->rcBand.bottom,
-	      pB->rcGripper.left, pB->rcGripper.top, pB->rcGripper.right, pB->rcGripper.bottom);
-	TRACE("band # %u: Img=(%d,%d)-(%d,%d), Txt=(%d,%d)-(%d,%d), Child=(%d,%d)-(%d,%d)\n",
-	      i,
-	      pB->rcCapImage.left, pB->rcCapImage.top, pB->rcCapImage.right, pB->rcCapImage.bottom,
-	      pB->rcCapText.left, pB->rcCapText.top, pB->rcCapText.right, pB->rcCapText.bottom,
-	      pB->rcChild.left, pB->rcChild.top, pB->rcChild.right, pB->rcChild.bottom);
+        TRACE("band # %u: fStatus=%08x, fDraw=%08x, Band=(%s), Grip=(%s)\n",
+              i, pB->fStatus, pB->fDraw, wine_dbgstr_rect(&pB->rcBand),
+              wine_dbgstr_rect(&pB->rcGripper));
+        TRACE("band # %u: Img=(%s), Txt=(%s), Child=(%s)\n",
+              i, wine_dbgstr_rect(&pB->rcCapImage),
+              wine_dbgstr_rect(&pB->rcCapText), wine_dbgstr_rect(&pB->rcChild));
     }
 
 }
@@ -1018,11 +1015,9 @@ REBAR_MoveChildWindows (const REBAR_INFO *infoPtr, UINT start, UINT endplus)
 	    REBAR_Notify ((NMHDR *)&rbcz, infoPtr, RBN_CHILDSIZE);
 	    if (!EqualRect (&lpBand->rcChild, &rbcz.rcChild)) {
 		TRACE("Child rect changed by NOTIFY for band %u\n", i);
-		TRACE("    from (%d,%d)-(%d,%d)  to (%d,%d)-(%d,%d)\n",
-		      lpBand->rcChild.left, lpBand->rcChild.top,
-		      lpBand->rcChild.right, lpBand->rcChild.bottom,
-		      rbcz.rcChild.left, rbcz.rcChild.top,
-		      rbcz.rcChild.right, rbcz.rcChild.bottom);
+                TRACE("    from (%s)  to (%s)\n",
+                      wine_dbgstr_rect(&lpBand->rcChild),
+                      wine_dbgstr_rect(&rbcz.rcChild));
 		lpBand->rcChild = rbcz.rcChild;  /* *** ??? */
             }
 
@@ -1318,7 +1313,7 @@ REBAR_Layout(REBAR_INFO *infoPtr, const RECT *lpRect)
         GetClientRect(infoPtr->hwndSelf, &rcAdj);
     else
         GetClientRect(GetParent(infoPtr->hwndSelf), &rcAdj);
-    TRACE("adjustment rect is (%d,%d)-(%d,%d)\n", rcAdj.left, rcAdj.top, rcAdj.right, rcAdj.bottom);
+    TRACE("adjustment rect is (%s)\n", wine_dbgstr_rect(&rcAdj));
 
     adjcx = get_rect_cx(infoPtr, &rcAdj);
     adjcy = get_rect_cy(infoPtr, &rcAdj);
@@ -1685,9 +1680,8 @@ REBAR_InternalEraseBkGnd (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lPara
                     else
 		        DrawEdge (hdc, &rcRowSep, EDGE_ETCHED, BF_BOTTOM);
 		}
-		TRACE ("drawing band separator bottom (%d,%d)-(%d,%d)\n",
-		       rcRowSep.left, rcRowSep.top,
-		       rcRowSep.right, rcRowSep.bottom);
+                TRACE ("drawing band separator bottom (%s)\n",
+                       wine_dbgstr_rect(&rcRowSep));
 	    }
 	}
 
@@ -1711,8 +1705,8 @@ REBAR_InternalEraseBkGnd (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lPara
                 else
 		    DrawEdge (hdc, &rcSep, EDGE_ETCHED, BF_RIGHT);
 	    }
-            TRACE("drawing band separator right (%d,%d)-(%d,%d)\n",
-		  rcSep.left, rcSep.top, rcSep.right, rcSep.bottom);
+            TRACE("drawing band separator right (%s)\n",
+                  wine_dbgstr_rect(&rcSep));
 	}
 
 	/* draw the actual background */
@@ -2145,8 +2139,7 @@ REBAR_GetRect (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     /* For CCS_VERT the coordinates will be swapped - like on Windows */
     CopyRect (lprc, &lpBand->rcBand);
 
-    TRACE("band %d, (%d,%d)-(%d,%d)\n", iBand,
-	  lprc->left, lprc->top, lprc->right, lprc->bottom);
+    TRACE("band %d, (%s)\n", iBand, wine_dbgstr_rect(lprc));
 
     return TRUE;
 }
@@ -2689,16 +2682,13 @@ REBAR_SizeToRect (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (lpRect == NULL)
        return FALSE;
 
-    TRACE("[%d %d %d %d]\n",
-	  lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
+    TRACE("[%s]\n", wine_dbgstr_rect(lpRect));
 
     /*  what is going on???? */
     GetWindowRect(infoPtr->hwndSelf, &t1);
-    TRACE("window rect [%d %d %d %d]\n",
-	  t1.left, t1.top, t1.right, t1.bottom);
+    TRACE("window rect [%s]\n", wine_dbgstr_rect(&t1));
     GetClientRect(infoPtr->hwndSelf, &t1);
-    TRACE("client rect [%d %d %d %d]\n",
-	  t1.left, t1.top, t1.right, t1.bottom);
+    TRACE("client rect [%s]\n", wine_dbgstr_rect(&t1));
 
     /* force full _Layout processing */
     REBAR_Layout(infoPtr, lpRect);
@@ -2718,9 +2708,8 @@ REBAR_Create (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (TRACE_ON(rebar)) {
 	GetWindowRect(infoPtr->hwndSelf, &wnrc1);
 	GetClientRect(infoPtr->hwndSelf, &clrc1);
-	TRACE("window=(%d,%d)-(%d,%d) client=(%d,%d)-(%d,%d) cs=(%d,%d %dx%d)\n",
-	      wnrc1.left, wnrc1.top, wnrc1.right, wnrc1.bottom,
-	      clrc1.left, clrc1.top, clrc1.right, clrc1.bottom,
+        TRACE("window=(%s) client=(%s) cs=(%d,%d %dx%d)\n",
+              wine_dbgstr_rect(&wnrc1), wine_dbgstr_rect(&clrc1),
 	      cs->x, cs->y, cs->cx, cs->cy);
     }
 
@@ -3016,7 +3005,7 @@ REBAR_NCCalcSize (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         /* FIXME: should use GetThemeInt */
         rect->top = min(rect->top + 1, rect->bottom);
     }
-    TRACE("new client=(%d,%d)-(%d,%d)\n", rect->left, rect->top, rect->right, rect->bottom);
+    TRACE("new client=(%s)\n", wine_dbgstr_rect(rect));
     return 0;
 }
 
@@ -3038,9 +3027,8 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (TRACE_ON(rebar)) {
 	GetWindowRect(hwnd, &wnrc1);
 	GetClientRect(hwnd, &clrc1);
-	TRACE("window=(%d,%d)-(%d,%d) client=(%d,%d)-(%d,%d) cs=(%d,%d %dx%d)\n",
-	      wnrc1.left, wnrc1.top, wnrc1.right, wnrc1.bottom,
-	      clrc1.left, clrc1.top, clrc1.right, clrc1.bottom,
+        TRACE("window=(%s) client=(%s) cs=(%d,%d %dx%d)\n",
+              wine_dbgstr_rect(&wnrc1), wine_dbgstr_rect(&clrc1),
 	      cs->x, cs->y, cs->cx, cs->cy);
     }
 
@@ -3167,9 +3155,7 @@ REBAR_NCPaint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    return 0;
 	GetWindowRect (infoPtr->hwndSelf, &rcWindow);
 	OffsetRect (&rcWindow, -rcWindow.left, -rcWindow.top);
-	TRACE("rect (%d,%d)-(%d,%d)\n",
-	      rcWindow.left, rcWindow.top,
-	      rcWindow.right, rcWindow.bottom);
+        TRACE("rect (%s)\n", wine_dbgstr_rect(&rcWindow));
 	DrawEdge (hdc, &rcWindow, EDGE_ETCHED, BF_RECT);
 	ReleaseDC( infoPtr->hwndSelf, hdc );
     }
@@ -3180,9 +3166,7 @@ REBAR_NCPaint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
             return 0;
         GetWindowRect (infoPtr->hwndSelf, &rcWindow);
         OffsetRect (&rcWindow, -rcWindow.left, -rcWindow.top);
-        TRACE("rect (%d,%d)-(%d,%d)\n",
-              rcWindow.left, rcWindow.top,
-              rcWindow.right, rcWindow.bottom);
+        TRACE("rect (%s)\n", wine_dbgstr_rect(&rcWindow));
         DrawThemeEdge (theme, hdc, 0, 0, &rcWindow, BDR_RAISEDINNER, BF_TOP, NULL);
         ReleaseDC( infoPtr->hwndSelf, hdc );
     }
@@ -3220,10 +3204,8 @@ REBAR_Paint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     GetClientRect(infoPtr->hwndSelf, &rc);
     hdc = wParam==0 ? BeginPaint (infoPtr->hwndSelf, &ps) : (HDC)wParam;
 
-    TRACE("painting (%d,%d)-(%d,%d) client (%d,%d)-(%d,%d)\n",
-	  ps.rcPaint.left, ps.rcPaint.top,
-	  ps.rcPaint.right, ps.rcPaint.bottom,
-	  rc.left, rc.top, rc.right, rc.bottom);
+    TRACE("painting (%s) client (%s)\n",
+          wine_dbgstr_rect(&ps.rcPaint), wine_dbgstr_rect(&rc));
 
     if (ps.fErase) {
 	/* Erase area of paint if requested */
@@ -3384,8 +3366,7 @@ REBAR_WindowPosChanged (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     ret = DefWindowProcW(infoPtr->hwndSelf, WM_WINDOWPOSCHANGED,
 			 wParam, lParam);
     GetWindowRect(infoPtr->hwndSelf, &rc);
-    TRACE("hwnd %p new pos (%d,%d)-(%d,%d)\n",
-	  infoPtr->hwndSelf, rc.left, rc.top, rc.right, rc.bottom);
+    TRACE("hwnd %p new pos (%s)\n", infoPtr->hwndSelf, wine_dbgstr_rect(&rc));
     return ret;
 }
 
