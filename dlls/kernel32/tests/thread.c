@@ -601,8 +601,10 @@ static VOID test_thread_priority(void)
    rc = SetThreadPriority(curthread,min_priority-1);
 
    ok(rc == FALSE, "SetThreadPriority passed with a bad argument\n");
-   ok(GetLastError() == ERROR_INVALID_PARAMETER,
-      "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER (87)\n", GetLastError());
+   ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+      GetLastError() == ERROR_INVALID_PRIORITY /* Win9x */,
+      "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER or ERROR_INVALID_PRIORITY\n",
+      GetLastError());
    ok(GetThreadPriority(curthread)==min_priority,
       "GetThreadPriority didn't return min_priority\n");
 
@@ -611,8 +613,10 @@ static VOID test_thread_priority(void)
    rc = SetThreadPriority(curthread,max_priority+1);
 
    ok(rc == FALSE, "SetThreadPriority passed with a bad argument\n");
-   ok(GetLastError() == ERROR_INVALID_PARAMETER,
-      "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER (87)\n", GetLastError());
+   ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+      GetLastError() == ERROR_INVALID_PRIORITY /* Win9x */,
+      "SetThreadPriority error %d, expected ERROR_INVALID_PARAMETER or ERROR_INVALID_PRIORITY\n",
+      GetLastError());
    ok(GetThreadPriority(curthread)==max_priority,
       "GetThreadPriority didn't return max_priority\n");
 
