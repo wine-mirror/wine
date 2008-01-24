@@ -134,13 +134,14 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
     DWORD new_style, changed;
 
     if (hwnd == GetDesktopWindow()) return;
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-
     new_style = GetWindowLongW( hwnd, GWL_STYLE );
     changed = new_style ^ old_style;
 
     if (changed & WS_VISIBLE)
     {
+        if (!(data = X11DRV_get_win_data( hwnd )) &&
+            !(data = X11DRV_create_win_data( hwnd ))) return;
+
         if (data->whole_window && (new_style & WS_VISIBLE) &&
             X11DRV_is_window_rect_mapped( &data->window_rect ))
         {
@@ -161,7 +162,8 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 
     if (changed & WS_DISABLED)
     {
-        if (data->whole_window && data->wm_hints)
+        data = X11DRV_get_win_data( hwnd );
+        if (data && data->wm_hints)
         {
             wine_tsx11_lock();
             data->wm_hints->input = !(new_style & WS_DISABLED);
@@ -357,7 +359,13 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                                 valid_rects, &visible_rect ))
         return FALSE;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
+    new_style = GetWindowLongW( hwnd, GWL_STYLE );
+    if (!(data = X11DRV_get_win_data( hwnd )))
+    {
+        /* create the win data if the window is being made visible */
+        if (!(new_style & WS_VISIBLE)) return TRUE;
+        if (!(data = X11DRV_create_win_data( hwnd ))) return FALSE;
+    }
 
     /* check if we need to switch the window to managed */
     if (!data->managed && data->whole_window && managed_mode &&
@@ -376,7 +384,6 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         }
     }
 
-    new_style = GetWindowLongW( hwnd, GWL_STYLE );
     old_window_rect = data->window_rect;
     old_whole_rect  = data->whole_rect;
     old_client_rect = data->client_rect;

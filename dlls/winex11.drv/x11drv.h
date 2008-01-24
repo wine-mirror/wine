@@ -682,6 +682,7 @@ struct x11drv_win_data
 };
 
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
+extern struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern XID X11DRV_get_fbconfig_id( HWND hwnd );
 extern Drawable X11DRV_get_gl_drawable( HWND hwnd );

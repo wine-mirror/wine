@@ -312,7 +312,8 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
     HWND next_hwnd;
     int w, h;
 
-    if (!(data = X11DRV_get_win_data(hwnd))) return FALSE;
+    if (!(data = X11DRV_get_win_data(hwnd)) &&
+        !(data = X11DRV_create_win_data(hwnd))) return FALSE;
 
     wine_tsx11_lock();
 
@@ -651,7 +652,8 @@ void X11DRV_make_systray_window( HWND hwnd )
     struct x11drv_win_data *data;
     Window systray_window;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!(data = X11DRV_get_win_data( hwnd )) &&
+        !(data = X11DRV_create_win_data( hwnd ))) return;
 
     wine_tsx11_lock();
     if (!systray_atom)
@@ -1315,26 +1317,10 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     BOOL ret = FALSE;
     INT cx = cs->cx, cy = cs->cy;
 
-    if (hwnd == GetDesktopWindow())
+    if (hwnd == GetDesktopWindow() && root_window != DefaultRootWindow( display ))
     {
-        if (root_window != DefaultRootWindow( display ))
-        {
-            if (!create_desktop_win_data( display, hwnd )) return FALSE;
-        }
-    }
-    else
-    {
-        struct x11drv_win_data *data;
-
-        if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
-
-        /* create an X window if it's a top level window */
-        if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
-        {
-            if (!create_whole_window( display, data )) goto failed;
-        }
-        /* get class or window DC if needed */
-        alloc_window_dce( data );
+        /* the desktop win data can't be created lazily */
+        if (!create_desktop_win_data( display, hwnd )) return FALSE;
     }
 
     /* Call the WH_CBT hook */
@@ -1463,6 +1449,44 @@ struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd )
 
     if (!hwnd || XFindContext( thread_display(), (XID)hwnd, win_data_context, &data )) data = NULL;
     return (struct x11drv_win_data *)data;
+}
+
+
+/***********************************************************************
+ *		X11DRV_create_win_data
+ *
+ * Create an X11 data window structure for an existing window.
+ */
+struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
+{
+    Display *display = thread_display();
+    struct x11drv_win_data *data;
+    HWND parent;
+
+    if (!(parent = GetAncestor( hwnd, GA_PARENT ))) return NULL;  /* desktop */
+    if (!(data = alloc_win_data( display, hwnd ))) return NULL;
+
+    GetWindowRect( hwnd, &data->window_rect );
+    MapWindowPoints( 0, parent, (POINT *)&data->window_rect, 2 );
+    data->whole_rect = data->window_rect;
+    GetClientRect( hwnd, &data->client_rect );
+    MapWindowPoints( hwnd, parent, (POINT *)&data->client_rect, 2 );
+
+    if (parent == GetDesktopWindow())
+    {
+        if (!create_whole_window( display, data ))
+        {
+            HeapFree( GetProcessHeap(), 0, data );
+            return NULL;
+        }
+        TRACE( "win %p/%lx window %s whole %s client %s\n",
+               hwnd, data->whole_window, wine_dbgstr_rect( &data->window_rect ),
+               wine_dbgstr_rect( &data->whole_rect ), wine_dbgstr_rect( &data->client_rect ));
+    }
+
+    /* get class or window DC if needed */
+    alloc_window_dce( data );
+    return data;
 }
 
 
