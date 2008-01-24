@@ -611,7 +611,7 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
                                 PDWORD size, PDWORD number )
 {
     BOOL match, ret = FALSE;
-    char spec[] = "\\*";
+    char spec[] = "\\*.icm";
     char colordir[MAX_PATH], glob[MAX_PATH], **profiles = NULL;
     DWORD i, len = sizeof(colordir), count = 0, totalsize = 0;
     PROFILEHEADER header;
@@ -760,7 +760,7 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
                                 PDWORD size, PDWORD number )
 {
     BOOL match, ret = FALSE;
-    WCHAR spec[] = {'\\','*',0};
+    WCHAR spec[] = {'\\','*','i','c','m',0};
     WCHAR colordir[MAX_PATH], glob[MAX_PATH], **profiles = NULL;
     DWORD i, len = sizeof(colordir), count = 0, totalsize = 0;
     PROFILEHEADER header;
