@@ -333,6 +333,7 @@ ALL_MAKEFILES = \
 	dlls/ntdll/Makefile \
 	dlls/ntdll/tests/Makefile \
 	dlls/ntdsapi/Makefile \
+	dlls/ntdsapi/tests/Makefile \
 	dlls/ntoskrnl.exe/Makefile \
 	dlls/ntprint/Makefile \
 	dlls/ntprint/tests/Makefile \
@@ -722,6 +723,7 @@ dlls/newdev/Makefile: dlls/newdev/Makefile.in dlls/Makedll.rules
 dlls/ntdll/Makefile: dlls/ntdll/Makefile.in dlls/Makedll.rules
 dlls/ntdll/tests/Makefile: dlls/ntdll/tests/Makefile.in dlls/Maketest.rules
 dlls/ntdsapi/Makefile: dlls/ntdsapi/Makefile.in dlls/Makedll.rules
+dlls/ntdsapi/tests/Makefile: dlls/ntdsapi/tests/Makefile.in dlls/Maketest.rules
 dlls/ntoskrnl.exe/Makefile: dlls/ntoskrnl.exe/Makefile.in dlls/Makedll.rules
 dlls/ntprint/Makefile: dlls/ntprint/Makefile.in dlls/Makedll.rules
 dlls/ntprint/tests/Makefile: dlls/ntprint/tests/Makefile.in dlls/Maketest.rules

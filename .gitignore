@@ -322,6 +322,9 @@ dlls/ntdll/tests/ntdll_crosstest.exe
 dlls/ntdll/tests/testlist.c
 dlls/ntdll/version.res
 dlls/ntdsapi/libntdsapi.def
+dlls/ntdsapi/tests/*.ok
+dlls/ntdsapi/tests/ntdsapi_crosstest.exe
+dlls/ntdsapi/tests/testlist.c
 dlls/ntoskrnl.exe/libntoskrnl.exe.def
 dlls/ntprint/ntprint.res
 dlls/ntprint/tests/*.ok
@@ -763,6 +766,7 @@ programs/winetest/msvcrtd_test.exe
 programs/winetest/msxml3_test.exe
 programs/winetest/netapi32_test.exe
 programs/winetest/ntdll_test.exe
+programs/winetest/ntdsapi_test.exe
 programs/winetest/ntprint_test.exe
 programs/winetest/odbccp32_test.exe
 programs/winetest/ole32_test.exe
