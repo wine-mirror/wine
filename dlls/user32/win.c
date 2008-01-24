@@ -863,11 +863,15 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
  */
 static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags )
 {
-    INT sw = SW_SHOW;
+    INT cx, cy, sw = SW_SHOW;
+    LRESULT result;
+    RECT rect;
     WND *wndPtr;
     HWND hwnd, parent, owner, top_child = 0;
     BOOL unicode = (flags & WIN_ISUNICODE) != 0;
     MDICREATESTRUCTA mdi_cs;
+    CBT_CREATEWNDA cbtc;
+    CREATESTRUCTA cbcs;
 
     TRACE("%s %s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
@@ -1078,13 +1082,90 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
         }
     }
     else SetWindowLongPtrW( hwnd, GWLP_ID, (ULONG_PTR)cs->hMenu );
-    WIN_ReleasePtr( wndPtr );
 
-    if (!USER_Driver->pCreateWindow( hwnd, cs, unicode))
+    /* call the WH_CBT hook */
+
+    /* the window style passed to the hook must be the real window style,
+     * rather than just the window style that the caller to CreateWindowEx
+     * passed in, so we have to copy the original CREATESTRUCT and get the
+     * the real style. */
+    cbcs = *cs;
+    cbcs.style = wndPtr->dwStyle;
+    cbtc.lpcs = &cbcs;
+    cbtc.hwndInsertAfter = HWND_TOP;
+    WIN_ReleasePtr( wndPtr );
+    if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode )) goto failed;
+
+    /* send the WM_GETMINMAXINFO message and fix the size if needed */
+
+    cx = cs->cx;
+    cy = cs->cy;
+    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
     {
-        WIN_DestroyWindow( hwnd );
-        return 0;
+        POINT maxSize, maxPos, minTrack, maxTrack;
+        WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
+        if (maxTrack.x < cx) cx = maxTrack.x;
+        if (maxTrack.y < cy) cy = maxTrack.y;
     }
+
+    if (cx < 0) cx = 0;
+    if (cy < 0) cy = 0;
+    SetRect( &rect, cs->x, cs->y, cs->x + cx, cs->y + cy );
+    if (!set_window_pos( hwnd, 0, SWP_NOZORDER | SWP_NOACTIVATE, &rect, &rect, NULL )) goto failed;
+
+    /* send WM_NCCREATE */
+
+    TRACE( "hwnd %p cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cx, cy );
+    if (unicode)
+        result = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
+    else
+        result = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
+    if (!result)
+    {
+        WARN( "%p: aborted by WM_NCCREATE\n", hwnd );
+        goto failed;
+    }
+
+    /* send WM_NCCALCSIZE */
+
+    if ((wndPtr = WIN_GetPtr(hwnd)))
+    {
+        /* yes, even if the CBT hook was called with HWND_TOP */
+        HWND insert_after = (wndPtr->dwStyle & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
+        RECT window_rect = wndPtr->rectWindow;
+        RECT client_rect = window_rect;
+        WIN_ReleasePtr( wndPtr );
+        SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&client_rect );
+        set_window_pos( hwnd, insert_after, SWP_NOACTIVATE, &window_rect, &client_rect, NULL );
+    }
+    else return 0;
+
+    /* send WM_CREATE */
+
+    if (unicode)
+        result = SendMessageW( hwnd, WM_CREATE, 0, (LPARAM)cs );
+    else
+        result = SendMessageA( hwnd, WM_CREATE, 0, (LPARAM)cs );
+    if (result == -1) goto failed;
+
+    NotifyWinEvent(EVENT_OBJECT_CREATE, hwnd, OBJID_WINDOW, 0);
+
+    /* send the size messages */
+
+    if (!(wndPtr = WIN_GetPtr(hwnd))) return 0;
+    if (!(wndPtr->flags & WIN_NEED_SIZE))
+    {
+        rect = wndPtr->rectClient;
+        WIN_ReleasePtr( wndPtr );
+        SendMessageW( hwnd, WM_SIZE, SIZE_RESTORED,
+                      MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
+        SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ) );
+    }
+    else WIN_ReleasePtr( wndPtr );
+
+    /* call the driver */
+
+    if (!USER_Driver->pCreateWindow( hwnd )) goto failed;
 
     /* Notify the parent window only */
 
@@ -1114,6 +1195,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
 
     TRACE("created window %p\n", hwnd);
     return hwnd;
+
+failed:
+    WIN_DestroyWindow( hwnd );
+    return 0;
 }
 
 

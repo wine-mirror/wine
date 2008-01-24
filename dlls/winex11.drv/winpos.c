@@ -302,75 +302,22 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
 }
 
 /***********************************************************************
- *		set_server_window_pos
- *
- * Set the window pos on the server side only. Helper for SetWindowPos.
- */
-static BOOL set_server_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                                   const RECT *rectClient, UINT swp_flags, const RECT *valid_rects,
-                                   RECT *visible_rect )
-{
-    WND *win;
-    BOOL ret;
-
-    if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
-    if (win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
-
-    SERVER_START_REQ( set_window_pos )
-    {
-        req->handle        = hwnd;
-        req->previous      = insert_after;
-        req->flags         = swp_flags;
-        req->window.left   = rectWindow->left;
-        req->window.top    = rectWindow->top;
-        req->window.right  = rectWindow->right;
-        req->window.bottom = rectWindow->bottom;
-        req->client.left   = rectClient->left;
-        req->client.top    = rectClient->top;
-        req->client.right  = rectClient->right;
-        req->client.bottom = rectClient->bottom;
-        if (!IsRectEmpty( &valid_rects[0] ))
-            wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
-        if ((ret = !wine_server_call( req )))
-        {
-            win->dwStyle    = reply->new_style;
-            win->dwExStyle  = reply->new_ex_style;
-            win->rectWindow = *rectWindow;
-            win->rectClient = *rectClient;
-            visible_rect->left   = reply->visible.left;
-            visible_rect->top    = reply->visible.top;
-            visible_rect->right  = reply->visible.right;
-            visible_rect->bottom = reply->visible.bottom;
-        }
-    }
-    SERVER_END_REQ;
-
-    WIN_ReleasePtr( win );
-    return ret;
-}
-
-
-/***********************************************************************
  *		SetWindowPos   (X11DRV.@)
  */
-BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                                   const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
+void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
+                          const RECT *rectWindow, const RECT *rectClient,
+                          const RECT *visible_rect, const RECT *valid_rects )
 {
     Display *display = thread_display();
-    struct x11drv_win_data *data;
-    RECT old_window_rect, old_whole_rect, old_client_rect, visible_rect;
-    DWORD new_style;
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
+    RECT old_window_rect, old_whole_rect, old_client_rect;
 
-    if (!set_server_window_pos( hwnd, insert_after, rectWindow, rectClient, swp_flags,
-                                valid_rects, &visible_rect ))
-        return FALSE;
-
-    new_style = GetWindowLongW( hwnd, GWL_STYLE );
-    if (!(data = X11DRV_get_win_data( hwnd )))
+    if (!data)
     {
         /* create the win data if the window is being made visible */
-        if (!(new_style & WS_VISIBLE)) return TRUE;
-        if (!(data = X11DRV_create_win_data( hwnd ))) return FALSE;
+        if (!(new_style & WS_VISIBLE)) return;
+        if (!(data = X11DRV_create_win_data( hwnd ))) return;
     }
 
     /* check if we need to switch the window to managed */
@@ -398,7 +345,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
     if (memcmp( &visible_rect, &data->whole_rect, sizeof(RECT) ))
     {
         TRACE( "%p: need to update visible rect %s -> %s\n", hwnd,
-               wine_dbgstr_rect(&visible_rect), wine_dbgstr_rect(&data->whole_rect) );
+               wine_dbgstr_rect(visible_rect), wine_dbgstr_rect(&data->whole_rect) );
         SERVER_START_REQ( set_window_visible_rect )
         {
             req->handle         = hwnd;
@@ -452,7 +399,7 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         data->client_rect.bottom-data->client_rect.top == old_client_rect.bottom-old_client_rect.top)
         X11DRV_sync_gl_drawable( display, data );
 
-    if (!data->whole_window || data->lock_changes) return TRUE;  /* nothing more to do */
+    if (!data->whole_window || data->lock_changes) return;  /* nothing more to do */
 
     if (data->mapped && (!(new_style & WS_VISIBLE) || !X11DRV_is_window_rect_mapped( rectWindow )))
     {
@@ -485,8 +432,6 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         }
         update_wm_states( display, data, !was_mapped );
     }
-
-    return TRUE;
 }
 
 

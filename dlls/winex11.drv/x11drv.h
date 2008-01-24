@@ -731,8 +731,6 @@ extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *
 extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
                                          UINT swp_flags, const RECT *old_client_rect,
                                          const RECT *old_whole_rect );
-extern BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                                   const RECT *rectClient, UINT swp_flags, const RECT *validRects );
 extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
 extern void xinerama_init( unsigned int width, unsigned int height );
 

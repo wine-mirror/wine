@@ -89,7 +89,7 @@
 @ cdecl AcquireClipboard(long) X11DRV_AcquireClipboard
 @ cdecl CountClipboardFormats() X11DRV_CountClipboardFormats
 @ cdecl CreateDesktopWindow(long) X11DRV_CreateDesktopWindow
-@ cdecl CreateWindow(long ptr long) X11DRV_CreateWindow
+@ cdecl CreateWindow(long) X11DRV_CreateWindow
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl EmptyClipboard(long) X11DRV_EmptyClipboard
 @ cdecl EndClipboardUpdate() X11DRV_EndClipboardUpdate
@@ -106,7 +106,7 @@
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long long) X11DRV_SetParent
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
-@ cdecl SetWindowPos(long long ptr ptr long ptr) X11DRV_SetWindowPos
+@ cdecl SetWindowPos(long long long ptr ptr ptr ptr) X11DRV_SetWindowPos
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long) X11DRV_SetWindowStyle
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText

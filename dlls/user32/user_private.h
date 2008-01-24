@@ -142,7 +142,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pGetMonitorInfo)(HMONITOR,MONITORINFO*);
     /* windowing functions */
     BOOL   (*pCreateDesktopWindow)(HWND);
-    BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);
+    BOOL   (*pCreateWindow)(HWND);
     void   (*pDestroyWindow)(HWND);
     HDC    (*pGetDCEx)(HWND,HRGN,DWORD);
     DWORD  (*pMsgWaitForMultipleObjectsEx)(DWORD,const HANDLE*,DWORD,DWORD,DWORD);
@@ -150,7 +150,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pScrollDC)(HDC, INT, INT, const RECT *, const RECT *, HRGN, LPRECT);
     void   (*pSetFocus)(HWND);
     void   (*pSetParent)(HWND,HWND,HWND);
-    BOOL   (*pSetWindowPos)(HWND,HWND,const RECT *,const RECT *,UINT,const RECT *);
+    void   (*pSetWindowPos)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *);
     int    (*pSetWindowRgn)(HWND,HRGN,BOOL);
     void   (*pSetWindowIcon)(HWND,UINT,HICON);
     void   (*pSetWindowStyle)(HWND,DWORD);

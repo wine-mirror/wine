@@ -1563,6 +1563,59 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     return ret;
 }
 
+
+/***********************************************************************
+ *		set_window_pos
+ *
+ * Backend implementation of SetWindowPos.
+ */
+BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
+                     const RECT *window_rect, const RECT *client_rect, const RECT *valid_rects )
+{
+    WND *win;
+    BOOL ret;
+    RECT visible_rect;
+
+    if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
+    if (win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
+
+    SERVER_START_REQ( set_window_pos )
+    {
+        req->handle        = hwnd;
+        req->previous      = insert_after;
+        req->flags         = swp_flags;
+        req->window.left   = window_rect->left;
+        req->window.top    = window_rect->top;
+        req->window.right  = window_rect->right;
+        req->window.bottom = window_rect->bottom;
+        req->client.left   = client_rect->left;
+        req->client.top    = client_rect->top;
+        req->client.right  = client_rect->right;
+        req->client.bottom = client_rect->bottom;
+        if (!IsRectEmpty( &valid_rects[0] ))
+            wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
+        if ((ret = !wine_server_call( req )))
+        {
+            win->dwStyle    = reply->new_style;
+            win->dwExStyle  = reply->new_ex_style;
+            win->rectWindow = *window_rect;
+            win->rectClient = *client_rect;
+            visible_rect.left   = reply->visible.left;
+            visible_rect.top    = reply->visible.top;
+            visible_rect.right  = reply->visible.right;
+            visible_rect.bottom = reply->visible.bottom;
+        }
+    }
+    SERVER_END_REQ;
+    WIN_ReleasePtr( win );
+
+    if (ret)
+        USER_Driver->pSetWindowPos( hwnd, insert_after, swp_flags, window_rect,
+                                    client_rect, &visible_rect, valid_rects );
+    return ret;
+}
+
+
 /***********************************************************************
  *		USER_SetWindowPos
  *
@@ -1606,8 +1659,8 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
 
     SWP_DoNCCalcSize( winpos, &newWindowRect, &newClientRect, valid_rects );
 
-    if(!USER_Driver->pSetWindowPos( winpos->hwnd, winpos->hwndInsertAfter, 
-                            &newWindowRect, &newClientRect, orig_flags, valid_rects ))
+    if (!set_window_pos( winpos->hwnd, winpos->hwndInsertAfter, orig_flags,
+                         &newWindowRect, &newClientRect, valid_rects ))
         return FALSE;
 
     /* erase parent when hiding or resizing child */

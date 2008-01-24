@@ -318,7 +318,7 @@ static BOOL nulldrv_CreateDesktopWindow( HWND hwnd )
     return TRUE;
 }
 
-static BOOL nulldrv_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
+static BOOL nulldrv_CreateWindow( HWND hwnd )
 {
     static int warned;
     if (warned++)
@@ -375,10 +375,10 @@ static void nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
 }
 
-static BOOL nulldrv_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                                  const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
+static void nulldrv_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                  const RECT *window_rect, const RECT *client_rect,
+                                  const RECT *visible_rect, const RECT *valid_rects )
 {
-    return FALSE;
 }
 
 static int nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
@@ -658,9 +658,9 @@ static BOOL loaderdrv_CreateDesktopWindow( HWND hwnd )
     return load_driver()->pCreateDesktopWindow( hwnd );
 }
 
-static BOOL loaderdrv_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
+static BOOL loaderdrv_CreateWindow( HWND hwnd )
 {
-    return load_driver()->pCreateWindow( hwnd, cs, unicode );
+    return load_driver()->pCreateWindow( hwnd );
 }
 
 static void loaderdrv_DestroyWindow( HWND hwnd )
@@ -700,10 +700,12 @@ static void loaderdrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
     load_driver()->pSetParent( hwnd, parent, old_parent );
 }
 
-static BOOL loaderdrv_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                                    const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
+static void loaderdrv_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                    const RECT *window_rect, const RECT *client_rect,
+                                    const RECT *visible_rect, const RECT *valid_rects )
 {
-    return load_driver()->pSetWindowPos( hwnd, insert_after, rectWindow, rectClient, swp_flags, valid_rects );
+    return load_driver()->pSetWindowPos( hwnd, insert_after, swp_flags, window_rect,
+                                         client_rect, visible_rect, valid_rects );
 }
 
 static int loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )

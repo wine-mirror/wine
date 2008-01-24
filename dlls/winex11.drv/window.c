@@ -1307,111 +1307,16 @@ BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
 /**********************************************************************
  *		CreateWindow   (X11DRV.@)
  */
-BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
+BOOL X11DRV_CreateWindow( HWND hwnd )
 {
     Display *display = thread_display();
-    WND *wndPtr;
-    HWND insert_after;
-    RECT rect;
     DWORD style;
-    CBT_CREATEWNDA cbtc;
-    CREATESTRUCTA cbcs;
-    BOOL ret = FALSE;
-    INT cx = cs->cx, cy = cs->cy;
 
     if (hwnd == GetDesktopWindow() && root_window != DefaultRootWindow( display ))
     {
         /* the desktop win data can't be created lazily */
         if (!create_desktop_win_data( display, hwnd )) return FALSE;
     }
-
-    /* Call the WH_CBT hook */
-
-    /* the window style passed to the hook must be the real window style,
-     * rather than just the window style that the caller to CreateWindowEx
-     * passed in, so we have to copy the original CREATESTRUCT and get the
-     * the real style. */
-    cbcs = *cs;
-    cbcs.style = GetWindowLongW(hwnd, GWL_STYLE);
-
-    cbtc.lpcs = &cbcs;
-    cbtc.hwndInsertAfter = HWND_TOP;
-    if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode ))
-    {
-        TRACE("CBT-hook returned !0\n");
-        goto failed;
-    }
-
-    /* Send the WM_GETMINMAXINFO message and fix the size if needed */
-    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
-    {
-        POINT maxSize, maxPos, minTrack, maxTrack;
-
-        WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
-        if (maxTrack.x < cx) cx = maxTrack.x;
-        if (maxTrack.y < cy) cy = maxTrack.y;
-    }
-
-    if (cx < 0) cx = 0;
-    if (cy < 0) cy = 0;
-    SetRect( &rect, cs->x, cs->y, cs->x + cx, cs->y + cy );
-    if (!X11DRV_SetWindowPos( hwnd, 0, &rect, &rect, SWP_NOZORDER | SWP_NOACTIVATE, NULL ))
-        return FALSE;
-
-    /* send WM_NCCREATE */
-    TRACE( "hwnd %p cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
-    if (unicode)
-        ret = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
-    else
-        ret = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
-    if (!ret)
-    {
-        WARN("aborted by WM_xxCREATE!\n");
-        return FALSE;
-    }
-
-    /* make sure the window is still valid */
-    if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
-
-    /* send WM_NCCALCSIZE */
-    rect = wndPtr->rectWindow;
-    WIN_ReleasePtr( wndPtr );
-    SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&rect );
-
-    if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
-
-    /* yes, even if the CBT hook was called with HWND_TOP */
-    insert_after = (wndPtr->dwStyle & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
-
-    X11DRV_SetWindowPos( hwnd, insert_after, &wndPtr->rectWindow, &rect, SWP_NOACTIVATE, NULL );
-
-    WIN_ReleasePtr( wndPtr );
-
-    if (unicode)
-        ret = (SendMessageW( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);
-    else
-        ret = (SendMessageA( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);
-
-    if (!ret) return FALSE;
-
-    NotifyWinEvent(EVENT_OBJECT_CREATE, hwnd, OBJID_WINDOW, 0);
-
-    /* Send the size messages */
-
-    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return FALSE;
-    if (!(wndPtr->flags & WIN_NEED_SIZE))
-    {
-        RECT rect = wndPtr->rectClient;
-        WIN_ReleasePtr( wndPtr );
-        /* send it anyway */
-        if (((rect.right-rect.left) <0) ||((rect.bottom-rect.top)<0))
-            WARN("sending bogus WM_SIZE message 0x%08x\n",
-                 MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
-        SendMessageW( hwnd, WM_SIZE, SIZE_RESTORED,
-                      MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
-        SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ) );
-    }
-    else WIN_ReleasePtr( wndPtr );
 
     /* Show the window, maximizing or minimizing if needed */
 
@@ -1433,10 +1338,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     }
 
     return TRUE;
-
- failed:
-    X11DRV_DestroyWindow( hwnd );
-    return FALSE;
 }
 
 

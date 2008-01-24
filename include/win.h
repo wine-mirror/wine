@@ -116,4 +116,7 @@ extern HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest ) DEC
 extern void WINPOS_CheckInternalPos( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void WINPOS_ActivateOtherWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 
+extern BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
+                            const RECT *window_rect, const RECT *client_rect, const RECT *valid_rects );
+
 #endif  /* __WINE_WIN_H */
