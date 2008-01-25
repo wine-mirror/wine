@@ -50,8 +50,8 @@ static void test_CredReadA(void)
 
     SetLastError(0xdeadbeef);
     ret = pCredReadA(TEST_TARGET_NAME, CRED_TYPE_GENERIC, 0xdeadbeef, &cred);
-    ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-        "CredReadA should have failed with ERROR_INVALID_FLAGS instead of %d\n",
+    ok(!ret && ( GetLastError() == ERROR_INVALID_FLAGS || GetLastError() == ERROR_INVALID_PARAMETER ),
+        "CredReadA should have failed with ERROR_INVALID_FLAGS or ERROR_INVALID_PARAMETER instead of %d\n",
         GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -95,8 +95,8 @@ static void test_CredWriteA(void)
 
     SetLastError(0xdeadbeef);
     ret = pCredWriteA(&new_cred, 0);
-    ok(!ret && GetLastError() == ERROR_BAD_USERNAME,
-        "CredWrite with username without domain should return ERROR_BAD_USERNAME not %d\n", GetLastError());
+    ok(!ret && ( GetLastError() == ERROR_BAD_USERNAME || GetLastError() == ERROR_NO_SUCH_LOGON_SESSION /* Vista */ ),
+        "CredWrite with username without domain should return ERROR_BAD_USERNAME or ERROR_NO_SUCH_LOGON_SESSION not %d\n", GetLastError());
 
     new_cred.UserName = NULL;
     SetLastError(0xdeadbeef);
@@ -118,8 +118,8 @@ static void test_CredDeleteA(void)
 
     SetLastError(0xdeadbeef);
     ret = pCredDeleteA(TEST_TARGET_NAME, CRED_TYPE_GENERIC, 0xdeadbeef);
-    ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
-        "CredDeleteA should have failed with ERROR_INVALID_FLAGS instead of %d\n",
+    ok(!ret && ( GetLastError() == ERROR_INVALID_FLAGS || GetLastError() == ERROR_INVALID_PARAMETER /* Vista */ ),
+        "CredDeleteA should have failed with ERROR_INVALID_FLAGS or ERROR_INVALID_PARAMETER instead of %d\n",
         GetLastError());
 }
 
@@ -226,11 +226,14 @@ static void test_domain_password(void)
 
     ret = pCredReadA(TEST_TARGET_NAME, CRED_TYPE_DOMAIN_PASSWORD, 0, &cred);
     ok(ret, "CredReadA failed with error %d\n", GetLastError());
-    todo_wine
-    ok(cred->CredentialBlobSize == 0, "expected CredentialBlobSize of 0 but got %d\n", cred->CredentialBlobSize);
-    todo_wine
-    ok(!cred->CredentialBlob, "expected NULL credentials but got %p\n", cred->CredentialBlob);
-    pCredFree(cred);
+    if (ret)  /* don't check the values of cred, if CredReadA failed. */
+    {
+        todo_wine
+        ok(cred->CredentialBlobSize == 0, "expected CredentialBlobSize of 0 but got %d\n", cred->CredentialBlobSize);
+        todo_wine
+        ok(!cred->CredentialBlob, "expected NULL credentials but got %p\n", cred->CredentialBlob);
+        pCredFree(cred);
+    }
 
     ret = pCredDeleteA(TEST_TARGET_NAME, CRED_TYPE_DOMAIN_PASSWORD, 0);
     ok(ret, "CredDeleteA failed with error %d\n", GetLastError());
