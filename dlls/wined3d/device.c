@@ -6901,6 +6901,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
             updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->backBuffer[i], pPresentationParameters);
         }
+        if(This->auto_depth_stencil_buffer) {
+            updateSurfaceDesc((IWineD3DSurfaceImpl *)This->auto_depth_stencil_buffer, pPresentationParameters);
+        }
+
 
         /* Now set the new viewport */
         IWineD3DDevice_SetViewport(iface, &vp);
