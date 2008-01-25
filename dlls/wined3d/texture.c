@@ -145,7 +145,6 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
 static void WINAPI IWineD3DTextureImpl_UnLoad(IWineD3DTexture *iface) {
     unsigned int i;
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     TRACE("(%p)\n", This);
 
     /* Unload all the surfaces and reset the texture name. If UnLoad was called on the
@@ -157,13 +156,7 @@ static void WINAPI IWineD3DTextureImpl_UnLoad(IWineD3DTexture *iface) {
         IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], 0, IWineD3DTexture_GetTextureDimensions(iface));
     }
 
-    if(This->baseTexture.textureName) {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        ENTER_GL();
-        glDeleteTextures(1, &This->baseTexture.textureName);
-        This->baseTexture.textureName = 0;
-        LEAVE_GL();
-    }
+    IWineD3DBaseTextureImpl_UnLoad((IWineD3DBaseTexture *) iface);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface) {

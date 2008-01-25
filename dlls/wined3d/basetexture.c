@@ -112,7 +112,16 @@ void     WINAPI        IWineD3DBaseTextureImpl_PreLoad(IWineD3DBaseTexture *ifac
 }
 
 void     WINAPI        IWineD3DBaseTextureImpl_UnLoad(IWineD3DBaseTexture *iface) {
-    IWineD3DResourceImpl_UnLoad((IWineD3DResource *)iface);
+    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+    if(This->baseTexture.textureName) {
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
+        glDeleteTextures(1, &This->baseTexture.textureName);
+        This->baseTexture.textureName = 0;
+        LEAVE_GL();
+    }
 }
 
 WINED3DRESOURCETYPE WINAPI IWineD3DBaseTextureImpl_GetType(IWineD3DBaseTexture *iface) {

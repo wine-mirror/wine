@@ -161,7 +161,6 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
 static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface) {
     unsigned int i, j;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     TRACE("(%p)\n", This);
 
     /* Unload all the surfaces and reset the texture name. If UnLoad was called on the
@@ -175,13 +174,7 @@ static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface) {
         }
     }
 
-    if(This->baseTexture.textureName) {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        ENTER_GL();
-        glDeleteTextures(1, &This->baseTexture.textureName);
-        This->baseTexture.textureName = 0;
-        LEAVE_GL();
-    }
+    IWineD3DBaseTextureImpl_UnLoad((IWineD3DBaseTexture *) iface);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DCubeTextureImpl_GetType(IWineD3DCubeTexture *iface) {
