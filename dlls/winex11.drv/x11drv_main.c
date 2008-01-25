@@ -498,13 +498,10 @@ static BOOL process_attach(void)
             break;
 
         case 15:
-            /* Out tests suggest that windows does not support 15 bpp color depth.
-             * X11 does, what should we do with these situations?
+            /* In GetDeviceCaps MSDN description explicitly states that
+             * in 15 bpp mode 16 is returned.
              */
-            FIXME("The X server is running at 15 bpp color depth\n");
-            screen_bpp = 15;
-            break;
-
+            /* fall through */
         case 16:
             screen_bpp = 16;
             break;
