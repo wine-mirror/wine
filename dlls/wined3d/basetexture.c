@@ -122,6 +122,7 @@ void     WINAPI        IWineD3DBaseTextureImpl_UnLoad(IWineD3DBaseTexture *iface
         This->baseTexture.textureName = 0;
         LEAVE_GL();
     }
+    This->baseTexture.dirty = TRUE;
 }
 
 WINED3DRESOURCETYPE WINAPI IWineD3DBaseTextureImpl_GetType(IWineD3DBaseTexture *iface) {
