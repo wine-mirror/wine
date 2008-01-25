@@ -571,8 +571,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             /* If the helper replied with "PW", using cached credentials failed */
             if(!strncmp(buffer, "PW", 2))
             {
-                TRACE("Using cached credentials failed. Using empty password.\n");
-                lstrcpynA(buffer, "PW AA==", max_len-1);
+                TRACE("Using cached credentials failed.\n");
+                ret = SEC_E_NO_CREDENTIALS;
+                goto isc_end;
             }
             else /* Just do a noop on the next run */
                 lstrcpynA(buffer, "OK", max_len-1);
