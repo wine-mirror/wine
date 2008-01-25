@@ -116,6 +116,13 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
         helper->com_buf_offset = 0;
         helper->session_key = NULL;
         helper->neg_flags = 0;
+        helper->crypt.ntlm.a4i = NULL;
+        helper->crypt.ntlm2.send_a4i = NULL;
+        helper->crypt.ntlm2.recv_a4i = NULL;
+        helper->crypt.ntlm2.send_sign_key = NULL;
+        helper->crypt.ntlm2.send_seal_key = NULL;
+        helper->crypt.ntlm2.recv_sign_key = NULL;
+        helper->crypt.ntlm2.recv_seal_key = NULL;
         helper->pipe_in = pipe_in[0];
         fcntl( pipe_in[0], F_SETFD, 1 );
         close(pipe_in[1]);
