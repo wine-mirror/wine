@@ -557,7 +557,7 @@ static void test_mova(IDirect3DDevice9 *device)
     IDirect3DVertexShader9 *mova_shader = NULL;
     IDirect3DVertexShader9 *mov_shader = NULL;
     HRESULT hr;
-    int i, j;
+    UINT i, j;
 
     hr = IDirect3DDevice9_CreateVertexShader(device, mova_test, &mova_shader);
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
@@ -862,7 +862,8 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
     IDirect3DSurface9 *surface = NULL;
     D3DLOCKED_RECT locked_rect;
     HRESULT hr;
-    INT x, y, face;
+    UINT x;
+    INT y, face;
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (0x%08x)\n", hr);
