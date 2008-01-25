@@ -139,21 +139,19 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 
     if (changed & WS_VISIBLE)
     {
-        if (!(data = X11DRV_get_win_data( hwnd )) &&
-            !(data = X11DRV_create_win_data( hwnd ))) return;
+        data = X11DRV_get_win_data( hwnd );
+        if (data) invalidate_dce( hwnd, &data->window_rect );
 
-        if (data->whole_window && (new_style & WS_VISIBLE) &&
-            X11DRV_is_window_rect_mapped( &data->window_rect ))
+        /* we don't unmap windows, that causes trouble with the window manager */
+        if (!(new_style & WS_VISIBLE)) return;
+
+        if (!data && !(data = X11DRV_create_win_data( hwnd ))) return;
+
+        if (data->whole_window && X11DRV_is_window_rect_mapped( &data->window_rect ))
         {
             X11DRV_set_wm_hints( display, data );
             if (!data->mapped)
             {
-                if (!data->managed && is_window_managed( hwnd, SWP_NOACTIVATE, &data->window_rect ))
-                {
-                    TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
-                    data->managed = TRUE;
-                    SetPropA( hwnd, managed_prop, (HANDLE)1 );
-                }
                 TRACE( "mapping win %p\n", hwnd );
                 X11DRV_sync_window_style( display, data );
                 wine_tsx11_lock();
@@ -162,8 +160,6 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
                 data->mapped = TRUE;
             }
         }
-        /* we don't unmap windows, that causes trouble with the window manager */
-        invalidate_dce( hwnd, &data->window_rect );
     }
 
     if (changed & WS_DISABLED)

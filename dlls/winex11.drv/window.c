@@ -1102,6 +1102,13 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     if (!(cx = data->window_rect.right - data->window_rect.left)) cx = 1;
     if (!(cy = data->window_rect.bottom - data->window_rect.top)) cy = 1;
 
+    if (!data->managed && is_window_managed( data->hwnd, SWP_NOACTIVATE, &data->window_rect ))
+    {
+        TRACE( "making win %p/%lx managed\n", data->hwnd, data->whole_window );
+        data->managed = TRUE;
+        SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
+    }
+
     mask = get_window_attributes( display, data, &attr );
 
     wine_tsx11_lock();
