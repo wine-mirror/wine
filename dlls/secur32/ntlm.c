@@ -133,50 +133,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                 static const char domain_arg[] = "--domain=";
                 int unixcp_size;
 
-                if(pAuthData == NULL)
-                {
-                    LPWKSTA_USER_INFO_1 ui = NULL;
-                    NET_API_STATUS status;
-
-                    status = NetWkstaUserGetInfo(NULL, 1, (LPBYTE *)&ui);
-                    if (status != NERR_Success || ui == NULL)
-                    {
-                        ret = SEC_E_NO_CREDENTIALS;
-                        phCredential = NULL;
-                        break;
-                    }
-                    
-                    username = HeapAlloc(GetProcessHeap(), 0, 
-                            (lstrlenW(ui->wkui1_username)+1) * 
-                            sizeof(SEC_WCHAR));
-                    lstrcpyW(username, ui->wkui1_username);
-                        
-                    /* same for the domain */
-                    domain = HeapAlloc(GetProcessHeap(), 0, 
-                            (lstrlenW(ui->wkui1_logon_domain)+1) * 
-                            sizeof(SEC_WCHAR));
-                    lstrcpyW(domain, ui->wkui1_logon_domain);
-                    NetApiBufferFree(ui);
-                }
-                else
-                {
-                    PSEC_WINNT_AUTH_IDENTITY_W auth_data = 
-                        (PSEC_WINNT_AUTH_IDENTITY_W)pAuthData;
-
-                    /* Get username and domain from pAuthData */
-                    username = HeapAlloc(GetProcessHeap(), 0, 
-                            (auth_data->UserLength + 1) * sizeof(SEC_WCHAR));
-                    memcpy(username, auth_data->User,
-                           auth_data->UserLength * sizeof(SEC_WCHAR));
-                    username[auth_data->UserLength] = '\0';
-
-                    domain = HeapAlloc(GetProcessHeap(), 0,
-                            (auth_data->DomainLength + 1) * sizeof(SEC_WCHAR));
-                    memcpy(domain, auth_data->Domain,
-                           auth_data->DomainLength * sizeof(SEC_WCHAR));
-                    domain[auth_data->DomainLength] = '\0';
-                }
-
                 ntlm_cred = HeapAlloc(GetProcessHeap(), 0, sizeof(*ntlm_cred));
                 if (!ntlm_cred)
                 {
@@ -184,31 +140,37 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                     break;
                 }
                 ntlm_cred->mode = NTLM_CLIENT;
+                ntlm_cred->username_arg = NULL;
+                ntlm_cred->domain_arg = NULL;
                 ntlm_cred->password = NULL;
                 ntlm_cred->pwlen = 0;
-
-                TRACE("Username is %s\n", debugstr_w(username));
-                unixcp_size =  WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
-                        username, -1, NULL, 0, NULL, NULL) + sizeof(username_arg);
-                ntlm_cred->username_arg = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
-                memcpy(ntlm_cred->username_arg, username_arg, sizeof(username_arg) - 1);
-                WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, username, -1,
-                        ntlm_cred->username_arg + sizeof(username_arg) - 1,
-                        unixcp_size - sizeof(username_arg) + 1, NULL, NULL);
-
-                TRACE("Domain name is %s\n", debugstr_w(domain));
-                unixcp_size = WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
-                        domain, -1, NULL, 0,  NULL, NULL) + sizeof(domain_arg);
-                ntlm_cred->domain_arg = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
-                memcpy(ntlm_cred->domain_arg, domain_arg, sizeof(domain_arg) - 1);
-                WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, domain,
-                        -1, ntlm_cred->domain_arg + sizeof(domain_arg) - 1,
-                        unixcp_size - sizeof(domain) + 1, NULL, NULL);
 
                 if(pAuthData != NULL)
                 {
                     PSEC_WINNT_AUTH_IDENTITY_W auth_data =
-                    (PSEC_WINNT_AUTH_IDENTITY_W)pAuthData;
+                        (PSEC_WINNT_AUTH_IDENTITY_W)pAuthData;
+
+                    TRACE("Username is %s\n", debugstr_wn(auth_data->User, auth_data->UserLength));
+                    TRACE("Domain name is %s\n", debugstr_wn(auth_data->Domain, auth_data->DomainLength));
+
+                    /* Get username and domain from pAuthData */
+                    unixcp_size =  WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
+                            auth_data->User, auth_data->UserLength, NULL, 0, NULL, NULL) + sizeof(username_arg);
+                    ntlm_cred->username_arg = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
+                    memcpy(ntlm_cred->username_arg, username_arg, sizeof(username_arg) - 1);
+                    WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, auth_data->User, auth_data->UserLength,
+                            ntlm_cred->username_arg + sizeof(username_arg) - 1,
+                            unixcp_size - sizeof(username_arg) + 1, NULL, NULL);
+                    ntlm_cred->username_arg[unixcp_size - 1] = '\0';
+
+                    unixcp_size = WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
+                            auth_data->Domain, auth_data->DomainLength, NULL, 0,  NULL, NULL) + sizeof(domain_arg);
+                    ntlm_cred->domain_arg = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
+                    memcpy(ntlm_cred->domain_arg, domain_arg, sizeof(domain_arg) - 1);
+                    WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, auth_data->Domain,
+                            auth_data->DomainLength, ntlm_cred->domain_arg + sizeof(domain_arg) - 1,
+                            unixcp_size - sizeof(domain) + 1, NULL, NULL);
+                    ntlm_cred->domain_arg[unixcp_size - 1] = '\0';
 
                     if(auth_data->PasswordLength != 0)
                     {
@@ -417,6 +379,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     PBYTE bin;
     int buffer_len, bin_len, max_len = NTLM_MAX_BUF;
     int token_idx;
+    SEC_CHAR *username = NULL;
 
     TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
@@ -452,7 +415,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     {
         static char helper_protocol[] = "--helper-protocol=ntlmssp-client-1";
         static CHAR credentials_argv[] = "--use-cached-creds";
-        SEC_CHAR *client_argv[6];
+        SEC_CHAR *client_argv[5];
 
         TRACE("First time in ISC()\n");
 
@@ -475,10 +438,41 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
         client_argv[0] = ntlm_auth;
         client_argv[1] = helper_protocol;
-        client_argv[2] = ntlm_cred->username_arg;
-        client_argv[3] = ntlm_cred->domain_arg;
-        client_argv[4] = credentials_argv;
-        client_argv[5] = NULL;
+        if (!ntlm_cred->username_arg && !ntlm_cred->domain_arg)
+        {
+            LPWKSTA_USER_INFO_1 ui = NULL;
+            NET_API_STATUS status;
+            int unixcp_size;
+            static const char username_arg[] = "--username=";
+
+            status = NetWkstaUserGetInfo(NULL, 1, (LPBYTE *)&ui);
+            if (status != NERR_Success || ui == NULL)
+            {
+                ret = SEC_E_NO_CREDENTIALS;
+                goto isc_end;
+            }
+
+            unixcp_size =  WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
+                    ui->wkui1_username, -1, NULL, 0, NULL, NULL) + sizeof(username_arg);
+            username = HeapAlloc(GetProcessHeap(), 0, unixcp_size);
+            memcpy(username, username_arg, sizeof(username_arg) - 1);
+            WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, ui->wkui1_username, -1,
+                    username + sizeof(username_arg) - 1,
+                    unixcp_size - sizeof(username_arg) + 1, NULL, NULL);
+            username[unixcp_size - 1] = '\0';
+
+            TRACE("using cached credentials\n");
+
+            client_argv[2] = username;
+            client_argv[3] = credentials_argv;
+            client_argv[4] = NULL;
+        }
+        else
+        {
+            client_argv[2] = ntlm_cred->username_arg;
+            client_argv[3] = ntlm_cred->domain_arg;
+            client_argv[4] = NULL;
+        }
 
         if((ret = fork_helper(&helper, ntlm_auth, client_argv)) != SEC_E_OK)
             goto isc_end;
@@ -840,6 +834,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     }
 
 isc_end:
+    HeapFree(GetProcessHeap(), 0, username);
     HeapFree(GetProcessHeap(), 0, want_flags);
     HeapFree(GetProcessHeap(), 0, buffer);
     HeapFree(GetProcessHeap(), 0, bin);
