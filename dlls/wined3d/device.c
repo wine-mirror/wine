@@ -6799,6 +6799,35 @@ static HRESULT WINAPI reset_unload_resources(IWineD3DResource *resource, void *d
     return S_OK;
 }
 
+static void reset_fbo_state(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    unsigned int i;
+
+    ENTER_GL();
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+    checkGLcall("glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0)");
+
+    if (This->fbo) {
+        GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->fbo));
+        This->fbo = 0;
+    }
+    if (This->src_fbo) {
+        GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->src_fbo));
+        This->src_fbo = 0;
+    }
+    if (This->dst_fbo) {
+        GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->dst_fbo));
+        This->dst_fbo = 0;
+    }
+    checkGLcall("Tear down fbos\n");
+    LEAVE_GL();
+
+    for (i = 0; i < GL_LIMITS(buffers); ++i) {
+        This->fbo_color_attachments[i] = NULL;
+    }
+    This->fbo_depth_attachment = NULL;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain;
@@ -6857,6 +6886,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     }
     if(pPresentationParameters->EnableAutoDepthStencil != swapchain->presentParms.EnableAutoDepthStencil) {
         ERR("What do do about a changed auto depth stencil parameter?\n");
+    }
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        reset_fbo_state((IWineD3DDevice *) This);
     }
 
     IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
