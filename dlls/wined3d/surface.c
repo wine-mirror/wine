@@ -510,24 +510,42 @@ static void surface_remove_pbo(IWineD3DSurfaceImpl *This) {
 static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     IWineD3DBaseTexture *texture = NULL;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    renderbuffer_entry_t *entry, *entry2;
     TRACE("(%p)\n", iface);
 
-    /* Default pool resources are supposed to be destroyed before Reset is called.
-     * Implicit resources stay however. So this means we have an implicit render target
-     * or depth stencil, and the content isn't supposed to survive the reset anyway
-     */
     if(This->resource.pool == WINED3DPOOL_DEFAULT) {
-        TRACE("Default pool - nothing to do\n");
-        return;
+        /* Default pool resources are supposed to be destroyed before Reset is called.
+         * Implicit resources stay however. So this means we have an implicit render target
+         * or depth stencil. The content may be destroyed, but we still have to tear down
+         * opengl resources, so we cannot leave early.
+         */
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
+    } else {
+        /* Load the surface into system memory */
+        IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
     }
-
-    /* Load the surface into system memory */
-    IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+    IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
+    IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
+    This->Flags &= ~SFLAG_ALLOCATED;
 
     /* Destroy PBOs, but load them into real sysmem before */
     if(This->Flags & SFLAG_PBO) {
         surface_remove_pbo(This);
     }
+
+    /* Destroy fbo render buffers. This is needed for implicit render targets, for
+     * all application-created targets the application has to release the surface
+     * before calling _Reset
+     */
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry) {
+        ENTER_GL();
+        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
+        LEAVE_GL();
+        list_remove(&entry->entry);
+        HeapFree(GetProcessHeap(), 0, entry);
+    }
+    list_init(&This->renderbuffers);
+    This->current_renderbuffer = NULL;
 
     /* If we're in a texture, the texture name belongs to the texture. Otherwise,
      * destroy it
