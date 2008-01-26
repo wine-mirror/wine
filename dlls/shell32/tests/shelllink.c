@@ -146,7 +146,7 @@ static void test_get_set(void)
     ok(SUCCEEDED(r), "GetWorkingDirectory failed (0x%08x)\n", r);
     ok(lstrcmpi(buffer,str)==0, "GetWorkingDirectory returned '%s'\n", buffer);
 
-    /* Test Getting / Setting the work directory */
+    /* Test Getting / Setting the path */
     strcpy(buffer,"garbage");
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
     ok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
@@ -283,7 +283,7 @@ static void test_get_set(void)
     i=0xdeadbeef;
     r = IShellLinkA_GetIconLocation(sl, buffer, sizeof(buffer), &i);
     ok(SUCCEEDED(r), "GetIconLocation failed (0x%08x)\n", r);
-    ok(lstrcmpi(buffer,str)==0, "GetArguments returned '%s'\n", buffer);
+    ok(lstrcmpi(buffer,str)==0, "GetIconLocation returned '%s'\n", buffer);
     ok(i==0xbabecafe, "GetIconLocation returned %d'\n", i);
 
     /* Test Getting / Setting the hot key */
