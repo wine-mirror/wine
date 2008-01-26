@@ -38,16 +38,36 @@
 
 #include "pshpack1.h"
 
-#define SCF_PIDL 1
-#define SCF_LOCATION 2
-#define SCF_DESCRIPTION 4
-#define SCF_RELATIVE 8
-#define SCF_WORKDIR 0x10
-#define SCF_ARGS 0x20
-#define SCF_CUSTOMICON 0x40
-#define SCF_UNICODE 0x80
-#define SCF_PRODUCT 0x800
-#define SCF_COMPONENT 0x1000
+typedef enum {
+    SLDF_HAS_ID_LIST = 0x00000001,
+    SLDF_HAS_LINK_INFO = 0x00000002,
+    SLDF_HAS_NAME = 0x00000004,
+    SLDF_HAS_RELPATH = 0x00000008,
+    SLDF_HAS_WORKINGDIR = 0x00000010,
+    SLDF_HAS_ARGS = 0x00000020,
+    SLDF_HAS_ICONLOCATION = 0x00000040,
+    SLDF_UNICODE = 0x00000080,
+    SLDF_FORCE_NO_LINKINFO = 0x00000100,
+    SLDF_HAS_EXP_SZ = 0x00000200,
+    SLDF_RUN_IN_SEPARATE = 0x00000400,
+    SLDF_HAS_LOGO3ID = 0x00000800,
+    SLDF_HAS_DARWINID = 0x00001000,
+    SLDF_RUNAS_USER = 0x00002000,
+    SLDF_HAS_EXP_ICON_SZ = 0x00004000,
+    SLDF_NO_PIDL_ALIAS = 0x00008000,
+    SLDF_FORCE_UNCNAME = 0x00010000,
+    SLDF_RUN_WITH_SHIMLAYER = 0x00020000,
+    SLDF_FORCE_NO_LINKTRACK = 0x00040000,
+    SLDF_ENABLE_TARGET_METADATA = 0x00080000,
+    SLDF_DISABLE_KNOWNFOLDER_RELATIVE_TRACKING = 0x00200000,
+    SLDF_RESERVED = 0x80000000,
+} SHELL_LINK_DATA_FLAGS;
+
+typedef struct tagDATABLOCKHEADER
+{
+    DWORD cbSize;
+    DWORD dwSignature;
+} DATABLOCK_HEADER;
 
 typedef struct _LINK_HEADER
 {
@@ -351,39 +371,51 @@ void lnk_dump(void)
 
     /* dump out all the flags */
     printf("Flags:   %04x ( ", hdr->dwFlags);
-#define FLAG(x) if(hdr->dwFlags & SCF_##x) printf("%s ",#x);
-    FLAG(PIDL)
-    FLAG(LOCATION)
-    FLAG(DESCRIPTION)
-    FLAG(RELATIVE)
-    FLAG(WORKDIR)
-    FLAG(ARGS)
-    FLAG(CUSTOMICON)
-    FLAG(UNICODE)
-    FLAG(PRODUCT)
-    FLAG(COMPONENT)
+#define FLAG(x) if(hdr->dwFlags & SLDF_##x) printf("%s ",#x)
+    FLAG(HAS_ID_LIST);
+    FLAG(HAS_LINK_INFO);
+    FLAG(HAS_NAME);
+    FLAG(HAS_RELPATH);
+    FLAG(HAS_WORKINGDIR);
+    FLAG(HAS_ARGS);
+    FLAG(HAS_ICONLOCATION);
+    FLAG(UNICODE);
+    FLAG(FORCE_NO_LINKINFO);
+    FLAG(HAS_EXP_SZ);
+    FLAG(RUN_IN_SEPARATE);
+    FLAG(HAS_LOGO3ID);
+    FLAG(HAS_DARWINID);
+    FLAG(RUNAS_USER);
+    FLAG(HAS_EXP_ICON_SZ);
+    FLAG(NO_PIDL_ALIAS);
+    FLAG(FORCE_UNCNAME);
+    FLAG(RUN_WITH_SHIMLAYER);
+    FLAG(FORCE_NO_LINKTRACK);
+    FLAG(ENABLE_TARGET_METADATA);
+    FLAG(DISABLE_KNOWNFOLDER_RELATIVE_TRACKING);
+    FLAG(RESERVED);
 #undef FLAG
     printf(")\n");
 
     printf("Length:  %04x\n", hdr->dwFileLength);
     printf("\n");
 
-    if (hdr->dwFlags & SCF_PIDL)
+    if (hdr->dwFlags & SLDF_HAS_ID_LIST)
         dump_pidl();
-    if (hdr->dwFlags & SCF_LOCATION)
+    if (hdr->dwFlags & SLDF_HAS_LINK_INFO)
         dump_location();
-    if (hdr->dwFlags & SCF_DESCRIPTION)
-        dump_string("Description", hdr->dwFlags & SCF_UNICODE);
-    if (hdr->dwFlags & SCF_RELATIVE)
-        dump_string("Relative path", hdr->dwFlags & SCF_UNICODE);
-    if (hdr->dwFlags & SCF_WORKDIR)
-        dump_string("Working directory", hdr->dwFlags & SCF_UNICODE);
-    if (hdr->dwFlags & SCF_ARGS)
-        dump_string("Arguments", hdr->dwFlags & SCF_UNICODE);
-    if (hdr->dwFlags & SCF_CUSTOMICON)
-        dump_string("Icon path", hdr->dwFlags & SCF_UNICODE);
-    if (hdr->dwFlags & SCF_PRODUCT)
+    if (hdr->dwFlags & SLDF_HAS_NAME)
+        dump_string("Description", hdr->dwFlags & SLDF_UNICODE);
+    if (hdr->dwFlags & SLDF_HAS_RELPATH)
+        dump_string("Relative path", hdr->dwFlags & SLDF_UNICODE);
+    if (hdr->dwFlags & SLDF_HAS_WORKINGDIR)
+        dump_string("Working directory", hdr->dwFlags & SLDF_UNICODE);
+    if (hdr->dwFlags & SLDF_HAS_ARGS)
+        dump_string("Arguments", hdr->dwFlags & SLDF_UNICODE);
+    if (hdr->dwFlags & SLDF_HAS_ICONLOCATION)
+        dump_string("Icon path", hdr->dwFlags & SLDF_UNICODE);
+    if (hdr->dwFlags & SLDF_HAS_LOGO3ID)
         dump_advertise_info("product");
-    if (hdr->dwFlags & SCF_COMPONENT)
+    if (hdr->dwFlags & SLDF_HAS_DARWINID)
         dump_advertise_info("msi string");
 }
