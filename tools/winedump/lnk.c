@@ -63,6 +63,8 @@ typedef enum {
     SLDF_RESERVED = 0x80000000,
 } SHELL_LINK_DATA_FLAGS;
 
+#define EXP_SZ_LINK_SIG         0xa0000001
+#define EXP_SPECIAL_FOLDER_SIG  0xa0000005
 #define EXP_DARWIN_ID_SIG       0xa0000006
 #define EXP_SZ_ICON_SIG         0xa0000007
 
@@ -115,6 +117,14 @@ typedef struct _LOCAL_VOLUME_INFO
     DWORD dwVolSerial;
     DWORD dwVolLabelOfs;
 } LOCAL_VOLUME_INFO;
+
+typedef struct
+{
+    DWORD cbSize;
+    DWORD dwSignature;
+    DWORD idSpecialFolder;
+    DWORD cbOffset;
+} EXP_SPECIAL_FOLDER;
 
 typedef struct lnk_string_tag
 {
@@ -286,6 +296,17 @@ static int base85_to_guid( const char *str, LPGUID guid )
         base *= 85;
     }
     return 1;
+}
+
+static int dump_special_folder_block(const DATABLOCK_HEADER* bhdr)
+{
+    const EXP_SPECIAL_FOLDER *sfb = (const EXP_SPECIAL_FOLDER*)bhdr;
+    printf("Special folder block\n");
+    printf("--------------------\n\n");
+    printf("folder  = 0x%04x\n", sfb->idSpecialFolder);
+    printf("offset  = %d\n", sfb->cbOffset);
+    printf("\n");
+    return 0;
 }
 
 static int dump_sz_block(const DATABLOCK_HEADER* bhdr, const char* label)
@@ -481,6 +502,12 @@ void lnk_dump(void)
             break;
         switch (bhdr->dwSignature)
         {
+        case EXP_SZ_LINK_SIG:
+            dump_sz_block(bhdr, "exp.link");
+            break;
+        case EXP_SPECIAL_FOLDER_SIG:
+            dump_special_folder_block(bhdr);
+            break;
         case EXP_SZ_ICON_SIG:
             dump_sz_block(bhdr, "icon");
             break;
