@@ -280,6 +280,7 @@ static const struct message destroy_monthcal_parent_msgs_seq[] = {
 
 /* expected message sequence for child*/
 static const struct message destroy_monthcal_child_msgs_seq[] = {
+    { 0x0090, sent|optional }, /* Vista */
     { WM_SHOWWINDOW, sent|wparam|lparam, 0, 0},
     { WM_WINDOWPOSCHANGING, sent|wparam, 0},
     { WM_WINDOWPOSCHANGED, sent|wparam, 0},
@@ -289,6 +290,7 @@ static const struct message destroy_monthcal_child_msgs_seq[] = {
 };
 
 static const struct message destroy_monthcal_multi_sel_style_seq[] = {
+    { 0x0090, sent|optional }, /* Vista */
     { WM_DESTROY, sent|wparam|lparam, 0, 0},
     { WM_NCDESTROY, sent|wparam|lparam, 0, 0},
     { 0 }
@@ -296,6 +298,7 @@ static const struct message destroy_monthcal_multi_sel_style_seq[] = {
 
 /* expected message sequence for parent window*/
 static const struct message destroy_parent_seq[] = {
+    { 0x0090, sent|optional }, /* Vista */
     { WM_WINDOWPOSCHANGING, sent|wparam, 0},
     { WM_WINDOWPOSCHANGED, sent|wparam, 0},
     { WM_NCACTIVATE, sent|wparam|lparam, 0, 0},
