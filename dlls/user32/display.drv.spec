@@ -27,7 +27,7 @@
 25 stub GetPaletteTranslate
 26 stub UpdateColors
 27 stub StretchBlt
-28 stub StrechDIBits
+28 stub StretchDIBits
 29 stub SelectBitmap
 30 stub BitmapBits
 31 stub ReEnable
