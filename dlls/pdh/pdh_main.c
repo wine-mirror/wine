@@ -873,7 +873,7 @@ PDH_STATUS WINAPI PdhLookupPerfNameByIndexW( LPCWSTR machine, DWORD index, LPWST
         return PDH_CSTATUS_NO_MACHINE;
     }
 
-    if (!buffer && !size) return PDH_INVALID_ARGUMENT;
+    if (!buffer || !size) return PDH_INVALID_ARGUMENT;
     if (!index) return ERROR_SUCCESS;
 
     for (i = 0; i < sizeof(counter_sources) / sizeof(counter_sources[0]); i++)
