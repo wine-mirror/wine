@@ -63,6 +63,9 @@ typedef enum {
     SLDF_RESERVED = 0x80000000,
 } SHELL_LINK_DATA_FLAGS;
 
+#define EXP_DARWIN_ID_SIG       0xa0000006
+#define EXP_SZ_ICON_SIG         0xa0000007
+
 typedef struct tagDATABLOCKHEADER
 {
     DWORD cbSize;
@@ -86,13 +89,13 @@ typedef struct _LINK_HEADER
     DWORD   Unknown6;       /* 0x48 */
 } LINK_HEADER, * PLINK_HEADER;
 
-typedef struct tagLINK_ADVERTISEINFO
+typedef struct tagLINK_SZ_BLOCK
 {
     DWORD size;
     DWORD magic;
     CHAR  bufA[MAX_PATH];
     WCHAR bufW[MAX_PATH];
-} LINK_ADVERTISEINFO;
+} LINK_SZ_BLOCK;
 
 typedef struct _LOCATION_INFO
 {
@@ -285,71 +288,63 @@ static int base85_to_guid( const char *str, LPGUID guid )
     return 1;
 }
 
-static int dump_advertise_info(const char *type)
+static int dump_sz_block(const DATABLOCK_HEADER* bhdr, const char* label)
 {
-    const LINK_ADVERTISEINFO *avt;
+    const LINK_SZ_BLOCK *szp = (const LINK_SZ_BLOCK*)bhdr;
+    printf("String block\n");
+    printf("-----------\n\n");
+    printf("magic   = %x\n", szp->magic);
+    printf("%s    = %s\n", label, szp->bufA);
+    printf("\n");
+    return 0;
+}
 
-    avt = fetch_block();
-    if (!avt)
-        return -1;
+static int dump_darwin_id(const DATABLOCK_HEADER* bhdr)
+{
+    const LINK_SZ_BLOCK *szp = (const LINK_SZ_BLOCK*)bhdr;
+    char comp_str[40];
+    const char *feat, *comp, *prod_str, *feat_str;
+    GUID guid;
 
     printf("Advertise Info\n");
     printf("--------------\n\n");
-    printf("magic   = %x\n", avt->magic);
-    printf("%s = %s\n", type, avt->bufA);
-    if (avt->magic == 0xa0000006)
+    printf("msi string = %s\n", szp->bufA);
+
+    if (base85_to_guid(szp->bufA, &guid))
+        prod_str = get_guid_str(&guid);
+    else
+        prod_str = "?";
+
+    comp = &szp->bufA[20];
+    feat = strchr(comp, '>');
+    if (!feat)
+        feat = strchr(comp, '<');
+    if (feat)
     {
-        char comp_str[40];
-        const char *feat, *comp, *prod_str, *feat_str;
-        GUID guid;
-
-        if (base85_to_guid(avt->bufA, &guid))
-            prod_str = get_guid_str( &guid );
-        else
-            prod_str = "?";
-
-        comp = &avt->bufA[20];
-        feat = strchr(comp,'>');
-        if (!feat)
-            feat = strchr(comp,'<');
-        if (feat)
-        {
-            memcpy( comp_str, comp, feat - comp );
-            comp_str[feat-comp] = 0;
-        }
-        else
-        {
-            strcpy( comp_str, "?" );
-        }
-
-        if (feat && feat[0] == '>' && base85_to_guid( &feat[1], &guid ))
-            feat_str = get_guid_str( &guid );
-        else
-            feat_str = "";
-
-        printf("  product:   %s\n", prod_str);
-        printf("  component: %s\n", comp_str );
-        printf("  feature:   %s\n", feat_str);
+        memcpy(comp_str, comp, feat - comp);
+        comp_str[feat-comp] = 0;
     }
+    else
+    {
+        strcpy(comp_str, "?");
+    }
+
+    if (feat && feat[0] == '>' && base85_to_guid( &feat[1], &guid ))
+        feat_str = get_guid_str( &guid );
+    else
+        feat_str = "";
+
+    printf("  product:   %s\n", prod_str);
+    printf("  component: %s\n", comp_str );
+    printf("  feature:   %s\n", feat_str);
     printf("\n");
 
     return 0;
 }
 
-static int dump_raw_block(void)
+static int dump_raw_block(const DATABLOCK_HEADER* bhdr)
 {
-    const DATABLOCK_HEADER *bhdr;
     int data_size;
-
-    bhdr = fetch_block();
-    if (!bhdr)
-    {
-        printf("\n");
-        printf("No end block!\n");
-        return 0;
-    }
-    if (!bhdr->cbSize)
-        return 0;
 
     printf("Raw Block\n");
     printf("---------\n\n");
@@ -404,6 +399,7 @@ enum FileSig get_kind_lnk(void)
 void lnk_dump(void)
 {
     const LINK_HEADER*        hdr;
+    const DATABLOCK_HEADER*   bhdr;
     DWORD dwFlags;
 
     offset = 0;
@@ -477,9 +473,23 @@ void lnk_dump(void)
         dump_string("Arguments", hdr->dwFlags & SLDF_UNICODE);
     if (hdr->dwFlags & SLDF_HAS_ICONLOCATION)
         dump_string("Icon path", hdr->dwFlags & SLDF_UNICODE);
-    if (hdr->dwFlags & SLDF_HAS_LOGO3ID)
-        dump_advertise_info("product");
-    if (hdr->dwFlags & SLDF_HAS_DARWINID)
-        dump_advertise_info("msi string");
-    while (dump_raw_block());
+
+    bhdr=fetch_block();
+    while (bhdr)
+    {
+        if (!bhdr->cbSize)
+            break;
+        switch (bhdr->dwSignature)
+        {
+        case EXP_SZ_ICON_SIG:
+            dump_sz_block(bhdr, "icon");
+            break;
+        case EXP_DARWIN_ID_SIG:
+            dump_darwin_id(bhdr);
+            break;
+        default:
+            dump_raw_block(bhdr);
+        }
+        bhdr=fetch_block();
+    }
 }
