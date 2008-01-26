@@ -336,6 +336,58 @@ static int dump_advertise_info(const char *type)
     return 0;
 }
 
+static int dump_raw_block(void)
+{
+    const DATABLOCK_HEADER *bhdr;
+    int data_size;
+
+    bhdr = fetch_block();
+    if (!bhdr)
+    {
+        printf("\n");
+        printf("No end block!\n");
+        return 0;
+    }
+    if (!bhdr->cbSize)
+        return 0;
+
+    printf("Raw Block\n");
+    printf("---------\n\n");
+    printf("size    = %d\n", bhdr->cbSize);
+    printf("magic   = %x\n", bhdr->dwSignature);
+
+    data_size=bhdr->cbSize-sizeof(*bhdr);
+    if (data_size > 0)
+    {
+        unsigned int i;
+        const unsigned char *data;
+
+        printf("data    = ");
+        data=(const unsigned char*)bhdr+sizeof(*bhdr);
+        while (data_size > 0)
+        {
+            for (i=0; i < 16; i++)
+            {
+                if (i < data_size)
+                    printf("%02x ", data[i]);
+                else
+                    printf("   ");
+            }
+            for (i=0; i < data_size && i < 16; i++)
+                printf("%c", (data[i] >= 32 && data[i] < 128 ? data[i] : '.'));
+            printf("\n");
+            data_size-=16;
+            if (data_size <= 0)
+                break;
+            data+=16;
+            printf("          ");
+        }
+    }
+    printf("\n");
+
+    return 1;
+}
+
 static const GUID CLSID_ShellLink = {0x00021401L, 0, 0, {0xC0,0,0,0,0,0,0,0x46}};
 
 enum FileSig get_kind_lnk(void)
@@ -429,4 +481,5 @@ void lnk_dump(void)
         dump_advertise_info("product");
     if (hdr->dwFlags & SLDF_HAS_DARWINID)
         dump_advertise_info("msi string");
+    while (dump_raw_block());
 }
