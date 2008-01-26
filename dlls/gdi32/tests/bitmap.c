@@ -1699,12 +1699,12 @@ static void test_mono_1x1_bmp_dbg(HBITMAP hbmp, int line)
     ok_(__FILE__, line)(ret == sizeof(BITMAP) ||
                         ret == sizeof(DIBSECTION) /* Win9x, only for curObj2 */,
                         "GetObject returned %d, error %u\n", ret, GetLastError());
-    ok_(__FILE__, line)(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
-    ok_(__FILE__, line)(bm.bmWidth == 1, "wrong bmWidth %d\n", bm.bmWidth);
-    ok_(__FILE__, line)(bm.bmHeight == 1, "wrong bmHeight %d\n", bm.bmHeight);
-    ok_(__FILE__, line)(bm.bmWidthBytes == 2, "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
-    ok_(__FILE__, line)(bm.bmPlanes == 1, "wrong bmPlanes %u\n", bm.bmPlanes);
-    ok_(__FILE__, line)(bm.bmBitsPixel == 1, "wrong bmBitsPixel %d\n", bm.bmBitsPixel);
+    ok_(__FILE__, line)(bm.bmType == 0, "wrong bmType, expected 0 got %d\n", bm.bmType);
+    ok_(__FILE__, line)(bm.bmWidth == 1, "wrong bmWidth, expected 1 got %d\n", bm.bmWidth);
+    ok_(__FILE__, line)(bm.bmHeight == 1, "wrong bmHeight, expected 1 got %d\n", bm.bmHeight);
+    ok_(__FILE__, line)(bm.bmWidthBytes == 2, "wrong bmWidthBytes, expected 2 got %d\n", bm.bmWidthBytes);
+    ok_(__FILE__, line)(bm.bmPlanes == 1, "wrong bmPlanes, expected 1 got %u\n", bm.bmPlanes);
+    ok_(__FILE__, line)(bm.bmBitsPixel == 1, "wrong bmBitsPixel, expected 1 got %d\n", bm.bmBitsPixel);
     ok_(__FILE__, line)(!bm.bmBits, "wrong bmBits %p\n", bm.bmBits);
 }
 
