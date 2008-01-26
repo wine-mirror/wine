@@ -1026,7 +1026,8 @@ HRESULT WINAPI AtlAxCreateControlEx(LPCOLESTR lpszName, HWND hWnd,
             IUnknown_AddRef( pUnkControl );
     }
 
-    IUnknown_Release( pUnkControl );
+    if ( pUnkControl )
+        IUnknown_Release( pUnkControl );
     if ( pContainer )
         IUnknown_Release( pContainer );
 
