@@ -352,6 +352,7 @@ enum FileSig get_kind_lnk(void)
 void lnk_dump(void)
 {
     const LINK_HEADER*        hdr;
+    DWORD dwFlags;
 
     offset = 0;
     hdr = fetch_block();
@@ -371,7 +372,15 @@ void lnk_dump(void)
 
     /* dump out all the flags */
     printf("Flags:   %04x ( ", hdr->dwFlags);
-#define FLAG(x) if(hdr->dwFlags & SLDF_##x) printf("%s ",#x)
+    dwFlags=hdr->dwFlags;
+#define FLAG(x) do \
+                { \
+                    if (dwFlags & SLDF_##x) \
+                    { \
+                        printf("%s ", #x); \
+                        dwFlags&=~SLDF_##x; \
+                    } \
+                } while (0)
     FLAG(HAS_ID_LIST);
     FLAG(HAS_LINK_INFO);
     FLAG(HAS_NAME);
@@ -395,6 +404,8 @@ void lnk_dump(void)
     FLAG(DISABLE_KNOWNFOLDER_RELATIVE_TRACKING);
     FLAG(RESERVED);
 #undef FLAG
+    if (dwFlags)
+        printf("+%04x", dwFlags);
     printf(")\n");
 
     printf("Length:  %04x\n", hdr->dwFileLength);
