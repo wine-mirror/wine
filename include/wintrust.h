@@ -341,6 +341,8 @@ typedef struct _CRYPT_PROVIDER_DATA {
     HCRYPTMSG                 hMsg;
     DWORD                     csSigners;
     CRYPT_PROVIDER_SGNR      *pasSigners;
+    DWORD                     csProvPrivData;
+    CRYPT_PROVIDER_PRIVDATA  *pasProvPrivData;
     DWORD                     dwSubjectChoice;
     union {
         struct _PROVDATA_SIP        *pPDSip;
