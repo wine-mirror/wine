@@ -329,6 +329,28 @@ static void fetch_modules_info(struct dump_context* dc)
     elf_enum_modules(dc->hProcess, fetch_elf_module_info_cb, dc);
 }
 
+static void fetch_module_versioninfo(LPCWSTR filename, VS_FIXEDFILEINFO* ffi)
+{
+    DWORD       handle;
+    DWORD       sz;
+    static const WCHAR backslashW[] = {'\\', '\0'};
+
+    memset(ffi, 0, sizeof(*ffi));
+    if ((sz = GetFileVersionInfoSizeW(filename, &handle)))
+    {
+        void*   info = HeapAlloc(GetProcessHeap(), 0, sz);
+        if (info && GetFileVersionInfoW(filename, handle, sz, info))
+        {
+            VS_FIXEDFILEINFO*   ptr;
+            UINT    len;
+
+            if (VerQueryValueW(info, backslashW, (void*)&ptr, &len))
+                memcpy(ffi, ptr, min(len, sizeof(*ffi)));
+        }
+        HeapFree(GetProcessHeap(), 0, info);
+    }
+}
+
 /******************************************************************
  *		add_memory_block
  *
@@ -515,7 +537,7 @@ static  unsigned        dump_modules(struct dump_context* dc, BOOL dump_elf)
             mdModule.ModuleNameRva = dc->rva;
             ms->Length -= sizeof(WCHAR);
             append(dc, ms, sizeof(ULONG) + ms->Length + sizeof(WCHAR));
-            memset(&mdModule.VersionInfo, 0, sizeof(mdModule.VersionInfo)); /* FIXME */
+            fetch_module_versioninfo(ms->Buffer, &mdModule.VersionInfo);
             mdModule.CvRecord.DataSize = 0; /* FIXME */
             mdModule.CvRecord.Rva = 0; /* FIXME */
             mdModule.MiscRecord.DataSize = 0; /* FIXME */
