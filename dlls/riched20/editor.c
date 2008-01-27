@@ -4,6 +4,7 @@
  * Copyright 2004 by Krzysztof Foltman
  * Copyright 2005 by Cihan Altinay
  * Copyright 2005 by Phil Krylov
+ * Copyright 2008 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -505,6 +506,148 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     }
     if (fmt.cTabCount < MAX_TAB_STOPS)
       fmt.rgxTabs[fmt.cTabCount++] = info->rtfParam;
+    break;
+  case rtfKeep:
+    fmt.dwMask = PFM_KEEP;
+    fmt.wEffects = PFE_KEEP;
+    break;
+  case rtfNoWidowControl:
+    fmt.dwMask = PFM_NOWIDOWCONTROL;
+    fmt.wEffects = PFE_NOWIDOWCONTROL;
+    break;
+  case rtfKeepNext:
+    fmt.dwMask = PFM_KEEPNEXT;
+    fmt.wEffects = PFE_KEEPNEXT;
+    break;
+  case rtfSpaceAfter:
+    fmt.dwMask = PFM_SPACEAFTER;
+    fmt.dySpaceAfter = info->rtfParam;
+    break;
+  case rtfSpaceBefore:
+    fmt.dwMask = PFM_SPACEBEFORE;
+    fmt.dySpaceBefore = info->rtfParam;
+    break;
+  case rtfSpaceBetween:
+    fmt.dwMask = PFM_LINESPACING;
+    if ((int)info->rtfParam > 0)
+    {
+      fmt.dyLineSpacing = info->rtfParam;
+      fmt.bLineSpacingRule = 3;
+    }
+    else
+    {
+      fmt.dyLineSpacing = info->rtfParam;
+      fmt.bLineSpacingRule = 4;
+    }
+  case rtfSpaceMultiply:
+    fmt.dwMask = PFM_LINESPACING;
+    fmt.dyLineSpacing = info->rtfParam * 20;
+    fmt.bLineSpacingRule = 5;
+    break;
+  case rtfParBullet:
+    fmt.dwMask = PFM_NUMBERING;
+    fmt.wNumbering = PFN_BULLET;
+    break;
+  case rtfParSimple:
+    fmt.dwMask = PFM_NUMBERING;
+    fmt.wNumbering = 2; /* FIXME: MSDN says it's not used ?? */
+    break;
+  case rtfParNumDecimal:
+    fmt.dwMask = PFM_NUMBERING;
+    fmt.wNumbering = 2; /* FIXME: MSDN says it's not used ?? */
+    break;
+  case rtfParNumIndent:
+    fmt.dwMask = PFM_NUMBERINGTAB;
+    fmt.wNumberingTab = info->rtfParam;
+    break;
+  case rtfParNumStartAt:
+    fmt.dwMask = PFM_NUMBERINGSTART;
+    fmt.wNumberingStart = info->rtfParam;
+    break;
+  case rtfBorderLeft:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    if (!(fmt.dwMask & PFM_BORDER))
+    {
+      fmt.dwMask |= PFM_BORDER;
+      fmt.wBorderSpace = 0;
+      fmt.wBorderWidth = 1;
+      fmt.wBorders = 0;
+    }
+    fmt.wBorders |= 1;
+    break;
+  case rtfBorderRight:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    if (!(fmt.dwMask & PFM_BORDER))
+    {
+      fmt.dwMask |= PFM_BORDER;
+      fmt.wBorderSpace = 0;
+      fmt.wBorderWidth = 1;
+      fmt.wBorders = 0;
+    }
+    fmt.wBorders |= 2;
+    break;
+  case rtfBorderTop:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    if (!(fmt.dwMask & PFM_BORDER))
+    {
+      fmt.dwMask |= PFM_BORDER;
+      fmt.wBorderSpace = 0;
+      fmt.wBorderWidth = 1;
+      fmt.wBorders = 0;
+    }
+    fmt.wBorders |= 4;
+    break;
+  case rtfBorderBottom:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    if (!(fmt.dwMask & PFM_BORDER))
+    {
+      fmt.dwMask |= PFM_BORDER;
+      fmt.wBorderSpace = 0;
+      fmt.wBorderWidth = 1;
+      fmt.wBorders = 0;
+    }
+    fmt.wBorders |= 8;
+    break;
+  case rtfBorderSingle:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    /* we assume that borders have been created before (RTF spec) */
+    fmt.wBorders &= ~0x70;
+    fmt.wBorders |= 1 << 8;
+    break;
+  case rtfBorderThick:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    /* we assume that borders have been created before (RTF spec) */
+    fmt.wBorders &= ~0x70;
+    fmt.wBorders |= 2 << 8;
+    break;
+  case rtfBorderShadow:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    /* we assume that borders have been created before (RTF spec) */
+    fmt.wBorders &= ~0x70;
+    fmt.wBorders |= 10 << 8;
+    break;
+  case rtfBorderDouble:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    /* we assume that borders have been created before (RTF spec) */
+    fmt.wBorders &= ~0x70;
+    fmt.wBorders |= 7 << 8;
+    break;
+  case rtfBorderDot:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    /* we assume that borders have been created before (RTF spec) */
+    fmt.wBorders &= ~0x70;
+    fmt.wBorders |= 11 << 8;
+    break;
+  case rtfBorderWidth:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    /* we assume that borders have been created before (RTF spec) */
+    fmt.wBorders &= ~0x70;
+    fmt.wBorders |= ((info->rtfParam / 15) & 7) << 8;
+    break;
+  case rtfBorderSpace:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    /* we assume that borders have been created before (RTF spec) */
+    fmt.wBorderSpace = info->rtfParam;
     break;
   }  
   if (fmt.dwMask) {
