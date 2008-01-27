@@ -550,12 +550,19 @@ LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *ppObj)
     return 1;
 }
 
+static void convert_sizel(ME_Context *c, const SIZEL* szl, SIZE* sz)
+{
+  /* sizel is in .01 millimeters, sz in pixels */
+  sz->cx = MulDiv(szl->cx, c->dpi.cx, 2540);
+  sz->cy = MulDiv(szl->cy, c->dpi.cy, 2540);
+}
+
 /******************************************************************************
  * ME_GetOLEObjectSize
  *
  * Sets run extent for OLE objects.
  */
-void ME_GetOLEObjectSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize)
+void ME_GetOLEObjectSize(ME_Context *c, ME_Run *run, SIZE *pSize)
 {
   IDataObject*  ido;
   FORMATETC     fmt;
@@ -565,6 +572,13 @@ void ME_GetOLEObjectSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize)
 
   assert(run->nFlags & MERF_GRAPHICS);
   assert(run->ole_obj);
+
+  if (run->ole_obj->sizel.cx != 0 || run->ole_obj->sizel.cy != 0)
+  {
+    convert_sizel(c, &run->ole_obj->sizel, pSize);
+    return;
+  }
+
   IOleObject_QueryInterface(run->ole_obj->poleobj, &IID_IDataObject, (void**)&ido);
   fmt.cfFormat = CF_BITMAP;
   fmt.ptd = NULL;
@@ -603,10 +617,10 @@ void ME_GetOLEObjectSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize)
     break;
   }
   IDataObject_Release(ido);
-  if (editor->nZoomNumerator != 0)
+  if (c->editor->nZoomNumerator != 0)
   {
-    pSize->cx = MulDiv(pSize->cx, editor->nZoomNumerator, editor->nZoomDenominator);
-    pSize->cy = MulDiv(pSize->cy, editor->nZoomNumerator, editor->nZoomDenominator);
+    pSize->cx = MulDiv(pSize->cx, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+    pSize->cy = MulDiv(pSize->cy, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
   }
 }
 
@@ -620,6 +634,7 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
   ENHMETAHEADER emh;
   HDC           hMemDC;
   SIZE          sz;
+  BOOL          has_size;
 
   assert(run->nFlags & MERF_GRAPHICS);
   assert(run->ole_obj);
@@ -628,6 +643,7 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
     FIXME("Couldn't get interface\n");
     return;
   }
+  has_size = run->ole_obj->sizel.cx != 0 || run->ole_obj->sizel.cy != 0;
   fmt.cfFormat = CF_BITMAP;
   fmt.ptd = NULL;
   fmt.dwAspect = DVASPECT_CONTENT;
@@ -650,7 +666,7 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
     GetObjectW(stgm.u.hBitmap, sizeof(dibsect), &dibsect);
     hMemDC = CreateCompatibleDC(c->hDC);
     SelectObject(hMemDC, stgm.u.hBitmap);
-    if (c->editor->nZoomNumerator == 0)
+    if (!has_size && c->editor->nZoomNumerator == 0)
     {
       sz.cx = dibsect.dsBm.bmWidth;
       sz.cy = dibsect.dsBm.bmHeight;
@@ -660,10 +676,17 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
     }
     else
     {
-      sz.cy = MulDiv(dibsect.dsBm.bmWidth,
-                     c->editor->nZoomNumerator, c->editor->nZoomDenominator);
-      sz.cx = MulDiv(dibsect.dsBm.bmHeight,
-                     c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+      if (has_size)
+      {
+        convert_sizel(c, &run->ole_obj->sizel, &sz);
+      }
+      else
+      {
+        sz.cy = MulDiv(dibsect.dsBm.bmWidth,
+                       c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+        sz.cx = MulDiv(dibsect.dsBm.bmHeight,
+                       c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+      }
       StretchBlt(c->hDC, x, y - sz.cy, sz.cx, sz.cy,
                  hMemDC, 0, 0, dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight, SRCCOPY);
     }
@@ -671,17 +694,24 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
     break;
   case TYMED_ENHMF:
     GetEnhMetaFileHeader(stgm.u.hEnhMetaFile, sizeof(emh), &emh);
-    if (c->editor->nZoomNumerator == 0)
+    if (!has_size && c->editor->nZoomNumerator == 0)
     {
-        sz.cy = emh.rclBounds.bottom - emh.rclBounds.top;
-        sz.cx = emh.rclBounds.right - emh.rclBounds.left;
+      sz.cy = emh.rclBounds.bottom - emh.rclBounds.top;
+      sz.cx = emh.rclBounds.right - emh.rclBounds.left;
     }
     else
     {
+      if (has_size)
+      {
+        convert_sizel(c, &run->ole_obj->sizel, &sz);
+      }
+      else
+      {
         sz.cy = MulDiv(emh.rclBounds.bottom - emh.rclBounds.top,
                        c->editor->nZoomNumerator, c->editor->nZoomDenominator);
         sz.cx = MulDiv(emh.rclBounds.right - emh.rclBounds.left,
                        c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+      }
     }
     {
       RECT    rc;

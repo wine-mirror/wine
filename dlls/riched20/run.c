@@ -492,7 +492,7 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
   if (run->nFlags & MERF_GRAPHICS)
   {
     SIZE sz;
-    ME_GetOLEObjectSize(c->editor, run, &sz);
+    ME_GetOLEObjectSize(c, run, &sz);
     if (cx < sz.cx)
       return 0;
     return 1;
@@ -546,21 +546,22 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
       return 0;
     return 1;
   }
+  ME_InitContext(&c, editor, GetDC(editor->hWnd));
   if (run->nFlags & MERF_GRAPHICS)
   {
     SIZE sz;
-    ME_GetOLEObjectSize(editor, run, &sz);
+    ME_GetOLEObjectSize(&c, run, &sz);
+    ReleaseDC(editor->hWnd, c.hDC);
     if (cx < sz.cx/2)
       return 0;
     return 1;
   }
-  
+
   if (editor->cPasswordMask)
     strRunText = ME_MakeStringR(editor->cPasswordMask,ME_StrVLen(run->strText));
   else
     strRunText = run->strText;
 
-  ME_InitContext(&c, editor, GetDC(editor->hWnd));
   hOldFont = ME_SelectStyleFont(&c, run->style);
   GetTextExtentExPointW(c.hDC, strRunText->szData, strRunText->nLen,
                         cx, &fit, NULL, &sz);
@@ -609,19 +610,20 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
   ME_String *strRunText;
   /* This could point to either the run's real text, or it's masked form in a password control */
 
+  ME_InitContext(&c, editor, GetDC(editor->hWnd));
   if (pRun->nFlags & MERF_GRAPHICS)
   {
-    if (!nOffset) return 0;
-    ME_GetOLEObjectSize(editor, pRun, &size);
-    return 1;
+    if (nOffset)
+      ME_GetOLEObjectSize(&c, pRun, &size);
+    ReleaseDC(editor->hWnd, c.hDC);
+    return nOffset != 0;
   }
   
    if (editor->cPasswordMask)
     strRunText = ME_MakeStringR(editor->cPasswordMask,ME_StrVLen(pRun->strText));
   else
     strRunText = pRun->strText;
-  
-  ME_InitContext(&c, editor, GetDC(editor->hWnd));
+
   ME_GetTextExtent(&c,  strRunText->szData, nOffset, pRun->style, &size);
   ReleaseDC(editor->hWnd, c.hDC);
   if (editor->cPasswordMask)
@@ -689,7 +691,7 @@ static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run 
   }
   if (run->nFlags & MERF_GRAPHICS)
   {
-    ME_GetOLEObjectSize(c->editor, run, &size);
+    ME_GetOLEObjectSize(c, run, &size);
     if (size.cy > *pAscent)
       *pAscent = size.cy;
     /* descent is unchanged */

@@ -260,7 +260,7 @@ int  ME_GetParaLineSpace(ME_Context *c, ME_Paragraph*);
 /* richole.c */
 LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *);
 void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run* run, ME_Paragraph *para, BOOL selected);
-void ME_GetOLEObjectSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize);
+void ME_GetOLEObjectSize(ME_Context *c, ME_Run *run, SIZE *pSize);
 void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src);
 void ME_DeleteReObject(REOBJECT* reo);
 
