@@ -1103,6 +1103,7 @@ struct _RTF_Info {
     RTFState         stack[maxStack];
     int              stackTop;
     BOOL             styleChanged;
+    LPRICHEDITOLE       lpRichEditOle;
 };
 
 
