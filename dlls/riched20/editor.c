@@ -849,6 +849,47 @@ skip_group:
   RTFRouteToken(info);	/* feed "}" back to router */
 }
 
+/* for now, lookup the \result part and use it, whatever the object */
+static void ME_RTFReadObjectGroup(RTF_Info *info)
+{
+  for (;;)
+  {
+    RTFGetToken (info);
+    if (info->rtfClass == rtfEOF)
+      return;
+    if (RTFCheckCM(info, rtfGroup, rtfEndGroup))
+      break;
+    if (RTFCheckCM(info, rtfGroup, rtfBeginGroup))
+    {
+      RTFGetToken (info);
+      if (info->rtfClass == rtfEOF)
+        return;
+      if (RTFCheckCMM(info, rtfControl, rtfDestination, rtfObjResult))
+      {
+	int	level = 1;
+
+	while (RTFGetToken (info) != rtfEOF)
+	{
+          if (info->rtfClass == rtfGroup)
+          {
+            if (info->rtfMajor == rtfBeginGroup) level++;
+            else if (info->rtfMajor == rtfEndGroup && --level < 0) break;
+          }
+          RTFRouteToken(info);
+	}
+      }
+      else RTFSkipGroup(info);
+      continue;
+    }
+    if (!RTFCheckCM (info, rtfControl, rtfObjAttr))
+    {
+      FIXME("Non supported attribute: %d %d %d\n", info->rtfClass, info->rtfMajor, info->rtfMinor);
+      return;
+    }
+  }
+  RTFRouteToken(info);	/* feed "}" back to router */
+}
+
 static void ME_RTFReadHook(RTF_Info *info) {
   switch(info->rtfClass)
   {
@@ -988,6 +1029,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       RTFInit(&parser);
       RTFSetReadHook(&parser, ME_RTFReadHook);
       RTFSetDestinationCallback(&parser, rtfPict, ME_RTFReadPictGroup);
+      RTFSetDestinationCallback(&parser, rtfObject, ME_RTFReadObjectGroup);
       BeginFile(&parser);
 
       /* do the parsing */
