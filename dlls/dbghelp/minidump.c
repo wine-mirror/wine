@@ -381,9 +381,8 @@ static void append(struct dump_context* dc, void* data, unsigned size)
  *
  * Write in File the exception information from pcs
  */
-static  void    dump_exception_info(struct dump_context* dc,
-                                    const MINIDUMP_EXCEPTION_INFORMATION* except,
-                                    DWORD *size)
+static  unsigned        dump_exception_info(struct dump_context* dc,
+                                            const MINIDUMP_EXCEPTION_INFORMATION* except)
 {
     MINIDUMP_EXCEPTION_STREAM   mdExcpt;
     EXCEPTION_RECORD            rec, *prec;
@@ -422,8 +421,8 @@ static  void    dump_exception_info(struct dump_context* dc,
     mdExcpt.ThreadContext.Rva = dc->rva + sizeof(mdExcpt);
 
     append(dc, &mdExcpt, sizeof(mdExcpt));
-    *size = sizeof(mdExcpt);
     append(dc, pctx, sizeof(*pctx));
+    return sizeof(mdExcpt);
 }
 
 /******************************************************************
@@ -431,7 +430,7 @@ static  void    dump_exception_info(struct dump_context* dc,
  *
  * Write in File the modules from pcs
  */
-static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size)
+static  unsigned        dump_modules(struct dump_context* dc, BOOL dump_elf)
 {
     MINIDUMP_MODULE             mdModule;
     MINIDUMP_MODULE_LIST        mdModuleList;
@@ -440,6 +439,7 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
     ULONG                       i, nmod;
     RVA                         rva_base;
     DWORD                       flags_out;
+    unsigned                    sz;
 
     for (i = nmod = 0; i < dc->num_modules; i++)
     {
@@ -460,7 +460,7 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
        in the minidump file.  Since each string is referenced by RVA they can all safely be located
        anywhere between streams in the file, so the end of this stream is sufficient. */
     rva_base = dc->rva;
-    dc->rva += *size = sizeof(mdModuleList.NumberOfModules) + sizeof(mdModule) * nmod;
+    dc->rva += sz = sizeof(mdModuleList.NumberOfModules) + sizeof(mdModule) * nmod;
     for (i = 0; i < dc->num_modules; i++)
     {
         if ((dc->modules[i].is_elf && !dump_elf) ||
@@ -528,6 +528,8 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
     }
     writeat(dc, rva_base, &mdModuleList.NumberOfModules, 
             sizeof(mdModuleList.NumberOfModules));
+
+    return sz;
 }
 
 /******************************************************************
@@ -535,7 +537,7 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf, DWORD *size
  *
  * Dumps into File the information about the system
  */
-static  void    dump_system_info(struct dump_context* dc, DWORD *size)
+static  unsigned        dump_system_info(struct dump_context* dc)
 {
     MINIDUMP_SYSTEM_INFO        mdSysInfo;
     SYSTEM_INFO                 sysInfo;
@@ -565,7 +567,6 @@ static  void    dump_system_info(struct dump_context* dc, DWORD *size)
     memset(&mdSysInfo.Cpu, 0, sizeof(mdSysInfo.Cpu));
 
     append(dc, &mdSysInfo, sizeof(mdSysInfo));
-    *size = sizeof(mdSysInfo);
 
     /* write the service pack version string after this stream.  It is referenced within the
        stream by its RVA in the file. */
@@ -573,6 +574,8 @@ static  void    dump_system_info(struct dump_context* dc, DWORD *size)
     WriteFile(dc->hFile, &slen, sizeof(slen), &written, NULL);
     WriteFile(dc->hFile, osInfo.szCSDVersion, slen, &written, NULL);
     dc->rva += sizeof(ULONG) + slen;
+
+    return sizeof(mdSysInfo);
 }
 
 /******************************************************************
@@ -580,9 +583,8 @@ static  void    dump_system_info(struct dump_context* dc, DWORD *size)
  *
  * Dumps into File the information about running threads
  */
-static  void    dump_threads(struct dump_context* dc,
-                             const MINIDUMP_EXCEPTION_INFORMATION* except,
-                             DWORD *size)
+static  unsigned        dump_threads(struct dump_context* dc,
+                                     const MINIDUMP_EXCEPTION_INFORMATION* except)
 {
     MINIDUMP_THREAD             mdThd;
     MINIDUMP_THREAD_LIST        mdThdList;
@@ -662,7 +664,8 @@ static  void    dump_threads(struct dump_context* dc,
     }
     writeat(dc, rva_base,
             &mdThdList.NumberOfThreads, sizeof(mdThdList.NumberOfThreads));
-    *size = dc->rva - rva_base;
+
+    return dc->rva - rva_base;
 }
 
 /******************************************************************
@@ -670,12 +673,12 @@ static  void    dump_threads(struct dump_context* dc,
  *
  * dumps information about the memory of the process (stack of the threads)
  */
-static void dump_memory_info(struct dump_context* dc, DWORD* size)
+static unsigned         dump_memory_info(struct dump_context* dc)
 {
     MINIDUMP_MEMORY_LIST        mdMemList;
     MINIDUMP_MEMORY_DESCRIPTOR  mdMem;
     DWORD                       written;
-    unsigned                    i, pos, len;
+    unsigned                    i, pos, len, sz;
     RVA                         rva_base;
     char                        tmp[1024];
 
@@ -683,9 +686,9 @@ static void dump_memory_info(struct dump_context* dc, DWORD* size)
     append(dc, &mdMemList.NumberOfMemoryRanges,
            sizeof(mdMemList.NumberOfMemoryRanges));
     rva_base = dc->rva;
-    dc->rva += mdMemList.NumberOfMemoryRanges * sizeof(mdMem);
-    *size = sizeof(mdMemList.NumberOfMemoryRanges) +
-               mdMemList.NumberOfMemoryRanges * sizeof(mdMem);
+    sz = mdMemList.NumberOfMemoryRanges * sizeof(mdMem);
+    dc->rva += sz;
+    sz += sizeof(mdMemList.NumberOfMemoryRanges);
 
     for (i = 0; i < dc->num_mem; i++)
     {
@@ -708,9 +711,11 @@ static void dump_memory_info(struct dump_context* dc, DWORD* size)
             writeat(dc, dc->mem[i].rva, &mdMem.Memory.Rva, sizeof(mdMem.Memory.Rva));
         }
     }
+
+    return sz;
 }
 
-static void dump_misc_info(struct dump_context* dc, DWORD* size)
+static unsigned         dump_misc_info(struct dump_context* dc)
 {
     MINIDUMP_MISC_INFO  mmi;
 
@@ -723,7 +728,7 @@ static void dump_misc_info(struct dump_context* dc, DWORD* size)
     mmi.ProcessUserTime = 0;
 
     append(dc, &mmi, sizeof(mmi));
-    *size = sizeof(mmi);
+    return sizeof(mmi);
 }
 
 /******************************************************************
@@ -794,37 +799,37 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     /* must be first in minidump */
     mdDir.StreamType = SystemInfoStream;
     mdDir.Location.Rva = dc.rva;
-    dump_system_info(&dc, &mdDir.Location.DataSize);
+    mdDir.Location.DataSize = dump_system_info(&dc);
     writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
             &mdDir, sizeof(mdDir));
 
     mdDir.StreamType = ThreadListStream;
     mdDir.Location.Rva = dc.rva;
-    dump_threads(&dc, ExceptionParam, &mdDir.Location.DataSize);
+    mdDir.Location.DataSize = dump_threads(&dc, ExceptionParam);
     writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir), 
             &mdDir, sizeof(mdDir));
 
     mdDir.StreamType = ModuleListStream;
     mdDir.Location.Rva = dc.rva;
-    dump_modules(&dc, FALSE, &mdDir.Location.DataSize);
+    mdDir.Location.DataSize = dump_modules(&dc, FALSE);
     writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
             &mdDir, sizeof(mdDir));
 
     mdDir.StreamType = 0xfff0; /* FIXME: this is part of MS reserved streams */
     mdDir.Location.Rva = dc.rva;
-    dump_modules(&dc, TRUE, &mdDir.Location.DataSize);
+    mdDir.Location.DataSize = dump_modules(&dc, TRUE);
     writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
             &mdDir, sizeof(mdDir));
 
     mdDir.StreamType = MemoryListStream;
     mdDir.Location.Rva = dc.rva;
-    dump_memory_info(&dc, &mdDir.Location.DataSize);
+    mdDir.Location.DataSize = dump_memory_info(&dc);
     writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
             &mdDir, sizeof(mdDir));
 
     mdDir.StreamType = MiscInfoStream;
     mdDir.Location.Rva = dc.rva;
-    dump_misc_info(&dc, &mdDir.Location.DataSize);
+    mdDir.Location.DataSize = dump_misc_info(&dc);
     writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
             &mdDir, sizeof(mdDir));
 
@@ -833,7 +838,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     {
         mdDir.StreamType = ExceptionStream;
         mdDir.Location.Rva = dc.rva;
-        dump_exception_info(&dc, ExceptionParam, &mdDir.Location.DataSize);
+        mdDir.Location.DataSize = dump_exception_info(&dc, ExceptionParam);
         writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
                 &mdDir, sizeof(mdDir));
     }
