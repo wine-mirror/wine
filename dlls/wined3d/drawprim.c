@@ -757,7 +757,7 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     This->shader_backend->shader_select(iface, use_ps(This), use_vs(This));
 }
 
-static void depth_copy(IWineD3DDevice *iface) {
+void depth_copy(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *)This->auto_depth_stencil_buffer;
 

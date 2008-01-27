@@ -411,6 +411,8 @@ extern glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
+void depth_copy(IWineD3DDevice *iface);
+
 /* Routines and structures related to state management */
 typedef struct WineD3DContext WineD3DContext;
 typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *ctx);

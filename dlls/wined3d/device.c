@@ -4800,6 +4800,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     RECT vp_rect;
     WINED3DVIEWPORT *vp = &This->stateBlock->viewport;
     UINT drawable_width, drawable_height;
+    IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *) This->stencilBufferTarget;
 
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
      * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
@@ -4858,6 +4859,26 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
         checkGLcall("glClearDepth");
         glMask = glMask | GL_DEPTH_BUFFER_BIT;
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
+
+        if(This->depth_copy_state == WINED3D_DCS_COPY) {
+            if(vp->X != 0 || vp->Y != 0 ||
+               vp->Width < depth_stencil->currentDesc.Width || vp->Height < depth_stencil->currentDesc.Height) {
+                depth_copy((IWineD3DDevice *) This);
+            }
+            else if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE] && (
+               This->stateBlock->scissorRect.left > 0 || This->stateBlock->scissorRect.top > 0 ||
+               This->stateBlock->scissorRect.right < depth_stencil->currentDesc.Width ||
+               This->stateBlock->scissorRect.bottom < depth_stencil->currentDesc.Height)) {
+                depth_copy((IWineD3DDevice *) This);
+            }
+            else if(Count > 0 && pRects && (
+               pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
+               pRects[0].x2 < depth_stencil->currentDesc.Width ||
+               pRects[0].y2 < depth_stencil->currentDesc.Height)) {
+                depth_copy((IWineD3DDevice *) This);
+            }
+        }
+        This->depth_copy_state = WINED3D_DCS_INITIAL;
     }
 
     if (Flags & WINED3DCLEAR_TARGET) {
