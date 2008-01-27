@@ -1068,8 +1068,8 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
          *   X  1500-150d       for V3 types
          *      8000-8010       for numeric leafes
          */
-        if (type->generic.id & 0x8600) continue;
-        codeview_parse_one_type(ctp, curr_type, type, TRUE);
+        if (!(type->generic.id & 0x8600) || (type->generic.id & 0x0100))
+            codeview_parse_one_type(ctp, curr_type, type, TRUE);
     }
 
     return TRUE;
