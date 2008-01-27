@@ -789,7 +789,6 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     mdHead.StreamDirectoryRva = sizeof(mdHead);
     mdHead.u.TimeDateStamp = time(NULL);
     mdHead.Flags = DumpType;
-    mdHead.CheckSum = 0;
     append(&dc, &mdHead, sizeof(mdHead));
 
     /* 3) write stream directories */
