@@ -118,11 +118,15 @@ static HRESULT WINAPI enummodescallback(LPDDSURFACEDESC lpddsd, LPVOID lpContext
         ok(U1(*lpddsd).lPitch != 0, "EnumDisplayModes callback with bad pitch\n");
     }
 
-    /* Check that frequency is valid if applicable */
+    /* Check that frequency is valid if applicable
+     *
+     * This fails on some Windows drivers or Windows versions, so it isn't important
+     * apparently
     if(lpddsd->dwFlags & DDSD_REFRESHRATE)
     {
         ok(U2(*lpddsd).dwRefreshRate != 0, "EnumDisplayModes callback with bad refresh rate\n");
     }
+     */
 
     adddisplaymode(lpddsd);
 
