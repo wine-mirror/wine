@@ -71,6 +71,12 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
       CopyMemory(&pItem->member.run, &pdi->member.run, sizeof(ME_Run));
       pItem->member.run.strText = ME_StrDup(pItem->member.run.strText);
       ME_AddRefStyle(pItem->member.run.style);
+      if (pdi->member.run.ole_obj)
+      {
+        pItem->member.run.ole_obj = ALLOC_OBJ(*pItem->member.run.ole_obj);
+        ME_CopyReObject(pItem->member.run.ole_obj, pdi->member.run.ole_obj);
+      }
+      else pItem->member.run.ole_obj = NULL;
       break;
     case diUndoSetCharFormat:
     case diUndoSetDefaultCharFormat:

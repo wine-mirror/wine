@@ -393,18 +393,20 @@ ME_InternalInsertTextFromCursor(ME_TextEditor *editor, int nCursor,
 }
 
 
-/* FIXME this is temporary, just to have something to test how bad graphics handler is */
-void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor)
+void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCursor)
 {
-  ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
-  WCHAR space = ' ';
+  ME_Style              *pStyle = ME_GetInsertStyle(editor, nCursor);
+  ME_DisplayItem        *di;
+  WCHAR                 space = ' ';
   
   /* FIXME no no no */
   if (ME_IsSelection(editor))
     ME_DeleteSelection(editor);
 
-  ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, pStyle,
-                                  MERF_GRAPHICS);
+  di = ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, pStyle,
+                                       MERF_GRAPHICS);
+  di->member.run.ole_obj = ALLOC_OBJ(*reo);
+  ME_CopyReObject(di->member.run.ole_obj, reo);
   ME_SendSelChange(editor);
 }
 

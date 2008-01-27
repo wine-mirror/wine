@@ -218,11 +218,18 @@ IRichEditOle_fnInPlaceDeactivate(IRichEditOle *me)
 }
 
 static HRESULT WINAPI
-IRichEditOle_fnInsertObject(IRichEditOle *me, REOBJECT *lpreobject)
+IRichEditOle_fnInsertObject(IRichEditOle *me, REOBJECT *reo)
 {
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
-    FIXME("stub %p\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", This, reo);
+
+    if (reo->cbStruct < sizeof(*reo)) return STG_E_INVALIDPARAMETER;
+    if (reo->poleobj)   IOleObject_AddRef(reo->poleobj);
+    if (reo->pstg)      IStorage_AddRef(reo->pstg);
+    if (reo->polesite)  IOleClientSite_AddRef(reo->polesite);
+
+    ME_InsertOLEFromCursor(This->editor, reo, 0);
+    return S_OK;
 }
 
 static HRESULT WINAPI IRichEditOle_fnSaveCompleted(IRichEditOle *me, LONG iob,
@@ -541,4 +548,136 @@ LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *ppObj)
     *ppObj = (LPVOID) reo;
 
     return 1;
+}
+
+/******************************************************************************
+ * ME_GetOLEObjectSize
+ *
+ * Sets run extent for OLE objects.
+ */
+void ME_GetOLEObjectSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize)
+{
+  IDataObject*  ido;
+  FORMATETC     fmt;
+  STGMEDIUM     stgm;
+  DIBSECTION    dibsect;
+  ENHMETAHEADER emh;
+
+  assert(run->nFlags & MERF_GRAPHICS);
+  assert(run->ole_obj);
+  IOleObject_QueryInterface(run->ole_obj->poleobj, &IID_IDataObject, (void**)&ido);
+  fmt.cfFormat = CF_BITMAP;
+  fmt.ptd = NULL;
+  fmt.dwAspect = DVASPECT_CONTENT;
+  fmt.lindex = -1;
+  fmt.tymed = TYMED_GDI;
+  if (IDataObject_GetData(ido, &fmt, &stgm) != S_OK)
+  {
+    fmt.cfFormat = CF_ENHMETAFILE;
+    fmt.tymed = TYMED_ENHMF;
+    if (IDataObject_GetData(ido, &fmt, &stgm) != S_OK)
+    {
+      FIXME("unsupported format\n");
+      pSize->cx = pSize->cy = 0;
+      IDataObject_Release(ido);
+      return;
+    }
+  }
+
+  switch (stgm.tymed)
+  {
+  case TYMED_GDI:
+    GetObjectW(stgm.u.hBitmap, sizeof(dibsect), &dibsect);
+    pSize->cx = dibsect.dsBm.bmWidth;
+    pSize->cy = dibsect.dsBm.bmHeight;
+    if (!stgm.pUnkForRelease) DeleteObject(stgm.u.hBitmap);
+    break;
+  case TYMED_ENHMF:
+    GetEnhMetaFileHeader(stgm.u.hEnhMetaFile, sizeof(emh), &emh);
+    pSize->cx = emh.rclBounds.right - emh.rclBounds.left;
+    pSize->cy = emh.rclBounds.bottom - emh.rclBounds.top;
+    if (!stgm.pUnkForRelease) DeleteEnhMetaFile(stgm.u.hEnhMetaFile);
+    break;
+  default:
+    FIXME("Unsupported tymed %d\n", stgm.tymed);
+    break;
+  }
+  IDataObject_Release(ido);
+}
+
+void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
+                ME_Paragraph *para, BOOL selected)
+{
+  IDataObject*  ido;
+  FORMATETC     fmt;
+  STGMEDIUM     stgm;
+  DIBSECTION    dibsect;
+  ENHMETAHEADER emh;
+  HDC           hMemDC;
+  RECT          rc;
+
+  assert(run->nFlags & MERF_GRAPHICS);
+  assert(run->ole_obj);
+  if (IOleObject_QueryInterface(run->ole_obj->poleobj, &IID_IDataObject, (void**)&ido) != S_OK)
+  {
+    FIXME("Couldn't get interface\n");
+    return;
+  }
+  fmt.cfFormat = CF_BITMAP;
+  fmt.ptd = NULL;
+  fmt.dwAspect = DVASPECT_CONTENT;
+  fmt.lindex = -1;
+  fmt.tymed = TYMED_GDI;
+  if (IDataObject_GetData(ido, &fmt, &stgm) != S_OK)
+  {
+    fmt.cfFormat = CF_ENHMETAFILE;
+    fmt.tymed = TYMED_ENHMF;
+    if (IDataObject_GetData(ido, &fmt, &stgm) != S_OK)
+    {
+      FIXME("Couldn't get storage medium\n");
+      IDataObject_Release(ido);
+      return;
+    }
+  }
+  switch (stgm.tymed)
+  {
+  case TYMED_GDI:
+    GetObjectW(stgm.u.hBitmap, sizeof(dibsect), &dibsect);
+    hMemDC = CreateCompatibleDC(c->hDC);
+    SelectObject(hMemDC, stgm.u.hBitmap);
+    BitBlt(c->hDC, x, y - dibsect.dsBm.bmHeight, dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+    DeleteDC(hMemDC);
+    if (!stgm.pUnkForRelease) DeleteObject(stgm.u.hBitmap);
+    break;
+  case TYMED_ENHMF:
+    GetEnhMetaFileHeader(stgm.u.hEnhMetaFile, sizeof(emh), &emh);
+    rc.left = x;
+    rc.top = y - (emh.rclBounds.bottom - emh.rclBounds.top);
+    rc.right = x + emh.rclBounds.right - emh.rclBounds.left;
+    rc.bottom = y;
+    PlayEnhMetaFile(c->hDC, stgm.u.hEnhMetaFile, &rc);
+    if (!stgm.pUnkForRelease) DeleteEnhMetaFile(stgm.u.hEnhMetaFile);
+    break;
+  default:
+    FIXME("Unsupported tymed %d\n", stgm.tymed);
+    break;
+  }
+  IDataObject_Release(ido);
+}
+
+void ME_DeleteReObject(REOBJECT* reo)
+{
+    if (reo->poleobj)   IOleObject_Release(reo->poleobj);
+    if (reo->pstg)      IStorage_Release(reo->pstg);
+    if (reo->polesite)  IOleClientSite_Release(reo->polesite);
+    FREE_OBJ(reo);
+}
+
+void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src)
+{
+    *dst = *src;
+
+    if (dst->poleobj)   IOleObject_AddRef(dst->poleobj);
+    if (dst->pstg)      IStorage_AddRef(dst->pstg);
+    if (dst->polesite)  IOleClientSite_AddRef(dst->polesite);
 }

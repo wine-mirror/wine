@@ -145,6 +145,7 @@ typedef struct tagME_Run
   int nAscent, nDescent; /* pixels above/below baseline */
   POINT pt; /* relative to para's position */
   struct tagME_TableCell *pCell; /* for MERF_CELL: points to respective cell in ME_Paragraph */
+  REOBJECT *ole_obj; /* FIXME: should be a union with strText (at least) */
 } ME_Run;
 
 typedef struct tagME_Document {

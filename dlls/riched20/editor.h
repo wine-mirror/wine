@@ -149,7 +149,6 @@ ME_DisplayItem *ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor,
                                      ME_Style *style, const WCHAR *str, int len, int flags);
 void ME_CheckCharOffsets(ME_TextEditor *editor);
 void ME_PropagateCharOffset(ME_DisplayItem *p, int shift);
-void ME_GetGraphicsSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize);
 int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run);
 /* this one accounts for 1/2 char tolerance */
 int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run);
@@ -201,7 +200,7 @@ int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to);
 BOOL ME_IsSelection(ME_TextEditor *editor);
 void ME_DeleteSelection(ME_TextEditor *editor);
 void ME_SendSelChange(ME_TextEditor *editor);
-void ME_InsertGraphicsFromCursor(ME_TextEditor *editor, int nCursor);
+void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCursor);
 void ME_InsertTableCellFromCursor(ME_TextEditor *editor, int nCursor);
 void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars);
 int ME_GetTextLength(ME_TextEditor *editor);
@@ -259,7 +258,11 @@ int  ME_GetParaBorderWidth(ME_TextEditor *editor, int);
 int  ME_GetParaLineSpace(ME_Context *c, ME_Paragraph*);
 
 /* richole.c */
-extern LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *);
+LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *);
+void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run* run, ME_Paragraph *para, BOOL selected);
+void ME_GetOLEObjectSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize);
+void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src);
+void ME_DeleteReObject(REOBJECT* reo);
 
 /* wintest.c */
 
