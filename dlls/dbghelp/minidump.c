@@ -222,6 +222,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
             else if (tid == GetCurrentThreadId() && except)
             {
                 CONTEXT lctx, *pctx;
+                mdThd->SuspendCount = 1;
                 if (except->ClientPointers)
                 {
                     EXCEPTION_POINTERS      ep;
@@ -237,6 +238,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
                 memcpy(ctx, pctx, sizeof(*ctx));
                 fetch_thread_stack(dc, tbi.TebBaseAddress, pctx, &mdThd->Stack);
             }
+            else mdThd->SuspendCount = 0;
         }
     }
     CloseHandle(hThread);
