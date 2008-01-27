@@ -603,6 +603,11 @@ void ME_GetOLEObjectSize(ME_TextEditor *editor, ME_Run *run, SIZE *pSize)
     break;
   }
   IDataObject_Release(ido);
+  if (editor->nZoomNumerator != 0)
+  {
+    pSize->cx = MulDiv(pSize->cx, editor->nZoomNumerator, editor->nZoomDenominator);
+    pSize->cy = MulDiv(pSize->cy, editor->nZoomNumerator, editor->nZoomDenominator);
+  }
 }
 
 void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
@@ -645,16 +650,37 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
     GetObjectW(stgm.u.hBitmap, sizeof(dibsect), &dibsect);
     hMemDC = CreateCompatibleDC(c->hDC);
     SelectObject(hMemDC, stgm.u.hBitmap);
-    BitBlt(c->hDC, x, y - dibsect.dsBm.bmHeight, dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-    DeleteDC(hMemDC);
+    if (c->editor->nZoomNumerator == 0)
+      BitBlt(c->hDC, x, y - dibsect.dsBm.bmHeight,
+             dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight,
+             hMemDC, 0, 0, SRCCOPY);
+    else
+    {
+      int w = MulDiv(dibsect.dsBm.bmWidth,
+                     c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+      int h = MulDiv(dibsect.dsBm.bmHeight,
+                     c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+      StretchBlt(c->hDC, x, y - h, w, h,
+                 hMemDC, 0, 0, dibsect.dsBm.bmWidth, dibsect.dsBm.bmHeight, SRCCOPY);
+    }
     if (!stgm.pUnkForRelease) DeleteObject(stgm.u.hBitmap);
     break;
   case TYMED_ENHMF:
     GetEnhMetaFileHeader(stgm.u.hEnhMetaFile, sizeof(emh), &emh);
     rc.left = x;
-    rc.top = y - (emh.rclBounds.bottom - emh.rclBounds.top);
-    rc.right = x + emh.rclBounds.right - emh.rclBounds.left;
     rc.bottom = y;
+    if (c->editor->nZoomNumerator == 0)
+    {
+        rc.top = y - (emh.rclBounds.bottom - emh.rclBounds.top);
+        rc.right = x + (emh.rclBounds.right - emh.rclBounds.left);
+    }
+    else
+    {
+        rc.top = y - MulDiv(emh.rclBounds.bottom - emh.rclBounds.top,
+                            c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+        rc.right = x + MulDiv(emh.rclBounds.right - emh.rclBounds.left,
+                              c->editor->nZoomNumerator, c->editor->nZoomDenominator);
+    }
     PlayEnhMetaFile(c->hDC, stgm.u.hEnhMetaFile, &rc);
     if (!stgm.pUnkForRelease) DeleteEnhMetaFile(stgm.u.hEnhMetaFile);
     break;
