@@ -1713,16 +1713,28 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 static void shader_arb_select_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-    static GLuint vprogram_id = 0;
-    static GLuint fprogram_id = 0;
 
-    if (!vprogram_id) vprogram_id = create_arb_blt_vertex_program(gl_info);
-    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vprogram_id));
+    if (!This->depth_blt_vprogram_id) This->depth_blt_vprogram_id = create_arb_blt_vertex_program(gl_info);
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->depth_blt_vprogram_id));
     glEnable(GL_VERTEX_PROGRAM_ARB);
 
-    if (!fprogram_id) fprogram_id = create_arb_blt_fragment_program(gl_info);
-    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, fprogram_id));
+    if (!This->depth_blt_fprogram_id) This->depth_blt_fprogram_id = create_arb_blt_fragment_program(gl_info);
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->depth_blt_fprogram_id));
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
+}
+
+static void shader_arb_destroy_depth_blt(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+
+    if(This->depth_blt_vprogram_id) {
+        GL_EXTCALL(glDeleteProgramsARB(1, &This->depth_blt_vprogram_id));
+        This->depth_blt_vprogram_id = 0;
+    }
+    if(This->depth_blt_fprogram_id) {
+        GL_EXTCALL(glDeleteProgramsARB(1, &This->depth_blt_fprogram_id));
+        This->depth_blt_fprogram_id = 0;
+    }
 }
 
 static void shader_arb_cleanup(IWineD3DDevice *iface) {
@@ -1747,6 +1759,7 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
 const shader_backend_t arb_program_shader_backend = {
     &shader_arb_select,
     &shader_arb_select_depth_blt,
+    &shader_arb_destroy_depth_blt,
     &shader_arb_load_constants,
     &shader_arb_cleanup,
     &shader_arb_color_correction,

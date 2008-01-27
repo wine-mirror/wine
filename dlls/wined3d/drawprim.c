@@ -773,20 +773,19 @@ static void depth_copy(IWineD3DDevice *iface) {
     }
 
     if (This->render_offscreen) {
-        static GLuint tmp_texture = 0;
         GLint old_binding = 0;
 
         TRACE("Copying onscreen depth buffer to offscreen surface\n");
 
-        if (!tmp_texture) {
-            glGenTextures(1, &tmp_texture);
+        if (!This->depth_blt_texture) {
+            glGenTextures(1, &This->depth_blt_texture);
         }
 
         /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
          * directly on the FBO texture. That's because we need to flip. */
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-        glBindTexture(GL_TEXTURE_2D, tmp_texture);
+        glBindTexture(GL_TEXTURE_2D, This->depth_blt_texture);
         glCopyTexImage2D(depth_stencil->glDescription.target,
                 depth_stencil->glDescription.level,
                 depth_stencil->glDescription.glFormatInternal,
@@ -802,7 +801,7 @@ static void depth_copy(IWineD3DDevice *iface) {
 
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, This->fbo));
         checkGLcall("glBindFramebuffer()");
-        depth_blt(iface, tmp_texture);
+        depth_blt(iface, This->depth_blt_texture);
         checkGLcall("depth_blt");
     } else {
         TRACE("Copying offscreen surface to onscreen depth buffer\n");

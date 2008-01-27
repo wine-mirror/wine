@@ -196,6 +196,7 @@ struct SHADER_OPCODE_ARG;
 typedef struct {
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(IWineD3DDevice *iface);
+    void (*shader_destroy_depth_blt)(IWineD3DDevice *iface);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
     void (*shader_cleanup)(IWineD3DDevice *iface);
     void (*shader_color_correction)(struct SHADER_OPCODE_ARG *arg);
@@ -701,6 +702,10 @@ struct IWineD3DDeviceImpl
     GLuint                  src_fbo;
     GLuint                  dst_fbo;
     GLenum                  *draw_buffers;
+    GLuint                  depth_blt_texture;
+    GLuint                  depth_blt_vprogram_id;
+    GLuint                  depth_blt_fprogram_id;
+    GLhandleARB             depth_blt_glsl_program_id;
 
     /* Cursor management */
     BOOL                    bCursorVisible;

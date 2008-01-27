@@ -1098,6 +1098,7 @@ void shader_trace_init(
 
 static void shader_none_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {}
 static void shader_none_select_depth_blt(IWineD3DDevice *iface) {}
+static void shader_none_destroy_depth_blt(IWineD3DDevice *iface) {}
 static void shader_none_load_constants(IWineD3DDevice *iface, char usePS, char useVS) {}
 static void shader_none_cleanup(IWineD3DDevice *iface) {}
 static void shader_none_color_correction(SHADER_OPCODE_ARG* arg) {}
@@ -1106,6 +1107,7 @@ static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 const shader_backend_t none_shader_backend = {
     &shader_none_select,
     &shader_none_select_depth_blt,
+    &shader_none_destroy_depth_blt,
     &shader_none_load_constants,
     &shader_none_cleanup,
     &shader_none_color_correction,

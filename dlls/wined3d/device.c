@@ -6897,7 +6897,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         This->shader_backend->shader_destroy((IWineD3DBaseShader *) shader);
     }
 
-    if(pPresentationParameters->Windowed) {
+    if(This->depth_blt_texture) {
+        ENTER_GL();
+        glDeleteTextures(1, &This->depth_blt_texture);
+        LEAVE_GL();
+        This->depth_blt_texture = 0;
+    }
+    This->shader_backend->shader_destroy_depth_blt(iface);
+
+     if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
         mode.Height = swapchain->orig_height;
         mode.RefreshRate = 0;
