@@ -322,6 +322,31 @@ HRESULT WINAPI HlinkUpdateStackItem(IHlinkFrame *pihlframe, IHlinkBrowseContext 
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI HlinkParseDisplayName(LPBC pibc, LPCWSTR pwzDisplayName, BOOL fNoForceAbs,
+        ULONG *pcchEaten, IMoniker **ppimk)
+{
+    HRESULT hres;
+
+    TRACE("(%p %s %x %p %p)\n", pibc, debugstr_w(pwzDisplayName), fNoForceAbs, pcchEaten, ppimk);
+
+    if(fNoForceAbs)
+        FIXME("Unsupported fNoForceAbs\n");
+
+    hres = MkParseDisplayNameEx(pibc, pwzDisplayName, pcchEaten, ppimk);
+    if(SUCCEEDED(hres))
+        return hres;
+
+    hres = MkParseDisplayName(pibc, pwzDisplayName, pcchEaten, ppimk);
+    if(SUCCEEDED(hres))
+        return hres;
+
+    hres = CreateFileMoniker(pwzDisplayName, ppimk);
+    if(SUCCEEDED(hres))
+        *pcchEaten = strlenW(pwzDisplayName);
+
+    return hres;
+}
+
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
         REFIID riid, LPVOID *ppvObj)
 {
