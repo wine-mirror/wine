@@ -448,6 +448,69 @@ static void test_HlinkCreateExtensionServices(void)
     IAuthenticate_Release(authenticate);
 }
 
+static void test_HlinkParseDisplayName(void)
+{
+    IMoniker *mon = NULL;
+    LPWSTR name;
+    DWORD issys;
+    ULONG eaten = 0;
+    IBindCtx *bctx;
+    HRESULT hres;
+
+    static const WCHAR winehq_urlW[] =
+            {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',
+	     '/','s','i','t','e','/','a','b','o','u','t',0};
+    static const WCHAR invalid_urlW[] = {'t','e','s','t',':','1','2','3','a','b','c',0};
+    static const WCHAR clsid_nameW[] = {'c','l','s','i','d',':',
+            '2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8',
+            '-','0','8','0','0','2','B','3','0','3','0','9','D',':',0};
+
+    CreateBindCtx(0, &bctx);
+
+    hres = HlinkParseDisplayName(bctx, winehq_urlW, FALSE, &eaten, &mon);
+    ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
+    ok(eaten == sizeof(winehq_urlW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
+    ok(mon != NULL, "mon == NULL\n");
+
+    hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
+    ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
+    ok(!lstrcmpW(name, winehq_urlW), "wrong display name %s\n", debugstr_w(name));
+    CoTaskMemFree(name);
+
+    hres = IMoniker_IsSystemMoniker(mon, &issys);
+    ok(hres == S_OK, "IsSystemMoniker failed: %08x\n", hres);
+    ok(issys == MKSYS_URLMONIKER, "issys=%x\n", issys);
+
+    IMoniker_Release(mon);
+
+    hres = HlinkParseDisplayName(bctx, clsid_nameW, FALSE, &eaten, &mon);
+    ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
+    ok(eaten == sizeof(clsid_nameW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
+    ok(mon != NULL, "mon == NULL\n");
+
+    hres = IMoniker_IsSystemMoniker(mon, &issys);
+    ok(hres == S_OK, "IsSystemMoniker failed: %08x\n", hres);
+    ok(issys == MKSYS_CLASSMONIKER, "issys=%x\n", issys);
+
+    IMoniker_Release(mon);
+
+    hres = HlinkParseDisplayName(bctx, invalid_urlW, FALSE, &eaten, &mon);
+     ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
+    ok(eaten == sizeof(invalid_urlW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
+    ok(mon != NULL, "mon == NULL\n");
+
+    hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
+    ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
+    ok(!lstrcmpW(name, invalid_urlW), "wrong display name %s\n", debugstr_w(name));
+    CoTaskMemFree(name);
+
+    hres = IMoniker_IsSystemMoniker(mon, &issys);
+    ok(hres == S_OK, "IsSystemMoniker failed: %08x\n", hres);
+    ok(issys == MKSYS_FILEMONIKER, "issys=%x\n", issys);
+
+    IBindCtx_Release(bctx);
+}
+
 START_TEST(hlink)
 {
     CoInitialize(NULL);
@@ -457,6 +520,7 @@ START_TEST(hlink)
     test_persist();
     test_special_reference();
     test_HlinkCreateExtensionServices();
+    test_HlinkParseDisplayName();
 
     CoUninitialize();
 }
