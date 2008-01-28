@@ -95,7 +95,24 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
     if(pclsid)
         *pclsid = clsid;
 
+    if(!ret)
+        return S_OK;
+
     return CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)ret);
+}
+
+BOOL is_registered_protocol(LPCWSTR url)
+{
+    DWORD schema_len;
+    WCHAR schema[64];
+    HRESULT hres;
+
+    hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
+            &schema_len, 0);
+    if(FAILED(hres))
+        return FALSE;
+
+    return get_protocol_cf(schema, schema_len, NULL, NULL) == S_OK;
 }
 
 IInternetProtocolInfo *get_protocol_info(LPCWSTR url)

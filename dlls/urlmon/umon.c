@@ -1186,6 +1186,27 @@ HRESULT WINAPI BindAsyncMoniker(IMoniker *pmk, DWORD grfOpt, IBindStatusCallback
 }
 
 /***********************************************************************
+ *           MkParseDisplayNameEx (URLMON.@)
+ */
+HRESULT WINAPI MkParseDisplayNameEx(IBindCtx *pbc, LPCWSTR szDisplayName, ULONG *pchEaten, LPMONIKER *ppmk)
+{
+    TRACE("(%p %s %p %p)\n", pbc, debugstr_w(szDisplayName), pchEaten, ppmk);
+
+    if(is_registered_protocol(szDisplayName)) {
+        HRESULT hres;
+
+        hres = CreateURLMoniker(NULL, szDisplayName, ppmk);
+        if(SUCCEEDED(hres)) {
+            *pchEaten = strlenW(szDisplayName);
+            return hres;
+        }
+    }
+
+    return MkParseDisplayName(pbc, szDisplayName, pchEaten, ppmk);
+}
+
+
+/***********************************************************************
  *           URLDownloadToFileA (URLMON.@)
  *
  * Downloads URL szURL to rile szFileName and call lpfnCB callback to
