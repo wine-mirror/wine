@@ -604,16 +604,25 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         } mime_filters[] = {
             {wszTextHtml,       text_html_filter},
             {wszTextRichtext,   text_richtext_filter},
+         /* {wszAudioXAiff,     audio_xaiff_filter}, */
+         /* {wszAudioBasic,     audio_basic_filter}, */
             {wszAudioWav,       audio_wav_filter},
             {wszImageGif,       image_gif_filter},
             {wszImagePjpeg,     image_pjpeg_filter},
             {wszImageTiff,      image_tiff_filter},
             {wszImageXPng,      image_xpng_filter},
+         /* {wszImageXBitmap,   image_xbitmap_filter}, */
             {wszImageBmp,       image_bmp_filter},
+         /* {wszImageXJg,       image_xjg_filter}, */
+         /* {wszImageXEmf,      image_xemf_filter}, */
+         /* {wszImageXWmf,      image_xwmf_filter}, */
             {wszVideoAvi,       video_avi_filter},
             {wszVideoMpeg,      video_mpeg_filter},
             {wszAppPostscript,  application_postscript_filter},
+         /* {wszAppBase64,      application_base64_filter}, */
+         /* {wszAppMacbinhex40, application_macbinhex40_filter}, */
             {wszAppPdf,         application_pdf_filter},
+         /* {wszAppXCompressed, application_xcompressed_filter}, */
             {wszAppXZip,        application_xzip_filter},
             {wszAppXGzip,       application_xgzip_filter},
             {wszAppJava,        application_java_filter},
