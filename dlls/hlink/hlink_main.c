@@ -347,6 +347,39 @@ HRESULT WINAPI HlinkParseDisplayName(LPBC pibc, LPCWSTR pwzDisplayName, BOOL fNo
     return hres;
 }
 
+HRESULT WINAPI HlinkResolveMonikerForData(LPMONIKER pimkReference, DWORD reserved, LPBC pibc,
+        ULONG cFmtetc, FORMATETC *rgFmtetc, IBindStatusCallback *pibsc, LPMONIKER pimkBase)
+{
+    LPOLESTR name = NULL;
+    IBindCtx *bctx;
+    DWORD mksys = 0;
+    void *obj = NULL;
+    HRESULT hres;
+
+    TRACE("(%p %x %p %d %p %p %p)\n", pimkReference, reserved, pibc, cFmtetc, rgFmtetc, pibsc, pimkBase);
+
+    if(cFmtetc || rgFmtetc || pimkBase)
+        FIXME("Unsupported args\n");
+
+    hres = RegisterBindStatusCallback(pibc, pibsc, NULL /* FIXME */, 0);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IMoniker_IsSystemMoniker(pimkReference, &mksys);
+    if(SUCCEEDED(hres) && mksys != MKSYS_URLMONIKER)
+        WARN("sysmk = %x\n", mksys);
+
+    /* FIXME: What is it for? */
+    CreateBindCtx(0, &bctx);
+    hres = IMoniker_GetDisplayName(pimkReference, bctx, NULL, &name);
+    IBindCtx_Release(bctx);
+    if(SUCCEEDED(hres)) {
+        TRACE("got display name %s\n", debugstr_w(name));
+        CoTaskMemFree(name);
+    }
+
+    return IMoniker_BindToStorage(pimkReference, pibc, NULL, &IID_IUnknown, &obj);
+}
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
         REFIID riid, LPVOID *ppvObj)
 {
