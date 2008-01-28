@@ -209,6 +209,9 @@ static const IHttpNegotiateVtbl HttpNegotiateVtbl = {
     HttpNegotiate_OnResponse
 };
 
+/***********************************************************************
+ *             HlinkCreateExtensionServices (HLINK.@)
+ */
 HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR pwzAdditionalHeaders,
         HWND phwnd, LPCWSTR pszUsername, LPCWSTR pszPassword,
         IUnknown *punkOuter, REFIID riid, void** ppv)

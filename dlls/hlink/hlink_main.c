@@ -52,12 +52,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+/***********************************************************************
+ *             DllCanUnloadNow (HLINK.@)
+ */
 HRESULT WINAPI DllCanUnloadNow( void )
 {
     FIXME("\n");
     return S_OK;
 }
 
+/***********************************************************************
+ *             HlinkCreateFromMoniker (HLINK.@)
+ */
 HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,
         LPCWSTR pwzFriendlyName, IHlinkSite* pihlsite, DWORD dwSiteData,
         IUnknown* piunkOuter, REFIID riid, void** ppvObj)
@@ -89,6 +95,9 @@ HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,
     return r;
 }
 
+/***********************************************************************
+ *             HlinkCreateFromString (HLINK.@)
+ */
 HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
         LPCWSTR pwzFriendlyName, IHlinkSite* pihlsite, DWORD dwSiteData,
         IUnknown* piunkOuter, REFIID riid, void** ppvObj)
@@ -151,6 +160,9 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
 }
 
 
+/***********************************************************************
+ *             HlinkNavigate (HLINK.@)
+ */
 HRESULT WINAPI HlinkCreateBrowseContext( IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
     HRESULT r = S_OK;
@@ -164,6 +176,9 @@ HRESULT WINAPI HlinkCreateBrowseContext( IUnknown* piunkOuter, REFIID riid, void
     return r;
 }
 
+/***********************************************************************
+ *             HlinkNavigate (HLINK.@)
+ */
 HRESULT WINAPI HlinkNavigate(IHlink *phl, IHlinkFrame *phlFrame,
         DWORD grfHLNF, LPBC pbc, IBindStatusCallback *pbsc,
         IHlinkBrowseContext *phlbc)
@@ -180,6 +195,9 @@ HRESULT WINAPI HlinkNavigate(IHlink *phl, IHlinkFrame *phlFrame,
     return r;
 }
 
+/***********************************************************************
+ *             HlinkOnNavigate (HLINK.@)
+ */
 HRESULT WINAPI HlinkOnNavigate( IHlinkFrame *phlFrame,
         IHlinkBrowseContext* phlbc, DWORD grfHLNF, IMoniker *pmkTarget,
         LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName, ULONG* puHLID)
@@ -199,6 +217,9 @@ HRESULT WINAPI HlinkOnNavigate( IHlinkFrame *phlFrame,
     return r;
 }
 
+/***********************************************************************
+ *             HlinkCreateFromData (HLINK.@)
+ */
 HRESULT WINAPI HlinkCreateFromData(IDataObject *piDataObj,
         IHlinkSite *pihlsite, DWORD dwSiteData, IUnknown *piunkOuter,
         REFIID riid, void **ppvObj)
@@ -209,12 +230,18 @@ HRESULT WINAPI HlinkCreateFromData(IDataObject *piDataObj,
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *             HlinkQueryCreateFromData (HLINK.@)
+ */
 HRESULT WINAPI HlinkQueryCreateFromData(IDataObject* piDataObj)
 {
     FIXME("%p\n", piDataObj);
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *             HlinkNavigateToStringReference (HLINK.@)
+ */
 HRESULT WINAPI HlinkNavigateToStringReference( LPCWSTR pwzTarget,
         LPCWSTR pwzLocation, IHlinkSite *pihlsite, DWORD dwSiteData,
         IHlinkFrame *pihlframe, DWORD grfHLNF, LPBC pibc,
@@ -235,6 +262,9 @@ HRESULT WINAPI HlinkNavigateToStringReference( LPCWSTR pwzTarget,
     return r;
 }
 
+/***********************************************************************
+ *             HlinkIsShortcut (HLINK.@)
+ */
 HRESULT WINAPI HlinkIsShortcut(LPCWSTR pwzFileName)
 {
     int len;
@@ -253,6 +283,9 @@ HRESULT WINAPI HlinkIsShortcut(LPCWSTR pwzFileName)
     return strcmpiW(pwzFileName+len, url_ext) ? S_FALSE : S_OK;
 }
 
+/***********************************************************************
+ *             HlinkGetSpecialReference (HLINK.@)
+ */
 HRESULT WINAPI HlinkGetSpecialReference(ULONG uReference, LPWSTR *ppwzReference)
 {
     DWORD res, type, size = 100;
@@ -308,12 +341,18 @@ HRESULT WINAPI HlinkGetSpecialReference(ULONG uReference, LPWSTR *ppwzReference)
     return S_OK;
 }
 
+/***********************************************************************
+ *             HlinkTranslateURL (HLINK.@)
+ */
 HRESULT WINAPI HlinkTranslateURL(LPCWSTR pwzURL, DWORD grfFlags, LPWSTR *ppwzTranslatedURL)
 {
     FIXME("(%s %08x %p)\n", debugstr_w(pwzURL), grfFlags, ppwzTranslatedURL);
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *             HlinkUpdateStackItem (HLINK.@)
+ */
 HRESULT WINAPI HlinkUpdateStackItem(IHlinkFrame *pihlframe, IHlinkBrowseContext *pihlbc,
         ULONG uHLID, IMoniker *pimkTrgt, LPCWSTR pwzLocation, LPCWSTR pwzFriendlyName)
 {
@@ -322,6 +361,9 @@ HRESULT WINAPI HlinkUpdateStackItem(IHlinkFrame *pihlframe, IHlinkBrowseContext 
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *             HlinkParseDisplayName (HLINK.@)
+ */
 HRESULT WINAPI HlinkParseDisplayName(LPBC pibc, LPCWSTR pwzDisplayName, BOOL fNoForceAbs,
         ULONG *pcchEaten, IMoniker **ppimk)
 {
@@ -347,6 +389,9 @@ HRESULT WINAPI HlinkParseDisplayName(LPBC pibc, LPCWSTR pwzDisplayName, BOOL fNo
     return hres;
 }
 
+/***********************************************************************
+ *             HlinkResolveMonikerForData (HLINK.@)
+ */
 HRESULT WINAPI HlinkResolveMonikerForData(LPMONIKER pimkReference, DWORD reserved, LPBC pibc,
         ULONG cFmtetc, FORMATETC *rgFmtetc, IBindStatusCallback *pibsc, LPMONIKER pimkBase)
 {
@@ -380,6 +425,7 @@ HRESULT WINAPI HlinkResolveMonikerForData(LPMONIKER pimkReference, DWORD reserve
 
     return IMoniker_BindToStorage(pimkReference, pibc, NULL, &IID_IUnknown, &obj);
 }
+
 static HRESULT WINAPI HLinkCF_fnQueryInterface ( LPCLASSFACTORY iface,
         REFIID riid, LPVOID *ppvObj)
 {
@@ -493,6 +539,9 @@ static HRESULT register_clsid(LPCGUID guid)
     return S_OK;
 }
 
+/***********************************************************************
+ *             DllRegisterServer (HLINK.@)
+ */
 HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT r;
