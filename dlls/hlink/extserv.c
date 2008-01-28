@@ -63,7 +63,7 @@ static HRESULT WINAPI ExtServUnk_QueryInterface(IUnknown *iface, REFIID riid, vo
     }
 
     if(*ppv) {
-        IUnknown_AddRef(EXTSERVUNK(This));
+        IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
 
