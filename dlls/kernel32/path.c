@@ -1042,15 +1042,6 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
         goto error;
     }
 
-    if (info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    {
-        if (flag & MOVEFILE_REPLACE_EXISTING)  /* cannot replace directory */
-        {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            goto error;
-        }
-    }
-
     /* we must have write access to the destination, and it must */
     /* not exist except if MOVEFILE_REPLACE_EXISTING is set */
 
@@ -1061,13 +1052,18 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
     }
     status = NtOpenFile( &dest_handle, GENERIC_READ | GENERIC_WRITE, &attr, &io, 0,
                          FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
-    if (status == STATUS_SUCCESS)
+    if (status == STATUS_SUCCESS)  /* destination exists */
     {
         NtClose( dest_handle );
         if (!(flag & MOVEFILE_REPLACE_EXISTING))
         {
             SetLastError( ERROR_ALREADY_EXISTS );
             RtlFreeUnicodeString( &nt_name );
+            goto error;
+        }
+        else if (info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY) /* cannot replace directory */
+        {
+            SetLastError( ERROR_ACCESS_DENIED );
             goto error;
         }
     }
