@@ -1769,11 +1769,7 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
         }
         break;
 
-    case cmb1: /* Printer Combobox in PRINT SETUP, quality combobox in PRINT */
-	 if (PrinterComboID != LOWORD(wParam)) {
-	     FIXME("No handling for print quality combo box yet.\n");
-	     break;
-	 }
+    case cmb1: /* Printer Combobox in PRINT SETUP */
 	 /* FALLTHROUGH */
     case cmb4:                         /* Printer combobox */
          if (HIWORD(wParam)==CBN_SELCHANGE) {
