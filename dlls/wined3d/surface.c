@@ -2102,11 +2102,18 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
         /* To perform the color key conversion we need a sysmem copy of
          * the surface. Make sure we have it
          */
+
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+        /* Make sure the texture is reloaded because of the color key change, this kills performance though :( */
+        /* TODO: This is not necessarily needed with hw palettized texture support */
+        This->Flags &= ~SFLAG_INTEXTURE;
     } else if(palette9_changed(This)) {
         TRACE("Reloading surface because the d3d8/9 palette was changed\n");
         /* TODO: This is not necessarily needed with hw palettized texture support */
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+
+        /* Make sure the texture is reloaded because of the color key change, this kills performance though :( */
+        This->Flags &= ~SFLAG_INTEXTURE;
     } else {
         TRACE("surface is already in texture\n");
         return WINED3D_OK;
