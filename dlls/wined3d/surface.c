@@ -1930,15 +1930,14 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
             table[i][1] = device->palettes[device->currentPalette][i].peGreen;
             table[i][2] = device->palettes[device->currentPalette][i].peBlue;
 
-            if(index_in_alpha) {
+            /* BltOverride uses a GL_ALPHA_TEST based on GL_NOT_EQUAL 0, so the alpha component
+              of pixels that should be masked away should be 0. When inde_in_alpha is set,
+              we will store the palette index (the glReadPixels code reads GL_ALPHA back)
+              or else we store 0xff. */
+            if(colorkey && (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&  (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
+                table[i][3] = 0;
+            } else if(index_in_alpha) {
                 table[i][3] = i;
-            } else if (colorkey &&
-                (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
-                (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
-                /* We should maybe here put a more 'neutral' color than the standard bright purple
-                   one often used by application to prevent the nice purple borders when bi-linear
-                   filtering is on */
-                table[i][3] = 0x00;
             } else {
                 table[i][3] = 0xFF;
             }
@@ -1951,16 +1950,14 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
             table[i][1] = pal->palents[i].peGreen;
             table[i][2] = pal->palents[i].peBlue;
 
-            if(index_in_alpha) {
-                table[i][3] = i;
-            }
-            else if (colorkey &&
-                (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&
-                (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
-                /* We should maybe here put a more 'neutral' color than the standard bright purple
-                   one often used by application to prevent the nice purple borders when bi-linear
-                   filtering is on */
+            /* BltOverride uses a GL_ALPHA_TEST based on GL_NOT_EQUAL 0, so the alpha component
+              of pixels that should be masked away should be 0. When inde_in_alpha is set,
+              we will store the palette index (the glReadPixels code reads GL_ALPHA back)
+              or else we store 0xff. */
+            if(colorkey && (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&  (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
                 table[i][3] = 0x00;
+            } else if(index_in_alpha) {
+                table[i][3] = i;
             } else if(pal->Flags & WINEDDPCAPS_ALPHA) {
                 table[i][3] = pal->palents[i].peFlags;
             } else {
