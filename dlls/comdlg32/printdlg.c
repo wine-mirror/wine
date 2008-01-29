@@ -362,6 +362,21 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
                lppd->Flags &= ~PD_COLLATE;
             lppd->nCopies = GetDlgItemInt(hDlg, edt3, NULL, FALSE);
 	}
+
+	/* Print quality, PrintDlg16 */
+	if(GetDlgItem(hDlg, cmb1))
+	{
+	    HWND hQuality = GetDlgItem(hDlg, cmb1);
+	    int Sel = SendMessageA(hQuality, CB_GETCURSEL, 0, 0);
+
+	    if(Sel != CB_ERR)
+	    {
+		LONG dpi = SendMessageA(hQuality, CB_GETITEMDATA, Sel, 0);
+		lpdm->dmFields |= DM_PRINTQUALITY | DM_YRESOLUTION;
+		lpdm->u1.s1.dmPrintQuality = LOWORD(dpi);
+		lpdm->dmYResolution = HIWORD(dpi);
+	    }
+	}
     }
     return TRUE;
 }
@@ -997,6 +1012,61 @@ BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
 	if (lppd->Flags & PD_HIDEPRINTTOFILE)
             ShowWindow(GetDlgItem(hDlg, chx1), SW_HIDE);
 
+	/* Fill print quality combo, PrintDlg16 */
+	if(GetDlgItem(hDlg, cmb1))
+	{
+	    DWORD numResolutions = DeviceCapabilitiesA(PrintStructures->lpPrinterInfo->pPrinterName,
+						       PrintStructures->lpPrinterInfo->pPortName,
+						       DC_ENUMRESOLUTIONS, NULL, lpdm);
+
+	    if(numResolutions != -1)
+	    {
+		HWND hQuality = GetDlgItem(hDlg, cmb1);
+		LONG* Resolutions;
+		char buf[255];
+		int i;
+		int dpiX, dpiY;
+		HDC hPrinterDC = CreateDCA(PrintStructures->lpPrinterInfo->pDriverName,
+					   PrintStructures->lpPrinterInfo->pPrinterName,
+					   0, lpdm);
+
+		Resolutions = HeapAlloc(GetProcessHeap(), 0, numResolutions*sizeof(LONG)*2);
+		DeviceCapabilitiesA(PrintStructures->lpPrinterInfo->pPrinterName,
+				    PrintStructures->lpPrinterInfo->pPortName,
+				    DC_ENUMRESOLUTIONS, (LPSTR)Resolutions, lpdm);
+
+		dpiX = GetDeviceCaps(hPrinterDC, LOGPIXELSX);
+		dpiY = GetDeviceCaps(hPrinterDC, LOGPIXELSY);
+		DeleteDC(hPrinterDC);
+
+		SendMessageA(hQuality, CB_RESETCONTENT, 0, 0);
+		for(i = 0; i < (numResolutions * 2); i += 2)
+		{
+		    BOOL IsDefault = FALSE;
+		    LRESULT Index;
+
+		    if(Resolutions[i] == Resolutions[i+1])
+		    {
+			if(dpiX == Resolutions[i])
+			    IsDefault = TRUE;
+			sprintf(buf, "%d dpi", Resolutions[i]);
+		    } else
+		    {
+			if(dpiX == Resolutions[i] && dpiY == Resolutions[i+1])
+			    IsDefault = TRUE;
+			sprintf(buf, "%d dpi x %d dpi", Resolutions[i], Resolutions[i+1]);
+		    }
+
+		    Index = SendMessageA(hQuality, CB_ADDSTRING, 0, (LPARAM)buf);
+
+		    if(IsDefault)
+			SendMessageA(hQuality, CB_SETCURSEL, Index, 0);
+
+		    SendMessageA(hQuality, CB_SETITEMDATA, Index, MAKELONG(dpiX,dpiY));
+		}
+		HeapFree(GetProcessHeap(), 0, Resolutions);
+	    }
+	}
     } else { /* PD_PRINTSETUP */
       BOOL bPortrait = (lpdm->u1.s1.dmOrientation == DMORIENT_PORTRAIT);
 
@@ -1536,9 +1606,8 @@ LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
         }
         break;
 
-    case cmb1: /* Printer Combobox in PRINT SETUP, quality combobox in PRINT */
+    case cmb1: /* Printer Combobox in PRINT SETUP, quality combobox in PRINT16 */
 	 if (PrinterComboID != LOWORD(wParam)) {
-	     FIXME("No handling for print quality combo box yet.\n");
 	     break;
 	 }
 	 /* FALLTHROUGH */
