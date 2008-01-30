@@ -251,15 +251,15 @@ int X11DRV_PALETTE_Init(void)
 
     GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
 
-    if ((mapping = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * NB_RESERVED_COLORS )))
-        palette_set_mapping( GetStockObject(DEFAULT_PALETTE), mapping );
-
     if( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL )
     {
         palette_size = 0;
     }
     else
     {
+        if ((mapping = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * NB_RESERVED_COLORS )))
+            palette_set_mapping( GetStockObject(DEFAULT_PALETTE), mapping );
+
         if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
             X11DRV_PALETTE_BuildPrivateMap( sys_pal_template );
         else
