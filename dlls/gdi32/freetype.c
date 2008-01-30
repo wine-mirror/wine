@@ -4497,6 +4497,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
 
     child->font->ntmFlags = child->face->ntmFlags;
     child->font->orientation = font->orientation;
+    child->font->scale_y = font->scale_y;
     hfontlist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hfontlist));
     hfontlist->hfont = CreateFontIndirectW(&font->font_desc.lf);
     list_add_head(&child->font->hfontlist, &hfontlist->entry);
