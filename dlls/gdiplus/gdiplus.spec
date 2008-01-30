@@ -587,7 +587,7 @@
 @ stdcall GdipSetSolidFillColor(ptr ptr)
 @ stdcall GdipSetStringFormatAlign(ptr long)
 @ stub GdipSetStringFormatDigitSubstitution
-@ stub GdipSetStringFormatFlags
+@ stdcall GdipSetStringFormatFlags(ptr long)
 @ stdcall GdipSetStringFormatHotkeyPrefix(ptr long)
 @ stdcall GdipSetStringFormatLineAlign(ptr long)
 @ stub GdipSetStringFormatMeasurableCharacterRanges
