@@ -124,6 +124,12 @@ enum InterpolationMode
     InterpolationModeHighQualityBicubic
 };
 
+enum PenAlignment
+{
+    PenAlignmentCenter   = 0,
+    PenAlignmentInset    = 1
+};
+
 enum PixelOffsetMode
 {
     PixelOffsetModeInvalid     = QualityModeInvalid,
@@ -279,6 +285,7 @@ typedef enum StringAlignment StringAlignment;
 typedef enum StringTrimming StringTrimming;
 typedef enum StringFormatFlags StringFormatFlags;
 typedef enum HotkeyPrefix HotkeyPrefix;
+typedef enum PenAlignment GpPenAlignment;
 
 #endif /* end of c typedefs */
 

@@ -380,3 +380,13 @@ GpStatus WINGDIPAPI GdipSetPenWidth(GpPen *pen, REAL width)
 
     return Ok;
 }
+
+
+GpStatus WINGDIPAPI GdipSetPenMode(GpPen *pen, GpPenAlignment penAlignment)
+{
+    if(!pen)    return InvalidParameter;
+
+    FIXME("stub (%d)\n", penAlignment);
+
+    return Ok;
+}
