@@ -193,6 +193,46 @@ static int type_has_pointers(const type_t *type)
     return FALSE;
 }
 
+static int type_has_full_pointer(const type_t *type)
+{
+    if (is_user_type(type))
+        return FALSE;
+    else if (type->type == RPC_FC_FP)
+        return TRUE;
+    else if (is_ptr(type))
+        return FALSE;
+    else if (is_array(type))
+        return type_has_full_pointer(type->ref);
+    else if (is_struct(type->type))
+    {
+        const var_t *field;
+        if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
+        {
+            if (type_has_full_pointer(field->type))
+                return TRUE;
+        }
+    }
+    else if (is_union(type->type))
+    {
+        var_list_t *fields;
+        const var_t *field;
+        if (type->type == RPC_FC_ENCAPSULATED_UNION)
+        {
+            const var_t *uv = LIST_ENTRY(list_tail(type->fields), const var_t, entry);
+            fields = uv->type->fields;
+        }
+        else
+            fields = type->fields;
+        if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
+        {
+            if (field->type && type_has_full_pointer(field->type))
+                return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static unsigned short user_type_offset(const char *name)
 {
     user_type_t *ut;
@@ -901,6 +941,32 @@ size_t type_memsize(const type_t *t, unsigned int *align)
     }
 
     return size;
+}
+
+int is_full_pointer_function(const func_t *func)
+{
+    const var_t *var;
+    if (type_has_full_pointer(func->def->type))
+        return TRUE;
+    if (!func->args)
+        return FALSE;
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+        if (type_has_full_pointer( var->type ))
+            return TRUE;
+    return FALSE;
+}
+
+void write_full_pointer_init(FILE *file, int indent, const func_t *func, int is_server)
+{
+    print_file(file, indent, "_StubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,%s);\n",
+                   is_server ? "XLAT_SERVER" : "XLAT_CLIENT");
+    fprintf(file, "\n");
+}
+
+void write_full_pointer_free(FILE *file, int indent, const func_t *func)
+{
+    print_file(file, indent, "NdrFullPointerXlatFree(_StubMsg.FullPtrXlatTables);\n");
+    fprintf(file, "\n");
 }
 
 static unsigned int write_nonsimple_pointer(FILE *file, const type_t *type, size_t offset)
