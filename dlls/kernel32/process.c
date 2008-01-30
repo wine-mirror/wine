@@ -2968,3 +2968,14 @@ BOOL WINAPI CmdBatNotification( BOOL bBatchRunning )
     FIXME("%d\n", bBatchRunning);
     return FALSE;
 }
+
+
+/***********************************************************************
+ *           RegisterApplicationRestart       (KERNEL32.@)
+ */
+HRESULT WINAPI RegisterApplicationRestart(PCWSTR pwzCommandLine, DWORD dwFlags)
+{
+    FIXME("(%s,%d)\n", debugstr_w(pwzCommandLine), dwFlags);
+
+    return S_OK;
+}

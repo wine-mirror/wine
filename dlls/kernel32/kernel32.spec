@@ -878,6 +878,7 @@
 @ stdcall ReadFileEx(long ptr long ptr ptr)
 @ stub ReadFileScatter
 @ stdcall ReadProcessMemory(long ptr ptr long ptr)
+@ stdcall RegisterApplicationRestart(wstr long)
 @ stub RegisterConsoleIME
 @ stub RegisterConsoleOS2
 @ stub RegisterConsoleVDM
