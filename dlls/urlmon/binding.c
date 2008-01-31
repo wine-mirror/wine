@@ -1283,7 +1283,7 @@ static HRESULT get_callback(IBindCtx *pbc, IBindStatusCallback **callback)
         IUnknown_Release(unk);
     }
 
-    return SUCCEEDED(hres) ? S_OK : MK_E_SYNTAX;
+    return SUCCEEDED(hres) ? S_OK : INET_E_DATA_NOT_AVAILABLE;
 }
 
 static BOOL is_urlmon_protocol(LPCWSTR url)
@@ -1484,9 +1484,7 @@ HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
     if(FAILED(hres))
         return hres;
 
-    if(binding->hres != S_OK) {
-        hres = SUCCEEDED(binding->hres) ? S_OK : binding->hres;
-    }else if(binding->stream->init_buf) {
+    if(binding->hres == S_OK && binding->stream->init_buf) {
         if((binding->state & BINDING_STOPPED) && (binding->state & BINDING_LOCKED))
             IInternetProtocol_UnlockRequest(binding->protocol);
 
