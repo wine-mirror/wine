@@ -434,6 +434,10 @@ static LRESULT ANIMATE_Play(ANIMATE_INFO *infoPtr, UINT cRepeat, WORD wFrom, WOR
     TRACE("(repeat=%d from=%d to=%d);\n",
 	  infoPtr->nLoop, infoPtr->nFromFrame, infoPtr->nToFrame);
 
+    if (infoPtr->nFromFrame >= infoPtr->mah.dwTotalFrames &&
+        (SHORT)infoPtr->nFromFrame < 0)
+        infoPtr->nFromFrame = 0;
+
     if (infoPtr->nFromFrame > infoPtr->nToFrame ||
 	infoPtr->nToFrame >= infoPtr->mah.dwTotalFrames)
 	return FALSE;
