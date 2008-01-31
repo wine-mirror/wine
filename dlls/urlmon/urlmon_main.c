@@ -406,6 +406,39 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
     pbindinfo->cbSize = size;
 }
 
+/***********************************************************************
+ *           CopyStgMedium (URLMON.@)
+ */
+HRESULT WINAPI CopyStgMedium(const STGMEDIUM *src, STGMEDIUM *dst)
+{
+    TRACE("(%p %p)\n", src, dst);
+
+    if(!src || !dst)
+        return E_POINTER;
+
+    memcpy(dst, src, sizeof(STGMEDIUM));
+
+    switch(dst->tymed) {
+    case TYMED_NULL:
+        break;
+    case TYMED_ISTREAM:
+        if(dst->u.pstm)
+            IStream_AddRef(dst->u.pstm);
+        break;
+    case TYMED_ISTORAGE:
+        if(dst->u.pstg)
+            IStorage_AddRef(dst->u.pstg);
+        break;
+    default:
+        FIXME("Unimplemented tymed %d\n", src->tymed);
+    }
+
+    if(dst->pUnkForRelease)
+        IUnknown_AddRef(dst->pUnkForRelease);
+
+    return S_OK;
+}
+
 static BOOL text_richtext_filter(const BYTE *b, DWORD size)
 {
     return size > 5 && !memcmp(b, "{\\rtf", 5);

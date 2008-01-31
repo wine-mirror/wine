@@ -21,7 +21,7 @@
 @ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)
 @ stub CompareSecurityIds
 @ stub CopyBindInfo
-@ stub CopyStgMedium
+@ stdcall CopyStgMedium(ptr ptr)
 @ stdcall CreateAsyncBindCtx(long ptr ptr ptr)
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long)
 @ stdcall CreateFormatEnumerator(long ptr ptr)

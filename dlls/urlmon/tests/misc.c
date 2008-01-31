@@ -18,6 +18,7 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
+#define NONAMELESSUNION
 
 #include <wine/test.h>
 #include <stdarg.h>
@@ -1177,6 +1178,37 @@ static void test_ReleaseBindInfo(void)
     ok(bi.pUnk == &unk, "bi.pUnk=%p, expected %p\n", bi.pUnk, &unk);
 }
 
+static void test_CopyStgMedium(void)
+{
+    STGMEDIUM src, dst;
+    HRESULT hres;
+
+    memset(&src, 0xf0, sizeof(src));
+    memset(&dst, 0xe0, sizeof(dst));
+    src.tymed = TYMED_NULL;
+    src.pUnkForRelease = NULL;
+    hres = CopyStgMedium(&src, &dst);
+    ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
+    ok(dst.tymed == TYMED_NULL, "tymed=%d\n", dst.tymed);
+    ok(dst.u.hGlobal == (void*)0xf0f0f0f0, "u=%p\n", dst.u.hGlobal);
+    ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
+
+    memset(&dst, 0xe0, sizeof(dst));
+    src.tymed = TYMED_ISTREAM;
+    src.u.pstm = NULL;
+    src.pUnkForRelease = NULL;
+    hres = CopyStgMedium(&src, &dst);
+    ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
+    ok(dst.tymed == TYMED_ISTREAM, "tymed=%d\n", dst.tymed);
+    ok(!dst.u.pstm, "pstm=%p\n", dst.u.pstm);
+    ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
+
+    hres = CopyStgMedium(&src, NULL);
+    ok(hres == E_POINTER, "CopyStgMedium failed: %08x, expected E_POINTER\n", hres);
+    hres = CopyStgMedium(NULL, &dst);
+    ok(hres == E_POINTER, "CopyStgMedium failed: %08x, expected E_POINTER\n", hres);
+}
+
 static void test_UrlMkGetSessionOption(void)
 {
     DWORD encoding, size;
@@ -1339,6 +1371,7 @@ START_TEST(misc)
     test_NameSpace();
     test_MimeFilter();
     test_ReleaseBindInfo();
+    test_CopyStgMedium();
     test_UrlMkGetSessionOption();
     test_ObtainUserAgentString();
     test_MkParseDisplayNameEx();
