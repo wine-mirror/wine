@@ -171,6 +171,7 @@ static void test_type_info(void)
 	ok(hres == S_OK, "GetNames returned 0x%08x instead of S_OK.\n", hres);
 	ok(n == 1, "GetNames returned %d names instead of 1.\n", n);
 	ok(!lstrcmpiW(names[0],name_Name), "DISPID_FONT_NAME doesn't get 'Names'.\n");
+	SysFreeString(names[0]);
 
 	ITypeInfo_Release(pTInfo);
 
