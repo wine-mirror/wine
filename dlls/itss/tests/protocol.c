@@ -70,6 +70,7 @@ DEFINE_EXPECT(ReportResult);
 
 static HRESULT expect_hrResult;
 static IInternetProtocol *read_protocol = NULL;
+static DWORD bindf;
 
 static const WCHAR blank_url1[] = {'i','t','s',':',
     't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
@@ -244,6 +245,7 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
     ok(pbindinfo != NULL, "pbindinfo == NULL\n");
     ok(pbindinfo->cbSize == sizeof(BINDINFO), "wrong size of pbindinfo: %d\n", pbindinfo->cbSize);
 
+    *grfBINDF = bindf;
     return S_OK;
 }
 
@@ -610,6 +612,8 @@ static void test_its_protocol(void)
             test_protocol_url(factory, blank_url5, TRUE);
             test_protocol_url(factory, blank_url6, TRUE);
             test_protocol_url(factory, blank_url8, TRUE);
+            bindf = BINDF_FROMURLMON | BINDF_NEEDFILE;
+            test_protocol_url(factory, blank_url1, TRUE);
         }
 
         IClassFactory_Release(factory);
