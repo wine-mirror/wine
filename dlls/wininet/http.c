@@ -2795,6 +2795,12 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
     TRACE("-->\n");
 
+    if (!lpszServerName || !lpszServerName[0])
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        goto lerror;
+    }
+
     assert( hIC->hdr.htype == WH_HINIT );
 
     lpwhs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPSESSIONW));
