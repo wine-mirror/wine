@@ -50,15 +50,19 @@ typedef struct {
     HRESULT hres;
 } stgmed_buf_t;
 
-#define STGMEDUNK(x)  ((IUnknown*) &(x)->lpUnknownVtbl)
+typedef struct _stgmed_obj_t stgmed_obj_t;
 
 typedef struct {
-    const IStreamVtbl *lpStreamVtbl;
+    void (*release)(stgmed_obj_t*);
+    HRESULT (*fill_stgmed)(stgmed_obj_t*,STGMEDIUM*);
+    void *(*get_result)(stgmed_obj_t*);
+} stgmed_obj_vtbl;
 
-    LONG ref;
+struct _stgmed_obj_t {
+    const stgmed_obj_vtbl *vtbl;
+};
 
-    stgmed_buf_t *buf;
-} ProtocolStream;
+#define STGMEDUNK(x)  ((IUnknown*) &(x)->lpUnknownVtbl)
 
 typedef enum {
     BEFORE_DOWNLOAD,
@@ -83,7 +87,7 @@ struct Binding {
     IServiceProvider *service_provider;
 
     stgmed_buf_t *stgmed_buf;
-    ProtocolStream *stream;
+    stgmed_obj_t *stgmed_obj;
 
     BINDINFO bindinfo;
     DWORD bindf;
@@ -103,8 +107,6 @@ struct Binding {
 
     DWORD apartment_thread;
     HWND notif_hwnd;
-
-    STGMEDIUM stgmed;
 
     task_header_t *task_queue_head, *task_queue_tail;
     CRITICAL_SECTION section;
@@ -527,6 +529,33 @@ static const IUnknownVtbl StgMedUnkVtbl = {
     StgMedUnk_Release
 };
 
+static stgmed_buf_t *create_stgmed_buf(IInternetProtocol *protocol)
+{
+    stgmed_buf_t *ret = heap_alloc(sizeof(*ret));
+
+    ret->lpUnknownVtbl = &StgMedUnkVtbl;
+    ret->ref = 1;
+    ret->size = 0;
+    ret->init = FALSE;
+    ret->hres = S_OK;
+
+    IInternetProtocol_AddRef(protocol);
+    ret->protocol = protocol;
+
+    URLMON_LockModule();
+
+    return ret;
+}
+
+typedef struct {
+    stgmed_obj_t stgmed_obj;
+    const IStreamVtbl *lpStreamVtbl;
+
+    LONG ref;
+
+    stgmed_buf_t *buf;
+} ProtocolStream;
+
 #define STREAM_THIS(iface) DEFINE_THIS(ProtocolStream, Stream, iface)
 
 static HRESULT WINAPI ProtocolStream_QueryInterface(IStream *iface,
@@ -724,30 +753,42 @@ static const IStreamVtbl ProtocolStreamVtbl = {
     ProtocolStream_Clone
 };
 
-#define BINDING_THIS(iface) DEFINE_THIS(Binding, Binding, iface)
-
-static stgmed_buf_t *create_stgmed_buf(IInternetProtocol *protocol)
+static void stgmed_stream_release(stgmed_obj_t *obj)
 {
-    stgmed_buf_t *ret = heap_alloc(sizeof(*ret));
-
-    ret->lpUnknownVtbl = &StgMedUnkVtbl;
-    ret->ref = 1;
-    ret->size = 0;
-    ret->init = FALSE;
-    ret->hres = S_OK;
-
-    IInternetProtocol_AddRef(protocol);
-    ret->protocol = protocol;
-
-    URLMON_LockModule();
-
-    return ret;
+    ProtocolStream *stream = (ProtocolStream*)obj;
+    IStream_Release(STREAM(stream));
 }
 
-static ProtocolStream *create_stream(stgmed_buf_t *buf)
+static HRESULT stgmed_stream_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
+{
+    ProtocolStream *stream = (ProtocolStream*)obj;
+
+    stgmed->tymed = TYMED_ISTREAM;
+    stgmed->u.pstm = STREAM(stream);
+    stgmed->pUnkForRelease = STGMEDUNK(stream->buf);
+
+    return S_OK;
+}
+
+static void *stgmed_stream_get_result(stgmed_obj_t *obj)
+{
+    ProtocolStream *stream = (ProtocolStream*)obj;
+
+    IStream_AddRef(STREAM(stream));
+    return STREAM(stream);
+}
+
+static const stgmed_obj_vtbl stgmed_stream_vtbl = {
+    stgmed_stream_release,
+    stgmed_stream_fill_stgmed,
+    stgmed_stream_get_result
+};
+
+static stgmed_obj_t *create_stgmed_stream(stgmed_buf_t *buf)
 {
     ProtocolStream *ret = heap_alloc(sizeof(ProtocolStream));
 
+    ret->stgmed_obj.vtbl = &stgmed_stream_vtbl;
     ret->lpStreamVtbl = &ProtocolStreamVtbl;
     ret->ref = 1;
 
@@ -756,8 +797,10 @@ static ProtocolStream *create_stream(stgmed_buf_t *buf)
 
     URLMON_LockModule();
 
-    return ret;
+    return &ret->stgmed_obj;
 }
+
+#define BINDING_THIS(iface) DEFINE_THIS(Binding, Binding, iface)
 
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
 {
@@ -821,8 +864,8 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
             IServiceProvider_Release(This->service_provider);
         if(This->stgmed_buf)
             IUnknown_Release(STGMEDUNK(This->stgmed_buf));
-        if(This->stream)
-            IStream_Release(STREAM(This->stream));
+        if(This->stgmed_obj)
+            This->stgmed_obj->vtbl->release(This->stgmed_obj);
         if(This->obj)
             IUnknown_Release(This->obj);
         if(This->bctx)
@@ -1106,6 +1149,8 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         if(!(This->state & BINDING_OBJAVAIL))
             create_object(This);
     }else {
+        STGMEDIUM stgmed;
+
         if(!(This->state & BINDING_LOCKED)) {
             HRESULT hres = IInternetProtocol_LockRequest(This->protocol, 0);
             if(SUCCEEDED(hres))
@@ -1113,8 +1158,10 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         }
 
         formatetc.cfFormat = This->clipboard_format;
+        This->stgmed_obj->vtbl->fill_stgmed(This->stgmed_obj, &stgmed);
+
         IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
-                &formatetc, &This->stgmed);
+                &formatetc, &stgmed);
 
         if(This->download_state == END_DOWNLOAD)
             stop_binding(This, S_OK, NULL);
@@ -1493,16 +1540,12 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
     if(binding_ctx) {
         ret->stgmed_buf = binding_ctx->stgmed_buf;
         IUnknown_AddRef(STGMEDUNK(ret->stgmed_buf));
-        ret->stream = binding_ctx->stream;
-        IStream_AddRef(STREAM(binding_ctx->stream));
         ret->clipboard_format = binding_ctx->clipboard_format;
     }else {
         ret->stgmed_buf = create_stgmed_buf(ret->protocol);
-        ret->stream = create_stream(ret->stgmed_buf);
     }
-    ret->stgmed.tymed = TYMED_ISTREAM;
-    ret->stgmed.u.pstm = STREAM((ProtocolStream*)ret->stream);
-    ret->stgmed.pUnkForRelease = (IUnknown*)BINDING(ret); /* NOTE: Windows uses other IUnknown */
+
+    ret->stgmed_obj = create_stgmed_stream(ret->stgmed_buf);
 
     *binding = ret;
     return S_OK;
@@ -1576,9 +1619,7 @@ HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
         if((binding->state & BINDING_STOPPED) && (binding->state & BINDING_LOCKED))
             IInternetProtocol_UnlockRequest(binding->protocol);
 
-        *ppv = binding->stgmed.u.pstm;
-        IStream_AddRef(binding->stgmed.u.pstm);
-
+        *ppv = binding->stgmed_obj->vtbl->get_result(binding->stgmed_obj);
         hres = S_OK;
     }else {
         hres = MK_S_ASYNCHRONOUS;
