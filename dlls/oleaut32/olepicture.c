@@ -1237,6 +1237,7 @@ static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
     DGifCloseFile(gif);
+    HeapFree(GetProcessHeap(),0,bmi);
     HeapFree(GetProcessHeap(),0,bytes);
     return S_OK;
 }
