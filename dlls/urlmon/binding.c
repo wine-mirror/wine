@@ -48,6 +48,8 @@ typedef struct {
     DWORD size;
     BOOL init;
     HRESULT hres;
+
+    LPWSTR cache_file;
 } stgmed_buf_t;
 
 typedef struct _stgmed_obj_t stgmed_obj_t;
@@ -513,6 +515,7 @@ static ULONG WINAPI StgMedUnk_Release(IUnknown *iface)
 
     if(!ref) {
         IInternetProtocol_Release(This->protocol);
+        heap_free(This->cache_file);
         heap_free(This);
 
         URLMON_UnlockModule();
@@ -538,6 +541,7 @@ static stgmed_buf_t *create_stgmed_buf(IInternetProtocol *protocol)
     ret->size = 0;
     ret->init = FALSE;
     ret->hres = S_OK;
+    ret->cache_file = NULL;
 
     IInternetProtocol_AddRef(protocol);
     ret->protocol = protocol;
@@ -1099,6 +1103,8 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         mime_available(This, szStatusText, FALSE);
         break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
+        heap_free(This->stgmed_buf->cache_file);
+        This->stgmed_buf->cache_file = heap_strdupW(szStatusText);
         break;
     case BINDSTATUS_DIRECTBIND:
         This->report_mime = FALSE;
@@ -1134,6 +1140,10 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         sent_begindownloaddata = TRUE;
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_BEGINDOWNLOADDATA, This->url);
+
+        if(This->stgmed_buf->cache_file)
+            IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+                    BINDSTATUS_CACHEFILENAMEAVAILABLE, This->stgmed_buf->cache_file);
     }
 
     if(This->stgmed_buf->hres == S_FALSE || (bscf & BSCF_LASTDATANOTIFICATION)) {
