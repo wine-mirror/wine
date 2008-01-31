@@ -785,6 +785,7 @@ static void test_typelibmarshal(void)
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
     tid = start_host_object(pStream, &IID_IKindaEnumWidget, (IUnknown *)pKEW, MSHLFLAGS_NORMAL, &thread);
+    IKindaEnumWidget_Release(pKEW);
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IKindaEnumWidget, (void **)&pKEW);
@@ -1163,6 +1164,7 @@ static void test_DispCallFunc(void)
     VariantClear(&varresult);
     VariantClear(&vararg[1]);
     VariantClear(&vararg[2]);
+    IWidget_Release(pWidget);
 }
 
 START_TEST(tmarshal)
