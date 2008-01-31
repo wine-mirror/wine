@@ -1458,11 +1458,6 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
     Binding *ret;
     HRESULT hres;
 
-    if(!to_obj && !IsEqualGUID(&IID_IStream, riid)) {
-        FIXME("Unsupported riid %s\n", debugstr_guid(riid));
-        return E_NOTIMPL;
-    }
-
     URLMON_LockModule();
 
     ret = heap_alloc_zero(sizeof(Binding));
@@ -1545,7 +1540,15 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
         ret->stgmed_buf = create_stgmed_buf(ret->protocol);
     }
 
-    ret->stgmed_obj = create_stgmed_stream(ret->stgmed_buf);
+    if(to_obj) {
+        ret->stgmed_obj = NULL;
+    }else if(IsEqualGUID(&IID_IStream, riid)) {
+        ret->stgmed_obj = create_stgmed_stream(ret->stgmed_buf);
+    }else {
+        FIXME("Unsupported riid %s\n", debugstr_guid(riid));
+        IBinding_Release(BINDING(ret));
+        return E_NOTIMPL;
+    }
 
     *binding = ret;
     return S_OK;
