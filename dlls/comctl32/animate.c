@@ -317,6 +317,9 @@ static BOOL ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
         rect.right = nWidth;
         rect.bottom = nHeight;
 
+        infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
+                                                 WM_CTLCOLORSTATIC,
+                                                 (WPARAM)hDC, (LPARAM)infoPtr->hwndSelf);
         if(!infoPtr->hbrushBG)
             infoPtr->hbrushBG = GetCurrentObject(hDC, OBJ_BRUSH);
 
@@ -928,11 +931,6 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
                 /* default paint handling */
                 return DefWindowProcW(hWnd, uMsg, wParam, lParam);
             }
-
-            if (infoPtr->dwStyle & ACS_TRANSPARENT)
-                infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
-                                                         WM_CTLCOLORSTATIC,
-                                                         wParam, (LPARAM)infoPtr->hwndSelf);
 
             if (wParam)
             {
