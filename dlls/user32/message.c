@@ -1987,25 +1987,6 @@ static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UIN
 
 
 /***********************************************************************
- *		get_hook_proc
- *
- * Retrieve the hook procedure real value for a module-relative proc
- */
-static void *get_hook_proc( void *proc, const WCHAR *module )
-{
-    HMODULE mod;
-
-    if (!(mod = GetModuleHandleW(module)))
-    {
-        TRACE( "loading %s\n", debugstr_w(module) );
-        /* FIXME: the library will never be freed */
-        if (!(mod = LoadLibraryW(module))) return NULL;
-    }
-    return (char *)mod + (ULONG_PTR)proc;
-}
-
-
-/***********************************************************************
  *           peek_message
  *
  * Peek for a message matching the given parameters. Return FALSE if none available.

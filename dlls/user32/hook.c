@@ -314,7 +314,7 @@ static LRESULT call_hook_proc( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
  *
  * Retrieve the hook procedure real value for a module-relative proc
  */
-static void *get_hook_proc( void *proc, const WCHAR *module )
+void *get_hook_proc( void *proc, const WCHAR *module )
 {
     HMODULE mod;
 

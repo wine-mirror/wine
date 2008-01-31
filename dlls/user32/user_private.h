@@ -235,6 +235,7 @@ extern BOOL CLIPBOARD_ReleaseOwner(void) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL HOOK_IsHooked( INT id ) DECLSPEC_HIDDEN;
 extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;
+extern void *get_hook_proc( void *proc, const WCHAR *module );
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
 extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
