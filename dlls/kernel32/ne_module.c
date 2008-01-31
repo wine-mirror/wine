@@ -1193,7 +1193,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     HMODULE16 hModule;
     NE_MODULE *pModule;
     LPSTR cmdline;
-    WORD cmdShow;
+    WORD cmdShow = 1; /* SW_SHOWNORMAL but we don't want to include winuser.h here */
 
     if (name == NULL) return 0;
 
@@ -1235,7 +1235,8 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
      *  information.
      */
     params = (LOADPARAMS16 *)paramBlock;
-    cmdShow = ((WORD *)MapSL(params->showCmd))[1];
+    if (params->showCmd)
+        cmdShow = ((WORD *)MapSL( params->showCmd ))[1];
     cmdline = MapSL( params->cmdLine );
     return NE_CreateThread( pModule, cmdShow, cmdline );
 }
