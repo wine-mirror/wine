@@ -484,7 +484,7 @@ static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
     for (i=0; i<argc; i++)
         len += strlenW(argv[i])+1;
 
-    ssi = HeapAlloc(GetProcessHeap(),0,sizeof *ssi + (len-1)*sizeof(WCHAR));
+    ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, str[len]));
     ssi->cmd = WINESERV_STARTINFO;
     ssi->size = len;
 
@@ -497,7 +497,7 @@ static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
     }
     *p=0;
 
-    r = WriteFile(pipe, ssi, sizeof *ssi + (len-1)*sizeof(WCHAR), &count, NULL);
+    r = WriteFile(pipe, ssi, FIELD_OFFSET(service_start_info, str[len]), &count, NULL);
     if (r)
     {
         r = ReadFile(pipe, &result, sizeof result, &count, NULL);
