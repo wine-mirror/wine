@@ -419,6 +419,8 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     if (This->grfBINDF & BINDF_NOWRITECACHE)
         request_flags |= INTERNET_FLAG_NO_CACHE_WRITE;
+    if (This->grfBINDF & BINDF_NEEDFILE)
+        request_flags |= INTERNET_FLAG_NEED_FILE;
     This->request = HttpOpenRequestW(This->connect, This->bind_info.dwBindVerb < BINDVERB_CUSTOM ?
                                      wszBindVerb[This->bind_info.dwBindVerb] :
                                      This->bind_info.szCustomVerb,
@@ -655,6 +657,21 @@ static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDA
         {
             This->content_length = atoiW(content_length);
         }
+
+    if(This->grfBINDF & BINDF_NEEDFILE) {
+        WCHAR cache_file[MAX_PATH];
+        DWORD buflen = sizeof(cache_file);
+
+        if(InternetQueryOptionW(This->request, INTERNET_OPTION_DATAFILE_NAME,
+                                cache_file, &buflen))
+        {
+            IInternetProtocolSink_ReportProgress(This->protocol_sink,
+                                                 BINDSTATUS_CACHEFILENAMEAVAILABLE,
+                                                 cache_file);
+        }else {
+            FIXME("Could not get cache file\n");
+        }
+    }
 
         This->flags |= FLAG_FIRST_CONTINUE_COMPLETE;
     }
