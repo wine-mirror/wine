@@ -1677,27 +1677,3 @@ void __RPC_USER MIDL_user_free(void *p)
 {
     HeapFree(GetProcessHeap(), 0, p);
 }
-
-/***********************************************************************
- *           CreatePointerMoniker (OLE32.@)
- *
- * Creates a moniker which represents a pointer.
- *
- * PARAMS
- *  punk [I] Pointer to the object to represent.
- *  ppmk [O] Address that receives the pointer to the created moniker.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: Any HRESULT code.
- */
-HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER *ppmk)
-{
-    FIXME("(%p, %p): stub\n", punk, ppmk);
-
-    if (!ppmk)
-        return E_INVALIDARG;
-
-    *ppmk = NULL;
-    return E_NOTIMPL;
-}

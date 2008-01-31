@@ -1609,7 +1609,6 @@ static void test_pointer_moniker(void)
     ok(hr == E_INVALIDARG, "CreatePointerMoniker(x, NULL) should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     hr = CreatePointerMoniker((IUnknown *)&Test_ClassFactory, &moniker);
-    todo_wine
     ok_ole_success(hr, CreatePointerMoniker);
     if (!moniker) return;
 

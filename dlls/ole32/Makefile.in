@@ -35,6 +35,7 @@ C_SRCS = \
 	ole32_main.c \
 	oleobj.c \
 	oleproxy.c \
+	pointermoniker.c \
 	regsvr.c \
 	rpc.c \
 	stg_bigblockfile.c \
