@@ -788,6 +788,11 @@ static const stgmed_obj_vtbl stgmed_stream_vtbl = {
     stgmed_stream_get_result
 };
 
+typedef struct {
+    stgmed_obj_t stgmed_obj;
+    stgmed_buf_t *buf;
+} stgmed_file_obj_t;
+
 static stgmed_obj_t *create_stgmed_stream(stgmed_buf_t *buf)
 {
     ProtocolStream *ret = heap_alloc(sizeof(ProtocolStream));
@@ -800,6 +805,61 @@ static stgmed_obj_t *create_stgmed_stream(stgmed_buf_t *buf)
     ret->buf = buf;
 
     URLMON_LockModule();
+
+    return &ret->stgmed_obj;
+}
+
+static void stgmed_file_release(stgmed_obj_t *obj)
+{
+    heap_free(obj);
+}
+
+static HRESULT stgmed_file_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
+{
+    stgmed_file_obj_t *file_obj = (stgmed_file_obj_t*)obj;
+
+    if(!file_obj->buf->cache_file) {
+        WARN("cache_file not set\n");
+        return INET_E_DATA_NOT_AVAILABLE;
+    }
+
+    fill_stgmed_buffer(file_obj->buf);
+    if(file_obj->buf->size == sizeof(file_obj->buf->buf)) {
+        BYTE buf[1024];
+        DWORD read;
+        HRESULT hres;
+
+        do {
+            hres = IInternetProtocol_Read(file_obj->buf->protocol, buf, sizeof(buf), &read);
+        }while(hres == S_OK);
+    }
+
+    stgmed->tymed = TYMED_FILE;
+    stgmed->u.lpszFileName = file_obj->buf->cache_file;
+    stgmed->pUnkForRelease = STGMEDUNK(file_obj->buf);
+
+    return S_OK;
+}
+
+static void *stgmed_file_get_result(stgmed_obj_t *obj)
+{
+    return NULL;
+}
+
+static const stgmed_obj_vtbl stgmed_file_vtbl = {
+    stgmed_file_release,
+    stgmed_file_fill_stgmed,
+    stgmed_file_get_result
+};
+
+static stgmed_obj_t *create_stgmed_file(stgmed_buf_t *buf)
+{
+    stgmed_file_obj_t *ret = heap_alloc(sizeof(*ret));
+
+    ret->stgmed_obj.vtbl = &stgmed_file_vtbl;
+
+    IUnknown_AddRef(STGMEDUNK(buf));
+    ret->buf = buf;
 
     return &ret->stgmed_obj;
 }
@@ -1160,6 +1220,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
             create_object(This);
     }else {
         STGMEDIUM stgmed;
+        HRESULT hres;
 
         if(!(This->state & BINDING_LOCKED)) {
             HRESULT hres = IInternetProtocol_LockRequest(This->protocol, 0);
@@ -1167,8 +1228,14 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
                 This->state |= BINDING_LOCKED;
         }
 
+        hres = This->stgmed_obj->vtbl->fill_stgmed(This->stgmed_obj, &stgmed);
+        if(FAILED(hres)) {
+            stop_binding(This, hres, NULL);
+            return;
+        }
+
+        formatetc.tymed = stgmed.tymed;
         formatetc.cfFormat = This->clipboard_format;
-        This->stgmed_obj->vtbl->fill_stgmed(This->stgmed_obj, &stgmed);
 
         IBindStatusCallback_OnDataAvailable(This->callback, bscf, progress,
                 &formatetc, &stgmed);
@@ -1554,6 +1621,9 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
         ret->stgmed_obj = NULL;
     }else if(IsEqualGUID(&IID_IStream, riid)) {
         ret->stgmed_obj = create_stgmed_stream(ret->stgmed_buf);
+    }else if(IsEqualGUID(&IID_IUnknown, riid)) {
+        ret->bindf |= BINDF_NEEDFILE;
+        ret->stgmed_obj = create_stgmed_file(ret->stgmed_buf);
     }else {
         FIXME("Unsupported riid %s\n", debugstr_guid(riid));
         IBinding_Release(BINDING(ret));
@@ -1633,14 +1703,11 @@ HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
             IInternetProtocol_UnlockRequest(binding->protocol);
 
         *ppv = binding->stgmed_obj->vtbl->get_result(binding->stgmed_obj);
-        hres = S_OK;
-    }else {
-        hres = MK_S_ASYNCHRONOUS;
     }
 
     IBinding_Release(BINDING(binding));
 
-    return hres;
+    return *ppv ? S_OK : MK_S_ASYNCHRONOUS;
 }
 
 HRESULT bind_to_object(IMoniker *mon, LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
