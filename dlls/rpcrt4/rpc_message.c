@@ -869,14 +869,14 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
       goto fail;
     }
 
-    if ((CurrentHeader->common.flags & RPC_FLG_FIRST) != first_flag) {
+    if (CurrentHeader->common.auth_len != auth_length) {
       WARN("auth_len header field changed from %ld to %d\n",
-        auth_length, (*Header)->common.auth_len);
+        auth_length, CurrentHeader->common.auth_len);
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
     }
 
-    if (((*Header)->common.flags & RPC_FLG_FIRST) != first_flag) {
+    if ((CurrentHeader->common.flags & RPC_FLG_FIRST) != first_flag) {
       TRACE("invalid packet flags\n");
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
