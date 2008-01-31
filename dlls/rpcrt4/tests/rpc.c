@@ -112,6 +112,7 @@ static void UuidConversionAndComparison(void) {
 	    ok( (UuidFromStringA((unsigned char*)str, &Uuid1) == RPC_S_INVALID_STRING_UUID), "Invalid UUID String\n" );
 	    str[i2] = x; /* change it back so remaining tests are interesting. */
 	}
+	RpcStringFree((unsigned char **)&str);
     }
 
     /* Uuid to String to Uuid (wchar) */
@@ -132,6 +133,7 @@ static void UuidConversionAndComparison(void) {
 	    ok( (UuidFromStringW(wstr, &Uuid1) == RPC_S_INVALID_STRING_UUID), "Invalid UUID WString\n" );
 	    wstr[i2] = wx; /* change it back so remaining tests are interesting. */
 	}
+	RpcStringFreeW(&wstr);
     }
 }
 
