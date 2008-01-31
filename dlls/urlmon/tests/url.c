@@ -1443,8 +1443,6 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     CHECK_EXPECT(Load);
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
-    trace("LOAD %p\n", pibc);
-
     if(test_protocol == HTTP_TEST)
         ok(!fFullyAvailable, "fFulyAvailable = %x\n", fFullyAvailable);
     else
@@ -1472,8 +1470,6 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(OnStartBinding);
-    if(test_protocol == FILE_TEST)
-        SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
     SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
     if(test_protocol != HTTP_TEST)
         SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
@@ -1487,8 +1483,6 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(OnStartBinding);
-    if(test_protocol == FILE_TEST)
-        todo_wine CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
     CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
     if(test_protocol != HTTP_TEST)
         CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
@@ -1972,6 +1966,8 @@ static void test_BindToStorage(int protocol, BOOL emul)
         SET_EXPECT(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST) {
+            SET_EXPECT(QueryInterface_IInternetBindInfo);
+            SET_EXPECT(QueryService_IInternetBindInfo);
             SET_EXPECT(QueryInterface_IHttpNegotiate);
             SET_EXPECT(BeginningTransaction);
             SET_EXPECT(QueryInterface_IHttpNegotiate2);
@@ -2028,6 +2024,8 @@ static void test_BindToStorage(int protocol, BOOL emul)
         CHECK_CALLED(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST) {
+            CLEAR_CALLED(QueryInterface_IInternetBindInfo);
+            CLEAR_CALLED(QueryService_IInternetBindInfo);
             CHECK_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(BeginningTransaction);
             /* QueryInterface_IHttpNegotiate2 and GetRootSecurityId
@@ -2195,8 +2193,12 @@ static void test_BindToObject(int protocol, BOOL emul)
                 CHECK_NOT_CALLED(Obj_OnProgress_CONNECTING);
             }
         }
-        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
-            CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
+        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST) {
+            if(urls[test_protocol] == SHORT_RESPONSE_URL)
+                CLEAR_CALLED(Obj_OnProgress_SENDINGREQUEST);
+            else
+                CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
+        }
         if(test_protocol == HTTP_TEST)
             CHECK_CALLED(OnResponse);
         CHECK_CALLED(Obj_OnProgress_MIMETYPEAVAILABLE);
@@ -2284,9 +2286,10 @@ static void test_ReportResult(HRESULT exhres)
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
     if(SUCCEEDED(exhres))
-        ok(hres == S_OK, "BindToStorage failed: %08x\n", hres);
+        ok(hres == S_OK || hres == MK_S_ASYNCHRONOUS, "BindToStorage failed: %08x\n", hres);
     else
-        ok(hres == exhres, "BindToStorage failed: %08x, expected %08x\n", hres, exhres);
+        ok(hres == exhres || hres == MK_S_ASYNCHRONOUS,
+           "BindToStorage failed: %08x, expected %08x or MK_S_ASYNCHRONOUS\n", hres, exhres);
 
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(QueryInterface_IInternetProtocol);
@@ -2315,7 +2318,8 @@ static void test_BindToStorage_fail(void)
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
-    ok(hres == MK_E_SYNTAX, "hres=%08x, expected INET_E_SYNTAX\n", hres);
+    ok(hres == MK_E_SYNTAX || hres == INET_E_DATA_NOT_AVAILABLE,
+       "hres=%08x, expected INET_E_SYNTAX or INET_E_DATA_NOT_AVAILABLE\n", hres);
 
     IBindCtx_Release(bctx);
 
