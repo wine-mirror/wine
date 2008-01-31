@@ -64,6 +64,11 @@ DEFINE_EXPECT(ReportResult);
 
 static HRESULT expect_hrResult;
 static BOOL expect_hr_win32err = FALSE;
+static DWORD bindf;
+
+static const WCHAR about_blank_url[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+static const WCHAR about_test_url[] = {'a','b','o','u','t',':','t','e','s','t',0};
+static const WCHAR about_res_url[] = {'r','e','s',':','b','l','a','n','k',0};
 
 static HRESULT WINAPI ProtocolSink_QueryInterface(IInternetProtocolSink *iface, REFIID riid, void **ppv)
 {
@@ -173,11 +178,10 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
     CHECK_EXPECT(GetBindInfo);
 
     ok(grfBINDF != NULL, "grfBINDF == NULL\n");
-    if(grfBINDF)
-        ok(!*grfBINDF, "*grfBINDF != 0\n");
     ok(pbindinfo != NULL, "pbindinfo == NULL\n");
     ok(pbindinfo->cbSize == sizeof(BINDINFO), "wrong size of pbindinfo: %d\n", pbindinfo->cbSize);
 
+    *grfBINDF = bindf;
     return S_OK;
 }
 
@@ -502,19 +506,68 @@ static void test_res_protocol(void)
     IUnknown_Release(unk);
 }
 
+static void do_test_about_protocol(IClassFactory *factory, DWORD bf)
+{
+    IInternetProtocol *protocol;
+    IInternetPriority *priority;
+    BYTE buf[512];
+    ULONG cb;
+    HRESULT hres;
+
+    static const WCHAR blank_html[] = {0xfeff,'<','H','T','M','L','>','<','/','H','T','M','L','>',0};
+    static const WCHAR test_html[] =
+        {0xfeff,'<','H','T','M','L','>','t','e','s','t','<','/','H','T','M','L','>',0};
+
+    bindf = bf;
+
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
+    ok(hres == E_NOINTERFACE,
+       "QueryInterface(IInternetPriority) returned %08x, expected E_NOINTEFACE\n", hres);
+
+    protocol_start(protocol, about_blank_url);
+    hres = IInternetProtocol_LockRequest(protocol, 0);
+    ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+    hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
+    ok(hres == S_OK, "Read failed: %08x\n", hres);
+    ok(cb == sizeof(blank_html), "cb=%d\n", cb);
+    ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
+    hres = IInternetProtocol_UnlockRequest(protocol);
+    ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
+
+    protocol_start(protocol, about_test_url);
+    hres = IInternetProtocol_LockRequest(protocol, 0);
+    ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+    hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
+    ok(hres == S_OK, "Read failed: %08x\n", hres);
+    ok(cb == sizeof(test_html), "cb=%d\n", cb);
+    ok(!memcmp(buf, test_html, cb), "Readed wrong data\n");
+    hres = IInternetProtocol_UnlockRequest(protocol);
+    ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
+
+    protocol_start(protocol, about_res_url);
+    hres = IInternetProtocol_LockRequest(protocol, 0);
+    ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+    hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
+    ok(hres == S_OK, "Read failed: %08x\n", hres);
+    ok(cb == sizeof(blank_html), "cb=%d\n", cb);
+    ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
+    hres = IInternetProtocol_UnlockRequest(protocol);
+    ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
+
+    IInternetProtocol_Release(protocol);
+}
+
 static void test_about_protocol(void)
 {
     IInternetProtocolInfo *protocol_info;
     IUnknown *unk;
     IClassFactory *factory;
     HRESULT hres;
-
-    static const WCHAR blank_url[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-    static const WCHAR test_url[] = {'a','b','o','u','t',':','t','e','s','t',0};
-    static const WCHAR res_url[] = {'r','e','s',':','b','l','a','n','k',0};
-    static const WCHAR blank_html[] = {0xfeff,'<','H','T','M','L','>','<','/','H','T','M','L','>',0};
-    static const WCHAR test_html[] =
-        {0xfeff,'<','H','T','M','L','>','t','e','s','t','<','/','H','T','M','L','>',0};
 
     hres = CoGetClassObject(&CLSID_AboutProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
@@ -530,34 +583,34 @@ static void test_about_protocol(void)
 
         for(i = PARSE_CANONICALIZE; i <= PARSE_UNESCAPE; i++) {
             if(i != PARSE_SECURITY_URL && i != PARSE_DOMAIN) {
-                hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, i, 0, buf,
+                hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, i, 0, buf,
                         sizeof(buf)/sizeof(buf[0]), &size, 0);
                 ok(hres == INET_E_DEFAULT_ACTION,
                         "[%d] failed: %08x, expected INET_E_DEFAULT_ACTION\n", i, hres);
             }
         }
 
-        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_SECURITY_URL, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
-        ok(!lstrcmpW(blank_url, buf), "buf != blank_url\n");
+        ok(!lstrcmpW(about_blank_url, buf), "buf != blank_url\n");
 
-        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_SECURITY_URL, 0, buf,
                 3, &size, 0);
         ok(hres == S_FALSE, "ParseUrl failed: %08x, expected S_FALSE\n", hres);
 
-        hres = IInternetProtocolInfo_ParseUrl(protocol_info, test_url, PARSE_SECURITY_URL, 0, buf,
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_test_url, PARSE_SECURITY_URL, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
-        ok(!lstrcmpW(test_url, buf), "buf != test_url\n");
+        ok(!lstrcmpW(about_test_url, buf), "buf != test_url\n");
 
         size = 0xdeadbeef;
         buf[0] = '?';
-        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_DOMAIN, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(blank_url)/sizeof(WCHAR), "size=%d\n", size);
+        ok(size == sizeof(about_blank_url)/sizeof(WCHAR), "size=%d\n", size);
 
         if (0)
         {
@@ -571,7 +624,7 @@ static void test_about_protocol(void)
         ok(size == 1, "size=%u, ezpected 1\n", size);
 
         buf[0] = '?';
-        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_DOMAIN, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), NULL, 0);
         ok(hres == E_POINTER, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
@@ -583,19 +636,19 @@ static void test_about_protocol(void)
         ok(buf[0] == '?', "buf changed\n");
         }
 
-        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_UNESCAPE+1, 0, buf,
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_UNESCAPE+1, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == INET_E_DEFAULT_ACTION,
                 "ParseUrl failed: %08x, expected INET_E_DEFAULT_ACTION\n", hres);
 
         size = 0xdeadbeef;
-        hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_url,
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, about_blank_url, about_test_url,
                 0, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
 
         size = 0xdeadbeef;
-        hres = IInternetProtocolInfo_CombineUrl(protocol_info, blank_url, test_url,
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, about_blank_url, about_test_url,
                 URL_FILE_USE_PATHURL, buf, sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
@@ -606,7 +659,7 @@ static void test_about_protocol(void)
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER, "CombineUrl failed: %08x\n", hres);
         ok(size == 0xdeadbeef, "size=%d\n", size);
 
-        hres = IInternetProtocolInfo_CompareUrl(protocol_info, blank_url, blank_url, 0);
+        hres = IInternetProtocolInfo_CompareUrl(protocol_info, about_blank_url, about_blank_url, 0);
         ok(hres == E_NOTIMPL, "CompareUrl failed: %08x\n", hres);
 
         hres = IInternetProtocolInfo_CompareUrl(protocol_info, NULL, NULL, 0xdeadbeef);
@@ -623,40 +676,40 @@ static void test_about_protocol(void)
             case QUERY_IS_SAFE:
                 break;
             default:
-                hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, i, 0,
+                hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, i, 0,
                                                        buf, sizeof(buf), &size, 0);
                 ok(hres == E_FAIL, "QueryInfo(%d) returned: %08x, expected E_FAIL\n", i, hres);
             }
         }
 
-        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_CAN_NAVIGATE, 0,
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, QUERY_CAN_NAVIGATE, 0,
                                                buf, sizeof(buf), &size, 0);
         ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER,
            "QueryInfo returned: %08x, expected INET_E_USE_DEFAULT_PROTOCOLHANDLER\n", hres);
 
         size = 0xdeadbeef;
         memset(buf, '?', sizeof(buf));
-        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, QUERY_USES_NETWORK, 0,
                                                buf, sizeof(buf), &size, 0);
         ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x\n", hres);
         ok(size == sizeof(DWORD), "size=%d\n", size);
         ok(!*(DWORD*)buf, "buf=%d\n", *(DWORD*)buf);
 
         memset(buf, '?', sizeof(buf));
-        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, QUERY_USES_NETWORK, 0,
                                                buf, sizeof(buf), NULL, 0);
         ok(hres == S_OK, "QueryInfo(QUERY_USES_NETWORK) failed: %08x\n", hres);
         ok(!*(DWORD*)buf, "buf=%d\n", *(DWORD*)buf);
 
-        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, QUERY_USES_NETWORK, 0,
                                                buf, 3, &size, 0);
         ok(hres == E_FAIL, "QueryInfo(QUERY_USES_NETWORK) failed: %08x, expected E_FAIL\n", hres);
 
-        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, QUERY_USES_NETWORK, 0,
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, QUERY_USES_NETWORK, 0,
                                                NULL, sizeof(buf), &size, 0);
         ok(hres == E_FAIL, "QueryInfo(QUERY_USES_NETWORK) failed: %08x, expected E_FAIL\n", hres);
 
-        hres = IInternetProtocolInfo_QueryInfo(protocol_info, blank_url, 60, 0,
+        hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, 60, 0,
                                                NULL, sizeof(buf), &size, 0);
         ok(hres == E_FAIL, "QueryInfo failed: %08x, expected E_FAIL\n", hres);
 
@@ -666,51 +719,9 @@ static void test_about_protocol(void)
     hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
     ok(hres == S_OK, "Could not get IClassFactory interface\n");
     if(SUCCEEDED(hres)) {
-        IInternetProtocol *protocol;
-        BYTE buf[512];
-        ULONG cb;
-        hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
-        ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
-
-        if(SUCCEEDED(hres)) {
-            IInternetPriority *priority;
-
-            hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
-            ok(hres == E_NOINTERFACE,
-               "QueryInterface(IInternetPriority) returned %08x, expected E_NOINTEFACE\n", hres);
-
-            protocol_start(protocol, blank_url);
-            hres = IInternetProtocol_LockRequest(protocol, 0);
-            ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
-            hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
-            ok(hres == S_OK, "Read failed: %08x\n", hres);
-            ok(cb == sizeof(blank_html), "cb=%d\n", cb);
-            ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
-            hres = IInternetProtocol_UnlockRequest(protocol);
-            ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
-
-            protocol_start(protocol, test_url);
-            hres = IInternetProtocol_LockRequest(protocol, 0);
-            ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
-            hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
-            ok(hres == S_OK, "Read failed: %08x\n", hres);
-            ok(cb == sizeof(test_html), "cb=%d\n", cb);
-            ok(!memcmp(buf, test_html, cb), "Readed wrong data\n");
-            hres = IInternetProtocol_UnlockRequest(protocol);
-            ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
-
-            protocol_start(protocol, res_url);
-            hres = IInternetProtocol_LockRequest(protocol, 0);
-            ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
-            hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
-            ok(hres == S_OK, "Read failed: %08x\n", hres);
-            ok(cb == sizeof(blank_html), "cb=%d\n", cb);
-            ok(!memcmp(buf, blank_html, cb), "Readed wrong data\n");
-            hres = IInternetProtocol_UnlockRequest(protocol);
-            ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
-
-            IInternetProtocol_Release(protocol);
-        }
+        do_test_about_protocol(factory, 0);
+        do_test_about_protocol(factory,
+                BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NEEDFILE);
 
         IClassFactory_Release(factory);
     }
