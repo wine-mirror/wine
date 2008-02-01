@@ -189,9 +189,9 @@
 # @ stub GdiGetPageCount
 # @ stub GdiGetPageHandle
 # @ stub GdiGetSpoolFileHandle
-# @ stub GdiGetSpoolMessage
+@ stdcall GdiGetSpoolMessage(ptr long ptr long)
 @ stdcall GdiGradientFill(long ptr long ptr long long) 
-# @ stub GdiInitSpool
+@ stdcall GdiInitSpool()
 # @ stub GdiInitializeLanguagePack
 @ stdcall GdiIsMetaFileDC(long)
 @ stdcall GdiIsMetaPrintDC(long)

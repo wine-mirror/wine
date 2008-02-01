@@ -57,6 +57,28 @@ static const char DefaultDevMode[]    = "Default DevMode";
 static const char PrinterDriverData[] = "PrinterDriverData";
 static const char Printers[]          = "System\\CurrentControlSet\\Control\\Print\\Printers\\";
 
+/******************************************************************
+ * GdiGetSpoolMessage [GDI32.@]
+ *
+ */
+DWORD WINAPI GdiGetSpoolMessage(LPVOID ptr1, DWORD data2, LPVOID ptr3, DWORD data4)
+{
+    TRACE("(%p 0x%x %p 0x%x) stub\n", ptr1, data2, ptr3, data4);
+    /* avoid 100% cpu usage with spoolsv.exe from w2k
+      (spoolsv.exe from xp does Sleep 1000/1500/2000 in a loop) */
+    Sleep(500);
+    return 0;
+}
+
+/******************************************************************
+ * GdiInitSpool [GDI32.@]
+ *
+ */
+DWORD WINAPI GdiInitSpool(void)
+{
+    FIXME("stub\n");
+    return TRUE;
+}
 
 /******************************************************************
  *                  StartDocA  [GDI32.@]
