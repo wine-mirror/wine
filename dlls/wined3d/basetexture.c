@@ -374,6 +374,12 @@ static inline void apply_wrap(const GLint textureDimensions, const DWORD state, 
         if(textureDimensions==GL_TEXTURE_CUBE_MAP_ARB) {
             /* Cubemaps are always set to clamp, regardless of the sampler state. */
             wrapParm = GL_CLAMP_TO_EDGE;
+        } else if(textureDimensions==GL_TEXTURE_RECTANGLE_ARB) {
+            if(state == WINED3DTADDRESS_WRAP) {
+                wrapParm = GL_CLAMP_TO_EDGE;
+            } else {
+                wrapParm = stateLookup[WINELOOKUP_WARPPARAM][state - minLookup[WINELOOKUP_WARPPARAM]];
+            }
         } else {
             wrapParm = stateLookup[WINELOOKUP_WARPPARAM][state - minLookup[WINELOOKUP_WARPPARAM]];
         }

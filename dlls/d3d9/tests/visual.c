@@ -6057,6 +6057,124 @@ static void test_vshader_float16(IDirect3DDevice9 *device)
     IDirect3DVertexBuffer9_Release(buffer);
 }
 
+static void conditional_np2_repeat_test(IDirect3DDevice9 *device)
+{
+    D3DCAPS9 caps;
+    IDirect3DTexture9 *texture;
+    HRESULT hr;
+    D3DLOCKED_RECT rect;
+    unsigned int x, y;
+    DWORD *dst, color;
+    const float quad[] = {
+        -1.0,   -1.0,   0.1,   -0.2,   -0.2,
+         1.0,   -1.0,   0.1,    1.2,   -0.2,
+        -1.0,    1.0,   0.1,   -0.2,    1.2,
+         1.0,    1.0,   0.1,    1.2,    1.2
+    };
+    memset(&caps, 0, sizeof(caps));
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed hr=%s\n", DXGetErrorString9(hr));
+    if(!(caps.TextureCaps & D3DPTEXTURECAPS_POW2)) {
+        /* NP2 conditional requires the POW2 flag. Check that while we're at it */
+        ok((caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL) == 0,
+           "Card has conditional NP2 support without power of two restriction set\n");
+        skip("Card has unconditional pow2 support, skipping conditional NP2 tests\n");
+        return;
+    } else if(!(caps.TextureCaps & D3DPTEXTURECAPS_POW2)) {
+        skip("No conditional NP2 support, skipping conditional NP2 tests\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_CreateTexture(device, 10, 10, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed hr=%s\n", DXGetErrorString9(hr));
+
+    memset(&rect, 0, sizeof(rect));
+    hr = IDirect3DTexture9_LockRect(texture, 0, &rect, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_LockRect failed hr=%s\n", DXGetErrorString9(hr));
+    for(y = 0; y < 10; y++) {
+        for(x = 0; x < 10; x++) {
+            dst = (DWORD *) ((BYTE *) rect.pBits + y * rect.Pitch + x * sizeof(DWORD));
+            if(x == 0 || x == 9 || y == 0 || y == 9) {
+                *dst = 0x00ff0000;
+            } else {
+                *dst = 0x000000ff;
+            }
+        }
+    }
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_UnlockRect failed hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed, hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed hr=%s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(float) * 5);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed hr=%s\n", DXGetErrorString9(hr));
+    }
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    color = getPixelColor(device,    1,  1);
+    ok(color == 0x00ff0000, "NP2: Pixel   1,  1 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 639, 479);
+    ok(color == 0x00ff0000, "NP2: Pixel 639, 479 has color %08x, expected 0x00ff0000\n", color);
+
+    color = getPixelColor(device, 135, 101);
+    ok(color == 0x00ff0000, "NP2: Pixel 135, 101 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 140, 101);
+    ok(color == 0x00ff0000, "NP2: Pixel 140, 101 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 135, 105);
+    ok(color == 0x00ff0000, "NP2: Pixel 135, 105 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 140, 105);
+    ok(color == 0x000000ff, "NP2: Pixel 140, 105 has color %08x, expected 0x000000ff\n", color);
+
+    color = getPixelColor(device, 135, 376);
+    ok(color == 0x00ff0000, "NP2: Pixel 135, 376 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 140, 376);
+    ok(color == 0x000000ff, "NP2: Pixel 140, 376 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 135, 379);
+    ok(color == 0x00ff0000, "NP2: Pixel 135, 379 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 140, 379);
+    ok(color == 0x00ff0000, "NP2: Pixel 140, 379 has color %08x, expected 0x00ff0000\n", color);
+
+    color = getPixelColor(device, 500, 101);
+    ok(color == 0x00ff0000, "NP2: Pixel 500, 101 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 504, 101);
+    ok(color == 0x00ff0000, "NP2: Pixel 504, 101 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 500, 105);
+    ok(color == 0x000000ff, "NP2: Pixel 500, 105 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 504, 105);
+    ok(color == 0x00ff0000, "NP2: Pixel 504, 105 has color %08x, expected 0x00ff0000\n", color);
+
+    color = getPixelColor(device, 500, 376);
+    ok(color == 0x000000ff, "NP2: Pixel 500, 376 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 504, 376);
+    ok(color == 0x00ff0000, "NP2: Pixel 504, 376 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 500, 380);
+    ok(color == 0x00ff0000, "NP2: Pixel 500, 380 has color %08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 504, 380);
+    ok(color == 0x00ff0000, "NP2: Pixel 504, 380 has color %08x, expected 0x00ff0000\n", color);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%s\n", DXGetErrorString9(hr));
+    IDirect3DTexture9_Release(texture);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -6138,6 +6256,7 @@ START_TEST(visual)
     texture_transform_flags_test(device_ptr);
     autogen_mipmap_test(device_ptr);
     fixed_function_decl_test(device_ptr);
+    conditional_np2_repeat_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
