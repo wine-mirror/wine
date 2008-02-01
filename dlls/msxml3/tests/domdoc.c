@@ -719,7 +719,7 @@ static void test_domnode( void )
         V_VT(&var) = VT_I4;
         V_I4(&var) = 0x1234;
         r = IXMLDOMElement_getAttribute( element, str, &var );
-        ok( r == S_FALSE, "getAttribute ret %08x\n", r );
+        ok( r == E_FAIL, "getAttribute ret %08x\n", r );
         ok( V_VT(&var) == VT_NULL, "vt = %x\n", V_VT(&var));
         VariantClear(&var);
         SysFreeString( str );
