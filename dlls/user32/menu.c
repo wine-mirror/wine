@@ -4252,7 +4252,7 @@ END:
  *           EndMenu   (USER.187)
  *           EndMenu   (USER32.@)
  */
-void WINAPI EndMenu(void)
+BOOL WINAPI EndMenu(void)
 {
     /* if we are in the menu code, and it is active */
     if (!fEndMenu && top_popup)
@@ -4266,6 +4266,7 @@ void WINAPI EndMenu(void)
 	/* don't end up with an orphaned menu */
         PostMessageW( top_popup, WM_CANCELMODE, 0, 0);
     }
+    return fEndMenu;
 }
 
 
