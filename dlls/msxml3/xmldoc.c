@@ -453,6 +453,9 @@ static HRESULT WINAPI xmldoc_createElement(IXMLDocument *iface, VARIANT vType,
     if (V_VT(&vType) != VT_I4)
         return E_INVALIDARG;
 
+    if(type_msxml_to_libxml(V_I4(&vType)) == -1)
+        return E_NOTIMPL;
+
     node = xmlNewNode(NULL, empty);
     node->type = type_msxml_to_libxml(V_I4(&vType));
 
