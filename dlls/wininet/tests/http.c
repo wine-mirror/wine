@@ -1502,7 +1502,10 @@ static void test_header_handling_order(int port)
     request = HttpOpenRequest(connect, NULL, "/test3", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
     ok(request != NULL, "HttpOpenRequest failed\n");
 
-    ret = HttpSendRequest(request, authorization, ~0UL, NULL, 0);
+    ret = HttpAddRequestHeaders(request, authorization, ~0UL, HTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "HttpAddRequestHeaders failed\n");
+
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
     status = 0;

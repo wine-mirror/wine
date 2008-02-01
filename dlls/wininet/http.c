@@ -1187,9 +1187,11 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
  *
  *   Insert or delete the authorization field in the request header.
  */
-static BOOL HTTP_InsertAuthorizationForHeader( LPWININETHTTPREQW lpwhr, struct HttpAuthInfo *pAuthInfo, LPCWSTR header )
+static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR header, BOOL first )
 {
     WCHAR *authorization = NULL;
+    struct HttpAuthInfo *pAuthInfo = lpwhr->pAuthInfo;
+    DWORD flags;
 
     if (pAuthInfo && pAuthInfo->auth_data_len)
     {
@@ -1222,32 +1224,14 @@ static BOOL HTTP_InsertAuthorizationForHeader( LPWININETHTTPREQW lpwhr, struct H
 
     TRACE("Inserting authorization: %s\n", debugstr_w(authorization));
 
-    HTTP_ProcessHeader(lpwhr, header, authorization,
-                       HTTP_ADDHDR_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+    /* make sure not to overwrite any caller supplied authorization header */
+    flags = HTTP_ADDHDR_FLAG_REQ;
+    flags |= first ? HTTP_ADDHDR_FLAG_ADD_IF_NEW : HTTP_ADDHDR_FLAG_REPLACE;
+
+    HTTP_ProcessHeader(lpwhr, header, authorization, flags);
 
     HeapFree(GetProcessHeap(), 0, authorization);
-
     return TRUE;
-}
-
-/***********************************************************************
- *  HTTP_InsertAuthorization
- *
- *   Insert the authorization field in the request header
- */
-static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr )
-{
-    return HTTP_InsertAuthorizationForHeader(lpwhr, lpwhr->pAuthInfo, szAuthorization);
-}
-
-/***********************************************************************
- *  HTTP_InsertProxyAuthorization
- *
- *   Insert the proxy authorization field in the request header
- */
-static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr )
-{
-    return HTTP_InsertAuthorizationForHeader(lpwhr, lpwhr->pProxyAuthInfo, szProxy_Authorization);
 }
 
 /***********************************************************************
@@ -2621,8 +2605,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                            lpwhr->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION ? szKeepAlive : szClose,
                            HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
 
-        HTTP_InsertAuthorization(lpwhr);
-        HTTP_InsertProxyAuthorization(lpwhr);
+        HTTP_InsertAuthorization(lpwhr, szAuthorization, !loop_next);
+        HTTP_InsertAuthorization(lpwhr, szProxy_Authorization, !loop_next);
 
         /* add the headers the caller supplied */
         if( lpszHeaders && dwHeaderLength )
