@@ -2365,7 +2365,9 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 5 * sizeof(float));
         ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
 
-        /* What does this mean? Not sure... */
+        /* D3DTFF_COUNT1 does not work on Nvidia drivers. It behaves like D3DTTFF_DISABLE. On ATI drivers
+         * it behaves like COUNT2 because normal textures require 2 coords
+         */
         IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT1);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, 5 * sizeof(float));
@@ -2398,9 +2400,11 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 160, 120);
     ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
     color = getPixelColor(device, 480, 120);
-    ok(color == 0x00ff8000 || color == 0x00fe7f00, "quad 3 has color %08x, expected 0x00ff8000\n", color);
+    ok(color == 0x00ff8000 || color == 0x00fe7f00 || color == 0x00000000,
+       "quad 3 has color %08x, expected 0x00ff8000\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color == 0x0033cc00 || color == 0x0032cb00, "quad 4 has color %08x, expected 0x0033cc00\n", color);
+    ok(color == 0x0033cc00 || color == 0x0032cb00 || color == 0x00FF0000 || color == 0x00FE0000,
+       "quad 4 has color %08x, expected 0x0033cc00\n", color);
 
     IDirect3DTexture9_Release(texture);
 
@@ -2479,9 +2483,9 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
              1.0,       0.0,       0.1,     1.0,    1.0,    1.0
         };
         float mat[16] = {1.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 1.0, 0.0,
-                          0.0, 1.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 1.0};
+                         0.0, 0.0, 1.0, 0.0,
+                         0.0, 1.0, 0.0, 0.0,
+                         0.0, 0.0, 0.0, 1.0};
         hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
 
@@ -2498,7 +2502,8 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
         /* Now disable the w coordinate. Does that change the input, or the output. The coordinates
          * are swapped by the matrix. If it changes the input, the v coord will be missing(green),
          * otherwise the w will be missing(blue).
-         * turns out that the blue color is missing, so it is an output modification
+         * turns out that on nvidia cards the blue color is missing, so it is an output modification.
+         * On ATI cards the COUNT2 is ignored, and it behaves in the same way as COUNT3.
          */
         IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
@@ -2515,7 +2520,9 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 5 * sizeof(float));
         ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
 
-        /* D3DTTFF_COUNT1. Set a NULL matrix, and count1, pass in all values as 1.0 */
+        /* D3DTTFF_COUNT1. Set a NULL matrix, and count1, pass in all values as 1.0. Nvidia has count1 ==
+         * disable. ATI extends it up to the amount of values needed for the volume texture
+         */
         memset(mat, 0, sizeof(mat));
         hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
@@ -2535,11 +2542,12 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 160, 360);
     ok(color == 0x00ffffff, "quad 1 has color %08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 160, 120);
-    ok(color == 0x00ffff00, "quad 2 has color %08x, expected 0x00ffff00\n", color);
+    ok(color == 0x00ffff00 /* NV*/ || color == 0x00ffffff /* ATI */,
+       "quad 2 has color %08x, expected 0x00ffff00\n", color);
     color = getPixelColor(device, 480, 120);
     ok(color == 0x000000ff, "quad 3 has color %08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color == 0x00ffffff, "quad 4 has color %08x, expected 0x00ffffff\n", color);
+    ok(color == 0x00ffffff || color == 0x0000ff00, "quad 4 has color %08x, expected 0x00ffffff\n", color);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff303030, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
