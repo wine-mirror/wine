@@ -1385,6 +1385,33 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
     return packet_ok; /* FIXME: error while writing ? */
 }
 
+static enum packet_return packet_read_register(struct gdb_context* gdbctx)
+{
+    unsigned            reg;
+    CONTEXT             ctx;
+    CONTEXT*            pctx = &gdbctx->context;
+
+    assert(gdbctx->in_trap);
+    reg = hex_to_int(gdbctx->in_packet, gdbctx->in_packet_len);
+    if (reg >= cpu_num_regs)
+    {
+        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
+            fprintf(stderr, "Register out of bounds %x (%x)\n", reg, cpu_num_regs);
+        return packet_error;
+    }
+    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
+    {
+        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
+            return packet_error;
+    }
+    if (gdbctx->trace & GDBPXY_TRC_COMMAND)
+        fprintf(stderr, "Read register %x => %lx\n", reg, *cpu_register(pctx, reg));
+    packet_reply_open(gdbctx);
+    packet_reply_hex_to(gdbctx, cpu_register(pctx, reg), 4);
+    packet_reply_close(gdbctx);
+    return packet_done;
+}
+
 static enum packet_return packet_write_register(struct gdb_context* gdbctx)
 {
     unsigned            reg;
@@ -1931,7 +1958,7 @@ static struct packet_entry packet_entries[] =
         {'H', packet_thread},
         {'m', packet_read_memory},
         {'M', packet_write_memory},
-        /* {'p', packet_read_register}, doesn't seem needed */
+        {'p', packet_read_register},
         {'P', packet_write_register},
         {'q', packet_query},
         /* {'Q', packet_set}, */
