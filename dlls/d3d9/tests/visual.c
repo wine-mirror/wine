@@ -3079,7 +3079,8 @@ static void x8l8v8u8_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
     color = getPixelColor(device, 578, 430);
-    ok(color == 0x008262ca || color == 0x008363ca, "D3DFMT_X8L8V8U8 = 0x112131ca returns color %08x, expected 0x008262ca\n", color);
+    ok(color == 0x008262ca || color == 0x008363ca || color == 0x008362ca,
+       "D3DFMT_X8L8V8U8 = 0x112131ca returns color %08x, expected 0x008262ca\n", color);
 
     hr = IDirect3DDevice9_SetPixelShader(device, shader2);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed (%08x)\n", hr);
