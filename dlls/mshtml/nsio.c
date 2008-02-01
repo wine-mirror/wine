@@ -1465,14 +1465,31 @@ static nsresult NSAPI nsURI_GetPath(nsIWineURI *iface, nsACString *aPath)
 static nsresult NSAPI nsURI_SetPath(nsIWineURI *iface, const nsACString *aPath)
 {
     nsURI *This = NSURI_THIS(iface);
+    const char *path;
 
-    TRACE("(%p)->(%p)\n", This, aPath);
+    nsACString_GetData(aPath, &path);
+    TRACE("(%p)->(%p(%s))\n", This, aPath, debugstr_a(path));
 
-    if(This->uri)
-        return nsIURI_SetPath(This->uri, aPath);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(This->wine_url) {
+        WCHAR new_url[INTERNET_MAX_URL_LENGTH];
+        DWORD size = sizeof(new_url)/sizeof(WCHAR);
+        LPWSTR pathw;
+        HRESULT hres;
+
+        pathw = heap_strdupAtoW(path);
+        hres = UrlCombineW(This->wine_url, pathw, new_url, &size, 0);
+        heap_free(pathw);
+        if(SUCCEEDED(hres))
+            nsIWineURI_SetWineURL(NSWINEURI(This), new_url);
+        else
+            WARN("UrlCombine failed: %08x\n", hres);
+    }
+
+    if(!This->uri)
+        return NS_OK;
+
+    return nsIURI_SetPath(This->uri, aPath);
 }
 
 static nsresult NSAPI nsURI_Equals(nsIWineURI *iface, nsIURI *other, PRBool *_retval)
