@@ -156,7 +156,7 @@ static WCHAR szCDataXML[] = {'<','!','[','C','D','A','T','A','[','[','1',']','*'
 static WCHAR szCDataNodeText[] = {'#','c','d','a','t','a','-','s','e','c','t','i','o','n',0 };
 static WCHAR szDocFragmentText[] = {'#','d','o','c','u','m','e','n','t','-','f','r','a','g','m','e','n','t',0 };
 
-static WCHAR szEntityRef[] = {'E','n','t','i','t','y','r','e','f',0 };
+static WCHAR szEntityRef[] = {'e','n','t','i','t','y','r','e','f',0 };
 static WCHAR szEntityRefXML[] = {'&','e','n','t','i','t','y','r','e','f',';',0 };
 
 #define expect_bstr_eq_and_free(bstr, expect) { \
@@ -2298,7 +2298,7 @@ static void test_xmlTypes(void)
                 /* test get_xml*/
                 hr = IXMLDOMEntityReference_get_xml(pEntityRef, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                todo_wine ok( !lstrcmpW( str, szEntityRefXML ), "incorrect xml string\n");
+                ok( !lstrcmpW( str, szEntityRefXML ), "incorrect xml string\n");
                 SysFreeString(str);
 
                 IXMLDOMEntityReference_Release(pEntityRef);
