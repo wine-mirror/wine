@@ -2643,7 +2643,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
             /* Windows only supports one 24bpp DIB format: RGB888 */
             srcbits+=left*3;
             for (h = lines - 1; h >= 0; h--) {
-                srcbyte=(const BYTE*)srcbits;
+                srcbyte = srcbits;
                 for (x = left; x < width+left; x++) {
                     XPutPixel(bmpImage, x, h,
                               X11DRV_PALETTE_ToPhysical

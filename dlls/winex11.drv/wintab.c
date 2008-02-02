@@ -602,7 +602,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                 cursor->TYPE = CSR_TYPE_ERASER;
 
 
-            any = (XAnyClassPtr) (target->inputclassinfo);
+            any = target->inputclassinfo;
 
             for (class_loop = 0; class_loop < target->num_classes; class_loop++)
             {

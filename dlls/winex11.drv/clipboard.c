@@ -1648,7 +1648,7 @@ HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Window requestor, Atom aTarget, Atom rpro
     memcpy(lpData, &lpdata->drvData, *lpBytes);
     GlobalUnlock(hData);
 
-    return (HANDLE) hData;
+    return hData;
 }
 
 
@@ -1666,8 +1666,7 @@ HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Window requestor, Atom aTarget, Atom 
         return 0;
     }
 
-    return X11DRV_CLIPBOARD_SerializeMetafile(CF_METAFILEPICT, (HANDLE)lpdata->hData32, 
-        lpBytes, TRUE);
+    return X11DRV_CLIPBOARD_SerializeMetafile(CF_METAFILEPICT, lpdata->hData32, lpBytes, TRUE);
 }
 
 
@@ -1685,8 +1684,7 @@ HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Window requestor, Atom aTarget, Atom r
         return 0;
     }
 
-    return X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, (HANDLE)lpdata->hData32, 
-        lpBytes, TRUE);
+    return X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, lpdata->hData32, lpBytes, TRUE);
 }
 
 
@@ -2136,7 +2134,7 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
                 unsigned int wiresize, size;
                 LPMETAFILEPICT lpmfp = (LPMETAFILEPICT) GlobalLock(h);
 
-                memcpy(lpmfp, (LPVOID)hdata, sizeof(METAFILEPICT));
+                memcpy(lpmfp, hdata, sizeof(METAFILEPICT));
                 wiresize = *lpcbytes - sizeof(METAFILEPICT);
                 lpmfp->hMF = SetMetaFileBitsEx(wiresize,
                     ((const BYTE *)hdata) + sizeof(METAFILEPICT));
@@ -2146,7 +2144,7 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
         }
         else if (wformat == CF_ENHMETAFILE)
         {
-            h = SetEnhMetaFileBits(*lpcbytes, (LPVOID)hdata);
+            h = SetEnhMetaFileBits(*lpcbytes, hdata);
         }
     }
 
@@ -2990,7 +2988,7 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
 
                     wine_tsx11_lock();
                     XChangeProperty(display, request, rprop, event->target,
-                                    8, PropModeReplace, (unsigned char *)lpClipData, cBytes);
+                                    8, PropModeReplace, lpClipData, cBytes);
                     wine_tsx11_unlock();
 
                     GlobalUnlock(hClipData);

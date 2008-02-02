@@ -834,8 +834,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
       if( lpDrop ) {
           WND *pDropWnd = WIN_GetPtr( hWnd );
 	  lpDrop->pFiles = sizeof(DROPFILES);
-	  lpDrop->pt.x = (INT)x;
-	  lpDrop->pt.y = (INT)y;
+	  lpDrop->pt.x = x;
+	  lpDrop->pt.y = y;
 	  lpDrop->fNC =
 	    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
 	      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||

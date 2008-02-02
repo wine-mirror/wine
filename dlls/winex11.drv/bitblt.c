@@ -681,8 +681,8 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
     register INT x, y;
     BOOL hstretch, vstretch, hswap, vswap;
 
-    hswap = ((int)widthSrc * widthDst) < 0;
-    vswap = ((int)heightSrc * heightDst) < 0;
+    hswap = widthSrc * widthDst < 0;
+    vswap = heightSrc * heightDst < 0;
     widthSrc  = abs(widthSrc);
     heightSrc = abs(heightSrc);
     widthDst  = abs(widthDst);
@@ -708,7 +708,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
 
     if (hstretch)
     {
-        xinc = ((int)widthSrc << 16) / widthDst;
+        xinc = (widthSrc << 16) / widthDst;
         xoff = ((widthSrc << 16) - (xinc * widthDst)) / 2;
     }
     else
@@ -720,7 +720,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
     wine_tsx11_lock();
     if (vstretch)
     {
-        yinc = ((int)heightSrc << 16) / heightDst;
+        yinc = (heightSrc << 16) / heightDst;
         ydst = visRectDst->top;
         if (vswap)
         {
@@ -778,7 +778,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
     }
     else  /* Shrinking */
     {
-        yinc = ((int)heightDst << 16) / heightSrc;
+        yinc = (heightDst << 16) / heightSrc;
         ysrc = visRectSrc->top;
         ydst = ((heightDst << 16) - (yinc * heightSrc)) / 2;
         if (vswap)

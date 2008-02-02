@@ -476,14 +476,14 @@ LOAD_FUNCPTR(glXFreeMemoryNV)
      */
 
     if(glxRequireVersion(3)) {
-        pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
-        pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
-        pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
-        pglXQueryDrawable = (void*)pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
+        pglXChooseFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
+        pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
+        pglXGetVisualFromFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
+        pglXQueryDrawable = pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
     } else if(glxRequireExtension("GLX_SGIX_fbconfig")) {
-        pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfigSGIX");
-        pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttribSGIX");
-        pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfigSGIX");
+        pglXChooseFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfigSGIX");
+        pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttribSGIX");
+        pglXGetVisualFromFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfigSGIX");
 
         /* The mesa libGL client library seems to forward glXQueryDrawable to the Xserver, so only
          * enable this function when the Xserver understand GLX 1.3 or newer
@@ -491,10 +491,10 @@ LOAD_FUNCPTR(glXFreeMemoryNV)
         pglXQueryDrawable = NULL;
      } else if(strcmp("ATI", WineGLInfo.glxClientVendor) == 0) {
         TRACE("Overriding ATI GLX capabilities!\n");
-        pglXChooseFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
-        pglXGetFBConfigAttrib = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
-        pglXGetVisualFromFBConfig = (void*)pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
-        pglXQueryDrawable = (void*)pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
+        pglXChooseFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXChooseFBConfig");
+        pglXGetFBConfigAttrib = pglXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttrib");
+        pglXGetVisualFromFBConfig = pglXGetProcAddressARB((const GLubyte *) "glXGetVisualFromFBConfig");
+        pglXQueryDrawable = pglXGetProcAddressARB((const GLubyte *) "glXQueryDrawable");
 
         /* Use client GLX information in case of the ATI drivers. We override the
          * capabilities over here and not somewhere else as ATI might better their
@@ -507,13 +507,13 @@ LOAD_FUNCPTR(glXFreeMemoryNV)
 
     if(glxRequireExtension("GLX_ATI_render_texture")) {
         use_render_texture_ati = 1;
-        pglXBindTexImageATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXBindTexImageATI");
-        pglXReleaseTexImageATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXReleaseTexImageATI");
-        pglXDrawableAttribATI = (void*)pglXGetProcAddressARB((const GLubyte *) "glXDrawableAttribATI");
+        pglXBindTexImageATI = pglXGetProcAddressARB((const GLubyte *) "glXBindTexImageATI");
+        pglXReleaseTexImageATI = pglXGetProcAddressARB((const GLubyte *) "glXReleaseTexImageATI");
+        pglXDrawableAttribATI = pglXGetProcAddressARB((const GLubyte *) "glXDrawableAttribATI");
     }
 
     if(glxRequireExtension("GLX_MESA_copy_sub_buffer")) {
-        pglXCopySubBufferMESA = (void*)pglXGetProcAddressARB((const GLubyte *) "glXCopySubBufferMESA");
+        pglXCopySubBufferMESA = pglXGetProcAddressARB((const GLubyte *) "glXCopySubBufferMESA");
     }
 
     X11DRV_WineGL_LoadExtensions();
@@ -1047,7 +1047,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     if (TRACE_ON(opengl)) {
         TRACE("(%p,%p)\n", physDev, ppfd);
 
-        dump_PIXELFORMATDESCRIPTOR((const PIXELFORMATDESCRIPTOR *) ppfd);
+        dump_PIXELFORMATDESCRIPTOR(ppfd);
     }
 
     wine_tsx11_lock();
@@ -1919,7 +1919,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
          pglNewList(listBase++, GL_COMPILE);
          if (needed_size != 0) {
              pglBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY,
-                     0 - (int) gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - (int) gm.gmptGlyphOrigin.y,
+                     0 - gm.gmptGlyphOrigin.x, (int) gm.gmBlackBoxY - gm.gmptGlyphOrigin.y,
                      gm.gmCellIncX, gm.gmCellIncY,
                      gl_bitmap);
          } else {
@@ -2320,7 +2320,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
 create_failed:
     HeapFree(GetProcessHeap(), 0, object);
     TRACE("->(FAILED)\n");
-    return (HPBUFFERARB) NULL;
+    return NULL;
 }
 
 /**
