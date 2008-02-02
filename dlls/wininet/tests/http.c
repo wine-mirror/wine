@@ -1285,8 +1285,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
 
         if (strstr(buffer, "GET /test1"))
         {
-            send(c, okmsg, sizeof okmsg-1, 0);
-            send(c, page1, sizeof page1-1, 0);
+            if (!strstr(buffer, "Content-Length: 0"))
+            {
+                send(c, okmsg, sizeof okmsg-1, 0);
+                send(c, page1, sizeof page1-1, 0);
+            }
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
         }
 
         if (strstr(buffer, "/test2"))
@@ -1316,7 +1321,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 send(c, notokmsg, sizeof notokmsg-1, 0);
         }
 
-        if (strstr(buffer, "/test5"))
+        if (strstr(buffer, "POST /test5"))
         {
             if (strstr(buffer, "Content-Length: 0"))
             {
@@ -1327,7 +1332,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 send(c, notokmsg, sizeof notokmsg-1, 0);
         }
 
-        if (strstr(buffer, "/quit"))
+        if (strstr(buffer, "GET /quit"))
         {
             send(c, okmsg, sizeof okmsg-1, 0);
             send(c, page1, sizeof page1-1, 0);
@@ -1343,7 +1348,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     return 0;
 }
 
-static void test_basic_request(int port, const char *url)
+static void test_basic_request(int port, const char *verb, const char *url)
 {
     HINTERNET hi, hc, hr;
     DWORD r, count;
@@ -1355,7 +1360,7 @@ static void test_basic_request(int port, const char *url)
     hc = InternetConnect(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(hc != NULL, "connect failed\n");
 
-    hr = HttpOpenRequest(hc, NULL, url, NULL, NULL, NULL, 0, 0);
+    hr = HttpOpenRequest(hc, verb, url, NULL, NULL, NULL, 0, 0);
     ok(hr != NULL, "HttpOpenRequest failed\n");
 
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
@@ -1550,14 +1555,14 @@ static void test_http_connection(void)
     if (r != WAIT_OBJECT_0)
         return;
 
-    test_basic_request(si.port, "/test1");
+    test_basic_request(si.port, "GET", "/test1");
     test_proxy_indirect(si.port);
     test_proxy_direct(si.port);
     test_header_handling_order(si.port);
-    test_basic_request(si.port, "/test5");
+    test_basic_request(si.port, "POST", "/test5");
 
     /* send the basic request again to shutdown the server thread */
-    test_basic_request(si.port, "/quit");
+    test_basic_request(si.port, "GET", "/quit");
 
     r = WaitForSingleObject(hThread, 3000);
     ok( r == WAIT_OBJECT_0, "thread wait failed\n");

@@ -2565,6 +2565,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     BOOL loop_next;
     INTERNET_ASYNC_RESULT iar;
     static const WCHAR szClose[] = { 'C','l','o','s','e',0 };
+    static const WCHAR szPost[] = { 'P','O','S','T',0 };
     static const WCHAR szContentLength[] =
         { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0 };
     WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \r\n */ + 20 /* int */ ];
@@ -2577,9 +2578,11 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     INTERNET_SetLastError(0);
 
     HTTP_FixVerb(lpwhr);
-    
-    sprintfW(contentLengthStr, szContentLength, dwContentLength);
-    HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
+    if (dwContentLength || !strcmpW(lpwhr->lpszVerb, szPost))
+    {
+        sprintfW(contentLengthStr, szContentLength, dwContentLength);
+        HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
+    }
 
     do
     {
