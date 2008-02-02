@@ -21275,6 +21275,14 @@ ac_config_files="$ac_config_files dlls/d3dx9_30/Makefile"
 
 ac_config_files="$ac_config_files dlls/d3dx9_31/Makefile"
 
+ac_config_files="$ac_config_files dlls/d3dx9_32/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3dx9_33/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3dx9_34/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3dx9_35/Makefile"
+
 ac_config_files="$ac_config_files dlls/d3dx9_36/Makefile"
 
 ac_config_files="$ac_config_files dlls/d3dxof/Makefile"
@@ -22571,6 +22579,10 @@ do
     "dlls/d3dx9_29/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_29/Makefile" ;;
     "dlls/d3dx9_30/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_30/Makefile" ;;
     "dlls/d3dx9_31/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_31/Makefile" ;;
+    "dlls/d3dx9_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_32/Makefile" ;;
+    "dlls/d3dx9_33/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_33/Makefile" ;;
+    "dlls/d3dx9_34/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_34/Makefile" ;;
+    "dlls/d3dx9_35/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_35/Makefile" ;;
     "dlls/d3dx9_36/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dx9_36/Makefile" ;;
     "dlls/d3dxof/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3dxof/Makefile" ;;
     "dlls/dbghelp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dbghelp/Makefile" ;;
