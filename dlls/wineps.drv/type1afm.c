@@ -861,7 +861,7 @@ static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
 	{
 	    if (metrics[i].C >= 0x20 && metrics[i].C <= 0xff)
 	    {
-	    	metrics[i].UV = ((LONG)(metrics[i].C)) | 0xf000L;
+		metrics[i].UV = metrics[i].C | 0xf000L;
 	    }
 	    else
 	    {

@@ -550,8 +550,8 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       LONG *lp = (LONG*)lpszOutput;
 
       if(lpszOutput != NULL) {
-	lp[0] = (LONG)pi->ppd->DefaultResolution;
-	lp[1] = (LONG)pi->ppd->DefaultResolution;
+	lp[0] = pi->ppd->DefaultResolution;
+	lp[1] = pi->ppd->DefaultResolution;
       }
       return 1;
     }
