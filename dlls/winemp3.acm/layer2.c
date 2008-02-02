@@ -174,7 +174,7 @@ static void II_step_two(unsigned int *bit_alloc, real fraction[2][4][SBLIMIT],
           {
             static int *table[] = { 0,0,0,grp_3tab,0,grp_5tab,0,0,0,grp_9tab };
             unsigned int idx,*tab,m=scale[x1];
-            idx = (unsigned int) getbits(k);
+            idx = getbits(k);
             tab = (unsigned int *) (table[d1] + idx + idx + idx);
             fraction[j][0][i] = muls[*tab++][m];
             fraction[j][1][i] = muls[*tab++][m];
@@ -209,7 +209,7 @@ static void II_step_two(unsigned int *bit_alloc, real fraction[2][4][SBLIMIT],
           static int *table[] = { 0,0,0,grp_3tab,0,grp_5tab,0,0,0,grp_9tab };
           unsigned int idx,*tab,m1,m2;
           m1 = scale[x1]; m2 = scale[x1+3];
-          idx = (unsigned int) getbits(k);
+          idx = getbits(k);
           tab = (unsigned int *) (table[d1] + idx + idx + idx);
           fraction[0][0][i] = muls[*tab][m1]; fraction[1][0][i] = muls[*tab++][m2];
           fraction[0][1][i] = muls[*tab][m1]; fraction[1][1][i] = muls[*tab++][m2];

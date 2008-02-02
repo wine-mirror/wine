@@ -204,13 +204,13 @@ int decodeMP3(struct mpstr *mp,const unsigned char *in,int isize,unsigned char *
            getbits(16);
         switch(mp->fr.lay) {
           case 1:
-	    do_layer1(&mp->fr,(unsigned char *) out,done);
+	    do_layer1(&mp->fr,out,done);
             break;
           case 2:
-	    do_layer2(&mp->fr,(unsigned char *) out,done);
+	    do_layer2(&mp->fr,out,done);
             break;
           case 3:
-	    do_layer3(&mp->fr,(unsigned char *) out,done);
+	    do_layer3(&mp->fr,out,done);
             break;
         }
 
