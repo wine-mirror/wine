@@ -488,6 +488,12 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     return hr;
 }
 
+HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv)
+{
+    /* TODO: Attenmpt to use the VMR-7 renderer instead when possible */
+    return VideoRenderer_create(pUnkOuter, ppv);
+}
+
 static HRESULT WINAPI VideoRendererInner_QueryInterface(IUnknown * iface, REFIID riid, LPVOID * ppv)
 {
     ICOM_THIS_MULTI(VideoRendererImpl, IInner_vtbl, iface);

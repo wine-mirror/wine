@@ -69,6 +69,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_AviSplitter, AVISplitter_create },
     { &CLSID_MPEG1Splitter, MPEGSplitter_create },
     { &CLSID_VideoRenderer, VideoRenderer_create },
+    { &CLSID_VideoRendererDefault, VideoRendererDefault_create },
     { &CLSID_DSoundRender, DSoundRender_create },
     { &CLSID_AVIDec, AVIDec_create },
     { &CLSID_SystemClock, &QUARTZ_CreateSystemClock },
