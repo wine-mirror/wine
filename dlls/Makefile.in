@@ -49,6 +49,7 @@ BASEDIRS = \
 	d3dim \
 	d3drm \
 	d3dx8 \
+	d3dx9_24 \
 	d3dx9_36 \
 	d3dxof \
 	dbghelp \
