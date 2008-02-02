@@ -206,6 +206,8 @@ ALL_MAKEFILES = \
 	dlls/d3dx8/tests/Makefile \
 	dlls/d3dx9_24/Makefile \
 	dlls/d3dx9_25/Makefile \
+	dlls/d3dx9_26/Makefile \
+	dlls/d3dx9_27/Makefile \
 	dlls/d3dx9_36/Makefile \
 	dlls/d3dxof/Makefile \
 	dlls/dbghelp/Makefile \
@@ -607,6 +609,8 @@ dlls/d3dx8/Makefile: dlls/d3dx8/Makefile.in dlls/Makedll.rules
 dlls/d3dx8/tests/Makefile: dlls/d3dx8/tests/Makefile.in dlls/Maketest.rules
 dlls/d3dx9_24/Makefile: dlls/d3dx9_24/Makefile.in dlls/Makedll.rules
 dlls/d3dx9_25/Makefile: dlls/d3dx9_25/Makefile.in dlls/Makedll.rules
+dlls/d3dx9_26/Makefile: dlls/d3dx9_26/Makefile.in dlls/Makedll.rules
+dlls/d3dx9_27/Makefile: dlls/d3dx9_27/Makefile.in dlls/Makedll.rules
 dlls/d3dx9_36/Makefile: dlls/d3dx9_36/Makefile.in dlls/Makedll.rules
 dlls/d3dxof/Makefile: dlls/d3dxof/Makefile.in dlls/Makedll.rules
 dlls/dbghelp/Makefile: dlls/dbghelp/Makefile.in dlls/Makedll.rules
