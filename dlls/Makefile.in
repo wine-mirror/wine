@@ -53,6 +53,9 @@ BASEDIRS = \
 	d3dx9_25 \
 	d3dx9_26 \
 	d3dx9_27 \
+	d3dx9_28 \
+	d3dx9_29 \
+	d3dx9_30 \
 	d3dx9_36 \
 	d3dxof \
 	dbghelp \
