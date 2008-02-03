@@ -224,7 +224,7 @@ static path_test_t arc_path[] = {
     {187.9, 716.5, PathPointTypeBezier, 0, 0}, /*34*/
     {293.1, 841.8, PathPointTypeBezier, 0, 0}, /*35*/
     {450.9, 824.1, PathPointTypeBezier, 0, 0}, /*36*/
-    {540.4, 676.9, PathPointTypeBezier, 0, 0} /*37*/
+    {540.4, 676.9, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 1} /*37*/
     };
 
 static void test_arc(void)
