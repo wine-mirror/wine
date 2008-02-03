@@ -869,10 +869,7 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
     if (gcdrf == CDRF_DODEFAULT ||
         notify_customdraw(infoPtr, &nmcd, CDDS_PREERASE) != CDRF_SKIPDEFAULT) {
         if ((theme = GetWindowTheme (infoPtr->hwndSelf))) {
-            DrawThemeBackground (theme, hdc,
-                (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_VERT) ?
-                    TKP_TRACKVERT : TKP_TRACK, TKS_NORMAL, &rcClient, 0);
-            DrawThemeParentBackground (infoPtr->hwndSelf, hdc, &rcClient);
+            DrawThemeParentBackground (infoPtr->hwndSelf, hdc, 0);
         }
         else
 	    FillRect (hdc, &rcClient, GetSysColorBrush(COLOR_BTNFACE));
