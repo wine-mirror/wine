@@ -7763,7 +7763,7 @@ static BOOL LISTVIEW_DrawTrackLine(const LISTVIEW_INFO *infoPtr)
  * RETURN:
  *   None.
  */
-static CALLBACK VOID LISTVIEW_DelayedEditItem(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+static VOID CALLBACK LISTVIEW_DelayedEditItem(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
     DELAYED_ITEM_EDIT *editItem = (DELAYED_ITEM_EDIT *)idEvent;
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(hwnd, 0);
