@@ -1903,20 +1903,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
-        switch (CheckFormat) {
-        case WINED3DFMT_DXT1:
-        case WINED3DFMT_DXT2:
-        case WINED3DFMT_DXT3:
-        case WINED3DFMT_DXT4:
-        case WINED3DFMT_DXT5:
-          TRACE_(d3d_caps)("[OK]\n");
-          return WINED3D_OK;
-        default:
-            break; /* Avoid compiler warnings */
-        }
-    }
-
     /* Check for supported sRGB formats (Texture loading and framebuffer) */
     if (Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
         if(!GL_SUPPORT(EXT_TEXTURE_SRGB)) {
@@ -2035,14 +2021,19 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             WARN_(d3d_caps)("[FAILED]\n");
             return WINED3DERR_NOTAVAILABLE;
 
-        /*****
-         *  DXTN Formats: Handled above
-         * WINED3DFMT_DXT1
-         * WINED3DFMT_DXT2
-         * WINED3DFMT_DXT3
-         * WINED3DFMT_DXT4
-         * WINED3DFMT_DXT5
-         */
+        case WINED3DFMT_DXT1:
+        case WINED3DFMT_DXT2:
+        case WINED3DFMT_DXT3:
+        case WINED3DFMT_DXT4:
+        case WINED3DFMT_DXT5:
+            if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+            } else {
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
 
         /*****
          *  Odd formats - not supported
