@@ -1918,7 +1918,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     }
 
     /* Check for supported sRGB formats (Texture loading and framebuffer) */
-    if (GL_SUPPORT(EXT_TEXTURE_SRGB) && (Usage & WINED3DUSAGE_QUERY_SRGBREAD)) {
+    if (Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
+        if(!GL_SUPPORT(EXT_TEXTURE_SRGB)) {
+            TRACE_(d3d_caps)("[FAILED] GL_EXT_texture_sRGB not supported\n");
+        }
+
         switch (CheckFormat) {
             case WINED3DFMT_A8R8G8B8:
             case WINED3DFMT_X8R8G8B8:
@@ -1931,7 +1935,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             case WINED3DFMT_DXT4:
             case WINED3DFMT_DXT5:
                 TRACE_(d3d_caps)("[OK]\n");
-                return WINED3D_OK;
+                break; /* Continue with checking other flags */
 
             default:
                 TRACE_(d3d_caps)("[FAILED] Gamma texture format %s not supported.\n", debug_d3dformat(CheckFormat));
