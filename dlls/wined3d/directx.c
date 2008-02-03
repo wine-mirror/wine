@@ -1929,23 +1929,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
-    if (GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
-
-        BOOL half_pixel_support = GL_SUPPORT(ARB_HALF_FLOAT_PIXEL);
-
-        switch (CheckFormat) {
-            case WINED3DFMT_R16F:
-            case WINED3DFMT_A16B16G16R16F:
-                if (!half_pixel_support) break;
-            case WINED3DFMT_R32F:
-            case WINED3DFMT_A32B32G32R32F:
-                TRACE_(d3d_caps)("[OK]\n");
-                return WINED3D_OK;
-            default:
-                break; /* Avoid compiler warnings */
-        }
-    }
-
     /* This format is nothing special and it is supported perfectly.
      * However, ati and nvidia driver on windows do not mark this format as
      * supported (tested with the dxCapsViewer) and pretending to
@@ -2046,10 +2029,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             return WINED3DERR_NOTAVAILABLE;
 
         /*****
-         *  Float formats: Not supported right now
+         *  WINED3DFMT_CxV8U8: Not supported right now
          */
-        case WINED3DFMT_G16R16F:
-        case WINED3DFMT_G32R32F:
         case WINED3DFMT_CxV8U8:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return WINED3DERR_NOTAVAILABLE;
@@ -2058,6 +2039,31 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         case WINED3DFMT_A16B16G16R16:
         case WINED3DFMT_A8R3G3B2:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            return WINED3DERR_NOTAVAILABLE;
+
+            /* Floating point formats */
+        case WINED3DFMT_R16F:
+        case WINED3DFMT_A16B16G16R16F:
+            if(GL_SUPPORT(ARB_HALF_FLOAT_PIXEL)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+            } else {
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+        case WINED3DFMT_R32F:
+        case WINED3DFMT_A32B32G32R32F:
+            if (GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+            } else {
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
+        case WINED3DFMT_G16R16F:
+        case WINED3DFMT_G32R32F:
+            TRACE_(d3d_caps)("[FAILED]\n");
             return WINED3DERR_NOTAVAILABLE;
 
         /* ATI instancing hack: Although ATI cards do not support Shader Model 3.0, they support
