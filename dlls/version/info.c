@@ -252,6 +252,10 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, DWORD datasize, LP
     if(!hModule)
     {
 	WARN("Could not load %s\n", debugstr_w(filename));
+
+	if (GetLastError() == ERROR_BAD_EXE_FORMAT)
+	    return 0xFFFFFFFF;
+
 	return 0;
     }
     hRsrc = FindResourceW(hModule,

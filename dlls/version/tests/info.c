@@ -44,6 +44,18 @@
 	"ERROR_PATH_NOT_FOUND (NT4)/ERROR_FILE_NOT_FOUND (2k3)" \
 	"expected, got %u\n", GetLastError());
 
+static void create_file(const CHAR *name)
+{
+    HANDLE file;
+    DWORD written;
+
+    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
+    WriteFile(file, name, strlen(name), &written, NULL);
+    WriteFile(file, "\n", strlen("\n"), &written, NULL);
+    CloseHandle(file);
+}
+
 static void test_info_size(void)
 {   DWORD hdl, retval;
     char mypath[MAX_PATH] = "";
@@ -153,6 +165,19 @@ static void test_info_size(void)
     }
     else
 	trace("skipping GetModuleFileNameA(NULL,..) failed\n");
+
+    create_file("test.txt");
+
+    /* no version info */
+    SetLastError(0xdeadbeef);
+    hdl = 0xcafe;
+    retval = GetFileVersionInfoSizeA("test.txt", &hdl);
+    ok(retval == 0, "Expected 0, got %d\n", retval);
+    ok(hdl == 0, "Expected 0, got %d\n", hdl);
+    ok(GetLastError() == ERROR_RESOURCE_DATA_NOT_FOUND,
+       "Expected ERROR_RESOURCE_DATA_NOT_FOUND, got %d\n", GetLastError());
+
+    DeleteFileA("test.txt");
 }
 
 static void VersionDwordLong2String(DWORDLONG Version, LPSTR lpszVerString)
