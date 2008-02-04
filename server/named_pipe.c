@@ -772,11 +772,20 @@ static struct pipe_server *find_available_server( struct named_pipe *pipe )
 {
     struct pipe_server *server;
 
+    /* look for pipe servers that are listening */
     LIST_FOR_EACH_ENTRY( server, &pipe->servers, struct pipe_server, entry )
     {
-        if (server->state == ps_idle_server || server->state == ps_wait_open)
+        if (server->state == ps_wait_open)
             return (struct pipe_server *)grab_object( server );
     }
+
+    /* fall back to pipe servers that are idle */
+    LIST_FOR_EACH_ENTRY( server, &pipe->servers, struct pipe_server, entry )
+    {
+        if (server->state == ps_idle_server)
+            return (struct pipe_server *)grab_object( server );
+    }
+
     return NULL;
 }
 
