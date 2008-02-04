@@ -989,8 +989,8 @@ out:
                          ptr = ((D3DINSTRUCTION*)(ptr))+1; } while (0)
 
 #define EXEBUF_PUT_RENDER_STATE(state, value, ptr) do {\
-                         ((D3DSTATE*)(ptr))->drstRenderStateType = state;\
-                         ((D3DSTATE*)(ptr))->dwArg[0] = value;\
+                         U1(*((D3DSTATE*)(ptr))).drstRenderStateType = state; \
+                         U2(*((D3DSTATE*)(ptr))).dwArg[0] = value; \
                          ptr = ((D3DSTATE*)(ptr))+1; } while (0)
 
 #define EXEBUF_PUT_PROCESSVERTICES(nvertices, ptr) do {\
@@ -1016,14 +1016,14 @@ out:
                          ((D3DINSTRUCTION*)(ptr))->bSize = sizeof(D3DTRIANGLE);\
                          ((D3DINSTRUCTION*)(ptr))->wCount = 2;\
                          ptr = ((D3DINSTRUCTION*)(ptr))+1;\
-                         ((D3DTRIANGLE*)(ptr))->v1 = base_idx;\
-                         ((D3DTRIANGLE*)(ptr))->v2 = (base_idx) + 1;\
-                         ((D3DTRIANGLE*)(ptr))->v3 = (base_idx) + 3;\
+                         U1(*((D3DTRIANGLE*)(ptr))).v1 = base_idx;\
+                         U2(*((D3DTRIANGLE*)(ptr))).v2 = (base_idx) + 1; \
+                         U3(*((D3DTRIANGLE*)(ptr))).v3 = (base_idx) + 3; \
                          ((D3DTRIANGLE*)(ptr))->wFlags = 0;\
                          ptr = ((D3DTRIANGLE*)ptr)+1;\
-                         ((D3DTRIANGLE*)(ptr))->v1 = (base_idx) + 1;\
-                         ((D3DTRIANGLE*)(ptr))->v2 = (base_idx) + 2;\
-                         ((D3DTRIANGLE*)(ptr))->v3 = (base_idx) + 3;\
+                         U1(*((D3DTRIANGLE*)(ptr))).v1 = (base_idx) + 1; \
+                         U2(*((D3DTRIANGLE*)(ptr))).v2 = (base_idx) + 2; \
+                         U3(*((D3DTRIANGLE*)(ptr))).v3 = (base_idx) + 3; \
                          ((D3DTRIANGLE*)(ptr))->wFlags = 0;\
                          ptr = ((D3DTRIANGLE*)(ptr))+1;\
                         } while (0)
@@ -1103,14 +1103,14 @@ static void D3D1_TextureMapBlendTest(void)
 
     memset(&ddbltfx, 0, sizeof(ddbltfx));
     ddbltfx.dwSize = sizeof(ddbltfx);
-    ddbltfx.dwFillColor	= 0;
+    U5(ddbltfx).dwFillColor = 0;
     hr = IDirectDrawSurface_Blt(Surface1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
 
-    ddbltfx.dwFillColor	= 0xff0000ff;
+    U5(ddbltfx).dwFillColor = 0xff0000ff;
     hr = IDirectDrawSurface_Blt(TexSurface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
-    ddbltfx.dwFillColor	= 0x800000ff;
+    U5(ddbltfx).dwFillColor = 0x800000ff;
     hr = IDirectDrawSurface_Blt(TexSurface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
 
@@ -1235,14 +1235,14 @@ static void D3D1_TextureMapBlendTest(void)
 
     memset(&ddbltfx, 0, sizeof(ddbltfx));
     ddbltfx.dwSize = sizeof(ddbltfx);
-    ddbltfx.dwFillColor	= 0;
+    U5(ddbltfx).dwFillColor = 0;
     hr = IDirectDrawSurface_Blt(Surface1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
 
-    ddbltfx.dwFillColor	= 0xff0000ff;
+    U5(ddbltfx).dwFillColor = 0xff0000ff;
     hr = IDirectDrawSurface_Blt(TexSurface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
-    ddbltfx.dwFillColor	= 0x800000ff;
+    U5(ddbltfx).dwFillColor = 0x800000ff;
     hr = IDirectDrawSurface_Blt(TexSurface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
 
@@ -1356,14 +1356,14 @@ static void D3D1_TextureMapBlendTest(void)
 
     memset(&ddbltfx, 0, sizeof(ddbltfx));
     ddbltfx.dwSize = sizeof(ddbltfx);
-    ddbltfx.dwFillColor	= 0;
+    U5(ddbltfx).dwFillColor = 0;
     hr = IDirectDrawSurface_Blt(Surface1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
 
-    ddbltfx.dwFillColor	= 0x00ffffff;
+    U5(ddbltfx).dwFillColor = 0x00ffffff;
     hr = IDirectDrawSurface_Blt(TexSurface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
-    ddbltfx.dwFillColor	= 0x00ffff80;
+    U5(ddbltfx).dwFillColor = 0x00ffff80;
     hr = IDirectDrawSurface_Blt(TexSurface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
 
@@ -1478,13 +1478,13 @@ static void D3D1_TextureMapBlendTest(void)
 
     memset(&ddbltfx, 0, sizeof(ddbltfx));
     ddbltfx.dwSize = sizeof(ddbltfx);
-    ddbltfx.dwFillColor	= 0;
+    U5(ddbltfx).dwFillColor = 0;
     hr = IDirectDrawSurface_Blt(Surface1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
-    ddbltfx.dwFillColor	= 0xf800;
+    U5(ddbltfx).dwFillColor = 0xf800;
     hr = IDirectDrawSurface_Blt(TexSurface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
-    ddbltfx.dwFillColor	= 0x001f;
+    U5(ddbltfx).dwFillColor = 0x001f;
     hr = IDirectDrawSurface_Blt(TexSurface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
 
