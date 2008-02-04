@@ -1611,7 +1611,8 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
         ret = GetLastError();
         goto end;
     }
-    if( lpVersionBuf && pcchVersionBuf && *pcchVersionBuf )
+
+    if (pcchVersionBuf)
     {
         if( VerQueryValueW(lpVer, szVersionResource, (LPVOID*)&ffi, &puLen) &&
             (puLen > 0) )
@@ -1619,24 +1620,24 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
             wsprintfW(tmp, szVersionFormat,
                   HIWORD(ffi->dwFileVersionMS), LOWORD(ffi->dwFileVersionMS),
                   HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS));
-            lstrcpynW(lpVersionBuf, tmp, *pcchVersionBuf);
-            *pcchVersionBuf = lstrlenW(lpVersionBuf);
+            if (lpVersionBuf) lstrcpynW(lpVersionBuf, tmp, *pcchVersionBuf);
+            *pcchVersionBuf = lstrlenW(tmp);
         }
         else
         {
-            *lpVersionBuf = 0;
+            if (lpVersionBuf) *lpVersionBuf = 0;
             *pcchVersionBuf = 0;
         }
     }
 
-    if( lpLangBuf && pcchLangBuf && *pcchLangBuf )
+    if (pcchLangBuf)
     {
         DWORD lang = GetUserDefaultLangID();
 
         FIXME("Retrieve language from file\n");
         wsprintfW(tmp, szLangFormat, lang);
-        lstrcpynW(lpLangBuf, tmp, *pcchLangBuf);
-        *pcchLangBuf = lstrlenW(lpLangBuf);
+        if (lpLangBuf) lstrcpynW(lpLangBuf, tmp, *pcchLangBuf);
+        *pcchLangBuf = lstrlenW(tmp);
     }
 
 end:
