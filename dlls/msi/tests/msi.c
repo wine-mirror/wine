@@ -1950,11 +1950,8 @@ static void test_MsiGetFileVersion(void)
     ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
     ok(!lstrcmpA(lang, "lang"),
        "Expected lang to be unchanged, got %s\n", lang);
-    todo_wine
-    {
-        ok(r == ERROR_FILE_INVALID,
-           "Expected ERROR_FILE_INVALID, got %d\n", r);
-    }
+    ok(r == ERROR_FILE_INVALID,
+       "Expected ERROR_FILE_INVALID, got %d\n", r);
 
     DeleteFileA("ver.txt");
 

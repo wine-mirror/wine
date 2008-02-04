@@ -1593,6 +1593,8 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
         gle = GetLastError();
         if (gle == ERROR_BAD_PATHNAME)
             return ERROR_FILE_NOT_FOUND;
+        else if (gle == ERROR_RESOURCE_DATA_NOT_FOUND)
+            return ERROR_FILE_INVALID;
 
         return gle;
     }
