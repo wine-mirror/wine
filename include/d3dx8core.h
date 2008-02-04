@@ -109,9 +109,7 @@ DECLARE_INTERFACE_(ID3DXFont,IUnknown)
 extern "C" {
 #endif
 
-HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer);
 HRESULT WINAPI D3DXCreateFont(LPDIRECT3DDEVICE8 pDevice, HFONT hFont, LPD3DXFONT* ppFont);
-UINT WINAPI D3DXGetFVFVertexSize(DWORD FVF);
 HRESULT WINAPI D3DXAssembleShader(LPCVOID pSrcData, UINT SrcDataLen, DWORD Flags, 
 			   LPD3DXBUFFER* ppConstants, 
 			   LPD3DXBUFFER* ppCompiledShader,
