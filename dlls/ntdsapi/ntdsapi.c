@@ -135,6 +135,11 @@ DWORD WINAPI DsMakeSpnW(LPCWSTR svc_class, LPCWSTR svc_name,
     return ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ *             DsMakeSpnA (NTDSAPI.@)
+ *
+ * See DsMakeSpnW.
+ */
 DWORD WINAPI DsMakeSpnA(LPCSTR svc_class, LPCSTR svc_name,
                         LPCSTR inst_name, USHORT inst_port,
                         LPCSTR ref, DWORD *spn_length, LPSTR spn)
