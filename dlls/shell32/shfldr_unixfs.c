@@ -1761,7 +1761,7 @@ static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd
     cBaseLen = lstrlenA(szNewDir);
     WideCharToMultiByte(CP_UNIXCP, 0, pwszName, -1, szNewDir+cBaseLen, FILENAME_MAX-cBaseLen, 0, 0);
    
-    if (mkdir(szNewDir, 0755)) {
+    if (mkdir(szNewDir, 0777)) {
         char szMessage[256 + FILENAME_MAX];
         char szCaption[256];
 
