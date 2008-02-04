@@ -1790,6 +1790,300 @@ static void test_MsiEnumClients(void)
     RegCloseKey(compkey);
 }
 
+static void get_version_info(LPSTR path, LPSTR *vercheck, LPDWORD verchecksz,
+                             LPSTR *langcheck, LPDWORD langchecksz)
+{
+    LPSTR version;
+    VS_FIXEDFILEINFO *ffi;
+    DWORD size = GetFileVersionInfoSizeA(path, NULL);
+    USHORT *lang;
+
+    version = HeapAlloc(GetProcessHeap(), 0, size);
+    GetFileVersionInfoA(path, 0, size, version);
+
+    VerQueryValueA(version, "\\", (LPVOID *)&ffi, &size);
+    *vercheck = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
+    sprintf(*vercheck, "%d.%d.%d.%d", HIWORD(ffi->dwFileVersionMS),
+            LOWORD(ffi->dwFileVersionMS), HIWORD(ffi->dwFileVersionLS),
+            LOWORD(ffi->dwFileVersionLS));
+    *verchecksz = lstrlenA(*vercheck);
+
+    VerQueryValue(version, "\\VarFileInfo\\Translation", (void **)&lang, &size);
+    *langcheck = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
+    sprintf(*langcheck, "%d", *lang);
+    *langchecksz = lstrlenA(*langcheck);
+
+    HeapFree(GetProcessHeap(), 0, version);
+}
+
+static void test_MsiGetFileVersion(void)
+{
+    UINT r;
+    DWORD versz, langsz;
+    char version[MAX_PATH];
+    char lang[MAX_PATH];
+    char path[MAX_PATH];
+    LPSTR vercheck, langcheck;
+    DWORD verchecksz, langchecksz;
+
+    /* NULL szFilePath */
+    versz = MAX_PATH;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA(NULL, version, &versz, lang, &langsz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    todo_wine
+    {
+        ok(!lstrcmpA(version, "version"),
+           "Expected version to be unchanged, got %s\n", version);
+        ok(!lstrcmpA(lang, "lang"),
+           "Expected lang to be unchanged, got %s\n", lang);
+    }
+
+    /* empty szFilePath */
+    versz = MAX_PATH;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA("", version, &versz, lang, &langsz);
+    ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    todo_wine
+    {
+        ok(r == ERROR_FILE_NOT_FOUND,
+           "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+        ok(!lstrcmpA(version, "version"),
+           "Expected version to be unchanged, got %s\n", version);
+        ok(!lstrcmpA(lang, "lang"),
+           "Expected lang to be unchanged, got %s\n", lang);
+    }
+
+    /* nonexistent szFilePath */
+    versz = MAX_PATH;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA("nonexistent", version, &versz, lang, &langsz);
+    ok(r == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+    ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    todo_wine
+    {
+        ok(!lstrcmpA(version, "version"),
+           "Expected version to be unchanged, got %s\n", version);
+        ok(!lstrcmpA(lang, "lang"),
+           "Expected lang to be unchanged, got %s\n", lang);
+    }
+
+    /* nonexistent szFilePath, valid lpVersionBuf, NULL pcchVersionBuf */
+    versz = MAX_PATH;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA("nonexistent", version, NULL, lang, &langsz);
+    ok(!lstrcmpA(version, "version"),
+       "Expected version to be unchanged, got %s\n", version);
+    ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+        ok(!lstrcmpA(lang, "lang"),
+           "Expected lang to be unchanged, got %s\n", lang);
+    }
+
+    /* nonexistent szFilePath, valid lpLangBuf, NULL pcchLangBuf */
+    versz = MAX_PATH;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA("nonexistent", version, &versz, lang, NULL);
+    ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(!lstrcmpA(lang, "lang"),
+       "Expected lang to be unchanged, got %s\n", lang);
+    ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+        ok(!lstrcmpA(version, "version"),
+           "Expected version to be unchanged, got %s\n", version);
+    }
+
+    /* nonexistent szFilePath, valid lpVersionBuf, pcchVersionBuf is zero */
+    versz = 0;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA("nonexistent", version, &versz, lang, &langsz);
+    ok(r == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+    ok(!lstrcmpA(version, "version"),
+       "Expected version to be unchanged, got %s\n", version);
+    ok(versz == 0, "Expected 0, got %d\n", versz);
+    ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    todo_wine
+    {
+        ok(!lstrcmpA(lang, "lang"),
+           "Expected lang to be unchanged, got %s\n", lang);
+    }
+
+    /* nonexistent szFilePath, valid lpLangBuf, pcchLangBuf is zero */
+    versz = MAX_PATH;
+    langsz = 0;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA("nonexistent", version, &versz, lang, &langsz);
+    ok(r == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+    ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(!lstrcmpA(lang, "lang"),
+       "Expected lang to be unchanged, got %s\n", lang);
+    ok(langsz == 0, "Expected 0, got %d\n", langsz);
+    todo_wine
+    {
+        ok(!lstrcmpA(version, "version"),
+           "Expected version to be unchanged, got %s\n", version);
+    }
+
+    /* nonexistent szFilePath, rest NULL */
+    r = MsiGetFileVersionA("nonexistent", NULL, NULL, NULL, NULL);
+    ok(r == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+
+    create_file("ver.txt", "ver.txt", 20);
+
+    /* file exists, no version information */
+    versz = MAX_PATH;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA("ver.txt", version, &versz, lang, &langsz);
+    ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    todo_wine
+    {
+        ok(r == ERROR_FILE_INVALID,
+           "Expected ERROR_FILE_INVALID, got %d\n", r);
+        ok(!lstrcmpA(version, "version"),
+           "Expected version to be unchanged, got %s\n", version);
+        ok(!lstrcmpA(lang, "lang"),
+           "Expected lang to be unchanged, got %s\n", lang);
+    }
+
+    DeleteFileA("ver.txt");
+
+    /* relative path, has version information */
+    versz = MAX_PATH;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA("kernel32.dll", version, &versz, lang, &langsz);
+    todo_wine
+    {
+        ok(r == ERROR_FILE_NOT_FOUND,
+           "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+        ok(!lstrcmpA(version, "version"),
+           "Expected version to be unchanged, got %s\n", version);
+        ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+        ok(!lstrcmpA(lang, "lang"),
+           "Expected lang to be unchanged, got %s\n", lang);
+        ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    }
+
+    GetSystemDirectoryA(path, MAX_PATH);
+    lstrcatA(path, "\\kernel32.dll");
+
+    get_version_info(path, &vercheck, &verchecksz, &langcheck, &langchecksz);
+
+    /* absolute path, has version information */
+    versz = MAX_PATH;
+    langsz = MAX_PATH;
+    lstrcpyA(version, "version");
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA(path, version, &versz, lang, &langsz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
+    ok(!lstrcmpA(lang, langcheck), "Expected %s, got %s\n", langcheck, lang);
+    ok(langsz == langchecksz, "Expected %d, got %d\n", langchecksz, langsz);
+    todo_wine
+    {
+        ok(!lstrcmpA(version, vercheck),
+           "Expected %s, got %s\n", vercheck, version);
+    }
+
+    /* only check version */
+    versz = MAX_PATH;
+    lstrcpyA(version, "version");
+    r = MsiGetFileVersionA(path, version, &versz, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
+    todo_wine
+    {
+        ok(!lstrcmpA(version, vercheck),
+           "Expected %s, got %s\n", vercheck, version);
+    }
+
+    /* only check language */
+    langsz = MAX_PATH;
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA(path, NULL, NULL, lang, &langsz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(lang, langcheck), "Expected %s, got %s\n", langcheck, lang);
+    ok(langsz == langchecksz, "Expected %d, got %d\n", langchecksz, langsz);
+
+    /* get pcchVersionBuf */
+    versz = MAX_PATH;
+    r = MsiGetFileVersionA(path, NULL, &versz, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
+    }
+
+    /* get pcchLangBuf */
+    langsz = MAX_PATH;
+    r = MsiGetFileVersionA(path, NULL, NULL, NULL, &langsz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(langsz == langchecksz, "Expected %d, got %d\n", langchecksz, langsz);
+    }
+
+    /* pcchVersionBuf not big enough */
+    versz = 5;
+    lstrcpyA(version, "version");
+    r = MsiGetFileVersionA(path, version, &versz, NULL, NULL);
+    ok(!strncmp(version, vercheck, 4),
+       "Expected first 4 characters of %s, got %s\n", vercheck, version);
+    todo_wine
+    {
+        ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+        ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
+    }
+
+    /* pcchLangBuf not big enough */
+    langsz = 3;
+    lstrcpyA(lang, "lang");
+    r = MsiGetFileVersionA(path, NULL, NULL, lang, &langsz);
+    ok(!strncmp(lang, langcheck, 2),
+       "Expected first character of %s, got %s\n", langcheck, lang);
+    todo_wine
+    {
+        ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+        ok(langsz == langchecksz, "Expected %d, got %d\n", langchecksz, langsz);
+    }
+
+    HeapFree(GetProcessHeap(), 0, vercheck);
+    HeapFree(GetProcessHeap(), 0, langcheck);
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -1811,4 +2105,6 @@ START_TEST(msi)
         test_MsiGetProductCode();
         test_MsiEnumClients();
     }
+
+    test_MsiGetFileVersion();
 }
