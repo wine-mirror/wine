@@ -1988,11 +1988,8 @@ static void test_MsiGetFileVersion(void)
     ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
     ok(!lstrcmpA(lang, langcheck), "Expected %s, got %s\n", langcheck, lang);
     ok(langsz == langchecksz, "Expected %d, got %d\n", langchecksz, langsz);
-    todo_wine
-    {
-        ok(!lstrcmpA(version, vercheck),
-           "Expected %s, got %s\n", vercheck, version);
-    }
+    ok(!lstrcmpA(version, vercheck),
+        "Expected %s, got %s\n", vercheck, version);
 
     /* only check version */
     versz = MAX_PATH;
@@ -2000,11 +1997,8 @@ static void test_MsiGetFileVersion(void)
     r = MsiGetFileVersionA(path, version, &versz, NULL, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
-    todo_wine
-    {
-        ok(!lstrcmpA(version, vercheck),
-           "Expected %s, got %s\n", vercheck, version);
-    }
+    ok(!lstrcmpA(version, vercheck),
+       "Expected %s, got %s\n", vercheck, version);
 
     /* only check language */
     langsz = MAX_PATH;
