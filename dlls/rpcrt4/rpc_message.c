@@ -813,6 +813,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   void *payload = NULL;
 
   *Header = NULL;
+  pMsg->Buffer = NULL;
 
   TRACE("(%p, %p, %p)\n", Connection, Header, pMsg);
 
@@ -964,6 +965,8 @@ fail:
   if (CurrentHeader != *Header)
     RPCRT4_FreeHeader(CurrentHeader);
   if (status != RPC_S_OK) {
+    I_RpcFree(pMsg->Buffer);
+    pMsg->Buffer = NULL;
     RPCRT4_FreeHeader(*Header);
     *Header = NULL;
   }
