@@ -1578,9 +1578,6 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
     TRACE("(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class);
 
-    if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
-        return io->u.Status;
-
     io->u.Status = STATUS_SUCCESS;
     switch (class)
     {
@@ -1589,6 +1586,9 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         {
             struct stat st;
             const FILE_BASIC_INFORMATION *info = ptr;
+
+            if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return io->u.Status;
 
             if (info->LastAccessTime.QuadPart || info->LastWriteTime.QuadPart)
             {
@@ -1641,6 +1641,8 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
                     if (fchmod( fd, st.st_mode ) == -1) io->u.Status = FILE_GetNtStatus();
                 }
             }
+
+            if (needs_close) close( fd );
         }
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
@@ -1650,8 +1652,13 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         {
             const FILE_POSITION_INFORMATION *info = ptr;
 
+            if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return io->u.Status;
+
             if (lseek( fd, info->CurrentByteOffset.QuadPart, SEEK_SET ) == (off_t)-1)
                 io->u.Status = FILE_GetNtStatus();
+
+            if (needs_close) close( fd );
         }
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
@@ -1661,6 +1668,9 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         {
             struct stat st;
             const FILE_END_OF_FILE_INFORMATION *info = ptr;
+
+            if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return io->u.Status;
 
             /* first try normal truncate */
             if (ftruncate( fd, (off_t)info->EndOfFile.QuadPart ) != -1) break;
@@ -1676,6 +1686,8 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
                     ftruncate( fd, (off_t)info->EndOfFile.QuadPart ) != -1) break;
             }
             io->u.Status = FILE_GetNtStatus();
+
+            if (needs_close) close( fd );
         }
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
@@ -1717,7 +1729,6 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         io->u.Status = STATUS_NOT_IMPLEMENTED;
         break;
     }
-    if (needs_close) close( fd );
     io->Information = 0;
     return io->u.Status;
 }
