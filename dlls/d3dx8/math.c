@@ -59,7 +59,7 @@ D3DXCOLOR* WINAPI D3DXColorAdjustSaturation(D3DXCOLOR *pout, CONST D3DXCOLOR *pc
 
 /*_________________D3DXMatrix____________________*/
 
-D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, float scaling, D3DXVECTOR3 *rotationcenter, D3DXQUATERNION *rotation, D3DXVECTOR3 *translation)
+D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, FLOAT scaling, CONST D3DXVECTOR3 *rotationcenter, CONST D3DXQUATERNION *rotation, CONST D3DXVECTOR3 *translation)
 {
     D3DXMATRIX m1, m2, m3, m4, m5, p1, p2, p3;
 
