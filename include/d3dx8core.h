@@ -105,6 +105,10 @@ DECLARE_INTERFACE_(ID3DXFont,IUnknown)
 /*************************************************************************************
  * Define entrypoints 
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer);
 HRESULT WINAPI D3DXCreateFont(LPDIRECT3DDEVICE8 pDevice, HFONT hFont, LPD3DXFONT* ppFont);
 UINT WINAPI D3DXGetFVFVertexSize(DWORD FVF);
@@ -120,5 +124,9 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(LPWSTR pSrcFile, DWORD Flags,
 				    LPD3DXBUFFER* ppConstants,
 				    LPD3DXBUFFER* ppCompiledShader,
 				    LPD3DXBUFFER* ppCompilationErrors);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_D3DX8CORE_H */
