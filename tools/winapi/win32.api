@@ -1,3 +1,11 @@
+%%acledit.dll
+
+%long
+
+HWND
+LONG
+WORD
+
 %%activeds.dll
 
 %long
@@ -859,6 +867,18 @@ int
 %void
 
 void
+
+%%ctapi32.dll
+
+%long
+
+IS8
+IU16
+
+%ptr
+
+IU8 *
+IU16 *
 
 %%d3d8.dll
 
@@ -1953,6 +1973,21 @@ LPSTR
 
 LPCWSTR
 LPWSTR
+
+%%inetcomm.dll
+
+%long
+
+DWORD
+HRESULT
+
+%ptr
+
+IMimeAllocator **
+IMimeMessage **
+IMimeSecurity **
+IStream **
+IUnknown *
 
 %%inseng.dll
 
