@@ -436,6 +436,9 @@ static BOOL is_pad(const char *name, const char *type)
 }
 
 
+/***********************************************************************
+ *             X11DRV_LoadTabletInfo (X11DRV.@)
+ */
 void X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
     const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
@@ -922,6 +925,9 @@ static void proximity_event( HWND hwnd, XEvent *event )
     SendMessageW(hwndTabletDefault, WT_PROXIMITY, (event->type == proximity_in_type), (LPARAM)hwnd);
 }
 
+/***********************************************************************
+ *		X11DRV_AttachEventQueueToTablet (X11DRV.@)
+ */
 int X11DRV_AttachEventQueueToTablet(HWND hOwner)
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
@@ -999,6 +1005,9 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
     return 0;
 }
 
+/***********************************************************************
+ *		X11DRV_GetCurrentPacket (X11DRV.@)
+ */
 int X11DRV_GetCurrentPacket(LPWTPACKET *packet)
 {
     memcpy(packet,&gMsgPacket,sizeof(WTPACKET));
