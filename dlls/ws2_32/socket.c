@@ -2292,6 +2292,11 @@ INT WINAPI WSAIoctl(SOCKET s,
 	FIXME("SIO_FLUSH: stub.\n");
 	break;
 
+   case WS_SIO_GET_EXTENSION_FUNCTION_POINTER:
+       FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER %s: stub\n", debugstr_guid(lpvInBuffer));
+       WSASetLastError(WSAEOPNOTSUPP);
+       return SOCKET_ERROR;
+
    default:
        FIXME("unsupported WS_IOCTL cmd (%08x)\n", dwIoControlCode);
        WSASetLastError(WSAEOPNOTSUPP);
