@@ -1543,10 +1543,10 @@ UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf,
     ret = MsiGetFileVersionW(szwFilePath, lpwVersionBuff, pcchVersionBuf,
                              lpwLangBuff, pcchLangBuf);
 
-    if( lpwVersionBuff )
+    if( (ret == ERROR_SUCCESS || ret == ERROR_MORE_DATA) && lpwVersionBuff )
         WideCharToMultiByte(CP_ACP, 0, lpwVersionBuff, -1,
                             lpVersionBuf, *pcchVersionBuf, NULL, NULL);
-    if( lpwLangBuff )
+    if( (ret == ERROR_SUCCESS || ret == ERROR_MORE_DATA) && lpwLangBuff )
         WideCharToMultiByte(CP_ACP, 0, lpwLangBuff, -1,
                             lpLangBuf, *pcchLangBuf, NULL, NULL);
 

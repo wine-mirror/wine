@@ -1834,15 +1834,12 @@ static void test_MsiGetFileVersion(void)
     r = MsiGetFileVersionA(NULL, version, &versz, lang, &langsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(version, "version"),
+       "Expected version to be unchanged, got %s\n", version);
     ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(!lstrcmpA(lang, "lang"),
+       "Expected lang to be unchanged, got %s\n", lang);
     ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
-    todo_wine
-    {
-        ok(!lstrcmpA(version, "version"),
-           "Expected version to be unchanged, got %s\n", version);
-        ok(!lstrcmpA(lang, "lang"),
-           "Expected lang to be unchanged, got %s\n", lang);
-    }
 
     /* empty szFilePath */
     versz = MAX_PATH;
@@ -1850,16 +1847,16 @@ static void test_MsiGetFileVersion(void)
     lstrcpyA(version, "version");
     lstrcpyA(lang, "lang");
     r = MsiGetFileVersionA("", version, &versz, lang, &langsz);
+    ok(!lstrcmpA(version, "version"),
+       "Expected version to be unchanged, got %s\n", version);
     ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(!lstrcmpA(lang, "lang"),
+       "Expected lang to be unchanged, got %s\n", lang);
     ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
     todo_wine
     {
         ok(r == ERROR_FILE_NOT_FOUND,
            "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
-        ok(!lstrcmpA(version, "version"),
-           "Expected version to be unchanged, got %s\n", version);
-        ok(!lstrcmpA(lang, "lang"),
-           "Expected lang to be unchanged, got %s\n", lang);
     }
 
     /* nonexistent szFilePath */
@@ -1870,15 +1867,12 @@ static void test_MsiGetFileVersion(void)
     r = MsiGetFileVersionA("nonexistent", version, &versz, lang, &langsz);
     ok(r == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+    ok(!lstrcmpA(version, "version"),
+       "Expected version to be unchanged, got %s\n", version);
     ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(!lstrcmpA(lang, "lang"),
+       "Expected lang to be unchanged, got %s\n", lang);
     ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
-    todo_wine
-    {
-        ok(!lstrcmpA(version, "version"),
-           "Expected version to be unchanged, got %s\n", version);
-        ok(!lstrcmpA(lang, "lang"),
-           "Expected lang to be unchanged, got %s\n", lang);
-    }
 
     /* nonexistent szFilePath, valid lpVersionBuf, NULL pcchVersionBuf */
     versz = MAX_PATH;
@@ -1889,13 +1883,13 @@ static void test_MsiGetFileVersion(void)
     ok(!lstrcmpA(version, "version"),
        "Expected version to be unchanged, got %s\n", version);
     ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(!lstrcmpA(lang, "lang"),
+       "Expected lang to be unchanged, got %s\n", lang);
     ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
     todo_wine
     {
         ok(r == ERROR_INVALID_PARAMETER,
            "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-        ok(!lstrcmpA(lang, "lang"),
-           "Expected lang to be unchanged, got %s\n", lang);
     }
 
     /* nonexistent szFilePath, valid lpLangBuf, NULL pcchLangBuf */
@@ -1904,6 +1898,8 @@ static void test_MsiGetFileVersion(void)
     lstrcpyA(version, "version");
     lstrcpyA(lang, "lang");
     r = MsiGetFileVersionA("nonexistent", version, &versz, lang, NULL);
+    ok(!lstrcmpA(version, "version"),
+       "Expected version to be unchanged, got %s\n", version);
     ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
     ok(!lstrcmpA(lang, "lang"),
        "Expected lang to be unchanged, got %s\n", lang);
@@ -1912,8 +1908,6 @@ static void test_MsiGetFileVersion(void)
     {
         ok(r == ERROR_INVALID_PARAMETER,
            "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-        ok(!lstrcmpA(version, "version"),
-           "Expected version to be unchanged, got %s\n", version);
     }
 
     /* nonexistent szFilePath, valid lpVersionBuf, pcchVersionBuf is zero */
@@ -1927,12 +1921,9 @@ static void test_MsiGetFileVersion(void)
     ok(!lstrcmpA(version, "version"),
        "Expected version to be unchanged, got %s\n", version);
     ok(versz == 0, "Expected 0, got %d\n", versz);
+    ok(!lstrcmpA(lang, "lang"),
+       "Expected lang to be unchanged, got %s\n", lang);
     ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
-    todo_wine
-    {
-        ok(!lstrcmpA(lang, "lang"),
-           "Expected lang to be unchanged, got %s\n", lang);
-    }
 
     /* nonexistent szFilePath, valid lpLangBuf, pcchLangBuf is zero */
     versz = MAX_PATH;
@@ -1942,15 +1933,12 @@ static void test_MsiGetFileVersion(void)
     r = MsiGetFileVersionA("nonexistent", version, &versz, lang, &langsz);
     ok(r == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
+    ok(!lstrcmpA(version, "version"),
+       "Expected version to be unchanged, got %s\n", version);
     ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
     ok(!lstrcmpA(lang, "lang"),
        "Expected lang to be unchanged, got %s\n", lang);
     ok(langsz == 0, "Expected 0, got %d\n", langsz);
-    todo_wine
-    {
-        ok(!lstrcmpA(version, "version"),
-           "Expected version to be unchanged, got %s\n", version);
-    }
 
     /* nonexistent szFilePath, rest NULL */
     r = MsiGetFileVersionA("nonexistent", NULL, NULL, NULL, NULL);
@@ -1966,15 +1954,15 @@ static void test_MsiGetFileVersion(void)
     lstrcpyA(lang, "lang");
     r = MsiGetFileVersionA("ver.txt", version, &versz, lang, &langsz);
     ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
+    ok(!lstrcmpA(version, "version"),
+       "Expected version to be unchanged, got %s\n", version);
     ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
+    ok(!lstrcmpA(lang, "lang"),
+       "Expected lang to be unchanged, got %s\n", lang);
     todo_wine
     {
         ok(r == ERROR_FILE_INVALID,
            "Expected ERROR_FILE_INVALID, got %d\n", r);
-        ok(!lstrcmpA(version, "version"),
-           "Expected version to be unchanged, got %s\n", version);
-        ok(!lstrcmpA(lang, "lang"),
-           "Expected lang to be unchanged, got %s\n", lang);
     }
 
     DeleteFileA("ver.txt");
