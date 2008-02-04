@@ -1,7 +1,7 @@
 /*
  * Implementation of the Local Printmonitor
  *
- * Copyright 2006 Detlef Riekenberg
+ * Copyright 2006-2008 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,7 +35,109 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
 
+/* ############################### */
+
 HINSTANCE LOCALSPL_hInstance = NULL;
+
+static const PRINTPROVIDOR * pp = NULL;
+
+/*****************************************************
+ *  get_backend [internal]
+ */
+static const PRINTPROVIDOR * get_backend(void)
+{
+    static const PRINTPROVIDOR backend = {
+        NULL,   /* fpOpenPrinter */
+        NULL,   /* fpSetJob */
+        NULL,   /* fpGetJob */
+        NULL,   /* fpEnumJobs */
+        NULL,   /* fpAddPrinter */
+        NULL,   /* fpDeletePrinter */
+        NULL,   /* fpSetPrinter */
+        NULL,   /* fpGetPrinter */
+        NULL,   /* fpEnumPrinters */
+        NULL,   /* fpAddPrinterDriver */
+        NULL,   /* fpEnumPrinterDrivers */
+        NULL,   /* fpGetPrinterDriver */
+        NULL,   /* fpGetPrinterDriverDirectory */
+        NULL,   /* fpDeletePrinterDriver */
+        NULL,   /* fpAddPrintProcessor */
+        NULL,   /* fpEnumPrintProcessors */
+        NULL,   /* fpGetPrintProcessorDirectory */
+        NULL,   /* fpDeletePrintProcessor */
+        NULL,   /* fpEnumPrintProcessorDatatypes */
+        NULL,   /* fpStartDocPrinter */
+        NULL,   /* fpStartPagePrinter */
+        NULL,   /* fpWritePrinter */
+        NULL,   /* fpEndPagePrinter */
+        NULL,   /* fpAbortPrinter */
+        NULL,   /* fpReadPrinter */
+        NULL,   /* fpEndDocPrinter */
+        NULL,   /* fpAddJob */
+        NULL,   /* fpScheduleJob */
+        NULL,   /* fpGetPrinterData */
+        NULL,   /* fpSetPrinterData */
+        NULL,   /* fpWaitForPrinterChange */
+        NULL,   /* fpClosePrinter */
+        NULL,   /* fpAddForm */
+        NULL,   /* fpDeleteForm */
+        NULL,   /* fpGetForm */
+        NULL,   /* fpSetForm */
+        NULL,   /* fpEnumForms */
+        NULL,   /* fpEnumMonitors */
+        NULL,   /* fpEnumPorts */
+        NULL,   /* fpAddPort */
+        NULL,   /* fpConfigurePort */
+        NULL,   /* fpDeletePort */
+        NULL,   /* fpCreatePrinterIC */
+        NULL,   /* fpPlayGdiScriptOnPrinterIC */
+        NULL,   /* fpDeletePrinterIC */
+        NULL,   /* fpAddPrinterConnection */
+        NULL,   /* fpDeletePrinterConnection */
+        NULL,   /* fpPrinterMessageBox */
+        NULL,   /* fpAddMonitor */
+        NULL,   /* fpDeleteMonitor */
+        NULL,   /* fpResetPrinter */
+        NULL,   /* fpGetPrinterDriverEx */
+        NULL,   /* fpFindFirstPrinterChangeNotification */
+        NULL,   /* fpFindClosePrinterChangeNotification */
+        NULL,   /* fpAddPortEx */
+        NULL,   /* fpShutDown */
+        NULL,   /* fpRefreshPrinterChangeNotification */
+        NULL,   /* fpOpenPrinterEx */
+        NULL,   /* fpAddPrinterEx */
+        NULL,   /* fpSetPort */
+        NULL,   /* fpEnumPrinterData */
+        NULL,   /* fpDeletePrinterData */
+        NULL,   /* fpClusterSplOpen */
+        NULL,   /* fpClusterSplClose */
+        NULL,   /* fpClusterSplIsAlive */
+        NULL,   /* fpSetPrinterDataEx */
+        NULL,   /* fpGetPrinterDataEx */
+        NULL,   /* fpEnumPrinterDataEx */
+        NULL,   /* fpEnumPrinterKey */
+        NULL,   /* fpDeletePrinterDataEx */
+        NULL,   /* fpDeletePrinterKey */
+        NULL,   /* fpSeekPrinter */
+        NULL,   /* fpDeletePrinterDriverEx */
+        NULL,   /* fpAddPerMachineConnection */
+        NULL,   /* fpDeletePerMachineConnection */
+        NULL,   /* fpEnumPerMachineConnections */
+        NULL,   /* fpXcvData */
+        NULL,   /* fpAddPrinterDriverEx */
+        NULL,   /* fpSplReadPrinter */
+        NULL,   /* fpDriverUnloadComplete */
+        NULL,   /* fpGetSpoolFileInfo */
+        NULL,   /* fpCommitSpoolData */
+        NULL,   /* fpCloseSpoolFileHandle */
+        NULL,   /* fpFlushPrinter */
+        NULL,   /* fpSendRecvBidiData */
+        NULL    /* fpAddDriverCatalog */
+    };
+    TRACE("=> %p (%u byte for %u entries)\n", &backend, sizeof(backend), sizeof(backend) / sizeof(VOID *));
+    return &backend;
+
+}
 
 /*****************************************************
  *      DllMain
@@ -52,6 +154,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls( hinstDLL );
             LOCALSPL_hInstance = hinstDLL;
+            pp = get_backend();
             break;
     }
     return TRUE;
@@ -84,7 +187,7 @@ BOOL WINAPI InitializePrintProvidor(LPPRINTPROVIDOR pPrintProvidor,
 {
 
     TRACE("(%p, %u, %s)\n", pPrintProvidor, cbPrintProvidor, debugstr_w(pFullRegistryPath));
-    ZeroMemory(pPrintProvidor, (cbPrintProvidor < sizeof(PRINTPROVIDOR)) ? cbPrintProvidor : sizeof(PRINTPROVIDOR));
+    memcpy(pPrintProvidor, pp, (cbPrintProvidor < sizeof(PRINTPROVIDOR)) ? cbPrintProvidor : sizeof(PRINTPROVIDOR));
 
     return TRUE;
 }
