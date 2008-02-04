@@ -1519,6 +1519,10 @@ UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf,
     LPWSTR szwFilePath = NULL, lpwVersionBuff = NULL, lpwLangBuff = NULL;
     UINT ret = ERROR_OUTOFMEMORY;
 
+    if ((lpVersionBuf && !pcchVersionBuf) ||
+        (lpLangBuf && !pcchLangBuf))
+        return ERROR_INVALID_PARAMETER;
+
     if( szFilePath )
     {
         szwFilePath = strdupAtoW( szFilePath );
@@ -1578,6 +1582,10 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
     TRACE("%s %p %d %p %d\n", debugstr_w(szFilePath),
           lpVersionBuf, pcchVersionBuf?*pcchVersionBuf:0,
           lpLangBuf, pcchLangBuf?*pcchLangBuf:0);
+
+    if ((lpVersionBuf && !pcchVersionBuf) ||
+        (lpLangBuf && !pcchLangBuf))
+        return ERROR_INVALID_PARAMETER;
 
     dwVerLen = GetFileVersionInfoSizeW(szFilePath, NULL);
     if( !dwVerLen )
