@@ -891,6 +891,9 @@ BOOL WINAPI FGetComponentPath(LPCSTR component, LPCSTR qualifier, LPSTR dll_path
     return ret;
 }
 
+/**************************************************************************
+ *  HrQueryAllRows   (MAPI32.75)
+ */
 HRESULT WINAPI HrQueryAllRows(LPMAPITABLE lpTable, LPSPropTagArray lpPropTags,
     LPSRestriction lpRestriction, LPSSortOrderSet lpSortOrderSet,
     LONG crowsMax, LPSRowSet *lppRows)
