@@ -6776,6 +6776,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     BOOL DisplayModeChanged = FALSE;
     WINED3DDISPLAYMODE mode;
     IWineD3DBaseShaderImpl *shader;
+    IWineD3DSurfaceImpl *target;
     TRACE("(%p)\n", This);
 
     hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &swapchain);
@@ -6846,6 +6847,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     }
     This->shader_backend->shader_destroy_depth_blt(iface);
 
+    while(This->numContexts) {
+        DestroyContext(This, This->contexts[0]);
+    }
+    This->activeContext = NULL;
+    HeapFree(GetProcessHeap(), 0, swapchain->context);
+    swapchain->context = NULL;
+    swapchain->num_contexts = 0;
+
      if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
         mode.Height = swapchain->orig_height;
@@ -6909,6 +6918,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         }
         swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
     }
+
+    /* Recreate the primary swapchain's context */
+    swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
+    if(swapchain->backBuffer) {
+        target = (IWineD3DSurfaceImpl *) swapchain->backBuffer[0];
+    } else {
+        target = (IWineD3DSurfaceImpl *) swapchain->frontBuffer;
+    }
+    swapchain->context[0] = CreateContext(This, target, swapchain->win_handle, FALSE,
+                                          &swapchain->presentParms);
+    swapchain->num_contexts = 1;
+    This->activeContext = swapchain->context[0];
+
+    /* All done. There is no need to reload resources or shaders, this will happen automatically on the
+     * first use
+     */
 
     IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     return WINED3D_OK;
