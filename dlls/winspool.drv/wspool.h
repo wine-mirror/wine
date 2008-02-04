@@ -21,6 +21,9 @@
 
 extern HINSTANCE WINSPOOL_hInstance;
 
+extern PRINTPROVIDOR * backend;
+extern BOOL load_backend(void);
+
 extern void WINSPOOL_LoadSystemPrinters(void);
 
 #define IDS_CAPTION       10

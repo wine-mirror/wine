@@ -4844,57 +4844,25 @@ BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
 				       DWORD Level, LPBYTE pDriverDirectory,
 				       DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    DWORD needed;
-    const printenv_t * env;
-
     TRACE("(%s, %s, %d, %p, %d, %p)\n", debugstr_w(pName), 
           debugstr_w(pEnvironment), Level, pDriverDirectory, cbBuf, pcbNeeded);
-    if(pName != NULL && pName[0]) {
-        FIXME("pName unsupported: %s\n", debugstr_w(pName));
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
 
-    env = validate_envW(pEnvironment);
-    if(!env) return FALSE;  /* pEnvironment invalid or unsupported */
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
-    if(Level != 1) {
-        WARN("(Level: %d) is ignored in win9x\n", Level);
+    if (Level != 1) {
+        /* (Level != 1) is ignored in win9x */
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
-
-    /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
-    needed = GetSystemDirectoryW(NULL, 0);
-    /* add the Size for the Subdirectories */
-    needed += lstrlenW(spooldriversW);
-    needed += lstrlenW(env->subdir);
-    needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
-
-    if(pcbNeeded)
-        *pcbNeeded = needed;
-    TRACE("required: 0x%x/%d\n", needed, needed);
-    if(needed > cbBuf) {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
-    }
-    if(pcbNeeded == NULL) {
-        WARN("(pcbNeeded == NULL) is ignored in win9x\n");
+    if (pcbNeeded == NULL) {
+        /* (pcbNeeded == NULL) is ignored in win9x */
         SetLastError(RPC_X_NULL_REF_POINTER);
         return FALSE;
     }
-    if(pDriverDirectory == NULL) {
-        /* ERROR_INVALID_USER_BUFFER is NT, ERROR_INVALID_PARAMETER is win9x */
-        SetLastError(ERROR_INVALID_USER_BUFFER);
-        return FALSE;
-    }
-    
-    GetSystemDirectoryW((LPWSTR) pDriverDirectory, cbBuf/sizeof(WCHAR));
-    /* add the Subdirectories */
-    lstrcatW((LPWSTR) pDriverDirectory, spooldriversW);
-    lstrcatW((LPWSTR) pDriverDirectory, env->subdir);
-    TRACE(" => %s\n", debugstr_w((LPWSTR) pDriverDirectory));
-    return TRUE;
+
+    return backend->fpGetPrinterDriverDirectory(pName, pEnvironment, Level,
+                                                pDriverDirectory, cbBuf, pcbNeeded);
+
 }
 
 
