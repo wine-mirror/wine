@@ -89,17 +89,12 @@ static void test_GetVersionEx(void)
     ok(ret, "Expected GetVersionExA to succeed\n");
     ok(GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got %d\n", GetLastError());
-
 }
 
-START_TEST(version)
+static void test_VerifyVersionInfo(void)
 {
     OSVERSIONINFOEX info = { sizeof(info) };
     BOOL ret;
-
-    init_function_pointers();
-
-    test_GetVersionEx();
 
     if(!pVerifyVersionInfoA || !pVerSetConditionMask)
     {
@@ -236,4 +231,12 @@ START_TEST(version)
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
         pVerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
     ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
+}
+
+START_TEST(version)
+{
+    init_function_pointers();
+
+    test_GetVersionEx();
+    test_VerifyVersionInfo();
 }
