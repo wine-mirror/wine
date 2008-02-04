@@ -796,7 +796,7 @@ BOOL WINAPI HttpEndRequestA(HINTERNET hRequest,
 
             FIXME("Do we need to translate info out of these buffer?\n");
 
-            HeapFree(GetProcessHeap(),0,(LPVOID)ptrW->lpvBuffer);
+            HeapFree(GetProcessHeap(),0,ptrW->lpvBuffer);
             ptrW2 = ptrW->Next;
             HeapFree(GetProcessHeap(),0,ptrW);
             ptrW = ptrW2;

@@ -265,7 +265,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             URLCacheContainers_CreateDefaults();
 
-            WININET_hModule = (HMODULE)hinstDLL;
+            WININET_hModule = hinstDLL;
 
         case DLL_THREAD_ATTACH:
 	    break;
@@ -568,7 +568,7 @@ lend:
 HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
-    HINTERNET rc = (HINTERNET)NULL;
+    HINTERNET rc = NULL;
     INT len;
     WCHAR *szAgent = NULL, *szProxy = NULL, *szBypass = NULL;
 
@@ -851,7 +851,7 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
     LPCSTR lpszUserName, LPCSTR lpszPassword,
     DWORD dwService, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    HINTERNET rc = (HINTERNET)NULL;
+    HINTERNET rc = NULL;
     INT len = 0;
     LPWSTR szServerName = NULL;
     LPWSTR szUserName = NULL;
@@ -1700,7 +1700,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
     LPWININETHANDLEHEADER lpwh;
 
     TRACE("\n");
-    lpwh = (LPWININETHANDLEHEADER) WININET_GetObject( hFile );
+    lpwh = WININET_GetObject( hFile );
     if (NULL == lpwh)
         return FALSE;
 
@@ -2544,7 +2544,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
         LPWININETHANDLEHEADER lpwh;
         INTERNET_STATUS_CALLBACK callback = *(INTERNET_STATUS_CALLBACK *)lpBuffer;
 
-        if (!(lpwh = (LPWININETHANDLEHEADER)WININET_GetObject(hInternet))) return FALSE;
+        if (!(lpwh = WININET_GetObject(hInternet))) return FALSE;
         r = (set_status_callback(lpwh, callback, FALSE) != INTERNET_INVALID_STATUS_CALLBACK);
         WININET_Release(lpwh);
         return r;
@@ -3104,7 +3104,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    HINTERNET rc = (HINTERNET)NULL;
+    HINTERNET rc = NULL;
 
     INT lenUrl;
     INT lenHeaders = 0;
@@ -3117,16 +3117,16 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
         lenUrl = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0 );
         szUrl = HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(WCHAR));
         if(!szUrl)
-            return (HINTERNET)NULL;
+            return NULL;
         MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, szUrl, lenUrl);
     }
-    
+
     if(lpszHeaders) {
         lenHeaders = MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, NULL, 0 );
         szHeaders = HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(WCHAR));
         if(!szHeaders) {
             HeapFree(GetProcessHeap(), 0, szUrl);
-            return (HINTERNET)NULL;
+            return NULL;
         }
         MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, szHeaders, lenHeaders);
     }

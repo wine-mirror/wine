@@ -162,7 +162,7 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     memset(psa,0,sizeof(struct sockaddr_in));
     memcpy((char *)&psa->sin_addr, phe->h_addr, phe->h_length);
     psa->sin_family = phe->h_addrtype;
-    psa->sin_port = htons((u_short)nServerPort);
+    psa->sin_port = htons(nServerPort);
 
     return TRUE;
 }
