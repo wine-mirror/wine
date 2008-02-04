@@ -3100,7 +3100,7 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf,
 	    pfo->lpPixmap = NULL;
 
 	    for ( i = 0; i < X11FONT_REFOBJS_MAX; i++ )
-		pfo->prefobjs[i] = (X_PHYSFONT)0xffffffff; /* invalid value */
+		pfo->prefobjs[i] = 0xffffffff; /* invalid value */
 
             /* special treatment for DBCS that needs multiple fonts */
             /* All member of pfo must be set correctly. */
@@ -3165,7 +3165,7 @@ END:
     *faceMatched = pfo->fi->df.dfFace;
     *pcharsetMatched = pfo->fi->internal_charset;
 
-    return (X_PHYSFONT)(X_PFONT_MAGIC | index);
+    return X_PFONT_MAGIC | index;
 }
 
 /***********************************************************************
