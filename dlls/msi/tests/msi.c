@@ -1847,17 +1847,14 @@ static void test_MsiGetFileVersion(void)
     lstrcpyA(version, "version");
     lstrcpyA(lang, "lang");
     r = MsiGetFileVersionA("", version, &versz, lang, &langsz);
+    ok(r == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
     ok(!lstrcmpA(version, "version"),
        "Expected version to be unchanged, got %s\n", version);
     ok(versz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, versz);
     ok(!lstrcmpA(lang, "lang"),
        "Expected lang to be unchanged, got %s\n", lang);
     ok(langsz == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, langsz);
-    todo_wine
-    {
-        ok(r == ERROR_FILE_NOT_FOUND,
-           "Expected ERROR_FILE_NOT_FOUND, got %d\n", r);
-    }
 
     /* nonexistent szFilePath */
     versz = MAX_PATH;

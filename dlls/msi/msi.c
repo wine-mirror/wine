@@ -1569,7 +1569,7 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
         '%','d','.','%','d','.','%','d','.','%','d',0};
     static const WCHAR szLangFormat[] = {'%','d',0};
     UINT ret = 0;
-    DWORD dwVerLen;
+    DWORD dwVerLen, gle;
     LPVOID lpVer = NULL;
     VS_FIXEDFILEINFO *ffi;
     UINT puLen;
@@ -1581,7 +1581,13 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
 
     dwVerLen = GetFileVersionInfoSizeW(szFilePath, NULL);
     if( !dwVerLen )
-        return GetLastError();
+    {
+        gle = GetLastError();
+        if (gle == ERROR_BAD_PATHNAME)
+            return ERROR_FILE_NOT_FOUND;
+
+        return gle;
+    }
 
     lpVer = msi_alloc(dwVerLen);
     if( !lpVer )
