@@ -2024,25 +2024,19 @@ static void test_MsiGetFileVersion(void)
     versz = 5;
     lstrcpyA(version, "version");
     r = MsiGetFileVersionA(path, version, &versz, NULL, NULL);
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!strncmp(version, vercheck, 4),
        "Expected first 4 characters of %s, got %s\n", vercheck, version);
     ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
-    todo_wine
-    {
-        ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
-    }
 
     /* pcchLangBuf not big enough */
     langsz = 3;
     lstrcpyA(lang, "lang");
     r = MsiGetFileVersionA(path, NULL, NULL, lang, &langsz);
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!strncmp(lang, langcheck, 2),
        "Expected first character of %s, got %s\n", langcheck, lang);
     ok(langsz == langchecksz, "Expected %d, got %d\n", langchecksz, langsz);
-    todo_wine
-    {
-        ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
-    }
 
     HeapFree(GetProcessHeap(), 0, vercheck);
     HeapFree(GetProcessHeap(), 0, langcheck);

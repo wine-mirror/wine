@@ -1621,6 +1621,10 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
                   HIWORD(ffi->dwFileVersionMS), LOWORD(ffi->dwFileVersionMS),
                   HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS));
             if (lpVersionBuf) lstrcpynW(lpVersionBuf, tmp, *pcchVersionBuf);
+
+            if (lstrlenW(tmp) >= *pcchVersionBuf)
+                ret = ERROR_MORE_DATA;
+
             *pcchVersionBuf = lstrlenW(tmp);
         }
         else
@@ -1637,6 +1641,10 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
         FIXME("Retrieve language from file\n");
         wsprintfW(tmp, szLangFormat, lang);
         if (lpLangBuf) lstrcpynW(lpLangBuf, tmp, *pcchLangBuf);
+
+        if (lstrlenW(tmp) >= *pcchLangBuf)
+            ret = ERROR_MORE_DATA;
+
         *pcchLangBuf = lstrlenW(tmp);
     }
 
