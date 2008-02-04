@@ -278,6 +278,37 @@ void wine_tsx11_unlock(void)
 
 
 /***********************************************************************
+ *		depth_to_bpp
+ *
+ * Convert X11-reported depth to the BPP value that Windows apps expect to see.
+ */
+unsigned int depth_to_bpp( unsigned int depth )
+{
+    switch (depth)
+    {
+    case 1:
+    case 8:
+        return depth;
+    case 15:
+    case 16:
+        return 16;
+    case 24:
+        /* This is not necessarily right. X11 always has 24 bits per pixel, but it can run
+         * with 24 bit framebuffers and 32 bit framebuffers. It doesn't make any difference
+         * for windowing, but gl applications can get visuals with alpha channels. So we
+         * should check the framebuffer and/or opengl formats available to find out what the
+         * framebuffer actually does
+         */
+    case 32:
+        return 32;
+    default:
+        FIXME( "Unexpected X11 depth %d bpp, what to report to app?\n", depth );
+        return depth;
+    }
+}
+
+
+/***********************************************************************
  *		get_config_key
  *
  * Get a config key from either the app-specific or the default config
@@ -491,35 +522,7 @@ static BOOL process_attach(void)
         screen_depth = desktop_vi->depth;
         XFree(desktop_vi);
     }
-
-    switch(screen_depth) {
-        case 8:
-            screen_bpp = 8;
-            break;
-
-        case 15:
-            /* In GetDeviceCaps MSDN description explicitly states that
-             * in 15 bpp mode 16 is returned.
-             */
-            /* fall through */
-        case 16:
-            screen_bpp = 16;
-            break;
-
-        case 24:
-            /* This is not necessarily right. X11 always has 24 bits per pixel, but it can run
-             * with 24 bit framebuffers and 32 bit framebuffers. It doesn't make any difference
-             * for windowing, but gl applications can get visuals with alpha channels. So we
-             * should check the framebuffer and/or opengl formats available to find out what the
-             * framebuffer actually does
-             */
-            screen_bpp = 32;
-            break;
-
-        default:
-            FIXME("Unexpected X11 depth %d bpp, what to report to app?\n", screen_depth);
-            screen_bpp = screen_depth;
-    }
+    screen_bpp = depth_to_bpp( screen_depth );
 
     XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
 

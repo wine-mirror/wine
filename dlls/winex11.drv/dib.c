@@ -4856,7 +4856,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc)
      * Create an HBITMAP with the same dimensions and BPP as the pixmap,
      * and make it a container for the pixmap passed.
      */
-    hBmp = CreateBitmap( width, height, 1, depth, NULL );
+    if (!(hBmp = CreateBitmap( width, height, 1, depth_to_bpp(depth), NULL ))) return 0;
 
     /* force bitmap to be owned by a screen DC */
     hdcMem = CreateCompatibleDC( hdc );
