@@ -1006,10 +1006,10 @@ INT WINAPI EnumFontsW( HDC hDC, LPCWSTR lpName, FONTENUMPROCW efproc,
 INT WINAPI GetTextCharacterExtra( HDC hdc )
 {
     INT ret;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
     if (!dc) return 0x80000000;
     ret = dc->charExtra;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -1020,7 +1020,7 @@ INT WINAPI GetTextCharacterExtra( HDC hdc )
 INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
 {
     INT prev;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
     if (!dc) return 0x80000000;
     if (dc->funcs->pSetTextCharacterExtra)
         prev = dc->funcs->pSetTextCharacterExtra( dc->physDev, extra );
@@ -1029,7 +1029,7 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
         prev = dc->charExtra;
         dc->charExtra = extra;
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return prev;
 }
 
@@ -1040,7 +1040,7 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
 BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
 {
     BOOL ret = TRUE;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pSetTextJustification)
         ret = dc->funcs->pSetTextJustification( dc->physDev, extra, breaks );
@@ -1059,7 +1059,7 @@ BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
             dc->breakRem   = 0;
         }
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -2425,7 +2425,7 @@ BOOL WINAPI PolyTextOutW( HDC hdc, const POLYTEXTW *pptxt, INT cStrings )
  */
 DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
 {
-    DC *dc = DC_GetDCPtr( hDC );
+    DC *dc = get_dc_ptr( hDC );
     DWORD ret = 0;
     if(!dc) return 0;
     if(dc->funcs->pSetMapperFlags)
@@ -2435,7 +2435,7 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
     }
     else
         FIXME("(%p, 0x%08x): stub - harmless\n", hDC, dwFlag);
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 

@@ -376,7 +376,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
     UINT result = 0;
     BITMAPOBJ * bitmap;
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     if ((bitmap = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC )))
     {
@@ -396,7 +396,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
     if (dc->funcs->pSetDIBColorTable)
         dc->funcs->pSetDIBColorTable(dc->physDev, startpos, entries, colors);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return result;
 }
 
@@ -409,7 +409,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
     DC * dc;
     UINT result = 0;
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     if (dc->funcs->pGetDIBColorTable)
         result = dc->funcs->pGetDIBColorTable(dc->physDev, startpos, entries, colors);
@@ -431,7 +431,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
             GDI_ReleaseObj( dc->hBitmap );
         }
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return result;
 }
 
@@ -1075,14 +1075,14 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     {
         if (init == CBM_INIT) SetDIBits( hdc, handle, 0, height, bits, data, coloruse );
 
-        else if (hdc && ((dc = DC_GetDCPtr( hdc )) != NULL) )
+        else if (hdc && ((dc = get_dc_ptr( hdc )) != NULL) )
         {
             if (!BITMAP_SetOwnerDC( handle, dc ))
             {
                 DeleteObject( handle );
                 handle = 0;
             }
-            DC_ReleaseDCPtr( dc );
+            release_dc_ptr( dc );
         }
     }
 
@@ -1323,7 +1323,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         bDesktopDC = TRUE;
     }
 
-    if (!(dc = DC_GetDCPtr( hdc ))) goto error;
+    if (!(dc = get_dc_ptr( hdc ))) goto error;
 
     /* create Device Dependent Bitmap and add DIB pointer */
     ret = CreateBitmap( dib->dsBm.bmWidth, dib->dsBm.bmHeight, 1,
@@ -1347,7 +1347,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         }
     }
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     if (bDesktopDC) DeleteDC( hdc );
     if (ret && bits) *bits = dib->dsBm.bmBits;
     return ret;

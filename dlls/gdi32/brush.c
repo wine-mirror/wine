@@ -336,7 +336,7 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
  */
 BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 {
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
     if (!dc) return FALSE;
     if (oldorg)
@@ -346,7 +346,7 @@ BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
     }
     dc->brushOrgX = x;
     dc->brushOrgY = y;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return TRUE;
 }
 
