@@ -637,6 +637,12 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         }
         gl_info->gl_driver_version = MAKEDWORD_VERSION(major, minor);
         TRACE_(d3d_caps)("found GL_VERSION  (%s)->%i.%i->(0x%08x)\n", debugstr_a(gl_string), major, minor, gl_info->gl_driver_version);
+        /* Current Windows drivers have versions like 6.14.... (some older have an earlier version) */
+        gl_info->gl_driver_version_hipart = MAKEDWORD_VERSION(6, 14);
+    } else {
+        FIXME("OpenGL driver did not return version information\n");
+        gl_info->gl_driver_version = MAKEDWORD_VERSION(0, 0);
+        gl_info->gl_driver_version_hipart = MAKEDWORD_VERSION(6, 14);
     }
 
     TRACE_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(gl_info->gl_renderer), gl_info->gl_card);
@@ -1531,8 +1537,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
 
     /* Note dx8 doesn't supply a DeviceName */
     if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
-    /* Current Windows drivers have versions like 6.14.... (some older have an earlier version) */
-    pIdentifier->DriverVersion->u.HighPart = MAKEDWORD_VERSION(6, 14);
+    pIdentifier->DriverVersion->u.HighPart = Adapters[Adapter].gl_info.gl_driver_version_hipart;
     pIdentifier->DriverVersion->u.LowPart = Adapters[Adapter].gl_info.gl_driver_version;
     *(pIdentifier->VendorId) = Adapters[Adapter].gl_info.gl_vendor;
     *(pIdentifier->DeviceId) = Adapters[Adapter].gl_info.gl_card;
