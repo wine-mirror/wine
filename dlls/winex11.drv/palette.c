@@ -85,6 +85,15 @@ static unsigned char X11DRV_PALETTE_freeList[256];
 
 static XContext palette_context;  /* X context to associate a color mapping to a palette */
 
+static CRITICAL_SECTION palette_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &palette_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": palette_cs") }
+};
+static CRITICAL_SECTION palette_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 /**********************************************************************/
 
    /* Map an EGA index (0..15) to a pixel value in the system color space.  */
@@ -761,13 +770,19 @@ BOOL X11DRV_IsSolidColor( COLORREF color )
 
     if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) return TRUE;  /* no palette */
 
+    EnterCriticalSection( &palette_cs );
     for (i = 0; i < palette_size ; i++, pEntry++)
     {
         if( i < COLOR_gapStart || i > COLOR_gapEnd )
             if ((GetRValue(color) == pEntry->peRed) &&
                 (GetGValue(color) == pEntry->peGreen) &&
-                (GetBValue(color) == pEntry->peBlue)) return TRUE;
+                (GetBValue(color) == pEntry->peBlue))
+            {
+                LeaveCriticalSection( &palette_cs );
+                return TRUE;
+            }
     }
+    LeaveCriticalSection( &palette_cs );
     return FALSE;
 }
 
@@ -810,8 +825,11 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 
     if ((screen_depth <= 8) && (pixel < 256) &&
         !(X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_VIRTUAL | X11DRV_PALETTE_FIXED)) ) {
-         return  ( *(COLORREF*)(COLOR_sysPal +
-		   ((X11DRV_PALETTE_XPixelToPalette)?X11DRV_PALETTE_XPixelToPalette[pixel]:pixel)) ) & 0x00ffffff;
+        COLORREF ret;
+        EnterCriticalSection( &palette_cs );
+        ret = *(COLORREF *)(COLOR_sysPal + (X11DRV_PALETTE_XPixelToPalette ? X11DRV_PALETTE_XPixelToPalette[pixel]: pixel)) & 0x00ffffff;
+        LeaveCriticalSection( &palette_cs );
+        return ret;
     }
 
     wine_tsx11_lock();
@@ -972,8 +990,10 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 			    ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? white : 1 - white;
 		}
 
+                EnterCriticalSection( &palette_cs );
 	    	index = X11DRV_SysPaletteLookupPixel( color, FALSE);
                 if (X11DRV_PALETTE_PaletteToXPixel) index = X11DRV_PALETTE_PaletteToXPixel[index];
+                LeaveCriticalSection( &palette_cs );
 
 		/* TRACE(palette,"RGB(%lx) -> pixel %i\n", color, index);
 		 */
@@ -1096,11 +1116,6 @@ UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary
 
     if (!GetObjectW( hpal, sizeof(num_entries), &num_entries )) return 0;
 
-    /* reset dynamic system palette entries */
-
-    if( primary && X11DRV_PALETTE_firstFree != -1)
-         X11DRV_PALETTE_FormatSystemPalette();
-
     /* initialize palette mapping table */
     prev_mapping = palette_get_mapping( hpal );
     if (prev_mapping)
@@ -1120,6 +1135,12 @@ UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary
         num_entries = 256;
     }
     if (!(num_entries = GetPaletteEntries( hpal, 0, num_entries, entries ))) return 0;
+
+    /* reset dynamic system palette entries */
+
+    EnterCriticalSection( &palette_cs );
+    if( primary && X11DRV_PALETTE_firstFree != -1)
+         X11DRV_PALETTE_FormatSystemPalette();
 
     for (i = 0; i < num_entries; i++)
     {
@@ -1193,6 +1214,7 @@ UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary
         TRACE("entry %i (%x) -> pixel %i\n", i, *(COLORREF*)&entries[i], index);
 
     }
+    LeaveCriticalSection( &palette_cs );
     return iRemapped;
 }
 
@@ -1227,6 +1249,7 @@ UINT X11DRV_GetSystemPaletteEntries( X11DRV_PDEVICE *physDev, UINT start, UINT c
     if (start >= palette_size) return 0;
     if (start + count >= palette_size) count = palette_size - start;
 
+    EnterCriticalSection( &palette_cs );
     for (i = 0; i < count; i++)
     {
         entries[i].peRed   = COLOR_sysPal[start + i].peRed;
@@ -1235,6 +1258,7 @@ UINT X11DRV_GetSystemPaletteEntries( X11DRV_PDEVICE *physDev, UINT start, UINT c
         entries[i].peFlags = 0;
         TRACE("\tidx(%02x) -> RGB(%08x)\n", start + i, *(COLORREF*)(entries + i) );
     }
+    LeaveCriticalSection( &palette_cs );
     return count;
 }
 
@@ -1272,7 +1296,9 @@ COLORREF X11DRV_GetNearestColor( X11DRV_PDEVICE *physDev, COLORREF color )
         color = RGB( entry.peRed,  entry.peGreen, entry.peBlue );
     }
     color &= 0x00ffffff;
+    EnterCriticalSection( &palette_cs );
     nearest = (0x00ffffff & *(COLORREF*)(COLOR_sysPal + X11DRV_SysPaletteLookupPixel(color, FALSE)));
+    LeaveCriticalSection( &palette_cs );
 
     TRACE("(%06x): returning %06x\n", color, nearest );
     return nearest;
@@ -1293,6 +1319,7 @@ UINT X11DRV_RealizeDefaultPalette( X11DRV_PDEVICE *physDev )
         PALETTEENTRY entries[NB_RESERVED_COLORS];
 
         GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, entries );
+        EnterCriticalSection( &palette_cs );
         for( i = 0; i < NB_RESERVED_COLORS; i++ )
         {
             index = X11DRV_PALETTE_LookupSystemXPixel( RGB(entries[i].peRed,
@@ -1305,6 +1332,7 @@ UINT X11DRV_RealizeDefaultPalette( X11DRV_PDEVICE *physDev )
                 ret++;
             }
         }
+        LeaveCriticalSection( &palette_cs );
     }
     return ret;
 }
