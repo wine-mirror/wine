@@ -182,7 +182,7 @@ static void set_tooltip(struct icon *icon, WCHAR *szTip, BOOL modify)
         SendMessageW(icon->tooltip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
 }
 
-static void modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
+static BOOL modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
 {
     struct icon    *icon;
 
@@ -193,7 +193,7 @@ static void modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
     if (!icon)
     {
         WINE_WARN("Invalid icon ID (0x%x) for HWND %p\n", nid->uID, nid->hWnd);
-        return;
+        return FALSE;
     }
 
     if (nid->uFlags & NIF_ICON)
@@ -216,9 +216,10 @@ static void modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
     {
         WINE_FIXME("balloon tip title %s, message %s\n", wine_dbgstr_w(nid->szInfoTitle), wine_dbgstr_w(nid->szInfo));
     }
+    return TRUE;
 }
 
-static void add_icon(NOTIFYICONDATAW *nid)
+static BOOL add_icon(NOTIFYICONDATAW *nid)
 {
     HMODULE x11drv = GetModuleHandleA( "winex11.drv" );
     RECT rect;
@@ -231,13 +232,13 @@ static void add_icon(NOTIFYICONDATAW *nid)
     if ((icon = get_icon(nid->hWnd, nid->uID)))
     {
         WINE_WARN("duplicate tray icon add, buggy app?\n");
-        return;
+        return FALSE;
     }
 
     if (!(icon = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*icon))))
     {
         WINE_ERR("out of memory\n");
-        return;
+        return FALSE;
     }
 
     icon->id    = nid->uID;
@@ -289,10 +290,10 @@ static void add_icon(NOTIFYICONDATAW *nid)
 
     list_add_tail(&tray.icons, &icon->entry);
 
-    modify_icon(nid, FALSE);
+    return modify_icon(nid, FALSE);
 }
 
-static void delete_icon(const NOTIFYICONDATAW *nid)
+static BOOL delete_icon(const NOTIFYICONDATAW *nid)
 {
     struct icon *icon = get_icon(nid->hWnd, nid->uID);
 
@@ -300,22 +301,24 @@ static void delete_icon(const NOTIFYICONDATAW *nid)
    
     if (!icon)
     {
-        WINE_ERR("invalid tray icon ID specified: %u\n", nid->uID);
-        return;
+        WINE_WARN("invalid tray icon ID specified: %u\n", nid->uID);
+        return FALSE;
     }
 
     DestroyWindow(icon->tooltip);
     DestroyWindow(icon->window);
+    return TRUE;
 }
 
-static void handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
+static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
 {
     NOTIFYICONDATAW nid;
     DWORD cbSize;
+    BOOL ret = FALSE;
 
-    if (cds->cbData < NOTIFYICONDATAW_V1_SIZE) return;
+    if (cds->cbData < NOTIFYICONDATAW_V1_SIZE) return FALSE;
     cbSize = ((PNOTIFYICONDATA)cds->lpData)->cbSize;
-    if (cbSize < NOTIFYICONDATAW_V1_SIZE) return;
+    if (cbSize < NOTIFYICONDATAW_V1_SIZE) return FALSE;
 
     ZeroMemory(&nid, sizeof(nid));
     memcpy(&nid, cds->lpData, min(sizeof(nid), cbSize));
@@ -343,14 +346,14 @@ static void handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         if (cds->cbData < nid.cbSize + 2 * sizeof(BITMAP) + cbMaskBits + cbColourBits)
         {
             WINE_ERR("buffer underflow\n");
-            return;
+            return FALSE;
         }
 
         /* sanity check */
         if ((bmColour.bmWidth != bmMask.bmWidth) || (bmColour.bmHeight != bmMask.bmHeight))
         {
             WINE_ERR("colour and mask bitmaps aren't consistent\n");
-            return;
+            return FALSE;
         }
 
         nid.hIcon = CreateIcon(NULL, bmColour.bmWidth, bmColour.bmHeight,
@@ -361,13 +364,13 @@ static void handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     switch (cds->dwData)
     {
     case NIM_ADD:
-        add_icon(&nid);
+        ret = add_icon(&nid);
         break;
     case NIM_DELETE:
-        delete_icon(&nid);
+        ret = delete_icon(&nid);
         break;
     case NIM_MODIFY:
-        modify_icon(&nid, TRUE);
+        ret = modify_icon(&nid, TRUE);
         break;
     default:
         WINE_FIXME("unhandled tray message: %ld\n", cds->dwData);
@@ -378,13 +381,15 @@ static void handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
      * icon handles */
     if (nid.uFlags & NIF_ICON)
         DestroyIcon(nid.hIcon);
+
+    return ret;
 }
 
 static LRESULT WINAPI listener_wndproc(HWND window, UINT msg,
                                        WPARAM wparam, LPARAM lparam)
 {
     if (msg == WM_COPYDATA)
-        handle_incoming((HWND)wparam, (COPYDATASTRUCT *)lparam);
+        return handle_incoming((HWND)wparam, (COPYDATASTRUCT *)lparam);
 
     return DefWindowProc(window, msg, wparam, lparam);
 }

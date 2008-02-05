@@ -104,6 +104,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     HWND tray;
     COPYDATASTRUCT cds;
     char *buffer = NULL;
+    BOOL ret;
 
     TRACE("dwMessage = %d, nid->cbSize=%d\n", dwMessage, nid->cbSize);
 
@@ -185,11 +186,11 @@ noicon:
         cds.lpData = nid;
     }
 
-    SendMessageW(tray, WM_COPYDATA, (WPARAM)nid->hWnd, (LPARAM)&cds);
+    ret = SendMessageW(tray, WM_COPYDATA, (WPARAM)nid->hWnd, (LPARAM)&cds);
 
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
     HeapFree(GetProcessHeap(), 0, buffer);
 
-    return TRUE;
+    return ret;
 }

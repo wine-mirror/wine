@@ -52,8 +52,7 @@ void test_cbsize(void)
         ok(pShell_NotifyIconW(NIM_DELETE, &nidW), "NIM_DELETE failed!\n");
         /* as icon doesn't exist anymore - now there will be an error */
         nidW.cbSize = sizeof(nidW);
-        /* wine currently doesn't return error code put prints an ERR(...) */
-        todo_wine ok(!pShell_NotifyIconW(NIM_DELETE, &nidW), "The icon was not deleted\n");
+        ok(!pShell_NotifyIconW(NIM_DELETE, &nidW), "The icon was not deleted\n");
     }
 
     /* same for Shell_NotifyIconA */
@@ -73,8 +72,7 @@ void test_cbsize(void)
     ok(Shell_NotifyIconA(NIM_DELETE, &nidA), "NIM_DELETE failed!\n");
     /* as icon doesn't exist anymore - now there will be an error */
     nidA.cbSize = sizeof(nidA);
-    /* wine currently doesn't return error code put prints an ERR(...) */
-    todo_wine ok(!Shell_NotifyIconA(NIM_DELETE, &nidA), "The icon was not deleted\n");
+    ok(!Shell_NotifyIconA(NIM_DELETE, &nidA), "The icon was not deleted\n");
 }
 
 START_TEST(systray)
