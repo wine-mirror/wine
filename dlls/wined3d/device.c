@@ -6777,6 +6777,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     WINED3DDISPLAYMODE mode;
     IWineD3DBaseShaderImpl *shader;
     IWineD3DSurfaceImpl *target;
+    UINT i;
     TRACE("(%p)\n", This);
 
     hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &swapchain);
@@ -6839,13 +6840,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         This->shader_backend->shader_destroy((IWineD3DBaseShader *) shader);
     }
 
+    ENTER_GL();
     if(This->depth_blt_texture) {
-        ENTER_GL();
         glDeleteTextures(1, &This->depth_blt_texture);
-        LEAVE_GL();
         This->depth_blt_texture = 0;
     }
     This->shader_backend->shader_destroy_depth_blt(iface);
+
+    for (i = 0; i < GL_LIMITS(textures); i++) {
+        /* The stateblock initialization below will recreate them */
+        glDeleteTextures(1, &This->dummyTextureName[i]);
+        checkGLcall("glDeleteTextures(1, &This->dummyTextureName[i])");
+        This->dummyTextureName[i] = 0;
+    }
+    LEAVE_GL();
 
     while(This->numContexts) {
         DestroyContext(This, This->contexts[0]);
