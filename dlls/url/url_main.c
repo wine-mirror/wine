@@ -24,6 +24,9 @@
 #include "shellapi.h"
 #include "shlwapi.h"
 #include "intshcut.h"
+#include "winuser.h"
+#include "commctrl.h"
+#include "prsht.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(url);
@@ -42,6 +45,25 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ * AddMIMEFileTypesPS (URL.@)
+ *
+ * Build and Manage a Filetype-Association Property Sheet
+ *
+ * PARAMS
+ *  unknown1 [I] Pointer to an Read-Only Area
+ *  lppsh    [I] PTR to the target PropertySheetHeader (ANSI)
+ *
+ * RETURNS
+ *  Success: 0
+ *
+ */
+DWORD WINAPI AddMIMEFileTypesPS(VOID * unknown1, LPPROPSHEETHEADERA lppsh)
+{
+    FIXME("(%p, %p): stub!\n", unknown1, lppsh);
+    return 0;
 }
 
 /***********************************************************************

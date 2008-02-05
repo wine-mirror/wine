@@ -1,4 +1,4 @@
-@ stub AddMIMEFileTypesPS
+@ stdcall AddMIMEFileTypesPS(ptr ptr)
 @ stub AutodialHookCallback
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject
