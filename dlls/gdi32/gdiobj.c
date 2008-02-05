@@ -823,7 +823,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
     while (header->hdcs)
     {
-        DC *dc = DC_GetDCPtr(header->hdcs->hdc);
+        DC *dc = get_dc_ptr(header->hdcs->hdc);
         struct hdc_list *tmp;
 
         TRACE("hdc %p has interest in %p\n", header->hdcs->hdc, obj);
@@ -831,7 +831,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         {
             if(dc->funcs->pDeleteObject)
                 dc->funcs->pDeleteObject( dc->physDev, obj );
-            DC_ReleaseDCPtr( dc );
+            release_dc_ptr( dc );
         }
         tmp = header->hdcs;
         header->hdcs = header->hdcs->next;
@@ -1098,10 +1098,10 @@ DWORD WINAPI GetObjectType( HGDIOBJ handle )
 HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
 {
     HGDIOBJ ret = 0;
-    DC * dc = DC_GetDCPtr( hdc );
+    DC * dc = get_dc_ptr( hdc );
 
-    if (dc)
-    {
+    if (!dc) return 0;
+
     switch (type) {
 	case OBJ_EXTPEN: /* fall through */
 	case OBJ_PEN:	 ret = dc->hPen; break;
@@ -1112,13 +1112,12 @@ HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
 
 	/* tests show that OBJ_REGION is explicitly ignored */
 	case OBJ_REGION: break;
-    default:
-    	/* the SDK only mentions those above */
-    	FIXME("(%p,%d): unknown type.\n",hdc,type);
+        default:
+            /* the SDK only mentions those above */
+            FIXME("(%p,%d): unknown type.\n",hdc,type);
 	    break;
-        }
-        DC_ReleaseDCPtr( dc );
     }
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -1143,23 +1142,15 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
 {
     HGDIOBJ ret = 0;
     GDIOBJHDR *header;
-    DC *dc;
 
     TRACE( "(%p,%p)\n", hdc, hObj );
 
-    if (!(dc = DC_GetDCPtr( hdc )))
-        SetLastError( ERROR_INVALID_HANDLE );
-    else
+    header = GDI_GetObjPtr( hObj, MAGIC_DONTCARE );
+    if (header)
     {
-        DC_ReleaseDCPtr( dc );
-
-        header = GDI_GetObjPtr( hObj, MAGIC_DONTCARE );
-        if (header)
-        {
-            const struct gdi_obj_funcs *funcs = header->funcs;
-            GDI_ReleaseObj( hObj );
-            if (funcs && funcs->pSelectObject) ret = funcs->pSelectObject( hObj, hdc );
-        }
+        const struct gdi_obj_funcs *funcs = header->funcs;
+        GDI_ReleaseObj( hObj );
+        if (funcs && funcs->pSelectObject) ret = funcs->pSelectObject( hObj, hdc );
     }
     return ret;
 }
@@ -1437,13 +1428,13 @@ BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
  */
 BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
 {
-    DC *dc = DC_GetDCPtr(hdc);
+    DC *dc = get_dc_ptr(hdc);
     BOOL ret = FALSE;
     if(dc)
     {
         if (dc->funcs->pGdiComment)
             ret = dc->funcs->pGdiComment( dc->physDev, cbSize, lpData );
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
     }
     return ret;
 }

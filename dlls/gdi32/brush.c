@@ -374,22 +374,30 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
     HGDIOBJ ret = 0;
     DC *dc = get_dc_ptr( hdc );
 
-    if (!dc) return 0;
+    if (!dc)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return 0;
+    }
 
     if ((brush = GDI_GetObjPtr( handle, BRUSH_MAGIC )))
     {
         if (brush->logbrush.lbStyle == BS_PATTERN)
             BITMAP_SetOwnerDC( (HBITMAP)brush->logbrush.lbHatch, dc );
 
-        if (dc->funcs->pSelectBrush) handle = dc->funcs->pSelectBrush( dc->physDev, handle );
-        if (handle)
+        GDI_inc_ref_count( handle );
+        GDI_ReleaseObj( handle );
+
+        if (dc->funcs->pSelectBrush && !dc->funcs->pSelectBrush( dc->physDev, handle ))
+        {
+            GDI_dec_ref_count( handle );
+        }
+        else
         {
             ret = dc->hBrush;
             dc->hBrush = handle;
-            GDI_inc_ref_count( handle );
             GDI_dec_ref_count( ret );
         }
-        GDI_ReleaseObj( handle );
     }
     release_dc_ptr( dc );
     return ret;

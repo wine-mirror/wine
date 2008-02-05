@@ -218,19 +218,31 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
 {
     HGDIOBJ ret = 0;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = get_dc_ptr( hdc );
 
-    if (!dc) return 0;
+    if (!dc)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return 0;
+    }
 
-    if (dc->funcs->pSelectPen) handle = dc->funcs->pSelectPen( dc->physDev, handle );
-    if (handle)
+    if (!GDI_inc_ref_count( handle ))
+    {
+        release_dc_ptr( dc );
+        return 0;
+    }
+
+    if (dc->funcs->pSelectPen && !dc->funcs->pSelectPen( dc->physDev, handle ))
+    {
+        GDI_dec_ref_count( handle );
+    }
+    else
     {
         ret = dc->hPen;
         dc->hPen = handle;
-        GDI_inc_ref_count( handle );
         GDI_dec_ref_count( ret );
     }
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
