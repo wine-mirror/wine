@@ -1508,7 +1508,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	/* this is not quite what MS doc says... */
 	midiOutReset(lpMidiStrm->hDevice);
 	/* empty list of already submitted buffers */
-	for (lpMidiHdr = lpMidiStrm->lpMidiHdr; lpMidiHdr; lpMidiHdr = (LPMIDIHDR)lpMidiHdr->lpNext) {
+	for (lpMidiHdr = lpMidiStrm->lpMidiHdr; lpMidiHdr; lpMidiHdr = lpMidiHdr->lpNext) {
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 
@@ -1592,7 +1592,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	    break;
 	}
 
-	for (lpmh = &lpMidiStrm->lpMidiHdr; *lpmh; lpmh = (LPMIDIHDR*)&((*lpmh)->lpNext));
+	for (lpmh = &lpMidiStrm->lpMidiHdr; *lpmh; lpmh = &(*lpmh)->lpNext);
 	*lpmh = lpMidiHdr;
 	lpMidiHdr = (LPMIDIHDR)msg->lParam;
 	lpMidiHdr->lpNext = 0;
@@ -1720,7 +1720,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 
-	    lpMidiStrm->lpMidiHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
+	    lpMidiStrm->lpMidiHdr = lpMidiHdr->lpNext;
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
 			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
 			   lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
