@@ -397,9 +397,6 @@ extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 
 /* dc.c */
 extern DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic ) DECLSPEC_HIDDEN;
-extern DC * DC_GetDCUpdate( HDC hdc ) DECLSPEC_HIDDEN;
-extern DC * DC_GetDCPtr( HDC hdc ) DECLSPEC_HIDDEN;
-extern void DC_ReleaseDCPtr( DC *dc ) DECLSPEC_HIDDEN;
 extern BOOL free_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern DC *get_dc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
 extern void release_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;

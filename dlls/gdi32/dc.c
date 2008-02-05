@@ -156,40 +156,6 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
 
 
 /***********************************************************************
- *           DC_GetDCPtr
- */
-DC *DC_GetDCPtr( HDC hdc )
-{
-    DC *dc = get_dc_obj( hdc );
-    if (!dc) return NULL;
-
-    if (!InterlockedCompareExchange( &dc->refcount, 1, 0 ))
-    {
-        dc->thread = GetCurrentThreadId();
-    }
-    else if (dc->thread != GetCurrentThreadId())
-    {
-        GDI_ReleaseObj( hdc );
-        SetLastError( ERROR_ACCESS_DENIED );
-        return NULL;
-    }
-    else InterlockedIncrement( &dc->refcount );
-
-    return dc;
-}
-
-
-/***********************************************************************
- *           DC_ReleaseDCPtr
- */
-void DC_ReleaseDCPtr( DC *dc )
-{
-    release_dc_ptr( dc );
-    GDI_ReleaseObj( dc->hSelf );
-}
-
-
-/***********************************************************************
  *           free_dc_ptr
  */
 BOOL free_dc_ptr( DC *dc )
