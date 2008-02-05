@@ -297,8 +297,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
     if(This->resource.format == WINED3DFMT_P8 ||
        This->resource.format == WINED3DFMT_A8P8)
     {
-        if(!This->Flags & SFLAG_INSYSMEM) {
-            FIXME("Palette changed with surface that does not have an up to date system memory copy\n");
+        if(!(This->Flags & SFLAG_INSYSMEM)) {
+            TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
+            IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
         }
         TRACE("Dirtifying surface\n");
         IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
