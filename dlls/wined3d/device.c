@@ -6931,6 +6931,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     swapchain->num_contexts = 1;
     This->activeContext = swapchain->context[0];
 
+    hr = IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *) This->stateBlock);
+    if(FAILED(hr)) {
+        ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
+    }
+
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
      * first use
      */
