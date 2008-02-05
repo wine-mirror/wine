@@ -393,13 +393,13 @@ static BOOL format_str_is_number(LPWSTR str)
     return TRUE;
 }
 
-static BOOL format_is_alpha(x)
+static BOOL format_is_alpha(WCHAR x)
 {
     return (!format_is_number(x) && x != '\0' &&
             x != '[' && x != ']' && x != '{' && x != '}');
 }
 
-static BOOL format_is_literal(x)
+static BOOL format_is_literal(WCHAR x)
 {
     return (format_is_alpha(x) || format_is_number(x));
 }
