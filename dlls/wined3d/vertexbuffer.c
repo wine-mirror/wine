@@ -503,6 +503,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     if(!This->vbo) {
         /* TODO: Make converting independent from VBOs */
         if(This->Flags & VBFLAG_CREATEVBO) {
+            CreateVBO(This);
             This->Flags &= ~VBFLAG_CREATEVBO;
         } else {
             return; /* Not doing any conversion */
