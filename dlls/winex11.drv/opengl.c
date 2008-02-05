@@ -758,6 +758,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       nvfloatattrib = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_FLOAT_COMPONENTS_NV: %x\n", cur, nvfloatattrib);
       break ;
+    case WGL_BIND_TO_TEXTURE_DEPTH_NV:
     case WGL_BIND_TO_TEXTURE_RGB_ARB:
     case WGL_BIND_TO_TEXTURE_RGBA_ARB:
     case WGL_BIND_TO_TEXTURE_RECTANGLE_FLOAT_R_NV:
@@ -1692,7 +1693,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
 
     if (!has_opengl()) {
         ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
+        return FALSE;
     }
 
     wine_tsx11_lock();
