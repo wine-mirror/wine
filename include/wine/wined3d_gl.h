@@ -3653,7 +3653,8 @@ typedef struct _WineD3D_GL_Info {
   GL_Vendors gl_vendor;
   GL_Cards   gl_card;
   UINT   vidmem;
-  DWORD  gl_driver_version;
+  DWORD  driver_version;
+  DWORD  driver_version_hipart;
   CHAR   gl_renderer[255];
   /**
    * CAPS Constants 

@@ -512,6 +512,25 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     gl_string = (const char *) glGetString(GL_VERSION);
     if (gl_string != NULL) {
 
+        /* First, parse the generic opengl version. This is supposed not to be convoluted with
+         * driver specific information
+         */
+        gl_string_cursor = gl_string;
+        major = atoi(gl_string_cursor);
+        if(major <= 0) {
+            ERR("Invalid opengl major version: %d\n", major);
+        }
+        while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+            ++gl_string_cursor;
+        }
+        if (*gl_string_cursor++ != '.') {
+            ERR_(d3d_caps)("Invalid opengl version string: %s\n", debugstr_a(gl_string));
+        }
+        minor = atoi(gl_string_cursor);
+        TRACE_(d3d_caps)("Found OpenGL version: %d.%d\n", major, minor);
+        gl_info->gl_version = MAKEDWORD_VERSION(major, minor);
+
+        /* Now parse the driver specific string which we'll report to the app */
         switch (gl_info->gl_vendor) {
         case VENDOR_NVIDIA:
             gl_string_cursor = strstr(gl_string, "NVIDIA");
@@ -635,14 +654,14 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             major = 0;
             minor = 9;
         }
-        gl_info->gl_driver_version = MAKEDWORD_VERSION(major, minor);
-        TRACE_(d3d_caps)("found GL_VERSION  (%s)->%i.%i->(0x%08x)\n", debugstr_a(gl_string), major, minor, gl_info->gl_driver_version);
+        gl_info->driver_version = MAKEDWORD_VERSION(major, minor);
+        TRACE_(d3d_caps)("found driver version (%s)->%i.%i->(0x%08x)\n", debugstr_a(gl_string), major, minor, gl_info->driver_version);
         /* Current Windows drivers have versions like 6.14.... (some older have an earlier version) */
-        gl_info->gl_driver_version_hipart = MAKEDWORD_VERSION(6, 14);
+        gl_info->driver_version_hipart = MAKEDWORD_VERSION(6, 14);
     } else {
         FIXME("OpenGL driver did not return version information\n");
-        gl_info->gl_driver_version = MAKEDWORD_VERSION(0, 0);
-        gl_info->gl_driver_version_hipart = MAKEDWORD_VERSION(6, 14);
+        gl_info->driver_version = MAKEDWORD_VERSION(0, 0);
+        gl_info->driver_version_hipart = MAKEDWORD_VERSION(6, 14);
     }
 
     TRACE_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(gl_info->gl_renderer), gl_info->gl_card);
@@ -732,7 +751,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
 #define USE_GL_FUNC(type, pfn, ext, replace) { \
             DWORD ver = ver_for_ext(ext); \
             if(gl_info->supported[ext]) gl_info->pfn = (type) pwglGetProcAddress(#pfn); \
-            else if(ver && ver <= gl_info->gl_driver_version) gl_info->pfn = (type) pwglGetProcAddress(#replace); \
+            else if(ver && ver <= gl_info->gl_version) gl_info->pfn = (type) pwglGetProcAddress(#replace); \
             else gl_info->pfn = NULL; \
         }
         GL_EXT_FUNCS_GEN;
@@ -748,7 +767,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
          */
         for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i) {
             if (gl_info->supported[EXTENSION_MAP[i].extension] == FALSE &&
-                EXTENSION_MAP[i].version <= gl_info->gl_driver_version && EXTENSION_MAP[i].version) {
+                EXTENSION_MAP[i].version <= gl_info->gl_version && EXTENSION_MAP[i].version) {
                 TRACE_(d3d_caps)(" GL CORE: %s support\n", EXTENSION_MAP[i].extension_string);
                 gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
             }
@@ -1537,8 +1556,8 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
 
     /* Note dx8 doesn't supply a DeviceName */
     if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
-    pIdentifier->DriverVersion->u.HighPart = Adapters[Adapter].gl_info.gl_driver_version_hipart;
-    pIdentifier->DriverVersion->u.LowPart = Adapters[Adapter].gl_info.gl_driver_version;
+    pIdentifier->DriverVersion->u.HighPart = Adapters[Adapter].gl_info.driver_version_hipart;
+    pIdentifier->DriverVersion->u.LowPart = Adapters[Adapter].gl_info.driver_version;
     *(pIdentifier->VendorId) = Adapters[Adapter].gl_info.gl_vendor;
     *(pIdentifier->DeviceId) = Adapters[Adapter].gl_info.gl_card;
     *(pIdentifier->SubSysId) = 0;
