@@ -576,13 +576,8 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
     BITMAPOBJ *bitmap;
     DC *dc;
 
-    if (!(bitmap = GDI_GetObjPtr( handle, BITMAP_MAGIC ))) return 0;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    if (!(dc = get_dc_ptr( hdc )))
-    {
-        GDI_ReleaseObj( handle );
-        return 0;
-    }
     if (GetObjectType( hdc ) != OBJ_MEMDC)
     {
         ret = 0;
@@ -591,34 +586,44 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
     ret = dc->hBitmap;
     if (handle == dc->hBitmap) goto done;  /* nothing to do */
 
+    if (!(bitmap = GDI_GetObjPtr( handle, BITMAP_MAGIC )))
+    {
+        ret = 0;
+        goto done;
+    }
+
     if (bitmap->header.dwCount && (handle != GetStockObject(DEFAULT_BITMAP)))
     {
         WARN( "Bitmap already selected in another DC\n" );
+        GDI_ReleaseObj( handle );
         ret = 0;
         goto done;
     }
 
     if (!bitmap->funcs && !BITMAP_SetOwnerDC( handle, dc ))
     {
+        GDI_ReleaseObj( handle );
         ret = 0;
         goto done;
     }
 
-    if (dc->funcs->pSelectBitmap) handle = dc->funcs->pSelectBitmap( dc->physDev, handle );
-
-    if (handle)
+    if (dc->funcs->pSelectBitmap && !dc->funcs->pSelectBitmap( dc->physDev, handle ))
+    {
+        GDI_ReleaseObj( handle );
+        ret = 0;
+    }
+    else
     {
         dc->hBitmap = handle;
         GDI_inc_ref_count( handle );
         dc->dirty = 0;
         SetRectRgn( dc->hVisRgn, 0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
+        GDI_ReleaseObj( handle );
         DC_InitDC( dc );
         GDI_dec_ref_count( ret );
     }
-    else ret = 0;
 
  done:
-    GDI_ReleaseObj( handle );
     release_dc_ptr( dc );
     return ret;
 }
