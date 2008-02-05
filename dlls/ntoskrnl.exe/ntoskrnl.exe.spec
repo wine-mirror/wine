@@ -700,7 +700,7 @@
 @ stub MmMapViewOfSection
 @ stub MmMarkPhysicalMemoryAsBad
 @ stub MmMarkPhysicalMemoryAsGood
-@ stub MmPageEntireDriver
+@ stdcall MmPageEntireDriver(ptr)
 @ stub MmPrefetchPages
 @ stub MmProbeAndLockPages
 @ stub MmProbeAndLockProcessPages
@@ -708,7 +708,7 @@
 @ stub MmProtectMdlSystemAddress
 @ stub MmQuerySystemSize
 @ stub MmRemovePhysicalMemory
-@ stub MmResetDriverPaging
+@ stdcall MmResetDriverPaging(ptr)
 @ stub MmSectionObjectType
 @ stub MmSecureVirtualMemory
 @ stub MmSetAddressRangeModified

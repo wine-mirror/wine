@@ -562,6 +562,23 @@ void WINAPI MmFreeNonCachedMemory( void *addr, SIZE_T size )
 }
 
 /***********************************************************************
+ *           MmPageEntireDriver   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI MmPageEntireDriver(PVOID AddrInSection)
+{
+    TRACE("%p\n", AddrInSection);
+    return AddrInSection;
+}
+
+/***********************************************************************
+ *           MmResetDriverPaging   (NTOSKRNL.EXE.@)
+ */
+void WINAPI MmResetDriverPaging(PVOID AddrInSection)
+{
+    TRACE("%p\n", AddrInSection);
+}
+
+/***********************************************************************
  *           PsCreateSystemThread   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI PsCreateSystemThread(PHANDLE ThreadHandle, ULONG DesiredAccess,
