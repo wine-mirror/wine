@@ -1040,7 +1040,20 @@ static void test_item_position(void)
 
 START_TEST(listview)
 {
-    InitCommonControls();
+    HMODULE hComctl32;
+    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
+
+    hComctl32 = GetModuleHandleA("comctl32.dll");
+    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
+    if (pInitCommonControlsEx)
+    {
+        INITCOMMONCONTROLSEX iccex;
+        iccex.dwSize = sizeof(iccex);
+        iccex.dwICC  = ICC_LISTVIEW_CLASSES;
+        pInitCommonControlsEx(&iccex);
+    }
+    else
+        InitCommonControls();
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 

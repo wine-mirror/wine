@@ -786,11 +786,23 @@ static void bandinfo_test(void)
 
 START_TEST(rebar)
 {
+    HMODULE hComctl32;
+    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
+    INITCOMMONCONTROLSEX iccex;
     WNDCLASSA wc;
     MSG msg;
     RECT rc;
 
-    InitCommonControls();
+    hComctl32 = GetModuleHandleA("comctl32.dll");
+    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
+    if (!pInitCommonControlsEx)
+    {
+        skip("InitCommonControlsEx() is missing. Skipping the tests\n");
+        return;
+    }
+    iccex.dwSize = sizeof(iccex);
+    iccex.dwICC = ICC_COOL_CLASSES;
+    pInitCommonControlsEx(&iccex);
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;

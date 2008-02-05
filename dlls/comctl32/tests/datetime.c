@@ -560,7 +560,21 @@ static void test_datetime_control(void)
 
 START_TEST(datetime)
 {
-    InitCommonControls();
+    HMODULE hComctl32;
+    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
+    INITCOMMONCONTROLSEX iccex;
+
+    hComctl32 = GetModuleHandleA("comctl32.dll");
+    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
+    if (!pInitCommonControlsEx)
+    {
+        skip("InitCommonControlsEx() is missing. Skipping the tests\n");
+        return;
+    }
+    iccex.dwSize = sizeof(iccex);
+    iccex.dwICC  = ICC_DATE_CLASSES;
+    pInitCommonControlsEx(&iccex);
+
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     test_datetime_control();

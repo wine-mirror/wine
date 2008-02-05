@@ -1480,10 +1480,24 @@ static LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
     return 0L;
 }
 
-static void init(void) {
+static int init(void)
+{
+    HMODULE hComctl32;
+    BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     WNDCLASSA wc;
+    INITCOMMONCONTROLSEX iccex;
 
-    InitCommonControls();
+    hComctl32 = GetModuleHandleA("comctl32.dll");
+    pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
+    if (!pInitCommonControlsEx)
+    {
+        skip("InitCommonControlsEx() is missing. Skipping the tests\n");
+        return 0;
+    }
+
+    iccex.dwSize = sizeof(iccex);
+    iccex.dwICC  = ICC_USEREX_CLASSES;
+    pInitCommonControlsEx(&iccex);
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -1503,13 +1517,15 @@ static void init(void) {
       NULL, NULL, GetModuleHandleA(NULL), 0);
     assert(hHeaderParentWnd != NULL);
     ShowWindow(hHeaderParentWnd, SW_SHOW);
+    return 1;
 }
 
 START_TEST(header)
 {
     HWND parent_hwnd;
 
-    init();
+    if (!init())
+        return;
 
     test_header_control();
     test_header_order();
