@@ -515,11 +515,11 @@ UINT WINAPI GetSystemPaletteEntries(
 
     TRACE("hdc=%p,start=%i,count=%i\n", hdc,start,count);
 
-    if ((dc = DC_GetDCPtr( hdc )))
+    if ((dc = get_dc_ptr( hdc )))
     {
         if (dc->funcs->pGetSystemPaletteEntries)
             ret = dc->funcs->pGetSystemPaletteEntries( dc->physDev, start, count, entries );
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
     }
     return ret;
 }
@@ -584,18 +584,18 @@ COLORREF WINAPI GetNearestColor(
     COLORREF nearest;
     DC 		*dc;
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return CLR_INVALID;
+    if (!(dc = get_dc_ptr( hdc ))) return CLR_INVALID;
 
     if (dc->funcs->pGetNearestColor)
     {
         nearest = dc->funcs->pGetNearestColor( dc->physDev, color );
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return nearest;
     }
 
     if (!(GetDeviceCaps(hdc, RASTERCAPS) & RC_PALETTE))
     {
-        DC_ReleaseDCPtr( dc );
+        release_dc_ptr( dc );
         return color;
     }
 
@@ -618,14 +618,14 @@ COLORREF WINAPI GetNearestColor(
             WARN("RGB(%x) : idx %d is out of bounds, assuming NULL\n", color, index );
             if (!GetPaletteEntries( hpal, 0, 1, &entry ))
             {
-                DC_ReleaseDCPtr( dc );
+                release_dc_ptr( dc );
                 return CLR_INVALID;
             }
         }
         color = RGB( entry.peRed, entry.peGreen, entry.peBlue );
     }
     nearest = color & 0x00ffffff;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
 
     TRACE("(%06x): returning %06x\n", color, nearest );
     return nearest;
@@ -662,11 +662,9 @@ static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
         palette->funcs = NULL;
     }
 
-    if (hLastRealizedPalette == handle)
-    {
+    if (InterlockedCompareExchangePointer( (void **)&hLastRealizedPalette, 0, handle ) == handle)
         TRACE("unrealizing palette %p\n", handle);
-        hLastRealizedPalette = 0;
-    }
+
     return TRUE;
 }
 
@@ -696,7 +694,7 @@ HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
       WARN("invalid selected palette %p\n",hpal);
       return 0;
     }
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
     ret = dc->hPalette;
     if (dc->funcs->pSelectPalette) hpal = dc->funcs->pSelectPalette( dc->physDev, hpal, FALSE );
     if (hpal)
@@ -705,7 +703,7 @@ HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
         if (!wBkg) hPrimaryPalette = hpal;
     }
     else ret = 0;
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -716,7 +714,7 @@ HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg)
 UINT WINAPI GDIRealizePalette( HDC hdc )
 {
     UINT realized = 0;
-    DC* dc = DC_GetDCPtr( hdc );
+    DC* dc = get_dc_ptr( hdc );
 
     if (!dc) return 0;
 
@@ -727,7 +725,7 @@ UINT WINAPI GDIRealizePalette( HDC hdc )
         if (dc->funcs->pRealizeDefaultPalette)
             realized = dc->funcs->pRealizeDefaultPalette( dc->physDev );
     }
-    else if(dc->hPalette != hLastRealizedPalette )
+    else if (InterlockedExchangePointer( (void **)&hLastRealizedPalette, dc->hPalette ) != dc->hPalette)
     {
         if (dc->funcs->pRealizePalette)
         {
@@ -740,11 +738,10 @@ UINT WINAPI GDIRealizePalette( HDC hdc )
                 GDI_ReleaseObj( dc->hPalette );
             }
         }
-        hLastRealizedPalette = dc->hPalette;
     }
     else TRACE("  skipping (hLastRealizedPalette = %p)\n", hLastRealizedPalette);
 
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     TRACE("   realized %i colors.\n", realized );
     return realized;
 }
@@ -760,10 +757,10 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 
     TRACE("%04x\n", hdc );
 
-    if (!(dc = DC_GetDCPtr( HDC_32(hdc) ))) return 0;
+    if (!(dc = get_dc_ptr( HDC_32(hdc) ))) return 0;
 
     if (dc->funcs->pRealizeDefaultPalette) ret = dc->funcs->pRealizeDefaultPalette( dc->physDev );
-    DC_ReleaseDCPtr( dc );
+    release_dc_ptr( dc );
     return ret;
 }
 
@@ -772,11 +769,11 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
  */
 BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
 {
-    DC *dc = DC_GetDCPtr( HDC_32(hDC) );
+    DC *dc = get_dc_ptr( HDC_32(hDC) );
     if (dc)
     {
       BOOL bRet = dc->hPalette == hPrimaryPalette;
-      DC_ReleaseDCPtr( dc );
+      release_dc_ptr( dc );
       return bRet;
     }
     return FALSE;
