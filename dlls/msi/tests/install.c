@@ -576,6 +576,16 @@ static const CHAR df_duplicate_file_dat[] = "FileKey\tComponent_\tFile_\tDestNam
                                             "maximus\tmaximus\tmaximus\taugustus\t\n"
                                             "caesar\tmaximus\tmaximus\t\tNONEXISTENT\n";
 
+static const CHAR wrv_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "augustus\t\tMSITESTDIR\t0\t\taugustus\n";
+
+static const CHAR wrv_registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
+                                       "s72\ti2\tl255\tL255\tL0\ts72\n"
+                                       "Registry\tRegistry\n"
+                                       "regdata\t2\tSOFTWARE\\Wine\\msitest\tValue\t[~]one[~]two[~]three\taugustus";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -862,6 +872,19 @@ static const msi_table df_tables[] =
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
     ADD_TABLE(df_duplicate_file),
+};
+
+static const msi_table wrv_tables[] =
+{
+    ADD_TABLE(wrv_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+    ADD_TABLE(wrv_registry),
 };
 
 /* cabinet definitions */
@@ -3625,6 +3648,43 @@ static void test_duplicatefiles(void)
     DeleteFile(msifile);
 }
 
+static void test_writeregistryvalues(void)
+{
+    UINT r;
+    LONG res;
+    HKEY hkey;
+    DWORD type, size;
+    CHAR path[MAX_PATH];
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 500);
+
+    create_database(msifile, wrv_tables, sizeof(wrv_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File installed\n");
+
+    res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    size = MAX_PATH;
+    type = REG_MULTI_SZ;
+    memset(path, 'a', MAX_PATH);
+    res = RegQueryValueExA(hkey, "Value", NULL, &type, (LPBYTE)path, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!memcmp(path, "one\0two\0three\0\0", size), "Wrong multi-sz data\n");
+    ok(size == 15, "Expected 15, got %d\n", size);
+    ok(type == REG_MULTI_SZ, "Expected REG_MULTI_SZ, got %d\n", type);
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -3667,6 +3727,7 @@ START_TEST(install)
     test_movefiles();
     test_missingcab();
     test_duplicatefiles();
+    test_writeregistryvalues();
 
     SetCurrentDirectoryA(prev_path);
 }
