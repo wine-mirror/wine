@@ -510,14 +510,10 @@ LONG WINAPI SetBitmapBits(
  */
 HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
 {
-    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     HBITMAP res = 0;
     BITMAP bm;
 
-    if(!bmp) return 0;
-
-    bm = bmp->bitmap;
-    bm.bmBits = NULL;
+    if (!GetObjectW( hbitmap, sizeof(bm), &bm )) return 0;
     res = CreateBitmapIndirect(&bm);
 
     if(res) {
@@ -527,8 +523,6 @@ HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
 	SetBitmapBits (res, bm.bmWidthBytes * bm.bmHeight, buf);
 	HeapFree( GetProcessHeap(), 0, buf );
     }
-
-    GDI_ReleaseObj( hbitmap );
     return res;
 }
 
