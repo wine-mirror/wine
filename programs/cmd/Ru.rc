@@ -202,10 +202,10 @@ VERIFY		Выводит текущее состояние: ON или OFF.\n\
 
   WCMD_VOL,    "Справка о VOL\n"
 
-  WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
-stack, and then changes the current directory to the supplied one.\n"
+  WCMD_PUSHD,  "PUSHD <directoryname> сохраняет текущий каталог в стек,\n\
+а затем переходит в указанный каталог.\n"
 
-  WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
+  WCMD_POPD,   "POPD переходит в каталог, сохранённый командой\n\
 PUSHD.\n"
 
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
@@ -225,13 +225,13 @@ DATE\t\tПоказать или изменить системную дату\n\
 DEL (ERASE)\tУдалить файл или набор файлов\n\
 DIR\t\tПоказать содержание папки\n\
 ECHO\t\tСкопировать текст прямо на выход консоли\n\
-HELP\t\tПоказать крадкую подсказку по команде\n\
+HELP\t\tПоказать краткую подсказку по команде\n\
 MD (MKDIR)\tСоздать папку\n\
-MORE\t\tDisplay output in pages\n\
+MORE\t\tВывести данные по страницам\n\
 MOVE\t\tПереместить файл, набор файлов или дерево папок\n\
 PATH\t\tПоказать или изменить путь поиска программ\n\
-POPD\t\tRestores the directory to the last one saved with PUSHD\n\
-PUSHD\t\tChanges to a new directory, saving the current one\n\
+POPD\t\tВосстановить предыдущее значение текущей папки, сохранённого с помощью PUSHD\n\
+PUSHD\t\tСохранить значение текущей папки и переходит к другой папке\n\
 PROMPT\t\tИзменить приглашение командной строки\n\
 REN (RENAME)\tПереименовать файл\n\
 RD (RMDIR)\tУдалить папку\n\
@@ -277,5 +277,5 @@ EXIT\t\tВыйти из CMD\n\n\
   WCMD_ANYKEY,"Нажмите ввод для продолжения: "
   WCMD_CONSTITLE,"Приглашение командной строки Wine"
   WCMD_VERSION,"Версия CMD %s\n\n"
-  WCMD_MOREPROMPT, "More? "
+  WCMD_MOREPROMPT, "Ещё? "
 }
