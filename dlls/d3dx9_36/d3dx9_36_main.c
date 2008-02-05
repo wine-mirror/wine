@@ -2,6 +2,7 @@
  * Direct3D X 9 main file
  *
  * Copyright (C) 2007 David Adam
+ * Copyright (C) 2008 Tony Wasserka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,4 +51,13 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ * D3DXGetDriverLevel.
+ * Returns always 900 (DX 9) for us
+ */
+UINT WINAPI D3DXGetDriverLevel(LPDIRECT3DDEVICE9 device)
+{
+    return 900;
 }

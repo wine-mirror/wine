@@ -149,7 +149,7 @@
 @ stdcall D3DXGeneratePMesh(ptr ptr ptr ptr long long ptr) d3dx8.D3DXGeneratePMesh
 @ stub D3DXGetDeclLength
 @ stub D3DXGetDeclVertexSize
-@ stub D3DXGetDriverLevel
+@ stdcall D3DXGetDriverLevel(ptr)
 @ stdcall D3DXGetFVFVertexSize(long) d3dx8.D3DXGetFVFVertexSize
 @ stdcall D3DXGetImageInfoFromFileA(ptr ptr) d3dx8.D3DXGetImageInfoFromFileA
 @ stdcall D3DXGetImageInfoFromFileInMemory(ptr long ptr) d3dx8.D3DXGetImageInfoFromFileInMemory
