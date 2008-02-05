@@ -55,7 +55,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         return;
     }
 
-    if(This->Flags & SFLAG_CONVERTED) {
+    /* Only support read back of converted P8 surfaces */
+    if(This->Flags & SFLAG_CONVERTED && (This->resource.format != WINED3DFMT_P8)) {
         FIXME("Read back converted textures unsupported, format=%s\n", debug_d3dformat(This->resource.format));
         return;
     }
@@ -86,8 +87,16 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         LEAVE_GL();
     } else {
         void *mem;
+        GLenum format = This->glDescription.glFormat;
+        GLenum type = This->glDescription.glType;
         int src_pitch = 0;
         int dst_pitch = 0;
+
+        /* In case of P8 the index is stored in the alpha component if the primary render target uses P8 */
+        if(This->resource.format == WINED3DFMT_P8) {
+            format = GL_ALPHA;
+            type = GL_UNSIGNED_BYTE;
+        }
 
         if (This->Flags & SFLAG_NONPOW2) {
             unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
@@ -100,21 +109,21 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         }
 
         TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
-                This->glDescription.glFormat, This->glDescription.glType, mem);
+                format, type, mem);
 
         if(This->Flags & SFLAG_PBO) {
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
             checkGLcall("glBindBufferARB");
 
-            glGetTexImage(This->glDescription.target, This->glDescription.level, This->glDescription.glFormat,
-                          This->glDescription.glType, NULL);
+            glGetTexImage(This->glDescription.target, This->glDescription.level, format,
+                          type, NULL);
             checkGLcall("glGetTexImage()");
 
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
             checkGLcall("glBindBufferARB");
         } else {
-            glGetTexImage(This->glDescription.target, This->glDescription.level, This->glDescription.glFormat,
-                          This->glDescription.glType, mem);
+            glGetTexImage(This->glDescription.target, This->glDescription.level, format,
+                          type, mem);
             checkGLcall("glGetTexImage()");
         }
         LEAVE_GL();
