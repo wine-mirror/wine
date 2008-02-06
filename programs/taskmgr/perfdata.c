@@ -32,25 +32,25 @@
 #include "taskmgr.h"
 #include "perfdata.h"
 
-PROCNTQSI                        NtQuerySystemInformation = NULL;
-PROCGGR                            pGetGuiResources = NULL;
-PROCGPIC                        pGetProcessIoCounters = NULL;
-CRITICAL_SECTION                    PerfDataCriticalSection;
-PPERFDATA                        pPerfDataOld = NULL;    /* Older perf data (saved to establish delta values) */
-PPERFDATA                        pPerfData = NULL;    /* Most recent copy of perf data */
-ULONG                            ProcessCountOld = 0;
-ULONG                            ProcessCount = 0;
-double                            dbIdleTime;
-double                            dbKernelTime;
-double                            dbSystemTime;
-LARGE_INTEGER                    liOldIdleTime = {{0,0}};
-double                            OldKernelTime = 0;
-LARGE_INTEGER                    liOldSystemTime = {{0,0}};
-SYSTEM_PERFORMANCE_INFORMATION    SystemPerfInfo;
-SYSTEM_BASIC_INFORMATION        SystemBasicInfo;
-SYSTEM_CACHE_INFORMATION        SystemCacheInfo;
-SYSTEM_HANDLE_INFORMATION        SystemHandleInfo;
-PSYSTEM_PROCESSORTIME_INFO        SystemProcessorTimeInfo = NULL;
+static PROCNTQSI                       NtQuerySystemInformation = NULL;
+static PROCGGR                         pGetGuiResources = NULL;
+static PROCGPIC                        pGetProcessIoCounters = NULL;
+static CRITICAL_SECTION                PerfDataCriticalSection;
+static PPERFDATA                       pPerfDataOld = NULL;    /* Older perf data (saved to establish delta values) */
+static PPERFDATA                       pPerfData = NULL;    /* Most recent copy of perf data */
+static ULONG                           ProcessCountOld = 0;
+static ULONG                           ProcessCount = 0;
+static double                          dbIdleTime;
+static double                          dbKernelTime;
+static double                          dbSystemTime;
+static LARGE_INTEGER                   liOldIdleTime = {{0,0}};
+static double                          OldKernelTime = 0;
+static LARGE_INTEGER                   liOldSystemTime = {{0,0}};
+static SYSTEM_PERFORMANCE_INFORMATION  SystemPerfInfo;
+static SYSTEM_BASIC_INFORMATION        SystemBasicInfo;
+static SYSTEM_CACHE_INFORMATION        SystemCacheInfo;
+static SYSTEM_HANDLE_INFORMATION       SystemHandleInfo;
+static PSYSTEM_PROCESSORTIME_INFO      SystemProcessorTimeInfo = NULL;
 
 BOOL PerfDataInitialize(void)
 {
