@@ -2426,7 +2426,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ex.flags = GT_USECRLF;
     ex.codepage = unicode ? 1200 : CP_ACP;
     ex.lpDefaultChar = NULL;
-    ex.lpUsedDefaultChar = NULL;
+    ex.lpUsedDefChar = NULL;
     rc = RichEditWndProc_common(hWnd, EM_GETTEXTEX, (WPARAM)&ex, unicode ? (LPARAM)bufferW : (LPARAM)bufferA, unicode);
 
     if (unicode)
@@ -2480,7 +2480,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       buffer = heap_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
 
       buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
-      rc = WideCharToMultiByte(ex->codepage, flags, buffer, -1, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
+      rc = WideCharToMultiByte(ex->codepage, flags, buffer, -1, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefChar);
       if (rc) rc--; /* do not count 0 terminator */
 
       heap_free(buffer);

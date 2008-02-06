@@ -531,7 +531,7 @@ typedef struct _gettextex {
     DWORD      flags;
     UINT       codepage;
     LPCSTR     lpDefaultChar;
-    LPBOOL     lpUsedDefaultChar;
+    LPBOOL     lpUsedDefChar;
 } GETTEXTEX;
 
 #define SF_TEXT		      0x00000001
