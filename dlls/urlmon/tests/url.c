@@ -2395,8 +2395,40 @@ static void test_BindToStorage_fail(void)
     test_ReportResult(S_FALSE);
 }
 
+static void gecko_installer_workaround(BOOL disable)
+{
+    HKEY hkey;
+    DWORD res;
+
+    static BOOL has_url = FALSE;
+    static char url[2048];
+
+    if(!disable && !has_url)
+        return;
+
+    res = RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\MSHTML", &hkey);
+    if(res != ERROR_SUCCESS)
+        return;
+
+    if(disable) {
+        DWORD type, size = sizeof(url);
+
+        res = RegQueryValueEx(hkey, "GeckoUrl", NULL, &type, (PVOID)url, &size);
+        if(res == ERROR_SUCCESS && type == REG_SZ)
+            has_url = TRUE;
+
+        RegDeleteValue(hkey, "GeckoUrl");
+    }else {
+        RegSetValueEx(hkey, "GeckoUrl", 0, REG_SZ, (PVOID)url, lstrlenA(url)+1);
+    }
+
+    RegCloseKey(hkey);
+}
+
 START_TEST(url)
 {
+    gecko_installer_workaround(TRUE);
+
     complete_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     complete_event2 = CreateEvent(NULL, FALSE, FALSE, NULL);
     thread_id = GetCurrentThreadId();
@@ -2508,4 +2540,6 @@ START_TEST(url)
     CloseHandle(complete_event);
     CloseHandle(complete_event2);
     CoUninitialize();
+
+    gecko_installer_workaround(FALSE);
 }
