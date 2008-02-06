@@ -811,7 +811,10 @@ static stgmed_obj_t *create_stgmed_stream(stgmed_buf_t *buf)
 
 static void stgmed_file_release(stgmed_obj_t *obj)
 {
-    heap_free(obj);
+    stgmed_file_obj_t *file_obj = (stgmed_file_obj_t*)obj;
+
+    IUnknown_Release(STGMEDUNK(file_obj->buf));
+    heap_free(file_obj);
 }
 
 static HRESULT stgmed_file_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
