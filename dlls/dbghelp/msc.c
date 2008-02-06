@@ -407,7 +407,7 @@ static void* codeview_cast_symt(struct symt* symt, enum SymTagEnum tag)
 }
 
 static struct symt* codeview_fetch_type(struct codeview_type_parse* ctp,
-                                        unsigned typeno)
+                                        unsigned typeno, BOOL details)
 {
     struct symt*                symt;
     const union codeview_type*  p;
@@ -421,7 +421,7 @@ static struct symt* codeview_fetch_type(struct codeview_type_parse* ctp,
         FIXME("Cannot locate type %x\n", typeno);
         return NULL;
     }
-    symt = codeview_parse_one_type(ctp, typeno, p, FALSE);
+    symt = codeview_parse_one_type(ctp, typeno, p, details);
     if (!symt) FIXME("Couldn't load forward type %x\n", typeno);
     return symt;
 }
@@ -437,7 +437,7 @@ static struct symt* codeview_add_type_pointer(struct codeview_type_parse* ctp,
         existing = codeview_cast_symt(existing, SymTagPointerType);
         return existing;
     }
-    pointee = codeview_fetch_type(ctp, pointee_type);
+    pointee = codeview_fetch_type(ctp, pointee_type, FALSE);
     return &symt_new_pointer(ctp->module, pointee)->symt;
 }
 
@@ -447,8 +447,8 @@ static struct symt* codeview_add_type_array(struct codeview_type_parse* ctp,
                                             unsigned int indextype,
                                             unsigned int arr_len)
 {
-    struct symt*        elem = codeview_fetch_type(ctp, elemtype);
-    struct symt*        index = codeview_fetch_type(ctp, indextype);
+    struct symt*        elem = codeview_fetch_type(ctp, elemtype, FALSE);
+    struct symt*        index = codeview_fetch_type(ctp, indextype, FALSE);
     DWORD               arr_max = 0;
 
     if (elem)
@@ -520,19 +520,19 @@ static void codeview_add_udt_element(struct codeview_type_parse* ctp,
         {
         case LF_BITFIELD_V1:
             symt_add_udt_element(ctp->module, symt, name,
-                                 codeview_fetch_type(ctp, cv_type->bitfield_v1.type),
+                                 codeview_fetch_type(ctp, cv_type->bitfield_v1.type, FALSE),
                                  cv_type->bitfield_v1.bitoff,
                                  cv_type->bitfield_v1.nbits);
             return;
         case LF_BITFIELD_V2:
             symt_add_udt_element(ctp->module, symt, name,
-                                 codeview_fetch_type(ctp, cv_type->bitfield_v2.type),
+                                 codeview_fetch_type(ctp, cv_type->bitfield_v2.type, FALSE),
                                  cv_type->bitfield_v2.bitoff,
                                  cv_type->bitfield_v2.nbits);
             return;
         }
     }
-    subtype = codeview_fetch_type(ctp, type);
+    subtype = codeview_fetch_type(ctp, type, FALSE);
 
     if (subtype)
     {
@@ -791,7 +791,7 @@ static void codeview_add_func_signature_args(struct codeview_type_parse* ctp,
 {
     const union codeview_reftype*       reftype;
 
-    sym->rettype = codeview_fetch_type(ctp, ret_type);
+    sym->rettype = codeview_fetch_type(ctp, ret_type, FALSE);
     if (args_list && (reftype = codeview_jump_to_type(ctp, args_list)))
     {
         int i;
@@ -800,12 +800,12 @@ static void codeview_add_func_signature_args(struct codeview_type_parse* ctp,
         case LF_ARGLIST_V1:
             for (i = 0; i < reftype->arglist_v1.num; i++)
                 symt_add_function_signature_parameter(ctp->module, sym,
-                                                      codeview_fetch_type(ctp, reftype->arglist_v1.args[i]));
+                                                      codeview_fetch_type(ctp, reftype->arglist_v1.args[i], FALSE));
             break;
         case LF_ARGLIST_V2:
             for (i = 0; i < reftype->arglist_v2.num; i++)
                 symt_add_function_signature_parameter(ctp->module, sym,
-                                                      codeview_fetch_type(ctp, reftype->arglist_v2.args[i]));
+                                                      codeview_fetch_type(ctp, reftype->arglist_v2.args[i], FALSE));
             break;
         default:
             FIXME("Unexpected leaf %x for signature's pmt\n", reftype->generic.id);
@@ -828,8 +828,8 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
     switch (type->generic.id)
     {
     case LF_MODIFIER_V1:
-        /* FIXME: we don't handle modifiers, 
-         * but readd previous type on the curr_type 
+        /* FIXME: we don't handle modifiers,
+         * but read previous type on the curr_type
          */
         WARN("Modifier on %x: %s%s%s%s\n",
              type->modifier_v1.type,
@@ -837,9 +837,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
              type->modifier_v1.attribute & 0x02 ? "volatile " : "",
              type->modifier_v1.attribute & 0x04 ? "unaligned " : "",
              type->modifier_v1.attribute & ~0x07 ? "unknown " : "");
-        if (!(symt = codeview_get_type(type->modifier_v1.type, TRUE)))
-            symt = codeview_parse_one_type(ctp, type->modifier_v1.type,
-                                           codeview_jump_to_type(ctp, type->modifier_v1.type), details);
+        symt = codeview_fetch_type(ctp, type->modifier_v1.type, details);
         break;
     case LF_MODIFIER_V2:
         /* FIXME: we don't handle modifiers, but readd previous type on the curr_type */
@@ -849,9 +847,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
              type->modifier_v2.attribute & 0x02 ? "volatile " : "",
              type->modifier_v2.attribute & 0x04 ? "unaligned " : "",
              type->modifier_v2.attribute & ~0x07 ? "unknown " : "");
-        if (!(symt = codeview_get_type(type->modifier_v2.type, TRUE)))
-            symt = codeview_parse_one_type(ctp, type->modifier_v2.type,
-                                           codeview_jump_to_type(ctp, type->modifier_v2.type), details);
+        symt = codeview_fetch_type(ctp, type->modifier_v2.type, details);
         break;
 
     case LF_POINTER_V1:
