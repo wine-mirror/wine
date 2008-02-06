@@ -2903,7 +2903,15 @@ static const struct driver_version_information driver_version_table[] = {
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    7,  15, 10, 16921   },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    7,  15, 10, 16921   },
 
-    /* TODO: Add information about legacy nvidia hardware, ATI, Intel and other cards */
+    /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode */
+    {VENDOR_ATI,        CARD_ATI_RADEON_9500,           6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_X700,           6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_X1600,          6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         6,  14, 10, 6764    },
+
+    /* TODO: Add information about legacy nvidia and ATI hardware, Intel and other cards */
 };
 
 static void fixup_extensions(WineD3D_GL_Info *gl_info) {
