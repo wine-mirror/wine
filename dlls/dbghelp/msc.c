@@ -659,6 +659,11 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
             ptr += 2 + 4 + 2 + (1 + type->stmember_v2.p_name.namelen);
             break;
 
+        case LF_STMEMBER_V3:
+            /* FIXME: ignored for now */
+            ptr += 2 + 4 + 2 + (strlen(type->stmember_v3.name) + 1);
+            break;
+
         case LF_METHOD_V1:
             /* FIXME: ignored for now */
             ptr += 2 + 2 + 2 + (1 + type->method_v1.p_name.namelen);
@@ -669,6 +674,11 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
             ptr += 2 + 2 + 4 + (1 + type->method_v2.p_name.namelen);
             break;
 
+        case LF_METHOD_V3:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2 + 4 + (strlen(type->method_v3.name) + 1);
+            break;
+
         case LF_NESTTYPE_V1:
             /* FIXME: ignored for now */
             ptr += 2 + 2 + (1 + type->nesttype_v1.p_name.namelen);
@@ -677,6 +687,11 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
         case LF_NESTTYPE_V2:
             /* FIXME: ignored for now */
             ptr += 2 + 2 + 4 + (1 + type->nesttype_v2.p_name.namelen);
+            break;
+
+        case LF_NESTTYPE_V3:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2 + 4 + (strlen(type->nesttype_v3.name) + 1);
             break;
 
         case LF_VFUNCTAB_V1:
@@ -713,6 +728,20 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
 
             default:
                 ptr += 2 + 2 + 4 + (1 + type->onemethod_v2.p_name.namelen);
+                break;
+            }
+            break;
+
+        case LF_ONEMETHOD_V3:
+            /* FIXME: ignored for now */
+            switch ((type->onemethod_v3.attribute >> 2) & 7)
+            {
+            case 4: case 6: /* (pure) introducing virtual method */
+                ptr += 2 + 2 + 4 + 4 + (strlen(type->onemethod_virt_v3.name) + 1);
+                break;
+
+            default:
+                ptr += 2 + 2 + 4 + (strlen(type->onemethod_v3.name) + 1);
                 break;
             }
             break;
