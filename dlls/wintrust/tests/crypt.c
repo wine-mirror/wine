@@ -30,11 +30,13 @@ static char selfname[MAX_PATH];
 
 static CHAR CURR_DIR[MAX_PATH];
 
-static HMODULE hWintrust = 0;
-
 static BOOL (WINAPI * pCryptCATAdminAcquireContext)(HCATADMIN*, const GUID*, DWORD);
 static BOOL (WINAPI * pCryptCATAdminReleaseContext)(HCATADMIN, DWORD);
 static BOOL (WINAPI * pCryptCATAdminCalcHashFromFileHandle)(HANDLE hFile, DWORD*, BYTE*, DWORD);
+
+static void InitFunctionPtrs(void)
+{
+    HMODULE hWintrust = GetModuleHandleA("wintrust.dll");
 
 #define WINTRUST_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(hWintrust, #func); \
@@ -42,21 +44,11 @@ static BOOL (WINAPI * pCryptCATAdminCalcHashFromFileHandle)(HANDLE hFile, DWORD*
       trace("GetProcAddress(%s) failed\n", #func); \
     }
 
-static BOOL InitFunctionPtrs(void)
-{
-    hWintrust = LoadLibraryA("wintrust.dll");
-
-    if(!hWintrust)
-    {
-        skip("Could not load wintrust.dll\n");
-        return FALSE;
-    }
-
     WINTRUST_GET_PROC(CryptCATAdminAcquireContext)
     WINTRUST_GET_PROC(CryptCATAdminReleaseContext)
     WINTRUST_GET_PROC(CryptCATAdminCalcHashFromFileHandle)
 
-    return TRUE;
+#undef WINTRUST_GET_PROC
 }
 
 static void test_context(void)
@@ -290,8 +282,7 @@ START_TEST(crypt)
     int myARGC;
     char** myARGV;
 
-    if(!InitFunctionPtrs())
-        return;
+    InitFunctionPtrs();
 
     myARGC = winetest_get_mainargs(&myARGV);
     strcpy(selfname, myARGV[0]);
@@ -300,6 +291,4 @@ START_TEST(crypt)
    
     test_context();
     test_calchash();
-
-    FreeLibrary(hWintrust);
 }
