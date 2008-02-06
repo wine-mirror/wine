@@ -6958,6 +6958,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
             IWineD3DDevice_SetFullscreen(iface, FALSE);
         }
         swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
+    } else if(!pPresentationParameters->Windowed) {
+        DWORD style = This->style, exStyle = This->exStyle;
+        /* If we're in fullscreen, and the mode wasn't changed, we have to get the window back into
+         * the right position. Some applications(Battlefield 2, Guild Wars) move it and then call
+         * Reset to clear up their mess. Guild Wars also loses the device during that.
+         */
+        This->style = 0;
+        This->exStyle = 0;
+        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, This->ddraw_window);
+        This->style = style;
+        This->exStyle = exStyle;
     }
 
     /* Recreate the primary swapchain's context */
