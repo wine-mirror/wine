@@ -83,7 +83,7 @@ const char* symt_get_name(const struct symt* sym)
     case SymTagFunction:        return ((const struct symt_function*)sym)->hash_elt.name;
     case SymTagPublicSymbol:    return ((const struct symt_public*)sym)->hash_elt.name;
     case SymTagBaseType:        return ((const struct symt_basic*)sym)->hash_elt.name;
-    case SymTagLabel:           return ((const struct symt_function_point*)sym)->name;
+    case SymTagLabel:           return ((const struct symt_hierarchy_point*)sym)->hash_elt.name;
     case SymTagThunk:           return ((const struct symt_thunk*)sym)->hash_elt.name;
     /* hierarchy tree */
     case SymTagEnum:            return ((const struct symt_enum*)sym)->name;
@@ -518,8 +518,10 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         case SymTagFuncDebugStart:
         case SymTagFuncDebugEnd:
         case SymTagLabel:
-            X(ULONG64) = ((const struct symt_function_point*)type)->parent->address + 
-                ((const struct symt_function_point*)type)->loc.offset;
+            if (!symt_get_info(((const struct symt_hierarchy_point*)type)->parent,
+                               req, pInfo))
+                return FALSE;
+            X(ULONG64) += ((const struct symt_hierarchy_point*)type)->loc.offset;
             break;
         case SymTagThunk:
             X(ULONG64) = ((const struct symt_thunk*)type)->address;
@@ -648,6 +650,9 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         case SymTagThunk:
             X(DWORD64) = ((const struct symt_thunk*)type)->size;
             break;
+        case SymTagLabel:
+            X(DWORD64) = 0;
+            break;
         default:
             FIXME("Unsupported sym-tag %s for get-length\n", 
                   symt_get_tag_str(type->tag));
@@ -768,6 +773,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
                   symt_get_tag_str(type->tag));
         case SymTagPublicSymbol:
         case SymTagThunk:
+        case SymTagLabel:
             return FALSE;
         }
         break;

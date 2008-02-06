@@ -374,21 +374,21 @@ struct symt_block* symt_close_func_block(struct module* module,
         GET_ENTRY(block->container, struct symt_block, symt) : NULL;
 }
 
-struct symt_function_point* symt_add_function_point(struct module* module, 
-                                                    struct symt_function* func,
-                                                    enum SymTagEnum point, 
-                                                    const struct location* loc,
-                                                    const char* name)
+struct symt_hierarchy_point* symt_add_function_point(struct module* module,
+                                                     struct symt_function* func,
+                                                     enum SymTagEnum point,
+                                                     const struct location* loc,
+                                                     const char* name)
 {
-    struct symt_function_point* sym;
+    struct symt_hierarchy_point*sym;
     struct symt**               p;
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = point;
-        sym->parent   = func;
+        sym->parent   = &func->symt;
         sym->loc      = *loc;
-        sym->name     = name ? pool_strdup(&module->pool, name) : NULL;
+        sym->hash_elt.name = name ? pool_strdup(&module->pool, name) : NULL;
         p = vector_add(&func->vchildren, &module->pool);
         *p = &sym->symt;
     }
@@ -468,6 +468,34 @@ struct symt_data* symt_new_constant(struct module* module,
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->type          = type;
         sym->u.value       = *v;
+        if (compiland)
+        {
+            struct symt**       p;
+            p = vector_add(&compiland->vchildren, &module->pool);
+            *p = &sym->symt;
+        }
+    }
+    return sym;
+}
+
+struct symt_hierarchy_point* symt_new_label(struct module* module,
+                                            struct symt_compiland* compiland,
+                                            const char* name, unsigned long address)
+{
+    struct symt_hierarchy_point*        sym;
+
+    TRACE_(dbghelp_symt)("Adding global label value %s:%s\n",
+                         debugstr_w(module->module.ModuleName), name);
+
+    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+    {
+        sym->symt.tag      = SymTagLabel;
+        sym->hash_elt.name = pool_strdup(&module->pool, name);
+        hash_table_add(&module->ht_symbols, &sym->hash_elt);
+        module->sortlist_valid = FALSE;
+        sym->loc.kind      = loc_absolute;
+        sym->loc.offset    = address;
+        sym->parent        = compiland ? &compiland->symt : NULL;
         if (compiland)
         {
             struct symt**       p;

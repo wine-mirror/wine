@@ -1588,9 +1588,9 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel, &loc,
                                         terminate_string(&sym->label_v1.p_name));
             }
-            else
-                FIXME("No current function for label %s\n",
-                      terminate_string(&sym->label_v1.p_name));
+            else symt_new_label(msc_dbg->module, compiland,
+                                terminate_string(&sym->label_v1.p_name),
+                                codeview_get_address(msc_dbg, sym->label_v1.segment, sym->label_v1.offset));
             break;
         case S_LABEL_V3:
             if (curr_func)
@@ -1600,8 +1600,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel, 
                                         &loc, sym->label_v3.name);
             }
-            else
-                FIXME("No current function for label %s\n", sym->label_v3.name);
+            else symt_new_label(msc_dbg->module, compiland, sym->label_v3.name,
+                                codeview_get_address(msc_dbg, sym->label_v3.segment, sym->label_v3.offset));
             break;
 
         case S_CONSTANT_V1:

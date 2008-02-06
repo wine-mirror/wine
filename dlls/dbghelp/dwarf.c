@@ -2070,7 +2070,7 @@ static enum location_error loc_compute_frame(struct process* pcs,
         psym = vector_at(&func->vchildren, i);
         if ((*psym)->tag == SymTagCustom)
         {
-            pframe = &((struct symt_function_point*)*psym)->loc;
+            pframe = &((struct symt_hierarchy_point*)*psym)->loc;
 
             /* First, recompute the frame information, if needed */
             switch (pframe->kind)

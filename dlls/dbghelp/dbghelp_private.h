@@ -206,12 +206,12 @@ struct symt_function
     struct vector               vchildren;      /* locals, params, blocks, start/end, labels */
 };
 
-struct symt_function_point
+struct symt_hierarchy_point
 {
     struct symt                 symt;           /* either SymTagFunctionDebugStart, SymTagFunctionDebugEnd, SymTagLabel */
-    struct symt_function*       parent;
+    struct hash_table_elt       hash_elt;       /* if label (and in compiland's hash table if global) */
+    struct symt*                parent;         /* symt_function or symt_compiland */
     struct location             loc;
-    const char*                 name;           /* for labels */
 };
 
 struct symt_public
@@ -548,7 +548,7 @@ extern struct symt_block*
                     symt_close_func_block(struct module* module, 
                                           struct symt_function* func,
                                           struct symt_block* block, unsigned pc);
-extern struct symt_function_point*
+extern struct symt_hierarchy_point*
                     symt_add_function_point(struct module* module, 
                                             struct symt_function* func,
                                             enum SymTagEnum point, 
@@ -568,6 +568,10 @@ extern struct symt_data*
                                       struct symt_compiland* parent,
                                       const char* name, struct symt* type,
                                       const VARIANT* v);
+extern struct symt_hierarchy_point*
+                    symt_new_label(struct module* module,
+                                   struct symt_compiland* compiland,
+                                   const char* name, unsigned long address);
 
 /* type.c */
 extern void         symt_init_basic(struct module* module);
