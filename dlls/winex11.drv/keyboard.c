@@ -1468,9 +1468,8 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
  * X11 lock must be held.
  */
 static void
-X11DRV_KEYBOARD_DetectLayout (void)
+X11DRV_KEYBOARD_DetectLayout( Display *display )
 {
-  Display *display = thread_display();
   unsigned current, match, mismatch, seq, i, syms;
   int score, keyc, key, pkey, ok;
   KeySym keysym = 0;
@@ -1577,9 +1576,8 @@ X11DRV_KEYBOARD_DetectLayout (void)
 /**********************************************************************
  *		X11DRV_InitKeyboard
  */
-void X11DRV_InitKeyboard(void)
+void X11DRV_InitKeyboard( Display *display )
 {
-    Display *display = thread_display();
     KeySym *ksp;
     XModifierKeymap *mmp;
     KeySym keysym;
@@ -1621,7 +1619,7 @@ void X11DRV_InitKeyboard(void)
     XFreeModifiermap(mmp);
 
     /* Detect the keyboard layout */
-    X11DRV_KEYBOARD_DetectLayout();
+    X11DRV_KEYBOARD_DetectLayout( display );
     lkey = main_key_tab[kbd_layout].key;
     syms = (keysyms_per_keycode > 4) ? 4 : keysyms_per_keycode;
 
@@ -1969,7 +1967,7 @@ void X11DRV_MappingNotify( HWND dummy, XEvent *event )
     wine_tsx11_lock();
     XRefreshKeyboardMapping(&event->xmapping);
     wine_tsx11_unlock();
-    X11DRV_InitKeyboard();
+    X11DRV_InitKeyboard( thread_display() );
 
     hwnd = GetFocus();
     if (!hwnd) hwnd = GetActiveWindow();
