@@ -2873,8 +2873,44 @@ static BOOL implementation_is_apple(WineD3D_GL_Info *gl_info) {
     }
 }
 
+/* Certain applications(Steam) complain if we report an outdated driver version. In general,
+ * reporting a driver version is moot because we are not the Windows driver, and we have different
+ * bugs, features, etc.
+ *
+ * If a card is not found in this table, the gl driver version is reported
+ */
+struct driver_version_information {
+    WORD vendor;                        /* reported PCI card vendor ID  */
+    WORD card;                          /* reported PCI card device ID  */
+    WORD hipart_hi, hipart_lo;          /* driver hiword to report      */
+    WORD lopart_hi, lopart_lo;          /* driver loword to report      */
+};
+
+static const struct driver_version_information driver_version_table[] = {
+    /* Nvidia drivers. Geforce FX and newer cards are supported by the current driver */
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    7,  15, 10, 16921   },
+
+    /* TODO: Add information about legacy nvidia hardware, ATI, Intel and other cards */
+};
+
 static void fixup_extensions(WineD3D_GL_Info *gl_info) {
-    if(implementation_is_apple(gl_info)) {
+    unsigned int i;
+    BOOL apple = implementation_is_apple(gl_info);
+
+    if(apple) {
         /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
          * used it falls back to software. While the compiler can detect if the shader uses all declared
          * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
@@ -2917,6 +2953,20 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
         if(gl_info->gl_vendor == VENDOR_INTEL) {
             TRACE("Enabling vertex texture coord fixes in vertex shaders\n");
             gl_info->set_texcoord_w = TRUE;
+        }
+    }
+
+    /* Fixup the driver version */
+    for(i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); i++) {
+        if(gl_info->gl_vendor == driver_version_table[i].vendor &&
+           gl_info->gl_card   == driver_version_table[i].card) {
+            TRACE_(d3d_caps)("Found card 0x%04x, 0x%04x in driver version DB\n", gl_info->gl_vendor, gl_info->gl_card);
+
+            gl_info->driver_version        = MAKEDWORD_VERSION(driver_version_table[i].lopart_hi,
+                                                               driver_version_table[i].lopart_lo);
+            gl_info->driver_version_hipart = MAKEDWORD_VERSION(driver_version_table[i].hipart_hi,
+                                                               driver_version_table[i].hipart_lo);
+            break;
         }
     }
 }
