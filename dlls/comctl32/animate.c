@@ -317,9 +317,6 @@ static BOOL ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
         rect.right = nWidth;
         rect.bottom = nHeight;
 
-        infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
-                                                 WM_CTLCOLORSTATIC,
-                                                 (WPARAM)hDC, (LPARAM)infoPtr->hwndSelf);
         if(!infoPtr->hbrushBG)
             infoPtr->hbrushBG = GetCurrentObject(hDC, OBJ_BRUSH);
 
@@ -403,6 +400,10 @@ static DWORD CALLBACK ANIMATE_AnimationThread(LPVOID ptr_)
 
     while(1)
     {
+        if (infoPtr->dwStyle & ACS_TRANSPARENT)
+            infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
+                                                     WM_CTLCOLORSTATIC,
+                                                     0, (LPARAM)infoPtr->hwndSelf);
         EnterCriticalSection(&infoPtr->cs);
         ANIMATE_DrawFrame(infoPtr);
         timeout = infoPtr->mah.dwMicroSecPerFrame;
@@ -451,6 +452,10 @@ static LRESULT ANIMATE_Play(ANIMATE_INFO *infoPtr, UINT cRepeat, WORD wFrom, WOR
      * does it send a notification */
     if (infoPtr->nFromFrame == infoPtr->nToFrame)
     {
+        if (infoPtr->dwStyle & ACS_TRANSPARENT)
+            infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
+                                                     WM_CTLCOLORSTATIC,
+                                                     0, (LPARAM)infoPtr->hwndSelf);
         ANIMATE_DrawFrame(infoPtr);
         return TRUE;
     }
