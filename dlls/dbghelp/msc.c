@@ -1495,6 +1495,15 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                 block, codeview_get_type(sym->register_v2.type, FALSE),
                                 terminate_string(&sym->register_v2.p_name));
             break;
+        case S_REGISTER_V3:
+            loc.kind = loc_register;
+            loc.reg = sym->register_v3.reg;
+            loc.offset = 0;
+            symt_add_func_local(msc_dbg->module, curr_func,
+                                DataIsLocal, &loc,
+                                block, codeview_get_type(sym->register_v3.type, FALSE),
+                                sym->register_v3.name);
+            break;
 
         case S_BLOCK_V1:
             block = symt_open_func_block(msc_dbg->module, curr_func, block, 
