@@ -732,6 +732,15 @@ union codeview_fieldtype
  * bit mode.  There are many other types listed in the documents, but these
  * are apparently not used by the compiler, or represent pointer types
  * that are not used.
+ *
+ * Official MS documentation says that type (< 0x4000, so 12 bits) is made of:
+ *        +----------+------+------+----------+------+
+ *        |    11    | 10-8 | 7-4  |     3    | 2-0  |
+ *        +----------+------+------+----------+------+
+ *        | reserved | mode | type | reserved | size |
+ *        +----------+------+------+----------+------+
+ * In recent PDB files, type 8 exists, and is seen as an HRESULT... So we've
+ * added this basic type... as if bit 3 had been integrated into the size field
  */
 
 /* the type number of a built-in type is a 16-bit value specified in the following format:
@@ -818,6 +827,7 @@ union codeview_fieldtype
 #define T_NBASICSTR         0x0005  /* near basic string */
 #define T_FBASICSTR         0x0006  /* far basic string */
 #define T_NOTTRANS          0x0007  /* untranslated type record from MS symbol format */
+#define T_HRESULT           0x0008  /* Hresult - or error code ??? */
 #define T_CHAR              0x0010  /* signed char */
 #define T_SHORT             0x0011  /* short */
 #define T_LONG              0x0012  /* long */
@@ -952,6 +962,7 @@ union codeview_fieldtype
 
 /* 32-bit near pointers to basic types */
 #define T_32PVOID           0x0403  /* 32-bit near pointer to void */
+#define T_32PHRESULT        0x0408  /* 16:32 near pointer to Hresult - or error code ??? */
 #define T_32PCHAR           0x0410  /* 16:32 near pointer to 8-bit signed */
 #define T_32PSHORT          0x0411  /* 16:32 near pointer to 16-bit signed */
 #define T_32PLONG           0x0412  /* 16:32 near pointer to 32-bit signed */
@@ -1032,7 +1043,6 @@ union codeview_fieldtype
 #define T_NEAR32PTR_BITS    0x0400
 #define T_FAR32PTR_BITS     0x0500
 #define T_NEAR64PTR_BITS    0x0600
-
 
 #define LF_MODIFIER_V1          0x0001
 #define LF_POINTER_V1           0x0002
