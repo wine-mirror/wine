@@ -343,9 +343,9 @@ union codeview_type
     {
         unsigned short int      len;
         short int               id;
-        unsigned                this_type;
-        unsigned int            class_type;
         unsigned int            rvtype;
+        unsigned int            class_type;
+        unsigned                this_type;
         unsigned char           call;
         unsigned char           reserved;
         unsigned short          params;
@@ -733,6 +733,7 @@ union codeview_fieldtype
  * are apparently not used by the compiler, or represent pointer types
  * that are not used.
  */
+
 /* the type number of a built-in type is a 16-bit value specified in the following format:
     bit #   |   11     |   10-8   |   7-4    |    3     |    2-0   |
     field   | reserved |   mode   |   type   | reserved |   size   |
@@ -1031,7 +1032,6 @@ union codeview_fieldtype
 #define T_NEAR32PTR_BITS    0x0400
 #define T_FAR32PTR_BITS     0x0500
 #define T_NEAR64PTR_BITS    0x0600
-
 
 
 #define LF_MODIFIER_V1          0x0001
