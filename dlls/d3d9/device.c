@@ -85,11 +85,16 @@ static ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9 iface) {
 static HRESULT  WINAPI  IDirect3DDevice9Impl_TestCooperativeLevel(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
-    TRACE("(%p) : Relay\n", This);
+    TRACE("(%p)\n", This);
 
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_TestCooperativeLevel(This->WineD3DDevice);
     LeaveCriticalSection(&d3d9_cs);
+    if(hr == WINED3D_OK && This->notreset) {
+        TRACE("D3D9 Device is marked not reset\n");
+        hr = D3DERR_DEVICENOTRESET;
+    }
+
     return hr;
 }
 
@@ -331,6 +336,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9 iface, D3DP
     IWineD3DDevice_EnumResources(This->WineD3DDevice, reset_enum_callback, &resources_ok);
     if(!resources_ok) {
         WARN("The application is holding D3DPOOL_DEFAULT resources, rejecting reset\n");
+        This->notreset = TRUE;
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -352,21 +358,26 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9 iface, D3DP
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_Reset(This->WineD3DDevice, &localParameters);
     LeaveCriticalSection(&d3d9_cs);
+    if(FAILED(hr)) {
+        This->notreset = TRUE;
 
-    pPresentationParameters->BackBufferWidth            = localParameters.BackBufferWidth;
-    pPresentationParameters->BackBufferHeight           = localParameters.BackBufferHeight;
-    pPresentationParameters->BackBufferFormat           = localParameters.BackBufferFormat;
-    pPresentationParameters->BackBufferCount            = localParameters.BackBufferCount;
-    pPresentationParameters->MultiSampleType            = localParameters.MultiSampleType;
-    pPresentationParameters->MultiSampleQuality         = localParameters.MultiSampleQuality;
-    pPresentationParameters->SwapEffect                 = localParameters.SwapEffect;
-    pPresentationParameters->hDeviceWindow              = localParameters.hDeviceWindow;
-    pPresentationParameters->Windowed                   = localParameters.Windowed;
-    pPresentationParameters->EnableAutoDepthStencil     = localParameters.EnableAutoDepthStencil;
-    pPresentationParameters->AutoDepthStencilFormat     = localParameters.AutoDepthStencilFormat;
-    pPresentationParameters->Flags                      = localParameters.Flags;
-    pPresentationParameters->FullScreen_RefreshRateInHz = localParameters.FullScreen_RefreshRateInHz;
-    pPresentationParameters->PresentationInterval       = localParameters.PresentationInterval;
+        pPresentationParameters->BackBufferWidth            = localParameters.BackBufferWidth;
+        pPresentationParameters->BackBufferHeight           = localParameters.BackBufferHeight;
+        pPresentationParameters->BackBufferFormat           = localParameters.BackBufferFormat;
+        pPresentationParameters->BackBufferCount            = localParameters.BackBufferCount;
+        pPresentationParameters->MultiSampleType            = localParameters.MultiSampleType;
+        pPresentationParameters->MultiSampleQuality         = localParameters.MultiSampleQuality;
+        pPresentationParameters->SwapEffect                 = localParameters.SwapEffect;
+        pPresentationParameters->hDeviceWindow              = localParameters.hDeviceWindow;
+        pPresentationParameters->Windowed                   = localParameters.Windowed;
+        pPresentationParameters->EnableAutoDepthStencil     = localParameters.EnableAutoDepthStencil;
+        pPresentationParameters->AutoDepthStencilFormat     = localParameters.AutoDepthStencilFormat;
+        pPresentationParameters->Flags                      = localParameters.Flags;
+        pPresentationParameters->FullScreen_RefreshRateInHz = localParameters.FullScreen_RefreshRateInHz;
+        pPresentationParameters->PresentationInterval       = localParameters.PresentationInterval;
+    } else {
+        This->notreset = FALSE;
+    }
 
     return hr;
 }

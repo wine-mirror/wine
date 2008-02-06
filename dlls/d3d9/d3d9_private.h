@@ -184,6 +184,7 @@ typedef struct IDirect3DDevice9Impl
     IDirect3DVertexDeclaration9  **convertedDecls;
     unsigned int                 numConvertedDecls, declArraySize;
 
+    BOOL                          notreset;
 } IDirect3DDevice9Impl;
 
 

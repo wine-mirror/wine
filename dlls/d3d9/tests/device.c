@@ -770,6 +770,8 @@ static void test_reset(void)
         skip("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after creation returned %#x\n", hr);
 
     width = GetSystemMetrics(SM_CXSCREEN);
     height = GetSystemMetrics(SM_CYSCREEN);
@@ -802,6 +804,8 @@ static void test_reset(void)
     d3dpp.BackBufferFormat = d3ddm.Format;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
 
     ZeroMemory(&vp, sizeof(vp));
     hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
@@ -843,6 +847,8 @@ static void test_reset(void)
     d3dpp.BackBufferHeight  = 300;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
 
     width = GetSystemMetrics(SM_CXSCREEN);
     height = GetSystemMetrics(SM_CYSCREEN);
@@ -888,26 +894,38 @@ static void test_reset(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
     /* Reset again to get the device out of the lost state */
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
 
     /* Scratch, sysmem and managed pools are fine */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
+
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
+
     hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 0, 0, D3DFMT_R5G6B5, D3DPOOL_MANAGED, &texture, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
     IDirect3DTexture9_Release(texture);
 
     /* A reference held to an implicit surface causes failures as well */
@@ -915,9 +933,13 @@ static void test_reset(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
 
     /* Shaders are fine as well */
     hr = IDirect3DDevice9_CreateVertexShader(pDevice, simple_vs, &shader);
@@ -934,6 +956,9 @@ static void test_reset(void)
     d3dpp.BackBufferHeight  = 32;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=32, h=32, windowed=FALSE failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
+
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed         = FALSE;
@@ -941,6 +966,8 @@ static void test_reset(void)
     d3dpp.BackBufferHeight  = 600;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=801, h=600, windowed=FALSE failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
 
 cleanup:
     if(pD3d) IDirect3D9_Release(pD3d);
