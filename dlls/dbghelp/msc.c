@@ -1476,6 +1476,17 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                 codeview_get_type(sym->stack_v3.symtype, FALSE),
                                 sym->stack_v3.name);
             break;
+	case S_BPREL_XXXX_V3:
+            loc.kind = loc_regrel;
+            loc.reg = 0; /* FIXME */
+            loc.offset = sym->stack_xxxx_v3.offset;
+            WARN("Supposed stack variable %s (%d)\n", sym->stack_xxxx_v3.name, sym->stack_xxxx_v3.unknown);
+            symt_add_func_local(msc_dbg->module, curr_func,
+                                sym->stack_xxxx_v3.offset > 0 ? DataIsParam : DataIsLocal,
+                                &loc, block,
+                                codeview_get_type(sym->stack_xxxx_v3.symtype, FALSE),
+                                sym->stack_xxxx_v3.name);
+            break;
 
         case S_REGISTER_V1:
             loc.kind = loc_register;

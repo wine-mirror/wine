@@ -1343,6 +1343,16 @@ union codeview_symbol
 
     struct
     {
+        short int               len;            /* Total length of this entry */
+        short int               id;             /* Always S_BPREL_V3 */
+        int                     offset;         /* Stack offset relative to BP */
+        unsigned int            symtype;
+        unsigned short          unknown;
+        char                    name[1];
+    } stack_xxxx_v3;
+
+    struct
+    {
 	short int	        len;	        /* Total length of this entry */
 	short int	        id;		/* Always S_REGISTER */
         unsigned short          type;
@@ -1583,6 +1593,7 @@ union codeview_symbol
 #define S_PUB_V3        0x110E
 #define S_LPROC_V3      0x110F
 #define S_GPROC_V3      0x1110
+#define S_BPREL_XXXX_V3 0x1111  /* not really understood, but looks like bprel... */
 #define S_MSTOOL_V3     0x1116  /* compiler command line options and build information */
 #define S_PUB_FUNC1_V3  0x1125  /* didn't get the difference between the two */
 #define S_PUB_FUNC2_V3  0x1127
