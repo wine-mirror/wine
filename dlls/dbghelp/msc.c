@@ -758,7 +758,8 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
 static struct symt* codeview_add_type_enum(struct codeview_type_parse* ctp,
                                            struct symt* existing,
                                            const char* name,
-                                           unsigned fieldlistno)
+                                           unsigned fieldlistno,
+                                           unsigned basetype)
 {
     struct symt_enum*   symt;
 
@@ -769,7 +770,8 @@ static struct symt* codeview_add_type_enum(struct codeview_type_parse* ctp,
     }
     else
     {
-        symt = symt_new_enum(ctp->module, name);
+        symt = symt_new_enum(ctp->module, name,
+                             codeview_fetch_type(ctp, basetype, FALSE));
         if (fieldlistno)
         {
             const union codeview_reftype* fieldlist;
@@ -1008,18 +1010,21 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
     case LF_ENUM_V1:
         symt = codeview_add_type_enum(ctp, existing,
                                       terminate_string(&type->enumeration_v1.p_name),
-                                      type->enumeration_v1.fieldlist);
+                                      type->enumeration_v1.fieldlist,
+                                      type->enumeration_v1.type);
         break;
 
     case LF_ENUM_V2:
         symt = codeview_add_type_enum(ctp, existing,
                                       terminate_string(&type->enumeration_v2.p_name),
-                                      type->enumeration_v2.fieldlist);
+                                      type->enumeration_v2.fieldlist,
+                                      type->enumeration_v2.type);
         break;
 
     case LF_ENUM_V3:
         symt = codeview_add_type_enum(ctp, existing, type->enumeration_v3.name,
-                                      type->enumeration_v3.fieldlist);
+                                      type->enumeration_v3.fieldlist,
+                                      type->enumeration_v3.type);
         break;
 
     case LF_PROCEDURE_V1:

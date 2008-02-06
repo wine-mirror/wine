@@ -256,6 +256,7 @@ struct symt_basic
 struct symt_enum
 {
     struct symt                 symt;
+    struct symt*                base_type;
     const char*                 name;
     struct vector               vchildren;
 };
@@ -591,7 +592,8 @@ extern BOOL         symt_add_udt_element(struct module* module,
                                          struct symt* elt_type, unsigned offset, 
                                          unsigned size);
 extern struct symt_enum*
-                    symt_new_enum(struct module* module, const char* typename);
+                    symt_new_enum(struct module* module, const char* typename,
+                                  struct symt* basetype);
 extern BOOL         symt_add_enum_element(struct module* module, 
                                           struct symt_enum* enum_type, 
                                           const char* name, int value);

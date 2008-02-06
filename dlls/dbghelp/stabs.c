@@ -856,7 +856,8 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
 	    new_dt = &symt_new_function_signature(ptd->module, ref_dt, -1)->symt;
 	    break;
 	case 'e':
-	    new_dt = &symt_new_enum(ptd->module, typename)->symt;
+            stabs_get_basic(ptd, 1 /* int */, &ref_dt);
+            new_dt = &symt_new_enum(ptd->module, typename, ref_dt)->symt;
 	    PTS_ABORTIF(ptd, stabs_pts_read_enum(ptd, (struct symt_enum*)new_dt) == -1);
 	    break;
 	case 's':
@@ -910,7 +911,8 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
 	    switch (tmp)
             {
 	    case 'e':
-                new_dt = &symt_new_enum(ptd->module, ptd->buf + idx)->symt;
+                stabs_get_basic(ptd, 1 /* int */, &ref_dt);
+                new_dt = &symt_new_enum(ptd->module, ptd->buf + idx, ref_dt)->symt;
                 break;
 	    case 's':
                 new_dt = &symt_new_udt(ptd->module, ptd->buf + idx, 0, UdtStruct)->symt;

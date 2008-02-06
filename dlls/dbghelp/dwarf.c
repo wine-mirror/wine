@@ -1216,15 +1216,24 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
 {
     struct attribute    name;
     struct attribute    size;
+    struct symt_basic*  basetype;
 
     if (di->symt) return di->symt;
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
     if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 4;
 
-    di->symt = &symt_new_enum(ctx->module, name.u.string)->symt;
+    switch (size.u.uvalue) /* FIXME: that's wrong */
+    {
+    case 1: basetype = symt_new_basic(ctx->module, btInt, "char", 1); break;
+    case 2: basetype = symt_new_basic(ctx->module, btInt, "short", 2); break;
+    default:
+    case 4: basetype = symt_new_basic(ctx->module, btInt, "int", 4); break;
+    }
+
+    di->symt = &symt_new_enum(ctx->module, name.u.string, &basetype->symt)->symt;
 
     if (di->abbrev->have_child) /* any interest to not have child ? */
     {

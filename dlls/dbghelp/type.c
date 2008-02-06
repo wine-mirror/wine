@@ -243,7 +243,8 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     return TRUE;
 }
 
-struct symt_enum* symt_new_enum(struct module* module, const char* typename)
+struct symt_enum* symt_new_enum(struct module* module, const char* typename,
+                                struct symt* basetype)
 {
     struct symt_enum*   sym;
 
@@ -251,6 +252,7 @@ struct symt_enum* symt_new_enum(struct module* module, const char* typename)
     {
         sym->symt.tag            = SymTagEnum;
         sym->name = (typename) ? pool_strdup(&module->pool, typename) : NULL;
+        sym->base_type           = basetype;
         vector_init(&sym->vchildren, sizeof(struct symt*), 8);
     }
     return sym;
@@ -271,8 +273,7 @@ BOOL symt_add_enum_element(struct module* module, struct symt_enum* enum_type,
     e->hash_elt.next = NULL;
     e->kind = DataIsConstant;
     e->container = &enum_type->symt;
-    /* CV defines the underlying type for the enumeration */
-    e->type = &symt_new_basic(module, btInt, "int", 4)->symt;
+    e->type = enum_type->base_type;
     e->u.value.n1.n2.vt = VT_I4;
     e->u.value.n1.n2.n3.lVal = value;
 
@@ -764,7 +765,9 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         case SymTagFunction:
             X(DWORD) = (DWORD)((const struct symt_function*)type)->type;
             break;
-            /* FIXME: should also work for enums */
+        case SymTagEnum:
+            X(DWORD) = (DWORD)((const struct symt_enum*)type)->base_type;
+            break;
         case SymTagFunctionArgType:
             X(DWORD) = (DWORD)((const struct symt_function_arg_type*)type)->arg_type;
             break;
