@@ -143,8 +143,7 @@ static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                 {
                     prox = MAKELPARAM( wParam, 1 );
                     TABLET_PostTabletMessage(handler, WT_PROXIMITY,
-                                        (WPARAM)handler->handle, (LPARAM)prox,
-                                        TRUE);
+                                        (WPARAM)handler->handle, prox, TRUE);
                 }
                 break;
             }
