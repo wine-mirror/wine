@@ -1719,6 +1719,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             break;
         case S_PUB_FUNC1_V3:
         case S_PUB_FUNC2_V3: /* using a data_v3 isn't what we'd expect */
+#if 0
+            /* FIXME: this is plain wrong (from a simple test) */
             if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
             {
                 symt_new_public(msc_dbg->module, compiland,
@@ -1726,6 +1728,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                 codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
                                 1, TRUE /* FIXME */, TRUE);
             }
+#endif
             break;
 
         case S_MSTOOL_V3: /* just to silence a few warnings */
