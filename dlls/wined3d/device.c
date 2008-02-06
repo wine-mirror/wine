@@ -6769,6 +6769,32 @@ static void reset_fbo_state(IWineD3DDevice *iface) {
     This->fbo_depth_attachment = NULL;
 }
 
+static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, WINED3DPRESENT_PARAMETERS *pp) {
+    UINT i, count;
+    WINED3DDISPLAYMODE m;
+    HRESULT hr;
+
+    /* All Windowed modes are supported, as is leaving the current mode */
+    if(pp->Windowed) return TRUE;
+    if(!pp->BackBufferWidth) return TRUE;
+    if(!pp->BackBufferHeight) return TRUE;
+
+    count = IWineD3D_GetAdapterModeCount(This->wineD3D, This->adapter->num, WINED3DFMT_UNKNOWN);
+    for(i = 0; i < count; i++) {
+        memset(&m, 0, sizeof(m));
+        hr = IWineD3D_EnumAdapterModes(This->wineD3D, This->adapter->num, WINED3DFMT_UNKNOWN, i, &m);
+        if(FAILED(hr)) {
+            ERR("EnumAdapterModes failed\n");
+        }
+        if(m.Width == pp->BackBufferWidth && m.Height == pp->BackBufferHeight) {
+            /* Mode found, it is supported */
+            return TRUE;
+        }
+    }
+    /* Mode not found -> not supported */
+    return FALSE;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain;
@@ -6784,6 +6810,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     if(FAILED(hr)) {
         ERR("Failed to get the first implicit swapchain\n");
         return hr;
+    }
+
+    if(!is_display_mode_supported(This, pPresentationParameters)) {
+        WARN("Rejecting Reset() call because the requested display mode is not supported\n");
+        WARN("Requested mode: %d, %d\n", pPresentationParameters->BackBufferWidth,
+             pPresentationParameters->BackBufferHeight);
+        return WINED3DERR_INVALIDCALL;
     }
 
     /* Is it necessary to recreate the gl context? Actually every setting can be changed

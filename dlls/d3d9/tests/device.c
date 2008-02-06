@@ -716,7 +716,7 @@ static void test_reset(void)
     IDirect3D9                  *pD3d               = NULL;
     IDirect3DDevice9            *pDevice            = NULL;
     D3DPRESENT_PARAMETERS        d3dpp;
-    D3DDISPLAYMODE               d3ddm;
+    D3DDISPLAYMODE               d3ddm, d3ddm2;
     D3DVIEWPORT9                 vp;
     DWORD                        width, orig_width = GetSystemMetrics(SM_CXSCREEN);
     DWORD                        height, orig_height = GetSystemMetrics(SM_CYSCREEN);
@@ -724,6 +724,8 @@ static void test_reset(void)
     IDirect3DSurface9            *surface;
     IDirect3DTexture9            *texture;
     IDirect3DVertexShader9       *shader;
+    BOOL                         support_800x600 = FALSE;
+    UINT                         i;
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
@@ -738,6 +740,27 @@ static void test_reset(void)
     d3dpp.BackBufferWidth  = 800;
     d3dpp.BackBufferHeight  = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
+
+    for(i = 0; i < IDirect3D9_GetAdapterModeCount(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format); i++) {
+        ZeroMemory( &d3ddm2, sizeof(d3ddm2) );
+        hr = IDirect3D9_EnumAdapterModes(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format, i, &d3ddm2);
+        ok(hr == D3D_OK, "IDirect3D9Impl_EnumAdapterModes returned %#x\n", hr);
+
+        if(d3ddm2.Width == 800 && d3ddm2.Height == 600) {
+            support_800x600 = TRUE;
+        }
+        /* We use them as invalid modes */
+        if((d3ddm2.Width == 801 && d3ddm2.Height == 600) ||
+           (d3ddm2.Width == 32 && d3ddm2.Height == 32)) {
+            skip("This system supports a screen resolution of %dx%d, not running mode tests\n",
+                 d3ddm2.Width, d3ddm2.Height);
+            goto cleanup;
+        }
+    }
+    if(!support_800x600) {
+        skip("Mode 800x600 not supported, skipping mode tests\n");
+        goto cleanup;
+    }
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
@@ -902,6 +925,22 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     IDirect3DVertexShader9_Release(shader);
+
+    /* Try setting invalid modes */
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed         = FALSE;
+    d3dpp.BackBufferWidth  = 32;
+    d3dpp.BackBufferHeight  = 32;
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=32, h=32, windowed=FALSE failed with %s\n", DXGetErrorString9(hr));
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed         = FALSE;
+    d3dpp.BackBufferWidth  = 801;
+    d3dpp.BackBufferHeight  = 600;
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=801, h=600, windowed=FALSE failed with %s\n", DXGetErrorString9(hr));
 
 cleanup:
     if(pD3d) IDirect3D9_Release(pD3d);
@@ -1819,6 +1858,7 @@ START_TEST(device)
         test_refcount();
         test_mipmap_levels();
         test_cursor();
+        test_reset();
         test_reset();
         test_scene();
         test_limits();
