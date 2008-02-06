@@ -803,10 +803,15 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         X(DWORD) = (DWORD)((const struct symt_array*)type)->index_type;
         break;
 
+    case TI_GET_CLASSPARENTID:
+        /* FIXME: we don't support properly C++ for now, pretend this symbol doesn't
+         * belong to a parent class
+         */
+        return FALSE;
+
 #undef X
 
     case TI_GET_ADDRESSOFFSET:
-    case TI_GET_CLASSPARENTID:
     case TI_GET_SYMINDEX:
     case TI_GET_THISADJUST:
     case TI_GET_VIRTUALBASECLASS:
