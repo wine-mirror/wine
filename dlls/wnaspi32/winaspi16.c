@@ -425,7 +425,7 @@ adapter name */
     FIXME("Not implemented SC_GET_DEV_TYPE\n");
     break;
   case SC_EXEC_SCSI_CMD:
-    return ASPI_ExecScsiCmd((DWORD)ptrSRB, mode);
+    return ASPI_ExecScsiCmd(ptrSRB, mode);
   case SC_RESET_DEV:
     FIXME("Not implemented SC_RESET_DEV\n");
     break;
