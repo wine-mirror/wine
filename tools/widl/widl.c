@@ -166,6 +166,9 @@ static char *make_token(const char *name)
   int i;
 
   slash = strrchr(name, '/');
+  if(!slash)
+    slash = strrchr(name, '\\');
+
   if (slash) name = slash + 1;
 
   token = xstrdup(name);
