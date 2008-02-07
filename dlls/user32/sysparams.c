@@ -2107,7 +2107,13 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         break;
     }
 
-    WINE_SPI_FIXME(SPI_SETMOUSESPEED);          /*    113  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_SETMOUSESPEED:                     /*    113  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    {
+        ret = save_int_param( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME3,
+                              &mouse_speed, (INT) pvParam, fWinIni);
+
+        break;
+    }
 
     case SPI_GETSCREENSAVERRUNNING:
         ret = get_bool_param( SPI_SETSCREENSAVERRUNNING_IDX,
