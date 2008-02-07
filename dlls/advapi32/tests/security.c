@@ -1812,8 +1812,10 @@ static void test_process_security(void)
     ok(CreateProcessA( NULL, buffer, &psa, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
         "CreateProcess with err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS( info.hProcess, PROCESS_ALL_ACCESS );
-    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    winetest_wait_child_process( info.hProcess );
 
+    CloseHandle( info.hProcess );
+    CloseHandle( info.hThread );
     CloseHandle( event );
     HeapFree(GetProcessHeap(), 0, Acl);
     HeapFree(GetProcessHeap(), 0, SecurityDescriptor);

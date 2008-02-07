@@ -1097,9 +1097,8 @@ static void run_child_process(void)
     sprintf(cmdline, "\"%s\" %s manifest1", argv[0], argv[1]);
     ok(CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL,
                      &si, &pi) != 0, "Could not create process: %u\n", GetLastError());
+    winetest_wait_child_process( pi.hProcess );
     CloseHandle(pi.hThread);
-
-    WaitForSingleObject(pi.hProcess, INFINITE);
     CloseHandle(pi.hProcess);
     DeleteFileA(path);
 }

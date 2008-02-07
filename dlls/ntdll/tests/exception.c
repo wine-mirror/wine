@@ -619,7 +619,7 @@ static void test_debugger(void)
             if(de.u.CreateProcessInfo.lpBaseOfImage != pNtCurrentTeb()->Peb->ImageBaseAddress)
             {
                 skip("child process loaded at different address, terminating it\n");
-                pNtTerminateProcess(pi.hProcess, 1);
+                pNtTerminateProcess(pi.hProcess, 0);
             }
         }
         else if (de.dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
@@ -710,6 +710,7 @@ static void test_debugger(void)
 
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
+    winetest_wait_child_process( pi.hProcess );
     ok(CloseHandle(pi.hThread) != 0, "error %u\n", GetLastError());
     ok(CloseHandle(pi.hProcess) != 0, "error %u\n", GetLastError());
 

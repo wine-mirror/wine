@@ -167,16 +167,8 @@ static void do_parent(void)
 
 static void finish_child_process(void)
 {
-    DWORD exit_code;
-    BOOL ret;
-
     SendMessage(child, WM_CLOSE, 0, 0);
-    ok(WaitForSingleObject(child_process, 30000) == WAIT_OBJECT_0, "Child process termination failed.\n");
-
-    ret = GetExitCodeProcess(child_process, &exit_code);
-    ok(ret, "GetExitCodeProcess() failed.  Error: %u\n", GetLastError());
-    ok(exit_code == 0, "Exit code == %u.\n", exit_code);
-
+    winetest_wait_child_process( child_process );
     CloseHandle(child_process);
 }
 

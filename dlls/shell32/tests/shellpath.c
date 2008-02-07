@@ -864,8 +864,7 @@ static void testNonExistentPath(void)
                 startup.dwFlags = SW_SHOWNORMAL;
                 CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL,
                  &startup, &info);
-                ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0,
-                 "child process termination\n");
+                winetest_wait_child_process( info.hProcess );
 
                 /* Query the path to be able to delete it below */
                 hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES, NULL,

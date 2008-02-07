@@ -634,25 +634,21 @@ make_cmdline(char buffer[MAX_PATH], const char *test)
   sprintf(buffer, "%s server %s", progname, test);
 }
 
-static int
+static void
 run_client(const char *test)
 {
   char cmdline[MAX_PATH];
   PROCESS_INFORMATION info;
   STARTUPINFOA startup;
-  DWORD exitcode;
 
   memset(&startup, 0, sizeof startup);
   startup.cb = sizeof startup;
 
   make_cmdline(cmdline, test);
   ok(CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-  ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-  ok(GetExitCodeProcess(info.hProcess, &exitcode), "GetExitCodeProcess\n");
+  winetest_wait_child_process( info.hProcess );
   ok(CloseHandle(info.hProcess), "CloseHandle\n");
   ok(CloseHandle(info.hThread), "CloseHandle\n");
-
-  return exitcode == 0;
 }
 
 static void
@@ -1208,10 +1204,10 @@ server(void)
   stop_event = CreateEvent(NULL, FALSE, FALSE, NULL);
   ok(stop_event != NULL, "CreateEvent failed\n");
 
-  ok(run_client("tcp_basic"), "tcp_basic client test failed\n");
+  run_client("tcp_basic");
 
   ok(RPC_S_OK == RpcServerUseProtseqEp(np, 0, pipe, NULL), "RpcServerUseProtseqEp\n");
-  ok(run_client("np_basic"), "np_basic client test failed\n");
+  run_client("np_basic");
 
   ok(WAIT_OBJECT_0 == WaitForSingleObject(stop_event, 60000), "WaitForSingleObject\n");
   todo_wine {

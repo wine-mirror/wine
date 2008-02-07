@@ -2575,7 +2575,7 @@ static void test_local_server(void)
     quit_event = CreateEvent(NULL, FALSE, FALSE, "Wine COM Test Quit Event");
     SetEvent(quit_event);
 
-    WaitForSingleObject(process, INFINITE);
+    winetest_wait_child_process( process );
     CloseHandle(quit_event);
     CloseHandle(process);
 }

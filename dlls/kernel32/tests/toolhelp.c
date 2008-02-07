@@ -342,8 +342,5 @@ START_TEST(toolhelp)
     test_module(info.dwProcessId, sub_expected_modules, NUM_OF(sub_expected_modules));
 
     SetEvent(ev2);
-    w = WaitForSingleObject(info.hProcess, WAIT_TIME);
-    ok(w == WAIT_OBJECT_0, "Failed to wait on sub-process termination\n");
-    ok(GetExitCodeProcess(info.hProcess, &w), "couldn't get process exit code\n");
-    ok(w == WAIT_OBJECT_0, "Sub-Process failed to terminate properly\n");
+    winetest_wait_child_process( info.hProcess );
 }
