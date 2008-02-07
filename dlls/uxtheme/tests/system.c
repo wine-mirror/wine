@@ -417,8 +417,10 @@ static void test_GetCurrentThemeName(void)
     /* Given number of characters for the theme name is too large */
     SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, sizeof(currentTheme), NULL, 0, NULL, 0);
-    todo_wine
-        ok( hRes == E_POINTER, "Expected E_POINTER, got 0x%08x\n", hRes);
+    if (bThemeActive)
+        ok( hRes == E_POINTER || hRes == S_OK, "Expected E_POINTER or S_OK, got 0x%08x\n", hRes);
+    else
+        ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
     ok( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08x\n",
         GetLastError());
