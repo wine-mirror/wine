@@ -86,14 +86,6 @@ static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0,
 /* ############################### */
 
 typedef struct {
-    WCHAR   src[MAX_PATH+MAX_PATH];
-    WCHAR   dst[MAX_PATH+MAX_PATH];
-    DWORD   srclen;
-    DWORD   dstlen;
-    DWORD   copyflags;
-} apd_data_t;
-
-typedef struct {
     struct list     entry;
     LPWSTR          name;
     LPWSTR          dllname;
@@ -353,67 +345,11 @@ static LPSTR strdupWtoA( LPCWSTR str )
 }
 
 /******************************************************************
- *  apd_copyfile [internal]
- *
- * Copy a file from the driverdirectory to the versioned directory
- *
- * RETURNS
- *  Success: TRUE
- *  Failure: FALSE
- *
- */
-static BOOL apd_copyfile(LPWSTR filename, apd_data_t *apd)
-{
-    LPWSTR  ptr;
-    LPWSTR  srcname;
-    DWORD   res;
-
-    apd->src[apd->srclen] = '\0';
-    apd->dst[apd->dstlen] = '\0';
-
-    if (!filename || !filename[0]) {
-        /* nothing to copy */
-        return TRUE;
-    }
-
-    ptr = strrchrW(filename, '\\');
-    if (ptr) {
-        ptr++;
-    }
-    else
-    {
-        ptr = filename;
-    }
-
-    if (apd->copyflags & APD_COPY_FROM_DIRECTORY) {
-        /* we have an absolute Path */
-        srcname = filename;
-    }
-    else
-    {
-        srcname = apd->src;
-        lstrcatW(srcname, ptr);
-    }
-    lstrcatW(apd->dst, ptr);
-
-    TRACE("%s => %s\n", debugstr_w(filename), debugstr_w(apd->dst));
-
-    /* FIXME: handle APD_COPY_NEW_FILES */
-    res = CopyFileW(srcname, apd->dst, FALSE);
-    TRACE("got %u with %u\n", res, GetLastError());
-
-    /* FIXME: install of wineps.drv must be fixed, before we return the real result
-    return res;
-    */
-    return TRUE;
-}
-
-
-/******************************************************************
  * Return the number of bytes for an multi_sz string.
  * The result includes all \0s
  * (specifically the extra \0, that is needed as multi_sz terminator).
  */
+#if 0
 static int multi_sz_lenW(const WCHAR *str)
 {
     const WCHAR *ptr = str;
@@ -425,7 +361,7 @@ static int multi_sz_lenW(const WCHAR *str)
 
     return (ptr - str + 1) * sizeof(WCHAR);
 }
-
+#endif
 /* ################################ */
 
 static int multi_sz_lenA(const char *str)
@@ -6396,17 +6332,9 @@ BOOL WINAPI AddPrinterConnectionW( LPWSTR pName )
  */
 BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD level, LPBYTE pDriverInfo, DWORD dwFileCopyFlags)
 {
-    const printenv_t *env;
-    apd_data_t apd;
-    DRIVER_INFO_8W di;
-    LPWSTR  ptr;
-    HKEY    hroot;
-    HKEY    hdrv;
-    DWORD   disposition;
-    DWORD   len;
-    LONG    lres;
-
     TRACE("(%s, %d, %p, 0x%x)\n", debugstr_w(pName), level, pDriverInfo, dwFileCopyFlags);
+
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
     if (level < 2 || level == 5 || level == 7 || level > 8) {
         SetLastError(ERROR_INVALID_LEVEL);
@@ -6418,141 +6346,7 @@ BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD level, LPBYTE pDriverInfo, 
         return FALSE;
     }
 
-    if ((dwFileCopyFlags & ~APD_COPY_FROM_DIRECTORY) != APD_COPY_ALL_FILES) {
-        FIXME("Flags 0x%x ignored (Fallback to APD_COPY_ALL_FILES)\n", dwFileCopyFlags & ~APD_COPY_FROM_DIRECTORY);
-    }
-
-    ptr = get_servername_from_name(pName);
-    HeapFree(GetProcessHeap(), 0, ptr);
-    if (ptr) {
-        FIXME("not supported for server: %s\n", debugstr_w(pName));
-        SetLastError(ERROR_ACCESS_DENIED);
-        return FALSE;
-    }
-
-    /* we need to set all entries in the Registry, independent from the Level of
-       DRIVER_INFO, that the caller supplied */
-
-    ZeroMemory(&di, sizeof(di));
-    if (pDriverInfo && (level < (sizeof(di_sizeof) / sizeof(di_sizeof[0])))) {
-        memcpy(&di, pDriverInfo, di_sizeof[level]);
-    }
-
-    /* dump the most used infos */
-    TRACE("%p: .cVersion    : 0x%x/%d\n", pDriverInfo, di.cVersion, di.cVersion);
-    TRACE("%p: .pName       : %s\n", di.pName, debugstr_w(di.pName));
-    TRACE("%p: .pEnvironment: %s\n", di.pEnvironment, debugstr_w(di.pEnvironment));
-    TRACE("%p: .pDriverPath : %s\n", di.pDriverPath, debugstr_w(di.pDriverPath));
-    TRACE("%p: .pDataFile   : %s\n", di.pDataFile, debugstr_w(di.pDataFile));
-    TRACE("%p: .pConfigFile : %s\n", di.pConfigFile, debugstr_w(di.pConfigFile));
-    TRACE("%p: .pHelpFile   : %s\n", di.pHelpFile, debugstr_w(di.pHelpFile));
-    /* dump only the first of the additional Files */
-    TRACE("%p: .pDependentFiles: %s\n", di.pDependentFiles, debugstr_w(di.pDependentFiles));
-
-
-    /* check environment */
-    env = validate_envW(di.pEnvironment);
-    if (env == NULL) return FALSE;        /* ERROR_INVALID_ENVIRONMENT */
-
-    /* fill the copy-data / get the driverdir */
-    len = sizeof(apd.src) - sizeof(Version3_SubdirW) - sizeof(WCHAR);
-    if (!GetPrinterDriverDirectoryW(NULL, (LPWSTR) env->envname, 1,
-                                    (LPBYTE) apd.src, len, &len)) {
-        /* Should never Fail */
-        return FALSE;
-    }
-    memcpy(apd.dst, apd.src, len);
-    lstrcatW(apd.src, backslashW);
-    apd.srclen = lstrlenW(apd.src);
-    lstrcatW(apd.dst, env->versionsubdir);
-    lstrcatW(apd.dst, backslashW);
-    apd.dstlen = lstrlenW(apd.dst);
-    apd.copyflags = dwFileCopyFlags;
-    CreateDirectoryW(apd.src, NULL);
-    CreateDirectoryW(apd.dst, NULL);
-
-    /* Fill the Registry for the Driver */
-    hroot = WINSPOOL_OpenDriverReg(env->envname, TRUE);
-    if(!hroot) {
-        ERR("Can't create Drivers key\n");
-        return FALSE;
-    }
-
-    if ((lres = RegCreateKeyExW(hroot, di.pName, 0, NULL, REG_OPTION_NON_VOLATILE,
-                                KEY_WRITE | KEY_QUERY_VALUE, NULL,
-                                &hdrv, &disposition)) != ERROR_SUCCESS) {
-
-        ERR("can't create driver %s: %u\n", debugstr_w(di.pName), lres);
-        RegCloseKey(hroot);
-        SetLastError(lres);
-        return FALSE;
-    }
-    RegCloseKey(hroot);
-
-    if (disposition == REG_OPENED_EXISTING_KEY) {
-        TRACE("driver %s already installed\n", debugstr_w(di.pName));
-        RegCloseKey(hdrv);
-        SetLastError(ERROR_PRINTER_DRIVER_ALREADY_INSTALLED);
-        return FALSE;
-    }
-
-    /* Verified with the Adobe PS Driver, that w2k does not use di.Version */
-    RegSetValueExW(hdrv, VersionW, 0, REG_DWORD, (LPBYTE) &env->driverversion,
-                   sizeof(DWORD));
-
-    RegSetValueExW(hdrv, DriverW, 0, REG_SZ, (LPBYTE) di.pDriverPath,
-                   (lstrlenW(di.pDriverPath)+1)* sizeof(WCHAR));
-    apd_copyfile(di.pDriverPath, &apd);
-
-    RegSetValueExW(hdrv, Data_FileW, 0, REG_SZ, (LPBYTE) di.pDataFile,
-                   (lstrlenW(di.pDataFile)+1)* sizeof(WCHAR));
-    apd_copyfile(di.pDataFile, &apd);
-
-    RegSetValueExW(hdrv, Configuration_FileW, 0, REG_SZ, (LPBYTE) di.pConfigFile,
-                   (lstrlenW(di.pConfigFile)+1)* sizeof(WCHAR));
-    apd_copyfile(di.pConfigFile, &apd);
-
-    /* settings for level 3 */
-    RegSetValueExW(hdrv, Help_FileW, 0, REG_SZ, (LPBYTE) di.pHelpFile,
-                   di.pHelpFile ? (lstrlenW(di.pHelpFile)+1)* sizeof(WCHAR) : 0);
-    apd_copyfile(di.pHelpFile, &apd);
-
-
-    ptr = di.pDependentFiles;
-    RegSetValueExW(hdrv, Dependent_FilesW, 0, REG_MULTI_SZ, (LPBYTE) di.pDependentFiles,
-                   di.pDependentFiles ? multi_sz_lenW(di.pDependentFiles) : 0);
-    while ((ptr != NULL) && (ptr[0])) {
-        if (apd_copyfile(ptr, &apd)) {
-            ptr += lstrlenW(ptr) + 1;
-        }
-        else
-        {
-            WARN("Failed to copy %s\n", debugstr_w(ptr));
-            ptr = NULL;
-        }
-    }
-
-    /* The language-Monitor was already copied to "%SystemRoot%\system32" */
-    RegSetValueExW(hdrv, MonitorW, 0, REG_SZ, (LPBYTE) di.pMonitorName,
-                   di.pMonitorName ? (lstrlenW(di.pMonitorName)+1)* sizeof(WCHAR) : 0);
-
-    RegSetValueExW(hdrv, DatatypeW, 0, REG_SZ, (LPBYTE) di.pDefaultDataType,
-                   di.pDefaultDataType ? (lstrlenW(di.pDefaultDataType)+1)* sizeof(WCHAR) : 0);
-
-    /* settings for level 4 */
-    RegSetValueExW(hdrv, Previous_NamesW, 0, REG_MULTI_SZ, (LPBYTE) di.pszzPreviousNames,
-                   di.pszzPreviousNames ? multi_sz_lenW(di.pszzPreviousNames) : 0);
-
-    if (level > 5) FIXME("level %u for Driver %s is incomplete\n", level, debugstr_w(di.pName));
-
-
-    RegCloseKey(hdrv);
-    FIXME("### DrvDriverEvent(...,DRIVEREVENT_INITIALIZE) not implemented yet\n");
-
-
-    TRACE("=> TRUE with %u\n", GetLastError());
-    return TRUE;
-
+    return backend->fpAddPrinterDriverEx(pName, level, pDriverInfo, dwFileCopyFlags);
 }
 
 /******************************************************************************
