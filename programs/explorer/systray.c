@@ -65,6 +65,7 @@ struct icon
     UINT           id;       /* the unique id given by the app */
     UINT           callback_message;
     BOOL           hidden;   /* icon display state */
+    WCHAR          tiptext[128]; /* Tooltip text. If empty => tooltip disabled */
 };
 
 static struct tray tray;
@@ -151,8 +152,7 @@ static LRESULT WINAPI adaptor_wndproc(HWND window, UINT msg,
 }
 
 
-/* listener code */
-
+/* Retrieves icon record by owner window and ID */
 static struct icon *get_icon(HWND owner, UINT id)
 {
     struct icon *this;
@@ -164,31 +164,65 @@ static struct icon *get_icon(HWND owner, UINT id)
     return NULL;
 }
 
-static void set_tooltip(struct icon *icon, WCHAR *szTip, BOOL modify)
+/* Creates tooltip window for icon. */
+static void create_tooltip(struct icon *icon)
 {
     TTTOOLINFOW ti;
+    static BOOL tooltips_initialized = FALSE;
 
+    /* Register tooltip classes if this is the first icon */
+    if (!tooltips_initialized)
+    {
+        INITCOMMONCONTROLSEX init_tooltip;
+
+        init_tooltip.dwSize = sizeof(INITCOMMONCONTROLSEX);
+        init_tooltip.dwICC = ICC_TAB_CLASSES;
+
+        InitCommonControlsEx(&init_tooltip);
+        tooltips_initialized = TRUE;
+    }
+
+    icon->tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+                                   WS_POPUP | TTS_ALWAYSTIP,
+                                   CW_USEDEFAULT, CW_USEDEFAULT,
+                                   CW_USEDEFAULT, CW_USEDEFAULT,
+                                   icon->window, NULL, NULL, NULL);
+
+    ZeroMemory(&ti, sizeof(ti));
     ti.cbSize = sizeof(TTTOOLINFOW);
     ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
     ti.hwnd = icon->window;
-    ti.hinst = 0;
     ti.uId = (UINT_PTR)icon->window;
-    ti.lpszText = szTip;
-    ti.lParam = 0;
-    ti.lpReserved = NULL;
-
-    if (modify)
-        SendMessageW(icon->tooltip, TTM_UPDATETIPTEXTW, 0, (LPARAM)&ti);
-    else
-        SendMessageW(icon->tooltip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
+    ti.lpszText = icon->tiptext;
+    SendMessageW(icon->tooltip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
 }
 
+/* Synchronize tooltip text with tooltip window */
+static void update_tooltip_text(struct icon *icon)
+{
+    TTTOOLINFOW ti;
+
+    ZeroMemory(&ti, sizeof(ti));
+    ti.cbSize = sizeof(TTTOOLINFOW);
+    ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
+    ti.hwnd = icon->window;
+    ti.uId = (UINT_PTR)icon->window;
+    ti.lpszText = icon->tiptext;
+
+    SendMessageW(icon->tooltip, TTM_UPDATETIPTEXTW, 0, (LPARAM)&ti);
+}
+
+/*
+ * Sets visibility status of tray icon. Creates/deletes icon window.
+ * Does not create/delete icon record.
+ *
+ * The purpose is similar to ShowWindow function.
+ */
 static BOOL display_icon(struct icon *icon, BOOL hide)
 {
     HMODULE x11drv = GetModuleHandleA("winex11.drv");
     RECT rect;
     static const WCHAR adaptor_windowname[] = /* Wine System Tray Adaptor */ {'W','i','n','e',' ','S','y','s','t','e','m',' ','T','r','a','y',' ','A','d','a','p','t','o','r',0};
-    static BOOL tooltps_initialized = FALSE;
 
     WINE_TRACE("id=0x%x, hwnd=%p, hide=%d\n", icon->id, icon->owner, hide);
 
@@ -224,28 +258,12 @@ static BOOL display_icon(struct icon *icon, BOOL hide)
     if (!hide_systray)
         ShowWindow(icon->window, SW_SHOWNA);
 
-    /* create icon tooltip */
+    create_tooltip(icon);
 
-    /* Register tooltip classes if this is the first icon */
-    if (!tooltps_initialized)
-    {
-        INITCOMMONCONTROLSEX init_tooltip;
-
-        init_tooltip.dwSize = sizeof(INITCOMMONCONTROLSEX);
-        init_tooltip.dwICC = ICC_TAB_CLASSES;
-
-        InitCommonControlsEx(&init_tooltip);
-        tooltps_initialized = TRUE;
-    }
-
-    icon->tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-                                   WS_POPUP | TTS_ALWAYSTIP,
-                                   CW_USEDEFAULT, CW_USEDEFAULT,
-                                   CW_USEDEFAULT, CW_USEDEFAULT,
-                                   icon->window, NULL, NULL, NULL);
     return TRUE;
 }
 
+/* Modifies an existing icon record */
 static BOOL modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
 {
     struct icon    *icon;
@@ -285,7 +303,9 @@ static BOOL modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
     }
     if (nid->uFlags & NIF_TIP)
     {
-        set_tooltip(icon, nid->szTip, modify_tooltip);
+        lstrcpynW(icon->tiptext, nid->szTip, sizeof(icon->tiptext)/sizeof(WCHAR));
+        if (!icon->hidden)
+            update_tooltip_text(icon);
     }
     if (nid->uFlags & NIF_INFO && nid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
@@ -294,6 +314,7 @@ static BOOL modify_icon(NOTIFYICONDATAW *nid, BOOL modify_tooltip)
     return TRUE;
 }
 
+/* Adds a new icon record to the list */
 static BOOL add_icon(NOTIFYICONDATAW *nid)
 {
     struct icon  *icon;
