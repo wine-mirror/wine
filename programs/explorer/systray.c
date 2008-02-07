@@ -439,7 +439,7 @@ static LRESULT WINAPI adaptor_wndproc(HWND window, UINT msg,
             /* notify the owner hwnd of the message */
             WINE_TRACE("relaying 0x%x\n", msg);
             ret = PostMessage(icon->owner, icon->callback_message, (WPARAM) icon->id, (LPARAM) msg);
-            if (!ret && (GetLastError() == ERROR_INVALID_HANDLE))
+            if (!ret && (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
             {
                 WINE_WARN("application window was destroyed without removing "
                           "notification icon, removing automatically\n");
