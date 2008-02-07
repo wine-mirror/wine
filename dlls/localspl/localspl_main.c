@@ -289,7 +289,7 @@ static const PRINTPROVIDOR * get_backend(void)
         NULL,   /* fpSendRecvBidiData */
         NULL    /* fpAddDriverCatalog */
     };
-    TRACE("=> %p (%u byte for %u entries)\n", &backend, sizeof(backend), sizeof(backend) / sizeof(VOID *));
+    TRACE("=> %p\n", &backend);
     return &backend;
 
 }
