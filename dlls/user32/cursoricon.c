@@ -914,7 +914,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
         goto end;
 
     if ( fCursor )
-        entry = CURSORICON_FindBestCursorFile( dir, width, height, 1 );
+        entry = CURSORICON_FindBestCursorFile( dir, width, height, colors );
     else
         entry = CURSORICON_FindBestIconFile( dir, width, height, colors );
 
