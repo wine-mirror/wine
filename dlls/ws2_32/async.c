@@ -215,9 +215,9 @@ static int WS_copy_he(char *p_to,char *p_base,int t_size,struct hostent* p_he, i
 	p_name = p;
 	strcpy(p, p_he->h_name); p += strlen(p) + 1;
 	p_aliases = p;
-	p += list_dup(p_he->h_aliases, p, p_base + (p - (char*)p_to), 0);
+	p += list_dup(p_he->h_aliases, p, p_base + (p - p_to), 0);
 	p_addr = p;
-	list_dup(p_he->h_addr_list, p, p_base + (p - (char*)p_to), p_he->h_length);
+	list_dup(p_he->h_addr_list, p, p_base + (p - p_to), p_he->h_length);
 
 	if (flag & AQ_WIN16)
 	{
@@ -273,7 +273,7 @@ static int WS_copy_pe(char *p_to,char *p_base,int t_size,struct protoent* p_pe, 
 	p_name = p;
 	strcpy(p, p_pe->p_name); p += strlen(p) + 1;
 	p_aliases = p;
-	list_dup(p_pe->p_aliases, p, p_base + (p - (char*)p_to), 0);
+	list_dup(p_pe->p_aliases, p, p_base + (p - p_to), 0);
 
 	if (flag & AQ_WIN16)
 	{
@@ -630,7 +630,7 @@ HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name,
 					LPSTR sbuf, INT buflen)
 {
 	TRACE("hwnd %p, msg %08x, host %s, buffer %i\n",
-	       hWnd, uMsg, (name)?name:"<null>", (int)buflen );
+	       hWnd, uMsg, (name)?name:"<null>", buflen );
 	return WSA_H32( __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,
 				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN32|AQ_GETHOST));
 }

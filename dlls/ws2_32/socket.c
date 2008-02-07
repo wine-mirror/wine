@@ -1670,8 +1670,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
             convert_sockopt(&level, &optname);
-            if (getsockopt(fd,(int) level, optname, optval,
-                        (unsigned int *)optlen) != 0 )
+            if (getsockopt(fd, level, optname, optval, (unsigned int *)optlen) != 0 )
             {
                 SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
                 ret = SOCKET_ERROR;
@@ -1792,7 +1791,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                 return SOCKET_ERROR;
 
             convert_sockopt(&level, &optname);
-            if (getsockopt(fd,(int) level, optname, &tv, &len) != 0 )
+            if (getsockopt(fd, level, optname, &tv, &len) != 0 )
             {
                 SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
                 ret = SOCKET_ERROR;
@@ -1886,8 +1885,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
             convert_sockopt(&level, &optname);
-            if (getsockopt(fd,(int) level, optname, optval,
-                        (unsigned int *)optlen) != 0 )
+            if (getsockopt(fd, level, optname, optval, (unsigned int *)optlen) != 0 )
             {
                 SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
                 ret = SOCKET_ERROR;
@@ -1915,8 +1913,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
             convert_sockopt(&level, &optname);
-            if (getsockopt(fd,(int) level, optname, optval,
-                        (unsigned int *)optlen) != 0 )
+            if (getsockopt(fd, level, optname, optval, (unsigned int *)optlen) != 0 )
             {
                 SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
                 ret = SOCKET_ERROR;
