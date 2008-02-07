@@ -75,8 +75,7 @@ typedef struct tagCRYPTHASH
 #define RSAENH_MAX_BLOCK_SIZE      24
 #define RSAENH_KEYSTATE_IDLE       0
 #define RSAENH_KEYSTATE_ENCRYPTING 1
-#define RSAENH_KEYSTATE_DECRYPTING 2
-#define RSAENH_KEYSTATE_MASTERKEY  3
+#define RSAENH_KEYSTATE_MASTERKEY  2
 typedef struct _RSAENH_SCHANNEL_INFO 
 {
     SCHANNEL_ALG saEncAlg;
@@ -2115,9 +2114,9 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     }
 
     if (pCryptKey->dwState == RSAENH_KEYSTATE_IDLE) 
-        pCryptKey->dwState = RSAENH_KEYSTATE_DECRYPTING;
+        pCryptKey->dwState = RSAENH_KEYSTATE_ENCRYPTING;
 
-    if (pCryptKey->dwState != RSAENH_KEYSTATE_DECRYPTING)
+    if (pCryptKey->dwState != RSAENH_KEYSTATE_ENCRYPTING)
     {
         SetLastError(NTE_BAD_DATA);
         return FALSE;
