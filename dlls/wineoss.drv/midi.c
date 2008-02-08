@@ -568,7 +568,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	    lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
 	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
-	    MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)lpMidiHdr->lpNext;
+	    MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
 	    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime) != MMSYSERR_NOERROR) {
 		WARN("Couldn't notify client\n");
 	    }
@@ -856,8 +856,8 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 
 	for (ptr = MidiInDev[wDevID].lpQueueHdr;
 	     ptr->lpNext != 0;
-	     ptr = (LPMIDIHDR)ptr->lpNext);
-	ptr->lpNext = (struct midihdr_tag*)lpMidiHdr;
+	     ptr = ptr->lpNext);
+	ptr->lpNext = lpMidiHdr;
     }
     LeaveCriticalSection(&crit_sect);
 
@@ -926,7 +926,7 @@ static DWORD midReset(WORD wDevID)
 			      (DWORD)MidiInDev[wDevID].lpQueueHdr, dwTime) != MMSYSERR_NOERROR) {
 	    WARN("Couldn't notify client\n");
 	}
-	MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR)MidiInDev[wDevID].lpQueueHdr->lpNext;
+	MidiInDev[wDevID].lpQueueHdr = MidiInDev[wDevID].lpQueueHdr->lpNext;
     }
     LeaveCriticalSection(&crit_sect);
 
