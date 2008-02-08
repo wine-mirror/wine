@@ -325,6 +325,12 @@ static void test_towers(void)
 
     ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_ip_tcp", "135", "10.0.0.1", &tower);
     ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
+    if (ret == RPC_S_INVALID_RPC_PROTSEQ)
+    {
+        /* Windows Vista fails with this error and crashes if we continue */
+        skip("TowerConstruct failed, we are most likely on Windows Vista\n");
+        return;
+    }
 
     /* first check we have the right amount of data */
     ok(tower->tower_length == sizeof(tower_data_tcp_ip1) ||
