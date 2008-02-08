@@ -351,6 +351,8 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
     static const WCHAR latnW[] = {'-','L','a','t','n',0};
     WCHAR *p;
 
+    TRACE("%s\n", debugstr_w(str));
+
     name->country = name->charset = name->script = name->modifier = NULL;
     name->lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
     name->matches = 0;
@@ -395,7 +397,6 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
         {
             *p++ = 0;
             name->charset = p;
-            name->codepage = find_charset( name->charset );
             p = strchrW( p, '@' );
         }
         if (p)
@@ -403,6 +404,9 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
             *p++ = 0;
             name->modifier = p;
         }
+
+        if (name->charset)
+            name->codepage = find_charset( name->charset );
 
         /* rebuild a Windows name if possible */
 
