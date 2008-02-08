@@ -54,6 +54,12 @@ typedef struct tagInputContextData
         INPUTCONTEXT    IMC;
 } InputContextData;
 
+typedef struct _tagTRANSMSG {
+    UINT message;
+    WPARAM wParam;
+    LPARAM lParam;
+} TRANSMSG, *LPTRANSMSG;
+
 static InputContextData *root_context = NULL;
 static HWND hwndDefault = NULL;
 static HANDLE hImeInst;
@@ -1991,6 +1997,33 @@ DWORD WINAPI ImmGetIMCCSize(HIMCC imcc)
     internal = (IMCCInternal*) imcc;
 
     return internal->dwSize;
+}
+
+/***********************************************************************
+*		ImmGenerateMessage(IMM32.@)
+*/
+BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
+{
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("%i messages queued\n",data->IMC.dwNumMsgBuf);
+    if (data->IMC.dwNumMsgBuf > 0)
+    {
+        LPTRANSMSG lpTransMsg;
+        INT i;
+
+        lpTransMsg = (LPTRANSMSG)ImmLockIMCC(data->IMC.hMsgBuf);
+        for (i = 0; i < data->IMC.dwNumMsgBuf; i++)
+            ImmInternalPostIMEMessage(lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
+
+        ImmUnlockIMCC(data->IMC.hMsgBuf);
+        ImmDestroyIMCC(data->IMC.hMsgBuf);
+
+        data->IMC.dwNumMsgBuf = 0;
+        data->IMC.hMsgBuf = NULL;
+    }
+
+    return TRUE;
 }
 
 /*****
