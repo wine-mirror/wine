@@ -270,7 +270,7 @@ static void test_createElement(void)
     V_I4(&vType) = -1;
     V_VT(&vName) = VT_NULL;
     hr = IXMLDocument_createElement(doc, vType, vName, &element);
-    ok(hr == E_NOTIMPL, "Expected S_OK, got %d\n", hr);
+    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %d\n", hr);
     ok(element == NULL, "Expected NULL element\n");
 
     if (element != NULL)
