@@ -914,8 +914,12 @@ static HRESULT WINAPI MimeBody_GetData(
                               ENCODINGTYPE ietEncoding,
                               IStream** ppStream)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%d, %p). Ignoring encoding type.\n", This, ietEncoding, ppStream);
+
+    *ppStream = This->data;
+    IStream_AddRef(*ppStream);
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_SetData(
