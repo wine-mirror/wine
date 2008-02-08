@@ -403,9 +403,7 @@ static LRESULT JSTCK_GetPosEx(DWORD_PTR dwDevID, LPJOYINFOEX lpInfo)
     TRACE("x: %d, y: %d, z: %d, r: %d, u: %d, v: %d, buttons: 0x%04x, flags: 0x%04x (fd %d)\n",
 	  lpInfo->dwXpos, lpInfo->dwYpos, lpInfo->dwZpos,
 	  lpInfo->dwRpos, lpInfo->dwUpos, lpInfo->dwVpos,
-	  (unsigned int)lpInfo->dwButtons,
-	  (unsigned int)lpInfo->dwFlags,
-          dev
+	  lpInfo->dwButtons, lpInfo->dwFlags, dev
          );
 
     return JOYERR_NOERROR;
