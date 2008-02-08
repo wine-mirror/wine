@@ -1160,11 +1160,11 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
 {
     BSTR url = NULL;
     INT ret;
-    nsAString ns_url;
-    PRBool insert_link_at_caret;
     nsISelection *nsselection;
+    nsIDOMDocument *nsdoc;
+    nsresult nsres;
 
-    FIXME("%p, 0x%x, %p, %p\n", This, cmdexecopt, in, out);
+    TRACE("%p, 0x%x, %p, %p\n", This, cmdexecopt, in, out);
 
     if (cmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER)
     {
@@ -1186,29 +1186,23 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     if (!nsselection)
         return E_FAIL;
 
-    nsAString_Init(&ns_url, url);
-
-    nsISelection_GetIsCollapsed(nsselection, &insert_link_at_caret);
-
-    if (insert_link_at_caret)
+    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+    if(NS_SUCCEEDED(nsres))
     {
         static const WCHAR wszA[] = {'a',0};
         static const WCHAR wszHref[] = {'h','r','e','f',0};
         nsIHTMLEditor *html_editor;
-        nsIDOMDocument *nsdoc;
         nsIDOMNode *text_node;
         nsIDOMElement *anchor_elem;
         nsIDOMNode *unused_node;
         nsAString a_str;
         nsAString href_str;
-        nsresult nsres;
-
-        nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-        if(NS_FAILED(nsres))
-            return E_FAIL;
+        nsAString ns_url;
+        PRBool insert_link_at_caret;
 
         nsAString_Init(&a_str, wszA);
         nsAString_Init(&href_str, wszHref);
+        nsAString_Init(&ns_url, url);
 
         /* create an element for the link */
         nsIDOMDocument_CreateElement(nsdoc, &a_str, &anchor_elem);
@@ -1217,44 +1211,48 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
         nsAString_Finish(&href_str);
         nsAString_Finish(&a_str);
 
-        /* create an element with text of URL */
-        nsIDOMDocument_CreateTextNode(nsdoc, &ns_url, (nsIDOMText **)&text_node);
+        nsISelection_GetIsCollapsed(nsselection, &insert_link_at_caret);
 
-        /* wrap the <a> tags around the text element */
-        nsIDOMElement_AppendChild(anchor_elem, text_node, &unused_node);
-        nsIDOMNode_Release(text_node);
-        nsIDOMNode_Release(unused_node);
+        /* create an element with text of URL */
+        if (insert_link_at_caret)
+        {
+            nsIDOMDocument_CreateTextNode(nsdoc, &ns_url, (nsIDOMText **)&text_node);
+
+            /* wrap the <a> tags around the text element */
+            nsIDOMElement_AppendChild(anchor_elem, text_node, &unused_node);
+            nsIDOMNode_Release(text_node);
+            nsIDOMNode_Release(unused_node);
+        }
+
+        nsAString_Finish(&ns_url);
 
         nsIEditor_QueryInterface(This->nscontainer->editor, &IID_nsIHTMLEditor, (void **)&html_editor);
         if (html_editor)
         {
-            /* add them to the document at the caret position */
-            nsres = nsIHTMLEditor_InsertElementAtSelection(html_editor, anchor_elem, FALSE);
+            if (insert_link_at_caret)
+            {
+                /* add them to the document at the caret position */
+                nsres = nsIHTMLEditor_InsertElementAtSelection(html_editor, anchor_elem, FALSE);
+                nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)anchor_elem);
+            }
+            else /* add them around the selection using the magic provided to us by nsIHTMLEditor */
+                nsres = nsIHTMLEditor_InsertLinkAroundSelection(html_editor, anchor_elem);
             nsIHTMLEditor_Release(html_editor);
         }
-
-        nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)anchor_elem);
 
         nsIDOMElement_Release(anchor_elem);
         nsIDOMDocument_Release(nsdoc);
     }
     else
-    {
-        nsICommandParams *nsparam = create_nscommand_params();
-
-        nsICommandParams_SetStringValue(nsparam, NSSTATE_ATTRIBUTE, &ns_url);
-        do_ns_command(This->nscontainer, NSCMD_INSERTLINKNOUI, nsparam);
-        nsICommandParams_Release(nsparam);
-    }
-
-    nsAString_Finish(&ns_url);
+        nsres = E_FAIL;
 
     nsISelection_Release(nsselection);
 
     if (cmdexecopt != OLECMDEXECOPT_DONTPROMPTUSER)
         SysFreeString(url);
 
-    return S_OK;
+    TRACE("-- 0x%08x\n", nsres);
+    return nsres;
 }
 
 static HRESULT query_selall_status(HTMLDocument *This, OLECMD *cmd)
