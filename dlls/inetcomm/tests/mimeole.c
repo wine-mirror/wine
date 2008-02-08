@@ -202,6 +202,34 @@ static void test_Allocator(void)
     IMimeAllocator_Release(alloc);
 }
 
+static void test_CreateMessage(void)
+{
+    HRESULT hr;
+    IMimeMessage *msg;
+    IStream *stream;
+    LARGE_INTEGER pos;
+    LONG ref;
+
+    hr = MimeOleCreateMessage(NULL, &msg);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    IStream_Write(stream, msg1, sizeof(msg1) - 1, NULL);
+    pos.QuadPart = 0;
+    IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+
+    hr = IMimeMessage_Load(msg, stream);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    IMimeMessage_Release(msg);
+
+    ref = IStream_AddRef(stream);
+    ok(ref == 2, "ref %d\n", ref);
+    IStream_Release(stream);
+
+    IStream_Release(stream);
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
@@ -209,5 +237,6 @@ START_TEST(mimeole)
     test_CreateSecurity();
     test_CreateBody();
     test_Allocator();
+    test_CreateMessage();
     OleUninitialize();
 }

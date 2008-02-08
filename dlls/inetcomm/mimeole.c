@@ -1091,6 +1091,7 @@ typedef struct MimeMessage
     const IMimeMessageVtbl *lpVtbl;
 
     LONG refs;
+    IStream *stream;
 } MimeMessage;
 
 static HRESULT WINAPI MimeMessage_QueryInterface(IMimeMessage *iface, REFIID riid, void **ppv)
@@ -1130,6 +1131,7 @@ static ULONG WINAPI MimeMessage_Release(IMimeMessage *iface)
     refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
+        if(This->stream) IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1155,9 +1157,22 @@ static HRESULT WINAPI MimeMessage_IsDirty(
 
 static HRESULT WINAPI MimeMessage_Load(
     IMimeMessage *iface,
-    LPSTREAM pStm){
-    FIXME("(%p)->(%p)\n", iface, pStm);
-    return E_NOTIMPL;
+    LPSTREAM pStm)
+{
+    MimeMessage *This = (MimeMessage *)iface;
+
+    TRACE("(%p)->(%p)\n", iface, pStm);
+
+    if(This->stream)
+    {
+        FIXME("already loaded a message\n");
+        return E_FAIL;
+    }
+
+    IStream_AddRef(pStm);
+    This->stream = pStm;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeMessage_Save(
@@ -1721,6 +1736,7 @@ HRESULT WINAPI MimeOleCreateMessage(IUnknown *pUnkOuter, IMimeMessage **ppMessag
 
     This->lpVtbl = &MimeMessageVtbl;
     This->refs = 1;
+    This->stream = NULL;
 
     *ppMessage = (IMimeMessage *)&This->lpVtbl;
     return S_OK;
