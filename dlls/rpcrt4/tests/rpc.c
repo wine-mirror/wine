@@ -392,6 +392,12 @@ static void test_I_RpcMapWin32Status(void)
 {
     LONG win32status;
     RPC_STATUS rpc_status;
+    BOOL w2k3 = FALSE;
+
+    /* Windows 2003 returns STATUS_UNSUCCESSFUL if given an unknown status */
+    win32status = I_RpcMapWin32Status(9999);
+    if (win32status == STATUS_UNSUCCESSFUL)
+        w2k3 = TRUE;
 
     for (rpc_status = 0; rpc_status < 10000; rpc_status++)
     {
@@ -399,6 +405,7 @@ static void test_I_RpcMapWin32Status(void)
         win32status = I_RpcMapWin32Status(rpc_status);
         switch (rpc_status)
         {
+        case ERROR_SUCCESS: expected_win32status = ERROR_SUCCESS; break;
         case ERROR_ACCESS_DENIED: expected_win32status = STATUS_ACCESS_DENIED; break;
         case ERROR_INVALID_HANDLE: expected_win32status = RPC_NT_SS_CONTEXT_MISMATCH; break;
         case ERROR_OUTOFMEMORY: expected_win32status = STATUS_NO_MEMORY; break;
@@ -505,7 +512,11 @@ static void test_I_RpcMapWin32Status(void)
         case RPC_X_PIPE_EMPTY: expected_win32status = RPC_NT_PIPE_EMPTY; break;
         case ERROR_PASSWORD_MUST_CHANGE: expected_win32status = STATUS_PASSWORD_MUST_CHANGE; break;
         case ERROR_ACCOUNT_LOCKED_OUT: expected_win32status = STATUS_ACCOUNT_LOCKED_OUT; break;
-        default: expected_win32status = rpc_status;
+        default:
+            if (w2k3)
+                expected_win32status = STATUS_UNSUCCESSFUL;
+            else
+                expected_win32status = rpc_status;
         }
         ok(win32status == expected_win32status, "I_RpcMapWin32Status(%ld) should have returned 0x%x instead of 0x%x\n",
             rpc_status, expected_win32status, win32status);
