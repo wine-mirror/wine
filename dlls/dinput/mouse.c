@@ -64,6 +64,7 @@ struct SysMouseImpl
     BOOL                            need_warp;
     DWORD                           last_warped;
 
+    DWORD                           last_event_time;
     /* This is for mouse reporting. */
     DIMOUSESTATE2                   m_state;
 };
@@ -280,6 +281,9 @@ static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARA
         {
             POINT pt, pt1;
 
+            /* Skip old movement events */
+            if (This->last_event_time - hook->time < 2000) break;
+
             GetCursorPos(&pt);
             This->m_state.lX += pt.x = hook->pt.x - pt.x;
             This->m_state.lY += pt.y = hook->pt.y - pt.y;
@@ -354,6 +358,8 @@ static void dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARA
         queue_event((LPDIRECTINPUTDEVICE8A)This, id_to_offset(&This->base.data_format, inst_id),
                     wdata, hook->time, This->base.dinput->evsequence++);
     }
+
+    This->last_event_time = hook->time;
 
     LeaveCriticalSection(&This->base.crit);
 }
