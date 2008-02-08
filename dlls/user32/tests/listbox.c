@@ -559,6 +559,11 @@ static void test_listbox_LB_DIR()
     char pathBuffer[MAX_PATH];
     char * p;
     char driveletter;
+    HANDLE file;
+
+    file = CreateFileA( "wtest1.tmp.c", FILE_ALL_ACCESS, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %d", GetLastError());
+    CloseHandle( file );
 
     /* NOTE: for this test to succeed, there must be no subdirectories
        under the current directory. In addition, there must be at least
@@ -965,6 +970,8 @@ static void test_listbox_LB_DIR()
         ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
     }
     DestroyWindow(hList);
+
+    DeleteFileA( "wtest1.tmp.c" );
 }
 
 HWND g_listBox;
@@ -1045,6 +1052,11 @@ static void test_listbox_dlgdir(void)
     char tempBuffer[MAX_PATH];
     char * p;
     char driveletter;
+    HANDLE file;
+
+    file = CreateFileA( "wtest1.tmp.c", FILE_ALL_ACCESS, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %d", GetLastError());
+    CloseHandle( file );
 
     /* NOTE: for this test to succeed, there must be no subdirectories
        under the current directory. In addition, there must be at least
@@ -1436,6 +1448,8 @@ static void test_listbox_dlgdir(void)
         }
     }
     DestroyWindow(hWnd);
+
+    DeleteFileA( "wtest1.tmp.c" );
 }
 
 START_TEST(listbox)
