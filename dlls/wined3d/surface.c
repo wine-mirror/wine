@@ -1399,7 +1399,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 }
             }
             else if(!GL_SUPPORT(EXT_PALETTED_TEXTURE) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
-                *format = GL_RED;
+                *format = GL_ALPHA;
                 *internal = GL_RGBA;
                 *type = GL_UNSIGNED_BYTE;
                 *target_bpp = 1;
@@ -1980,9 +1980,9 @@ const char *fragment_palette_conversion =
     "!!ARBfp1.0\n"
     "TEMP index;\n"
     "PARAM constants = { 0.996, 0.00195, 0, 0 };\n" /* { 255/256, 0.5/255*255/256, 0, 0 } */
-    "TEX index.x, fragment.texcoord[0], texture[0], 2D;\n" /* store the red-component of the current pixel */
-    "MAD index.x, index.x, constants.x, constants.y;\n" /* Scale the index by 255/256 and add a bias of '0.5' in order to sample in the middle */
-    "TEX result.color, index, texture[1], 1D;\n" /* use the red-component as a index in the palette to get the final color */
+    "TEX index, fragment.texcoord[0], texture[0], 2D;\n" /* The alpha-component contains the palette index */
+    "MAD index.a, index.a, constants.x, constants.y;\n" /* Scale the index by 255/256 and add a bias of '0.5' in order to sample in the middle */
+    "TEX result.color, index.a, texture[1], 1D;\n" /* use the alpha-component as a index in the palette to get the final color */
     "END";
 
 /* This function is used in case of 8bit paletted textures to upload the palette.
