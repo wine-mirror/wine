@@ -192,19 +192,17 @@ static void ImmInternalSetOpenStatus(BOOL fOpen)
 {
     TRACE("Setting internal state to %s\n",(fOpen)?"OPEN":"CLOSED");
 
-   root_context->IMC.fOpen = fOpen;
-   root_context->bInternalState = fOpen;
-
-   if (fOpen == FALSE)
-   {
+    if (root_context->IMC.fOpen && fOpen == FALSE)
+    {
         ShowWindow(hwndDefault,SW_HIDE);
         ImmDestroyIMCC(root_context->IMC.hCompStr);
         root_context->IMC.hCompStr = NULL;
     }
-    else
-        ShowWindow(hwndDefault, SW_SHOWNOACTIVATE);
 
-   ImmInternalSendIMENotify(IMN_SETOPENSTATUS, 0);
+    root_context->IMC.fOpen = fOpen;
+    root_context->bInternalState = fOpen;
+
+    ImmInternalSendIMENotify(IMN_SETOPENSTATUS, 0);
 }
 
 static int updateField(DWORD origLen, DWORD origOffset, DWORD currentOffset,
