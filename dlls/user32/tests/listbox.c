@@ -562,7 +562,7 @@ static void test_listbox_LB_DIR()
     HANDLE file;
 
     file = CreateFileA( "wtest1.tmp.c", FILE_ALL_ACCESS, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
-    ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %d", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %d\n", GetLastError());
     CloseHandle( file );
 
     /* NOTE: for this test to succeed, there must be no subdirectories
@@ -1055,7 +1055,7 @@ static void test_listbox_dlgdir(void)
     HANDLE file;
 
     file = CreateFileA( "wtest1.tmp.c", FILE_ALL_ACCESS, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
-    ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %d", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %d\n", GetLastError());
     CloseHandle( file );
 
     /* NOTE: for this test to succeed, there must be no subdirectories
