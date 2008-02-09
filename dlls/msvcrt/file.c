@@ -1692,11 +1692,13 @@ static int read_i(int fd, void *buf, unsigned int count)
                 if (bufstart[i] == 0x1a)
                 {
                     num_read = i;
+                    MSVCRT_fdesc[fd].wxflag |= (WX_ATEOF|WX_READEOF);
+                    TRACE(":^Z EOF %s\n",debugstr_an(buf,num_read));
                     break;
                 }
             }
         }
-        if (num_read != count)
+        if (count != 0 && num_read == 0)
         {
             MSVCRT_fdesc[fd].wxflag |= (WX_ATEOF|WX_READEOF);
             TRACE(":EOF %s\n",debugstr_an(buf,num_read));
@@ -1707,6 +1709,7 @@ static int read_i(int fd, void *buf, unsigned int count)
         if (GetLastError() == ERROR_BROKEN_PIPE)
         {
             TRACE(":end-of-pipe\n");
+            MSVCRT_fdesc[fd].wxflag |= (WX_ATEOF|WX_READEOF);
             return 0;
         }
         else
