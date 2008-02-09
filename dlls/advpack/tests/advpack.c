@@ -521,7 +521,7 @@ static void setperusersecvalues_test(void)
     /* set initial values */
     lstrcpy(peruser.szGUID, "guid");
     hr = pSetPerUserSecValues(&peruser);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(OPEN_GUID_KEY(), "Expected guid key to exist\n");
     ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
     ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
@@ -538,7 +538,7 @@ static void setperusersecvalues_test(void)
     /* raise the version, but bRollback is FALSE, so vals not saved */
     lstrcpy(peruser.szVersion, "2,1,1,1");
     hr = pSetPerUserSecValues(&peruser);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
     ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
     ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
@@ -555,7 +555,7 @@ static void setperusersecvalues_test(void)
     peruser.bRollback = TRUE;
     lstrcpy(peruser.szVersion, "3,1,1,1");
     hr = pSetPerUserSecValues(&peruser);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(check_reg_str(guid, NULL, "displayname"), "Expected displayname\n");
     ok(check_reg_str(guid, "ComponentID", "compid"), "Expected compid\n");
     ok(check_reg_str(guid, "Locale", "locale"), "Expected locale\n");
