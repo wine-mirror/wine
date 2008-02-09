@@ -449,9 +449,13 @@ static void test_getDefaultOIDFunctionAddress(void)
      "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
     /* Even with a registered dll, this fails (since the dll doesn't exist) */
+    SetLastError(0xdeadbeef);
     ret = CryptRegisterDefaultOIDFunction(0, "CertDllOpenStoreProv", 0,
      bogusDll);
-    ok(ret, "CryptRegisterDefaultOIDFunction failed: %08x\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+        skip("Need admin rights\n");
+    else
+        ok(ret, "CryptRegisterDefaultOIDFunction failed: %08x\n", GetLastError());
     ret = CryptGetDefaultOIDFunctionAddress(set, 0, NULL, 0, &funcAddr,
      &hFuncAddr);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
