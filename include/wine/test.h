@@ -354,7 +354,8 @@ void winetest_wait_child_process( HANDLE process )
     {
         fprintf( stdout, "%s: %u failures in child process\n",
                  current_test->name, exit_code );
-        InterlockedExchangeAdd( &failures, exit_code );
+        while (exit_code-- > 0)
+            InterlockedIncrement(&failures);
     }
 }
 
