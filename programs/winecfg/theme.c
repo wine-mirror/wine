@@ -522,6 +522,21 @@ static struct
     {-1,                COLOR_INACTIVECAPTION,  "InactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE */
     {-1,                COLOR_INACTIVECAPTIONTEXT,"InactiveTitleText" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_TEXT */
     {-1,                -1,                     "MsgBoxText"    }, /* IDC_SYSPARAMS_MSGBOX_TEXT */
+    {-1,                COLOR_APPWORKSPACE,     "AppWorkSpace"  }, /* IDC_SYSPARAMS_APPWORKSPACE */
+    {-1,                COLOR_WINDOWFRAME,      "WindowFrame"   }, /* IDC_SYSPARAMS_WINDOW_FRAME */
+    {-1,                COLOR_ACTIVEBORDER,     "ActiveBorder"  }, /* IDC_SYSPARAMS_ACTIVE_BORDER */
+    {-1,                COLOR_INACTIVEBORDER,   "InactiveBorder" }, /* IDC_SYSPARAMS_INACTIVE_BORDER */
+    {-1,                COLOR_BTNSHADOW,        "ButtonShadow"  }, /* IDC_SYSPARAMS_BUTTON_SHADOW */
+    {-1,                COLOR_GRAYTEXT,         "GrayText"      }, /* IDC_SYSPARAMS_GRAY_TEXT */
+    {-1,                COLOR_BTNHILIGHT,       "ButtonHilight" }, /* IDC_SYSPARAMS_BUTTON_HILIGHT */
+    {-1,                COLOR_3DDKSHADOW,       "ButtonDkShadow" }, /* IDC_SYSPARAMS_BUTTON_DARK_SHADOW */
+    {-1,                COLOR_3DLIGHT,          "ButtonLight"   }, /* IDC_SYSPARAMS_BUTTON_LIGHT */
+    {-1,                COLOR_ALTERNATEBTNFACE, "ButtonAlternateFace" }, /* IDC_SYSPARAMS_BUTTON_ALTERNATE */
+    {-1,                COLOR_HOTLIGHT,         "HotTrackingColor" }, /* IDC_SYSPARAMS_HOT_TRACKING */
+    {-1,                COLOR_GRADIENTACTIVECAPTION, "GradientActiveTitle" }, /* IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT */
+    {-1,                COLOR_GRADIENTINACTIVECAPTION, "GradientInactiveTitle" }, /* IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT */
+    {-1,                COLOR_MENUHILIGHT,      "MenuHilight"   }, /* IDC_SYSPARAMS_MENU_HILIGHT */
+    {-1,                COLOR_MENUBAR,          "MenuBar"       }, /* IDC_SYSPARAMS_MENUBAR */
 };
 
 static void save_sys_color(int idx, COLORREF clr)
