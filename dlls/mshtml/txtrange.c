@@ -826,6 +826,7 @@ static long move_prev_chars(HTMLTxtRange *This, long cnt, const dompos_t *pos, B
 {
     dompos_t iter, tmp;
     long ret = 0;
+    BOOL prev_eq = FALSE;
     WCHAR c;
 
     if(bounded)
@@ -847,14 +848,16 @@ static long move_prev_chars(HTMLTxtRange *This, long cnt, const dompos_t *pos, B
 
         ret++;
 
-        if(bound_pos && dompos_cmp(&iter, bound_pos)) {
+        if(prev_eq) {
             *bounded = TRUE;
-            cnt--;
+            ret++;
         }
+
+        prev_eq = bound_pos && dompos_cmp(&iter, bound_pos);
     }
 
     *new_pos = iter;
-    return bounded && *bounded ? ret+1 : ret;
+    return ret;
 }
 
 static long find_prev_space(HTMLTxtRange *This, const dompos_t *pos, BOOL first_space, dompos_t *ret)
