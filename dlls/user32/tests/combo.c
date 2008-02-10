@@ -162,6 +162,7 @@ static void test_setfont(DWORD style)
 static LRESULT (CALLBACK *old_parent_proc)(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 static LPCSTR expected_edit_text;
 static LPCSTR expected_list_text;
+static BOOL selchange_fired;
 
 static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -187,6 +188,8 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                    edit, expected_edit_text);
                 ok(!strcmp(list, expected_list_text), "list: got %s, expected %s\n",
                    list, expected_list_text);
+
+                selchange_fired = TRUE;
             }
             break;
         }
@@ -213,17 +216,39 @@ static void test_selection(DWORD style, const char * const text[],
     idx = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
     ok(idx == -1, "expected selection -1, got %d\n", idx);
 
+    /* keyboard navigation */
+
     expected_list_text = text[list[0]];
     expected_edit_text = text[edit[0]];
+    selchange_fired = FALSE;
     SendMessage(hCombo, WM_KEYDOWN, VK_DOWN, 0);
+    ok(selchange_fired, "CBN_SELCHANGE not sent!\n");
 
     expected_list_text = text[list[1]];
     expected_edit_text = text[edit[1]];
+    selchange_fired = FALSE;
     SendMessage(hCombo, WM_KEYDOWN, VK_DOWN, 0);
+    ok(selchange_fired, "CBN_SELCHANGE not sent!\n");
 
     expected_list_text = text[list[2]];
     expected_edit_text = text[edit[2]];
+    selchange_fired = FALSE;
     SendMessage(hCombo, WM_KEYDOWN, VK_UP, 0);
+    ok(selchange_fired, "CBN_SELCHANGE not sent!\n");
+
+    /* programatic navigation */
+
+    expected_list_text = text[list[3]];
+    expected_edit_text = text[edit[3]];
+    selchange_fired = FALSE;
+    SendMessage(hCombo, CB_SETCURSEL, list[3], 0);
+    ok(!selchange_fired, "CBN_SELCHANGE sent!\n");
+
+    expected_list_text = text[list[4]];
+    expected_edit_text = text[edit[4]];
+    selchange_fired = FALSE;
+    SendMessage(hCombo, CB_SETCURSEL, list[4], 0);
+    ok(!selchange_fired, "CBN_SELCHANGE sent!\n");
 
     SetWindowLongPtr(hMainWnd, GWLP_WNDPROC, (ULONG_PTR)old_parent_proc);
     DestroyWindow(hCombo);
@@ -232,8 +257,8 @@ static void test_selection(DWORD style, const char * const text[],
 static void test_CBN_SELCHANGE(void)
 {
     static const char * const text[] = { "alpha", "beta", "" };
-    static const int sel_1[] = { 2, 0, 1 };
-    static const int sel_2[] = { 0, 1, 0 };
+    static const int sel_1[] = { 2, 0, 1, 0, 1 };
+    static const int sel_2[] = { 0, 1, 0, 0, 1 };
 
     test_selection(CBS_SIMPLE, text, sel_1, sel_2);
     test_selection(CBS_DROPDOWN, text, sel_1, sel_2);
