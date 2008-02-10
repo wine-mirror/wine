@@ -543,7 +543,7 @@ static void set_color_from_theme(WCHAR *keyName, COLORREF color)
 
     for (i=0; i<sizeof(metrics)/sizeof(metrics[0]); i++)
     {
-        if (strcmp(metrics[i].color_reg, keyNameA)==0)
+        if (lstrcmpiA(metrics[i].color_reg, keyNameA)==0)
         {
             metrics[i].color = color;
             save_sys_color(i, color);
