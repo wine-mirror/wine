@@ -505,7 +505,8 @@ static GpStatus draw_polyline(GpGraphics *graphics, GpPen *pen,
 
     transform_and_round_points(graphics, pti, ptcopy, count);
 
-    Polyline(graphics->hdc, pti, count);
+    if(Polyline(graphics->hdc, pti, count))
+        status = Ok;
 
 end:
     GdipFree(pti);
