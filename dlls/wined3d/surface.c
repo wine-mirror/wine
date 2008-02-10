@@ -9,7 +9,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006-2007 Stefan Dösinger for CodeWeavers
  * Copyright 2007 Henri Verbeet
- * Copyright 2006-2007 Roderick Colenbrander
+ * Copyright 2006-2008 Roderick Colenbrander
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey);
+static inline void clear_unused_channels(IWineD3DSurfaceImpl *This);
 
 static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
     /* Make sure that a proper texture unit is selected, bind the texture
@@ -603,6 +604,7 @@ const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
     return (CONST void*)(This->resource.allocatedMemory);
 }
 
+/* Read the framebuffer back into the surface */
 static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, void *dest, UINT pitch) {
     IWineD3DSwapChainImpl *swapchain;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
@@ -804,6 +806,79 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         HeapFree(GetProcessHeap(), 0, mem);
     }
     LEAVE_GL();
+}
+
+/* Read the framebuffer contents into a texture */
+static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
+{
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    IWineD3DSwapChainImpl *swapchain;
+    int bpp;
+    GLenum format, internal, type;
+    CONVERT_TYPES convert;
+    BOOL srcIsUpsideDown;
+    GLint prevRead;
+
+    d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
+
+    IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
+     * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
+     * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
+     * context->last_was_blit set on the unlock.
+     */
+    ActivateContext(device, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
+    surface_bind_and_dirtify(This);
+    ENTER_GL();
+
+    glGetIntegerv(GL_READ_BUFFER, &prevRead);
+
+    /* Select the correct read buffer, and give some debug output.
+     * There is no need to keep track of the current read buffer or reset it, every part of the code
+     * that reads sets the read buffer as desired.
+     */
+    if(!swapchain) {
+        /* Locking the primary render target which is not on a swapchain(=offscreen render target).
+         * Read from the back buffer
+         */
+        TRACE("Locking offscreen render target\n");
+        glReadBuffer(device->offscreenBuffer);
+        srcIsUpsideDown = TRUE;
+    } else {
+        GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
+        TRACE("Locking %#x buffer\n", buffer);
+        glReadBuffer(buffer);
+        checkGLcall("glReadBuffer");
+
+        IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+        srcIsUpsideDown = FALSE;
+    }
+
+    if(!(This->Flags & SFLAG_ALLOCATED)) {
+        surface_allocate_surface(This, internal, This->pow2Width,
+                                 This->pow2Height, format, type);
+    }
+
+    clear_unused_channels(This);
+
+    /* If !SrcIsUpsideDown we should flip the surface.
+     * This can be done using glCopyTexSubImage2D but this
+     * is VERY slow, so don't do that. We should prevent
+     * this code from getting called in such cases or perhaps
+     * we can use FBOs */
+
+    glCopyTexSubImage2D(This->glDescription.target,
+                        This->glDescription.level,
+                        0, 0, 0, 0,
+                        This->currentDesc.Width,
+                        This->currentDesc.Height);
+    checkGLcall("glCopyTexSubImage2D");
+
+    glReadBuffer(prevRead);
+    vcheckGLcall("glReadBuffer");
+
+    LEAVE_GL();
+    TRACE("Updated target %d\n", This->glDescription.target);
 }
 
 static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
@@ -3865,41 +3940,15 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 HeapFree(GetProcessHeap(), 0, mem);
         }
     } else /* if(flag == SFLAG_INTEXTURE) */ {
-        d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
-
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        surface_bind_and_dirtify(This);
-
         if (This->Flags & SFLAG_INDRAWABLE) {
-            GLint prevRead;
+            read_from_framebuffer_texture(This);
+        } else { /* Upload from system memory */
+            d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
 
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            surface_bind_and_dirtify(This);
             ENTER_GL();
-            glGetIntegerv(GL_READ_BUFFER, &prevRead);
-            vcheckGLcall("glGetIntegerv");
-            glReadBuffer(This->resource.wineD3DDevice->offscreenBuffer);
-            vcheckGLcall("glReadBuffer");
 
-            if(!(This->Flags & SFLAG_ALLOCATED)) {
-                surface_allocate_surface(This, internal, This->pow2Width,
-                                            This->pow2Height, format, type);
-            }
-
-            clear_unused_channels(This);
-
-            glCopyTexSubImage2D(This->glDescription.target,
-                                This->glDescription.level,
-                                0, 0, 0, 0,
-                                This->currentDesc.Width,
-                                This->currentDesc.Height);
-            checkGLcall("glCopyTexSubImage2D");
-
-            glReadBuffer(prevRead);
-            vcheckGLcall("glReadBuffer");
-
-            LEAVE_GL();
-
-            TRACE("Updated target %d\n", This->glDescription.target);
-        } else {
             /* The only place where LoadTexture() might get called when isInDraw=1
              * is ActivateContext where lastActiveRenderTarget is preloaded.
              */
@@ -3967,6 +4016,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
             /* Restore the default pitch */
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+            LEAVE_GL();
 
             /* Don't delete PBO memory */
             if((mem != This->resource.allocatedMemory) && !(This->Flags & SFLAG_PBO))
