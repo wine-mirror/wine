@@ -36,7 +36,7 @@ static const char doc_str1[] = "<html><body>test</body></html>";
 static const char range_test_str[] =
     "<html><body>test \na<font size=\"2\">bc\t123<br /> it's\r\n  \t</font>text<br /></body></html>";
 static const char range_test2_str[] =
-    "<html><body>abc<hr />123</body></html>";
+    "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
     "<body><a href=\"http://test\" name=\"x\">link</a><input />"
@@ -948,13 +948,24 @@ static void test_txtrange2(IHTMLDocument2 *doc)
 
     range = test_create_body_range(doc);
 
-    test_range_text(range, "abc\r\n\r\n123");
+    test_range_text(range, "abc\r\n\r\n123\r\n\r\n\r\ndef");
     test_range_move(range, characterW, 5, 5);
     test_range_moveend(range, characterW, 1, 1);
     test_range_text(range, "2");
     test_range_move(range, characterW, -3, -3);
     test_range_moveend(range, characterW, 3, 3);
     test_range_text(range, "c\r\n\r\n1");
+    test_range_collapse(range, VARIANT_FALSE);
+    test_range_moveend(range, characterW, 4, 4);
+    test_range_text(range, "23");
+    test_range_moveend(range, characterW, 1, 1);
+    test_range_text(range, "23\r\n\r\n\r\nd");
+    test_range_moveend(range, characterW, -1, -1);
+    test_range_text(range, "23");
+    test_range_moveend(range, characterW, -1, -1);
+    test_range_text(range, "23");
+    test_range_moveend(range, characterW, -2, -2);
+    test_range_text(range, "2");
 
     IHTMLTxtRange_Release(range);
 }
