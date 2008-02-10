@@ -585,7 +585,7 @@ static void do_parse_theme(WCHAR *file)
 
         sscanf(keyNameValueA, "%d %d %d", &red, &green, &blue);
 
-        color = RGB((BYTE)red, (BYTE)blue, (BYTE)green);
+        color = RGB((BYTE)red, (BYTE)green, (BYTE)blue);
 
         HeapFree(GetProcessHeap(), 0, keyNameValueA);
 
