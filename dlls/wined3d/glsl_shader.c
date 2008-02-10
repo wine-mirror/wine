@@ -62,7 +62,10 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
     const char *spam[] = {
         "Vertex shader was successfully compiled to run on hardware.\n",    /* fglrx        */
         "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx        */
-        "Fragment shader(s) linked, vertex shader(s) linked."               /* fglrx, no \n */
+        "Fragment shader(s) linked, vertex shader(s) linked.",              /* fglrx, no \n */
+        "Vertex shader(s) linked, no fragment shader(s) defined.",          /* fglrx, no \n */
+        "Fragment shader was successfully compiled to run on hardware.\nWARNING: 0:1: extension 'GL_ARB_draw_buffers' is not supported",
+        "Fragment shader(s) linked, no vertex shader(s) defined."           /* fglrx, no \n */
     };
 
     GL_EXTCALL(glGetObjectParameterivARB(obj,
@@ -73,7 +76,10 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
      * that if there are errors. */
     if (infologLength > 1)
     {
-        infoLog = HeapAlloc(GetProcessHeap(), 0, infologLength);
+        /* Fglrx doesn't terminate the string properly, but it tells us the proper length.
+         * So use HEAP_ZERO_MEMORY to avoid uninitialized bytes
+         */
+        infoLog = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, infologLength);
         GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
         is_spam = FALSE;
 
