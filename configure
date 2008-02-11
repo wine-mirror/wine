@@ -21617,6 +21617,8 @@ ac_config_files="$ac_config_files dlls/qedit/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/qmgr/Makefile"
 
+ac_config_files="$ac_config_files dlls/qmgr/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/qmgrprxy/Makefile"
 
 ac_config_files="$ac_config_files dlls/quartz/Makefile"
@@ -22754,6 +22756,7 @@ do
     "dlls/qedit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qedit/Makefile" ;;
     "dlls/qedit/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qedit/tests/Makefile" ;;
     "dlls/qmgr/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qmgr/Makefile" ;;
+    "dlls/qmgr/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qmgr/tests/Makefile" ;;
     "dlls/qmgrprxy/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qmgrprxy/Makefile" ;;
     "dlls/quartz/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/quartz/Makefile" ;;
     "dlls/quartz/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/quartz/tests/Makefile" ;;

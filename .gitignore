@@ -395,6 +395,9 @@ dlls/qedit/tests/testlist.c
 dlls/qmgr/qmgr_local.h
 dlls/qmgr/qmgr_local_i.c
 dlls/qmgr/rsrc.res
+dlls/qmgr/tests/*.ok
+dlls/qmgr/tests/qmgr_crosstest.exe
+dlls/qmgr/tests/testlist.c
 dlls/qmgrprxy/qmgrprxy.h
 dlls/qmgrprxy/qmgrprxy_i.c
 dlls/qmgrprxy/qmgrprxy_p.c
@@ -780,6 +783,7 @@ programs/winetest/opengl32_test.exe
 programs/winetest/pdh_test.exe
 programs/winetest/psapi_test.exe
 programs/winetest/qedit_test.exe
+programs/winetest/qmgr_test.exe
 programs/winetest/quartz_test.exe
 programs/winetest/riched20_test.exe
 programs/winetest/riched32_test.exe
