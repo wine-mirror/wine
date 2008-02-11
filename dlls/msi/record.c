@@ -338,7 +338,13 @@ UINT MSI_RecordGetStringA(MSIRECORD *rec, UINT iField,
     TRACE("%p %d %p %p\n", rec, iField, szValue, pcchValue);
 
     if( iField > rec->count )
-        return ERROR_INVALID_PARAMETER;
+    {
+        if ( szValue && *pcchValue > 0 )
+            szValue[0] = 0;
+
+        *pcchValue = 0;
+        return ERROR_SUCCESS;
+    }
 
     ret = ERROR_SUCCESS;
     switch( rec->fields[iField].type )
@@ -414,7 +420,13 @@ UINT MSI_RecordGetStringW(MSIRECORD *rec, UINT iField,
     TRACE("%p %d %p %p\n", rec, iField, szValue, pcchValue);
 
     if( iField > rec->count )
-        return ERROR_INVALID_PARAMETER;
+    {
+        if ( szValue && *pcchValue > 0 )
+            szValue[0] = 0;
+
+        *pcchValue = 0;
+        return ERROR_SUCCESS;
+    }
 
     ret = ERROR_SUCCESS;
     switch( rec->fields[iField].type )
