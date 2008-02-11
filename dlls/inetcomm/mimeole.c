@@ -1090,12 +1090,25 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     return S_OK;
 }
 
+typedef struct body_t
+{
+    struct list entry;
+    HBODY hbody;
+    IMimeBody *mime_body;
+
+    struct body_t *parent;
+    struct list children;
+} body_t;
+
 typedef struct MimeMessage
 {
     const IMimeMessageVtbl *lpVtbl;
 
     LONG refs;
     IStream *stream;
+
+    struct list body_tree;
+    HBODY next_hbody;
 } MimeMessage;
 
 static HRESULT WINAPI MimeMessage_QueryInterface(IMimeMessage *iface, REFIID riid, void **ppv)
@@ -1125,6 +1138,18 @@ static ULONG WINAPI MimeMessage_AddRef(IMimeMessage *iface)
     return InterlockedIncrement(&This->refs);
 }
 
+static void empty_body_list(struct list *list)
+{
+    body_t *body, *cursor2;
+    LIST_FOR_EACH_ENTRY_SAFE(body, cursor2, list, body_t, entry)
+    {
+        empty_body_list(&body->children);
+        list_remove(&body->entry);
+        IMimeBody_Release(body->mime_body);
+        HeapFree(GetProcessHeap(), 0, body);
+    }
+}
+
 static ULONG WINAPI MimeMessage_Release(IMimeMessage *iface)
 {
     MimeMessage *This = (MimeMessage *)iface;
@@ -1135,6 +1160,8 @@ static ULONG WINAPI MimeMessage_Release(IMimeMessage *iface)
     refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
+        empty_body_list(&This->body_tree);
+
         if(This->stream) IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -1159,11 +1186,48 @@ static HRESULT WINAPI MimeMessage_IsDirty(
     return E_NOTIMPL;
 }
 
+static body_t *new_body_entry(IMimeBody *mime_body, HBODY hbody, body_t *parent)
+{
+    body_t *body = HeapAlloc(GetProcessHeap(), 0, sizeof(*body));
+    if(body)
+    {
+        body->mime_body = mime_body;
+        body->hbody = hbody;
+        list_init(&body->children);
+        body->parent = parent;
+    }
+    return body;
+}
+
+static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *offset, body_t *parent)
+{
+    IMimeBody *mime_body;
+    HRESULT hr;
+    body_t *body;
+    ULARGE_INTEGER cur;
+    LARGE_INTEGER zero;
+
+    MimeBody_create(NULL, (void**)&mime_body);
+    IMimeBody_Load(mime_body, pStm);
+    zero.QuadPart = 0;
+    hr = IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &cur);
+    offset->cbBodyStart = cur.LowPart;
+    IMimeBody_SetData(mime_body, IET_BINARY, NULL, NULL, &IID_IStream, pStm);
+    body = new_body_entry(mime_body, msg->next_hbody, parent);
+    msg->next_hbody = (HBODY)((DWORD)msg->next_hbody + 1);
+
+    return body;
+}
+
 static HRESULT WINAPI MimeMessage_Load(
     IMimeMessage *iface,
     LPSTREAM pStm)
 {
     MimeMessage *This = (MimeMessage *)iface;
+    body_t *root_body;
+    BODYOFFSETS offsets;
+    ULARGE_INTEGER cur;
+    LARGE_INTEGER zero;
 
     TRACE("(%p)->(%p)\n", iface, pStm);
 
@@ -1175,6 +1239,17 @@ static HRESULT WINAPI MimeMessage_Load(
 
     IStream_AddRef(pStm);
     This->stream = pStm;
+    offsets.cbBoundaryStart = offsets.cbHeaderStart = 0;
+    offsets.cbBodyStart = offsets.cbBodyEnd = 0;
+
+    root_body = create_sub_body(This, pStm, &offsets, NULL);
+
+    zero.QuadPart = 0;
+    IStream_Seek(pStm, zero, STREAM_SEEK_END, &cur);
+    offsets.cbBodyEnd = cur.LowPart;
+    MimeBody_set_offsets(impl_from_IMimeBody(root_body->mime_body), &offsets);
+
+    list_add_head(&This->body_tree, &root_body->entry);
 
     return S_OK;
 }
