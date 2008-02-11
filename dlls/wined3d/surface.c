@@ -38,13 +38,21 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
 static inline void clear_unused_channels(IWineD3DSurfaceImpl *This);
 
 static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
-    /* Make sure that a proper texture unit is selected, bind the texture
-     * and dirtify the sampler to restore the texture on the next draw. */
+    GLint active_texture;
+
+    /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
+     * Read the unit back instead of switching to 0, this avoids messing around with the state manager's
+     * gl states. The current texture unit should always be a valid one.
+     *
+     * TODO: Track the current active texture per GL context instead of using glGet
+     */
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-        checkGLcall("glActiveTextureARB");
+        glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
+        active_texture -= GL_TEXTURE0_ARB;
+    } else {
+        active_texture = 0;
     }
-    IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
+    IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(active_texture));
     IWineD3DSurface_BindTexture((IWineD3DSurface *)This);
 }
 
