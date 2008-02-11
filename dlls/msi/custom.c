@@ -857,12 +857,6 @@ static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
     lstrcatW(package_path, backslash);
     lstrcatW(package_path, source);
 
-    if (GetFileAttributesW(package_path) == INVALID_FILE_ATTRIBUTES)
-    {
-        ERR("Source package does not exist: %s\n", debugstr_w(package_path));
-        return ERROR_FUNCTION_FAILED;
-    }
-
     TRACE("Installing package %s concurrently\n", debugstr_w(package_path));
 
     info = do_msidbCAConcurrentInstall(package, type, package_path, target, action);

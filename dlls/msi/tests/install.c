@@ -352,7 +352,7 @@ static const CHAR ci_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
 static const CHAR ci_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
                                             "s72\ti2\tS64\tS0\tS255\n"
                                             "CustomAction\tAction\n"
-                                            "RunInstall\t23\tmsitest\\concurrent.msi\tMYPROP=[UILevel]\t\n";
+                                            "RunInstall\t87\tmsitest\\concurrent.msi\tMYPROP=[UILevel]\t\n";
 
 static const CHAR ci_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
@@ -1848,9 +1848,15 @@ static void test_concurrentinstall(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    /* Delete the files in the temp (current) folder */
-    DeleteFile(msifile);
     DeleteFile(path);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    DeleteFile(msifile);
     DeleteFile("msitest\\msitest\\augustus");
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest\\msitest");
