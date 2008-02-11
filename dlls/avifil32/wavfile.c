@@ -540,7 +540,7 @@ static HRESULT WINAPI IPersistFile_fnGetClassID(IPersistFile *iface,
   if (pClassID == NULL)
     return AVIERR_BADPARAM;
 
-  memcpy(pClassID, &CLSID_WAVFile, sizeof(CLSID_WAVFile));
+  *pClassID = CLSID_WAVFile;
 
   return AVIERR_OK;
 }

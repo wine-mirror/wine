@@ -590,7 +590,7 @@ static HRESULT WINAPI IPersistFile_fnGetClassID(IPersistFile *iface,
   if (pClassID == NULL)
     return AVIERR_BADPARAM;
 
-  memcpy(pClassID, &CLSID_AVIFile, sizeof(CLSID_AVIFile));
+  *pClassID = CLSID_AVIFile;
 
   return AVIERR_OK;
 }

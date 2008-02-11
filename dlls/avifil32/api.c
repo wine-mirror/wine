@@ -249,7 +249,7 @@ HRESULT WINAPI AVIFileOpenW(PAVIFILE *ppfile, LPCWSTR szFile, UINT uMode,
     if (! AVIFILE_GetFileHandlerByExtension(szFile, &clsidHandler))
       return AVIERR_UNSUPPORTED;
   } else
-    memcpy(&clsidHandler, lpHandler, sizeof(clsidHandler));
+    clsidHandler = *lpHandler;
 
   /* create instance of handler */
   hr = CoCreateInstance(&clsidHandler, NULL, CLSCTX_INPROC, &IID_IAVIFile, (LPVOID*)ppfile);
@@ -746,7 +746,7 @@ HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,
     if (AVIFILE_CLSIDFromString(szValue, &clsidHandler) != S_OK)
       return AVIERR_UNSUPPORTED;
   } else
-    memcpy(&clsidHandler, pclsidHandler, sizeof(clsidHandler));
+    clsidHandler = *pclsidHandler;
 
   hr = CoCreateInstance(&clsidHandler, NULL, CLSCTX_INPROC, &IID_IAVIStream, (LPVOID*)ppsCompressed);
   if (FAILED(hr) || *ppsCompressed == NULL)

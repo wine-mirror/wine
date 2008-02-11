@@ -78,7 +78,7 @@ static HRESULT AVIFILE_CreateClassFactory(const CLSID *pclsid, const IID *riid,
 
   pClassFactory->lpVtbl    = &iclassfact;
   pClassFactory->dwRef     = 0;
-  memcpy(&pClassFactory->clsid, pclsid, sizeof(pClassFactory->clsid));
+  pClassFactory->clsid     = *pclsid;
 
   hr = IClassFactory_QueryInterface((IClassFactory*)pClassFactory, riid, ppv);
   if (FAILED(hr)) {
