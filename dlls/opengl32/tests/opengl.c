@@ -236,6 +236,12 @@ static void test_colorbits(HDC hdc)
     int res;
     int iPixelFormat = 0;
 
+    if (!pwglChoosePixelFormatARB)
+    {
+        skip("wglChoosePixelFormatARB is not available\n");
+        return;
+    }
+
     /* We need a pixel format with at least one bit of alpha */
     res = pwglChoosePixelFormatARB(hdc, iAttribs, NULL, 1, &iPixelFormat, &nFormats);
     if(res == FALSE || nFormats == 0)
@@ -263,6 +269,12 @@ static void test_gdi_dbuf(HDC hdc)
     unsigned int nFormats;
     int iPixelFormat;
     int res;
+
+    if (!pwglGetPixelFormatAttribivARB)
+    {
+        skip("wglGetPixelFormatAttribivARB is not available\n");
+        return;
+    }
 
     nFormats = DescribePixelFormat(hdc, 0, 0, NULL);
     for(iPixelFormat = 1;iPixelFormat <= nFormats;iPixelFormat++)
@@ -382,6 +394,13 @@ START_TEST(opengl)
         test_setpixelformat(hdc);
         test_colorbits(hdc);
         test_gdi_dbuf(hdc);
+
+        if (!pwglGetExtensionsStringARB)
+        {
+            skip("wglGetExtensionsStringARB is not available\n");
+            DestroyWindow(hwnd);
+            return;
+        }
 
         wgl_extensions = pwglGetExtensionsStringARB(hdc);
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");
