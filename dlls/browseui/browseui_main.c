@@ -37,6 +37,9 @@
 
 #include "browseui.h"
 
+#include "initguid.h"
+DEFINE_GUID(CLSID_CompCatCacheDaemon, 0x8C7461EF, 0x2b13, 0x11d2, 0xbe, 0x35, 0x30, 0x78, 0x30, 0x2c, 0x20, 0x30);
+
 WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 
 LONG BROWSEUI_refCount = 0;
@@ -51,6 +54,7 @@ static const struct {
 } ClassesTable[] = {
     {&CLSID_ACLMulti, ACLMulti_Constructor},
     {&CLSID_ProgressDialog, ProgressDialog_Constructor},
+    {&CLSID_CompCatCacheDaemon, CompCatCacheDaemon_Constructor},
     {NULL, NULL}
 };
 

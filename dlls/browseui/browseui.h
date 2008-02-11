@@ -26,5 +26,8 @@ extern HINSTANCE BROWSEUI_hinstance;
 
 HRESULT WINAPI ACLMulti_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
 HRESULT WINAPI ProgressDialog_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
+HRESULT WINAPI CompCatCacheDaemon_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
+
+extern const GUID CLSID_CompCatCacheDaemon;
 
 #endif /* __WINE_SHDOCVW_H */

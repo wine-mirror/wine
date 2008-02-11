@@ -30,6 +30,7 @@
 
 #include "ole2.h"
 #include "shlguid.h"
+#include "browseui.h"
 
 #include "wine/debug.h"
 
@@ -450,6 +451,13 @@ static struct regsvr_coclass const coclass_list[] = {
     {
         &CLSID_ProgressDialog,
         "Progress Dialog",
+        NULL,
+        "browseui.dll",
+        "Both"
+    },
+    {
+        &CLSID_CompCatCacheDaemon,
+        "Component Catagory Cache Daemon",
         NULL,
         "browseui.dll",
         "Both"
