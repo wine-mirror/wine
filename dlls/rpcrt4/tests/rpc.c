@@ -388,7 +388,8 @@ static void test_towers(void)
     ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
     ret = TowerExplode(tower, NULL, NULL, NULL, NULL, &address);
     ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
-    ok(!strcmp(address, ""), "address was \"%s\" instead of \"\"\n", address);
+    /* Windows XP SP3 sets address to NULL */
+    ok(!address || !strcmp(address, ""), "address was \"%s\" instead of \"\"\n or NULL (XP SP3)", address);
 
     I_RpcFree(address);
     I_RpcFree(tower);
