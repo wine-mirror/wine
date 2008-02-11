@@ -1629,55 +1629,66 @@ void shader_glsl_cmp(SHADER_OPCODE_ARG* arg) {
     char mask_char[6];
     BOOL temp_destination = FALSE;
 
-    DWORD src0reg = arg->src[0] & WINED3DSP_REGNUM_MASK;
-    DWORD src1reg = arg->src[1] & WINED3DSP_REGNUM_MASK;
-    DWORD src2reg = arg->src[2] & WINED3DSP_REGNUM_MASK;
-    DWORD src0regtype = shader_get_regtype(arg->src[0]);
-    DWORD src1regtype = shader_get_regtype(arg->src[1]);
-    DWORD src2regtype = shader_get_regtype(arg->src[2]);
-    DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
-    DWORD dstregtype = shader_get_regtype(arg->dst);
+    if(shader_is_scalar(arg->src[0])) {
+        write_mask = shader_glsl_append_dst(arg->buffer, arg);
 
-    /* Cycle through all source0 channels */
-    for (i=0; i<4; i++) {
-        write_mask = 0;
-        /* Find the destination channels which use the current source0 channel */
-        for (j=0; j<4; j++) {
-            if ( ((arg->src[0] >> (WINED3DSP_SWIZZLE_SHIFT + 2*j)) & 0x3) == i ) {
-                write_mask |= WINED3DSP_WRITEMASK_0 << j;
-                cmp_channel = WINED3DSP_WRITEMASK_0 << j;
-            }
-        }
-
-        /* Splitting the cmp instruction up in multiple lines imposes a problem:
-         * The first lines may overwrite source parameters of the following lines.
-         * Deal with that by using a temporary destination register if needed
-         */
-        if((src0reg == dstreg && src0regtype == dstregtype) ||
-           (src1reg == dstreg && src1regtype == dstregtype) ||
-           (src2reg == dstreg && src2regtype == dstregtype)) {
-
-            write_mask = shader_glsl_get_write_mask(arg->dst & (~WINED3DSP_SWIZZLE_MASK | write_mask), mask_char);
-            if (!write_mask) continue;
-            shader_addline(arg->buffer, "tmp0%s = (", mask_char);
-            temp_destination = TRUE;
-        } else {
-            write_mask = shader_glsl_append_dst_ext(arg->buffer, arg, arg->dst & (~WINED3DSP_SWIZZLE_MASK | write_mask));
-            if (!write_mask) continue;
-        }
-
-        shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], cmp_channel, &src0_param);
+        shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
         shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
         shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
 
-            shader_addline(arg->buffer, "%s >= 0.0 ? %s : %s);\n",
-                           src0_param.param_str, src1_param.param_str, src2_param.param_str);
-    }
+        shader_addline(arg->buffer, "%s >= 0.0 ? %s : %s);\n",
+                       src0_param.param_str, src1_param.param_str, src2_param.param_str);
+    } else {
+        DWORD src0reg = arg->src[0] & WINED3DSP_REGNUM_MASK;
+        DWORD src1reg = arg->src[1] & WINED3DSP_REGNUM_MASK;
+        DWORD src2reg = arg->src[2] & WINED3DSP_REGNUM_MASK;
+        DWORD src0regtype = shader_get_regtype(arg->src[0]);
+        DWORD src1regtype = shader_get_regtype(arg->src[1]);
+        DWORD src2regtype = shader_get_regtype(arg->src[2]);
+        DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
+        DWORD dstregtype = shader_get_regtype(arg->dst);
 
-    if(temp_destination) {
-        shader_glsl_get_write_mask(arg->dst, mask_char);
-        shader_glsl_append_dst_ext(arg->buffer, arg, arg->dst);
-        shader_addline(arg->buffer, "tmp0%s);\n", mask_char);
+        /* Cycle through all source0 channels */
+        for (i=0; i<4; i++) {
+            write_mask = 0;
+            /* Find the destination channels which use the current source0 channel */
+            for (j=0; j<4; j++) {
+                if ( ((arg->src[0] >> (WINED3DSP_SWIZZLE_SHIFT + 2*j)) & 0x3) == i ) {
+                    write_mask |= WINED3DSP_WRITEMASK_0 << j;
+                    cmp_channel = WINED3DSP_WRITEMASK_0 << j;
+                }
+            }
+
+            /* Splitting the cmp instruction up in multiple lines imposes a problem:
+            * The first lines may overwrite source parameters of the following lines.
+            * Deal with that by using a temporary destination register if needed
+            */
+            if((src0reg == dstreg && src0regtype == dstregtype) ||
+            (src1reg == dstreg && src1regtype == dstregtype) ||
+            (src2reg == dstreg && src2regtype == dstregtype)) {
+
+                write_mask = shader_glsl_get_write_mask(arg->dst & (~WINED3DSP_SWIZZLE_MASK | write_mask), mask_char);
+                if (!write_mask) continue;
+                shader_addline(arg->buffer, "tmp0%s = (", mask_char);
+                temp_destination = TRUE;
+            } else {
+                write_mask = shader_glsl_append_dst_ext(arg->buffer, arg, arg->dst & (~WINED3DSP_SWIZZLE_MASK | write_mask));
+                if (!write_mask) continue;
+            }
+
+            shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], cmp_channel, &src0_param);
+            shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, &src1_param);
+            shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
+
+            shader_addline(arg->buffer, "%s >= 0.0 ? %s : %s);\n",
+                        src0_param.param_str, src1_param.param_str, src2_param.param_str);
+        }
+
+        if(temp_destination) {
+            shader_glsl_get_write_mask(arg->dst, mask_char);
+            shader_glsl_append_dst_ext(arg->buffer, arg, arg->dst);
+            shader_addline(arg->buffer, "tmp0%s);\n", mask_char);
+        }
     }
 
 }

@@ -2071,9 +2071,9 @@ static inline BOOL shader_is_comment(DWORD token) {
     return WINED3DSIO_COMMENT == (token & WINED3DSI_OPCODE_MASK);
 }
 
-/* TODO: vFace (ps_3_0) */
 static inline BOOL shader_is_scalar(DWORD param) {
     DWORD reg_type = shader_get_regtype(param);
+    DWORD reg_num;
 
     switch (reg_type) {
         case WINED3DSPR_RASTOUT:
@@ -2089,6 +2089,17 @@ static inline BOOL shader_is_scalar(DWORD param) {
         case WINED3DSPR_LOOP:       /* aL */
         case WINED3DSPR_PREDICATE:  /* p0 */
             return TRUE;
+
+        case WINED3DSPR_MISCTYPE:
+            reg_num = param & WINED3DSP_REGNUM_MASK;
+            switch(reg_num) {
+                case 0: /* vPos */
+                    return FALSE;
+                case 1: /* vFace */
+                    return TRUE;
+                default:
+                    return FALSE;
+            }
 
         default:
             return FALSE;
