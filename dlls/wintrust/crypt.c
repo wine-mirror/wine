@@ -51,7 +51,14 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
 {
     FIXME("%p %s %x\n", catAdmin, debugstr_guid(sysSystem), dwFlags);
 
-    if (catAdmin) *catAdmin = (HCATADMIN)0xdeadbeef;
+    if (!catAdmin)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    *catAdmin = (HCATADMIN)0xdeadbeef;
+
     return TRUE;
 }
 

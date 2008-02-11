@@ -67,12 +67,9 @@ static void test_context(void)
     /* All NULL */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminAcquireContext(NULL, NULL, 0);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     /* NULL GUID */
     SetLastError(0xdeadbeef);
@@ -113,12 +110,9 @@ static void test_context(void)
     /* NULL context handle and dummy GUID */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminAcquireContext(NULL, &dummy, 0);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
 
     /* Correct context handle and dummy GUID */
     SetLastError(0xdeadbeef);
