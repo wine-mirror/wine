@@ -161,7 +161,7 @@ static BOOL ANIMATE_DoStop(ANIMATE_INFO *infoPtr)
         if (infoPtr->threadId != GetCurrentThreadId())
         {
             LeaveCriticalSection(&infoPtr->cs);  /* leave it a chance to run */
-            WaitForSingleObject( handle, INFINITE );
+            MsgWaitForMultipleObjects( 1, &handle, FALSE, INFINITE, QS_ALLINPUT );
             TRACE("animation thread stopped\n");
             EnterCriticalSection(&infoPtr->cs);
         }
