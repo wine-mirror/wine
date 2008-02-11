@@ -426,7 +426,8 @@ static inline BOOL test_arb_vs_offset_limit(WineD3D_GL_Info *gl_info) {
         "!!ARBvp1.0\n"
         "PARAM C[66] = { program.env[0..65] };\n"
         "ADDRESS A0;"
-        "ARL A0.x, 0.0;\n"
+        "PARAM zero = {0.0, 0.0, 0.0, 0.0};\n"
+        "ARL A0.x, zero.x;\n"
         "MOV result.position, C[A0.x + 65];\n"
         "END\n";
 
