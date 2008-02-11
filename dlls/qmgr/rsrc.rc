@@ -1,6 +1,4 @@
 /*
- * Queue Manager definitions
- *
  * Copyright 2007 Google (Roy Shea)
  *
  * This library is free software; you can redistribute it and/or
@@ -18,40 +16,5 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __QMGR_H__
-#define __QMGR_H__
-
-#include "windef.h"
-#include "objbase.h"
-
-#define COBJMACROS
-#include "bits.h"
-
-#include <string.h>
-
-/* Background copy manager vtbl and related data */
-typedef struct
-{
-    const IBackgroundCopyManagerVtbl *lpVtbl;
-    LONG ref;
-} BackgroundCopyManagerImpl;
-
-typedef struct
-{
-    const IClassFactoryVtbl *lpVtbl;
-} ClassFactoryImpl;
-
-extern ClassFactoryImpl BITS_ClassFactory;
-
-HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj);
-
-/* Little helper functions */
-static inline char *
-qmgr_strdup(const char *s)
-{
-    size_t n = strlen(s) + 1;
-    char *d = HeapAlloc(GetProcessHeap(), 0, n);
-    return d ? memcpy(d, s, n) : NULL;
-}
-
-#endif /* __QMGR_H__ */
+/* @makedep: qmgr.inf */
+REGINST REGINST qmgr.inf

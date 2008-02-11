@@ -394,6 +394,7 @@ dlls/qedit/tests/qedit_crosstest.exe
 dlls/qedit/tests/testlist.c
 dlls/qmgr/qmgr_local.h
 dlls/qmgr/qmgr_local_i.c
+dlls/qmgr/rsrc.res
 dlls/qmgrprxy/qmgrprxy.h
 dlls/qmgrprxy/qmgrprxy_i.c
 dlls/qmgrprxy/qmgrprxy_p.c

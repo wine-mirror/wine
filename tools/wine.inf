@@ -2196,6 +2196,8 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,objsel.dll,1
 11,,qcap.dll,1
 11,,qedit.dll,1
+11,,qmgr.dll,1
+11,,qmgrprxy.dll,1
 11,,quartz.dll,1
 11,,rsaenh.dll,1
 11,,shdocvw.dll,1

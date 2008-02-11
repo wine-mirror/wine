@@ -3,13 +3,15 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = qmgr.dll
-IMPORTS   = kernel32
+IMPORTS   = advpack advapi32 kernel32
 EXTRALIBS = -luuid
 
 C_SRCS = \
 	factory.c \
 	qmgr.c \
 	qmgr_main.c
+
+RC_SRCS = rsrc.rc
 
 IDL_I_SRCS = qmgr_local.idl
 
