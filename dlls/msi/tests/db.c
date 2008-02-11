@@ -5701,6 +5701,70 @@ static void test_noquotes(void)
     DeleteFileA(msifile);
 }
 
+static void read_file_data(LPCSTR filename, LPSTR buffer)
+{
+    OFSTRUCT ofs;
+    HFILE file;
+    DWORD read;
+
+    file = OpenFile(filename, &ofs, OF_READ);
+    ZeroMemory(buffer, MAX_PATH);
+    ReadFile((HANDLE)file, buffer, MAX_PATH, &read, NULL);
+    CloseHandle((HANDLE)file);
+}
+
+static void test_forcecodepage(void)
+{
+    MSIHANDLE hdb;
+    const char *query;
+    char buffer[MAX_PATH];
+    UINT r;
+
+    DeleteFile(msifile);
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `_ForceCodepage`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "CREATE TABLE `Table` ( `A` CHAR(72) NOT NULL PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `_ForceCodepage`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `_ForceCodepage`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    MsiCloseHandle(hdb);
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_DIRECT, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `_ForceCodepage`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    r = MsiDatabaseExport(hdb, "_ForceCodepage", CURR_DIR, "forcecodepage.idt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    read_file_data("forcecodepage.idt", buffer);
+    ok(!lstrcmpA(buffer, "\r\n\r\n0\t_ForceCodepage\r\n"),
+       "Expected \"\r\n\r\n0\t_ForceCodepage\r\n\", got \"%s\"", buffer);
+
+    MsiCloseHandle(hdb);
+    DeleteFileA(msifile);
+    DeleteFileA("forcecodepage.idt");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -5735,4 +5799,5 @@ START_TEST(db)
     test_quotes();
     test_carriagereturn();
     test_noquotes();
+    test_forcecodepage();
 }

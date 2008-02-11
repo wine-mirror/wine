@@ -849,12 +849,29 @@ static UINT msi_export_row( MSIRECORD *row, void *arg )
     return msi_export_record( arg, row, 1 );
 }
 
+static UINT msi_export_forcecodepage( HANDLE handle )
+{
+    DWORD sz;
+
+    static const char data[] = "\r\n\r\n0\t_ForceCodepage\r\n";
+
+    FIXME("Read the codepage from the strings table!\n");
+
+    sz = lstrlenA(data) + 1;
+    if (!WriteFile(handle, data, sz, &sz, NULL))
+        return ERROR_FUNCTION_FAILED;
+
+    return ERROR_SUCCESS;
+}
+
 UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
                LPCWSTR folder, LPCWSTR file )
 {
     static const WCHAR query[] = {
         's','e','l','e','c','t',' ','*',' ','f','r','o','m',' ','%','s',0 };
     static const WCHAR szbs[] = { '\\', 0 };
+    static const WCHAR forcecodepage[] = {
+        '_','F','o','r','c','e','C','o','d','e','p','a','g','e',0 };
     MSIRECORD *rec = NULL;
     MSIQUERY *view = NULL;
     LPWSTR filename;
@@ -881,6 +898,12 @@ UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
     msi_free( filename );
     if (handle == INVALID_HANDLE_VALUE)
         return ERROR_FUNCTION_FAILED;
+
+    if (!lstrcmpW( table, forcecodepage ))
+    {
+        r = msi_export_forcecodepage( handle );
+        goto done;
+    }
 
     r = MSI_OpenQuery( db, &view, query, table );
     if (r == ERROR_SUCCESS)
@@ -915,8 +938,8 @@ UINT MSI_DatabaseExport( MSIDATABASE *db, LPCWSTR table,
         msiobj_release( &view->hdr );
     }
 
+done:
     CloseHandle( handle );
-
     return r;
 }
 
