@@ -1331,7 +1331,7 @@ static BOOL fci_flush_folder(
       )
   ) {
     /* save CCAB */
-    memcpy(&(p_fci_internal->oldCCAB), p_fci_internal->pccab, sizeof(CCAB));
+    p_fci_internal->oldCCAB = *p_fci_internal->pccab;
     /* increment cabinet index */
     ++(p_fci_internal->pccab->iCab);
     /* get name of next cabinet */
@@ -2244,7 +2244,7 @@ static BOOL fci_flush_cabinet(
       CB_MAX_CABINET_NAME + CB_MAX_DISK_NAME
     )) {
       /* save CCAB */
-      memcpy(&(p_fci_internal->oldCCAB), p_fci_internal->pccab, sizeof(CCAB));
+      p_fci_internal->oldCCAB = *p_fci_internal->pccab;
       /* increment cabinet index */
       ++(p_fci_internal->pccab->iCab);
       /* get name of next cabinet */
@@ -2477,7 +2477,7 @@ BOOL __cdecl FCIAddFile(
       )
   ) {
     /* save CCAB */
-    memcpy(&(p_fci_internal->oldCCAB), p_fci_internal->pccab, sizeof(CCAB));
+    p_fci_internal->oldCCAB = *p_fci_internal->pccab;
     /* increment cabinet index */
     ++(p_fci_internal->pccab->iCab);
     /* get name of next cabinet */
@@ -2644,7 +2644,7 @@ BOOL __cdecl FCIAddFile(
       )
   ) {
     /* save CCAB */
-    memcpy(&(p_fci_internal->oldCCAB), p_fci_internal->pccab, sizeof(CCAB));
+    p_fci_internal->oldCCAB = *p_fci_internal->pccab;
     /* increment cabinet index */
     ++(p_fci_internal->pccab->iCab);
     /* get name of next cabinet */
