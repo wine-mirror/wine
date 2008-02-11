@@ -398,12 +398,15 @@ static void test_I_RpcMapWin32Status(void)
 {
     LONG win32status;
     RPC_STATUS rpc_status;
-    BOOL w2k3 = FALSE;
+    BOOL w2k3_up = FALSE;
 
-    /* Windows 2003 returns STATUS_UNSUCCESSFUL if given an unknown status */
+    /* Windows 2003 and Vista return STATUS_UNSUCCESSFUL if given an unknown status */
     win32status = I_RpcMapWin32Status(9999);
     if (win32status == STATUS_UNSUCCESSFUL)
-        w2k3 = TRUE;
+    {
+        trace("We are on Windows 2003 or Vista\n");
+        w2k3_up = TRUE;
+    }
 
     for (rpc_status = 0; rpc_status < 10000; rpc_status++)
     {
@@ -519,7 +522,7 @@ static void test_I_RpcMapWin32Status(void)
         case ERROR_PASSWORD_MUST_CHANGE: expected_win32status = STATUS_PASSWORD_MUST_CHANGE; break;
         case ERROR_ACCOUNT_LOCKED_OUT: expected_win32status = STATUS_ACCOUNT_LOCKED_OUT; break;
         default:
-            if (w2k3)
+            if (w2k3_up)
                 expected_win32status = STATUS_UNSUCCESSFUL;
             else
                 expected_win32status = rpc_status;
