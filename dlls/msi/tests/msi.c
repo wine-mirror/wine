@@ -2080,11 +2080,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA("garbage", INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2093,11 +2090,8 @@ static void test_MsiGetProductInfo(void)
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D",
                            INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2116,11 +2110,8 @@ static void test_MsiGetProductInfo(void)
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93",
                            INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 

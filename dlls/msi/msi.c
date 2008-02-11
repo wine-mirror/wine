@@ -567,6 +567,7 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
     UINT r;
     HKEY hkey;
     LPWSTR val = NULL;
+    WCHAR squished_pc[GUID_SIZE];
 
     TRACE("%s %s %p %p\n", debugstr_w(szProduct),
           debugstr_w(szAttribute), szValue, pcchValueBuf);
@@ -575,7 +576,10 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
      * FIXME: Values seem scattered/duplicated in the registry. Is there a system?
      */
 
-    if ((szValue->str.w && !pcchValueBuf) || !szProduct || !szProduct[0] || !szAttribute)
+    if ((szValue->str.w && !pcchValueBuf) || !szProduct || !szAttribute)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!squash_guid(szProduct, squished_pc))
         return ERROR_INVALID_PARAMETER;
 
     /* check for special properties */
