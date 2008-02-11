@@ -801,6 +801,14 @@ BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWO
 
     *vbo = This->vbo;
     if(This->vbo == 0) {
+        if(This->Flags & VBFLAG_CREATEVBO) {
+            CreateVBO(This);
+            This->Flags &= ~VBFLAG_CREATEVBO;
+            if(This->vbo) {
+                *vbo = This->vbo;
+                return (BYTE *) iOffset;
+            }
+        }
         return This->resource.allocatedMemory + iOffset;
     } else {
         return (BYTE *) iOffset;
