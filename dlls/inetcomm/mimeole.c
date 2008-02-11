@@ -1339,14 +1339,54 @@ static HRESULT WINAPI MimeMessage_HandsOffStorage(
     return E_NOTIMPL;
 }
 
+static HRESULT find_body(struct list *list, HBODY hbody, body_t **body)
+{
+    body_t *cur;
+    HRESULT hr;
+
+    if(hbody == HBODY_ROOT)
+    {
+        *body = LIST_ENTRY(list_head(list), body_t, entry);
+        return S_OK;
+    }
+
+    LIST_FOR_EACH_ENTRY(cur, list, body_t, entry)
+    {
+        if(cur->hbody == hbody)
+        {
+            *body = cur;
+            return S_OK;
+        }
+        hr = find_body(&cur->children, hbody, body);
+        if(hr == S_OK) return S_OK;
+    }
+    return S_FALSE;
+}
+
 static HRESULT WINAPI MimeMessage_BindToObject(
     IMimeMessage *iface,
     const HBODY hBody,
     REFIID riid,
     void **ppvObject)
 {
-    FIXME("(%p)->(%p, %s, %p)\n", iface, hBody, debugstr_guid(riid), ppvObject);
-    return E_NOTIMPL;
+    MimeMessage *This = (MimeMessage *)iface;
+    HRESULT hr;
+    body_t *body;
+
+    TRACE("(%p)->(%p, %s, %p)\n", iface, hBody, debugstr_guid(riid), ppvObject);
+
+    hr = find_body(&This->body_tree, hBody, &body);
+
+    if(hr != S_OK) return hr;
+
+    if(IsEqualIID(riid, &IID_IMimeBody))
+    {
+        IMimeBody_AddRef(body->mime_body);
+        *ppvObject = body->mime_body;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI MimeMessage_SaveBody(

@@ -209,6 +209,8 @@ static void test_CreateMessage(void)
     IStream *stream;
     LARGE_INTEGER pos;
     LONG ref;
+    IMimeBody *body;
+    BODYOFFSETS offsets;
 
     hr = MimeOleCreateMessage(NULL, &msg);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -220,6 +222,16 @@ static void test_CreateMessage(void)
 
     hr = IMimeMessage_Load(msg, stream);
     ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeMessage_BindToObject(msg, HBODY_ROOT, &IID_IMimeBody, (void**)&body);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeBody_GetOffsets(body, &offsets);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(offsets.cbBoundaryStart == 0, "got %d\n", offsets.cbBoundaryStart);
+    ok(offsets.cbHeaderStart == 0, "got %d\n", offsets.cbHeaderStart);
+    ok(offsets.cbBodyStart == 359, "got %d\n", offsets.cbBodyStart);
+    ok(offsets.cbBodyEnd == 666, "got %d\n", offsets.cbBodyEnd);
+    IMimeBody_Release(body);
 
     IMimeMessage_Release(msg);
 
