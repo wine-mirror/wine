@@ -1296,6 +1296,22 @@ interface INewShortcutHookW : IUnknown
                 [in] int cchExtension);
 } 
 
+/*****************************************************************************
+ * IRunnableTask interface
+ */
+[
+    object,
+    uuid(85788d00-6807-11d0-b810-00c04fd706ec),
+    pointer_default(unique)
+]
+interface IRunnableTask : IUnknown
+{
+    HRESULT Run();
+    HRESULT Kill([in] BOOL fWait);
+    HRESULT Suspend();
+    HRESULT Resume();
+    ULONG IsRunning();
+}
 
 /*****************************************************************************
  * IShellChangeNotify interface
