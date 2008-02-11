@@ -2042,6 +2042,465 @@ static void test_MsiGetFileVersion(void)
     HeapFree(GetProcessHeap(), 0, langcheck);
 }
 
+static void test_MsiGetProductInfo(void)
+{
+    UINT r;
+    LONG res;
+    HKEY propkey;
+    HKEY prodkey, localkey;
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR buf[MAX_PATH];
+    CHAR keypath[MAX_PATH];
+    LPSTR usersid;
+    DWORD sz;
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    /* NULL szProduct */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(NULL, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* empty szProduct */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA("", INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* garbage szProduct */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA("garbage", INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* guid without brackets */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D",
+                           INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* guid with brackets */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}",
+                           INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* same length as guid, but random */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93",
+                           INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* not installed, NULL szAttribute */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, NULL, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* not installed, NULL lpValueBuf */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, NULL, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* not installed, NULL pcchValueBuf */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, NULL);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* created guid cannot possibly be an installed product code */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* managed product code exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local user product code exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* both local and managed product code exist */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegCreateKeyA(localkey, "InstallProperties", &propkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+        ok(sz == 0, "Expected 0, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+        ok(sz == 4, "Expected 4, got %d\n", sz);
+    }
+
+    /* lpValueBuf is NULL */
+    sz = MAX_PATH;
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, NULL, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(sz == 4, "Expected 4, got %d\n", sz);
+    }
+
+    /* lpValueBuf is NULL, pcchValueBuf is too small */
+    sz = 2;
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, NULL, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(sz == 4, "Expected 4, got %d\n", sz);
+    }
+
+    /* lpValueBuf is NULL, pcchValueBuf is too small */
+    sz = 2;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to remain unchanged, got \"%s\"\n", buf);
+    todo_wine
+    {
+        ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+        ok(sz == 4, "Expected 4, got %d\n", sz);
+    }
+
+    /* lpValueBuf is NULL, pcchValueBuf is exactly 4 */
+    sz = 4;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"),
+       "Expected buf to remain unchanged, got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "IMadeThis", 0, REG_SZ, (LPBYTE)"random", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* random property not supported by MSI, value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, "IMadeThis", buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    RegDeleteValueA(propkey, "IMadeThis");
+    RegDeleteValueA(propkey, "HelpLink");
+    RegDeleteKeyA(propkey, "");
+    RegDeleteKeyA(localkey, "");
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(propkey);
+    RegCloseKey(localkey);
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local user product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegCreateKeyA(localkey, "InstallProperties", &propkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+        ok(sz == 0, "Expected 0, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+        ok(sz == 4, "Expected 4, got %d\n", sz);
+    }
+
+    RegDeleteValueA(propkey, "HelpLink");
+    RegDeleteKeyA(propkey, "");
+    RegDeleteKeyA(localkey, "");
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(propkey);
+    RegCloseKey(localkey);
+    RegCloseKey(prodkey);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* classes product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local user product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegCreateKeyA(localkey, "InstallProperties", &propkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    RegDeleteKeyA(propkey, "");
+    RegDeleteKeyA(localkey, "");
+    RegCloseKey(propkey);
+    RegCloseKey(localkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, "S-1-5-18\\\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Local System product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PROPERTY,
+           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    }
+    ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegCreateKeyA(localkey, "InstallProperties", &propkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+        ok(sz == 0, "Expected 0, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+        ok(sz == 4, "Expected 4, got %d\n", sz);
+    }
+
+    RegDeleteValueA(propkey, "HelpLink");
+    RegDeleteKeyA(propkey, "");
+    RegDeleteKeyA(localkey, "");
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(propkey);
+    RegCloseKey(localkey);
+    RegCloseKey(prodkey);
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -2062,6 +2521,7 @@ START_TEST(msi)
         test_MsiGetComponentPath();
         test_MsiGetProductCode();
         test_MsiEnumClients();
+        test_MsiGetProductInfo();
     }
 
     test_MsiGetFileVersion();
