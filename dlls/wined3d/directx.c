@@ -2874,6 +2874,68 @@ static BOOL implementation_is_apple(WineD3D_GL_Info *gl_info) {
     }
 }
 
+#define GLINFO_LOCATION (*gl_info)
+static void test_pbo_functionality(WineD3D_GL_Info *gl_info) {
+    /* Some OpenGL implementations, namely Apple's Geforce 8 driver, advertises PBOs,
+     * but glTexSubImage from a PBO fails miserably, with the first line repeated over
+     * all the texture. This function detects this bug by its symptom and disables PBOs
+     * if the test fails.
+     *
+     * The test uplaods a 4x4 texture via the PBO in the "native" format GL_BGRA,
+     * GL_UNSIGNED_INT_8_8_8_8_REV. This format triggers the bug, and it is what we use
+     * for D3DFMT_A8R8G8B8. Then the texture is read back without any PBO and the data
+     * read back is compared to the original. If they are equal PBOs are assumed to work,
+     * otherwise the PBO extension is disabled.
+     */
+    GLuint texture, pbo;
+    static const unsigned int pattern[] = {
+        0x00000000, 0x000000ff, 0x0000ff00, 0x40ff0000,
+        0x80ffffff, 0x40ffff00, 0x00ff00ff, 0x0000ffff,
+        0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x000000ff,
+        0x80ff00ff, 0x0000ffff, 0x00ff00ff, 0x40ff00ff
+    };
+    unsigned int check[sizeof(pattern) / sizeof(pattern[0])];
+
+    if(!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]) {
+        /* No PBO -> No point in testing them */
+        return;
+    }
+
+    while(glGetError());
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
+    checkGLcall("Specifying the PBO test texture\n");
+
+    GL_EXTCALL(glGenBuffersARB(1, &pbo));
+    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pbo));
+    GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, sizeof(pattern), pattern, GL_STREAM_DRAW_ARB));
+    checkGLcall("Specifying the PBO test pbo\n");
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    checkGLcall("Loading the PBO test texture\n");
+
+    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+    glFinish(); /* just to be sure */
+
+    memset(check, 0, sizeof(check));
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
+    checkGLcall("Reading back the PBO test texture\n");
+
+    glDeleteTextures(1, &texture);
+    GL_EXTCALL(glDeleteBuffersARB(1, &pbo));
+    checkGLcall("PBO test cleanup\n");
+
+    if(memcmp(check, pattern, sizeof(check)) != 0) {
+        WARN_(d3d_caps)("PBO test failed, read back data doesn't match original\n");
+        WARN_(d3d_caps)("Disabling PBOs. This may result in slower performance\n");
+        gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] = FALSE;
+    } else {
+        TRACE_(d3d_caps)("PBO test successfull\n");
+    }
+}
+#undef GLINFO_LOCATION
+
 /* Certain applications(Steam) complain if we report an outdated driver version. In general,
  * reporting a driver version is moot because we are not the Windows driver, and we have different
  * bugs, features, etc.
@@ -2964,6 +3026,9 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
             gl_info->set_texcoord_w = TRUE;
         }
     }
+
+    /* Find out if PBOs work as they are supposed to */
+    test_pbo_functionality(gl_info);
 
     /* Fixup the driver version */
     for(i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); i++) {
