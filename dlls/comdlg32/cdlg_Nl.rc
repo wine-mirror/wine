@@ -283,6 +283,71 @@ FONT 8, "MS Shell Dlg"
     RTEXT           "&t/m:",           stc3, 100,124,  16,8
 }
 
+PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Print Setup"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,180,156,48,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,232,156,48,14
+
+    GROUPBOX        "Printer",        grp4,   8,  4, 272,84, WS_GROUP
+    PUSHBUTTON      "&Eigenschappen", psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Naam:",         stc6,  16, 20,  36,8
+    COMBOBOX                          cmb1,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Status:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Type:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Waar:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Opmerking:",       stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Remark",   stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+
+    GROUPBOX        "Papier",          grp2,   8, 92, 164,56, WS_GROUP
+    LTEXT           "&Grootte:",         stc2,  16,108,  36, 8
+    COMBOBOX                          cmb2,  52,106, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "&Bron:",       stc3,  16,128,  36, 8
+    COMBOBOX                          cmb3,  52,126, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+
+    GROUPBOX        "Orientatie",    grp1, 180, 92, 100,56, WS_GROUP
+    ICON            "",               ico1, 195,112,  18,20, WS_GROUP
+    CONTROL         "P&ortret",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
+    CONTROL         "L&iggend",     rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
+END
+
+PAGESETUPDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Setup Page"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL "", rct1, "Static", SS_WHITERECT, 80, 8, 80, 80
+  CONTROL "", rct2, "Static", SS_GRAYRECT, 160, 12, 4, 80
+  CONTROL "", rct3, "Static", SS_GRAYRECT,  84, 88, 80, 4
+  GROUPBOX "Papier", grp2, 8, 96, 224, 56, BS_GROUPBOX
+  LTEXT "&Grootte:", stc2, 16, 112, 36, 8
+  COMBOBOX cmb2, 64, 110, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  LTEXT "La&de:", stc3, 16, 132, 36, 8
+  COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  GROUPBOX "Orientatie", grp1, 8, 156, 64, 56, BS_GROUPBOX
+  AUTORADIOBUTTON "&Portret", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "&Liggend", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
+  GROUPBOX "Borders", grp4, 80, 156, 152, 56, BS_GROUPBOX
+  LTEXT "L&inks:", stc15, 88, 172, 21, 8
+  EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER|ES_NUMBER
+  LTEXT "&Rechts:", stc16, 159, 172, 27, 8
+  EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER|ES_NUMBER
+  LTEXT "B&oven:", stc17, 88, 192, 21, 8
+  EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER|ES_NUMBER
+  LTEXT "&Onder:", stc18, 159, 192, 23, 8
+  EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER|ES_NUMBER
+  DEFPUSHBUTTON "OK", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
+  PUSHBUTTON "Cancel", IDCANCEL, 126, 220, 50, 14
+  PUSHBUTTON "P&rinter...", psh3, 184, 220, 48, 14
+END
+
+
 STRINGTABLE DISCARDABLE
 {
     IDS_ABOUTBOX            "&Info over FolderPicker"
