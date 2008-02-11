@@ -30,14 +30,14 @@
 
 static BOOL (WINAPI * pWintrustAddActionID)(GUID*, DWORD, CRYPT_REGISTER_ACTIONID*);
 static BOOL (WINAPI * pWintrustAddDefaultForUsage)(const CHAR*,CRYPT_PROVIDER_REGDEFUSAGE*);
-static BOOL (WINAPI * pWintrustRemoveActionID)(GUID*);
+static void (WINAPI * pWintrustGetRegPolicyFlags)(DWORD *);
 static BOOL (WINAPI * pWintrustLoadFunctionPointers)(GUID *, CRYPT_PROVIDER_FUNCTIONS *);
-
-static HMODULE hWintrust = 0;
+static BOOL (WINAPI * pWintrustRemoveActionID)(GUID*);
+static BOOL (WINAPI * pWintrustSetRegPolicyFlags)(DWORD);
 
 static void InitFunctionPtrs(void)
 {
-    hWintrust = GetModuleHandleA("wintrust.dll");
+    HMODULE hWintrust = GetModuleHandleA("wintrust.dll");
 
 #define WINTRUST_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(hWintrust, #func); \
@@ -46,8 +46,10 @@ static void InitFunctionPtrs(void)
 
     WINTRUST_GET_PROC(WintrustAddActionID)
     WINTRUST_GET_PROC(WintrustAddDefaultForUsage)
-    WINTRUST_GET_PROC(WintrustRemoveActionID)
+    WINTRUST_GET_PROC(WintrustGetRegPolicyFlags)
     WINTRUST_GET_PROC(WintrustLoadFunctionPointers)
+    WINTRUST_GET_PROC(WintrustRemoveActionID)
+    WINTRUST_GET_PROC(WintrustSetRegPolicyFlags)
 
 #undef WINTRUST_GET_PROC
 }
@@ -309,19 +311,18 @@ static void test_RegPolicyFlags(void)
      "Software\\Microsoft\\Windows\\CurrentVersion\\Wintrust\\"
      "Trust Providers\\Software Publishing";
     static const CHAR State[] = "State";
-    void (WINAPI *pGetFlags)(DWORD *);
-    BOOL (WINAPI *pSetFlags)(DWORD);
     HKEY key;
     LONG r;
     DWORD flags1, flags2, flags3, size;
     BOOL ret;
 
-    pGetFlags = (void*)GetProcAddress(hWintrust, "WintrustGetRegPolicyFlags");
-    pSetFlags = (void*)GetProcAddress(hWintrust, "WintrustSetRegPolicyFlags");
-    if (!pGetFlags || !pSetFlags)
+    if (!pWintrustGetRegPolicyFlags || !pWintrustSetRegPolicyFlags)
+    {
         skip("Policy flags functions not present\n");
+        return;
+    }
 
-    pGetFlags(&flags2);
+    pWintrustGetRegPolicyFlags(&flags2);
 
     r = RegOpenKeyExA(HKEY_CURRENT_USER, Software_Publishing, 0, KEY_ALL_ACCESS,
      &key);
@@ -334,13 +335,13 @@ static void test_RegPolicyFlags(void)
     ok(flags1 == flags2, "Got %08x flags instead of %08x\n", flags1, flags2);
 
     flags3 = flags2 | 1;
-    ret = pSetFlags(flags3);
-    ok(ret, "pSetFlags failed: %d\n", GetLastError());
+    ret = pWintrustSetRegPolicyFlags(flags3);
+    ok(ret, "WintrustSetRegPolicyFlags failed: %d\n", GetLastError());
     size = sizeof(flags1);
     r = RegQueryValueExA(key, State, NULL, NULL, (LPBYTE)&flags1, &size);
     ok(flags1 == flags3, "Got %08x flags instead of %08x\n", flags1, flags3);
 
-    pSetFlags(flags2);
+    pWintrustSetRegPolicyFlags(flags2);
 
     RegCloseKey(key);
 }
