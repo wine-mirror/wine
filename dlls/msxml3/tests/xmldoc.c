@@ -270,16 +270,25 @@ static void test_createElement(void)
     V_I4(&vType) = -1;
     V_VT(&vName) = VT_NULL;
     hr = IXMLDocument_createElement(doc, vType, vName, &element);
-    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %d\n", hr);
-    ok(element == NULL, "Expected NULL element\n");
-
-    if (element != NULL)
+    /* Upto and including SP7, createElement returns an element. */
+    if(hr == S_OK)
     {
-        hr = IXMLElement_get_type(element, &type);
-        ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
-        ok(type == XMLELEMTYPE_OTHER, "Expected XMLELEMTYPE_OTHER, got %ld\n", type);
+        ok(element != NULL, "Expected element\n");
+        if (element != NULL)
+        {
+            hr = IXMLElement_get_type(element, &type);
+            ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+            /* SP7 returns an XMLELEMTYPE_ELEMENT */
+            ok(type == XMLELEMTYPE_OTHER || type == XMLELEMTYPE_ELEMENT,
+                         "Expected XMLELEMTYPE_OTHER || XMLELEMTYPE_ELEMENT, got %ld\n", type);
 
-        IXMLElement_Release(element);
+            IXMLElement_Release(element);
+        }
+    }
+    else
+    {
+        ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %d\n", hr);
+        ok(element == NULL, "Expected NULL element\n");
     }
 
     /* invalid vName type */
