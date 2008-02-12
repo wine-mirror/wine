@@ -2189,8 +2189,44 @@ static HRESULT WINAPI MimeMessage_GetTextBody(
     IStream **pStream,
     LPHBODY phBody)
 {
-    FIXME("(%p)->(%d, %d, %p, %p)\n", iface, dwTxtType, ietEncoding, pStream, phBody);
-    return E_NOTIMPL;
+    HRESULT hr;
+    HBODY hbody;
+    FINDBODY find_struct;
+    IMimeBody *mime_body;
+    static char text[] = "text";
+    static char plain[] = "plain";
+    static char html[] = "html";
+
+    TRACE("(%p)->(%d, %d, %p, %p)\n", iface, dwTxtType, ietEncoding, pStream, phBody);
+
+    find_struct.pszPriType = text;
+
+    switch(dwTxtType)
+    {
+    case TXT_PLAIN:
+        find_struct.pszSubType = plain;
+        break;
+    case TXT_HTML:
+        find_struct.pszSubType = html;
+        break;
+    default:
+        return MIME_E_INVALID_TEXT_TYPE;
+    }
+
+    hr = IMimeMessage_FindFirst(iface, &find_struct, &hbody);
+    if(hr != S_OK)
+    {
+        TRACE("not found hr %08x\n", hr);
+        *phBody = NULL;
+        return hr;
+    }
+
+    IMimeMessage_BindToObject(iface, hbody, &IID_IMimeBody, (void**)&mime_body);
+
+    IMimeBody_GetData(mime_body, ietEncoding, pStream);
+    *phBody = hbody;
+    IMimeBody_Release(mime_body);
+    return hr;
 }
 
 static HRESULT WINAPI MimeMessage_SetTextBody(

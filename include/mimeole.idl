@@ -41,6 +41,8 @@ cpp_quote("#define MIME_E_NOT_FOUND              0x800cce05")
 cpp_quote("#define MIME_E_NO_DATA                0x800cce05")
 cpp_quote("#define MIME_E_BUFFER_TOO_SMALL       0x800cce06")
 
+cpp_quote("#define MIME_E_INVALID_TEXT_TYPE      0x800cce38")
+
 cpp_quote("typedef enum tagMIMEPROPID {")
 cpp_quote("    PID_HDR_NEWSGROUP  = 2,")
 cpp_quote("    PID_HDR_NEWSGROUPS = 3,")
@@ -893,6 +895,9 @@ cpp_quote("#endif")
             DWORD dwDelay;
             WCHAR wchQuote;
         } WEBPAGEOPTIONS, *LPWEBPAGEOPTIONS;
+
+        cpp_quote("#define TXT_PLAIN       1")
+        cpp_quote("#define TXT_HTML        2")
 
         HRESULT CreateWebPage(
             [in]        IStream *pRootStm,
