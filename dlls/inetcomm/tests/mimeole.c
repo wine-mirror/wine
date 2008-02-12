@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windows.h"
 #include "ole2.h"
@@ -216,6 +217,8 @@ static void test_CreateMessage(void)
     FINDBODY find_struct;
     char text[] = "text";
     HBODY *body_list;
+    PROPVARIANT prop;
+    static char att_pritype[] = "att:pri-content-type";
 
     hr = MimeOleCreateMessage(NULL, &msg);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -247,6 +250,14 @@ static void test_CreateMessage(void)
     IMimeBody_Release(body);
 
     hr = IMimeMessage_GetBody(msg, IBL_ROOT, NULL, &hbody);
+
+    PropVariantInit(&prop);
+    hr = IMimeMessage_GetBodyProp(msg, hbody, att_pritype, 0, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(prop.vt == VT_LPSTR, "vt %08x\n", prop.vt);
+    ok(!strcasecmp(prop.u.pszVal, "multipart"), "got %s\n", prop.u.pszVal);
+    PropVariantClear(&prop);
+
     hr = IMimeMessage_GetBody(msg, IBL_FIRST, hbody, &hbody);
     ok(hr == S_OK, "ret %08x\n", hr);
     hr = IMimeMessage_BindToObject(msg, hbody, &IID_IMimeBody, (void**)&body);

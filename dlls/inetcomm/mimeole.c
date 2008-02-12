@@ -627,8 +627,19 @@ static HRESULT WINAPI MimeBody_GetProp(
                               DWORD dwFlags,
                               LPPROPVARIANT pValue)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+    TRACE("(%p)->(%s, %d, %p)\n", This, pszName, dwFlags, pValue);
+
+    if(!strcasecmp(pszName, "att:pri-content-type"))
+    {
+        PropVariantClear(pValue);
+        pValue->vt = VT_LPSTR;
+        pValue->u.pszVal = strdupA(This->content_pri_type);
+        return S_OK;
+    }
+
+    FIXME("stub!\n");
+    return E_FAIL;
 }
 
 static HRESULT WINAPI MimeBody_SetProp(
