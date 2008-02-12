@@ -5588,20 +5588,31 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
        {  90,    300,     0.1,      2.0,        0x00ffff00},
        { 570,    300,     0.1,      2.0,        0x00ffff00}
     };
+    D3DCAPS9 caps;
+
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == D3D_OK, "GetDeviceCaps failed, hr = %08x\n", hr);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_d3dcolor, &dcl_color);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_ubyte4n, &dcl_ubyte);
-    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_short4, &dcl_short);
     ok(SUCCEEDED(hr) || hr == E_FAIL, "CreateVertexDeclaration failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_float, &dcl_float);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_ubyte4n_2streams, &dcl_ubyte_2);
-    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+    if(caps.DeclTypes & D3DDTCAPS_UBYTE4N) {
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_ubyte4n_2streams, &dcl_ubyte_2);
+        ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_ubyte4n, &dcl_ubyte);
+        ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+    } else {
+        trace("D3DDTCAPS_UBYTE4N not supported\n");
+        dcl_ubyte_2 = NULL;
+        dcl_ubyte = NULL;
+    }
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_d3dcolor_2streams, &dcl_color_2);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_positiont, &dcl_positiont);
@@ -5857,7 +5868,10 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
        "pixel 572/302 has color %08x, expected 0x000000ff\n", color);
 
     /* This test is pointless without those two declarations: */
-    if(!dcl_color_2 || !dcl_ubyte_2) goto out;
+    if((!dcl_color_2) || (!dcl_ubyte_2)) {
+        skip("color-ubyte switching test declarations aren't supported\n");
+        goto out;
+    }
 
     hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quads), (void **) &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
@@ -5907,7 +5921,7 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
             hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 8, 2);
             ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL,
                "IDirect3DDevice9_DrawPrimitive failed, hr = %#08x\n", hr);
-            ok(ub_ok == SUCCEEDED(hr), "dcl_ubyte_2 returned two different results\n");
+            ub_ok = (SUCCEEDED(hr) && ub_ok);
 
             hr = IDirect3DDevice9_EndScene(device);
             ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
