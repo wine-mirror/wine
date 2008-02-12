@@ -188,7 +188,7 @@ void WINAPI SwitchToFiber( LPVOID fiber )
     /* stack_allocation and stack_base never change */
 
     /* FIXME: should save floating point context if requested in fiber->flags */
-    if (!sigsetjmp( current_fiber->jmpbuf, 1 ))
+    if (!sigsetjmp( current_fiber->jmpbuf, 0 ))
     {
         NtCurrentTeb()->Tib.u.FiberData   = new_fiber;
         NtCurrentTeb()->Tib.ExceptionList = new_fiber->except;

@@ -94,7 +94,7 @@
              __f.frame.Handler = __wine_exception_handler; \
              __f.u.filter = (func); \
              __wine_push_frame( &__f.frame ); \
-             if (sigsetjmp( __f.jmp, 1 )) { \
+             if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
 
