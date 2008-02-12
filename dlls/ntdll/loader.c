@@ -2533,6 +2533,9 @@ void __wine_process_init(void)
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
         exit(1);
     }
+    RtlInitAnsiString( &func_name, "UnhandledExceptionFilter" );
+    LdrGetProcedureAddress( wm->ldr.BaseAddress, &func_name, 0, (void **)&unhandled_exception_filter );
+
     RtlInitAnsiString( &func_name, "__wine_kernel_init" );
     if ((status = LdrGetProcedureAddress( wm->ldr.BaseAddress, &func_name,
                                           0, (void **)&init_func )) != STATUS_SUCCESS)

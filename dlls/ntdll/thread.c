@@ -48,6 +48,8 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
 
+PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter = NULL;
+
 /* info passed to a starting thread */
 struct startup_info
 {
@@ -339,27 +341,6 @@ HANDLE thread_init(void)
     return exe_file;
 }
 
-typedef LONG (WINAPI *PUNHANDLED_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
-static PUNHANDLED_EXCEPTION_FILTER get_unhandled_exception_filter(void)
-{
-    static PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter;
-    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
-    UNICODE_STRING module_name;
-    ANSI_STRING func_name;
-    HMODULE kernel32_handle;
-
-    if (unhandled_exception_filter) return unhandled_exception_filter;
-
-    RtlInitUnicodeString(&module_name, kernel32W);
-    RtlInitAnsiString( &func_name, "UnhandledExceptionFilter" );
-
-    if (LdrGetDllHandle( 0, 0, &module_name, &kernel32_handle ) == STATUS_SUCCESS)
-        LdrGetProcedureAddress( kernel32_handle, &func_name, 0,
-                                (void **)&unhandled_exception_filter );
-
-    return unhandled_exception_filter;
-}
-
 #ifdef __i386__
 /* wrapper for apps that don't declare the thread function correctly */
 extern DWORD call_thread_entry_point( PRTL_THREAD_START_ROUTINE entry, void *arg );
@@ -465,13 +446,13 @@ static void start_thread( struct wine_pthread_thread_info *info )
 
     /* NOTE: Windows does not have an exception handler around the call to
      * the thread attach. We do for ease of debugging */
-    if (get_unhandled_exception_filter())
+    if (unhandled_exception_filter)
     {
         __TRY
         {
             call_thread_func( func, arg );
         }
-        __EXCEPT(get_unhandled_exception_filter())
+        __EXCEPT(unhandled_exception_filter)
         {
             NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
         }

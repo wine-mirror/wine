@@ -94,6 +94,9 @@ extern void SNOOP_SetupDLL( HMODULE hmod );
 extern UNICODE_STRING windows_dir;
 extern UNICODE_STRING system_dir;
 
+typedef LONG (WINAPI *PUNHANDLED_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
+extern PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter;
+
 /* redefine these to make sure we don't reference kernel symbols */
 #define GetProcessHeap()       (NtCurrentTeb()->Peb->ProcessHeap)
 #define GetCurrentProcessId()  (HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess))
