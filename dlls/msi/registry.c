@@ -231,8 +231,6 @@ static const WCHAR szInstaller_LocalManagedProd_fmt[] = {
 'I','n','s','t','a','l','l','e','r','\\',
 'P','r','o','d','u','c','t','s','\\','%','s',0};
 
-#define SQUISH_GUID_SIZE 33
-
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out)
 {
     DWORD i,n=0;

@@ -2140,14 +2140,14 @@ static void test_Installer_InstallProduct(void)
     /* Package name */
     memset(szString, 0, sizeof(szString));
     hr = Installer_ProductInfo(szProductCode, WINE_INSTALLPROPERTY_PACKAGENAMEW, szString);
-    todo_wine ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
     todo_wine ok_w2("Installer_ProductInfo returned %s but expected %s\n", szString, szMsifile);
 
     /* Product name */
     memset(szString, 0, sizeof(szString));
     hr = Installer_ProductInfo(szProductCode, WINE_INSTALLPROPERTY_PRODUCTNAMEW, szString);
     ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
-    ok_w2("Installer_ProductInfo returned %s but expected %s\n", szString, szMSITEST);
+    todo_wine ok_w2("Installer_ProductInfo returned %s but expected %s\n", szString, szMSITEST);
 
     /* Installer::Products */
     test_Installer_Products(TRUE);
@@ -2248,6 +2248,11 @@ static void test_Installer_InstallProduct(void)
 
     res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\05FA3C1F65B896A40AC00077F34EF203");
     todo_wine ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = delete_registry_key(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\"
+                              "CurrentVersion\\Installer\\Managed\\S-1-5-4\\"
+                              "Installer\\Products\\05FA3C1F65B896A40AC00077F34EF203");
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* Delete installation files we installed */
     delete_test_files();

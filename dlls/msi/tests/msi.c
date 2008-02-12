@@ -2166,11 +2166,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2206,11 +2203,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2221,12 +2215,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2235,50 +2226,35 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     /* lpValueBuf is NULL */
     sz = MAX_PATH;
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, NULL, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     /* lpValueBuf is NULL, pcchValueBuf is too small */
     sz = 2;
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, NULL, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     /* lpValueBuf is NULL, pcchValueBuf is too small */
     sz = 2;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
     ok(!lstrcmpA(buf, "apple"), "Expected buf to remain unchanged, got \"%s\"\n", buf);
-    todo_wine
-    {
-        ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     /* lpValueBuf is NULL, pcchValueBuf is exactly 4 */
     sz = 4;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
-    }
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"),
        "Expected buf to remain unchanged, got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %d\n", sz);
@@ -2290,11 +2266,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, "IMadeThis", buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2317,11 +2290,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2337,11 +2307,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2352,12 +2319,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2366,12 +2330,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     RegDeleteValueA(propkey, "HelpLink");
     RegDeleteKeyA(propkey, "");
@@ -2391,11 +2352,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2411,11 +2369,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2426,11 +2381,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2450,11 +2402,8 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PROPERTY,
-           "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+        "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
     ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
@@ -2465,12 +2414,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2479,12 +2425,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2493,12 +2436,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_INSTALLEDPRODUCTNAME, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"1.1.1", 6);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2507,12 +2447,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_VERSIONSTRING, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "1.1.1"), "Expected \"1.1.1\", got \"%s\"\n", buf);
-        ok(sz == 5, "Expected 5, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "1.1.1"), "Expected \"1.1.1\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"tele", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2521,12 +2458,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "tele"), "Expected \"tele\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "tele"), "Expected \"tele\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2535,12 +2469,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_INSTALLLOCATION, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "loc"), "Expected \"loc\", got \"%s\"\n", buf);
-        ok(sz == 3, "Expected 3, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "loc"), "Expected \"loc\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2549,12 +2480,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_INSTALLSOURCE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "source"), "Expected \"source\", got \"%s\"\n", buf);
-        ok(sz == 6, "Expected 6, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "source"), "Expected \"source\", got \"%s\"\n", buf);
+    ok(sz == 6, "Expected 6, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2563,12 +2491,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_INSTALLDATE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "date"), "Expected \"date\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "date"), "Expected \"date\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2577,12 +2502,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PUBLISHER, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "pub"), "Expected \"pub\", got \"%s\"\n", buf);
-        ok(sz == 3, "Expected 3, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "pub"), "Expected \"pub\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"pack", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2591,12 +2513,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_LOCALPACKAGE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "pack"), "Expected \"pack\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "pack"), "Expected \"pack\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "UrlInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2605,12 +2524,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_URLINFOABOUT, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "about"), "Expected \"about\", got \"%s\"\n", buf);
-        ok(sz == 5, "Expected 5, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "about"), "Expected \"about\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "UrlUpdateInfo", 0, REG_SZ, (LPBYTE)"info", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2619,12 +2535,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_URLUPDATEINFO, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "info"), "Expected \"info\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "info"), "Expected \"info\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"1", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2633,12 +2546,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_VERSIONMINOR, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
-        ok(sz == 1, "Expected 1, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"1", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2647,12 +2557,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_VERSIONMAJOR, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
-        ok(sz == 1, "Expected 1, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2661,12 +2568,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PRODUCTID, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "id"), "Expected \"id\", got \"%s\"\n", buf);
-        ok(sz == 2, "Expected 2, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "id"), "Expected \"id\", got \"%s\"\n", buf);
+    ok(sz == 2, "Expected 2, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2675,12 +2579,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_REGCOMPANY, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "comp"), "Expected \"comp\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "comp"), "Expected \"comp\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "RegOwner", 0, REG_SZ, (LPBYTE)"own", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2689,12 +2590,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_REGOWNER, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "own"), "Expected \"own\", got \"%s\"\n", buf);
-        ok(sz == 3, "Expected 3, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "own"), "Expected \"own\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "InstanceType", 0, REG_SZ, (LPBYTE)"type", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2703,12 +2601,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_INSTANCETYPE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "InstanceType", 0, REG_SZ, (LPBYTE)"type", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2717,12 +2612,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_INSTANCETYPE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "type"), "Expected \"type\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "type"), "Expected \"type\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "Transforms", 0, REG_SZ, (LPBYTE)"tforms", 7);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2731,12 +2623,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_TRANSFORMS, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "Transforms", 0, REG_SZ, (LPBYTE)"tforms", 7);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2745,12 +2634,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_TRANSFORMS, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "tforms"), "Expected \"tforms\", got \"%s\"\n", buf);
-        ok(sz == 6, "Expected 6, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "tforms"), "Expected \"tforms\", got \"%s\"\n", buf);
+    ok(sz == 6, "Expected 6, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2759,12 +2645,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_LANGUAGE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2773,12 +2656,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_LANGUAGE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "lang"), "Expected \"lang\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "lang"), "Expected \"lang\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2787,12 +2667,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PRODUCTNAME, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2801,12 +2678,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PRODUCTNAME, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "Assignment", 0, REG_SZ, (LPBYTE)"at", 3);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2816,11 +2690,8 @@ static void test_MsiGetProductInfo(void)
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_ASSIGNMENTTYPE, buf, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "Assignment", 0, REG_SZ, (LPBYTE)"at", 3);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2830,11 +2701,8 @@ static void test_MsiGetProductInfo(void)
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_ASSIGNMENTTYPE, buf, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(buf, "at"), "Expected \"at\", got \"%s\"\n", buf);
-        ok(sz == 2, "Expected 2, got %d\n", sz);
-    }
+    ok(!lstrcmpA(buf, "at"), "Expected \"at\", got \"%s\"\n", buf);
+    ok(sz == 2, "Expected 2, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2843,12 +2711,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PACKAGECODE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2857,12 +2722,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PACKAGECODE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_BAD_CONFIGURATION,
-           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
-        ok(!lstrcmpA(buf, "code"), "Expected \"code\", got \"%s\"\n", buf);
-    }
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    ok(!lstrcmpA(buf, "code"), "Expected \"code\", got \"%s\"\n", buf);
     ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "PackageCode", 0, REG_SZ, (LPBYTE)pack_squashed, 33);
@@ -2872,12 +2734,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PACKAGECODE, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, packcode), "Expected \"%s\", got \"%s\"\n", packcode, buf);
-        ok(sz == 38, "Expected 38, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, packcode), "Expected \"%s\", got \"%s\"\n", packcode, buf);
+    ok(sz == 38, "Expected 38, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2886,12 +2745,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_VERSION, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2900,12 +2756,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_VERSION, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "ver"), "Expected \"ver\", got \"%s\"\n", buf);
-        ok(sz == 3, "Expected 3, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "ver"), "Expected \"ver\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"ico", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2914,12 +2767,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PRODUCTICON, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"ico", 4);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2928,12 +2778,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PRODUCTICON, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "ico"), "Expected \"ico\", got \"%s\"\n", buf);
-        ok(sz == 3, "Expected 3, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "ico"), "Expected \"ico\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
 
     res = RegCreateKeyA(prodkey, "SourceList", &source);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2944,12 +2791,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PACKAGENAME, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "packname"), "Expected \"packname\", got \"%s\"\n", buf);
-        ok(sz == 8, "Expected 8, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "packname"), "Expected \"packname\", got \"%s\"\n", buf);
+    ok(sz == 8, "Expected 8, got %d\n", sz);
 
     res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2958,12 +2802,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-        ok(sz == 0, "Expected 0, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(prodkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2972,12 +2813,9 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "auth"), "Expected \"auth\", got \"%s\"\n", buf);
-        ok(sz == 4, "Expected 4, got %d\n", sz);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "auth"), "Expected \"auth\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
 
     RegDeleteValueA(propkey, "HelpLink");
     RegDeleteValueA(propkey, "DisplayName");
