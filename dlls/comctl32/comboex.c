@@ -243,7 +243,7 @@ static INT COMBOEX_NotifyEndEdit (COMBOEX_INFO *infoPtr, NMCBEENDEDITW *neew, LP
     } else {
 	NMCBEENDEDITA neea;
 
-        memcpy (&neea.hdr, &neew->hdr, sizeof(NMHDR));
+        neea.hdr = neew->hdr;
         neea.fChanged = neew->fChanged;
         neea.iNewSelection = neew->iNewSelection;
         WideCharToMultiByte (CP_ACP, 0, wstr, -1, neea.szText, CBEMAXSTRLEN, 0, 0);

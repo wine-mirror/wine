@@ -2087,7 +2087,7 @@ static void TOOLBAR_Cust_AddButton(const CUSTDLG_INFO *custInfo, HWND hwnd, INT 
 
             /* duplicate 'separator' button */
             btnNew = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
-            memcpy(btnNew, btnInfo, sizeof(CUSTOMBUTTON));
+            *btnNew = *btnInfo;
             btnInfo = btnNew;
         }
 
@@ -2370,7 +2370,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             IDC_TOOLBARBTN_LBOX, LB_GETITEMDATA, index, 0);
                     }
 
-                    memcpy (&btnInfo->btn, &nmtb.tbButton, sizeof(TBBUTTON));
+                    btnInfo->btn = nmtb.tbButton;
                     if (!(nmtb.tbButton.fsStyle & BTNS_SEP))
                     {
                         if (lstrlenW(nmtb.pszText))
@@ -6455,7 +6455,7 @@ TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
     PAINTSTRUCT ps;
 
     /* fill ps.rcPaint with a default rect */
-    memcpy(&(ps.rcPaint), &(infoPtr->rcBound), sizeof(infoPtr->rcBound));
+    ps.rcPaint = infoPtr->rcBound;
 
     hdc = wParam==0 ? BeginPaint(hwnd, &ps) : (HDC)wParam;
 
@@ -7179,7 +7179,7 @@ static BOOL TOOLBAR_GetButtonInfo(const TOOLBAR_INFO *infoPtr, NMTOOLBARW *nmtb)
                MultiByteToWideChar(CP_ACP, 0, (LPCSTR)nmtba.pszText, -1, 
                   nmtb->pszText, nmtb->cchText);
 
-            memcpy(&nmtb->tbButton, &nmtba.tbButton, sizeof(TBBUTTON));
+            nmtb->tbButton = nmtba.tbButton;
             bRet = TRUE;
         }
 
