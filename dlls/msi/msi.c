@@ -1622,11 +1622,15 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
     static const WCHAR szVersionResource[] = {'\\',0};
     static const WCHAR szVersionFormat[] = {
         '%','d','.','%','d','.','%','d','.','%','d',0};
+    static const WCHAR szLangResource[] = {
+        '\\','V','a','r','F','i','l','e','I','n','f','o','\\',
+        'T','r','a','n','s','l','a','t','i','o','n',0};
     static const WCHAR szLangFormat[] = {'%','d',0};
     UINT ret = 0;
     DWORD dwVerLen, gle;
     LPVOID lpVer = NULL;
     VS_FIXEDFILEINFO *ffi;
+    USHORT *lang;
     UINT puLen;
     WCHAR tmp[32];
 
@@ -1687,16 +1691,22 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
 
     if (pcchLangBuf)
     {
-        DWORD lang = GetUserDefaultLangID();
+        if (VerQueryValueW(lpVer, szLangResource, (LPVOID*)&lang, &puLen) &&
+            (puLen > 0))
+        {
+            wsprintfW(tmp, szLangFormat, *lang);
+            if (lpLangBuf) lstrcpynW(lpLangBuf, tmp, *pcchLangBuf);
 
-        FIXME("Retrieve language from file\n");
-        wsprintfW(tmp, szLangFormat, lang);
-        if (lpLangBuf) lstrcpynW(lpLangBuf, tmp, *pcchLangBuf);
+            if (lstrlenW(tmp) >= *pcchLangBuf)
+                ret = ERROR_MORE_DATA;
 
-        if (lstrlenW(tmp) >= *pcchLangBuf)
-            ret = ERROR_MORE_DATA;
-
-        *pcchLangBuf = lstrlenW(tmp);
+            *pcchLangBuf = lstrlenW(tmp);
+        }
+        else
+        {
+            if (lpLangBuf) *lpLangBuf = 0;
+            *pcchLangBuf = 0;
+        }
     }
 
 end:
