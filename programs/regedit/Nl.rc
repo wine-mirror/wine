@@ -20,6 +20,7 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
+
 /*
  * Menu
  */
@@ -61,6 +62,7 @@ BEGIN
             MENUITEM "&Tekenreekswaarde",             ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binaire waarde",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD-waarde",                 ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi-Tekenreekswaarde",       ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Verwijderen\tDel",                 ID_EDIT_DELETE
@@ -111,6 +113,7 @@ BEGIN
             MENUITEM "&Tekenreekswaarde",      ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binaire waarde",        ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD waarde",          ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi-Tekenreekswaarde",ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Verwijderen\tDel",          ID_EDIT_DELETE
@@ -218,6 +221,19 @@ BEGIN
     PUSHBUTTON   "Annuleren",IDCANCEL,165,80,40,11,WS_GROUP
 END
 
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Multi-tekenreeks bewerken"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "waardename:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "waardegegevens:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,140,160,30,11,WS_GROUP
+    PUSHBUTTON   "Annuleren",IDCANCEL,175,160,30,11,WS_GROUP
+END
+
 /*
  * String Table
  */
@@ -253,6 +269,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Een nieuwe tekenreekswaarde toevoegen"
     ID_EDIT_NEW_BINARYVALUE "Een nieuwe binaire waarde toevoegen"
     ID_EDIT_NEW_DWORDVALUE  "Een nieuwe DWORD-waarde toevoegen" 
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Een nieuwe multi-tekenreekswaarde toevoegen"
     ID_REGISTRY_IMPORTREGISTRYFILE "Een tekstbestand in het register importeren"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Het register of een gedeelte ervan naar een tekstbestand exporteren"
@@ -261,7 +278,7 @@ BEGIN
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
                             "De verbinding met het register van een externe computer verbreken"
     ID_REGISTRY_PRINT       "Het register of een gedeelte ervan afdrukken"
-    ID_HELP_HELPTOPICS      "Help voor de Register-editor openen"
+/*    ID_HELP_HELPTOPICS      "Help voor de Register-editor openen" */
     ID_HELP_ABOUT           "Programmagegevens, versienummer en copyrightgegevens weergeven"
 END
 
