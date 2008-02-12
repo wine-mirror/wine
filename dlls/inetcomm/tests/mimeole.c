@@ -216,6 +216,8 @@ static void test_CreateMessage(void)
     ULONG count;
     FINDBODY find_struct;
     HCHARSET hcs;
+    INETCSETINFO csi;
+
     char text[] = "text";
     HBODY *body_list;
     PROPVARIANT prop;
@@ -308,6 +310,8 @@ static void test_CreateMessage(void)
     hr = IMimeMessage_GetCharset(body, &hcs);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(hcs == NULL, "ret %p\n", hcs);
+    hr = MimeOleGetCharsetInfo(hcs, &csi);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
 
     IMimeMessage_Release(msg);
 

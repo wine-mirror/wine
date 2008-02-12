@@ -67,7 +67,7 @@
 @ stub MimeOleGetBodyPropA
 @ stub MimeOleGetBodyPropW
 @ stub MimeOleGetCertsFromThumbprints
-@ stub MimeOleGetCharsetInfo
+@ stdcall MimeOleGetCharsetInfo(ptr ptr)
 @ stub MimeOleGetCodePageCharset
 @ stub MimeOleGetCodePageInfo
 @ stub MimeOleGetContentTypeExt

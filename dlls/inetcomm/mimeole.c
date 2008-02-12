@@ -2888,3 +2888,10 @@ HRESULT WINAPI MimeOleGetAllocator(IMimeAllocator **alloc)
 {
     return MimeAllocator_create(NULL, (void**)alloc);
 }
+
+HRESULT WINAPI MimeOleGetCharsetInfo(HCHARSET hCharset, LPINETCSETINFO pCsetInfo)
+{
+    FIXME("(%p, %p)\n", hCharset, pCsetInfo);
+    if(!hCharset) return E_INVALIDARG;
+    return E_FAIL;
+}
