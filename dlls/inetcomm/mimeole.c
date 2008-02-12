@@ -1090,6 +1090,253 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj)
     return S_OK;
 }
 
+typedef struct
+{
+    IStreamVtbl *lpVtbl;
+    LONG refs;
+
+    IStream *base;
+    ULARGE_INTEGER pos, start, length;
+} sub_stream_t;
+
+static inline sub_stream_t *impl_from_IStream( IStream *iface )
+{
+    return (sub_stream_t *)((char*)iface - FIELD_OFFSET(sub_stream_t, lpVtbl));
+}
+
+static HRESULT WINAPI sub_stream_QueryInterface(
+        IStream* iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    sub_stream_t *This = impl_from_IStream(iface);
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
+    *ppvObject = NULL;
+
+    if(IsEqualIID(riid, &IID_IUnknown) ||
+       IsEqualIID(riid, &IID_ISequentialStream) ||
+       IsEqualIID(riid, &IID_IStream))
+    {
+        IStream_AddRef(iface);
+        *ppvObject = iface;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI sub_stream_AddRef(
+         IStream* iface)
+{
+    sub_stream_t *This = impl_from_IStream(iface);
+
+    TRACE("(%p)\n", This);
+    return InterlockedIncrement(&This->refs);
+}
+
+static ULONG WINAPI  sub_stream_Release(
+        IStream* iface)
+{
+    sub_stream_t *This = impl_from_IStream(iface);
+    LONG refs;
+
+    TRACE("(%p)\n", This);
+    refs = InterlockedDecrement(&This->refs);
+    if(!refs)
+    {
+        IStream_Release(This->base);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return refs;
+}
+
+static HRESULT WINAPI sub_stream_Read(
+        IStream* iface,
+        void *pv,
+        ULONG cb,
+        ULONG *pcbRead)
+{
+    sub_stream_t *This = impl_from_IStream(iface);
+    HRESULT hr;
+    ULARGE_INTEGER base_pos;
+    LARGE_INTEGER tmp_pos;
+
+    TRACE("(%p, %d, %p)\n", pv, cb, pcbRead);
+
+    tmp_pos.QuadPart = 0;
+    IStream_Seek(This->base, tmp_pos, STREAM_SEEK_CUR, &base_pos);
+    tmp_pos.QuadPart = This->pos.QuadPart + This->start.QuadPart;
+    IStream_Seek(This->base, tmp_pos, STREAM_SEEK_SET, NULL);
+
+    if(This->pos.QuadPart + cb > This->length.QuadPart)
+        cb = This->length.QuadPart - This->pos.QuadPart;
+
+    hr = IStream_Read(This->base, pv, cb, pcbRead);
+
+    This->pos.QuadPart += *pcbRead;
+
+    tmp_pos.QuadPart = base_pos.QuadPart;
+    IStream_Seek(This->base, tmp_pos, STREAM_SEEK_SET, NULL);
+
+    return hr;
+}
+
+static HRESULT WINAPI sub_stream_Write(
+        IStream* iface,
+        const void *pv,
+        ULONG cb,
+        ULONG *pcbWritten)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sub_stream_Seek(
+        IStream* iface,
+        LARGE_INTEGER dlibMove,
+        DWORD dwOrigin,
+        ULARGE_INTEGER *plibNewPosition)
+{
+    sub_stream_t *This = impl_from_IStream(iface);
+    LARGE_INTEGER new_pos;
+
+    TRACE("(%08x.%08x, %x, %p)\n", dlibMove.u.HighPart, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
+
+    switch(dwOrigin)
+    {
+    case STREAM_SEEK_SET:
+        new_pos = dlibMove;
+        break;
+    case STREAM_SEEK_CUR:
+        new_pos.QuadPart = This->pos.QuadPart + dlibMove.QuadPart;
+        break;
+    case STREAM_SEEK_END:
+        new_pos.QuadPart = This->length.QuadPart + dlibMove.QuadPart;
+        break;
+    }
+
+    if(new_pos.QuadPart < 0) new_pos.QuadPart = 0;
+    else if(new_pos.QuadPart > This->length.QuadPart) new_pos.QuadPart = This->length.QuadPart;
+
+    This->pos.QuadPart = new_pos.QuadPart;
+
+    if(plibNewPosition) *plibNewPosition = This->pos;
+    return S_OK;
+}
+
+static HRESULT WINAPI sub_stream_SetSize(
+        IStream* iface,
+        ULARGE_INTEGER libNewSize)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sub_stream_CopyTo(
+        IStream* iface,
+        IStream *pstm,
+        ULARGE_INTEGER cb,
+        ULARGE_INTEGER *pcbRead,
+        ULARGE_INTEGER *pcbWritten)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sub_stream_Commit(
+        IStream* iface,
+        DWORD grfCommitFlags)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sub_stream_Revert(
+        IStream* iface)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sub_stream_LockRegion(
+        IStream* iface,
+        ULARGE_INTEGER libOffset,
+        ULARGE_INTEGER cb,
+        DWORD dwLockType)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sub_stream_UnlockRegion(
+        IStream* iface,
+        ULARGE_INTEGER libOffset,
+        ULARGE_INTEGER cb,
+        DWORD dwLockType)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sub_stream_Stat(
+        IStream* iface,
+        STATSTG *pstatstg,
+        DWORD grfStatFlag)
+{
+    sub_stream_t *This = impl_from_IStream(iface);
+    FIXME("(%p)->(%p, %08x)\n", This, pstatstg, grfStatFlag);
+    memset(pstatstg, 0, sizeof(*pstatstg));
+    pstatstg->cbSize = This->length;
+    return S_OK;
+}
+
+static HRESULT WINAPI sub_stream_Clone(
+        IStream* iface,
+        IStream **ppstm)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static struct IStreamVtbl sub_stream_vtbl =
+{
+    sub_stream_QueryInterface,
+    sub_stream_AddRef,
+    sub_stream_Release,
+    sub_stream_Read,
+    sub_stream_Write,
+    sub_stream_Seek,
+    sub_stream_SetSize,
+    sub_stream_CopyTo,
+    sub_stream_Commit,
+    sub_stream_Revert,
+    sub_stream_LockRegion,
+    sub_stream_UnlockRegion,
+    sub_stream_Stat,
+    sub_stream_Clone
+};
+
+static HRESULT create_sub_stream(IStream *stream, ULARGE_INTEGER start, ULARGE_INTEGER length, IStream **out)
+{
+    sub_stream_t *This;
+
+    *out = NULL;
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if(!This) return E_OUTOFMEMORY;
+
+    This->lpVtbl = &sub_stream_vtbl;
+    This->refs = 1;
+    This->start = start;
+    This->length = length;
+    This->pos.QuadPart = 0;
+    IStream_AddRef(stream);
+    This->base = stream;
+
+    *out = (IStream*)&This->lpVtbl;
+    return S_OK;
+}
+
+
 typedef struct body_t
 {
     struct list entry;
