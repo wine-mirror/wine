@@ -1,0 +1,212 @@
+/*
+ * OleView (Nl.rc)
+ * Dutch Language Support
+ *
+ * Copyright 2008 Frans Kool
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
+
+IDM_MENU MENU
+{
+    POPUP "&Bestand"
+    {
+        MENUITEM "&Verbind aan bestand...",    IDM_BIND
+        MENUITEM "&Bekijk TypeLib...",    IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "&Systeem Configuratie",    IDM_SYSCONF
+        MENUITEM "&Run de Register Editer",    IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Afsluiten",    IDM_EXIT
+    }
+    POPUP "&Object"
+    {
+        POPUP "&CoCreateInstance Vlag"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER",        IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "Bekijk &Type informatie",    IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Creëer &Instantie",    IDM_CREATEINST, GRAYED
+        MENUITEM "Creëer Instantie &Op",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&Verwijder Instantie",    IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Copieer C&LSID naar clipbord",    IDM_COPYCLSID, GRAYED
+        MENUITEM "Copieer &HTML object Label naar clipbord", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Bekijk...",    IDM_VIEW, GRAYED
+    }
+    POPUP "Be&kijken"
+    {
+        MENUITEM "&Expert modus",    IDM_EXPERT,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Ver&borgen componenten categorieën",    IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Taakbalk",    IDM_TOOLBAR,CHECKED
+        MENUITEM "&Status Balk",    IDM_STATUSBAR,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Verversen\tF5",    IDM_REFRESH
+    }
+    POPUP "&Help"
+    {
+        MENUITEM "&Over OleView",    IDM_ABOUT
+    }
+}
+
+IDM_TYPELIB MENU
+{
+    POPUP "&Bestand"
+    {
+        MENUITEM "Op&slaan als",    IDM_SAVEAS
+        MENUITEM "S&luiten",  IDM_CLOSE
+    }
+    POPUP "Be&kijken"
+    {
+        MENUITEM "&Groepeer op type kind", IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "&Taakbalk",    IDM_TOOLBAR
+        MENUITEM "&Status Balk", IDM_STATUSBAR,CHECKED
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OleView"
+    IDS_APPTITLE           "OleView"
+    IDS_READY              "Gereed"
+    IDS_ABOUT              "OleView - OLE/COM Object Toner"
+    IDS_ABOUTVER           "versie 1.0"
+    IDS_TYPELIBTITLE       "ITypeLib Toner"
+    IDS_OPEN               "Open"
+
+    IDM_BIND,              "Verbind aan een bestand via een Bestandsbeschrijver (Moniker)"
+    IDM_TYPELIB,           "Open een TypeLib bestand en bekijk de inhoud"
+    IDM_SYSCONF,           "Wijzig de algemene machine Distributed COM instellingen"
+    IDM_REGEDIT,           "Run de Wine register editer"
+    IDM_EXIT,              "Verlaat de applicatie. Vraagt om wijzigingen op te slaan"
+    IDM_CREATEINST,        "Creëer een instantie van get geselecteerde object"
+    IDM_CREATEINSTON,      "Creëer een instantie van get geselecteerde object op een specifieke machine"
+    IDM_RELEASEINST,       "Verwijder de momenteel geselecteerde object instantie"
+    IDM_COPYCLSID,         "Copieer de GUID van het momenteel geselecteerde object naar het clipbord"
+    IDM_VIEW,              "Toon details voor het geselecteerde object"
+    IDM_FLAG_INSERV,       "Gebruik CLSCTX_INPROC_SERVER als CoGetClassObject wordt aangeroepen"
+    IDM_FLAG_INHANDL,      "Gebruik CLSCTX_INPROC_HANDLER als CoGetClassObject wordt aangeroepen"
+    IDM_FLAG_LOCSERV,      "Gebruik CLSCTX_LOCAL_SERVER als CoGetClassObject wordt aangeroepen"
+    IDM_FLAG_REMSERV,      "Gebruik CLSCTX_REMOTE_SERVER als CoGetClassObject wordt aangeroepen"
+    IDM_EXPERT,            "Schakel tussen expert en beginner modus"
+    IDM_HIDDEN,            "Toon/verberg component categorieën die niet zichtbaar zouden moeten zijn"
+    IDM_TOOLBAR,           "Toon of verberg de taakbalk"
+    IDM_STATUSBAR,         "Toon of verberg de status balk"
+    IDM_REFRESH,           "Ververs alle lijsten"
+    IDM_ABOUT,             "Toon programma informatie, versie nummer en copyright"
+
+    IDM_SAVEAS,            "Opslaan als een .IDL of .H bestand"
+    IDM_CLOSE,             "Sluit venster"
+    IDM_GROUP,             "Groepeer typeinfos op type"
+
+    IDS_TREE_OC,           "ObjectClasses"
+    IDS_TREE_GBCC,         "Gegroepeerd op Component Categorie"
+    IDS_TREE_O1O,          "OLE 1.0 Objecten"
+    IDS_TREE_CLO,          "COM Library Objecten"
+    IDS_TREE_AO,           "Alle Objecten"
+    IDS_TREE_AID,          "Applicatie ID's"
+    IDS_TREE_TL,           "Type Bibliotheken"
+    IDS_TL_VER,            "ver."
+    IDS_TREE_I,            "Interfaces"
+
+    IDS_TAB_REG,           "Register"
+    IDS_TAB_IMPL,          "Implementatie"
+    IDS_TAB_ACTIV,         "Activatie"
+
+    IDS_CGCOFAIL,          "CoGetClassObject faalde."
+    IDS_ERROR_UNKN,        "Onbekende fout"
+    IDS_TRUE,              "Waar"
+    IDS_FALSE,             "Onwaar"
+    IDS_BYTES,             "bytes"
+
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) gefaald ($%x)"
+    IDS_INHERITINTERFACES, "Inherited Interfaces"
+}
+
+DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Verbinden met een andere machine"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "&Machine naam:", IDIGNORE, 5, 6, 190, 8
+    EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&OK", IDOK, 200, 5, 45, 14
+    PUSHBUTTON  "&Annuleren", IDCANCEL, 200, 22, 45, 14
+}
+
+DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Systeem Configuratie"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Systeem Instellingen", IDIGNORE, 5, 6, 160, 8
+    CHECKBOX    "&Distributed COM toestaan", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "&Remote Connections toestaan (Alleen Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "Deze instellingen wijzigen alleen register waarden.\nZe hebben geen effect op de snelheid van Wine.", IDIGNORE, 5, 50, 160, 40
+    DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
+    PUSHBUTTON  "&Annuleren", IDCANCEL, 120, 80, 45, 14
+}
+
+DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Default Interface"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Interface", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Sluiten", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&Bekijk Type Informatie", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersist Interface"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Class Naam:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Sluiten", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersistStream Interface"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Class Naam:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Sluiten", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+    PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
+}
