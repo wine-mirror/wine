@@ -1777,6 +1777,71 @@ static HRESULT WINAPI MimeMessage_SaveBody(
     return E_NOTIMPL;
 }
 
+static HRESULT get_body(MimeMessage *msg, BODYLOCATION location, HBODY pivot, body_t **out)
+{
+    body_t *root = LIST_ENTRY(list_head(&msg->body_tree), body_t, entry);
+    body_t *body;
+    HRESULT hr;
+    struct list *list;
+
+    if(location == IBL_ROOT)
+    {
+        *out = root;
+        return S_OK;
+    }
+
+    hr = find_body(&msg->body_tree, pivot, &body);
+
+    if(hr == S_OK)
+    {
+        switch(location)
+        {
+        case IBL_PARENT:
+            *out = body->parent;
+            break;
+
+        case IBL_FIRST:
+            list = list_head(&body->children);
+            if(list)
+                *out = LIST_ENTRY(list, body_t, entry);
+            else
+                hr = MIME_E_NOT_FOUND;
+            break;
+
+        case IBL_LAST:
+            list = list_tail(&body->children);
+            if(list)
+                *out = LIST_ENTRY(list, body_t, entry);
+            else
+                hr = MIME_E_NOT_FOUND;
+            break;
+
+        case IBL_NEXT:
+            list = list_next(&body->parent->children, &body->entry);
+            if(list)
+                *out = LIST_ENTRY(list, body_t, entry);
+            else
+                hr = MIME_E_NOT_FOUND;
+            break;
+
+        case IBL_PREVIOUS:
+            list = list_prev(&body->parent->children, &body->entry);
+            if(list)
+                *out = LIST_ENTRY(list, body_t, entry);
+            else
+                hr = MIME_E_NOT_FOUND;
+            break;
+
+        default:
+            hr = E_FAIL;
+            break;
+        }
+    }
+
+    return hr;
+}
+
+
 static HRESULT WINAPI MimeMessage_InsertBody(
     IMimeMessage *iface,
     BODYLOCATION location,
@@ -1793,8 +1858,17 @@ static HRESULT WINAPI MimeMessage_GetBody(
     HBODY hPivot,
     LPHBODY phBody)
 {
-    FIXME("(%p)->(%d, %p, %p)\n", iface, location, hPivot, phBody);
-    return E_NOTIMPL;
+    MimeMessage *This = (MimeMessage *)iface;
+    body_t *body;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d, %p, %p)\n", iface, location, hPivot, phBody);
+
+    hr = get_body(This, location, hPivot, &body);
+
+    if(hr == S_OK) *phBody = body->hbody;
+
+    return hr;
 }
 
 static HRESULT WINAPI MimeMessage_DeleteBody(

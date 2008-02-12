@@ -209,6 +209,7 @@ static void test_CreateMessage(void)
     IStream *stream;
     LARGE_INTEGER pos;
     LONG ref;
+    HBODY hbody;
     IMimeBody *body;
     BODYOFFSETS offsets;
 
@@ -232,6 +233,32 @@ static void test_CreateMessage(void)
     ok(offsets.cbBodyStart == 359, "got %d\n", offsets.cbBodyStart);
     ok(offsets.cbBodyEnd == 666, "got %d\n", offsets.cbBodyEnd);
     IMimeBody_Release(body);
+
+    hr = IMimeMessage_GetBody(msg, IBL_ROOT, NULL, &hbody);
+    hr = IMimeMessage_GetBody(msg, IBL_FIRST, hbody, &hbody);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeMessage_BindToObject(msg, hbody, &IID_IMimeBody, (void**)&body);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeBody_GetOffsets(body, &offsets);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(offsets.cbBoundaryStart == 405, "got %d\n", offsets.cbBoundaryStart);
+    ok(offsets.cbHeaderStart == 428, "got %d\n", offsets.cbHeaderStart);
+    ok(offsets.cbBodyStart == 518, "got %d\n", offsets.cbBodyStart);
+    ok(offsets.cbBodyEnd == 523, "got %d\n", offsets.cbBodyEnd);
+    IMimeBody_Release(body);
+
+    hr = IMimeMessage_GetBody(msg, IBL_NEXT, hbody, &hbody);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeMessage_BindToObject(msg, hbody, &IID_IMimeBody, (void**)&body);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeBody_GetOffsets(body, &offsets);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(offsets.cbBoundaryStart == 525, "got %d\n", offsets.cbBoundaryStart);
+    ok(offsets.cbHeaderStart == 548, "got %d\n", offsets.cbHeaderStart);
+    ok(offsets.cbBodyStart == 629, "got %d\n", offsets.cbBodyStart);
+    ok(offsets.cbBodyEnd == 639, "got %d\n", offsets.cbBodyEnd);
+    IMimeBody_Release(body);
+
 
     IMimeMessage_Release(msg);
 
