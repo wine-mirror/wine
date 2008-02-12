@@ -1856,6 +1856,8 @@ HRESULT WINAPI MimeOleCreateMessage(IUnknown *pUnkOuter, IMimeMessage **ppMessag
     This->lpVtbl = &MimeMessageVtbl;
     This->refs = 1;
     This->stream = NULL;
+    list_init(&This->body_tree);
+    This->next_hbody = (HBODY)1;
 
     *ppMessage = (IMimeMessage *)&This->lpVtbl;
     return S_OK;
