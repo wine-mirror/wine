@@ -18,6 +18,57 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
+MENU_001 MENU DISCARDABLE
+BEGIN
+	MENUITEM "&Grote Icons",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "&Kleine Icons",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Lijst",			FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&Details",		FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP ""
+	BEGIN
+	  POPUP "&Bekijken"
+	  BEGIN
+	    MENUITEM "&Grote Icons",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "&Kleine Icons",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Lijst",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Details",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "Sorteren &Icons"
+	  BEGIN
+	    MENUITEM "Op &Naam",	0x30	/* column 0 */
+	    MENUITEM "Op &Type",	0x32	/* column 2 */
+	    MENUITEM "Op &Grootte",	0x31	/* ... */
+	    MENUITEM "Op &Datum",	0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "&Automatisch",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "Uitlijnen Icons",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "Vernieuwen",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "Plakken",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "Plakken als Link",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "Nieuw"
+	  BEGIN
+	    MENUITEM "Nieuwe &Map",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Nieuwe &Link",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "Eigenschappen",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+
 /*
  shellview item menu
 */
@@ -25,20 +76,66 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
-	  MENUITEM "E&xplore",		FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "&Selecteer"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Verkennen",		FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "&Open",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
-	  MENUITEM "C&ut",		FCIDM_SHVIEW_CUT
-	  MENUITEM "&Copy",		FCIDM_SHVIEW_COPY
+	  MENUITEM "K&nippen",		FCIDM_SHVIEW_CUT
+	  MENUITEM "&Kopieren",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Create &Link",	FCIDM_SHVIEW_CREATELINK
-	  MENUITEM "&Delete",		FCIDM_SHVIEW_DELETE
-	  MENUITEM "&Rename",		FCIDM_SHVIEW_RENAME
+	  MENUITEM "Creeer &Link",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Ver&wijder",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "&Hernoemen",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
-	  MENUITEM "&Properties",	FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "&Eigenschappen",	FCIDM_SHVIEW_PROPERTIES
 	END
 END
+
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Bladeren naar Map"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Annuleren", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	4, 40, 180, 120
+}
+
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Bladeren naar Map"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Folder:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Nieuwe &map maken", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Annuleren", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Message"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Ja", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Ja op &alles", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Nee", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Ann&uleren", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
 
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
@@ -65,4 +162,90 @@ FONT 8, "MS Shell Dlg"
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Annuleren", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "&Bladeren...", 12288, 170, 63, 50, 14, WS_TABSTOP
+}
+
+STRINGTABLE DISCARDABLE
+{
+        /* columns in the shellview */
+	IDS_SHV_COLUMN1		"Bestand"
+	IDS_SHV_COLUMN2		"Grootte"
+	IDS_SHV_COLUMN3		"Type"
+	IDS_SHV_COLUMN4		"Gewijzigd"
+	IDS_SHV_COLUMN5		"Attributen"
+	IDS_SHV_COLUMN6		"Grootte"
+	IDS_SHV_COLUMN7		"Beschikbare ruimte"
+	IDS_SHV_COLUMN8		"Naam"
+	IDS_SHV_COLUMN9		"Commentaar"
+	IDS_SHV_COLUMN10	"Eigenaar"
+	IDS_SHV_COLUMN11	"Groep"
+	IDS_SHV_COLUMN_DELFROM	"Originele locatie"
+	IDS_SHV_COLUMN_DELDATE	"Datum verwijderd"
+
+        /* special folders */
+	IDS_DESKTOP		"Bureaublad"
+	IDS_MYCOMPUTER		"Mijn Computer"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Vuilnisbak"
+
+        /* context menus */
+	IDS_VIEW_LARGE		"Grote Icons"
+	IDS_VIEW_SMALL		"&Kleine Icons"
+	IDS_VIEW_LIST		"&Lijst"
+	IDS_VIEW_DETAILS	"&Details"
+	IDS_SELECT		"Selecteer"
+	IDS_OPEN		"Open"
+
+	IDS_CREATEFOLDER_DENIED "Niet mogelijk om nieuwe map te maken: Permissie afgewezen."
+	IDS_CREATEFOLDER_CAPTION "Fout tijdens creatie van een nieuwe map"
+	IDS_DELETEITEM_CAPTION "Bevestig bestand verwijdering"
+	IDS_DELETEFOLDER_CAPTION "Bevestig map verwijdering"
+	IDS_DELETEITEM_TEXT "Weet u zeker dat u '%1' wilt verwijderen?"
+	IDS_DELETEMULTIPLE_TEXT "Weet u zeker dat u deze %1 bestanden wilt verwijderen?"
+	IDS_DELETESELECTED_TEXT "Weet u zeker dat u de geselecteerde bestand(en) wilt verwijderen?"
+	IDS_TRASHITEM_TEXT "Weet u zeker dat u '%1' naar de Vuilnisbak wilt sturen?"
+	IDS_TRASHFOLDER_TEXT "Weet u zeker dat u '%1' en zijn gehele inhoud naar de Vuilnisbak wilt sturen?"
+	IDS_TRASHMULTIPLE_TEXT "Weet u zeker dat u deze %1 bestanden naar de Vuilnisbak wilt sturen?"
+	IDS_CANTTRASH_TEXT "Bestand '%1' kan niet naar de Vuilnisbak worden gestuurd. Wilt u het dan maar verwijderen?"
+	IDS_OVERWRITEFILE_TEXT "Deze map bevat reeds een bestand genaamd '%1'.\n\nWilt u het vervangen?"
+	IDS_OVERWRITEFILE_CAPTION "Bevestig het overschrijven van het bestand"
+	IDS_OVERWRITEFOLDER_TEXT "Deze map bevat reeds een map genaamd '%1'.\n\n"\
+	    "Als de bestanden in de doel map dezelfde naam hebben als de bestanden in de\n"\
+	    "geselecteerde map worden ze overschreven. Wilt u nog steeds de map copieren\n"\
+	    "of verplaatsen?"
+
+        /* message box strings */
+        IDS_RESTART_TITLE       "Herstarten"
+        IDS_RESTART_PROMPT      "Wilt u een Windows herstart simuleren?"
+        IDS_SHUTDOWN_TITLE      "Afsluiten"
+        IDS_SHUTDOWN_PROMPT     "Wilt u uw Wine sessie afsluiten?"
+
+        /* shell folder path default values */
+	IDS_PROGRAMS                "Start Menu\\Programmas"
+	IDS_PERSONAL                "Mijn Documenten"
+	IDS_FAVORITES               "Favorieten"
+	IDS_STARTUP                 "Start Menu\\Programmas\\StartUp"
+	IDS_RECENT                  "Recent"
+	IDS_SENDTO                  "Stuur Naar"
+	IDS_STARTMENU               "Start Menu"
+	IDS_MYMUSIC                 "Mijn Muziek"
+	IDS_MYVIDEO                 "Mijn Videos"
+	IDS_DESKTOPDIRECTORY        "Bureaublad"
+	IDS_NETHOOD                 "Netwerkomgeving"
+	IDS_TEMPLATES               "Sjablonen"
+	IDS_APPDATA                 "Applicatie Data"
+	IDS_PRINTHOOD               "Printeromgeving"
+	IDS_LOCAL_APPDATA           "Lokale Instellingen\\Applicatie Data"
+	IDS_INTERNET_CACHE          "Lokale Instellingen\\Tijdelijke Internet Bestanden"
+	IDS_COOKIES                 "Koekies"
+	IDS_HISTORY                 "Lokale Instellingen\\Geschiedenis"
+	IDS_PROGRAM_FILES           "Programma Bestanden"
+	IDS_MYPICTURES              "Mijn Afbeeldingen"
+	IDS_PROGRAM_FILES_COMMON    "Programma Bestanden\\Gemeenschappelijke Bestanden"
+	IDS_COMMON_DOCUMENTS        "Documenten"
+	IDS_ADMINTOOLS              "Start Menu\\Programmas\\Administratieve Tools"
+	IDS_COMMON_MUSIC            "Documenten\\Mijn Muziek"
+	IDS_COMMON_PICTURES         "Documenten\\Mijn Afbeeldingen"
+	IDS_COMMON_VIDEO            "Documenten\\Mijn Videos"
+	IDS_CDBURN_AREA             "Lokale Instellingen\\Applicatie Data\\Microsoft\\CD Branden"
+
+	IDS_NEWFOLDER		"Nieuwe Map"
 }
