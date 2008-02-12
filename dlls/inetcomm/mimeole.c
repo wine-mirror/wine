@@ -1446,6 +1446,97 @@ static body_t *new_body_entry(IMimeBody *mime_body, HBODY hbody, body_t *parent)
     return body;
 }
 
+typedef struct
+{
+    struct list entry;
+    BODYOFFSETS offsets;
+} offset_entry_t;
+
+static HRESULT create_body_offset_list(IStream *stm, const char *boundary, struct list *body_offsets)
+{
+    HRESULT hr;
+    DWORD read;
+    int boundary_len = strlen(boundary);
+    char *buf, *nl_boundary, *ptr, *overlap;
+    DWORD total_read = 0;
+    DWORD start = 0, overlap_no;
+    offset_entry_t *cur_body = NULL;
+    ULARGE_INTEGER cur;
+    LARGE_INTEGER zero;
+
+    list_init(body_offsets);
+    nl_boundary = HeapAlloc(GetProcessHeap(), 0, 4 + boundary_len + 1);
+    memcpy(nl_boundary, "\r\n--", 4);
+    memcpy(nl_boundary + 4, boundary, boundary_len + 1);
+
+    overlap_no = boundary_len + 5;
+
+    overlap = buf = HeapAlloc(GetProcessHeap(), 0, overlap_no + PARSER_BUF_SIZE + 1);
+
+    zero.QuadPart = 0;
+    hr = IStream_Seek(stm, zero, STREAM_SEEK_CUR, &cur);
+    start = cur.LowPart;
+
+    do {
+        hr = IStream_Read(stm, overlap, PARSER_BUF_SIZE, &read);
+        if(FAILED(hr)) goto end;
+        if(read == 0) break;
+        total_read += read;
+        overlap[read] = '\0';
+
+        ptr = buf;
+        do {
+            ptr = strstr(ptr, nl_boundary);
+            if(ptr)
+            {
+                DWORD boundary_start = start + ptr - buf;
+                char *end = ptr + boundary_len + 4;
+
+                if(*end == '\0' || *(end + 1) == '\0')
+                    break;
+
+                if(*end == '\r' && *(end + 1) == '\n')
+                {
+                    if(cur_body)
+                    {
+                        cur_body->offsets.cbBodyEnd = boundary_start;
+                        list_add_tail(body_offsets, &cur_body->entry);
+                    }
+                    cur_body = HeapAlloc(GetProcessHeap(), 0, sizeof(*cur_body));
+                    cur_body->offsets.cbBoundaryStart = boundary_start + 2; /* doesn't including the leading \r\n */
+                    cur_body->offsets.cbHeaderStart = boundary_start + boundary_len + 6;
+                }
+                else if(*end == '-' && *(end + 1) == '-')
+                {
+                    if(cur_body)
+                    {
+                        cur_body->offsets.cbBodyEnd = boundary_start;
+                        list_add_tail(body_offsets, &cur_body->entry);
+                        goto end;
+                    }
+                }
+                ptr = end + 2;
+            }
+        } while(ptr);
+
+        if(overlap == buf) /* 1st iteration */
+        {
+            memcpy(buf, buf + PARSER_BUF_SIZE - overlap_no, overlap_no);
+            overlap = buf + overlap_no;
+            start += read - overlap_no;
+        }
+        else
+        {
+            memcpy(buf, buf + PARSER_BUF_SIZE, overlap_no);
+            start += read;
+        }
+    } while(1);
+
+end:
+    HeapFree(GetProcessHeap(), 0, buf);
+    return hr;
+}
+
 static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *offset, body_t *parent)
 {
     IMimeBody *mime_body;
@@ -1458,11 +1549,51 @@ static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *off
     IMimeBody_Load(mime_body, pStm);
     zero.QuadPart = 0;
     hr = IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &cur);
-    offset->cbBodyStart = cur.LowPart;
+    offset->cbBodyStart = cur.LowPart + offset->cbHeaderStart;
+    if(parent) MimeBody_set_offsets(impl_from_IMimeBody(mime_body), offset);
     IMimeBody_SetData(mime_body, IET_BINARY, NULL, NULL, &IID_IStream, pStm);
     body = new_body_entry(mime_body, msg->next_hbody, parent);
     msg->next_hbody = (HBODY)((DWORD)msg->next_hbody + 1);
 
+    if(IMimeBody_IsContentType(mime_body, "multipart", NULL) == S_OK)
+    {
+        MIMEPARAMINFO *param_info;
+        ULONG count, i;
+        IMimeAllocator *alloc;
+
+        hr = IMimeBody_GetParameters(mime_body, "Content-Type", &count, &param_info);
+        if(hr != S_OK || count == 0) return body;
+
+        MimeOleGetAllocator(&alloc);
+
+        for(i = 0; i < count; i++)
+        {
+            if(!strcasecmp(param_info[i].pszName, "boundary"))
+            {
+                struct list offset_list;
+                offset_entry_t *cur, *cursor2;
+                hr = create_body_offset_list(pStm, param_info[i].pszData, &offset_list);
+                LIST_FOR_EACH_ENTRY_SAFE(cur, cursor2, &offset_list, offset_entry_t, entry)
+                {
+                    body_t *sub_body;
+                    IStream *sub_stream;
+                    ULARGE_INTEGER start, length;
+
+                    start.LowPart = cur->offsets.cbHeaderStart;
+                    length.LowPart = cur->offsets.cbBodyEnd - cur->offsets.cbHeaderStart;
+                    create_sub_stream(pStm, start, length, &sub_stream);
+                    sub_body = create_sub_body(msg, sub_stream, &cur->offsets, body);
+                    IStream_Release(sub_stream);
+                    list_add_tail(&body->children, &sub_body->entry);
+                    list_remove(&cur->entry);
+                    HeapFree(GetProcessHeap(), 0, cur);
+                }
+                break;
+            }
+        }
+        IMimeAllocator_FreeParamInfoArray(alloc, count, param_info, TRUE);
+        IMimeAllocator_Release(alloc);
+    }
     return body;
 }
 
