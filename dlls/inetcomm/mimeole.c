@@ -2029,8 +2029,16 @@ static HRESULT WINAPI MimeMessage_IsBodyType(
     HBODY hBody,
     IMSGBODYTYPE bodytype)
 {
-    FIXME("(%p)->(%p, %d)\n", iface, hBody, bodytype);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IMimeBody *mime_body;
+    TRACE("(%p)->(%p, %d)\n", iface, hBody, bodytype);
+
+    hr = IMimeMessage_BindToObject(iface, hBody, &IID_IMimeBody, (void**)&mime_body);
+    if(hr != S_OK) return hr;
+
+    hr = IMimeBody_IsType(mime_body, bodytype);
+    MimeBody_Release(mime_body);
+    return hr;
 }
 
 static HRESULT WINAPI MimeMessage_IsContentType(
@@ -2039,8 +2047,16 @@ static HRESULT WINAPI MimeMessage_IsContentType(
     LPCSTR pszPriType,
     LPCSTR pszSubType)
 {
-    FIXME("(%p)->(%p, %s, %s)\n", iface, hBody, pszPriType, pszSubType);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IMimeBody *mime_body;
+    TRACE("(%p)->(%p, %s, %s)\n", iface, hBody, pszPriType, pszSubType);
+
+    hr = IMimeMessage_BindToObject(iface, hBody, &IID_IMimeBody, (void**)&mime_body);
+    if(FAILED(hr)) return hr;
+
+    hr = IMimeBody_IsContentType(mime_body, pszPriType, pszSubType);
+    IMimeBody_Release(mime_body);
+    return hr;
 }
 
 static HRESULT WINAPI MimeMessage_QueryBodyProp(
@@ -2062,8 +2078,18 @@ static HRESULT WINAPI MimeMessage_GetBodyProp(
     DWORD dwFlags,
     LPPROPVARIANT pValue)
 {
-    FIXME("(%p)->(%p, %s, 0x%x, %p)\n", iface, hBody, pszName, dwFlags, pValue);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IMimeBody *mime_body;
+
+    TRACE("(%p)->(%p, %s, 0x%x, %p)\n", iface, hBody, pszName, dwFlags, pValue);
+
+    hr = IMimeMessage_BindToObject(iface, hBody, &IID_IMimeBody, (void**)&mime_body);
+    if(hr != S_OK) return hr;
+
+    hr = IMimeBody_GetProp(mime_body, pszName, dwFlags, pValue);
+    IMimeBody_Release(mime_body);
+
+    return hr;
 }
 
 static HRESULT WINAPI MimeMessage_SetBodyProp(
