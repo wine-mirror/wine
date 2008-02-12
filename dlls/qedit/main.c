@@ -34,6 +34,96 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
+/******************************************************************************
+ * DirectShow ClassFactory
+ */
+typedef struct {
+    IClassFactory ITF_IClassFactory;
+
+    LONG ref;
+    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
+} IClassFactoryImpl;
+
+struct object_creation_info
+{
+    const CLSID *clsid;
+    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
+};
+
+static const struct object_creation_info object_creation[] =
+{
+};
+
+static HRESULT WINAPI
+DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        IClassFactory_AddRef(iface);
+        *ppobj = This;
+        return S_OK;
+    }
+
+    *ppobj = NULL;
+    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI DSCF_AddRef(LPCLASSFACTORY iface)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (ref == 0)
+        CoTaskMemFree(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI DSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    HRESULT hres;
+    LPUNKNOWN punk;
+
+    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+
+    *ppobj = NULL;
+    hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
+    if (SUCCEEDED(hres)) {
+        hres = IUnknown_QueryInterface(punk, riid, ppobj);
+        IUnknown_Release(punk);
+    }
+    return hres;
+}
+
+static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    FIXME("(%p)->(%d),stub!\n",This,dolock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl DSCF_Vtbl =
+{
+    DSCF_QueryInterface,
+    DSCF_AddRef,
+    DSCF_Release,
+    DSCF_CreateInstance,
+    DSCF_LockServer
+};
+
+
 /***********************************************************************
  *              DllCanUnloadNow (QEDIT.@)
  */
@@ -59,7 +149,35 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
+    unsigned int i;
+    IClassFactoryImpl *factory;
+
     TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    return E_NOINTERFACE;
+    if ( !IsEqualGUID( &IID_IClassFactory, riid )
+         && ! IsEqualGUID( &IID_IUnknown, riid) )
+        return E_NOINTERFACE;
+
+    for (i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++)
+    {
+        if (IsEqualGUID(object_creation[i].clsid, rclsid))
+            break;
+    }
+
+    if (i == sizeof(object_creation)/sizeof(object_creation[0]))
+    {
+        FIXME("%s: no class found.\n", debugstr_guid(rclsid));
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
+
+    factory = CoTaskMemAlloc(sizeof(*factory));
+    if (factory == NULL) return E_OUTOFMEMORY;
+
+    factory->ITF_IClassFactory.lpVtbl = &DSCF_Vtbl;
+    factory->ref = 1;
+
+    factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
+
+    *ppv = &(factory->ITF_IClassFactory);
+    return S_OK;
 }
