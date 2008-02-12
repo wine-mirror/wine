@@ -1921,13 +1921,49 @@ static HRESULT WINAPI MimeMessage_CountBodies(
     return S_OK;
 }
 
+static HRESULT find_next(IMimeMessage *msg, LPFINDBODY find_body, HBODY *out)
+{
+    HRESULT hr;
+    IMimeBody *mime_body;
+    HBODY next;
+
+    if(find_body->dwReserved == 0)
+        find_body->dwReserved = (DWORD)HBODY_ROOT;
+    else
+    {
+        hr = IMimeMessage_GetBody(msg, IBL_FIRST, (HBODY)find_body->dwReserved, &next);
+        if(hr == S_OK)
+            find_body->dwReserved = (DWORD)next;
+        else
+        {
+            hr = IMimeMessage_GetBody(msg, IBL_NEXT, (HBODY)find_body->dwReserved, &next);
+            if(hr == S_OK)
+                find_body->dwReserved = (DWORD)next;
+            else
+                return MIME_E_NOT_FOUND;
+        }
+    }
+
+    hr = IMimeMessage_BindToObject(msg, (HBODY)find_body->dwReserved, &IID_IMimeBody, (void**)&mime_body);
+    if(IMimeBody_IsContentType(mime_body, find_body->pszPriType, find_body->pszSubType) == S_OK)
+    {
+        IMimeBody_Release(mime_body);
+        *out = (HBODY)find_body->dwReserved;
+        return S_OK;
+    }
+    IMimeBody_Release(mime_body);
+    return find_next(msg, find_body, out);
+}
+
 static HRESULT WINAPI MimeMessage_FindFirst(
     IMimeMessage *iface,
     LPFINDBODY pFindBody,
     LPHBODY phBody)
 {
-    FIXME("(%p)->(%p, %p)\n", iface, pFindBody, phBody);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", iface, pFindBody, phBody);
+
+    pFindBody->dwReserved = 0;
+    return find_next(iface, pFindBody, phBody);
 }
 
 static HRESULT WINAPI MimeMessage_FindNext(
@@ -1935,8 +1971,9 @@ static HRESULT WINAPI MimeMessage_FindNext(
     LPFINDBODY pFindBody,
     LPHBODY phBody)
 {
-    FIXME("(%p)->(%p, %p)\n", iface, pFindBody, phBody);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", iface, pFindBody, phBody);
+
+    return find_next(iface, pFindBody, phBody);
 }
 
 static HRESULT WINAPI MimeMessage_ResolveURL(

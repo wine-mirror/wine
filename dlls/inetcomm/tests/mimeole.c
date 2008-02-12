@@ -213,6 +213,8 @@ static void test_CreateMessage(void)
     IMimeBody *body;
     BODYOFFSETS offsets;
     ULONG count;
+    FINDBODY find_struct;
+    char text[] = "text";
 
     hr = MimeOleCreateMessage(NULL, &msg);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -268,6 +270,17 @@ static void test_CreateMessage(void)
     ok(offsets.cbBodyEnd == 639, "got %d\n", offsets.cbBodyEnd);
     IMimeBody_Release(body);
 
+    find_struct.pszPriType = text;
+    find_struct.pszSubType = NULL;
+
+    hr = IMimeMessage_FindFirst(msg, &find_struct, &hbody);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeMessage_FindNext(msg, &find_struct, &hbody);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeMessage_FindNext(msg, &find_struct, &hbody);
+    ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
 
     IMimeMessage_Release(msg);
 
