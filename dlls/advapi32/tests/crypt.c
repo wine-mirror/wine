@@ -34,7 +34,6 @@ static const char szKeySet[] = "wine_test_keyset";
 static const char szBadKeySet[] = "wine_test_bad_keyset";
 #define NON_DEF_PROV_TYPE 999
 
-static HMODULE hadvapi32;
 static BOOL (WINAPI *pCryptAcquireContextA)(HCRYPTPROV*,LPCSTR,LPCSTR,DWORD,DWORD);
 static BOOL (WINAPI *pCryptEnumProviderTypesA)(DWORD, DWORD*, DWORD, DWORD*, LPSTR, DWORD*);
 static BOOL (WINAPI *pCryptEnumProvidersA)(DWORD, DWORD*, DWORD, DWORD*, LPSTR, DWORD*);
@@ -68,7 +67,7 @@ static BOOL (WINAPI *pCryptVerifySignatureW)(HCRYPTHASH, BYTE*, DWORD, HCRYPTKEY
 
 static void init_function_pointers(void)
 {
-    hadvapi32 = GetModuleHandleA("advapi32.dll");
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
 
     pCryptAcquireContextA = (void*)GetProcAddress(hadvapi32, "CryptAcquireContextA");
     pCryptEnumProviderTypesA = (void*)GetProcAddress(hadvapi32, "CryptEnumProviderTypesA");
@@ -324,10 +323,15 @@ static void test_incorrect_api_usage(void)
     result = pCryptImportKey(hProv, &temp, 1, (HCRYPTKEY)NULL, 0, &hKey2);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
-    dwLen = 1;
-    result = pCryptSignHashW(hHash, 0, NULL, 0, &temp, &dwLen);
-    ok (!result && (GetLastError() == ERROR_INVALID_PARAMETER ||
-        GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), "%d\n", GetLastError());
+    if (pCryptSignHashW)
+    {
+        dwLen = 1;
+        result = pCryptSignHashW(hHash, 0, NULL, 0, &temp, &dwLen);
+        ok (!result && (GetLastError() == ERROR_INVALID_PARAMETER ||
+            GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), "%d\n", GetLastError());
+    }
+    else
+        skip("CryptSignHashW is not available\n");
 
     result = pCryptSetKeyParam(hKey, 0, &temp, 1);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
@@ -338,9 +342,14 @@ static void test_incorrect_api_usage(void)
     result = pCryptSetProvParam(hProv, 0, &temp, 1);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
-    result = pCryptVerifySignatureW(hHash, &temp, 1, hKey, NULL, 0);
-    ok (!result && (GetLastError() == ERROR_INVALID_PARAMETER ||
-        GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), "%d\n", GetLastError());
+    if (pCryptVerifySignatureW)
+    {
+        result = pCryptVerifySignatureW(hHash, &temp, 1, hKey, NULL, 0);
+        ok (!result && (GetLastError() == ERROR_INVALID_PARAMETER ||
+            GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), "%d\n", GetLastError());
+    }
+    else
+        skip("CryptVerifySignatureW is not available\n");
 
     result = pCryptDestroyHash(hHash);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
@@ -382,6 +391,12 @@ static void test_verify_sig(void)
 	HCRYPTKEY key;
 	HCRYPTHASH hash;
 	BYTE bogus[] = { 0 };
+
+	if (!pCryptVerifySignatureW)
+	{
+		skip("CryptVerifySignatureW is not available\n");
+		return;
+	}
 
 	SetLastError(0xdeadbeef);
 	ret = pCryptVerifySignatureW(0, NULL, 0, 0, NULL, 0);
