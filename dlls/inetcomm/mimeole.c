@@ -1674,8 +1674,12 @@ static HRESULT WINAPI MimeMessage_GetMessageSource(
     IStream **ppStream,
     DWORD dwFlags)
 {
+    MimeMessage *This = (MimeMessage *)iface;
     FIXME("(%p)->(%p, 0x%x)\n", iface, ppStream, dwFlags);
-    return E_NOTIMPL;
+
+    IStream_AddRef(This->stream);
+    *ppStream = This->stream;
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeMessage_GetMessageSize(
