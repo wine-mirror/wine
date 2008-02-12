@@ -1643,10 +1643,7 @@ static void test_msiimport(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = add_table_to_db(hdb, endlines1);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = add_table_to_db(hdb, endlines2);
     ok(r == ERROR_FUNCTION_FAILED,
@@ -1749,7 +1746,8 @@ static void test_msiimport(void)
     MsiCloseHandle(rec);
 
     r = MsiViewFetch(view, &rec);
-    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(r == ERROR_NO_MORE_ITEMS,
+       "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     r = MsiViewClose(view);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -1758,37 +1756,28 @@ static void test_msiimport(void)
 
     query = "SELECT * FROM `Table`";
     r = MsiDatabaseOpenView(hdb, query, &view);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_NAMES, &rec);
     count = MsiRecordGetFieldCount(rec);
-    todo_wine
-    {
-        ok(count == 6, "Expected 6, got %d\n", count);
-        ok(check_record(rec, 1, "A"), "Expected A\n");
-        ok(check_record(rec, 2, "B"), "Expected B\n");
-        ok(check_record(rec, 3, "C"), "Expected C\n");
-        ok(check_record(rec, 4, "D"), "Expected D\n");
-        ok(check_record(rec, 5, "E"), "Expected E\n");
-        ok(check_record(rec, 6, "F"), "Expected F\n");
-    }
+    ok(count == 6, "Expected 6, got %d\n", count);
+    ok(check_record(rec, 1, "A"), "Expected A\n");
+    ok(check_record(rec, 2, "B"), "Expected B\n");
+    ok(check_record(rec, 3, "C"), "Expected C\n");
+    ok(check_record(rec, 4, "D"), "Expected D\n");
+    ok(check_record(rec, 5, "E"), "Expected E\n");
+    ok(check_record(rec, 6, "F"), "Expected F\n");
     MsiCloseHandle(rec);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
     count = MsiRecordGetFieldCount(rec);
-    todo_wine
-    {
-        ok(count == 6, "Expected 6, got %d\n", count);
-        ok(check_record(rec, 1, "s72"), "Expected s72\n");
-        ok(check_record(rec, 2, "s72"), "Expected s72\n");
-        ok(check_record(rec, 3, "s72"), "Expected s72\n");
-        ok(check_record(rec, 4, "s72"), "Expected s72\n");
-        ok(check_record(rec, 5, "s72"), "Expected s72\n");
-        ok(check_record(rec, 6, "s72"), "Expected s72\n");
-    }
+    ok(count == 6, "Expected 6, got %d\n", count);
+    ok(check_record(rec, 1, "s72"), "Expected s72\n");
+    ok(check_record(rec, 2, "s72"), "Expected s72\n");
+    ok(check_record(rec, 3, "s72"), "Expected s72\n");
+    ok(check_record(rec, 4, "s72"), "Expected s72\n");
+    ok(check_record(rec, 5, "s72"), "Expected s72\n");
+    ok(check_record(rec, 6, "s72"), "Expected s72\n");
     MsiCloseHandle(rec);
 
     MsiViewClose(view);
@@ -1796,51 +1785,36 @@ static void test_msiimport(void)
 
     query = "SELECT * FROM `Table`";
     r = MsiDatabaseOpenView(hdb, query, &view);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewExecute(view, 0);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewFetch(view, &rec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(check_record(rec, 1, "a"), "Expected 'a'\n");
-        ok(check_record(rec, 2, "b"), "Expected 'b'\n");
-        ok(check_record(rec, 3, "c"), "Expected 'c'\n");
-        ok(check_record(rec, 4, "d"), "Expected 'd'\n");
-        ok(check_record(rec, 5, "e"), "Expected 'e'\n");
-        ok(check_record(rec, 6, "f"), "Expected 'f'\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(check_record(rec, 1, "a"), "Expected 'a'\n");
+    ok(check_record(rec, 2, "b"), "Expected 'b'\n");
+    ok(check_record(rec, 3, "c"), "Expected 'c'\n");
+    ok(check_record(rec, 4, "d"), "Expected 'd'\n");
+    ok(check_record(rec, 5, "e"), "Expected 'e'\n");
+    ok(check_record(rec, 6, "f"), "Expected 'f'\n");
 
     MsiCloseHandle(rec);
 
     r = MsiViewFetch(view, &rec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(check_record(rec, 1, "g"), "Expected 'g'\n");
-        ok(check_record(rec, 2, "h"), "Expected 'h'\n");
-        ok(check_record(rec, 3, "i"), "Expected 'i'\n");
-        ok(check_record(rec, 4, "j"), "Expected 'j'\n");
-        ok(check_record(rec, 5, "k"), "Expected 'k'\n");
-        ok(check_record(rec, 6, "l"), "Expected 'l'\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(check_record(rec, 1, "g"), "Expected 'g'\n");
+    ok(check_record(rec, 2, "h"), "Expected 'h'\n");
+    ok(check_record(rec, 3, "i"), "Expected 'i'\n");
+    ok(check_record(rec, 4, "j"), "Expected 'j'\n");
+    ok(check_record(rec, 5, "k"), "Expected 'k'\n");
+    ok(check_record(rec, 6, "l"), "Expected 'l'\n");
 
     MsiCloseHandle(rec);
 
     r = MsiViewFetch(view, &rec);
-    todo_wine
-    {
-        ok(r == ERROR_NO_MORE_ITEMS,
-           "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
-    }
+    ok(r == ERROR_NO_MORE_ITEMS,
+       "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     MsiViewClose(view);
     MsiCloseHandle(view);

@@ -317,12 +317,18 @@ static void msi_parse_line(LPWSTR *line, LPWSTR **entries, DWORD *num_entries)
     /* store pointers into the data */
     for (i = 0, ptr = *line; i < count; i++)
     {
+        while (*ptr && *ptr == '\r') ptr++;
         save = ptr;
 
-        while (*ptr && *ptr != '\t' && *ptr != '\n') ptr++;
+        while (*ptr && *ptr != '\t' && *ptr != '\n' && *ptr != '\r') ptr++;
 
         /* NULL-separate the data */
-        if (*ptr)
+        if (*ptr == '\n' || *ptr == '\r')
+        {
+            while (*ptr == '\n' || *ptr == '\r')
+                *(ptr++) = '\0';
+        }
+        else if (*ptr)
             *ptr++ = '\0';
 
         (*entries)[i] = save;
@@ -598,11 +604,11 @@ UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
 {
     UINT r;
     DWORD len, i;
-    DWORD num_labels;
+    DWORD num_labels, num_types;
     DWORD num_columns, num_records = 0;
     LPWSTR *columns, *types, *labels;
     LPWSTR path, ptr, data;
-    LPWSTR **records;
+    LPWSTR **records = NULL;
     LPWSTR **temp_records;
 
     static const WCHAR backslash[] = {'\\',0};
@@ -625,8 +631,14 @@ UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
 
     ptr = data;
     msi_parse_line( &ptr, &columns, &num_columns );
-    msi_parse_line( &ptr, &types, NULL );
+    msi_parse_line( &ptr, &types, &num_types );
     msi_parse_line( &ptr, &labels, &num_labels );
+
+    if (num_columns != num_types)
+    {
+        r = ERROR_FUNCTION_FAILED;
+        goto done;
+    }
 
     records = msi_alloc(sizeof(LPWSTR *));
     if (!records)
