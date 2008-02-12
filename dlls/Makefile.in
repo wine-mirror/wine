@@ -184,6 +184,7 @@ BASEDIRS = \
 	psapi \
 	pstorec \
 	qcap \
+	qedit \
 	qmgr \
 	qmgrprxy \
 	quartz \
