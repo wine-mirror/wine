@@ -1397,7 +1397,8 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
             ok((unsigned char)(color) == ((unsigned char)test_data[i].color[j])
                     && abs( ((unsigned char)(color>>8)) - (unsigned char)(test_data[i].color[j]>>8) ) < 13
                     && abs( ((unsigned char)(color>>16)) - (unsigned char)(test_data[i].color[j]>>16) ) < 13,
-                    "fog ps%i vs%i fvm%i ftm%i %d: got color %08x, expected %08x +-5%%\n", test_data[i].vshader, test_data[i].pshader, test_data[i].vfog, test_data[i].tfog, j, color, test_data[i].color[j]);
+               "fog vs%i ps%i fvm%i ftm%i %d: got color %08x, expected %08x +-5%%\n",
+               test_data[i].vshader, test_data[i].pshader, test_data[i].vfog, test_data[i].tfog, j, color, test_data[i].color[j]);
         }
     }
 
