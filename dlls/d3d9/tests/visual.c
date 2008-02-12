@@ -630,8 +630,10 @@ static void fog_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     DWORD color;
+    BYTE r, g, b;
     float start = 0.0f, end = 1.0f;
     D3DCAPS9 caps;
+    int i;
 
     /* Gets full z based fog with linear fog, no fog with specular color */
     struct sVertex unstransformed_1[] = {
@@ -661,6 +663,27 @@ static void fog_test(IDirect3DDevice9 *device)
         {640,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
         {640,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
         {320,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+    };
+    struct vertex rev_fog_quads[] = {
+       {-1.0,   -1.0,   0.1,    0x000000ff},
+       {-1.0,    0.0,   0.1,    0x000000ff},
+       { 0.0,    0.0,   0.1,    0x000000ff},
+       { 0.0,   -1.0,   0.1,    0x000000ff},
+
+       { 0.0,   -1.0,   0.9,    0x000000ff},
+       { 0.0,    0.0,   0.9,    0x000000ff},
+       { 1.0,    0.0,   0.9,    0x000000ff},
+       { 1.0,   -1.0,   0.9,    0x000000ff},
+
+       { 0.0,    0.0,   0.4,    0x000000ff},
+       { 0.0,    1.0,   0.4,    0x000000ff},
+       { 1.0,    1.0,   0.4,    0x000000ff},
+       { 1.0,    0.0,   0.4,    0x000000ff},
+
+       {-1.0,    0.0,   0.7,    0x000000ff},
+       {-1.0,    1.0,   0.7,    0x000000ff},
+       { 0.0,    1.0,   0.7,    0x000000ff},
+       { 0.0,    0.0,   0.7,    0x000000ff},
     };
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
@@ -817,6 +840,71 @@ static void fog_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 480, 120);
     ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
 
+    /* Test "reversed" fog without shaders. With shaders this fails on a few Windows D3D implementations,
+     * but without shaders it seems to work everywhere
+     */
+    end = 0.2;
+    start = 0.8;
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, *((DWORD *) &start));
+    ok(hr == D3D_OK, "Setting fog start returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGEND, *((DWORD *) &end));
+    ok(hr == D3D_OK, "Setting fog end returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok( hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %s\n", DXGetErrorString9(hr));
+
+    /* Test reversed fog without shaders. ATI cards have problems with reversed fog and shaders, so
+     * it doesn't seem very important for games. ATI cards also have problems with reversed table fog,
+     * so skip this for now
+     */
+    for(i = 0; i < 1 /*2 - Table fog test disabled, fails on ATI */; i++) {
+        const char *mode = (i ? "table" : "vertex");
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, i == 0 ? D3DFOG_LINEAR : D3DFOG_NONE);
+        ok( hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, i == 0 ? D3DFOG_NONE : D3DFOG_LINEAR);
+        ok( hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok( hr == D3D_OK, "IDirect3DDDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+        if(SUCCEEDED(hr)) {
+            WORD Indices2[] = { 0,  1,  2,  2,  3, 0,
+                                4,  5,  6,  6,  7, 4,
+                                8,  9, 10, 10, 11, 8,
+                            12, 13, 14, 14, 15, 12};
+
+            hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */,
+                    16 /* NumVerts */, 8 /*PrimCount */, Indices2, D3DFMT_INDEX16, rev_fog_quads,
+                    sizeof(rev_fog_quads[0]));
+
+            hr = IDirect3DDevice9_EndScene(device);
+            ok( hr == D3D_OK, "IDirect3DDDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+        }
+        IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        color = getPixelColor(device, 160, 360);
+        ok(color == 0x0000FF00, "Reversed %s fog: z=0.1 has color 0x%08x, expected 0x0000ff00\n", mode, color);
+
+        color = getPixelColor(device, 160, 120);
+        r = (color & 0x00ff0000) >> 16;
+        g = (color & 0x0000ff00) >>  8;
+        b = (color & 0x000000ff);
+        ok(r == 0x00 && g >= 0x29 && g <= 0x2d && b >= 0xd2 && b <= 0xd6,
+           "Reversed %s fog: z=0.7 has color 0x%08x, expected\n", mode, color);
+
+        color = getPixelColor(device, 480, 120);
+        r = (color & 0x00ff0000) >> 16;
+        g = (color & 0x0000ff00) >>  8;
+        b = (color & 0x000000ff);
+        ok(r == 0x00 && g >= 0xa8 && g <= 0xac && b >= 0x53 && b <= 0x57,
+           "Reversed %s fog: z=0.4 has color 0x%08x, expected\n", mode, color);
+
+        color = getPixelColor(device, 480, 360);
+        ok(color == 0x000000ff, "Reversed %s fog: z=0.9 has color 0x%08x, expected 0x000000ff\n", mode, color);
+
+        if(!(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE)) {
+            skip("D3DPRASTERCAPS_FOGTABLE not supported, skipping reversed table fog test\n");
+            break;
+        }
+    }
     /* Turn off the fog master switch to avoid confusing other tests */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
     ok(hr == D3D_OK, "Turning off fog calculations returned %s\n", DXGetErrorString9(hr));
