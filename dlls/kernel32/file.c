@@ -1542,10 +1542,37 @@ BOOL WINAPI ReplaceFileA(LPCSTR lpReplacedFileName,LPCSTR lpReplacementFileName,
                          LPCSTR lpBackupFileName, DWORD dwReplaceFlags,
                          LPVOID lpExclude, LPVOID lpReserved)
 {
-    FIXME("(%s,%s,%s,%08x,%p,%p) stub\n",lpReplacedFileName,lpReplacementFileName,
-                                          lpBackupFileName,dwReplaceFlags,lpExclude,lpReserved);
-    SetLastError(ERROR_UNABLE_TO_MOVE_REPLACEMENT);
-    return FALSE;
+    WCHAR *replacedW, *replacementW, *backupW = NULL;
+    BOOL ret;
+
+    /* This function only makes sense when the first two parameters are defined */
+    if (!lpReplacedFileName || !(replacedW = FILE_name_AtoW( lpReplacedFileName, TRUE )))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!lpReplacementFileName || !(replacementW = FILE_name_AtoW( lpReplacementFileName, TRUE )))
+    {
+        HeapFree( GetProcessHeap(), 0, replacedW );
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    /* The backup parameter, however, is optional */
+    if (lpBackupFileName)
+    {
+        if (!(backupW = FILE_name_AtoW( lpBackupFileName, TRUE )))
+        {
+            HeapFree( GetProcessHeap(), 0, replacedW );
+            HeapFree( GetProcessHeap(), 0, replacementW );
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+    }
+    ret = ReplaceFileW( replacedW, replacementW, backupW, dwReplaceFlags, lpExclude, lpReserved );
+    HeapFree( GetProcessHeap(), 0, replacedW );
+    HeapFree( GetProcessHeap(), 0, replacementW );
+    HeapFree( GetProcessHeap(), 0, backupW );
+    return ret;
 }
 
 
