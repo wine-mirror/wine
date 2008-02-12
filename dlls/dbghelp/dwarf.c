@@ -980,7 +980,7 @@ static struct symt* dwarf2_parse_base_type(dwarf2_parse_context_t* ctx,
         break;
     default: break;
     }
-    if (!ctx->symt_cache[cache_idx])
+    if (cache_idx != -1 && !ctx->symt_cache[cache_idx])
         ctx->symt_cache[cache_idx] = di->symt;
 
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
