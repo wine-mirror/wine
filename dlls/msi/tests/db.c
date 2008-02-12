@@ -1649,11 +1649,8 @@ static void test_msiimport(void)
     }
 
     r = add_table_to_db(hdb, endlines2);
-    todo_wine
-    {
-        ok(r == ERROR_FUNCTION_FAILED,
-           "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
-    }
+    ok(r == ERROR_FUNCTION_FAILED,
+       "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
 
     query = "SELECT * FROM `TestTable`";
     r = MsiDatabaseOpenView(hdb, query, &view);
@@ -5255,10 +5252,7 @@ static void test_quotes(void)
     write_file("import.idt", import_dat, (sizeof(import_dat) - 1) * sizeof(char));
 
     r = MsiDatabaseImportA(hdb, CURR_DIR, "import.idt");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     DeleteFileA("import.idt");
 
@@ -5275,19 +5269,13 @@ static void test_quotes(void)
     size = MAX_PATH;
     r = MsiRecordGetString(hrec, 1, buf, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmp(buf, "This is a new 'string' ok"),
-           "Expected \"This is a new 'string' ok\", got %s\n", buf);
-    }
+    ok(!lstrcmp(buf, "This is a new 'string' ok"),
+       "Expected \"This is a new 'string' ok\", got %s\n", buf);
 
     MsiCloseHandle(hrec);
 
     r = MsiViewFetch(hview, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
-    }
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     MsiCloseHandle(hview);
 
