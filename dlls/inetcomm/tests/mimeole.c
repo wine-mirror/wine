@@ -215,6 +215,7 @@ static void test_CreateMessage(void)
     BODYOFFSETS offsets;
     ULONG count;
     FINDBODY find_struct;
+    HCHARSET hcs;
     char text[] = "text";
     HBODY *body_list;
     PROPVARIANT prop;
@@ -268,6 +269,11 @@ static void test_CreateMessage(void)
     ok(offsets.cbHeaderStart == 428, "got %d\n", offsets.cbHeaderStart);
     ok(offsets.cbBodyStart == 518, "got %d\n", offsets.cbBodyStart);
     ok(offsets.cbBodyEnd == 523, "got %d\n", offsets.cbBodyEnd);
+
+    hr = IMimeBody_GetCharset(body, &hcs);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(hcs == NULL, "ret %p\n", hcs);
+
     IMimeBody_Release(body);
 
     hr = IMimeMessage_GetBody(msg, IBL_NEXT, hbody, &hbody);
@@ -298,6 +304,10 @@ static void test_CreateMessage(void)
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(count == 2, "got %d\n", count);
     CoTaskMemFree(body_list);
+
+    hr = IMimeMessage_GetCharset(body, &hcs);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(hcs == NULL, "ret %p\n", hcs);
 
     IMimeMessage_Release(msg);
 

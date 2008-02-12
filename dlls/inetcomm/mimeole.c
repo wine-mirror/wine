@@ -715,7 +715,8 @@ static HRESULT WINAPI MimeBody_GetCharset(
                                  LPHCHARSET phCharset)
 {
     FIXME("stub\n");
-    return E_NOTIMPL;
+    *phCharset = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_SetCharset(
@@ -2023,7 +2024,8 @@ static HRESULT WINAPI MimeMessage_GetCharset(
     LPHCHARSET phCharset)
 {
     FIXME("(%p)->(%p)\n", iface, phCharset);
-    return E_NOTIMPL;
+    *phCharset = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeMessage_SetCharset(
