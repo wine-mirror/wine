@@ -1889,14 +1889,36 @@ static HRESULT WINAPI MimeMessage_MoveBody(
     return E_NOTIMPL;
 }
 
+static void count_children(body_t *body, boolean recurse, ULONG *count)
+{
+    body_t *child;
+
+    LIST_FOR_EACH_ENTRY(child, &body->children, body_t, entry)
+    {
+        (*count)++;
+        if(recurse) count_children(child, recurse, count);
+    }
+}
+
 static HRESULT WINAPI MimeMessage_CountBodies(
     IMimeMessage *iface,
     HBODY hParent,
     boolean fRecurse,
     ULONG *pcBodies)
 {
-    FIXME("(%p)->(%p, %s, %p)\n", iface, hParent, fRecurse ? "TRUE" : "FALSE", pcBodies);
-    return E_NOTIMPL;
+    HRESULT hr;
+    MimeMessage *This = (MimeMessage *)iface;
+    body_t *body;
+
+    TRACE("(%p)->(%p, %s, %p)\n", iface, hParent, fRecurse ? "TRUE" : "FALSE", pcBodies);
+
+    hr = find_body(&This->body_tree, hParent, &body);
+    if(hr != S_OK) return hr;
+
+    *pcBodies = 1;
+    count_children(body, fRecurse, pcBodies);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeMessage_FindFirst(

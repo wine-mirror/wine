@@ -212,6 +212,7 @@ static void test_CreateMessage(void)
     HBODY hbody;
     IMimeBody *body;
     BODYOFFSETS offsets;
+    ULONG count;
 
     hr = MimeOleCreateMessage(NULL, &msg);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -223,6 +224,14 @@ static void test_CreateMessage(void)
 
     hr = IMimeMessage_Load(msg, stream);
     ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeMessage_CountBodies(msg, HBODY_ROOT, TRUE, &count);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(count == 3, "got %d\n", count);
+
+    hr = IMimeMessage_CountBodies(msg, HBODY_ROOT, FALSE, &count);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(count == 3, "got %d\n", count);
 
     hr = IMimeMessage_BindToObject(msg, HBODY_ROOT, &IID_IMimeBody, (void**)&body);
     ok(hr == S_OK, "ret %08x\n", hr);
