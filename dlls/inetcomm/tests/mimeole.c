@@ -215,6 +215,7 @@ static void test_CreateMessage(void)
     ULONG count;
     FINDBODY find_struct;
     char text[] = "text";
+    HBODY *body_list;
 
     hr = MimeOleCreateMessage(NULL, &msg);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -281,6 +282,11 @@ static void test_CreateMessage(void)
 
     hr = IMimeMessage_FindNext(msg, &find_struct, &hbody);
     ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
+
+    hr = IMimeMessage_GetAttachments(msg, &count, &body_list);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(count == 2, "got %d\n", count);
+    CoTaskMemFree(body_list);
 
     IMimeMessage_Release(msg);
 

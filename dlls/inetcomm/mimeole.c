@@ -2279,8 +2279,38 @@ static HRESULT WINAPI MimeMessage_GetAttachments(
     ULONG *pcAttach,
     LPHBODY *pprghAttach)
 {
-    FIXME("(%p)->(%p, %p)\n", iface, pcAttach, pprghAttach);
-    return E_NOTIMPL;
+    HRESULT hr;
+    FINDBODY find_struct;
+    HBODY hbody;
+    LPHBODY array;
+    ULONG size = 10;
+
+    TRACE("(%p)->(%p, %p)\n", iface, pcAttach, pprghAttach);
+
+    *pcAttach = 0;
+    array = CoTaskMemAlloc(size * sizeof(HBODY));
+
+    find_struct.pszPriType = find_struct.pszSubType = NULL;
+    hr = IMimeMessage_FindFirst(iface, &find_struct, &hbody);
+    while(hr == S_OK)
+    {
+        hr = IMimeMessage_IsContentType(iface, hbody, "multipart", NULL);
+        TRACE("IsCT rets %08x %d\n", hr, *pcAttach);
+        if(hr != S_OK)
+        {
+            if(*pcAttach + 1 > size)
+            {
+                size *= 2;
+                array = CoTaskMemRealloc(array, size * sizeof(HBODY));
+            }
+            array[*pcAttach] = hbody;
+            (*pcAttach)++;
+        }
+        hr = IMimeMessage_FindNext(iface, &find_struct, &hbody);
+    }
+
+    *pprghAttach = array;
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeMessage_GetAddressTable(
