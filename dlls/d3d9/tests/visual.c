@@ -6468,10 +6468,14 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
         skip("D3DTEXOPCAPS_BUMPENVMAP not set, skipping bumpmap tests\n");
         return;
     } else {
+        /* This check is disabled, some Windows drivers do not handle D3DUSAGE_QUERY_LEGACYBUMPMAP properly.
+         * They report that it is not supported, but after that bump mapping works properly. So just test
+         * if the format is generally supported, and check the BUMPENVMAP flag
+         */
         IDirect3D9 *d3d9;
 
         IDirect3DDevice9_GetDirect3D(device, &d3d9);
-        hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_LEGACYBUMPMAP,
+        hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
                                           D3DRTYPE_TEXTURE, D3DFMT_V8U8);
         IDirect3D9_Release(d3d9);
         if(FAILED(hr)) {
