@@ -1131,31 +1131,42 @@ static DWORD WINAPI async_notifier_proc(LPVOID p)
     RpcConnection *conn = p;
     RPC_ASYNC_STATE *state = conn->async_state;
 
-    if (state && !conn->ops->wait_for_incoming_data(conn))
+    if (state && conn->ops->wait_for_incoming_data(conn) != -1)
     {
         state->Event = RpcCallComplete;
         switch (state->NotificationType)
         {
         case RpcNotificationTypeEvent:
+            TRACE("RpcNotificationTypeEvent %p\n", state->u.hEvent);
             SetEvent(state->u.hEvent);
             break;
         case RpcNotificationTypeApc:
+            TRACE("RpcNotificationTypeApc %p\n", state->u.APC.hThread);
             QueueUserAPC(async_apc_notifier_proc, state->u.APC.hThread, (ULONG_PTR)state);
             break;
         case RpcNotificationTypeIoc:
+            TRACE("RpcNotificationTypeIoc %p, 0x%x, 0x%lx, %p\n",
+                state->u.IOC.hIOPort, state->u.IOC.dwNumberOfBytesTransferred,
+                state->u.IOC.dwCompletionKey, state->u.IOC.lpOverlapped);
             PostQueuedCompletionStatus(state->u.IOC.hIOPort,
                 state->u.IOC.dwNumberOfBytesTransferred,
                 state->u.IOC.dwCompletionKey,
                 state->u.IOC.lpOverlapped);
             break;
         case RpcNotificationTypeHwnd:
+            TRACE("RpcNotificationTypeHwnd %p 0x%x\n", state->u.HWND.hWnd,
+                state->u.HWND.Msg);
             PostMessageW(state->u.HWND.hWnd, state->u.HWND.Msg, 0, 0);
             break;
         case RpcNotificationTypeCallback:
+            TRACE("RpcNotificationTypeCallback %p\n", state->u.NotificationRoutine);
             state->u.NotificationRoutine(state, NULL, state->Event);
             break;
         case RpcNotificationTypeNone:
+            TRACE("RpcNotificationTypeNone\n");
+            break;
         default:
+            FIXME("unknown NotificationType: %d/0x%x\n", state->NotificationType, state->NotificationType);
             break;
         }
     }
