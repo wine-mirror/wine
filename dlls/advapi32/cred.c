@@ -1670,3 +1670,23 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
     }
     return TRUE;
 }
+
+/******************************************************************************
+ * CredGetSessionTypes [ADVAPI32.@]
+ */
+WINADVAPI BOOL WINAPI CredGetSessionTypes(DWORD persistCount, LPDWORD persists)
+{
+    TRACE("(%u, %p)\n", persistCount, persists);
+
+    memset(persists, CRED_PERSIST_NONE, persistCount*sizeof(*persists));
+    if (CRED_TYPE_GENERIC < persistCount)
+    {
+        persists[CRED_TYPE_GENERIC] = CRED_PERSIST_ENTERPRISE;
+
+        if (CRED_TYPE_DOMAIN_PASSWORD < persistCount)
+        {
+            persists[CRED_TYPE_DOMAIN_PASSWORD] = CRED_PERSIST_ENTERPRISE;
+        }
+    }
+    return TRUE;
+}

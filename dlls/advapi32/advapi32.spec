@@ -107,7 +107,7 @@
 @ stdcall CredEnumerateA(str long ptr ptr)
 @ stdcall CredEnumerateW(wstr long ptr ptr)
 @ stdcall CredFree(ptr)
-# @ stub CredGetSessionTypes
+@ stdcall CredGetSessionTypes(long ptr)
 # @ stub CredGetTargetInfoA
 # @ stub CredGetTargetInfoW
 # @ stub CredIsMarshaledCredentialA
