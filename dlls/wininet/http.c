@@ -2283,6 +2283,20 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     return result;
 }
 
+static BOOL HTTP_GetRequestURL(WININETHTTPREQW *req, LPWSTR buf)
+{
+    LPHTTPHEADERW host_header;
+
+    static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+
+    host_header = HTTP_GetHeader(req, szHost);
+    if(!host_header)
+        return FALSE;
+
+    sprintfW(buf, formatW, host_header->lpszValue, req->lpszPath); /* FIXME */
+    return TRUE;
+}
+
 /***********************************************************************
  *           HTTP_HandleRedirect (internal)
  */
@@ -2742,6 +2756,32 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             bSuccess = TRUE;
     }
     while (loop_next);
+
+    /* FIXME: Better check, when we have to create the cache file */
+    if(bSuccess && (lpwhr->hdr.dwFlags & INTERNET_FLAG_NEED_FILE)) {
+        WCHAR url[INTERNET_MAX_URL_LENGTH];
+        WCHAR cacheFileName[MAX_PATH+1];
+        BOOL b;
+
+        b = HTTP_GetRequestURL(lpwhr, url);
+        if(!b) {
+            WARN("Could not get URL\n");
+            goto lend;
+        }
+
+        b = CreateUrlCacheEntryW(url, lpwhr->dwContentLength > 0 ? lpwhr->dwContentLength : 0, NULL, cacheFileName, 0);
+        if(b) {
+            lpwhr->lpszCacheFile = WININET_strdupW(cacheFileName);
+            lpwhr->hCacheFile = CreateFileW(lpwhr->lpszCacheFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                      NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+            if(lpwhr->hCacheFile == INVALID_HANDLE_VALUE) {
+                WARN("Could not create file: %u\n", GetLastError());
+                lpwhr->hCacheFile = NULL;
+            }
+        }else {
+            WARN("Could not create cache entry: %08x\n", GetLastError());
+        }
+    }
 
 lend:
 
@@ -3392,6 +3432,14 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
 
     TRACE("\n");
+
+    if(lpwhr->hCacheFile)
+        CloseHandle(lpwhr->hCacheFile);
+
+    if(lpwhr->lpszCacheFile) {
+        DeleteFileW(lpwhr->lpszCacheFile); /* FIXME */
+        HeapFree(GetProcessHeap(), 0, lpwhr->lpszCacheFile);
+    }
 
     WININET_Release(&lpwhr->lpHttpSession->hdr);
 

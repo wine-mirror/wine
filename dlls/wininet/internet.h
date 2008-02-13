@@ -209,6 +209,8 @@ typedef struct
     DWORD dwContentRead; /* bytes of the content read so far */
     HTTPHEADERW *pCustHeaders;
     DWORD nCustHeaders;
+    HANDLE hCacheFile;
+    LPWSTR lpszCacheFile;
     struct HttpAuthInfo *pAuthInfo;
     struct HttpAuthInfo *pProxyAuthInfo;
 } WININETHTTPREQW, *LPWININETHTTPREQW;

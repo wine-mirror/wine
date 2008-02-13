@@ -1775,6 +1775,15 @@ BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
             {
                 lpwhr->dwContentRead += bytes_read;
                 *pdwNumOfBytesRead = bytes_read;
+
+                if(lpwhr->lpszCacheFile) {
+                    BOOL res;
+
+                    res = WriteFile(lpwhr->hCacheFile, lpBuffer, bytes_read, NULL, NULL);
+                    if(!res)
+                        WARN("WriteFile failed: %u\n", GetLastError());
+                }
+
                 if (!bytes_read && (lpwhr->dwContentRead == lpwhr->dwContentLength))
                     retval = HTTP_FinishedReading(lpwhr);
                 else
