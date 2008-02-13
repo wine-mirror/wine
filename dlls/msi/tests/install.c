@@ -887,6 +887,18 @@ static const msi_table wrv_tables[] =
     ADD_TABLE(wrv_registry),
 };
 
+static const msi_table sf_tables[] =
+{
+    ADD_TABLE(wrv_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
 /* cabinet definitions */
 
 /* make the max size large so there is only one cab file */
@@ -3694,6 +3706,41 @@ static void test_writeregistryvalues(void)
     RemoveDirectory("msitest");
 }
 
+static void test_sourcefolder(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("augustus", 500);
+
+    create_database(msifile, sf_tables, sizeof(sf_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE,
+           "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+        ok(!delete_pf("msitest", FALSE), "File installed\n");
+    }
+
+    RemoveDirectoryA("msitest");
+
+    r = MsiInstallProductA(msifile, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE,
+           "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+        ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+        ok(!delete_pf("msitest", FALSE), "File installed\n");
+    }
+
+    DeleteFile(msifile);
+    DeleteFile("augustus");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -3737,6 +3784,7 @@ START_TEST(install)
     test_missingcab();
     test_duplicatefiles();
     test_writeregistryvalues();
+    test_sourcefolder();
 
     SetCurrentDirectoryA(prev_path);
 }
