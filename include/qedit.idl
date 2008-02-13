@@ -1,8 +1,5 @@
 /*
- * GUID definitions
- *
- * Copyright 2000 Alexandre Julliard
- * Copyright 2000 Francois Gouget
+ * Copyright (C) 2008 Google (Lei Zhang)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,20 +16,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
+import "oaidl.idl";
+import "ocidl.idl";
+/* import "dxtrans.idl"; */
+import "amstream.idl";
+import "msxml.idl";
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-
-#include "objbase.h"
-#include "oleauto.h"
-#include "olectl.h"
-#include "initguid.h"
-
-#include "uuids.h"
-#include "strmif.h"
-#include "control.h"
-#include "amstream.h"
-#include "qedit.h"
+[
+    object,
+    uuid(0579154A-2B53-4994-B0D0-E773148EFF85),
+    local,
+    pointer_default(unique)
+]
+interface ISampleGrabberCB : IUnknown
+{
+    HRESULT SampleCB(
+        double SampleTime,
+        IMediaSample * pSample
+    );
+    HRESULT BufferCB(
+        double SampleTime,
+        BYTE * pBuffer,
+        long BufferLen
+    );
+}

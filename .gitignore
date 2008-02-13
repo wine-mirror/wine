@@ -626,6 +626,7 @@ include/oleidl.h
 include/optary.h
 include/propidl.h
 include/pstore.h
+include/qedit.h
 include/richole.h
 include/sensevts.h
 include/servprov.h

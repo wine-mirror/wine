@@ -51,6 +51,7 @@ IDL_H_SRCS = \
 	optary.idl \
 	propidl.idl \
 	pstore.idl \
+	qedit.idl \
 	richole.idl \
 	sensevts.idl \
 	servprov.idl \
