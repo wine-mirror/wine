@@ -1525,7 +1525,7 @@ void WCMD_rename (void) {
        part otherwise use supplied name. This supports:
           ren *.fred *.jim
           ren jim.* fred.* etc
-       However, windows has a more complex algorithum supporting eg
+       However, windows has a more complex algorithm supporting eg
           ?'s and *'s mid name                                         */
     dotSrc = strchrW(fd.cFileName, '.');
 

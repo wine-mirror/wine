@@ -358,7 +358,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
   /*
    * unmap all views, must be done before call to SetEndFile
    *
-   * Just ditch the victim list because there is no guarentee we will need them
+   * Just ditch the victim list because there is no guarantee we will need them
    * and it is not worth the performance hit to unmap and remap them all.
    */
   BIGBLOCKFILE_DeleteList(This, This->victimhead);

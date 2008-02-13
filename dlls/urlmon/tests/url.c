@@ -1226,7 +1226,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
         ok(szStatusText == NULL, "Expected szStatusText to be NULL\n");
         break;
     default:
-        ok(0, "unexpexted code %d\n", ulStatusCode);
+        ok(0, "unexpected code %d\n", ulStatusCode);
     };
     return S_OK;
 }

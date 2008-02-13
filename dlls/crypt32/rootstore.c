@@ -97,7 +97,7 @@ static BOOL add_line_to_buffer(struct DynamicBuffer *buffer, LPCSTR line)
 }
 
 /* Reads any base64-encoded certificates present in fp and adds them to store.
- * Returns TRUE if any certifcates were successfully imported.
+ * Returns TRUE if any certificates were successfully imported.
  */
 static BOOL import_base64_certs_from_fp(FILE *fp, HCERTSTORE store)
 {

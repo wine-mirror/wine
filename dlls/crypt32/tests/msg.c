@@ -1921,7 +1921,7 @@ static void test_decode_msg_update(void)
      "Expected CRYPT_E_ASN1_BADTAG, got %x\n", GetLastError());
     CryptMsgClose(msg);
 
-    /* An empty message can be opened with indetermined type.. */
+    /* An empty message can be opened with undetermined type.. */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
      TRUE);

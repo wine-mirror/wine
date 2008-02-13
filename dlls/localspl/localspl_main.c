@@ -193,7 +193,7 @@ static LONG copy_servername_from_name(LPCWSTR name, LPWSTR target)
     if ((name[0] != '\\') || (name[1] != '\\')) return 0;
 
     server = &name[2];
-    /* skip over both backslash, find seperator '\'  */
+    /* skip over both backslash, find separator '\' */
     ptr = strchrW(server, '\\');
     serverlen = (ptr) ? ptr - server : lstrlenW(server);
 

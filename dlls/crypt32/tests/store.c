@@ -1942,7 +1942,7 @@ static void test_I_UpdateStore(void)
     }
 
     CertDeleteCertificateFromStore(cert);
-    /* If a context is deleted from store2, I_CertUpdateStore delets it
+    /* If a context is deleted from store2, I_CertUpdateStore deletes it
      * from store1
      */
     ret = pI_CertUpdatestore(store1, store2, 0, 0);

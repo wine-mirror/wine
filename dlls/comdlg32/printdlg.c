@@ -3246,7 +3246,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             GWLP_WNDPROC,
             (ULONG_PTR)PRINTDLG_PagePaintProc);
 	
-	/* FIXME: Paint hook. Must it be at begin of initializtion or at end? */
+	/* FIXME: Paint hook. Must it be at begin of initialization or at end? */
 	res = TRUE;
 	if (pda->dlga->Flags & PSD_ENABLEPAGESETUPHOOK) {
             if (!pda->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,(LPARAM)pda->dlga))

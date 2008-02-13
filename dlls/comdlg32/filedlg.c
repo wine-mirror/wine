@@ -1834,7 +1834,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
   TRACE("current directory=%s\n", debugstr_w(lpstrPathAndFile));
 
-  /* if the user specifyed a fully qualified path use it */
+  /* if the user specified a fully qualified path use it */
   if(PathIsRelativeW(lpstrFileList))
   {
     lstrcatW(lpstrPathAndFile, lpstrFileList);
@@ -3681,7 +3681,7 @@ static void CALLBACK FD32_UpdateResult(const FD31_DATA *lfs)
                                   priv->ofnA->lpstrFile, ofnW->nMaxFile, NULL, NULL ))
             priv->ofnA->lpstrFile[ofnW->nMaxFile-1] = 0;
 
-        /* offsets are not guarenteed to be the same in WCHAR to MULTIBYTE conversion */
+        /* offsets are not guaranteed to be the same in WCHAR to MULTIBYTE conversion */
         /* set filename offset */
         lpszTemp = PathFindFileNameA(priv->ofnA->lpstrFile);
         priv->ofnA->nFileOffset = (lpszTemp - priv->ofnA->lpstrFile);
@@ -3813,7 +3813,7 @@ static INT_PTR CALLBACK FD32_FileOpenDlgProc(HWND hWnd, UINT wMsg,
  *
  * Creates a win31 style dialog box for the user to select a file to open/save.
  */
-static BOOL GetFileName31A(LPOPENFILENAMEA lpofn, /* addess of structure with data*/
+static BOOL GetFileName31A(LPOPENFILENAMEA lpofn, /* address of structure with data*/
                            UINT dlgType /* type dialogue : open/save */
                            )
 {
@@ -3844,7 +3844,7 @@ static BOOL GetFileName31A(LPOPENFILENAMEA lpofn, /* addess of structure with da
  *
  * Creates a win31 style dialog box for the user to select a file to open/save
  */
-static BOOL GetFileName31W(LPOPENFILENAMEW lpofn, /* addess of structure with data*/
+static BOOL GetFileName31W(LPOPENFILENAMEW lpofn, /* address of structure with data*/
                            UINT dlgType /* type dialogue : open/save */
                            )
 {

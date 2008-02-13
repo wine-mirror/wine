@@ -21,7 +21,7 @@
 #ifndef H_CTAPI
 #define H_CTAPI
 
-/* More uniqe defines */
+/* More unique defines */
 
 #define CT_API_AD_HOST		2
 #define CT_API_AD_REMOTE	5

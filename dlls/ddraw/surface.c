@@ -744,7 +744,7 @@ IDirectDrawSurfaceImpl_Flip(IDirectDrawSurface7 *iface,
  * Params:
  *  DestRect: Destination rectangle, can be NULL
  *  SrcSurface: Source surface, can be NULL
- *  SrcRect: Source rectange, can be NULL
+ *  SrcRect: Source rectangle, can be NULL
  *  Flags: Blt flags
  *  DDBltFx: Some extended blt parameters, connected to the flags
  *

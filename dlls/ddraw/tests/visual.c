@@ -1072,7 +1072,7 @@ static void D3D1_TextureMapBlendTest(void)
           {0.0f,   480.0f,   0.0f, 1.0f, 0x008000ff, 0, 0.0f, 1.0f}
     };
 
-    /* 1) Test alpha with DDPF_ALPHAPIXELS texture - should be be taken from texture alpha channel*/
+    /* 1) Test alpha with DDPF_ALPHAPIXELS texture - should be taken from texture alpha channel*/
     memset (&ddsd, 0, sizeof (ddsd));
     ddsd.dwSize = sizeof (ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
@@ -1199,7 +1199,7 @@ static void D3D1_TextureMapBlendTest(void)
     blue =  (color & 0x000000ff);
     ok(red == 0 &&  green == 0 && blue == 0xff, "Got color %08x, expected 000000ff or near\n", color);
 
-    /* 2) Test alpha with texture that has no alpha channel - alpha should be be taken from diffuse color */
+    /* 2) Test alpha with texture that has no alpha channel - alpha should be taken from diffuse color */
     if(Texture) IDirect3DTexture_Release(Texture);
     Texture = NULL;
     if(TexSurface) IDirectDrawSurface_Release(TexSurface);

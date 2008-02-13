@@ -81,7 +81,7 @@
  * For the evolution of types, the need of the second flavor was the
  * number of types to be defined (limited to 0xFFFF, including the C
  * basic types); the need of the third flavor is the increase of
- * symbol size (to be greated than 256), which was likely needed for
+ * symbol size (to be greater than 256), which was likely needed for
  * complex C++ types (nested + templates).
  *
  * It's somehow difficult to represent the layout of those types on

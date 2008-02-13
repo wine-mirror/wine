@@ -940,7 +940,7 @@ static void test_shader(void)
     HeapFree(GetProcessHeap(), 0, data);
     /* Verify that we can retrieve the shader function */
     hr = IDirect3DDevice8_GetVertexShaderFunction(pDevice, hVertexShader, NULL, &data_size);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderFucntion returned %#08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShaderFunction returned %#08x\n", hr);
     ok(data_size == simple_vs_size, "Got data_size %u, expected %u\n", data_size, simple_vs_size);
     data = HeapAlloc(GetProcessHeap(), 0, simple_vs_size);
     data_size = 1;

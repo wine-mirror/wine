@@ -805,7 +805,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     ZeroMemory(&vp, sizeof(vp));
     hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
@@ -848,7 +848,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     width = GetSystemMetrics(SM_CXSCREEN);
     height = GetSystemMetrics(SM_CYSCREEN);
@@ -901,7 +901,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     /* Scratch, sysmem and managed pools are fine */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
@@ -909,7 +909,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
@@ -917,7 +917,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
 
     hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 0, 0, D3DFMT_R5G6B5, D3DPOOL_MANAGED, &texture, NULL);
@@ -925,7 +925,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DTexture9_Release(texture);
 
     /* A reference held to an implicit surface causes failures as well */
@@ -939,7 +939,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successfull reset returned %#x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     /* Shaders are fine as well */
     hr = IDirect3DDevice9_CreateVertexShader(pDevice, simple_vs, &shader);
