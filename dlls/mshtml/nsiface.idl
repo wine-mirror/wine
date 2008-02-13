@@ -23,8 +23,8 @@
  * useable in C code.
  */
 
-cpp_quote("#define GECKO_VERSION \"0.1.0\"");
-cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION");
+cpp_quote("#define GECKO_VERSION \"0.1.0\"")
+cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION")
 
 import "wtypes.idl";
 
@@ -736,7 +736,7 @@ interface nsIDOMElementCSSInlineStyle : nsISupports
     nsresult GetStyle(nsIDOMCSSStyleDeclaration **aStyle);
 }
 
-cpp_quote("#undef GetClassName");
+cpp_quote("#undef GetClassName")
 
 [
     object,
@@ -1263,7 +1263,7 @@ interface nsIWebBrowser : nsISupports
     nsresult GetContentDOMWindow(nsIDOMWindow **aContentDOMWindow);
 }
 
-cpp_quote("#define SETUP_IS_CHROME_WRAPPER 7");
+cpp_quote("#define SETUP_IS_CHROME_WRAPPER 7")
 
 [
     object,
@@ -1311,7 +1311,7 @@ interface nsIBaseWindow : nsISupports
     nsresult SetTitle(const PRUnichar *aTitle);
 }
 
-cpp_quote("#define LOAD_FLAGS_NONE 0");
+cpp_quote("#define LOAD_FLAGS_NONE 0")
 
 [
     object,
@@ -1710,13 +1710,13 @@ interface nsIDOMEvent : nsISupports
     nsresult InitEvent(const nsAString *eventTypeArg, PRBool canBubbleArg, PRBool cancelableArg);
 }
 
-cpp_quote("#define CONTEXT_NONE              0x00");
-cpp_quote("#define CONTEXT_LINK              0x01");
-cpp_quote("#define CONTEXT_IMAGE             0x02");
-cpp_quote("#define CONTEXT_DOCUMENT          0x04");
-cpp_quote("#define CONTEXT_TEXT              0x08");
-cpp_quote("#define CONTEXT_INPUT             0x10");
-cpp_quote("#define CONTEXT_BACKGROUND_IMAGE  0x20");
+cpp_quote("#define CONTEXT_NONE              0x00")
+cpp_quote("#define CONTEXT_LINK              0x01")
+cpp_quote("#define CONTEXT_IMAGE             0x02")
+cpp_quote("#define CONTEXT_DOCUMENT          0x04")
+cpp_quote("#define CONTEXT_TEXT              0x08")
+cpp_quote("#define CONTEXT_INPUT             0x10")
+cpp_quote("#define CONTEXT_BACKGROUND_IMAGE  0x20")
 
 [
     object,
