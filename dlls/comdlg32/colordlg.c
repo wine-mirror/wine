@@ -443,6 +443,7 @@ void CC_PaintSelectedColor( HWND hDlg, COLORREF cr )
   {
    FillRect(hdc, &rect, hBrush);
    DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
+   DeleteObject(hBrush);
   }
   ReleaseDC(hwnd, hdc);
  }
