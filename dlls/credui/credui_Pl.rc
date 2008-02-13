@@ -39,3 +39,13 @@ BEGIN
     DEFPUSHBUTTON   "&OK",IDOK,97,128,50,14
     PUSHBUTTON      "&Anuluj",IDCANCEL,156,128,50,14
 END
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_TITLEFORMAT     "Po³¹cz z %s"
+    IDS_MESSAGEFORMAT   "£¹czenie z %s"
+    IDS_INCORRECTPASSWORDTITLE  "Logowanie nie powiod³o siê"
+    IDS_INCORRECTPASSWORD       "Upewnij siê, ¿e nazwa u¿ytkownika\ni has³o s¹ poprawne."
+    IDS_CAPSLOCKONTITLE "Caps Lock jest w³¹czony"
+    IDS_CAPSLOCKON      "W³¹czony tryb Caps Lock mo¿e spowodowaæ, ¿e wpiszesz has³o niepoprawnie.\n\nNaciœnik klawisz Caps Lock key na klawiaturze, aby go wy³¹czyæ\nprzed wprowadzeniem has³a."
+}
