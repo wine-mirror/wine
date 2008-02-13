@@ -36,6 +36,7 @@ static BOOL (WINAPI *pCredWriteA)(PCREDENTIALA,DWORD);
 
 #define TEST_TARGET_NAME  "credtest.winehq.org"
 #define TEST_TARGET_NAME2 "credtest2.winehq.org"
+static const WCHAR TEST_PASSWORD[] = {'p','4','$','$','w','0','r','d','!',0};
 
 static void test_CredReadA(void)
 {
@@ -130,15 +131,14 @@ static void test_generic(void)
     PCREDENTIALA *creds;
     CREDENTIALA new_cred;
     PCREDENTIALA cred;
-    static const WCHAR password[] = {'p','4','$','$','w','0','r','d','!',0};
     BOOL found = FALSE;
 
     new_cred.Flags = 0;
     new_cred.Type = CRED_TYPE_GENERIC;
     new_cred.TargetName = (char *)TEST_TARGET_NAME;
     new_cred.Comment = (char *)"Comment";
-    new_cred.CredentialBlobSize = sizeof(password);
-    new_cred.CredentialBlob = (LPBYTE)password;
+    new_cred.CredentialBlobSize = sizeof(TEST_PASSWORD);
+    new_cred.CredentialBlob = (LPBYTE)TEST_PASSWORD;
     new_cred.Persist = CRED_PERSIST_ENTERPRISE;
     new_cred.AttributeCount = 0;
     new_cred.Attributes = NULL;
@@ -158,10 +158,10 @@ static void test_generic(void)
             ok(creds[i]->Type == CRED_TYPE_GENERIC, "expected creds[%d]->Type CRED_TYPE_GENERIC but got %d\n", i, creds[i]->Type);
             ok(!creds[i]->Flags, "expected creds[%d]->Flags 0 but got 0x%x\n", i, creds[i]->Flags);
             ok(!strcmp(creds[i]->Comment, "Comment"), "expected creds[%d]->Comment \"Comment\" but got \"%s\"\n", i, creds[i]->Comment);
-            ok(creds[i]->CredentialBlobSize == sizeof(password), "wrong CredentialBlobSize %d\n", creds[i]->CredentialBlobSize);
+            ok(creds[i]->CredentialBlobSize == sizeof(TEST_PASSWORD), "wrong CredentialBlobSize %d\n", creds[i]->CredentialBlobSize);
             ok(creds[i]->CredentialBlob != NULL, "CredentialBlob should be present\n");
             if (creds[i]->CredentialBlob)
-                ok(!memcmp(creds[i]->CredentialBlob, password, sizeof(password)), "credentials don't match\n");
+                ok(!memcmp(creds[i]->CredentialBlob, TEST_PASSWORD, sizeof(TEST_PASSWORD)), "credentials don't match\n");
             ok(creds[i]->Persist, "expected creds[%d]->Persist CRED_PERSIST_ENTERPRISE but got %d\n", i, creds[i]->Persist);
             ok(!strcmp(creds[i]->UserName, "winetest"), "expected creds[%d]->UserName \"winetest\" but got \"%s\"\n", i, creds[i]->UserName);
             found = TRUE;
@@ -185,15 +185,14 @@ static void test_domain_password(void)
     PCREDENTIALA *creds;
     CREDENTIALA new_cred;
     PCREDENTIALA cred;
-    static const WCHAR password[] = {'p','4','$','$','w','0','r','d','!',0};
     BOOL found = FALSE;
 
     new_cred.Flags = 0;
     new_cred.Type = CRED_TYPE_DOMAIN_PASSWORD;
     new_cred.TargetName = (char *)TEST_TARGET_NAME;
     new_cred.Comment = (char *)"Comment";
-    new_cred.CredentialBlobSize = sizeof(password);
-    new_cred.CredentialBlob = (LPBYTE)password;
+    new_cred.CredentialBlobSize = sizeof(TEST_PASSWORD);
+    new_cred.CredentialBlob = (LPBYTE)TEST_PASSWORD;
     new_cred.Persist = CRED_PERSIST_ENTERPRISE;
     new_cred.AttributeCount = 0;
     new_cred.Attributes = NULL;
