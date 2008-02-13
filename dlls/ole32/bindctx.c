@@ -611,6 +611,9 @@ HRESULT WINAPI BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID riid, LPVOID * pp
 
     res = CreateBindCtx(grfOpt, &pbc);
     if (SUCCEEDED(res))
+    {
         res = IMoniker_BindToObject(pmk, pbc, NULL, riid, ppvResult);
+        IBindCtx_Release(pbc);
+    }
     return res;
 }
