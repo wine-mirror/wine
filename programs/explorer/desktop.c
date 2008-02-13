@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include "wine/unicode.h"
 
 #define OEMRESOURCE
 
@@ -143,6 +144,40 @@ static void initialize_display_settings( HWND desktop )
     }
 }
 
+static void set_desktop_window_title( HWND hwnd, const char *name )
+{
+    static const WCHAR desktop_nameW[] = {'W','i','n','e',' ','d','e','s','k','t','o','p',0};
+    static const WCHAR desktop_name_separatorW[] = {' ', '-', ' ', 0};
+    WCHAR *window_titleW = NULL;
+    int window_title_len;
+    int name_len;
+
+    if (!name[0])
+    {
+        SetWindowTextW( hwnd, desktop_nameW );
+        return;
+    }
+
+    name_len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    window_title_len = name_len * sizeof(WCHAR)
+                     + sizeof(desktop_name_separatorW)
+                     + sizeof(desktop_nameW);
+    window_titleW = HeapAlloc( GetProcessHeap(), 0, window_title_len );
+    if (!window_titleW)
+    {
+        SetWindowTextW( hwnd, desktop_nameW );
+        return;
+    }
+
+    MultiByteToWideChar( CP_ACP, 0, name, -1,
+                         window_titleW, name_len );
+    strcatW( window_titleW, desktop_name_separatorW );
+    strcatW( window_titleW, desktop_nameW );
+
+    SetWindowTextW( hwnd, window_titleW );
+    HeapFree( GetProcessHeap(), 0, window_titleW );
+}
+
 /* main desktop management function */
 void manage_desktop( char *arg )
 {
@@ -152,7 +187,7 @@ void manage_desktop( char *arg )
     unsigned int width, height;
     char *cmdline = NULL;
     char *p = arg;
-    static const WCHAR desktop_nameW[] = {'W','i','n','e',' ','d','e','s','k','t','o','p',0};
+    const char *name = NULL;
 
     /* get the rest of the command line (if any) */
     while (*p && !isspace(*p)) p++;
@@ -174,11 +209,13 @@ void manage_desktop( char *arg )
             width = 800;
             height = 600;
         }
-        xwin = create_desktop( arg, width, height );
+        name = arg;
+        xwin = create_desktop( name, width, height );
     }
     else if (get_default_desktop_size( &width, &height ))
     {
-        xwin = create_desktop( "Default", width, height );
+        name = "Default";
+        xwin = create_desktop( name, width, height );
     }
 
     if (!xwin) using_root = TRUE; /* using the root window */
@@ -193,7 +230,7 @@ void manage_desktop( char *arg )
     {
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
-        SetWindowTextW( hwnd, desktop_nameW );
+        if (name) set_desktop_window_title( hwnd, name );
         SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
         SetDeskWallPaper( (LPSTR)-1 );
         initialize_display_settings( hwnd );
