@@ -607,9 +607,9 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
   memset(& This->sInfo, 0, sizeof(This->sInfo));
 
   LoadStringW(AVIFILE_hModule, IDS_WAVEFILETYPE, This->fInfo.szFileType,
-	      sizeof(This->fInfo.szFileType));
+	      sizeof(This->fInfo.szFileType)/sizeof(This->fInfo.szFileType[0]));
   if (LoadStringW(AVIFILE_hModule, IDS_WAVESTREAMFORMAT,
-		  wszStreamFmt, sizeof(wszStreamFmt)) > 0) {
+		  wszStreamFmt, sizeof(wszStreamFmt)/sizeof(wszStreamFmt[0])) > 0) {
     wsprintfW(This->sInfo.szName, wszStreamFmt,
 	      AVIFILE_BasenameW(This->szFileName));
   }
