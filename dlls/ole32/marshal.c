@@ -279,7 +279,7 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
         /* get IRemUnknown proxy so we can communicate with the remote object */
         hr = proxy_manager_get_remunknown(This, &remunk);
 
-        if (hr == S_OK)
+        if (SUCCEEDED(hr))
         {
             hr = IRemUnknown_RemQueryInterface(remunk, ipid, NORMALEXTREFS,
                                                nonlocal_mqis, iids, &qiresults);
