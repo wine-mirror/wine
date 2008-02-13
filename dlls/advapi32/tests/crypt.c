@@ -400,6 +400,11 @@ static void test_verify_sig(void)
 
 	SetLastError(0xdeadbeef);
 	ret = pCryptVerifySignatureW(0, NULL, 0, 0, NULL, 0);
+	if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+	{
+		skip("CryptVerifySignatureW is not implemented\n");
+		return;
+	}
 	ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
 	 "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
 	ret = pCryptAcquireContextA(&prov, szKeySet, NULL, PROV_RSA_FULL,
