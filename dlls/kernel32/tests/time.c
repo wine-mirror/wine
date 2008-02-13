@@ -207,7 +207,9 @@ static LONG get_tz_bias(const TIME_ZONE_INFORMATION *tzinfo, DWORD tz_id)
     switch (tz_id)
     {
     case TIME_ZONE_ID_DAYLIGHT:
-        return tzinfo->DaylightBias;
+        if (memcmp(&tzinfo->StandardDate, &tzinfo->DaylightDate, sizeof(tzinfo->DaylightDate)) != 0)
+            return tzinfo->DaylightBias;
+        /* fall through */
 
     case TIME_ZONE_ID_STANDARD:
         return tzinfo->StandardBias;
