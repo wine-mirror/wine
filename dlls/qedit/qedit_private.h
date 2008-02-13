@@ -33,5 +33,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "dshow.h"
+#include "qedit.h"
 
 #endif /* __QEDIT_PRIVATE_INCLUDED__ */
