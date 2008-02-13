@@ -2513,3 +2513,25 @@ UINT WINAPI MsiAdvertiseScriptA( LPCSTR szScriptFile, DWORD dwFlags,
           debugstr_a( szScriptFile ), dwFlags, phRegData, fRemoveItems );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ * MsiIsProductElevatedW        [MSI.@]
+ */
+UINT WINAPI MsiIsProductElevatedW( LPCWSTR szProduct, BOOL *pfElevated )
+{
+    FIXME("%s %p - stub\n",
+          debugstr_w( szProduct ), pfElevated );
+    *pfElevated = TRUE;
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ * MsiIsProductElevatedA        [MSI.@]
+ */
+UINT WINAPI MsiIsProductElevatedA( LPCSTR szProduct, BOOL *pfElevated )
+{
+    FIXME("%s %p - stub\n",
+          debugstr_a( szProduct ), pfElevated );
+    *pfElevated = TRUE;
+    return ERROR_SUCCESS;
+}

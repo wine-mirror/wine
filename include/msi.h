@@ -569,6 +569,10 @@ UINT WINAPI MsiAdvertiseScriptA(LPCSTR, DWORD, PHKEY, BOOL);
 UINT WINAPI MsiAdvertiseScriptW(LPCWSTR, DWORD, PHKEY, BOOL);
 #define     MsiAdvertiseScript WINELIB_NAME_AW(MsiAdvertiseScript)
 
+UINT WINAPI MsiIsProductElevatedA(LPCSTR, BOOL *);
+UINT WINAPI MsiIsProductElevatedW(LPCWSTR, BOOL *);
+#define     MsiIsProductElevated WINELIB_NAME_AW(MsiIsProductElevated)
+
 /* Non Unicode */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);
 UINT WINAPI MsiCloseAllHandles(void);
