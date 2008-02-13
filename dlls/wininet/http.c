@@ -71,6 +71,7 @@ static const WCHAR szAuthorization[] = { 'A','u','t','h','o','r','i','z','a','t'
 static const WCHAR szProxy_Authorization[] = { 'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
 static const WCHAR szStatus[] = { 'S','t','a','t','u','s',0 };
 static const WCHAR szKeepAlive[] = {'K','e','e','p','-','A','l','i','v','e',0};
+static const WCHAR szGET[] = { 'G','E','T', 0 };
 
 #define MAXHOSTNAME 100
 #define MAX_FIELD_VALUE_LEN 256
@@ -208,16 +209,6 @@ static void AsyncHttpSendRequestProc(WORKREQUEST *workRequest)
             req->dwContentLength, req->bEndRequest);
 
     HeapFree(GetProcessHeap(), 0, req->lpszHeader);
-}
-
-static void HTTP_FixVerb( LPWININETHTTPREQW lpwhr )
-{
-    /* if the verb is NULL default to GET */
-    if (NULL == lpwhr->lpszVerb)
-    {
-	    static const WCHAR szGET[] = { 'G','E','T', 0 };
-	    lpwhr->lpszVerb = WININET_strdupW(szGET);
-    }
 }
 
 static void HTTP_FixURL( LPWININETHTTPREQW lpwhr)
@@ -871,10 +862,9 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
             dwBufferSize=sizeof(szNewLocation);
             if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
             {
-	            static const WCHAR szGET[] = { 'G','E','T', 0 };
                 /* redirects are always GETs */
                 HeapFree(GetProcessHeap(),0,lpwhr->lpszVerb);
-	            lpwhr->lpszVerb = WININET_strdupW(szGET);
+                lpwhr->lpszVerb = WININET_strdupW(szGET);
                 HTTP_DrainContent(lpwhr);
                 rc = HTTP_HandleRedirect(lpwhr, szNewLocation);
                 if (rc)
@@ -1379,7 +1369,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         goto lend;
     }
 
-    if (NULL != lpszObjectName && strlenW(lpszObjectName)) {
+    if (lpszObjectName && *lpszObjectName) {
         HRESULT rc;
 
         len = 0;
@@ -1396,7 +1386,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         }
     }
 
-    if (NULL != lpszReferrer && strlenW(lpszReferrer))
+    if (lpszReferrer && *lpszReferrer)
         HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpszReferrer, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (lpszAcceptTypes)
@@ -1412,13 +1402,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         }
     }
 
-    if (NULL == lpszVerb)
-    {
-        static const WCHAR szGet[] = {'G','E','T',0};
-        lpwhr->lpszVerb = WININET_strdupW(szGet);
-    }
-    else if (strlenW(lpszVerb))
-        lpwhr->lpszVerb = WININET_strdupW(lpszVerb);
+    lpwhr->lpszVerb = WININET_strdupW(lpszVerb && *lpszVerb ? lpszVerb : szGET);
 
     HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
@@ -2394,6 +2378,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
             HeapFree(GetProcessHeap(), 0, combined_url);
             return FALSE;
         }
+
         HeapFree(GetProcessHeap(), 0, combined_url);
 
         if (!strncmpW(szHttp, urlComponents.lpszScheme, strlenW(szHttp)) &&
@@ -2430,7 +2415,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
          */
 
         /* consider the current host as the referrer */
-        if (NULL != lpwhs->lpszServerName && strlenW(lpwhs->lpszServerName))
+        if (lpwhs->lpszServerName && *lpwhs->lpszServerName)
             HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpwhs->lpszServerName,
                            HTTP_ADDHDR_FLAG_REQ|HTTP_ADDREQ_FLAG_REPLACE|
                            HTTP_ADDHDR_FLAG_ADD_IF_NEW);
@@ -2472,7 +2457,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
 
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
     lpwhr->lpszPath=NULL;
-    if (strlenW(path))
+    if (*path)
     {
         DWORD needed = 0;
         HRESULT rc;
@@ -2591,7 +2576,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-    HTTP_FixVerb(lpwhr);
+    /* if the verb is NULL default to GET */
+    if (!lpwhr->lpszVerb)
+        lpwhr->lpszVerb = WININET_strdupW(szGET);
+
     if (dwContentLength || !strcmpW(lpwhr->lpszVerb, szPost))
     {
         sprintfW(contentLengthStr, szContentLength, dwContentLength);
