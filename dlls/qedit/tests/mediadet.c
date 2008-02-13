@@ -32,10 +32,11 @@ static void test_mediadet(void)
 
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (LPVOID*)&pM);
-    todo_wine {
     ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
     ok(pM != NULL, "pM is NULL\n");
-    }
+
+    hr = IMediaDet_Release(pM);
+    ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
 }
 
 START_TEST(mediadet)

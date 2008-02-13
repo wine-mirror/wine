@@ -8,6 +8,7 @@ EXTRALIBS = -lstrmiids -luuid
 
 C_SRCS = \
 	main.c \
+	mediadet.c \
 	regsvr.c
 
 @MAKE_DLL_RULES@

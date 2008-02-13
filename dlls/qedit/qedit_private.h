@@ -35,4 +35,6 @@
 #include "dshow.h"
 #include "qedit.h"
 
+HRESULT MediaDet_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+
 #endif /* __QEDIT_PRIVATE_INCLUDED__ */
