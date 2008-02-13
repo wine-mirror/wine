@@ -30,6 +30,7 @@
 static BOOL (WINAPI *pCredDeleteA)(LPCSTR,DWORD,DWORD);
 static BOOL (WINAPI *pCredEnumerateA)(LPCSTR,DWORD,DWORD *,PCREDENTIALA **);
 static VOID (WINAPI *pCredFree)(PVOID);
+static BOOL (WINAPI *pCredGetSessionTypes)(DWORD,LPDWORD);
 static BOOL (WINAPI *pCredReadA)(LPCSTR,DWORD,DWORD,PCREDENTIALA *);
 static BOOL (WINAPI *pCredRenameA)(LPCSTR,LPCSTR,DWORD,DWORD);
 static BOOL (WINAPI *pCredWriteA)(PCREDENTIALA,DWORD);
@@ -124,6 +125,25 @@ static void test_CredDeleteA(void)
         GetLastError());
 }
 
+static void check_blob(int line, DWORD cred_type, PCREDENTIALA cred)
+{
+    if (cred_type == CRED_TYPE_DOMAIN_PASSWORD)
+    {
+        todo_wine
+        ok_(__FILE__, line)(cred->CredentialBlobSize == 0, "expected CredentialBlobSize of 0 but got %d\n", cred->CredentialBlobSize);
+        todo_wine
+        ok_(__FILE__, line)(!cred->CredentialBlob, "expected NULL credentials but got %p\n", cred->CredentialBlob);
+    }
+    else
+    {
+        DWORD size=sizeof(TEST_PASSWORD);
+        ok_(__FILE__, line)(cred->CredentialBlobSize == size, "expected CredentialBlobSize of %u but got %u\n", size, cred->CredentialBlobSize);
+        ok_(__FILE__, line)(cred->CredentialBlob != NULL, "CredentialBlob should be present\n");
+        if (cred->CredentialBlob)
+            ok_(__FILE__, line)(!memcmp(cred->CredentialBlob, TEST_PASSWORD, size), "wrong CredentialBlob\n");
+    }
+}
+
 static void test_generic(void)
 {
     BOOL ret;
@@ -158,10 +178,7 @@ static void test_generic(void)
             ok(creds[i]->Type == CRED_TYPE_GENERIC, "expected creds[%d]->Type CRED_TYPE_GENERIC but got %d\n", i, creds[i]->Type);
             ok(!creds[i]->Flags, "expected creds[%d]->Flags 0 but got 0x%x\n", i, creds[i]->Flags);
             ok(!strcmp(creds[i]->Comment, "Comment"), "expected creds[%d]->Comment \"Comment\" but got \"%s\"\n", i, creds[i]->Comment);
-            ok(creds[i]->CredentialBlobSize == sizeof(TEST_PASSWORD), "wrong CredentialBlobSize %d\n", creds[i]->CredentialBlobSize);
-            ok(creds[i]->CredentialBlob != NULL, "CredentialBlob should be present\n");
-            if (creds[i]->CredentialBlob)
-                ok(!memcmp(creds[i]->CredentialBlob, TEST_PASSWORD, sizeof(TEST_PASSWORD)), "credentials don't match\n");
+            check_blob(__LINE__, CRED_TYPE_GENERIC, creds[i]);
             ok(creds[i]->Persist, "expected creds[%d]->Persist CRED_PERSIST_ENTERPRISE but got %d\n", i, creds[i]->Persist);
             ok(!strcmp(creds[i]->UserName, "winetest"), "expected creds[%d]->UserName \"winetest\" but got \"%s\"\n", i, creds[i]->UserName);
             found = TRUE;
@@ -178,7 +195,7 @@ static void test_generic(void)
     ok(ret, "CredDeleteA failed with error %d\n", GetLastError());
 }
 
-static void test_domain_password(void)
+static void test_domain_password(DWORD cred_type)
 {
     BOOL ret;
     DWORD count, i;
@@ -188,7 +205,7 @@ static void test_domain_password(void)
     BOOL found = FALSE;
 
     new_cred.Flags = 0;
-    new_cred.Type = CRED_TYPE_DOMAIN_PASSWORD;
+    new_cred.Type = cred_type;
     new_cred.TargetName = (char *)TEST_TARGET_NAME;
     new_cred.Comment = (char *)"Comment";
     new_cred.CredentialBlobSize = sizeof(TEST_PASSWORD);
@@ -208,13 +225,10 @@ static void test_domain_password(void)
     {
         if (!strcmp(creds[i]->TargetName, TEST_TARGET_NAME))
         {
-            ok(creds[i]->Type == CRED_TYPE_DOMAIN_PASSWORD, "expected creds[%d]->Type CRED_TYPE_DOMAIN_PASSWORD but got %d\n", i, creds[i]->Type);
+            ok(creds[i]->Type == cred_type, "expected creds[%d]->Type CRED_TYPE_DOMAIN_PASSWORD but got %d\n", i, creds[i]->Type);
             ok(!creds[i]->Flags, "expected creds[%d]->Flags 0 but got 0x%x\n", i, creds[i]->Flags);
             ok(!strcmp(creds[i]->Comment, "Comment"), "expected creds[%d]->Comment \"Comment\" but got \"%s\"\n", i, creds[i]->Comment);
-            todo_wine
-            ok(creds[i]->CredentialBlobSize == 0, "expected CredentialBlobSize of 0 but got %d\n", creds[i]->CredentialBlobSize);
-            todo_wine
-            ok(!creds[i]->CredentialBlob, "expected NULL credentials but got %p\n", creds[i]->CredentialBlob);
+            check_blob(__LINE__, cred_type, creds[i]);
             ok(creds[i]->Persist, "expected creds[%d]->Persist CRED_PERSIST_ENTERPRISE but got %d\n", i, creds[i]->Persist);
             ok(!strcmp(creds[i]->UserName, "test\\winetest"), "expected creds[%d]->UserName \"winetest\" but got \"%s\"\n", i, creds[i]->UserName);
             found = TRUE;
@@ -223,25 +237,25 @@ static void test_domain_password(void)
     pCredFree(creds);
     ok(found, "credentials not found\n");
 
-    ret = pCredReadA(TEST_TARGET_NAME, CRED_TYPE_DOMAIN_PASSWORD, 0, &cred);
+    ret = pCredReadA(TEST_TARGET_NAME, cred_type, 0, &cred);
     ok(ret, "CredReadA failed with error %d\n", GetLastError());
     if (ret)  /* don't check the values of cred, if CredReadA failed. */
     {
-        todo_wine
-        ok(cred->CredentialBlobSize == 0, "expected CredentialBlobSize of 0 but got %d\n", cred->CredentialBlobSize);
-        todo_wine
-        ok(!cred->CredentialBlob, "expected NULL credentials but got %p\n", cred->CredentialBlob);
+        check_blob(__LINE__, cred_type, cred);
         pCredFree(cred);
     }
 
-    ret = pCredDeleteA(TEST_TARGET_NAME, CRED_TYPE_DOMAIN_PASSWORD, 0);
+    ret = pCredDeleteA(TEST_TARGET_NAME, cred_type, 0);
     ok(ret, "CredDeleteA failed with error %d\n", GetLastError());
 }
 
 START_TEST(cred)
 {
+    DWORD persists[CRED_TYPE_MAXIMUM];
+
     pCredEnumerateA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredEnumerateA");
     pCredFree = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredFree");
+    pCredGetSessionTypes = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredGetSessionTypes");
     pCredWriteA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredWriteA");
     pCredDeleteA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredDeleteA");
     pCredReadA = (void *)GetProcAddress(GetModuleHandle("advapi32.dll"), "CredReadA");
@@ -254,12 +268,38 @@ START_TEST(cred)
         return;
     }
 
+    if (pCredGetSessionTypes)
+    {
+        BOOL ret;
+        DWORD i;
+        ret = pCredGetSessionTypes(CRED_TYPE_MAXIMUM, persists);
+        ok(ret, "CredGetSessionTypes failed with error %d\n", GetLastError());
+        ok(persists[0] == CRED_PERSIST_NONE, "persists[0] = %u instead of CRED_PERSIST_NONE\n", persists[0]);
+        for (i=0; i < CRED_TYPE_MAXIMUM; i++)
+            ok(persists[i] <= CRED_PERSIST_ENTERPRISE, "bad value for persists[%u]: %u\n", i, persists[i]);
+    }
+    else
+        memset(persists, CRED_PERSIST_ENTERPRISE, sizeof(persists));
+
     test_CredReadA();
     test_CredWriteA();
     test_CredDeleteA();
 
     trace("generic:\n");
-    test_generic();
-    trace("domain password:\n");
-    test_domain_password();
+    if (persists[CRED_TYPE_GENERIC] == CRED_PERSIST_NONE)
+        skip("CRED_TYPE_GENERIC credentials are not supported or are disabled. Skipping\n");
+    else
+        test_generic();
+
+        trace("domain password:\n");
+    if (persists[CRED_TYPE_DOMAIN_PASSWORD] == CRED_PERSIST_NONE)
+        skip("CRED_TYPE_DOMAIN_PASSWORD credentials are not supported or are disabled. Skipping\n");
+    else
+        test_domain_password(CRED_TYPE_DOMAIN_PASSWORD);
+
+    trace("domain visible password:\n");
+    if (persists[CRED_TYPE_DOMAIN_VISIBLE_PASSWORD] == CRED_PERSIST_NONE)
+        skip("CRED_TYPE_DOMAIN_VISIBLE_PASSWORD credentials are not supported or are disabled. Skipping\n");
+    else
+        test_domain_password(CRED_TYPE_DOMAIN_VISIBLE_PASSWORD);
 }
