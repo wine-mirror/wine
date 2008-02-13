@@ -31,8 +31,9 @@
 #include "winbase.h"
 #include "winerror.h"
 
-static HINSTANCE hkernel32;
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
+static BOOL (WINAPI *pReplaceFileA)(LPCSTR, LPCSTR, LPCSTR, DWORD, LPVOID, LPVOID);
+static BOOL (WINAPI *pReplaceFileW)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, LPVOID, LPVOID);
 
 /* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
@@ -49,6 +50,14 @@ static const char sillytext[] =
 "1234 43 4kljf lf &%%%&&&&&& 34 4 34   3############# 33 3 3 3 # 3## 3"
 "sdlkfjasdlkfj a dslkj adsklf  \n  \nasdklf askldfa sdlkf \nsadklf asdklf asdf ";
 
+static void InitFunctionPointers(void)
+{
+    HMODULE hkernel32 = GetModuleHandleA("kernel32");
+
+    pFindFirstFileExA=(void*)GetProcAddress(hkernel32, "FindFirstFileExA");
+    pReplaceFileA=(void*)GetProcAddress(hkernel32, "ReplaceFileA");
+    pReplaceFileW=(void*)GetProcAddress(hkernel32, "ReplaceFileW");
+}
 
 static void test__hread( void )
 {
@@ -1918,6 +1927,12 @@ static void test_ReplaceFileA(void)
     DWORD ret;
     BOOL retok;
 
+    if (!pReplaceFileA)
+    {
+        skip("ReplaceFileA() is missing\n");
+        return;
+    }
+
     ret = GetTempPathA(MAX_PATH, temp_path);
     ok(ret != 0, "GetTempPathA error %d\n", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
@@ -1983,7 +1998,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = ReplaceFile(replaced, replacement, backup, 0, 0, 0);
+    ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
     ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
     /* make sure that the backup has the size of the old "replaced" file */
     hBackupFile = CreateFileA(backup, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
@@ -2023,7 +2038,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
 
     /* re-create replacement file for pass w/ backup (backup-file not existing) */
@@ -2035,7 +2050,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = ReplaceFileA(replaced, replacement, backup, 0, 0, 0);
+    ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
     ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
 
     /* re-create replacement file for pass w/ no permissions to "replaced" */
@@ -2047,7 +2062,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = ReplaceFileA(replaced, replacement, backup, 0, 0, 0);
+    ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
     ok(ret != ERROR_UNABLE_TO_REMOVE_REPLACED, "ReplaceFileA: unexpected error %d\n", GetLastError());
     /* make sure that the replacement file still exists */
     hReplacementFile = CreateFileA(replacement, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
@@ -2064,7 +2079,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = ReplaceFileA(replaced, replacement, backup, 0, 0, 0);
+    ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
 			"ReplaceFileA: unexpected error %d\n", GetLastError());
 
@@ -2072,7 +2087,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
         "ReplaceFileA: unexpected error %d\n", GetLastError());
 
@@ -2098,6 +2113,12 @@ static void test_ReplaceFileW(void)
     WCHAR temp_path[MAX_PATH];
     DWORD ret;
 
+    if (!pReplaceFileW)
+    {
+        skip("ReplaceFileW() is missing\n");
+        return;
+    }
+
     ret = GetTempPathW(MAX_PATH, temp_path);
     if (ret==0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
         return;
@@ -2113,19 +2134,19 @@ static void test_ReplaceFileW(void)
     ret = GetTempFileNameW(temp_path, prefix, 0, backup);
     ok(ret != 0, "GetTempFileNameW error (backup) %d\n", GetLastError());
 
-    ret = ReplaceFileW(replaced, replacement, backup, 0, 0, 0);
+    ret = pReplaceFileW(replaced, replacement, backup, 0, 0, 0);
     ok(ret, "ReplaceFileW: error %d\n", GetLastError());
 
     ret = GetTempFileNameW(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameW error (replacement) %d\n", GetLastError());
-    ret = ReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
+    ret = pReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
     ok(ret, "ReplaceFileW: error %d\n", GetLastError());
 
     ret = GetTempFileNameW(temp_path, prefix, 0, replacement);
     ok(ret != 0, "GetTempFileNameW error (replacement) %d\n", GetLastError());
     ret = DeleteFileW(backup);
     ok(ret, "DeleteFileW: error (backup) %d\n", GetLastError());
-    ret = ReplaceFileW(replaced, replacement, backup, 0, 0, 0);
+    ret = pReplaceFileW(replaced, replacement, backup, 0, 0, 0);
     ok(ret, "ReplaceFileW: error %d\n", GetLastError());
 
     ret = GetTempFileNameW(temp_path, prefix, 0, replacement);
@@ -2133,7 +2154,7 @@ static void test_ReplaceFileW(void)
     ret = SetFileAttributesW(replaced, FILE_ATTRIBUTE_READONLY);
     ok(ret, "SetFileAttributesW: error setting to read only %d\n", GetLastError());
 
-    ret = ReplaceFileW(replaced, replacement, backup, 0, 0, 0);
+    ret = pReplaceFileW(replaced, replacement, backup, 0, 0, 0);
     ok(ret != ERROR_UNABLE_TO_REMOVE_REPLACED,
         "ReplaceFileW: unexpected error %d\n", GetLastError());
     ret = SetFileAttributesW(replaced, FILE_ATTRIBUTE_NORMAL);
@@ -2141,10 +2162,10 @@ static void test_ReplaceFileW(void)
 
     ret = DeleteFileW(replaced);
     ok(ret, "DeleteFileW: error (replaced) %d\n", GetLastError());
-    ret = ReplaceFileW(replaced, replacement, backup, 0, 0, 0);
+    ret = pReplaceFileW(replaced, replacement, backup, 0, 0, 0);
     ok(!ret, "ReplaceFileW: error %d\n", GetLastError());
 
-    ret = ReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
+    ret = pReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
         "ReplaceFileW: unexpected error %d\n", GetLastError());
 
@@ -2154,8 +2175,7 @@ static void test_ReplaceFileW(void)
 
 START_TEST(file)
 {
-    hkernel32 = GetModuleHandleA("kernel32.dll");
-    pFindFirstFileExA=(void*)GetProcAddress(hkernel32, "FindFirstFileExA");
+    InitFunctionPointers();
 
     test__hread(  );
     test__hwrite(  );
