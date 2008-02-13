@@ -40,3 +40,42 @@ interface ISampleGrabberCB : IUnknown
         long BufferLen
     );
 }
+
+[
+    object,
+    uuid(6B652FFF-11FE-4fce-92AD-0266B5D7C78F),
+    local,
+    pointer_default(unique)
+]
+interface ISampleGrabber: IUnknown
+{
+    HRESULT SetOneShot(
+        BOOL OneShot
+    );
+
+    HRESULT SetMediaType(
+        const AM_MEDIA_TYPE * pType
+    );
+
+    HRESULT GetConnectedMediaType(
+        AM_MEDIA_TYPE * pType
+    );
+
+    HRESULT SetBufferSamples(
+        BOOL BufferThem
+    );
+
+    HRESULT GetCurrentBuffer(
+        [in,out] long * pBufferSize,
+        [out] long * pBuffer
+    );
+
+    HRESULT GetCurrentSample(
+        [out] IMediaSample ** ppSample
+    );
+
+    HRESULT SetCallback(
+        ISampleGrabberCB * pCallback,
+        long WhichMethodToCallback
+    );
+};
