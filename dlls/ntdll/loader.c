@@ -876,18 +876,19 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
 /*************************************************************************
  *              MODULE_InitDLL
  */
-static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
+static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
 {
     WCHAR mod_name[32];
-    BOOL retv = TRUE;
+    NTSTATUS status = STATUS_SUCCESS;
     DLLENTRYPROC entry = wm->ldr.EntryPoint;
     void *module = wm->ldr.BaseAddress;
+    BOOL retv = TRUE;
 
     /* Skip calls for modules loaded with special load flags */
 
-    if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return TRUE;
+    if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return STATUS_SUCCESS;
     if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.BaseAddress, reason );
-    if (!entry) return TRUE;
+    if (!entry) return STATUS_SUCCESS;
 
     if (TRACE_ON(relay))
     {
@@ -901,7 +902,20 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
     else TRACE("(%p %s,%s,%p) - CALL\n", module, debugstr_w(wm->ldr.BaseDllName.Buffer),
                reason_names[reason], lpReserved );
 
-    retv = call_dll_entry_point( entry, module, reason, lpReserved );
+    __TRY
+    {
+        retv = call_dll_entry_point( entry, module, reason, lpReserved );
+        if (!retv)
+            status = STATUS_DLL_INIT_FAILED;
+    }
+    __EXCEPT(NULL)
+    {
+        if (TRACE_ON(relay))
+            DPRINTF("%04x:exception in PE entry point (proc=%p,module=%p,reason=%s,res=%p)\n",
+                    GetCurrentThreadId(), entry, module, reason_names[reason], lpReserved );
+        status = GetExceptionCode();
+    }
+    __ENDTRY
 
     /* The state of the module list may have changed due to the call
        to the dll. We cannot assume that this module has not been
@@ -912,7 +926,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
                 reason_names[reason], lpReserved, retv );
     else TRACE("(%p,%s,%p) - RETURN %d\n", module, reason_names[reason], lpReserved, retv );
 
-    return retv;
+    return status;
 }
 
 
@@ -979,16 +993,14 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
     {
         WINE_MODREF *prev = current_modref;
         current_modref = wm;
-        if (MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved ))
-        {
+        status = MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved );
+        if (status == STATUS_SUCCESS)
             wm->ldr.Flags |= LDR_PROCESS_ATTACHED;
-        }
         else
         {
             /* point to the name so LdrInitializeThunk can print it */
             last_failed_modref = wm;
             WARN("Initialization of %s failed\n", debugstr_w(wm->ldr.BaseDllName.Buffer));
-            status = STATUS_DLL_INIT_FAILED;
         }
         current_modref = prev;
     }
@@ -1888,7 +1900,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         if (nts != STATUS_SUCCESS)
             nts = load_builtin_dll( load_path, filename, 0, flags, pwm );
         if (nts == STATUS_SUCCESS && loadorder == LO_DEFAULT &&
-            !MODULE_InitDLL( *pwm, DLL_WINE_PREATTACH, NULL ))
+            (MODULE_InitDLL( *pwm, DLL_WINE_PREATTACH, NULL ) != STATUS_SUCCESS))
         {
             /* stub-only dll, try native */
             TRACE( "%s pre-attach returned FALSE, preferring native\n", debugstr_w(filename) );
