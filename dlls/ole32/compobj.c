@@ -1780,11 +1780,6 @@ static HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSI
   HRESULT hr = S_FALSE;
   RegisteredClass *curClass;
 
-  /*
-   * Sanity check
-   */
-  assert(ppUnk!=0);
-
   EnterCriticalSection( &csRegisteredClassList );
 
   LIST_FOR_EACH_ENTRY(curClass, &RegisteredClassList, RegisteredClass, entry)
