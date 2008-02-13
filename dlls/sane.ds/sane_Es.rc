@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#pragma code_page(65001)
 
 LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
 
@@ -38,3 +39,5 @@ STRINGTABLE DISCARDABLE
  5 "%"
  6 "ns"
 }
+
+#pragma code_page(default)
