@@ -92,45 +92,54 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
        ZeroMemory(&newinfo, sizeof(newinfo));
        newinfo.dwSize = sizeof(NEWCPLINFOA);
        applet->info[i].dwSize = sizeof(NEWCPLINFOW);
+       applet->info[i].dwFlags = 0;
+       applet->info[i].dwHelpContext = 0;
+       applet->info[i].szHelpFile[0] = '\0';
        /* proc is supposed to return a null value upon success for
 	* CPL_INQUIRE and CPL_NEWINQUIRE
 	* However, real drivers don't seem to behave like this
 	* So, use introspection rather than return value
 	*/
-       applet->proc(hWnd, CPL_NEWINQUIRE, i, (LPARAM)&newinfo);
-       if (newinfo.hIcon == 0) {
-	   applet->proc(hWnd, CPL_INQUIRE, i, (LPARAM)&info);
-	   if (info.idIcon == 0 || info.idName == 0) {
-	       WARN("Couldn't get info from sp %u\n", i);
-	       applet->info[i].dwSize = 0;
-	   } else {
-	       /* convert the old data into the new structure */
-	       applet->info[i].dwFlags = 0;
-	       applet->info[i].dwHelpContext = 0;
-	       applet->info[i].lData = info.lData;
-	       applet->info[i].hIcon = LoadIconW(applet->hModule,
-						 MAKEINTRESOURCEW(info.idIcon));
-	       LoadStringW(applet->hModule, info.idName,
-			   applet->info[i].szName, sizeof(applet->info[i].szName) / sizeof(WCHAR));
-	       LoadStringW(applet->hModule, info.idInfo,
-			   applet->info[i].szInfo, sizeof(applet->info[i].szInfo) / sizeof(WCHAR));
-	       applet->info[i].szHelpFile[0] = '\0';
+       applet->proc(hWnd, CPL_INQUIRE, i, (LPARAM)&info);
+       applet->info[i].lData = info.lData;
+       if (info.idIcon != CPL_DYNAMIC_RES)
+	   applet->info[i].hIcon = LoadIconW(applet->hModule,
+					     MAKEINTRESOURCEW(info.idIcon));
+       if (info.idName != CPL_DYNAMIC_RES)
+	   LoadStringW(applet->hModule, info.idName,
+		       applet->info[i].szName, sizeof(applet->info[i].szName) / sizeof(WCHAR));
+       if (info.idInfo != CPL_DYNAMIC_RES)
+	   LoadStringW(applet->hModule, info.idInfo,
+		       applet->info[i].szInfo, sizeof(applet->info[i].szInfo) / sizeof(WCHAR));
+
+       if ((info.idIcon == CPL_DYNAMIC_RES) || (info.idName == CPL_DYNAMIC_RES) ||
+           (info.idInfo == CPL_DYNAMIC_RES)) {
+	   applet->proc(hWnd, CPL_NEWINQUIRE, i, (LPARAM)&newinfo);
+
+	   applet->info[i].dwFlags = newinfo.dwFlags;
+	   applet->info[i].dwHelpContext = newinfo.dwHelpContext;
+	   applet->info[i].lData = newinfo.lData;
+	   if (info.idIcon == CPL_DYNAMIC_RES) {
+	       if (!newinfo.hIcon) WARN("couldn't get icon for applet %u\n", i);
+	       applet->info[i].hIcon = newinfo.hIcon;
 	   }
-       }
-       else
-       {
-           CopyMemory(&applet->info[i], &newinfo, newinfo.dwSize);
-	   if (newinfo.dwSize != sizeof(NEWCPLINFOW))
-           {
-	       applet->info[i].dwSize = sizeof(NEWCPLINFOW);
-               MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szName,
-	                           sizeof(((LPNEWCPLINFOA)&newinfo)->szName) / sizeof(CHAR),
-			           applet->info[i].szName,
-			           sizeof(applet->info[i].szName) / sizeof(WCHAR));
-               MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szInfo,
-	                           sizeof(((LPNEWCPLINFOA)&newinfo)->szInfo) / sizeof(CHAR),
-			           applet->info[i].szInfo,
-			           sizeof(applet->info[i].szInfo) / sizeof(WCHAR));
+	   if (newinfo.dwSize == sizeof(NEWCPLINFOW)) {
+	       if (info.idName == CPL_DYNAMIC_RES)
+	           memcpy(applet->info[i].szName, newinfo.szName, sizeof(newinfo.szName));
+	       if (info.idInfo == CPL_DYNAMIC_RES)
+	           memcpy(applet->info[i].szInfo, newinfo.szInfo, sizeof(newinfo.szInfo));
+	       memcpy(applet->info[i].szHelpFile, newinfo.szHelpFile, sizeof(newinfo.szHelpFile));
+	   } else {
+	       if (info.idName == CPL_DYNAMIC_RES)
+                   MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szName,
+	                               sizeof(((LPNEWCPLINFOA)&newinfo)->szName) / sizeof(CHAR),
+			               applet->info[i].szName,
+			               sizeof(applet->info[i].szName) / sizeof(WCHAR));
+	       if (info.idInfo == CPL_DYNAMIC_RES)
+                   MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szInfo,
+	                               sizeof(((LPNEWCPLINFOA)&newinfo)->szInfo) / sizeof(CHAR),
+			               applet->info[i].szInfo,
+			               sizeof(applet->info[i].szInfo) / sizeof(WCHAR));
                MultiByteToWideChar(CP_ACP, 0, ((LPNEWCPLINFOA)&newinfo)->szHelpFile,
 	                           sizeof(((LPNEWCPLINFOA)&newinfo)->szHelpFile) / sizeof(CHAR),
 			           applet->info[i].szHelpFile,
