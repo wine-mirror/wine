@@ -2219,7 +2219,7 @@ interface nsIEditor  : nsISupports
     nsresult RemoveAttribute([in] nsIDOMElement *aElement, [in] const nsAString *aAttribute);
     nsresult CloneAttribute([in] const nsAString *aAttribute, [in] nsIDOMNode *aDestNode, [in] nsIDOMNode *aSourceNode);
     nsresult CloneAttributes([in] nsIDOMNode *destNode, [in] nsIDOMNode *sourceNode);
-    nsresult CreateNode([in] const nsAString *tag, [in] nsIDOMNode parent, [in] PRInt32 position, [out] nsIDOMNode **_retval);
+    nsresult CreateNode([in] const nsAString *tag, [in] nsIDOMNode *parent, [in] PRInt32 position, [out] nsIDOMNode **_retval);
     nsresult InsertNode([in] nsIDOMNode *node, [in] nsIDOMNode *parent, [in] PRInt32 aPosition);
     nsresult SplitNode([in] nsIDOMNode *existingRightNode, [in] PRInt32 offset, [out] nsIDOMNode **newLeftNode);
     nsresult JoinNodes([in] nsIDOMNode *leftNode, [in] nsIDOMNode *rightNode, [in] nsIDOMNode *parent);
