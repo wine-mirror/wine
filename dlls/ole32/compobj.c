@@ -591,9 +591,9 @@ static DWORD CALLBACK apartment_hostobject_thread(LPVOID p)
     {
         if (!msg.hwnd && (msg.message == DM_HOSTOBJECT))
         {
-            struct host_object_params *params = (struct host_object_params *)msg.lParam;
-            params->hr = apartment_hostobject(apt, params);
-            SetEvent(params->event);
+            struct host_object_params *obj_params = (struct host_object_params *)msg.lParam;
+            obj_params->hr = apartment_hostobject(apt, obj_params);
+            SetEvent(obj_params->event);
         }
         else
         {
