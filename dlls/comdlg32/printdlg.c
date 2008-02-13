@@ -3232,7 +3232,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (uMsg == WM_INITDIALOG) { /*Init dialog*/
         pda = (PageSetupDataA*)lParam;
 	pda->hDlg   = hDlg; /* saving handle to main window to PageSetupDataA structure */
-	memcpy(&pda->curdlg, pda->dlga, sizeof(pda->curdlg));
+	pda->curdlg = *pda->dlga;
 	
 	hDrawWnd = GetDlgItem(hDlg, rct1); 
         TRACE("set property to %p\n", pda);
@@ -3358,7 +3358,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (uMsg==WM_INITDIALOG) {
 	res = TRUE;
         pda = (PageSetupDataW*)lParam;
-	memcpy(&pda->curdlg, pda, sizeof(pda->curdlg));
+	pda->curdlg = *pda->dlga;
 	SetPropW(hDlg, __WINE_PAGESETUPDLGDATA, pda);
 	if (pda->dlga->Flags & PSD_ENABLEPAGESETUPHOOK) {
 	    res = pda->dlga->lpfnPageSetupHook(hDlg,uMsg,wParam,(LPARAM)pda->dlga);
@@ -3537,10 +3537,10 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
 	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	return FALSE;
     }
-    
+
     pda = HeapAlloc(GetProcessHeap(),0,sizeof(*pda));
     pda->dlga = setupdlg;
-    memcpy(&pda->pdlg,&pdlg,sizeof(pdlg));
+    pda->pdlg = pdlg;
 
     bRet = (0<DialogBoxIndirectParamA(
 		setupdlg->hInstance,
@@ -3631,7 +3631,7 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
     }
     pdw = HeapAlloc(GetProcessHeap(),0,sizeof(*pdw));
     pdw->dlga = setupdlg;
-    memcpy(&pdw->pdlg,&pdlg,sizeof(pdlg));
+    pdw->pdlg = pdlg;
 
     bRet = (0<DialogBoxIndirectParamW(
 		setupdlg->hInstance,
