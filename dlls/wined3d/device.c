@@ -3180,7 +3180,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, C
 static HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, RECT* pRect) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    memcpy(pRect, &This->updateStateBlock->scissorRect, sizeof(pRect));
+    *pRect = This->updateStateBlock->scissorRect;
     TRACE("(%p)Returning a Scissor Rect of %d:%d-%d:%d\n", This, pRect->left, pRect->top, pRect->right, pRect->bottom);
     return WINED3D_OK;
 }
