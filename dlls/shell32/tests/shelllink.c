@@ -565,6 +565,11 @@ static void test_load_save(void)
     /* Create a temporary non-executable file */
     r=GetTempPath(sizeof(mypath), mypath);
     ok(r<sizeof(mypath), "GetTempPath failed (%d), err %d\n", r, GetLastError());
+    if (!pGetLongPathNameA)
+    {
+        skip("GetLongPathNameA is not available\n");
+        goto cleanup;
+    }
     r=pGetLongPathNameA(mypath, mydir, sizeof(mydir));
     ok(r<sizeof(mydir), "GetLongPathName failed (%d), err %d\n", r, GetLastError());
     p=strrchr(mydir, '\\');
@@ -597,6 +602,7 @@ static void test_load_save(void)
      * represented as a path.
      */
 
+cleanup:
     /* DeleteFileW is not implemented on Win9x */
     r=DeleteFileA("c:\\test.lnk");
     ok(r, "failed to delete link (%d)\n", GetLastError());
