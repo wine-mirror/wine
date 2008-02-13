@@ -257,8 +257,7 @@ static HRESULT WINAPI ACLMulti_Expand(IACList *iface, LPCWSTR wstr)
         if (!This->objs[i].pACL)
             continue;
         res = IACList_Expand(This->objs[i].pACL, wstr);
-        if (res == S_OK)
-            break;
+        /* Vista behaviour - XP would break out of the loop if res == S_OK (usually calling Expand only once) */
     }
     return res;
 }
