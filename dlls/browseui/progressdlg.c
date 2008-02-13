@@ -179,6 +179,8 @@ static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
                 ShowWindow(GetDlgItem(hwnd, IDCANCEL), SW_HIDE);
             if (This->dwFlags & PROGDLG_MARQUEEPROGRESS)
                 set_progress_marquee(This);
+            if (This->dwFlags & PROGDLG_NOMINIMIZE)
+                SetWindowLongW(hwnd, GWL_STYLE, GetWindowLongW(hwnd, GWL_STYLE) & (~WS_MINIMIZEBOX));
 
             update_dialog(This, 0xffffffff);
             This->dwUpdate = 0;
@@ -328,8 +330,6 @@ static HRESULT WINAPI ProgressDialog_StartProgressDialog(IProgressDialog *iface,
         FIXME("Flags PROGDLG_AUTOTIME not supported\n");
     if (dwFlags & PROGDLG_NOTIME)
         FIXME("Flags PROGDLG_NOTIME not supported\n");
-    if (dwFlags & PROGDLG_NOMINIMIZE)
-        FIXME("Flags PROGDLG_NOMINIMIZE not supported\n");
 
     EnterCriticalSection(&This->cs);
 
