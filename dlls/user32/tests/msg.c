@@ -8936,7 +8936,7 @@ static const struct message WmSetWindowRgn_no_redraw[] = {
 };
 
 static const struct message WmSetWindowRgn_clear[] = {
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE }, /* some versions of 2000/XP also has SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE in wparam */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent }, /* wparam != 1 */
     { WM_GETTEXT, sent|defwinproc|optional },

@@ -273,8 +273,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 
     if (ret)
     {
-        UINT swp_flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED;
-        if (hrgn) swp_flags |= SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE;
+        UINT swp_flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE;
         if (!bRedraw) swp_flags |= SWP_NOREDRAW;
         SetWindowPos( hwnd, 0, 0, 0, 0, 0, swp_flags );
     }
