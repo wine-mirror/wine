@@ -3432,8 +3432,8 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
 
         if (message_loop)
         {
-            DWORD wait_flags = (dwFlags & COWAIT_WAITALL) ? MWMO_WAITALL : 0 |
-                    (dwFlags & COWAIT_ALERTABLE ) ? MWMO_ALERTABLE : 0;
+            DWORD wait_flags = ((dwFlags & COWAIT_WAITALL) ? MWMO_WAITALL : 0) |
+                    ((dwFlags & COWAIT_ALERTABLE ) ? MWMO_ALERTABLE : 0);
 
             TRACE("waiting for rpc completion or window message\n");
 
