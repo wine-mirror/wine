@@ -47,6 +47,7 @@ static const struct {
     {"GL_APPLE_fence",                      APPLE_FENCE,                    0                           },
     {"GL_APPLE_flush_render",               APPLE_FLUSH_RENDER,             0                           },
     {"GL_APPLE_ycbcr_422",                  APPLE_YCBCR_422,                0                           },
+    {"GL_APPLE_float_pixels",               APPLE_FLOAT_PIXELS,             0                           },
 
     /* ATI */
     {"GL_ATI_separate_stencil",             ATI_SEPARATE_STENCIL,           0                           },
@@ -783,6 +784,25 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              * of the code
              */
             gl_info->supported[NV_FENCE] = FALSE;
+        }
+        if (gl_info->supported[APPLE_FLOAT_PIXELS]) {
+            /* GL_APPLE_float_pixels == GL_ARB_texture_float + GL_ARB_half_float_pixel
+             *
+             * The enums are the same:
+             * GL_RGBA16F_ARB     = GL_RGBA_FLOAT16_APPLE = 0x881A
+             * GL_RGB16F_ARB      = GL_RGB_FLOAT16_APPLE  = 0x881B
+             * GL_RGBA32F_ARB     = GL_RGBA_FLOAT32_APPLE = 0x8814
+             * GL_RGB32F_ARB      = GL_RGB_FLOAT32_APPLE  = 0x8815
+             * GL_HALF_FLOAT_ARB  = GL_HALF_APPLE         =  0x140B
+             */
+            if(!gl_info->supported[ARB_TEXTURE_FLOAT]) {
+                TRACE_(d3d_caps)(" IMPLIED: GL_ARB_texture_float support(from GL_APPLE_float_pixels\n");
+                gl_info->supported[ARB_TEXTURE_FLOAT] = TRUE;
+            }
+            if(!gl_info->supported[ARB_HALF_FLOAT_PIXEL]) {
+                TRACE_(d3d_caps)(" IMPLIED: GL_ARB_half_float_pixel support(from GL_APPLE_float_pixels\n");
+                gl_info->supported[ARB_HALF_FLOAT_PIXEL] = TRUE;
+            }
         }
         if (gl_info->supported[ARB_TEXTURE_CUBE_MAP]) {
             TRACE_(d3d_caps)(" IMPLIED: NVIDIA (NV) Texture Gen Reflection support\n");

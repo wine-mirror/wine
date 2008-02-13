@@ -2887,6 +2887,25 @@ typedef void (WINE_GLAPI * PGLFNFINISHRENDERAPPLEPROC) (void);
 #define GL_SAMPLER_2D_RECT_SHADOW_ARB       0x8B64
 #endif
 
+/* GL_APPLE_float_pixels */
+#ifndef GL_APPLE_float_pixels
+#define GL_APPLE_float_pixels
+#define GL_HALF_APPLE                       0x140B
+#define GL_COLOR_FLOAT_APPLE                0x8A0F
+#define GL_RGBA_FLOAT32_APPLE               0x8814
+#define GL_RGB_FLOAT32_APPLE                0x8815
+#define GL_ALPHA_FLOAT32_APPLE              0x8816
+#define GL_INTENSITY_FLOAT32_APPLE          0x8817
+#define GL_LUMINANCE_FLOAT32_APPLE          0x8818
+#define GL_LUMINANCE_ALPHA_FLOAT32_APPLE    0x8819
+#define GL_RGBA_FLOAT16_APPLE               0x881A
+#define GL_RGB_FLOAT16_APPLE                0x881B
+#define GL_ALPHA_FLOAT16_APPLE              0x881C
+#define GL_INTENSITY_FLOAT16_APPLE          0x881D
+#define GL_LUMINANCE_FLOAT16_APPLE          0x881E
+#define GL_LUMINANCE_ALPHA_FLOAT16_APPLE    0x881F
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3251,6 +3270,7 @@ typedef enum _GL_SupportedExt {
   APPLE_CLIENT_STORAGE,
   APPLE_FLUSH_RENDER,
   APPLE_YCBCR_422,
+  APPLE_FLOAT_PIXELS,
   /* SGI */
   SGI_VIDEO_SYNC,
   SGIS_GENERATE_MIPMAP,
