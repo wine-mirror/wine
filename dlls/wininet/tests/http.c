@@ -233,6 +233,7 @@ static VOID WINAPI callback(
 
 static void InternetReadFile_test(int flags)
 {
+    BOOL res;
     DWORD rc;
     CHAR buffer[4000];
     DWORD length;
@@ -285,6 +286,11 @@ static void InternetReadFile_test(int flags)
     trace("HttpOpenRequestA -->\n");
 
     if (hor == 0x0) goto abort;
+
+    length = sizeof(buffer);
+    res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
+    ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
+    ok(!strcmp(buffer, "http://www.winehq.org/about/"), "Wrong URL %s\n", buffer);
 
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
     todo_wine
@@ -366,10 +372,10 @@ static void InternetReadFile_test(int flags)
     buffer[length]=0;
     trace("Option 0x16 -> %i  %s\n",rc,buffer);
 
-    length = 4000;
-    rc = InternetQueryOptionA(hor,INTERNET_OPTION_URL,buffer,&length);
-    buffer[length]=0;
-    trace("Option 0x22 -> %i  %s\n",rc,buffer);
+    length = sizeof(buffer);
+    res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
+    ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
+    ok(!strcmp(buffer, "http://www.winehq.org/site/about"), "Wrong URL %s\n", buffer);
 
     length = 16;
     rc = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_LENGTH,&buffer,&length,0x0);
@@ -963,6 +969,103 @@ static void InternetOpenRequest_test(void)
     ok(InternetCloseHandle(request), "Close request handle failed\n");
 
 done:
+    ok(InternetCloseHandle(connect), "Close connect handle failed\n");
+    ok(InternetCloseHandle(session), "Close session handle failed\n");
+}
+
+static void test_http_cache(void)
+{
+    HINTERNET session, connect, request;
+    char file_name[MAX_PATH], url[INTERNET_MAX_URL_LENGTH];
+    DWORD size, file_size;
+    BYTE buf[100];
+    HANDLE file;
+    BOOL ret;
+
+    static const char *types[] = { "*", "", NULL };
+
+    session = InternetOpenA("Wine Regression Test", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    ok(session != NULL ,"Unable to open Internet session\n");
+
+    connect = InternetConnectA(session, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
+                              INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "Unable to connect to http://winehq.org with error %d\n", GetLastError());
+
+    request = HttpOpenRequestA(connect, NULL, "/site/about", NULL, NULL, types, INTERNET_FLAG_NEED_FILE, 0);
+    if (!request && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
+    {
+        trace( "Network unreachable, skipping test\n" );
+
+        ok(InternetCloseHandle(connect), "Close connect handle failed\n");
+        ok(InternetCloseHandle(session), "Close session handle failed\n");
+
+        return;
+    }
+    ok(request != NULL, "Failed to open request handle err %u\n", GetLastError());
+
+    size = sizeof(url);
+    ret = InternetQueryOptionA(request, INTERNET_OPTION_URL, url, &size);
+    ok(ret, "InternetQueryOptionA(INTERNET_OPTION_url) failed: %u\n", GetLastError());
+    ok(!strcmp(url, "http://www.winehq.org/site/about"), "Wrong URL %s\n", url);
+
+    size = sizeof(file_name);
+    ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
+    ok(!ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) succeeded\n");
+    ok(GetLastError() == ERROR_INTERNET_ITEM_NOT_FOUND, "GetLastError()=%u\n", GetLastError());
+    ok(!size, "size = %d\n", size);
+
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+
+    size = sizeof(file_name);
+    ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
+    ok(ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) failed: %u\n", GetLastError());
+
+    file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                      FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
+    file_size = GetFileSize(file, NULL);
+    ok(file_size == 0, "file size=%d\n", file_size);
+
+    ret = InternetReadFile(request, buf, sizeof(buf), &size);
+    ok(ret, "InternetReadFile failed: %u\n", GetLastError());
+    ok(size == sizeof(buf), "size=%d\n", size);
+
+    file_size = GetFileSize(file, NULL);
+    ok(file_size == sizeof(buf), "file size=%d\n", file_size);
+    CloseHandle(file);
+
+    ok(InternetCloseHandle(request), "Close request handle failed\n");
+
+    file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                      FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file == INVALID_HANDLE_VALUE, "CreateFile succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError()=%u, expected ERROR_FILE_NOT_FOUND\n", GetLastError());
+
+    request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, types, INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok(request != NULL, "Failed to open request handle err %u\n", GetLastError());
+
+    ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
+    ok(!ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) succeeded\n");
+    ok(GetLastError() == ERROR_INTERNET_ITEM_NOT_FOUND, "GetLastError()=%u\n", GetLastError());
+    ok(!size, "size = %d\n", size);
+
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+
+    size = sizeof(file_name);
+    ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
+    ok(!ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) succeeded\n");
+    ok(GetLastError() == ERROR_INTERNET_ITEM_NOT_FOUND, "GetLastError()=%u\n", GetLastError());
+    ok(!size, "size = %d\n", size);
+
+    file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                      FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file == INVALID_HANDLE_VALUE, "CreateFile succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError()=%u, expected ERROR_FILE_NOT_FOUND\n", GetLastError());
+
+    ok(InternetCloseHandle(request), "Close request handle failed\n");
+
     ok(InternetCloseHandle(connect), "Close connect handle failed\n");
     ok(InternetCloseHandle(session), "Close session handle failed\n");
 }
@@ -1628,6 +1731,7 @@ START_TEST(http)
         InternetReadFileExA_test(INTERNET_FLAG_ASYNC);
     }
     InternetOpenRequest_test();
+    test_http_cache();
     InternetOpenUrlA_test();
     if (!pInternetTimeFromSystemTimeA)
         skip("skipping the InternetTime tests\n");
