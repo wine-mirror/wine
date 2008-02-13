@@ -70,6 +70,7 @@ TESTBINS = \
 	opengl32_test.exe \
 	pdh_test.exe \
 	psapi_test.exe \
+	qedit_test.exe \
 	quartz_test.exe \
 	riched20_test.exe \
 	riched32_test.exe \
@@ -196,6 +197,8 @@ pdh_test.exe: $(DLLDIR)/pdh/tests/pdh_test.exe$(DLLEXT)
 	cp $(DLLDIR)/pdh/tests/pdh_test.exe$(DLLEXT) $@ && $(STRIP) $@
 psapi_test.exe: $(DLLDIR)/psapi/tests/psapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/psapi/tests/psapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
+qedit_test.exe: $(DLLDIR)/qedit/tests/qedit_test.exe$(DLLEXT)
+	cp $(DLLDIR)/qedit/tests/qedit_test.exe$(DLLEXT) $@ && $(STRIP) $@
 quartz_test.exe: $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT)
 	cp $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT) $@ && $(STRIP) $@
 riched20_test.exe: $(DLLDIR)/riched20/tests/riched20_test.exe$(DLLEXT)

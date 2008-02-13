@@ -389,6 +389,9 @@ dlls/psapi/tests/*.ok
 dlls/psapi/tests/psapi_crosstest.exe
 dlls/psapi/tests/testlist.c
 dlls/qcap/version.res
+dlls/qedit/tests/*.ok
+dlls/qedit/tests/qedit_crosstest.exe
+dlls/qedit/tests/testlist.c
 dlls/qmgr/qmgr_local.h
 dlls/qmgr/qmgr_local_i.c
 dlls/qmgrprxy/qmgrprxy.h
@@ -775,6 +778,7 @@ programs/winetest/oleaut32_test.exe
 programs/winetest/opengl32_test.exe
 programs/winetest/pdh_test.exe
 programs/winetest/psapi_test.exe
+programs/winetest/qedit_test.exe
 programs/winetest/quartz_test.exe
 programs/winetest/riched20_test.exe
 programs/winetest/riched32_test.exe

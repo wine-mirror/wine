@@ -381,6 +381,7 @@ ALL_MAKEFILES = \
 	dlls/pstorec/Makefile \
 	dlls/qcap/Makefile \
 	dlls/qedit/Makefile \
+	dlls/qedit/tests/Makefile \
 	dlls/qmgr/Makefile \
 	dlls/qmgrprxy/Makefile \
 	dlls/quartz/Makefile \
@@ -793,6 +794,7 @@ dlls/psapi/tests/Makefile: dlls/psapi/tests/Makefile.in dlls/Maketest.rules
 dlls/pstorec/Makefile: dlls/pstorec/Makefile.in dlls/Makedll.rules
 dlls/qcap/Makefile: dlls/qcap/Makefile.in dlls/Makedll.rules
 dlls/qedit/Makefile: dlls/qedit/Makefile.in dlls/Makedll.rules
+dlls/qedit/tests/Makefile: dlls/qedit/tests/Makefile.in dlls/Maketest.rules
 dlls/qmgr/Makefile: dlls/qmgr/Makefile.in dlls/Makedll.rules
 dlls/qmgrprxy/Makefile: dlls/qmgrprxy/Makefile.in dlls/Makedll.rules
 dlls/quartz/Makefile: dlls/quartz/Makefile.in dlls/Makedll.rules

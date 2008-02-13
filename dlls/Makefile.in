@@ -326,6 +326,7 @@ TESTSUBDIRS = \
 	opengl32/tests \
 	pdh/tests \
 	psapi/tests \
+	qedit/tests \
 	quartz/tests \
 	riched20/tests \
 	riched32/tests \

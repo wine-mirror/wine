@@ -21613,6 +21613,8 @@ ac_config_files="$ac_config_files dlls/qcap/Makefile"
 
 ac_config_files="$ac_config_files dlls/qedit/Makefile"
 
+ac_config_files="$ac_config_files dlls/qedit/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/qmgr/Makefile"
 
 ac_config_files="$ac_config_files dlls/qmgrprxy/Makefile"
@@ -22750,6 +22752,7 @@ do
     "dlls/pstorec/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/pstorec/Makefile" ;;
     "dlls/qcap/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qcap/Makefile" ;;
     "dlls/qedit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qedit/Makefile" ;;
+    "dlls/qedit/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qedit/tests/Makefile" ;;
     "dlls/qmgr/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qmgr/Makefile" ;;
     "dlls/qmgrprxy/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/qmgrprxy/Makefile" ;;
     "dlls/quartz/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/quartz/Makefile" ;;
