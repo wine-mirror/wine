@@ -147,7 +147,9 @@ DECL_WINELIB_TYPE_AW(PCREDUI_INFO)
 #define CRED_TYPE_DOMAIN_PASSWORD                   2
 #define CRED_TYPE_DOMAIN_CERTIFICATE                3
 #define CRED_TYPE_DOMAIN_VISIBLE_PASSWORD           4
-#define CRED_TYPE_MAXIMUM                           5
+#define CRED_TYPE_GENERIC_CERTIFICATE               5
+#define CRED_TYPE_MAXIMUM                           6
+#define CRED_TYPE_MAXIMUM_EX                        (CRED_TYPE_MAXIMUM+1000)
 
 /* values for CREDENTIAL::Persist */
 #define CRED_PERSIST_NONE                           0
