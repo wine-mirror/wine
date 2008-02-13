@@ -788,11 +788,9 @@ static void test_EnumColorProfilesA(void)
     ret = pEnumColorProfilesA( NULL, &record, buffer, NULL, &number );
     ok( !ret, "EnumColorProfilesA() succeeded (%d)\n", GetLastError() );
 
-    if (standardprofile)
-    {
-        ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
-        ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
-    }
+    ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
+    todo_wine
+    ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
 
     size = 0;
 
@@ -801,13 +799,11 @@ static void test_EnumColorProfilesA(void)
 
     /* Functional checks */
 
-    if (standardprofile)
-    {
-        size = total;
+    size = total;
+    ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
+    todo_wine
+    ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
 
-        ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
-        ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
-    }
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
@@ -842,26 +838,21 @@ static void test_EnumColorProfilesW(void)
     ret = pEnumColorProfilesW( NULL, &record, buffer, NULL, &number );
     ok( !ret, "EnumColorProfilesW() succeeded (%d)\n", GetLastError() );
 
-    if (standardprofileW)
-    {
-        ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
-        ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
-    }
+    ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
+    todo_wine
+    ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
 
     size = 0;
-
     ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesW() succeeded (%d)\n", GetLastError() );
 
     /* Functional checks */
 
-    if (standardprofileW)
-    {
-        size = total;
+    size = total;
+    ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
+    todo_wine
+    ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
 
-        ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
-        ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
-    }
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
