@@ -325,7 +325,7 @@ BOOL WINAPI CryptSIPRetrieveSubjectGuid
     dos = (IMAGE_DOS_HEADER *)pMapped;
     if (dos->e_magic == IMAGE_DOS_SIGNATURE)
     {
-        memcpy(pgSubject, &unknown, sizeof(GUID));
+        *pgSubject = unknown;
         SetLastError(S_OK);
         bRet = TRUE;
         goto cleanup1;
@@ -435,8 +435,8 @@ static void CRYPT_CacheSIP(const GUID *pgSubject, SIP_DISPATCH_INFO *info)
 
     if (prov)
     {
-        memcpy(&prov->subject, pgSubject, sizeof(prov->subject));
-        memcpy(&prov->info, info, sizeof(prov->info));
+        prov->subject = *pgSubject;
+        prov->info = *info;
         EnterCriticalSection(&providers_cs);
         list_add_tail(&providers, &prov->entry);
         LeaveCriticalSection(&providers_cs);

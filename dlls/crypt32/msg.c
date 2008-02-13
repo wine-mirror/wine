@@ -78,7 +78,7 @@ static inline void CryptMsgBase_Init(CryptMsgBase *msg, DWORD dwFlags,
     if (pStreamInfo)
     {
         msg->streamed = TRUE;
-        memcpy(&msg->stream_info, pStreamInfo, sizeof(msg->stream_info));
+        msg->stream_info = *pStreamInfo;
     }
     else
     {
@@ -1124,7 +1124,7 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         CRYPT_SIGNED_INFO info;
         char oid_rsa_data[] = szOID_RSA_data;
 
-        memcpy(&info, msg->msg_data.info, sizeof(info));
+        info = *msg->msg_data.info;
         /* Quirk:  OID is only encoded messages if an update has happened */
         if (msg->base.state != MsgStateInit)
             info.content.pszObjId = oid_rsa_data;

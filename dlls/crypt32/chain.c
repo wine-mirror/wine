@@ -986,8 +986,7 @@ static BOOL CRYPT_BuildCandidateChainFromCert(HCERTCHAINENGINE hChainEngine,
             chain->ref = 1;
             chain->world = world;
             chain->context.cbSize = sizeof(CERT_CHAIN_CONTEXT);
-            memcpy(&chain->context.TrustStatus, &simpleChain->TrustStatus,
-             sizeof(CERT_TRUST_STATUS));
+            chain->context.TrustStatus = simpleChain->TrustStatus;
             chain->context.cChain = 1;
             chain->context.rgpChain = CryptMemAlloc(sizeof(PCERT_SIMPLE_CHAIN));
             chain->context.rgpChain[0] = simpleChain;
@@ -1029,8 +1028,7 @@ static PCERT_SIMPLE_CHAIN CRYPT_CopySimpleChainToElement(
 
                 if (element)
                 {
-                    memcpy(element, chain->rgpElement[i],
-                     sizeof(CERT_CHAIN_ELEMENT));
+                    *element = *chain->rgpElement[i];
                     element->pCertContext = CertDuplicateCertificateContext(
                      chain->rgpElement[i]->pCertContext);
                     /* Reset the trust status of the copied element, it'll get
