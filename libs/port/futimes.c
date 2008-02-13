@@ -24,8 +24,12 @@
 #ifndef HAVE_FUTIMES
 
 #include <sys/types.h>
-#include <sys/time.h>
-#include <utime.h>
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#ifdef HAVE_UTIME_H
+# include <utime.h>
+#endif
 #include <stdio.h>
 #include <errno.h>
 
