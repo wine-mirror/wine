@@ -1404,7 +1404,7 @@ interface nsIWebNavigation : nsISupports
 ]
 interface nsIPrintSettings : nsISupports
 {
-    typedef struct {} nsMargin;
+    typedef struct { char dummy; } nsMargin;
 
     nsresult SetPrintOptions(PRInt32 aType, PRBool aTurnOnOff);
     nsresult GetPrintOptions(PRInt32 aType, PRBool *_retval);
