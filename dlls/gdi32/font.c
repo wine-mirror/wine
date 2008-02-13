@@ -1455,26 +1455,6 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
 
 
 /***********************************************************************
- * GetOutlineTextMetrics [GDI.308]  Gets metrics for TrueType fonts.
- *
- * NOTES
- *    lpOTM should be LPOUTLINETEXTMETRIC
- *
- * RETURNS
- *    Success: Non-zero or size of required buffer
- *    Failure: 0
- */
-UINT16 WINAPI GetOutlineTextMetrics16(
-    HDC16 hdc,    /* [in]  Handle of device context */
-    UINT16 cbData, /* [in]  Size of metric data array */
-    LPOUTLINETEXTMETRIC16 lpOTM)  /* [out] Address of metric data array */
-{
-    FIXME("(%04x,%04x,%p): stub\n", hdc,cbData,lpOTM);
-    return 0;
-}
-
-
-/***********************************************************************
  *		GetOutlineTextMetricsA (GDI32.@)
  * Gets metrics for TrueType fonts.
  *
@@ -2405,15 +2385,6 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
         FIXME("(%p, 0x%08x): stub - harmless\n", hDC, dwFlag);
     release_dc_ptr( dc );
     return ret;
-}
-
-/***********************************************************************
- *          GetAspectRatioFilterEx  (GDI.486)
- */
-BOOL16 WINAPI GetAspectRatioFilterEx16( HDC16 hdc, LPSIZE16 pAspectRatio )
-{
-  FIXME("(%04x, %p): -- Empty Stub !\n", hdc, pAspectRatio);
-  return FALSE;
 }
 
 /***********************************************************************

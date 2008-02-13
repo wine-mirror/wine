@@ -1728,6 +1728,31 @@ BOOL16 WINAPI GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar, 
 
 
 /***********************************************************************
+ *           GetOutlineTextMetrics (GDI.308)
+ *
+ * Gets metrics for TrueType fonts.
+ *
+ * PARAMS
+ *    hdc    [In]  Handle of device context
+ *    cbData [In]  Size of metric data array
+ *    lpOTM  [Out] Address of metric data array
+ *
+ * RETURNS
+ *    Success: Non-zero or size of required buffer
+ *    Failure: 0
+ *
+ * NOTES
+ *    lpOTM should be LPOUTLINETEXTMETRIC
+ */
+UINT16 WINAPI GetOutlineTextMetrics16( HDC16 hdc, UINT16 cbData,
+                                       LPOUTLINETEXTMETRIC16 lpOTM )
+{
+    FIXME("(%04x,%04x,%p): stub\n", hdc,cbData,lpOTM);
+    return 0;
+}
+
+
+/***********************************************************************
  *           GetGlyphOutline    (GDI.309)
  */
 DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
@@ -2608,6 +2633,16 @@ BOOL16 WINAPI ScaleWindowExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
                                      &size32 );
     if (size) { size->cx = size32.cx; size->cy = size32.cy; }
     return ret;
+}
+
+
+/***********************************************************************
+ *           GetAspectRatioFilterEx  (GDI.486)
+ */
+BOOL16 WINAPI GetAspectRatioFilterEx16( HDC16 hdc, LPSIZE16 pAspectRatio )
+{
+    FIXME("(%04x, %p): -- Empty Stub !\n", hdc, pAspectRatio);
+    return FALSE;
 }
 
 
