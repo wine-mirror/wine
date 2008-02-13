@@ -253,9 +253,6 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, DWORD datasize, LP
     {
 	WARN("Could not load %s\n", debugstr_w(filename));
 
-	if (GetLastError() == ERROR_BAD_EXE_FORMAT)
-	    return 0xFFFFFFFF;
-
 	return 0;
     }
     hRsrc = FindResourceW(hModule,
@@ -384,7 +381,10 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, DWORD datasize, LPV
     if(hModule < 32)
     {
 	WARN("Could not load %s\n", debugstr_a(filename));
-	return 0;
+	if (hModule == ERROR_BAD_FORMAT)
+		return 0xFFFFFFFF;
+	else
+		return 0x0;
     }
     hRsrc = FindResource16(hModule,
 			  MAKEINTRESOURCEA(VS_VERSION_INFO),
