@@ -537,7 +537,7 @@ static HKEY reg_open_mscms_key(void)
     return ICM_key;
 }
 
-static void check_registry(void)
+static void check_registry(BOOL *has_space_rgb)
 {
     HKEY hkIcmKey;
     LONG res;
@@ -546,6 +546,7 @@ static void check_registry(void)
     char szData[MAX_PATH+1];
     DWORD dwNameLen, dwDataLen, dwType;
 
+    *has_space_rgb = FALSE;
     hkIcmKey = reg_open_mscms_key();
     if (!hkIcmKey)
     {
@@ -567,6 +568,8 @@ static void check_registry(void)
         dwNameLen = sizeof(szName);
         dwDataLen = sizeof(szData);
         res = RegEnumValueA( hkIcmKey, i, szName, &dwNameLen, NULL, &dwType, (LPBYTE)szData, &dwDataLen );
+        if (strcmp(szName, "RGB") == 0)
+            *has_space_rgb = TRUE;
         if (res != ERROR_SUCCESS) 
         {
             trace("RegEnumValueA() failed (%d), cannot enumerate profiles\n", res);
@@ -580,7 +583,7 @@ static void check_registry(void)
     RegCloseKey( hkIcmKey );
 }
 
-static void test_GetStandardColorSpaceProfileA(void)
+static void test_GetStandardColorSpaceProfileA(BOOL has_space_rgb)
 {
     BOOL ret;
     DWORD size;
@@ -646,7 +649,7 @@ static void test_GetStandardColorSpaceProfileA(void)
 
     /* Functional checks */
 
-    if (standardprofile)
+    if (has_space_rgb)
     {
         size = sizeof(oldprofile);
 
@@ -674,7 +677,7 @@ static void test_GetStandardColorSpaceProfileA(void)
     }
 }
 
-static void test_GetStandardColorSpaceProfileW(void)
+static void test_GetStandardColorSpaceProfileW(BOOL has_space_rgb)
 {
     BOOL ret;
     DWORD size;
@@ -696,9 +699,12 @@ static void test_GetStandardColorSpaceProfileW(void)
     ret = pGetStandardColorSpaceProfileW(NULL, (DWORD)-1, newprofile, &sizeP);
     ok( !ret && GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
 
-    SetLastError(0xfaceabee); /* 3th param, */
+    SetLastError(0xfaceabee); /* 3rd param, */
     ret = pGetStandardColorSpaceProfileW(NULL, SPACE_RGB, NULL, &sizeP);
-    ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
+    if (has_space_rgb)
+        ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
+    else
+        todo_wine ok( !ret && GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
 
     SetLastError(0xfaceabee); /* 4th param, */
     ret = pGetStandardColorSpaceProfileW(NULL, SPACE_RGB, newprofile, NULL);
@@ -706,7 +712,11 @@ static void test_GetStandardColorSpaceProfileW(void)
 
     SetLastError(0xfaceabee); /* dereferenced 4th param. */
     ret = pGetStandardColorSpaceProfileW(NULL, SPACE_RGB, newprofile, &zero);
-    ok( !ret && (GetLastError() == ERROR_MORE_DATA || GetLastError() == ERROR_INSUFFICIENT_BUFFER), "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
+    if (has_space_rgb)
+        ok( !ret && (GetLastError() == ERROR_MORE_DATA || GetLastError() == ERROR_INSUFFICIENT_BUFFER), "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
+    else
+        todo_wine ok( !ret && GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileW() returns %d (GLE=%d)\n", ret, GetLastError() );
+
 
     /* Several invalid parameter checks: */
 
@@ -729,7 +739,7 @@ static void test_GetStandardColorSpaceProfileW(void)
 
     /* Functional checks */
 
-    if (standardprofileW)
+    if (has_space_rgb)
     {
         size = sizeof(oldprofile);
 
@@ -1350,6 +1360,7 @@ START_TEST(profile)
     char path[MAX_PATH], file[MAX_PATH];
     char profilefile1[MAX_PATH], profilefile2[MAX_PATH];
     WCHAR profilefile1W[MAX_PATH], profilefile2W[MAX_PATH];
+    BOOL has_space_rgb;
     WCHAR fileW[MAX_PATH];
     UINT ret;
 
@@ -1424,10 +1435,10 @@ START_TEST(profile)
     test_GetCountColorProfileElements();
 
     enum_registered_color_profiles();
-    check_registry();
+    check_registry(&has_space_rgb);
 
-    test_GetStandardColorSpaceProfileA();
-    test_GetStandardColorSpaceProfileW();
+    test_GetStandardColorSpaceProfileA(has_space_rgb);
+    test_GetStandardColorSpaceProfileW(has_space_rgb);
 
     test_EnumColorProfilesA();
     test_EnumColorProfilesW();
