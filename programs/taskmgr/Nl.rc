@@ -135,7 +135,7 @@ BEGIN
         MENUITEM "&Herstellen",                 ID_RESTORE
         MENUITEM "&Sluiten",                    ID_FILE_EXIT
         MENUITEM SEPARATOR
-        MENUITEM "&Altijd op de voorgrond",     ID_OPTIONS_ALWAYSONTOP, CHECKED
+        MENUITEM "&Altijd op de voorgrond",     ID_OPTIONS_ALWAYSONTOP
     END
 END
 
