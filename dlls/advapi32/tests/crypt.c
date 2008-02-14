@@ -425,12 +425,16 @@ static void test_verify_sig(void)
 	 "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
 	SetLastError(0xdeadbeef);
 	ret = pCryptVerifySignatureW(hash, NULL, 0, key, NULL, 0);
-	ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
-	 "Expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
+	ok(!ret && (GetLastError() == NTE_BAD_SIGNATURE ||
+	 GetLastError() == ERROR_INVALID_PARAMETER),
+	 "Expected NTE_BAD_SIGNATURE or ERROR_INVALID_PARAMETER, got %08x\n",
+	 GetLastError());
 	SetLastError(0xdeadbeef);
 	ret = pCryptVerifySignatureW(hash, NULL, sizeof(bogus), key, NULL, 0);
-	ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
-	 "Expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
+	ok(!ret && (GetLastError() == NTE_BAD_SIGNATURE ||
+	 GetLastError() == ERROR_INVALID_PARAMETER),
+	 "Expected NTE_BAD_SIGNATURE or ERROR_INVALID_PARAMETER, got %08x\n",
+	 GetLastError());
 	SetLastError(0xdeadbeef);
 	ret = pCryptVerifySignatureW(hash, bogus, 0, key, NULL, 0);
 	ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
