@@ -5727,6 +5727,108 @@ static void test_forcecodepage(void)
     DeleteFileA("forcecodepage.idt");
 }
 
+static void test_viewmodify_refresh(void)
+{
+    MSIHANDLE hdb, hview, hrec;
+    const char *query;
+    char buffer[MAX_PATH];
+    UINT r;
+    DWORD size;
+
+    DeleteFile(msifile);
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `Table` ( `A` CHAR(72) NOT NULL, `B` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `Table` ( `A`, `B` ) VALUES ( 'hi', 1 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `Table`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "UPDATE `Table` SET `B` = 2 WHERE `A` = 'hi'";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewModify(hview, MSIMODIFY_REFRESH, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetStringA(hrec, 1, buffer, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buffer, "hi"), "Expected \"hi\", got \"%s\"\n", buffer);
+    ok(size == 2, "Expected 2, got %d\n", size);
+
+    r = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(r == 2, "Expected 2, got %d\n", r);
+    }
+
+    MsiCloseHandle(hrec);
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "INSERT INTO `Table` ( `A`, `B` ) VALUES ( 'hello', 3 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `Table` WHERE `B` = 3";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "UPDATE `Table` SET `B` = 2 WHERE `A` = 'hello'";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `Table` ( `A`, `B` ) VALUES ( 'hithere', 3 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewModify(hview, MSIMODIFY_REFRESH, hrec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetStringA(hrec, 1, buffer, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buffer, "hello"), "Expected \"hello\", got \"%s\"\n", buffer);
+    ok(size == 5, "Expected 5, got %d\n", size);
+
+    r = MsiRecordGetInteger(hrec, 2);
+    todo_wine
+    {
+        ok(r == 2, "Expected 2, got %d\n", r);
+    }
+
+    MsiCloseHandle(hrec);
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+    MsiCloseHandle(hdb);
+    DeleteFileA(msifile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -5762,4 +5864,5 @@ START_TEST(db)
     test_carriagereturn();
     test_noquotes();
     test_forcecodepage();
+    test_viewmodify_refresh();
 }
