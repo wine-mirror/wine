@@ -2053,7 +2053,9 @@ static void testKeyUsage(void)
         if (pUsage->cUsageIdentifier)
             ok(!strcmp(pUsage->rgpszUsageIdentifier[0], oid),
              "Expected %s, got %s\n", oid, pUsage->rgpszUsageIdentifier[0]);
-        /* Yep, I can re-add the same usage identifier */
+        /* Re-adding the same usage identifier succeeds, though it only adds
+         * a duplicate usage identifier on versions prior to Vista
+         */
         ret = CertAddEnhancedKeyUsageIdentifier(context, oid);
         ok(ret, "CertAddEnhancedKeyUsageIdentifier failed: %08x\n",
          GetLastError());
@@ -2061,8 +2063,8 @@ static void testKeyUsage(void)
         ret = CertGetEnhancedKeyUsage(context, 0, pUsage, &size);
         ok(ret && GetLastError() == 0,
          "CertGetEnhancedKeyUsage failed: %08x\n", GetLastError());
-        ok(pUsage->cUsageIdentifier == 2, "Expected 2 identifiers, got %d\n",
-         pUsage->cUsageIdentifier);
+        ok(pUsage->cUsageIdentifier == 1 || pUsage->cUsageIdentifier == 2,
+         "Expected 1 or 2 identifiers, got %d\n", pUsage->cUsageIdentifier);
         if (pUsage->cUsageIdentifier)
             ok(!strcmp(pUsage->rgpszUsageIdentifier[0], oid),
              "Expected %s, got %s\n", oid, pUsage->rgpszUsageIdentifier[0]);

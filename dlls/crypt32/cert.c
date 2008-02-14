@@ -1902,29 +1902,43 @@ BOOL WINAPI CertAddEnhancedKeyUsageIdentifier(PCCERT_CONTEXT pCertContext,
              CERT_FIND_PROP_ONLY_ENHKEY_USAGE_FLAG, usage, &size);
             if (ret)
             {
-                PCERT_ENHKEY_USAGE newUsage = CryptMemAlloc(size +
-                 sizeof(LPSTR) + strlen(pszUsageIdentifier) + 1);
+                DWORD i;
+                BOOL exists = FALSE;
 
-                if (newUsage)
+                /* Make sure usage doesn't already exist */
+                for (i = 0; !exists && i < usage->cUsageIdentifier; i++)
                 {
-                    LPSTR nextOID;
-                    DWORD i;
+                    if (!strcmp(usage->rgpszUsageIdentifier[i],
+                     pszUsageIdentifier))
+                        exists = TRUE;
+                }
+                if (!exists)
+                {
+                    PCERT_ENHKEY_USAGE newUsage = CryptMemAlloc(size +
+                     sizeof(LPSTR) + strlen(pszUsageIdentifier) + 1);
 
-                    newUsage->rgpszUsageIdentifier =
-                     (LPSTR *)((LPBYTE)newUsage + sizeof(CERT_ENHKEY_USAGE));
-                    nextOID = (LPSTR)((LPBYTE)newUsage->rgpszUsageIdentifier +
-                     (usage->cUsageIdentifier + 1) * sizeof(LPSTR));
-                    for (i = 0; i < usage->cUsageIdentifier; i++)
+                    if (newUsage)
                     {
+                        LPSTR nextOID;
+
+                        newUsage->rgpszUsageIdentifier = (LPSTR *)
+                         ((LPBYTE)newUsage + sizeof(CERT_ENHKEY_USAGE));
+                        nextOID = (LPSTR)((LPBYTE)newUsage->rgpszUsageIdentifier
+                          + (usage->cUsageIdentifier + 1) * sizeof(LPSTR));
+                        for (i = 0; i < usage->cUsageIdentifier; i++)
+                        {
+                            newUsage->rgpszUsageIdentifier[i] = nextOID;
+                            strcpy(nextOID, usage->rgpszUsageIdentifier[i]);
+                            nextOID += strlen(nextOID) + 1;
+                        }
                         newUsage->rgpszUsageIdentifier[i] = nextOID;
-                        strcpy(nextOID, usage->rgpszUsageIdentifier[i]);
-                        nextOID += strlen(nextOID) + 1;
+                        strcpy(nextOID, pszUsageIdentifier);
+                        newUsage->cUsageIdentifier = i + 1;
+                        ret = CertSetEnhancedKeyUsage(pCertContext, newUsage);
+                        CryptMemFree(newUsage);
                     }
-                    newUsage->rgpszUsageIdentifier[i] = nextOID;
-                    strcpy(nextOID, pszUsageIdentifier);
-                    newUsage->cUsageIdentifier = i + 1;
-                    ret = CertSetEnhancedKeyUsage(pCertContext, newUsage);
-                    CryptMemFree(newUsage);
+                    else
+                        ret = FALSE;
                 }
             }
             CryptMemFree(usage);
