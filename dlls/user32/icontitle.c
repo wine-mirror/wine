@@ -181,7 +181,7 @@ static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
     {
 	WCHAR buffer[80];
 
-        INT length = GetWindowTextW( owner, buffer, sizeof(buffer) );
+        INT length = GetWindowTextW( owner, buffer, sizeof(buffer)/sizeof(buffer[0]) );
         SetTextColor( hDC, textColor );
         SetBkMode( hDC, TRANSPARENT );
 
