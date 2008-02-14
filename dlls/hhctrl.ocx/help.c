@@ -115,7 +115,7 @@ BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
     if (!info->web_browser)
         return FALSE;
 
-    if(!GetFullPathNameW(file, sizeof(full_path), full_path, NULL)) {
+    if(!GetFullPathNameW(file, sizeof(full_path)/sizeof(full_path[0]), full_path, NULL)) {
         WARN("GetFullPathName failed: %u\n", GetLastError());
         return FALSE;
     }

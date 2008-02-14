@@ -342,7 +342,7 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
 
     CHMInfo *ret = heap_alloc_zero(sizeof(CHMInfo));
 
-    res = GetFullPathNameW(szFile, sizeof(file), file, NULL);
+    res = GetFullPathNameW(szFile, sizeof(file)/sizeof(file[0]), file, NULL);
     ret->szFile = strdupW(file);
 
     hres = CoCreateInstance(&CLSID_ITStorage, NULL, CLSCTX_INPROC_SERVER,
