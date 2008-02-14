@@ -3024,8 +3024,14 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
          *
          * We don't want to enable this on all cards, as it adds an extra instruction per texcoord used. This
          * makes the shader slower and eats instruction slots which should be available to the d3d app.
+         *
+         * ATI Radeon HD 2xxx cards on MacOS have the issue. Instead of checking for the buggy cards blacklist
+         * all radeon cards on Macs but whitelist the good ones, that way we're prepared for the future. If
+         * this workaround is activated on cards that do not need it it won't break things, just affect
+         * performance negatively
          */
-        if(gl_info->gl_vendor == VENDOR_INTEL) {
+        if(gl_info->gl_vendor == VENDOR_INTEL ||
+           (gl_info->gl_vendor == VENDOR_ATI && gl_info->gl_card != CARD_ATI_RADEON_X1600)) {
             TRACE("Enabling vertex texture coord fixes in vertex shaders\n");
             gl_info->set_texcoord_w = TRUE;
         }
