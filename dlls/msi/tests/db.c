@@ -5762,10 +5762,7 @@ static void test_viewmodify_refresh(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewModify(hview, MSIMODIFY_REFRESH, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetStringA(hrec, 1, buffer, &size);
@@ -5774,10 +5771,7 @@ static void test_viewmodify_refresh(void)
     ok(size == 2, "Expected 2, got %d\n", size);
 
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(r == 2, "Expected 2, got %d\n", r);
-    }
+    ok(r == 2, "Expected 2, got %d\n", r);
 
     MsiCloseHandle(hrec);
     MsiViewClose(hview);
@@ -5805,10 +5799,7 @@ static void test_viewmodify_refresh(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewModify(hview, MSIMODIFY_REFRESH, hrec);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetStringA(hrec, 1, buffer, &size);
@@ -5817,10 +5808,7 @@ static void test_viewmodify_refresh(void)
     ok(size == 5, "Expected 5, got %d\n", size);
 
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine
-    {
-        ok(r == 2, "Expected 2, got %d\n", r);
-    }
+    ok(r == 2, "Expected 2, got %d\n", r);
 
     MsiCloseHandle(hrec);
     MsiViewClose(hview);

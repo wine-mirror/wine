@@ -1527,10 +1527,8 @@ static void test_Database(IDispatch *pDatabase, BOOL readonly)
             ok(hr == DISP_E_EXCEPTION, "View_Modify failed, hresult 0x%08x\n", hr);
             ok_exception(hr, szModifyModeRecord);
 
-            /* View::Modify with MSIMODIFY_REFRESH should undo our changes */
             hr = View_Modify(pView, MSIMODIFY_REFRESH, pRecord);
-            /* Wine's MsiViewModify currently does not support MSIMODIFY_REFRESH */
-            todo_wine ok(hr == S_OK, "View_Modify failed, hresult 0x%08x\n", hr);
+            ok(hr == S_OK, "View_Modify failed, hresult 0x%08x\n", hr);
 
             /* Record::StringDataGet, confirm that the record is back to its unmodified value */
             memset(szString, 0, sizeof(szString));

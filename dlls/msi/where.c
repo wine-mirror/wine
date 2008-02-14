@@ -503,11 +503,17 @@ static UINT WHERE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
                           MSIRECORD *rec, UINT row )
 {
     MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
+    UINT r;
 
-    TRACE("%p %d %p\n", wv, eModifyMode, rec );
+    TRACE("%p %d %p\n", wv, eModifyMode, rec);
 
-    if( !wv->table )
-         return ERROR_FUNCTION_FAILED;
+    r = WHERE_execute(view, NULL);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = find_entry_in_hash(wv->reorder, row - 1, &row);
+    if (r != ERROR_SUCCESS)
+        return r;
 
     return wv->table->ops->modify( wv->table, eModifyMode, rec, row );
 }
