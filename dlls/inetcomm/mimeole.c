@@ -820,7 +820,7 @@ static HRESULT WINAPI MimeBody_SetOption(
                                 const TYPEDID oid,
                                 LPCPROPVARIANT pValue)
 {
-    FIXME("stub\n");
+    FIXME("(%p)->(%08x, %p): stub\n", iface, oid, pValue);
     return E_NOTIMPL;
 }
 
@@ -829,7 +829,7 @@ static HRESULT WINAPI MimeBody_GetOption(
                                 const TYPEDID oid,
                                 LPPROPVARIANT pValue)
 {
-    FIXME("stub\n");
+    FIXME("(%p)->(%08x, %p): stub\n", iface, oid, pValue);
     return E_NOTIMPL;
 }
 
@@ -846,7 +846,7 @@ static HRESULT WINAPI MimeBody_IsType(
                              IMimeBody* iface,
                              IMSGBODYTYPE bodytype)
 {
-    FIXME("stub\n");
+    FIXME("(%p)->(%d): stub\n", iface, bodytype);
     return E_NOTIMPL;
 }
 
@@ -2134,7 +2134,7 @@ static HRESULT WINAPI MimeMessage_SetOption(
     const TYPEDID oid,
     LPCPROPVARIANT pValue)
 {
-    FIXME("(%p)->(%d, %p)\n", iface, oid, pValue);
+    FIXME("(%p)->(%08x, %p)\n", iface, oid, pValue);
     return E_NOTIMPL;
 }
 
@@ -2143,7 +2143,7 @@ static HRESULT WINAPI MimeMessage_GetOption(
     const TYPEDID oid,
     LPPROPVARIANT pValue)
 {
-    FIXME("(%p)->(%d, %p)\n", iface, oid, pValue);
+    FIXME("(%p)->(%08x, %p)\n", iface, oid, pValue);
     return E_NOTIMPL;
 }
 
