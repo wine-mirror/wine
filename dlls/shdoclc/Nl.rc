@@ -21,6 +21,17 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
+STRINGTABLE DISCARDABLE
+{
+    IDS_MESSAGE_BOX_TITLE, "Wine Internet Verkenner"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_PRINT_HEADER_TEMPLATE "&w&bPagina &p" /* FIXME: should be "&w&bPagina &p of &P" */
+    IDS_PRINT_FOOTER_TEMPLATE "&u&b&d"
+}
+
 IDR_BROWSE_CONTEXT_MENU MENU
 {
     POPUP "Standaard"
@@ -131,7 +142,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Eigenschappen",               IDM_PROPERTIES
     }
 
-    POPUP "Context Unknown"
+    POPUP "Context Onbekend"
     {
         MENUITEM SEPARATOR
     }
@@ -190,22 +201,22 @@ IDR_BROWSE_CONTEXT_MENU MENU
 
     POPUP "Debug"
     {
-        MENUITEM "Trace Tags",         IDM_TRACETAGS
-        MENUITEM "Resource Failures",  IDM_RESOURCEFAILURES
-        MENUITEM "Dump Tracking Info", IDM_DUMPTRACKINGINFO
-        MENUITEM "Debug Break",        IDM_DEBUGBREAK
-        MENUITEM "Debug View",         IDM_DEBUGVIEW
-        MENUITEM "Dump Tree",          IDM_DUMPTREE
-        MENUITEM "Dump Lines",         IDM_DUMPLINES
-        MENUITEM "Dump Displaytree",   IDM_DUMPDISPLAYTREE
-        MENUITEM "Dump FormatCaches",  IDM_DUMPFORMATCACHES
-        MENUITEM "Dump LayoutRects",   IDM_DUMPLAYOUTRECTS
-        MENUITEM "Memory Monitor",     IDM_MEMORYMONITOR
+        MENUITEM "Traceer Labels",         IDM_TRACETAGS
+        MENUITEM "Resource Fouten",  IDM_RESOURCEFAILURES
+        MENUITEM "Log Tracerings Informatie", IDM_DUMPTRACKINGINFO
+        MENUITEM "Debug Onderbreking",        IDM_DEBUGBREAK
+        MENUITEM "Debug Beeld",         IDM_DEBUGVIEW
+        MENUITEM "Log Gehele Boom",          IDM_DUMPTREE
+        MENUITEM "Log Regels",         IDM_DUMPLINES
+        MENUITEM "Log Beeld Boom",   IDM_DUMPDISPLAYTREE
+        MENUITEM "Log Formaat Caches",  IDM_DUMPFORMATCACHES
+        MENUITEM "Log Layout Rects",   IDM_DUMPLAYOUTRECTS
+        MENUITEM "Geheugen Monitor",     IDM_MEMORYMONITOR
         MENUITEM "Performance Meters", IDM_PERFORMANCEMETERS
-        MENUITEM "Save HTML",          IDM_SAVEHTML
+        MENUITEM "Sla HTML op",          IDM_SAVEHTML
         MENUITEM SEPARATOR
-        MENUITEM "&Browse View",       IDM_BROWSEMODE
-        MENUITEM "&Edit View",         IDM_EDITMODE
+        MENUITEM "&Bladeren Beeld",       IDM_BROWSEMODE
+        MENUITEM "&Wijzigen Beeld",         IDM_EDITMODE
     }
 
     POPUP "Vertikale scrollbalk"
