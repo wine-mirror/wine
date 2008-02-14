@@ -221,7 +221,7 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
   VariantClear(&v);
 
   if (boolret) {
-    snprintfW(szVersion_v, sizeof(szVersion_v), 
+    snprintfW(szVersion_v, sizeof(szVersion_v)/sizeof(szVersion_v[0]),
 	      szVersionFormat,
 	      HIWORD(pFileInfo->dwFileVersionMS), 
 	      LOWORD(pFileInfo->dwFileVersionMS),
@@ -466,7 +466,7 @@ static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
     {
         static const WCHAR mem_fmt[] = {'%','.','1','f',' ','M','B',0};
 
-        snprintfW( buffer, sizeof(buffer), mem_fmt, ((float)tmp) / 1000000.0 );
+        snprintfW( buffer, sizeof(buffer)/sizeof(buffer[0]), mem_fmt, ((float)tmp) / 1000000.0 );
         add_prop_str( pDisplayAdapterSubCont, szDisplayMemoryLocalized, buffer );
         add_prop_str( pDisplayAdapterSubCont, szDisplayMemoryEnglish, buffer );
     }
