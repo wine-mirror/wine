@@ -555,7 +555,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (wModuleName)
         module_set_module(module, wModuleName);
     lstrcpynW(module->module.ImageName, wImageName,
-              sizeof(module->module.ImageName) / sizeof(CHAR));
+              sizeof(module->module.ImageName) / sizeof(WCHAR));
 
     return module->module.BaseOfImage;
 }
