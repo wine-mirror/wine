@@ -2238,7 +2238,7 @@ LSTATUS WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInform
                                LPDWORD lpcbSecurityDescriptor )
 {
     TRACE("(%p,%d,%p,%d)\n",hkey,SecurityInformation,pSecurityDescriptor,
-          lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
+          *lpcbSecurityDescriptor);
 
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
