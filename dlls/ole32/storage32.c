@@ -7116,7 +7116,7 @@ HRESULT WINAPI WriteFmtUserTypeStg(
     TRACE("(%p,%x,%s)\n",pstg,cf,debugstr_w(lpszUserType));
 
     /* get the clipboard format name */
-    n = GetClipboardFormatNameW( cf, szwClipName, sizeof(szwClipName) );
+    n = GetClipboardFormatNameW( cf, szwClipName, sizeof(szwClipName)/sizeof(szwClipName[0]) );
     szwClipName[n]=0;
 
     TRACE("Clipboard name is %s\n", debugstr_w(szwClipName));
