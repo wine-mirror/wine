@@ -235,7 +235,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
                 }
                 else pctx = except->ExceptionPointers->ContextRecord;
 
-                memcpy(ctx, pctx, sizeof(*ctx));
+                *ctx = *pctx;
                 fetch_thread_stack(dc, tbi.TebBaseAddress, pctx, &mdThd->Stack);
             }
             else mdThd->SuspendCount = 0;
