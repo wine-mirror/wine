@@ -160,12 +160,16 @@ static void testAddCert(void)
      */
     ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
      sizeof(bigCert), 0, NULL);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+     GetLastError() == E_INVALIDARG),
+     "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n",
+     GetLastError());
     ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
      bigCert, sizeof(bigCert), 0, NULL);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+     GetLastError() == E_INVALIDARG),
+     "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n",
+     GetLastError());
 
     /* Weird--can add a cert to the NULL store (does this have special
      * meaning?)

@@ -782,12 +782,6 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
     TRACE("(%p, %p, %08x, %p)\n", hCertStore, pCertContext,
      dwAddDisposition, ppStoreContext);
 
-    /* Weird case to pass a test */
-    if (dwAddDisposition == 0)
-    {
-        SetLastError(STATUS_ACCESS_VIOLATION);
-        return FALSE;
-    }
     if (dwAddDisposition != CERT_STORE_ADD_ALWAYS)
     {
         BYTE hashToAdd[20];
@@ -855,6 +849,7 @@ BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
         break;
     default:
         FIXME("Unimplemented add disposition %d\n", dwAddDisposition);
+        SetLastError(E_INVALIDARG);
         ret = FALSE;
     }
 
