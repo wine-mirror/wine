@@ -2,6 +2,7 @@
  * Wine command prompt (Dutch resources)
  *
  * Copyright (C) 2003 Hans Leidekker
+ * Copyright (C) 2008 Frans Kool
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -197,7 +198,13 @@ De verify-schakelaar heeft geen functie binnen Wine.\n"
 
   WCMD_VOL,    "Uitleg bij VOL\n"
 
-  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+  WCMD_PUSHD,  "PUSHD <directory naam> bewaart de huidige directory op een\n\
+stapel, en verandert dan de huidige directory naar de opgegeven naam.\n"
+
+  WCMD_POPD,   "POPD verandert de huidige directory naar de meest recente die\n\
+op de stapel werd gezet met PUSHD.\n"
+
+  WCMD_MORE,   "MORE toont de uitvoer van programma's of herleidde invoer per bladzijde.\n"
 
   WCMD_EXIT,
 "EXIT beëindigt de lopende sessie en keert terug\n\
@@ -231,38 +238,38 @@ VOL\t\tToon het label van een schijf\n\
 EXIT\t\tSluit CMD af\n\n\
 type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
 
-  WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
+  WCMD_CONFIRM, "Bent u zeker"
+  WCMD_YES, "J"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "File association missing for extension %s\n"
-  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
-  WCMD_OVERWRITE, "Overwrite %s"
-  WCMD_MORESTR, "More..."
-  WCMD_TRUNCATEDLINE, "Line in Batch processing possibly truncated. Using:\n"
-  WCMD_NYI, "Not Yet Implemented\n\n"
-  WCMD_NOARG, "Argument missing\n"
-  WCMD_SYNTAXERR, "Syntax error\n"
-  WCMD_FILENOTFOUND, "%s : File Not Found\n"
-  WCMD_NOCMDHELP, "No help available for %s\n"
-  WCMD_NOTARGET, "Target to GOTO not found\n"
-  WCMD_CURRENTDATE, "Current Date is %s\n"
-  WCMD_CURRENTTIME, "Current Time is %s\n"
-  WCMD_NEWDATE, "Enter new date: "
-  WCMD_NEWTIME, "Enter new time: "
-  WCMD_MISSINGENV, "Environment variable %s not defined\n"
-  WCMD_READFAIL, "Failed to open '%s'\n"
-  WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
+  WCMD_NOASSOC, "Bestands associatie ontbreekt voor extentie %s\n"
+  WCMD_NOFTYPE, "Geen open commando verbonden met bestand type '%s'\n"
+  WCMD_OVERWRITE, "Overschrijf %s"
+  WCMD_MORESTR, "Meer..."
+  WCMD_TRUNCATEDLINE, "Regel in Batch proces mogelijk afgebroken. We gebruiken:\n"
+  WCMD_NYI, "Nog Niet Geïmplementeerd\n\n"
+  WCMD_NOARG, "Argument ontbreekt\n"
+  WCMD_SYNTAXERR, "Fout in de syntax\n"
+  WCMD_FILENOTFOUND, "%s : Bestand Niet Gevonden\n"
+  WCMD_NOCMDHELP, "Geen help beschikbaar voor %s\n"
+  WCMD_NOTARGET, "Doel opgegeven bij GOTO niet gevonden\n"
+  WCMD_CURRENTDATE, "Huidige Datum is %s\n"
+  WCMD_CURRENTTIME, "Huidige Tijd is %s\n"
+  WCMD_NEWDATE, "Voer de nieuwe datum in: "
+  WCMD_NEWTIME, "voer de nieuwe tijd in: "
+  WCMD_MISSINGENV, "Omgevings variable %s niet gedefinieerd\n"
+  WCMD_READFAIL, "Openen van '%s' is mislukt\n"
+  WCMD_CALLINSCRIPT, "Onmogelijk om een batch label aan te roepen van buiten een batch script\n"
   WCMD_ALL, "A"
-  WCMD_DELPROMPT, "%s, Delete"
-  WCMD_ECHOPROMPT, "Echo is %s\n"
-  WCMD_VERIFYPROMPT, "Verify is %s\n"
-  WCMD_VERIFYERR, "Verify must be ON or OFF\n";
-  WCMD_ARGERR, "Parameter error\n"
-  WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
-  WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"
-  WCMD_NOPATH, "PATH not found\n"
-  WCMD_ANYKEY,"Press Return key to continue: "
+  WCMD_DELPROMPT, "%s, Verwijderen"
+  WCMD_ECHOPROMPT, "Echo staat %s\n"
+  WCMD_VERIFYPROMPT, "Verify staat %s\n"
+  WCMD_VERIFYERR, "Verify moet ON of OFF zijn\n";
+  WCMD_ARGERR, "Parameter onjuist\n"
+  WCMD_VOLUMEDETAIL, "Schijf in drive %c is %s\nSchijf Serienummer is %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "Schijf naam (11 karakters, ENTER voor geen)?"
+  WCMD_NOPATH, "PATH niet gevonden\n"
+  WCMD_ANYKEY,"Druk op de Return toets om verder te gaan: "
   WCMD_CONSTITLE,"Wine Command Prompt"
-  WCMD_VERSION,"CMD Version %s\n\n"
-  WCMD_MOREPROMPT, "More? "
+  WCMD_VERSION,"CMD Versie %s\n\n"
+  WCMD_MOREPROMPT, "Meer? "
 }
