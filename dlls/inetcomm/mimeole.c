@@ -1251,8 +1251,46 @@ static HRESULT WINAPI sub_stream_CopyTo(
         ULARGE_INTEGER *pcbRead,
         ULARGE_INTEGER *pcbWritten)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT        hr = S_OK;
+    BYTE           tmpBuffer[128];
+    ULONG          bytesRead, bytesWritten, copySize;
+    ULARGE_INTEGER totalBytesRead;
+    ULARGE_INTEGER totalBytesWritten;
+
+    TRACE("(%p)->(%p, %d, %p, %p)\n", iface, pstm, cb.LowPart, pcbRead, pcbWritten);
+
+    totalBytesRead.QuadPart = 0;
+    totalBytesWritten.QuadPart = 0;
+
+    while ( cb.QuadPart > 0 )
+    {
+        if ( cb.QuadPart >= sizeof(tmpBuffer) )
+            copySize = sizeof(tmpBuffer);
+        else
+            copySize = cb.u.LowPart;
+
+        hr = IStream_Read(iface, tmpBuffer, copySize, &bytesRead);
+        if (FAILED(hr)) break;
+
+        totalBytesRead.QuadPart += bytesRead;
+
+        if (bytesRead)
+        {
+            hr = IStream_Write(pstm, tmpBuffer, bytesRead, &bytesWritten);
+            if (FAILED(hr)) break;
+            totalBytesWritten.QuadPart += bytesWritten;
+        }
+
+        if (bytesRead != copySize)
+            cb.QuadPart = 0;
+        else
+            cb.QuadPart -= bytesRead;
+    }
+
+    if (pcbRead) pcbRead->QuadPart = totalBytesRead.QuadPart;
+    if (pcbWritten) pcbWritten->QuadPart = totalBytesWritten.QuadPart;
+
+    return hr;
 }
 
 static HRESULT WINAPI sub_stream_Commit(
