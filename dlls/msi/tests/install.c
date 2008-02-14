@@ -1343,6 +1343,15 @@ static void test_MsiInstallProduct(void)
     LONG res;
     HKEY hkey;
     DWORD num, size, type;
+    SC_HANDLE scm;
+
+    scm = OpenSCManager(NULL, NULL, GENERIC_ALL);
+    if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("Services are not implemented, we are most likely on win9x\n");
+        return;
+    }
+    CloseServiceHandle(scm);
 
     create_test_files();
     create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
