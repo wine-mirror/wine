@@ -326,8 +326,8 @@ static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
     ok(ret, "CryptHashCertificate failed: %08x\n", GetLastError());
     ret = CertGetCertificateContextProperty(context, propID, NULL,
      &dwSizeWithNull);
-    ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
-     GetLastError());
+    ok(ret, "algID %08x, propID %d: CertGetCertificateContextProperty failed: %08x\n",
+     algID, propID, GetLastError());
     ret = CertGetCertificateContextProperty(context, propID, hashProperty,
      &size);
     ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
