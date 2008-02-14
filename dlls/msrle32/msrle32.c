@@ -1225,8 +1225,8 @@ static LRESULT About(CodecInfo *pi, HWND hWnd)
   /* pre-condition */
   assert(MSRLE32_hModule != 0);
 
-  LoadStringW(MSRLE32_hModule, IDS_NAME, szTitle, sizeof(szTitle));
-  LoadStringW(MSRLE32_hModule, IDS_ABOUT, szAbout, sizeof(szAbout));
+  LoadStringW(MSRLE32_hModule, IDS_NAME, szTitle, sizeof(szTitle)/sizeof(szTitle[0]));
+  LoadStringW(MSRLE32_hModule, IDS_ABOUT, szAbout, sizeof(szAbout)/sizeof(szAbout[0]));
 
   MessageBoxW(hWnd, szAbout, szTitle, MB_OK|MB_ICONINFORMATION);
 
