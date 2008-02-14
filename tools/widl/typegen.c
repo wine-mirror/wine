@@ -30,7 +30,6 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
-#include <signal.h>
 #include <limits.h>
 
 #include "widl.h"

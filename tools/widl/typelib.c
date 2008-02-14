@@ -28,9 +28,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <string.h>
-#include <assert.h>
 #include <ctype.h>
-#include <signal.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
