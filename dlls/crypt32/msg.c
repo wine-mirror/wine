@@ -109,7 +109,7 @@ static void CDataEncodeMsg_Close(HCRYPTMSG hCryptMsg)
         LocalFree(msg->bare_content);
 }
 
-static WINAPI BOOL CRYPT_EncodeContentLength(DWORD dwCertEncodingType,
+static BOOL WINAPI CRYPT_EncodeContentLength(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
