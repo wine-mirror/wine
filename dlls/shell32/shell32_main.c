@@ -85,7 +85,6 @@ extern const char * const SHELL_Authors[];
 LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
 {
     DWORD argc;
-    HGLOBAL hargv;
     LPWSTR  *argv;
     LPCWSTR cs;
     LPWSTR arg,s,d;
@@ -97,20 +96,18 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
         /* Return the path to the executable */
         DWORD len, size=16;
 
-        hargv=LocalAlloc(0, size);
-        argv=LocalLock(hargv);
+        argv=LocalAlloc(LMEM_FIXED, size);
         for (;;)
         {
             len = GetModuleFileNameW(0, (LPWSTR)(argv+1), (size-sizeof(LPWSTR))/sizeof(WCHAR));
             if (!len)
             {
-                LocalFree(hargv);
+                LocalFree(argv);
                 return NULL;
             }
             if (len < size) break;
             size*=2;
-            hargv=LocalReAlloc(hargv, size, 0);
-            argv=LocalLock(hargv);
+            argv=LocalReAlloc(argv, size, 0);
         }
         argv[0]=(LPWSTR)(argv+1);
         if (numargs)
@@ -160,8 +157,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     /* Allocate in a single lump, the string array, and the strings that go with it.
      * This way the caller can make a single GlobalFree call to free both, as per MSDN.
      */
-    hargv=GlobalAlloc(0, argc*sizeof(LPWSTR)+(strlenW(lpCmdline)+1)*sizeof(WCHAR));
-    argv=GlobalLock(hargv);
+    argv=LocalAlloc(LMEM_FIXED, argc*sizeof(LPWSTR)+(strlenW(lpCmdline)+1)*sizeof(WCHAR));
     if (!argv)
         return NULL;
     cmdline=(LPWSTR)(argv+argc);
