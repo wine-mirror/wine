@@ -780,17 +780,6 @@ static void shader_glsl_gen_modifier (
     }
 }
 
-static BOOL constant_is_local(IWineD3DBaseShaderImpl* This, DWORD reg) {
-    local_constant* lconst;
-
-    if(This->baseShader.load_local_constsF) return FALSE;
-    LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
-        if(lconst->idx == reg) return TRUE;
-    }
-    return FALSE;
-
-}
-
 /** Writes the GLSL variable name that corresponds to the register that the
  * DX opcode parameter is trying to access */
 static void shader_glsl_get_register_name(
@@ -877,7 +866,7 @@ static void shader_glsl_get_register_name(
            }
 
         } else {
-            if(constant_is_local(This, reg)) {
+            if(shader_constant_is_local(This, reg)) {
                 sprintf(tmpStr, "LC%u", reg);
             } else {
                 sprintf(tmpStr, "%s[%u]", prefix, reg);
