@@ -290,3 +290,24 @@ BEGIN
     IDS_UNAVAILABLE_DRIVER      "Stuurprogramma in de registry is niet beschikbaar!\n\nVerwijder \"%s\" uit de registry?"
     IDS_WARNING                 "Waarschuwing"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "Instellingen Achtergrond"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Instellingen Tekst"
+    IDC_SYSPARAMS_DESKTOP           "Bureaublad"
+    IDC_SYSPARAMS_MENU              "Menu Achtergrond"
+    IDC_SYSPARAMS_MENU_TEXT         "Menu Tekst"
+    IDC_SYSPARAMS_SCROLLBAR         "Scrollbar"
+    IDC_SYSPARAMS_SELECTION         "Selectie Achtergrond"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Selectie Tekst"
+    IDC_SYSPARAMS_TOOLTIP           "ToolTip Achtergrond"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "ToolTip Tekst"
+    IDC_SYSPARAMS_WINDOW            "Window Achtergrond"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Window Tekst"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Actieve Titel Balk"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Actieve Titel Tekst"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Inactieve Titel Balk"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactieve Title Tekst"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Melding Window Tekst"
+END
