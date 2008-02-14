@@ -3597,6 +3597,16 @@ static void test_csparentdc(void)
    DestroyWindow(hwnd2);
 }
 
+static LRESULT WINAPI def_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI def_window_procW(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
 static void test_IsWindowUnicode(void)
 {
     static const char ansi_class_nameA[] = "ansi class name";
@@ -3609,13 +3619,13 @@ static void test_IsWindowUnicode(void)
 
     memset(&classW, 0, sizeof(classW));
     classW.hInstance = GetModuleHandleA(0);
-    classW.lpfnWndProc = DefWindowProcW;
+    classW.lpfnWndProc = def_window_procW;
     classW.lpszClassName = unicode_class_nameW;
-    if (!RegisterClassW(&classW)) return;
+    if (!RegisterClassW(&classW)) return; /* this catches Win9x as well */
 
     memset(&classA, 0, sizeof(classA));
     classA.hInstance = GetModuleHandleA(0);
-    classA.lpfnWndProc = DefWindowProcA;
+    classA.lpfnWndProc = def_window_procA;
     classA.lpszClassName = ansi_class_nameA;
     assert(RegisterClassA(&classA));
 
@@ -3625,9 +3635,9 @@ static void test_IsWindowUnicode(void)
     assert(hwnd);
 
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
-    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)def_window_procA);
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
-    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)def_window_procW);
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
 
     DestroyWindow(hwnd);
@@ -3637,9 +3647,9 @@ static void test_IsWindowUnicode(void)
     assert(hwnd);
 
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
-    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)def_window_procA);
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
-    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)def_window_procW);
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
 
     DestroyWindow(hwnd);
@@ -3650,9 +3660,9 @@ static void test_IsWindowUnicode(void)
     assert(hwnd);
 
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
-    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)def_window_procW);
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
-    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)def_window_procA);
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
 
     DestroyWindow(hwnd);
@@ -3662,9 +3672,9 @@ static void test_IsWindowUnicode(void)
     assert(hwnd);
 
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
-    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)def_window_procW);
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
-    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)def_window_procA);
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
 
     DestroyWindow(hwnd);
@@ -3675,7 +3685,7 @@ static void test_IsWindowUnicode(void)
     assert(hwnd);
 
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
-    SetClassLongPtrA(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    SetClassLongPtrA(hwnd, GCLP_WNDPROC, (ULONG_PTR)def_window_procA);
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
     /* do not restore class window proc back to unicode */
 
@@ -3686,7 +3696,7 @@ static void test_IsWindowUnicode(void)
     assert(hwnd);
 
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
-    SetClassLongPtrW(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    SetClassLongPtrW(hwnd, GCLP_WNDPROC, (ULONG_PTR)def_window_procW);
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
 
     DestroyWindow(hwnd);
@@ -3697,7 +3707,7 @@ static void test_IsWindowUnicode(void)
     assert(hwnd);
 
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
-    SetClassLongPtrW(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    SetClassLongPtrW(hwnd, GCLP_WNDPROC, (ULONG_PTR)def_window_procW);
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
     /* do not restore class window proc back to ansi */
 
@@ -3708,7 +3718,7 @@ static void test_IsWindowUnicode(void)
     assert(hwnd);
 
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
-    SetClassLongPtrA(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    SetClassLongPtrA(hwnd, GCLP_WNDPROC, (ULONG_PTR)def_window_procA);
     ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
 
     DestroyWindow(hwnd);
