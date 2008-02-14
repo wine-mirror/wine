@@ -90,4 +90,26 @@ extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 
+/* typelibs */
+enum tid_t {
+    IXMLDOMAttribute_tid,
+    IXMLDOMCDATASection_tid,
+    IXMLDOMComment_tid,
+    IXMLDOMDocument2_tid,
+    IXMLDOMDocumentFragment_tid,
+    IXMLDOMElement_tid,
+    IXMLDOMEntityReference_tid,
+    IXMLDOMNamedNodeMap_tid,
+    IXMLDOMNodeList_tid,
+    IXMLDOMParseError_tid,
+    IXMLDOMProcessingInstruction_tid,
+    IXMLDOMSchemaCollection_tid,
+    IXMLDOMText_tid,
+    IXMLElement_tid,
+    IXMLDocument_tid,
+    LAST_tid
+};
+
+extern HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo);
+
 #endif /* __MSXML_PRIVATE__ */
