@@ -89,7 +89,7 @@ HRESULT vdecl_convert_fvf(
     if (!elements) 
         return D3DERR_OUTOFVIDEOMEMORY;
 
-    memcpy(&elements[size-1], &end_element, sizeof(D3DVERTEXELEMENT9));
+    elements[size-1] = end_element;
     idx = 0;
     if (has_pos) {
         if (!has_blend && (fvf & D3DFVF_XYZRHW)) {
