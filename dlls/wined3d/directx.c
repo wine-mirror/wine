@@ -107,6 +107,7 @@ static const struct {
     {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS,           0                           },
     {"GL_EXT_vertex_shader",                EXT_VERTEX_SHADER,              0                           },
     {"GL_EXT_vertex_weighting",             EXT_VERTEX_WEIGHTING,           0                           },
+    {"GL_EXT_gpu_program_parameters",       EXT_GPU_PROGRAM_PARAMETERS,     0                           },
 
     /* NV */
     {"GL_NV_half_float",                    NV_HALF_FLOAT,                  0                           },

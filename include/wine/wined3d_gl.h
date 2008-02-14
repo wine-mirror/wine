@@ -2906,6 +2906,13 @@ typedef void (WINE_GLAPI * PGLFNFINISHRENDERAPPLEPROC) (void);
 #define GL_LUMINANCE_ALPHA_FLOAT16_APPLE    0x881F
 #endif
 
+/* GL_EXT_gpu_program_parameters */
+#ifndef GL_EXT_gpu_program_parameters
+#define GL_EXT_gpu_program_parameters
+typedef void (WINE_GLAPI * PGLFNPROGRAMENVPARAMETERS4FVEXTPROC) (GLenum target, GLuint index, GLsizei count, const float *params);
+typedef void (WINE_GLAPI * PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC) (GLenum target, GLuint index, GLsizei count, const float *params);
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3240,6 +3247,7 @@ typedef enum _GL_SupportedExt {
   EXT_TEXTURE_ENV_DOT3,
   EXT_TEXTURE_SRGB,
   EXT_VERTEX_WEIGHTING,
+  EXT_GPU_PROGRAM_PARAMETERS,
   /* NVIDIA */
   NV_HALF_FLOAT,
   NV_FOG_DISTANCE,
@@ -3559,7 +3567,10 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLXFNWAITVIDEOSYNCSGIPROC,                         glXWaitVideoSyncSGI,                        SGI_VIDEO_SYNC,         NULL );\
     /* GL_APPLE_flush_render */ \
     USE_GL_FUNC(PGLFNFLUSHRENDERAPPLEPROC,                          glFlushRenderApple,                         APPLE_FLUSH_RENDER,     NULL );\
-    USE_GL_FUNC(PGLFNFINISHRENDERAPPLEPROC,                         glFinishRenderApple,                        APPLE_FLUSH_RENDER,     NULL );
+    USE_GL_FUNC(PGLFNFINISHRENDERAPPLEPROC,                         glFinishRenderApple,                        APPLE_FLUSH_RENDER,     NULL );\
+    /* GL_EXT_gpu_program_parameters */ \
+    USE_GL_FUNC(PGLFNPROGRAMENVPARAMETERS4FVEXTPROC,                glProgramEnvParameters4fvEXT,            EXT_GPU_PROGRAM_PARAMETERS,NULL );\
+    USE_GL_FUNC(PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC,              glProgramLocalParameters4fvEXT,          EXT_GPU_PROGRAM_PARAMETERS,NULL );
 
 /****************************************************
  * OpenGL WGL defines and functions pointer

@@ -90,10 +90,27 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, Win
             GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, lcl_const));
         }
     } else {
-        for(i = 0; i < max_constants; i++) {
-            if(dirty_consts[i]) {
-                dirty_consts[i] = 0;
-                GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+        if(GL_SUPPORT(EXT_GPU_PROGRAM_PARAMETERS)) {
+            /* TODO: Benchmark if we're better of with finding the dirty constants ourselves,
+             * or just reloading *all* constants at once
+             *
+            GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, 0, max_constants, constants));
+             */
+            for(i = 0; i < max_constants; i++) {
+                if(!dirty_consts[i]) continue;
+
+                /* Find the next block of dirty constants */
+                j = i;
+                for(i++; (i < max_constants) && dirty_consts[i]; i++);
+
+                GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, j, i - j, constants + (j * 4)));
+            }
+        } else {
+            for(i = 0; i < max_constants; i++) {
+                if(dirty_consts[i]) {
+                    dirty_consts[i] = 0;
+                    GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+                }
             }
         }
     }
