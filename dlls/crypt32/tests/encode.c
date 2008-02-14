@@ -5212,6 +5212,11 @@ static void test_encodePKCSSignerInfo(DWORD dwEncoding)
     SetLastError(0xdeadbeef);
     ret = pCryptEncodeObjectEx(dwEncoding, PKCS7_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        skip("no PKCS7_SIGNER_INFO encode support\n");
+        return;
+    }
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* To be encoded, a signer must have an issuer at least, and the encoding
@@ -5509,6 +5514,11 @@ static void test_encodeNameConstraints(DWORD dwEncoding)
 
     ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME_CONSTRAINTS, &constraints,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        skip("no X509_NAME_CONSTRAINTS encode support\n");
+        return;
+    }
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -5660,6 +5670,11 @@ static void test_decodeNameConstraints(DWORD dwEncoding)
          encodedNameConstraints[i].encoded.pbData,
          encodedNameConstraints[i].encoded.cbData,
          CRYPT_DECODE_ALLOC_FLAG, NULL, &constraints, &size);
+        if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            skip("no X509_NAME_CONSTRAINTS decode support\n");
+            return;
+        }
         ok(ret, "%d: CryptDecodeObjectEx failed: %08x\n", i, GetLastError());
         if (ret)
         {
