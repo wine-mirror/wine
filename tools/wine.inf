@@ -2230,6 +2230,8 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,hhctrl.ocx
 11,,imaadp32.acm
 11,,imagehlp.dll
+11,,itircl.dll
+11,,itss.dll
 11,,kernel32.dll
 11,,msadp32.acm
 11,,msg711.acm
