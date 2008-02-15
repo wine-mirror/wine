@@ -252,6 +252,44 @@ static HRESULT WINAPI ISF_MyComputer_fnParseDisplayName (IShellFolder2 *iface,
     return hr;
 }
 
+/* retrieve a map of drives that should be displayed */
+static DWORD get_drive_map(void)
+{
+    static const WCHAR policiesW[] = {'S','o','f','t','w','a','r','e','\\',
+                                      'M','i','c','r','o','s','o','f','t','\\',
+                                      'W','i','n','d','o','w','s','\\',
+                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                      'P','o','l','i','c','i','e','s','\\',
+                                      'E','x','p','l','o','r','e','r',0};
+    static const WCHAR nodrivesW[] = {'N','o','D','r','i','v','e','s',0};
+    static DWORD drive_mask, init_done;
+
+    if (!init_done)
+    {
+        DWORD type, size, data, mask = 0;
+        HKEY hkey;
+
+        if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, policiesW, &hkey ))
+        {
+            size = sizeof(data);
+            if (!RegQueryValueExW( hkey, nodrivesW, NULL, &type, (LPBYTE)&data, &size ) && type == REG_DWORD)
+                mask |= data;
+            RegCloseKey( hkey );
+        }
+        if (!RegOpenKeyW( HKEY_CURRENT_USER, policiesW, &hkey ))
+        {
+            size = sizeof(data);
+            if (!RegQueryValueExW( hkey, nodrivesW, NULL, &type, (LPBYTE)&data, &size ) && type == REG_DWORD)
+                mask |= data;
+            RegCloseKey( hkey );
+        }
+        drive_mask = mask;
+        init_done = 1;
+    }
+
+    return GetLogicalDrives() & ~drive_mask;
+}
+
 /**************************************************************************
  *  CreateMyCompEnumList()
  */
@@ -271,7 +309,7 @@ static BOOL CreateMyCompEnumList(IEnumIDList *list, DWORD dwFlags)
     if (dwFlags & SHCONTF_FOLDERS)
     {
         WCHAR wszDriveName[] = {'A', ':', '\\', '\0'};
-        DWORD dwDrivemap = GetLogicalDrives();
+        DWORD dwDrivemap = get_drive_map();
         HKEY hkey;
         UINT i;
 
