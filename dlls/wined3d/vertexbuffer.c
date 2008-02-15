@@ -499,10 +499,6 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     int i, j;
     TRACE("(%p)->()\n", This);
 
-    if(This->Flags & VBFLAG_LOAD) {
-        return; /* Already doing that stuff */
-    }
-
     if(!This->vbo) {
         /* TODO: Make converting independent from VBOs */
         if(This->Flags & VBFLAG_CREATEVBO) {

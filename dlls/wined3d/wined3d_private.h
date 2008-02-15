@@ -951,11 +951,10 @@ typedef struct IWineD3DVertexBufferImpl
 
 extern const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
 
-#define VBFLAG_LOAD           0x01    /* Data is written from allocatedMemory to the VBO */
-#define VBFLAG_OPTIMIZED      0x02    /* Optimize has been called for the VB */
-#define VBFLAG_DIRTY          0x04    /* Buffer data has been modified */
-#define VBFLAG_HASDESC        0x08    /* A vertex description has been found */
-#define VBFLAG_CREATEVBO      0x10    /* Attempt to create a VBO next PreLoad */
+#define VBFLAG_OPTIMIZED      0x01    /* Optimize has been called for the VB */
+#define VBFLAG_DIRTY          0x02    /* Buffer data has been modified */
+#define VBFLAG_HASDESC        0x04    /* A vertex description has been found */
+#define VBFLAG_CREATEVBO      0x08    /* Attempt to create a VBO next PreLoad */
 
 /*****************************************************************************
  * IWineD3DIndexBuffer implementation structure (extends IWineD3DResourceImpl)
