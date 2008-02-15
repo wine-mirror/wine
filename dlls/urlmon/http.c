@@ -380,7 +380,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
             if (!(user_agent = CoTaskMemAlloc((len)*sizeof(WCHAR))))
                 WARN("Out of memory\n");
             else
-                MultiByteToWideChar(CP_ACP, 0, user_agenta, -1, user_agent, len*sizeof(WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, user_agenta, -1, user_agent, len);
         }
         heap_free(user_agenta);
     }
