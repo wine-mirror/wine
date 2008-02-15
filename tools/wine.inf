@@ -2203,6 +2203,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 
 [FakeDllsSection]
 10,,explorer.exe
+10,,hh.exe
 10,,notepad.exe
 10,,regedit.exe
 10,,twain_32.dll
