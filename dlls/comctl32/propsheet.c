@@ -555,7 +555,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
 
     if ( !HIWORD( lppsp->pszTitle ) )
     {
-      if (!LoadStringW( lppsp->hInstance, (DWORD_PTR)lppsp->pszTitle,szTitle,sizeof(szTitle) ))
+      if (!LoadStringW( lppsp->hInstance, (DWORD_PTR)lppsp->pszTitle,szTitle,sizeof(szTitle)/sizeof(szTitle[0]) ))
       {
         pTitle = pszNull;
 	FIXME("Could not load resource #%04x?\n",LOWORD(lppsp->pszTitle));
@@ -2160,7 +2160,7 @@ static void PROPSHEET_SetTitleW(HWND hwndDlg, DWORD dwStyle, LPCWSTR lpszText)
   TRACE("%s (style %08x)\n", debugstr_w(lpszText), dwStyle);
   if (HIWORD(lpszText) == 0) {
     if (!LoadStringW(psInfo->ppshheader.hInstance,
-                     LOWORD(lpszText), szTitle, sizeof(szTitle)-sizeof(WCHAR)))
+                     LOWORD(lpszText), szTitle, sizeof(szTitle)/sizeof(szTitle[0])))
       return;
     lpszText = szTitle;
   }
@@ -3636,7 +3636,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       HWND hwndCancel = GetDlgItem(hwnd, IDCANCEL);
 
       EnableWindow(hwndCancel, FALSE);
-      if (LoadStringW(COMCTL32_hModule, IDS_CLOSE, buf, sizeof(buf)))
+      if (LoadStringW(COMCTL32_hModule, IDS_CLOSE, buf, sizeof(buf)/sizeof(buf[0])))
          SetWindowTextW(hwndOK, buf);
 
       return FALSE;
