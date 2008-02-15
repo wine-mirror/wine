@@ -344,6 +344,7 @@ struct monitor_enum_info
     UINT     max_area;
     UINT     min_distance;
     HMONITOR primary;
+    HMONITOR nearest;
     HMONITOR ret;
 };
 
@@ -376,7 +377,7 @@ static BOOL CALLBACK monitor_enum( HMONITOR monitor, HDC hdc, LPRECT rect, LPARA
         if (distance < info->min_distance)
         {
             info->min_distance = distance;
-            info->ret = monitor;
+            info->nearest = monitor;
         }
     }
     if (!info->primary)
@@ -403,9 +404,14 @@ HMONITOR WINAPI MonitorFromRect( LPRECT rect, DWORD flags )
     info.max_area     = 0;
     info.min_distance = ~0u;
     info.primary      = 0;
+    info.nearest      = 0;
     info.ret          = 0;
     if (!EnumDisplayMonitors( 0, NULL, monitor_enum, (LPARAM)&info )) return 0;
-    if (!info.ret && (flags & MONITOR_DEFAULTTOPRIMARY)) info.ret = info.primary;
+    if (!info.ret)
+    {
+        if (flags & MONITOR_DEFAULTTOPRIMARY) info.ret = info.primary;
+        else if (flags & MONITOR_DEFAULTTONEAREST) info.ret = info.nearest;
+    }
 
     TRACE( "%s flags %x returning %p\n", wine_dbgstr_rect(rect), flags, info.ret );
     return info.ret;
@@ -429,6 +435,8 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
 {
     RECT rect;
     WINDOWPLACEMENT wp;
+
+    TRACE("(%p, 0x%08x)\n", hWnd, dwFlags);
 
     if (IsIconic(hWnd) && GetWindowPlacement(hWnd, &wp))
         return MonitorFromRect( &wp.rcNormalPosition, dwFlags );
