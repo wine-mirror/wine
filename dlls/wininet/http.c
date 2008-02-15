@@ -1129,9 +1129,9 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
     {
         signed char in[4];
 
-        if (base64[0] > ARRAYSIZE(HTTP_Base64Dec) ||
+        if (base64[0] >= ARRAYSIZE(HTTP_Base64Dec) ||
             ((in[0] = HTTP_Base64Dec[base64[0]]) == -1) ||
-            base64[1] > ARRAYSIZE(HTTP_Base64Dec) ||
+            base64[1] >= ARRAYSIZE(HTTP_Base64Dec) ||
             ((in[1] = HTTP_Base64Dec[base64[1]]) == -1))
         {
             WARN("invalid base64: %s\n", debugstr_w(base64));
