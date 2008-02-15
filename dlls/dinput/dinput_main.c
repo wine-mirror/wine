@@ -82,7 +82,7 @@ static const struct dinput_device *dinput_devices[] =
 };
 #define NB_DINPUT_DEVICES (sizeof(dinput_devices)/sizeof(dinput_devices[0]))
 
-HINSTANCE DINPUT_instance = NULL;
+static HINSTANCE DINPUT_instance = NULL;
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
 {
@@ -208,6 +208,35 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
 		TRACE("%s ",flags[i].name);
     }
     TRACE("\n");
+}
+
+void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
+    int i;
+
+    FIXME("diaf.dwSize = %d\n", lpdiActionFormat->dwSize);
+    FIXME("diaf.dwActionSize = %d\n", lpdiActionFormat->dwActionSize);
+    FIXME("diaf.dwDataSize = %d\n", lpdiActionFormat->dwDataSize);
+    FIXME("diaf.dwNumActions = %d\n", lpdiActionFormat->dwNumActions);
+    FIXME("diaf.rgoAction = %p\n", lpdiActionFormat->rgoAction);
+    for (i=0;i<lpdiActionFormat->dwNumActions;i++) {
+        FIXME("diaf.rgoAction[%d]:\n", i);
+        FIXME("\tuAppData=%lx\n", lpdiActionFormat->rgoAction[i].uAppData);
+        FIXME("\tdwSemantics=%x\n", lpdiActionFormat->rgoAction[i].dwSemantics);
+        FIXME("\tdwFlags=%x\n", lpdiActionFormat->rgoAction[i].dwFlags);
+        FIXME("\tszActionName=%s\n", debugstr_a(lpdiActionFormat->rgoAction[i].lptszActionName));
+        FIXME("\tguidInstance=%s\n", debugstr_guid(&lpdiActionFormat->rgoAction[i].guidInstance));
+        FIXME("\tdwObjID=%x\n", lpdiActionFormat->rgoAction[i].dwObjID);
+        FIXME("\tdwHow=%x\n", lpdiActionFormat->rgoAction[i].dwHow);
+    }
+    FIXME("diaf.guidActionMap = %s\n", debugstr_guid(&lpdiActionFormat->guidActionMap));
+    FIXME("diaf.dwGenre = %d\n", lpdiActionFormat->dwGenre);
+    FIXME("diaf.dwBufferSize = %d\n", lpdiActionFormat->dwBufferSize);
+    FIXME("diaf.lAxisMin = %d\n", lpdiActionFormat->lAxisMin);
+    FIXME("diaf.lAxisMax = %d\n", lpdiActionFormat->lAxisMax);
+    FIXME("diaf.hInstString = %p\n", lpdiActionFormat->hInstString);
+    FIXME("diaf.ftTimeStamp ...\n");
+    FIXME("diaf.dwCRC = %x\n", lpdiActionFormat->dwCRC);
+    FIXME("diaf.tszActionMap = %s\n", debugstr_a(lpdiActionFormat->tszActionMap));
 }
 
 /******************************************************************************

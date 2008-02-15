@@ -1339,7 +1339,7 @@ HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A ifa
 						       DWORD dwFlags)
 {
     FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
-    
+    _dump_diactionformatA(lpdiaf);
     return DI_OK;
 }
 
