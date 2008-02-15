@@ -44,8 +44,9 @@ Linux info:
   it's best to have a current kernel such as 2.4.x or 2.6.x.
 
 FreeBSD info:
-  Wine should build on FreeBSD 5.x, but versions before FreeBSD 6.2 will
-  generally not work properly.
+  Wine should build on FreeBSD 5.x, but versions before FreeBSD 7.0 will
+  generally not work properly. FreeBSD 6.3 has patches available to allow
+  Wine to run. See <http://wiki.freebsd.org/Wine> for more information.
  
   More information can be found in the FreeBSD ports tree at
   <ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/>.
@@ -67,10 +68,9 @@ Mac OS X info:
 Supported file systems:
   Wine should run on most file systems. However, Wine will fail to start
   if umsdos is used for the /tmp directory. A few compatibility problems have
-  also been reported using files accessed through Samba. Also, as NTFS
-  can only be used safely with readonly access for now, we recommend against
-  using NTFS, as Windows programs need write access almost everywhere.
-  In case of NTFS files, copy over to a writable location.
+  also been reported using files accessed through Samba. Also, NTFS does not
+  provide all the file system features needed by some applications.
+  Using a native Linux file system such as ext3 is recommended.
 
 Basic requirements:
   You need to have the X11 development include files installed
