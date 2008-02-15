@@ -543,7 +543,7 @@ void URLCacheContainers_CreateDefaults(void)
         WCHAR wszMutexName[MAX_PATH];
         int path_len, suffix_len;
 
-        if (FAILED(SHGetSpecialFolderPathW(NULL, wszCachePath, DefaultContainerData[i].nFolder, TRUE)))
+        if (!SHGetSpecialFolderPathW(NULL, wszCachePath, DefaultContainerData[i].nFolder, TRUE))
         {
             ERR("Couldn't get path for default container %u\n", i);
             continue;
