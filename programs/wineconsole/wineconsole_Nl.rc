@@ -2,6 +2,7 @@
  * wineconsole (Dutch resources)
  * 
  * Copyright 2003 Hans Leidekker
+ * Copyright 2008 Frans Kool
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,11 +39,26 @@ IDS_DLG_TIT_DEFAULT,    "Configuratie - standaard instelllingen"
 IDS_DLG_TIT_CURRENT,    "Configuratie - huidige instellingen"
 IDS_DLG_TIT_ERROR,	"Configuratiefout"
 IDS_DLG_ERR_SBWINSIZE,	"De schermbuffer moet groter dan of gelijk zijn aan de vensterbuffer"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Fout in verwerken gebeurtenis id\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: Onjuiste backend\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Niet herkende opdrachtregel optie\n"
+IDS_CMD_ABOUT              "Dit start een programma in een Wine console-omgeving\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Starten van programma %s mislukt.\n"\
+                           "Het commando is onjuist.\n"
+
+IDS_USAGE_HEADER           "\nGebruik:\n  wineconsole [opties] <commando>\n\nOpties:\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Kiezen voor user zal een nieuw window doen verschijnen,\n"\
+                           "                            curses zal proberen de huidige terminal om te zetten\n"\
+                           "                            in een Wine console\n"
+IDS_USAGE_COMMAND          "  <commando>                Het Wine programma dat zal starten in de Wine console\n"
+IDS_USAGE_FOOTER           "\nExample:\n  wineconsole cmd\nStarts the Wine command prompt in a Wine console\n\n"
+
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION " Optiies "
+CAPTION " Opties "
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "Cursorgrootte", -1, 10, 11, 60, 44, BS_GROUPBOX
@@ -101,7 +117,7 @@ FONT 8, "MS Shell Dlg"
 	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
-	GROUPBOX "Programma is geÃindigd", -1, 115, 11, 80, 42, BS_GROUPBOX
+	GROUPBOX "Programma is geëindigd", -1, 115, 11, 80, 42, BS_GROUPBOX
 	AUTOCHECKBOX "&Console afsluiten", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
 
 	GROUPBOX "Versie", -1, 115, 55, 80, 42
