@@ -97,6 +97,7 @@ BASEDIRS = \
 	inkobj \
 	inseng \
 	iphlpapi \
+	itircl \
 	itss \
 	kernel32 \
 	localspl \

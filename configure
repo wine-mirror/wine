@@ -21387,6 +21387,8 @@ ac_config_files="$ac_config_files dlls/iphlpapi/Makefile"
 
 ac_config_files="$ac_config_files dlls/iphlpapi/tests/Makefile"
 
+ac_config_files="$ac_config_files dlls/itircl/Makefile"
+
 ac_config_files="$ac_config_files dlls/itss/Makefile"
 
 ac_config_files="$ac_config_files dlls/itss/tests/Makefile"
@@ -22593,6 +22595,7 @@ do
     "dlls/inseng/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inseng/Makefile" ;;
     "dlls/iphlpapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/iphlpapi/Makefile" ;;
     "dlls/iphlpapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/iphlpapi/tests/Makefile" ;;
+    "dlls/itircl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itircl/Makefile" ;;
     "dlls/itss/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itss/Makefile" ;;
     "dlls/itss/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itss/tests/Makefile" ;;
     "dlls/kernel32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/Makefile" ;;
