@@ -194,6 +194,18 @@ static LRESULT ImmInternalSendIMENotify(WPARAM notify, LPARAM lParam)
     return 0;
 }
 
+static HIMCC ImmCreateBlankCompStr(void)
+{
+    HIMCC rc;
+    LPCOMPOSITIONSTRING ptr;
+    rc = ImmCreateIMCC(sizeof(COMPOSITIONSTRING));
+    ptr = (LPCOMPOSITIONSTRING)ImmLockIMCC(rc);
+    memset(ptr,0,sizeof(COMPOSITIONSTRING));
+    ptr->dwSize = sizeof(COMPOSITIONSTRING);
+    ImmUnlockIMCC(rc);
+    return rc;
+}
+
 static void ImmInternalSetOpenStatus(BOOL fOpen)
 {
     TRACE("Setting internal state to %s\n",(fOpen)?"OPEN":"CLOSED");
@@ -202,7 +214,7 @@ static void ImmInternalSetOpenStatus(BOOL fOpen)
     {
         ShowWindow(hwndDefault,SW_HIDE);
         ImmDestroyIMCC(root_context->IMC.hCompStr);
-        root_context->IMC.hCompStr = NULL;
+        root_context->IMC.hCompStr = ImmCreateBlankCompStr();
     }
 
     root_context->IMC.fOpen = fOpen;
@@ -596,6 +608,9 @@ HIMC WINAPI ImmCreateContext(void)
     InputContextData *new_context;
 
     new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
+
+    /* hCompStr is never NULL */
+    new_context->IMC.hCompStr = ImmCreateBlankCompStr();
 
     return (HIMC)new_context;
 }
@@ -1411,14 +1426,17 @@ BOOL WINAPI ImmNotifyIME(
                     TRACE("%s - %s\n","NI_COMPOSITIONSTR","CPS_CANCEL");
                     {
                         BOOL send;
+                        LPCOMPOSITIONSTRING lpCompStr;
 
                         if (pX11DRV_ForceXIMReset)
                             pX11DRV_ForceXIMReset(root_context->IMC.hWnd);
 
-                        send = (root_context->IMC.hCompStr!=NULL);
+                        lpCompStr = ImmLockIMCC(root_context->IMC.hCompStr);
+                        send = (lpCompStr->dwCompStrLen != 0);
+                        ImmUnlockIMCC(root_context->IMC.hCompStr);
 
                         ImmDestroyIMCC(root_context->IMC.hCompStr);
-                        root_context->IMC.hCompStr = NULL;
+                        root_context->IMC.hCompStr = ImmCreateBlankCompStr();
 
                         if (send)
                             ImmInternalPostIMEMessage(WM_IME_COMPOSITION, 0,
