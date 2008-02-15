@@ -39,9 +39,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define STUB_HEADER(This) (((const CInterfaceStubHeader*)((This)->lpVtbl))[-1])
 
-static WINE_EXCEPTION_FILTER(stub_filter)
+static LONG WINAPI stub_filter(EXCEPTION_POINTERS *eptr)
 {
-    if (GetExceptionInformation()->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE)
+    if (eptr->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE)
         return EXCEPTION_CONTINUE_SEARCH;
     return EXCEPTION_EXECUTE_HANDLER;
 }

@@ -53,9 +53,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  * constant is (http://msdn2.microsoft.com/en-us/library/ms693773.aspx) */
 #define MAX_COMPARISON_DATA 2048
 
-static LONG WINAPI rpc_filter(EXCEPTION_POINTERS *__eptr)
+static LONG WINAPI rpc_filter(EXCEPTION_POINTERS *eptr)
 {
-    switch (GetExceptionCode())
+    switch (eptr->ExceptionRecord->ExceptionCode)
     {
     case EXCEPTION_ACCESS_VIOLATION:
     case EXCEPTION_ILLEGAL_INSTRUCTION:

@@ -153,14 +153,6 @@ static void RPCRT4_release_server_interface(RpcServerInterface *sif)
   }
 }
 
-static WINE_EXCEPTION_FILTER(rpc_filter)
-{
-  WARN("exception caught with code 0x%08x = %d\n", GetExceptionCode(), GetExceptionCode());
-  TRACE("returning failure packet\n");
-  /* catch every exception */
-  return EXCEPTION_EXECUTE_HANDLER;
-}
-
 static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr, RPC_MESSAGE *msg)
 {
   RPC_STATUS status;
@@ -294,7 +286,8 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
   RPCRT4_SetThreadCurrentCallHandle(msg->Handle);
   __TRY {
     if (func) func(msg);
-  } __EXCEPT(rpc_filter) {
+  } __EXCEPT(NULL) {
+    WARN("exception caught with code 0x%08x = %d\n", GetExceptionCode(), GetExceptionCode());
     exception = TRUE;
     if (GetExceptionCode() == STATUS_ACCESS_VIOLATION)
       status = ERROR_NOACCESS;

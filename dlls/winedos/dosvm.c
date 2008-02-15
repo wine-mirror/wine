@@ -521,10 +521,10 @@ DWORD WINAPI DOSVM_Loop( HANDLE hThread )
   }
 }
 
-static WINE_EXCEPTION_FILTER(exception_handler)
+static LONG WINAPI exception_handler(EXCEPTION_POINTERS *eptr)
 {
-  EXCEPTION_RECORD *rec = GetExceptionInformation()->ExceptionRecord;
-  CONTEXT *context = GetExceptionInformation()->ContextRecord;
+  EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+  CONTEXT *context = eptr->ContextRecord;
   int arg = rec->ExceptionInformation[0];
   BOOL ret;
 

@@ -126,9 +126,6 @@ typedef void (CALLBACK *__WINE_FINALLY)(BOOL);
 /* convenience handler for page fault exceptions */
 #define __EXCEPT_PAGE_FAULT __EXCEPT( (__WINE_FILTER)1 )
 
-#define WINE_EXCEPTION_FILTER(func) LONG WINAPI func( EXCEPTION_POINTERS *__eptr )
-#define WINE_FINALLY_FUNC(func) void WINAPI func( BOOL __normal )
-
 #define GetExceptionInformation() (__eptr)
 #define GetExceptionCode()        (__eptr->ExceptionRecord->ExceptionCode)
 #define AbnormalTermination()     (!__normal)

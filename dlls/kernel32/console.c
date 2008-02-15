@@ -1642,9 +1642,9 @@ BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
     return ret;
 }
 
-static WINE_EXCEPTION_FILTER(CONSOLE_CtrlEventHandler)
+static LONG WINAPI CONSOLE_CtrlEventHandler(EXCEPTION_POINTERS *eptr)
 {
-    TRACE("(%x)\n", GetExceptionCode());
+    TRACE("(%x)\n", eptr->ExceptionRecord->ExceptionCode);
     return EXCEPTION_EXECUTE_HANDLER;
 }
 

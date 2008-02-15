@@ -108,11 +108,11 @@ static WORD alloc_pm_selector( WORD seg, unsigned char flags )
  * Handle EXCEPTION_VM86_STI exceptions generated
  * when there are pending asynchronous events.
  */
-static WINE_EXCEPTION_FILTER(dpmi_exception_handler)
+static LONG WINAPI dpmi_exception_handler(EXCEPTION_POINTERS *eptr)
 {
 #ifdef __i386__
-    EXCEPTION_RECORD *rec = GetExceptionInformation()->ExceptionRecord;
-    CONTEXT *context = GetExceptionInformation()->ContextRecord;
+    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+    CONTEXT *context = eptr->ContextRecord;
 
     if (rec->ExceptionCode == EXCEPTION_VM86_STI)
     {

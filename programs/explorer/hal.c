@@ -102,9 +102,10 @@ failed:
     return FALSE;
 }
 
-static WINE_EXCEPTION_FILTER(assert_fault)
+static LONG WINAPI assert_fault(EXCEPTION_POINTERS *eptr)
 {
-    if (GetExceptionCode() == EXCEPTION_WINE_ASSERTION) return EXCEPTION_EXECUTE_HANDLER;
+    if (eptr->ExceptionRecord->ExceptionCode == EXCEPTION_WINE_ASSERTION)
+        return EXCEPTION_EXECUTE_HANDLER;
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
