@@ -405,8 +405,6 @@ TREEVIEW_GetPrevListItem(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *tvIt
 static TREEVIEW_ITEM *
 TREEVIEW_GetNextListItem(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *tvItem)
 {
-    assert(tvItem != NULL);
-
     /*
      * If this item has children and is expanded, return the first child
      */
@@ -1047,7 +1045,6 @@ static void
 TREEVIEW_InsertBefore(TREEVIEW_ITEM *newItem, TREEVIEW_ITEM *sibling,
 		      TREEVIEW_ITEM *parent)
 {
-    assert(newItem != NULL);
     assert(parent != NULL);
 
     if (sibling != NULL)
@@ -1080,7 +1077,6 @@ static void
 TREEVIEW_InsertAfter(TREEVIEW_ITEM *newItem, TREEVIEW_ITEM *sibling,
 		     TREEVIEW_ITEM *parent)
 {
-    assert(newItem != NULL);
     assert(parent != NULL);
 
     if (sibling != NULL)
