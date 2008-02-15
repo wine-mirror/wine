@@ -2068,7 +2068,7 @@ TMStubImpl_Invoke(
             args
         );
     }
-    __EXCEPT(NULL)
+    __EXCEPT_ALL
     {
         DWORD dwExceptionCode = GetExceptionCode();
         ERR("invoke call failed with exception 0x%08x (%d)\n", dwExceptionCode, dwExceptionCode);

@@ -718,7 +718,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 }
             }
         }
-        __EXCEPT(NULL)
+        __EXCEPT_ALL
         {
             RetVal = NdrProxyErrorHandler(GetExceptionCode());
         }

@@ -286,7 +286,7 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
   RPCRT4_SetThreadCurrentCallHandle(msg->Handle);
   __TRY {
     if (func) func(msg);
-  } __EXCEPT(NULL) {
+  } __EXCEPT_ALL {
     WARN("exception caught with code 0x%08x = %d\n", GetExceptionCode(), GetExceptionCode());
     exception = TRUE;
     if (GetExceptionCode() == STATUS_ACCESS_VIOLATION)

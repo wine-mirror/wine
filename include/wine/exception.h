@@ -72,6 +72,7 @@
 #define __FINALLY(func) __finally { (func)(!AbnormalTermination()); }
 #define __ENDTRY /*nothing*/
 #define __EXCEPT_PAGE_FAULT __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+#define __EXCEPT_ALL __except(EXCEPTION_EXECUTE_HANDLER)
 
 #else  /* USE_COMPILER_EXCEPTIONS */
 
@@ -125,6 +126,8 @@ typedef void (CALLBACK *__WINE_FINALLY)(BOOL);
 
 /* convenience handler for page fault exceptions */
 #define __EXCEPT_PAGE_FAULT __EXCEPT( (__WINE_FILTER)1 )
+/* convenience handler for all exception */
+#define __EXCEPT_ALL __EXCEPT( NULL )
 
 #define GetExceptionInformation() (__eptr)
 #define GetExceptionCode()        (__eptr->ExceptionRecord->ExceptionCode)

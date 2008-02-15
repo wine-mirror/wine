@@ -858,7 +858,7 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
         {
             (*callback)( module, reason, NULL );
         }
-        __EXCEPT(NULL)
+        __EXCEPT_ALL
         {
             if (TRACE_ON(relay))
                 DPRINTF("%04x:exception in TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
@@ -908,7 +908,7 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
         if (!retv)
             status = STATUS_DLL_INIT_FAILED;
     }
-    __EXCEPT(NULL)
+    __EXCEPT_ALL
     {
         if (TRACE_ON(relay))
             DPRINTF("%04x:exception in PE entry point (proc=%p,module=%p,reason=%s,res=%p)\n",
