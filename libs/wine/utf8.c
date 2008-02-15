@@ -155,10 +155,38 @@ int wine_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int 
     return dstlen - len;
 }
 
+/* helper for the various utf8 mbstowcs functions */
+static inline unsigned int decode_utf8_char( unsigned char ch, const char **str, const char *strend )
+{
+    unsigned int len = utf8_length[ch-0x80];
+    unsigned int res = ch & utf8_mask[len];
+    const char *end = *str + len;
+
+    if (end > strend) return ~0;
+    switch(len)
+    {
+    case 3:
+        if ((ch = end[-3] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+        (*str)++;
+    case 2:
+        if ((ch = end[-2] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+        (*str)++;
+    case 1:
+        if ((ch = end[-1] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+        (*str)++;
+        if (res < utf8_minval[len]) break;
+        return res;
+    }
+    return ~0;
+}
+
 /* query necessary dst length for src string */
 static inline int get_length_mbs_utf8( int flags, const char *src, int srclen )
 {
-    int len, ret = 0;
+    int ret = 0;
     unsigned int res;
     const char *srcend = src + srclen;
 
@@ -170,32 +198,12 @@ static inline int get_length_mbs_utf8( int flags, const char *src, int srclen )
             ret++;
             continue;
         }
-        len = utf8_length[ch-0x80];
-        if (src + len > srcend) goto bad;
-        res = ch & utf8_mask[len];
-
-        switch(len)
+        if ((res = decode_utf8_char( ch, &src, srcend )) <= 0x10ffff)
         {
-        case 3:
-            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
-            res = (res << 6) | ch;
-            src++;
-        case 2:
-            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
-            res = (res << 6) | ch;
-            src++;
-        case 1:
-            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
-            res = (res << 6) | ch;
-            src++;
-            if (res < utf8_minval[len]) goto bad;
-            if (res > 0x10ffff) goto bad;
             if (res > 0xffff) ret++;
             ret++;
-            continue;
         }
-    bad:
-        if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
+        else if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
         /* otherwise ignore it */
     }
     return ret;
@@ -205,7 +213,6 @@ static inline int get_length_mbs_utf8( int flags, const char *src, int srclen )
 /* return -1 on dst buffer overflow, -2 on invalid input char */
 int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
-    int len;
     unsigned int res;
     const char *srcend = src + srclen;
     WCHAR *dstend = dst + dstlen;
@@ -220,38 +227,18 @@ int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int 
             *dst++ = ch;
             continue;
         }
-        len = utf8_length[ch-0x80];
-        if (src + len > srcend) goto bad;
-        res = ch & utf8_mask[len];
-
-        switch(len)
+        if ((res = decode_utf8_char( ch, &src, srcend )) <= 0xffff)
         {
-        case 3:
-            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
-            res = (res << 6) | ch;
-            src++;
-        case 2:
-            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
-            res = (res << 6) | ch;
-            src++;
-        case 1:
-            if ((ch = *src ^ 0x80) >= 0x40) goto bad;
-            res = (res << 6) | ch;
-            src++;
-            if (res < utf8_minval[len]) goto bad;
-            if (res > 0x10ffff) goto bad;
-            if (res <= 0xffff) *dst++ = res;
-            else /* we need surrogates */
-            {
-                if (dst == dstend - 1) return -1;  /* overflow */
-                res -= 0x10000;
-                *dst++ = 0xd800 | (res >> 10);
-                *dst++ = 0xdc00 | (res & 0x3ff);
-            }
-            continue;
+            *dst++ = res;
         }
-    bad:
-        if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
+        else if (res <= 0x10ffff)  /* we need surrogates */
+        {
+            if (dst == dstend - 1) return -1;  /* overflow */
+            res -= 0x10000;
+            *dst++ = 0xd800 | (res >> 10);
+            *dst++ = 0xdc00 | (res & 0x3ff);
+        }
+        else if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
         /* otherwise ignore it */
     }
     if (src < srcend) return -1;  /* overflow */
