@@ -3584,7 +3584,7 @@ TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 	    infoPtr->bLabelChanged = TRUE;
 
-	    len = GetWindowTextW(infoPtr->hwndEdit, buffer, sizeof(buffer));
+	    len = GetWindowTextW(infoPtr->hwndEdit, buffer, sizeof(buffer)/sizeof(buffer[0]));
 
 	    /* Select font to get the right dimension of the string */
 	    hFont = (HFONT)SendMessageW(infoPtr->hwndEdit, WM_GETFONT, 0, 0);
