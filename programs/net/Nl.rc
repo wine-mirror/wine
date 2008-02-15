@@ -1,0 +1,43 @@
+/*
+ * NET.EXE - Wine-compatible net program
+ * Dutch language support
+ *
+ * Copyright (C) 2008 Frans Kool
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+    STRING_USAGE, "Gebruik van dit commando is:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_START_USAGE, "Specificeer de te starten service naam.\n"
+    STRING_STOP_USAGE, "Specificeer de te stoppen service naam.\n"
+    STRING_STOP_DEP, "Stoppen van afhankelijke service: %s\n"
+    STRING_CANT_STOP, "Kon service %s niet stoppen\n"
+    STRING_NO_SCM, "Kon geen handle krijgen naar de service controle manager.\n"
+    STRING_NO_SVCHANDLE, "Kon geen handle krijgen naar de service.\n"
+    STRING_START_SVC, "De %s service is aan het starten.\n"
+    STRING_START_SVC_SUCCESS, "De %s service was succesvol gestart.\n"
+    STRING_START_SVC_FAIL, "De %s service start is mislukt.\n"
+    STRING_STOP_SVC, "De %s service is aan het stoppen.\n"
+    STRING_STOP_SVC_SUCCESS, "De %s service was succesvol gestopt.\n"
+    STRING_STOP_SVC_FAIL, "De %s service wilde niet stoppen.\n"
+    STRING_HELP_USAGE, "Gebruik van dit commando is:\n\nNET HELP commando\n    -of-\nNET commando /HELP\n\n   Beschikbare commando's zijn:\n   NET HELP    NET START     NET STOP\n"
+    STRING_NO_ENTRIES, "De opgegeven lijst is leeg.\n"
+    STRING_USE_HEADER, "\nStatus    Lokaal  Op afstand\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY, "%s      %S      %S      Open resources: %lu\n"
+}
