@@ -666,11 +666,22 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
       LPVOID pvRef, DWORD dwFlags
 )
 {
-      IDirectInputImpl *This = impl_from_IDirectInput8A( iface );
+    IDirectInputImpl *This = impl_from_IDirectInput8A( iface );
 
-      FIXME("(this=%p,%s,%p,%p,%p,%04x): stub\n", This, ptszUserName, lpdiActionFormat,
-            lpCallback, pvRef, dwFlags);
-      return 0;
+    FIXME("(this=%p,%s,%p,%p,%p,%04x): stub\n", This, ptszUserName, lpdiActionFormat,
+          lpCallback, pvRef, dwFlags);
+#define X(x) if (dwFlags & x) FIXME("\tdwFlags |= "#x"\n");
+	X(DIEDBSFL_ATTACHEDONLY)
+	X(DIEDBSFL_THISUSER)
+	X(DIEDBSFL_FORCEFEEDBACK)
+	X(DIEDBSFL_AVAILABLEDEVICES)
+	X(DIEDBSFL_MULTIMICEKEYBOARDS)
+	X(DIEDBSFL_NONGAMINGDEVICES)
+#undef X
+
+    _dump_diactionformatA(lpdiActionFormat);
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
