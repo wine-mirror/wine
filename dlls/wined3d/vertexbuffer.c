@@ -474,6 +474,9 @@ static void CreateVBO(IWineD3DVertexBufferImpl *This) {
     }
     This->vbo_size = This->resource.size;
     This->vbo_usage = glUsage;
+    This->dirtystart = 0;
+    This->dirtyend = This->resource.size;
+    This->Flags |= VBFLAG_DIRTY;
 
     LEAVE_GL();
 
