@@ -1830,6 +1830,9 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
             ret = wine_cp_mbstowcs( unix_cptable, flags, src, srclen, dst, dstlen );
             break;
         }
+#ifdef __APPLE__
+        flags |= MB_COMPOSITE;  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
+#endif
         /* fall through */
     case CP_UTF8:
         ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
