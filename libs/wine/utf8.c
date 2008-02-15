@@ -22,6 +22,8 @@
 
 #include "wine/unicode.h"
 
+extern WCHAR compose( const WCHAR *str );
+
 /* number of following bytes in sequence based on first byte value (for bytes above 0x7f) */
 static const char utf8_length[128] =
 {
@@ -183,6 +185,94 @@ static inline unsigned int decode_utf8_char( unsigned char ch, const char **str,
     return ~0;
 }
 
+/* query necessary dst length for src string with composition */
+static inline int get_length_mbs_utf8_compose( int flags, const char *src, int srclen )
+{
+    int ret = 0;
+    unsigned int res;
+    WCHAR composed[2];
+    const char *srcend = src + srclen;
+
+    composed[0] = 0;
+    while (src < srcend)
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
+        {
+            composed[0] = ch;
+            ret++;
+            continue;
+        }
+        if ((res = decode_utf8_char( ch, &src, srcend )) <= 0xffff)
+        {
+            if (composed[0])
+            {
+                composed[1] = res;
+                if ((composed[0] = compose( composed ))) continue;
+            }
+            composed[0] = res;
+            ret++;
+        }
+        else if (res <= 0x10ffff)
+        {
+            ret += 2;
+            composed[0] = 0;  /* no composition for surrogates */
+        }
+        else if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
+        /* otherwise ignore it */
+    }
+    return ret;
+}
+
+/* UTF-8 to wide char string conversion with composition */
+/* return -1 on dst buffer overflow, -2 on invalid input char */
+static int utf8_mbstowcs_compose( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+{
+    unsigned int res;
+    const char *srcend = src + srclen;
+    WCHAR composed[2];
+    WCHAR *dstend = dst + dstlen;
+
+    if (!dstlen) return get_length_mbs_utf8_compose( flags, src, srclen );
+
+    composed[0] = 0;
+    while (src < srcend)
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
+        {
+            if (dst >= dstend) return -1;  /* overflow */
+            *dst++ = composed[0] = ch;
+            continue;
+        }
+        if ((res = decode_utf8_char( ch, &src, srcend )) <= 0xffff)
+        {
+            if (composed[0])
+            {
+                composed[1] = res;
+                if ((composed[0] = compose( composed )))
+                {
+                    dst[-1] = composed[0];
+                    continue;
+                }
+            }
+            if (dst >= dstend) return -1;  /* overflow */
+            *dst++ = composed[0] = res;
+        }
+        else if (res <= 0x10ffff) /* we need surrogates */
+        {
+            if (dst >= dstend - 1) return -1;  /* overflow */
+            res -= 0x10000;
+            *dst++ = 0xd800 | (res >> 10);
+            *dst++ = 0xdc00 | (res & 0x3ff);
+            composed[0] = 0;  /* no composition for surrogates */
+        }
+        else if (flags & MB_ERR_INVALID_CHARS) return -2;  /* bad char */
+        /* otherwise ignore it */
+    }
+    return dstlen - (dstend - dst);
+}
+
 /* query necessary dst length for src string */
 static inline int get_length_mbs_utf8( int flags, const char *src, int srclen )
 {
@@ -216,6 +306,8 @@ int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int 
     unsigned int res;
     const char *srcend = src + srclen;
     WCHAR *dstend = dst + dstlen;
+
+    if (flags & MB_COMPOSITE) return utf8_mbstowcs_compose( flags, src, srclen, dst, dstlen );
 
     if (!dstlen) return get_length_mbs_utf8( flags, src, srclen );
 
