@@ -185,8 +185,8 @@ static void _dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid)
     _dump_DIEFFECT_flags(eff->dwFlags); 
     TRACE("  - dwDuration: %d\n", eff->dwDuration);
     TRACE("  - dwGain: %d\n", eff->dwGain);
-    if ((eff->dwGain > 10000) || (eff->dwGain < 0))
-	WARN("dwGain is out of range (0 - 10,000)\n"); 
+    if (eff->dwGain > 10000)
+	WARN("dwGain is out of range (>10,000)\n");
     TRACE("  - dwTriggerButton: %d\n", eff->dwTriggerButton);
     TRACE("  - dwTriggerRepeatInterval: %d\n", eff->dwTriggerRepeatInterval);
     TRACE("  - cAxes: %d\n", eff->cAxes);
