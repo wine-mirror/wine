@@ -241,8 +241,6 @@ TREEVIEW_GetInfoPtr(HWND hwnd)
 static inline int
 TREEVIEW_GetItemIndex(const TREEVIEW_INFO *infoPtr, HTREEITEM handle)
 {
-    assert(infoPtr != NULL);
-
     return DPA_GetPtrIndex(infoPtr->items, handle);
 }
 
