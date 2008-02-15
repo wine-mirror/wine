@@ -1125,12 +1125,12 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl,
         shortname = _ILGetSTextPointer(pidl);
 
         if (filename)
-            lstrcpynA(pfd->cFileName, filename, MAX_PATH);
+            lstrcpynA(pfd->cFileName, filename, sizeof(pfd->cFileName));
         else
             pfd->cFileName[0] = '\0';
 
         if (shortname)
-            lstrcpynA(pfd->cAlternateFileName, shortname, MAX_PATH);
+            lstrcpynA(pfd->cAlternateFileName, shortname, sizeof(pfd->cAlternateFileName));
         else
             pfd->cAlternateFileName[0] = '\0';
         return NOERROR;
