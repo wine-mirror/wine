@@ -1923,6 +1923,54 @@ static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *fi
     return;
 }
 
+static void create_dummy_textures(IWineD3DDeviceImpl *This) {
+    unsigned int i;
+    /* Under DirectX you can have texture stage operations even if no texture is
+    bound, whereas opengl will only do texture operations when a valid texture is
+    bound. We emulate this by creating dummy textures and binding them to each
+    texture stage, but disable all stages by default. Hence if a stage is enabled
+    then the default texture will kick in until replaced by a SetTexture call     */
+    ENTER_GL();
+
+    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+        /* The dummy texture does not have client storage backing */
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+    }
+    for (i = 0; i < GL_LIMITS(textures); i++) {
+        GLubyte white = 255;
+
+        /* Make appropriate texture active */
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+            checkGLcall("glActiveTextureARB");
+        } else if (i > 0) {
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+        }
+
+        /* Generate an opengl texture name */
+        glGenTextures(1, &This->dummyTextureName[i]);
+        checkGLcall("glGenTextures");
+        TRACE("Dummy Texture %d given name %d\n", i, This->dummyTextureName[i]);
+
+        /* Generate a dummy 2d texture (not using 1d because they cause many
+        * DRI drivers fall back to sw) */
+        This->stateBlock->textureDimensions[i] = GL_TEXTURE_2D;
+        glBindTexture(GL_TEXTURE_2D, This->dummyTextureName[i]);
+        checkGLcall("glBindTexture");
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 1, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
+        checkGLcall("glTexImage2D");
+    }
+    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
+        /* Reenable because if supported it is enabled by default */
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+    }
+
+    LEAVE_GL();
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain = NULL;
@@ -2009,6 +2057,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
+    create_dummy_textures(This);
 #if 0
     IWineD3DImpl_CheckGraphicsMemory();
 #endif
@@ -6883,7 +6932,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     This->shader_backend->shader_destroy_depth_blt(iface);
 
     for (i = 0; i < GL_LIMITS(textures); i++) {
-        /* The stateblock initialization below will recreate them */
+        /* Textures are recreated below */
         glDeleteTextures(1, &This->dummyTextureName[i]);
         checkGLcall("glDeleteTextures(1, &This->dummyTextureName[i])");
         This->dummyTextureName[i] = 0;
@@ -6989,6 +7038,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     if(FAILED(hr)) {
         ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
     }
+    create_dummy_textures(This);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
      * first use

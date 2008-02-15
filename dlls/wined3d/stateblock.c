@@ -1234,55 +1234,11 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->samplerState[i][WINED3DSAMP_DMAPOFFSET       ] = 0; /* TODO: Vertex offset in the presampled displacement map */
     }
 
-    /* Under DirectX you can have texture stage operations even if no texture is
-       bound, whereas opengl will only do texture operations when a valid texture is
-       bound. We emulate this by creating dummy textures and binding them to each
-       texture stage, but disable all stages by default. Hence if a stage is enabled
-       then the default texture will kick in until replaced by a SetTexture call     */
-    ENTER_GL();
-
-    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
-        /* The dummy texture does not have client storage backing */
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-    }
-    for (i = 0; i < GL_LIMITS(textures); i++) {
-        GLubyte white = 255;
-
+    for(i = 0; i < GL_LIMITS(textures); i++) {
         /* Note this avoids calling settexture, so pretend it has been called */
         This->changed.textures[i] = TRUE;
         This->textures[i]         = NULL;
-
-        /* Make appropriate texture active */
-        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-            checkGLcall("glActiveTextureARB");
-        } else if (i > 0) {
-            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-        }
-
-        /* Generate an opengl texture name */
-        glGenTextures(1, &ThisDevice->dummyTextureName[i]);
-        checkGLcall("glGenTextures");
-        TRACE("Dummy Texture %d given name %d\n", i, ThisDevice->dummyTextureName[i]);
-
-        /* Generate a dummy 2d texture (not using 1d because they cause many
-         * DRI drivers fall back to sw) */
-        This->textureDimensions[i] = GL_TEXTURE_2D;
-        glBindTexture(GL_TEXTURE_2D, ThisDevice->dummyTextureName[i]);
-        checkGLcall("glBindTexture");
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 1, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
-        checkGLcall("glTexImage2D");
     }
-    if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
-        /* Reenable because if supported it is enabled by default */
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-    }
-
-    LEAVE_GL();
-
 
     /* Defaulting palettes - Note these are device wide but reinitialized here for convenience*/
     for (i = 0; i < MAX_PALETTES; ++i) {
