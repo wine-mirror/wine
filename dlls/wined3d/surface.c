@@ -3474,6 +3474,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     TRACE("(%p)->(%d, %d, %p, %p, %08x\n", iface, dstx, dsty, Source, rsrc, trans);
 
+    if ( (This->Flags & SFLAG_LOCKED) || ((srcImpl != NULL) && (srcImpl->Flags & SFLAG_LOCKED)))
+    {
+        WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
+        return WINEDDERR_SURFACEBUSY;
+    }
+
     if(myDevice->inScene &&
        (iface == myDevice->stencilBufferTarget ||
        (Source && Source == myDevice->stencilBufferTarget))) {
