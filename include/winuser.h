@@ -181,6 +181,17 @@ typedef struct tagMOUSEKEYS
     DWORD   dwReserved2;
 } MOUSEKEYS, *LPMOUSEKEYS;
 
+/* struct and defines for GetMouseMovePointsEx */
+#define GMMP_USE_DISPLAY_POINTS 1
+#define GMMP_USE_HIGH_RESOLUTION_POINTS 2
+
+typedef struct tagMOUSEMOVEPOINT {
+    int x;
+    int y;
+    DWORD time;
+    ULONG_PTR dwExtraInfo;
+} MOUSEMOVEPOINT,*PMOUSEMOVEPOINT,*LPMOUSEMOVEPOINT;
+
 /* flags for STICKYKEYS dwFlags field */
 #define SKF_AUDIBLEFEEDBACK 0x00000040
 #define SKF_AVAILABLE       0x00000002
