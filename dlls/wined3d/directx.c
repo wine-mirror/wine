@@ -85,6 +85,8 @@ static const struct {
     /* EXT */
     {"GL_EXT_blend_color",                  EXT_BLEND_COLOR,                0                           },
     {"GL_EXT_blend_minmax",                 EXT_BLEND_MINMAX,               0                           },
+    {"GL_EXT_blend_equation_separate",      EXT_BLEND_EQUATION_SEPARATE,    0                           },
+    {"GL_EXT_blend_func_separate",          EXT_BLEND_FUNC_SEPARATE,        0                           },
     {"GL_EXT_fog_coord",                    EXT_FOG_COORD,                  0                           },
     {"GL_EXT_framebuffer_blit",             EXT_FRAMEBUFFER_BLIT,           0                           },
     {"GL_EXT_framebuffer_object",           EXT_FRAMEBUFFER_OBJECT,         0                           },
@@ -2201,10 +2203,12 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                         WINED3DPMISCCAPS_NULLREFERENCE
                                         WINED3DPMISCCAPS_INDEPENDENTWRITEMASKS
                                         WINED3DPMISCCAPS_FOGANDSPECULARALPHA
-                                        WINED3DPMISCCAPS_SEPARATEALPHABLEND
                                         WINED3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS
                                         WINED3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING
                                         WINED3DPMISCCAPS_FOGVERTEXCLAMPED */
+
+    if(GL_SUPPORT(EXT_BLEND_EQUATION_SEPARATE) && GL_SUPPORT(EXT_BLEND_FUNC_SEPARATE))
+        *pCaps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_SEPARATEALPHABLEND;
 
 /* The caps below can be supported but aren't handled yet in utils.c 'd3dta_to_combiner_input', disable them until support is fixed */
 #if 0

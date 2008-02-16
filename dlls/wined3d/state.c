@@ -36,6 +36,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 
+static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
+
 static void state_nogl(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     /* Used for states which are not mapped to a gl state as-is, but used somehow different,
      * e.g as a parameter for drawing, or which are unimplemented in windows d3d
@@ -332,7 +334,6 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
             FIXME("Unrecognized src blend value %d\n", stateblock->renderState[WINED3DRS_SRCBLEND]);
     }
 
-
     if(stateblock->renderState[WINED3DRS_EDGEANTIALIAS] ||
        stateblock->renderState[WINED3DRS_ANTIALIASEDLINEENABLE]) {
         glEnable(GL_LINE_SMOOTH);
@@ -348,9 +349,88 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         checkGLcall("glDisable(GL_LINE_SMOOTH)");
     }
 
-    TRACE("glBlendFunc src=%x, dst=%x\n", srcBlend, dstBlend);
-    glBlendFunc(srcBlend, dstBlend);
-    checkGLcall("glBlendFunc");
+    /* Re-apply BLENDOP(ALPHA) because of a possible SEPARATEALPHABLENDENABLE change */
+    if(!isStateDirty(context, STATE_RENDER(WINED3DRS_BLENDOP))) {
+        state_blendop(STATE_RENDER(WINED3DRS_BLENDOPALPHA), stateblock, context);
+    }
+
+    if(stateblock->renderState[WINED3DRS_SEPARATEALPHABLENDENABLE]) {
+        int srcBlendAlpha = GL_ZERO;
+        int dstBlendAlpha = GL_ZERO;
+
+        /* Separate alpha blending requires GL_EXT_blend_function_separate, so make sure it is around */
+        if(!GL_SUPPORT(EXT_BLEND_FUNC_SEPARATE)) {
+            WARN("Unsupported in local OpenGL implementation: glBlendFuncSeparateEXT\n");
+            return;
+        }
+
+        switch (stateblock->renderState[WINED3DRS_DESTBLENDALPHA]) {
+            case WINED3DBLEND_ZERO               : dstBlendAlpha = GL_ZERO;  break;
+            case WINED3DBLEND_ONE                : dstBlendAlpha = GL_ONE;  break;
+            case WINED3DBLEND_SRCCOLOR           : dstBlendAlpha = GL_SRC_COLOR;  break;
+            case WINED3DBLEND_INVSRCCOLOR        : dstBlendAlpha = GL_ONE_MINUS_SRC_COLOR;  break;
+            case WINED3DBLEND_SRCALPHA           : dstBlendAlpha = GL_SRC_ALPHA;  break;
+            case WINED3DBLEND_INVSRCALPHA        : dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;  break;
+            case WINED3DBLEND_DESTCOLOR          : dstBlendAlpha = GL_DST_COLOR;  break;
+            case WINED3DBLEND_INVDESTCOLOR       : dstBlendAlpha = GL_ONE_MINUS_DST_COLOR;  break;
+            case WINED3DBLEND_DESTALPHA          : dstBlendAlpha = GL_DST_ALPHA;  break;
+            case WINED3DBLEND_INVDESTALPHA       : dstBlendAlpha = GL_DST_ALPHA;  break;
+            case WINED3DBLEND_SRCALPHASAT        :
+                dstBlend = GL_SRC_ALPHA_SATURATE;
+                WARN("Application uses SRCALPHASAT as dest blend factor, expect problems\n");
+                break;
+            /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy source blending
+            * values which are still valid up to d3d9. They should not occur as dest blend values
+            */
+            case WINED3DBLEND_BOTHSRCALPHA       :
+                dstBlendAlpha = GL_SRC_ALPHA;
+                srcBlendAlpha = GL_SRC_ALPHA;
+                FIXME("WINED3DRS_DESTBLENDALPHA = WINED3DBLEND_BOTHSRCALPHA, what to do?\n");
+                break;
+            case WINED3DBLEND_BOTHINVSRCALPHA    :
+                dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
+                srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
+                FIXME("WINED3DRS_DESTBLENDALPHA = WINED3DBLEND_BOTHINVSRCALPHA, what to do?\n");
+                break;
+            case WINED3DBLEND_BLENDFACTOR        : dstBlendAlpha = GL_CONSTANT_COLOR;   break;
+            case WINED3DBLEND_INVBLENDFACTOR     : dstBlendAlpha = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+            default:
+                FIXME("Unrecognized dst blend alpha value %d\n", stateblock->renderState[WINED3DRS_DESTBLENDALPHA]);
+        }
+
+        switch (stateblock->renderState[WINED3DRS_SRCBLENDALPHA]) {
+            case WINED3DBLEND_ZERO               : srcBlendAlpha = GL_ZERO;  break;
+            case WINED3DBLEND_ONE                : srcBlendAlpha = GL_ONE;  break;
+            case WINED3DBLEND_SRCCOLOR           : srcBlendAlpha = GL_SRC_COLOR;  break;
+            case WINED3DBLEND_INVSRCCOLOR        : srcBlendAlpha = GL_ONE_MINUS_SRC_COLOR;  break;
+            case WINED3DBLEND_SRCALPHA           : srcBlendAlpha = GL_SRC_ALPHA;  break;
+            case WINED3DBLEND_INVSRCALPHA        : srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;  break;
+            case WINED3DBLEND_DESTCOLOR          : srcBlendAlpha = GL_DST_COLOR;  break;
+            case WINED3DBLEND_INVDESTCOLOR       : srcBlendAlpha = GL_ONE_MINUS_DST_COLOR;  break;
+            case WINED3DBLEND_SRCALPHASAT        : srcBlendAlpha = GL_SRC_ALPHA_SATURATE;  break;
+            case WINED3DBLEND_DESTALPHA          : srcBlendAlpha = GL_DST_ALPHA;  break;
+            case WINED3DBLEND_INVDESTALPHA       : srcBlendAlpha = GL_DST_ALPHA;  break;
+            case WINED3DBLEND_BOTHSRCALPHA       :
+                srcBlendAlpha = GL_SRC_ALPHA;
+                dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
+                break;
+            case WINED3DBLEND_BOTHINVSRCALPHA    :
+                srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
+                dstBlendAlpha = GL_SRC_ALPHA;
+                break;
+            case WINED3DBLEND_BLENDFACTOR        : srcBlendAlpha = GL_CONSTANT_COLOR;   break;
+            case WINED3DBLEND_INVBLENDFACTOR     : srcBlendAlpha = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+            default:
+                FIXME("Unrecognized src blend alpha value %d\n", stateblock->renderState[WINED3DRS_SRCBLENDALPHA]);
+        }
+
+        GL_EXTCALL(glBlendFuncSeparateEXT(srcBlend, dstBlend, srcBlendAlpha, dstBlendAlpha));
+        checkGLcall("glBlendFuncSeparateEXT");
+    } else {
+        TRACE("glBlendFunc src=%x, dst=%x\n", srcBlend, dstBlend);
+        glBlendFunc(srcBlend, dstBlend);
+        checkGLcall("glBlendFunc");
+    }
 
     /* colorkey fixup for stage 0 alphaop depends on WINED3DRS_ALPHABLENDENABLE state,
         so it may need updating */
@@ -502,26 +582,49 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 }
 
 static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    int glParm = GL_FUNC_ADD;
+    int blendEquation = GL_FUNC_ADD;
+    int blendEquationAlpha = GL_FUNC_ADD;
 
     if(!GL_SUPPORT(EXT_BLEND_MINMAX)) {
         WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
         return;
     }
 
+    /* BLENDOPALPHA requires GL_EXT_blend_equation_separate, so make sure it is around */
+    if(stateblock->renderState[WINED3DRS_BLENDOPALPHA] && !GL_SUPPORT(EXT_BLEND_EQUATION_SEPARATE)) {
+        WARN("Unsupported in local OpenGL implementation: glBlendEquationSeparateEXT\n");
+        return;
+    }
+
     switch ((WINED3DBLENDOP) stateblock->renderState[WINED3DRS_BLENDOP]) {
-        case WINED3DBLENDOP_ADD              : glParm = GL_FUNC_ADD;              break;
-        case WINED3DBLENDOP_SUBTRACT         : glParm = GL_FUNC_SUBTRACT;         break;
-        case WINED3DBLENDOP_REVSUBTRACT      : glParm = GL_FUNC_REVERSE_SUBTRACT; break;
-        case WINED3DBLENDOP_MIN              : glParm = GL_MIN;                   break;
-        case WINED3DBLENDOP_MAX              : glParm = GL_MAX;                   break;
+        case WINED3DBLENDOP_ADD              : blendEquation = GL_FUNC_ADD;              break;
+        case WINED3DBLENDOP_SUBTRACT         : blendEquation = GL_FUNC_SUBTRACT;         break;
+        case WINED3DBLENDOP_REVSUBTRACT      : blendEquation = GL_FUNC_REVERSE_SUBTRACT; break;
+        case WINED3DBLENDOP_MIN              : blendEquation = GL_MIN;                   break;
+        case WINED3DBLENDOP_MAX              : blendEquation = GL_MAX;                   break;
         default:
             FIXME("Unrecognized/Unhandled D3DBLENDOP value %d\n", stateblock->renderState[WINED3DRS_BLENDOP]);
     }
 
-    TRACE("glBlendEquation(%x)\n", glParm);
-    GL_EXTCALL(glBlendEquationEXT(glParm));
-    checkGLcall("glBlendEquation");
+    switch ((WINED3DBLENDOP) stateblock->renderState[WINED3DRS_BLENDOPALPHA]) {
+        case WINED3DBLENDOP_ADD              : blendEquationAlpha = GL_FUNC_ADD;              break;
+        case WINED3DBLENDOP_SUBTRACT         : blendEquationAlpha = GL_FUNC_SUBTRACT;         break;
+        case WINED3DBLENDOP_REVSUBTRACT      : blendEquationAlpha = GL_FUNC_REVERSE_SUBTRACT; break;
+        case WINED3DBLENDOP_MIN              : blendEquationAlpha = GL_MIN;                   break;
+        case WINED3DBLENDOP_MAX              : blendEquationAlpha = GL_MAX;                   break;
+        default:
+            FIXME("Unrecognized/Unhandled D3DBLENDOP value %d\n", stateblock->renderState[WINED3DRS_BLENDOPALPHA]);
+    }
+
+    if(stateblock->renderState[WINED3DRS_SEPARATEALPHABLENDENABLE]) {
+        TRACE("glBlendEquationSeparateEXT(%x, %x)\n", blendEquation, blendEquationAlpha);
+        GL_EXTCALL(glBlendEquationSeparateEXT(blendEquation, blendEquationAlpha));
+        checkGLcall("glBlendEquationSeparateEXT");
+    } else {
+        TRACE("glBlendEquation(%x)\n", blendEquation);
+        GL_EXTCALL(glBlendEquationEXT(blendEquation));
+        checkGLcall("glBlendEquation");
+    }
 }
 
 static void
@@ -1604,12 +1707,6 @@ static void state_tessellation(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     TRACE("Stub\n");
     if(stateblock->renderState[WINED3DRS_ENABLEADAPTIVETESSELLATION])
         FIXME("(WINED3DRS_ENABLEADAPTIVETESSELLATION,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_ENABLEADAPTIVETESSELLATION]);
-}
-
-static void state_separateblend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    TRACE("Stub\n");
-    if(stateblock->renderState[WINED3DRS_SEPARATEALPHABLENDENABLE])
-        FIXME("(WINED3DRS_SEPARATEALPHABLENDENABLE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_SEPARATEALPHABLENDENABLE]);
 }
 
 static void state_wrapu(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -4033,10 +4130,10 @@ const struct StateEntry StateTable[] =
     { /*203, WINED3DRS_WRAP13                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*204, WINED3DRS_WRAP14                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*205, WINED3DRS_WRAP15                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
-    { /*206, WINED3DRS_SEPARATEALPHABLENDENABLE     */      STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   state_separateblend },
-    { /*207, WINED3DRS_SRCBLENDALPHA                */      STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   state_separateblend },
-    { /*208, WINED3DRS_DESTBLENDALPHA               */      STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   state_separateblend },
-    { /*209, WINED3DRS_BLENDOPALPHA                 */      STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   state_separateblend },
+    { /*206, WINED3DRS_SEPARATEALPHABLENDENABLE     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend },
+    { /*207, WINED3DRS_SRCBLENDALPHA                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend },
+    { /*208, WINED3DRS_DESTBLENDALPHA               */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend },
+    { /*209, WINED3DRS_BLENDOPALPHA                 */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blendop },
     /* Texture stage states */
     { /*0, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*0, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },

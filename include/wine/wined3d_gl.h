@@ -2237,6 +2237,16 @@ typedef GLvoid* (WINE_GLAPI * PGLFNMAPBUFFERARBPROC) (GLenum target, GLenum acce
 typedef GLboolean (WINE_GLAPI * PGLFNUNMAPBUFFERARBPROC) (GLenum target);
 typedef void (WINE_GLAPI * PGLFNGETBUFFERPARAMETERIVARBPROC) (GLenum target, GLenum pname, GLint *params);
 typedef void (WINE_GLAPI * PGLFNGETBUFFERPOINTERVARBPROC) (GLenum target, GLenum pname, GLvoid* *params);
+/* GL_EXT_blend_equation_separate */
+typedef void (WINE_GLAPI * PGLFNBLENDFUNCSEPARATEEXTPROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
+/* GL_EXT_blend_func_separate */
+#ifndef GL_EXT_blend_func_separate
+#define GL_BLEND_DST_RGB_EXT              0x80C8
+#define GL_BLEND_SRC_RGB_EXT              0x80C9
+#define GL_BLEND_DST_ALPHA_EXT            0x80CA
+#define GL_BLEND_SRC_ALPHA_EXT            0x80CB
+#endif
+typedef void (WINE_GLAPI * PGLFNBLENDEQUATIONSEPARATEEXTPROC) (GLenum modeRGB, GLenum modeAlpha);
 /* GL_EXT_fog_coord */
 #ifndef GL_EXT_fog_coord
 #define GL_EXT_fog_coord 1
@@ -3190,6 +3200,8 @@ typedef enum _GL_SupportedExt {
   /* EXT */
   EXT_BLEND_COLOR,
   EXT_BLEND_MINMAX,
+  EXT_BLEND_EQUATION_SEPARATE,
+  EXT_BLEND_FUNC_SEPARATE,
   EXT_FOG_COORD,
   EXT_FRAMEBUFFER_OBJECT,
   EXT_FRAMEBUFFER_BLIT,
@@ -3309,6 +3321,10 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGETBUFFERPARAMETERIVARBPROC,                   glGetBufferParameterivARB,                  ARB_VERTEX_BUFFER_OBJECT,NULL);\
     USE_GL_FUNC(PGLFNGETBUFFERPOINTERVARBPROC,                      glGetBufferPointervARB,                     ARB_VERTEX_BUFFER_OBJECT,NULL);\
     /** EXT Extensions **/ \
+    /* GL_EXT_blend_equation_separate */ \
+    USE_GL_FUNC(PGLFNBLENDFUNCSEPARATEEXTPROC,                      glBlendFuncSeparateEXT,                     EXT_BLEND_FUNC_SEPARATE, NULL);\
+    /* GL_EXT_blend_func_separate */ \
+    USE_GL_FUNC(PGLFNBLENDEQUATIONSEPARATEEXTPROC,                  glBlendEquationSeparateEXT,                 EXT_BLEND_EQUATION_SEPARATE, NULL);\
     /* GL_EXT_fog_coord */ \
     USE_GL_FUNC(PGLFNGLFOGCOORDFEXTPROC,                            glFogCoordfEXT,                             EXT_FOG_COORD,          NULL );\
     USE_GL_FUNC(PGLFNGLFOGCOORDFVEXTPROC,                           glFogCoordfvEXT,                            EXT_FOG_COORD,          NULL );\
