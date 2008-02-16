@@ -1543,18 +1543,25 @@ static void test_LookupAccountName(void)
     domain_size = domain_save;
     sid_size = sid_save;
 
-    ret = LookupAccountNameA(NULL, "Everyone", psid, &sid_size, domain, &domain_size, &sid_use);
-    get_sid_info(psid, &account, &sid_dom);
-    ok(ret, "Failed to lookup account name\n");
-    ok(sid_size != 0, "sid_size was zero\n");
-    ok(!lstrcmp(account, "Everyone"), "Expected Everyone, got %s\n", account);
-    todo_wine
-    ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
-    ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
-    todo_wine
-    ok(lstrlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
-    ok(sid_use == SidTypeWellKnownGroup, "Expected SidTypeUser, got %d\n", sid_use);
-    domain_size = domain_save;
+    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
+    {
+        skip("Non-english locale (test with hardcoded 'Everyone')\n");
+    }
+    else
+    {
+        ret = LookupAccountNameA(NULL, "Everyone", psid, &sid_size, domain, &domain_size, &sid_use);
+        get_sid_info(psid, &account, &sid_dom);
+        ok(ret, "Failed to lookup account name\n");
+        ok(sid_size != 0, "sid_size was zero\n");
+        ok(!lstrcmp(account, "Everyone"), "Expected Everyone, got %s\n", account);
+        todo_wine
+        ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
+        ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
+        todo_wine
+        ok(lstrlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
+        ok(sid_use == SidTypeWellKnownGroup, "Expected SidTypeUser, got %d\n", sid_use);
+        domain_size = domain_save;
+    }
 
     /* NULL Sid with zero sid size */
     SetLastError(0xdeadbeef);
@@ -2046,32 +2053,39 @@ static void test_SetEntriesInAcl(void)
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
 
-    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
-    ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszEveryone;
-    res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-    ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
-    ok(NewAcl != NULL, "returned acl was NULL\n");
-    LocalFree(NewAcl);
+    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
+    {
+        skip("Non-english locale (test with hardcoded 'Everyone')\n");
+    }
+    else
+    {
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+        ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszEveryone;
+        res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
+        ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
+        ok(NewAcl != NULL, "returned acl was NULL\n");
+        LocalFree(NewAcl);
 
-    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_BAD_FORM;
-    res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-    ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
-    ok(NewAcl == NULL, "returned acl wasn't NULL: %p\n", NewAcl);
-    LocalFree(NewAcl);
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_BAD_FORM;
+        res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
+        ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
+        ok(NewAcl == NULL, "returned acl wasn't NULL: %p\n", NewAcl);
+        LocalFree(NewAcl);
 
-    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
-    ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
-    res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-    ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
-    ok(NewAcl == NULL, "returned acl wasn't NULL: %p\n", NewAcl);
-    LocalFree(NewAcl);
+        ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+        ExplicitAccess.Trustee.MultipleTrusteeOperation = TRUSTEE_IS_IMPERSONATE;
+        res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
+        ok(res == ERROR_INVALID_PARAMETER, "SetEntriesInAclW failed: %u\n", res);
+        ok(NewAcl == NULL, "returned acl wasn't NULL: %p\n", NewAcl);
+        LocalFree(NewAcl);
 
-    ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
-    ExplicitAccess.grfAccessMode = SET_ACCESS;
-    res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
-    ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
-    ok(NewAcl != NULL, "returned acl was NULL\n");
-    LocalFree(NewAcl);
+        ExplicitAccess.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+        ExplicitAccess.grfAccessMode = SET_ACCESS;
+        res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
+        ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
+        ok(NewAcl != NULL, "returned acl was NULL\n");
+        LocalFree(NewAcl);
+    }
 
     ExplicitAccess.grfAccessMode = REVOKE_ACCESS;
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
