@@ -618,6 +618,18 @@ static void test_domdoc( void )
         ok( V_VT(&var) == VT_NULL, "incorrect dataType type\n");
         VariantClear(&var);
 
+        /* test nodeName */
+        r = IXMLDOMProcessingInstruction_get_nodeName(nodePI, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
+        SysFreeString(str);
+
+        /* test Target */
+        r = IXMLDOMProcessingInstruction_get_target(nodePI, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect target string\n");
+        SysFreeString(str);
+
         /* test nodeTypeString */
         r = IXMLDOMProcessingInstruction_get_nodeTypeString(nodePI, &str);
         ok(r == S_OK, "ret %08x\n", r );

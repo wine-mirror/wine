@@ -433,8 +433,9 @@ static HRESULT WINAPI dom_pi_get_target(
     IXMLDOMProcessingInstruction *iface,
     BSTR *p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    /* target returns the same value as nodeName property */
+    dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
+    return IXMLDOMNode_get_nodeName( This->node, p );
 }
 
 static HRESULT WINAPI dom_pi_get_data(
