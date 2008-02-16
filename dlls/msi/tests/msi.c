@@ -643,7 +643,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
-    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 8);
+    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
