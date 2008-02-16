@@ -1078,7 +1078,7 @@ LSTATUS WINAPI RegSetValueW( HKEY hkey, LPCWSTR name, DWORD type, LPCWSTR data, 
 
     TRACE("(%p,%s,%d,%s,%d)\n", hkey, debugstr_w(name), type, debugstr_w(data), count );
 
-    if (type != REG_SZ) return ERROR_INVALID_PARAMETER;
+    if (type != REG_SZ || !data) return ERROR_INVALID_PARAMETER;
 
     if (name && name[0])  /* need to create the subkey */
     {
@@ -1104,7 +1104,7 @@ LSTATUS WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DW
 
     TRACE("(%p,%s,%d,%s,%d)\n", hkey, debugstr_a(name), type, debugstr_a(data), count );
 
-    if (type != REG_SZ) return ERROR_INVALID_PARAMETER;
+    if (type != REG_SZ || !data) return ERROR_INVALID_PARAMETER;
 
     if (name && name[0])  /* need to create the subkey */
     {

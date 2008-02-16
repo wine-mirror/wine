@@ -295,12 +295,42 @@ static void test_set_value(void)
     static const WCHAR emptyW[] = {0};
     static const WCHAR string1W[] = {'T','h','i','s','N','e','v','e','r','B','r','e','a','k','s', 0};
     static const WCHAR string2W[] = {'T','h','i','s', 0 ,'B','r','e','a','k','s', 0 , 0 ,'A', 0 , 0 , 0 , 'L','o','t', 0 , 0 , 0 , 0, 0};
+    static const WCHAR substring2W[] = {'T','h','i','s',0};
 
     static const char name1A[] =   "CleanSingleString";
     static const char name2A[] =   "SomeIntraZeroedString";
     static const char emptyA[] = "";
     static const char string1A[] = "ThisNeverBreaks";
     static const char string2A[] = "This\0Breaks\0\0A\0\0\0Lot\0\0\0\0";
+    static const char substring2A[] = "This";
+
+    ret = RegSetValueA(hkey_main, NULL, REG_SZ, NULL, 0);
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have failed with ERROR_INVALID_PARAMETER instead of %d\n", ret);
+
+    ret = RegSetValueA(hkey_main, NULL, REG_SZ, string1A, sizeof(string1A));
+    ok(ret == ERROR_SUCCESS, "RegSetValueA failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(NULL, string1A, sizeof(string1A));
+    test_hkey_main_Value_W(NULL, string1W, sizeof(string1W));
+
+    /* RegSetValueA ignores the size passed in */
+    ret = RegSetValueA(hkey_main, NULL, REG_SZ, string1A, 4);
+    ok(ret == ERROR_SUCCESS, "RegSetValueA failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(NULL, string1A, sizeof(string1A));
+    test_hkey_main_Value_W(NULL, string1W, sizeof(string1W));
+
+    /* stops at first null */
+    ret = RegSetValueA(hkey_main, NULL, REG_SZ, string2A, sizeof(string2A));
+    ok(ret == ERROR_SUCCESS, "RegSetValueA failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(NULL, substring2A, sizeof(substring2A));
+    test_hkey_main_Value_W(NULL, substring2W, sizeof(substring2W));
+
+    /* only REG_SZ is supported */
+    ret = RegSetValueA(hkey_main, NULL, REG_BINARY, string2A, sizeof(string2A));
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    ret = RegSetValueA(hkey_main, NULL, REG_EXPAND_SZ, string2A, sizeof(string2A));
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    ret = RegSetValueA(hkey_main, NULL, REG_MULTI_SZ, string2A, sizeof(string2A));
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
 
     /* Test RegSetValueExA with a 'zero-byte' string (as Office 2003 does).
      * Surprisingly enough we're supposed to get zero bytes out of it.
@@ -333,6 +363,35 @@ static void test_set_value(void)
 
     /* 9x doesn't support W-calls, so don't test them then */
     if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return; 
+
+
+    ret = RegSetValueW(hkey_main, NULL, REG_SZ, NULL, 0);
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueW should have failed with ERROR_INVALID_PARAMETER instead of %d\n", ret);
+
+    ret = RegSetValueW(hkey_main, NULL, REG_SZ, string1W, sizeof(string1W));
+    ok(ret == ERROR_SUCCESS, "RegSetValueW failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(NULL, string1A, sizeof(string1A));
+    test_hkey_main_Value_W(NULL, string1W, sizeof(string1W));
+
+    /* RegSetValueA ignores the size passed in */
+    ret = RegSetValueW(hkey_main, NULL, REG_SZ, string1W, 4 * sizeof(string1W[0]));
+    ok(ret == ERROR_SUCCESS, "RegSetValueW failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(NULL, string1A, sizeof(string1A));
+    test_hkey_main_Value_W(NULL, string1W, sizeof(string1W));
+
+    /* stops at first null */
+    ret = RegSetValueW(hkey_main, NULL, REG_SZ, string2W, sizeof(string2W));
+    ok(ret == ERROR_SUCCESS, "RegSetValueW failed: %d, GLE=%d\n", ret, GetLastError());
+    test_hkey_main_Value_A(NULL, substring2A, sizeof(substring2A));
+    test_hkey_main_Value_W(NULL, substring2W, sizeof(substring2W));
+
+    /* only REG_SZ is supported */
+    ret = RegSetValueW(hkey_main, NULL, REG_BINARY, string2W, sizeof(string2W));
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueW should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    ret = RegSetValueW(hkey_main, NULL, REG_EXPAND_SZ, string2W, sizeof(string2W));
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueW should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    ret = RegSetValueW(hkey_main, NULL, REG_MULTI_SZ, string2W, sizeof(string2W));
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueW should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
 
     /* test RegSetValueExW with normal string */
     ret = RegSetValueExW(hkey_main, name1W, 0, REG_SZ, (const BYTE *)string1W, sizeof(string1W));
