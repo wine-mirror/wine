@@ -1065,7 +1065,7 @@ LSTATUS WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD typ
  *  lpSubKey [I] Name of a subkey of hKey.
  *  dwType   [I] Type of information to store.
  *  lpData   [I] String that contains the data to set for the default value.
- *  cbData   [I] Size of lpData.
+ *  cbData   [I] Ignored.
  *
  * RETURNS
  *  Success: ERROR_SUCCESS
