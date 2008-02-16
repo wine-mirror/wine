@@ -46,7 +46,7 @@ LONG BROWSEUI_refCount = 0;
 
 HINSTANCE BROWSEUI_hinstance = 0;
 
-typedef HRESULT (WINAPI *LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
+typedef HRESULT (*LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
 
 static const struct {
     REFCLSID clsid;

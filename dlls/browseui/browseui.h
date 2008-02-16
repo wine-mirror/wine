@@ -24,9 +24,9 @@
 extern LONG BROWSEUI_refCount;
 extern HINSTANCE BROWSEUI_hinstance;
 
-HRESULT WINAPI ACLMulti_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
-HRESULT WINAPI ProgressDialog_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
-HRESULT WINAPI CompCatCacheDaemon_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
+extern HRESULT ACLMulti_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
+extern HRESULT ProgressDialog_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
+extern HRESULT CompCatCacheDaemon_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
 
 extern const GUID CLSID_CompCatCacheDaemon;
 

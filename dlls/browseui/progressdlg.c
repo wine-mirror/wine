@@ -246,7 +246,7 @@ static DWORD WINAPI dialog_thread(LPVOID lpParameter)
     return 0;
 }
 
-HRESULT WINAPI ProgressDialog_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
+HRESULT ProgressDialog_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     ProgressDialog *This;
     if (pUnkOuter)

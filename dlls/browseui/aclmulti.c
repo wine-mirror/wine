@@ -81,7 +81,7 @@ static void release_obj(struct ACLMultiSublist *obj)
         IACList_Release(obj->pACL);
 }
 
-HRESULT WINAPI ACLMulti_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
+HRESULT ACLMulti_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     ACLMulti *This;
     if (pUnkOuter)

@@ -51,7 +51,7 @@ typedef struct tagCCCD {
 
 static const IRunnableTaskVtbl CompCatCacheDaemonVtbl;
 
-HRESULT WINAPI CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
+HRESULT CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     CompCatCacheDaemon *This;
     if (pUnkOuter)
