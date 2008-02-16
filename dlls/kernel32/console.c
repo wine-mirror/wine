@@ -1161,6 +1161,9 @@ static  BOOL    start_console_renderer_helper(const char* appname, STARTUPINFOA*
         CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS,
                        NULL, NULL, si, &pi))
     {
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+
         if (WaitForSingleObject(hEvent, INFINITE) != WAIT_OBJECT_0) return FALSE;
 
         TRACE("Started wineconsole pid=%08x tid=%08x\n",
