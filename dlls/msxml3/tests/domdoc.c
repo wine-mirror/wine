@@ -2128,6 +2128,18 @@ static void test_xmlTypes(void)
                     ok( !lstrcmpW( str, _bstr_("attribute") ), "incorrect nodeTypeString string\n");
                     SysFreeString(str);
 
+                    /* test nodeName */
+                    hr = IXMLDOMAttribute_get_nodeName(pAttrubute, &str);
+                    ok(hr == S_OK, "ret %08x\n", hr );
+                    ok( !lstrcmpW( str, szAttribute ), "incorrect nodeName string\n");
+                    SysFreeString(str);
+
+                    /* test name property */
+                    hr = IXMLDOMAttribute_get_name(pAttrubute, &str);
+                    ok(hr == S_OK, "ret %08x\n", hr );
+                    ok( !lstrcmpW( str, szAttribute ), "incorrect name string\n");
+                    SysFreeString(str);
+
                     hr = IXMLDOMAttribute_get_xml(pAttrubute, &str);
                     ok(hr == S_OK, "ret %08x\n", hr );
                     ok( !lstrcmpW( str, szAttributeXML ), "incorrect attribute xml\n");

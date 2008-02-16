@@ -433,8 +433,9 @@ static HRESULT WINAPI domattr_get_name(
     IXMLDOMAttribute *iface,
     BSTR *p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    /* name property returns the same value as nodeName */
+    domattr *This = impl_from_IXMLDOMAttribute( iface );
+    return IXMLDOMNode_get_nodeName( This->node, p );
 }
 
 static HRESULT WINAPI domattr_get_value(
