@@ -2364,6 +2364,79 @@ static void BltParamTest(void)
     IDirectDrawSurface_Release(surface2);
 }
 
+static void PaletteTest(void)
+{
+    HRESULT hr;
+    IDirectDrawPalette *palette;
+    PALETTEENTRY Table[256];
+    PALETTEENTRY palEntries[256];
+    int i;
+
+    for(i=0; i<256; i++)
+    {
+        Table[i].peRed   = 0xff;
+        Table[i].peGreen = 0;
+        Table[i].peBlue  = 0;
+        Table[i].peFlags = 0;
+    }
+
+    /* Create a 8bit palette without DDPCAPS_ALLOW256 set */
+    hr = IDirectDraw_CreatePalette(lpDD, DDPCAPS_8BIT, Table, &palette, NULL);
+    ok(hr == DD_OK, "CreatePalette failed with %08x\n", hr);
+
+    /* Read back the palette and verify the entries. Without DDPCAPS_ALLOW256 set
+    /  entry 0 and 255 should have been overwritten with black and white */
+    IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
+    ok(hr == DD_OK, "GetEntries failed with %08x\n", hr);
+    if(hr == DD_OK)
+    {
+        ok((palEntries[0].peRed == 0) && (palEntries[0].peGreen == 0) && (palEntries[0].peBlue == 0),
+           "Palette entry 0 of a palette without DDPCAPS_ALLOW256 set should be (0,0,0) but it is (%d,%d,%d)\n",
+           palEntries[0].peRed, palEntries[0].peGreen, palEntries[0].peBlue);
+        ok((palEntries[255].peRed == 255) && (palEntries[255].peGreen == 255) && (palEntries[255].peBlue == 255),
+           "Palette entry 255 of a palette without DDPCAPS_ALLOW256 set should be (255,255,255) but it is (%d,%d,%d)\n",
+           palEntries[255].peRed, palEntries[255].peGreen, palEntries[255].peBlue);
+
+        /* Entry 1-254 should contain red */
+        for(i=1; i<255; i++)
+            ok((palEntries[i].peRed == 255) && (palEntries[i].peGreen == 0) && (palEntries[i].peBlue == 0),
+               "Palette entry %d should have contained (255,0,0) but was set to %d,%d,%d)\n",
+               i, palEntries[i].peRed, palEntries[i].peGreen, palEntries[i].peBlue);
+    }
+
+    /* CreatePalette without DDPCAPS_ALLOW256 ignores entry 0 and 255,
+    /  now check we are able to update the entries afterwards. */
+    IDirectDrawPalette_SetEntries(palette , 0, 0, 256, &Table[0]);
+    ok(hr == DD_OK, "SetEntries failed with %08x\n", hr);
+    IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
+    ok(hr == DD_OK, "GetEntries failed with %08x\n", hr);
+    if(hr == DD_OK)
+    {
+        ok((palEntries[0].peRed == 0) && (palEntries[0].peGreen == 0) && (palEntries[0].peBlue == 0),
+           "Palette entry 0 should have been set to (0,0,0) but it contains (%d,%d,%d)\n",
+           palEntries[0].peRed, palEntries[0].peGreen, palEntries[0].peBlue);
+        ok((palEntries[255].peRed == 255) && (palEntries[255].peGreen == 255) && (palEntries[255].peBlue == 255),
+           "Palette entry 255 should have been set to (255,255,255) but it contains (%d,%d,%d)\n",
+           palEntries[255].peRed, palEntries[255].peGreen, palEntries[255].peBlue);
+    }
+    IDirectDrawPalette_Release(palette);
+
+    /* Create a 8bit palette with DDPCAPS_ALLOW256 set */
+    hr = IDirectDraw_CreatePalette(lpDD, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
+    ok(hr == DD_OK, "CreatePalette failed with %08x\n", hr);
+    IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
+    ok(hr == DD_OK, "GetEntries failed with %08x\n", hr);
+    if(hr == DD_OK)
+    {
+        /* All entries should contain red */
+        for(i=0; i<256; i++)
+            ok((palEntries[i].peRed == 255) && (palEntries[i].peGreen == 0) && (palEntries[i].peBlue == 0),
+               "Palette entry %d should have contained (255,0,0) but was set to %d,%d,%d)\n",
+               i, palEntries[i].peRed, palEntries[i].peGreen, palEntries[i].peBlue);
+    }
+    IDirectDrawPalette_Release(palette);
+}
+
 static void StructSizeTest(void)
 {
     IDirectDrawSurface *surface1;
@@ -2491,5 +2564,6 @@ START_TEST(dsurface)
     PrivateDataTest();
     BltParamTest();
     StructSizeTest();
+    PaletteTest();
     ReleaseDirectDraw();
 }

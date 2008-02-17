@@ -111,6 +111,7 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DW
     IWineD3DResourceImpl *res;
 
     TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
+    TRACE("Palette flags: %#x\n", This->Flags);
 
     if (This->Flags & WINEDDPCAPS_8BITENTRIES) {
         unsigned int i;
@@ -121,6 +122,19 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DW
     }
     else {
         memcpy(This->palents+Start, PalEnt, Count * sizeof(PALETTEENTRY));
+
+        /* When WINEDDCAPS_ALLOW256 isn't set we need to override entry 0 with black and 255 with white */
+        if(!(This->Flags & WINEDDPCAPS_ALLOW256))
+        {
+            TRACE("WINEDDPCAPS_ALLOW256 set, overriding palette entry 0 with black and 255 with white\n");
+            This->palents[0].peRed = 0;
+            This->palents[0].peGreen = 0;
+            This->palents[0].peBlue = 0;
+
+            This->palents[255].peRed = 255;
+            This->palents[255].peGreen = 255;
+            This->palents[255].peBlue = 255;
+        }
 
         if (This->hpal)
             SetPaletteEntries(This->hpal, Start, Count, This->palents+Start);
