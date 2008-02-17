@@ -97,7 +97,7 @@ BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR pa
     STRRET strret;
     DWORD flag;
 
-    TRACE("%p %p %p %d\n", psf, pidl, path, type);
+    TRACE("%p %p %p %x\n", psf, pidl, path, type);
 
     if (!pidl || !path)
         return FALSE;
@@ -109,46 +109,44 @@ BOOL WINAPI ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR pa
             return FALSE;
     }
 
-    if (type >= 0 && type <= 2)
+    switch (type)
     {
-        switch (type)
+    case ILGDN_FORPARSING:
+        flag = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR;
+        break;
+    case ILGDN_NORMAL:
+        flag = SHGDN_NORMAL;
+        break;
+    case ILGDN_INFOLDER:
+        flag = SHGDN_INFOLDER;
+        break;
+    default:
+        FIXME("Unknown type parameter = %x\n", type);
+        flag = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR;
+        break;
+    }
+
+    if (!*(const WORD*)pidl || type == ILGDN_FORPARSING)
+    {
+        ret = IShellFolder_GetDisplayNameOf(lsf, pidl, flag, &strret);
+        if (SUCCEEDED(ret))
         {
-        case ILGDN_FORPARSING:
-            flag = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR;
-            break;
-        case ILGDN_NORMAL:
-            flag = SHGDN_NORMAL;
-            break;
-        case ILGDN_INFOLDER:
-            flag = SHGDN_INFOLDER;
-            break;
-        default:
-            FIXME("Unknown type parameter = %x\n", type);
-            flag = SHGDN_FORPARSING | SHGDN_FORADDRESSBAR;
-            break;
+            if(!StrRetToStrNW(path, MAX_PATH, &strret, pidl))
+                ret = E_FAIL;
         }
-        if (!*(const WORD*)pidl || type == ILGDN_FORPARSING)
+    }
+    else
+    {
+        ret = SHBindToParent(pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidllast);
+        if (SUCCEEDED(ret))
         {
-            ret = IShellFolder_GetDisplayNameOf(lsf, pidl, flag, &strret);
+            ret = IShellFolder_GetDisplayNameOf(psfParent, pidllast, flag, &strret);
             if (SUCCEEDED(ret))
             {
-                if(!StrRetToStrNW(path, MAX_PATH, &strret, pidl))
+                if(!StrRetToStrNW(path, MAX_PATH, &strret, pidllast))
                     ret = E_FAIL;
             }
-        }
-        else
-        {
-            ret = SHBindToParent(pidl, &IID_IShellFolder, (LPVOID*)&psfParent, &pidllast);
-            if (SUCCEEDED(ret))
-            {
-                ret = IShellFolder_GetDisplayNameOf(psfParent, pidllast, flag, &strret);
-                if (SUCCEEDED(ret))
-                {
-                    if(!StrRetToStrNW(path, MAX_PATH, &strret, pidllast))
-                        ret = E_FAIL;
-                }
-                IShellFolder_Release(psfParent);
-            }
+            IShellFolder_Release(psfParent);
         }
     }
 
