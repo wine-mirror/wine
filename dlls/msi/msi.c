@@ -561,6 +561,28 @@ done:
     return rc;
 }
 
+static LPWSTR msi_reg_get_value(HKEY hkey, LPCWSTR name, DWORD *type)
+{
+    DWORD dval;
+    LONG res;
+    WCHAR temp[20];
+
+    static const WCHAR format[] = {'%','d',0};
+
+    res = RegQueryValueExW(hkey, name, NULL, type, NULL, NULL);
+    if (res != ERROR_SUCCESS)
+        return NULL;
+
+    if (*type == REG_SZ)
+        return msi_reg_get_val_str(hkey, name);
+
+    if (!msi_reg_get_val_dword(hkey, name, &dval))
+        return NULL;
+
+    sprintfW(temp, format, dval);
+    return strdupW(temp);
+}
+
 static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
                                       awstring *szValue, LPDWORD pcchValueBuf)
 {
@@ -572,7 +594,7 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
     BOOL classes = FALSE;
     BOOL badconfig = FALSE;
     LONG res;
-    DWORD save;
+    DWORD save, type;
 
     static WCHAR empty[] = {0};
     static const WCHAR sourcelist[] = {
@@ -641,7 +663,7 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         else if (!lstrcmpW(szAttribute, INSTALLPROPERTY_VERSIONSTRINGW))
             szAttribute = display_version;
 
-        val = msi_reg_get_val_str(userdata, szAttribute);
+        val = msi_reg_get_value(userdata, szAttribute, &type);
         if (!val)
             val = empty;
     }
@@ -669,18 +691,19 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         {
             res = RegOpenKeyW(prodkey, sourcelist, &source);
             if (res == ERROR_SUCCESS)
-                val = msi_reg_get_val_str(source, szAttribute);
+                val = msi_reg_get_value(source, szAttribute, &type);
 
             RegCloseKey(source);
         }
         else
         {
-            val = msi_reg_get_val_str(prodkey, szAttribute);
+            val = msi_reg_get_value(prodkey, szAttribute, &type);
             if (!val)
                 val = empty;
         }
 
-        if (val != empty && !lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEW))
+        if (val != empty && type != REG_DWORD &&
+            !lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEW))
         {
             if (lstrlenW(val) != SQUISH_GUID_SIZE - 1)
                 badconfig = TRUE;
