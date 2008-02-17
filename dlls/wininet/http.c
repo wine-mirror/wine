@@ -62,7 +62,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
-static const WCHAR g_szHttp1_1[] = {' ','H','T','T','P','/','1','.','1',0 };
+static const WCHAR g_szHttp1_1[] = {'H','T','T','P','/','1','.','1',0};
 static const WCHAR g_szReferer[] = {'R','e','f','e','r','e','r',0};
 static const WCHAR g_szAccept[] = {'A','c','c','e','p','t',0};
 static const WCHAR g_szUserAgent[] = {'U','s','e','r','-','A','g','e','n','t',0};
@@ -247,7 +247,7 @@ static void HTTP_FixURL( LPWININETHTTPREQW lpwhr)
     }
 }
 
-static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR verb, LPCWSTR path )
+static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR verb, LPCWSTR path, LPCWSTR version )
 {
     LPWSTR requestString;
     DWORD len, n;
@@ -261,7 +261,7 @@ static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR ve
     static const WCHAR sztwocrlf[] = {'\r','\n','\r','\n', 0};
 
     /* allocate space for an array of all the string pointers to be added */
-    len = (lpwhr->nCustHeaders)*4 + 9;
+    len = (lpwhr->nCustHeaders)*4 + 10;
     req = HeapAlloc( GetProcessHeap(), 0, len*sizeof(LPCWSTR) );
 
     /* add the verb, path and HTTP version string */
@@ -269,7 +269,8 @@ static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR ve
     req[n++] = verb;
     req[n++] = szSpace;
     req[n++] = path;
-    req[n++] = g_szHttp1_1;
+    req[n++] = szSpace;
+    req[n++] = version;
 
     /* Append custom request headers */
     for (i = 0; i < lpwhr->nCustHeaders; i++)
@@ -1404,6 +1405,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 
     lpwhr->lpszVerb = WININET_strdupW(lpszVerb && *lpszVerb ? lpszVerb : szGET);
 
+    if (lpszVersion)
+        lpwhr->lpszVersion = WININET_strdupW(lpszVersion);
+    else
+        lpwhr->lpszVersion = WININET_strdupW(g_szHttp1_1);
+
     HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (lpwhs->nServerPort == INTERNET_INVALID_PORT_NUMBER)
@@ -1633,7 +1639,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
             BOOL ret;
 
             if (request_only)
-                headers = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath);
+                headers = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, lpwhr->lpszVersion);
             else
                 headers = lpwhr->lpszRawHeaders;
 
@@ -2518,7 +2524,7 @@ static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
 
     lpszPath = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( lpwhs->lpszHostName ) + 13)*sizeof(WCHAR) );
     sprintfW( lpszPath, szFormat, lpwhs->lpszHostName, lpwhs->nHostPort );
-    requestString = HTTP_BuildHeaderRequestString( lpwhr, szConnect, lpszPath );
+    requestString = HTTP_BuildHeaderRequestString( lpwhr, szConnect, lpszPath, g_szHttp1_1 );
     HeapFree( GetProcessHeap(), 0, lpszPath );
 
     len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
@@ -2619,7 +2625,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
 
-        requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath);
+        requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, lpwhr->lpszVersion);
  
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
