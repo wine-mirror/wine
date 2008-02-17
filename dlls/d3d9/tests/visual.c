@@ -117,9 +117,13 @@ static IDirect3DDevice9 *init_d3d9(void)
     present_parameters.BackBufferHeight = 480;
     present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
     present_parameters.EnableAutoDepthStencil = TRUE;
-    present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
+    if(FAILED(hr)) {
+        present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
+        hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
+    }
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D_CreateDevice returned: %s\n", DXGetErrorString9(hr));
 
     return device_ptr;
@@ -6463,6 +6467,184 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
 
 }
 
+static void stencil_cull_test(IDirect3DDevice9 *device) {
+    HRESULT hr;
+    IDirect3DSurface9 *depthstencil = NULL;
+    D3DSURFACE_DESC desc;
+    float quad1[] = {
+        -1.0,   -1.0,   0.1,
+         0.0,   -1.0,   0.1,
+        -1.0,    0.0,   0.1,
+         0.0,    0.0,   0.1,
+    };
+    float quad2[] = {
+         0.0,   -1.0,   0.1,
+         1.0,   -1.0,   0.1,
+         0.0,    0.0,   0.1,
+         1.0,    0.0,   0.1,
+    };
+    float quad3[] = {
+        0.0,    0.0,   0.1,
+        1.0,    0.0,   0.1,
+        0.0,    1.0,   0.1,
+        1.0,    1.0,   0.1,
+    };
+    float quad4[] = {
+        -1.0,    0.0,   0.1,
+         0.0,    0.0,   0.1,
+        -1.0,    1.0,   0.1,
+         0.0,    1.0,   0.1,
+    };
+    struct vertex painter[] = {
+       {-1.0,   -1.0,   0.0,    0x00000000},
+       { 1.0,   -1.0,   0.0,    0x00000000},
+       {-1.0,    1.0,   0.0,    0x00000000},
+       { 1.0,    1.0,   0.0,    0x00000000},
+    };
+    WORD indices_cw[]  = {0, 1, 3};
+    WORD indices_ccw[] = {0, 2, 3};
+    unsigned int i;
+    DWORD color;
+
+    IDirect3DDevice9_GetDepthStencilSurface(device, &depthstencil);
+    if(depthstencil == NULL) {
+        skip("No depth stencil buffer\n");
+        return;
+    }
+    hr = IDirect3DSurface9_GetDesc(depthstencil, &desc);
+    ok(hr == D3D_OK, "IDirect3DSurface9_GetDesc failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DSurface9_Release(depthstencil);
+    if(desc.Format != D3DFMT_D24S8 && desc.Format != D3DFMT_D24X4S4) {
+        skip("No 4 or 8 bit stencil surface\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_STENCIL, 0x00ff0000, 0.0, 0x8);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+    IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILFAIL, D3DSTENCILOP_INCR);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILZFAIL, D3DSTENCILOP_DECR);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILREF, 0x3);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CCW_STENCILFAIL, D3DSTENCILOP_REPLACE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CCW_STENCILZFAIL, D3DSTENCILOP_DECR);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CCW_STENCILPASS, D3DSTENCILOP_INCR);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILENABLE, TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TWOSIDEDSTENCILMODE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    /* First pass: Fill the stencil buffer with some values... */
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_CW);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                1 /*PrimCount */, indices_cw, D3DFMT_INDEX16, quad1, sizeof(float) * 3);
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                1 /*PrimCount */, indices_ccw, D3DFMT_INDEX16, quad1, sizeof(float) * 3);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TWOSIDEDSTENCILMODE, TRUE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                1 /*PrimCount */, indices_cw, D3DFMT_INDEX16, quad2, sizeof(float) * 3);
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                1 /*PrimCount */, indices_ccw, D3DFMT_INDEX16, quad2, sizeof(float) * 3);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_CW);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                1 /*PrimCount */, indices_cw, D3DFMT_INDEX16, quad3, sizeof(float) * 3);
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                1 /*PrimCount */, indices_ccw, D3DFMT_INDEX16, quad3, sizeof(float) * 3);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_CCW);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                1 /*PrimCount */, indices_cw, D3DFMT_INDEX16, quad4, sizeof(float) * 3);
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
+                1 /*PrimCount */, indices_ccw, D3DFMT_INDEX16, quad4, sizeof(float) * 3);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TWOSIDEDSTENCILMODE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILFUNC, D3DCMP_EQUAL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    /* 2nd pass: Make the stencil values visible */
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+        for(i = 0; i < 16; i++) {
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILREF, i);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+            painter[0].diffuse = (i * 16); /* Creates shades of blue */
+            painter[1].diffuse = (i * 16);
+            painter[2].diffuse = (i * 16);
+            painter[3].diffuse = (i * 16);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, painter, sizeof(painter[0]));
+            ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+        }
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    color = getPixelColor(device, 160, 420);
+    ok(color == 0x00000030, "CCW triangle, twoside FALSE, cull cw, replace, has color 0x%08x, expected 0x00000030\n", color);
+    color = getPixelColor(device, 160, 300);
+    ok(color == 0x00000080, "CW triangle, twoside FALSE, cull cw, culled, has color 0x%08x, expected 0x00000080\n", color);
+
+    color = getPixelColor(device, 480, 420);
+    ok(color == 0x00000090, "CCW triangle, twoside TRUE, cull off, incr, has color 0x%08x, expected 0x00000090\n", color);
+    color = getPixelColor(device, 480, 300);
+    ok(color == 0x00000030, "CW triangle, twoside TRUE, cull off, replace, has color 0x%08x, expected 0x00000030\n", color);
+
+    color = getPixelColor(device, 160, 180);
+    ok(color == 0x00000080, "CCW triangle, twoside TRUE, cull ccw, culled, has color 0x%08x, expected 0x00000080\n", color);
+    color = getPixelColor(device, 160, 60);
+    ok(color == 0x00000030, "CW triangle, twoside TRUE, cull ccw, replace, has color 0x%08x, expected 0x00000030\n", color);
+
+    color = getPixelColor(device, 480, 180);
+    ok(color == 0x00000090, "CCW triangle, twoside TRUE, cull cw, incr, has color 0x%08x, expected 0x00000090\n", color);
+    color = getPixelColor(device, 480, 60);
+    ok(color == 0x00000080, "CW triangle, twoside TRUE, cull cw, culled, has color 0x%08x, expected 0x00000080\n", color);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -6546,6 +6728,11 @@ START_TEST(visual)
     fixed_function_decl_test(device_ptr);
     conditional_np2_repeat_test(device_ptr);
     fixed_function_bumpmap_test(device_ptr);
+    if(caps.StencilCaps & D3DSTENCILCAPS_TWOSIDED) {
+        stencil_cull_test(device_ptr);
+    } else {
+        skip("No two sided stencil support\n");
+    }
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
