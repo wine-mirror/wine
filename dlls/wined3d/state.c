@@ -2526,6 +2526,7 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
 static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+    float mat[2][2];
 
     if(stateblock->pixelShader && stage != 0 &&
        ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->needsbumpmat == stage) {
@@ -2545,11 +2546,13 @@ static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stage));
             checkGLcall("GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stage))");
         }
-        GL_EXTCALL(glTexBumpParameterfvATI(GL_BUMP_ROT_MATRIX_ATI,
-                   (float *) &(stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00])));
+        mat[0][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]);
+        mat[1][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT01]);
+        mat[0][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT10]);
+        mat[1][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT11]);
+        GL_EXTCALL(glTexBumpParameterfvATI(GL_BUMP_ROT_MATRIX_ATI, (float *) mat));
         checkGLcall("glTexBumpParameterfvATI");
-    }
-    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+    } else if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
         /* Direct3D sets the matrix in the stage reading the perturbation map. The result is used to
          * offset the destination stage(always stage + 1 in d3d). In GL_NV_texture_shader, the bump
          * map offseting is done in the stage reading the bump mapped texture, and the perturbation
@@ -2562,8 +2565,14 @@ static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
             checkGLcall("GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage))");
 
-            glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV,
-                      (float *) &(stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]));
+            /* We can't just pass a pointer to the stateblock to GL due to the different matrix
+             * format(column major vs row major)
+             */
+            mat[0][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]);
+            mat[1][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT01]);
+            mat[0][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT10]);
+            mat[1][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT11]);
+            glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, (float *) mat);
             checkGLcall("glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, mat)");
         }
     }
