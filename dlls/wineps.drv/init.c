@@ -37,7 +37,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wownt32.h"
 #include "winreg.h"
 #include "psdrv.h"
 #include "winspool.h"
@@ -406,7 +405,7 @@ HDC PSDRV_ResetDC( PSDRV_PDEVICE *physDev, const DEVMODEW *lpInitData )
         HeapFree(PSDRV_Heap, 0, devmodeA);
         PSDRV_UpdateDevCaps(physDev);
         hrgn = CreateRectRgn(0, 0, physDev->horzRes, physDev->vertRes);
-        SelectVisRgn16(HDC_16(physDev->hdc), HRGN_16(hrgn));
+        SelectVisRgn( physDev->hdc, hrgn );
         DeleteObject(hrgn);
     }
     return physDev->hdc;

@@ -1395,6 +1395,24 @@ BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD_PTR dwHookData )
 }
 
 
+/***********************************************************************
+ *           GetDCHook   (GDI32.@)
+ *
+ * Note: this doesn't exist in Win32, we add it here because user32 needs it.
+ */
+DWORD_PTR WINAPI GetDCHook( HDC hdc, DCHOOKPROC *proc )
+{
+    DC *dc = get_dc_ptr( hdc );
+    DWORD_PTR ret;
+
+    if (!dc) return 0;
+    if (proc) *proc = dc->hookThunk;
+    ret = dc->dwHookData;
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
 /* relay function to call the 16-bit DC hook proc */
 static BOOL WINAPI call_dc_hook16( HDC hdc, WORD code, DWORD_PTR data, LPARAM lParam )
 {
@@ -1454,11 +1472,12 @@ DWORD WINAPI GetDCHook16( HDC16 hdc16, FARPROC16 *phookProc )
 
 
 /***********************************************************************
- *           SetHookFlags   (GDI.192)
+ *           SetHookFlags   (GDI32.@)
+ *
+ * Note: this doesn't exist in Win32, we add it here because user32 needs it.
  */
-WORD WINAPI SetHookFlags16(HDC16 hdc16, WORD flags)
+WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
 {
-    HDC hdc = HDC_32( hdc16 );
     DC *dc = get_dc_obj( hdc );  /* not get_dc_ptr, this needs to work from any thread */
     LONG ret = 0;
 

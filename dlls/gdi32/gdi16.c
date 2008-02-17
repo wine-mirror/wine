@@ -1347,6 +1347,15 @@ BOOL16 WINAPI PtVisible16( HDC16 hdc, INT16 x, INT16 y )
 
 
 /***********************************************************************
+ *           SelectVisRgn   (GDI.105)
+ */
+INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
+{
+    return SelectVisRgn( HDC_32(hdc), HRGN_32(hrgn) );
+}
+
+
+/***********************************************************************
  *           SetBitmapBits    (GDI.106)
  */
 LONG WINAPI SetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPCVOID buffer )
@@ -1563,6 +1572,15 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr, 
     PlayMetaFileRecord( HDC_32(hdc), ht32, mr, handles );
     for (i = 0; i < handles; i++) ht->objectHandle[i] = LOWORD(ht32->objectHandle[i]);
     HeapFree( GetProcessHeap(), 0, ht32 );
+}
+
+
+/***********************************************************************
+ *           SetHookFlags   (GDI.192)
+ */
+WORD WINAPI SetHookFlags16( HDC16 hdc, WORD flags )
+{
+    return SetHookFlags( HDC_32(hdc), flags );
 }
 
 

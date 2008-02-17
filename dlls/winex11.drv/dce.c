@@ -27,10 +27,7 @@
 #include "win.h"
 #include "windef.h"
 #include "wingdi.h"
-#include "wownt32.h"
 #include "x11drv.h"
-#include "wine/winbase16.h"
-#include "wine/wingdi16.h"
 #include "wine/server.h"
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -170,7 +167,7 @@ static void update_visible_region( struct dce *dce )
     OffsetRgn( vis_rgn,
                -(escape.drawable_rect.left + escape.dc_rect.left),
                -(escape.drawable_rect.top + escape.dc_rect.top) );
-    SelectVisRgn16( HDC_16(dce->hdc), HRGN_16(vis_rgn) );
+    SelectVisRgn( dce->hdc, vis_rgn );
     DeleteObject( vis_rgn );
 }
 
@@ -214,7 +211,7 @@ static void delete_clip_rgn( struct dce *dce )
     dce->clip_rgn = 0;
 
     /* make it dirty so that the vis rgn gets recomputed next time */
-    SetHookFlags16( HDC_16(dce->hdc), DCHF_INVALIDATEVISRGN );
+    SetHookFlags( dce->hdc, DCHF_INVALIDATEVISRGN );
 }
 
 
@@ -317,7 +314,7 @@ void alloc_window_dce( struct x11drv_win_data *data )
         if (win_style & WS_CLIPCHILDREN) dce->flags |= DCX_CLIPCHILDREN;
         if (win_style & WS_CLIPSIBLINGS) dce->flags |= DCX_CLIPSIBLINGS;
     }
-    SetHookFlags16( HDC_16(dce->hdc), DCHF_INVALIDATEVISRGN );
+    SetHookFlags( dce->hdc, DCHF_INVALIDATEVISRGN );
 
     EnterCriticalSection( &dce_section );
     list_add_tail( &dce_list, &dce->entry );
@@ -427,7 +424,7 @@ void invalidate_dce( HWND hwnd, const RECT *rect )
                     /* Set dirty bits in the hDC and DCE structs */
 
                     TRACE("\tfixed up %p dce [%p]\n", dce, dce->hwnd);
-                    SetHookFlags16( HDC_16(dce->hdc), DCHF_INVALIDATEVISRGN );
+                    SetHookFlags( dce->hdc, DCHF_INVALIDATEVISRGN );
                 }
             }
         } /* dce list */
@@ -561,7 +558,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     dce->hwnd = hwnd;
     dce->flags = (dce->flags & ~clip_flags) | (flags & clip_flags);
 
-    if (SetHookFlags16( HDC_16(dce->hdc), DCHF_VALIDATEVISRGN ))
+    if (SetHookFlags( dce->hdc, DCHF_VALIDATEVISRGN ))
         bUpdateVisRgn = TRUE;  /* DC was dirty */
 
     if (bUpdateVisRgn) update_visible_region( dce );

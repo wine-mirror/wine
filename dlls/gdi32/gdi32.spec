@@ -515,10 +515,11 @@
 @ stdcall CloseJob16(long)
 @ stdcall DrvGetPrinterData16(str str ptr ptr long ptr)
 @ stdcall DrvSetPrinterData16(str str long ptr long)
+@ stdcall GetDCHook(long ptr)
 @ stdcall OpenJob16(str str long)
-@ stdcall SelectVisRgn16(long long)
+@ stdcall SelectVisRgn(long long)
 @ stdcall SetDCHook(long ptr long)
-@ stdcall SetHookFlags16(long long)
+@ stdcall SetHookFlags(long long)
 @ stdcall WriteSpool16(long ptr long)
 
 ################################################################

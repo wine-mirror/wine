@@ -163,22 +163,23 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 }
 
 /***********************************************************************
- *           SelectVisRgn   (GDI.105)
+ *           SelectVisRgn   (GDI32.@)
+ *
+ * Note: not exported on Windows, only the 16-bit version is exported.
  */
-INT16 WINAPI SelectVisRgn16( HDC16 hdc16, HRGN16 hrgn )
+INT WINAPI SelectVisRgn( HDC hdc, HRGN hrgn )
 {
     int retval;
-    HDC hdc = HDC_32( hdc16 );
     DC * dc;
 
     if (!hrgn) return ERROR;
     if (!(dc = get_dc_ptr( hdc ))) return ERROR;
 
-    TRACE("%p %04x\n", hdc, hrgn );
+    TRACE("%p %p\n", hdc, hrgn );
 
     dc->dirty = 0;
 
-    retval = CombineRgn( dc->hVisRgn, HRGN_32(hrgn), 0, RGN_COPY );
+    retval = CombineRgn( dc->hVisRgn, hrgn, 0, RGN_COPY );
     CLIPPING_UpdateGCRegion( dc );
     release_dc_ptr( dc );
     return retval;
