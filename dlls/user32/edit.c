@@ -5347,7 +5347,7 @@ static void EDIT_UpdateText(EDITSTATE *es, const RECT *rc, BOOL bErase)
 
 static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
 {
-    DWORD dwBufLen;
+    LONG buflen;
     LPWSTR lpCompStr = NULL;
     HIMC hIMC;
     LPSTR lpCompStrAttr = NULL;
@@ -5356,15 +5356,15 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
     if (!(hIMC = ImmGetContext(hwnd)))
         return;
 
-    dwBufLen = ImmGetCompositionStringW(hIMC, GCS_COMPSTR, NULL, 0);
+    buflen = ImmGetCompositionStringW(hIMC, GCS_COMPSTR, NULL, 0);
 
-    if (dwBufLen < 0)
+    if (buflen < 0)
     {
         ImmReleaseContext(hwnd, hIMC);
         return;
     }
 
-    lpCompStr = HeapAlloc(GetProcessHeap(),0,dwBufLen + sizeof(WCHAR));
+    lpCompStr = HeapAlloc(GetProcessHeap(),0,buflen + sizeof(WCHAR));
     if (!lpCompStr)
     {
         ERR("Unable to allocate IME CompositionString\n");
@@ -5372,9 +5372,9 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
         return;
     }
 
-    if (dwBufLen)
-        ImmGetCompositionStringW(hIMC, GCS_COMPSTR, lpCompStr, dwBufLen);
-    lpCompStr[dwBufLen/sizeof(WCHAR)] = 0;
+    if (buflen)
+        ImmGetCompositionStringW(hIMC, GCS_COMPSTR, lpCompStr, buflen);
+    lpCompStr[buflen/sizeof(WCHAR)] = 0;
 
     if (CompFlag & GCS_COMPATTR)
     {
@@ -5427,21 +5427,21 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
 
 static void EDIT_GetResultStr(HWND hwnd, EDITSTATE *es)
 {
-    DWORD dwBufLen;
+    LONG buflen;
     LPWSTR lpResultStr;
     HIMC    hIMC;
 
     if ( !(hIMC = ImmGetContext(hwnd)))
         return;
 
-    dwBufLen = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, NULL, 0);
-    if (dwBufLen <= 0)
+    buflen = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, NULL, 0);
+    if (buflen <= 0)
     {
         ImmReleaseContext(hwnd, hIMC);
         return;
     }
 
-    lpResultStr = HeapAlloc(GetProcessHeap(),0, dwBufLen+sizeof(WCHAR));
+    lpResultStr = HeapAlloc(GetProcessHeap(),0, buflen+sizeof(WCHAR));
     if (!lpResultStr)
     {
         ERR("Unable to alloc buffer for IME string\n");
@@ -5449,8 +5449,8 @@ static void EDIT_GetResultStr(HWND hwnd, EDITSTATE *es)
         return;
     }
 
-    ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, lpResultStr, dwBufLen);
-    lpResultStr[dwBufLen/sizeof(WCHAR)] = 0;
+    ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, lpResultStr, buflen);
+    lpResultStr[buflen/sizeof(WCHAR)] = 0;
 
     /* check for change in composition start */
     if (es->selection_end < es->composition_start)
