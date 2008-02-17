@@ -923,7 +923,7 @@ static BOOL msi_comp_find_package(LPCWSTR prodcode, MSIINSTALLCONTEXT context)
     return (res == ERROR_SUCCESS);
 }
 
-static BOOL msi_comp_find_prodcode(LPCWSTR prodcode, LPWSTR squished_pc,
+static BOOL msi_comp_find_prodcode(LPWSTR squished_pc,
                                    MSIINSTALLCONTEXT context,
                                    LPCWSTR comp, DWORD *sz)
 {
@@ -983,7 +983,7 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
 
     *pdwState = INSTALLSTATE_UNKNOWN;
 
-    if (!msi_comp_find_prodcode(szProductCode, squished_pc, dwContext, szComponent, &sz))
+    if (!msi_comp_find_prodcode(squished_pc, dwContext, szComponent, &sz))
         return ERROR_UNKNOWN_COMPONENT;
 
     if (sz == 0)
