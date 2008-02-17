@@ -1339,6 +1339,12 @@ HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A ifa
 						       DWORD dwFlags)
 {
     FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, lpszUserName, dwFlags);
+#define X(x) if (dwFlags & x) FIXME("\tdwFlags =|"#x"\n");
+	X(DIDBAM_DEFAULT)
+	X(DIDBAM_PRESERVE)
+	X(DIDBAM_INITIALIZE)
+	X(DIDBAM_HWDEFAULTS)
+#undef X
     _dump_diactionformatA(lpdiaf);
     return DI_OK;
 }
@@ -1349,6 +1355,12 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 						       DWORD dwFlags)
 {
     FIXME("(%p)->(%p,%s,%08x): stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
+#define X(x) if (dwFlags & x) FIXME("\tdwFlags =|"#x"\n");
+	X(DIDBAM_DEFAULT)
+	X(DIDBAM_PRESERVE)
+	X(DIDBAM_INITIALIZE)
+	X(DIDBAM_HWDEFAULTS)
+#undef X
   
     return DI_OK;
 }
