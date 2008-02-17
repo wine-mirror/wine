@@ -157,8 +157,7 @@ int TABLET_PostTabletMessage(LPOPENCONTEXT newcontext, UINT msg, WPARAM wParam,
     return 0;
 }
 
-static inline DWORD ScaleForContext(DWORD In, DWORD InOrg, DWORD InExt, DWORD
-                                    OutOrg, DWORD OutExt)
+static inline DWORD ScaleForContext(DWORD In, LONG InOrg, LONG InExt, LONG OutOrg, LONG OutExt)
 {
     if (((InExt > 0 )&&(OutExt > 0)) || ((InExt<0) && (OutExt < 0)))
         return ((In - InOrg) * abs(OutExt) / abs(InExt)) + OutOrg;
