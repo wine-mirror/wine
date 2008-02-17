@@ -120,7 +120,33 @@ static void test_DIB_PAL_COLORS(void) {
     ReleaseDC( NULL, hdc );
 }
 
+static void test_palette_entries(void)
+{
+    char logpalettebuf[sizeof(LOGPALETTE) + sizeof(logpalettedata)];
+    PLOGPALETTE logpalette = (PLOGPALETTE)logpalettebuf;
+    HPALETTE hpal;
+    UINT res=0;
+    PALETTEENTRY palEntry = { 0x1, 0x2, 0x3, 0xff };
+    PALETTEENTRY getEntryResult;
+
+    /* Initalize the logical palette with a few colours */
+    logpalette->palVersion = 0x300;
+    logpalette->palNumEntries = 8;
+    memcpy( logpalette->palPalEntry, logpalettedata, sizeof(logpalettedata) );
+    hpal = CreatePalette( logpalette );
+
+    /* Set a new entry with peFlags to 0xff */
+    SetPaletteEntries(hpal, 0, 1, &palEntry);
+
+    /* Retrieve the entry to see if GDI32 performs any filtering on peFlags */
+    res = GetPaletteEntries(hpal, 0, 1, &getEntryResult);
+    ok(res == 1, "GetPaletteEntries should have returned 1 but returned %d\n", res);
+
+    ok( palEntry.peFlags == getEntryResult.peFlags, "palEntry.peFlags (%#x) != getEntryResult.peFlags (%#x)\n", palEntry.peFlags, getEntryResult.peFlags );
+}
+
 START_TEST(palette)
 {
     test_DIB_PAL_COLORS();
+    test_palette_entries();
 }

@@ -300,9 +300,6 @@ UINT WINAPI GetPaletteEntries(
       }
       memcpy( entries, &palPtr->logpalette.palPalEntry[start],
 	      count * sizeof(PALETTEENTRY) );
-      for( numEntries = 0; numEntries < count ; numEntries++ )
-	   if (entries[numEntries].peFlags & 0xF0)
-	       entries[numEntries].peFlags = 0;
     }
 
     GDI_ReleaseObj( hpalette );
