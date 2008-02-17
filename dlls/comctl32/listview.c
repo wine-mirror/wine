@@ -611,7 +611,7 @@ static const char* debugnmlistview(const NMLISTVIEW *plvnm)
 {
     if (!plvnm) return "(null)";
     return wine_dbg_sprintf("iItem=%d, iSubItem=%d, uNewState=0x%x,"
-	         " uOldState=0x%x, uChanged=0x%x, ptAction=%s, lParam=%ld\n",
+	         " uOldState=0x%x, uChanged=0x%x, ptAction=%s, lParam=%ld",
 	         plvnm->iItem, plvnm->iSubItem, plvnm->uNewState, plvnm->uOldState,
 		 plvnm->uChanged, wine_dbgstr_point(&plvnm->ptAction), plvnm->lParam);
 }
