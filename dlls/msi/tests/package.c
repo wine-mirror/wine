@@ -4697,6 +4697,7 @@ static void test_installprops(void)
     CHAR path[MAX_PATH];
     CHAR buf[MAX_PATH];
     DWORD size, type;
+    LANGID langid;
     HKEY hkey;
     UINT r;
 
@@ -4761,6 +4762,14 @@ static void test_installprops(void)
     r = MsiGetProperty(hpkg, "PackageCode", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("PackageCode = %s\n", buf);
+
+    langid = GetUserDefaultLangID();
+    sprintf(path, "%d", langid);
+
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "UserLanguageID", buf, &size);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
+    ok( !lstrcmpA(buf, path), "Expected \"%s\", got \"%s\"\n", path, buf);
 
     CloseHandle(hkey);
     MsiCloseHandle(hpkg);

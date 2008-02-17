@@ -352,6 +352,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     LONG res;
     SYSTEM_INFO sys_info;
     SYSTEMTIME systemtime;
+    LANGID langid;
 
     static const WCHAR cszbs[]={'\\',0};
     static const WCHAR CFF[] = 
@@ -420,7 +421,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szScreenX[] = {'S','c','r','e','e','n','X',0};
     static const WCHAR szScreenY[] = {'S','c','r','e','e','n','Y',0};
     static const WCHAR szColorBits[] = {'C','o','l','o','r','B','i','t','s',0};
-    static const WCHAR szScreenFormat[] = {'%','d',0};
+    static const WCHAR szIntFormat[] = {'%','d',0};
     static const WCHAR szIntel[] = { 'I','n','t','e','l',0 };
     static const WCHAR szAllUsers[] = { 'A','L','L','U','S','E','R','S',0 };
     static const WCHAR szCurrentVersion[] = {
@@ -437,6 +438,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szCOMPANYNAME[] = {'C','O','M','P','A','N','Y','N','A','M','E',0};
     static const WCHAR szDate[] = {'D','a','t','e',0};
     static const WCHAR szTime[] = {'T','i','m','e',0};
+    static const WCHAR szUserLangID[] = {'U','s','e','r','L','a','n','g','u','a','g','e','I','D',0};
 
     /*
      * Other things that probably should be set:
@@ -523,7 +525,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     /* Physical Memory is specified in MB. Using total amount. */
     msex.dwLength = sizeof(msex);
     GlobalMemoryStatusEx( &msex );
-    sprintfW( bufstr, szScreenFormat, (int)(msex.ullTotalPhys/1024/1024));
+    sprintfW( bufstr, szIntFormat, (int)(msex.ullTotalPhys/1024/1024));
     MSI_SetPropertyW(package, szPhysicalMemory, bufstr);
 
     SHGetFolderPathW(NULL,CSIDL_WINDOWS,NULL,0,pth);
@@ -570,17 +572,17 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     GetSystemInfo( &sys_info );
     if (sys_info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
-        sprintfW( bufstr, szScreenFormat, sys_info.wProcessorLevel );
+        sprintfW( bufstr, szIntFormat, sys_info.wProcessorLevel );
         MSI_SetPropertyW( package, szIntel, bufstr );
     }
 
     /* Screen properties. */
     dc = GetDC(0);
-    sprintfW( bufstr, szScreenFormat, GetDeviceCaps( dc, HORZRES ) );
+    sprintfW( bufstr, szIntFormat, GetDeviceCaps( dc, HORZRES ) );
     MSI_SetPropertyW( package, szScreenX, bufstr );
-    sprintfW( bufstr, szScreenFormat, GetDeviceCaps( dc, VERTRES ));
+    sprintfW( bufstr, szIntFormat, GetDeviceCaps( dc, VERTRES ));
     MSI_SetPropertyW( package, szScreenY, bufstr );
-    sprintfW( bufstr, szScreenFormat, GetDeviceCaps( dc, BITSPIXEL ));
+    sprintfW( bufstr, szIntFormat, GetDeviceCaps( dc, BITSPIXEL ));
     MSI_SetPropertyW( package, szColorBits, bufstr );
     ReleaseDC(0, dc);
 
@@ -627,6 +629,11 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         ERR("Couldn't set Time property: GetTimeFormat failed with error %d\n", GetLastError());
 
     set_msi_assembly_prop( package );
+
+    langid = GetUserDefaultLangID();
+    sprintfW(bufstr, szIntFormat, langid);
+
+    MSI_SetPropertyW( package, szUserLangID, bufstr );
 
     msi_free( check );
     CloseHandle( hkey );
