@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 
 typedef struct tabSTREAM
 {
-    int str_index;
+    UINT str_index;
     LPWSTR name;
     IStream *stream;
 } STREAM;
@@ -54,7 +54,7 @@ typedef struct tagMSISTREAMSVIEW
     UINT row_size;
 } MSISTREAMSVIEW;
 
-static BOOL streams_set_table_size(MSISTREAMSVIEW *sv, int size)
+static BOOL streams_set_table_size(MSISTREAMSVIEW *sv, UINT size)
 {
     if (size >= sv->max_streams)
     {
@@ -372,7 +372,7 @@ static UINT STREAMS_modify(struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIRE
 static UINT STREAMS_delete(struct tagMSIVIEW *view)
 {
     MSISTREAMSVIEW *sv = (MSISTREAMSVIEW *)view;
-    int i;
+    UINT i;
 
     TRACE("(%p)\n", view);
 
