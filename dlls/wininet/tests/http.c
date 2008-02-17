@@ -1305,18 +1305,21 @@ done:
     ok(InternetCloseHandle(hSession), "Close session handle failed\n");
 }
 
+static const char contmsg[] =
+"HTTP/1.1 100 Continue\r\n";
+
 static const char okmsg[] =
-"HTTP/1.0 200 OK\r\n"
+"HTTP/1.1 200 OK\r\n"
 "Server: winetest\r\n"
 "\r\n";
 
 static const char notokmsg[] =
-"HTTP/1.0 400 Bad Request\r\n"
+"HTTP/1.1 400 Bad Request\r\n"
 "Server: winetest\r\n"
 "\r\n";
 
 static const char noauthmsg[] =
-"HTTP/1.0 401 Unauthorized\r\n"
+"HTTP/1.1 401 Unauthorized\r\n"
 "Server: winetest\r\n"
 "\r\n";
 
@@ -1433,6 +1436,14 @@ static DWORD CALLBACK server_thread(LPVOID param)
             }
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
+
+        if (strstr(buffer, "GET /test6"))
+        {
+            send(c, contmsg, sizeof contmsg-1, 0);
+            send(c, contmsg, sizeof contmsg-1, 0);
+            send(c, okmsg, sizeof okmsg-1, 0);
+            send(c, page1, sizeof page1-1, 0);
         }
 
         if (strstr(buffer, "GET /quit"))
@@ -1663,6 +1674,7 @@ static void test_http_connection(void)
     test_proxy_direct(si.port);
     test_header_handling_order(si.port);
     test_basic_request(si.port, "POST", "/test5");
+    test_basic_request(si.port, "GET", "/test6");
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");

@@ -3020,6 +3020,7 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     BOOL bSuccess = FALSE;
     INT  rc = 0;
     static const WCHAR szCrLf[] = {'\r','\n',0};
+    static const WCHAR szHundred[] = {'1','0','0',0};
     char bufferA[MAX_REPLY_LEN];
     LPWSTR status_code, status_text;
     DWORD cchMaxRawHeaders = 1024;
@@ -3034,19 +3035,37 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     if (!NETCON_connected(&lpwhr->netConnection))
         goto lend;
 
-    /*
-     * HACK peek at the buffer
-     */
-    NETCON_recv(&lpwhr->netConnection, buffer, buflen, MSG_PEEK, &rc);
+    do {
+        /*
+         * HACK peek at the buffer
+         */
+        buflen = MAX_REPLY_LEN;
+        NETCON_recv(&lpwhr->netConnection, buffer, buflen, MSG_PEEK, &rc);
 
-    /*
-     * We should first receive 'HTTP/1.x nnn OK' where nnn is the status code.
-     */
-    buflen = MAX_REPLY_LEN;
-    memset(buffer, 0, MAX_REPLY_LEN);
-    if (!NETCON_getNextLine(&lpwhr->netConnection, bufferA, &buflen))
-        goto lend;
-    MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
+        /*
+         * We should first receive 'HTTP/1.x nnn OK' where nnn is the status code.
+         */
+        memset(buffer, 0, MAX_REPLY_LEN);
+        if (!NETCON_getNextLine(&lpwhr->netConnection, bufferA, &buflen))
+            goto lend;
+        MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
+
+        /* split the version from the status code */
+        status_code = strchrW( buffer, ' ' );
+        if( !status_code )
+            goto lend;
+        *status_code++=0;
+
+        /* split the status code from the status text */
+        status_text = strchrW( status_code, ' ' );
+        if( !status_text )
+            goto lend;
+        *status_text++=0;
+
+        TRACE("version [%s] status code [%s] status text [%s]\n",
+           debugstr_w(buffer), debugstr_w(status_code), debugstr_w(status_text) );
+
+    } while (!strcmpW(status_code, szHundred)); /* ignore "100 Continue" responses */
 
     /* regenerate raw headers */
     while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
@@ -3059,21 +3078,6 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
     cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
     lpszRawHeaders[cchRawHeaders] = '\0';
-
-    /* split the version from the status code */
-    status_code = strchrW( buffer, ' ' );
-    if( !status_code )
-        goto lend;
-    *status_code++=0;
-
-    /* split the status code from the status text */
-    status_text = strchrW( status_code, ' ' );
-    if( !status_text )
-        goto lend;
-    *status_text++=0;
-
-    TRACE("version [%s] status code [%s] status text [%s]\n",
-         debugstr_w(buffer), debugstr_w(status_code), debugstr_w(status_text) );
 
     HTTP_ProcessHeader(lpwhr, szStatus, status_code,
             HTTP_ADDHDR_FLAG_REPLACE);
