@@ -307,7 +307,7 @@ static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR ve
     return requestString;
 }
 
-static void HTTP_ProcessHeaders( LPWININETHTTPREQW lpwhr )
+static void HTTP_ProcessCookies( LPWININETHTTPREQW lpwhr )
 {
     static const WCHAR szSet_Cookie[] = { 'S','e','t','-','C','o','o','k','i','e',0 };
     int HeaderIndex;
@@ -842,8 +842,8 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
             INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen, sizeof(DWORD));
 
-    /* process headers here. Is this right? */
-    HTTP_ProcessHeaders(lpwhr);
+    /* process cookies here. Is this right? */
+    HTTP_ProcessCookies(lpwhr);
 
     dwBufferSize = sizeof(lpwhr->dwContentLength);
     if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
@@ -2676,7 +2676,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                                 INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen,
                                 sizeof(DWORD));
 
-            HTTP_ProcessHeaders(lpwhr);
+            HTTP_ProcessCookies(lpwhr);
 
             dwBufferSize = sizeof(lpwhr->dwContentLength);
             if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
