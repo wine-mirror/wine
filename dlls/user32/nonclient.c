@@ -309,7 +309,7 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
     }
     else {
         DWORD style = GetWindowLongW (hwnd, GWL_STYLE);
-        NC_DrawCaptionBar (hdc, rect, style, uFlags & DC_ACTIVE, uFlags & DC_GRADIENT);
+        NC_DrawCaptionBar (hdc, &rc, style, uFlags & DC_ACTIVE, uFlags & DC_GRADIENT);
     }
 
 
@@ -917,7 +917,7 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
     r.bottom--;
 
     SystemParametersInfoW (SPI_GETGRADIENTCAPTIONS, 0, &gradient, 0);
-    NC_DrawCaptionBar (hdc, rect, style, active, gradient);
+    NC_DrawCaptionBar (hdc, &r, style, active, gradient);
 
     if ((style & WS_SYSMENU) && !(exStyle & WS_EX_TOOLWINDOW)) {
         if (NC_DrawSysButton (hwnd, hdc, FALSE))
