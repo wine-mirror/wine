@@ -1347,6 +1347,159 @@ static void Direct3D1Test(void)
     ok(hr == D3D_OK, "IDirect3DDevice_DeleteViewport returned %08x\n", hr);
 }
 
+static BOOL colortables_check_equality(PALETTEENTRY table1[256], PALETTEENTRY table2[256])
+{
+    int i;
+
+    for (i = 0; i < 256; i++) {
+       if (table1[i].peRed != table2[i].peRed || table1[i].peGreen != table2[i].peGreen ||
+           table1[i].peBlue != table2[i].peBlue) return FALSE;
+    }
+
+    return TRUE;
+}
+
+/* test palette handling in IDirect3DTexture_Load */
+static void TextureLoadTest(void)
+{
+    IDirectDrawSurface *TexSurface = NULL;
+    IDirect3DTexture *Texture = NULL;
+    IDirectDrawSurface *TexSurface2 = NULL;
+    IDirect3DTexture *Texture2 = NULL;
+    IDirectDrawPalette *palette = NULL;
+    IDirectDrawPalette *palette2 = NULL;
+    IDirectDrawPalette *palette_tmp = NULL;
+    PALETTEENTRY table1[256], table2[256], table_tmp[256];
+    HRESULT hr;
+    DDSURFACEDESC ddsd;
+    int i;
+
+    memset (&ddsd, 0, sizeof (ddsd));
+    ddsd.dwSize = sizeof (ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsd.dwHeight = 128;
+    ddsd.dwWidth = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 8;
+
+    hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &TexSurface, NULL);
+    ok(hr==D3D_OK, "CreateSurface returned: %x\n", hr);
+    if (FAILED(hr)) {
+        skip("IDirectDraw_CreateSurface failed; skipping further tests\n");
+        goto cleanup;
+    }
+
+    hr = IDirectDrawSurface_QueryInterface(TexSurface, &IID_IDirect3DTexture,
+                (void *)&Texture);
+    ok(hr==D3D_OK, "IDirectDrawSurface_QueryInterface returned: %x\n", hr);
+    if (FAILED(hr)) {
+        skip("Can't get IDirect3DTexture interface; skipping further tests\n");
+        goto cleanup;
+    }
+
+    hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &TexSurface2, NULL);
+    ok(hr==D3D_OK, "CreateSurface returned: %x\n", hr);
+    if (FAILED(hr)) {
+        skip("IDirectDraw_CreateSurface failed; skipping further tests\n");
+        goto cleanup;
+    }
+
+    hr = IDirectDrawSurface_QueryInterface(TexSurface2, &IID_IDirect3DTexture,
+                (void *)&Texture2);
+    ok(hr==D3D_OK, "IDirectDrawSurface_QueryInterface returned: %x\n", hr);
+    if (FAILED(hr)) {
+        skip("Can't get IDirect3DTexture interface; skipping further tests\n");
+        goto cleanup;
+    }
+
+    /* test Load when both textures have no palette */
+    hr = IDirect3DTexture_Load(Texture2, Texture);
+    ok(hr == DD_OK, "IDirect3DTexture_Load returned %08x\n", hr);
+
+    for (i = 0; i < 256; i++) {
+        table1[i].peRed = i;
+        table1[i].peGreen = i;
+        table1[i].peBlue = i;
+        table1[i].peFlags = 0;
+    }
+
+    hr = IDirectDraw_CreatePalette(DirectDraw1, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, table1, &palette, NULL);
+    ok(hr == DD_OK, "CreatePalette returned %08x\n", hr);
+    if (FAILED(hr)) {
+        skip("IDirectDraw_CreatePalette failed; skipping further tests\n");
+        goto cleanup;
+    }
+
+    /* test Load when source texture has palette and destination has no palette */
+    hr = IDirectDrawSurface_SetPalette(TexSurface, palette);
+    ok(hr == DD_OK, "IDirectDrawSurface_SetPalette returned %08x\n", hr);
+    hr = IDirect3DTexture_Load(Texture2, Texture);
+    ok(hr == DDERR_NOPALETTEATTACHED, "IDirect3DTexture_Load returned %08x\n", hr);
+
+    for (i = 0; i < 256; i++) {
+        table2[i].peRed = 255 - i;
+        table2[i].peGreen = 255 - i;
+        table2[i].peBlue = 255 - i;
+        table2[i].peFlags = 0;
+    }
+
+    hr = IDirectDraw_CreatePalette(DirectDraw1, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, table2, &palette2, NULL);
+    ok(hr == DD_OK, "CreatePalette returned %08x\n", hr);
+    if (FAILED(hr)) {
+        skip("IDirectDraw_CreatePalette failed; skipping further tests\n");
+        goto cleanup;
+    }
+
+    /* test Load when source has no palette and destination has a palette */
+    hr = IDirectDrawSurface_SetPalette(TexSurface, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface_SetPalette returned %08x\n", hr);
+    hr = IDirectDrawSurface_SetPalette(TexSurface2, palette2);
+    ok(hr == DD_OK, "IDirectDrawSurface_SetPalette returned %08x\n", hr);
+    hr = IDirect3DTexture_Load(Texture2, Texture);
+    ok(hr == DD_OK, "IDirect3DTexture_Load returned %08x\n", hr);
+    hr = IDirectDrawSurface_GetPalette(TexSurface2, &palette_tmp);
+    ok(hr == DD_OK, "IDirectDrawSurface_GetPalette returned %08x\n", hr);
+    if (!palette_tmp) {
+        skip("IDirectDrawSurface_GetPalette failed; skipping color table check\n");
+        goto cleanup;
+    } else {
+        hr = IDirectDrawPalette_GetEntries(palette_tmp, 0, 0, 256, table_tmp);
+        ok(hr == DD_OK, "IDirectDrawPalette_GetEntries returned %08x\n", hr);
+        ok(colortables_check_equality(table2, table_tmp), "Unexpected palettized texture color table\n");
+        IDirectDrawPalette_Release(palette_tmp);
+    }
+
+    /* test Load when both textures have palettes */
+    hr = IDirectDrawSurface_SetPalette(TexSurface, palette);
+    ok(hr == DD_OK, "IDirectDrawSurface_SetPalette returned %08x\n", hr);
+    hr = IDirect3DTexture_Load(Texture2, Texture);
+    ok(hr == DD_OK, "IDirect3DTexture_Load returned %08x\n", hr);
+    hr = IDirect3DTexture_Load(Texture2, Texture);
+    ok(hr == DD_OK, "IDirect3DTexture_Load returned %08x\n", hr);
+    hr = IDirectDrawSurface_GetPalette(TexSurface2, &palette_tmp);
+    ok(hr == DD_OK, "IDirectDrawSurface_GetPalette returned %08x\n", hr);
+    if (!palette_tmp) {
+        skip("IDirectDrawSurface_GetPalette failed; skipping color table check\n");
+        goto cleanup;
+    } else {
+        hr = IDirectDrawPalette_GetEntries(palette_tmp, 0, 0, 256, table_tmp);
+        ok(hr == DD_OK, "IDirectDrawPalette_GetEntries returned %08x\n", hr);
+        ok(colortables_check_equality(table1, table_tmp), "Unexpected palettized texture color table\n");
+        IDirectDrawPalette_Release(palette_tmp);
+    }
+
+    cleanup:
+
+    if (palette) IDirectDrawPalette_Release(palette);
+    if (palette2) IDirectDrawPalette_Release(palette2);
+    if (TexSurface) IDirectDrawSurface_Release(TexSurface);
+    if (Texture) IDirect3DTexture_Release(Texture);
+    if (TexSurface2) IDirectDrawSurface_Release(TexSurface2);
+    if (Texture2) IDirect3DTexture_Release(Texture2);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -1372,6 +1525,7 @@ START_TEST(d3d)
         skip("Skipping d3d1 tests\n");
     } else {
         Direct3D1Test();
+        TextureLoadTest();
         D3D1_releaseObjects();
     }
 }
