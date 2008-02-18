@@ -368,3 +368,38 @@ HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR szFi
 
     return hres == MK_S_ASYNCHRONOUS ? S_OK : hres;
 }
+
+/***********************************************************************
+ *           URLDownloadToFileA (URLMON.@)
+ *
+ * Downloads URL szURL to rile szFileName and call lpfnCB callback to
+ * report progress.
+ *
+ * PARAMS
+ *  pCaller    [I] controlling IUnknown interface.
+ *  szURL      [I] URL of the file to download
+ *  szFileName [I] file name to store the content of the URL
+ *  dwReserved [I] reserved - set to 0
+ *  lpfnCB     [I] callback for progress report
+ *
+ * RETURNS
+ *  S_OK on success
+ */
+HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller, LPCSTR szURL, LPCSTR szFileName, DWORD dwReserved,
+        LPBINDSTATUSCALLBACK lpfnCB)
+{
+    LPWSTR urlW, file_nameW;
+    HRESULT hres;
+
+    TRACE("(%p %s %s %d %p)\n", pCaller, debugstr_a(szURL), debugstr_a(szFileName), dwReserved, lpfnCB);
+
+    urlW = heap_strdupAtoW(szURL);
+    file_nameW = heap_strdupAtoW(szFileName);
+
+    hres = URLDownloadToFileW(pCaller, urlW, file_nameW, dwReserved, lpfnCB);
+
+    heap_free(urlW);
+    heap_free(file_nameW);
+
+    return hres;
+}

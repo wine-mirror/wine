@@ -1207,53 +1207,6 @@ HRESULT WINAPI MkParseDisplayNameEx(IBindCtx *pbc, LPCWSTR szDisplayName, ULONG 
 
 
 /***********************************************************************
- *           URLDownloadToFileA (URLMON.@)
- *
- * Downloads URL szURL to rile szFileName and call lpfnCB callback to
- * report progress.
- *
- * PARAMS
- *  pCaller    [I] controlling IUnknown interface.
- *  szURL      [I] URL of the file to download
- *  szFileName [I] file name to store the content of the URL
- *  dwReserved [I] reserved - set to 0
- *  lpfnCB     [I] callback for progress report
- *
- * RETURNS
- *  S_OK on success
- *  E_OUTOFMEMORY when going out of memory
- */
-HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller,
-				  LPCSTR szURL,
-				  LPCSTR szFileName,
-				  DWORD dwReserved,
-				  LPBINDSTATUSCALLBACK lpfnCB)
-{
-    UNICODE_STRING szURL_w, szFileName_w;
-
-    if ((szURL == NULL) || (szFileName == NULL)) {
-	FIXME("(%p,%s,%s,%08x,%p) cannot accept NULL strings !\n", pCaller, debugstr_a(szURL), debugstr_a(szFileName), dwReserved, lpfnCB);
-	return E_INVALIDARG; /* The error code is not specified in this case... */
-    }
-    
-    if (RtlCreateUnicodeStringFromAsciiz(&szURL_w, szURL)) {
-	if (RtlCreateUnicodeStringFromAsciiz(&szFileName_w, szFileName)) {
-	    HRESULT ret = URLDownloadToFileW(pCaller, szURL_w.Buffer, szFileName_w.Buffer, dwReserved, lpfnCB);
-
-	    RtlFreeUnicodeString(&szURL_w);
-	    RtlFreeUnicodeString(&szFileName_w);
-	    
-	    return ret;
-	} else {
-	    RtlFreeUnicodeString(&szURL_w);
-	}
-    }
-    
-    FIXME("(%p,%s,%s,%08x,%p) could not allocate W strings !\n", pCaller, szURL, szFileName, dwReserved, lpfnCB);
-    return E_OUTOFMEMORY;
-}
-
-/***********************************************************************
  *           URLDownloadToCacheFileA (URLMON.@)
  */
 HRESULT WINAPI URLDownloadToCacheFileA(LPUNKNOWN lpUnkCaller, LPCSTR szURL, LPSTR szFileName,
