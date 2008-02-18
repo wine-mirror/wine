@@ -843,7 +843,7 @@ PDH_STATUS WINAPI PdhLookupPerfNameByIndexA( LPCSTR machine, DWORD index, LPSTR 
         return PDH_CSTATUS_NO_MACHINE;
     }
 
-    if (!buffer && !size) return PDH_INVALID_ARGUMENT;
+    if (!buffer || !size) return PDH_INVALID_ARGUMENT;
     if (!index) return ERROR_SUCCESS;
 
     if (!(ret = PdhLookupPerfNameByIndexW( NULL, index, bufferW, &sizeW )))
