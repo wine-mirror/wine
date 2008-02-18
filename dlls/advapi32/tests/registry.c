@@ -334,9 +334,6 @@ static void test_set_value(void)
 
     /* Test RegSetValueExA with a 'zero-byte' string (as Office 2003 does).
      * Surprisingly enough we're supposed to get zero bytes out of it.
-     * FIXME: Wine's on-disk file format does not differentiate this with
-     *        regular empty strings but there's no way to test as it requires
-     *        stopping the wineserver.
      */
     ret = RegSetValueExA(hkey_main, name1A, 0, REG_SZ, (const BYTE *)emptyA, 0);
     ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d, GLE=%d\n", ret, GetLastError());
