@@ -222,7 +222,6 @@ static void delete_clip_rgn( struct dce *dce )
  */
 static struct dce *alloc_cache_dce(void)
 {
-    struct x11drv_escape_set_dce escape;
     struct dce *dce;
 
     if (!(dce = HeapAlloc( GetProcessHeap(), 0, sizeof(*dce) ))) return NULL;
@@ -245,11 +244,6 @@ static struct dce *alloc_cache_dce(void)
     EnterCriticalSection( &dce_section );
     list_add_head( &dce_list, &dce->entry );
     LeaveCriticalSection( &dce_section );
-
-    escape.code = X11DRV_SET_DCE;
-    escape.dce  = dce;
-    ExtEscape( dce->hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL );
-
     return dce;
 }
 
@@ -261,7 +255,6 @@ static struct dce *alloc_cache_dce(void)
  */
 void alloc_window_dce( struct x11drv_win_data *data )
 {
-    struct x11drv_escape_set_dce escape;
     struct dce *dce;
     void *class_ptr = NULL;
     LONG style = GetClassLongW( data->hwnd, GCL_STYLE );
@@ -320,10 +313,6 @@ void alloc_window_dce( struct x11drv_win_data *data )
     list_add_tail( &dce_list, &dce->entry );
     LeaveCriticalSection( &dce_section );
     data->dce = dce;
-
-    escape.code = X11DRV_SET_DCE;
-    escape.dce  = dce;
-    ExtEscape( dce->hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL );
 }
 
 
@@ -579,15 +568,13 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
  */
 INT X11DRV_ReleaseDC( HWND hwnd, HDC hdc, BOOL end_paint )
 {
-    enum x11drv_escape_codes escape = X11DRV_GET_DCE;
     struct dce *dce;
     BOOL ret = FALSE;
 
     TRACE("%p %p\n", hwnd, hdc );
 
     EnterCriticalSection( &dce_section );
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(dce), (LPSTR)&dce )) dce = NULL;
+    dce = (struct dce *)GetDCHook( hdc, NULL );
     if (dce && dce->count)
     {
         if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
@@ -653,14 +640,11 @@ static BOOL CALLBACK dc_hook( HDC hDC, WORD code, DWORD_PTR data, LPARAM lParam 
  */
 HWND X11DRV_WindowFromDC( HDC hdc )
 {
-    enum x11drv_escape_codes escape = X11DRV_GET_DCE;
     struct dce *dce;
     HWND hwnd = 0;
 
     EnterCriticalSection( &dce_section );
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(dce), (LPSTR)&dce )) dce = NULL;
-    if (dce) hwnd = dce->hwnd;
+    if ((dce = (struct dce *)GetDCHook( hdc, NULL ))) hwnd = dce->hwnd;
     LeaveCriticalSection( &dce_section );
     return hwnd;
 }

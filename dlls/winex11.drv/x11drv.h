@@ -65,7 +65,6 @@ typedef int Status;
 #define MAX_DASHLEN 16
 
 struct tagCURSORICONINFO;
-struct dce;
 
 extern void wine_tsx11_lock(void);
 extern void wine_tsx11_unlock(void);
@@ -137,7 +136,6 @@ typedef struct
     int           textPixel;
     int           depth;       /* bit depth of the DC */
     int           exposures;   /* count of graphics exposures operations */
-    struct dce   *dce;         /* opaque pointer to DCE */
     int           current_pf;
     Drawable      gl_drawable;
     Pixmap        pixmap;      /* Pixmap for a GLXPixmap gl_drawable */
@@ -476,8 +474,8 @@ enum x11drv_escape_codes
     X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
     X11DRV_START_EXPOSURES,  /* start graphics exposures */
     X11DRV_END_EXPOSURES,    /* end graphics exposures */
-    X11DRV_GET_DCE,          /* get the DCE pointer */
-    X11DRV_SET_DCE,          /* set the DCE pointer */
+    X11DRV_GET_DCE,          /* no longer used */
+    X11DRV_SET_DCE,          /* no longer used */
     X11DRV_GET_GLX_DRAWABLE, /* get current glx drawable for a DC */
     X11DRV_SYNC_PIXMAP,      /* sync the dibsection to its pixmap */
     X11DRV_FLUSH_GL_DRAWABLE /* flush changes made to the gl drawable */

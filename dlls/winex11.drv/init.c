@@ -408,19 +408,8 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                 }
                 break;
             case X11DRV_GET_DCE:
-                if (out_count >= sizeof(struct dce *))
-                {
-                    *(struct dce **)out_data = physDev->dce;
-                    return TRUE;
-                }
-                break;
             case X11DRV_SET_DCE:
-                if (in_count >= sizeof(struct x11drv_escape_set_dce))
-                {
-                    const struct x11drv_escape_set_dce *data = (const struct x11drv_escape_set_dce *)in_data;
-                    physDev->dce = data->dce;
-                    return TRUE;
-                }
+                FIXME( "%x escape no longer supported\n", *(const enum x11drv_escape_codes *)in_data );
                 break;
             case X11DRV_GET_GLX_DRAWABLE:
                 if (out_count >= sizeof(Drawable))
