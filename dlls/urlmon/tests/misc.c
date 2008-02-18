@@ -421,6 +421,7 @@ static const WCHAR mimeAppPdf[] = {'a','p','p','l','i','c','a','t','i','o','n','
 static const WCHAR mimeAppXMSDownload[] =
     {'a','p','p','l','i','c','a','t','i','o','n','/','x','-','m','s','d','o','w','n','l','o','a','d',0};
 static const WCHAR mimeAudioWav[] = {'a','u','d','i','o','/','w','a','v',0};
+static const WCHAR mimeAudioBasic[] = {'a','u','d','i','o','/','b','a','s','i','c',0};
 
 static const struct {
     LPCWSTR url;
@@ -517,6 +518,10 @@ static BYTE data78[] = {'R','I','F','F',0xff,0xff,0xff,0xff,'<','h','t','m','l',
 static BYTE data79[] = {'%','!',0xff};
 static BYTE data80[] = {'%','!'};
 static BYTE data81[] = {'%','!','P','S','<','h','t','m','l','>'};
+static BYTE data82[] = {'.','s','n','d',0};
+static BYTE data83[] = {'.','s','n','d'};
+static BYTE data84[] = {'.','s','n','d',0,'<','h','t','m','l','>',1,1};
+static BYTE data85[] = {'.','S','N','D',0};
 
 static const struct {
     BYTE *data;
@@ -603,7 +608,11 @@ static const struct {
     {data78, sizeof(data78), mimeTextHtml},
     {data79, sizeof(data79), mimeAppPostscript},
     {data80, sizeof(data80), mimeTextPlain},
-    {data81, sizeof(data81), mimeTextHtml}
+    {data81, sizeof(data81), mimeTextHtml},
+    {data82, sizeof(data82), mimeAudioBasic},
+    {data83, sizeof(data83), mimeTextPlain},
+    {data84, sizeof(data84), mimeTextHtml},
+    {data85, sizeof(data85), mimeTextPlain}
 };
 
 static void test_FindMimeFromData(void)
