@@ -1046,6 +1046,16 @@ BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 
 
 /***********************************************************************
+ *           EnumFonts      (GDI.70)
+ */
+INT16 WINAPI EnumFonts16( HDC16 hDC, LPCSTR lpName, FONTENUMPROC16 efproc,
+                          LPARAM lpData )
+{
+    return EnumFontFamilies16( hDC, lpName, efproc, lpData );
+}
+
+
+/***********************************************************************
  *           EnumObjects    (GDI.71)
  */
 INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 obj, GOBJENUMPROC16 proc, LPARAM lParam )
@@ -1925,6 +1935,28 @@ DWORD WINAPI GetFontData16( HDC16 hdc, DWORD table, DWORD offset, LPVOID buffer,
 BOOL16 WINAPI GetRasterizerCaps16( LPRASTERIZER_STATUS lprs, UINT16 cbNumBytes )
 {
     return GetRasterizerCaps( lprs, cbNumBytes );
+}
+
+
+/***********************************************************************
+ *             EnumFontFamilies    (GDI.330)
+ */
+INT16 WINAPI EnumFontFamilies16( HDC16 hDC, LPCSTR lpFamily,
+                                 FONTENUMPROC16 efproc, LPARAM lpData )
+{
+    LOGFONT16 lf, *plf;
+
+    if (lpFamily)
+    {
+        if (!*lpFamily) return 1;
+        lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
+        lf.lfCharSet = DEFAULT_CHARSET;
+        lf.lfPitchAndFamily = 0;
+        plf = &lf;
+    }
+    else plf = NULL;
+
+    return EnumFontFamiliesEx16( hDC, plf, efproc, lpData, 0 );
 }
 
 
