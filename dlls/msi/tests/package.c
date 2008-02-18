@@ -4698,7 +4698,7 @@ static void test_installprops(void)
     CHAR buf[MAX_PATH];
     DWORD size, type;
     LANGID langid;
-    HKEY hkey;
+    HKEY hkey1, hkey2;
     UINT r;
 
     GetCurrentDirectory(MAX_PATH, path);
@@ -4718,11 +4718,18 @@ static void test_installprops(void)
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
 
-    RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", &hkey);
+    RegOpenKey(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\MS Setup (ACME)\\User Info", &hkey1);
+
+    RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", &hkey2);
 
     size = MAX_PATH;
     type = REG_SZ;
-    RegQueryValueEx(hkey, "RegisteredOwner", NULL, &type, (LPBYTE)path, &size);
+    if (RegQueryValueEx(hkey1, "DefName", NULL, &type, (LPBYTE)path, &size) != ERROR_SUCCESS)
+    {
+        size = MAX_PATH;
+        type = REG_SZ;
+        RegQueryValueEx(hkey2, "RegisteredOwner", NULL, &type, (LPBYTE)path, &size);
+    }
 
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "USERNAME", buf, &size);
@@ -4731,7 +4738,12 @@ static void test_installprops(void)
 
     size = MAX_PATH;
     type = REG_SZ;
-    RegQueryValueEx(hkey, "RegisteredOrganization", NULL, &type, (LPBYTE)path, &size);
+    if (RegQueryValueEx(hkey1, "DefCompany", NULL, &type, (LPBYTE)path, &size) != ERROR_SUCCESS)
+    {
+        size = MAX_PATH;
+        type = REG_SZ;
+        RegQueryValueEx(hkey2, "RegisteredOrganization", NULL, &type, (LPBYTE)path, &size);
+    }
 
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "COMPANYNAME", buf, &size);
@@ -4771,7 +4783,8 @@ static void test_installprops(void)
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
     ok( !lstrcmpA(buf, path), "Expected \"%s\", got \"%s\"\n", path, buf);
 
-    CloseHandle(hkey);
+    CloseHandle(hkey1);
+    CloseHandle(hkey2);
     MsiCloseHandle(hpkg);
     DeleteFile(msifile);
 }
