@@ -1982,11 +1982,20 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 
     if (lpBuffer)
     {
+        DWORD alloclen;
         len = (*lpdwBufferLength)*sizeof(WCHAR);
-        bufferW = HeapAlloc( GetProcessHeap(), 0, len );
+        if ((dwInfoLevel & HTTP_QUERY_HEADER_MASK) == HTTP_QUERY_CUSTOM)
+        {
+            alloclen = MultiByteToWideChar( CP_ACP, 0, lpBuffer, -1, NULL, 0 ) * sizeof(WCHAR);
+            if (alloclen < len)
+                alloclen = len;
+        }
+        else
+            alloclen = len;
+        bufferW = HeapAlloc( GetProcessHeap(), 0, alloclen );
         /* buffer is in/out because of HTTP_QUERY_CUSTOM */
         if ((dwInfoLevel & HTTP_QUERY_HEADER_MASK) == HTTP_QUERY_CUSTOM)
-            MultiByteToWideChar(CP_ACP,0,lpBuffer,-1,bufferW,len);
+            MultiByteToWideChar( CP_ACP, 0, lpBuffer, -1, bufferW, alloclen / sizeof(WCHAR) );
     } else
     {
         bufferW = NULL;
