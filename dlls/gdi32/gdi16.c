@@ -2268,6 +2268,31 @@ BOOL16 WINAPI FastWindowFrame16( HDC16 hdc, const RECT16 *rect,
 
 
 /***********************************************************************
+ *           GdiInit2     (GDI.403)
+ *
+ * See "Undocumented Windows"
+ *
+ * PARAMS
+ *   h1 [I] GDI object
+ *   h2 [I] global data
+ */
+HANDLE16 WINAPI GdiInit216( HANDLE16 h1, HANDLE16 h2 )
+{
+    FIXME("(%04x, %04x), stub.\n", h1, h2);
+    if (h2 == 0xffff) return 0xffff; /* undefined return value */
+    return h1; /* FIXME: should be the memory handle of h1 */
+}
+
+
+/***********************************************************************
+ *           FinalGdiInit     (GDI.405)
+ */
+void WINAPI FinalGdiInit16( HBRUSH16 hPattern /* [in] fill pattern of desktop */ )
+{
+}
+
+
+/***********************************************************************
  *           CreateUserBitmap    (GDI.407)
  */
 HBITMAP16 WINAPI CreateUserBitmap16( INT16 width, INT16 height, UINT16 planes,
@@ -2452,6 +2477,39 @@ HRGN16 WINAPI CreatePolyPolygonRgn16( const POINT16 *points,
     HeapFree( GetProcessHeap(), 0, count32 );
     HeapFree( GetProcessHeap(), 0, points32 );
     return HRGN_16(hrgn);
+}
+
+
+/***********************************************************************
+ *           GdiSeeGdiDo   (GDI.452)
+ */
+DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
+                          WORD wParam3 )
+{
+    DWORD ret = ~0U;
+
+    switch (wReqType)
+    {
+    case 0x0001:  /* LocalAlloc */
+        WARN("LocalAlloc16(%x, %x): ignoring\n", wParam1, wParam3);
+        ret = 0;
+        break;
+    case 0x0002:  /* LocalFree */
+        WARN("LocalFree16(%x): ignoring\n", wParam1);
+        ret = 0;
+        break;
+    case 0x0003:  /* LocalCompact */
+        WARN("LocalCompact16(%x): ignoring\n", wParam3);
+        ret = 65000; /* lie about the amount of free space */
+        break;
+    case 0x0103:  /* LocalHeap */
+        WARN("LocalHeap16(): ignoring\n");
+        break;
+    default:
+        WARN("(wReqType=%04x): Unknown\n", wReqType);
+        break;
+    }
+    return ret;
 }
 
 
@@ -3017,6 +3075,25 @@ UINT16 WINAPI GetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries, RG
 DWORD WINAPI GetRegionData16( HRGN16 hrgn, DWORD count, LPRGNDATA rgndata )
 {
     return GetRegionData( HRGN_32(hrgn), count, rgndata );
+}
+
+
+/***********************************************************************
+ *           GdiFreeResources   (GDI.609)
+ */
+WORD WINAPI GdiFreeResources16( DWORD reserve )
+{
+    return 90; /* lie about it, it shouldn't matter */
+}
+
+
+/***********************************************************************
+ *           GdiSignalProc32     (GDI.610)
+ */
+WORD WINAPI GdiSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
+                           DWORD dwFlags, HMODULE16 hModule )
+{
+    return 0;
 }
 
 
