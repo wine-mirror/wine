@@ -34,14 +34,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
 
 static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc );
-static INT BITMAP_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static BOOL BITMAP_DeleteObject( HGDIOBJ handle, void *obj );
 
 static const struct gdi_obj_funcs bitmap_funcs =
 {
     BITMAP_SelectObject,  /* pSelectObject */
-    BITMAP_GetObject16,   /* pGetObject16 */
     BITMAP_GetObject,     /* pGetObjectA */
     BITMAP_GetObject,     /* pGetObjectW */
     NULL,                 /* pUnrealizeObject */
@@ -664,52 +662,6 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle, void *obj )
         HeapFree(GetProcessHeap(), 0, bmp->color_table);
     }
     return GDI_FreeObject( handle, obj );
-}
-
-
-/***********************************************************************
- *           BITMAP_GetObject16
- */
-static INT BITMAP_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
-{
-    BITMAPOBJ *bmp = obj;
-
-    if (bmp->dib)
-    {
-        if ( count <= sizeof(BITMAP16) )
-        {
-            BITMAP *bmp32 = &bmp->dib->dsBm;
-	    BITMAP16 bmp16;
-	    bmp16.bmType       = bmp32->bmType;
-	    bmp16.bmWidth      = bmp32->bmWidth;
-	    bmp16.bmHeight     = bmp32->bmHeight;
-	    bmp16.bmWidthBytes = bmp32->bmWidthBytes;
-	    bmp16.bmPlanes     = bmp32->bmPlanes;
-	    bmp16.bmBitsPixel  = bmp32->bmBitsPixel;
-	    bmp16.bmBits       = (SEGPTR)0;
-	    memcpy( buffer, &bmp16, count );
-	    return count;
-        }
-        else
-        {
-	    FIXME("not implemented for DIBs: count %d\n", count);
-	    return 0;
-        }
-    }
-    else
-    {
-	BITMAP16 bmp16;
-	bmp16.bmType       = bmp->bitmap.bmType;
-	bmp16.bmWidth      = bmp->bitmap.bmWidth;
-	bmp16.bmHeight     = bmp->bitmap.bmHeight;
-	bmp16.bmWidthBytes = bmp->bitmap.bmWidthBytes;
-	bmp16.bmPlanes     = bmp->bitmap.bmPlanes;
-	bmp16.bmBitsPixel  = bmp->bitmap.bmBitsPixel;
-	bmp16.bmBits       = (SEGPTR)0;
-	if (count < sizeof(bmp16)) return 0;
-	memcpy( buffer, &bmp16, sizeof(bmp16) );
-	return sizeof(bmp16);
-    }
 }
 
 

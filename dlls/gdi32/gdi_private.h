@@ -72,7 +72,6 @@ typedef struct {
 struct gdi_obj_funcs
 {
     HGDIOBJ (*pSelectObject)( HGDIOBJ handle, HDC hdc );
-    INT     (*pGetObject16)( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
     INT     (*pGetObjectA)( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
     INT     (*pGetObjectW)( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
     BOOL    (*pUnrealizeObject)( HGDIOBJ handle, void *obj );

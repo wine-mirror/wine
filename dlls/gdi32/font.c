@@ -87,7 +87,6 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
 }
 
 static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc );
-static INT FONT_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT FONT_GetObjectA( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT FONT_GetObjectW( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj );
@@ -95,7 +94,6 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj );
 static const struct gdi_obj_funcs font_funcs =
 {
     FONT_SelectObject,  /* pSelectObject */
-    FONT_GetObject16,   /* pGetObject16 */
     FONT_GetObjectA,    /* pGetObjectA */
     FONT_GetObjectW,    /* pGetObjectW */
     NULL,               /* pUnrealizeObject */
@@ -615,21 +613,6 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     return ret;
 }
 
-
-/***********************************************************************
- *           FONT_GetObject16
- */
-static INT FONT_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
-{
-    FONTOBJ *font = obj;
-    LOGFONT16 lf16;
-
-    FONT_LogFontWTo16( &font->logfont, &lf16 );
-
-    if (count > sizeof(LOGFONT16)) count = sizeof(LOGFONT16);
-    memcpy( buffer, &lf16, count );
-    return count;
-}
 
 /***********************************************************************
  *           FONT_GetObjectA

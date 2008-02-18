@@ -44,7 +44,6 @@ static BOOL DC_DeleteObject( HGDIOBJ handle, void *obj );
 static const struct gdi_obj_funcs dc_funcs =
 {
     NULL,             /* pSelectObject */
-    NULL,             /* pGetObject16 */
     NULL,             /* pGetObjectA */
     NULL,             /* pGetObjectW */
     NULL,             /* pUnrealizeObject */

@@ -43,14 +43,12 @@ typedef struct
 #define NB_HATCH_STYLES  6
 
 static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc );
-static INT BRUSH_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT BRUSH_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static BOOL BRUSH_DeleteObject( HGDIOBJ handle, void *obj );
 
 static const struct gdi_obj_funcs brush_funcs =
 {
     BRUSH_SelectObject,  /* pSelectObject */
-    BRUSH_GetObject16,   /* pGetObject16 */
     BRUSH_GetObject,     /* pGetObjectA */
     BRUSH_GetObject,     /* pGetObjectW */
     NULL,                /* pUnrealizeObject */
@@ -421,23 +419,6 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle, void *obj )
 	  break;
     }
     return GDI_FreeObject( handle, obj );
-}
-
-
-/***********************************************************************
- *           BRUSH_GetObject16
- */
-static INT BRUSH_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
-{
-    BRUSHOBJ *brush = obj;
-    LOGBRUSH16 logbrush;
-
-    logbrush.lbStyle = brush->logbrush.lbStyle;
-    logbrush.lbColor = brush->logbrush.lbColor;
-    logbrush.lbHatch = brush->logbrush.lbHatch;
-    if (count > sizeof(logbrush)) count = sizeof(logbrush);
-    memcpy( buffer, &logbrush, count );
-    return count;
 }
 
 

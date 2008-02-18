@@ -28,7 +28,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/wingdi16.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 
@@ -43,13 +42,11 @@ typedef struct
 
 
 static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc );
-static INT PEN_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 
 static const struct gdi_obj_funcs pen_funcs =
 {
     PEN_SelectObject,  /* pSelectObject */
-    PEN_GetObject16,   /* pGetObject16 */
     PEN_GetObject,     /* pGetObjectA */
     PEN_GetObject,     /* pGetObjectW */
     NULL,              /* pUnrealizeObject */
@@ -244,28 +241,6 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
     }
     release_dc_ptr( dc );
     return ret;
-}
-
-
-/***********************************************************************
- *           PEN_GetObject16
- */
-static INT PEN_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
-{
-    PENOBJ *pen = obj;
-    LOGPEN16 *logpen;
-
-    if (!buffer) return sizeof(LOGPEN16);
-
-    if (count < sizeof(LOGPEN16)) return 0;
-
-    logpen = buffer;
-    logpen->lopnStyle = pen->logpen.elpPenStyle;
-    logpen->lopnColor = pen->logpen.elpColor;
-    logpen->lopnWidth.x = pen->logpen.elpWidth;
-    logpen->lopnWidth.y = 0;
-
-    return sizeof(LOGPEN16);
 }
 
 
