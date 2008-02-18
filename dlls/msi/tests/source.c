@@ -716,10 +716,652 @@ static void test_MsiSourceListAddSourceEx(void)
     HeapFree(GetProcessHeap(), 0, usersid);
 }
 
+static void test_MsiSourceListEnumSources(void)
+{
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    CHAR value[MAX_PATH];
+    LPSTR usersid;
+    LONG res;
+    UINT r;
+    HKEY prodkey, userkey;
+    HKEY url, net, source;
+    DWORD size;
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    /* GetLastError is not set by the function */
+
+    /* NULL szProductCodeOrPatchCode */
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    /* empty szProductCodeOrPatchCode */
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    /* garbage szProductCodeOrPatchCode */
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    /* guid without brackets */
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA",
+                                  usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    /* guid with brackets */
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
+                                  usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(userkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(source, "URL", &url);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URL key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegSetValueExA(url, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegSetValueExA(url, "2", 0, REG_SZ, (LPBYTE)"second", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegSetValueExA(url, "4", 0, REG_SZ, (LPBYTE)"fourth", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* sources exist */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    /* try index 0 again */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    /* try index 1 */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 1, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "second"), "Expected \"second\", got %s\n", value);
+        ok(size == 6, "Expected 6, got %d\n", size);
+    }
+
+    /* try index 2 */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 2, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    /* NULL szUserSid */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    /* invalid dwOptions, must be one of MSICODE_ and MSISOURCETYPE_ */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    /* invalid dwOptions, must be one of MSICODE_ and MSISOURCETYPE_ */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PATCH, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    /* invalid dwOptions, must be one of MSICODE_ and MSISOURCETYPE_ */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSICODE_PATCH | MSISOURCETYPE_URL,
+                                  0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PATCH, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    /* invalid dwOptions, must be one of MSICODE_ and MSISOURCETYPE_ */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK | MSISOURCETYPE_URL,
+                                  0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    RegDeleteValueA(url, "1");
+    RegDeleteValueA(url, "2");
+    RegDeleteValueA(url, "4");
+    RegDeleteKeyA(url, "");
+    RegCloseKey(url);
+
+    /* SourceList key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Net key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegSetValueExA(net, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* sources exist */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    RegDeleteValueA(net, "1");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    /* MSIINSTALLCONTEXT_USERMANAGED */
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(userkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(source, "URL", &url);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URL key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegSetValueExA(url, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* sources exist */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    /* NULL szUserSid */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    RegDeleteValueA(url, "1");
+    RegDeleteKeyA(url, "");
+    RegCloseKey(url);
+
+    /* SourceList key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Net key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegSetValueExA(net, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* sources exist */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    RegDeleteValueA(net, "1");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    /* MSIINSTALLCONTEXT_MACHINE */
+
+    /* szUserSid is non-NULL */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    /* szUserSid is non-NULL */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(prodkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(source, "URL", &url);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URL key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegSetValueExA(url, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* sources exist */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    /* NULL szUserSid */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    RegDeleteValueA(url, "1");
+    RegDeleteKeyA(url, "");
+    RegCloseKey(url);
+
+    /* SourceList key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegCreateKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Net key exists */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    res = RegSetValueExA(net, "1", 0, REG_SZ, (LPBYTE)"first", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* sources exist */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL,
+                                  MSIINSTALLCONTEXT_MACHINE,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
+        ok(size == 5, "Expected 5, got %d\n", size);
+    }
+
+    RegDeleteValueA(net, "1");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+}
+
 START_TEST(source)
 {
     init_functionpointers();
 
     test_MsiSourceListGetInfo();
     test_MsiSourceListAddSourceEx();
+    test_MsiSourceListEnumSources();
 }
