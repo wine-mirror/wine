@@ -96,6 +96,7 @@ BASEDIRS = \
 	imm32 \
 	inetcomm \
 	infosoft \
+	initpki \
 	inkobj \
 	inseng \
 	iphlpapi \
