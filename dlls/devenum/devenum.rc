@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma code_page(65001)
+
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -45,10 +47,10 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE DISCARDABLE
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
-	7  "DirectSound par dÈfaut"
-	8  "DirectSound†: %s"
-	9  "PÈriphÈrique WaveOut par dÈfaut"
-	10 "PÈriphÈrique MidiOut par dÈfaut"
+	7  "DirectSound par d√©faut"
+	8  "DirectSound¬†: %s"
+	9  "P√©riph√©rique WaveOut par d√©faut"
+	10 "P√©riph√©rique MidiOut par d√©faut"
 }
 
 STRINGTABLE DISCARDABLE
@@ -56,8 +58,8 @@ LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
 	7  "Standard DirectSound"
 	8  "DirectSound: %s"
-	9  "Standard WaveOut - Ger‰t"
-	10 "Standard MidiOut - Ger‰t"
+	9  "Standard WaveOut - Ger√§t"
+	10 "Standard MidiOut - Ger√§t"
 }
 
 STRINGTABLE DISCARDABLE
@@ -72,10 +74,10 @@ LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 STRINGTABLE DISCARDABLE
 LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
 {
-	7  "DirectSound padr„o"
+	7  "DirectSound padr√£o"
 	8  "DirectSound: %s"
-	9  "Dispositivo padr„o WaveOut"
-	10 "Dispositivo padr„o MidiOut"
+	9  "Dispositivo padr√£o WaveOut"
+	10 "Dispositivo padr√£o MidiOut"
 }
 
 STRINGTABLE DISCARDABLE
@@ -90,10 +92,10 @@ LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
 STRINGTABLE DISCARDABLE
 LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 {
-	7  "DafaultnÌ DirectSound"
+	7  "Dafaultn√≠ DirectSound"
 	8  "DirectSound: %s"
-	9  "StandardnÌ za¯ÌzenÌ WaveOut"
-	10 "StandardnÌ za¯ÌzenÌ MidiOut"
+	9  "Standardn√≠ za≈ô√≠zen√≠ WaveOut"
+	10 "Standardn√≠ za≈ô√≠zen√≠ MidiOut"
 }
 
 STRINGTABLE DISCARDABLE
