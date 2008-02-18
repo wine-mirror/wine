@@ -524,12 +524,18 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 		    if ((This->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue) {
 		        if (!ci->bNegate) {
                             TRACE(" Branch to %d\n", ci->dwOffset);
-			    instr = (char*)current + ci->dwOffset;
+                            if (ci->dwOffset) {
+                                instr = (char*)current + ci->dwOffset;
+                                break;
+                            }
 			}
 		    } else {
 		        if (ci->bNegate) {
                             TRACE(" Branch to %d\n", ci->dwOffset);
-			    instr = (char*)current + ci->dwOffset;
+                            if (ci->dwOffset) {
+                                instr = (char*)current + ci->dwOffset;
+                                break;
+                            }
 			}
 		    }
 
