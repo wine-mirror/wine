@@ -287,46 +287,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    RGBQUAD col[256];
-    IWineD3DPaletteImpl *pal = This->palette;
-    unsigned int n;
-    TRACE("(%p)\n", This);
-
-    if(This->resource.format == WINED3DFMT_P8 ||
-       This->resource.format == WINED3DFMT_A8P8)
-    {
-        if(!(This->Flags & SFLAG_INSYSMEM)) {
-            TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
-            IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
-        }
-        TRACE("Dirtifying surface\n");
-        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
-    }
-
-    if(This->Flags & SFLAG_DIBSECTION) {
-        TRACE("(%p): Updating the hdc's palette\n", This);
-        for (n=0; n<256; n++) {
-            if(pal) {
-                col[n].rgbRed   = pal->palents[n].peRed;
-                col[n].rgbGreen = pal->palents[n].peGreen;
-                col[n].rgbBlue  = pal->palents[n].peBlue;
-            } else {
-                IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-                /* Use the default device palette */
-                col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
-                col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
-                col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
-            }
-            col[n].rgbReserved = 0;
-        }
-        SetDIBColorTable(This->hDC, 0, 256, col);
-    }
-
-    return WINED3D_OK;
-}
-
 DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     DWORD ret;
