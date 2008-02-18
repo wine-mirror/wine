@@ -784,7 +784,7 @@ static void test_AccessCheck(void)
 
     pRtlAdjustPrivilege(SE_SECURITY_PRIVILEGE, FALSE, TRUE, &Enabled);
 
-    res = DuplicateToken(ProcessToken, SecurityIdentification, &Token);
+    res = DuplicateToken(ProcessToken, SecurityImpersonation, &Token);
     ok(res, "DuplicateToken failed with error %d\n", GetLastError());
 
     /* SD without owner/group */
