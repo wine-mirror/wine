@@ -2000,6 +2000,7 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
     IWineD3DPaletteImpl* pal = This->palette;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BOOL index_in_alpha = FALSE;
+    int dxVersion = ( (IWineD3DImpl *) device->wineD3D)->dxVersion;
     int i;
 
     /* Old games like StarCraft, C&C, Red Alert and others use P8 render targets.
@@ -2016,22 +2017,29 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
 
     if (pal == NULL) {
         /* Still no palette? Use the device's palette */
-        /* Get the surface's palette */
+        /* can ddraw and d3d < 8 surfaces use device's palette (d3d >= 8 feature)? */
         for (i = 0; i < 256; i++) {
             table[i][0] = device->palettes[device->currentPalette][i].peRed;
             table[i][1] = device->palettes[device->currentPalette][i].peGreen;
             table[i][2] = device->palettes[device->currentPalette][i].peBlue;
 
-            /* BltOverride uses a GL_ALPHA_TEST based on GL_NOT_EQUAL 0, so the alpha component
-              of pixels that should be masked away should be 0. When inde_in_alpha is set,
-              we will store the palette index (the glReadPixels code reads GL_ALPHA back)
-              or else we store 0xff. */
-            if(colorkey && (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&  (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
-                table[i][3] = 0;
-            } else if(index_in_alpha) {
-                table[i][3] = i;
+            if(dxVersion >= 8) {
+                /* Direct3D >= 8 palette usage style: P8 textures use device palettes, palette entry format is A8R8G8B8,
+                   alpha is stored in peFlags and may be used by the app if D3DPTEXTURECAPS_ALPHAPALETTE device
+                   capability flag is present (wine does advertise this capability) */
+                table[i][3] = device->palettes[device->currentPalette][i].peFlags;
             } else {
-                table[i][3] = 0xFF;
+                /* BltOverride uses a GL_ALPHA_TEST based on GL_NOT_EQUAL 0, so the alpha component
+                of pixels that should be masked away should be 0. When inde_in_alpha is set,
+                we will store the palette index (the glReadPixels code reads GL_ALPHA back)
+                or else we store 0xff. */
+                if(colorkey && (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&  (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
+                    table[i][3] = 0;
+                } else if(index_in_alpha) {
+                    table[i][3] = i;
+                } else {
+                    table[i][3] = 0xFF;
+                }
             }
         }
     } else {
