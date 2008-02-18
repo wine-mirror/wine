@@ -369,7 +369,7 @@ static DWORD create_tmp_file(HMMIO* hFile, LPWSTR* pszTmpFileName)
     szPrefix[2] = 'I';
     szPrefix[3] = '\0';
 
-    if (!GetTempPathW(sizeof(szTmpPath), szTmpPath)) {
+    if (!GetTempPathW(sizeof(szTmpPath)/sizeof(szTmpPath[0]), szTmpPath)) {
         WARN("can't retrieve temp path!\n");
         return MCIERR_FILE_NOT_FOUND;
     }
