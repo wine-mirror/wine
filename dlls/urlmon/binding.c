@@ -1665,7 +1665,7 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, I
 
         TRACE("start ret %08x\n", hres);
 
-        if(FAILED(hres)) {
+        if(FAILED(hres) && hres != E_PENDING) {
             stop_binding(binding, hres, NULL);
             IBinding_Release(BINDING(binding));
 
