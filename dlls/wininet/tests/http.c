@@ -894,8 +894,8 @@ static void HttpSendRequestEx_test(void)
     BufferIn.dwStructSize = sizeof( INTERNET_BUFFERS);
     BufferIn.Next = (LPINTERNET_BUFFERS)0xdeadcab;
     BufferIn.lpcszHeader = szContentType;
-    BufferIn.dwHeadersLength = sizeof(szContentType);
-    BufferIn.dwHeadersTotal = sizeof(szContentType);
+    BufferIn.dwHeadersLength = sizeof(szContentType)-1;
+    BufferIn.dwHeadersTotal = sizeof(szContentType)-1;
     BufferIn.lpvBuffer = szPostData;
     BufferIn.dwBufferLength = 3;
     BufferIn.dwBufferTotal = sizeof(szPostData)-1;
