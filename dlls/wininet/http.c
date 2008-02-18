@@ -594,7 +594,7 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
     BOOL bSuccess = FALSE;
     DWORD len;
 
-    TRACE("copying header: %s\n", debugstr_w(lpszHeader));
+    TRACE("copying header: %s\n", debugstr_wn(lpszHeader, dwHeaderLength));
 
     if( dwHeaderLength == ~0U )
         len = strlenW(lpszHeader);
@@ -650,6 +650,12 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
  *
  * Adds one or more HTTP header to the request handler
  *
+ * NOTE
+ * On Windows if dwHeaderLength includes the trailing '\0', then
+ * HttpAddRequestHeadersW() adds it too. However this results in an
+ * invalid Http header which is rejected by some servers so we probably
+ * don't need to match Windows on that point.
+ *
  * RETURNS
  *    TRUE  on success
  *    FALSE on failure
@@ -661,8 +667,7 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
     BOOL bSuccess = FALSE;
     LPWININETHTTPREQW lpwhr;
 
-    TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_w(lpszHeader), dwHeaderLength,
-          dwModifier);
+    TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_wn(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
     if (!lpszHeader) 
       return TRUE;
@@ -698,8 +703,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     LPWSTR hdr;
     BOOL r;
 
-    TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_a(lpszHeader), dwHeaderLength,
-          dwModifier);
+    TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_an(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
     len = MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, NULL, 0 );
     hdr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
