@@ -474,35 +474,35 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
         IWineD3DBaseTexture_PreLoad(baseTexture);
         IWineD3DBaseTexture_Release(baseTexture);
     } else {
-    TRACE("(%p) : About to load surface\n", This);
+        TRACE("(%p) : About to load surface\n", This);
 
-    if(!device->isInDraw) {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    }
-
-    ENTER_GL();
-    glEnable(This->glDescription.target);/* make sure texture support is enabled in this context */
-    if (!This->glDescription.level) {
-        if (!This->glDescription.textureName) {
-            glGenTextures(1, &This->glDescription.textureName);
-            checkGLcall("glGenTextures");
-            TRACE("Surface %p given name %d\n", This, This->glDescription.textureName);
+        if(!device->isInDraw) {
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
-        glBindTexture(This->glDescription.target, This->glDescription.textureName);
-        checkGLcall("glBindTexture");
-        IWineD3DSurface_LoadTexture(iface, FALSE);
-        /* This is where we should be reducing the amount of GLMemoryUsed */
-    } else if (This->glDescription.textureName) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
-        /* assume this is a coding error not a real error for now */
-        FIXME("Mipmap surface has a glTexture bound to it!\n");
-    }
-    if (This->resource.pool == WINED3DPOOL_DEFAULT) {
-       /* Tell opengl to try and keep this texture in video ram (well mostly) */
-       GLclampf tmp;
-       tmp = 0.9f;
-        glPrioritizeTextures(1, &This->glDescription.textureName, &tmp);
-    }
-    LEAVE_GL();
+
+        ENTER_GL();
+        glEnable(This->glDescription.target);/* make sure texture support is enabled in this context */
+        if (!This->glDescription.level) {
+            if (!This->glDescription.textureName) {
+                glGenTextures(1, &This->glDescription.textureName);
+                checkGLcall("glGenTextures");
+                TRACE("Surface %p given name %d\n", This, This->glDescription.textureName);
+            }
+            glBindTexture(This->glDescription.target, This->glDescription.textureName);
+            checkGLcall("glBindTexture");
+            IWineD3DSurface_LoadTexture(iface, FALSE);
+            /* This is where we should be reducing the amount of GLMemoryUsed */
+        } else if (This->glDescription.textureName) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
+            /* assume this is a coding error not a real error for now */
+            FIXME("Mipmap surface has a glTexture bound to it!\n");
+        }
+        if (This->resource.pool == WINED3DPOOL_DEFAULT) {
+            /* Tell opengl to try and keep this texture in video ram (well mostly) */
+            GLclampf tmp;
+            tmp = 0.9f;
+            glPrioritizeTextures(1, &This->glDescription.textureName, &tmp);
+        }
+        LEAVE_GL();
     }
     return;
 }
