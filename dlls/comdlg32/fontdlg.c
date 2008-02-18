@@ -963,7 +963,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
                    call back with the extra FONTTYPE_...  bits added */
                 lpxx->lfPitchAndFamily = HIWORD(l) >> 8;
             }
-            lstrcpyW(lpxx->lfFaceName,str);
+            lstrcpynW(lpxx->lfFaceName, str, sizeof(lpxx->lfFaceName)/sizeof(lpxx->lfFaceName[0]));
             i=SendDlgItemMessageW(hDlg, cmb2, CB_GETCURSEL, 0, 0);
             if (i!=CB_ERR)
             {
