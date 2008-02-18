@@ -107,8 +107,13 @@ static HRESULT WINAPI domcdata_GetTypeInfoCount(
     IXMLDOMCDATASection *iface,
     UINT* pctinfo )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI domcdata_GetTypeInfo(
@@ -116,8 +121,14 @@ static HRESULT WINAPI domcdata_GetTypeInfo(
     UINT iTInfo, LCID lcid,
     ITypeInfo** ppTInfo )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+    HRESULT hr;
+
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(IXMLDOMCDATASection_tid, ppTInfo);
+
+    return hr;
 }
 
 static HRESULT WINAPI domcdata_GetIDsOfNames(
@@ -125,8 +136,24 @@ static HRESULT WINAPI domcdata_GetIDsOfNames(
     REFIID riid, LPOLESTR* rgszNames,
     UINT cNames, LCID lcid, DISPID* rgDispId )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+
+    if(!rgszNames || cNames == 0 || !rgDispId)
+        return E_INVALIDARG;
+
+    hr = get_typeinfo(IXMLDOMCDATASection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domcdata_Invoke(
@@ -135,8 +162,22 @@ static HRESULT WINAPI domcdata_Invoke(
     WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult,
     EXCEPINFO* pExcepInfo, UINT* puArgErr )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IXMLDOMCDATASection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
+                pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domcdata_get_nodeName(
