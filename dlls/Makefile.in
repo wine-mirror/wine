@@ -199,6 +199,7 @@ BASEDIRS = \
 	shlwapi \
 	slbcsp \
 	snmpapi \
+	softpub \
 	spoolss \
 	stdole2.tlb \
 	stdole32.tlb \

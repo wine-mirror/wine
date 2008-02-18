@@ -21669,6 +21669,8 @@ ac_config_files="$ac_config_files dlls/snmpapi/Makefile"
 
 ac_config_files="$ac_config_files dlls/snmpapi/tests/Makefile"
 
+ac_config_files="$ac_config_files dlls/softpub/Makefile"
+
 ac_config_files="$ac_config_files dlls/spoolss/Makefile"
 
 ac_config_files="$ac_config_files dlls/spoolss/tests/Makefile"
@@ -22748,6 +22750,7 @@ do
     "dlls/slbcsp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/slbcsp/Makefile" ;;
     "dlls/snmpapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/snmpapi/Makefile" ;;
     "dlls/snmpapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/snmpapi/tests/Makefile" ;;
+    "dlls/softpub/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/softpub/Makefile" ;;
     "dlls/spoolss/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/spoolss/Makefile" ;;
     "dlls/spoolss/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/spoolss/tests/Makefile" ;;
     "dlls/stdole2.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/stdole2.tlb/Makefile" ;;
