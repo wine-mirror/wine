@@ -366,6 +366,7 @@ static void test_domdoc( void )
     VARIANT var;
     BSTR str;
     long code;
+    long nLength = 0;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -553,6 +554,14 @@ static void test_domdoc( void )
         ok(r == S_FALSE, "ret %08x\n", r );
         ok( V_VT(&var) == VT_NULL, "incorrect dataType type\n");
         VariantClear(&var);
+
+        /* test length property */
+        r = IXMLDOMText_get_length(nodetext, NULL);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        r = IXMLDOMText_get_length(nodetext, &nLength);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok(nLength == 4, "expected 4 got %ld\n", nLength);
 
         /* test nodeTypeString */
         r = IXMLDOMText_get_nodeTypeString(nodetext, &str);
