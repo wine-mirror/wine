@@ -3536,6 +3536,51 @@ HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, D
     return IWineD3DBaseSurfaceImpl_BltFast(iface, dstx, dsty, Source, rsrc, trans);
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    RGBQUAD col[256];
+    IWineD3DPaletteImpl *pal = This->palette;
+    unsigned int n;
+    TRACE("(%p)\n", This);
+
+    if(This->resource.format == WINED3DFMT_P8 ||
+       This->resource.format == WINED3DFMT_A8P8)
+    {
+        if(!(This->Flags & SFLAG_INSYSMEM)) {
+            TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
+            IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+        }
+        TRACE("Dirtifying surface\n");
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
+    }
+
+    if(This->Flags & SFLAG_DIBSECTION) {
+        TRACE("(%p): Updating the hdc's palette\n", This);
+        for (n=0; n<256; n++) {
+            if(pal) {
+                col[n].rgbRed   = pal->palents[n].peRed;
+                col[n].rgbGreen = pal->palents[n].peGreen;
+                col[n].rgbBlue  = pal->palents[n].peBlue;
+            } else {
+                IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+                /* Use the default device palette */
+                col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
+                col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
+                col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
+            }
+            col[n].rgbReserved = 0;
+        }
+        SetDIBColorTable(This->hDC, 0, 256, col);
+    }
+
+    /* Propagate the changes to the drawable.
+     * TODO: in case of hardware p8 palettes we should only upload the palette. */
+    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+        IWineD3DSurface_LoadLocation(iface, SFLAG_INDRAWABLE, NULL);
+
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /** Check against the maximum texture sizes supported by the video card **/
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
@@ -4120,7 +4165,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_BltFast,
     IWineD3DBaseSurfaceImpl_GetPalette,
     IWineD3DBaseSurfaceImpl_SetPalette,
-    IWineD3DBaseSurfaceImpl_RealizePalette,
+    IWineD3DSurfaceImpl_RealizePalette,
     IWineD3DBaseSurfaceImpl_SetColorKey,
     IWineD3DBaseSurfaceImpl_GetPitch,
     IWineD3DSurfaceImpl_SetMem,
