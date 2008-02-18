@@ -426,6 +426,8 @@ static void create_test_entries(void)
         "RegSetValueExA failed\n");
     ok(!RegSetValueExA(hkey_main,"TP1_SZ",0,REG_SZ, (const BYTE *)sTestpath1, strlen(sTestpath1)+1), 
         "RegSetValueExA failed\n");
+    ok(!RegSetValueExA(hkey_main,"TP1_ZB_SZ",0,REG_SZ, NULL, 0),
+       "RegSetValueExA failed\n");
     ok(!RegSetValueExA(hkey_main,"TP2_EXP_SZ",0,REG_EXPAND_SZ, (const BYTE *)sTestpath2, strlen(sTestpath2)+1), 
         "RegSetValueExA failed\n");
     ok(!RegSetValueExA(hkey_main,"DWORD",0,REG_DWORD, (const BYTE *)qw, 4),
@@ -769,6 +771,17 @@ static void test_get_value(void)
     ok(size == strlen(sTestpath1)+1 || size == strlen(sTestpath1)+2,
        "strlen(sTestpath1)=%d size=%d\n", lstrlenA(sTestpath1), size);
     ok(type == REG_SZ, "type=%d\n", type);
+
+    /* Query REG_SZ using RRF_RT_REG_SZ on a zero-byte value (ok) */
+    strcpy(buf, sTestpath1);
+    type = 0xdeadbeef;
+    size = sizeof(buf);
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_ZB_SZ", RRF_RT_REG_SZ, &type, buf, &size);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    /* v5.2.3790.1830 (2003 SP1) returns sTestpath1 length + 2 here. */
+    ok(size == 0, "size=%d\n", size);
+    ok(type == REG_SZ, "type=%d\n", type);
+    ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
 
     /* Query REG_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
