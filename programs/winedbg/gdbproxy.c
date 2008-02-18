@@ -1396,7 +1396,7 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
     if (reg >= cpu_num_regs)
     {
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "Register out of bounds %x (%x)\n", reg, cpu_num_regs);
+            fprintf(stderr, "Register out of bounds %x\n", reg);
         return packet_error;
     }
     if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
