@@ -21485,6 +21485,8 @@ ac_config_files="$ac_config_files dlls/msnet32/Makefile"
 
 ac_config_files="$ac_config_files dlls/msrle32/Makefile"
 
+ac_config_files="$ac_config_files dlls/mssip32/Makefile"
+
 ac_config_files="$ac_config_files dlls/msvcirt/Makefile"
 
 ac_config_files="$ac_config_files dlls/msvcr71/Makefile"
@@ -22650,6 +22652,7 @@ do
     "dlls/msisys.ocx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msisys.ocx/Makefile" ;;
     "dlls/msnet32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msnet32/Makefile" ;;
     "dlls/msrle32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msrle32/Makefile" ;;
+    "dlls/mssip32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mssip32/Makefile" ;;
     "dlls/msvcirt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcirt/Makefile" ;;
     "dlls/msvcr71/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcr71/Makefile" ;;
     "dlls/msvcrt/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvcrt/Makefile" ;;
