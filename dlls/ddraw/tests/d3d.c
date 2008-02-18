@@ -979,6 +979,8 @@ static void Direct3D1Test(void)
 
     hr = IDirect3DExecuteBuffer_Lock(exebuf, &desc);
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Lock failed: %08x\n", hr);
+
+    memset(desc.lpData, 0, 128);
     instr = desc.lpData;
     instr[idx].bOpcode = D3DOP_BRANCHFORWARD;
     instr[idx].bSize = sizeof(*branch);
@@ -992,7 +994,7 @@ static void Direct3D1Test(void)
     idx += (sizeof(*branch) / sizeof(*instr));
     instr[idx].bOpcode = D3DOP_EXIT;
     instr[idx].bSize = 0;
-    instr[idx].bSize = 0;
+    instr[idx].wCount = 0;
     hr = IDirect3DExecuteBuffer_Unlock(exebuf);
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Unlock failed: %08x\n", hr);
 
@@ -1016,6 +1018,34 @@ static void Direct3D1Test(void)
     vp_data.dvMaxZ = 1;
     hr = IDirect3DViewport_SetViewport(vp, &vp_data);
     ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
+
+    hr = IDirect3DDevice_Execute(dev1, exebuf, vp, D3DEXECUTE_CLIPPED);
+    ok(hr == D3D_OK, "IDirect3DDevice_Execute returned %08x\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+
+    hr = IDirect3DExecuteBuffer_Lock(exebuf, &desc);
+    ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Lock failed: %08x\n", hr);
+
+    memset(desc.lpData, 0, 128);
+    instr = desc.lpData;
+    idx = 0;
+    instr[idx].bOpcode = D3DOP_BRANCHFORWARD;
+    instr[idx].bSize = sizeof(*branch);
+    instr[idx].wCount = 1;
+    idx++;
+    branch = (D3DBRANCH *) &instr[idx];
+    branch->dwMask = 0x0;
+    branch->dwValue = 1;
+    branch->bNegate = TRUE;
+    branch->dwOffset = 64;
+    instr = (D3DINSTRUCTION*)((char*)desc.lpData + 64);
+    instr[0].bOpcode = D3DOP_EXIT;
+    instr[0].bSize = 0;
+    instr[0].wCount = 0;
+    hr = IDirect3DExecuteBuffer_Unlock(exebuf);
+    ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Unlock failed: %08x\n", hr);
 
     hr = IDirect3DDevice_Execute(dev1, exebuf, vp, D3DEXECUTE_CLIPPED);
     ok(hr == D3D_OK, "IDirect3DDevice_Execute returned %08x\n", hr);
