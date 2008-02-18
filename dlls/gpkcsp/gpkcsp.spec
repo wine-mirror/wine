@@ -1,0 +1,26 @@
+@ stub CPAcquireContext
+@ stub CPCreateHash
+@ stub CPDecrypt
+@ stub CPDeriveKey
+@ stub CPDestroyHash
+@ stub CPDestroyKey
+@ stub CPEncrypt
+@ stub CPExportKey
+@ stub CPGenKey
+@ stub CPGenRandom
+@ stub CPGetHashParam
+@ stub CPGetKeyParam
+@ stub CPGetProvParam
+@ stub CPGetUserKey
+@ stub CPHashData
+@ stub CPHashSessionKey
+@ stub CPImportKey
+@ stub CPReleaseContext
+@ stub CPSetHashParam
+@ stub CPSetKeyParam
+@ stub CPSetProvParam
+@ stub CPSignHash
+@ stub CPVerifySignature
+@ stdcall DllMain(ptr long ptr)
+@ stub DllRegisterServer
+@ stub DllUnregisterServer

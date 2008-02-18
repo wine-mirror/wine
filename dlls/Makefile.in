@@ -82,6 +82,7 @@ BASEDIRS = \
 	gdi32 \
 	gdiplus \
 	gphoto2.ds \
+	gpkcsp \
 	hal \
 	hhctrl.ocx \
 	hid \
