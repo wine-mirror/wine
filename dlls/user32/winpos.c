@@ -1326,27 +1326,6 @@ static inline void get_valid_rects( const RECT *old_client, const RECT *new_clie
     }
 }
 
-struct move_owned_info
-{
-    HWND owner;
-    HWND insert_after;
-};
-
-static BOOL CALLBACK move_owned_popups( HWND hwnd, LPARAM lparam )
-{
-    struct move_owned_info *info = (struct move_owned_info *)lparam;
-
-    if (hwnd == info->owner) return FALSE;
-    if ((GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) &&
-        GetWindow( hwnd, GW_OWNER ) == info->owner)
-    {
-        SetWindowPos( hwnd, info->insert_after, 0, 0, 0, 0,
-                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE |
-                      SWP_NOSENDCHANGING | SWP_DEFERERASE );
-        info->insert_after = hwnd;
-    }
-    return TRUE;
-}
 
 /***********************************************************************
  *           SWP_DoOwnedPopups
@@ -1358,36 +1337,75 @@ static BOOL CALLBACK move_owned_popups( HWND hwnd, LPARAM lparam )
  */
 static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
 {
-    HWND owner = GetWindow( hwnd, GW_OWNER );
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
-    struct move_owned_info info;
+    HWND owner, *list = NULL;
+    unsigned int i;
 
     TRACE("(%p) hInsertAfter = %p\n", hwnd, hwndInsertAfter );
 
-    if ((style & WS_POPUP) && owner)
+    if ((style & WS_POPUP) && (owner = GetWindow( hwnd, GW_OWNER )))
     {
         /* make sure this popup stays above the owner */
 
         if (hwndInsertAfter != HWND_TOP && hwndInsertAfter != HWND_TOPMOST)
         {
-            HWND hwndLocalPrev = HWND_TOP;
-            HWND prev = GetWindow( owner, GW_HWNDPREV );
+            if (!(list = WIN_ListChildren( GetDesktopWindow() ))) return hwndInsertAfter;
 
-            while (prev && prev != hwndInsertAfter)
+            for (i = 0; list[i]; i++)
             {
-                if (hwndLocalPrev == HWND_TOP && GetWindowLongW( prev, GWL_STYLE ) & WS_VISIBLE)
-                    hwndLocalPrev = prev;
-                prev = GetWindow( prev, GW_HWNDPREV );
+                if (list[i] == owner)
+                {
+                    if (i > 0) hwndInsertAfter = list[i-1];
+                    else hwndInsertAfter = HWND_TOP;
+                    break;
+                }
+
+                if (hwndInsertAfter == HWND_NOTOPMOST)
+                {
+                    if (!(GetWindowLongW( list[i], GWL_EXSTYLE ) & WS_EX_TOPMOST)) break;
+                }
+                else if (list[i] == hwndInsertAfter) break;
             }
-            if (!prev) hwndInsertAfter = hwndLocalPrev;
         }
     }
     else if (style & WS_CHILD) return hwndInsertAfter;
 
-    info.owner = hwnd;
-    info.insert_after = hwndInsertAfter;
-    EnumWindows( move_owned_popups, (LPARAM)&info );
-    return info.insert_after;
+    if (hwndInsertAfter == HWND_BOTTOM) goto done;
+    if (!list && !(list = WIN_ListChildren( GetDesktopWindow() ))) goto done;
+
+    i = 0;
+    if (hwndInsertAfter == HWND_TOP || hwndInsertAfter == HWND_NOTOPMOST)
+    {
+        if (hwndInsertAfter == HWND_NOTOPMOST || !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_TOPMOST))
+        {
+            /* skip all the topmost windows */
+            while (list[i] && (GetWindowLongW( list[i], GWL_EXSTYLE ) & WS_EX_TOPMOST)) i++;
+        }
+    }
+    else if (hwndInsertAfter != HWND_TOPMOST)
+    {
+        /* skip windows that are already placed correctly */
+        for (i = 0; list[i]; i++)
+        {
+            if (list[i] == hwndInsertAfter) break;
+            if (list[i] == hwnd) goto done;  /* nothing to do if window is moving backwards in z-order */
+        }
+    }
+
+    for ( ; list[i]; i++)
+    {
+        if (list[i] == hwnd) break;
+        if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_POPUP)) continue;
+        if (GetWindow( list[i], GW_OWNER ) != hwnd) continue;
+        TRACE( "moving %p owned by %p after %p\n", list[i], hwnd, hwndInsertAfter );
+        SetWindowPos( list[i], hwndInsertAfter, 0, 0, 0, 0,
+                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_DEFERERASE );
+        hwndInsertAfter = list[i];
+    }
+
+done:
+    HeapFree( GetProcessHeap(), 0, list );
+    return hwndInsertAfter;
 }
 
 /***********************************************************************
