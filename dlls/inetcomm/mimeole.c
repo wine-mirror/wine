@@ -1257,7 +1257,7 @@ static HRESULT WINAPI sub_stream_CopyTo(
     ULARGE_INTEGER totalBytesRead;
     ULARGE_INTEGER totalBytesWritten;
 
-    TRACE("(%p)->(%p, %d, %p, %p)\n", iface, pstm, cb.LowPart, pcbRead, pcbWritten);
+    TRACE("(%p)->(%p, %d, %p, %p)\n", iface, pstm, cb.u.LowPart, pcbRead, pcbWritten);
 
     totalBytesRead.QuadPart = 0;
     totalBytesWritten.QuadPart = 0;
@@ -1525,7 +1525,7 @@ static HRESULT create_body_offset_list(IStream *stm, const char *boundary, struc
 
     zero.QuadPart = 0;
     hr = IStream_Seek(stm, zero, STREAM_SEEK_CUR, &cur);
-    start = cur.LowPart;
+    start = cur.u.LowPart;
 
     do {
         hr = IStream_Read(stm, overlap, PARSER_BUF_SIZE, &read);
@@ -1599,7 +1599,7 @@ static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *off
     IMimeBody_Load(mime_body, pStm);
     zero.QuadPart = 0;
     hr = IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &cur);
-    offset->cbBodyStart = cur.LowPart + offset->cbHeaderStart;
+    offset->cbBodyStart = cur.u.LowPart + offset->cbHeaderStart;
     if(parent) MimeBody_set_offsets(impl_from_IMimeBody(mime_body), offset);
     IMimeBody_SetData(mime_body, IET_BINARY, NULL, NULL, &IID_IStream, pStm);
     body = new_body_entry(mime_body, msg->next_hbody, parent);
@@ -1629,8 +1629,8 @@ static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *off
                     IStream *sub_stream;
                     ULARGE_INTEGER start, length;
 
-                    start.LowPart = cur->offsets.cbHeaderStart;
-                    length.LowPart = cur->offsets.cbBodyEnd - cur->offsets.cbHeaderStart;
+                    start.u.LowPart = cur->offsets.cbHeaderStart;
+                    length.u.LowPart = cur->offsets.cbBodyEnd - cur->offsets.cbHeaderStart;
                     create_sub_stream(pStm, start, length, &sub_stream);
                     sub_body = create_sub_body(msg, sub_stream, &cur->offsets, body);
                     IStream_Release(sub_stream);
@@ -1674,7 +1674,7 @@ static HRESULT WINAPI MimeMessage_Load(
 
     zero.QuadPart = 0;
     IStream_Seek(pStm, zero, STREAM_SEEK_END, &cur);
-    offsets.cbBodyEnd = cur.LowPart;
+    offsets.cbBodyEnd = cur.u.LowPart;
     MimeBody_set_offsets(impl_from_IMimeBody(root_body->mime_body), &offsets);
 
     list_add_head(&This->body_tree, &root_body->entry);
