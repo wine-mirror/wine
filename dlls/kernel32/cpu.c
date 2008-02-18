@@ -683,12 +683,12 @@ VOID WINAPI GetSystemInfo(
 	}
 	valSize = sizeof(int);
 	if (sysctlbyname ("hw.ncpu", &value, &valSize, NULL, 0) == 0)
-	cachedsi.dwNumberOfProcessors = value;
- 
+            cachedsi.dwNumberOfProcessors = value;
+
 	valSize = sizeof(int);
 	if (sysctlbyname ("hw.activecpu", &value, &valSize, NULL, 0) == 0)
-	    cachedsi.dwActiveProcessorMask = value;
-	    
+	    cachedsi.dwActiveProcessorMask = (1 << value) - 1;
+
 	valSize = sizeof(int);
 	if (sysctlbyname ("hw.cputype", &cputype, &valSize, NULL, 0) == 0)
 	{
