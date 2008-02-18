@@ -38,6 +38,7 @@ BASEDIRS = \
 	credui \
 	crtdll \
 	crypt32 \
+	cryptdlg \
 	cryptdll \
 	cryptnet \
 	ctapi32 \

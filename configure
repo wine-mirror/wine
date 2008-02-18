@@ -21227,6 +21227,8 @@ ac_config_files="$ac_config_files dlls/crypt32/Makefile"
 
 ac_config_files="$ac_config_files dlls/crypt32/tests/Makefile"
 
+ac_config_files="$ac_config_files dlls/cryptdlg/Makefile"
+
 ac_config_files="$ac_config_files dlls/cryptdll/Makefile"
 
 ac_config_files="$ac_config_files dlls/cryptnet/Makefile"
@@ -22515,6 +22517,7 @@ do
     "dlls/crtdll/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crtdll/Makefile" ;;
     "dlls/crypt32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crypt32/Makefile" ;;
     "dlls/crypt32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/crypt32/tests/Makefile" ;;
+    "dlls/cryptdlg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptdlg/Makefile" ;;
     "dlls/cryptdll/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptdll/Makefile" ;;
     "dlls/cryptnet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptnet/Makefile" ;;
     "dlls/cryptnet/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptnet/tests/Makefile" ;;

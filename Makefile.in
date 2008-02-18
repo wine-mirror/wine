@@ -188,6 +188,7 @@ ALL_MAKEFILES = \
 	dlls/crtdll/Makefile \
 	dlls/crypt32/Makefile \
 	dlls/crypt32/tests/Makefile \
+	dlls/cryptdlg/Makefile \
 	dlls/cryptdll/Makefile \
 	dlls/cryptnet/Makefile \
 	dlls/cryptnet/tests/Makefile \
@@ -579,6 +580,7 @@ dlls/credui/tests/Makefile: dlls/credui/tests/Makefile.in dlls/Maketest.rules
 dlls/crtdll/Makefile: dlls/crtdll/Makefile.in dlls/Makedll.rules
 dlls/crypt32/Makefile: dlls/crypt32/Makefile.in dlls/Makedll.rules
 dlls/crypt32/tests/Makefile: dlls/crypt32/tests/Makefile.in dlls/Maketest.rules
+dlls/cryptdlg/Makefile: dlls/cryptdlg/Makefile.in dlls/Makedll.rules
 dlls/cryptdll/Makefile: dlls/cryptdll/Makefile.in dlls/Makedll.rules
 dlls/cryptnet/Makefile: dlls/cryptnet/Makefile.in dlls/Makedll.rules
 dlls/cryptnet/tests/Makefile: dlls/cryptnet/tests/Makefile.in dlls/Maketest.rules
