@@ -466,6 +466,9 @@ static CRITICAL_SECTION freetype_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_','\0'};
 
+static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
+static BOOL use_default_fallback = FALSE;
+
 static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph);
 
 /****************************************
@@ -2072,6 +2075,10 @@ static void update_font_info(void)
                    (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR));
     sprintf( cpbuf, "%u,%u", ansi_cp, oem_cp );
 
+    /* Setup DefaultFallback usage */
+    if (ansi_cp == 932)
+        use_default_fallback = TRUE;
+
     len = sizeof(buf);
     if (RegQueryValueExA(hkey, "Codepages", 0, &type, (BYTE *)buf, &len) == ERROR_SUCCESS && type == REG_SZ)
     {
@@ -2846,6 +2853,30 @@ static BOOL create_child_font_list(GdiFont *font)
             break;
         }
     }
+    /*
+     * if not SYMBOL or OEM then we also get all the fonts for Microsoft
+     * Sans Serif.  This is how asian windows get default fallbacks for fonts
+     */
+    if (use_default_fallback && font->charset != SYMBOL_CHARSET &&
+        font->charset != OEM_CHARSET &&
+        strcmpW(font->name,szDefaultFallbackLink) != 0)
+        LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
+        {
+            if(!strcmpW(font_link->font_name,szDefaultFallbackLink))
+            {
+                TRACE("found entry in default fallback list\n");
+                LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
+                {
+                    new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
+                    new_child->face = font_link_entry->face;
+                    new_child->font = NULL;
+                    list_add_tail(&font->child_fonts, &new_child->entry);
+                    TRACE("font %s %ld\n", debugstr_a(new_child->face->file), new_child->face->face_index);
+                }
+                ret = TRUE;
+                break;
+            }
+        }
 
     return ret;
 }
