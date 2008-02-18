@@ -11,6 +11,7 @@ C_SRCS = \
 	bindctx.c \
 	binding.c \
 	bindprot.c \
+	download.c \
 	file.c \
 	format.c \
 	ftp.c \
