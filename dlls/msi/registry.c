@@ -52,14 +52,6 @@ static const WCHAR szUserFeatures_fmt[] = {
 'F','e','a','t','u','r','e','s','\\',
 '%','s',0};
 
-static const WCHAR szInstaller_Features[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'F','e','a','t','u','r','e','s',0 };
-
 static const WCHAR szUserDataFeatures_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -86,15 +78,6 @@ static const WCHAR szInstaller_Components[] = {
 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
 'I','n','s','t','a','l','l','e','r','\\',
 'C','o','m','p','o','n','e','n','t','s',0 };
-
-static const WCHAR szInstaller_Components_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'C','o','m','p','o','n','e','n','t','s','\\',
-'%','s',0};
 
 static const WCHAR szUser_Components_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
@@ -608,11 +591,6 @@ UINT MSIREG_DeleteUserFeaturesKey(LPCWSTR szProduct)
     return RegDeleteTreeW(HKEY_CURRENT_USER, keypath);
 }
 
-UINT MSIREG_OpenFeatures(HKEY* key)
-{
-    return RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller_Features,key);
-}
-
 UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 {
     UINT rc;
@@ -667,27 +645,6 @@ UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
 UINT MSIREG_OpenComponents(HKEY* key)
 {
     return RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller_Components,key);
-}
-
-UINT MSIREG_OpenComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
-{
-    UINT rc;
-    WCHAR squished_cc[GUID_SIZE];
-    WCHAR keypath[0x200];
-
-    TRACE("%s\n",debugstr_w(szComponent));
-    if (!squash_guid(szComponent,squished_cc))
-        return ERROR_FUNCTION_FAILED;
-    TRACE("squished (%s)\n", debugstr_w(squished_cc));
-
-    sprintfW(keypath,szInstaller_Components_fmt,squished_cc);
-
-    if (create)
-        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,keypath,key);
-    else
-        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,keypath,key);
-
-    return rc;
 }
 
 UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
