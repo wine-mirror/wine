@@ -398,7 +398,6 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
     if(offsetof(BINDINFO, szExtraInfo) < size)
         CoTaskMemFree(pbindinfo->szCustomVerb);
 
-
     if(pbindinfo->pUnk && offsetof(BINDINFO, pUnk) < size)
         IUnknown_Release(pbindinfo->pUnk);
 
@@ -420,6 +419,13 @@ HRESULT WINAPI CopyStgMedium(const STGMEDIUM *src, STGMEDIUM *dst)
 
     switch(dst->tymed) {
     case TYMED_NULL:
+        break;
+    case TYMED_FILE:
+        if(src->u.lpszFileName && !src->pUnkForRelease) {
+            DWORD size = (strlenW(src->u.lpszFileName)+1)*sizeof(WCHAR);
+            dst->u.lpszFileName = CoTaskMemAlloc(size);
+            memcpy(dst->u.lpszFileName, src->u.lpszFileName, size);
+        }
         break;
     case TYMED_ISTREAM:
         if(dst->u.pstm)

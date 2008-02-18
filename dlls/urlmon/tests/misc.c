@@ -1183,6 +1183,8 @@ static void test_CopyStgMedium(void)
     STGMEDIUM src, dst;
     HRESULT hres;
 
+    static WCHAR fileW[] = {'f','i','l','e',0};
+
     memset(&src, 0xf0, sizeof(src));
     memset(&dst, 0xe0, sizeof(dst));
     src.tymed = TYMED_NULL;
@@ -1201,6 +1203,17 @@ static void test_CopyStgMedium(void)
     ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
     ok(dst.tymed == TYMED_ISTREAM, "tymed=%d\n", dst.tymed);
     ok(!dst.u.pstm, "pstm=%p\n", dst.u.pstm);
+    ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
+
+    memset(&dst, 0xe0, sizeof(dst));
+    src.tymed = TYMED_FILE;
+    src.u.lpszFileName = fileW;
+    src.pUnkForRelease = NULL;
+    hres = CopyStgMedium(&src, &dst);
+    ok(hres == S_OK, "CopyStgMedium failed: %08x\n", hres);
+    ok(dst.tymed == TYMED_FILE, "tymed=%d\n", dst.tymed);
+    ok(dst.u.lpszFileName && dst.u.lpszFileName != fileW, "lpszFileName=%p\n", dst.u.lpszFileName);
+    ok(!lstrcmpW(dst.u.lpszFileName, fileW), "wrong file name\n");
     ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
 
     hres = CopyStgMedium(&src, NULL);
