@@ -78,7 +78,7 @@ static const IProgressDialogVtbl ProgressDialogVtbl;
 
 static void set_buffer(LPWSTR *buffer, LPCWSTR string)
 {
-    const WCHAR empty_string = {0};
+    static const WCHAR empty_string[] = {0};
     IMalloc *malloc;
     int cb;
 
