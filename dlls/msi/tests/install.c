@@ -2898,6 +2898,7 @@ static void test_publishsourcelist(void)
     UINT r;
     DWORD size;
     CHAR value[MAX_PATH];
+    CHAR path[MAX_PATH];
     CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
 
     CreateDirectoryA("msitest", NULL);
@@ -2915,8 +2916,17 @@ static void test_publishsourcelist(void)
     /* nothing published */
     size = 0xdeadbeef;
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1");
@@ -2927,8 +2937,17 @@ static void test_publishsourcelist(void)
     /* after RegisterProduct */
     size = 0xdeadbeef;
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     r = MsiInstallProductA(msifile, "PROCESS_COMPONENTS=1");
@@ -2939,8 +2958,17 @@ static void test_publishsourcelist(void)
     /* after ProcessComponents */
     size = 0xdeadbeef;
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     r = MsiInstallProductA(msifile, "PUBLISH_FEATURES=1");
@@ -2951,8 +2979,17 @@ static void test_publishsourcelist(void)
     /* after PublishFeatures */
     size = 0xdeadbeef;
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
+
+    size = 0xdeadbeef;
+    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    }
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
@@ -2964,13 +3001,93 @@ static void test_publishsourcelist(void)
     size = MAX_PATH;
     lstrcpyA(value, "aaa");
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                              MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
+                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, value, &size);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
         ok(!lstrcmpA(value, "msitest.msi"), "Expected 'msitest.msi', got %s\n", value);
         ok(size == 11, "Expected 11, got %d\n", size);
     }
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_MEDIAPACKAGEPATH, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
+        ok(size == 0, "Expected 0, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_DISKPROMPT, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
+        ok(size == 0, "Expected 0, got %d\n", size);
+    }
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\");
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
+        ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
+    }
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "n"), "Expected \"n\", got \"%s\"\n", value);
+        ok(size == 1, "Expected 1, got %d\n", size);
+    }
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
+        ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
+    }
+
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 1, value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    }
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
+    ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
 
     /* complete uninstall */
     r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
