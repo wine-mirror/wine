@@ -365,15 +365,11 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
             }
         }
 
-        /* After seeing some logs, not sure at all about this... */
-        if (pal == NULL)
-        {
-            IWineD3DSurface_SetPalette(This->WineD3DSurface, wine_pal);
-            if (pal_src != NULL) IDirectDrawPalette_AddRef(pal_src);
-        }
-        else if (pal_src != NULL)
+        if (pal_src != NULL)
         {
             PALETTEENTRY palent[256];
+
+            if (pal == NULL) return DDERR_NOPALETTEATTACHED;
             IDirectDrawPalette_GetEntries(pal_src, 0, 0, 256, palent);
             IDirectDrawPalette_SetEntries(pal, 0, 0, 256, palent);
         }
