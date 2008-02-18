@@ -944,30 +944,6 @@ HGDIOBJ WINAPI GetStockObject( INT obj )
 
 
 /***********************************************************************
- *           GetObject    (GDI.82)
- */
-INT16 WINAPI GetObject16( HGDIOBJ16 handle16, INT16 count, LPVOID buffer )
-{
-    GDIOBJHDR * ptr;
-    HGDIOBJ handle = HGDIOBJ_32( handle16 );
-    INT16 result = 0;
-
-    TRACE("%p %d %p\n", handle, count, buffer );
-    if (!count) return 0;
-
-    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
-
-    if (ptr->funcs && ptr->funcs->pGetObject16)
-        result = ptr->funcs->pGetObject16( handle, ptr, count, buffer );
-    else
-        SetLastError( ERROR_INVALID_HANDLE );
-
-    GDI_ReleaseObj( handle );
-    return result;
-}
-
-
-/***********************************************************************
  *           GetObjectA    (GDI32.@)
  */
 INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )

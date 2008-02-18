@@ -119,6 +119,25 @@ static void logfont_16_to_W( const LOGFONT16 *font16, LPLOGFONTW font32 )
     font32->lfFaceName[LF_FACESIZE-1] = 0;
 }
 
+/* convert a LOGFONTW to a LOGFONT16 */
+static void logfont_W_to_16( const LOGFONTW* font32, LPLOGFONT16 font16 )
+{
+    font16->lfHeight = font32->lfHeight;
+    font16->lfWidth = font32->lfWidth;
+    font16->lfEscapement = font32->lfEscapement;
+    font16->lfOrientation = font32->lfOrientation;
+    font16->lfWeight = font32->lfWeight;
+    font16->lfItalic = font32->lfItalic;
+    font16->lfUnderline = font32->lfUnderline;
+    font16->lfStrikeOut = font32->lfStrikeOut;
+    font16->lfCharSet = font32->lfCharSet;
+    font16->lfOutPrecision = font32->lfOutPrecision;
+    font16->lfClipPrecision = font32->lfClipPrecision;
+    font16->lfQuality = font32->lfQuality;
+    font16->lfPitchAndFamily = font32->lfPitchAndFamily;
+    WideCharToMultiByte( CP_ACP, 0, font32->lfFaceName, -1, font16->lfFaceName, LF_FACESIZE, NULL, NULL );
+    font16->lfFaceName[LF_FACESIZE-1] = 0;
+}
 
 /***********************************************************************
  *           SetBkColor    (GDI.1)
@@ -1141,6 +1160,95 @@ INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
 INT16 WINAPI GetMapMode16( HDC16 hdc )
 {
     return GetMapMode( HDC_32(hdc) );
+}
+
+
+/***********************************************************************
+ *           GetObject    (GDI.82)
+ */
+INT16 WINAPI GetObject16( HGDIOBJ16 handle16, INT16 count, LPVOID buffer )
+{
+    HGDIOBJ handle = HGDIOBJ_32( handle16 );
+    switch( GetObjectType( handle ))
+    {
+    case OBJ_PEN:
+        if (buffer)
+        {
+            LOGPEN16 *pen16 = buffer;
+            LOGPEN pen;
+
+            if (count < sizeof(LOGPEN16)) return 0;
+            if (!GetObjectW( handle, sizeof(pen), &pen )) return 0;
+
+            pen16->lopnStyle   = pen.lopnStyle;
+            pen16->lopnColor   = pen.lopnColor;
+            pen16->lopnWidth.x = pen.lopnWidth.x;
+            pen16->lopnWidth.y = pen.lopnWidth.y;
+        }
+        return sizeof(LOGPEN16);
+
+    case OBJ_BRUSH:
+        if (buffer)
+        {
+            LOGBRUSH brush;
+            LOGBRUSH16 brush16;
+
+            if (!GetObjectW( handle, sizeof(brush), &brush )) return 0;
+            brush16.lbStyle = brush.lbStyle;
+            brush16.lbColor = brush.lbColor;
+            brush16.lbHatch = brush.lbHatch;
+            if (count > sizeof(brush16)) count = sizeof(brush16);
+            memcpy( buffer, &brush16, count );
+            return count;
+        }
+        return sizeof(LOGBRUSH16);
+
+    case OBJ_PAL:
+        return GetObjectW( handle, count, buffer );
+
+    case OBJ_FONT:
+        if (buffer)
+        {
+            LOGFONTW font;
+            LOGFONT16 font16;
+
+            if (!GetObjectW( handle, sizeof(font), &font )) return 0;
+            logfont_W_to_16( &font, &font16 );
+            if (count > sizeof(font16)) count = sizeof(font16);
+            memcpy( buffer, &font16, count );
+            return count;
+        }
+        return sizeof(LOGFONT16);
+
+    case OBJ_BITMAP:
+        {
+            DIBSECTION dib;
+            INT size;
+            BITMAP16 *bmp16 = buffer;
+
+            if (!(size = GetObjectW( handle, sizeof(dib), &dib ))) return 0;
+            if (size == sizeof(DIBSECTION) && count > sizeof(BITMAP16))
+            {
+                FIXME("not implemented for DIBs: count %d\n", count);
+                return 0;
+            }
+            else
+            {
+                if (count < sizeof(BITMAP16)) return 0;
+                bmp16->bmType       = dib.dsBm.bmType;
+                bmp16->bmWidth      = dib.dsBm.bmWidth;
+                bmp16->bmHeight     = dib.dsBm.bmHeight;
+                bmp16->bmWidthBytes = dib.dsBm.bmWidthBytes;
+                bmp16->bmPlanes     = dib.dsBm.bmPlanes;
+                bmp16->bmBitsPixel  = dib.dsBm.bmBitsPixel;
+                bmp16->bmBits       = 0;
+                return sizeof(BITMAP16);
+            }
+        }
+
+    default:
+        return 0;
+    }
 }
 
 
