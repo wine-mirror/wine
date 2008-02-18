@@ -99,6 +99,15 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 }
 
 STRINGTABLE DISCARDABLE
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
+{
+	7  "Standardowe DirectSound"
+	8  "DirectSound: %s"
+	9  "Standardowe urządzenie WaveOut"
+	10 "Standardowe urządzenie Device"
+}
+
+STRINGTABLE DISCARDABLE
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 {
 7  "Standard DirectSound"
