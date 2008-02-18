@@ -197,6 +197,7 @@ BASEDIRS = \
 	shell32 \
 	shfolder \
 	shlwapi \
+	slbcsp \
 	snmpapi \
 	spoolss \
 	stdole2.tlb \
