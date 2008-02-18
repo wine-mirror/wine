@@ -21321,6 +21321,8 @@ ac_config_files="$ac_config_files dlls/dsound/Makefile"
 
 ac_config_files="$ac_config_files dlls/dsound/tests/Makefile"
 
+ac_config_files="$ac_config_files dlls/dssenh/Makefile"
+
 ac_config_files="$ac_config_files dlls/dswave/Makefile"
 
 ac_config_files="$ac_config_files dlls/dwmapi/Makefile"
@@ -22576,6 +22578,7 @@ do
     "dlls/dpnlobby/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnlobby/Makefile" ;;
     "dlls/dsound/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/Makefile" ;;
     "dlls/dsound/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/tests/Makefile" ;;
+    "dlls/dssenh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dssenh/Makefile" ;;
     "dlls/dswave/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dswave/Makefile" ;;
     "dlls/dwmapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dwmapi/Makefile" ;;
     "dlls/dxdiagn/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxdiagn/Makefile" ;;

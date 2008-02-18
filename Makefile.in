@@ -235,6 +235,7 @@ ALL_MAKEFILES = \
 	dlls/dpnlobby/Makefile \
 	dlls/dsound/Makefile \
 	dlls/dsound/tests/Makefile \
+	dlls/dssenh/Makefile \
 	dlls/dswave/Makefile \
 	dlls/dwmapi/Makefile \
 	dlls/dxdiagn/Makefile \
@@ -633,6 +634,7 @@ dlls/dpnhpast/Makefile: dlls/dpnhpast/Makefile.in dlls/Makedll.rules
 dlls/dpnlobby/Makefile: dlls/dpnlobby/Makefile.in dlls/Makedll.rules
 dlls/dsound/Makefile: dlls/dsound/Makefile.in dlls/Makedll.rules
 dlls/dsound/tests/Makefile: dlls/dsound/tests/Makefile.in dlls/Maketest.rules
+dlls/dssenh/Makefile: dlls/dssenh/Makefile.in dlls/Makedll.rules
 dlls/dswave/Makefile: dlls/dswave/Makefile.in dlls/Makedll.rules
 dlls/dwmapi/Makefile: dlls/dwmapi/Makefile.in dlls/Makedll.rules
 dlls/dxdiagn/Makefile: dlls/dxdiagn/Makefile.in dlls/Makedll.rules
