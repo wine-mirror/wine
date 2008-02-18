@@ -493,10 +493,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToObject(IMoniker* iface,
 /******************************************************************************
  *        URLMoniker_BindToStorage
  ******************************************************************************/
-static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
-						   IBindCtx* pbc,
-						   REFIID riid,
-						   VOID** ppvObject)
+static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName, IBindCtx* pbc, VOID** ppvObject)
 {
     HRESULT hres;
     BINDINFO bi;
@@ -505,12 +502,7 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
     Binding *bind;
     int len;
 
-    WARN("(%s %p %s %p)\n", debugstr_w(URLName), pbc, debugstr_guid(riid), ppvObject);
-
-    if(!IsEqualIID(&IID_IStream, riid)) {
-	FIXME("unsupported iid\n");
-	return E_NOTIMPL;
-    }
+    WARN("(%s %p %p)\n", debugstr_w(URLName), pbc, ppvObject);
 
     bind = heap_alloc_zero(sizeof(Binding));
     bind->lpVtbl = &BindingVtbl;
@@ -741,10 +733,11 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
         return E_FAIL;
     }
 
-    if(url.nScheme== INTERNET_SCHEME_HTTPS
-       || url.nScheme== INTERNET_SCHEME_FTP
-       || url.nScheme == INTERNET_SCHEME_GOPHER)
-        return URLMonikerImpl_BindToStorage_hack(This->URLName, pbc, riid, ppvObject);
+    if(IsEqualGUID(&IID_IStream, riid) &&
+       (  url.nScheme == INTERNET_SCHEME_HTTPS
+       || url.nScheme == INTERNET_SCHEME_FTP
+       || url.nScheme == INTERNET_SCHEME_GOPHER))
+        return URLMonikerImpl_BindToStorage_hack(This->URLName, pbc, ppvObject);
 
     TRACE("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
 
