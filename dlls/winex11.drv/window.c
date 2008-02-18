@@ -1516,13 +1516,10 @@ void X11DRV_SetFocus( HWND hwnd )
 {
     Display *display = thread_display();
     struct x11drv_win_data *data;
-    XWindowAttributes win_attr;
+    XWindowChanges changes;
 
-    /* Only mess with the X focus if there's */
-    /* no desktop window and if the window is not managed by the WM. */
-    if (root_window != DefaultRootWindow(display)) return;
-
-    if (!hwnd)  /* If setting the focus to 0, uninstall the colormap */
+    /* If setting the focus to 0, uninstall the colormap */
+    if (!hwnd && root_window == DefaultRootWindow(display))
     {
         wine_tsx11_lock();
         if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
@@ -1538,11 +1535,10 @@ void X11DRV_SetFocus( HWND hwnd )
 
     /* Set X focus and install colormap */
     wine_tsx11_lock();
-    if (XGetWindowAttributes( display, data->whole_window, &win_attr ) &&
-        (win_attr.map_state == IsViewable))
+    changes.stack_mode = Above;
+    XConfigureWindow( display, data->whole_window, CWStackMode, &changes );
+    if (root_window == DefaultRootWindow(display))
     {
-        /* If window is not viewable, don't change anything */
-
         /* we must not use CurrentTime (ICCCM), so try to use last message time instead */
         /* FIXME: this is not entirely correct */
         XSetInputFocus( display, data->whole_window, RevertToParent,

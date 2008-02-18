@@ -113,10 +113,6 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
         if (SendMessageW( hwnd, WM_QUERYNEWPALETTE, 0, 0 ))
             SendMessageTimeoutW( HWND_BROADCAST, WM_PALETTEISCHANGING, (WPARAM)hwnd, 0,
                                  SMTO_ABORTIFHUNG, 2000, NULL );
-
-        if (!GetPropA( hwnd, "__wine_x11_managed" ))
-            SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-
         if (!IsWindow(hwnd)) return FALSE;
     }
 
