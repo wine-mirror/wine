@@ -21621,6 +21621,8 @@ ac_config_files="$ac_config_files dlls/rsaenh/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/sane.ds/Makefile"
 
+ac_config_files="$ac_config_files dlls/sccbase/Makefile"
+
 ac_config_files="$ac_config_files dlls/schannel/Makefile"
 
 ac_config_files="$ac_config_files dlls/schannel/tests/Makefile"
@@ -22720,6 +22722,7 @@ do
     "dlls/rsaenh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsaenh/Makefile" ;;
     "dlls/rsaenh/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsaenh/tests/Makefile" ;;
     "dlls/sane.ds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sane.ds/Makefile" ;;
+    "dlls/sccbase/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sccbase/Makefile" ;;
     "dlls/schannel/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/schannel/Makefile" ;;
     "dlls/schannel/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/schannel/tests/Makefile" ;;
     "dlls/secur32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/secur32/Makefile" ;;

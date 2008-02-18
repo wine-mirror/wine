@@ -183,6 +183,7 @@ BASEDIRS = \
 	rsabase \
 	rsaenh \
 	sane.ds \
+	sccbase \
 	schannel \
 	secur32 \
 	security \
