@@ -2560,7 +2560,7 @@ PRINTDLG_PS_UpdateDlgStructW(HWND hDlg, PageSetupDataW *pdw) {
     /* Save paper source into device context */
     PRINTDLG_SetUpPaperComboBoxW(hDlg,cmb3,devname,portname,dm);
 
-    if (GetDlgItemTextW(hDlg,cmb2,papername,sizeof(papername))>0) {
+    if (GetDlgItemTextW(hDlg,cmb2,papername,sizeof(papername)/sizeof(papername[0]))>0) {
 	PRINTDLG_PaperSizeW(&(pdw->pdlg),papername,&(pdw->dlgw->ptPaperSize));
 	pdw->dlgw->ptPaperSize.x = _c_10mm2size((LPPAGESETUPDLGA)pdw->dlgw,pdw->dlgw->ptPaperSize.x);
 	pdw->dlgw->ptPaperSize.y = _c_10mm2size((LPPAGESETUPDLGA)pdw->dlgw,pdw->dlgw->ptPaperSize.y);
