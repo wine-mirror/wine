@@ -1163,6 +1163,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
     nsISelection *nsselection;
     nsIDOMDocument *nsdoc;
     nsresult nsres;
+    HRESULT hres = E_FAIL;
 
     TRACE("%p, 0x%x, %p, %p\n", This, cmdexecopt, in, out);
 
@@ -1242,9 +1243,9 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
 
         nsIDOMElement_Release(anchor_elem);
         nsIDOMDocument_Release(nsdoc);
+
+        hres = NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
     }
-    else
-        nsres = E_FAIL;
 
     nsISelection_Release(nsselection);
 
@@ -1252,7 +1253,7 @@ static HRESULT exec_hyperlink(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in,
         SysFreeString(url);
 
     TRACE("-- 0x%08x\n", nsres);
-    return nsres;
+    return hres;
 }
 
 static HRESULT query_selall_status(HTMLDocument *This, OLECMD *cmd)
