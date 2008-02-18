@@ -2357,6 +2357,39 @@ void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
 
 
 /***********************************************************************
+ *           IsGDIObject    (GDI.462)
+ *
+ * returns type of object if valid (W95 system programming secrets p. 264-5)
+ */
+BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle16 )
+{
+    static const BYTE type_map[] =
+    {
+        0,  /* bad */
+        1,  /* OBJ_PEN */
+        2,  /* OBJ_BRUSH */
+        7,  /* OBJ_DC */
+        9,  /* OBJ_METADC */
+        4,  /* OBJ_PAL */
+        3,  /* OBJ_FONT */
+        5,  /* OBJ_BITMAP */
+        6,  /* OBJ_REGION */
+        10, /* OBJ_METAFILE */
+        7,  /* OBJ_MEMDC */
+        0,  /* OBJ_EXTPEN */
+        9,  /* OBJ_ENHMETADC */
+        12, /* OBJ_ENHMETAFILE */
+        0   /* OBJ_COLORSPACE */
+    };
+
+    UINT type = GetObjectType( HGDIOBJ_32( handle16 ));
+
+    if (type >= sizeof(type_map)/sizeof(type_map[0])) return 0;
+    return type_map[type];
+}
+
+
+/***********************************************************************
  *           RectVisible    (GDI.465)
  *           RectVisibleOld (GDI.104)
  */

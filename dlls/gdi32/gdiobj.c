@@ -1257,26 +1257,6 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
 
 
 /***********************************************************************
- *           IsGDIObject    (GDI.462)
- *
- * returns type of object if valid (W95 system programming secrets p. 264-5)
- */
-BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle16 )
-{
-    UINT16 magic = 0;
-    HGDIOBJ handle = HGDIOBJ_32( handle16 );
-
-    GDIOBJHDR *object = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    if (object)
-    {
-        magic = GDIMAGIC(object->wMagic) - FIRST_MAGIC + 1;
-        GDI_ReleaseObj( handle );
-    }
-    return magic;
-}
-
-
-/***********************************************************************
  *           SetObjectOwner    (GDI32.@)
  */
 void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
