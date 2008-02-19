@@ -423,6 +423,7 @@ ALL_MAKEFILES = \
 	dlls/shlwapi/Makefile \
 	dlls/shlwapi/tests/Makefile \
 	dlls/slbcsp/Makefile \
+	dlls/slc/Makefile \
 	dlls/snmpapi/Makefile \
 	dlls/snmpapi/tests/Makefile \
 	dlls/softpub/Makefile \
@@ -837,6 +838,7 @@ dlls/shfolder/Makefile: dlls/shfolder/Makefile.in dlls/Makedll.rules
 dlls/shlwapi/Makefile: dlls/shlwapi/Makefile.in dlls/Makedll.rules
 dlls/shlwapi/tests/Makefile: dlls/shlwapi/tests/Makefile.in dlls/Maketest.rules
 dlls/slbcsp/Makefile: dlls/slbcsp/Makefile.in dlls/Makedll.rules
+dlls/slc/Makefile: dlls/slc/Makefile.in dlls/Makedll.rules
 dlls/snmpapi/Makefile: dlls/snmpapi/Makefile.in dlls/Makedll.rules
 dlls/snmpapi/tests/Makefile: dlls/snmpapi/tests/Makefile.in dlls/Maketest.rules
 dlls/softpub/Makefile: dlls/softpub/Makefile.in dlls/Makedll.rules

@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = slc.dll
+IMPORTLIB = libslc.$(IMPLIBEXT)
+IMPORTS   = kernel32
+
+C_SRCS = \
+	slc.c
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -212,6 +212,7 @@ BASEDIRS = \
 	shfolder \
 	shlwapi \
 	slbcsp \
+	slc \
 	snmpapi \
 	softpub \
 	spoolss \
@@ -627,6 +628,7 @@ IMPORT_LIBS = \
 	shell32/libshell32.$(IMPLIBEXT) \
 	shfolder/libshfolder.$(IMPLIBEXT) \
 	shlwapi/libshlwapi.$(IMPLIBEXT) \
+	slc/libslc.$(IMPLIBEXT) \
 	snmpapi/libsnmpapi.$(IMPLIBEXT) \
 	spoolss/libspoolss.$(IMPLIBEXT) \
 	sti/libsti.$(IMPLIBEXT) \
@@ -967,6 +969,9 @@ shfolder/libshfolder.$(IMPLIBEXT): shfolder/shfolder.spec $(WINEBUILD)
 
 shlwapi/libshlwapi.$(IMPLIBEXT): shlwapi/shlwapi.spec $(WINEBUILD)
 	@cd shlwapi && $(MAKE) libshlwapi.$(IMPLIBEXT)
+
+slc/libslc.$(IMPLIBEXT): slc/slc.spec $(WINEBUILD)
+	@cd slc && $(MAKE) libslc.$(IMPLIBEXT)
 
 snmpapi/libsnmpapi.$(IMPLIBEXT): snmpapi/snmpapi.spec $(WINEBUILD)
 	@cd snmpapi && $(MAKE) libsnmpapi.$(IMPLIBEXT)

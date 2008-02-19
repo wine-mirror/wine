@@ -479,6 +479,7 @@ dlls/shlwapi/shlwapi.res
 dlls/shlwapi/tests/*.ok
 dlls/shlwapi/tests/shlwapi_crosstest.exe
 dlls/shlwapi/tests/testlist.c
+dlls/slc/libslc.def
 dlls/snmpapi/libsnmpapi.def
 dlls/snmpapi/tests/*.ok
 dlls/snmpapi/tests/snmpapi_crosstest.exe
