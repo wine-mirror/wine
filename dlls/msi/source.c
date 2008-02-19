@@ -395,8 +395,13 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
                                    LPCWSTR szProperty, LPCWSTR szValue)
 {
     WCHAR squished_pc[GUID_SIZE];
-    HKEY sourcekey;
+    HKEY sourcekey, media;
+    LPCWSTR property;
     UINT rc;
+
+    static const WCHAR media_package[] = {
+        'M','e','d','i','a','P','a','c','k','a','g','e',0
+    };
 
     TRACE("%s %s %x %x %s %s\n", debugstr_w(szProduct), debugstr_w(szUserSid),
             dwContext, dwOptions, debugstr_w(szProperty), debugstr_w(szValue));
@@ -415,40 +420,30 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         FIXME("Unhandled options MSICODE_PATCH\n");
         return ERROR_UNKNOWN_PATCH;
     }
-    
+
     if (szUserSid)
         FIXME("Unhandled UserSid %s\n",debugstr_w(szUserSid));
 
     if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
         FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
 
+    property = szProperty;
+    if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW))
+        property = media_package;
+
     rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    if (strcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) == 0)
+    if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) ||
+        !lstrcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW))
     {
-        HKEY key;
-        DWORD size = lstrlenW(szValue)*sizeof(WCHAR);
-        rc = OpenMediaSubkey(sourcekey, &key, FALSE);
+        rc = OpenMediaSubkey(sourcekey, &media, TRUE);
         if (rc == ERROR_SUCCESS)
-            rc = RegSetValueExW(key, INSTALLPROPERTY_MEDIAPACKAGEPATHW, 0,
-                    REG_SZ, (const BYTE *)szValue, size);
-        if (rc != ERROR_SUCCESS)
-            rc = ERROR_UNKNOWN_PROPERTY;
-        RegCloseKey(key);
-    }
-    else if (strcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW) == 0)
-    {
-        HKEY key;
-        DWORD size = lstrlenW(szValue)*sizeof(WCHAR);
-        rc = OpenMediaSubkey(sourcekey, &key, FALSE);
-        if (rc == ERROR_SUCCESS)
-            rc = RegSetValueExW(key, INSTALLPROPERTY_DISKPROMPTW, 0,
-                    REG_SZ, (const BYTE *)szValue, size);
-        if (rc != ERROR_SUCCESS)
-            rc = ERROR_UNKNOWN_PROPERTY;
-        RegCloseKey(key);
+        {
+            rc = msi_reg_set_val_str(media, property, szValue);
+            RegCloseKey(media);
+        }
     }
     else if (strcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW)==0)
     {

@@ -1509,28 +1509,19 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* Media key is created by MsiSourceListSetInfo */
     res = RegOpenKeyA(source, "Media", &media);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        CHECK_REG_STR(media, "MediaPackage", "path");
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(media, "MediaPackage", "path");
 
     /* set the info again */
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path2");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        CHECK_REG_STR(media, "MediaPackage", "path2");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    CHECK_REG_STR(media, "MediaPackage", "path2");
 
     /* NULL szProperty */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1557,11 +1548,8 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        CHECK_REG_STR(media, "MediaPackage", "");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    CHECK_REG_STR(media, "MediaPackage", "");
 
     /* INSTALLPROPERTY_MEDIAPACKAGEPATH, MSISOURCETYPE_NETWORK */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1589,11 +1577,8 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
                               INSTALLPROPERTY_DISKPROMPT, "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        CHECK_REG_STR(media, "DiskPrompt", "prompt");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    CHECK_REG_STR(media, "DiskPrompt", "prompt");
 
     /* INSTALLPROPERTY_DISKPROMPT, MSISOURCETYPE_NETWORK */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1750,18 +1735,12 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* Media key is created by MsiSourceListSetInfo */
     res = RegOpenKeyA(source, "Media", &media);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        CHECK_REG_STR(media, "MediaPackage", "path");
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(media, "MediaPackage", "path");
 
     RegDeleteValueA(media, "MediaPackage");
     RegDeleteKeyA(media, "");
@@ -1793,18 +1772,12 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_MACHINE, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* Media key is created by MsiSourceListSetInfo */
     res = RegOpenKeyA(source, "Media", &media);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        CHECK_REG_STR(media, "MediaPackage", "path");
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(media, "MediaPackage", "path");
 
     /* szUserSid is non-NULL */
     r = MsiSourceListSetInfoA(prodcode, usersid,
