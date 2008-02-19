@@ -87,7 +87,6 @@
 %option nounput noyy_top_state noyywrap
 %option 8bit never-interactive
 %option prefix="parser_"
-%option nounistd
 
 /* Some shortcut definitions */
 ws	[ \f\t\r]
@@ -97,11 +96,17 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 
 /*#define LEX_DEBUG*/
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+
+#ifndef HAVE_UNISTD_H
+#define YY_NO_UNISTD_H
+#endif
 
 #include "wine/unicode.h"
 #include "wrc.h"

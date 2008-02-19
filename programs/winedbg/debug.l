@@ -19,12 +19,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-%option nounput interactive 8bit prefix="dbg_" nounistd
+%option nounput interactive 8bit prefix="dbg_"
 
 %{
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+
+#ifndef HAVE_UNISTD_H
+#define YY_NO_UNISTD_H
+#endif
 
 #include "debugger.h"
 #include "dbg.tab.h"
