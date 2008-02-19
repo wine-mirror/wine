@@ -139,6 +139,90 @@ static void logfont_W_to_16( const LOGFONTW* font32, LPLOGFONT16 font16 )
     font16->lfFaceName[LF_FACESIZE-1] = 0;
 }
 
+/* convert a ENUMLOGFONTEXW to a ENUMLOGFONTEX16 */
+static void enumlogfontex_W_to_16( const ENUMLOGFONTEXW *fontW,
+                                   LPENUMLOGFONTEX16 font16 )
+{
+    logfont_W_to_16( (const LOGFONTW *)fontW, (LPLOGFONT16)font16);
+
+    WideCharToMultiByte( CP_ACP, 0, fontW->elfFullName, -1,
+                         (LPSTR) font16->elfFullName, LF_FULLFACESIZE, NULL, NULL );
+    font16->elfFullName[LF_FULLFACESIZE-1] = '\0';
+    WideCharToMultiByte( CP_ACP, 0, fontW->elfStyle, -1,
+                         (LPSTR) font16->elfStyle, LF_FACESIZE, NULL, NULL );
+    font16->elfStyle[LF_FACESIZE-1] = '\0';
+    WideCharToMultiByte( CP_ACP, 0, fontW->elfScript, -1,
+                         (LPSTR) font16->elfScript, LF_FACESIZE, NULL, NULL );
+    font16->elfScript[LF_FACESIZE-1] = '\0';
+}
+
+/* convert a NEWTEXTMETRICEXW to a NEWTEXTMETRICEX16 */
+static void newtextmetricex_W_to_16( const NEWTEXTMETRICEXW *ptmW,
+                                     LPNEWTEXTMETRICEX16 ptm16 )
+{
+    ptm16->ntmTm.tmHeight = ptmW->ntmTm.tmHeight;
+    ptm16->ntmTm.tmAscent = ptmW->ntmTm.tmAscent;
+    ptm16->ntmTm.tmDescent = ptmW->ntmTm.tmDescent;
+    ptm16->ntmTm.tmInternalLeading = ptmW->ntmTm.tmInternalLeading;
+    ptm16->ntmTm.tmExternalLeading = ptmW->ntmTm.tmExternalLeading;
+    ptm16->ntmTm.tmAveCharWidth = ptmW->ntmTm.tmAveCharWidth;
+    ptm16->ntmTm.tmMaxCharWidth = ptmW->ntmTm.tmMaxCharWidth;
+    ptm16->ntmTm.tmWeight = ptmW->ntmTm.tmWeight;
+    ptm16->ntmTm.tmOverhang = ptmW->ntmTm.tmOverhang;
+    ptm16->ntmTm.tmDigitizedAspectX = ptmW->ntmTm.tmDigitizedAspectX;
+    ptm16->ntmTm.tmDigitizedAspectY = ptmW->ntmTm.tmDigitizedAspectY;
+    ptm16->ntmTm.tmFirstChar = ptmW->ntmTm.tmFirstChar > 255 ? 255 : ptmW->ntmTm.tmFirstChar;
+    ptm16->ntmTm.tmLastChar = ptmW->ntmTm.tmLastChar > 255 ? 255 : ptmW->ntmTm.tmLastChar;
+    ptm16->ntmTm.tmDefaultChar = ptmW->ntmTm.tmDefaultChar > 255 ? 255 : ptmW->ntmTm.tmDefaultChar;
+    ptm16->ntmTm.tmBreakChar = ptmW->ntmTm.tmBreakChar > 255 ? 255 : ptmW->ntmTm.tmBreakChar;
+    ptm16->ntmTm.tmItalic = ptmW->ntmTm.tmItalic;
+    ptm16->ntmTm.tmUnderlined = ptmW->ntmTm.tmUnderlined;
+    ptm16->ntmTm.tmStruckOut = ptmW->ntmTm.tmStruckOut;
+    ptm16->ntmTm.tmPitchAndFamily = ptmW->ntmTm.tmPitchAndFamily;
+    ptm16->ntmTm.tmCharSet = ptmW->ntmTm.tmCharSet;
+    ptm16->ntmTm.ntmFlags = ptmW->ntmTm.ntmFlags;
+    ptm16->ntmTm.ntmSizeEM = ptmW->ntmTm.ntmSizeEM;
+    ptm16->ntmTm.ntmCellHeight = ptmW->ntmTm.ntmCellHeight;
+    ptm16->ntmTm.ntmAvgWidth = ptmW->ntmTm.ntmAvgWidth;
+    memcpy(&ptm16->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
+}
+
+/*
+ * callback for EnumFontFamiliesEx16
+ * Note: plf is really an ENUMLOGFONTEXW, and ptm is a NEWTEXTMETRICEXW.
+ *       We have to use other types because of the FONTENUMPROCW definition.
+ */
+static INT CALLBACK enum_font_callback( const LOGFONTW *plf,
+                                        const TEXTMETRICW *ptm, DWORD fType,
+                                        LPARAM param )
+{
+    const struct callback16_info *info = (struct callback16_info *)param;
+    ENUMLOGFONTEX16 elfe16;
+    NEWTEXTMETRICEX16 ntm16;
+    SEGPTR segelfe16;
+    SEGPTR segntm16;
+    WORD args[7];
+    DWORD ret;
+
+    enumlogfontex_W_to_16((const ENUMLOGFONTEXW *)plf, &elfe16);
+    newtextmetricex_W_to_16((const NEWTEXTMETRICEXW *)ptm, &ntm16);
+    segelfe16 = MapLS( &elfe16 );
+    segntm16 = MapLS( &ntm16 );
+    args[6] = SELECTOROF(segelfe16);
+    args[5] = OFFSETOF(segelfe16);
+    args[4] = SELECTOROF(segntm16);
+    args[3] = OFFSETOF(segntm16);
+    args[2] = fType;
+    args[1] = HIWORD(info->param);
+    args[0] = LOWORD(info->param);
+
+    WOWCallback16Ex( (DWORD)info->proc, WCB16_PASCAL, sizeof(args), args, &ret );
+    UnMapLS( segelfe16 );
+    UnMapLS( segntm16 );
+    return LOWORD(ret);
+}
+
+
 /***********************************************************************
  *           SetBkColor    (GDI.1)
  */
@@ -3135,6 +3219,31 @@ WORD WINAPI GdiSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
 UINT16 WINAPI GetTextCharset16( HDC16 hdc )
 {
     return GetTextCharset( HDC_32(hdc) );
+}
+
+
+/***********************************************************************
+ *           EnumFontFamiliesEx (GDI.613)
+ */
+INT16 WINAPI EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 plf,
+                                   FONTENUMPROC16 proc, LPARAM lParam,
+                                   DWORD dwFlags)
+{
+    struct callback16_info info;
+    LOGFONTW lfW, *plfW;
+
+    info.proc  = (FARPROC16)proc;
+    info.param = lParam;
+
+    if (plf)
+    {
+        logfont_16_to_W(plf, &lfW);
+        plfW = &lfW;
+    }
+    else plfW = NULL;
+
+    return EnumFontFamiliesExW( HDC_32(hdc), plfW, enum_font_callback,
+                                (LPARAM)&info, dwFlags );
 }
 
 

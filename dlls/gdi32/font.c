@@ -111,20 +111,6 @@ typedef struct
 
 typedef struct
 {
-  LPLOGFONT16           lpLogFontParam;
-  FONTENUMPROC16        lpEnumFunc;
-  LPARAM                lpData;
-
-  LPNEWTEXTMETRICEX16   lpTextMetric;
-  LPENUMLOGFONTEX16     lpLogFont;
-  SEGPTR                segTextMetric;
-  SEGPTR                segLogFont;
-  DWORD                 dwFlags;
-  HDC                   hdc;
-} fontEnum16;
-
-typedef struct
-{
   LPLOGFONTW          lpLogFontParam;
   FONTENUMPROCW       lpEnumFunc;
   LPARAM              lpData;
@@ -176,48 +162,6 @@ static const CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   { SYMBOL_CHARSET, CP_SYMBOL, {{0,0,0,0},{FS_SYMBOL,0}} }
 };
 
-/***********************************************************************
- *              LOGFONT conversion functions.
- */
-static void FONT_LogFontWTo16( const LOGFONTW* font32, LPLOGFONT16 font16 )
-{
-    font16->lfHeight = font32->lfHeight;
-    font16->lfWidth = font32->lfWidth;
-    font16->lfEscapement = font32->lfEscapement;
-    font16->lfOrientation = font32->lfOrientation;
-    font16->lfWeight = font32->lfWeight;
-    font16->lfItalic = font32->lfItalic;
-    font16->lfUnderline = font32->lfUnderline;
-    font16->lfStrikeOut = font32->lfStrikeOut;
-    font16->lfCharSet = font32->lfCharSet;
-    font16->lfOutPrecision = font32->lfOutPrecision;
-    font16->lfClipPrecision = font32->lfClipPrecision;
-    font16->lfQuality = font32->lfQuality;
-    font16->lfPitchAndFamily = font32->lfPitchAndFamily;
-    WideCharToMultiByte( CP_ACP, 0, font32->lfFaceName, -1,
-                         font16->lfFaceName, LF_FACESIZE, NULL, NULL );
-    font16->lfFaceName[LF_FACESIZE-1] = 0;
-}
-
-static void FONT_LogFont16ToW( const LOGFONT16 *font16, LPLOGFONTW font32 )
-{
-    font32->lfHeight = font16->lfHeight;
-    font32->lfWidth = font16->lfWidth;
-    font32->lfEscapement = font16->lfEscapement;
-    font32->lfOrientation = font16->lfOrientation;
-    font32->lfWeight = font16->lfWeight;
-    font32->lfItalic = font16->lfItalic;
-    font32->lfUnderline = font16->lfUnderline;
-    font32->lfStrikeOut = font16->lfStrikeOut;
-    font32->lfCharSet = font16->lfCharSet;
-    font32->lfOutPrecision = font16->lfOutPrecision;
-    font32->lfClipPrecision = font16->lfClipPrecision;
-    font32->lfQuality = font16->lfQuality;
-    font32->lfPitchAndFamily = font16->lfPitchAndFamily;
-    MultiByteToWideChar( CP_ACP, 0, font16->lfFaceName, -1, font32->lfFaceName, LF_FACESIZE );
-    font32->lfFaceName[LF_FACESIZE-1] = 0;
-}
-
 static void FONT_LogFontAToW( const LOGFONTA *fontA, LPLOGFONTW fontW )
 {
     memcpy(fontW, fontA, sizeof(LOGFONTA) - LF_FACESIZE);
@@ -232,21 +176,6 @@ static void FONT_LogFontWToA( const LOGFONTW *fontW, LPLOGFONTA fontA )
     WideCharToMultiByte(CP_ACP, 0, fontW->lfFaceName, -1, fontA->lfFaceName,
 			LF_FACESIZE, NULL, NULL);
     fontA->lfFaceName[LF_FACESIZE-1] = 0;
-}
-
-static void FONT_EnumLogFontExWTo16( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTEX16 font16 )
-{
-    FONT_LogFontWTo16( (const LOGFONTW *)fontW, (LPLOGFONT16)font16);
-
-    WideCharToMultiByte( CP_ACP, 0, fontW->elfFullName, -1,
-			 (LPSTR) font16->elfFullName, LF_FULLFACESIZE, NULL, NULL );
-    font16->elfFullName[LF_FULLFACESIZE-1] = '\0';
-    WideCharToMultiByte( CP_ACP, 0, fontW->elfStyle, -1,
-			 (LPSTR) font16->elfStyle, LF_FACESIZE, NULL, NULL );
-    font16->elfStyle[LF_FACESIZE-1] = '\0';
-    WideCharToMultiByte( CP_ACP, 0, fontW->elfScript, -1,
-			 (LPSTR) font16->elfScript, LF_FACESIZE, NULL, NULL );
-    font16->elfScript[LF_FACESIZE-1] = '\0';
 }
 
 static void FONT_EnumLogFontExWToA( const ENUMLOGFONTEXW *fontW, LPENUMLOGFONTEXA fontA )
@@ -298,35 +227,6 @@ static void FONT_TextMetricWToA(const TEXTMETRICW *ptmW, LPTEXTMETRICA ptmA )
     ptmA->tmCharSet = ptmW->tmCharSet;
 }
 
-
-static void FONT_NewTextMetricExWTo16(const NEWTEXTMETRICEXW *ptmW, LPNEWTEXTMETRICEX16 ptm16 )
-{
-    ptm16->ntmTm.tmHeight = ptmW->ntmTm.tmHeight;
-    ptm16->ntmTm.tmAscent = ptmW->ntmTm.tmAscent;
-    ptm16->ntmTm.tmDescent = ptmW->ntmTm.tmDescent;
-    ptm16->ntmTm.tmInternalLeading = ptmW->ntmTm.tmInternalLeading;
-    ptm16->ntmTm.tmExternalLeading = ptmW->ntmTm.tmExternalLeading;
-    ptm16->ntmTm.tmAveCharWidth = ptmW->ntmTm.tmAveCharWidth;
-    ptm16->ntmTm.tmMaxCharWidth = ptmW->ntmTm.tmMaxCharWidth;
-    ptm16->ntmTm.tmWeight = ptmW->ntmTm.tmWeight;
-    ptm16->ntmTm.tmOverhang = ptmW->ntmTm.tmOverhang;
-    ptm16->ntmTm.tmDigitizedAspectX = ptmW->ntmTm.tmDigitizedAspectX;
-    ptm16->ntmTm.tmDigitizedAspectY = ptmW->ntmTm.tmDigitizedAspectY;
-    ptm16->ntmTm.tmFirstChar = ptmW->ntmTm.tmFirstChar > 255 ? 255 : ptmW->ntmTm.tmFirstChar;
-    ptm16->ntmTm.tmLastChar = ptmW->ntmTm.tmLastChar > 255 ? 255 : ptmW->ntmTm.tmLastChar;
-    ptm16->ntmTm.tmDefaultChar = ptmW->ntmTm.tmDefaultChar > 255 ? 255 : ptmW->ntmTm.tmDefaultChar;
-    ptm16->ntmTm.tmBreakChar = ptmW->ntmTm.tmBreakChar > 255 ? 255 : ptmW->ntmTm.tmBreakChar;
-    ptm16->ntmTm.tmItalic = ptmW->ntmTm.tmItalic;
-    ptm16->ntmTm.tmUnderlined = ptmW->ntmTm.tmUnderlined;
-    ptm16->ntmTm.tmStruckOut = ptmW->ntmTm.tmStruckOut;
-    ptm16->ntmTm.tmPitchAndFamily = ptmW->ntmTm.tmPitchAndFamily;
-    ptm16->ntmTm.tmCharSet = ptmW->ntmTm.tmCharSet;
-    ptm16->ntmTm.ntmFlags = ptmW->ntmTm.ntmFlags;
-    ptm16->ntmTm.ntmSizeEM = ptmW->ntmTm.ntmSizeEM;
-    ptm16->ntmTm.ntmCellHeight = ptmW->ntmTm.ntmCellHeight;
-    ptm16->ntmTm.ntmAvgWidth = ptmW->ntmTm.ntmAvgWidth;
-    memcpy(&ptm16->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
-}
 
 static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRICEXA *ptmA )
 {
@@ -656,45 +556,6 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj )
 
 
 /***********************************************************************
- *              FONT_EnumInstance16
- *
- * Called by the device driver layer to pass font info
- * down to the application.
- *
- * Note: plf is really an ENUMLOGFONTEXW, and ptm is a NEWTEXTMETRICEXW.
- *       We have to use other types because of the FONTENUMPROCW definition.
- */
-static INT CALLBACK FONT_EnumInstance16( const LOGFONTW *plf, const TEXTMETRICW *ptm,
-                                         DWORD fType, LPARAM lp )
-{
-    fontEnum16 *pfe = (fontEnum16*)lp;
-    INT ret = 1;
-
-    if (!pfe->lpLogFontParam ||
-        pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
-        pfe->lpLogFontParam->lfCharSet == plf->lfCharSet )
-    {
-        WORD args[7];
-        DWORD result;
-
-        FONT_EnumLogFontExWTo16((const ENUMLOGFONTEXW *)plf, pfe->lpLogFont);
-        FONT_NewTextMetricExWTo16((const NEWTEXTMETRICEXW *)ptm, pfe->lpTextMetric);
-        pfe->dwFlags |= ENUM_CALLED;
-
-        args[6] = SELECTOROF(pfe->segLogFont);
-        args[5] = OFFSETOF(pfe->segLogFont);
-        args[4] = SELECTOROF(pfe->segTextMetric);
-        args[3] = OFFSETOF(pfe->segTextMetric);
-        args[2] = fType;
-        args[1] = HIWORD(pfe->lpData);
-        args[0] = LOWORD(pfe->lpData);
-        WOWCallback16Ex( (DWORD)pfe->lpEnumFunc, WCB16_PASCAL, sizeof(args), args, &result );
-        ret = LOWORD(result);
-    }
-    return ret;
-}
-
-/***********************************************************************
  *              FONT_EnumInstance
  *
  * Note: plf is really an ENUMLOGFONTEXW, and ptm is a NEWTEXTMETRICEXW.
@@ -727,63 +588,6 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
 
         ret = pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
     }
-    return ret;
-}
-
-/***********************************************************************
- *              EnumFontFamiliesEx	(GDI.613)
- */
-INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
-                                   FONTENUMPROC16 efproc, LPARAM lParam,
-                                   DWORD dwFlags)
-{
-    fontEnum16 fe16;
-    INT16	ret = 1, ret2;
-    DC* 	dc = get_dc_ptr( HDC_32(hDC) );
-    NEWTEXTMETRICEX16 tm16;
-    ENUMLOGFONTEX16 lf16;
-    LOGFONTW lfW, *plfW;
-    BOOL enum_gdi_fonts;
-
-    if (!dc) return 0;
-
-    if (plf)
-    {
-        FONT_LogFont16ToW(plf, &lfW);
-        plfW = &lfW;
-    }
-    else plfW = NULL;
-
-    fe16.hdc = HDC_32(hDC);
-    fe16.lpLogFontParam = plf;
-    fe16.lpEnumFunc = efproc;
-    fe16.lpData = lParam;
-    fe16.lpTextMetric = &tm16;
-    fe16.lpLogFont = &lf16;
-    fe16.segTextMetric = MapLS( &tm16 );
-    fe16.segLogFont = MapLS( &lf16 );
-    fe16.dwFlags = 0;
-
-    enum_gdi_fonts = GetDeviceCaps(fe16.hdc, TEXTCAPS) & TC_VA_ABLE;
-
-    if (!dc->funcs->pEnumDeviceFonts && !enum_gdi_fonts)
-    {
-        ret = 0;
-        goto done;
-    }
-
-    if (enum_gdi_fonts)
-        ret = WineEngEnumFonts( plfW, FONT_EnumInstance16, (LPARAM)&fe16 );
-    fe16.dwFlags &= ~ENUM_CALLED;
-    if (ret && dc->funcs->pEnumDeviceFonts) {
-	ret2 = dc->funcs->pEnumDeviceFonts( dc->physDev, plfW, FONT_EnumInstance16, (LPARAM)&fe16 );
-	if(fe16.dwFlags & ENUM_CALLED) /* update ret iff a font gets enumed */
-	    ret = ret2;
-    }
-done:
-    UnMapLS( fe16.segTextMetric );
-    UnMapLS( fe16.segLogFont );
-    release_dc_ptr( dc );
     return ret;
 }
 
