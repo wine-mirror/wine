@@ -522,9 +522,18 @@ static int ProcessWindowsFileProtection(void)
                              dllcache, targetpath, currentpath, tempfile, &sz);
         if (rc != ERROR_SUCCESS)
         {
-            WINE_ERR("WFP: %s error 0x%x\n",wine_dbgstr_w(finddata.cFileName),rc);
+            WINE_WARN("WFP: %s error 0x%x\n",wine_dbgstr_w(finddata.cFileName),rc);
             DeleteFileW(tempfile);
         }
+
+        /* now delete the source file so that we don't try to install it over and over again */
+        lstrcpynW( targetpath, dllcache, MAX_PATH - 1 );
+        sz = strlenW( targetpath );
+        targetpath[sz++] = '\\';
+        lstrcpynW( targetpath + sz, finddata.cFileName, MAX_PATH - sz );
+        if (!DeleteFileW( targetpath ))
+            WINE_WARN( "failed to delete %s: error %u\n", wine_dbgstr_w(targetpath), GetLastError() );
+
         find_rc = FindNextFileW(find_handle,&finddata);
     }
     FindClose(find_handle);
