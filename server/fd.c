@@ -1979,11 +1979,11 @@ DECL_HANDLER(get_handle_fd)
         int unix_fd = get_unix_fd( fd );
         if (unix_fd != -1)
         {
-            send_client_fd( current->process, unix_fd, req->handle );
             reply->type = fd->fd_ops->get_fd_type( fd );
             reply->removable = is_fd_removable(fd);
             reply->options = fd->options;
             reply->access = get_handle_access( current->process, req->handle );
+            send_client_fd( current->process, unix_fd, req->handle );
         }
         release_object( fd );
     }
