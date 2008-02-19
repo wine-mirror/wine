@@ -415,6 +415,9 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (!szValue)
         return ERROR_UNKNOWN_PROPERTY;
 
+    if (dwContext == MSIINSTALLCONTEXT_MACHINE && szUserSid)
+        return ERROR_INVALID_PARAMETER;
+
     if (dwOptions & MSICODE_PATCH)
     {
         FIXME("Unhandled options MSICODE_PATCH\n");

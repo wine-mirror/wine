@@ -1764,11 +1764,8 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, usersid,
                               MSIINSTALLCONTEXT_MACHINE, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     RegDeleteValueA(media, "MediaPackage");
     RegDeleteKeyA(media, "");
