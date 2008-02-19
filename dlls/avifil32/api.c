@@ -1077,7 +1077,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 	break; /* a new one */
     }
 
-    if (count - i == -1U) {
+    if (i == count + 1) {
       /* it's a new CLSID */
 
       /* FIXME: How do we get info's about read/write capabilities? */
