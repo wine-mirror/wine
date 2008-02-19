@@ -6,7 +6,7 @@
 @ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr) d3dx8.D3DXBoxBoundProbe
 @ stub D3DXCheckCubeTextureRequirements
 @ stub D3DXCheckTextureRequirements
-@ stub D3DXCheckVersion
+@ stdcall D3DXCheckVersion(long long)
 @ stub D3DXCheckVolumeTextureRequirements
 @ stub D3DXCleanMesh
 @ stdcall D3DXColorAdjustContrast(ptr ptr long) d3dx8.D3DXColorAdjustContrast

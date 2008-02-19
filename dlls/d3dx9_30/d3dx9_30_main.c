@@ -51,3 +51,15 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
     }
     return TRUE;
 }
+
+/***********************************************************************
+ * D3DXCheckVersion
+ * Checks wether we are compiling against the correct d3d and d3dx library.
+ */
+BOOL WINAPI D3DXCheckVersion(UINT d3dsdkvers, UINT d3dxsdkvers)
+{
+    if(d3dsdkvers==D3D_SDK_VERSION && d3dxsdkvers==30)
+        return TRUE;
+    else
+        return FALSE;
+}

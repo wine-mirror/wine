@@ -54,6 +54,18 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 }
 
 /***********************************************************************
+ * D3DXCheckVersion
+ * Checks wether we are compiling against the correct d3d and d3dx library.
+ */
+BOOL WINAPI D3DXCheckVersion(UINT d3dsdkvers, UINT d3dxsdkvers)
+{
+    if(d3dsdkvers==D3D_SDK_VERSION && d3dxsdkvers==36)
+        return TRUE;
+    else
+        return FALSE;
+}
+
+/***********************************************************************
  * D3DXGetDriverLevel.
  * Returns always 900 (DX 9) for us
  */
