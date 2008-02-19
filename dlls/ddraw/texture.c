@@ -369,7 +369,11 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
         {
             PALETTEENTRY palent[256];
 
-            if (pal == NULL) return DDERR_NOPALETTEATTACHED;
+            if (pal == NULL)
+            {
+                LeaveCriticalSection(&ddraw_cs);
+                return DDERR_NOPALETTEATTACHED;
+            }
             IDirectDrawPalette_GetEntries(pal_src, 0, 0, 256, palent);
             IDirectDrawPalette_SetEntries(pal, 0, 0, 256, palent);
         }
