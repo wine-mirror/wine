@@ -413,7 +413,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (dwOptions & MSICODE_PATCH)
     {
         FIXME("Unhandled options MSICODE_PATCH\n");
-        return ERROR_FUNCTION_FAILED;
+        return ERROR_UNKNOWN_PATCH;
     }
     
     if (szUserSid)

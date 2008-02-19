@@ -1452,23 +1452,16 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, usersid,
                               MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PATCH,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PATCH,
-           "Expected ERROR_UNKNOWN_PATCH, got %d\n", r);
-    }
+    ok(r == ERROR_UNKNOWN_PATCH,
+       "Expected ERROR_UNKNOWN_PATCH, got %d\n", r);
 
     /* dwOptions is both MSICODE_PRODUCT and MSICODE_PATCH */
     r = MsiSourceListSetInfoA(prodcode, usersid,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSICODE_PATCH | MSISOURCETYPE_URL,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PATCH,
-           "Expected ERROR_SUCCESS, got %d\n", r);
-    }
-
+    ok(r == ERROR_UNKNOWN_PATCH,
+       "Expected ERROR_SUCCESS, got %d\n", r);
     /* dwOptions has both MSISOURCETYPE_NETWORK and MSISOURCETYPE_URL */
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
