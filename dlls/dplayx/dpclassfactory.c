@@ -24,9 +24,13 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "objbase.h"
 #include "winerror.h"
 #include "wine/debug.h"
+#include "dplay.h"
+#include "dplobby.h"
+#include "initguid.h"
 #include "dpinit.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
