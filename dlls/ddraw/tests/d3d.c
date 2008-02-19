@@ -358,6 +358,12 @@ static void LightTest(void)
     rc = IDirect3DDevice7_GetCaps(lpD3DDevice, &caps);
     ok(rc == D3D_OK, "IDirect3DDevice7_GetCaps failed with %x\n", rc);
 
+    if ( caps.dwMaxActiveLights == (DWORD) -1) {
+        /* Some cards without T&L Support return -1 (Examples: Vodoo banshee, RivaTNT / NV4) */
+        skip("T&L not supported\n");
+        return;
+    }
+
     for(i = 1; i <= caps.dwMaxActiveLights; i++) {
         rc = IDirect3DDevice7_LightEnable(lpD3DDevice, i, TRUE);
         ok(rc == D3D_OK, "Enabling light %u failed with %x\n", i, rc);
