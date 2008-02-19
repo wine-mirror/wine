@@ -3,7 +3,7 @@
  *
  * Copyright 2006 Michael Kaufmann
  * Copyright 2007 Dmitry Timoshkov
- * Copyright 2007 Andrew Riedi
+ * Copyright 2007-2008 Andrew Riedi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,30 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
+
+#include "pshpack1.h"
+
+typedef struct
+{
+    BYTE bWidth;
+    BYTE bHeight;
+    BYTE bColorCount;
+    BYTE bReserved;
+    WORD xHotspot;
+    WORD yHotspot;
+    DWORD dwDIBSize;
+    DWORD dwDIBOffset;
+} CURSORICONFILEDIRENTRY;
+
+typedef struct
+{
+    WORD idReserved;
+    WORD idType;
+    WORD idCount;
+    CURSORICONFILEDIRENTRY idEntries[1];
+} CURSORICONFILEDIR;
+
+#include "poppack.h"
 
 static char **test_argv;
 static int test_argc;
@@ -559,6 +583,92 @@ static void test_CreateIcon(void)
     DeleteObject(hbmColor);
 }
 
+static void test_LoadImage(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    DWORD error, bytes_written;
+    CURSORICONFILEDIR *icon_data;
+    CURSORICONFILEDIRENTRY *icon_entry;
+    BITMAPINFOHEADER *icon_header;
+    ICONINFO icon_info;
+
+#define ICON_WIDTH 32
+#define ICON_HEIGHT 32
+#define ICON_AND_SIZE (ICON_WIDTH*ICON_HEIGHT/8)
+#define ICON_BPP 32
+#define ICON_SIZE \
+    (sizeof(CURSORICONFILEDIR) + sizeof(BITMAPINFOHEADER) \
+    + ICON_AND_SIZE + ICON_AND_SIZE*ICON_BPP)
+
+    /* Set icon data. */
+    icon_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ICON_SIZE);
+    icon_data->idReserved = 0;
+    icon_data->idType = 1;
+    icon_data->idCount = 1;
+
+    icon_entry = icon_data->idEntries;
+    icon_entry->bWidth = ICON_WIDTH;
+    icon_entry->bHeight = ICON_HEIGHT;
+    icon_entry->bColorCount = 0;
+    icon_entry->bReserved = 0;
+    icon_entry->xHotspot = 1;
+    icon_entry->yHotspot = 1;
+    icon_entry->dwDIBSize = ICON_SIZE - sizeof(CURSORICONFILEDIR);
+    icon_entry->dwDIBOffset = sizeof(CURSORICONFILEDIR);
+
+    icon_header = (BITMAPINFOHEADER *) ((BYTE *) icon_data + icon_entry->dwDIBOffset);
+    icon_header->biSize = sizeof(BITMAPINFOHEADER);
+    icon_header->biWidth = ICON_WIDTH;
+    icon_header->biHeight = ICON_HEIGHT*2;
+    icon_header->biPlanes = 1;
+    icon_header->biBitCount = ICON_BPP;
+    icon_header->biSizeImage = 0; /* Uncompressed bitmap. */
+
+    /* Create the icon. */
+    handle = CreateFileA("icon.ico", FILE_ALL_ACCESS, 0, NULL, CREATE_NEW,
+        FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(handle != INVALID_HANDLE_VALUE, "CreateFileA failed. %u\n", GetLastError());
+    ret = WriteFile(handle, icon_data, ICON_SIZE, &bytes_written, NULL);
+    ok(bytes_written == ICON_SIZE, "icon.ico created improperly.\n");
+    CloseHandle(handle);
+
+    /* Test loading an icon as a cursor. */
+    SetLastError(0xdeadbeef);
+    handle = LoadImageA(NULL, "icon.ico", IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
+    todo_wine
+    ok(handle != NULL, "LoadImage() failed.\n");
+    error = GetLastError();
+    ok(error == 0, "Last error: %u\n", error);
+
+    /* Test the icon information. */
+    SetLastError(0xdeadbeef);
+    ret = GetIconInfo(handle, &icon_info);
+    todo_wine
+    ok(ret, "GetIconInfo() failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    todo_wine {
+    ok(icon_info.fIcon == FALSE, "fIcon != FALSE.\n");
+    ok(icon_info.xHotspot == 1, "xHotspot is %u.\n", icon_info.xHotspot);
+    ok(icon_info.yHotspot == 1, "yHotspot is %u.\n", icon_info.yHotspot);
+    ok(icon_info.hbmColor != NULL, "No hbmColor!\n");
+    }
+    ok(icon_info.hbmMask != NULL, "No hbmMask!\n");
+
+    /* Clean up. */
+    SetLastError(0xdeadbeef);
+    ret = DestroyCursor(handle);
+    todo_wine
+    ok(ret, "DestroyCursor() failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    HeapFree(GetProcessHeap(), 0, icon_data);
+    DeleteFileA("icon.ico");
+}
+
 static void test_DestroyCursor(void)
 {
     static const BYTE bmp_bits[4096];
@@ -662,6 +772,7 @@ START_TEST(cursoricon)
     test_CopyImage_Bitmap(32);
     test_initial_cursor();
     test_CreateIcon();
+    test_LoadImage();
     test_DestroyCursor();
     do_parent();
     test_child_process();
