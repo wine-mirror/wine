@@ -21,6 +21,7 @@
 %option stack
 %option nounput noyy_top_state
 %option 8bit never-interactive prefix="parser_"
+%option nounistd
 
 nl	\r?\n
 ws	[ \f\t\r]

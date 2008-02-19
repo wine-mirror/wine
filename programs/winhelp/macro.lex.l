@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 %}
-%option nounput interactive 8bit
+%option nounput interactive 8bit nounistd
 %x quote
 %{
 #include <assert.h>

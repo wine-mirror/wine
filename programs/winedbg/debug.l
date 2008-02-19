@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-%option nounput interactive 8bit prefix="dbg_"
+%option nounput interactive 8bit prefix="dbg_" nounistd
 
 %{
 #include <stdlib.h>

@@ -87,6 +87,7 @@
 %option nounput noyy_top_state noyywrap
 %option 8bit never-interactive
 %option prefix="parser_"
+%option nounistd
 
 /* Some shortcut definitions */
 ws	[ \f\t\r]

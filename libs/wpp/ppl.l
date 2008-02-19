@@ -128,6 +128,7 @@
 %option 8bit never-interactive
 %option nounput
 %option prefix="ppy_"
+%option nounistd
 
 %x pp_pp
 %x pp_eol
