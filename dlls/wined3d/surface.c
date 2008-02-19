@@ -1163,11 +1163,19 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
         checkGLcall("glBindBufferARB");
     }
 
-    glDrawPixels(This->lockedRect.right - This->lockedRect.left,
-                 (This->lockedRect.bottom - This->lockedRect.top)-1,
-                 fmt, type,
-                 mem + bpp * This->lockedRect.left + pitch * This->lockedRect.top);
-    checkGLcall("glDrawPixels");
+    /* When the surface is locked we only have to refresh the locked part else we need to update the whole image */
+    if(This->Flags & SFLAG_LOCKED) {
+        glDrawPixels(This->lockedRect.right - This->lockedRect.left,
+                     (This->lockedRect.bottom - This->lockedRect.top)-1,
+                     fmt, type,
+                     mem + bpp * This->lockedRect.left + pitch * This->lockedRect.top);
+        checkGLcall("glDrawPixels");
+    } else {
+        glDrawPixels(This->currentDesc.Width,
+                     This->currentDesc.Height,
+                     fmt, type, mem);
+        checkGLcall("glDrawPixels");
+    }
 
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
