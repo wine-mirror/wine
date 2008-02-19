@@ -283,7 +283,7 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
 
         case WINED3DRTYPE_VERTEXBUFFER:
             IWineD3DVertexBuffer_GetDesc((IWineD3DVertexBuffer *) resource, &vertex_desc);
-            pool = index_desc.Pool;
+            pool = vertex_desc.Pool;
             break;
 
         /* No need to check for textures. If there is a D3DPOOL_DEFAULT texture, there
