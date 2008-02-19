@@ -81,7 +81,7 @@ static UINT OpenSourceKey(LPCWSTR szProduct, HKEY* key, DWORD dwOptions,
             rc = MSIREG_OpenLocalClassesProductKey(szProduct, &rootkey, create);
     }
 
-    if (rc)
+    if (rc != ERROR_SUCCESS)
     {
         if (dwOptions == MSICODE_PATCH)
             return ERROR_UNKNOWN_PATCH;
@@ -424,8 +424,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
 
     rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
-        return ERROR_UNKNOWN_PRODUCT;
-
+        return rc;
 
     if (strcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) == 0)
     {

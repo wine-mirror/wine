@@ -1499,11 +1499,8 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_BAD_CONFIGURATION,
-           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
-    }
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
     res = RegCreateKeyA(userkey, "SourceList", &source);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1743,11 +1740,8 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_BAD_CONFIGURATION,
-           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
-    }
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
     res = RegCreateKeyA(userkey, "SourceList", &source);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -1789,11 +1783,8 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_MACHINE, MSICODE_PRODUCT,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_BAD_CONFIGURATION,
-           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
-    }
+    ok(r == ERROR_BAD_CONFIGURATION,
+       "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
     res = RegCreateKeyA(prodkey, "SourceList", &source);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
