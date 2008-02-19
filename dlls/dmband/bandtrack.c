@@ -255,7 +255,7 @@ static ULONG WINAPI IDirectMusicBandTrack_IPersistStream_Release (LPPERSISTSTREA
 static HRESULT WINAPI IDirectMusicBandTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
   ICOM_THIS_MULTI(IDirectMusicBandTrack, PersistStreamVtbl, iface);
   TRACE("(%p, %p)\n", This, pClassID);
-  memcpy(pClassID, &CLSID_DirectMusicBandTrack, sizeof(CLSID));
+  *pClassID = CLSID_DirectMusicBandTrack;
   return S_OK;
 }
 
@@ -604,9 +604,9 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicBandTrack (LPCGUID lpcGUID, LPVOID *ppobj
   track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
   DM_STRUCT_INIT(track->pDesc);
   track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-  memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicBandTrack, sizeof (CLSID));
+  track->pDesc->guidClass = CLSID_DirectMusicBandTrack;
   track->ref = 0; /* will be inited by QueryInterface */
   list_init (&track->Bands);
-  
+
   return IDirectMusicBandTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
 }
