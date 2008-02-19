@@ -425,6 +425,8 @@ void lnk_dump(void)
 
     offset = 0;
     hdr = fetch_block();
+    if (!hdr)
+        return;
 
     printf("Header\n");
     printf("------\n\n");
