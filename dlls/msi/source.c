@@ -424,12 +424,6 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         return ERROR_UNKNOWN_PATCH;
     }
 
-    if (szUserSid)
-        FIXME("Unhandled UserSid %s\n",debugstr_w(szUserSid));
-
-    if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
-        FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
-
     property = szProperty;
     if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW))
         property = media_package;
@@ -493,10 +487,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             rc = ERROR_UNKNOWN_PROPERTY;
     }
     else
-    {
-        FIXME("Unknown property %s\n",debugstr_w(szProperty));
         rc = ERROR_UNKNOWN_PROPERTY;
-    }
 
     RegCloseKey(sourcekey);
     return rc;
