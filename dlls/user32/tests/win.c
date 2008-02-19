@@ -54,6 +54,7 @@ static HHOOK hhook;
 
 static const char* szAWRClass = "Winsize";
 static HMENU hmenu;
+static DWORD our_pid;
 
 #define COUNTOF(arr) (sizeof(arr)/sizeof(arr[0]))
 
@@ -1724,6 +1725,7 @@ static void test_mdi(void)
         DispatchMessage(&msg);
     }
 */
+    DestroyWindow(mdi_hwndMain);
 }
 
 static void test_icons(void)
@@ -1789,6 +1791,8 @@ static void test_icons(void)
     /* make sure the big icon hasn't changed */
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
     ok( res == icon2, "wrong big icon after set %p/%p\n", res, icon2 );
+
+    DestroyWindow( hwnd );
 }
 
 static LRESULT WINAPI nccalcsize_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -2035,6 +2039,127 @@ static void test_children_zorder(HWND parent)
 
     /* another set of complex children styles */
     test_window_tree(parent, complex_style_6, complex_order_6, 3);
+}
+
+#define check_z_order(hwnd, next, prev, owner, topmost) \
+        check_z_order_debug((hwnd), (next), (prev), (owner), (topmost), \
+                            __FILE__, __LINE__)
+
+static void check_z_order_debug(HWND hwnd, HWND next, HWND prev, HWND owner,
+                                BOOL topmost, const char *file, int line)
+{
+    HWND test;
+    DWORD ex_style;
+
+    test = GetWindow(hwnd, GW_HWNDNEXT);
+    /* skip foreign windows */
+    while (test && (GetWindowThreadProcessId(test, NULL) != our_pid ||
+                    UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)) != GetModuleHandle(0)))
+    {
+        /*trace("skipping next %p (%p)\n", test, UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)));*/
+        test = GetWindow(test, GW_HWNDNEXT);
+    }
+    ok_(file, line)(next == test, "expected next %p, got %p\n", next, test);
+
+    test = GetWindow(hwnd, GW_HWNDPREV);
+    /* skip foreign windows */
+    while (test && (GetWindowThreadProcessId(test, NULL) != our_pid ||
+                    UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)) != GetModuleHandle(0)))
+    {
+        /*trace("skipping prev %p (%p)\n", test, UlongToHandle(GetWindowLongPtr(test, GWLP_HINSTANCE)));*/
+        test = GetWindow(test, GW_HWNDPREV);
+    }
+    ok_(file, line)(prev == test, "expected prev %p, got %p\n", prev, test);
+
+    test = GetWindow(hwnd, GW_OWNER);
+    ok_(file, line)(owner == test, "expected owner %p, got %p\n", owner, test);
+
+    ex_style = GetWindowLong(hwnd, GWL_EXSTYLE);
+    ok_(file, line)(!(ex_style & WS_EX_TOPMOST) == !topmost, "expected %stopmost\n", topmost ? "" : "NOT ");
+}
+
+static void test_popup_zorder(HWND hwnd_D, HWND hwnd_E)
+{
+    HWND hwnd_A, hwnd_B, hwnd_C, hwnd_F;
+
+    trace("hwnd_D %p, hwnd_E %p\n", hwnd_D, hwnd_E);
+
+    SetWindowPos(hwnd_E, hwnd_D, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
+
+    check_z_order(hwnd_D, hwnd_E, 0, 0, FALSE);
+    check_z_order(hwnd_E, 0, hwnd_D, 0, FALSE);
+
+    hwnd_F = CreateWindowEx(0, "MainWindowClass", "Owner window",
+                            WS_OVERLAPPED | WS_CAPTION,
+                            100, 100, 100, 100,
+                            0, 0, GetModuleHandle(0), NULL);
+    trace("hwnd_F %p\n", hwnd_F);
+    check_z_order(hwnd_F, hwnd_D, 0, 0, FALSE);
+
+    SetWindowPos(hwnd_F, hwnd_E, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
+    check_z_order(hwnd_F, 0, hwnd_E, 0, FALSE);
+    check_z_order(hwnd_E, hwnd_F, hwnd_D, 0, FALSE);
+    check_z_order(hwnd_D, hwnd_E, 0, 0, FALSE);
+
+    hwnd_C = CreateWindowEx(0, "MainWindowClass", NULL,
+                            WS_POPUP,
+                            100, 100, 100, 100,
+                            hwnd_F, 0, GetModuleHandle(0), NULL);
+    trace("hwnd_C %p\n", hwnd_C);
+    check_z_order(hwnd_F, 0, hwnd_E, 0, FALSE);
+    check_z_order(hwnd_E, hwnd_F, hwnd_D, 0, FALSE);
+    check_z_order(hwnd_D, hwnd_E, hwnd_C, 0, FALSE);
+    check_z_order(hwnd_C, hwnd_D, 0, hwnd_F, FALSE);
+
+    hwnd_B = CreateWindowEx(WS_EX_TOPMOST, "MainWindowClass", NULL,
+                            WS_POPUP,
+                            100, 100, 100, 100,
+                            hwnd_F, 0, GetModuleHandle(0), NULL);
+    trace("hwnd_B %p\n", hwnd_B);
+    check_z_order(hwnd_F, 0, hwnd_E, 0, FALSE);
+    check_z_order(hwnd_E, hwnd_F, hwnd_D, 0, FALSE);
+    check_z_order(hwnd_D, hwnd_E, hwnd_C, 0, FALSE);
+    check_z_order(hwnd_C, hwnd_D, hwnd_B, hwnd_F, FALSE);
+    check_z_order(hwnd_B, hwnd_C, 0, hwnd_F, TRUE);
+
+    hwnd_A = CreateWindowEx(WS_EX_TOPMOST, "MainWindowClass", NULL,
+                            WS_POPUP,
+                            100, 100, 100, 100,
+                            0, 0, GetModuleHandle(0), NULL);
+    trace("hwnd_A %p\n", hwnd_A);
+    check_z_order(hwnd_F, 0, hwnd_E, 0, FALSE);
+    check_z_order(hwnd_E, hwnd_F, hwnd_D, 0, FALSE);
+    check_z_order(hwnd_D, hwnd_E, hwnd_C, 0, FALSE);
+    check_z_order(hwnd_C, hwnd_D, hwnd_B, hwnd_F, FALSE);
+    check_z_order(hwnd_B, hwnd_C, hwnd_A, hwnd_F, TRUE);
+    check_z_order(hwnd_A, hwnd_B, 0, 0, TRUE);
+
+    trace("A %p B %p C %p D %p E %p F %p\n", hwnd_A, hwnd_B, hwnd_C, hwnd_D, hwnd_E, hwnd_F);
+
+    /* move hwnd_F and its popups up */
+    SetWindowPos(hwnd_F, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
+    check_z_order(hwnd_E, 0, hwnd_D, 0, FALSE);
+    check_z_order(hwnd_D, hwnd_E, hwnd_F, 0, FALSE);
+    check_z_order(hwnd_F, hwnd_D, hwnd_C, 0, FALSE);
+    check_z_order(hwnd_C, hwnd_F, hwnd_B, hwnd_F, FALSE);
+    check_z_order(hwnd_B, hwnd_C, hwnd_A, hwnd_F, TRUE);
+    check_z_order(hwnd_A, hwnd_B, 0, 0, TRUE);
+
+    /* move hwnd_F and its popups down */
+#if 0 /* enable once Wine is fixed to pass this test */
+    SetWindowPos(hwnd_F, HWND_BOTTOM, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
+    check_z_order(hwnd_F, 0, hwnd_C, 0, FALSE);
+    check_z_order(hwnd_C, hwnd_F, hwnd_B, hwnd_F, FALSE);
+    check_z_order(hwnd_B, hwnd_C, hwnd_E, hwnd_F, FALSE);
+    check_z_order(hwnd_E, hwnd_B, hwnd_D, 0, FALSE);
+    check_z_order(hwnd_D, hwnd_E, hwnd_A, 0, FALSE);
+    check_z_order(hwnd_A, hwnd_D, 0, 0, TRUE);
+#endif
+
+    DestroyWindow(hwnd_A);
+    DestroyWindow(hwnd_B);
+    DestroyWindow(hwnd_C);
+    DestroyWindow(hwnd_F);
 }
 
 static void test_vis_rgn( HWND hwnd )
@@ -4450,16 +4575,18 @@ START_TEST(win)
                                WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                WS_MAXIMIZEBOX | WS_POPUP,
                                100, 100, 200, 200,
-                               0, 0, 0, NULL);
+                               0, 0, GetModuleHandle(0), NULL);
     test_nonclient_area(hwndMain);
 
     hwndMain2 = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window 2",
                                 WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                 WS_MAXIMIZEBOX | WS_POPUP,
                                 100, 100, 200, 200,
-                                0, 0, 0, NULL);
+                                0, 0, GetModuleHandle(0), NULL);
     assert( hwndMain );
     assert( hwndMain2 );
+
+    our_pid = GetWindowThreadProcessId(hwndMain, NULL);
 
     /* Add the tests below this line */
     test_params();
@@ -4482,6 +4609,7 @@ START_TEST(win)
     test_SetForegroundWindow(hwndMain);
 
     test_children_zorder(hwndMain);
+    test_popup_zorder(hwndMain2, hwndMain);
     test_keyboard_input(hwndMain);
     test_mouse_input(hwndMain);
     test_validatergn(hwndMain);
