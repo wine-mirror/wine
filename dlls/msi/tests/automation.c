@@ -2139,7 +2139,7 @@ static void test_Installer_InstallProduct(void)
     /* Package name */
     memset(szString, 0, sizeof(szString));
     hr = Installer_ProductInfo(szProductCode, WINE_INSTALLPROPERTY_PACKAGENAMEW, szString);
-    ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "Installer_ProductInfo failed, hresult 0x%08x\n", hr);
     todo_wine ok_w2("Installer_ProductInfo returned %s but expected %s\n", szString, szMsifile);
 
     /* Product name */

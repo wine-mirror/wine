@@ -260,7 +260,7 @@
 264 stub MsiSourceListEnumSourcesW
 265 stdcall MsiSourceListGetInfoA(str str long long str ptr ptr)
 266 stdcall MsiSourceListGetInfoW(wstr wstr long long wstr ptr ptr)
-267 stub MsiSourceListSetInfoA
+267 stdcall MsiSourceListSetInfoA(str str long long str str)
 268 stdcall MsiSourceListSetInfoW(wstr wstr long long wstr wstr)
 269 stub MsiEnumPatchesExA
 270 stub MsiEnumPatchesExW

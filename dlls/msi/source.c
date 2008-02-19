@@ -359,6 +359,35 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
 }
 
 /******************************************************************
+ *  MsiSourceListSetInfoA   (MSI.@)
+ */
+UINT WINAPI MsiSourceListSetInfoA(LPCSTR szProduct, LPCSTR szUserSid,
+                                  MSIINSTALLCONTEXT dwContext, DWORD dwOptions,
+                                  LPCSTR szProperty, LPCSTR szValue)
+{
+    UINT ret;
+    LPWSTR product = NULL;
+    LPWSTR usersid = NULL;
+    LPWSTR property = NULL;
+    LPWSTR value = NULL;
+
+    if (szProduct) product = strdupAtoW(szProduct);
+    if (szUserSid) usersid = strdupAtoW(szUserSid);
+    if (szProperty) property = strdupAtoW(szProperty);
+    if (szValue) value = strdupAtoW(szValue);
+
+    ret = MsiSourceListSetInfoW(product, usersid, dwContext, dwOptions,
+                                property, value);
+
+    msi_free(product);
+    msi_free(usersid);
+    msi_free(property);
+    msi_free(value);
+
+    return ret;
+}
+
+/******************************************************************
  *  MsiSourceListSetInfoW   (MSI.@)
  */
 UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
@@ -374,6 +403,12 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (!szProduct || lstrlenW(szProduct) > 39)
         return ERROR_INVALID_PARAMETER;
 
+    if (!szProperty)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!szValue)
+        return ERROR_UNKNOWN_PROPERTY;
+
     if (dwOptions & MSICODE_PATCH)
     {
         FIXME("Unhandled options MSICODE_PATCH\n");
@@ -386,7 +421,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
         FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
 
-    rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, TRUE);
+    rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
         return ERROR_UNKNOWN_PRODUCT;
 

@@ -120,6 +120,36 @@ static void get_user_sid(LPSTR *usersid)
     pConvertSidToStringSidA(user->User.Sid, usersid);
 }
 
+static void check_reg_str(HKEY prodkey, LPCSTR name, LPCSTR expected, BOOL bcase, DWORD line)
+{
+    char val[MAX_PATH];
+    DWORD size, type;
+    LONG res;
+
+    size = MAX_PATH;
+    val[0] = '\0';
+    res = RegQueryValueExA(prodkey, name, NULL, &type, (LPBYTE)val, &size);
+
+    if (res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ))
+    {
+        ok_(__FILE__, line)(FALSE, "Key doesn't exist or wrong type\n");
+        return;
+    }
+
+    if (!expected)
+        ok_(__FILE__, line)(lstrlenA(val) == 0, "Expected empty string, got %s\n", val);
+    else
+    {
+        if (bcase)
+            ok_(__FILE__, line)(!lstrcmpA(val, expected), "Expected %s, got %s\n", expected, val);
+        else
+            ok_(__FILE__, line)(!lstrcmpiA(val, expected), "Expected %s, got %s\n", expected, val);
+    }
+}
+
+#define CHECK_REG_STR(prodkey, name, expected) \
+    check_reg_str(prodkey, name, expected, TRUE, __LINE__);
+
 static void test_MsiSourceListGetInfo(void)
 {
     CHAR prodcode[MAX_PATH];
@@ -1357,6 +1387,470 @@ static void test_MsiSourceListEnumSources(void)
     RegCloseKey(prodkey);
 }
 
+static void test_MsiSourceListSetInfo(void)
+{
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    HKEY prodkey, userkey;
+    HKEY net, url, media, source;
+    LPSTR usersid;
+    LONG res;
+    UINT r;
+
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    /* GetLastError is not set by the function */
+
+    /* NULL szProductCodeOrPatchCode */
+    r = MsiSourceListSetInfoA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* empty szProductCodeOrPatchCode */
+    r = MsiSourceListSetInfoA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* garbage szProductCodeOrPatchCode */
+    r = MsiSourceListSetInfoA("garbage", usersid,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* guid without brackets */
+    r = MsiSourceListSetInfoA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA",
+                              usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* guid with brackets */
+    r = MsiSourceListSetInfoA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
+                              usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* dwOptions is MSICODE_PRODUCT */
+    r = MsiSourceListSetInfoA(prodcode, usersid,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* dwOptions is MSICODE_PATCH */
+    r = MsiSourceListSetInfoA(prodcode, usersid,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PATCH,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PATCH,
+           "Expected ERROR_UNKNOWN_PATCH, got %d\n", r);
+    }
+
+    /* dwOptions is both MSICODE_PRODUCT and MSICODE_PATCH */
+    r = MsiSourceListSetInfoA(prodcode, usersid,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSICODE_PATCH | MSISOURCETYPE_URL,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PATCH,
+           "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* dwOptions has both MSISOURCETYPE_NETWORK and MSISOURCETYPE_URL */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK | MSISOURCETYPE_URL,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* LastUsedSource and dwOptions has both
+     * MSISOURCETYPE_NETWORK and MSISOURCETYPE_URL
+     */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK | MSISOURCETYPE_URL,
+                              INSTALLPROPERTY_LASTUSEDSOURCE, "path");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* LastUsedSource and dwOptions has no source type */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_LASTUSEDSOURCE, "path");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(userkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists, no source type */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* Media key is created by MsiSourceListSetInfo */
+    res = RegOpenKeyA(source, "Media", &media);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        CHECK_REG_STR(media, "MediaPackage", "path");
+    }
+
+    /* set the info again */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path2");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        CHECK_REG_STR(media, "MediaPackage", "path2");
+    }
+
+    /* NULL szProperty */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              NULL, "path");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* empty szProperty */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              "", "path");
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+
+    /* NULL szValue */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, NULL);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+
+    /* empty szValue */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        CHECK_REG_STR(media, "MediaPackage", "");
+    }
+
+    /* INSTALLPROPERTY_MEDIAPACKAGEPATH, MSISOURCETYPE_NETWORK */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* INSTALLPROPERTY_MEDIAPACKAGEPATH, MSISOURCETYPE_URL */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_URL,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* INSTALLPROPERTY_DISKPROMPT */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_DISKPROMPT, "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        CHECK_REG_STR(media, "DiskPrompt", "prompt");
+    }
+
+    /* INSTALLPROPERTY_DISKPROMPT, MSISOURCETYPE_NETWORK */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_DISKPROMPT, "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* INSTALLPROPERTY_DISKPROMPT, MSISOURCETYPE_URL */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_URL,
+                              INSTALLPROPERTY_DISKPROMPT, "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_LASTUSEDSOURCE, "source");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE, MSISOURCETYPE_NETWORK */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_LASTUSEDSOURCE, "source");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Net key is created by MsiSourceListSetInfo */
+    res = RegOpenKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(net, "1", "source\\")
+
+    /* source has forward slash */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_LASTUSEDSOURCE, "source/");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    CHECK_REG_STR(net, "1", "source\\")
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE, MSISOURCETYPE_URL */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_URL,
+                              INSTALLPROPERTY_LASTUSEDSOURCE, "source");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* URL key is created by MsiSourceListSetInfo */
+    res = RegOpenKeyA(source, "URL", &url);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(url, "1", "source/");
+
+    /* source has backslash */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_URL,
+                              INSTALLPROPERTY_LASTUSEDSOURCE, "source\\");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    CHECK_REG_STR(url, "1", "source/");
+
+    /* INSTALLPROPERTY_PACKAGENAME */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_PACKAGENAME, "name");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    CHECK_REG_STR(source, "PackageName", "name");
+
+    /* INSTALLPROPERTY_PACKAGENAME, MSISOURCETYPE_NETWORK */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                              INSTALLPROPERTY_PACKAGENAME, "name");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* INSTALLPROPERTY_PACKAGENAME, MSISOURCETYPE_URL */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_URL,
+                              INSTALLPROPERTY_PACKAGENAME, "name");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* INSTALLPROPERTY_LASTUSEDTYPE */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_LASTUSEDTYPE, "type");
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+
+    /* definitely unknown property */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              "unknown", "val");
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+
+    RegDeleteValueA(net, "1");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+    RegDeleteValueA(url, "1");
+    RegDeleteKeyA(url, "");
+    RegCloseKey(url);
+    RegDeleteValueA(media, "MediaPackage");
+    RegDeleteValueA(media, "DiskPrompt");
+    RegDeleteKeyA(media, "");
+    RegCloseKey(media);
+    RegDeleteValueA(source, "PackageName");
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    /* MSIINSTALLCONTEXT_USERMANAGED */
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(userkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists, no source type */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* Media key is created by MsiSourceListSetInfo */
+    res = RegOpenKeyA(source, "Media", &media);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        CHECK_REG_STR(media, "MediaPackage", "path");
+    }
+
+    RegDeleteValueA(media, "MediaPackage");
+    RegDeleteKeyA(media, "");
+    RegCloseKey(media);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    /* MSIINSTALLCONTEXT_MACHINE */
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_MACHINE, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(prodkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists, no source type */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_MACHINE, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* Media key is created by MsiSourceListSetInfo */
+    res = RegOpenKeyA(source, "Media", &media);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        CHECK_REG_STR(media, "MediaPackage", "path");
+    }
+
+    /* szUserSid is non-NULL */
+    r = MsiSourceListSetInfoA(prodcode, usersid,
+                              MSIINSTALLCONTEXT_MACHINE, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    RegDeleteValueA(media, "MediaPackage");
+    RegDeleteKeyA(media, "");
+    RegCloseKey(media);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+}
+
 START_TEST(source)
 {
     init_functionpointers();
@@ -1364,4 +1858,5 @@ START_TEST(source)
     test_MsiSourceListGetInfo();
     test_MsiSourceListAddSourceEx();
     test_MsiSourceListEnumSources();
+    test_MsiSourceListSetInfo();
 }
