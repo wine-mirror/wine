@@ -435,6 +435,13 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (rc != ERROR_SUCCESS)
         return rc;
 
+    if (lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW) &&
+        dwOptions & (MSISOURCETYPE_NETWORK | MSISOURCETYPE_URL))
+    {
+        RegCloseKey(sourcekey);
+        return ERROR_INVALID_PARAMETER;
+    }
+
     if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) ||
         !lstrcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW))
     {

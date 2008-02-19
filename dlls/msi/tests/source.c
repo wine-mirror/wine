@@ -1452,16 +1452,15 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, usersid,
                               MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PATCH,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    ok(r == ERROR_UNKNOWN_PATCH,
-       "Expected ERROR_UNKNOWN_PATCH, got %d\n", r);
+    ok(r == ERROR_UNKNOWN_PATCH, "Expected ERROR_UNKNOWN_PATCH, got %d\n", r);
 
     /* dwOptions is both MSICODE_PRODUCT and MSICODE_PATCH */
     r = MsiSourceListSetInfoA(prodcode, usersid,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSICODE_PATCH | MSISOURCETYPE_URL,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    ok(r == ERROR_UNKNOWN_PATCH,
-       "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_UNKNOWN_PATCH, "Expected ERROR_UNKNOWN_PATCH, got %d\n", r);
+
     /* dwOptions has both MSISOURCETYPE_NETWORK and MSISOURCETYPE_URL */
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
@@ -1556,22 +1555,16 @@ static void test_MsiSourceListSetInfo(void)
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* INSTALLPROPERTY_MEDIAPACKAGEPATH, MSISOURCETYPE_URL */
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_URL,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* INSTALLPROPERTY_DISKPROMPT */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1585,22 +1578,16 @@ static void test_MsiSourceListSetInfo(void)
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
                               INSTALLPROPERTY_DISKPROMPT, "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* INSTALLPROPERTY_DISKPROMPT, MSISOURCETYPE_URL */
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_URL,
                               INSTALLPROPERTY_DISKPROMPT, "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* INSTALLPROPERTY_LASTUSEDSOURCE */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1664,22 +1651,16 @@ static void test_MsiSourceListSetInfo(void)
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
                               INSTALLPROPERTY_PACKAGENAME, "name");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* INSTALLPROPERTY_PACKAGENAME, MSISOURCETYPE_URL */
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_URL,
                               INSTALLPROPERTY_PACKAGENAME, "name");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* INSTALLPROPERTY_LASTUSEDTYPE */
     r = MsiSourceListSetInfoA(prodcode, NULL,
