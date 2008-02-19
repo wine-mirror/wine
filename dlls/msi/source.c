@@ -394,13 +394,14 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
                                    MSIINSTALLCONTEXT dwContext, DWORD dwOptions,
                                    LPCWSTR szProperty, LPCWSTR szValue)
 {
+    WCHAR squished_pc[GUID_SIZE];
     HKEY sourcekey;
     UINT rc;
 
     TRACE("%s %s %x %x %s %s\n", debugstr_w(szProduct), debugstr_w(szUserSid),
             dwContext, dwOptions, debugstr_w(szProperty), debugstr_w(szValue));
 
-    if (!szProduct || lstrlenW(szProduct) > 39)
+    if (!szProduct || !squash_guid(szProduct, squished_pc))
         return ERROR_INVALID_PARAMETER;
 
     if (!szProperty)

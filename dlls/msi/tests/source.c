@@ -1398,7 +1398,6 @@ static void test_MsiSourceListSetInfo(void)
     LONG res;
     UINT r;
 
-
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
 
@@ -1415,33 +1414,24 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* garbage szProductCodeOrPatchCode */
     r = MsiSourceListSetInfoA("garbage", usersid,
                               MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* guid without brackets */
     r = MsiSourceListSetInfoA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA",
                               usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
                               INSTALLPROPERTY_MEDIAPACKAGEPATH, "path");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* guid with brackets */
     r = MsiSourceListSetInfoA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
