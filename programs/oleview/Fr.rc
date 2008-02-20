@@ -28,7 +28,7 @@ IDM_MENU MENU
         MENUITEM "&Lier au fichier...",    IDM_BIND
         MENUITEM "&Afficher la TypeLib...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "&Configuration système",    IDM_SYSCONF
+        MENUITEM "&Configuration système...",    IDM_SYSCONF
         MENUITEM "&Exécuter l'éditeur de la base de registre",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "&Quitter",    IDM_EXIT
@@ -46,7 +46,7 @@ IDM_MENU MENU
         MENUITEM "Afficher les informations sur le &type",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Créer une &instance",    IDM_CREATEINST, GRAYED
-        MENUITEM "Créer une instance &sur",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "Créer une instance &sur...",    IDM_CREATEINSTON, GRAYED
         MENUITEM "&Libérer l'instance",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Copier le &CLSID dans le presse-papiers",    IDM_COPYCLSID, GRAYED
@@ -75,7 +75,7 @@ IDM_TYPELIB MENU
 {
     POPUP "&Fichier"
     {
-        MENUITEM "Enregistrer &sous",    IDM_SAVEAS
+        MENUITEM "Enregistrer &sous...",    IDM_SAVEAS
         MENUITEM "&Fermer",  IDM_CLOSE
     }
     POPUP "&Affichage"

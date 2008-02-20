@@ -28,7 +28,7 @@ IDM_MENU MENU
         MENUITEM "&Bind to file...",    IDM_BIND
         MENUITEM "&View TypeLib...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "&System Configuration",    IDM_SYSCONF
+        MENUITEM "&System Configuration...",    IDM_SYSCONF
         MENUITEM "&Run the Registry Editor",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "E&xit",    IDM_EXIT
@@ -46,7 +46,7 @@ IDM_MENU MENU
         MENUITEM "View &Type information",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Create &Instance",    IDM_CREATEINST, GRAYED
-        MENUITEM "Create Instance &On",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "Create Instance &On...",    IDM_CREATEINSTON, GRAYED
         MENUITEM "&Release Instance",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Copy C&LSID to clipboard",    IDM_COPYCLSID, GRAYED
@@ -75,7 +75,7 @@ IDM_TYPELIB MENU
 {
     POPUP "&File"
     {
-        MENUITEM "&Save as",    IDM_SAVEAS
+        MENUITEM "&Save as...",    IDM_SAVEAS
         MENUITEM "&Close",  IDM_CLOSE
     }
     POPUP "&View"

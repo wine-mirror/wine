@@ -29,7 +29,7 @@ IDM_MENU MENU
         MENUITEM "&Dowi¹¿ do pliku...",    IDM_BIND
         MENUITEM "&Otwórz bibliotekê typów...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "&Konfiguracja systemu",    IDM_SYSCONF
+        MENUITEM "&Konfiguracja systemu...",    IDM_SYSCONF
         MENUITEM "&Uruchom Edytor Rejestrów",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "&Zakoñcz",    IDM_EXIT
@@ -47,7 +47,7 @@ IDM_MENU MENU
         MENUITEM "Wyœwietl informacje o &typie",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Stwórz &instancjê",    IDM_CREATEINST, GRAYED
-        MENUITEM "Stwórz instancjê &na",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "Stwórz instancjê &na...",    IDM_CREATEINSTON, GRAYED
         MENUITEM "&Zwolnij instancjê",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Kopiuj C&LSID do schowka",    IDM_COPYCLSID, GRAYED
@@ -76,7 +76,7 @@ IDM_TYPELIB MENU
 {
     POPUP "&Plik"
     {
-        MENUITEM "Z&apisz jako",    IDM_SAVEAS
+        MENUITEM "Z&apisz jako...",    IDM_SAVEAS
         MENUITEM "&Zamknij",  IDM_CLOSE
     }
     POPUP "&Widok"

@@ -28,7 +28,7 @@ IDM_MENU MENU
         MENUITEM "&Bind til fil . . .",    IDM_BIND
         MENUITEM "&Vis TypeLib . . .",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "&Systemoppsett",    IDM_SYSCONF
+        MENUITEM "&Systemoppsett . . .",    IDM_SYSCONF
         MENUITEM "Kjø&r registerredigerer",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "&Avslutt",    IDM_EXIT
@@ -46,7 +46,7 @@ IDM_MENU MENU
         MENUITEM "Vis &type-informasjon",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Opprett &instans",    IDM_CREATEINST, GRAYED
-        MENUITEM "&Opprett instans på",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&Opprett instans på . . .",    IDM_CREATEINSTON, GRAYED
         MENUITEM "&Slipp instans",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Kopier C&LSID til utklippstavlen",    IDM_COPYCLSID, GRAYED
@@ -75,7 +75,7 @@ IDM_TYPELIB MENU
 {
     POPUP "&Fil"
     {
-        MENUITEM "Lagre &som",    IDM_SAVEAS
+        MENUITEM "Lagre &som . . .",    IDM_SAVEAS
         MENUITEM "&Lukk",  IDM_CLOSE
     }
     POPUP "&Vis"

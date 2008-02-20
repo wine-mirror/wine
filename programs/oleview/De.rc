@@ -46,7 +46,7 @@ IDM_MENU MENU
         MENUITEM "&Typ-Informationen anzeigen",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Instanz erstellen",    IDM_CREATEINST, GRAYED
-        MENUITEM "Instanz erstellen &auf",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "Instanz erstellen &auf...",    IDM_CREATEINSTON, GRAYED
         MENUITEM "Instanz &freigeben",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "C&LSID in Zwischenablage kopieren",    IDM_COPYCLSID, GRAYED
@@ -75,7 +75,7 @@ IDM_TYPELIB MENU
 {
     POPUP "&Datei"
     {
-        MENUITEM "&Speichern unter",    IDM_SAVEAS
+        MENUITEM "&Speichern unter...",    IDM_SAVEAS
         MENUITEM "&Schliessen",  IDM_CLOSE
     }
     POPUP "&Ansicht"

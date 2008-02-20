@@ -28,7 +28,7 @@ IDM_MENU MENU
         MENUITEM "&Verbind aan bestand...",    IDM_BIND
         MENUITEM "&Bekijk TypeLib...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "&Systeem Configuratie",    IDM_SYSCONF
+        MENUITEM "&Systeem Configuratie...",    IDM_SYSCONF
         MENUITEM "&Run de Register Editer",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "&Afsluiten",    IDM_EXIT
@@ -46,7 +46,7 @@ IDM_MENU MENU
         MENUITEM "Bekijk &Type informatie",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Creëer &Instantie",    IDM_CREATEINST, GRAYED
-        MENUITEM "Creëer Instantie &Op",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "Creëer Instantie &Op...",    IDM_CREATEINSTON, GRAYED
         MENUITEM "&Verwijder Instantie",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Copieer C&LSID naar clipbord",    IDM_COPYCLSID, GRAYED
@@ -75,7 +75,7 @@ IDM_TYPELIB MENU
 {
     POPUP "&Bestand"
     {
-        MENUITEM "Op&slaan als",    IDM_SAVEAS
+        MENUITEM "Op&slaan als...",    IDM_SAVEAS
         MENUITEM "S&luiten",  IDM_CLOSE
     }
     POPUP "Be&kijken"

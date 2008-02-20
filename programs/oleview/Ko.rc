@@ -29,7 +29,7 @@ IDM_MENU MENU
         MENUITEM "파일에 연결(&B)...",    IDM_BIND
         MENUITEM "타입 라이브러리 보기(&V)...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "시스템 설정(&S)",    IDM_SYSCONF
+        MENUITEM "시스템 설정(&S)...",    IDM_SYSCONF
         MENUITEM "레지스트리 편집기 실행(&R)",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "나가기(&X)",    IDM_EXIT
@@ -47,7 +47,7 @@ IDM_MENU MENU
         MENUITEM "타입 정보 보기(&T)",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "인스턴스 만들기(&I)",    IDM_CREATEINST, GRAYED
-        MENUITEM "인스턴트 온(Instance &On) 만들기",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "인스턴트 온(Instance &On) 만들기...",    IDM_CREATEINSTON, GRAYED
         MENUITEM "인스턴트 해제하기(&R)",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "C&LSID를 클립보드로 복사",    IDM_COPYCLSID, GRAYED
@@ -76,7 +76,7 @@ IDM_TYPELIB MENU
 {
  	POPUP "파일(&F)"
 	{
-		MENUITEM "다른 이름으로 저장(&S)",    IDM_SAVEAS
+		MENUITEM "다른 이름으로 저장(&S)...",    IDM_SAVEAS
 		MENUITEM "닫기(&C)",  IDM_CLOSE
 	}
 	POPUP "보기(&V)"
