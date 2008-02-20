@@ -48,6 +48,8 @@ static const IID NS_IOSERVICE_CID =
 
 static nsIIOService *nsio = NULL;
 
+static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
 typedef struct {
     const nsIWineURIVtbl *lpWineURIVtbl;
 
@@ -593,7 +595,7 @@ static BOOL do_load_from_moniker_hack(nsChannel *This)
         const char *scheme;
 
         nsACString_GetData(&scheme_str, &scheme);
-        ret = !strcmp(scheme, "wine");
+        ret = !strcmp(scheme, "wine") || !strcmp(scheme, "about");
     }
 
     nsACString_Finish(&scheme_str);
@@ -1264,7 +1266,7 @@ static nsresult NSAPI nsURI_GetScheme(nsIWineURI *iface, nsACString *aScheme)
 
     TRACE("(%p)->(%p)\n", This, aScheme);
 
-    if(This->use_wine_url) {
+    if(This->use_wine_url && strcmpW(This->wine_url, about_blankW)) {
         /*
          * For Gecko we set scheme to unknown so it won't be handled
          * as any special case.
