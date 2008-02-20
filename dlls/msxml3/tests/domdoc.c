@@ -2347,6 +2347,360 @@ static void test_xmlTypes(void)
     free_bstrs();
 }
 
+static void test_nodeTypeTests( void )
+{
+    IXMLDOMDocument *doc = NULL;
+    IXMLDOMElement *pRoot;
+    IXMLDOMElement *pElement;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if(hr == S_OK)
+    {
+        hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)pRoot, NULL);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMElement_put_dataType(pRoot, NULL);
+            ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+            /* Invalid Value */
+            hr = IXMLDOMElement_put_dataType(pRoot, _bstr_("abcdefg") );
+            ok(hr == E_FAIL, "ret %08x\n", hr );
+
+            /* NOTE:
+             *   The name passed into put_dataType is case-insensitive. So many of the names
+             *     have been changed to reflect this.
+             */
+            /* Boolean */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_Boolean"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("Boolean") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* String */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_String"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("String") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* Number */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_Number"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("number") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* Int */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_Int"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("InT") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* Fixed */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_Fixed"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("fixed.14.4") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* DateTime */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_DateTime"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("DateTime") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* DateTime TZ */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_DateTime_tz"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("DateTime.tz") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* Date */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_Date"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("Date") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* Time */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_Time"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("Time") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* Time.tz */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_Time_TZ"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("Time.tz") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* I1 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_I1"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("I1") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* Byte */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_byte"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("byte") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* I2 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_I2"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("I2") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* I4 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_I4"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("I4") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* UI1 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_UI1"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("UI1") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* UI2 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_UI2"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("UI2") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* UI4 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_UI4"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("UI4") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* r4 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_r4"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("r4") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* r8 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_r8"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("r8") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* float */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_float"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("float") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* uuid */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_uuid"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("UuId") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* bin.hex */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_bin_hex"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("bin.hex") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* bin.base64 */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_bin_base64"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("bin.base64") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            /* Check changing types */
+            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_Change"), &pElement);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            if(hr == S_OK)
+            {
+                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("DateTime.tz") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("string") );
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                IXMLDOMElement_Release(pElement);
+            }
+
+            IXMLDOMElement_Release(pRoot);
+        }
+    }
+
+    IXMLDOMDocument_Release(doc);
+
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -2367,6 +2721,7 @@ START_TEST(domdoc)
     test_XPath();
     test_cloneNode();
     test_xmlTypes();
+    test_nodeTypeTests();
 
     CoUninitialize();
 }

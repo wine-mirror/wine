@@ -39,6 +39,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+static const WCHAR szBinBase64[]  = {'b','i','n','.','b','a','s','e','6','4',0};
+static const WCHAR szString[]     = {'s','t','r','i','n','g',0};
+static const WCHAR szNumber[]     = {'n','u','m','b','e','r',0};
+static const WCHAR szInt[]        = {'I','n','t',0};
+static const WCHAR szFixed[]      = {'F','i','x','e','d','.','1','4','.','4',0};
+static const WCHAR szBoolean[]    = {'B','o','o','l','e','a','n',0};
+static const WCHAR szDateTime[]   = {'d','a','t','e','T','i','m','e',0};
+static const WCHAR szDateTimeTZ[] = {'d','a','t','e','T','i','m','e','.','t','z',0};
+static const WCHAR szDate[]       = {'D','a','t','e',0};
+static const WCHAR szTime[]       = {'T','i','m','e',0};
+static const WCHAR szTimeTZ[]     = {'T','i','m','e','.','t','z',0};
+static const WCHAR szI1[]         = {'i','1',0};
+static const WCHAR szByte[]       = {'B','y','t','e',0};
+static const WCHAR szI2[]         = {'i','2',0};
+static const WCHAR szI4[]         = {'i','4',0};
+static const WCHAR szIU1[]        = {'u','i','1',0};
+static const WCHAR szIU2[]        = {'u','i','2',0};
+static const WCHAR szIU4[]        = {'u','i','4',0};
+static const WCHAR szR4[]         = {'r','4',0};
+static const WCHAR szR8[]         = {'r','8',0};
+static const WCHAR szFloat[]      = {'f','l','o','a','t',0};
+static const WCHAR szUUID[]       = {'u','u','i','d',0};
+static const WCHAR szBinHex[]     = {'b','i','n','.','h','e','x',0};
+
 static inline xmlnode *impl_from_InternalUnknown( IUnknown *iface )
 {
     return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpInternalUnkVtbl));
@@ -859,8 +883,77 @@ static HRESULT WINAPI xmlnode_put_dataType(
     IXMLDOMNode *iface,
     BSTR dataTypeName)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    HRESULT hr = E_FAIL;
+
+    TRACE("iface %p\n", iface);
+
+    if(dataTypeName == NULL)
+        return E_INVALIDARG;
+
+    /* An example of this is. The Text in the node needs to be a 0 or 1 for a boolean type.
+       This applies to changing types (string->bool) or setting a new one
+     */
+    FIXME("Need to Validate the data before allowing a type to be set.\n");
+
+    /* Check all supported types. */
+    if(lstrcmpiW(dataTypeName,szString) == 0  ||
+       lstrcmpiW(dataTypeName,szNumber) == 0  ||
+       lstrcmpiW(dataTypeName,szUUID) == 0    ||
+       lstrcmpiW(dataTypeName,szInt) == 0     ||
+       lstrcmpiW(dataTypeName,szI4) == 0      ||
+       lstrcmpiW(dataTypeName,szFixed) == 0   ||
+       lstrcmpiW(dataTypeName,szBoolean) == 0 ||
+       lstrcmpiW(dataTypeName,szDateTime) == 0 ||
+       lstrcmpiW(dataTypeName,szDateTimeTZ) == 0 ||
+       lstrcmpiW(dataTypeName,szDate) == 0    ||
+       lstrcmpiW(dataTypeName,szTime) == 0    ||
+       lstrcmpiW(dataTypeName,szTimeTZ) == 0  ||
+       lstrcmpiW(dataTypeName,szI1) == 0      ||
+       lstrcmpiW(dataTypeName,szByte) == 0    ||
+       lstrcmpiW(dataTypeName,szI2) == 0      ||
+       lstrcmpiW(dataTypeName,szIU1) == 0     ||
+       lstrcmpiW(dataTypeName,szIU2) == 0     ||
+       lstrcmpiW(dataTypeName,szIU4) == 0     ||
+       lstrcmpiW(dataTypeName,szR4) == 0      ||
+       lstrcmpiW(dataTypeName,szR8) == 0      ||
+       lstrcmpiW(dataTypeName,szFloat) == 0   ||
+       lstrcmpiW(dataTypeName,szBinHex) == 0  ||
+       lstrcmpiW(dataTypeName,szBinBase64) == 0)
+    {
+        xmlNsPtr pNS = NULL;
+        xmlAttrPtr pAttr = NULL;
+        xmlChar* str = xmlChar_from_wchar((WCHAR*)dataTypeName);
+
+        pAttr = xmlHasNsProp(This->node, (xmlChar*)"dt",
+                            (xmlChar*)"urn:schemas-microsoft-com:datatypes");
+        if (pAttr)
+        {
+            pAttr = xmlSetNsProp(This->node, pAttr->ns, (xmlChar*)"dt", str);
+
+            hr = S_OK;
+        }
+        else
+        {
+            pNS = xmlNewNs(This->node, (xmlChar*)"urn:schemas-microsoft-com:datatypes", (xmlChar*)"dt");
+            if(pNS)
+            {
+                pAttr = xmlNewNsProp(This->node, pNS, (xmlChar*)"dt", str);
+                if(pAttr)
+                {
+                    xmlAddChild(This->node, (xmlNodePtr)pAttr);
+
+                    hr = S_OK;
+                }
+                else
+                    ERR("Failed to create Attribute\n");
+            }
+            else
+                ERR("Failed to Create Namepsace\n");
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlnode_get_xml(
