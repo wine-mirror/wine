@@ -148,8 +148,62 @@ UINT WINAPI MsiSourceListEnumSourcesA(LPCSTR szProductCodeOrPatch, LPCSTR szUser
                                       DWORD dwOptions, DWORD dwIndex,
                                       LPSTR szSource, LPDWORD pcchSource)
 {
-    FIXME("(%s, %s, %d, %d, %d, %p, %p): stub!\n", szProductCodeOrPatch, szUserSid,
-          dwContext, dwOptions, dwIndex, szSource, pcchSource);
+    LPWSTR product = NULL;
+    LPWSTR usersid = NULL;
+    LPWSTR source = NULL;
+    DWORD len = 0;
+    UINT r;
+
+    TRACE("(%s, %s, %d, %d, %d, %p, %p)\n", debugstr_a(szProductCodeOrPatch),
+          debugstr_a(szUserSid), dwContext, dwOptions, dwIndex, szSource, pcchSource);
+
+    if (szSource && !pcchSource)
+        return ERROR_INVALID_PARAMETER;
+
+    if (szProductCodeOrPatch) product = strdupAtoW(szProductCodeOrPatch);
+    if (szUserSid) usersid = strdupAtoW(szUserSid);
+
+    r = MsiSourceListEnumSourcesW(product, usersid, dwContext, dwOptions,
+                                  dwIndex, NULL, &len);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    source = msi_alloc(++len * sizeof(WCHAR));
+    if (!source)
+        return ERROR_OUTOFMEMORY;
+
+    *source = '\0';
+    r = MsiSourceListEnumSourcesW(product, usersid, dwContext, dwOptions,
+                                  dwIndex, source, &len);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    len = WideCharToMultiByte(CP_ACP, 0, source, -1, NULL, 0, NULL, NULL);
+    if (*pcchSource >= len)
+        WideCharToMultiByte(CP_ACP, 0, source, -1, szSource, len, NULL, NULL);
+    else if (szSource)
+        r = ERROR_MORE_DATA;
+
+    *pcchSource = len - 1;
+
+done:
+    msi_free(product);
+    msi_free(usersid);
+    msi_free(source);
+
+    return r;
+}
+
+/******************************************************************
+ *  MsiSourceListEnumSourcesA   (MSI.@)
+ */
+UINT WINAPI MsiSourceListEnumSourcesW(LPCWSTR szProductCodeOrPatch, LPCWSTR szUserSid,
+                                      MSIINSTALLCONTEXT dwContext,
+                                      DWORD dwOptions, DWORD dwIndex,
+                                      LPWSTR szSource, LPDWORD pcchSource)
+{
+    FIXME("(%s, %s, %d, %d, %d, %p, %p): stub!\n", debugstr_w(szProductCodeOrPatch),
+          debugstr_w(szUserSid), dwContext, dwOptions, dwIndex, szSource, pcchSource);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
