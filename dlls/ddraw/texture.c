@@ -360,6 +360,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
             if(ret_value != D3D_OK)
             {
                 ERR("IWineD3DPalette::GetParent failed! This is unexpected\n");
+                if (pal) IDirectDrawPalette_Release(pal);
                 LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
@@ -371,6 +372,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
 
             if (pal == NULL)
             {
+                IDirectDrawPalette_Release(pal_src);
                 LeaveCriticalSection(&ddraw_cs);
                 return DDERR_NOPALETTEATTACHED;
             }
