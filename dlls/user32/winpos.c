@@ -1675,7 +1675,7 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
 
     SWP_DoNCCalcSize( winpos, &newWindowRect, &newClientRect, valid_rects );
 
-    if (!set_window_pos( winpos->hwnd, winpos->hwndInsertAfter, orig_flags,
+    if (!set_window_pos( winpos->hwnd, winpos->hwndInsertAfter, winpos->flags,
                          &newWindowRect, &newClientRect, valid_rects ))
         return FALSE;
 
