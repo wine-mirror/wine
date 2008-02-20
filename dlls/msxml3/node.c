@@ -251,6 +251,7 @@ static HRESULT WINAPI xmlnode_get_nodeValue(
 
     switch ( This->node->type )
     {
+    case XML_PI_NODE:
     case XML_ATTRIBUTE_NODE:
       {
         xmlChar *content = xmlNodeGetContent(This->node);
@@ -269,7 +270,7 @@ static HRESULT WINAPI xmlnode_get_nodeValue(
     case XML_DOCUMENT_NODE:
         /* these seem to return NULL */
         break;
-    case XML_PI_NODE:
+
     default:
         FIXME("node %p type %d\n", This, This->node->type);
     }
