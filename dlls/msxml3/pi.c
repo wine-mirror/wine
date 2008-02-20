@@ -483,8 +483,20 @@ static HRESULT WINAPI dom_pi_get_data(
     IXMLDOMProcessingInstruction *iface,
     BSTR *p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
+    HRESULT hr = E_FAIL;
+    VARIANT vRet;
+
+    if(!p)
+        return E_INVALIDARG;
+
+    hr = IXMLDOMNode_get_nodeValue( This->node, &vRet );
+    if(hr == S_OK)
+    {
+        *p = V_BSTR(&vRet);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI dom_pi_put_data(
