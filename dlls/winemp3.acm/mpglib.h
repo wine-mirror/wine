@@ -62,7 +62,7 @@ extern "C" {
 BOOL InitMP3(struct mpstr *mp);
 int decodeMP3(struct mpstr *mp,const unsigned char *inmemory,int inmemsize,
      unsigned char *outmemory,int outmemsize,int *done);
-void ExitMP3(struct mpstr *mp);
+void ClearMP3Buffer(struct mpstr *mp);
 
 #ifdef __cplusplus
 }

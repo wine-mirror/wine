@@ -163,6 +163,9 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
 
     buffered_after = get_num_buffered_bytes(&amd->mp);
     TRACE("before %d put %d during %d after %d\n", buffered_before, *nsrc, buffered_during, buffered_after);
+
+    *nsrc -= buffered_after;
+    ClearMP3Buffer(&amd->mp);
 }
 
 /***********************************************************************
@@ -376,7 +379,7 @@ static	LRESULT	MPEG3_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
  */
 static	void	MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
 {
-    ExitMP3(&aad->mp);
+    ClearMP3Buffer(&aad->mp);
     InitMP3(&aad->mp);
 }
 
@@ -438,7 +441,7 @@ static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
  */
 static	LRESULT	MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
 {
-    ExitMP3(&((AcmMpeg3Data*)adsi->dwDriver)->mp);
+    ClearMP3Buffer(&((AcmMpeg3Data*)adsi->dwDriver)->mp);
     HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
     return MMSYSERR_NOERROR;
 }

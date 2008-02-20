@@ -48,7 +48,7 @@ BOOL InitMP3(struct mpstr *mp)
 	return !0;
 }
 
-void ExitMP3(struct mpstr *mp)
+void ClearMP3Buffer(struct mpstr *mp)
 {
 	struct buf *b,*bn;
 
@@ -59,6 +59,9 @@ void ExitMP3(struct mpstr *mp)
 		free(b);
 		b = bn;
 	}
+	mp->tail = NULL;
+	mp->head = NULL;
+	mp->bsize = 0;
 }
 
 static struct buf *addbuf(struct mpstr *mp,const unsigned char *buf,int size)
