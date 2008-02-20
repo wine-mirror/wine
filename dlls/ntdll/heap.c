@@ -1231,7 +1231,10 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
     notify_alloc( pInUse + 1, size, flags & HEAP_ZERO_MEMORY );
 
     if (flags & HEAP_ZERO_MEMORY)
-        clear_block( pInUse + 1, pInUse->size & ARENA_SIZE_MASK );
+    {
+        clear_block( pInUse + 1, size );
+        mark_block_uninitialized( (char *)(pInUse + 1) + size, pInUse->unused_bytes );
+    }
     else
         mark_block_uninitialized( pInUse + 1, pInUse->size & ARENA_SIZE_MASK );
 
@@ -1431,11 +1434,13 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
     /* Clear the extra bytes if needed */
 
-    if ((pArena->size & ARENA_SIZE_MASK) > oldActualSize)
+    if (size > oldActualSize)
     {
         if (flags & HEAP_ZERO_MEMORY)
-            clear_block( (char *)(pArena + 1) + oldActualSize,
-                         (pArena->size & ARENA_SIZE_MASK) - oldActualSize );
+        {
+            clear_block( (char *)(pArena + 1) + oldActualSize, size - oldActualSize );
+            mark_block_uninitialized( (char *)(pArena + 1) + size, pArena->unused_bytes );
+        }
         else
             mark_block_uninitialized( (char *)(pArena + 1) + oldActualSize,
                                       (pArena->size & ARENA_SIZE_MASK) - oldActualSize );
