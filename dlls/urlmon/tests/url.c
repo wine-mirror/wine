@@ -1819,26 +1819,27 @@ static void test_bscholder(IBindStatusCallback *holder)
     IHttpNegotiate_Release(http_negotiate_serv);
 
     hres = IBindStatusCallback_QueryInterface(holder, &IID_IHttpNegotiate2, (void**)&http_negotiate2);
-    ok(hres == S_OK, "Could not get IHttpNegotiate2 interface: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
+        ok(hres == E_FAIL, "GetRootSecurityId failed: %08x\n", hres);
 
-    hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
-    ok(hres == E_FAIL, "GetRootSecurityId failed: %08x\n", hres);
+        SET_EXPECT(QueryInterface_IHttpNegotiate2);
+        hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpNegotiate2, &IID_IHttpNegotiate2,
+                                             (void**)&http_negotiate2_serv);
+        ok(hres == S_OK, "Could not get IHttpNegotiate2 service: %08x\n", hres);
+        CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+        ok(http_negotiate2 == http_negotiate2_serv, "http_negotiate != http_negotiate_serv\n");
 
-    IHttpNegotiate_Release(http_negotiate2);
+        SET_EXPECT(GetRootSecurityId);
+        hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
+        ok(hres == E_NOTIMPL, "GetRootSecurityId failed: %08x\n", hres);
+        CHECK_CALLED(GetRootSecurityId);
 
-    SET_EXPECT(QueryInterface_IHttpNegotiate2);
-    hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpNegotiate2, &IID_IHttpNegotiate2,
-                                         (void**)&http_negotiate2_serv);
-    ok(hres == S_OK, "Could not get IHttpNegotiate2 service: %08x\n", hres);
-    CHECK_CALLED(QueryInterface_IHttpNegotiate2);
-    ok(http_negotiate2 == http_negotiate2_serv, "http_negotiate != http_negotiate_serv\n");
-
-    SET_EXPECT(GetRootSecurityId);
-    hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
-    ok(hres == E_NOTIMPL, "GetRootSecurityId failed: %08x\n", hres);
-    CHECK_CALLED(GetRootSecurityId);
-
-    IHttpNegotiate_Release(http_negotiate2_serv);
+        IHttpNegotiate_Release(http_negotiate2_serv);
+        IHttpNegotiate_Release(http_negotiate2);
+    }else {
+        skip("Could not get IHttpNegotiate2\n");
+    }
 
     SET_EXPECT(OnProgress_FINDINGRESOURCE);
     hres = IBindStatusCallback_OnProgress(holder, 0, 0, BINDSTATUS_FINDINGRESOURCE, NULL);
