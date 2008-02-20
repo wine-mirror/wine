@@ -1703,6 +1703,18 @@ interface nsIIOService : nsISupports
 
 [
     object,
+    uuid(f0c5dddb-4713-4603-af2d-bf671838996b),
+    local,
+    /* NOT_FROZEN */
+]
+interface nsINetUtil : nsISupports
+{
+    nsresult ParseContentType(const nsACString *aTypeHeader, nsACString *aCharset,
+                              PRBool *aHadCharset, nsACString *aContentType);
+}
+
+[
+    object,
     uuid(9c5d3c58-1dd1-11b2-a1c9-f3699284657a),
     local
     /* FROZEN */
