@@ -1323,7 +1323,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     ARENA_INUSE *pArena;
     HEAP *heapPtr;
     SUBHEAP *subheap;
-    SIZE_T oldSize, rounded_size;
+    SIZE_T oldBlockSize, oldActualSize, rounded_size;
 
     if (!ptr) return NULL;
     if (!(heapPtr = HEAP_GetPtr( heap )))
@@ -1355,13 +1355,14 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
     /* Check if we need to grow the block */
 
-    oldSize = (pArena->size & ARENA_SIZE_MASK);
-    if (rounded_size > oldSize)
+    oldBlockSize = (pArena->size & ARENA_SIZE_MASK);
+    oldActualSize = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
+    if (rounded_size > oldBlockSize)
     {
-        char *pNext = (char *)(pArena + 1) + oldSize;
+        char *pNext = (char *)(pArena + 1) + oldBlockSize;
         if ((pNext < (char *)subheap->base + subheap->size) &&
             (*(DWORD *)pNext & ARENA_FLAG_FREE) &&
-            (oldSize + (*(DWORD *)pNext & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) >= rounded_size))
+            (oldBlockSize + (*(DWORD *)pNext & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) >= rounded_size))
         {
             /* The next block is free and large enough */
             ARENA_FREE *pFree = (ARENA_FREE *)pNext;
@@ -1378,7 +1379,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
             HEAP_ShrinkBlock( subheap, pArena, rounded_size );
             notify_alloc( pArena + 1, size, FALSE );
             /* FIXME: this is wrong as we may lose old VBits settings */
-            mark_block_initialized( pArena + 1, oldSize );
+            mark_block_initialized( pArena + 1, oldActualSize );
         }
         else  /* Do it the hard way */
         {
@@ -1403,9 +1404,10 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
                            + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
             pInUse->magic = ARENA_INUSE_MAGIC;
             HEAP_ShrinkBlock( newsubheap, pInUse, rounded_size );
-            mark_block_initialized( pInUse + 1, oldSize );
+
+            mark_block_initialized( pInUse + 1, oldActualSize );
             notify_alloc( pInUse + 1, size, FALSE );
-            memcpy( pInUse + 1, pArena + 1, oldSize );
+            memcpy( pInUse + 1, pArena + 1, oldActualSize );
 
             /* Free the previous block */
 
@@ -1429,14 +1431,14 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
     /* Clear the extra bytes if needed */
 
-    if (rounded_size > oldSize)
+    if ((pArena->size & ARENA_SIZE_MASK) > oldActualSize)
     {
         if (flags & HEAP_ZERO_MEMORY)
-            clear_block( (char *)(pArena + 1) + oldSize,
-                         (pArena->size & ARENA_SIZE_MASK) - oldSize );
+            clear_block( (char *)(pArena + 1) + oldActualSize,
+                         (pArena->size & ARENA_SIZE_MASK) - oldActualSize );
         else
-            mark_block_uninitialized( (char *)(pArena + 1) + oldSize,
-                                      (pArena->size & ARENA_SIZE_MASK) - oldSize );
+            mark_block_uninitialized( (char *)(pArena + 1) + oldActualSize,
+                                      (pArena->size & ARENA_SIZE_MASK) - oldActualSize );
     }
 
     /* Return the new arena */
