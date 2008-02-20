@@ -1028,6 +1028,15 @@ out:
                          ptr = ((D3DTRIANGLE*)(ptr))+1;\
                         } while (0)
 
+HRESULT CALLBACK TextureFormatEnumCallback(LPDDSURFACEDESC lpDDSD, LPVOID lpContext)
+{
+    if (lpDDSD->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+        *(BOOL*)lpContext = TRUE;
+    }
+
+    return DDENUMRET_OK;
+}
+
 static void D3D1_TextureMapBlendTest(void)
 {
     HRESULT hr;
@@ -1043,6 +1052,9 @@ static void D3D1_TextureMapBlendTest(void)
     DDCOLORKEY clrKey;
     IDirectDrawSurface *TexSurface = NULL;
     IDirect3DTexture *Texture = NULL;
+    IDirectDrawPalette *Palette = NULL;
+    PALETTEENTRY table1[256];
+    BOOL p8_textures_supported = FALSE;
 
     struct {
         float x, y, z;
@@ -1554,9 +1566,6 @@ static void D3D1_TextureMapBlendTest(void)
     ok(red == 0xff &&  green == 0 && blue == 0, "Got color %08x, expected 00ff0000 or near\n", color);
 
     color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 245);
-    red =   (color & 0x00ff0000) >> 16;
-    green = (color & 0x0000ff00) >>  8;
-    blue =  (color & 0x000000ff);
     ok(color == 0, "Got color %08x, expected 00000000\n", color);
 
     color = D3D1_getPixelColor(DirectDraw1, Surface1, 400, 245);
@@ -1565,8 +1574,148 @@ static void D3D1_TextureMapBlendTest(void)
     blue =  (color & 0x000000ff);
     ok(red >= 0x7e && red <= 0x82 &&  green == 0 && blue == 0, "Got color %08x, expected 00800000 or near\n", color);
 
+    /* 5) Test alpha again, now with color keyed P8 texture */
+    if(Texture) IDirect3DTexture_Release(Texture);
+    Texture = NULL;
+    if(TexSurface) IDirectDrawSurface_Release(TexSurface);
+    TexSurface = NULL;
+
+    hr = IDirect3DDevice_EnumTextureFormats(Direct3DDevice1, TextureFormatEnumCallback,
+                                                &p8_textures_supported);
+    ok(hr == DD_OK, "IDirect3DDevice_EnumTextureFormats returned %08x\n", hr);
+
+    if (!p8_textures_supported) {
+        skip("device has no P8 texture support, skipping test\n");
+    } else {
+        memset (&ddsd, 0, sizeof (ddsd));
+        ddsd.dwSize = sizeof (ddsd);
+        ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+        ddsd.dwHeight = 128;
+        ddsd.dwWidth = 128;
+        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+        ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+        U1(ddsd.ddpfPixelFormat).dwRGBBitCount      = 8;
+
+        hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &TexSurface, NULL);
+        ok(hr==D3D_OK, "CreateSurface returned: %x\n", hr);
+        if (FAILED(hr)) {
+            skip("IDirectDraw_CreateSurface failed; skipping further tests\n");
+            goto out;
+        }
+
+        memset(table1, 0, sizeof(table1));
+        table1[0].peBlue = 0xff;
+        table1[1].peRed = 0xff;
+
+        hr = IDirectDraw_CreatePalette(DirectDraw1, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, table1, &Palette, NULL);
+        ok(hr == DD_OK, "CreatePalette returned %08x\n", hr);
+        if (FAILED(hr)) {
+            skip("IDirectDraw_CreatePalette failed; skipping further tests\n");
+            goto out;
+        }
+
+        hr = IDirectDrawSurface_SetPalette(TexSurface, Palette);
+        ok(hr==D3D_OK, "IDirectDrawSurface_SetPalette returned: %x\n", hr);
+
+        hr = IDirectDrawSurface_QueryInterface(TexSurface, &IID_IDirect3DTexture,
+                    (void *)&Texture);
+        ok(hr==D3D_OK, "IDirectDrawSurface_QueryInterface returned: %x\n", hr);
+        if (FAILED(hr)) {
+            skip("Can't get IDirect3DTexture interface; skipping further tests\n");
+            goto out;
+        }
+
+        memset(&ddbltfx, 0, sizeof(ddbltfx));
+        ddbltfx.dwSize = sizeof(ddbltfx);
+        U5(ddbltfx).dwFillColor = 0;
+        hr = IDirectDrawSurface_Blt(Surface1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
+        ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
+        U5(ddbltfx).dwFillColor = 0;
+        hr = IDirectDrawSurface_Blt(TexSurface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
+        ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
+        U5(ddbltfx).dwFillColor = 1;
+        hr = IDirectDrawSurface_Blt(TexSurface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
+        ok(hr == D3D_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
+
+        clrKey.dwColorSpaceLowValue = 1;
+        clrKey.dwColorSpaceHighValue = 1;
+        hr = IDirectDrawSurface_SetColorKey(TexSurface, DDCKEY_SRCBLT, &clrKey);
+        ok(hr==D3D_OK, "IDirectDrawSurfac_SetColorKey returned: %x\n", hr);
+
+        memset(&exdesc, 0, sizeof(D3DEXECUTEBUFFERDESC));
+        exdesc.dwSize = sizeof(D3DEXECUTEBUFFERDESC);
+        hr = IDirect3DExecuteBuffer_Lock(ExecuteBuffer, &exdesc);
+        ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Lock failed with %08x\n", hr);
+        if (FAILED(hr)) {
+            skip("IDirect3DExecuteBuffer_Lock failed; skipping further tests\n");
+            goto out;
+        }
+
+        memcpy(exdesc.lpData, test1_quads, sizeof(test1_quads));
+
+        exe_buffer_ptr = 256 + (char*)exdesc.lpData;
+
+        EXEBUF_PUT_PROCESSVERTICES(8, exe_buffer_ptr);
+
+        EXEBUF_START_RENDER_STATES(2, exe_buffer_ptr);
+        EXEBUF_PUT_RENDER_STATE(D3DRENDERSTATE_ALPHABLENDENABLE, TRUE, exe_buffer_ptr);
+        hr = IDirect3DTexture_GetHandle(Texture, Direct3DDevice1, &htex);
+        ok(hr == D3D_OK, "IDirect3DTexture_GetHandle failed with %08x\n", hr);
+        EXEBUF_PUT_RENDER_STATE(D3DRENDERSTATE_TEXTUREHANDLE,  htex, exe_buffer_ptr);
+
+        EXEBUF_PUT_QUAD(0, exe_buffer_ptr);
+        EXEBUF_PUT_QUAD(4, exe_buffer_ptr);
+
+        EXEBUF_END(exe_buffer_ptr);
+
+        exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - 256;
+
+        hr = IDirect3DExecuteBuffer_Unlock(ExecuteBuffer);
+        if (FAILED(hr)) {
+            trace("IDirect3DExecuteBuffer_Unlock failed with %08x\n", hr);
+        }
+
+        memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
+        exdata.dwSize = sizeof(D3DEXECUTEDATA);
+        exdata.dwVertexCount = 8;
+        exdata.dwInstructionOffset = 256;
+        exdata.dwInstructionLength = exe_length;
+        hr = IDirect3DExecuteBuffer_SetExecuteData(ExecuteBuffer, &exdata);
+        ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
+
+        hr = IDirect3DDevice_BeginScene(Direct3DDevice1);
+        ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+
+        if (SUCCEEDED(hr)) {
+            hr = IDirect3DDevice_Execute(Direct3DDevice1, ExecuteBuffer, Viewport, D3DEXECUTE_UNCLIPPED);
+            ok(hr == D3D_OK, "IDirect3DDevice_Execute failed, hr = %08x\n", hr);
+            hr = IDirect3DDevice_EndScene(Direct3DDevice1);
+            ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        }
+
+        color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 5);
+        ok(color == 0, "Got color %08x, expected 00000000\n", color);
+
+        color = D3D1_getPixelColor(DirectDraw1, Surface1, 400, 5);
+        red =   (color & 0x00ff0000) >> 16;
+        green = (color & 0x0000ff00) >>  8;
+        blue =  (color & 0x000000ff);
+        ok(red == 0 &&  green == 0 && blue == 0xff, "Got color %08x, expected 000000ff or near\n", color);
+
+        color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 245);
+        ok(color == 0, "Got color %08x, expected 00000000\n", color);
+
+        color = D3D1_getPixelColor(DirectDraw1, Surface1, 400, 245);
+        red =   (color & 0x00ff0000) >> 16;
+        green = (color & 0x0000ff00) >>  8;
+        blue =  (color & 0x000000ff);
+        ok(red == 0 &&  green == 0 && blue >= 0x7e && blue <= 0x82, "Got color %08x, expected 00000080 or near\n", color);
+    }
+
     out:
 
+    if (Palette) IDirectDrawPalette_Release(Palette);
     if (TexSurface) IDirectDrawSurface_Release(TexSurface);
     if (Texture) IDirect3DTexture_Release(Texture);
 }
