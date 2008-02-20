@@ -98,6 +98,7 @@ STRINGTABLE
     IDS_ABOUTVER           "버젼 1.0"
     IDS_TYPELIBTITLE       "ITypeLib 뷰어"
     IDS_OPEN               "열기"
+    IDS_OPEN_TYPELIB_FILTER "TypeLib Files (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
 
     IDM_BIND,              "파일 별명으로 파일 연결"
     IDM_TYPELIB,           "타입 라이브러리 파일을 열고 내용 보기"

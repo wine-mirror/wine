@@ -25,13 +25,6 @@ static WCHAR wszRegEdit[] = { 'r','e','g','e','d','i','t','.','e','x','e','\0' }
 static WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
     'c','l','a','s','s','i','d','=','\"','c','l','s','i','d',':','%','s','\"','\n',
     '>','\n','<','/','o','b','j','e','c','t','>','\0' };
-WCHAR wszFilter[] = { 'T','y','p','e','L','i','b',' ','F','i','l','e','s',' ',
-    '(','*','t','l','b',';','*','o','l','b',';','*','.','d','l','l',';',
-    '*','.','o','c','x',';','*','.','e','x','e',')','\0',
-    '*','.','t','l','b',';','*','.','o','l','b',';','*','.','d','l','l',';',
-    '*','.','o','c','x','*','.','e','x','e','\0',
-    'A','l','l',' ','F','i','l','e','s',' ','(','*','.','*',')','\0',
-    '*','.','*','\0','\0' };
 
 INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -408,8 +401,10 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             OPENFILENAME ofn;
             static WCHAR wszTitle[MAX_LOAD_STRING];
             static WCHAR wszName[MAX_LOAD_STRING];
+            static WCHAR wszFilter[MAX_LOAD_STRING];
 
             LoadString(globals.hMainInst, IDS_OPEN, wszTitle, sizeof(wszTitle));
+            LoadString(globals.hMainInst, IDS_OPEN_TYPELIB_FILTER, wszFilter, sizeof(wszFilter));
             InitOpenFileName(hWnd, &ofn, wszFilter, wszTitle, wszName);
             if(GetOpenFileName(&ofn)) CreateTypeLibWindow(globals.hMainInst, wszName);
             break;

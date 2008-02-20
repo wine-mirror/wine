@@ -96,6 +96,7 @@ STRINGTABLE
     IDS_ABOUTVER           "versie 1.0"
     IDS_TYPELIBTITLE       "ITypeLib Toner"
     IDS_OPEN               "Open"
+    IDS_OPEN_TYPELIB_FILTER "TypeLib Files (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
 
     IDM_BIND,              "Verbind aan een bestand via een Bestandsbeschrijver (Moniker)"
     IDM_TYPELIB,           "Open een TypeLib bestand en bekijk de inhoud"
