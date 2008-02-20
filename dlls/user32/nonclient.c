@@ -611,19 +611,19 @@ static LRESULT NC_DoNCHitTest (WND *wndPtr, POINT pt )
 
             /* Check close button */
             if (wndPtr->dwStyle & WS_SYSMENU)
-                rect.right -= GetSystemMetrics(SM_CYCAPTION) - 1;
+                rect.right -= GetSystemMetrics(SM_CYCAPTION);
             if (pt.x > rect.right) return HTCLOSE;
 
             /* Check maximize box */
             /* In win95 there is automatically a Maximize button when there is a minimize one*/
             if (min_or_max_box && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
-                rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+                rect.right -= GetSystemMetrics(SM_CXSIZE);
             if (pt.x > rect.right) return HTMAXBUTTON;
 
             /* Check minimize box */
             /* In win95 there is automatically a Maximize button when there is a Maximize one*/
             if (min_or_max_box && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
-                rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+                rect.right -= GetSystemMetrics(SM_CXSIZE);
 
             if (pt.x > rect.right) return HTMINBUTTON;
             return HTCAPTION;
@@ -742,8 +742,8 @@ static void NC_DrawCloseButton (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
     }
     else
     {
-        rect.left = rect.right - GetSystemMetrics(SM_CXSIZE) - 1;
-        rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
+        rect.left = rect.right - GetSystemMetrics(SM_CXSIZE);
+        rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 2;
         rect.top += 2;
         rect.right -= 2;
     }
@@ -772,9 +772,9 @@ static void NC_DrawMaxButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 
     NC_GetInsideRect( hwnd, &rect );
     if (GetWindowLongW( hwnd, GWL_STYLE) & WS_SYSMENU)
-        rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+        rect.right -= GetSystemMetrics(SM_CXSIZE);
     rect.left = rect.right - GetSystemMetrics(SM_CXSIZE);
-    rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
+    rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 2;
     rect.top += 2;
     rect.right -= 2;
     if (down) flags |= DFCS_PUSHED;
@@ -800,11 +800,11 @@ static void  NC_DrawMinButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 
     NC_GetInsideRect( hwnd, &rect );
     if (style & WS_SYSMENU)
-        rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+        rect.right -= GetSystemMetrics(SM_CXSIZE);
     if (style & (WS_MAXIMIZEBOX|WS_MINIMIZEBOX))
         rect.right -= GetSystemMetrics(SM_CXSIZE) - 2;
     rect.left = rect.right - GetSystemMetrics(SM_CXSIZE);
-    rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 1;
+    rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE) - 2;
     rect.top += 2;
     rect.right -= 2;
     if (down) flags |= DFCS_PUSHED;
