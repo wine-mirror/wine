@@ -58,10 +58,6 @@ typedef struct tagACLMulti {
     struct ACLMultiSublist *objs;
 } ACLMulti;
 
-static const IEnumStringVtbl ACLMultiVtbl;
-static const IACListVtbl ACLMulti_ACListVtbl;
-static const IObjMgrVtbl ACLMulti_ObjMgrVtbl;
-
 static inline ACLMulti *impl_from_IACList(IACList *iface)
 {
     return (ACLMulti *)((char *)iface - FIELD_OFFSET(ACLMulti, aclVtbl));
@@ -81,35 +77,14 @@ static void release_obj(struct ACLMultiSublist *obj)
         IACList_Release(obj->pACL);
 }
 
-HRESULT ACLMulti_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
-{
-    ACLMulti *This;
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
-    This = CoTaskMemAlloc(sizeof(ACLMulti));
-    if (This == NULL)
-        return E_OUTOFMEMORY;
-    ZeroMemory(This, sizeof(*This));
-    This->vtbl = &ACLMultiVtbl;
-    This->aclVtbl = &ACLMulti_ACListVtbl;
-    This->objmgrVtbl = &ACLMulti_ObjMgrVtbl;
-    This->refCount = 1;
-
-    TRACE("returning %p\n", This);
-    *ppOut = (IUnknown *)This;
-    BROWSEUI_refCount++;
-    return S_OK;
-}
-
-static void WINAPI ACLMulti_Destructor(ACLMulti *This)
+static void ACLMulti_Destructor(ACLMulti *This)
 {
     int i;
     TRACE("destroying %p\n", This);
     for (i = 0; i < This->nObjs; i++)
         release_obj(&This->objs[i]);
-    CoTaskMemFree(This->objs);
-    CoTaskMemFree(This);
+    heap_free(This->objs);
+    heap_free(This);
     BROWSEUI_refCount--;
 }
 
@@ -166,7 +141,7 @@ static HRESULT WINAPI ACLMulti_Append(IObjMgr *iface, IUnknown *obj)
     if (obj == NULL)
         return E_FAIL;
 
-    This->objs = CoTaskMemRealloc(This->objs, sizeof(This->objs[0]) * (This->nObjs+1));
+    This->objs = heap_realloc(This->objs, sizeof(This->objs[0]) * (This->nObjs+1));
     This->objs[This->nObjs].punk = obj;
     IUnknown_AddRef(obj);
     if (FAILED(IUnknown_QueryInterface(obj, &IID_IEnumString, (LPVOID *)&This->objs[This->nObjs].pEnum)))
@@ -189,7 +164,7 @@ static HRESULT WINAPI ACLMulti_Remove(IObjMgr *iface, IUnknown *obj)
             release_obj(&This->objs[i]);
             memmove(&This->objs[i], &This->objs[i+1], (This->nObjs-i-1)*sizeof(struct ACLMultiSublist));
             This->nObjs--;
-            This->objs = CoTaskMemRealloc(This->objs, sizeof(This->objs[0]) * This->nObjs);
+            This->objs = heap_realloc(This->objs, sizeof(This->objs[0]) * This->nObjs);
             return S_OK;
         }
 
@@ -328,3 +303,24 @@ static const IACListVtbl ACLMulti_ACListVtbl =
 
     ACLMulti_Expand
 };
+
+HRESULT ACLMulti_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
+{
+    ACLMulti *This;
+    if (pUnkOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    This = heap_alloc(sizeof(ACLMulti));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+    ZeroMemory(This, sizeof(*This));
+    This->vtbl = &ACLMultiVtbl;
+    This->aclVtbl = &ACLMulti_ACListVtbl;
+    This->objmgrVtbl = &ACLMulti_ObjMgrVtbl;
+    This->refCount = 1;
+
+    TRACE("returning %p\n", This);
+    *ppOut = (IUnknown *)This;
+    BROWSEUI_refCount++;
+    return S_OK;
+}
