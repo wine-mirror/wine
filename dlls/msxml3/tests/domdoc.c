@@ -645,6 +645,18 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("processinginstruction") ), "incorrect nodeTypeString string\n");
         SysFreeString(str);
 
+        /* test get_nodeValue */
+        r = IXMLDOMProcessingInstruction_get_nodeValue(nodePI, &var);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( V_BSTR(&var), _bstr_("version=\"1.0\"") ), "incorrect data string\n");
+        VariantClear(&var);
+
+        /* test get_data */
+        r = IXMLDOMProcessingInstruction_get_data(nodePI, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("version=\"1.0\"") ), "incorrect data string\n");
+        SysFreeString(str);
+
         IXMLDOMProcessingInstruction_Release(nodePI);
     }
 
