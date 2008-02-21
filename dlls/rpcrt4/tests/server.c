@@ -93,6 +93,12 @@ s_str_length(const char *s)
 }
 
 int
+s_str_t_length(str_t s)
+{
+  return strlen(s);
+}
+
+int
 s_cstr_length(const char *s, int n)
 {
   int len = 0;
@@ -497,6 +503,16 @@ s_sum_L1_norms(int n, vector_t *vs)
   return sum;
 }
 
+s123_t *
+s_get_s123(void)
+{
+  s123_t *s = MIDL_user_allocate(sizeof *s);
+  s->f1 = 1;
+  s->f2 = 2;
+  s->f3 = 3;
+  return s;
+}
+
 str_t
 s_get_filename(void)
 {
@@ -693,6 +709,7 @@ basic_tests(void)
   ok(x == 25, "RPC square_ref\n");
 
   ok(str_length(string) == strlen(string), "RPC str_length\n");
+  ok(str_t_length(string) == strlen(string), "RPC str_length\n");
   ok(dot_self(&a) == 59, "RPC dot_self\n");
 
   ok(str_struct_len(&ss) == lstrlenA(string), "RPC str_struct_len\n");
@@ -959,6 +976,7 @@ pointer_tests(void)
   name_t name;
   void *buffer;
   int *pa2;
+  s123_t *s123;
 
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
@@ -1012,6 +1030,10 @@ pointer_tests(void)
 
   pa2 = a;
   ok(sum_pcarr2(4, &pa2) == 10, "RPC sum_pcarr2\n");
+
+  s123 = get_s123();
+  ok(s123->f1 == 1 && s123->f2 == 2 && s123->f3 == 3, "RPC get_s123\n");
+  MIDL_user_free(s123);
 }
 
 static int
