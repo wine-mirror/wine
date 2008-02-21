@@ -663,6 +663,7 @@ struct x11drv_win_data
 {
     HWND        hwnd;           /* hwnd that this private data belongs to */
     Window      whole_window;   /* X window for the complete window */
+    Window      client_window;  /* X window for the client area */
     Window      icon_window;    /* X window for the icon */
     XID         fbconfig_id;    /* fbconfig id for the GL drawable this hwnd uses */
     Drawable    gl_drawable;    /* Optional GL drawable for rendering the client area */
@@ -684,6 +685,7 @@ struct x11drv_win_data
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
 extern struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
+extern Window X11DRV_get_client_window( HWND hwnd );
 extern XID X11DRV_get_fbconfig_id( HWND hwnd );
 extern Drawable X11DRV_get_gl_drawable( HWND hwnd );
 extern Pixmap X11DRV_get_gl_pixmap( HWND hwnd );
@@ -726,9 +728,11 @@ extern BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
 extern void X11DRV_set_iconic_state( HWND hwnd );
 extern void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect );
 extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect );
-extern void X11DRV_sync_gl_drawable( Display *display, struct x11drv_win_data *data );
 extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data );
 extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
+                                         UINT swp_flags, const RECT *old_client_rect,
+                                         const RECT *old_whole_rect );
+extern void X11DRV_sync_client_position( Display *display, struct x11drv_win_data *data,
                                          UINT swp_flags, const RECT *old_client_rect,
                                          const RECT *old_whole_rect );
 extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );

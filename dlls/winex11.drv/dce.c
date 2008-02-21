@@ -143,17 +143,22 @@ static void update_visible_region( struct dce *dce )
     if (dce->clip_rgn) CombineRgn( vis_rgn, vis_rgn, dce->clip_rgn,
                                    (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
+    escape.fbconfig_id = 0;
+    escape.gl_drawable = 0;
+    escape.pixmap = 0;
+
     if (top == dce->hwnd && ((data = X11DRV_get_win_data( dce->hwnd )) != NULL) &&
          IsIconic( dce->hwnd ) && data->icon_window)
     {
         escape.drawable = data->icon_window;
-        escape.fbconfig_id = 0;
-        escape.gl_drawable = 0;
-        escape.pixmap = 0;
+    }
+    else if (top == dce->hwnd && (flags & DCX_WINDOW))
+    {
+        escape.drawable = X11DRV_get_whole_window( top );
     }
     else
     {
-        escape.drawable = X11DRV_get_whole_window( top );
+        escape.drawable = X11DRV_get_client_window( top );
         escape.fbconfig_id = X11DRV_get_fbconfig_id( dce->hwnd );
         escape.gl_drawable = X11DRV_get_gl_drawable( dce->hwnd );
         escape.pixmap = X11DRV_get_gl_pixmap( dce->hwnd );

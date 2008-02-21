@@ -93,18 +93,22 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
-    rect.left   = data->whole_rect.left + event->x;
-    rect.top    = data->whole_rect.top + event->y;
+    if (event->window == data->whole_window)
+    {
+        rect.left = data->whole_rect.left + event->x;
+        rect.top  = data->whole_rect.top + event->y;
+        flags |= RDW_FRAME;
+    }
+    else
+    {
+        rect.left = data->client_rect.left + event->x;
+        rect.top  = data->client_rect.top + event->y;
+    }
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
     if (event->window == root_window)
         OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
-
-    if (rect.left < data->client_rect.left ||
-        rect.top < data->client_rect.top ||
-        rect.right > data->client_rect.right ||
-        rect.bottom > data->client_rect.bottom) flags |= RDW_FRAME;
 
     SERVER_START_REQ( update_window_zorder )
     {
@@ -243,7 +247,7 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
  * Move the window bits when a window is moved.
  */
 static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect, const RECT *new_rect,
-                              const RECT *old_whole_rect )
+                              const RECT *old_client_rect )
 {
     RECT src_rect = *old_rect;
     RECT dst_rect = *new_rect;
@@ -261,23 +265,19 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
     }
     else
     {
-        OffsetRect( &dst_rect, -data->whole_rect.left, -data->whole_rect.top );
+        OffsetRect( &dst_rect, -data->client_rect.left, -data->client_rect.top );
         /* make src rect relative to the old position of the window */
-        OffsetRect( &src_rect, -old_whole_rect->left, -old_whole_rect->top );
+        OffsetRect( &src_rect, -old_client_rect->left, -old_client_rect->top );
         if (dst_rect.left == src_rect.left && dst_rect.top == src_rect.top) return;
-        /* now make them relative to window rect for DCX_WINDOW */
-        OffsetRect( &dst_rect, data->whole_rect.left - data->window_rect.left,
-                    data->whole_rect.top - data->window_rect.top );
-        OffsetRect( &src_rect, data->whole_rect.left - data->window_rect.left,
-                    data->whole_rect.top - data->window_rect.top );
-        hdc_src = hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE | DCX_WINDOW );
+        hdc_src = hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE );
     }
 
     code = X11DRV_START_EXPOSURES;
     ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 
-    TRACE( "copying bits for win %p/%lx %s -> %s\n",
-         data->hwnd, data->whole_window, wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect) );
+    TRACE( "copying bits for win %p/%lx/%lx %s -> %s\n",
+           data->hwnd, data->whole_window, data->client_window,
+           wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect) );
     BitBlt( hdc_dst, dst_rect.left, dst_rect.top,
             dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
             hdc_src, src_rect.left, src_rect.top, SRCCOPY );
@@ -290,9 +290,15 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
 
     if (rgn)
     {
-        OffsetRgn( rgn, data->window_rect.left - data->client_rect.left,
-                   data->window_rect.top - data->client_rect.top );
-        RedrawWindow( data->hwnd, NULL, rgn, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN );
+        if (!data->whole_window)
+        {
+            /* map region to client rect since we are using DCX_WINDOW */
+            OffsetRgn( rgn, data->window_rect.left - data->client_rect.left,
+                       data->window_rect.top - data->client_rect.top );
+            RedrawWindow( data->hwnd, NULL, rgn,
+                          RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN );
+        }
+        else RedrawWindow( data->hwnd, NULL, rgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
         DeleteObject( rgn );
     }
 }
@@ -384,16 +390,13 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
         {
             /* if we have an X window the bits will be moved by the X server */
             if (!data->whole_window)
-                move_window_bits( data, &old_whole_rect, &data->whole_rect, &old_whole_rect );
+                move_window_bits( data, &old_whole_rect, &data->whole_rect, &old_client_rect );
         }
         else
-            move_window_bits( data, &valid_rects[1], &valid_rects[0], &old_whole_rect );
+            move_window_bits( data, &valid_rects[1], &valid_rects[0], &old_client_rect );
     }
 
-    if (data->gl_drawable &&
-        data->client_rect.right-data->client_rect.left == old_client_rect.right-old_client_rect.left &&
-        data->client_rect.bottom-data->client_rect.top == old_client_rect.bottom-old_client_rect.top)
-        X11DRV_sync_gl_drawable( display, data );
+    X11DRV_sync_client_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
 
     if (!data->whole_window || data->lock_changes) return;  /* nothing more to do */
 
@@ -1197,7 +1200,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     BOOL    moved = FALSE;
     DWORD     dwPoint = GetMessagePos ();
     BOOL DragFullWindows = TRUE;
-    Window parent_win, whole_win;
+    Window parent_win, grab_win;
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data;
 
@@ -1297,15 +1300,15 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     if (parent || (root_window != DefaultRootWindow(gdi_display)))
         SystemParametersInfoA(SPI_GETDRAGFULLWINDOWS, 0, &DragFullWindows, 0);
 
-    whole_win = X11DRV_get_whole_window( GetAncestor(hwnd,GA_ROOT) );
-    parent_win = parent ? X11DRV_get_whole_window( GetAncestor(parent,GA_ROOT) ) : root_window;
+    grab_win = X11DRV_get_client_window( GetAncestor(hwnd,GA_ROOT) );
+    parent_win = parent ? X11DRV_get_client_window( GetAncestor(parent,GA_ROOT) ) : root_window;
 
     wine_tsx11_lock();
-    XGrabPointer( thread_data->display, whole_win, False,
+    XGrabPointer( thread_data->display, grab_win, False,
                   PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                   GrabModeAsync, GrabModeAsync, parent_win, None, CurrentTime );
     wine_tsx11_unlock();
-    thread_data->grab_window = whole_win;
+    thread_data->grab_window = grab_win;
 
     while(1)
     {

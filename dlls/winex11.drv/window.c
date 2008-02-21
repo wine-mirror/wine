@@ -58,6 +58,7 @@ XContext winContext = 0;
 static XContext win_data_context;
 
 static const char whole_window_prop[] = "__wine_x11_whole_window";
+static const char client_window_prop[]= "__wine_x11_client_window";
 static const char icon_window_prop[]  = "__wine_x11_icon_window";
 static const char fbconfig_id_prop[]  = "__wine_x11_fbconfig_id";
 static const char gl_drawable_prop[]  = "__wine_x11_gl_drawable";
@@ -426,9 +427,9 @@ done:
 }
 
 /***********************************************************************
- *              X11DRV_sync_gl_drawable
+ *              sync_gl_drawable
  */
-void X11DRV_sync_gl_drawable(Display *display, struct x11drv_win_data *data)
+static void sync_gl_drawable(Display *display, struct x11drv_win_data *data)
 {
     int w = data->client_rect.right - data->client_rect.left;
     int h = data->client_rect.bottom - data->client_rect.top;
@@ -500,7 +501,6 @@ void X11DRV_sync_gl_drawable(Display *display, struct x11drv_win_data *data)
     data->pixmap = pix;
     data->gl_drawable = glxp;
 
-    XFlush(display);
     wine_tsx11_unlock();
 
     SetPropA(data->hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
@@ -520,12 +520,12 @@ static int get_window_changes( XWindowChanges *changes, const RECT *old, const R
 
     if (old->right - old->left != new->right - new->left )
     {
-        if (!(changes->width = new->right - new->left)) changes->width = 1;
+        if ((changes->width = new->right - new->left) <= 0) changes->width = 1;
         mask |= CWWidth;
     }
     if (old->bottom - old->top != new->bottom - new->top)
     {
-        if (!(changes->height = new->bottom - new->top)) changes->height = 1;
+        if ((changes->height = new->bottom - new->top) <= 0) changes->height = 1;
         mask |= CWHeight;
     }
     if (old->left != new->left)
@@ -1086,6 +1086,46 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
 }
 
 
+/***********************************************************************
+ *		X11DRV_sync_client_position
+ *
+ * Synchronize the X client window position with the Windows one
+ */
+void X11DRV_sync_client_position( Display *display, struct x11drv_win_data *data,
+                                  UINT swp_flags, const RECT *old_client_rect,
+                                  const RECT *old_whole_rect )
+{
+    int mask;
+    XWindowChanges changes;
+    RECT old = *old_client_rect;
+    RECT new = data->client_rect;
+
+    OffsetRect( &old, -old_whole_rect->left, -old_whole_rect->top );
+    OffsetRect( &new, -data->whole_rect.left, -data->whole_rect.top );
+    if (!(mask = get_window_changes( &changes, &old, &new ))) return;
+
+    if (data->client_window)
+    {
+        TRACE( "setting client win %lx pos %d,%d,%dx%d changes=%x\n",
+               data->client_window, new.left, new.top,
+               new.right - new.left, new.bottom - new.top, mask );
+        wine_tsx11_lock();
+        XConfigureWindow( display, data->client_window, mask, &changes );
+        wine_tsx11_unlock();
+    }
+
+    if (data->gl_drawable && (mask & (CWWidth|CWHeight))) sync_gl_drawable( display, data );
+
+    /* make sure the changes get to the server before we start painting */
+    if (data->client_window || data->gl_drawable)
+    {
+        wine_tsx11_lock();
+        XFlush(display);
+        wine_tsx11_unlock();
+    }
+}
+
+
 /**********************************************************************
  *		create_whole_window
  *
@@ -1125,7 +1165,33 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
         wine_tsx11_unlock();
         return 0;
     }
+
+    attr.bit_gravity = NorthWestGravity;
+    attr.win_gravity = NorthWestGravity;
+    attr.backing_store = NotUseful;
+    attr.event_mask = (ExposureMask | PointerMotionMask |
+                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
+    mask = CWEventMask | CWBitGravity | CWWinGravity | CWBackingStore;
+
+    if ((cx = data->client_rect.right - data->client_rect.left) <= 0) cx = 1;
+    if ((cy = data->client_rect.bottom - data->client_rect.top) <= 0) cy = 1;
+
+    data->client_window = XCreateWindow( display, data->whole_window,
+                                         data->client_rect.left - data->window_rect.left,
+                                         data->client_rect.top - data->window_rect.top,
+                                         cx, cy, 0, screen_depth, InputOutput,
+                                         visual, mask, &attr );
+    if (!data->client_window)
+    {
+        XDestroyWindow( display, data->whole_window );
+        data->whole_window = 0;
+        wine_tsx11_unlock();
+        return 0;
+    }
+
+    XMapWindow( display, data->client_window );
     XSaveContext( display, data->whole_window, winContext, (char *)data->hwnd );
+    XSaveContext( display, data->client_window, winContext, (char *)data->hwnd );
     wine_tsx11_unlock();
 
     xim = x11drv_thread_data()->xim;
@@ -1135,6 +1201,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     X11DRV_set_wm_hints( display, data );
 
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)data->whole_window );
+    SetPropA( data->hwnd, client_window_prop, (HANDLE)data->client_window );
 
     /* set the window text */
     if (!InternalGetWindowText( data->hwnd, text, sizeof(text)/sizeof(WCHAR) )) text[0] = 0;
@@ -1161,12 +1228,15 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
 
     if (!data->whole_window) return;
 
-    TRACE( "win %p xwin %lx\n", data->hwnd, data->whole_window );
-    if (thread_data->cursor_window == data->whole_window) thread_data->cursor_window = None;
+    TRACE( "win %p xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
+    if (thread_data->cursor_window == data->whole_window ||
+        thread_data->cursor_window == data->client_window)
+        thread_data->cursor_window = None;
     wine_tsx11_lock();
     XDeleteContext( display, data->whole_window, winContext );
+    XDeleteContext( display, data->client_window, winContext );
     XDestroyWindow( display, data->whole_window );
-    data->whole_window = 0;
+    data->whole_window = data->client_window = 0;
     if (data->xic)
     {
         XUnsetICFocus( data->xic );
@@ -1178,6 +1248,7 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     data->wm_hints = NULL;
     wine_tsx11_unlock();
     RemovePropA( data->hwnd, whole_window_prop );
+    RemovePropA( data->hwnd, client_window_prop );
 }
 
 
@@ -1260,10 +1331,11 @@ static struct x11drv_win_data *create_desktop_win_data( Display *display, HWND h
     wine_tsx11_lock();
     visualid = XVisualIDFromVisual(visual);
     wine_tsx11_unlock();
-    data->whole_window = root_window;
+    data->whole_window = data->client_window = root_window;
     data->managed = TRUE;
     SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
+    SetPropA( data->hwnd, client_window_prop, (HANDLE)root_window );
     SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
     set_initial_wm_hints( display, data );
     return data;
@@ -1389,8 +1461,8 @@ struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
             HeapFree( GetProcessHeap(), 0, data );
             return NULL;
         }
-        TRACE( "win %p/%lx window %s whole %s client %s\n",
-               hwnd, data->whole_window, wine_dbgstr_rect( &data->window_rect ),
+        TRACE( "win %p/%lx/%lx window %s whole %s client %s\n",
+               hwnd, data->whole_window, data->client_window, wine_dbgstr_rect( &data->window_rect ),
                wine_dbgstr_rect( &data->whole_rect ), wine_dbgstr_rect( &data->client_rect ));
     }
 
@@ -1415,6 +1487,24 @@ Window X11DRV_get_whole_window( HWND hwnd )
         return (Window)GetPropA( hwnd, whole_window_prop );
     }
     return data->whole_window;
+}
+
+
+/***********************************************************************
+ *		X11DRV_get_client_window
+ *
+ * Return the X window associated with the client area of a window
+ */
+Window X11DRV_get_client_window( HWND hwnd )
+{
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+
+    if (!data)
+    {
+        if (hwnd == GetDesktopWindow()) return root_window;
+        return (Window)GetPropA( hwnd, client_window_prop );
+    }
+    return data->client_window;
 }
 
 

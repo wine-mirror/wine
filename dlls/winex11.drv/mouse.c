@@ -119,14 +119,22 @@ void X11DRV_Xcursor_Init(void)
  *
  * get the coordinates of a mouse event
  */
-static inline void get_coords( HWND hwnd, int x, int y, POINT *pt )
+static inline void get_coords( HWND hwnd, Window window, int x, int y, POINT *pt )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
     if (!data) return;
 
-    pt->x = x + data->whole_rect.left;
-    pt->y = y + data->whole_rect.top;
+    if (window == data->client_window)
+    {
+        pt->x = x + data->client_rect.left;
+        pt->y = y + data->client_rect.top;
+    }
+    else
+    {
+        pt->x = x + data->whole_rect.left;
+        pt->y = y + data->whole_rect.top;
+    }
 }
 
 /***********************************************************************
@@ -170,7 +178,7 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
         x += virtual_screen_rect.left;
         y += virtual_screen_rect.top;
     }
-    get_coords( hwnd, x, y, pt );
+    get_coords( hwnd, window, x, y, pt );
 
     /* update the cursor */
 

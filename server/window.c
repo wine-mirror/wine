@@ -2055,7 +2055,7 @@ DECL_HANDLER(get_visible_region)
         if (data) set_reply_data_ptr( data, reply->total_size );
     }
     reply->top_win  = top->handle;
-    reply->top_rect = top->visible_rect;
+    reply->top_rect = (top == win && (req->flags & DCX_WINDOW)) ? top->visible_rect : top->client_rect;
 
     if (!is_desktop_window(win))
     {
