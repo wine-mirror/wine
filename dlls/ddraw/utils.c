@@ -250,6 +250,7 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
 
         case WINED3DFMT_UYVY:
         case WINED3DFMT_YUY2:
+        case WINED3DFMT_YV12:
         case WINED3DFMT_DXT1:
         case WINED3DFMT_DXT2:
         case WINED3DFMT_DXT3:
@@ -552,6 +553,10 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
         if(DDPixelFormat->dwFourCC == MAKEFOURCC('Y', 'U', 'Y', '2'))
         {
             return WINED3DFMT_YUY2;
+        }
+        if(DDPixelFormat->dwFourCC == MAKEFOURCC('Y', 'V', '1', '2'))
+        {
+            return WINED3DFMT_YV12;
         }
         if(DDPixelFormat->dwFourCC == MAKEFOURCC('D', 'X', 'T', '1'))
         {
