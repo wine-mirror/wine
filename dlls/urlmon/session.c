@@ -27,6 +27,7 @@ typedef struct name_space {
     LPWSTR protocol;
     IClassFactory *cf;
     CLSID clsid;
+    BOOL urlmon;
 
     struct name_space *next;
 } name_space;
@@ -111,6 +112,7 @@ static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR proto
         IClassFactory_AddRef(cf);
     new_name_space->cf = cf;
     new_name_space->clsid = *clsid;
+    new_name_space->urlmon = urlmon_protocol;
     new_name_space->protocol = heap_strdupW(protocol);
 
     new_name_space->next = name_space_list;
@@ -119,7 +121,7 @@ static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR proto
     return S_OK;
 }
 
-static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol, BOOL urlmon_protocol)
+static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol)
 {
     name_space *iter, *last = NULL;
 
@@ -135,7 +137,7 @@ static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol, BOOL ur
         else
             name_space_list = iter->next;
 
-        if(!urlmon_protocol)
+        if(!iter->urlmon)
             IClassFactory_Release(iter->cf);
         heap_free(iter->protocol);
         heap_free(iter);
@@ -150,7 +152,7 @@ void register_urlmon_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR protocol
     if(do_register)
         register_namespace(cf, clsid, protocol, TRUE);
     else
-        unregister_namespace(cf, protocol, TRUE);
+        unregister_namespace(cf, protocol);
 }
 
 BOOL is_registered_protocol(LPCWSTR url)
@@ -183,6 +185,9 @@ IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
 
     ns = find_name_space(schema);
     if(ns) {
+        if(ns->urlmon)
+            return NULL;
+
         hres = IClassFactory_QueryInterface(ns->cf, &IID_IInternetProtocolInfo, (void**)&ret);
         if(SUCCEEDED(hres))
             return ret;
@@ -283,7 +288,7 @@ static HRESULT WINAPI InternetSession_UnregisterNameSpace(IInternetSession *ifac
     if(!pCF || !pszProtocol)
         return E_INVALIDARG;
 
-    return unregister_namespace(pCF, pszProtocol, FALSE);
+    return unregister_namespace(pCF, pszProtocol);
 }
 
 static HRESULT WINAPI InternetSession_RegisterMimeFilter(IInternetSession *iface,
