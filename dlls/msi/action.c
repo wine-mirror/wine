@@ -3389,12 +3389,16 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     HKEY hkey=0;
     HKEY hukey=0;
     HKEY hudkey=0, props=0;
+    HKEY source;
     static const WCHAR szProductLanguage[] =
         {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
     static const WCHAR szARPProductIcon[] =
         {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
     static const WCHAR szProductVersion[] =
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+    static const WCHAR szSourceList[] =
+        {'S','o','u','r','c','e','L','i','s','t',0};
+    static const WCHAR szEmpty[] = {0};
     DWORD langid;
     LPWSTR buffer;
     DWORD size;
@@ -3422,6 +3426,12 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     rc = MSIREG_OpenUserProductsKey(package->ProductCode,&hukey,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
+
+    rc = RegCreateKeyW(hukey, szSourceList, &source);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    RegCloseKey(source);
 
     rc = MSIREG_OpenUserDataProductKey(package->ProductCode,&hudkey,TRUE);
     if (rc != ERROR_SUCCESS)
@@ -3454,7 +3464,36 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONW, verdword );
     }
     msi_free(buffer);
-    
+
+    buffer = strrchrW( package->PackagePath, '\\') + 1;
+    rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
+                                MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                                INSTALLPROPERTY_PACKAGENAMEW, buffer );
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
+                                MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                                INSTALLPROPERTY_MEDIAPACKAGEPATHW, szEmpty );
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
+                                MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                                INSTALLPROPERTY_DISKPROMPTW, szEmpty );
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    buffer = msi_dup_property( package, cszSourceDir );
+
+    rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
+                                MSIINSTALLCONTEXT_USERUNMANAGED,
+                                MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                                INSTALLPROPERTY_LASTUSEDSOURCEW, buffer );
+    msi_free(buffer);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
     /* FIXME: Need to write more keys to the user registry */
   
     hDb= alloc_msihandle( &package->db->hdr );
