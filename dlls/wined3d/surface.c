@@ -2024,31 +2024,22 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
     }
 
     if (pal == NULL) {
+        /* In DirectDraw the palette is a property of the surface, there are no such things as device palettes. */
+        if(dxVersion <= 7) {
+            ERR("This code should never get entered for DirectDraw!, expect problems\n");
+            return;
+        }
+
         /* Still no palette? Use the device's palette */
         /* can ddraw and d3d < 8 surfaces use device's palette (d3d >= 8 feature)? */
         for (i = 0; i < 256; i++) {
             table[i][0] = device->palettes[device->currentPalette][i].peRed;
             table[i][1] = device->palettes[device->currentPalette][i].peGreen;
             table[i][2] = device->palettes[device->currentPalette][i].peBlue;
-
-            if(dxVersion >= 8) {
-                /* Direct3D >= 8 palette usage style: P8 textures use device palettes, palette entry format is A8R8G8B8,
-                   alpha is stored in peFlags and may be used by the app if D3DPTEXTURECAPS_ALPHAPALETTE device
-                   capability flag is present (wine does advertise this capability) */
-                table[i][3] = device->palettes[device->currentPalette][i].peFlags;
-            } else {
-                /* BltOverride uses a GL_ALPHA_TEST based on GL_NOT_EQUAL 0, so the alpha component
-                of pixels that should be masked away should be 0. When inde_in_alpha is set,
-                we will store the palette index (the glReadPixels code reads GL_ALPHA back)
-                or else we store 0xff. */
-                if(colorkey && (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&  (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
-                    table[i][3] = 0;
-                } else if(index_in_alpha) {
-                    table[i][3] = i;
-                } else {
-                    table[i][3] = 0xFF;
-                }
-            }
+            /* Direct3D >= 8 palette usage style: P8 textures use device palettes, palette entry format is A8R8G8B8,
+               alpha is stored in peFlags and may be used by the app if D3DPTEXTURECAPS_ALPHAPALETTE device
+               capability flag is present (wine does advertise this capability) */
+            table[i][3] = device->palettes[device->currentPalette][i].peFlags;
         }
     } else {
         TRACE("Using surface palette %p\n", pal);
@@ -3176,6 +3167,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         DWORD oldCKeyFlags = Src->CKeyFlags;
         WINEDDCOLORKEY oldBltCKey = This->SrcBltCKey;
         RECT SourceRectangle;
+        BOOL paletteOverride = FALSE;
 
         TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
 
@@ -3225,6 +3217,16 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         } else {
             /* Do not use color key */
             Src->CKeyFlags &= ~WINEDDSD_CKSRCBLT;
+        }
+
+        /* When blitting from an offscreen surface to a rendertarget, the source
+         * surface is not required to have a palette. Our rendering / conversion
+         * code further down the road retrieves the palette from the surface, so
+         * it must have a palette set. */
+        if((Src->resource.format == WINED3DFMT_P8) && (Src->palette == NULL)) {
+            paletteOverride = TRUE;
+            TRACE("Source surface (%p) lacks palette, overriding palette with palette %p of destination surface (%p)\n", Src, This->palette, This);
+            Src->palette = This->palette;
         }
 
         /* Now load the surface */
@@ -3326,6 +3328,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;
         This->SrcBltCKey = oldBltCKey;
+
+        /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
+        if(paletteOverride)
+            Src->palette = NULL;
 
         LEAVE_GL();
 
