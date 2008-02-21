@@ -32,6 +32,8 @@
  *	Add symbol size to internal symbol table.
  */
 
+#define NONAMELESSUNION
+
 #include "config.h"
 #include "wine/port.h"
 
