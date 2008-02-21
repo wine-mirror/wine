@@ -755,7 +755,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
     ptr = (LPWSTR) &pMonitors[len];
 
     numentries = 0;
-    len = sizeof(buffer);
+    len = sizeof(buffer)/sizeof(buffer[0]);
     buffer[0] = '\0';
 
     /* Windows creates the "Monitors"-Key on reboot / start "spooler" */
