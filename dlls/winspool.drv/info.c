@@ -763,7 +763,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
         /* Scan all Monitor-Registry-Keys */
         while (RegEnumKeyExW(hroot, index, buffer, &len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
             TRACE("Monitor_%d: %s\n", numentries, debugstr_w(buffer));
-            dllsize = sizeof(dllname)/sizeof(dllname[0]);
+            dllsize = sizeof(dllname);
             dllname[0] = '\0';
 
             /* The Monitor must have a Driver-DLL */
