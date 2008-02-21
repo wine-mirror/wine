@@ -1579,6 +1579,7 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
             needNotify = 1;
         }
     }
+    ioData->mBuffers[0].mDataByteSize = dataProvided;
 
     OSSpinLockUnlock(&wwo->lock);
 
