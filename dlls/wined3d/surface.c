@@ -56,6 +56,17 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
     IWineD3DSurface_BindTexture((IWineD3DSurface *)This);
 }
 
+/* This function checks if the primary render target uses the 8bit paletted format. */
+static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
+{
+    if (device->render_targets && device->render_targets[0]) {
+        IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
+        if((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET) && (render_target->resource.format == WINED3DFMT_P8))
+            return TRUE;
+    }
+    return FALSE;
+}
+
 /* This call just downloads data, the caller is responsible for activating the
  * right context and binding the correct texture. */
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
@@ -1441,7 +1452,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     const GlPixelFormatDesc *glDesc;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    BOOL p8_render_target = FALSE;
     getFormatDescEntry(This->resource.format, &GLINFO_LOCATION, &glDesc);
 
     /* Default values: From the surface */
@@ -1465,12 +1475,6 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 Paletted Texture
                 **************** */
 
-            if (device->render_targets && device->render_targets[0]) {
-                IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
-                if((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET) && (render_target->resource.format == WINED3DFMT_P8))
-                    p8_render_target = TRUE;
-            }
-
              /* Use conversion when the paletted texture extension OR fragment shaders are available. When either
              * of the two is available make sure texturing is requested as neither of the two works in
              * conjunction with calls like glDraw-/glReadPixels. Further also use conversion in case of color keying.
@@ -1478,7 +1482,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if( !(GL_SUPPORT(EXT_PALETTED_TEXTURE) || (GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && p8_render_target)) || colorkey_active || !use_texturing ) {
+            if( !(GL_SUPPORT(EXT_PALETTED_TEXTURE) || (GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && primary_render_target_is_p8(device))) || colorkey_active || !use_texturing ) {
                 *format = GL_RGBA;
                 *internal = GL_RGBA;
                 *type = GL_UNSIGNED_BYTE;
@@ -2016,12 +2020,7 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
     * is slow. Further RGB->P8 conversion is not possible because palettes can have
     * duplicate entries. Store the color key in the unused alpha component to speed the
     * download up and to make conversion unneeded. */
-    if (device->render_targets && device->render_targets[0]) {
-        IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
-
-        if((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET) && (render_target->resource.format == WINED3DFMT_P8))
-            index_in_alpha = TRUE;
-    }
+    index_in_alpha = primary_render_target_is_p8(device);
 
     if (pal == NULL) {
         /* In DirectDraw the palette is a property of the surface, there are no such things as device palettes. */
