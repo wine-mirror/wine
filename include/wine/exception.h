@@ -23,6 +23,7 @@
 
 #include <setjmp.h>
 #include <windef.h>
+#include <excpt.h>
 
 /* The following definitions allow using exceptions in Wine and Winelib code
  *
