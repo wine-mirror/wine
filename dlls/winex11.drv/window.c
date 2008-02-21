@@ -360,12 +360,13 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
     {
         XSetWindowAttributes attrib;
 
+        data->colormap = XCreateColormap(display, parent, vis->visual,
+                                         (vis->class == PseudoColor ||
+                                          vis->class == GrayScale ||
+                                          vis->class == DirectColor) ?
+                                         AllocAll : AllocNone);
         attrib.override_redirect = True;
-        attrib.colormap = XCreateColormap(display, parent, vis->visual,
-                                          (vis->class == PseudoColor ||
-                                           vis->class == GrayScale ||
-                                           vis->class == DirectColor) ?
-                                          AllocAll : AllocNone);
+        attrib.colormap = data->colormap;
         XInstallColormap(gdi_display, attrib.colormap);
 
         data->gl_drawable = XCreateWindow(display, parent, -w, 0, w, h, 0,
@@ -1293,6 +1294,13 @@ void X11DRV_DestroyWindow( HWND hwnd )
     free_window_dce( data );
     destroy_whole_window( display, data );
     destroy_icon_window( display, data );
+
+    if (data->colormap)
+    {
+        wine_tsx11_lock();
+        XFreeColormap( display, data->colormap );
+        wine_tsx11_unlock();
+    }
 
     if (thread_data->last_focus == hwnd) thread_data->last_focus = 0;
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );

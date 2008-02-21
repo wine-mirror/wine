@@ -665,6 +665,7 @@ struct x11drv_win_data
     Window      whole_window;   /* X window for the complete window */
     Window      client_window;  /* X window for the client area */
     Window      icon_window;    /* X window for the icon */
+    Colormap    colormap;       /* Colormap for this window */
     XID         fbconfig_id;    /* fbconfig id for the GL drawable this hwnd uses */
     Drawable    gl_drawable;    /* Optional GL drawable for rendering the client area */
     Pixmap      pixmap;         /* Base pixmap for if gl_drawable is a GLXPixmap */
