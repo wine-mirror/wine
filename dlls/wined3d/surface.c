@@ -2048,14 +2048,14 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
             table[i][1] = pal->palents[i].peGreen;
             table[i][2] = pal->palents[i].peBlue;
 
-            /* BltOverride uses a GL_ALPHA_TEST based on GL_NOT_EQUAL 0, so the alpha component
-              of pixels that should be masked away should be 0. When inde_in_alpha is set,
-              we will store the palette index (the glReadPixels code reads GL_ALPHA back)
-              or else we store 0xff. */
-            if(colorkey && (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&  (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
-                table[i][3] = 0x00;
-            } else if(index_in_alpha) {
+            /* When index_in_alpha is the palette index is stored in the alpha component. In case of a readback
+               we can then read GL_ALPHA. Color keying is handled in BltOverride using a GL_ALPHA_TEST using GL_NOT_EQUAL.
+               In case of index_in_alpha the color key itself is passed to glAlphaFunc in other cases the alpha component
+               of pixels that should be masked away is set to 0. */
+            if(index_in_alpha) {
                 table[i][3] = i;
+            } else if(colorkey && (i >= This->SrcBltCKey.dwColorSpaceLowValue) &&  (i <= This->SrcBltCKey.dwColorSpaceHighValue)) {
+                table[i][3] = 0x00;
             } else if(pal->Flags & WINEDDPCAPS_ALPHA) {
                 table[i][3] = pal->palents[i].peFlags;
             } else {
@@ -3270,7 +3270,14 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             glEnable(GL_ALPHA_TEST);
             checkGLcall("glEnable GL_ALPHA_TEST");
-            glAlphaFunc(GL_NOTEQUAL, 0.0);
+
+            /* When the primary render target uses P8, the alpha component contains the palette index.
+             * Which means that the colorkey is one of the palette entries. In other cases pixels that
+             * should be masked away have alpha set to 0. */
+            if(primary_render_target_is_p8(myDevice))
+                glAlphaFunc(GL_NOTEQUAL, (float)This->SrcBltCKey.dwColorSpaceLowValue / 256.0);
+            else
+                glAlphaFunc(GL_NOTEQUAL, 0.0);
             checkGLcall("glAlphaFunc\n");
         } else {
             glDisable(GL_ALPHA_TEST);
