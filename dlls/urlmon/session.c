@@ -43,6 +43,15 @@ typedef struct mime_filter {
 static name_space *name_space_list = NULL;
 static mime_filter *mime_filter_list = NULL;
 
+static CRITICAL_SECTION session_cs;
+static CRITICAL_SECTION_DEBUG session_cs_dbg =
+{
+    0, 0, &session_cs,
+    { &session_cs_dbg.ProcessLocksList, &session_cs_dbg.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": session") }
+};
+static CRITICAL_SECTION session_cs = { &session_cs_dbg, -1, 0, 0, 0, 0 };
+
 static name_space *find_name_space(LPCWSTR protocol)
 {
     name_space *iter;
@@ -115,8 +124,12 @@ static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR proto
     new_name_space->urlmon = urlmon_protocol;
     new_name_space->protocol = heap_strdupW(protocol);
 
+    EnterCriticalSection(&session_cs);
+
     new_name_space->next = name_space_list;
     name_space_list = new_name_space;
+
+    LeaveCriticalSection(&session_cs);
 
     return S_OK;
 }
@@ -124,6 +137,8 @@ static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR proto
 static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol)
 {
     name_space *iter, *last = NULL;
+
+    EnterCriticalSection(&session_cs);
 
     for(iter = name_space_list; iter; iter = iter->next) {
         if(iter->cf == cf && !strcmpW(iter->protocol, protocol))
@@ -136,7 +151,11 @@ static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol)
             last->next = iter->next;
         else
             name_space_list = iter->next;
+    }
 
+    LeaveCriticalSection(&session_cs);
+
+    if(iter) {
         if(!iter->urlmon)
             IClassFactory_Release(iter->cf);
         heap_free(iter->protocol);
@@ -183,19 +202,19 @@ IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
     if(FAILED(hres) || !schema_len)
         return NULL;
 
+    EnterCriticalSection(&session_cs);
+
     ns = find_name_space(schema);
-    if(ns) {
-        if(ns->urlmon)
-            return NULL;
-
+    if(ns && !ns->urlmon) {
         hres = IClassFactory_QueryInterface(ns->cf, &IID_IInternetProtocolInfo, (void**)&ret);
-        if(SUCCEEDED(hres))
-            return ret;
-
-        hres = IClassFactory_CreateInstance(ns->cf, NULL, &IID_IInternetProtocolInfo, (void**)&ret);
-        if(SUCCEEDED(hres))
-            return ret;
+        if(FAILED(hres))
+            hres = IClassFactory_CreateInstance(ns->cf, NULL, &IID_IInternetProtocolInfo, (void**)&ret);
     }
+
+    LeaveCriticalSection(&session_cs);
+
+    if(ns && SUCCEEDED(hres))
+        return ret;
 
     hres = get_protocol_cf(schema, schema_len, NULL, &cf);
     if(FAILED(hres))
@@ -216,10 +235,14 @@ HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret)
     DWORD schema_len;
     HRESULT hres;
 
+    *ret = NULL;
+
     hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
             &schema_len, 0);
     if(FAILED(hres) || !schema_len)
         return schema_len ? hres : E_FAIL;
+
+    EnterCriticalSection(&session_cs);
 
     ns = find_name_space(schema);
     if(ns) {
@@ -227,8 +250,12 @@ HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret)
         IClassFactory_AddRef(*ret);
         if(clsid)
             *clsid = ns->clsid;
-        return S_OK;
     }
+
+    LeaveCriticalSection(&session_cs);
+
+    if(*ret)
+        return S_OK;
 
     return get_protocol_cf(schema, schema_len, clsid, ret);
 }
@@ -305,8 +332,12 @@ static HRESULT WINAPI InternetSession_RegisterMimeFilter(IInternetSession *iface
     filter->clsid = *rclsid;
     filter->mime = heap_strdupW(pwzType);
 
+    EnterCriticalSection(&session_cs);
+
     filter->next = mime_filter_list;
     mime_filter_list = filter;
+
+    LeaveCriticalSection(&session_cs);
 
     return S_OK;
 }
@@ -318,23 +349,28 @@ static HRESULT WINAPI InternetSession_UnregisterMimeFilter(IInternetSession *ifa
 
     TRACE("(%p %s)\n", pCF, debugstr_w(pwzType));
 
+    EnterCriticalSection(&session_cs);
+
     for(iter = mime_filter_list; iter; iter = iter->next) {
         if(iter->cf == pCF && !strcmpW(iter->mime, pwzType))
             break;
         prev = iter;
     }
 
-    if(!iter)
-        return S_OK;
+    if(iter) {
+        if(prev)
+            prev->next = iter->next;
+        else
+            mime_filter_list = iter->next;
+    }
 
-    if(prev)
-        prev->next = iter->next;
-    else
-        mime_filter_list = iter->next;
+    LeaveCriticalSection(&session_cs);
 
-    IClassFactory_Release(iter->cf);
-    heap_free(iter->mime);
-    heap_free(iter);
+    if(iter) {
+        IClassFactory_Release(iter->cf);
+        heap_free(iter->mime);
+        heap_free(iter);
+    }
 
     return S_OK;
 }
