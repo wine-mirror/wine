@@ -1390,10 +1390,11 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 	return TRUE;
 
     case SRCCOPY:  /* 0xcc */
+    case SRCINVERT:
         if (physDevSrc->depth == physDevDst->depth)
         {
             wine_tsx11_lock();
-            XSetFunction( gdi_display, physDevDst->gc, GXcopy );
+            XSetFunction( gdi_display, physDevDst->gc, rop == SRCCOPY ? GXcopy : GXxor );
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
                        physDevSrc->dc_rect.left + visRectSrc.left,
@@ -1414,7 +1415,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 
             XSetBackground( gdi_display, physDevDst->gc, fg );
             XSetForeground( gdi_display, physDevDst->gc, bg );
-            XSetFunction( gdi_display, physDevDst->gc, GXcopy );
+            XSetFunction( gdi_display, physDevDst->gc, rop == SRCCOPY ? GXcopy : GXxor );
             XCopyPlane( gdi_display, physDevSrc->drawable,
                         physDevDst->drawable, physDevDst->gc,
                         physDevSrc->dc_rect.left + visRectSrc.left,
