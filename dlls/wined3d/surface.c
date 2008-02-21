@@ -3581,9 +3581,10 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
         SetDIBColorTable(This->hDC, 0, 256, col);
     }
 
-    /* Propagate the changes to the drawable.
+    /* Propagate the changes to the drawable when we have a palette. This function is also called
+     * when the palette is removed.
      * TODO: in case of hardware p8 palettes we should only upload the palette. */
-    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+    if(pal && (This->resource.usage & WINED3DUSAGE_RENDERTARGET))
         IWineD3DSurface_LoadLocation(iface, SFLAG_INDRAWABLE, NULL);
 
     return WINED3D_OK;
