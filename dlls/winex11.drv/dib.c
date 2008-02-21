@@ -108,6 +108,17 @@ static void X11DRV_DIB_Unlock(X_PHYSBITMAP *,BOOL);
 */
 
 /***********************************************************************
+ *           DIB_DoProtectDIBSection
+ */
+static void X11DRV_DIB_DoProtectDIBSection( X_PHYSBITMAP *physBitmap, DWORD new_prot )
+{
+    DWORD old_prot;
+
+    VirtualProtect(physBitmap->base, physBitmap->size, new_prot, &old_prot);
+    TRACE("Changed protection from %d to %d\n", old_prot, new_prot);
+}
+
+/***********************************************************************
  *           X11DRV_DIB_GetXImageWidthBytes
  *
  * Return the width of an X image in bytes
@@ -3960,6 +3971,34 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   descr.dibpitch  = ((descr.infoWidth * descr.infoBpp + 31) &~31) / 8;
   X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
   result = X11DRV_DIB_SetImageBits( &descr );
+
+  /* optimisation for the case where the input bits are in exactly the same
+   * format as the internal representation and copying to the app bits is
+   * cheap - saves a round trip to the X server */
+  if (descr.compression == BI_RGB &&
+      coloruse == DIB_RGB_COLORS &&
+      descr.infoBpp == bitmap.bmBitsPixel &&
+      physBitmap->base && physBitmap->size < 65536)
+  {
+      unsigned int srcwidthb = bitmap.bmWidthBytes;
+      int dstwidthb = X11DRV_DIB_GetDIBWidthBytes( width, descr.infoBpp );
+      LPBYTE dbits = physBitmap->base, sbits = (LPBYTE)bits + (startscan * srcwidthb);
+      int widthb;
+      UINT y;
+
+      TRACE("syncing compatible set bits to app bits\n");
+      if ((tmpheight < 0) ^ (bitmap.bmHeight < 0))
+      {
+          dbits = (LPBYTE)bits + (dstwidthb * (lines-1));
+          dstwidthb = -dstwidthb;
+      }
+	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
+      widthb = min(srcwidthb, abs(dstwidthb));
+      for (y = 0; y < lines; y++, dbits += dstwidthb, sbits += srcwidthb)
+          memcpy(dbits, sbits, widthb);
+	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
+	  physBitmap->status = DIB_Status_InSync;
+  }
   X11DRV_DIB_Unlock( physBitmap, TRUE );
 
   HeapFree(GetProcessHeap(), 0, descr.colorMap);
@@ -4113,17 +4152,6 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   if(descr.colorMap != colorPtr)
       HeapFree(GetProcessHeap(), 0, descr.colorMap);
   return lines;
-}
-
-/***********************************************************************
- *           DIB_DoProtectDIBSection
- */
-static void X11DRV_DIB_DoProtectDIBSection( X_PHYSBITMAP *physBitmap, DWORD new_prot )
-{
-    DWORD old_prot;
-
-    VirtualProtect(physBitmap->base, physBitmap->size, new_prot, &old_prot);
-    TRACE("Changed protection from %d to %d\n", old_prot, new_prot);
 }
 
 /***********************************************************************
