@@ -1302,19 +1302,9 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     {
         HKEY service_key;
 
-        /* The service already exists, so bail out */
-        if(!lstrcmpiW(lpServiceName, buffer))
-        {
-            SetLastError(ERROR_SERVICE_EXISTS);
-            return NULL;
-        }
-
-        /* The given displayname matches the found servicename. We don't bail out
-         * as servicename is checked before a duplicate displayname
+        /* Open service first before deciding whether it already exists or not
+         * It could be that it's not a valid service, but only the registry key itself exists
          */
-        if(!lstrcmpiW(lpDisplayName, buffer))
-            displayname_exists = TRUE;
-
         if (RegOpenKeyExW(hscm->hkey, buffer, 0, KEY_READ, &service_key) == ERROR_SUCCESS)
         {
             WCHAR name[MAX_PATH];
@@ -1322,9 +1312,16 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
             if (RegQueryValueExW(service_key, szDisplayName, NULL, NULL, (LPBYTE)name, &size) == ERROR_SUCCESS)
             {
-                /* The given displayname matches the found displayname */
-                if (!lstrcmpiW(lpDisplayName, name))
+                if (lpDisplayName && (!lstrcmpiW(lpDisplayName, name)
+                                   || !lstrcmpiW(lpDisplayName, buffer)))
                     displayname_exists = TRUE;
+
+                if (!lstrcmpiW(lpServiceName, buffer))
+                {
+                    RegCloseKey(service_key);
+                    SetLastError(ERROR_SERVICE_EXISTS);
+                    return NULL;
+                }
             }
             RegCloseKey(service_key);
         }
@@ -1332,7 +1329,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         len = sizeof(buffer);
     }
 
-    if (lpDisplayName && displayname_exists)
+    if (displayname_exists)
     {
         SetLastError(ERROR_DUPLICATE_SERVICE_NAME);
         return NULL;
