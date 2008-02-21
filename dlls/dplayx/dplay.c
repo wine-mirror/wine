@@ -3669,7 +3669,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
     return DPERR_INVALIDFLAGS;
   }
 
-  if( !lpEnumCallback || !*lpEnumCallback )
+  if( !lpEnumCallback )
   {
      return DPERR_INVALIDPARAMS;
   }
