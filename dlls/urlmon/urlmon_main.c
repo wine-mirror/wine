@@ -210,31 +210,14 @@ static const struct object_creation_info object_creation[] =
 
 static void init_session(BOOL init)
 {
-    IInternetSession *session;
     int i;
 
-    CoInternetGetSession(0, &session, 0);
-
     for(i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++) {
-        if(object_creation[i].protocol) {
-            if(init)
-            {
-                IInternetSession_RegisterNameSpace(session, object_creation[i].cf,
-                        object_creation[i].clsid, object_creation[i].protocol, 0, NULL, 0);
-                /* make sure that the AddRef on the class factory doesn't keep us loaded */
-                URLMON_UnlockModule();
-            }
-            else
-            {
-                /* make sure that the Release on the class factory doesn't unload us */
-                URLMON_LockModule();
-                IInternetSession_UnregisterNameSpace(session, object_creation[i].cf,
-                        object_creation[i].protocol);
-            }
-        }
-    }
 
-    IInternetSession_Release(session);
+        if(object_creation[i].protocol)
+            register_urlmon_namespace(object_creation[i].cf, object_creation[i].clsid,
+                                      object_creation[i].protocol, init);
+    }
 }
 
 /*******************************************************************************

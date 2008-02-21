@@ -101,6 +101,58 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
     return CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)ret);
 }
 
+static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR protocol, BOOL urlmon_protocol)
+{
+    name_space *new_name_space;
+
+    new_name_space = heap_alloc(sizeof(name_space));
+
+    if(!urlmon_protocol)
+        IClassFactory_AddRef(cf);
+    new_name_space->cf = cf;
+    new_name_space->clsid = *clsid;
+    new_name_space->protocol = heap_strdupW(protocol);
+
+    new_name_space->next = name_space_list;
+    name_space_list = new_name_space;
+
+    return S_OK;
+}
+
+static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol, BOOL urlmon_protocol)
+{
+    name_space *iter, *last = NULL;
+
+    for(iter = name_space_list; iter; iter = iter->next) {
+        if(iter->cf == cf && !strcmpW(iter->protocol, protocol))
+            break;
+        last = iter;
+    }
+
+    if(iter) {
+        if(last)
+            last->next = iter->next;
+        else
+            name_space_list = iter->next;
+
+        if(!urlmon_protocol)
+            IClassFactory_Release(iter->cf);
+        heap_free(iter->protocol);
+        heap_free(iter);
+    }
+
+    return S_OK;
+}
+
+
+void register_urlmon_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR protocol, BOOL do_register)
+{
+    if(do_register)
+        register_namespace(cf, clsid, protocol, TRUE);
+    else
+        unregister_namespace(cf, protocol, TRUE);
+}
+
 BOOL is_registered_protocol(LPCWSTR url)
 {
     DWORD schema_len;
@@ -209,8 +261,6 @@ static HRESULT WINAPI InternetSession_RegisterNameSpace(IInternetSession *iface,
         IClassFactory *pCF, REFCLSID rclsid, LPCWSTR pwzProtocol, ULONG cPatterns,
         const LPCWSTR *ppwzPatterns, DWORD dwReserved)
 {
-    name_space *new_name_space;
-
     TRACE("(%p %s %s %d %p %d)\n", pCF, debugstr_guid(rclsid), debugstr_w(pwzProtocol),
           cPatterns, ppwzPatterns, dwReserved);
 
@@ -222,47 +272,18 @@ static HRESULT WINAPI InternetSession_RegisterNameSpace(IInternetSession *iface,
     if(!pCF || !pwzProtocol)
         return E_INVALIDARG;
 
-    new_name_space = heap_alloc(sizeof(name_space));
-
-    IClassFactory_AddRef(pCF);
-    new_name_space->cf = pCF;
-    new_name_space->clsid = *rclsid;
-    new_name_space->protocol = heap_strdupW(pwzProtocol);
-
-    new_name_space->next = name_space_list;
-    name_space_list = new_name_space;
-    return S_OK;
+    return register_namespace(pCF, rclsid, pwzProtocol, FALSE);
 }
 
 static HRESULT WINAPI InternetSession_UnregisterNameSpace(IInternetSession *iface,
         IClassFactory *pCF, LPCWSTR pszProtocol)
 {
-    name_space *iter, *last = NULL;
-
     TRACE("(%p %s)\n", pCF, debugstr_w(pszProtocol));
 
     if(!pCF || !pszProtocol)
         return E_INVALIDARG;
 
-    for(iter = name_space_list; iter; iter = iter->next) {
-        if(iter->cf == pCF && !strcmpW(iter->protocol, pszProtocol))
-            break;
-        last = iter;
-    }
-
-    if(!iter)
-        return S_OK;
-
-    if(last)
-        last->next = iter->next;
-    else
-        name_space_list = iter->next;
-
-    IClassFactory_Release(iter->cf);
-    heap_free(iter->protocol);
-    heap_free(iter);
-
-    return S_OK;
+    return unregister_namespace(pCF, pszProtocol, FALSE);
 }
 
 static HRESULT WINAPI InternetSession_RegisterMimeFilter(IInternetSession *iface,

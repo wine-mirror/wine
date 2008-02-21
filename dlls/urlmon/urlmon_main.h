@@ -68,6 +68,7 @@ void	UMCloseCacheFileStream(IUMCacheStream *pstr);
 IInternetProtocolInfo *get_protocol_info(LPCWSTR url);
 HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret);
 BOOL is_registered_protocol(LPCWSTR);
+void register_urlmon_namespace(IClassFactory*,REFIID,LPCWSTR,BOOL);
 
 HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
 HRESULT bind_to_object(IMoniker *mon, LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
