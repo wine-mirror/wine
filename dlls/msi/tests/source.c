@@ -883,6 +883,18 @@ static void test_MsiSourceListEnumSources(void)
     ok(!lstrcmpA(value, "first"), "Expected \"first\", got %s\n", value);
     ok(size == 5, "Expected 5, got %d\n", size);
 
+    /* both szSource and pcchSource are NULL, index 0 */
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* both szSource and pcchSource are NULL, index 1 */
+    r = MsiSourceListEnumSourcesA(prodcode, usersid,
+                                  MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 1, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     /* size is exactly 5 */
     size = 5;
     lstrcpyA(value, "aaa");

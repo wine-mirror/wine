@@ -189,12 +189,13 @@ UINT WINAPI MsiSourceListEnumSourcesA(LPCSTR szProductCodeOrPatch, LPCSTR szUser
         goto done;
 
     len = WideCharToMultiByte(CP_ACP, 0, source, -1, NULL, 0, NULL, NULL);
-    if (*pcchSource >= len)
+    if (pcchSource && *pcchSource >= len)
         WideCharToMultiByte(CP_ACP, 0, source, -1, szSource, len, NULL, NULL);
     else if (szSource)
         r = ERROR_MORE_DATA;
 
-    *pcchSource = len - 1;
+    if (pcchSource)
+        *pcchSource = len - 1;
 
 done:
     msi_free(product);
@@ -203,7 +204,7 @@ done:
 
     if (r == ERROR_SUCCESS)
     {
-        if (szSource) index++;
+        if (szSource || !pcchSource) index++;
     }
     else if (dwIndex > index)
         index = 0;
@@ -281,7 +282,7 @@ done:
 
     if (r == ERROR_SUCCESS)
     {
-        if (szSource) index++;
+        if (szSource || !pcchSource) index++;
     }
     else if (dwIndex > index)
         index = 0;
