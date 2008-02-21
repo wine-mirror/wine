@@ -736,7 +736,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
     return DPERR_INVALIDPARAMS;
   }
 
-  if( !lpEnumAddressTypeCallback || !*lpEnumAddressTypeCallback )
+  if( !lpEnumAddressTypeCallback )
   {
      return DPERR_INVALIDPARAMS;
   }
@@ -892,7 +892,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
     return DPERR_INVALIDPARAMS;
   }
 
-  if( !lpEnumLocalAppCallback || !*lpEnumLocalAppCallback )
+  if( !lpEnumLocalAppCallback )
   {
      return DPERR_INVALIDPARAMS;
   }
