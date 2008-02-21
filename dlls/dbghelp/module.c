@@ -308,7 +308,7 @@ BOOL module_get_debug(struct module_pair* pair)
             idslW64.CheckSum = pair->effective->module.CheckSum;
             idslW64.TimeDateStamp = pair->effective->module.TimeDateStamp;
             memcpy(idslW64.FileName, pair->effective->module.ImageName,
-                   sizeof(idslW64.FileName));
+                   sizeof(pair->effective->module.ImageName));
             idslW64.Reparse = FALSE;
             idslW64.hFile = INVALID_HANDLE_VALUE;
 
