@@ -16,38 +16,10 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#ifndef __WINE_SLERROR_H
+#define __WINE_SLERROR_H
 
-#include <stdarg.h>
+#define SL_E_RIGHT_NOT_GRANTED        0xC004F013
+#define SL_E_DATATYPE_MISMATCHED      0xC004F01E
 
-#include "windef.h"
-#include "winbase.h"
-#include "wine/debug.h"
-
-#include "slpublic.h"
-#include "slerror.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(slc);
-
-DWORD WINAPI SLGetWindowsInformationDWORD(LPCWSTR lpszValueName, LPDWORD pdwValue)
-{
-    FIXME("(%s) stub\n", debugstr_w(lpszValueName) );
-
-    return SL_E_RIGHT_NOT_GRANTED;
-}
-
-/***********************************************************************
- *             DllMain   (CLUSAPI.@)
- *
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch(fdwReason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hinstDLL );
-        break;
-    }
-    return TRUE;
-}
+#endif /* __WINE_SLERROR_H */

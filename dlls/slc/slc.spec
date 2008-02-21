@@ -26,7 +26,7 @@
 @ stub SLGetSLIDList
 @ stub SLGetServiceInformation
 @ stub SLGetWindowsInformation
-@ stub SLGetWindowsInformationDWORD
+@ stdcall SLGetWindowsInformationDWORD(wstr ptr)
 @ stub SLInstallLicense
 @ stub SLInstallProofOfPurchase
 @ stub SLInstallSAMLicense

@@ -359,6 +359,8 @@ SRCDIR_INCLUDES = \
 	shlobj.h \
 	shlwapi.h \
 	sipbase.h \
+	slerror.h \
+	slpublic.h \
 	snmp.h \
 	softpub.h \
 	sql.h \
