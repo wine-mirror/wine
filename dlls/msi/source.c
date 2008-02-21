@@ -524,6 +524,52 @@ UINT WINAPI MsiSourceListSetInfoA(LPCSTR szProduct, LPCSTR szUserSid,
     return ret;
 }
 
+static UINT set_last_used_source(HKEY source, LPCWSTR product, LPCWSTR usersid,
+                                 MSIINSTALLCONTEXT context, DWORD options,
+                                 LPCWSTR value)
+{
+    LPWSTR buffer;
+    WCHAR typechar;
+    DWORD size;
+    UINT r;
+    int index = 0;
+
+    static const WCHAR format[] = {'%','c',';','%','i',';','%','s',0};
+
+    if (options & MSISOURCETYPE_NETWORK)
+        typechar = 'n';
+    else if (options & MSISOURCETYPE_URL)
+        typechar = 'u';
+    else
+        return ERROR_INVALID_PARAMETER;
+
+    /* make sure the source is registered */
+    r = MsiSourceListAddSourceExW(product, usersid, context,
+                                  options, value, 0);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    while ((r = MsiSourceListEnumSourcesW(product, usersid, context, options,
+                                          index, NULL, NULL)) == ERROR_SUCCESS)
+        index++;
+
+    if (r != ERROR_NO_MORE_ITEMS)
+        return r;
+
+    size = (lstrlenW(format) + lstrlenW(value) + 7) * sizeof(WCHAR);
+    buffer = msi_alloc(size);
+    if (!buffer)
+        return ERROR_OUTOFMEMORY;
+
+    sprintfW(buffer, format, typechar, index, value);
+
+    r = RegSetValueExW(source, INSTALLPROPERTY_LASTUSEDSOURCEW, 0,
+                       REG_SZ, (LPBYTE)buffer, size);
+    msi_free(buffer);
+
+    return r;
+}
+
 /******************************************************************
  *  MsiSourceListSetInfoW   (MSI.@)
  */
@@ -586,35 +632,6 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             RegCloseKey(media);
         }
     }
-    else if (strcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW)==0)
-    {
-        LPWSTR buffer = NULL;
-        DWORD size;
-        WCHAR typechar = 'n';
-        static const WCHAR LastUsedSource_Fmt[] = {'%','c',';','%','i',';','%','s',0};
-
-        /* make sure the source is registered */
-        MsiSourceListAddSourceExW(szProduct, szUserSid, dwContext, 
-                dwOptions, szValue, 0); 
-
-        if (dwOptions & MSISOURCETYPE_NETWORK)
-            typechar = 'n';
-        else if (dwOptions & MSISOURCETYPE_URL)
-            typechar = 'u';
-        else if (dwOptions & MSISOURCETYPE_MEDIA)
-            typechar = 'm';
-        else
-            ERR("Unknown source type! %x\n", dwOptions);
-
-        size = (lstrlenW(szValue)+5)*sizeof(WCHAR);
-        buffer = msi_alloc(size);
-        sprintfW(buffer, LastUsedSource_Fmt, typechar, 1, szValue);
-        rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW, 0, 
-                REG_EXPAND_SZ, (LPBYTE)buffer, size);
-        if (rc != ERROR_SUCCESS)
-            rc = ERROR_UNKNOWN_PROPERTY;
-        msi_free( buffer );
-    }
     else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
     {
         DWORD size = lstrlenW(szValue)*sizeof(WCHAR);
@@ -623,6 +640,9 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
     }
+    else if (strcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW)==0)
+        rc = set_last_used_source(sourcekey, szProduct, szUserSid, dwContext,
+                                  dwOptions, szValue);
     else
         rc = ERROR_UNKNOWN_PROPERTY;
 

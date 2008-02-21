@@ -1546,11 +1546,8 @@ static void test_MsiSourceListSetInfo(void)
     r = MsiSourceListSetInfoA(prodcode, NULL,
                               MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
                               INSTALLPROPERTY_LASTUSEDSOURCE, "source");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* INSTALLPROPERTY_LASTUSEDSOURCE, MSISOURCETYPE_NETWORK */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1563,6 +1560,7 @@ static void test_MsiSourceListSetInfo(void)
     res = RegOpenKeyA(source, "Net", &net);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     CHECK_REG_STR(net, "1", "source\\")
+    CHECK_REG_STR(source, "LastUsedSource", "n;1;source");
 
     /* source has forward slash */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1570,7 +1568,9 @@ static void test_MsiSourceListSetInfo(void)
                               MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
                               INSTALLPROPERTY_LASTUSEDSOURCE, "source/");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    CHECK_REG_STR(net, "1", "source\\")
+    CHECK_REG_STR(net, "1", "source\\");
+    CHECK_REG_STR(net, "2", "source/\\");
+    CHECK_REG_STR(source, "LastUsedSource", "n;2;source/");
 
     /* INSTALLPROPERTY_LASTUSEDSOURCE, MSISOURCETYPE_URL */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1583,6 +1583,7 @@ static void test_MsiSourceListSetInfo(void)
     res = RegOpenKeyA(source, "URL", &url);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     CHECK_REG_STR(url, "1", "source/");
+    CHECK_REG_STR(source, "LastUsedSource", "u;1;source");
 
     /* source has backslash */
     r = MsiSourceListSetInfoA(prodcode, NULL,
@@ -1591,6 +1592,16 @@ static void test_MsiSourceListSetInfo(void)
                               INSTALLPROPERTY_LASTUSEDSOURCE, "source\\");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     CHECK_REG_STR(url, "1", "source/");
+    CHECK_REG_STR(url, "2", "source\\/");
+    CHECK_REG_STR(source, "LastUsedSource", "u;2;source\\");
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE, MSISOURCETYPE_MEDIA */
+    r = MsiSourceListSetInfoA(prodcode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED,
+                              MSICODE_PRODUCT | MSISOURCETYPE_MEDIA,
+                              INSTALLPROPERTY_LASTUSEDSOURCE, "source");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* INSTALLPROPERTY_PACKAGENAME */
     r = MsiSourceListSetInfoA(prodcode, NULL,
