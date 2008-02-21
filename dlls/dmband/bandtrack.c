@@ -302,8 +302,8 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_LoadBand (LPPERSISTSTREAM if
       ERR(": no more memory\n");
       return  E_OUTOFMEMORY;
     }
-    memcpy(&pNewBand->pBandHeader, pHeader, sizeof(DMUS_PRIVATE_BAND_ITEM_HEADER));
-    pNewBand->ppBand = (IDirectMusicBandImpl*)((char*)(*ppBand) - offsetof(IDirectMusicBandImpl,BandVtbl));
+    memcpy(&pNewBand->BandHeader, pHeader, sizeof(DMUS_PRIVATE_BAND_ITEM_HEADER));
+    pNewBand->pBand = (IDirectMusicBandImpl*)((char*)(*ppBand) - offsetof(IDirectMusicBandImpl,BandVtbl));
     IDirectMusicBand_AddRef(*ppBand);
     list_add_tail (&This->Bands, &pNewBand->entry);
   }

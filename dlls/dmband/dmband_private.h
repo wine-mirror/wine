@@ -78,8 +78,8 @@ typedef struct _DMUS_PRIVATE_INSTRUMENT {
 
 typedef struct _DMUS_PRIVATE_BAND {
 	struct list entry; /* for listing elements */
-	DMUS_PRIVATE_BAND_ITEM_HEADER pBandHeader;
-	IDirectMusicBandImpl* ppBand;
+	DMUS_PRIVATE_BAND_ITEM_HEADER BandHeader;
+	IDirectMusicBandImpl* pBand;
 } DMUS_PRIVATE_BAND, *LPDMUS_PRIVATE_BAND;
 
 
