@@ -71,8 +71,12 @@ HKCR,"Shell.UIHelper.1",,,""
 HKCR,"Shell.UIHelper.1\CLSID",,,"%CLSID_ShellUIHelper%"
 
 HKCR,"CLSID\%CLSID_Internet%",,,"Internet Explorer"
+HKCR,"CLSID\%CLSID_Internet%\DefaultIcon",,,"shdoclc.dll,-190"
 HKCR,"CLSID\%CLSID_Internet%\InProcServer32",,,"%MODULE%"
 HKCR,"CLSID\%CLSID_Internet%\InProcServer32","ThreadingModel",,"Apartment"
+HKCR,"CLSID\%CLSID_Internet%\Shell",,,"OpenHomePage"
+HKCR,"CLSID\%CLSID_Internet%\Shell\OpenHomePage",,,"Open &Home Page"
+HKCR,"CLSID\%CLSID_Internet%\Shell\OpenHomePage\Command",,,"""%16422%\Internet Explorer\iexplore.exe"""
 HKCR,"CLSID\%CLSID_Internet%\ShellFolder",,2,"0x24"
 
 HKCR,"CLSID\%CLSID_WebBrowser%",,,"Microsoft Web Browser"
