@@ -193,6 +193,8 @@ static HWND create_datetime_control(DWORD style, DWORD exstyle)
 
 static void test_dtm_set_format(HWND hWndDateTime)
 {
+    CHAR txt[256];
+    SYSTEMTIME systime;
     LRESULT r;
 
     r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0, (LPARAM)NULL);
@@ -203,6 +205,17 @@ static void test_dtm_set_format(HWND hWndDateTime)
     expect(1, r);
 
     ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_format_seq, "test_dtm_set_format", FALSE);
+
+    r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0,
+		    (LPARAM)"'hh' hh");
+    expect(1, r);
+    ZeroMemory(&systime, sizeof(systime));
+    systime.wYear = 2000;
+    systime.wMonth = systime.wDay = 1;
+    r = SendMessage(hWndDateTime, DTM_SETSYSTEMTIME, 0, (LPARAM)&systime);
+    expect(1, r);
+    GetWindowText(hWndDateTime, txt, 256);
+    todo_wine ok(strcmp(txt, "hh 12") == 0, "String mismatch (\"%s\" vs \"hh 12\")\n", txt);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
