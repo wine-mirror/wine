@@ -48,9 +48,46 @@ test_CreateInstance(void)
 
 }
 
+static void test_CreateJob(void)
+{
+    /* Job information */
+    static const WCHAR copyNameW[] = {'T', 'e', 's', 't', 0};
+    IBackgroundCopyJob* job = NULL;
+    GUID tmpId;
+    HRESULT hres;
+    ULONG res;
+    IBackgroundCopyManager* manager = NULL;
+
+    /* Setup */
+    hres = CoCreateInstance(&CLSID_BackgroundCopyManager, NULL,
+                            CLSCTX_LOCAL_SERVER, &IID_IBackgroundCopyManager,
+                            (void **) &manager);
+    if(hres != S_OK)
+    {
+        skip("Unable to create bits instance required for test.\n");
+        return;
+    }
+
+    /* Create bits job */
+    hres = IBackgroundCopyManager_CreateJob(manager, copyNameW,
+                                            BG_JOB_TYPE_DOWNLOAD, &tmpId,
+                                            &job);
+    ok(hres == S_OK, "CreateJob failed: %08x\n", hres);
+    if(hres != S_OK)
+        skip("Unable to create bits job.\n");
+    else
+    {
+        res = IBackgroundCopyJob_Release(job);
+        ok(res == 0, "Bad ref count on release: %u\n", res);
+    }
+
+    IBackgroundCopyManager_Release(manager);
+}
+
 START_TEST(qmgr)
 {
     CoInitialize(NULL);
     test_CreateInstance();
+    test_CreateJob();
     CoUninitialize();
 }

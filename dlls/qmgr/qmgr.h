@@ -34,6 +34,9 @@ typedef struct
 {
     const IBackgroundCopyJobVtbl *lpVtbl;
     LONG ref;
+    LPWSTR displayName;
+    BG_JOB_TYPE type;
+    GUID jobId;
 } BackgroundCopyJobImpl;
 
 /* Background copy manager vtbl and related data */
@@ -51,6 +54,8 @@ typedef struct
 extern ClassFactoryImpl BITS_ClassFactory;
 
 HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj);
+HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
+                                     GUID *pJobId, LPVOID *ppObj);
 
 /* Little helper functions */
 static inline char *

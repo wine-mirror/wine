@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
 static void BackgroundCopyJobDestructor(BackgroundCopyJobImpl *This)
 {
+    HeapFree(GetProcessHeap(), 0, This->displayName);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -361,3 +362,42 @@ static const IBackgroundCopyJobVtbl BITS_IBackgroundCopyJob_Vtbl =
     BITS_IBackgroundCopyJob_GetProxySettings,
     BITS_IBackgroundCopyJob_TakeOwnership,
 };
+
+HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
+                                     GUID *pJobId, LPVOID *ppObj)
+{
+    HRESULT hr;
+    BackgroundCopyJobImpl *This;
+    int n;
+
+    TRACE("(%s,%d,%p)\n", debugstr_w(displayName), type, ppObj);
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->lpVtbl = &BITS_IBackgroundCopyJob_Vtbl;
+    This->ref = 1;
+    This->type = type;
+
+    n = (lstrlenW(displayName) + 1) *  sizeof *displayName;
+    This->displayName = HeapAlloc(GetProcessHeap(), 0, n);
+    if (!This->displayName)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(This->displayName, displayName, n);
+
+    hr = CoCreateGuid(&This->jobId);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, This->displayName);
+        HeapFree(GetProcessHeap(), 0, This);
+        return hr;
+    }
+    memcpy(pJobId, &This->jobId, sizeof(GUID));
+
+    *ppObj = &This->lpVtbl;
+    return S_OK;
+}

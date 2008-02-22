@@ -91,8 +91,9 @@ static HRESULT WINAPI BITS_IBackgroundCopyManager_CreateJob(
         GUID *pJobId,
         IBackgroundCopyJob **ppJob)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return BackgroundCopyJobConstructor(DisplayName, Type, pJobId,
+                                        (LPVOID *) ppJob);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyManager_GetJob(
