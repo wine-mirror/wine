@@ -594,7 +594,7 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
     BOOL classes = FALSE;
     BOOL badconfig = FALSE;
     LONG res;
-    DWORD save, type;
+    DWORD save, type = REG_NONE;
 
     static WCHAR empty[] = {0};
     static const WCHAR sourcelist[] = {
