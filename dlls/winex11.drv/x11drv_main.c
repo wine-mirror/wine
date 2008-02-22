@@ -476,7 +476,6 @@ sym_not_found:
 static BOOL process_attach(void)
 {
     Display *display;
-    XVisualInfo *desktop_vi = NULL;
     const char *env;
 
     setup_options();
@@ -513,15 +512,6 @@ static BOOL process_attach(void)
         }
     }
     if (!screen_depth) screen_depth = DefaultDepthOfScreen( screen );
-
-    /* If OpenGL is available, change the default visual, etc as necessary */
-    if ((desktop_vi = X11DRV_setup_opengl_visual( display )))
-    {
-        visual       = desktop_vi->visual;
-        screen       = ScreenOfDisplay(display, desktop_vi->screen);
-        screen_depth = desktop_vi->depth;
-        XFree(desktop_vi);
-    }
     screen_bpp = depth_to_bpp( screen_depth );
 
     XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );

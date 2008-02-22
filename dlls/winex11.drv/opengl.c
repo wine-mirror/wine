@@ -3364,47 +3364,6 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
   return TRUE;
 }
 
-/***********************************************************************
- *		X11DRV_setup_opengl_visual
- *
- * Setup the default visual used for OpenGL and Direct3D, and the desktop
- * window (if it exists).  If OpenGL isn't available, the visual is simply
- * set to the default visual for the display
- */
-XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
-{
-    XVisualInfo *visual = NULL;
-    int i;
-
-    /* In order to support OpenGL or D3D, we require a double-buffered visual and stencil buffer support,
-     * D3D and some applications can make use of aux buffers.
-     */
-    int visualProperties[][11] = {
-        { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 24, GLX_STENCIL_SIZE, 8, GLX_ALPHA_SIZE, 8, GLX_AUX_BUFFERS, 1, None },
-        { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 24, GLX_STENCIL_SIZE, 8, GLX_ALPHA_SIZE, 8, None },
-        { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 16, GLX_STENCIL_SIZE, 8, None },
-        { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 16, None },
-    };
-
-    if (!has_opengl())
-        return NULL;
-
-    wine_tsx11_lock();
-    for (i = 0; i < sizeof(visualProperties)/sizeof(visualProperties[0]); ++i) {
-        visual = pglXChooseVisual(display, DefaultScreen(display), visualProperties[i]);
-        if (visual)
-            break;
-    }
-    wine_tsx11_unlock();
-
-    if (visual)
-        TRACE("Visual ID %lx Chosen\n", visual->visualid);
-    else
-        WARN("No suitable visual found\n");
-
-    return visual;
-}
-
 XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
 {
     WineGLPixelFormat *fmt;
@@ -3577,11 +3536,6 @@ BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
 {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
-}
-
-XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
-{
-  return NULL;
 }
 
 Drawable get_glxdrawable(X11DRV_PDEVICE *physDev)
