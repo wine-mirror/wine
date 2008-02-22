@@ -2898,7 +2898,6 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 static LPWSTR load_string( HINSTANCE instance, LPCWSTR str )
 {
     LPWSTR ret;
-    UINT len;
 
     if (IS_INTRESOURCE(str))
     {
@@ -2906,6 +2905,7 @@ static LPWSTR load_string( HINSTANCE instance, LPCWSTR str )
         HGLOBAL hmem;
         WCHAR *ptr;
         WORD i, id = LOWORD(str);
+        UINT len;
 
         if (!(hrsrc = FindResourceW( instance, MAKEINTRESOURCEW((id >> 4) + 1), (LPWSTR)RT_STRING )))
             return NULL;
