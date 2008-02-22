@@ -124,8 +124,9 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetId(
     IBackgroundCopyJob* iface,
     GUID *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+    memcpy(pVal, &This->jobId, sizeof *pVal);
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetType(
