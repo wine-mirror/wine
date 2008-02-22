@@ -210,6 +210,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         int attribs[256];
         int nAttribs = 0;
         unsigned int nFormats;
+        WINED3DFORMAT fmt = target->resource.format;
 
         hdc = GetDC(win_handle);
         if(hdc == NULL) {
@@ -224,7 +225,15 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         PUSH2(WGL_SUPPORT_OPENGL_ARB, GL_TRUE);
         PUSH2(WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB); /* Make sure we receive an accelerated format. On windows (at least on ATI) this is not always the case */
 
-        if(!getColorBits(target->resource.format, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
+        /* In case of ORM_BACKBUFFER, make sure to request an alpha component for X4R4G4B4/X8R8G8B8 as we might need it for the backbuffer. */
+        if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
+            if(target->resource.format == WINED3DFMT_X4R4G4B4)
+                fmt = WINED3DFMT_A4R4G4B4;
+            else if(target->resource.format == WINED3DFMT_X8R8G8B8)
+                fmt = WINED3DFMT_A8R8G8B8;
+        }
+
+        if(!getColorBits(fmt, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
             ERR("Unable to get color bits for format %#x!\n", target->resource.format);
             return FALSE;
         }
