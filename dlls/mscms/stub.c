@@ -31,20 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
-BOOL WINAPI AssociateColorProfileWithDeviceA( PCSTR machine, PCSTR profile, PCSTR device )
-{
-    FIXME( "( %p, %p, %p ) stub\n", machine, profile, device );
-
-    return TRUE;
-}
-
-BOOL WINAPI AssociateColorProfileWithDeviceW( PCWSTR machine, PCWSTR profile, PCWSTR device )
-{
-    FIXME( "( %p, %p, %p ) stub\n", machine, profile, device );
-
-    return TRUE;
-}
-
 BOOL WINAPI CheckBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT format, DWORD width,
                              DWORD height, DWORD stride, PBYTE result, PBMCALLBACKFN callback,
                              LPARAM data )
@@ -98,20 +84,6 @@ BOOL WINAPI CreateProfileFromLogColorSpaceW( LPLOGCOLORSPACEW space, PBYTE *buff
     FIXME( "( %p, %p ) stub\n", space, buffer );
 
     return FALSE;
-}
-
-BOOL WINAPI DisassociateColorProfileFromDeviceA( PCSTR machine, PCSTR profile, PCSTR device )
-{
-    FIXME( "( %p, %p, %p ) stub\n", machine, profile, device );
-
-    return TRUE;
-}
-
-BOOL WINAPI DisassociateColorProfileFromDeviceW( PCWSTR machine, PCWSTR profile, PCWSTR device )
-{
-    FIXME( "( %p, %p, %p ) stub\n", machine, profile, device );
-
-    return TRUE;
 }
 
 DWORD WINAPI GenerateCopyFilePaths( LPCWSTR printer, LPCWSTR directory, LPBYTE clientinfo,

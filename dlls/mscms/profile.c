@@ -1,7 +1,7 @@
 /*
  * MSCMS - Color Management System for Wine
  *
- * Copyright 2004, 2005, 2006 Hans Leidekker
+ * Copyright 2004, 2005, 2006, 2008 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include <stdarg.h>
 
@@ -28,6 +29,7 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "icm.h"
 
 #include "mscms_priv.h"
@@ -61,6 +63,170 @@ static const char *MSCMS_dbgstr_tag( DWORD tag )
 }
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
+
+/******************************************************************************
+ * AssociateColorProfileWithDeviceA               [MSCMS.@]
+ */
+BOOL WINAPI AssociateColorProfileWithDeviceA( PCSTR machine, PCSTR profile, PCSTR device )
+{
+    int len;
+    BOOL ret = FALSE;
+    WCHAR *profileW, *deviceW;
+
+    TRACE( "( %s, %s, %s )\n", debugstr_a(machine), debugstr_a(profile), debugstr_a(device) );
+
+    if (!profile || !device)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (machine)
+    {
+        SetLastError( ERROR_NOT_SUPPORTED );
+        return FALSE;
+    }
+
+    len = MultiByteToWideChar( CP_ACP, 0, profile, -1, NULL, 0 );
+    if (!(profileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+
+    MultiByteToWideChar( CP_ACP, 0, profile, -1, profileW, len );
+
+    len = MultiByteToWideChar( CP_ACP, 0, device, -1, NULL, 0 );
+    if ((deviceW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    {
+        MultiByteToWideChar( CP_ACP, 0, device, -1, deviceW, len );
+        ret = AssociateColorProfileWithDeviceW( NULL, profileW, deviceW );
+    }
+
+    HeapFree( GetProcessHeap(), 0, profileW );
+    HeapFree( GetProcessHeap(), 0, deviceW );
+    return ret;
+}
+
+static BOOL set_profile_device_key( PCWSTR file, const BYTE *value, DWORD size )
+{
+    static const WCHAR fmtW[] = {'%','c','%','c','%','c','%','c',0};
+    static const WCHAR icmW[] = {'S','o','f','t','w','a','r','e','\\',
+                                 'M','i','c','r','o','s','o','f','t','\\',
+                                 'W','i','n','d','o','w','s',' ','N','T','\\',
+                                 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                 'I','C','M',0};
+    PROFILEHEADER header;
+    PROFILE profile;
+    HPROFILE handle;
+    HKEY icm_key, class_key;
+    WCHAR basenameW[MAX_PATH], classW[5];
+
+    profile.dwType = PROFILE_FILENAME;
+    profile.pProfileData = (PVOID)file;
+    profile.cbDataSize = (lstrlenW( file ) + 1) * sizeof(WCHAR);
+
+    /* FIXME is the profile installed? */
+    if (!(handle = OpenColorProfileW( &profile, PROFILE_READ, 0, OPEN_EXISTING )))
+    {
+        SetLastError( ERROR_INVALID_PROFILE );
+        return FALSE;
+    }
+
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, icmW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &icm_key, NULL );
+    GetColorProfileHeader( handle, &header );
+
+    MSCMS_basename( file, basenameW );
+    sprintfW( classW, fmtW, (header.phClass >> 24) & 0xff, (header.phClass >> 16) & 0xff,
+                            (header.phClass >> 8) & 0xff,  header.phClass & 0xff );
+
+    RegCreateKeyExW( icm_key, classW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &class_key, NULL );
+    if (value) RegSetValueExW( class_key, basenameW, 0, REG_BINARY, value, size );
+    else RegDeleteValueW( class_key, basenameW );
+
+    RegCloseKey( class_key );
+    RegCloseKey( icm_key );
+    CloseColorProfile( handle );
+    return TRUE;
+}
+
+/******************************************************************************
+ * AssociateColorProfileWithDeviceW               [MSCMS.@]
+ */
+BOOL WINAPI AssociateColorProfileWithDeviceW( PCWSTR machine, PCWSTR profile, PCWSTR device )
+{
+    static const BYTE dummy_value[12];
+
+    TRACE( "( %s, %s, %s )\n", debugstr_w(machine), debugstr_w(profile), debugstr_w(device) );
+
+    if (!profile || !device)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (machine)
+    {
+        SetLastError( ERROR_NOT_SUPPORTED );
+        return FALSE;
+    }
+
+    return set_profile_device_key( profile, dummy_value, sizeof(dummy_value) );
+}
+
+/******************************************************************************
+ * DisassociateColorProfileFromDeviceA            [MSCMS.@]
+ */
+BOOL WINAPI DisassociateColorProfileFromDeviceA( PCSTR machine, PCSTR profile, PCSTR device )
+{
+    int len;
+    BOOL ret = FALSE;
+    WCHAR *profileW, *deviceW;
+
+    TRACE( "( %s, %s, %s )\n", debugstr_a(machine), debugstr_a(profile), debugstr_a(device) );
+
+    if (!profile || !device)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (machine)
+    {
+        SetLastError( ERROR_NOT_SUPPORTED );
+        return FALSE;
+    }
+
+    len = MultiByteToWideChar( CP_ACP, 0, profile, -1, NULL, 0 );
+    if (!(profileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+
+    MultiByteToWideChar( CP_ACP, 0, profile, -1, profileW, len );
+
+    len = MultiByteToWideChar( CP_ACP, 0, device, -1, NULL, 0 );
+    if ((deviceW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    {
+        MultiByteToWideChar( CP_ACP, 0, device, -1, deviceW, len );
+        ret = DisassociateColorProfileFromDeviceW( NULL, profileW, deviceW );
+    }
+
+    HeapFree( GetProcessHeap(), 0, profileW );
+    HeapFree( GetProcessHeap(), 0, deviceW );
+    return ret;
+}
+
+/******************************************************************************
+ * DisassociateColorProfileFromDeviceW            [MSCMS.@]
+ */
+BOOL WINAPI DisassociateColorProfileFromDeviceW( PCWSTR machine, PCWSTR profile, PCWSTR device )
+{
+    TRACE( "( %s, %s, %s )\n", debugstr_w(machine), debugstr_w(profile), debugstr_w(device) );
+
+    if (!profile || !device)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (machine)
+    {
+        SetLastError( ERROR_NOT_SUPPORTED );
+        return FALSE;
+    }
+
+    return set_profile_device_key( profile, NULL, 0 );
+}
 
 /******************************************************************************
  * GetColorDirectoryA               [MSCMS.@]
