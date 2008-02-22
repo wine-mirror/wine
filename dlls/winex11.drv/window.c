@@ -486,6 +486,9 @@ static void sync_gl_drawable(Display *display, struct x11drv_win_data *data)
     Drawable glxp;
     Pixmap pix;
 
+    if (w <= 0) w = 1;
+    if (h <= 0) h = 1;
+
     TRACE("Resizing GL drawable 0x%lx to %dx%d\n", data->gl_drawable, w, h);
 #ifdef SONAME_LIBXCOMPOSITE
     if(usexcomposite)
