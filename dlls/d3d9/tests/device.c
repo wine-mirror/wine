@@ -744,7 +744,7 @@ static void test_reset(void)
     for(i = 0; i < IDirect3D9_GetAdapterModeCount(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format); i++) {
         ZeroMemory( &d3ddm2, sizeof(d3ddm2) );
         hr = IDirect3D9_EnumAdapterModes(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format, i, &d3ddm2);
-        ok(hr == D3D_OK, "IDirect3D9Impl_EnumAdapterModes returned %#x\n", hr);
+        ok(hr == D3D_OK, "IDirect3D9_EnumAdapterModes returned %#x\n", hr);
 
         if(d3ddm2.Width == 800 && d3ddm2.Height == 600) {
             support_800x600 = TRUE;
