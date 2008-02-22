@@ -1662,7 +1662,7 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, I
     hres = IBindStatusCallback_OnStartBinding(binding->callback, 0, BINDING(binding));
     if(FAILED(hres)) {
         WARN("OnStartBinding failed: %08x\n", hres);
-        stop_binding(binding, 0x800c0008, NULL);
+        stop_binding(binding, INET_E_DOWNLOAD_FAILURE, NULL);
         IBinding_Release(BINDING(binding));
         return hres;
     }
