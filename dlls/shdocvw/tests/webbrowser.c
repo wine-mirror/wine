@@ -105,6 +105,7 @@ DEFINE_EXPECT(QueryStatus_SETPROGRESSTEXT);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+static const WCHAR emptyW[] = {0};
 
 static VARIANT_BOOL exvb;
 static IWebBrowser2 *wb;
@@ -130,6 +131,26 @@ static const char *debugstr_guid(REFIID riid)
             riid->Data4[5], riid->Data4[6], riid->Data4[7]);
 
     return buf;
+}
+
+#define test_LocationURL(a,b) _test_LocationURL(__LINE__,a,b)
+static void _test_LocationURL(unsigned line, IUnknown *unk, LPCWSTR exurl)
+{
+    IWebBrowser2 *wb;
+    BSTR url = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IWebBrowser2_get_LocationURL(wb, &url);
+    ok_(__FILE__,line) (hres == (*exurl ? S_OK : S_FALSE), "get_LocationURL failed: %08x\n", hres);
+    ok_(__FILE__,line) (!lstrcmpW(url, exurl), "unexpected URL: %s\n", debugstr_w(url));
+
+    SysFreeString(url);
+    IWebBrowser2_Release(wb);
 }
 
 static HRESULT QueryInterface(REFIID,void**);
@@ -1845,6 +1866,8 @@ static void test_Navigate2(IUnknown *unk)
     if(FAILED(hres))
         return;
 
+    test_LocationURL(unk, emptyW);
+
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = SysAllocString(about_blankW);
 
@@ -1943,6 +1966,7 @@ static void test_WebBrowser(void)
 
     test_QueryInterface(unk);
     test_ClassInfo(unk);
+    test_LocationURL(unk, emptyW);
     test_ConnectionPoint(unk, TRUE);
     test_ClientSite(unk, &ClientSite);
     test_Extent(unk);
