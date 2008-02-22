@@ -563,6 +563,7 @@ static UINT set_last_used_source(HKEY source, LPCWSTR product, LPCWSTR usersid,
 
     sprintfW(buffer, format, typechar, index, value);
 
+    size = (lstrlenW(buffer) + 1) * sizeof(WCHAR);
     r = RegSetValueExW(source, INSTALLPROPERTY_LASTUSEDSOURCEW, 0,
                        REG_SZ, (LPBYTE)buffer, size);
     msi_free(buffer);
