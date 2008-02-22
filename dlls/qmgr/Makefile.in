@@ -8,6 +8,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	factory.c \
+	job.c \
 	qmgr.c \
 	qmgr_main.c \
 	service.c

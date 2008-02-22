@@ -29,6 +29,13 @@
 
 #include <string.h>
 
+/* Background copy job vtbl and related data */
+typedef struct
+{
+    const IBackgroundCopyJobVtbl *lpVtbl;
+    LONG ref;
+} BackgroundCopyJobImpl;
+
 /* Background copy manager vtbl and related data */
 typedef struct
 {
