@@ -207,6 +207,65 @@ static int get_window_attributes( Display *display, struct x11drv_win_data *data
 
 
 /***********************************************************************
+ *              create_client_window
+ */
+static Window create_client_window( Display *display, struct x11drv_win_data *data, XVisualInfo *vis )
+{
+    int cx, cy, mask;
+    XSetWindowAttributes attr;
+    Window client;
+
+    attr.bit_gravity = NorthWestGravity;
+    attr.win_gravity = NorthWestGravity;
+    attr.backing_store = NotUseful;
+    attr.event_mask = (ExposureMask | PointerMotionMask |
+                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
+    mask = CWEventMask | CWBitGravity | CWWinGravity | CWBackingStore;
+
+    if ((cx = data->client_rect.right - data->client_rect.left) <= 0) cx = 1;
+    if ((cy = data->client_rect.bottom - data->client_rect.top) <= 0) cy = 1;
+
+    wine_tsx11_lock();
+
+    if (vis)
+    {
+        attr.colormap = XCreateColormap( display, root_window, vis->visual,
+                                         (vis->class == PseudoColor || vis->class == GrayScale ||
+                                          vis->class == DirectColor) ? AllocAll : AllocNone );
+        mask |= CWColormap;
+    }
+
+    client = XCreateWindow( display, data->whole_window,
+                            data->client_rect.left - data->whole_rect.left,
+                            data->client_rect.top - data->whole_rect.top,
+                            cx, cy, 0, screen_depth, InputOutput,
+                            vis ? vis->visual : visual, mask, &attr );
+    if (!client)
+    {
+        wine_tsx11_unlock();
+        return 0;
+    }
+
+    if (data->client_window)
+    {
+        XDeleteContext( display, data->client_window, winContext );
+        XDestroyWindow( display, data->client_window );
+    }
+    data->client_window = client;
+
+    if (data->colormap) XFreeColormap( display, data->colormap );
+    data->colormap = vis ? attr.colormap : 0;
+
+    XMapWindow( display, data->client_window );
+    XSaveContext( display, data->client_window, winContext, (char *)data->hwnd );
+    wine_tsx11_unlock();
+
+    SetPropA( data->hwnd, client_window_prop, (HANDLE)data->client_window );
+    return data->client_window;
+}
+
+
+/***********************************************************************
  *              X11DRV_sync_window_style
  *
  * Change the X window attributes when the window style has changed.
@@ -311,41 +370,32 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
     Display *display = thread_display();
     struct x11drv_win_data *data;
     XVisualInfo *vis;
-    Drawable parent;
-    HWND next_hwnd;
     int w, h;
 
     if (!(data = X11DRV_get_win_data(hwnd)) &&
         !(data = X11DRV_create_win_data(hwnd))) return FALSE;
 
+    if (data->fbconfig_id) return FALSE;  /* can't change it twice */
+
     wine_tsx11_lock();
-
     vis = visual_from_fbconfig_id(fbconfig_id);
-    if(!vis)
-    {
-        wine_tsx11_unlock();
-        return FALSE;
-    }
-
-    if(data->whole_window && vis->visualid == XVisualIDFromVisual(visual))
-    {
-        TRACE("Whole window available and visual match, rendering onscreen\n");
-        goto done;
-    }
-
     wine_tsx11_unlock();
+    if (!vis) return FALSE;
 
-    parent = data->whole_window;
-    next_hwnd = hwnd;
-    while(!parent)
+    if (data->whole_window)
     {
-        next_hwnd = GetAncestor(next_hwnd, GA_PARENT);
-        if(!next_hwnd)
+        Window client = data->client_window;
+
+        if (vis->visualid != XVisualIDFromVisual(visual))
         {
-            ERR("Could not find parent HWND with a drawable!\n");
-            return FALSE;
+            client = create_client_window( display, data, vis );
+            TRACE( "re-created client window %lx for %p fbconfig %lx\n", client, data->hwnd, fbconfig_id );
         }
-        parent = X11DRV_get_whole_window(next_hwnd);
+        wine_tsx11_lock();
+        XFree(vis);
+        wine_tsx11_unlock();
+        if (client) goto done;
+        return FALSE;
     }
 
     w = data->client_rect.right - data->client_rect.left;
@@ -354,12 +404,14 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
     if(w <= 0) w = 1;
     if(h <= 0) h = 1;
 
-    wine_tsx11_lock();
 #ifdef SONAME_LIBXCOMPOSITE
     if(usexcomposite)
     {
         XSetWindowAttributes attrib;
+        Window parent = X11DRV_get_whole_window( GetAncestor( hwnd, GA_ROOT ));
 
+        if (!parent) parent = root_window;
+        wine_tsx11_lock();
         data->colormap = XCreateColormap(display, parent, vis->visual,
                                          (vis->class == PseudoColor ||
                                           vis->class == GrayScale ||
@@ -379,16 +431,18 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
                                       CompositeRedirectManual);
             XMapWindow(display, data->gl_drawable);
         }
+        XFree(vis);
+        wine_tsx11_unlock();
     }
     else
 #endif
     {
         WARN("XComposite is not available, using GLXPixmap hack\n");
 
-        data->pixmap = XCreatePixmap(display, parent, w, h, vis->depth);
+        wine_tsx11_lock();
+        data->pixmap = XCreatePixmap(display, root_window, w, h, vis->depth);
         if(!data->pixmap)
         {
-            ERR("Failed to create pixmap for offscreen rendering\n");
             XFree(vis);
             wine_tsx11_unlock();
             return FALSE;
@@ -400,29 +454,23 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
             XFreePixmap(display, data->pixmap);
             data->pixmap = 0;
         }
-    }
-
-    if(!data->gl_drawable)
-    {
-        ERR("Failed to create drawable for offscreen rendering\n");
         XFree(vis);
         wine_tsx11_unlock();
-        return FALSE;
+        if (data->pixmap) SetPropA(hwnd, pixmap_prop, (HANDLE)data->pixmap);
     }
 
-done:
-    XFree(vis);
-
-    XFlush(display);
-    wine_tsx11_unlock();
+    if (!data->gl_drawable) return FALSE;
 
     TRACE("Created GL drawable 0x%lx, using FBConfigID 0x%lx\n",
           data->gl_drawable, fbconfig_id);
+    SetPropA(hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
 
+done:
     data->fbconfig_id = fbconfig_id;
     SetPropA(hwnd, fbconfig_id_prop, (HANDLE)data->fbconfig_id);
-    SetPropA(hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
-    SetPropA(hwnd, pixmap_prop, (HANDLE)data->pixmap);
+    wine_tsx11_lock();
+    XFlush( display );
+    wine_tsx11_unlock();
     invalidate_dce( hwnd, &data->window_rect );
     return TRUE;
 }
@@ -435,8 +483,6 @@ static void sync_gl_drawable(Display *display, struct x11drv_win_data *data)
     int w = data->client_rect.right - data->client_rect.left;
     int h = data->client_rect.bottom - data->client_rect.top;
     XVisualInfo *vis;
-    Drawable parent;
-    HWND next_hwnd;
     Drawable glxp;
     Pixmap pix;
 
@@ -451,19 +497,6 @@ static void sync_gl_drawable(Display *display, struct x11drv_win_data *data)
     }
 #endif
 
-    parent = data->whole_window;
-    next_hwnd = data->hwnd;
-    while(!parent)
-    {
-        next_hwnd = GetAncestor(next_hwnd, GA_PARENT);
-        if(!next_hwnd)
-        {
-            ERR("Could not find parent HWND with a drawable!\n");
-            return;
-        }
-        parent = X11DRV_get_whole_window(next_hwnd);
-    }
-
     wine_tsx11_lock();
 
     vis = visual_from_fbconfig_id(data->fbconfig_id);
@@ -473,7 +506,7 @@ static void sync_gl_drawable(Display *display, struct x11drv_win_data *data)
         return;
     }
 
-    pix = XCreatePixmap(display, parent, w, h, vis->depth);
+    pix = XCreatePixmap(display, root_window, w, h, vis->depth);
     if(!pix)
     {
         ERR("Failed to create pixmap for offscreen rendering\n");
@@ -1161,39 +1194,20 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
                                         cx, cy, 0, screen_depth, InputOutput,
                                         visual, mask, &attr );
 
-    if (!data->whole_window)
+    if (data->whole_window) XSaveContext( display, data->whole_window, winContext, (char *)data->hwnd );
+    wine_tsx11_unlock();
+
+    if (!data->whole_window) return 0;
+
+    if (!create_client_window( display, data, NULL ))
     {
-        wine_tsx11_unlock();
-        return 0;
-    }
-
-    attr.bit_gravity = NorthWestGravity;
-    attr.win_gravity = NorthWestGravity;
-    attr.backing_store = NotUseful;
-    attr.event_mask = (ExposureMask | PointerMotionMask |
-                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
-    mask = CWEventMask | CWBitGravity | CWWinGravity | CWBackingStore;
-
-    if ((cx = data->client_rect.right - data->client_rect.left) <= 0) cx = 1;
-    if ((cy = data->client_rect.bottom - data->client_rect.top) <= 0) cy = 1;
-
-    data->client_window = XCreateWindow( display, data->whole_window,
-                                         data->client_rect.left - data->window_rect.left,
-                                         data->client_rect.top - data->window_rect.top,
-                                         cx, cy, 0, screen_depth, InputOutput,
-                                         visual, mask, &attr );
-    if (!data->client_window)
-    {
+        wine_tsx11_lock();
+        XDeleteContext( display, data->whole_window, winContext );
         XDestroyWindow( display, data->whole_window );
         data->whole_window = 0;
         wine_tsx11_unlock();
         return 0;
     }
-
-    XMapWindow( display, data->client_window );
-    XSaveContext( display, data->whole_window, winContext, (char *)data->hwnd );
-    XSaveContext( display, data->client_window, winContext, (char *)data->hwnd );
-    wine_tsx11_unlock();
 
     xim = x11drv_thread_data()->xim;
     if (xim) data->xic = X11DRV_CreateIC( xim, display, data->whole_window );
@@ -1202,7 +1216,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     X11DRV_set_wm_hints( display, data );
 
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)data->whole_window );
-    SetPropA( data->hwnd, client_window_prop, (HANDLE)data->client_window );
 
     /* set the window text */
     if (!InternalGetWindowText( data->hwnd, text, sizeof(text)/sizeof(WCHAR) )) text[0] = 0;
