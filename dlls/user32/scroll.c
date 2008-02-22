@@ -1998,6 +1998,9 @@ static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, BOOL fShowH, BOOL fShowV 
  */
 BOOL WINAPI ShowScrollBar(HWND hwnd, INT nBar, BOOL fShow)
 {
+    if ( !hwnd )
+        return FALSE;
+
     SCROLL_ShowScrollBar( hwnd, nBar, (nBar == SB_VERT) ? 0 : fShow,
                                       (nBar == SB_HORZ) ? 0 : fShow );
     return TRUE;

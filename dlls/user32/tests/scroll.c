@@ -123,10 +123,7 @@ static void scrollbar_test3(void)
     ok( !IsWindowVisible( hScroll ), "The scrollbar window should be visible\n" );
 
     ret = ShowScrollBar( NULL, SB_CTL, TRUE );
-    todo_wine
-    {
-        ok( !ret, "The ShowScrollBar() should failed.\n" );
-    }
+    ok( !ret, "The ShowScrollBar() should failed.\n" );
 
 }
 
