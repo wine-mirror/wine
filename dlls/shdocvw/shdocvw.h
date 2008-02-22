@@ -144,6 +144,7 @@ struct WebBrowser {
     VARIANT_BOOL status_bar;
     VARIANT_BOOL tool_bar;
     VARIANT_BOOL full_screen;
+    VARIANT_BOOL theater_mode;
 
     DocHost doc_host;
 };

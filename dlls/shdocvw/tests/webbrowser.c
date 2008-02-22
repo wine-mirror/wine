@@ -89,6 +89,7 @@ DEFINE_EXPECT(Invoke_ONADDRESSBAR);
 DEFINE_EXPECT(Invoke_ONSTATUSBAR);
 DEFINE_EXPECT(Invoke_ONTOOLBAR);
 DEFINE_EXPECT(Invoke_ONFULLSCREEN);
+DEFINE_EXPECT(Invoke_ONTHEATERMODE);
 DEFINE_EXPECT(Invoke_WINDOWSETRESIZABLE);
 DEFINE_EXPECT(EnableModeless_TRUE);
 DEFINE_EXPECT(EnableModeless_FALSE);
@@ -617,6 +618,11 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
     case DISPID_ONFULLSCREEN:
         CHECK_EXPECT(Invoke_ONFULLSCREEN);
+        test_invoke_bool(pDispParams);
+        break;
+
+    case DISPID_ONTHEATERMODE:
+        CHECK_EXPECT(Invoke_ONTHEATERMODE);
         test_invoke_bool(pDispParams);
         break;
 
@@ -1574,6 +1580,35 @@ static void test_ie_funcs(IUnknown *unk)
     hres = IWebBrowser2_put_FullScreen(wb, (exvb = VARIANT_FALSE));
     ok(hres == S_OK, "put_FullScreen failed: %08x\n", hres);
     CHECK_CALLED(Invoke_ONFULLSCREEN);
+
+    /* TheaterMode */
+
+    hres = IWebBrowser2_get_TheaterMode(wb, &b);
+    ok(hres == S_OK, "get_TheaterMode failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    SET_EXPECT(Invoke_ONTHEATERMODE);
+    hres = IWebBrowser2_put_TheaterMode(wb, (exvb = VARIANT_TRUE));
+    ok(hres == S_OK, "put_TheaterMode failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONTHEATERMODE);
+
+    hres = IWebBrowser2_get_TheaterMode(wb, &b);
+    ok(hres == S_OK, "get_TheaterMode failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    SET_EXPECT(Invoke_ONTHEATERMODE);
+    hres = IWebBrowser2_put_TheaterMode(wb, (exvb = 100));
+    ok(hres == S_OK, "put_TheaterMode failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONTHEATERMODE);
+
+    hres = IWebBrowser2_get_TheaterMode(wb, &b);
+    ok(hres == S_OK, "get_TheaterMode failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    SET_EXPECT(Invoke_ONTHEATERMODE);
+    hres = IWebBrowser2_put_TheaterMode(wb, (exvb = VARIANT_FALSE));
+    ok(hres == S_OK, "put_TheaterMode failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_ONTHEATERMODE);
 
     /* Resizable */
 

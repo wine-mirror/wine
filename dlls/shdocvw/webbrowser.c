@@ -817,15 +817,31 @@ static HRESULT WINAPI WebBrowser_put_RegisterAsDropTarget(IWebBrowser2 *iface,
 static HRESULT WINAPI WebBrowser_get_TheaterMode(IWebBrowser2 *iface, VARIANT_BOOL *pbRegister)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pbRegister);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pbRegister);
+
+    *pbRegister = This->theater_mode;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_TheaterMode(IWebBrowser2 *iface, VARIANT_BOOL bRegister)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, bRegister);
-    return E_NOTIMPL;
+    VARIANTARG arg;
+    DISPPARAMS dispparams = {&arg, NULL, 1, 0};
+
+    TRACE("(%p)->(%x)\n", This, bRegister);
+
+    This->theater_mode = bRegister ? VARIANT_TRUE : VARIANT_FALSE;
+
+    /* In opposition to InternetExplorer, all we should do here is
+     * inform the embedder about the theater mode change. */
+
+    V_VT(&arg) = VT_BOOL;
+    V_BOOL(&arg) = bRegister;
+    call_sink(This->doc_host.cps.wbe2, DISPID_ONTHEATERMODE, &dispparams);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_AddressBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
@@ -984,6 +1000,7 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     ret->status_bar = VARIANT_TRUE;
     ret->tool_bar = VARIANT_TRUE;
     ret->full_screen = VARIANT_FALSE;
+    ret->theater_mode = VARIANT_FALSE;
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
