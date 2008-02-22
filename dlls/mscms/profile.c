@@ -1397,11 +1397,12 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
         if (access & PROFILE_READWRITE) flags = GENERIC_READ|GENERIC_WRITE;
 
         if (!flags) return NULL;
+        if (!sharing) sharing = FILE_SHARE_READ;
 
         handle = CreateFileW( profile->pProfileData, flags, sharing, NULL, creation, 0, NULL );
         if (handle == INVALID_HANDLE_VALUE)
         {
-            WARN( "Unable to open color profile\n" );
+            WARN( "Unable to open color profile %u\n", GetLastError() );
             return NULL;
         }
 
