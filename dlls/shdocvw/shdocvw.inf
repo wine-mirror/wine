@@ -70,7 +70,6 @@ HKCR,"Shell.UIHelper\CurVer",,,"Shell.UIHelper.2"
 HKCR,"Shell.UIHelper.1",,,""
 HKCR,"Shell.UIHelper.1\CLSID",,,"%CLSID_ShellUIHelper%"
 
-HKCR,"CLSID\%CLSID_Internet%",,,"Internet Explorer"
 HKCR,"CLSID\%CLSID_Internet%\DefaultIcon",,,"shdoclc.dll,-190"
 HKCR,"CLSID\%CLSID_Internet%\InProcServer32",,,"%MODULE%"
 HKCR,"CLSID\%CLSID_Internet%\InProcServer32","ThreadingModel",,"Apartment"
