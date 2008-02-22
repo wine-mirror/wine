@@ -49,33 +49,11 @@ typedef struct tagCCCD {
     CRITICAL_SECTION cs;
 } CompCatCacheDaemon;
 
-static const IRunnableTaskVtbl CompCatCacheDaemonVtbl;
-
-HRESULT CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
-{
-    CompCatCacheDaemon *This;
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
-    This = CoTaskMemAlloc(sizeof(CompCatCacheDaemon));
-    if (This == NULL)
-        return E_OUTOFMEMORY;
-    ZeroMemory(This, sizeof(*This));
-    This->vtbl = &CompCatCacheDaemonVtbl;
-    This->refCount = 1;
-    InitializeCriticalSection(&This->cs);
-
-    TRACE("returning %p\n", This);
-    *ppOut = (IUnknown *)This;
-    BROWSEUI_refCount++;
-    return S_OK;
-}
-
 static void CompCatCacheDaemon_Destructor(CompCatCacheDaemon *This)
 {
     TRACE("destroying %p\n", This);
     DeleteCriticalSection(&This->cs);
-    CoTaskMemFree(This);
+    heap_free(This);
     BROWSEUI_refCount--;
 }
 
@@ -157,3 +135,23 @@ static const IRunnableTaskVtbl CompCatCacheDaemonVtbl =
     CompCatCacheDaemon_Resume,
     CompCatCacheDaemon_IsRunning
 };
+
+HRESULT CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
+{
+    CompCatCacheDaemon *This;
+    if (pUnkOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    This = heap_alloc(sizeof(CompCatCacheDaemon));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->vtbl = &CompCatCacheDaemonVtbl;
+    This->refCount = 1;
+    InitializeCriticalSection(&This->cs);
+
+    TRACE("returning %p\n", This);
+    *ppOut = (IUnknown *)This;
+    BROWSEUI_refCount++;
+    return S_OK;
+}

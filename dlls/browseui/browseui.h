@@ -35,6 +35,11 @@ static inline void *heap_alloc(size_t size)
     return HeapAlloc(GetProcessHeap(), 0, size);
 }
 
+static inline void *heap_alloc_zero(size_t size)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+}
+
 static inline void *heap_realloc(void *mem, size_t size)
 {
     return mem ? HeapReAlloc(GetProcessHeap(), 0, mem, size) : heap_alloc(size);

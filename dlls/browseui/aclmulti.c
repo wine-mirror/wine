@@ -310,10 +310,10 @@ HRESULT ACLMulti_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc(sizeof(ACLMulti));
+    This = heap_alloc_zero(sizeof(ACLMulti));
     if (This == NULL)
         return E_OUTOFMEMORY;
-    ZeroMemory(This, sizeof(*This));
+
     This->vtbl = &ACLMultiVtbl;
     This->aclVtbl = &ACLMulti_ACListVtbl;
     This->objmgrVtbl = &ACLMulti_ObjMgrVtbl;

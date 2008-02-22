@@ -64,24 +64,11 @@ typedef struct tagClassFactory
     LONG   ref;
     LPFNCONSTRUCTOR ctor;
 } ClassFactory;
-static const IClassFactoryVtbl ClassFactoryVtbl;
-
-static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
-{
-    ClassFactory *This = CoTaskMemAlloc(sizeof(ClassFactory));
-    This->vtbl = &ClassFactoryVtbl;
-    This->ref = 1;
-    This->ctor = ctor;
-    *ppvOut = (LPVOID)This;
-    TRACE("Created class factory %p\n", This);
-    BROWSEUI_refCount++;
-    return S_OK;
-}
 
 static void ClassFactory_Destructor(ClassFactory *This)
 {
     TRACE("Destroying class factory %p\n", This);
-    CoTaskMemFree(This);
+    heap_free(This);
     BROWSEUI_refCount--;
 }
 
@@ -153,6 +140,18 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
     ClassFactory_CreateInstance,
     ClassFactory_LockServer
 };
+
+static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
+{
+    ClassFactory *This = heap_alloc(sizeof(ClassFactory));
+    This->vtbl = &ClassFactoryVtbl;
+    This->ref = 1;
+    This->ctor = ctor;
+    *ppvOut = (LPVOID)This;
+    TRACE("Created class factory %p\n", This);
+    BROWSEUI_refCount++;
+    return S_OK;
+}
 
 /*************************************************************************
  * BROWSEUI DllMain
