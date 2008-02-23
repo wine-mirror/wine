@@ -374,12 +374,19 @@ START_TEST(opengl)
         HDC hdc;
         int iPixelFormat, res;
         HGLRC hglrc;
+        DWORD error;
         ShowWindow(hwnd, SW_SHOW);
 
         hdc = GetDC(hwnd);
 
         iPixelFormat = ChoosePixelFormat(hdc, &pfd);
         ok(iPixelFormat > 0, "No pixelformat found!\n"); /* This should never happen as ChoosePixelFormat always returns a closest match */
+
+        /* We shouldn't be able to create a context from a hdc which doesn't have a pixel format set */
+        hglrc = wglCreateContext(hdc);
+        ok(hglrc == NULL, "wglCreateContext should fail when no pixel format has been set, but it passed");
+        error = GetLastError();
+        ok(error == ERROR_INVALID_PIXEL_FORMAT, "expected ERROR_INVALID_PIXEL_FORMAT for wglCreateContext without a pixelformat set, but recevied %#x", error);
 
         res = SetPixelFormat(hdc, iPixelFormat, &pfd);
         ok(res, "SetPixelformat failed: %x\n", GetLastError());
