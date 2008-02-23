@@ -120,7 +120,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject
 						result = DMUS_S_STRING_TRUNCATED;
 				}
 				if (pDesc)
-					memcpy (pDesc, &pContainedObject->Desc, sizeof(DMUS_OBJECTDESC));
+					*pDesc = pContainedObject->Desc;
 				return result;
 			}
 			dwCount++;
@@ -171,10 +171,10 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_GetDescriptor
 		ERR(": pDesc bad write pointer\n");
 		return E_POINTER;
 	}
-	
+
 	DM_STRUCT_INIT(pDesc);
-	memcpy (pDesc, &This->Desc, sizeof(DMUS_OBJECTDESC));
-	
+	*pDesc = This->Desc;
+
 	return S_OK;
 }
 
@@ -199,7 +199,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_SetDescriptor
 	}
 
 	if (pDesc->dwValidData & DMUS_OBJ_OBJECT) {
-		memcpy (&This->Desc.guidObject, &pDesc->guidObject, sizeof(GUID));
+		This->Desc.guidObject = pDesc->guidObject;
 		dwNewFlags |= DMUS_OBJ_OBJECT;
 	}
 	if (pDesc->dwValidData & DMUS_OBJ_NAME) {
@@ -276,7 +276,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescript
 				TRACE_(dmfile)(": container form\n");
 				/* set guidClass */
 				pDesc->dwValidData |= DMUS_OBJ_CLASS;
-				memcpy (&pDesc->guidClass, &CLSID_DirectMusicContainer, sizeof(CLSID));				
+				pDesc->guidClass = CLSID_DirectMusicContainer;
 				do {
 					IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
 					StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
@@ -490,7 +490,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 			switch (Chunk.fccID) {
 				case DMUS_FOURCC_CONTAINER_FORM: {
 					TRACE_(dmfile)(": container form\n");
-					memcpy (&This->Desc.guidClass, &CLSID_DirectMusicContainer, sizeof(CLSID));
+					This->Desc.guidClass = CLSID_DirectMusicContainer;
 					This->Desc.dwValidData |= DMUS_OBJ_CLASS;
 					do {
 						IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
@@ -618,7 +618,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 																		TRACE_(dmdump)(": contained object header: \n%s\n", debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER(&tmpObjectHeader));
 																		/* copy guidClass */
 																		pNewEntry->Desc.dwValidData |= DMUS_OBJ_CLASS;
-																		memcpy (&pNewEntry->Desc.guidClass, &tmpObjectHeader.guidClassID, sizeof(GUID));
+																		pNewEntry->Desc.guidClass = tmpObjectHeader.guidClassID;
 																		/* store flags */
 																		pNewEntry->dwFlags = tmpObjectHeader.dwFlags;
 																		break;
@@ -648,7 +648,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 																							if (!IsEqualCLSID (&pNewEntry->Desc.guidClass, &tmpReferenceHeader.guidClassID)) ERR(": object header declares different CLSID than reference header?\n");
 																							/* it shouldn't be necessary to copy guidClass, since it was set in contained object header already...
 																							   yet if they happen to be different, I'd rather stick to this one */
-																							memcpy (&pNewEntry->Desc.guidClass, &tmpReferenceHeader.guidClassID, sizeof(GUID));
+																							pNewEntry->Desc.guidClass = tmpReferenceHeader.guidClassID;
 																							pNewEntry->Desc.dwValidData |= tmpReferenceHeader.dwValidData;
 																							break;																	
 																						}

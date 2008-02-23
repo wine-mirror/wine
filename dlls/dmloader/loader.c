@@ -492,7 +492,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_ScanDirectory (L
 		DMUS_OBJECTDESC Desc;
 		DM_STRUCT_INIT(&Desc);
 		Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_DATE;
-		memcpy (&Desc.guidClass, rguidClass, sizeof(GUID));
+		Desc.guidClass = *rguidClass;
 		strcpyW (Desc.wszFileName, FileData.cFileName);
 		FileTimeToLocalFileTime (&FileData.ftCreationTime, &Desc.ftDate);
 		IDirectMusicLoader8_SetObject (iface, &Desc);
@@ -690,15 +690,15 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_EnumObject (LPDI
 	LPWINE_LOADER_ENTRY pObjectEntry;
 	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	TRACE("(%p, %s, %d, %p)\n", This, debugstr_dmguid(rguidClass), dwIndex, pDesc);
-	
+
 	DM_STRUCT_INIT(pDesc);
-	
+
 	LIST_FOR_EACH (pEntry, This->pObjects) {
 		pObjectEntry = LIST_ENTRY (pEntry, WINE_LOADER_ENTRY, entry);
-			
+
 		if (IsEqualGUID (rguidClass, &GUID_DirectMusicAllTypes) || IsEqualGUID (rguidClass, &pObjectEntry->Desc.guidClass)) {
 			if (dwCount == dwIndex) {
-				memcpy (pDesc, &pObjectEntry->Desc, sizeof(DMUS_OBJECTDESC));
+				*pDesc = pObjectEntry->Desc;
 				/* we aren't supposed to reveal this info */
 				pDesc->dwValidData &= ~(DMUS_OBJ_MEMORY | DMUS_OBJ_STREAM);
 				pDesc->pbMemData = NULL;
@@ -744,12 +744,12 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_IDirectMusicLoader_LoadObjectFromFi
 	ICOM_THIS_MULTI(IDirectMusicLoaderImpl, LoaderVtbl, iface);
 	DMUS_OBJECTDESC ObjDesc;
 	WCHAR wszLoaderSearchPath[MAX_PATH];
-	
+
 	TRACE("(%p, %s, %s, %s, %p): wrapping to IDirectMusicLoaderImpl_GetObject\n", This, debugstr_dmguid(rguidClassID), debugstr_dmguid(iidInterfaceID), debugstr_w(pwzFilePath), ppObject);
-	
+
 	DM_STRUCT_INIT(&ObjDesc);	
 	ObjDesc.dwValidData = DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_CLASS; /* I believe I've read somewhere in MSDN that this function requires either full path or relative path */
-	memcpy (&ObjDesc.guidClass, rguidClassID, sizeof(CLSID));
+	ObjDesc.guidClass = *rguidClassID;
 	/* OK, MSDN says that search order is the following:
 	    - current directory (DONE)
 	    - windows search path (FIXME: how do I get that?)
@@ -817,8 +817,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppob
 	/* set default DLS collection (via SetObject... so that loading via DMUS_OBJ_OBJECT is possible) */
 	DM_STRUCT_INIT(&Desc);
 	Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_OBJECT;
-	memcpy (&Desc.guidClass, &CLSID_DirectMusicCollection, sizeof(CLSID));
-	memcpy (&Desc.guidObject, &GUID_DefaultGMCollection, sizeof(GUID));
+	Desc.guidClass = CLSID_DirectMusicCollection;
+	Desc.guidObject = GUID_DefaultGMCollection;
 	DMUSIC_GetDefaultGMPath (Desc.wszFileName);
 	IDirectMusicLoader_SetObject ((LPDIRECTMUSICLOADER8)obj, &Desc);
 	/* and now the workaroundTM for "invalid" default DLS; basically, 
@@ -939,10 +939,10 @@ HRESULT WINAPI DMUSIC_InitLoaderSettings (LPDIRECTMUSICLOADER8 iface) {
 
 	TRACE(": (%p)\n", This);
 	GetCurrentDirectoryW (MAX_PATH, wszCurrent);
-	
+
 	for (i = 0; i < sizeof(classes)/sizeof(REFCLSID); i++) {
 		LPWINE_LOADER_OPTION pNewSetting = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(WINE_LOADER_OPTION));
-		memcpy (&pNewSetting->guidClass, classes[i], sizeof(CLSID));
+		pNewSetting->guidClass = *classes[i];
 		strcpyW (pNewSetting->wszSearchPath, wszCurrent);
 		pNewSetting->bCache = TRUE;
 		list_add_tail (This->pClassSettings, &pNewSetting->entry);
@@ -954,10 +954,10 @@ HRESULT WINAPI DMUSIC_InitLoaderSettings (LPDIRECTMUSICLOADER8 iface) {
 HRESULT WINAPI DMUSIC_CopyDescriptor (LPDMUS_OBJECTDESC pDst, LPDMUS_OBJECTDESC pSrc) {
 	TRACE(": copy \n%s", debugstr_DMUS_OBJECTDESC(pSrc));
 	/* copy field by field */
-	if (pSrc->dwValidData & DMUS_OBJ_CLASS) memcpy (&pDst->guidClass, &pSrc->guidClass, sizeof(CLSID));
-	if (pSrc->dwValidData & DMUS_OBJ_OBJECT) memcpy (&pDst->guidObject, &pSrc->guidObject, sizeof(GUID));
-	if (pSrc->dwValidData & DMUS_OBJ_DATE) memcpy (&pDst->ftDate, &pSrc->ftDate, sizeof(FILETIME));
-	if (pSrc->dwValidData & DMUS_OBJ_VERSION) memcpy (&pDst->vVersion, &pSrc->vVersion, sizeof(DMUS_VERSION));
+	if (pSrc->dwValidData & DMUS_OBJ_CLASS) pDst->guidClass = pSrc->guidClass;
+	if (pSrc->dwValidData & DMUS_OBJ_OBJECT) pDst->guidObject = pSrc->guidObject;
+	if (pSrc->dwValidData & DMUS_OBJ_DATE) pDst->ftDate = pSrc->ftDate;
+	if (pSrc->dwValidData & DMUS_OBJ_VERSION) pDst->vVersion = pSrc->vVersion;
 	if (pSrc->dwValidData & DMUS_OBJ_NAME) strcpyW (pDst->wszName, pSrc->wszName);
 	if (pSrc->dwValidData & DMUS_OBJ_CATEGORY) strcpyW (pDst->wszCategory, pSrc->wszCategory);
 	if (pSrc->dwValidData & DMUS_OBJ_FILENAME) strcpyW (pDst->wszFileName, pSrc->wszFileName);
