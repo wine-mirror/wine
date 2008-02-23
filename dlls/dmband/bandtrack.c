@@ -302,7 +302,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_LoadBand (LPPERSISTSTREAM if
       ERR(": no more memory\n");
       return  E_OUTOFMEMORY;
     }
-    memcpy(&pNewBand->BandHeader, pHeader, sizeof(DMUS_PRIVATE_BAND_ITEM_HEADER));
+    pNewBand->BandHeader = *pHeader;
     pNewBand->pBand = (IDirectMusicBandImpl*)((char*)(*ppBand) - offsetof(IDirectMusicBandImpl,BandVtbl));
     IDirectMusicBand_AddRef(*ppBand);
     list_add_tail (&This->Bands, &pNewBand->entry);
@@ -321,6 +321,8 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
 
   IDirectMusicBand* pBand = NULL;
   DMUS_PRIVATE_BAND_ITEM_HEADER header;
+
+  memset(&header, 0, sizeof header);
 
   if (pChunk->fccID != DMUS_FOURCC_BANDS_LIST) {
     ERR_(dmfile)(": %s chunk should be a BANDS list\n", debugstr_fourcc (pChunk->fccID));
