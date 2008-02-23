@@ -768,7 +768,7 @@ static void test_GetMouseMovePointsEx(void)
     count = BUFLIM;
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), &in, out, count, GMMP_USE_DISPLAY_POINTS);
     todo_wine {
-    ok(retval <= count, "expected GetMouseMovePointsEx to succeed, got %d\n", retval);
+    ok((0 <= retval) && (retval <= count), "expected GetMouseMovePointsEx to succeed, got %d\n", retval);
     ok(MYERROR == GetLastError(),
        "expected error %d, got %u\n", MYERROR, GetLastError());
     }
