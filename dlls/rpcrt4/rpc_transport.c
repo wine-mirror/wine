@@ -29,32 +29,42 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <errno.h>
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <fcntl.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_TCP_H
-# include <netinet/tcp.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
+
+#if defined(__MINGW32__) || defined (_MSC_VER)
+# include <ws2tcpip.h>
+# ifndef EADDRINUSE
+#  define EADDRINUSE WSAEADDRINUSE
+# endif
+# ifndef EAGAIN
+#  define EAGAIN WSAEWOULDBLOCK
+# endif
+#else
+# include <errno.h>
+# ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+# endif
+# include <fcntl.h>
+# ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+# endif
+# ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+# endif
+# ifdef HAVE_NETINET_TCP_H
+#  include <netinet/tcp.h>
+# endif
+# ifdef HAVE_ARPA_INET_H
+#  include <arpa/inet.h>
+# endif
+# ifdef HAVE_NETDB_H
+#  include <netdb.h>
+# endif
+# ifdef HAVE_SYS_POLL_H
+#  include <sys/poll.h>
+# endif
+#endif /* defined(__MINGW32__) || defined (_MSC_VER) */
 
 #include "windef.h"
 #include "winbase.h"
