@@ -279,8 +279,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSysExTrack (LPCGUID lpcGUID, LPVOID *ppob
 	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
 	DM_STRUCT_INIT(track->pDesc);
 	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicSysExTrack, sizeof (CLSID));
+	track->pDesc->guidClass = CLSID_DirectMusicSysExTrack;
 	track->ref = 0; /* will be inited by QueryInterface */
-	
+
 	return IDirectMusicSysExTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
 }

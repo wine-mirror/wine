@@ -310,7 +310,7 @@ static ULONG WINAPI IDirectMusicTempoTrack_IPersistStream_Release (LPPERSISTSTRE
 static HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
   TRACE("(%p, %p)\n", This, pClassID);
-  memcpy(pClassID, &CLSID_DirectMusicTempoTrack, sizeof(CLSID));
+  *pClassID = CLSID_DirectMusicTempoTrack;
   return S_OK;
 }
 
@@ -352,7 +352,7 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Load (LPPERSISTSTREA
 	ERR(": no more memory\n");
 	return  E_OUTOFMEMORY;
       }
-      memcpy(&pNewItem->item, &item, sizeof(DMUS_IO_TEMPO_ITEM));
+      pNewItem->item = item;
       list_add_tail (&This->Items, &pNewItem->entry);
       pNewItem = NULL;
       StreamCount += sizeof(item);
@@ -414,7 +414,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicTempoTrack (LPCGUID lpcGUID, LPVOID *ppob
   track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
   DM_STRUCT_INIT(track->pDesc);
   track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-  memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicTempoTrack, sizeof (CLSID));
+  track->pDesc->guidClass = CLSID_DirectMusicTempoTrack;
   track->ref = 0; /* will be inited by QueryInterface */
   track->enabled = TRUE;
   list_init (&track->Items);
