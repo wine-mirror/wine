@@ -231,6 +231,9 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
                 fmt = WINED3DFMT_A4R4G4B4;
             else if(target->resource.format == WINED3DFMT_X8R8G8B8)
                 fmt = WINED3DFMT_A8R8G8B8;
+
+            /* We like to have two aux buffers in backbuffer mode */
+            PUSH2(WGL_AUX_BUFFERS_ARB, 2);
         }
 
         if(!getColorBits(fmt, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
