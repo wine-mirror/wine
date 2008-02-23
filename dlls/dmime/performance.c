@@ -770,7 +770,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio (LPDIRECTMUSICPERFO
 
 	/* as seen in msdn we need params init before audio path creation */
 	if (NULL != pParams) {
-	  memcpy(&This->pParams, pParams, sizeof(DMUS_AUDIOPARAMS));
+	  This->pParams = *pParams;
 	} else {
 	  /**
 	   * TODO, how can i fill the struct 
