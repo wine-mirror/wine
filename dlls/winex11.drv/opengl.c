@@ -1367,6 +1367,10 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   ppfd->cAccumBlueBits = bb;
   ppfd->cAccumAlphaBits = ab;
 
+  /* Aux bits */
+  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_AUX_BUFFERS, &value);
+  ppfd->cAuxBuffers = value;
+
   /* Depth bits */
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DEPTH_SIZE, &value);
   ppfd->cDepthBits = value;
@@ -1376,8 +1380,6 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   ppfd->cStencilBits = value;
 
   wine_tsx11_unlock();
-
-  /* Aux : to do ... */
 
   ppfd->iLayerType = PFD_MAIN_PLANE;
 
