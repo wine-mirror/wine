@@ -1087,3 +1087,28 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
 
     return TRUE;
 }
+
+/***********************************************************************
+ * GetMouseMovePointsEx [USER32]
+ *
+ * RETURNS
+ *     Success: count of point set in the buffer
+ *     Failure: -1
+ */
+int WINAPI GetMouseMovePointsEx(UINT size, LPMOUSEMOVEPOINT ptin, LPMOUSEMOVEPOINT ptout, int count, DWORD res) {
+
+    if((size != sizeof(MOUSEMOVEPOINT)) || (count < 0) || (count > 64)) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return -1;
+    }
+
+    if(!ptin || !ptout) {
+        SetLastError(ERROR_NOACCESS);
+        return -1;
+    }
+
+    FIXME("(%d %p %p %d %d) stub\n", size, ptin, ptout, count, res);
+
+    SetLastError(ERROR_POINT_NOT_FOUND);
+    return -1;
+}

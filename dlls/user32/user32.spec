@@ -328,7 +328,7 @@
 @ stdcall GetMessageW(ptr long long long)
 @ stdcall GetMonitorInfoA(long ptr)
 @ stdcall GetMonitorInfoW(long ptr)
-# @ stub GetMouseMovePointsEx
+@ stdcall GetMouseMovePointsEx(long ptr ptr long long)
 @ stdcall GetNextDlgGroupItem(long long long)
 @ stdcall GetNextDlgTabItem(long long long)
 # @ stub GetNextQueueWindow
