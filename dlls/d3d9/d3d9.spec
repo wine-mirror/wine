@@ -12,5 +12,3 @@
 @ stdcall DebugSetMute()
 @ stdcall Direct3DCreate9(long)
 @ stdcall Direct3DCreate9Ex(long ptr)
-
-@ stdcall D3D9GetSWInfo()

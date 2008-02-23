@@ -38,11 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 static int D3DPERF_event_level = 0;
 
-HRESULT WINAPI D3D9GetSWInfo(void) {
-    FIXME("(void): stub\n");
-    return 0;
-}
-
 void WINAPI DebugSetMute(void) {
     /* nothing to do */
 }
