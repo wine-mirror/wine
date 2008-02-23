@@ -161,6 +161,7 @@ for i in \
     "$CROOT/windows/system32/drivers" \
     "$CROOT/windows/system32/spool" \
     "$CROOT/windows/system32/spool/drivers" \
+    "$CROOT/windows/system32/spool/drivers/color" \
     "$CROOT/windows/temp"
 do
     [ -d "$i" ] || mkdir "$i"
