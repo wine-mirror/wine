@@ -1103,6 +1103,8 @@ static void shader_none_load_constants(IWineD3DDevice *iface, char usePS, char u
 static void shader_none_cleanup(IWineD3DDevice *iface) {}
 static void shader_none_color_correction(SHADER_OPCODE_ARG* arg) {}
 static void shader_none_destroy(IWineD3DBaseShader *iface) {}
+static HRESULT shader_none_alloc(IWineD3DDevice *iface) {return WINED3D_OK;}
+static void shader_none_free(IWineD3DDevice *iface) {}
 
 const shader_backend_t none_shader_backend = {
     &shader_none_select,
@@ -1111,7 +1113,9 @@ const shader_backend_t none_shader_backend = {
     &shader_none_load_constants,
     &shader_none_cleanup,
     &shader_none_color_correction,
-    &shader_none_destroy
+    &shader_none_destroy,
+    &shader_none_alloc,
+    &shader_none_free
 };
 
 /* *******************************************

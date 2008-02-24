@@ -173,6 +173,8 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->dst_fbo));
         }
 
+        This->shader_backend->shader_free_private(iface);
+
         if (This->glsl_program_lookup) hash_table_destroy(This->glsl_program_lookup);
 
         /* TODO: Clean up all the surfaces and textures! */

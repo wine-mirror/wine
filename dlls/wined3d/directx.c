@@ -2826,6 +2826,12 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     } else {
         object->shader_backend = &none_shader_backend;
     }
+    if(FAILED(object->shader_backend->shader_alloc_private((IWineD3DDevice *) object))) {
+        IWineD3D_Release(object->wineD3D);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppReturnedDeviceInterface = NULL;
+        return E_OUTOFMEMORY;
+    }
 
     /* set the state of the device to valid */
     object->state = WINED3D_OK;

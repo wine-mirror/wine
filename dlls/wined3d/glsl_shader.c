@@ -3226,6 +3226,11 @@ static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
 
     print_glsl_info_log(&GLINFO_LOCATION, program_id);
 
+    /* Once linked we can mark the shaders for deletion. They will be deleted once the program
+     * is destroyed
+     */
+    GL_EXTCALL(glDeleteObjectARB(vshader_id));
+    GL_EXTCALL(glDeleteObjectARB(pshader_id));
     return program_id;
 }
 
@@ -3246,24 +3251,26 @@ static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 static void shader_glsl_select_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *) This->shader_priv;
     static GLhandleARB loc = -1;
 
-    if (!This->depth_blt_glsl_program_id) {
-        This->depth_blt_glsl_program_id = create_glsl_blt_shader(gl_info);
-        loc = GL_EXTCALL(glGetUniformLocationARB(This->depth_blt_glsl_program_id, "sampler"));
+    if (!priv->depth_blt_glsl_program_id) {
+        priv->depth_blt_glsl_program_id = create_glsl_blt_shader(gl_info);
+        loc = GL_EXTCALL(glGetUniformLocationARB(priv->depth_blt_glsl_program_id, "sampler"));
     }
 
-    GL_EXTCALL(glUseProgramObjectARB(This->depth_blt_glsl_program_id));
+    GL_EXTCALL(glUseProgramObjectARB(priv->depth_blt_glsl_program_id));
     GL_EXTCALL(glUniform1iARB(loc, 0));
 }
 
 static void shader_glsl_destroy_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *) This->shader_priv;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
-    if(This->depth_blt_glsl_program_id) {
-        GL_EXTCALL(glDeleteObjectARB(This->depth_blt_glsl_program_id));
-        This->depth_blt_glsl_program_id = 0;
+    if(priv->depth_blt_glsl_program_id) {
+        GL_EXTCALL(glDeleteObjectARB(priv->depth_blt_glsl_program_id));
+        priv->depth_blt_glsl_program_id = 0;
     }
 }
 
@@ -3308,6 +3315,17 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     This->baseShader.is_compiled = FALSE;
 }
 
+static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    This->shader_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
+    return WINED3D_OK;
+}
+
+static void shader_glsl_free(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    HeapFree(GetProcessHeap(), 0, This->shader_priv);
+}
+
 const shader_backend_t glsl_shader_backend = {
     &shader_glsl_select,
     &shader_glsl_select_depth_blt,
@@ -3315,5 +3333,7 @@ const shader_backend_t glsl_shader_backend = {
     &shader_glsl_load_constants,
     &shader_glsl_cleanup,
     &shader_glsl_color_correction,
-    &shader_glsl_destroy
+    &shader_glsl_destroy,
+    &shader_glsl_alloc,
+    &shader_glsl_free
 };

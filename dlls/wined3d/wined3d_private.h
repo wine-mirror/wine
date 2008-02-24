@@ -257,11 +257,24 @@ typedef struct {
     void (*shader_cleanup)(IWineD3DDevice *iface);
     void (*shader_color_correction)(struct SHADER_OPCODE_ARG *arg);
     void (*shader_destroy)(IWineD3DBaseShader *iface);
+    HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
+    void (*shader_free_private)(IWineD3DDevice *iface);
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend;
 extern const shader_backend_t arb_program_shader_backend;
 extern const shader_backend_t none_shader_backend;
+
+/* GLSL shader private data */
+struct shader_glsl_priv {
+    GLhandleARB             depth_blt_glsl_program_id;
+};
+
+/* ARB_program_shader private data */
+struct shader_arb_priv {
+    GLuint                  depth_blt_vprogram_id;
+    GLuint                  depth_blt_fprogram_id;
+};
 
 /* X11 locking */
 
@@ -712,6 +725,7 @@ struct IWineD3DDeviceImpl
     int ps_selected_mode;
     const shader_backend_t *shader_backend;
     hash_table_t *glsl_program_lookup;
+    void *shader_priv;
 
     /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */
@@ -761,9 +775,6 @@ struct IWineD3DDeviceImpl
     GLuint                  dst_fbo;
     GLenum                  *draw_buffers;
     GLuint                  depth_blt_texture;
-    GLuint                  depth_blt_vprogram_id;
-    GLuint                  depth_blt_fprogram_id;
-    GLhandleARB             depth_blt_glsl_program_id;
 
     /* Cursor management */
     BOOL                    bCursorVisible;
