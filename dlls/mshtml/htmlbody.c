@@ -331,15 +331,39 @@ static HRESULT WINAPI HTMLBodyElement_get_link(IHTMLBodyElement *iface, VARIANT 
 static HRESULT WINAPI HTMLBodyElement_put_vLink(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    nsAString vlink_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+
+    if(!variant_to_nscolor(&v, &vlink_str))
+        return S_OK;
+
+    nsres = nsIDOMHTMLBodyElement_SetVLink(This->nsbody, &vlink_str);
+    nsAString_Finish(&vlink_str);
+    if(NS_FAILED(nsres))
+        ERR("SetLink failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_get_vLink(IHTMLBodyElement *iface, VARIANT *p)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString vlink_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&vlink_str, NULL);
+    nsres = nsIDOMHTMLBodyElement_GetVLink(This->nsbody, &vlink_str);
+    if(NS_FAILED(nsres))
+        ERR("GetLink failed: %08x\n", nsres);
+
+    nscolor_to_variant(&vlink_str, p);
+    nsAString_Finish(&vlink_str);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_aLink(IHTMLBodyElement *iface, VARIANT v)
