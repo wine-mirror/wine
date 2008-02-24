@@ -910,6 +910,209 @@ static void alpha_test(IDirect3DDevice8 *device)
     }
 }
 
+static void p8_texture_test(IDirect3DDevice8 *device)
+{
+    IDirect3D8 *d3d = NULL;
+    HRESULT hr;
+    IDirect3DTexture8 *texture = NULL;
+    D3DLOCKED_RECT lr;
+    unsigned char *data;
+    DWORD color, red, green, blue;
+    PALETTEENTRY table[256];
+    D3DCAPS8 caps;
+    UINT i;
+    float quad[] = {
+       -1.0,       0,       0.1,     0.0,    0.0,
+       -1.0,       1.0,     0.1,     0.0,    1.0,
+        1.0,       0,       0.1,     1.0,    0.0,
+        1.0,       1.0,     0.1,     1.0,    1.0,
+    };
+    float quad2[] = {
+       -1.0,       -1.0,    0.1,     0.0,    0.0,
+       -1.0,       0,       0.1,     0.0,    1.0,
+        1.0,       -1.0,    0.1,     1.0,    0.0,
+        1.0,       0,       0.1,     1.0,    1.0,
+    };
+
+    IDirect3DDevice8_GetDirect3D(device, &d3d);
+
+    if(IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+       D3DRTYPE_TEXTURE, D3DFMT_P8) != D3D_OK) {
+           skip("D3DFMT_P8 textures not supported\n");
+           goto out;
+    }
+
+    hr = IDirect3DDevice8_CreateTexture(device, 1, 1, 1, 0, D3DFMT_P8,
+                                        D3DPOOL_MANAGED, &texture);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateTexture failed, hr = %08x\n", hr);
+    if(!texture) {
+        skip("Failed to create D3DFMT_P8 texture\n");
+        goto out;
+    }
+
+    memset(&lr, 0, sizeof(lr));
+    hr = IDirect3DTexture8_LockRect(texture, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture8_LockRect failed, hr = %08x\n", hr);
+    data = lr.pBits;
+    *data = 1;
+
+    hr = IDirect3DTexture8_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture8_UnlockRect failed, hr = %08x\n", hr);
+
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *) texture);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture failed, hr = %08x\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed, hr = %08x\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHABLENDENABLE, TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
+
+    /* The first part of the test should work both with and without D3DPTEXTURECAPS_ALPHAPALETTE;
+       alpha of every entry is set to 1.0, which MS says is required when there's no
+       D3DPTEXTURECAPS_ALPHAPALETTE capability */
+    for (i = 0; i < 256; i++) {
+        table[i].peRed = table[i].peGreen = table[i].peBlue = 0;
+        table[i].peFlags = 0xff;
+    }
+    table[1].peRed = 0xff;
+    hr = IDirect3DDevice8_SetPaletteEntries(device, 0, table);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetPaletteEntries failed, hr = %08x\n", hr);
+
+    table[1].peRed = 0;
+    table[1].peBlue = 0xff;
+    hr = IDirect3DDevice8_SetPaletteEntries(device, 1, table);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetPaletteEntries failed, hr = %08x\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed, hr = %08x\n", hr);
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_TEX1);
+        ok(hr == D3D_OK, "SetVertexShader failed, hr = %#08x\n", hr);
+
+        hr = IDirect3DDevice8_SetCurrentTexturePalette(device, 0);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetCurrentTexturePalette failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DrawPrimitiveUP failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice8_SetCurrentTexturePalette(device, 1);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetCurrentTexturePalette failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 5 * sizeof(float));
+        ok(hr == D3D_OK, "IDirect3DDevice8_DrawPrimitiveUP failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed, hr = %08x\n", hr);
+    }
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
+
+    color = getPixelColor(device, 32, 32);
+    red   = (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue  = (color & 0x000000ff) >>  0;
+    ok(red == 0xff && blue == 0 && green == 0,
+       "got color %08x, expected 0x00ff0000\n", color);
+
+    todo_wine {
+        color = getPixelColor(device, 32, 320);
+        red   = (color & 0x00ff0000) >> 16;
+        green = (color & 0x0000ff00) >>  8;
+        blue  = (color & 0x000000ff) >>  0;
+        ok(red == 0 && blue == 0xff && green == 0,
+        "got color %08x, expected 0x000000ff\n", color);
+    }
+
+    /* Test palettes with alpha */
+    IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_ALPHAPALETTE)) {
+        skip("no D3DPTEXTURECAPS_ALPHAPALETTE capability, tests with alpha in palette will be skipped\n");
+    } else {
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+        ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHABLENDENABLE, TRUE);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
+
+        for (i = 0; i < 256; i++) {
+            table[i].peRed = table[i].peGreen = table[i].peBlue = 0;
+            table[i].peFlags = 0xff;
+        }
+        table[1].peRed = 0xff;
+        table[1].peFlags = 0x80;
+        hr = IDirect3DDevice8_SetPaletteEntries(device, 0, table);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetPaletteEntries failed, hr = %08x\n", hr);
+
+        table[1].peRed = 0;
+        table[1].peBlue = 0xff;
+        table[1].peFlags = 0x80;
+        hr = IDirect3DDevice8_SetPaletteEntries(device, 1, table);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetPaletteEntries failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice8_BeginScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed, hr = %08x\n", hr);
+        if(SUCCEEDED(hr)) {
+            hr = IDirect3DDevice8_SetRenderState(device, D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
+            hr = IDirect3DDevice8_SetRenderState(device, D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+            ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
+
+            hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_TEX1);
+            ok(hr == D3D_OK, "SetVertexShader failed, hr = %#08x\n", hr);
+
+            hr = IDirect3DDevice8_SetCurrentTexturePalette(device, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice8_SetCurrentTexturePalette failed, hr = %08x\n", hr);
+
+            hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+            ok(hr == D3D_OK, "IDirect3DDevice8_DrawPrimitiveUP failed, hr = %08x\n", hr);
+
+            hr = IDirect3DDevice8_SetCurrentTexturePalette(device, 1);
+            ok(hr == D3D_OK, "IDirect3DDevice8_SetCurrentTexturePalette failed, hr = %08x\n", hr);
+
+            hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, 5 * sizeof(float));
+            ok(hr == D3D_OK, "IDirect3DDevice8_DrawPrimitiveUP failed, hr = %08x\n", hr);
+
+            hr = IDirect3DDevice8_EndScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed, hr = %08x\n", hr);
+        }
+
+        hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
+
+        todo_wine {
+            color = getPixelColor(device, 32, 32);
+            red   = (color & 0x00ff0000) >> 16;
+            green = (color & 0x0000ff00) >>  8;
+            blue  = (color & 0x000000ff) >>  0;
+            ok(red >= 0x7e && red <= 0x81 && blue == 0 && green == 0,
+            "got color %08x, expected 0x00800000 or near\n", color);
+
+            color = getPixelColor(device, 32, 320);
+            red   = (color & 0x00ff0000) >> 16;
+            green = (color & 0x0000ff00) >>  8;
+            blue  = (color & 0x000000ff) >>  0;
+            ok(red == 0 && blue >= 0x7e && blue <= 0x81 && green == 0,
+            "got color %08x, expected 0x00000080 or near\n", color);
+        }
+    }
+
+    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture failed, hr = %08x\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHABLENDENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
+
+out:
+    if(texture) IDirect3DTexture8_Release(texture);
+    IDirect3D8_Release(d3d);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice8 *device_ptr;
@@ -980,6 +1183,8 @@ START_TEST(visual)
     {
         skip("No vs.1.1 support\n");
     }
+
+    p8_texture_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
