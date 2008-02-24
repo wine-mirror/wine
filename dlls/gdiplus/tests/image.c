@@ -105,6 +105,17 @@ static void test_GetImageDimension(void)
     GdipDisposeImage((GpImage*)bm);
 }
 
+static void test_LoadingImages(void)
+{
+    GpStatus stat;
+
+    stat = GdipCreateBitmapFromFile(0, 0);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromFile(0, (GpBitmap**)0xdeadbeef);
+    expect(InvalidParameter, stat);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -119,6 +130,7 @@ START_TEST(image)
 
     test_Scan0();
     test_GetImageDimension();
+    test_LoadingImages();
 
     GdiplusShutdown(gdiplusToken);
 }
