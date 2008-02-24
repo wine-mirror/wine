@@ -47,6 +47,30 @@ typedef struct {
 
 #define HTMLBODY(x)  ((IHTMLBodyElement*)  &(x)->lpHTMLBodyElementVtbl)
 
+static BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr)
+{
+    switch(V_VT(v)) {
+    case VT_BSTR:
+        nsAString_Init(nsstr, V_BSTR(v));
+        return TRUE;
+
+    case VT_I4: {
+        PRUnichar buf[10];
+        static const WCHAR formatW[] = {'#','%','x',0};
+
+        wsprintfW(buf, formatW, V_I4(v));
+        nsAString_Init(nsstr, buf);
+        return TRUE;
+    }
+
+    default:
+        FIXME("invalid vt=%d\n", V_VT(v));
+    }
+
+    return FALSE;
+
+}
+
 #define HTMLBODY_THIS(iface) DEFINE_THIS(HTMLBodyElement, HTMLBodyElement, iface)
 
 static HRESULT WINAPI HTMLBodyElement_QueryInterface(IHTMLBodyElement *iface,
@@ -254,8 +278,20 @@ static HRESULT WINAPI HTMLBodyElement_get_text(IHTMLBodyElement *iface, VARIANT 
 static HRESULT WINAPI HTMLBodyElement_put_link(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    nsAString link_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+
+    if(!variant_to_nscolor(&v, &link_str))
+        return S_OK;
+
+    nsres = nsIDOMHTMLBodyElement_SetLink(This->nsbody, &link_str);
+    nsAString_Finish(&link_str);
+    if(NS_FAILED(nsres))
+        ERR("SetLink failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_get_link(IHTMLBodyElement *iface, VARIANT *p)
