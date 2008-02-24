@@ -71,6 +71,21 @@ static BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr)
 
 }
 
+static void nscolor_to_variant(const nsAString *nsstr, VARIANT *p)
+{
+    const PRUnichar *color;
+
+    nsAString_GetData(nsstr, &color);
+
+    if(*color == '#') {
+        V_VT(p) = VT_I4;
+        V_I4(p) = strtolW(color+1, NULL, 16);
+    }else {
+        V_VT(p) = VT_BSTR;
+        V_BSTR(p) = SysAllocString(color);
+    }
+}
+
 #define HTMLBODY_THIS(iface) DEFINE_THIS(HTMLBodyElement, HTMLBodyElement, iface)
 
 static HRESULT WINAPI HTMLBodyElement_QueryInterface(IHTMLBodyElement *iface,
@@ -297,8 +312,20 @@ static HRESULT WINAPI HTMLBodyElement_put_link(IHTMLBodyElement *iface, VARIANT 
 static HRESULT WINAPI HTMLBodyElement_get_link(IHTMLBodyElement *iface, VARIANT *p)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString link_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&link_str, NULL);
+    nsres = nsIDOMHTMLBodyElement_GetLink(This->nsbody, &link_str);
+    if(NS_FAILED(nsres))
+        ERR("GetLink failed: %08x\n", nsres);
+
+    nscolor_to_variant(&link_str, p);
+    nsAString_Finish(&link_str);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_vLink(IHTMLBodyElement *iface, VARIANT v)
