@@ -90,4 +90,6 @@ extern void MSCMS_get_profile_header( const icProfile *iccprofile, PROFILEHEADER
 extern void MSCMS_set_profile_header( icProfile *iccprofile, const PROFILEHEADER *header );
 extern DWORD MSCMS_get_profile_size( const icProfile *iccprofile );
 
+extern const char *MSCMS_dbgstr_tag(DWORD);
+
 #endif /* HAVE_LCMS */

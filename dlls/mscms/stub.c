@@ -29,6 +29,8 @@
 #include "winuser.h"
 #include "icm.h"
 
+#include "mscms_priv.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
 BOOL WINAPI CheckBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT format, DWORD width,
@@ -149,7 +151,7 @@ BOOL WINAPI RegisterCMMW( PCWSTR machine, DWORD id, PCWSTR dll )
 
 BOOL WINAPI SelectCMM( DWORD id )
 {
-    FIXME( "( 0x%08x ) stub\n", id );
+    FIXME( "( %s ) stub\n", MSCMS_dbgstr_tag(id) );
 
     return TRUE;
 }
@@ -184,15 +186,6 @@ BOOL WINAPI SpoolerCopyFileEvent( LPWSTR printer, LPWSTR key, DWORD event )
 {
     FIXME( "( %s, %s, 0x%08x ) stub\n", debugstr_w(printer), debugstr_w(key), event );
     return TRUE;
-}
-
-BOOL WINAPI TranslateColors( HTRANSFORM transform, PCOLOR inputcolors, DWORD number,
-                             COLORTYPE input, PCOLOR outputcolors, COLORTYPE output )
-{
-    FIXME( "( %p, %p, 0x%08x, 0x%08x, %p, 0x%08x ) stub\n", transform, inputcolors,
-           number, input, outputcolors, output );
-
-    return FALSE;
 }
 
 BOOL WINAPI UnregisterCMMA( PCSTR machine, DWORD id )

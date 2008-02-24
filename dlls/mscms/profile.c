@@ -56,7 +56,7 @@ static inline LPWSTR MSCMS_strdupW( LPCSTR str )
     return ret;
 }
 
-static const char *MSCMS_dbgstr_tag( DWORD tag )
+const char *MSCMS_dbgstr_tag( DWORD tag )
 {
     return wine_dbg_sprintf( "'%c%c%c%c'",
         (char)(tag >> 24), (char)(tag >> 16), (char)(tag >> 8), (char)(tag) );
