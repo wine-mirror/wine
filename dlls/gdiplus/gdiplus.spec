@@ -435,7 +435,7 @@
 @ stub GdipIsVisibleRegionPointI
 @ stub GdipIsVisibleRegionRect
 @ stub GdipIsVisibleRegionRectI
-@ stub GdipLoadImageFromFile
+@ stdcall GdipLoadImageFromFile(wstr ptr)
 @ stub GdipLoadImageFromFileICM
 @ stdcall GdipLoadImageFromStream(ptr ptr)
 @ stdcall GdipLoadImageFromStreamICM(ptr ptr)

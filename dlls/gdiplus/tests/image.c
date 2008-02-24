@@ -114,6 +114,12 @@ static void test_LoadingImages(void)
 
     stat = GdipCreateBitmapFromFile(0, (GpBitmap**)0xdeadbeef);
     expect(InvalidParameter, stat);
+
+    stat = GdipLoadImageFromFile(0, 0);
+    expect(InvalidParameter, stat);
+
+    stat = GdipLoadImageFromFile(0, (GpImage**)0xdeadbeef);
+    expect(InvalidParameter, stat);
 }
 
 START_TEST(image)

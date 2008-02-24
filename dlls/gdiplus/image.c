@@ -697,6 +697,27 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipLoadImageFromFile(GDIPCONST WCHAR* filename,
+                                          GpImage **image)
+{
+    GpStatus stat;
+    IStream *stream;
+
+    if (!filename || !image)
+        return InvalidParameter;
+
+    stat = GdipCreateStreamOnFile(filename, GENERIC_READ, &stream);
+
+    if (stat != Ok)
+        return stat;
+
+    stat = GdipLoadImageFromStream(stream, image);
+
+    IStream_Release(stream);
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
 {
     IPicture *pic;
