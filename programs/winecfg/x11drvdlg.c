@@ -78,7 +78,7 @@ static void update_gui_for_desktop_mode(HWND dialog) {
         char* buf, *bufindex;
 	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_CHECKED);
 
-        buf = get_reg_key(config_key, keypath("X11 Driver"), "Desktop", "640x480");
+        buf = get_reg_key(config_key, keypath("X11 Driver"), "Desktop", "800x600");
         /* note: this test must match the one in x11drv */
         if( buf[0] != 'n' &&  buf[0] != 'N' &&  buf[0] != 'F' &&  buf[0] != 'f'
                 &&  buf[0] != '0') {
@@ -96,8 +96,8 @@ static void update_gui_for_desktop_mode(HWND dialog) {
                 SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), bufindex);
             } else {
                 WINE_TRACE("Desktop registry entry is malformed\n");
-                SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), "640");
-                SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), "480");
+                SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), "800");
+                SetWindowText(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), "600");
             }
         }
         HeapFree(GetProcessHeap(), 0, buf);
@@ -183,12 +183,12 @@ static void set_from_desktop_edits(HWND dialog) {
 
     if (width == NULL || strcmp(width, "") == 0) {
         HeapFree(GetProcessHeap(), 0, width);
-        width = strdupA("640");
+        width = strdupA("800");
     }
     
     if (height == NULL || strcmp(height, "") == 0) {
         HeapFree(GetProcessHeap(), 0, height);
-        height = strdupA("480");
+        height = strdupA("600");
     }
 
     new = HeapAlloc(GetProcessHeap(), 0, strlen(width) + strlen(height) + 2 /* x + terminator */);
