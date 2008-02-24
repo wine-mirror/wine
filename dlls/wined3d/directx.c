@@ -3397,9 +3397,10 @@ BOOL InitAdapters(void) {
             TRACE("iPixelFormat=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d\n", cfgs->iPixelFormat, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize);
             cfgs++;
         }
-        WineD3D_ReleaseFakeGLContext();
 
         fixup_extensions(&Adapters[0].gl_info);
+
+        WineD3D_ReleaseFakeGLContext();
 
         select_shader_mode(&Adapters[0].gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
