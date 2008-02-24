@@ -247,8 +247,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR* filename,
 
     stat = GdipCreateBitmapFromStream(stream, bitmap);
 
-    if(!stat)
-        IStream_Release(stream);
+    IStream_Release(stream);
 
     return stat;
 }
