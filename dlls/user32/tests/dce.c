@@ -385,7 +385,6 @@ static void test_invisible_create(void)
     dc1 = GetDC(hwnd_owndc);
     dc2 = GetDC(hwnd_owndc);
 
-todo_wine
     ok(dc1 == dc2, "expected owndc dcs to match\n");
 
     ReleaseDC(hwnd_owndc, dc2);

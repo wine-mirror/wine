@@ -71,6 +71,8 @@ static const char visual_id_prop[]    = "__wine_x11_visual_id";
 
 extern int usexcomposite;
 
+extern void WIN_invalidate_dce( HWND hwnd, const RECT *rect );  /* FIXME: to be removed */
+
 /***********************************************************************
  *		is_window_managed
  *
@@ -471,7 +473,7 @@ done:
     wine_tsx11_lock();
     XFlush( display );
     wine_tsx11_unlock();
-    invalidate_dce( hwnd, &data->window_rect );
+    WIN_invalidate_dce( hwnd, NULL );
     return TRUE;
 }
 
@@ -542,7 +544,6 @@ static void sync_gl_drawable(Display *display, struct x11drv_win_data *data)
 
     SetPropA(data->hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
     SetPropA(data->hwnd, pixmap_prop, (HANDLE)data->pixmap);
-    invalidate_dce( data->hwnd, &data->window_rect );
 }
 
 
@@ -1307,7 +1308,6 @@ void X11DRV_DestroyWindow( HWND hwnd )
         wine_tsx11_unlock();
     }
 
-    free_window_dce( data );
     destroy_whole_window( display, data );
     destroy_icon_window( display, data );
 
@@ -1489,9 +1489,6 @@ struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
                hwnd, data->whole_window, data->client_window, wine_dbgstr_rect( &data->window_rect ),
                wine_dbgstr_rect( &data->whole_rect ), wine_dbgstr_rect( &data->client_rect ));
     }
-
-    /* get class or window DC if needed */
-    alloc_window_dce( data );
     return data;
 }
 
@@ -1533,47 +1530,6 @@ Window X11DRV_get_client_window( HWND hwnd )
 
 
 /***********************************************************************
- *              X11DRV_get_fbconfig_id
- *
- * Return the GLXFBConfig ID of the drawable used by the window for
- * OpenGL rendering. This is 0 for windows without a pixel format set.
- */
-XID X11DRV_get_fbconfig_id( HWND hwnd )
-{
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-
-    if (!data) return (XID)GetPropA( hwnd, fbconfig_id_prop );
-    return data->fbconfig_id;
-}
-
-/***********************************************************************
- *              X11DRV_get_gl_drawable
- *
- * Return the GL drawable for this window.
- */
-Drawable X11DRV_get_gl_drawable( HWND hwnd )
-{
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-
-    if (!data) return (Drawable)GetPropA( hwnd, gl_drawable_prop );
-    return data->gl_drawable;
-}
-
-/***********************************************************************
- *              X11DRV_get_gl_pixmap
- *
- * Return the Pixmap associated with the GL drawable (if any) for this window.
- */
-Pixmap X11DRV_get_gl_pixmap( HWND hwnd )
-{
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-
-    if (!data) return (Pixmap)GetPropA( hwnd, pixmap_prop );
-    return data->pixmap;
-}
-
-
-/***********************************************************************
  *		X11DRV_get_ic
  *
  * Return the X input context associated with a window
@@ -1584,6 +1540,70 @@ XIC X11DRV_get_ic( HWND hwnd )
 
     if (!data) return 0;
     return data->xic;
+}
+
+
+/***********************************************************************
+ *		X11DRV_GetDC   (X11DRV.@)
+ */
+void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
+                   const RECT *top_rect, DWORD flags )
+{
+    struct x11drv_escape_set_drawable escape;
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+
+    escape.code        = X11DRV_SET_DRAWABLE;
+    escape.mode        = IncludeInferiors;
+    escape.fbconfig_id = 0;
+    escape.gl_drawable = 0;
+    escape.pixmap      = 0;
+
+    if (top == hwnd && data && IsIconic( hwnd ) && data->icon_window)
+    {
+        escape.drawable = data->icon_window;
+    }
+    else if (top == hwnd && (flags & DCX_WINDOW))
+    {
+        escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
+    }
+    else
+    {
+        escape.drawable    = X11DRV_get_client_window( top );
+        escape.fbconfig_id = data ? data->fbconfig_id : (XID)GetPropA( hwnd, fbconfig_id_prop );
+        escape.gl_drawable = data ? data->gl_drawable : (Drawable)GetPropA( hwnd, gl_drawable_prop );
+        escape.pixmap      = data ? data->pixmap : (Pixmap)GetPropA( hwnd, pixmap_prop );
+    }
+
+    escape.dc_rect.left         = win_rect->left - top_rect->left;
+    escape.dc_rect.top          = win_rect->top - top_rect->top;
+    escape.dc_rect.right        = win_rect->right - top_rect->left;
+    escape.dc_rect.bottom       = win_rect->bottom - top_rect->top;
+    escape.drawable_rect.left   = top_rect->left;
+    escape.drawable_rect.top    = top_rect->top;
+    escape.drawable_rect.right  = top_rect->right;
+    escape.drawable_rect.bottom = top_rect->bottom;
+
+    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+}
+
+
+/***********************************************************************
+ *		X11DRV_ReleaseDC  (X11DRV.@)
+ */
+void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
+{
+    struct x11drv_escape_set_drawable escape;
+
+    escape.code = X11DRV_SET_DRAWABLE;
+    escape.drawable = root_window;
+    escape.mode = IncludeInferiors;
+    escape.drawable_rect = virtual_screen_rect;
+    SetRect( &escape.dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
+             virtual_screen_rect.bottom - virtual_screen_rect.top );
+    escape.fbconfig_id = 0;
+    escape.gl_drawable = 0;
+    escape.pixmap = 0;
+    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 
@@ -1708,7 +1728,6 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     if ((data = X11DRV_get_win_data( hwnd )))
     {
         sync_window_region( thread_display(), data, hrgn );
-        invalidate_dce( hwnd, &data->window_rect );
     }
     else if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
     {

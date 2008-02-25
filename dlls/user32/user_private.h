@@ -144,9 +144,9 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pCreateDesktopWindow)(HWND);
     BOOL   (*pCreateWindow)(HWND);
     void   (*pDestroyWindow)(HWND);
-    HDC    (*pGetDCEx)(HWND,HRGN,DWORD);
+    void   (*pGetDC)(HDC,HWND,HWND,const RECT *,const RECT *,DWORD);
     DWORD  (*pMsgWaitForMultipleObjectsEx)(DWORD,const HANDLE*,DWORD,DWORD,DWORD);
-    INT    (*pReleaseDC)(HWND,HDC,BOOL);
+    void   (*pReleaseDC)(HWND,HDC);
     BOOL   (*pScrollDC)(HDC, INT, INT, const RECT *, const RECT *, HRGN, LPRECT);
     void   (*pSetFocus)(HWND);
     void   (*pSetParent)(HWND,HWND,HWND);
@@ -157,7 +157,6 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetWindowText)(HWND,LPCWSTR);
     BOOL   (*pShowWindow)(HWND,INT);
     void   (*pSysCommandSizeMove)(HWND,WPARAM);
-    HWND   (*pWindowFromDC)(HDC);
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
 } USER_DRIVER;
 
@@ -231,9 +230,13 @@ extern HMODULE user32_module DECLSPEC_HIDDEN;
 extern DWORD USER16_AlertableWait DECLSPEC_HIDDEN;
 extern HBRUSH SYSCOLOR_55AABrush DECLSPEC_HIDDEN;
 
+struct dce;
+
 extern BOOL CLIPBOARD_ReleaseOwner(void) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL HOOK_IsHooked( INT id ) DECLSPEC_HIDDEN;
+extern void free_dce( struct dce *dce, HWND hwnd ) DECLSPEC_HIDDEN;
+extern void invalidate_dce( HWND hwnd, const RECT *rect ) DECLSPEC_HIDDEN;
 extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;
 extern void *get_hook_proc( void *proc, const WCHAR *module );
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;

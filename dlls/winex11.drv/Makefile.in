@@ -14,7 +14,6 @@ C_SRCS = \
 	clipboard.c \
 	clipping.c \
 	codepage.c \
-	dce.c \
 	desktop.c \
 	dib.c \
 	dib_convert.c \

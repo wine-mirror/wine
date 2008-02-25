@@ -492,12 +492,6 @@ struct x11drv_escape_set_drawable
     Pixmap                   pixmap;       /* Pixmap for a GLXPixmap gl_drawable */
 };
 
-struct x11drv_escape_set_dce
-{
-    enum x11drv_escape_codes code;            /* escape code (X11DRV_SET_DRAWABLE) */
-    struct dce              *dce;             /* pointer to DCE (opaque ptr for GDI) */
-};
-
 /**************************************************************************
  * X11 USER driver
  */
@@ -676,7 +670,6 @@ struct x11drv_win_data
     BOOL        managed : 1;    /* is window managed? */
     BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
     DWORD       wm_state;       /* bit mask of active x11drv_wm_state values */
-    struct dce *dce;            /* DCE for CS_OWNDC or CS_CLASSDC windows */
     unsigned int lock_changes;  /* lock count for X11 change requests */
     HBITMAP     hWMIconBitmap;
     HBITMAP     hWMIconMask;
@@ -686,9 +679,6 @@ extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
 extern struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern Window X11DRV_get_client_window( HWND hwnd );
-extern XID X11DRV_get_fbconfig_id( HWND hwnd );
-extern Drawable X11DRV_get_gl_drawable( HWND hwnd );
-extern Pixmap X11DRV_get_gl_pixmap( HWND hwnd );
 extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
 extern XIC X11DRV_get_ic( HWND hwnd );
 extern BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig );
@@ -698,10 +688,6 @@ extern XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id );
 extern void mark_drawable_dirty( Drawable old, Drawable new );
 extern Drawable create_glxpixmap( Display *display, XVisualInfo *vis, Pixmap parent );
 extern void flush_gl_drawable( X11DRV_PDEVICE *physDev );
-
-extern void alloc_window_dce( struct x11drv_win_data *data );
-extern void free_window_dce( struct x11drv_win_data *data );
-extern void invalidate_dce( HWND hwnd, const RECT *rect );
 
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;

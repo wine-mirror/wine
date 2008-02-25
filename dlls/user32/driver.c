@@ -108,7 +108,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(CreateDesktopWindow);
         GET_USER_FUNC(CreateWindow);
         GET_USER_FUNC(DestroyWindow);
-        GET_USER_FUNC(GetDCEx);
+        GET_USER_FUNC(GetDC);
         GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
         GET_USER_FUNC(ReleaseDC);
         GET_USER_FUNC(ScrollDC);
@@ -121,7 +121,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SetWindowText);
         GET_USER_FUNC(ShowWindow);
         GET_USER_FUNC(SysCommandSizeMove);
-        GET_USER_FUNC(WindowFromDC);
         GET_USER_FUNC(WindowMessage);
 #undef GET_USER_FUNC
     }
@@ -344,9 +343,9 @@ static void nulldrv_DestroyWindow( HWND hwnd )
 {
 }
 
-static HDC nulldrv_GetDCEx( HWND hwnd, HRGN hrgn, DWORD flags )
+static void nulldrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
+                           const RECT *top_rect, DWORD flags )
 {
-    return 0;
 }
 
 static DWORD nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
@@ -356,9 +355,8 @@ static DWORD nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *han
                                      timeout, flags & MWMO_ALERTABLE );
 }
 
-static INT nulldrv_ReleaseDC( HWND hwnd, HDC hdc, BOOL end_paint )
+static void nulldrv_ReleaseDC( HWND hwnd, HDC hdc )
 {
-    return 0;
 }
 
 static BOOL nulldrv_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
@@ -405,11 +403,6 @@ static BOOL nulldrv_ShowWindow( HWND hwnd, INT cmd )
 
 static void nulldrv_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
 {
-}
-
-static HWND nulldrv_WindowFromDC( HDC hdc )
-{
-    return 0;
 }
 
 static LRESULT nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -461,7 +454,7 @@ static const USER_DRIVER null_driver =
     nulldrv_CreateDesktopWindow,
     nulldrv_CreateWindow,
     nulldrv_DestroyWindow,
-    nulldrv_GetDCEx,
+    nulldrv_GetDC,
     nulldrv_MsgWaitForMultipleObjectsEx,
     nulldrv_ReleaseDC,
     nulldrv_ScrollDC,
@@ -474,7 +467,6 @@ static const USER_DRIVER null_driver =
     nulldrv_SetWindowText,
     nulldrv_ShowWindow,
     nulldrv_SysCommandSizeMove,
-    nulldrv_WindowFromDC,
     nulldrv_WindowMessage
 };
 
@@ -668,9 +660,10 @@ static void loaderdrv_DestroyWindow( HWND hwnd )
     load_driver()->pDestroyWindow( hwnd );
 }
 
-static HDC loaderdrv_GetDCEx( HWND hwnd, HRGN hrgn, DWORD flags )
+static void loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
+                             const RECT *top_rect, DWORD flags )
 {
-    return load_driver()->pGetDCEx( hwnd, hrgn, flags );
+    load_driver()->pGetDC( hdc, hwnd, top_win, win_rect, top_rect, flags );
 }
 
 static DWORD loaderdrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
@@ -679,9 +672,9 @@ static DWORD loaderdrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *h
     return load_driver()->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
 }
 
-static INT loaderdrv_ReleaseDC( HWND hwnd, HDC hdc, BOOL end_paint )
+static void loaderdrv_ReleaseDC( HWND hwnd, HDC hdc )
 {
-    return load_driver()->pReleaseDC( hwnd, hdc, end_paint );
+    load_driver()->pReleaseDC( hwnd, hdc );
 }
 
 static BOOL loaderdrv_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
@@ -738,11 +731,6 @@ static void loaderdrv_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
     load_driver()->pSysCommandSizeMove( hwnd, wparam );
 }
 
-static HWND loaderdrv_WindowFromDC( HDC hdc )
-{
-    return load_driver()->pWindowFromDC( hdc );
-}
-
 static LRESULT loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return load_driver()->pWindowMessage( hwnd, msg, wparam, lparam );
@@ -792,7 +780,7 @@ static const USER_DRIVER lazy_load_driver =
     loaderdrv_CreateDesktopWindow,
     loaderdrv_CreateWindow,
     loaderdrv_DestroyWindow,
-    loaderdrv_GetDCEx,
+    loaderdrv_GetDC,
     loaderdrv_MsgWaitForMultipleObjectsEx,
     loaderdrv_ReleaseDC,
     loaderdrv_ScrollDC,
@@ -805,6 +793,5 @@ static const USER_DRIVER lazy_load_driver =
     loaderdrv_SetWindowText,
     loaderdrv_ShowWindow,
     loaderdrv_SysCommandSizeMove,
-    loaderdrv_WindowFromDC,
     loaderdrv_WindowMessage
 };

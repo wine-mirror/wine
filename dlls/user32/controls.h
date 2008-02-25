@@ -64,6 +64,8 @@ struct tagWND;
 extern ATOM get_int_atom_value( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern void CLASS_RegisterBuiltinClasses(void) DECLSPEC_HIDDEN;
 extern WNDPROC get_class_winproc( struct tagCLASS *class ) DECLSPEC_HIDDEN;
+extern struct dce *get_class_dce( struct tagCLASS *class ) DECLSPEC_HIDDEN;
+extern struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce ) DECLSPEC_HIDDEN;
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule ) DECLSPEC_HIDDEN;
 
 /* defwnd proc */

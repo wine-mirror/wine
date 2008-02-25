@@ -52,6 +52,7 @@ typedef struct tagCLASS
     INT              cbClsExtra;    /* Class extra bytes */
     INT              cbWndExtra;    /* Window extra bytes */
     LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
+    struct dce      *dce;           /* Opaque pointer to class DCE */
     HINSTANCE        hInstance;     /* Module that created the task */
     HICON            hIcon;         /* Default icon */
     HICON            hIconSm;       /* Default small icon */
@@ -243,6 +244,7 @@ static void CLASS_FreeClass( CLASS *classPtr )
 
     USER_Lock();
 
+    if (classPtr->dce) free_dce( classPtr->dce, 0 );
     list_remove( &classPtr->entry );
     if (classPtr->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         DeleteObject( classPtr->hbrBackground );
@@ -438,6 +440,26 @@ void CLASS_RegisterBuiltinClasses(void)
 WNDPROC get_class_winproc( CLASS *class )
 {
     return class->winproc;
+}
+
+
+/***********************************************************************
+ *           get_class_dce
+ */
+struct dce *get_class_dce( CLASS *class )
+{
+    return class->dce;
+}
+
+
+/***********************************************************************
+ *           set_class_dce
+ */
+struct dce *set_class_dce( CLASS *class, struct dce *dce )
+{
+    if (class->dce) return class->dce;  /* already set, don't change it */
+    class->dce = dce;
+    return dce;
 }
 
 

@@ -38,6 +38,7 @@ typedef struct tagWND
     HWND           parent;        /* Window parent */
     HWND           owner;         /* Window owner */
     struct tagCLASS *class;       /* Window class */
+    struct dce    *dce;           /* DCE pointer */
     WNDPROC        winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     DWORD          tid;           /* Owner thread id */

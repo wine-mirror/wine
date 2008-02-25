@@ -141,15 +141,11 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
     new_style = GetWindowLongW( hwnd, GWL_STYLE );
     changed = new_style ^ old_style;
 
-    if (changed & WS_VISIBLE)
+    if ((changed & WS_VISIBLE) && (new_style & WS_VISIBLE))
     {
-        data = X11DRV_get_win_data( hwnd );
-        if (data) invalidate_dce( hwnd, &data->window_rect );
-
         /* we don't unmap windows, that causes trouble with the window manager */
-        if (!(new_style & WS_VISIBLE)) return;
-
-        if (!data && !(data = X11DRV_create_win_data( hwnd ))) return;
+        if (!(data = X11DRV_get_win_data( hwnd )) &&
+            !(data = X11DRV_create_win_data( hwnd ))) return;
 
         if (data->whole_window && X11DRV_is_window_rect_mapped( &data->window_rect ))
         {
@@ -359,15 +355,6 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
             wine_server_call( req );
         }
         SERVER_END_REQ;
-    }
-
-    /* invalidate DCEs */
-    if ((((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) && (new_style & WS_VISIBLE)) ||
-        (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW)))
-    {
-        RECT rect;
-        UnionRect( &rect, rectWindow, &old_window_rect );
-        invalidate_dce( hwnd, &rect );
     }
 
     TRACE( "win %p window %s client %s style %08x\n",
@@ -787,8 +774,6 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         rect.bottom = y + height;
         OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
         X11DRV_X_to_window_rect( data, &rect );
-
-        invalidate_dce( hwnd, &data->window_rect );
 
         if (win->flags & WIN_RESTORE_MAX) style |= WS_MAXIMIZE;
         WIN_SetStyle( hwnd, style, WS_MINIMIZE );

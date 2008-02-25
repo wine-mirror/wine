@@ -794,3 +794,4 @@
 @ cdecl WINPOS_ShowIconTitle(long long)
 @ cdecl WIN_GetPtr(long)
 @ cdecl WIN_SetStyle(long long long)
+@ cdecl WIN_invalidate_dce(long ptr) invalidate_dce

@@ -1468,8 +1468,6 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
             ERR("Couldn't set format of the window, returning failure\n");
             return FALSE;
         }
-
-        physDev->gl_drawable = X11DRV_get_gl_drawable(hwnd);
     }
     else if(physDev->bitmap) {
         if(!(value&GLX_PIXMAP_BIT)) {

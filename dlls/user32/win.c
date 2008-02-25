@@ -522,7 +522,11 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     }
     SERVER_END_REQ;
     WIN_ReleasePtr( win );
-    if (ok) USER_Driver->pSetWindowStyle( hwnd, old_style );
+    if (ok)
+    {
+        USER_Driver->pSetWindowStyle( hwnd, old_style );
+        if ((old_style ^ new_style) & WS_VISIBLE) invalidate_dce( hwnd, NULL );
+    }
     return old_style;
 }
 
@@ -631,6 +635,8 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
         menu = (HMENU)wndPtr->wIDmenu;
     sys_menu = wndPtr->hSysMenu;
+    free_dce( wndPtr->dce, hwnd );
+    wndPtr->dce = NULL;
     WIN_ReleasePtr( wndPtr );
 
     if (menu) DestroyMenu( menu );
