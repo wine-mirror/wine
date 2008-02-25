@@ -1613,10 +1613,10 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_Pixel
         return FALSE;
     }
 
-    if(cfg->depthSize < depthSize)
+    if(cfg->depthSize != depthSize)
         return FALSE;
 
-    if(cfg->stencilSize < stencilSize)
+    if(cfg->stencilSize != stencilSize)
         return FALSE;
 
     return TRUE;
