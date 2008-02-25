@@ -33,6 +33,7 @@
 #define WIN32_NO_STATUS
 #include "winternl.h"
 #include "ntdll_misc.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -568,16 +569,18 @@ static WCHAR *build_assembly_id( const struct assembly_identity *ai )
 
 static ACTIVATION_CONTEXT *check_actctx( HANDLE h )
 {
-    ACTIVATION_CONTEXT *actctx = h;
+    ACTIVATION_CONTEXT *ret = NULL, *actctx = h;
 
     if (!h || h == INVALID_HANDLE_VALUE) return NULL;
-    switch (actctx->magic)
+    __TRY
     {
-    case ACTCTX_MAGIC:
-        return actctx;
-    default:
-        return NULL;
+        if (actctx->magic == ACTCTX_MAGIC) ret = actctx;
     }
+    __EXCEPT_PAGE_FAULT
+    {
+    }
+    __ENDTRY
+    return ret;
 }
 
 static inline void actctx_addref( ACTIVATION_CONTEXT *actctx )
