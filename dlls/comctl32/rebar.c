@@ -3197,24 +3197,23 @@ REBAR_NotifyFormat (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 REBAR_Paint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    HDC hdc;
-    PAINTSTRUCT ps;
-    RECT rc;
+    HDC hdc = (HDC)wParam;
 
-    GetClientRect(infoPtr->hwndSelf, &rc);
-    hdc = wParam==0 ? BeginPaint (infoPtr->hwndSelf, &ps) : (HDC)wParam;
-
-    TRACE("painting (%s) client (%s)\n",
-          wine_dbgstr_rect(&ps.rcPaint), wine_dbgstr_rect(&rc));
-
-    if (ps.fErase) {
-	/* Erase area of paint if requested */
-        REBAR_InternalEraseBkGnd (infoPtr, wParam, lParam, &ps.rcPaint);
+    if (hdc) {
+        TRACE("painting\n");
+        REBAR_Refresh (infoPtr, hdc);
+    } else {
+        PAINTSTRUCT ps;
+        hdc = BeginPaint (infoPtr->hwndSelf, &ps);
+        TRACE("painting (%s)\n", wine_dbgstr_rect(&ps.rcPaint));
+        if (ps.fErase) {
+            /* Erase area of paint if requested */
+            REBAR_InternalEraseBkGnd (infoPtr, wParam, lParam, &ps.rcPaint);
+        }
+        REBAR_Refresh (infoPtr, hdc);
+	EndPaint (infoPtr->hwndSelf, &ps);
     }
 
-    REBAR_Refresh (infoPtr, hdc);
-    if (!wParam)
-	EndPaint (infoPtr->hwndSelf, &ps);
     return 0;
 }
 
