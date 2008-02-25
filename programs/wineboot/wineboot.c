@@ -329,6 +329,7 @@ static DWORD runCmd(LPWSTR cmdline, LPCWSTR dir, BOOL wait, BOOL minimized)
         GetExitCodeProcess(info.hProcess, &exit_code);
     }
 
+    CloseHandle( info.hThread );
     CloseHandle( info.hProcess );
 
     return exit_code;
