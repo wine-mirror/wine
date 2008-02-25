@@ -562,7 +562,7 @@ static void start_services(void)
         return;
     }
 
-    while (!RegEnumKeyW( hkey, index++, name, sizeof(name) ))
+    while (!RegEnumKeyW( hkey, index++, name, sizeof(name)/sizeof(name[0]) ))
     {
         if (RegOpenKeyW( hkey, name, &skey )) continue;
         size = sizeof(start);
