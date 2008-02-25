@@ -506,7 +506,8 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
     if (memchrW(firstModifier, 's', modifierLen) != NULL) {
       if (finaloutput[0] != 0x00) strcatW(finaloutput, space);
       /* Don't flag as doneModifier - %~s on its own is processed later */
-      GetShortPathName(outputparam, outputparam, sizeof(outputparam));
+      GetShortPathName(outputparam, outputparam,
+                       sizeof(outputparam)/sizeof(outputparam[0]));
     }
 
     /* 5. Handle 'f' : Fully qualified path (File doesn't have to exist) */
