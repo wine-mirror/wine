@@ -2400,6 +2400,47 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             }
             break;
         }
+        case INTERNET_OPTION_PER_CONNECTION_OPTION:
+            FIXME("INTERNET_OPTION_PER_CONNECTION_OPTION stub\n");
+            if (*lpdwBufferLength < sizeof(INTERNET_PER_CONN_OPTION_LISTW))
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            else
+            {
+                INTERNET_PER_CONN_OPTION_LISTW *con = lpBuffer;
+                int x;
+                bSuccess = TRUE;
+                for (x = 0; x < con->dwOptionCount; ++x)
+                {
+                    INTERNET_PER_CONN_OPTIONW *option = con->pOptions + x;
+                    switch (option->dwOption)
+                    {
+                    case INTERNET_PER_CONN_FLAGS:
+                        option->Value.dwValue = PROXY_TYPE_DIRECT;
+                        break;
+
+                    case INTERNET_PER_CONN_PROXY_SERVER:
+                    case INTERNET_PER_CONN_PROXY_BYPASS:
+                    case INTERNET_PER_CONN_AUTOCONFIG_URL:
+                    case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
+                    case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
+                    case INTERNET_PER_CONN_AUTOCONFIG_RELOAD_DELAY_MINS:
+                    case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
+                    case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
+                        FIXME("Unhandled dwOption %d\n", option->dwOption);
+                        option->Value.dwValue = 0;
+                        bSuccess = FALSE;
+                        break;
+
+                    default:
+                        FIXME("Unknown dwOption %d\n", option->dwOption);
+                        bSuccess = FALSE;
+                        break;
+                    }
+                }
+                if (!bSuccess)
+                    INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+            }
+            break;
         default:
             FIXME("Stub! %d\n", dwOption);
             break;
