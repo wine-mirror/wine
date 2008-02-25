@@ -939,7 +939,36 @@ done:
 }
 
 /******************************************************************
- *  MsiSourceListAddMediaDisk(MSI.@)
+ *  MsiSourceListAddMediaDiskA (MSI.@)
+ */
+UINT WINAPI MsiSourceListAddMediaDiskA(LPCSTR szProduct, LPCSTR szUserSid,
+        MSIINSTALLCONTEXT dwContext, DWORD dwOptions, DWORD dwDiskId,
+        LPCSTR szVolumeLabel, LPCSTR szDiskPrompt)
+{
+    UINT r;
+    LPWSTR product = NULL;
+    LPWSTR usersid = NULL;
+    LPWSTR volume = NULL;
+    LPWSTR prompt = NULL;
+
+    if (szProduct) product = strdupAtoW(szProduct);
+    if (szUserSid) usersid = strdupAtoW(szUserSid);
+    if (szVolumeLabel) volume = strdupAtoW(szVolumeLabel);
+    if (szDiskPrompt) prompt = strdupAtoW(szDiskPrompt);
+
+    r = MsiSourceListAddMediaDiskW(product, usersid, dwContext, dwOptions,
+                                     dwDiskId, volume, prompt);
+
+    msi_free(product);
+    msi_free(usersid);
+    msi_free(volume);
+    msi_free(prompt);
+
+    return r;
+}
+
+/******************************************************************
+ *  MsiSourceListAddMediaDiskW (MSI.@)
  */
 UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid, 
         MSIINSTALLCONTEXT dwContext, DWORD dwOptions, DWORD dwDiskId, 
@@ -975,7 +1004,7 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
     if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
         FIXME("Unknown context MSIINSTALLCONTEXT_USERUNMANAGED\n");
 
-    rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, TRUE);
+    rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
         return ERROR_UNKNOWN_PRODUCT;
 

@@ -266,7 +266,7 @@
 270 stub MsiEnumPatchesExW
 271 stub MsiSourceListEnumMediaDisksA
 272 stub MsiSourceListEnumMediaDisksW
-273 stub MsiSourceListAddMediaDiskA
+273 stdcall MsiSourceListAddMediaDiskA(str str long long long str str)
 274 stdcall MsiSourceListAddMediaDiskW(wstr wstr long long long wstr wstr)
 275 stub MsiSourceListClearMediaDiskA
 276 stub MsiSourceListClearMediaDiskW

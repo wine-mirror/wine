@@ -1940,6 +1940,329 @@ static void test_MsiSourceListSetInfo(void)
     RegCloseKey(prodkey);
 }
 
+static void test_MsiSourceListAddMediaDisk(void)
+{
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    HKEY prodkey, userkey;
+    HKEY media, source;
+    LPSTR usersid;
+    LONG res;
+    UINT r;
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    /* GetLastError is not set by the function */
+
+    /* NULL szProductCodeOrPatchCode */
+    r = MsiSourceListAddMediaDiskA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* empty szProductCodeOrPatchCode */
+    r = MsiSourceListAddMediaDiskA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* garbage szProductCodeOrPatchCode */
+    r = MsiSourceListAddMediaDiskA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* guid without brackets */
+    r = MsiSourceListAddMediaDiskA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA",
+                                   usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* guid with brackets */
+    r = MsiSourceListAddMediaDiskA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
+                                   usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* dwOptions has MSISOURCETYPE_NETWORK */
+    r = MsiSourceListAddMediaDiskA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
+                                   usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                                   1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* dwOptions has MSISOURCETYPE_URL */
+    r = MsiSourceListAddMediaDiskA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
+                                   usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL,
+                                   1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* dwOptions has MSISOURCETYPE_MEDIA */
+    r = MsiSourceListAddMediaDiskA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
+                                   usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_MEDIA,
+                                   1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(userkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Media subkey is created by MsiSourceListAddMediaDisk */
+    res = RegOpenKeyA(source, "Media", &media);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(media, "1", "label;prompt");
+
+    /* dwDiskId is random */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 42, "label42", "prompt42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(media, "1", "label;prompt");
+    CHECK_REG_STR(media, "42", "label42;prompt42");
+
+    /* dwDiskId is 0 */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 0, "label0", "prompt0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(media, "0", "label0;prompt0");
+    CHECK_REG_STR(media, "1", "label;prompt");
+    CHECK_REG_STR(media, "42", "label42;prompt42");
+
+    /* dwDiskId is < 0 */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, -1, "label-1", "prompt-1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(media, "-1", "label-1;prompt-1");
+    CHECK_REG_STR(media, "0", "label0;prompt0");
+    CHECK_REG_STR(media, "1", "label;prompt");
+    CHECK_REG_STR(media, "42", "label42;prompt42");
+
+    /* update dwDiskId 1 */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "newlabel", "newprompt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(media, "-1", "label-1;prompt-1");
+    CHECK_REG_STR(media, "0", "label0;prompt0");
+    CHECK_REG_STR(media, "1", "newlabel;newprompt");
+    CHECK_REG_STR(media, "42", "label42;prompt42");
+
+    /* update dwDiskId 1, szPrompt is NULL */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "etiqueta", NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(media, "-1", "label-1;prompt-1");
+    CHECK_REG_STR(media, "0", "label0;prompt0");
+    CHECK_REG_STR(media, "1", "etiqueta;");
+    CHECK_REG_STR(media, "42", "label42;prompt42");
+
+    /* update dwDiskId 1, szPrompt is empty */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "etikett", "");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* update dwDiskId 1, szVolumeLable is NULL */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, NULL, "provocar");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(media, "-1", "label-1;prompt-1");
+    CHECK_REG_STR(media, "0", "label0;prompt0");
+    CHECK_REG_STR(media, "1", ";provocar");
+    CHECK_REG_STR(media, "42", "label42;prompt42");
+
+    /* update dwDiskId 1, szVolumeLable is empty */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, "", "provoquer");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    /* szUserSid is NULL */
+    r = MsiSourceListAddMediaDiskA(prodcode, NULL,
+                                   MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, 1, NULL, "provoquer");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(media, "-1", "label-1;prompt-1");
+    CHECK_REG_STR(media, "0", "label0;prompt0");
+    CHECK_REG_STR(media, "1", ";provoquer");
+    CHECK_REG_STR(media, "42", "label42;prompt42");
+
+    RegDeleteValueA(media, "-1");
+    RegDeleteValueA(media, "0");
+    RegDeleteValueA(media, "1");
+    RegDeleteValueA(media, "42");
+    RegDeleteKeyA(media, "");
+    RegCloseKey(media);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    /* MSIINSTALLCONTEXT_USERMANAGED */
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(userkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_USERMANAGED,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Media subkey is created by MsiSourceListAddMediaDisk */
+    res = RegOpenKeyA(source, "Media", &media);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(media, "1", "label;prompt");
+
+    RegDeleteValueA(media, "1");
+    RegDeleteKeyA(media, "");
+    RegCloseKey(media);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    /* MSIINSTALLCONTEXT_MACHINE */
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* machine product key exists */
+    r = MsiSourceListAddMediaDiskA(prodcode, NULL,
+                                   MSIINSTALLCONTEXT_MACHINE,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+    }
+
+    res = RegCreateKeyA(prodkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    r = MsiSourceListAddMediaDiskA(prodcode, NULL,
+                                   MSIINSTALLCONTEXT_MACHINE,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Media subkey is created by MsiSourceListAddMediaDisk */
+    res = RegOpenKeyA(source, "Media", &media);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(media, "1", "label;prompt");
+
+    /* szUserSid is non-NULL */
+    r = MsiSourceListAddMediaDiskA(prodcode, usersid,
+                                   MSIINSTALLCONTEXT_MACHINE,
+                                   MSICODE_PRODUCT, 1, "label", "prompt");
+    todo_wine
+    {
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
+
+    RegDeleteValueA(media, "1");
+    RegDeleteKeyA(media, "");
+    RegCloseKey(media);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+}
+
 START_TEST(source)
 {
     init_functionpointers();
@@ -1948,4 +2271,5 @@ START_TEST(source)
     test_MsiSourceListAddSourceEx();
     test_MsiSourceListEnumSources();
     test_MsiSourceListSetInfo();
+    test_MsiSourceListAddMediaDisk();
 }
