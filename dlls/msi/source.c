@@ -402,7 +402,8 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         RegQueryValueExW(media, szProperty, 0, 0, (LPBYTE)szValue, pcchValue);
         RegCloseKey(media);
     }
-    else if (!lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW))
+    else if (!lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW) ||
+             !lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDTYPEW))
     {
         rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW,
                               0, 0, NULL, &size);
@@ -423,11 +424,26 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             return ERROR_SUCCESS;
         }
 
-        ptr = strrchrW(source, ';');
-        if (!ptr)
+        if (!lstrcmpW(szProperty, INSTALLPROPERTY_LASTUSEDTYPEW))
+        {
+            if (*source != 'n' && *source != 'u' && *source != 'm')
+            {
+                msi_free(source);
+                RegCloseKey(sourcekey);
+                return ERROR_SUCCESS;
+            }
+
             ptr = source;
+            source[1] = '\0';
+        }
         else
-            ptr++;
+        {
+            ptr = strrchrW(source, ';');
+            if (!ptr)
+                ptr = source;
+            else
+                ptr++;
+        }
 
         if (szValue)
         {
@@ -439,33 +455,6 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
 
         *pcchValue = lstrlenW(ptr);
         msi_free(source);
-    }
-    else if (strcmpW(INSTALLPROPERTY_LASTUSEDTYPEW, szProperty)==0)
-    {
-        LPWSTR buffer;
-        DWORD size = 0;
-
-        RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW, 0, 0,
-                NULL, &size);
-        if (size == 0)
-            rc = ERROR_UNKNOWN_PROPERTY;
-        else
-        {
-            buffer = msi_alloc(size);
-            rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW,
-                    0, 0, (LPBYTE)buffer,&size); 
-            if (*pcchValue < 1)
-            {
-                rc = ERROR_MORE_DATA;
-                *pcchValue = 1;
-            }
-            else
-            {
-                szValue[0] = buffer[0];
-                rc = ERROR_SUCCESS;
-            }
-            msi_free(buffer);
-        }
     }
     else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
     {

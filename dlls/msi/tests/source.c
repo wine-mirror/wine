@@ -454,12 +454,9 @@ static void test_MsiSourceListGetInfo(void)
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
                                value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
-        ok(size == 0, "Expected 0, got %d\n", size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
+    ok(size == 0, "Expected 0, got %d\n", size);
 
     data = "x;y;z";
     res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
@@ -471,12 +468,9 @@ static void test_MsiSourceListGetInfo(void)
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
                                value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
-        ok(size == 0, "Expected 0, got %d\n", size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
+    ok(size == 0, "Expected 0, got %d\n", size);
 
     data = "n;y;z";
     res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
@@ -488,12 +482,9 @@ static void test_MsiSourceListGetInfo(void)
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
                                value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, "n"), "Expected \"n\", got \"%s\"\n", value);
-        ok(size == 1, "Expected 1, got %d\n", size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "n"), "Expected \"n\", got \"%s\"\n", value);
+    ok(size == 1, "Expected 1, got %d\n", size);
 
     data = "negatory";
     res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
@@ -505,12 +496,9 @@ static void test_MsiSourceListGetInfo(void)
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
                                value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, "n"), "Expected \"n\", got \"%s\"\n", value);
-        ok(size == 1, "Expected 1, got %d\n", size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "n"), "Expected \"n\", got \"%s\"\n", value);
+    ok(size == 1, "Expected 1, got %d\n", size);
 
     data = "megatron";
     res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
@@ -522,12 +510,9 @@ static void test_MsiSourceListGetInfo(void)
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
                                value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, "m"), "Expected \"m\", got \"%s\"\n", value);
-        ok(size == 1, "Expected 1, got %d\n", size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "m"), "Expected \"m\", got \"%s\"\n", value);
+    ok(size == 1, "Expected 1, got %d\n", size);
 
     data = "useless";
     res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
@@ -539,12 +524,9 @@ static void test_MsiSourceListGetInfo(void)
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
                                value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, "u"), "Expected \"u\", got \"%s\"\n", value);
-        ok(size == 1, "Expected 1, got %d\n", size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "u"), "Expected \"u\", got \"%s\"\n", value);
+    ok(size == 1, "Expected 1, got %d\n", size);
 
     RegDeleteValueA(media, "MediaPackage");
     RegDeleteValueA(media, "DiskPrompt");
