@@ -2322,7 +2322,6 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type,
     {
         static const WCHAR szMulti[] = {'[','~',']',0};
         LPCWSTR ptr;
-        LPWSTR newdata;
         *type=REG_SZ;
 
         if (value[0]=='#')
@@ -2350,19 +2349,8 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type,
         /* add double NULL terminator */
         if (*type == REG_MULTI_SZ)
         {
-            *size += sizeof(WCHAR);
-            newdata = msi_alloc(*size);
-            if (!newdata)
-            {
-                msi_free(data);
-                return NULL;
-            }
-
-            memcpy(newdata, data, *size - 1);
-            newdata[*size] = '\0';
-
-            msi_free(data);
-            data = (LPSTR)newdata;
+            *size += 2 * sizeof(WCHAR); /* two NULL terminators */
+            data = msi_realloc_zero(data, *size);
         }
     }
     return data;
@@ -2502,10 +2490,6 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     }
 
     deformat_string(package, name, &deformated);
-
-    /* get the double nulls to terminate SZ_MULTI */
-    if (type == REG_MULTI_SZ)
-        size +=sizeof(WCHAR);
 
     if (!check_first)
     {
