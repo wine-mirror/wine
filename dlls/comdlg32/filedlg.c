@@ -1373,9 +1373,9 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
       if (handledPath == FALSE && (win2000plus || win98plus)) {
           fodInfos->initdir = MemAlloc(MAX_PATH*sizeof(WCHAR));
 
-          if(FAILED(COMDLG32_SHGetFolderPathW(hwnd, CSIDL_PERSONAL, 0, 0, fodInfos->initdir)))
+          if(!COMDLG32_SHGetFolderPathW(hwnd, CSIDL_PERSONAL, 0, 0, fodInfos->initdir))
           {
-            if(FAILED(COMDLG32_SHGetFolderPathW(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, 0, 0, fodInfos->initdir)))
+            if(!COMDLG32_SHGetFolderPathW(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, 0, 0, fodInfos->initdir))
             {
                 /* last fallback */
                 GetCurrentDirectoryW(MAX_PATH, fodInfos->initdir);
