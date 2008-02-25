@@ -196,6 +196,8 @@ int WINAPI WinMain(HINSTANCE hinstance,
     if (!rc)
         return 0;
 
+    CloseHandle(info.hThread);
     WaitForSingleObject(info.hProcess,INFINITE);
+    CloseHandle(info.hProcess);
     return 0;
 }
