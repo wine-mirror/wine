@@ -197,6 +197,11 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD
     IWineD3DPaletteImpl *PalImpl = (IWineD3DPaletteImpl *) Pal;
     TRACE("(%p)->(%p)\n", This, Pal);
 
+    if(This->palette == PalImpl) {
+        TRACE("Nop palette change\n");
+        return WINED3D_OK;
+    }
+
     if(This->palette != NULL)
         if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
             This->palette->Flags &= ~WINEDDPCAPS_PRIMARYSURFACE;
