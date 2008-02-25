@@ -351,16 +351,13 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
                                    LPCWSTR szProperty, LPWSTR szValue, 
                                    LPDWORD pcchValue) 
 {
+    WCHAR squished_pc[GUID_SIZE];
     HKEY sourcekey;
     UINT rc;
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szProperty));
 
-    if (!szProduct || !*szProduct)
-        return ERROR_INVALID_PARAMETER;
-
-    if (lstrlenW(szProduct) != GUID_SIZE - 1 ||
-        (szProduct[0] != '{' && szProduct[GUID_SIZE - 2] != '}'))
+    if (!szProduct || !squash_guid(szProduct, squished_pc))
         return ERROR_INVALID_PARAMETER;
 
     if (szValue && !pcchValue)
