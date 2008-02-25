@@ -626,11 +626,11 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 
     if (hIMC)
     {
-        ImmDestroyIMCC(root_context->IMC.hCompStr);
-        ImmDestroyIMCC(root_context->IMC.hCandInfo);
-        ImmDestroyIMCC(root_context->IMC.hGuideLine);
-        ImmDestroyIMCC(root_context->IMC.hPrivate);
-        ImmDestroyIMCC(root_context->IMC.hMsgBuf);
+        ImmDestroyIMCC(data->IMC.hCompStr);
+        ImmDestroyIMCC(data->IMC.hCandInfo);
+        ImmDestroyIMCC(data->IMC.hGuideLine);
+        ImmDestroyIMCC(data->IMC.hPrivate);
+        ImmDestroyIMCC(data->IMC.hMsgBuf);
 
         if (data->textfont)
         {
