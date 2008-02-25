@@ -49,7 +49,6 @@ typedef struct tagWND
     void          *pHScroll;      /* Horizontal scroll-bar info */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
-    DWORD          clsStyle;      /* Class style at window creation */
     UINT_PTR       wIDmenu;       /* ID or hmenu (from CreateWindow) */
     DWORD          helpContext;   /* Help context ID */
     UINT           flags;         /* Misc. flags (see below) */

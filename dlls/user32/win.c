@@ -133,7 +133,8 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
         return NULL;
     }
 
-    if (!(win = HeapAlloc( GetProcessHeap(), 0, sizeof(WND) + extra_bytes - sizeof(win->wExtra) )))
+    if (!(win = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                           sizeof(WND) + extra_bytes - sizeof(win->wExtra) )))
     {
         SERVER_START_REQ( destroy_window )
         {
@@ -163,13 +164,11 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     win->hwndSelf   = handle;
     win->parent     = full_parent;
     win->owner      = full_owner;
+    win->class      = class;
+    win->winproc    = get_class_winproc( class );
     win->dwMagic    = WND_MAGIC;
-    win->flags      = 0;
     win->cbWndExtra = extra_bytes;
-    SetRectEmpty( &win->rectWindow );
-    SetRectEmpty( &win->rectClient );
-    memset( win->wExtra, 0, extra_bytes );
-    CLASS_AddWindow( class, win, unicode );
+    if (WINPROC_IsUnicode( win->winproc, unicode )) win->flags |= WIN_ISUNICODE;
     return win;
 }
 

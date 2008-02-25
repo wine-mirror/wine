@@ -433,17 +433,11 @@ void CLASS_RegisterBuiltinClasses(void)
 
 
 /***********************************************************************
- *           CLASS_AddWindow
- *
- * Add a new window using this class, and set the necessary
- * information inside the window structure.
+ *           get_class_winproc
  */
-void CLASS_AddWindow( CLASS *class, WND *win, BOOL unicode )
+WNDPROC get_class_winproc( CLASS *class )
 {
-    win->class    = class;
-    win->clsStyle = class->style;
-    win->winproc  = class->winproc;
-    if (WINPROC_IsUnicode( win->winproc, unicode )) win->flags |= WIN_ISUNICODE;
+    return class->winproc;
 }
 
 
