@@ -808,7 +808,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
                 }
             }
             index++;
-            len = sizeof(buffer);
+            len = sizeof(buffer)/sizeof(buffer[0]);
             buffer[0] = '\0';
         }
         RegCloseKey(hroot);
