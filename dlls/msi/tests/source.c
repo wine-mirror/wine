@@ -373,6 +373,20 @@ static void test_MsiSourceListGetInfo(void)
     ok(!lstrcmpA(value, "prompt"), "Expected \"prompt\", got \"%s\"\n", value);
     ok(size == 6, "Expected 6, got %d\n", size);
 
+    data = "";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE, source is empty */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE,
+                               value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
     data = "source";
     res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
                          (const BYTE *)data, lstrlenA(data) + 1);
@@ -383,12 +397,57 @@ static void test_MsiSourceListGetInfo(void)
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE,
                                value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, "source"), "Expected \"source\", got \"%s\"\n", value);
-        ok(size == 6, "Expected 6, got %d\n", size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "source"), "Expected \"source\", got \"%s\"\n", value);
+    ok(size == 6, "Expected 6, got %d\n", size);
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE, size is too short */
+    size = 4;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE,
+                               value, &size);
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got \"%s\"\n", value);
+    ok(size == 6, "Expected 6, got %d\n", size);
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE, size is exactly 6 */
+    size = 6;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE,
+                               value, &size);
+    ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got \"%s\"\n", value);
+    ok(size == 6, "Expected 6, got %d\n", size);
+
+    data = "a;source";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE, one semi-colon */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE,
+                               value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "source"), "Expected \"source\", got \"%s\"\n", value);
+    ok(size == 6, "Expected 6, got %d\n", size);
+
+    data = "a:source";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE, one colon */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE,
+                               value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "a:source"), "Expected \"a:source\", got \"%s\"\n", value);
+    ok(size == 8, "Expected 8, got %d\n", size);
 
     /* INSTALLPROPERTY_LASTUSEDTYPE, invalid source format */
     size = MAX_PATH;

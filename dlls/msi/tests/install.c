@@ -3017,12 +3017,9 @@ static void test_publishsourcelist(void)
     lstrcpyA(value, "aaa");
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
-        ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
+    ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
 
     size = MAX_PATH;
     lstrcpyA(value, "aaa");
