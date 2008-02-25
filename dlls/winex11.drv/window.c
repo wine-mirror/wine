@@ -64,7 +64,6 @@ static const char fbconfig_id_prop[]  = "__wine_x11_fbconfig_id";
 static const char gl_drawable_prop[]  = "__wine_x11_gl_drawable";
 static const char pixmap_prop[]       = "__wine_x11_pixmap";
 static const char managed_prop[]      = "__wine_x11_managed";
-static const char visual_id_prop[]    = "__wine_x11_visual_id";
 
 /* for XDG systray icons */
 #define SYSTEM_TRAY_REQUEST_DOCK    0
@@ -1360,7 +1359,6 @@ static struct x11drv_win_data *create_desktop_win_data( Display *display, HWND h
     SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
     SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
     SetPropA( data->hwnd, client_window_prop, (HANDLE)root_window );
-    SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
     set_initial_wm_hints( display, data );
     return data;
 }
