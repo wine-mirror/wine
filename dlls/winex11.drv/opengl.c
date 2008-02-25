@@ -1523,15 +1523,44 @@ BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
      * Up to now that works fine.
      *
      * The delayed GLX context creation could cause issues for wglCopyContext as it might get called
-     * when there is no GLX context yet. Warn the user about it and let him report a bug report.
-     * The chance this will cause problems is small as at the time of writing Wine has had OpenGL support
-     * for more than 7 years and this function has remained a stub ever since then.
+     * when there is no GLX context yet. The chance this will cause problems is small as at the time of
+     * writing Wine has had OpenGL support for more than 7 years and this function has remained a stub
+     * ever since then.
      */
     if(!src->ctx || !dst->ctx) {
-        FIXME("No source or destination context available! This could indicate a Wine bug.\n");
-        return FALSE;
+        /* NOTE: As a special case, if both GLX contexts are NULL, that means
+         * neither WGL context was made current. In that case, both contexts
+         * are in a default state, so any copy would no-op.
+         */
+        if(!src->ctx && !dst->ctx) {
+            TRACE("No source or destination contexts set. No-op.\n");
+            return TRUE;
+        }
+
+        if (!src->ctx) {
+            DWORD type = GetObjectType(src->hdc);
+            wine_tsx11_lock();
+            if(src->vis)
+                src->ctx = pglXCreateContext(gdi_display, src->vis, NULL, type == OBJ_MEMDC ? False : True);
+            else /* Create a GLX Context for a pbuffer */
+                src->ctx = pglXCreateNewContext(gdi_display, src->fmt->fbconfig, src->fmt->render_type, NULL, True);
+            TRACE(" created a delayed OpenGL context (%p)\n", src->ctx);
+        }
+        else if (!dst->ctx) {
+            DWORD type = GetObjectType(dst->hdc);
+            wine_tsx11_lock();
+            if(dst->vis)
+                dst->ctx = pglXCreateContext(gdi_display, dst->vis, NULL, type == OBJ_MEMDC ? False : True);
+            else /* Create a GLX Context for a pbuffer */
+                dst->ctx = pglXCreateNewContext(gdi_display, dst->fmt->fbconfig, dst->fmt->render_type, NULL, True);
+            TRACE(" created a delayed OpenGL context (%p)\n", dst->ctx);
+        }
     }
+    else
+        wine_tsx11_lock();
+
     pglXCopyContext(gdi_display, src->ctx, dst->ctx, mask);
+    wine_tsx11_unlock();
 
     /* As opposed to wglCopyContext, glXCopyContext doesn't return anything, so hopefully we passed */
     return TRUE;
