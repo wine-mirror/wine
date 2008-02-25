@@ -979,12 +979,11 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
     UINT rc;
     WCHAR szIndex[10];
     WCHAR squished_pc[GUID_SIZE];
-    static const WCHAR fmt[] = {'%','i',0};
-    static const WCHAR disk_fmt[] = {'%','s',';','%','s',0};
-    static const WCHAR empty[1] = {0};
-    LPCWSTR pt1,pt2;
     LPWSTR buffer;
     DWORD size;
+
+    static const WCHAR fmt[] = {'%','i',0};
+    static const WCHAR semicolon[] = {';',0};
 
     TRACE("%s %s %x %x %i %s %s\n", debugstr_w(szProduct),
             debugstr_w(szUserSid), dwContext, dwOptions, dwDiskId,
@@ -1012,33 +1011,24 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    OpenMediaSubkey(sourcekey,&mediakey,TRUE);
+    OpenMediaSubkey(sourcekey, &mediakey, TRUE);
 
-    sprintfW(szIndex,fmt,dwDiskId);
+    sprintfW(szIndex, fmt, dwDiskId);
 
     size = 2;
-    if (szVolumeLabel)
-    {
-        size +=lstrlenW(szVolumeLabel);
-        pt1 = szVolumeLabel;
-    }
-    else
-        pt1 = empty;
-    if (szDiskPrompt)
-    {
-        size +=lstrlenW(szDiskPrompt);
-        pt2 = szDiskPrompt;
-    }
-    else
-        pt2 = empty;
+    if (szVolumeLabel) size += lstrlenW(szVolumeLabel);
+    if (szDiskPrompt) size += lstrlenW(szDiskPrompt);
 
-    size *=sizeof(WCHAR);
-
+    size *= sizeof(WCHAR);
     buffer = msi_alloc(size);
-    sprintfW(buffer,disk_fmt,pt1,pt2);
+    *buffer = '\0';
+
+    if (szVolumeLabel) lstrcpyW(buffer, szVolumeLabel);
+    lstrcatW(buffer, semicolon);
+    if (szDiskPrompt) lstrcatW(buffer, szDiskPrompt);
 
     RegSetValueExW(mediakey, szIndex, 0, REG_SZ, (LPBYTE)buffer, size);
-    msi_free( buffer );
+    msi_free(buffer);
 
     RegCloseKey(sourcekey);
     RegCloseKey(mediakey);
