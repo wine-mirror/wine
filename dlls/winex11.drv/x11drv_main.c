@@ -659,6 +659,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     data->last_focus = 0;
     data->selection_wnd = 0;
     TlsSetValue( thread_data_tls_index, data );
+    X11DRV_SetCursor( NULL );
     return data;
 }
 
