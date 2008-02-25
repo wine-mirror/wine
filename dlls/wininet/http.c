@@ -3080,6 +3080,20 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
 
     } while (!strcmpW(status_code, szHundred)); /* ignore "100 Continue" responses */
 
+    /* Add status code */
+    HTTP_ProcessHeader(lpwhr, szStatus, status_code,
+            HTTP_ADDHDR_FLAG_REPLACE);
+
+    HeapFree(GetProcessHeap(),0,lpwhr->lpszVersion);
+    HeapFree(GetProcessHeap(),0,lpwhr->lpszStatusText);
+
+    lpwhr->lpszVersion= WININET_strdupW(buffer);
+    lpwhr->lpszStatusText = WININET_strdupW(status_text);
+
+    /* Restore the spaces */
+    *(status_code-1) = ' ';
+    *(status_text-1) = ' ';
+
     /* regenerate raw headers */
     while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
     {
@@ -3091,15 +3105,6 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
     cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
     lpszRawHeaders[cchRawHeaders] = '\0';
-
-    HTTP_ProcessHeader(lpwhr, szStatus, status_code,
-            HTTP_ADDHDR_FLAG_REPLACE);
-
-    HeapFree(GetProcessHeap(),0,lpwhr->lpszVersion);
-    HeapFree(GetProcessHeap(),0,lpwhr->lpszStatusText);
-
-    lpwhr->lpszVersion= WININET_strdupW(buffer);
-    lpwhr->lpszStatusText = WININET_strdupW(status_text);
 
     /* Parse each response line */
     do
