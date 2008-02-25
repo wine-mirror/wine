@@ -483,8 +483,18 @@ static HRESULT WINAPI domcdata_put_data(
     IXMLDOMCDATASection *iface,
     BSTR data)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+    HRESULT hr = E_FAIL;
+    VARIANT val;
+
+    TRACE("%p %s\n", This, debugstr_w(data) );
+
+    V_VT(&val) = VT_BSTR;
+    V_BSTR(&val) = data;
+
+    hr = IXMLDOMNode_put_nodeValue( This->element, val );
+
+    return hr;
 }
 
 static HRESULT WINAPI domcdata_get_length(
