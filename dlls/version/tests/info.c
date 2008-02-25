@@ -476,7 +476,8 @@ static void test_VerQueryValue(void)
     SetLastError(0xdeadbeef);
     ret = VerQueryValue(ver, "String", (LPVOID*)&p, &len);
     ok(!ret, "VerQueryValue should fail\n");
-    ok(GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND,
+    ok(GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND ||
+       GetLastError() == 0xdeadbeef /* Win9x, NT4, W2K */,
        "VerQueryValue returned %u\n", GetLastError());
     ok(p == (char *)0xdeadbeef, "expected 0xdeadbeef got %p\n", p);
     ok(len == 0, "expected 0 got %x\n", len);
@@ -542,7 +543,8 @@ todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
         SetLastError(0xdeadbeef);
         ret = VerQueryValue(ver, buf, (LPVOID*)&p, &len);
         ok(!ret, "VerQueryValue(%s) succeeded\n", buf);
-        ok(GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND,
+        ok(GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND ||
+           GetLastError() == 0xdeadbeef /* Win9x, NT4, W2K */,
            "VerQueryValue returned %u\n", GetLastError());
         ok(p == (char *)0xdeadbeef, "expected 0xdeadbeef got %p\n", p);
         ok(len == 0, "expected 0 got %x\n", len);
