@@ -115,7 +115,7 @@ static HRESULT WINAPI IDirectMusicPortImpl_Compact (LPDIRECTMUSICPORT iface) {
 static HRESULT WINAPI IDirectMusicPortImpl_GetCaps (LPDIRECTMUSICPORT iface, LPDMUS_PORTCAPS pPortCaps) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
 	TRACE("(%p, %p)\n", This, pPortCaps);
-	memcpy(pPortCaps, &This->caps, sizeof(DMUS_PORTCAPS));	
+	*pPortCaps = This->caps;
 	return S_OK;
 }
 
@@ -250,8 +250,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj,
 	obj->lpVtbl = &DirectMusicPort_Vtbl;
 	obj->ref = 0;  /* will be inited by QueryInterface */
 	obj->fActive = FALSE;
-	memcpy(&obj->params, pPortParams, sizeof(DMUS_PORTPARAMS));
-	memcpy(&obj->caps, pPortCaps, sizeof(DMUS_PORTCAPS));
+	obj->params = *pPortParams;
+	obj->caps = *pPortCaps;
 	obj->pDirectSound = NULL;
 	obj->pLatencyClock = NULL;
 	hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (LPVOID*)&obj->pLatencyClock, NULL);
