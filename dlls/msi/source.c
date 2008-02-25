@@ -1016,7 +1016,7 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
 
     rc = OpenSourceKey(szProduct, &sourcekey, MSICODE_PRODUCT, dwContext, FALSE);
     if (rc != ERROR_SUCCESS)
-        return ERROR_UNKNOWN_PRODUCT;
+        return rc;
 
     OpenMediaSubkey(sourcekey,&mediakey,TRUE);
 
