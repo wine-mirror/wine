@@ -103,8 +103,8 @@ BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rect )
         /* popup with sysmenu == caption are managed */
         if (style & WS_SYSMENU) return TRUE;
         /* full-screen popup windows are managed */
-        if ((window_rect->right - window_rect->left) == screen_width &&
-            (window_rect->bottom - window_rect->top) == screen_height)
+        if (window_rect->left <= 0 && window_rect->right >= screen_width &&
+            window_rect->top <= 0 && window_rect->bottom >= screen_height)
             return TRUE;
     }
     /* default: not managed */
