@@ -304,8 +304,12 @@ static void test_set_value(void)
     static const char string2A[] = "This\0Breaks\0\0A\0\0\0Lot\0\0\0\0";
     static const char substring2A[] = "This";
 
-    ret = RegSetValueA(hkey_main, NULL, REG_SZ, NULL, 0);
-    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have failed with ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    if (0)
+    {
+        /* Crashes on NT4, Windows 2000 and XP SP1 */
+        ret = RegSetValueA(hkey_main, NULL, REG_SZ, NULL, 0);
+        ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have failed with ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    }
 
     ret = RegSetValueA(hkey_main, NULL, REG_SZ, string1A, sizeof(string1A));
     ok(ret == ERROR_SUCCESS, "RegSetValueA failed: %d, GLE=%d\n", ret, GetLastError());
@@ -367,9 +371,12 @@ static void test_set_value(void)
     /* 9x doesn't support W-calls, so don't test them then */
     if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return; 
 
-
-    ret = RegSetValueW(hkey_main, NULL, REG_SZ, NULL, 0);
-    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueW should have failed with ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    if (0)
+    {
+        /* Crashes on NT4, Windows 2000 and XP SP1 */
+        ret = RegSetValueW(hkey_main, NULL, REG_SZ, NULL, 0);
+        ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueW should have failed with ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    }
 
     ret = RegSetValueW(hkey_main, NULL, REG_SZ, string1W, sizeof(string1W));
     ok(ret == ERROR_SUCCESS, "RegSetValueW failed: %d, GLE=%d\n", ret, GetLastError());
