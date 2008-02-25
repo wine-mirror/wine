@@ -2888,8 +2888,8 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
             case VT_BSTR:     elemSize = sizeof(*pvarSrc->u.bstrVal); break;
             case VT_LPSTR:    elemSize = sizeof(*pvarSrc->u.pszVal); break;
             case VT_LPWSTR:   elemSize = sizeof(*pvarSrc->u.pwszVal); break;
+            case VT_VARIANT:  elemSize = sizeof(*pvarSrc->u.pvarVal); break;
 
-            case VT_VARIANT:
             default:
                 FIXME("Invalid element type: %ul\n", pvarSrc->vt & ~VT_VECTOR);
                 return E_INVALIDARG;
