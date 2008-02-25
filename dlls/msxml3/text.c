@@ -483,8 +483,18 @@ static HRESULT WINAPI domtext_put_data(
     IXMLDOMText *iface,
     BSTR data)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domtext *This = impl_from_IXMLDOMText( iface );
+    HRESULT hr = E_FAIL;
+    VARIANT val;
+
+    TRACE("%p %s\n", This, debugstr_w(data) );
+
+    V_VT(&val) = VT_BSTR;
+    V_BSTR(&val) = data;
+
+    hr = IXMLDOMNode_put_nodeValue( This->element, val );
+
+    return hr;
 }
 
 static HRESULT WINAPI domtext_get_length(
