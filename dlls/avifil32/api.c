@@ -1148,7 +1148,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 
   /* add "All files" "*.*" filter if enough space left */
   size = LoadStringW(AVIFILE_hModule, IDS_ALLFILES,
-		     szAllFiles, sizeof(szAllFiles)) + 1;
+		     szAllFiles, sizeof(szAllFiles)/sizeof(szAllFiles[0])) + 1;
   if (cbFilter > size) {
     int i;
 
@@ -1336,7 +1336,8 @@ static void AVISaveOptionsUpdate(HWND hWnd)
 	    }
 	  } else {
 	    LoadStringW(AVIFILE_hModule, IDS_UNCOMPRESSED,
-			icinfo.szDescription, sizeof(icinfo.szDescription));
+			icinfo.szDescription,
+			sizeof(icinfo.szDescription)/sizeof(icinfo.szDescription[0]));
 	    lstrcatW(szFormat, icinfo.szDescription);
 	  }
 	} else if (sInfo.fccType == streamtypeAUDIO) {
