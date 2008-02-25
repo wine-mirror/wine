@@ -121,7 +121,15 @@ void init_type_lookup(WineD3D_GL_Info *gl_info);
 #define WINED3D_ATR_NORMALIZED(type)    GLINFO_LOCATION.glTypeLookup[type].normalized
 #define WINED3D_ATR_TYPESIZE(type)      GLINFO_LOCATION.glTypeLookup[type].typesize
 
-/* See GL_NV_half_float for reference */
+/* The following functions convert 16 bit floats in the FLOAT16 data type
+ * to standard C floats and vice versa. They do not depend on the encoding
+ * of the C float, so they are platform independent, but slow. On x86 and
+ * other IEEE 754 compliant platforms the conversion can be accelerated with
+ * bitshifting the exponent and mantissa. There are also some SSE-based
+ * assembly routines out there
+ *
+ * See GL_NV_half_float for a reference of the FLOAT16 / GL_HALF format
+ */
 static inline float float_16_to_32(const unsigned short *in) {
     const unsigned short s = ((*in) & 0x8000);
     const unsigned short e = ((*in) & 0x7C00) >> 10;
@@ -137,6 +145,54 @@ static inline float float_16_to_32(const unsigned short *in) {
         if(m == 0) return sgn / 0.0; /* +INF / -INF */
         else return 0.0 / 0.0; /* NAN */
     }
+}
+
+static inline unsigned short float_32_to_16(const float *in) {
+    int exp = 0;
+    float tmp = fabs(*in);
+    unsigned int mantissa;
+    unsigned short ret;
+
+    /* Deal with special numbers */
+    if(*in == 0.0) return 0x0000;
+    if(isnan(*in)) return 0x7C01;
+    if(isinf(*in)) return (*in < 0.0 ? 0xFC00 : 0x7c00);
+
+    if(tmp < pow(2, 10)) {
+        do
+        {
+            tmp = tmp * 2.0;
+            exp--;
+        }while(tmp < pow(2, 10));
+    } else if(tmp >= pow(2, 11)) {
+        do
+        {
+            tmp /= 2.0;
+            exp++;
+        }while(tmp >= pow(2, 11));
+    }
+
+    mantissa = (unsigned int) tmp;
+    if(tmp - mantissa >= 0.5) mantissa++; /* round to nearest, away from zero */
+
+    exp += 10;  /* Normalize the mantissa */
+    exp += 15;  /* Exponent is encoded with excess 15 */
+
+    if(exp > 30) { /* too big */
+        ret = 0x7c00; /* INF */
+    } else if(exp <= 0) {
+        /* exp == 0: Non-normalized mantissa. Returns 0x0000 (=0.0) for too small numbers */
+        while(exp <= 0) {
+            mantissa = mantissa >> 1;
+            exp++;
+        }
+        ret = mantissa & 0x3ff;
+    } else {
+        ret = (exp << 10) | (mantissa & 0x3ff);
+    }
+
+    ret |= ((*in < 0.0 ? 1 : 0) << 15); /* Add the sign */
+    return ret;
 }
 
 /**

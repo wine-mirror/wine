@@ -4153,6 +4153,10 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3D
     return IWineD3DBaseSurfaceImpl_SetContainer(iface, container);
 }
 
+static WINED3DSURFTYPE WINAPI IWineD3DSurfaceImpl_GetImplType(IWineD3DSurface *iface) {
+    return SURFACE_OPENGL;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -4208,5 +4212,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,
     IWineD3DSurfaceImpl_ModifyLocation,
-    IWineD3DSurfaceImpl_LoadLocation
+    IWineD3DSurfaceImpl_LoadLocation,
+    IWineD3DSurfaceImpl_GetImplType
 };

@@ -575,6 +575,111 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
+void convert_r32f_r16f(BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h) {
+    unsigned int x, y;
+    float *src_f;
+    unsigned short *dst_s;
+
+    TRACE("Converting %dx%d pixels, pitches %d %d\n", w, h, pitch_in, pitch_out);
+    for(y = 0; y < h; y++) {
+        src_f = (float *) (src + y * pitch_in);
+        dst_s = (unsigned short *) (dst + y * pitch_out);
+        for(x = 0; x < w; x++) {
+            dst_s[x] = float_32_to_16(src_f + x);
+        }
+    }
+}
+
+struct d3dfmt_convertor_desc {
+    WINED3DFORMAT from, to;
+    void (*convert)(BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
+};
+
+struct d3dfmt_convertor_desc convertors[] = {
+    {WINED3DFMT_R32F,       WINED3DFMT_R16F,        convert_r32f_r16f},
+};
+
+static inline struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT from, WINED3DFORMAT to) {
+    unsigned int i;
+    for(i = 0; i < (sizeof(convertors) / sizeof(convertors[0])); i++) {
+        if(convertors[i].from == from && convertors[i].to == to) {
+            return &convertors[i];
+        }
+    }
+    return NULL;
+}
+
+/*****************************************************************************
+ * surface_convert_format
+ *
+ * Creates a duplicate of a surface in a different format. Is used by Blt to
+ * blit between surfaces with different formats
+ *
+ * Parameters
+ *  source: Source surface
+ *  fmt: Requested destination format
+ *
+ *****************************************************************************/
+IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, WINED3DFORMAT to_fmt) {
+    IWineD3DSurface *ret = NULL;
+    struct d3dfmt_convertor_desc *conv;
+    WINED3DLOCKED_RECT lock_src, lock_dst;
+    HRESULT hr;
+
+    conv = find_convertor(source->resource.format, to_fmt);
+    if(!conv) {
+        FIXME("Cannot find a conversion function from format %s to %s\n",
+              debug_d3dformat(source->resource.format), debug_d3dformat(to_fmt));
+        return NULL;
+    }
+
+    IWineD3DDevice_CreateSurface((IWineD3DDevice *) source->resource.wineD3DDevice,
+                                 source->currentDesc.Width,
+                                 source->currentDesc.Height,
+                                 to_fmt,
+                                 TRUE,  /* lockable */
+                                 TRUE,  /* discard  */
+                                 0,     /* level */
+                                 &ret,
+                                 WINED3DRTYPE_SURFACE,
+                                 0,     /* usage */
+                                 WINED3DPOOL_SCRATCH,
+                                 WINED3DMULTISAMPLE_NONE,   /* TODO: Multisampled conversion */
+                                 0,     /* multisamplequality */
+                                 NULL,  /* sharedhandle */
+                                 IWineD3DSurface_GetImplType((IWineD3DSurface *) source),
+                                 NULL); /* parent */
+    if(!ret) {
+        ERR("Failed to create a destination surface for conversion\n");
+        return NULL;
+    }
+
+    memset(&lock_src, 0, sizeof(lock_src));
+    memset(&lock_dst, 0, sizeof(lock_dst));
+
+    hr = IWineD3DSurface_LockRect((IWineD3DSurface *) source, &lock_src, NULL, WINED3DLOCK_READONLY);
+    if(FAILED(hr)) {
+        ERR("Failed to lock the source surface\n");
+        IWineD3DSurface_Release(ret);
+        return NULL;
+    }
+    hr = IWineD3DSurface_LockRect(ret, &lock_dst, NULL, WINED3DLOCK_READONLY);
+    if(FAILED(hr)) {
+        ERR("Failed to lock the dest surface\n");
+        IWineD3DSurface_UnlockRect((IWineD3DSurface *) source);
+        IWineD3DSurface_Release(ret);
+        return NULL;
+    }
+
+    conv->convert(lock_src.pBits, lock_dst.pBits, lock_src.Pitch, lock_dst.Pitch,
+                  source->currentDesc.Width, source->currentDesc.Height);
+
+    IWineD3DSurface_UnlockRect(ret);
+    IWineD3DSurface_UnlockRect((IWineD3DSurface *) source);
+
+    return (IWineD3DSurfaceImpl *) ret;
+}
+
 /*****************************************************************************
  * _Blt_ColorFill
  *
@@ -710,14 +815,22 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
     }
     else
     {
+        dfmt = This->resource.format;
+        dEntry = getFormatDescEntry(dfmt, NULL, NULL);
         if (Src)
         {
-            IWineD3DSurface_LockRect(SrcSurface, &slock, NULL, WINED3DLOCK_READONLY);
+            if(This->resource.format != Src->resource.format) {
+                Src = surface_convert_format(Src, dfmt);
+                if(!Src) {
+                    /* The conv function writes a FIXME */
+                    WARN("Cannot convert source surface format to dest format\n");
+                    goto release;
+                }
+            }
+            IWineD3DSurface_LockRect((IWineD3DSurface *) Src, &slock, NULL, WINED3DLOCK_READONLY);
             sfmt = Src->resource.format;
         }
         sEntry = getFormatDescEntry(sfmt, NULL, NULL);
-        dfmt = This->resource.format;
-        dEntry = getFormatDescEntry(dfmt, NULL, NULL);
         IWineD3DSurface_LockRect(iface, &dlock,NULL,0);
     }
 
@@ -725,19 +838,7 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
 
     if (sEntry->isFourcc && dEntry->isFourcc)
     {
-        if (sfmt != dfmt)
-        {
-            FIXME("FOURCC->FOURCC copy only supported for the same type of surface\n");
-            ret = WINED3DERR_WRONGTEXTUREFORMAT;
-            goto release;
-        }
         memcpy(dlock.pBits, slock.pBits, This->resource.size);
-        goto release;
-    }
-
-    if (sEntry->isFourcc && !dEntry->isFourcc)
-    {
-        FIXME("DXTC decompression not supported right now\n");
         goto release;
     }
 
@@ -977,7 +1078,7 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
                     sbuf = sbase;
 
                     /* check for overlapping surfaces */
-                    if (SrcSurface != iface || xdst.top < xsrc.top ||
+                    if (Src != This || xdst.top < xsrc.top ||
                         xdst.right <= xsrc.left || xsrc.right <= xdst.left)
                     {
                         /* no overlap, or dst above src, so copy from top downwards */
@@ -1265,7 +1366,9 @@ error:
 
 release:
     IWineD3DSurface_UnlockRect(iface);
-    if (SrcSurface && SrcSurface != iface) IWineD3DSurface_UnlockRect(SrcSurface);
+    if (Src && Src != This) IWineD3DSurface_UnlockRect((IWineD3DSurface *) Src);
+    /* Release the converted surface if any */
+    if (Src && SrcSurface != (IWineD3DSurface *) Src) IWineD3DSurface_Release((IWineD3DSurface *) Src);
     return ret;
 }
 
