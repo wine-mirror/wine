@@ -34,6 +34,8 @@
 
 static UINT (WINAPI *pMsiQueryComponentStateA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPCSTR, INSTALLSTATE*);
+static UINT (WINAPI *pMsiSourceListEnumSourcesA)
+    (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPSTR, LPDWORD);
 static UINT (WINAPI *pMsiSourceListGetInfoA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, LPSTR, LPDWORD);
 
@@ -1019,6 +1021,7 @@ static void init_functionpointers(void)
       trace("GetProcAddress(%s) failed\n", #func);
 
     GET_PROC(MsiQueryComponentStateA);
+    GET_PROC(MsiSourceListEnumSourcesA);
     GET_PROC(MsiSourceListGetInfoA);
 
 #undef GET_PROC
@@ -2921,8 +2924,8 @@ static void test_publishsourcelist(void)
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     size = 0xdeadbeef;
-    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+    r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
@@ -2939,8 +2942,8 @@ static void test_publishsourcelist(void)
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     size = 0xdeadbeef;
-    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+    r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
@@ -2957,8 +2960,8 @@ static void test_publishsourcelist(void)
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     size = 0xdeadbeef;
-    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+    r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
@@ -2975,8 +2978,8 @@ static void test_publishsourcelist(void)
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
     size = 0xdeadbeef;
-    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
+    r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
     ok(size == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", size);
 
@@ -3031,24 +3034,24 @@ static void test_publishsourcelist(void)
 
     size = MAX_PATH;
     lstrcpyA(value, "aaa");
-    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                  MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
+    r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, 0, value, &size);
     ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
 
     size = MAX_PATH;
     lstrcpyA(value, "aaa");
-    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
+    r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 0, value, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
 
     size = MAX_PATH;
     lstrcpyA(value, "aaa");
-    r = MsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                  MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 1, value, &size);
+    r = pMsiSourceListEnumSourcesA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT | MSISOURCETYPE_NETWORK, 1, value, &size);
     ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
