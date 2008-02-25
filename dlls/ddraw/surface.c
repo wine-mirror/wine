@@ -577,20 +577,6 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
 
     /* This->surface_desc.dwWidth and dwHeight are changeable, thus lock */
     EnterCriticalSection(&ddraw_cs);
-    if (Rect)
-    {
-        if ((Rect->left < 0)
-                || (Rect->top < 0)
-                || (Rect->left > Rect->right)
-                || (Rect->top > Rect->bottom)
-                || (Rect->right > This->surface_desc.dwWidth)
-                || (Rect->bottom > This->surface_desc.dwHeight))
-        {
-            WARN("Trying to lock an invalid rectangle, returning DDERR_INVALIDPARAMS\n");
-            LeaveCriticalSection(&ddraw_cs);
-            return DDERR_INVALIDPARAMS;
-        }
-    }
 
     /* Should I check for the handle to be NULL?
      *
@@ -604,6 +590,24 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
         WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", DDERR_INVALIDPARAMS);
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
+    }
+
+    /* Windows zeroes this if the rect is invalid */
+    DDSD->lpSurface = 0;
+
+    if (Rect)
+    {
+        if ((Rect->left < 0)
+                || (Rect->top < 0)
+                || (Rect->left > Rect->right)
+                || (Rect->top > Rect->bottom)
+                || (Rect->right > This->surface_desc.dwWidth)
+                || (Rect->bottom > This->surface_desc.dwHeight))
+        {
+            WARN("Trying to lock an invalid rectangle, returning DDERR_INVALIDPARAMS\n");
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_INVALIDPARAMS;
+        }
     }
 
     hr = IWineD3DSurface_LockRect(This->WineD3DSurface,

@@ -1652,10 +1652,14 @@ static void test_lockrect_invalid(void)
         {
             RECT *rect = &invalid[i];
 
+            memset(&locked_desc, 1, sizeof(locked_desc));
+            locked_desc.dwSize = sizeof(locked_desc);
+
             hr = IDirectDrawSurface_Lock(surface, rect, &locked_desc, DDLOCK_WAIT, NULL);
             ok(hr == DDERR_INVALIDPARAMS, "Lock returned 0x%08x for rect [%d, %d]->[%d, %d]"
                     ", expected DDERR_INVALIDPARAMS (0x%08x)\n", hr, rect->left, rect->top,
                     rect->right, rect->bottom, DDERR_INVALIDPARAMS);
+            ok(!locked_desc.lpSurface, "IDirectDrawSurface_Lock did not set lpSurface in the surface desc to zero.\n");
         }
 
         hr = IDirectDrawSurface_Lock(surface, NULL, &locked_desc, DDLOCK_WAIT, NULL);
