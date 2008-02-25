@@ -978,6 +978,7 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
     HKEY mediakey;
     UINT rc;
     WCHAR szIndex[10];
+    WCHAR squished_pc[GUID_SIZE];
     static const WCHAR fmt[] = {'%','i',0};
     static const WCHAR disk_fmt[] = {'%','s',';','%','s',0};
     static const WCHAR empty[1] = {0};
@@ -989,7 +990,16 @@ UINT WINAPI MsiSourceListAddMediaDiskW(LPCWSTR szProduct, LPCWSTR szUserSid,
             debugstr_w(szUserSid), dwContext, dwOptions, dwDiskId,
             debugstr_w(szVolumeLabel), debugstr_w(szDiskPrompt));
 
-    if (!szProduct || lstrlenW(szProduct) > 39)
+    if (!szProduct || !squash_guid(szProduct, squished_pc))
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwOptions != MSICODE_PRODUCT && dwOptions != MSICODE_PATCH)
+        return ERROR_INVALID_PARAMETER;
+
+    if ((szVolumeLabel && !*szVolumeLabel) || (szDiskPrompt && !*szDiskPrompt))
+        return ERROR_INVALID_PARAMETER;
+
+    if ((dwContext & MSIINSTALLCONTEXT_MACHINE) && szUserSid)
         return ERROR_INVALID_PARAMETER;
 
     if (dwOptions & MSICODE_PATCH)

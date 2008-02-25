@@ -1965,30 +1965,21 @@ static void test_MsiSourceListAddMediaDisk(void)
     /* empty szProductCodeOrPatchCode */
     r = MsiSourceListAddMediaDiskA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                    MSICODE_PRODUCT, 1, "label", "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* garbage szProductCodeOrPatchCode */
     r = MsiSourceListAddMediaDiskA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                    MSICODE_PRODUCT, 1, "label", "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* guid without brackets */
     r = MsiSourceListAddMediaDiskA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA",
                                    usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                    MSICODE_PRODUCT, 1, "label", "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* guid with brackets */
     r = MsiSourceListAddMediaDiskA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
@@ -2002,33 +1993,24 @@ static void test_MsiSourceListAddMediaDisk(void)
                                    usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                    MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
                                    1, "label", "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* dwOptions has MSISOURCETYPE_URL */
     r = MsiSourceListAddMediaDiskA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
                                    usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                    MSICODE_PRODUCT | MSISOURCETYPE_URL,
                                    1, "label", "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* dwOptions has MSISOURCETYPE_MEDIA */
     r = MsiSourceListAddMediaDiskA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
                                    usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                    MSICODE_PRODUCT | MSISOURCETYPE_MEDIA,
                                    1, "label", "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* MSIINSTALLCONTEXT_USERUNMANAGED */
 
@@ -2119,11 +2101,8 @@ static void test_MsiSourceListAddMediaDisk(void)
     r = MsiSourceListAddMediaDiskA(prodcode, usersid,
                                    MSIINSTALLCONTEXT_USERUNMANAGED,
                                    MSICODE_PRODUCT, 1, "etikett", "");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* update dwDiskId 1, szVolumeLable is NULL */
     r = MsiSourceListAddMediaDiskA(prodcode, usersid,
@@ -2140,11 +2119,8 @@ static void test_MsiSourceListAddMediaDisk(void)
     r = MsiSourceListAddMediaDiskA(prodcode, usersid,
                                    MSIINSTALLCONTEXT_USERUNMANAGED,
                                    MSICODE_PRODUCT, 1, "", "provoquer");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* szUserSid is NULL */
     r = MsiSourceListAddMediaDiskA(prodcode, NULL,
@@ -2248,11 +2224,8 @@ static void test_MsiSourceListAddMediaDisk(void)
     r = MsiSourceListAddMediaDiskA(prodcode, usersid,
                                    MSIINSTALLCONTEXT_MACHINE,
                                    MSICODE_PRODUCT, 1, "label", "prompt");
-    todo_wine
-    {
-        ok(r == ERROR_INVALID_PARAMETER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    }
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     RegDeleteValueA(media, "1");
     RegDeleteKeyA(media, "");
