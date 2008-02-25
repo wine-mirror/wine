@@ -332,6 +332,16 @@ static void test_MsiSourceListGetInfo(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(size == 11, "Expected 11, got %d\n", size);
 
+    /* INSTALLPROPERTY_MEDIAPACKAGEPATH, media key does not exist */
+    size = MAX_PATH;
+    lstrcpyA(value, "aaa");
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_MEDIAPACKAGEPATH,
+                               value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
     res = RegCreateKeyA(hkey, "Media", &media);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -345,12 +355,9 @@ static void test_MsiSourceListGetInfo(void)
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_MEDIAPACKAGEPATH,
                                value, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(value, "path"), "Expected \"path\", got \"%s\"\n", value);
-        ok(size == 4, "Expected 4, got %d\n", size);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "path"), "Expected \"path\", got \"%s\"\n", value);
+    ok(size == 4, "Expected 4, got %d\n", size);
 
     /* INSTALLPROPERTY_DISKPROMPT */
     data = "prompt";

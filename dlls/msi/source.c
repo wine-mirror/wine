@@ -352,8 +352,11 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
                                    LPDWORD pcchValue) 
 {
     WCHAR squished_pc[GUID_SIZE];
-    HKEY sourcekey;
+    HKEY sourcekey, media;
     UINT rc;
+
+    static const WCHAR mediapack[] = {
+        'M','e','d','i','a','P','a','c','k','a','g','e',0};
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szProperty));
 
@@ -381,27 +384,21 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    if (strcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) == 0)
+    if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) ||
+        !lstrcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW))
     {
-        HKEY key;
-        rc = OpenMediaSubkey(sourcekey, &key, FALSE);
-        if (rc == ERROR_SUCCESS)
-            rc = RegQueryValueExW(key, INSTALLPROPERTY_MEDIAPACKAGEPATHW,
-                    0, 0, (LPBYTE)szValue, pcchValue);
-        if (rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA)
-            rc = ERROR_UNKNOWN_PROPERTY;
-        RegCloseKey(key);
-    }
-    else if (strcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW) ==0)
-    {
-        HKEY key;
-        rc = OpenMediaSubkey(sourcekey, &key, FALSE);
-        if (rc == ERROR_SUCCESS)
-            rc = RegQueryValueExW(key, INSTALLPROPERTY_DISKPROMPTW, 0, 0,
-                    (LPBYTE)szValue, pcchValue);
-        if (rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA)
-            rc = ERROR_UNKNOWN_PROPERTY;
-        RegCloseKey(key);
+        rc = OpenMediaSubkey(sourcekey, &media, FALSE);
+        if (rc != ERROR_SUCCESS)
+        {
+            RegCloseKey(sourcekey);
+            return ERROR_SUCCESS;
+        }
+
+        if (!lstrcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW))
+            szProperty = mediapack;
+
+        RegQueryValueExW(media, szProperty, 0, 0, (LPBYTE)szValue, pcchValue);
+        RegCloseKey(media);
     }
     else if (strcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW)==0)
     {
