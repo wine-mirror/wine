@@ -550,7 +550,7 @@ oleautomation,
 uuid(2933bf88-7b36-11d2-b20e-00c04f983e60),
 pointer_default(unique)
 ]
-interface IXMLDOMComment : IXMLDOMNode
+interface IXMLDOMComment : IXMLDOMCharacterData
 {
     /* empty */
 }
