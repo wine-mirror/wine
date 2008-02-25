@@ -569,6 +569,22 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("text") ), "incorrect nodeTypeString string\n");
         SysFreeString(str);
 
+        /* put data Tests */
+        r = IXMLDOMText_put_data(nodetext, _bstr_("This &is a ; test <>\\"));
+        ok(r == S_OK, "ret %08x\n", r );
+
+        /* Confirm XML text is good */
+        r = IXMLDOMText_get_xml(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("This &amp;is a ; test &lt;&gt;\\") ), "incorrect xml string\n");
+        SysFreeString(str);
+
+        /* Confirm we get the put_data Text back */
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect xml string\n");
+        SysFreeString(str);
+
         IXMLDOMText_Release( nodetext );
     }
     SysFreeString( str );
@@ -657,12 +673,29 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("version=\"1.0\"") ), "incorrect data string\n");
         SysFreeString(str);
 
+        /* test put_data */
+        r = IXMLDOMProcessingInstruction_put_data(nodePI, _bstr_("version=\"1.0\" encoding=\"UTF-8\""));
+        ok(r == S_OK, "ret %08x\n", r );
+        SysFreeString(str);
+
+        r = IXMLDOMProcessingInstruction_get_data(nodePI, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("version=\"1.0\" encoding=\"UTF-8\"") ), "incorrect data string\n");
+        SysFreeString(str);
+
+        /* Confirm XML text is good */
+        r = IXMLDOMProcessingInstruction_get_xml(nodePI, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") ), "incorrect xml string\n");
+        SysFreeString(str);
+
         IXMLDOMProcessingInstruction_Release(nodePI);
     }
 
     r = IXMLDOMDocument_Release( doc );
     ok( r == 0, "document ref count incorrect\n");
 
+    free_bstrs();
 }
 
 static void test_domnode( void )
@@ -2059,6 +2092,22 @@ static void test_xmlTypes(void)
                 ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
                 VariantClear(&v);
 
+                /* put data Tests */
+                hr = IXMLDOMComment_put_data(pComment, _bstr_("This &is a ; test <>\\"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                /* Confirm XML text is good */
+                hr = IXMLDOMComment_get_xml(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("<!--This &is a ; test <>\\-->") ), "incorrect xml string\n");
+                SysFreeString(str);
+
+                /* Confirm we get the put_data Text back */
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect xml string\n");
+                SysFreeString(str);
+
                 IXMLDOMComment_Release(pComment);
             }
 
@@ -2241,6 +2290,22 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMCDATASection_get_nodeTypeString(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( !lstrcmpW( str, _bstr_("cdatasection") ), "incorrect nodeTypeString string\n");
+                SysFreeString(str);
+
+                /* put data Tests */
+                hr = IXMLDOMCDATASection_put_data(pCDataSec, _bstr_("This &is a ; test <>\\"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                /* Confirm XML text is good */
+                hr = IXMLDOMCDATASection_get_xml(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("<![CDATA[This &is a ; test <>\\]]>") ), "incorrect xml string\n");
+                SysFreeString(str);
+
+                /* Confirm we get the put_data Text back */
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
                 SysFreeString(str);
 
                 IXMLDOMCDATASection_Release(pCDataSec);
