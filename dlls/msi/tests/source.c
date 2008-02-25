@@ -160,7 +160,7 @@ static void test_MsiSourceListGetInfo(void)
     LPCSTR data;
     LONG res;
     UINT r;
-    HKEY userkey, hkey;
+    HKEY userkey, hkey, media;
     DWORD size;
 
     if (!pMsiSourceListGetInfoA)
@@ -332,6 +332,158 @@ static void test_MsiSourceListGetInfo(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(size == 11, "Expected 11, got %d\n", size);
 
+    res = RegCreateKeyA(hkey, "Media", &media);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    data = "path";
+    res = RegSetValueExA(media, "MediaPackage", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_MEDIAPACKAGEPATH */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_MEDIAPACKAGEPATH,
+                               value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "path"), "Expected \"path\", got \"%s\"\n", value);
+        ok(size == 4, "Expected 4, got %d\n", size);
+    }
+
+    /* INSTALLPROPERTY_DISKPROMPT */
+    data = "prompt";
+    res = RegSetValueExA(media, "DiskPrompt", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_DISKPROMPT,
+                               value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(value, "prompt"), "Expected \"prompt\", got \"%s\"\n", value);
+    ok(size == 6, "Expected 6, got %d\n", size);
+
+    data = "source";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDSOURCE */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE,
+                               value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "source"), "Expected \"source\", got \"%s\"\n", value);
+        ok(size == 6, "Expected 6, got %d\n", size);
+    }
+
+    /* INSTALLPROPERTY_LASTUSEDTYPE, invalid source format */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
+                               value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
+        ok(size == 0, "Expected 0, got %d\n", size);
+    }
+
+    data = "x;y;z";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDTYPE, invalid source format */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
+                               value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, ""), "Expected \"\", got \"%s\"\n", value);
+        ok(size == 0, "Expected 0, got %d\n", size);
+    }
+
+    data = "n;y;z";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDTYPE */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
+                               value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "n"), "Expected \"n\", got \"%s\"\n", value);
+        ok(size == 1, "Expected 1, got %d\n", size);
+    }
+
+    data = "negatory";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDTYPE */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
+                               value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "n"), "Expected \"n\", got \"%s\"\n", value);
+        ok(size == 1, "Expected 1, got %d\n", size);
+    }
+
+    data = "megatron";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDTYPE */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
+                               value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "m"), "Expected \"m\", got \"%s\"\n", value);
+        ok(size == 1, "Expected 1, got %d\n", size);
+    }
+
+    data = "useless";
+    res = RegSetValueExA(hkey, "LastUsedSource", 0, REG_SZ,
+                         (const BYTE *)data, lstrlenA(data) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* INSTALLPROPERTY_LASTUSEDTYPE */
+    size = MAX_PATH;
+    r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDTYPE,
+                               value, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(value, "u"), "Expected \"u\", got \"%s\"\n", value);
+        ok(size == 1, "Expected 1, got %d\n", size);
+    }
+
+    RegDeleteValueA(media, "MediaPackage");
+    RegDeleteValueA(media, "DiskPrompt");
+    RegDeleteKeyA(media, "");
+    RegDeleteValueA(hkey, "LastUsedSource");
     RegDeleteValueA(hkey, "nonexistent");
     RegDeleteValueA(hkey, "PackageName");
     RegDeleteKeyA(hkey, "");
