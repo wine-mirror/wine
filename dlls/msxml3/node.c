@@ -284,8 +284,34 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
     IXMLDOMNode *iface,
     VARIANT value)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    HRESULT hr = S_FALSE;
+    xmlChar *str = NULL;
+
+    TRACE("%p type(%d)", This, This->node->type);
+
+    /* Document, Document Fragment, Document Type, Element,
+        Entity, Entity Reference, Notation arent supported. */
+    switch ( This->node->type )
+    {
+    case XML_ATTRIBUTE_NODE:
+    case XML_CDATA_SECTION_NODE:
+    case XML_COMMENT_NODE:
+    case XML_PI_NODE:
+    case XML_TEXT_NODE:
+      {
+        str = xmlChar_from_wchar((WCHAR*)V_BSTR(&value));
+
+        xmlNodeSetContent(This->node, str);
+        hr = S_OK;
+        break;
+      }
+    default:
+        /* Do nothing for unsupported types. */
+        break;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlnode_get_nodeType(
