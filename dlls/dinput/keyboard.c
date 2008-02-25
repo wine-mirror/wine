@@ -361,7 +361,8 @@ static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface
 
     if (!GetKeyNameTextW((DIDFT_GETINSTANCE(pdidoi->dwType) & 0x80) << 17 |
                          (DIDFT_GETINSTANCE(pdidoi->dwType) & 0x7f) << 16,
-                         pdidoi->tszName, sizeof(pdidoi->tszName)))
+                         pdidoi->tszName,
+                         sizeof(pdidoi->tszName)/sizeof(pdidoi->tszName[0])))
         return DIERR_OBJECTNOTFOUND;
 
     _dump_OBJECTINSTANCEW(pdidoi);
