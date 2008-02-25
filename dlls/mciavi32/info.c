@@ -230,22 +230,22 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	strcpy(buffer, "MCI_SET_ON:");
 
 	if (dwFlags & MCI_SET_VIDEO) {
-	    strncat(buffer, " video", sizeof(buffer));
+	    strncat(buffer, " video", sizeof(buffer)-sizeof("MCI_SET_ON:"));
 	    wma->dwSet |= 4;
 	}
 	if (dwFlags & MCI_SET_AUDIO) {
-	    strncat(buffer, " audio", sizeof(buffer));
+	    strncat(buffer, " audio", sizeof(buffer)-sizeof("MCI_SET_ON:"));
 	    switch (lpParms->dwAudio) {
 	    case MCI_SET_AUDIO_ALL:
-		strncat(buffer, " all", sizeof(buffer));
+		strncat(buffer, " all", sizeof(buffer)-sizeof("MCI_SET_ON:"));
 		wma->dwSet |= 3;
 		break;
 	    case MCI_SET_AUDIO_LEFT:
-		strncat(buffer, " left", sizeof(buffer));
+		strncat(buffer, " left", sizeof(buffer)-sizeof("MCI_SET_ON:"));
 		wma->dwSet |= 1;
 		break;
 	    case MCI_SET_AUDIO_RIGHT:
-		strncat(buffer, " right", sizeof(buffer));
+		strncat(buffer, " right", sizeof(buffer)-sizeof("MCI_SET_ON:"));
 		wma->dwSet |= 2;
 		break;
 	    default:
@@ -264,22 +264,22 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 
 	strcpy(buffer, "MCI_SET_OFF:");
 	if (dwFlags & MCI_SET_VIDEO) {
-	    strncat(buffer, " video", sizeof(buffer));
+	    strncat(buffer, " video", sizeof(buffer)-sizeof("MCI_SET_OFF:"));
 	    wma->dwSet &= ~4;
 	}
 	if (dwFlags & MCI_SET_AUDIO) {
-	    strncat(buffer, " audio", sizeof(buffer));
+	    strncat(buffer, " audio", sizeof(buffer)-sizeof("MCI_SET_OFF:"));
 	    switch (lpParms->dwAudio) {
 	    case MCI_SET_AUDIO_ALL:
-		strncat(buffer, " all", sizeof(buffer));
+		strncat(buffer, " all", sizeof(buffer)-sizeof("MCI_SET_OFF:"));
 		wma->dwSet &= ~3;
 		break;
 	    case MCI_SET_AUDIO_LEFT:
-		strncat(buffer, " left", sizeof(buffer));
+		strncat(buffer, " left", sizeof(buffer)-sizeof("MCI_SET_OFF:"));
 		wma->dwSet &= ~2;
 		break;
 	    case MCI_SET_AUDIO_RIGHT:
-		strncat(buffer, " right", sizeof(buffer));
+		strncat(buffer, " right", sizeof(buffer)-sizeof("MCI_SET_OFF:"));
 		wma->dwSet &= ~2;
 		break;
 	    default:
@@ -288,7 +288,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	    }
 	}
 	if (dwFlags & MCI_DGV_SET_SEEK_EXACTLY) {
-	    strncat(buffer, " seek_exactly", sizeof(buffer));
+	    strncat(buffer, " seek_exactly", sizeof(buffer)-strlen(buffer)-1);
 	}
 	FIXME("%s\n", buffer);
     }
