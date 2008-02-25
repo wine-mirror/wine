@@ -2885,9 +2885,8 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (DeviceInterfaceDetailData && (DeviceInterfaceDetailData->cbSize <
-            offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char) ||
-            DeviceInterfaceDetailData->cbSize > sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A)))
+    if (DeviceInterfaceDetailData && (DeviceInterfaceDetailData->cbSize !=
+            offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char)))
     {
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
