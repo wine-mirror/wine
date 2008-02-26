@@ -175,14 +175,14 @@ HRESULT register_class_object(BOOL do_reg)
 
 static HRESULT reg_install(LPCSTR section, STRTABLEA *strtable)
 {
-    typeof(RegInstallA) *pRegInstall;
+    HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
     HMODULE hadvpack;
     HRESULT hres;
 
     static const WCHAR advpackW[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
 
     hadvpack = LoadLibraryW(advpackW);
-    pRegInstall = (typeof(RegInstallA)*)GetProcAddress(hadvpack, "RegInstall");
+    pRegInstall = (void *)GetProcAddress(hadvpack, "RegInstall");
 
     hres = pRegInstall(shdocvw_hinstance, section, strtable);
 
