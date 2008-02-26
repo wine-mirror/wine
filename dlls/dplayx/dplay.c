@@ -3619,8 +3619,7 @@ BOOL WINAPI DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
   HRESULT                  hr;
 
   dpCompoundAddress.dwDataSize = sizeof( GUID );
-  memcpy( &dpCompoundAddress.guidDataType, &DPAID_ServiceProvider,
-          sizeof( GUID ) ) ;
+  dpCompoundAddress.guidDataType = DPAID_ServiceProvider;
   dpCompoundAddress.lpData = lpcSpGuid;
 
   *lplpAddrBuf = NULL;
