@@ -972,6 +972,12 @@ static void test_MsiSourceListEnumSources(void)
     HKEY url, net, source;
     DWORD size;
 
+    if (!pMsiSourceListEnumSourcesA)
+    {
+        skip("MsiSourceListEnumSourcesA is not available\n");
+        return;
+    }
+
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
 
@@ -1564,6 +1570,12 @@ static void test_MsiSourceListSetInfo(void)
     LONG res;
     UINT r;
 
+    if (!pMsiSourceListSetInfoA)
+    {
+        skip("MsiSourceListSetInfoA is not available\n");
+        return;
+    }
+
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
 
@@ -1963,6 +1975,12 @@ static void test_MsiSourceListAddMediaDisk(void)
     LPSTR usersid;
     LONG res;
     UINT r;
+
+    if (!pMsiSourceListAddMediaDiskA)
+    {
+        skip("MsiSourceListAddMediaDiskA is not available\n");
+        return;
+    }
 
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
