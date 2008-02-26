@@ -650,12 +650,12 @@ static void test_datalink(void)
     }
 
     flags = 0;
-    r = dl->lpVtbl->GetFlags( dl, &flags );
+    r = IShellLinkDataList_GetFlags( dl, &flags );
     ok( r == S_OK, "GetFlags failed\n");
     ok( flags == 0, "GetFlags returned wrong flags\n");
 
     dar = (void*)-1;
-    r = dl->lpVtbl->CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
+    r = IShellLinkDataList_CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
     ok( r == E_FAIL, "CopyDataBlock failed\n");
     ok( dar == NULL, "should be null\n");
 
@@ -664,17 +664,17 @@ static void test_datalink(void)
 
     /*
      * The following crashes:
-     * r = dl->lpVtbl->GetFlags( dl, NULL );
+     * r = IShellLinkDataList_GetFlags( dl, NULL );
      */
 
     flags = 0;
-    r = dl->lpVtbl->GetFlags( dl, &flags );
+    r = IShellLinkDataList_GetFlags( dl, &flags );
     ok( r == S_OK, "GetFlags failed\n");
     ok( flags == (SLDF_HAS_DARWINID|SLDF_HAS_LOGO3ID),
         "GetFlags returned wrong flags\n");
 
     dar = NULL;
-    r = dl->lpVtbl->CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
+    r = IShellLinkDataList_CopyDataBlock( dl, EXP_DARWIN_ID_SIG, (LPVOID*) &dar );
     ok( r == S_OK, "CopyDataBlock failed\n");
 
     ok( dar && ((DATABLOCK_HEADER*)dar)->dwSignature == EXP_DARWIN_ID_SIG, "signature wrong\n");
