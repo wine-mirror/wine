@@ -91,9 +91,13 @@ static void test_GetICMProfileW( HDC dc )
     ret = GetICMProfileW( dc, NULL, NULL );
     ok( !ret, "GetICMProfileW succeeded\n" );
 
-    size = MAX_PATH;
-    ret = GetICMProfileW( dc, &size, NULL );
-    ok( ret, "GetICMProfileW failed %d\n", GetLastError() );
+    if (0)
+    {
+        /* Vista crashes */
+        size = MAX_PATH;
+        ret = GetICMProfileW( dc, &size, NULL );
+        ok( ret, "GetICMProfileW failed %d\n", GetLastError() );
+    }
 
     ret = GetICMProfileW( dc, NULL, filename );
     ok( !ret, "GetICMProfileW succeeded\n" );
