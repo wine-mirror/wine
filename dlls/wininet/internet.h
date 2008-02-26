@@ -133,14 +133,12 @@ typedef enum
 #define INET_OPENURL 0x0001
 #define INET_CALLBACKW 0x0002
 
-struct _WININETHANDLEHEADER;
 typedef struct _WININETHANDLEHEADER WININETHANDLEHEADER, *LPWININETHANDLEHEADER;
-
-typedef void (*WININET_object_function)( LPWININETHANDLEHEADER );
 
 typedef struct {
     void (*Destroy)(WININETHANDLEHEADER*);
     void (*CloseConnection)(WININETHANDLEHEADER*);
+    BOOL (*WriteFile)(WININETHANDLEHEADER*,const void*,DWORD,DWORD*);
 } HANDLEHEADERVtbl;
 
 struct _WININETHANDLEHEADER

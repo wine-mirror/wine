@@ -473,6 +473,7 @@ static VOID APPINFO_Destroy(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl APPINFOVtbl = {
     APPINFO_Destroy,
+    NULL,
     NULL
 };
 
@@ -1692,48 +1693,24 @@ DWORD WINAPI InternetSetFilePointer(HINTERNET hFile, LONG lDistanceToMove,
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
+BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
 	DWORD dwNumOfBytesToWrite, LPDWORD lpdwNumOfBytesWritten)
 {
-    BOOL retval = FALSE;
-    int nSocket = -1;
     LPWININETHANDLEHEADER lpwh;
+    BOOL retval = FALSE;
 
-    TRACE("\n");
+    TRACE("(%p %p %d %p)\n", hFile, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
+
     lpwh = WININET_GetObject( hFile );
-    if (NULL == lpwh)
-        return FALSE;
 
-    switch (lpwh->htype)
-    {
-        case WH_HHTTPREQ:
-            {
-                LPWININETHTTPREQW lpwhr;
-                lpwhr = (LPWININETHTTPREQW)lpwh;
-
-                TRACE("HTTPREQ %i\n",dwNumOfBytesToWrite);
-                retval = NETCON_send(&lpwhr->netConnection, lpBuffer, 
-                        dwNumOfBytesToWrite, 0, (LPINT)lpdwNumOfBytesWritten);
-
-                WININET_Release( lpwh );
-                return retval;
-            }
-            break;
-
-        case WH_HFILE:
-            nSocket = ((LPWININETFTPFILE)lpwh)->nDataSocket;
-            break;
-
-        default:
-            break;
+    if(lpwh && lpwh->vtbl->WriteFile) {
+        retval = lpwh->vtbl->WriteFile(lpwh, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
+    }else {
+        WARN("Invalid handle\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        retval = FALSE;
     }
 
-    if (nSocket != -1)
-    {
-        int res = send(nSocket, lpBuffer, dwNumOfBytesToWrite, 0);
-        retval = (res >= 0);
-        *lpdwNumOfBytesWritten = retval ? res : 0;
-    }
     WININET_Release( lpwh );
 
     return retval;

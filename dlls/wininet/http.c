@@ -1392,9 +1392,17 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
+static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
+{
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)hdr;
+
+    return NETCON_send(&lpwhr->netConnection, buffer, size, 0, (LPINT)written);
+}
+
 static const HANDLEHEADERVtbl HTTPREQVtbl = {
     HTTPREQ_Destroy,
-    HTTPREQ_CloseConnection
+    HTTPREQ_CloseConnection,
+    HTTPREQ_WriteFile
 };
 
 /***********************************************************************
@@ -2916,6 +2924,7 @@ static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
     HTTPSESSION_Destroy,
+    NULL,
     NULL
 };
 

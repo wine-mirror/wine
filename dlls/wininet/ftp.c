@@ -1155,9 +1155,21 @@ static void FTPFILE_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwh);
 }
 
+static BOOL FTPFILE_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
+{
+    LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
+    int res;
+
+    res = send(lpwh->nDataSocket, buffer, size, 0);
+
+    *written = res>0 ? res : 0;
+    return res >= 0;
+}
+
 static const HANDLEHEADERVtbl FTPFILEVtbl = {
     FTPFILE_Destroy,
-    NULL
+    NULL,
+    FTPFILE_WriteFile
 };
 
 /***********************************************************************
@@ -2073,7 +2085,8 @@ static void FTPSESSION_CloseConnection(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl FTPSESSIONVtbl = {
     FTPSESSION_Destroy,
-    FTPSESSION_CloseConnection
+    FTPSESSION_CloseConnection,
+    NULL
 };
 
 
@@ -3150,6 +3163,7 @@ static void FTPFINDNEXT_Destroy(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl FTPFINDNEXTVtbl = {
     FTPFINDNEXT_Destroy,
+    NULL,
     NULL
 };
 
