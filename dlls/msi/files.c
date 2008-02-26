@@ -554,10 +554,10 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
             lstrcatW(mi->source, mi->cabinet);
     }
 
-    msi_package_add_media_disk(package, MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
+    msi_package_add_media_disk(package, MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
                                mi->disk_id, mi->volume_label, mi->disk_prompt);
 
-    msi_package_add_info(package, MSIINSTALLCONTEXT_USERMANAGED,
+    msi_package_add_info(package, MSIINSTALLCONTEXT_USERUNMANAGED,
                          MSICODE_PRODUCT | MSISOURCETYPE_MEDIA,
                          INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
 
