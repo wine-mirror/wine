@@ -915,7 +915,7 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
     GpPointF points[MAX_ARC_PTS];
     GpStatus retval;
 
-    if(!graphics || !pen)
+    if(!graphics || !pen || width <= 0 || height <= 0)
         return InvalidParameter;
 
     num_pts = arc2polybezier(points, x, y, width, height, startAngle, sweepAngle);
