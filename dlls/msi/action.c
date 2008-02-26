@@ -3508,9 +3508,13 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     /* publish the SourceList info */
     LIST_FOR_EACH_ENTRY(info, &package->sourcelist_info, MSISOURCELISTINFO, entry)
     {
-        MsiSourceListSetInfoW(package->ProductCode, NULL,
-                              info->context, info->options,
-                              info->property, info->value);
+        if (!lstrcmpW(info->property, INSTALLPROPERTY_LASTUSEDSOURCEW))
+            msi_set_last_used_source(package->ProductCode, NULL, info->context,
+                                     info->options, info->value);
+        else
+            MsiSourceListSetInfoW(package->ProductCode, NULL,
+                                  info->context, info->options,
+                                  info->property, info->value);
     }
 
     LIST_FOR_EACH_ENTRY(disk, &package->sourcelist_media, MSIMEDIADISK, entry)

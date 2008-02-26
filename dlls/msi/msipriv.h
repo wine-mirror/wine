@@ -885,6 +885,8 @@ extern BOOL check_unique_action(const MSIPACKAGE *, LPCWSTR);
 extern WCHAR* generate_error_string(MSIPACKAGE *, UINT, DWORD, ... );
 extern UINT msi_create_component_directories( MSIPACKAGE *package );
 extern void msi_ui_error( DWORD msg_id, DWORD type );
+extern UINT msi_set_last_used_source(LPCWSTR product, LPCWSTR usersid,
+                        MSIINSTALLCONTEXT context, DWORD options, LPCWSTR value);
 
 /* control event stuff */
 extern VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,
