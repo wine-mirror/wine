@@ -384,9 +384,9 @@ START_TEST(opengl)
 
         /* We shouldn't be able to create a context from a hdc which doesn't have a pixel format set */
         hglrc = wglCreateContext(hdc);
-        ok(hglrc == NULL, "wglCreateContext should fail when no pixel format has been set, but it passed");
+        ok(hglrc == NULL, "wglCreateContext should fail when no pixel format has been set, but it passed\n");
         error = GetLastError();
-        ok(error == ERROR_INVALID_PIXEL_FORMAT, "expected ERROR_INVALID_PIXEL_FORMAT for wglCreateContext without a pixelformat set, but recevied %#x", error);
+        ok(error == ERROR_INVALID_PIXEL_FORMAT, "expected ERROR_INVALID_PIXEL_FORMAT for wglCreateContext without a pixelformat set, but received %#x\n", error);
 
         res = SetPixelFormat(hdc, iPixelFormat, &pfd);
         ok(res, "SetPixelformat failed: %x\n", GetLastError());
