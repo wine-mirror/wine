@@ -2022,6 +2022,12 @@ static void test_publish(void)
 
     static const CHAR subkey[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 
+    if (!pMsiQueryComponentStateA)
+    {
+        skip("MsiQueryComponentStateA is not available\n");
+        return;
+    }
+
     get_date_str(date);
     GetTempPath(MAX_PATH, temp);
 
@@ -2903,6 +2909,12 @@ static void test_publishsourcelist(void)
     CHAR value[MAX_PATH];
     CHAR path[MAX_PATH];
     CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
+
+    if (!pMsiSourceListEnumSourcesA || !pMsiSourceListGetInfoA)
+    {
+        skip("MsiSourceListEnumSourcesA and/or MsiSourceListGetInfoA are not available\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
