@@ -39,6 +39,13 @@ typedef struct
     GUID jobId;
 } BackgroundCopyJobImpl;
 
+/* Enum background copy jobs vtbl and related data */
+typedef struct
+{
+    const IEnumBackgroundCopyJobsVtbl *lpVtbl;
+    LONG ref;
+} EnumBackgroundCopyJobsImpl;
+
 /* Background copy manager vtbl and related data */
 typedef struct
 {
@@ -56,6 +63,8 @@ extern ClassFactoryImpl BITS_ClassFactory;
 HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
                                      GUID *pJobId, LPVOID *ppObj);
+HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
+                                          IBackgroundCopyManager* copyManager);
 
 /* Little helper functions */
 static inline char *
