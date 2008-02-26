@@ -6,7 +6,7 @@
  * Copyright 1999 Klaas van Gend
  * Copyright 1999, 2000 Huw D M Davies
  * Copyright 2001 Marcus Meissner
- * Copyright 2005, 2006, 2007 Detlef Riekenberg
+ * Copyright 2005-2008 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -216,6 +216,7 @@ static const WCHAR ManufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e
 static const WCHAR MonitorW[] = {'M','o','n','i','t','o','r',0};
 static const WCHAR MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static const WCHAR NameW[] = {'N','a','m','e',0};
+static const WCHAR ObjectGUIDW[] = {'O','b','j','e','c','t','G','U','I','D',0};
 static const WCHAR OEM_UrlW[] = {'O','E','M',' ','U','r','l',0};
 static const WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
 static const WCHAR PortW[] = {'P','o','r','t',0};
@@ -3996,6 +3997,41 @@ static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
     return space;
 }
 
+/*********************************************************************
+ *    WINSPOOL_GetPrinter_7
+ *
+ * Fills out a PRINTER_INFO_7 struct storing the strings in buf.
+ */
+static BOOL WINSPOOL_GetPrinter_7(HKEY hkeyPrinter, PRINTER_INFO_7W *pi7, LPBYTE buf,
+                                  DWORD cbBuf, LPDWORD pcbNeeded, BOOL unicode)
+{
+    DWORD size, left = cbBuf;
+    BOOL space = (cbBuf > 0);
+    LPBYTE ptr = buf;
+
+    *pcbNeeded = 0;
+
+    if (WINSPOOL_GetStringFromReg(hkeyPrinter, ObjectGUIDW, ptr, left, &size, unicode))
+    {
+        if (space && size <= left) {
+            pi7->pszObjectGUID = (LPWSTR)ptr;
+            ptr += size;
+            left -= size;
+        } else
+            space = FALSE;
+        *pcbNeeded += size;
+    }
+    if (pi7) {
+        /* We do not have a Directory Service */
+        pi7->dwAction = DSPRINT_UNPUBLISH;
+    }
+
+    if (!space && pi7) /* zero out pi7 if we can't completely fill buf */
+        memset(pi7, 0, sizeof(*pi7));
+
+    return space;
+}
+
 /*****************************************************************************
  *          WINSPOOL_GetPrinter
  *
@@ -4091,6 +4127,44 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	needed += size;
 	break;
       }
+
+
+    case 6:
+      {
+        PRINTER_INFO_6 *pi6 = (PRINTER_INFO_6 *) pPrinter;
+
+        size = sizeof(PRINTER_INFO_6);
+        if (size <= cbBuf) {
+            /* FIXME: We do not update the status yet */
+            pi6->dwStatus = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Status");
+            ret = TRUE;
+        } else {
+            ret = FALSE;
+        }
+
+        needed += size;
+        break;
+      }
+
+    case 7:
+      {
+        PRINTER_INFO_7W *pi7 = (PRINTER_INFO_7W *) pPrinter;
+
+        size = sizeof(PRINTER_INFO_7W);
+        if (size <= cbBuf) {
+            ptr = pPrinter + size;
+            cbBuf -= size;
+            memset(pPrinter, 0, size);
+        } else {
+            pi7 = NULL;
+            cbBuf = 0;
+        }
+
+        ret = WINSPOOL_GetPrinter_7(hkeyPrinter, pi7, ptr, cbBuf, &needed, unicode);
+        needed += size;
+        break;
+      }
+
 
     default:
         FIXME("Unimplemented level %d\n", Level);
