@@ -34,6 +34,63 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
+#ifdef HAVE_LCMS
+
+static DWORD from_profile( HPROFILE profile )
+{
+    PROFILEHEADER header;
+
+    GetColorProfileHeader( profile, &header );
+    TRACE( "color space: 0x%08x %s\n", header.phDataColorSpace, MSCMS_dbgstr_tag( header.phDataColorSpace ) );
+
+    switch (header.phDataColorSpace)
+    {
+    case 0x434d594b: return TYPE_CMYK_16;  /* 'CMYK' */
+    case 0x47524159: return TYPE_GRAY_16;  /* 'GRAY' */
+    case 0x4c616220: return TYPE_Lab_16;   /* 'Lab ' */
+    case 0x52474220: return TYPE_RGB_16;   /* 'RGB ' */
+    case 0x58595a20: return TYPE_XYZ_16;   /* 'XYZ ' */
+    default:
+        WARN("unhandled format\n");
+        return TYPE_RGB_16;
+    }
+}
+
+static DWORD from_bmformat( BMFORMAT format )
+{
+    TRACE( "bitmap format: 0x%08x\n", format );
+
+    switch (format)
+    {
+    case BM_RGBTRIPLETS: return TYPE_RGB_8;
+    case BM_BGRTRIPLETS: return TYPE_BGR_8;
+    case BM_GRAY:        return TYPE_GRAY_8;
+    default:
+        FIXME("unhandled bitmap format\n");
+        return TYPE_RGB_8;
+    }
+}
+
+static DWORD from_type( COLORTYPE type )
+{
+    TRACE( "color type: 0x%08x\n", type );
+
+    switch (type)
+    {
+    case COLOR_GRAY:    return TYPE_GRAY_16;
+    case COLOR_RGB:     return TYPE_RGB_16;
+    case COLOR_XYZ:     return TYPE_XYZ_16;
+    case COLOR_Yxy:     return TYPE_Yxy_16;
+    case COLOR_Lab:     return TYPE_Lab_16;
+    case COLOR_CMYK:    return TYPE_CMYK_16;
+    default:
+        FIXME("unhandled color type\n");
+        return TYPE_RGB_16;
+    }
+}
+
+#endif /* HAVE_LCMS */
+
 /******************************************************************************
  * CreateColorTransformA            [MSCMS.@]
  *
@@ -56,28 +113,6 @@ HTRANSFORM WINAPI CreateColorTransformA( LPLOGCOLORSPACEA space, HPROFILE dest,
     MultiByteToWideChar( CP_ACP, 0, space->lcsFilename, -1, spaceW.lcsFilename, len );
 
     return CreateColorTransformW( &spaceW, dest, target, flags );
-}
-
-static DWORD from_profile( HPROFILE profile )
-{
-    PROFILEHEADER header;
-
-    GetColorProfileHeader( profile, &header );
-    TRACE( "color space: 0x%08x %s\n", header.phDataColorSpace, MSCMS_dbgstr_tag( header.phDataColorSpace ) );
-
-    switch (header.phDataColorSpace)
-    {
-    case 0x434d594b: return TYPE_CMYK_16;  /* 'CMYK' */
-    case 0x47524159: return TYPE_GRAY_16;  /* 'GRAY' */
-    case 0x4c616220: return TYPE_Lab_16;   /* 'Lab ' */
-    case 0x52474220: return TYPE_RGB_16;   /* 'RGB ' */
-    case 0x58595a20: return TYPE_XYZ_16;   /* 'XYZ ' */
-    default:
-    {
-        WARN("unhandled format\n");
-        return TYPE_RGB_16;
-    }
-    }
 }
 
 /******************************************************************************
@@ -234,23 +269,6 @@ BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
     return ret;
 }
 
-static DWORD from_bmformat( BMFORMAT format )
-{
-    TRACE( "bitmap format: 0x%08x\n", format );
-
-    switch (format)
-    {
-    case BM_RGBTRIPLETS: return TYPE_RGB_8;
-    case BM_BGRTRIPLETS: return TYPE_BGR_8;
-    case BM_GRAY:        return TYPE_GRAY_8;
-    default:
-    {
-        FIXME("unhandled bitmap format\n");
-        return TYPE_RGB_8;
-    }
-    }
-}
-
 /******************************************************************************
  * TranslateBitmapBits              [MSCMS.@]
  *
@@ -293,26 +311,6 @@ BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT i
 
 #endif /* HAVE_LCMS */
     return ret;
-}
-
-static DWORD from_type( COLORTYPE type )
-{
-    TRACE( "color type: 0x%08x\n", type );
-
-    switch (type)
-    {
-    case COLOR_GRAY:    return TYPE_GRAY_16;
-    case COLOR_RGB:     return TYPE_RGB_16;
-    case COLOR_XYZ:     return TYPE_XYZ_16;
-    case COLOR_Yxy:     return TYPE_Yxy_16;
-    case COLOR_Lab:     return TYPE_Lab_16;
-    case COLOR_CMYK:    return TYPE_CMYK_16;
-    default:
-    {
-        FIXME("unhandled color type\n");
-        return TYPE_RGB_16;
-    }
-    }
 }
 
 /******************************************************************************
