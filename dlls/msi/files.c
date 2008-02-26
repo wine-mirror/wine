@@ -59,6 +59,7 @@ static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
 struct media_info {
     UINT disk_id;
+    UINT type;
     UINT last_sequence;
     LPWSTR disk_prompt;
     LPWSTR cabinet;
@@ -504,6 +505,8 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
 {
     MSIRECORD *row;
     LPWSTR source_dir;
+    LPWSTR source;
+    DWORD options;
     UINT r;
 
     static const WCHAR query[] = {
@@ -539,6 +542,9 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
     source_dir = msi_dup_property(package, cszSourceDir);
     lstrcpyW(mi->source, source_dir);
 
+    PathStripToRootW(source_dir);
+    mi->type = GetDriveTypeW(source_dir);
+
     if (file->IsCompressed && mi->cabinet)
     {
         if (mi->cabinet[0] == '#')
@@ -554,12 +560,30 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
             lstrcatW(mi->source, mi->cabinet);
     }
 
-    msi_package_add_media_disk(package, MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
-                               mi->disk_id, mi->volume_label, mi->disk_prompt);
+    options = MSICODE_PRODUCT;
+    if (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE)
+    {
+        source = source_dir;
+        options |= MSISOURCETYPE_MEDIA;
+    }
+    else if (package->BaseURL && UrlIsW(package->BaseURL, URLIS_URL))
+    {
+        source = package->BaseURL;
+        options |= MSISOURCETYPE_URL;
+    }
+    else
+    {
+        source = mi->source;
+        options |= MSISOURCETYPE_NETWORK;
+    }
+
+    if (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE)
+        msi_package_add_media_disk(package, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   MSICODE_PRODUCT, mi->disk_id,
+                                   mi->volume_label, mi->disk_prompt);
 
     msi_package_add_info(package, MSIINSTALLCONTEXT_USERUNMANAGED,
-                         MSICODE_PRODUCT | MSISOURCETYPE_MEDIA,
-                         INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
+                         options, INSTALLPROPERTY_LASTUSEDSOURCEW, source);
 
     msi_free(source_dir);
     return ERROR_SUCCESS;
@@ -602,14 +626,11 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
     {
         LPWSTR source = msi_dup_property(package, cszSourceDir);
         BOOL matches;
-        UINT type;
 
-        PathStripToRootW(source);
-        type = GetDriveTypeW(source);
         matches = source_matches_volume(mi, source);
         msi_free(source);
 
-        if ((type == DRIVE_CDROM || type == DRIVE_REMOVABLE) && !matches)
+        if ((mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE) && !matches)
         {
             rc = msi_change_media(package, mi);
             if (rc != ERROR_SUCCESS)

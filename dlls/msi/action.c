@@ -3468,16 +3468,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    buffer = msi_dup_property( package, cszSourceDir );
-
-    rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
-                                MSIINSTALLCONTEXT_USERUNMANAGED,
-                                MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
-                                INSTALLPROPERTY_LASTUSEDSOURCEW, buffer );
-    msi_free(buffer);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
     /* FIXME: Need to write more keys to the user registry */
   
     hDb= alloc_msihandle( &package->db->hdr );
