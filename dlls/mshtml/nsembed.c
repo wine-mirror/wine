@@ -166,7 +166,7 @@ static BOOL load_xpcom(const PRUnichar *gre_path)
     }
 
 #define NS_DLSYM(func) \
-    func = (typeof(func))GetProcAddress(hXPCOM, #func); \
+    func = (void *)GetProcAddress(hXPCOM, #func); \
     if(!func) \
         ERR("Could not GetProcAddress(" #func ") failed\n")
 
