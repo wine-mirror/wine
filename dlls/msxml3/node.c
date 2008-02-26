@@ -288,7 +288,7 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
     HRESULT hr = S_FALSE;
     xmlChar *str = NULL;
 
-    TRACE("%p type(%d)", This, This->node->type);
+    TRACE("%p type(%d)\n", This, This->node->type);
 
     /* Document, Document Fragment, Document Type, Element,
         Entity, Entity Reference, Notation arent supported. */
