@@ -1169,6 +1169,7 @@ static BOOL FTPFILE_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWOR
 static const HANDLEHEADERVtbl FTPFILEVtbl = {
     FTPFILE_Destroy,
     NULL,
+    NULL,
     FTPFILE_WriteFile
 };
 
@@ -2086,6 +2087,7 @@ static void FTPSESSION_CloseConnection(WININETHANDLEHEADER *hdr)
 static const HANDLEHEADERVtbl FTPSESSIONVtbl = {
     FTPSESSION_Destroy,
     FTPSESSION_CloseConnection,
+    NULL,
     NULL
 };
 
@@ -3163,6 +3165,7 @@ static void FTPFINDNEXT_Destroy(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl FTPFINDNEXTVtbl = {
     FTPFINDNEXT_Destroy,
+    NULL,
     NULL,
     NULL
 };

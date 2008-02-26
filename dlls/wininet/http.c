@@ -1392,6 +1392,25 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
+static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD size)
+{
+    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+
+    switch(option) {
+    case INTERNET_OPTION_SEND_TIMEOUT:
+    case INTERNET_OPTION_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT\n");
+
+        if (size != sizeof(DWORD))
+            return ERROR_INVALID_PARAMETER;
+
+        return NETCON_set_timeout(&req->netConnection, option == INTERNET_OPTION_SEND_TIMEOUT,
+                    *(DWORD*)buffer);
+    }
+
+    return ERROR_INTERNET_INVALID_OPTION;
+}
+
 static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)hdr;
@@ -1402,6 +1421,7 @@ static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWOR
 static const HANDLEHEADERVtbl HTTPREQVtbl = {
     HTTPREQ_Destroy,
     HTTPREQ_CloseConnection,
+    HTTPREQ_SetOption,
     HTTPREQ_WriteFile
 };
 
@@ -2924,6 +2944,7 @@ static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
     HTTPSESSION_Destroy,
+    NULL,
     NULL,
     NULL
 };

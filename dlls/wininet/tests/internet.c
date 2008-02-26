@@ -113,6 +113,10 @@ static void test_InternetCanonicalizeUrlA(void)
         "got %u and %u with size %u for '%s' (%d)\n",
         res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
 
+    res = InternetSetOptionA(NULL, 0xdeadbeef, buffer, sizeof(buffer));
+    ok(!res, "InternetSetOptionA succeeded\n");
+    ok(GetLastError() == ERROR_INTERNET_INVALID_OPTION,
+       "InternetSetOptionA failed %u, expected ERROR_INTERNET_INVALID_OPTION\n", GetLastError());
 }
 
 /* ############################### */

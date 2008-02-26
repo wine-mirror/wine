@@ -474,6 +474,7 @@ static VOID APPINFO_Destroy(WININETHANDLEHEADER *hdr)
 static const HANDLEHEADERVtbl APPINFOVtbl = {
     APPINFO_Destroy,
     NULL,
+    NULL,
     NULL
 };
 
@@ -2477,11 +2478,22 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     LPWININETHANDLEHEADER lpwhh;
     BOOL ret = TRUE;
 
-    TRACE("0x%08x\n", dwOption);
+    TRACE("(%p %d %p %d)\n", hInternet, dwOption, lpBuffer, dwBufferLength);
 
     lpwhh = (LPWININETHANDLEHEADER) WININET_GetObject( hInternet );
-    if( !lpwhh )
-        return FALSE;
+    if(lpwhh && lpwhh->vtbl->SetOption) {
+        DWORD res;
+
+        res = lpwhh->vtbl->SetOption(lpwhh, dwOption, lpBuffer, dwBufferLength);
+        if(res != ERROR_INTERNET_INVALID_OPTION) {
+            WININET_Release( lpwhh );
+
+            if(res != ERROR_SUCCESS)
+                SetLastError(res);
+
+            return res == ERROR_SUCCESS;
+        }
+    }
 
     switch (dwOption)
     {
@@ -2553,25 +2565,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 	break;
     case INTERNET_OPTION_SEND_TIMEOUT:
     case INTERNET_OPTION_RECEIVE_TIMEOUT:
-        TRACE("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT\n");
-        if (dwBufferLength == sizeof(DWORD))
-        {
-            if (lpwhh->htype == WH_HHTTPREQ)
-                ret = NETCON_set_timeout(
-                    &((LPWININETHTTPREQW)lpwhh)->netConnection,
-                    dwOption == INTERNET_OPTION_SEND_TIMEOUT,
-                    *(DWORD *)lpBuffer);
-            else
-            {
-                FIXME("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT not supported on protocol %d\n",
-                      lpwhh->htype);
-            }
-        }
-        else
-        {
-            INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-            ret = FALSE;
-        }
+        FIXME("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT\n");
         break;
     case INTERNET_OPTION_CONNECT_RETRIES:
         FIXME("Option INTERNET_OPTION_CONNECT_RETRIES: STUB\n");
@@ -2584,11 +2578,13 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 	 break;
     default:
         FIXME("Option %d STUB\n",dwOption);
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
         ret = FALSE;
         break;
     }
-    WININET_Release( lpwhh );
+
+    if(lpwhh)
+        WININET_Release( lpwhh );
 
     return ret;
 }
