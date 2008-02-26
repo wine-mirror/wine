@@ -537,6 +537,12 @@ UINT WINAPI MsiSourceListAddSourceA(LPCSTR, LPCSTR, DWORD, LPCSTR);
 UINT WINAPI MsiSourceListAddSourceW(LPCWSTR, LPCWSTR, DWORD, LPCWSTR);
 #define     MsiSourceListAddSource WINELIB_NAME_AW(MsiSourceListAddSource)
 
+UINT WINAPI MsiSourceListEnumMediaDisksA(LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPWORD,
+                                         LPSTR, LPDWORD, LPSTR, LPDWORD);
+UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR, LPCWSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPWORD,
+                                         LPWSTR, LPDWORD, LPWSTR, LPDWORD);
+#define     MsiSourceListEnumMediaDisks WINELIB_NAME_AW(MsiSourceListEnumMediaDisks)
+
 UINT WINAPI MsiSourceListEnumSourcesA(LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPSTR, LPDWORD);
 UINT WINAPI MsiSourceListEnumSourcesW(LPCWSTR, LPCWSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPWSTR, LPDWORD);
 #define     MsiSourceListEnumSources WINELIB_NAME_AW(MsiSourceListEnumSources)

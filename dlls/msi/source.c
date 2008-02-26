@@ -141,6 +141,194 @@ static UINT OpenURLSubkey(HKEY rootkey, HKEY *key, BOOL create)
 }
 
 /******************************************************************
+ *  MsiSourceListEnumMediaDisksA   (MSI.@)
+ */
+UINT WINAPI MsiSourceListEnumMediaDisksA(LPCSTR szProductCodeOrPatchCode,
+                                         LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext,
+                                         DWORD dwOptions, DWORD dwIndex, LPWORD pdwDiskId,
+                                         LPSTR szVolumeLabel, LPDWORD pcchVolumeLabel,
+                                         LPSTR szDiskPrompt, LPDWORD pcchDiskPrompt)
+{
+    LPWSTR product = NULL;
+    LPWSTR usersid = NULL;
+    LPWSTR volume = NULL;
+    LPWSTR prompt = NULL;
+    DWORD volumesz, promptsz;
+    UINT r = ERROR_INVALID_PARAMETER;
+
+    TRACE("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p)\n", debugstr_a(szProductCodeOrPatchCode),
+          debugstr_a(szUserSid), dwContext, dwOptions, dwIndex, pdwDiskId,
+          szVolumeLabel, pcchVolumeLabel, szDiskPrompt, pcchDiskPrompt);
+
+    if (szDiskPrompt && !pcchDiskPrompt)
+        return ERROR_INVALID_PARAMETER;
+
+    if (szProductCodeOrPatchCode) product = strdupAtoW(szProductCodeOrPatchCode);
+    if (szUserSid) usersid = strdupAtoW(szUserSid);
+
+    /* FIXME: add tests for an invalid format */
+
+    if (pcchVolumeLabel)
+        volume = msi_alloc(*pcchVolumeLabel * sizeof(WCHAR));
+
+    if (pcchDiskPrompt)
+        prompt = msi_alloc(*pcchDiskPrompt * sizeof(WCHAR));
+
+    if (volume) *volume = '\0';
+    if (prompt) *prompt = '\0';
+    r = MsiSourceListEnumMediaDisksW(product, usersid, dwContext, dwOptions,
+                                     dwIndex, pdwDiskId, volume, pcchVolumeLabel,
+                                     prompt, pcchDiskPrompt);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    if (szVolumeLabel && pcchVolumeLabel)
+        volumesz = WideCharToMultiByte(CP_ACP, 0, volume, -1, szVolumeLabel,
+                            *pcchVolumeLabel + 1, NULL, NULL);
+
+    if (szDiskPrompt)
+        promptsz = WideCharToMultiByte(CP_ACP, 0, prompt, -1, szDiskPrompt,
+                            *pcchDiskPrompt + 1, NULL, NULL);
+
+done:
+    msi_free(product);
+    msi_free(usersid);
+    msi_free(volume);
+    msi_free(prompt);
+
+    return r;
+}
+
+/******************************************************************
+ *  MsiSourceListEnumMediaDisksW   (MSI.@)
+ */
+UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR szProductCodeOrPatchCode,
+                                         LPCWSTR szUserSid, MSIINSTALLCONTEXT dwContext,
+                                         DWORD dwOptions, DWORD dwIndex, LPWORD pdwDiskId,
+                                         LPWSTR szVolumeLabel, LPDWORD pcchVolumeLabel,
+                                         LPWSTR szDiskPrompt, LPDWORD pcchDiskPrompt)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    LPWSTR value = NULL;
+    LPWSTR data = NULL;
+    LPWSTR ptr;
+    HKEY source, media;
+    DWORD valuesz, datasz = 0;
+    DWORD type;
+    DWORD numvals, size;
+    LONG res;
+    UINT r;
+    static int index = 0;
+
+    TRACE("(%s, %s, %d, %d, %d, %p, %p, %p, %p)\n", debugstr_w(szProductCodeOrPatchCode),
+          debugstr_w(szUserSid), dwContext, dwOptions, dwIndex, szVolumeLabel,
+          pcchVolumeLabel, szDiskPrompt, pcchDiskPrompt);
+
+    if (!szProductCodeOrPatchCode ||
+        !squash_guid(szProductCodeOrPatchCode, squished_pc))
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwContext == MSIINSTALLCONTEXT_MACHINE && szUserSid)
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwOptions != MSICODE_PRODUCT && dwOptions != MSICODE_PATCH)
+        return ERROR_INVALID_PARAMETER;
+
+    if (szDiskPrompt && !pcchDiskPrompt)
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwIndex == 0)
+        index = 0;
+
+    if (dwIndex != index)
+        return ERROR_INVALID_PARAMETER;
+
+    r = OpenSourceKey(szProductCodeOrPatchCode, &source,
+                      dwOptions, dwContext, FALSE);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = OpenMediaSubkey(source, &media, FALSE);
+    if (r != ERROR_SUCCESS)
+    {
+        RegCloseKey(source);
+        return ERROR_NO_MORE_ITEMS;
+    }
+
+    if (!pcchVolumeLabel && !pcchDiskPrompt)
+    {
+        r = RegEnumValueW(media, dwIndex, NULL, NULL, NULL,
+                          &type, NULL, NULL);
+        goto done;
+    }
+
+    res = RegQueryInfoKeyW(media, NULL, NULL, NULL, NULL, NULL,
+                           NULL, &numvals, &valuesz, &datasz, NULL, NULL);
+    if (res != ERROR_SUCCESS)
+    {
+        r = ERROR_BAD_CONFIGURATION;
+        goto done;
+    }
+
+    value = msi_alloc(++valuesz * sizeof(WCHAR));
+    data = msi_alloc(++datasz * sizeof(WCHAR));
+    if (!value || !data)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    r = RegEnumValueW(media, dwIndex, value, &valuesz,
+                      NULL, &type, (LPBYTE)data, &datasz);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    if (pdwDiskId)
+        *pdwDiskId = atolW(value);
+
+    ptr = strchrW(data, ';');
+    if (!ptr)
+        ptr = data;
+    else
+        *ptr = '\0';
+
+    if (pcchVolumeLabel)
+    {
+        size = lstrlenW(data);
+        if (size >= *pcchVolumeLabel)
+            r = ERROR_MORE_DATA;
+        else if (szVolumeLabel)
+            lstrcpyW(szVolumeLabel, data);
+
+        *pcchVolumeLabel = size;
+    }
+
+    if (pcchDiskPrompt)
+    {
+        data = ptr;
+        if (!*data)
+            data++;
+
+        size = lstrlenW(data);
+        if (size >= *pcchDiskPrompt)
+            r = ERROR_MORE_DATA;
+        else if (szDiskPrompt)
+            lstrcpyW(szDiskPrompt, data);
+
+        *pcchDiskPrompt = size;
+    }
+
+    index++;
+
+done:
+    msi_free(value);
+    msi_free(data);
+    RegCloseKey(source);
+
+    return r;
+}
+
+/******************************************************************
  *  MsiSourceListEnumSourcesA   (MSI.@)
  */
 UINT WINAPI MsiSourceListEnumSourcesA(LPCSTR szProductCodeOrPatch, LPCSTR szUserSid,
