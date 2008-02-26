@@ -589,6 +589,49 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
     return ERROR_SUCCESS;
 }
 
+/* FIXME: search NETWORK and URL sources as well */
+static UINT find_published_source(MSIPACKAGE *package, struct media_info *mi)
+{
+    WCHAR source[MAX_PATH];
+    WCHAR volume[MAX_PATH];
+    WCHAR prompt[MAX_PATH];
+    DWORD volumesz, promptsz;
+    DWORD index, size;
+    WORD id;
+    UINT r;
+
+    r = MsiSourceListGetInfoW(package->ProductCode, NULL,
+                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_LASTUSEDSOURCEW, source, &size);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    index = 0;
+    volumesz = MAX_PATH;
+    promptsz = MAX_PATH;
+    while (MsiSourceListEnumMediaDisksW(package->ProductCode, NULL,
+                                        MSIINSTALLCONTEXT_USERUNMANAGED,
+                                        MSICODE_PRODUCT, index++, &id,
+                                        volume, &volumesz, prompt, &promptsz) == ERROR_SUCCESS)
+    {
+        mi->disk_id = id;
+        mi->volume_label = msi_realloc(mi->volume_label, ++volumesz * sizeof(WCHAR));
+        lstrcpyW(mi->volume_label, volume);
+        mi->disk_prompt = msi_realloc(mi->disk_prompt, ++promptsz * sizeof(WCHAR));
+        lstrcpyW(mi->disk_prompt, prompt);
+
+        if (source_matches_volume(mi, source))
+        {
+            /* FIXME: what about SourceDir */
+            lstrcpyW(mi->source, source);
+            lstrcatW(mi->source, mi->cabinet);
+            return ERROR_SUCCESS;
+        }
+    }
+
+    return ERROR_FUNCTION_FAILED;
+}
+
 static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *mi)
 {
     UINT rc = ERROR_SUCCESS;
@@ -641,8 +684,13 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
     if (file->IsCompressed &&
         GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
     {
-        ERR("Cabinet not found: %s\n", debugstr_w(mi->source));
-        return ERROR_INSTALL_FAILURE;
+        /* FIXME: this might be done earlier in the install process */
+        rc = find_published_source(package, mi);
+        if (rc != ERROR_SUCCESS)
+        {
+            ERR("Cabinet not found: %s\n", debugstr_w(mi->source));
+            return ERROR_INSTALL_FAILURE;
+        }
     }
 
     return ERROR_SUCCESS;
