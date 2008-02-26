@@ -1867,6 +1867,125 @@ cleanup:
     if(d3d9) IDirect3D9_Release(d3d9);
 }
 
+struct formats {
+    D3DFORMAT DisplayFormat;
+    D3DFORMAT BackBufferFormat;
+    BOOL shouldPass;
+};
+
+struct formats r5g6b5_format_list[] =
+{
+    { D3DFMT_R5G6B5, D3DFMT_R5G6B5, TRUE },
+    { D3DFMT_R5G6B5, D3DFMT_X1R5G5B5, FALSE },
+    { D3DFMT_R5G6B5, D3DFMT_A1R5G5B5, FALSE },
+    { D3DFMT_R5G6B5, D3DFMT_X8R8G8B8, FALSE },
+    { D3DFMT_R5G6B5, D3DFMT_A8R8G8B8, FALSE },
+    { 0, 0, 0}
+};
+
+struct formats x1r5g5b5_format_list[] =
+{
+    { D3DFMT_X1R5G5B5, D3DFMT_R5G6B5, FALSE },
+    { D3DFMT_X1R5G5B5, D3DFMT_X1R5G5B5, TRUE },
+    { D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, TRUE },
+    { D3DFMT_X1R5G5B5, D3DFMT_X8R8G8B8, FALSE },
+    { D3DFMT_X1R5G5B5, D3DFMT_A8R8G8B8, FALSE },
+
+    /* A1R5G5B5 should not be usable as a display format, it is backbuffer-only */
+    { D3DFMT_A1R5G5B5, D3DFMT_R5G6B5, FALSE },
+    { D3DFMT_A1R5G5B5, D3DFMT_X1R5G5B5, FALSE },
+    { D3DFMT_A1R5G5B5, D3DFMT_A1R5G5B5, FALSE },
+    { D3DFMT_A1R5G5B5, D3DFMT_X8R8G8B8, FALSE },
+    { D3DFMT_A1R5G5B5, D3DFMT_A8R8G8B8, FALSE },
+    { 0, 0, 0}
+};
+
+struct formats x8r8g8b8_format_list[] =
+{
+    { D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, FALSE },
+    { D3DFMT_X8R8G8B8, D3DFMT_X1R5G5B5, FALSE },
+    { D3DFMT_X8R8G8B8, D3DFMT_A1R5G5B5, FALSE },
+    { D3DFMT_X8R8G8B8, D3DFMT_X8R8G8B8, TRUE },
+    { D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, TRUE },
+
+    /* A1R8G8B8 should not be usable as a display format, it is backbuffer-only */
+    { D3DFMT_A8R8G8B8, D3DFMT_R5G6B5, FALSE },
+    { D3DFMT_A8R8G8B8, D3DFMT_X1R5G5B5, FALSE },
+    { D3DFMT_A8R8G8B8, D3DFMT_A1R5G5B5, FALSE },
+    { D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, FALSE },
+    { D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE },
+    { 0, 0, 0}
+};
+
+static void test_display_formats()
+{
+    /* Direct3D9 offers 4 display formats R5G6B5, X1R5G5B5, X8R8G8B8 and A2R10G10B10.
+     * Next to these there are 6 different backbuffer formats. Only a fixed number of
+     * mixings are possible in FULLSCREEN mode. In windowed mode more combinations are
+     * allowed due to depth conversion and this is likely driver dependent.
+     * This test checks which combinations are possible in fullscreen mode and this should not be driver dependent.
+     * TODO: handle A2R10G10B10 but what hardware supports it? Parhelia? It is very rare. */
+
+    UINT Adapter = D3DADAPTER_DEFAULT;
+    D3DDEVTYPE DeviceType = D3DDEVTYPE_HAL;
+    int i, nmodes;
+    HRESULT hr;
+
+    IDirect3D9 *d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
+    if(!d3d9) return;
+
+    nmodes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, D3DFMT_R5G6B5);
+    if(!nmodes) {
+        skip("Display format R5G6B5 not supported, skipping\n");
+    } else {
+        trace("Testing display format R5G6B5\n");
+        for(i=0; r5g6b5_format_list[i].DisplayFormat != 0; i++)
+        {
+            hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat, FALSE);
+
+            if(r5g6b5_format_list[i].shouldPass)
+                ok(hr == D3D_OK, "format %d %d didn't pass with hr=%#08x\n", r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat, hr);
+            else
+                ok(hr != D3D_OK, "format %d %d didn't pass while it was expected to\n", r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat);
+        }
+    }
+
+    nmodes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, D3DFMT_X1R5G5B5);
+    if(!nmodes) {
+        skip("Display format X1R5G5B5 not supported, skipping\n");
+    } else {
+        trace("Testing display format X1R5G5B5\n");
+        for(i=0; x1r5g5b5_format_list[i].DisplayFormat != 0; i++)
+        {
+            hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, x1r5g5b5_format_list[i].DisplayFormat, x1r5g5b5_format_list[i].BackBufferFormat, FALSE);
+
+            if(x1r5g5b5_format_list[i].shouldPass)
+                ok(hr == D3D_OK, "format %d %d didn't pass with hr=%#08x\n", x1r5g5b5_format_list[i].DisplayFormat, x1r5g5b5_format_list[i].BackBufferFormat, hr);
+            else
+                ok(hr != D3D_OK, "format %d %d didn't pass while it was expected to\n", x1r5g5b5_format_list[i].DisplayFormat, x1r5g5b5_format_list[i].BackBufferFormat);
+        }
+    }
+
+    nmodes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, D3DFMT_X8R8G8B8);
+    if(!nmodes) {
+        skip("Display format X8R8G8B8 not supported, skipping\n");
+    } else {
+        trace("Testing display format X8R8G8B8\n");
+        for(i=0; x8r8g8b8_format_list[i].DisplayFormat != 0; i++)
+        {
+            hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, x8r8g8b8_format_list[i].DisplayFormat, x8r8g8b8_format_list[i].BackBufferFormat, FALSE);
+
+            if(x8r8g8b8_format_list[i].shouldPass)
+                ok(hr == D3D_OK, "format %d %d didn't pass with hr=%#08x\n", x8r8g8b8_format_list[i].DisplayFormat, x8r8g8b8_format_list[i].BackBufferFormat, hr);
+            else
+                ok(hr != D3D_OK, "format %d %d didn't pass while it was expected to\n", x8r8g8b8_format_list[i].DisplayFormat, x8r8g8b8_format_list[i].BackBufferFormat);
+        }
+    }
+
+    if(d3d9) IDirect3D9_Release(d3d9);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -1880,6 +1999,7 @@ START_TEST(device)
     ok(pDirect3DCreate9 != NULL, "Failed to get address of Direct3DCreate9\n");
     if (pDirect3DCreate9)
     {
+        test_display_formats();
         test_display_modes();
         test_swapchain();
         test_refcount();
