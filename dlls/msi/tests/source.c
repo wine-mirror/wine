@@ -35,6 +35,9 @@ static UINT (WINAPI *pMsiSourceListAddMediaDiskA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPCSTR, LPCSTR);
 static UINT (WINAPI *pMsiSourceListAddSourceExA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, DWORD);
+static UINT (WINAPI *pMsiSourceListEnumMediaDisksA)
+    (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPWORD, LPSTR,
+    LPDWORD, LPSTR, LPDWORD);
 static UINT (WINAPI *pMsiSourceListEnumSourcesA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPSTR, LPDWORD);
 static UINT (WINAPI *pMsiSourceListGetInfoA)
@@ -54,6 +57,7 @@ static void init_functionpointers(void)
 
     GET_PROC(hmsi, MsiSourceListAddMediaDiskA)
     GET_PROC(hmsi, MsiSourceListAddSourceExA)
+    GET_PROC(hmsi, MsiSourceListEnumMediaDisksA)
     GET_PROC(hmsi, MsiSourceListEnumSourcesA)
     GET_PROC(hmsi, MsiSourceListGetInfoA)
     GET_PROC(hmsi, MsiSourceListSetInfoA)
@@ -2252,68 +2256,74 @@ static void test_MsiSourceListEnumMediaDisks(void)
     LONG res;
     UINT r;
 
+    if (!pMsiSourceListEnumMediaDisksA)
+    {
+        skip("MsiSourceListEnumMediaDisksA is not available\n");
+        return;
+    }
+
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
 
     /* GetLastError is not set by the function */
 
     /* NULL szProductCodeOrPatchCode */
-    r = MsiSourceListEnumMediaDisksA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* empty szProductCodeOrPatchCode */
-    r = MsiSourceListEnumMediaDisksA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* garbage szProductCodeOrPatchCode */
-    r = MsiSourceListEnumMediaDisksA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* guid without brackets */
-    r = MsiSourceListEnumMediaDisksA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA",
-                                     usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA",
+                                      usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* guid with brackets */
-    r = MsiSourceListEnumMediaDisksA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
-                                     usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}",
+                                      usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_UNKNOWN_PRODUCT,
        "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
 
     /* dwOptions has MSISOURCETYPE_NETWORK */
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
-                                     0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT | MSISOURCETYPE_NETWORK,
+                                      0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* dwOptions has MSISOURCETYPE_URL */
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT | MSISOURCETYPE_URL,
-                                     0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT | MSISOURCETYPE_URL,
+                                      0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* dwIndex is non-zero */
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 1, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 1, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
@@ -2326,9 +2336,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* user product key exists */
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_BAD_CONFIGURATION,
        "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
@@ -2341,9 +2351,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = 0xdeadbeef;
     lstrcpyA(prompt, "bbb");
     promptsz = 0xdeadbeef;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_NO_MORE_ITEMS,
        "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2361,9 +2371,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = 0xdeadbeef;
     lstrcpyA(prompt, "bbb");
     promptsz = 0xdeadbeef;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_NO_MORE_ITEMS,
        "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2381,9 +2391,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2398,9 +2408,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     id = 0;
     labelsz = MAX_PATH;
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 1, &id, NULL, &labelsz,
-                                     NULL, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 1, &id, NULL, &labelsz,
+                                      NULL, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 2, "Expected 2, got %d\n", id);
     ok(labelsz == 3, "Expected 3, got %d\n", labelsz);
@@ -2412,9 +2422,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 1, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 1, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2432,9 +2442,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2448,9 +2458,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 1, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 1, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 2, "Expected 2, got %d\n", id);
     ok(!lstrcmpA(label, "one"), "Expected \"one\", got \"%s\"\n", label);
@@ -2464,9 +2474,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 2, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 2, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 4, "Expected 4, got %d\n", id);
     ok(!lstrcmpA(label, "three"), "Expected \"three\", got \"%s\"\n", label);
@@ -2480,9 +2490,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 3, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 3, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_NO_MORE_ITEMS,
        "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2497,9 +2507,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2513,9 +2523,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2529,9 +2539,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 2, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 2, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
     ok(!lstrcmpA(label, "aaa"), "Expected \"aaa\", got \"%s\"\n", label);
@@ -2545,9 +2555,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 1, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 1, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 2, "Expected 2, got %d\n", id);
     ok(!lstrcmpA(label, "one"), "Expected \"one\", got \"%s\"\n", label);
@@ -2561,9 +2571,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 1, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 1, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
     ok(!lstrcmpA(label, "aaa"), "Expected \"aaa\", got \"%s\"\n", label);
@@ -2576,9 +2586,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, NULL, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, NULL, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
     ok(labelsz == 5, "Expected 5, got %d\n", labelsz);
@@ -2590,9 +2600,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, NULL, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, NULL, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(labelsz == 5, "Expected 5, got %d\n", labelsz);
@@ -2603,9 +2613,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     id = 0;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, NULL, NULL,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, NULL, NULL,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(prompt, "prompt"), "Expected \"prompt\", got \"%s\"\n", prompt);
@@ -2616,9 +2626,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     lstrcpyA(label, "aaa");
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, NULL,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, NULL,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "aaa"), "Expected \"aaa\", got \"%s\"\n", label);
@@ -2630,9 +2640,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     lstrcpyA(label, "aaa");
     labelsz = MAX_PATH;
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     NULL, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      NULL, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2643,9 +2653,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     id = 0;
     lstrcpyA(label, "aaa");
     labelsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     NULL, NULL);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      NULL, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2656,9 +2666,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     lstrcpyA(label, "aaa");
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, NULL);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, NULL);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2671,9 +2681,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = 5;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, NULL, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, NULL, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!lstrcmpA(label, "aaa"), "Expected \"aaa\", got \"%s\"\n", label);
     ok(labelsz == 5, "Expected 5, got %d\n", labelsz);
@@ -2685,9 +2695,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = 6;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, NULL, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, NULL, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
     ok(!lstrcmpA(label, "aaa"), "Expected \"aaa\", got \"%s\"\n", label);
     ok(labelsz == 5, "Expected 5, got %d\n", labelsz);
@@ -2703,9 +2713,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2722,9 +2732,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2741,9 +2751,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, ""), "Expected \"\", got \"%s\"\n", label);
@@ -2760,9 +2770,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     ok(!lstrcmpA(label, ""), "Expected \"\", got \"%s\"\n", label);
@@ -2780,9 +2790,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 1, "Expected 1, got %d\n", id);
     todo_wine
@@ -2814,9 +2824,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* user product key exists */
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_BAD_CONFIGURATION,
        "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
@@ -2829,9 +2839,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = 0xdeadbeef;
     lstrcpyA(prompt, "bbb");
     promptsz = 0xdeadbeef;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_NO_MORE_ITEMS,
        "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2849,9 +2859,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = 0xdeadbeef;
     lstrcpyA(prompt, "bbb");
     promptsz = 0xdeadbeef;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_NO_MORE_ITEMS,
        "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2869,9 +2879,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 2, "Expected 2, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2896,9 +2906,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* machine product key exists */
-    r = MsiSourceListEnumMediaDisksA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_BAD_CONFIGURATION,
        "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
 
@@ -2911,9 +2921,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = 0xdeadbeef;
     lstrcpyA(prompt, "bbb");
     promptsz = 0xdeadbeef;
-    r = MsiSourceListEnumMediaDisksA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_NO_MORE_ITEMS,
        "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2931,9 +2941,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = 0xdeadbeef;
     lstrcpyA(prompt, "bbb");
     promptsz = 0xdeadbeef;
-    r = MsiSourceListEnumMediaDisksA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_NO_MORE_ITEMS,
        "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
@@ -2951,9 +2961,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, NULL, MSIINSTALLCONTEXT_MACHINE,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(id == 2, "Expected 2, got %d\n", id);
     ok(!lstrcmpA(label, "label"), "Expected \"label\", got \"%s\"\n", label);
@@ -2967,9 +2977,9 @@ static void test_MsiSourceListEnumMediaDisks(void)
     labelsz = MAX_PATH;
     lstrcpyA(prompt, "bbb");
     promptsz = MAX_PATH;
-    r = MsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_MACHINE,
-                                     MSICODE_PRODUCT, 0, &id, label, &labelsz,
-                                     prompt, &promptsz);
+    r = pMsiSourceListEnumMediaDisksA(prodcode, usersid, MSIINSTALLCONTEXT_MACHINE,
+                                      MSICODE_PRODUCT, 0, &id, label, &labelsz,
+                                      prompt, &promptsz);
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
     ok(id == 0xbeef, "Expected 0xbeef, got %d\n", id);
