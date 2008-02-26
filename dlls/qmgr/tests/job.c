@@ -83,12 +83,29 @@ static void test_GetId(void)
     ok(memcmp(&tmpId, &test_jobId, sizeof tmpId) == 0, "Got incorrect GUID\n");
 }
 
+/* Test that the type is properly set */
+static void test_GetType(void)
+{
+    HRESULT hres;
+    BG_JOB_TYPE type;
+
+    hres = IBackgroundCopyJob_GetType(test_job, &type);
+    ok(hres == S_OK, "GetType failed: %08x\n", hres);
+    if(hres != S_OK)
+    {
+        skip("Unable to get type of test_job.\n");
+        return;
+    }
+    ok(type == test_type, "Got incorrect type\n");
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(job)
 {
     static const test_t tests[] = {
         test_GetId,
+        test_GetType,
         0
     };
     const test_t *test;

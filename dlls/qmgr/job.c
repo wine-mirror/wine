@@ -133,8 +133,13 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetType(
     IBackgroundCopyJob* iface,
     BG_JOB_TYPE *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+
+    if (!pVal)
+        return E_INVALIDARG;
+
+    *pVal = This->type;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetProgress(
