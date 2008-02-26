@@ -350,6 +350,8 @@ LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, ULONG size);
 HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy);
 HRESULT WINAPI CoRevokeMallocSpy(void);
 
+HRESULT WINAPI CoGetContextToken( ULONG_PTR *token );
+
 /* class registration flags; passed to CoRegisterClassObject */
 typedef enum tagREGCLS
 {

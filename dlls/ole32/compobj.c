@@ -3734,6 +3734,18 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
     return hr;
 }
 
+
+/***********************************************************************
+ *           CoGetContextToken [OLE32.@]
+ */
+HRESULT WINAPI CoGetContextToken( ULONG_PTR *token )
+{
+    FIXME( "stub\n" );
+    if (token) *token = 0;
+    return E_NOTIMPL;
+}
+
+
 /***********************************************************************
  *		DllMain (OLE32.@)
  */
