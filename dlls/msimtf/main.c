@@ -164,7 +164,7 @@ static HRESULT register_server(BOOL doregister)
 {
     HRESULT hres;
     HMODULE hAdvpack;
-    typeof(RegInstallA) *pRegInstall;
+    HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
     STRTABLEA strtable;
     STRENTRYA pse[1];
     static CLSID const *clsids[34];
@@ -186,7 +186,7 @@ static HRESULT register_server(BOOL doregister)
     strtable.pse = pse;
 
     hAdvpack = LoadLibraryW(wszAdvpack);
-    pRegInstall = (typeof(RegInstallA)*)GetProcAddress(hAdvpack, "RegInstall");
+    pRegInstall = (void *)GetProcAddress(hAdvpack, "RegInstall");
 
     hres = pRegInstall(msimtf_instance, doregister ? "RegisterDll" : "UnregisterDll", &strtable);
 
