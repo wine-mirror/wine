@@ -110,8 +110,8 @@ static HRESULT WINAPI BITS_IBackgroundCopyManager_EnumJobs(
         DWORD dwFlags,
         IEnumBackgroundCopyJobs **ppEnum)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return EnumBackgroundCopyJobsConstructor((LPVOID *) ppEnum, iface);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyManager_GetErrorDescription(

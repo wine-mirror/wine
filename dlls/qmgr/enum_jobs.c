@@ -120,3 +120,20 @@ static const IEnumBackgroundCopyJobsVtbl BITS_IEnumBackgroundCopyJobs_Vtbl =
     BITS_IEnumBackgroundCopyJobs_Clone,
     BITS_IEnumBackgroundCopyJobs_GetCount
 };
+
+HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
+                                          IBackgroundCopyManager* copyManager)
+{
+    EnumBackgroundCopyJobsImpl *This;
+
+    TRACE("%p, %p)\n", ppObj, copyManager);
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
+    if (!This)
+        return E_OUTOFMEMORY;
+    This->lpVtbl = &BITS_IEnumBackgroundCopyJobs_Vtbl;
+    This->ref = 1;
+
+    *ppObj = &This->lpVtbl;
+    return S_OK;
+}
