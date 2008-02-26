@@ -25,6 +25,20 @@ import "msxml.idl";
 interface IInternetProtocolSink;
 
 /*****************************************************************************
+ * IInternet interface
+ */
+[
+    object,
+    uuid(79eac9e0-baf9-11ce-8c82-00aa004ba90b),
+    pointer_default(unique),
+    local
+]
+interface IInternet : IUnknown
+{
+    typedef [unique] IInternet *LPIINTERNET;
+}
+
+/*****************************************************************************
  * IBinding interface
  */
 [
