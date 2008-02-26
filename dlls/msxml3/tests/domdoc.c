@@ -2,6 +2,7 @@
  * XML test
  *
  * Copyright 2005 Mike McCormack for CodeWeavers
+ * Copyright 2007 Alistair Leslie-Hughes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1949,6 +1950,7 @@ static void test_xmlTypes(void)
     BSTR str;
     IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;   /* Used for testing Siblings */
     VARIANT v;
+    long len = 0;
 
     hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
     if( hr != S_OK )
@@ -2107,6 +2109,11 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect xml string\n");
                 SysFreeString(str);
+
+                /* test length property */
+                hr = IXMLDOMComment_get_length(pComment, &len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok(len == 21, "expected 21 got %ld\n", len);
 
                 IXMLDOMComment_Release(pComment);
             }

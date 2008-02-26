@@ -500,8 +500,26 @@ static HRESULT WINAPI domcomment_get_length(
     IXMLDOMComment *iface,
     long *len)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcomment *This = impl_from_IXMLDOMComment( iface );
+    xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
+    xmlChar *pContent;
+    long nLength = 0;
+
+    TRACE("%p\n", iface);
+
+    if(!len)
+        return E_INVALIDARG;
+
+    pContent = xmlNodeGetContent(pDOMNode->node);
+    if(pContent)
+    {
+        nLength = xmlStrlen(pContent);
+        xmlFree(pContent);
+    }
+
+    *len = nLength;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI domcomment_substringData(
