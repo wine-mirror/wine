@@ -702,6 +702,7 @@ programs/rpcss/irot.h
 programs/rpcss/irot_s.c
 programs/rpcss/rpcss
 programs/rundll32/rundll32
+programs/secedit/secedit
 programs/spoolsv/spoolsv
 programs/start/rsrc.res
 programs/start/start

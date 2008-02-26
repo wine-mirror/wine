@@ -21897,6 +21897,8 @@ ac_config_files="$ac_config_files programs/rpcss/Makefile"
 
 ac_config_files="$ac_config_files programs/rundll32/Makefile"
 
+ac_config_files="$ac_config_files programs/secedit/Makefile"
+
 ac_config_files="$ac_config_files programs/spoolsv/Makefile"
 
 ac_config_files="$ac_config_files programs/start/Makefile"
@@ -22898,6 +22900,7 @@ do
     "programs/regsvr32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/regsvr32/Makefile" ;;
     "programs/rpcss/Makefile") CONFIG_FILES="$CONFIG_FILES programs/rpcss/Makefile" ;;
     "programs/rundll32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/rundll32/Makefile" ;;
+    "programs/secedit/Makefile") CONFIG_FILES="$CONFIG_FILES programs/secedit/Makefile" ;;
     "programs/spoolsv/Makefile") CONFIG_FILES="$CONFIG_FILES programs/spoolsv/Makefile" ;;
     "programs/start/Makefile") CONFIG_FILES="$CONFIG_FILES programs/start/Makefile" ;;
     "programs/svchost/Makefile") CONFIG_FILES="$CONFIG_FILES programs/svchost/Makefile" ;;

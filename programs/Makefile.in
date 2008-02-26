@@ -25,6 +25,7 @@ SUBDIRS = \
 	regsvr32 \
 	rpcss \
 	rundll32 \
+	secedit \
 	spoolsv \
 	start \
 	svchost \
@@ -69,6 +70,7 @@ INSTALLSUBDIRS = \
 	regsvr32 \
 	rpcss \
 	rundll32 \
+	secedit \
 	spoolsv \
 	start \
 	svchost \
