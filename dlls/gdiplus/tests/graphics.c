@@ -220,6 +220,44 @@ static void test_save_restore(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_GdipDrawBezierI(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpPen *pen = NULL;
+    HDC hdc = GetDC(0);
+
+    /* make a graphics object and pen object */
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    ok(pen != NULL, "Expected pen to be initialized\n");
+
+    /* InvalidParameter cases: null graphics, null pen */
+    status = GdipDrawBezierI(NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawBezierI(graphics, NULL, 0, 0, 0, 0, 0, 0, 0, 0);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawBezierI(NULL, pen, 0, 0, 0, 0, 0, 0, 0, 0);
+    expect(InvalidParameter, status);
+
+    /* successful case */
+    status = GdipDrawBezierI(graphics, pen, 0, 0, 0, 0, 0, 0, 0, 0);
+    expect(Ok, status);
+
+    GdipDeletePen(pen);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -234,6 +272,7 @@ START_TEST(graphics)
 
     test_constructor_destructor();
     test_save_restore();
+    test_GdipDrawBezierI();
 
     GdiplusShutdown(gdiplusToken);
 }
