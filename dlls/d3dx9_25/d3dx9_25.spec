@@ -196,7 +196,7 @@
 @ stdcall D3DXMatrixAffineTransformation(ptr long ptr ptr ptr) d3dx9_36.D3DXMatrixAffineTransformation
 @ stdcall D3DXMatrixAffineTransformation2D(ptr long ptr long ptr) d3dx9_36.D3DXMatrixAffineTransformation2D
 @ stdcall D3DXMatrixDecompose(ptr ptr ptr ptr) d3dx9_36.D3DXMatrixDecompose
-@ stdcall D3DXMatrixDeterminant(ptr) d3dx9_36.D3DXMatrixfDeterminant
+@ stdcall D3DXMatrixDeterminant(ptr) d3dx9_36.D3DXMatrixDeterminant
 @ stdcall D3DXMatrixInverse(ptr ptr ptr) d3dx9_36.D3DXMatrixInverse
 @ stdcall D3DXMatrixLookAtLH(ptr ptr ptr ptr) d3dx9_36.D3DXMatrixLookAtLH
 @ stdcall D3DXMatrixLookAtRH(ptr ptr ptr ptr) d3dx9_36.D3DXMatrixLookAtRH
