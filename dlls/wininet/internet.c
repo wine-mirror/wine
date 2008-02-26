@@ -2393,7 +2393,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
             else
             {
-                static const INTERNET_VERSION_INFO info = { 6, 0 };
+                static const INTERNET_VERSION_INFO info = { 1, 2 };
                 memcpy(lpBuffer, &info, sizeof(info));
                 *lpdwBufferLength = sizeof(info);
                 bSuccess = TRUE;

@@ -321,6 +321,19 @@ static void test_null(void)
   ok(r == TRUE, "ret %d\n", r);
 }
 
+static void test_version(void)
+{
+    INTERNET_VERSION_INFO version;
+    DWORD size;
+    BOOL res;
+
+    size = sizeof(version);
+    res = InternetQueryOptionA(NULL, INTERNET_OPTION_VERSION, &version, &size);
+    ok(res, "Could not get version: %u\n", GetLastError());
+    ok(version.dwMajorVersion == 1, "dwMajorVersion=%d, expected 1\n", version.dwMajorVersion);
+    ok(version.dwMinorVersion == 2, "dwMinorVersion=%d, expected 2\n", version.dwMinorVersion);
+}
+
 /* ############################### */
 
 START_TEST(internet)
@@ -328,5 +341,6 @@ START_TEST(internet)
   test_InternetCanonicalizeUrlA();
   test_InternetQueryOptionA();
   test_get_cookie();
+  test_version();
   test_null();
 }
