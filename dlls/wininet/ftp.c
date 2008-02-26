@@ -122,7 +122,6 @@ static const CHAR *const szFtpCommands[] = {
 static const CHAR szMonths[] = "JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC";
 static const WCHAR szNoAccount[] = {'n','o','a','c','c','o','u','n','t','\0'};
 
-static void FTP_CloseConnection(LPWININETHANDLEHEADER hdr);
 static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext);
 static BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
@@ -1157,7 +1156,8 @@ static void FTPFILE_Destroy(WININETHANDLEHEADER *hdr)
 }
 
 static const HANDLEHEADERVtbl FTPFILEVtbl = {
-    FTPFILE_Destroy
+    FTPFILE_Destroy,
+    NULL
 };
 
 /***********************************************************************
@@ -1205,7 +1205,6 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
         lpwh->hdr.dwFlags = dwFlags;
         lpwh->hdr.dwContext = dwContext;
         lpwh->hdr.dwRefCount = 1;
-        lpwh->hdr.close_connection = NULL;
         lpwh->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
         lpwh->nDataSocket = nDataSocket;
 	lpwh->session_deleted = FALSE;
@@ -2047,9 +2046,34 @@ static void FTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwfs);
 }
 
+static void FTPSESSION_CloseConnection(WININETHANDLEHEADER *hdr)
+{
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
+
+    TRACE("\n");
+
+    SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext,
+                      INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
+
+    if (lpwfs->download_in_progress != NULL)
+        lpwfs->download_in_progress->session_deleted = TRUE;
+
+     if (lpwfs->sndSocket != -1)
+         closesocket(lpwfs->sndSocket);
+
+     if (lpwfs->lstnSocket != -1)
+         closesocket(lpwfs->lstnSocket);
+
+    if (lpwfs->pasvSocket != -1)
+        closesocket(lpwfs->pasvSocket);
+
+    SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext,
+                      INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
+}
 
 static const HANDLEHEADERVtbl FTPSESSIONVtbl = {
-    FTPSESSION_Destroy
+    FTPSESSION_Destroy,
+    FTPSESSION_CloseConnection
 };
 
 
@@ -2121,7 +2145,6 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwfs->hdr.dwContext = dwContext;
     lpwfs->hdr.dwInternalFlags = dwInternalFlags;
     lpwfs->hdr.dwRefCount = 1;
-    lpwfs->hdr.close_connection = FTP_CloseConnection;
     lpwfs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
     lpwfs->download_in_progress = NULL;
     lpwfs->sndSocket = -1;
@@ -3045,36 +3068,6 @@ recv_end:
     return  (nRC != -1);
 }
 
-/***********************************************************************
- *           FTP_CloseConnection (internal)
- *
- * Close connections
- */
-static void FTP_CloseConnection(LPWININETHANDLEHEADER hdr)
-{
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
-
-    TRACE("\n");
-
-    SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext,
-                      INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
-
-    if (lpwfs->download_in_progress != NULL)
-        lpwfs->download_in_progress->session_deleted = TRUE;
-
-     if (lpwfs->sndSocket != -1)
-         closesocket(lpwfs->sndSocket);
-
-     if (lpwfs->lstnSocket != -1)
-         closesocket(lpwfs->lstnSocket);
-
-    if (lpwfs->pasvSocket != -1)
-        closesocket(lpwfs->pasvSocket);
-
-    SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext,
-                      INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
-}
-
 
 /***********************************************************************
  *           FTP_FindNextFileW (Internal)
@@ -3156,7 +3149,8 @@ static void FTPFINDNEXT_Destroy(WININETHANDLEHEADER *hdr)
 }
 
 static const HANDLEHEADERVtbl FTPFINDNEXTVtbl = {
-    FTPFINDNEXT_Destroy
+    FTPFINDNEXT_Destroy,
+    NULL
 };
 
 /***********************************************************************
@@ -3191,7 +3185,6 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
             lpwfn->hdr.vtbl = &FTPFINDNEXTVtbl;
             lpwfn->hdr.dwContext = dwContext;
             lpwfn->hdr.dwRefCount = 1;
-            lpwfn->hdr.close_connection = NULL;
             lpwfn->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
             lpwfn->index = 1; /* Next index is 1 since we return index 0 */
             lpwfn->size = dwSize;

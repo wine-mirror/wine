@@ -103,7 +103,6 @@ struct HttpAuthInfo
     BOOL finished; /* finished authenticating */
 };
 
-static void HTTP_CloseConnection(LPWININETHANDLEHEADER hdr);
 static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
 static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr);
 static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
@@ -1349,8 +1348,53 @@ static void HTTPREQ_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwhr);
 }
 
+static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
+{
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
+    LPWININETHTTPSESSIONW lpwhs = NULL;
+    LPWININETAPPINFOW hIC = NULL;
+
+    TRACE("%p\n",lpwhr);
+
+    if (!NETCON_connected(&lpwhr->netConnection))
+        return;
+
+    if (lpwhr->pAuthInfo)
+    {
+        DeleteSecurityContext(&lpwhr->pAuthInfo->ctx);
+        FreeCredentialsHandle(&lpwhr->pAuthInfo->cred);
+
+        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->auth_data);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->scheme);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo);
+        lpwhr->pAuthInfo = NULL;
+    }
+    if (lpwhr->pProxyAuthInfo)
+    {
+        DeleteSecurityContext(&lpwhr->pProxyAuthInfo->ctx);
+        FreeCredentialsHandle(&lpwhr->pProxyAuthInfo->cred);
+
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->auth_data);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->scheme);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo);
+        lpwhr->pProxyAuthInfo = NULL;
+    }
+
+    lpwhs = lpwhr->lpHttpSession;
+    hIC = lpwhs->lpAppInfo;
+
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                          INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
+
+    NETCON_close(&lpwhr->netConnection);
+
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                          INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
+}
+
 static const HANDLEHEADERVtbl HTTPREQVtbl = {
-    HTTPREQ_Destroy
+    HTTPREQ_Destroy,
+    HTTPREQ_CloseConnection
 };
 
 /***********************************************************************
@@ -1394,7 +1438,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
     lpwhr->hdr.dwRefCount = 1;
-    lpwhr->hdr.close_connection = HTTP_CloseConnection;
     lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
     lpwhr->hdr.dwInternalFlags = lpwhs->hdr.dwInternalFlags & INET_CALLBACKW;
 
@@ -2872,7 +2915,8 @@ static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
 
 
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
-    HTTPSESSION_Destroy
+    HTTPSESSION_Destroy,
+    NULL
 };
 
 
@@ -2922,7 +2966,6 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwhs->hdr.dwContext = dwContext;
     lpwhs->hdr.dwInternalFlags = dwInternalFlags | (hIC->hdr.dwInternalFlags & INET_CALLBACKW);
     lpwhs->hdr.dwRefCount = 1;
-    lpwhs->hdr.close_connection = NULL;
     lpwhs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
 
     WININET_AddRef( &hIC->hdr );
@@ -3430,57 +3473,6 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
 
 
 /***********************************************************************
- *           HTTP_CloseConnection (internal)
- *
- * Close socket connection
- *
- */
-static void HTTP_CloseConnection(LPWININETHANDLEHEADER hdr)
-{
-    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
-    LPWININETHTTPSESSIONW lpwhs = NULL;
-    LPWININETAPPINFOW hIC = NULL;
-
-    TRACE("%p\n",lpwhr);
-
-    if (!NETCON_connected(&lpwhr->netConnection))
-        return;
-
-    if (lpwhr->pAuthInfo)
-    {
-        DeleteSecurityContext(&lpwhr->pAuthInfo->ctx);
-        FreeCredentialsHandle(&lpwhr->pAuthInfo->cred);
-
-        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->auth_data);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->scheme);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo);
-        lpwhr->pAuthInfo = NULL;
-    }
-    if (lpwhr->pProxyAuthInfo)
-    {
-        DeleteSecurityContext(&lpwhr->pProxyAuthInfo->ctx);
-        FreeCredentialsHandle(&lpwhr->pProxyAuthInfo->cred);
-
-        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->auth_data);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->scheme);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo);
-        lpwhr->pProxyAuthInfo = NULL;
-    }
-
-    lpwhs = lpwhr->lpHttpSession;
-    hIC = lpwhs->lpAppInfo;
-
-    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                          INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
-
-    NETCON_close(&lpwhr->netConnection);
-
-    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                          INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
-}
-
-
-/***********************************************************************
  *           HTTP_FinishedReading (internal)
  *
  * Called when all content from server has been read by client.
@@ -3497,7 +3489,7 @@ BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
                              &dwBufferSize, NULL) ||
         strcmpiW(szConnectionResponse, szKeepAlive))
     {
-        HTTP_CloseConnection(&lpwhr->hdr);
+        HTTPREQ_CloseConnection(&lpwhr->hdr);
     }
 
     /* FIXME: store data in the URL cache here */

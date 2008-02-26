@@ -140,6 +140,7 @@ typedef void (*WININET_object_function)( LPWININETHANDLEHEADER );
 
 typedef struct {
     void (*Destroy)(WININETHANDLEHEADER*);
+    void (*CloseConnection)(WININETHANDLEHEADER*);
 } HANDLEHEADERVtbl;
 
 struct _WININETHANDLEHEADER
@@ -152,7 +153,6 @@ struct _WININETHANDLEHEADER
     DWORD  dwError;
     DWORD  dwInternalFlags;
     DWORD  dwRefCount;
-    WININET_object_function close_connection;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
     struct list entry;
     struct list children;

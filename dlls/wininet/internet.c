@@ -174,10 +174,10 @@ BOOL WININET_Release( LPWININETHANDLEHEADER info )
     TRACE( "object %p refcount = %d\n", info, info->dwRefCount );
     if( !info->dwRefCount )
     {
-        if ( info->close_connection )
+        if ( info->vtbl->CloseConnection )
         {
             TRACE( "closing connection %p\n", info);
-            info->close_connection( info );
+            info->vtbl->CloseConnection( info );
         }
         INTERNET_SendCallback(info, info->dwContext,
                               INTERNET_STATUS_HANDLE_CLOSING, &info->hInternet,
@@ -472,7 +472,8 @@ static VOID APPINFO_Destroy(WININETHANDLEHEADER *hdr)
 }
 
 static const HANDLEHEADERVtbl APPINFOVtbl = {
-    APPINFO_Destroy
+    APPINFO_Destroy,
+    NULL
 };
 
 
@@ -531,7 +532,6 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     lpwai->hdr.vtbl = &APPINFOVtbl;
     lpwai->hdr.dwFlags = dwFlags;
     lpwai->hdr.dwRefCount = 1;
-    lpwai->hdr.close_connection = NULL;
     lpwai->dwAccessType = dwAccessType;
     lpwai->lpszProxyUsername = NULL;
     lpwai->lpszProxyPassword = NULL;
