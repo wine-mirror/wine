@@ -118,8 +118,8 @@ typedef struct
 
     INT     cxEffective;    /* current cx for band */
     UINT    cyHeader;       /* the height of the header */
-    UINT    lcx;            /* minimum cx for band */
-    UINT    lcy;            /* minimum cy for band */
+    UINT    cxMinBand;      /* minimum cx for band */
+    UINT    cyMinBand;      /* minimum cy for band */
 
     UINT    cyRowSoFar;     /* for RBS_VARHEIGHT - the height of the row if it would break on this band (set by _Layout) */
     INT     iRow;           /* zero-based index of the row this band assigned to */
@@ -188,7 +188,7 @@ typedef struct
 
 /* fStatus flags */
 #define BEGIN_DRAG_ISSUED   0x00000001
-#define AUTO_RESIZE         0x00000002
+#define SELF_RESIZE         0x00000002
 #define BAND_NEEDS_REDRAW   0x00000020
 
 /* used by Windows to mark that the header size has been set by the user and shouldn't be changed */
@@ -409,8 +409,8 @@ REBAR_DumpBand (const REBAR_INFO *iP)
 	if (pB->fMask & RBBIM_TEXT)
 	    TRACE("band # %u: text=%s\n",
 		  i, (pB->lpText) ? debugstr_w(pB->lpText) : "(null)");
-	TRACE("band # %u: lcx=%u, cxEffective=%u, lcy=%u\n",
-	      i, pB->lcx, pB->cxEffective, pB->lcy);
+        TRACE("band # %u: cxMinBand=%u, cxEffective=%u, cyMinBand=%u\n",
+              i, pB->cxMinBand, pB->cxEffective, pB->cyMinBand);
         TRACE("band # %u: fStatus=%08x, fDraw=%08x, Band=(%s), Grip=(%s)\n",
               i, pB->fStatus, pB->fDraw, wine_dbgstr_rect(&pB->rcBand),
               wine_dbgstr_rect(&pB->rcGripper));
@@ -465,7 +465,7 @@ static int round_child_height(REBAR_BAND *lpBand, int cyHeight)
 
 static void update_min_band_height(const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
-    lpBand->lcy = max(lpBand->cyHeader,
+    lpBand->cyMinBand = max(lpBand->cyHeader,
         (lpBand->hwndChild ? lpBand->cyChild + REBARSPACE(lpBand) : REBAR_NO_CHILD_HEIGHT));
 }
 
@@ -983,12 +983,12 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
 	infoPtr->hwndSelf, infoPtr->dwStyle, x, y, width, height);
 
     /* Set flag to ignore next WM_SIZE message and resize the window */
-    infoPtr->fStatus |= AUTO_RESIZE;
+    infoPtr->fStatus |= SELF_RESIZE;
     if ((infoPtr->dwStyle & CCS_VERT) == 0)
         SetWindowPos(infoPtr->hwndSelf, 0, x, y, width, height, SWP_NOZORDER);
     else
         SetWindowPos(infoPtr->hwndSelf, 0, y, x, height, width, SWP_NOZORDER);
-    infoPtr->fStatus &= ~AUTO_RESIZE;
+    infoPtr->fStatus &= ~SELF_RESIZE;
 }
 
 
@@ -1167,17 +1167,17 @@ static void REBAR_SetRowRectsX(const REBAR_INFO *infoPtr, INT iBeginBand, INT iE
  */
 static REBAR_BAND *REBAR_FindBandToGrow(const REBAR_INFO *infoPtr, INT iBeginBand, INT iEndBand)
 {
-    INT iLcx = 0, i;
+    INT cxMinFirstBand = 0, i;
 
-    iLcx = infoPtr->bands[iBeginBand].lcx;
+    cxMinFirstBand = infoPtr->bands[iBeginBand].cxMinBand;
 
     for (i = prev_band(infoPtr, iEndBand); i >= iBeginBand; i = prev_band(infoPtr, i))
-        if (infoPtr->bands[i].cxEffective > iLcx && !(infoPtr->bands[i].fStyle&RBBS_FIXEDSIZE))
+        if (infoPtr->bands[i].cxEffective > cxMinFirstBand && !(infoPtr->bands[i].fStyle&RBBS_FIXEDSIZE))
             break;
 
     if (i < iBeginBand)
         for (i = prev_band(infoPtr, iEndBand); i >= iBeginBand; i = prev_band(infoPtr, i))
-            if (infoPtr->bands[i].lcx == iLcx)
+            if (infoPtr->bands[i].cxMinBand == cxMinFirstBand)
                 break;
 
     TRACE("Extra space for row [%d..%d) should be added to band %d\n", iBeginBand, iEndBand, i);
@@ -1194,7 +1194,7 @@ static int REBAR_ShrinkBandsRTL(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
     {
         lpBand = &infoPtr->bands[i];
 
-        width = max(lpBand->cxEffective - cxShrink, (int)lpBand->lcx);
+        width = max(lpBand->cxEffective - cxShrink, (int)lpBand->cxMinBand);
         cxShrink -= lpBand->cxEffective - width;
         lpBand->cxEffective = width;
         if (bEnforce && lpBand->cx > lpBand->cxEffective)
@@ -1216,7 +1216,7 @@ static int REBAR_ShrinkBandsLTR(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
     {
         lpBand = &infoPtr->bands[i];
 
-        width = max(lpBand->cxEffective - cxShrink, (int)lpBand->lcx);
+        width = max(lpBand->cxEffective - cxShrink, (int)lpBand->cxMinBand);
         cxShrink -= lpBand->cxEffective - width;
         lpBand->cxEffective = width;
         if (bEnforce)
@@ -1238,7 +1238,7 @@ static int REBAR_SetBandsHeight(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
     {
         lpBand = &infoPtr->bands[i];
         lpBand->cyRowSoFar = yMaxHeight;
-        yMaxHeight = max(yMaxHeight, lpBand->lcy);
+        yMaxHeight = max(yMaxHeight, lpBand->cyMinBand);
     }
     TRACE("Bands [%d; %d) height: %d\n", iBeginBand, iEndBand, yMaxHeight);
 
@@ -1277,7 +1277,7 @@ static void REBAR_LayoutRow(const REBAR_INFO *infoPtr, int iBeginBand, int iEndB
         lpBand = &infoPtr->bands[i];
         if (i > iBeginBand)
             width += SEP_WIDTH;
-        lpBand->cxEffective = max(lpBand->lcx, lpBand->cx);
+        lpBand->cxEffective = max(lpBand->cxMinBand, lpBand->cx);
         width += lpBand->cxEffective;
     }
 
@@ -1304,30 +1304,23 @@ static void REBAR_LayoutRow(const REBAR_INFO *infoPtr, int iBeginBand, int iEndB
 }
 
 static VOID
-REBAR_Layout(REBAR_INFO *infoPtr, const RECT *lpRect)
+REBAR_Layout(REBAR_INFO *infoPtr)
 {
     REBAR_BAND *lpBand;
     RECT rcAdj;
     SIZE oldSize;
-    INT adjcx, adjcy, i;
+    INT adjcx, i;
     INT rowstart = 0;
     INT row = 0;
     INT xMin, yPos;
-    INT cyTarget;
-    const INT yInit = 0;
 
-    cyTarget = 0;
-    if (lpRect) {
-        rcAdj = *lpRect;
-        cyTarget = get_rect_cy(infoPtr, lpRect);
-    } else if (infoPtr->dwStyle & (CCS_NORESIZE | CCS_NOPARENTALIGN) || GetParent(infoPtr->hwndSelf) == NULL)
+    if (infoPtr->dwStyle & (CCS_NORESIZE | CCS_NOPARENTALIGN) || GetParent(infoPtr->hwndSelf) == NULL)
         GetClientRect(infoPtr->hwndSelf, &rcAdj);
     else
         GetClientRect(GetParent(infoPtr->hwndSelf), &rcAdj);
     TRACE("adjustment rect is (%s)\n", wine_dbgstr_rect(&rcAdj));
 
     adjcx = get_rect_cx(infoPtr, &rcAdj);
-    adjcy = get_rect_cy(infoPtr, &rcAdj);
 
     if (infoPtr->uNumBands == 0) {
         TRACE("No bands - setting size to (0,%d), vert: %lx\n", adjcx, infoPtr->dwStyle & CCS_VERT);
@@ -1338,16 +1331,15 @@ REBAR_Layout(REBAR_INFO *infoPtr, const RECT *lpRect)
         return;
     }
 
-    yPos = yInit;
+    yPos = 0;
     xMin = 0;
     /* divide rows */
-    i = 0;
     for (i = 0; i < infoPtr->uNumBands; i++)
     {
         lpBand = &infoPtr->bands[i];
         if (HIDDENBAND(lpBand)) continue;
 
-        if (i > rowstart && (lpBand->fStyle & RBBS_BREAK || xMin + lpBand->lcx > adjcx)) {
+        if (i > rowstart && (lpBand->fStyle & RBBS_BREAK || xMin + lpBand->cxMinBand > adjcx)) {
             TRACE("%s break on band %d\n", (lpBand->fStyle & RBBS_BREAK ? "Hard" : "Soft"), i - 1);
             REBAR_LayoutRow(infoPtr, rowstart, i, adjcx, &row, &yPos);
             rowstart = i;
@@ -1356,12 +1348,12 @@ REBAR_Layout(REBAR_INFO *infoPtr, const RECT *lpRect)
         else
             xMin += SEP_WIDTH;
 
-        xMin += lpBand->lcx;
+        xMin += lpBand->cxMinBand;
     }
     REBAR_LayoutRow(infoPtr, rowstart, infoPtr->uNumBands, adjcx, &row, &yPos);
 
     if (!(infoPtr->dwStyle & RBS_VARHEIGHT))
-        yPos = REBAR_SetBandsHeight(infoPtr, 0, infoPtr->uNumBands, yInit);
+        yPos = REBAR_SetBandsHeight(infoPtr, 0, infoPtr->uNumBands, 0);
 
     infoPtr->uNumRows = row;
 
@@ -1416,7 +1408,7 @@ REBAR_SizeChildrenToHeight(const REBAR_INFO *infoPtr, int iBeginBand, int iEndBa
             lpBand->fDraw |= NTF_INVALIDATE;
             update_min_band_height(infoPtr, lpBand);
         }
-        cyBandsNew = max(cyBandsNew, lpBand->lcy);
+        cyBandsNew = max(cyBandsNew, lpBand->cyMinBand);
     }
     return cyBandsNew - cyBandsOld;
 }
@@ -1460,7 +1452,7 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
                 uNumRows++;
                 /* temporary change for _SizeControlsToHeight. The true values will be computed in _Layout */
                 if (infoPtr->dwStyle & RBS_VARHEIGHT)
-                    lpBand->rcBand.bottom = lpBand->rcBand.top + lpBand->lcy;
+                    lpBand->rcBand.bottom = lpBand->rcBand.top + lpBand->cyMinBand;
             }
         }
     }
@@ -1492,7 +1484,7 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
         extra -= REBAR_SizeChildrenToHeight(infoPtr, 0, infoPtr->uNumBands, extra / infoPtr->uNumRows, &fChanged);
 
     if (fChanged)
-        REBAR_Layout(infoPtr, NULL);
+        REBAR_Layout(infoPtr);
 }
 
 static VOID
@@ -1503,7 +1495,7 @@ REBAR_AutoSize(REBAR_INFO *infoPtr, BOOL needsLayout)
 
     GetClientRect(infoPtr->hwndSelf, &rc);
     if (needsLayout)
-        REBAR_Layout(infoPtr, NULL);
+        REBAR_Layout(infoPtr);
     REBAR_SizeToHeight(infoPtr, get_rect_cy(infoPtr, &rc));
     GetClientRect(infoPtr->hwndSelf, &rcNew);
 
@@ -1518,7 +1510,7 @@ static VOID
 REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
      /* Function:  This routine evaluates the band specs supplied */
      /*  by the user and updates the following 5 fields in        */
-     /*  the internal band structure: cxHeader, lcx, lcy, hcx, hcy*/
+     /*  the internal band structure: cxHeader, cyHeader, cxMinBand, cyMinBand, fStatus */
 {
     UINT header=0;
     UINT textheight=0;
@@ -1526,8 +1518,8 @@ REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     REBAR_BAND *tBand;
 
     lpBand->fStatus = 0;
-    lpBand->lcx = 0;
-    lpBand->lcy = 0;
+    lpBand->cxMinBand = 0;
+    lpBand->cyMinBand = 0;
 
     /* Data coming in from users into the cx... and cy... fields   */
     /* may be bad, just garbage, because the user never clears     */
@@ -1584,11 +1576,11 @@ REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 	lpBand->fStatus |= HAS_IMAGE;
         if (infoPtr->dwStyle & CCS_VERT) {
 	   header += (infoPtr->imageSize.cy + REBAR_POST_IMAGE);
-	   lpBand->lcy = infoPtr->imageSize.cx + 2;
+	   lpBand->cyMinBand = infoPtr->imageSize.cx + 2;
 	}
 	else {
 	   header += (infoPtr->imageSize.cx + REBAR_POST_IMAGE);
-	   lpBand->lcy = infoPtr->imageSize.cy + 2;
+	   lpBand->cyMinBand = infoPtr->imageSize.cy + 2;
 	}
     }
 
@@ -1621,11 +1613,11 @@ REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     lpBand->cyHeader = textheight;
 
     /* Now compute minimum size of child window */
-    update_min_band_height(infoPtr, lpBand);       /* update lpBand->lcy from cyHeader and cyChild*/
+    update_min_band_height(infoPtr, lpBand);       /* update lpBand->cyMinBand from cyHeader and cyChild*/
 
-    lpBand->lcx = lpBand->cxMinChild + lpBand->cxHeader + REBAR_POST_CHILD;
+    lpBand->cxMinBand = lpBand->cxMinChild + lpBand->cxHeader + REBAR_POST_CHILD;
     if (lpBand->fStyle & RBBS_USECHEVRON && lpBand->cxMinChild < lpBand->cxIdeal)
-        lpBand->lcx += CHEVRON_WIDTH;
+        lpBand->cxMinBand += CHEVRON_WIDTH;
 }
 
 static BOOL
@@ -2048,7 +2040,7 @@ REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (infoPtr->uNumBands == 1)
       REBAR_ValidateBand (infoPtr, &infoPtr->bands[0]);
 
-    REBAR_Layout(infoPtr, NULL);
+    REBAR_Layout(infoPtr);
 
     return TRUE;
 }
@@ -2421,7 +2413,7 @@ REBAR_InsertBandT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnico
 
     REBAR_DumpBand (infoPtr);
 
-    REBAR_Layout(infoPtr, NULL);
+    REBAR_Layout(infoPtr);
     InvalidateRect(infoPtr->hwndSelf, 0, TRUE);
 
     return TRUE;
@@ -2512,9 +2504,9 @@ REBAR_MinimizeBand (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         return TRUE;
     }
 
-    infoPtr->bands[iPrev].cxEffective += lpBand->cxEffective - lpBand->lcx;
+    infoPtr->bands[iPrev].cxEffective += lpBand->cxEffective - lpBand->cxMinBand;
     infoPtr->bands[iPrev].cx = infoPtr->bands[iPrev].cxEffective;
-    lpBand->cx = lpBand->cxEffective = lpBand->lcx;
+    lpBand->cx = lpBand->cxEffective = lpBand->cxMinBand;
 
     iRowBegin = get_row_begin_for_band(infoPtr, uBand);
     iRowEnd = get_row_end_for_band(infoPtr, uBand);
@@ -2642,7 +2634,7 @@ REBAR_SetBandInfoT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnic
     REBAR_DumpBand (infoPtr);
 
     if (bChanged && (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_STYLE))) {
-	  REBAR_Layout(infoPtr, NULL);
+	  REBAR_Layout(infoPtr);
 	  InvalidateRect(infoPtr->hwndSelf, 0, 1);
     }
 
@@ -2791,7 +2783,7 @@ REBAR_ShowBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    ShowWindow (lpBand->hwndChild, SW_HIDE);
     }
 
-    REBAR_Layout(infoPtr, NULL);
+    REBAR_Layout(infoPtr);
     InvalidateRect(infoPtr->hwndSelf, 0, 1);
 
     return TRUE;
@@ -3374,7 +3366,7 @@ REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	REBAR_ValidateBand (infoPtr, lpBand);
     }
 
-    REBAR_Layout(infoPtr, NULL);
+    REBAR_Layout(infoPtr);
     return 0;
 }
 
@@ -3416,9 +3408,9 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TRACE("wParam=%lx, lParam=%lx\n", wParam, lParam);
 
     /* avoid _Layout resize recursion (but it shouldn't be infinite and it seems Windows does recurse) */
-    if (infoPtr->fStatus & AUTO_RESIZE) {
-	infoPtr->fStatus &= ~AUTO_RESIZE;
-	TRACE("AUTO_RESIZE was set, reset, fStatus=%08x lparam=%08lx\n",
+    if (infoPtr->fStatus & SELF_RESIZE) {
+	infoPtr->fStatus &= ~SELF_RESIZE;
+	TRACE("SELF_RESIZE was set, reset, fStatus=%08x lparam=%08lx\n",
 	      infoPtr->fStatus, lParam);
 	return 0;
     }
@@ -3426,7 +3418,7 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (infoPtr->dwStyle & RBS_AUTOSIZE)
         REBAR_AutoSize(infoPtr, TRUE);
     else
-        REBAR_Layout(infoPtr, NULL);
+        REBAR_Layout(infoPtr);
 
     return 0;
 }
@@ -3444,7 +3436,7 @@ REBAR_StyleChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         infoPtr->dwStyle &= ~WS_BORDER;
     /* maybe it should be COMMON_STYLES like in toolbar */
     if ((ss->styleNew ^ ss->styleOld) & CCS_VERT)
-        REBAR_Layout(infoPtr, NULL);
+        REBAR_Layout(infoPtr);
 
     return FALSE;
 }
