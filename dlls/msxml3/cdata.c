@@ -501,8 +501,26 @@ static HRESULT WINAPI domcdata_get_length(
     IXMLDOMCDATASection *iface,
     long *len)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+    xmlnode *pDOMNode = impl_from_IXMLDOMNode( (IXMLDOMNode*)This->element );
+    xmlChar *pContent;
+    long nLength = 0;
+
+    TRACE("%p\n", iface);
+
+    if(!len)
+        return E_INVALIDARG;
+
+    pContent = xmlNodeGetContent(pDOMNode->node);
+    if(pContent)
+    {
+        nLength = xmlStrlen(pContent);
+        xmlFree(pContent);
+    }
+
+    *len = nLength;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI domcdata_substringData(

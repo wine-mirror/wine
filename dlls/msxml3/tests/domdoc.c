@@ -2315,6 +2315,11 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
                 SysFreeString(str);
 
+                /* test length property */
+                hr = IXMLDOMCDATASection_get_length(pComment, &len);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok(len == 21, "expected 21 got %ld\n", len);
+
                 IXMLDOMCDATASection_Release(pCDataSec);
             }
 
