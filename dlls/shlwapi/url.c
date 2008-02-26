@@ -752,7 +752,6 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	break;
     } while(FALSE); /* a litte trick to allow easy exit from nested if's */
 
-
     ret = S_OK;
     switch (process_case) {
 
@@ -780,9 +779,6 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
         memcpy(preliminary, base.pszProtocol, (base.cchProtocol + 1)*sizeof(WCHAR));
 	work = preliminary + base.cchProtocol + 1;
 	strcpyW(work, relative.pszSuffix);
-	if (!(dwFlags & URL_PLUGGABLE_PROTOCOL) &&
-	    URL_JustLocation(relative.pszSuffix))
-	    strcatW(work, single_slash);
 	break;
 
     case 4:  /*
