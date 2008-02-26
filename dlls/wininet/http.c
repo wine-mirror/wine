@@ -104,8 +104,6 @@ struct HttpAuthInfo
 };
 
 static void HTTP_CloseConnection(LPWININETHANDLEHEADER hdr);
-static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr);
-static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr);
 static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
 static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr);
 static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
@@ -1311,6 +1309,50 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           HTTPREQ_Destroy (internal)
+ *
+ * Deallocate request handle
+ *
+ */
+static void HTTPREQ_Destroy(WININETHANDLEHEADER *hdr)
+{
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
+    DWORD i;
+
+    TRACE("\n");
+
+    if(lpwhr->hCacheFile)
+        CloseHandle(lpwhr->hCacheFile);
+
+    if(lpwhr->lpszCacheFile) {
+        DeleteFileW(lpwhr->lpszCacheFile); /* FIXME */
+        HeapFree(GetProcessHeap(), 0, lpwhr->lpszCacheFile);
+    }
+
+    WININET_Release(&lpwhr->lpHttpSession->hdr);
+
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszVersion);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszStatusText);
+
+    for (i = 0; i < lpwhr->nCustHeaders; i++)
+    {
+        HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszField);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszValue);
+    }
+
+    HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders);
+    HeapFree(GetProcessHeap(), 0, lpwhr);
+}
+
+static const HANDLEHEADERVtbl HTTPREQVtbl = {
+    HTTPREQ_Destroy
+};
+
 /***********************************************************************
  *           HTTP_HttpOpenRequestW (internal)
  *
@@ -1348,11 +1390,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         goto lend;
     }
     lpwhr->hdr.htype = WH_HHTTPREQ;
+    lpwhr->hdr.vtbl = &HTTPREQVtbl;
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
     lpwhr->hdr.dwRefCount = 1;
     lpwhr->hdr.close_connection = HTTP_CloseConnection;
-    lpwhr->hdr.destroy = HTTP_CloseHTTPRequestHandle;
     lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
     lpwhr->hdr.dwInternalFlags = lpwhs->hdr.dwInternalFlags & INET_CALLBACKW;
 
@@ -2808,6 +2850,33 @@ lend:
 }
 
 /***********************************************************************
+ *           HTTPSESSION_Destroy (internal)
+ *
+ * Deallocate session handle
+ *
+ */
+static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
+{
+    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) hdr;
+
+    TRACE("%p\n", lpwhs);
+
+    WININET_Release(&lpwhs->lpAppInfo->hdr);
+
+    HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
+    HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
+    HeapFree(GetProcessHeap(), 0, lpwhs->lpszPassword);
+    HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
+    HeapFree(GetProcessHeap(), 0, lpwhs);
+}
+
+
+static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
+    HTTPSESSION_Destroy
+};
+
+
+/***********************************************************************
  *           HTTP_Connect  (internal)
  *
  * Create http session handle
@@ -2848,12 +2917,12 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     */
 
     lpwhs->hdr.htype = WH_HHTTPSESSION;
+    lpwhs->hdr.vtbl = &HTTPSESSIONVtbl;
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
     lpwhs->hdr.dwInternalFlags = dwInternalFlags | (hIC->hdr.dwInternalFlags & INET_CALLBACKW);
     lpwhs->hdr.dwRefCount = 1;
     lpwhs->hdr.close_connection = NULL;
-    lpwhs->hdr.destroy = HTTP_CloseHTTPSessionHandle;
     lpwhs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
 
     WININET_AddRef( &hIC->hdr );
@@ -3434,67 +3503,6 @@ BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
     /* FIXME: store data in the URL cache here */
 
     return TRUE;
-}
-
-/***********************************************************************
- *           HTTP_CloseHTTPRequestHandle (internal)
- *
- * Deallocate request handle
- *
- */
-static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
-{
-    DWORD i;
-    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
-
-    TRACE("\n");
-
-    if(lpwhr->hCacheFile)
-        CloseHandle(lpwhr->hCacheFile);
-
-    if(lpwhr->lpszCacheFile) {
-        DeleteFileW(lpwhr->lpszCacheFile); /* FIXME */
-        HeapFree(GetProcessHeap(), 0, lpwhr->lpszCacheFile);
-    }
-
-    WININET_Release(&lpwhr->lpHttpSession->hdr);
-
-    HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
-    HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
-    HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
-    HeapFree(GetProcessHeap(), 0, lpwhr->lpszVersion);
-    HeapFree(GetProcessHeap(), 0, lpwhr->lpszStatusText);
-
-    for (i = 0; i < lpwhr->nCustHeaders; i++)
-    {
-        HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszField);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[i].lpszValue);
-    }
-
-    HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders);
-    HeapFree(GetProcessHeap(), 0, lpwhr);
-}
-
-
-/***********************************************************************
- *           HTTP_CloseHTTPSessionHandle (internal)
- *
- * Deallocate session handle
- *
- */
-static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
-{
-    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) hdr;
-
-    TRACE("%p\n", lpwhs);
-
-    WININET_Release(&lpwhs->lpAppInfo->hdr);
-
-    HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
-    HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
-    HeapFree(GetProcessHeap(), 0, lpwhs->lpszPassword);
-    HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
-    HeapFree(GetProcessHeap(), 0, lpwhs);
 }
 
 

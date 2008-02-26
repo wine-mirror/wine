@@ -122,10 +122,7 @@ static const CHAR *const szFtpCommands[] = {
 static const CHAR szMonths[] = "JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC";
 static const WCHAR szNoAccount[] = {'n','o','a','c','c','o','u','n','t','\0'};
 
-static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr);
-static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr);
 static void FTP_CloseConnection(LPWININETHANDLEHEADER hdr);
-static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr);
 static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext);
 static BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
@@ -1131,6 +1128,39 @@ lend:
 
 
 /***********************************************************************
+ *           FTPFILE_Destroy(internal)
+ *
+ * Closes the file transfer handle. This also 'cleans' the data queue of
+ * the 'transfer complete' message (this is a bit of a hack though :-/ )
+ *
+ */
+static void FTPFILE_Destroy(WININETHANDLEHEADER *hdr)
+{
+    LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
+    LPWININETFTPSESSIONW lpwfs = lpwh->lpFtpSession;
+    INT nResCode;
+
+    TRACE("\n");
+
+    WININET_Release(&lpwh->lpFtpSession->hdr);
+
+    if (!lpwh->session_deleted)
+        lpwfs->download_in_progress = NULL;
+
+    if (lpwh->nDataSocket != -1)
+        closesocket(lpwh->nDataSocket);
+
+    nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
+    if (nResCode > 0 && nResCode != 226) WARN("server reports failed transfer\n");
+
+    HeapFree(GetProcessHeap(), 0, lpwh);
+}
+
+static const HANDLEHEADERVtbl FTPFILEVtbl = {
+    FTPFILE_Destroy
+};
+
+/***********************************************************************
  *           FTP_FtpOpenFileW (Internal)
  *
  * Open a remote file for writing or reading
@@ -1171,11 +1201,11 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
     {
         lpwh = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETFTPFILE));
         lpwh->hdr.htype = WH_HFILE;
+        lpwh->hdr.vtbl = &FTPFILEVtbl;
         lpwh->hdr.dwFlags = dwFlags;
         lpwh->hdr.dwContext = dwContext;
         lpwh->hdr.dwRefCount = 1;
         lpwh->hdr.close_connection = NULL;
-        lpwh->hdr.destroy = FTP_CloseFileTransferHandle;
         lpwh->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
         lpwh->nDataSocket = nDataSocket;
 	lpwh->session_deleted = FALSE;
@@ -1998,6 +2028,31 @@ lend:
     return r;
 }
 
+
+/***********************************************************************
+ *           FTPSESSION_Destroy (internal)
+ *
+ * Deallocate session handle
+ */
+static void FTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
+{
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
+
+    TRACE("\n");
+
+    WININET_Release(&lpwfs->lpAppInfo->hdr);
+
+    HeapFree(GetProcessHeap(), 0, lpwfs->lpszPassword);
+    HeapFree(GetProcessHeap(), 0, lpwfs->lpszUserName);
+    HeapFree(GetProcessHeap(), 0, lpwfs);
+}
+
+
+static const HANDLEHEADERVtbl FTPSESSIONVtbl = {
+    FTPSESSION_Destroy
+};
+
+
 /***********************************************************************
  *           FTP_Connect (internal)
  *
@@ -2061,12 +2116,12 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	nServerPort = INTERNET_DEFAULT_FTP_PORT;
 
     lpwfs->hdr.htype = WH_HFTPSESSION;
+    lpwfs->hdr.vtbl = &FTPSESSIONVtbl;
     lpwfs->hdr.dwFlags = dwFlags;
     lpwfs->hdr.dwContext = dwContext;
     lpwfs->hdr.dwInternalFlags = dwInternalFlags;
     lpwfs->hdr.dwRefCount = 1;
     lpwfs->hdr.close_connection = FTP_CloseConnection;
-    lpwfs->hdr.destroy = FTP_CloseSessionHandle;
     lpwfs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
     lpwfs->download_in_progress = NULL;
     lpwfs->sndSocket = -1;
@@ -3022,25 +3077,6 @@ static void FTP_CloseConnection(LPWININETHANDLEHEADER hdr)
 
 
 /***********************************************************************
- *           FTP_CloseSessionHandle (internal)
- *
- * Deallocate session handle
- */
-static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
-{
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
-
-    TRACE("\n");
-
-    WININET_Release(&lpwfs->lpAppInfo->hdr);
-
-    HeapFree(GetProcessHeap(), 0, lpwfs->lpszPassword);
-    HeapFree(GetProcessHeap(), 0, lpwfs->lpszUserName);
-    HeapFree(GetProcessHeap(), 0, lpwfs);
-}
-
-
-/***********************************************************************
  *           FTP_FindNextFileW (Internal)
  *
  * Continues a file search from a previous call to FindFirstFile
@@ -3097,16 +3133,11 @@ lend:
 
 
 /***********************************************************************
- *           FTP_CloseFindNextHandle (internal)
+ *           FTPFINDNEXT_Destroy (internal)
  *
  * Deallocate session handle
- *
- * RETURNS
- *   TRUE on success
- *   FALSE on failure
- *
  */
-static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
+static void FTPFINDNEXT_Destroy(WININETHANDLEHEADER *hdr)
 {
     LPWININETFTPFINDNEXTW lpwfn = (LPWININETFTPFINDNEXTW) hdr;
     DWORD i;
@@ -3124,34 +3155,9 @@ static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
     HeapFree(GetProcessHeap(), 0, lpwfn);
 }
 
-/***********************************************************************
- *           FTP_CloseFileTransferHandle (internal)
- *
- * Closes the file transfer handle. This also 'cleans' the data queue of
- * the 'transfer complete' message (this is a bit of a hack though :-/ )
- *
- */
-static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr)
-{
-    LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
-    LPWININETFTPSESSIONW lpwfs = lpwh->lpFtpSession;
-    INT nResCode;
-
-    TRACE("\n");
-
-    WININET_Release(&lpwh->lpFtpSession->hdr);
-
-    if (!lpwh->session_deleted)
-        lpwfs->download_in_progress = NULL;
-
-    if (lpwh->nDataSocket != -1)
-        closesocket(lpwh->nDataSocket);
-
-    nResCode = FTP_ReceiveResponse(lpwfs, lpwfs->hdr.dwContext);
-    if (nResCode > 0 && nResCode != 226) WARN("server reports failed transfer\n");
-
-    HeapFree(GetProcessHeap(), 0, lpwh);
-}
+static const HANDLEHEADERVtbl FTPFINDNEXTVtbl = {
+    FTPFINDNEXT_Destroy
+};
 
 /***********************************************************************
  *           FTP_ReceiveFileList (internal)
@@ -3182,10 +3188,10 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
         if (lpwfn)
         {
             lpwfn->hdr.htype = WH_HFTPFINDNEXT;
+            lpwfn->hdr.vtbl = &FTPFINDNEXTVtbl;
             lpwfn->hdr.dwContext = dwContext;
             lpwfn->hdr.dwRefCount = 1;
             lpwfn->hdr.close_connection = NULL;
-            lpwfn->hdr.destroy = FTP_CloseFindNextHandle;
             lpwfn->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
             lpwfn->index = 1; /* Next index is 1 since we return index 0 */
             lpwfn->size = dwSize;

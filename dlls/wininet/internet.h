@@ -138,9 +138,14 @@ typedef struct _WININETHANDLEHEADER WININETHANDLEHEADER, *LPWININETHANDLEHEADER;
 
 typedef void (*WININET_object_function)( LPWININETHANDLEHEADER );
 
+typedef struct {
+    void (*Destroy)(WININETHANDLEHEADER*);
+} HANDLEHEADERVtbl;
+
 struct _WININETHANDLEHEADER
 {
     WH_TYPE htype;
+    const HANDLEHEADERVtbl *vtbl;
     HINTERNET hInternet;
     DWORD  dwFlags;
     DWORD_PTR dwContext;
@@ -148,7 +153,6 @@ struct _WININETHANDLEHEADER
     DWORD  dwInternalFlags;
     DWORD  dwRefCount;
     WININET_object_function close_connection;
-    WININET_object_function destroy;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
     struct list entry;
     struct list children;

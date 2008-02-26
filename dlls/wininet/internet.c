@@ -78,7 +78,6 @@ typedef struct
     CHAR   response[MAX_REPLY_LEN];
 } WITHREADERROR, *LPWITHREADERROR;
 
-static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr);
 HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
               LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext);
 
@@ -186,7 +185,7 @@ BOOL WININET_Release( LPWININETHANDLEHEADER info )
         TRACE( "destroying object %p\n", info);
         if ( info->htype != WH_HINIT )
             list_remove( &info->entry );
-        info->destroy( info );
+        info->vtbl->Destroy( info );
     }
     return TRUE;
 }
@@ -453,6 +452,31 @@ static void dump_INTERNET_FLAGS(DWORD dwFlags)
 }
 
 /***********************************************************************
+ *           INTERNET_CloseHandle (internal)
+ *
+ * Close internet handle
+ *
+ */
+static VOID APPINFO_Destroy(WININETHANDLEHEADER *hdr)
+{
+    LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW) hdr;
+
+    TRACE("%p\n",lpwai);
+
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszAgent);
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxy);
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyUsername);
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyPassword);
+    HeapFree(GetProcessHeap(), 0, lpwai);
+}
+
+static const HANDLEHEADERVtbl APPINFOVtbl = {
+    APPINFO_Destroy
+};
+
+
+/***********************************************************************
  *           InternetOpenW   (WININET.@)
  *
  * Per-application initialization of wininet
@@ -504,10 +528,10 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     }
 
     lpwai->hdr.htype = WH_HINIT;
+    lpwai->hdr.vtbl = &APPINFOVtbl;
     lpwai->hdr.dwFlags = dwFlags;
     lpwai->hdr.dwRefCount = 1;
     lpwai->hdr.close_connection = NULL;
-    lpwai->hdr.destroy = INTERNET_CloseHandle;
     lpwai->dwAccessType = dwAccessType;
     lpwai->lpszProxyUsername = NULL;
     lpwai->lpszProxyPassword = NULL;
@@ -966,30 +990,6 @@ lend:
         WININET_Release( &lpwh->hdr );
     return bSuccess;
 }
-
-/***********************************************************************
- *           INTERNET_CloseHandle (internal)
- *
- * Close internet handle
- *
- * RETURNS
- *    Void
- *
- */
-static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr)
-{
-    LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW) hdr;
-
-    TRACE("%p\n",lpwai);
-
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszAgent);
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxy);
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyUsername);
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyPassword);
-    HeapFree(GetProcessHeap(), 0, lpwai);
-}
-
 
 /***********************************************************************
  *           InternetCloseHandle (WININET.@)
