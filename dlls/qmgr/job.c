@@ -194,8 +194,18 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetDisplayName(
     IBackgroundCopyJob* iface,
     LPWSTR *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+    int n;
+
+    if (!pVal)
+        return E_INVALIDARG;
+
+    n = (lstrlenW(This->displayName) + 1) * sizeof **pVal;
+    *pVal = CoTaskMemAlloc(n);
+    if (*pVal == NULL)
+        return E_OUTOFMEMORY;
+    memcpy(*pVal, This->displayName, n);
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetDescription(

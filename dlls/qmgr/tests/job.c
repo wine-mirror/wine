@@ -99,6 +99,23 @@ static void test_GetType(void)
     ok(type == test_type, "Got incorrect type\n");
 }
 
+/* Test that the display name is properly set */
+static void test_GetName(void)
+{
+    HRESULT hres;
+    LPWSTR displayName;
+
+    hres = IBackgroundCopyJob_GetDisplayName(test_job, &displayName);
+    ok(hres == S_OK, "GetName failed: %08x\n", hres);
+    if(hres != S_OK)
+    {
+        skip("Unable to get display name of test_job.\n");
+        return;
+    }
+    ok(lstrcmpW(displayName, test_displayName) == 0, "Got incorrect type\n");
+    CoTaskMemFree(displayName);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(job)
@@ -106,6 +123,7 @@ START_TEST(job)
     static const test_t tests[] = {
         test_GetId,
         test_GetType,
+        test_GetName,
         0
     };
     const test_t *test;
