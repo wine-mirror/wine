@@ -126,7 +126,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(PDIRECTPLAY8ADDRESS iface,
 static HRESULT WINAPI IDirectPlay8AddressImpl_GetSP(PDIRECTPLAY8ADDRESS iface, GUID* pguidSP) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %p)\n", iface, pguidSP);
-  memcpy(pguidSP, &This->SP_guid, sizeof(GUID));
+  *pguidSP = This->SP_guid;
   return DPN_OK; 
 }
 
@@ -139,7 +139,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetUserData(PDIRECTPLAY8ADDRESS if
 static HRESULT WINAPI IDirectPlay8AddressImpl_SetSP(PDIRECTPLAY8ADDRESS iface, CONST GUID* CONST pguidSP) { 
   IDirectPlay8AddressImpl *This = (IDirectPlay8AddressImpl *)iface;
   TRACE("(%p, %s)\n", iface, debugstr_SP(pguidSP));
-  memcpy(&This->SP_guid, pguidSP, sizeof(GUID));
+  This->SP_guid = *pguidSP;
   return DPN_OK; 
 }
 
