@@ -59,22 +59,28 @@ static void test_GetVersionEx(void)
     memset(&infoA,0,sizeof infoA);
     ret = GetVersionExA(&infoA);
     ok(!ret, "Expected GetVersionExA to fail\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+        GetLastError() == 0xdeadbeef /* Win9x */,
+        "Expected ERROR_INSUFFICIENT_BUFFER or 0xdeadbeef (Win9x), got %d\n",
+        GetLastError());
 
     SetLastError(0xdeadbeef);
     infoA.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA) / 2;
     ret = GetVersionExA(&infoA);
     ok(!ret, "Expected GetVersionExA to fail\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+        GetLastError() == 0xdeadbeef /* Win9x */,
+        "Expected ERROR_INSUFFICIENT_BUFFER or 0xdeadbeef (Win9x), got %d\n",
+        GetLastError());
 
     SetLastError(0xdeadbeef);
     infoA.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA) * 2;
     ret = GetVersionExA(&infoA);
     ok(!ret, "Expected GetVersionExA to fail\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
+        GetLastError() == 0xdeadbeef /* Win9x */,
+        "Expected ERROR_INSUFFICIENT_BUFFER or 0xdeadbeef (Win9x), got %d\n",
+        GetLastError());
 
     SetLastError(0xdeadbeef);
     infoA.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
