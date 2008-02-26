@@ -34,8 +34,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static typeof(RegDeleteTreeW) * pRegDeleteTreeW;
-static typeof(RegDeleteTreeA) * pRegDeleteTreeA;
+static LSTATUS (WINAPI *pRegDeleteTreeW)(HKEY,LPCWSTR);
+static LSTATUS (WINAPI *pRegDeleteTreeA)(HKEY,LPCSTR);
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
@@ -433,8 +433,8 @@ HRESULT WINAPI DllUnregisterServer(void)
 
     HMODULE advapi32 = GetModuleHandleA("advapi32");
     if (!advapi32) return E_FAIL;
-    pRegDeleteTreeA = (typeof(RegDeleteTreeA)*) GetProcAddress(advapi32, "RegDeleteTreeA");
-    pRegDeleteTreeW = (typeof(RegDeleteTreeW)*) GetProcAddress(advapi32, "RegDeleteTreeW");
+    pRegDeleteTreeA = (void *) GetProcAddress(advapi32, "RegDeleteTreeA");
+    pRegDeleteTreeW = (void *) GetProcAddress(advapi32, "RegDeleteTreeW");
     if (!pRegDeleteTreeA || !pRegDeleteTreeW) return E_FAIL;
 
     TRACE("\n");
