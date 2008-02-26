@@ -33,7 +33,6 @@
  *   - RBS_FIXEDORDER
  *   - RBS_REGISTERDROP
  *   - RBS_TOOLTIPS
- *   - RBS_AUTOSIZE
  *   Messages:
  *   - RB_BEGINDRAG
  *   - RB_DRAGMOVE
@@ -255,7 +254,7 @@ typedef struct
 #define REBAR_GetInfoPtr(wndPtr) ((REBAR_INFO *)GetWindowLongPtrW (hwnd, 0))
 
 static LRESULT REBAR_NotifyFormat(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
-
+static void REBAR_AutoSize(REBAR_INFO *infoPtr, BOOL needsLayout);
 
 /* "constant values" retrieved when DLL was initialized    */
 /* FIXME we do this when the classes are registered.       */
@@ -1389,6 +1388,7 @@ REBAR_Layout(REBAR_INFO *infoPtr, const RECT *lpRect)
     {
         NMHDR heightchange;
         REBAR_Notify(&heightchange, infoPtr, RBN_HEIGHTCHANGE);
+        REBAR_AutoSize(infoPtr, FALSE);
     }
 }
 
@@ -1495,6 +1495,24 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
         REBAR_Layout(infoPtr, NULL);
 }
 
+static VOID
+REBAR_AutoSize(REBAR_INFO *infoPtr, BOOL needsLayout)
+{
+    RECT rc, rcNew;
+    NMRBAUTOSIZE autosize;
+
+    GetClientRect(infoPtr->hwndSelf, &rc);
+    if (needsLayout)
+        REBAR_Layout(infoPtr, NULL);
+    REBAR_SizeToHeight(infoPtr, get_rect_cy(infoPtr, &rc));
+    GetClientRect(infoPtr->hwndSelf, &rcNew);
+
+    GetClientRect(infoPtr->hwndSelf, &autosize.rcTarget);
+    autosize.fChanged = (memcmp(&rc, &rcNew, sizeof(RECT)) == 0);
+    autosize.rcTarget = rc;
+    autosize.rcActual = rcNew;
+    REBAR_Notify((NMHDR *)&autosize, infoPtr, RBN_AUTOSIZE);
+}
 
 static VOID
 REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
@@ -3397,7 +3415,7 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     TRACE("wParam=%lx, lParam=%lx\n", wParam, lParam);
 
-    /* avoid auto resize infinite recursion */
+    /* avoid _Layout resize recursion (but it shouldn't be infinite and it seems Windows does recurse) */
     if (infoPtr->fStatus & AUTO_RESIZE) {
 	infoPtr->fStatus &= ~AUTO_RESIZE;
 	TRACE("AUTO_RESIZE was set, reset, fStatus=%08x lparam=%08lx\n",
@@ -3405,19 +3423,10 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	return 0;
     }
     
-    /* FIXME: wrong */
-    if (infoPtr->dwStyle & RBS_AUTOSIZE) {
-	NMRBAUTOSIZE autosize;
-
-	GetClientRect(infoPtr->hwndSelf, &autosize.rcTarget);
-	autosize.fChanged = 0;  /* ??? */
-	autosize.rcActual = autosize.rcTarget;  /* ??? */
-	REBAR_Notify((NMHDR *) &autosize, infoPtr, RBN_AUTOSIZE);
-	TRACE("RBN_AUTOSIZE client=(%d,%d), lp=%08lx\n",
-	      autosize.rcTarget.right, autosize.rcTarget.bottom, lParam);
-    }
-
-    REBAR_Layout(infoPtr, NULL);
+    if (infoPtr->dwStyle & RBS_AUTOSIZE)
+        REBAR_AutoSize(infoPtr, TRUE);
+    else
+        REBAR_Layout(infoPtr, NULL);
 
     return 0;
 }
