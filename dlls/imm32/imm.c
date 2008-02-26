@@ -2101,7 +2101,6 @@ static void PaintDefaultIMEWnd(HWND hwnd)
             rect.top = cpt.y;
             rect.right = rect.left + pt.x;
             rect.bottom = rect.top + pt.y;
-            offX=offY=10;
             monitor = MonitorFromPoint(cpt, MONITOR_DEFAULTTOPRIMARY);
         }
         else /* CFS_DEFAULT */
