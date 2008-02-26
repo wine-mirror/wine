@@ -288,6 +288,14 @@ extern "C" {
 #define DPD_DELETE_SPECIFIC_VERSION 0x00000002
 #define DPD_DELETE_ALL_FILES        0x00000004
 
+/* dwAction for PRINTER_INFO_7 */
+#define DSPRINT_PUBLISH     0x00000001
+#define DSPRINT_UPDATE      0x00000002
+#define DSPRINT_UNPUBLISH   0x00000004
+#define DSPRINT_REPUBLISH   0x00000008
+#define DSPRINT_PENDING     0x80000000
+
+/* ##################################### */
 
 /* TYPES */
 typedef struct _PRINTER_DEFAULTSA {
