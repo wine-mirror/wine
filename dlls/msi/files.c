@@ -739,20 +739,10 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 {
     struct media_info *mi;
     UINT rc = ERROR_SUCCESS;
-    LPWSTR ptr;
     MSIFILE *file;
 
     /* increment progress bar each time action data is sent */
     ui_progress(package,1,1,0,0);
-
-    /* handle the keys for the SourceList */
-    ptr = strrchrW(package->PackagePath,'\\');
-    if (ptr)
-    {
-        ptr++;
-        msi_package_add_info(package, MSIINSTALLCONTEXT_USERMANAGED,
-                             MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, ptr);
-    }
 
     schedule_install_files(package);
 
