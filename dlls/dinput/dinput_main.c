@@ -36,6 +36,7 @@
 #include <string.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -223,7 +224,7 @@ void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
         FIXME("\tuAppData=%lx\n", lpdiActionFormat->rgoAction[i].uAppData);
         FIXME("\tdwSemantics=%x\n", lpdiActionFormat->rgoAction[i].dwSemantics);
         FIXME("\tdwFlags=%x\n", lpdiActionFormat->rgoAction[i].dwFlags);
-        FIXME("\tszActionName=%s\n", debugstr_a(lpdiActionFormat->rgoAction[i].lptszActionName));
+        FIXME("\tszActionName=%s\n", debugstr_a(lpdiActionFormat->rgoAction[i].u.lptszActionName));
         FIXME("\tguidInstance=%s\n", debugstr_guid(&lpdiActionFormat->rgoAction[i].guidInstance));
         FIXME("\tdwObjID=%x\n", lpdiActionFormat->rgoAction[i].dwObjID);
         FIXME("\tdwHow=%x\n", lpdiActionFormat->rgoAction[i].dwHow);
