@@ -559,6 +559,7 @@ enum x11drv_atoms
     XATOM_RAW_CAP_HEIGHT,
     XATOM_WM_PROTOCOLS,
     XATOM_WM_DELETE_WINDOW,
+    XATOM_WM_STATE,
     XATOM_WM_TAKE_FOCUS,
     XATOM_KWM_DOCKWINDOW,
     XATOM_DndProtocol,
@@ -669,6 +670,7 @@ struct x11drv_win_data
     XWMHints   *wm_hints;       /* window manager hints */
     BOOL        managed : 1;    /* is window managed? */
     BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
+    int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     unsigned int lock_changes;  /* lock count for X11 change requests */
     HBITMAP     hWMIconBitmap;

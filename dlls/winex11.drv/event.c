@@ -583,35 +583,66 @@ static void EVENT_FocusOut( HWND hwnd, XEvent *xev )
 
 
 /***********************************************************************
+ *           get_window_wm_state
+ */
+int get_window_wm_state( Display *display, struct x11drv_win_data *data )
+{
+    struct
+    {
+        CARD32 state;
+        XID     icon;
+    } *state;
+    Atom type;
+    int format, ret = -1;
+    unsigned long count, remaining;
+
+    wine_tsx11_lock();
+    if (!XGetWindowProperty( display, data->whole_window, x11drv_atom(WM_STATE), 0,
+                             sizeof(*state)/sizeof(CARD32), False, x11drv_atom(WM_STATE),
+                             &type, &format, &count, &remaining, (unsigned char **)&state ))
+    {
+        if (type == x11drv_atom(WM_STATE) && format && count >= sizeof(*state)/(format/8))
+            ret = state->state;
+        XFree( state );
+    }
+    wine_tsx11_unlock();
+    return ret;
+}
+
+
+/***********************************************************************
  *           EVENT_PropertyNotify
- *   We use this to release resources like Pixmaps when a selection
- *   client no longer needs them.
  */
 static void EVENT_PropertyNotify( HWND hwnd, XEvent *xev )
 {
-  XPropertyEvent *event = &xev->xproperty;
-  /* Check if we have any resources to free */
-  TRACE("Received PropertyNotify event:\n");
+    XPropertyEvent *event = &xev->xproperty;
+    struct x11drv_win_data *data;
 
-  switch(event->state)
-  {
-    case PropertyDelete:
+    if (!hwnd) return;
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+
+    switch(event->state)
     {
-      TRACE("\tPropertyDelete for atom %ld on window %ld\n",
-            event->atom, (long)event->window);
-      break;
-    }
+    case PropertyDelete:
+        if (event->atom == x11drv_atom(WM_STATE))
+        {
+            data->wm_state = WithdrawnState;
+            TRACE( "%p/%lx: WM_STATE deleted\n", data->hwnd, data->whole_window );
+        }
+        break;
 
     case PropertyNewValue:
-    {
-      TRACE("\tPropertyNewValue for atom %ld on window %ld\n\n",
-            event->atom, (long)event->window);
-      break;
+        if (event->atom == x11drv_atom(WM_STATE))
+        {
+            int new_state = get_window_wm_state( event->display, data );
+            if (new_state != -1 && new_state != data->wm_state)
+            {
+                TRACE( "%p/%lx: new WM_STATE %d\n", data->hwnd, data->whole_window, new_state );
+                data->wm_state = new_state;
+            }
+        }
+        break;
     }
-
-    default:
-      break;
-  }
 }
 
 static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )

@@ -123,6 +123,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "RAW_CAP_HEIGHT",
     "WM_PROTOCOLS",
     "WM_DELETE_WINDOW",
+    "WM_STATE",
     "WM_TAKE_FOCUS",
     "KWM_DOCKWINDOW",
     "DndProtocol",
