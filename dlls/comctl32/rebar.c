@@ -1572,7 +1572,7 @@ REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     }
 
     /* image is visible */
-    if ((lpBand->fMask & RBBIM_IMAGE) && (infoPtr->himl)) {
+    if (lpBand->iImage != -1 && (infoPtr->himl)) {
 	lpBand->fStatus |= HAS_IMAGE;
         if (infoPtr->dwStyle & CCS_VERT) {
 	   header += (infoPtr->imageSize.cy + REBAR_POST_IMAGE);

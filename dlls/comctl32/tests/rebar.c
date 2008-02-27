@@ -261,6 +261,16 @@ rbsize_result_t rbsize_results[] = {
     { {328,   0, 511,  28}, 0x00, 183}, { {511,   0, 672,  28}, 0x00, 161},
     { {  0,  28, 672,  56}, 0x00, 200},
   }, },
+  { {0, 0, 672, 40}, 40, 2, {20, 20, }, 5, {
+    { {  0,   0, 114,  20}, 0x00, 40}, { {114,   0, 328,  20}, 0x00, 214},
+    { {328,   0, 511,  20}, 0x00, 183}, { {511,   0, 672,  20}, 0x00, 161},
+    { {  0,  20, 672,  40}, 0x00, 200},
+  }, },
+  { {0, 0, 672, 56}, 56, 2, {28, 28, }, 5, {
+    { {  0,   0, 114,  28}, 0x00, 40}, { {114,   0, 328,  28}, 0x00, 214},
+    { {328,   0, 511,  28}, 0x00, 183}, { {511,   0, 672,  28}, 0x00, 161},
+    { {  0,  28, 672,  56}, 0x00, 200},
+  }, },
   { {0, 0, 672, 0}, 0, 0, {0, }, 0, {{{0, 0, 0, 0}, 0, 0},
   }, },
   { {0, 0, 672, 65}, 65, 1, {65, }, 3, {
@@ -425,6 +435,16 @@ static void layout_test(void)
     ok(SendMessage(hRebar, RB_SETBARINFO, 0, (LPARAM)&ri), "RB_SETBARINFO failed\n");
     rbi.fMask = RBBIM_IMAGE;
     rbi.iImage = 1;
+    SendMessage(hRebar, RB_SETBANDINFO, 1, (LPARAM)&rbi);
+    check_sizes();
+
+    /* after removing it everything is back to normal*/
+    rbi.iImage = -1;
+    SendMessage(hRebar, RB_SETBANDINFO, 1, (LPARAM)&rbi);
+    check_sizes();
+
+    /* Only -1 means that the image is not present. Other invalid values increase the height */
+    rbi.iImage = -2;
     SendMessage(hRebar, RB_SETBANDINFO, 1, (LPARAM)&rbi);
     check_sizes();
 
