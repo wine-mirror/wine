@@ -986,6 +986,9 @@ static void test_condition(void)
     r = MsiEvaluateCondition(hpkg, "0");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
+    r = MsiEvaluateCondition(hpkg, "-1");
+    ok( r == MSICONDITION_TRUE, "wrong return val\n");
+
     r = MsiEvaluateCondition(hpkg, "0 = 0");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
@@ -1621,6 +1624,10 @@ static void test_condition(void)
 
     r = MsiEvaluateCondition(hpkg, "X !=\"\" and (X =\"5.0\" or X =\"5.1\" or X =\"6.0\")");
     ok( r == MSICONDITION_ERROR, "wrong return val (%d)\n", r);
+
+    /* feature doesn't exist */
+    r = MsiEvaluateCondition(hpkg, "&nofeature");
+    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);
