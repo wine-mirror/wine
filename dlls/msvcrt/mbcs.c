@@ -191,7 +191,7 @@ int CDECL _setmbcp(int cp)
   if (!GetCPInfo(newcp, &cpi))
   {
     WARN("Codepage %d not found\n", newcp);
-    msvcrt_set_errno(MSVCRT_EINVAL);
+    *MSVCRT__errno() = MSVCRT_EINVAL;
     return -1;
   }
 
