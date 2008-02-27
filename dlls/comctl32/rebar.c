@@ -1101,7 +1101,9 @@ REBAR_MoveChildWindows (const REBAR_INFO *infoPtr, UINT start, UINT endplus)
 
 }
 
-static int next_band(const REBAR_INFO *infoPtr, int i)
+/* Returns the next visible band (the first visible band in [i+1; infoPtr->uNumBands) )
+ * or infoPtr->uNumBands if none */
+static int next_visible(const REBAR_INFO *infoPtr, int i)
 {
     int n;
     for (n = i + 1; n < infoPtr->uNumBands; n++)
@@ -1110,7 +1112,9 @@ static int next_band(const REBAR_INFO *infoPtr, int i)
     return n;
 }
 
-static int prev_band(const REBAR_INFO *infoPtr, int i)
+/* Returns the previous visible band (the last visible band in [0; i) )
+ * or -1 if none */
+static int prev_visible(const REBAR_INFO *infoPtr, int i)
 {
     int n;
     for (n = i - 1; n >= 0; n--)
@@ -1119,11 +1123,18 @@ static int prev_band(const REBAR_INFO *infoPtr, int i)
     return n;
 }
 
+/* Returns the first visible band or infoPtr->uNumBands if none */
+static int first_visible(const REBAR_INFO *infoPtr)
+{
+    return next_visible(infoPtr, -1); /* this works*/
+}
+
+/* Returns the first visible band for the given row (or iBand if none) */
 static int get_row_begin_for_band(const REBAR_INFO *infoPtr, INT iBand)
 {
     int iLastBand = iBand;
     int iRow = infoPtr->bands[iBand].iRow;
-    while ((iBand = prev_band(infoPtr, iBand)) >= 0) {
+    while ((iBand = prev_visible(infoPtr, iBand)) >= 0) {
         if (infoPtr->bands[iBand].iRow != iRow)
             break;
         else
@@ -1132,19 +1143,22 @@ static int get_row_begin_for_band(const REBAR_INFO *infoPtr, INT iBand)
     return iLastBand;
 }
 
+/* Returns the first visible band for the next row (or infoPtr->uNumBands if none) */
 static int get_row_end_for_band(const REBAR_INFO *infoPtr, INT iBand)
 {
     int iRow = infoPtr->bands[iBand].iRow;
-    while ((iBand = next_band(infoPtr, iBand)) < infoPtr->uNumBands)
+    while ((iBand = next_visible(infoPtr, iBand)) < infoPtr->uNumBands)
         if (infoPtr->bands[iBand].iRow != iRow)
             break;
     return iBand;
 }
 
+/* Compute the rcBand.{left,right} from the cxEffective bands widths computed earier.
+ * iBeginBand must be visible */
 static void REBAR_SetRowRectsX(const REBAR_INFO *infoPtr, INT iBeginBand, INT iEndBand)
 {
     int xPos = 0, i;
-    for (i = iBeginBand; i < iEndBand; i = next_band(infoPtr, i))
+    for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
         REBAR_BAND *lpBand = &infoPtr->bands[i];
 
@@ -1171,12 +1185,12 @@ static REBAR_BAND *REBAR_FindBandToGrow(const REBAR_INFO *infoPtr, INT iBeginBan
 
     cxMinFirstBand = infoPtr->bands[iBeginBand].cxMinBand;
 
-    for (i = prev_band(infoPtr, iEndBand); i >= iBeginBand; i = prev_band(infoPtr, i))
+    for (i = prev_visible(infoPtr, iEndBand); i >= iBeginBand; i = prev_visible(infoPtr, i))
         if (infoPtr->bands[i].cxEffective > cxMinFirstBand && !(infoPtr->bands[i].fStyle&RBBS_FIXEDSIZE))
             break;
 
     if (i < iBeginBand)
-        for (i = prev_band(infoPtr, iEndBand); i >= iBeginBand; i = prev_band(infoPtr, i))
+        for (i = prev_visible(infoPtr, iEndBand); i >= iBeginBand; i = prev_visible(infoPtr, i))
             if (infoPtr->bands[i].cxMinBand == cxMinFirstBand)
                 break;
 
@@ -1184,13 +1198,14 @@ static REBAR_BAND *REBAR_FindBandToGrow(const REBAR_INFO *infoPtr, INT iBeginBan
     return &infoPtr->bands[i];
 }
 
+/* Try to shrink the visible bands in [iBeginBand; iEndBand) by cxShrink, starting from the right */
 static int REBAR_ShrinkBandsRTL(const REBAR_INFO *infoPtr, INT iBeginBand, INT iEndBand, INT cxShrink, BOOL bEnforce)
 {
     REBAR_BAND *lpBand;
     INT width, i;
 
     TRACE("Shrinking bands [%d..%d) by %d, right-to-left\n", iBeginBand, iEndBand, cxShrink);
-    for (i = prev_band(infoPtr, iEndBand); i >= iBeginBand; i = prev_band(infoPtr, i))
+    for (i = prev_visible(infoPtr, iEndBand); i >= iBeginBand; i = prev_visible(infoPtr, i))
     {
         lpBand = &infoPtr->bands[i];
 
@@ -1206,13 +1221,15 @@ static int REBAR_ShrinkBandsRTL(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
 }
 
 
+/* Try to shrink the visible bands in [iBeginBand; iEndBand) by cxShrink, starting from the left.
+ * iBeginBand must be visible */
 static int REBAR_ShrinkBandsLTR(const REBAR_INFO *infoPtr, INT iBeginBand, INT iEndBand, INT cxShrink, BOOL bEnforce)
 {
     REBAR_BAND *lpBand;
     INT width, i;
 
     TRACE("Shrinking bands [%d..%d) by %d, left-to-right\n", iBeginBand, iEndBand, cxShrink);
-    for (i = iBeginBand; i < iEndBand; i = next_band(infoPtr, i))
+    for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
         lpBand = &infoPtr->bands[i];
 
@@ -1227,6 +1244,7 @@ static int REBAR_ShrinkBandsLTR(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
     return cxShrink;
 }
 
+/* Set the heights of the visible bands in [iBeginBand; iEndBand) to the max height. iBeginBand must be visible */
 static int REBAR_SetBandsHeight(const REBAR_INFO *infoPtr, INT iBeginBand, INT iEndBand, INT yStart)
 {
     REBAR_BAND *lpBand;
@@ -1234,7 +1252,7 @@ static int REBAR_SetBandsHeight(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
     int yPos = yStart;
     int row = infoPtr->bands[iBeginBand].iRow;
     int i;
-    for (i = iBeginBand; i < iEndBand; i = next_band(infoPtr, i))
+    for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
         lpBand = &infoPtr->bands[i];
         lpBand->cyRowSoFar = yMaxHeight;
@@ -1242,7 +1260,7 @@ static int REBAR_SetBandsHeight(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
     }
     TRACE("Bands [%d; %d) height: %d\n", iBeginBand, iEndBand, yMaxHeight);
 
-    for (i = iBeginBand; i < iEndBand; i = next_band(infoPtr, i))
+    for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
         lpBand = &infoPtr->bands[i];
         /* we may be called for multiple rows if RBS_VARHEIGHT not set */
@@ -1261,6 +1279,7 @@ static int REBAR_SetBandsHeight(const REBAR_INFO *infoPtr, INT iBeginBand, INT i
     return yPos + yMaxHeight;
 }
 
+/* Layout the row [iBeginBand; iEndBand). iBeginBand must be visible */
 static void REBAR_LayoutRow(const REBAR_INFO *infoPtr, int iBeginBand, int iEndBand, int cx, int *piRow, int *pyPos)
 {
     REBAR_BAND *lpBand;
@@ -1272,7 +1291,7 @@ static void REBAR_LayoutRow(const REBAR_INFO *infoPtr, int iBeginBand, int iEndB
         infoPtr->bands[i].iRow = *piRow;
 
     /* compute the extra space */
-    for (i = iBeginBand; i < iEndBand; i = next_band(infoPtr, i))
+    for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
         lpBand = &infoPtr->bands[i];
         if (i > iBeginBand)
@@ -1285,7 +1304,7 @@ static void REBAR_LayoutRow(const REBAR_INFO *infoPtr, int iBeginBand, int iEndB
     TRACE("Extra space: %d\n", extra);
     if (extra < 0) {
         int ret = REBAR_ShrinkBandsRTL(infoPtr, iBeginBand, iEndBand, -extra, FALSE);
-        if (ret > 0 && next_band(infoPtr, iBeginBand) != iEndBand)  /* one band may be longer than expected... */
+        if (ret > 0 && next_visible(infoPtr, iBeginBand) != iEndBand)  /* one band may be longer than expected... */
             ERR("Error layouting row %d - couldn't shrink for %d pixels (%d total shrink)\n", *piRow, ret, -extra);
     } else
     if (extra > 0) {
@@ -1310,7 +1329,7 @@ REBAR_Layout(REBAR_INFO *infoPtr)
     RECT rcAdj;
     SIZE oldSize;
     INT adjcx, i;
-    INT rowstart = 0;
+    INT rowstart;
     INT row = 0;
     INT xMin, yPos;
 
@@ -1333,11 +1352,11 @@ REBAR_Layout(REBAR_INFO *infoPtr)
 
     yPos = 0;
     xMin = 0;
+    rowstart = first_visible(infoPtr);
     /* divide rows */
-    for (i = 0; i < infoPtr->uNumBands; i++)
+    for (i = rowstart; i < infoPtr->uNumBands; i = next_visible(infoPtr, i))
     {
         lpBand = &infoPtr->bands[i];
-        if (HIDDENBAND(lpBand)) continue;
 
         if (i > rowstart && (lpBand->fStyle & RBBS_BREAK || xMin + lpBand->cxMinBand > adjcx)) {
             TRACE("%s break on band %d\n", (lpBand->fStyle & RBBS_BREAK ? "Hard" : "Soft"), i - 1);
@@ -1353,7 +1372,7 @@ REBAR_Layout(REBAR_INFO *infoPtr)
     REBAR_LayoutRow(infoPtr, rowstart, infoPtr->uNumBands, adjcx, &row, &yPos);
 
     if (!(infoPtr->dwStyle & RBS_VARHEIGHT))
-        yPos = REBAR_SetBandsHeight(infoPtr, 0, infoPtr->uNumBands, 0);
+        yPos = REBAR_SetBandsHeight(infoPtr, first_visible(infoPtr), infoPtr->uNumBands, 0);
 
     infoPtr->uNumRows = row;
 
@@ -1384,6 +1403,7 @@ REBAR_Layout(REBAR_INFO *infoPtr)
     }
 }
 
+/* iBeginBand must be visible */
 static int
 REBAR_SizeChildrenToHeight(const REBAR_INFO *infoPtr, int iBeginBand, int iEndBand, int extra, BOOL *fChanged)
 {
@@ -1394,7 +1414,7 @@ REBAR_SizeChildrenToHeight(const REBAR_INFO *infoPtr, int iBeginBand, int iEndBa
     TRACE("[%d;%d) by %d\n", iBeginBand, iEndBand, extra);
 
     cyBandsOld = infoPtr->bands[iBeginBand].rcBand.bottom - infoPtr->bands[iBeginBand].rcBand.top;
-    for (i = iBeginBand; i < iEndBand; i = next_band(infoPtr, i))
+    for (i = iBeginBand; i < iEndBand; i = next_visible(infoPtr, i))
     {
         REBAR_BAND *lpBand = &infoPtr->bands[i];
         int cyMaxChild = cyBandsOld - REBARSPACE(lpBand) + extra;
@@ -1427,7 +1447,7 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
     /* Pass one: break-up/glue rows */
     if (extra > 0)
     {
-        for (i = prev_band(infoPtr, infoPtr->uNumBands); i > 0; i = prev_band(infoPtr, i))
+        for (i = prev_visible(infoPtr, infoPtr->uNumBands); i > 0; i = prev_visible(infoPtr, i))
         {
             REBAR_BAND *lpBand = &infoPtr->bands[i];
             int height = lpBand->rcBand.bottom - lpBand->rcBand.top;
@@ -1461,7 +1481,7 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
     /* Pass two: increase/decrease control height */
     if (infoPtr->dwStyle & RBS_VARHEIGHT)
     {
-        int i = 0;
+        int i = first_visible(infoPtr);
         int iRow = 0;
         while (i < infoPtr->uNumBands)
         {
@@ -1470,7 +1490,7 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
             int rowEnd;
 
             /* we can't use get_row_end_for_band as we might have added RBBS_BREAK in the first phase */
-            for (rowEnd = next_band(infoPtr, i); rowEnd < infoPtr->uNumBands; rowEnd = next_band(infoPtr, rowEnd))
+            for (rowEnd = next_visible(infoPtr, i); rowEnd < infoPtr->uNumBands; rowEnd = next_visible(infoPtr, rowEnd))
                 if (infoPtr->bands[rowEnd].iRow != lpBand->iRow || (infoPtr->bands[rowEnd].fStyle & RBBS_BREAK))
                     break;
 
@@ -1481,7 +1501,7 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
         }
     }
     else
-        extra -= REBAR_SizeChildrenToHeight(infoPtr, 0, infoPtr->uNumBands, extra / infoPtr->uNumRows, &fChanged);
+        extra -= REBAR_SizeChildrenToHeight(infoPtr, first_visible(infoPtr), infoPtr->uNumBands, extra / infoPtr->uNumRows, &fChanged);
 
     if (fChanged)
         REBAR_Layout(infoPtr);
@@ -1993,7 +2013,7 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
         hitBand->cx = hitBand->cxEffective;
     } else if (movement > 0) {
         int cxLeft = REBAR_ShrinkBandsLTR(infoPtr, iHitBand, iRowEnd, movement, TRUE);
-        REBAR_BAND *lpPrev = &infoPtr->bands[prev_band(infoPtr, iHitBand)];
+        REBAR_BAND *lpPrev = &infoPtr->bands[prev_visible(infoPtr, iHitBand)];
         lpPrev->cxEffective += movement - cxLeft;
         lpPrev->cx = lpPrev->cxEffective;
     }
@@ -2440,6 +2460,13 @@ REBAR_MaximizeBand (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     lpBand = &infoPtr->bands[uBand];
 
+    if (lpBand->fStyle & RBBS_HIDDEN)
+    {
+        /* Windows is buggy and creates a hole */
+        WARN("Ignoring maximize request on a hidden band (%d)\n", uBand);
+        return FALSE;
+    }
+
     cxIdealBand = lpBand->cxIdeal + lpBand->cxHeader + REBAR_POST_CHILD;
     if (lParam && (lpBand->cxEffective < cxIdealBand))
         cxDesired = cxIdealBand;
@@ -2452,7 +2479,7 @@ REBAR_MaximizeBand (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (extra > 0)
         extra = REBAR_ShrinkBandsRTL(infoPtr, iRowBegin, uBand, extra, TRUE);
     if (extra > 0)
-        extra = REBAR_ShrinkBandsLTR(infoPtr, next_band(infoPtr, uBand), iRowEnd, extra, TRUE);
+        extra = REBAR_ShrinkBandsLTR(infoPtr, next_visible(infoPtr, uBand), iRowEnd, extra, TRUE);
     lpBand->cxEffective += extraOrig - extra;
     lpBand->cx = lpBand->cxEffective;
     TRACE("(%ld, %ld): Wanted size %d, obtained %d (shrink %d, %d)\n", wParam, lParam, cxDesired, lpBand->cx, extraOrig, extra);
@@ -2491,10 +2518,18 @@ REBAR_MinimizeBand (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     /* compute amount of movement and validate */
     lpBand = &infoPtr->bands[uBand];
-    iPrev = prev_band(infoPtr, uBand);
+
+    if (lpBand->fStyle & RBBS_HIDDEN)
+    {
+        /* Windows is buggy and creates a hole/overlap */
+        WARN("Ignoring minimize request on a hidden band (%d)\n", uBand);
+        return FALSE;
+    }
+
+    iPrev = prev_visible(infoPtr, uBand);
     /* if first band in row */
     if (iPrev < 0 || infoPtr->bands[iPrev].iRow != lpBand->iRow) {
-        int iNext = next_band(infoPtr, uBand);
+        int iNext = next_visible(infoPtr, uBand);
         if (iNext < infoPtr->uNumBands && infoPtr->bands[iNext].iRow == lpBand->iRow) {
             TRACE("(%ld): Minimizing the first band in row is by maximizing the second\n", wParam);
             REBAR_MaximizeBand(infoPtr, iNext, FALSE);
