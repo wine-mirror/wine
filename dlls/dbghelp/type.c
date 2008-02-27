@@ -21,6 +21,9 @@
  * Note: This really doesn't do much at the moment, but it forms the framework
  * upon which full support for datatype handling will eventually be built.
  */
+
+#define NONAMELESSUNION
+
 #include "config.h"
 #include <stdlib.h>
 #include <stdarg.h>
