@@ -1377,7 +1377,6 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       return hr;
     } else {
       VARIANTARG vararg;
-      HRESULT hr;
 
       VariantInit(&vararg);
       hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_BOOL);
@@ -1399,7 +1398,6 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       return hr;
     } else {
       VARIANTARG vararg;
-      HRESULT hr;
 
       VariantInit(&vararg);
       hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_BOOL);
@@ -1421,7 +1419,6 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       return hr;
     } else {
       VARIANTARG vararg;
-      HRESULT hr;
 
       VariantInit(&vararg);
       hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_BOOL);
@@ -1440,7 +1437,6 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       return OLEFontImpl_get_Size((IFont *)this, &V_CY(pVarResult));
     } else {
       VARIANTARG vararg;
-      HRESULT hr;
 
       VariantInit(&vararg);
       hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_CY);
@@ -1459,7 +1455,6 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       return OLEFontImpl_get_Weight((IFont *)this, &V_I2(pVarResult));
     } else {
       VARIANTARG vararg;
-      HRESULT hr;
 
       VariantInit(&vararg);
       hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_I2);
@@ -1478,7 +1473,6 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
       return OLEFontImpl_get_Charset((IFont *)this, &V_I2(pVarResult));
     } else {
       VARIANTARG vararg;
-      HRESULT hr;
 
       VariantInit(&vararg);
       hr = VariantChangeTypeEx(&vararg, &pDispParams->rgvarg[0], lcid, 0, VT_I2);
