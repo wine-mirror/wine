@@ -49,6 +49,16 @@ typedef struct
     LONG ref;
 } EnumBackgroundCopyJobsImpl;
 
+/* Enum background copy files vtbl and related data */
+typedef struct
+{
+    const IEnumBackgroundCopyFilesVtbl *lpVtbl;
+    LONG ref;
+    IBackgroundCopyFile **files;
+    ULONG numFiles;
+    ULONG indexFiles;
+} EnumBackgroundCopyFilesImpl;
+
 /* Background copy file vtbl and related data */
 typedef struct
 {
@@ -79,6 +89,8 @@ HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
                                           IBackgroundCopyManager* copyManager);
 HRESULT BackgroundCopyFileConstructor(LPCWSTR remoteName,
                                       LPCWSTR localName, LPVOID *ppObj);
+HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj,
+                                           IBackgroundCopyJob* copyJob);
 
 /* Little helper functions */
 static inline char *
