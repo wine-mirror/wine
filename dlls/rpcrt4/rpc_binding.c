@@ -468,6 +468,7 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
 {
   CHAR *data, *next;
   static const char ep_opt[] = "endpoint=";
+  BOOL endpoint_already_found = FALSE;
 
   TRACE("(%s,%p,%p,%p,%p,%p)\n", debugstr_a((char*)StringBinding),
        ObjUuid, Protseq, NetworkAddr, Endpoint, Options);
@@ -513,22 +514,28 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
       next = strchr(opt, '=');
       if (!next) {
         /* not an option, must be an endpoint */
-        if (*Endpoint) goto fail;
-        *Endpoint = (unsigned char*) opt;
+        if (endpoint_already_found) goto fail;
+        if (Endpoint) *Endpoint = (unsigned char*) opt;
+        else HeapFree(GetProcessHeap(), 0, opt);
+        endpoint_already_found = TRUE;
       } else {
         if (strncmp(opt, ep_opt, strlen(ep_opt)) == 0) {
           /* endpoint option */
-          if (*Endpoint) goto fail;
-          *Endpoint = (unsigned char*) RPCRT4_strdupA(next+1);
+          if (endpoint_already_found) goto fail;
+          if (Endpoint) *Endpoint = (unsigned char*) RPCRT4_strdupA(next+1);
           HeapFree(GetProcessHeap(), 0, opt);
+          endpoint_already_found = TRUE;
         } else {
           /* network option */
-          if (*Options) {
-            /* FIXME: this is kind of inefficient */
-            *Options = (unsigned char*) RPCRT4_strconcatA( (char*)*Options, opt);
+          if (Options) {
+            if (*Options) {
+              /* FIXME: this is kind of inefficient */
+              *Options = (unsigned char*) RPCRT4_strconcatA( (char*)*Options, opt);
+              HeapFree(GetProcessHeap(), 0, opt);
+            } else
+              *Options = (unsigned char*) opt;
+          } else
             HeapFree(GetProcessHeap(), 0, opt);
-          } else 
-	    *Options = (unsigned char*) opt;
         }
       }
     }
@@ -559,6 +566,7 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
 {
   WCHAR *data, *next;
   static const WCHAR ep_opt[] = {'e','n','d','p','o','i','n','t','=',0};
+  BOOL endpoint_already_found = FALSE;
 
   TRACE("(%s,%p,%p,%p,%p,%p)\n", debugstr_w(StringBinding),
        ObjUuid, Protseq, NetworkAddr, Endpoint, Options);
@@ -604,22 +612,28 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
       next = strchrW(opt, '=');
       if (!next) {
         /* not an option, must be an endpoint */
-        if (*Endpoint) goto fail;
-        *Endpoint = opt;
+        if (endpoint_already_found) goto fail;
+        if (Endpoint) *Endpoint = opt;
+        else HeapFree(GetProcessHeap(), 0, opt);
+        endpoint_already_found = TRUE;
       } else {
         if (strncmpW(opt, ep_opt, strlenW(ep_opt)) == 0) {
           /* endpoint option */
-          if (*Endpoint) goto fail;
-          *Endpoint = RPCRT4_strdupW(next+1);
+          if (endpoint_already_found) goto fail;
+          if (Endpoint) *Endpoint = RPCRT4_strdupW(next+1);
           HeapFree(GetProcessHeap(), 0, opt);
+          endpoint_already_found = TRUE;
         } else {
           /* network option */
-          if (*Options) {
-            /* FIXME: this is kind of inefficient */
-            *Options = RPCRT4_strconcatW(*Options, opt);
+          if (Options) {
+            if (*Options) {
+              /* FIXME: this is kind of inefficient */
+              *Options = RPCRT4_strconcatW(*Options, opt);
+              HeapFree(GetProcessHeap(), 0, opt);
+            } else
+              *Options = opt;
+          } else
             HeapFree(GetProcessHeap(), 0, opt);
-          } else 
-	    *Options = opt;
         }
       }
     }
