@@ -21,6 +21,7 @@
 #include "windows.h"
 #include "gdiplus.h"
 #include "wine/test.h"
+#include <math.h>
 
 #define expect(expected, got) ok(((UINT)got) == ((UINT)expected), "Expected %.8x, got %.8x\n", (UINT)expected, (UINT)got)
 
@@ -73,6 +74,37 @@ static void test_Scan0(void)
     expect(0xdeadbeef, bm);
 }
 
+static void test_GetImageDimension(void)
+{
+    GpBitmap *bm;
+    GpStatus stat;
+    const REAL WIDTH = 10.0, HEIGHT = 20.0;
+    REAL w,h;
+
+    bm = (GpBitmap*)0xdeadbeef;
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB,NULL, &bm);
+    expect(Ok,stat);
+    ok((GpBitmap*)0xdeadbeef != bm, "Expected bitmap to not be 0xdeadbeef\n");
+    ok(NULL != bm, "Expected bitmap to not be NULL\n");
+
+    stat = GdipGetImageDimension(NULL,&w,&h);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageDimension((GpImage*)bm,NULL,&h);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageDimension((GpImage*)bm,&w,NULL);
+    expect(InvalidParameter, stat);
+
+    w = -1;
+    h = -1;
+    stat = GdipGetImageDimension((GpImage*)bm,&w,&h);
+    expect(Ok, stat);
+    ok(fabs(WIDTH - w) < 0.0001, "Width wrong");
+    ok(fabs(HEIGHT - h) < 0.0001, "Height wrong");
+    GdipDisposeImage((GpImage*)bm);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -86,6 +118,7 @@ START_TEST(image)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_Scan0();
+    test_GetImageDimension();
 
     GdiplusShutdown(gdiplusToken);
 }

@@ -463,6 +463,37 @@ GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetImageDimension(GpImage *image, REAL *width,
+    REAL *height)
+{
+    if(!image || !height || !width)
+        return InvalidParameter;
+
+    if(image->type == ImageTypeMetafile){
+        HDC hdc = GetDC(0);
+
+        *height = convert_unit(hdc, ((GpMetafile*)image)->unit) *
+                        ((GpMetafile*)image)->bounds.Height;
+
+        *width = convert_unit(hdc, ((GpMetafile*)image)->unit) *
+                        ((GpMetafile*)image)->bounds.Width;
+
+        ReleaseDC(0, hdc);
+    }
+
+    else if(image->type == ImageTypeBitmap){
+        *height = ((GpBitmap*)image)->height;
+        *width = ((GpBitmap*)image)->width;
+    }
+    else{
+        *height = ipicture_pixel_height(image->picture);
+        *width = ipicture_pixel_width(image->picture);
+    }
+
+    TRACE("returning (%f, %f)\n", *height, *width);
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
     GpGraphics **graphics)
 {
