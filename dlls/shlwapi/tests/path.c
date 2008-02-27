@@ -76,11 +76,13 @@ static struct {
 } TEST_PATH_IS_URL[] = {
     {"http://foo/bar", TRUE},
     {"c:\\foo\\bar", FALSE},
+    {"c:/foo/bar", FALSE},
     {"foo://foo/bar", TRUE},
     {"foo\\bar", FALSE},
     {"foo.bar", FALSE},
     {"bogusscheme:", TRUE},
-    {"http:partial", TRUE}
+    {"http:partial", TRUE},
+    {"www.winehq.org", FALSE}
 };
 
 struct {
