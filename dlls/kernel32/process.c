@@ -690,7 +690,7 @@ static void init_windows_dirs(void)
 
     static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
     static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
-    static const WCHAR default_windirW[] = {'c',':','\\','w','i','n','d','o','w','s',0};
+    static const WCHAR default_windirW[] = {'C',':','\\','w','i','n','d','o','w','s',0};
     static const WCHAR default_sysdirW[] = {'\\','s','y','s','t','e','m','3','2',0};
 
     DWORD len;

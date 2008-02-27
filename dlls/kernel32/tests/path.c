@@ -727,6 +727,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
       "GetFullPathNameA returned part '%s' instead of '%s'\n",strptr,SHORTFILE);
 /* Otherwise insert the missing leading slash */
   if( otherDrive != NOT_A_VALID_DRIVE) {
+    /* FIXME: this test assumes that current directory on other drive is root */
     sprintf(tmpstr,"%c:%s\\%s",otherDrive,SHORTDIR,SHORTFILE);
     ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed for %s\n", tmpstr);
     sprintf(tmpstr,"%c:\\%s\\%s",otherDrive,SHORTDIR,SHORTFILE);
@@ -1157,6 +1158,87 @@ static void test_NeedCurrentDirectoryForExePathW(void)
     ok(!pNeedCurrentDirectoryForExePathW(cmdname), "returned TRUE for \"cmd.exe\"\n");
 }
 
+/* Call various path/file name retrieving APIs and check the case of
+ * the returned drive letter. Some apps (for instance Adobe Photoshop CS3
+ * installer) depend on the driver letter being in upper case.
+ */
+static void test_drive_letter_case(void)
+{
+    UINT ret;
+    char buf[MAX_PATH];
+
+#define is_upper_case_letter(a) ((a) >= 'A' && (a) <= 'Z')
+
+    memset(buf, 0, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    ret = GetWindowsDirectory(buf, sizeof(buf));
+    ok(ret, "GetWindowsDirectory error %u\n", GetLastError());
+    ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+    ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+
+    /* re-use the buffer returned by GetFullPathName */
+    buf[2] = '/';
+    SetLastError(0xdeadbeef);
+    ret = GetFullPathName(buf + 2, sizeof(buf), buf, NULL);
+    ok(ret, "GetFullPathName error %u\n", GetLastError());
+    ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+    ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+
+    memset(buf, 0, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    ret = GetSystemDirectory(buf, sizeof(buf));
+    ok(ret, "GetSystemDirectory error %u\n", GetLastError());
+    ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+    ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+
+    memset(buf, 0, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentDirectory(sizeof(buf), buf);
+    ok(ret, "GetCurrentDirectory error %u\n", GetLastError());
+    ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+    ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+
+    memset(buf, 0, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    ret = GetTempPath(sizeof(buf), buf);
+    ok(ret, "GetTempPath error %u\n", GetLastError());
+    ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+    ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+
+    memset(buf, 0, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    ret = GetFullPathName(".", sizeof(buf), buf, NULL);
+    ok(ret, "GetFullPathName error %u\n", GetLastError());
+    ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+    ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+
+    /* re-use the buffer returned by GetFullPathName */
+    SetLastError(0xdeadbeef);
+    ret = GetShortPathName(buf, buf, sizeof(buf));
+    ok(ret, "GetShortPathName error %u\n", GetLastError());
+    ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+    ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+
+    if (pGetLongPathNameA)
+    {
+        /* re-use the buffer returned by GetShortPathName */
+        SetLastError(0xdeadbeef);
+        ret = pGetLongPathNameA(buf, buf, sizeof(buf));
+        ok(ret, "GetLongPathNameA error %u\n", GetLastError());
+        ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
+        ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
+        ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+    }
+#undef is_upper_case_letter
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
@@ -1188,4 +1270,5 @@ START_TEST(path)
     {
         test_NeedCurrentDirectoryForExePathW();
     }
+    test_drive_letter_case();
 }
