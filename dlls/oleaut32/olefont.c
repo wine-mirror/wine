@@ -941,7 +941,7 @@ static HRESULT WINAPI OLEFontImpl_IsEqual(
 {
   OLEFontImpl *left = (OLEFontImpl *)iface;
   OLEFontImpl *right = (OLEFontImpl *)pFontOther;
-  HRESULT hres;
+  INT ret;
   INT left_len,right_len;
 
   if((iface == NULL) || (pFontOther == NULL))
@@ -964,9 +964,9 @@ static HRESULT WINAPI OLEFontImpl_IsEqual(
   /* Check from string */
   left_len = strlenW(left->description.lpstrName);
   right_len = strlenW(right->description.lpstrName);
-  hres = CompareStringW(0,0,left->description.lpstrName, left_len,
+  ret = CompareStringW(0,0,left->description.lpstrName, left_len,
     right->description.lpstrName, right_len);
-  if (hres != CSTR_EQUAL)
+  if (ret != CSTR_EQUAL)
     return S_FALSE;
 
   return S_OK;
