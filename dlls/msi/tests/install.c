@@ -3660,8 +3660,11 @@ static void test_movefiles(void)
         ok(!delete_pf("msitest\\application", TRUE), "File should not exist\n");
     ok(delete_pf("msitest\\wildcard", TRUE), "File not moved\n");
     ok(!delete_pf("msitest\\ape", TRUE), "File moved\n");
-    ok(delete_pf("msitest\\foo", TRUE), "File not moved\n");
-    ok(!delete_pf("msitest\\fao", TRUE), "File should not exist\n");
+    /* either fao or foo will be moved depending on directory order */
+    if (delete_pf("msitest\\foo", TRUE))
+        ok(!delete_pf("msitest\\fao", TRUE), "File should not exist\n");
+    else
+        ok(delete_pf("msitest\\fao", TRUE), "File not moved\n");
     ok(delete_pf("msitest\\single", TRUE), "File not moved\n");
     ok(!delete_pf("msitest\\fbod", TRUE), "File moved\n");
     ok(delete_pf("msitest\\budding", TRUE), "File not moved\n");
