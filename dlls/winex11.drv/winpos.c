@@ -177,11 +177,11 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 
 
 /***********************************************************************
- *     update_wm_states
+ *     update_net_wm_states
  */
-static void update_wm_states( Display *display, struct x11drv_win_data *data, BOOL force )
+static void update_net_wm_states( Display *display, struct x11drv_win_data *data )
 {
-    static const unsigned int state_atoms[NB_WM_STATES] =
+    static const unsigned int state_atoms[NB_NET_WM_STATES] =
     {
         XATOM__NET_WM_STATE_FULLSCREEN,
         XATOM__NET_WM_STATE_ABOVE,
@@ -197,13 +197,13 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
 
     if (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
         data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height)
-        new_state |= (1 << WM_STATE_FULLSCREEN);
+        new_state |= (1 << NET_WM_STATE_FULLSCREEN);
 
     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
     if (ex_style & WS_EX_TOPMOST)
-        new_state |= (1 << WM_STATE_ABOVE);
+        new_state |= (1 << NET_WM_STATE_ABOVE);
     if (ex_style & WS_EX_TOOLWINDOW)
-        new_state |= (1 << WM_STATE_SKIP_TASKBAR) | (1 << WM_STATE_SKIP_PAGER);
+        new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER);
 
     xev.xclient.type = ClientMessage;
     xev.xclient.window = data->whole_window;
@@ -215,17 +215,13 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
     xev.xclient.data.l[2] = 0;
     xev.xclient.data.l[3] = 1;
 
-    for (i = 0; i < NB_WM_STATES; i++)
+    for (i = 0; i < NB_NET_WM_STATES; i++)
     {
-        if (!((data->wm_state ^ new_state) & (1 << i)))  /* unchanged */
-        {
-            /* if forced, we only add states, we don't remove them */
-            if (!force || !(new_state & (1 << i))) continue;
-        }
+        if (!((data->net_wm_state ^ new_state) & (1 << i))) continue;  /* unchanged */
 
         TRACE( "setting wm state %u for window %p/%lx to %u prev %u\n",
                i, data->hwnd, data->whole_window,
-               (new_state & (1 << i)) != 0, (data->wm_state & (1 << i)) != 0 );
+               (new_state & (1 << i)) != 0, (data->net_wm_state & (1 << i)) != 0 );
 
         xev.xclient.data.l[0] = (new_state & (1 << i)) ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
         xev.xclient.data.l[1] = X11DRV_Atoms[state_atoms[i] - FIRST_XATOM];
@@ -233,7 +229,7 @@ static void update_wm_states( Display *display, struct x11drv_win_data *data, BO
         XSendEvent( display, root_window, False, SubstructureRedirectMask | SubstructureNotifyMask, &xev );
         wine_tsx11_unlock();
     }
-    data->wm_state = new_state;
+    data->net_wm_state = new_state;
 }
 
 
@@ -394,6 +390,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
         XUnmapWindow( display, data->whole_window );
         wine_tsx11_unlock();
         data->mapped = FALSE;
+        data->net_wm_state = 0;
     }
 
     X11DRV_sync_window_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
@@ -401,8 +398,6 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     if ((new_style & WS_VISIBLE) && !(new_style & WS_MINIMIZE) &&
         X11DRV_is_window_rect_mapped( rectWindow ))
     {
-        BOOL was_mapped = data->mapped;
-
         if (!data->mapped || (swp_flags & SWP_FRAMECHANGED))
             X11DRV_set_wm_hints( display, data );
 
@@ -416,7 +411,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
             wine_tsx11_unlock();
             data->mapped = TRUE;
         }
-        update_wm_states( display, data, !was_mapped );
+        update_net_wm_states( display, data );
     }
 }
 
@@ -841,7 +836,7 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
     if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)
     {
         /* update the full screen state */
-        update_wm_states( display, data, FALSE );
+        update_net_wm_states( display, data );
     }
 
     if (resize_data->old_virtual_rect.left != virtual_screen_rect.left) mask |= CWX;

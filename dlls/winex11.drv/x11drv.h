@@ -642,13 +642,13 @@ enum x11drv_window_messages
 };
 
 /* _NET_WM_STATE properties that we keep track of */
-enum x11drv_wm_state
+enum x11drv_net_wm_state
 {
-    WM_STATE_FULLSCREEN,
-    WM_STATE_ABOVE,
-    WM_STATE_SKIP_PAGER,
-    WM_STATE_SKIP_TASKBAR,
-    NB_WM_STATES
+    NET_WM_STATE_FULLSCREEN,
+    NET_WM_STATE_ABOVE,
+    NET_WM_STATE_SKIP_PAGER,
+    NET_WM_STATE_SKIP_TASKBAR,
+    NB_NET_WM_STATES
 };
 
 /* x11drv private window data */
@@ -669,7 +669,7 @@ struct x11drv_win_data
     XWMHints   *wm_hints;       /* window manager hints */
     BOOL        managed : 1;    /* is window managed? */
     BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
-    DWORD       wm_state;       /* bit mask of active x11drv_wm_state values */
+    DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     unsigned int lock_changes;  /* lock count for X11 change requests */
     HBITMAP     hWMIconBitmap;
     HBITMAP     hWMIconMask;
