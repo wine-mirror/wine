@@ -745,14 +745,27 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 void X11DRV_MapNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
-    HWND hwndFocus = GetFocus();
     WND *win;
+    int state;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!data->mapped) return;
 
-    if (!(win = WIN_GetPtr( hwnd ))) return;
+    if (!data->managed)
+    {
+        HWND hwndFocus = GetFocus();
+        if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
+        return;
+    }
 
-    if (data->managed && (win->dwStyle & WS_VISIBLE) && (win->dwStyle & WS_MINIMIZE))
+    state = get_window_wm_state( event->xmap.display, data );
+    if (state != NormalState)
+    {
+        TRACE( "win %p/%lx ignoring since state=%d\n", hwnd, data->whole_window, state );
+        return;
+    }
+
+    if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) == (WS_VISIBLE|WS_MINIMIZE))
     {
         int x, y;
         unsigned int width, height, border, depth;
@@ -773,6 +786,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
         X11DRV_X_to_window_rect( data, &rect );
 
+        if (!(win = WIN_GetPtr( hwnd ))) return;
         if (win->flags & WIN_RESTORE_MAX) style |= WS_MAXIMIZE;
         WIN_SetStyle( hwnd, style, WS_MINIMIZE );
         WIN_ReleasePtr( win );
@@ -783,8 +797,6 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_STATECHANGED );
         data->lock_changes--;
     }
-    else WIN_ReleasePtr( win );
-    if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
 }
 
 
@@ -795,13 +807,21 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
     WND *win;
+    int state;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!data->managed || !data->mapped) return;
+
+    state = get_window_wm_state( event->xunmap.display, data );
+    if (state != IconicState)
+    {
+        TRACE( "win %p/%lx ignoring since state=%d\n", hwnd, data->whole_window, state );
+        return;
+    }
 
     if (!(win = WIN_GetPtr( hwnd ))) return;
 
-    if ((win->dwStyle & WS_VISIBLE) && data->managed &&
-        X11DRV_is_window_rect_mapped( &win->rectWindow ))
+    if ((win->dwStyle & WS_VISIBLE) && X11DRV_is_window_rect_mapped( &win->rectWindow ))
     {
         if (win->dwStyle & WS_MAXIMIZE)
             win->flags |= WIN_RESTORE_MAX;
