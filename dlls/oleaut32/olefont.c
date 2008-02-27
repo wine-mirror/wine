@@ -1812,7 +1812,9 @@ static HRESULT WINAPI OLEFontImpl_GetSizeMax(
   pcbSize->u.LowPart += sizeof(BYTE);  /* StrLength */
 
   if (this->description.lpstrName!=0)
-    pcbSize->u.LowPart += lstrlenW(this->description.lpstrName);
+      pcbSize->u.LowPart += WideCharToMultiByte( CP_ACP, 0, this->description.lpstrName,
+                                                 strlenW(this->description.lpstrName),
+                                                 NULL, 0, NULL, NULL );
 
   return S_OK;
 }
