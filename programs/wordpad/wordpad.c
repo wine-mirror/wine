@@ -2269,7 +2269,6 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
     HWND hRulerWnd = GetDlgItem(hWnd, IDC_RULER);
     int rebarHeight = 0;
-    int rebarRows = 2;
 
     if (hwndStatusBar)
     {
@@ -2285,13 +2284,7 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     }
     if (hwndReBar)
     {
-        if(!is_bar_visible(BANDID_TOOLBAR))
-            rebarRows--;
-
-        if(!is_bar_visible(BANDID_FORMATBAR))
-            rebarRows--;
-
-        rebarHeight = rebarRows ? SendMessageW(hwndReBar, RB_GETBARHEIGHT, 0, 0) : 0;
+        rebarHeight = SendMessageW(hwndReBar, RB_GETBARHEIGHT, 0, 0);
 
         MoveWindow(hwndReBar, 0, 0, LOWORD(lParam), rebarHeight, TRUE);
     }
