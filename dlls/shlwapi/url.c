@@ -1580,14 +1580,18 @@ static HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 {
     HKEY newkey;
     DWORD data_len, dwType;
-    WCHAR reg_path[MAX_PATH];
     WCHAR value[MAX_PATH], data[MAX_PATH];
 
+    static const WCHAR prefix_keyW[] =
+        {'S','o','f','t','w','a','r','e',
+         '\\','M','i','c','r','o','s','o','f','t',
+         '\\','W','i','n','d','o','w','s',
+         '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+         '\\','U','R','L',
+         '\\','D','e','f','a','u','l','t','P','r','e','f','i','x',0};
+
     /* get and prepend default */
-    MultiByteToWideChar(0, 0,
-	 "Software\\Microsoft\\Windows\\CurrentVersion\\URL\\DefaultPrefix",
-			-1, reg_path, MAX_PATH);
-    RegOpenKeyExW(HKEY_LOCAL_MACHINE, reg_path, 0, 1, &newkey);
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, prefix_keyW, 0, 1, &newkey);
     data_len = MAX_PATH;
     value[0] = '@';
     value[1] = '\0';
