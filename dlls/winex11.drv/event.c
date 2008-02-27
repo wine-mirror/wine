@@ -21,6 +21,12 @@
 
 #include "config.h"
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
@@ -239,7 +245,7 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
 /***********************************************************************
  *           process_events
  */
-static int process_events( Display *display, ULONG_PTR mask )
+static int process_events( Display *display, Bool (*filter)(), ULONG_PTR arg )
 {
     XEvent event;
     HWND hwnd;
@@ -247,14 +253,14 @@ static int process_events( Display *display, ULONG_PTR mask )
     x11drv_event_handler handler;
 
     wine_tsx11_lock();
-    while (XCheckIfEvent( display, &event, filter_event, (char *)mask ))
+    while (XCheckIfEvent( display, &event, filter, (char *)arg ))
     {
         count++;
         if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
 
         if (!(handler = find_handler( event.type )))
         {
-            TRACE( "%s, ignoring\n", dbgstr_event( event.type ));
+            TRACE( "%s for win %lx, ignoring\n", dbgstr_event( event.type ), event.xany.window );
             continue;  /* no handler, ignore it */
         }
 
@@ -295,12 +301,12 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 
     data->process_event_count++;
 
-    if (process_events( data->display, mask )) ret = count - 1;
+    if (process_events( data->display, filter_event, mask )) ret = count - 1;
     else if (count || timeout)
     {
         ret = WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
                                         timeout, flags & MWMO_ALERTABLE );
-        if (ret == count - 1) process_events( data->display, mask );
+        if (ret == count - 1) process_events( data->display, filter_event, mask );
     }
     else ret = WAIT_TIMEOUT;
 
@@ -644,6 +650,42 @@ static void EVENT_PropertyNotify( HWND hwnd, XEvent *xev )
         break;
     }
 }
+
+
+/* event filter to wait for a WM_STATE change notification on a window */
+static Bool is_wm_state_notify( Display *display, XEvent *event, XPointer arg )
+{
+    return (event->type == PropertyNotify &&
+            event->xproperty.window == (Window)arg &&
+            event->xproperty.atom == x11drv_atom(WM_STATE));
+}
+
+/***********************************************************************
+ *           wait_for_withdrawn_state
+ */
+void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data )
+{
+    DWORD end = GetTickCount() + 2000;
+
+    if (!data->whole_window || !data->managed) return;
+
+    while (data->wm_state != WithdrawnState &&
+           !process_events( display, is_wm_state_notify, data->whole_window ))
+    {
+        struct pollfd pfd;
+        int timeout = end - GetTickCount();
+
+        TRACE( "waiting for window %p/%lx to become withdrawn\n", data->hwnd, data->whole_window );
+        pfd.fd = ConnectionNumber(display);
+        pfd.events = POLLIN;
+        if (timeout <= 0 || poll( &pfd, 1, timeout ) != 1)
+        {
+            FIXME( "window %p/%lx wait timed out\n", data->hwnd, data->whole_window );
+            return;
+        }
+    }
+}
+
 
 static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 {

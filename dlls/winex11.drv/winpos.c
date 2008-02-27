@@ -153,6 +153,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
             if (!data->mapped)
             {
                 TRACE( "mapping win %p\n", hwnd );
+                wait_for_withdrawn_state( display, data );
                 X11DRV_sync_window_style( display, data );
                 wine_tsx11_lock();
                 XMapWindow( display, data->whole_window );
@@ -385,9 +386,10 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     if (data->mapped && (!(new_style & WS_VISIBLE) || !X11DRV_is_window_rect_mapped( rectWindow )))
     {
-        TRACE( "unmapping win %p\n", hwnd );
+        TRACE( "unmapping win %p/%lx\n", hwnd, data->whole_window );
         wine_tsx11_lock();
-        XUnmapWindow( display, data->whole_window );
+        if (data->managed) XWithdrawWindow( display, data->whole_window, DefaultScreen(display) );
+        else XUnmapWindow( display, data->whole_window );
         wine_tsx11_unlock();
         data->mapped = FALSE;
         data->net_wm_state = 0;
@@ -403,7 +405,8 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
         if (!data->mapped)
         {
-            TRACE( "mapping win %p\n", hwnd );
+            TRACE( "mapping win %p/%lx\n", hwnd, data->whole_window );
+            wait_for_withdrawn_state( display, data );
             X11DRV_sync_window_style( display, data );
             wine_tsx11_lock();
             XMapWindow( display, data->whole_window );
