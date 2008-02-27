@@ -1,0 +1,44 @@
+/*
+ * NET.EXE - Wine-compatible net program
+ * Polish language support
+ *
+ * Copyright (C) 2007 Tim Schwartz
+ * Copyright (C) 2008 Mikolaj Zalewski
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "Sk³adnia polecenia:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_START_USAGE, "Podaj nazwê serwisu do uruchomienia.\n"
+    STRING_STOP_USAGE, "Podaj nazwê serwidu do zatrzymania.\n"
+    STRING_STOP_DEP, "Zatrzymujê serwis: %s\n"
+    STRING_CANT_STOP, "Nie uda³o siê zatrzymaæ serwisu %s\n"
+    STRING_NO_SCM, "Nie uda³o siê otrzymaæ uchwytu do mened¿era serwisów.\n"
+    STRING_NO_SVCHANDLE, "Nie uda³o siê uzyskaæ uchwytu do serwisu.\n"
+    STRING_START_SVC, "Serwis %s jest uruchamiany...\n"
+    STRING_START_SVC_SUCCESS, "Serwis %s zosta³ pomyœlnie uruchamiany.\n"
+    STRING_START_SVC_FAIL, "Uruchomienie serwisu %s nie powiod³o siê.\n"
+    STRING_STOP_SVC, "Serwis %s jest zatrzymywany...\n"
+    STRING_STOP_SVC_SUCCESS, "Serwis %s zosta³ pomyœlnie zatrzymany.\n"
+    STRING_STOP_SVC_FAIL, "Zatrzymanie serwisu %s nie powiod³o siê.\n"
+    STRING_HELP_USAGE, "Sk³adnia tego polecenia:\n\nNET HELP polecenie\n    -lub-\nNET polecenie /HELP\n\n   Dostêpne polecenia:\n   NET HELP    NET START     NET STOP\n"
+    STRING_NO_ENTRIES, "There are no entries in the list.\n"
+    STRING_USE_HEADER, "\nStatus    Lokalny  Zdalny\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY, "%s      %S      %S      Otwarte zasoby: %lu\n"
+}
