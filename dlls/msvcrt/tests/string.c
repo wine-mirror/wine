@@ -50,6 +50,7 @@ static int* (*pmemcmp)(void *, const void *, size_t n);
 static int (*pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (*pstrcat_s)(char *dst, size_t len, const char *src);
 static int (*p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
+static int (*p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -562,6 +563,47 @@ static void test__mbsnbcpy_s(void)
        dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
 }
 
+static void test_wcscpy_s(void)
+{
+    static const WCHAR szLongText[] = { 'T','h','i','s','A','L','o','n','g','s','t','r','i','n','g',0 };
+    static WCHAR szDest[18];
+    static WCHAR szDestShort[8];
+    int ret;
+
+    if(!p_wcscpy_s)
+    {
+        skip("wcscpy_s not found\n");
+        return;
+    }
+
+    /* Test NULl Dest */
+    ret = p_wcscpy_s(NULL, 18, szLongText);
+    ok(ret == EINVAL, "p_wcscpy_s expect EINVAL got %d\n", ret);
+
+    /* Test NULl Source */
+    szDest[0] = 'A';
+    ret = p_wcscpy_s(szDest, 18, NULL);
+    ok(ret == EINVAL, "expected EINVAL got %d\n", ret);
+    ok(szDest[0] == 0, "szDest[0] not 0\n");
+
+    /* Test invalid size */
+    szDest[0] = 'A';
+    ret = p_wcscpy_s(szDest, 0, szLongText);
+    ok(ret == ERANGE, "expected ERANGE got %d\n", ret);
+    ok(szDest[0] == 0, "szDest[0] not 0\n");
+
+    /* Copy same buffer size */
+    ret = p_wcscpy_s(szDest, 18, szLongText);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ok(lstrcmpW(szDest, szLongText) == 0, "szDest != szLongText\n");
+
+    /* Copy smaller buffer size */
+    szDest[0] = 'A';
+    ret = p_wcscpy_s(szDestShort, 8, szLongText);
+    ok(ret == EINVAL, "expected EINVAL got %d\n", ret);
+    ok(szDestShort[0] == 0, "szDestShort[0] not 0\n");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -577,6 +619,7 @@ START_TEST(string)
     SET(pstrcpy_s,"strcpy_s");
     SET(pstrcat_s,"strcat_s");
     SET(p_mbsnbcpy_s,"_mbsnbcpy_s");
+    SET(p_wcscpy_s,"wcscpy_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -599,4 +642,6 @@ START_TEST(string)
     test_strcpy_s();
     test_strcat_s();
     test__mbsnbcpy_s();
+
+    test_wcscpy_s();
 }

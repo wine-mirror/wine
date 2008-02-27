@@ -971,3 +971,41 @@ INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
 {
     return isxdigitW( wc );
 }
+
+/*********************************************************************
+ *		wcscpy_s (MSVCRT.@)
+ */
+INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, const  MSVCRT_wchar_t *wcSrc)
+{
+    INT size = 0;
+
+    if(!wcDest)
+        return MSVCRT_EINVAL;
+
+    if(!wcSrc)
+    {
+        wcDest[0] = 0;
+        return MSVCRT_EINVAL;
+    }
+
+    if(numElement == 0)
+    {
+        wcDest[0] = 0;
+        return MSVCRT_ERANGE;
+    }
+
+    size = strlenW(wcSrc) + 1;
+
+    if(size > numElement)
+    {
+        wcDest[0] = 0;
+        return MSVCRT_EINVAL;
+    }
+
+    if(size > numElement)
+        size = numElement;
+
+    memcpy( wcDest, wcSrc, size*sizeof(WCHAR) );
+
+    return 0;
+}
