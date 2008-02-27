@@ -346,7 +346,7 @@ static LPWSTR build_default_format(const MSIRECORD* record)
         sprintfW(index, fmt_index, i);
         str = MSI_RecordGetString(record, i);
         len = (str) ? lstrlenW(str) : 0;
-        len += (sizeof(fmt_null) - 3) + lstrlenW(index);
+        len += (sizeof(fmt_null)/sizeof(fmt_null[0]) - 3) + lstrlenW(index);
         size += len;
 
         if (len > max_len)
