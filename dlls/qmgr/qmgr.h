@@ -28,6 +28,7 @@
 #include "bits.h"
 
 #include <string.h>
+#include "wine/list.h"
 
 /* Background copy job vtbl and related data */
 typedef struct
@@ -37,6 +38,8 @@ typedef struct
     LPWSTR displayName;
     BG_JOB_TYPE type;
     GUID jobId;
+    struct list files;
+    BG_JOB_PROGRESS jobProgress;
 } BackgroundCopyJobImpl;
 
 /* Enum background copy jobs vtbl and related data */
@@ -52,6 +55,7 @@ typedef struct
     const IBackgroundCopyFileVtbl *lpVtbl;
     LONG ref;
     BG_FILE_INFO info;
+    struct list entryFromJob;
 } BackgroundCopyFileImpl;
 
 /* Background copy manager vtbl and related data */
@@ -73,6 +77,8 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
                                      GUID *pJobId, LPVOID *ppObj);
 HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
                                           IBackgroundCopyManager* copyManager);
+HRESULT BackgroundCopyFileConstructor(LPCWSTR remoteName,
+                                      LPCWSTR localName, LPVOID *ppObj);
 
 /* Little helper functions */
 static inline char *

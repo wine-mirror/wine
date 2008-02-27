@@ -80,8 +80,25 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFile(
     LPCWSTR RemoteUrl,
     LPCWSTR LocalName)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+    IBackgroundCopyFile *pFile;
+    BackgroundCopyFileImpl *file;
+    HRESULT res;
+
+    /* We should return E_INVALIDARG in these cases.  */
+    FIXME("Check for valid filenames and supported protocols\n");
+
+    res = BackgroundCopyFileConstructor(RemoteUrl, LocalName, (LPVOID *) &pFile);
+    if (res != S_OK)
+        return res;
+
+    /* Add a reference to the file to file list */
+    IBackgroundCopyFile_AddRef(pFile);
+    file = (BackgroundCopyFileImpl *) pFile;
+    list_add_head(&This->files, &file->entryFromJob);
+    ++This->jobProgress.FilesTotal;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_EnumFiles(
@@ -413,6 +430,12 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
         return hr;
     }
     memcpy(pJobId, &This->jobId, sizeof(GUID));
+
+    list_init(&This->files);
+    This->jobProgress.BytesTotal = BG_SIZE_UNKNOWN;
+    This->jobProgress.BytesTransferred = 0;
+    This->jobProgress.FilesTotal = 0;
+    This->jobProgress.FilesTransferred = 0;
 
     *ppObj = &This->lpVtbl;
     return S_OK;
