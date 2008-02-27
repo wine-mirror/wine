@@ -348,7 +348,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
     if (!(fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC, (HGDIOBJ *)&hFont,
                                      &font_funcs ))) return 0;
 
-    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
+    fontPtr->logfont = *plf;
 
     TRACE("(%d %d %d %d %x %d %x %d %d) %s %s %s %s => %p\n",
           plf->lfHeight, plf->lfWidth,
@@ -2536,7 +2536,7 @@ BOOL WINAPI TranslateCharsetInfo(
       return FALSE;
     }
     if (index >= MAXTCIINDEX || FONT_tci[index].ciCharset == DEFAULT_CHARSET) return FALSE;
-    memcpy(lpCs, &FONT_tci[index], sizeof(CHARSETINFO));
+    *lpCs = FONT_tci[index];
     return TRUE;
 }
 
@@ -3208,4 +3208,31 @@ BOOL WINAPI FontIsLinked(HDC hdc)
     release_dc_ptr(dc);
     TRACE("returning %d\n", ret);
     return ret;
+}
+
+/*************************************************************
+ *           GdiRealizationInfo    (GDI32.@)
+ *
+ * Returns a structure that contains some font information.
+ */
+typedef struct
+{
+    DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
+    DWORD unknown1;    /* keeps incrementing - num of fonts that have been created or selected into a dc ?? */
+    DWORD unknown2;    /* fixed for a given font - looks like it could be the order of the face in the font list or the order
+                          in which the face was first rendered. */
+} realization_info_t;
+
+BOOL WINAPI GdiRealizationInfo(HDC hdc, realization_info_t *info)
+{
+    UINT otm_size;
+    FIXME("(%p, %p): stub!\n", hdc, info);
+
+    info->flags = 1;
+    otm_size = GetOutlineTextMetricsW(hdc, 0, NULL);
+    if(otm_size) info->flags |= 2;  /* scalable */
+
+    info->unknown1 = -1;
+    info->unknown2 = -1;
+    return TRUE;
 }

@@ -38,6 +38,7 @@ BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
 DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
 DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
+BOOL  (WINAPI *pGdiRealizationInfo)(HDC hdc, DWORD *);
 
 static HMODULE hgdi32 = 0;
 
@@ -51,6 +52,7 @@ static void init(void)
     pGetFontUnicodeRanges = (void *)GetProcAddress(hgdi32, "GetFontUnicodeRanges");
     pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
     pGetGlyphIndicesW = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesW");
+    pGdiRealizationInfo = (void *)GetProcAddress(hgdi32, "GdiRealizationInfo");
 }
 
 static INT CALLBACK is_truetype_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
@@ -1745,6 +1747,53 @@ static void test_nonexistent_font(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_GdiRealizationInfo(void)
+{
+    HDC hdc;
+    DWORD info[4];
+    BOOL r;
+    HFONT hfont, hfont_old;
+    LOGFONTA lf;
+
+    if(!pGdiRealizationInfo)
+    {
+        skip("GdiRealizationInfo not available\n");
+        return;
+    }
+
+    hdc = GetDC(0);
+
+    memset(info, 0xcc, sizeof(info));
+    r = pGdiRealizationInfo(hdc, info);
+    ok(r != 0, "ret 0\n");
+    ok(info[0] == 1, "info[0] = %x for the system font\n", info[0]);
+    ok(info[3] == 0xcccccccc, "structure longer than 3 dwords");
+
+    if (!is_truetype_font_installed("Arial"))
+    {
+        skip("skipping GdiRealizationInfo with truetype font\n");
+        goto end;
+    }
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Arial");
+    lf.lfHeight = 20;
+    lf.lfWeight = FW_NORMAL;
+    hfont = CreateFontIndirectA(&lf);
+    hfont_old = SelectObject(hdc, hfont);
+
+    memset(info, 0xcc, sizeof(info));
+    r = pGdiRealizationInfo(hdc, info);
+    ok(r != 0, "ret 0\n");
+    ok(info[0] == 3, "info[0] = %x for arial\n", info[0]);
+    ok(info[3] == 0xcccccccc, "structure longer than 3 dwords");
+
+    DeleteObject(SelectObject(hdc, hfont_old));
+
+ end:
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -1778,4 +1827,5 @@ START_TEST(font)
     else
         skip("Arial Black or Symbol/Wingdings is not installed\n");
     test_GetTextMetrics();
+    test_GdiRealizationInfo();
 }

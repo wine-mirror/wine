@@ -206,7 +206,7 @@
 # @ stub GdiProcessSetup
 # @ stub GdiQueryFonts
 # @ stub GdiQueryTable
-# @ stub GdiRealizationInfo
+@ stdcall GdiRealizationInfo(long ptr)
 # @ stub GdiReleaseDC
 @ stub GdiReleaseLocalDC
 # @ stub GdiResetDCEMF
