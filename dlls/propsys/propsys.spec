@@ -93,7 +93,7 @@
 @ stub PSSetPropertyValue
 @ stub PSStringFromPropertyKey
 @ stub PSUnregisterPropertySchema
-@ stub PropVariantChangeType
+@ stdcall PropVariantChangeType(ptr ptr long long)
 @ stub PropVariantCompareEx
 @ stub PropVariantGetBooleanElem
 @ stub PropVariantGetDoubleElem

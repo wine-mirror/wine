@@ -206,6 +206,8 @@ interface IPropertyStorage : IUnknown
 
   typedef struct tagPROPVARIANT *LPPROPVARIANT;
 
+  cpp_quote("#define REFPROPVARIANT const PROPVARIANT *")
+
   cpp_quote("#define PIDDI_THUMBNAIL 0x00000002L /* VT_BLOB */")
   cpp_quote("")
   cpp_quote("#define PIDSI_TITLE        0x00000002L /* VT_LPSTR */")

@@ -6,7 +6,8 @@ MODULE    = propsys.dll
 IMPORTS   = kernel32
 
 C_SRCS = \
-	propsys_main.c
+	propsys_main.c \
+	propvar.c
 
 @MAKE_DLL_RULES@
 
