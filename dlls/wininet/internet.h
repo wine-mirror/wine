@@ -246,25 +246,6 @@ typedef struct _WININETFTPSESSIONW
 } WININETFTPSESSIONW, *LPWININETFTPSESSIONW;
 
 
-typedef struct
-{
-    BOOL bIsDirectory;
-    LPWSTR lpszName;
-    DWORD nSize;
-    struct tm tmLastModified;
-    unsigned short permissions;
-} FILEPROPERTIESW, *LPFILEPROPERTIESW;
-
-
-typedef struct
-{
-    WININETHANDLEHEADER hdr;
-    WININETFTPSESSIONW *lpFtpSession;
-    DWORD index;
-    DWORD size;
-    LPFILEPROPERTIESW lpafp;
-} WININETFTPFINDNEXTW, *LPWININETFTPFINDNEXTW;
-
 struct WORKREQ_FTPPUTFILEW
 {
     LPWSTR lpszLocalFile;
@@ -432,7 +413,6 @@ INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
     LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD_PTR dwContext);
 BOOLAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszCurrentDirectory,
 	LPDWORD lpdwCurrentDirectory);
-BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileData);
 BOOL FTP_FtpRenameFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszSrc, LPCWSTR lpszDest);
 BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
 BOOL FTP_FtpDeleteFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName);

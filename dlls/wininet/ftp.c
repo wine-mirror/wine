@@ -61,6 +61,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
+typedef struct
+{
+    BOOL bIsDirectory;
+    LPWSTR lpszName;
+    DWORD nSize;
+    struct tm tmLastModified;
+    unsigned short permissions;
+} FILEPROPERTIESW, *LPFILEPROPERTIESW;
+
+typedef struct
+{
+    WININETHANDLEHEADER hdr;
+    WININETFTPSESSIONW *lpFtpSession;
+    DWORD index;
+    DWORD size;
+    LPFILEPROPERTIESW lpafp;
+} WININETFTPFINDNEXTW, *LPWININETFTPFINDNEXTW;
+
 #define DATA_PACKET_SIZE 	0x2000
 #define szCRLF 			"\r\n"
 #define MAX_BACKLOG 		5
@@ -145,6 +163,7 @@ static BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR 
 static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
 	LPWIN32_FIND_DATAW lpFindFileData, DWORD_PTR dwContext);
 static DWORD FTP_SetResponseError(DWORD dwResponse);
+static BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileData);
 
 /***********************************************************************
  *           FtpPutFileA (WININET.@)
@@ -3241,7 +3260,7 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
  *   FALSE on failure
  *
  */
-BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileData)
+static BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileData)
 {
     BOOL bSuccess = FALSE;
 
