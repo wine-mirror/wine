@@ -17,6 +17,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* make sure the structures work with a comctl32 v5.x */
+#define _WIN32_WINNT 0x500
+#define _WIN32_IE 0x500
+
 #include <assert.h>
 #include <stdarg.h>
 
@@ -252,6 +256,11 @@ rbsize_result_t rbsize_results[] = {
     { {328,   0, 511,  20}, 0x00, 183}, { {511,   0, 672,  20}, 0x00, 161},
     { {  0,  20, 672,  40}, 0x00, 200},
   }, },
+  { {0, 0, 672, 56}, 56, 2, {28, 28, }, 5, {
+    { {  0,   0, 114,  28}, 0x00, 40}, { {114,   0, 328,  28}, 0x00, 214},
+    { {328,   0, 511,  28}, 0x00, 183}, { {511,   0, 672,  28}, 0x00, 161},
+    { {  0,  28, 672,  56}, 0x00, 200},
+  }, },
   { {0, 0, 672, 0}, 0, 0, {0, }, 0, {{{0, 0, 0, 0}, 0, 0},
   }, },
   { {0, 0, 672, 65}, 65, 1, {65, }, 3, {
@@ -329,6 +338,8 @@ static void layout_test(void)
 {
     HWND hRebar = NULL;
     REBARBANDINFO rbi;
+    HIMAGELIST himl;
+    REBARINFO ri;
 
     rebuild_rebar(&hRebar);
     check_sizes();
@@ -404,6 +415,17 @@ static void layout_test(void)
     SendMessageA(hRebar, RB_MINIMIZEBAND, 2, 0);
     check_sizes();
     SendMessageA(hRebar, RB_MINIMIZEBAND, 0, 0);
+    check_sizes();
+
+    /* an image will increase the band height */
+    himl = ImageList_LoadImage(LoadLibrary("comctl32"), MAKEINTRESOURCE(121), 24, 2, CLR_NONE, IMAGE_BITMAP, LR_DEFAULTCOLOR);
+    ri.cbSize = sizeof(ri);
+    ri.fMask = RBIM_IMAGELIST;
+    ri.himl = himl;
+    ok(SendMessage(hRebar, RB_SETBARINFO, 0, (LPARAM)&ri), "RB_SETBARINFO failed\n");
+    rbi.fMask = RBBIM_IMAGE;
+    rbi.iImage = 1;
+    SendMessage(hRebar, RB_SETBANDINFO, 1, (LPARAM)&rbi);
     check_sizes();
 
     /* VARHEIGHT resizing test on a horizontal rebar */
@@ -793,7 +815,7 @@ START_TEST(rebar)
     MSG msg;
     RECT rc;
 
-    hComctl32 = GetModuleHandleA("comctl32.dll");
+    hComctl32 = LoadLibraryA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
     if (!pInitCommonControlsEx)
     {

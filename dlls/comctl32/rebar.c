@@ -1513,7 +1513,7 @@ REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
      /*  the internal band structure: cxHeader, cyHeader, cxMinBand, cyMinBand, fStatus */
 {
     UINT header=0;
-    UINT textheight=0;
+    UINT textheight=0, imageheight = 0;
     UINT i, nonfixed;
     REBAR_BAND *tBand;
 
@@ -1576,11 +1576,11 @@ REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 	lpBand->fStatus |= HAS_IMAGE;
         if (infoPtr->dwStyle & CCS_VERT) {
 	   header += (infoPtr->imageSize.cy + REBAR_POST_IMAGE);
-	   lpBand->cyMinBand = infoPtr->imageSize.cx + 2;
+           imageheight = infoPtr->imageSize.cx + 4;
 	}
 	else {
 	   header += (infoPtr->imageSize.cx + REBAR_POST_IMAGE);
-	   lpBand->cyMinBand = infoPtr->imageSize.cy + 2;
+           imageheight = infoPtr->imageSize.cy + 4;
 	}
     }
 
@@ -1610,7 +1610,7 @@ REBAR_ValidateBand (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     /* check if user overrode the header value */
     if (!(lpBand->fStyle & RBBS_UNDOC_FIXEDHEADER))
         lpBand->cxHeader = header;
-    lpBand->cyHeader = textheight;
+    lpBand->cyHeader = max(textheight, imageheight);
 
     /* Now compute minimum size of child window */
     update_min_band_height(infoPtr, lpBand);       /* update lpBand->cyMinBand from cyHeader and cyChild*/
@@ -2633,7 +2633,7 @@ REBAR_SetBandInfoT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnic
 
     REBAR_DumpBand (infoPtr);
 
-    if (bChanged && (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_STYLE))) {
+    if (bChanged && (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_STYLE | RBBIM_IMAGE))) {
 	  REBAR_Layout(infoPtr);
 	  InvalidateRect(infoPtr->hwndSelf, 0, 1);
     }
