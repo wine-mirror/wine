@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 C_SRCS = \
 	enum_jobs.c \
 	factory.c \
+	file.c \
 	job.c \
 	qmgr.c \
 	qmgr_main.c \

@@ -46,6 +46,14 @@ typedef struct
     LONG ref;
 } EnumBackgroundCopyJobsImpl;
 
+/* Background copy file vtbl and related data */
+typedef struct
+{
+    const IBackgroundCopyFileVtbl *lpVtbl;
+    LONG ref;
+    BG_FILE_INFO info;
+} BackgroundCopyFileImpl;
+
 /* Background copy manager vtbl and related data */
 typedef struct
 {
