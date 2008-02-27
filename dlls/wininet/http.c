@@ -1422,7 +1422,8 @@ static const HANDLEHEADERVtbl HTTPREQVtbl = {
     HTTPREQ_Destroy,
     HTTPREQ_CloseConnection,
     HTTPREQ_SetOption,
-    HTTPREQ_WriteFile
+    HTTPREQ_WriteFile,
+    NULL
 };
 
 /***********************************************************************
@@ -2944,6 +2945,7 @@ static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
     HTTPSESSION_Destroy,
+    NULL,
     NULL,
     NULL,
     NULL

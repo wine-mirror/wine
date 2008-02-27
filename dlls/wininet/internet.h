@@ -140,6 +140,7 @@ typedef struct {
     void (*CloseConnection)(WININETHANDLEHEADER*);
     DWORD (*SetOption)(WININETHANDLEHEADER*,DWORD,void*,DWORD);
     BOOL (*WriteFile)(WININETHANDLEHEADER*,const void*,DWORD,DWORD*);
+    DWORD (*FindNextFileW)(WININETHANDLEHEADER*,void*);
 } HANDLEHEADERVtbl;
 
 struct _WININETHANDLEHEADER
@@ -429,7 +430,6 @@ BOOLAPI FTP_FtpSetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDire
 BOOLAPI FTP_FtpCreateDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
 INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
     LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD_PTR dwContext);
-BOOL WINAPI FTP_FindNextFileW(LPWININETFTPFINDNEXTW lpwh, LPVOID lpvFindData);
 BOOLAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszCurrentDirectory,
 	LPDWORD lpdwCurrentDirectory);
 BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileData);

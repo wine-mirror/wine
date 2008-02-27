@@ -475,6 +475,7 @@ static const HANDLEHEADERVtbl APPINFOVtbl = {
     APPINFO_Destroy,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -944,53 +945,32 @@ BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
  *    FALSE on failure
  *
  */
-static void AsyncFtpFindNextFileProc(WORKREQUEST *workRequest)
-{
-    struct WORKREQ_FTPFINDNEXTW *req = &workRequest->u.FtpFindNextW;
-    LPWININETFTPFINDNEXTW lpwh = (LPWININETFTPFINDNEXTW) workRequest->hdr;
-
-    TRACE("%p\n", lpwh);
-
-    FTP_FindNextFileW(lpwh, req->lpFindFileData);
-}
-
 BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
 {
-    LPWININETAPPINFOW hIC = NULL;
-    LPWININETFTPFINDNEXTW lpwh;
-    BOOL bSuccess = FALSE;
+    WININETHANDLEHEADER *hdr;
+    DWORD res;
 
     TRACE("\n");
 
-    lpwh = (LPWININETFTPFINDNEXTW) WININET_GetObject( hFind );
-    if (NULL == lpwh || lpwh->hdr.htype != WH_HFTPFINDNEXT)
-    {
-        FIXME("Only FTP supported\n");
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        goto lend;
+    hdr = WININET_GetObject(hFind);
+    if(!hdr) {
+        WARN("Invalid handle\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
     }
 
-    hIC = lpwh->lpFtpSession->lpAppInfo;
-    if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
-    {
-        WORKREQUEST workRequest;
-        struct WORKREQ_FTPFINDNEXTW *req;
-
-        workRequest.asyncproc = AsyncFtpFindNextFileProc;
-        workRequest.hdr = WININET_AddRef( &lpwh->hdr );
-        req = &workRequest.u.FtpFindNextW;
-        req->lpFindFileData = lpvFindData;
-
-	bSuccess = INTERNET_AsyncCall(&workRequest);
+    if(hdr->vtbl->FindNextFileW) {
+        res = hdr->vtbl->FindNextFileW(hdr, lpvFindData);
+    }else {
+        WARN("Handle doesn't support NextFile\n");
+        res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
     }
-    else
-    {
-        bSuccess = FTP_FindNextFileW(lpwh, lpvFindData);
-    }
-lend:
-    if( lpwh )
-        WININET_Release( &lpwh->hdr );
-    return bSuccess;
+
+    WININET_Release(hdr);
+
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 /***********************************************************************

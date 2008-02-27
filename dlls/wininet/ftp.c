@@ -1170,7 +1170,8 @@ static const HANDLEHEADERVtbl FTPFILEVtbl = {
     FTPFILE_Destroy,
     NULL,
     NULL,
-    FTPFILE_WriteFile
+    FTPFILE_WriteFile,
+    NULL
 };
 
 /***********************************************************************
@@ -2087,6 +2088,7 @@ static void FTPSESSION_CloseConnection(WININETHANDLEHEADER *hdr)
 static const HANDLEHEADERVtbl FTPSESSIONVtbl = {
     FTPSESSION_Destroy,
     FTPSESSION_CloseConnection,
+    NULL,
     NULL,
     NULL
 };
@@ -3083,63 +3085,6 @@ recv_end:
     return  (nRC != -1);
 }
 
-
-/***********************************************************************
- *           FTP_FindNextFileW (Internal)
- *
- * Continues a file search from a previous call to FindFirstFile
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
-BOOL WINAPI FTP_FindNextFileW(LPWININETFTPFINDNEXTW lpwh, LPVOID lpvFindData)
-{
-    BOOL bSuccess = TRUE;
-    LPWIN32_FIND_DATAW lpFindFileData;
-
-    TRACE("index(%d) size(%d)\n", lpwh->index, lpwh->size);
-
-    assert (lpwh->hdr.htype == WH_HFTPFINDNEXT);
-
-    /* Clear any error information */
-    INTERNET_SetLastError(0);
-
-    lpFindFileData = (LPWIN32_FIND_DATAW) lpvFindData;
-    ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
-
-    if (lpwh->index >= lpwh->size)
-    {
-        INTERNET_SetLastError(ERROR_NO_MORE_FILES);
-        bSuccess = FALSE;
-	goto lend;
-    }
-
-    FTP_ConvertFileProp(&lpwh->lpafp[lpwh->index], lpFindFileData);
-    lpwh->index++;
-
-    TRACE("\nName: %s\nSize: %d\n", debugstr_w(lpFindFileData->cFileName), lpFindFileData->nFileSizeLow);
-
-lend:
-
-    if (lpwh->hdr.dwFlags & INTERNET_FLAG_ASYNC)
-    {
-        INTERNET_ASYNC_RESULT iar;
-
-        iar.dwResult = (DWORD)bSuccess;
-        iar.dwError = iar.dwError = bSuccess ? ERROR_SUCCESS :
-                                               INTERNET_GetLastError();
-
-        INTERNET_SendCallback(&lpwh->hdr, lpwh->hdr.dwContext,
-                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                              sizeof(INTERNET_ASYNC_RESULT));
-    }
-
-    return bSuccess;
-}
-
-
 /***********************************************************************
  *           FTPFINDNEXT_Destroy (internal)
  *
@@ -3163,11 +3108,74 @@ static void FTPFINDNEXT_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwfn);
 }
 
+static DWORD WINAPI FTPFINDNEXT_FindNextFileProc(WININETFTPFINDNEXTW *find, LPVOID data)
+{
+    WIN32_FIND_DATAW *find_data = data;
+    DWORD res = ERROR_SUCCESS;
+
+    TRACE("index(%d) size(%d)\n", find->index, find->size);
+
+    ZeroMemory(find_data, sizeof(WIN32_FIND_DATAW));
+
+    if (find->index < find->size) {
+        FTP_ConvertFileProp(&find->lpafp[find->index], find_data);
+        find->index++;
+
+        TRACE("Name: %s\nSize: %d\n", debugstr_w(find_data->cFileName), find_data->nFileSizeLow);
+    }else {
+        res = ERROR_NO_MORE_FILES;
+    }
+
+    if (find->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    {
+        INTERNET_ASYNC_RESULT iar;
+
+        iar.dwResult = (res == ERROR_SUCCESS);
+        iar.dwError = res;
+
+        INTERNET_SendCallback(&find->hdr, find->hdr.dwContext,
+                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                              sizeof(INTERNET_ASYNC_RESULT));
+    }
+
+    return res;
+}
+
+static void FTPFINDNEXT_AsyncFindNextFileProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPFINDNEXTW *req = &workRequest->u.FtpFindNextW;
+
+    FTPFINDNEXT_FindNextFileProc((WININETFTPFINDNEXTW*)workRequest->hdr, req->lpFindFileData);
+}
+
+static DWORD FTPFINDNEXT_FindNextFileW(WININETHANDLEHEADER *hdr, void *data)
+{
+    WININETFTPFINDNEXTW *find = (WININETFTPFINDNEXTW*)hdr;
+
+    if (find->lpFtpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    {
+        WORKREQUEST workRequest;
+        struct WORKREQ_FTPFINDNEXTW *req;
+
+        workRequest.asyncproc = FTPFINDNEXT_AsyncFindNextFileProc;
+        workRequest.hdr = WININET_AddRef( &find->hdr );
+        req = &workRequest.u.FtpFindNextW;
+        req->lpFindFileData = data;
+
+	INTERNET_AsyncCall(&workRequest);
+
+        return ERROR_SUCCESS;
+    }
+
+    return FTPFINDNEXT_FindNextFileProc(find, data);
+}
+
 static const HANDLEHEADERVtbl FTPFINDNEXTVtbl = {
     FTPFINDNEXT_Destroy,
     NULL,
     NULL,
-    NULL
+    NULL,
+    FTPFINDNEXT_FindNextFileW
 };
 
 /***********************************************************************
