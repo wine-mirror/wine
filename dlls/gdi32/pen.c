@@ -265,7 +265,7 @@ static INT PEN_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer )
             count == sizeof(EXTLOGPEN))
         {
             EXTLOGPEN *elp = buffer;
-            memcpy(elp, &pen->logpen, sizeof(EXTLOGPEN));
+            *elp = pen->logpen;
             elp->elpWidth = 0;
             return sizeof(EXTLOGPEN);
         }

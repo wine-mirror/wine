@@ -608,7 +608,7 @@ BOOL GDI_Init(void)
 
     /* For the default gui font, we use the lfHeight member in deffonts as a place-holder
        for the point size so we must convert this into a true height */
-    memcpy(&default_gui_font, &deffonts->DefaultGuiFont, sizeof(default_gui_font));
+    default_gui_font = deffonts->DefaultGuiFont;
     default_gui_font.lfHeight = -MulDiv(default_gui_font.lfHeight, get_dpi(), 72);
     stock_objects[DEFAULT_GUI_FONT]    = CreateFontIndirectW( &default_gui_font );
 

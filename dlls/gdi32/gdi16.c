@@ -184,7 +184,7 @@ static void newtextmetricex_W_to_16( const NEWTEXTMETRICEXW *ptmW,
     ptm16->ntmTm.ntmSizeEM = ptmW->ntmTm.ntmSizeEM;
     ptm16->ntmTm.ntmCellHeight = ptmW->ntmTm.ntmCellHeight;
     ptm16->ntmTm.ntmAvgWidth = ptmW->ntmTm.ntmAvgWidth;
-    memcpy(&ptm16->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
+    ptm16->ntmFontSig = ptmW->ntmFontSig;
 }
 
 /*

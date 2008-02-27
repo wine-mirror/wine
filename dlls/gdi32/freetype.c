@@ -1220,7 +1220,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
                       winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
                 if(TranslateCharsetInfo((DWORD*)(UINT_PTR)winfnt_header.charset, &csi, TCI_SRCCHARSET))
-                    memcpy(&fs, &csi.fs, sizeof(csi.fs));
+                    fs = csi.fs;
                 internal_leading = winfnt_header.internal_leading;
             }
 #endif
@@ -1278,7 +1278,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             face->font_version = pHeader ? pHeader->Font_Revision : 0;
             face->family = family;
             face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
-            memcpy(&face->fs, &fs, sizeof(face->fs));
+            face->fs = fs;
             memset(&face->fs_links, 0, sizeof(face->fs_links));
 
             if(FT_IS_SCALABLE(ft_face)) {
@@ -1513,7 +1513,7 @@ static BOOL init_system_links(void)
             {
                 LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
                 {
-                    memcpy(&face->fs_links, &fs, sizeof(fs));
+                    face->fs_links = fs;
                 }
             }
             list_add_tail(&system_links, &font_link->entry);
@@ -2784,7 +2784,7 @@ static GdiFont *find_in_cache(HFONT hfont, LOGFONTW *plf, XFORM *pxf, BOOL can_u
     HFONTLIST *hflist;
     struct list *font_elem_ptr, *hfontlist_elem_ptr;
 
-    memcpy(&fd.lf, plf, sizeof(LOGFONTW));
+    fd.lf = *plf;
     memcpy(&fd.matrix, pxf, sizeof(FMAT2));
     fd.can_use_bitmap = can_use_bitmap;
     calc_hash(&fd);
@@ -3003,7 +3003,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     ret = alloc_font();
 
      memcpy(&ret->font_desc.matrix, &dc->xformWorld2Vport, sizeof(FMAT2));
-     memcpy(&ret->font_desc.lf, &lf, sizeof(LOGFONTW));
+     ret->font_desc.lf = lf;
      ret->font_desc.can_use_bitmap = can_use_bitmap;
      calc_hash(&ret->font_desc);
      hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
@@ -3209,7 +3209,7 @@ found:
     ret->fake_italic = (it && !face->Italic);
     ret->fake_bold = (bd && !face->Bold);
 
-    memcpy(&ret->fs, &face->fs, sizeof(FONTSIGNATURE));
+    ret->fs = face->fs;
 
     if(csi.fs.fsCsb[0]) {
         ret->charset = lf.lfCharSet;
@@ -3378,8 +3378,8 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     if (face->cached_enum_data)
     {
         TRACE("Cached\n");
-        memcpy(pelf, &face->cached_enum_data->elf, sizeof(ENUMLOGFONTEXW));
-        memcpy(pntm, &face->cached_enum_data->ntm, sizeof(NEWTEXTMETRICEXW));
+        *pelf = face->cached_enum_data->elf;
+        *pntm = face->cached_enum_data->ntm;
         *ptype = face->cached_enum_data->type;
         return;
     }
@@ -3434,7 +3434,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     pntm->ntmTm.ntmFlags = face->ntmFlags;
     pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
     pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
-    memcpy(&pntm->ntmFontSig, &face->fs, sizeof(FONTSIGNATURE));
+    pntm->ntmFontSig = face->fs;
 
     pelf->elfScript[0] = '\0'; /* This will get set in WineEngEnumFonts */
 
@@ -3463,8 +3463,8 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     face->cached_enum_data = HeapAlloc(GetProcessHeap(), 0, sizeof(*face->cached_enum_data));
     if (face->cached_enum_data)
     {
-        memcpy(&face->cached_enum_data->elf, pelf, sizeof(ENUMLOGFONTEXW));
-        memcpy(&face->cached_enum_data->ntm, pntm, sizeof(NEWTEXTMETRICEXW));
+        face->cached_enum_data->elf = *pelf;
+        face->cached_enum_data->ntm = *pntm;
         face->cached_enum_data->type = *ptype;
     }
 
@@ -3506,7 +3506,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
         if(psub) {
             TRACE("substituting %s -> %s\n", debugstr_w(plf->lfFaceName),
                   debugstr_w(psub->to.name));
-            memcpy(&lf, plf, sizeof(lf));
+            lf = *plf;
             strcpyW(lf.lfFaceName, psub->to.name);
             plf = &lf;
         }
@@ -4305,7 +4305,7 @@ BOOL WineEngGetTextMetrics(GdiFont *font, LPTEXTMETRICW ptm)
         LeaveCriticalSection( &freetype_cs );
         return FALSE;
     }
-    memcpy(ptm, &font->potm->otmTextMetrics, sizeof(*ptm));
+    *ptm = font->potm->otmTextMetrics;
     scale_font_metrics(font, ptm);
     LeaveCriticalSection( &freetype_cs );
     return TRUE;
@@ -4885,7 +4885,7 @@ INT WineEngGetTextFace(GdiFont *font, INT count, LPWSTR str)
 
 UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags)
 {
-    if (fs) memcpy(fs, &font->fs, sizeof(FONTSIGNATURE));
+    if (fs) *fs = font->fs;
     return font->charset;
 }
 
