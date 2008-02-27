@@ -27,7 +27,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "msvcrt/mbctype.h"
-#include "msvcrt/errno.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -454,11 +453,11 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
     MSVCRT_size_t pos = 0;
 
     if(!dst || size == 0)
-        return EINVAL;
+        return MSVCRT_EINVAL;
     if(!src)
     {
         dst[0] = '\0';
-        return EINVAL;
+        return MSVCRT_EINVAL;
     }
     if(!n)
         return 0;
@@ -471,7 +470,7 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
             if(pos == size)
             {
                 dst[0] = '\0';
-                return ERANGE;
+                return MSVCRT_ERANGE;
             }
             is_lead = (!is_lead && _ismbblead(*src));
             n--;
@@ -489,7 +488,7 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
             if(pos == size)
             {
                 dst[0] = '\0';
-                return ERANGE;
+                return MSVCRT_ERANGE;
             }
 
             if(!(*src)) break;
@@ -502,7 +501,7 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
     else
     {
         dst[0] = '\0';
-        return ERANGE;
+        return MSVCRT_ERANGE;
     }
 
     return 0;

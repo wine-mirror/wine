@@ -26,7 +26,6 @@
 
 #include <stdlib.h>
 #include "msvcrt.h"
-#include "msvcrt/errno.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -159,12 +158,12 @@ int CDECL MSVCRT_strcoll( const char* str1, const char* str2 )
 int CDECL MSVCRT_strcpy_s( char* dst, MSVCRT_size_t elem, const char* src )
 {
     MSVCRT_size_t i;
-    if(!elem) return EINVAL;
-    if(!dst) return EINVAL;
+    if(!elem) return MSVCRT_EINVAL;
+    if(!dst) return MSVCRT_EINVAL;
     if(!src)
     {
         dst[0] = '\0';
-        return EINVAL;
+        return MSVCRT_EINVAL;
     }
 
     for(i = 0; i < elem; i++)
@@ -172,7 +171,7 @@ int CDECL MSVCRT_strcpy_s( char* dst, MSVCRT_size_t elem, const char* src )
         if((dst[i] = src[i]) == '\0') return 0;
     }
     dst[0] = '\0';
-    return ERANGE;
+    return MSVCRT_ERANGE;
 }
 
 /*********************************************************************
@@ -181,12 +180,12 @@ int CDECL MSVCRT_strcpy_s( char* dst, MSVCRT_size_t elem, const char* src )
 int CDECL MSVCRT_strcat_s( char* dst, MSVCRT_size_t elem, const char* src )
 {
     MSVCRT_size_t i, j;
-    if(!dst) return EINVAL;
-    if(elem == 0) return EINVAL;
+    if(!dst) return MSVCRT_EINVAL;
+    if(elem == 0) return MSVCRT_EINVAL;
     if(!src)
     {
         dst[0] = '\0';
-        return EINVAL;
+        return MSVCRT_EINVAL;
     }
 
     for(i = 0; i < elem; i++)
@@ -201,7 +200,7 @@ int CDECL MSVCRT_strcat_s( char* dst, MSVCRT_size_t elem, const char* src )
     }
     /* Set the first element to 0, not the first element after the skipped part */
     dst[0] = '\0';
-    return ERANGE;
+    return MSVCRT_ERANGE;
 }
 
 /*********************************************************************

@@ -23,7 +23,6 @@
 
 #include "msvcrt.h"
 #include "mtdll.h"
-#include "msvcrt/errno.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
