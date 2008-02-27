@@ -26,6 +26,8 @@
 #include "exdispid.h"
 #include "shellapi.h"
 #include "winreg.h"
+#include "shlwapi.h"
+#include "wininet.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -550,6 +552,35 @@ static HRESULT http_load_hack(DocHost *This, IMoniker *mon, IBindStatusCallback 
     return IBindStatusCallback_OnStopBinding(callback, hres, NULL);
 }
 
+static HRESULT create_moniker(LPCWSTR url, IMoniker **mon)
+{
+    WCHAR new_url[INTERNET_MAX_URL_LENGTH];
+    DWORD size;
+    HRESULT hres;
+
+    if(PathIsURLW(url))
+        return CreateURLMoniker(NULL, url, mon);
+
+    if(url[1] == ':') {
+        size = sizeof(new_url);
+        hres = UrlCreateFromPathW(url, new_url, &size, 0);
+        if(FAILED(hres)) {
+            WARN("UrlCreateFromPathW failed: %08x\n", hres);
+            return hres;
+        }
+    }else {
+        size = sizeof(new_url);
+        hres = UrlApplySchemeW(url, new_url, &size, URL_APPLY_GUESSSCHEME);
+        TRACE("got %s\n", debugstr_w(new_url));
+        if(FAILED(hres)) {
+            WARN("UrlApplyScheme failed: %08x\n", hres);
+            return hres;
+        }
+    }
+
+    return CreateURLMoniker(NULL, new_url, mon);
+}
+
 static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCtx *bindctx,
                               IBindStatusCallback *callback)
 {
@@ -564,11 +595,9 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
     if(mon) {
         IMoniker_AddRef(mon);
     }else {
-        hres = CreateURLMoniker(NULL, url, &mon);
-        if(FAILED(hres)) {
-            WARN("CreateURLMoniker failed: %08x\n", hres);
+        hres = create_moniker(url, &mon);
+        if(FAILED(hres))
             return hres;
-        }
     }
 
     CoTaskMemFree(This->url);
@@ -579,7 +608,7 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
     IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
                                  (IUnknown*)CLIENTSITE(This));
 
-    hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
+    hres = CoInternetParseUrl(This->url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
             &schema_len, 0);
     if(SUCCEEDED(hres) &&
        (!strcmpW(schema, httpW) || !strcmpW(schema, httpsW) || !strcmpW(schema, ftpW))) {
