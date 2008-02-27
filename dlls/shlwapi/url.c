@@ -2155,6 +2155,8 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
     PARSEDURLA base;
     DWORD res1;
 
+    TRACE("%s\n", debugstr_a(lpstrPath));
+
     if (!lpstrPath || !*lpstrPath) return FALSE;
 
     /* get protocol        */
@@ -2172,6 +2174,8 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 {
     PARSEDURLW base;
     DWORD res1;
+
+    TRACE("%s\n", debugstr_w(lpstrPath));
 
     if (!lpstrPath || !*lpstrPath) return FALSE;
 
