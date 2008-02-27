@@ -3,11 +3,11 @@ Signature="$CHICAGO$"
 
 
 [RegisterDll]
-AddReg=Classes.Reg
+AddReg=Classes.Reg, URL.Reg
 
 
 [UnregisterDll]
-DelReg=Classes.Reg
+DelReg=Classes.Reg, URL.Reg
 
 
 [RegisterIE]
@@ -125,6 +125,15 @@ HKCR,"InternetShortcut\DefaultIcon",,,"url.dll,0"
 HKCR,"InternetShortcut\shell\open\command",,,"rundll32.exe shdocvw.dll,OpenURL %l"
 HKCR,"InternetShortcut\shell\print\command",,,"rundll32.exe mshtml.dll,PrintHTML ""%1"""
 HKCR,"InternetShortcut\shell\printto\command",,,"rundll32.exe mshtml.dll,PrintHTML ""%1"" ""%2"" ""%3"" ""%4"""
+
+
+[URL.Reg]
+HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\DefaultPrefix",,,"http://"
+HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","ftp",,"ftp://"
+HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","gopher",,"gopher://"
+HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","home",,"http://"
+HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","mosaic",,"http://"
+HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","www",,"http://"
 
 
 [Settings.Reg]
