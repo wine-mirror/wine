@@ -533,6 +533,83 @@ static void test_I_RpcMapWin32Status(void)
     }
 }
 
+static void test_RpcStringBindingParseA(void)
+{
+    static unsigned char valid_binding[] = "00000000-0000-0000-c000-000000000046@ncacn_np:.[endpoint=\\pipe\\test]";
+    static unsigned char valid_binding2[] = "00000000-0000-0000-c000-000000000046@ncacn_np:.[\\pipe\\test]";
+    static unsigned char invalid_uuid_binding[] = "{00000000-0000-0000-c000-000000000046}@ncacn_np:.[endpoint=\\pipe\\test]";
+    static unsigned char invalid_ep_binding[] = "00000000-0000-0000-c000-000000000046@ncacn_np:.[endpoint=test]";
+    static unsigned char invalid_binding[] = "00000000-0000-0000-c000-000000000046@ncacn_np";
+    RPC_STATUS status;
+    unsigned char *uuid;
+    unsigned char *protseq;
+    unsigned char *network_addr;
+    unsigned char *endpoint;
+    unsigned char *options;
+
+    /* test all parameters */
+    status = RpcStringBindingParseA(valid_binding, &uuid, &protseq, &network_addr, &endpoint, &options);
+    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %ld\n", status);
+    ok(!strcmp((char *)uuid, "00000000-0000-0000-c000-000000000046"), "uuid should have been 00000000-0000-0000-C000-000000000046 instead of %s\n", uuid);
+    ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
+    ok(!strcmp((char *)network_addr, "."), "network_addr should have been . instead of %s\n", network_addr);
+    todo_wine
+    ok(!strcmp((char *)endpoint, "pipetest"), "endpoint should have been pipetest instead of %s\n", endpoint);
+    todo_wine
+    ok(options && !strcmp((char *)options, ""), "options should have been \"\" of \"%s\"\n", options);
+    RpcStringFreeA(&uuid);
+    RpcStringFreeA(&protseq);
+    RpcStringFreeA(&network_addr);
+    RpcStringFreeA(&endpoint);
+    RpcStringFreeA(&options);
+
+    /* test all parameters with different type of string binding */
+    status = RpcStringBindingParseA(valid_binding2, &uuid, &protseq, &network_addr, &endpoint, &options);
+    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %ld\n", status);
+    ok(!strcmp((char *)uuid, "00000000-0000-0000-c000-000000000046"), "uuid should have been 00000000-0000-0000-C000-000000000046 instead of %s\n", uuid);
+    ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
+    ok(!strcmp((char *)network_addr, "."), "network_addr should have been . instead of %s\n", network_addr);
+    todo_wine
+    ok(!strcmp((char *)endpoint, "pipetest"), "endpoint should have been pipetest instead of %s\n", endpoint);
+    todo_wine
+    ok(options && !strcmp((char *)options, ""), "options should have been \"\" of \"%s\"\n", options);
+    RpcStringFreeA(&uuid);
+    RpcStringFreeA(&protseq);
+    RpcStringFreeA(&network_addr);
+    RpcStringFreeA(&endpoint);
+    RpcStringFreeA(&options);
+
+    /* test with as many parameters NULL as possible */
+    status = RpcStringBindingParseA(valid_binding, NULL, &protseq, NULL, NULL, NULL);
+    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %ld\n", status);
+    ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
+    RpcStringFreeA(&protseq);
+
+    /* test with invalid uuid */
+    status = RpcStringBindingParseA(invalid_uuid_binding, NULL, &protseq, NULL, NULL, NULL);
+    todo_wine
+    ok(status == RPC_S_INVALID_STRING_UUID, "RpcStringBindingParseA should have returned RPC_S_INVALID_STRING_UUID instead of %ld\n", status);
+    todo_wine
+    ok(protseq == NULL, "protseq was %p instead of NULL\n", protseq);
+
+    /* test with invalid endpoint */
+    status = RpcStringBindingParseA(invalid_ep_binding, NULL, &protseq, NULL, NULL, NULL);
+    ok(status == RPC_S_OK, "RpcStringBindingParseA failed with error %ld\n", status);
+    RpcStringFreeA(&protseq);
+
+    /* test with invalid binding */
+    status = RpcStringBindingParseA(invalid_binding, &uuid, &protseq, &network_addr, &endpoint, &options);
+    todo_wine
+    ok(status == RPC_S_INVALID_STRING_BINDING, "RpcStringBindingParseA should have returned RPC_S_INVALID_STRING_BINDING instead of %ld\n", status);
+    todo_wine
+    ok(uuid == NULL, "uuid was %p instead of NULL\n", uuid);
+    ok(protseq == NULL, "protseq was %p instead of NULL\n", protseq);
+    todo_wine
+    ok(network_addr == NULL, "network_addr was %p instead of NULL\n", network_addr);
+    ok(endpoint == NULL, "endpoint was %p instead of NULL\n", endpoint);
+    ok(options == NULL, "options was %p instead of NULL\n", options);
+}
+
 START_TEST( rpc )
 {
     trace ( " ** Uuid Conversion and Comparison Tests **\n" );
@@ -542,4 +619,5 @@ START_TEST( rpc )
     test_rpc_ncacn_ip_tcp();
     test_towers();
     test_I_RpcMapWin32Status();
+    test_RpcStringBindingParseA();
 }
