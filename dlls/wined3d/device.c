@@ -1149,12 +1149,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     switch(Type) {
     case WINED3DQUERYTYPE_OCCLUSION:
         TRACE("(%p) occlusion query\n", This);
-        /* Use the base Query vtable until we have a occlusion query one */
-        vtable = &IWineD3DQuery_Vtbl;
         if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
             hr = WINED3D_OK;
         else
             WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
+
+        vtable = &IWineD3DOcclusionQuery_Vtbl;
         break;
 
     case WINED3DQUERYTYPE_EVENT:

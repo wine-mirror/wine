@@ -1572,6 +1572,7 @@ typedef struct IWineD3DQueryImpl
 
 extern const IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
 extern const IWineD3DQueryVtbl IWineD3DEventQuery_Vtbl;
+extern const IWineD3DQueryVtbl IWineD3DOcclusionQuery_Vtbl;
 
 /* Datastructures for IWineD3DQueryImpl.extendedData */
 typedef struct  WineQueryOcclusionData {
