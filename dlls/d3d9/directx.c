@@ -36,9 +36,16 @@ static HRESULT WINAPI IDirect3D9Impl_QueryInterface(LPDIRECT3D9EX iface, REFIID 
         TRACE("Returning IDirect3D9 interface at %p\n", *ppobj);
         return S_OK;
     } else if(IsEqualGUID(riid, &IID_IDirect3D9Ex)) {
-        *ppobj = (IDirect3D9Ex *) This;
-        TRACE("Returning IDirect3D9Ex interface at %p\n", *ppobj);
-        IDirect3D9Ex_AddRef((IDirect3D9Ex *)*ppobj);
+        if(This->extended) {
+            *ppobj = (IDirect3D9Ex *) This;
+            TRACE("Returning IDirect3D9Ex interface at %p\n", *ppobj);
+            IDirect3D9Ex_AddRef((IDirect3D9Ex *)*ppobj);
+        } else {
+            WARN("Application asks for IDirect3D9Ex, but this instance wasn't created with Direct3DCreate9Ex\n");
+            WARN("Returning E_NOINTERFACE\n");
+            *ppobj = NULL;
+            return E_NOINTERFACE;
+        }
     }
 
     WARN("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ppobj);
