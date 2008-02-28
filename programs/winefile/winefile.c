@@ -4491,7 +4491,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 				case ID_FILE_DELETE: {
 					TCHAR path[BUFFER_LEN];
-					SHFILEOPSTRUCT shfo = {hwnd, FO_DELETE, path};
+                                        SHFILEOPSTRUCT shfo = {hwnd, FO_DELETE, path, NULL, FOF_ALLOWUNDO};
 
 					get_path(pane->cur, path);
 
