@@ -57,12 +57,42 @@ static void test_context(void)
     HCATADMIN hca;
     static GUID dummy   = { 0xdeadbeef, 0xdead, 0xbeef, { 0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef }};
     static GUID unknown = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }}; /* WINTRUST.DLL */
+    CHAR windir[MAX_PATH], catroot[MAX_PATH], catroot2[MAX_PATH], dummydir[MAX_PATH];
+    DWORD attrs;
 
     if (!pCryptCATAdminAcquireContext || !pCryptCATAdminReleaseContext)
     {
         skip("CryptCATAdminAcquireContext and/or CryptCATAdminReleaseContext are not available\n");
         return;
     }
+
+    /* When CryptCATAdminAcquireContext is successful it will create
+     * several directories if they don't exist:
+     *
+     * ...\system32\CatRoot\{GUID}, this directory holds the .cat files
+     * ...\system32\CatRoot2\{GUID}  (WinXP and up), here we find the catalog database for that GUID
+     *
+     * Windows Vista uses lowercase catroot and catroot2.
+     *
+     * When passed a NULL GUID it will create the following directories although on
+     * WinXP and up these directories are already present when Windows is installed:
+     *
+     * ...\system32\CatRoot\{127D0A1D-4EF2-11D1-8608-00C04FC295EE}
+     * ...\system32\CatRoot2\{127D0A1D-4EF2-11D1-8608-00C04FC295EE} (WinXP up)
+     *
+     * TODO: Find out what this GUID is/does.
+     *
+     * On WinXp and up there is also a TimeStamp file in some of directories that
+     * seem to indicate the last change to the catalog database for that GUID.
+     *
+     * On Windows 2000 some files are created/updated:
+     *
+     * ...\system32\CatRoot\SYSMAST.cbk
+     * ...\system32\CatRoot\SYSMAST.cbd
+     * ...\system32\CatRoot\{GUID}\CATMAST.cbk
+     * ...\system32\CatRoot\{GUID}\CATMAST.cbd
+     *
+     */
 
     /* All NULL */
     SetLastError(0xdeadbeef);
@@ -114,7 +144,16 @@ static void test_context(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    /* Correct context handle and dummy GUID */
+    /* Correct context handle and dummy GUID
+     *
+     * The tests run in the past unfortunately made sure that some directories were created.
+     *
+     * FIXME:
+     * We don't want to mess too much with these for now so we should delete only the ones
+     * that shouldn't be there like the deadbeef ones. We first have to figure out if it's
+     * save to remove files and directories from CatRoot/CatRoot2.
+     */
+
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminAcquireContext(&hca, &dummy, 0);
     ok(ret, "Expected success\n");
@@ -122,6 +161,39 @@ static void test_context(void)
        GetLastError() == 0xdeadbeef /* Vista */,
        "Expected ERROR_SUCCESS or 0xdeadbeef, got %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
+
+    GetWindowsDirectoryA(windir, MAX_PATH);
+    lstrcpyA(catroot, windir);
+    lstrcatA(catroot, "\\system32\\CatRoot");
+    lstrcpyA(catroot2, windir);
+    lstrcatA(catroot2, "\\system32\\CatRoot2");
+
+    attrs = GetFileAttributes(catroot);
+    /* On a clean Wine this will fail. When a native wintrust.dll was used in the past
+     * some tests will succeed.
+     */
+    todo_wine
+        ok(attrs != INVALID_FILE_ATTRIBUTES,
+            "Expected the CatRoot directory to exist\n");
+
+    /* Windows creates the GUID directory in capitals */
+    lstrcpyA(dummydir, catroot);
+    lstrcatA(dummydir, "\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}");
+    attrs = GetFileAttributes(dummydir);
+    todo_wine
+        ok(attrs != INVALID_FILE_ATTRIBUTES,
+            "Expected CatRoot\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF} directory to exist\n");
+
+    /* Only present on XP or higher. */
+    attrs = GetFileAttributes(catroot2);
+    if (attrs != INVALID_FILE_ATTRIBUTES)
+    {
+        lstrcpyA(dummydir, catroot2);
+        lstrcatA(dummydir, "\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}");
+        attrs = GetFileAttributes(dummydir);
+        ok(attrs != INVALID_FILE_ATTRIBUTES,
+            "Expected CatRoot2\\{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF} directory to exist\n");
+    }
 
     ret = pCryptCATAdminReleaseContext(hca, 0);
     ok(ret, "Expected success\n");
