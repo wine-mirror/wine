@@ -139,7 +139,7 @@ extern CRITICAL_SECTION d3d9_cs;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern const IDirect3D9Vtbl Direct3D9_Vtbl;
+extern const IDirect3D9ExVtbl Direct3D9_Vtbl;
 
 /*****************************************************************************
  * IDirect3D implementation structure
@@ -147,7 +147,7 @@ extern const IDirect3D9Vtbl Direct3D9_Vtbl;
 typedef struct IDirect3D9Impl
 {
     /* IUnknown fields */
-    const IDirect3D9Vtbl   *lpVtbl;
+    const IDirect3D9ExVtbl   *lpVtbl;
     LONG                    ref;
 
     /* The WineD3D device */
