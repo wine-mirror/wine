@@ -1497,14 +1497,27 @@ static nsresult NSAPI nsURI_SetPath(nsIWineURI *iface, const nsACString *aPath)
 static nsresult NSAPI nsURI_Equals(nsIWineURI *iface, nsIURI *other, PRBool *_retval)
 {
     nsURI *This = NSURI_THIS(iface);
+    nsIWineURI *wine_uri;
+    LPCWSTR other_url = NULL;
+    nsresult nsres;
 
     TRACE("(%p)->(%p %p)\n", This, other, _retval);
 
     if(This->uri)
         return nsIURI_Equals(This->uri, other, _retval);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsres = nsIURI_QueryInterface(other, &IID_nsIWineURI, (void**)&wine_uri);
+    if(NS_FAILED(nsres)) {
+        TRACE("Could not get nsIWineURI interface\n");
+        *_retval = FALSE;
+        return NS_OK;
+    }
+
+    nsIWineURI_GetWineURL(wine_uri, &other_url);
+    *_retval = !UrlCompareW(This->wine_url, other_url, TRUE);
+    nsIWineURI_Release(wine_uri);
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_SchemeIs(nsIWineURI *iface, const char *scheme, PRBool *_retval)
