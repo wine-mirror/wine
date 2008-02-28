@@ -3,9 +3,10 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = qmgr.dll
-IMPORTS   = ole32 user32 kernel32
+IMPORTS   = ole32 shlwapi user32 kernel32
 
 CTESTS = \
+	enum_files.c \
 	job.c \
 	qmgr.c
 

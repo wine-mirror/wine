@@ -111,8 +111,9 @@ static HRESULT WINAPI BITS_IEnumBackgroundCopyFiles_GetCount(
     IEnumBackgroundCopyFiles* iface,
     ULONG *puCount)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    EnumBackgroundCopyFilesImpl *This = (EnumBackgroundCopyFilesImpl *) iface;
+    *puCount = This->numFiles;
+    return S_OK;
 }
 
 static const IEnumBackgroundCopyFilesVtbl BITS_IEnumBackgroundCopyFiles_Vtbl =
