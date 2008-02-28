@@ -1370,14 +1370,14 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
 #ifdef HAVE_LCMS
     cmsHPROFILE cmsprofile = NULL;
     icProfile *iccprofile = NULL;
-    HANDLE handle = NULL;
+    HANDLE handle = INVALID_HANDLE_VALUE;
     DWORD size;
 
     TRACE( "( %p, 0x%08x, 0x%08x, 0x%08x )\n", profile, access, sharing, creation );
 
     if (!profile || !profile->pProfileData) return NULL;
 
-    if (profile->dwType & PROFILE_MEMBUFFER)
+    if (profile->dwType == PROFILE_MEMBUFFER)
     {
         /* FIXME: access flags not implemented for memory based profiles */
 
@@ -1386,8 +1386,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     
         cmsprofile = cmsOpenProfileFromMem( iccprofile, size );
     }
-
-    if (profile->dwType & PROFILE_FILENAME)
+    else if (profile->dwType == PROFILE_FILENAME)
     {
         DWORD read, flags = 0;
 
@@ -1432,6 +1431,11 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
 
         cmsprofile = cmsOpenProfileFromMem( iccprofile, size );
     }
+    else
+    {
+        ERR( "Invalid profile type %u\n", profile->dwType );
+        return NULL;
+    }
 
     if (cmsprofile)
         return MSCMS_create_hprofile_handle( handle, iccprofile, cmsprofile, access );
@@ -1462,19 +1466,23 @@ BOOL WINAPI CloseColorProfile( HPROFILE profile )
 
     TRACE( "( %p )\n", profile );
 
-    if (file && (access & PROFILE_READWRITE))
+    if (file != INVALID_HANDLE_VALUE)
     {
-        DWORD written, size = MSCMS_get_profile_size( iccprofile );
+        if (access & PROFILE_READWRITE)
+        {
+            DWORD written, size = MSCMS_get_profile_size( iccprofile );
 
-        if (SetFilePointer( file, 0, NULL, FILE_BEGIN ) ||
-            !WriteFile( file, iccprofile, size, &written, NULL ) || written != size)
-            ERR( "Unable to write color profile\n" );
+            if (SetFilePointer( file, 0, NULL, FILE_BEGIN ) ||
+                !WriteFile( file, iccprofile, size, &written, NULL ) || written != size)
+            {
+                ERR( "Unable to write color profile\n" );
+            }
+        }
+        CloseHandle( file );
     }
-
     ret = cmsCloseProfile( MSCMS_hprofile2cmsprofile( profile ) );
-    HeapFree( GetProcessHeap(), 0, MSCMS_hprofile2iccprofile( profile ) );
+    HeapFree( GetProcessHeap(), 0, iccprofile );
 
-    CloseHandle( MSCMS_hprofile2handle( profile ) );
     MSCMS_destroy_hprofile_handle( profile );
 
 #endif /* HAVE_LCMS */

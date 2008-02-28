@@ -44,9 +44,9 @@ static CRITICAL_SECTION MSCMS_handle_cs = { &MSCMS_handle_cs_debug, -1, 0, 0, 0,
 /*  A simple structure to tie together a pointer to an icc profile, an lcms
  *  color profile handle and a Windows file handle. Windows color profile 
  *  handles are built from indexes into an array of these structures. If
- *  the profile is memory based the file handle field is NULL. The 'access'
- *  field records the access parameter supplied to an OpenColorProfile()
- *  call, i.e. PROFILE_READ or PROFILE_READWRITE.
+ *  the profile is memory based the file handle field is set to
+ *  INVALID_HANDLE_VALUE. The 'access' field records the access parameter
+ *  supplied to an OpenColorProfile() call, i.e. PROFILE_READ or PROFILE_READWRITE.
  */
 
 struct profile
