@@ -159,6 +159,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
                 XMapWindow( display, data->whole_window );
                 wine_tsx11_unlock();
                 data->mapped = TRUE;
+                data->iconic = (new_style & WS_MINIMIZE) != 0;
             }
         }
     }
@@ -354,8 +355,8 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
         SERVER_END_REQ;
     }
 
-    TRACE( "win %p window %s client %s style %08x\n",
-           hwnd, wine_dbgstr_rect(rectWindow), wine_dbgstr_rect(rectClient), new_style );
+    TRACE( "win %p window %s client %s style %08x flags %08x\n",
+           hwnd, wine_dbgstr_rect(rectWindow), wine_dbgstr_rect(rectClient), new_style, swp_flags );
 
     if (!IsRectEmpty( &valid_rects[0] ))
     {
@@ -395,12 +396,14 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
         data->net_wm_state = 0;
     }
 
-    X11DRV_sync_window_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
+    /* don't change position if we are about to minimize a managed window */
+    if (!(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & WS_MINIMIZE)))
+        X11DRV_sync_window_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
 
-    if ((new_style & WS_VISIBLE) && !(new_style & WS_MINIMIZE) &&
-        X11DRV_is_window_rect_mapped( rectWindow ))
+    if ((new_style & WS_VISIBLE) &&
+        ((new_style & WS_MINIMIZE) || X11DRV_is_window_rect_mapped( rectWindow )))
     {
-        if (!data->mapped || (swp_flags & SWP_FRAMECHANGED))
+        if (!data->mapped || (swp_flags & (SWP_FRAMECHANGED|SWP_STATECHANGED)))
             X11DRV_set_wm_hints( display, data );
 
         if (!data->mapped)
@@ -413,6 +416,18 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
             XFlush( display );
             wine_tsx11_unlock();
             data->mapped = TRUE;
+            data->iconic = (new_style & WS_MINIMIZE) != 0;
+        }
+        else if ((swp_flags & SWP_STATECHANGED) && (!data->iconic != !(new_style & WS_MINIMIZE)))
+        {
+            data->iconic = (new_style & WS_MINIMIZE) != 0;
+            TRACE( "changing win %p iconic state to %u\n", data->hwnd, data->iconic );
+            wine_tsx11_lock();
+            if (data->iconic)
+                XIconifyWindow( display, data->whole_window, DefaultScreen(display) );
+            else if (X11DRV_is_window_rect_mapped( rectWindow ))
+                XMapWindow( display, data->whole_window );
+            wine_tsx11_unlock();
         }
         update_net_wm_states( display, data );
     }
@@ -528,8 +543,6 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
         old_style = WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
 
-        X11DRV_set_iconic_state( hwnd );
-
         wpl.ptMinPosition = WINPOS_FindIconPos( hwnd, wpl.ptMinPosition );
 
         if (!(old_style & WS_MINIMIZE)) swpFlags |= SWP_STATECHANGED;
@@ -545,11 +558,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
 
         old_style = WIN_SetStyle( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
-        if (old_style & WS_MINIMIZE)
-        {
-            WINPOS_ShowIconTitle( hwnd, FALSE );
-            X11DRV_set_iconic_state( hwnd );
-        }
+        if (old_style & WS_MINIMIZE) WINPOS_ShowIconTitle( hwnd, FALSE );
+
         if (!(old_style & WS_MAXIMIZE)) swpFlags |= SWP_STATECHANGED;
         SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
         break;
@@ -563,7 +573,6 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
             BOOL restore_max;
 
             WINPOS_ShowIconTitle( hwnd, FALSE );
-            X11DRV_set_iconic_state( hwnd );
 
             if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
             restore_max = (wndPtr->flags & WIN_RESTORE_MAX) != 0;
@@ -764,6 +773,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         TRACE( "win %p/%lx ignoring since state=%d\n", hwnd, data->whole_window, state );
         return;
     }
+    data->iconic = FALSE;
 
     if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) == (WS_VISIBLE|WS_MINIMIZE))
     {
@@ -818,6 +828,7 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
         TRACE( "win %p/%lx ignoring since state=%d\n", hwnd, data->whole_window, state );
         return;
     }
+    data->iconic = TRUE;
 
     if (!(win = WIN_GetPtr( hwnd ))) return;
 

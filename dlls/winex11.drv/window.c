@@ -981,48 +981,6 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
 
 
 /***********************************************************************
- *              X11DRV_set_iconic_state
- *
- * Set the X11 iconic state according to the window style.
- */
-void X11DRV_set_iconic_state( HWND hwnd )
-{
-    Display *display = thread_display();
-    struct x11drv_win_data *data;
-    RECT rect;
-    DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
-    BOOL iconic = (style & WS_MINIMIZE) != 0;
-
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->whole_window) return;
-
-    GetWindowRect( hwnd, &rect );
-
-    wine_tsx11_lock();
-
-    if (data->wm_hints)
-    {
-        data->wm_hints->flags |= StateHint | IconPositionHint;
-        data->wm_hints->initial_state = iconic ? IconicState : NormalState;
-        data->wm_hints->icon_x = rect.left - virtual_screen_rect.left;
-        data->wm_hints->icon_y = rect.top - virtual_screen_rect.top;
-        XSetWMHints( display, data->whole_window, data->wm_hints );
-    }
-
-    if (data->mapped)
-    {
-        if (iconic)
-            XIconifyWindow( display, data->whole_window, DefaultScreen(display) );
-        else
-            if (X11DRV_is_window_rect_mapped( &rect ))
-                XMapWindow( display, data->whole_window );
-    }
-
-    wine_tsx11_unlock();
-}
-
-
-/***********************************************************************
  *		X11DRV_window_to_X_rect
  *
  * Convert a rect from client to X window coordinates
