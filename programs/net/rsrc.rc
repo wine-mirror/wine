@@ -26,4 +26,5 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #include "Fr.rc"
 #include "Ko.rc"
 #include "Nl.rc"
+#include "Pl.rc"
 #include "Ru.rc"
