@@ -44,7 +44,6 @@
 #include "winuser.h"
 #include "wingdi.h"
 
-#include "win.h"
 #include "x11drv.h"
 
 /* avoid conflict with field names in included win32 headers */
@@ -728,6 +727,7 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
  */
 static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 {
+    struct x11drv_win_data *data;
     unsigned long	data_length;
     unsigned long	aux_long;
     unsigned char*	p_data = NULL;
@@ -735,7 +735,6 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     int			x, y, dummy;
     BOOL	        bAccept;
     Window		win, w_aux_root, w_aux_child;
-    WND*                pWnd;
     HWND		hScope = hWnd;
 
     win = X11DRV_get_whole_window(hWnd);
@@ -746,14 +745,14 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     y += virtual_screen_rect.top;
     wine_tsx11_unlock();
 
-    pWnd = WIN_GetPtr(hWnd);
+    if (!(data = X11DRV_get_win_data( hWnd ))) return;
 
     /* find out drop point and drop window */
     if( x < 0 || y < 0 ||
-        x > (pWnd->rectWindow.right - pWnd->rectWindow.left) ||
-        y > (pWnd->rectWindow.bottom - pWnd->rectWindow.top) )
+        x > (data->whole_rect.right - data->whole_rect.left) ||
+        y > (data->whole_rect.bottom - data->whole_rect.top) )
     {   
-	bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; 
+	bAccept = GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES;
 	x = 0;
 	y = 0; 
     }
@@ -773,7 +772,6 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 	    bAccept = FALSE;
 	}
     }
-    WIN_ReleasePtr(pWnd);
 
     if (!bAccept) return;
 
@@ -807,17 +805,11 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
             if( lpDrop )
             {
-                WND *pDropWnd = WIN_GetPtr( hScope );
                 lpDrop->pFiles = sizeof(DROPFILES);
                 lpDrop->pt.x = x;
                 lpDrop->pt.y = y;
-                lpDrop->fNC =
-                    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
-                      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
-                      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
-                      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
+                lpDrop->fNC = FALSE;
                 lpDrop->fWide = FALSE;
-                WIN_ReleasePtr(pDropWnd);
                 p_drop = (char *)(lpDrop + 1);
                 p = (char *)p_data;
                 while(*p)
@@ -846,6 +838,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
  */
 static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 {
+  struct x11drv_win_data *win_data;
   unsigned long	data_length;
   unsigned long	aux_long, drop_len = 0;
   unsigned char	*p_data = NULL; /* property data */
@@ -904,19 +897,18 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
       hDrop = GlobalAlloc( GMEM_SHARE, drop_len );
       lpDrop = (DROPFILES *) GlobalLock( hDrop );
 
-      if( lpDrop ) {
-          WND *pDropWnd = WIN_GetPtr( hWnd );
+      if( lpDrop && (win_data = X11DRV_get_win_data( hWnd )))
+      {
 	  lpDrop->pFiles = sizeof(DROPFILES);
 	  lpDrop->pt.x = x;
 	  lpDrop->pt.y = y;
 	  lpDrop->fNC =
-	    ( x < (pDropWnd->rectClient.left - pDropWnd->rectWindow.left)  ||
-	      y < (pDropWnd->rectClient.top - pDropWnd->rectWindow.top)    ||
-	      x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
-	      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
+	    ( x < (win_data->client_rect.left - win_data->whole_rect.left)  ||
+	      y < (win_data->client_rect.top - win_data->whole_rect.top)    ||
+	      x > (win_data->client_rect.right - win_data->whole_rect.left) ||
+	      y > (win_data->client_rect.bottom - win_data->whole_rect.top) );
 	  lpDrop->fWide = FALSE;
 	  p_drop = (char*)(lpDrop + 1);
-          WIN_ReleasePtr(pDropWnd);
       }
 
       /* create message content */
