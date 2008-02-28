@@ -574,6 +574,12 @@ static void test_domdoc( void )
         r = IXMLDOMText_put_data(nodetext, _bstr_("This &is a ; test <>\\"));
         ok(r == S_OK, "ret %08x\n", r );
 
+        /* get data Tests */
+        r = IXMLDOMText_get_data(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect put_data string\n");
+        SysFreeString(str);
+
         /* Confirm XML text is good */
         r = IXMLDOMText_get_xml(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );

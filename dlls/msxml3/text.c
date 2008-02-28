@@ -475,8 +475,20 @@ static HRESULT WINAPI domtext_get_data(
     IXMLDOMText *iface,
     BSTR *p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domtext *This = impl_from_IXMLDOMText( iface );
+    HRESULT hr = E_FAIL;
+    VARIANT vRet;
+
+    if(!p)
+        return E_INVALIDARG;
+
+    hr = IXMLDOMNode_get_nodeValue( This->element, &vRet );
+    if(hr == S_OK)
+    {
+        *p = V_BSTR(&vRet);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domtext_put_data(
