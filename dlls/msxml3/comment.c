@@ -474,8 +474,20 @@ static HRESULT WINAPI domcomment_get_data(
     IXMLDOMComment *iface,
     BSTR *p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcomment *This = impl_from_IXMLDOMComment( iface );
+    HRESULT hr = E_FAIL;
+    VARIANT vRet;
+
+    if(!p)
+        return E_INVALIDARG;
+
+    hr = IXMLDOMNode_get_nodeValue( This->node, &vRet );
+    if(hr == S_OK)
+    {
+        *p = V_BSTR(&vRet);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domcomment_put_data(

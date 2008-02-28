@@ -2105,6 +2105,12 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
 
                 /* get data Tests */
+                hr = IXMLDOMComment_get_data(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect get_data string\n");
+                SysFreeString(str);
+
+                /* get data Tests */
                 hr = IXMLDOMComment_get_nodeValue(pComment, &v);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( V_VT(&v) == VT_BSTR, "incorrect dataType type\n");
