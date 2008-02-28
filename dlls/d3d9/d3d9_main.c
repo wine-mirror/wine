@@ -61,6 +61,23 @@ IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion) {
     return (IDirect3D9*) object;
 }
 
+HRESULT WINAPI Direct3DCreate9Ex(UINT SDKVersion, IDirect3D9Ex **direct3d9ex) {
+    IDirect3D9 *ret;
+    IDirect3D9Impl* object;
+
+    TRACE("Calling Direct3DCreate9\n");
+    ret = Direct3DCreate9(SDKVersion);
+    if(!ret) {
+        *direct3d9ex = NULL;
+        return D3DERR_NOTAVAILABLE;
+    }
+
+    object = (IDirect3D9Impl *) ret;
+    object->extended = TRUE; /* Enables QI for extended interfaces */
+    *direct3d9ex = (IDirect3D9Ex *) object;
+    return D3D_OK;
+}
+
 /*******************************************************************
  *       Direct3DShaderValidatorCreate9 (D3D9.@)
  *

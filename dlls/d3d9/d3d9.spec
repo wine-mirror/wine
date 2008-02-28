@@ -9,3 +9,4 @@
 @ stdcall D3DPERF_QueryRepeatFrame()
 @ stdcall D3DPERF_SetMarker(long wstr)
 @ stdcall D3DPERF_SetRegion(long wstr)
+@ stdcall Direct3DCreate9Ex(long ptr)

@@ -7,6 +7,7 @@ IMPORTS   = user32 kernel32
 EXTRALIBS = -ldxerr9 -luuid -ldxguid
 
 CTESTS = \
+	d3d9ex.c \
 	device.c \
 	query.c \
 	shader.c \
