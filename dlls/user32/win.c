@@ -868,7 +868,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
  */
 static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags )
 {
-    INT cx, cy, sw = SW_SHOW;
+    INT cx, cy, style, sw = SW_SHOW;
     LRESULT result;
     RECT rect;
     WND *wndPtr;
@@ -1153,6 +1153,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
         result = SendMessageA( hwnd, WM_CREATE, 0, (LPARAM)cs );
     if (result == -1) goto failed;
 
+    /* call the driver */
+
+    if (!USER_Driver->pCreateWindow( hwnd )) goto failed;
+
     NotifyWinEvent(EVENT_OBJECT_CREATE, hwnd, OBJID_WINDOW, 0);
 
     /* send the size messages */
@@ -1168,9 +1172,19 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
     }
     else WIN_ReleasePtr( wndPtr );
 
-    /* call the driver */
+    /* Show the window, maximizing or minimizing if needed */
 
-    if (!USER_Driver->pCreateWindow( hwnd )) goto failed;
+    style = WIN_SetStyle( hwnd, 0, WS_MAXIMIZE | WS_MINIMIZE );
+    if (style & (WS_MINIMIZE | WS_MAXIMIZE))
+    {
+        RECT newPos;
+        UINT swFlag = (style & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
+
+        swFlag = WINPOS_MinMaximize( hwnd, swFlag, &newPos );
+        swFlag |= SWP_FRAMECHANGED; /* Frame always gets changed */
+        if (!(style & WS_VISIBLE) || (style & WS_CHILD) || GetActiveWindow()) swFlag |= SWP_NOACTIVATE;
+        SetWindowPos( hwnd, 0, newPos.left, newPos.top, newPos.right, newPos.bottom, swFlag );
+    }
 
     /* Notify the parent window only */
 

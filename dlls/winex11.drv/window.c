@@ -1376,33 +1376,12 @@ BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
 BOOL X11DRV_CreateWindow( HWND hwnd )
 {
     Display *display = thread_display();
-    DWORD style;
 
     if (hwnd == GetDesktopWindow() && root_window != DefaultRootWindow( display ))
     {
         /* the desktop win data can't be created lazily */
         if (!create_desktop_win_data( display, hwnd )) return FALSE;
     }
-
-    /* Show the window, maximizing or minimizing if needed */
-
-    style = GetWindowLongW( hwnd, GWL_STYLE );
-    if (style & (WS_MINIMIZE | WS_MAXIMIZE))
-    {
-        extern UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect ); /*FIXME*/
-
-        RECT newPos;
-        UINT swFlag = (style & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
-        WIN_SetStyle( hwnd, 0, WS_MAXIMIZE | WS_MINIMIZE );
-        swFlag = WINPOS_MinMaximize( hwnd, swFlag, &newPos );
-
-        swFlag |= SWP_FRAMECHANGED; /* Frame always gets changed */
-        if (!(style & WS_VISIBLE) || (style & WS_CHILD) || GetActiveWindow()) swFlag |= SWP_NOACTIVATE;
-
-        SetWindowPos( hwnd, 0, newPos.left, newPos.top,
-                      newPos.right, newPos.bottom, swFlag );
-    }
-
     return TRUE;
 }
 

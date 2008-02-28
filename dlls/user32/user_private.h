@@ -155,7 +155,6 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetWindowIcon)(HWND,UINT,HICON);
     void   (*pSetWindowStyle)(HWND,DWORD);
     void   (*pSetWindowText)(HWND,LPCWSTR);
-    BOOL   (*pShowWindow)(HWND,INT);
     void   (*pSysCommandSizeMove)(HWND,WPARAM);
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
 } USER_DRIVER;

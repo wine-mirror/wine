@@ -119,7 +119,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SetWindowIcon);
         GET_USER_FUNC(SetWindowStyle);
         GET_USER_FUNC(SetWindowText);
-        GET_USER_FUNC(ShowWindow);
         GET_USER_FUNC(SysCommandSizeMove);
         GET_USER_FUNC(WindowMessage);
 #undef GET_USER_FUNC
@@ -396,11 +395,6 @@ static void nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
 {
 }
 
-static BOOL nulldrv_ShowWindow( HWND hwnd, INT cmd )
-{
-    return FALSE;
-}
-
 static void nulldrv_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
 {
 }
@@ -465,7 +459,6 @@ static const USER_DRIVER null_driver =
     nulldrv_SetWindowIcon,
     nulldrv_SetWindowStyle,
     nulldrv_SetWindowText,
-    nulldrv_ShowWindow,
     nulldrv_SysCommandSizeMove,
     nulldrv_WindowMessage
 };
@@ -721,11 +714,6 @@ static void loaderdrv_SetWindowText( HWND hwnd, LPCWSTR text )
     load_driver()->pSetWindowText( hwnd, text );
 }
 
-static BOOL loaderdrv_ShowWindow( HWND hwnd, INT cmd )
-{
-    return load_driver()->pShowWindow( hwnd, cmd );
-}
-
 static void loaderdrv_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
 {
     load_driver()->pSysCommandSizeMove( hwnd, wparam );
@@ -791,7 +779,6 @@ static const USER_DRIVER lazy_load_driver =
     loaderdrv_SetWindowIcon,
     loaderdrv_SetWindowStyle,
     loaderdrv_SetWindowText,
-    loaderdrv_ShowWindow,
     loaderdrv_SysCommandSizeMove,
     loaderdrv_WindowMessage
 };

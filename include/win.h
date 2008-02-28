@@ -115,8 +115,10 @@ extern LONG WINPOS_HandleWindowPosChanging(HWND hwnd, WINDOWPOS *winpos) DECLSPE
 extern HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest ) DECLSPEC_HIDDEN;
 extern void WINPOS_CheckInternalPos( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void WINPOS_ActivateOtherWindow( HWND hwnd ) DECLSPEC_HIDDEN;
+extern UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect ) DECLSPEC_HIDDEN;
 
 extern BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
-                            const RECT *window_rect, const RECT *client_rect, const RECT *valid_rects );
+                            const RECT *window_rect, const RECT *client_rect,
+                            const RECT *valid_rects ) DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_WIN_H */

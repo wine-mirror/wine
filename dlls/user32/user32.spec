@@ -789,7 +789,6 @@
 #
 @ cdecl HOOK_CallHooks(long long long long long)
 @ cdecl USER_Unlock()
-@ cdecl WINPOS_ActivateOtherWindow(long)
 @ cdecl WINPOS_GetMinMaxInfo(long ptr ptr ptr ptr)
 @ cdecl WINPOS_ShowIconTitle(long long)
 @ cdecl WIN_GetPtr(long)

@@ -110,7 +110,6 @@
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long) X11DRV_SetWindowStyle
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
-@ cdecl ShowWindow(long long) X11DRV_ShowWindow
 @ cdecl SysCommandSizeMove(long long) X11DRV_SysCommandSizeMove
 @ cdecl WindowMessage(long long long long) X11DRV_WindowMessage
 
