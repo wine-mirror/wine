@@ -103,10 +103,10 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFile(
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_EnumFiles(
     IBackgroundCopyJob* iface,
-    IEnumBackgroundCopyFiles **pEnum)
+    IEnumBackgroundCopyFiles **ppEnum)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return EnumBackgroundCopyFilesConstructor((LPVOID *) ppEnum, iface);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Suspend(

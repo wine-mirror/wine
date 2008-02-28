@@ -191,6 +191,33 @@ static void test_AddFile(void)
     ok(hres == S_OK, "Second call to AddFile failed: 0x%08x\n", hres);
 }
 
+/* Test creation of a job enumerator */
+static void test_EnumFiles(void)
+{
+    HRESULT hres;
+    IEnumBackgroundCopyFiles *enumFiles;
+    ULONG res;
+
+    hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathA,
+                                      test_localPathA);
+    if (hres != S_OK)
+    {
+        skip("Unable to add file to job\n");
+        return;
+    }
+
+    hres = IBackgroundCopyJob_EnumFiles(test_job, &enumFiles);
+    ok(hres == S_OK, "EnumFiles failed: 0x%08x\n", hres);
+    if(hres != S_OK)
+    {
+        skip("Unable to create file enumerator.\n");
+        return;
+    }
+
+    res = IEnumBackgroundCopyFiles_Release(enumFiles);
+    ok(res == 0, "Bad ref count on release: %u\n", res);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(job)
@@ -200,6 +227,7 @@ START_TEST(job)
         test_GetType,
         test_GetName,
         test_AddFile,
+        test_EnumFiles,
         0
     };
     const test_t *test;
