@@ -1143,11 +1143,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DQueryImpl *object; /*NOTE: impl ref allowed since this is a create function */
     HRESULT hr = WINED3DERR_NOTAVAILABLE;
+    const IWineD3DQueryVtbl *vtable;
 
     /* Just a check to see if we support this type of query */
     switch(Type) {
     case WINED3DQUERYTYPE_OCCLUSION:
         TRACE("(%p) occlusion query\n", This);
+        /* Use the base Query vtable until we have a occlusion query one */
+        vtable = &IWineD3DQuery_Vtbl;
         if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
             hr = WINED3D_OK;
         else
@@ -1161,6 +1164,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
              */
             FIXME("(%p) Event query: Unimplemented, but pretending to be supported\n", This);
         }
+        vtable = &IWineD3DEventQuery_Vtbl;
         hr = WINED3D_OK;
         break;
 
@@ -1177,6 +1181,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
     case WINED3DQUERYTYPE_CACHEUTILIZATION:
     default:
+        /* Use the base Query vtable until we have a special one for each query */
+        vtable = &IWineD3DQuery_Vtbl;
         FIXME("(%p) Unhandled query type %d\n", This, Type);
     }
     if(NULL == ppQuery || hr != WINED3D_OK) {
@@ -1184,6 +1190,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     }
 
     D3DCREATEOBJECTINSTANCE(object, Query)
+    object->lpVtbl       = vtable;
     object->type         = Type;
     object->state        = QUERY_CREATED;
     /* allocated the 'extended' data based on the type of query requested */
