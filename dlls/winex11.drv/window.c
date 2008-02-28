@@ -799,11 +799,18 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
 
         if ( !(style & WS_THICKFRAME) )
         {
-            size_hints->max_width = data->whole_rect.right - data->whole_rect.left;
-            size_hints->max_height = data->whole_rect.bottom - data->whole_rect.top;
-            size_hints->min_width = size_hints->max_width;
-            size_hints->min_height = size_hints->max_height;
-            size_hints->flags |= PMinSize | PMaxSize;
+            /* If we restrict window resizing Metacity decides that it should
+             * disable fullscreen support for this window as well.
+             */
+            if (!(data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
+                  data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height))
+            {
+                size_hints->max_width = data->whole_rect.right - data->whole_rect.left;
+                size_hints->max_height = data->whole_rect.bottom - data->whole_rect.top;
+                size_hints->min_width = size_hints->max_width;
+                size_hints->min_height = size_hints->max_height;
+                size_hints->flags |= PMinSize | PMaxSize;
+            }
         }
         XSetWMNormalHints( display, data->whole_window, size_hints );
         XFree( size_hints );
