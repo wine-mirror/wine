@@ -4032,6 +4032,43 @@ static BOOL WINSPOOL_GetPrinter_7(HKEY hkeyPrinter, PRINTER_INFO_7W *pi7, LPBYTE
     return space;
 }
 
+/*********************************************************************
+ *    WINSPOOL_GetPrinter_9
+ *
+ * Fills out a PRINTER_INFO_9A|W struct storing the strings in buf.
+ * The strings are either stored as unicode or ascii.
+ */
+static BOOL WINSPOOL_GetPrinter_9(HKEY hkeyPrinter, PRINTER_INFO_9W *pi9, LPBYTE buf,
+                                  DWORD cbBuf, LPDWORD pcbNeeded, BOOL unicode)
+{
+    DWORD size;
+    BOOL space = (cbBuf > 0);
+
+    *pcbNeeded = 0;
+
+    if(WINSPOOL_GetDevModeFromReg(hkeyPrinter, Default_DevModeW, buf, cbBuf, &size, unicode)) {
+        if(space && size <= cbBuf) {
+            pi9->pDevMode = (LPDEVMODEW)buf;
+        } else
+            space = FALSE;
+        *pcbNeeded += size;
+    }
+    else
+    {
+        WINSPOOL_GetDefaultDevMode(buf, cbBuf, &size, unicode);
+        if(space && size <= cbBuf) {
+            pi9->pDevMode = (LPDEVMODEW)buf;
+        } else
+            space = FALSE;
+        *pcbNeeded += size;
+    }
+
+    if(!space && pi9) /* zero out pi9 if we can't completely fill buf */
+        memset(pi9, 0, sizeof(*pi9));
+
+    return space;
+}
+
 /*****************************************************************************
  *          WINSPOOL_GetPrinter
  *
@@ -4161,6 +4198,26 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
         }
 
         ret = WINSPOOL_GetPrinter_7(hkeyPrinter, pi7, ptr, cbBuf, &needed, unicode);
+        needed += size;
+        break;
+      }
+
+
+    case 9:
+      {
+        PRINTER_INFO_9W *pi9 = (PRINTER_INFO_9W *)pPrinter;
+
+        size = sizeof(PRINTER_INFO_9W);
+        if(size <= cbBuf) {
+            ptr = pPrinter + size;
+            cbBuf -= size;
+            memset(pPrinter, 0, size);
+        } else {
+            pi9 = NULL;
+            cbBuf = 0;
+        }
+
+        ret = WINSPOOL_GetPrinter_9(hkeyPrinter, pi9, ptr, cbBuf, &needed, unicode);
         needed += size;
         break;
       }
