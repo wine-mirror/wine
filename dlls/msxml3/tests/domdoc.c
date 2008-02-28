@@ -2098,6 +2098,13 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMComment_put_data(pComment, _bstr_("This &is a ; test <>\\"));
                 ok(hr == S_OK, "ret %08x\n", hr );
 
+                /* get data Tests */
+                hr = IXMLDOMComment_get_nodeValue(pComment, &v);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( V_VT(&v) == VT_BSTR, "incorrect dataType type\n");
+                ok( !lstrcmpW( V_BSTR(&v), _bstr_("This &is a ; test <>\\") ), "incorrect get_nodeValue string\n");
+                VariantClear(&v);
+
                 /* Confirm XML text is good */
                 hr = IXMLDOMComment_get_xml(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
