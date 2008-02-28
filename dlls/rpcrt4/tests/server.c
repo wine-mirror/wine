@@ -36,6 +36,17 @@ static const char *progname;
 
 static HANDLE stop_event;
 
+static void (WINAPI *pNDRSContextMarshall2)(RPC_BINDING_HANDLE, NDR_SCONTEXT, void*, NDR_RUNDOWN, void*, ULONG);
+static NDR_SCONTEXT (WINAPI *pNDRSContextUnmarshall2)(RPC_BINDING_HANDLE, void*, ULONG, void*, ULONG);
+
+static void InitFunctionPointers(void)
+{
+    HMODULE hrpcrt4 = GetModuleHandleA("rpcrt4.dll");
+
+    pNDRSContextMarshall2 = (void *)GetProcAddress(hrpcrt4, "NDRSContextMarshall2");
+    pNDRSContextUnmarshall2 = (void *)GetProcAddress(hrpcrt4, "NDRSContextUnmarshall2");
+}
+
 void __RPC_FAR *__RPC_USER
 midl_user_allocate(size_t n)
 {
@@ -542,40 +553,40 @@ s_context_handle_test(void)
     binding = I_RpcGetCurrentCallHandle();
     ok(binding != NULL, "I_RpcGetCurrentCallHandle returned NULL\n");
 
-    h = NDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
+    h = pNDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
 
     /* marshal a context handle with NULL userContext */
     memset(buf, 0xcc, sizeof(buf));
-    NDRSContextMarshall2(binding, h, buf, NULL, NULL, 0);
+    pNDRSContextMarshall2(binding, h, buf, NULL, NULL, 0);
     ok(*(ULONG *)buf == 0, "attributes should have been set to 0 instead of 0x%x\n", *(ULONG *)buf);
     ok(UuidIsNil((UUID *)&buf[4], &status), "uuid should have been nil\n");
 
-    h = NDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
+    h = pNDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
 
     /* marshal a context handle with non-NULL userContext */
     memset(buf, 0xcc, sizeof(buf));
     h->userContext = (void *)0xdeadbeef;
-    NDRSContextMarshall2(binding, h, buf, NULL, NULL, 0);
+    pNDRSContextMarshall2(binding, h, buf, NULL, NULL, 0);
     ok(*(ULONG *)buf == 0, "attributes should have been set to 0 instead of 0x%x\n", *(ULONG *)buf);
     ok(!UuidIsNil((UUID *)&buf[4], &status), "uuid should not have been nil\n");
 
-    h = NDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
+    h = pNDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
     ok(h->userContext == (void *)0xdeadbeef, "userContext of interface didn't unmarshal properly: %p\n", h->userContext);
 
     /* marshal a context handle with an interface specified */
-    h = NDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
+    h = pNDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
 
     memset(buf, 0xcc, sizeof(buf));
     h->userContext = (void *)0xcafebabe;
-    NDRSContextMarshall2(binding, h, buf, NULL, &server_if.InterfaceId, 0);
+    pNDRSContextMarshall2(binding, h, buf, NULL, &server_if.InterfaceId, 0);
     ok(*(ULONG *)buf == 0, "attributes should have been set to 0 instead of 0x%x\n", *(ULONG *)buf);
     ok(!UuidIsNil((UUID *)&buf[4], &status), "uuid should not have been nil\n");
 
-    h = NDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
+    h = pNDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
     ok(h->userContext == (void *)0xcafebabe, "userContext of interface didn't unmarshal properly: %p\n", h->userContext);
 
@@ -585,7 +596,7 @@ s_context_handle_test(void)
     {
         RPC_SERVER_INTERFACE server_if_clone = server_if;
 
-        NDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if_clone.InterfaceId, 0);
+        pNDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if_clone.InterfaceId, 0);
     }
 
     /* test different interface data, but different pointer */
@@ -604,9 +615,9 @@ s_context_handle_test(void)
             0,
             0,
         };
-        NDRSContextMarshall2(binding, h, buf, NULL, &server_if.InterfaceId, 0);
+        pNDRSContextMarshall2(binding, h, buf, NULL, &server_if.InterfaceId, 0);
 
-        NDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if2.InterfaceId, 0);
+        pNDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if2.InterfaceId, 0);
     }
 }
 
@@ -1241,6 +1252,8 @@ START_TEST(server)
 {
   int argc;
   char **argv;
+
+  InitFunctionPointers();
 
   argc = winetest_get_mainargs(&argv);
   progname = argv[0];
