@@ -283,8 +283,10 @@ static void test_LoadFunctionPointers(void)
 
     SetLastError(0xdeadbeef);
     ret = pWintrustLoadFunctionPointers(NULL, &funcs);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(!ret, "WintrustLoadFunctionPointers succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == 0xdeadbeef /* W2K and XP-SP1 */,
+        "Expected ERROR_INVALID_PARAMETER or 0xdeadbeef, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     funcs.cbStruct = 0;
