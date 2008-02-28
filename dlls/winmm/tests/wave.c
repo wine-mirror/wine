@@ -535,6 +535,7 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
 {
     MSG msg;
 
+    PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );  /* make sure the thread has a message queue */
     SetEvent((HANDLE)lpParameter);
 
     while (GetMessage(&msg, 0, 0, 0)) {
