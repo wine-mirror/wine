@@ -438,6 +438,7 @@ static void inode_set_name( struct inode *inode, const char *name )
 static void free_inode( struct inode *inode )
 {
     int subtree = 0, watches = 0;
+    struct inode *tmp, *next;
     struct dir *dir;
 
     LIST_FOR_EACH_ENTRY( dir, &inode->dirs, struct dir, in_entry )
@@ -448,7 +449,6 @@ static void free_inode( struct inode *inode )
 
     if (!subtree && !inode->parent)
     {
-        struct inode *tmp, *next;
         LIST_FOR_EACH_ENTRY_SAFE( tmp, next, &inode->children,
                                   struct inode, ch_entry )
         {
@@ -463,6 +463,13 @@ static void free_inode( struct inode *inode )
 
     if (inode->parent)
         list_remove( &inode->ch_entry );
+
+    /* disconnect remaining children from the parent */
+    LIST_FOR_EACH_ENTRY_SAFE( tmp, next, &inode->children, struct inode, ch_entry )
+    {
+        list_remove( &tmp->ch_entry );
+        tmp->parent = NULL;
+    }
 
     if (inode->wd != -1)
     {
