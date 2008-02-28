@@ -721,10 +721,9 @@ BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
 
 	TRACE("%p %i\n", hwnd, (bShow != 0) );
 
-	if( !title )
-	    lpPos->hwndIconTitle = title = ICONTITLE_Create( hwnd );
 	if( bShow )
         {
+            if (!title) lpPos->hwndIconTitle = title = ICONTITLE_Create( hwnd );
             if (!IsWindowVisible(title))
             {
                 SendMessageW( title, WM_SHOWWINDOW, TRUE, 0 );
@@ -732,7 +731,7 @@ BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
                               SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
             }
 	}
-	else ShowWindow( title, SW_HIDE );
+	else if (title) ShowWindow( title, SW_HIDE );
     }
     return FALSE;
 }
@@ -1129,6 +1128,8 @@ static BOOL show_window( HWND hwnd, INT cmd )
     if (cmd == SW_HIDE)
     {
         HWND hFocus;
+
+        WINPOS_ShowIconTitle( hwnd, FALSE );
 
         /* FIXME: This will cause the window to be activated irrespective
          * of whether it is owned by the same thread. Has to be done
