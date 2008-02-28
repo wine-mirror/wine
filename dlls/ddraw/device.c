@@ -1862,6 +1862,13 @@ IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
     EnterCriticalSection(&ddraw_cs);
     /* Flags: Not used */
 
+    if(This->target == Target)
+    {
+        TRACE("No-op SetRenderTarget operation, not doing anything\n");
+        LeaveCriticalSection(&ddraw_cs);
+        return D3D_OK;
+    }
+
     hr = IWineD3DDevice_SetRenderTarget(This->wineD3DDevice,
                                         0,
                                         Target ? Target->WineD3DSurface : NULL);
