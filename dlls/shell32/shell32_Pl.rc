@@ -76,14 +76,14 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Wybierz"		FCIDM_SHVIEW_OPEN
 	  MENUITEM "&Eksploruj",		FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "&Otwórz",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
 	  MENUITEM "&Wytnij",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Kopiuj",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Utwórz &Skrót",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Utwórz &skrót",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "&Usuñ",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Zmieñ nazwê",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
@@ -178,7 +178,7 @@ STRINGTABLE DISCARDABLE
 
 	IDS_CREATEFOLDER_DENIED "Nie mogê utworzyæ nowego katalogu: Brak dostêpu."
 	IDS_CREATEFOLDER_CAPTION "B³¹d przy tworzeniu nowego katalogu."
-	IDS_DELETEITEM_CAPTION "PotwierdŸ usuniêcia pliku"
+	IDS_DELETEITEM_CAPTION "PotwierdŸ usuniêcie pliku"
 	IDS_DELETEFOLDER_CAPTION "PotwierdŸ usuniêcie katalogu"
 	IDS_DELETEITEM_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Czy jesteœ pewien, ¿e chcesz usun¹æ te %1 pliki?"
@@ -229,5 +229,5 @@ STRINGTABLE DISCARDABLE
 	IDS_COMMON_VIDEO            "Documenty\\Moje wideo"
 	IDS_CDBURN_AREA             "Ustawienia lokalne\\Dane aplikacji\\Microsoft\\Nagrywanie dysków CD"
 
-	IDS_NEWFOLDER		"New Folder"
+	IDS_NEWFOLDER		"Nowy Folder"
 }
