@@ -48,6 +48,7 @@ struct fiber_data
     sigjmp_buf            jmpbuf;            /* 14 setjmp buffer (on Windows: CONTEXT) */
     DWORD                 flags;             /*    fiber flags */
     LPFIBER_START_ROUTINE start;             /*    start routine */
+    void                **fls_slots;         /*    fiber storage slots */
 };
 
 
@@ -107,6 +108,7 @@ LPVOID WINAPI CreateFiberEx( SIZE_T stack_commit, SIZE_T stack_reserve, DWORD fl
     fiber->except      = (void *)-1;
     fiber->start       = start;
     fiber->flags       = flags;
+    fiber->fls_slots   = NULL;
     return fiber;
 }
 
@@ -125,6 +127,7 @@ void WINAPI DeleteFiber( LPVOID fiber_ptr )
         ExitThread(1);
     }
     VirtualFree( fiber->stack_allocation, 0, MEM_RELEASE );
+    HeapFree( GetProcessHeap(), 0, fiber->fls_slots );
     HeapFree( GetProcessHeap(), 0, fiber );
 }
 
@@ -157,6 +160,7 @@ LPVOID WINAPI ConvertThreadToFiberEx( LPVOID param, DWORD flags )
     fiber->stack_allocation = NtCurrentTeb()->DeallocationStack;
     fiber->start            = NULL;
     fiber->flags            = flags;
+    fiber->fls_slots        = NtCurrentTeb()->FlsSlots;
     NtCurrentTeb()->Tib.u.FiberData = fiber;
     return fiber;
 }
@@ -188,6 +192,7 @@ void WINAPI SwitchToFiber( LPVOID fiber )
 
     current_fiber->except      = NtCurrentTeb()->Tib.ExceptionList;
     current_fiber->stack_limit = NtCurrentTeb()->Tib.StackLimit;
+    current_fiber->fls_slots   = NtCurrentTeb()->FlsSlots;
     /* stack_allocation and stack_base never change */
 
     /* FIXME: should save floating point context if requested in fiber->flags */
@@ -198,6 +203,7 @@ void WINAPI SwitchToFiber( LPVOID fiber )
         NtCurrentTeb()->Tib.StackBase     = new_fiber->stack_base;
         NtCurrentTeb()->Tib.StackLimit    = new_fiber->stack_limit;
         NtCurrentTeb()->DeallocationStack = new_fiber->stack_allocation;
+        NtCurrentTeb()->FlsSlots          = new_fiber->fls_slots;
         if (new_fiber->start)  /* first time */
             wine_switch_to_stack( start_fiber, new_fiber, new_fiber->stack_base );
         else
@@ -210,10 +216,40 @@ void WINAPI SwitchToFiber( LPVOID fiber )
  */
 DWORD WINAPI FlsAlloc( PFLS_CALLBACK_FUNCTION callback )
 {
-    FIXME( "%p: stub!\n", callback );
+    DWORD index;
+    PEB * const peb = NtCurrentTeb()->Peb;
 
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FLS_OUT_OF_INDEXES;
+    RtlAcquirePebLock();
+    if (!peb->FlsCallback &&
+        !(peb->FlsCallback = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        8 * sizeof(peb->FlsBitmapBits) * sizeof(void*) )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        index = FLS_OUT_OF_INDEXES;
+    }
+    else
+    {
+        index = RtlFindClearBitsAndSet( peb->FlsBitmap, 1, 0 );
+        if (index != ~0U)
+        {
+            if (!NtCurrentTeb()->FlsSlots &&
+                !(NtCurrentTeb()->FlsSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                        8 * sizeof(peb->FlsBitmapBits) * sizeof(void*) )))
+            {
+                RtlClearBits( peb->FlsBitmap, index, 1 );
+                index = FLS_OUT_OF_INDEXES;
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            }
+            else
+            {
+                NtCurrentTeb()->FlsSlots[index] = 0; /* clear the value */
+                peb->FlsCallback[index] = callback;
+            }
+        }
+        else SetLastError( ERROR_NO_MORE_ITEMS );
+    }
+    RtlReleasePebLock();
+    return index;
 }
 
 /***********************************************************************
@@ -221,10 +257,20 @@ DWORD WINAPI FlsAlloc( PFLS_CALLBACK_FUNCTION callback )
  */
 BOOL WINAPI FlsFree( DWORD index )
 {
-    FIXME( "%x: stub!\n", index );
+    BOOL ret;
 
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    RtlAcquirePebLock();
+    ret = RtlAreBitsSet( NtCurrentTeb()->Peb->FlsBitmap, index, 1 );
+    if (ret) RtlClearBits( NtCurrentTeb()->Peb->FlsBitmap, index, 1 );
+    if (ret)
+    {
+        /* FIXME: call Fls callback */
+        /* FIXME: add equivalent of ThreadZeroTlsCell here */
+        if (NtCurrentTeb()->FlsSlots) NtCurrentTeb()->FlsSlots[index] = 0;
+    }
+    else SetLastError( ERROR_INVALID_PARAMETER );
+    RtlReleasePebLock();
+    return TRUE;
 }
 
 /***********************************************************************
@@ -232,10 +278,13 @@ BOOL WINAPI FlsFree( DWORD index )
  */
 PVOID WINAPI FlsGetValue( DWORD index )
 {
-    FIXME( "%x: stub!\n", index );
-
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return NULL;
+    if (index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) || !NtCurrentTeb()->FlsSlots)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    SetLastError( ERROR_SUCCESS );
+    return NtCurrentTeb()->FlsSlots[index];
 }
 
 /***********************************************************************
@@ -243,9 +292,18 @@ PVOID WINAPI FlsGetValue( DWORD index )
  */
 BOOL WINAPI FlsSetValue( DWORD index, PVOID data )
 {
-
-    FIXME( "%x, %p: stub!\n", index, data );
-
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    if (index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!NtCurrentTeb()->FlsSlots &&
+        !(NtCurrentTeb()->FlsSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) * sizeof(void*) )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    NtCurrentTeb()->FlsSlots[index] = data;
+    return TRUE;
 }
