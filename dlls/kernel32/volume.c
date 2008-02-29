@@ -339,7 +339,7 @@ static enum fs_type VOLUME_ReadFATSuperblock( HANDLE handle, BYTE *buff )
         sectors_per_cluster = buff[0x0d];
         /* check if the parameters are reasonable and will not cause
          * arithmetic errors in the calculation */
-        reasonable = num_boot_sectors < 16 &&
+        reasonable = num_boot_sectors < total_sectors &&
                      num_fats < 16 &&
                      bytes_per_sector >= 512 && bytes_per_sector % 512 == 0 &&
                      sectors_per_cluster > 1;
@@ -516,6 +516,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
 {
     static const WCHAR audiocdW[] = {'A','u','d','i','o',' ','C','D',0};
     static const WCHAR fatW[] = {'F','A','T',0};
+    static const WCHAR fat32W[] = {'F','A','T','3','2',0};
     static const WCHAR ntfsW[] = {'N','T','F','S',0};
     static const WCHAR cdfsW[] = {'C','D','F','S',0};
 
@@ -611,8 +612,9 @@ fill_fs_info:  /* now fill in the information that depends on the file system ty
         if (flags) *flags = FILE_READ_ONLY_VOLUME;
         break;
     case FS_FAT1216:
-    case FS_FAT32:
         if (fsname) lstrcpynW( fsname, fatW, fsname_len );
+    case FS_FAT32:
+        if (type == FS_FAT32 && fsname) lstrcpynW( fsname, fat32W, fsname_len );
         if (filename_len) *filename_len = 255;
         if (flags) *flags = FILE_CASE_PRESERVED_NAMES;  /* FIXME */
         break;
