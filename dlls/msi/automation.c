@@ -1535,6 +1535,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
     HRESULT hr;
     LPWSTR szString = NULL;
     DWORD dwSize = 0;
+    INSTALLUILEVEL ui;
 
     VariantInit(&varg0);
     VariantInit(&varg1);
@@ -1623,6 +1624,31 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     ERR("MsiOpenDatabase returned %d\n", ret);
                     return DISP_E_EXCEPTION;
                 }
+            }
+            else return DISP_E_MEMBERNOTFOUND;
+            break;
+
+        case DISPID_INSTALLER_UILEVEL:
+            if (wFlags & DISPATCH_PROPERTYPUT)
+            {
+                hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
+                if (FAILED(hr)) return hr;
+                if ((ui = MsiSetInternalUI(V_I4(&varg0), NULL) == INSTALLUILEVEL_NOCHANGE))
+                {
+                    ERR("MsiSetInternalUI failed\n");
+                    return DISP_E_EXCEPTION;
+                }
+            }
+            else if (wFlags & DISPATCH_PROPERTYGET)
+            {
+                if ((ui = MsiSetInternalUI(INSTALLUILEVEL_NOCHANGE, NULL) == INSTALLUILEVEL_NOCHANGE))
+                {
+                    ERR("MsiSetInternalUI failed\n");
+                    return DISP_E_EXCEPTION;
+                }
+
+                V_VT(pVarResult) = VT_I4;
+                V_I4(pVarResult) = ui;
             }
             else return DISP_E_MEMBERNOTFOUND;
             break;

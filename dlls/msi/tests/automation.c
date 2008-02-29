@@ -470,11 +470,9 @@ static void test_dispid(void)
     ok( get_dispid( pInstaller, "OpenPackage" ) == 2, "dispid wrong\n");
     todo_wine ok( get_dispid( pInstaller, "OpenProduct" ) == 3, "dispid wrong\n");
     ok( get_dispid( pInstaller, "OpenDatabase" ) == 4, "dispid wrong\n");
-    todo_wine {
-    ok( get_dispid( pInstaller, "SummaryInformation" ) == 5, "dispid wrong\n");
+    todo_wine ok( get_dispid( pInstaller, "SummaryInformation" ) == 5, "dispid wrong\n");
     ok( get_dispid( pInstaller, "UILevel" ) == 6, "dispid wrong\n");
-    ok( get_dispid( pInstaller, "EnableLog" ) == 7, "dispid wrong\n");
-    }
+    todo_wine ok( get_dispid( pInstaller, "EnableLog" ) == 7, "dispid wrong\n");
     ok( get_dispid( pInstaller, "InstallProduct" ) == 8, "dispid wrong\n");
     ok( get_dispid( pInstaller, "Version" ) == 9, "dispid wrong\n");
     todo_wine {
