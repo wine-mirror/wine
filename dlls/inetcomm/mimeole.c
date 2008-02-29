@@ -1225,6 +1225,8 @@ static HRESULT WINAPI sub_stream_Seek(
     case STREAM_SEEK_END:
         new_pos.QuadPart = This->length.QuadPart + dlibMove.QuadPart;
         break;
+    default:
+        return STG_E_INVALIDFUNCTION;
     }
 
     if(new_pos.QuadPart < 0) new_pos.QuadPart = 0;
