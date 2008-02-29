@@ -374,7 +374,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTW *lplf)
     int i,j;
     LOGFONTW lf;
 
-    memcpy(&lf, lplf, sizeof(LOGFONTW));
+    lf = *lplf;
 
     for (i=0;i<FSTYLES;i++)
     {

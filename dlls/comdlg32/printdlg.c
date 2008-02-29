@@ -2850,7 +2850,7 @@ PRINTDLG_PS_ChangePaperPrev(const PageSetupDataA *pda)
     MoveWindow(GetDlgItem(pda->hDlg, rct2), x+width, y+SHADOW, SHADOW, height, FALSE);
     MoveWindow(GetDlgItem(pda->hDlg, rct3), x+SHADOW, y+height, width, SHADOW, FALSE);
     MoveWindow(GetDlgItem(pda->hDlg, rct1), x, y, width, height, FALSE);
-    memcpy(&rtTmp, &pda->rtDrawRect, sizeof(RECT));
+    rtTmp = pda->rtDrawRect;
     rtTmp.right  += SHADOW;
     rtTmp.bottom += SHADOW;
 #undef SHADOW 
