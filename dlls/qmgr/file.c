@@ -68,21 +68,35 @@ static ULONG WINAPI BITS_IBackgroundCopyFile_Release(
     return ref;
 }
 
-/*** IBackgroundCopyFile methods ***/
+/* Get the remote name of a background copy file */
 static HRESULT WINAPI BITS_IBackgroundCopyFile_GetRemoteName(
     IBackgroundCopyFile* iface,
     LPWSTR *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyFileImpl *This = (BackgroundCopyFileImpl *) iface;
+    int n = (lstrlenW(This->info.RemoteName) + 1) * sizeof(WCHAR);
+
+    *pVal = CoTaskMemAlloc(n);
+    if (!*pVal)
+        return E_OUTOFMEMORY;
+
+    memcpy(*pVal, This->info.RemoteName, n);
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyFile_GetLocalName(
     IBackgroundCopyFile* iface,
     LPWSTR *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyFileImpl *This = (BackgroundCopyFileImpl *) iface;
+    int n = (lstrlenW(This->info.LocalName) + 1) * sizeof(WCHAR);
+
+    *pVal = CoTaskMemAlloc(n);
+    if (!*pVal)
+        return E_OUTOFMEMORY;
+
+    memcpy(*pVal, This->info.LocalName, n);
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyFile_GetProgress(
