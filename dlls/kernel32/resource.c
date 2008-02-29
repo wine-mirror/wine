@@ -132,6 +132,9 @@ static HRSRC find_resourceA( HMODULE hModule, LPCSTR type, LPCSTR name, WORD lan
     LDR_RESOURCE_INFO info;
     const IMAGE_RESOURCE_DATA_ENTRY *entry = NULL;
 
+    nameW.Buffer = NULL;
+    typeW.Buffer = NULL;
+
     __TRY
     {
         if ((status = get_res_nameA( name, &nameW )) != STATUS_SUCCESS) goto done;
