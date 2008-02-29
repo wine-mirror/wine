@@ -384,6 +384,58 @@ static void test_GdipDrawLineI(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_GdipDrawLinesI(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpPen *pen = NULL;
+    GpPoint *ptf = NULL;
+    HDC hdc = GetDC(0);
+
+    /* make a graphics object and pen object */
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    ok(pen != NULL, "Expected pen to be initialized\n");
+
+    /* make some arbitrary valid points*/
+    ptf = GdipAlloc(2 * sizeof(GpPointF));
+
+    ptf[0].X = 1;
+    ptf[0].Y = 1;
+
+    ptf[1].X = 2;
+    ptf[1].Y = 2;
+
+    /* InvalidParameter cases: null graphics, null pen, null points, count < 2*/
+    status = GdipDrawLinesI(NULL, NULL, NULL, 0);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawLinesI(graphics, pen, ptf, 0);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawLinesI(graphics, NULL, ptf, 2);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawLinesI(NULL, pen, ptf, 2);
+    expect(InvalidParameter, status);
+
+    /* successful case */
+    status = GdipDrawLinesI(graphics, pen, ptf, 2);
+    expect(Ok, status);
+
+    GdipFree(ptf);
+    GdipDeletePen(pen);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -402,6 +454,7 @@ START_TEST(graphics)
     test_GdipDrawArc();
     test_GdipDrawArcI();
     test_GdipDrawLineI();
+    test_GdipDrawLinesI();
 
     GdiplusShutdown(gdiplusToken);
 }

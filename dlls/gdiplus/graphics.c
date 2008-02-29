@@ -1224,6 +1224,35 @@ GpStatus WINGDIPAPI GdipDrawLines(GpGraphics *graphics, GpPen *pen, GDIPCONST
     return retval;
 }
 
+GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
+    GpPoint *points, INT count)
+{
+    INT save_state;
+    GpStatus retval;
+    GpPointF *ptf = NULL;
+    int i;
+
+    if(!pen || !graphics || (count < 2))
+        return InvalidParameter;
+
+    ptf = GdipAlloc(count * sizeof(GpPointF));
+    if(!ptf) return OutOfMemory;
+
+    for(i = 0; i < count; i ++){
+        ptf[i].X = (REAL) points[i].X;
+        ptf[i].Y = (REAL) points[i].Y;
+    }
+
+    save_state = prepare_dc(graphics, pen);
+
+    retval = draw_polyline(graphics, pen, ptf, count, TRUE);
+
+    restore_dc(graphics, save_state);
+
+    GdipFree(ptf);
+    return retval;
+}
+
 GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     INT save_state;
