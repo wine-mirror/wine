@@ -1711,7 +1711,7 @@ static void test_mk_protocol(void)
     ok(hres == INET_E_RESOURCE_NOT_FOUND, "Start failed: %08x, expected INET_E_RESOURCE_NOT_FOUND\n", hres);
 
     CHECK_CALLED(GetBindInfo);
-    CHECK_CALLED(ReportProgress_DIRECTBIND);
+    CLEAR_CALLED(ReportProgress_DIRECTBIND);
     CHECK_CALLED(ReportProgress_SENDINGREQUEST);
     CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
     CHECK_CALLED(ReportResult);
