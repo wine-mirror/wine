@@ -46,7 +46,6 @@
 #include "xcomposite.h"
 #include "wine/debug.h"
 #include "wine/server.h"
-#include "win.h"
 #include "mwm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
@@ -69,8 +68,6 @@ static const char managed_prop[]      = "__wine_x11_managed";
 #define SYSTEM_TRAY_REQUEST_DOCK    0
 
 extern int usexcomposite;
-
-extern void WIN_invalidate_dce( HWND hwnd, const RECT *rect );  /* FIXME: to be removed */
 
 /***********************************************************************
  *		is_window_managed

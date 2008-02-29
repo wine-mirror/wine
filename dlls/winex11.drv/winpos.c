@@ -33,7 +33,6 @@
 #include "wine/wingdi16.h"
 
 #include "x11drv.h"
-#include "win.h"
 
 #include "wine/server.h"
 #include "wine/debug.h"

@@ -746,4 +746,11 @@ LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
 
 extern void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr, LPVIDMEM fb_mem);
 
+/* FIXME: private functions imported from user32 */
+extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
+extern BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow );
+extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos, POINT *minTrack,
+                                  POINT *maxTrack );
+extern void WIN_invalidate_dce( HWND hwnd, const RECT *rect );
+
 #endif  /* __WINE_X11DRV_H */

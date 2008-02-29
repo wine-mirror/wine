@@ -45,7 +45,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "win.h"
 #include "x11drv.h"
 #include "wine/server.h"
 #include "wine/unicode.h"

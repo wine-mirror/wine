@@ -22,7 +22,6 @@
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
 
-#include "win.h"
 #include "x11drv.h"
 
 /* avoid conflict with field names in included win32 headers */
