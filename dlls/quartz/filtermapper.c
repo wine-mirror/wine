@@ -41,6 +41,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+#define ARRAYSIZE(array) (sizeof(array)/sizeof((array)[0]))
+
 /* Unexposed IAMFilterData interface */
 typedef struct IAMFilterData IAMFilterData;
 
@@ -311,7 +313,7 @@ static HRESULT WINAPI FilterMapper2_CreateCategory(
 {
     LPWSTR wClsidAMCat = NULL;
     LPWSTR wClsidCategory = NULL;
-    WCHAR wszKeyName[strlenW(wszClsidSlash) + strlenW(wszSlashInstance) + (CHARS_IN_GUID-1) * 2 + 1];
+    WCHAR wszKeyName[ARRAYSIZE(wszClsidSlash)-1 + ARRAYSIZE(wszSlashInstance)-1 + (CHARS_IN_GUID-1) * 2 + 1];
     HKEY hKey = NULL;
     LONG lRet;
     HRESULT hr;
