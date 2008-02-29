@@ -780,12 +780,12 @@ HRESULT linuxinput_create_effect(
     LinuxInputEffectImpl* newEffect = HeapAlloc(GetProcessHeap(), 
 	HEAP_ZERO_MEMORY, sizeof(LinuxInputEffectImpl));
     DWORD type = _typeFromGUID(rguid);
-    
+
     newEffect->lpVtbl = &LinuxInputEffectVtbl;
     newEffect->ref = 1;
-    memcpy(&(newEffect->guid), rguid, sizeof(*rguid));
+    newEffect->guid = *rguid;
     newEffect->fd = fd;
-    
+
     /* set the type.  this cannot be changed over the effect's life. */
     switch (type) {
 	case DIEFT_PERIODIC: 
