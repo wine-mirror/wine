@@ -50,6 +50,7 @@ C_SRCS = \
 	path.c \
 	pen.c \
 	printdrv.c \
+	printdrv16.c \
 	region.c
 
 C_SRCS16 = \
