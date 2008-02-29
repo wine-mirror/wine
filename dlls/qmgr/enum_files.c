@@ -114,19 +114,29 @@ static HRESULT WINAPI BITS_IEnumBackgroundCopyFiles_Next(
     return fetched == celt ? S_OK : S_FALSE;
 }
 
+/* Skip over one or more files in the file enumerator */
 static HRESULT WINAPI BITS_IEnumBackgroundCopyFiles_Skip(
     IEnumBackgroundCopyFiles* iface,
     ULONG celt)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    EnumBackgroundCopyFilesImpl *This = (EnumBackgroundCopyFilesImpl *) iface;
+
+    if (celt > This->numFiles - This->indexFiles)
+    {
+        This->indexFiles = This->numFiles;
+        return S_FALSE;
+    }
+
+    This->indexFiles += celt;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IEnumBackgroundCopyFiles_Reset(
     IEnumBackgroundCopyFiles* iface)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    EnumBackgroundCopyFilesImpl *This = (EnumBackgroundCopyFilesImpl *) iface;
+    This->indexFiles = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IEnumBackgroundCopyFiles_Clone(

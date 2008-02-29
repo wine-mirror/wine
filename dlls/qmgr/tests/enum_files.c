@@ -214,6 +214,54 @@ static void test_Next_errors(void)
     ok(hres == E_INVALIDARG, "Invalid call to Next succeeded: %08x\n", hres);
 }
 
+/* Test skipping through the files in a list */
+static void test_Skip_walkList(void)
+{
+    HRESULT hres;
+    ULONG i;
+
+    for (i = 0; i < test_fileCount; i++)
+    {
+        hres = IEnumBackgroundCopyFiles_Skip(test_enumFiles, 1);
+        ok(hres == S_OK, "Skip failed: %08x\n", hres);
+        if(hres != S_OK)
+        {
+            skip("Unable to propely Skip files\n");
+            return;
+        }
+    }
+
+    hres = IEnumBackgroundCopyFiles_Skip(test_enumFiles, 1);
+    ok(hres == S_FALSE, "Skip expected end of list: %08x\n", hres);
+}
+
+/* Test skipping off the end of the list */
+static void test_Skip_offEnd(void)
+{
+    HRESULT hres;
+
+    hres = IEnumBackgroundCopyFiles_Skip(test_enumFiles, test_fileCount + 1);
+    ok(hres == S_FALSE, "Skip expected end of list: %08x\n", hres);
+}
+
+/* Test resetting the file enumerator */
+static void test_Reset(void)
+{
+    HRESULT hres;
+
+    hres = IEnumBackgroundCopyFiles_Skip(test_enumFiles, test_fileCount);
+    ok(hres == S_OK, "Skip failed: %08x\n", hres);
+    hres = IEnumBackgroundCopyFiles_Reset(test_enumFiles);
+    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+    if(hres != S_OK)
+    {
+        skip("Unable to Reset enumerator\n");
+        return;
+    }
+    hres = IEnumBackgroundCopyFiles_Skip(test_enumFiles, test_fileCount);
+    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(enum_files)
@@ -224,6 +272,9 @@ START_TEST(enum_files)
         test_Next_walkList_1,
         test_Next_walkList_2,
         test_Next_errors,
+        test_Skip_walkList,
+        test_Skip_offEnd,
+        test_Reset,
         0
     };
     const test_t *test;
