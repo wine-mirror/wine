@@ -1014,7 +1014,7 @@ BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
     if (!data)
         return FALSE;
 
-    memcpy(lpCompForm,&(data->IMC.cfCompForm),sizeof(COMPOSITIONFORM));
+    *lpCompForm = data->IMC.cfCompForm;
     return 1;
 }
 
@@ -1614,7 +1614,7 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
     if (!data)
         return FALSE;
 
-    memcpy(&data->IMC.lfFont.W,lplf,sizeof(LOGFONTW));
+    data->IMC.lfFont.W = *lplf;
     ImmInternalSendIMENotify(IMN_SETCOMPOSITIONFONT, 0);
 
     if (data->textfont)
@@ -1751,7 +1751,7 @@ BOOL WINAPI ImmSetCompositionWindow(
     if (!data)
         return FALSE;
 
-    memcpy(&data->IMC.cfCompForm,lpCompForm,sizeof(COMPOSITIONFORM));
+    data->IMC.cfCompForm = *lpCompForm;
 
     if (IsWindowVisible(hwndDefault))
     {
