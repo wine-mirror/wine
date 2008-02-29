@@ -75,7 +75,7 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
     *clonepen = GdipAlloc(sizeof(GpPen));
     if(!*clonepen)  return OutOfMemory;
 
-    memcpy(*clonepen, pen, sizeof(GpPen));
+    **clonepen = *pen;
 
     GdipCloneCustomLineCap(pen->customstart, &(*clonepen)->customstart);
     GdipCloneCustomLineCap(pen->customend, &(*clonepen)->customend);

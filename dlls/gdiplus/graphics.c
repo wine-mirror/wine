@@ -1426,7 +1426,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
      * width, angle). */
     SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
     GetTextMetricsW(graphics->hdc, &textmet);
-    memcpy(&lfw, &font->lfw, sizeof(LOGFONTW));
+    lfw = font->lfw;
 
     lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
     lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
@@ -1811,7 +1811,7 @@ GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     if(!graphics || !matrix)
         return InvalidParameter;
 
-    memcpy(matrix, graphics->worldtrans, sizeof(GpMatrix));
+    *matrix = *graphics->worldtrans;
     return Ok;
 }
 

@@ -97,7 +97,7 @@ GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix *matrix, GpMatrix **clone)
     *clone = GdipAlloc(sizeof(GpMatrix));
     if(!*clone)    return OutOfMemory;
 
-    memcpy(*clone, matrix, sizeof(GpMatrix));
+    **clone = *matrix;
 
     return Ok;
 }

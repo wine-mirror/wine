@@ -441,7 +441,7 @@ GpStatus WINGDIPAPI GdipGetImageBounds(GpImage *image, GpRectF *srcRect,
     if(!image || !srcRect || !srcUnit)
         return InvalidParameter;
     if(image->type == ImageTypeMetafile){
-        memcpy(srcRect, &((GpMetafile*)image)->bounds, sizeof(GpRectF));
+        *srcRect = ((GpMetafile*)image)->bounds;
         *srcUnit = ((GpMetafile*)image)->unit;
     }
     else if(image->type == ImageTypeBitmap){

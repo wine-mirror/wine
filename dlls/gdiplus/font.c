@@ -95,7 +95,7 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
     if(!font || !graphics || !lfw)
         return InvalidParameter;
 
-    memcpy(lfw, &font->lfw, sizeof(LOGFONTW));
+    *lfw = font->lfw;
 
     return Ok;
 }
