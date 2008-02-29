@@ -1,7 +1,7 @@
 /*
  * Queue Manager (BITS) File Enumerator
  *
- * Copyright 2007 Google (Roy Shea)
+ * Copyright 2007, 2008 Google (Roy Shea, Dan Hipschman)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -73,15 +73,45 @@ static ULONG WINAPI BITS_IEnumBackgroundCopyFiles_Release(
     return ref;
 }
 
-/*** IEnumBackgroundCopyFiles methods ***/
+/* Return reference to one or more files in the file enumerator */
 static HRESULT WINAPI BITS_IEnumBackgroundCopyFiles_Next(
     IEnumBackgroundCopyFiles* iface,
     ULONG celt,
     IBackgroundCopyFile **rgelt,
     ULONG *pceltFetched)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    EnumBackgroundCopyFilesImpl *This = (EnumBackgroundCopyFilesImpl *) iface;
+    ULONG fetched;
+    ULONG i;
+    IBackgroundCopyFile *file;
+
+    /* Despite documented behavior, Windows (tested on XP) is not verifying
+       that the caller set pceltFetched to zero.  No check here. */
+
+    fetched = min(celt, This->numFiles - This->indexFiles);
+    if (pceltFetched)
+        *pceltFetched = fetched;
+    else
+    {
+        /* We need to initialize this array if the caller doesn't request
+           the length because length_is will default to celt.  */
+        for (i = 0; i < celt; i++)
+            rgelt[i] = NULL;
+
+        /* pceltFetched can only be NULL if celt is 1 */
+        if (celt != 1)
+            return E_INVALIDARG;
+    }
+
+    /* Fill in the array of objects */
+    for (i = 0; i < fetched; i++)
+    {
+        file = This->files[This->indexFiles++];
+        IBackgroundCopyFile_AddRef(file);
+        rgelt[i] = file;
+    }
+
+    return fetched == celt ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI BITS_IEnumBackgroundCopyFiles_Skip(
