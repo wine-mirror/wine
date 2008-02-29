@@ -234,7 +234,7 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     release_chm(This); /* Native leaks handle here */
     This->chm_file = chm_file;
-    memcpy(&This->chm_object, &chm_object, sizeof(chm_object));
+    This->chm_object = chm_object;
 
     hres = IInternetProtocolSink_ReportData(pOIProtSink,
             BSCF_FIRSTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE,

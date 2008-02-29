@@ -445,7 +445,7 @@ static int ITSS_chm_enumerator(
     TRACE("adding %s to enumeration\n", debugstr_w(ui->path) );
 
     info = HeapAlloc( GetProcessHeap(), 0, sizeof (struct enum_info) );
-    memcpy( &info->ui, ui, sizeof info->ui );
+    info->ui = *ui;
 
     info->next = NULL;
     info->prev = stgenum->last;
@@ -788,7 +788,7 @@ static HRESULT WINAPI ITSS_IStream_Stat(
     pstatstg->type = STGTY_STREAM;
     pstatstg->cbSize.QuadPart = This->ui.length;
     pstatstg->grfMode = STGM_READ;
-    memcpy( &pstatstg->clsid, &CLSID_ITStorage, sizeof (CLSID) );
+    pstatstg->clsid = CLSID_ITStorage;
 
     return S_OK;
 }
@@ -828,7 +828,7 @@ static IStream_Impl *ITSS_create_stream(
     stm->vtbl_IStream = &ITSS_IStream_vtbl;
     stm->ref = 1;
     stm->addr = 0;
-    memcpy( &stm->ui, ui, sizeof stm->ui );
+    stm->ui = *ui;
     stm->stg = stg;
     IStorage_AddRef( (IStorage*) stg );
 
