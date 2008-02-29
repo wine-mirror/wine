@@ -1371,7 +1371,6 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     cmsHPROFILE cmsprofile = NULL;
     icProfile *iccprofile = NULL;
     HANDLE handle = INVALID_HANDLE_VALUE;
-    DWORD size;
 
     TRACE( "( %p, 0x%08x, 0x%08x, 0x%08x )\n", profile, access, sharing, creation );
 
@@ -1381,14 +1380,14 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     {
         /* FIXME: access flags not implemented for memory based profiles */
 
-        iccprofile = profile->pProfileData;
-        size = profile->cbDataSize;
-    
-        cmsprofile = cmsOpenProfileFromMem( iccprofile, size );
+        if (!(iccprofile = HeapAlloc( GetProcessHeap(), 0, profile->cbDataSize ))) return NULL;
+        memcpy( iccprofile, profile->pProfileData, profile->cbDataSize );
+
+        cmsprofile = cmsOpenProfileFromMem( iccprofile, profile->cbDataSize );
     }
     else if (profile->dwType == PROFILE_FILENAME)
     {
-        DWORD read, flags = 0;
+        DWORD size, read, flags = 0;
 
         TRACE( "profile file: %s\n", debugstr_w( (WCHAR *)profile->pProfileData ) );
 
