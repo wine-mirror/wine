@@ -788,9 +788,6 @@
 # Wine dll separation hacks, these will go away, don't use them
 #
 @ cdecl HOOK_CallHooks(long long long long long)
-@ cdecl USER_Unlock()
 @ cdecl WINPOS_GetMinMaxInfo(long ptr ptr ptr ptr)
 @ cdecl WINPOS_ShowIconTitle(long long)
-@ cdecl WIN_GetPtr(long)
-@ cdecl WIN_SetStyle(long long long)
 @ cdecl WIN_invalidate_dce(long ptr) invalidate_dce
