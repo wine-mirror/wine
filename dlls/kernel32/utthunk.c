@@ -304,7 +304,7 @@ VOID WINAPI UTUnRegister( HMODULE hModule )
 
     RtlAcquirePebLock();
     ut = UTFind( hModule );
-    if ( !ut )
+    if ( ut )
     {
         hModule16 = ut->hModule16;
         UTFree( ut );
