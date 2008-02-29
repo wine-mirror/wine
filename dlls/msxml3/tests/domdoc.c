@@ -682,19 +682,7 @@ static void test_domdoc( void )
 
         /* test put_data */
         r = IXMLDOMProcessingInstruction_put_data(nodePI, _bstr_("version=\"1.0\" encoding=\"UTF-8\""));
-        ok(r == S_OK, "ret %08x\n", r );
-        SysFreeString(str);
-
-        r = IXMLDOMProcessingInstruction_get_data(nodePI, &str);
-        ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("version=\"1.0\" encoding=\"UTF-8\"") ), "incorrect data string\n");
-        SysFreeString(str);
-
-        /* Confirm XML text is good */
-        r = IXMLDOMProcessingInstruction_get_xml(nodePI, &str);
-        ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("<?xml version=\"1.0\" encoding=\"UTF-8\"?>") ), "incorrect xml string\n");
-        SysFreeString(str);
+        ok(r == E_FAIL, "ret %08x\n", r );
 
         IXMLDOMProcessingInstruction_Release(nodePI);
     }

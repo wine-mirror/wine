@@ -506,8 +506,23 @@ static HRESULT WINAPI dom_pi_put_data(
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
     HRESULT hr = E_FAIL;
     VARIANT val;
+    BSTR sTarget;
+    static WCHAR szXML[] = {'x','m','l',0};
 
     TRACE("%p %s\n", This, debugstr_w(data) );
+
+    /* Cannot set data to a PI node whos target is 'xml' */
+    hr = dom_pi_get_nodeName(iface, &sTarget);
+    if(hr == S_OK)
+    {
+        if(lstrcmpW( sTarget, szXML) == 0)
+        {
+            SysFreeString(sTarget);
+            return E_FAIL;
+        }
+
+        SysFreeString(sTarget);
+    }
 
     V_VT(&val) = VT_BSTR;
     V_BSTR(&val) = data;
