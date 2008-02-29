@@ -476,6 +476,7 @@ static const HANDLEHEADERVtbl APPINFOVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -2399,6 +2400,10 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                     INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
             }
             break;
+    case 66:
+        FIXME("66\n");
+        bSuccess = TRUE;
+        break;
         default:
             FIXME("Stub! %d\n", dwOption);
             break;
@@ -2556,6 +2561,9 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_SECURITY_FLAGS:
 	 FIXME("Option INTERNET_OPTION_SECURITY_FLAGS; STUB\n");
 	 break;
+    case 86:
+        FIXME("86\n");
+        break;
     default:
         FIXME("Option %d STUB\n",dwOption);
         INTERNET_SetLastError(ERROR_INTERNET_INVALID_OPTION);
@@ -3400,96 +3408,33 @@ lend:
  *   INTERNET_STATUS_REQUEST_COMPLETE will be sent when more
  *   data is available.
  */
-void AsyncInternetQueryDataAvailableProc(WORKREQUEST *workRequest)
-{
-    LPWININETHTTPREQW lpwhr;
-    INTERNET_ASYNC_RESULT iar;
-    char buffer[4048];
-
-    TRACE("INTERNETQUERYDATAAVAILABLE %p\n", workRequest->hdr);
-
-    switch (workRequest->hdr->htype)
-    {
-    case WH_HHTTPREQ:
-        lpwhr = (LPWININETHTTPREQW)workRequest->hdr;
-        iar.dwResult = NETCON_recv(&lpwhr->netConnection, buffer,
-                                   min(sizeof(buffer),
-                                       lpwhr->dwContentLength - lpwhr->dwContentRead),
-                                   MSG_PEEK, (int *)&iar.dwError);
-        INTERNET_SendCallback(workRequest->hdr, workRequest->hdr->dwContext,
-                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                              sizeof(INTERNET_ASYNC_RESULT));
-        break;
-
-    default:
-        FIXME("unsupported file type\n");
-        break;
-    }
-}
-
 BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                                 LPDWORD lpdwNumberOfBytesAvailble,
                                 DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPWININETHTTPREQW lpwhr;
-    BOOL retval = FALSE;
-    char buffer[4048];
+    WININETHANDLEHEADER *hdr;
+    DWORD res;
 
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hFile );
-    if (NULL == lpwhr)
-    {
-        INTERNET_SetLastError(ERROR_NO_MORE_FILES);
+    TRACE("(%p %p %x %lx)\n", hFile, lpdwNumberOfBytesAvailble, dwFlags, dwContext);
+
+    hdr = WININET_GetObject( hFile );
+    if (!hdr) {
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    TRACE("-->  %p %i\n",lpwhr,lpwhr->hdr.htype);
-
-    switch (lpwhr->hdr.htype)
-    {
-    case WH_HHTTPREQ:
-        retval = TRUE;
-        if (NETCON_query_data_available(&lpwhr->netConnection,
-                                        lpdwNumberOfBytesAvailble) &&
-            !*lpdwNumberOfBytesAvailble)
-        {
-            /* Even if we are in async mode, we need to determine whether
-             * there is actually more data available. We do this by trying
-             * to peek only a single byte in async mode. */
-            BOOL async = (lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
-            if (NETCON_recv(&lpwhr->netConnection, buffer,
-                            min(async ? 1 : sizeof(buffer),
-                                lpwhr->dwContentLength - lpwhr->dwContentRead),
-                            MSG_PEEK, (int *)lpdwNumberOfBytesAvailble) &&
-                async && *lpdwNumberOfBytesAvailble)
-            {
-                WORKREQUEST workRequest;
-
-                *lpdwNumberOfBytesAvailble = 0;
-                workRequest.asyncproc = AsyncInternetQueryDataAvailableProc;
-                workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
-
-                retval = INTERNET_AsyncCall(&workRequest);
-                if (!retval)
-                {
-                    WININET_Release( &lpwhr->hdr );
-                }
-                else
-                {
-                    INTERNET_SetLastError(ERROR_IO_PENDING);
-                    retval = FALSE;
-                }
-            }
-        }
-        break;
-
-    default:
-        FIXME("unsupported file type\n");
-        break;
+    if(hdr->vtbl->QueryDataAvailable) {
+        res = hdr->vtbl->QueryDataAvailable(hdr, lpdwNumberOfBytesAvailble, dwFlags, dwContext);
+    }else {
+        WARN("wrong handle\n");
+        res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
     }
-    WININET_Release( &lpwhr->hdr );
 
-    TRACE("<-- %i\n",retval);
-    return retval;
+    WININET_Release(hdr);
+
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 

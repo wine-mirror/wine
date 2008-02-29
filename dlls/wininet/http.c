@@ -1418,11 +1418,62 @@ static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWOR
     return NETCON_send(&lpwhr->netConnection, buffer, size, 0, (LPINT)written);
 }
 
+static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
+{
+    WININETHTTPREQW *req = (WININETHTTPREQW*)workRequest->hdr;
+    INTERNET_ASYNC_RESULT iar;
+    char buffer[4048];
+
+    TRACE("%p\n", workRequest->hdr);
+
+    iar.dwResult = NETCON_recv(&req->netConnection, buffer,
+                               min(sizeof(buffer), req->dwContentLength - req->dwContentRead),
+                               MSG_PEEK, (int *)&iar.dwError);
+
+    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                          sizeof(INTERNET_ASYNC_RESULT));
+}
+
+static DWORD HTTPREQ_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
+{
+    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    BYTE buffer[4048];
+    BOOL async;
+
+    TRACE("(%p %p %x %lx)\n", req, available, flags, ctx);
+
+    if(!NETCON_query_data_available(&req->netConnection, available) || *available)
+        return ERROR_SUCCESS;
+
+    /* Even if we are in async mode, we need to determine whether
+     * there is actually more data available. We do this by trying
+     * to peek only a single byte in async mode. */
+    async = (req->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC) != 0;
+
+    if (NETCON_recv(&req->netConnection, buffer,
+                    min(async ? 1 : sizeof(buffer), req->dwContentLength - req->dwContentRead),
+                    MSG_PEEK, (int *)available) && async && *available)
+    {
+        WORKREQUEST workRequest;
+
+        *available = 0;
+        workRequest.asyncproc = HTTPREQ_AsyncQueryDataAvailableProc;
+        workRequest.hdr = WININET_AddRef( &req->hdr );
+
+        INTERNET_AsyncCall(&workRequest);
+
+        return ERROR_IO_PENDING;
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static const HANDLEHEADERVtbl HTTPREQVtbl = {
     HTTPREQ_Destroy,
     HTTPREQ_CloseConnection,
     HTTPREQ_SetOption,
     HTTPREQ_WriteFile,
+    HTTPREQ_QueryDataAvailable,
     NULL
 };
 
@@ -2945,6 +2996,7 @@ static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
     HTTPSESSION_Destroy,
+    NULL,
     NULL,
     NULL,
     NULL,
