@@ -26,7 +26,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 /* Destructor for instances of background copy manager */
 static void BackgroundCopyManagerDestructor(BackgroundCopyManagerImpl *This)
 {
+    BackgroundCopyJobImpl *job;
     TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(job, &This->jobs, BackgroundCopyJobImpl, entryFromQmgr)
+        job->lpVtbl->Release((IBackgroundCopyJob *) job);
+
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -91,9 +96,21 @@ static HRESULT WINAPI BITS_IBackgroundCopyManager_CreateJob(
         GUID *pJobId,
         IBackgroundCopyJob **ppJob)
 {
+    BackgroundCopyManagerImpl * This = (BackgroundCopyManagerImpl *) iface;
+    BackgroundCopyJobImpl *job;
+    HRESULT hres;
     TRACE("\n");
-    return BackgroundCopyJobConstructor(DisplayName, Type, pJobId,
+
+    hres = BackgroundCopyJobConstructor(DisplayName, Type, pJobId,
                                         (LPVOID *) ppJob);
+    if (FAILED(hres))
+        return hres;
+
+    /* Add a reference to the job to job list */
+    IBackgroundCopyJob_AddRef(*ppJob);
+    job = (BackgroundCopyJobImpl *) *ppJob;
+    list_add_head(&This->jobs, &job->entryFromQmgr);
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyManager_GetJob(
@@ -151,6 +168,7 @@ HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     This->lpVtbl = &BITS_IBackgroundCopyManager_Vtbl;
     This->ref = 1;
+    list_init(&This->jobs);
 
     *ppObj = &This->lpVtbl;
     return S_OK;

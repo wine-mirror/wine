@@ -40,6 +40,7 @@ typedef struct
     GUID jobId;
     struct list files;
     BG_JOB_PROGRESS jobProgress;
+    struct list entryFromQmgr;
 } BackgroundCopyJobImpl;
 
 /* Enum background copy jobs vtbl and related data */
@@ -74,6 +75,7 @@ typedef struct
 {
     const IBackgroundCopyManagerVtbl *lpVtbl;
     LONG ref;
+    struct list jobs;
 } BackgroundCopyManagerImpl;
 
 typedef struct
