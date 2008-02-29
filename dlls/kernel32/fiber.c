@@ -34,6 +34,9 @@
 #include "winternl.h"
 #include "wine/exception.h"
 #include "wine/library.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(fiber);
 
 struct fiber_data
 {
@@ -200,4 +203,49 @@ void WINAPI SwitchToFiber( LPVOID fiber )
         else
             siglongjmp( new_fiber->jmpbuf, 1 );
     }
+}
+
+/***********************************************************************
+ *           FlsAlloc   (KERNEL32.@)
+ */
+DWORD WINAPI FlsAlloc( PFLS_CALLBACK_FUNCTION callback )
+{
+    FIXME( "%p: stub!\n", callback );
+
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FLS_OUT_OF_INDEXES;
+}
+
+/***********************************************************************
+ *           FlsFree   (KERNEL32.@)
+ */
+BOOL WINAPI FlsFree( DWORD index )
+{
+    FIXME( "%x: stub!\n", index );
+
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           FlsGetValue   (KERNEL32.@)
+ */
+PVOID WINAPI FlsGetValue( DWORD index )
+{
+    FIXME( "%x: stub!\n", index );
+
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return NULL;
+}
+
+/***********************************************************************
+ *           FlsSetValue   (KERNEL32.@)
+ */
+BOOL WINAPI FlsSetValue( DWORD index, PVOID data )
+{
+
+    FIXME( "%x, %p: stub!\n", index, data );
+
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
 }
