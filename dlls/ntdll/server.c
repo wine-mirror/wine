@@ -146,6 +146,8 @@ void server_exit_thread( int status )
     RtlAcquirePebLock();
     RemoveEntryList( &NtCurrentTeb()->TlsLinks );
     RtlReleasePebLock();
+    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->FlsSlots );
+    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
 
     info.stack_base  = NtCurrentTeb()->DeallocationStack;
     info.teb_base    = NtCurrentTeb();

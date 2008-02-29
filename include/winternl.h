@@ -275,6 +275,20 @@ typedef struct _PEB
     PRTL_BITMAP                  TlsExpansionBitmap;                /* 150 */
     ULONG                        TlsExpansionBitmapBits[32];        /* 154 */
     ULONG                        SessionId;                         /* 1d4 */
+    ULARGE_INTEGER               AppCompatFlags;                    /* 1d8 */
+    ULARGE_INTEGER               AppCompatFlagsUser;                /* 1e0 */
+    PVOID                        ShimData;                          /* 1e8 */
+    PVOID                        AppCompatInfo;                     /* 1ec */
+    UNICODE_STRING               CSDVersion;                        /* 1f0 */
+    PVOID                        ActivationContextData;             /* 1f8 */
+    PVOID                        ProcessAssemblyStorageMap;         /* 1fc */
+    PVOID                        SystemDefaultActivationData;       /* 200 */
+    PVOID                        SystemAssemblyStorageMap;          /* 204 */
+    ULONG                        MinimumStackCommit;                /* 208 */
+    PVOID                       *FlsCallback;                       /* 20c */
+    LIST_ENTRY                   FlsListHead;                       /* 210 */
+    PRTL_BITMAP                  FlsBitmap;                         /* 218 */
+    ULONG                        FlsBitmapBits[4];                  /* 21c */
 } PEB, *PPEB;
 
 
@@ -343,6 +357,14 @@ typedef struct _TEB
     ULONG           WaitingOnLoaderLock;        /* f84 */
     PVOID           Reserved5[3];               /* f88 */
     PVOID          *TlsExpansionSlots;          /* f94 */
+    ULONG           ImpersonationLocale;        /* f98 */
+    ULONG           IsImpersonating;            /* f9c */
+    PVOID           NlsCache;                   /* fa0 */
+    PVOID           ShimData;                   /* fa4 */
+    ULONG           HeapVirtualAffinity;        /* fa8 */
+    PVOID           CurrentTransactionHandle;   /* fac */
+    PVOID           ActiveFrame;                /* fb0 */
+    PVOID          *FlsSlots;                   /* fb4 */
 } TEB, *PTEB;
 # endif /* WINE_TEB_DEFINED */
 #endif  /* WINE_NO_TEB */
