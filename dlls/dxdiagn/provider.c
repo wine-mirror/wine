@@ -207,7 +207,7 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
 
   retval = GetFileVersionInfoSizeW(szFile, &hdl);
   pVersionInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, retval);
-  hr = GetFileVersionInfoW(szFile, 0, retval, pVersionInfo); 
+  boolret = GetFileVersionInfoW(szFile, 0, retval, pVersionInfo);
   boolret = VerQueryValueW(pVersionInfo, szSlashSep, (LPVOID) &pFileInfo, &uiLength);
 
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szFile);
