@@ -644,7 +644,7 @@ static  unsigned        dump_threads(struct dump_context* dc,
             cbin.CallbackType = ThreadCallback;
             cbin.u.Thread.ThreadId = dc->spi->ti[i].dwThreadID;
             cbin.u.Thread.ThreadHandle = 0; /* FIXME */
-            memcpy(&cbin.u.Thread.Context, &ctx, sizeof(CONTEXT));
+            cbin.u.Thread.Context = ctx;
             cbin.u.Thread.SizeOfContext = sizeof(CONTEXT);
             cbin.u.Thread.StackBase = mdThd.Stack.StartOfMemoryRange;
             cbin.u.Thread.StackEnd = mdThd.Stack.StartOfMemoryRange +
