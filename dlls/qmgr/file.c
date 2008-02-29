@@ -103,8 +103,13 @@ static HRESULT WINAPI BITS_IBackgroundCopyFile_GetProgress(
     IBackgroundCopyFile* iface,
     BG_FILE_PROGRESS *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyFileImpl *This = (BackgroundCopyFileImpl *) iface;
+
+    pVal->BytesTotal = This->fileProgress.BytesTotal;
+    pVal->BytesTransferred = This->fileProgress.BytesTransferred;
+    pVal->Completed = This->fileProgress.Completed;
+
+    return S_OK;
 }
 
 static const IBackgroundCopyFileVtbl BITS_IBackgroundCopyFile_Vtbl =
@@ -151,6 +156,10 @@ HRESULT BackgroundCopyFileConstructor(LPCWSTR remoteName,
 
     This->lpVtbl = &BITS_IBackgroundCopyFile_Vtbl;
     This->ref = 1;
+
+    This->fileProgress.BytesTotal = BG_SIZE_UNKNOWN;
+    This->fileProgress.BytesTransferred = 0;
+    This->fileProgress.Completed = FALSE;
 
     *ppObj = &This->lpVtbl;
     return S_OK;

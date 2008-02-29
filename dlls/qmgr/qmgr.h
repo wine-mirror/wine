@@ -65,6 +65,7 @@ typedef struct
     const IBackgroundCopyFileVtbl *lpVtbl;
     LONG ref;
     BG_FILE_INFO info;
+    BG_FILE_PROGRESS fileProgress;
     struct list entryFromJob;
 } BackgroundCopyFileImpl;
 

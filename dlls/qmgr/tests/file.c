@@ -145,6 +145,24 @@ static void test_GetLocalName(void)
     CoTaskMemFree(name);
 }
 
+/* Test getting the progress of a file*/
+static void test_GetProgress_PreTransfer(void)
+{
+    HRESULT hres;
+    BG_FILE_PROGRESS progress;
+
+    hres = IBackgroundCopyFile_GetProgress(test_file, &progress);
+    ok(hres == S_OK, "GetProgress failed: %08x\n", hres);
+    if(hres != S_OK)
+    {
+        skip("Unable to get progress of test_file.\n");
+        return;
+    }
+    ok(progress.BytesTotal == BG_SIZE_UNKNOWN, "Got incorrect total size: %llu\n", progress.BytesTotal);
+    ok(progress.BytesTransferred == 0, "Got incorrect number of transfered bytes: %llu\n", progress.BytesTransferred);
+    ok(progress.Completed == FALSE, "Got incorret completion status\n");
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(file)
@@ -152,6 +170,7 @@ START_TEST(file)
     static const test_t tests[] = {
         test_GetRemoteName,
         test_GetLocalName,
+        test_GetProgress_PreTransfer,
         0
     };
     const test_t *test;
