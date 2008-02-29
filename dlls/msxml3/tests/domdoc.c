@@ -592,6 +592,52 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect xml string\n");
         SysFreeString(str);
 
+        /* test substringData */
+        r = IXMLDOMText_substringData(nodetext, 0, 4, NULL);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        /* test substringData - Invalid offset */
+        str = (BSTR)&szElement;
+        r = IXMLDOMText_substringData(nodetext, -1, 4, &str);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+        ok( str == NULL, "incorrect string\n");
+
+        /* test substringData - Invalid offset */
+        str = (BSTR)&szElement;
+        r = IXMLDOMText_substringData(nodetext, 30, 0, &str);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok( str == NULL, "incorrect string\n");
+
+        /* test substringData - Invalid size */
+        str = (BSTR)&szElement;
+        r = IXMLDOMText_substringData(nodetext, 0, -1, &str);
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+        ok( str == NULL, "incorrect string\n");
+
+        /* test substringData - Invalid size */
+        str = (BSTR)&szElement;
+        r = IXMLDOMText_substringData(nodetext, 2, 0, &str);
+        ok(r == S_FALSE, "ret %08x\n", r );
+        ok( str == NULL, "incorrect string\n");
+
+        /* test substringData - Start of string */
+        r = IXMLDOMText_substringData(nodetext, 0, 4, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("This") ), "incorrect substringData string\n");
+        SysFreeString(str);
+
+        /* test substringData - Middle of string */
+        r = IXMLDOMText_substringData(nodetext, 13, 4, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("test") ), "incorrect substringData string\n");
+        SysFreeString(str);
+
+        /* test substringData - End of string */
+        r = IXMLDOMText_substringData(nodetext, 20, 4, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("\\") ), "incorrect substringData string\n");
+        SysFreeString(str);
+
         IXMLDOMText_Release( nodetext );
     }
     SysFreeString( str );
