@@ -664,14 +664,15 @@ state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &stateblock->material.Specular);
         checkGLcall("glMaterialfv");
 
-        if(stateblock->material.Power > 128.0) {
+        if(stateblock->material.Power > GL_LIMITS(shininess)) {
             /* glMaterialf man page says that the material says that GL_SHININESS must be between 0.0
-             * and 128.0, although in d3d neither -1 nor 129 produce an error. For values > 128 clamp
-             * them, since 128 results in a hardly visible specular highlight, so it should be safe to
-             * to clamp to 128
+             * and 128.0, although in d3d neither -1 nor 129 produce an error. GL_NV_max_light_exponent
+             * allows bigger values. If the extension is supported, GL_LIMITS(shininess) contains the
+             * value reported by the extension, otherwise 128. For values > GL_LIMITS(shininess) clamp
+             * them, it should be safe to do so without major visual dissortions.
              */
-            WARN("Material power > 128\n");
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 128.0);
+            WARN("Material power = %f, limit %f\n", stateblock->material.Power, GL_LIMITS(shininess));
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, GL_LIMITS(shininess));
         } else {
             glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, stateblock->material.Power);
         }

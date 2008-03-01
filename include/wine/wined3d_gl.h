@@ -2913,6 +2913,13 @@ typedef void (WINE_GLAPI * PGLFNPROGRAMENVPARAMETERS4FVEXTPROC) (GLenum target, 
 typedef void (WINE_GLAPI * PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC) (GLenum target, GLuint index, GLsizei count, const float *params);
 #endif
 
+/* GL_NV_light_max_exponent */
+#ifndef GL_NV_light_max_exponent
+#define GL_NV_light_max_exponent
+#define GL_MAX_SHININESS_NV                 0x8504
+#define GL_MAX_SPOT_EXPONENT_NV             0x8505
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3267,6 +3274,7 @@ typedef enum _GL_SupportedExt {
   NV_VERTEX_PROGRAM3,
   NV_FENCE,
   NV_DEPTH_CLAMP,
+  NV_LIGHT_MAX_EXPONENT,
   /* ATI */
   ATI_SEPARATE_STENCIL,
   ATI_TEXTURE_ENV_COMBINE3,
@@ -3722,6 +3730,7 @@ typedef struct _WineD3D_GL_Info {
   UINT   max_anisotropy;
   UINT   max_aux_buffers;
   UINT   max_glsl_varyings;
+  float  max_shininess;
 
   unsigned max_vshader_constantsF;
   unsigned max_pshader_constantsF;

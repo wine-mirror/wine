@@ -128,6 +128,7 @@ static const struct {
     {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2,             0                           },
     {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3,             0                           },
     {"GL_NV_depth_clamp",                   NV_DEPTH_CLAMP,                 0                           },
+    {"GL_NV_light_max_exponent",            NV_LIGHT_MAX_EXPONENT,          0                           },
 
     /* SGI */
     {"GL_SGIS_generate_mipmap",             SGIS_GENERATE_MIPMAP,           0                           },
@@ -954,6 +955,11 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             gl_info->ps_nv_version = PS_VERSION_30;
         } else if (gl_info->supported[NV_FRAGMENT_PROGRAM]) {
             gl_info->ps_nv_version = PS_VERSION_20;
+        }
+        if (gl_info->supported[NV_LIGHT_MAX_EXPONENT]) {
+            glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->max_shininess);
+        } else {
+            gl_info->max_shininess = 128.0;
         }
         if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]) {
             /* If we have full NP2 texture support, disable GL_ARB_texture_rectangle because we will never use it.
