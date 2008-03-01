@@ -584,8 +584,32 @@ static HRESULT WINAPI domtext_appendData(
     IXMLDOMText *iface,
     BSTR p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domtext *This = impl_from_IXMLDOMText( iface );
+    xmlnode *pDOMNode = impl_from_IXMLDOMNode( (IXMLDOMNode*)This->element );
+    xmlChar *pContent;
+    HRESULT hr = S_FALSE;
+
+    TRACE("%p\n", iface);
+
+    /* Nothing to do if NULL or an Empty string passed in. */
+    if(p == NULL || SysStringLen(p) == 0)
+        return S_OK;
+
+    pContent = xmlChar_from_wchar( (WCHAR*)p );
+    if(pContent)
+    {
+        if(xmlTextConcat(pDOMNode->node, pContent, SysStringLen(p) ) == 0)
+            hr = S_OK;
+        else
+        {
+            hr = E_FAIL;
+            xmlFree(pContent);
+        }
+    }
+    else
+        hr = E_FAIL;
+
+    return hr;
 }
 
 static HRESULT WINAPI domtext_insertData(

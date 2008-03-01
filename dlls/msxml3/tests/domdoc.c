@@ -638,6 +638,21 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("\\") ), "incorrect substringData string\n");
         SysFreeString(str);
 
+        /* test appendData */
+        r = IXMLDOMText_appendData(nodetext, NULL);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_appendData(nodetext, _bstr_(""));
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_appendData(nodetext, _bstr_("Append"));
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
         IXMLDOMText_Release( nodetext );
     }
     SysFreeString( str );
