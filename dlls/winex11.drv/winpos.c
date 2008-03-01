@@ -186,11 +186,12 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
     {
         XATOM__NET_WM_STATE_FULLSCREEN,
         XATOM__NET_WM_STATE_ABOVE,
+        XATOM__NET_WM_STATE_MAXIMIZED_VERT,
         XATOM__NET_WM_STATE_SKIP_PAGER,
         XATOM__NET_WM_STATE_SKIP_TASKBAR
     };
 
-    DWORD i, ex_style, new_state = 0;
+    DWORD i, style, ex_style, new_state = 0;
     XEvent xev;
 
     if (!data->managed) return;
@@ -199,6 +200,9 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
     if (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
         data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height)
         new_state |= (1 << NET_WM_STATE_FULLSCREEN);
+
+    style = GetWindowLongW( data->hwnd, GWL_STYLE );
+    if (style & WS_MAXIMIZE) new_state |= (1 << NET_WM_STATE_MAXIMIZED);
 
     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
     if (ex_style & WS_EX_TOPMOST)
@@ -213,7 +217,6 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
     xev.xclient.display = display;
     xev.xclient.send_event = True;
     xev.xclient.format = 32;
-    xev.xclient.data.l[2] = 0;
     xev.xclient.data.l[3] = 1;
 
     for (i = 0; i < NB_NET_WM_STATES; i++)
@@ -226,6 +229,8 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
 
         xev.xclient.data.l[0] = (new_state & (1 << i)) ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
         xev.xclient.data.l[1] = X11DRV_Atoms[state_atoms[i] - FIRST_XATOM];
+        xev.xclient.data.l[2] = ((state_atoms[i] == XATOM__NET_WM_STATE_MAXIMIZED_VERT) ?
+                                 x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ) : 0);
         wine_tsx11_lock();
         XSendEvent( display, root_window, False, SubstructureRedirectMask | SubstructureNotifyMask, &xev );
         wine_tsx11_unlock();
@@ -395,8 +400,8 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
         data->net_wm_state = 0;
     }
 
-    /* don't change position if we are about to minimize a managed window */
-    if (!(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & WS_MINIMIZE)))
+    /* don't change position if we are about to minimize or maximize a managed window */
+    if (!(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & (WS_MINIMIZE|WS_MAXIMIZE))))
         X11DRV_sync_window_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
 
     if ((new_style & WS_VISIBLE) &&
