@@ -808,11 +808,6 @@ UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
-UINT MSIREG_OpenProducts(HKEY* key)
-{
-    return RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller_Products,key);
-}
-
 UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
 {
     UINT rc;
@@ -1137,7 +1132,7 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     if (NULL == lpguid)
         return ERROR_INVALID_PARAMETER;
 
-    r = MSIREG_OpenProducts(&hkeyProducts);
+    r = RegCreateKeyW(HKEY_LOCAL_MACHINE, szInstaller_Products, &hkeyProducts);
     if( r != ERROR_SUCCESS )
         return ERROR_NO_MORE_ITEMS;
 
