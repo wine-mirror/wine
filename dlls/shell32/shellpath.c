@@ -1164,7 +1164,7 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
     HRESULT hr;
     WCHAR shellFolderPath[MAX_PATH], userShellFolderPath[MAX_PATH];
     LPCWSTR pShellFolderPath, pUserShellFolderPath;
-    DWORD dwDisp, dwType, dwPathLen = MAX_PATH;
+    DWORD dwType, dwPathLen = MAX_PATH;
     HKEY userShellFolderKey, shellFolderKey;
 
     TRACE("%p,%s,%s,%p\n",rootKey, debugstr_w(userPrefix), debugstr_w(value),
@@ -1187,14 +1187,12 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
         pShellFolderPath = szSHFolders;
     }
 
-    if (RegCreateKeyExW(rootKey, pShellFolderPath, 0, NULL, 0, KEY_ALL_ACCESS,
-     NULL, &shellFolderKey, &dwDisp))
+    if (RegCreateKeyW(rootKey, pShellFolderPath, &shellFolderKey))
     {
         TRACE("Failed to create %s\n", debugstr_w(pShellFolderPath));
         return E_FAIL;
     }
-    if (RegCreateKeyExW(rootKey, pUserShellFolderPath, 0, NULL, 0,
-     KEY_ALL_ACCESS, NULL, &userShellFolderKey, &dwDisp))
+    if (RegCreateKeyW(rootKey, pUserShellFolderPath, &userShellFolderKey))
     {
         TRACE("Failed to create %s\n",
          debugstr_w(pUserShellFolderPath));
@@ -1329,10 +1327,8 @@ static HRESULT _SHGetCurrentVersionPath(DWORD dwFlags, BYTE folder,
     else
     {
         HKEY hKey;
-        DWORD dwDisp;
 
-        if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, szCurrentVersion, 0,
-         NULL, 0, KEY_ALL_ACCESS, NULL, &hKey, &dwDisp))
+        if (RegCreateKeyW(HKEY_LOCAL_MACHINE, szCurrentVersion, &hKey))
             hr = E_FAIL;
         else
         {
@@ -1783,20 +1779,18 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
     WCHAR path[MAX_PATH];
     HRESULT hr = S_OK;
     HKEY hUserKey = NULL, hKey = NULL;
-    DWORD dwDisp, dwType, dwPathLen;
+    DWORD dwType, dwPathLen;
     LONG ret;
 
     TRACE("%p,%p,%s,%p,%u\n", hRootKey, hToken,
      debugstr_w(szUserShellFolderPath), folders, foldersLen);
 
-    ret = RegCreateKeyExW(hRootKey, szUserShellFolderPath, 0, NULL, 0,
-     KEY_ALL_ACCESS, NULL, &hUserKey, &dwDisp);
+    ret = RegCreateKeyW(hRootKey, szUserShellFolderPath, &hUserKey);
     if (ret)
         hr = HRESULT_FROM_WIN32(ret);
     else
     {
-        ret = RegCreateKeyExW(hRootKey, szShellFolderPath, 0, NULL, 0,
-         KEY_ALL_ACCESS, NULL, &hKey, &dwDisp);
+        ret = RegCreateKeyW(hRootKey, szShellFolderPath, &hKey);
         if (ret)
             hr = HRESULT_FROM_WIN32(ret);
     }
