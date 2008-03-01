@@ -454,13 +454,16 @@ static HKEY SETUPDI_CreateDrvKey(struct DeviceInfo *devInfo)
 static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
         DWORD devId, LPCWSTR instanceId, BOOL phantom)
 {
-    struct DeviceInfo *devInfo = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(struct DeviceInfo));
+    struct DeviceInfo *devInfo = NULL;
+    HANDLE devInst = GlobalAlloc(GMEM_FIXED, sizeof(struct DeviceInfo));
+    if (devInst)
+        devInfo = GlobalLock(devInst);
 
     if (devInfo)
     {
         devInfo->set = set;
-        devInfo->devId = devId;
+        devInfo->devId = (DWORD)devInst;
+
         devInfo->instanceId = HeapAlloc(GetProcessHeap(), 0,
                 (lstrlenW(instanceId) + 1) * sizeof(WCHAR));
         if (devInfo->instanceId)
@@ -477,10 +480,12 @@ static struct DeviceInfo *SETUPDI_AllocateDeviceInfo(struct DeviceInfoSet *set,
                             (LPBYTE)&phantom, sizeof(phantom));
             }
             list_init(&devInfo->interfaces);
+            GlobalUnlock(devInst);
         }
         else
         {
-            HeapFree(GetProcessHeap(), 0, devInfo);
+            GlobalUnlock(devInst);
+            GlobalFree(devInst);
             devInfo = NULL;
         }
     }
@@ -514,7 +519,7 @@ static void SETUPDI_FreeDeviceInfo(struct DeviceInfo *devInfo)
         SETUPDI_FreeInterfaceInstances(iface);
         HeapFree(GetProcessHeap(), 0, iface);
     }
-    HeapFree(GetProcessHeap(), 0, devInfo);
+    GlobalFree((HANDLE)devInfo->devId);
 }
 
 /* Adds a device with GUID guid and identifer devInst to set.  Allocates a
@@ -551,7 +556,7 @@ static BOOL SETUPDI_AddDeviceToSet(struct DeviceInfoSet *set,
 
             DeviceInfoData->cbSize = sizeof(SP_DEVINFO_DATA);
             memcpy(&DeviceInfoData->ClassGuid, guid, sizeof(GUID));
-            DeviceInfoData->DevInst = devInst;
+            DeviceInfoData->DevInst = devInfo->devId;
             DeviceInfoData->Reserved = (ULONG_PTR)devInfo;
             SETUPDI_GuidToString(guid, classGuidStr);
             SetupDiSetDeviceRegistryPropertyW((HDEVINFO)set,
@@ -3847,4 +3852,67 @@ BOOL WINAPI SetupDiDeleteDevRegKey(
             WARN("unknown KeyType %d\n", KeyType);
     }
     return ret;
+}
+
+/***********************************************************************
+ *              CM_Get_Device_IDA  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_IDA( DEVINST dnDevInst, PSTR Buffer,
+                                   ULONG  BufferLen, ULONG  ulFlags)
+{
+    struct DeviceInfo *devInfo = GlobalLock((HANDLE)dnDevInst);
+
+    TRACE("%x->%p, %p, %u %u\n", dnDevInst, devInfo, Buffer, BufferLen, ulFlags);
+
+    if (!devInfo)
+        return CR_NO_SUCH_DEVINST;
+
+    WideCharToMultiByte(CP_ACP, 0, devInfo->instanceId, -1, Buffer, BufferLen, 0, 0);
+    TRACE("Returning %s\n", debugstr_a(Buffer));
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *              CM_Get_Device_IDW  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_IDW( DEVINST dnDevInst, LPWSTR Buffer,
+                                   ULONG  BufferLen, ULONG  ulFlags)
+{
+    struct DeviceInfo *devInfo = GlobalLock((HANDLE)dnDevInst);
+
+    TRACE("%x->%p, %p, %u %u\n", dnDevInst, devInfo, Buffer, BufferLen, ulFlags);
+
+    if (!devInfo)
+    {
+        WARN("dev instance %d not found!\n", dnDevInst);
+        return CR_NO_SUCH_DEVINST;
+    }
+
+    lstrcpynW(Buffer, devInfo->instanceId, BufferLen);
+    TRACE("Returning %s\n", debugstr_w(Buffer));
+    GlobalUnlock((HANDLE)dnDevInst);
+    return CR_SUCCESS;
+}
+
+
+
+/***********************************************************************
+ *              CM_Get_Device_ID_Size  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_Size( PULONG  pulLen, DEVINST dnDevInst,
+                                        ULONG  ulFlags)
+{
+    struct DeviceInfo *ppdevInfo = GlobalLock((HANDLE)dnDevInst);
+
+    TRACE("%x->%p, %p, %u\n", dnDevInst, ppdevInfo, pulLen, ulFlags);
+
+    if (!ppdevInfo)
+    {
+        WARN("dev instance %d not found!\n", dnDevInst);
+        return CR_NO_SUCH_DEVINST;
+    }
+
+    *pulLen = lstrlenW(ppdevInfo->instanceId);
+    GlobalUnlock((HANDLE)dnDevInst);
+    return CR_SUCCESS;
 }

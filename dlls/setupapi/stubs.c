@@ -28,6 +28,7 @@
 #include "winreg.h"
 #include "cfgmgr32.h"
 #include "setupapi.h"
+#include "winnls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
@@ -70,17 +71,6 @@ CONFIGRET WINAPI CM_Disconnect_Machine(HMACHINE handle)
 }
 
 /***********************************************************************
- *		CM_Get_Device_IDA  (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_IDA( DEVINST dnDevInst, PSTR Buffer,
-                                   ULONG  BufferLen, ULONG  ulFlags)
-{
-    FIXME("%x, %p, %u %u\n",dnDevInst, Buffer, BufferLen, ulFlags);
-    Buffer[0] = 0;
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
  *             CM_Get_Device_ID_ListA  (SETUPAPI.@)
  */
 
@@ -93,13 +83,12 @@ CONFIGRET WINAPI CM_Get_Device_ID_ListA(
 }
 
 /***********************************************************************
- *		CM_Get_Device_ID_Size  (SETUPAPI.@)
+ *              CM_Get_Parent (SETUPAPI.@)
  */
-CONFIGRET WINAPI CM_Get_Device_ID_Size( PULONG  pulLen, DEVINST dnDevInst,
-                                        ULONG  ulFlags)
+DWORD WINAPI CM_Get_Parent(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags)
 {
-    FIXME("%p %x %u\n",pulLen, dnDevInst, ulFlags);
-    *pulLen = 1;
+    FIXME("%p 0x%08x 0x%08x stub\n", pdnDevInst, dnDevInst, ulFlags);
+    *pdnDevInst = dnDevInst;
     return CR_SUCCESS;
 }
 

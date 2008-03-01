@@ -72,7 +72,7 @@
 @ stub CM_Get_DevNode_Status
 @ stub CM_Get_DevNode_Status_Ex
 @ stdcall CM_Get_Device_IDA(ptr ptr long long)
-@ stub CM_Get_Device_IDW
+@ stdcall CM_Get_Device_IDW(ptr ptr long long)
 @ stub CM_Get_Device_ID_ExA
 @ stub CM_Get_Device_ID_ExW
 @ stdcall CM_Get_Device_ID_ListA(ptr ptr long long)
@@ -115,7 +115,7 @@
 @ stub CM_Get_Next_Log_Conf_Ex
 @ stub CM_Get_Next_Res_Des
 @ stub CM_Get_Next_Res_Des_Ex
-@ stub CM_Get_Parent
+@ stdcall CM_Get_Parent(ptr long long)
 @ stub CM_Get_Parent_Ex
 @ stub CM_Get_Res_Des_Data
 @ stub CM_Get_Res_Des_Data_Ex
