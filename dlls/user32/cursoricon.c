@@ -24,8 +24,6 @@
 /*
  * Theory:
  *
- * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnwui/html/msdn_icons.asp
- *
  * Cursors and icons are stored in a global heap block, with the
  * following layout:
  *

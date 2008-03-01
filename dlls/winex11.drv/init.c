@@ -251,8 +251,7 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
     case CAPS1:
         FIXME("(%p): CAPS1 is unimplemented, will return 0\n", physDev->hdc );
         /* please see wingdi.h for the possible bit-flag values that need
-           to be returned. also, see
-           http://msdn.microsoft.com/library/ddkdoc/win95ddk/graphcnt_1m0p.htm */
+           to be returned. */
         return 0;
     case SIZEPALETTE:
         return palette_size;

@@ -1837,8 +1837,6 @@ static char *strdupA(LPCSTR str)
 
 /***********************************************************************
  *           ComboWndProc_common
- *
- * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/commctls/comboboxes/comboboxes.asp
  */
 static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
                                     WPARAM wParam, LPARAM lParam, BOOL unicode )

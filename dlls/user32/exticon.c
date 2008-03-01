@@ -194,7 +194,6 @@ static BYTE * ICO_LoadIcon( LPBYTE peimage, LPicoICONDIRENTRY lpiIDE, ULONG *uSi
  *                      ICO_GetIconDirectory
  *
  * Reads .ico file and build phony ICONDIR struct
- * see http://www.microsoft.com/win32dev/ui/icons.htm
  */
 #define HEADER_SIZE		(sizeof(CURSORICONDIR) - sizeof (CURSORICONDIRENTRY))
 #define HEADER_SIZE_FILE	(sizeof(icoICONDIR) - sizeof (icoICONDIRENTRY))

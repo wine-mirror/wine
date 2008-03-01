@@ -1029,9 +1029,6 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
 
 /***********************************************************************
  *		X Font Resources
- *
- * font info		- http://www.microsoft.com/kb/articles/q65/1/23.htm
- * Windows font metrics	- http://www.microsoft.com/kb/articles/q32/6/67.htm
  */
 static void XFONT_GetLeading( const IFONTINFO16 *pFI, const XFontStruct* x_fs,
 			      INT16* pIL, INT16* pEL, const XFONTTRANS *XFT )
@@ -2404,7 +2401,6 @@ static int XFONT_GetDefResolution( int log_pixels_x, int log_pixels_y )
  *      weight, italics, underlines, strikeouts
  *
  * NOTE: you can experiment with different penalty weights to see what happens.
- * http://premium.microsoft.com/msdn/library/techart/f365/f36b/f37b/d38b/sa8bf.htm
  */
 static UINT XFONT_Match( fontMatch* pfm )
 {

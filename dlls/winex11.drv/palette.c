@@ -43,9 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(palette);
  * the screendepth > 8 - we abandon palette mappings altogether
  * because pixel values can be calculated without X server
  * assistance.
- *
- * Windows palette manager is described in the
- * http://premium.microsoft.com/msdn/library/techart/f30/f34/f40/d4d/sa942.htm
  */
 
 #define NB_RESERVED_COLORS     20   /* number of fixed colors in system palette */
