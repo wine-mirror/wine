@@ -37,7 +37,6 @@
 #include "winuser.h"
 
 #include "wine/winbase16.h"
-#include "thread.h"
 #include "winternl.h"
 #include "toolhelp.h"
 #include "kernel_private.h"

@@ -22,6 +22,7 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -33,7 +34,6 @@
 #define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "thread.h"
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/server.h"

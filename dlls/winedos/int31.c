@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/winbase16.h"
 #include "wownt32.h"
 #include "dosexe.h"
@@ -32,7 +33,6 @@
 #include "excpt.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "thread.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);
 
@@ -353,10 +353,10 @@ __ASM_GLOBAL_FUNC(DPMI_CallRMCB32,
  */
 static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
 {
-    DWORD old_vif = NtCurrentTeb()->dpmi_vif;
+    DWORD old_vif = get_vm86_teb_info()->dpmi_vif;
 
     /* Disable virtual interrupts. */
-    NtCurrentTeb()->dpmi_vif = 0;
+    get_vm86_teb_info()->dpmi_vif = 0;
 
     if (wine_ldt_is_system( rmcb->proc_sel )) {
         /* Wine-internal RMCB, call directly */
@@ -404,7 +404,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
     } __EXCEPT(dpmi_exception_handler) { } __ENDTRY
         
     /* Restore virtual interrupt flag. */
-    NtCurrentTeb()->dpmi_vif = old_vif;                                 
+    get_vm86_teb_info()->dpmi_vif = old_vif;
 }
 
 
@@ -734,7 +734,7 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
   rm_ctx.SegGs  = 0;
 
   /* Copy interrupt state. */
-  if (NtCurrentTeb()->dpmi_vif)
+  if (get_vm86_teb_info()->dpmi_vif)
       rm_ctx.EFlags = V86_FLAG | VIF_MASK;
   else
       rm_ctx.EFlags = V86_FLAG;
@@ -764,9 +764,9 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
 
   /* Copy interrupt state. */
   if (rm_ctx.EFlags & VIF_MASK)
-      NtCurrentTeb()->dpmi_vif = 1;
+      get_vm86_teb_info()->dpmi_vif = 1;
   else
-      NtCurrentTeb()->dpmi_vif = 0;
+      get_vm86_teb_info()->dpmi_vif = 0;
 
   /* Return to new address and hope that we didn't mess up */
   TRACE("re-entering protected mode at %04x:%08x\n",
@@ -1348,22 +1348,22 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 
     case 0x0900:  /* Get and Disable Virtual Interrupt State */
         TRACE( "Get and Disable Virtual Interrupt State: %d\n",
-               NtCurrentTeb()->dpmi_vif );
-        SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
-        NtCurrentTeb()->dpmi_vif = 0;
+               get_vm86_teb_info()->dpmi_vif );
+        SET_AL( context, get_vm86_teb_info()->dpmi_vif ? 1 : 0 );
+        get_vm86_teb_info()->dpmi_vif = 0;
         break;
 
     case 0x0901:  /* Get and Enable Virtual Interrupt State */
         TRACE( "Get and Enable Virtual Interrupt State: %d\n",
-               NtCurrentTeb()->dpmi_vif );
-        SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
-        NtCurrentTeb()->dpmi_vif = 1;
+               get_vm86_teb_info()->dpmi_vif );
+        SET_AL( context, get_vm86_teb_info()->dpmi_vif ? 1 : 0 );
+        get_vm86_teb_info()->dpmi_vif = 1;
         break;
 
     case 0x0902:  /* Get Virtual Interrupt State */
         TRACE( "Get Virtual Interrupt State: %d\n",
-               NtCurrentTeb()->dpmi_vif );
-        SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
+               get_vm86_teb_info()->dpmi_vif );
+        SET_AL( context, get_vm86_teb_info()->dpmi_vif ? 1 : 0 );
         break;
 
     case 0x0e00:  /* Get Coprocessor Status (1.0) */

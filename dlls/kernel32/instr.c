@@ -27,9 +27,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/winuser16.h"
 #include "excpt.h"
-#include "thread.h"
 #include "wine/debug.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"
@@ -851,16 +851,16 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             return ExceptionContinueExecution;
 
         case 0xfa: /* cli */
-            NtCurrentTeb()->dpmi_vif = 0;
+            get_vm86_teb_info()->dpmi_vif = 0;
             context->Eip += prefixlen + 1;
             return ExceptionContinueExecution;
 
         case 0xfb: /* sti */
-            NtCurrentTeb()->dpmi_vif = 1;
+            get_vm86_teb_info()->dpmi_vif = 1;
             context->Eip += prefixlen + 1;
-            if (NtCurrentTeb()->vm86_pending)
+            if (get_vm86_teb_info()->vm86_pending)
             {
-                NtCurrentTeb()->vm86_pending = 0;
+                get_vm86_teb_info()->vm86_pending = 0;
                 rec->ExceptionCode = EXCEPTION_VM86_STI;
                 break; /* Handle the pending event. */
             }

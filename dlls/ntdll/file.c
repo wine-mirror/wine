@@ -73,7 +73,6 @@
 #define WIN32_NO_STATUS
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "thread.h"
 #include "wine/server.h"
 #include "ntdll_misc.h"
 

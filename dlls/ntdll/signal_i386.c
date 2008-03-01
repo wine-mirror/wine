@@ -56,7 +56,6 @@
 #endif
 
 #include "windef.h"
-#include "thread.h"
 #include "wine/library.h"
 #include "ntdll_misc.h"
 #include "wine/exception.h"
@@ -532,7 +531,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
      * we are returning from exception handler, pending events
      * will be rechecked after each raised exception.
      */
-    while (check_pending && NtCurrentTeb()->vm86_pending)
+    while (check_pending && get_vm86_teb_info()->vm86_pending)
     {
         check_pending = FALSE;
         ntdll_get_thread_data()->vm86_ptr = NULL;
@@ -554,7 +553,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
             rec->ExceptionAddress = (LPVOID)vcontext.Eip;
 
             vcontext.EFlags &= ~VIP_MASK;
-            NtCurrentTeb()->vm86_pending = 0;
+            get_vm86_teb_info()->vm86_pending = 0;
             __regs_RtlRaiseException( rec, &vcontext );
 
             restore_vm86_context( &vcontext, vm86 );
@@ -569,7 +568,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
      * that the following operation compiles into atomic
      * instruction.
      */
-    vm86->regs.eflags |= NtCurrentTeb()->vm86_pending;
+    vm86->regs.eflags |= get_vm86_teb_info()->vm86_pending;
 }
 #endif /* __HAVE_VM86 */
 
@@ -1212,7 +1211,7 @@ static void WINAPI raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     /* merge_vm86_pending_flags merges the vm86_pending flag in safely */
-    NtCurrentTeb()->vm86_pending |= VIP_MASK;
+    get_vm86_teb_info()->vm86_pending |= VIP_MASK;
 
     if (ntdll_get_thread_data()->vm86_ptr)
     {
@@ -1224,12 +1223,12 @@ static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *con
         }
         merge_vm86_pending_flags( rec );
     }
-    else if (NtCurrentTeb()->dpmi_vif &&
+    else if (get_vm86_teb_info()->dpmi_vif &&
              !wine_ldt_is_system(context->SegCs) &&
              !wine_ldt_is_system(context->SegSs))
     {
         /* Executing DPMI code and virtual interrupts are enabled. */
-        NtCurrentTeb()->vm86_pending = 0;
+        get_vm86_teb_info()->vm86_pending = 0;
         __regs_RtlRaiseException( rec, context );
     }
 done:
@@ -1614,7 +1613,7 @@ void __wine_enter_vm86( CONTEXT *context )
         case VM86_STI: /* sti/popf/iret instruction enabled virtual interrupts */
             context->EFlags |= VIF_MASK;
             context->EFlags &= ~VIP_MASK;
-            NtCurrentTeb()->vm86_pending = 0;
+            get_vm86_teb_info()->vm86_pending = 0;
             rec.ExceptionCode = EXCEPTION_VM86_STI;
             break;
         case VM86_PICRETURN: /* return due to pending PIC request */

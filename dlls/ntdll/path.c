@@ -39,7 +39,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/library.h"
-#include "thread.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);

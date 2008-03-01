@@ -31,7 +31,6 @@
 #include "winerror.h"
 #include "wownt32.h"
 #include "excpt.h"
-#include "thread.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"
@@ -265,7 +264,7 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
              * emulated because the instruction emulation requires
              * original CS:IP and the emulation may change TEB.dpmi_vif.
              */
-            if(NtCurrentTeb()->dpmi_vif)
+            if(get_vm86_teb_info()->dpmi_vif)
                 insert_event_check( context );
 
             if (ret != ExceptionContinueSearch) return ret;
@@ -625,7 +624,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
              * Note that wine_call_to_16_regs overwrites context stack
              * pointer so we may modify it here without a problem.
              */
-            if (NtCurrentTeb()->dpmi_vif)
+            if (get_vm86_teb_info()->dpmi_vif)
             {
                 context->SegSs = wine_get_ds();
                 context->Esp   = (DWORD)stack;

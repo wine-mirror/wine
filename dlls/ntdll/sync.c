@@ -53,7 +53,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
-#include "thread.h"
+#include "winternl.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"

@@ -29,7 +29,6 @@
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "thread.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);

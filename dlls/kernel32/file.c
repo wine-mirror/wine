@@ -45,7 +45,6 @@
 #include "wine/exception.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "thread.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 

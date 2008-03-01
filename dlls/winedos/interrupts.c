@@ -23,10 +23,9 @@
 #include <stdio.h>
 
 #include "dosexe.h"
+#include "winternl.h"
 #include "wine/debug.h"
 #include "wine/winbase16.h"
-
-#include "thread.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -179,7 +178,7 @@ static void DOSVM_IntProcRelay( CONTEXT86 *context, LPVOID data )
 static void DOSVM_PrepareIRQ( CONTEXT86 *context, BOOL isbuiltin )
 {
     /* Disable virtual interrupts. */
-    NtCurrentTeb()->dpmi_vif = 0;
+    get_vm86_teb_info()->dpmi_vif = 0;
 
     if (!isbuiltin)
     {

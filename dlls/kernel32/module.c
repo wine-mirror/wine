@@ -36,7 +36,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "thread.h"
 #include "kernel_private.h"
 
 #include "wine/exception.h"
