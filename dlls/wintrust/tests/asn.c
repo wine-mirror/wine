@@ -26,6 +26,10 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pCryptDecodeObjectEx)(DWORD,LPCSTR,const BYTE*,DWORD,DWORD,PCRYPT_DECODE_PARA,void*,DWORD*);
+static BOOL (WINAPI *pCryptEncodeObjectEx)(DWORD,LPCSTR,const void*,DWORD,PCRYPT_ENCODE_PARA,void*,DWORD*);
+
+
 static WCHAR url[] = { 'h','t','t','p',':','/','/','w','i','n','e','h','q','.',
  'o','r','g',0 };
 static const WCHAR nihongoURL[] = { 'h','t','t','p',':','/','/',0x226f,
@@ -52,13 +56,19 @@ static void test_encodeSPCLink(void)
     LPBYTE buf;
     SPC_LINK link = { 0 };
 
+    if (!pCryptEncodeObjectEx)
+    {
+        skip("CryptEncodeObjectEx() is not available. Skipping the encodeSPCLink tests\n");
+        return;
+    }
+
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     link.dwLinkChoice = SPC_URL_LINK_CHOICE;
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -71,7 +81,7 @@ static void test_encodeSPCLink(void)
     U(link).pwszUrl = (LPWSTR)nihongoURL;
     size = 1;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_IA5_STRING,
      "Expected CRYPT_E_INVALID_IA5_STRING, got %08x\n", GetLastError());
@@ -80,7 +90,7 @@ static void test_encodeSPCLink(void)
      */
     ok(size == 0, "Expected size 0, got %d\n", size);
     U(link).pwszUrl = url;
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -91,7 +101,7 @@ static void test_encodeSPCLink(void)
     }
     link.dwLinkChoice = SPC_FILE_LINK_CHOICE;
     U(link).pwszFile = (LPWSTR)nihongoURL;
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -102,7 +112,7 @@ static void test_encodeSPCLink(void)
     }
     link.dwLinkChoice = SPC_MONIKER_LINK_CHOICE;
     memset(&U(link).Moniker, 0, sizeof(U(link).Moniker));
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -114,7 +124,7 @@ static void test_encodeSPCLink(void)
     memset(&U(link).Moniker.ClassId, 0xea, sizeof(U(link).Moniker.ClassId));
     U(link).Moniker.SerializedData.pbData = data;
     U(link).Moniker.SerializedData.cbData = sizeof(data);
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -136,7 +146,13 @@ static void test_decodeSPCLink(void)
     DWORD size = 0;
     SPC_LINK *link;
 
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
+    if (!pCryptDecodeObjectEx)
+    {
+        skip("CryptDecodeObjectEx() is not available. Skipping the decodeSPCLink tests\n");
+        return;
+    }
+
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      emptyURLSPCLink, sizeof(emptyURLSPCLink), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -148,7 +164,7 @@ static void test_decodeSPCLink(void)
         ok(lstrlenW(U(*link).pwszUrl) == 0, "Expected empty string\n");
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      urlSPCLink, sizeof(urlSPCLink), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -160,7 +176,7 @@ static void test_decodeSPCLink(void)
         ok(!lstrcmpW(U(*link).pwszUrl, url), "Unexpected URL\n");
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      fileSPCLink, sizeof(fileSPCLink), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -172,7 +188,7 @@ static void test_decodeSPCLink(void)
         ok(!lstrcmpW(U(*link).pwszFile, nihongoURL), "Unexpected file\n");
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      emptyMonikerSPCLink, sizeof(emptyMonikerSPCLink), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -189,7 +205,7 @@ static void test_decodeSPCLink(void)
          "Expected no serialized data\n");
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      monikerSPCLink, sizeof(monikerSPCLink), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -210,7 +226,7 @@ static void test_decodeSPCLink(void)
         LocalFree(buf);
     }
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      badMonikerSPCLink, sizeof(badMonikerSPCLink), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_BAD_ENCODE,
@@ -238,7 +254,13 @@ static void test_encodeSPCPEImage(void)
     SPC_PE_IMAGE_DATA imageData = { { 0 } };
     SPC_LINK link = { 0 };
 
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    if (!pCryptEncodeObjectEx)
+    {
+        skip("CryptEncodeObjectEx() is not available. Skipping the encodeSPCPEImage tests\n");
+        return;
+    }
+
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -251,14 +273,14 @@ static void test_encodeSPCPEImage(void)
     /* With an invalid link: */
     imageData.pFile = &link;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(!ret && GetLastError () == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* With just unused bits field set: */
     imageData.pFile = NULL;
     imageData.Flags.cUnusedBits = 1;
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -272,7 +294,7 @@ static void test_encodeSPCPEImage(void)
     imageData.Flags.cUnusedBits = 0;
     imageData.Flags.pbData = flags;
     imageData.Flags.cbData = sizeof(flags);
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -286,7 +308,7 @@ static void test_encodeSPCPEImage(void)
     imageData.Flags.cbData = 0;
     link.dwLinkChoice = SPC_FILE_LINK_CHOICE;
     imageData.pFile = &link;
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -299,7 +321,7 @@ static void test_encodeSPCPEImage(void)
     /* With flags and an empty file: */
     imageData.Flags.pbData = flags;
     imageData.Flags.cbData = sizeof(flags);
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -312,7 +334,7 @@ static void test_encodeSPCPEImage(void)
     }
     /* Finally, a non-empty file: */
     U(link).pwszFile = (LPWSTR)nihongoURL;
-    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
@@ -332,7 +354,13 @@ static void test_decodeSPCPEImage(void)
     DWORD size = 0;
     SPC_PE_IMAGE_DATA *imageData;
 
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    if (!pCryptDecodeObjectEx)
+    {
+        skip("CryptDecodeObjectEx() is not available. Skipping the decodeSPCPEImage tests\n");
+        return;
+    }
+
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      emptySequence, sizeof(emptySequence),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -344,7 +372,7 @@ static void test_decodeSPCPEImage(void)
         ok(imageData->pFile == NULL, "Expected no file\n");
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      onlyFlagsPEImage, sizeof(onlyFlagsPEImage),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -359,7 +387,7 @@ static void test_decodeSPCPEImage(void)
         ok(imageData->pFile == NULL, "Expected no file\n");
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      onlyEmptyFilePEImage, sizeof(onlyEmptyFilePEImage),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -379,7 +407,7 @@ static void test_decodeSPCPEImage(void)
         }
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      flagsAndEmptyFilePEImage, sizeof(flagsAndEmptyFilePEImage),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -402,7 +430,7 @@ static void test_decodeSPCPEImage(void)
         }
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      flagsAndFilePEImage, sizeof(flagsAndFilePEImage),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -429,6 +457,10 @@ static void test_decodeSPCPEImage(void)
 
 START_TEST(asn)
 {
+    HMODULE hCrypt32 = LoadLibraryA("crypt32.dll");
+    pCryptDecodeObjectEx = (void*)GetProcAddress(hCrypt32, "CryptDecodeObjectEx");
+    pCryptEncodeObjectEx = (void*)GetProcAddress(hCrypt32, "CryptEncodeObjectEx");
+
     test_encodeSPCLink();
     test_decodeSPCLink();
     test_encodeSPCPEImage();
