@@ -1052,32 +1052,32 @@ static ULONG WINAPI mrd_Release( IWineMsiRemoteDatabase *iface )
     return r;
 }
 
-HRESULT WINAPI mrd_IsTablePersistent( IWineMsiRemoteDatabase *iface,
-                                      BSTR table, MSICONDITION *persistent )
+static HRESULT WINAPI mrd_IsTablePersistent( IWineMsiRemoteDatabase *iface,
+                                             BSTR table, MSICONDITION *persistent )
 {
     msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
     *persistent = MsiDatabaseIsTablePersistentW(This->database, (LPWSTR)table);
     return S_OK;
 }
 
-HRESULT WINAPI mrd_GetPrimaryKeys( IWineMsiRemoteDatabase *iface,
-                                   BSTR table, MSIHANDLE *keys )
+static HRESULT WINAPI mrd_GetPrimaryKeys( IWineMsiRemoteDatabase *iface,
+                                          BSTR table, MSIHANDLE *keys )
 {
     msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
     UINT r = MsiDatabaseGetPrimaryKeysW(This->database, (LPWSTR)table, keys);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrd_GetSummaryInformation( IWineMsiRemoteDatabase *iface,
-                                          UINT updatecount, MSIHANDLE *suminfo )
+static HRESULT WINAPI mrd_GetSummaryInformation( IWineMsiRemoteDatabase *iface,
+                                                UINT updatecount, MSIHANDLE *suminfo )
 {
     msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
     UINT r = MsiGetSummaryInformationW(This->database, NULL, updatecount, suminfo);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrd_OpenView( IWineMsiRemoteDatabase *iface,
-                             BSTR query, MSIHANDLE *view )
+static HRESULT WINAPI mrd_OpenView( IWineMsiRemoteDatabase *iface,
+                                    BSTR query, MSIHANDLE *view )
 {
     msi_remote_database_impl *This = mrd_from_IWineMsiRemoteDatabase( iface );
     UINT r = MsiDatabaseOpenViewW(This->database, (LPWSTR)query, view);

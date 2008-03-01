@@ -576,7 +576,7 @@ static UINT msi_apply_transforms( MSIPACKAGE *package )
     return r;
 }
 
-BOOL ui_sequence_exists( MSIPACKAGE *package )
+static BOOL ui_sequence_exists( MSIPACKAGE *package )
 {
     MSIQUERY *view;
     UINT rc;
@@ -5220,7 +5220,7 @@ static BOOL add_wildcard(FILE_LIST *files, LPWSTR source, LPWSTR dest)
     return TRUE;
 }
 
-BOOL move_files_wildcard(LPWSTR source, LPWSTR dest, int options)
+static BOOL move_files_wildcard(LPWSTR source, LPWSTR dest, int options)
 {
     WIN32_FIND_DATAW wfd;
     HANDLE hfile;

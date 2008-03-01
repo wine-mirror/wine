@@ -673,7 +673,7 @@ UINT MSI_RecordSetStream(MSIRECORD *rec, UINT iField, IStream *stream)
     return ERROR_SUCCESS;
 }
 
-UINT MSI_RecordSetStreamFromFileW(MSIRECORD *rec, UINT iField, LPCWSTR szFilename)
+static UINT MSI_RecordSetStreamFromFileW(MSIRECORD *rec, UINT iField, LPCWSTR szFilename)
 {
     IStream *stm = NULL;
     HRESULT r;

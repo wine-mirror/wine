@@ -1648,7 +1648,7 @@ static HRESULT WINAPI mrp_SetMsiHandle( IWineMsiRemotePackage *iface, MSIHANDLE 
     return S_OK;
 }
 
-HRESULT WINAPI mrp_GetActiveDatabase( IWineMsiRemotePackage *iface, MSIHANDLE *handle )
+static HRESULT WINAPI mrp_GetActiveDatabase( IWineMsiRemotePackage *iface, MSIHANDLE *handle )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     IWineMsiRemoteDatabase *rdb = NULL;
@@ -1675,7 +1675,7 @@ HRESULT WINAPI mrp_GetActiveDatabase( IWineMsiRemotePackage *iface, MSIHANDLE *h
     return S_OK;
 }
 
-HRESULT WINAPI mrp_GetProperty( IWineMsiRemotePackage *iface, BSTR property, BSTR *value, DWORD *size )
+static HRESULT WINAPI mrp_GetProperty( IWineMsiRemotePackage *iface, BSTR property, BSTR *value, DWORD *size )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r;
@@ -1687,63 +1687,63 @@ HRESULT WINAPI mrp_GetProperty( IWineMsiRemotePackage *iface, BSTR property, BST
     return S_OK;
 }
 
-HRESULT WINAPI mrp_SetProperty( IWineMsiRemotePackage *iface, BSTR property, BSTR value )
+static HRESULT WINAPI mrp_SetProperty( IWineMsiRemotePackage *iface, BSTR property, BSTR value )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiSetPropertyW(This->package, (LPWSTR)property, (LPWSTR)value);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_ProcessMessage( IWineMsiRemotePackage *iface, INSTALLMESSAGE message, MSIHANDLE record )
+static HRESULT WINAPI mrp_ProcessMessage( IWineMsiRemotePackage *iface, INSTALLMESSAGE message, MSIHANDLE record )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiProcessMessage(This->package, message, record);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_DoAction( IWineMsiRemotePackage *iface, BSTR action )
+static HRESULT WINAPI mrp_DoAction( IWineMsiRemotePackage *iface, BSTR action )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiDoActionW(This->package, (LPWSTR)action);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_Sequence( IWineMsiRemotePackage *iface, BSTR table, int sequence )
+static HRESULT WINAPI mrp_Sequence( IWineMsiRemotePackage *iface, BSTR table, int sequence )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiSequenceW(This->package, (LPWSTR)table, sequence);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_GetTargetPath( IWineMsiRemotePackage *iface, BSTR folder, BSTR *value, DWORD *size )
+static HRESULT WINAPI mrp_GetTargetPath( IWineMsiRemotePackage *iface, BSTR folder, BSTR *value, DWORD *size )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiGetTargetPathW(This->package, (LPWSTR)folder, (LPWSTR)value, size);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_SetTargetPath( IWineMsiRemotePackage *iface, BSTR folder, BSTR value)
+static HRESULT WINAPI mrp_SetTargetPath( IWineMsiRemotePackage *iface, BSTR folder, BSTR value)
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiSetTargetPathW(This->package, (LPWSTR)folder, (LPWSTR)value);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_GetSourcePath( IWineMsiRemotePackage *iface, BSTR folder, BSTR *value, DWORD *size )
+static HRESULT WINAPI mrp_GetSourcePath( IWineMsiRemotePackage *iface, BSTR folder, BSTR *value, DWORD *size )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiGetSourcePathW(This->package, (LPWSTR)folder, (LPWSTR)value, size);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_GetMode( IWineMsiRemotePackage *iface, MSIRUNMODE mode, BOOL *ret )
+static HRESULT WINAPI mrp_GetMode( IWineMsiRemotePackage *iface, MSIRUNMODE mode, BOOL *ret )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     *ret = MsiGetMode(This->package, mode);
     return S_OK;
 }
 
-HRESULT WINAPI mrp_GetFeatureState( IWineMsiRemotePackage *iface, BSTR feature,
+static HRESULT WINAPI mrp_GetFeatureState( IWineMsiRemotePackage *iface, BSTR feature,
                                     INSTALLSTATE *installed, INSTALLSTATE *action )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
@@ -1751,14 +1751,14 @@ HRESULT WINAPI mrp_GetFeatureState( IWineMsiRemotePackage *iface, BSTR feature,
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_SetFeatureState( IWineMsiRemotePackage *iface, BSTR feature, INSTALLSTATE state )
+static HRESULT WINAPI mrp_SetFeatureState( IWineMsiRemotePackage *iface, BSTR feature, INSTALLSTATE state )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiSetFeatureStateW(This->package, (LPWSTR)feature, state);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_GetComponentState( IWineMsiRemotePackage *iface, BSTR component,
+static HRESULT WINAPI mrp_GetComponentState( IWineMsiRemotePackage *iface, BSTR component,
                                       INSTALLSTATE *installed, INSTALLSTATE *action )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
@@ -1766,28 +1766,28 @@ HRESULT WINAPI mrp_GetComponentState( IWineMsiRemotePackage *iface, BSTR compone
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_SetComponentState( IWineMsiRemotePackage *iface, BSTR component, INSTALLSTATE state )
+static HRESULT WINAPI mrp_SetComponentState( IWineMsiRemotePackage *iface, BSTR component, INSTALLSTATE state )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiSetComponentStateW(This->package, (LPWSTR)component, state);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_GetLanguage( IWineMsiRemotePackage *iface, LANGID *language )
+static HRESULT WINAPI mrp_GetLanguage( IWineMsiRemotePackage *iface, LANGID *language )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     *language = MsiGetLanguage(This->package);
     return S_OK;
 }
 
-HRESULT WINAPI mrp_SetInstallLevel( IWineMsiRemotePackage *iface, int level )
+static HRESULT WINAPI mrp_SetInstallLevel( IWineMsiRemotePackage *iface, int level )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiSetInstallLevel(This->package, level);
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_FormatRecord( IWineMsiRemotePackage *iface, MSIHANDLE record,
+static HRESULT WINAPI mrp_FormatRecord( IWineMsiRemotePackage *iface, MSIHANDLE record,
                                  BSTR value, DWORD *size )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
@@ -1795,7 +1795,7 @@ HRESULT WINAPI mrp_FormatRecord( IWineMsiRemotePackage *iface, MSIHANDLE record,
     return HRESULT_FROM_WIN32(r);
 }
 
-HRESULT WINAPI mrp_EvaluateCondition( IWineMsiRemotePackage *iface, BSTR condition )
+static HRESULT WINAPI mrp_EvaluateCondition( IWineMsiRemotePackage *iface, BSTR condition )
 {
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
     UINT r = MsiEvaluateConditionW(This->package, (LPWSTR)condition);
