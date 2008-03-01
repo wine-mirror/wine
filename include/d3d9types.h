@@ -226,15 +226,6 @@ typedef enum _D3DDECLUSAGE {
   D3DDECLUSAGE_SAMPLE       = 13     
 } D3DDECLUSAGE;
 
-/* MSDN is quite confussing at this point...
-http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/d3d/constants/OTHER_D3D.asp
-says D3DMAX, and D3DMAXDECLUSAGE = D3DDECLUSAGE_DEPTH
-http://msdn.microsoft.com/library/default.asp?url=/archive/en-us/directx9_c_summer_03/directx/graphics/reference/d3d/constants/other_d3d.asp
-says MAXD3D, and D3DDECLUSAGE_SAMPLE
-
-So both are defined
-*/
-
 #define D3DMAXDECLUSAGE         D3DDECLUSAGE_SAMPLE
 #define D3DMAXDECLUSAGEINDEX    15
 #define D3DMAXDECLLENGTH        18

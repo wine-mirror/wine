@@ -31,9 +31,7 @@ typedef struct
     unsigned short MustFree : 1; /* 0x0002 - server interpreter MUST size this
      *  parameter, other parameters may be skipped, using the value in
      *  NDR_PROC_PARTIAL_OIF_HEADER::constant_server_buffer_size instead. */
-    unsigned short IsPipe : 1; /* 0x0004 - The parameter is a pipe handle. See
-     *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/rpc/rpc/pipes.asp
-     *  for more information on pipes. */
+    unsigned short IsPipe : 1; /* 0x0004 - The parameter is a pipe handle */
     unsigned short IsIn : 1; /* 0x0008 - The parameter is an input */
     unsigned short IsOut : 1; /* 0x0010 - The parameter is an output */
     unsigned short IsReturn : 1; /* 0x0020 - The parameter is to be returned */

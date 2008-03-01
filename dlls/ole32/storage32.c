@@ -28,9 +28,6 @@
  *  The compound file implementation of IStorage used for create
  *  and manage substorages and streams within a storage object
  *  residing in a compound file object.
- *
- * MSDN
- *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/stg/stg/istorage_compound_file_implementation.asp
  */
 
 #include <assert.h>

@@ -90,9 +90,6 @@ typedef struct WS(in_addr6)
    u_char s6_addr[16];   /* IPv6 address */
 } IN6_ADDR, *PIN6_ADDR, *LPIN6_ADDR;
 
-/* check for sockaddr_in6 / sockaddr_in6_old madness:
- * http://msdn.microsoft.com/library/en-us/winsock/winsock/sockaddr_2.asp
- */
 typedef struct WS(sockaddr_in6)
 {
    short   sin6_family;            /* AF_INET6 */
