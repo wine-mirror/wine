@@ -29,6 +29,7 @@
 #include "msiquery.h"
 #include "objbase.h"
 #include "msipriv.h"
+#include "query.h"
 
 #include "wine/debug.h"
 
