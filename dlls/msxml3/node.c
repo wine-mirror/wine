@@ -200,7 +200,8 @@ static HRESULT WINAPI xmlnode_get_nodeName(
 	    break;
 	case XML_ATTRIBUTE_NODE:
 	case XML_ELEMENT_NODE:
-	str = This->node->name;
+	case XML_PI_NODE:
+        str = This->node->name;
 	    break;
     default:
         FIXME("nodeName not mapped correctly (%d)\n", This->node->type);

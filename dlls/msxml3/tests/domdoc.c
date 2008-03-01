@@ -745,6 +745,12 @@ static void test_domdoc( void )
         r = IXMLDOMProcessingInstruction_put_data(nodePI, _bstr_("version=\"1.0\" encoding=\"UTF-8\""));
         ok(r == E_FAIL, "ret %08x\n", r );
 
+        /* test get nodeName */
+        r = IXMLDOMProcessingInstruction_get_nodeName(nodePI, &str);
+        ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
+        ok(r == S_OK, "ret %08x\n", r );
+        SysFreeString(str);
+
         IXMLDOMProcessingInstruction_Release(nodePI);
     }
 
