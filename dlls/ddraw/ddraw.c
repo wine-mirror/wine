@@ -73,10 +73,6 @@ static const DDDEVICEIDENTIFIER2 deviceidentifier =
  * method.
  * The returned interface is AddRef()-ed before it's returned
  *
- * Rules for QueryInterface:
- *  http://msdn.microsoft.com/library/default.asp? \
- *    url=/library/en-us/com/html/6db17ed8-06e4-4bae-bc26-113176cc7e0e.asp
- *
  * Used for version 1, 2, 4 and 7
  *
  * Params:

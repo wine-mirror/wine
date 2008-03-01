@@ -681,9 +681,7 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
 	    }
             else
             {
-                /* Truncate on first space, like Windows:
-                 * http://support.microsoft.com/?scid=kb%3Ben-us%3B140724
-                 */
+                /* Truncate on first space */
 		WCHAR *p = lpResult;
 		while (*p != ' ' && *p != '\0')
                     p++;

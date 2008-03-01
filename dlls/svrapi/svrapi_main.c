@@ -1,6 +1,5 @@
 /*
 * Part of NETAPI on Windows 9x
-* http://msdn.microsoft.com/library/default.asp?url=/library/en-us/stgmgmt/fs/netshareenum.asp
 *
 * Copyright 2006 Konstantin Petrov
 *

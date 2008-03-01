@@ -1624,17 +1624,12 @@ end:
  * Most values can be overridden in either
  * HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
  * or in the same location in HKLM.
- * The registry usage is explained by the following tech note:
- * http://www.microsoft.com/windows2000/techinfo/reskit/en-us/default.asp?url=/windows2000/techinfo/reskit/en-us/regentry/36173.asp
  * The "Shell Folders" registry key was used in NT4 and earlier systems.
  * Beginning with Windows 2000, the "User Shell Folders" key is used, so
  * changes made to it are made to the former key too.  This synchronization is
  * done on-demand: not until someone requests the value of one of these paths
  * (by calling one of the SHGet functions) is the value synchronized.
- * Furthermore, as explained here:
- * http://www.microsoft.com/windows2000/techinfo/reskit/en-us/default.asp?url=/windows2000/techinfo/reskit/en-us/regentry/36276.asp
- * the HKCU paths take precedence over the HKLM paths.
- *
+ * Furthermore, the HKCU paths take precedence over the HKLM paths.
  */
 HRESULT WINAPI SHGetFolderPathW(
 	HWND hwndOwner,    /* [I] owner window */

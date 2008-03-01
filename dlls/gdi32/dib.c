@@ -82,7 +82,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
  *           DIB_GetDIBWidthBytes
  *
  * Return the width of a DIB bitmap in bytes. DIB bitmap data is 32-bit aligned.
- * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/bitmaps_87eb.asp
  */
 int DIB_GetDIBWidthBytes( int width, int depth )
 {
@@ -570,8 +569,6 @@ static const RGBTRIPLE DefLogPaletteTriples[20] = { /* Copy of Default Logical P
  * RETURNS
  *    Success: Number of scan lines copied from bitmap
  *    Failure: 0
- *
- * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/bitmaps_87eb.asp
  */
 INT WINAPI GetDIBits(
     HDC hdc,         /* [in]  Handle to device context */

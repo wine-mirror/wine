@@ -22,11 +22,9 @@
  * See:
  * http://www.geocities.com/SiliconValley/Network/5317/drivers.html
  * http://willemer.de/informatik/windows/inf_info.htm (German)
- * http://www.microsoft.com/ddk/ddkdocs/win98ddk/devinst_12uw.htm
  * DDK: setupx.h
  * http://mmatrix.tripod.com/customsystemfolder/infsysntaxfull.html
  * http://www.rdrop.com/~cary/html/inf_faq.html
- * http://support.microsoft.com/support/kb/articles/q194/6/40.asp
  *
  * Stuff tested with:
  * - rs405deu.exe (German Acroread 4.05 setup)
