@@ -3529,7 +3529,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
 /***********************************************************************
  *           CoGetObject [OLE32.@]
  *
- * Gets the object named by coverting the name to a moniker and binding to it.
+ * Gets the object named by converting the name to a moniker and binding to it.
  *
  * PARAMS
  *  pszName      [I] String representing the object.

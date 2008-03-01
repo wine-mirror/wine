@@ -196,7 +196,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         cMaxItems = 255;
         hr = ScriptItemize(TestItem2, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
         ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
-        /*  This test is for the intertrim operation of ScriptItemize where only one SCRIPT_ITEM is *
+        /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
          *  returned.                                                                               */
         ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == cInChars,
                             "Start pos not = 0 (%d) or end pos not = %d (%d)\n",
@@ -745,7 +745,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     BOOL            fTrailing;
 
     /* Test with hdc, this should be a valid test
-     * Here we generrate an SCRIPT_STRING_ANALYSIS that will be used as input to the
+     * Here we generate an SCRIPT_STRING_ANALYSIS that will be used as input to the
      * following character positions to X and X to character position functions.
      */
     hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,

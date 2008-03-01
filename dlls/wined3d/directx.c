@@ -3004,7 +3004,7 @@ static void test_pbo_functionality(WineD3D_GL_Info *gl_info) {
         WARN_(d3d_caps)("Disabling PBOs. This may result in slower performance\n");
         gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] = FALSE;
     } else {
-        TRACE_(d3d_caps)("PBO test successfull\n");
+        TRACE_(d3d_caps)("PBO test successful\n");
     }
 }
 #undef GLINFO_LOCATION
@@ -3094,10 +3094,10 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
          * We don't want to enable this on all cards, as it adds an extra instruction per texcoord used. This
          * makes the shader slower and eats instruction slots which should be available to the d3d app.
          *
-         * ATI Radeon HD 2xxx cards on MacOS have the issue. Instead of checking for the buggy cards blacklist
-         * all radeon cards on Macs but whitelist the good ones, that way we're prepared for the future. If
-         * this workaround is activated on cards that do not need it it won't break things, just affect
-         * performance negatively
+         * ATI Radeon HD 2xxx cards on MacOS have the issue. Instead of checking for the buggy cards, blacklist
+         * all radeon cards on Macs and whitelist the good ones. That way we're prepared for the future. If
+         * this workaround is activated on cards that do not need it, it won't break things, just affect
+         * performance negatively.
          */
         if(gl_info->gl_vendor == VENDOR_INTEL ||
            (gl_info->gl_vendor == VENDOR_ATI && gl_info->gl_card != CARD_ATI_RADEON_X1600)) {

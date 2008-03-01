@@ -10039,11 +10039,11 @@ fi
         fi
         if test "$ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" != "yes"; then
   case "x$with_xvidmode" in
-  x)   wine_notices="$wine_notices|libxxf86vm development files not found, XFree86 Vidmode won't be supported." ;;
+  x)   wine_notices="$wine_notices|libXxf86vm development files not found, XFree86 Vidmode won't be supported." ;;
   xno) ;;
-  *)   { { echo "$as_me:$LINENO: error: libxxf86vm development files not found, XFree86 Vidmode won't be supported.
+  *)   { { echo "$as_me:$LINENO: error: libXxf86vm development files not found, XFree86 Vidmode won't be supported.
 This is an error since --with-xvidmode was requested." >&5
-echo "$as_me: error: libxxf86vm development files not found, XFree86 Vidmode won't be supported.
+echo "$as_me: error: libXxf86vm development files not found, XFree86 Vidmode won't be supported.
 This is an error since --with-xvidmode was requested." >&2;}
    { (exit 1); exit 1; }; } ;;
 esac

@@ -54,7 +54,7 @@ DEFINE_OLEGUID( CLSID_InProcFreeMarshaler, 0x0000033a, 0, 0 );
  *         locking is required.
  * LOCK  - The value is written to only using Interlocked* functions.
  * CS    - The value is read or written to inside a critical section.
- *         The identifier following "CS" is the specific critical setion that
+ *         The identifier following "CS" is the specific critical section that
  *         must be used.
  * MUTEX - The value is read or written to with a mutex held.
  *         The identifier following "MUTEX" is the specific mutex that

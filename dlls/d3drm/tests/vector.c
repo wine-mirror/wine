@@ -280,7 +280,7 @@ static void ColorTest(void)
     got_color=pD3DRMCreateColorRGBA(red,green,blue,alpha);
     ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
 
-/* if a component is <0 then, then one considers this compenent as 0. The following test proves this fact (test only with the red component). */
+/* if a component is <0 then, then one considers this component as 0. The following test proves this fact (test only with the red component). */
     red=-0.88f;
     green=0.4f;
     blue=0.6f;
@@ -289,7 +289,7 @@ static void ColorTest(void)
     got_color=pD3DRMCreateColorRGBA(red,green,blue,alpha);
     ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
 
-/* if a component is >1 then, then one considers this compenent as 1. The following test proves this fact (test only with the red component). */
+/* if a component is >1 then, then one considers this component as 1. The following test proves this fact (test only with the red component). */
     red=2.37f;
     green=0.4f;
     blue=0.6f;

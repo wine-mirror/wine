@@ -118,7 +118,7 @@ static const char OLEDD_DRAGTRACKERCLASS[] = "WineDragDropTracker32";
 static struct list targetListHead = LIST_INIT(targetListHead);
 
 /******************************************************************************
- * These are the prototypes of miscelaneous utility methods
+ * These are the prototypes of miscellaneous utility methods
  */
 static void OLEUTL_ReadRegistryDWORDValue(HKEY regKey, DWORD* pdwValue);
 
@@ -2734,7 +2734,7 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
     case VT_CLSID:
     case VT_LPSTR:
     case VT_LPWSTR:
-        /* pick an arbitary typed pointer - we don't care about the type
+        /* pick an arbitrary typed pointer - we don't care about the type
          * as we are just freeing it */
         CoTaskMemFree(pvar->u.puuid);
         break;
@@ -2781,7 +2781,7 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
             }
             if (pvar->vt & ~VT_VECTOR)
             {
-                /* pick an arbitary VT_VECTOR structure - they all have the same
+                /* pick an arbitrary VT_VECTOR structure - they all have the same
                  * memory layout */
                 CoTaskMemFree(pvar->u.capropvar.pElems);
             }

@@ -270,7 +270,7 @@ static void test_createElement(void)
     V_I4(&vType) = -1;
     V_VT(&vName) = VT_NULL;
     hr = IXMLDocument_createElement(doc, vType, vName, &element);
-    /* Upto and including SP7, createElement returns an element. */
+    /* Up to and including SP7, createElement returns an element. */
     if(hr == S_OK)
     {
         ok(element != NULL, "Expected element\n");

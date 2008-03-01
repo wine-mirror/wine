@@ -643,7 +643,7 @@ then
                   $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
         WINE_NOTICE_WITH(xvidmode,[test "$ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" != "yes"],
-                         [libxxf86vm development files not found, XFree86 Vidmode won't be supported.])
+                         [libXxf86vm development files not found, XFree86 Vidmode won't be supported.])
 
         dnl *** Check for Transform functions in Xrender
         if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x" -a "x$ac_cv_lib_soname_Xext" != "x"
