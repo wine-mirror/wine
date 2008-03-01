@@ -2340,8 +2340,6 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     status = server_init_process_done();
     if (status != STATUS_SUCCESS) goto error;
 
-    RtlEnterCriticalSection( &loader_section );
-
     actctx_init();
     load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
     if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS) goto error;
@@ -2349,6 +2347,8 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto error;
 
     pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
+
+    RtlEnterCriticalSection( &loader_section );
 
     if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS)
     {
