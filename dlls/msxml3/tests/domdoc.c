@@ -2323,6 +2323,7 @@ static void test_xmlTypes(void)
             if(hr == S_OK)
             {
                 IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;
+                VARIANT var;
 
                 hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pCDataSec, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
@@ -2387,6 +2388,12 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMCDATASection_get_length(pComment, &len);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok(len == 21, "expected 21 got %ld\n", len);
+
+                /* test length property */
+                hr = IXMLDOMCDATASection_get_nodeValue(pComment, &var);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
+                VariantClear(&var);
 
                 IXMLDOMCDATASection_Release(pCDataSec);
             }

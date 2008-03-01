@@ -251,6 +251,7 @@ static HRESULT WINAPI xmlnode_get_nodeValue(
 
     switch ( This->node->type )
     {
+    case XML_CDATA_SECTION_NODE:
     case XML_COMMENT_NODE:
     case XML_PI_NODE:
     case XML_ATTRIBUTE_NODE:
