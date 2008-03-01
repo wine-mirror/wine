@@ -86,8 +86,6 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
          * Win95osr2.1: 4, 3, 0x40304BC, " B " (according to doc)
          * Win95osr2.5: 4, 3, 0x40304BE, " C " (according to doc)
          * Win95a/b can be discerned via regkey SubVersionNumber
-         * See also:
-         * http://support.microsoft.com/support/kb/articles/q158/2/38.asp
          */
         sizeof(RTL_OSVERSIONINFOEXW), 4, 0, 0x40003B6, VER_PLATFORM_WIN32_WINDOWS,
         {0},

@@ -58,10 +58,6 @@ static const IRpcProxyBufferVtbl StdProxy_Vtbl;
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
-/* How the Windows stubless proxy thunks work is explained at
- * http://msdn.microsoft.com/library/en-us/dnmsj99/html/com0199.asp,
- * but I'll use a slightly different method, to make life easier */
-
 #if defined(__i386__)
 
 #include "pshpack1.h"

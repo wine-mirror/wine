@@ -98,10 +98,7 @@ static const WCHAR machineW[] = { 'd','u','m','m','y',0 };
 /*  To do any real functionality testing with this suite you need a copy of
  *  the freely distributable standard RGB color space profile. It comes
  *  standard with Windows, but on Wine you probably need to install it yourself
- *  in one of the locations mentioned below. Here's a link to the profile in
- *  a self extracting zip file:
- *
- *  http://download.microsoft.com/download/whistler/hwdev1/1.0/wxp/en-us/ColorProfile.exe
+ *  in one of the locations mentioned below.
  */
 
 /* Two common places to find the standard color space profile, relative

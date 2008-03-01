@@ -32,8 +32,7 @@
 #include "winreg.h"
 #include "winternl.h"
 
-/* FIXME!!! this test checks only mappings, defined by MSDN:
- * http://support.microsoft.com/default.aspx?scid=KB;EN-US;q113996&
+/* FIXME!!! this test checks only mappings, defined by MSDN
  * It is necessary to add other mappings and to test them up to Windows XP.
  *
  * Some Windows platforms don't know about all the mappings, and in such

@@ -23,7 +23,6 @@
 /* there can't be any alignment with the structures in this file */
 #include "pshpack1.h"
 
-/* From http://msdn.microsoft.com/library/default.asp?url=/library/en-us/rpc/rpc/parameter_descriptors.asp */
 typedef struct _NDR_PROC_HEADER
 {
     /* type of handle to use:

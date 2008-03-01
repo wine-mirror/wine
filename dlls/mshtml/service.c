@@ -232,7 +232,6 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
 {
     HTMLDocument *This = SERVPROV_THIS(iface);
     
-    /* See http://msdn.microsoft.com/workshop/browser/hosting/wbcustompart2.asp */
     if(IsEqualGUID(&CLSID_CMarkup, guidService)) {
         FIXME("(%p)->(CLSID_CMarkup %s %p)\n", This, debugstr_guid(riid), ppv);
         return E_NOINTERFACE;
