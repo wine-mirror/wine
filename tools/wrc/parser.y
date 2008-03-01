@@ -2079,34 +2079,63 @@ byebye:
 	return ctrl;
 }
 
+static int get_class_idW(const WCHAR *cc)
+{
+        static const WCHAR szBUTTON[]    = {'B','U','T','T','O','N',0};
+        static const WCHAR szCOMBOBOX[]  = {'C','O','M','B','O','B','O','X',0};
+        static const WCHAR szLISTBOX[]   = {'L','I','S','T','B','O','X',0};
+        static const WCHAR szEDIT[]      = {'E','D','I','T',0};
+        static const WCHAR szSTATIC[]    = {'S','T','A','T','I','C',0};
+        static const WCHAR szSCROLLBAR[] = {'S','C','R','O','L','L','B','A','R',0};
+
+        if(!strcmpiW(szBUTTON, cc))
+                return CT_BUTTON;
+        if(!strcmpiW(szCOMBOBOX, cc))
+                return CT_COMBOBOX;
+        if(!strcmpiW(szLISTBOX, cc))
+                return CT_LISTBOX;
+        if(!strcmpiW(szEDIT, cc))
+                return CT_EDIT;
+        if(!strcmpiW(szSTATIC, cc))
+                return CT_STATIC;
+        if(!strcmpiW(szSCROLLBAR, cc))
+                return CT_SCROLLBAR;
+
+        return -1;
+}
+
+static int get_class_idA(const char *cc)
+{
+        if(!strcasecmp("BUTTON", cc))
+                return CT_BUTTON;
+        if(!strcasecmp("COMBOBOX", cc))
+                return CT_COMBOBOX;
+        if(!strcasecmp("LISTBOX", cc))
+                return CT_LISTBOX;
+        if(!strcasecmp("EDIT", cc))
+                return CT_EDIT;
+        if(!strcasecmp("STATIC", cc))
+                return CT_STATIC;
+        if(!strcasecmp("SCROLLBAR", cc))
+                return CT_SCROLLBAR;
+
+        return -1;
+}
+
+
 static name_id_t *convert_ctlclass(name_id_t *cls)
 {
-	char *cc = NULL;
 	int iclass;
 
 	if(cls->type == name_ord)
 		return cls;
 	assert(cls->type == name_str);
-	if(cls->type == str_unicode)
-	{
-		yyerror("Don't yet support unicode class comparison");
-	}
-	else
-		cc = cls->name.s_name->str.cstr;
+        if(cls->name.s_name->type == str_unicode)
+                iclass = get_class_idW(cls->name.s_name->str.wstr);
+        else
+                iclass = get_class_idA(cls->name.s_name->str.cstr);
 
-	if(!strcasecmp("BUTTON", cc))
-		iclass = CT_BUTTON;
-	else if(!strcasecmp("COMBOBOX", cc))
-		iclass = CT_COMBOBOX;
-	else if(!strcasecmp("LISTBOX", cc))
-		iclass = CT_LISTBOX;
-	else if(!strcasecmp("EDIT", cc))
-		iclass = CT_EDIT;
-	else if(!strcasecmp("STATIC", cc))
-		iclass = CT_STATIC;
-	else if(!strcasecmp("SCROLLBAR", cc))
-		iclass = CT_SCROLLBAR;
-	else
+        if (iclass == -1)
 		return cls;	/* No default, return user controlclass */
 
 	free(cls->name.s_name->str.cstr);
