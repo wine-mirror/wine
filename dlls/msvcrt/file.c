@@ -671,8 +671,7 @@ int CDECL _commit(int fd)
 /*********************************************************************
  *		_dup2 (MSVCRT.@)
  * NOTES
- * MSDN isn't clear on this point, but the remarks for _pipe,
- * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt__pipe.asp
+ * MSDN isn't clear on this point, but the remarks for _pipe
  * indicate file descriptors duplicated with _dup and _dup2 are always
  * inheritable.
  */

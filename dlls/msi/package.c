@@ -332,12 +332,6 @@ done:
     msi_free(version);
 }
 
-/*
- * There are a whole slew of these we need to set
- *
- *
-http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/properties.asp
- */
 static VOID set_installer_properties(MSIPACKAGE *package)
 {
     WCHAR pth[MAX_PATH];

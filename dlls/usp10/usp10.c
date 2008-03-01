@@ -35,11 +35,6 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
-/**
- * some documentation here:
- *   http://www.microsoft.com/typography/developers/uniscribe/uniscribe.htm
- */
-
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
 static const SCRIPT_PROPERTIES props[] =

@@ -18,11 +18,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * NOTES:
- *
- * See http://www.microsoft.com/msj/0197/exception/exception.htm,
- * but don't believe all of it.
- *
  * FIXME: Incomplete support for nested exceptions/try block cleanup.
  */
 
@@ -468,8 +463,7 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
             ret = EXCEPTION_CONTINUE_EXECUTION;
         }
         break;
-    /* According to
-     * http://msdn.microsoft.com/library/en-us/vclib/html/_CRT_signal.asp
+    /* According to msdn,
      * the FPE signal handler takes as a second argument the type of
      * floating point exception.
      */
@@ -531,8 +525,6 @@ void msvcrt_free_signals(void)
 
 /*********************************************************************
  *		signal (MSVCRT.@)
- * MS signal handling is described here:
- * http://msdn.microsoft.com/library/en-us/vclib/html/_CRT_signal.asp
  * Some signals may never be generated except through an explicit call to
  * raise.
  */
