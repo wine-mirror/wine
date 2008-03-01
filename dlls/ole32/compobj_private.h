@@ -269,8 +269,7 @@ void apartment_joinmta(void);
 #define DM_HOSTOBJECT   (WM_USER + 1) /* WPARAM = 0, LPARAM = (struct host_object_params *) */
 
 /*
- * Per-thread values are stored in the TEB on offset 0xF80,
- * see http://www.microsoft.com/msj/1099/bugslayer/bugslayer1099.htm
+ * Per-thread values are stored in the TEB on offset 0xF80
  */
 
 /* will create if necessary */

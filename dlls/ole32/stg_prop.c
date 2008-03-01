@@ -25,11 +25,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * There's a decent overview of property set storage here:
- * http://msdn.microsoft.com/archive/en-us/dnarolegen/html/msdn_propset.asp
- * It's a little bit out of date, and more definitive references are given
- * below, but it gives the best "big picture" that I've found.
- *
  * TODO:
  * - I don't honor the maximum property set size.
  * - Certain bogus files could result in reading past the end of a buffer.
@@ -68,9 +63,7 @@ static inline StorageImpl *impl_from_IPropertySetStorage( IPropertySetStorage *i
     return (StorageImpl *)((char*)iface - FIELD_OFFSET(StorageImpl, base.pssVtbl));
 }
 
-/* These are documented in MSDN, e.g.
- * http://msdn.microsoft.com/library/en-us/stg/stg/property_set_header.asp
- * http://msdn.microsoft.com/library/library/en-us/stg/stg/section.asp
+/* These are documented in MSDN,
  * but they don't seem to be in any header file.
  */
 #define PROPSETHDR_BYTEORDER_MAGIC      0xfffe
@@ -87,9 +80,6 @@ static inline StorageImpl *impl_from_IPropertySetStorage( IPropertySetStorage *i
 #define CFTAG_FMTID     (-3L)
 #define CFTAG_NODATA      0L
 
-/* The format version (and what it implies) is described here:
- * http://msdn.microsoft.com/library/en-us/stg/stg/format_version.asp
- */
 typedef struct tagPROPERTYSETHEADER
 {
     WORD  wByteOrder; /* always 0xfffe */
@@ -1421,9 +1411,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
     }
     if (!This->codePage)
     {
-        /* default to Unicode unless told not to, as specified here:
-         * http://msdn.microsoft.com/library/en-us/stg/stg/names_in_istorage.asp
-         */
+        /* default to Unicode unless told not to, as specified on msdn */
         if (This->grfFlags & PROPSETFLAG_ANSI)
             This->codePage = GetACP();
         else
@@ -2037,9 +2025,7 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
         ps->grfFlags = grfFlags;
         if (ps->grfFlags & PROPSETFLAG_CASE_SENSITIVE)
             ps->format = 1;
-        /* default to Unicode unless told not to, as specified here:
-         * http://msdn.microsoft.com/library/en-us/stg/stg/names_in_istorage.asp
-         */
+        /* default to Unicode unless told not to, as specified here on mdsn */
         if (ps->grfFlags & PROPSETFLAG_ANSI)
             ps->codePage = GetACP();
         else
@@ -2507,8 +2493,6 @@ static const WCHAR szDocSummaryInfo[] = { 5,'D','o','c','u','m','e','n','t',
  *
  * NOTES
  * str must be at least CCH_MAX_PROPSTG_NAME characters in length.
- * Based on the algorithm described here:
- * http://msdn.microsoft.com/library/en-us/stg/stg/names_in_istorage.asp
  */
 HRESULT WINAPI FmtIdToPropStgName(const FMTID *rfmtid, LPOLESTR str)
 {
@@ -2574,10 +2558,6 @@ HRESULT WINAPI FmtIdToPropStgName(const FMTID *rfmtid, LPOLESTR str)
  * RETURNS
  *  E_INVALIDARG if rfmtid or str is NULL or if str can't be converted to
  *  a format ID, S_OK otherwise.
- *
- * NOTES
- * Based on the algorithm described here:
- * http://msdn.microsoft.com/library/en-us/stg/stg/names_in_istorage.asp
  */
 HRESULT WINAPI PropStgNameToFmtId(const LPOLESTR str, FMTID *rfmtid)
 {

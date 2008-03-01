@@ -50,7 +50,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 /* see MSDN docs for IROTData::GetComparisonData, which states what this
- * constant is (http://msdn2.microsoft.com/en-us/library/ms693773.aspx) */
+ * constant is
+ */
 #define MAX_COMPARISON_DATA 2048
 
 static LONG WINAPI rpc_filter(EXCEPTION_POINTERS *eptr)

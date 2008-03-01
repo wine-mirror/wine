@@ -1,6 +1,5 @@
 /*
  * based on Windows Sockets 1.1 specs
- * (ftp.microsoft.com:/Advsys/winsock/spec11/WINSOCK.TXT)
  *
  * Copyright (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
  * Copyright (C) 2005 Marcus Meissner
@@ -881,8 +880,7 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
         const struct WS_sockaddr_in6* win6 = (const struct WS_sockaddr_in6*)wsaddr;
 
         /* Note: Windows has 2 versions of the sockaddr_in6 struct, one with
-         * scope_id, one without. Check:
-         * http://msdn.microsoft.com/library/en-us/winsock/winsock/sockaddr_2.asp
+         * scope_id, one without.
          */
         if (wsaddrlen >= sizeof(struct WS_sockaddr_in6_old)) {
             uaddrlen = sizeof(struct sockaddr_in6);
