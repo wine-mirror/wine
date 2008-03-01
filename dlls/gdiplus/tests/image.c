@@ -100,8 +100,8 @@ static void test_GetImageDimension(void)
     h = -1;
     stat = GdipGetImageDimension((GpImage*)bm,&w,&h);
     expect(Ok, stat);
-    ok(fabs(WIDTH - w) < 0.0001, "Width wrong");
-    ok(fabs(HEIGHT - h) < 0.0001, "Height wrong");
+    ok(fabs(WIDTH - w) < 0.0001, "Width wrong\n");
+    ok(fabs(HEIGHT - h) < 0.0001, "Height wrong\n");
     GdipDisposeImage((GpImage*)bm);
 }
 
