@@ -276,12 +276,12 @@ void shader_generate_arb_declarations(
          */
         if(max_constantsF < GL_LIMITS(pshader_constantsF)) {
             ((IWineD3DPixelShaderImpl *)This)->bumpenvmatconst = max_constantsF;
-            shader_addline(buffer, "PARAM bumpenvmat = program.env[%d];\n", ((IWineD3DPixelShaderImpl *)This)->bumpenvmatconst);
+            shader_addline(buffer, "PARAM bumpenvmat%d = program.env[%d];\n", reg_maps->bumpmat, ((IWineD3DPixelShaderImpl *)This)->bumpenvmatconst);
 
             if(reg_maps->luminanceparams != -1 && max_constantsF +1 < GL_LIMITS(pshader_constantsF)) {
                 extra_constants_needed += 1;
                 ((IWineD3DPixelShaderImpl *)This)->luminanceconst = max_constantsF + 1;
-                shader_addline(buffer, "PARAM luminance = program.env[%d];\n", ((IWineD3DPixelShaderImpl *)This)->luminanceconst);
+                shader_addline(buffer, "PARAM luminance%d = program.env[%d];\n", reg_maps->luminanceparams, ((IWineD3DPixelShaderImpl *)This)->luminanceconst);
             } else if(reg_maps->luminanceparams != -1) {
                 FIXME("No free constant to load the luminance parameters\n");
             }
@@ -890,6 +890,8 @@ void pshader_hw_bem(SHADER_OPCODE_ARG* arg) {
     char dst_name[50];
     char src_name[2][50];
     char dst_wmask[20];
+    DWORD sampler_code = arg->dst & WINED3DSP_REGNUM_MASK;
+    BOOL has_bumpmat = (This->bumpenvmatconst != -1);
 
     pshader_get_register_name(arg->shader, arg->dst, dst_name);
     shader_arb_get_write_mask(arg, arg->dst, dst_wmask);
@@ -898,11 +900,11 @@ void pshader_hw_bem(SHADER_OPCODE_ARG* arg) {
     pshader_gen_input_modifier_line(arg->shader, buffer, arg->src[0], 0, src_name[0]);
     pshader_gen_input_modifier_line(arg->shader, buffer, arg->src[1], 1, src_name[1]);
 
-    if(This->bumpenvmatconst != -1) {
+    if(has_bumpmat) {
         /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
-        shader_addline(buffer, "SWZ TMP2, bumpenvmat, x, z, 0, 0;\n");
+        shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", sampler_code);
         shader_addline(buffer, "DP3 TMP.r, TMP2, %s;\n", src_name[1]);
-        shader_addline(buffer, "SWZ TMP2, bumpenvmat, y, w, 0, 0;\n");
+        shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, y, w, 0, 0;\n", sampler_code);
         shader_addline(buffer, "DP3 TMP.g, TMP2, %s;\n", src_name[1]);
 
         shader_addline(buffer, "ADD %s, %s, TMP;\n", dst_name, src_name[0]);
@@ -1232,6 +1234,9 @@ void pshader_hw_texreg2rgb(SHADER_OPCODE_ARG* arg) {
 
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD sampler_code = arg->dst & WINED3DSP_REGNUM_MASK;
+    BOOL has_bumpmat = (This->bumpenvmatconst != -1);
+    BOOL has_luminance = (This->luminanceconst != -1);
 
     DWORD dst = arg->dst;
     DWORD src = arg->src[0] & WINED3DSP_REGNUM_MASK;
@@ -1245,12 +1250,12 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
     /* Can directly use the name because texbem is only valid for <= 1.3 shaders */
     pshader_get_register_name(arg->shader, dst, reg_coord);
 
-    if(This->bumpenvmatconst != -1) {
+    if(has_bumpmat) {
         /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
 
-        shader_addline(buffer, "SWZ TMP2, bumpenvmat, x, z, 0, 0;\n");
+        shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", sampler_code);
         shader_addline(buffer, "DP3 TMP.r, TMP2, T%u;\n", src);
-        shader_addline(buffer, "SWZ TMP2, bumpenvmat, y, w, 0, 0;\n");
+        shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, y, w, 0, 0;\n", sampler_code);
         shader_addline(buffer, "DP3 TMP.g, TMP2, T%u;\n", src);
 
         /* with projective textures, texbem only divides the static texture coord, not the displacement,
@@ -1267,8 +1272,9 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
 
         shader_hw_sample(arg, reg_dest_code, reg_coord, "TMP", FALSE, FALSE);
 
-        if(arg->opcode->opcode == WINED3DSIO_TEXBEML && This->luminanceconst != -1) {
-            shader_addline(buffer, "MAD TMP, T%u.z, luminance.x, luminance.y;\n", src);
+        if(arg->opcode->opcode == WINED3DSIO_TEXBEML && has_luminance) {
+            shader_addline(buffer, "MAD TMP, T%u.z, luminance%d.x, luminance%d.y;\n",
+                           src, sampler_code, sampler_code);
             shader_addline(buffer, "MUL %s, %s, TMP;\n", reg_coord, reg_coord);
         }
 
