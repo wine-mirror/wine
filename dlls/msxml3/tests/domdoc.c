@@ -2389,11 +2389,17 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok(len == 21, "expected 21 got %ld\n", len);
 
-                /* test length property */
+                /* test get nodeValue */
                 hr = IXMLDOMCDATASection_get_nodeValue(pComment, &var);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
                 VariantClear(&var);
+
+                /* test get data */
+                hr = IXMLDOMCDATASection_get_data(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
+                SysFreeString(str);
 
                 IXMLDOMCDATASection_Release(pCDataSec);
             }
