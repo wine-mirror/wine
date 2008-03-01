@@ -1505,6 +1505,16 @@ static void texbem_test(IDirect3DDevice9 *device)
         0x00000001, 0x800f0000, 0xb0e40001, /* mov r0, t1*/
         0x0000ffff
     };
+    static const DWORD double_texbem_code[] =  {
+        0xffff0103,                                         /* ps_1_3           */
+        0x00000042, 0xb00f0000,                             /* tex t0           */
+        0x00000043, 0xb00f0001, 0xb0e40000,                 /* texbem t1, t0    */
+        0x00000042, 0xb00f0002,                             /* tex t2           */
+        0x00000043, 0xb00f0003, 0xb0e40002,                 /* texbem t3, t2    */
+        0x00000002, 0x800f0000, 0xb0e40001, 0xb0e40003,     /* add r0, t1, t3   */
+        0x0000ffff                                          /* end              */
+    };
+
 
     static const float quad[][7] = {
         {-128.0f/640.0f, -128.0f/480.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f},
@@ -1536,7 +1546,8 @@ static void texbem_test(IDirect3DDevice9 *device)
 
     IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
     IDirect3DPixelShader9       *pixel_shader       = NULL;
-    IDirect3DTexture9           *texture            = NULL;
+    IDirect3DTexture9           *texture            = NULL, *texture1, *texture2;
+    D3DLOCKED_RECT locked_rect;
 
     generate_bumpmap_textures(device);
 
@@ -1619,6 +1630,131 @@ static void texbem_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "SetTexture failed (0x%08x)\n", hr);
         IDirect3DTexture9_Release(texture);
     }
+
+    /* Test double texbem */
+    hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1, 0, D3DFMT_V8U8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1, 0, D3DFMT_V8U8, D3DPOOL_MANAGED, &texture1, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 8, 8, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture2, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, double_texbem_code, &pixel_shader);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed (%08x)\n", hr);
+
+    hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+    ((signed char *) locked_rect.pBits)[0] = (-1.0 / 8.0) * 127;
+    ((signed char *) locked_rect.pBits)[1] = ( 1.0 / 8.0) * 127;
+
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+
+    hr = IDirect3DTexture9_LockRect(texture1, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+    ((signed char *) locked_rect.pBits)[0] = (-2.0 / 8.0) * 127;
+    ((signed char *) locked_rect.pBits)[1] = (-4.0 / 8.0) * 127;
+    hr = IDirect3DTexture9_UnlockRect(texture1, 0);
+    ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+
+    {
+        /* Some data without any meaning, just to have an 8x8 array to see which element is picked */
+#define tex  0x00ff0000
+#define tex1 0x0000ff00
+#define origin 0x000000ff
+        static const DWORD pixel_data[] = {
+            0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+            0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+            0x000000ff, tex1      , 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+            0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+            0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, origin,     0x000000ff, tex       , 0x000000ff,
+            0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+            0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+            0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff,
+        };
+#undef tex1
+#undef tex2
+#undef origin
+
+        hr = IDirect3DTexture9_LockRect(texture2, 0, &locked_rect, NULL, 0);
+        ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+        for(i = 0; i < 8; i++) {
+            memcpy(((char *) locked_rect.pBits) + i * locked_rect.Pitch, pixel_data + 8 * i, 8 * sizeof(DWORD));
+        }
+        hr = IDirect3DTexture9_UnlockRect(texture2, 0);
+        ok(SUCCEEDED(hr), "LockRect failed (0x%08x)\n", hr);
+    }
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 1, (IDirect3DBaseTexture9 *) texture2);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 2, (IDirect3DBaseTexture9 *) texture1);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 3, (IDirect3DBaseTexture9 *) texture2);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(device, pixel_shader);
+    ok(SUCCEEDED(hr), "Direct3DDevice9_SetPixelShader failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX4);
+    ok(SUCCEEDED(hr), "Direct3DDevice9_SetPixelShader failed (0x%08x)\n", hr);
+
+    bumpenvmat[0] =-1.0;  bumpenvmat[2] =  2.0;
+    bumpenvmat[1] = 0.0;  bumpenvmat[3] =  0.0;
+    IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_BUMPENVMAT00, *(LPDWORD)&bumpenvmat[0]);
+    IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_BUMPENVMAT01, *(LPDWORD)&bumpenvmat[1]);
+    IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_BUMPENVMAT10, *(LPDWORD)&bumpenvmat[2]);
+    IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_BUMPENVMAT11, *(LPDWORD)&bumpenvmat[3]);
+
+    bumpenvmat[0] = 1.5; bumpenvmat[2] =  0.0;
+    bumpenvmat[1] = 0.0; bumpenvmat[3] =  0.5;
+    IDirect3DDevice9_SetTextureStageState(device, 3, D3DTSS_BUMPENVMAT00, *(LPDWORD)&bumpenvmat[0]);
+    IDirect3DDevice9_SetTextureStageState(device, 3, D3DTSS_BUMPENVMAT01, *(LPDWORD)&bumpenvmat[1]);
+    IDirect3DDevice9_SetTextureStageState(device, 3, D3DTSS_BUMPENVMAT10, *(LPDWORD)&bumpenvmat[2]);
+    IDirect3DDevice9_SetTextureStageState(device, 3, D3DTSS_BUMPENVMAT11, *(LPDWORD)&bumpenvmat[3]);
+
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    hr = IDirect3DDevice9_SetSamplerState(device, 1, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    hr = IDirect3DDevice9_SetSamplerState(device, 1, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    hr = IDirect3DDevice9_SetSamplerState(device, 2, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    hr = IDirect3DDevice9_SetSamplerState(device, 2, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    hr = IDirect3DDevice9_SetSamplerState(device, 3, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    hr = IDirect3DDevice9_SetSamplerState(device, 3, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed (0x%08x)\n", hr);
+    if(SUCCEEDED(hr)) {
+        static const float double_quad[] = {
+            -1.0,   -1.0,   0.0,    0.0,    0.0,    0.5,    0.5,    0.0,    0.0,    0.5,    0.5,
+             1.0,   -1.0,   0.0,    0.0,    0.0,    0.5,    0.5,    0.0,    0.0,    0.5,    0.5,
+            -1.0,    1.0,   0.0,    0.0,    0.0,    0.5,    0.5,    0.0,    0.0,    0.5,    0.5,
+             1.0,    1.0,   0.0,    0.0,    0.0,    0.5,    0.5,    0.0,    0.0,    0.5,    0.5,
+        };
+
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, double_quad, sizeof(float) * 11);
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (0x%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    color = getPixelColor(device, 320, 240);
+    ok(color == 0x00ffff00, "double texbem failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 1, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 2, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 3, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "Direct3DDevice9_SetPixelShader failed (0x%08x)\n", hr);
+
+    IDirect3DPixelShader9_Release(pixel_shader);
+    IDirect3DTexture9_Release(texture);
+    IDirect3DTexture9_Release(texture1);
+    IDirect3DTexture9_Release(texture2);
 }
 
 static void z_range_test(IDirect3DDevice9 *device)
