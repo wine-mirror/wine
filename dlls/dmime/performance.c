@@ -225,12 +225,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANC
 	  HRESULT hr;
 	  hr = DirectSoundCreate8(NULL, (LPDIRECTSOUND8*) &This->pDirectSound, NULL);
 	  if (!This->pDirectSound) return DSERR_NODRIVER;
-	  
-	  /** 
-	   * as seen in msdn
-	   * 
-	   *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directX/htm/idirectmusicperformance8initaudio.asp
-	   */
+
 	  if (NULL != hWnd) {
 	    IDirectSound8_SetCooperativeLevel(This->pDirectSound, hWnd, DSSCL_PRIORITY);
 	  } else {
@@ -772,10 +767,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio (LPDIRECTMUSICPERFO
 	if (NULL != pParams) {
 	  This->pParams = *pParams;
 	} else {
-	  /**
-	   * TODO, how can i fill the struct 
-	   * as seen at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directX/htm/dmusaudioparams.asp
-	   */
+	  /* TODO, how can i fill the struct as seen on msdn */
 	  memset(&This->pParams, 0, sizeof(DMUS_AUDIOPARAMS));
 	  This->pParams.dwSize = sizeof(DMUS_AUDIOPARAMS);
 	  This->pParams.fInitNow = FALSE;
@@ -834,9 +826,6 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateAudioPath (LPDIRECTMUSI
 	return IDirectMusicAudioPath_Activate(*ppNewPath, fActivate);
 }
 
-/**
- * see  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directX/htm/standardaudiopaths.asp
- */
 static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwType, DWORD dwPChannelCount, BOOL fActivate, IDirectMusicAudioPath** ppNewPath) {
 	IDirectMusicAudioPathImpl *default_path;
 	IDirectMusicAudioPath *pPath;
@@ -1043,9 +1032,6 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPerformanceImpl (LPCGUID lpcGUID, LPVOID 
 	InitializeCriticalSection(&obj->safe);
 	obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectMusicPerformance8Impl*->safe");
 
-	/**
-	 * @see http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/htm/latencyandbumpertime.asp
-	 */
 	obj->rtLatencyTime  = 100;  /* 100ms TO FIX */
 	obj->dwBumperLength =   50; /* 50ms default */
 	obj->dwPrepareTime  = 1000; /* 1000ms default */

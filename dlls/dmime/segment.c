@@ -310,7 +310,6 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetGraph (LP
   }
   /** 
    * should return This, as seen in msdn 
-   * http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/htm/idirectmusicsegment8getgraph.asp
    * "...The segment object implements IDirectMusicGraph directly..."
    */
   *ppGraph = This->pGraph;

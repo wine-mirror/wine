@@ -787,8 +787,7 @@ void shader_dump_param(
 /** Shared code in order to generate the bulk of the shader string.
     Use the shader_header_fct & shader_footer_fct to add strings
     that are specific to pixel or vertex functions
-    NOTE: A description of how to parse tokens can be found at:
-          http://msdn.microsoft.com/library/default.asp?url=/library/en-us/graphics/hh/graphics/usermodedisplaydriver_shader_cc8e4e05-f5c3-4ec0-8853-8ce07c1551b2.xml.asp */
+    NOTE: A description of how to parse tokens can be found on msdn */
 void shader_generate_main(
     IWineD3DBaseShader *iface,
     SHADER_BUFFER* buffer,

@@ -1887,9 +1887,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 break;
         }
     }
-    /* TODO: Check support against more of the WINED3DUSAGE_QUERY_* constants
-     * See http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/IDirect3D9__CheckDeviceFormat.asp
-     * and http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/D3DUSAGE_QUERY.asp */
+    /* TODO: Check support against more of the WINED3DUSAGE_QUERY_* constants */
     if (Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
         if (!GL_LIMITS(vertex_samplers)) {
             TRACE_(d3d_caps)("[FAILED]\n");

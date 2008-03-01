@@ -1430,8 +1430,6 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
      * POINTSCALEENABLE controls how point size value is treated. If set to
      * true, the point size is scaled with respect to height of viewport.
      * When set to false point size is in pixels.
-     *
-     * http://msdn.microsoft.com/library/en-us/directx9_c/point_sprites.asp
      */
 
     /* Default values */
@@ -1564,7 +1562,6 @@ static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 static void state_wrap(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     /**
      http://www.cosc.brocku.ca/Offerings/3P98/course/lectures/texture/
-     http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/FixedFunction/Textures/texturewrapping.asp
      http://www.gamedev.net/reference/programming/features/rendererdll3/page2.asp
      Discussion on the ways to turn on WRAPing to solve an OpenGL conversion problem.
      http://www.flipcode.org/cgi-bin/fcmsg.cgi?thread_show=10248

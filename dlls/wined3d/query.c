@@ -25,8 +25,6 @@
 #include "wined3d_private.h"
 
 /*
- * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/advancedtopics/Queries.asp
- *
  * Occlusion Queries:
  * http://www.gris.uni-tuebingen.de/~bartz/Publications/paper/hww98.pdf
  * http://oss.sgi.com/projects/ogl-sample/registry/ARB/occlusion_query.txt
