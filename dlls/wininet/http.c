@@ -729,8 +729,7 @@ static void HTTP_DrainContent(LPWININETHTTPREQW lpwhr)
     do
     {
         char buffer[2048];
-        if (!INTERNET_ReadFile(&lpwhr->hdr, buffer, sizeof(buffer), &bytes_read,
-                               TRUE, FALSE))
+        if (!INTERNET_ReadFile(&lpwhr->hdr, buffer, sizeof(buffer), &bytes_read, TRUE))
             return;
     } while (bytes_read);
 }

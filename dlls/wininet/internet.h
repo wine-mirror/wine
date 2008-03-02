@@ -404,7 +404,7 @@ LPSTR INTERNET_GetResponseBuffer(void);
 LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
                        DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead,
-                       BOOL bWait, BOOL bSendCompletionStatus);
+                       BOOL bWait);
 
 BOOLAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
     LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD_PTR dwContext);

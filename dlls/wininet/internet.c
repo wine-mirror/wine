@@ -1700,8 +1700,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
 
 
 BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
-                       DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead,
-                       BOOL bWait, BOOL bSendCompletionStatus)
+                       DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead, BOOL bWait)
 {
     BOOL retval = FALSE;
     int nSocket = -1;
@@ -1765,18 +1764,6 @@ BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
             break;
     }
 
-    if (bSendCompletionStatus)
-    {
-        INTERNET_ASYNC_RESULT iar;
-
-        iar.dwResult = retval;
-        iar.dwError = iar.dwError = retval ? ERROR_SUCCESS :
-                                             INTERNET_GetLastError();
-
-        INTERNET_SendCallback(lpwh, lpwh->dwContext,
-                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                              sizeof(INTERNET_ASYNC_RESULT));
-    }
     return retval;
 }
 
@@ -1805,7 +1792,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
         return FALSE;
     }
 
-    retval = INTERNET_ReadFile(lpwh, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead, TRUE, FALSE);
+    retval = INTERNET_ReadFile(lpwh, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead, TRUE);
     WININET_Release( lpwh );
 
     TRACE("-- %s (bytes read: %d)\n", retval ? "TRUE": "FALSE", pdwNumOfBytesRead ? *pdwNumOfBytesRead : -1);
@@ -1842,12 +1829,21 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 void AsyncInternetReadFileExProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_INTERNETREADFILEEXA const *req = &workRequest->u.InternetReadFileExA;
+    INTERNET_ASYNC_RESULT iar;
+    BOOL res;
 
     TRACE("INTERNETREADFILEEXA %p\n", workRequest->hdr);
 
-    INTERNET_ReadFile(workRequest->hdr, req->lpBuffersOut->lpvBuffer,
+    res = INTERNET_ReadFile(workRequest->hdr, req->lpBuffersOut->lpvBuffer,
         req->lpBuffersOut->dwBufferLength,
-        &req->lpBuffersOut->dwBufferLength, TRUE, TRUE);
+        &req->lpBuffersOut->dwBufferLength, TRUE);
+
+    iar.dwResult = res;
+    iar.dwError = res ? ERROR_SUCCESS : INTERNET_GetLastError();
+
+    INTERNET_SendCallback(workRequest->hdr, workRequest->hdr->dwContext,
+                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                          sizeof(INTERNET_ASYNC_RESULT));
 }
 
 BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOut,
@@ -1907,7 +1903,7 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
 
     retval = INTERNET_ReadFile(lpwh, lpBuffersOut->lpvBuffer,
         lpBuffersOut->dwBufferLength, &lpBuffersOut->dwBufferLength,
-        !(dwFlags & IRF_NO_WAIT), FALSE);
+        !(dwFlags & IRF_NO_WAIT));
 
     if (retval)
     {
