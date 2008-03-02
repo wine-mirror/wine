@@ -84,20 +84,20 @@ static void test_mmioDescend(void)
     /* test various mmioDescend flags */
 
     mmioSeek(hmmio, 0, SEEK_SET);
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDRIFF);
     ok(ret == MMIOERR_CHUNKNOTFOUND ||
        ret == MMIOERR_INVALIDFILE, "mmioDescend returned %u\n", ret);
 
     mmioSeek(hmmio, 0, SEEK_SET);
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ck.ckid = 0;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDRIFF);
     ok(ret == MMIOERR_CHUNKNOTFOUND ||
        ret == MMIOERR_INVALIDFILE, "mmioDescend returned %u\n", ret);
 
     mmioSeek(hmmio, 0, SEEK_SET);
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ck.fccType = 0;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDRIFF);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
@@ -105,14 +105,14 @@ static void test_mmioDescend(void)
     ok(ck.fccType == formtypeAVI, "wrong fccType: %04x\n", ck.fccType);
 
     mmioSeek(hmmio, 0, SEEK_SET);
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ret = mmioDescend(hmmio, &ck, NULL, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
     ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04x\n", ck.ckid);
     ok(ck.fccType == formtypeAVI, "wrong fccType: %04x\n", ck.fccType);
 
     /* do NOT seek, use current file position */
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ck.fccType = 0;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDLIST);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
@@ -120,7 +120,7 @@ static void test_mmioDescend(void)
     ok(ck.fccType == listtypeAVIHEADER, "wrong fccType: %04x\n", ck.fccType);
 
     mmioSeek(hmmio, 0, SEEK_SET);
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ck.ckid = 0;
     ck.fccType = listtypeAVIHEADER;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDCHUNK);
@@ -129,7 +129,7 @@ static void test_mmioDescend(void)
     ok(ck.fccType == formtypeAVI, "wrong fccType: %04x\n", ck.fccType);
 
     /* do NOT seek, use current file position */
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ck.ckid = FOURCC_LIST;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDCHUNK);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
@@ -137,7 +137,7 @@ static void test_mmioDescend(void)
     ok(ck.fccType == listtypeAVIHEADER, "wrong fccType: %04x\n", ck.fccType);
 
     mmioSeek(hmmio, 0, SEEK_SET);
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ck.ckid = FOURCC_RIFF;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDCHUNK);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
@@ -145,7 +145,7 @@ static void test_mmioDescend(void)
     ok(ck.fccType == formtypeAVI, "wrong fccType: %04x\n", ck.fccType);
 
     /* do NOT seek, use current file position */
-    memset(&ckList, 0x55, sizeof(ckList));
+    memset(&ckList, 0x66, sizeof(ckList));
     ckList.ckid = 0;
     ret = mmioDescend(hmmio, &ckList, &ck, MMIO_FINDCHUNK);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
@@ -153,16 +153,16 @@ static void test_mmioDescend(void)
     ok(ckList.fccType == listtypeAVIHEADER, "wrong fccType: %04x\n", ckList.fccType);
 
     mmioSeek(hmmio, 0, SEEK_SET);
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDCHUNK);
     ok(ret == MMIOERR_CHUNKNOTFOUND ||
        ret == MMIOERR_INVALIDFILE, "mmioDescend returned %u\n", ret);
-    ok(ck.ckid != 0x55555555, "wrong ckid: %04x\n", ck.ckid);
-    ok(ck.fccType != 0x55555555, "wrong fccType: %04x\n", ck.fccType);
-    ok(ck.dwDataOffset != 0x55555555, "wrong dwDataOffset: %04x\n", ck.dwDataOffset);
+    ok(ck.ckid != 0x66666666, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType != 0x66666666, "wrong fccType: %04x\n", ck.fccType);
+    ok(ck.dwDataOffset != 0x66666666, "wrong dwDataOffset: %04x\n", ck.dwDataOffset);
 
     mmioSeek(hmmio, 0, SEEK_SET);
-    memset(&ck, 0x55, sizeof(ck));
+    memset(&ck, 0x66, sizeof(ck));
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDRIFF);
     ok(ret == MMIOERR_CHUNKNOTFOUND ||
        ret == MMIOERR_INVALIDFILE, "mmioDescend returned %u\n", ret);
