@@ -2710,6 +2710,7 @@ BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize
         case WINED3DFMT_D24S8:
         case WINED3DFMT_D24FS8:
         case WINED3DFMT_D32:
+        case WINED3DFMT_D32F_LOCKABLE:
             break;
         default:
             FIXME("Unsupported stencil format: %s\n", debug_d3dformat(fmt));
