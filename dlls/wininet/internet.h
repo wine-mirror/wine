@@ -378,9 +378,6 @@ DWORD INTERNET_GetLastError(void);
 BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
 LPSTR INTERNET_GetResponseBuffer(void);
 LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
-BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
-                       DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead,
-                       BOOL bWait);
 
 BOOLAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,

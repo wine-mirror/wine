@@ -1700,7 +1700,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
 }
 
 
-BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
+static BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
                        DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead, BOOL bWait)
 {
     BOOL retval = FALSE;

@@ -117,7 +117,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD
 static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
 static BOOL HTTP_VerifyValidHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field);
-
+static void HTTP_DrainContent(WININETHTTPREQW *req);
 
 LPHTTPHEADERW HTTP_GetHeader(LPWININETHTTPREQW req, LPCWSTR head)
 {
@@ -713,25 +713,6 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     HeapFree( GetProcessHeap(), 0, hdr );
 
     return r;
-}
-
-/* read any content returned by the server so that the connection can be
- * reused */
-static void HTTP_DrainContent(LPWININETHTTPREQW lpwhr)
-{
-    DWORD bytes_read;
-
-    if (!NETCON_connected(&lpwhr->netConnection)) return;
-
-    if (lpwhr->dwContentLength == -1)
-        NETCON_close(&lpwhr->netConnection);
-
-    do
-    {
-        char buffer[2048];
-        if (!INTERNET_ReadFile(&lpwhr->hdr, buffer, sizeof(buffer), &bytes_read, TRUE))
-            return;
-    } while (bytes_read);
 }
 
 /***********************************************************************
@@ -1410,7 +1391,7 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
-DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
+static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
     int bytes_read;
 
@@ -1690,6 +1671,25 @@ lend:
 
     TRACE("<-- %p (%p)\n", handle, lpwhr);
     return handle;
+}
+
+/* read any content returned by the server so that the connection can be
+ * reused */
+static void HTTP_DrainContent(WININETHTTPREQW *req)
+{
+    DWORD bytes_read;
+
+    if (!NETCON_connected(&req->netConnection)) return;
+
+    if (req->dwContentLength == -1)
+        NETCON_close(&req->netConnection);
+
+    do
+    {
+        char buffer[2048];
+        if (HTTPREQ_Read(req, buffer, sizeof(buffer), &bytes_read, TRUE) != ERROR_SUCCESS)
+            return;
+    } while (bytes_read);
 }
 
 static const WCHAR szAccept[] = { 'A','c','c','e','p','t',0 };
