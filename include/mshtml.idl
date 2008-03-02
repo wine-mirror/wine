@@ -1771,7 +1771,7 @@ interface IHTMLElement : IDispatch
 
     [propput, id(DISPID_IHTMLELEMENT_ONKEYUP)]
     HRESULT onkeyup([in] VARIANT v);
-    
+
     [propget, id(DISPID_IHTMLELEMENT_ONKEYUP)]
     HRESULT onkeyup([retval, out] VARIANT *p);
 
@@ -5315,7 +5315,7 @@ interface IHTMLDocument3 : IDispatch
 
     [propget, id(DISPID_IHTMLDOCUMENT3_UNIQUEID), hidden]
     HRESULT uniqueID([retval, out] BSTR *p);
-    
+
     [id(DISPID_IHTMLDOCUMENT3_ATTACHEVENT)]
     HRESULT attachEvent(
         [in] BSTR event,
@@ -6660,6 +6660,81 @@ interface IHTMLTableSection : IDispatch
 
     [id(DISPID_IHTMLTABLESECTION_DELETEROW)]
     HRESULT deleteRow([defaultvalue(-1), in] long index);
+}
+
+/*****************************************************************************
+ *    IHTMLScriptElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f28b-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLScriptElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_SRC), displaybind, bindable]
+    HRESULT src([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_SRC), displaybind, bindable]
+    HRESULT src([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_HTMLFOR), displaybind, bindable]
+    HRESULT htmlFor([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_HTMLFOR), displaybind, bindable]
+    HRESULT htmlFor([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_EVENT), displaybind, bindable]
+    HRESULT event([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_EVENT), displaybind, bindable]
+    HRESULT event([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_TEXT), displaybind, bindable]
+    HRESULT text([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_TEXT), displaybind, bindable]
+    HRESULT text([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_DEFER), displaybind, bindable]
+    HRESULT defer([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_DEFER), displaybind, bindable]
+    HRESULT defer([retval, out] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_READYSTATE)]
+    HRESULT readyState([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_ONERROR), displaybind, bindable]
+    HRESULT onerror([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_ONERROR), displaybind, bindable]
+    HRESULT onerror([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT_TYPE), displaybind, bindable]
+    HRESULT type([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLScriptElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f828-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLScriptElement2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLSCRIPTELEMENT2_CHARSET), displaybind, bindable]
+    HRESULT charset([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSCRIPTELEMENT2_CHARSET), displaybind, bindable]
+    HRESULT charset([retval, out] BSTR *p);
 }
 
 /*****************************************************************************
