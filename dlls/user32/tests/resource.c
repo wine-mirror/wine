@@ -31,6 +31,50 @@ static void init_function_pointers(void)
     pPrivateExtractIconsA = (void*)GetProcAddress(hmod, "PrivateExtractIconsA");
 }
 
+static void test_LoadStringW(void)
+{
+    HINSTANCE hInst = GetModuleHandle(NULL);
+    WCHAR copiedstringw[128], returnedstringw[128], *resourcepointer = NULL;
+    char copiedstring[128], returnedstring[128];
+    int length1, length2, retvalue;
+
+    /* Check that the string which is returned by LoadStringW matches
+       the string at the pointer returned by LoadStringW when called with buflen = 0 */
+    length1 = LoadStringW(hInst, 2, (WCHAR *) &resourcepointer, 0); /* get pointer to resource. */
+    length2 = LoadStringW(hInst, 2, returnedstringw, sizeof(returnedstringw) /sizeof(WCHAR)); /* get resource string */
+    ok(length2 > 0, "LoadStringW failed to load resource 2, ret %d, err %d\n", length2, GetLastError());
+    todo_wine
+    {
+        ok(length1 == length2, "LoadStringW returned different values dependent on buflen. ret1 %d, ret2 %d\n",
+            length1, length2);
+        ok(length1 > 0 && resourcepointer != NULL, "LoadStringW failed to get pointer to resource 2, ret %d, err %d\n",
+            length1, GetLastError());
+    }
+
+    /* Copy the resource since it is not '\0' terminated, and add '\0' to the end */
+    if(resourcepointer != NULL) /* Check that the resource pointer was loaded to avoid access violation */
+    {
+        memcpy(copiedstringw, resourcepointer, length1 * sizeof(WCHAR));
+        copiedstringw[length1] = '\0';
+        /* check that strings match */
+        WideCharToMultiByte( CP_ACP, 0, returnedstringw, -1, returnedstring, 128, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, copiedstringw, -1, copiedstring, 128, NULL, NULL );
+        ok(!memcmp(copiedstringw, returnedstringw, (length2 + 1)*sizeof(WCHAR)),
+           "strings don't match: returnedstring = %s, copiedstring = %s\n", returnedstring, copiedstring);
+    }
+    todo_wine
+    {
+        /* check that calling LoadStringW with buffer = NULL returns zero */
+        retvalue = LoadStringW(hInst, 2, NULL, 0);
+        ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d",
+            retvalue);
+        /* check again, with a different buflen value, that calling LoadStringW with buffer = NULL returns zero */
+        retvalue = LoadStringW(hInst, 2, NULL, 128);
+        ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d",
+            retvalue);
+    }
+}
+
 static void test_LoadStringA (void)
 {
     HINSTANCE hInst = GetModuleHandle (NULL);
@@ -74,6 +118,13 @@ static void test_LoadStringA (void)
         "LoadString failed: ret %d err %d\n", ret, GetLastError());
     ok( LoadStringA( hInst, MAKELONG( 65534, 0xffff ), buf, sizeof(buf)) == ret,
         "LoadString failed: ret %d err %d\n", ret, GetLastError());
+
+    ret = LoadStringA(hInst, 0, buf, 0);
+    todo_wine
+    {
+        ok( ret == -1, "LoadStringA did not return -1 when called with buflen = 0, got %d, err %d\n",
+            ret, GetLastError());
+    }
 }
 
 static void test_accel1(void)
@@ -316,7 +367,8 @@ static void test_LoadImage(void)
 START_TEST(resource)
 {
     init_function_pointers();
-    test_LoadStringA ();
+    test_LoadStringA();
+    test_LoadStringW();
     test_accel1();
     test_accel2();
     test_PrivateExtractIcons();

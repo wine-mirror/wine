@@ -41,6 +41,7 @@ STRINGTABLE
 {
   0 "String resource"
   1 "Another string resource"
+  2 L"This is a wide string resource"
   65534 "Test high id"
 }
 
