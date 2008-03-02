@@ -1410,6 +1410,46 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
+DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
+{
+    int bytes_read;
+
+    if(!NETCON_recv(&req->netConnection, buffer, min(size, req->dwContentLength - req->dwContentRead),
+                     sync ? MSG_WAITALL : 0, &bytes_read)) {
+        if(req->dwContentLength != -1 && req->dwContentRead != req->dwContentLength)
+            ERR("not all data received %d/%d\n", req->dwContentRead, req->dwContentLength);
+
+        /* always returns TRUE, even if the network layer returns an
+         * error */
+        *read = 0;
+        HTTP_FinishedReading(req);
+        return ERROR_SUCCESS;
+    }
+
+    req->dwContentRead += bytes_read;
+    *read = bytes_read;
+
+    if(req->lpszCacheFile) {
+        BOOL res;
+
+        res = WriteFile(req->hCacheFile, buffer, bytes_read, NULL, NULL);
+        if(!res)
+            WARN("WriteFile failed: %u\n", GetLastError());
+    }
+
+    if(!bytes_read && (req->dwContentRead == req->dwContentLength))
+        HTTP_FinishedReading(req);
+
+    return ERROR_SUCCESS;
+}
+
+static DWORD HTTPREQ_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size, DWORD *read)
+{
+    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+
+    return HTTPREQ_Read(req, buffer, size, read, TRUE);
+}
+
 static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)hdr;
@@ -1471,6 +1511,7 @@ static const HANDLEHEADERVtbl HTTPREQVtbl = {
     HTTPREQ_Destroy,
     HTTPREQ_CloseConnection,
     HTTPREQ_SetOption,
+    HTTPREQ_ReadFile,
     HTTPREQ_WriteFile,
     HTTPREQ_QueryDataAvailable,
     NULL
@@ -2995,6 +3036,7 @@ static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
 
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
     HTTPSESSION_Destroy,
+    NULL,
     NULL,
     NULL,
     NULL,

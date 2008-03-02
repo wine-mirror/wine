@@ -477,6 +477,7 @@ static const HANDLEHEADERVtbl APPINFOVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -1703,11 +1704,9 @@ BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
                        DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead, BOOL bWait)
 {
     BOOL retval = FALSE;
-    int nSocket = -1;
     int bytes_read;
     LPWININETHTTPREQW lpwhr;
 
-    /* FIXME: this should use NETCON functions! */
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
@@ -1749,17 +1748,6 @@ BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
             }
             break;
 
-        case WH_HFILE:
-            /* FIXME: FTP should use NETCON_ stuff */
-            nSocket = ((LPWININETFTPFILE)lpwh)->nDataSocket;
-            if (nSocket != -1)
-            {
-                int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, bWait ? MSG_WAITALL : 0);
-                retval = (res >= 0);
-                *pdwNumOfBytesRead = retval ? res : 0;
-            }
-            break;
-
         default:
             break;
     }
@@ -1778,25 +1766,30 @@ BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
  *
  */
 BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
-	DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead)
+        DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead)
 {
-    LPWININETHANDLEHEADER lpwh;
-    BOOL retval;
+    LPWININETHANDLEHEADER hdr;
+    DWORD res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
     TRACE("%p %p %d %p\n", hFile, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead);
 
-    lpwh = WININET_GetObject( hFile );
-    if (!lpwh)
-    {
+    hdr = WININET_GetObject(hFile);
+    if (!hdr) {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    retval = INTERNET_ReadFile(lpwh, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead, TRUE);
-    WININET_Release( lpwh );
+    if(hdr->vtbl->ReadFile)
+        res = hdr->vtbl->ReadFile(hdr, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead);
 
-    TRACE("-- %s (bytes read: %d)\n", retval ? "TRUE": "FALSE", pdwNumOfBytesRead ? *pdwNumOfBytesRead : -1);
-    return retval;
+    WININET_Release(hdr);
+
+    TRACE("-- %s (%u) (bytes read: %d)\n", res == ERROR_SUCCESS ? "TRUE": "FALSE", res,
+          pdwNumOfBytesRead ? *pdwNumOfBytesRead : -1);
+
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 /***********************************************************************

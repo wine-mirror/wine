@@ -139,6 +139,7 @@ typedef struct {
     void (*Destroy)(WININETHANDLEHEADER*);
     void (*CloseConnection)(WININETHANDLEHEADER*);
     DWORD (*SetOption)(WININETHANDLEHEADER*,DWORD,void*,DWORD);
+    DWORD (*ReadFile)(WININETHANDLEHEADER*,void*,DWORD,DWORD*);
     BOOL (*WriteFile)(WININETHANDLEHEADER*,const void*,DWORD,DWORD*);
     DWORD (*QueryDataAvailable)(WININETHANDLEHEADER*,DWORD*,DWORD,DWORD_PTR);
     DWORD (*FindNextFileW)(WININETHANDLEHEADER*,void*);

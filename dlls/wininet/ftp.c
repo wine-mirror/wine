@@ -1174,6 +1174,21 @@ static void FTPFILE_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwh);
 }
 
+static DWORD FTPFILE_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size, DWORD *read)
+{
+    WININETFTPFILE *file = (WININETFTPFILE*)hdr;
+    int res;
+
+    if (file->nDataSocket == -1)
+        return ERROR_INTERNET_DISCONNECTED;
+
+    /* FIXME: FTP should use NETCON_ stuff */
+    res = recv(file->nDataSocket, buffer, size, MSG_WAITALL);
+    *read = res>0 ? res : 0;
+
+    return res>=0 ? ERROR_SUCCESS : INTERNET_ERROR_BASE; /* FIXME*/
+}
+
 static BOOL FTPFILE_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
@@ -1189,6 +1204,7 @@ static const HANDLEHEADERVtbl FTPFILEVtbl = {
     FTPFILE_Destroy,
     NULL,
     NULL,
+    FTPFILE_ReadFile,
     FTPFILE_WriteFile,
     NULL,
     NULL
@@ -2108,6 +2124,7 @@ static void FTPSESSION_CloseConnection(WININETHANDLEHEADER *hdr)
 static const HANDLEHEADERVtbl FTPSESSIONVtbl = {
     FTPSESSION_Destroy,
     FTPSESSION_CloseConnection,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -3193,6 +3210,7 @@ static DWORD FTPFINDNEXT_FindNextFileW(WININETHANDLEHEADER *hdr, void *data)
 
 static const HANDLEHEADERVtbl FTPFINDNEXTVtbl = {
     FTPFINDNEXT_Destroy,
+    NULL,
     NULL,
     NULL,
     NULL,
