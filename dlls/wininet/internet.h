@@ -222,31 +222,6 @@ typedef struct
 } WININETHTTPREQW, *LPWININETHTTPREQW;
 
 
-struct _WININETFTPSESSIONW;
-
-typedef struct
-{
-    WININETHANDLEHEADER hdr;
-    struct _WININETFTPSESSIONW *lpFtpSession;
-    BOOL session_deleted;
-    int nDataSocket;
-} WININETFTPFILE, *LPWININETFTPFILE;
-
-
-typedef struct _WININETFTPSESSIONW
-{
-    WININETHANDLEHEADER hdr;
-    WININETAPPINFOW *lpAppInfo;
-    int sndSocket;
-    int lstnSocket;
-    int pasvSocket; /* data socket connected by us in case of passive FTP */
-    LPWININETFTPFILE download_in_progress;
-    struct sockaddr_in socketAddress;
-    struct sockaddr_in lstnSocketAddress;
-    LPWSTR  lpszPassword;
-    LPWSTR  lpszUserName;
-} WININETFTPSESSIONW, *LPWININETFTPSESSIONW;
-
 
 struct WORKREQ_FTPPUTFILEW
 {
@@ -406,23 +381,6 @@ LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
                        DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead,
                        BOOL bWait);
-
-BOOLAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
-    LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD_PTR dwContext);
-BOOLAPI FTP_FtpSetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
-BOOLAPI FTP_FtpCreateDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
-INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
-    LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD_PTR dwContext);
-BOOLAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszCurrentDirectory,
-	LPDWORD lpdwCurrentDirectory);
-BOOL FTP_FtpRenameFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszSrc, LPCWSTR lpszDest);
-BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
-BOOL FTP_FtpDeleteFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName);
-HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName,
-	DWORD fdwAccess, DWORD dwFlags, DWORD_PTR dwContext);
-BOOLAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
-	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
-	DWORD_PTR dwContext);
 
 BOOLAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
