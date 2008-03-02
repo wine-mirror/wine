@@ -139,7 +139,7 @@ FONT 8, "MS Shell Dlg"
 /*
 	special folders
 */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	IDS_DESKTOP		"Plocha"
 	IDS_MYCOMPUTER		"Tento poèítaè"

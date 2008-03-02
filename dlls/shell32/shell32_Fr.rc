@@ -167,7 +167,7 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "&Parcourir...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
         /* columns in the shellview */
 	IDS_SHV_COLUMN1		"Fichier"

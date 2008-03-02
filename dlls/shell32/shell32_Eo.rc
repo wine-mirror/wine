@@ -137,7 +137,7 @@ FONT 8, "MS Shell Dlg"
 /*
 	special folders
 */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	IDS_DESKTOP		"Desktop"
 	IDS_MYCOMPUTER		"Mea Komputero"
@@ -146,7 +146,7 @@ STRINGTABLE DISCARDABLE
 /*
 	context menus
 */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	IDS_VIEW_LARGE		"&Grandaj Ikonoj"
 	IDS_VIEW_SMALL		"Malgrandaj Ikonoj"
@@ -156,7 +156,7 @@ STRINGTABLE DISCARDABLE
 	IDS_OPEN		"Malfermu"
 }
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	IDS_CREATEFOLDER_DENIED "Mi ne povas crei novan Dosierujon: Aliro rifuzita."
 	IDS_CREATEFOLDER_CAPTION "Eraro dum kreiøo de dosierujo"
@@ -188,7 +188,7 @@ END
 
 
 /* message box strings */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
        IDS_RESTART_TITLE       "Restartigu"
        IDS_RESTART_PROMPT      "Æu vi volas simuli Vindozan restartigon?"
@@ -197,7 +197,7 @@ STRINGTABLE DISCARDABLE
 }
 
 /* shell folder path default values */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	IDS_PROGRAMS                "Start Menu\\Programs"
 	IDS_PERSONAL                "Miaj Dokumentoj"

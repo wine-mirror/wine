@@ -135,7 +135,7 @@ FONT 8, "MS Shell Dlg"
 /*
 	special folders
 */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	IDS_DESKTOP		"Стільниця"
 	IDS_MYCOMPUTER		"Мій Комп'ютер"

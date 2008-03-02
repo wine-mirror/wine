@@ -68,7 +68,7 @@ FONT 8, "MS Shell Dlg"
 }
 
 /*	columns in the shellview	*/
-STRINGTABLE LANGUAGE LANG_SLOVENIAN, SUBLANG_NEUTRAL
+STRINGTABLE
 BEGIN
 	IDS_SHV_COLUMN1		"Datoteka"
 	IDS_SHV_COLUMN2		"Velikost"

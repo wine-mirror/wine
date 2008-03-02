@@ -80,7 +80,7 @@ END
 /*
 	special folders
 */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	IDS_DESKTOP		"ﾃﾞｽｸﾄｯﾌﾟ"
 	IDS_MYCOMPUTER		"ﾏｲｺﾝﾋﾟｭｰﾀ"
@@ -89,7 +89,7 @@ STRINGTABLE DISCARDABLE
 /*
 	context menus
 */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	IDS_VIEW_LARGE		"大きいアイコン(&G)"
 	IDS_VIEW_SMALL		"小さいアイコン(&M)"
@@ -127,7 +127,7 @@ FONT 8, "MS Shell Dlg"
 }
 
 /*	columns in the shellview	*/
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
 	IDS_SHV_COLUMN1		"名前"
 	IDS_SHV_COLUMN2		"サイズ"
