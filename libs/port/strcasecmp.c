@@ -24,6 +24,7 @@
 #include <ctype.h>
 
 #ifndef HAVE_STRCASECMP
+#undef strcasecmp
 int strcasecmp( const char *str1, const char *str2 )
 {
     const unsigned char *ustr1 = (const unsigned char *)str1;

@@ -24,6 +24,7 @@
 #include <ctype.h>
 
 #ifndef HAVE_STRNCASECMP
+#undef strncasecmp
 int strncasecmp( const char *str1, const char *str2, size_t n )
 {
     const unsigned char *ustr1 = (const unsigned char *)str1;
