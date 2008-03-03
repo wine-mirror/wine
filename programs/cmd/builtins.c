@@ -998,13 +998,15 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
       /* execute all appropriate commands */
       curPosition = *cmdList;
 
-      WINE_TRACE("Processing cmdList(%p) - &(%d) bd(%d / %d)\n",
+      WINE_TRACE("Processing cmdList(%p) - delim(%d) bd(%d / %d)\n",
                  *cmdList,
-                 (*cmdList)->isAmphersand,
+                 (*cmdList)->prevDelim,
                  (*cmdList)->bracketDepth, myDepth);
 
-      /* Execute any appended to the statement with &&'s */
-      if ((*cmdList)->isAmphersand) {
+      /* Execute any statements appended to the line */
+      /* FIXME: Only if previous call worked for && or failed for || */
+      if ((*cmdList)->prevDelim == CMD_ONFAILURE ||
+          (*cmdList)->prevDelim != CMD_ONSUCCESS) {
         if (processThese) {
           WCMD_execute ((*cmdList)->command, (*cmdList)->redirects, variable,
                         value, cmdList);
@@ -2278,6 +2280,7 @@ void WCMD_more (WCHAR *command) {
     HANDLE hConIn = CreateFile(conInW, GENERIC_READ | GENERIC_WRITE,
                          FILE_SHARE_READ, NULL, OPEN_EXISTING,
                          FILE_ATTRIBUTE_NORMAL, 0);
+    WINE_TRACE("No parms - working probably in pipe mode\n");
     SetStdHandle(STD_INPUT_HANDLE, hConIn);
 
     /* Warning: No easy way of ending the stream (ctrl+z on windows) so
@@ -2302,6 +2305,7 @@ void WCMD_more (WCHAR *command) {
     BOOL needsPause = FALSE;
 
     /* Loop through all args */
+    WINE_TRACE("Parms supplied - working through each file\n");
     WCMD_enter_paged_mode(moreStrPage);
 
     while (argN) {

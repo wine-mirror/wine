@@ -31,12 +31,20 @@
 
 /*	Data structure to hold commands to be processed */
 
+typedef enum _CMDdelimiters {
+  CMD_NONE,        /* End of line or single & */
+  CMD_ONFAILURE,   /* ||                      */
+  CMD_ONSUCCESS,   /* &&                      */
+  CMD_PIPE         /* Single                  */
+} CMD_DELIMITERS;
+
 typedef struct _CMD_LIST {
   WCHAR              *command;     /* Command string to execute                */
   WCHAR              *redirects;   /* Redirects in place                       */
   struct _CMD_LIST   *nextcommand; /* Next command string to execute           */
-  BOOL                isAmphersand;/* Whether follows &&                       */
+  CMD_DELIMITERS      prevDelim;   /* Previous delimiter                       */
   int                 bracketDepth;/* How deep bracketing have we got to       */
+  WCHAR               pipeFile[MAX_PATH]; /* Where to get input from for pipes */
 } CMD_LIST;
 
 void WCMD_assoc (WCHAR *, BOOL);
@@ -64,7 +72,6 @@ void WCMD_output (const WCHAR *format, ...);
 void WCMD_output_asis (const WCHAR *message);
 void WCMD_parse (WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2);
 void WCMD_pause (void);
-void WCMD_pipe (CMD_LIST **command, WCHAR *var, WCHAR *val);
 void WCMD_popd (void);
 void WCMD_print_error (void);
 void WCMD_pushd (WCHAR *);
