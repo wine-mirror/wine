@@ -1865,6 +1865,9 @@ void WCMD_setshow_default (WCHAR *command) {
       return;
     } else {
 
+      /* Save away the actual new directory, to store as current location */
+      GetCurrentDirectoryW (sizeof(string)/sizeof(WCHAR), string);
+
       /* Restore old directory if drive letter would change, and
            CD x:\directory /D (or pushd c:\directory) not supplied */
       if ((strstrW(quals, parmD) == NULL) &&

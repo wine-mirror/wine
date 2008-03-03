@@ -419,6 +419,7 @@ int wmain (int argc, WCHAR *argvW[])
     static const WCHAR fmt[] = {'=','%','c',':','\0'};
     wsprintf(envvar, fmt, string[0]);
     SetEnvironmentVariable(envvar, string);
+    WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
   }
 
   if (opt_k) {
@@ -643,7 +644,9 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
       if (GetEnvironmentVariable(envvar, dir, MAX_PATH) == 0) {
         static const WCHAR fmt[] = {'%','s','\\','\0'};
         wsprintf(cmd, fmt, cmd);
+        WINE_TRACE("No special directory settings, using dir of %s\n", wine_dbgstr_w(cmd));
       }
+      WINE_TRACE("Got directory %s as %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(cmd));
       status = SetCurrentDirectory (cmd);
       if (!status) WCMD_print_error ();
       HeapFree( GetProcessHeap(), 0, cmd );
