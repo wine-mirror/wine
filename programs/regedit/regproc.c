@@ -274,6 +274,7 @@ static LONG setValue(LPSTR val_name, LPSTR val_data)
             val_data[dwLen]='\0';
         }
         lpbData = (BYTE*) val_data;
+        dwLen++;  /* include terminating null */
     }
     else if (dwParseType == REG_DWORD)  /* Convert the dword types */
     {
