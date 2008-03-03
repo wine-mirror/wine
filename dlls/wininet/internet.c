@@ -478,6 +478,7 @@ static const HANDLEHEADERVtbl APPINFOVtbl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -1700,61 +1701,6 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
 }
 
 
-static BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
-                       DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead, BOOL bWait)
-{
-    BOOL retval = FALSE;
-    int bytes_read;
-    LPWININETHTTPREQW lpwhr;
-
-    switch (lpwh->htype)
-    {
-        case WH_HHTTPREQ:
-            lpwhr = (LPWININETHTTPREQW)lpwh;
-
-            if (!NETCON_recv(&lpwhr->netConnection, lpBuffer,
-                             min(dwNumOfBytesToRead, lpwhr->dwContentLength - lpwhr->dwContentRead),
-                             bWait ? MSG_WAITALL : 0, &bytes_read))
-            {
-
-                if (((lpwhr->dwContentLength != -1) &&
-                     (lpwhr->dwContentRead != lpwhr->dwContentLength)))
-                    ERR("not all data received %d/%d\n", lpwhr->dwContentRead,
-                        lpwhr->dwContentLength);
-
-                /* always returns TRUE, even if the network layer returns an
-                 * error */
-                *pdwNumOfBytesRead = 0;
-                HTTP_FinishedReading(lpwhr);
-                retval = TRUE;
-            }
-            else
-            {
-                lpwhr->dwContentRead += bytes_read;
-                *pdwNumOfBytesRead = bytes_read;
-
-                if(lpwhr->lpszCacheFile) {
-                    BOOL res;
-
-                    res = WriteFile(lpwhr->hCacheFile, lpBuffer, bytes_read, NULL, NULL);
-                    if(!res)
-                        WARN("WriteFile failed: %u\n", GetLastError());
-                }
-
-                if (!bytes_read && (lpwhr->dwContentRead == lpwhr->dwContentLength))
-                    retval = HTTP_FinishedReading(lpwhr);
-                else
-                    retval = TRUE;
-            }
-            break;
-
-        default:
-            break;
-    }
-
-    return retval;
-}
-
 /***********************************************************************
  *           InternetReadFile (WININET.@)
  *
@@ -1819,98 +1765,31 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
  * SEE
  *  InternetOpenUrlA(), HttpOpenRequestA()
  */
-void AsyncInternetReadFileExProc(WORKREQUEST *workRequest)
-{
-    struct WORKREQ_INTERNETREADFILEEXA const *req = &workRequest->u.InternetReadFileExA;
-    INTERNET_ASYNC_RESULT iar;
-    BOOL res;
-
-    TRACE("INTERNETREADFILEEXA %p\n", workRequest->hdr);
-
-    res = INTERNET_ReadFile(workRequest->hdr, req->lpBuffersOut->lpvBuffer,
-        req->lpBuffersOut->dwBufferLength,
-        &req->lpBuffersOut->dwBufferLength, TRUE);
-
-    iar.dwResult = res;
-    iar.dwError = res ? ERROR_SUCCESS : INTERNET_GetLastError();
-
-    INTERNET_SendCallback(workRequest->hdr, workRequest->hdr->dwContext,
-                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                          sizeof(INTERNET_ASYNC_RESULT));
-}
-
 BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOut,
 	DWORD dwFlags, DWORD_PTR dwContext)
 {
-    BOOL retval = FALSE;
-    LPWININETHANDLEHEADER lpwh;
+    LPWININETHANDLEHEADER hdr;
+    DWORD res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
     TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffersOut, dwFlags, dwContext);
 
-    if (dwFlags & ~(IRF_ASYNC|IRF_NO_WAIT))
-        FIXME("these dwFlags aren't implemented: 0x%x\n", dwFlags & ~(IRF_ASYNC|IRF_NO_WAIT));
-
-    if (lpBuffersOut->dwStructSize != sizeof(*lpBuffersOut))
-    {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    lpwh = (LPWININETHANDLEHEADER) WININET_GetObject( hFile );
-    if (!lpwh)
-    {
+    hdr = WININET_GetObject(hFile);
+    if (!hdr) {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    INTERNET_SendCallback(lpwh, lpwh->dwContext,
-                          INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
+    if(hdr->vtbl->ReadFileExA)
+        res = hdr->vtbl->ReadFileExA(hdr, lpBuffersOut, dwFlags, dwContext);
 
-    /* FIXME: IRF_ASYNC may not be the right thing to test here;
-     * hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC is probably better */
-    if (dwFlags & IRF_ASYNC)
-    {
-        DWORD dwDataAvailable = 0;
+    WININET_Release(hdr);
 
-        if (lpwh->htype == WH_HHTTPREQ)
-            NETCON_query_data_available(&((LPWININETHTTPREQW)lpwh)->netConnection,
-                                        &dwDataAvailable);
+    TRACE("-- %s (%u, bytes read: %d)\n", res == ERROR_SUCCESS ? "TRUE": "FALSE",
+          res, lpBuffersOut->dwBufferLength);
 
-        if (!dwDataAvailable)
-        {
-            WORKREQUEST workRequest;
-            struct WORKREQ_INTERNETREADFILEEXA *req;
-
-            workRequest.asyncproc = AsyncInternetReadFileExProc;
-            workRequest.hdr = WININET_AddRef( lpwh );
-            req = &workRequest.u.InternetReadFileExA;
-            req->lpBuffersOut = lpBuffersOut;
-
-            if (!INTERNET_AsyncCall(&workRequest))
-                WININET_Release( lpwh );
-            else
-                INTERNET_SetLastError(ERROR_IO_PENDING);
-            goto end;
-        }
-    }
-
-    retval = INTERNET_ReadFile(lpwh, lpBuffersOut->lpvBuffer,
-        lpBuffersOut->dwBufferLength, &lpBuffersOut->dwBufferLength,
-        !(dwFlags & IRF_NO_WAIT));
-
-    if (retval)
-    {
-        DWORD dwBytesReceived = lpBuffersOut->dwBufferLength;
-        INTERNET_SendCallback(lpwh, lpwh->dwContext,
-                              INTERNET_STATUS_RESPONSE_RECEIVED, &dwBytesReceived,
-                              sizeof(dwBytesReceived));
-    }
-
-end:
-    WININET_Release( lpwh );
-
-    TRACE("-- %s (bytes read: %d)\n", retval ? "TRUE": "FALSE", lpBuffersOut->dwBufferLength);
-    return retval;
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 /***********************************************************************
