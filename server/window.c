@@ -1363,8 +1363,8 @@ static unsigned int get_window_update_flags( struct window *win, struct window *
 static struct region *expose_window( struct window *win, const rectangle_t *old_window_rect,
                                      struct region *old_vis_rgn )
 {
-    struct window *parent = win;
     struct region *new_vis_rgn, *exposed_rgn;
+    int offset_x, offset_y;
 
     if (!(new_vis_rgn = get_visible_region( win, DCX_WINDOW ))) return NULL;
 
@@ -1383,23 +1383,30 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
         }
     }
 
-    /* make it relative to the old window pos for subtracting */
-    offset_region( new_vis_rgn, win->window_rect.left - old_window_rect->left,
-                   win->window_rect.top - old_window_rect->top  );
-
-    if (subtract_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ) && !is_region_empty( new_vis_rgn ))
+    offset_x = old_window_rect->left - win->client_rect.left;
+    offset_y = old_window_rect->top - win->client_rect.top;
+    if (win->parent)
     {
-        /* make it relative to new client rect again */
-        int offset_x = old_window_rect->left - win->client_rect.left;
-        int offset_y = old_window_rect->top - win->client_rect.top;
-        if (win->parent && !is_desktop_window(win->parent))
+        if (!is_desktop_window(win->parent))
         {
             offset_x += win->client_rect.left;
             offset_y += win->client_rect.top;
-            parent = win->parent;
         }
-        offset_region( new_vis_rgn, offset_x, offset_y );
-        redraw_window( parent, new_vis_rgn, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+
+        /* make it relative to the old window pos for subtracting */
+        offset_region( new_vis_rgn, win->window_rect.left - old_window_rect->left,
+                       win->window_rect.top - old_window_rect->top  );
+
+        if ((win->parent->style & WS_CLIPCHILDREN) ?
+            subtract_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ) :
+            xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
+        {
+            if (!is_region_empty( new_vis_rgn ))
+            {
+                offset_region( new_vis_rgn, offset_x, offset_y );
+                redraw_window( win->parent, new_vis_rgn, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+            }
+        }
     }
     free_region( new_vis_rgn );
     return exposed_rgn;
