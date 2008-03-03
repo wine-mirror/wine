@@ -698,11 +698,24 @@ serialize_param(
 	    }
 	    ITypeInfo_GetTypeAttr(tinfo2,&tattr);
 	    switch (tattr->typekind) {
+            case TKIND_ALIAS:
+                if (tattr->tdescAlias.vt == VT_USERDEFINED)
+                {
+                    DWORD href = tattr->tdescAlias.u.hreftype;
+                    ITypeInfo_ReleaseTypeAttr(tinfo, tattr);
+                    ITypeInfo_Release(tinfo2);
+                    hres = ITypeInfo_GetRefTypeInfo(tinfo,href,&tinfo2);
+                    if (hres) {
+                        ERR("Could not get typeinfo of hreftype %x for VT_USERDEFINED.\n",tdesc->u.lptdesc->u.hreftype);
+                        return hres;
+                    }
+                    ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+                    derefhere = (tattr->typekind != TKIND_DISPATCH && tattr->typekind != TKIND_INTERFACE);
+                }
+                break;
 	    case TKIND_ENUM:	/* confirmed */
 	    case TKIND_RECORD:	/* FIXME: mostly untested */
-		derefhere=TRUE;
 		break;
-	    case TKIND_ALIAS:	/* FIXME: untested */
 	    case TKIND_DISPATCH:	/* will be done in VT_USERDEFINED case */
 	    case TKIND_INTERFACE:	/* will be done in VT_USERDEFINED case */
 		derefhere=FALSE;
@@ -1030,11 +1043,24 @@ deserialize_param(
 		}
 		ITypeInfo_GetTypeAttr(tinfo2,&tattr);
 		switch (tattr->typekind) {
+                case TKIND_ALIAS:
+                    if (tattr->tdescAlias.vt == VT_USERDEFINED)
+                    {
+                        DWORD href = tattr->tdescAlias.u.hreftype;
+                        ITypeInfo_ReleaseTypeAttr(tinfo, tattr);
+                        ITypeInfo_Release(tinfo2);
+                        hres = ITypeInfo_GetRefTypeInfo(tinfo,href,&tinfo2);
+                        if (hres) {
+                            ERR("Could not get typeinfo of hreftype %x for VT_USERDEFINED.\n",tdesc->u.lptdesc->u.hreftype);
+                            return hres;
+                        }
+                        ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+                        derefhere = (tattr->typekind != TKIND_DISPATCH && tattr->typekind != TKIND_INTERFACE);
+                    }
+                    break;
 		case TKIND_ENUM:	/* confirmed */
 		case TKIND_RECORD:	/* FIXME: mostly untested */
-		    derefhere=TRUE;
 		    break;
-		case TKIND_ALIAS:	/* FIXME: untested */
 		case TKIND_DISPATCH:	/* will be done in VT_USERDEFINED case */
 		case TKIND_INTERFACE:	/* will be done in VT_USERDEFINED case */
 		    derefhere=FALSE;
