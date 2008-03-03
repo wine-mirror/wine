@@ -120,11 +120,8 @@ static void test_LoadStringA (void)
         "LoadString failed: ret %d err %d\n", ret, GetLastError());
 
     ret = LoadStringA(hInst, 0, buf, 0);
-    todo_wine
-    {
-        ok( ret == -1, "LoadStringA did not return -1 when called with buflen = 0, got %d, err %d\n",
-            ret, GetLastError());
-    }
+    ok( ret == -1, "LoadStringA did not return -1 when called with buflen = 0, got %d, err %d\n",
+        ret, GetLastError());
 }
 
 static void test_accel1(void)
