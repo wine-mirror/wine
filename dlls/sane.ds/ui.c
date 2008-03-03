@@ -608,14 +608,13 @@ BOOL DoScannerUI(void)
 static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt, 
         int index, int position)
 {
-    CHAR buffer[244];
+    WCHAR buffer[244];
     HWND edit_w;
-    CHAR unit[20];
-
-    LoadStringA(SANE_instance, opt->unit, unit,20);
+    int len;
 
     if (opt->type == SANE_TYPE_INT)
     {
+        static const WCHAR formatW[] = {'%','i',0};
         INT si;
 
         if (opt->constraint.range->quant)
@@ -623,11 +622,11 @@ static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt,
         else
             si = position;
 
-        sprintf(buffer,"%i %s",si,unit);
-
+        len = wsprintfW( buffer, formatW, si );
     }
     else if  (opt->type == SANE_TYPE_FIXED)
     {
+        static const WCHAR formatW[] = {'%','f',0};
         double s_quant, dd;
 
         s_quant = SANE_UNFIX(opt->constraint.range->quant);
@@ -637,14 +636,15 @@ static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt,
         else
             dd = position * 0.01;
 
-        sprintf(buffer,"%f %s",dd,unit);
+        len = wsprintfW( buffer, formatW, dd );
     }
-    else
-        buffer[0] = 0;
+    else return;
+
+    buffer[len++] = ' ';
+    LoadStringW( SANE_instance, opt->unit, buffer + len, sizeof(buffer)/sizeof(WCHAR) - len );
 
     edit_w = GetDlgItem(hwnd,index+ID_BASE+ID_EDIT_BASE);
-    if (edit_w && buffer[0])
-        SetWindowTextA(edit_w,buffer);
+    if (edit_w) SetWindowTextW(edit_w,buffer);
 
 }
 

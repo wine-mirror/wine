@@ -308,15 +308,12 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 	    nToPage   = GetDlgItemInt(hDlg, edt2, NULL, FALSE);
 	    if (nFromPage < lppd->nMinPage || nFromPage > lppd->nMaxPage ||
 		nToPage < lppd->nMinPage || nToPage > lppd->nMaxPage) {
-	        char resourcestr[256];
-		char resultstr[256];
-		LoadStringA(COMDLG32_hInstance, PD32_INVALID_PAGE_RANGE,
-			    resourcestr, 255);
-		sprintf(resultstr,resourcestr, lppd->nMinPage, lppd->nMaxPage);
-		LoadStringA(COMDLG32_hInstance, PD32_PRINT_TITLE,
-			    resourcestr, 255);
-		MessageBoxA(hDlg, resultstr, resourcestr,
-			    MB_OK | MB_ICONWARNING);
+	        WCHAR resourcestr[256];
+		WCHAR resultstr[256];
+		LoadStringW(COMDLG32_hInstance, PD32_INVALID_PAGE_RANGE, resourcestr, 255);
+		wsprintfW(resultstr,resourcestr, lppd->nMinPage, lppd->nMaxPage);
+		LoadStringW(COMDLG32_hInstance, PD32_PRINT_TITLE, resourcestr, 255);
+		MessageBoxW(hDlg, resultstr, resourcestr, MB_OK | MB_ICONWARNING);
 		return FALSE;
 	    }
 	    lppd->nFromPage = nFromPage;
@@ -3569,9 +3566,9 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
         bRet = PrintDlgA(&pdlg);
         if (!bRet){
             if (!(setupdlg->Flags & PSD_NOWARNING)) {
-                char errstr[256];
-                LoadStringA(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
-                MessageBoxA(setupdlg->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
+                WCHAR errstr[256];
+                LoadStringW(COMDLG32_hInstance, PD32_NO_DEFAULT_PRINTER, errstr, 255);
+                MessageBoxW(setupdlg->hwndOwner, errstr, 0, MB_OK | MB_ICONERROR);
             }
             return FALSE;
         }
