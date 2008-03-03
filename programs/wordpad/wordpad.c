@@ -1212,7 +1212,7 @@ static void number_with_units(LPWSTR buffer, int number)
     MultiByteToWideChar(CP_ACP, 0, string, -1, buffer, MAX_STRING_LEN);
 }
 
-BOOL CALLBACK datetime_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK datetime_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
     {
@@ -1263,7 +1263,7 @@ BOOL CALLBACK datetime_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
     return FALSE;
 }
 
-BOOL CALLBACK newfile_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK newfile_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
     {
@@ -1844,7 +1844,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         {
             HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
             int ret = DialogBox(hInstance, MAKEINTRESOURCE(IDD_NEWFILE), hWnd,
-                                (DLGPROC)newfile_proc);
+                                newfile_proc);
 
             if(ret != ID_NEWFILE_ABORT)
             {
@@ -2160,7 +2160,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_DATETIME:
         {
         HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
-        DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_DATETIME), hWnd, (DLGPROC)datetime_proc);
+        DialogBoxW(hInstance, MAKEINTRESOURCEW(IDD_DATETIME), hWnd, datetime_proc);
         break;
         }
 
