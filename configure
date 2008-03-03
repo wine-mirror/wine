@@ -16595,6 +16595,10 @@ esac
 
 
 
+
+
+
+
 for ac_func in \
 	_pclose \
 	_popen \
@@ -16603,6 +16607,8 @@ for ac_func in \
 	_strdup \
 	_stricmp \
 	_strnicmp \
+	_strtoi64 \
+	_strtoui64 \
 	_vsnprintf \
 	asctime_r \
 	chsize \
@@ -16654,6 +16660,8 @@ for ac_func in \
 	strerror \
 	strncasecmp \
 	strtold \
+	strtoll \
+	strtoull \
 	tcgetattr \
 	thr_kill2 \
 	timegm \

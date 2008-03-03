@@ -666,6 +666,12 @@
 /* Define to 1 if you have the `strtold' function. */
 #undef HAVE_STRTOLD
 
+/* Define to 1 if you have the `strtoll' function. */
+#undef HAVE_STRTOLL
+
+/* Define to 1 if you have the `strtoull' function. */
+#undef HAVE_STRTOULL
+
 /* Define to 1 if `direction' is member of `struct ff_effect'. */
 #undef HAVE_STRUCT_FF_EFFECT_DIRECTION
 
@@ -971,6 +977,12 @@
 
 /* Define to 1 if you have the `_strnicmp' function. */
 #undef HAVE__STRNICMP
+
+/* Define to 1 if you have the `_strtoi64' function. */
+#undef HAVE__STRTOI64
+
+/* Define to 1 if you have the `_strtoui64' function. */
+#undef HAVE__STRTOUI64
 
 /* Define to 1 if you have the `_vsnprintf' function. */
 #undef HAVE__VSNPRINTF

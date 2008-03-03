@@ -1328,6 +1328,8 @@ AC_CHECK_FUNCS(\
 	_strdup \
 	_stricmp \
 	_strnicmp \
+	_strtoi64 \
+	_strtoui64 \
 	_vsnprintf \
 	asctime_r \
 	chsize \
@@ -1379,6 +1381,8 @@ AC_CHECK_FUNCS(\
 	strerror \
 	strncasecmp \
 	strtold \
+	strtoll \
+	strtoull \
 	tcgetattr \
 	thr_kill2 \
 	timegm \
