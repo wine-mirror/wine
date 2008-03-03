@@ -43,6 +43,7 @@ static const char elem_test_str[] =
     "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
+    "<script type=\"text/javascript\"></script>"
     "</body></html>";
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
@@ -69,7 +70,8 @@ typedef enum {
     ET_P,
     ET_BR,
     ET_TABLE,
-    ET_TBODY
+    ET_TBODY,
+    ET_SCRIPT
 } elem_type_t;
 
 static REFIID const none_iids[] = {
@@ -150,6 +152,15 @@ static REFIID const table_iids[] = {
     NULL
 };
 
+static REFIID const script_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLScriptElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -171,7 +182,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"P",         elem_iids},
     {"BR",        elem_iids},
     {"TABLE",     table_iids},
-    {"TBODY",     elem_iids}
+    {"TBODY",     elem_iids},
+    {"SCRIPT",    script_iids}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -1196,7 +1208,8 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_OPTION,
         ET_TEXTAREA,
         ET_TABLE,
-        ET_TBODY
+        ET_TBODY,
+        ET_SCRIPT
     };
 
     static const elem_type_t item_types[] = {

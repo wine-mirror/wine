@@ -192,6 +192,7 @@ struct NSContainer {
     nsEventListener focus_listener;
     nsEventListener keypress_listener;
     nsEventListener load_listener;
+    nsEventListener node_insert_listener;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -446,6 +447,7 @@ HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement*);
+HTMLElement *HTMLScriptElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTable_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
