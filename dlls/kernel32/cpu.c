@@ -370,7 +370,7 @@ VOID WINAPI GetSystemInfo(
 
 	TRACE("si=0x%p\n", si);
 	if (cache) {
-		memcpy(si,&cachedsi,sizeof(*si));
+		*si = cachedsi;
 		return;
 	}
 	memset(PF,0,sizeof(PF));
@@ -392,7 +392,7 @@ VOID WINAPI GetSystemInfo(
 	cachedsi.wProcessorRevision		= 0;
 
 	cache = 1; /* even if there is no more info, we now have a cache entry */
-	memcpy(si,&cachedsi,sizeof(*si));
+	*si = cachedsi;
 
 	/* Hmm, reasonable processor feature defaults? */
 
@@ -788,7 +788,7 @@ VOID WINAPI GetSystemInfo(
         if (!cachedsi.dwActiveProcessorMask)
             cachedsi.dwActiveProcessorMask = (1 << cachedsi.dwNumberOfProcessors) - 1;
 
-        memcpy(si,&cachedsi,sizeof(*si));
+        *si = cachedsi;
 
         TRACE("<- CPU arch %d, res'd %d, pagesize %d, minappaddr %p, maxappaddr %p,"
               " act.cpumask %08x, numcpus %d, CPU type %d, allocgran. %d, CPU level %d, CPU rev %d\n",

@@ -477,8 +477,10 @@ BOOL WINAPI BuildCommDCBAndTimeoutsW(
 	COMMTIMEOUTS timeouts;
 	BOOL result;
 	LPCWSTR ptr = devid;
-	
+
 	TRACE("(%s,%p,%p)\n",debugstr_w(devid),lpdcb,lptimeouts);
+
+	memset(&timeouts, 0, sizeof timeouts);
 
 	/* Set DCBlength. (Windows NT does not do this, but 9x does) */
 	lpdcb->DCBlength = sizeof(DCB);
@@ -486,8 +488,8 @@ BOOL WINAPI BuildCommDCBAndTimeoutsW(
 	/* Make a copy of the original data structures to work with since if
 	   if there is an error in the device control string the originals
 	   should not be modified (except possibly DCBlength) */
-	memcpy(&dcb, lpdcb, sizeof(DCB));
-	if(lptimeouts) memcpy(&timeouts, lptimeouts, sizeof(COMMTIMEOUTS));
+	dcb = *lpdcb;
+	if(lptimeouts) timeouts = *lptimeouts;
 
 	ptr = COMM_ParseStart(ptr);
 
@@ -500,8 +502,8 @@ BOOL WINAPI BuildCommDCBAndTimeoutsW(
 
 	if(result)
 	{
-		memcpy(lpdcb, &dcb, sizeof(DCB));
-		if(lptimeouts) memcpy(lptimeouts, &timeouts, sizeof(COMMTIMEOUTS));
+		*lpdcb = dcb;
+		if(lptimeouts) *lptimeouts = timeouts;
 		return TRUE;
 	}
 	else

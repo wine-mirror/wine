@@ -454,7 +454,7 @@ void WINAPI __regs_QT_Thunk( CONTEXT86 *context )
     CONTEXT86 context16;
     DWORD argsize;
 
-    memcpy(&context16,context,sizeof(context16));
+    context16 = *context;
 
     context16.SegFs = wine_get_fs();
     context16.SegGs = wine_get_gs();
@@ -588,7 +588,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
     DWORD newstack[32];
     LPBYTE oldstack;
 
-    memcpy(&context16,context,sizeof(context16));
+    context16 = *context;
 
     context16.SegFs = wine_get_fs();
     context16.SegGs = wine_get_gs();
@@ -753,7 +753,7 @@ void WINAPI __regs_Common32ThkLS( CONTEXT86 *context )
     CONTEXT86 context16;
     DWORD argsize;
 
-    memcpy(&context16,context,sizeof(context16));
+    context16 = *context;
 
     context16.SegFs = wine_get_fs();
     context16.SegGs = wine_get_gs();
@@ -814,7 +814,7 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT86 *context )
     CONTEXT86 context16;
     DWORD argsize;
 
-    memcpy(&context16,context,sizeof(context16));
+    context16 = *context;
 
     context16.SegFs = wine_get_fs();
     context16.SegGs = wine_get_gs();

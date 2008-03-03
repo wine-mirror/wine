@@ -1227,7 +1227,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     }
 
     if (time(NULL)==cache_lastchecked) {
-	memcpy(lpmemex,&cached_memstatus,sizeof(*lpmemex));
+	*lpmemex = cached_memstatus;
 	return TRUE;
     }
     cache_lastchecked = time(NULL);
@@ -1347,7 +1347,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     */
     lpmemex->ullAvailExtendedVirtual = 0;
 
-    memcpy(&cached_memstatus,lpmemex,sizeof(*lpmemex));
+    cached_memstatus = *lpmemex;
 
     TRACE("<-- LPMEMORYSTATUSEX: dwLength %d, dwMemoryLoad %d, ullTotalPhys %s, ullAvailPhys %s,"
           " ullTotalPageFile %s, ullAvailPageFile %s, ullTotalVirtual %s, ullAvailVirtual %s\n",

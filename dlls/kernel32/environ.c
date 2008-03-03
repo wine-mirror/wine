@@ -421,7 +421,7 @@ BOOL WINAPI SetStdHandle( DWORD std_handle, HANDLE handle )
  */
 VOID WINAPI GetStartupInfoA( LPSTARTUPINFOA info )
 {
-    memcpy(info, &startup_infoA, sizeof(startup_infoA));
+    *info = startup_infoA;
 }
 
 
@@ -430,7 +430,7 @@ VOID WINAPI GetStartupInfoA( LPSTARTUPINFOA info )
  */
 VOID WINAPI GetStartupInfoW( LPSTARTUPINFOW info )
 {
-    memcpy(info, &startup_infoW, sizeof(startup_infoW));
+    *info = startup_infoW;
 }
 
 /******************************************************************

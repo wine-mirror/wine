@@ -453,7 +453,7 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
 
     if (lpTimeZoneInformation != NULL)
     {
-        memcpy(&tzinfo, lpTimeZoneInformation, sizeof(TIME_ZONE_INFORMATION));
+        tzinfo = *lpTimeZoneInformation;
     }
     else
     {
@@ -499,7 +499,7 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
 
     if (lpTimeZoneInformation != NULL)
     {
-        memcpy(&tzinfo, lpTimeZoneInformation, sizeof(TIME_ZONE_INFORMATION));
+        tzinfo = *lpTimeZoneInformation;
     }
     else
     {
