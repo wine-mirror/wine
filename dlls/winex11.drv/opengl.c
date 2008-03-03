@@ -618,6 +618,11 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
     TRACE("pAttr[%d] = %x\n", cur, iWGLAttr[cur]);
 
     switch (iWGLAttr[cur]) {
+    case WGL_AUX_BUFFERS_ARB:
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_AUX_BUFFERS, pop);
+      TRACE("pAttr[%d] = GLX_AUX_BUFFERS: %d\n", cur, pop);
+      break;
     case WGL_COLOR_BITS_ARB:
       pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_BUFFER_SIZE, pop);
