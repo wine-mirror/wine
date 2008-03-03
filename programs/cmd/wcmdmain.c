@@ -962,8 +962,11 @@ void WCMD_run_program (WCHAR *command, int called) {
     GetFullPathName(param1, sizeof(pathtosearch)/sizeof(WCHAR), pathtosearch, NULL);
     lastSlash = strrchrW(pathtosearch, '\\');
     if (lastSlash && strchrW(lastSlash, '.') != NULL) extensionsupplied = TRUE;
-    if (lastSlash) *lastSlash = 0x00;
     strcpyW(stemofsearch, lastSlash+1);
+
+    /* Reduce pathtosearch to a path with trailing '\' to support c:\a.bat and
+       c:\windows\a.bat syntax                                                 */
+    if (lastSlash) *(lastSlash + 1) = 0x00;
   }
 
   /* Now extract PATHEXT */
