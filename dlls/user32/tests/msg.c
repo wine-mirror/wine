@@ -7239,7 +7239,12 @@ static void test_winevents(void)
 
     /****** start of global hook test *************/
     hCBT_global_hook = SetWindowsHookExA(WH_CBT, cbt_global_hook_proc, GetModuleHandleA(0), 0);
-    assert(hCBT_global_hook);
+    if (!hCBT_global_hook)
+    {
+        ok(DestroyWindow(hwnd), "failed to destroy window\n");
+        skip( "cannot set global hook\n" );
+        return;
+    }
 
     hevent = CreateEventA(NULL, 0, 0, NULL);
     assert(hevent);
