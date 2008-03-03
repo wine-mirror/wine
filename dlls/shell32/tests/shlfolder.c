@@ -43,6 +43,8 @@
 static IMalloc *ppM;
 
 static HRESULT (WINAPI *pSHBindToParent)(LPCITEMIDLIST, REFIID, LPVOID*, LPCITEMIDLIST*);
+static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
+static HRESULT (WINAPI *pSHGetFolderPathAndSubDirA)(HWND, int, HANDLE, DWORD, LPCSTR, LPSTR);
 static BOOL (WINAPI *pSHGetPathFromIDListW)(LPCITEMIDLIST,LPWSTR);
 static BOOL (WINAPI *pSHGetSpecialFolderPathW)(HWND, LPWSTR, int, BOOL);
 static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
@@ -57,6 +59,8 @@ static void init_function_pointers(void)
 
     hmod = GetModuleHandleA("shell32.dll");
     pSHBindToParent = (void*)GetProcAddress(hmod, "SHBindToParent");
+    pSHGetFolderPathA = (void*)GetProcAddress(hmod, "SHGetFolderPathA");
+    pSHGetFolderPathAndSubDirA = (void*)GetProcAddress(hmod, "SHGetFolderPathAndSubDirA");
     pSHGetPathFromIDListW = (void*)GetProcAddress(hmod, "SHGetPathFromIDListW");
     pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
     pILFindLastID = (void *)GetProcAddress(hmod, (LPCSTR)16);
@@ -1365,6 +1369,102 @@ static void test_ITEMIDLIST_format(void) {
     }
 }
 
+static void testSHGetFolderPathAndSubDirA(void)
+{
+    HRESULT ret;
+    BOOL delret;
+    DWORD dwret;
+    int i;
+    static char wine[] = "wine";
+    static char winetemp[] = "wine\\temp";
+    static char appdata[MAX_PATH];
+    static char testpath[MAX_PATH];
+    static char toolongpath[MAX_PATH+1];
+
+    if(!pSHGetFolderPathA) {
+        skip("SHGetFolderPathA not present!\n");
+        return;
+    }
+    if(!SUCCEEDED(pSHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appdata)))
+    {
+        skip("SHGetFolderPathA failed for CSIDL_LOCAL_APPDATA!\n");
+        return;
+    }
+
+    sprintf(testpath, "%s\\%s", appdata, winetemp);
+    delret = RemoveDirectoryA(testpath);
+    if(!delret && (ERROR_PATH_NOT_FOUND != GetLastError()) ) {
+        skip("RemoveDirectoryA(%s) failed with error %u\n", testpath, GetLastError());
+        return;
+    }
+
+    sprintf(testpath, "%s\\%s", appdata, wine);
+    delret = RemoveDirectoryA(testpath);
+    if(!delret && (ERROR_PATH_NOT_FOUND != GetLastError()) && (ERROR_FILE_NOT_FOUND != GetLastError())) {
+        skip("RemoveDirectoryA(%s) failed with error %u\n", testpath, GetLastError());
+        return;
+    }
+    for(i=0; i< MAX_PATH; i++)
+        toolongpath[i] = '0' + i % 10;
+    toolongpath[MAX_PATH] = '\0';
+
+    /* test invalid second parameter */
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | 0xff, NULL, SHGFP_TYPE_CURRENT, wine, testpath);
+    ok(E_INVALIDARG == ret, "expected E_INVALIDARG, got  %x\n", ret);
+
+    /* test invalid forth parameter */
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, 2, wine, testpath);
+    ok(E_INVALIDARG == ret, "expected E_INVALIDARG, got  %x\n", ret);
+
+    /* test fifth parameter */
+    testpath[0] = '\0';
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, NULL, testpath);
+    ok(S_OK == ret, "expected S_OK, got %x\n", ret);
+    ok(!lstrcmpA(appdata, testpath), "expected %s, got %s\n", appdata, testpath);
+
+    testpath[0] = '\0';
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, "", testpath);
+    ok(S_OK == ret, "expected S_OK, got %x\n", ret);
+    ok(!lstrcmpA(appdata, testpath), "expected %s, got %s\n", appdata, testpath);
+
+    testpath[0] = '\0';
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, "\\", testpath);
+    ok(S_OK == ret, "expected S_OK, got %x\n", ret);
+    ok(!lstrcmpA(appdata, testpath), "expected %s, got %s\n", appdata, testpath);
+
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, toolongpath, testpath);
+    ok(HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE) == ret,
+        "expected %x, got %x\n", HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), ret);
+
+    testpath[0] = '\0';
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, wine, NULL);
+    ok(S_OK == ret, "expected S_OK, got %x\n", ret);
+
+    /* test a not existing path */
+    testpath[0] = '\0';
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, winetemp, testpath);
+    ok(HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == ret,
+        "expected %x, got %x\n", HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), ret);
+
+    /* create a directory inside a not existing directory */
+    testpath[0] = '\0';
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_CREATE | CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, winetemp, testpath);
+    ok(S_OK == ret, "expected S_OK, got %x\n", ret);
+    ok(!strncmp(appdata, testpath, strlen(appdata)),
+        "expected %s to start with %s\n", testpath, appdata);
+    ok(!lstrcmpA(&testpath[1 + strlen(appdata)], winetemp),
+        "expected %s to end with %s\n", testpath, winetemp);
+    dwret = GetFileAttributes(testpath);
+    ok(FILE_ATTRIBUTE_DIRECTORY | dwret, "expected %x to contain FILE_ATTRIBUTE_DIRECTORY\n", dwret);
+
+    /* cleanup */
+    sprintf(testpath, "%s\\%s", appdata, winetemp);
+    RemoveDirectoryA(testpath);
+    sprintf(testpath, "%s\\%s", appdata, wine);
+    RemoveDirectoryA(testpath);
+}
+
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -1381,6 +1481,10 @@ START_TEST(shlfolder)
     test_CallForAttributes();
     test_FolderShortcut();
     test_ITEMIDLIST_format();
+    if(pSHGetFolderPathAndSubDirA)
+        testSHGetFolderPathAndSubDirA();
+    else
+        skip("SHGetFolderPathAndSubDirA not present\n");
 
     OleUninitialize();
 }
