@@ -55,12 +55,13 @@
 #endif
 
 #if defined(__MINGW32__) || defined (_MSC_VER)
-#include "winsock2.h"
+#include "ws2tcpip.h"
 #ifndef MSG_WAITALL
 #define MSG_WAITALL 0
 #endif
 #else
 #define closesocket close
+#define ioctlsocket ioctl
 #endif /* __MINGW32__ */
 
 /* used for netconnection.c stuff */
