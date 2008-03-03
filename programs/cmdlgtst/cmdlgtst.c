@@ -813,37 +813,37 @@ static INT_PTR CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 static void mwc_ColorSetup(HWND hWnd)
 {
-	int r = DialogBox(g_hInstance, "Color_Flags_Dialog", hWnd, (DLGPROC) mwcd_ColorSetup);
+	int r = DialogBox(g_hInstance, "Color_Flags_Dialog", hWnd, mwcd_ColorSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Color_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
 static void mwc_FontSetup(HWND hWnd)
 {
-	int r = DialogBox(g_hInstance, "Font_Flags_Dialog", hWnd, (DLGPROC) mwcd_FontSetup);
+	int r = DialogBox(g_hInstance, "Font_Flags_Dialog", hWnd, mwcd_FontSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Font_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
 static void mwc_FindReplaceSetup(HWND hWnd)
 {
-	int r = DialogBox(g_hInstance, "Find_Flags_Dialog", hWnd, (DLGPROC) mwcd_FindSetup);
+	int r = DialogBox(g_hInstance, "Find_Flags_Dialog", hWnd, mwcd_FindSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Find_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
 static void mwc_PrintSetup(HWND hWnd)
 {
-	int r = DialogBox(g_hInstance, "Print_Flags_Dialog", hWnd, (DLGPROC) mwcd_PrintSetup);
+	int r = DialogBox(g_hInstance, "Print_Flags_Dialog", hWnd, mwcd_PrintSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Print_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
 static void mwc_PageSetup(HWND hWnd)
 {
-	int r = DialogBox(g_hInstance, "PageSetup_Flags_Dialog", hWnd, (DLGPROC) mwcd_PageSetup);
+	int r = DialogBox(g_hInstance, "PageSetup_Flags_Dialog", hWnd, mwcd_PageSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening PageSetup_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
 static void mwc_FileSetup(HWND hWnd)
 {
-	int r = DialogBox(g_hInstance, "File_Flags_Dialog", hWnd, (DLGPROC) mwcd_FileSetup);
+	int r = DialogBox(g_hInstance, "File_Flags_Dialog", hWnd, mwcd_FileSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening File_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
@@ -964,10 +964,10 @@ static LRESULT CALLBACK EXPORT mainWindowDispatcher(
 			mwc_PageSetup(hWnd); return 1;
 
 		case CM_H_ABOUT:
-			DialogBox(g_hInstance, "AboutDialog", hWnd, (DLGPROC) mwcd_About);
+			DialogBox(g_hInstance, "AboutDialog", hWnd, mwcd_About);
 			return 1;
 		case CM_H_USAGE:
-			DialogBox(g_hInstance, "UsageDialog", hWnd, (DLGPROC) mwcd_About);
+			DialogBox(g_hInstance, "UsageDialog", hWnd, mwcd_About);
          	/* return value?  *What* return value? */
 			return 1;
 
