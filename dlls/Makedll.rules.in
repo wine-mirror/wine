@@ -81,19 +81,8 @@ doc-sgml: $(C_SRCS) dummy
 
 # Rules for installation
 
-EXE_SPECS16 = $(SPEC_SRCS16:.exe.spec=.exe16)
-DRV_SPECS16 = $(EXE_SPECS16:.drv.spec=.drv16)
-ALL_SPECS16 = $(DRV_SPECS16:.spec=.dll16)
-
-WIN16_INSTALL = $(SPEC_SRCS16:%=_install_/%)
-
 .PHONY: install_static_implib_def install_static_implib_a
-.PHONY: $(SPEC_SRCS16:%=_install_/%) $(ALL_SPECS16:%=_install_/%) $(IMPORTLIB:%=_install_/%) $(IMPLIB_SRCS:%=_install_static_implib_/%)
-
-$(SPEC_SRCS16:%=_install_/%): $(ALL_SPECS16:%=_install_/%)
-
-$(ALL_SPECS16:%=_install_/%): $(DESTDIR)$(dlldir) dummy
-	echo "$(MODULE)" > $(DESTDIR)$(dlldir)/`basename $@`
+.PHONY: $(IMPORTLIB:%=_install_/%) $(IMPLIB_SRCS:%=_install_static_implib_/%)
 
 $(IMPORTLIB:%=_install_/%): $(IMPORTLIB) $(DESTDIR)$(dlldir) dummy
 	$(INSTALL_DATA) $(IMPORTLIB) $(DESTDIR)$(dlldir)/$(IMPORTLIB)
@@ -105,13 +94,13 @@ install_static_implib_a:
 
 $(IMPLIB_SRCS:%=_install_static_implib_/%): install_static_implib_$(IMPLIBEXT)
 
-install install-lib:: $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir) @WIN16_INSTALL@ dummy
+install install-lib:: $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir) dummy
 	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT)
 
 install install-dev:: $(IMPORTLIB:%=_install_/%) $(IMPLIB_SRCS:%=_install_static_implib_/%)
 
 uninstall::
-	-cd $(DESTDIR)$(dlldir) && $(RM) $(MODULE)$(DLLEXT) $(IMPORTLIB) $(STATICIMPLIB) $(ALL_SPECS16)
+	-cd $(DESTDIR)$(dlldir) && $(RM) $(MODULE)$(DLLEXT) $(IMPORTLIB) $(STATICIMPLIB)
 
 # Misc. rules
 

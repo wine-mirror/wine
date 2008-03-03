@@ -5,6 +5,8 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
+INSTALLDIRS = $(DESTDIR)$(dlldir)
+
 # special configure-dependent targets
 
 GLU32FILES = glu32
@@ -1071,11 +1073,21 @@ winecrt0/libwinecrt0.a: winecrt0
 
 # Misc rules
 
+.PHONY: $(WIN16_FILES:%=__install__/%)
+
+WIN16_INSTALL = $(WIN16_FILES:%=__install__/%)
+
+$(WIN16_FILES:%=__install__/%): $(WIN16_FILES) $(DESTDIR)$(dlldir) dummy
+	$(INSTALL_DATA) `basename $@` $(DESTDIR)$(dlldir)/`basename $@`
+
+install install-lib:: @WIN16_INSTALL@
+
 install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__)
 
 install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__)
 
 uninstall::
+	-cd $(DESTDIR)$(dlldir) && $(RM) $(WIN16_FILES)
 	-rmdir $(DESTDIR)$(dlldir)
 
 clean::
