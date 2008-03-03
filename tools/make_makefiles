@@ -225,7 +225,7 @@ sub parse_makefile($)
             $make{$1} = $2;
             next;
         }
-        if (/^(BISON_SRCS|LEX_SRCS|IDL_[CHIPS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|MC_SRCS|RC_SRCS|RC_SRCS16|RC_BINARIES|SPEC_SRCS16|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
+        if (/^(BISON_SRCS|LEX_SRCS|IDL_[CHIPS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|MC_SRCS|RC_SRCS|RC_SRCS16|RC_BINARIES|SPEC_SRCS16|EXTRA_OBJS16|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
         {
             my @list = split(/\s+/, $2);
             $make{$1} = \@list;
@@ -421,6 +421,13 @@ sub update_dlls(@)
         {
             my @list = map { $_ =~ s/\.spec$//; $_ .= ".dll" unless $_ =~ /\./; $_; } @{$makefile{"SPEC_SRCS16"}};
             $altnames{$module} = \@list;
+        }
+        if (defined $makefile{"EXTRA_OBJS16"})
+        {
+            foreach my $obj (@{$makefile{"EXTRA_OBJS16"}})
+            {
+                if ($obj =~ /^(.*\.(exe|mod))\.o/) { push @{$altnames{$module}}, $1; }
+            }
         }
     }
 

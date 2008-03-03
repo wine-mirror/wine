@@ -96,6 +96,7 @@ MC_SRCS = \
 	nls/winerr_kor.mc
 
 EXTRA_OBJS   = relay16asm.o
+EXTRA_OBJS16 = winoldap.mod.o
 
 EXTRASUBDIRS = nls
 
@@ -105,6 +106,9 @@ kernel.res: $(MC_SRCS:.mc=.mc.rc)
 
 relay16asm.o: $(WINEBUILD)
 	$(WINEBUILD) $(WINEBUILDFLAGS) -o $@ --relay16
+
+winoldap.mod.o: $(WINEBUILD)
+	$(WINEBUILD) $(WINEBUILDFLAGS) --exe -o $@ --main-module $(MODULE) --entry WINOLDAP_EntryPoint
 
 # Special rules for 16-bit resource and spec files
 

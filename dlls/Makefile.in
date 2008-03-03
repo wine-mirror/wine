@@ -419,6 +419,7 @@ WIN16_FILES = \
 	wineps16.drv16 \
 	wing.dll16 \
 	winnls.dll16 \
+	winoldap.mod16 \
 	winsock.dll16 \
 	wintab.dll16 \
 	wprocs.dll16
@@ -446,7 +447,7 @@ dispdib.dll16 gdi.exe16 wing.dll16:
 imm.dll16:
 	echo "imm32.dll" >$@
 
-comm.drv16 krnl386.exe16 stress.dll16 system.drv16 toolhelp.dll16 win87em.dll16 windebug.dll16:
+comm.drv16 krnl386.exe16 stress.dll16 system.drv16 toolhelp.dll16 win87em.dll16 windebug.dll16 winoldap.mod16:
 	echo "kernel32.dll" >$@
 
 lzexpand.dll16:

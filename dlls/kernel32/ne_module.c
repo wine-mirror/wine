@@ -1197,6 +1197,8 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
     if (name == NULL) return 0;
 
+    TRACE("name %s, paramBlock %p\n", name, paramBlock);
+
     /* Load module */
 
     if ( (hModule = NE_GetModuleByFilename(name) ) != 0 )
@@ -1707,10 +1709,24 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 
     if (ret == 21 || ret == ERROR_BAD_FORMAT)  /* 32-bit module or unknown executable*/
     {
-        DWORD count;
-        ReleaseThunkLock( &count );
-        ret = LOWORD( WinExec( lpCmdLine, nCmdShow ) );
-        RestoreThunkLock( count );
+        LOADPARAMS16 params;
+        WORD showCmd[2];
+        showCmd[0] = 2;
+        showCmd[1] = nCmdShow;
+
+        arglen = strlen( lpCmdLine );
+        cmdline = HeapAlloc( GetProcessHeap(), 0, arglen + 1 );
+        cmdline[0] = (BYTE)arglen;
+        memcpy( cmdline + 1, lpCmdLine, arglen );
+
+        params.hEnvironment = 0;
+        params.cmdLine = MapLS( cmdline );
+        params.showCmd = MapLS( showCmd );
+        params.reserved = 0;
+
+        ret = LoadModule16( "winoldap.mod", &params );
+        UnMapLS( params.cmdLine );
+        UnMapLS( params.showCmd );
     }
     return ret;
 }

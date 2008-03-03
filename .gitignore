@@ -559,6 +559,7 @@ dlls/winmm/tests/winmm_crosstest.exe
 dlls/winmm/winmm_res.res
 dlls/winnls.dll16
 dlls/winnls32/libwinnls32.def
+dlls/winoldap.mod16
 dlls/winscard/libwinscard.def
 dlls/winscard/rsrc.res
 dlls/winsock.dll16
