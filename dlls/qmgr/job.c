@@ -163,8 +163,17 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetProgress(
     IBackgroundCopyJob* iface,
     BG_JOB_PROGRESS *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+
+    if (!pVal)
+        return E_INVALIDARG;
+
+    pVal->BytesTotal = This->jobProgress.BytesTotal;
+    pVal->BytesTransferred = This->jobProgress.BytesTransferred;
+    pVal->FilesTotal = This->jobProgress.FilesTotal;
+    pVal->FilesTransferred = This->jobProgress.FilesTransferred;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetTimes(
@@ -432,7 +441,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
     memcpy(pJobId, &This->jobId, sizeof(GUID));
 
     list_init(&This->files);
-    This->jobProgress.BytesTotal = BG_SIZE_UNKNOWN;
+    This->jobProgress.BytesTotal = 0;
     This->jobProgress.BytesTransferred = 0;
     This->jobProgress.FilesTotal = 0;
     This->jobProgress.FilesTransferred = 0;

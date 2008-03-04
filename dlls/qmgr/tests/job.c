@@ -218,6 +218,27 @@ static void test_EnumFiles(void)
     ok(res == 0, "Bad ref count on release: %u\n", res);
 }
 
+/* Test getting job progress */
+static void test_GetProgress_preTransfer(void)
+{
+    HRESULT hres;
+    BG_JOB_PROGRESS progress;
+
+    hres = IBackgroundCopyJob_GetProgress(test_job, &progress);
+    ok(hres == S_OK, "GetProgress failed: 0x%08x\n", hres);
+    if (hres != S_OK)
+    {
+        skip("Unable to get job progress\n");
+        teardown();
+        return;
+    }
+
+    ok(progress.BytesTotal == 0, "Incorrect BytesTotal: %llu\n", progress.BytesTotal);
+    ok(progress.BytesTransferred == 0, "Incorrect BytesTransferred: %llu\n", progress.BytesTransferred);
+    ok(progress.FilesTotal == 0, "Incorrect FilesTotal: %u\n", progress.FilesTotal);
+    ok(progress.FilesTransferred == 0, "Incorrect FilesTransferred %u\n", progress.FilesTransferred);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(job)
@@ -228,6 +249,7 @@ START_TEST(job)
         test_GetName,
         test_AddFile,
         test_EnumFiles,
+        test_GetProgress_preTransfer,
         0
     };
     const test_t *test;
