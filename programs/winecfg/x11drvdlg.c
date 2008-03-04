@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
 #define MINDPI 96
-#define MAXDPI 120
+#define MAXDPI 160
 #define DEFDPI 96
 
 static const char logpixels_reg[] = "System\\CurrentControlSet\\Hardware Profiles\\Current\\Software\\Fonts";
