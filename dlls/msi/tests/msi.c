@@ -3282,6 +3282,2738 @@ static void test_MsiGetProductInfo(void)
     RegCloseKey(prodkey);
 }
 
+static void test_MsiGetProductInfoEx(void)
+{
+    UINT r;
+    LONG res;
+    HKEY propkey, userkey;
+    HKEY prodkey, localkey;
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR packcode[MAX_PATH];
+    CHAR pack_squashed[MAX_PATH];
+    CHAR buf[MAX_PATH];
+    CHAR keypath[MAX_PATH];
+    LPSTR usersid;
+    DWORD sz;
+
+    create_test_guid(prodcode, prod_squashed);
+    create_test_guid(packcode, pack_squashed);
+    get_user_sid(&usersid);
+
+    /* NULL szProductCode */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* empty szProductCode */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* garbage szProductCode */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* guid without brackets */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D", usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* guid with brackets */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}", usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* szValue is non-NULL while pcchValue is NULL */
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, NULL);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+
+    /* dwContext is out of range */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid, 42,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* szProperty is NULL */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             NULL, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* szProperty is empty */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             "", buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* szProperty is not a valid property */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             "notvalid", buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* same length as guid, but random */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93", usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local user product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegCreateKeyA(localkey, "InstallProperties", &propkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "5"), "Expected \"5\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    RegDeleteValueA(propkey, "LocalPackage");
+
+    /* LocalPackage value must exist */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage exists, but HelpLink does not exist */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpTelephone value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "phone"), "Expected \"phone\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    /* szValue and pcchValue are NULL */
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* pcchValue is exactly 5 */
+    sz = 5;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
+    ok(r == ERROR_MORE_DATA,
+       "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 10, "Expected 10, got %d\n", sz);
+
+    /* szValue is NULL, pcchValue is exactly 5 */
+    sz = 5;
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, NULL, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 10, "Expected 10, got %d\n", sz);
+
+    /* szValue is NULL, pcchValue is MAX_PATH */
+    sz = MAX_PATH;
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, NULL, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(sz == 10, "Expected 10, got %d\n", sz);
+
+    /* pcchValue is exactly 0 */
+    sz = 0;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
+    ok(r == ERROR_MORE_DATA,
+       "Expected ERROR_MORE_DATA, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected \"apple\", got \"%s\"\n", buf);
+    ok(sz == 10, "Expected 10, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "notvalid", 0, REG_SZ, (LPBYTE)"invalid", 8);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* szProperty is not a valid property */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             "notvalid", buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallDate value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_INSTALLDATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "date"), "Expected \"date\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_INSTALLEDPRODUCTNAME, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallLocation value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_INSTALLLOCATION, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "loc"), "Expected \"loc\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallSource value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_INSTALLSOURCE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "source"), "Expected \"source\", got \"%s\"\n", buf);
+    ok(sz == 6, "Expected 6, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_LOCALPACKAGE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "local"), "Expected \"local\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Publisher value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PUBLISHER, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "pub"), "Expected \"pub\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLInfoAbout value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_URLINFOABOUT, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "about"), "Expected \"about\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLUpdateInfo value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_URLUPDATEINFO, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "update"), "Expected \"update\", got \"%s\"\n", buf);
+    ok(sz == 6, "Expected 6, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMinor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_VERSIONMINOR, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "2"), "Expected \"2\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMajor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_VERSIONMAJOR, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayVersion value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_VERSIONSTRING, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "3.2.1"), "Expected \"3.2.1\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductID value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTID, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "id"), "Expected \"id\", got \"%s\"\n", buf);
+    ok(sz == 2, "Expected 2, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegCompany value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_REGCOMPANY, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "comp"), "Expected \"comp\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegOwner value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_REGOWNER, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "owner"), "Expected \"owner\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Transforms value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_TRANSFORMS, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Language value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_LANGUAGE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTNAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* AssignmentType value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_ASSIGNMENTTYPE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageCode value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PACKAGECODE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Version value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_VERSION, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductIcon value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTICON, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PACKAGENAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* AuthorizedLUAApp value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    RegDeleteValueA(propkey, "AuthorizedLUAApp");
+    RegDeleteValueA(propkey, "PackageName");
+    RegDeleteValueA(propkey, "ProductIcon");
+    RegDeleteValueA(propkey, "Version");
+    RegDeleteValueA(propkey, "PackageCode");
+    RegDeleteValueA(propkey, "AssignmentType");
+    RegDeleteValueA(propkey, "ProductName");
+    RegDeleteValueA(propkey, "Language");
+    RegDeleteValueA(propkey, "Transforms");
+    RegDeleteValueA(propkey, "RegOwner");
+    RegDeleteValueA(propkey, "RegCompany");
+    RegDeleteValueA(propkey, "ProductID");
+    RegDeleteValueA(propkey, "DisplayVersion");
+    RegDeleteValueA(propkey, "VersionMajor");
+    RegDeleteValueA(propkey, "VersionMinor");
+    RegDeleteValueA(propkey, "URLUpdateInfo");
+    RegDeleteValueA(propkey, "URLInfoAbout");
+    RegDeleteValueA(propkey, "Publisher");
+    RegDeleteValueA(propkey, "LocalPackage");
+    RegDeleteValueA(propkey, "InstallSource");
+    RegDeleteValueA(propkey, "InstallLocation");
+    RegDeleteValueA(propkey, "DisplayName");
+    RegDeleteValueA(propkey, "InstallDate");
+    RegDeleteValueA(propkey, "HelpTelephone");
+    RegDeleteValueA(propkey, "HelpLink");
+    RegDeleteValueA(propkey, "LocalPackage");
+    RegDeleteKeyA(propkey, "");
+    RegCloseKey(propkey);
+    RegDeleteKeyA(localkey, "");
+    RegCloseKey(localkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpTelephone value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallDate value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_INSTALLDATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_INSTALLEDPRODUCTNAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallLocation value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_INSTALLLOCATION, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallSource value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_INSTALLSOURCE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_LOCALPACKAGE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Publisher value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PUBLISHER, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLInfoAbout value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_URLINFOABOUT, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLUpdateInfo value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_URLUPDATEINFO, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMinor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_VERSIONMINOR, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMajor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_VERSIONMAJOR, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayVersion value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_VERSIONSTRING, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductID value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTID, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegCompany value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_REGCOMPANY, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegOwner value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_REGOWNER, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Transforms value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_TRANSFORMS, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "trans"), "Expected \"trans\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Language value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_LANGUAGE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "lang"), "Expected \"lang\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTNAME, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* AssignmentType value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_ASSIGNMENTTYPE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* PackageCode value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PACKAGECODE, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+        ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+        ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(prodkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Version value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_VERSION, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "ver"), "Expected \"ver\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductIcon value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PRODUCTICON, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "icon"), "Expected \"icon\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_PACKAGENAME, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT,
+           "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+        ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+        ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(prodkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* AuthorizedLUAApp value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERUNMANAGED,
+                             INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "auth"), "Expected \"auth\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    RegDeleteValueA(prodkey, "AuthorizedLUAApp");
+    RegDeleteValueA(prodkey, "PackageName");
+    RegDeleteValueA(prodkey, "ProductIcon");
+    RegDeleteValueA(prodkey, "Version");
+    RegDeleteValueA(prodkey, "PackageCode");
+    RegDeleteValueA(prodkey, "AssignmentType");
+    RegDeleteValueA(prodkey, "ProductName");
+    RegDeleteValueA(prodkey, "Language");
+    RegDeleteValueA(prodkey, "Transforms");
+    RegDeleteValueA(prodkey, "RegOwner");
+    RegDeleteValueA(prodkey, "RegCompany");
+    RegDeleteValueA(prodkey, "ProductID");
+    RegDeleteValueA(prodkey, "DisplayVersion");
+    RegDeleteValueA(prodkey, "VersionMajor");
+    RegDeleteValueA(prodkey, "VersionMinor");
+    RegDeleteValueA(prodkey, "URLUpdateInfo");
+    RegDeleteValueA(prodkey, "URLInfoAbout");
+    RegDeleteValueA(prodkey, "Publisher");
+    RegDeleteValueA(prodkey, "LocalPackage");
+    RegDeleteValueA(prodkey, "InstallSource");
+    RegDeleteValueA(prodkey, "InstallLocation");
+    RegDeleteValueA(prodkey, "DisplayName");
+    RegDeleteValueA(prodkey, "InstallDate");
+    RegDeleteValueA(prodkey, "HelpTelephone");
+    RegDeleteValueA(prodkey, "HelpLink");
+    RegDeleteValueA(prodkey, "LocalPackage");
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    /* MSIINSTALLCONTEXT_USERMANAGED */
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local user product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegCreateKeyA(localkey, "InstallProperties", &propkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ManagedLocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ManagedLocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "5"), "Expected \"5\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpTelephone value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "phone"), "Expected \"phone\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallDate value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_INSTALLDATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "date"), "Expected \"date\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_INSTALLEDPRODUCTNAME, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallLocation value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_INSTALLLOCATION, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "loc"), "Expected \"loc\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallSource value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_INSTALLSOURCE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "source"), "Expected \"source\", got \"%s\"\n", buf);
+    ok(sz == 6, "Expected 6, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_LOCALPACKAGE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "local"), "Expected \"local\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Publisher value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PUBLISHER, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "pub"), "Expected \"pub\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLInfoAbout value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_URLINFOABOUT, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "about"), "Expected \"about\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLUpdateInfo value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_URLUPDATEINFO, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "update"), "Expected \"update\", got \"%s\"\n", buf);
+    ok(sz == 6, "Expected 6, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMinor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_VERSIONMINOR, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "2"), "Expected \"2\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMajor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_VERSIONMAJOR, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayVersion value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_VERSIONSTRING, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "3.2.1"), "Expected \"3.2.1\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductID value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTID, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "id"), "Expected \"id\", got \"%s\"\n", buf);
+    ok(sz == 2, "Expected 2, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegCompany value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_REGCOMPANY, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "comp"), "Expected \"comp\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegOwner value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_REGOWNER, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "owner"), "Expected \"owner\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Transforms value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_TRANSFORMS, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Language value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_LANGUAGE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTNAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* AssignmentType value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_ASSIGNMENTTYPE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageCode value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PACKAGECODE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Version value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_VERSION, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductIcon value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTICON, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PACKAGENAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* AuthorizedLUAApp value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    RegDeleteValueA(propkey, "AuthorizedLUAApp");
+    RegDeleteValueA(propkey, "PackageName");
+    RegDeleteValueA(propkey, "ProductIcon");
+    RegDeleteValueA(propkey, "Version");
+    RegDeleteValueA(propkey, "PackageCode");
+    RegDeleteValueA(propkey, "AssignmentType");
+    RegDeleteValueA(propkey, "ProductName");
+    RegDeleteValueA(propkey, "Language");
+    RegDeleteValueA(propkey, "Transforms");
+    RegDeleteValueA(propkey, "RegOwner");
+    RegDeleteValueA(propkey, "RegCompany");
+    RegDeleteValueA(propkey, "ProductID");
+    RegDeleteValueA(propkey, "DisplayVersion");
+    RegDeleteValueA(propkey, "VersionMajor");
+    RegDeleteValueA(propkey, "VersionMinor");
+    RegDeleteValueA(propkey, "URLUpdateInfo");
+    RegDeleteValueA(propkey, "URLInfoAbout");
+    RegDeleteValueA(propkey, "Publisher");
+    RegDeleteValueA(propkey, "LocalPackage");
+    RegDeleteValueA(propkey, "InstallSource");
+    RegDeleteValueA(propkey, "InstallLocation");
+    RegDeleteValueA(propkey, "DisplayName");
+    RegDeleteValueA(propkey, "InstallDate");
+    RegDeleteValueA(propkey, "HelpTelephone");
+    RegDeleteValueA(propkey, "HelpLink");
+    RegDeleteValueA(propkey, "ManagedLocalPackage");
+    RegDeleteKeyA(propkey, "");
+    RegCloseKey(propkey);
+    RegDeleteKeyA(localkey, "");
+    RegCloseKey(localkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* current user product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists, user product key does not exist */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegSetValueExA(userkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists, user product key does exist */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpTelephone value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallDate value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_INSTALLDATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_INSTALLEDPRODUCTNAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallLocation value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_INSTALLLOCATION, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallSource value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_INSTALLSOURCE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_LOCALPACKAGE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Publisher value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PUBLISHER, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLInfoAbout value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_URLINFOABOUT, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLUpdateInfo value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_URLUPDATEINFO, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMinor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_VERSIONMINOR, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMajor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_VERSIONMAJOR, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayVersion value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_VERSIONSTRING, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductID value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTID, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegCompany value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_REGCOMPANY, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegOwner value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_REGOWNER, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Transforms value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_TRANSFORMS, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "trans"), "Expected \"trans\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Language value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_LANGUAGE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "lang"), "Expected \"lang\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTNAME, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* AssignmentType value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_ASSIGNMENTTYPE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* PackageCode value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PACKAGECODE, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+        ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+        ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(userkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Version value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_VERSION, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "ver"), "Expected \"ver\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductIcon value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PRODUCTICON, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "icon"), "Expected \"icon\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(userkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_PACKAGENAME, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT,
+           "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+        ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+        ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(userkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* AuthorizedLUAApp value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_USERMANAGED,
+                             INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "auth"), "Expected \"auth\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    RegDeleteValueA(userkey, "AuthorizedLUAApp");
+    RegDeleteValueA(userkey, "PackageName");
+    RegDeleteValueA(userkey, "ProductIcon");
+    RegDeleteValueA(userkey, "Version");
+    RegDeleteValueA(userkey, "PackageCode");
+    RegDeleteValueA(userkey, "AssignmentType");
+    RegDeleteValueA(userkey, "ProductName");
+    RegDeleteValueA(userkey, "Language");
+    RegDeleteValueA(userkey, "Transforms");
+    RegDeleteValueA(userkey, "RegOwner");
+    RegDeleteValueA(userkey, "RegCompany");
+    RegDeleteValueA(userkey, "ProductID");
+    RegDeleteValueA(userkey, "DisplayVersion");
+    RegDeleteValueA(userkey, "VersionMajor");
+    RegDeleteValueA(userkey, "VersionMinor");
+    RegDeleteValueA(userkey, "URLUpdateInfo");
+    RegDeleteValueA(userkey, "URLInfoAbout");
+    RegDeleteValueA(userkey, "Publisher");
+    RegDeleteValueA(userkey, "LocalPackage");
+    RegDeleteValueA(userkey, "InstallSource");
+    RegDeleteValueA(userkey, "InstallLocation");
+    RegDeleteValueA(userkey, "DisplayName");
+    RegDeleteValueA(userkey, "InstallDate");
+    RegDeleteValueA(userkey, "HelpTelephone");
+    RegDeleteValueA(userkey, "HelpLink");
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    /* MSIINSTALLCONTEXT_MACHINE */
+
+    /* szUserSid is non-NULL */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, usersid,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\S-1-5-18\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &localkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local system product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegCreateKeyA(localkey, "InstallProperties", &propkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "5"), "Expected \"5\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpTelephone value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "phone"), "Expected \"phone\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallDate value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_INSTALLDATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "date"), "Expected \"date\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_INSTALLEDPRODUCTNAME, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallLocation value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_INSTALLLOCATION, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "loc"), "Expected \"loc\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallSource value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_INSTALLSOURCE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "source"), "Expected \"source\", got \"%s\"\n", buf);
+    ok(sz == 6, "Expected 6, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_LOCALPACKAGE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "local"), "Expected \"local\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Publisher value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PUBLISHER, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "pub"), "Expected \"pub\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLInfoAbout value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_URLINFOABOUT, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "about"), "Expected \"about\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLUpdateInfo value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_URLUPDATEINFO, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "update"), "Expected \"update\", got \"%s\"\n", buf);
+    ok(sz == 6, "Expected 6, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMinor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_VERSIONMINOR, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "2"), "Expected \"2\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMajor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_VERSIONMAJOR, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "3"), "Expected \"3\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayVersion value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_VERSIONSTRING, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "3.2.1"), "Expected \"3.2.1\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductID value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTID, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "id"), "Expected \"id\", got \"%s\"\n", buf);
+    ok(sz == 2, "Expected 2, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegCompany value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_REGCOMPANY, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "comp"), "Expected \"comp\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegOwner value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_REGOWNER, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "owner"), "Expected \"owner\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Transforms value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_TRANSFORMS, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Language value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_LANGUAGE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTNAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* AssignmentType value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_ASSIGNMENTTYPE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageCode value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PACKAGECODE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Version value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_VERSION, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductIcon value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTICON, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PACKAGENAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* AuthorizedLUAApp value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    RegDeleteValueA(propkey, "AuthorizedLUAApp");
+    RegDeleteValueA(propkey, "PackageName");
+    RegDeleteValueA(propkey, "ProductIcon");
+    RegDeleteValueA(propkey, "Version");
+    RegDeleteValueA(propkey, "PackageCode");
+    RegDeleteValueA(propkey, "AssignmentType");
+    RegDeleteValueA(propkey, "ProductName");
+    RegDeleteValueA(propkey, "Language");
+    RegDeleteValueA(propkey, "Transforms");
+    RegDeleteValueA(propkey, "RegOwner");
+    RegDeleteValueA(propkey, "RegCompany");
+    RegDeleteValueA(propkey, "ProductID");
+    RegDeleteValueA(propkey, "DisplayVersion");
+    RegDeleteValueA(propkey, "VersionMajor");
+    RegDeleteValueA(propkey, "VersionMinor");
+    RegDeleteValueA(propkey, "URLUpdateInfo");
+    RegDeleteValueA(propkey, "URLInfoAbout");
+    RegDeleteValueA(propkey, "Publisher");
+    RegDeleteValueA(propkey, "LocalPackage");
+    RegDeleteValueA(propkey, "InstallSource");
+    RegDeleteValueA(propkey, "InstallLocation");
+    RegDeleteValueA(propkey, "DisplayName");
+    RegDeleteValueA(propkey, "InstallDate");
+    RegDeleteValueA(propkey, "HelpTelephone");
+    RegDeleteValueA(propkey, "HelpLink");
+    RegDeleteValueA(propkey, "LocalPackage");
+    RegDeleteKeyA(propkey, "");
+    RegCloseKey(propkey);
+    RegDeleteKeyA(localkey, "");
+    RegCloseKey(localkey);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* local classes product key exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTSTATE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "1"), "Expected \"1\", got \"%s\"\n", buf);
+    ok(sz == 1, "Expected 1, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "HelpLink", 0, REG_SZ, (LPBYTE)"link", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpLink value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_HELPLINK, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "HelpTelephone", 0, REG_SZ, (LPBYTE)"phone", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* HelpTelephone value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_HELPTELEPHONE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "InstallDate", 0, REG_SZ, (LPBYTE)"date", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallDate value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_INSTALLDATE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "DisplayName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_INSTALLEDPRODUCTNAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "InstallLocation", 0, REG_SZ, (LPBYTE)"loc", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallLocation value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_INSTALLLOCATION, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "InstallSource", 0, REG_SZ, (LPBYTE)"source", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallSource value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_INSTALLSOURCE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "LocalPackage", 0, REG_SZ, (LPBYTE)"local", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_LOCALPACKAGE, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "Publisher", 0, REG_SZ, (LPBYTE)"pub", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Publisher value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PUBLISHER, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "URLInfoAbout", 0, REG_SZ, (LPBYTE)"about", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLInfoAbout value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_URLINFOABOUT, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "URLUpdateInfo", 0, REG_SZ, (LPBYTE)"update", 7);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* URLUpdateInfo value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_URLUPDATEINFO, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "VersionMinor", 0, REG_SZ, (LPBYTE)"2", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMinor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_VERSIONMINOR, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "VersionMajor", 0, REG_SZ, (LPBYTE)"3", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* VersionMajor value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_VERSIONMAJOR, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "DisplayVersion", 0, REG_SZ, (LPBYTE)"3.2.1", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* DisplayVersion value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_VERSIONSTRING, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "ProductID", 0, REG_SZ, (LPBYTE)"id", 3);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductID value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTID, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "RegCompany", 0, REG_SZ, (LPBYTE)"comp", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegCompany value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_REGCOMPANY, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "RegOwner", 0, REG_SZ, (LPBYTE)"owner", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* RegOwner value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_REGOWNER, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PROPERTY,
+       "Expected ERROR_UNKNOWN_PROPERTY, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+    ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "Transforms", 0, REG_SZ, (LPBYTE)"trans", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Transforms value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_TRANSFORMS, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "trans"), "Expected \"trans\", got \"%s\"\n", buf);
+    ok(sz == 5, "Expected 5, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "Language", 0, REG_SZ, (LPBYTE)"lang", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Language value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_LANGUAGE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "lang"), "Expected \"lang\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "ProductName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTNAME, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "name"), "Expected \"name\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "AssignmentType", 0, REG_SZ, (LPBYTE)"type", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* AssignmentType value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_ASSIGNMENTTYPE, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "PackageCode", 0, REG_SZ, (LPBYTE)"code", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* FIXME */
+
+    /* PackageCode value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PACKAGECODE, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_CONFIGURATION,
+           "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+        ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+        ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(prodkey, "Version", 0, REG_SZ, (LPBYTE)"ver", 4);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Version value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_VERSION, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "ver"), "Expected \"ver\", got \"%s\"\n", buf);
+    ok(sz == 3, "Expected 3, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "ProductIcon", 0, REG_SZ, (LPBYTE)"icon", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ProductIcon value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PRODUCTICON, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "icon"), "Expected \"icon\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    res = RegSetValueExA(prodkey, "PackageName", 0, REG_SZ, (LPBYTE)"name", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* PackageName value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_PACKAGENAME, buf, &sz);
+    todo_wine
+    {
+        ok(r == ERROR_UNKNOWN_PRODUCT,
+           "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+        ok(!lstrcmpA(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
+        ok(sz == MAX_PATH, "Expected MAX_PATH, got %d\n", sz);
+    }
+
+    res = RegSetValueExA(prodkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* AuthorizedLUAApp value exists */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoExA(prodcode, NULL,
+                             MSIINSTALLCONTEXT_MACHINE,
+                             INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "auth"), "Expected \"auth\", got \"%s\"\n", buf);
+    ok(sz == 4, "Expected 4, got %d\n", sz);
+
+    RegDeleteValueA(prodkey, "AuthorizedLUAApp");
+    RegDeleteValueA(prodkey, "PackageName");
+    RegDeleteValueA(prodkey, "ProductIcon");
+    RegDeleteValueA(prodkey, "Version");
+    RegDeleteValueA(prodkey, "PackageCode");
+    RegDeleteValueA(prodkey, "AssignmentType");
+    RegDeleteValueA(prodkey, "ProductName");
+    RegDeleteValueA(prodkey, "Language");
+    RegDeleteValueA(prodkey, "Transforms");
+    RegDeleteValueA(prodkey, "RegOwner");
+    RegDeleteValueA(prodkey, "RegCompany");
+    RegDeleteValueA(prodkey, "ProductID");
+    RegDeleteValueA(prodkey, "DisplayVersion");
+    RegDeleteValueA(prodkey, "VersionMajor");
+    RegDeleteValueA(prodkey, "VersionMinor");
+    RegDeleteValueA(prodkey, "URLUpdateInfo");
+    RegDeleteValueA(prodkey, "URLInfoAbout");
+    RegDeleteValueA(prodkey, "Publisher");
+    RegDeleteValueA(prodkey, "LocalPackage");
+    RegDeleteValueA(prodkey, "InstallSource");
+    RegDeleteValueA(prodkey, "InstallLocation");
+    RegDeleteValueA(prodkey, "DisplayName");
+    RegDeleteValueA(prodkey, "InstallDate");
+    RegDeleteValueA(prodkey, "HelpTelephone");
+    RegDeleteValueA(prodkey, "HelpLink");
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -3303,6 +6035,7 @@ START_TEST(msi)
         test_MsiGetProductCode();
         test_MsiEnumClients();
         test_MsiGetProductInfo();
+        test_MsiGetProductInfoEx();
     }
 
     test_MsiGetFileVersion();
