@@ -296,7 +296,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 		This->freqAdjust = ((DWORD64)This->freq << DSOUND_FREQSHIFT) / This->device->pwfx->nSamplesPerSec;
 		This->nAvgBytesPerSec = freq * This->pwfx->nBlockAlign;
 		DSOUND_RecalcFormat(This);
-		DSOUND_MixToTemporary(This, 0, This->buflen);
+		DSOUND_MixToTemporary(This, 0, This->buflen, FALSE);
 	}
 
 	RtlReleaseResource(&This->lock);
@@ -733,9 +733,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 		{
 			RtlAcquireResourceShared(&iter->lock, TRUE);
 			if (x1)
-				DSOUND_MixToTemporary(iter, (DWORD_PTR)p1 - (DWORD_PTR)iter->buffer->memory, x1);
+				DSOUND_MixToTemporary(iter, (DWORD_PTR)p1 - (DWORD_PTR)iter->buffer->memory, x1, FALSE);
 			if (x2)
-				DSOUND_MixToTemporary(iter, 0, x2);
+				DSOUND_MixToTemporary(iter, 0, x2, FALSE);
 			RtlReleaseResource(&iter->lock);
 		}
 		RtlReleaseResource(&This->device->buffer_list_lock);
@@ -1223,7 +1223,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->secondary = NULL;
     dsb->tmp_buffer = NULL;
     DSOUND_RecalcFormat(dsb);
-    DSOUND_MixToTemporary(dsb, 0, dsb->buflen);
+    DSOUND_MixToTemporary(dsb, 0, dsb->buflen, FALSE);
 
     /* variable sized struct so calculate size based on format */
     size = sizeof(WAVEFORMATEX) + pdsb->pwfx->cbSize;

@@ -57,10 +57,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-#define DS_HEL_BUFLEN 0x8000 /* HEL: The buffer length of the emulated buffer */
-#define DS_SND_QUEUE_MAX 10 /* max number of fragments to prebuffer, each fragment is approximately 10 ms long */
-#define DS_SND_QUEUE_MIN 6 /* If the minimum of prebuffered fragments go below this, forcibly take all locks to prevent underruns */
-
 DirectSoundDevice*	DSOUND_renderer[MAXWAVEDRIVERS];
 GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
 GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
@@ -92,10 +88,12 @@ HRESULT mmErr(UINT err)
 	}
 }
 
+/* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
 int ds_emuldriver = 0;
-int ds_hel_buflen = DS_HEL_BUFLEN;
-int ds_snd_queue_max = DS_SND_QUEUE_MAX;
-int ds_snd_queue_min = DS_SND_QUEUE_MIN;
+int ds_hel_buflen = 32768;
+int ds_snd_queue_max = 10;
+int ds_snd_queue_min = 6;
+int ds_snd_shadow_maxsize = 2;
 int ds_hw_accel = DS_HW_ACCEL_FULL;
 int ds_default_playback = 0;
 int ds_default_capture = 0;
@@ -173,43 +171,38 @@ void setup_dsound_options(void)
     }
 
     if (!get_config_key( hkey, appkey, "DefaultPlayback", buffer, MAX_PATH ))
-	    ds_default_playback = atoi(buffer);
+        ds_default_playback = atoi(buffer);
+
+    if (!get_config_key( hkey, appkey, "MaxShadowSize", buffer, MAX_PATH ))
+        ds_snd_shadow_maxsize = atoi(buffer);
 
     if (!get_config_key( hkey, appkey, "DefaultCapture", buffer, MAX_PATH ))
-	    ds_default_capture = atoi(buffer);
+        ds_default_capture = atoi(buffer);
 
     if (!get_config_key( hkey, appkey, "DefaultSampleRate", buffer, MAX_PATH ))
-	    ds_default_sample_rate = atoi(buffer);
+        ds_default_sample_rate = atoi(buffer);
 
     if (!get_config_key( hkey, appkey, "DefaultBitsPerSample", buffer, MAX_PATH ))
-	    ds_default_bits_per_sample = atoi(buffer);
+        ds_default_bits_per_sample = atoi(buffer);
 
     if (appkey) RegCloseKey( appkey );
     if (hkey) RegCloseKey( hkey );
 
-    if (ds_emuldriver)
-       WARN("ds_emuldriver = %d (default=0)\n",ds_emuldriver);
-    if (ds_hel_buflen != DS_HEL_BUFLEN)
-       WARN("ds_hel_buflen = %d (default=%d)\n",ds_hel_buflen ,DS_HEL_BUFLEN);
-    if (ds_snd_queue_max != DS_SND_QUEUE_MAX)
-       WARN("ds_snd_queue_max = %d (default=%d)\n",ds_snd_queue_max ,DS_SND_QUEUE_MAX);
-    if (ds_snd_queue_min != DS_SND_QUEUE_MIN)
-       WARN("ds_snd_queue_min = %d (default=%d)\n",ds_snd_queue_min ,DS_SND_QUEUE_MIN);
-    if (ds_hw_accel != DS_HW_ACCEL_FULL)
-	WARN("ds_hw_accel = %s (default=Full)\n",
-	    ds_hw_accel==DS_HW_ACCEL_FULL ? "Full" :
-	    ds_hw_accel==DS_HW_ACCEL_STANDARD ? "Standard" :
-	    ds_hw_accel==DS_HW_ACCEL_BASIC ? "Basic" :
-	    ds_hw_accel==DS_HW_ACCEL_EMULATION ? "Emulation" :
-	    "Unknown");
-    if (ds_default_playback != 0)
-	WARN("ds_default_playback = %d (default=0)\n",ds_default_playback);
-    if (ds_default_capture != 0)
-	WARN("ds_default_capture = %d (default=0)\n",ds_default_playback);
-    if (ds_default_sample_rate != 44100)
-        WARN("ds_default_sample_rate = %d (default=44100)\n",ds_default_sample_rate);
-    if (ds_default_bits_per_sample != 16)
-        WARN("ds_default_bits_per_sample = %d (default=16)\n",ds_default_bits_per_sample);
+    TRACE("ds_emuldriver = %d\n", ds_emuldriver);
+    TRACE("ds_hel_buflen = %d\n", ds_hel_buflen);
+    TRACE("ds_snd_queue_max = %d\n", ds_snd_queue_max);
+    TRACE("ds_snd_queue_min = %d\n", ds_snd_queue_min);
+    TRACE("ds_hw_accel = %s\n",
+        ds_hw_accel==DS_HW_ACCEL_FULL ? "Full" :
+        ds_hw_accel==DS_HW_ACCEL_STANDARD ? "Standard" :
+        ds_hw_accel==DS_HW_ACCEL_BASIC ? "Basic" :
+        ds_hw_accel==DS_HW_ACCEL_EMULATION ? "Emulation" :
+        "Unknown");
+    TRACE("ds_default_playback = %d\n", ds_default_playback);
+    TRACE("ds_default_capture = %d\n", ds_default_playback);
+    TRACE("ds_default_sample_rate = %d\n", ds_default_sample_rate);
+    TRACE("ds_default_bits_per_sample = %d\n", ds_default_bits_per_sample);
+    TRACE("ds_snd_shadow_maxsize = %d\n", ds_snd_shadow_maxsize);
 }
 
 static const char * get_device_id(LPCGUID pGuid)

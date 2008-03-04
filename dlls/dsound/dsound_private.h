@@ -35,6 +35,7 @@ extern int ds_emuldriver;
 extern int ds_hel_buflen;
 extern int ds_snd_queue_max;
 extern int ds_snd_queue_min;
+extern int ds_snd_shadow_maxsize;
 extern int ds_hw_accel;
 extern int ds_default_playback;
 extern int ds_default_capture;
@@ -181,7 +182,7 @@ struct IDirectSoundBufferImpl
     DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;
     /* used for frequency conversion (PerfectPitch) */
-    ULONG                       freqneeded, freqAdjust, freqAcc, freqAccNext;
+    ULONG                       freqneeded, freqAdjust, freqAcc, freqAccNext, resampleinmixer;
     /* used for mixing */
     DWORD                       primary_mixpos, buf_mixpos, sec_mixpos;
 
@@ -449,7 +450,7 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
-void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mixlen);
+void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mixlen, BOOL inmixer);
 DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, DWORD* overshot);
 
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
