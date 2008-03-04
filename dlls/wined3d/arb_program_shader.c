@@ -48,60 +48,51 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
  * @target_type should be either GL_VERTEX_PROGRAM_ARB (for vertex shaders)
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
-static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_Info *gl_info, GLuint target_type,
-        unsigned int max_constants, float* constants, struct list *constant_list) {
-    constants_entry *constant;
+static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_Info *gl_info, GLuint target_type,
+        unsigned int max_constants, float* constants, char *dirty_consts) {
     local_constant* lconst;
-    DWORD i, j, k;
-    DWORD *idx;
+    DWORD i, j;
+    unsigned int ret;
 
     if (TRACE_ON(d3d_shader)) {
-        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
-            idx = constant->idx;
-            j = constant->count;
-            while (j--) {
-                i = *idx++;
-                TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
+        for(i = 0; i < max_constants; i++) {
+            if(!dirty_consts[i]) continue;
+            TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
                         constants[i * 4 + 0], constants[i * 4 + 1],
                         constants[i * 4 + 2], constants[i * 4 + 3]);
-            }
         }
     }
     /* In 1.X pixel shaders constants are implicitly clamped in the range [-1;1] */
     if(target_type == GL_FRAGMENT_PROGRAM_ARB &&
        WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1) {
         float lcl_const[4];
-        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
-            idx = constant->idx;
-            j = constant->count;
-            while (j--) {
-                i = *idx++;
-                k = i * 4;
-                if(constants[k + 0] > 1.0) lcl_const[0] = 1.0;
-                else if(constants[k + 0] < -1.0) lcl_const[0] = -1.0;
-                else lcl_const[0] = constants[k + 0];
+        for(i = 0; i < max_constants; i++) {
+            if(!dirty_consts[i]) continue;
+            dirty_consts[i] = 0;
 
-                if(constants[k + 1] > 1.0) lcl_const[1] = 1.0;
-                else if(constants[k + 1] < -1.0) lcl_const[1] = -1.0;
-                else lcl_const[1] = constants[k + 1];
+            j = 4 * i;
+            if(constants[j + 0] > 1.0) lcl_const[0] = 1.0;
+            else if(constants[j + 0] < -1.0) lcl_const[0] = -1.0;
+            else lcl_const[0] = constants[j + 0];
 
-                if(constants[k + 2] > 1.0) lcl_const[2] = 1.0;
-                else if(constants[k + 2] < -1.0) lcl_const[2] = -1.0;
-                else lcl_const[2] = constants[k + 2];
+            if(constants[j + 1] > 1.0) lcl_const[1] = 1.0;
+            else if(constants[j + 1] < -1.0) lcl_const[1] = -1.0;
+            else lcl_const[1] = constants[j + 1];
 
-                if(constants[k + 3] > 1.0) lcl_const[3] = 1.0;
-                else if(constants[k + 3] < -1.0) lcl_const[3] = -1.0;
-                else lcl_const[3] = constants[k + 3];
+            if(constants[j + 2] > 1.0) lcl_const[2] = 1.0;
+            else if(constants[j + 2] < -1.0) lcl_const[2] = -1.0;
+            else lcl_const[2] = constants[j + 2];
 
-                GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, lcl_const));
-            }
+            if(constants[j + 3] > 1.0) lcl_const[3] = 1.0;
+            else if(constants[j + 3] < -1.0) lcl_const[3] = -1.0;
+            else lcl_const[3] = constants[j + 3];
+
+            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, lcl_const));
         }
     } else {
-        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
-            idx = constant->idx;
-            j = constant->count;
-            while (j--) {
-                i = *idx++;
+        for(i = 0; i < max_constants; i++) {
+            if(dirty_consts[i]) {
+                dirty_consts[i] = 0;
                 GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
             }
         }
@@ -117,10 +108,14 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
         }
     }
     /* Immediate constants are clamped for 1.X shaders at loading times */
+    ret = 0;
     LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+        dirty_consts[lconst->idx] = 1; /* Dirtify so the non-immediate constant overwrites it next time */
+        ret = max(ret, lconst->idx);
         GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, lconst->idx, (GLfloat*)lconst->value));
     }
     checkGLcall("glProgramEnvParameter4fvARB()");
+    return ret;
 }
 
 /**
@@ -142,10 +137,11 @@ void shader_arb_load_constants(
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
 
         /* Load DirectX 9 float constants for vertex shader */
-        shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                                   GL_LIMITS(vshader_constantsF),
-                                   stateBlock->vertexShaderConstantF,
-                                   &stateBlock->set_vconstantsF);
+        deviceImpl->highest_dirty_vs_const = shader_arb_load_constantsF(
+                vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
+                deviceImpl->highest_dirty_vs_const,
+                stateBlock->vertexShaderConstantF,
+                deviceImpl->activeContext->vshader_const_dirty);
 
         /* Upload the position fixup */
         GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, ARB_SHADER_PRIVCONST_POS, deviceImpl->posFixup));
@@ -157,10 +153,12 @@ void shader_arb_load_constants(
         IWineD3DPixelShaderImpl *psi = (IWineD3DPixelShaderImpl *) pshader;
 
         /* Load DirectX 9 float constants for pixel shader */
-        shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB, 
-                                   GL_LIMITS(pshader_constantsF),
-                                   stateBlock->pixelShaderConstantF,
-                                   &stateBlock->set_pconstantsF);
+        deviceImpl->highest_dirty_ps_const = shader_arb_load_constantsF(
+                pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
+                deviceImpl->highest_dirty_ps_const,
+                stateBlock->pixelShaderConstantF,
+                deviceImpl->activeContext->pshader_const_dirty);
+
         if(((IWineD3DPixelShaderImpl *) pshader)->bumpenvmatconst != -1) {
             /* needsbumpmat stores the stage number from where to load the matrix. bumpenvmatconst stores the
              * number of the constant to load the matrix into.
@@ -177,6 +175,7 @@ void shader_arb_load_constants(
                  */
                 float *scale = (float *) &stateBlock->textureState[(int) psi->needsbumpmat][WINED3DTSS_BUMPENVLSCALE];
                 GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->luminanceconst, scale));
+                deviceImpl->activeContext->pshader_const_dirty[psi->luminanceconst] = 1;
             }
         }
         if(((IWineD3DPixelShaderImpl *) pshader)->srgb_enabled &&
@@ -200,6 +199,9 @@ void shader_arb_load_constants(
             GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->srgb_cmp_const, comparison));
             GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->srgb_low_const, mul_low));
             checkGLcall("Load sRGB correction constants\n");
+            deviceImpl->activeContext->pshader_const_dirty[psi->srgb_low_const] = 1;
+            deviceImpl->activeContext->pshader_const_dirty[psi->srgb_cmp_const] = 1;
+
         }
     }
 }
@@ -1769,6 +1771,10 @@ static void shader_arb_free(IWineD3DDevice *iface) {
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
 }
 
+static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
+    return TRUE;
+}
+
 const shader_backend_t arb_program_shader_backend = {
     &shader_arb_select,
     &shader_arb_select_depth_blt,
@@ -1778,6 +1784,7 @@ const shader_backend_t arb_program_shader_backend = {
     &shader_arb_color_correction,
     &shader_arb_destroy,
     &shader_arb_alloc,
-    &shader_arb_free
+    &shader_arb_free,
+    &shader_arb_dirty_const
 
 };

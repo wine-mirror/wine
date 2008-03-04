@@ -259,6 +259,7 @@ typedef struct {
     void (*shader_destroy)(IWineD3DBaseShader *iface);
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
+    BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend;
@@ -575,6 +576,8 @@ struct WineD3DContext {
     char                    texShaderBumpMap;
     BOOL                    fog_coord;
 
+    char                    *vshader_const_dirty, *pshader_const_dirty;
+
     /* The actual opengl context */
     HGLRC                   glCtx;
     HWND                    win_handle;
@@ -749,6 +752,7 @@ struct IWineD3DDeviceImpl
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
+    unsigned int            highest_dirty_ps_const, highest_dirty_vs_const;
 
     /* Render Target Support */
     IWineD3DSurface       **render_targets;
@@ -842,7 +846,7 @@ struct IWineD3DDeviceImpl
     struct WineD3DRectPatch *currentPatch;
 };
 
-extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
+extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl, IWineD3DDevice_DirtyConst_Vtbl;
 
 HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfaceImpl *target, DWORD Count,
                                         CONST WINED3DRECT* pRects, DWORD Flags, WINED3DCOLOR Color,

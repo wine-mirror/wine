@@ -3326,6 +3326,11 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
 }
 
+static BOOL shader_glsl_dirty_const(IWineD3DDevice *iface) {
+    /* TODO: GL_EXT_bindable_uniform can be used to share constants accross shaders */
+    return FALSE;
+}
+
 const shader_backend_t glsl_shader_backend = {
     &shader_glsl_select,
     &shader_glsl_select_depth_blt,
@@ -3335,5 +3340,6 @@ const shader_backend_t glsl_shader_backend = {
     &shader_glsl_color_correction,
     &shader_glsl_destroy,
     &shader_glsl_alloc,
-    &shader_glsl_free
+    &shader_glsl_free,
+    &shader_glsl_dirty_const
 };

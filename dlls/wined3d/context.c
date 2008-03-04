@@ -326,6 +326,17 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     ret->surface = (IWineD3DSurface *) target;
     ret->isPBuffer = create_pbuffer;
     ret->tid = GetCurrentThreadId();
+    if(This->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *) This)) {
+        /* Create the dirty constants array and initialize them to dirty */
+        ret->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(*ret->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
+        ret->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(*ret->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
+        memset(ret->vshader_const_dirty, 1,
+               sizeof(*ret->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
+        memset(ret->pshader_const_dirty, 1,
+                sizeof(*ret->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
+    }
 
     TRACE("Successfully created new context %p\n", ret);
 
@@ -478,6 +489,8 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     } else ReleaseDC(context->win_handle, context->hdc);
     pwglDeleteContext(context->glCtx);
 
+    HeapFree(GetProcessHeap(), 0, context->vshader_const_dirty);
+    HeapFree(GetProcessHeap(), 0, context->pshader_const_dirty);
     RemoveContextFromArray(This, context);
 }
 
@@ -899,6 +912,14 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             if(ret == FALSE) {
                 ERR("Failed to activate the new context\n");
             }
+        }
+        if(This->activeContext->vshader_const_dirty) {
+            memset(This->activeContext->vshader_const_dirty, 1,
+                   sizeof(This->activeContext->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
+        }
+        if(This->activeContext->pshader_const_dirty) {
+            memset(This->activeContext->pshader_const_dirty, 1,
+                   sizeof(This->activeContext->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
         }
         This->activeContext = context;
     }
