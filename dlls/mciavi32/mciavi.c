@@ -369,7 +369,7 @@ static DWORD MCIAVI_mciPlay_async(WINE_MCIAVI *wma, DWORD dwFlags, LPMCI_PLAY_PA
 
     data->wDevID = wma->wDevID;
     data->flags = dwFlags;
-    memcpy(&data->params, lpParams, sizeof(MCI_PLAY_PARMS));
+    data->params = *lpParams;
 
     if (!(handle = CreateThread(NULL, 0, MCIAVI_mciPlay_thread, data, 0, NULL)))
     {
