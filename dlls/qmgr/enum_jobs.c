@@ -25,6 +25,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
 static void EnumBackgroundCopyJobsDestructor(EnumBackgroundCopyJobsImpl *This)
 {
+    ULONG i;
+
+    for(i = 0; i < This->numJobs; i++)
+        IBackgroundCopyJob_Release(This->jobs[i]);
+
+    HeapFree(GetProcessHeap(), 0, This->jobs);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -105,8 +111,9 @@ static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_GetCount(
     IEnumBackgroundCopyJobs* iface,
     ULONG *puCount)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+    *puCount = This->numJobs;
+    return S_OK;
 }
 
 static const IEnumBackgroundCopyJobsVtbl BITS_IEnumBackgroundCopyJobs_Vtbl =
@@ -124,7 +131,10 @@ static const IEnumBackgroundCopyJobsVtbl BITS_IEnumBackgroundCopyJobs_Vtbl =
 HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
                                           IBackgroundCopyManager* copyManager)
 {
+    BackgroundCopyManagerImpl *qmgr = (BackgroundCopyManagerImpl *) copyManager;
     EnumBackgroundCopyJobsImpl *This;
+    BackgroundCopyJobImpl *job;
+    ULONG i;
 
     TRACE("%p, %p)\n", ppObj, copyManager);
 
@@ -133,6 +143,31 @@ HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
         return E_OUTOFMEMORY;
     This->lpVtbl = &BITS_IEnumBackgroundCopyJobs_Vtbl;
     This->ref = 1;
+
+    /* Create array of jobs */
+    This->indexJobs = 0;
+    This->numJobs = list_count(&qmgr->jobs);
+
+    if (0 < This->numJobs)
+    {
+        This->jobs = HeapAlloc(GetProcessHeap(), 0,
+                               This->numJobs * sizeof *This->jobs);
+        if (!This->jobs)
+        {
+            HeapFree(GetProcessHeap(), 0, This);
+            return E_OUTOFMEMORY;
+        }
+    }
+    else
+        This->jobs = NULL;
+
+    i = 0;
+    LIST_FOR_EACH_ENTRY(job, &qmgr->jobs, BackgroundCopyJobImpl, entryFromQmgr)
+    {
+        IBackgroundCopyJob *iJob = (IBackgroundCopyJob *) job;
+        IBackgroundCopyJob_AddRef(iJob);
+        This->jobs[i++] = iJob;
+    }
 
     *ppObj = &This->lpVtbl;
     return S_OK;
