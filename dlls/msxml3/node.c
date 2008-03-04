@@ -51,7 +51,6 @@ static const WCHAR szDate[]       = {'D','a','t','e',0};
 static const WCHAR szTime[]       = {'T','i','m','e',0};
 static const WCHAR szTimeTZ[]     = {'T','i','m','e','.','t','z',0};
 static const WCHAR szI1[]         = {'i','1',0};
-static const WCHAR szByte[]       = {'B','y','t','e',0};
 static const WCHAR szI2[]         = {'i','2',0};
 static const WCHAR szI4[]         = {'i','4',0};
 static const WCHAR szIU1[]        = {'u','i','1',0};
@@ -940,7 +939,6 @@ static HRESULT WINAPI xmlnode_put_dataType(
        lstrcmpiW(dataTypeName,szTime) == 0    ||
        lstrcmpiW(dataTypeName,szTimeTZ) == 0  ||
        lstrcmpiW(dataTypeName,szI1) == 0      ||
-       lstrcmpiW(dataTypeName,szByte) == 0    ||
        lstrcmpiW(dataTypeName,szI2) == 0      ||
        lstrcmpiW(dataTypeName,szIU1) == 0     ||
        lstrcmpiW(dataTypeName,szIU2) == 0     ||
