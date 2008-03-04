@@ -18,7 +18,7 @@ all: $(MODULE)
 
 $(MODULE): $(OBJS) Makefile.in
 	$(RM) $@
-	$(AR) $@ $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 	$(RANLIB) $@
 
 # Rules for installation

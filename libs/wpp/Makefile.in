@@ -17,7 +17,7 @@ all: $(MODULE)
 
 $(MODULE): $(OBJS)
 	$(RM) $@
-	$(AR) $@ $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 	$(RANLIB) $@
 
 ppy.tab.c: ppy.tab.h   # for parallel makes

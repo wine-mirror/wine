@@ -52,7 +52,7 @@ lib$(BASEMODULE).def: $(MAINSPEC)
 
 lib$(BASEMODULE).def.a: $(IMPLIB_OBJS)
 	$(RM) $@
-	$(AR) $@ $(IMPLIB_OBJS)
+	$(AR) $(ARFLAGS) $@ $(IMPLIB_OBJS)
 	$(RANLIB) $@
 
 lib$(BASEMODULE).a: $(SPEC_DEF) $(IMPLIB_OBJS)

@@ -687,6 +687,7 @@ AS
 ac_ct_AS
 LD
 AR
+ARFLAGS
 RANLIB
 STRIP
 WINDRES
@@ -5599,6 +5600,8 @@ esac
 else
   AR="$ac_cv_prog_AR"
 fi
+
+ARFLAGS=rc
 
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
@@ -23079,6 +23082,7 @@ AS!$AS$ac_delim
 ac_ct_AS!$ac_ct_AS$ac_delim
 LD!$LD$ac_delim
 AR!$AR$ac_delim
+ARFLAGS!$ARFLAGS$ac_delim
 RANLIB!$RANLIB$ac_delim
 STRIP!$STRIP$ac_delim
 WINDRES!$WINDRES$ac_delim
@@ -23088,7 +23092,6 @@ GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
 LDCONFIG!$LDCONFIG$ac_delim
 INSTALL_PROGRAM!$INSTALL_PROGRAM$ac_delim
-INSTALL_SCRIPT!$INSTALL_SCRIPT$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 82; then
@@ -23150,6 +23153,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+INSTALL_SCRIPT!$INSTALL_SCRIPT$ac_delim
 INSTALL_DATA!$INSTALL_DATA$ac_delim
 LINT!$LINT$ac_delim
 LINTFLAGS!$LINTFLAGS$ac_delim
@@ -23224,7 +23228,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 72; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 73; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
