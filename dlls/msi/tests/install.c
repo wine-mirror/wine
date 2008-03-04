@@ -175,6 +175,13 @@ static const CHAR cc_component_dat[] = "Component\tComponentId\tDirectory_\tAttr
                                        "augustus\t\tMSITESTDIR\t0\t1\taugustus\n"
                                        "caesar\t\tMSITESTDIR\t0\t1\tcaesar\n";
 
+static const CHAR cc2_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "maximus\t\tMSITESTDIR\t0\t1\tmaximus\n"
+                                        "augustus\t\tMSITESTDIR\t0\t0\taugustus\n"
+                                        "caesar\t\tMSITESTDIR\t0\t1\tcaesar\n";
+
 static const CHAR cc_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
                                      "Feature\tFeature\n"
@@ -193,6 +200,14 @@ static const CHAR cc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion
                                   "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1\n"
                                   "augustus\taugustus\taugustus\t50000\t\t\t16384\t2\n"
                                   "caesar\tcaesar\tcaesar\t500\t\t\t16384\t12";
+
+static const CHAR cc2_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1\n"
+                                   "augustus\taugustus\taugustus\t50000\t\t\t16384\t2\n"
+                                   "tiberius\tmaximus\ttiberius\t500\t\t\t16384\t3\n"
+                                   "caesar\tcaesar\tcaesar\t500\t\t\t16384\t12";
 
 static const CHAR cc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
                                    "i2\ti4\tL64\tS255\tS32\tS72\n"
@@ -619,6 +634,18 @@ static const msi_table cc_tables[] =
     ADD_TABLE(cc_feature),
     ADD_TABLE(cc_feature_comp),
     ADD_TABLE(cc_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(cc_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table cc2_tables[] =
+{
+    ADD_TABLE(cc2_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cc_feature_comp),
+    ADD_TABLE(cc2_file),
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(cc_media),
     ADD_TABLE(property),
@@ -1538,6 +1565,49 @@ static void create_cc_test_files(void)
     DeleteFile("caesar");
 }
 
+static void create_cc2_test_files(void)
+{
+    CCAB cabParams;
+    HFCI hfci;
+    ERF erf;
+    static CHAR cab_context[] = "test%d.cab";
+    BOOL res;
+
+    create_file("maximus", 500);
+    create_file("augustus", 50000);
+    create_file("tiberius", 500);
+    create_file("caesar", 500);
+
+    set_cab_parameters(&cabParams, "test1.cab", 40000);
+
+    hfci = FCICreate(&erf, file_placed, mem_alloc, mem_free, fci_open,
+                      fci_read, fci_write, fci_close, fci_seek, fci_delete,
+                      get_temp_file, &cabParams, cab_context);
+    ok(hfci != NULL, "Failed to create an FCI context\n");
+
+    res = add_file(hfci, "maximus", tcompTYPE_NONE);
+    ok(res, "Failed to add file maximus\n");
+
+    res = add_file(hfci, "augustus", tcompTYPE_NONE);
+    ok(res, "Failed to add file augustus\n");
+
+    res = add_file(hfci, "tiberius", tcompTYPE_NONE);
+    ok(res, "Failed to add file tiberius\n");
+
+    res = FCIFlushCabinet(hfci, FALSE, get_next_cabinet, progress);
+    ok(res, "Failed to flush the cabinet\n");
+
+    res = FCIDestroy(hfci);
+    ok(res, "Failed to destroy the cabinet\n");
+
+    create_cab_file("test3.cab", MEDIA_SIZE, "caesar\0");
+
+    DeleteFile("maximus");
+    DeleteFile("augustus");
+    DeleteFile("tiberius");
+    DeleteFile("caesar");
+}
+
 static void delete_cab_files(void)
 {
     SHFILEOPSTRUCT shfl;
@@ -1573,6 +1643,22 @@ static void test_continuouscabs(void)
         ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
         ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     }
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    delete_cab_files();
+    DeleteFile(msifile);
+
+    create_cc2_test_files();
+    create_database(msifile, cc2_tables, sizeof(cc2_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\tiberius", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     delete_cab_files();

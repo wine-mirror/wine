@@ -401,9 +401,12 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
     }
     case fdintCLOSE_FILE_INFO:
     {
+        CabData *data = (CabData*) pfdin->pv;
         FILETIME ft;
         FILETIME ftLocal;
         HANDLE handle = (HANDLE) pfdin->hf;
+
+        data->mi->is_continuous = FALSE;
 
         if (!DosDateTimeToFileTime(pfdin->date, pfdin->time, &ft))
             return -1;
