@@ -9346,8 +9346,8 @@ static void test_ShowWindow(void)
 /* 31 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
 /* 32 */ { SW_HIDE, TRUE, 0, WmHide_3, TRUE },
 /* 33 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
-/* 34 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq, TRUE }, /* what does this mean?! */
-/* 35 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq, TRUE },
+/* 34 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq, FALSE }, /* what does this mean?! */
+/* 35 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq, FALSE },
 /* 36 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
 /* 37 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_2, FALSE },
 /* 38 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },

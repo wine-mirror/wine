@@ -1052,8 +1052,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
             if (!wasVisible) return FALSE;
             showFlag = FALSE;
             swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE;
-            if (hwnd != GetActiveWindow())
-                swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+            if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
 
 	case SW_SHOWMINNOACTIVE:
@@ -1106,6 +1105,8 @@ static BOOL show_window( HWND hwnd, INT cmd )
             }
             if (style & WS_CHILD && !(swp & SWP_STATECHANGED)) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
+        default:
+            return wasVisible;
     }
 
     if ((showFlag != wasVisible || cmd == SW_SHOWNA) && cmd != SW_SHOWMAXIMIZED && !(swp & SWP_STATECHANGED))
