@@ -355,7 +355,7 @@ static LPNETRESOURCEW _copyNetResourceForEnumW(LPNETRESOURCEW lpNet)
         {
             size_t len;
 
-            memcpy(ret, lpNet, sizeof(ret));
+            *ret = *lpNet;
             ret->lpLocalName = ret->lpComment = ret->lpProvider = NULL;
             if (lpNet->lpRemoteName)
             {
