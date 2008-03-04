@@ -73,15 +73,41 @@ static ULONG WINAPI BITS_IEnumBackgroundCopyJobs_Release(
     return ref;
 }
 
-/*** IEnumBackgroundCopyJobs methods ***/
 static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Next(
     IEnumBackgroundCopyJobs* iface,
     ULONG celt,
     IBackgroundCopyJob **rgelt,
     ULONG *pceltFetched)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+    ULONG fetched;
+    ULONG i;
+    IBackgroundCopyJob *job;
+
+    fetched = min(celt, This->numJobs - This->indexJobs);
+    if (pceltFetched)
+        *pceltFetched = fetched;
+    else
+    {
+        /* We need to initialize this array if the caller doesn't request
+           the length because length_is will default to celt.  */
+        for (i = 0; i < celt; ++i)
+            rgelt[i] = NULL;
+
+        /* pceltFetched can only be NULL if celt is 1 */
+        if (celt != 1)
+            return E_INVALIDARG;
+    }
+
+    /* Fill in the array of objects */
+    for (i = 0; i < fetched; ++i)
+    {
+        job = This->jobs[This->indexJobs++];
+        IBackgroundCopyJob_AddRef(job);
+        rgelt[i] = job;
+    }
+
+    return fetched == celt ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Skip(

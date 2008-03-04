@@ -1,7 +1,7 @@
 /*
  * Unit test suite for Enum Background Copy Jobs Interface
  *
- * Copyright 2007 Google (Roy Shea)
+ * Copyright 2007 Google (Roy Shea, Dan Hipschman)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,7 @@ static const WCHAR test_displayNameB[] = {'T','e','s','t','B', 0};
 static IBackgroundCopyManager *test_manager;
 static IBackgroundCopyJob *test_jobA;
 static IBackgroundCopyJob *test_jobB;
+static ULONG test_jobCountB;
 static IEnumBackgroundCopyJobs *test_enumJobsA;
 static IEnumBackgroundCopyJobs *test_enumJobsB;
 static GUID test_jobIdA;
@@ -71,6 +72,10 @@ static BOOL setup(void)
 
     hres = IBackgroundCopyManager_EnumJobs(test_manager, 0, &test_enumJobsB);
     if(hres != S_OK)
+        return FALSE;
+
+    hres = IEnumBackgroundCopyJobs_GetCount(test_enumJobsB, &test_jobCountB);
+    if (hres != S_OK)
         return FALSE;
 
     return TRUE;
@@ -125,12 +130,118 @@ static void test_GetCount(void)
     ok(jobCountB == jobCountA + 1, "Got incorrect count\n");
 }
 
+/* Test Next with a NULL pceltFetched*/
+static void test_Next_walkListNull(void)
+{
+    HRESULT hres;
+    IBackgroundCopyJob *job;
+    ULONG i;
+
+    /* Fetch the available jobs */
+    for (i = 0; i < test_jobCountB; i++)
+    {
+        hres = IEnumBackgroundCopyJobs_Next(test_enumJobsB, 1, &job, NULL);
+        ok(hres == S_OK, "Next failed: %08x\n", hres);
+        if(hres != S_OK)
+        {
+            skip("Unable to get job from Next\n");
+            return;
+        }
+        IBackgroundCopyJob_Release(job);
+    }
+
+    /* Attempt to fetch one more than the number of available jobs */
+    hres = IEnumBackgroundCopyJobs_Next(test_enumJobsB, 1, &job, NULL);
+    ok(hres == S_FALSE, "Next off end of available jobs failed: %08x\n", hres);
+}
+
+/* Test Next */
+static void test_Next_walkList_1(void)
+{
+    HRESULT hres;
+    IBackgroundCopyJob *job;
+    ULONG fetched;
+    ULONG i;
+
+    /* Fetch the available jobs */
+    for (i = 0; i < test_jobCountB; i++)
+    {
+        fetched = 0;
+        hres = IEnumBackgroundCopyJobs_Next(test_enumJobsB, 1, &job, &fetched);
+        ok(hres == S_OK, "Next failed: %08x\n", hres);
+        if(hres != S_OK)
+        {
+            skip("Unable to get job from Next\n");
+            return;
+        }
+        ok(fetched == 1, "Next returned the incorrect number of jobs: %08x\n", hres);
+        IBackgroundCopyJob_Release(job);
+    }
+
+    /* Attempt to fetch one more than the number of available jobs */
+    fetched = 0;
+    hres = IEnumBackgroundCopyJobs_Next(test_enumJobsB, 1, &job, &fetched);
+    ok(hres == S_FALSE, "Next off end of available jobs failed: %08x\n", hres);
+    ok(fetched == 0, "Next returned the incorrect number of jobs: %08x\n", hres);
+}
+
+/* Test Next by requesting multiple files at a time */
+static void test_Next_walkList_2(void)
+{
+    HRESULT hres;
+    IBackgroundCopyJob **jobs;
+    ULONG fetched;
+    ULONG i;
+
+    jobs = HeapAlloc(GetProcessHeap(), 0, test_jobCountB * sizeof *jobs);
+    if (!jobs)
+    {
+        skip("Couldn't allocate memory\n");
+        return;
+    }
+
+    for (i = 0; i < test_jobCountB; i++)
+        jobs[i] = NULL;
+
+    fetched = 0;
+    hres = IEnumBackgroundCopyJobs_Next(test_enumJobsB, test_jobCountB, jobs, &fetched);
+    ok(hres == S_OK, "Next failed: %08x\n", hres);
+    if(hres != S_OK)
+    {
+        skip("Unable to get file from test_enumJobs\n");
+        return;
+    }
+    ok(fetched == test_jobCountB, "Next returned the incorrect number of jobs: %08x\n", hres);
+
+    for (i = 0; i < test_jobCountB; i++)
+    {
+        ok(jobs[i] != NULL, "Next returned NULL\n");
+        if (jobs[i])
+            IBackgroundCopyFile_Release(jobs[i]);
+    }
+}
+
+/* Test Next Error conditions */
+static void test_Next_errors(void)
+{
+    HRESULT hres;
+    IBackgroundCopyJob *jobs[2];
+
+    /* E_INVALIDARG: pceltFetched can ONLY be NULL if celt is 1 */
+    hres = IEnumBackgroundCopyJobs_Next(test_enumJobsB, 2, jobs, NULL);
+    ok(hres != S_OK, "Invalid call to Next succeeded: %08x\n", hres);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(enum_jobs)
 {
     static const test_t tests[] = {
         test_GetCount,
+        test_Next_walkListNull,
+        test_Next_walkList_1,
+        test_Next_walkList_2,
+        test_Next_errors,
         0
     };
     const test_t *test;
