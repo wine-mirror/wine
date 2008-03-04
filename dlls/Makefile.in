@@ -518,6 +518,7 @@ winsock.dll16:
 STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 
 IMPORT_SYMLINKS = \
+	libd3dx9.$(IMPLIBEXT) \
 	libwinspool.$(IMPLIBEXT)
 
 IMPORT_LIBS = \
@@ -553,6 +554,7 @@ IMPORT_LIBS = \
 	d3dim/libd3dim.$(IMPLIBEXT) \
 	d3drm/libd3drm.$(IMPLIBEXT) \
 	d3dx8/libd3dx8.$(IMPLIBEXT) \
+	d3dx9_36/libd3dx9.$(IMPLIBEXT) \
 	d3dxof/libd3dxof.$(IMPLIBEXT) \
 	dbghelp/libdbghelp.$(IMPLIBEXT) \
 	dciman32/libdciman32.$(IMPLIBEXT) \
@@ -738,6 +740,9 @@ d3drm/libd3drm.$(IMPLIBEXT): d3drm/d3drm.spec $(WINEBUILD)
 
 d3dx8/libd3dx8.$(IMPLIBEXT): d3dx8/d3dx8.spec $(WINEBUILD)
 	@cd d3dx8 && $(MAKE) libd3dx8.$(IMPLIBEXT)
+
+d3dx9_36/libd3dx9.$(IMPLIBEXT): d3dx9_36/d3dx9_36.spec $(WINEBUILD)
+	@cd d3dx9_36 && $(MAKE) libd3dx9.$(IMPLIBEXT)
 
 d3dxof/libd3dxof.$(IMPLIBEXT): d3dxof/d3dxof.spec $(WINEBUILD)
 	@cd d3dxof && $(MAKE) libd3dxof.$(IMPLIBEXT)
@@ -1056,6 +1061,9 @@ wsock32/libwsock32.$(IMPLIBEXT): wsock32/wsock32.spec $(WINEBUILD)
 
 wtsapi32/libwtsapi32.$(IMPLIBEXT): wtsapi32/wtsapi32.spec $(WINEBUILD)
 	@cd wtsapi32 && $(MAKE) libwtsapi32.$(IMPLIBEXT)
+
+libd3dx9.$(IMPLIBEXT): d3dx9_36/libd3dx9.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.$(IMPLIBEXT) $@
 
 libwinspool.$(IMPLIBEXT): winspool.drv/libwinspool.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.$(IMPLIBEXT) $@

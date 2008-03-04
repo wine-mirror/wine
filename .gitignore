@@ -109,6 +109,7 @@ dlls/d3dx8/libd3dx8.def
 dlls/d3dx8/tests/*.ok
 dlls/d3dx8/tests/d3dx8_crosstest.exe
 dlls/d3dx8/tests/testlist.c
+dlls/d3dx9_36/libd3dx9.def
 dlls/d3dxof/libd3dxof.def
 dlls/d3dxof/version.res
 dlls/dbghelp/libdbghelp.def
@@ -222,6 +223,7 @@ dlls/kernel32/tests/testlist.c
 dlls/kernel32/version16.res
 dlls/keyboard.drv16
 dlls/krnl386.exe16
+dlls/libd3dx9.def
 dlls/libwinspool.def
 dlls/localspl/localspl.res
 dlls/localspl/tests/*.ok
