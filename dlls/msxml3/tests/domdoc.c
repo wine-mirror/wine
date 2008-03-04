@@ -2316,6 +2316,7 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMElement_get_xml(pElement, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( !lstrcmpW( str, szElementXML3 ), "incorrect element xml\n");
+                SysFreeString(str);
 
                 IXMLDOMElement_Release(pElement);
             }
@@ -2391,18 +2392,18 @@ static void test_xmlTypes(void)
                 SysFreeString(str);
 
                 /* test length property */
-                hr = IXMLDOMCDATASection_get_length(pComment, &len);
+                hr = IXMLDOMCDATASection_get_length(pCDataSec, &len);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok(len == 21, "expected 21 got %ld\n", len);
 
                 /* test get nodeValue */
-                hr = IXMLDOMCDATASection_get_nodeValue(pComment, &var);
+                hr = IXMLDOMCDATASection_get_nodeValue(pCDataSec, &var);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
                 VariantClear(&var);
 
                 /* test get data */
-                hr = IXMLDOMCDATASection_get_data(pComment, &str);
+                hr = IXMLDOMCDATASection_get_data(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
                 SysFreeString(str);
@@ -2470,7 +2471,7 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, _bstr_("documentfragment") ), "incorrect nodeTypeString string\n");
                 SysFreeString(str);
 
-                IXMLDOMDocumentFragment_Release(pCDataSec);
+                IXMLDOMDocumentFragment_Release(pDocFrag);
             }
 
             /* Entity References */
@@ -2691,19 +2692,6 @@ static void test_nodeTypeTests( void )
                 IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
 
                 hr = IXMLDOMElement_put_dataType(pElement, _bstr_("I1") );
-                ok(hr == S_OK, "ret %08x\n", hr );
-
-                IXMLDOMElement_Release(pElement);
-            }
-
-            /* Byte */
-            hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing_byte"), &pElement);
-            ok(hr == S_OK, "ret %08x\n", hr );
-            if(hr == S_OK)
-            {
-                IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pElement, NULL);
-
-                hr = IXMLDOMElement_put_dataType(pElement, _bstr_("byte") );
                 ok(hr == S_OK, "ret %08x\n", hr );
 
                 IXMLDOMElement_Release(pElement);
