@@ -596,6 +596,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     WND *wndPtr;
     HWND *list;
     HMENU menu = 0, sys_menu;
+    HWND icon_title;
 
     TRACE("%p\n", hwnd );
 
@@ -627,8 +628,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 
     /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
 
-    WINPOS_CheckInternalPos( hwnd );
-
     /* free resources associated with the window */
 
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
@@ -637,8 +636,10 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     sys_menu = wndPtr->hSysMenu;
     free_dce( wndPtr->dce, hwnd );
     wndPtr->dce = NULL;
+    icon_title = wndPtr->icon_title;
     WIN_ReleasePtr( wndPtr );
 
+    if (icon_title) DestroyWindow( icon_title );
     if (menu) DestroyMenu( menu );
     if (sys_menu) DestroyMenu( sys_menu );
 

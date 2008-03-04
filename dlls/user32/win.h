@@ -45,6 +45,10 @@ typedef struct tagWND
     HINSTANCE      hInstance;     /* Window hInstance (from CreateWindow) */
     RECT           rectClient;    /* Client area rel. to parent client area */
     RECT           rectWindow;    /* Whole window rel. to parent client area */
+    RECT           normal_rect;   /* Normal window rect saved when maximized/minimized */
+    POINT          min_pos;       /* Position for minimized window */
+    POINT          max_pos;       /* Position for maximized window */
+    HWND           icon_title;    /* Icon title window */
     LPWSTR         text;          /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
@@ -113,7 +117,6 @@ extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos, POIN
                                   POINT *maxTrack ) DECLSPEC_HIDDEN;
 extern LONG WINPOS_HandleWindowPosChanging(HWND hwnd, WINDOWPOS *winpos) DECLSPEC_HIDDEN;
 extern HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest ) DECLSPEC_HIDDEN;
-extern void WINPOS_CheckInternalPos( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void WINPOS_ActivateOtherWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect ) DECLSPEC_HIDDEN;
 
