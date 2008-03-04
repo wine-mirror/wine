@@ -33,9 +33,9 @@
 #include "winuser.h"
 
 #include "wine/debug.h"
-#include "explorer_private.h"
+#include "mountmgr.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(explorer);
+WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 #ifdef HAVE_DISKARBITRATION_DISKARBITRATION_H
 
@@ -72,7 +72,7 @@ static void appeared_callback( DADiskRef disk, void *context )
             type = "cdrom";
     }
 
-    WINE_TRACE( "got mount notification for '%s' on '%s'\n", device, mount_point );
+    TRACE( "got mount notification for '%s' on '%s'\n", device, mount_point );
 
     add_dos_device( device, device, mount_point, type );
 done:
@@ -101,7 +101,7 @@ static void disappeared_callback( DADiskRef disk, void *context )
     strcpy( device, "/dev/r" );
     CFStringGetCString( ref, device + 6, sizeof(device) - 6, kCFStringEncodingASCII );
 
-    WINE_TRACE( "got unmount notification for '%s'\n", device );
+    TRACE( "got unmount notification for '%s'\n", device );
 
     remove_dos_device( device );
 done:
@@ -139,7 +139,7 @@ void initialize_diskarbitration(void)
 
 void initialize_diskarbitration(void)
 {
-    WINE_TRACE( "Skipping, Disk Arbitration support not compiled in\n" );
+    TRACE( "Skipping, Disk Arbitration support not compiled in\n" );
 }
 
 #endif  /* HAVE_DISKARBITRATION_DISKARBITRATION_H */

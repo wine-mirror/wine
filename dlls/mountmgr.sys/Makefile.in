@@ -4,9 +4,15 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mountmgr.sys
 IMPORTS   = advapi32 ntoskrnl.exe kernel32 ntdll
+DELAYIMPORTS = user32
 EXTRADLLFLAGS = -Wb,--subsystem,native
+EXTRADEFS = @HALINCL@
+EXTRALIBS = @DISKARBITRATIONLIB@ -luuid
 
 C_SRCS = \
+	device.c \
+	diskarb.c \
+	hal.c \
 	mountmgr.c
 
 @MAKE_DLL_RULES@

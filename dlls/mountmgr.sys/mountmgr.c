@@ -38,6 +38,7 @@
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "mountmgr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
@@ -492,6 +493,9 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
         FIXME( "failed to create device error %x\n", status );
         return status;
     }
+
+    initialize_hal();
+    initialize_diskarbitration();
 
     RtlInitUnicodeString( &nameW, harddiskW );
     status = IoCreateDriver( &nameW, harddisk_driver_entry );

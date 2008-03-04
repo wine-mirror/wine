@@ -37,7 +37,7 @@
 #include "wine/list.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(explorer);
+WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 struct dos_drive
 {
@@ -72,8 +72,8 @@ static void send_notify( int drive, int code )
     info.dbcv_reserved   = 0;
     info.dbcv_unitmask   = 1 << drive;
     info.dbcv_flags      = DBTF_MEDIA;
-    SendMessageTimeoutW( HWND_BROADCAST, WM_DEVICECHANGE, code, (LPARAM)&info,
-                         SMTO_ABORTIFHUNG, 0, &result );
+    result = BroadcastSystemMessageW( BSF_FORCEIFHUNG|BSF_QUERY, NULL,
+                                      WM_DEVICECHANGE, code, (LPARAM)&info );
 }
 
 static inline int is_valid_device( struct stat *st )
@@ -213,7 +213,7 @@ found:
 
         set_mount_point( drive, mount_point );
 
-        WINE_TRACE( "added device %c: udi %s for %s on %s type %s\n",
+        TRACE( "added device %c: udi %s for %s on %s type %s\n",
                     'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),
                     wine_dbgstr_a(mount_point), wine_dbgstr_a(type) );
 

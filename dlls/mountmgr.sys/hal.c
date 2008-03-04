@@ -36,9 +36,9 @@
 #include "wine/library.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "explorer_private.h"
+#include "mountmgr.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(explorer);
+WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 #ifdef SONAME_LIBHAL
 
@@ -98,7 +98,7 @@ static BOOL load_functions(void)
     return TRUE;
 
 failed:
-    WINE_WARN( "failed to load HAL support: %s\n", error );
+    WARN( "failed to load HAL support: %s\n", error );
     return FALSE;
 }
 
@@ -153,7 +153,7 @@ static void removed_device( LibHalContext *ctx, const char *udi )
 {
     DBusError error;
 
-    WINE_TRACE( "removed %s\n", wine_dbgstr_a(udi) );
+    TRACE( "removed %s\n", wine_dbgstr_a(udi) );
 
     if (remove_dos_device( udi ))
     {
@@ -167,7 +167,7 @@ static void removed_device( LibHalContext *ctx, const char *udi )
 static void property_modified (LibHalContext *ctx, const char *udi,
                                const char *key, dbus_bool_t is_removed, dbus_bool_t is_added)
 {
-    WINE_TRACE( "udi %s key %s %s\n", wine_dbgstr_a(udi), wine_dbgstr_a(key),
+    TRACE( "udi %s key %s %s\n", wine_dbgstr_a(udi), wine_dbgstr_a(key),
                 is_added ? "added" : is_removed ? "removed" : "modified" );
 
     if (!strcmp( key, "volume.mount_point" )) new_device( ctx, udi );
@@ -187,7 +187,7 @@ static DWORD WINAPI hal_thread( void *arg )
     p_dbus_error_init( &error );
     if (!(dbc = p_dbus_bus_get( DBUS_BUS_SYSTEM, &error )))
     {
-        WINE_WARN( "failed to get system dbus connection: %s\n", error.message );
+        WARN( "failed to get system dbus connection: %s\n", error.message );
         p_dbus_error_free( &error );
         return 1;
     }
@@ -199,7 +199,7 @@ static DWORD WINAPI hal_thread( void *arg )
 
     if (!p_libhal_ctx_init( ctx, &error ))
     {
-        WINE_WARN( "HAL context init failed: %s\n", error.message );
+        WARN( "HAL context init failed: %s\n", error.message );
         p_dbus_error_free( &error );
         return 1;
     }
@@ -218,7 +218,7 @@ static DWORD WINAPI hal_thread( void *arg )
     }
     __EXCEPT( assert_fault )
     {
-        WINE_WARN( "dbus assertion failure, disabling HAL support\n" );
+        WARN( "dbus assertion failure, disabling HAL support\n" );
         return 1;
     }
     __ENDTRY;
@@ -243,7 +243,7 @@ void initialize_hal(void)
 
 void initialize_hal(void)
 {
-    WINE_TRACE( "Skipping, HAL support not compiled in\n" );
+    TRACE( "Skipping, HAL support not compiled in\n" );
 }
 
 #endif  /* SONAME_LIBHAL */
