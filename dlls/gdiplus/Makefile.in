@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdiplus.dll
-IMPORTLIB = libgdiplus.$(IMPLIBEXT)
+IMPORTLIB = gdiplus
 IMPORTS   = shlwapi oleaut32 ole32 user32 gdi32 kernel32
 EXTRALIBS = -luuid
 

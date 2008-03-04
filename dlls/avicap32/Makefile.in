@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = avicap32.dll
-IMPORTLIB = libavicap32.$(IMPLIBEXT)
+IMPORTLIB = avicap32
 IMPORTS   = kernel32 ntdll
 
 C_SRCS = avicap32_main.c

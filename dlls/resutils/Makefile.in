@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = resutils.dll
-IMPORTLIB = libresutils.$(IMPLIBEXT)
+IMPORTLIB = resutils
 IMPORTS   = kernel32
 
 C_SRCS = \

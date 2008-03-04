@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wtsapi32.dll
-IMPORTLIB = libwtsapi32.$(IMPLIBEXT)
+IMPORTLIB = wtsapi32
 IMPORTS   = kernel32
 
 C_SRCS = \

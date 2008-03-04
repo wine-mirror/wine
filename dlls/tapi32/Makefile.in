@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = tapi32.dll
-IMPORTLIB = libtapi32.$(IMPLIBEXT)
+IMPORTLIB = tapi32
 IMPORTS   = advapi32 kernel32
 
 C_SRCS = \

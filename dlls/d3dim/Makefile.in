@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dim.dll
-IMPORTLIB = libd3dim.$(IMPLIBEXT)
+IMPORTLIB = d3dim
 IMPORTS   = kernel32
 
 C_SRCS = d3dim_main.c

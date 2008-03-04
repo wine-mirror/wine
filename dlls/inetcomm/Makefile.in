@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = inetcomm.dll
-IMPORTLIB = libinetcomm.$(IMPLIBEXT)
+IMPORTLIB = inetcomm
 IMPORTS   = ole32 ws2_32 user32 advapi32 kernel32
 EXTRALIBS = -luuid
 

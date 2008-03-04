@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = url.dll
-IMPORTLIB = liburl.$(IMPLIBEXT)
+IMPORTLIB = url
 IMPORTS   = shell32 shlwapi kernel32
 
 C_SRCS = url_main.c

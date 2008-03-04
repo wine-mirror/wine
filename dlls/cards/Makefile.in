@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cards.dll
-IMPORTLIB = libcards.$(IMPLIBEXT)
+IMPORTLIB = cards
 IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = \

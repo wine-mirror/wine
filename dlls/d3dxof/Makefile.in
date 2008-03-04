@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dxof.dll
-IMPORTLIB = libd3dxof.$(IMPLIBEXT)
+IMPORTLIB = d3dxof
 IMPORTS   = ole32 user32 advapi32 kernel32
 EXTRALIBS = -ldxguid -luuid
 

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dplay.dll
-IMPORTLIB = libdplay.$(IMPLIBEXT)
+IMPORTLIB = dplay
 IMPORTS   = dplayx kernel32
 
 RC_SRCS = version.rc

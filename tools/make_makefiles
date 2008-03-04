@@ -405,7 +405,7 @@ sub update_dlls(@)
 
         if (defined $makefile{"IMPORTLIB"})
         {
-            if ($makefile{"IMPORTLIB"} =~ /^([a-zA-Z0-9_.]+)\.\$\(IMPLIBEXT\)/)
+            if ($makefile{"IMPORTLIB"} =~ /^([a-zA-Z0-9_.]+)/)
             {
                 $importlibs{$module} = $1;
             }
@@ -511,12 +511,12 @@ sub update_dlls(@)
     {
         my $dir = $directories{$mod};
         my $lib = $importlibs{$mod};
-        if ($lib ne "lib" . $dir) { push @lib_symlinks, $mod; }
+        if ($lib ne $dir) { push @lib_symlinks, $mod; }
     }
     $text .= "IMPORT_SYMLINKS =";
     foreach my $mod (sort @lib_symlinks)
     {
-        $text .= sprintf " \\\n\t%s.\$(IMPLIBEXT)", $importlibs{$mod};
+        $text .= sprintf " \\\n\tlib%s.\$(IMPLIBEXT)", $importlibs{$mod};
     }
 
     $text .= "\n\nIMPORT_LIBS = \\\n\t\$(IMPORT_SYMLINKS)";
@@ -526,9 +526,9 @@ sub update_dlls(@)
     }
     foreach my $mod (sort keys %importlibs)
     {
-        $text .= " \\\n\t$directories{$mod}/$importlibs{$mod}.\$(IMPLIBEXT)";
+        $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.\$(IMPLIBEXT)";
         next unless defined $static_implibs{$mod};
-        $text .= " \\\n\t$directories{$mod}/$importlibs{$mod}.\$(STATIC_IMPLIBEXT)";
+        $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.\$(STATIC_IMPLIBEXT)";
     }
     $text .= "\n\n";
     $text .= "implib: \$(IMPORT_LIBS)\n\n";
@@ -540,16 +540,16 @@ sub update_dlls(@)
         my $lib = $importlibs{$mod};
         my $spec = $mod;
         $spec =~ s/\.dll$//;
-        $text .= sprintf "%s/%s.\$(IMPLIBEXT): %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
-        $text .= sprintf "\t\@cd %s && \$(MAKE) %s.\$(IMPLIBEXT)\n\n", $dir, $lib;
+        $text .= sprintf "%s/lib%s.\$(IMPLIBEXT): %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
+        $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(IMPLIBEXT)\n\n", $dir, $lib;
         next unless $static_implibs{$mod};
-        $text .= sprintf "%s/%s.\$(STATIC_IMPLIBEXT): dummy\n", $dir, $lib, $dir, $spec;
-        $text .= sprintf "\t\@cd %s && \$(MAKE) %s.\$(STATIC_IMPLIBEXT)\n\n", $dir, $lib;
+        $text .= sprintf "%s/lib%s.\$(STATIC_IMPLIBEXT): dummy\n", $dir, $lib, $dir, $spec;
+        $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(STATIC_IMPLIBEXT)\n\n", $dir, $lib;
     }
     foreach my $mod (sort @lib_symlinks)
     {
         my $dir = $directories{$mod};
-        my $lib = $importlibs{$mod} . ".\$(IMPLIBEXT)";
+        my $lib = "lib" . $importlibs{$mod} . ".\$(IMPLIBEXT)";
         $text .= sprintf "%s: %s/%s\n", $lib, $dir, $lib;
         $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s \$@\n\n", $dir, $lib;
     }
@@ -576,7 +576,7 @@ sub update_dlls(@)
 
     foreach my $mod (sort @lib_symlinks)
     {
-        push @ignores, "dlls/$importlibs{$mod}.def";
+        push @ignores, "dlls/lib$importlibs{$mod}.def";
     }
     foreach my $mod (sort keys %directories)
     {
@@ -585,7 +585,7 @@ sub update_dlls(@)
     }
     foreach my $mod (sort keys %importlibs)
     {
-        push @ignores, "dlls/$directories{$mod}/$importlibs{$mod}.def";
+        push @ignores, "dlls/$directories{$mod}/lib$importlibs{$mod}.def";
     }
 
     return @ignores;

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dpnet.dll
-IMPORTLIB = libdpnet.$(IMPLIBEXT)
+IMPORTLIB = dpnet
 IMPORTS   = ole32 user32 advapi32 kernel32
 EXTRALIBS = -ldxguid -luuid
 

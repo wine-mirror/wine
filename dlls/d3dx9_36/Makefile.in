@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dx9_36.dll
-IMPORTLIB = libd3dx9.$(IMPLIBEXT)
+IMPORTLIB = d3dx9
 IMPORTS   = d3d9 d3dx8 kernel32
 
 C_SRCS = \
@@ -18,6 +18,6 @@ libd3dx9.a: $(SPEC_DEF)
 	$(DLLTOOL) -k -l $@ -d $(SPEC_DEF)
 
 clean::
-	$(RM) $(IMPORTLIB)
+	$(RM) $(IMPORTLIBFILE)
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

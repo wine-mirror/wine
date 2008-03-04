@@ -20,7 +20,8 @@ WIN16_FILES = $(SPEC_SRCS16:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
 ALL_OBJS    = @WIN16_FILES@ $(OBJS) $(RC_SRCS:.rc=.res)
 ALL_LIBS    = $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
-STATICIMPLIB= $(IMPORTLIB:.def=.def.a)
+IMPORTLIBFILE = $(IMPORTLIB:%=lib%.$(IMPLIBEXT))
+STATICIMPLIB  = $(IMPORTLIBFILE:.def=.def.a)
 DLL_LDPATH  = -L$(DLLDIR) $(DELAYIMPORTS:%=-L$(DLLDIR)/%) $(IMPORTS:%=-L$(DLLDIR)/%)
 INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(datadir)/wine
 
@@ -42,7 +43,7 @@ $(MODULE): $(RCOBJS) $(OBJS) $(SPEC_DEF) Makefile.in
 
 .PHONY: implib $(IMPLIB_SRCS:%=__static_implib__%)
 
-all implib: $(IMPORTLIB) $(IMPLIB_SRCS:%=__static_implib__%)
+all implib: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%)
 
 $(IMPLIB_SRCS:%=__static_implib__%): $(STATICIMPLIB)
 
@@ -84,8 +85,8 @@ doc-sgml: $(C_SRCS) dummy
 .PHONY: install_static_implib_def install_static_implib_a
 .PHONY: $(IMPORTLIB:%=_install_/%) $(IMPLIB_SRCS:%=_install_static_implib_/%)
 
-$(IMPORTLIB:%=_install_/%): $(IMPORTLIB) $(DESTDIR)$(dlldir) dummy
-	$(INSTALL_DATA) $(IMPORTLIB) $(DESTDIR)$(dlldir)/$(IMPORTLIB)
+$(IMPORTLIB:%=_install_/%): $(IMPORTLIBFILE) $(DESTDIR)$(dlldir) dummy
+	$(INSTALL_DATA) $(IMPORTLIBFILE) $(DESTDIR)$(dlldir)/$(IMPORTLIBFILE)
 
 install_static_implib_def: $(STATICIMPLIB) $(DESTDIR)$(dlldir) dummy
 	$(INSTALL_DATA) $(STATICIMPLIB) $(DESTDIR)$(dlldir)/$(STATICIMPLIB)
@@ -100,7 +101,7 @@ install install-lib:: $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir) dummy
 install install-dev:: $(IMPORTLIB:%=_install_/%) $(IMPLIB_SRCS:%=_install_static_implib_/%)
 
 uninstall::
-	-cd $(DESTDIR)$(dlldir) && $(RM) $(MODULE)$(DLLEXT) $(IMPORTLIB) $(STATICIMPLIB)
+	-cd $(DESTDIR)$(dlldir) && $(RM) $(MODULE)$(DLLEXT) $(IMPORTLIBFILE) $(STATICIMPLIB)
 
 # Misc. rules
 

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wintab32.dll
-IMPORTLIB = libwintab32.$(IMPLIBEXT)
+IMPORTLIB = wintab32
 IMPORTS   = user32 kernel32
 
 C_SRCS = \

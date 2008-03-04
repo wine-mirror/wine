@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mswsock.dll
-IMPORTLIB = libmswsock.$(IMPLIBEXT)
+IMPORTLIB = mswsock
 IMPORTS   = ws2_32 kernel32
 
 C_SRCS = \

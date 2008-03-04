@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = secur32.dll
-IMPORTLIB = libsecur32.$(IMPLIBEXT)
+IMPORTLIB = secur32
 IMPORTS   = netapi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = crypt32
 

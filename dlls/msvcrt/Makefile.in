@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcrt.dll
-IMPORTLIB = libmsvcrt.$(IMPLIBEXT)
+IMPORTLIB = msvcrt
 IMPORTS   = kernel32 ntdll
 DELAYIMPORTS = user32
 

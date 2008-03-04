@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winnls32.dll
-IMPORTLIB = libwinnls32.$(IMPLIBEXT)
+IMPORTLIB = winnls32
 IMPORTS   = kernel32
 
 C_SRCS = \

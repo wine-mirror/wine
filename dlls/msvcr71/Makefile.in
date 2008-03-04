@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcr71.dll
-IMPORTLIB = libmsvcr71.$(IMPLIBEXT)
+IMPORTLIB = msvcr71
 IMPORTS   = msvcrt kernel32
 
 C_SRCS = \

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winscard.dll
-IMPORTLIB = libwinscard.$(IMPLIBEXT)
+IMPORTLIB = winscard
 IMPORTS   = kernel32
 
 C_SRCS = \

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdsapi.dll
-IMPORTLIB = libntdsapi.$(IMPLIBEXT)
+IMPORTLIB = ntdsapi
 IMPORTS   = user32 kernel32
 
 C_SRCS = \

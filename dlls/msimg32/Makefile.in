@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msimg32.dll
-IMPORTLIB = libmsimg32.$(IMPLIBEXT)
+IMPORTLIB = msimg32
 IMPORTS   = gdi32 kernel32
 
 C_SRCS = msimg32_main.c

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = iphlpapi.dll
-IMPORTLIB = libiphlpapi.$(IMPLIBEXT)
+IMPORTLIB = iphlpapi
 IMPORTS   = advapi32 kernel32
 EXTRALIBS = @RESOLVLIBS@
 

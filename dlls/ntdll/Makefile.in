@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdll.dll
-IMPORTLIB = libntdll.$(IMPLIBEXT)
+IMPORTLIB = ntdll
 EXTRALIBS = @IOKITLIB@
 EXTRADLLFLAGS = -Wl,--image-base,0x7bc00000
 

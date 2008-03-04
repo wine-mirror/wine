@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shfolder.dll
-IMPORTLIB = libshfolder.$(IMPLIBEXT)
+IMPORTLIB = shfolder
 IMPORTS   = shell32 kernel32
 
 RC_SRCS = version.rc

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wldap32.dll
-IMPORTLIB = libwldap32.$(IMPLIBEXT)
+IMPORTLIB = wldap32
 IMPORTS   = user32 kernel32
 EXTRALIBS = @LDAPLIBS@
 

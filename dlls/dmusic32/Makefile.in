@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmusic32.dll
-IMPORTLIB = libdmusic32.$(IMPLIBEXT)
+IMPORTLIB = dmusic32
 IMPORTS   = kernel32
 EXTRALIBS = -luuid
 

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olecli32.dll
-IMPORTLIB = libolecli32.$(IMPLIBEXT)
+IMPORTLIB = olecli32
 IMPORTS   = ole32 gdi32 kernel32
 
 C_SRCS = \

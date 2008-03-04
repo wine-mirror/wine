@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = sti.dll
-IMPORTLIB = libsti.$(IMPLIBEXT)
+IMPORTLIB = sti
 IMPORTS   = kernel32
 
 C_SRCS = sti_main.c

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olesvr32.dll
-IMPORTLIB = libolesvr32.$(IMPLIBEXT)
+IMPORTLIB = olesvr32
 IMPORTS   = kernel32
 
 C_SRCS = \

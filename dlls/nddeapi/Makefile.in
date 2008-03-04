@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = nddeapi.dll
-IMPORTLIB = libnddeapi.$(IMPLIBEXT)
+IMPORTLIB = nddeapi
 IMPORTS   = kernel32
 
 C_SRCS = \

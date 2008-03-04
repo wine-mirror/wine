@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wnaspi32.dll
-IMPORTLIB = libwnaspi32.$(IMPLIBEXT)
+IMPORTLIB = wnaspi32
 IMPORTS   = advapi32 kernel32
 
 C_SRCS = \

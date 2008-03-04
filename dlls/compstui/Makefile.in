@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = compstui.dll
-IMPORTLIB = libcompstui.$(IMPLIBEXT)
+IMPORTLIB = compstui
 IMPORTS   = kernel32
 
 C_SRCS = \

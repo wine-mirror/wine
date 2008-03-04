@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mprapi.dll
-IMPORTLIB = libmprapi.$(IMPLIBEXT)
+IMPORTLIB = mprapi
 IMPORTS   = kernel32
 
 C_SRCS = \

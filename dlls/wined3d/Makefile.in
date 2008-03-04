@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wined3d.dll
-IMPORTLIB = libwined3d.$(IMPLIBEXT)
+IMPORTLIB = wined3d
 IMPORTS   = user32 gdi32 advapi32 kernel32
 EXTRALIBS = -luuid
 

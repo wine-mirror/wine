@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dnsapi.dll
-IMPORTLIB = libdnsapi.$(IMPLIBEXT)
+IMPORTLIB = dnsapi
 IMPORTS   = netapi32 kernel32
 EXTRALIBS = @RESOLVLIBS@
 

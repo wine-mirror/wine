@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = clusapi.dll
-IMPORTLIB = libclusapi.$(IMPLIBEXT)
+IMPORTLIB = clusapi
 IMPORTS   = kernel32
 
 C_SRCS = \

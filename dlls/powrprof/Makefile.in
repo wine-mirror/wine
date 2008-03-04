@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = powrprof.dll
-IMPORTLIB = libpowrprof.$(IMPLIBEXT)
+IMPORTLIB = powrprof
 IMPORTS   = advapi32 kernel32 ntdll
 
 C_SRCS = powrprof.c

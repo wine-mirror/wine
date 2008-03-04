@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = psapi.dll
-IMPORTLIB = libpsapi.$(IMPLIBEXT)
+IMPORTLIB = psapi
 IMPORTS   = kernel32 ntdll
 
 C_SRCS = \

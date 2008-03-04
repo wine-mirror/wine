@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mapi32.dll
-IMPORTLIB = libmapi32.$(IMPLIBEXT)
+IMPORTLIB = mapi32
 IMPORTS   = shlwapi shell32 kernel32
 EXTRALIBS = -luuid
 

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dx8.dll
-IMPORTLIB = libd3dx8.$(IMPLIBEXT)
+IMPORTLIB = d3dx8
 IMPORTS   = kernel32
 EXTRALIBS = -ldxguid -luuid
 

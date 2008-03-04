@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = serialui.dll
-IMPORTLIB = libserialui.$(IMPLIBEXT)
+IMPORTLIB = serialui
 IMPORTS   = user32 advapi32 kernel32
 
 C_SRCS = \

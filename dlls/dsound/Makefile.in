@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dsound.dll
-IMPORTLIB = libdsound.$(IMPLIBEXT)
+IMPORTLIB = dsound
 IMPORTS   = winmm ole32 user32 advapi32 kernel32 ntdll
 EXTRALIBS = -ldxguid -luuid
 

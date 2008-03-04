@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hid.dll
-IMPORTLIB = libhid.$(IMPLIBEXT)
+IMPORTLIB = hid
 IMPORTS   = kernel32
 
 C_SRCS = \

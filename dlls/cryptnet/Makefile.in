@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cryptnet.dll
-IMPORTLIB = libcryptnet.$(IMPLIBEXT)
+IMPORTLIB = cryptnet
 IMPORTS   = crypt32 kernel32
 DELAYIMPORTS = wininet
 

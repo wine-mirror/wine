@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msdmo.dll
-IMPORTLIB = libmsdmo.$(IMPLIBEXT)
+IMPORTLIB = msdmo
 IMPORTS   = ole32 user32 advapi32 kernel32 
 EXTRALIBS = -luuid
 

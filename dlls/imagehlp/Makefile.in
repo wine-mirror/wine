@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = imagehlp.dll
-IMPORTLIB = libimagehlp.$(IMPLIBEXT)
+IMPORTLIB = imagehlp
 IMPORTS   = dbghelp kernel32 ntdll
 
 C_SRCS = \

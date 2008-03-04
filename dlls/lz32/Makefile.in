@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = lz32.dll
-IMPORTLIB = liblz32.$(IMPLIBEXT)
+IMPORTLIB = lz32
 IMPORTS   = kernel32
 
 RC_SRCS  = version.rc

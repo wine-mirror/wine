@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wow32.dll
-IMPORTLIB = libwow32.$(IMPLIBEXT)
+IMPORTLIB = wow32
 IMPORTS   = kernel32
 
 C_SRCS = wow_main.c

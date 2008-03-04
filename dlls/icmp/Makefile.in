@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = icmp.dll
-IMPORTLIB = libicmp.$(IMPLIBEXT)
+IMPORTLIB = icmp
 IMPORTS   = kernel32
 
 C_SRCS = icmp_main.c

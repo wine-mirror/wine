@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = oleacc.dll
-IMPORTLIB = liboleacc.$(IMPLIBEXT)
+IMPORTLIB = oleacc
 IMPORTS   = kernel32
 
 C_SRCS = \

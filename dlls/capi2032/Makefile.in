@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = capi2032.dll
-IMPORTLIB = libcapi2032.$(IMPLIBEXT)
+IMPORTLIB = capi2032
 IMPORTS   = kernel32
 
 C_SRCS = cap20wxx.c

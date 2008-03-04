@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cfgmgr32.dll
-IMPORTLIB = libcfgmgr32.$(IMPLIBEXT)
+IMPORTLIB = cfgmgr32
 IMPORTS   = setupapi kernel32
 
 @MAKE_DLL_RULES@

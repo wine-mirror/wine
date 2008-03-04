@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winedos.dll
-IMPORTLIB = libwinedos.$(IMPLIBEXT)
+IMPORTLIB = winedos
 IMPORTS   = user32 kernel32 ntdll
 
 SPEC_SRCS16 = wprocs.spec

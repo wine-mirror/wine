@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = odbccp32.dll
-IMPORTLIB = libodbccp32.$(IMPLIBEXT)
+IMPORTLIB = odbccp32
 IMPORTS   = advapi32 kernel32
 EXTRALIBS = -luuid
 

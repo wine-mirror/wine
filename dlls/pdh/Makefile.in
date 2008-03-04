@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = pdh.dll
-IMPORTLIB = libpdh.$(IMPLIBEXT)
+IMPORTLIB = pdh
 IMPORTS   = kernel32
 
 C_SRCS = \

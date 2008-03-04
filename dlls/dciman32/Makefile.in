@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dciman32.dll
-IMPORTLIB = libdciman32.$(IMPLIBEXT)
+IMPORTLIB = dciman32
 IMPORTS   = kernel32
 
 C_SRCS = dciman_main.c
