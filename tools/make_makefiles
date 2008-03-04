@@ -526,12 +526,9 @@ sub update_dlls(@)
     }
     foreach my $mod (sort keys %importlibs)
     {
-        my $dir = $directories{$mod};
-        my $def = $mod;
-        $def =~ s/\.(dll|drv)$//;
-        $text .= sprintf " \\\n\t%s/lib%s.\$(IMPLIBEXT)", $dir, $def;
+        $text .= " \\\n\t$directories{$mod}/$importlibs{$mod}.\$(IMPLIBEXT)";
         next unless defined $static_implibs{$mod};
-        $text .= sprintf " \\\n\t%s/lib%s.\$(STATIC_IMPLIBEXT)", $dir, $def
+        $text .= " \\\n\t$directories{$mod}/$importlibs{$mod}.\$(STATIC_IMPLIBEXT)";
     }
     $text .= "\n\n";
     $text .= "implib: \$(IMPORT_LIBS)\n\n";
@@ -588,10 +585,7 @@ sub update_dlls(@)
     }
     foreach my $mod (sort keys %importlibs)
     {
-        my $dir = $directories{$mod};
-        my $def = $mod;
-        $def =~ s/\.(dll|drv)$//;
-        push @ignores, "dlls/$dir/lib$def.def";
+        push @ignores, "dlls/$directories{$mod}/$importlibs{$mod}.def";
     }
 
     return @ignores;
