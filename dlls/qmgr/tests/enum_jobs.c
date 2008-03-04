@@ -232,6 +232,61 @@ static void test_Next_errors(void)
     ok(hres != S_OK, "Invalid call to Next succeeded: %08x\n", hres);
 }
 
+/* Test skipping through the jobs in a list */
+static void test_Skip_walkList(void)
+{
+    HRESULT hres;
+    ULONG i;
+
+    for (i = 0; i < test_jobCountB; i++)
+    {
+        hres = IEnumBackgroundCopyJobs_Skip(test_enumJobsB, 1);
+        ok(hres == S_OK, "Skip failed: %08x\n", hres);
+        if(hres != S_OK)
+        {
+            skip("Unable to propely Skip jobs\n");
+            return;
+        }
+    }
+
+    hres = IEnumBackgroundCopyJobs_Skip(test_enumJobsB, 1);
+    ok(hres == S_FALSE, "Skip expected end of list: %08x\n", hres);
+}
+
+/* Test skipping off the end of the list */
+static void test_Skip_offEnd(void)
+{
+    HRESULT hres;
+
+    hres = IEnumBackgroundCopyJobs_Skip(test_enumJobsB, test_jobCountB + 1);
+    ok(hres == S_FALSE, "Skip expected end of list: %08x\n", hres);
+}
+
+/* Test reset */
+static void test_Reset(void)
+{
+    HRESULT hres;
+
+    hres = IEnumBackgroundCopyJobs_Skip(test_enumJobsB, test_jobCountB);
+    ok(hres == S_OK, "Skip failed: %08x\n", hres);
+    if (hres != S_OK)
+    {
+        skip("Skip failed\n");
+        return;
+    }
+
+    hres = IEnumBackgroundCopyJobs_Reset(test_enumJobsB);
+    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+    if(hres != S_OK)
+    {
+        skip("Unable to Reset enumerator\n");
+        return;
+    }
+
+    hres = IEnumBackgroundCopyJobs_Skip(test_enumJobsB, test_jobCountB);
+    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(enum_jobs)
@@ -242,6 +297,9 @@ START_TEST(enum_jobs)
         test_Next_walkList_1,
         test_Next_walkList_2,
         test_Next_errors,
+        test_Skip_walkList,
+        test_Skip_offEnd,
+        test_Reset,
         0
     };
     const test_t *test;

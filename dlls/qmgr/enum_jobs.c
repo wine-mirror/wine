@@ -114,15 +114,24 @@ static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Skip(
     IEnumBackgroundCopyJobs* iface,
     ULONG celt)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+
+    if (This->numJobs - This->indexJobs < celt)
+    {
+        This->indexJobs = This->numJobs;
+        return S_FALSE;
+    }
+
+    This->indexJobs += celt;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Reset(
     IEnumBackgroundCopyJobs* iface)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    EnumBackgroundCopyJobsImpl *This = (EnumBackgroundCopyJobsImpl *) iface;
+    This->indexJobs = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IEnumBackgroundCopyJobs_Clone(
