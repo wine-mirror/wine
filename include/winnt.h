@@ -46,7 +46,7 @@ extern "C" {
 #ifndef MIDL_PASS
 # if defined(_MSC_VER)
 #  define DECLSPEC_IMPORT __declspec(dllimport)
-# elif defined(__MINGW32__)
+# elif defined(__MINGW32__) || defined(__CYGWIN__)
 #  define DECLSPEC_IMPORT __attribute__((dllimport))
 # else
 #  define DECLSPEC_IMPORT DECLSPEC_HIDDEN
@@ -154,7 +154,9 @@ extern "C" {
 # define DECLSPEC_EXPORT
 #endif
 
-#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+#if defined(__MSC_VER) || defined(__MINGW32__) || defined(__CYGWIN__)
+# define DECLSPEC_HIDDEN
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
 # define DECLSPEC_HIDDEN __attribute__((visibility ("hidden")))
 #else
 # define DECLSPEC_HIDDEN
