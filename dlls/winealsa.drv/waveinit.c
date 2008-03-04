@@ -741,7 +741,7 @@ static int ALSA_ScanDevices(int directhw,
             char *pcmname = NULL;
             snd_pcm_t *pcm;
 
-            sprintf(defaultpcmname, "default:%d", card);
+            sprintf(defaultpcmname, "default");
             sprintf(plugpcmname,    "plughw:%d,%d", card, device);
             sprintf(hwpcmname,      "hw:%d,%d", card, device);
 
