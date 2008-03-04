@@ -323,7 +323,7 @@ static DWORD WAVE_mciCreateRIFFSkeleton(WINE_MCIWAVE* wmw)
    {
        wmw->lpWaveFormat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wmw->lpWaveFormat));
        if (!wmw->lpWaveFormat) return MMSYSERR_NOMEM;
-       memcpy(wmw->lpWaveFormat, &wmw->wfxRef, sizeof(wmw->wfxRef));
+       *wmw->lpWaveFormat = wmw->wfxRef;
    }
 
    /* we can only record PCM files... there is no way in the MCI API to specify
