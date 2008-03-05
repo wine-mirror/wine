@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -211,18 +214,27 @@ BOOL WINAPI EnumWindowStationsW( WINSTAENUMPROCW func, LPARAM lparam )
     unsigned int index = 0;
     WCHAR name[MAX_PATH];
     BOOL ret = TRUE;
+    NTSTATUS status;
 
     while (ret)
     {
         SERVER_START_REQ( enum_winstation )
         {
             req->index = index;
-            wine_server_set_reply( req, name, sizeof(name) );
-            ret = !wine_server_call( req );
+            wine_server_set_reply( req, name, sizeof(name) - sizeof(WCHAR) );
+            status = wine_server_call( req );
+            name[wine_server_reply_size(reply)/sizeof(WCHAR)] = 0;
             index = reply->next;
         }
         SERVER_END_REQ;
-        if (ret) ret = func( name, lparam );
+        if (status == STATUS_NO_MORE_ENTRIES)
+            break;
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError( status ) );
+            return FALSE;
+        }
+        ret = func( name, lparam );
     }
     return ret;
 }
@@ -401,6 +413,10 @@ BOOL WINAPI EnumDesktopsW( HWINSTA winsta, DESKTOPENUMPROCW func, LPARAM lparam 
     unsigned int index = 0;
     WCHAR name[MAX_PATH];
     BOOL ret = TRUE;
+    NTSTATUS status;
+
+    if (!winsta)
+        winsta = GetProcessWindowStation();
 
     while (ret)
     {
@@ -408,12 +424,20 @@ BOOL WINAPI EnumDesktopsW( HWINSTA winsta, DESKTOPENUMPROCW func, LPARAM lparam 
         {
             req->winstation = winsta;
             req->index      = index;
-            wine_server_set_reply( req, name, sizeof(name) );
-            ret = !wine_server_call( req );
+            wine_server_set_reply( req, name, sizeof(name) - sizeof(WCHAR) );
+            status = wine_server_call( req );
+            name[wine_server_reply_size(reply)/sizeof(WCHAR)] = 0;
             index = reply->next;
         }
         SERVER_END_REQ;
-        if (ret) ret = func( name, lparam );
+        if (status == STATUS_NO_MORE_ENTRIES)
+            break;
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError( status ) );
+            return FALSE;
+        }
+        ret = func(name, lparam);
     }
     return ret;
 }
