@@ -1888,6 +1888,15 @@ CascadeWindows (HWND hwndParent, UINT wFlags, const RECT *lpRect,
 }
 
 
+/***********************************************************************
+ *		CascadeChildWindows (USER32.@)
+ */
+WORD WINAPI CascadeChildWindows( HWND parent, UINT flags )
+{
+    return CascadeWindows( parent, flags, NULL, 0, NULL );
+}
+
+
 /******************************************************************************
  *		TileWindows (USER32.@) Tiles MDI child windows
  *
@@ -1902,6 +1911,16 @@ TileWindows (HWND hwndParent, UINT wFlags, const RECT *lpRect,
     FIXME("(%p,0x%08x,...,%u,...): stub\n", hwndParent, wFlags, cKids);
     return 0;
 }
+
+
+/***********************************************************************
+ *		TileChildWindows (USER32.@)
+ */
+WORD WINAPI TileChildWindows( HWND parent, UINT flags )
+{
+    return TileWindows( parent, flags, NULL, 0, NULL );
+}
+
 
 /************************************************************************
  *              "More Windows..." functionality

@@ -28,7 +28,7 @@
 @ stdcall CallNextHookEx(long long long long)
 @ stdcall CallWindowProcA(ptr long long long long)
 @ stdcall CallWindowProcW(ptr long long long long)
-@ stub CascadeChildWindows
+@ stdcall CascadeChildWindows(long long)
 @ stdcall CascadeWindows(long long ptr long ptr)
 @ stdcall ChangeClipboardChain(long long)
 @ stdcall ChangeDisplaySettingsA(ptr long)
@@ -698,7 +698,7 @@
 @ stdcall SystemParametersInfoW(long long ptr long)
 @ stdcall TabbedTextOutA(long long long str long long ptr long)
 @ stdcall TabbedTextOutW(long long long wstr long long ptr long)
-@ stub TileChildWindows
+@ stdcall TileChildWindows(long long)
 @ stdcall TileWindows(long long ptr long ptr)
 @ stdcall ToAscii(long long ptr ptr long)
 @ stdcall ToAsciiEx(long long ptr ptr long long)
