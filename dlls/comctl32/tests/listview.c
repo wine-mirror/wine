@@ -547,7 +547,7 @@ static void insert_column(HWND hwnd, int idx)
     LVCOLUMN column;
     DWORD rc;
 
-    memset(&column, 0xaa, sizeof(column));
+    memset(&column, 0xcc, sizeof(column));
     column.mask = LVCF_SUBITEM;
     column.iSubItem = idx;
 
@@ -562,7 +562,7 @@ static void insert_item(HWND hwnd, int idx)
     LVITEMA item;
     DWORD rc;
 
-    memset(&item, 0xaa, sizeof (item));
+    memset(&item, 0xcc, sizeof (item));
     item.mask = LVIF_TEXT;
     item.iItem = idx;
     item.iSubItem = 0;
@@ -593,7 +593,7 @@ static void test_items(void)
     insert_column(hwnd, 1);
 
     /* Insert an item with just a param */
-    memset (&item, 0xaa, sizeof (item));
+    memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_PARAM;
     item.iItem = 0;
     item.iSubItem = 0;
@@ -602,7 +602,7 @@ static void test_items(void)
     ok(r == 0, "ret %d\n", r);
 
     /* Test getting of the param */
-    memset (&item, 0xaa, sizeof (item));
+    memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_PARAM;
     item.iItem = 0;
     item.iSubItem = 0;
@@ -611,7 +611,7 @@ static void test_items(void)
     ok(item.lParam == lparamTest, "got lParam %lx, expected %lx\n", item.lParam, lparamTest);
 
     /* Set up a subitem */
-    memset (&item, 0xaa, sizeof (item));
+    memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_TEXT;
     item.iItem = 0;
     item.iSubItem = 1;
@@ -620,7 +620,7 @@ static void test_items(void)
     ok(r != 0, "ret %d\n", r);
 
     /* Query param from subitem: returns main item param */
-    memset (&item, 0xaa, sizeof (item));
+    memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_PARAM;
     item.iItem = 0;
     item.iSubItem = 1;
@@ -629,7 +629,7 @@ static void test_items(void)
     ok(item.lParam == lparamTest, "got lParam %lx, expected %lx\n", item.lParam, lparamTest);
 
     /* Set up param on first subitem: no effect */
-    memset (&item, 0xaa, sizeof (item));
+    memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_PARAM;
     item.iItem = 0;
     item.iSubItem = 1;
@@ -638,7 +638,7 @@ static void test_items(void)
     ok(r == 0, "ret %d\n", r);
 
     /* Query param from subitem again: should still return main item param */
-    memset (&item, 0xaa, sizeof (item));
+    memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_PARAM;
     item.iItem = 0;
     item.iSubItem = 1;
@@ -647,7 +647,7 @@ static void test_items(void)
     ok(item.lParam == lparamTest, "got lParam %lx, expected %lx\n", item.lParam, lparamTest);
 
     /**** Some tests of state highlighting ****/
-    memset (&item, 0xaa, sizeof (item));
+    memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_STATE;
     item.iItem = 0;
     item.iSubItem = 0;
@@ -660,7 +660,7 @@ static void test_items(void)
     r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM) &item);
     ok(r != 0, "ret %d\n", r);
 
-    memset (&item, 0xaa, sizeof (item));
+    memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_STATE;
     item.iItem = 0;
     item.iSubItem = 0;
@@ -687,7 +687,7 @@ static void test_columns(void)
     ok(hwnd != NULL, "failed to create listview window\n");
 
     /* Add a column with no mask */
-    memset(&column, 0xaa, sizeof(column));
+    memset(&column, 0xcc, sizeof(column));
     column.mask = 0;
     rc = ListView_InsertColumn(hwnd, 0, &column);
     ok(rc==0, "Inserting column with no mask failed with %d\n", rc);
