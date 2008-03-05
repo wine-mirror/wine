@@ -562,19 +562,22 @@ static void test_StrCmpA(void)
   ok(ChrCmpIA('a', 'z'), "ChrCmpIA believes that a == z!\n");
 
   pStrIsIntlEqualA = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualA");
+  if (pStrIsIntlEqualA)
+  {
+    ok(pStrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) isn't case-insensitive\n");
+    ok(!pStrIsIntlEqualA(TRUE, str1, str2, 5), "StrIsIntlEqualA(TRUE,...) isn't case-sensitive\n");
+  }
+  else
+    skip("StrIsIntlEqualA() is not available. Tests skipped\n");
+
   pIntlStrEqWorkerA = (void *)GetProcAddress(hShlwapi, "IntlStrEqWorkerA");
-
-  if (!pStrIsIntlEqualA)
-    return;
-
-  ok(pStrIsIntlEqualA(FALSE, str1, str2, 5), "StrIsIntlEqualA(FALSE,...) isn't case-insensitive\n");
-  ok(!pStrIsIntlEqualA(TRUE, str1, str2, 5), "StrIsIntlEqualA(TRUE,...) isn't case-sensitive\n");
-
-  if (!pIntlStrEqWorkerA)
-    return;
-
-  ok(pIntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) isn't case-insensitive\n");
-  ok(!pIntlStrEqWorkerA(TRUE, str1, str2, 5), "pIntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
+  if (pIntlStrEqWorkerA)
+  {
+    ok(pIntlStrEqWorkerA(FALSE, str1, str2, 5), "IntlStrEqWorkerA(FALSE,...) isn't case-insensitive\n");
+    ok(!pIntlStrEqWorkerA(TRUE, str1, str2, 5), "pIntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
+  }
+  else
+    skip("IntlStrEqWorkerA() is not available. Tests skipped\n");
 }
 
 static void test_StrCmpW(void)
@@ -588,19 +591,22 @@ static void test_StrCmpW(void)
   ok(ChrCmpIW('a', 'z'), "ChrCmpIW believes that a == z!\n");
 
   pStrIsIntlEqualW = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualW");
+  if (pStrIsIntlEqualW)
+  {
+    ok(pStrIsIntlEqualW(FALSE, str1, str2, 5), "StrIsIntlEqualW(FALSE,...) isn't case-insensitive\n");
+    ok(!pStrIsIntlEqualW(TRUE, str1, str2, 5), "StrIsIntlEqualW(TRUE,...) isn't case-sensitive\n");
+  }
+  else
+    skip("StrIsIntlEqualW() is not available. Tests skipped\n");
+
   pIntlStrEqWorkerW = (void *)GetProcAddress(hShlwapi, "IntlStrEqWorkerW");
-
-  if (!pStrIsIntlEqualW)
-    return;
-
-  ok(pStrIsIntlEqualW(FALSE, str1, str2, 5), "StrIsIntlEqualW(FALSE,...) isn't case-insensitive\n");
-  ok(!pStrIsIntlEqualW(TRUE, str1, str2, 5), "StrIsIntlEqualW(TRUE,...) isn't case-sensitive\n");
-
-  if (!pIntlStrEqWorkerW)
-    return;
-
-  ok(pIntlStrEqWorkerW(FALSE, str1, str2, 5), "IntlStrEqWorkerW(FALSE,...) isn't case-insensitive\n");
-  ok(!pIntlStrEqWorkerW(TRUE, str1, str2, 5), "IntlStrEqWorkerW(TRUE,...) isn't case-sensitive\n");
+  if (pIntlStrEqWorkerW)
+  {
+    ok(pIntlStrEqWorkerW(FALSE, str1, str2, 5), "IntlStrEqWorkerW(FALSE,...) isn't case-insensitive\n");
+    ok(!pIntlStrEqWorkerW(TRUE, str1, str2, 5), "IntlStrEqWorkerW(TRUE,...) isn't case-sensitive\n");
+  }
+  else
+    skip("IntlStrEqWorkerW() is not available. Tests skipped\n");
 }
 
 static WCHAR *CoDupStrW(const char* src)
@@ -620,7 +626,11 @@ static void test_StrRetToBSTR(void)
     HRESULT ret;
 
     pStrRetToBSTR = (void *)GetProcAddress(hShlwapi, "StrRetToBSTR");
-    if (!pStrRetToBSTR) return;
+    if (!pStrRetToBSTR)
+    {
+        skip("StrRetToBSTR() is not available. Tests skipped\n");
+        return;
+    }
 
     strret.uType = STRRET_WSTR;
     U(strret).pOleStr = CoDupStrW("Test");
@@ -659,7 +669,10 @@ static void test_StrCpyNXA(void)
 
   pStrCpyNXA = (void *)GetProcAddress(hShlwapi, (LPSTR)399);
   if (!pStrCpyNXA)
+  {
+    skip("StrCpyNXA() is not available. Tests skipped\n");
     return;
+  }
 
   memset(dest, '\n', sizeof(dest));
   lpszRes = pStrCpyNXA(dest, lpSrc, sizeof(dest)/sizeof(dest[0]));
@@ -678,7 +691,10 @@ static void test_StrCpyNXW(void)
 
   pStrCpyNXW = (void *)GetProcAddress(hShlwapi, (LPSTR)400);
   if (!pStrCpyNXW)
+  {
+    skip("StrCpyNXW() is not available. Tests skipped\n");
     return;
+  }
 
   memcpy(dest, lpInit, sizeof(lpInit));
   lpszRes = pStrCpyNXW(dest, lpSrc, sizeof(dest)/sizeof(dest[0]));
@@ -733,7 +749,10 @@ static void test_SHAnsiToAnsi(void)
 
   pSHAnsiToAnsi = (void *)GetProcAddress(hShlwapi, (LPSTR)345);
   if (!pSHAnsiToAnsi)
+  {
+    skip("SHAnsiToAnsi() is not available. Tests skipped\n");
     return;
+  }
 
   memset(dest, '\n', sizeof(dest));
   dwRet = pSHAnsiToAnsi("hello", dest, sizeof(dest)/sizeof(dest[0]));
@@ -752,7 +771,10 @@ static void test_SHUnicodeToUnicode(void)
 
   pSHUnicodeToUnicode = (void *)GetProcAddress(hShlwapi, (LPSTR)346);
   if (!pSHUnicodeToUnicode)
+  {
+    skip("SHUnicodeToUnicode() is not available. Tests skipped\n");
     return;
+  }
 
   memcpy(dest, lpInit, sizeof(lpInit));
   dwRet = pSHUnicodeToUnicode(lpSrc, dest, sizeof(dest)/sizeof(dest[0]));
