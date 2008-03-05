@@ -760,6 +760,16 @@ sub _generate_dsp($$) {
     print OUT "\r\n";
     print OUT "# PROP Default_Filter \"cpp;c;cxx;rc;def;r;odl;idl;hpj;bat\"\r\n";
 
+    if ($project eq "winebuild") {
+        for my $ source_file ("getopt.c", "getopt1.c", "mkstemps.c")
+        {
+            print OUT "# Begin Source File\r\n";
+            print OUT "\r\n";
+            print OUT "SOURCE=..\\..\\libs\\port\\$source_file\r\n";
+            print OUT "# End Source File\r\n";
+        }
+    }
+
     foreach my $source_file (@source_files) {
 	$source_file =~ s%/%\\%g;
 	if($source_file !~ /^\./) {
