@@ -455,6 +455,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
         return;
     }
+    if (!data->iconic) return;
 
     state = get_window_wm_state( event->xmap.display, data );
     if (state == NormalState)
@@ -502,7 +503,7 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
     int state;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->managed || !data->mapped) return;
+    if (!data->managed || !data->mapped || data->iconic) return;
 
     state = get_window_wm_state( event->xunmap.display, data );
     if (state == IconicState)
