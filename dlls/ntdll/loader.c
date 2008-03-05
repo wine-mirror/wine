@@ -1244,11 +1244,18 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
  *
  * Check if a loaded native dll is a Wine fake dll.
  */
-static BOOL is_fake_dll( const void *base )
+static BOOL is_fake_dll( HANDLE handle )
 {
     static const char fakedll_signature[] = "Wine placeholder DLL";
-    const IMAGE_DOS_HEADER *dos = base;
+    char buffer[sizeof(IMAGE_DOS_HEADER) + sizeof(fakedll_signature)];
+    const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)buffer;
+    IO_STATUS_BLOCK io;
+    LARGE_INTEGER offset;
 
+    offset.QuadPart = 0;
+    if (NtReadFile( handle, 0, NULL, 0, &io, buffer, sizeof(buffer), &offset, NULL )) return FALSE;
+    if (io.Information < sizeof(buffer)) return FALSE;
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) return FALSE;
     if (dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
         !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return TRUE;
     return FALSE;
@@ -1426,13 +1433,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
                                  &module, 0, 0, &size, &len, ViewShare, 0, PAGE_READONLY );
     NtClose( mapping );
     if (status != STATUS_SUCCESS) return status;
-
-    if (is_fake_dll( module ))
-    {
-        TRACE( "%s is a fake dll, not loading it\n", debugstr_w(name) );
-        NtUnmapViewOfSection( NtCurrentProcess(), module );
-        return STATUS_DLL_NOT_FOUND;
-    }
 
     /* create the MODREF */
 
@@ -1869,6 +1869,13 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
 
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
     loadorder = get_load_order( main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, filename );
+
+    if (handle && is_fake_dll( handle ))
+    {
+        TRACE( "%s is a fake Wine dll\n", debugstr_w(filename) );
+        NtClose( handle );
+        handle = 0;
+    }
 
     switch(loadorder)
     {
