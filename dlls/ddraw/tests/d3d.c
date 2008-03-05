@@ -1102,7 +1102,7 @@ static void Direct3D1Test(void)
     ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
 
     transformdata.lpHOut = outH;
-    memset(outH, 0xaa, sizeof(outH));
+    memset(outH, 0xcc, sizeof(outH));
     hr = IDirect3DViewport_TransformVertices(Viewport, sizeof(testverts) / sizeof(testverts[0]),
                                              &transformdata, D3DTRANSFORM_UNCLIPPED,
                                              &i);
@@ -1122,7 +1122,7 @@ static void Direct3D1Test(void)
            cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
     }
     for(i = 0; i < sizeof(outH); i++) {
-        if(((unsigned char *) outH)[i] != 0xaa) {
+        if(((unsigned char *) outH)[i] != 0xcc) {
             ok(FALSE, "Homogeneous output was generated despite UNCLIPPED flag\n");
             break;
         }
@@ -1180,7 +1180,7 @@ static void Direct3D1Test(void)
            cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
     }
 
-    memset(out, 0xbb, sizeof(out));
+    memset(out, 0xcc, sizeof(out));
     hr = IDirect3DViewport_TransformVertices(Viewport, sizeof(testverts) / sizeof(testverts[0]),
                                              &transformdata, D3DTRANSFORM_CLIPPED,
                                              &i);
@@ -1217,7 +1217,7 @@ static void Direct3D1Test(void)
         }
     }
     for(i = 0; i < sizeof(out) / sizeof(DWORD); i++) {
-        ok(((DWORD *) out)[i] != 0xbbbbbbbb,
+        ok(((DWORD *) out)[i] != 0xcccccccc,
                 "Regular output DWORD %d remained untouched\n", i);
     }
 
