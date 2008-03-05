@@ -1831,6 +1831,7 @@ typedef struct
 #define BSF_RETURNHDESK          0x00000200
 #define BSF_LUID                 0x00000400
 
+#define BROADCAST_QUERY_DENY     0x424D5144
 
 /***** Window hooks *****/
 
