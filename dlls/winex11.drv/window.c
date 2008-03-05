@@ -1201,7 +1201,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
  *
  * Destroy the whole X window for a given window.
  */
-static void destroy_whole_window( Display *display, struct x11drv_win_data *data )
+static void destroy_whole_window( Display *display, struct x11drv_win_data *data, BOOL already_destroyed )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
 
@@ -1214,12 +1214,16 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
     wine_tsx11_lock();
     XDeleteContext( display, data->whole_window, winContext );
     XDeleteContext( display, data->client_window, winContext );
-    XDestroyWindow( display, data->whole_window );
+    if (!already_destroyed) XDestroyWindow( display, data->whole_window );
     data->whole_window = data->client_window = 0;
+    data->wm_state = WithdrawnState;
+    data->net_wm_state = 0;
+    data->mapped = FALSE;
     if (data->xic)
     {
         XUnsetICFocus( data->xic );
         XDestroyIC( data->xic );
+        data->xic = 0;
     }
     /* Outlook stops processing messages after destroying a dialog, so we need an explicit flush */
     XFlush( display );
@@ -1269,7 +1273,7 @@ void X11DRV_DestroyWindow( HWND hwnd )
         wine_tsx11_unlock();
     }
 
-    destroy_whole_window( display, data );
+    destroy_whole_window( display, data, FALSE );
     destroy_icon_window( display, data );
 
     if (data->colormap)
@@ -1286,6 +1290,21 @@ void X11DRV_DestroyWindow( HWND hwnd )
     XDeleteContext( display, (XID)hwnd, win_data_context );
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
+}
+
+
+/***********************************************************************
+ *		X11DRV_DestroyNotify
+ */
+void X11DRV_DestroyNotify( HWND hwnd, XEvent *event )
+{
+    Display *display = event->xdestroywindow.display;
+    struct x11drv_win_data *data;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+
+    FIXME( "window %p/%lx destroyed from the outside\n", hwnd, data->whole_window );
+    destroy_whole_window( display, data, TRUE );
 }
 
 
@@ -1562,7 +1581,7 @@ void X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
         if (old_parent == GetDesktopWindow())
         {
             /* destroy the old X windows */
-            destroy_whole_window( display, data );
+            destroy_whole_window( display, data, FALSE );
             destroy_icon_window( display, data );
             if (data->managed)
             {

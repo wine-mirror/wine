@@ -103,7 +103,7 @@ static struct event_handler handlers[MAX_EVENT_HANDLERS] =
     /* NoExpose */
     /* VisibilityNotify */
     /* CreateNotify */
-    /* DestroyNotify */
+    { DestroyNotify,    X11DRV_DestroyNotify },
     { UnmapNotify,      X11DRV_UnmapNotify },
     { MapNotify,        X11DRV_MapNotify },
     /* MapRequest */
@@ -123,7 +123,7 @@ static struct event_handler handlers[MAX_EVENT_HANDLERS] =
     { MappingNotify,    X11DRV_MappingNotify },
 };
 
-static int nb_event_handlers = 18;  /* change this if you add handlers above */
+static int nb_event_handlers = 19;  /* change this if you add handlers above */
 
 
 /* return the name of an X event */
