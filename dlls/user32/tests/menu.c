@@ -494,7 +494,7 @@ static void test_menu_bmp_and_string(void)
         return;
     }
 
-    memset( bmfill, 0x55, sizeof( bmfill));
+    memset( bmfill, 0xcc, sizeof( bmfill));
     hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
                           WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
                           NULL, NULL, NULL, NULL);
