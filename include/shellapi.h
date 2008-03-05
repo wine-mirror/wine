@@ -95,7 +95,7 @@ typedef struct _AppBarData
 	LPARAM	lParam;
 } APPBARDATA, *PAPPBARDATA;
 
-UINT    WINAPI SHAppBarMessage(DWORD,PAPPBARDATA);
+UINT_PTR WINAPI SHAppBarMessage(DWORD,PAPPBARDATA);
 
 /******************************************
  * SHGetFileInfo
