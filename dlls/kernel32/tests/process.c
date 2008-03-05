@@ -1369,7 +1369,7 @@ static void test_OpenProcess(void)
 
     hproc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
 
-    memset(&info, 0xaa, sizeof(info));
+    memset(&info, 0xcc, sizeof(info));
     ok(VirtualQueryEx(hproc, addr1, &info, sizeof(info)) == sizeof(info),
        "VirtualQueryEx error %d\n", GetLastError());
 
