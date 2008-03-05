@@ -480,6 +480,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         X11DRV_X_to_window_rect( data, &rect );
 
         wp.length = sizeof(wp);
+        GetWindowPlacement( hwnd, &wp );
         wp.flags = 0;
         wp.showCmd = SW_RESTORE;
         wp.rcNormalPosition = rect;
