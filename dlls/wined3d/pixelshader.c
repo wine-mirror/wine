@@ -467,8 +467,6 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
         }
     }
 
-    This->needsbumpmat = reg_maps->bumpmat;
-
 #if 1 /* if were using the data buffer of device then we don't need to free it */
   HeapFree(GetProcessHeap(), 0, buffer.buffer);
 #endif

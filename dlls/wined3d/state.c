@@ -2403,7 +2403,7 @@ static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     } tmpvalue;
 
     if(stateblock->pixelShader && stage != 0 &&
-       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams == stage) {
+       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams[stage]) {
         /* The pixel shader has to know the luminance scale. Do a constants update if it
          * isn't scheduled anyway
          */
@@ -2427,7 +2427,7 @@ static void tex_bumpenvloffset(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     } tmpvalue;
 
     if(stateblock->pixelShader && stage != 0 &&
-       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams == stage) {
+       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams[stage]) {
         /* The pixel shader has to know the luminance offset. Do a constants update if it
          * isn't scheduled anyway
          */
@@ -2621,9 +2621,8 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     float mat[2][2];
-
     if(stateblock->pixelShader && stage != 0 &&
-       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->needsbumpmat == stage) {
+       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.bumpmat[stage]) {
         /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
          * anyway
          */

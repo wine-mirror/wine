@@ -1735,9 +1735,9 @@ struct glsl_shader_prog_link {
     GLhandleARB             vuniformI_locations[MAX_CONST_I];
     GLhandleARB             puniformI_locations[MAX_CONST_I];
     GLhandleARB             posFixup_location;
-    GLhandleARB             bumpenvmat_location;
-    GLhandleARB             luminancescale_location;
-    GLhandleARB             luminanceoffset_location;
+    GLhandleARB             bumpenvmat_location[MAX_TEXTURES];
+    GLhandleARB             luminancescale_location[MAX_TEXTURES];
+    GLhandleARB             luminanceoffset_location[MAX_TEXTURES];
     GLhandleARB             srgb_comparison_location;
     GLhandleARB             srgb_mul_low_location;
     GLhandleARB             ycorrection_location;
@@ -1788,7 +1788,7 @@ typedef struct shader_reg_maps {
     /* Sampler usage tokens 
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD samplers[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
-    char bumpmat, luminanceparams;
+    BOOL bumpmat[MAX_TEXTURES], luminanceparams[MAX_TEXTURES];
     char usesnrm, vpos, usesdsy;
     char usesrelconstF;
 
@@ -2243,6 +2243,11 @@ enum vertexprocessing_mode {
     pretransformed
 };
 
+struct stb_const_desc {
+    char                    texunit;
+    UINT                    const_num;
+};
+
 typedef struct IWineD3DPixelShaderImpl {
     /* IUnknown parts */
     const IWineD3DPixelShaderVtbl *lpVtbl;
@@ -2262,9 +2267,9 @@ typedef struct IWineD3DPixelShaderImpl {
     PSHADERDATA                *data;
 
     /* Some information about the shader behavior */
-    char                        needsbumpmat;
-    UINT                        bumpenvmatconst;
-    UINT                        luminanceconst;
+    struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];
+    char                        numbumpenvmatconsts;
+    struct stb_const_desc       luminanceconst[MAX_TEXTURES];
     char                        srgb_enabled;
     char                        srgb_mode_hardcoded;
     UINT                        srgb_low_const;

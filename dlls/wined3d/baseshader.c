@@ -212,8 +212,8 @@ HRESULT shader_get_registers_used(
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
-    reg_maps->bumpmat = -1;
-    reg_maps->luminanceparams = -1;
+    memset(reg_maps->bumpmat, 0, sizeof(reg_maps->bumpmat));
+    memset(reg_maps->luminanceparams, 0, sizeof(reg_maps->luminanceparams));
 
     if (pToken == NULL)
         return WINED3D_OK;
@@ -348,7 +348,8 @@ HRESULT shader_get_registers_used(
             int i, limit;
 
             /* Declare 1.X samplers implicitly, based on the destination reg. number */
-            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && 
+            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
+                pshader /* Filter different instructions with the same enum values in VS */ &&
                 (WINED3DSIO_TEX == curOpcode->opcode ||
                  WINED3DSIO_TEXBEM == curOpcode->opcode ||
                  WINED3DSIO_TEXBEML == curOpcode->opcode ||
@@ -395,25 +396,17 @@ HRESULT shader_get_registers_used(
                 /* texbem is only valid with < 1.4 pixel shaders */
                 if(WINED3DSIO_TEXBEM  == curOpcode->opcode ||
                     WINED3DSIO_TEXBEML == curOpcode->opcode) {
-                    if(reg_maps->bumpmat != -1 && reg_maps->bumpmat != sampler_code) {
-                        FIXME("Pixel shader uses texbem instruction on more than 1 sampler\n");
-                    } else {
-                        reg_maps->bumpmat = sampler_code;
-                        if(WINED3DSIO_TEXBEML == curOpcode->opcode) {
-                            reg_maps->luminanceparams = sampler_code;
-                        }
+                    reg_maps->bumpmat[sampler_code] = TRUE;
+                    if(WINED3DSIO_TEXBEML == curOpcode->opcode) {
+                        reg_maps->luminanceparams[sampler_code] = TRUE;
                     }
                 }
             }
             if(WINED3DSIO_NRM  == curOpcode->opcode) {
                 reg_maps->usesnrm = 1;
-            } else if(WINED3DSIO_BEM == curOpcode->opcode) {
+            } else if(WINED3DSIO_BEM == curOpcode->opcode && pshader) {
                 DWORD regnum = *pToken & WINED3DSP_REGNUM_MASK;
-                if(reg_maps->bumpmat != -1 && reg_maps->bumpmat != regnum) {
-                    FIXME("Pixel shader uses bem or texbem instruction on more than 1 sampler\n");
-                } else {
-                    reg_maps->bumpmat = regnum;
-                }
+                reg_maps->bumpmat[regnum] = TRUE;
             } else if(WINED3DSIO_DSY  == curOpcode->opcode) {
                 reg_maps->usesdsy = 1;
             }
