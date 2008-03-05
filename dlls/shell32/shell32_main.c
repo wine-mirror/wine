@@ -882,6 +882,10 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
     int height=data->rc.bottom - data->rc.top;
     RECT rec=data->rc;
 
+    TRACE("msg=%d, data={cb=%d, hwnd=%p, callback=%x, edge=%d, rc=%s, lparam=%lx}\n",
+          msg, data->cbSize, data->hWnd, data->uCallbackMessage, data->uEdge,
+          wine_dbgstr_rect(&data->rc), data->lParam);
+
     switch (msg)
     {
     case ABM_GETSTATE:
@@ -894,8 +898,7 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
         SetActiveWindow(data->hWnd);
         return TRUE;
     case ABM_GETAUTOHIDEBAR:
-        data->hWnd=GetActiveWindow();
-        return TRUE;
+        return 0; /* pretend there is no autohide bar */
     case ABM_NEW:
         /* cbSize, hWnd, and uCallbackMessage are used. All other ignored */
         SetWindowPos(data->hWnd,HWND_TOP,0,0,0,0,SWP_SHOWWINDOW|SWP_NOMOVE|SWP_NOSIZE);

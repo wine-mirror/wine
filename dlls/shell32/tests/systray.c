@@ -75,6 +75,40 @@ void test_cbsize(void)
     ok(!Shell_NotifyIconA(NIM_DELETE, &nidA), "The icon was not deleted\n");
 }
 
+static void test_SHAppBarMessage(void)
+{
+    APPBARDATA abd;
+    HWND hwnd, foregnd;
+
+    memset(&abd, 0xcc, sizeof(abd));
+    abd.cbSize = sizeof(abd);
+    abd.uEdge = ABE_BOTTOM;
+
+    hwnd = (HWND)SHAppBarMessage(ABM_GETAUTOHIDEBAR, &abd);
+    ok(hwnd == NULL || IsWindow(hwnd), "ret %p which is not a window\n", hwnd);
+    ok(abd.hWnd == (HWND)0xcccccccc, "hWnd overwritten\n");
+
+    /* Presumably one can pass a hwnd with ABM_GETAUTOHIDEBAR to specify a monitor.
+       Pass the foreground window and check */
+    foregnd = GetForegroundWindow();
+    if(foregnd)
+    {
+        abd.hWnd = foregnd;
+        hwnd = (HWND)SHAppBarMessage(ABM_GETAUTOHIDEBAR, &abd);
+        ok(hwnd == NULL || IsWindow(hwnd), "ret %p which is not a window\n", hwnd);
+        ok(abd.hWnd == foregnd, "hWnd overwritten\n");
+        if(hwnd)
+        {
+            HMONITOR appbar_mon, foregnd_mon;
+            appbar_mon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            foregnd_mon = MonitorFromWindow(foregnd, MONITOR_DEFAULTTONEAREST);
+            ok(appbar_mon == foregnd_mon, "Windows on different monitors\n");
+        }
+    }
+
+    return;
+}
+
 START_TEST(systray)
 {
     WNDCLASSA wc;
@@ -110,4 +144,6 @@ START_TEST(systray)
         DispatchMessageA(&msg);
     }
     DestroyWindow(hMainWnd);
+
+    test_SHAppBarMessage();
 }
