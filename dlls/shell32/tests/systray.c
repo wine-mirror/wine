@@ -79,6 +79,7 @@ static void test_SHAppBarMessage(void)
 {
     APPBARDATA abd;
     HWND hwnd, foregnd;
+    UINT_PTR ret;
 
     memset(&abd, 0xcc, sizeof(abd));
     abd.cbSize = sizeof(abd);
@@ -104,6 +105,19 @@ static void test_SHAppBarMessage(void)
             foregnd_mon = MonitorFromWindow(foregnd, MONITOR_DEFAULTTONEAREST);
             ok(appbar_mon == foregnd_mon, "Windows on different monitors\n");
         }
+    }
+
+    memset(&abd, 0xcc, sizeof(abd));
+    abd.cbSize = sizeof(abd);
+    ret = SHAppBarMessage(ABM_GETTASKBARPOS, &abd);
+    if(ret)
+    {
+        ok(abd.hWnd == (HWND)0xcccccccc, "hWnd overwritten\n");
+todo_wine
+{
+        ok(abd.uEdge >= ABE_LEFT && abd.uEdge <= ABE_BOTTOM, "uEdge not returned\n");
+        ok(abd.rc.left != 0xcccccccc, "rc not updated\n");
+}
     }
 
     return;

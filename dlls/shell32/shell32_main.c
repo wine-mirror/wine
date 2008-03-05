@@ -882,7 +882,7 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
     int height=data->rc.bottom - data->rc.top;
     RECT rec=data->rc;
 
-    TRACE("msg=%d, data={cb=%d, hwnd=%p, callback=%x, edge=%d, rc=%s, lparam=%lx}\n",
+    FIXME("msg=%d, data={cb=%d, hwnd=%p, callback=%x, edge=%d, rc=%s, lparam=%lx}: stub\n",
           msg, data->cbSize, data->hWnd, data->uCallbackMessage, data->uEdge,
           wine_dbgstr_rect(&data->rc), data->lParam);
 
@@ -891,6 +891,8 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
     case ABM_GETSTATE:
         return ABS_ALWAYSONTOP | ABS_AUTOHIDE;
     case ABM_GETTASKBARPOS:
+        /* FIXME: This is wrong.  It should return the taskbar co-ords and edge from the monitor
+           which contains data->hWnd */
         GetWindowRect(data->hWnd, &rec);
         data->rc=rec;
         return TRUE;
