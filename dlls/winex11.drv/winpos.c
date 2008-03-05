@@ -197,12 +197,13 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
     if (!data->managed) return;
     if (!data->mapped) return;
 
-    if (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
-        data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height)
-        new_state |= (1 << NET_WM_STATE_FULLSCREEN);
-
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
     if (style & WS_MAXIMIZE) new_state |= (1 << NET_WM_STATE_MAXIMIZED);
+
+    if (!(style & WS_MAXIMIZE) &&
+        data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
+        data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height)
+        new_state |= (1 << NET_WM_STATE_FULLSCREEN);
 
     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
     if (ex_style & WS_EX_TOPMOST)
