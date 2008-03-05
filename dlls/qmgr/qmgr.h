@@ -40,6 +40,7 @@ typedef struct
     GUID jobId;
     struct list files;
     BG_JOB_PROGRESS jobProgress;
+    BG_JOB_STATE state;
     struct list entryFromQmgr;
 } BackgroundCopyJobImpl;
 

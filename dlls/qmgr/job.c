@@ -119,8 +119,25 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_Suspend(
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Resume(
     IBackgroundCopyJob* iface)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+
+    if (This->state == BG_JOB_STATE_CANCELLED
+        || This->state == BG_JOB_STATE_ACKNOWLEDGED)
+    {
+        return BG_E_INVALID_STATE;
+    }
+
+    if (This->jobProgress.FilesTransferred == This->jobProgress.FilesTotal)
+        return BG_E_EMPTY;
+
+    if (This->state == BG_JOB_STATE_CONNECTING
+        || This->state == BG_JOB_STATE_TRANSFERRING)
+    {
+        return S_OK;
+    }
+
+    This->state = BG_JOB_STATE_QUEUED;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Cancel(
@@ -188,8 +205,13 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetState(
     IBackgroundCopyJob* iface,
     BG_JOB_STATE *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+
+    if (!pVal)
+        return E_INVALIDARG;
+
+    *pVal = This->state;
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetError(
@@ -445,6 +467,8 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
     This->jobProgress.BytesTransferred = 0;
     This->jobProgress.FilesTotal = 0;
     This->jobProgress.FilesTransferred = 0;
+
+    This->state = BG_JOB_STATE_SUSPENDED;
 
     *ppObj = &This->lpVtbl;
     return S_OK;

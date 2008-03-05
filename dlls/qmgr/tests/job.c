@@ -239,6 +239,47 @@ static void test_GetProgress_preTransfer(void)
     ok(progress.FilesTransferred == 0, "Incorrect FilesTransferred %u\n", progress.FilesTransferred);
 }
 
+/* Test getting job state */
+static void test_GetState(void)
+{
+    HRESULT hres;
+    BG_JOB_STATE state;
+
+    state = BG_JOB_STATE_ERROR;
+    hres = IBackgroundCopyJob_GetState(test_job, &state);
+    ok(hres == S_OK, "GetState failed: 0x%08x\n", hres);
+    if (hres != S_OK)
+    {
+        skip("Unable to get job state\n");
+        return;
+    }
+    ok(state == BG_JOB_STATE_SUSPENDED, "Incorrect job state: %d\n", state);
+}
+
+/* Test resuming a job */
+static void test_ResumeEmpty(void)
+{
+    HRESULT hres;
+    BG_JOB_STATE state;
+
+    hres = IBackgroundCopyJob_Resume(test_job);
+    ok(hres == BG_E_EMPTY, "Resume failed to return BG_E_EMPTY error: 0x%08x\n", hres);
+    if (hres != BG_E_EMPTY)
+    {
+        skip("Failed calling resume job\n");
+        return;
+    }
+
+    state = BG_JOB_STATE_ERROR;
+    hres = IBackgroundCopyJob_GetState(test_job, &state);
+    if (hres != S_OK)
+    {
+        skip("Unable to get job state\n");
+        return;
+    }
+    ok(state == BG_JOB_STATE_SUSPENDED, "Incorrect job state: %d\n", state);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(job)
@@ -250,6 +291,8 @@ START_TEST(job)
         test_AddFile,
         test_EnumFiles,
         test_GetProgress_preTransfer,
+        test_GetState,
+        test_ResumeEmpty,
         0
     };
     const test_t *test;
