@@ -3239,7 +3239,7 @@ void fillGLAttribFuncs(WineD3D_GL_Info *gl_info) {
     if(GL_SUPPORT(EXT_SECONDARY_COLOR)) {
         specular_funcs[WINED3DDECLTYPE_D3DCOLOR]    = (void *) specular_d3dcolor;
     } else {
-        specular_funcs[WINED3DDECLTYPE_FLOAT3]      = (void *) warn_no_specular_func;
+        specular_funcs[WINED3DDECLTYPE_D3DCOLOR]      = (void *) warn_no_specular_func;
     }
     specular_funcs[WINED3DDECLTYPE_UBYTE4]      = (void *) invalid_func;
     specular_funcs[WINED3DDECLTYPE_SHORT2]      = (void *) invalid_func;
