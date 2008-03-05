@@ -246,6 +246,8 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
 
     if (data->client_window)
     {
+        struct x11drv_thread_data *thread_data = x11drv_thread_data();
+        if (thread_data->cursor_window == data->client_window) thread_data->cursor_window = None;
         XDeleteContext( display, data->client_window, winContext );
         XDestroyWindow( display, data->client_window );
     }
