@@ -654,35 +654,40 @@ static void EVENT_PropertyNotify( HWND hwnd, XEvent *xev )
 /* event filter to wait for a WM_STATE change notification on a window */
 static Bool is_wm_state_notify( Display *display, XEvent *event, XPointer arg )
 {
-    return (event->type == PropertyNotify &&
-            event->xproperty.window == (Window)arg &&
-            event->xproperty.atom == x11drv_atom(WM_STATE));
+    if (event->xany.window != (Window)arg) return 0;
+    return (event->type == DestroyNotify ||
+            (event->type == PropertyNotify && event->xproperty.atom == x11drv_atom(WM_STATE)));
 }
 
 /***********************************************************************
  *           wait_for_withdrawn_state
  */
-void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data )
+void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, BOOL set )
 {
     DWORD end = GetTickCount() + 2000;
 
-    if (!data->whole_window || !data->managed) return;
+    if (!data->managed) return;
 
-    while (data->wm_state != WithdrawnState &&
-           !process_events( display, is_wm_state_notify, data->whole_window ))
+    TRACE( "waiting for window %p/%lx to become %swithdrawn\n",
+           data->hwnd, data->whole_window, set ? "" : "not " );
+
+    while (data->whole_window && ((data->wm_state == WithdrawnState) == !set))
     {
-        struct pollfd pfd;
-        int timeout = end - GetTickCount();
-
-        TRACE( "waiting for window %p/%lx to become withdrawn\n", data->hwnd, data->whole_window );
-        pfd.fd = ConnectionNumber(display);
-        pfd.events = POLLIN;
-        if (timeout <= 0 || poll( &pfd, 1, timeout ) != 1)
+        if (!process_events( display, is_wm_state_notify, data->whole_window ))
         {
-            FIXME( "window %p/%lx wait timed out\n", data->hwnd, data->whole_window );
-            return;
+            struct pollfd pfd;
+            int timeout = end - GetTickCount();
+
+            pfd.fd = ConnectionNumber(display);
+            pfd.events = POLLIN;
+            if (timeout <= 0 || poll( &pfd, 1, timeout ) != 1)
+            {
+                FIXME( "window %p/%lx wait timed out\n", data->hwnd, data->whole_window );
+                break;
+            }
         }
     }
+    TRACE( "window %p/%lx state now %d\n", data->hwnd, data->whole_window, data->wm_state );
 }
 
 
