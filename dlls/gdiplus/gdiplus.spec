@@ -72,7 +72,7 @@
 @ stub GdipCreateAdjustableArrowCap
 @ stub GdipCreateBitmapFromDirectDrawSurface
 @ stdcall GdipCreateBitmapFromFile(wstr ptr)
-@ stub GdipCreateBitmapFromFileICM
+@ stdcall GdipCreateBitmapFromFileICM(wstr ptr)
 @ stub GdipCreateBitmapFromGdiDib
 @ stdcall GdipCreateBitmapFromGraphics(long long ptr ptr)
 @ stub GdipCreateBitmapFromHBITMAP

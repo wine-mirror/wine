@@ -249,6 +249,7 @@ GpStatus WINGDIPAPI GdipConvertToEmfPlus(const GpGraphics*,GpMetafile*,INT*,
 GpStatus WINGDIPAPI GdipConvertToEmfPlusToFile(const GpGraphics*,GpMetafile*,INT*,const WCHAR*,EmfType,const WCHAR*,GpMetafile**);
 GpStatus WINGDIPAPI GdipConvertToEmfPlusToStream(const GpGraphics*,GpMetafile*,INT*,IStream*,EmfType,const WCHAR*,GpMetafile**);
 GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR*,GpBitmap**);
+GpStatus WINGDIPAPI GdipCreateBitmapFromFileICM(GDIPCONST WCHAR*,GpBitmap**);
 GpStatus WINGDIPAPI GdipCreateBitmapFromGraphics(INT,INT,GpGraphics*,GpBitmap**);
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT,INT,INT,PixelFormat,BYTE*,
     GpBitmap**);

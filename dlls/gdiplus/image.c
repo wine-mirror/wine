@@ -250,6 +250,13 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromFile(GDIPCONST WCHAR* filename,
     return stat;
 }
 
+/* FIXME: no icm */
+GpStatus WINGDIPAPI GdipCreateBitmapFromFileICM(GDIPCONST WCHAR* filename,
+    GpBitmap **bitmap)
+{
+    return GdipCreateBitmapFromFile(filename, bitmap);
+}
+
 GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     HBITMAP* hbmReturn, ARGB background)
 {
