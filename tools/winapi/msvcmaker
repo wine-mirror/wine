@@ -742,14 +742,6 @@ sub _generate_dsp($$) {
 	print OUT "\r\n";
     }
 
-    if ($project eq "winebuild") {
-	print OUT "# Begin Special Build Tool\r\n";
-	print OUT "SOURCE=\"\$(InputPath)\"\r\n";
-        print OUT "PostBuild_Desc=Copying wine.lib ...\r\n";
-	print OUT "PostBuild_Cmds=";
-	print OUT "copy ..\\..\\libs\\wine\\$output_dir\\wine.lib \$(OutDir)\r\n";
-	print OUT "# End Special Build Tool\r\n";
-    }
     print OUT "# Begin Target\r\n";
     print OUT "\r\n";
     foreach my $cfg (@cfgs) {
