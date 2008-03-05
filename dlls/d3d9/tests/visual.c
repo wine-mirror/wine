@@ -2383,7 +2383,7 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     D3DLOCKED_RECT lr;
     D3DLOCKED_BOX lb;
     DWORD color;
-    IDirect3DVertexDeclaration9 *decl, *decl2;
+    IDirect3DVertexDeclaration9 *decl, *decl2, *decl3;
     float identity[16] = {1.0, 0.0, 0.0, 0.0,
                            0.0, 1.0, 0.0, 0.0,
                            0.0, 0.0, 1.0, 0.0,
@@ -2398,6 +2398,15 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
         {0, 12, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
         D3DDECL_END()
     };
+    static const D3DVERTEXELEMENT9 decl_elements3[] = {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    static const unsigned char proj_texdata[] = {0x00, 0x00, 0x00, 0x00,
+                                                 0x00, 0xff, 0x00, 0x00,
+                                                 0x00, 0x00, 0x00, 0x00,
+                                                 0x00, 0x00, 0x00, 0x00};
 
     memset(&lr, 0, sizeof(lr));
     memset(&lb, 0, sizeof(lb));
@@ -2411,6 +2420,8 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements2, &decl2);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements3, &decl3);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_SRGBTEXTURE) returned %s\n", DXGetErrorString9(hr));
@@ -2652,6 +2663,133 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
 
     IDirect3DTexture9_Release(texture);
 
+    /* Test projected textures, without any fancy matrices */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_L8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &identity);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, decl3);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_LockRect failed with %s\n", DXGetErrorString9(hr));
+    for(x = 0; x < 4; x++) {
+        memcpy(((BYTE *) lr.pBits) + lr.Pitch * x, proj_texdata + 4 * x, 4 * sizeof(proj_texdata[0]));
+    }
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_UnlockRect failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        const float proj_quads[] = {
+           -1.0,   -1.0,    0.1,    0.0,    0.0,    4.0,    6.0,
+            1.0,   -1.0,    0.1,    4.0,    0.0,    4.0,    6.0,
+           -1.0,    0.0,    0.1,    0.0,    4.0,    4.0,    6.0,
+            1.0,    0.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+           -1.0,    0.0,    0.1,    0.0,    0.0,    4.0,    6.0,
+            1.0,    0.0,    0.1,    4.0,    0.0,    4.0,    6.0,
+           -1.0,    1.0,    0.1,    0.0,    4.0,    4.0,    6.0,
+            1.0,    1.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+        };
+
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4 | D3DTTFF_PROJECTED);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &proj_quads[0*7], 7 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3 | D3DTTFF_PROJECTED);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &proj_quads[4*7], 7 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %s\n", DXGetErrorString9(hr));
+    IDirect3DTexture9_Release(texture);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+    color = getPixelColor(device, 158, 118);
+    ok(color == 0x00000000, "proj: Pixel 158/118 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 162, 118);
+    ok(color == 0x00000000, "proj: Pixel 162/118 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 158, 122);
+    ok(color == 0x00000000, "proj: Pixel 158/122 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 162, 122);
+    ok(color == 0x00FFFFFF, "proj: Pixel 162/122 has color 0x%08x, expected 0x00FFFFFF\n", color);
+
+    color = getPixelColor(device, 158, 178);
+    ok(color == 0x00000000, "proj: Pixel 158/178 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 162, 178);
+    ok(color == 0x00FFFFFF, "proj: Pixel 158/178 has color 0x%08x, expected 0x00FFFFFF\n", color);
+    color = getPixelColor(device, 158, 182);
+    ok(color == 0x00000000, "proj: Pixel 158/182 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 162, 182);
+    ok(color == 0x00000000, "proj: Pixel 158/182 has color 0x%08x, expected 0x00000000\n", color);
+
+    color = getPixelColor(device, 318, 118);
+    ok(color == 0x00000000, "proj: Pixel 318/118 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 322, 118);
+    ok(color == 0x00000000, "proj: Pixel 322/118 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 318, 122);
+    ok(color == 0x00FFFFFF, "proj: Pixel 318/122 has color 0x%08x, expected 0x00FFFFFF\n", color);
+    color = getPixelColor(device, 322, 122);
+    ok(color == 0x00000000, "proj: Pixel 322/122 has color 0x%08x, expected 0x00000000\n", color);
+
+    color = getPixelColor(device, 318, 178);
+    ok(color == 0x00FFFFFF, "proj: Pixel 318/178 has color 0x%08x, expected 0x00FFFFFF\n", color);
+    color = getPixelColor(device, 322, 178);
+    ok(color == 0x00000000, "proj: Pixel 322/178 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 318, 182);
+    ok(color == 0x00000000, "proj: Pixel 318/182 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 322, 182);
+    ok(color == 0x00000000, "proj: Pixel 322/182 has color 0x%08x, expected 0x00000000\n", color);
+
+    color = getPixelColor(device, 238, 298);
+    ok(color == 0x00000000, "proj: Pixel 238/298 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 242, 298);
+    ok(color == 0x00000000, "proj: Pixel 242/298 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 238, 302);
+    ok(color == 0x00000000, "proj: Pixel 238/302 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 242, 302);
+    ok(color == 0x00FFFFFF, "proj: Pixel 242/302 has color 0x%08x, expected 0x00FFFFFF\n", color);
+
+    color = getPixelColor(device, 238, 388);
+    ok(color == 0x00000000, "proj: Pixel 238/388 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 242, 388);
+    ok(color == 0x00FFFFFF, "proj: Pixel 242/388 has color 0x%08x, expected 0x00FFFFFF\n", color);
+    color = getPixelColor(device, 238, 392);
+    ok(color == 0x00000000, "proj: Pixel 238/392 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 242, 392);
+    ok(color == 0x00000000, "proj: Pixel 242/392 has color 0x%08x, expected 0x00000000\n", color);
+
+    color = getPixelColor(device, 478, 298);
+    ok(color == 0x00000000, "proj: Pixel 478/298 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 482, 298);
+    ok(color == 0x00000000, "proj: Pixel 482/298 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 478, 302);
+    ok(color == 0x00FFFFFF, "proj: Pixel 478/302 has color 0x%08x, expected 0x00FFFFFF\n", color);
+    color = getPixelColor(device, 482, 302);
+    ok(color == 0x00000000, "proj: Pixel 482/302 has color 0x%08x, expected 0x00000000\n", color);
+
+    color = getPixelColor(device, 478, 388);
+    ok(color == 0x00FFFFFF, "proj: Pixel 478/388 has color 0x%08x, expected 0x00FFFFFF\n", color);
+    color = getPixelColor(device, 482, 388);
+    ok(color == 0x00000000, "proj: Pixel 482/388 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 478, 392);
+    ok(color == 0x00000000, "proj: Pixel 478/392 has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 482, 392);
+    ok(color == 0x00000000, "proj: Pixel 482/392 has color 0x%08x, expected 0x00000000\n", color);
+
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
     /* Use a smaller volume texture than the biggest possible size for memory and performance reasons
@@ -2879,6 +3017,7 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %s\n", DXGetErrorString9(hr));
     IDirect3DVertexDeclaration9_Release(decl);
     IDirect3DVertexDeclaration9_Release(decl2);
+    IDirect3DVertexDeclaration9_Release(decl3);
 }
 
 static void texdepth_test(IDirect3DDevice9 *device)
