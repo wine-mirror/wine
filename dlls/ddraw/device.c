@@ -3708,14 +3708,14 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
     {
         WineD3DStrided.u.s.diffuse.lpData = D3DDrawPrimStrideData->diffuse.lpvData;
         WineD3DStrided.u.s.diffuse.dwStride = D3DDrawPrimStrideData->diffuse.dwStride;
-        WineD3DStrided.u.s.diffuse.dwType = WINED3DDECLTYPE_SHORT4;
+        WineD3DStrided.u.s.diffuse.dwType = WINED3DDECLTYPE_D3DCOLOR;
     }
 
     if(VertexType & D3DFVF_SPECULAR)
     {
         WineD3DStrided.u.s.specular.lpData = D3DDrawPrimStrideData->specular.lpvData;
         WineD3DStrided.u.s.specular.dwStride = D3DDrawPrimStrideData->specular.dwStride;
-        WineD3DStrided.u.s.specular.dwType = WINED3DDECLTYPE_SHORT4;
+        WineD3DStrided.u.s.specular.dwType = WINED3DDECLTYPE_D3DCOLOR;
     }
 
     for( i = 0; i < GET_TEXCOUNT_FROM_FVF(VertexType); i++)
@@ -3857,14 +3857,14 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     {
         WineD3DStrided.u.s.diffuse.lpData = D3DDrawPrimStrideData->diffuse.lpvData;
         WineD3DStrided.u.s.diffuse.dwStride = D3DDrawPrimStrideData->diffuse.dwStride;
-        WineD3DStrided.u.s.diffuse.dwType = WINED3DDECLTYPE_SHORT4;
+        WineD3DStrided.u.s.diffuse.dwType = WINED3DDECLTYPE_D3DCOLOR;
     }
 
     if(VertexType & D3DFVF_SPECULAR)
     {
         WineD3DStrided.u.s.specular.lpData = D3DDrawPrimStrideData->specular.lpvData;
         WineD3DStrided.u.s.specular.dwStride = D3DDrawPrimStrideData->specular.dwStride;
-        WineD3DStrided.u.s.specular.dwType = WINED3DDECLTYPE_SHORT4;
+        WineD3DStrided.u.s.specular.dwType = WINED3DDECLTYPE_D3DCOLOR;
     }
 
     for( i = 0; i < GET_TEXCOUNT_FROM_FVF(VertexType); i++)
