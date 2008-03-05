@@ -25,6 +25,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <math.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
@@ -35,9 +36,14 @@
 #endif
 #include <string.h>
 
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
+
 #include "x11drv.h"
 #include "x11font.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
@@ -1373,4 +1379,55 @@ DWORD X11DRV_SetDCOrg( X11DRV_PDEVICE *physDev, INT x, INT y )
     physDev->dc_rect.left = x - physDev->drawable_rect.left;
     physDev->dc_rect.top = y - physDev->drawable_rect.top;
     return ret;
+}
+
+/***********************************************************************
+ *              GetICMProfile (X11DRV.@)
+ */
+BOOL X11DRV_GetICMProfile( X11DRV_PDEVICE *physDev, LPDWORD size, LPWSTR filename )
+{
+    static const WCHAR path[] =
+        {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s',
+         '\\','c','o','l','o','r','\\',0};
+    static const WCHAR srgb[] =
+        {'s','R','G','B',' ','C','o','l','o','r',' ','S','p','a','c','e',' ',
+         'P','r','o','f','i','l','e','.','i','c','m',0};
+    static const WCHAR mntr[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+         'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t',
+         'V','e','r','s','i','o','n','\\','I','C','M','\\','m','n','t','r',0};
+
+    HKEY hkey;
+    DWORD required;
+    WCHAR profile[MAX_PATH], fullname[MAX_PATH];
+
+    if (!size) return FALSE;
+
+    strcpyW( profile, srgb );
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, mntr, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    {
+        DWORD len = sizeof(profile)/sizeof(WCHAR);
+        /* FIXME handle multiple values */
+        RegEnumValueW( hkey, 0, profile, &len, NULL, NULL, NULL, NULL );
+        RegCloseKey( hkey );
+    }
+    GetSystemDirectoryW( fullname, MAX_PATH );
+    strcatW( fullname, path );
+    strcatW( fullname, profile );
+
+    required = strlenW( fullname ) + 1;
+    if (*size < required)
+    {
+        *size = required;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+    if (filename)
+    {
+        strcpyW( filename, fullname );
+        if (GetFileAttributesW( filename ) == INVALID_FILE_ATTRIBUTES)
+            WARN( "color profile not found\n" );
+    }
+    *size = required;
+    return TRUE;
 }

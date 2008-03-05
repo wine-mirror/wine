@@ -140,6 +140,7 @@ typedef struct tagDC_FUNCS
     INT      (*pGetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPVOID,BITMAPINFO*,UINT);
     INT      (*pGetDeviceCaps)(PHYSDEV,INT);
     BOOL     (*pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
+    BOOL     (*pGetICMProfile)(PHYSDEV,LPDWORD,LPWSTR);
     COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
     COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
     INT      (*pGetPixelFormat)(PHYSDEV);

@@ -75,6 +75,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pGetDIBits */
     EMFDRV_GetDeviceCaps,            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
+    NULL,                            /* pGetICMProfile */
     NULL,                            /* pGetNearestColor */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */

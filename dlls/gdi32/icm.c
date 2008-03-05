@@ -30,6 +30,8 @@
 #include "winnls.h"
 #include "winreg.h"
 
+#include "gdi_private.h"
+
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -97,51 +99,18 @@ BOOL WINAPI GetICMProfileA(HDC hdc, LPDWORD size, LPSTR filename)
  */
 BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
 {
-    HKEY hkey;
-    DWORD required;
-    WCHAR profile[MAX_PATH], fullname[MAX_PATH];
-    static const WCHAR path[] =
-        {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s',
-         '\\','c','o','l','o','r','\\',0};
-    static const WCHAR srgb[] =
-        {'s','R','G','B',' ','C','o','l','o','r',' ','S','p','a','c','e',' ',
-         'P','r','o','f','i','l','e','.','i','c','m',0};
-    static const WCHAR mntr[] =
-        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t',
-         'V','e','r','s','i','o','n','\\','I','C','M','\\','m','n','t','r',0};
+    BOOL ret = FALSE;
+    DC *dc = get_dc_ptr(hdc);
 
     TRACE("%p, %p, %p\n", hdc, size, filename);
 
-    if (!hdc || !size) return FALSE;
-
-    strcpyW(profile, srgb);
-    if (!RegCreateKeyExW(HKEY_LOCAL_MACHINE, mntr, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL))
+    if (dc)
     {
-        DWORD size = sizeof(profile) / sizeof(WCHAR);
-        /* FIXME handle multiple values */
-        RegEnumValueW(hkey, 0, profile, &size, NULL, NULL, NULL, NULL);
-        RegCloseKey(hkey);
+        if (dc->funcs->pGetICMProfile)
+            ret = dc->funcs->pGetICMProfile(dc->physDev, size, filename);
+        release_dc_ptr(dc);
     }
-    GetSystemDirectoryW(fullname, MAX_PATH);
-    strcatW(fullname, path);
-    strcatW(fullname, profile);
-
-    required = strlenW(fullname) + 1;
-    if (*size < required)
-    {
-        *size = required;
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
-    }
-    if (filename)
-    {
-        strcpyW(filename, fullname);
-        if (GetFileAttributesW(filename) == INVALID_FILE_ATTRIBUTES)
-            WARN("color profile not found\n");
-    }
-    *size = required;
-    return TRUE;
+    return ret;
 }
 
 /**********************************************************************

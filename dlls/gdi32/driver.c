@@ -116,6 +116,7 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(GetDIBits);
         GET_FUNC(GetDeviceCaps);
         GET_FUNC(GetDeviceGammaRamp);
+        GET_FUNC(GetICMProfile);
         GET_FUNC(GetNearestColor);
         GET_FUNC(GetPixel);
         GET_FUNC(GetPixelFormat);
