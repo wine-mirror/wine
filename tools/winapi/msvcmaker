@@ -768,18 +768,6 @@ sub _generate_dsp($$) {
 	    $source_file = ".\\$source_file";
 	}
 
-	if($source_file =~ /^(.*?)\.spec$/) {
-	    my $basename = $1;
-
-	    $basename = "$basename.dll" if $basename !~ /\..{1,3}$/;
-	    my $dbg_c_file = "$basename.dbg.c";
-
-	    print OUT "# Begin Source File\r\n";
-	    print OUT "\r\n";
-	    print OUT "SOURCE=$dbg_c_file\r\n";
-	    print OUT "# End Source File\r\n";
-	}
-
 	print OUT "# Begin Source File\r\n";
 	print OUT "\r\n";
 
@@ -791,42 +779,15 @@ sub _generate_dsp($$) {
 	    my $spec_file = $source_file;
 	    my $def_file = "$basename.def";
 
-	    $basename = "$basename.dll" if $basename !~ /\..{1,3}$/;
-	    my $dbg_file = "$basename.dbg";
-	    my $dbg_c_file = "$basename.dbg.c";
-
 	    my $srcdir = "."; # FIXME: Is this really always correct?
 
 	    print OUT "# Begin Custom Build\r\n";
 	    print OUT "InputPath=$spec_file\r\n";
 	    print OUT "\r\n";
 	    print OUT "BuildCmds= \\\r\n";
-	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe --def $spec_file > $def_file \\\r\n";
-	    
-	    if($project =~ /^ntdll$/) {
-		my $n = 0;
-		foreach my $c_src (@c_srcs) {
-		    if($n++ > 0)  {
-			print OUT "\techo $c_src >> $dbg_file \\\r\n";
-		    } else {
-			print OUT "\techo $c_src > $dbg_file \\\r\n";
-		    }
-		}
-		print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe";
-		print OUT " -o $dbg_c_file --debug -C$srcdir $dbg_file \\\r\n";
-	    } else {
-		my $c_srcs = join(" ", grep(/\.c$/, @c_srcs));
-
-		print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe";
-		print OUT " -o $dbg_c_file --debug -C$srcdir $c_srcs \\\r\n";
-	    }
-
-	    print OUT "\t\r\n";
+	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe --def $spec_file > $def_file\r\n";
 	    print OUT "\r\n";
 	    print OUT "\"$def_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
-	    print OUT "   \$(BuildCmds)\r\n";
-	    print OUT "\r\n";
-	    print OUT "\"$dbg_c_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
 	    print OUT "   \$(BuildCmds)\r\n";
 	    print OUT "# End Custom Build\r\n";
 	} elsif($source_file =~ /([^\\]*?\.h)$/) {
