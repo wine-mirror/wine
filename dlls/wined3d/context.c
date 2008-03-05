@@ -915,11 +915,11 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         }
         if(This->activeContext->vshader_const_dirty) {
             memset(This->activeContext->vshader_const_dirty, 1,
-                   sizeof(This->activeContext->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
+                   sizeof(*This->activeContext->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
         }
         if(This->activeContext->pshader_const_dirty) {
             memset(This->activeContext->pshader_const_dirty, 1,
-                   sizeof(This->activeContext->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
+                   sizeof(*This->activeContext->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
         }
         This->activeContext = context;
     }
