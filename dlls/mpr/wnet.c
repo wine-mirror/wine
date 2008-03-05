@@ -279,16 +279,18 @@ void wnetInit(HINSTANCE hInstDll)
                     {
                         PWSTR ptrPrev;
                         int entireNetworkLen;
+                        LPCWSTR stringresource;
 
                         entireNetworkLen = LoadStringW(hInstDll,
-                         IDS_ENTIRENETWORK, NULL, 0);
+                         IDS_ENTIRENETWORK, (LPWSTR)&stringresource, 0);
                         providerTable->entireNetwork = HeapAlloc(
                          GetProcessHeap(), 0, (entireNetworkLen + 1) *
                          sizeof(WCHAR));
                         if (providerTable->entireNetwork)
-                            LoadStringW(hInstDll, IDS_ENTIRENETWORK,
-                             providerTable->entireNetwork,
-                             entireNetworkLen + 1);
+                        {
+                            memcpy(providerTable->entireNetwork, stringresource, entireNetworkLen*sizeof(WCHAR));
+                            providerTable->entireNetwork[entireNetworkLen] = 0;
+                        }
                         providerTable->numAllocated = numToAllocate;
                         for (ptr = providers; ptr; )
                         {

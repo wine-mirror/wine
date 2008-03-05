@@ -43,13 +43,10 @@ static void test_LoadStringW(void)
     length1 = LoadStringW(hInst, 2, (WCHAR *) &resourcepointer, 0); /* get pointer to resource. */
     length2 = LoadStringW(hInst, 2, returnedstringw, sizeof(returnedstringw) /sizeof(WCHAR)); /* get resource string */
     ok(length2 > 0, "LoadStringW failed to load resource 2, ret %d, err %d\n", length2, GetLastError());
-    todo_wine
-    {
-        ok(length1 == length2, "LoadStringW returned different values dependent on buflen. ret1 %d, ret2 %d\n",
-            length1, length2);
-        ok(length1 > 0 && resourcepointer != NULL, "LoadStringW failed to get pointer to resource 2, ret %d, err %d\n",
-            length1, GetLastError());
-    }
+    ok(length1 == length2, "LoadStringW returned different values dependent on buflen. ret1 %d, ret2 %d\n",
+        length1, length2);
+    ok(length1 > 0 && resourcepointer != NULL, "LoadStringW failed to get pointer to resource 2, ret %d, err %d\n",
+        length1, GetLastError());
 
     /* Copy the resource since it is not '\0' terminated, and add '\0' to the end */
     if(resourcepointer != NULL) /* Check that the resource pointer was loaded to avoid access violation */
@@ -62,17 +59,13 @@ static void test_LoadStringW(void)
         ok(!memcmp(copiedstringw, returnedstringw, (length2 + 1)*sizeof(WCHAR)),
            "strings don't match: returnedstring = %s, copiedstring = %s\n", returnedstring, copiedstring);
     }
-    todo_wine
-    {
-        /* check that calling LoadStringW with buffer = NULL returns zero */
-        retvalue = LoadStringW(hInst, 2, NULL, 0);
-        ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d\n",
-            retvalue);
-        /* check again, with a different buflen value, that calling LoadStringW with buffer = NULL returns zero */
-        retvalue = LoadStringW(hInst, 2, NULL, 128);
-        ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d\n",
-            retvalue);
-    }
+
+    /* check that calling LoadStringW with buffer = NULL returns zero */
+    retvalue = LoadStringW(hInst, 2, NULL, 0);
+    ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d\n", retvalue);
+    /* check again, with a different buflen value, that calling LoadStringW with buffer = NULL returns zero */
+    retvalue = LoadStringW(hInst, 2, NULL, 128);
+    ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d\n", retvalue);
 }
 
 static void test_LoadStringA (void)

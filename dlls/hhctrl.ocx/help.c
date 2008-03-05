@@ -51,13 +51,14 @@ static const WCHAR szEmpty[] = {0};
 static LPWSTR HH_LoadString(DWORD dwID)
 {
     LPWSTR string = NULL;
+    LPCWSTR stringresource;
     int iSize;
 
-    iSize = LoadStringW(hhctrl_hinstance, dwID, NULL, 0);
-    iSize += 2; /* some strings (tab text) needs double-null termination */
+    iSize = LoadStringW(hhctrl_hinstance, dwID, (LPWSTR)&stringresource, 0);
 
-    string = heap_alloc(iSize * sizeof(WCHAR));
-    LoadStringW(hhctrl_hinstance, dwID, string, iSize);
+    string = heap_alloc((iSize + 2) * sizeof(WCHAR)); /* some strings (tab text) needs double-null termination */
+    memcpy(string, stringresource, iSize*sizeof(WCHAR));
+    string[iSize] = 0;
 
     return string;
 }

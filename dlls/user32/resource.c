@@ -368,6 +368,9 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     TRACE("instance = %p, id = %04x, buffer = %p, length = %d\n",
           instance, resource_id, buffer, buflen);
 
+    if(buffer == NULL)
+        return 0;
+
     /* Use loword (incremented by 1) as resourceid */
     hrsrc = FindResourceW( instance, MAKEINTRESOURCEW((LOWORD(resource_id) >> 4) + 1),
                            (LPWSTR)RT_STRING );
@@ -382,7 +385,14 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 
     TRACE("strlen = %d\n", (int)*p );
 
-    if (buffer == NULL) return *p;
+    /*if buflen == 0, then return a read-only pointer to the resource itself in buffer
+    it is assumed that buffer is actually a (LPWSTR *) */
+    if(buflen == 0)
+    {
+        *((LPWSTR *)buffer) = p + 1;
+        return *p;
+    }
+
     i = min(buflen - 1, *p);
     if (i > 0) {
 	memcpy(buffer, p + 1, i * sizeof (WCHAR));
