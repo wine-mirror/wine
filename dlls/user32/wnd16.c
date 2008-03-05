@@ -965,6 +965,24 @@ HWND16 WINAPI ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
 
 
 /***********************************************************************
+ *		CascadeChildWindows (USER.198)
+ */
+void WINAPI CascadeChildWindows16( HWND16 parent, WORD action )
+{
+    CascadeWindows( WIN_Handle32(parent), action, NULL, 0, NULL );
+}
+
+
+/***********************************************************************
+ *		TileChildWindows (USER.199)
+ */
+void WINAPI TileChildWindows16( HWND16 parent, WORD action )
+{
+    TileWindows( WIN_Handle32(parent), action, NULL, 0, NULL );
+}
+
+
+/***********************************************************************
  *		GetWindowTask   (USER.224)
  */
 HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )

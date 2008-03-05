@@ -2177,20 +2177,3 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
     USER_HEAP_FREE( hdwp );
     return res;
 }
-
-
-/***********************************************************************
- *		TileChildWindows (USER.199)
- */
-void WINAPI TileChildWindows16( HWND16 parent, WORD action )
-{
-    FIXME("(%04x, %d): stub\n", parent, action);
-}
-
-/***********************************************************************
- *		CascadeChildWindows (USER.198)
- */
-void WINAPI CascadeChildWindows16( HWND16 parent, WORD action )
-{
-    FIXME("(%04x, %d): stub\n", parent, action);
-}
