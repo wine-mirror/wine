@@ -39,11 +39,20 @@ static BOOL    (WINAPI *pIntlStrEqWorkerA)(BOOL,LPCSTR,LPCSTR,int);
 static BOOL    (WINAPI *pIntlStrEqWorkerW)(BOOL,LPCWSTR,LPCWSTR,int);
 static DWORD   (WINAPI *pSHAnsiToAnsi)(LPCSTR,LPSTR,int);
 static DWORD   (WINAPI *pSHUnicodeToUnicode)(LPCWSTR,LPWSTR,int);
+static LPSTR   (WINAPI *pStrCatBuffA)(LPSTR,LPCSTR,INT);
+static LPWSTR  (WINAPI *pStrCatBuffW)(LPWSTR,LPCWSTR,INT);
 static LPSTR   (WINAPI *pStrCpyNXA)(LPSTR,LPCSTR,int);
 static LPWSTR  (WINAPI *pStrCpyNXW)(LPWSTR,LPCWSTR,int);
+static LPSTR   (WINAPI *pStrFormatByteSize64A)(LONGLONG,LPSTR,UINT);
+static LPSTR   (WINAPI *pStrFormatKBSizeA)(LONGLONG,LPSTR,UINT);
+static LPWSTR  (WINAPI *pStrFormatKBSizeW)(LONGLONG,LPWSTR,UINT);
 static BOOL    (WINAPI *pStrIsIntlEqualA)(BOOL,LPCSTR,LPCSTR,int);
 static BOOL    (WINAPI *pStrIsIntlEqualW)(BOOL,LPCWSTR,LPCWSTR,int);
 static HRESULT (WINAPI *pStrRetToBSTR)(STRRET*,void*,BSTR*);
+static HRESULT (WINAPI *pStrRetToBufA)(STRRET*,LPCITEMIDLIST,LPSTR,UINT);
+static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
+static INT     (WINAPIV *pwnsprintfA)(LPSTR,INT,LPCSTR, ...);
+static INT     (WINAPIV *pwnsprintfW)(LPWSTR,INT,LPCWSTR, ...);
 
 static int strcmpW(const WCHAR *str1, const WCHAR *str2)
 {
@@ -490,9 +499,15 @@ static void test_StrFormatByteSize64A(void)
   char szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
 
+  if (!pStrFormatByteSize64A)
+  {
+    skip("StrFormatByteSize64A() is not available. Tests skipped\n");
+    return;
+  }
+
   while(result->value)
   {
-    StrFormatByteSize64A(result->value, szBuff, 256);
+    pStrFormatByteSize64A(result->value, szBuff, 256);
 
     ok(!strcmp(result->byte_size_64, szBuff),
         "Formatted %x%08x wrong: got %s, expected %s\n",
@@ -508,9 +523,15 @@ static void test_StrFormatKBSizeW(void)
   char szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
 
+  if (!pStrFormatKBSizeW)
+  {
+    skip("StrFormatKBSizeW() is not available. Tests skipped\n");
+    return;
+  }
+
   while(result->value)
   {
-    StrFormatKBSizeW(result->value, szBuffW, 256);
+    pStrFormatKBSizeW(result->value, szBuffW, 256);
     WideCharToMultiByte(0,0,szBuffW,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR),0,0);
     ok(!strcmp(result->kb_size, szBuff),
         "Formatted %x%08x wrong: got %s, expected %s\n",
@@ -524,9 +545,15 @@ static void test_StrFormatKBSizeA(void)
   char szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
 
+  if (!pStrFormatKBSizeA)
+  {
+    skip("StrFormatKBSizeA() is not available. Tests skipped\n");
+    return;
+  }
+
   while(result->value)
   {
-    StrFormatKBSizeA(result->value, szBuff, 256);
+    pStrFormatKBSizeA(result->value, szBuff, 256);
 
     ok(!strcmp(result->kb_size, szBuff),
         "Formatted %x%08x wrong: got %s, expected %s\n",
@@ -794,42 +821,75 @@ static void test_StrXXX_overflows(void)
     expect_eq(StrCpyNA(buf, str1, 10), buf, PCHAR, "%p");
     expect_eq(buf[9], 0, CHAR, "%x");
     expect_eq(buf[10], '\xbf', CHAR, "%x");
-    expect_eq(StrCatBuffA(buf, str1, 100), buf, PCHAR, "%p");
-    expect_eq(buf[99], 0, CHAR, "%x");
-    expect_eq(buf[100], '\xbf', CHAR, "%x");
+
+    if (pStrCatBuffA)
+    {
+        expect_eq(pStrCatBuffA(buf, str1, 100), buf, PCHAR, "%p");
+        expect_eq(buf[99], 0, CHAR, "%x");
+        expect_eq(buf[100], '\xbf', CHAR, "%x");
+    }
+    else
+        skip("StrCatBuffA() is not available. Tests skipped\n");
 
     memset(wbuf, 0xbf, sizeof(wbuf));
     expect_eq(StrCpyNW(wbuf, wstr1, 10), wbuf, PWCHAR, "%p");
     expect_eq(wbuf[9], 0, WCHAR, "%x");
     expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
-    expect_eq(StrCatBuffW(wbuf, wstr1, 100), wbuf, PWCHAR, "%p");
-    expect_eq(wbuf[99], 0, WCHAR, "%x");
-    expect_eq(wbuf[100], (WCHAR)0xbfbf, WCHAR, "%x");
 
-    memset(wbuf, 0xbf, sizeof(wbuf));
-    strret.uType = STRRET_WSTR;
-    U(strret).pOleStr = StrDupW(wstr1);
-    expect_eq(StrRetToBufW(&strret, NULL, wbuf, 10), S_OK, HRESULT, "%x");
-    expect_eq(wbuf[9], 0, WCHAR, "%x");
-    expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
+    if (pStrCatBuffW)
+    {
+        expect_eq(pStrCatBuffW(wbuf, wstr1, 100), wbuf, PWCHAR, "%p");
+        expect_eq(wbuf[99], 0, WCHAR, "%x");
+        expect_eq(wbuf[100], (WCHAR)0xbfbf, WCHAR, "%x");
+    }
+    else
+        skip("StrCatBuffW() is not available. Tests skipped\n");
 
-    memset(buf, 0xbf, sizeof(buf));
-    strret.uType = STRRET_CSTR;
-    StrCpyN(U(strret).cStr, str1, MAX_PATH);
-    expect_eq(StrRetToBufA(&strret, NULL, buf, 10), S_OK, HRESULT, "%x");
-    expect_eq(buf[9], 0, CHAR, "%x");
-    expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
+    if (pStrRetToBufW)
+    {
+        memset(wbuf, 0xbf, sizeof(wbuf));
+        strret.uType = STRRET_WSTR;
+        U(strret).pOleStr = StrDupW(wstr1);
+        expect_eq(pStrRetToBufW(&strret, NULL, wbuf, 10), S_OK, HRESULT, "%x");
+        expect_eq(wbuf[9], 0, WCHAR, "%x");
+        expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
+    }
+    else
+        skip("StrRetToBufW() is not available. Tests skipped\n");
 
-    memset(buf, 0xbf, sizeof(buf));
-    ret = wnsprintfA(buf, 10, "%s", str1);
-    todo_wine ok(ret == 9, "Unexpected wsnprintfA return %d, expected 9\n", ret);
-    expect_eq(buf[9], 0, CHAR, "%x");
-    expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
-    memset(wbuf, 0xbf, sizeof(wbuf));
-    ret = wnsprintfW(wbuf, 10, fmt, wstr1);
-    todo_wine ok(ret == 9, "Unexpected wsnprintfW return %d, expected 9\n", ret);
-    expect_eq(wbuf[9], 0, WCHAR, "%x");
-    expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
+    if (pStrRetToBufA)
+    {
+        memset(buf, 0xbf, sizeof(buf));
+        strret.uType = STRRET_CSTR;
+        StrCpyN(U(strret).cStr, str1, MAX_PATH);
+        expect_eq(pStrRetToBufA(&strret, NULL, buf, 10), S_OK, HRESULT, "%x");
+        expect_eq(buf[9], 0, CHAR, "%x");
+        expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
+    }
+    else
+        skip("StrRetToBufA() is not available. Tests skipped\n");
+
+    if (pwnsprintfA)
+    {
+        memset(buf, 0xbf, sizeof(buf));
+        ret = pwnsprintfA(buf, 10, "%s", str1);
+        todo_wine ok(ret == 9, "Unexpected wsnprintfA return %d, expected 9\n", ret);
+        expect_eq(buf[9], 0, CHAR, "%x");
+        expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
+    }
+    else
+        skip("wnsprintfA() is not available. Tests skipped\n");
+
+    if (pwnsprintfW)
+    {
+        memset(wbuf, 0xbf, sizeof(wbuf));
+        ret = pwnsprintfW(wbuf, 10, fmt, wstr1);
+        todo_wine ok(ret == 9, "Unexpected wsnprintfW return %d, expected 9\n", ret);
+        expect_eq(wbuf[9], 0, WCHAR, "%x");
+        expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
+    }
+    else
+        skip("wnsprintfW() is not available. Tests skipped\n");
 }
 
 START_TEST(string)
@@ -847,11 +907,20 @@ START_TEST(string)
   pIntlStrEqWorkerW = (void *)GetProcAddress(hShlwapi, "IntlStrEqWorkerW");
   pSHAnsiToAnsi = (void *)GetProcAddress(hShlwapi, (LPSTR)345);
   pSHUnicodeToUnicode = (void *)GetProcAddress(hShlwapi, (LPSTR)346);
+  pStrCatBuffA = (void *)GetProcAddress(hShlwapi, "StrCatBuffA");
+  pStrCatBuffW = (void *)GetProcAddress(hShlwapi, "StrCatBuffW");
   pStrCpyNXA = (void *)GetProcAddress(hShlwapi, (LPSTR)399);
   pStrCpyNXW = (void *)GetProcAddress(hShlwapi, (LPSTR)400);
+  pStrFormatByteSize64A = (void *)GetProcAddress(hShlwapi, "StrFormatByteSize64A");
+  pStrFormatKBSizeA = (void *)GetProcAddress(hShlwapi, "StrFormatKBSizeA");
+  pStrFormatKBSizeW = (void *)GetProcAddress(hShlwapi, "StrFormatKBSizeW");
   pStrIsIntlEqualA = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualA");
   pStrIsIntlEqualW = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualW");
   pStrRetToBSTR = (void *)GetProcAddress(hShlwapi, "StrRetToBSTR");
+  pStrRetToBufA = (void *)GetProcAddress(hShlwapi, "StrRetToBufA");
+  pStrRetToBufW = (void *)GetProcAddress(hShlwapi, "StrRetToBufW");
+  pwnsprintfA = (void *)GetProcAddress(hShlwapi, "wnsprintfA");
+  pwnsprintfW = (void *)GetProcAddress(hShlwapi, "wnsprintfW");
 
   test_StrChrA();
   test_StrChrW();
