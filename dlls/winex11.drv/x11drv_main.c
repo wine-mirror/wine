@@ -128,6 +128,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "KWM_DOCKWINDOW",
     "DndProtocol",
     "DndSelection",
+    "_ICC_PROFILE",
     "_MOTIF_WM_HINTS",
     "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR",
     "_NET_SYSTEM_TRAY_OPCODE",

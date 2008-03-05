@@ -1381,6 +1381,39 @@ DWORD X11DRV_SetDCOrg( X11DRV_PDEVICE *physDev, INT x, INT y )
     return ret;
 }
 
+static unsigned char *get_icm_profile( unsigned long *size )
+{
+    Atom type;
+    int format;
+    unsigned long count, remaining;
+    unsigned char *profile, *ret = NULL;
+
+    wine_tsx11_lock();
+    XGetWindowProperty( gdi_display, DefaultRootWindow(gdi_display),
+                        x11drv_atom(_ICC_PROFILE), 0, ~0UL, False, AnyPropertyType,
+                        &type, &format, &count, &remaining, &profile );
+    if (format && count)
+    {
+        *size = count * (format / 8);
+        if ((ret = HeapAlloc( GetProcessHeap(), 0, *size ))) memcpy( ret, profile, *size );
+        XFree( profile );
+    }
+    wine_tsx11_unlock();
+    return ret;
+}
+
+typedef struct
+{
+    unsigned int unknown[6];
+    unsigned int state[5];
+    unsigned int count[2];
+    unsigned char buffer[64];
+} sha_ctx;
+
+extern void WINAPI A_SHAInit( sha_ctx * );
+extern void WINAPI A_SHAUpdate( sha_ctx *, const unsigned char *, unsigned int );
+extern void WINAPI A_SHAFinal( sha_ctx *, unsigned char * );
+
 /***********************************************************************
  *              GetICMProfile (X11DRV.@)
  */
@@ -1398,22 +1431,53 @@ BOOL X11DRV_GetICMProfile( X11DRV_PDEVICE *physDev, LPDWORD size, LPWSTR filenam
          'V','e','r','s','i','o','n','\\','I','C','M','\\','m','n','t','r',0};
 
     HKEY hkey;
-    DWORD required;
-    WCHAR profile[MAX_PATH], fullname[MAX_PATH];
+    DWORD required, len;
+    WCHAR profile[MAX_PATH], fullname[2*MAX_PATH + sizeof(path)/sizeof(WCHAR)];
+    unsigned char *buffer;
+    unsigned long buflen;
 
     if (!size) return FALSE;
 
-    strcpyW( profile, srgb );
-    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, mntr, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
-    {
-        DWORD len = sizeof(profile)/sizeof(WCHAR);
-        /* FIXME handle multiple values */
-        RegEnumValueW( hkey, 0, profile, &len, NULL, NULL, NULL, NULL );
-        RegCloseKey( hkey );
-    }
     GetSystemDirectoryW( fullname, MAX_PATH );
     strcatW( fullname, path );
-    strcatW( fullname, profile );
+
+    len = sizeof(profile)/sizeof(WCHAR);
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, mntr, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL ) &&
+        !RegEnumValueW( hkey, 0, profile, &len, NULL, NULL, NULL, NULL )) /* FIXME handle multiple values */
+    {
+        strcatW( fullname, profile );
+        RegCloseKey( hkey );
+    }
+    else if ((buffer = get_icm_profile( &buflen )))
+    {
+        static const WCHAR fmt[] = {'%','0','2','x',0};
+        static const WCHAR icm[] = {'.','i','c','m',0};
+
+        unsigned char sha1sum[20];
+        unsigned int i;
+        sha_ctx ctx;
+        HANDLE file;
+
+        A_SHAInit( &ctx );
+        A_SHAUpdate( &ctx, buffer, buflen );
+        A_SHAFinal( &ctx, sha1sum );
+
+        for (i = 0; i < sizeof(sha1sum); i++) sprintfW( &profile[i * 2], fmt, sha1sum[i] );
+        memcpy( &profile[i * 2], icm, sizeof(icm) );
+
+        strcatW( fullname, profile );
+        file = CreateFileW( fullname, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0 );
+        if (file != INVALID_HANDLE_VALUE)
+        {
+            DWORD written;
+
+            if (!WriteFile( file, buffer, buflen, &written, NULL ) || written != buflen)
+                ERR( "Unable to write color profile\n" );
+            CloseHandle( file );
+        }
+        HeapFree( GetProcessHeap(), 0, buffer );
+    }
+    else strcatW( fullname, srgb );
 
     required = strlenW( fullname ) + 1;
     if (*size < required)
