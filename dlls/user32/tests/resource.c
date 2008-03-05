@@ -66,11 +66,11 @@ static void test_LoadStringW(void)
     {
         /* check that calling LoadStringW with buffer = NULL returns zero */
         retvalue = LoadStringW(hInst, 2, NULL, 0);
-        ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d",
+        ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d\n",
             retvalue);
         /* check again, with a different buflen value, that calling LoadStringW with buffer = NULL returns zero */
         retvalue = LoadStringW(hInst, 2, NULL, 128);
-        ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d",
+        ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d\n",
             retvalue);
     }
 }
