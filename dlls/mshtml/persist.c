@@ -577,7 +577,7 @@ static HRESULT WINAPI PersistFile_GetClassID(IPersistFile *iface, CLSID *pClassI
     if(!pClassID)
         return E_INVALIDARG;
 
-    memcpy(pClassID, &CLSID_HTMLDocument, sizeof(CLSID));
+    *pClassID = CLSID_HTMLDocument;
     return S_OK;
 }
 

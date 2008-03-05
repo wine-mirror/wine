@@ -110,7 +110,7 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *i
     if(!pIID)
         return E_POINTER;
 
-    memcpy(pIID, This->iid, sizeof(IID));
+    *pIID = *This->iid;
     return S_OK;
 }
 
