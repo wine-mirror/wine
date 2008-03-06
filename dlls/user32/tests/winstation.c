@@ -220,6 +220,12 @@ static void test_handles(void)
     ok( !CloseWindowStation( (HWINSTA)d2 ), "CloseWindowStation succeeded on desktop\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "bad last error %d\n", GetLastError() );
 
+    SetLastError( 0xdeadbeef );
+    d3 = CreateDesktop( "foobar", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    ok( d3 != 0, "create foobar desktop again failed\n" );
+    ok( GetLastError() == 0xdeadbeef, "bad last error %d\n", GetLastError() );
+    ok( CloseDesktop( d3 ), "CloseDesktop failed\n" );
+
     d3 = OpenDesktop( "foobar", 0, TRUE, DESKTOP_ALL_ACCESS );
     ok( d3 != 0, "open foobar desktop failed\n" );
     ok( d3 != d2, "open foobar desktop returned same handle\n" );
