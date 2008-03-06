@@ -669,6 +669,7 @@ DECL_HANDLER(enum_desktop)
         {
             set_reply_data_obj_name( &desktop->obj );
             release_object( desktop );
+            release_object( winstation );
             clear_error();
             reply->next = index;
             return;
