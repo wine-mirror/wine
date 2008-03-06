@@ -38,5 +38,14 @@ typedef enum _EXCEPTION_DISPOSITION
 #define EXCEPTION_CONTINUE_EXECUTION    -1
 
 
+#if defined(_MSC_VER) && defined(USE_COMPILER_EXCEPTIONS)
+#define GetExceptionCode    _exception_code
+#define GetExceptionInformation (struct _EXCEPTION_POINTERS *)_exception_info
+#define AbnormalTermination _abnormal_termination
+
+unsigned long __cdecl _exception_code(void);
+void * __cdecl _exception_info(void);
+int __cdecl _abnormal_termination(void);
+#endif /* defined(_MSC_VER) && defined(USE_COMPILER_EXCEPTIONS) */
 
 #endif /* __WINE_EXCPT_H */
