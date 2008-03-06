@@ -122,6 +122,55 @@ static void test_LoadingImages(void)
     expect(InvalidParameter, stat);
 }
 
+static void test_encoders(void)
+{
+    GpStatus stat;
+    UINT n;
+    UINT s;
+    ImageCodecInfo *codecs;
+    int i;
+    int bmp_found;
+
+    static const WCHAR bmp_format[] = {'B', 'M', 'P', 0};
+
+    stat = GdipGetImageEncodersSize(&n, &s);
+    expect(stat, Ok);
+
+    codecs = GdipAlloc(s);
+    if (!codecs)
+        return;
+
+    stat = GdipGetImageEncoders(n, s, NULL);
+    expect(GenericError, stat);
+
+    stat = GdipGetImageEncoders(0, s, codecs);
+    expect(GenericError, stat);
+
+    stat = GdipGetImageEncoders(n, s-1, codecs);
+    expect(GenericError, stat);
+
+    stat = GdipGetImageEncoders(n, s+1, codecs);
+    expect(GenericError, stat);
+
+    stat = GdipGetImageEncoders(n, s, codecs);
+    expect(stat, Ok);
+
+    bmp_found = FALSE;
+    for (i = 0; i < n; i++)
+        {
+            if (CompareStringW(LOCALE_SYSTEM_DEFAULT, 0,
+                               codecs[i].FormatDescription, -1,
+                               bmp_format, -1) == CSTR_EQUAL) {
+                bmp_found = TRUE;
+                break;
+            }
+        }
+    if (!bmp_found)
+        ok(FALSE, "No BMP codec found.\n");
+
+    GdipFree(codecs);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -137,6 +186,7 @@ START_TEST(image)
     test_Scan0();
     test_GetImageDimension();
     test_LoadingImages();
+    test_encoders();
 
     GdiplusShutdown(gdiplusToken);
 }

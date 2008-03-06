@@ -836,3 +836,63 @@ GpStatus WINGDIPAPI GdipSetImagePalette(GpImage *image,
 
     return NotImplemented;
 }
+
+/*************************************************************************
+ * Encoders -
+ *   Structures that represent which formats we support for encoding.
+ */
+
+typedef enum {
+    BMP,
+    NUM_ENCODERS_SUPPORTED
+} ImageFormat;
+
+/* ImageCodecInfo creation routines taken from libgdiplus */
+static const WCHAR bmp_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'B', 'M', 'P', 0}; /* Built-in BMP */
+static const WCHAR bmp_extension[] = {'*','.','B', 'M', 'P',';', '*','.', 'D','I', 'B',';', '*','.', 'R', 'L', 'E',0}; /* *.BMP;*.DIB;*.RLE */
+static const WCHAR bmp_mimetype[] = {'i', 'm', 'a','g', 'e', '/', 'b', 'm', 'p', 0}; /* image/bmp */
+static const WCHAR bmp_format[] = {'B', 'M', 'P', 0}; /* BMP */
+static const BYTE bmp_sig_pattern[] = { 0x42, 0x4D };
+static const BYTE bmp_sig_mask[] = { 0xFF, 0xFF };
+
+static const ImageCodecInfo codecs[NUM_ENCODERS_SUPPORTED] =
+    {
+        { /* BMP */
+            /* Clsid */              { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } },
+            /* FormatID */           { 0xb96b3cabU, 0x0728U, 0x11d3U, {0x9d, 0x7b, 0x00, 0x00, 0xf8, 0x1e, 0xf3, 0x2e} },
+            /* CodecName */          bmp_codecname,
+            /* DllName */            NULL,
+            /* FormatDescription */  bmp_format,
+            /* FilenameExtension */  bmp_extension,
+            /* MimeType */           bmp_mimetype,
+            /* Flags */              ImageCodecFlagsEncoder | ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
+            /* Version */            1,
+            /* SigCount */           1,
+            /* SigSize */            2,
+            /* SigPattern */         bmp_sig_pattern,
+            /* SigMask */            bmp_sig_mask,
+        },
+    };
+
+GpStatus WINGDIPAPI GdipGetImageEncodersSize(UINT *numEncoders, UINT *size)
+{
+    if (!numEncoders || !size)
+        return InvalidParameter;
+
+    *numEncoders = NUM_ENCODERS_SUPPORTED;
+    *size = sizeof (codecs);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetImageEncoders(UINT numEncoders, UINT size, ImageCodecInfo *encoders)
+{
+    if (!encoders ||
+        (numEncoders != NUM_ENCODERS_SUPPORTED) ||
+        (size != sizeof (codecs)))
+        return GenericError;
+
+    memcpy(encoders, codecs, sizeof (codecs));
+
+    return Ok;
+}

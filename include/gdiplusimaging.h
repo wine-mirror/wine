@@ -43,6 +43,24 @@ public:
     EncoderParameter Parameter[1];
 };
 
+class ImageCodecInfo
+{
+public:
+    CLSID Clsid;
+    GUID  FormatID;
+    const WCHAR* CodecName;
+    const WCHAR* DllName;
+    const WCHAR* FormatDescription;
+    const WCHAR* FilenameExtension;
+    const WCHAR* MimeType;
+    DWORD Flags;
+    DWORD Version;
+    DWORD SigCount;
+    DWORD SigSize;
+    const BYTE* SigPattern;
+    const BYTE* SigMask;
+};
+
 class BitmapData
 {
 public:
@@ -83,6 +101,23 @@ typedef struct EncoderParameters
     UINT Count;
     EncoderParameter Parameter[1];
 } EncoderParameters;
+
+typedef struct ImageCodecInfo
+{
+    CLSID Clsid;
+    GUID  FormatID;
+    const WCHAR* CodecName;
+    const WCHAR* DllName;
+    const WCHAR* FormatDescription;
+    const WCHAR* FilenameExtension;
+    const WCHAR* MimeType;
+    DWORD Flags;
+    DWORD Version;
+    DWORD SigCount;
+    DWORD SigSize;
+    const BYTE* SigPattern;
+    const BYTE* SigMask;
+} ImageCodecInfo;
 
 typedef struct BitmapData
 {
