@@ -31,7 +31,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "excpt.h"
-#include "ddk/wdm.h"
+#include "ddk/ntddk.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
@@ -98,4 +98,11 @@ VOID WINAPI KfReleaseSpinLock(PKSPIN_LOCK SpinLock, KIRQL NewIrql)
 #endif
 {
     FIXME( "(%p %u) stub!\n", SpinLock, NewIrql );
+}
+
+ULONG WINAPI HalGetBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, PVOID Buffer, ULONG Length)
+{
+    FIXME("(%u %u %u %p %u) stub!\n", BusDataType, BusNumber, SlotNumber, Buffer, Length);
+    /* Claim that there is no such bus */
+    return 0;
 }
