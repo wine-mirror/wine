@@ -11,13 +11,4 @@ C_SRCS = \
 
 @MAKE_DLL_RULES@
 
-libd3dx9.def: $(MAINSPEC)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
-
-libd3dx9.a: $(SPEC_DEF)
-	$(DLLTOOL) -k -l $@ -d $(SPEC_DEF)
-
-clean::
-	$(RM) $(IMPORTLIBFILE)
-
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

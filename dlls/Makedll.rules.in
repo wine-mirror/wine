@@ -15,7 +15,7 @@ MINGWAR     = @MINGWAR@
 DEFS        = -D__WINESRC__ $(EXTRADEFS)
 BASEMODULE  = $(MODULE:%.dll=%)
 MAINSPEC    = $(BASEMODULE).spec
-SPEC_DEF    = lib$(BASEMODULE).def
+SPEC_DEF    = $(BASEMODULE).def
 WIN16_FILES = $(SPEC_SRCS16:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
 ALL_OBJS    = @WIN16_FILES@ $(OBJS) $(RC_SRCS:.rc=.res)
 ALL_LIBS    = $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
@@ -47,15 +47,15 @@ all implib: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%)
 
 $(IMPLIB_SRCS:%=__static_implib__%): $(STATICIMPLIB)
 
-lib$(BASEMODULE).def: $(MAINSPEC)
+$(SPEC_DEF) $(IMPORTLIB:%=lib%.def): $(MAINSPEC)
 	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
 
-lib$(BASEMODULE).def.a: $(IMPLIB_OBJS)
+$(IMPORTLIB:%=lib%.def.a): $(IMPLIB_OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(IMPLIB_OBJS)
 	$(RANLIB) $@
 
-lib$(BASEMODULE).a: $(SPEC_DEF) $(IMPLIB_OBJS)
+$(IMPORTLIB:%=lib%.a): $(SPEC_DEF) $(IMPLIB_OBJS)
 	$(DLLTOOL) -k -l $@ -d $(SPEC_DEF)
 	$(MINGWAR) rs $@ $(IMPLIB_OBJS)
 
@@ -106,7 +106,7 @@ uninstall::
 # Misc. rules
 
 clean::
-	$(RM) $(SPEC_DEF)
+	$(RM) $(SPEC_DEF) $(IMPORTLIBFILE)
 
 $(SPEC_DEF) $(SPEC_SRCS16:.spec=.spec.o): $(WINEBUILD)
 

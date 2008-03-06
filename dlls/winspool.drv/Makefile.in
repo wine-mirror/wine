@@ -15,13 +15,4 @@ RC_SRCS = winspool.rc
 
 @MAKE_DLL_RULES@
 
-libwinspool.def: $(MAINSPEC)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
-
-libwinspool.a: $(SPEC_DEF)
-	$(DLLTOOL) -k -l $@ -d $(SPEC_DEF)
-
-clean::
-	$(RM) $(IMPORTLIBFILE)
-
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
