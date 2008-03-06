@@ -1442,6 +1442,9 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
     UINT uNumRows = infoPtr->uNumRows;
     int i;
 
+    if (uNumRows == 0)  /* avoid division by 0 */
+        return;
+
     /* That's not exactly what Windows does but should be similar */
 
     /* Pass one: break-up/glue rows */
