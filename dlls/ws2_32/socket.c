@@ -3390,7 +3390,7 @@ static int convert_eai_u2w(int unixret) {
  */
 int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addrinfo *hints, struct WS_addrinfo **res)
 {
-#if HAVE_GETADDRINFO
+#ifdef HAVE_GETADDRINFO
     struct addrinfo *unixaires = NULL;
     int   result;
     struct addrinfo unixhints, *punixhints = NULL;
@@ -3507,7 +3507,7 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
 int WINAPI WS_getnameinfo(const SOCKADDR *sa, WS_socklen_t salen, PCHAR host,
                           DWORD hostlen, PCHAR serv, DWORD servlen, INT flags)
 {
-#if HAVE_GETNAMEINFO
+#ifdef HAVE_GETNAMEINFO
     int ret;
     union generic_unix_sockaddr sa_u;
     unsigned int size;
