@@ -7309,7 +7309,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <sys/types.h>
-     #if HAVE_SYS_PARAM_H
+     #ifdef HAVE_SYS_PARAM_H
      # include <sys/param.h>
      #endif
 
@@ -7378,13 +7378,13 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
+     #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
-     #if HAVE_SYS_SOCKETVAR_H
+     #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
-     #if HAVE_NETINET_IN_H
+     #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
 
@@ -7446,13 +7446,13 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
+     #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
-     #if HAVE_SYS_SOCKETVAR_H
+     #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
-     #if HAVE_NETINET_IN_H
+     #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
      #ifdef HAVE_NETINET_TCP_H
@@ -7520,7 +7520,7 @@ cat >>conftest.$ac_ext <<_ACEOF
      #ifdef HAVE_ASM_TYPES_H
      # include <asm/types.h>
      #endif
-     #if HAVE_SYS_SOCKET_H
+     #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
 
@@ -7582,13 +7582,13 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
+     #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
-     #if HAVE_NETINET_IN_H
+     #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
-     #if HAVE_ARPA_NAMESER_H
+     #ifdef HAVE_ARPA_NAMESER_H
      # include <arpa/nameser.h>
      #endif
 
@@ -7709,7 +7709,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <sys/types.h>
-#if HAVE_UCONTEXT_H
+#ifdef HAVE_UCONTEXT_H
 #include <ucontext.h>
 #endif
 
@@ -13644,8 +13644,8 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#if HAVE_FT2BUILD_H
-                          #include <ft2build.h>
+#ifdef HAVE_FT2BUILD_H
+                          # include <ft2build.h>
                           #endif
 
 #include <$ac_header>

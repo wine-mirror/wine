@@ -329,31 +329,31 @@ dnl **** Checks for headers that depend on other ones ****
 
 AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/user.h sys/vfs.h],,,
     [#include <sys/types.h>
-     #if HAVE_SYS_PARAM_H
+     #ifdef HAVE_SYS_PARAM_H
      # include <sys/param.h>
      #endif])
 
 AC_CHECK_HEADERS([netinet/in_pcb.h netinet/ip_var.h net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h netipx/ipx.h],,,
     [#include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
+     #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
-     #if HAVE_SYS_SOCKETVAR_H
+     #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
-     #if HAVE_NETINET_IN_H
+     #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif])
 
 AC_CHECK_HEADERS([netinet/tcp_var.h],,,
     [#include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
+     #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
-     #if HAVE_SYS_SOCKETVAR_H
+     #ifdef HAVE_SYS_SOCKETVAR_H
      # include <sys/socketvar.h>
      #endif
-     #if HAVE_NETINET_IN_H
+     #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
      #ifdef HAVE_NETINET_TCP_H
@@ -365,19 +365,19 @@ AC_CHECK_HEADERS([linux/ipx.h],,,
      #ifdef HAVE_ASM_TYPES_H
      # include <asm/types.h>
      #endif
-     #if HAVE_SYS_SOCKET_H
+     #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif])
 
 AC_CHECK_HEADERS([resolv.h],,,
     [#include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
+     #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
-     #if HAVE_NETINET_IN_H
+     #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
-     #if HAVE_ARPA_NAMESER_H
+     #ifdef HAVE_ARPA_NAMESER_H
      # include <arpa/nameser.h>
      #endif])
 
@@ -385,7 +385,7 @@ AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
 
 AC_CHECK_HEADERS([sys/thr.h],,,
 [#include <sys/types.h>
-#if HAVE_UCONTEXT_H
+#ifdef HAVE_UCONTEXT_H
 #include <ucontext.h>
 #endif])
 
@@ -969,8 +969,8 @@ then
                          freetype/ftwinfnt.h \
                          freetype/ftmodapi.h \
                          freetype/internal/sfnt.h,,,
-                         [#if HAVE_FT2BUILD_H
-                          #include <ft2build.h>
+                         [#ifdef HAVE_FT2BUILD_H
+                          # include <ft2build.h>
                           #endif])
 	AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <ft2build.h>
                     #include <freetype/fttrigon.h>]])],[AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
