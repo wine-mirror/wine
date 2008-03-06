@@ -148,6 +148,33 @@ static void test_graph_builder(void)
     releasefiltergraph();
 }
 
+static void test_graph_builder_addfilter(void)
+{
+    HRESULT hr;
+    IBaseFilter *pF = NULL;
+    static const WCHAR testFilterW[] = {'t','e','s','t','F','i','l','t','e','r',0};
+
+    if (!createfiltergraph())
+        return;
+
+    hr = IGraphBuilder_AddFilter(pgraph, NULL, testFilterW);
+    ok(hr == E_POINTER, "IGraphBuilder_AddFilter returned: %x\n", hr);
+
+    /* create video filter */
+    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (LPVOID*)&pF);
+    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    ok(pF != NULL, "pF is NULL\n");
+    if (!pF) {
+        skip("failed to created filter, skipping\n");
+        return;
+    }
+
+    hr = IGraphBuilder_AddFilter(pgraph, pF, NULL);
+    ok(hr == S_OK, "IGraphBuilder_AddFilter returned: %x\n", hr);
+    releasefiltergraph();
+}
+
 static void test_filter_graph2(void)
 {
     HRESULT hr;
@@ -167,5 +194,6 @@ START_TEST(filtergraph)
     CoInitialize(NULL);
     test_render_run();
     test_graph_builder();
+    test_graph_builder_addfilter();
     test_filter_graph2();
 }
