@@ -1220,13 +1220,13 @@ int CDECL _futime(int fd, struct MSVCRT__utimbuf *t)
     MSVCRT_time_t currTime;
     MSVCRT_time(&currTime);
     RtlSecondsSince1970ToTime(currTime, (LARGE_INTEGER *)&at);
-    memcpy(&wt, &at, sizeof(wt));
+    wt = at;
   }
   else
   {
     RtlSecondsSince1970ToTime(t->actime, (LARGE_INTEGER *)&at);
     if (t->actime == t->modtime)
-      memcpy(&wt, &at, sizeof(wt));
+      wt = at;
     else
       RtlSecondsSince1970ToTime(t->modtime, (LARGE_INTEGER *)&wt);
   }
