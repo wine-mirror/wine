@@ -1742,6 +1742,17 @@ static HRESULT OLEPictureImpl_LoadAPM(OLEPictureImpl *This,
 }
 
 /************************************************************************
+ * BITMAP FORMAT FLAGS -
+ *   Flags that differentiate between different types of bitmaps.
+ */
+
+#define BITMAP_FORMAT_BMP   0x4d42 /* "BM" */
+#define BITMAP_FORMAT_JPEG  0xd8ff
+#define BITMAP_FORMAT_GIF   0x4947
+#define BITMAP_FORMAT_PNG   0x5089
+#define BITMAP_FORMAT_APM   0xcdd7
+
+/************************************************************************
  * OLEPictureImpl_IPersistStream_Load (IUnknown)
  *
  * Loads the binary data from the IStream. Starts at current position.
@@ -1887,19 +1898,19 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   This->loadtime_format = magic;
 
   switch (magic) {
-  case 0x4947: /* GIF */
+  case BITMAP_FORMAT_GIF: /* GIF */
     hr = OLEPictureImpl_LoadGif(This, xbuf, xread);
     break;
-  case 0xd8ff: /* JPEG */
+  case BITMAP_FORMAT_JPEG: /* JPEG */
     hr = OLEPictureImpl_LoadJpeg(This, xbuf, xread);
     break;
-  case 0x4d42: /* Bitmap */
+  case BITMAP_FORMAT_BMP: /* Bitmap */
     hr = OLEPictureImpl_LoadDIB(This, xbuf, xread);
     break;
-  case 0x5089: /* PNG */
+  case BITMAP_FORMAT_PNG: /* PNG */
     hr = OLEPictureImpl_LoadPNG(This, xbuf, xread);
     break;
-  case 0xcdd7: /* APM */
+  case BITMAP_FORMAT_APM: /* APM */
     hr = OLEPictureImpl_LoadAPM(This, xbuf, xread);
     break;
   case 0x0000: { /* ICON , first word is dwReserved */
@@ -1975,7 +1986,7 @@ static int serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLengt
 
     /* Fill the BITMAPFILEHEADER */
     pFileHeader = (BITMAPFILEHEADER *)(*ppBuffer);
-    pFileHeader->bfType = 0x4d42;
+    pFileHeader->bfType = BITMAP_FORMAT_BMP;
     pFileHeader->bfSize = *pLength;
     pFileHeader->bfOffBits =
         sizeof(BITMAPFILEHEADER) +
@@ -2187,17 +2198,17 @@ static HRESULT WINAPI OLEPictureImpl_Save(
         break;
     case PICTYPE_BITMAP:
         if (This->bIsDirty) {
-            switch (This->keepOrigFormat ? This->loadtime_format : 0x4d42) {
-            case 0x4d42:
+            switch (This->keepOrigFormat ? This->loadtime_format : BITMAP_FORMAT_BMP) {
+            case BITMAP_FORMAT_BMP:
                 iSerializeResult = serializeBMP(This->desc.u.bmp.hbitmap, &pIconData, &iDataSize);
                 break;
-            case 0xd8ff:
+            case BITMAP_FORMAT_JPEG:
                 FIXME("(%p,%p,%d), PICTYPE_BITMAP (format JPEG) not implemented!\n",This,pStm,fClearDirty);
                 break;
-            case 0x4947:
+            case BITMAP_FORMAT_GIF:
                 FIXME("(%p,%p,%d), PICTYPE_BITMAP (format GIF) not implemented!\n",This,pStm,fClearDirty);
                 break;
-            case 0x5089:
+            case BITMAP_FORMAT_PNG:
                 FIXME("(%p,%p,%d), PICTYPE_BITMAP (format PNG) not implemented!\n",This,pStm,fClearDirty);
                 break;
             default:
