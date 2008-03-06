@@ -742,35 +742,14 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
 
 static int figure_deg(int x, int y)
 {
-    int rc;
+    float angle;
 
-    if (y != 0)
-    {
-        rc = (int) 10 * (atan( (FLOAT)abs(y) / (FLOAT)abs(x)) / (3.1415 / 180));
-        if (y>0)
-        {
-            if (x>0)
-                rc += 900;
-            else
-                rc = 2700 - rc;
-        }
-        else
-        {
-            if (x>0)
-                rc = 900 - rc;
-            else
-                rc += 2700;
-        }
-    }
-    else
-    {
-        if (x >= 0)
-            rc = 900;
-        else
-            rc = 2700;
-    }
+    angle = atan2((float)y, (float)x);
+    angle += M_PI_2;
+    if (angle <= 0)
+	angle += 2 * M_PI;
 
-    return rc;
+    return (0.5 + (angle * 1800.0 / M_PI));
 }
 
 static int get_button_state(int curnum)
