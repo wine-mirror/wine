@@ -923,7 +923,7 @@ static UINT get_defaulttablecolumns( LPCWSTR name, MSICOLUMNINFO *colinfo, UINT 
     {
         if (colinfo && (i < *sz) )
         {
-            memcpy( &colinfo[i], &p[i], sizeof(MSICOLUMNINFO) );
+            colinfo[i] = p[i];
             colinfo[i].tablename = strdupW( p[i].tablename );
             colinfo[i].colname = strdupW( p[i].colname );
         }

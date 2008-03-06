@@ -232,7 +232,7 @@ static void read_properties_from_data( PROPVARIANT *prop, LPBYTE data, DWORD sz 
         else
             ptr = &property;
 
-        memcpy(&prop[ idofs[i].propid ], ptr, sizeof(PROPVARIANT));
+        prop[ idofs[i].propid ] = *ptr;
     }
 }
 
@@ -387,7 +387,7 @@ static UINT save_summary_info( const MSISUMMARYINFO * si, IStream *stm )
 
     /* write the format header */
     sz = sizeof format_hdr;
-    memcpy( &format_hdr.fmtid, &FMTID_SummaryInformation, sizeof (FMTID) );
+    format_hdr.fmtid = FMTID_SummaryInformation;
     format_hdr.dwOffset = sizeof format_hdr + sizeof set_hdr;
     r = IStream_Write( stm, &format_hdr, sz, &count );
     if( FAILED(r) || count != sz )
@@ -624,7 +624,7 @@ static UINT get_prop( MSIHANDLE handle, UINT uiProperty, UINT *puiDataType,
         break;
     case VT_FILETIME:
         if( pftValue )
-            memcpy(pftValue, &prop->u.filetime, sizeof (FILETIME) );
+            *pftValue = prop->u.filetime;
         break;
     case VT_EMPTY:
         break;
@@ -745,7 +745,7 @@ static UINT set_prop( MSIHANDLE handle, UINT uiProperty, UINT uiDataType,
         prop->u.iVal = iValue;
         break;
     case VT_FILETIME:
-        memcpy( &prop->u.filetime, pftValue, sizeof prop->u.filetime );
+        prop->u.filetime = *pftValue;
         break;
     case VT_LPSTR:
         if( str->unicode )
