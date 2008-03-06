@@ -45,8 +45,7 @@ static INT ipicture_pixel_height(IPicture *pic)
 
     hdcref = GetDC(0);
 
-    y = (UINT)(((REAL)y) * ((REAL)GetDeviceCaps(hdcref, LOGPIXELSY)) /
-              ((REAL)INCH_HIMETRIC));
+    y = MulDiv(y, GetDeviceCaps(hdcref, LOGPIXELSY), INCH_HIMETRIC);
     ReleaseDC(0, hdcref);
 
     return y;
@@ -61,8 +60,7 @@ static INT ipicture_pixel_width(IPicture *pic)
 
     hdcref = GetDC(0);
 
-    x = (UINT)(((REAL)x) * ((REAL)GetDeviceCaps(hdcref, LOGPIXELSX)) /
-              ((REAL)INCH_HIMETRIC));
+    x = MulDiv(x, GetDeviceCaps(hdcref, LOGPIXELSX), INCH_HIMETRIC);
 
     ReleaseDC(0, hdcref);
 
