@@ -1,0 +1,12 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = libadsiid.a
+
+C_SRCS = \
+	adsiid.c
+
+@MAKE_IMPLIB_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

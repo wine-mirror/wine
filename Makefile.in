@@ -160,6 +160,7 @@ ALL_MAKEFILES = \
 	dlls/acledit/Makefile \
 	dlls/activeds/Makefile \
 	dlls/actxprxy/Makefile \
+	dlls/adsiid/Makefile \
 	dlls/advapi32/Makefile \
 	dlls/advapi32/tests/Makefile \
 	dlls/advpack/Makefile \
@@ -576,6 +577,7 @@ dlls/Makefile: dlls/Makefile.in Make.rules
 dlls/acledit/Makefile: dlls/acledit/Makefile.in dlls/Makedll.rules
 dlls/activeds/Makefile: dlls/activeds/Makefile.in dlls/Makedll.rules
 dlls/actxprxy/Makefile: dlls/actxprxy/Makefile.in dlls/Makedll.rules
+dlls/adsiid/Makefile: dlls/adsiid/Makefile.in dlls/Makeimplib.rules
 dlls/advapi32/Makefile: dlls/advapi32/Makefile.in dlls/Makedll.rules
 dlls/advapi32/tests/Makefile: dlls/advapi32/tests/Makefile.in dlls/Maketest.rules
 dlls/advpack/Makefile: dlls/advpack/Makefile.in dlls/Makedll.rules

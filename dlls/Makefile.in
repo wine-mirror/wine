@@ -271,6 +271,7 @@ BASEDIRS = \
 	wtsapi32
 
 IMPLIBSUBDIRS = \
+	adsiid \
 	dxerr8 \
 	dxerr9 \
 	dxguid \
@@ -523,6 +524,7 @@ IMPORT_SYMLINKS = \
 
 IMPORT_LIBS = \
 	$(IMPORT_SYMLINKS) \
+	adsiid/libadsiid.a \
 	dxerr8/libdxerr8.a \
 	dxerr9/libdxerr9.a \
 	dxguid/libdxguid.a \
@@ -1073,6 +1075,7 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
+adsiid/libadsiid.a: adsiid
 dxerr8/libdxerr8.a: dxerr8
 dxerr9/libdxerr9.a: dxerr9
 dxguid/libdxguid.a: dxguid
