@@ -64,6 +64,7 @@
 # ifdef HAVE_SYS_POLL_H
 #  include <sys/poll.h>
 # endif
+# define closesocket close
 #endif /* defined(__MINGW32__) || defined (_MSC_VER) */
 
 #include "windef.h"
@@ -801,7 +802,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
     if (0>connect(sock, ai_cur->ai_addr, ai_cur->ai_addrlen))
     {
       WARN("connect() failed: %s\n", strerror(errno));
-      close(sock);
+      closesocket(sock);
       continue;
     }
 
@@ -880,7 +881,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         if (ret < 0)
         {
             WARN("bind failed: %s\n", strerror(errno));
-            close(sock);
+            closesocket(sock);
             if (errno == EADDRINUSE)
               status = RPC_S_DUPLICATE_ENDPOINT;
             else
@@ -892,7 +893,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
                                                 endpoint, NULL, NULL, NULL);
         if (create_status != RPC_S_OK)
         {
-            close(sock);
+            closesocket(sock);
             status = create_status;
             continue;
         }
@@ -1046,7 +1047,7 @@ static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
   TRACE("%d\n", tcpc->sock);
 
   if (tcpc->sock != -1)
-    close(tcpc->sock);
+    closesocket(tcpc->sock);
   tcpc->sock = -1;
   close(tcpc->cancel_fds[0]);
   close(tcpc->cancel_fds[1]);
