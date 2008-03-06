@@ -738,7 +738,9 @@ static HRESULT WINAPI WebBrowser_get_ReadyState(IWebBrowser2 *iface, READYSTATE 
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
     FIXME("(%p)->(%p)\n", This, lpReadyState);
-    return E_NOTIMPL;
+
+    *lpReadyState = READYSTATE_COMPLETE;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_Offline(IWebBrowser2 *iface, VARIANT_BOOL *pbOffline)
