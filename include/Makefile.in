@@ -135,6 +135,7 @@ SRCDIR_INCLUDES = \
 	ddk/imm.h \
 	ddk/mountmgr.h \
 	ddk/ntddcdvd.h \
+	ddk/ntddk.h \
 	ddk/ntddser.h \
 	ddk/ntddtape.h \
 	ddk/wdm.h \
