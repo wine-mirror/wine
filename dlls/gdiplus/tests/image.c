@@ -171,6 +171,111 @@ static void test_encoders(void)
     GdipFree(codecs);
 }
 
+static void test_LockBits(void)
+{
+    GpStatus stat;
+    GpBitmap *bm;
+    GpRect rect;
+    BitmapData bd;
+    const REAL WIDTH = 10.0, HEIGHT = 20.0;
+
+    bm = NULL;
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+
+    rect.X = 2;
+    rect.Y = 3;
+    rect.Width = 4;
+    rect.Height = 5;
+
+    /* read-only */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    /* read-only, consecutive */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    stat = GdipDisposeImage((GpImage*)bm);
+    expect(Ok, stat);
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+
+    /* read x2 */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+    todo_wine {
+        stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+        expect(WrongState, stat);
+    }
+
+    stat = GdipBitmapUnlockBits(bm, &bd);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bm);
+    expect(Ok, stat);
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+
+    /* write, no modification */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    /* write, consecutive */
+    todo_wine {
+        stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite, PixelFormat24bppRGB, &bd);
+        expect(Ok, stat);
+    }
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    stat = GdipDisposeImage((GpImage*)bm);
+    expect(Ok, stat);
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+
+    /* write, modify */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        if (bd.Scan0)
+            ((char*)bd.Scan0)[2] = 0xff;
+
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    stat = GdipDisposeImage((GpImage*)bm);
+    expect(Ok, stat);
+
+    /* dispose locked */
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+    stat = GdipDisposeImage((GpImage*)bm);
+    expect(Ok, stat);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -187,6 +292,7 @@ START_TEST(image)
     test_GetImageDimension();
     test_LoadingImages();
     test_encoders();
+    test_LockBits();
 
     GdiplusShutdown(gdiplusToken);
 }
