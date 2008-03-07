@@ -7117,6 +7117,26 @@ emW_cleanup:
 }
 
 /******************************************************************************
+ * SpoolerInit (WINSPOOL.@)
+ *
+ * Initialize the Spooler
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  The function fails on windows, when the spooler service is not running
+ *
+ */
+BOOL WINAPI SpoolerInit(void)
+{
+
+    if ((backend == NULL)  && !load_backend()) return FALSE;
+    return TRUE;
+}
+
+/******************************************************************************
  *		XcvDataW (WINSPOOL.@)
  *
  * Execute commands in the Printmonitor DLL
