@@ -170,8 +170,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     bitmap->lockmode = flags;
     bitmap->numlocks++;
 
-    if(flags & ImageLockModeWrite)
-        bitmap->bitmapbits = buff;
+    bitmap->bitmapbits = buff;
 
     return Ok;
 }
@@ -198,7 +197,8 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
         if(!(--bitmap->numlocks))
             bitmap->lockmode = 0;
 
-        GdipFree(lockeddata->Scan0);
+        GdipFree(bitmap->bitmapbits);
+        bitmap->bitmapbits = NULL;
         return Ok;
     }
 
@@ -225,6 +225,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     }
 
     GdipFree(bitmap->bitmapbits);
+    bitmap->bitmapbits = NULL;
 
     return Ok;
 }
@@ -426,6 +427,8 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
     IPicture_get_CurDC(image->picture, &hdc);
     DeleteDC(hdc);
     IPicture_Release(image->picture);
+    if (image->type == ImageTypeBitmap)
+        GdipFree(((GpBitmap*)image)->bitmapbits);
     GdipFree(image);
 
     return Ok;
