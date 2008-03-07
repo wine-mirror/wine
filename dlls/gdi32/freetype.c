@@ -1760,10 +1760,9 @@ static void load_system_fonts(void)
  */
 static void update_reg_entries(void)
 {
-    HKEY winkey = 0, externalkey = 0;
+    HKEY winnt_key = 0, win9x_key = 0, external_key = 0;
     LPWSTR valueW;
-    LPVOID data;
-    DWORD dlen, vlen, datalen, valuelen, i, type, len, len_fam;
+    DWORD len, len_fam;
     Family *family;
     Face *face;
     struct list *family_elem_ptr, *face_elem_ptr;
@@ -1772,47 +1771,20 @@ static void update_reg_entries(void)
     static const WCHAR spaceW[] = {' ', '\0'};
     char *path;
 
-    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, is_win9x() ? win9x_font_reg_key : winnt_font_reg_key,
-                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &winkey, NULL) != ERROR_SUCCESS) {
+    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key,
+                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL) != ERROR_SUCCESS) {
         ERR("Can't create Windows font reg key\n");
         goto end;
     }
-    /* @@ Wine registry key: HKCU\Software\Wine\Fonts\ExternalFonts */
-    if(RegCreateKeyW(HKEY_CURRENT_USER, external_fonts_reg_key, &externalkey) != ERROR_SUCCESS) {
-        ERR("Can't create external font reg key\n");
+
+    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, win9x_font_reg_key,
+                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &win9x_key, NULL) != ERROR_SUCCESS) {
+        ERR("Can't create Windows font reg key\n");
         goto end;
     }
 
-    /* Delete all external fonts added last time */
-
-    RegQueryInfoKeyW(externalkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                     &valuelen, &datalen, NULL, NULL);
-    valuelen++; /* returned value doesn't include room for '\0' */
-    valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
-    data = HeapAlloc(GetProcessHeap(), 0, datalen * sizeof(WCHAR));
-
-    dlen = datalen * sizeof(WCHAR);
-    vlen = valuelen;
-    i = 0;
-    while(RegEnumValueW(externalkey, i++, valueW, &vlen, NULL, &type, data,
-                        &dlen) == ERROR_SUCCESS) {
-
-        RegDeleteValueW(winkey, valueW);
-        /* reset dlen and vlen */
-        dlen = datalen;
-        vlen = valuelen;
-    }
-    HeapFree(GetProcessHeap(), 0, data);
-    HeapFree(GetProcessHeap(), 0, valueW);
-
-    /* Delete the old external fonts key */
-    RegCloseKey(externalkey);
-    externalkey = 0;
-    RegDeleteKeyW(HKEY_CURRENT_USER, external_fonts_reg_key);
-
-    /* @@ Wine registry key: HKCU\Software\Wine\Fonts\ExternalFonts */
     if(RegCreateKeyExW(HKEY_CURRENT_USER, external_fonts_reg_key,
-                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &externalkey, NULL) != ERROR_SUCCESS) {
+                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &external_key, NULL) != ERROR_SUCCESS) {
         ERR("Can't create external font reg key\n");
         goto end;
     }
@@ -1843,21 +1815,76 @@ static void update_reg_entries(void)
 
             file = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
             MultiByteToWideChar(CP_ACP, 0, path, -1, file, len);
-            RegSetValueExW(winkey, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
-            RegSetValueExW(externalkey, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
+            RegSetValueExW(winnt_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
+            RegSetValueExW(win9x_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
+            RegSetValueExW(external_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
 
             HeapFree(GetProcessHeap(), 0, file);
             HeapFree(GetProcessHeap(), 0, valueW);
         }
     }
  end:
-    if(externalkey)
-        RegCloseKey(externalkey);
-    if(winkey)
-        RegCloseKey(winkey);
+    if(external_key) RegCloseKey(external_key);
+    if(win9x_key) RegCloseKey(win9x_key);
+    if(winnt_key) RegCloseKey(winnt_key);
     return;
 }
 
+static void delete_external_font_keys(void)
+{
+    HKEY winnt_key = 0, win9x_key = 0, external_key = 0;
+    DWORD dlen, vlen, datalen, valuelen, i, type;
+    LPWSTR valueW;
+    LPVOID data;
+
+    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key,
+                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL) != ERROR_SUCCESS) {
+        ERR("Can't create Windows font reg key\n");
+        goto end;
+    }
+
+    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, win9x_font_reg_key,
+                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &win9x_key, NULL) != ERROR_SUCCESS) {
+        ERR("Can't create Windows font reg key\n");
+        goto end;
+    }
+
+    if(RegCreateKeyW(HKEY_CURRENT_USER, external_fonts_reg_key, &external_key) != ERROR_SUCCESS) {
+        ERR("Can't create external font reg key\n");
+        goto end;
+    }
+
+    /* Delete all external fonts added last time */
+
+    RegQueryInfoKeyW(external_key, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                     &valuelen, &datalen, NULL, NULL);
+    valuelen++; /* returned value doesn't include room for '\0' */
+    valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
+    data = HeapAlloc(GetProcessHeap(), 0, datalen * sizeof(WCHAR));
+
+    dlen = datalen * sizeof(WCHAR);
+    vlen = valuelen;
+    i = 0;
+    while(RegEnumValueW(external_key, i++, valueW, &vlen, NULL, &type, data,
+                        &dlen) == ERROR_SUCCESS) {
+
+        RegDeleteValueW(winnt_key, valueW);
+        RegDeleteValueW(win9x_key, valueW);
+        /* reset dlen and vlen */
+        dlen = datalen;
+        vlen = valuelen;
+    }
+    HeapFree(GetProcessHeap(), 0, data);
+    HeapFree(GetProcessHeap(), 0, valueW);
+
+    /* Delete the old external fonts key */
+    RegCloseKey(external_key);
+    RegDeleteKeyW(HKEY_CURRENT_USER, external_fonts_reg_key);
+
+ end:
+    if(win9x_key) RegCloseKey(win9x_key);
+    if(winnt_key) RegCloseKey(winnt_key);
+}
 
 /*************************************************************
  *    WineEngAddFontResourceEx
@@ -2228,6 +2255,8 @@ BOOL WineEngInit(void)
         return FALSE;
     }
     WaitForSingleObject(font_mutex, INFINITE);
+
+    delete_external_font_keys();
 
     /* load the system bitmap fonts */
     load_system_fonts();
