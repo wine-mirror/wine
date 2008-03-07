@@ -214,10 +214,8 @@ static void test_LockBits(void)
     /* read x2 */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
     expect(Ok, stat);
-    todo_wine {
-        stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
-        expect(WrongState, stat);
-    }
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+    expect(WrongState, stat);
 
     stat = GdipBitmapUnlockBits(bm, &bd);
     expect(Ok, stat);

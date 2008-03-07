@@ -114,8 +114,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     if(flags & ImageLockModeUserInputBuf)
         return NotImplemented;
 
-    if((bitmap->lockmode & ImageLockModeWrite) || (bitmap->lockmode &&
-        (flags & ImageLockModeWrite)))
+    if(bitmap->lockmode)
         return WrongState;
 
     IPicture_get_Handle(bitmap->image.picture, &hbm);
