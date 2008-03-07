@@ -296,7 +296,7 @@ static void run_userhandling_tests(void)
 
     ret = pNetUserChangePassword(NULL, sNonexistentUser, sTestUserOldPass,
             sTestUserNewPass);
-    ok(ret == NERR_UserNotFound,
+    ok(ret == NERR_UserNotFound || ret == ERROR_INVALID_PASSWORD,
             "Changing password for nonexistent user returned 0x%08x.\n", ret);
 
     ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
