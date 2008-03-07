@@ -6907,7 +6907,16 @@ static void vpos_register_test(IDirect3DDevice9 *device)
     0x02000001, 0x800f0800, 0x80e40002,                                     /* mov oC0, r2                */
     0x0000ffff                                                              /* end                        */
     };
-    IDirect3DPixelShader9 *shader;
+    const DWORD shader_frac_code[] = {
+    0xffff0300,                                                             /* ps_3_0                     */
+    0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 0.0, 0.0, 0.0, 0.0 */
+    0x0200001f, 0x80000000, 0x90031000,                                     /* dcl vPos.xy                */
+    0x02000001, 0x800f0000, 0xa0e40000,                                     /* mov r0, c0                 */
+    0x02000013, 0x80030000, 0x90541000,                                     /* frc r0.xy, vPos.xy         */
+    0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
+    0x0000ffff                                                              /* end                        */
+    };
+    IDirect3DPixelShader9 *shader, *shader_frac;
     IDirect3DSurface9 *surface = NULL, *backbuffer;
     const float quad[] = {
         -1.0,   -1.0,   0.1,    0.0,    0.0,
@@ -6922,6 +6931,8 @@ static void vpos_register_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code, &shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader failed hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_frac_code, &shader_frac);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader failed hr=%s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_SetPixelShader(device, shader);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed hr=%s\n", DXGetErrorString9(hr));
@@ -6967,8 +6978,6 @@ static void vpos_register_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%s\n", DXGetErrorString9(hr));
         hr = IDirect3DDevice9_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed hr=%s\n", DXGetErrorString9(hr));
-        hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%s\n", DXGetErrorString9(hr));
     }
     hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, D3DLOCK_READONLY);
     ok(hr == D3D_OK, "IDirect3DSurface9_LockRect failed, hr=%s\n", DXGetErrorString9(hr));
@@ -6989,7 +6998,38 @@ static void vpos_register_test(IDirect3DDevice9 *device)
     hr = IDirect3DSurface9_UnlockRect(surface);
     ok(hr == D3D_OK, "IDirect3DSurface9_UnlockRect failed, hr=%s\n", DXGetErrorString9(hr));
 
+    /* Test the fraction value of vPos. This is tested with the offscreen target and not the backbuffer to
+     * have full control over the multisampling setting inside this test
+     */
+    hr = IDirect3DDevice9_SetPixelShader(device, shader_frac);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed hr=%s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed hr=%s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(float) * 5);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed hr=%s\n", DXGetErrorString9(hr));
+    }
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, D3DLOCK_READONLY);
+    ok(hr == D3D_OK, "IDirect3DSurface9_LockRect failed, hr=%s\n", DXGetErrorString9(hr));
+
+    pos = (DWORD *) (((BYTE *) lr.pBits) + 14 * lr.Pitch + 14 * sizeof(DWORD));
+    color = *pos & 0x00ffffff;
+    ok(color == 0x00000000, "vPos fraction test has color 0x%08x, expected 0x00000000\n", color);
+
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(hr == D3D_OK, "IDirect3DSurface9_UnlockRect failed, hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed hr=%s\n", DXGetErrorString9(hr));
     IDirect3DPixelShader9_Release(shader);
+    IDirect3DPixelShader9_Release(shader_frac);
     if(surface) IDirect3DSurface9_Release(surface);
     IDirect3DSurface9_Release(backbuffer);
 }

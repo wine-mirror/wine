@@ -706,7 +706,21 @@ void shader_generate_glsl_declarations(
     /* Start the main program */
     shader_addline(buffer, "void main() {\n");
     if(pshader && reg_maps->vpos) {
-        shader_addline(buffer, "vpos = vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1) - 0.5;\n");
+        /* DirectX apps expect integer values, while OpenGL drivers add approximately 0.5. This causes
+         * off-by-one problems as spotted by the vPos d3d9 visual test. Unfortunately the ATI cards do
+         * not add exactly 0.5, but rather something like 0.49999999 or 0.50000001, which still causes
+         * precision troubles when we just substract 0.5.
+         *
+         * To deal with that just floor() the position. This will eliminate the fraction on all cards.
+         *
+         * TODO: Test how that behaves with multisampling once we can enable multisampling in winex11.
+         *
+         * An advantage of floor is that it works even if the driver doesn't add 1/2. It is somewhat
+         * questionable if 1.5, 2.5, ... are the proper values to return in gl_FragCoord, even though
+         * coordinates specify the pixel centers instead of the pixel corners. This code will behave
+         * correctly on drivers that returns integer values.
+         */
+        shader_addline(buffer, "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
     }
 }
 
