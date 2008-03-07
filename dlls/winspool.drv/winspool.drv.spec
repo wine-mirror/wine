@@ -68,6 +68,8 @@
 @ stdcall ConfigurePortA(str long str)
 @ stdcall ConfigurePortW(wstr long wstr)
 @ stdcall ConnectToPrinterDlg(long long)
+@ stub ConvertAnsiDevModeToUnicodeDevMode
+@ stub ConvertUnicodeDevModeToAnsiDevMode
 @ stub CreatePrinterIC
 @ stub DEVICECAPABILITIES
 @ stub DEVICEMODE
