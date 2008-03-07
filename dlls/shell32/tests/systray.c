@@ -27,6 +27,7 @@
 
 static HWND hMainWnd;
 static BOOL (WINAPI *pShell_NotifyIconW)(DWORD,PNOTIFYICONDATAW);
+static HMONITOR (WINAPI *pMonitorFromWindow)(HWND, DWORD);
 
 void test_cbsize(void)
 {
@@ -89,21 +90,28 @@ static void test_SHAppBarMessage(void)
     ok(hwnd == NULL || IsWindow(hwnd), "ret %p which is not a window\n", hwnd);
     ok(abd.hWnd == (HWND)0xcccccccc, "hWnd overwritten\n");
 
-    /* Presumably one can pass a hwnd with ABM_GETAUTOHIDEBAR to specify a monitor.
-       Pass the foreground window and check */
-    foregnd = GetForegroundWindow();
-    if(foregnd)
+    if (!pMonitorFromWindow)
     {
-        abd.hWnd = foregnd;
-        hwnd = (HWND)SHAppBarMessage(ABM_GETAUTOHIDEBAR, &abd);
-        ok(hwnd == NULL || IsWindow(hwnd), "ret %p which is not a window\n", hwnd);
-        ok(abd.hWnd == foregnd, "hWnd overwritten\n");
-        if(hwnd)
+        skip("MonitorFromWindow is not available\n");
+    }
+    else
+    {
+        /* Presumably one can pass a hwnd with ABM_GETAUTOHIDEBAR to specify a monitor.
+           Pass the foreground window and check */
+        foregnd = GetForegroundWindow();
+        if(foregnd)
         {
-            HMONITOR appbar_mon, foregnd_mon;
-            appbar_mon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-            foregnd_mon = MonitorFromWindow(foregnd, MONITOR_DEFAULTTONEAREST);
-            ok(appbar_mon == foregnd_mon, "Windows on different monitors\n");
+            abd.hWnd = foregnd;
+            hwnd = (HWND)SHAppBarMessage(ABM_GETAUTOHIDEBAR, &abd);
+            ok(hwnd == NULL || IsWindow(hwnd), "ret %p which is not a window\n", hwnd);
+            ok(abd.hWnd == foregnd, "hWnd overwritten\n");
+            if(hwnd)
+            {
+                HMONITOR appbar_mon, foregnd_mon;
+                appbar_mon = pMonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+                foregnd_mon = pMonitorFromWindow(foregnd, MONITOR_DEFAULTTONEAREST);
+                ok(appbar_mon == foregnd_mon, "Windows on different monitors\n");
+            }
         }
     }
 
@@ -128,10 +136,13 @@ START_TEST(systray)
     WNDCLASSA wc;
     MSG msg;
     RECT rc;
-    HMODULE hdll;
+    HMODULE huser32, hshell32;
 
-    hdll = GetModuleHandleA("shell32.dll");
-    pShell_NotifyIconW = (void*)GetProcAddress(hdll, "Shell_NotifyIconW");
+    hshell32 = GetModuleHandleA("shell32.dll");
+    pShell_NotifyIconW = (void*)GetProcAddress(hshell32, "Shell_NotifyIconW");
+
+    huser32 = GetModuleHandleA("user32.dll");
+    pMonitorFromWindow = (void*)GetProcAddress(huser32, "MonitorFromWindow");
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
