@@ -626,7 +626,7 @@ static void test_LoadImage(void)
     icon_header->biSizeImage = 0; /* Uncompressed bitmap. */
 
     /* Create the icon. */
-    handle = CreateFileA("icon.ico", FILE_ALL_ACCESS, 0, NULL, CREATE_NEW,
+    handle = CreateFileA("icon.ico", GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW,
         FILE_ATTRIBUTE_NORMAL, NULL);
     ok(handle != INVALID_HANDLE_VALUE, "CreateFileA failed. %u\n", GetLastError());
     ret = WriteFile(handle, icon_data, ICON_SIZE, &bytes_written, NULL);
