@@ -181,6 +181,8 @@ HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
 
     /* Create array of jobs */
     This->indexJobs = 0;
+
+    EnterCriticalSection(&qmgr->cs);
     This->numJobs = list_count(&qmgr->jobs);
 
     if (0 < This->numJobs)
@@ -189,6 +191,7 @@ HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
                                This->numJobs * sizeof *This->jobs);
         if (!This->jobs)
         {
+            LeaveCriticalSection(&qmgr->cs);
             HeapFree(GetProcessHeap(), 0, This);
             return E_OUTOFMEMORY;
         }
@@ -203,6 +206,7 @@ HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
         IBackgroundCopyJob_AddRef(iJob);
         This->jobs[i++] = iJob;
     }
+    LeaveCriticalSection(&qmgr->cs);
 
     *ppObj = &This->lpVtbl;
     return S_OK;

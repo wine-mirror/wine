@@ -78,7 +78,7 @@ typedef struct
 typedef struct
 {
     const IBackgroundCopyManagerVtbl *lpVtbl;
-    LONG ref;
+    CRITICAL_SECTION cs;
     struct list jobs;
 } BackgroundCopyManagerImpl;
 
