@@ -675,8 +675,61 @@ static HRESULT WINAPI HTMLDocument_get_nameProp(IHTMLDocument2 *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLDocument_write(IHTMLDocument2 *iface, SAFEARRAY *psarray)
 {
-    FIXME("(%p)->(%p)\n", iface, psarray);
-    return E_NOTIMPL;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+    nsIDOMDocument *domdoc;
+    nsIDOMHTMLDocument *nsdoc;
+    nsAString nsstr;
+    VARIANT *var;
+    int i;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", iface, psarray);
+
+    if(psarray->cDims != 1) {
+        FIXME("cDims=%d\n", psarray->cDims);
+        return E_INVALIDARG;
+    }
+
+    if(!This->nscontainer)
+        return S_OK;
+
+    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &domdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return S_OK;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(domdoc, &IID_nsIDOMHTMLDocument, (void**)&nsdoc);
+    nsIDOMDocument_Release(domdoc);
+    if(NS_FAILED(nsres))
+        return S_OK;
+
+    hres = SafeArrayAccessData(psarray, (void**)&var);
+    if(FAILED(hres)) {
+        WARN("SafeArrayAccessData failed: %08x\n", hres);
+        nsIDOMHTMLDocument_Release(nsdoc);
+        return hres;
+    }
+
+    nsAString_Init(&nsstr, NULL);
+
+    for(i=0; i < psarray->rgsabound[0].cElements; i++) {
+        if(V_VT(var+i) == VT_BSTR) {
+            nsAString_SetData(&nsstr, V_BSTR(var+i));
+            nsres = nsIDOMHTMLDocument_Write(nsdoc, &nsstr);
+            if(NS_FAILED(nsres))
+                ERR("Write failed: %08x\n", nsres);
+        }else {
+            FIXME("vt=%d\n", V_VT(var+i));
+        }
+    }
+
+    nsAString_Finish(&nsstr);
+    SafeArrayUnaccessData(psarray);
+    nsIDOMHTMLDocument_Release(nsdoc);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_writeln(IHTMLDocument2 *iface, SAFEARRAY *psarray)
