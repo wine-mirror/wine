@@ -226,6 +226,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
 
     GdipFree(bitmap->bitmapbits);
     bitmap->bitmapbits = NULL;
+    bitmap->lockmode = 0;
 
     return Ok;
 }

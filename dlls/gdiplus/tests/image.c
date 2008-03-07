@@ -237,10 +237,8 @@ static void test_LockBits(void)
     }
 
     /* write, consecutive */
-    todo_wine {
-        stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite, PixelFormat24bppRGB, &bd);
-        expect(Ok, stat);
-    }
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
 
     if (stat == Ok) {
         stat = GdipBitmapUnlockBits(bm, &bd);
