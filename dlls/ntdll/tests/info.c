@@ -765,6 +765,11 @@ static void test_query_process_image_file_name(void)
     INT len;
 
     status = pNtQueryInformationProcess(NULL, ProcessImageFileName, &image_file_name, sizeof(image_file_name), NULL);
+    if (status == STATUS_INVALID_INFO_CLASS)
+    {
+        skip("ProcessImageFileName is not supported\n");
+        return;
+    }
     ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, &image_file_name, 2, &ReturnLength);
