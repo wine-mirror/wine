@@ -151,7 +151,7 @@ BOOL WINAPI RegisterCMMW( PCWSTR machine, DWORD id, PCWSTR dll )
 
 BOOL WINAPI SelectCMM( DWORD id )
 {
-    FIXME( "( %s ) stub\n", MSCMS_dbgstr_tag(id) );
+    FIXME( "(%x) stub\n", id );
 
     return TRUE;
 }

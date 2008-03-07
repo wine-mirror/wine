@@ -127,9 +127,13 @@ static BOOL set_profile_device_key( PCWSTR file, const BYTE *value, DWORD size )
         SetLastError( ERROR_INVALID_PROFILE );
         return FALSE;
     }
-
+    if (!GetColorProfileHeader( handle, &header ))
+    {
+        CloseColorProfile( handle );
+        SetLastError( ERROR_INVALID_PROFILE );
+        return FALSE;
+    }
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, icmW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &icm_key, NULL );
-    GetColorProfileHeader( handle, &header );
 
     MSCMS_basename( file, basenameW );
     sprintfW( classW, fmtW, (header.phClass >> 24) & 0xff, (header.phClass >> 16) & 0xff,
