@@ -1235,6 +1235,48 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     return TRUE;
 }
 
+/* make sure the specified rect is visible on screen */
+static void make_rect_onscreen( RECT *rect )
+{
+    MONITORINFO info;
+    HMONITOR monitor = MonitorFromRect( rect, MONITOR_DEFAULTTONEAREST );
+
+    info.cbSize = sizeof(info);
+    if (!monitor || !GetMonitorInfoW( monitor, &info )) return;
+    /* FIXME: map coordinates from rcWork to rcMonitor */
+    if (rect->right <= info.rcWork.left)
+    {
+        rect->right += info.rcWork.left - rect->left;
+        rect->left = info.rcWork.left;
+    }
+    else if (rect->left >= info.rcWork.right)
+    {
+        rect->left += info.rcWork.right - rect->right;
+        rect->right = info.rcWork.right;
+    }
+    if (rect->bottom <= info.rcWork.top)
+    {
+        rect->bottom += info.rcWork.top - rect->top;
+        rect->top = info.rcWork.top;
+    }
+    else if (rect->top >= info.rcWork.bottom)
+    {
+        rect->top += info.rcWork.bottom - rect->bottom;
+        rect->bottom = info.rcWork.bottom;
+    }
+}
+
+/* make sure the specified point is visible on screen */
+static void make_point_onscreen( POINT *pt )
+{
+    RECT rect;
+
+    SetRect( &rect, pt->x, pt->y, pt->x + 1, pt->y + 1 );
+    make_rect_onscreen( &rect );
+    pt->x = rect.left;
+    pt->y = rect.top;
+}
+
 
 /***********************************************************************
  *           WINPOS_SetPlacement
@@ -1243,50 +1285,48 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
 {
     DWORD style;
     WND *pWnd = WIN_GetPtr( hwnd );
-    POINT pt;
-    RECT rect;
+    WINDOWPLACEMENT wp = *wndpl;
+
+    if (flags & PLACE_MIN) make_point_onscreen( &wp.ptMinPosition );
+    if (flags & PLACE_MAX) make_point_onscreen( &wp.ptMaxPosition );
+    if (flags & PLACE_RECT) make_rect_onscreen( &wp.rcNormalPosition );
+
+    TRACE( "%p: setting min %d,%d max %d,%d normal %s flags %x ajusted to min %d,%d max %d,%d normal %s\n",
+           hwnd, wndpl->ptMinPosition.x, wndpl->ptMinPosition.y,
+           wndpl->ptMaxPosition.x, wndpl->ptMaxPosition.y,
+           wine_dbgstr_rect(&wndpl->rcNormalPosition), flags,
+           wp.ptMinPosition.x, wp.ptMinPosition.y, wp.ptMaxPosition.x, wp.ptMaxPosition.y,
+           wine_dbgstr_rect(&wp.rcNormalPosition) );
 
     if (!pWnd || pWnd == WND_OTHER_PROCESS || pWnd == WND_DESKTOP) return FALSE;
 
-    TRACE( "%p: setting min %d,%d max %d,%d normal %s flags %x\n",
-           hwnd, wndpl->ptMinPosition.x, wndpl->ptMinPosition.y,
-           wndpl->ptMaxPosition.x, wndpl->ptMaxPosition.y,
-           wine_dbgstr_rect(&wndpl->rcNormalPosition), flags );
-
-    if( flags & PLACE_MIN ) pWnd->min_pos = wndpl->ptMinPosition;
-    if( flags & PLACE_MAX ) pWnd->max_pos = wndpl->ptMaxPosition;
-    if( flags & PLACE_RECT) pWnd->normal_rect = wndpl->rcNormalPosition;
+    if( flags & PLACE_MIN ) pWnd->min_pos = wp.ptMinPosition;
+    if( flags & PLACE_MAX ) pWnd->max_pos = wp.ptMaxPosition;
+    if( flags & PLACE_RECT) pWnd->normal_rect = wp.rcNormalPosition;
 
     style = pWnd->dwStyle;
-    pt.x = pt.y = -1;
-    SetRectEmpty( &rect );
-
-    if( style & WS_MINIMIZE )
-    {
-        if (wndpl->flags & WPF_SETMINPOSITION) pt = pWnd->min_pos;
-    }
-    else if( style & WS_MAXIMIZE )
-    {
-        pt = pWnd->max_pos;
-    }
-    else if( flags & PLACE_RECT )
-        rect = pWnd->normal_rect;
 
     WIN_ReleasePtr( pWnd );
 
     if( style & WS_MINIMIZE )
     {
-        WINPOS_ShowIconTitle( hwnd, FALSE );
-        if (!EMPTYPOINT(pt)) SetWindowPos( hwnd, 0, pt.x, pt.y, 0, 0,
-                                           SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+        if (flags & PLACE_MIN)
+        {
+            WINPOS_ShowIconTitle( hwnd, FALSE );
+            SetWindowPos( hwnd, 0, wp.ptMinPosition.x, wp.ptMinPosition.y, 0, 0,
+                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+        }
     }
     else if( style & WS_MAXIMIZE )
     {
-        if (!EMPTYPOINT(pt)) SetWindowPos( hwnd, 0, pt.x, pt.y, 0, 0,
-                                           SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+        if (flags & PLACE_MAX)
+            SetWindowPos( hwnd, 0, wp.ptMaxPosition.x, wp.ptMaxPosition.y, 0, 0,
+                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
     }
     else if( flags & PLACE_RECT )
-        SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+        SetWindowPos( hwnd, 0, wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+                      wp.rcNormalPosition.right - wp.rcNormalPosition.left,
+                      wp.rcNormalPosition.bottom - wp.rcNormalPosition.top,
                       SWP_NOZORDER | SWP_NOACTIVATE );
 
     ShowWindow( hwnd, wndpl->showCmd );
@@ -1318,8 +1358,10 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
  */
 BOOL WINAPI SetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
 {
+    UINT flags = PLACE_MAX | PLACE_RECT;
     if (!wpl) return FALSE;
-    return WINPOS_SetPlacement( hwnd, wpl, PLACE_MIN | PLACE_MAX | PLACE_RECT );
+    if (wpl->flags & WPF_SETMINPOSITION) flags |= PLACE_MIN;
+    return WINPOS_SetPlacement( hwnd, wpl, flags );
 }
 
 
@@ -1354,28 +1396,25 @@ BOOL WINAPI AnimateWindow(HWND hwnd, DWORD dwTime, DWORD dwFlags)
 void WINAPI SetInternalWindowPos( HWND hwnd, UINT showCmd,
                                     LPRECT rect, LPPOINT pt )
 {
-    if( IsWindow(hwnd) )
+    WINDOWPLACEMENT wndpl;
+    UINT flags;
+
+    wndpl.length  = sizeof(wndpl);
+    wndpl.showCmd = showCmd;
+    wndpl.flags = flags = 0;
+
+    if( pt )
     {
-        WINDOWPLACEMENT wndpl;
-	UINT flags;
-
-	wndpl.length  = sizeof(wndpl);
-	wndpl.showCmd = showCmd;
-	wndpl.flags = flags = 0;
-
-	if( pt )
-	{
-            flags |= PLACE_MIN;
-            wndpl.flags |= WPF_SETMINPOSITION;
-            wndpl.ptMinPosition = *pt;
-	}
-	if( rect )
-	{
-            flags |= PLACE_RECT;
-            wndpl.rcNormalPosition = *rect;
-	}
-        WINPOS_SetPlacement( hwnd, &wndpl, flags );
+        flags |= PLACE_MIN;
+        wndpl.flags |= WPF_SETMINPOSITION;
+        wndpl.ptMinPosition = *pt;
     }
+    if( rect )
+    {
+        flags |= PLACE_RECT;
+        wndpl.rcNormalPosition = *rect;
+    }
+    WINPOS_SetPlacement( hwnd, &wndpl, flags );
 }
 
 
