@@ -2367,23 +2367,41 @@ BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
                                              LPCSTR lpszFontFile,
                                              LPCSTR lpszCurrentPath )
 {
-    HANDLE f;
+    LPWSTR lpszResourceFileW = NULL;
+    LPWSTR lpszFontFileW = NULL;
+    LPWSTR lpszCurrentPathW = NULL;
+    int len;
+    BOOL ret;
 
-    /* fHidden=1 - only visible for the calling app, read-only, not
-     * enumbered with EnumFonts/EnumFontFamilies
-     * lpszCurrentPath can be NULL
-     */
-    FIXME("(%d,%s,%s,%s): stub\n",
-          fHidden, debugstr_a(lpszResourceFile), debugstr_a(lpszFontFile),
-          debugstr_a(lpszCurrentPath) );
-
-    /* If the output file already exists, return the ERROR_FILE_EXISTS error as specified in MSDN */
-    if ((f = CreateFileA(lpszResourceFile, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)) != INVALID_HANDLE_VALUE) {
-        CloseHandle(f);
-        SetLastError(ERROR_FILE_EXISTS);
-        return FALSE;
+    if (lpszResourceFile)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, lpszResourceFile, -1, NULL, 0);
+        lpszResourceFileW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszResourceFile, -1, lpszResourceFileW, len);
     }
-    return FALSE; /* create failed */
+
+    if (lpszFontFile)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, lpszFontFile, -1, NULL, 0);
+        lpszFontFileW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszFontFile, -1, lpszFontFileW, len);
+    }
+
+    if (lpszCurrentPath)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, lpszCurrentPath, -1, NULL, 0);
+        lpszCurrentPathW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszCurrentPath, -1, lpszCurrentPathW, len);
+    }
+
+    ret = CreateScalableFontResourceW(fHidden, lpszResourceFileW,
+            lpszFontFileW, lpszCurrentPathW);
+
+    HeapFree(GetProcessHeap(), 0, lpszResourceFileW);
+    HeapFree(GetProcessHeap(), 0, lpszFontFileW);
+    HeapFree(GetProcessHeap(), 0, lpszCurrentPathW);
+
+    return ret;
 }
 
 /***********************************************************************
@@ -2394,8 +2412,22 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
                                              LPCWSTR lpszFontFile,
                                              LPCWSTR lpszCurrentPath )
 {
-    FIXME("(%d,%p,%p,%p): stub\n",
-	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
+    HANDLE f;
+    FIXME("(%d,%s,%s,%s): stub\n",
+          fHidden, debugstr_w(lpszResourceFile), debugstr_w(lpszFontFile),
+          debugstr_w(lpszCurrentPath) );
+
+    /* fHidden=1 - only visible for the calling app, read-only, not
+     * enumbered with EnumFonts/EnumFontFamilies
+     * lpszCurrentPath can be NULL
+     */
+
+    /* If the output file already exists, return the ERROR_FILE_EXISTS error as specified in MSDN */
+    if ((f = CreateFileW(lpszResourceFile, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0)) != INVALID_HANDLE_VALUE) {
+        CloseHandle(f);
+        SetLastError(ERROR_FILE_EXISTS);
+        return FALSE;
+    }
     return FALSE; /* create failed */
 }
 
