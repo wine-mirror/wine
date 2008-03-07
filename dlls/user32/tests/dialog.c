@@ -877,7 +877,7 @@ static void InitialFocusTest (void)
         pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
 
         g_hwndInitialFocusT1 = 0;
-        hDlg = CreateDialogIndirectParamW(g_hinst, pTemplate, NULL, focusDlgWinProc, 0);
+        hDlg = CreateDialogIndirectParamA(g_hinst, pTemplate, NULL, focusDlgWinProc, 0);
         ok (hDlg != 0, "Failed to create test dialog.\n");
 
         ok ((g_hwndInitialFocusT1 == 0),
