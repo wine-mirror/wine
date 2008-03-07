@@ -143,6 +143,11 @@ static void keyboard_tests(DWORD version)
     ULONG ref = 0;
 
     hr = DirectInputCreate(hInstance, version, &pDI, NULL);
+    if (hr == DIERR_OLDDIRECTINPUTVERSION)
+    {
+        skip("Tests require a newer dinput version\n");
+        return;
+    }
     ok(SUCCEEDED(hr), "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
     if (FAILED(hr)) return;
 

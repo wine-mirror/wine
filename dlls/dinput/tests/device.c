@@ -144,6 +144,11 @@ static void device_tests(void)
     struct enum_data data;
 
     hr = DirectInputCreate(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
+    if (hr == DIERR_OLDDIRECTINPUTVERSION)
+    {
+        skip("Tests require a newer dinput version\n");
+        return;
+    }
     ok(SUCCEEDED(hr), "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
     if (FAILED(hr)) return;
 
