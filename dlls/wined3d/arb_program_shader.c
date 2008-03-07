@@ -100,8 +100,11 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, Win
                 if(!dirty_consts[i]) continue;
 
                 /* Find the next block of dirty constants */
+                dirty_consts[i] = 0;
                 j = i;
-                for(i++; (i < max_constants) && dirty_consts[i]; i++);
+                for(i++; (i < max_constants) && dirty_consts[i]; i++) {
+                    dirty_consts[i] = 0;
+                }
 
                 GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, j, i - j, constants + (j * 4)));
             }
