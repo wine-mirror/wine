@@ -684,7 +684,7 @@ static void find_reg_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
 
         if (match_tz_info(tzi, &reg_tzi))
         {
-            memcpy(tzi, &reg_tzi, sizeof(*tzi));
+            *tzi = reg_tzi;
             NtClose(hkey);
             return;
         }

@@ -158,7 +158,7 @@ NTSTATUS WINAPI RtlAllocateAndInitializeSid (
     tmp_sid->Revision = SID_REVISION;
 
     if (pIdentifierAuthority)
-        memcpy(&tmp_sid->IdentifierAuthority, pIdentifierAuthority, sizeof(SID_IDENTIFIER_AUTHORITY));
+        tmp_sid->IdentifierAuthority = *pIdentifierAuthority;
     tmp_sid->SubAuthorityCount = nSubAuthorityCount;
 
     switch( nSubAuthorityCount )
@@ -302,7 +302,7 @@ BOOL WINAPI RtlInitializeSid(
 	pisid->Revision = SID_REVISION;
 	pisid->SubAuthorityCount = nSubAuthorityCount;
 	if (pIdentifierAuthority)
-	  memcpy(&pisid->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
+	  pisid->IdentifierAuthority = *pIdentifierAuthority;
 
 	for (i = 0; i < nSubAuthorityCount; i++)
 	  *RtlSubAuthoritySid(pSid, i) = 0;

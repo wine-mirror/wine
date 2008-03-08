@@ -96,7 +96,7 @@ NTSTATUS WINAPI RtlpNtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJEC
 
     if (attr)
     {
-        memcpy( &oa, attr, sizeof oa );
+        oa = *attr;
         oa.Attributes &= ~(OBJ_PERMANENT|OBJ_EXCLUSIVE);
         attr = &oa;
     }
