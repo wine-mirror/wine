@@ -754,7 +754,8 @@ static void test_SecurityManager(void)
         zone = 100;
         hres = IInternetSecurityManager_MapUrlToZone(secmgr, secmgr_tests[i].url,
                                                      &zone, 0);
-        ok(hres == secmgr_tests[i].zone_hres,
+        ok(hres == secmgr_tests[i].zone_hres /* IE <=6 */
+           || (FAILED(secmgr_tests[i].zone_hres) && hres == E_INVALIDARG), /* IE7 */
            "[%d] MapUrlToZone failed: %08x, expected %08x\n",
                 i, hres, secmgr_tests[i].zone_hres);
         if(SUCCEEDED(hres))

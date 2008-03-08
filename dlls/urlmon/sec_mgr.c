@@ -66,7 +66,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone)
     if(FAILED(hres))
         return hres;
     if(!*schema)
-        return 0x80041001;
+        return E_INVALIDARG;
 
     /* file protocol is a special case */
     if(!strcmpW(schema, wszFile)) {
