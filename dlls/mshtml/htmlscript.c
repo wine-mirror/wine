@@ -39,6 +39,8 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLScriptElementVtbl *lpHTMLScriptElementVtbl;
+
+    nsIDOMHTMLScriptElement *nsscript;
 } HTMLScriptElement;
 
 #define HTMLSCRIPT(x)  ((IHTMLScriptElement*)  &(x)->lpHTMLScriptElementVtbl)
@@ -203,8 +205,22 @@ static HRESULT WINAPI HTMLScriptElement_put_type(IHTMLScriptElement *iface, BSTR
 static HRESULT WINAPI HTMLScriptElement_get_type(IHTMLScriptElement *iface, BSTR *p)
 {
     HTMLScriptElement *This = HTMLSCRIPT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    const PRUnichar *nstype;
+    nsAString nstype_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&nstype_str, NULL);
+    nsres = nsIDOMHTMLScriptElement_GetType(This->nsscript, &nstype_str);
+    if(NS_FAILED(nsres))
+        ERR("GetType failed: %08x\n", nsres);
+
+    nsAString_GetData(&nstype_str, &nstype);
+    *p = *nstype ? SysAllocString(nstype) : NULL;
+    nsAString_Finish(&nstype_str);
+
+    return S_OK;
 }
 
 static const IHTMLScriptElementVtbl HTMLScriptElementVtbl = {
@@ -277,11 +293,16 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
 HTMLElement *HTMLScriptElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLScriptElement *ret = heap_alloc(sizeof(HTMLScriptElement));
+    nsresult nsres;
 
     HTMLElement_Init(&ret->element);
 
     ret->lpHTMLScriptElementVtbl = &HTMLScriptElementVtbl;
     ret->element.node.vtbl = &HTMLScriptElementImplVtbl;
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLScriptElement, (void**)&ret->nsscript);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIDOMHTMLScriptElement: %08x\n", nsres);
 
     return &ret->element;
 }

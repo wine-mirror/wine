@@ -43,7 +43,7 @@ static const char elem_test_str[] =
     "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
-    "<script type=\"text/javascript\"></script>"
+    "<script id=\"sc\" type=\"text/javascript\"></script>"
     "</body></html>";
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
@@ -53,6 +53,8 @@ static const WCHAR noneW[] = {'N','o','n','e',0};
 static WCHAR characterW[] = {'c','h','a','r','a','c','t','e','r',0};
 static WCHAR texteditW[] = {'t','e','x','t','e','d','i','t',0};
 static WCHAR wordW[] = {'w','o','r','d',0};
+
+static const WCHAR text_javascriptW[] = {'t','e','x','t','/','j','a','v','a','s','c','r','i','p','t',0};
 
 typedef enum {
     ET_NONE,
@@ -1193,6 +1195,7 @@ static void test_elems(IHTMLDocument2 *doc)
 
     static const WCHAR xW[] = {'x',0};
     static const WCHAR sW[] = {'s',0};
+    static const WCHAR scW[] = {'s','c',0};
     static const WCHAR xxxW[] = {'x','x','x',0};
 
     static const elem_type_t all_types[] = {
@@ -1248,6 +1251,20 @@ static void test_elems(IHTMLDocument2 *doc)
 
         IHTMLSelectElement_Release(select);
         IHTMLElement_Release(elem);
+    }
+
+    elem = get_elem_by_id(doc, scW, TRUE);
+    if(elem) {
+        IHTMLScriptElement *script;
+        BSTR type;
+
+        hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLScriptElement, (void**)&script);
+        ok(hres == S_OK, "Could not get IHTMLScriptElement interface: %08x\n", hres);
+
+        hres = IHTMLScriptElement_get_type(script, &type);
+        ok(hres == S_OK, "get_type failed: %08x\n", hres);
+        ok(!lstrcmpW(type, text_javascriptW), "Unexpected type %s\n", dbgstr_w(type));
+        SysFreeString(type);
     }
 
     test_stylesheets(doc);

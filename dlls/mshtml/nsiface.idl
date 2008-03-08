@@ -1273,6 +1273,30 @@ interface nsIDOMHTMLTextAreaElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf90b1-15b3-11d2-932e-00805f8add32),
+    local
+    /* FROZEN */
+]
+interface nsIDOMHTMLScriptElement : nsIDOMHTMLElement
+{
+    nsresult GetText(nsAString *aText);
+    nsresult SetText(const nsAString *aText);
+    nsresult GetHtmlFor(nsAString *aHtmlFor);
+    nsresult SetHtmlFor(const nsAString *aHtmlFor);
+    nsresult GetEvent(nsAString *aEvent);
+    nsresult SetEvent(const nsAString *aEvent);
+    nsresult GetCharset(nsAString *aCharset);
+    nsresult SetCharset(const nsAString *aCharset);
+    nsresult GetDefer(PRBool *aDefer);
+    nsresult SetDefer(PRBool aDefer);
+    nsresult GetSrc(nsAString *aSrc);
+    nsresult SetSrc(const nsAString *aSrc);
+    nsresult GetType(nsAString *aType);
+    nsresult SetType(const nsAString *aType);
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
     /* FROZEN */
