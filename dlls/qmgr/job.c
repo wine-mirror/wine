@@ -159,7 +159,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetId(
     GUID *pVal)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
-    memcpy(pVal, &This->jobId, sizeof *pVal);
+    *pVal = This->jobId;
     return S_OK;
 }
 
@@ -460,7 +460,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
         HeapFree(GetProcessHeap(), 0, This);
         return hr;
     }
-    memcpy(pJobId, &This->jobId, sizeof(GUID));
+    *pJobId = This->jobId;
 
     list_init(&This->files);
     This->jobProgress.BytesTotal = 0;
