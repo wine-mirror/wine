@@ -1693,36 +1693,40 @@ static LPDEVMODEW DEVMODEcpyAtoW(DEVMODEW *dmW, const DEVMODEA *dmA)
 }
 
 /***********************************************************
- *      DEVMODEdupWtoA
- * Creates an ascii copy of supplied devmode on heap
+ * DEVMODEdupWtoA
+ * Creates an ansi copy of supplied devmode
  */
-static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
+static LPDEVMODEA DEVMODEdupWtoA(const DEVMODEW *dmW)
 {
     LPDEVMODEA dmA;
     DWORD size;
-    BOOL Formname;
-    ptrdiff_t off_formname = (const char *)dmW->dmFormName - (const char *)dmW;
 
-    if(!dmW) return NULL;
-    Formname = (dmW->dmSize > off_formname);
-    size = dmW->dmSize - CCHDEVICENAME - (Formname ? CCHFORMNAME : 0);
-    dmA = HeapAlloc(heap, HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra);
+    if (!dmW) return NULL;
+    size = dmW->dmSize - CCHDEVICENAME -
+                        ((dmW->dmSize > FIELD_OFFSET(DEVMODEW, dmFormName)) ? CCHFORMNAME : 0);
+
+    dmA = HeapAlloc(GetProcessHeap(), 0, size + dmW->dmDriverExtra);
+    if (!dmA) return NULL;
+
     WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1,
                         (LPSTR)dmA->dmDeviceName, CCHDEVICENAME, NULL, NULL);
-    if(!Formname) {
-      memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
-	     dmW->dmSize - CCHDEVICENAME * sizeof(WCHAR));
-    } else {
-      memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
-	     off_formname - CCHDEVICENAME * sizeof(WCHAR));
-      WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1,
-                          (LPSTR)dmA->dmFormName, CCHFORMNAME, NULL, NULL);
-      memcpy(&dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize -
-	     (off_formname + CCHFORMNAME * sizeof(WCHAR)));
+
+    if (FIELD_OFFSET(DEVMODEW, dmFormName) >= dmW->dmSize) {
+        memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
+               dmW->dmSize - FIELD_OFFSET(DEVMODEW, dmSpecVersion));
     }
+    else
+    {
+        memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
+               FIELD_OFFSET(DEVMODEW, dmFormName) - FIELD_OFFSET(DEVMODEW, dmSpecVersion));
+        WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1,
+                            (LPSTR)dmA->dmFormName, CCHFORMNAME, NULL, NULL);
+
+        memcpy(&dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize - FIELD_OFFSET(DEVMODEW, dmLogPixels));
+    }
+
     dmA->dmSize = size;
-    memcpy((char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize,
-	   dmW->dmDriverExtra);
+    memcpy((char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize, dmW->dmDriverExtra);
     return dmA;
 }
 
@@ -1823,7 +1827,7 @@ INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
 			       WORD fwCapability, LPWSTR pOutput,
 			       const DEVMODEW *pDevMode)
 {
-    LPDEVMODEA dmA = DEVMODEdupWtoA(GetProcessHeap(), pDevMode);
+    LPDEVMODEA dmA = DEVMODEdupWtoA(pDevMode);
     LPSTR pDeviceA = strdupWtoA(pDevice);
     LPSTR pPortA = strdupWtoA(pPort);
     INT ret;
@@ -1921,7 +1925,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 {
 
     LPSTR pDeviceNameA = strdupWtoA(pDeviceName);
-    LPDEVMODEA pDevModeInputA = DEVMODEdupWtoA(GetProcessHeap(),pDevModeInput);
+    LPDEVMODEA pDevModeInputA = DEVMODEdupWtoA(pDevModeInput);
     LPDEVMODEA pDevModeOutputA = NULL;
     LONG ret;
 
@@ -2884,7 +2888,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
        drivers */
     if (dmW)
     {
-        dmA = DEVMODEdupWtoA(GetProcessHeap(), dmW);
+        dmA = DEVMODEdupWtoA(dmW);
         RegSetValueExW(hkeyPrinter, default_devmodeW, 0, REG_BINARY,
                        (LPBYTE)dmA, dmA->dmSize + dmA->dmDriverExtra);
         HeapFree(GetProcessHeap(), 0, dmA);
