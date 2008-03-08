@@ -21438,6 +21438,8 @@ ac_config_files="$ac_config_files dlls/itss/Makefile"
 
 ac_config_files="$ac_config_files dlls/itss/tests/Makefile"
 
+ac_config_files="$ac_config_files dlls/jscript/Makefile"
+
 ac_config_files="$ac_config_files dlls/kernel32/Makefile"
 
 ac_config_files="$ac_config_files dlls/kernel32/tests/Makefile"
@@ -22678,6 +22680,7 @@ do
     "dlls/itircl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itircl/Makefile" ;;
     "dlls/itss/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itss/Makefile" ;;
     "dlls/itss/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/itss/tests/Makefile" ;;
+    "dlls/jscript/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/jscript/Makefile" ;;
     "dlls/kernel32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/Makefile" ;;
     "dlls/kernel32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/kernel32/tests/Makefile" ;;
     "dlls/localspl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/localspl/Makefile" ;;

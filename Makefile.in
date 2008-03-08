@@ -288,6 +288,7 @@ ALL_MAKEFILES = \
 	dlls/itircl/Makefile \
 	dlls/itss/Makefile \
 	dlls/itss/tests/Makefile \
+	dlls/jscript/Makefile \
 	dlls/kernel32/Makefile \
 	dlls/kernel32/tests/Makefile \
 	dlls/localspl/Makefile \
@@ -705,6 +706,7 @@ dlls/iphlpapi/tests/Makefile: dlls/iphlpapi/tests/Makefile.in dlls/Maketest.rule
 dlls/itircl/Makefile: dlls/itircl/Makefile.in dlls/Makedll.rules
 dlls/itss/Makefile: dlls/itss/Makefile.in dlls/Makedll.rules
 dlls/itss/tests/Makefile: dlls/itss/tests/Makefile.in dlls/Maketest.rules
+dlls/jscript/Makefile: dlls/jscript/Makefile.in dlls/Makedll.rules
 dlls/kernel32/Makefile: dlls/kernel32/Makefile.in dlls/Makedll.rules
 dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in dlls/Maketest.rules
 dlls/localspl/Makefile: dlls/localspl/Makefile.in dlls/Makedll.rules

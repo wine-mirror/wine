@@ -117,6 +117,7 @@ BASEDIRS = \
 	iphlpapi \
 	itircl \
 	itss \
+	jscript \
 	kernel32 \
 	localspl \
 	localui \
