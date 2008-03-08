@@ -634,6 +634,48 @@ static HRESULT create_mon_for_nschannel(nsChannel *channel, IMoniker **mon)
     return hres;
 }
 
+static NSContainer *get_nscontainer_from_load_group(nsChannel *This)
+{
+    NSContainer *container;
+    nsIChannel *channel;
+    nsIRequest *req;
+    nsIWineURI *wine_uri;
+    nsIURI *uri;
+    nsresult nsres;
+
+    nsres = nsILoadGroup_GetDefaultLoadRequest(This->load_group, &req);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDefaultLoadRequest failed: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIRequest_QueryInterface(req, &IID_nsIChannel, (void**)&channel);
+    nsIRequest_Release(req);
+    if(NS_FAILED(nsres)) {
+        WARN("Could not get nsIChannel interface: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIChannel_GetURI(channel, &uri);
+    nsIChannel_Release(channel);
+    if(NS_FAILED(nsres)) {
+        ERR("GetURI failed: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIURI_QueryInterface(uri, &IID_nsIWineURI, (void**)&wine_uri);
+    nsIURI_Release(uri);
+    if(NS_FAILED(nsres)) {
+        TRACE("Could not get nsIWineURI: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsIWineURI_GetNSContainer(wine_uri, &container);
+    nsIWineURI_Release(wine_uri);
+
+    return container;
+}
+
 static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
         nsIStreamListener *listener, nsISupports *context, BOOL *open)
 {
@@ -774,6 +816,13 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
 
     nsIWineURI_GetNSContainer(This->uri, &container);
+
+    if(!container && This->load_group) {
+        container = get_nscontainer_from_load_group(This);
+        if(container)
+            nsIWineURI_SetNSContainer(This->uri, container);
+    }
+
     if(!container) {
         TRACE("container = NULL\n");
         return This->channel
@@ -2043,7 +2092,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     }
 
     nsACString_Init(&spec_str, spec);
-    nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
+    nsres = nsIIOService_NewURI(nsio, &spec_str, aOriginCharset, aBaseURI, &uri);
     nsACString_Finish(&spec_str);
     if(NS_FAILED(nsres))
         TRACE("NewURI failed: %08x\n", nsres);
@@ -2057,6 +2106,8 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
             TRACE("Could not get base nsIWineURI: %08x\n", nsres);
         }
     }
+
+    TRACE("nscontainer = %p\n", nscontainer);
 
     nsres = create_uri(uri, nscontainer, &wine_uri);
     *_retval = (nsIURI*)wine_uri;
