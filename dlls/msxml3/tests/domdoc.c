@@ -2454,6 +2454,52 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
                 SysFreeString(str);
 
+                /* test substringData */
+                hr = IXMLDOMCDATASection_substringData(pCDataSec, 0, 4, NULL);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                /* test substringData - Invalid offset */
+                str = (BSTR)&szElement;
+                hr = IXMLDOMCDATASection_substringData(pCDataSec, -1, 4, &str);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+                ok( str == NULL, "incorrect string\n");
+
+                /* test substringData - Invalid offset */
+                str = (BSTR)&szElement;
+                hr = IXMLDOMCDATASection_substringData(pCDataSec, 30, 0, &str);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok( str == NULL, "incorrect string\n");
+
+                /* test substringData - Invalid size */
+                str = (BSTR)&szElement;
+                hr = IXMLDOMCDATASection_substringData(pCDataSec, 0, -1, &str);
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+                ok( str == NULL, "incorrect string\n");
+
+                /* test substringData - Invalid size */
+                str = (BSTR)&szElement;
+                hr = IXMLDOMCDATASection_substringData(pCDataSec, 2, 0, &str);
+                ok(hr == S_FALSE, "ret %08x\n", hr );
+                ok( str == NULL, "incorrect string\n");
+
+                /* test substringData - Start of string */
+                hr = IXMLDOMCDATASection_substringData(pCDataSec, 0, 4, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("This") ), "incorrect substringData string\n");
+                SysFreeString(str);
+
+                /* test substringData - Middle of string */
+                hr = IXMLDOMCDATASection_substringData(pCDataSec, 13, 4, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("test") ), "incorrect substringData string\n");
+                SysFreeString(str);
+
+                /* test substringData - End of string */
+                hr = IXMLDOMCDATASection_substringData(pCDataSec, 20, 4, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("\\") ), "incorrect substringData string\n");
+                SysFreeString(str);
+
                 IXMLDOMCDATASection_Release(pCDataSec);
             }
 
