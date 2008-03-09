@@ -1109,7 +1109,8 @@ const shader_backend_t none_shader_backend = {
     &shader_none_destroy,
     &shader_none_alloc,
     &shader_none_free,
-    &shader_none_dirty_const
+    &shader_none_dirty_const,
+    FFPStateTable
 };
 
 /* *******************************************

@@ -4411,7 +4411,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
     }
 
     if(Stage > This->stateBlock->lowest_disabled_stage &&
-       StateTable[STATE_TEXTURESTAGE(0, Type)].representative == STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP)) {
+       This->shader_backend->StateTable[STATE_TEXTURESTAGE(0, Type)].representative == STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP)) {
         /* Colorop change above lowest disabled stage? That won't change anything in the gl setup
          * Changes in other states are important on disabled stages too
          */
@@ -7778,7 +7778,7 @@ const DWORD SavedVertexStates_S[NUM_SAVEDVERTEXSTATES_S] = {
 };
 
 void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
-    DWORD rep = StateTable[state].representative;
+    DWORD rep = This->shader_backend->StateTable[state].representative;
     DWORD idx;
     BYTE shift;
     UINT i;

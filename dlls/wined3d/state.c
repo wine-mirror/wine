@@ -435,7 +435,7 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     /* colorkey fixup for stage 0 alphaop depends on WINED3DRS_ALPHABLENDENABLE state,
         so it may need updating */
     if (stateblock->renderState[WINED3DRS_COLORKEYENABLE]) {
-        StateTable[STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP)].apply(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
+        FFPStateTable[STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP)].apply(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
     }
 }
 
@@ -484,7 +484,7 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     }
 
     if(enable_ckey || context->last_was_ckey) {
-        StateTable[STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP)].apply(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
+        FFPStateTable[STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP)].apply(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
     }
     context->last_was_ckey = enable_ckey;
 
@@ -2605,7 +2605,7 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
             update_fog = TRUE;
     }
 
-    if(!isStateDirty(context, StateTable[STATE_VSHADER].representative)) {
+    if(!isStateDirty(context, FFPStateTable[STATE_VSHADER].representative)) {
         device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_pshader, use_vshader);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader)) {
@@ -3915,7 +3915,7 @@ static void frontface(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     }
 }
 
-const struct StateEntry StateTable[] =
+const struct StateEntry FFPStateTable[] =
 {
       /* State name                                         representative,                                     apply function */
     { /* 0,  Undefined                              */      0,                                                  state_undefined     },

@@ -3372,5 +3372,6 @@ const shader_backend_t glsl_shader_backend = {
     &shader_glsl_destroy,
     &shader_glsl_alloc,
     &shader_glsl_free,
-    &shader_glsl_dirty_const
+    &shader_glsl_dirty_const,
+    FFPStateTable
 };

@@ -1883,6 +1883,6 @@ const shader_backend_t arb_program_shader_backend = {
     &shader_arb_destroy,
     &shader_arb_alloc,
     &shader_arb_free,
-    &shader_arb_dirty_const
-
+    &shader_arb_dirty_const,
+    FFPStateTable
 };

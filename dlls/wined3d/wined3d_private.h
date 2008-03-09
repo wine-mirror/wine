@@ -260,6 +260,7 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
+    const struct StateEntry *StateTable;
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend;
@@ -543,8 +544,8 @@ struct StateEntry
     APPLYSTATEFUNC  apply;
 };
 
-/* Global state table */
-extern const struct StateEntry StateTable[];
+/* "Base" state table */
+extern const struct StateEntry FFPStateTable[];
 
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext {
