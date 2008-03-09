@@ -986,7 +986,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     if (Flags & WINED3DLOCK_DISCARD) {
         /* Set SFLAG_INSYSMEM, so we'll never try to download the data from the texture. */
         TRACE("WINED3DLOCK_DISCARD flag passed, marking local copy as up to date\n");
+        surface_prepare_system_memory(This); /* Makes sure memory is allocated */
         This->Flags |= SFLAG_INSYSMEM;
+        goto lock_end;
     }
 
     if (This->Flags & SFLAG_INSYSMEM) {
