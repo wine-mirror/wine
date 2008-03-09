@@ -35,6 +35,7 @@
 #define REG_VAL_EXISTS(key, value)   !RegQueryValueEx(key, value, NULL, NULL, NULL, NULL)
 #define OPEN_GUID_KEY() !RegOpenKey(HKEY_LOCAL_MACHINE, GUID_KEY, &guid)
 
+static HMODULE hAdvPack;
 static HRESULT (WINAPI *pCloseINFEngine)(HINF);
 static HRESULT (WINAPI *pDelNode)(LPCSTR,DWORD);
 static HRESULT (WINAPI *pGetVersionFromFile)(LPCSTR,LPDWORD,LPDWORD,BOOL);
@@ -66,7 +67,7 @@ static void get_progfiles_dir(void)
 
 static BOOL init_function_pointers(void)
 {
-    HMODULE hAdvPack = LoadLibraryA("advpack.dll");
+    hAdvPack = LoadLibraryA("advpack.dll");
 
     if (!hAdvPack)
         return FALSE;
@@ -594,4 +595,6 @@ START_TEST(advpack)
     setperusersecvalues_test();
     translateinfstring_test();
     translateinfstringex_test();
+
+    FreeLibrary(hAdvPack);
 }
