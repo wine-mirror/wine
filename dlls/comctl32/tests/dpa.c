@@ -453,6 +453,4 @@ START_TEST(dpa)
         test_dpa();
     else
         trace("skipping tests\n");
-
-    FreeLibrary(hcomctl32);
 }
