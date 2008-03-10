@@ -653,6 +653,47 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string\n");
         SysFreeString(str);
 
+        /* test insertData */
+        str = SysAllocStringLen(NULL, 0);
+        r = IXMLDOMText_insertData(nodetext, -1, str);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, -1, NULL);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 1000, str);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 1000, NULL);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 0, NULL);
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 0, str);
+        ok(r == S_OK, "ret %08x\n", r );
+        SysFreeString(str);
+
+        r = IXMLDOMText_insertData(nodetext, -1, _bstr_("Inserting"));
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 1000, _bstr_("Inserting"));
+        ok(r == E_INVALIDARG, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 0, _bstr_("Begin "));
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 17, _bstr_("Middle"));
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_insertData(nodetext, 39, _bstr_(" End"));
+        ok(r == S_OK, "ret %08x\n", r );
+
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
         IXMLDOMText_Release( nodetext );
     }
     SysFreeString( str );
