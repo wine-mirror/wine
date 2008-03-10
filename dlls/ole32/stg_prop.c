@@ -913,12 +913,12 @@ static HRESULT WINAPI IPropertyStorage_fnStat(
     hr = IStream_Stat(This->stm, &stat, STATFLAG_NONAME);
     if (SUCCEEDED(hr))
     {
-        memcpy(&statpsstg->fmtid, &This->fmtid, sizeof(statpsstg->fmtid));
-        memcpy(&statpsstg->clsid, &This->clsid, sizeof(statpsstg->clsid));
+        statpsstg->fmtid = This->fmtid;
+        statpsstg->clsid = This->clsid;
         statpsstg->grfFlags = This->grfFlags;
-        memcpy(&statpsstg->mtime, &stat.mtime, sizeof(statpsstg->mtime));
-        memcpy(&statpsstg->ctime, &stat.ctime, sizeof(statpsstg->ctime));
-        memcpy(&statpsstg->atime, &stat.atime, sizeof(statpsstg->atime));
+        statpsstg->mtime = stat.mtime;
+        statpsstg->ctime = stat.ctime;
+        statpsstg->atime = stat.atime;
         statpsstg->dwOSVersion = This->originatorOS;
     }
     return hr;
@@ -1309,7 +1309,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
         goto end;
     }
     This->format = hdr.wFormat;
-    memcpy(&This->clsid, &hdr.clsid, sizeof(This->clsid));
+    This->clsid = hdr.clsid;
     This->originatorOS = hdr.dwOSVer;
     if (PROPSETHDR_OSVER_KIND(hdr.dwOSVer) == PROPSETHDR_OSVER_KIND_MAC)
         WARN("File comes from a Mac, strings will probably be screwed up\n");
@@ -1969,7 +1969,7 @@ static HRESULT PropertyStorage_BaseConstruct(IStream *stm,
     InitializeCriticalSection(&(*pps)->cs);
     (*pps)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PropertyStorage_impl.cs");
     (*pps)->stm = stm;
-    memcpy(&(*pps)->fmtid, rfmtid, sizeof((*pps)->fmtid));
+    (*pps)->fmtid = *rfmtid;
     (*pps)->grfMode = grfMode;
 
     hr = PropertyStorage_CreateDictionaries(*pps);
@@ -2314,7 +2314,7 @@ static HRESULT create_EnumSTATPROPSETSTG(
             statpss.atime = stat.atime;
             statpss.ctime = stat.ctime;
             statpss.grfFlags = stat.grfMode;
-            memcpy(&statpss.clsid, &stat.clsid, sizeof stat.clsid);
+            statpss.clsid = stat.clsid;
             enumx_add_element(enumx, &statpss);
         }
         CoTaskMemFree(stat.pwcsName);
@@ -2570,12 +2570,12 @@ HRESULT WINAPI PropStgNameToFmtId(const LPOLESTR str, FMTID *rfmtid)
 
     if (!lstrcmpiW(str, szDocSummaryInfo))
     {
-        memcpy(rfmtid, &FMTID_DocSummaryInformation, sizeof(*rfmtid));
+        *rfmtid = FMTID_DocSummaryInformation;
         hr = S_OK;
     }
     else if (!lstrcmpiW(str, szSummaryInfo))
     {
-        memcpy(rfmtid, &FMTID_SummaryInformation, sizeof(*rfmtid));
+        *rfmtid = FMTID_SummaryInformation;
         hr = S_OK;
     }
     else

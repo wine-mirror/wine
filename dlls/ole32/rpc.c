@@ -242,7 +242,7 @@ static unsigned char * ChannelHooks_ClientFillBuffer(SChannelHookCallInfo *info,
 
         wire_orpc_extent->conformance = (extension_size+7)&~7;
         wire_orpc_extent->size = extension_size;
-        memcpy(&wire_orpc_extent->id, &entry->id, sizeof(wire_orpc_extent->id));
+        wire_orpc_extent->id = entry->id;
         buffer += FIELD_OFFSET(WIRE_ORPC_EXTENT, data[wire_orpc_extent->conformance]);
     }
 
@@ -362,7 +362,7 @@ static unsigned char * ChannelHooks_ServerFillBuffer(SChannelHookCallInfo *info,
 
         wire_orpc_extent->conformance = (extension_size+7)&~7;
         wire_orpc_extent->size = extension_size;
-        memcpy(&wire_orpc_extent->id, &entry->id, sizeof(wire_orpc_extent->id));
+        wire_orpc_extent->id = entry->id;
         buffer += FIELD_OFFSET(WIRE_ORPC_EXTENT, data[wire_orpc_extent->conformance]);
     }
 
@@ -411,7 +411,7 @@ HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook)
     if (!entry)
         return E_OUTOFMEMORY;
 
-    memcpy(&entry->id, rguid, sizeof(entry->id));
+    entry->id = *rguid;
     entry->hook = hook;
     IChannelHook_AddRef(hook);
 
@@ -553,7 +553,7 @@ static HRESULT WINAPI ServerRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
         {
             WIRE_ORPC_EXTENT *wire_orpc_extent = msg->Buffer;
             wire_orpc_extent->conformance = 0;
-            memcpy(&wire_orpc_extent->id, &GUID_NULL, sizeof(wire_orpc_extent->id));
+            wire_orpc_extent->id = GUID_NULL;
             wire_orpc_extent->size = 0;
             msg->Buffer = (char *)msg->Buffer + FIELD_OFFSET(WIRE_ORPC_EXTENT, data[0]);
         }
@@ -737,7 +737,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
             {
                 WIRE_ORPC_EXTENT *wire_orpc_extent = msg->Buffer;
                 wire_orpc_extent->conformance = 0;
-                memcpy(&wire_orpc_extent->id, &GUID_NULL, sizeof(wire_orpc_extent->id));
+                wire_orpc_extent->id = GUID_NULL;
                 wire_orpc_extent->size = 0;
                 msg->Buffer = (char *)msg->Buffer + FIELD_OFFSET(WIRE_ORPC_EXTENT, data[0]);
             }

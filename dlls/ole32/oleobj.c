@@ -724,7 +724,7 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
    */
   This->Connections[index].sink = pAdvise;
   This->Connections[index].advf = advf & ~WINE_ADVF_REMOTE;
-  memcpy(&(This->Connections[index].fmat), pFetc, sizeof(FORMATETC));
+  This->Connections[index].fmat = *pFetc;
   if (pFetc->ptd)
   {
     This->Connections[index].fmat.ptd = CoTaskMemAlloc(pFetc->ptd->tdSize);

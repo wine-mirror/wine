@@ -7908,7 +7908,7 @@ HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid)
         return E_INVALIDARG;
 
     /* clear the output args */
-    memcpy(pclsid, &CLSID_NULL, sizeof(*pclsid));
+    *pclsid = CLSID_NULL;
 
     res = IStream_Read(pStm,(void*)pclsid,sizeof(CLSID),&nbByte);
 
