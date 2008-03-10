@@ -3,6 +3,7 @@
  * Copyright 1998-2000 Lionel Ulmer
  * Copyright 2000-2001 TransGaming Technologies Inc.
  * Copyright 2006 Stefan Dösinger
+ * Copyright 2008 Denver Gingerich
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -534,34 +535,24 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
 }
 
 /*****************************************************************************
- * IDirectDraw7::SetDisplayMode
  *
- * Sets the display screen resolution, color depth and refresh frequency
- * when in fullscreen mode (in theory).
- * Possible return values listed in the SDK suggest that this method fails
- * when not in fullscreen mode, but this is wrong. Windows 2000 happily sets
- * the display mode in DDSCL_NORMAL mode without an hwnd specified.
- * It seems to be valid to pass 0 for With and Height, this has to be tested
- * It could mean that the current video mode should be left as-is. (But why
- * call it then?)
+ * Helper function for SetDisplayMode and RestoreDisplayMode
  *
- * Params:
- *  Height, Width: Screen dimension
- *  BPP: Color depth in Bits per pixel
- *  Refreshrate: Screen refresh rate
- *  Flags: Other stuff
- *
- * Returns
- *  DD_OK on success
+ * Implements DirectDraw's SetDisplayMode, but ignores the value of
+ * ForceRefreshRate, since it is already handled by
+ * IDirectDrawImpl_SetDisplayMode.  RestoreDisplayMode can use this function
+ * without worrying that ForceRefreshRate will override the refresh rate.  For
+ * argument and return value documentation, see
+ * IDirectDrawImpl_SetDisplayMode.
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
-                               DWORD Width,
-                               DWORD Height,
-                               DWORD BPP,
-                               DWORD RefreshRate,
-                               DWORD Flags)
+static HRESULT
+IDirectDrawImpl_SetDisplayModeNoOverride(IDirectDraw7 *iface,
+                                         DWORD Width,
+                                         DWORD Height,
+                                         DWORD BPP,
+                                         DWORD RefreshRate,
+                                         DWORD Flags)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     WINED3DDISPLAYMODE Mode;
@@ -616,6 +607,46 @@ IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
 }
 
 /*****************************************************************************
+ * IDirectDraw7::SetDisplayMode
+ *
+ * Sets the display screen resolution, color depth and refresh frequency
+ * when in fullscreen mode (in theory).
+ * Possible return values listed in the SDK suggest that this method fails
+ * when not in fullscreen mode, but this is wrong. Windows 2000 happily sets
+ * the display mode in DDSCL_NORMAL mode without an hwnd specified.
+ * It seems to be valid to pass 0 for With and Height, this has to be tested
+ * It could mean that the current video mode should be left as-is. (But why
+ * call it then?)
+ *
+ * Params:
+ *  Height, Width: Screen dimension
+ *  BPP: Color depth in Bits per pixel
+ *  Refreshrate: Screen refresh rate
+ *  Flags: Other stuff
+ *
+ * Returns
+ *  DD_OK on success
+ *
+ *****************************************************************************/
+static HRESULT WINAPI
+IDirectDrawImpl_SetDisplayMode(IDirectDraw7 *iface,
+                               DWORD Width,
+                               DWORD Height,
+                               DWORD BPP,
+                               DWORD RefreshRate,
+                               DWORD Flags)
+{
+    if (force_refresh_rate != 0)
+    {
+        TRACE("ForceRefreshRate overriding passed-in refresh rate (%d Hz) to %d Hz\n", RefreshRate, force_refresh_rate);
+        RefreshRate = force_refresh_rate;
+    }
+
+    return IDirectDrawImpl_SetDisplayModeNoOverride(iface, Width, Height, BPP,
+                                                    RefreshRate, Flags);
+}
+
+/*****************************************************************************
  * IDirectDraw7::RestoreDisplayMode
  *
  * Restores the display mode to what it was at creation time. Basically.
@@ -642,12 +673,12 @@ IDirectDrawImpl_RestoreDisplayMode(IDirectDraw7 *iface)
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     TRACE("(%p)\n", This);
 
-    return IDirectDraw7_SetDisplayMode(ICOM_INTERFACE(This, IDirectDraw7),
-                                       This->orig_width,
-                                       This->orig_height,
-                                       This->orig_bpp,
-                                       0,
-                                       0);
+    return IDirectDrawImpl_SetDisplayModeNoOverride(ICOM_INTERFACE(This, IDirectDraw7),
+                                                    This->orig_width,
+                                                    This->orig_height,
+                                                    This->orig_bpp,
+                                                    0,
+                                                    0);
 }
 
 /*****************************************************************************

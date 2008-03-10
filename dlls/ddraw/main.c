@@ -4,6 +4,7 @@
  * Copyright 1998 Lionel Ulmer
  * Copyright 2000-2001 TransGaming Technologies Inc.
  * Copyright 2006 Stefan Dösinger
+ * Copyright 2008 Denver Gingerich
  *
  * This file contains the (internal) driver registration functions,
  * driver enumeration APIs and DirectDraw creation functions.
@@ -67,6 +68,9 @@ static CRITICAL_SECTION_DEBUG ddraw_cs_debug =
     0, 0, { (DWORD_PTR)(__FILE__ ": ddraw_cs") }
 };
 CRITICAL_SECTION ddraw_cs = { &ddraw_cs_debug, -1, 0, 0, 0, 0 };
+
+/* value of ForceRefreshRate */
+DWORD force_refresh_rate = 0;
 
 /***********************************************************************
  *
@@ -884,6 +888,38 @@ DllMain(HINSTANCE hInstDLL,
                     ERR("Unknown default surface type. Supported are:\n gdi, opengl\n");
                 }
             }
+        }
+
+        /* On Windows one can force the refresh rate that DirectDraw uses by
+         * setting an override value in dxdiag.  This is documented in KB315614
+         * (main article), KB230002, and KB217348.  By comparing registry dumps
+         * before and after setting the override, we see that the override value
+         * is stored in HKLM\Software\Microsoft\DirectDraw\ForceRefreshRate as a
+         * DWORD that represents the refresh rate to force.  We use this
+         * registry entry to modify the behavior of SetDisplayMode so that Wine
+         * users can override the refresh rate in a Windows-compatible way.
+         *
+         * dxdiag will not accept a refresh rate lower than 40 or higher than
+         * 120 so this value should be within that range.  It is, of course,
+         * possible for a user to set the registry entry value directly so that
+         * assumption might not hold.
+         *
+         * There is no current mechanism for setting this value through the Wine
+         * GUI.  It would be most appropriate to set this value through a dxdiag
+         * clone, but it may be sufficient to use winecfg.
+         *
+         * TODO: Create a mechanism for setting this value through the Wine GUI.
+         */
+        if ( !RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectDraw", &hkey ) )
+        {
+            DWORD type, data;
+            size = sizeof(data);
+            if (!RegQueryValueExA( hkey, "ForceRefreshRate", NULL, &type, (LPBYTE)&data, &size ) && type == REG_DWORD)
+            {
+                TRACE("ForceRefreshRate set; overriding refresh rate to %d Hz\n", data);
+                force_refresh_rate = data;
+            }
+            RegCloseKey( hkey );
         }
 
         DisableThreadLibraryCalls(hInstDLL);

@@ -83,6 +83,8 @@ extern ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface)
 /* Global critical section */
 extern CRITICAL_SECTION ddraw_cs;
 
+extern DWORD force_refresh_rate;
+
 /*****************************************************************************
  * IDirectDraw implementation structure
  *****************************************************************************/
