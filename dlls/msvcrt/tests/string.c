@@ -616,10 +616,10 @@ START_TEST(string)
     ok(hMsvcrt != 0, "GetModuleHandleA failed\n");
     SET(pmemcpy,"memcpy");
     SET(pmemcmp,"memcmp");
-    SET(pstrcpy_s,"strcpy_s");
-    SET(pstrcat_s,"strcat_s");
-    SET(p_mbsnbcpy_s,"_mbsnbcpy_s");
-    SET(p_wcscpy_s,"wcscpy_s");
+    pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
+    pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
+    p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );
+    p_wcscpy_s = (void *)GetProcAddress( hMsvcrt,"wcscpy_s" );
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
