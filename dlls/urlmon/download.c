@@ -309,6 +309,7 @@ static IBindStatusCallback *DownloadBSC_Create(IBindStatusCallback *callback, LP
     ret->lpServiceProviderVtbl    = &ServiceProviderVtbl;
     ret->ref = 1;
     ret->file_name = heap_strdupW(file_name);
+    ret->cache_file = NULL;
 
     if(callback)
         IBindStatusCallback_AddRef(callback);
