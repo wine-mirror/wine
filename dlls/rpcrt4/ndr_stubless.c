@@ -493,7 +493,7 @@ static void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
                 if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
                 {
                     if (pParam->param_direction & RPC_FC_RETURN_PARAM)
-                        call_unmarshaller(pStubMsg, (unsigned char **)pRetVal, pTypeFormat, 0);
+                        call_unmarshaller(pStubMsg, &pRetVal, pTypeFormat, 0);
                     else
                         call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
                 }
