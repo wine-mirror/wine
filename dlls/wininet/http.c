@@ -98,6 +98,7 @@ struct HttpAuthInfo
     CtxtHandle ctx;
     TimeStamp exp;
     ULONG attr;
+    ULONG max_token;
     void *auth_data;
     unsigned int auth_data_len;
     BOOL finished; /* finished authenticating */
@@ -476,6 +477,16 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
                                                    pAuthData, NULL,
                                                    NULL, &pAuthInfo->cred,
                                                    &exp);
+            if (sec_status == SEC_E_OK)
+            {
+                PSecPkgInfoW sec_pkg_info;
+                sec_status = QuerySecurityPackageInfoW(pAuthInfo->scheme, &sec_pkg_info);
+                if (sec_status == SEC_E_OK)
+                {
+                    pAuthInfo->max_token = sec_pkg_info->cbMaxToken;
+                    FreeContextBuffer(sec_pkg_info);
+                }
+            }
             if (sec_status != SEC_E_OK)
             {
                 WARN("AcquireCredentialsHandleW for scheme %s failed with error 0x%08x\n",
@@ -554,10 +565,10 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
             HTTP_DecodeBase64(pszAuthData, in.pvBuffer);
         }
 
-        buffer = HeapAlloc(GetProcessHeap(), 0, 0x100);
+        buffer = HeapAlloc(GetProcessHeap(), 0, pAuthInfo->max_token);
 
         out.BufferType = SECBUFFER_TOKEN;
-        out.cbBuffer = 0x100;
+        out.cbBuffer = pAuthInfo->max_token;
         out.pvBuffer = buffer;
 
         out_desc.ulVersion = 0;
