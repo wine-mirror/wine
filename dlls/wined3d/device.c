@@ -7096,18 +7096,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
        (swapchain->presentParms.Windowed && !pPresentationParameters->Windowed) ||
         DisplayModeChanged) {
 
-        /* Switching to fullscreen? Change to fullscreen mode, THEN change the screen res */
-        if(!pPresentationParameters->Windowed) {
-            IWineD3DDevice_SetFullscreen(iface, TRUE);
-        }
-
-        IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
-
-        /* Switching out of fullscreen mode? First set the original res, then change the window */
-        if(pPresentationParameters->Windowed) {
-            IWineD3DDevice_SetFullscreen(iface, FALSE);
-        }
+        IWineD3DDevice_SetFullscreen(iface, !pPresentationParameters->Windowed);
         swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
+        IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
     } else if(!pPresentationParameters->Windowed) {
         DWORD style = This->style, exStyle = This->exStyle;
         /* If we're in fullscreen, and the mode wasn't changed, we have to get the window back into
