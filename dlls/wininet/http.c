@@ -404,8 +404,6 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
 
     TRACE("%s\n", debugstr_w(pszAuthValue));
 
-    if (!domain_and_username) return FALSE;
-
     if (!pAuthInfo)
     {
         TimeStamp exp;
@@ -435,9 +433,8 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
         }
         else
         {
+            PVOID pAuthData;
             SEC_WINNT_AUTH_IDENTITY_W nt_auth_identity;
-            WCHAR *user = strchrW(domain_and_username, '\\');
-            WCHAR *domain = domain_and_username;
 
             pAuthInfo->scheme = WININET_strdupW(pszAuthValue);
             if (!pAuthInfo->scheme)
@@ -446,25 +443,37 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
                 return FALSE;
             }
 
-            if (user) user++;
-            else
+            if (domain_and_username)
             {
-                user = domain_and_username;
-                domain = NULL;
-            }
-            nt_auth_identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-            nt_auth_identity.User = user;
-            nt_auth_identity.UserLength = strlenW(nt_auth_identity.User);
-            nt_auth_identity.Domain = domain;
-            nt_auth_identity.DomainLength = domain ? user - domain - 1 : 0;
-            nt_auth_identity.Password = password;
-            nt_auth_identity.PasswordLength = strlenW(nt_auth_identity.Password);
+                WCHAR *user = strchrW(domain_and_username, '\\');
+                WCHAR *domain = domain_and_username;
 
-            /* FIXME: make sure scheme accepts SEC_WINNT_AUTH_IDENTITY before calling AcquireCredentialsHandle */
+                /* FIXME: make sure scheme accepts SEC_WINNT_AUTH_IDENTITY before calling AcquireCredentialsHandle */
+
+                pAuthData = &nt_auth_identity;
+
+                if (user) user++;
+                else
+                {
+                    user = domain_and_username;
+                    domain = NULL;
+                }
+
+                nt_auth_identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+                nt_auth_identity.User = user;
+                nt_auth_identity.UserLength = strlenW(nt_auth_identity.User);
+                nt_auth_identity.Domain = domain;
+                nt_auth_identity.DomainLength = domain ? user - domain - 1 : 0;
+                nt_auth_identity.Password = password;
+                nt_auth_identity.PasswordLength = strlenW(nt_auth_identity.Password);
+            }
+            else
+                /* use default credentials */
+                pAuthData = NULL;
 
             sec_status = AcquireCredentialsHandleW(NULL, pAuthInfo->scheme,
                                                    SECPKG_CRED_OUTBOUND, NULL,
-                                                   &nt_auth_identity, NULL,
+                                                   pAuthData, NULL,
                                                    NULL, &pAuthInfo->cred,
                                                    &exp);
             if (sec_status != SEC_E_OK)
@@ -491,11 +500,18 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
 
     if (is_basic_auth_value(pszAuthValue))
     {
-        int userlen = WideCharToMultiByte(CP_UTF8, 0, domain_and_username, lstrlenW(domain_and_username), NULL, 0, NULL, NULL);
-        int passlen = WideCharToMultiByte(CP_UTF8, 0, password, lstrlenW(password), NULL, 0, NULL, NULL);
+        int userlen;
+        int passlen;
         char *auth_data;
 
         TRACE("basic authentication\n");
+
+        /* we don't cache credentials for basic authentication, so we can't
+         * retrieve them if the application didn't pass us any credentials */
+        if (!domain_and_username) return FALSE;
+
+        userlen = WideCharToMultiByte(CP_UTF8, 0, domain_and_username, lstrlenW(domain_and_username), NULL, 0, NULL, NULL);
+        passlen = WideCharToMultiByte(CP_UTF8, 0, password, lstrlenW(password), NULL, 0, NULL, NULL);
 
         /* length includes a nul terminator, which will be re-used for the ':' */
         auth_data = HeapAlloc(GetProcessHeap(), 0, userlen + 1 + passlen);
