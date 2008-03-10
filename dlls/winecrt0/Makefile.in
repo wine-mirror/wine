@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = libwinecrt0.a
+MODULE    = winecrt0
 
 C_SRCS = \
 	delay_load.c \

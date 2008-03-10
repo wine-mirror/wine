@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = libstrmiids.a
+MODULE    = strmiids
 
 C_SRCS = \
 	strmiids.c

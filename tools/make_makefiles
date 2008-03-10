@@ -390,10 +390,10 @@ sub update_dlls(@)
         my $module = $makefile{"MODULE"};
         (my $dir = $makefile{"=dir"}) =~ s/^dlls\/(.*)\//$1/;
 
-        if ($module =~ /^lib.*\.a$/)
+        if ($makefile{"=rules"} eq $makerules{"MAKE_IMPLIB_RULES"})
         {
             $staticlib_dirs{$module} = $dir;
-            die "invalid module $module in dir $staticlib_dirs{$module}\n" if "lib$staticlib_dirs{$module}.a" ne $module;
+            die "invalid module $module in dir $staticlib_dirs{$module}\n" if "$staticlib_dirs{$module}" ne $module;
         }
         else
         {
@@ -522,7 +522,7 @@ sub update_dlls(@)
     $text .= "\n\nIMPORT_LIBS = \\\n\t\$(IMPORT_SYMLINKS)";
     foreach my $mod (sort keys %staticlib_dirs)
     {
-        $text .= sprintf " \\\n\t%s/%s", $staticlib_dirs{$mod}, $mod;
+        $text .= sprintf " \\\n\t%s/lib%s.a", $staticlib_dirs{$mod}, $mod;
     }
     foreach my $mod (sort keys %importlibs)
     {
@@ -563,7 +563,7 @@ sub update_dlls(@)
 
     foreach my $mod (sort keys %staticlib_dirs)
     {
-        $text .= sprintf "%s/%s: %s\n", $staticlib_dirs{$mod}, $mod, $staticlib_dirs{$mod};
+        $text .= sprintf "%s/lib%s.a: %s\n", $staticlib_dirs{$mod}, $mod, $staticlib_dirs{$mod};
     }
     $text .= "\n# Misc rules\n";
 

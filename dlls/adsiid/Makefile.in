@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = libadsiid.a
+MODULE    = adsiid
 
 C_SRCS = \
 	adsiid.c

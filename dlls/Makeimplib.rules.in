@@ -12,23 +12,23 @@ INSTALLDIRS = $(DESTDIR)$(dlldir)
 
 @MAKE_RULES@
 
-all: $(MODULE)
+all: $(MODULE:%=lib%.a)
 
 # Rules for .a library
 
-$(MODULE): $(OBJS) Makefile.in
+$(MODULE:%=lib%.a): $(OBJS) Makefile.in
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 	$(RANLIB) $@
 
 # Rules for installation
 
-install install-dev:: $(MODULE) $(DESTDIR)$(dlldir)
-	$(INSTALL_DATA) $(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)
+install install-dev:: $(MODULE:%=lib%.a) $(DESTDIR)$(dlldir)
+	$(INSTALL_DATA) $(MODULE:%=lib%.a) $(DESTDIR)$(dlldir)/$(MODULE:%=lib%.a)
 
 install-lib::
 
 uninstall::
-	$(RM) $(DESTDIR)$(dlldir)/$(MODULE)
+	$(RM) $(DESTDIR)$(dlldir)/$(MODULE:%=lib%.a)
 
 # End of global library rules

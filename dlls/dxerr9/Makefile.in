@@ -2,7 +2,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = libdxerr9.a
+MODULE    = dxerr9
 
 C_SRCS = \
 	dxerr9.c
