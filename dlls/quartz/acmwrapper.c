@@ -137,7 +137,8 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	unprepare_header = TRUE;
 
 	if ((res = acmStreamConvert(This->has, &ash, This->reinit_codec ? ACM_STREAMCONVERTF_START : 0))) {
-	    ERR("Cannot convert data header %d\n", res);
+	    if(res != MMSYSERR_MOREDATA)
+	        ERR("Cannot convert data header %d\n", res);
 	    goto error;
 	}
 	This->reinit_codec = FALSE;
@@ -154,10 +155,11 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	else
 	    This->current_size = 0;
 
-	hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
-	if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
-	    ERR("Error sending sample (%x)\n", hr);
-	    goto error;
+        hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
+        if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
+            if (FAILED(hr))
+                ERR("Error sending sample (%x)\n", hr);
+            goto error;
         }
 
 error:
