@@ -835,6 +835,7 @@ START_TEST(rebar)
     MSG msg;
     RECT rc;
 
+    /* LoadLibrary is needed. This file has no references to functions in comctl32 */
     hComctl32 = LoadLibraryA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
     if (!pInitCommonControlsEx)
@@ -879,4 +880,6 @@ START_TEST(rebar)
         DispatchMessageA(&msg);
     }
     DestroyWindow(hMainWnd);
+
+    FreeLibrary(hComctl32);
 }
