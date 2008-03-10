@@ -1807,14 +1807,21 @@ static void update_reg_entries(void)
                 strcatW(valueW, face->StyleName);
             }
             strcatW(valueW, TrueType);
-            if((path = strrchr(face->file, '/')) == NULL)
-                path = face->file;
-            else
-                path++;
-            len = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
 
-            file = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, path, -1, file, len);
+            file = wine_get_dos_file_name(face->file);
+            if(file)
+                len = strlenW(file) + 1;
+            else
+            {
+                if((path = strrchr(face->file, '/')) == NULL)
+                    path = face->file;
+                else
+                    path++;
+                len = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
+
+                file = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, path, -1, file, len);
+            }
             RegSetValueExW(winnt_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
             RegSetValueExW(win9x_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
             RegSetValueExW(external_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
