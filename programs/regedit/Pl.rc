@@ -24,18 +24,6 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Plik"
-    BEGIN
-        MENUITEM "Za&koñcz",                       ID_REGISTRY_EXIT
-    END
-    POPUP "&Pomoc"
-    BEGIN
-        MENUITEM "&O programie...",                  ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Rejestr"
@@ -247,8 +235,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Edytor rejestru"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

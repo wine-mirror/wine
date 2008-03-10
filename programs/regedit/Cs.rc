@@ -28,17 +28,6 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Soubor"
-    BEGIN
-        MENUITEM "&Konec",                       ID_REGISTRY_EXIT
-    END
-    POPUP "&Nápovìda"
-    BEGIN
-        MENUITEM "&O aplikaci ...",                  ID_HELP_ABOUT
-    END
-END
 
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
@@ -174,8 +163,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Editor registru"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

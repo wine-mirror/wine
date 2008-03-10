@@ -28,18 +28,6 @@ LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "파일(&F)"
-    BEGIN
-        MENUITEM "끝내기(&X)",                       ID_REGISTRY_EXIT
-    END
-    POPUP "도움말(&H)"
-    BEGIN
-        MENUITEM "관하여(&A) ...",                  ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "레지스트리(&R)"
@@ -251,8 +239,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "레지스트리 편집기"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

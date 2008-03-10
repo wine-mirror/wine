@@ -26,18 +26,6 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Fichier"
-    BEGIN
-        MENUITEM "&Quitter",                       ID_REGISTRY_EXIT
-    END
-    POPUP "Aid&e"
-    BEGIN
-        MENUITEM "À &propos",                  ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Registres"
@@ -249,8 +237,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Éditeur de registres"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

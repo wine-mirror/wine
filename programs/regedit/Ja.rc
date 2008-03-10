@@ -24,18 +24,6 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "ファイル(&F)"
-    BEGIN
-        MENUITEM "終了(&x)",                       ID_REGISTRY_EXIT
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "バージョン情報(&A)...",                  ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "レジストリ(&R)"
@@ -170,8 +158,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "レジストリエディタ"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

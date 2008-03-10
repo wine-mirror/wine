@@ -88,8 +88,8 @@ extern HFONT     hFont;
 extern enum OPTION_FLAGS Options;
 
 extern TCHAR szTitle[];
-extern TCHAR szFrameClass[];
-extern TCHAR szChildClass[];
+extern const TCHAR szFrameClass[];
+extern const TCHAR szChildClass[];
 extern TCHAR g_pszDefaultValueName[];
 
 /* about.c */

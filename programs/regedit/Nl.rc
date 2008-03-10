@@ -25,18 +25,6 @@ LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Bestand"
-    BEGIN
-        MENUITEM "&Afsluiten",                  ID_REGISTRY_EXIT
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&Info ...",                   ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Registerbestand"
@@ -248,8 +236,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Register-editor"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

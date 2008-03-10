@@ -24,18 +24,6 @@ LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Archivo"
-    BEGIN
-        MENUITEM "&Salir",                      ID_REGISTRY_EXIT
-    END
-    POPUP "A&yuda"
-    BEGIN
-        MENUITEM "&Acerca de...",               ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Registro"
@@ -249,8 +237,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Editor del registro"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

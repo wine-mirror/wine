@@ -24,18 +24,6 @@ LANGUAGE LANG_SLOVENIAN, SUBLANG_NEUTRAL
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Datoteka"
-    BEGIN
-        MENUITEM "Iz&hod",                       ID_REGISTRY_EXIT
-    END
-    POPUP "&Pomoè"
-    BEGIN
-        MENUITEM "&O ...",                  ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Register"
@@ -111,8 +99,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Urejevalnik registra"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

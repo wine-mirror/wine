@@ -49,8 +49,8 @@ LPCTSTR strClipboardFormat = _T("TODO: SET CORRECT FORMAT");
 
 #define MAX_LOADSTRING  100
 TCHAR szTitle[MAX_LOADSTRING];
-TCHAR szFrameClass[MAX_LOADSTRING];
-TCHAR szChildClass[MAX_LOADSTRING];
+const TCHAR szFrameClass[] = {'R','E','G','E','D','I','T','_','F','R','A','M','E',0};
+const TCHAR szChildClass[] = {'R','E','G','E','D','I','T',0};
 
 
 /*******************************************************************************
@@ -170,8 +170,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
     /* Initialize global strings */
     LoadString(hInstance, IDS_APP_TITLE, szTitle, COUNT_OF(szTitle));
-    LoadString(hInstance, IDC_REGEDIT_FRAME, szFrameClass, COUNT_OF(szFrameClass));
-    LoadString(hInstance, IDC_REGEDIT, szChildClass, COUNT_OF(szChildClass));
     LoadString(hInstance, IDS_REGISTRY_DEFAULT_VALUE, g_pszDefaultValueName, COUNT_OF(g_pszDefaultValueName));
 
     /* Store instance handle in our global variable */

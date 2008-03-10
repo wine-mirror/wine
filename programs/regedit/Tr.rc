@@ -24,18 +24,6 @@ LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Dosya"
-    BEGIN
-        MENUITEM "&Çýkýþ",                      ID_REGISTRY_EXIT
-    END
-    POPUP "&Yardým"
-    BEGIN
-        MENUITEM "&Hakkýnda...",                ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Kayýt"
@@ -221,8 +209,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Kayýt DÜzenleyici"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE

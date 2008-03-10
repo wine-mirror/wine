@@ -24,18 +24,6 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
  * Menu
  */
 
-IDC_REGEDIT MENU DISCARDABLE
-BEGIN
-    POPUP "&Файл"
-    BEGIN
-        MENUITEM "В&ыйти",                       ID_REGISTRY_EXIT
-    END
-    POPUP "&Справка"
-    BEGIN
-        MENUITEM "&О программе",                  ID_HELP_ABOUT
-    END
-END
-
 IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Реестр"
@@ -111,8 +99,6 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Редактор реестра"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 STRINGTABLE DISCARDABLE
