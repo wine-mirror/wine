@@ -1818,6 +1818,7 @@ typedef struct
 #define BSM_NETDRIVER            0x00000002
 #define BSM_INSTALLABLEDRIVERS   0x00000004
 #define BSM_APPLICATIONS         0x00000008
+#define BSM_ALLDESKTOPS          0x00000010
 
 #define BSF_QUERY                0x00000001
 #define BSF_IGNORECURRENTTASK    0x00000002
