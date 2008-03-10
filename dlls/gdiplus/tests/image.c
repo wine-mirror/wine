@@ -128,6 +128,8 @@ static void test_SavingImages(void)
     GpBitmap *bm;
     UINT n;
     UINT s;
+    const REAL WIDTH = 10.0, HEIGHT = 20.0;
+    REAL w, h;
     ImageCodecInfo *codecs;
     static const WCHAR filename[] = { 'a','.','b','m','p',0 };
 
@@ -137,7 +139,7 @@ static void test_SavingImages(void)
     expect(InvalidParameter, stat);
 
     bm = NULL;
-    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat24bppRGB, NULL, &bm);
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
     expect(Ok, stat);
     if (!bm)
         return;
@@ -149,7 +151,7 @@ static void test_SavingImages(void)
     stat = GdipSaveImageToFile((GpImage*)bm, filename, 0, 0);
     expect(InvalidParameter, stat);
 
-    /* this should succeed */
+    /* encoder tests should succeed -- already tested */
     stat = GdipGetImageEncodersSize(&n, &s);
     if (stat != Ok || n == 0) goto cleanup;
 
@@ -162,11 +164,26 @@ static void test_SavingImages(void)
     stat = GdipSaveImageToFile((GpImage*)bm, filename, &codecs[0].Clsid, 0);
     expect(stat, Ok);
 
+    GdipDisposeImage((GpImage*)bm);
+    bm = 0;
+
+    /* re-load and check image stats */
+    stat = GdipLoadImageFromFile(filename, (GpImage**)&bm);
+    expect(stat, Ok);
+    if (stat != Ok) goto cleanup;
+
+    stat = GdipGetImageDimension((GpImage*)bm, &w, &h);
+    if (stat != Ok) goto cleanup;
+
+    ok((fabs(w - WIDTH) < 0.01) && (fabs(h - HEIGHT) < 0.01),
+       "Saved image dimensions are different!\n");
+
  cleanup:
     if (codecs)
         GdipFree(codecs);
     if (bm)
         GdipDisposeImage((GpImage*)bm);
+    ok(DeleteFileW(filename), "Delete failed.\n");
 }
 
 static void test_encoders(void)
