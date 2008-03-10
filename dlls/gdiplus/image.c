@@ -811,6 +811,29 @@ GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage *image, PROPID propId)
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipSaveImageToFile(GpImage *image, GDIPCONST WCHAR* filename,
+                                        GDIPCONST CLSID *clsidEncoder,
+                                        GDIPCONST EncoderParameters *encoderParams)
+{
+    GpStatus stat;
+    IStream *stream;
+
+    if (!image || !filename|| !clsidEncoder)
+        return InvalidParameter;
+
+    if (!(image->picture))
+        return InvalidParameter;
+
+    stat = GdipCreateStreamOnFile(filename, GENERIC_WRITE, &stream);
+    if (stat != Ok)
+        return GenericError;
+
+    stat = GdipSaveImageToStream(image, stream, clsidEncoder, encoderParams);
+
+    IStream_Release(stream);
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {

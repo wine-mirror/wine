@@ -122,6 +122,53 @@ static void test_LoadingImages(void)
     expect(InvalidParameter, stat);
 }
 
+static void test_SavingImages(void)
+{
+    GpStatus stat;
+    GpBitmap *bm;
+    UINT n;
+    UINT s;
+    ImageCodecInfo *codecs;
+    static const WCHAR filename[] = { 'a','.','b','m','p',0 };
+
+    codecs = NULL;
+
+    stat = GdipSaveImageToFile(0, 0, 0, 0);
+    expect(InvalidParameter, stat);
+
+    bm = NULL;
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+    if (!bm)
+        return;
+
+    /* invalid params */
+    stat = GdipSaveImageToFile((GpImage*)bm, 0, 0, 0);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSaveImageToFile((GpImage*)bm, filename, 0, 0);
+    expect(InvalidParameter, stat);
+
+    /* this should succeed */
+    stat = GdipGetImageEncodersSize(&n, &s);
+    if (stat != Ok || n == 0) goto cleanup;
+
+    codecs = GdipAlloc(s);
+    if (!codecs) goto cleanup;
+
+    stat = GdipGetImageEncoders(n, s, codecs);
+    if (stat != Ok) goto cleanup;
+
+    stat = GdipSaveImageToFile((GpImage*)bm, filename, &codecs[0].Clsid, 0);
+    expect(stat, Ok);
+
+ cleanup:
+    if (codecs)
+        GdipFree(codecs);
+    if (bm)
+        GdipDisposeImage((GpImage*)bm);
+}
+
 static void test_encoders(void)
 {
     GpStatus stat;
@@ -287,6 +334,7 @@ START_TEST(image)
     test_Scan0();
     test_GetImageDimension();
     test_LoadingImages();
+    test_SavingImages();
     test_encoders();
     test_LockBits();
 
