@@ -2855,7 +2855,7 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID clsidNew)
     LONG len = sizeof(szClsidNew);
 
     FIXME("(%s,%p)\n", debugstr_guid(clsidOld), clsidNew);
-    memcpy(clsidNew,clsidOld,sizeof(CLSID)); /* copy over old value */
+    *clsidNew = *clsidOld; /* copy over old value */
 
     res = COM_OpenKeyForCLSID(clsidOld, wszTreatAs, KEY_READ, &hkey);
     if (FAILED(res))

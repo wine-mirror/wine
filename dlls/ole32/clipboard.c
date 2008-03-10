@@ -1365,7 +1365,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetCanonicalFormatEtc(
   if ( !pformatectIn || !pformatetcOut )
     return E_INVALIDARG;
 
-  memcpy(pformatetcOut, pformatectIn, sizeof(FORMATETC));
+  *pformatetcOut = *pformatectIn;
   return DATA_S_SAMEFORMATETC;
 }
 

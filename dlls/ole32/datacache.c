@@ -1240,13 +1240,13 @@ static HRESULT WINAPI DataCache_GetClassID(
       HRESULT hr = IStorage_Stat(cache_entry->storage, &statstg, STATFLAG_NONAME);
       if (SUCCEEDED(hr))
       {
-        memcpy(pClassID, &statstg.clsid, sizeof(*pClassID));
+        *pClassID = statstg.clsid;
         return S_OK;
       }
     }
   }
 
-  memcpy(pClassID, &CLSID_NULL, sizeof(*pClassID));
+  *pClassID = CLSID_NULL;
 
   return S_OK;
 }
