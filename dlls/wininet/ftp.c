@@ -1296,7 +1296,7 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
         lpwh->hdr.vtbl = &FTPFILEVtbl;
         lpwh->hdr.dwFlags = dwFlags;
         lpwh->hdr.dwContext = dwContext;
-        lpwh->hdr.dwRefCount = 1;
+        lpwh->hdr.refs = 1;
         lpwh->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
         lpwh->nDataSocket = nDataSocket;
 	lpwh->session_deleted = FALSE;
@@ -2242,7 +2242,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwfs->hdr.dwFlags = dwFlags;
     lpwfs->hdr.dwContext = dwContext;
     lpwfs->hdr.dwInternalFlags = dwInternalFlags;
-    lpwfs->hdr.dwRefCount = 1;
+    lpwfs->hdr.refs = 1;
     lpwfs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
     lpwfs->download_in_progress = NULL;
     lpwfs->sndSocket = -1;
@@ -3293,7 +3293,7 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
             lpwfn->hdr.htype = WH_HFTPFINDNEXT;
             lpwfn->hdr.vtbl = &FTPFINDNEXTVtbl;
             lpwfn->hdr.dwContext = dwContext;
-            lpwfn->hdr.dwRefCount = 1;
+            lpwfn->hdr.refs = 1;
             lpwfn->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
             lpwfn->index = 1; /* Next index is 1 since we return index 0 */
             lpwfn->size = dwSize;

@@ -156,7 +156,7 @@ struct _WININETHANDLEHEADER
     DWORD_PTR dwContext;
     DWORD  dwError;
     DWORD  dwInternalFlags;
-    DWORD  dwRefCount;
+    LONG   refs;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
     struct list entry;
     struct list children;

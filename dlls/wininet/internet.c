@@ -145,8 +145,8 @@ end:
 
 LPWININETHANDLEHEADER WININET_AddRef( LPWININETHANDLEHEADER info )
 {
-    info->dwRefCount++;
-    TRACE("%p -> refcount = %d\n", info, info->dwRefCount );
+    ULONG refs = InterlockedIncrement(&info->refs);
+    TRACE("%p -> refcount = %d\n", info, refs );
     return info;
 }
 
@@ -170,9 +170,9 @@ LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
 
 BOOL WININET_Release( LPWININETHANDLEHEADER info )
 {
-    info->dwRefCount--;
-    TRACE( "object %p refcount = %d\n", info, info->dwRefCount );
-    if( !info->dwRefCount )
+    ULONG refs = InterlockedDecrement(&info->refs);
+    TRACE( "object %p refcount = %d\n", info, refs );
+    if( !refs )
     {
         if ( info->vtbl->CloseConnection )
         {
@@ -537,7 +537,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     lpwai->hdr.htype = WH_HINIT;
     lpwai->hdr.vtbl = &APPINFOVtbl;
     lpwai->hdr.dwFlags = dwFlags;
-    lpwai->hdr.dwRefCount = 1;
+    lpwai->hdr.refs = 1;
     lpwai->dwAccessType = dwAccessType;
     lpwai->lpszProxyUsername = NULL;
     lpwai->lpszProxyPassword = NULL;

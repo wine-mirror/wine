@@ -1606,7 +1606,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     lpwhr->hdr.vtbl = &HTTPREQVtbl;
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
-    lpwhr->hdr.dwRefCount = 1;
+    lpwhr->hdr.refs = 1;
     lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
     lpwhr->hdr.dwInternalFlags = lpwhs->hdr.dwInternalFlags & INET_CALLBACKW;
 
@@ -3159,7 +3159,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
     lpwhs->hdr.dwInternalFlags = dwInternalFlags | (hIC->hdr.dwInternalFlags & INET_CALLBACKW);
-    lpwhs->hdr.dwRefCount = 1;
+    lpwhs->hdr.refs = 1;
     lpwhs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
 
     WININET_AddRef( &hIC->hdr );
