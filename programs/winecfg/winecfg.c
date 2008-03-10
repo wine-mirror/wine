@@ -461,6 +461,11 @@ void set_reg_key_dword(HKEY root, const char *path, const char *name, DWORD valu
     HeapFree(GetProcessHeap(), 0, wname);
 }
 
+void set_reg_key_dwordW(HKEY root, const WCHAR *path, const WCHAR *name, DWORD value)
+{
+    set_reg_key_ex(root, path, name, &value, REG_DWORD);
+}
+
 /**
  * enumerates the value names at the given path, taking into account
  * the changes in the settings list.

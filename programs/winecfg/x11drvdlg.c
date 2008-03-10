@@ -37,10 +37,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
 #define MINDPI 96
-#define MAXDPI 160
+#define MAXDPI 480
 #define DEFDPI 96
 
-static const char logpixels_reg[] = "System\\CurrentControlSet\\Hardware Profiles\\Current\\Software\\Fonts";
+static const WCHAR logpixels_reg[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s','\\','C','u','r','r','e','n','t','\\','S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
+static const WCHAR logpixels[] = {'L','o','g','P','i','x','e','l','s',0};
 
 static struct SHADERMODE
 {
@@ -244,8 +245,7 @@ static void on_d3d_pshader_mode_clicked(HWND dialog) {
 static INT read_logpixels_reg(void)
 {
     DWORD dwLogPixels;
-    char *buf  = get_reg_key(HKEY_LOCAL_MACHINE, logpixels_reg,
-                             "LogPixels", NULL);
+    WCHAR *buf = get_reg_keyW(HKEY_LOCAL_MACHINE, logpixels_reg, logpixels, NULL);
     dwLogPixels = buf ? *buf : DEFDPI;
     HeapFree(GetProcessHeap(), 0, buf);
     return dwLogPixels;
@@ -357,7 +357,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    buf[0] = 0;
 		    sprintf(buf, "%d", i);
 		    SendMessage(GetDlgItem(hDlg, IDC_RES_DPIEDIT), WM_SETTEXT, 0, (LPARAM) buf);
-		    set_reg_key_dword(HKEY_LOCAL_MACHINE, logpixels_reg, "LogPixels", i);
+		    set_reg_key_dwordW(HKEY_LOCAL_MACHINE, logpixels_reg, logpixels, i);
 		    break;
 		}
 	    }
