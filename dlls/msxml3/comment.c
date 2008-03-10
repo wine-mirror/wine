@@ -538,8 +538,45 @@ static HRESULT WINAPI domcomment_substringData(
     IXMLDOMComment *iface,
     long offset, long count, BSTR *p)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domcomment *This = impl_from_IXMLDOMComment( iface );
+    xmlnode *pDOMNode = impl_from_IXMLDOMNode( This->node );
+    xmlChar *pContent;
+    long nLength = 0;
+    HRESULT hr = S_FALSE;
+
+    TRACE("%p\n", iface);
+
+    if(!p)
+        return E_INVALIDARG;
+
+    *p = NULL;
+    if(offset < 0 || count < 0)
+        return E_INVALIDARG;
+
+    if(count == 0)
+        return hr;
+
+    pContent = xmlNodeGetContent(pDOMNode->node);
+    if(pContent)
+    {
+        nLength = xmlStrlen(pContent);
+
+        if( offset < nLength)
+        {
+            BSTR sContent = bstr_from_xmlChar(pContent);
+            if(offset + count > nLength)
+                *p = SysAllocString(&sContent[offset]);
+            else
+                *p = SysAllocStringLen(&sContent[offset], count);
+
+            SysFreeString(sContent);
+            hr = S_OK;
+        }
+
+        xmlFree(pContent);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domcomment_appendData(
