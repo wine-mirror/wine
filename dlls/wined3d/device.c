@@ -1248,6 +1248,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
  *  window: Window to setup
  *
  *****************************************************************************/
+static LONG fullscreen_style(LONG orig_style) {
+    LONG style = orig_style;
+    style &= ~WS_CAPTION;
+    style &= ~WS_THICKFRAME;
+
+    /* Make sure the window is managed, otherwise we won't get keyboard input */
+    style |= WS_POPUP | WS_SYSMENU;
+
+    return style;
+}
+
+static LONG fullscreen_exStyle(LONG orig_exStyle) {
+    LONG exStyle = orig_exStyle;
+
+    /* Filter out window decorations */
+    exStyle &= ~WS_EX_WINDOWEDGE;
+    exStyle &= ~WS_EX_CLIENTEDGE;
+
+    return exStyle;
+}
+
 static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *iface, HWND window) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -1267,14 +1288,8 @@ static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *ifac
     This->style = style;
     This->exStyle = exStyle;
 
-    /* Filter out window decorations */
-    style &= ~WS_CAPTION;
-    style &= ~WS_THICKFRAME;
-    exStyle &= ~WS_EX_WINDOWEDGE;
-    exStyle &= ~WS_EX_CLIENTEDGE;
-
-    /* Make sure the window is managed, otherwise we won't get keyboard input */
-    style |= WS_POPUP | WS_SYSMENU;
+    style = fullscreen_style(style);
+    exStyle = fullscreen_exStyle(exStyle);
 
     TRACE("Old style was %08x,%08x, setting to %08x,%08x\n",
           This->style, This->exStyle, style, exStyle);
@@ -1301,6 +1316,7 @@ static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *ifac
  *****************************************************************************/
 static void WINAPI IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND window) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    LONG style, exStyle;
 
     /* This could be a DDSCL_NORMAL -> DDSCL_NORMAL
      * switch, do nothing
@@ -1310,8 +1326,18 @@ static void WINAPI IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND 
     TRACE("(%p): Restoring window settings of window %p to %08x, %08x\n",
           This, window, This->style, This->exStyle);
 
-    SetWindowLongW(window, GWL_STYLE, This->style);
-    SetWindowLongW(window, GWL_EXSTYLE, This->exStyle);
+    style = GetWindowLongW(window, GWL_STYLE);
+    exStyle = GetWindowLongW(window, GWL_EXSTYLE);
+
+    /* Only restore the style if the application didn't modify it during the fullscreen phase.
+     * Some applications change it before calling Reset() when switching between windowed and
+     * fullscreen modes(HL2), some depend on the original style(Eve Online)
+     */
+    if(style == fullscreen_style(This->style) &&
+       exStyle == fullscreen_style(This->exStyle)) {
+        SetWindowLongW(window, GWL_STYLE, This->style);
+        SetWindowLongW(window, GWL_EXSTYLE, This->exStyle);
+    }
 
     /* Delete the old values */
     This->style = 0;
