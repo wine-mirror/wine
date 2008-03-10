@@ -838,10 +838,54 @@ GpStatus WINGDIPAPI GdipSaveImageToFile(GpImage *image, GDIPCONST WCHAR* filenam
  * Encoding functions -
  *   These functions encode an image in different image file formats.
  */
+#define BITMAP_FORMAT_BMP   0x4d42 /* "BM" */
+#define BITMAP_FORMAT_JPEG  0xd8ff
+#define BITMAP_FORMAT_GIF   0x4947
+#define BITMAP_FORMAT_PNG   0x5089
+#define BITMAP_FORMAT_APM   0xcdd7
+
 static GpStatus encode_image_BMP(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
                                  void **output, unsigned int *output_size)
 {
-    return NotImplemented;
+    int num_palette_entries;
+    BITMAPFILEHEADER *bmp_file_hdr;
+    BITMAPINFO *bmp_info_hdr;
+
+    if (bitmap_info->bmiHeader.biClrUsed) {
+        num_palette_entries = bitmap_info->bmiHeader.biClrUsed;
+        if (num_palette_entries > 256) num_palette_entries = 256;
+    } else {
+        if (bitmap_info->bmiHeader.biBitCount <= 8)
+            num_palette_entries = 1 << bitmap_info->bmiHeader.biBitCount;
+        else
+            num_palette_entries = 0;
+    }
+
+    *output_size =
+        sizeof(BITMAPFILEHEADER) +
+        sizeof(BITMAPINFOHEADER) +
+        num_palette_entries * sizeof(RGBQUAD) +
+        bitmap_info->bmiHeader.biSizeImage;
+
+    *output = GdipAlloc(*output_size);
+
+    bmp_file_hdr = (BITMAPFILEHEADER*) *output;
+    bmp_file_hdr->bfType = BITMAP_FORMAT_BMP;
+    bmp_file_hdr->bfSize = *output_size;
+    bmp_file_hdr->bfOffBits =
+        sizeof(BITMAPFILEHEADER) +
+        sizeof(BITMAPINFOHEADER) +
+        num_palette_entries * sizeof (RGBQUAD);
+
+    bmp_info_hdr = (BITMAPINFO*) ((unsigned char*)(*output) + sizeof(BITMAPFILEHEADER));
+    memcpy(bmp_info_hdr, bitmap_info, sizeof(BITMAPINFOHEADER) + num_palette_entries * sizeof(RGBQUAD));
+    memcpy((unsigned char *)(*output) +
+           sizeof(BITMAPFILEHEADER) +
+           sizeof(BITMAPINFOHEADER) +
+           num_palette_entries * sizeof(RGBQUAD),
+           bitmap_bits, bitmap_info->bmiHeader.biSizeImage);
+
+    return Ok;
 }
 
 typedef GpStatus encode_image_func(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
