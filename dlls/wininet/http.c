@@ -1341,8 +1341,10 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
 
     if (lpwhr->pAuthInfo)
     {
-        DeleteSecurityContext(&lpwhr->pAuthInfo->ctx);
-        FreeCredentialsHandle(&lpwhr->pAuthInfo->cred);
+        if (SecIsValidHandle(&lpwhr->pAuthInfo->ctx))
+            DeleteSecurityContext(&lpwhr->pAuthInfo->ctx);
+        if (SecIsValidHandle(&lpwhr->pAuthInfo->cred))
+            FreeCredentialsHandle(&lpwhr->pAuthInfo->cred);
 
         HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->auth_data);
         HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->scheme);
@@ -1351,8 +1353,10 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
     }
     if (lpwhr->pProxyAuthInfo)
     {
-        DeleteSecurityContext(&lpwhr->pProxyAuthInfo->ctx);
-        FreeCredentialsHandle(&lpwhr->pProxyAuthInfo->cred);
+        if (SecIsValidHandle(&lpwhr->pProxyAuthInfo->ctx))
+            DeleteSecurityContext(&lpwhr->pProxyAuthInfo->ctx);
+        if (SecIsValidHandle(&lpwhr->pProxyAuthInfo->cred))
+            FreeCredentialsHandle(&lpwhr->pProxyAuthInfo->cred);
 
         HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->auth_data);
         HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->scheme);
