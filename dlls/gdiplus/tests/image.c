@@ -159,8 +159,10 @@ static void test_SavingImages(void)
     stat = GdipGetImageEncoders(n, s, codecs);
     if (stat != Ok) goto cleanup;
 
-    stat = GdipSaveImageToFile((GpImage*)bm, filename, &codecs[0].Clsid, 0);
-    expect(stat, Ok);
+    todo_wine {
+        stat = GdipSaveImageToFile((GpImage*)bm, filename, &codecs[0].Clsid, 0);
+        expect(stat, Ok);
+    }
 
  cleanup:
     if (codecs)

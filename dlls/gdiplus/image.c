@@ -834,17 +834,93 @@ GpStatus WINGDIPAPI GdipSaveImageToFile(GpImage *image, GDIPCONST WCHAR* filenam
     return stat;
 }
 
+/*************************************************************************
+ * Encoding functions -
+ *   These functions encode an image in different image file formats.
+ */
+static GpStatus encode_image_BMP(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
+                                 void **output, unsigned int *output_size)
+{
+    return NotImplemented;
+}
+
+typedef GpStatus encode_image_func(LPVOID bitmap_bits, LPBITMAPINFO bitmap_info,
+                                   void **output, unsigned int *output_size);
+
+typedef enum {
+    BMP,
+    NUM_ENCODERS_SUPPORTED
+} ImageFormat;
+
+static const ImageCodecInfo codecs[NUM_ENCODERS_SUPPORTED];
+static encode_image_func *const encode_image_funcs[NUM_ENCODERS_SUPPORTED] = {
+    encode_image_BMP,
+};
+
 GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
+    GpStatus stat;
+    HRESULT hr;
+    short type;
+    HBITMAP hbmp;
+    HDC hdc;
+    BITMAPINFO bmp_info;
+    LPVOID bmp_bits;
+    encode_image_func* encode_image;
+    LPVOID output;
+    unsigned int output_size;
+    unsigned int dummy;
+    int i;
+
+    output = NULL;
+    output_size = 0;
+
     if(!image || !stream)
         return InvalidParameter;
 
-    /* FIXME: CLSID, EncoderParameters not used */
+    if (!image->picture)
+        return GenericError;
 
-    IPicture_SaveAsFile(image->picture, stream, FALSE, NULL);
+    hr = IPicture_get_Type(image->picture, &type);
+    if (FAILED(hr) || type != PICTYPE_BITMAP)
+        return GenericError;
 
-    return Ok;
+    /* select correct encoder */
+    encode_image = NULL;
+    for (i = 0; i < NUM_ENCODERS_SUPPORTED; i++) {
+        if (IsEqualCLSID(clsid, &codecs[i].Clsid))
+            encode_image = encode_image_funcs[i];
+    }
+    if (encode_image == NULL)
+        return UnknownImageFormat;
+
+    /* extract underlying hbitmap representation from the IPicture */
+    hr = IPicture_get_Handle(image->picture, (OLE_HANDLE*)&hbmp);
+    if (FAILED(hr) || !hbmp)
+        return GenericError;
+
+    /* get bits from HBITMAP */
+    hdc = GetDC(0);
+    bmp_info.bmiHeader.biSize = sizeof(bmp_info.bmiHeader);
+    GetDIBits(hdc, hbmp, 0, 0, NULL, &bmp_info, DIB_RGB_COLORS);
+
+    bmp_bits = GdipAlloc(bmp_info.bmiHeader.biSizeImage);
+    if (!bmp_bits) {
+        ReleaseDC(0, hdc);
+        return OutOfMemory;
+    }
+    GetDIBits(hdc, hbmp, 0, bmp_info.bmiHeader.biHeight, bmp_bits, &bmp_info, DIB_RGB_COLORS);
+
+    stat = encode_image(bmp_bits, &bmp_info, &output, &output_size);
+    if (stat == Ok)
+        IStream_Write(stream, output, output_size, &dummy);
+
+    GdipFree(output);
+    GdipFree(bmp_bits);
+    ReleaseDC(0, hdc);
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipSetImagePalette(GpImage *image,
@@ -865,11 +941,6 @@ GpStatus WINGDIPAPI GdipSetImagePalette(GpImage *image,
  * Encoders -
  *   Structures that represent which formats we support for encoding.
  */
-
-typedef enum {
-    BMP,
-    NUM_ENCODERS_SUPPORTED
-} ImageFormat;
 
 /* ImageCodecInfo creation routines taken from libgdiplus */
 static const WCHAR bmp_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'B', 'M', 'P', 0}; /* Built-in BMP */
