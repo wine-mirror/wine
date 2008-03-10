@@ -2337,8 +2337,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     This->ddraw_height = pMode->Height;
     This->ddraw_format = pMode->Format;
 
-    /* Only do this with a window of course */
-    if(This->ddraw_window)
+    /* Only do this with a window of course, and only if we're fullscreened */
+    if(This->ddraw_window && This->ddraw_fullscreen)
       MoveWindow(This->ddraw_window, 0, 0, pMode->Width, pMode->Height, TRUE);
 
     /* And finally clip mouse to our screen */
