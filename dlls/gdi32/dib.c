@@ -290,13 +290,13 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
                             dwRop );
             }
 
-            SetDIBits(hdcMem, hBitmap, 0, height, bits, info, wUsage);
+            heightSrc = SetDIBits(hdcMem, hBitmap, 0, height, bits, info, wUsage);
 
             /* Origin for DIBitmap may be bottom left (positive biHeight) or top
                left (negative biHeight) */
-            StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
-                hdcMem, xSrc, abs(height) - heightSrc - ySrc,
-                widthSrc, heightSrc, dwRop );
+            if (heightSrc) StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
+                                       hdcMem, xSrc, abs(height) - heightSrc - ySrc,
+                                       widthSrc, heightSrc, dwRop );
             if(hpal)
                 SelectPalette(hdcMem, hpal, FALSE);
             SelectObject( hdcMem, hOldBitmap );
