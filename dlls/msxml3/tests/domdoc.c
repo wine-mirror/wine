@@ -2500,6 +2500,21 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, _bstr_("\\") ), "incorrect substringData string\n");
                 SysFreeString(str);
 
+                /* test appendData */
+                hr = IXMLDOMCDATASection_appendData(pCDataSec, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_appendData(pCDataSec, _bstr_(""));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_appendData(pCDataSec, _bstr_("Append"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
                 IXMLDOMCDATASection_Release(pCDataSec);
             }
 
