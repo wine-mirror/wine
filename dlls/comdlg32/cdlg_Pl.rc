@@ -449,6 +449,14 @@ STRINGTABLE DISCARDABLE
     IDS_OPEN_FILE   "Otwórz plik"
 }
 
+STRINGTABLE DISCARDABLE /* Font styles */
+{
+    IDS_FONT_REGULAR       "Regularny"
+    IDS_FONT_BOLD          "Pogrubiony"
+    IDS_FONT_ITALIC        "Kusywa"
+    IDS_FONT_BOLD_ITALIC   "Pogrubiona kursywa"
+}
+
 STRINGTABLE DISCARDABLE /* Color names */
 {
     IDS_COLOR_BLACK     "Czarny"
