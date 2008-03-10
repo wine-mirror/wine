@@ -405,7 +405,10 @@ static BOOL ntlm_GetCachedCredential(const SEC_WCHAR *pszTargetName, PCREDENTIAL
             p = pszHost + strlenW(pszHost);
     }
     else /* otherwise not an SPN, just a host */
+    {
+        pszHost = pszTargetName;
         p = pszHost + strlenW(pszHost);
+    }
 
     pszHostOnly = HeapAlloc(GetProcessHeap(), 0, (p - pszHost + 1) * sizeof(WCHAR));
     if (!pszHostOnly)
