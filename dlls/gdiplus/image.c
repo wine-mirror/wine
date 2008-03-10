@@ -740,8 +740,6 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
         return GenericError;
     }
 
-    IStream_AddRef(stream);
-
     IPicture_get_Type(pic, &type);
 
     if(type == PICTYPE_BITMAP){
