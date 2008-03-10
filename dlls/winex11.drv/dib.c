@@ -39,7 +39,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "x11drv.h"
-#include "excpt.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
@@ -3539,65 +3539,74 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
           bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
 
       /* Transfer the pixels */
-    switch(descr->infoBpp)
+    __TRY
     {
-    case 1:
-	X11DRV_DIB_SetImageBits_1( descr->lines, descr->bits, descr->infoWidth,
-				   descr->width, descr->xSrc, (int *)(descr->colorMap),
-				   bmpImage, descr->dibpitch );
-	break;
-    case 4:
-        if (descr->compression) {
-            X11DRV_DIB_SetImageBits_GetSubImage( descr, bmpImage);
-	    X11DRV_DIB_SetImageBits_RLE4( descr->lines, descr->bits,
-					  descr->infoWidth, descr->width,
-					  descr->xSrc, (int *)(descr->colorMap),
-					  bmpImage );
-	} else
-	    X11DRV_DIB_SetImageBits_4( descr->lines, descr->bits,
-				       descr->infoWidth, descr->width,
-				       descr->xSrc, (int*)(descr->colorMap),
-				       bmpImage, descr->dibpitch );
-	break;
-    case 8:
-        if (descr->compression) {
-            X11DRV_DIB_SetImageBits_GetSubImage( descr, bmpImage);
-	    X11DRV_DIB_SetImageBits_RLE8( descr->lines, descr->bits,
-					  descr->infoWidth, descr->width,
-					  descr->xSrc, (int *)(descr->colorMap),
-					  bmpImage );
-	} else
-	    X11DRV_DIB_SetImageBits_8( descr->lines, descr->bits,
-				       descr->infoWidth, descr->width,
-				       descr->xSrc, (int *)(descr->colorMap),
-				       bmpImage, descr->dibpitch );
-	break;
-    case 15:
-    case 16:
-	X11DRV_DIB_SetImageBits_16( descr->lines, descr->bits,
-				    descr->infoWidth, descr->width,
-                                   descr->xSrc, descr->physDev,
-                                   descr->rMask, descr->gMask, descr->bMask,
-                                   bmpImage, descr->dibpitch);
-	break;
-    case 24:
-	X11DRV_DIB_SetImageBits_24( descr->lines, descr->bits,
-				    descr->infoWidth, descr->width,
-				    descr->xSrc, descr->physDev,
-                                    descr->rMask, descr->gMask, descr->bMask,
-				    bmpImage, descr->dibpitch);
-	break;
-    case 32:
-	X11DRV_DIB_SetImageBits_32( descr->lines, descr->bits,
-				    descr->infoWidth, descr->width,
-                                   descr->xSrc, descr->physDev,
-                                   descr->rMask, descr->gMask, descr->bMask,
-                                   bmpImage, descr->dibpitch);
-	break;
-    default:
-        WARN("(%d): Invalid depth\n", descr->infoBpp );
-        break;
+        switch(descr->infoBpp)
+        {
+        case 1:
+            X11DRV_DIB_SetImageBits_1( descr->lines, descr->bits, descr->infoWidth,
+                                       descr->width, descr->xSrc, (int *)(descr->colorMap),
+                                       bmpImage, descr->dibpitch );
+            break;
+        case 4:
+            if (descr->compression) {
+                X11DRV_DIB_SetImageBits_GetSubImage( descr, bmpImage);
+                X11DRV_DIB_SetImageBits_RLE4( descr->lines, descr->bits,
+                                              descr->infoWidth, descr->width,
+                                              descr->xSrc, (int *)(descr->colorMap),
+                                              bmpImage );
+            } else
+                X11DRV_DIB_SetImageBits_4( descr->lines, descr->bits,
+                                           descr->infoWidth, descr->width,
+                                           descr->xSrc, (int*)(descr->colorMap),
+                                           bmpImage, descr->dibpitch );
+            break;
+        case 8:
+            if (descr->compression) {
+                X11DRV_DIB_SetImageBits_GetSubImage( descr, bmpImage);
+                X11DRV_DIB_SetImageBits_RLE8( descr->lines, descr->bits,
+                                              descr->infoWidth, descr->width,
+                                              descr->xSrc, (int *)(descr->colorMap),
+                                              bmpImage );
+            } else
+                X11DRV_DIB_SetImageBits_8( descr->lines, descr->bits,
+                                           descr->infoWidth, descr->width,
+                                           descr->xSrc, (int *)(descr->colorMap),
+                                           bmpImage, descr->dibpitch );
+            break;
+        case 15:
+        case 16:
+            X11DRV_DIB_SetImageBits_16( descr->lines, descr->bits,
+                                        descr->infoWidth, descr->width,
+                                        descr->xSrc, descr->physDev,
+                                        descr->rMask, descr->gMask, descr->bMask,
+                                        bmpImage, descr->dibpitch);
+            break;
+        case 24:
+            X11DRV_DIB_SetImageBits_24( descr->lines, descr->bits,
+                                        descr->infoWidth, descr->width,
+                                        descr->xSrc, descr->physDev,
+                                        descr->rMask, descr->gMask, descr->bMask,
+                                        bmpImage, descr->dibpitch);
+            break;
+        case 32:
+            X11DRV_DIB_SetImageBits_32( descr->lines, descr->bits,
+                                        descr->infoWidth, descr->width,
+                                        descr->xSrc, descr->physDev,
+                                        descr->rMask, descr->gMask, descr->bMask,
+                                        bmpImage, descr->dibpitch);
+            break;
+        default:
+            WARN("(%d): Invalid depth\n", descr->infoBpp );
+            break;
+        }
     }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN( "invalid bits pointer %p\n", descr->bits );
+        lines = 0;
+    }
+    __ENDTRY
 
     TRACE("XPutImage(%ld,%p,%p,%d,%d,%d,%d,%d,%d)\n",
      descr->drawable, descr->gc, bmpImage,
@@ -3605,20 +3614,22 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
      descr->width, descr->height);
 
     wine_tsx11_lock();
-#ifdef HAVE_LIBXXSHM
-    if (descr->image && descr->useShm)
+    if (lines)
     {
-        XShmPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
-                      descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
-                      descr->width, descr->height, FALSE );
-        XSync( gdi_display, 0 );
-    }
-    else
+#ifdef HAVE_LIBXXSHM
+        if (descr->image && descr->useShm)
+        {
+            XShmPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
+                          descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
+                          descr->width, descr->height, FALSE );
+            XSync( gdi_display, 0 );
+        }
+        else
 #endif
-        XPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
-		   descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
-		   descr->width, descr->height );
-
+            XPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
+                       descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
+                       descr->width, descr->height );
+    }
     if (!descr->image) XDestroyImage( bmpImage );
     wine_tsx11_unlock();
     return lines;
