@@ -379,10 +379,6 @@ static LRESULT ANIMATE_Timer(ANIMATE_INFO *infoPtr)
 
     if ((hDC = GetDC(infoPtr->hwndSelf)) != 0)
     {
-        if (infoPtr->dwStyle & ACS_TRANSPARENT)
-            infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
-                                                     WM_CTLCOLORSTATIC,
-                                                     (WPARAM)hDC, (LPARAM)infoPtr->hwndSelf);
         EnterCriticalSection(&infoPtr->cs);
         ANIMATE_DrawFrame(infoPtr, hDC);
         LeaveCriticalSection(&infoPtr->cs);
@@ -403,10 +399,6 @@ static DWORD CALLBACK ANIMATE_AnimationThread(LPVOID ptr_)
     {
         HDC hDC = GetDC(infoPtr->hwndSelf);
 
-        if (infoPtr->dwStyle & ACS_TRANSPARENT)
-            infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
-                                                     WM_CTLCOLORSTATIC,
-                                                     (WPARAM)hDC, (LPARAM)infoPtr->hwndSelf);
         EnterCriticalSection(&infoPtr->cs);
         ANIMATE_DrawFrame(infoPtr, hDC);
         timeout = infoPtr->mah.dwMicroSecPerFrame;
@@ -461,10 +453,6 @@ static LRESULT ANIMATE_Play(ANIMATE_INFO *infoPtr, UINT cRepeat, WORD wFrom, WOR
 
         if ((hDC = GetDC(infoPtr->hwndSelf)) != 0)
         {
-            if (infoPtr->dwStyle & ACS_TRANSPARENT)
-                infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
-                                                         WM_CTLCOLORSTATIC,
-                                                         (WPARAM)hDC, (LPARAM)infoPtr->hwndSelf);
             ANIMATE_DrawFrame(infoPtr, hDC);
 
 	    ReleaseDC(infoPtr->hwndSelf, hDC);
@@ -481,11 +469,6 @@ static LRESULT ANIMATE_Play(ANIMATE_INFO *infoPtr, UINT cRepeat, WORD wFrom, WOR
     } 
     else 
     {
-        if(infoPtr->dwStyle & ACS_TRANSPARENT)
-            infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify,
-                                                     WM_CTLCOLORSTATIC, 0,
-                                                     (LPARAM)infoPtr->hwndSelf);
-
 	TRACE("Using an animation thread\n");
         infoPtr->hStopEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
         infoPtr->hThread = CreateThread(0, 0, ANIMATE_AnimationThread,
@@ -718,6 +701,8 @@ static BOOL ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 
 static BOOL ANIMATE_OpenW(ANIMATE_INFO *infoPtr, HINSTANCE hInstance, LPWSTR lpszName)
 {
+    HDC hdc;
+
     ANIMATE_Free(infoPtr);
 
     if (!lpszName) 
@@ -766,6 +751,12 @@ static BOOL ANIMATE_OpenW(ANIMATE_INFO *infoPtr, HINSTANCE hInstance, LPWSTR lps
 	ANIMATE_Free(infoPtr);
 	return FALSE;
     }
+
+    hdc = GetDC(infoPtr->hwndSelf);
+    /* native looks at the top left pixel of the first frame here too. */
+    infoPtr->hbrushBG = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLORSTATIC,
+                                             (WPARAM)hdc, (LPARAM)infoPtr->hwndSelf);
+    ReleaseDC(infoPtr->hwndSelf, hdc);
 
     if (!(infoPtr->dwStyle & ACS_CENTER))
 	SetWindowPos(infoPtr->hwndSelf, 0, 0, 0, infoPtr->mah.dwWidth, infoPtr->mah.dwHeight,
