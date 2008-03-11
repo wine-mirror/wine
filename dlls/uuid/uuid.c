@@ -50,7 +50,9 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "shldisp.h"
 #include "comcat.h"
 #include "urlmon.h"
+#define _NO_AUTHOR_GUIDS
 #include "activaut.h"
+#define _NO_SCRIPT_GUIDS
 #include "activscp.h"
 #include "dispex.h"
 #include "mlang.h"
