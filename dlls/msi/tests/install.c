@@ -146,7 +146,9 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "Setup\tSetup\n"
                                    "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}\n"
                                    "AdminProperties\tPOSTADMIN\n"
-                                   "ROOTDRIVE\tC:\\\n";
+                                   "ROOTDRIVE\tC:\\\n"
+                                   "SERVNAME\tTestService\n"
+                                   "SERVDISP\tTestServiceDisp\n";
 
 static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
                                    "s72\ti2\tl255\tL255\tL0\ts72\n"
@@ -160,7 +162,7 @@ static const CHAR service_install_dat[] = "ServiceInstall\tName\tDisplayName\tSe
                                           "LoadOrderGroup\tDependencies\tStartName\tPassword\tArguments\tComponent_\tDescription\n"
                                           "s72\ts255\tL255\ti4\ti4\ti4\tS255\tS255\tS255\tS255\tS255\ts72\tL255\n"
                                           "ServiceInstall\tServiceInstall\n"
-                                          "TestService\tTestService\tTestService\t2\t3\t0\t\t\tTestService\t\t\tservice_comp\t\t";
+                                          "TestService\t[SERVNAME]\t[SERVDISP]\t2\t3\t0\t\t\tTestService\t\t\tservice_comp\t\t";
 
 static const CHAR service_control_dat[] = "ServiceControl\tName\tEvent\tArguments\tWait\tComponent_\n"
                                           "s72\tl255\ti2\tL255\tI2\ts72\n"

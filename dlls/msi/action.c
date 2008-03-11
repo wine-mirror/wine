@@ -4470,7 +4470,8 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     MSIRECORD *row;
     MSIFILE *file;
     SC_HANDLE hscm, service = NULL;
-    LPCWSTR name, disp, comp, depends, pass;
+    LPCWSTR comp, depends, pass;
+    LPWSTR name, disp;
     LPCWSTR load_order, serv_name, key;
     DWORD serv_type, start_type;
     DWORD err_control;
@@ -4497,8 +4498,8 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     if (depends && *depends)
         FIXME("Dependency list unhandled!\n");
 
-    name = MSI_RecordGetString(rec, 2);
-    disp = MSI_RecordGetString(rec, 3);
+    deformat_string(package, MSI_RecordGetString(rec, 2), &name);
+    deformat_string(package, MSI_RecordGetString(rec, 3), &disp);
     serv_type = MSI_RecordGetInteger(rec, 4);
     err_control = MSI_RecordGetInteger(rec, 6);
     load_order = MSI_RecordGetString(rec, 7);
@@ -4536,6 +4537,8 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
 done:
     CloseServiceHandle(service);
     CloseServiceHandle(hscm);
+    msi_free(name);
+    msi_free(disp);
 
     return ERROR_SUCCESS;
 }
