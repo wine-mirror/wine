@@ -101,12 +101,21 @@ static void test_VerifyVersionInfo(void)
 {
     OSVERSIONINFOEX info = { sizeof(info) };
     BOOL ret;
+    DWORD servicepack;
 
     if(!pVerifyVersionInfoA || !pVerSetConditionMask)
     {
         skip("Needed functions not available\n");
         return;
     }
+
+    /* Before we start doing some tests we should check what the version of
+     * the ServicePack is. Tests on a box with no ServicePack will fail otherwise.
+     */
+    GetVersionEx((OSVERSIONINFO *)&info);
+    servicepack = info.wServicePackMajor;
+    memset(&info, 0, sizeof(info));
+    info.dwOSVersionInfoSize = sizeof(info);
 
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION,
         pVerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL));
@@ -152,7 +161,11 @@ static void test_VerifyVersionInfo(void)
     ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
         pVerSetConditionMask(pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL),
             VER_MAJORVERSION, VER_GREATER_EQUAL));
-    ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
+    if (servicepack == 0)
+        ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
+            "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %d\n", GetLastError());
+    else
+        ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
 
     GetVersionEx((OSVERSIONINFO *)&info);
     info.wServicePackMinor++;
@@ -161,17 +174,24 @@ static void test_VerifyVersionInfo(void)
     ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
         "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %d\n", GetLastError());
 
-    GetVersionEx((OSVERSIONINFO *)&info);
-    info.wServicePackMajor--;
-    ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
-        pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER));
-    ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
+    if (servicepack == 0)
+    {
+        skip("There is no ServicePack on this system\n");
+    }
+    else
+    {
+        GetVersionEx((OSVERSIONINFO *)&info);
+        info.wServicePackMajor--;
+        ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+            pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER));
+        ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
 
-    GetVersionEx((OSVERSIONINFO *)&info);
-    info.wServicePackMajor--;
-    ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
-        pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
-    ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
+        GetVersionEx((OSVERSIONINFO *)&info);
+        info.wServicePackMajor--;
+        ret = pVerifyVersionInfoA(&info, VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+            pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL));
+        ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
+    }
 
     GetVersionEx((OSVERSIONINFO *)&info);
     info.wServicePackMajor++;
