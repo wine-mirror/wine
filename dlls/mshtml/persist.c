@@ -44,47 +44,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static int fix_headers(char *buf, DWORD post_len)
 {
-    char *ptr = NULL;
+    char *ptr = buf, *ptr2;
 
-    if(!strncasecmp(USER_AGENT, buf, sizeof(USER_AGENT)-1)) {
-        ptr = buf;
-    }else {
-        ptr = strstr(buf, "\r\n" USER_AGENT);
-        if(ptr)
-            ptr += 2;
-    }
+    while(*ptr && (ptr[0] != '\r' || ptr[1] != '\n')) {
+        for(ptr2=ptr+1; *ptr2 && (ptr2[0] != '\r' || ptr2[1] != '\n'); ptr2++);
 
-    if(ptr) {
-        const char *ptr2;
+        if(*ptr2)
+            ptr2 += 2;
 
-        FIXME("Ignoring User-Agent header\n");
-
-        ptr2 = strstr(ptr, "\r\n");
-        if(ptr2)
+        if(!strncasecmp(ptr, USER_AGENT, sizeof(USER_AGENT)-1)) {
+            FIXME("Ignoring User-Agent header\n");
             memmove(ptr, ptr2, strlen(ptr2)+1);
-    }
-
-    if(!post_len) {
-        if(!strncasecmp(CONTENT_TYPE, buf, sizeof(CONTENT_TYPE)-1)) {
-            ptr = buf;
-        }else {
-            ptr = strstr(buf, "\r\n" CONTENT_TYPE);
-            if(ptr)
-                ptr += 2;
-        }
-
-        if(ptr) {
-            const char *ptr2;
-
+        }else if(!post_len && !strncasecmp(ptr, CONTENT_TYPE, sizeof(CONTENT_TYPE)-1)) {
             TRACE("Ignoring Content-Type header\n");
-
-            ptr2 = strstr(ptr, "\r\n");
-            if(ptr2)
-                memmove(ptr, ptr2, strlen(ptr2)+1);
+            memmove(ptr, ptr2, strlen(ptr2)+1);
+        }else {
+            ptr = ptr2;
         }
     }
 
-    return strlen(buf);
+    *ptr = 0;
+    return ptr-buf;
 }
 
 static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
@@ -159,18 +139,16 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
         }
 
         if(post_len) {
-            if(len >= 4 && !strcmp(data+len-4, "\r\n\r\n"))
-                len -= 2;
-
             sprintf(data+len, content_length, post_len);
-            len = strlen(data);
+            len += strlen(data+len);
 
             memcpy(data+len, bindinfo.stgmedData.u.hGlobal, post_len);
         }
 
         TRACE("data = %s\n", debugstr_an(data, len+post_len));
 
-        ret = create_nsstream(data, len+post_len);
+        if(len)
+            ret = create_nsstream(data, len+post_len);
     }
 
     CoTaskMemFree(headers);
