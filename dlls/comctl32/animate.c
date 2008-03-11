@@ -95,7 +95,7 @@ typedef struct
 
 static void ANIMATE_Notify(const ANIMATE_INFO *infoPtr, UINT notif)
 {
-    SendMessageW(infoPtr->hwndNotify, WM_COMMAND,
+    PostMessageW(infoPtr->hwndNotify, WM_COMMAND,
 		 MAKEWPARAM(GetDlgCtrlID(infoPtr->hwndSelf), notif),
 		 (LPARAM)infoPtr->hwndSelf);
 }
