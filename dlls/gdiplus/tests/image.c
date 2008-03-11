@@ -179,8 +179,7 @@ static void test_SavingImages(void)
        "Saved image dimensions are different!\n");
 
  cleanup:
-    if (codecs)
-        GdipFree(codecs);
+    GdipFree(codecs);
     if (bm)
         GdipDisposeImage((GpImage*)bm);
     ok(DeleteFileW(filename), "Delete failed.\n");
