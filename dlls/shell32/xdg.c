@@ -16,10 +16,38 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ *
+ * XDG_UserDirLookup() and helper functions are based on code from:
+ * http://www.freedesktop.org/wiki/Software/xdg-user-dirs
+ *
+ * Copyright (c) 2007 Red Hat, inc
+ *
+ * From the xdg-user-dirs license:
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation files
+ * (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge,
+ * publish, distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 #include "config.h"
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -711,4 +739,231 @@ char *XDG_GetStringValue(XDG_PARSED_FILE *file, const char *group_name, const ch
     }
     
     return NULL;
+}
+
+/* Get the name of the xdg configuration file.
+ *
+ * [in] home_dir - $HOME
+ * [out] config_file - the name of the configuration file
+ */
+static HRESULT get_xdg_config_file(char * home_dir, char ** config_file)
+{
+    char *config_home;
+
+    config_home = getenv("XDG_CONFIG_HOME");
+    if (!config_home || !config_home[0])
+    {
+        *config_file = HeapAlloc(GetProcessHeap(), 0, strlen(home_dir) + strlen("/.config/user-dirs.dirs") + 1);
+        if (!*config_file)
+            return E_OUTOFMEMORY;
+
+        strcpy(*config_file, home_dir);
+        strcat(*config_file, "/.config/user-dirs.dirs");
+    }
+    else
+    {
+        *config_file = HeapAlloc(GetProcessHeap(), 0, strlen(config_home) + strlen("/user-dirs.dirs") + 1);
+        if (!*config_file)
+            return E_OUTOFMEMORY;
+
+        strcpy(*config_file, config_home);
+        strcat(*config_file, "/user-dirs.dirs");
+    }
+    return S_OK;
+}
+
+/* Parse the key in a line in the xdg-user-dir config file.
+ * i.e. XDG_PICTURES_DIR="$HOME/Pictures"
+ *      ^                ^
+ *
+ * [in] xdg_dirs - array of xdg directories to look for
+ * [in] num_dirs - number of elements in xdg_dirs
+ * [in/out] p_ptr - pointer to where we are in the buffer
+ * Returns the index to xdg_dirs if we find the key, or -1 on error.
+ */
+static int parse_config1(const char ** xdg_dirs, const unsigned int num_dirs, char ** p_ptr)
+{
+    char *p;
+    int i;
+
+    p = *p_ptr;
+    while (*p == ' ' || *p == '\t')
+        p++;
+    if (strncmp(p, "XDG_", 4))
+        return -1;
+
+    p += 4;
+    for (i = 0; i < num_dirs; i++)
+    {
+        if (!strncmp(p, xdg_dirs[i], strlen(xdg_dirs[i])))
+        {
+            p += strlen(xdg_dirs[i]);
+            break;
+        }
+    }
+    if (i == num_dirs)
+        return -1;
+    if (strncmp(p, "_DIR", 4))
+        return -1;
+    p += 4;
+    while (*p == ' ' || *p == '\t')
+        p++;
+    if (*p != '=')
+        return -1;
+    p++;
+    while (*p == ' ' || *p == '\t')
+        p++;
+    if (*p != '"')
+        return -1;
+    p++;
+
+    *p_ptr = p;
+    return i;
+}
+
+/* Parse the value in a line in the xdg-user-dir config file.
+ * i.e. XDG_PICTURES_DIR="$HOME/Pictures"
+ *                        ^             ^
+ *
+ * [in] p - pointer to the buffer
+ * [in] home_dir - $HOME
+ * [out] out_ptr - the directory name
+ */
+static HRESULT parse_config2(char * p, const char * home_dir, char ** out_ptr)
+{
+    BOOL relative;
+    char *out, *d;
+
+    relative = FALSE;
+
+    if (!strncmp(p, "$HOME/", 6))
+    {
+        p += 6;
+        relative = TRUE;
+    }
+    else if (*p != '/')
+        return E_FAIL;
+
+    if (relative)
+    {
+        out = HeapAlloc(GetProcessHeap(), 0, strlen(home_dir) + strlen(p) + 2);
+        if (!out)
+            return E_OUTOFMEMORY;
+
+        strcpy(out, home_dir);
+        strcat(out, "/");
+    }
+    else
+    {
+        out = HeapAlloc(GetProcessHeap(), 0, strlen(p) + 1);
+        if (!out)
+            return E_OUTOFMEMORY;
+        *out = 0;
+    }
+
+    d = out + strlen(out);
+    while (*p && *p != '"')
+    {
+        if ((*p == '\\') && (*(p + 1) != 0))
+            p++;
+        *d++ = *p++;
+    }
+    *d = 0;
+    *out_ptr = out;
+    return S_OK;
+}
+
+/* Parse part of a line in the xdg-user-dir config file.
+ * i.e. XDG_PICTURES_DIR="$HOME/Pictures"
+ *                        ^             ^
+ *
+ * The calling function is responsible for freeing all elements of out_ptr as
+ * well as out_ptr itself.
+ *
+ * [in] xdg_dirs - array of xdg directories to look for
+ * [in] num_dirs - number of elements in xdg_dirs
+ * [out] out_ptr - an array of the xdg directories names
+ */
+HRESULT XDG_UserDirLookup(const char ** xdg_dirs, const unsigned int num_dirs, char *** out_ptr)
+{
+    FILE *file;
+    char **out;
+    char *home_dir, *config_file;
+    char buffer[512];
+    int i, len;
+    HRESULT hr;
+
+    *out_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, num_dirs * sizeof(char *));
+    out = *out_ptr;
+    if (!out)
+        return E_OUTOFMEMORY;
+
+    home_dir = getenv("HOME");
+    if (!home_dir)
+    {
+        hr = E_FAIL;
+        goto xdg_user_dir_lookup_error;
+    }
+
+    hr = get_xdg_config_file(home_dir, &config_file);
+    if (FAILED(hr))
+        goto xdg_user_dir_lookup_error;
+
+    file = fopen(config_file, "r");
+    HeapFree(GetProcessHeap(), 0, config_file);
+    if (!file)
+    {
+        hr = E_HANDLE;
+        goto xdg_user_dir_lookup_error;
+    }
+
+    while (fgets(buffer, sizeof(buffer), file))
+    {
+        int idx;
+        char *p;
+
+        /* Remove newline at end */
+        len = strlen(buffer);
+        if (len > 0 && buffer[len-1] == '\n')
+            buffer[len-1] = 0;
+
+        /* Parse the key */
+        p = buffer;
+        idx = parse_config1(xdg_dirs, num_dirs, &p);
+        if (idx < 0)
+            continue;
+        if (out[idx])
+            continue;
+
+        /* Parse the value */
+        hr = parse_config2(p, home_dir, &out[idx]);
+        if (FAILED(hr))
+        {
+            if (hr == E_OUTOFMEMORY)
+                goto xdg_user_dir_lookup_error;
+            continue;
+        }
+    }
+    hr = S_OK;
+
+    /* Remove entries for directories that do no exist */
+    for (i = 0; i <  num_dirs; i++)
+    {
+        struct stat statFolder;
+
+        if (!out[i])
+            continue;
+        if (!stat(out[i], &statFolder) && S_ISDIR(statFolder.st_mode))
+            continue;
+        HeapFree(GetProcessHeap(), 0, out[i]);
+        out[i] = NULL;
+    }
+
+xdg_user_dir_lookup_error:
+    if (FAILED(hr))
+    {
+        for (i = 0; i < num_dirs; i++) HeapFree(GetProcessHeap(), 0, out[i]);
+        HeapFree(GetProcessHeap(), 0, out_ptr);
+    }
+    return hr;
 }

@@ -47,5 +47,6 @@ HRESULT TRASH_UnpackItemID(LPCSHITEMID id, TRASH_ELEMENT *element, WIN32_FIND_DA
 HRESULT TRASH_EnumItems(LPITEMIDLIST **pidls, int *count);
 void TRASH_DisposeElement(TRASH_ELEMENT *element);
 
+HRESULT XDG_UserDirLookup(const char ** xdg_dirs, const unsigned int num_dirs, char *** out_ptr);
 
 #endif /* ndef __XDG_H__ */
