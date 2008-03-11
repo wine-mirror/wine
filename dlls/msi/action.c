@@ -565,7 +565,7 @@ static UINT msi_apply_transforms( MSIPACKAGE *package )
     for( i=0; xforms && xforms[i] && r == ERROR_SUCCESS; i++ )
     {
         if (xforms[i][0] == ':')
-            r = msi_apply_substorage_transform( package, package->db, &xforms[i][1] );
+            r = msi_apply_substorage_transform( package, package->db, xforms[i] );
         else
             r = MSI_DatabaseApplyTransformW( package->db, xforms[i], 0 );
     }
