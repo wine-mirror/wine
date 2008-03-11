@@ -590,6 +590,7 @@ dlls/ws2_32/version.res
 dlls/wsock32/libwsock32.def
 dlls/wsock32/version.res
 dlls/wtsapi32/libwtsapi32.def
+include/activaut.h
 include/activscp.h
 include/amstream.h
 include/amvideo.h

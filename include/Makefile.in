@@ -5,6 +5,7 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 IDL_H_SRCS = \
+	activaut.idl \
 	activscp.idl \
 	amstream.idl \
 	amvideo.idl \
