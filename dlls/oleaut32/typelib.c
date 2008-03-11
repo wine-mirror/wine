@@ -3477,8 +3477,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 					     pOtherTypeInfoBlks[i].name_offs +
 					     pNameTable);
       (*ppTypeInfoImpl)->dwHelpContext = pOtherTypeInfoBlks[i].helpcontext;
-      memcpy(&((*ppTypeInfoImpl)->TypeAttr.guid), &pOtherTypeInfoBlks[i].uuid,
-	     sizeof(GUID));
+      (*ppTypeInfoImpl)->TypeAttr.guid = pOtherTypeInfoBlks[i].uuid;
       (*ppTypeInfoImpl)->TypeAttr.typekind = pTIHeader->typekind;
       (*ppTypeInfoImpl)->TypeAttr.wMajorVerNum = pTIHeader->major_version;
       (*ppTypeInfoImpl)->TypeAttr.wMinorVerNum = pTIHeader->minor_version;
@@ -3849,7 +3848,7 @@ static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
     TRACE("(%p)\n",This);
     *ppTLibAttr = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppTLibAttr));
-    memcpy(*ppTLibAttr, &This->LibAttr, sizeof(**ppTLibAttr));
+    **ppTLibAttr = This->LibAttr;
     return S_OK;
 }
 
@@ -4589,7 +4588,7 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
     if (!*ppTypeAttr)
         return E_OUTOFMEMORY;
 
-    memcpy(*ppTypeAttr, &This->TypeAttr, sizeof(**ppTypeAttr));
+    **ppTypeAttr = This->TypeAttr;
 
     if (This->TypeAttr.typekind == TKIND_ALIAS)
         TLB_CopyTypeDesc(&(*ppTypeAttr)->tdescAlias,
@@ -4632,14 +4631,14 @@ static SIZE_T TLB_SizeElemDesc( const ELEMDESC *elemdesc )
 
 static HRESULT TLB_CopyElemDesc( const ELEMDESC *src, ELEMDESC *dest, char **buffer )
 {
-    memcpy(dest, src, sizeof(ELEMDESC));
+    *dest = *src;
     *buffer = TLB_CopyTypeDesc(&dest->tdesc, &src->tdesc, *buffer);
     if (src->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
     {
         const PARAMDESCEX *pparamdescex_src = src->u.paramdesc.pparamdescex;
         PARAMDESCEX *pparamdescex_dest = dest->u.paramdesc.pparamdescex = (PARAMDESCEX *)*buffer;
         *buffer += sizeof(PARAMDESCEX);
-        memcpy(pparamdescex_dest, pparamdescex_src, sizeof(PARAMDESCEX));
+        *pparamdescex_dest = *pparamdescex_src;
         VariantInit(&pparamdescex_dest->varDefaultValue);
         return VariantCopy(&pparamdescex_dest->varDefaultValue, 
                            (VARIANTARG *)&pparamdescex_src->varDefaultValue);
@@ -4674,7 +4673,7 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
     dest = (FUNCDESC *)SysAllocStringByteLen(NULL, size);
     if (!dest) return E_OUTOFMEMORY;
 
-    memcpy(dest, src, sizeof(FUNCDESC));
+    *dest = *src;
     if (dispinterface)    /* overwrite funckind */
         dest->funckind = FUNC_DISPATCH;
     buffer = (char *)(dest + 1);

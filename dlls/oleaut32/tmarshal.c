@@ -1802,7 +1802,7 @@ PSFacBuf_CreateProxy(
     /* one reference for the proxy */
     proxy->ref		= 1;
     proxy->tinfo	= tinfo;
-    memcpy(&proxy->iid,riid,sizeof(*riid));
+    proxy->iid		= *riid;
     proxy->chanbuf      = 0;
 
     InitializeCriticalSection(&proxy->crit);
@@ -2218,7 +2218,7 @@ PSFacBuf_CreateStub(
     stub->tinfo		= tinfo;
     stub->dispatch_stub = NULL;
     stub->dispatch_derivative = FALSE;
-    memcpy(&(stub->iid),riid,sizeof(*riid));
+    stub->iid		= *riid;
     hres = IRpcStubBuffer_Connect((LPRPCSTUBBUFFER)stub,pUnkServer);
     *ppStub 		= (LPRPCSTUBBUFFER)stub;
     TRACE("IRpcStubBuffer: %p\n", stub);

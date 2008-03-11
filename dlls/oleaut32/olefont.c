@@ -1556,7 +1556,7 @@ static HRESULT WINAPI OLEFontImpl_GetClassID(
   if (pClassID==0)
     return E_POINTER;
 
-  memcpy(pClassID, &CLSID_StdFont, sizeof(CLSID_StdFont));
+  *pClassID = CLSID_StdFont;
 
   return S_OK;
 }

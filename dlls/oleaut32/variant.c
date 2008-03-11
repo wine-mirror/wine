@@ -1254,7 +1254,7 @@ INT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME lpSt, double *pDateOut)
   if (lpSt->wMonth > 12)
     return FALSE;
 
-  memcpy(&ud.st, lpSt, sizeof(ud.st));
+  ud.st = *lpSt;
   return !VarDateFromUdate(&ud, 0, pDateOut);
 }
 
@@ -1280,7 +1280,7 @@ INT WINAPI VariantTimeToSystemTime(double dateIn, LPSYSTEMTIME lpSt)
   if (FAILED(VarUdateFromDate(dateIn, 0, &ud)))
     return FALSE;
 
-  memcpy(lpSt, &ud.st, sizeof(ud.st));
+  *lpSt = ud.st;
   return TRUE;
 }
 
@@ -1312,8 +1312,8 @@ HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DAT
 
   if (lcid != MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT))
     FIXME("lcid possibly not handled, treating as en-us\n");
-      
-  memcpy(&ud, pUdateIn, sizeof(ud));
+
+  ud = *pUdateIn;
 
   if (dwFlags & VAR_VALIDDATE)
     WARN("Ignoring VAR_VALIDDATE\n");

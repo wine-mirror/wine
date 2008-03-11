@@ -404,7 +404,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
     }
 
     sp = &GifFile->SavedImages[GifFile->ImageCount];
-    memcpy(&sp->ImageDesc, &GifFile->Image, sizeof(GifImageDesc));
+    sp->ImageDesc = GifFile->Image;
     if (GifFile->Image.ColorMap != NULL) {
         sp->ImageDesc.ColorMap = MakeMapObject(
                                  GifFile->Image.ColorMap->ColorCount,

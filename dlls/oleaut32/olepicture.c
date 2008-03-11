@@ -316,7 +316,7 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
   newObject->bIsDirty = FALSE;
 
   if (pictDesc) {
-      memcpy(&newObject->desc, pictDesc, sizeof(PICTDESC));
+      newObject->desc = *pictDesc;
 
       switch(pictDesc->picType) {
       case PICTYPE_BITMAP:
@@ -955,7 +955,7 @@ static HRESULT WINAPI OLEPictureImpl_GetClassID(
   IPersistStream* iface,CLSID* pClassID)
 {
   TRACE("(%p)\n", pClassID);
-  memcpy(pClassID, &CLSID_StdPicture, sizeof(*pClassID));
+  *pClassID = CLSID_StdPicture;
   return S_OK;
 }
 
@@ -2077,7 +2077,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 
 			/* Fill out the BITMAPINFOHEADER */
 			pIconBitmapHeader = (BITMAPINFOHEADER *)(pIconData + 3 * sizeof(WORD) + sizeof(CURSORICONFILEDIRENTRY));
-			memcpy(pIconBitmapHeader, &pInfoBitmap->bmiHeader, sizeof(BITMAPINFOHEADER));
+			*pIconBitmapHeader = pInfoBitmap->bmiHeader;
 
 			/*	Find out whether a palette exists for the bitmap */
 			if (	(pInfoBitmap->bmiHeader.biBitCount == 16 && pInfoBitmap->bmiHeader.biCompression == BI_RGB)

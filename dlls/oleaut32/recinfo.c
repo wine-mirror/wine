@@ -268,7 +268,7 @@ static HRESULT WINAPI IRecordInfoImpl_GetGuid(IRecordInfo *iface, GUID *pguid)
     if(!pguid)
         return E_INVALIDARG;
 
-    memcpy(pguid, &This->guid, sizeof(GUID));
+    *pguid = This->guid;
     return S_OK;
 }
 
@@ -557,7 +557,7 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
 
     if(typeattr->typekind == TKIND_ALIAS) {
         hres = ITypeInfo_GetRefTypeInfo(pTI, typeattr->tdescAlias.u.hreftype, &pTypeInfo);
-        memcpy(&guid, &typeattr->guid, sizeof(GUID));
+        guid = typeattr->guid;
         ITypeInfo_ReleaseTypeAttr(pTI, typeattr);
         if(FAILED(hres)) {
             WARN("GetRefTypeInfo failed: %08x\n", hres);
@@ -567,7 +567,7 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
     }else  {
         pTypeInfo = pTI;
         ITypeInfo_AddRef(pTypeInfo);
-        memcpy(&guid, &typeattr->guid, sizeof(GUID));
+        guid = typeattr->guid;
     }
 
     if(typeattr->typekind != TKIND_RECORD) {
@@ -585,7 +585,7 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
     ret->size = typeattr->cbSizeInstance;
     ITypeInfo_ReleaseTypeAttr(pTypeInfo, typeattr);
 
-    memcpy(&ret->guid, &guid, sizeof(GUID));
+    ret->guid = guid;
 
     /* NOTE: Windows implementation calls ITypeInfo::GetCantainingTypeLib and
      *       ITypeLib::GetLibAttr, but we currently don't need this.
