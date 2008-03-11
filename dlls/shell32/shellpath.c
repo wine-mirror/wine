@@ -1997,15 +1997,16 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
  *   shell folder to it. But if not, then we check XDG_MUSIC_DIR - "well known"
  *   directory, and try to link to that. If that fails, then we symlink to
  *   $HOME directly. The same holds fo 'My Pictures' and 'My Video'.
- * - The Desktop shell folder is symlinked to '$HOME/Desktop', if that does
- *   exists and left alone if not.
+ * - The Desktop shell folder is symlinked to XDG_DESKTOP_DIR. If that does not
+ *   exist, then we try '$HOME/Desktop'. If that does not exist, then we leave
+ *   it alone.
  * ('My Music',... above in fact means LoadString(IDS_MYMUSIC))
  */
 static void _SHCreateSymbolicLinks(void)
 {
     UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEO, IDS_MYMUSIC }, i;
     int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };
-    static const char * xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC" };
+    static const char * xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DESKTOP" };
     WCHAR wszTempPath[MAX_PATH];
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
     char szMyStuffTarget[FILENAME_MAX], *pszMyStuff;
@@ -2015,6 +2016,7 @@ static void _SHCreateSymbolicLinks(void)
     HRESULT hr;
     const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
     char ** xdg_results = NULL;
+    char * xdg_desktop_dir;
 
     /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
     hr = SHGetFolderPathW(NULL, CSIDL_PERSONAL|CSIDL_FLAG_CREATE, NULL,
@@ -2102,15 +2104,20 @@ static void _SHCreateSymbolicLinks(void)
         strcpy(szDesktopTarget, pszPersonal);
     HeapFree(GetProcessHeap(), 0, pszPersonal);
 
-    if (_SHAppendToUnixPath(szDesktopTarget, DesktopW) &&
-        !stat(szDesktopTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
+    xdg_desktop_dir = xdg_results ? xdg_results[num - 1] : NULL;
+    if (xdg_desktop_dir ||
+        (_SHAppendToUnixPath(szDesktopTarget, DesktopW) &&
+        !stat(szDesktopTarget, &statFolder) && S_ISDIR(statFolder.st_mode)))
     {
         hr = SHGetFolderPathW(NULL, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL,
                               SHGFP_TYPE_DEFAULT, wszTempPath);
         if (SUCCEEDED(hr) && (pszDesktop = wine_get_unix_file_name(wszTempPath))) 
         {
             rmdir(pszDesktop);
-            symlink(szDesktopTarget, pszDesktop);
+            if (xdg_desktop_dir)
+                symlink(xdg_desktop_dir, pszDesktop);
+            else
+                symlink(szDesktopTarget, pszDesktop);
             HeapFree(GetProcessHeap(), 0, pszDesktop);
         }
     }
