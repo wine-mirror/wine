@@ -719,7 +719,7 @@ static void test_monthcal_unicode(HWND hwnd)
 static void test_monthcal_HitTest(HWND hwnd)
 {
     MCHITTESTINFO mchit;
-    int res;
+    UINT res;
     SYSTEMTIME st;
 
     memset(&mchit, 0, sizeof(MCHITTESTINFO));
@@ -911,7 +911,7 @@ static void test_monthcal_todaylink(HWND hwnd)
     MCHITTESTINFO mchit;
     SYSTEMTIME st_test, st_new;
     BOOL error = FALSE;
-    int res;
+    UINT res;
 
     memset(&mchit, 0, sizeof(MCHITTESTINFO));
 
