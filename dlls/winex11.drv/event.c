@@ -255,23 +255,25 @@ enum event_merge_action
  */
 static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
 {
-    if (prev->xany.window != next->xany.window) return MERGE_HANDLE;
     switch (prev->type)
     {
     case ConfigureNotify:
-        if (prev->xany.window != next->xany.window) break;
         switch (next->type)
         {
         case ConfigureNotify:
-            TRACE( "discarding duplicate ConfigureNotify for window %lx\n", prev->xany.window );
-            return MERGE_DISCARD;
+            if (prev->xany.window == next->xany.window)
+            {
+                TRACE( "discarding duplicate ConfigureNotify for window %lx\n", prev->xany.window );
+                return MERGE_DISCARD;
+            }
+            break;
         case Expose:
         case PropertyNotify:
             return MERGE_KEEP;
         }
         break;
     case MotionNotify:
-        if (next->type == MotionNotify)
+        if (prev->xany.window == next->xany.window && next->type == MotionNotify)
         {
             TRACE( "discarding duplicate MotionNotify for window %lx\n", prev->xany.window );
             return MERGE_DISCARD;
