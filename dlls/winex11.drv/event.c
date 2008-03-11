@@ -241,39 +241,105 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
 }
 
 
+enum event_merge_action
+{
+    MERGE_DISCARD,  /* discard the old event */
+    MERGE_HANDLE,   /* handle the old event */
+    MERGE_KEEP      /* keep the old event for future merging */
+};
+
+/***********************************************************************
+ *           merge_events
+ *
+ * Try to merge 2 consecutive events.
+ */
+static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
+{
+    if (prev->xany.window != next->xany.window) return MERGE_HANDLE;
+    switch (prev->type)
+    {
+    case ConfigureNotify:
+        if (prev->xany.window != next->xany.window) break;
+        switch (next->type)
+        {
+        case ConfigureNotify:
+            TRACE( "discarding duplicate ConfigureNotify for window %lx\n", prev->xany.window );
+            return MERGE_DISCARD;
+        case Expose:
+        case PropertyNotify:
+            return MERGE_KEEP;
+        }
+        break;
+    case MotionNotify:
+        if (next->type == MotionNotify)
+        {
+            TRACE( "discarding duplicate MotionNotify for window %lx\n", prev->xany.window );
+            return MERGE_DISCARD;
+        }
+        break;
+    }
+    return MERGE_HANDLE;
+}
+
+
+/***********************************************************************
+ *           call_event_handler
+ */
+static inline void call_event_handler( Display *display, XEvent *event )
+{
+    HWND hwnd;
+    x11drv_event_handler handler;
+
+    if (!(handler = find_handler( event->type )))
+    {
+        TRACE( "%s for win %lx, ignoring\n", dbgstr_event( event->type ), event->xany.window );
+        return;  /* no handler, ignore it */
+    }
+
+    if (XFindContext( display, event->xany.window, winContext, (char **)&hwnd ) != 0)
+        hwnd = 0;  /* not for a registered window */
+    if (!hwnd && event->xany.window == root_window) hwnd = GetDesktopWindow();
+
+    TRACE( "%s for hwnd/window %p/%lx\n",
+           dbgstr_event( event->type ), hwnd, event->xany.window );
+    wine_tsx11_unlock();
+    handler( hwnd, event );
+    wine_tsx11_lock();
+}
+
+
 /***********************************************************************
  *           process_events
  */
 static int process_events( Display *display, Bool (*filter)(), ULONG_PTR arg )
 {
-    XEvent event;
-    HWND hwnd;
+    XEvent event, prev_event;
     int count = 0;
-    x11drv_event_handler handler;
+    enum event_merge_action action = MERGE_DISCARD;
 
+    prev_event.type = 0;
     wine_tsx11_lock();
     while (XCheckIfEvent( display, &event, filter, (char *)arg ))
     {
         count++;
         if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
-
-        if (!(handler = find_handler( event.type )))
+        if (prev_event.type) action = merge_events( &prev_event, &event );
+        switch( action )
         {
-            TRACE( "%s for win %lx, ignoring\n", dbgstr_event( event.type ), event.xany.window );
-            continue;  /* no handler, ignore it */
+        case MERGE_DISCARD:  /* discard prev, keep new */
+            prev_event = event;
+            break;
+        case MERGE_HANDLE:  /* handle prev, keep new */
+            call_event_handler( display, &prev_event );
+            prev_event = event;
+            break;
+        case MERGE_KEEP:  /* handle new, keep prev for future merging */
+            call_event_handler( display, &event );
+            break;
         }
-
-        if (XFindContext( display, event.xany.window, winContext, (char **)&hwnd ) != 0)
-            hwnd = 0;  /* not for a registered window */
-        if (!hwnd && event.xany.window == root_window) hwnd = GetDesktopWindow();
-
-        wine_tsx11_unlock();
-        TRACE( "%s for hwnd/window %p/%lx\n",
-               dbgstr_event( event.type ), hwnd, event.xany.window );
-        handler( hwnd, &event );
-        wine_tsx11_lock();
     }
     XFlush( gdi_display );
+    if (prev_event.type) call_event_handler( display, &prev_event );
     wine_tsx11_unlock();
     if (count) TRACE( "processed %d events\n", count );
     return count;
