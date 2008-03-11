@@ -3068,13 +3068,22 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
         FontSubst *psub;
         SYSTEM_LINKS *font_link;
         CHILD_FONT *font_link_entry;
+        LPWSTR FaceName = lf.lfFaceName;
 
-        psub = get_font_subst(&font_subst_list, lf.lfFaceName, lf.lfCharSet);
+        /*
+         * Check for a leading '@' this signals that the font is being
+         * requested in tategaki mode (vertical writing subtitution) but
+         * does not affect the fontface that is to be selected.
+         */
+        if (lf.lfFaceName[0]=='@')
+            FaceName = &lf.lfFaceName[1];
+
+        psub = get_font_subst(&font_subst_list, FaceName, lf.lfCharSet);
 
 	if(psub) {
-	    TRACE("substituting %s -> %s\n", debugstr_w(lf.lfFaceName),
+	    TRACE("substituting %s -> %s\n", debugstr_w(FaceName),
 		  debugstr_w(psub->to.name));
-	    strcpyW(lf.lfFaceName, psub->to.name);
+	    strcpyW(FaceName, psub->to.name);
 	}
 
 	/* We want a match on name and charset or just name if
@@ -3085,7 +3094,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 	*/
         LIST_FOR_EACH(family_elem_ptr, &font_list) {
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
-	    if(!strcmpiW(family->FamilyName, lf.lfFaceName)) {
+	    if(!strcmpiW(family->FamilyName, FaceName)) {
                 LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
                     if((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0])
@@ -3101,7 +3110,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
          */
         LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
         {
-            if(!strcmpiW(font_link->font_name, lf.lfFaceName))
+            if(!strcmpiW(font_link->font_name, FaceName))
             {
                 TRACE("found entry in system list\n");
                 LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
