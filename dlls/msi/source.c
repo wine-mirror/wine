@@ -934,11 +934,14 @@ static void free_source_list(struct list *sourcelist)
     }
 }
 
-static void add_source_to_list(struct list *sourcelist, media_info *info)
+static void add_source_to_list(struct list *sourcelist, media_info *info,
+                               DWORD *index)
 {
     media_info *iter;
     BOOL found = FALSE;
     static const WCHAR fmt[] = {'%','i',0};
+
+    if (index) *index = 0;
 
     if (list_empty(sourcelist))
     {
@@ -957,6 +960,8 @@ static void add_source_to_list(struct list *sourcelist, media_info *info)
         /* update the rest of the list */
         if (found)
             sprintfW(iter->szIndex, fmt, ++iter->index);
+        else if (index)
+            (*index)++;
     }
 
     if (!found)
@@ -1005,7 +1010,7 @@ static UINT fill_source_list(struct list *sourcelist, HKEY sourcekey, DWORD *cou
         }
 
         index = ++(*count);
-        add_source_to_list(sourcelist, entry);
+        add_source_to_list(sourcelist, entry, NULL);
     }
 
 error:
@@ -1031,6 +1036,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     LPWSTR source;
     LPCWSTR postfix;
     DWORD size, count;
+    DWORD index;
 
     static const WCHAR fmt[] = {'%','i',0};
     static const WCHAR one[] = {'1',0};
@@ -1098,7 +1104,7 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         rc = RegSetValueExW(typekey, one, 0, REG_EXPAND_SZ, (LPBYTE)source, size);
         goto done;
     }
-    else if (dwIndex > count)
+    else if (dwIndex > count || dwIndex == 0)
     {
         sprintfW(name, fmt, count + 1);
         rc = RegSetValueExW(typekey, name, 0, REG_EXPAND_SZ, (LPBYTE)source, size);
@@ -1106,10 +1112,6 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
     }
     else
     {
-        /* add to the end of the list */
-        if (dwIndex == 0)
-            dwIndex = count + 1;
-
         sprintfW(name, fmt, dwIndex);
         info = msi_alloc(sizeof(media_info));
         if (!info)
@@ -1121,10 +1123,13 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         info->path = strdupW(source);
         lstrcpyW(info->szIndex, name);
         info->index = dwIndex;
-        add_source_to_list(&sourcelist, info);
+        add_source_to_list(&sourcelist, info, &index);
 
         LIST_FOR_EACH_ENTRY(info, &sourcelist, media_info, entry)
         {
+            if (info->index < index)
+                continue;
+
             size = (lstrlenW(info->path) + 1) * sizeof(WCHAR);
             rc = RegSetValueExW(typekey, info->szIndex, 0,
                                 REG_EXPAND_SZ, (LPBYTE)info->path, size);
