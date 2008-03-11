@@ -70,11 +70,18 @@ static const char szKeyNT[] = "Software\\Microsoft\\Windows NT\\CurrentVersion";
 
 static int get_registry_version(void)
 {
-    int i, best = -1, platform, major, minor = 0;
+    int i, best = -1, platform, major, minor, build = 0;
     char *p, *ver;
 
     if ((ver = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL )))
+    {
+        char *build_str;
+
         platform = VER_PLATFORM_WIN32_NT;
+
+	build_str = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL );
+        build = atoi(build_str);
+    }
     else if ((ver = get_reg_key( HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL )))
         platform = VER_PLATFORM_WIN32_WINDOWS;
     else
@@ -82,10 +89,15 @@ static int get_registry_version(void)
 
     if ((p = strchr( ver, '.' )))
     {
-        char *str = p;
-        *str++ = 0;
-        if ((p = strchr( str, '.' ))) *p = 0;
-        minor = atoi(str);
+        char *minor_str = p;
+        *minor_str++ = 0;
+        if ((p = strchr( minor_str, '.' )))
+        {
+            char *build_str = p;
+            *build_str++ = 0;
+            build = atoi(build_str);
+        }
+        minor = atoi(minor_str);
     }
     major = atoi(ver);
 
@@ -94,7 +106,9 @@ static int get_registry_version(void)
         if (win_versions[i].dwPlatformId != platform) continue;
         if (win_versions[i].dwMajorVersion != major) continue;
         best = i;
-        if (win_versions[i].dwMinorVersion == minor) return i;
+        if ((win_versions[i].dwMinorVersion == minor) &&
+            (win_versions[i].dwBuildNumber == build))
+            return i;
     }
     return best;
 }
