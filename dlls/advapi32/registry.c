@@ -150,6 +150,32 @@ static inline HKEY get_special_root_hkey( HKEY hkey )
 
 
 /******************************************************************************
+ * RegOverridePredefKey   [ADVAPI32.@]
+ */
+LSTATUS WINAPI RegOverridePredefKey( HKEY hkey, HKEY override )
+{
+    HKEY old_key;
+    int idx;
+
+    if ((hkey < HKEY_SPECIAL_ROOT_FIRST) || (hkey > HKEY_SPECIAL_ROOT_LAST))
+        return ERROR_INVALID_PARAMETER;
+    idx = (UINT_PTR)hkey - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST;
+
+    if (override)
+    {
+        NTSTATUS status = NtDuplicateObject( GetCurrentProcess(), override,
+                                             GetCurrentProcess(), (HANDLE *)&override,
+                                             0, 0, DUPLICATE_SAME_ACCESS );
+        if (status) return RtlNtStatusToDosError( status );
+    }
+
+    old_key = InterlockedExchangePointer( (void **)&special_root_keys[idx], override );
+    if (old_key) NtClose( old_key );
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
  * RegCreateKeyExW   [ADVAPI32.@]
  *
  * See RegCreateKeyExA.
