@@ -440,6 +440,17 @@ void __stdcall __CxxLongjmpUnwind( const struct MSVCRT___JUMP_BUFFER *buf )
 
 #endif  /* __i386__ */
 
+
+/*********************************************************************
+ *		__CppXcptFilter (MSVCRT.@)
+ */
+int CDECL __CppXcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
+{
+    /* only filter c++ exceptions */
+    if (ex != CXX_EXCEPTION) return EXCEPTION_CONTINUE_SEARCH;
+    return _XcptFilter( ex, ptr );
+}
+
 /*********************************************************************
  *		_CxxThrowException (MSVCRT.@)
  */

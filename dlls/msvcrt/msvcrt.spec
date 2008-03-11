@@ -75,6 +75,7 @@
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(str long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
+@ cdecl __CppXcptFilter(long ptr)
 @ cdecl __CxxDetectRethrow(ptr)
 @ cdecl -i386 -norelay __CxxFrameHandler(ptr ptr ptr ptr)
 @ stdcall -i386 __CxxLongjmpUnwind(ptr)

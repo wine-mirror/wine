@@ -75,7 +75,7 @@
 @ extern _HUGE msvcrt._HUGE
 @ cdecl _Strftime(str long str ptr ptr) msvcrt._Strftime
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
-@ stub __CppXcptFilter
+@ cdecl __CppXcptFilter(long ptr) msvcrt.__CppXcptFilter
 @ stub __CxxCallUnwindDtor
 @ stub __CxxCallUnwindVecDtor
 @ stub __CxxDetectRethrow
