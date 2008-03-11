@@ -603,6 +603,36 @@ static const CHAR wrv_registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tCompon
                                        "Registry\tRegistry\n"
                                        "regdata\t2\tSOFTWARE\\Wine\\msitest\tValue\t[~]one[~]two[~]three\taugustus";
 
+static const CHAR ca51_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                         "Component\tComponent\n"
+                                         "augustus\t\tMSITESTDIR\t0\tMYPROP=42\taugustus\n";
+
+static const CHAR ca51_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                                "s72\tS255\tI2\n"
+                                                "InstallExecuteSequence\tAction\n"
+                                                "ValidateProductID\t\t700\n"
+                                                "GoodSetProperty\t\t725\n"
+                                                "BadSetProperty\t\t750\n"
+                                                "CostInitialize\t\t800\n"
+                                                "FileCost\t\t900\n"
+                                                "CostFinalize\t\t1000\n"
+                                                "InstallValidate\t\t1400\n"
+                                                "InstallInitialize\t\t1500\n"
+                                                "ProcessComponents\t\t1600\n"
+                                                "UnpublishFeatures\t\t1800\n"
+                                                "InstallFiles\t\t4000\n"
+                                                "RegisterProduct\t\t6100\n"
+                                                "PublishFeatures\t\t6300\n"
+                                                "PublishProduct\t\t6400\n"
+                                                "InstallFinalize\t\t6600";
+
+static const CHAR ca51_custom_action_dat[] = "Action\tType\tSource\tTarget\n"
+                                             "s72\ti2\tS64\tS0\n"
+                                             "CustomAction\tAction\n"
+                                             "GoodSetProperty\t51\tMYPROP\t42\n"
+                                             "BadSetProperty\t51\t\tMYPROP\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -926,6 +956,19 @@ static const msi_table sf_tables[] =
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
+};
+
+static const msi_table ca51_tables[] =
+{
+    ADD_TABLE(ca51_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(ca51_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+    ADD_TABLE(ca51_custom_action),
 };
 
 /* cabinet definitions */
@@ -4250,6 +4293,27 @@ static void test_sourcefolder(void)
     DeleteFile("augustus");
 }
 
+static void test_customaction51(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 500);
+
+    create_database(msifile, ca51_tables, sizeof(ca51_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File installed\n");
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -4299,6 +4363,7 @@ START_TEST(install)
     test_duplicatefiles();
     test_writeregistryvalues();
     test_sourcefolder();
+    test_customaction51();
 
     SetCurrentDirectoryA(prev_path);
 }

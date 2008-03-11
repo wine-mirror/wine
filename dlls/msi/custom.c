@@ -331,6 +331,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
             msi_free(deformated);
             break;
         case 51: /* Property set with formatted text. */
+            if (!source)
+                break;
+
             deformat_string(package,target,&deformated);
             rc = MSI_SetPropertyW(package,source,deformated);
             msi_free(deformated);
