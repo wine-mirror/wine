@@ -46,6 +46,7 @@
 #include "pidl.h"
 #include "wine/unicode.h"
 #include "shlwapi.h"
+#include "xdg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -1993,8 +1994,9 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
  *   point directly to $HOME. We assume the user to be a unix hacker who does not
  *   want wine to create anything anywhere besides the .wine directory. So, if
  *   there already is a 'My Music' directory in $HOME, we symlink the 'My Music'
- *   shell folder to it. But if not, we symlink it to $HOME directly. The same
- *   holds fo 'My Pictures' and 'My Video'.
+ *   shell folder to it. But if not, then we check XDG_MUSIC_DIR - "well known"
+ *   directory, and try to link to that. If that fails, then we symlink to
+ *   $HOME directly. The same holds fo 'My Pictures' and 'My Video'.
  * - The Desktop shell folder is symlinked to '$HOME/Desktop', if that does
  *   exists and left alone if not.
  * ('My Music',... above in fact means LoadString(IDS_MYMUSIC))
@@ -2003,6 +2005,7 @@ static void _SHCreateSymbolicLinks(void)
 {
     UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEO, IDS_MYMUSIC }, i;
     int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };
+    static const char * xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC" };
     WCHAR wszTempPath[MAX_PATH];
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
     char szMyStuffTarget[FILENAME_MAX], *pszMyStuff;
@@ -2010,6 +2013,8 @@ static void _SHCreateSymbolicLinks(void)
     struct stat statFolder;
     const char *pszHome;
     HRESULT hr;
+    const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
+    char ** xdg_results = NULL;
 
     /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
     hr = SHGetFolderPathW(NULL, CSIDL_PERSONAL|CSIDL_FLAG_CREATE, NULL,
@@ -2017,6 +2022,8 @@ static void _SHCreateSymbolicLinks(void)
     if (FAILED(hr)) return;
     pszPersonal = wine_get_unix_file_name(wszTempPath);
     if (!pszPersonal) return;
+
+    XDG_UserDirLookup(xdg_dirs, num, &xdg_results);
 
     pszHome = getenv("HOME");
     if (pszHome && !stat(pszHome, &statFolder) && S_ISDIR(statFolder.st_mode)) {
@@ -2073,9 +2080,17 @@ static void _SHCreateSymbolicLinks(void)
         } 
         else
         {
-            /* Else link to where 'My Documents' itself links to. */
             rmdir(pszMyStuff);
-            symlink(szPersonalTarget, pszMyStuff);
+            if (xdg_results && xdg_results[i])
+            {
+                /* the folder specified by XDG_XXX_DIR exists, link to it. */
+                symlink(xdg_results[i], pszMyStuff);
+            }
+            else
+            {
+                /* Else link to where 'My Documents' itself links to. */
+                symlink(szPersonalTarget, pszMyStuff);
+            }
         }
         HeapFree(GetProcessHeap(), 0, pszMyStuff);
     }
@@ -2098,6 +2113,14 @@ static void _SHCreateSymbolicLinks(void)
             symlink(szDesktopTarget, pszDesktop);
             HeapFree(GetProcessHeap(), 0, pszDesktop);
         }
+    }
+
+    /* Free resources allocated by XDG_UserDirLookup() */
+    if (xdg_results)
+    {
+        for (i = 0; i < num; i++)
+            HeapFree(GetProcessHeap(), 0, xdg_results[i]);
+        HeapFree(GetProcessHeap(), 0, xdg_results);
     }
 }
 
