@@ -2,7 +2,7 @@
  * XML test
  *
  * Copyright 2005 Mike McCormack for CodeWeavers
- * Copyright 2007 Alistair Leslie-Hughes
+ * Copyright 2007-2008 Alistair Leslie-Hughes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -528,6 +528,7 @@ static void test_domdoc( void )
     ok( r == E_INVALIDARG, "returns %08x\n", r );
     r = IXMLDOMDocument_createTextNode(doc, str, &nodetext);
     ok( r == S_OK, "returns %08x\n", r );
+    SysFreeString( str );
     if(nodetext)
     {
         IXMLDOMNamedNodeMap *pAttribs;
@@ -696,7 +697,6 @@ static void test_domdoc( void )
 
         IXMLDOMText_Release( nodetext );
     }
-    SysFreeString( str );
 
     /* test Create Comment */
     r = IXMLDOMDocument_createComment(doc, NULL, NULL);
