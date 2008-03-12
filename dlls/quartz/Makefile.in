@@ -24,6 +24,7 @@ C_SRCS = \
 	main.c \
 	memallocator.c \
 	mpegsplit.c \
+	nullrenderer.c \
 	parser.c \
 	pin.c \
 	regsvr.c \

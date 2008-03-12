@@ -855,6 +855,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
+    {   &CLSID_NullRenderer,
+        "Null Renderer",
+        NULL,
+        "quartz.dll",
+        "Both"
+    },
     {   &CLSID_VideoRenderer,
 	"Video Renderer",
 	NULL,
@@ -1063,6 +1069,18 @@ static struct regsvr_filter const filter_list[] = {
             {   REG_PINFLAG_B_OUTPUT,
                 {   { &MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Packet },
                     { &MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Payload },
+                    { NULL }
+                },
+            },
+            { 0xFFFFFFFF },
+        }
+    },
+    {   &CLSID_NullRenderer,
+        &CLSID_LegacyAmFilterCategory,
+        {'N','u','l','l',' ','R','e','n','d','e','r','e','r',0},
+        0x200000,
+        {   {   REG_PINFLAG_B_RENDERER,
+                {   { &MEDIATYPE_NULL, &GUID_NULL },
                     { NULL }
                 },
             },

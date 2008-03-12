@@ -52,6 +52,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv);
+HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv);
