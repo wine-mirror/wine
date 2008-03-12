@@ -77,7 +77,7 @@ static UINT JOIN_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *v
             break;
         }
 
-        prev_rows = table->rows;
+        prev_rows *= table->rows;
         cols += table->columns;
     }
 
@@ -108,7 +108,7 @@ static UINT JOIN_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IStr
             break;
         }
 
-        prev_rows = table->rows;
+        prev_rows *= table->rows;
         cols += table->columns;
     }
 
