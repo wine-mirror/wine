@@ -1796,7 +1796,10 @@ static void test_FoldStringW(void)
   };
 
   if (!pFoldStringW)
+  {
+    skip("FoldStringW is not available\n");
     return; /* FoldString is present in NT v3.1+, but not 95/98/Me */
+  }
 
   /* Invalid flag combinations */
   for (i = 0; i < sizeof(badFlags)/sizeof(badFlags[0]); i++)
@@ -1805,7 +1808,10 @@ static void test_FoldStringW(void)
     SetLastError(0);
     ret = pFoldStringW(badFlags[i], src, 256, dst, 256);
     if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    {
+      skip("FoldStringW is not implemented\n");
       return;
+    }
     EXPECT_LEN(0); EXPECT_FLAGS;
   }
 
