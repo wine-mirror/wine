@@ -242,7 +242,7 @@ HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES * p
     pPinImpl->pConnectSpecific = OutputPin_ConnectSpecific;
     if (props)
     {
-        memcpy(&pPinImpl->allocProps, props, sizeof(pPinImpl->allocProps));
+        pPinImpl->allocProps = *props;
         if (pPinImpl->allocProps.cbAlign == 0)
             pPinImpl->allocProps.cbAlign = 1;
     }
