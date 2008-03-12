@@ -1186,49 +1186,46 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
  *
  *   Insert or delete the authorization field in the request header.
  */
-static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, struct HttpAuthInfo *pAuthInfo, LPCWSTR header, BOOL first )
+static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, struct HttpAuthInfo *pAuthInfo, LPCWSTR header )
 {
-    WCHAR *authorization = NULL;
-    DWORD flags;
-
-    if (pAuthInfo && pAuthInfo->auth_data_len)
+    if (pAuthInfo)
     {
         static const WCHAR wszSpace[] = {' ',0};
         static const WCHAR wszBasic[] = {'B','a','s','i','c',0};
         unsigned int len;
+        WCHAR *authorization = NULL;
 
-        /* scheme + space + base64 encoded data (3/2/1 bytes data -> 4 bytes of characters) */
-        len = strlenW(pAuthInfo->scheme)+1+((pAuthInfo->auth_data_len+2)*4)/3;
-        authorization = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
-        if (!authorization)
-            return FALSE;
-
-        strcpyW(authorization, pAuthInfo->scheme);
-        strcatW(authorization, wszSpace);
-        HTTP_EncodeBase64(pAuthInfo->auth_data,
-                          pAuthInfo->auth_data_len,
-                          authorization+strlenW(authorization));
-
-        /* clear the data as it isn't valid now that it has been sent to the
-         * server, unless it's Basic authentication which doesn't do
-         * connection tracking */
-        if (strcmpiW(pAuthInfo->scheme, wszBasic))
+        if (pAuthInfo->auth_data_len)
         {
-            HeapFree(GetProcessHeap(), 0, pAuthInfo->auth_data);
-            pAuthInfo->auth_data = NULL;
-            pAuthInfo->auth_data_len = 0;
+            /* scheme + space + base64 encoded data (3/2/1 bytes data -> 4 bytes of characters) */
+            len = strlenW(pAuthInfo->scheme)+1+((pAuthInfo->auth_data_len+2)*4)/3;
+            authorization = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+            if (!authorization)
+                return FALSE;
+
+            strcpyW(authorization, pAuthInfo->scheme);
+            strcatW(authorization, wszSpace);
+            HTTP_EncodeBase64(pAuthInfo->auth_data,
+                              pAuthInfo->auth_data_len,
+                              authorization+strlenW(authorization));
+
+            /* clear the data as it isn't valid now that it has been sent to the
+             * server, unless it's Basic authentication which doesn't do
+             * connection tracking */
+            if (strcmpiW(pAuthInfo->scheme, wszBasic))
+            {
+                HeapFree(GetProcessHeap(), 0, pAuthInfo->auth_data);
+                pAuthInfo->auth_data = NULL;
+                pAuthInfo->auth_data_len = 0;
+            }
         }
+
+        TRACE("Inserting authorization: %s\n", debugstr_w(authorization));
+
+        HTTP_ProcessHeader(lpwhr, header, authorization, HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
+
+        HeapFree(GetProcessHeap(), 0, authorization);
     }
-
-    TRACE("Inserting authorization: %s\n", debugstr_w(authorization));
-
-    /* make sure not to overwrite any caller supplied authorization header */
-    flags = HTTP_ADDHDR_FLAG_REQ;
-    flags |= first ? HTTP_ADDHDR_FLAG_ADD_IF_NEW : HTTP_ADDHDR_FLAG_REPLACE;
-
-    HTTP_ProcessHeader(lpwhr, header, authorization, flags);
-
-    HeapFree(GetProcessHeap(), 0, authorization);
     return TRUE;
 }
 
@@ -3076,8 +3073,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                            lpwhr->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION ? szKeepAlive : szClose,
                            HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
 
-        HTTP_InsertAuthorization(lpwhr, lpwhr->pAuthInfo, szAuthorization, !loop_next);
-        HTTP_InsertAuthorization(lpwhr, lpwhr->pProxyAuthInfo, szProxy_Authorization, !loop_next);
+        HTTP_InsertAuthorization(lpwhr, lpwhr->pAuthInfo, szAuthorization);
+        HTTP_InsertAuthorization(lpwhr, lpwhr->pProxyAuthInfo, szProxy_Authorization);
 
         /* add the headers the caller supplied */
         if( lpszHeaders && dwHeaderLength )
