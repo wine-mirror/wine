@@ -39,7 +39,10 @@ static void test_urlcacheA(void)
     BYTE zero_byte = 0;
     LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo;
     DWORD cbCacheEntryInfo;
+    DWORD cbCacheEntryInfoSaved;
     static const FILETIME filetime_zero;
+    HANDLE hEnumHandle;
+    BOOL found = FALSE;
 
     ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filename, 0);
     ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
@@ -72,6 +75,44 @@ static void test_urlcacheA(void)
 
     ret = UnlockUrlCacheEntryFile(TEST_URL, 0);
     ok(ret, "UnlockUrlCacheEntryFile failed with error %d\n", GetLastError());
+
+
+    /* test Find*UrlCacheEntry functions */
+    cbCacheEntryInfo = 0;
+    hEnumHandle = FindFirstUrlCacheEntry(NULL, NULL, &cbCacheEntryInfo);
+    ok(!hEnumHandle, "FindFirstUrlCacheEntry should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "FindFirstUrlCacheEntry should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo * sizeof(char));
+    cbCacheEntryInfoSaved = cbCacheEntryInfo;
+    hEnumHandle = FindFirstUrlCacheEntry(NULL, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(hEnumHandle != NULL, "FindFirstUrlCacheEntry failed with error %d\n", GetLastError());
+    while (TRUE)
+    {
+        if (!strcmp(lpCacheEntryInfo->lpszSourceUrlName, TEST_URL))
+        {
+            found = TRUE;
+            break;
+        }
+        cbCacheEntryInfo = cbCacheEntryInfoSaved;
+        ret = FindNextUrlCacheEntry(hEnumHandle, lpCacheEntryInfo, &cbCacheEntryInfo);
+        if (!ret)
+        {
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+            {
+                lpCacheEntryInfo = HeapReAlloc(GetProcessHeap(), 0, lpCacheEntryInfo, cbCacheEntryInfo);
+                cbCacheEntryInfoSaved = cbCacheEntryInfo;
+                ret = FindNextUrlCacheEntry(hEnumHandle, lpCacheEntryInfo, &cbCacheEntryInfo);
+            }
+        }
+        ok(ret, "FindNextUrlCacheEntry failed with error %d\n", GetLastError());
+        if (!ret)
+            break;
+    }
+    ok(found, "committed url cache entry not found during enumeration\n");
+
+    ret = FindCloseUrlCache(hEnumHandle);
+    ok(ret, "FindCloseUrlCache failed with error %d\n", GetLastError());
+
 
     ret = DeleteUrlCacheEntry(TEST_URL);
     ok(ret, "DeleteUrlCacheEntry failed with error %d\n", GetLastError());
