@@ -1872,51 +1872,6 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             FIXME("INTERNET_OPTION_USER_AGENT\n");
             break;
 
-        case INTERNET_OPTION_DATAFILE_NAME:
-        {
-            TRACE("INTERNET_OPTION_DATAFILE_NAME\n");
-            if (!lpwhh)
-            {
-                WARN("Invalid hInternet handle\n");
-                INTERNET_SetLastError(ERROR_INVALID_HANDLE);
-                return FALSE;
-            }
-            if (lpwhh->htype == WH_HHTTPREQ)
-            {
-                LPWININETHTTPREQW lpreq = (LPWININETHTTPREQW) lpwhh;
-                DWORD size;
-
-                if(!lpreq->lpszCacheFile) {
-                    *lpdwBufferLength = 0;
-                    INTERNET_SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
-                }
-                else if(bIsUnicode)
-                {
-                    size = (lstrlenW(lpreq->lpszCacheFile)+1) * sizeof(WCHAR);
-                    if (*lpdwBufferLength < size)
-                        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                    else
-                    {
-                        memcpy(lpBuffer, lpreq->lpszCacheFile, size);
-                        bSuccess = TRUE;
-                    }
-                    *lpdwBufferLength = size;
-                }
-                else
-                {
-                    size = WideCharToMultiByte(CP_ACP, 0, lpreq->lpszCacheFile, -1, NULL, 0, NULL, NULL);
-                    if (size > *lpdwBufferLength) {
-                        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                    }else {
-                        *lpdwBufferLength = WideCharToMultiByte(CP_ACP, 0, lpreq->lpszCacheFile,
-                                -1, lpBuffer, *lpdwBufferLength, NULL, NULL);
-                        bSuccess = TRUE;
-                    }
-                }
-            }
-            break;
-        }
-
         case INTERNET_OPTION_HTTP_VERSION:
         {
             if (*lpdwBufferLength < sizeof(HTTP_VERSION_INFO))

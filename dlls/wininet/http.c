@@ -1449,6 +1449,35 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
             return ERROR_SUCCESS;
         }
     }
+
+    case INTERNET_OPTION_DATAFILE_NAME: {
+        DWORD req_size;
+
+        TRACE("INTERNET_OPTION_DATAFILE_NAME\n");
+
+        if(!req->lpszCacheFile) {
+            *size = 0;
+            return ERROR_INTERNET_ITEM_NOT_FOUND;
+        }
+
+        if(unicode) {
+            req_size = (lstrlenW(req->lpszCacheFile)+1) * sizeof(WCHAR);
+            if(*size < req_size)
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            *size = req_size;
+            memcpy(buffer, req->lpszCacheFile, *size);
+            return ERROR_SUCCESS;
+        }else {
+            req_size = WideCharToMultiByte(CP_ACP, 0, req->lpszCacheFile, -1, NULL, 0, NULL, NULL);
+            if (req_size > *size)
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            *size = WideCharToMultiByte(CP_ACP, 0, req->lpszCacheFile,
+                    -1, buffer, *size, NULL, NULL);
+            return ERROR_SUCCESS;
+        }
+    }
     }
 
     FIXME("Not implemented option %d\n", option);
