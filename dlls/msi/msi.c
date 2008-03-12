@@ -722,20 +722,25 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         goto done;
     }
 
-    save = *pcchValueBuf;
-
-    if (lstrlenW(val) < *pcchValueBuf)
-        r = msi_strcpy_to_awstring(val, szValue, pcchValueBuf);
-    else if (szValue->str.a || szValue->str.w)
-        r = ERROR_MORE_DATA;
-
-    if (!badconfig)
-        *pcchValueBuf = lstrlenW(val);
-    else if (r == ERROR_SUCCESS)
+    if (pcchValueBuf)
     {
-        *pcchValueBuf = save;
-        r = ERROR_BAD_CONFIGURATION;
+        save = *pcchValueBuf;
+
+        if (lstrlenW(val) < *pcchValueBuf)
+            r = msi_strcpy_to_awstring(val, szValue, pcchValueBuf);
+        else if (szValue->str.a || szValue->str.w)
+            r = ERROR_MORE_DATA;
+
+        if (!badconfig)
+            *pcchValueBuf = lstrlenW(val);
+        else if (r == ERROR_SUCCESS)
+        {
+            *pcchValueBuf = save;
+            r = ERROR_BAD_CONFIGURATION;
+        }
     }
+    else if (badconfig)
+        r = ERROR_BAD_CONFIGURATION;
 
     if (val != empty)
         msi_free(val);

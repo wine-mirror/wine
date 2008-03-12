@@ -2233,6 +2233,10 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "link"), "Expected \"link\", got \"%s\"\n", buf);
     ok(sz == 4, "Expected 4, got %d\n", sz);
 
+    /* pcchBuf is NULL */
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     /* lpValueBuf is NULL */
     sz = MAX_PATH;
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_HELPLINK, NULL, &sz);
