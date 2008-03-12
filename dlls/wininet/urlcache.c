@@ -2216,9 +2216,11 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     DWORD dwFileSizeLow = 0;
     DWORD dwFileSizeHigh = 0;
     BYTE cDirectory = 0;
+    int len;
     char achFile[MAX_PATH];
-    char achUrl[MAX_PATH];
+    LPSTR lpszUrlNameA = NULL;
     char *pchLocalFileName = 0;
+    DWORD error = ERROR_SUCCESS;
 
     TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
         debugstr_w(lpszUrlName),
@@ -2264,17 +2266,23 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
 
-    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, achUrl, -1, NULL, NULL);
-
-    if (URLCache_FindHash(pHeader, achUrl, &pHashEntry))
+    len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
+    lpszUrlNameA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+    if (!lpszUrlNameA)
     {
-        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        error = GetLastError();
+        goto cleanup;
+    }
+    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, lpszUrlNameA, len, NULL, NULL);
+
+    if (URLCache_FindHash(pHeader, lpszUrlNameA, &pHashEntry))
+    {
         FIXME("entry already in cache - don't know what to do!\n");
 /*
  *        SetLastError(ERROR_FILE_NOT_FOUND);
  *        return FALSE;
  */
-        return TRUE;
+        goto cleanup;
     }
 
     if (lpszLocalFileName)
@@ -2283,10 +2291,9 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
 
         if (strncmpW(lpszLocalFileName, pContainer->path, lstrlenW(pContainer->path)))
         {
-            URLCacheContainer_UnlockIndex(pContainer, pHeader);
             ERR("path %s must begin with cache content path %s\n", debugstr_w(lpszLocalFileName), debugstr_w(pContainer->path));
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
+            error = ERROR_INVALID_PARAMETER;
+            goto cleanup;
         }
 
         /* skip container path prefix */
@@ -2306,18 +2313,18 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
 
         if (!bFound)
         {
-            URLCacheContainer_UnlockIndex(pContainer, pHeader);
             ERR("cache directory not found in path %s\n", debugstr_w(lpszLocalFileName));
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
+            error = ERROR_INVALID_PARAMETER;
+            goto cleanup;
         }
 
         lpszLocalFileName += (DIR_LENGTH + 1); /* "1234WXYZ\" */
     }
 
-    dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(achUrl) + 1);
+    dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(lpszUrlNameA) + 1);
     if (lpszLocalFileName)
     {
+        len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
         dwOffsetLocalFileName = dwBytesNeeded;
         dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(pchLocalFileName) + 1);
     }
@@ -2336,10 +2343,9 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
 
     if (!URLCache_FindFirstFreeEntry(pHeader, dwBytesNeeded / BLOCKSIZE, &pEntry))
     {
-        URLCacheContainer_UnlockIndex(pContainer, pHeader);
         ERR("no free entries\n");
-        SetLastError(ERROR_DISK_FULL);
-        return FALSE;
+        error = ERROR_DISK_FULL;
+        goto cleanup;
     }
 
     /* FindFirstFreeEntry fills in blocks used */
@@ -2375,22 +2381,31 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     pUrlEntry->dwUnknown8 = 0;
 
 
-    strcpy((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, achUrl);
+    strcpy((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, lpszUrlNameA);
     if (dwOffsetLocalFileName)
         strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName + DIR_LENGTH + 1);
     if (dwOffsetHeader)
 	memcpy((LPBYTE)pUrlEntry + dwOffsetHeader, lpHeaderInfo, dwHeaderSize);
 
-    if (!URLCache_AddEntryToHash(pHeader, achUrl, (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader)))
+    if (!URLCache_AddEntryToHash(pHeader, lpszUrlNameA, (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader)))
     {
         URLCache_DeleteEntry(pHeader, &pUrlEntry->CacheFileEntry);
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        HeapFree(GetProcessHeap(), 0, lpszUrlNameA);
         return FALSE;
     }
 
+cleanup:
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
+    HeapFree(GetProcessHeap(), 0, lpszUrlNameA);
 
-    return TRUE;
+    if (error == ERROR_SUCCESS)
+        return TRUE;
+    else
+    {
+        SetLastError(error);
+        return FALSE;
+    }
 }
 
 /***********************************************************************
