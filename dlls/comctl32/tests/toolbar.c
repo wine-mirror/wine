@@ -1109,14 +1109,14 @@ static void test_getstring(void)
     r = SendMessage(hToolbar, TB_ADDSTRING, 0, (LPARAM)answer);
     expect(0, r);
     r = SendMessage(hToolbar, TB_GETSTRING, MAKEWPARAM(0, 0), (LPARAM)NULL);
-    expect(strlen(answer), r);
+    expect(lstrlenA(answer), r);
     r = SendMessage(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), (LPARAM)NULL);
-    expect(strlen(answer), r);
+    expect(lstrlenA(answer), r);
     r = SendMessage(hToolbar, TB_GETSTRING, MAKEWPARAM(sizeof(str), 0), (LPARAM)str);
-    expect(strlen(answer), r);
+    expect(lstrlenA(answer), r);
     expect(0, lstrcmp(answer, str));
     r = SendMessage(hToolbar, TB_GETSTRINGW, MAKEWPARAM(sizeof(strW), 0), (LPARAM)strW);
-    expect(strlen(answer), r);
+    expect(lstrlenA(answer), r);
     expect(0, lstrcmpW(answerW, strW));
 
     DestroyWindow(hToolbar);
