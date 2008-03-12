@@ -101,7 +101,7 @@ typedef struct _URL_CACHEFILE_ENTRY
     DWORD CacheEntryType; /* see INTERNET_CACHE_ENTRY_INFO::CacheEntryType */
     DWORD dwOffsetHeaderInfo; /* offset of start of header info from start of entry */
     DWORD dwHeaderInfoSize;
-    DWORD dwUnknown6; /* usually zero */
+    DWORD dwOffsetFileExtension; /* offset of start of file extension from start of entry */
     WORD wLastSyncDate; /* last sync date in dos format */
     WORD wLastSyncTime; /* last sync time in dos format */
     DWORD dwHitRate; /* see INTERNET_CACHE_ENTRY_INFO::dwHitRate */
@@ -1021,6 +1021,30 @@ static BOOL URLCache_CopyEntry(
     if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
         ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
     dwRequiredSize = DWORD_ALIGN(dwRequiredSize);
+
+    if (pUrlEntry->dwOffsetFileExtension)
+    {
+        int lenExtension;
+
+        if (bUnicode)
+            lenExtension = MultiByteToWideChar(CP_ACP, 0, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetFileExtension, -1, NULL, 0);
+        else
+            lenExtension = strlen((LPSTR)pUrlEntry + pUrlEntry->dwOffsetFileExtension) + 1;
+        dwRequiredSize += lenExtension * (bUnicode ? sizeof(WCHAR) : sizeof(CHAR));
+
+        if (*lpdwBufferSize >= dwRequiredSize)
+        {
+            lpCacheEntryInfo->lpszFileExtension = (LPSTR)lpCacheEntryInfo + dwRequiredSize - lenExtension;
+            if (bUnicode)
+                MultiByteToWideChar(CP_ACP, 0, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetFileExtension, -1, (LPWSTR)lpCacheEntryInfo->lpszSourceUrlName, lenExtension);
+            else
+                memcpy(lpCacheEntryInfo->lpszFileExtension, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetFileExtension, lenExtension * sizeof(CHAR));
+        }
+
+        if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
+            ZeroMemory((LPBYTE)lpCacheEntryInfo + dwRequiredSize, 4 - (dwRequiredSize % 4));
+        dwRequiredSize = DWORD_ALIGN(dwRequiredSize);
+    }
 
     if (dwRequiredSize > *lpdwBufferSize)
     {
@@ -2213,12 +2237,14 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     DWORD dwBytesNeeded = DWORD_ALIGN(sizeof(*pUrlEntry));
     DWORD dwOffsetLocalFileName = 0;
     DWORD dwOffsetHeader = 0;
+    DWORD dwOffsetFileExtension = 0;
     DWORD dwFileSizeLow = 0;
     DWORD dwFileSizeHigh = 0;
     BYTE cDirectory = 0;
     int len;
     char achFile[MAX_PATH];
     LPSTR lpszUrlNameA = NULL;
+    LPSTR lpszFileExtensionA = NULL;
     char *pchLocalFileName = 0;
     DWORD error = ERROR_SUCCESS;
 
@@ -2274,6 +2300,18 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
         goto cleanup;
     }
     WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, lpszUrlNameA, len, NULL, NULL);
+
+    if (lpszFileExtension)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, lpszFileExtension, -1, NULL, 0, NULL, NULL);
+        lpszFileExtensionA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+        if (!lpszFileExtensionA)
+        {
+            error = GetLastError();
+            goto cleanup;
+        }
+        WideCharToMultiByte(CP_ACP, 0, lpszFileExtension, -1, lpszFileExtensionA, len, NULL, NULL);
+    }
 
     if (URLCache_FindHash(pHeader, lpszUrlNameA, &pHashEntry))
     {
@@ -2333,6 +2371,11 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
         dwOffsetHeader = dwBytesNeeded;
         dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + dwHeaderSize);
     }
+    if (lpszFileExtensionA)
+    {
+        dwOffsetFileExtension = dwBytesNeeded;
+        dwBytesNeeded = DWORD_ALIGN(dwBytesNeeded + strlen(lpszFileExtensionA) + 1);
+    }
 
     /* round up to next block */
     if (dwBytesNeeded % BLOCKSIZE)
@@ -2356,6 +2399,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     pUrlEntry->dwHeaderInfoSize = dwHeaderSize;
     pUrlEntry->dwExemptDelta = 0;
     pUrlEntry->dwHitRate = 0;
+    pUrlEntry->dwOffsetFileExtension = dwOffsetFileExtension;
     pUrlEntry->dwOffsetHeaderInfo = dwOffsetHeader;
     pUrlEntry->dwOffsetLocalName = dwOffsetLocalFileName;
     pUrlEntry->dwOffsetUrl = DWORD_ALIGN(sizeof(*pUrlEntry));
@@ -2376,7 +2420,6 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     pUrlEntry->dwUnknown3 = 0x60;
     pUrlEntry->Unknown4 = 0;
     pUrlEntry->wUnknown5 = 0x1010;
-    pUrlEntry->dwUnknown6 = 0;
     pUrlEntry->dwUnknown7 = 0;
     pUrlEntry->dwUnknown8 = 0;
 
@@ -2385,7 +2428,9 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     if (dwOffsetLocalFileName)
         strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetLocalFileName), pchLocalFileName + DIR_LENGTH + 1);
     if (dwOffsetHeader)
-	memcpy((LPBYTE)pUrlEntry + dwOffsetHeader, lpHeaderInfo, dwHeaderSize);
+        memcpy((LPBYTE)pUrlEntry + dwOffsetHeader, lpHeaderInfo, dwHeaderSize);
+    if (dwOffsetFileExtension)
+        strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetFileExtension), lpszFileExtensionA);
 
     if (!URLCache_AddEntryToHash(pHeader, lpszUrlNameA, (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader)))
     {
@@ -2398,6 +2443,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
 cleanup:
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
     HeapFree(GetProcessHeap(), 0, lpszUrlNameA);
+    HeapFree(GetProcessHeap(), 0, lpszFileExtensionA);
 
     if (error == ERROR_SUCCESS)
         return TRUE;
@@ -2425,11 +2471,11 @@ BOOL WINAPI CommitUrlCacheEntryA(
     )
 {
     DWORD len;
-    WCHAR *url_name;
-    WCHAR *local_file_name;
+    WCHAR *url_name = NULL;
+    WCHAR *local_file_name = NULL;
     WCHAR *original_url = NULL;
+    WCHAR *file_extension = NULL;
     BOOL bSuccess = FALSE;
-    DWORD dwError = 0;
 
     TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
         debugstr_a(lpszUrlName),
@@ -2440,51 +2486,43 @@ BOOL WINAPI CommitUrlCacheEntryA(
         debugstr_a(lpszFileExtension),
         debugstr_a(lpszOriginalUrl));
 
-    if (lpszFileExtension != 0)
+    len = MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, NULL, 0);
+    url_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!url_name)
+        goto cleanup;
+    MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, url_name, len);
+
+    len = MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, NULL, 0);
+    local_file_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!local_file_name)
+        goto cleanup;
+    MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, local_file_name, len);
+    if (lpszFileExtension)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
+        len = MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, NULL, 0);
+        file_extension = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!file_extension)
+            goto cleanup;
+        MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, file_extension, len);
     }
-    if ((len = MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, NULL, 0)) != 0 &&
-        (url_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0)
+    if (lpszOriginalUrl)
     {
-	MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, url_name, len);
-	if ((len = MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, NULL, 0)) != 0 &&
-	    (local_file_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0)
-	{
-            MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, local_file_name, len);
-	    if (!lpszOriginalUrl ||
-		((len = MultiByteToWideChar(CP_ACP, 0, lpszOriginalUrl, -1, NULL, 0)) != 0 &&
-		  (original_url = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0))
-	    {
-		if (original_url)
-		    MultiByteToWideChar(CP_ACP, 0, lpszOriginalUrl, -1, original_url, len);
-	        if (CommitUrlCacheEntryInternal(url_name, local_file_name, ExpireTime, LastModifiedTime,
-					CacheEntryType, lpHeaderInfo, dwHeaderSize,
-					NULL, original_url))
-	        {
-	            bSuccess = TRUE;
-	        }
-	        else
-	        {
-	        dwError = GetLastError();
-                }
-	    	HeapFree(GetProcessHeap(), 0, original_url);
-	    }
-		else
-	    {
-	        dwError = GetLastError();
-	    }
-	    HeapFree(GetProcessHeap(), 0, local_file_name);
-	}
-	else
-	{
-	    dwError = GetLastError();
-	}
-        HeapFree(GetProcessHeap(), 0, url_name);
-	if (!bSuccess)
-	    SetLastError(dwError);
+        len = MultiByteToWideChar(CP_ACP, 0, lpszOriginalUrl, -1, NULL, 0);
+        original_url = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!original_url)
+            goto cleanup;
+        MultiByteToWideChar(CP_ACP, 0, lpszOriginalUrl, -1, original_url, len);
     }
+
+    bSuccess = CommitUrlCacheEntryInternal(url_name, local_file_name, ExpireTime, LastModifiedTime,
+                                           CacheEntryType, lpHeaderInfo, dwHeaderSize,
+                                           file_extension, original_url);
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, original_url);
+    HeapFree(GetProcessHeap(), 0, local_file_name);
+    HeapFree(GetProcessHeap(), 0, url_name);
+
     return bSuccess;
 }
 

@@ -56,7 +56,7 @@ static void test_urlcacheA(void)
 
     CloseHandle(hFile);
 
-    ret = CommitUrlCacheEntry(TEST_URL, filename, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, NULL, NULL);
+    ret = CommitUrlCacheEntry(TEST_URL, filename, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
     ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
 
     cbCacheEntryInfo = 0;
@@ -71,6 +71,7 @@ static void test_urlcacheA(void)
     ok(lpCacheEntryInfo->dwStructSize == sizeof(*lpCacheEntryInfo), "lpCacheEntryInfo->dwStructSize was %d\n", lpCacheEntryInfo->dwStructSize);
     ok(!strcmp(lpCacheEntryInfo->lpszSourceUrlName, TEST_URL), "lpCacheEntryInfo->lpszSourceUrlName should be %s instead of %s\n", TEST_URL, lpCacheEntryInfo->lpszSourceUrlName);
     ok(!strcmp(lpCacheEntryInfo->lpszLocalFileName, filename), "lpCacheEntryInfo->lpszLocalFileName should be %s instead of %s\n", filename, lpCacheEntryInfo->lpszLocalFileName);
+    ok(!strcmp(lpCacheEntryInfo->lpszFileExtension, "html"), "lpCacheEntryInfo->lpszFileExtension should be html instead of %s\n", lpCacheEntryInfo->lpszFileExtension);
 
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
