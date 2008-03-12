@@ -375,8 +375,6 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 	
 			    if (CreateDirectoryW(wszDirPath, 0))
 			    {
-				int k;
-	
 				/* The following is OK because we generated an
 				 * 8 character directory name made from characters
 				 * [A-Z0-9], which are equivalent for all code
