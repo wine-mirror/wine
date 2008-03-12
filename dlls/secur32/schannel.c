@@ -39,7 +39,7 @@ static SECURITY_STATUS schan_QueryCredentialsAttributes(
         if (pBuffer)
         {
             /* FIXME: get from CryptoAPI */
-            FIXME("%d: stub\n", ulAttribute);
+            FIXME("SECPKG_ATTR_SUPPORTED_ALGS: stub\n");
             ret = SEC_E_UNSUPPORTED_FUNCTION;
         }
         else
@@ -48,9 +48,13 @@ static SECURITY_STATUS schan_QueryCredentialsAttributes(
     case SECPKG_ATTR_CIPHER_STRENGTHS:
         if (pBuffer)
         {
+            SecPkgCred_CipherStrengths *r = (SecPkgCred_CipherStrengths*)pBuffer;
+
             /* FIXME: get from CryptoAPI */
-            FIXME("%d: stub\n", ulAttribute);
-            ret = SEC_E_UNSUPPORTED_FUNCTION;
+            FIXME("SECPKG_ATTR_CIPHER_STRENGTHS: semi-stub\n");
+            r->dwMinimumCipherStrength = 40;
+            r->dwMaximumCipherStrength = 168;
+            ret = SEC_E_OK;
         }
         else
             ret = SEC_E_INTERNAL_ERROR;
@@ -59,7 +63,7 @@ static SECURITY_STATUS schan_QueryCredentialsAttributes(
         if (pBuffer)
         {
             /* FIXME: get from OpenSSL? */
-            FIXME("%d: stub\n", ulAttribute);
+            FIXME("SECPKG_ATTR_SUPPORTED_PROTOCOLS: stub\n");
             ret = SEC_E_UNSUPPORTED_FUNCTION;
         }
         else
