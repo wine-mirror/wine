@@ -2214,7 +2214,13 @@ static void test_EnumDateFormatsA(void)
 
     trace("EnumDateFormatsA DATE_YEARMONTH\n");
     date_fmt_buf[0] = 0;
+    SetLastError(0xdeadbeef);
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, DATE_YEARMONTH);
+    if (!ret && (GetLastError() == ERROR_INVALID_FLAGS))
+    {
+        skip("DATE_YEARMONTH is only present on W2K and later\n");
+        return;
+    }
     ok(ret, "EnumDateFormatsA(DATE_YEARMONTH) error %d\n", GetLastError());
     trace("%s\n", date_fmt_buf);
     /* test the 1st enumerated format */
