@@ -44,6 +44,8 @@ static UINT (WINAPI *pMsiSourceListGetInfoA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, LPSTR, LPDWORD);
 static UINT (WINAPI *pMsiSourceListSetInfoA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT,  DWORD,LPCSTR,  LPCSTR);
+static UINT (WINAPI *pMsiSourceListAddSourceA)
+    (LPCSTR, LPCSTR, DWORD, LPCSTR);
 
 static void init_functionpointers(void)
 {
@@ -61,6 +63,7 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiSourceListEnumSourcesA)
     GET_PROC(hmsi, MsiSourceListGetInfoA)
     GET_PROC(hmsi, MsiSourceListSetInfoA)
+    GET_PROC(hmsi, MsiSourceListAddSourceA)
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA)
 
@@ -3015,6 +3018,251 @@ static void test_MsiSourceListEnumMediaDisks(void)
     RegCloseKey(prodkey);
 }
 
+static void test_MsiSourceListAddSource(void)
+{
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    CHAR username[MAX_PATH];
+    LPSTR usersid, ptr;
+    LONG res;
+    UINT r;
+    HKEY prodkey, userkey;
+    HKEY net, source;
+    DWORD size;
+
+    if (!pMsiSourceListAddSourceA)
+    {
+        skip("Skipping MsiSourceListAddSourceA tests\n");
+        return;
+    }
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    /* MACHINENAME\username */
+    size = MAX_PATH;
+    GetComputerNameA(username, &size);
+    lstrcatA(username, "\\");
+    ptr = username + lstrlenA(username);
+    size = MAX_PATH;
+    GetUserNameA(ptr, &size);
+
+    /* GetLastError is not set by the function */
+
+    /* NULL szProduct */
+    r = pMsiSourceListAddSourceA(NULL, username, 0, "source");
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* empty szProduct */
+    r = pMsiSourceListAddSourceA("", username, 0, "source");
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* garbage szProduct */
+    r = pMsiSourceListAddSourceA("garbage", username, 0, "source");
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* guid without brackets */
+    r = pMsiSourceListAddSourceA("51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA", username, 0, "source");
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* guid with brackets */
+    r = pMsiSourceListAddSourceA("{51CD2AD5-0482-4C46-8DDD-0ED1022AA1AA}", username, 0, "source");
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* dwReserved is not 0 */
+    r = pMsiSourceListAddSourceA(prodcode, username, 42, "source");
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* szSource is NULL */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* szSource is empty */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "");
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* MSIINSTALLCONTEXT_USERMANAGED */
+
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "source");
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "source");
+    ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+
+    res = RegCreateKeyA(userkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "source");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Net key is created */
+    res = RegOpenKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LastUsedSource does not exist and it is not created */
+    res = RegQueryValueExA(source, "LastUsedSource", 0, NULL, NULL, NULL);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    CHECK_REG_STR(net, "1", "source\\");
+
+    RegDeleteValueA(net, "1");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+
+    res = RegSetValueExA(source, "LastUsedSource", 0, REG_SZ, (LPBYTE)"blah", 5);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LastUsedSource value exists */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "source");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Net key is created */
+    res = RegOpenKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(source, "LastUsedSource", "blah");
+    CHECK_REG_STR(net, "1", "source\\");
+
+    RegDeleteValueA(net, "1");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+
+    res = RegSetValueExA(source, "LastUsedSource", 0, REG_SZ, (LPBYTE)"5", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LastUsedSource is an integer */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "source");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Net key is created */
+    res = RegOpenKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(source, "LastUsedSource", "5");
+    CHECK_REG_STR(net, "1", "source\\");
+
+    /* Add a second source, has trailing backslash */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "another\\");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(source, "LastUsedSource", "5");
+    CHECK_REG_STR(net, "1", "source\\");
+    CHECK_REG_STR(net, "2", "another\\");
+
+    res = RegSetValueExA(source, "LastUsedSource", 0, REG_SZ, (LPBYTE)"2", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LastUsedSource is in the source list */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "third/");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(source, "LastUsedSource", "2");
+    CHECK_REG_STR(net, "1", "source\\");
+    CHECK_REG_STR(net, "2", "another\\");
+    CHECK_REG_STR(net, "3", "third/\\");
+
+    RegDeleteValueA(net, "1");
+    RegDeleteValueA(net, "2");
+    RegDeleteValueA(net, "3");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "source");
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "source");
+    ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+
+    res = RegCreateKeyA(userkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    r = pMsiSourceListAddSourceA(prodcode, username, 0, "source");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Net key is created */
+    res = RegOpenKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(net, "1", "source\\");
+
+    RegDeleteValueA(net, "1");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+
+    /* MSIINSTALLCONTEXT_MACHINE */
+
+    r = pMsiSourceListAddSourceA(prodcode, NULL, 0, "source");
+    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* machine product key exists */
+    r = pMsiSourceListAddSourceA(prodcode, NULL, 0, "source");
+    ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
+
+    res = RegCreateKeyA(prodkey, "SourceList", &source);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists */
+    r = pMsiSourceListAddSourceA(prodcode, NULL, 0, "source");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* Net key is created */
+    res = RegOpenKeyA(source, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(net, "1", "source\\");
+
+    /* empty szUserName */
+    r = pMsiSourceListAddSourceA(prodcode, "", 0, "another");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    CHECK_REG_STR(net, "1", "source\\");
+    CHECK_REG_STR(net, "2", "another\\");
+
+    RegDeleteValueA(net, "2");
+    RegDeleteValueA(net, "1");
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+    RegDeleteKeyA(source, "");
+    RegCloseKey(source);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+}
+
 START_TEST(source)
 {
     init_functionpointers();
@@ -3025,4 +3273,5 @@ START_TEST(source)
     test_MsiSourceListSetInfo();
     test_MsiSourceListAddMediaDisk();
     test_MsiSourceListEnumMediaDisks();
+    test_MsiSourceListAddSource();
 }

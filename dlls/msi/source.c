@@ -850,25 +850,57 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
 UINT WINAPI MsiSourceListAddSourceW( LPCWSTR szProduct, LPCWSTR szUserName,
         DWORD dwReserved, LPCWSTR szSource)
 {
+    WCHAR squished_pc[GUID_SIZE];
     INT ret;
     LPWSTR sidstr = NULL;
     DWORD sidsize = 0;
     DWORD domsize = 0;
+    DWORD context;
+    HKEY hkey = 0;
+    UINT r;
 
     TRACE("%s %s %s\n", debugstr_w(szProduct), debugstr_w(szUserName), debugstr_w(szSource));
 
-    if (LookupAccountNameW(NULL, szUserName, NULL, &sidsize, NULL, &domsize, NULL))
+    if (!szSource || !*szSource)
+        return ERROR_INVALID_PARAMETER;
+
+    if (dwReserved != 0)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!szProduct || !squash_guid(szProduct, squished_pc))
+        return ERROR_INVALID_PARAMETER;
+
+    if (!szUserName || !*szUserName)
+        context = MSIINSTALLCONTEXT_MACHINE;
+    else
     {
-        PSID psid = msi_alloc(sidsize);
+        if (LookupAccountNameW(NULL, szUserName, NULL, &sidsize, NULL, &domsize, NULL))
+        {
+            PSID psid = msi_alloc(sidsize);
 
-        if (LookupAccountNameW(NULL, szUserName, psid, &sidsize, NULL, &domsize, NULL))
-            ConvertSidToStringSidW(psid, &sidstr);
+            if (LookupAccountNameW(NULL, szUserName, psid, &sidsize, NULL, &domsize, NULL))
+                ConvertSidToStringSidW(psid, &sidstr);
 
-        msi_free(psid);
+            msi_free(psid);
+        }
+
+        r = MSIREG_OpenLocalManagedProductKey(szProduct, &hkey, FALSE);
+        if (r == ERROR_SUCCESS)
+            context = MSIINSTALLCONTEXT_USERMANAGED;
+        else
+        {
+            r = MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE);
+            if (r != ERROR_SUCCESS)
+                return ERROR_UNKNOWN_PRODUCT;
+
+            context = MSIINSTALLCONTEXT_USERUNMANAGED;
+        }
+
+        RegCloseKey(hkey);
     }
 
     ret = MsiSourceListAddSourceExW(szProduct, sidstr, 
-        MSIINSTALLCONTEXT_USERMANAGED, MSISOURCETYPE_NETWORK, szSource, 0);
+        context, MSISOURCETYPE_NETWORK, szSource, 0);
 
     if (sidstr)
         LocalFree(sidstr);
@@ -891,7 +923,7 @@ UINT WINAPI MsiSourceListAddSourceA( LPCSTR szProduct, LPCSTR szUserName,
     szwusername = strdupAtoW( szUserName );
     szwsource = strdupAtoW( szSource );
 
-    ret = MsiSourceListAddSourceW(szwproduct, szwusername, 0, szwsource);
+    ret = MsiSourceListAddSourceW(szwproduct, szwusername, dwReserved, szwsource);
 
     msi_free(szwproduct);
     msi_free(szwusername);
