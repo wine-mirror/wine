@@ -2163,28 +2163,9 @@ static void update_font_info(void)
     FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
 }
 
-/*************************************************************
- *    WineEngInit
- *
- * Initialize FreeType library and create a list of available faces
- */
-BOOL WineEngInit(void)
+
+static BOOL init_freetype(void)
 {
-    static const WCHAR dot_fonW[] = {'.','f','o','n','\0'};
-    static const WCHAR pathW[] = {'P','a','t','h',0};
-    HKEY hkey;
-    DWORD valuelen, datalen, i = 0, type, dlen, vlen;
-    LPVOID data;
-    WCHAR windowsdir[MAX_PATH];
-    char *unixname;
-    HANDLE font_mutex;
-    const char *data_dir;
-
-    TRACE("\n");
-
-    /* update locale dependent font info in registry */
-    update_font_info();
-
     ft_handle = wine_dlopen(SONAME_LIBFREETYPE, RTLD_NOW, NULL, 0);
     if(!ft_handle) {
         WINE_MESSAGE(
@@ -2219,7 +2200,7 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Vector_Transform)
 
 #undef LOAD_FUNCPTR
-    /* Don't warn if this one is missing */
+    /* Don't warn if these ones are missing */
     pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
     pFT_Load_Sfnt_Table = wine_dlsym(ft_handle, "FT_Load_Sfnt_Table", NULL, 0);
     pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
@@ -2241,11 +2222,10 @@ BOOL WineEngInit(void)
         ft_handle = NULL;
 	return FALSE;
     }
-    FT_Version.major=FT_Version.minor=FT_Version.patch=-1;
+    FT_Version.major = FT_Version.minor = FT_Version.patch = -1;
     if (pFT_Library_Version)
-    {
         pFT_Library_Version(library,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
-    }
+
     if (FT_Version.major<=0)
     {
         FT_Version.major=2;
@@ -2256,6 +2236,43 @@ BOOL WineEngInit(void)
     FT_SimpleVersion = ((FT_Version.major << 16) & 0xff0000) |
                        ((FT_Version.minor <<  8) & 0x00ff00) |
                        ((FT_Version.patch      ) & 0x0000ff);
+
+    return TRUE;
+
+sym_not_found:
+    WINE_MESSAGE(
+      "Wine cannot find certain functions that it needs inside the FreeType\n"
+      "font library.  To enable Wine to use TrueType fonts please upgrade\n"
+      "FreeType to at least version 2.0.5.\n"
+      "http://www.freetype.org\n");
+    wine_dlclose(ft_handle, NULL, 0);
+    ft_handle = NULL;
+    return FALSE;
+}
+
+/*************************************************************
+ *    WineEngInit
+ *
+ * Initialize FreeType library and create a list of available faces
+ */
+BOOL WineEngInit(void)
+{
+    static const WCHAR dot_fonW[] = {'.','f','o','n','\0'};
+    static const WCHAR pathW[] = {'P','a','t','h',0};
+    HKEY hkey;
+    DWORD valuelen, datalen, i = 0, type, dlen, vlen;
+    LPVOID data;
+    WCHAR windowsdir[MAX_PATH];
+    char *unixname;
+    HANDLE font_mutex;
+    const char *data_dir;
+
+    TRACE("\n");
+
+    /* update locale dependent font info in registry */
+    update_font_info();
+
+    if(!init_freetype()) return FALSE;
 
     if((font_mutex = CreateMutexW(NULL, FALSE, font_mutex_nameW)) == NULL) {
         ERR("Failed to create font mutex\n");
@@ -2385,15 +2402,6 @@ BOOL WineEngInit(void)
     
     ReleaseMutex(font_mutex);
     return TRUE;
-sym_not_found:
-    WINE_MESSAGE(
-      "Wine cannot find certain functions that it needs inside the FreeType\n"
-      "font library.  To enable Wine to use TrueType fonts please upgrade\n"
-      "FreeType to at least version 2.0.5.\n"
-      "http://www.freetype.org\n");
-    wine_dlclose(ft_handle, NULL, 0);
-    ft_handle = NULL;
-    return FALSE;
 }
 
 
