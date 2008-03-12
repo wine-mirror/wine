@@ -131,6 +131,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "_ICC_PROFILE",
     "_MOTIF_WM_HINTS",
     "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR",
+    "_NET_SUPPORTED",
     "_NET_SYSTEM_TRAY_OPCODE",
     "_NET_SYSTEM_TRAY_S0",
     "_NET_WM_MOVERESIZE",

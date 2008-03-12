@@ -639,6 +639,37 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
 
 /***********************************************************************
+ *              is_netwm_supported
+ */
+static BOOL is_netwm_supported( Display *display, Atom atom )
+{
+    static Atom *net_supported;
+    static int net_supported_count = -1;
+    int i;
+
+    wine_tsx11_lock();
+    if (net_supported_count == -1)
+    {
+        Atom type;
+        int format;
+        unsigned long count, remaining;
+
+        if (!XGetWindowProperty( display, DefaultRootWindow(display), x11drv_atom(_NET_SUPPORTED), 0,
+                                 ~0UL, False, XA_ATOM, &type, &format, &count,
+                                 &remaining, (unsigned char **)&net_supported ))
+            net_supported_count = count * (format / 8) / sizeof(Atom);
+        else
+            net_supported_count = 0;
+    }
+    wine_tsx11_unlock();
+
+    for (i = 0; i < net_supported_count; i++)
+        if (net_supported[i] == atom) return TRUE;
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           SysCommandSizeMove   (X11DRV.@)
  *
  * Perform SC_MOVE and SC_SIZE commands.
@@ -655,6 +686,12 @@ BOOL X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
     if (!data->whole_window || !data->managed) return FALSE;
+
+    if (!is_netwm_supported( display, x11drv_atom(_NET_WM_MOVERESIZE) ))
+    {
+        TRACE( "_NET_WM_MOVERESIZE not supported\n" );
+        return FALSE;
+    }
 
     if (syscommand == SC_MOVE)
     {
