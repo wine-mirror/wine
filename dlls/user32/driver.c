@@ -400,8 +400,9 @@ static void nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
 {
 }
 
-static void nulldrv_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
+static BOOL nulldrv_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
 {
+    return FALSE;
 }
 
 static LRESULT nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -725,9 +726,9 @@ static void loaderdrv_SetWindowText( HWND hwnd, LPCWSTR text )
     load_driver()->pSetWindowText( hwnd, text );
 }
 
-static void loaderdrv_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
+static BOOL loaderdrv_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
 {
-    load_driver()->pSysCommandSizeMove( hwnd, wparam );
+    return load_driver()->pSysCommandSizeMove( hwnd, wparam );
 }
 
 static LRESULT loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )

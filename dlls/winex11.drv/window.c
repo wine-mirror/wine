@@ -1567,6 +1567,39 @@ void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
 }
 
 
+/***********************************************************************
+ *		SetCapture  (X11DRV.@)
+ */
+void X11DRV_SetCapture( HWND hwnd, UINT flags )
+{
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+
+    if (!(flags & GUI_INMOVESIZE)) return;
+
+    if (hwnd)
+    {
+        Window grab_win = X11DRV_get_client_window( GetAncestor( hwnd, GA_ROOT ) );
+
+        if (!grab_win) return;
+        wine_tsx11_lock();
+        XFlush( gdi_display );
+        XGrabPointer( thread_data->display, grab_win, False,
+                      PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+                      GrabModeAsync, GrabModeAsync, root_window, None, CurrentTime );
+        wine_tsx11_unlock();
+        thread_data->grab_window = grab_win;
+    }
+    else  /* release capture */
+    {
+        wine_tsx11_lock();
+        XFlush( gdi_display );
+        XUngrabPointer( thread_data->display, CurrentTime );
+        wine_tsx11_unlock();
+        thread_data->grab_window = None;
+    }
+}
+
+
 /*****************************************************************
  *		SetParent   (X11DRV.@)
  */

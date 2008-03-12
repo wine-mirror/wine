@@ -1532,7 +1532,7 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     {
     case SC_SIZE:
     case SC_MOVE:
-        USER_Driver->pSysCommandSizeMove( hwnd, wParam );
+        WINPOS_SysCommandSizeMove( hwnd, wParam );
         break;
 
     case SC_MINIMIZE:
