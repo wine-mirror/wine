@@ -1146,7 +1146,10 @@ IDirectSoundCaptureBufferImpl_Start(
 
             for (c = 0; c < device->nrofpwaves; ++c) {
                 device->pwave[c].lpData = (char *)device->buffer + c * blocksize;
-                device->pwave[c].dwBufferLength = blocksize;
+                if (c + 1 == device->nrofpwaves)
+                    device->pwave[c].dwBufferLength = device->buflen - c * blocksize;
+                else
+                    device->pwave[c].dwBufferLength = blocksize;
                 device->pwave[c].dwBytesRecorded = 0;
                 device->pwave[c].dwUser = (DWORD)device;
                 device->pwave[c].dwFlags = 0;
@@ -1167,8 +1170,6 @@ IDirectSoundCaptureBufferImpl_Start(
                     break;
                 }
             }
-            if (device->buflen % blocksize)
-                device->pwave[device->nrofpwaves - 1].dwBufferLength = device->buflen % blocksize;
 
             FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
         }
