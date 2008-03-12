@@ -1868,54 +1868,6 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             break;
         }
 
-        case INTERNET_OPTION_URL:
-        {
-            TRACE("INTERNET_OPTION_URL\n");
-
-            if (!lpwhh)
-            {
-                WARN("Invalid hInternet handle\n");
-                INTERNET_SetLastError(ERROR_INVALID_HANDLE);
-                return FALSE;
-            }
-            if (lpwhh->htype == WH_HHTTPREQ)
-            {
-                LPWININETHTTPREQW lpreq = (LPWININETHTTPREQW) lpwhh;
-                WCHAR url[1023];
-                static const WCHAR szFmt[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
-                static const WCHAR szHost[] = {'H','o','s','t',0};
-                DWORD sizeRequired;
-                LPHTTPHEADERW Host;
-
-                Host = HTTP_GetHeader(lpreq,szHost);
-                sprintfW(url,szFmt,Host->lpszValue,lpreq->lpszPath);
-                TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
-                if(!bIsUnicode)
-                {
-                    sizeRequired = WideCharToMultiByte(CP_ACP,0,url,-1,
-                     lpBuffer,*lpdwBufferLength,NULL,NULL);
-                    if (sizeRequired > *lpdwBufferLength)
-                        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                    else
-                        bSuccess = TRUE;
-                    *lpdwBufferLength = sizeRequired;
-                }
-                else
-                {
-                    sizeRequired = (lstrlenW(url)+1) * sizeof(WCHAR);
-                    if (*lpdwBufferLength < sizeRequired)
-                        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                    else
-                    {
-                        strcpyW(lpBuffer, url);
-                        bSuccess = TRUE;
-                    }
-                    *lpdwBufferLength = sizeRequired;
-                }
-            }
-            break;
-        }
-
         case INTERNET_OPTION_USER_AGENT:
             FIXME("INTERNET_OPTION_USER_AGENT\n");
             break;

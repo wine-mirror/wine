@@ -1405,6 +1405,8 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
 
 static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
+    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+
     switch(option) {
     case INTERNET_OPTION_HANDLE_TYPE:
         TRACE("INTERNET_OPTION_HANDLE_TYPE\n");
@@ -1415,6 +1417,38 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
         *size = sizeof(DWORD);
         *(DWORD*)buffer = INTERNET_HANDLE_TYPE_HTTP_REQUEST;
         return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_URL: {
+        WCHAR url[INTERNET_MAX_URL_LENGTH];
+        HTTPHEADERW *host;
+        DWORD len;
+
+        static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+        static const WCHAR hostW[] = {'H','o','s','t',0};
+
+        TRACE("INTERNET_OPTION_URL\n");
+
+        host = HTTP_GetHeader(req, hostW);
+        sprintfW(url, formatW, host->lpszValue, req->lpszPath);
+        TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
+
+        if(unicode) {
+            len = (strlenW(url)+1) * sizeof(WCHAR);
+            if(*size < len)
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            *size = len;
+            strcpyW(buffer, url);
+            return ERROR_SUCCESS;
+        }else {
+            len = WideCharToMultiByte(CP_ACP, 0, url, -1, buffer, *size, NULL, NULL);
+            if(len > *size)
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            *size = len;
+            return ERROR_SUCCESS;
+        }
+    }
     }
 
     FIXME("Not implemented option %d\n", option);
