@@ -1186,10 +1186,9 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
  *
  *   Insert or delete the authorization field in the request header.
  */
-static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR header, BOOL first )
+static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, struct HttpAuthInfo *pAuthInfo, LPCWSTR header, BOOL first )
 {
     WCHAR *authorization = NULL;
-    struct HttpAuthInfo *pAuthInfo = lpwhr->pAuthInfo;
     DWORD flags;
 
     if (pAuthInfo && pAuthInfo->auth_data_len)
@@ -3077,8 +3076,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                            lpwhr->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION ? szKeepAlive : szClose,
                            HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
 
-        HTTP_InsertAuthorization(lpwhr, szAuthorization, !loop_next);
-        HTTP_InsertAuthorization(lpwhr, szProxy_Authorization, !loop_next);
+        HTTP_InsertAuthorization(lpwhr, lpwhr->pAuthInfo, szAuthorization, !loop_next);
+        HTTP_InsertAuthorization(lpwhr, lpwhr->pProxyAuthInfo, szProxy_Authorization, !loop_next);
 
         /* add the headers the caller supplied */
         if( lpszHeaders && dwHeaderLength )
