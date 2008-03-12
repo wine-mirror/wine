@@ -234,6 +234,7 @@ struct dce;
 extern BOOL CLIPBOARD_ReleaseOwner(void) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL HOOK_IsHooked( INT id ) DECLSPEC_HIDDEN;
+extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret );
 extern void free_dce( struct dce *dce, HWND hwnd ) DECLSPEC_HIDDEN;
 extern void invalidate_dce( HWND hwnd, const RECT *rect ) DECLSPEC_HIDDEN;
 extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;

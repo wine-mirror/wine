@@ -2636,30 +2636,6 @@ static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 
 
 /***********************************************************************
- *           MENU_SetCapture
- */
-static void MENU_SetCapture( HWND hwnd )
-{
-    HWND previous = 0;
-
-    SERVER_START_REQ( set_capture_window )
-    {
-        req->handle = hwnd;
-        req->flags  = CAPTURE_MENU;
-        if (!wine_server_call_err( req ))
-        {
-            previous = reply->previous;
-            hwnd = reply->full_handle;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (previous && previous != hwnd)
-        SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
-}
-
-
-/***********************************************************************
  *           MENU_DoNextMenu
  *
  * NOTE: WM_NEXTMENU documented in Win32 is a bit different.
@@ -2781,7 +2757,7 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 	if( hNewWnd != pmt->hOwnerWnd )
 	{
 	    pmt->hOwnerWnd = hNewWnd;
-	    MENU_SetCapture( pmt->hOwnerWnd );
+            set_capture_window( pmt->hOwnerWnd, GUI_INMENUMODE, NULL );
 	}
 
 	pmt->hTopMenu = pmt->hCurrentMenu = hNewMenu; /* all subpopups are hidden */
@@ -3015,7 +2991,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
     if (wFlags & TF_ENDMENU) fEndMenu = TRUE;
 
-    MENU_SetCapture( mt.hOwnerWnd );
+    set_capture_window( mt.hOwnerWnd, GUI_INMENUMODE, NULL );
 
     while (!fEndMenu)
     {
@@ -3239,7 +3215,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	else mt.trackFlags &= ~TF_SKIPREMOVE;
     }
 
-    MENU_SetCapture(0);  /* release the capture */
+    set_capture_window( 0, GUI_INMENUMODE, NULL );
 
     /* If dropdown is still painted and the close box is clicked on
        then the menu will be destroyed as part of the DispatchMessage above.
@@ -4122,7 +4098,8 @@ BOOL MENU_SetMenu( HWND hWnd, HMENU hMenu )
         return FALSE;
 
     hWnd = WIN_GetFullHandle( hWnd );
-    if (GetCapture() == hWnd) MENU_SetCapture(0);  /* release the capture */
+    if (GetCapture() == hWnd)
+        set_capture_window( 0, GUI_INMENUMODE, NULL );  /* release the capture */
 
     if (hMenu != 0)
     {

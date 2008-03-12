@@ -76,6 +76,38 @@ static WORD get_key_state(void)
 }
 
 
+/**********************************************************************
+ *		set_capture_window
+ */
+BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
+{
+    HWND previous = 0;
+    UINT flags = 0;
+    BOOL ret;
+
+    if (gui_flags & GUI_INMENUMODE) flags |= CAPTURE_MENU;
+    if (gui_flags & GUI_INMOVESIZE) flags |= CAPTURE_MOVESIZE;
+
+    SERVER_START_REQ( set_capture_window )
+    {
+        req->handle = hwnd;
+        req->flags  = flags;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            previous = reply->previous;
+            hwnd = reply->full_handle;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (previous && previous != hwnd)
+        SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
+
+    if (prev_ret) *prev_ret = previous;
+    return ret;
+}
+
+
 /***********************************************************************
  *		SendInput  (USER32.@)
  */
@@ -191,22 +223,9 @@ BOOL WINAPI SetCursorPos( INT x, INT y )
  */
 HWND WINAPI SetCapture( HWND hwnd )
 {
-    HWND previous = 0;
+    HWND previous;
 
-    SERVER_START_REQ( set_capture_window )
-    {
-        req->handle = hwnd;
-        req->flags  = 0;
-        if (!wine_server_call_err( req ))
-        {
-            previous = reply->previous;
-            hwnd = reply->full_handle;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (previous && previous != hwnd)
-        SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
+    set_capture_window( hwnd, 0, &previous );
     return previous;
 }
 
@@ -216,18 +235,7 @@ HWND WINAPI SetCapture( HWND hwnd )
  */
 BOOL WINAPI ReleaseCapture(void)
 {
-    BOOL ret;
-    HWND previous = 0;
-
-    SERVER_START_REQ( set_capture_window )
-    {
-        req->handle = 0;
-        req->flags  = 0;
-        if ((ret = !wine_server_call_err( req ))) previous = reply->previous;
-    }
-    SERVER_END_REQ;
-
-    if (previous) SendMessageW( previous, WM_CAPTURECHANGED, 0, 0 );
+    BOOL ret = set_capture_window( 0, 0, NULL );
 
     /* Somebody may have missed some mouse movements */
     mouse_event( MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
