@@ -70,6 +70,7 @@ static void test_urlcacheA(void)
 
     ok(lpCacheEntryInfo->dwStructSize == sizeof(*lpCacheEntryInfo), "lpCacheEntryInfo->dwStructSize was %d\n", lpCacheEntryInfo->dwStructSize);
     ok(!strcmp(lpCacheEntryInfo->lpszSourceUrlName, TEST_URL), "lpCacheEntryInfo->lpszSourceUrlName should be %s instead of %s\n", TEST_URL, lpCacheEntryInfo->lpszSourceUrlName);
+    ok(!strcmp(lpCacheEntryInfo->lpszLocalFileName, filename), "lpCacheEntryInfo->lpszLocalFileName should be %s instead of %s\n", filename, lpCacheEntryInfo->lpszLocalFileName);
 
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
