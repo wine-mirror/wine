@@ -112,5 +112,6 @@ enum tid_t {
 };
 
 extern HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo);
+extern ITypeLib *get_msxml3_typelib( LPWSTR *path );
 
 #endif /* __MSXML_PRIVATE__ */
