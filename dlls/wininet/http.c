@@ -55,6 +55,7 @@
 #define NO_SHLWAPI_GDI
 #include "shlwapi.h"
 #include "sspi.h"
+#include "wincrypt.h"
 
 #include "internet.h"
 #include "wine/debug.h"
@@ -1475,6 +1476,68 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
 
             *size = WideCharToMultiByte(CP_ACP, 0, req->lpszCacheFile,
                     -1, buffer, *size, NULL, NULL);
+            return ERROR_SUCCESS;
+        }
+    }
+
+    case INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT: {
+        PCCERT_CONTEXT context;
+
+        if(*size < sizeof(INTERNET_CERTIFICATE_INFOW)) {
+            *size = sizeof(INTERNET_CERTIFICATE_INFOW);
+            return ERROR_INSUFFICIENT_BUFFER;
+        }
+
+        context = (PCCERT_CONTEXT)NETCON_GetCert(&(req->netConnection));
+        if(context) {
+            INTERNET_CERTIFICATE_INFOW *info = (INTERNET_CERTIFICATE_INFOW*)buffer;
+            DWORD len;
+
+            memset(info, 0, sizeof(INTERNET_CERTIFICATE_INFOW));
+            info->ftExpiry = context->pCertInfo->NotAfter;
+            info->ftStart = context->pCertInfo->NotBefore;
+            if(unicode) {
+                len = CertNameToStrW(context->dwCertEncodingType,
+                        &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR, NULL, 0);
+                info->lpszSubjectInfo = LocalAlloc(0, len*sizeof(WCHAR));
+                if(info->lpszSubjectInfo)
+                    CertNameToStrW(context->dwCertEncodingType,
+                             &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR,
+                             info->lpszSubjectInfo, len);
+                len = CertNameToStrW(context->dwCertEncodingType,
+                         &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR, NULL, 0);
+                info->lpszIssuerInfo = LocalAlloc(0, len*sizeof(WCHAR));
+                if (info->lpszIssuerInfo)
+                    CertNameToStrW(context->dwCertEncodingType,
+                             &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR,
+                             info->lpszIssuerInfo, len);
+            }else {
+                INTERNET_CERTIFICATE_INFOA *infoA = (INTERNET_CERTIFICATE_INFOA*)info;
+
+                len = CertNameToStrA(context->dwCertEncodingType,
+                         &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR, NULL, 0);
+                infoA->lpszSubjectInfo = LocalAlloc(0, len);
+                if(infoA->lpszSubjectInfo)
+                    CertNameToStrA(context->dwCertEncodingType,
+                             &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR,
+                             infoA->lpszSubjectInfo, len);
+                len = CertNameToStrA(context->dwCertEncodingType,
+                         &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR, NULL, 0);
+                infoA->lpszIssuerInfo = LocalAlloc(0, len);
+                if(infoA->lpszIssuerInfo)
+                    CertNameToStrA(context->dwCertEncodingType,
+                             &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR,
+                             infoA->lpszIssuerInfo, len);
+            }
+
+            /*
+             * Contrary to MSDN, these do not appear to be set.
+             * lpszProtocolName
+             * lpszSignatureAlgName
+             * lpszEncryptionAlgName
+             * dwKeySize
+             */
+            CertFreeCertificateContext(context);
             return ERROR_SUCCESS;
         }
     }

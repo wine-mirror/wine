@@ -59,7 +59,6 @@
 #include "winerror.h"
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
-#include "wincrypt.h"
 
 #include "wine/exception.h"
 
@@ -2036,87 +2035,6 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             bSuccess = TRUE;
             break;
 
-        case INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT:
-            if (!lpwhh)
-            {
-                INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-                return FALSE;
-            }
-            if (*lpdwBufferLength < sizeof(INTERNET_CERTIFICATE_INFOW))
-            {
-                *lpdwBufferLength = sizeof(INTERNET_CERTIFICATE_INFOW);
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            }
-            else if (lpwhh->htype == WH_HHTTPREQ)
-            {
-                LPWININETHTTPREQW lpwhr;
-                PCCERT_CONTEXT context;
-
-                lpwhr = (LPWININETHTTPREQW)lpwhh;
-                context = (PCCERT_CONTEXT)NETCON_GetCert(&(lpwhr->netConnection));
-                if (context)
-                {
-                    LPINTERNET_CERTIFICATE_INFOW info = (LPINTERNET_CERTIFICATE_INFOW)lpBuffer;
-                    DWORD strLen;
-
-                    memset(info,0,sizeof(INTERNET_CERTIFICATE_INFOW));
-                    info->ftExpiry = context->pCertInfo->NotAfter;
-                    info->ftStart = context->pCertInfo->NotBefore;
-                    if (bIsUnicode)
-                    {
-                        strLen = CertNameToStrW(context->dwCertEncodingType,
-                         &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR,
-                         NULL, 0);
-                        info->lpszSubjectInfo = LocalAlloc(0,
-                         strLen * sizeof(WCHAR));
-                        if (info->lpszSubjectInfo)
-                            CertNameToStrW(context->dwCertEncodingType,
-                             &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR,
-                             info->lpszSubjectInfo, strLen);
-                        strLen = CertNameToStrW(context->dwCertEncodingType,
-                         &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR,
-                         NULL, 0);
-                        info->lpszIssuerInfo = LocalAlloc(0,
-                         strLen * sizeof(WCHAR));
-                        if (info->lpszIssuerInfo)
-                            CertNameToStrW(context->dwCertEncodingType,
-                             &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR,
-                             info->lpszIssuerInfo, strLen);
-                    }
-                    else
-                    {
-                        LPINTERNET_CERTIFICATE_INFOA infoA =
-                         (LPINTERNET_CERTIFICATE_INFOA)info;
-
-                        strLen = CertNameToStrA(context->dwCertEncodingType,
-                         &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR,
-                         NULL, 0);
-                        infoA->lpszSubjectInfo = LocalAlloc(0, strLen);
-                        if (infoA->lpszSubjectInfo)
-                            CertNameToStrA(context->dwCertEncodingType,
-                             &context->pCertInfo->Subject, CERT_SIMPLE_NAME_STR,
-                             infoA->lpszSubjectInfo, strLen);
-                        strLen = CertNameToStrA(context->dwCertEncodingType,
-                         &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR,
-                         NULL, 0);
-                        infoA->lpszIssuerInfo = LocalAlloc(0, strLen);
-                        if (infoA->lpszIssuerInfo)
-                            CertNameToStrA(context->dwCertEncodingType,
-                             &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR,
-                             infoA->lpszIssuerInfo, strLen);
-                    }
-                    /*
-                     * Contrary to MSDN, these do not appear to be set.
-                     * lpszProtocolName
-                     * lpszSignatureAlgName
-                     * lpszEncryptionAlgName
-                     * dwKeySize
-                     */
-                    CertFreeCertificateContext(context);
-                    bSuccess = TRUE;
-                }
-            }
-            break;
         case INTERNET_OPTION_VERSION:
         {
             TRACE("INTERNET_OPTION_VERSION\n");
