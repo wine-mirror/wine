@@ -1142,6 +1142,13 @@ static inline HASH_CACHEFILE_ENTRY * URLCache_HashEntryFromOffset(LPCURLCACHE_HE
     return (HASH_CACHEFILE_ENTRY *)((LPBYTE)pHeader + dwOffset);
 }
 
+static inline BOOL URLCache_IsHashEntryValid(LPCURLCACHE_HEADER pHeader, const HASH_CACHEFILE_ENTRY *pHashEntry)
+{
+    /* check pHashEntry located within acceptable bounds in the URL cache mapping */
+    return ((DWORD)((LPBYTE)pHashEntry - (LPBYTE)pHeader) >= ENTRY_START_OFFSET) &&
+           ((DWORD)((LPBYTE)pHashEntry - (LPBYTE)pHeader) < pHeader->dwFileSize);
+}
+
 static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct _HASH_ENTRY ** ppHashEntry)
 {
     /* structure of hash table:
@@ -1164,7 +1171,7 @@ static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct
     key = (key / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES;
 
     for (pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHeader->dwOffsetFirstHashTable);
-         ((DWORD)((LPBYTE)pHashEntry - (LPBYTE)pHeader) >= ENTRY_START_OFFSET) && ((DWORD)((LPBYTE)pHashEntry - (LPBYTE)pHeader) < pHeader->dwFileSize);
+         URLCache_IsHashEntryValid(pHeader, pHashEntry);
          pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHashEntry->dwAddressNext))
     {
         int i;
@@ -1277,7 +1284,7 @@ static BOOL URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, D
     key = (key / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES;
 
     for (pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHeader->dwOffsetFirstHashTable);
-         ((DWORD)((LPBYTE)pHashEntry - (LPBYTE)pHeader) >= ENTRY_START_OFFSET) && ((DWORD)((LPBYTE)pHashEntry - (LPBYTE)pHeader) < pHeader->dwFileSize);
+         URLCache_IsHashEntryValid(pHeader, pHashEntry);
          pHashEntry = URLCache_HashEntryFromOffset(pHeader, pHashEntry->dwAddressNext))
     {
         int i;
