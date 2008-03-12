@@ -256,13 +256,13 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
         return E_FAIL;
     }
 
-    memcpy(&amt.majortype, &MEDIATYPE_Audio, sizeof(GUID));
-    memcpy(&amt.formattype, &FORMAT_WaveFormatEx, sizeof(GUID));
+    amt.majortype = MEDIATYPE_Audio;
+    amt.formattype = FORMAT_WaveFormatEx;
     amt.cbFormat = chunk.cb;
     amt.pbFormat = CoTaskMemAlloc(amt.cbFormat);
     amt.pUnk = NULL;
     hr = IAsyncReader_SyncRead(This->pReader, pos, amt.cbFormat, amt.pbFormat);
-    memcpy(&amt.subtype, &MEDIATYPE_Audio, sizeof(GUID));
+    amt.subtype = MEDIATYPE_Audio;
     amt.subtype.Data1 = ((WAVEFORMATEX*)amt.pbFormat)->wFormatTag;
 
     pos += chunk.cb;

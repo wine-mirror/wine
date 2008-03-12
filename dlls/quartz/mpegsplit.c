@@ -317,9 +317,9 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
     ppiOutput->pFilter = (IBaseFilter*)This;
     wsprintfW(ppiOutput->achName, wszAudioStream);
 
-    memcpy(&pamt->formattype, &FORMAT_WaveFormatEx, sizeof(GUID));
-    memcpy(&pamt->majortype, &MEDIATYPE_Audio, sizeof(GUID));
-    memcpy(&pamt->subtype, &MEDIASUBTYPE_MPEG1AudioPayload, sizeof(GUID));
+    pamt->formattype = FORMAT_WaveFormatEx;
+    pamt->majortype = MEDIATYPE_Audio;
+    pamt->subtype = MEDIASUBTYPE_MPEG1AudioPayload;
 
     pamt->lSampleSize = 0;
     pamt->bFixedSizeSamples = TRUE;

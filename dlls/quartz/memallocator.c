@@ -188,9 +188,9 @@ static HRESULT WINAPI BaseMemAllocator_SetProperties(IMemAllocator * iface, ALLO
                 hr = E_OUTOFMEMORY;
             else
             {
-                memcpy(This->pProps, pRequest, sizeof(*This->pProps));
-                    
-                memcpy(pActual, pRequest, sizeof(*pActual));
+                *This->pProps = *pRequest;
+
+                *pActual = *pRequest;
 
                 hr = S_OK;
             }

@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
 {
-    memcpy(pDest, pSrc, sizeof(AM_MEDIA_TYPE));
+    *pDest = *pSrc;
     if (!pSrc->pbFormat) return S_OK;
     if (!(pDest->pbFormat = CoTaskMemAlloc(pSrc->cbFormat)))
         return E_OUTOFMEMORY;

@@ -609,7 +609,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
             This->pmt->pbFormat = NULL;
             This->pmt->pUnk = NULL;
             This->pmt->lSampleSize = 0;
-            memcpy(&This->pmt->formattype, &FORMAT_None, sizeof(FORMAT_None));
+            This->pmt->formattype = FORMAT_None;
             hr = GetClassMediaFile(pReader, pszFileName, &This->pmt->majortype, &This->pmt->subtype);
             if (FAILED(hr))
             {

@@ -365,19 +365,19 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                 switch (pStrHdr->fccType)
                 {
                 case streamtypeVIDEO:
-                    memcpy(&amt.formattype, &FORMAT_VideoInfo, sizeof(GUID));
+                    amt.formattype = FORMAT_VideoInfo;
                     amt.pbFormat = NULL;
                     amt.cbFormat = 0;
                     break;
                 case streamtypeAUDIO:
-                    memcpy(&amt.formattype, &FORMAT_WaveFormatEx, sizeof(GUID));
+                    amt.formattype = FORMAT_WaveFormatEx;
                     break;
                 default:
-                    memcpy(&amt.formattype, &FORMAT_None, sizeof(GUID));
+                    amt.formattype = FORMAT_None;
                 }
-                memcpy(&amt.majortype, &MEDIATYPE_Video, sizeof(GUID));
+                amt.majortype = MEDIATYPE_Video;
                 amt.majortype.Data1 = pStrHdr->fccType;
-                memcpy(&amt.subtype, &MEDIATYPE_Video, sizeof(GUID));
+                amt.subtype = MEDIATYPE_Video;
                 amt.subtype.Data1 = pStrHdr->fccHandler;
                 TRACE("Subtype FCC: %.04s\n", (LPCSTR)&pStrHdr->fccHandler);
                 amt.lSampleSize = pStrHdr->dwSampleSize;
@@ -448,7 +448,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
 
     if (IsEqualGUID(&amt.formattype, &FORMAT_WaveFormatEx))
     {
-        memcpy(&amt.subtype, &MEDIATYPE_Video, sizeof(GUID));
+        amt.subtype = MEDIATYPE_Video;
         amt.subtype.Data1 = ((WAVEFORMATEX *)amt.pbFormat)->wFormatTag;
     }
 
