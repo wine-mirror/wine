@@ -186,6 +186,7 @@ HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj, IBackgroundCopyJob* iC
 
     /* Create array of files */
     This->indexFiles = 0;
+    EnterCriticalSection(&job->cs);
     This->numFiles = list_count(&job->files);
     This->files = NULL;
     if (This->numFiles > 0)
@@ -194,6 +195,7 @@ HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj, IBackgroundCopyJob* iC
                                 This->numFiles * sizeof This->files[0]);
         if (!This->files)
         {
+            LeaveCriticalSection(&job->cs);
             HeapFree(GetProcessHeap(), 0, This);
             return E_OUTOFMEMORY;
         }
@@ -206,6 +208,7 @@ HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj, IBackgroundCopyJob* iC
         This->files[i] = (IBackgroundCopyFile *) file;
         ++i;
     }
+    LeaveCriticalSection(&job->cs);
 
     *ppObj = &This->lpVtbl;
     return S_OK;

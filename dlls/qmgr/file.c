@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
 static void BackgroundCopyFileDestructor(BackgroundCopyFileImpl *This)
 {
+    IBackgroundCopyJob_Release((IBackgroundCopyJob *) This->owner);
     HeapFree(GetProcessHeap(), 0, This->info.LocalName);
     HeapFree(GetProcessHeap(), 0, This->info.RemoteName);
     HeapFree(GetProcessHeap(), 0, This);
@@ -105,9 +106,11 @@ static HRESULT WINAPI BITS_IBackgroundCopyFile_GetProgress(
 {
     BackgroundCopyFileImpl *This = (BackgroundCopyFileImpl *) iface;
 
+    EnterCriticalSection(&This->owner->cs);
     pVal->BytesTotal = This->fileProgress.BytesTotal;
     pVal->BytesTransferred = This->fileProgress.BytesTransferred;
     pVal->Completed = This->fileProgress.Completed;
+    LeaveCriticalSection(&This->owner->cs);
 
     return S_OK;
 }
@@ -122,8 +125,9 @@ static const IBackgroundCopyFileVtbl BITS_IBackgroundCopyFile_Vtbl =
     BITS_IBackgroundCopyFile_GetProgress
 };
 
-HRESULT BackgroundCopyFileConstructor(LPCWSTR remoteName,
-                                      LPCWSTR localName, LPVOID *ppObj)
+HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
+                                      LPCWSTR remoteName, LPCWSTR localName,
+                                      LPVOID *ppObj)
 {
     BackgroundCopyFileImpl *This;
     int n;
@@ -160,6 +164,8 @@ HRESULT BackgroundCopyFileConstructor(LPCWSTR remoteName,
     This->fileProgress.BytesTotal = BG_SIZE_UNKNOWN;
     This->fileProgress.BytesTransferred = 0;
     This->fileProgress.Completed = FALSE;
+    This->owner = owner;
+    IBackgroundCopyJob_AddRef((IBackgroundCopyJob *) owner);
 
     *ppObj = &This->lpVtbl;
     return S_OK;

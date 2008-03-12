@@ -41,6 +41,8 @@ typedef struct
     struct list files;
     BG_JOB_PROGRESS jobProgress;
     BG_JOB_STATE state;
+    /* Protects file list, and progress */
+    CRITICAL_SECTION cs;
     struct list entryFromQmgr;
 } BackgroundCopyJobImpl;
 
@@ -72,12 +74,14 @@ typedef struct
     BG_FILE_INFO info;
     BG_FILE_PROGRESS fileProgress;
     struct list entryFromJob;
+    BackgroundCopyJobImpl *owner;
 } BackgroundCopyFileImpl;
 
 /* Background copy manager vtbl and related data */
 typedef struct
 {
     const IBackgroundCopyManagerVtbl *lpVtbl;
+    /* Protects job list and job states */
     CRITICAL_SECTION cs;
     struct list jobs;
 } BackgroundCopyManagerImpl;
@@ -88,14 +92,16 @@ typedef struct
 } ClassFactoryImpl;
 
 extern ClassFactoryImpl BITS_ClassFactory;
+extern BackgroundCopyManagerImpl globalMgr;
 
 HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
                                      GUID *pJobId, LPVOID *ppObj);
 HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
                                           IBackgroundCopyManager* copyManager);
-HRESULT BackgroundCopyFileConstructor(LPCWSTR remoteName,
-                                      LPCWSTR localName, LPVOID *ppObj);
+HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
+                                      LPCWSTR remoteName, LPCWSTR localName,
+                                      LPVOID *ppObj);
 HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj,
                                            IBackgroundCopyJob* copyJob);
 

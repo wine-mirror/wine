@@ -127,7 +127,7 @@ static const IBackgroundCopyManagerVtbl BITS_IBackgroundCopyManager_Vtbl =
     BITS_IBackgroundCopyManager_GetErrorDescription
 };
 
-static BackgroundCopyManagerImpl globalMgr = {
+BackgroundCopyManagerImpl globalMgr = {
     &BITS_IBackgroundCopyManager_Vtbl,
     { NULL, -1, 0, 0, 0, 0 },
     LIST_INIT(globalMgr.jobs)

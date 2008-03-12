@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
 static void BackgroundCopyJobDestructor(BackgroundCopyJobImpl *This)
 {
+    DeleteCriticalSection(&This->cs);
     HeapFree(GetProcessHeap(), 0, This->displayName);
     HeapFree(GetProcessHeap(), 0, This);
 }
@@ -88,15 +89,17 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFile(
     /* We should return E_INVALIDARG in these cases.  */
     FIXME("Check for valid filenames and supported protocols\n");
 
-    res = BackgroundCopyFileConstructor(RemoteUrl, LocalName, (LPVOID *) &pFile);
+    res = BackgroundCopyFileConstructor(This, RemoteUrl, LocalName, (LPVOID *) &pFile);
     if (res != S_OK)
         return res;
 
     /* Add a reference to the file to file list */
     IBackgroundCopyFile_AddRef(pFile);
     file = (BackgroundCopyFileImpl *) pFile;
+    EnterCriticalSection(&This->cs);
     list_add_head(&This->files, &file->entryFromJob);
     ++This->jobProgress.FilesTotal;
+    LeaveCriticalSection(&This->cs);
 
     return S_OK;
 }
@@ -120,24 +123,26 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_Resume(
     IBackgroundCopyJob* iface)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+    HRESULT rv = S_OK;
 
+    EnterCriticalSection(&globalMgr.cs);
     if (This->state == BG_JOB_STATE_CANCELLED
         || This->state == BG_JOB_STATE_ACKNOWLEDGED)
     {
-        return BG_E_INVALID_STATE;
+        rv = BG_E_INVALID_STATE;
     }
-
-    if (This->jobProgress.FilesTransferred == This->jobProgress.FilesTotal)
-        return BG_E_EMPTY;
-
-    if (This->state == BG_JOB_STATE_CONNECTING
-        || This->state == BG_JOB_STATE_TRANSFERRING)
+    else if (This->jobProgress.FilesTransferred == This->jobProgress.FilesTotal)
     {
-        return S_OK;
+        rv = BG_E_EMPTY;
     }
+    else if (This->state != BG_JOB_STATE_CONNECTING
+             && This->state != BG_JOB_STATE_TRANSFERRING)
+    {
+        This->state = BG_JOB_STATE_QUEUED;
+    }
+    LeaveCriticalSection(&globalMgr.cs);
 
-    This->state = BG_JOB_STATE_QUEUED;
-    return S_OK;
+    return rv;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Cancel(
@@ -185,10 +190,12 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetProgress(
     if (!pVal)
         return E_INVALIDARG;
 
+    EnterCriticalSection(&This->cs);
     pVal->BytesTotal = This->jobProgress.BytesTotal;
     pVal->BytesTransferred = This->jobProgress.BytesTransferred;
     pVal->FilesTotal = This->jobProgress.FilesTotal;
     pVal->FilesTransferred = This->jobProgress.FilesTransferred;
+    LeaveCriticalSection(&This->cs);
 
     return S_OK;
 }
@@ -210,6 +217,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetState(
     if (!pVal)
         return E_INVALIDARG;
 
+    /* Don't think we need a critical section for this */
     *pVal = This->state;
     return S_OK;
 }
@@ -441,6 +449,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
         return E_OUTOFMEMORY;
 
     This->lpVtbl = &BITS_IBackgroundCopyJob_Vtbl;
+    InitializeCriticalSection(&This->cs);
     This->ref = 1;
     This->type = type;
 
@@ -448,6 +457,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
     This->displayName = HeapAlloc(GetProcessHeap(), 0, n);
     if (!This->displayName)
     {
+        DeleteCriticalSection(&This->cs);
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
@@ -456,6 +466,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
     hr = CoCreateGuid(&This->jobId);
     if (FAILED(hr))
     {
+        DeleteCriticalSection(&This->cs);
         HeapFree(GetProcessHeap(), 0, This->displayName);
         HeapFree(GetProcessHeap(), 0, This);
         return hr;
