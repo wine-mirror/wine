@@ -3013,6 +3013,60 @@ static void test_nodeTypeTests( void )
     free_bstrs();
 }
 
+static void test_DocumentSaveToDocument(void)
+{
+    IXMLDOMDocument *doc = NULL;
+    IXMLDOMDocument *doc2 = NULL;
+    IXMLDOMElement *pRoot;
+
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc2 );
+    if( hr != S_OK )
+    {
+        IXMLDOMDocument_Release(doc);
+        return;
+    }
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if(hr == S_OK)
+    {
+        hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)pRoot, NULL);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            VARIANT vDoc;
+            BSTR sOrig;
+            BSTR sNew;
+
+            V_VT(&vDoc) = VT_UNKNOWN;
+            V_UNKNOWN(&vDoc) = (IUnknown*)doc2;
+
+            hr = IXMLDOMDocument_save(doc, vDoc);
+            ok(hr == S_OK, "ret %08x\n", hr );
+
+            hr = IXMLDOMDocument_get_xml(doc, &sOrig);
+            ok(hr == S_OK, "ret %08x\n", hr );
+
+            hr = IXMLDOMDocument_get_xml(doc2, &sNew);
+            ok(hr == S_OK, "ret %08x\n", hr );
+
+            ok( !lstrcmpW( sOrig, sNew ), "New document is not the same as origial\n");
+
+            SysFreeString(sOrig);
+            SysFreeString(sNew);
+        }
+    }
+
+    IXMLDOMDocument_Release(doc2);
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -3034,6 +3088,7 @@ START_TEST(domdoc)
     test_cloneNode();
     test_xmlTypes();
     test_nodeTypeTests();
+    test_DocumentSaveToDocument();
 
     CoUninitialize();
 }

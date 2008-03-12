@@ -1559,10 +1559,35 @@ static HRESULT WINAPI domdoc_save(
     TRACE("(%p)->(var(vt %x, %s))\n", This, V_VT(&destination),
           V_VT(&destination) == VT_BSTR ? debugstr_w(V_BSTR(&destination)) : NULL);
 
-    if(V_VT(&destination) != VT_BSTR)
+    if(V_VT(&destination) != VT_BSTR && V_VT(&destination) != VT_UNKNOWN)
     {
-        FIXME("Unhandled vt %x\n", V_VT(&destination));
+        FIXME("Unhandled vt %d\n", V_VT(&destination));
         return S_FALSE;
+    }
+
+    if(V_VT(&destination) == VT_UNKNOWN)
+    {
+        IUnknown *pUnk = V_UNKNOWN(&destination);
+        IXMLDOMDocument *pDocument;
+
+        ret = IXMLDOMDocument_QueryInterface(pUnk, &IID_IXMLDOMDocument2, (void**)&pDocument);
+        if(ret == S_OK)
+        {
+            BSTR bXML;
+            VARIANT_BOOL bSuccessful;
+
+            ret = IXMLDOMDocument_get_xml(iface, &bXML);
+            if(ret == S_OK)
+            {
+                ret = IXMLDOMDocument_loadXML(pDocument, bXML, &bSuccessful);
+
+                SysFreeString(bXML);
+            }
+
+            IXMLDOMDocument_Release(pDocument);
+        }
+
+        return ret;
     }
 
     handle = CreateFileW( V_BSTR(&destination), GENERIC_WRITE, 0,
