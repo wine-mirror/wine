@@ -521,15 +521,15 @@ LONG CoreAudio_WaveInit(void)
                                                                                                 (char) (status >> 16),
                                                                                                 (char) (status >> 8),
                                                                                                 (char) status);
-        return 1;
+        return DRV_FAILURE;
     }
     if (CoreAudio_DefaultDevice.outputDeviceID == kAudioDeviceUnknown) {
         ERR("AudioHardwareGetProperty: CoreAudio_DefaultDevice.outputDeviceID == kAudioDeviceUnknown\n");
-        return 1;
+        return DRV_FAILURE;
     }
     
     if ( ! CoreAudio_GetDevCaps() )
-        return 1;
+        return DRV_FAILURE;
     
     CoreAudio_DefaultDevice.interface_name=HeapAlloc(GetProcessHeap(),0,strlen(CoreAudio_DefaultDevice.dev_name)+1);
     sprintf(CoreAudio_DefaultDevice.interface_name, "%s", CoreAudio_DefaultDevice.dev_name);
@@ -646,7 +646,7 @@ LONG CoreAudio_WaveInit(void)
     if (!messageThreadPortName)
     {
         ERR("Can't create message thread port name\n");
-        return 1;
+        return DRV_FAILURE;
     }
 
     port_ReceiveInMessageThread = CFMessagePortCreateLocal(kCFAllocatorDefault, messageThreadPortName,
@@ -655,7 +655,7 @@ LONG CoreAudio_WaveInit(void)
     {
         ERR("Can't create message thread local port\n");
         CFRelease(messageThreadPortName);
-        return 1;
+        return DRV_FAILURE;
     }
 
     Port_SendToMessageThread = CFMessagePortCreateRemote(kCFAllocatorDefault, messageThreadPortName);
@@ -664,7 +664,7 @@ LONG CoreAudio_WaveInit(void)
     {
         ERR("Can't create port for sending to message thread\n");
         CFRelease(port_ReceiveInMessageThread);
-        return 1;
+        return DRV_FAILURE;
     }
 
     /* Cannot WAIT for any events because we are called from the loader (which has a lock on loading stuff) */
@@ -681,12 +681,12 @@ LONG CoreAudio_WaveInit(void)
         CFRelease(port_ReceiveInMessageThread);
         CFRelease(Port_SendToMessageThread);
         Port_SendToMessageThread = NULL;
-        return 1;
+        return DRV_FAILURE;
     }
 
     /* The message thread is responsible for releasing port_ReceiveInMessageThread. */
 
-    return 0;
+    return DRV_SUCCESS;
 }
 
 void CoreAudio_WaveRelease(void)

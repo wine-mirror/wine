@@ -368,7 +368,7 @@ LONG CoreAudio_MixerInit(void)
             (char) (status >> 16),
             (char) (status >> 8),
             (char) status);
-        return 0;
+        return DRV_FAILURE;
     }
 
     numLines = propertySize / sizeof(AudioDeviceID);
@@ -495,7 +495,7 @@ LONG CoreAudio_MixerInit(void)
     MIX_FillControls();
 
     HeapFree(GetProcessHeap(), 0, deviceArray);
-    return 1;
+    return DRV_SUCCESS;
 
 error:
     if (mixer.lines)
@@ -510,7 +510,7 @@ error:
     HeapFree(GetProcessHeap(), 0, deviceArray);
     if (mixer.mixerCtrls)
         HeapFree(GetProcessHeap(), 0, mixer.mixerCtrls);
-    return 0;
+    return DRV_FAILURE;
 }
 
 /**************************************************************************

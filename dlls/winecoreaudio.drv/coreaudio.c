@@ -45,7 +45,7 @@ static LRESULT CoreAudio_drvLoad(void)
     CoreAudio_WaveInit();
     CoreAudio_MIDIInit();
     CoreAudio_MixerInit();
-    return 1;
+    return DRV_SUCCESS;
 }
 
 /**************************************************************************
@@ -57,7 +57,7 @@ static LRESULT CoreAudio_drvFree(void)
     CoreAudio_WaveRelease();
     CoreAudio_MIDIRelease();
     CoreAudio_MixerRelease();
-    return 1;
+    return DRV_SUCCESS;
 }
 
 /**************************************************************************

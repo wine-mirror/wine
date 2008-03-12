@@ -109,7 +109,7 @@ LONG CoreAudio_MIDIInit(void)
     {
         CFRelease(name);
         ERR("can't create wineMIDIClient\n");
-        return 0;
+        return DRV_FAILURE;
     }
     CFRelease(name);
 
@@ -193,7 +193,7 @@ LONG CoreAudio_MIDIInit(void)
         destinations[i].caps.wVoices = 16;
         destinations[i].caps.wNotes = 16;
     }
-    return 1;
+    return DRV_SUCCESS;
 }
 
 LONG CoreAudio_MIDIRelease(void)
@@ -214,7 +214,7 @@ LONG CoreAudio_MIDIRelease(void)
 
     HeapFree(GetProcessHeap(), 0, sources);
     HeapFree(GetProcessHeap(), 0, destinations);
-    return 1;
+    return DRV_SUCCESS;
 }
 
 
