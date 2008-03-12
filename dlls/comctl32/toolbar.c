@@ -5186,6 +5186,7 @@ TOOLBAR_GetStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (iString < infoPtr->nNumStrings)
     {
         ret = WideCharToMultiByte(CP_ACP, 0, infoPtr->strings[iString], -1, str, buffersize, NULL, NULL);
+        ret--;
 
         TRACE("returning %s\n", debugstr_a(str));
     }
@@ -5216,11 +5217,12 @@ TOOLBAR_GetStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
             memcpy(str, infoPtr->strings[iString], ret);
             str[len] = '\0';
         }
+        ret = len;
 
         TRACE("returning %s\n", debugstr_w(str));
     }
     else
-        ERR("String index %d out of range (largest is %d)\n", iString, infoPtr->nNumStrings - 1);
+        WARN("String index %d out of range (largest is %d)\n", iString, infoPtr->nNumStrings - 1);
 
     return ret;
 }
