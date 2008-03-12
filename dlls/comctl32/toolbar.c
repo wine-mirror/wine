@@ -5211,8 +5211,11 @@ TOOLBAR_GetStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
         len = min(len, strlenW(infoPtr->strings[iString]));
         ret = (len+1)*sizeof(WCHAR);
-        memcpy(str, infoPtr->strings[iString], ret);
-        str[len] = '\0';
+        if (str)
+        {
+            memcpy(str, infoPtr->strings[iString], ret);
+            str[len] = '\0';
+        }
 
         TRACE("returning %s\n", debugstr_w(str));
     }
