@@ -583,13 +583,12 @@ void URLCacheContainers_DeleteAll(void)
 
 static BOOL URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAINER ** ppContainer)
 {
-    struct list * cursor;
+    URLCACHECONTAINER * pContainer;
 
     TRACE("searching for prefix for URL: %s\n", debugstr_w(lpwszUrl));
 
-    LIST_FOR_EACH(cursor, &UrlContainers)
+    LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, URLCACHECONTAINER, entry)
     {
-        URLCACHECONTAINER * pContainer = LIST_ENTRY(cursor, URLCACHECONTAINER, entry);
         int prefix_len = strlenW(pContainer->cache_prefix);
         if (!strncmpW(pContainer->cache_prefix, lpwszUrl, prefix_len))
         {
