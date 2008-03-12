@@ -10,7 +10,8 @@ CTESTS = \
 	generated.c \
 	http.c \
 	internet.c \
-	url.c
+	url.c \
+	urlcache.c
 
 @MAKE_TEST_RULES@
 
