@@ -471,9 +471,28 @@ static VOID APPINFO_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwai);
 }
 
+static DWORD APPINFO_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+{
+    switch(option) {
+    case INTERNET_OPTION_HANDLE_TYPE:
+        TRACE("INTERNET_OPTION_HANDLE_TYPE\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(DWORD);
+        *(DWORD*)buffer = INTERNET_HANDLE_TYPE_INTERNET;
+        return ERROR_SUCCESS;
+    }
+
+    FIXME("Not implemented option %d\n", option);
+    return ERROR_INTERNET_INVALID_OPTION;
+}
+
 static const HANDLEHEADERVtbl APPINFOVtbl = {
     APPINFO_Destroy,
     NULL,
+    APPINFO_QueryOption,
     NULL,
     NULL,
     NULL,
@@ -1834,32 +1853,6 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
 
     switch (dwOption)
     {
-        case INTERNET_OPTION_HANDLE_TYPE:
-        {
-            ULONG type;
-
-            if (!lpwhh)
-            {
-                WARN("Invalid hInternet handle\n");
-                INTERNET_SetLastError(ERROR_INVALID_HANDLE);
-                return FALSE;
-            }
-
-            type = lpwhh->htype;
-
-            TRACE("INTERNET_OPTION_HANDLE_TYPE: %d\n", type);
-
-            if (*lpdwBufferLength < sizeof(ULONG))
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            else
-            {
-                memcpy(lpBuffer, &type, sizeof(ULONG));
-                bSuccess = TRUE;
-            }
-            *lpdwBufferLength = sizeof(ULONG);
-            break;
-        }
-
         case INTERNET_OPTION_REQUEST_FLAGS:
         {
             ULONG flags = 4;
@@ -1922,6 +1915,10 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             }
             break;
         }
+
+        case INTERNET_OPTION_USER_AGENT:
+            FIXME("INTERNET_OPTION_USER_AGENT\n");
+            break;
 
         case INTERNET_OPTION_DATAFILE_NAME:
         {
@@ -2272,9 +2269,20 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
         FIXME("66\n");
         bSuccess = TRUE;
         break;
-        default:
-            FIXME("Stub! %d\n", dwOption);
-            break;
+        default: {
+            if(lpwhh) {
+                DWORD res;
+
+                res = lpwhh->vtbl->QueryOption(lpwhh, dwOption, lpBuffer, lpdwBufferLength, bIsUnicode);
+                if(res == ERROR_SUCCESS)
+                    bSuccess = TRUE;
+                else
+                    SetLastError(res);
+            }else {
+                FIXME("Stub! %d\n", dwOption);
+                break;
+            }
+        }
     }
     if (lpwhh)
         WININET_Release( lpwhh );
