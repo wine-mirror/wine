@@ -6,6 +6,8 @@ MODULE    = jscript.dll
 IMPORTS   = kernel32
 EXTRALIBS = -luuid
 
+RC_SRCS = rsrc.rc
+
 C_SRCS = \
 	jscript_main.c
 
