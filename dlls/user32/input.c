@@ -100,6 +100,8 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
     }
     SERVER_END_REQ;
 
+    USER_Driver->pSetCapture( hwnd, gui_flags );
+
     if (previous && previous != hwnd)
         SendMessageW( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
 
