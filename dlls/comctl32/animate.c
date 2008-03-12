@@ -856,14 +856,10 @@ static LRESULT ANIMATE_Destroy(ANIMATE_INFO *infoPtr)
 static BOOL ANIMATE_EraseBackground(ANIMATE_INFO const *infoPtr, HDC hdc)
 {
     RECT rect;
-    HBRUSH hBrush = 0;
+    HBRUSH hBrush;
 
-    if(infoPtr->dwStyle & ACS_TRANSPARENT)
-    {
-        hBrush = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLORSTATIC,
-				      (WPARAM)hdc, (LPARAM)infoPtr->hwndSelf);
-    }
-
+    hBrush = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLORSTATIC,
+                                  (WPARAM)hdc, (LPARAM)infoPtr->hwndSelf);
     GetClientRect(infoPtr->hwndSelf, &rect);
     FillRect(hdc, &rect, hBrush ? hBrush : GetCurrentObject(hdc, OBJ_BRUSH));
 
