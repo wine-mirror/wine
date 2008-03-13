@@ -1414,7 +1414,18 @@ static void testSHGetFolderPathAndSubDirA(void)
 
     /* test invalid forth parameter */
     ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, 2, wine, testpath);
-    ok(E_INVALIDARG == ret, "expected E_INVALIDARG, got  %x\n", ret);
+    switch(ret) {
+        case S_OK: /* winvista */
+            ok(!strncmp(appdata, testpath, strlen(appdata)),
+                "expected %s to start with %s\n", testpath, appdata);
+            ok(!lstrcmpA(&testpath[1 + strlen(appdata)], winetemp),
+                "expected %s to end with %s\n", testpath, winetemp);
+            break;
+        case E_INVALIDARG: /* winxp, win2k3 */
+            break;
+        default:
+            ok(0, "expected S_OK or E_INVALIDARG, got  %x\n", ret);
+    }
 
     /* test fifth parameter */
     testpath[0] = '\0';
@@ -1438,7 +1449,7 @@ static void testSHGetFolderPathAndSubDirA(void)
 
     testpath[0] = '\0';
     ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, wine, NULL);
-    ok(S_OK == ret, "expected S_OK, got %x\n", ret);
+    ok((S_OK == ret) || (E_INVALIDARG == ret), "expected S_OK or E_INVALIDARG, got %x\n", ret);
 
     /* test a not existing path */
     testpath[0] = '\0';
