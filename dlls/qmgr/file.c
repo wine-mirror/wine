@@ -1,7 +1,7 @@
 /*
  * Queue Manager (BITS) File
  *
- * Copyright 2007 Google (Roy Shea)
+ * Copyright 2007, 2008 Google (Roy Shea, Dan Hipschman)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,16 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "winreg.h"
+#include "ole2.h"
+#include "urlmon.h"
+#include "wininet.h"
 
 #include "qmgr.h"
 #include "wine/debug.h"
@@ -204,6 +214,7 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
     static WCHAR prefix[] = {'B','I','T', 0};
     WCHAR tmpDir[MAX_PATH];
     WCHAR tmpName[MAX_PATH];
+    HRESULT hr;
 
     if (!GetTempPathW(MAX_PATH, tmpDir))
     {
@@ -233,10 +244,30 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
           debugstr_w(file->info.LocalName));
 
     transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSFERRING);
-    if (!CopyFileExW(file->info.RemoteName, tmpName, copyProgressCallback,
-                     file, NULL, 0))
+
+    DeleteUrlCacheEntryW(file->info.RemoteName);
+    hr = URLDownloadToFileW(NULL, file->info.RemoteName, tmpName, 0, NULL);
+    if (SUCCEEDED(hr))
     {
-        ERR("Local file copy failed: error %d\n", GetLastError());
+        FIXME("Do progress updates correctly with IBindStatusCallback\n");
+        EnterCriticalSection(&job->cs);
+        file->fileProgress.BytesTotal = 0;
+        LeaveCriticalSection(&job->cs);
+    }
+    else if (hr == INET_E_DOWNLOAD_FAILURE)
+    {
+        TRACE("URLDownload failed, trying local file copy\n");
+        if (!CopyFileExW(file->info.RemoteName, tmpName, copyProgressCallback,
+                         file, NULL, 0))
+        {
+            ERR("Local file copy failed: error %d\n", GetLastError());
+            transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_ERROR);
+            return FALSE;
+        }
+    }
+    else
+    {
+        ERR("URLDownload failed: eh 0x%08x\n", hr);
         transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_ERROR);
         return FALSE;
     }
