@@ -4471,7 +4471,7 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     MSIFILE *file;
     SC_HANDLE hscm, service = NULL;
     LPCWSTR comp, depends, pass;
-    LPWSTR name, disp;
+    LPWSTR name = NULL, disp = NULL;
     LPCWSTR load_order, serv_name, key;
     DWORD serv_type, start_type;
     DWORD err_control;
