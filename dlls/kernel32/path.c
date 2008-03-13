@@ -1010,6 +1010,9 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
     if (!dest)
         return DeleteFileW( source );
 
+    if (flag & MOVEFILE_WRITE_THROUGH)
+        FIXME("MOVEFILE_WRITE_THROUGH unimplemented\n");
+
     /* check if we are allowed to rename the source */
 
     if (!RtlDosPathNameToNtPathName_U( source, &nt_name, NULL, NULL ))
