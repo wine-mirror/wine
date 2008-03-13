@@ -388,23 +388,27 @@ BOOL match_token(const char *haystack, const char *needle)
 **  by Wacom tablets.  This code will likely need to be expanded for alternate tablet types
 */
 
-#define IS_TABLET_CURSOR(n, t)   (is_wacom((n), (t)) || is_cursor((n), (t)) || is_stylus((n), (t)) || is_eraser((n), (t)) || is_pad((n), (t)))
-
-static BOOL is_wacom(const char *name, const char *type)
+static BOOL is_tablet_cursor(const char *name, const char *type)
 {
-    if (name && match_token(name, "wacom"))
-        return TRUE;
-    if (type && match_token(type, "wacom"))
-        return TRUE;
-    return FALSE;
-}
+    int i;
+    static const char *tablet_cursor_whitelist[] = {
+        "wacom",
+        "wizardpen",
+        "acecad",
+        "tablet",
+        "cursor",
+        "stylus",
+        "eraser",
+        "pad",
+        NULL
+    };
 
-static BOOL is_cursor(const char *name, const char *type)
-{
-    if (name && match_token(name, "cursor"))
-        return TRUE;
-    if (type && match_token(type, "cursor"))
-        return TRUE;
+    for (i=0; tablet_cursor_whitelist[i] != NULL; i++) {
+        if (name && match_token(name, tablet_cursor_whitelist[i]))
+            return TRUE;
+        if (type && match_token(type, tablet_cursor_whitelist[i]))
+            return TRUE;
+    }
     return FALSE;
 }
 
@@ -422,15 +426,6 @@ static BOOL is_eraser(const char *name, const char *type)
     if (name && match_token(name, "eraser"))
         return TRUE;
     if (type && match_token(type, "eraser"))
-        return TRUE;
-    return FALSE;
-}
-
-static BOOL is_pad(const char *name, const char *type)
-{
-    if (name && match_token(name, "pad"))
-        return TRUE;
-    if (type && match_token(type, "pad"))
         return TRUE;
     return FALSE;
 }
@@ -580,9 +575,9 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             }
             MultiByteToWideChar(CP_UNIXCP, 0, target->name, -1, cursor->NAME, WT_MAX_NAME_LEN);
 
-            if (! IS_TABLET_CURSOR(target->name, device_type))
+            if (! is_tablet_cursor(target->name, device_type))
             {
-                WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device\n",
+                WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device.  If this is wrong, please report to http://forums.winehq.org\n",
                      loop, devices[loop].name, device_type ? device_type : "");
                 XFree(device_type);
                 cursor_target --;
