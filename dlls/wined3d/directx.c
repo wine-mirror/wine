@@ -36,6 +36,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
+/* The d3d device ID */
+static const GUID IID_D3DDEVICE_D3DUID = { 0xaeb2cdd4, 0x6e41, 0x43ea, { 0x94,0x1c,0x83,0x61,0xcc,0x76,0x07,0x81 } };
+
 /* Extension detection */
 static const struct {
     const char *extension_string;
@@ -1594,8 +1597,8 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     *(pIdentifier->DeviceId) = Adapters[Adapter].gl_info.gl_card;
     *(pIdentifier->SubSysId) = 0;
     *(pIdentifier->Revision) = 0;
+    *pIdentifier->DeviceIdentifier = IID_D3DDEVICE_D3DUID;
 
-    /*FIXME: memcpy(&pIdentifier->DeviceIdentifier, ??, sizeof(??GUID)); */
     if (Flags & WINED3DENUM_NO_WHQL_LEVEL) {
         *(pIdentifier->WHQLLevel) = 0;
     } else {
