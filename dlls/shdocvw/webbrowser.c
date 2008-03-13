@@ -462,8 +462,11 @@ static HRESULT WINAPI WebBrowser_get_LocationURL(IWebBrowser2 *iface, BSTR *Loca
 static HRESULT WINAPI WebBrowser_get_Busy(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pBool);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pBool);
+
+    *pBool = This->doc_host.busy;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_Quit(IWebBrowser2 *iface)

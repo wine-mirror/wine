@@ -99,6 +99,7 @@ struct DocHost {
 
     VARIANT_BOOL silent;
     VARIANT_BOOL offline;
+    VARIANT_BOOL busy;
 
     ConnectionPointContainer cps;
 };

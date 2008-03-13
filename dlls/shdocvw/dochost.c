@@ -78,6 +78,7 @@ static void navigate_complete(DocHost *This)
     SysFreeString(V_BSTR(&url));
     if(disp)
         IDispatch_Release(disp);
+    This->busy = VARIANT_FALSE;
 }
 
 void object_available(DocHost *This)

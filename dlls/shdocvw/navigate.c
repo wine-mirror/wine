@@ -427,6 +427,8 @@ static void on_before_navigate2(DocHost *This, LPCWSTR url, const BYTE *post_dat
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = params;
 
+    This->busy = VARIANT_TRUE;
+
     V_VT(params) = VT_BOOL|VT_BYREF;
     V_BOOLREF(params) = cancel;
 
