@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -209,9 +211,165 @@ static DWORD CALLBACK copyProgressCallback(LARGE_INTEGER totalSize,
             : PROGRESS_CANCEL);
 }
 
+typedef struct
+{
+    const IBindStatusCallbackVtbl *lpVtbl;
+    BackgroundCopyFileImpl *file;
+    LONG ref;
+} DLBindStatusCallback;
+
+static ULONG WINAPI DLBindStatusCallback_AddRef(IBindStatusCallback *iface)
+{
+    DLBindStatusCallback *This = (DLBindStatusCallback *) iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI DLBindStatusCallback_Release(IBindStatusCallback *iface)
+{
+    DLBindStatusCallback *This = (DLBindStatusCallback *) iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (ref == 0)
+    {
+        IBackgroundCopyFile_Release((IBackgroundCopyFile *) This->file);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_QueryInterface(
+    IBindStatusCallback *iface,
+    REFIID riid,
+    void **ppvObject)
+{
+    DLBindStatusCallback *This = (DLBindStatusCallback *) iface;
+
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IBindStatusCallback))
+    {
+        *ppvObject = &This->lpVtbl;
+        DLBindStatusCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_GetBindInfo(
+    IBindStatusCallback *iface,
+    DWORD *grfBINDF,
+    BINDINFO *pbindinfo)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_GetPriority(
+    IBindStatusCallback *iface,
+    LONG *pnPriority)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_OnDataAvailable(
+    IBindStatusCallback *iface,
+    DWORD grfBSCF,
+    DWORD dwSize,
+    FORMATETC *pformatetc,
+    STGMEDIUM *pstgmed)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_OnLowResource(
+    IBindStatusCallback *iface,
+    DWORD reserved)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_OnObjectAvailable(
+    IBindStatusCallback *iface,
+    REFIID riid,
+    IUnknown *punk)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_OnProgress(
+    IBindStatusCallback *iface,
+    ULONG progress,
+    ULONG progressMax,
+    ULONG statusCode,
+    LPCWSTR statusText)
+{
+    DLBindStatusCallback *This = (DLBindStatusCallback *) iface;
+    BackgroundCopyFileImpl *file = This->file;
+    BackgroundCopyJobImpl *job = file->owner;
+    ULONG64 diff;
+
+    EnterCriticalSection(&job->cs);
+    diff = (file->fileProgress.BytesTotal == BG_SIZE_UNKNOWN
+            ? progress
+            : progress - file->fileProgress.BytesTransferred);
+    file->fileProgress.BytesTotal = progressMax ? progressMax : BG_SIZE_UNKNOWN;
+    file->fileProgress.BytesTransferred = progress;
+    job->jobProgress.BytesTransferred += diff;
+    LeaveCriticalSection(&job->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_OnStartBinding(
+    IBindStatusCallback *iface,
+    DWORD dwReserved,
+    IBinding *pib)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DLBindStatusCallback_OnStopBinding(
+    IBindStatusCallback *iface,
+    HRESULT hresult,
+    LPCWSTR szError)
+{
+    return E_NOTIMPL;
+}
+
+static const IBindStatusCallbackVtbl DLBindStatusCallback_Vtbl =
+{
+    DLBindStatusCallback_QueryInterface,
+    DLBindStatusCallback_AddRef,
+    DLBindStatusCallback_Release,
+    DLBindStatusCallback_OnStartBinding,
+    DLBindStatusCallback_GetPriority,
+    DLBindStatusCallback_OnLowResource,
+    DLBindStatusCallback_OnProgress,
+    DLBindStatusCallback_OnStopBinding,
+    DLBindStatusCallback_GetBindInfo,
+    DLBindStatusCallback_OnDataAvailable,
+    DLBindStatusCallback_OnObjectAvailable
+};
+
+static DLBindStatusCallback *DLBindStatusCallbackConstructor(
+    BackgroundCopyFileImpl *file)
+{
+    DLBindStatusCallback *This = HeapAlloc(GetProcessHeap(), 0, sizeof This);
+    if (!This)
+        return NULL;
+
+    This->lpVtbl = &DLBindStatusCallback_Vtbl;
+    IBackgroundCopyFile_AddRef((IBackgroundCopyFile *) file);
+    This->file = file;
+    This->ref = 1;
+    return This;
+}
+
 BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
 {
     static WCHAR prefix[] = {'B','I','T', 0};
+    IBindStatusCallback *callbackObj;
     WCHAR tmpDir[MAX_PATH];
     WCHAR tmpName[MAX_PATH];
     HRESULT hr;
@@ -232,6 +390,14 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
         return FALSE;
     }
 
+    callbackObj = (IBindStatusCallback *) DLBindStatusCallbackConstructor(file);
+    if (!callbackObj)
+    {
+        ERR("Out of memory\n");
+        transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSIENT_ERROR);
+        return FALSE;
+    }
+
     EnterCriticalSection(&job->cs);
     file->fileProgress.BytesTotal = BG_SIZE_UNKNOWN;
     file->fileProgress.BytesTransferred = 0;
@@ -246,15 +412,9 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
     transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSFERRING);
 
     DeleteUrlCacheEntryW(file->info.RemoteName);
-    hr = URLDownloadToFileW(NULL, file->info.RemoteName, tmpName, 0, NULL);
-    if (SUCCEEDED(hr))
-    {
-        FIXME("Do progress updates correctly with IBindStatusCallback\n");
-        EnterCriticalSection(&job->cs);
-        file->fileProgress.BytesTotal = 0;
-        LeaveCriticalSection(&job->cs);
-    }
-    else if (hr == INET_E_DOWNLOAD_FAILURE)
+    hr = URLDownloadToFileW(NULL, file->info.RemoteName, tmpName, 0, callbackObj);
+    IBindStatusCallback_Release(callbackObj);
+    if (hr == INET_E_DOWNLOAD_FAILURE)
     {
         TRACE("URLDownload failed, trying local file copy\n");
         if (!CopyFileExW(file->info.RemoteName, tmpName, copyProgressCallback,
@@ -265,7 +425,7 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
             return FALSE;
         }
     }
-    else
+    else if (!SUCCEEDED(hr))
     {
         ERR("URLDownload failed: eh 0x%08x\n", hr);
         transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_ERROR);
