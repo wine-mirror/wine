@@ -786,6 +786,13 @@ static void test_domdoc( void )
         r = IXMLDOMProcessingInstruction_put_data(nodePI, _bstr_("version=\"1.0\" encoding=\"UTF-8\""));
         ok(r == E_FAIL, "ret %08x\n", r );
 
+        /* test put_data */
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocString(szOpen);  /* Doesnt matter what the string is, cannot set an xml node. */
+        r = IXMLDOMProcessingInstruction_put_nodeValue(nodePI, var);
+        ok(r == E_FAIL, "ret %08x\n", r );
+        VariantClear(&var);
+
         /* test get nodeName */
         r = IXMLDOMProcessingInstruction_get_nodeName(nodePI, &str);
         ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
