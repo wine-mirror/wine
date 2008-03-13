@@ -69,6 +69,7 @@ my %special_dlls =
 # Default patterns for top-level .gitignore
 my @ignores = (
     "*.[oa]",
+    "*.res",
     "*.so",
     "/autom4te.cache",
     "/config.cache",
@@ -88,8 +89,6 @@ my @ignore_srcs = (
     [ 'BISON_SRCS',   '\.y',   '.tab.h' ],
     [ 'LEX_SRCS',     '\.l',   '.yy.c' ],
     [ 'MC_SRCS',      '\.mc',  '.mc.rc' ],
-    [ 'RC_SRCS',      '\.rc',  '.res' ],
-    [ 'RC_SRCS16',    '\.rc',  '.res' ],
     [ 'IDL_TLB_SRCS', '\.idl', '.tlb' ],
     [ 'IDL_H_SRCS',   '\.idl', '.h' ],
     [ 'IDL_C_SRCS',   '\.idl', '.h' ],
