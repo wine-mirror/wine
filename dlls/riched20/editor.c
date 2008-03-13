@@ -898,7 +898,7 @@ static void ME_RTFReadHook(RTF_Info *info) {
       {
         case rtfBeginGroup:
           if (info->stackTop < maxStack) {
-            memcpy(&info->stack[info->stackTop].fmt, &info->style->fmt, sizeof(CHARFORMAT2W));
+            info->stack[info->stackTop].fmt = info->style->fmt;
             info->stack[info->stackTop].codePage = info->codePage;
             info->stack[info->stackTop].unicodeLength = info->unicodeLength;
           }

@@ -403,7 +403,7 @@ HFONT ME_SelectStyleFont(ME_Context *c, ME_Style *s)
     TRACE_(richedit_style)("font created %d\n", nEmpty);
     item->hFont = s->hFont;
     item->nRefs = 1;
-    memcpy(&item->lfSpecs, &lf, sizeof(LOGFONTW));
+    item->lfSpecs = lf;
   }
   hOldFont = SelectObject(c->hDC, s->hFont);
   /* should be cached too, maybe ? */
