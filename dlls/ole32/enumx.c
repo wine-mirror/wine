@@ -177,7 +177,7 @@ enumx_impl *enumx_allocate(REFIID riid, const void *vtbl, ULONG elem_size)
         enumx->ref = 1;
         enumx->current = NULL;
         enumx->elem_size = elem_size;
-        memcpy(&enumx->riid, riid, sizeof *riid);
+        enumx->riid = *riid;
         list_init(&enumx->elements);
     }
 

@@ -887,7 +887,7 @@ static HRESULT WINAPI IPropertyStorage_fnSetClass(
         return E_INVALIDARG;
     if (!(This->grfMode & STGM_READWRITE))
         return STG_E_ACCESSDENIED;
-    memcpy(&This->clsid, clsid, sizeof(This->clsid));
+    This->clsid = *clsid;
     This->dirty = TRUE;
     if (This->grfFlags & PROPSETFLAG_UNBUFFERED)
         IPropertyStorage_Commit(iface, STGC_DEFAULT);
