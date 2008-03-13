@@ -139,6 +139,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_Resume(
              && This->state != BG_JOB_STATE_TRANSFERRING)
     {
         This->state = BG_JOB_STATE_QUEUED;
+        SetEvent(globalMgr.jobEvent);
     }
     LeaveCriticalSection(&globalMgr.cs);
 

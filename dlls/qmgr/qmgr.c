@@ -130,6 +130,7 @@ static const IBackgroundCopyManagerVtbl BITS_IBackgroundCopyManager_Vtbl =
 BackgroundCopyManagerImpl globalMgr = {
     &BITS_IBackgroundCopyManager_Vtbl,
     { NULL, -1, 0, 0, 0, 0 },
+    NULL,
     LIST_INIT(globalMgr.jobs)
 };
 
@@ -139,4 +140,60 @@ HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj)
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
     *ppObj = (IBackgroundCopyManager *) &globalMgr;
     return S_OK;
+}
+
+DWORD WINAPI fileTransfer(void *param)
+{
+    BackgroundCopyManagerImpl *qmgr = &globalMgr;
+    HANDLE events[2];
+
+    events[0] = stop_event;
+    events[1] = qmgr->jobEvent;
+
+    for (;;)
+    {
+        BackgroundCopyJobImpl *job, *jobCur;
+        BOOL haveJob = FALSE;
+
+        /* Check if it's the stop_event */
+        if (WaitForMultipleObjects(2, events, FALSE, INFINITE) == WAIT_OBJECT_0)
+            return 0;
+
+        /* Note that other threads may add files to the job list, but only
+           this thread ever deletes them so we don't need to worry about jobs
+           magically disappearing from the list.  */
+        EnterCriticalSection(&qmgr->cs);
+
+        LIST_FOR_EACH_ENTRY_SAFE(job, jobCur, &qmgr->jobs, BackgroundCopyJobImpl, entryFromQmgr)
+        {
+            if (job->state == BG_JOB_STATE_ACKNOWLEDGED || job->state == BG_JOB_STATE_CANCELLED)
+            {
+                list_remove(&job->entryFromQmgr);
+                IBackgroundCopyJob_Release((IBackgroundCopyJob *) job);
+            }
+            else if (job->state == BG_JOB_STATE_QUEUED)
+            {
+                haveJob = TRUE;
+                break;
+            }
+            else if (job->state == BG_JOB_STATE_CONNECTING
+                     || job->state == BG_JOB_STATE_TRANSFERRING)
+            {
+                ERR("Invalid state for job %p: %d\n", job, job->state);
+            }
+        }
+
+        if (!haveJob)
+            ResetEvent(qmgr->jobEvent);
+
+        LeaveCriticalSection(&qmgr->cs);
+
+        if (haveJob)
+        {
+            FIXME("Actually process job %p; setting error state\n", job);
+            EnterCriticalSection(&qmgr->cs);
+            job->state = BG_JOB_STATE_ERROR;
+            LeaveCriticalSection(&qmgr->cs);
+        }
+    }
 }

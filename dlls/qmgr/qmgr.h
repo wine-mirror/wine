@@ -81,8 +81,9 @@ typedef struct
 typedef struct
 {
     const IBackgroundCopyManagerVtbl *lpVtbl;
-    /* Protects job list and job states */
+    /* Protects job list, job states, and jobEvent  */
     CRITICAL_SECTION cs;
+    HANDLE jobEvent;
     struct list jobs;
 } BackgroundCopyManagerImpl;
 
@@ -91,6 +92,7 @@ typedef struct
     const IClassFactoryVtbl *lpVtbl;
 } ClassFactoryImpl;
 
+extern HANDLE stop_event;
 extern ClassFactoryImpl BITS_ClassFactory;
 extern BackgroundCopyManagerImpl globalMgr;
 
@@ -104,6 +106,7 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
                                       LPVOID *ppObj);
 HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj,
                                            IBackgroundCopyJob* copyJob);
+DWORD WINAPI fileTransfer(void *param);
 
 /* Little helper functions */
 static inline char *

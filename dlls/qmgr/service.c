@@ -28,10 +28,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
+HANDLE stop_event = NULL;
+
 static WCHAR qmgr_nameW[] = {'B','I','T','S',0};
 static SERVICE_STATUS_HANDLE status_handle;
 static SERVICE_STATUS status;
-static HANDLE stop_event = NULL;
 
 static VOID
 UpdateStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
@@ -108,6 +109,8 @@ StartCount(void)
 VOID WINAPI
 ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
 {
+    HANDLE fileTxThread;
+    DWORD threadId;
     TRACE("\n");
 
     stop_event = CreateEventW(NULL, TRUE, FALSE, NULL);
@@ -129,9 +132,24 @@ ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
         return;
     }
 
+    globalMgr.jobEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    if (!globalMgr.jobEvent) {
+        ERR("Couldn't create event: error %d\n", GetLastError());
+        UpdateStatus(SERVICE_STOPPED, NO_ERROR, 0);
+        return;
+    }
+
+    fileTxThread = CreateThread(NULL, 0, fileTransfer, NULL, 0, &threadId);
+    if (!fileTxThread)
+    {
+        ERR("Failed starting file transfer thread\n");
+        UpdateStatus(SERVICE_STOPPED, NO_ERROR, 0);
+        return;
+    }
+
     UpdateStatus(SERVICE_RUNNING, NO_ERROR, 0);
 
-    WaitForSingleObject(stop_event, INFINITE);
+    WaitForSingleObject(fileTxThread, INFINITE);
     UpdateStatus(SERVICE_STOPPED, NO_ERROR, 0);
     CloseHandle(stop_event);
     TRACE("service stoped\n");
