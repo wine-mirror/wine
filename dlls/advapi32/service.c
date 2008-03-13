@@ -36,7 +36,7 @@
 #include "lmcons.h"
 #include "lmserver.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(advapi);
+WINE_DEFAULT_DEBUG_CHANNEL(service);
 
 static const WCHAR szLocalSystem[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
 static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
