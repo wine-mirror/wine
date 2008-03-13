@@ -270,12 +270,38 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
                                     IBaseFilter *pfRenderer)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
+    IPin *pin_in = NULL;
+    IPin *pin_out = NULL;
+    HRESULT hr;
 
     FIXME("(%p/%p)->(%s, %s, %p, %p, %p) Stub!\n", This, iface,
           debugstr_guid(pCategory), debugstr_guid(pType),
           pSource, pfCompressor, pfRenderer);
 
-    return E_NOTIMPL;
+    if (pfCompressor)
+        FIXME("Intermediate streams not supported yet\n");
+
+    if (!This->mygraph)
+    {
+        FIXME("Need a capture graph\n");
+        return E_UNEXPECTED;
+    }
+
+    ICaptureGraphBuilder2_FindPin(iface, pSource, PINDIR_OUTPUT, pCategory, pType, TRUE, 0, &pin_in);
+    if (!pin_in)
+        return E_FAIL;
+    ICaptureGraphBuilder2_FindPin(iface, (IUnknown*)pfRenderer, PINDIR_INPUT, pCategory, pType, TRUE, 0, &pin_out);
+    if (!pin_out)
+    {
+        IPin_Release(pin_in);
+        return E_FAIL;
+    }
+
+    /* Uses 'Intelligent Connect', so Connect, not ConnectDirect here */
+    hr = IFilterGraph2_Connect(This->mygraph, pin_in, pin_out);
+    IPin_Release(pin_in);
+    IPin_Release(pin_out);
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -333,16 +359,22 @@ static BOOL pin_matches(IPin *pin, PIN_DIRECTION direction, const GUID *cat, con
 
     IPin_QueryDirection(pin, &pindir);
     if (pindir != direction)
+    {
+        TRACE("No match, wrong direction\n");
         return FALSE;
+    }
 
     if (unconnected && IPin_ConnectedTo(pin, &partner) == S_OK)
     {
         IPin_Release(partner);
+        TRACE("No match, %p already connected to %p\n", pin, partner);
         return FALSE;
     }
 
     if (cat || type)
         FIXME("Ignoring category/type\n");
+
+    TRACE("Match made in heaven\n");
 
     return TRUE;
 }
@@ -403,6 +435,7 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
 
             if (hr != S_OK)
                 break;
+            TRACE("Testing match\n");
             if (pin_matches(pin, pindir, pCategory, pType, fUnconnected) && numcurrent++ == num)
                 break;
             IPin_Release(pin);
@@ -412,7 +445,7 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
 
         if (hr != S_OK)
         {
-            WARN("Could not find pin # %d\n", numcurrent);
+            WARN("Could not find %s pin # %d\n", (pindir == PINDIR_OUTPUT ? "output" : "input"), numcurrent);
             return E_FAIL;
         }
     }
