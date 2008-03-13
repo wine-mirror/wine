@@ -2961,7 +2961,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
     {
         int len = MultiByteToWideChar(CP_ACP, 0, lpszUrlSearchPattern, -1, NULL, 0);
         pEntryHandle->lpszUrlSearchPattern = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if (!pEntryHandle)
+        if (!pEntryHandle->lpszUrlSearchPattern)
         {
             HeapFree(GetProcessHeap(), 0, pEntryHandle);
             return NULL;
@@ -3002,7 +3002,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
     {
         int len = strlenW(lpszUrlSearchPattern);
         pEntryHandle->lpszUrlSearchPattern = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-        if (!pEntryHandle)
+        if (!pEntryHandle->lpszUrlSearchPattern)
         {
             HeapFree(GetProcessHeap(), 0, pEntryHandle);
             return NULL;
