@@ -18,6 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+
 #include "qmgr.h"
 #include "wine/debug.h"
 
@@ -157,8 +162,43 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_Cancel(
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Complete(
     IBackgroundCopyJob* iface)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
+    HRESULT rv = S_OK;
+
+    EnterCriticalSection(&This->cs);
+
+    if (This->state == BG_JOB_STATE_CANCELLED
+        || This->state == BG_JOB_STATE_ACKNOWLEDGED)
+    {
+        rv = BG_E_INVALID_STATE;
+    }
+    else
+    {
+        BackgroundCopyFileImpl *file;
+        LIST_FOR_EACH_ENTRY(file, &This->files, BackgroundCopyFileImpl, entryFromJob)
+        {
+            if (file->fileProgress.Completed)
+            {
+                if (!MoveFileExW(file->tempFileName, file->info.LocalName,
+                                 (MOVEFILE_COPY_ALLOWED
+                                  | MOVEFILE_REPLACE_EXISTING
+                                  | MOVEFILE_WRITE_THROUGH)))
+                {
+                    ERR("Couldn't rename file %s -> %s\n",
+                        debugstr_w(file->tempFileName),
+                        debugstr_w(file->info.LocalName));
+                    rv = BG_S_PARTIAL_COMPLETE;
+                }
+            }
+            else
+                rv = BG_S_PARTIAL_COMPLETE;
+        }
+    }
+
+    This->state = BG_JOB_STATE_ACKNOWLEDGED;
+    LeaveCriticalSection(&This->cs);
+
+    return rv;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetId(

@@ -280,6 +280,103 @@ static void test_ResumeEmpty(void)
     ok(state == BG_JOB_STATE_SUSPENDED, "Incorrect job state: %d\n", state);
 }
 
+static void makeFile(WCHAR *name, const char *contents)
+{
+    HANDLE file;
+    DWORD w, len = strlen(contents);
+
+    DeleteFileW(name);
+    file = CreateFileW(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile\n");
+    ok(WriteFile(file, contents, len, &w, NULL), "WriteFile\n");
+    CloseHandle(file);
+}
+
+static void compareFiles(WCHAR *n1, WCHAR *n2)
+{
+    char b1[256];
+    char b2[256];
+    DWORD s1, s2;
+    HANDLE f1, f2;
+
+    f1 = CreateFileW(n1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                     FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(f1 != INVALID_HANDLE_VALUE, "CreateFile\n");
+
+    f2 = CreateFileW(n2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                     FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(f1 != INVALID_HANDLE_VALUE, "CreateFile\n");
+
+    /* Neither of these files is very big */
+    ok(ReadFile(f1, b1, sizeof b1, &s1, NULL), "ReadFile\n");
+    ok(ReadFile(f2, b2, sizeof b2, &s2, NULL), "ReadFile\n");
+
+    CloseHandle(f1);
+    CloseHandle(f2);
+
+    ok(s1 == s2, "Files differ in length\n");
+    ok(memcmp(b1, b2, s1) == 0, "Files differ in contents\n");
+}
+
+/* Test a complete transfer for local files */
+static void test_CompleteLocal(void)
+{
+    static const int timeout_sec = 30;
+    HRESULT hres;
+    BG_JOB_STATE state;
+    int i;
+
+    DeleteFileW(test_localPathA);
+    DeleteFileW(test_localPathB);
+    makeFile(test_remotePathA, "This is a WINE test file for BITS\n");
+    makeFile(test_remotePathB, "This is another WINE test file for BITS\n");
+
+    hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathA,
+                                      test_localPathA);
+    if (hres != S_OK)
+    {
+        skip("Unable to add file to job\n");
+        return;
+    }
+
+    hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathB,
+                                      test_localPathB);
+    if (hres != S_OK)
+    {
+        skip("Unable to add file to job\n");
+        return;
+    }
+
+    hres = IBackgroundCopyJob_Resume(test_job);
+    ok(hres == S_OK, "IBackgroundCopyJob_Resume\n");
+
+    for (i = 0; i < timeout_sec; ++i)
+    {
+        hres = IBackgroundCopyJob_GetState(test_job, &state);
+        ok(hres == S_OK, "IBackgroundCopyJob_GetState\n");
+        ok(state == BG_JOB_STATE_QUEUED || state == BG_JOB_STATE_CONNECTING
+           || state == BG_JOB_STATE_TRANSFERRING || state == BG_JOB_STATE_TRANSFERRED,
+           "Bad state: %d\n", state);
+        if (state == BG_JOB_STATE_TRANSFERRED)
+            break;
+        Sleep(1000);
+    }
+
+    ok(i < timeout_sec, "BITS jobs timed out\n");
+    hres = IBackgroundCopyJob_Complete(test_job);
+    ok(hres == S_OK, "IBackgroundCopyJob_Complete\n");
+    hres = IBackgroundCopyJob_GetState(test_job, &state);
+    ok(hres == S_OK, "IBackgroundCopyJob_GetState\n");
+    ok(state == BG_JOB_STATE_ACKNOWLEDGED, "Bad state: %d\n", state);
+
+    compareFiles(test_remotePathA, test_localPathA);
+    compareFiles(test_remotePathB, test_localPathB);
+
+    ok(DeleteFileW(test_remotePathA), "DeleteFile\n");
+    ok(DeleteFileW(test_remotePathB), "DeleteFile\n");
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(job)
@@ -293,6 +390,7 @@ START_TEST(job)
         test_GetProgress_preTransfer,
         test_GetState,
         test_ResumeEmpty,
+        test_CompleteLocal,
         0
     };
     const test_t *test;
