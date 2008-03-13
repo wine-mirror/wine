@@ -2307,7 +2307,7 @@ system.ini, drivers32,,"; vidc.IV32=ir32_32.dll"
 HKLM,%CurrentVersionNT%\Time Zones\Dateline Standard Time,"Display",,"Pacific/Kwajalein"
 HKLM,%CurrentVersionNT%\Time Zones\Dateline Standard Time,"Dlt",,"Dateline Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Dateline Standard Time,"Std",,"Dateline Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Dateline Standard Time,"TZI",1,d0,02,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Dateline Standard Time,"TZI",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time,"Display",,"Pacific/Apia"
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time,"Dlt",,"Samoa Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Samoa Standard Time,"Std",,"Samoa Standard Time"
@@ -2323,12 +2323,12 @@ HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time,"TZI",1,1c,02,00,00,00,
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"Display",,"America/Los_Angeles"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"Dlt",,"Pacific Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"Std",,"Pacific Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Display",,"America/Tijuana"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Dlt",,"Pacific Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Std",,"Pacific Standard Time (Mexico)"
-HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Display",,"America/Chihuahua (Mexico Standard Time 2)"
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Display",,"America/Chihuahua"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Dlt",,"Mexico Daylight Time 2"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Std",,"Mexico Standard Time 2"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"TZI",1,a4,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
@@ -2339,7 +2339,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Mid-Atlantic Standard Time,"TZI",1,78,00,00,0
 HKLM,%CurrentVersionNT%\Time Zones\Middle East Standard Time,"Display",,"Asia/Beirut"
 HKLM,%CurrentVersionNT%\Time Zones\Middle East Standard Time,"Dlt",,"Middle East Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Middle East Standard Time,"Std",,"Middle East Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Middle East Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,00,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Middle East Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,06,00,04,00,18,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Montevideo Standard Time,"Display",,"America/Montevideo"
 HKLM,%CurrentVersionNT%\Time Zones\Montevideo Standard Time,"Dlt",,"Montevideo Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Montevideo Standard Time,"Std",,"Montevideo Standard Time"
@@ -2348,10 +2348,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time,"Display",,"America/De
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time,"Dlt",,"Mountain Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time,"Std",,"Mountain Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time,"TZI",1,a4,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"Display",,"America/Chihuahua (Mountain Standard Time)"
+HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"Display",,"America/Chihuahua"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"Dlt",,"Mountain Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"Std",,"Mountain Standard Time (Mexico)"
-HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"TZI",1,a4,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Mountain Standard Time (Mexico),"TZI",1,a4,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\US Mountain Standard Time,"Display",,"America/Phoenix"
 HKLM,%CurrentVersionNT%\Time Zones\US Mountain Standard Time,"Dlt",,"US Mountain Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\US Mountain Standard Time,"Std",,"US Mountain Standard Time"
@@ -2360,19 +2360,15 @@ HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time,"Display",,"America/Chi
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time,"Dlt",,"Central Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time,"Std",,"Central Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time,"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Display",,"America/Mexico_City (Central Standard Time)"
-HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Dlt",,"Central Daylight Time (Mexico)"
-HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Std",,"Central Standard Time (Mexico)"
-HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Display",,"America/Mexico_City (Mexico Standard Time)"
+HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Display",,"America/Mexico_City"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Dlt",,"Mexico Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Std",,"Mexico Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"Display",,"America/Regina"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"Dlt",,"Canada Central Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"Std",,"Canada Central Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Central America Standard Time,"Display",,"America/Regina"
+HKLM,%CurrentVersionNT%\Time Zones\Central America Standard Time,"Display",,"America/El_Salvador"
 HKLM,%CurrentVersionNT%\Time Zones\Central America Standard Time,"Dlt",,"Central America Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central America Standard Time,"Std",,"Central America Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central America Standard Time,"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
@@ -2380,10 +2376,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Display",,"America/New
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Dlt",,"Eastern Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Std",,"Eastern Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"TZI",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"Display",,"America/Indiana/Indianapolis"
+HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"Display",,"America/Indiana"
 HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"Dlt",,"US Eastern Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"Std",,"US Eastern Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"TZI",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"TZI",1,00,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\SA Pacific Standard Time,"Display",,"America/Bogota"
 HKLM,%CurrentVersionNT%\Time Zones\SA Pacific Standard Time,"Dlt",,"SA Pacific Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\SA Pacific Standard Time,"Std",,"SA Pacific Standard Time"
@@ -2395,27 +2391,27 @@ HKLM,%CurrentVersionNT%\Time Zones\Atlantic Standard Time,"TZI",1,f0,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\SA Western Standard Time,"Display",,"America/Caracas"
 HKLM,%CurrentVersionNT%\Time Zones\SA Western Standard Time,"Dlt",,"SA Western Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\SA Western Standard Time,"Std",,"SA Western Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\SA Western Standard Time,"TZI",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\SA Western Standard Time,"TZI",1,0e,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Pacific SA Standard Time,"Display",,"America/Santiago"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific SA Standard Time,"Dlt",,"Pacific SA Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific SA Standard Time,"Std",,"Pacific SA Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Pacific SA Standard Time,"TZI",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pacific SA Standard Time,"TZI",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,05,00,05,00,18,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"Display",,"America/St_Johns"
 HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"Dlt",,"Newfoundland Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"Std",,"Newfoundland Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"TZI",1,d2,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,00,00,01,00,00,00,00,00,00,00,03,00,00,00,02,00,00,00,01,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\SA Eastern Standard Time,"Display",,"America/Argentina/Buenos_Aires"
+HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"TZI",1,d2,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\SA Eastern Standard Time,"Display",,"America/Buenos_Aires"
 HKLM,%CurrentVersionNT%\Time Zones\SA Eastern Standard Time,"Dlt",,"SA Eastern Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\SA Eastern Standard Time,"Std",,"SA Eastern Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\SA Eastern Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\SA Eastern Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,06,00,03,00,18,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"Display",,"America/Sao_Paulo"
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"Dlt",,"E. South America Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"Std",,"E. South America Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,02,00,00,00,05,00,00,00,00,00,00,00,00,00,00,00,0b,00,00,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,02,00,06,00,03,00,18,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"Display",,"Atlantic/Azores"
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"Dlt",,"Azores Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"Std",,"Azores Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"TZI",1,3c,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"TZI",1,3c,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Cape Verde Standard Time,"Display",,"Atlantic/Cape_Verde"
 HKLM,%CurrentVersionNT%\Time Zones\Cape Verde Standard Time,"Dlt",,"Cape Verde Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Cape Verde Standard Time,"Std",,"Cape Verde Standard Time"
@@ -2431,7 +2427,7 @@ HKLM,%CurrentVersionNT%\Time Zones\GMT Standard Time,"TZI",1,00,00,00,00,00,00,0
 HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"Display",,"America/Godthab"
 HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"Dlt",,"Greenland Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"Std",,"Greenland Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,06,00,04,00,17,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,16,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Display",,"Europe/Paris"
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Dlt",,"Romance Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Std",,"Romance Standard Time"
@@ -2443,7 +2439,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Central Europe Standard Time,"TZI",1,c4,ff,ff
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"Display",,"Africa/Cairo"
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"Dlt",,"Egypt Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"Std",,"Egypt Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,09,00,04,00,05,00,17,00,3b,00,3b,00,00,00,00,00,04,00,05,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,08,00,04,00,05,00,18,00,00,00,00,00,00,00,00,00,04,00,05,00,04,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Ekaterinburg Standard Time,"Display",,"Asia/Yekaterinburg"
 HKLM,%CurrentVersionNT%\Time Zones\Ekaterinburg Standard Time,"Dlt",,"Ekaterinburg Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Ekaterinburg Standard Time,"Std",,"Ekaterinburg Standard Time"
@@ -2459,15 +2455,15 @@ HKLM,%CurrentVersionNT%\Time Zones\Sri Lanka Standard Time,"TZI",1,b6,fe,ff,ff,0
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Display",,"Asia/Jerusalem"
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Dlt",,"Israel Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Std",,"Israel Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,09,00,00,00,03,00,02,00,00,00,00,00,00,00,00,00,03,00,05,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,05,00,05,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Display",,"Asia/Amman"
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Dlt",,"Jordan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Std",,"Jordan Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,00,00,00,00,00,00,00,00,00,00,03,00,04,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,04,00,05,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\E. Europe Standard Time,"Display",,"Europe/Bucharest"
 HKLM,%CurrentVersionNT%\Time Zones\E. Europe Standard Time,"Dlt",,"E. Europe Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\E. Europe Standard Time,"Std",,"E. Europe Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\E. Europe Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\E. Europe Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,04,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\FLE Standard Time,"Display",,"Europe/Helsinki"
 HKLM,%CurrentVersionNT%\Time Zones\FLE Standard Time,"Dlt",,"FLE Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\FLE Standard Time,"Std",,"FLE Standard Time"
@@ -2475,7 +2471,7 @@ HKLM,%CurrentVersionNT%\Time Zones\FLE Standard Time,"TZI",1,88,ff,ff,ff,00,00,0
 HKLM,%CurrentVersionNT%\Time Zones\Georgian Standard Time,"Display",,"Asia/Tbilisi"
 HKLM,%CurrentVersionNT%\Time Zones\Georgian Standard Time,"Dlt",,"Georgian Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Georgian Standard Time,"Std",,"Georgian Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Georgian Standard Time,"TZI",1,4c,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Georgian Standard Time,"TZI",1,10,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\GTB Standard Time,"Display",,"Europe/Athens"
 HKLM,%CurrentVersionNT%\Time Zones\GTB Standard Time,"Dlt",,"GTB Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\GTB Standard Time,"Std",,"GTB Standard Time"
@@ -2491,7 +2487,7 @@ HKLM,%CurrentVersionNT%\Time Zones\E. Africa Standard Time,"TZI",1,4c,ff,ff,ff,0
 HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"Display",,"Asia/Baghdad"
 HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"Dlt",,"Arabic Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"Std",,"Arabic Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"TZI",1,4c,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,01,00,04,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"TZI",1,4c,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,03,00,01,00,04,00,00,00,00,00,00,00,00,00,04,00,02,00,01,00,03,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Russian Standard Time,"Display",,"Europe/Moscow"
 HKLM,%CurrentVersionNT%\Time Zones\Russian Standard Time,"Dlt",,"Russian Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Russian Standard Time,"Std",,"Russian Standard Time"
@@ -2499,7 +2495,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Russian Standard Time,"TZI",1,4c,ff,ff,ff,00,
 HKLM,%CurrentVersionNT%\Time Zones\Iran Standard Time,"Display",,"Asia/Tehran"
 HKLM,%CurrentVersionNT%\Time Zones\Iran Standard Time,"Dlt",,"Iran Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Iran Standard Time,"Std",,"Iran Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Iran Standard Time,"TZI",1,2e,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Iran Standard Time,"TZI",1,2e,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,09,00,06,00,03,00,18,00,00,00,00,00,00,00,00,00,03,00,05,00,04,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Arabian Standard Time,"Display",,"Asia/Muscat"
 HKLM,%CurrentVersionNT%\Time Zones\Arabian Standard Time,"Dlt",,"Arabian Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Arabian Standard Time,"Std",,"Arabian Standard Time"
@@ -2595,7 +2591,7 @@ HKLM,%CurrentVersionNT%\Time Zones\AUS Central Standard Time,"TZI",1,c6,fd,ff,ff
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"Display",,"Australia/Sydney"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"Dlt",,"AUS Eastern Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"Std",,"AUS Eastern Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"Display",,"Asia/Baku"
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"Dlt",,"Azerbaijan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"Std",,"Azerbaijan Standard Time"
@@ -2603,7 +2599,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"TZI",1,10,ff,ff,ff,
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"Display",,"Australia/Adelaide"
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"Dlt",,"Cen. Australia Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"Std",,"Cen. Australia Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"TZI",1,c6,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"TZI",1,c6,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\E. Australia Standard Time,"Display",,"Australia/Brisbane"
 HKLM,%CurrentVersionNT%\Time Zones\E. Australia Standard Time,"Dlt",,"E. Australia Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\E. Australia Standard Time,"Std",,"E. Australia Standard Time"
@@ -2616,10 +2612,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Vladivostok Standard Time,"Display",,"Asia/Vl
 HKLM,%CurrentVersionNT%\Time Zones\Vladivostok Standard Time,"Dlt",,"Vladivostok Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Vladivostok Standard Time,"Std",,"Vladivostok Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Vladivostok Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Central Pacific Standard Time,"Display",,"Pacific/Guadalcanal"
+HKLM,%CurrentVersionNT%\Time Zones\Central Pacific Standard Time,"Display",,"Asia/Magadan"
 HKLM,%CurrentVersionNT%\Time Zones\Central Pacific Standard Time,"Dlt",,"Central Pacific Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central Pacific Standard Time,"Std",,"Central Pacific Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Central Pacific Standard Time,"TZI",1,6c,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Pacific Standard Time,"TZI",1,6c,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"Display",,"Pacific/Fiji"
 HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"Dlt",,"Fiji Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"Std",,"Fiji Standard Time"
@@ -2627,7 +2623,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"TZI",1,30,fd,ff,ff,00,00,
 HKLM,%CurrentVersionNT%\Time Zones\New Zealand Standard Time,"Display",,"Pacific/Auckland"
 HKLM,%CurrentVersionNT%\Time Zones\New Zealand Standard Time,"Dlt",,"New Zealand Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\New Zealand Standard Time,"Std",,"New Zealand Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\New Zealand Standard Time,"TZI",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,03,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\New Zealand Standard Time,"TZI",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,09,00,00,00,05,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Display",,"Pacific/Tongatapu"
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Dlt",,"Tonga Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Std",,"Tonga Standard Time"
@@ -2643,7 +2639,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Central European Standard Time,"TZI",1,c4,ff,
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"Display",,"Australia/Hobart"
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"Dlt",,"Tasmania Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"Std",,"Tasmania Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
 
 [Services]
 HKLM,"%Services%\Spooler","Description",,"Loads files to memory for later printing."
