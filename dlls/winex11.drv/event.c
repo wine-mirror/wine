@@ -291,6 +291,8 @@ static inline void call_event_handler( Display *display, XEvent *event )
 {
     HWND hwnd;
     x11drv_event_handler handler;
+    XEvent *prev;
+    struct x11drv_thread_data *thread_data;
 
     if (!(handler = find_handler( event->type )))
     {
@@ -305,7 +307,11 @@ static inline void call_event_handler( Display *display, XEvent *event )
     TRACE( "%s for hwnd/window %p/%lx\n",
            dbgstr_event( event->type ), hwnd, event->xany.window );
     wine_tsx11_unlock();
+    thread_data = x11drv_thread_data();
+    prev = thread_data->current_event;
+    thread_data->current_event = event;
     handler( hwnd, event );
+    thread_data->current_event = prev;
     wine_tsx11_lock();
 }
 
@@ -364,9 +370,7 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                          timeout, flags & MWMO_ALERTABLE );
     }
 
-    if (data->process_event_count) mask = 0;  /* don't process nested events */
-
-    data->process_event_count++;
+    if (data->current_event) mask = 0;  /* don't process nested events */
 
     if (process_events( data->display, filter_event, mask )) ret = count - 1;
     else if (count || timeout)
@@ -377,7 +381,6 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     }
     else ret = WAIT_TIMEOUT;
 
-    data->process_event_count--;
     return ret;
 }
 

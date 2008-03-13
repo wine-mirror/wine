@@ -499,7 +499,7 @@ struct x11drv_escape_set_drawable
 struct x11drv_thread_data
 {
     Display *display;
-    int      process_event_count;  /* recursion count for event processing */
+    XEvent  *current_event;        /* event currently being processed */
     Cursor   cursor;               /* current cursor */
     Window   cursor_window;        /* current window that contains the cursor */
     Window   grab_window;          /* window that currently grabs the mouse */
