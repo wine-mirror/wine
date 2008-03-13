@@ -2578,6 +2578,47 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string\n");
                 SysFreeString(str);
 
+                /* test insertData */
+                str = SysAllocStringLen(NULL, 0);
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, -1, str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, -1, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 1000, str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 1000, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 0, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 0, str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                SysFreeString(str);
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, -1, _bstr_("Inserting"));
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 1000, _bstr_("Inserting"));
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 0, _bstr_("Begin "));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 17, _bstr_("Middle"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_insertData(pCDataSec, 39, _bstr_(" End"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
                 IXMLDOMCDATASection_Release(pCDataSec);
             }
 
