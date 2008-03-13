@@ -377,7 +377,7 @@ static BOOL UIINSERTOBJECTDLG_PopulateObjectTypes(InsertObjectDlgInfo* pdlgInfo)
     if (ERROR_SUCCESS == RegQueryValueW(hkey, NULL, keydesc, &len))
     {
        CLSID* lpclsid = HeapAlloc(GetProcessHeap(), 0, sizeof(CLSID));
-       memcpy(lpclsid, &clsid, sizeof(CLSID));
+       *lpclsid = clsid;
 
        len = SendMessageW(pdlgInfo->hwndObjTypeLB, LB_ADDSTRING, 0, (LPARAM)keydesc);
        SendMessageW(pdlgInfo->hwndObjTypeLB, LB_SETITEMDATA, (WPARAM)len, (LPARAM)lpclsid);
@@ -453,7 +453,7 @@ static BOOL UIINSERTOBJECTDLG_OnOpen(InsertObjectDlgInfo* pdlgInfo)
     {
        CLSID* clsid = (CLSID*) SendMessageA(pdlgInfo->hwndObjTypeLB, 
           LB_GETITEMDATA, (WPARAM)index, 0);
-       memcpy(&pdlgInfo->lpOleUIInsertObject->clsid, clsid, sizeof(CLSID));
+       pdlgInfo->lpOleUIInsertObject->clsid = *clsid;
 
        if (pdlgInfo->lpOleUIInsertObject->dwFlags & IOF_CREATENEWOBJECT)
        {
