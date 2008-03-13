@@ -98,6 +98,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFile(
     file = (BackgroundCopyFileImpl *) pFile;
     EnterCriticalSection(&This->cs);
     list_add_head(&This->files, &file->entryFromJob);
+    This->jobProgress.BytesTotal = BG_SIZE_UNKNOWN;
     ++This->jobProgress.FilesTotal;
     LeaveCriticalSection(&This->cs);
 
@@ -484,4 +485,30 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
 
     *ppObj = &This->lpVtbl;
     return S_OK;
+}
+
+void processJob(BackgroundCopyJobImpl *job)
+{
+    for (;;)
+    {
+        BackgroundCopyFileImpl *file;
+        BOOL done = TRUE;
+
+        EnterCriticalSection(&job->cs);
+        LIST_FOR_EACH_ENTRY(file, &job->files, BackgroundCopyFileImpl, entryFromJob)
+            if (!file->fileProgress.Completed)
+            {
+                done = FALSE;
+                break;
+            }
+        LeaveCriticalSection(&job->cs);
+        if (done)
+        {
+            transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSFERRED);
+            return;
+        }
+
+        if (!processFile(file, job))
+          return;
+    }
 }

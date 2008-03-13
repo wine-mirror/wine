@@ -189,11 +189,6 @@ DWORD WINAPI fileTransfer(void *param)
         LeaveCriticalSection(&qmgr->cs);
 
         if (haveJob)
-        {
-            FIXME("Actually process job %p; setting error state\n", job);
-            EnterCriticalSection(&qmgr->cs);
-            job->state = BG_JOB_STATE_ERROR;
-            LeaveCriticalSection(&qmgr->cs);
-        }
+            processJob(job);
     }
 }

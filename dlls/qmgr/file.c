@@ -170,3 +170,91 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
     *ppObj = &This->lpVtbl;
     return S_OK;
 }
+
+static DWORD CALLBACK copyProgressCallback(LARGE_INTEGER totalSize,
+                                           LARGE_INTEGER totalTransferred,
+                                           LARGE_INTEGER streamSize,
+                                           LARGE_INTEGER streamTransferred,
+                                           DWORD streamNum,
+                                           DWORD reason,
+                                           HANDLE srcFile,
+                                           HANDLE dstFile,
+                                           LPVOID obj)
+{
+    BackgroundCopyFileImpl *file = (BackgroundCopyFileImpl *) obj;
+    BackgroundCopyJobImpl *job = file->owner;
+    ULONG64 diff;
+
+    EnterCriticalSection(&job->cs);
+    diff = (file->fileProgress.BytesTotal == BG_SIZE_UNKNOWN
+            ? totalTransferred.QuadPart
+            : totalTransferred.QuadPart - file->fileProgress.BytesTransferred);
+    file->fileProgress.BytesTotal = totalSize.QuadPart;
+    file->fileProgress.BytesTransferred = totalTransferred.QuadPart;
+    job->jobProgress.BytesTransferred += diff;
+    LeaveCriticalSection(&job->cs);
+
+    return (job->state == BG_JOB_STATE_TRANSFERRING
+            ? PROGRESS_CONTINUE
+            : PROGRESS_CANCEL);
+}
+
+BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
+{
+    static WCHAR prefix[] = {'B','I','T', 0};
+    WCHAR tmpDir[MAX_PATH];
+    WCHAR tmpName[MAX_PATH];
+
+    if (!GetTempPathW(MAX_PATH, tmpDir))
+    {
+        ERR("Couldn't create temp file name: %d\n", GetLastError());
+        /* Guessing on what state this should give us */
+        transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSIENT_ERROR);
+        return FALSE;
+    }
+
+    if (!GetTempFileNameW(tmpDir, prefix, 0, tmpName))
+    {
+        ERR("Couldn't create temp file: %d\n", GetLastError());
+        /* Guessing on what state this should give us */
+        transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSIENT_ERROR);
+        return FALSE;
+    }
+
+    EnterCriticalSection(&job->cs);
+    file->fileProgress.BytesTotal = BG_SIZE_UNKNOWN;
+    file->fileProgress.BytesTransferred = 0;
+    file->fileProgress.Completed = FALSE;
+    LeaveCriticalSection(&job->cs);
+
+    TRACE("Transferring: %s -> %s -> %s\n",
+          debugstr_w(file->info.RemoteName),
+          debugstr_w(tmpName),
+          debugstr_w(file->info.LocalName));
+
+    transitionJobState(job, BG_JOB_STATE_QUEUED, BG_JOB_STATE_TRANSFERRING);
+    if (!CopyFileExW(file->info.RemoteName, tmpName, copyProgressCallback,
+                     file, NULL, 0))
+    {
+        ERR("Local file copy failed: error %d\n", GetLastError());
+        transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_ERROR);
+        return FALSE;
+    }
+
+    if (transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_QUEUED))
+    {
+        lstrcpyW(file->tempFileName, tmpName);
+
+        EnterCriticalSection(&job->cs);
+        file->fileProgress.Completed = TRUE;
+        job->jobProgress.FilesTransferred++;
+        LeaveCriticalSection(&job->cs);
+
+        return TRUE;
+    }
+    else
+    {
+        DeleteFileW(tmpName);
+        return FALSE;
+    }
+}

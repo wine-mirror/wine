@@ -73,6 +73,7 @@ typedef struct
     LONG ref;
     BG_FILE_INFO info;
     BG_FILE_PROGRESS fileProgress;
+    WCHAR tempFileName[MAX_PATH];
     struct list entryFromJob;
     BackgroundCopyJobImpl *owner;
 } BackgroundCopyFileImpl;
@@ -107,6 +108,8 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
 HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj,
                                            IBackgroundCopyJob* copyJob);
 DWORD WINAPI fileTransfer(void *param);
+void processJob(BackgroundCopyJobImpl *job);
+BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job);
 
 /* Little helper functions */
 static inline char *
@@ -115,6 +118,21 @@ qmgr_strdup(const char *s)
     size_t n = strlen(s) + 1;
     char *d = HeapAlloc(GetProcessHeap(), 0, n);
     return d ? memcpy(d, s, n) : NULL;
+}
+
+static inline BOOL
+transitionJobState(BackgroundCopyJobImpl *job, BG_JOB_STATE fromState,
+                   BG_JOB_STATE toState)
+{
+    BOOL rv = FALSE;
+    EnterCriticalSection(&globalMgr.cs);
+    if (job->state == fromState)
+    {
+        job->state = toState;
+        rv = TRUE;
+    }
+    LeaveCriticalSection(&globalMgr.cs);
+    return rv;
 }
 
 #endif /* __QMGR_H__ */
