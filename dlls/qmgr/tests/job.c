@@ -375,6 +375,8 @@ static void test_CompleteLocal(void)
 
     ok(DeleteFileW(test_remotePathA), "DeleteFile\n");
     ok(DeleteFileW(test_remotePathB), "DeleteFile\n");
+    DeleteFileW(test_localPathA);
+    DeleteFileW(test_localPathB);
 }
 
 /* Test a complete transfer for local files */
@@ -448,6 +450,8 @@ static void test_CompleteLocalURL(void)
 
     ok(DeleteFileW(test_remotePathA), "DeleteFile\n");
     ok(DeleteFileW(test_remotePathB), "DeleteFile\n");
+    DeleteFileW(test_localPathA);
+    DeleteFileW(test_localPathB);
 
     HeapFree(GetProcessHeap(), 0, urlA);
     HeapFree(GetProcessHeap(), 0, urlB);
