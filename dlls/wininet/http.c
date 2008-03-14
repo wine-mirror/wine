@@ -3864,16 +3864,25 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
  */
 BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
 {
-    WCHAR szConnectionResponse[20];
-    DWORD dwBufferSize = sizeof(szConnectionResponse);
+    WCHAR szVersion[10];
+    DWORD dwBufferSize = sizeof(szVersion);
 
     TRACE("\n");
 
-    if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse,
+    /* as per RFC 2068, S8.1.2.1, if the client is HTTP/1.1 then assume that
+     * the connection is keep-alive by default */
+    if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_VERSION, szVersion,
                              &dwBufferSize, NULL) ||
-        strcmpiW(szConnectionResponse, szKeepAlive))
+        strcmpiW(szVersion, g_szHttp1_1))
     {
-        HTTPREQ_CloseConnection(&lpwhr->hdr);
+        WCHAR szConnectionResponse[20];
+        dwBufferSize = sizeof(szConnectionResponse);
+        if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse,
+                                 &dwBufferSize, NULL) ||
+            strcmpiW(szConnectionResponse, szKeepAlive))
+        {
+            HTTPREQ_CloseConnection(&lpwhr->hdr);
+        }
     }
 
     /* FIXME: store data in the URL cache here */
