@@ -567,7 +567,7 @@ HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER *ppmk)
 {
     PointerMonikerImpl *This;
 
-    FIXME("(%p, %p): stub\n", punk, ppmk);
+    TRACE("(%p, %p)\n", punk, ppmk);
 
     if (!ppmk)
         return E_INVALIDARG;
