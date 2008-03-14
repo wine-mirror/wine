@@ -62,10 +62,10 @@
 @ stub D3DXCreateEffectFromResourceExW
 @ stub D3DXCreateEffectFromResourceW
 @ stub D3DXCreateEffectPool
-@ stub D3DXCreateFontA
-@ stub D3DXCreateFontIndirectA
-@ stub D3DXCreateFontIndirectW
-@ stub D3DXCreateFontW
+@ stdcall D3DXCreateFontA(ptr long long long long long long long long long str ptr)
+@ stdcall D3DXCreateFontIndirectA(ptr ptr ptr)
+@ stdcall D3DXCreateFontIndirectW(ptr ptr ptr)
+@ stdcall D3DXCreateFontW(ptr long long long long long long long long long wstr ptr)
 @ stub D3DXCreateFragmentLinker
 @ stub D3DXCreateFragmentLinkerEx
 @ stub D3DXCreateKeyframedAnimationSet
