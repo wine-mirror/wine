@@ -669,12 +669,12 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos
 					dsb->primary_mixpos = writepos;
 				}
 
-				/* mix next buffer into the main buffer */
-				len = DSOUND_MixOne(dsb, writepos, mixlen);
-
 				/* if the buffer was starting, it must be playing now */
 				if (dsb->state == STATE_STARTING)
 					dsb->state = STATE_PLAYING;
+
+				/* mix next buffer into the main buffer */
+				len = DSOUND_MixOne(dsb, writepos, mixlen);
 
 				if (!minlen) minlen = len;
 
