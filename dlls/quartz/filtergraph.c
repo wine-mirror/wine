@@ -282,15 +282,13 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown * iface) {
     if (ref == 0) {
         int i;
 
+        IMediaControl_Stop((IMediaControl*)&(This->IMediaControl_vtbl));
         if (This->refClock)
             IReferenceClock_Release(This->refClock);
 
-        for (i = 0; i < This->nFilters; i++)
-        {
-            IBaseFilter_SetSyncSource(This->ppFiltersInGraph[i], NULL);
-            IBaseFilter_Release(This->ppFiltersInGraph[i]);
-            CoTaskMemFree(This->pFilterNames[i]);
-        }
+        while (This->nFilters)
+            IFilterGraph2_RemoveFilter((IFilterGraph2*)This, This->ppFiltersInGraph[0]);
+
         for (i = 0; i < This->nItfCacheEntries; i++)
         {
             if (This->ItfCacheEntries[i].iface)
