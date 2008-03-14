@@ -498,6 +498,15 @@ static HRESULT WINAPI DSoundRender_Run(IBaseFilter * iface, REFERENCE_TIME tStar
         /* It's okay if there's no buffer yet. It'll start when it's created */
         if (This->dsbuffer)
         {
+            if (This->state == State_Stopped)
+            {
+                char *buf1;
+                DWORD size1;
+
+                IDirectSoundBuffer_Lock(This->dsbuffer, 0, 0, (void**)&buf1, &size1, NULL, NULL, DSBLOCK_ENTIREBUFFER);
+                memset(buf1, 0, size1);
+                IDirectSoundBuffer_Unlock(This->dsbuffer, buf1, size1, NULL, 0);
+            }
             hr = IDirectSoundBuffer_Play(This->dsbuffer, 0, 0, DSBPLAY_LOOPING);
             if (FAILED(hr))
                 ERR("Can't start playing! (%x)\n", hr);
