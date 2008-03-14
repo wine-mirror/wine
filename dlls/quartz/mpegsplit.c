@@ -337,7 +337,6 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
     mode_ext      =   ((header[3]>>4)&0x3);
     emphasis      =   ((header[3]>>0)&0x3);
 
-
     pamt->cbFormat = ((layer==3)? sizeof(MPEGLAYER3WAVEFORMAT) :
                                   sizeof(MPEG1WAVEFORMAT));
     pamt->pbFormat = CoTaskMemAlloc(pamt->cbFormat);
@@ -431,7 +430,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
     ALLOCATOR_PROPERTIES props;
     HRESULT hr;
     LONGLONG pos = 0; /* in bytes */
-    BYTE header[4];
+    BYTE header[10];
     int streamtype = 0;
     LONGLONG total, avail;
     AM_MEDIA_TYPE amt;
@@ -440,15 +439,39 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
     IAsyncReader_Length(pPin->pReader, &total, &avail);
     This->EndOfFile = total;
 
-    hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, (LPVOID)&header[0]);
+    hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, header);
     if (SUCCEEDED(hr))
         pos += 4;
 
+    /* Skip ID3 v2 tag, if any */
+    if (SUCCEEDED(hr) && !strncmp("ID3", (char*)header, 3))
+    do {
+        UINT length;
+        hr = IAsyncReader_SyncRead(pPin->pReader, pos, 6, header + 4);
+        if (FAILED(hr))
+            break;
+        pos += 6;
+        TRACE("Found ID3 v2.%d.%d\n", header[3], header[4]);
+        length  = (header[6] & 0x7F) << 21;
+        length += (header[7] & 0x7F) << 14;
+        length += (header[8] & 0x7F) << 7;
+        length += (header[9] & 0x7F);
+        TRACE("Length: %u\n", length);
+        pos += length;
+
+        /* Read the real header for the mpeg splitter */
+        hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, header);
+        if (SUCCEEDED(hr))
+            pos += 4;
+        TRACE("%x:%x:%x:%x\n", header[0], header[1], header[2], header[3]);
+    } while (0);
+
     while(SUCCEEDED(hr) && !(streamtype=MPEGSplitter_head_check(header)))
     {
+        TRACE("%x:%x:%x:%x\n", header[0], header[1], header[2], header[3]);
         /* No valid header yet; shift by a byte and check again */
         memcpy(header, header+1, 3);
-        hr = IAsyncReader_SyncRead(pPin->pReader, pos++, 1, (LPVOID)&header[3]);
+        hr = IAsyncReader_SyncRead(pPin->pReader, pos++, 1, header + 3);
     }
     if (FAILED(hr))
         return hr;
