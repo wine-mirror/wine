@@ -457,6 +457,7 @@ static HRESULT WINAPI SecManagerImpl_ProcessUrlAction(IInternetSecurityManager *
                                                       DWORD dwFlags, DWORD dwReserved)
 {
     SecManagerImpl *This = SECMGR_THIS(iface);
+    DWORD zone, policy;
     HRESULT hres;
 
     TRACE("(%p)->(%s %08x %p %08x %p %08x %08x %08x)\n", iface, debugstr_w(pwszUrl), dwAction,
@@ -469,8 +470,36 @@ static HRESULT WINAPI SecManagerImpl_ProcessUrlAction(IInternetSecurityManager *
             return hres;
     }
 
-    FIXME("Default action is not implemented\n");
-    return E_NOTIMPL;
+    if(pContext || cbContext || dwFlags || dwReserved)
+        FIXME("Unsupported arguments\n");
+
+    if(!pwszUrl)
+        return E_INVALIDARG;
+
+    hres = map_url_to_zone(pwszUrl, &zone, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    hres = get_action_policy(zone, dwAction, (BYTE*)&policy, sizeof(policy), URLZONEREG_DEFAULT);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("policy %x\n", policy);
+
+    switch(GetUrlPolicyPermissions(policy)) {
+    case URLPOLICY_ALLOW:
+    case URLPOLICY_CHANNEL_SOFTDIST_PRECACHE:
+        return S_OK;
+    case URLPOLICY_DISALLOW:
+        return S_FALSE;
+    case URLPOLICY_QUERY:
+        FIXME("URLPOLICY_QUERY not implemented\n");
+        return E_FAIL;
+    default:
+        FIXME("Not implemented policy %x\n", policy);
+    }
+
+    return E_FAIL;
 }
                                                
 
