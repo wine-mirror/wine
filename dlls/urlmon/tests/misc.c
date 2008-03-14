@@ -250,7 +250,7 @@ static void test_RegisterFormatEnumerator(void)
 static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l',
         '/','b','l','a','n','k','.','h','t','m',0};
 static const WCHAR url2[] = {'i','n','d','e','x','.','h','t','m',0};
-static const WCHAR url3[] = {'f','i','l','e',':','c',':','\\','I','n','d','e','x','.','h','t','m',0};
+static const WCHAR url3[] = {'f','i','l','e',':','/','/','c',':','\\','I','n','d','e','x','.','h','t','m',0};
 static const WCHAR url4[] = {'f','i','l','e',':','s','o','m','e','%','2','0','f','i','l','e',
         '%','2','e','j','p','g',0};
 static const WCHAR url5[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
@@ -262,7 +262,8 @@ static const WCHAR url8[] = {'t','e','s','t',':','1','2','3','a','b','c',0};
 static const WCHAR url9[] =
     {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',
      '/','s','i','t','e','/','a','b','o','u','t',0};
-
+static const WCHAR url10[] = {'f','i','l','e',':','/','/','s','o','m','e','%','2','0','f','i','l','e',
+        '.','j','p','g',0};
 
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
@@ -713,12 +714,13 @@ static void test_FindMimeFromData(void)
 }
 
 static const BYTE secid1[] = {'f','i','l','e',':',0,0,0,0};
-static const BYTE secid4[] ={'f','i','l','e',':',3,0,0,0};
 static const BYTE secid5[] = {'h','t','t','p',':','w','w','w','.','w','i','n','e','h','q',
     '.','o','r','g',3,0,0,0};
 static const BYTE secid6[] = {'a','b','o','u','t',':','b','l','a','n','k',3,0,0,0};
 static const BYTE secid7[] = {'f','t','p',':','w','i','n','e','h','q','.','o','r','g',
                               3,0,0,0};
+static const BYTE secid10[] =
+    {'f','i','l','e',':','s','o','m','e','%','2','0','f','i','l','e','.','j','p','g',3,0,0,0};
 
 static struct secmgr_test {
     LPCWSTR url;
@@ -731,7 +733,7 @@ static struct secmgr_test {
     {url1, 0,   S_OK, sizeof(secid1), secid1, S_OK},
     {url2, 100, 0x80041001, 0, NULL, E_INVALIDARG},
     {url3, 0,   S_OK, sizeof(secid1), secid1, S_OK},
-    {url4, 3,   S_OK, sizeof(secid4), secid4, S_OK},
+    {url10,3,   S_OK, sizeof(secid10),secid10,S_OK},
     {url5, 3,   S_OK, sizeof(secid5), secid5, S_OK},
     {url6, 3,   S_OK, sizeof(secid6), secid6, S_OK},
     {url7, 3,   S_OK, sizeof(secid7), secid7, S_OK}

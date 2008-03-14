@@ -95,13 +95,39 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
 
     /* file protocol is a special case */
     if(!strcmpW(schema, fileW)) {
-        WCHAR path[MAX_PATH];
+        WCHAR path[MAX_PATH], root[20];
+        WCHAR *ptr;
 
         hres = CoInternetParseUrl(secur_url, PARSE_PATH_FROM_URL, 0, path,
                 sizeof(path)/sizeof(WCHAR), &size, 0);
 
-        if(SUCCEEDED(hres) && strchrW(path, '\\'))
-            *zone = 0;
+        if(SUCCEEDED(hres) && (ptr = strchrW(path, '\\')) && ptr-path < sizeof(root)/sizeof(WCHAR)) {
+            UINT type;
+
+            memcpy(root, path, (ptr-path)*sizeof(WCHAR));
+            root[ptr-path] = 0;
+
+            type = GetDriveTypeW(root);
+
+            switch(type) {
+            case DRIVE_UNKNOWN:
+            case DRIVE_NO_ROOT_DIR:
+                break;
+            case DRIVE_REMOVABLE:
+            case DRIVE_FIXED:
+            case DRIVE_CDROM:
+            case DRIVE_RAMDISK:
+                *zone = 0;
+                hres = S_OK;
+                break;
+            case DRIVE_REMOTE:
+                *zone = 3;
+                hres = S_OK;
+                break;
+            default:
+                FIXME("unsupported drive type %d\n", type);
+            }
+        }
     }
 
     if(*zone == -1) {
@@ -305,7 +331,7 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManager *ifa
 
     /* file protocol is a special case */
     if(strlenW(pwszUrl) >= sizeof(wszFile)/sizeof(WCHAR)
-            && !memcmp(url, wszFile, sizeof(wszFile))) {
+            && !memcmp(url, wszFile, sizeof(wszFile)) && strchrW(url, '\\')) {
 
         static const BYTE secidFile[] = {'f','i','l','e',':'};
 
