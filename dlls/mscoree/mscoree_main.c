@@ -295,6 +295,17 @@ HRESULT WINAPI LoadStringRC(UINT resId, LPWSTR pBuffer, int iBufLen, int bQuiet)
     return LoadStringRCEx(-1, resId, pBuffer, iBufLen, bQuiet, NULL);
 }
 
+HRESULT WINAPI CorBindToRuntimeEx(LPWSTR szVersion, LPWSTR szBuildFlavor, DWORD nflags, REFCLSID rslsid,
+                                  REFIID riid, LPVOID *ppv)
+{
+    FIXME("%s %s %d %s %s %p\n", debugstr_w(szVersion), debugstr_w(szBuildFlavor), nflags, debugstr_guid( rslsid ),
+          debugstr_guid( riid ), ppv);
+
+    *ppv = NULL;
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 {
     FIXME("(%p, %p, %p): stub\n", rclsid, riid, ppv);

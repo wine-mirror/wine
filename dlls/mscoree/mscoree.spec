@@ -19,7 +19,7 @@
 @ stub CorBindToRuntimeByCfg
 @ stub CorBindToRuntimeByPath
 @ stub CorBindToRuntimeByPathEx
-@ stub CorBindToRuntimeEx
+@ stdcall CorBindToRuntimeEx(wstr wstr long ptr ptr ptr)
 @ stdcall CorBindToRuntimeHost(wstr wstr wstr ptr long ptr ptr ptr)
 @ stub CorDllMainWorker
 @ stdcall CorExitProcess(long)
