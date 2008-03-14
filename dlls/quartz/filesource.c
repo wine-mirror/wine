@@ -30,6 +30,7 @@
 #include "vfwmsgs.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "shlwapi.h"
 #include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
@@ -62,10 +63,47 @@ static inline AsyncReader *impl_from_IFileSourceFilter( IFileSourceFilter *iface
     return (AsyncReader *)((char*)iface - FIELD_OFFSET(AsyncReader, lpVtblFSF));
 }
 
+static WCHAR const mediatype_name[11] = {
+    'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
+static WCHAR const subtype_name[8] = {
+    'S', 'u', 'b', 't', 'y', 'p', 'e', 0 };
+
 static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType)
 {
-    /* FIXME: implement */
-    return E_NOTIMPL;
+    WCHAR *extension;
+    LONG l;
+    HKEY hsub;
+    WCHAR keying[39];
+    DWORD size;
+
+    if (!pszFileName)
+        return E_POINTER;
+
+    /* Get the part of the name that matters */
+    extension = PathFindExtensionW(pszFileName);
+    if (*extension != '.')
+        return E_FAIL;
+
+    l = RegOpenKeyExW(hkeyExtensions, extension, 0, KEY_READ, &hsub);
+    if (l)
+        return E_FAIL;
+
+    size = sizeof(keying);
+    l = RegQueryValueExW(hsub, mediatype_name, NULL, NULL, (LPBYTE)keying, &size);
+    if (!l)
+        CLSIDFromString(keying, majorType);
+
+    size = sizeof(keying);
+    if (!l)
+        l = RegQueryValueExW(hsub, subtype_name, NULL, NULL, (LPBYTE)keying, &size);
+    if (!l)
+        CLSIDFromString(keying, minorType);
+
+    RegCloseKey(hsub);
+
+    if (!l)
+        return S_OK;
+    return E_FAIL;
 }
 
 static unsigned char byte_from_hex_char(WCHAR wHex)
@@ -197,6 +235,8 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
     BOOL bFound = FALSE;
     static const WCHAR wszMediaType[] = {'M','e','d','i','a',' ','T','y','p','e',0};
 
+    TRACE("(%p, %s, %p, %p)\n", pReader, debugstr_w(pszFileName), majorType, minorType);
+
     CopyMemory(majorType, &GUID_NULL, sizeof(*majorType));
     CopyMemory(minorType, &GUID_NULL, sizeof(*minorType));
 
@@ -213,7 +253,7 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
             WCHAR wszMajorKeyName[CHARS_IN_GUID];
             DWORD dwKeyNameLength = sizeof(wszMajorKeyName) / sizeof(wszMajorKeyName[0]);
             static const WCHAR wszExtensions[] = {'E','x','t','e','n','s','i','o','n','s',0};
-    
+
             if (RegEnumKeyExW(hkeyMediaType, indexMajor, wszMajorKeyName, &dwKeyNameLength, NULL, NULL, NULL, NULL) != ERROR_SUCCESS)
                 break;
             if (RegOpenKeyExW(hkeyMediaType, wszMajorKeyName, 0, KEY_READ, &hkeyMajor) != ERROR_SUCCESS)
