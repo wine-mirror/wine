@@ -880,7 +880,7 @@
 @ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
 @ stdcall ReadFile(long ptr long ptr ptr)
 @ stdcall ReadFileEx(long ptr long ptr ptr)
-@ stub ReadFileScatter
+@ stdcall ReadFileScatter(long ptr long ptr ptr)
 @ stdcall ReadProcessMemory(long ptr ptr long ptr)
 @ stdcall RegisterApplicationRestart(wstr long)
 @ stub RegisterConsoleIME
@@ -1143,7 +1143,7 @@
 @ stdcall WriteConsoleW(long ptr long ptr ptr)
 @ stdcall WriteFile(long ptr long ptr ptr)
 @ stdcall WriteFileEx(long ptr long ptr ptr)
-@ stub WriteFileGather
+@ stdcall WriteFileGather(long ptr long ptr ptr)
 @ stdcall WritePrivateProfileSectionA(str str str)
 @ stdcall WritePrivateProfileSectionW(wstr wstr wstr)
 @ stdcall WritePrivateProfileStringA(str str str str)
