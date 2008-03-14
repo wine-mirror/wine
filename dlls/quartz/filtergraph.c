@@ -778,7 +778,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
     /* Try to find a suitable filter that can connect to the pin to render */
     tab[0] = mt->majortype;
     tab[1] = mt->subtype;
-    hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, 0, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
+    hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
     if (FAILED(hr)) {
         ERR("Unable to enum filters (%x)\n", hr);
         return hr;
@@ -931,7 +931,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface,
         /* Try to find a suitable renderer with the same media type */
         tab[0] = mt->majortype;
         tab[1] = GUID_NULL;
-        hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, 0, TRUE, 1, tab, NULL, NULL, TRUE, FALSE, 0, NULL, NULL, NULL);
+        hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, TRUE, FALSE, 0, NULL, NULL, NULL);
         if (FAILED(hr)) {
             ERR("Unable to enum filters (%x)\n", hr);
             return hr;
@@ -1057,7 +1057,7 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface,
     if (SUCCEEDED(hr)) {
         tab[0] = mt.majortype;
         tab[1] = mt.subtype;
-        hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, 0, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
+        hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
     }
 
     if (FAILED(hr))
