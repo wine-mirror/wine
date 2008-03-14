@@ -620,10 +620,20 @@ static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface,
 
 static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
+    IReferenceClock *pClock = NULL;
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(): stub !!!\n", iface, This);
+    TRACE("(%p/%p)->() semi-stub\n", iface, This);
 
-    return S_OK;
+    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&pClock);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IMediaFilter_SetSyncSource((IMediaFilter*)&(This->IMediaFilter_vtbl), pClock);
+        IReferenceClock_Release(pClock);
+    }
+
+    return hr;
 }
 
 static HRESULT GetFilterInfo(IMoniker* pMoniker, GUID* pclsid, VARIANT* pvar)
@@ -4755,6 +4765,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
         ERR("Unable to create filter mapper (%x)\n", hr);
 	return hr;
     }
+    IFilterGraph2_SetDefaultSyncSource((IFilterGraph2*)fimpl);
 
     *ppObj = fimpl;
     return S_OK;
