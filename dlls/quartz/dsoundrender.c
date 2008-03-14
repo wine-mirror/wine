@@ -1011,7 +1011,7 @@ static HRESULT WINAPI ReferenceClock_GetTime(IReferenceClock *iface,
     if (This->dsbuffer)
         hr = DSoundRender_GetPos(This, &play_pos, NULL, pTime);
     if (FAILED(hr))
-        ERR("Could not get refreence time (%x)!\n", hr);
+        ERR("Could not get reference time (%x)!\n", hr);
 
     return hr;
 }
