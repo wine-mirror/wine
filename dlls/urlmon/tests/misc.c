@@ -744,7 +744,7 @@ static void test_SecurityManager(void)
     int i;
     IInternetSecurityManager *secmgr = NULL;
     BYTE buf[512];
-    DWORD zone, size;
+    DWORD zone, size, policy;
     HRESULT hres;
 
     hres = CoInternetCreateSecurityManager(NULL, &secmgr, 0);
@@ -798,7 +798,82 @@ static void test_SecurityManager(void)
     ok(hres == E_INVALIDARG,
        "GetSecurityId failed: %08x, expected E_INVALIDARG\n", hres);
 
+    hres = IInternetSecurityManager_ProcessUrlAction(secmgr, NULL, URLACTION_SCRIPT_RUN, (BYTE*)&policy,
+            sizeof(WCHAR), NULL, 0, 0, 0);
+    ok(hres == E_INVALIDARG, "ProcessUrlAction failed: %08x, expected E_INVALIDARG\n", hres);
+
     IInternetSecurityManager_Release(secmgr);
+}
+
+static void test_url_action(IInternetSecurityManager *secmgr, IInternetZoneManager *zonemgr, DWORD action)
+{
+    DWORD res, size, policy, reg_policy;
+    char buf[10];
+    HKEY hkey;
+    HRESULT hres;
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Zones\\3", &hkey);
+    if(res != ERROR_SUCCESS) {
+        ok(0, "Could not open zone key\n");
+        return;
+    }
+
+    wsprintf(buf, "%X", action);
+    size = sizeof(DWORD);
+    res = RegQueryValueExA(hkey, buf, NULL, NULL, (BYTE*)&reg_policy, &size);
+    RegCloseKey(hkey);
+    if(res != ERROR_SUCCESS || size != sizeof(DWORD)) {
+        policy = 0xdeadbeef;
+        hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url9, action, (BYTE*)&policy,
+                sizeof(WCHAR), NULL, 0, 0, 0);
+        ok(hres == E_FAIL, "ProcessUrlAction(%x) failed: %08x, expected E_FAIL\n", action, hres);
+        ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
+
+        policy = 0xdeadbeef;
+        hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, action, (BYTE*)&policy,
+                sizeof(DWORD), URLZONEREG_DEFAULT);
+        ok(hres == E_FAIL, "GetZoneActionPolicy failed: %08x, expected E_FAIL\n", hres);
+        ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
+        return;
+    }
+
+    policy = 0xdeadbeef;
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, action, (BYTE*)&policy,
+            sizeof(DWORD), URLZONEREG_DEFAULT);
+    ok(hres == S_OK, "GetZoneActionPolicy failed: %08x\n", hres);
+    ok(policy == reg_policy, "(%x) policy=%x, expected %x\n", action, policy, reg_policy);
+
+    if(policy != URLPOLICY_QUERY) {
+        policy = 0xdeadbeef;
+        hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url9, action, (BYTE*)&policy,
+                sizeof(WCHAR), NULL, 0, 0, 0);
+        if(reg_policy == URLPOLICY_DISALLOW)
+            ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
+        else
+            ok(hres == S_OK, "ProcessUrlAction(%x) failed: %08x\n", action, hres);
+        ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
+    }
+}
+
+static void test_polices(void)
+{
+    IInternetZoneManager *zonemgr = NULL;
+    IInternetSecurityManager *secmgr = NULL;
+    HRESULT hres;
+
+    hres = CoInternetCreateSecurityManager(NULL, &secmgr, 0);
+    ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
+    hres = CoInternetCreateZoneManager(NULL, &zonemgr, 0);
+    ok(hres == S_OK, "CoInternetCreateZoneManager failed: %08x\n", hres);
+
+    test_url_action(secmgr, zonemgr, URLACTION_SCRIPT_RUN);
+    test_url_action(secmgr, zonemgr, URLACTION_ACTIVEX_OVERRIDE_OBJECT_SAFETY);
+    test_url_action(secmgr, zonemgr, URLACTION_CHANNEL_SOFTDIST_PERMISSIONS);
+    test_url_action(secmgr, zonemgr, 0xdeadbeef);
+
+    IInternetSecurityManager_Release(secmgr);
+    IInternetZoneManager_Release(zonemgr);
 }
 
 static void test_ZoneManager(void)
@@ -1392,6 +1467,7 @@ START_TEST(misc)
     test_CoInternetQueryInfo();
     test_FindMimeFromData();
     test_SecurityManager();
+    test_polices();
     test_ZoneManager();
     test_NameSpace();
     test_MimeFilter();
