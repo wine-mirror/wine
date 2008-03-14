@@ -279,7 +279,7 @@ HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
     HRESULT hr;
     IPinImpl *This = (IPinImpl *)iface;
 
-/*  TRACE("(%p)\n", ppPin);*/
+    TRACE("(%p)\n", ppPin);
 
     EnterCriticalSection(This->pCritSec);
     {
