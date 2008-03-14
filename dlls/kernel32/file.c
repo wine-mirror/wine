@@ -1385,6 +1385,8 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         options |= FILE_DELETE_ON_CLOSE;
         access |= DELETE;
     }
+    if (attributes & FILE_FLAG_NO_BUFFERING)
+        options |= FILE_NO_INTERMEDIATE_BUFFERING;
     if (!(attributes & FILE_FLAG_OVERLAPPED))
         options |= FILE_SYNCHRONOUS_IO_ALERT;
     if (attributes & FILE_FLAG_RANDOM_ACCESS)
