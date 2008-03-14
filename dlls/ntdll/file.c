@@ -1037,6 +1037,95 @@ err:
 }
 
 
+/******************************************************************************
+ *  NtWriteFileGather   [NTDLL.@]
+ *  ZwWriteFileGather   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                                   PIO_STATUS_BLOCK io_status, FILE_SEGMENT_ELEMENT *segments,
+                                   ULONG length, PLARGE_INTEGER offset, PULONG key )
+{
+    size_t page_size = getpagesize();
+    int result, unix_handle, needs_close;
+    unsigned int options;
+    NTSTATUS status;
+    ULONG pos = 0, total = 0;
+    enum server_fd_type type;
+    ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
+
+    TRACE( "(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
+           file, event, apc, apc_user, io_status, segments, length, offset, key);
+
+    if (length % page_size) return STATUS_INVALID_PARAMETER;
+    if (!io_status) return STATUS_ACCESS_VIOLATION;
+
+    status = server_get_unix_fd( file, FILE_WRITE_DATA, &unix_handle,
+                                 &needs_close, &type, &options );
+    if (status) return status;
+
+    if ((type != FD_TYPE_FILE) ||
+        (options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)) ||
+        !(options & FILE_NO_INTERMEDIATE_BUFFERING))
+    {
+        status = STATUS_INVALID_PARAMETER;
+        goto error;
+    }
+
+    while (length)
+    {
+        if (offset && offset->QuadPart != (LONGLONG)-2 /* FILE_USE_FILE_POINTER_POSITION */)
+            result = pwrite( unix_handle, (char *)segments->Buffer + pos,
+                             page_size - pos, offset->QuadPart + total );
+        else
+            result = write( unix_handle, (char *)segments->Buffer + pos, page_size - pos );
+
+        if (result == -1)
+        {
+            if (errno == EINTR) continue;
+            if (errno == EFAULT)
+            {
+                status = STATUS_INVALID_USER_BUFFER;
+                goto error;
+            }
+            status = FILE_GetNtStatus();
+            break;
+        }
+        if (!result)
+        {
+            status = STATUS_DISK_FULL;
+            break;
+        }
+        total += result;
+        length -= result;
+        if ((pos += result) == page_size)
+        {
+            pos = 0;
+            segments++;
+        }
+    }
+
+    if (cvalue) NTDLL_AddCompletion( file, cvalue, status, total );
+
+ error:
+    if (needs_close) close( unix_handle );
+    if (status == STATUS_SUCCESS)
+    {
+        io_status->u.Status = status;
+        io_status->Information = total;
+        TRACE("= SUCCESS (%u)\n", total);
+        if (event) NtSetEvent( event, NULL );
+        if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
+                                   (ULONG_PTR)apc_user, (ULONG_PTR)io_status, 0 );
+    }
+    else
+    {
+        TRACE("= 0x%08x\n", status);
+        if (status != STATUS_PENDING && event) NtResetEvent( event, NULL );
+    }
+    return status;
+}
+
+
 struct async_ioctl
 {
     HANDLE          handle;   /* handle to the device */

@@ -375,7 +375,7 @@
 @ stub NtWaitHighEventPair
 @ stub NtWaitLowEventPair
 @ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
-@ stub NtWriteFileGather
+@ stdcall NtWriteFileGather(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtWriteRequestData
 @ stdcall NtWriteVirtualMemory(long ptr ptr long ptr)
 @ stdcall NtYieldExecution()
@@ -1218,7 +1218,7 @@
 @ stub ZwWaitHighEventPair
 @ stub ZwWaitLowEventPair
 @ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
-# @ stub ZwWriteFileGather
+@ stdcall ZwWriteFileGather(long long ptr ptr ptr ptr long ptr ptr) NtWriteFileGather
 @ stub ZwWriteRequestData
 @ stdcall ZwWriteVirtualMemory(long ptr ptr long ptr) NtWriteVirtualMemory
 @ stdcall ZwYieldExecution() NtYieldExecution
