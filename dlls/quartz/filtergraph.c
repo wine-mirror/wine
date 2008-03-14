@@ -1699,7 +1699,7 @@ static HRESULT WINAPI MediaSeeking_GetCapabilities(IMediaSeeking *iface,
 						   DWORD *pCapabilities) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pCapabilities);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pCapabilities);
 
     return S_OK;
 }
@@ -1708,7 +1708,7 @@ static HRESULT WINAPI MediaSeeking_CheckCapabilities(IMediaSeeking *iface,
 						     DWORD *pCapabilities) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pCapabilities);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pCapabilities);
 
     return S_OK;
 }
@@ -1717,7 +1717,7 @@ static HRESULT WINAPI MediaSeeking_IsFormatSupported(IMediaSeeking *iface,
 						     const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
 
     return S_OK;
 }
@@ -1726,7 +1726,7 @@ static HRESULT WINAPI MediaSeeking_QueryPreferredFormat(IMediaSeeking *iface,
 							GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
 
     return S_OK;
 }
@@ -1735,7 +1735,7 @@ static HRESULT WINAPI MediaSeeking_GetTimeFormat(IMediaSeeking *iface,
 						 GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
 
     return S_OK;
 }
@@ -1744,7 +1744,7 @@ static HRESULT WINAPI MediaSeeking_IsUsingTimeFormat(IMediaSeeking *iface,
 						     const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
 
     return S_OK;
 }
@@ -1753,7 +1753,7 @@ static HRESULT WINAPI MediaSeeking_SetTimeFormat(IMediaSeeking *iface,
 						 const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
 
     return S_OK;
 }
@@ -1762,7 +1762,7 @@ static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface,
 					       LONGLONG *pDuration) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pDuration);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pDuration);
 
     return S_OK;
 }
@@ -1771,7 +1771,7 @@ static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface,
 						   LONGLONG *pStop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pStop);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pStop);
 
     return S_OK;
 }
@@ -1780,7 +1780,7 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface,
 						      LONGLONG *pCurrent) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pCurrent);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pCurrent);
 
     return S_OK;
 }
@@ -1792,7 +1792,7 @@ static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface,
 						     const GUID *pSourceFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p, %p, 0x%s, %p): stub !!!\n", This, iface, pTarget,
+    FIXME("(%p/%p)->(%p, %p, 0x%s, %p): stub !!!\n", This, iface, pTarget,
         pTargetFormat, wine_dbgstr_longlong(Source), pSourceFormat);
 
     return S_OK;
@@ -1805,7 +1805,7 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface,
 						DWORD dwStopFlags) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p, %08x, %p, %08x): stub !!!\n", This, iface, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
+    FIXME("(%p/%p)->(%p, %08x, %p, %08x): stub !!!\n", This, iface, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
 
     return S_OK;
 }
@@ -1815,7 +1815,7 @@ static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface,
 						LONGLONG *pStop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p, %p): stub !!!\n", This, iface, pCurrent, pStop);
+    FIXME("(%p/%p)->(%p, %p): stub !!!\n", This, iface, pCurrent, pStop);
 
     return S_OK;
 }
@@ -1825,7 +1825,7 @@ static HRESULT WINAPI MediaSeeking_GetAvailable(IMediaSeeking *iface,
 						LONGLONG *pLatest) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p, %p): stub !!!\n", This, iface, pEarliest, pLatest);
+    FIXME("(%p/%p)->(%p, %p): stub !!!\n", This, iface, pEarliest, pLatest);
 
     return S_OK;
 }
@@ -1834,7 +1834,7 @@ static HRESULT WINAPI MediaSeeking_SetRate(IMediaSeeking *iface,
 					   double dRate) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%f): stub !!!\n", This, iface, dRate);
+    FIXME("(%p/%p)->(%f): stub !!!\n", This, iface, dRate);
 
     return S_OK;
 }
@@ -1843,7 +1843,7 @@ static HRESULT WINAPI MediaSeeking_GetRate(IMediaSeeking *iface,
 					   double *pdRate) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pdRate);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pdRate);
 
     return S_OK;
 }
@@ -1852,7 +1852,7 @@ static HRESULT WINAPI MediaSeeking_GetPreroll(IMediaSeeking *iface,
 					      LONGLONG *pllPreroll) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pllPreroll);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pllPreroll);
 
     return S_OK;
 }
