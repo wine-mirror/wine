@@ -275,8 +275,8 @@
 @ stdcall NtQueueApcThread(long ptr long long long)
 @ stdcall NtRaiseException(ptr ptr long)
 @ stub NtRaiseHardError
-@ stdcall NtReadFile(long long long long long long long long long)
-@ stub NtReadFileScatter
+@ stdcall NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
+@ stdcall NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtReadRequestData
 @ stdcall NtReadVirtualMemory(long ptr ptr long ptr)
 @ stub NtRegisterNewDevice
@@ -1118,8 +1118,8 @@
 @ stdcall ZwQueueApcThread(long ptr long long long) NtQueueApcThread
 @ stdcall ZwRaiseException(ptr ptr long) NtRaiseException
 @ stub ZwRaiseHardError
-@ stdcall ZwReadFile(long long long long long long long long long) NtReadFile
-# @ stub ZwReadFileScatter
+@ stdcall ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) NtReadFile
+@ stdcall ZwReadFileScatter(long long ptr ptr ptr ptr long ptr ptr) NtReadFileScatter
 @ stub ZwReadRequestData
 @ stdcall ZwReadVirtualMemory(long ptr ptr long ptr) NtReadVirtualMemory
 @ stub ZwRegisterNewDevice
