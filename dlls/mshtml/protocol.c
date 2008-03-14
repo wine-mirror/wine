@@ -833,8 +833,9 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
             dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
 
     if(ParseAction == PARSE_SECURITY_URL) {
+        WCHAR file_part[MAX_PATH], full_path[MAX_PATH];
         WCHAR *ptr;
-        DWORD size;
+        DWORD size, len;
 
         static const WCHAR wszFile[] = {'f','i','l','e',':','/','/'};
         static const WCHAR wszRes[] = {'r','e','s',':','/','/'};
@@ -846,19 +847,29 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
         if(!ptr)
             return E_INVALIDARG;
 
-        size = ptr-pwzUrl + sizeof(wszFile)/sizeof(WCHAR) - sizeof(wszRes)/sizeof(WCHAR);
+        len = ptr - (pwzUrl + sizeof(wszRes)/sizeof(WCHAR));
+        if(len > sizeof(file_part)/sizeof(WCHAR)) {
+            FIXME("Too long URL\n");
+            return MK_E_SYNTAX;
+        }
+
+        memcpy(file_part, pwzUrl + sizeof(wszRes)/sizeof(WCHAR), len*sizeof(WCHAR));
+        file_part[len] = 0;
+
+        len = SearchPathW(NULL, file_part, NULL, sizeof(full_path)/sizeof(WCHAR), full_path, NULL);
+        if(!len) {
+            WARN("Could not find file %s\n", debugstr_w(file_part));
+            return MK_E_SYNTAX;
+        }
+
+        size = sizeof(wszFile)/sizeof(WCHAR) + len + 1;
+        if(pcchResult)
+            *pcchResult = size;
         if(size >= cchResult)
             return S_FALSE;
 
-        /* FIXME: return full path */
         memcpy(pwzResult, wszFile, sizeof(wszFile));
-        memcpy(pwzResult + sizeof(wszFile)/sizeof(WCHAR),
-                pwzUrl + sizeof(wszRes)/sizeof(WCHAR),
-                size*sizeof(WCHAR) - sizeof(wszFile));
-        pwzResult[size] = 0;
-
-        if(pcchResult)
-            *pcchResult = size;
+        memcpy(pwzResult + sizeof(wszFile)/sizeof(WCHAR), full_path, (len+1)*sizeof(WCHAR));
         return S_OK;
     }
 

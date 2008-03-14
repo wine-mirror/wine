@@ -70,6 +70,13 @@ static const WCHAR about_blank_url[] = {'a','b','o','u','t',':','b','l','a','n',
 static const WCHAR about_test_url[] = {'a','b','o','u','t',':','t','e','s','t',0};
 static const WCHAR about_res_url[] = {'r','e','s',':','b','l','a','n','k',0};
 
+static const char *debugstr_w(LPCWSTR str)
+{
+    static char buf[1024];
+    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
+    return buf;
+}
+
 static HRESULT WINAPI ProtocolSink_QueryInterface(IInternetProtocolSink *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
@@ -247,6 +254,29 @@ static void protocol_start(IInternetProtocol *protocol, LPCWSTR url)
     CHECK_CALLED(ReportResult);
 }
 
+static void res_sec_url_cmp(LPCWSTR url, DWORD size, LPCWSTR file)
+{
+    WCHAR buf[MAX_PATH];
+    DWORD len;
+
+    static const WCHAR fileW[] = {'f','i','l','e',':','/','/'};
+
+    if(size < sizeof(fileW)/sizeof(WCHAR) || memcmp(url, fileW, sizeof(fileW))) {
+        ok(0, "wrong URL protocol\n");
+        return;
+    }
+
+    len = SearchPathW(NULL, file, NULL, sizeof(buf)/sizeof(WCHAR), buf, NULL);
+    if(!len) {
+        ok(0, "SearchPath failed: %u\n", GetLastError());
+        return;
+    }
+
+    len += sizeof(fileW)/sizeof(WCHAR)+1;
+    ok(len == size, "wrong size %u, expected %u\n", size, len);
+    ok(!lstrcmpW(url + sizeof(fileW)/sizeof(WCHAR), buf), "wrong file part %s\n", debugstr_w(url));
+}
+
 static void test_res_protocol(void)
 {
     IInternetProtocolInfo *protocol_info;
@@ -265,7 +295,9 @@ static void test_res_protocol(void)
         {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l','/','x','x','.','h','t','m',0};
     static const WCHAR wrong_url4[] =
         {'r','e','s',':','/','/','x','x','.','d','l','l','/','b','l','a','n','k','.','h','t','m',0};
-
+    static const WCHAR wrong_url5[] =
+        {'r','e','s',':','/','/','s','h','t','m','l','.','d','l','l','/','b','l','a','n','k','.','h','t','m',0};
+    static const WCHAR mshtml_dllW[] = {'m','s','h','t','m','l','.','d','l','l',0};
 
     hres = CoGetClassObject(&CLSID_ResProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
@@ -291,15 +323,22 @@ static void test_res_protocol(void)
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
+        res_sec_url_cmp(buf, size, mshtml_dllW);
 
+        size = 0;
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
                 3, &size, 0);
         ok(hres == S_FALSE, "ParseUrl failed: %08x, expected S_FALSE\n", hres);
+        ok(size, "size=0\n");
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_SECURITY_URL, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == MK_E_SYNTAX || hres == E_INVALIDARG,
            "ParseUrl failed: %08x, expected MK_E_SYNTAX\n", hres);
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url5, PARSE_SECURITY_URL, 0, buf,
+                sizeof(buf)/sizeof(buf[0]), &size, 0);
+        ok(hres == MK_E_SYNTAX, "ParseUrl failed: %08x, expected MK_E_SYNTAX\n", hres);
 
         size = 0xdeadbeef;
         buf[0] = '?';
