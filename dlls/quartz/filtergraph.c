@@ -1695,22 +1695,119 @@ static ULONG WINAPI MediaSeeking_Release(IMediaSeeking *iface) {
     return Filtergraph_Release(This);
 }
 
+typedef HRESULT WINAPI (*fnFoundSeek)(IFilterGraphImpl *This, IMediaSeeking*, DWORD_PTR arg);
+
+static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek, DWORD_PTR arg) {
+    BOOL allnotimpl = TRUE;
+    int i;
+    IBaseFilter* pfilter;
+    IEnumPins* pEnum;
+    HRESULT hr, hr_return = S_OK;
+    IPin* pPin;
+    DWORD dummy;
+    PIN_DIRECTION dir;
+
+    TRACE("(%p)->(%p %08lx)\n", This, FoundSeek, arg);
+    /* Send a message to all renderers, they are responsible for broadcasting it further */
+
+    for(i = 0; i < This->nFilters; i++)
+    {
+        BOOL renderer = TRUE;
+        pfilter = This->ppFiltersInGraph[i];
+        hr = IBaseFilter_EnumPins(pfilter, &pEnum);
+        if (hr != S_OK)
+        {
+            ERR("Enum pins failed %x\n", hr);
+            continue;
+        }
+        /* Check if it is a source filter */
+        while(IEnumPins_Next(pEnum, 1, &pPin, &dummy) == S_OK)
+        {
+            IPin_QueryDirection(pPin, &dir);
+            IPin_Release(pPin);
+            if (dir != PINDIR_INPUT)
+            {
+                renderer = FALSE;
+                break;
+            }
+        }
+        IEnumPins_Release(pEnum);
+        if (renderer)
+        {
+            IMediaSeeking *seek = NULL;
+            IBaseFilter_QueryInterface(pfilter, &IID_IMediaSeeking, (void**)&seek);
+            if (!seek)
+                continue;
+            hr = FoundSeek(This, seek, arg);
+            IMediaSeeking_Release(seek);
+            if (hr_return != E_NOTIMPL)
+                allnotimpl = FALSE;
+            if (hr_return == S_OK || (FAILED(hr) && hr != E_NOTIMPL && !FAILED(hr_return)))
+                hr_return = hr;
+        }
+    }
+
+    if (allnotimpl)
+        return E_NOTIMPL;
+    return hr_return;
+}
+
+static HRESULT WINAPI FoundCapabilities(IFilterGraphImpl *This, IMediaSeeking *seek, DWORD_PTR pcaps)
+{
+    HRESULT hr;
+    DWORD caps = 0;
+
+    hr = IMediaSeeking_GetCapabilities(seek, &caps);
+    if (FAILED(hr))
+        return hr;
+
+    /* Only add common capabilities everything supports */
+    *(DWORD*)pcaps &= caps;
+
+    return hr;
+}
+
 /*** IMediaSeeking methods ***/
 static HRESULT WINAPI MediaSeeking_GetCapabilities(IMediaSeeking *iface,
 						   DWORD *pCapabilities) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
+    HRESULT hr;
+    TRACE("(%p/%p)->(%p)\n", This, iface, pCapabilities);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pCapabilities);
+    if (!pCapabilities)
+        return E_POINTER;
 
-    return S_OK;
+    EnterCriticalSection(&This->cs);
+    *pCapabilities = 0xffffffff;
+
+    hr = all_renderers_seek(This, FoundCapabilities, (DWORD_PTR)pCapabilities);
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaSeeking_CheckCapabilities(IMediaSeeking *iface,
 						     DWORD *pCapabilities) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
+    DWORD originalcaps;
+    HRESULT hr;
+    TRACE("(%p/%p)->(%p)\n", This, iface, pCapabilities);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pCapabilities);
+    if (!pCapabilities)
+        return E_POINTER;
 
+    EnterCriticalSection(&This->cs);
+    originalcaps = *pCapabilities;
+    hr = all_renderers_seek(This, FoundCapabilities, (DWORD_PTR)pCapabilities);
+    LeaveCriticalSection(&This->cs);
+
+    if (FAILED(hr))
+        return hr;
+
+    if (!*pCapabilities)
+        return E_FAIL;
+    if (*pCapabilities != originalcaps)
+        return S_FALSE;
     return S_OK;
 }
 
@@ -1793,13 +1890,38 @@ static HRESULT WINAPI MediaSeeking_SetTimeFormat(IMediaSeeking *iface,
     return S_OK;
 }
 
+static HRESULT WINAPI FoundDuration(IFilterGraphImpl *This, IMediaSeeking *seek, DWORD_PTR pduration)
+{
+    HRESULT hr;
+    LONGLONG duration = 0, *pdur = (LONGLONG*)pduration;
+
+    hr = IMediaSeeking_GetDuration(seek, &duration);
+    if (FAILED(hr))
+        return hr;
+
+    /* FIXME: Minimum or maximum duration? */
+    if (!*pdur < duration)
+        *pdur = duration;
+
+    return hr;
+}
+
 static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface,
 					       LONGLONG *pDuration) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pDuration);
+    TRACE("(%p/%p)->(%p)\n", This, iface, pDuration);
 
-    return S_OK;
+    if (!pDuration)
+        return E_POINTER;
+
+    EnterCriticalSection(&This->cs);
+    *pDuration = 0;
+    hr = all_renderers_seek(This, FoundDuration, (DWORD_PTR)pDuration);
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface,
