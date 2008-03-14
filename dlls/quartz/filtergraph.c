@@ -1605,7 +1605,7 @@ static HRESULT WINAPI MediaControl_RenderFile(IMediaControl *iface,
 					      BSTR strFilename) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
-    TRACE("(%p/%p)->(%s (%p)): stub !!!\n", This, iface, debugstr_w(strFilename), strFilename);
+    FIXME("(%p/%p)->(%s (%p)): stub !!!\n", This, iface, debugstr_w(strFilename), strFilename);
 
     return S_OK;
 }
@@ -1615,7 +1615,7 @@ static HRESULT WINAPI MediaControl_AddSourceFilter(IMediaControl *iface,
 						   IDispatch **ppUnk) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
-    TRACE("(%p/%p)->(%s (%p), %p): stub !!!\n", This, iface, debugstr_w(strFilename), strFilename, ppUnk);
+    FIXME("(%p/%p)->(%s (%p), %p): stub !!!\n", This, iface, debugstr_w(strFilename), strFilename, ppUnk);
 
     return S_OK;
 }
@@ -1624,7 +1624,7 @@ static HRESULT WINAPI MediaControl_get_FilterCollection(IMediaControl *iface,
 							IDispatch **ppUnk) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, ppUnk);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, ppUnk);
 
     return S_OK;
 }
@@ -1633,7 +1633,7 @@ static HRESULT WINAPI MediaControl_get_RegFilterCollection(IMediaControl *iface,
 							   IDispatch **ppUnk) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, ppUnk);
+    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, ppUnk);
 
     return S_OK;
 }
@@ -1641,7 +1641,7 @@ static HRESULT WINAPI MediaControl_get_RegFilterCollection(IMediaControl *iface,
 static HRESULT WINAPI MediaControl_StopWhenReady(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
-    TRACE("(%p/%p)->(): stub !!!\n", This, iface);
+    FIXME("(%p/%p)->(): stub !!!\n", This, iface);
 
     return S_OK;
 }
