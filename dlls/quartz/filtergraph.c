@@ -198,6 +198,7 @@ typedef struct _IFilterGraphImpl {
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
+    GUID timeformatseek;
 } IFilterGraphImpl;
 
 static HRESULT WINAPI Filtergraph_QueryInterface(IFilterGraphImpl *This,
@@ -1717,7 +1718,16 @@ static HRESULT WINAPI MediaSeeking_IsFormatSupported(IMediaSeeking *iface,
 						     const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    if (!pFormat)
+        return E_POINTER;
+
+    TRACE("(%p/%p)->(%s)\n", This, iface, debugstr_guid(pFormat));
+
+    if (!IsEqualGUID(&TIME_FORMAT_MEDIA_TIME, pFormat))
+    {
+        FIXME("Unhandled time format %s\n", debugstr_guid(pFormat));
+        return S_FALSE;
+    }
 
     return S_OK;
 }
@@ -1726,7 +1736,11 @@ static HRESULT WINAPI MediaSeeking_QueryPreferredFormat(IMediaSeeking *iface,
 							GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    if (!pFormat)
+        return E_POINTER;
+
+    FIXME("(%p/%p)->(%p): semi-stub !!!\n", This, iface, pFormat);
+    memcpy(pFormat, &TIME_FORMAT_MEDIA_TIME, sizeof(GUID));
 
     return S_OK;
 }
@@ -1735,7 +1749,11 @@ static HRESULT WINAPI MediaSeeking_GetTimeFormat(IMediaSeeking *iface,
 						 GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    if (!pFormat)
+        return E_POINTER;
+
+    TRACE("(%p/%p)->(%p)\n", This, iface, pFormat);
+    memcpy(pFormat, &This->timeformatseek, sizeof(GUID));
 
     return S_OK;
 }
@@ -1744,7 +1762,12 @@ static HRESULT WINAPI MediaSeeking_IsUsingTimeFormat(IMediaSeeking *iface,
 						     const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    TRACE("(%p/%p)->(%p)\n", This, iface, pFormat);
+    if (!pFormat)
+        return E_POINTER;
+
+    if (memcmp(pFormat, &This->timeformatseek, sizeof(GUID)))
+        return S_FALSE;
 
     return S_OK;
 }
@@ -1753,7 +1776,19 @@ static HRESULT WINAPI MediaSeeking_SetTimeFormat(IMediaSeeking *iface,
 						 const GUID *pFormat) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pFormat);
+    if (!pFormat)
+        return E_POINTER;
+
+    TRACE("(%p/%p)->(%s)\n", This, iface, debugstr_guid(pFormat));
+
+    if (This->state != State_Stopped)
+        return VFW_E_WRONG_STATE;
+
+    if (!IsEqualGUID(&TIME_FORMAT_MEDIA_TIME, pFormat))
+    {
+        FIXME("Unhandled time format %s\n", debugstr_guid(pFormat));
+        return E_INVALIDARG;
+    }
 
     return S_OK;
 }
@@ -4759,6 +4794,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     InitializeCriticalSection(&fimpl->cs);
     fimpl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IFilterGraphImpl.cs");
     fimpl->nItfCacheEntries = 0;
+    memcpy(&fimpl->timeformatseek, &TIME_FORMAT_MEDIA_TIME, sizeof(GUID));
 
     hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&fimpl->pFilterMapper2);
     if (FAILED(hr)) {
