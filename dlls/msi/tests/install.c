@@ -621,12 +621,7 @@ static const CHAR ca51_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                 "CostFinalize\t\t1000\n"
                                                 "InstallValidate\t\t1400\n"
                                                 "InstallInitialize\t\t1500\n"
-                                                "ProcessComponents\t\t1600\n"
-                                                "UnpublishFeatures\t\t1800\n"
                                                 "InstallFiles\t\t4000\n"
-                                                "RegisterProduct\t\t6100\n"
-                                                "PublishFeatures\t\t6300\n"
-                                                "PublishProduct\t\t6400\n"
                                                 "InstallFinalize\t\t6600";
 
 static const CHAR ca51_custom_action_dat[] = "Action\tType\tSource\tTarget\n"
