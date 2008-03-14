@@ -856,6 +856,23 @@ static void test_url_action(IInternetSecurityManager *secmgr, IInternetZoneManag
     }
 }
 
+static void test_special_url_action(IInternetSecurityManager *secmgr, IInternetZoneManager *zonemgr, DWORD action)
+{
+    DWORD policy;
+    HRESULT hres;
+
+    policy = 0xdeadbeef;
+    hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, action, (BYTE*)&policy,
+            sizeof(DWORD), URLZONEREG_DEFAULT);
+    ok(hres == S_OK, "GetZoneActionPolicy failed: %08x\n", hres);
+    ok(policy == URLPOLICY_DISALLOW, "(%x) policy=%x, expected URLPOLIVY_DISALLOW\n", action, policy);
+
+    policy = 0xdeadbeef;
+    hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url1, action, (BYTE*)&policy,
+            sizeof(WCHAR), NULL, 0, 0, 0);
+    ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
+}
+
 static void test_polices(void)
 {
     IInternetZoneManager *zonemgr = NULL;
@@ -871,6 +888,8 @@ static void test_polices(void)
     test_url_action(secmgr, zonemgr, URLACTION_ACTIVEX_OVERRIDE_OBJECT_SAFETY);
     test_url_action(secmgr, zonemgr, URLACTION_CHANNEL_SOFTDIST_PERMISSIONS);
     test_url_action(secmgr, zonemgr, 0xdeadbeef);
+
+    test_special_url_action(secmgr, zonemgr, URLACTION_SCRIPT_OVERRIDE_SAFETY);
 
     IInternetSecurityManager_Release(secmgr);
     IInternetZoneManager_Release(zonemgr);

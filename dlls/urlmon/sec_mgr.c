@@ -176,6 +176,12 @@ static HRESULT get_action_policy(DWORD zone, DWORD action, BYTE *policy, DWORD s
     LONG res;
     HRESULT hres;
 
+    switch(action) {
+    case URLACTION_SCRIPT_OVERRIDE_SAFETY:
+        *(DWORD*)policy = URLPOLICY_DISALLOW;
+        return S_OK;
+    }
+
     switch(zone_reg) {
     case URLZONEREG_DEFAULT:
     case URLZONEREG_HKCU:
