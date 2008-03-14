@@ -448,12 +448,31 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface,
         if (This->ppFiltersInGraph[i] == pFilter)
         {
             IEnumPins *penumpins;
+            IBaseFilter_Stop(pFilter);
             hr = IBaseFilter_EnumPins(pFilter, &penumpins);
             if (SUCCEEDED(hr)) {
                 IPin *ppin;
                 while(IEnumPins_Next(penumpins, 1, &ppin, NULL) == S_OK) {
-                    IPin_Disconnect(ppin);
-                    IPin_Release(ppin);
+                    IPin *victim = NULL;
+                    HRESULT h;
+                    IPin_ConnectedTo(ppin, &victim);
+                    if (victim)
+                    {
+                        h = IPin_Disconnect(victim);
+                        TRACE("Disconnect other side: %08x\n", h);
+                        if (h == VFW_E_NOT_STOPPED)
+                        {
+                            PIN_INFO pinfo;
+                            IPin_QueryPinInfo(victim, &pinfo);
+                            IBaseFilter_Stop(pinfo.pFilter);
+                            IBaseFilter_Release(pinfo.pFilter);
+                            h = IPin_Disconnect(victim);
+                            TRACE("Disconnect retry: %08x\n", h);
+                        }
+                        IPin_Release(victim);
+                    }
+                    h = IPin_Disconnect(ppin);
+                    TRACE("Disconnect 2: %08x\n", h);
                 }
                 IEnumPins_Release(penumpins);
             }
