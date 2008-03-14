@@ -599,6 +599,7 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
         else
         {
             ERR("InitializeSecurityContextW returned error 0x%08x\n", sec_status);
+            pAuthInfo->finished = TRUE;
             HeapFree(GetProcessHeap(), 0, out.pvBuffer);
             return FALSE;
         }
