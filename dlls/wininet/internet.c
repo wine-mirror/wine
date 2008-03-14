@@ -1704,11 +1704,16 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
     TRACE("(%p %p %d %p)\n", hFile, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
 
     lpwh = WININET_GetObject( hFile );
+    if (!lpwh) {
+        WARN("Invalid handle\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
 
-    if(lpwh && lpwh->vtbl->WriteFile) {
+    if(lpwh->vtbl->WriteFile) {
         retval = lpwh->vtbl->WriteFile(lpwh, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
     }else {
-        WARN("Invalid handle\n");
+        WARN("No Writefile method.\n");
         SetLastError(ERROR_INVALID_HANDLE);
         retval = FALSE;
     }
@@ -1848,7 +1853,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
 
     TRACE("(%p, 0x%08x, %p, %p)\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
 
-    lpwhh = (LPWININETHANDLEHEADER) WININET_GetObject( hInternet );
+    lpwhh = WININET_GetObject( hInternet );
 
     switch (dwOption)
     {
