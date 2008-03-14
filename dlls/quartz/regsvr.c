@@ -1111,6 +1111,19 @@ static struct regsvr_filter const filter_list[] = {
             { 0xFFFFFFFF },
         }
     },
+    {   &CLSID_DSoundRender,
+        &CLSID_LegacyAmFilterCategory,
+        {'A','u','d','i','o',' ','R','e','n','d','e','r','e','r',0},
+        0x800000,
+        {   {   REG_PINFLAG_B_RENDERER,
+                {   { &MEDIATYPE_Audio, &MEDIASUBTYPE_PCM },
+/*                  { &MEDIATYPE_Audio, &MEDIASUBTYPE_IEEE_FLOAT }, */
+                    { NULL }
+                },
+            },
+            { 0xFFFFFFFF },
+        }
+    },
     {   &CLSID_AVIDec,
 	&CLSID_LegacyAmFilterCategory,
 	{'A','V','I',' ','D','e','c','o','m','p','r','e','s','s','o','r',0},
