@@ -191,6 +191,19 @@ static void test_AddFile(void)
     ok(hres == S_OK, "Second call to AddFile failed: 0x%08x\n", hres);
 }
 
+/* Test adding a set of files */
+static void test_AddFileSet(void)
+{
+    HRESULT hres;
+    BG_FILE_INFO files[2] =
+        {
+            {test_remotePathA, test_localPathA},
+            {test_remotePathB, test_localPathB}
+        };
+    hres = IBackgroundCopyJob_AddFileSet(test_job, 2, files);
+    ok(hres == S_OK, "AddFileSet failed: 0x%08x\n", hres);
+}
+
 /* Test creation of a job enumerator */
 static void test_EnumFiles(void)
 {
@@ -466,6 +479,7 @@ START_TEST(job)
         test_GetType,
         test_GetName,
         test_AddFile,
+        test_AddFileSet,
         test_EnumFiles,
         test_GetProgress_preTransfer,
         test_GetState,

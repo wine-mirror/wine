@@ -77,8 +77,15 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFileSet(
     ULONG cFileCount,
     BG_FILE_INFO *pFileSet)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    ULONG i;
+    for (i = 0; i < cFileCount; ++i)
+    {
+        HRESULT hr = IBackgroundCopyJob_AddFile(iface, pFileSet[i].RemoteName,
+                                                pFileSet[i].LocalName);
+        if (!SUCCEEDED(hr))
+            return hr;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFile(
