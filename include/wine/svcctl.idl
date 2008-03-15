@@ -48,6 +48,31 @@ interface svcctl
         [in,out] SC_RPC_HANDLE *handle
     );
 
+    /* Compatible with Windows function 0x02 */
+    DWORD svcctl_DeleteService(
+        [in] SC_RPC_HANDLE hService
+    );
+
+    /* Compatible with Windows function 0x0c */
+    DWORD svcctl_CreateServiceW(
+        [in] SC_RPC_HANDLE hSCManager,
+        [in] LPCWSTR lpServiceName,
+        [in,unique] LPCWSTR lpDisplayName,
+        [in] DWORD dwDesiredAccess,
+        [in] DWORD dwServiceType,
+        [in] DWORD dwStartType,
+        [in] DWORD dwErrorControl,
+        [in] LPCWSTR lpBinaryPathName,
+        [in,unique] LPCWSTR lpLoadOrderGroup,
+        [in,out,unique] DWORD *lpdwTagId,
+        [in,unique,size_is(dwDependenciesSize)] const BYTE *lpDependencies,
+        [in] DWORD dwDependenciesSize,
+        [in,unique] LPCWSTR lpServiceStartName,
+        [in,unique,size_is(dwPasswordSize)] const BYTE *lpPassword,
+        [in] DWORD dwPasswordSize,
+        [out] SC_RPC_HANDLE *phService
+    );
+
     /* Compatible with Windows function 0x0f */
     DWORD svcctl_OpenSCManagerW(
         [in,unique] MACHINE_HANDLEW MachineName,
@@ -56,4 +81,11 @@ interface svcctl
         [out] SC_RPC_HANDLE *handle
     );
 
+    /* Compatible with Windows function 0x10 */
+    DWORD svcctl_OpenServiceW(
+        [in] SC_RPC_HANDLE hSCManager,
+        [in] LPCWSTR lpServiceName,
+        [in] DWORD dwDesiredAccess,
+        [out] SC_RPC_HANDLE *phService
+    );
 }

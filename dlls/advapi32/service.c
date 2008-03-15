@@ -1199,10 +1199,7 @@ CloseServiceHandle( SC_HANDLE hSCObject )
     }
 
     obj = (struct sc_handle *)hSCObject;
-    if (obj->server_handle)   /* service handles currently don't have RPC connections */
-        err = svcctl_CloseServiceHandle(&obj->server_handle);
-    else
-        err = ERROR_SUCCESS;
+    err = svcctl_CloseServiceHandle(&obj->server_handle);
     sc_handle_free( obj );
 
     if (err != ERROR_SUCCESS)
@@ -1253,8 +1250,7 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 {
     struct sc_manager *hscm;
     struct sc_service *hsvc;
-    HKEY hKey;
-    long r;
+    DWORD err;
     DWORD len;
     DWORD new_mask = dwDesiredAccess;
 
@@ -1272,13 +1268,6 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         SetLastError(ERROR_INVALID_ADDRESS);
         return NULL;
     }
-
-    r = RegOpenKeyExW( hscm->hkey, lpServiceName, 0, KEY_ALL_ACCESS, &hKey );
-    if (r!=ERROR_SUCCESS)
-    {
-        SetLastError( ERROR_SERVICE_DOES_NOT_EXIST );
-        return NULL;
-    }
     
     len = strlenW(lpServiceName)+1;
     hsvc = sc_handle_alloc( SC_HTYPE_SERVICE,
@@ -1286,18 +1275,31 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                             sc_handle_destroy_service );
     if (!hsvc)
     {
-        RegCloseKey(hKey);
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return NULL;
     }
     strcpyW( hsvc->name, lpServiceName );
-    hsvc->hkey = hKey;
-
-    RtlMapGenericMask(&new_mask, &svc_generic);
-    hsvc->dwAccess = new_mask;
 
     /* add reference to SCM handle */
     hscm->hdr.ref_count++;
     hsvc->scm = hscm;
+
+    err = svcctl_OpenServiceW(hscm->hdr.server_handle, lpServiceName, dwDesiredAccess, &hsvc->hdr.server_handle);
+
+    if (err != ERROR_SUCCESS)
+    {
+        sc_handle_free(&hsvc->hdr);
+        SetLastError(err);
+        return NULL;
+    }
+
+    /* for parts of advapi32 not using services.exe yet */
+    RtlMapGenericMask(&new_mask, &svc_generic);
+    hsvc->dwAccess = new_mask;
+
+    err = RegOpenKeyExW( hscm->hkey, lpServiceName, 0, KEY_ALL_ACCESS, &hsvc->hkey );
+    if (err != ERROR_SUCCESS)
+        ERR("Shouldn't hapen - service key for service validated by services.exe doesn't exist\n");
 
     TRACE("returning %p\n",hsvc);
 
@@ -1318,15 +1320,9 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 {
     struct sc_manager *hscm;
     struct sc_service *hsvc = NULL;
-    HKEY hKey;
-    LONG r;
-    DWORD dp, len;
-    struct reg_value val[10];
-    int n = 0;
     DWORD new_mask = dwDesiredAccess;
-    DWORD index = 0;
-    WCHAR buffer[MAX_PATH];
-    BOOL displayname_exists = FALSE;
+    DWORD len, err;
+    SIZE_T depslen = 0, passwdlen;
 
     TRACE("%p %s %s\n", hSCManager, 
           debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
@@ -1344,164 +1340,55 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return NULL;
     }
 
-    if (!(hscm->dwAccess & SC_MANAGER_CREATE_SERVICE))
+    if (lpDependencies)
     {
-        SetLastError(ERROR_ACCESS_DENIED);
-        return NULL;
+        const WCHAR *wptr = lpDependencies;
+        while (*wptr)
+            wptr += strlenW(wptr)+1;
+        depslen = (wptr - lpDependencies + 1)*sizeof(WCHAR);
     }
+    else
+        depslen = 0;
 
-    if (!lpServiceName[0])
-    {
-        SetLastError(ERROR_INVALID_NAME);
-        return NULL;
-    }
-
-    if (!lpBinaryPathName[0])
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
-    }
-
-    /* ServiceType can only be one value (except for SERVICE_INTERACTIVE_PROCESS which can be used
-     * together with SERVICE_WIN32_OWN_PROCESS or SERVICE_WIN32_SHARE_PROCESS when the service
-     * runs under the LocalSystem account)
-     */
-    switch (dwServiceType)
-    {
-    case SERVICE_KERNEL_DRIVER:
-    case SERVICE_FILE_SYSTEM_DRIVER:
-    case SERVICE_WIN32_OWN_PROCESS:
-    case SERVICE_WIN32_SHARE_PROCESS:
-        /* No problem */
-        break;
-    case SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS:
-    case SERVICE_WIN32_SHARE_PROCESS | SERVICE_INTERACTIVE_PROCESS:
-        /* FIXME : Do we need a more thorough check? */
-        if (lpServiceStartName)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return NULL;
-        }
-        break;
-    default:
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
-    }
-
-    if (!lpServiceStartName && (dwServiceType & SERVICE_WIN32))
-            lpServiceStartName = szLocalSystem;
-
-    /* StartType can only be a single value (if several values are mixed the result is probably not what was intended) */
-    if (dwStartType > SERVICE_DISABLED)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
-    }
-
-    /* SERVICE_BOOT_START and SERVICE_SYSTEM_START or only allowed for driver services */
-    if (((dwStartType == SERVICE_BOOT_START) || (dwStartType == SERVICE_SYSTEM_START)) &&
-        ((dwServiceType & SERVICE_WIN32_OWN_PROCESS) || (dwServiceType & SERVICE_WIN32_SHARE_PROCESS)))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
-    }
-
-    /* Loop through the registry to check if the service already exists and to
-     * check if we can use the given displayname.
-     * FIXME: Should we use EnumServicesStatusEx?
-     */
-    len = sizeof(buffer);
-    while (RegEnumKeyExW(hscm->hkey, index, buffer, &len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-    {
-        HKEY service_key;
-
-        /* Open service first before deciding whether it already exists or not
-         * It could be that it's not a valid service, but only the registry key itself exists
-         */
-        if (RegOpenKeyExW(hscm->hkey, buffer, 0, KEY_READ, &service_key) == ERROR_SUCCESS)
-        {
-            WCHAR name[MAX_PATH];
-            DWORD size = sizeof(name);
-
-            if (RegQueryValueExW(service_key, szDisplayName, NULL, NULL, (LPBYTE)name, &size) == ERROR_SUCCESS)
-            {
-                if (lpDisplayName && (!lstrcmpiW(lpDisplayName, name)
-                                   || !lstrcmpiW(lpDisplayName, buffer)))
-                    displayname_exists = TRUE;
-
-                if (!lstrcmpiW(lpServiceName, buffer))
-                {
-                    RegCloseKey(service_key);
-                    SetLastError(ERROR_SERVICE_EXISTS);
-                    return NULL;
-                }
-            }
-            RegCloseKey(service_key);
-        }
-        index++;
-        len = sizeof(buffer);
-    }
-
-    if (displayname_exists)
-    {
-        SetLastError(ERROR_DUPLICATE_SERVICE_NAME);
-        return NULL;
-    }
-
-    r = RegCreateKeyExW(hscm->hkey, lpServiceName, 0, NULL,
-                       REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dp);
-    if (r!=ERROR_SUCCESS)
-    {
-        /* FIXME: Should we set an error? */
-        return NULL;
-    }
-
-    if( lpDisplayName )
-        service_set_string( &val[n++], szDisplayName, lpDisplayName );
-
-    service_set_dword( &val[n++], szType, &dwServiceType );
-    service_set_dword( &val[n++], szStart, &dwStartType );
-    service_set_dword( &val[n++], szError, &dwErrorControl );
-
-    service_set_string( &val[n++], szImagePath, lpBinaryPathName );
-
-    if( lpLoadOrderGroup )
-        service_set_string( &val[n++], szGroup, lpLoadOrderGroup );
-
-    /* FIXME: lpDependencies is used to create both DependOnService and DependOnGroup
-     * There is no such key as what szDependencies refers to */
-    if( lpDependencies )
-        service_set_multi_string( &val[n++], szDependencies, lpDependencies );
-
-    if( lpPassword )
-        FIXME("Don't know how to add a Password for a service.\n");
-
-    if( lpServiceStartName )
-        service_set_string( &val[n++], szObjectName, lpServiceStartName );
-
-    r = service_write_values( hKey, val, n );
-    if( r != ERROR_SUCCESS )
-        goto error;
+    if (lpPassword)
+        passwdlen = (strlenW(lpPassword) + 1) * sizeof(WCHAR);
+    else
+        passwdlen = 0;
 
     len = strlenW(lpServiceName)+1;
     len = sizeof (struct sc_service) + len*sizeof(WCHAR);
     hsvc = sc_handle_alloc( SC_HTYPE_SERVICE, len, sc_handle_destroy_service );
     if( !hsvc )
-        goto error;
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return NULL;
+    }
     lstrcpyW( hsvc->name, lpServiceName );
-    hsvc->hkey = hKey;
-
-    RtlMapGenericMask(&new_mask, &svc_generic);
-    hsvc->dwAccess = new_mask;
 
     hsvc->scm = hscm;
     hscm->hdr.ref_count++;
 
+    err = svcctl_CreateServiceW(hscm->hdr.server_handle, lpServiceName,
+            lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
+            lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (LPBYTE)lpDependencies, depslen,
+            lpServiceStartName, (LPBYTE)lpPassword, passwdlen, &hsvc->hdr.server_handle);
+
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError(err);
+        sc_handle_free(&hsvc->hdr);
+        return NULL;
+    }
+
+    /* for parts of advapi32 not using services.exe yet */
+    err = RegOpenKeyW(hscm->hkey, lpServiceName, &hsvc->hkey);
+    if (err != ERROR_SUCCESS)
+        WINE_ERR("Couldn't open key that should have been created by services.exe\n");
+
+    RtlMapGenericMask(&new_mask, &svc_generic);
+    hsvc->dwAccess = new_mask;
+
     return (SC_HANDLE) &hsvc->hdr;
-    
-error:
-    RegCloseKey( hKey );
-    return NULL;
 }
 
 
@@ -1564,6 +1451,7 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 BOOL WINAPI DeleteService( SC_HANDLE hService )
 {
     struct sc_service *hsvc;
+    DWORD err;
 
     hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
     if (!hsvc)
@@ -1572,20 +1460,16 @@ BOOL WINAPI DeleteService( SC_HANDLE hService )
         return FALSE;
     }
 
-    if (!(hsvc->dwAccess & DELETE))
+    err = svcctl_DeleteService(hsvc->hdr.server_handle);
+    if (err != 0)
     {
-        SetLastError(ERROR_ACCESS_DENIED);
+        SetLastError(err);
         return FALSE;
     }
 
     /* Close the key to the service */
     RegCloseKey(hsvc->hkey);
-
-    /* Delete the service under the Service Control Manager key */
-    RegDeleteTreeW(hsvc->scm->hkey, hsvc->name);
-
     hsvc->hkey = NULL;
-
     return TRUE;
 }
 

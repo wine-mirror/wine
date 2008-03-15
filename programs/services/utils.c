@@ -31,12 +31,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(service);
 
 LPWSTR strdupW(LPCWSTR str)
 {
-    int len = strlenW(str);
-    WCHAR *buf = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
+    int len;
+    WCHAR *buf;
+
+    if (str == NULL)
+        return NULL;
+    len = strlenW(str);
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
     if (buf == NULL)
         return NULL;
     strcpyW(buf, str);
     return buf;
+}
+
+BOOL check_multisz(LPCWSTR lpMultiSz, DWORD cbSize)
+{
+    if (cbSize == 0 || (cbSize == sizeof(WCHAR) && lpMultiSz[0] == 0))
+        return TRUE;
+    if ((cbSize % sizeof(WCHAR)) != 0 || cbSize < 2*sizeof(WCHAR))
+        return FALSE;
+    if (lpMultiSz[cbSize/2 - 1] || lpMultiSz[cbSize/2 - 2])
+        return FALSE;
+    return TRUE;
 }
 
 DWORD load_reg_string(HKEY hKey, LPCWSTR szValue, BOOL bExpand, LPWSTR *output)

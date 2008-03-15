@@ -56,6 +56,14 @@ static const GENERIC_MAPPING g_scm_generic =
     SC_MANAGER_ALL_ACCESS
 };
 
+static const GENERIC_MAPPING g_svc_generic =
+{
+    (STANDARD_RIGHTS_READ | SERVICE_QUERY_CONFIG | SERVICE_QUERY_STATUS | SERVICE_INTERROGATE | SERVICE_ENUMERATE_DEPENDENTS),
+    (STANDARD_RIGHTS_WRITE | SERVICE_CHANGE_CONFIG),
+    (STANDARD_RIGHTS_EXECUTE | SERVICE_START | SERVICE_STOP | SERVICE_PAUSE_CONTINUE | SERVICE_USER_DEFINED_CONTROL),
+    SERVICE_ALL_ACCESS
+};
+
 typedef enum
 {
     SC_HTYPE_DONT_CARE = 0,
@@ -73,6 +81,51 @@ struct sc_manager       /* service control manager handle */
 {
     struct sc_handle hdr;
 };
+
+struct sc_service       /* service handle */
+{
+    struct sc_handle hdr;
+    struct service_entry *service_entry;
+};
+
+/* Check if the given handle is of the required type and allows the requested access. */
+static DWORD validate_context_handle(SC_RPC_HANDLE handle, DWORD type, DWORD needed_access, struct sc_handle **out_hdr)
+{
+    struct sc_handle *hdr = (struct sc_handle *)handle;
+
+    if (type != SC_HTYPE_DONT_CARE && hdr->type != type)
+    {
+        WINE_ERR("Handle is of an invalid type (%d, %d)\n", hdr->type, type);
+        return ERROR_INVALID_HANDLE;
+    }
+
+    if ((needed_access & hdr->access) != needed_access)
+    {
+        WINE_ERR("Access denied - handle created with access %x, needed %x\n", hdr->access, needed_access);
+        return ERROR_ACCESS_DENIED;
+    }
+
+    *out_hdr = hdr;
+    return ERROR_SUCCESS;
+}
+
+static DWORD validate_scm_handle(SC_RPC_HANDLE handle, DWORD needed_access, struct sc_manager **manager)
+{
+    struct sc_handle *hdr;
+    DWORD err = validate_context_handle(handle, SC_HTYPE_MANAGER, needed_access, &hdr);
+    if (err == ERROR_SUCCESS)
+        *manager = (struct sc_manager *)hdr;
+    return err;
+}
+
+static DWORD validate_service_handle(SC_RPC_HANDLE handle, DWORD needed_access, struct sc_service **service)
+{
+    struct sc_handle *hdr;
+    DWORD err = validate_context_handle(handle, SC_HTYPE_SERVICE, needed_access, &hdr);
+    if (err == ERROR_SUCCESS)
+        *service = (struct sc_service *)hdr;
+    return err;
+}
 
 DWORD svcctl_OpenSCManagerW(
     MACHINE_HANDLEW MachineName, /* Note: this parameter is ignored */
@@ -117,10 +170,177 @@ static void SC_RPC_HANDLE_destroy(SC_RPC_HANDLE handle)
             HeapFree(GetProcessHeap(), 0, manager);
             break;
         }
+        case SC_HTYPE_SERVICE:
+        {
+            struct sc_service *service = (struct sc_service *)hdr;
+            release_service(service->service_entry);
+            HeapFree(GetProcessHeap(), 0, service);
+            break;
+        }
         default:
             WINE_ERR("invalid handle type %d\n", hdr->type);
             RpcRaiseException(ERROR_INVALID_HANDLE);
     }
+}
+
+static DWORD create_handle_for_service(struct service_entry *entry, DWORD dwDesiredAccess, SC_RPC_HANDLE *phService)
+{
+    struct sc_service *service;
+
+    if (!(service = HeapAlloc(GetProcessHeap(), 0, sizeof(*service))))
+    {
+        release_service(entry);
+        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+    }
+
+    service->hdr.type = SC_HTYPE_SERVICE;
+    service->hdr.access = dwDesiredAccess;
+    RtlMapGenericMask(&service->hdr.access, &g_svc_generic);
+    service->service_entry = entry;
+    if (dwDesiredAccess & MAXIMUM_ALLOWED)
+        dwDesiredAccess |= SERVICE_ALL_ACCESS;
+
+    *phService = &service->hdr;
+    return ERROR_SUCCESS;
+}
+
+DWORD svcctl_OpenServiceW(
+    SC_RPC_HANDLE hSCManager,
+    LPCWSTR lpServiceName,
+    DWORD dwDesiredAccess,
+    SC_RPC_HANDLE *phService)
+{
+    struct sc_manager *manager;
+    struct service_entry *entry;
+    DWORD err;
+
+    WINE_TRACE("(%s, 0x%x)\n", wine_dbgstr_w(lpServiceName), dwDesiredAccess);
+
+    if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
+        return err;
+    if (!validate_service_name(lpServiceName))
+        return ERROR_INVALID_NAME;
+
+    lock_services();
+    entry = find_service(lpServiceName);
+    if (entry != NULL)
+        entry->ref_count++;
+    unlock_services();
+
+    if (entry == NULL)
+        return ERROR_SERVICE_DOES_NOT_EXIST;
+
+    return create_handle_for_service(entry, dwDesiredAccess, phService);
+}
+
+DWORD svcctl_CreateServiceW(
+    SC_RPC_HANDLE hSCManager,
+    LPCWSTR lpServiceName,
+    LPCWSTR lpDisplayName,
+    DWORD dwDesiredAccess,
+    DWORD dwServiceType,
+    DWORD dwStartType,
+    DWORD dwErrorControl,
+    LPCWSTR lpBinaryPathName,
+    LPCWSTR lpLoadOrderGroup,
+    DWORD *lpdwTagId,
+    const BYTE *lpDependencies,
+    DWORD dwDependenciesSize,
+    LPCWSTR lpServiceStartName,
+    const BYTE *lpPassword,
+    DWORD dwPasswordSize,
+    SC_RPC_HANDLE *phService)
+{
+    struct sc_manager *manager;
+    struct service_entry *entry;
+    DWORD err;
+
+    WINE_TRACE("(%s, %s, 0x%x, %s)\n", wine_dbgstr_w(lpServiceName), wine_dbgstr_w(lpDisplayName), dwDesiredAccess, wine_dbgstr_w(lpBinaryPathName));
+
+    if ((err = validate_scm_handle(hSCManager, SC_MANAGER_CREATE_SERVICE, &manager)) != ERROR_SUCCESS)
+        return err;
+
+    if (!validate_service_name(lpServiceName))
+        return ERROR_INVALID_NAME;
+    if (!check_multisz((LPCWSTR)lpDependencies, dwDependenciesSize) || !lpServiceName[0] || !lpBinaryPathName[0])
+        return ERROR_INVALID_PARAMETER;
+
+    if (lpPassword)
+        WINE_FIXME("Don't know how to add a password\n");   /* I always get ERROR_GEN_FAILURE */
+    if (lpDependencies)
+        WINE_FIXME("Dependencies not supported yet\n");
+
+    entry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*entry));
+    entry->name = strdupW(lpServiceName);
+    entry->config.dwServiceType = dwServiceType;
+    entry->config.dwStartType = dwStartType;
+    entry->config.dwErrorControl = dwErrorControl;
+    entry->config.lpBinaryPathName = strdupW(lpBinaryPathName);
+    entry->config.lpLoadOrderGroup = strdupW(lpLoadOrderGroup);
+    entry->config.lpServiceStartName = strdupW(lpServiceStartName);
+    entry->config.lpDisplayName = strdupW(lpDisplayName);
+
+    if (lpdwTagId)      /* TODO: in most situations a non-NULL tagid will generate a ERROR_INVALID_PARAMETER */
+        entry->config.dwTagId = *lpdwTagId;
+    else
+        entry->config.dwTagId = 0;
+
+    /* other fields NULL*/
+
+    if (!validate_service_config(entry))
+    {
+        WINE_ERR("Invalid data while trying to create service\n");
+        free_service_entry(entry);
+        return ERROR_INVALID_PARAMETER;
+    }
+
+    lock_services();
+
+    if (find_service(lpServiceName))
+    {
+        unlock_services();
+        free_service_entry(entry);
+        return ERROR_SERVICE_EXISTS;
+    }
+
+    if (find_service_by_displayname(get_display_name(entry)))
+    {
+        unlock_services();
+        free_service_entry(entry);
+        return ERROR_DUPLICATE_SERVICE_NAME;
+    }
+
+    err = add_service(entry);
+    if (err != ERROR_SUCCESS)
+    {
+        unlock_services();
+        free_service_entry(entry);
+        return err;
+    }
+    unlock_services();
+
+    return create_handle_for_service(entry, dwDesiredAccess, phService);
+}
+
+DWORD svcctl_DeleteService(
+    SC_RPC_HANDLE hService)
+{
+    struct sc_service *service;
+    DWORD err;
+
+    if ((err = validate_service_handle(hService, DELETE, &service)) != ERROR_SUCCESS)
+        return err;
+
+    lock_services();
+
+    if (!is_marked_for_delete(service->service_entry))
+        err = remove_service(service->service_entry);
+    else
+        err = ERROR_SERVICE_MARKED_FOR_DELETE;
+
+    unlock_services();
+
+    return err;
 }
 
 DWORD svcctl_CloseServiceHandle(
