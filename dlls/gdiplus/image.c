@@ -908,7 +908,9 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     HRESULT hr;
     short type;
     HBITMAP hbmp;
+    HBITMAP old_hbmp;
     HDC hdc;
+    int bm_is_selected;
     BITMAPINFO bmp_info;
     LPVOID bmp_bits;
     encode_image_func* encode_image;
@@ -917,6 +919,7 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     unsigned int dummy;
     int i;
 
+    old_hbmp = 0;
     output = NULL;
     output_size = 0;
 
@@ -943,18 +946,32 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     hr = IPicture_get_Handle(image->picture, (OLE_HANDLE*)&hbmp);
     if (FAILED(hr) || !hbmp)
         return GenericError;
+    hr = IPicture_get_CurDC(image->picture, &hdc);
+    if (FAILED(hr))
+        return GenericError;
+    bm_is_selected = (hdc != 0);
+    if (!bm_is_selected) {
+        hdc = CreateCompatibleDC(0);
+        old_hbmp = SelectObject(hdc, hbmp);
+    }
 
     /* get bits from HBITMAP */
-    hdc = GetDC(0);
     bmp_info.bmiHeader.biSize = sizeof(bmp_info.bmiHeader);
+    bmp_info.bmiHeader.biBitCount = 0;
     GetDIBits(hdc, hbmp, 0, 0, NULL, &bmp_info, DIB_RGB_COLORS);
 
     bmp_bits = GdipAlloc(bmp_info.bmiHeader.biSizeImage);
-    if (!bmp_bits) {
-        ReleaseDC(0, hdc);
-        return OutOfMemory;
+
+    if (bmp_bits)
+        GetDIBits(hdc, hbmp, 0, abs(bmp_info.bmiHeader.biHeight), bmp_bits, &bmp_info, DIB_RGB_COLORS);
+
+    if (!bm_is_selected) {
+        SelectObject(hdc, old_hbmp);
+        DeleteDC(hdc);
     }
-    GetDIBits(hdc, hbmp, 0, bmp_info.bmiHeader.biHeight, bmp_bits, &bmp_info, DIB_RGB_COLORS);
+
+    if (!bmp_bits)
+        return OutOfMemory;
 
     stat = encode_image(bmp_bits, &bmp_info, &output, &output_size);
     if (stat == Ok)
@@ -962,7 +979,6 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
 
     GdipFree(output);
     GdipFree(bmp_bits);
-    ReleaseDC(0, hdc);
 
     return stat;
 }
