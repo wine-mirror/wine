@@ -243,6 +243,18 @@ static inline LPWSTR SERV_dupmulti(LPCSTR str)
     return wstr;
 }
 
+static inline DWORD multisz_cb(LPCWSTR wmultisz)
+{
+    const WCHAR *wptr = wmultisz;
+
+    if (wmultisz == NULL)
+        return 0;
+
+    while (*wptr)
+        wptr += lstrlenW(wptr)+1;
+    return (wptr - wmultisz + 1)*sizeof(WCHAR);
+}
+
 /******************************************************************************
  * RPC connection with servies.exe
  */
@@ -1322,7 +1334,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     struct sc_service *hsvc = NULL;
     DWORD new_mask = dwDesiredAccess;
     DWORD len, err;
-    SIZE_T depslen = 0, passwdlen;
+    SIZE_T passwdlen;
 
     TRACE("%p %s %s\n", hSCManager, 
           debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
@@ -1339,16 +1351,6 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         SetLastError(ERROR_INVALID_ADDRESS);
         return NULL;
     }
-
-    if (lpDependencies)
-    {
-        const WCHAR *wptr = lpDependencies;
-        while (*wptr)
-            wptr += strlenW(wptr)+1;
-        depslen = (wptr - lpDependencies + 1)*sizeof(WCHAR);
-    }
-    else
-        depslen = 0;
 
     if (lpPassword)
         passwdlen = (strlenW(lpPassword) + 1) * sizeof(WCHAR);
@@ -1370,8 +1372,9 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
     err = svcctl_CreateServiceW(hscm->hdr.server_handle, lpServiceName,
             lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
-            lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (LPBYTE)lpDependencies, depslen,
-            lpServiceStartName, (LPBYTE)lpPassword, passwdlen, &hsvc->hdr.server_handle);
+            lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (LPBYTE)lpDependencies,
+            multisz_cb(lpDependencies), lpServiceStartName, (LPBYTE)lpPassword, passwdlen,
+            &hsvc->hdr.server_handle);
 
     if (err != ERROR_SUCCESS)
     {
@@ -2299,11 +2302,9 @@ BOOL WINAPI ChangeServiceConfigW( SC_HANDLE hService, DWORD dwServiceType,
   LPCWSTR lpLoadOrderGroup, LPDWORD lpdwTagId, LPCWSTR lpDependencies,
   LPCWSTR lpServiceStartName, LPCWSTR lpPassword, LPCWSTR lpDisplayName)
 {
-    struct reg_value val[10];
     struct sc_service *hsvc;
-    DWORD r = ERROR_SUCCESS;
-    HKEY hKey;
-    int n = 0;
+    DWORD cb_pwd;
+    DWORD err;
 
     TRACE("%p %d %d %d %s %s %p %p %s %s %s\n",
           hService, dwServiceType, dwStartType, dwErrorControl, 
@@ -2317,37 +2318,18 @@ BOOL WINAPI ChangeServiceConfigW( SC_HANDLE hService, DWORD dwServiceType,
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    hKey = hsvc->hkey;
 
-    if( dwServiceType != SERVICE_NO_CHANGE )
-        service_set_dword( &val[n++], szType, &dwServiceType );
+    cb_pwd = lpPassword ? (strlenW(lpPassword) + 1)*sizeof(WCHAR) : 0;
 
-    if( dwStartType != SERVICE_NO_CHANGE )
-        service_set_dword( &val[n++], szStart, &dwStartType );
+    err = svcctl_ChangeServiceConfigW(hsvc->hdr.server_handle, dwServiceType,
+            dwStartType, dwErrorControl, lpBinaryPathName, lpLoadOrderGroup, lpdwTagId,
+            (const BYTE *)lpDependencies, multisz_cb(lpDependencies), lpServiceStartName,
+            (const BYTE *)lpPassword, cb_pwd, lpDisplayName);
 
-    if( dwErrorControl != SERVICE_NO_CHANGE )
-        service_set_dword( &val[n++], szError, &dwErrorControl );
+    if (err != ERROR_SUCCESS)
+        SetLastError(err);
 
-    if( lpBinaryPathName )
-        service_set_string( &val[n++], szImagePath, lpBinaryPathName );
-
-    if( lpLoadOrderGroup )
-        service_set_string( &val[n++], szGroup, lpLoadOrderGroup );
-
-    /* FIXME: lpDependencies is used to create/change both DependOnService and DependOnGroup
-     * There is no such key as what szDependencies refers to */
-    if( lpDependencies )
-        service_set_multi_string( &val[n++], szDependencies, lpDependencies );
-
-    if( lpPassword )
-        FIXME("ignoring password\n");
-
-    if( lpServiceStartName )
-        service_set_string( &val[n++], szObjectName, lpServiceStartName );
-
-    r = service_write_values( hsvc->hkey, val, n );
-
-    return (r == ERROR_SUCCESS) ? TRUE : FALSE ;
+    return err == ERROR_SUCCESS;
 }
 
 /******************************************************************************

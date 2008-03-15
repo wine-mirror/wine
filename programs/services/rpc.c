@@ -370,6 +370,119 @@ DWORD svcctl_QueryServiceConfigW(
     return ERROR_SUCCESS;
 }
 
+DWORD svcctl_ChangeServiceConfigW(
+        SC_RPC_HANDLE hService,
+        DWORD dwServiceType,
+        DWORD dwStartType,
+        DWORD dwErrorControl,
+        LPCWSTR lpBinaryPathName,
+        LPCWSTR lpLoadOrderGroup,
+        DWORD *lpdwTagId,
+        const BYTE *lpDependencies,
+        DWORD dwDependenciesSize,
+        LPCWSTR lpServiceStartName,
+        const BYTE *lpPassword,
+        DWORD dwPasswordSize,
+        LPCWSTR lpDisplayName)
+{
+    struct service_entry new_entry;
+    struct sc_service *service;
+    DWORD err;
+
+    WINE_TRACE("\n");
+
+    if ((err = validate_service_handle(hService, SERVICE_CHANGE_CONFIG, &service)) != 0)
+        return err;
+
+    if (!check_multisz((LPCWSTR)lpDependencies, dwDependenciesSize))
+        return ERROR_INVALID_PARAMETER;
+
+    /* first check if the new configuration is correct */
+    lock_services();
+
+    if (is_marked_for_delete(service->service_entry))
+    {
+        unlock_services();
+        return ERROR_SERVICE_MARKED_FOR_DELETE;
+    }
+
+    if (lpDisplayName != NULL && find_service_by_displayname(lpDisplayName))
+    {
+        unlock_services();
+        return ERROR_DUPLICATE_SERVICE_NAME;
+    }
+
+    new_entry = *service->service_entry;
+
+    if (dwServiceType != SERVICE_NO_CHANGE)
+        new_entry.config.dwServiceType = dwServiceType;
+
+    if (dwStartType != SERVICE_NO_CHANGE)
+        new_entry.config.dwStartType = dwStartType;
+
+    if (dwErrorControl != SERVICE_NO_CHANGE)
+        new_entry.config.dwErrorControl = dwErrorControl;
+
+    if (lpBinaryPathName != NULL)
+        new_entry.config.lpBinaryPathName = (LPWSTR)lpBinaryPathName;
+
+    if (lpLoadOrderGroup != NULL)
+        new_entry.config.lpLoadOrderGroup = (LPWSTR)lpLoadOrderGroup;
+
+    if (lpdwTagId != NULL)
+        WINE_FIXME("Changing tag id not supported\n");
+
+    if (lpDependencies != NULL)
+        WINE_FIXME("Chainging dependencies not supported\n");
+
+    if (lpServiceStartName != NULL)
+        new_entry.config.lpServiceStartName = (LPWSTR)lpServiceStartName;
+
+    if (lpPassword != NULL)
+        WINE_FIXME("Setting password not supported\n");
+
+    if (lpDisplayName != NULL)
+        new_entry.config.lpDisplayName = (LPWSTR)lpDisplayName;
+
+    if (!validate_service_config(&new_entry))
+    {
+        WINE_ERR("The configuration after the change wouldn't be valid");
+        unlock_services();
+        return ERROR_INVALID_PARAMETER;
+    }
+
+    /* configuration OK. The strings needs to be duplicated */
+    if (lpBinaryPathName != NULL)
+    {
+        HeapFree(GetProcessHeap(), 0, service->service_entry->config.lpBinaryPathName);
+        new_entry.config.lpBinaryPathName = strdupW(lpBinaryPathName);
+    }
+
+    if (lpLoadOrderGroup != NULL)
+    {
+        HeapFree(GetProcessHeap(), 0, service->service_entry->config.lpLoadOrderGroup);
+        new_entry.config.lpLoadOrderGroup = strdupW(lpLoadOrderGroup);
+    }
+
+    if (lpServiceStartName != NULL)
+    {
+        HeapFree(GetProcessHeap(), 0, service->service_entry->config.lpServiceStartName);
+        new_entry.config.lpServiceStartName = strdupW(lpServiceStartName);
+    }
+
+    if (lpDisplayName != NULL)
+    {
+        HeapFree(GetProcessHeap(), 0, service->service_entry->config.lpDisplayName);
+        new_entry.config.lpDisplayName = strdupW(lpDisplayName);
+    }
+
+    *service->service_entry = new_entry;
+    save_service_config(service->service_entry);
+    unlock_services();
+
+    return ERROR_SUCCESS;
+}
+
 DWORD svcctl_CloseServiceHandle(
     SC_RPC_HANDLE *handle)
 {

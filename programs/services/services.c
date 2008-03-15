@@ -140,7 +140,7 @@ static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
     return RegSetValueExW(hKey, value_name, 0, REG_SZ, (LPBYTE)string, sizeof(WCHAR)*(strlenW(string) + 1));
 }
 
-static DWORD save_service_config(struct service_entry *entry)
+DWORD save_service_config(struct service_entry *entry)
 {
     HKEY hServicesRootKey;
     DWORD err;

@@ -41,6 +41,7 @@ struct service_entry *find_service(LPCWSTR name);
 struct service_entry *find_service_by_displayname(LPCWSTR name);
 DWORD add_service(struct service_entry *entry);
 DWORD remove_service(struct service_entry *entry);
+DWORD save_service_config(struct service_entry *entry);
 void free_service_entry(struct service_entry *entry);
 void release_service(struct service_entry *service);
 

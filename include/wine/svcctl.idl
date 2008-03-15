@@ -69,6 +69,23 @@ cpp_quote("#endif")
         [in] SC_RPC_HANDLE hService
     );
 
+    /* Compatible with Windows function 0x0b */
+    DWORD svcctl_ChangeServiceConfigW(
+        [in] SC_RPC_HANDLE hService,
+        [in] DWORD dwServiceType,
+        [in] DWORD dwStartType,
+        [in] DWORD dwErrorControl,
+        [in,unique] LPCWSTR lpBinaryPathName,
+        [in,unique] LPCWSTR lpLoadOrderGroupKey,
+        [in,out,unique] DWORD *lpdwTagId,
+        [in,unique,size_is(dwDependenciesSize)] const BYTE *lpDependencies,
+        [in] DWORD dwDependenciesSize,
+        [in,unique] LPCWSTR lpServiceStartName,
+        [in,unique,size_is(dwPasswordSize)] const BYTE *lpPassword,
+        [in] DWORD dwPasswordSize,
+        [in,unique] LPCWSTR lpDisplayName
+    );
+
     /* Compatible with Windows function 0x0c */
     DWORD svcctl_CreateServiceW(
         [in] SC_RPC_HANDLE hSCManager,
