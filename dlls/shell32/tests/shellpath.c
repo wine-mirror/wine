@@ -296,24 +296,21 @@ static void testSHGetFolderLocationInvalidArgs(void)
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, 0xeeee, NULL, 0, &pidl);
     ok(hr == E_INVALIDARG,
-     "SHGetFolderLocation(NULL, 0xeeee, NULL, 0, &pidl)\n"
-     "returned 0x%08x, expected E_INVALIDARG\n", hr);
+     "SHGetFolderLocation(NULL, 0xeeee, NULL, 0, &pidl) returned 0x%08x, expected E_INVALIDARG\n", hr);
     if (SUCCEEDED(hr))
         IMalloc_Free(pMalloc, pidl);
     /* check a bogus user token: */
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, CSIDL_FAVORITES, (HANDLE)2, 0, &pidl);
     ok(hr == E_FAIL,
-     "SHGetFolderLocation(NULL, CSIDL_FAVORITES, 2, 0, &pidl)\n"
-     "returned 0x%08x, expected E_FAIL\n", hr);
+     "SHGetFolderLocation(NULL, CSIDL_FAVORITES, 2, 0, &pidl) returned 0x%08x, expected E_FAIL\n", hr);
     if (SUCCEEDED(hr))
         IMalloc_Free(pMalloc, pidl);
     /* check reserved is not zero: */
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, CSIDL_DESKTOP, NULL, 1, &pidl);
     ok(hr == E_INVALIDARG,
-     "SHGetFolderLocation(NULL, CSIDL_DESKTOP, NULL, 1, &pidl)\n"
-     "returned 0x%08x, expected E_INVALIDARG\n", hr);
+     "SHGetFolderLocation(NULL, CSIDL_DESKTOP, NULL, 1, &pidl) returned 0x%08x, expected E_INVALIDARG\n", hr);
     if (SUCCEEDED(hr))
         IMalloc_Free(pMalloc, pidl);
     /* a NULL pidl pointer crashes, so don't test it */
@@ -344,12 +341,10 @@ static void testSHGetFolderPathInvalidArgs(void)
     hr = pSHGetFolderPathA(NULL, CSIDL_DESKTOP, (HANDLE)2,
      SHGFP_TYPE_DEFAULT, path);
     ok(hr == E_FAIL,
-     "SHGetFolderPathA(NULL, CSIDL_DESKTOP, 2, SHGFP_TYPE_DEFAULT, path)\n"
-     "returned 0x%08x, expected E_FAIL\n", hr);
+     "SHGetFolderPathA(NULL, CSIDL_DESKTOP, 2, SHGFP_TYPE_DEFAULT, path) returned 0x%08x, expected E_FAIL\n", hr);
     hr = pSHGetFolderPathA(NULL, 0xeeee, NULL, SHGFP_TYPE_DEFAULT, path);
     ok(hr == E_INVALIDARG,
-     "SHGetFolderPathA(NULL, 0xeeee, NULL, SHGFP_TYPE_DEFAULT, path)\n"
-     "returned 0x%08x, expected E_INVALIDARG\n", hr);
+     "SHGetFolderPathA(NULL, 0xeeee, NULL, SHGFP_TYPE_DEFAULT, path) returned 0x%08x, expected E_INVALIDARG\n", hr);
 }
 
 static void testSHGetSpecialFolderPathInvalidArgs(void)
@@ -362,20 +357,17 @@ static void testSHGetSpecialFolderPathInvalidArgs(void)
 #if 0
     ret = pSHGetSpecialFolderPathA(NULL, NULL, CSIDL_BITBUCKET, FALSE);
     ok(!ret,
-     "SHGetSpecialFolderPathA(NULL, NULL, CSIDL_BITBUCKET, FALSE)\n"
-     "returned TRUE, expected FALSE\n");
+     "SHGetSpecialFolderPathA(NULL, NULL, CSIDL_BITBUCKET, FALSE) returned TRUE, expected FALSE\n");
 #endif
     /* odd but true: calling with a NULL path still succeeds if it's a real
      * dir (on some windows platform).  on winME it generates exception.
      */
     ret = pSHGetSpecialFolderPathA(NULL, path, CSIDL_PROGRAMS, FALSE);
     ok(ret,
-     "SHGetSpecialFolderPathA(NULL, path, CSIDL_PROGRAMS, FALSE)\n"
-     "returned FALSE, expected TRUE\n");
+     "SHGetSpecialFolderPathA(NULL, path, CSIDL_PROGRAMS, FALSE) returned FALSE, expected TRUE\n");
     ret = pSHGetSpecialFolderPathA(NULL, path, 0xeeee, FALSE);
     ok(!ret,
-     "SHGetSpecialFolderPathA(NULL, path, 0xeeee, FALSE)\n"
-     "returned TRUE, expected FALSE\n");
+     "SHGetSpecialFolderPathA(NULL, path, 0xeeee, FALSE) returned TRUE, expected FALSE\n");
 }
 
 static void testApiParameters(void)
@@ -399,13 +391,11 @@ static BYTE testSHGetFolderLocation(BOOL optional, int folder)
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, folder, NULL, 0, &pidl);
     ok(SUCCEEDED(hr) || optional,
-     "SHGetFolderLocation(NULL, %s, NULL, 0, &pidl)\n"
-     "failed: 0x%08x\n", getFolderName(folder), hr);
+     "SHGetFolderLocation(NULL, %s, NULL, 0, &pidl) failed: 0x%08x\n", getFolderName(folder), hr);
     if (SUCCEEDED(hr))
     {
         ok(pidl != NULL,
-         "SHGetFolderLocation(NULL, %s, NULL, 0, &pidl)\n"
-         "succeeded, but returned pidl is NULL\n", getFolderName(folder));
+         "SHGetFolderLocation(NULL, %s, NULL, 0, &pidl) succeeded, but returned pidl is NULL\n", getFolderName(folder));
         if (pidl)
         {
             LPITEMIDLIST pidlLast = pILFindLastID(pidl);
@@ -433,13 +423,11 @@ static BYTE testSHGetSpecialFolderLocation(BOOL optional, int folder)
     pidl = NULL;
     hr = pSHGetSpecialFolderLocation(NULL, folder, &pidl);
     ok(SUCCEEDED(hr) || optional,
-     "SHGetSpecialFolderLocation(NULL, %s, &pidl)\n"
-     "failed: 0x%08x\n", getFolderName(folder), hr);
+     "SHGetSpecialFolderLocation(NULL, %s, &pidl) failed: 0x%08x\n", getFolderName(folder), hr);
     if (SUCCEEDED(hr))
     {
         ok(pidl != NULL,
-         "SHGetSpecialFolderLocation(NULL, %s, &pidl)\n"
-         "succeeded, but returned pidl is NULL\n", getFolderName(folder));
+         "SHGetSpecialFolderLocation(NULL, %s, &pidl) succeeded, but returned pidl is NULL\n", getFolderName(folder));
         if (pidl)
         {
             LPITEMIDLIST pidlLast = pILFindLastID(pidl);
@@ -463,8 +451,7 @@ static void testSHGetFolderPath(BOOL optional, int folder)
 
     hr = pSHGetFolderPathA(NULL, folder, NULL, SHGFP_TYPE_CURRENT, path);
     ok(SUCCEEDED(hr) || optional,
-     "SHGetFolderPathA(NULL, %s, NULL, SHGFP_TYPE_CURRENT, path)\n"
-     "failed: 0x%08x\n", getFolderName(folder), hr);
+     "SHGetFolderPathA(NULL, %s, NULL, SHGFP_TYPE_CURRENT, path) failed: 0x%08x\n", getFolderName(folder), hr);
 }
 
 static void testSHGetSpecialFolderPath(BOOL optional, int folder)
@@ -679,8 +666,7 @@ static void testWinDir(void)
         GetWindowsDirectoryA(windowsDir, sizeof(windowsDir));
         myPathRemoveBackslashA(windowsDir);
         ok(!lstrcmpiA(windowsDir, windowsShellPath),
-         "GetWindowsDirectory does not match SHGetSpecialFolderPath:\n"
-         "GetWindowsDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
+         "GetWindowsDirectory returns %s SHGetSpecialFolderPath returns %s\n",
          windowsDir, windowsShellPath);
     }
 }
@@ -701,8 +687,7 @@ static void testSystemDir(void)
     {
         myPathRemoveBackslashA(systemShellPath);
         ok(!lstrcmpiA(systemDir, systemShellPath),
-         "GetSystemDirectory does not match SHGetSpecialFolderPath:\n"
-         "GetSystemDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
+         "GetSystemDirectory returns %s SHGetSpecialFolderPath returns %s\n",
          systemDir, systemShellPath);
     }
     /* check CSIDL_SYSTEMX86; note that this isn't always present, so don't
@@ -712,8 +697,7 @@ static void testSystemDir(void)
     {
         myPathRemoveBackslashA(systemShellPath);
         ok(!lstrcmpiA(systemDir, systemShellPath),
-         "GetSystemDirectory does not match SHGetSpecialFolderPath:\n"
-         "GetSystemDirectory returns %s\nSHGetSpecialFolderPath returns %s\n",
+         "GetSystemDirectory returns %s SHGetSpecialFolderPath returns %s\n",
          systemDir, systemShellPath);
     }
 }
@@ -782,7 +766,7 @@ static void testNonExistentPath1(void)
     }
     ok(SUCCEEDED(hr),
      "SHGetFolderPath(NULL, CSIDL_FAVORITES | CSIDL_FLAG_CREATE, "
-     "NULL, SHGFP_TYPE_CURRENT, path)\nfailed: 0x%08x\n", hr);
+     "NULL, SHGFP_TYPE_CURRENT, path) failed: 0x%08x\n", hr);
 }
 
 /* Subprocess helper 2: make sure SHGetFolderPath still succeeds when the
