@@ -511,7 +511,7 @@ BOOL WINAPI FileExists(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFileFindData)
     FindClose(hFind);
 
     if (lpFileFindData)
-        memcpy(lpFileFindData, &FindData, sizeof(WIN32_FIND_DATAW));
+        *lpFileFindData = FindData;
 
     SetErrorMode(uErrorMode);
 

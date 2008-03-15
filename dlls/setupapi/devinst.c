@@ -352,13 +352,11 @@ static BOOL SETUPDI_AddInterfaceInstance(PSP_DEVINFO_DATA DeviceInfoData,
                         iface->cInstances++;
                         instance->cbSize =
                             sizeof(SP_DEVICE_INTERFACE_DATA);
-                        memcpy(&instance->InterfaceClassGuid,
-                                InterfaceClassGuid, sizeof(GUID));
+                        instance->InterfaceClassGuid = *InterfaceClassGuid;
                         instance->Flags = SPINT_ACTIVE; /* FIXME */
                         instance->Reserved = (ULONG_PTR)ifaceInfo;
                         if (newInterface)
-                            memcpy(&iface->guid, InterfaceClassGuid,
-                                    sizeof(GUID));
+                            iface->guid = *InterfaceClassGuid;
                         key = SetupDiCreateDeviceInterfaceRegKeyW(devInfo->set,
                                 instance, 0, KEY_WRITE, NULL, NULL);
                         if (key != INVALID_HANDLE_VALUE)
@@ -555,7 +553,7 @@ static BOOL SETUPDI_AddDeviceToSet(struct DeviceInfoSet *set,
             SP_DEVINFO_DATA *DeviceInfoData = &set->devices[set->cDevices++];
 
             DeviceInfoData->cbSize = sizeof(SP_DEVINFO_DATA);
-            memcpy(&DeviceInfoData->ClassGuid, guid, sizeof(GUID));
+            DeviceInfoData->ClassGuid = *guid;
             DeviceInfoData->DevInst = devInfo->devId;
             DeviceInfoData->Reserved = (ULONG_PTR)devInfo;
             SETUPDI_GuidToString(guid, classGuidStr);
@@ -1498,7 +1496,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
                     ret = FALSE;
                 }
                 else
-                    memcpy(DeviceInfoData, dev, sizeof(SP_DEVINFO_DATA));
+                    *DeviceInfoData = *dev;
             }
         }
     }
@@ -2383,7 +2381,7 @@ BOOL WINAPI SetupDiGetDeviceInfoListDetailA(
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    memcpy(&DevInfoData->ClassGuid, &set->ClassGuid, sizeof(GUID));
+    DevInfoData->ClassGuid = set->ClassGuid;
     DevInfoData->RemoteMachineHandle = NULL;
     DevInfoData->RemoteMachineName[0] = '\0';
     return TRUE;
@@ -2416,7 +2414,7 @@ BOOL WINAPI SetupDiGetDeviceInfoListDetailW(
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    memcpy(&DevInfoData->ClassGuid, &set->ClassGuid, sizeof(GUID));
+    DevInfoData->ClassGuid = set->ClassGuid;
     DevInfoData->RemoteMachineHandle = NULL;
     DevInfoData->RemoteMachineName[0] = '\0';
     return TRUE;
@@ -2513,7 +2511,7 @@ BOOL WINAPI SetupDiCreateDeviceInterfaceW(
                 ret = FALSE;
             }
             else
-                memcpy(DeviceInterfaceData, iface, sizeof(*iface));
+                *DeviceInterfaceData = *iface;
         }
     }
     return ret;
@@ -2770,8 +2768,7 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
         if ((ret = SETUPDI_FindInterface(devInfo, InterfaceClassGuid, &iface)))
         {
             if (MemberIndex < iface->cInstances)
-                memcpy(DeviceInterfaceData, &iface->instances[MemberIndex],
-                    sizeof(SP_DEVICE_INTERFACE_DATA));
+                *DeviceInterfaceData = iface->instances[MemberIndex];
             else
             {
                 SetLastError(ERROR_NO_MORE_ITEMS);
@@ -2801,9 +2798,7 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
                 {
                     DWORD instanceIndex = MemberIndex - cEnumerated;
 
-                    memcpy(DeviceInterfaceData,
-                            &iface->instances[instanceIndex],
-                            sizeof(SP_DEVICE_INTERFACE_DATA));
+                    *DeviceInterfaceData = iface->instances[instanceIndex];
                     cEnumerated += instanceIndex + 1;
                     found = TRUE;
                     ret = TRUE;
@@ -2916,7 +2911,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
         else
             DeviceInterfaceDetailData->DevicePath[0] = '\0';
         if (DeviceInfoData && DeviceInfoData->cbSize == sizeof(SP_DEVINFO_DATA))
-            memcpy(DeviceInfoData, info->device, sizeof(SP_DEVINFO_DATA));
+            *DeviceInfoData = *info->device;
         ret = TRUE;
     }
     else
@@ -2984,7 +2979,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
         else
             DeviceInterfaceDetailData->DevicePath[0] = '\0';
         if (DeviceInfoData && DeviceInfoData->cbSize == sizeof(SP_DEVINFO_DATA))
-            memcpy(DeviceInfoData, info->device, sizeof(SP_DEVINFO_DATA));
+            *DeviceInfoData = *info->device;
         ret = TRUE;
     }
     else

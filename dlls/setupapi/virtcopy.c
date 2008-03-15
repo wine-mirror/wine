@@ -250,10 +250,10 @@ static RETERR16 VCP_VirtnodeCreate(const VCPFILESPEC *vfsSrc, const VCPFILESPEC 
     lpvn->cbSize = sizeof(VIRTNODE);
 
     if (vfsSrc)
-        memcpy(&lpvn->vfsSrc, vfsSrc, sizeof(VCPFILESPEC));
+        lpvn->vfsSrc = *vfsSrc;
 
     if (vfsDst)
-        memcpy(&lpvn->vfsDst, vfsDst, sizeof(VCPFILESPEC));
+        lpvn->vfsDst = *vfsDst;
 
     lpvn->fl = fl;
     lpvn->lParam = lParam;
