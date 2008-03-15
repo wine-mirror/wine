@@ -745,7 +745,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
                 {
                     PSecPkgInfoW pkgInfo = *ppPackageInfo + i++;
 
-                    memcpy(pkgInfo, &package->infoW, sizeof(SecPkgInfoW));
+                    *pkgInfo = package->infoW;
                     if (package->infoW.Name)
                     {
                         TRACE("Name[%d] = %s\n", i - 1, debugstr_w(package->infoW.Name));

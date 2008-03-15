@@ -45,7 +45,7 @@ static SECURITY_STATUS SECUR32_makeSecHandle(PSecHandle phSec,
 
         if (newSec)
         {
-            memcpy(newSec, realHandle, sizeof(*realHandle));
+            *newSec = *realHandle;
             phSec->dwUpper = (ULONG_PTR)package;
             phSec->dwLower = (ULONG_PTR)newSec;
             ret = SEC_E_OK;
@@ -778,7 +778,7 @@ SECURITY_STATUS WINAPI QuerySecurityPackageInfoW(SEC_WCHAR *pszPackageName,
             PWSTR nextString = (PWSTR)((PBYTE)*ppPackageInfo +
              sizeof(SecPkgInfoW));
 
-            memcpy(*ppPackageInfo, &package->infoW, sizeof(package->infoW));
+            **ppPackageInfo = package->infoW;
             if (package->infoW.Name)
             {
                 (*ppPackageInfo)->Name = nextString;
