@@ -319,7 +319,7 @@ static void compareFiles(WCHAR *n1, WCHAR *n2)
 
     f2 = CreateFileW(n2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
                      FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(f1 != INVALID_HANDLE_VALUE, "CreateFile\n");
+    ok(f2 != INVALID_HANDLE_VALUE, "CreateFile\n");
 
     /* Neither of these files is very big */
     ok(ReadFile(f1, b1, sizeof b1, &s1, NULL), "ReadFile\n");
