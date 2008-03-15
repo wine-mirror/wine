@@ -582,6 +582,7 @@ programs/rpcss/irot_s.c
 programs/rpcss/rpcss
 programs/rundll32/rundll32
 programs/secedit/secedit
+programs/services/services
 programs/spoolsv/spoolsv
 programs/start/start
 programs/svchost/svchost

@@ -539,6 +539,7 @@ ALL_MAKEFILES = \
 	programs/rpcss/Makefile \
 	programs/rundll32/Makefile \
 	programs/secedit/Makefile \
+	programs/services/Makefile \
 	programs/spoolsv/Makefile \
 	programs/start/Makefile \
 	programs/svchost/Makefile \
@@ -962,6 +963,7 @@ programs/regsvr32/Makefile: programs/regsvr32/Makefile.in programs/Makeprog.rule
 programs/rpcss/Makefile: programs/rpcss/Makefile.in programs/Makeprog.rules
 programs/rundll32/Makefile: programs/rundll32/Makefile.in programs/Makeprog.rules
 programs/secedit/Makefile: programs/secedit/Makefile.in programs/Makeprog.rules
+programs/services/Makefile: programs/services/Makefile.in programs/Makeprog.rules
 programs/spoolsv/Makefile: programs/spoolsv/Makefile.in programs/Makeprog.rules
 programs/start/Makefile: programs/start/Makefile.in programs/Makeprog.rules
 programs/svchost/Makefile: programs/svchost/Makefile.in programs/Makeprog.rules
