@@ -1850,6 +1850,29 @@ done:
     return ret;
 }
 
+static DWORD move_string_to_buffer(BYTE **buf, LPWSTR *string_ptr)
+{
+    DWORD cb;
+    WCHAR empty_str[] = {0};
+
+    if (!*string_ptr)
+        *string_ptr = empty_str;
+
+    cb = (strlenW(*string_ptr) + 1)*sizeof(WCHAR);
+
+    memcpy(*buf, *string_ptr, cb);
+    MIDL_user_free(*string_ptr);
+    *string_ptr = (LPWSTR)*buf;
+    *buf += cb;
+
+    return cb;
+}
+
+static DWORD size_string(LPWSTR string)
+{
+    return (string ? (strlenW(string) + 1)*sizeof(WCHAR) : sizeof(WCHAR));
+}
+
 /******************************************************************************
  * QueryServiceConfigW [ADVAPI32.@]
  */
@@ -1858,12 +1881,11 @@ QueryServiceConfigW( SC_HANDLE hService,
                      LPQUERY_SERVICE_CONFIGW lpServiceConfig,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded)
 {
-    WCHAR str_buffer[ MAX_PATH ];
-    LONG r;
-    DWORD type, val, sz, total, n;
-    LPBYTE p;
-    HKEY hKey;
+    QUERY_SERVICE_CONFIGW config;
     struct sc_service *hsvc;
+    DWORD total;
+    DWORD err;
+    BYTE *bufpos;
 
     TRACE("%p %p %d %p\n", hService, lpServiceConfig,
            cbBufSize, pcbBytesNeeded);
@@ -1874,58 +1896,23 @@ QueryServiceConfigW( SC_HANDLE hService,
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    hKey = hsvc->hkey;
 
-    /* TODO: Check which members are mandatory and what the registry types
-     * should be. This should of course also be tested when a service is
-     * created.
-     */
+    memset(&config, 0, sizeof(config));
+
+    if ((err = svcctl_QueryServiceConfigW(hsvc->hdr.server_handle, &config)) != 0)
+    {
+        TRACE("services.exe: error %u\n", err);
+        SetLastError(err);
+        return FALSE;
+    }
 
     /* calculate the size required first */
     total = sizeof (QUERY_SERVICE_CONFIGW);
-
-    sz = sizeof(str_buffer);
-    r = RegQueryValueExW( hKey, szImagePath, 0, &type, (LPBYTE) str_buffer, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
-    {
-        sz = ExpandEnvironmentStringsW(str_buffer,NULL,0);
-        if( 0 == sz ) return FALSE;
-
-        total += sizeof(WCHAR) * sz;
-    }
-    else
-    {
-       /* FIXME: set last error */
-       return FALSE;
-    }
-
-    sz = 0;
-    r = RegQueryValueExW( hKey, szGroup, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-        total += sz;
-    else
-	total += sizeof(WCHAR);
-
-    sz = 0;
-    r = RegQueryValueExW( hKey, szDependencies, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_MULTI_SZ ) )
-        total += sz;
-    else
-	total += sizeof(WCHAR);
-
-    sz = 0;
-    r = RegQueryValueExW( hKey, szObjectName, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-        total += sz;
-    else
-	total += sizeof(WCHAR);
-
-    sz = 0;
-    r = RegQueryValueExW( hKey, szDisplayName, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-        total += sz;
-    else
-	total += sizeof(WCHAR);
+    total += size_string(config.lpBinaryPathName);
+    total += size_string(config.lpLoadOrderGroup);
+    total += size_string(config.lpDependencies);
+    total += size_string(config.lpServiceStartName);
+    total += size_string(config.lpDisplayName);
 
     *pcbBytesNeeded = total;
 
@@ -1933,112 +1920,24 @@ QueryServiceConfigW( SC_HANDLE hService,
     if( total > cbBufSize )
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        MIDL_user_free(config.lpBinaryPathName);
+        MIDL_user_free(config.lpLoadOrderGroup);
+        MIDL_user_free(config.lpDependencies);
+        MIDL_user_free(config.lpServiceStartName);
+        MIDL_user_free(config.lpDisplayName);
         return FALSE;
     }
 
-    ZeroMemory( lpServiceConfig, total );
+    *lpServiceConfig = config;
+    bufpos = ((BYTE *)lpServiceConfig) + sizeof(QUERY_SERVICE_CONFIGW);
+    move_string_to_buffer(&bufpos, &lpServiceConfig->lpBinaryPathName);
+    move_string_to_buffer(&bufpos, &lpServiceConfig->lpLoadOrderGroup);
+    move_string_to_buffer(&bufpos, &lpServiceConfig->lpDependencies);
+    move_string_to_buffer(&bufpos, &lpServiceConfig->lpServiceStartName);
+    move_string_to_buffer(&bufpos, &lpServiceConfig->lpDisplayName);
 
-    sz = sizeof val;
-    r = RegQueryValueExW( hKey, szType, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_DWORD ) )
-        lpServiceConfig->dwServiceType = val;
-
-    sz = sizeof val;
-    r = RegQueryValueExW( hKey, szStart, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_DWORD ) )
-        lpServiceConfig->dwStartType = val;
-
-    sz = sizeof val;
-    r = RegQueryValueExW( hKey, szError, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_DWORD ) )
-        lpServiceConfig->dwErrorControl = val;
-
-    sz = sizeof val;
-    r = RegQueryValueExW( hKey, szTag, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_DWORD ) )
-        lpServiceConfig->dwTagId = val;
-
-    /* now do the strings */
-    p = (LPBYTE) &lpServiceConfig[1];
-    n = total - sizeof (QUERY_SERVICE_CONFIGW);
-
-    sz = sizeof(str_buffer);
-    r = RegQueryValueExW( hKey, szImagePath, 0, &type, (LPBYTE) str_buffer, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
-    {
-        sz = ExpandEnvironmentStringsW(str_buffer, (LPWSTR) p, n);
-        sz *= sizeof(WCHAR);
-        if( 0 == sz || sz > n ) return FALSE;
-
-        lpServiceConfig->lpBinaryPathName = (LPWSTR) p;
-        p += sz;
-        n -= sz;
-    }
-    else
-    {
-       /* FIXME: set last error */
-       return FALSE;
-    }
-
-    sz = n;
-    r = RegQueryValueExW( hKey, szGroup, 0, &type, p, &sz );
-    lpServiceConfig->lpLoadOrderGroup = (LPWSTR) p;
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-    {
-        p += sz;
-        n -= sz;
-    }
-    else
-    {
-	*(WCHAR *) p = 0;
-	p += sizeof(WCHAR);
-	n -= sizeof(WCHAR);
-    }
-
-    sz = n;
-    r = RegQueryValueExW( hKey, szDependencies, 0, &type, p, &sz );
-    lpServiceConfig->lpDependencies = (LPWSTR) p;
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-    {
-        p += sz;
-        n -= sz;
-    }
-    else
-    {
-	*(WCHAR *) p = 0;
-	p += sizeof(WCHAR);
-	n -= sizeof(WCHAR);
-    }
-
-    sz = n;
-    r = RegQueryValueExW( hKey, szObjectName, 0, &type, p, &sz );
-    lpServiceConfig->lpServiceStartName = (LPWSTR) p;
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-    {
-        p += sz;
-        n -= sz;
-    }
-    else
-    {
-        *(WCHAR *) p = 0;
-        p += sizeof(WCHAR);
-        n -= sizeof(WCHAR);
-    }
-
-    sz = n;
-    r = RegQueryValueExW( hKey, szDisplayName, 0, &type, p, &sz );
-    lpServiceConfig->lpDisplayName = (LPWSTR) p;
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-    {
-        p += sz;
-        n -= sz;
-    }
-    else
-    {
-        *(WCHAR *) p = 0;
-        p += sizeof(WCHAR);
-        n -= sizeof(WCHAR);
-    }
+    if (bufpos - (LPBYTE)lpServiceConfig > cbBufSize)
+        ERR("Buffer overflow!\n");
 
     TRACE("Image path           = %s\n", debugstr_w(lpServiceConfig->lpBinaryPathName) );
     TRACE("Group                = %s\n", debugstr_w(lpServiceConfig->lpLoadOrderGroup) );

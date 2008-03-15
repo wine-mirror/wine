@@ -343,6 +343,33 @@ DWORD svcctl_DeleteService(
     return err;
 }
 
+DWORD svcctl_QueryServiceConfigW(
+        SC_RPC_HANDLE hService,
+        QUERY_SERVICE_CONFIGW *config)
+{
+    struct sc_service *service;
+    DWORD err;
+
+    WINE_TRACE("(%p)\n", config);
+
+    if ((err = validate_service_handle(hService, SERVICE_QUERY_CONFIG, &service)) != 0)
+        return err;
+
+    lock_services();
+    config->dwServiceType = service->service_entry->config.dwServiceType;
+    config->dwStartType = service->service_entry->config.dwStartType;
+    config->dwErrorControl = service->service_entry->config.dwErrorControl;
+    config->lpBinaryPathName = strdupW(service->service_entry->config.lpBinaryPathName);
+    config->lpLoadOrderGroup = strdupW(service->service_entry->config.lpLoadOrderGroup);
+    config->dwTagId = service->service_entry->config.dwTagId;
+    config->lpDependencies = NULL; /* TODO */
+    config->lpServiceStartName = strdupW(service->service_entry->config.lpServiceStartName);
+    config->lpDisplayName = strdupW(service->service_entry->config.lpDisplayName);
+    unlock_services();
+
+    return ERROR_SUCCESS;
+}
+
 DWORD svcctl_CloseServiceHandle(
     SC_RPC_HANDLE *handle)
 {

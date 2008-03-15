@@ -24,6 +24,7 @@ import "wtypes.idl";
 /*
  * some defined for the C code
  */
+cpp_quote("#include \"winsvc.h\"")
 cpp_quote("#define SVCCTL_TRANSPORT {'n','c','a','c','n','_','n','p',0}")
 cpp_quote("#define SVCCTL_ENDPOINT {'\\\\','p','i','p','e','\\\\','s','v','c','c','t','l',0}")
 
@@ -42,6 +43,21 @@ interface svcctl
     /* handle types */
     typedef [handle] LPCWSTR MACHINE_HANDLEW;
     typedef [context_handle] void *SC_RPC_HANDLE;
+
+cpp_quote("#if 0 /* already defined in winsvc.h */")
+typedef struct _QUERY_SERVICE_CONFIGW {
+    DWORD   dwServiceType;
+    DWORD   dwStartType;
+    DWORD   dwErrorControl;
+    [unique] LPWSTR  lpBinaryPathName;
+    [unique] LPWSTR  lpLoadOrderGroup;
+    DWORD   dwTagId;
+    [unique] LPWSTR  lpDependencies;
+    [unique] LPWSTR  lpServiceStartName;
+    [unique] LPWSTR  lpDisplayName;
+} QUERY_SERVICE_CONFIGW, *LPQUERY_SERVICE_CONFIGW;
+cpp_quote("#endif")
+
 
     /* Compatible with Windows function 0x00 */
     DWORD svcctl_CloseServiceHandle(
@@ -88,4 +104,10 @@ interface svcctl
         [in] DWORD dwDesiredAccess,
         [out] SC_RPC_HANDLE *phService
     );
+
+    /* Windows function 0x11 must be using a different prototype - not compatible */
+    DWORD svcctl_QueryServiceConfigW(
+        [in] SC_RPC_HANDLE hService,
+        [out] QUERY_SERVICE_CONFIGW *config);
+
 }
