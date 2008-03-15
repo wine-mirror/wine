@@ -548,7 +548,7 @@ static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src) {
     if (!src) return FALSE;
     *dst = HeapAlloc(GetProcessHeap(), 0, sizeof(HMAC_INFO));
     if (!*dst) return FALSE;
-    memcpy(*dst, src, sizeof(HMAC_INFO));
+    **dst = *src;
     (*dst)->pbInnerString = NULL;
     (*dst)->pbOuterString = NULL;
     if ((*dst)->cbInnerString == 0) (*dst)->cbInnerString = RSAENH_HMAC_DEF_PAD_LEN;
@@ -1837,7 +1837,7 @@ BOOL WINAPI RSAENH_CPDuplicateHash(HCRYPTPROV hUID, HCRYPTHASH hHash, DWORD *pdw
                          destroy_hash, (OBJECTHDR**)&pDestHash);
     if (*phHash != (HCRYPTHASH)INVALID_HANDLE_VALUE)
     {
-        memcpy(pDestHash, pSrcHash, sizeof(CRYPTHASH));
+        *pDestHash = *pSrcHash;
         duplicate_hash_impl(pSrcHash->aiAlgid, &pSrcHash->context, &pDestHash->context);
         copy_hmac_info(&pDestHash->pHMACInfo, pSrcHash->pHMACInfo);
         copy_data_blob(&pDestHash->tpPRFParams.blobLabel, &pSrcHash->tpPRFParams.blobLabel);
@@ -1893,7 +1893,7 @@ BOOL WINAPI RSAENH_CPDuplicateKey(HCRYPTPROV hUID, HCRYPTKEY hKey, DWORD *pdwRes
                         (OBJECTHDR**)&pDestKey);
     if (*phKey != (HCRYPTKEY)INVALID_HANDLE_VALUE)
     {
-        memcpy(pDestKey, pSrcKey, sizeof(CRYPTKEY));
+        *pDestKey = *pSrcKey;
         copy_data_blob(&pDestKey->siSChannelInfo.blobServerRandom,
                        &pSrcKey->siSChannelInfo.blobServerRandom);
         copy_data_blob(&pDestKey->siSChannelInfo.blobClientRandom, 
