@@ -4563,6 +4563,61 @@ static void test_GetUpdateRect(void)
     DestroyWindow(hgrandparent);
 }
 
+
+static LRESULT CALLBACK TestExposedRegion_WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if(msg == WM_PAINT)
+    {
+        PAINTSTRUCT ps;
+        RECT updateRect;
+        DWORD waitResult;
+        HWND win;
+        const int waitTime = 2000;
+
+        BeginPaint(hwnd, &ps);
+
+        /* create and destroy window to create an exposed region on this window */
+        win = CreateWindowA("static", "win", WS_VISIBLE,
+                             10,10,50,50, NULL, NULL, 0, NULL);
+        DestroyWindow(win);
+
+        waitResult = MsgWaitForMultipleObjectsEx( 0, NULL, waitTime, QS_PAINT, 0 );
+
+        ValidateRect(hwnd, NULL);
+        EndPaint(hwnd, &ps);
+
+        if(waitResult != WAIT_TIMEOUT)
+        {
+            GetUpdateRect(hwnd, &updateRect, FALSE);
+todo_wine
+{
+            ok(!IsRectEmpty(&updateRect), "Exposed rect should not be empty\n");
+}
+        }
+
+        return 1;
+    }
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+static void test_Expose(void)
+{
+    ATOM atom;
+    WNDCLASSA cls;
+    HWND mw;
+    memset(&cls, 0, sizeof(WNDCLASSA));
+    cls.lpfnWndProc = TestExposedRegion_WndProc;
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszClassName = "TestExposeClass";
+    atom = RegisterClassA(&cls);
+
+    mw = CreateWindowA("TestExposeClass", "MainWindow", WS_VISIBLE|WS_OVERLAPPEDWINDOW,
+                            0, 0, 200, 100, NULL, NULL, 0, NULL);
+
+    UpdateWindow(mw);
+    DestroyWindow(mw);
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -4645,6 +4700,7 @@ START_TEST(win)
     test_ShowWindow();
     test_gettext();
     test_GetUpdateRect();
+    test_Expose();
 
     /* add the tests above this line */
     UnhookWindowsHookEx(hhook);
