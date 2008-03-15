@@ -484,21 +484,14 @@ void processRegLines(FILE *in)
 {
     LPSTR line           = NULL;  /* line read from input stream */
     ULONG lineSize       = REG_VAL_BUF_SIZE;
-    BYTE  uni[2];
+    BOOL  unicode_check  = TRUE;
 
     line = HeapAlloc(GetProcessHeap(), 0, lineSize);
     CHECK_ENOUGH_MEMORY(line);
 
-    if (fread(uni, 2, 1, in) == 1) {
-        if (uni[0] == 0xff && uni[1] == 0xfe) {
-            printf("Trying to import from a unicode file: this isn't supported yet.\n"
-                   "Please use export as Win 9x/NT4 files from native regedit\n");
-            return;
-        }
-        fseek(in, -2, SEEK_CUR);
-    }
     while (!feof(in)) {
         LPSTR s; /* The pointer into line for where the current fgets should read */
+        LPSTR check;
         s = line;
         for (;;) {
             size_t size_remaining;
@@ -527,7 +520,34 @@ void processRegLines(FILE *in)
              * eof, error, eol or getting the maximum amount.  Abort on error.
              */
             size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
-            if (NULL == fgets (s, size_to_get, in)) {
+
+            if (unicode_check)
+            {
+                if (fread( s, 2, 1, in) == 1)
+                {
+                    if ((BYTE)s[0] == 0xff && (BYTE)s[1] == 0xfe)
+                    {
+                        printf("Trying to import from a unicode file: this isn't supported yet.\n"
+                               "Please use export as Win 9x/NT4 files from native regedit\n");
+                        HeapFree(GetProcessHeap(), 0, line);
+                        return;
+                    }
+                    else
+                    {
+                        unicode_check = FALSE;
+                        check = fgets (&s[2], size_to_get-2, in);
+                    }
+                }
+                else
+                {
+                    unicode_check = FALSE;
+                    check = NULL;
+                }
+            }
+            else
+                check = fgets (s, size_to_get, in);
+
+            if (check == NULL) {
                 if (ferror(in)) {
                     perror ("While reading input");
                     exit (IO_ERROR);
