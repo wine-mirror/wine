@@ -471,14 +471,16 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   }
   case rtfFirstIndent:
     ME_GetSelectionParaFormat(info->editor, &fmt);
-    fmt.dwMask = PFM_STARTINDENT | PFM_OFFSET;
-    fmt.dxStartIndent += info->rtfParam + fmt.dxOffset;
+    fmt.dwMask |= PFM_STARTINDENT | PFM_OFFSET;
+    fmt.dxStartIndent += info->rtfParam;
     fmt.dxOffset = -info->rtfParam;
     break;
   case rtfLeftIndent:
+    /* we assume rtfLeftIndent is always specified before rtfFirstIndent */
     ME_GetSelectionParaFormat(info->editor, &fmt);
-    fmt.dwMask = PFM_STARTINDENT;
-    fmt.dxStartIndent = -fmt.dxOffset + info->rtfParam;
+    fmt.dwMask |= PFM_STARTINDENT;
+    fmt.dxStartIndent = info->rtfParam;
+    fmt.dxOffset = 0;
     break;
   case rtfRightIndent:
     fmt.dwMask = PFM_RIGHTINDENT;
