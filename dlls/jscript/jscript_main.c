@@ -27,10 +27,10 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
-#include "ole2.h"
 #include "advpub.h"
 
 #include "initguid.h"
+#include "ole2.h"
 #include "activscp.h"
 #include "activaut.h"
 
@@ -46,6 +46,62 @@ static const CLSID CLSID_JScriptEncode =
     {0xf414c262,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
 static HINSTANCE jscript_hinstance;
+
+HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
+                                             REFIID riid, void **ppv)
+{
+    FIXME("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("(%p)->(%x)\n", iface, fLock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl JScriptFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    JScriptFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory JScriptFactory = { &JScriptFactoryVtbl };
 
 /******************************************************************
  *              DllMain (jscript.@)
@@ -72,6 +128,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
+    if(IsEqualGUID(&CLSID_JScript, rclsid)) {
+        TRACE("(CLSID_JScript %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&JScriptFactory, riid, ppv);
+    }
+
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }

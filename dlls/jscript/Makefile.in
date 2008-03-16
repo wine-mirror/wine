@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = jscript.dll
 IMPORTS   = kernel32
-EXTRALIBS = -luuid
 
 RC_SRCS = rsrc.rc
 
