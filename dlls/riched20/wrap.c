@@ -467,14 +467,12 @@ static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
 }
 
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
-  HWND hWnd = editor->hWnd;
-  HDC hDC = GetDC(hWnd);
   ME_DisplayItem *item;
   ME_Context c;
   BOOL bModified = FALSE;
   int yStart = -1, yEnd = -1;
 
-  ME_InitContext(&c, editor, hDC);
+  ME_InitContext(&c, editor, GetDC(editor->hWnd));
   c.pt.x = 0;
   c.pt.y = 0;
   editor->nHeight = 0;
@@ -510,9 +508,8 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   
   editor->nTotalLength = c.pt.y;
 
-  ME_DestroyContext(&c);
-  ReleaseDC(hWnd, hDC);
-  
+  ME_DestroyContext(&c, editor->hWnd);
+
   if (bModified || editor->nTotalLength < editor->nLastTotalLength)
     ME_InvalidateMarkedParagraphs(editor);
   return bModified;
@@ -520,9 +517,8 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
 
 void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor) {
   ME_Context c;
-  HDC hDC = GetDC(editor->hWnd);
 
-  ME_InitContext(&c, editor, hDC);
+  ME_InitContext(&c, editor, GetDC(editor->hWnd));
   if (editor->bRedraw)
   {
     RECT rc = c.rcView;
@@ -544,8 +540,7 @@ void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor) {
       InvalidateRect(editor->hWnd, &rc, TRUE);
     }
   }
-  ME_DestroyContext(&c);
-  ReleaseDC(editor->hWnd, hDC);
+  ME_DestroyContext(&c, editor->hWnd);
 }
 
 

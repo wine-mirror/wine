@@ -215,9 +215,8 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
       *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
       *x = run->member.run.pt.x + sz.cx;
       *y = para->member.para.nYPos + row->member.row.nBaseline + pSizeRun->member.run.pt.y - pSizeRun->member.run.nAscent - ME_GetYScrollPos(editor);
-      
-      ME_DestroyContext(&c);
-      ReleaseDC(editor->hWnd, hDC);
+
+      ME_DestroyContext(&c, editor->hWnd);
       return;
     }
   }

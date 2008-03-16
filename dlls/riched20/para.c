@@ -28,7 +28,6 @@ static const WCHAR wszParagraphSign[] = {0xB6, 0};
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   ME_Context c;
-  HDC hDC;
   PARAFORMAT2 fmt;
   CHARFORMAT2W cf;
   LOGFONTW lf;
@@ -38,9 +37,8 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   ME_DisplayItem *run;
   ME_Style *style;
 
-  hDC = GetDC(editor->hWnd);
+  ME_InitContext(&c, editor, GetDC(editor->hWnd));
 
-  ME_InitContext(&c, editor, hDC);
   hf = (HFONT)GetStockObject(SYSTEM_FONT);
   assert(hf);
   GetObjectW(hf, sizeof(LOGFONTW), &lf);
@@ -85,8 +83,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
 
   text->pLast->member.para.nCharOfs = 1;
 
-  ME_DestroyContext(&c);
-  ReleaseDC(editor->hWnd, hDC);
+  ME_DestroyContext(&c, editor->hWnd);
 }
  
 void ME_MarkAllForWrapping(ME_TextEditor *editor)

@@ -551,7 +551,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
   {
     SIZE sz;
     ME_GetOLEObjectSize(&c, run, &sz);
-    ReleaseDC(editor->hWnd, c.hDC);
+    ME_DestroyContext(&c, editor->hWnd);
     if (cx < sz.cx/2)
       return 0;
     return 1;
@@ -580,7 +580,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
     ME_DestroyString(strRunText);
   
   ME_UnselectStyleFont(&c, run->style, hOldFont);
-  ReleaseDC(editor->hWnd, c.hDC);
+  ME_DestroyContext(&c, editor->hWnd);
   return fit;
 }
 

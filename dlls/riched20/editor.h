@@ -190,7 +190,7 @@ void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend, BOOL ctrl);
 
 void ME_InitContext(ME_Context *c, ME_TextEditor *editor, HDC hDC);
-void ME_DestroyContext(ME_Context *c);
+void ME_DestroyContext(ME_Context *c, HWND release);
 ME_Style *GetInsertStyle(ME_TextEditor *editor, int nCursor);
 void ME_MustBeWrapped(ME_Context *c, ME_DisplayItem *para);
 void ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,

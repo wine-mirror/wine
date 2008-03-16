@@ -91,7 +91,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
   if (editor->nTotalLength != editor->nLastTotalLength)
     ME_SendRequestResize(editor, FALSE);
   editor->nLastTotalLength = editor->nTotalLength;
-  ME_DestroyContext(&c);
+  ME_DestroyContext(&c, NULL);
 }
 
 void ME_Repaint(ME_TextEditor *editor)
