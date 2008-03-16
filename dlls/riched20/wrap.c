@@ -47,7 +47,11 @@ static void ME_BeginRow(ME_WrapContext *wc)
   wc->pRowStart = NULL;
   wc->bOverflown = FALSE;
   wc->pLastSplittableRun = NULL;
-  wc->nAvailWidth = wc->nTotalWidth - (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin;
+  if (wc->context->editor->bWordWrap)
+    wc->nAvailWidth = wc->context->rcView.right - wc->context->rcView.left -
+        (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin;
+  else
+    wc->nAvailWidth = ~0u >> 1;
   wc->pt.x = 0;
 }
 
@@ -393,8 +397,10 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
       wc.pt.y += border;
   }
 
-  wc.nTotalWidth = c->rcView.right - c->rcView.left;
-  wc.nAvailWidth = wc.nTotalWidth - wc.nFirstMargin - wc.nRightMargin;
+  if (c->editor->bWordWrap)
+    wc.nAvailWidth = c->rcView.right - c->rcView.left - wc.nFirstMargin - wc.nRightMargin;
+  else
+    wc.nAvailWidth = ~0u >> 1;
   wc.pRowStart = NULL;
 
   linespace = ME_GetParaLineSpace(c, &tp->member.para);

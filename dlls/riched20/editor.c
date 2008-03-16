@@ -114,7 +114,7 @@
   + EM_SETSEL
   + EM_SETSCROLLPOS 3.0
   - EM_SETTABSTOPS 3.0
-  - EM_SETTARGETDEVICE
+  - EM_SETTARGETDEVICE (partial)
   + EM_SETTEXTEX 3.0 (no rich text insertion handling, proper style?)
   - EM_SETTEXTMODE 2.0
   - EM_SETTYPOGRAPHYOPTIONS 3.0
@@ -1590,6 +1590,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
   ed->bRedraw = TRUE;
+  ed->bWordWrap = FALSE;
   ed->bHideSelection = FALSE;
   ed->nInvalidOfs = -1;
   ed->pfnWordBreak = NULL;
@@ -1901,7 +1902,6 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   UNSUPPORTED_MSG(EM_SETLANGOPTIONS)
   UNSUPPORTED_MSG(EM_SETPALETTE)
   UNSUPPORTED_MSG(EM_SETTABSTOPS)
-  UNSUPPORTED_MSG(EM_SETTARGETDEVICE)
   UNSUPPORTED_MSG(EM_SETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(WM_STYLECHANGING)
@@ -3188,6 +3188,18 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_RewrapRepaint(editor);
     return 0;
   }
+  case EM_SETTARGETDEVICE:
+    if (wParam == 0)
+    {
+        switch (lParam)
+        {
+        case 0: editor->bWordWrap = TRUE; break;
+        case 1: editor->bWordWrap = FALSE; break;
+        default: FIXME("Unknown option to EM_SETTARGETDEVICE(NULL,%ld)\n", lParam);
+        }
+    }
+    else FIXME("Unsupported yet non NULL device in EM_SETTARGETDEVICE\n");
+    break;
   default:
   do_default:
     return DefWindowProcW(hWnd, msg, wParam, lParam);

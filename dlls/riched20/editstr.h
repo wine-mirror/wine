@@ -312,6 +312,7 @@ typedef struct tagME_TextEditor
   int nZoomNumerator, nZoomDenominator;
   RECT rcFormat;
   BOOL bRedraw;
+  BOOL bWordWrap;
   int nInvalidOfs;
   int nTextLimit;
   EDITWORDBREAKPROCW pfnWordBreak;
@@ -350,7 +351,7 @@ typedef struct tagME_WrapContext
   ME_Style *style;
   ME_Context *context;
   int nLeftMargin, nRightMargin, nFirstMargin;
-  int nTotalWidth, nAvailWidth;
+  int nAvailWidth;
   int nRow;
   POINT pt;
   BOOL bOverflown;
