@@ -74,7 +74,7 @@ CHARFORMAT2W *ME_ToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from)
 void ME_CopyToCF2W(CHARFORMAT2W *to, CHARFORMAT2W *from)
 {
   if (ME_ToCF2W(to, from) == from)
-    CopyMemory(to, from, sizeof(*from));
+    *to = *from;
 }
 
 CHARFORMAT2W *ME_ToCFAny(CHARFORMAT2W *to, CHARFORMAT2W *from)
@@ -154,7 +154,7 @@ ME_Style *ME_MakeStyle(CHARFORMAT2W *style) {
   if (style->cbSize <= sizeof(CHARFORMAT2W))
     CopyMemory(&s->fmt, style, style->cbSize);
   else
-    CopyMemory(&s->fmt, style, sizeof(CHARFORMAT2W));
+    s->fmt = *style;
   s->fmt.cbSize = sizeof(CHARFORMAT2W);
 
   s->nSequence = -2;
@@ -229,7 +229,7 @@ void ME_CopyCharFormat(CHARFORMAT2W *pDest, const CHARFORMAT2W *pSrc)
   /* using this with non-2W structs is forbidden */
   assert(pSrc->cbSize == sizeof(CHARFORMAT2W));
   assert(pDest->cbSize == sizeof(CHARFORMAT2W));
-  CopyMemory(pDest, pSrc, sizeof(CHARFORMAT2W));
+  *pDest = *pSrc;
 }
 
 static void ME_DumpStyleEffect(char **p, const char *name, const CHARFORMAT2W *fmt, int mask)
