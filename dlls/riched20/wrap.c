@@ -117,7 +117,8 @@ static void ME_WrapSizeRun(ME_WrapContext *wc, ME_DisplayItem *p)
 
   ME_UpdateRunFlags(wc->context->editor, &p->member.run);
 
-  ME_CalcRunExtent(wc->context, &ME_GetParagraph(p)->member.para, &p->member.run);
+  ME_CalcRunExtent(wc->context, &ME_GetParagraph(p)->member.para,
+                   wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, &p->member.run);
 }
 
 static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, int i)
@@ -128,7 +129,7 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
     return NULL;
   j = ME_ReverseFindNonWhitespaceV(p->member.run.strText, i);
   if (j>0) {
-    pp = ME_SplitRun(wc->context, piter, j);
+    pp = ME_SplitRun(wc, piter, j);
     wc->pt.x += piter->member.run.nWidth;
     return pp;
   }
@@ -147,7 +148,7 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
       if (piter->member.run.nFlags & MERF_ENDWHITE)
       {
         j = ME_ReverseFindNonWhitespaceV(piter->member.run.strText, i);
-        pp = ME_SplitRun(wc->context, piter, i);
+        pp = ME_SplitRun(wc, piter, i);
         wc->pt = pp->member.run.pt;
         return pp;
       }
@@ -202,7 +203,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
       if (i == len)
         i = ME_ReverseFindNonWhitespaceV(run->strText, len);
       if (i) {
-        ME_DisplayItem *piter2 = ME_SplitRun(wc->context, piter, i);
+        ME_DisplayItem *piter2 = ME_SplitRun(wc, piter, i);
         wc->pt = piter2->member.run.pt;
         return piter2;
       }
@@ -219,7 +220,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   TRACE("Backtracking failed, trying desperate: %s\n", debugstr_w(p->member.run.strText->szData));
   /* OK, no better idea, so assume we MAY split words if we can split at all*/
   if (idesp)
-    return ME_SplitRun(wc->context, piter, idesp);
+    return ME_SplitRun(wc, piter, idesp);
   else
   if (wc->pRowStart && piter != wc->pRowStart)
   {
@@ -235,7 +236,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
     int pos2 = ME_StrRelPos(run->strText, 0, &chars);
     if (pos2 != len) {
       /* the run is more than 1 char, so we may split */
-      return ME_SplitRun(wc->context, piter, pos2);
+      return ME_SplitRun(wc, piter, pos2);
     }
     /* the run is one char, can't split it */
     return piter;
@@ -272,7 +273,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
       black = ME_FindNonWhitespaceV(run->strText, 0);
       if (black) {
         wc->bOverflown = FALSE;
-        pp = ME_SplitRun(wc->context, p, black);
+        pp = ME_SplitRun(wc, p, black);
         p->member.run.nFlags |= MERF_SKIPPED;
         ME_InsertRowStart(wc, pp);
         return pp;
@@ -290,6 +291,12 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     return p;
   }
   /* we're not at the end of the row */
+  if (run->nFlags & MERF_TAB) {
+    /* force recomputation of tabs' size as it depends on position */
+    ME_CalcRunExtent(wc->context, &ME_GetParagraph(p)->member.para,
+                     wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
+  }
+
   /* will current run fit? */
   if (wc->pt.x + run->nWidth > wc->nAvailWidth)
   {
@@ -315,7 +322,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     {
       /* we aren't sure if it's *really* necessary, it's a good start however */
       int black = ME_ReverseFindNonWhitespaceV(run->strText, len);
-      ME_SplitRun(wc->context, p, black);
+      ME_SplitRun(wc, p, black);
       /* handle both parts again */
       return p;
     }

@@ -202,11 +202,14 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
           pSizeRun = run = tmp;
           assert(run);
           assert(run->type == diRun);
-          sz = ME_GetRunSize(&c, &para->member.para, &run->member.run, ME_StrLen(run->member.run.strText));
+          sz = ME_GetRunSize(&c, &para->member.para,
+                             &run->member.run, ME_StrLen(run->member.run.strText),
+                             row->member.row.nLMargin);
         }
       }
       if (pCursor->nOffset && !(run->member.run.nFlags & MERF_SKIPPED)) {
-        sz = ME_GetRunSize(&c, &para->member.para, &run->member.run, pCursor->nOffset);
+        sz = ME_GetRunSize(&c, &para->member.para, &run->member.run, pCursor->nOffset,
+                           row->member.row.nLMargin);
       }
 
       *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
