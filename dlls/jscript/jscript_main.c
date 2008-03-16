@@ -16,21 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
+#include "initguid.h"
 
-#include <stdarg.h>
-#include <stdio.h>
+#include "jscript.h"
 
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
 #include "winreg.h"
 #include "advpub.h"
-
-#include "initguid.h"
-#include "ole2.h"
 #include "activscp.h"
 #include "activaut.h"
 
@@ -46,13 +37,6 @@ static const CLSID CLSID_JScriptEncode =
     {0xf414c262,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
 static HINSTANCE jscript_hinstance;
-
-HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
-                                             REFIID riid, void **ppv)
-{
-    FIXME("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
-}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
