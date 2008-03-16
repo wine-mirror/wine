@@ -1845,6 +1845,73 @@ WINED3DFORMAT DepthStencilFormat)
     return FALSE;
 }
 
+/* Check the render target capabilities of a format */
+static BOOL CheckRenderTargetCapability(WINED3DFORMAT AdapterFormat, WINED3DFORMAT CheckFormat)
+{
+    UINT Adapter = 0;
+
+    /* Filter out non-RT formats */
+    switch(CheckFormat)
+    {
+        /* Don't offer 8bit, windows doesn't either although we could emulate it */
+        case WINED3DFMT_A8P8:
+        case WINED3DFMT_P8:
+
+        /* No DXTC render targets */
+        case WINED3DFMT_DXT1:
+        case WINED3DFMT_DXT2:
+        case WINED3DFMT_DXT3:
+        case WINED3DFMT_DXT4:
+        case WINED3DFMT_DXT5:
+            return FALSE;
+        default:
+            break;
+    }
+
+    if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
+        WineD3D_PixelFormat *cfgs = Adapters[Adapter].cfgs;
+        int it;
+        short AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
+        short CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
+
+        getColorBits(AdapterFormat, &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
+        getColorBits(CheckFormat, &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
+
+        /* In backbuffer mode the front and backbuffer share the same WGL pixelformat.
+         * The format must match in RGB, alpha is allowed to be different. (Only the backbuffer can have alpha) */
+        if(!((AdapterRed == CheckRed) && (AdapterGreen == CheckGreen) && (AdapterBlue == CheckBlue))) {
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+        }
+
+        /* Check if there is a WGL pixel format matching the requirements, the format should also be window
+         * drawable (not offscreen; e.g. Nvidia offers R5G6B5 for pbuffers even when X is running at 24bit) */
+        for (it = 0; it < Adapters[Adapter].nCfgs; ++it) {
+            if (cfgs[it].windowDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], CheckFormat)) {
+                TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n", cfgs[it].iPixelFormat, debug_d3dformat(CheckFormat));
+                return TRUE;
+            }
+        }
+    } else if(wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER) {
+        /* We can propably use this function in FBO mode too on some drivers to get some basic indication of the capabilities. */
+        WineD3D_PixelFormat *cfgs = Adapters[Adapter].cfgs;
+        int it;
+
+        /* Check if there is a WGL pixel format matching the requirements, the pixel format should also be usable with pbuffers */
+        for (it = 0; it < Adapters[Adapter].nCfgs; ++it) {
+            if (cfgs[it].pbufferDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], CheckFormat)) {
+                TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n", cfgs[it].iPixelFormat, debug_d3dformat(CheckFormat));
+                return TRUE;
+            }
+        }
+    } else if(wined3d_settings.offscreen_rendering_mode == ORM_FBO){
+        /* For now return TRUE for FBOs until we have some proper checks.
+         * Note that this function will only be called when the format is around for texturing. */
+        return TRUE;
+    }
+    return FALSE;
+}
+
 /* Check if a texture format is supported on the given adapter */
 static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
@@ -2095,6 +2162,15 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 /* No usage checks were requested, so return because we know that the format is supported */
                 if(!Usage)
                     return WINED3D_OK;
+
+                if(Usage & WINED3DUSAGE_RENDERTARGET) {
+                    if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
+                        UsageCaps |= WINED3DUSAGE_RENDERTARGET;
+                    } else {
+                        TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                }
             }
         }
     } else if(RType == WINED3DRTYPE_SURFACE) {
@@ -2111,7 +2187,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 TRACE_(d3d_caps)("[FAILED] - No depthstencil support\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
-         }
+        }
+
+        if(Usage & WINED3DUSAGE_RENDERTARGET) {
+            if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
+                UsageCaps |= WINED3DUSAGE_RENDERTARGET;
+            } else {
+                TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
+                 return WINED3DERR_NOTAVAILABLE;
+            }
+        }
     } else if(RType == WINED3DRTYPE_TEXTURE) {
         /* Texture allows:
          *                - D3DUSAGE_AUTOGENMIPMAP
@@ -2130,6 +2215,14 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             if(!Usage)
                 return WINED3D_OK;
 
+            if(Usage & WINED3DUSAGE_RENDERTARGET) {
+                if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_RENDERTARGET;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
+                     return WINED3DERR_NOTAVAILABLE;
+                 }
+            }
         } else if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
@@ -2215,43 +2308,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
-    if(Usage & WINED3DUSAGE_RENDERTARGET) {
-        switch (CheckFormat) {
-            case WINED3DFMT_R8G8B8:
-            case WINED3DFMT_A8R8G8B8:
-            case WINED3DFMT_X8R8G8B8:
-            case WINED3DFMT_R5G6B5:
-            case WINED3DFMT_X1R5G5B5:
-            case WINED3DFMT_A1R5G5B5:
-            case WINED3DFMT_A4R4G4B4:
-            case WINED3DFMT_R3G3B2:
-            case WINED3DFMT_X4R4G4B4:
-            case WINED3DFMT_A8B8G8R8:
-            case WINED3DFMT_X8B8G8R8:
-            case WINED3DFMT_P8:
-            case WINED3DFMT_G16R16:
-                TRACE_(d3d_caps)("[OK]\n");
-                return WINED3D_OK;
-            case WINED3DFMT_R16F:
-            case WINED3DFMT_A16B16G16R16F:
-                if (!GL_SUPPORT(ARB_HALF_FLOAT_PIXEL) || !GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
-                    TRACE_(d3d_caps)("[FAILED]\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                TRACE_(d3d_caps)("[OK]\n");
-                return WINED3D_OK;
-            case WINED3DFMT_A32B32G32R32F:
-               if (!GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
-                    TRACE_(d3d_caps)("[FAILED]\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                TRACE_(d3d_caps)("[OK]\n");
-                return WINED3D_OK;
-            default:
-                TRACE_(d3d_caps)("[FAILED]\n");
-                return WINED3DERR_NOTAVAILABLE;
-        }
-    } else if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
+    if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
         if(GL_SUPPORT(NV_REGISTER_COMBINERS) && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
             switch (CheckFormat) {
                 case WINED3DFMT_V8U8:
@@ -3672,6 +3729,7 @@ BOOL InitAdapters(void) {
         PUSH1(WGL_ALPHA_BITS_ARB)
         PUSH1(WGL_DEPTH_BITS_ARB)
         PUSH1(WGL_STENCIL_BITS_ARB)
+        PUSH1(WGL_DRAW_TO_WINDOW_ARB)
 
         for(iPixelFormat=1; iPixelFormat<=Adapters[0].nCfgs; iPixelFormat++) {
             res = GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, nAttribs, attribs, values));
@@ -3687,8 +3745,19 @@ BOOL InitAdapters(void) {
             cfgs->alphaSize = values[3];
             cfgs->depthSize = values[4];
             cfgs->stencilSize = values[5];
+            cfgs->windowDrawable = values[6];
 
-            TRACE("iPixelFormat=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d\n", cfgs->iPixelFormat, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize);
+            cfgs->pbufferDrawable = FALSE;
+            /* Check for pbuffer support when it is around as wglGetPixelFormatAttribiv fails for unknown
+attributes. */
+            if(GL_SUPPORT(WGL_ARB_PBUFFER)) {
+                int attrib = WGL_DRAW_TO_PBUFFER_ARB;
+                int value;
+                if(GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, 1, &attrib, &value)))
+                    cfgs->pbufferDrawable = value;
+            }
+
+            TRACE("iPixelFormat=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
             cfgs++;
         }
 

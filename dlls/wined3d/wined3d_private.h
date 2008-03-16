@@ -638,6 +638,8 @@ typedef struct WineD3D_PixelFormat
     int iPixelFormat; /* WGL pixel format */
     int redSize, greenSize, blueSize, alphaSize;
     int depthSize, stencilSize;
+    BOOL windowDrawable;
+    BOOL pbufferDrawable;
 } WineD3D_PixelFormat;
 
 /* The adapter structure */
