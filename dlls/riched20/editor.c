@@ -691,7 +691,8 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
   }
 }
 
-static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE h, const SIZEL* sz)
+static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbmp,
+                                  const SIZEL* sz)
 {
   LPOLEOBJECT         lpObject = NULL;
   LPSTORAGE           lpStorage = NULL;
@@ -704,11 +705,20 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE h, const SIZEL* s
   BOOL                ret = FALSE;
   DWORD               conn;
 
-  stgm.tymed = TYMED_ENHMF;
-  stgm.u.hEnhMetaFile = h;
+  if (hemf)
+  {
+      stgm.tymed = TYMED_ENHMF;
+      stgm.u.hEnhMetaFile = hemf;
+      fm.cfFormat = CF_ENHMETAFILE;
+  }
+  else if (hbmp)
+  {
+      stgm.tymed = TYMED_GDI;
+      stgm.u.hBitmap = hbmp;
+      fm.cfFormat = CF_BITMAP;
+  }
   stgm.pUnkForRelease = NULL;
 
-  fm.cfFormat = CF_ENHMETAFILE;
   fm.ptd = NULL;
   fm.dwAspect = DVASPECT_CONTENT;
   fm.lindex = -1;
@@ -768,6 +778,8 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
   BYTE          val;
   METAFILEPICT  mfp;
   HENHMETAFILE  hemf;
+  HBITMAP       hbmp;
+  enum gfxkind {gfx_unknown = 0, gfx_enhmetafile, gfx_dib} gfx = gfx_unknown;
 
   RTFGetToken (info);
   if (info->rtfClass == rtfEOF)
@@ -777,6 +789,12 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
   if (RTFCheckMM (info, rtfPictAttr, rtfWinMetafile))
   {
     mfp.mm = info->rtfParam;
+    gfx = gfx_enhmetafile;
+  }
+  else if (RTFCheckMM (info, rtfPictAttr, rtfDevIndBitmap))
+  {
+    if (info->rtfParam != 0) FIXME("dibitmap should be 0 (%d)\n", info->rtfParam);
+    gfx = gfx_dib;
   }
   else
   {
@@ -799,9 +817,13 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
       goto skip_group;
     }
     else if (RTFCheckMM (info, rtfPictAttr, rtfPicWid))
-      mfp.xExt = info->rtfParam;
+    {
+      if (gfx == gfx_enhmetafile) mfp.xExt = info->rtfParam;
+    }
     else if (RTFCheckMM (info, rtfPictAttr, rtfPicHt))
-      mfp.yExt = info->rtfParam;
+    {
+      if (gfx == gfx_enhmetafile) mfp.yExt = info->rtfParam;
+    }
     else if (RTFCheckMM (info, rtfPictAttr, rtfPicGoalWid))
       sz.cx = info->rtfParam;
     else if (RTFCheckMM (info, rtfPictAttr, rtfPicGoalHt))
@@ -837,8 +859,31 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
   }
   if (flip) FIXME("wrong hex string\n");
 
-  if ((hemf = SetWinMetaFileBits(bufidx, buffer, NULL, &mfp)))
-    ME_RTFInsertOleObject(info, hemf, &sz);
+  switch (gfx)
+  {
+  case gfx_enhmetafile:
+    if ((hemf = SetWinMetaFileBits(bufidx, buffer, NULL, &mfp)))
+        ME_RTFInsertOleObject(info, hemf, NULL, &sz);
+    break;
+  case gfx_dib:
+    {
+      BITMAPINFO* bi = (BITMAPINFO*)buffer;
+      HDC         hdc = GetDC(0);
+      unsigned    nc = bi->bmiHeader.biClrUsed;
+
+      /* not quite right, especially for bitfields type of compression */
+      if (!nc && bi->bmiHeader.biBitCount <= 8)
+        nc = 1 << bi->bmiHeader.biBitCount;
+      if ((hbmp = CreateDIBitmap(hdc, &bi->bmiHeader,
+                                 CBM_INIT, (char*)(bi + 1) + nc * sizeof(RGBQUAD),
+                                 bi, DIB_RGB_COLORS)))
+          ME_RTFInsertOleObject(info, NULL, hbmp, &sz);
+      ReleaseDC(0, hdc);
+    }
+    break;
+  default:
+    break;
+  }
   HeapFree(GetProcessHeap(), 0, buffer);
   RTFRouteToken (info);	/* feed "}" back to router */
   return;
