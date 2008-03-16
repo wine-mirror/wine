@@ -1806,10 +1806,50 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
     return hr;
 }
 
+
 #define GLINFO_LOCATION Adapters[Adapter].gl_info
+/* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */
+static BOOL CheckDepthStencilCapability(UINT Adapter, WINED3DFORMAT DisplayFormat,
+WINED3DFORMAT DepthStencilFormat)
+{
+    int it=0;
+    WineD3D_PixelFormat *cfgs = Adapters[Adapter].cfgs;
+
+    /* Only allow depth/stencil formats */
+    switch (DepthStencilFormat) {
+        case WINED3DFMT_D16_LOCKABLE:
+        case WINED3DFMT_D16:
+        case WINED3DFMT_D15S1:
+        case WINED3DFMT_D24X8:
+        case WINED3DFMT_D24X4S4:
+        case WINED3DFMT_D24S8:
+        case WINED3DFMT_D24FS8:
+        case WINED3DFMT_D32:
+        case WINED3DFMT_D32F_LOCKABLE:
+            break;
+
+        default:
+            return FALSE;
+    }
+
+    /* Walk through all WGL pixel formats to find a match */
+    cfgs = Adapters[Adapter].cfgs;
+    for (it = 0; it < Adapters[Adapter].nCfgs; ++it) {
+        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], DisplayFormat)) {
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&cfgs[it], DepthStencilFormat)) {
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
+
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                               WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    DWORD UsageCaps = 0;
+
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%u,%s,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n",
           This,
           Adapter,
@@ -1842,7 +1882,38 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
-    if(RType == WINED3DRTYPE_VOLUMETEXTURE) {
+    if(RType == WINED3DRTYPE_SURFACE) {
+        /* Surface allows:
+         *                - D3DUSAGE_DEPTHSTENCIL
+         *                - D3DUSAGE_NONSECURE (d3d9ex)
+         *                - D3DUSAGE_RENDERTARGET
+         */
+
+        if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
+            if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
+                UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
+            } else {
+                TRACE_(d3d_caps)("[FAILED] - No depthstencil support\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+         }
+    } else if(RType == WINED3DRTYPE_TEXTURE) {
+        /* Texture allows:
+         *                - D3DUSAGE_AUTOGENMIPMAP
+         *                - D3DUSAGE_DEPTHSTENCIL
+         *                - D3DUSAGE_DMAP
+         *                - D3DUSAGE_DYNAMIC
+         *                - D3DUSAGE_NONSECURE (d3d9ex)
+         *                - D3DUSAGE_RENDERTARGET
+         *                - D3DUSAGE_SOFTWAREPROCESSING
+         *                - D3DUSAGE_TEXTAPI (d3d9ex)
+         */
+
+        if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
+            if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
+                UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
+        }
+    } else if(RType == WINED3DRTYPE_VOLUMETEXTURE) {
         if(!GL_SUPPORT(EXT_TEXTURE3D)) {
             TRACE_(d3d_caps)("[FAILED] - No volume texture support\n");
             return WINED3DERR_NOTAVAILABLE;
@@ -1919,29 +1990,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
-    if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
-        switch (CheckFormat) {
-            /* In theory we could do all formats, just fetch them accordingly should the buffer be locked.
-             * Windows supports only those 3, and enumerating the other formats confuses applications
-             */
-            case WINED3DFMT_D24S8:
-            case WINED3DFMT_D24X8:
-            case WINED3DFMT_D16:
-                TRACE_(d3d_caps)("[OK]\n");
-                return WINED3D_OK;
-            case WINED3DFMT_D16_LOCKABLE:
-            case WINED3DFMT_D24FS8:
-            case WINED3DFMT_D32F_LOCKABLE:
-            case WINED3DFMT_D24X4S4:
-            case WINED3DFMT_D15S1:
-            case WINED3DFMT_D32:
-                TRACE_(d3d_caps)("[FAILED]. Disabled because not enumerated on windows\n");
-                return WINED3DERR_NOTAVAILABLE;
-            default:
-                TRACE_(d3d_caps)("[FAILED]\n");
-                return WINED3DERR_NOTAVAILABLE;
-        }
-    } else if(Usage & WINED3DUSAGE_RENDERTARGET) {
+    if(Usage & WINED3DUSAGE_RENDERTARGET) {
         switch (CheckFormat) {
             case WINED3DFMT_R8G8B8:
             case WINED3DFMT_A8R8G8B8:
@@ -2189,6 +2238,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         default:
             break;
     }
+
+
 
     TRACE_(d3d_caps)("[FAILED]\n");
     return WINED3DERR_NOTAVAILABLE;
