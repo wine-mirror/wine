@@ -336,7 +336,7 @@ static void ME_RTFCharAttrHook(RTF_Info *info)
       fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINETYPE | CFM_STRIKEOUT | CFM_COLOR | CFM_BACKCOLOR | CFM_SIZE | CFM_WEIGHT;
       fmt.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
       fmt.yHeight = 12*20; /* 12pt */
-      fmt.wWeight = 400;
+      fmt.wWeight = FW_NORMAL;
       fmt.bUnderlineType = CFU_UNDERLINENONE;
       break;
     case rtfBold:

@@ -55,7 +55,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   cf.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
   lstrcpyW(cf.szFaceName, lf.lfFaceName);
   cf.yHeight = ME_twips2pointsY(&c, lf.lfHeight);
-  if (lf.lfWeight >= 700) cf.dwEffects |= CFE_BOLD;
+  if (lf.lfWeight > FW_NORMAL) cf.dwEffects |= CFE_BOLD;
   cf.wWeight = lf.lfWeight;
   if (lf.lfItalic) cf.dwEffects |= CFE_ITALIC;
   cf.bUnderlineType = (lf.lfUnderline) ? CFU_CF1UNDERLINE : CFU_UNDERLINENONE;

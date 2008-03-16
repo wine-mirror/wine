@@ -303,9 +303,9 @@ ME_LogFontFromStyle(ME_Context* c, LOGFONTW *lf, const ME_Style *s)
 
   lf->lfHeight = ME_twips2pointsY(c, -s->fmt.yHeight);
   
-  lf->lfWeight = 400;
+  lf->lfWeight = FW_NORMAL;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_BOLD)
-    lf->lfWeight = 700;
+    lf->lfWeight = FW_BOLD;
   if (s->fmt.dwMask & CFM_WEIGHT)
     lf->lfWeight = s->fmt.wWeight;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_ITALIC)
@@ -337,7 +337,7 @@ void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt)
   fmt->dwMask = CFM_WEIGHT|CFM_BOLD|CFM_ITALIC|CFM_UNDERLINE|CFM_STRIKEOUT|CFM_SIZE|CFM_FACE|CFM_CHARSET;
   fmt->wWeight = lf->lfWeight;
   fmt->yHeight = -lf->lfHeight*1440/ry;
-  if (lf->lfWeight>400) fmt->dwEffects |= CFM_BOLD;
+  if (lf->lfWeight > FW_NORMAL) fmt->dwEffects |= CFM_BOLD;
   if (lf->lfItalic) fmt->dwEffects |= CFM_ITALIC;
   if (lf->lfUnderline) fmt->dwEffects |= CFM_UNDERLINE;
   /* notice that if a logfont was created with underline due to CFM_LINK, this
