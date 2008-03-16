@@ -340,8 +340,9 @@ static void ME_RTFCharAttrHook(RTF_Info *info)
       fmt.bUnderlineType = CFU_UNDERLINENONE;
       break;
     case rtfBold:
-      fmt.dwMask = CFM_BOLD;
-      fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
+      fmt.dwMask = CFM_BOLD | CFM_WEIGHT;
+      fmt.dwEffects = info->rtfParam ? CFE_BOLD : 0;
+      fmt.wWeight = info->rtfParam ? FW_BOLD : FW_NORMAL;
       break;
     case rtfItalic:
       fmt.dwMask = CFM_ITALIC;
