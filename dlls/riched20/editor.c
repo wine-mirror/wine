@@ -245,7 +245,6 @@ static const WCHAR RichEdit50W[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5',
 static const WCHAR REListBox20W[] = {'R','E','L','i','s','t','B','o','x','2','0','W', 0};
 static const WCHAR REComboBox20W[] = {'R','E','C','o','m','b','o','B','o','x','2','0','W', 0};
 static HCURSOR hLeft;
-static HCURSOR hBeam;
 
 int me_debug = 0;
 HANDLE me_heap = NULL;
@@ -1522,12 +1521,15 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
   return FALSE;
 }
 
-static void ME_SetCursor(ME_TextEditor *editor, int x)
+static BOOL ME_SetCursor(ME_TextEditor *editor, int x)
 {
-    if (x < editor->selofs || editor->linesel)
+  if ((GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_SELECTIONBAR) &&
+      (x < editor->selofs || editor->linesel))
+  {
       SetCursor(hLeft);
-    else
-      SetCursor(hBeam);
+      return TRUE;
+  }
+  return FALSE;
 }
 
 static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
@@ -1703,7 +1705,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
       me_heap = HeapCreate (0, 0x10000, 0);
       if (!ME_RegisterEditorClass(hinstDLL)) return FALSE;
       hLeft = LoadCursorW(hinstDLL, MAKEINTRESOURCEW(OCR_REVERSE));
-      hBeam = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
       LookupInit();
       break;
 
@@ -2819,7 +2820,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     SetCapture(hWnd);
     ME_LinkNotify(editor,msg,wParam,lParam);
-    ME_SetCursor(editor, LOWORD(lParam));
+    if (!ME_SetCursor(editor, LOWORD(lParam))) goto do_default;
     break;
   case WM_MOUSEMOVE:
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
@@ -2828,7 +2829,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (GetCapture() == hWnd)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     ME_LinkNotify(editor,msg,wParam,lParam);
-    ME_SetCursor(editor, LOWORD(lParam));
+    if (!ME_SetCursor(editor, LOWORD(lParam))) goto do_default;
     break;
   case WM_LBUTTONUP:
     if (GetCapture() == hWnd)
@@ -2836,9 +2837,14 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
-    editor->linesel = 0;
-    ME_SetCursor(editor, LOWORD(lParam));
-    ME_LinkNotify(editor,msg,wParam,lParam);
+    else
+    {
+      BOOL ret;
+      editor->linesel = 0;
+      ret = ME_SetCursor(editor, LOWORD(lParam));
+      ME_LinkNotify(editor,msg,wParam,lParam);
+      if (!ret) goto do_default;
+    }
     break;
   case WM_LBUTTONDBLCLK:
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
@@ -3388,7 +3394,7 @@ static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
   wcW.cbWndExtra = sizeof(ME_TextEditor *);
   wcW.hInstance = NULL; /* hInstance would register DLL-local class */
   wcW.hIcon = NULL;
-  wcW.hCursor = hBeam;
+  wcW.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
   wcW.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
   wcW.lpszMenuName = NULL;
 
