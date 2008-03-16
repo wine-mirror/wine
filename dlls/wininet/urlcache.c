@@ -2124,6 +2124,10 @@ BOOL WINAPI CreateUrlCacheEntryW(
             lpszUrlPart++;
             break;
         }
+        else if(*lpszUrlPart == '?' || *lpszUrlPart == '#')
+        {
+            lpszUrlEnd = lpszUrlPart;
+        }
     }
     if (!lstrcmpW(lpszUrlPart, szWWW))
     {
