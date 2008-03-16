@@ -1845,6 +1845,204 @@ WINED3DFORMAT DepthStencilFormat)
     return FALSE;
 }
 
+/* Check if a texture format is supported on the given adapter */
+static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
+{
+    switch (CheckFormat) {
+
+        /*****
+         *  supported: RGB(A) formats
+         */
+        case WINED3DFMT_R8G8B8: /* Enable for dx7, blacklisted for 8 and 9 above */
+        case WINED3DFMT_A8R8G8B8:
+        case WINED3DFMT_X8R8G8B8:
+        case WINED3DFMT_R5G6B5:
+        case WINED3DFMT_X1R5G5B5:
+        case WINED3DFMT_A1R5G5B5:
+        case WINED3DFMT_A4R4G4B4:
+        case WINED3DFMT_R3G3B2:
+        case WINED3DFMT_A8:
+        case WINED3DFMT_X4R4G4B4:
+        case WINED3DFMT_A8B8G8R8:
+        case WINED3DFMT_X8B8G8R8:
+        case WINED3DFMT_A2R10G10B10:
+        case WINED3DFMT_A2B10G10R10:
+        case WINED3DFMT_G16R16:
+            TRACE_(d3d_caps)("[OK]\n");
+            return TRUE;
+
+        /*****
+         *  supported: Palettized
+         */
+        case WINED3DFMT_P8:
+            TRACE_(d3d_caps)("[OK]\n");
+            return TRUE;
+        /* No Windows driver offers A8P8, so don't offer it either */
+        case WINED3DFMT_A8P8:
+            return FALSE;
+
+        /*****
+         *  Supported: (Alpha)-Luminance
+         */
+        case WINED3DFMT_L8:
+        case WINED3DFMT_A8L8:
+        case WINED3DFMT_A4L4:
+        case WINED3DFMT_L16:
+            TRACE_(d3d_caps)("[OK]\n");
+            return TRUE;
+
+        /* Depth/stencil is handled using checkDepthStencilCapability, return FALSE here */
+        case WINED3DFMT_D16_LOCKABLE:
+        case WINED3DFMT_D16:
+        case WINED3DFMT_D15S1:
+        case WINED3DFMT_D24X8:
+        case WINED3DFMT_D24X4S4:
+        case WINED3DFMT_D24S8:
+        case WINED3DFMT_D24FS8:
+        case WINED3DFMT_D32:
+        case WINED3DFMT_D32F_LOCKABLE:
+            return FALSE;
+
+        /*****
+         *  Not supported everywhere(depends on GL_ATI_envmap_bumpmap or
+         *  GL_NV_texture_shader), but advertized to make apps happy.
+         *  Enable some because games often fail when they are not available
+         *  and are still playable even without bump mapping
+         */
+        case WINED3DFMT_V8U8:
+            if(GL_SUPPORT(NV_TEXTURE_SHADER) || GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+                return WINED3D_OK;
+            }
+            TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
+            return FALSE;
+
+        case WINED3DFMT_X8L8V8U8:
+        case WINED3DFMT_L6V5U5:
+            WARN_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        case WINED3DFMT_Q8W8V8U8:
+        case WINED3DFMT_V16U16:
+            if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
+                WARN_(d3d_caps)("[Not supported, but pretended to do]\n");
+                return TRUE;
+            }
+            TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
+            return FALSE;
+
+        /* Those are not advertized by the nvidia windows driver, and not
+         * supported natively by GL_NV_texture_shader or GL_ATI_envmap_bumpmap.
+         * WINED3DFMT_A2W10V10U10 could be loaded into shaders using the unsigned
+         * ARGB format if needed
+         */
+        case WINED3DFMT_W11V11U10:
+        case WINED3DFMT_A2W10V10U10:
+            WARN_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        case WINED3DFMT_DXT1:
+        case WINED3DFMT_DXT2:
+        case WINED3DFMT_DXT3:
+        case WINED3DFMT_DXT4:
+        case WINED3DFMT_DXT5:
+            if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            }
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+
+        /*****
+         *  Odd formats - not supported
+         */
+        case WINED3DFMT_VERTEXDATA:
+        case WINED3DFMT_INDEX16:
+        case WINED3DFMT_INDEX32:
+        case WINED3DFMT_Q16W16V16U16:
+            TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            return FALSE;
+
+        /*****
+         *  WINED3DFMT_CxV8U8: Not supported right now
+         */
+        case WINED3DFMT_CxV8U8:
+            TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            return FALSE;
+
+        /* YUV formats, not supported for now */
+        case WINED3DFMT_UYVY:
+        case WINED3DFMT_YUY2:
+            TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            return FALSE;
+
+            /* Not supported */
+        case WINED3DFMT_A16B16G16R16:
+        case WINED3DFMT_A8R3G3B2:
+            TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            return FALSE;
+
+            /* Floating point formats */
+        case WINED3DFMT_R16F:
+        case WINED3DFMT_A16B16G16R16F:
+            if(GL_SUPPORT(ARB_HALF_FLOAT_PIXEL)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            }
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        case WINED3DFMT_R32F:
+        case WINED3DFMT_A32B32G32R32F:
+            if (GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            }
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        case WINED3DFMT_G16R16F:
+        case WINED3DFMT_G32R32F:
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        /* ATI instancing hack: Although ATI cards do not support Shader Model 3.0, they support
+         * instancing. To query if the card supports instancing CheckDeviceFormat with the special format
+         * MAKEFOURCC('I','N','S','T') is used. Should a (broken) app check for this provide a proper return value.
+         * We can do instancing with all shader versions, but we need vertex shaders.
+         *
+         * Additionally applications have to set the D3DRS_POINTSIZE render state to
+MAKEFOURCC('I','N','S','T') once
+         * to enable instancing. WineD3D doesn't need that and just ignores it.
+         *
+         * With Shader Model 3.0 capable cards Instancing 'just works' in Windows.
+         */
+        case WINEMAKEFOURCC('I','N','S','T'):
+            TRACE("ATI Instancing check hack\n");
+            if(GL_SUPPORT(ARB_VERTEX_PROGRAM) || GL_SUPPORT(ARB_VERTEX_SHADER)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            }
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        /* Some weird FOURCC formats */
+        case WINED3DFMT_R8G8_B8G8:
+        case WINED3DFMT_G8R8_G8B8:
+        case WINED3DFMT_MULTI2_ARGB8:
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        case WINED3DFMT_UNKNOWN:
+            return FALSE;
+
+        default:
+            ERR("Unhandled format=%s\n", debug_d3dformat(CheckFormat));
+            break;
+    }
+    return FALSE;
+}
+
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                               WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
@@ -1882,7 +2080,24 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
     }
 
-    if(RType == WINED3DRTYPE_SURFACE) {
+    if(RType == WINED3DRTYPE_CUBETEXTURE) {
+        /* Cubetexture allows:
+         *                    - D3DUSAGE_AUTOGENMIPMAP
+         *                    - D3DUSAGE_DEPTHSTENCIL
+         *                    - D3DUSAGE_DYNAMIC
+         *                    - D3DUSAGE_NONSECURE (d3d9ex)
+         *                    - D3DUSAGE_RENDERTARGET
+         *                    - D3DUSAGE_SOFTWAREPROCESSING
+         */
+        if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+            /* Check if the texture format is around */
+            if(CheckTextureCapability(Adapter, CheckFormat)) {
+                /* No usage checks were requested, so return because we know that the format is supported */
+                if(!Usage)
+                    return WINED3D_OK;
+            }
+        }
+    } else if(RType == WINED3DRTYPE_SURFACE) {
         /* Surface allows:
          *                - D3DUSAGE_DEPTHSTENCIL
          *                - D3DUSAGE_NONSECURE (d3d9ex)
@@ -1909,15 +2124,25 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                - D3DUSAGE_TEXTAPI (d3d9ex)
          */
 
-        if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
+        /* Check if the texture format is around */
+        if(CheckTextureCapability(Adapter, CheckFormat)) {
+            /* No usage checks were requested, so return because we know that the format is supported */
+            if(!Usage)
+                return WINED3D_OK;
+
+        } else if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
         }
     } else if(RType == WINED3DRTYPE_VOLUMETEXTURE) {
-        if(!GL_SUPPORT(EXT_TEXTURE3D)) {
-            TRACE_(d3d_caps)("[FAILED] - No volume texture support\n");
-            return WINED3DERR_NOTAVAILABLE;
+        /* Check volume texture and volume usage caps */
+        if(GL_SUPPORT(EXT_TEXTURE3D)) {
+            if(CheckTextureCapability(Adapter, CheckFormat) == FALSE) {
+                TRACE_(d3d_caps)("[FAILED] - Format not supported\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
         }
+
         /* Filter formats that need conversion; For one part, this conversion is unimplemented,
          * and volume textures are huge, so it would be a big performance hit. Unless we hit an
          * app needing one of those formats, don't advertize them to avoid leading apps into
