@@ -452,10 +452,15 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   switch(info->rtfMinor)
   {
   case rtfParDef: /* restores default paragraph attributes */
-    fmt.dwMask = PFM_ALIGNMENT | PFM_TABSTOPS | PFM_OFFSET | PFM_STARTINDENT;
+    fmt.dwMask = PFM_ALIGNMENT | PFM_BORDER | PFM_LINESPACING | PFM_TABSTOPS | PFM_OFFSET |
+        PFM_RIGHTINDENT | PFM_SPACEAFTER | PFM_SPACEBEFORE | PFM_STARTINDENT;
+    /* TODO: numbering, shading */
     fmt.wAlignment = PFA_LEFT;
     fmt.cTabCount = 0;
-    fmt.dxOffset = fmt.dxStartIndent = 0;
+    fmt.dxOffset = fmt.dxStartIndent = fmt.dxRightIndent = 0;
+    fmt.wBorderWidth = fmt.wBorders = 0;
+    fmt.bLineSpacingRule = 0;
+    fmt.dySpaceBefore = fmt.dySpaceAfter = 0;
     RTFFlushOutputBuffer(info);
     ME_GetParagraph(info->editor->pCursors[0].pRun)->member.para.bTable = FALSE;
     break;
