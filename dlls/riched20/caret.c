@@ -411,6 +411,21 @@ void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCur
 }
 
 
+void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor)
+{
+  ME_Style              *pStyle = ME_GetInsertStyle(editor, nCursor);
+  ME_DisplayItem        *di;
+  WCHAR                 space = ' ';
+
+  /* FIXME no no no */
+  if (ME_IsSelection(editor))
+    ME_DeleteSelection(editor);
+
+  di = ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, pStyle,
+                                       MERF_ENDROW);
+  ME_SendSelChange(editor);
+}
+
 void
 ME_InsertTableCellFromCursor(ME_TextEditor *editor, int nCursor)
 {

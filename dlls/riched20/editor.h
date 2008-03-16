@@ -186,6 +186,7 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y);
 void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars);
 void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor, 
                              const WCHAR *str, int len, ME_Style *style);
+void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend, BOOL ctrl);
 
 void ME_InitContext(ME_Context *c, ME_TextEditor *editor, HDC hDC);

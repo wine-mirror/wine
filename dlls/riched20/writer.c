@@ -714,6 +714,10 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
           nChars--;
           if (editor->bEmulateVersion10 && nChars)
             nChars--;
+        } else if (p->member.run.nFlags & MERF_ENDROW) {
+          if (!ME_StreamOutPrint(pStream, "\\line \r\n"))
+            return FALSE;
+          nChars--;
         } else {
           int nEnd;
           

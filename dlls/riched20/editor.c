@@ -2960,7 +2960,10 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       {
         ME_Style *style = ME_GetInsertStyle(editor, 0);
         ME_SaveTempStyle(editor);
-        ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
+        if (wstr == '\r' && (GetKeyState(VK_SHIFT) & 0x8000))
+          ME_InsertEndRowFromCursor(editor, 0);
+        else
+          ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
         ME_ReleaseStyle(style);
         ME_CommitUndo(editor);
       }

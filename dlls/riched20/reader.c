@@ -2596,10 +2596,13 @@ static void SpecialChar (RTF_Info *info)
 		}
 		break;
 	}
+	case rtfLine:
+            RTFFlushOutputBuffer(info);
+            ME_InsertEndRowFromCursor(info->editor, 0);
+            break;
 	case rtfPage:
 	case rtfSect:
 	case rtfRow:
-	case rtfLine:
 	case rtfPar:
 		RTFPutUnicodeChar (info, '\n');
 		break;
@@ -2647,6 +2650,7 @@ RTFFlushUnicodeOutputBuffer(RTF_Info *info)
                 info->dwOutputCount = 0;
         }
 }
+
 
 static void
 RTFPutUnicodeString(RTF_Info *info, const WCHAR *string, int length)
