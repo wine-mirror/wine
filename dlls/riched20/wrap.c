@@ -282,6 +282,13 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     ME_InsertRowStart(wc, p);
     return p;
   }
+  /* simply end the current row and move on to next one */
+  if (run->nFlags & MERF_ENDROW)
+  {
+    p = p->next;
+    ME_InsertRowStart(wc, p);
+    return p;
+  }
   /* we're not at the end of the row */
   /* will current run fit? */
   if (wc->pt.x + run->nWidth > wc->nAvailWidth)
