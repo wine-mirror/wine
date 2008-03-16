@@ -1107,7 +1107,7 @@ static Picture get_tile_pict(enum drawable_depth_type type, int text_pixel)
         col.green |= col.green << 8;
         col.blue = GetField(text_pixel, b_shift, b_len);
         col.blue |= col.blue << 8;
-        col.alpha = 0x0;
+        col.alpha = 0xffff;
 
         wine_tsx11_lock();
         pXRenderFillRectangle(gdi_display, PictOpSrc, tile->pict, &col, 0, 0, 1, 1);
