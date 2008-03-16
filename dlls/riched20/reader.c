@@ -857,9 +857,9 @@ static void ReadFontTbl(RTF_Info *info)
 		fp->rtfFName = NULL;
 		fp->rtfFAltName = NULL;
 		fp->rtfFNum = -1;
-		fp->rtfFFamily = 0;
+		fp->rtfFFamily = FF_DONTCARE;
 		fp->rtfFCharSet = DEFAULT_CHARSET; /* 1 */
-		fp->rtfFPitch = 0;
+		fp->rtfFPitch = DEFAULT_PITCH;
 		fp->rtfFType = 0;
 		fp->rtfFCodePage = CP_ACP;
 
