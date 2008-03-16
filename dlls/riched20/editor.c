@@ -641,8 +641,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   case rtfBorderWidth:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
-    fmt.wBorders &= ~0x70;
-    fmt.wBorders |= ((info->rtfParam / 15) & 7) << 8;
+    fmt.wBorderWidth |= ((info->rtfParam / 15) & 7) << 8;
     break;
   case rtfBorderSpace:
     ME_GetSelectionParaFormat(info->editor, &fmt);
