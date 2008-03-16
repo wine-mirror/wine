@@ -786,7 +786,7 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
   METAFILEPICT  mfp;
   HENHMETAFILE  hemf;
   HBITMAP       hbmp;
-  enum gfxkind {gfx_unknown = 0, gfx_enhmetafile, gfx_dib} gfx = gfx_unknown;
+  enum gfxkind {gfx_unknown = 0, gfx_enhmetafile, gfx_metafile, gfx_dib} gfx = gfx_unknown;
 
   RTFGetToken (info);
   if (info->rtfClass == rtfEOF)
@@ -796,12 +796,16 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
   if (RTFCheckMM (info, rtfPictAttr, rtfWinMetafile))
   {
     mfp.mm = info->rtfParam;
-    gfx = gfx_enhmetafile;
+    gfx = gfx_metafile;
   }
   else if (RTFCheckMM (info, rtfPictAttr, rtfDevIndBitmap))
   {
     if (info->rtfParam != 0) FIXME("dibitmap should be 0 (%d)\n", info->rtfParam);
     gfx = gfx_dib;
+  }
+  else if (RTFCheckMM (info, rtfPictAttr, rtfEmfBlip))
+  {
+    gfx = gfx_enhmetafile;
   }
   else
   {
@@ -825,11 +829,11 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
     }
     else if (RTFCheckMM (info, rtfPictAttr, rtfPicWid))
     {
-      if (gfx == gfx_enhmetafile) mfp.xExt = info->rtfParam;
+      if (gfx == gfx_metafile) mfp.xExt = info->rtfParam;
     }
     else if (RTFCheckMM (info, rtfPictAttr, rtfPicHt))
     {
-      if (gfx == gfx_enhmetafile) mfp.yExt = info->rtfParam;
+      if (gfx == gfx_metafile) mfp.yExt = info->rtfParam;
     }
     else if (RTFCheckMM (info, rtfPictAttr, rtfPicGoalWid))
       sz.cx = info->rtfParam;
@@ -869,6 +873,10 @@ static void ME_RTFReadPictGroup(RTF_Info *info)
   switch (gfx)
   {
   case gfx_enhmetafile:
+    if ((hemf = SetEnhMetaFileBits(bufidx, buffer)))
+      ME_RTFInsertOleObject(info, hemf, NULL, &sz);
+    break;
+  case gfx_metafile:
     if ((hemf = SetWinMetaFileBits(bufidx, buffer, NULL, &mfp)))
         ME_RTFInsertOleObject(info, hemf, NULL, &sz);
     break;

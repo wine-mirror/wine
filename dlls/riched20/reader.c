@@ -1788,6 +1788,7 @@ static RTFKey	rtfKey[] =
 	{ rtfPictAttr,	rtfWinMetafile,		"wmetafile",	0 },
 	{ rtfPictAttr,	rtfDevIndBitmap,	"dibitmap",	0 },
 	{ rtfPictAttr,	rtfWinBitmap,		"wbitmap",	0 },
+	{ rtfPictAttr,	rtfEmfBlip,		"emfblip",	0 },
 	{ rtfPictAttr,	rtfPixelBits,		"wbmbitspixel",	0 },
 	{ rtfPictAttr,	rtfBitmapPlanes,	"wbmplanes",	0 },
 	{ rtfPictAttr,	rtfBitmapWid,		"wbmwidthbytes", 0 },
