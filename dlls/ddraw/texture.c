@@ -300,8 +300,6 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture2, iface);
     IDirectDrawSurfaceImpl *src_ptr = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, D3DTexture2);
-    IWineD3DPalette *wine_pal, *wine_pal_src;
-    IDirectDrawPalette *pal = NULL, *pal_src = NULL;
     HRESULT ret_value = D3D_OK;
 
     TRACE("(%p)->(%p)\n", This, src_ptr);
@@ -315,6 +313,8 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
 
     while(1)
     {
+        IWineD3DPalette *wine_pal, *wine_pal_src;
+        IDirectDrawPalette *pal = NULL, *pal_src = NULL;
         DDSURFACEDESC *src_d, *dst_d;
 
         TRACE(" copying surface %p to surface %p (mipmap level %d)\n", src_ptr, This, src_ptr->mipmap_level);
