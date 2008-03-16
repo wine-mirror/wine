@@ -682,9 +682,9 @@ void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run,
       }
       else
       {
-        sz.cy = MulDiv(dibsect.dsBm.bmWidth,
+        sz.cx = MulDiv(dibsect.dsBm.bmWidth,
                        c->editor->nZoomNumerator, c->editor->nZoomDenominator);
-        sz.cx = MulDiv(dibsect.dsBm.bmHeight,
+        sz.cy = MulDiv(dibsect.dsBm.bmHeight,
                        c->editor->nZoomNumerator, c->editor->nZoomDenominator);
       }
       StretchBlt(c->hDC, x, y - sz.cy, sz.cx, sz.cy,
