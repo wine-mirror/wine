@@ -26,6 +26,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "winsvc.h"
+#include "winnls.h"
 #include "lmcons.h"
 
 #include "wine/test.h"
@@ -614,45 +615,77 @@ static void test_get_servicekeyname(void)
     SC_HANDLE scm_handle, svc_handle;
     CHAR servicename[4096];
     CHAR displayname[4096];
+    WCHAR servicenameW[4096];
+    WCHAR displaynameW[4096];
     DWORD servicesize, displaysize, tempsize;
     BOOL ret;
     static const CHAR deadbeef[] = "Deadbeef";
+    static const WCHAR deadbeefW[] = {'D','e','a','d','b','e','e','f',0};
 
     /* Having NULL for the size of the buffer will crash on W2K3 */
 
     SetLastError(0xdeadbeef);
     ret = GetServiceKeyNameA(NULL, NULL, NULL, &servicesize);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
 
+    servicesize = 200;
     SetLastError(0xdeadbeef);
     ret = GetServiceKeyNameA(scm_handle, NULL, NULL, &servicesize);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
        GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
        "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    todo_wine ok(servicesize == 1, "Service size expected 1, got %d\n", servicesize);
 
     /* Valid handle and buffer but no displayname */
+    servicesize = 200;
     SetLastError(0xdeadbeef);
     ret = GetServiceKeyNameA(scm_handle, NULL, servicename, &servicesize);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
        GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
        "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    todo_wine ok(servicesize == 200, "Service size expected 1, got %d\n", servicesize);
 
     /* Test for nonexistent displayname */
     SetLastError(0xdeadbeef);
     ret = GetServiceKeyNameA(scm_handle, deadbeef, NULL, &servicesize);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST,
        "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
+    todo_wine ok(servicesize == 1, "Service size expected 1, got %d\n", servicesize);
+
+    servicesize = 15;
+    strcpy(servicename, "ABC");
+    ret = GetServiceKeyNameA(scm_handle, deadbeef, servicename, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine ok(servicesize == 15, "Service size expected 15, got %d\n", servicesize);
+    ok(servicename[0] == 0, "Service name not empty\n");
+
+    servicesize = 15;
+    servicenameW[0] = 'A';
+    ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine ok(servicesize == 15, "Service size expected 15, got %d\n", servicesize);
+    ok(servicenameW[0] == 0, "Service name not empty\n");
+
+    servicesize = 0;
+    strcpy(servicename, "ABC");
+    ret = GetServiceKeyNameA(scm_handle, deadbeef, servicename, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine ok(servicesize == 1, "Service size expected 1, got %d\n", servicesize);
+    ok(servicename[0] == 'A', "Service name changed\n");
+
+    servicesize = 0;
+    servicenameW[0] = 'A';
+    ret = GetServiceKeyNameW(scm_handle, deadbeefW, servicenameW, &servicesize);
+    ok(!ret, "Expected failure\n");
+    todo_wine ok(servicesize == 2, "Service size expected 2, got %d\n", servicesize);
+    ok(servicenameW[0] == 'A', "Service name changed\n");
 
     /* Check if 'Spooler' exists */
     svc_handle = OpenServiceA(scm_handle, spooler, GENERIC_READ);
@@ -673,7 +706,6 @@ static void test_get_servicekeyname(void)
     servicesize = 0;
     ret = GetServiceKeyNameA(scm_handle, displayname, NULL, &servicesize);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
@@ -682,7 +714,6 @@ static void test_get_servicekeyname(void)
     tempsize = servicesize;
     servicesize *= 2;
     ret = GetServiceKeyNameA(scm_handle, displayname, servicename, &servicesize);
-    todo_wine
     ok(ret, "Expected success\n");
     ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
        GetLastError() == ERROR_IO_PENDING /* W2K */ ||
@@ -693,7 +724,34 @@ static void test_get_servicekeyname(void)
         ok(lstrlen(servicename) == tempsize/2,
            "Expected the buffer to be twice the length of the string\n") ;
         ok(!lstrcmpi(servicename, spooler), "Expected %s, got %s\n", spooler, servicename);
+        ok(servicesize == (tempsize * 2),
+           "Expected servicesize not to change if buffer not insufficient\n") ;
     }
+
+    MultiByteToWideChar(CP_ACP, 0, displayname, -1, displaynameW, sizeof(displaynameW)/2);
+    SetLastError(0xdeadbeef);
+    servicesize *= 2;
+    ret = GetServiceKeyNameW(scm_handle, displaynameW, servicenameW, &servicesize);
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */ ||
+       GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */,
+       "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    if (ret)
+    {
+        ok(lstrlen(servicename) == tempsize/2,
+           "Expected the buffer to be twice the length of the string\n") ;
+        ok(servicesize == lstrlenW(servicenameW),
+           "Expected servicesize not to change if buffer not insufficient\n") ;
+    }
+
+    SetLastError(0xdeadbeef);
+    servicesize = 3;
+    ret = GetServiceKeyNameW(scm_handle, displaynameW, servicenameW, &servicesize);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(servicenameW[0] == 0, "Buffer not empty\n");
 
     CloseServiceHandle(scm_handle);
 }

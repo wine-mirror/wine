@@ -127,4 +127,19 @@ cpp_quote("#endif")
         [in] SC_RPC_HANDLE hService,
         [out] QUERY_SERVICE_CONFIGW *config);
 
+    /* Compatible with Windows function 0x14 */
+    DWORD svcctl_GetServiceDisplayNameW(
+        [in] SC_RPC_HANDLE hSCManager,
+        [in] LPCWSTR lpServiceName,
+        [out,size_is(cchBufSize)] WCHAR lpBuffer[],
+        [in] DWORD cchBufSize,
+        [out] DWORD *cchLength);
+
+    /* Compatible with Windows function 0x15 */
+    DWORD svcctl_GetServiceKeyNameW(
+        [in] SC_RPC_HANDLE hSCManager,
+        [in] LPCWSTR lpServiceDisplayName,
+        [out,size_is(cchBufSize)] WCHAR lpBuffer[],
+        [in] DWORD cchBufSize,
+        [out] DWORD *cchLength);
 }

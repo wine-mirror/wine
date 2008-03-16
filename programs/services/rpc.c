@@ -183,6 +183,93 @@ static void SC_RPC_HANDLE_destroy(SC_RPC_HANDLE handle)
     }
 }
 
+DWORD svcctl_GetServiceDisplayNameW(
+    SC_RPC_HANDLE hSCManager,
+    LPCWSTR lpServiceName,
+    WCHAR *lpBuffer,
+    DWORD cchBufSize,
+    DWORD *cchLength)
+{
+    struct sc_manager *manager;
+    struct service_entry *entry;
+    DWORD err;
+
+    WINE_TRACE("(%s, %d)\n", wine_dbgstr_w(lpServiceName), cchBufSize);
+
+    if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
+        return err;
+
+    lock_services();
+
+    entry = find_service(lpServiceName);
+    if (entry != NULL)
+    {
+        LPCWSTR name = get_display_name(entry);
+        *cchLength = strlenW(name);
+        if (*cchLength < cchBufSize)
+        {
+            err = ERROR_SUCCESS;
+            lstrcpyW(lpBuffer, name);
+        }
+        else
+            err = ERROR_INSUFFICIENT_BUFFER;
+    }
+    else
+    {
+        *cchLength = 1;
+        err = ERROR_SERVICE_DOES_NOT_EXIST;
+    }
+
+    if (err != ERROR_SUCCESS && cchBufSize > 0)
+        lpBuffer[0] = 0;
+    unlock_services();
+
+    return err;
+}
+
+DWORD svcctl_GetServiceKeyNameW(
+    SC_RPC_HANDLE hSCManager,
+    LPCWSTR lpServiceDisplayName,
+    WCHAR *lpBuffer,
+    DWORD cchBufSize,
+    DWORD *cchLength)
+{
+    struct service_entry *entry;
+    struct sc_manager *manager;
+    DWORD err;
+
+    WINE_TRACE("(%s, %d)\n", wine_dbgstr_w(lpServiceDisplayName), cchBufSize);
+
+    if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
+        return err;
+
+    lock_services();
+
+    entry = find_service_by_displayname(lpServiceDisplayName);
+    if (entry != NULL)
+    {
+        *cchLength = strlenW(entry->name);
+        if (*cchLength < cchBufSize)
+        {
+            err = ERROR_SUCCESS;
+            lstrcpyW(lpBuffer, entry->name);
+        }
+        else
+            err = ERROR_INSUFFICIENT_BUFFER;
+    }
+    else
+    {
+        *cchLength = 1;
+        err = ERROR_SERVICE_DOES_NOT_EXIST;
+    }
+
+    if (err != ERROR_SUCCESS && cchBufSize > 0)
+        lpBuffer[0] = 0;
+    unlock_services();
+
+    return err;
+}
+
 static DWORD create_handle_for_service(struct service_entry *entry, DWORD dwDesiredAccess, SC_RPC_HANDLE *phService)
 {
     struct sc_service *service;

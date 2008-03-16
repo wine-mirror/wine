@@ -2135,8 +2135,44 @@ EnumServicesStatusExW(SC_HANDLE hSCManager, SC_ENUM_TYPE InfoLevel, DWORD dwServ
 BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
                                 LPSTR lpServiceName, LPDWORD lpcchBuffer )
 {
-    FIXME("%p %s %p %p\n", hSCManager, debugstr_a(lpDisplayName), lpServiceName, lpcchBuffer);
-    return FALSE;
+    LPWSTR lpDisplayNameW, lpServiceNameW;
+    DWORD sizeW;
+    BOOL ret = FALSE;
+
+    TRACE("%p %s %p %p\n", hSCManager,
+          debugstr_a(lpDisplayName), lpServiceName, lpcchBuffer);
+
+    lpDisplayNameW = SERV_dup(lpDisplayName);
+    if (lpServiceName)
+        lpServiceNameW = HeapAlloc(GetProcessHeap(), 0, *lpcchBuffer * sizeof(WCHAR));
+    else
+        lpServiceNameW = NULL;
+
+    sizeW = *lpcchBuffer;
+    if (!GetServiceKeyNameW(hSCManager, lpDisplayNameW, lpServiceNameW, &sizeW))
+    {
+        if (*lpcchBuffer && lpServiceName)
+            lpServiceName[0] = 0;
+        *lpcchBuffer = sizeW*2;  /* we can only provide an upper estimation of string length */
+        goto cleanup;
+    }
+
+    if (!WideCharToMultiByte(CP_ACP, 0, lpServiceNameW, (sizeW + 1), lpServiceName,
+                        *lpcchBuffer, NULL, NULL ))
+    {
+        if (*lpcchBuffer && lpServiceName)
+            lpServiceName[0] = 0;
+        *lpcchBuffer = WideCharToMultiByte(CP_ACP, 0, lpServiceNameW, -1, NULL, 0, NULL, NULL);
+        goto cleanup;
+    }
+
+    /* lpcchBuffer not updated - same as in GetServiceDisplayNameA */
+    ret = TRUE;
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, lpServiceNameW);
+    HeapFree(GetProcessHeap(), 0, lpDisplayNameW);
+    return ret;
 }
 
 /******************************************************************************
@@ -2145,8 +2181,31 @@ BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
 BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
                                 LPWSTR lpServiceName, LPDWORD lpcchBuffer )
 {
-    FIXME("%p %s %p %p\n", hSCManager, debugstr_w(lpDisplayName), lpServiceName, lpcchBuffer);
-    return FALSE;
+    struct sc_manager *hscm;
+    DWORD err;
+
+    TRACE("%p %s %p %p\n", hSCManager,
+          debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
+
+    hscm = sc_handle_get_handle_data(hSCManager, SC_HTYPE_MANAGER);
+    if (!hscm)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (!lpDisplayName)
+    {
+        SetLastError(ERROR_INVALID_ADDRESS);
+        return FALSE;
+    }
+
+    err = svcctl_GetServiceKeyNameW(hscm->hdr.server_handle,
+            lpDisplayName, lpServiceName, lpServiceName ? *lpcchBuffer : 0, lpcchBuffer);
+
+    if (err)
+        SetLastError(err);
+    return err == ERROR_SUCCESS;
 }
 
 /******************************************************************************
@@ -2195,6 +2254,8 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     sizeW = *lpcchBuffer;
     if (!GetServiceDisplayNameW(hSCManager, lpServiceNameW, lpDisplayNameW, &sizeW))
     {
+        if (*lpcchBuffer && lpDisplayName)
+            lpDisplayName[0] = 0;
         *lpcchBuffer = sizeW*2;  /* we can only provide an upper estimation of string length */
         goto cleanup;
     }
@@ -2202,6 +2263,8 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     if (!WideCharToMultiByte(CP_ACP, 0, lpDisplayNameW, (sizeW + 1), lpDisplayName,
                         *lpcchBuffer, NULL, NULL ))
     {
+        if (*lpcchBuffer && lpDisplayName)
+            lpDisplayName[0] = 0;
         *lpcchBuffer = WideCharToMultiByte(CP_ACP, 0, lpDisplayNameW, -1, NULL, 0, NULL, NULL);
         goto cleanup;
     }
@@ -2223,8 +2286,7 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
   LPWSTR lpDisplayName, LPDWORD lpcchBuffer)
 {
     struct sc_manager *hscm;
-    DWORD type, size;
-    LONG ret;
+    DWORD err;
 
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
@@ -2242,56 +2304,12 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return FALSE;
     }
 
-    size = *lpcchBuffer * sizeof(WCHAR);
-    ret = RegGetValueW(hscm->hkey, lpServiceName, szDisplayName, RRF_RT_REG_SZ, &type, lpDisplayName, &size);
-    if (!ret && !lpDisplayName && size)
-        ret = ERROR_MORE_DATA;
+    err = svcctl_GetServiceDisplayNameW(hscm->hdr.server_handle,
+            lpServiceName, lpDisplayName, lpDisplayName ? *lpcchBuffer : 0, lpcchBuffer);
 
-    if (ret)
-    {
-        if (lpDisplayName && *lpcchBuffer) *lpDisplayName = 0;
-
-        if (ret == ERROR_MORE_DATA)
-        {
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            *lpcchBuffer = (size / sizeof(WCHAR)) - 1;
-        }
-        else if (ret == ERROR_FILE_NOT_FOUND)
-        {
-            HKEY hkey;
-
-            if (!RegOpenKeyW(hscm->hkey, lpServiceName, &hkey))
-            {
-                UINT len = lstrlenW(lpServiceName);
-                BOOL r = FALSE;
-
-                if ((*lpcchBuffer <= len) || (!lpDisplayName && *lpcchBuffer))
-                    SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                else if (lpDisplayName && *lpcchBuffer)
-                {
-                    /* No displayname, but the service exists and the buffer
-                     * is big enough. We should return the servicename.
-                     */
-                    lstrcpyW(lpDisplayName, lpServiceName);
-                    r = TRUE;
-                }
-
-                *lpcchBuffer = len;
-                RegCloseKey(hkey);
-                return r;
-            }
-            else
-                SetLastError(ERROR_SERVICE_DOES_NOT_EXIST);
-        }
-        else
-            SetLastError(ret);
-        return FALSE;
-    }
-
-    /* Always return the correct needed size on success */
-    *lpcchBuffer = (size / sizeof(WCHAR)) - 1;
-
-    return TRUE;
+    if (err)
+        SetLastError(err);
+    return err == ERROR_SUCCESS;
 }
 
 /******************************************************************************
