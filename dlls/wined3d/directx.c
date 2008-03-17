@@ -1808,6 +1808,34 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 
 
 #define GLINFO_LOCATION Adapters[Adapter].gl_info
+/* Check if we support bumpmapping for a format */
+static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
+{
+    if(GL_SUPPORT(NV_REGISTER_COMBINERS) && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+        switch (CheckFormat) {
+            case WINED3DFMT_V8U8:
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            /* TODO: Other bump map formats */
+            default:
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return FALSE;
+        }
+    }
+    if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+        switch (CheckFormat) {
+            case WINED3DFMT_V8U8:
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            default:
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return FALSE;
+        }
+    }
+    TRACE_(d3d_caps)("[FAILED]\n");
+    return FALSE;
+}
+
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */
 static BOOL CheckDepthStencilCapability(UINT Adapter, WINED3DFORMAT DisplayFormat,
 WINED3DFORMAT DepthStencilFormat)
@@ -2223,6 +2251,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                      return WINED3DERR_NOTAVAILABLE;
                  }
             }
+
+            /* Check QUERY_LEGACYBUMPMAP support */
+            if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
+                if(CheckBumpMapCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_LEGACYBUMPMAP;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No legacy bumpmap support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
         } else if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
@@ -2306,32 +2344,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 TRACE_(d3d_caps)("[FAILED]\n");
                 return WINED3DERR_NOTAVAILABLE;
         }
-    }
-
-    if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
-        if(GL_SUPPORT(NV_REGISTER_COMBINERS) && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-            switch (CheckFormat) {
-                case WINED3DFMT_V8U8:
-                    TRACE_(d3d_caps)("[OK]\n");
-                    return WINED3D_OK;
-                /* TODO: Other bump map formats */
-                default:
-                    TRACE_(d3d_caps)("[FAILED]\n");
-                    return WINED3DERR_NOTAVAILABLE;
-            }
-        }
-        if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
-            switch (CheckFormat) {
-                case WINED3DFMT_V8U8:
-                    TRACE_(d3d_caps)("[OK]\n");
-                    return WINED3D_OK;
-                default:
-                    TRACE_(d3d_caps)("[FAILED]\n");
-                    return WINED3DERR_NOTAVAILABLE;
-            }
-        }
-        TRACE_(d3d_caps)("[FAILED]\n");
-        return WINED3DERR_NOTAVAILABLE;
     }
 
     /* Check for supported sRGB formats (Texture loading and framebuffer) */
