@@ -1767,19 +1767,25 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     TRACE("(%04x, %08X, %p)\n", wDevID, dwParam, lpParms);
 
     if (wDevID == MCI_ALL_DEVICE_ID) {
-	LPWINE_MCIDRIVER	next;
-
-	EnterCriticalSection(&WINMM_cs);
 	/* FIXME: shall I notify once after all is done, or for
 	 * each of the open drivers ? if the latest, which notif
 	 * to return when only one fails ?
 	 */
-	for (wmd = MciDrivers; wmd; ) {
-	    next = wmd->lpNext;
-	    MCI_Close(wmd->wDeviceID, dwParam, lpParms);
-	    wmd = next;
+	while (MciDrivers) {
+            /* Retrieve the device ID under lock, but send the message without,
+             * the driver might be calling some winmm functions from another
+             * thread before being fully stopped.
+             */
+            EnterCriticalSection(&WINMM_cs);
+            if (!MciDrivers)
+            {
+                LeaveCriticalSection(&WINMM_cs);
+                break;
+            }
+            wDevID = MciDrivers->wDeviceID;
+            LeaveCriticalSection(&WINMM_cs);
+            MCI_Close(wDevID, dwParam, lpParms);
 	}
-	LeaveCriticalSection(&WINMM_cs);
 	return 0;
     }
 
