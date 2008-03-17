@@ -481,7 +481,7 @@ static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect,
     TRACE("(%p)->(%x %p)\n", This, dwDrawAspect, psizel);
 
     /* Tests show that dwDrawAspect is ignored */
-    memcpy(&This->extent, psizel, sizeof(SIZEL));
+    This->extent = *psizel;
     return S_OK;
 }
 
@@ -492,7 +492,7 @@ static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect,
     TRACE("(%p)->(%x, %p)\n", This, dwDrawAspect, psizel);
 
     /* Tests show that dwDrawAspect is ignored */
-    memcpy(psizel, &This->extent, sizeof(SIZEL));
+    *psizel = This->extent;
     return S_OK;
 }
 
@@ -631,10 +631,10 @@ static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObject *iface,
 
     TRACE("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
 
-    memcpy(&This->pos_rect, lprcPosRect, sizeof(RECT));
+    This->pos_rect = *lprcPosRect;
 
     if(lprcClipRect)
-        memcpy(&This->clip_rect, lprcClipRect, sizeof(RECT));
+        This->clip_rect = *lprcClipRect;
 
     if(This->shell_embedding_hwnd) {
         SetWindowPos(This->shell_embedding_hwnd, NULL,

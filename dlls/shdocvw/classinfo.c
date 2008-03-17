@@ -72,7 +72,7 @@ static HRESULT WINAPI ProvideClassInfo_GetGUID(IProvideClassInfo2 *iface,
 
     if (dwGuidKind != GUIDKIND_DEFAULT_SOURCE_DISP_IID) {
         WARN("Wrong GUID type: %d\n", dwGuidKind);
-        memcpy(pGUID, &IID_NULL, sizeof(GUID));
+        *pGUID = IID_NULL;
         return E_FAIL;
     }
 

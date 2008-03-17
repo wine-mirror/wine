@@ -344,7 +344,7 @@ static HRESULT WINAPI WebBrowser_put_Left(IWebBrowser2 *iface, long Left)
     if(!This->inplace)
         return E_UNEXPECTED;
 
-    memcpy(&rect, &This->pos_rect, sizeof(RECT));
+    rect = This->pos_rect;
     rect.left = Left;
 
     /* We don't really change the window position here.
@@ -372,7 +372,7 @@ static HRESULT WINAPI WebBrowser_put_Top(IWebBrowser2 *iface, long Top)
     if(!This->inplace)
         return E_UNEXPECTED;
 
-    memcpy(&rect, &This->pos_rect, sizeof(RECT));
+    rect = This->pos_rect;
     rect.top = Top;
 
     /* We don't really change the window position here.
@@ -400,9 +400,9 @@ static HRESULT WINAPI WebBrowser_put_Width(IWebBrowser2 *iface, long Width)
     if(!This->inplace)
         return E_UNEXPECTED;
 
-    memcpy(&rect, &This->pos_rect, sizeof(RECT));
+    rect = This->pos_rect;
     rect.right = rect.left+Width;
- 
+
     /* We don't really change the window size here.
      * We just notify the embedder that he should do so. */
    return IOleInPlaceSite_OnPosRectChange(This->inplace, &rect);
@@ -428,7 +428,7 @@ static HRESULT WINAPI WebBrowser_put_Height(IWebBrowser2 *iface, long Height)
     if(!This->inplace)
         return E_UNEXPECTED;
 
-    memcpy(&rect, &This->pos_rect, sizeof(RECT));
+    rect = This->pos_rect;
     rect.bottom = rect.top+Height;
 
     /* We don't really change the window size here.

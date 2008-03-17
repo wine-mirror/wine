@@ -326,7 +326,7 @@ static HRESULT InstanceObjectFactory_Constructor(REFCLSID rclsid, IPropertyBag *
     if (pInstanceObjectFactory) {
         pInstanceObjectFactory->lpIClassFactoryVtbl = &InstanceObjectFactory_IClassFactoryVtbl;
         pInstanceObjectFactory->m_cRef = 0;
-        memcpy(&pInstanceObjectFactory->m_clsidInstance, rclsid, sizeof(CLSID));
+        pInstanceObjectFactory->m_clsidInstance = *rclsid;
         pInstanceObjectFactory->m_pPropertyBag = pPropertyBag;
         IPropertyBag_AddRef(pPropertyBag);
 
