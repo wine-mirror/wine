@@ -701,12 +701,6 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
         hotspot = *pt;
         bmi = (BITMAPINFO *)(pt + 1);
     }
-    size = bitmap_info_size( bmi, DIB_RGB_COLORS );
-
-    if (!width) width = bmi->bmiHeader.biWidth;
-    if (!height) height = bmi->bmiHeader.biHeight/2;
-    DoStretch = (bmi->bmiHeader.biHeight/2 != height) ||
-      (bmi->bmiHeader.biWidth != width);
 
     /* Check bitmap header */
 
@@ -717,6 +711,13 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
           WARN_(cursor)("\tinvalid resource bitmap header.\n");
           return 0;
     }
+
+    size = bitmap_info_size( bmi, DIB_RGB_COLORS );
+
+    if (!width) width = bmi->bmiHeader.biWidth;
+    if (!height) height = bmi->bmiHeader.biHeight/2;
+    DoStretch = (bmi->bmiHeader.biHeight/2 != height) ||
+      (bmi->bmiHeader.biWidth != width);
 
     if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
     if (screen_dc)
