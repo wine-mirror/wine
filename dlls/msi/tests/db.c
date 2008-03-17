@@ -1643,7 +1643,12 @@ static void test_msiimport(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = add_table_to_db(hdb, endlines1);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    if (r == ERROR_FUNCTION_FAILED)
+    {
+        /* win9x doesn't handle this case */
+        skip("endlines not handled correctly.\n");
+        return;
+    }
 
     r = add_table_to_db(hdb, endlines2);
     ok(r == ERROR_FUNCTION_FAILED,
