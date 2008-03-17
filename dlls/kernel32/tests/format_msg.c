@@ -158,7 +158,7 @@ static void test_message_from_string(void)
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
 
-    /* %! prints an exclaimation */
+    /* %! prints an exclamation */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "yah%!%0   ", 0,
         0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("yah!", out),"failed out=[%s]\n",out);

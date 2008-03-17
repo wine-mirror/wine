@@ -296,7 +296,7 @@ static int wine_pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
  * at http://www.cs.wustl.edu/~schmidt/win32-cv-1.html and
  * http://www.cs.wustl.edu/~schmidt/win32-cv-2.html.
  * This paper formed the basis for the condition variable
- * impementation used in the ACE library.
+ * implementation used in the ACE library.
  */
 
 /* Possible problems with ACE:

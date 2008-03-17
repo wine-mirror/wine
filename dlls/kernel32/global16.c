@@ -1065,7 +1065,7 @@ BOOL16 WINAPI MemManInfo16( MEMMANINFO *info )
     MEMORYSTATUS status;
 
     /*
-     * Not unsurprisingly although the documention says you
+     * Not unsurprisingly although the documentation says you
      * _must_ provide the size in the dwSize field, this function
      * (under Windows) always fills the structure and returns true.
      */

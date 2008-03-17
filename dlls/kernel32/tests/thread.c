@@ -309,7 +309,7 @@ cleanup:
     CloseHandle(hProcess);
 }
 
-/* Check basic funcationality of CreateThread and Tls* functions */
+/* Check basic functionality of CreateThread and Tls* functions */
 static VOID test_CreateThread_basic(void)
 {
    HANDLE thread[NUM_THREADS],event[NUM_THREADS];
@@ -331,7 +331,7 @@ static VOID test_CreateThread_basic(void)
 /* Create events for thread synchronization */
   for(i=0;i<NUM_THREADS;i++) {
     threadmem[i]=0;
-/* Note that it doesn't matter what type of event we chose here.  This
+/* Note that it doesn't matter what type of event we choose here.  This
    test isn't trying to thoroughly test events
 */
     event[i]=CreateEventA(NULL,TRUE,FALSE,NULL);

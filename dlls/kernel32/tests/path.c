@@ -68,7 +68,7 @@ typedef struct {
 } SLpassfail;
 
 /* function that tests GetFullPathNameA, GetShortPathNameA,GetLongPathNameA */
-/* NOTE: the passfail structure is used to allow cutomizeable todo checking
+/* NOTE: the passfail structure is used to allow customizable todo checking
          for wine.  It is not very pretty, but it sure beats duplicating this
          function lots of times
 */
@@ -78,7 +78,7 @@ static void test_ValidPathA(const CHAR *curdir, const CHAR *subdir, const CHAR *
   CHAR tmpstr[MAX_PATH],
        fullpath[MAX_PATH],      /*full path to the file (not short/long) */
        subpath[MAX_PATH],       /*relative path to the file */
-       fullpathshort[MAX_PATH], /*absolue path to the file (short format) */
+       fullpathshort[MAX_PATH], /*absolute path to the file (short format) */
        fullpathlong[MAX_PATH],  /*absolute path to the file (long format) */
        curdirshort[MAX_PATH],   /*absolute path to the current dir (short) */
        curdirlong[MAX_PATH];    /*absolute path to the current dir (long) */
@@ -826,7 +826,7 @@ static void test_GetTempPathA(char* tmp_dir)
     ok(len == strlen(buf), "returned length should be equal to the length of string\n");
 
     /* Some versions of Windows touch the buffer, some don't so we don't
-     * test that. Also, NT sometimes exagerates the required buffer size
+     * test that. Also, NT sometimes exaggerates the required buffer size
      * so we cannot test for an exact match. Finally, the
      * 'len_with_null - 1' case is so buggy on Windows it's not testable.
      * For instance in some cases Win98 returns len_with_null - 1 instead
@@ -1160,7 +1160,7 @@ static void test_NeedCurrentDirectoryForExePathW(void)
 
 /* Call various path/file name retrieving APIs and check the case of
  * the returned drive letter. Some apps (for instance Adobe Photoshop CS3
- * installer) depend on the driver letter being in upper case.
+ * installer) depend on the drive letter being in upper case.
  */
 static void test_drive_letter_case(void)
 {

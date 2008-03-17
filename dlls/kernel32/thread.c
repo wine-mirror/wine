@@ -377,7 +377,7 @@ BOOL WINAPI GetThreadPriorityBoost(
 /**********************************************************************
  * SetThreadPriorityBoost [KERNEL32.@]  Sets priority boost for thread.
  *
- * Priority boost is not implemented. Thsi function always returns
+ * Priority boost is not implemented. This function always returns
  * FALSE and sets last error to ERROR_CALL_NOT_IMPLEMENTED
  *
  * RETURNS

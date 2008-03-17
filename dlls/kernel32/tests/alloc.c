@@ -166,7 +166,7 @@ static void test_Heap(void)
        GlobalMemoryStatusEx
 */
 /* In addition, these features aren't being tested
-       GMEM_DISCADABLE
+       GMEM_DISCARDABLE
        GMEM_NOCOMPACT
 */
 static void test_Global(void)
@@ -258,7 +258,7 @@ static void test_Global(void)
        LocalFlags
 */
 /* In addition, these features aren't being tested
-       LMEM_DISCADABLE
+       LMEM_DISCARDABLE
        LMEM_NOCOMPACT
 */
 static void test_Local(void)

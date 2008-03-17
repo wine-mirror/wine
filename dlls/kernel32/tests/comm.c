@@ -393,7 +393,7 @@ static TEST test[] =
 
 #define TEST_COUNT (sizeof(test) / sizeof(TEST))
 
-/* This function can be useful if you are modifiying the test cases and want to
+/* This function can be useful if you are modifying the test cases and want to
    output the contents of a DCB structure. */
 /*static print_dcb(DCB *pdcb)
 {
@@ -870,7 +870,7 @@ static void test_LoopbackRead(HANDLE hcom)
     ok(ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL), "Readfile failed\n");
     ok(read == sizeof(tbuf),"ReadFile read %d bytes, expected \"%s\"\n", read,rbuf);
 
-    /* Now do the same withe a slower Baud rate.
+    /* Now do the same with a slower Baud rate.
        As we request more characters then written, we will hit the timeout
     */
 

@@ -266,9 +266,9 @@ ULONGLONG WINAPI GetTickCount64(void)
  *  The current tick count.
  *
  * NOTES
- *  -The value returned will wrap arounf every 2^32 milliseconds.
- *  -Under Windows, tick 0 is the moment at which the system is rebooted.
- *  Under Wine, tick 0 begins at the moment the wineserver process is started,
+ *  The value returned will wrap around every 2^32 milliseconds.
+ *  Under Windows, tick 0 is the moment at which the system is rebooted.
+ *  Under Wine, tick 0 begins at the moment the wineserver process is started.
  */
 DWORD WINAPI GetTickCount(void)
 {

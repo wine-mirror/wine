@@ -79,7 +79,7 @@ static inline int IsLeapYear(int Year)
  *
  * PARAMS
  *   date        [in] The local time to compare.
- *   compareDate [in] The daylight saving begin or end date.
+ *   compareDate [in] The daylight savings begin or end date.
  *
  * RETURNS
  *
@@ -147,7 +147,7 @@ static int TIME_DayLightCompareDate( const SYSTEMTIME *date,
  *      TIME_ZONE_ID_INVALID    An error occurred
  *      TIME_ZONE_ID_UNKNOWN    There are no transition time known
  *      TIME_ZONE_ID_STANDARD   Current time is standard time
- *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
+ *      TIME_ZONE_ID_DAYLIGHT   Current time is daylight savings time
  */
 static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
     FILETIME *lpFileTime, BOOL islocal )
@@ -185,7 +185,7 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
 
         FileTimeToSystemTime(lpFileTime, &SysTime);
         
-         /* check for daylight saving */
+         /* check for daylight savings */
         ret = TIME_DayLightCompareDate( &SysTime, &pTZinfo->StandardDate);
         if (ret == -2)
           return TIME_ZONE_ID_INVALID;
@@ -223,7 +223,7 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
 /***********************************************************************
  *  TIME_TimeZoneID
  *
- *  Calculates whether daylight saving is on now.
+ *  Calculates whether daylight savings is on now.
  *
  *  PARAMS
  *      pTzi [in] Timezone info.
@@ -232,7 +232,7 @@ static DWORD TIME_CompTimeZoneID ( const TIME_ZONE_INFORMATION *pTZinfo,
  *      TIME_ZONE_ID_INVALID    An error occurred
  *      TIME_ZONE_ID_UNKNOWN    There are no transition time known
  *      TIME_ZONE_ID_STANDARD   Current time is standard time
- *      TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
+ *      TIME_ZONE_ID_DAYLIGHT   Current time is daylight savings time
  */
 static DWORD TIME_ZoneID( const TIME_ZONE_INFORMATION *pTzi )
 {
@@ -391,7 +391,7 @@ BOOL WINAPI SetSystemTimeAdjustment( DWORD dwTimeAdjustment, BOOL bTimeAdjustmen
  *  TIME_ZONE_ID_INVALID    An error occurred
  *  TIME_ZONE_ID_UNKNOWN    There are no transition time known
  *  TIME_ZONE_ID_STANDARD   Current time is standard time
- *  TIME_ZONE_ID_DAYLIGHT   Current time is dayligh saving time
+ *  TIME_ZONE_ID_DAYLIGHT   Current time is dayligh savings time
  */
 DWORD WINAPI GetTimeZoneInformation( LPTIME_ZONE_INFORMATION tzinfo )
 {
@@ -943,13 +943,13 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
 /*********************************************************************
  *      GetDaylightFlag                                   (KERNEL32.@)
  *
- *  Specifies if daylight saving time is in operation.
+ *  Specifies if daylight savings time is in operation.
  *
  * NOTES
  *  This function is called from the Win98's control applet timedate.cpl.
  *
  * RETURNS
- *  TRUE if daylight saving time is in operation.
+ *  TRUE if daylight savings time is in operation.
  *  FALSE otherwise.
  */
 BOOL WINAPI GetDaylightFlag(void)

@@ -1054,7 +1054,7 @@ BOOL WINAPI DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
  * expires, the callback function is called.
  *
  * RETURNS
- *   nonzero on success or zero on faillure
+ *   nonzero on success or zero on failure
  *
  * BUGS
  *   Unimplemented
@@ -1074,7 +1074,7 @@ BOOL WINAPI CreateTimerQueueTimer( PHANDLE phNewTimer, HANDLE TimerQueue,
  * Cancels a timer-queue timer.
  *
  * RETURNS
- *   nonzero on success or zero on faillure
+ *   nonzero on success or zero on failure
  *
  * BUGS
  *   Unimplemented

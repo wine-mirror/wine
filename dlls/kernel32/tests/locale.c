@@ -184,7 +184,7 @@ static void test_GetTimeFormatA(void)
   ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQA;
 
-  STRINGSA("tt HH':'mm'@'ss", "A"); /* Insufficent buffer */
+  STRINGSA("tt HH':'mm'@'ss", "A"); /* Insufficient buffer */
   SetLastError(0xdeadbeef);
   ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, 2);
   EXPECT_BUFFER; EXPECT_LEN(0); EXPECT_EQA;

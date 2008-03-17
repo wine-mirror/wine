@@ -319,7 +319,7 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 /****************************************************************************
  *		QueryPerformanceFrequency (KERNEL32.@)
  *
- * Get the resolution of the performace counter.
+ * Get the resolution of the performance counter.
  *
  * PARAMS
  *  frequency [O] Destination for the counter resolution
