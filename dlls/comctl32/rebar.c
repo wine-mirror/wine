@@ -1516,9 +1516,9 @@ REBAR_AutoSize(REBAR_INFO *infoPtr, BOOL needsLayout)
     RECT rc, rcNew;
     NMRBAUTOSIZE autosize;
 
-    GetClientRect(infoPtr->hwndSelf, &rc);
     if (needsLayout)
         REBAR_Layout(infoPtr);
+    GetClientRect(infoPtr->hwndSelf, &rc);
     REBAR_SizeToHeight(infoPtr, get_rect_cy(infoPtr, &rc));
     GetClientRect(infoPtr->hwndSelf, &rcNew);
 
