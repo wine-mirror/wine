@@ -1874,6 +1874,21 @@ static void test_menu_hilitemenuitem( void )
     AppendMenu(hPopupMenu, MF_STRING, 102, "Item 2");
     AppendMenu(hPopupMenu, MF_STRING, 103, "Item 3");
 
+    ok(!(GetMenuState(hPopupMenu, 1, MF_BYPOSITION) & MF_HILITE),
+      "HiliteMenuItem: Item 2 is hilited\n");
+
+    SetLastError(0xdeadbeef);
+    ok(!HiliteMenuItem(NULL, hPopupMenu, 1, MF_HILITE),
+      "HiliteMenuItem: call should have failed.\n");
+    todo_wine
+    {
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
+      "HiliteMenuItem: expected error ERROR_INVALID_WINDOW_HANDLE, got: %d\n", GetLastError());
+    }
+
+    ok(!(GetMenuState(hPopupMenu, 1, MF_BYPOSITION) & MF_HILITE),
+      "HiliteMenuItem: Item 2 is hilited\n");
+
     HiliteMenuItem(NULL, hPopupMenu, 0, MF_HILITE);
     HiliteMenuItem(NULL, hPopupMenu, 1, MF_HILITE);
     HiliteMenuItem(NULL, hPopupMenu, 2, MF_HILITE);
