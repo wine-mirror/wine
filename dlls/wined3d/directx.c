@@ -1873,6 +1873,21 @@ WINED3DFORMAT DepthStencilFormat)
     return FALSE;
 }
 
+static BOOL CheckFilterCapability(WINED3DFORMAT CheckFormat)
+{
+    switch (CheckFormat) {
+        /* Filtering not supported */
+        case WINED3DFMT_R32F:
+        case WINED3DFMT_A32B32G32R32F:
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+        default:
+            break;
+    }
+
+    return TRUE;
+}
+
 /* Check the render target capabilities of a format */
 static BOOL CheckRenderTargetCapability(WINED3DFORMAT AdapterFormat, WINED3DFORMAT CheckFormat)
 {
@@ -2208,18 +2223,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (Usage & WINED3DUSAGE_QUERY_FILTER) {
-        switch (CheckFormat) {
-            /* Filtering not supported */
-            case WINED3DFMT_R32F:
-            case WINED3DFMT_A32B32G32R32F:
-                TRACE_(d3d_caps)("[FAILED]\n");
-                return WINED3DERR_NOTAVAILABLE;
-            default:
-                break;
-        }
-    }
-
     if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
         if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
             TRACE_(d3d_caps)("[FAILED] - No mipmap generation support\n");
@@ -2248,6 +2251,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                         UsageCaps |= WINED3DUSAGE_RENDERTARGET;
                     } else {
                         TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                }
+
+                /* Check QUERY_FILTER support */
+                if(Usage & WINED3DUSAGE_QUERY_FILTER) {
+                    if(CheckFilterCapability(CheckFormat)) {
+                        UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
+                    } else {
+                        TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
                         return WINED3DERR_NOTAVAILABLE;
                     }
                 }
@@ -2324,6 +2337,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                  }
             }
 
+            /* Check QUERY_FILTER support */
+            if(Usage & WINED3DUSAGE_QUERY_FILTER) {
+                if(CheckFilterCapability(CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+
             /* Check QUERY_LEGACYBUMPMAP support */
             if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
                 if(CheckBumpMapCapability(Adapter, CheckFormat)) {
@@ -2363,6 +2386,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             if(CheckTextureCapability(Adapter, CheckFormat) == FALSE) {
                 TRACE_(d3d_caps)("[FAILED] - Format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
+            }
+
+            /* Check QUERY_FILTER support */
+            if(Usage & WINED3DUSAGE_QUERY_FILTER) {
+                if(CheckFilterCapability(CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
             }
 
             /* Check QUERY_SRGBREAD support */
