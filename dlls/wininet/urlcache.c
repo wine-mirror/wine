@@ -2494,11 +2494,14 @@ BOOL WINAPI CommitUrlCacheEntryA(
         goto cleanup;
     MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, url_name, len);
 
-    len = MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, NULL, 0);
-    local_file_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    if (!local_file_name)
-        goto cleanup;
-    MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, local_file_name, len);
+    if (lpszLocalFileName)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, NULL, 0);
+        local_file_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!local_file_name)
+            goto cleanup;
+        MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, local_file_name, len);
+    }
     if (lpszFileExtension)
     {
         len = MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, NULL, 0);
@@ -2522,6 +2525,7 @@ BOOL WINAPI CommitUrlCacheEntryA(
 
 cleanup:
     HeapFree(GetProcessHeap(), 0, original_url);
+    HeapFree(GetProcessHeap(), 0, file_extension);
     HeapFree(GetProcessHeap(), 0, local_file_name);
     HeapFree(GetProcessHeap(), 0, url_name);
 
