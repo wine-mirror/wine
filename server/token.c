@@ -466,7 +466,7 @@ static struct token *create_token( unsigned primary, const SID *user,
             memcpy( &group->sid, groups[i].Sid, FIELD_OFFSET( SID, SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] ) );
             group->enabled = TRUE;
             group->def = TRUE;
-            group->logon = FALSE;
+            group->logon = (groups[i].Attributes & SE_GROUP_LOGON_ID) ? TRUE : FALSE;
             group->mandatory = (groups[i].Attributes & SE_GROUP_MANDATORY) ? TRUE : FALSE;
             group->owner = groups[i].Attributes & SE_GROUP_OWNER ? TRUE : FALSE;
             group->resource = FALSE;
@@ -1295,6 +1295,7 @@ DECL_HANDLER(get_token_groups)
                     if (group->owner) *attr_ptr |= SE_GROUP_OWNER;
                     if (group->deny_only) *attr_ptr |= SE_GROUP_USE_FOR_DENY_ONLY;
                     if (group->resource) *attr_ptr |= SE_GROUP_RESOURCE;
+                    if (group->logon) *attr_ptr |= SE_GROUP_LOGON_ID;
 
                     memcpy(sid_ptr, &group->sid, FIELD_OFFSET(SID, SubAuthority[group->sid.SubAuthorityCount]));
 
