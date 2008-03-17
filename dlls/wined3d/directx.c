@@ -2223,13 +2223,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
-        if(!GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
-            TRACE_(d3d_caps)("[FAILED] - No mipmap generation support\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-    }
-
     if(RType == WINED3DRTYPE_CUBETEXTURE) {
         /* Cubetexture allows:
          *                    - D3DUSAGE_AUTOGENMIPMAP
@@ -2245,6 +2238,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 /* No usage checks were requested, so return because we know that the format is supported */
                 if(!Usage)
                     return WINED3D_OK;
+
+                if(Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
+                    /* Check for automatic mipmap generation support */
+                    if(GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
+                        UsageCaps |= WINED3DUSAGE_AUTOGENMIPMAP;
+                    } else {
+                        /* When autogenmipmap isn't around continue and return WINED3DOK_NOAUOTGEN instead of D3D_OK */
+                        TRACE_(d3d_caps)("[FAILED] - No autogenmipmap support, but continuing\n");
+                    }
+                }
 
                 if(Usage & WINED3DUSAGE_RENDERTARGET) {
                     if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
@@ -2327,6 +2330,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             /* No usage checks were requested, so return because we know that the format is supported */
             if(!Usage)
                 return WINED3D_OK;
+
+            if(Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
+                /* Check for automatic mipmap generation support */
+                if(GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
+                    UsageCaps |= WINED3DUSAGE_AUTOGENMIPMAP;
+                } else {
+                    /* When autogenmipmap isn't around continue and return WINED3DOK_NOAUOTGEN instead of D3D_OK */
+                    TRACE_(d3d_caps)("[FAILED] - No autogenmipmap support, but continuing\n");
+                }
+            }
 
             if(Usage & WINED3DUSAGE_RENDERTARGET) {
                 if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
@@ -2631,10 +2644,17 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             break;
     }
 
-
-
-    TRACE_(d3d_caps)("[FAILED]\n");
-    return WINED3DERR_NOTAVAILABLE;
+    /* When the UsageCaps exactly matches Usage return WINED3D_OK except for the situation in which
+     * WINED3DUSAGE_AUTOGENMIPMAP isn't around, then WINED3DOK_NOAUTOGEN is returned if all the other
+     * usage flags match. */
+    if(UsageCaps == Usage) {
+        return WINED3D_OK;
+    } else if((UsageCaps == (Usage & ~WINED3DUSAGE_AUTOGENMIPMAP)) && (Usage & WINED3DUSAGE_AUTOGENMIPMAP)){
+        return WINED3DOK_NOAUTOGEN;
+    } else {
+        TRACE_(d3d_caps)("[FAILED] - Usage=%#08x requested but only %#08x is available\n", Usage, UsageCaps);
+        return WINED3DERR_NOTAVAILABLE;
+    }
 }
 
 static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
