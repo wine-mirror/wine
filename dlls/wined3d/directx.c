@@ -1940,6 +1940,35 @@ static BOOL CheckRenderTargetCapability(WINED3DFORMAT AdapterFormat, WINED3DFORM
     return FALSE;
 }
 
+static BOOL CheckSrgbReadCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
+{
+    /* Check for supported sRGB formats (Texture loading and framebuffer) */
+    if(!GL_SUPPORT(EXT_TEXTURE_SRGB)) {
+        TRACE_(d3d_caps)("[FAILED] GL_EXT_texture_sRGB not supported\n");
+        return FALSE;
+    }
+
+    switch (CheckFormat) {
+        case WINED3DFMT_A8R8G8B8:
+        case WINED3DFMT_X8R8G8B8:
+        case WINED3DFMT_A4R4G4B4:
+        case WINED3DFMT_L8:
+        case WINED3DFMT_A8L8:
+        case WINED3DFMT_DXT1:
+        case WINED3DFMT_DXT2:
+        case WINED3DFMT_DXT3:
+        case WINED3DFMT_DXT4:
+        case WINED3DFMT_DXT5:
+            TRACE_(d3d_caps)("[OK]\n");
+            return TRUE;
+
+        default:
+            TRACE_(d3d_caps)("[FAILED] Gamma texture format %s not supported.\n", debug_d3dformat(CheckFormat));
+            return FALSE;
+    }
+    return FALSE;
+}
+
 /* Check if a texture format is supported on the given adapter */
 static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
@@ -2199,6 +2228,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                         return WINED3DERR_NOTAVAILABLE;
                     }
                 }
+
+                /* Check QUERY_SRGBREAD support */
+                if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
+                    if(CheckSrgbReadCapability(Adapter, CheckFormat)) {
+                        UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
+                    } else {
+                        TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                }
             }
         }
     } else if(RType == WINED3DRTYPE_SURFACE) {
@@ -2261,6 +2300,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
+
+            /* Check QUERY_SRGBREAD support */
+            if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
+                if(CheckSrgbReadCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
         } else if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
@@ -2271,6 +2320,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             if(CheckTextureCapability(Adapter, CheckFormat) == FALSE) {
                 TRACE_(d3d_caps)("[FAILED] - Format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
+            }
+
+            /* Check QUERY_SRGBREAD support */
+            if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
+                if(CheckSrgbReadCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
             }
         }
 
@@ -2342,32 +2401,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             default:
                 TRACE_(d3d_caps)("[FAILED]\n");
-                return WINED3DERR_NOTAVAILABLE;
-        }
-    }
-
-    /* Check for supported sRGB formats (Texture loading and framebuffer) */
-    if (Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
-        if(!GL_SUPPORT(EXT_TEXTURE_SRGB)) {
-            TRACE_(d3d_caps)("[FAILED] GL_EXT_texture_sRGB not supported\n");
-        }
-
-        switch (CheckFormat) {
-            case WINED3DFMT_A8R8G8B8:
-            case WINED3DFMT_X8R8G8B8:
-            case WINED3DFMT_A4R4G4B4:
-            case WINED3DFMT_L8:
-            case WINED3DFMT_A8L8:
-            case WINED3DFMT_DXT1:
-            case WINED3DFMT_DXT2:
-            case WINED3DFMT_DXT3:
-            case WINED3DFMT_DXT4:
-            case WINED3DFMT_DXT5:
-                TRACE_(d3d_caps)("[OK]\n");
-                break; /* Continue with checking other flags */
-
-            default:
-                TRACE_(d3d_caps)("[FAILED] Gamma texture format %s not supported.\n", debug_d3dformat(CheckFormat));
                 return WINED3DERR_NOTAVAILABLE;
         }
     }
