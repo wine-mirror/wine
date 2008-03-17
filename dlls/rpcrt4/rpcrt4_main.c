@@ -1081,3 +1081,12 @@ RPC_STATUS RPC_ENTRY RpcCancelThread(void* ThreadHandle)
 
     return RPC_S_OK;
 }
+
+/******************************************************************************
+ * RpcCancelThreadEx   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcCancelThreadEx(void* ThreadHandle, LONG Timeout)
+{
+    FIXME("(%p, %d)\n", ThreadHandle, Timeout);
+    return RPC_S_OK;
+}

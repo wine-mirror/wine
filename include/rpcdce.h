@@ -469,6 +469,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #define RpcBindingInqAuthInfo WINELIB_NAME_AW(RpcBindingInqAuthInfo)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY RpcCancelThread(void*);
+RPCRTAPI RPC_STATUS RPC_ENTRY RpcCancelThreadEx(void*,LONG);
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcNetworkIsProtseqValidA( RPC_CSTR protseq );

@@ -363,7 +363,7 @@
 @ stdcall RpcBindingVectorFree(ptr)
 @ stdcall RpcCancelAsyncCall(ptr long) RpcAsyncCancelCall
 @ stdcall RpcCancelThread(ptr)
-@ stub RpcCancelThreadEx
+@ stdcall RpcCancelThreadEx(ptr long)
 @ stub RpcCertGeneratePrincipalNameA
 @ stub RpcCertGeneratePrincipalNameW
 @ stdcall RpcCompleteAsyncCall(ptr ptr) RpcAsyncCompleteCall
