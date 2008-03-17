@@ -1444,7 +1444,7 @@ LPITEMIDLIST _ILCreateGuid(PIDLTYPE type, REFIID guid)
         {
             LPPIDLDATA pData = _ILGetDataPointer(pidlOut);
 
-            memcpy(&(pData->u.guid.guid), guid, sizeof(GUID));
+            pData->u.guid.guid = *guid;
             TRACE("-- create GUID-pidl %s\n",
                   debugstr_guid(&(pData->u.guid.guid)));
         }

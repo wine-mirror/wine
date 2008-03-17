@@ -332,7 +332,7 @@ static HRESULT WINAPI RecycleBin_GetClassID(IPersistFolder2 *This, CLSID *pClass
     TRACE("(%p, %p)\n", This, pClassID);
     if (This == NULL || pClassID == NULL)
         return E_INVALIDARG;
-    memcpy(pClassID, &CLSID_RecycleBin, sizeof(CLSID));
+    *pClassID = CLSID_RecycleBin;
     return S_OK;
 }
 

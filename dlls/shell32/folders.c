@@ -554,7 +554,7 @@ static HRESULT WINAPI IEIPersistFile_fnGetClassID(
 	if (lpClassId==NULL)
 	  return E_POINTER;
 
-	memcpy(lpClassId, &StdFolderID, sizeof(StdFolderID));
+	*lpClassId = StdFolderID;
 
 	return S_OK;
 }

@@ -1112,7 +1112,7 @@ static void copy_dir_to_dir(FILE_OPERATION *op, const FILE_ENTRY *feFrom, LPCWST
     PathCombineW(szFrom, feFrom->szFullPath, wildCardFiles);
     szFrom[lstrlenW(szFrom) + 1] = '\0';
 
-    memcpy(&fileOp, op->req, sizeof(fileOp));
+    fileOp = *op->req;
     fileOp.pFrom = szFrom;
     fileOp.pTo = szTo;
     fileOp.fFlags &= ~FOF_MULTIDESTFILES; /* we know we're copying to one dir */
@@ -1373,7 +1373,7 @@ static void move_dir_to_dir(LPSHFILEOPSTRUCTW lpFileOp, const FILE_ENTRY *feFrom
     lstrcpyW(szTo, szDestPath);
     szTo[lstrlenW(szDestPath) + 1] = '\0';
 
-    memcpy(&fileOp, lpFileOp, sizeof(fileOp));
+    fileOp = *lpFileOp;
     fileOp.pFrom = szFrom;
     fileOp.pTo = szTo;
 

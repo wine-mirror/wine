@@ -1470,7 +1470,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     BOOL appKnownSingular = FALSE;
 
     /* make a local copy of the LPSHELLEXECUTEINFO structure and work with this from now on */
-    memcpy(&sei_tmp, sei, sizeof(sei_tmp));
+    sei_tmp = *sei;
 
     TRACE("mask=0x%08x hwnd=%p verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s\n",
             sei_tmp.fMask, sei_tmp.hwnd, debugstr_w(sei_tmp.lpVerb),

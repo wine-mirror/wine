@@ -320,7 +320,7 @@ static HRESULT ShellLink_GetClassID( IShellLinkImpl *This, CLSID *pclsid )
 {
     TRACE("%p %p\n", This, pclsid);
 
-    memcpy( pclsid, &CLSID_ShellLink, sizeof (CLSID) );
+    *pclsid = CLSID_ShellLink;
     return S_OK;
 }
 
@@ -1079,7 +1079,7 @@ static HRESULT WINAPI IPersistStream_fnSave(
     memset(&header, 0, sizeof(header));
     header.dwSize = sizeof(header);
     header.fStartup = This->iShowCmd;
-    memcpy(&header.MagicGuid, &CLSID_ShellLink, sizeof(header.MagicGuid) );
+    header.MagicGuid = CLSID_ShellLink;
 
     header.wHotKey = This->wHotKey;
     header.nIcon = This->iIcoNdx;

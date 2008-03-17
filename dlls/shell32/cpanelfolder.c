@@ -997,7 +997,7 @@ static HRESULT WINAPI IShellExecuteHookW_fnExecute(IShellExecuteHookW* iface, LP
 
     MultiByteToWideChar(CP_ACP, 0, pcpanel->szName+pcpanel->offsDispName, -1, params, MAX_PATH);
 
-    memcpy(&sei_tmp, psei, sizeof(sei_tmp));
+    sei_tmp = *psei;
     sei_tmp.lpFile = path;
     sei_tmp.lpParameters = params;
     sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
@@ -1078,7 +1078,7 @@ static HRESULT WINAPI IShellExecuteHookA_fnExecute(IShellExecuteHookA* iface, LP
     lstrcatA(path, "\" ");
     lstrcatA(path, pcpanel->szName+pcpanel->offsDispName);
 
-    memcpy(&sei_tmp, psei, sizeof(sei_tmp));
+    sei_tmp = *psei;
     sei_tmp.lpFile = path;
     sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
 

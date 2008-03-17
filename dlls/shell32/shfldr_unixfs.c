@@ -1459,7 +1459,7 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_GetClassID(IPersistFolder3* ifa
     if (!pClassID)
         return E_INVALIDARG;
 
-    memcpy(pClassID, This->m_pCLSID, sizeof(CLSID));
+    *pClassID = *This->m_pCLSID;
     return S_OK;
 }
 
