@@ -922,10 +922,12 @@ static void test_settargetpath(void)
     sprintf( tempdir, "%s\\subdir", buffer );
 
     r = MsiSetTargetPath( hpkg, "TARGETDIR", buffer );
-    ok( r == ERROR_SUCCESS, "MsiSetTargetPath on file returned %d\n", r );
+    ok( r == ERROR_SUCCESS || r == ERROR_DIRECTORY,
+        "MsiSetTargetPath on file returned %d\n", r );
 
     r = MsiSetTargetPath( hpkg, "TARGETDIR", tempdir );
-    ok( r == ERROR_SUCCESS, "MsiSetTargetPath on 'subdir' of file returned %d\n", r );
+    ok( r == ERROR_SUCCESS || r == ERROR_DIRECTORY,
+        "MsiSetTargetPath on 'subdir' of file returned %d\n", r );
 
     DeleteFile( buffer );
 
@@ -4731,6 +4733,7 @@ static void test_installprops(void)
 
     size = MAX_PATH;
     type = REG_SZ;
+    *path = '\0';
     if (RegQueryValueEx(hkey1, "DefName", NULL, &type, (LPBYTE)path, &size) != ERROR_SUCCESS)
     {
         size = MAX_PATH;
@@ -4738,13 +4741,18 @@ static void test_installprops(void)
         RegQueryValueEx(hkey2, "RegisteredOwner", NULL, &type, (LPBYTE)path, &size);
     }
 
-    size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "USERNAME", buf, &size);
-    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
-    ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+    /* win9x doesn't set this */
+    if (*path)
+    {
+        size = MAX_PATH;
+        r = MsiGetProperty(hpkg, "USERNAME", buf, &size);
+        ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+        ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+    }
 
     size = MAX_PATH;
     type = REG_SZ;
+    *path = '\0';
     if (RegQueryValueEx(hkey1, "DefCompany", NULL, &type, (LPBYTE)path, &size) != ERROR_SUCCESS)
     {
         size = MAX_PATH;
@@ -4752,10 +4760,13 @@ static void test_installprops(void)
         RegQueryValueEx(hkey2, "RegisteredOrganization", NULL, &type, (LPBYTE)path, &size);
     }
 
-    size = MAX_PATH;
-    r = MsiGetProperty(hpkg, "COMPANYNAME", buf, &size);
-    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
-    ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+    if (*path)
+    {
+        size = MAX_PATH;
+        r = MsiGetProperty(hpkg, "COMPANYNAME", buf, &size);
+        ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+        ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+    }
 
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "VersionDatabase", buf, &size);
