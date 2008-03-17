@@ -2167,6 +2167,29 @@ MAKEFOURCC('I','N','S','T') once
     return FALSE;
 }
 
+static BOOL CheckVertexTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
+{
+    if (!GL_LIMITS(vertex_samplers)) {
+        TRACE_(d3d_caps)("[FAILED]\n");
+        return FALSE;
+    }
+
+    switch (CheckFormat) {
+        case WINED3DFMT_A32B32G32R32F:
+            if (!GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return FALSE;
+            }
+            TRACE_(d3d_caps)("[OK]\n");
+            return TRUE;
+
+        default:
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+    }
+    return FALSE;
+}
+
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
                                               WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
@@ -2235,6 +2258,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                         UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
                     } else {
                         TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                }
+
+                /* Check QUERY_VERTEXTEXTURE support */
+                if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
+                    if(CheckVertexTextureCapability(Adapter, CheckFormat)) {
+                        UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
+                    } else {
+                        TRACE_(d3d_caps)("[FAILED] - No query vertextexture support\n");
                         return WINED3DERR_NOTAVAILABLE;
                     }
                 }
@@ -2310,6 +2343,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
+
+            /* Check QUERY_VERTEXTEXTURE support */
+            if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
+                if(CheckVertexTextureCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query vertextexture support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
         } else if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
@@ -2328,6 +2371,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
                 } else {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+
+            /* Check QUERY_VERTEXTEXTURE support */
+            if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
+                if(CheckVertexTextureCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query vertextexture support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
@@ -2381,27 +2434,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             default:
                 /* Do nothing, continue with checking the format below */
                 break;
-        }
-    }
-    /* TODO: Check support against more of the WINED3DUSAGE_QUERY_* constants */
-    if (Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
-        if (!GL_LIMITS(vertex_samplers)) {
-            TRACE_(d3d_caps)("[FAILED]\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
-        switch (CheckFormat) {
-            case WINED3DFMT_A32B32G32R32F:
-                if (!GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
-                    TRACE_(d3d_caps)("[FAILED]\n");
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                TRACE_(d3d_caps)("[OK]\n");
-                return WINED3D_OK;
-
-            default:
-                TRACE_(d3d_caps)("[FAILED]\n");
-                return WINED3DERR_NOTAVAILABLE;
         }
     }
 
