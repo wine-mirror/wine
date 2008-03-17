@@ -2168,6 +2168,12 @@ static void test_Installer_InstallProduct(void)
 
     /* Installer::InstallProduct */
     hr = Installer_InstallProduct(szMsifile, NULL);
+    if (hr == DISP_E_EXCEPTION)
+    {
+        skip("Installer object not supported.\n");
+        delete_test_files();
+        return;
+    }
     ok(hr == S_OK, "Installer_InstallProduct failed, hresult 0x%08x\n", hr);
 
     /* Installer::ProductState for our product code, which has been installed */
