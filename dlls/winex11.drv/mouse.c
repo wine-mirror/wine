@@ -172,11 +172,6 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
 
-    if (window == root_window)
-    {
-        x += virtual_screen_rect.left;
-        y += virtual_screen_rect.top;
-    }
     get_coords( hwnd, window, x, y, pt );
 
     /* update the cursor */
