@@ -662,7 +662,7 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
  *	Redirect stdin, stdout and/or stderr if required.
  */
 
-    /* STDIN could come from a preceeding pipe, so delete on close if it does */
+    /* STDIN could come from a preceding pipe, so delete on close if it does */
     if (cmdList && (*cmdList)->pipeFile[0] != 0x00) {
         WINE_TRACE("Input coming from %s\n", wine_dbgstr_w((*cmdList)->pipeFile));
         h = CreateFile ((*cmdList)->pipeFile, GENERIC_READ,

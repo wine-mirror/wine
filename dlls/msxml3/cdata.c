@@ -626,7 +626,7 @@ static HRESULT WINAPI domcdata_insertData(
 
     TRACE("%p\n", This);
 
-    /* If have a NULL or empty string, dont do anything. */
+    /* If have a NULL or empty string, don't do anything. */
     if(SysStringLen(p) == 0)
         return S_OK;
 

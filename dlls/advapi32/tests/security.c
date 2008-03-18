@@ -1174,7 +1174,7 @@ static void test_CreateWellKnownSid()
             cb = sizeof(sid_buffer);
             if (!pCreateWellKnownSid(i, domainsid, sid_buffer, &cb))
             {
-                skip("Well know SIDs starting from %d are not implemented\n", i);
+                skip("Well known SIDs starting from %d are not implemented\n", i);
                 break;
             }
         }

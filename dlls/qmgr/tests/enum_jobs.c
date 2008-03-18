@@ -307,7 +307,7 @@ START_TEST(enum_jobs)
     CoInitialize(NULL);
     for (test = tests; *test; ++test)
     {
-        /* Keep state seperate between tests.  */
+        /* Keep state separate between tests */
         if (!setup())
         {
             teardown();

@@ -788,7 +788,7 @@ static void test_domdoc( void )
 
         /* test put_data */
         V_VT(&var) = VT_BSTR;
-        V_BSTR(&var) = SysAllocString(szOpen);  /* Doesnt matter what the string is, cannot set an xml node. */
+        V_BSTR(&var) = SysAllocString(szOpen);  /* Doesn't matter what the string is, cannot set an xml node. */
         r = IXMLDOMProcessingInstruction_put_nodeValue(nodePI, var);
         ok(r == E_FAIL, "ret %08x\n", r );
         VariantClear(&var);

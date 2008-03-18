@@ -282,7 +282,7 @@ START_TEST(enum_files)
     CoInitialize(NULL);
     for (test = tests; *test; ++test)
     {
-        /* Keep state seperate between tests.  */
+        /* Keep state separate between tests. */
         if (!setup())
         {
             skip("Unable to setup test\n");

@@ -293,7 +293,7 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
     TRACE("%p type(%d)\n", This, This->node->type);
 
     /* Document, Document Fragment, Document Type, Element,
-        Entity, Entity Reference, Notation arent supported. */
+        Entity, Entity Reference, Notation aren't supported. */
     switch ( This->node->type )
     {
     case XML_ATTRIBUTE_NODE:

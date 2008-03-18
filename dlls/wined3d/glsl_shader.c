@@ -3358,7 +3358,7 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
 }
 
 static BOOL shader_glsl_dirty_const(IWineD3DDevice *iface) {
-    /* TODO: GL_EXT_bindable_uniform can be used to share constants accross shaders */
+    /* TODO: GL_EXT_bindable_uniform can be used to share constants across shaders */
     return FALSE;
 }
 
