@@ -2245,6 +2245,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     }
                 }
 
+                /* Always report dynamic locking */
+                if(Usage & WINED3DUSAGE_DYNAMIC)
+                    UsageCaps |= WINED3DUSAGE_DYNAMIC;
+
                 if(Usage & WINED3DUSAGE_RENDERTARGET) {
                     if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
                         UsageCaps |= WINED3DUSAGE_RENDERTARGET;
@@ -2333,6 +2337,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 }
             }
 
+            /* Always report dynamic locking */
+            if(Usage & WINED3DUSAGE_DYNAMIC)
+                UsageCaps |= WINED3DUSAGE_DYNAMIC;
+
             if(Usage & WINED3DUSAGE_RENDERTARGET) {
                 if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
                     UsageCaps |= WINED3DUSAGE_RENDERTARGET;
@@ -2386,12 +2394,22 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
         }
     } else if(RType == WINED3DRTYPE_VOLUMETEXTURE) {
+        /* Volumetexture allows:
+         *                      - D3DUSAGE_DYNAMIC
+         *                      - D3DUSAGE_NONSECURE (d3d9ex)
+         *                      - D3DUSAGE_SOFTWAREPROCESSING
+         */
+
         /* Check volume texture and volume usage caps */
         if(GL_SUPPORT(EXT_TEXTURE3D)) {
             if(CheckTextureCapability(Adapter, CheckFormat) == FALSE) {
                 TRACE_(d3d_caps)("[FAILED] - Format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
             }
+
+            /* Always report dynamic locking */
+            if(Usage & WINED3DUSAGE_DYNAMIC)
+                UsageCaps |= WINED3DUSAGE_DYNAMIC;
 
             /* Check QUERY_FILTER support */
             if(Usage & WINED3DUSAGE_QUERY_FILTER) {
