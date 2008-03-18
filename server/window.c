@@ -1364,7 +1364,6 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
                                      struct region *old_vis_rgn )
 {
     struct region *new_vis_rgn, *exposed_rgn;
-    int offset_x, offset_y;
 
     if (!(new_vis_rgn = get_visible_region( win, DCX_WINDOW ))) return NULL;
 
@@ -1383,16 +1382,8 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
         }
     }
 
-    offset_x = old_window_rect->left - win->client_rect.left;
-    offset_y = old_window_rect->top - win->client_rect.top;
     if (win->parent)
     {
-        if (!is_desktop_window(win->parent))
-        {
-            offset_x += win->client_rect.left;
-            offset_y += win->client_rect.top;
-        }
-
         /* make it relative to the old window pos for subtracting */
         offset_region( new_vis_rgn, win->window_rect.left - old_window_rect->left,
                        win->window_rect.top - old_window_rect->top  );
@@ -1403,7 +1394,8 @@ static struct region *expose_window( struct window *win, const rectangle_t *old_
         {
             if (!is_region_empty( new_vis_rgn ))
             {
-                offset_region( new_vis_rgn, offset_x, offset_y );
+                /* make it relative to parent */
+                offset_region( new_vis_rgn, old_window_rect->left, old_window_rect->top );
                 redraw_window( win->parent, new_vis_rgn, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
             }
         }
