@@ -122,18 +122,22 @@ static void create_test_guid(LPSTR prodcode, LPSTR squashed)
     WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
 }
 
-static void get_user_sid(LPSTR *usersid)
+static int get_user_sid(LPSTR *usersid)
 {
     HANDLE token;
     BYTE buf[1024];
     DWORD size;
     PTOKEN_USER user;
+    BOOL rc;
 
-    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    rc=OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    if (!rc && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        return 0;
     size = sizeof(buf);
     GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
     user = (PTOKEN_USER)buf;
     pConvertSidToStringSidA(user->User.Sid, usersid);
+    return 1;
 }
 
 static void check_reg_str(HKEY prodkey, LPCSTR name, LPCSTR expected, BOOL bcase, DWORD line)
@@ -186,7 +190,11 @@ static void test_MsiSourceListGetInfo(void)
     }
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    if (!get_user_sid(&usersid))
+    {
+        skip("User SID not available -> skipping MsiSourceListGetInfoA tests\n");
+        return;
+    }
 
     /* NULL szProductCodeOrPatchCode */
     r = pMsiSourceListGetInfoA(NULL, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
@@ -613,7 +621,11 @@ static void test_MsiSourceListAddSourceEx(void)
     }
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    if (!get_user_sid(&usersid))
+    {
+        skip("User SID not available -> skipping MsiSourceListAddSourceExA tests\n");
+        return;
+    }
 
     /* GetLastError is not set by the function */
 
@@ -982,7 +994,11 @@ static void test_MsiSourceListEnumSources(void)
     }
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    if (!get_user_sid(&usersid))
+    {
+        skip("User SID not available -> skipping MsiSourceListEnumSourcesA tests\n");
+        return;
+    }
 
     /* GetLastError is not set by the function */
 
@@ -1580,7 +1596,11 @@ static void test_MsiSourceListSetInfo(void)
     }
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    if (!get_user_sid(&usersid))
+    {
+        skip("User SID not available -> skipping MsiSourceListSetInfoA tests\n");
+        return;
+    }
 
     /* GetLastError is not set by the function */
 
@@ -1986,7 +2006,11 @@ static void test_MsiSourceListAddMediaDisk(void)
     }
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    if (!get_user_sid(&usersid))
+    {
+        skip("User SID not available -> skipping MsiSourceListAddMediaDiskA tests\n");
+        return;
+    }
 
     /* GetLastError is not set by the function */
 
@@ -2284,7 +2308,11 @@ static void test_MsiSourceListEnumMediaDisks(void)
     }
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    if (!get_user_sid(&usersid))
+    {
+        skip("User SID not available -> skipping MsiSourceListEnumMediaDisksA tests\n");
+        return;
+    }
 
     /* GetLastError is not set by the function */
 
@@ -3038,7 +3066,11 @@ static void test_MsiSourceListAddSource(void)
     }
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    if (!get_user_sid(&usersid))
+    {
+        skip("User SID not available -> skipping MsiSourceListAddSourceA tests\n");
+        return;
+    }
 
     /* MACHINENAME\username */
     size = MAX_PATH;
