@@ -2323,11 +2323,11 @@ HKLM,%CurrentVersionNT%\Time Zones\Alaskan Standard Time,"TZI",1,1c,02,00,00,00,
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"Display",,"America/Los_Angeles"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"Dlt",,"Pacific Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"Std",,"Pacific Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Display",,"America/Tijuana"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Dlt",,"Pacific Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Std",,"Pacific Standard Time (Mexico)"
-HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Display",,"America/Chihuahua"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Dlt",,"Mexico Daylight Time 2"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time 2,"Std",,"Mexico Standard Time 2"
