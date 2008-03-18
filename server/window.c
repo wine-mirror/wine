@@ -1804,11 +1804,22 @@ DECL_HANDLER(get_window_parents)
 /* get a list of the window children */
 DECL_HANDLER(get_window_children)
 {
-    struct window *ptr, *parent = get_window( req->parent );
+    struct window *ptr, *parent;
     int total = 0;
     user_handle_t *data;
     data_size_t len;
     atom_t atom = req->atom;
+
+    if (req->desktop)
+    {
+        struct desktop *desktop = get_desktop_obj( current->process, req->desktop, DESKTOP_ENUMERATE );
+        if (!desktop) return;
+        parent = desktop->top_window;
+        release_object( desktop );
+    }
+    else parent = get_window( req->parent );
+
+    if (!parent) return;
 
     if (get_req_data_size())
     {
@@ -1816,14 +1827,11 @@ DECL_HANDLER(get_window_children)
         if (!atom) return;
     }
 
-    if (parent)
+    LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
     {
-        LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
-        {
-            if (atom && get_class_atom(ptr->class) != atom) continue;
-            if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
-            total++;
-        }
+        if (atom && get_class_atom(ptr->class) != atom) continue;
+        if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
+        total++;
     }
     reply->count = total;
     len = min( get_reply_max_size(), total * sizeof(user_handle_t) );

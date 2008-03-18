@@ -2656,6 +2656,7 @@ static void dump_get_window_parents_reply( const struct get_window_parents_reply
 
 static void dump_get_window_children_request( const struct get_window_children_request *req )
 {
+    fprintf( stderr, " desktop=%p,", req->desktop );
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " atom=%04x,", req->atom );
     fprintf( stderr, " tid=%04x,", req->tid );

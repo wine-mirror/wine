@@ -203,8 +203,7 @@ static WCHAR *build_desktop_name( const struct unicode_str *name,
 }
 
 /* retrieve a pointer to a desktop object */
-static inline struct desktop *get_desktop_obj( struct process *process, obj_handle_t handle,
-                                               unsigned int access )
+struct desktop *get_desktop_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct desktop *)get_handle_obj( process, handle, access, &desktop_ops );
 }

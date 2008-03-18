@@ -212,7 +212,7 @@ static WND *free_window_handle( HWND hwnd )
  * Build an array of the children of a given window. The array must be
  * freed with HeapFree. Returns NULL when no windows are found.
  */
-static HWND *list_window_children( HWND hwnd, LPCWSTR class, DWORD tid )
+static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWORD tid )
 {
     HWND *list;
     int size = 32;
@@ -225,6 +225,7 @@ static HWND *list_window_children( HWND hwnd, LPCWSTR class, DWORD tid )
 
         SERVER_START_REQ( get_window_children )
         {
+            req->desktop = desktop;
             req->parent = hwnd;
             req->tid = tid;
             if (!(req->atom = get_int_atom_value( class )) && class)
@@ -1522,7 +1523,7 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR t
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return 0;
     }
 
-    if (!(list = list_window_children( parent, className, 0 ))) goto done;
+    if (!(list = list_window_children( 0, parent, className, 0 ))) goto done;
 
     if (child)
     {
@@ -2862,7 +2863,7 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  */
 HWND *WIN_ListChildren( HWND hwnd )
 {
-    return list_window_children( hwnd, NULL, 0 );
+    return list_window_children( 0, hwnd, NULL, 0 );
 }
 
 
@@ -2906,12 +2907,31 @@ BOOL WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC func, LPARAM lParam )
 
     USER_CheckNotLock();
 
-    if (!(list = list_window_children( GetDesktopWindow(), NULL, id ))) return TRUE;
+    if (!(list = list_window_children( 0, GetDesktopWindow(), NULL, id ))) return TRUE;
 
     /* Now call the callback function for every window */
 
     for (i = 0; list[i]; i++)
         if (!func( list[i], lParam )) break;
+    HeapFree( GetProcessHeap(), 0, list );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              EnumDesktopWindows   (USER32.@)
+ */
+BOOL WINAPI EnumDesktopWindows( HDESK desktop, WNDENUMPROC func, LPARAM lparam )
+{
+    HWND *list;
+    int i;
+
+    USER_CheckNotLock();
+
+    if (!(list = list_window_children( desktop, 0, NULL, 0 ))) return TRUE;
+
+    for (i = 0; list[i]; i++)
+        if (!func( list[i], lparam )) break;
     HeapFree( GetProcessHeap(), 0, list );
     return TRUE;
 }

@@ -455,16 +455,6 @@ HDESK WINAPI OpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK access )
 
 
 /***********************************************************************
- *              EnumDesktopWindows   (USER32.@)
- */
-BOOL WINAPI EnumDesktopWindows( HDESK desktop, WNDENUMPROC func, LPARAM lparam )
-{
-    FIXME( "(%p,%p,0x%lx): stub!\n", desktop, func, lparam );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *              GetUserObjectInformationA   (USER32.@)
  */
 BOOL WINAPI GetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DWORD len, LPDWORD needed )

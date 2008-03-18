@@ -2901,6 +2901,7 @@ struct get_window_parents_reply
 struct get_window_children_request
 {
     struct request_header __header;
+    obj_handle_t   desktop;
     user_handle_t  parent;
     atom_t         atom;
     thread_id_t    tid;
@@ -4994,6 +4995,6 @@ union generic_reply
     struct add_fd_completion_reply add_fd_completion_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 337
+#define SERVER_PROTOCOL_VERSION 338
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
