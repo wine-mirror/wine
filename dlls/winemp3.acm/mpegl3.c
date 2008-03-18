@@ -145,6 +145,23 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
     DWORD               buffered_during;
     DWORD               buffered_after;
 
+    /* Skip leading ID v3 header */
+    if (amd->mp.fsizeold == -1 && !strncmp("ID3", (char*)src, 3))
+    {
+        UINT length = 10;
+        const char *header = (char *)src;
+
+        TRACE("Found ID3 v2.%d.%d\n", header[3], header[4]);
+        length += (header[6] & 0x7F) << 21;
+        length += (header[7] & 0x7F) << 14;
+        length += (header[8] & 0x7F) << 7;
+        length += (header[9] & 0x7F);
+        TRACE("Length: %u\n", length);
+        *nsrc = length;
+        *ndst = 0;
+        return;
+    }
+
     buffered_before = get_num_buffered_bytes(&amd->mp);
     ret = decodeMP3(&amd->mp, src, *nsrc, dst, *ndst, &size);
     buffered_during = get_num_buffered_bytes(&amd->mp);
