@@ -784,6 +784,16 @@ HRESULT WINAPI Rfc1766ToLcidW(LCID *pLocale, LPCWSTR pszRfc1766)
     return hr;
 }
 
+HRESULT WINAPI Rfc1766ToLcidA(LCID *lcid, LPCSTR rfc1766A)
+{
+    WCHAR rfc1766W[MAX_RFC1766_NAME + 1];
+
+    MultiByteToWideChar(CP_ACP, 0, rfc1766A, -1, rfc1766W, MAX_RFC1766_NAME);
+    rfc1766W[MAX_RFC1766_NAME] = 0;
+
+    return Rfc1766ToLcidW(lcid, rfc1766W);
+}
+
 /******************************************************************************
  * MLANG ClassFactory
  */
