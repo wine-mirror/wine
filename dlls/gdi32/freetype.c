@@ -3894,7 +3894,7 @@ static const GSUB_Feature * GSUB_get_feature(const GSUB_Header *header, const GS
     const GSUB_FeatureList *feature;
     feature = (GSUB_FeatureList*)((LPBYTE)header + GET_BE_WORD(header->FeatureList));
 
-    TRACE("%i features \n",GET_BE_WORD(lang->FeatureCount));
+    TRACE("%i features\n",GET_BE_WORD(lang->FeatureCount));
     for (i = 0; i < GET_BE_WORD(lang->FeatureCount); i++)
     {
         int index = GET_BE_WORD(lang->FeatureIndex[i]);
