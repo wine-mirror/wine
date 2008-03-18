@@ -57,6 +57,7 @@ static const struct {
     {"GL_ATI_texture_env_combine3",         ATI_TEXTURE_ENV_COMBINE3,       0                           },
     {"GL_ATI_texture_mirror_once",          ATI_TEXTURE_MIRROR_ONCE,        0                           },
     {"GL_ATI_envmap_bumpmap",               ATI_ENVMAP_BUMPMAP,             0                           },
+    {"GL_ATI_fragment_shader",              ATI_FRAGMENT_SHADER,            0                           },
 
     /* ARB */
     {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS,               0                           },

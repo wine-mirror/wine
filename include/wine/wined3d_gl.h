@@ -2920,6 +2920,85 @@ typedef void (WINE_GLAPI * PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC) (GLenum target
 #define GL_MAX_SPOT_EXPONENT_NV             0x8505
 #endif
 
+/* GL_ATI_fragment_shader */
+#ifndef GL_ATI_fragment_shader
+#define GL_ATI_fragment_shader
+typedef GLuint (WINE_GLAPI *PGLFNGENFRAGMENTSHADERSATI) (GLuint range);
+typedef void (WINE_GLAPI *PGLFNBINDFRAGMENTSHADERATI) (GLuint id);
+typedef void (WINE_GLAPI *PGLFNDELETEFRAGMENTSHADERATI) (GLuint id);
+typedef void (WINE_GLAPI *PGLFNBEGINFRAGMENTSHADERATI) ();
+typedef void (WINE_GLAPI *PGLFNENDFRAGMENTSHADERATI) ();
+typedef void (WINE_GLAPI *PGLFNPASSTEXCOORDATI) (GLuint dst, GLuint coord, GLenum swizzle);
+typedef void (WINE_GLAPI *PGLFNSAMPLEMAPATI) (GLuint dst, GLuint interp, GLenum swizzle);
+typedef void (WINE_GLAPI *PGLFNCOLORFRAGMENTOP1ATI) (GLenum op, GLuint dst, GLuint dstMask,
+                                                     GLuint dstMod, GLuint arg1, GLuint arg1Rep,
+                                                     GLuint arg1Mod);
+typedef void (WINE_GLAPI *PGLFNCOLORFRAGMENTOP2ATI) (GLenum op, GLuint dst, GLuint dstMask,
+                                                     GLuint dstMod, GLuint arg1, GLuint arg1Rep,
+                                                     GLuint arg1Mod, GLuint arg2, GLuint arg2Rep,
+                                                     GLuint arg2Mod);
+typedef void (WINE_GLAPI *PGLFNCOLORFRAGMENTOP3ATI) (GLenum op, GLuint dst, GLuint dstMask,
+                                                     GLuint dstMod, GLuint arg1, GLuint arg1Rep,
+                                                     GLuint arg1Mod, GLuint arg2, GLuint arg2Rep,
+                                                     GLuint arg2Mod, GLuint arg3, GLuint arg3Rep,
+                                                     GLuint arg3Mod);
+typedef void (WINE_GLAPI *PGLFNALPHAFRAGMENTOP1ATI) (GLenum op, GLuint dst, GLuint dstMod,
+                                                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod);
+typedef void (WINE_GLAPI *PGLFNALPHAFRAGMENTOP2ATI) (GLenum op, GLuint dst, GLuint dstMod,
+                                                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod,
+                                                     GLuint arg2, GLuint arg2Rep, GLuint arg2Mod);
+typedef void (WINE_GLAPI *PGLFNALPHAFRAGMENTOP3ATI) (GLenum op, GLuint dst, GLuint dstMod,
+                                                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod,
+                                                     GLuint arg2, GLuint arg2Rep, GLuint arg2Mod,
+                                                     GLuint arg3, GLuint arg3Rep, GLuint arg3Mod);
+typedef void (WINE_GLAPI *PGLFNSETFRAGMENTSHADERCONSTANTATI) (GLuint dst, const GLfloat *value);
+#define GL_FRAGMENT_SHADER_ATI              0x8920
+#define GL_REG_0_ATI                        0x8921
+#define GL_REG_1_ATI                        0x8922
+#define GL_REG_2_ATI                        0x8923
+#define GL_REG_3_ATI                        0x8924
+#define GL_REG_4_ATI                        0x8925
+#define GL_REG_5_ATI                        0x8926
+#define GL_CON_0_ATI                        0x8941
+#define GL_CON_1_ATI                        0x8942
+#define GL_CON_2_ATI                        0x8943
+#define GL_CON_3_ATI                        0x8944
+#define GL_CON_4_ATI                        0x8945
+#define GL_CON_5_ATI                        0x8946
+#define GL_CON_6_ATI                        0x8947
+#define GL_CON_7_ATI                        0x8948
+#define GL_MOV_ATI                          0x8961
+#define GL_ADD_ATI                          0x8963
+#define GL_MUL_ATI                          0x8964
+#define GL_SUB_ATI                          0x8965
+#define GL_DOT3_ATI                         0x8966
+#define GL_DOT4_ATI                         0x8967
+#define GL_MAD_ATI                          0x8968
+#define GL_LERP_ATI                         0x8969
+#define GL_CND_ATI                          0x896A
+#define GL_CND0_ATI                         0x896B
+#define GL_DOT2_ADD_ATI                     0x896C
+#define GL_SECONDARY_INTERPOLATOR_ATI       0x896D
+#define GL_SWIZZLE_STR_ATI                  0x8976
+#define GL_SWIZZLE_STQ_ATI                  0x8977
+#define GL_SWIZZLE_STR_DR_ATI               0x8978
+#define GL_SWIZZLE_STQ_DQ_ATI               0x8979
+#define GL_RED_BIT_ATI                      0x00000001
+#define GL_GREEN_BIT_ATI                    0x00000002
+#define GL_BLUE_BIT_ATI                     0x00000004
+#define GL_2X_BIT_ATI                       0x00000001
+#define GL_4X_BIT_ATI                       0x00000002
+#define GL_8X_BIT_ATI                       0x00000004
+#define GL_HALF_BIT_ATI                     0x00000008
+#define GL_QUARTER_BIT_ATI                  0x00000010
+#define GL_EIGHTH_BIT_ATI                   0x00000020
+#define GL_SATURATE_BIT_ATI                 0x00000040
+#define GL_2X_BIT_ATI                       0x00000001
+#define GL_COMP_BIT_ATI                     0x00000002
+#define GL_NEGATE_BIT_ATI                   0x00000004
+#define GL_BIAS_BIT_ATI                     0x00000008
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3281,6 +3360,7 @@ typedef enum _GL_SupportedExt {
   ATI_TEXTURE_MIRROR_ONCE,
   EXT_VERTEX_SHADER,
   ATI_ENVMAP_BUMPMAP,
+  ATI_FRAGMENT_SHADER,
   /* APPLE */
   APPLE_FENCE,
   APPLE_CLIENT_STORAGE,
@@ -3578,7 +3658,22 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNFINISHRENDERAPPLEPROC,                         glFinishRenderApple,                        APPLE_FLUSH_RENDER,     NULL );\
     /* GL_EXT_gpu_program_parameters */ \
     USE_GL_FUNC(PGLFNPROGRAMENVPARAMETERS4FVEXTPROC,                glProgramEnvParameters4fvEXT,            EXT_GPU_PROGRAM_PARAMETERS,NULL );\
-    USE_GL_FUNC(PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC,              glProgramLocalParameters4fvEXT,          EXT_GPU_PROGRAM_PARAMETERS,NULL );
+    USE_GL_FUNC(PGLFNPROGRAMLOCALPARAMETERS4FVEXTPROC,              glProgramLocalParameters4fvEXT,          EXT_GPU_PROGRAM_PARAMETERS,NULL );\
+    /* GL_ATI_fragment_shader */ \
+    USE_GL_FUNC(PGLFNGENFRAGMENTSHADERSATI,                         glGenFragmentShadersATI,                    ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNBINDFRAGMENTSHADERATI,                         glBindFragmentShaderATI,                    ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNDELETEFRAGMENTSHADERATI,                       glDeleteFragmentShaderATI,                  ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNBEGINFRAGMENTSHADERATI,                        glBeginFragmentShaderATI,                   ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNENDFRAGMENTSHADERATI,                          glEndFragmentShaderATI,                     ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNPASSTEXCOORDATI,                               glPassTexCoordATI,                          ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNSAMPLEMAPATI,                                  glSampleMapATI,                             ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNCOLORFRAGMENTOP1ATI,                           glColorFragmentOp1ATI,                      ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNCOLORFRAGMENTOP2ATI,                           glColorFragmentOp2ATI,                      ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNCOLORFRAGMENTOP3ATI,                           glColorFragmentOp3ATI,                      ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNALPHAFRAGMENTOP1ATI,                           glAlphaFragmentOp1ATI,                      ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNALPHAFRAGMENTOP2ATI,                           glAlphaFragmentOp2ATI,                      ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNALPHAFRAGMENTOP3ATI,                           glAlphaFragmentOp3ATI,                      ATI_FRAGMENT_SHADER,    NULL );\
+    USE_GL_FUNC(PGLFNSETFRAGMENTSHADERCONSTANTATI,                  glSetFragmentShaderConstantATI,             ATI_FRAGMENT_SHADER,    NULL );
 
 /****************************************************
  * OpenGL WGL defines and functions pointer
