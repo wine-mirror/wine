@@ -3213,12 +3213,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->devType                      = DeviceType;
 
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &object->ps_selected_mode, &object->vs_selected_mode);
-    object->shader_backend = select_shader_backend(Adapter, DeviceType);    if(FAILED(object->shader_backend->shader_alloc_private((IWineD3DDevice *) object))) {
-        IWineD3D_Release(object->wineD3D);
-        HeapFree(GetProcessHeap(), 0, object);
-        *ppReturnedDeviceInterface = NULL;
-        return E_OUTOFMEMORY;
-    }
+    object->shader_backend = select_shader_backend(Adapter, DeviceType);
 
     /* Prefer the vtable with functions optimized for single dirtifyable objects if the shader
      * model can deal with that. It is essentially the same, just with adjusted

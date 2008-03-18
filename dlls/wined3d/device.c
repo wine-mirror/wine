@@ -173,8 +173,6 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->dst_fbo));
         }
 
-        This->shader_backend->shader_free_private(iface);
-
         if (This->glsl_program_lookup) hash_table_destroy(This->glsl_program_lookup);
 
         /* TODO: Clean up all the surfaces and textures! */
@@ -2084,6 +2082,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
         IWineD3DSurface_AddRef(This->stencilBufferTarget);
     }
 
+    hr = This->shader_backend->shader_alloc_private(iface);
+    if(FAILED(hr)) {
+        TRACE("Shader private data couldn't be allocated\n");
+        goto err_out;
+    }
+
     /* Set up some starting GL setup */
     ENTER_GL();
 
@@ -2147,6 +2151,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     return WINED3D_OK;
 
 err_out:
+    This->shader_backend->shader_free_private(iface);
     HeapFree(GetProcessHeap(), 0, This->render_targets);
     HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
     HeapFree(GetProcessHeap(), 0, This->draw_buffers);
@@ -2211,6 +2216,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     for (sampler = 0; sampler < MAX_VERTEX_SAMPLERS; ++sampler) {
         IWineD3DDevice_SetTexture(iface, WINED3DVERTEXTEXTURESAMPLER0 + sampler, NULL);
     }
+
+    /* Destroy the depth blt resources, they will be invalid after the reset. Also free shader
+     * private data, it might contain opengl pointers
+     */
+    This->shader_backend->shader_destroy_depth_blt(iface);
+    This->shader_backend->shader_free_private(iface);
 
     /* Release the update stateblock */
     if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
