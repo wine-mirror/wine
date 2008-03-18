@@ -257,6 +257,26 @@ typedef struct SHADER_BUFFER {
     BOOL newline;
 } SHADER_BUFFER;
 
+struct shader_caps {
+    DWORD               TextureOpCaps;
+    DWORD               MaxTextureBlendStages;
+    DWORD               MaxSimultaneousTextures;
+
+    DWORD               VertexShaderVersion;
+    DWORD               MaxVertexShaderConst;
+
+    DWORD               PixelShaderVersion;
+    float               PixelShader1xMaxValue;
+
+    WINED3DVSHADERCAPS2_0   VS20Caps;
+    WINED3DPSHADERCAPS2_0   PS20Caps;
+
+    DWORD               MaxVShaderInstructionsExecuted;
+    DWORD               MaxPShaderInstructionsExecuted;
+    DWORD               MaxVertexShader30InstructionSlots;
+    DWORD               MaxPixelShader30InstructionSlots;
+};
+
 typedef struct {
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(IWineD3DDevice *iface);
@@ -270,6 +290,7 @@ typedef struct {
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
     void (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
+    void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     const struct StateEntry *StateTable;
 } shader_backend_t;
 
@@ -2359,4 +2380,9 @@ static inline BOOL use_ps(IWineD3DDeviceImpl *device) {
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED3DRECT *src_rect,
         IWineD3DSurface *dst_surface, WINED3DRECT *dst_rect, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip);
 
+void select_shader_mode(
+                        WineD3D_GL_Info *gl_info,
+                        WINED3DDEVTYPE DeviceType,
+                        int* ps_selected,
+                        int* vs_selected);
 #endif

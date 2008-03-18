@@ -3525,6 +3525,10 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
     This->baseShader.prgId = shader_obj;
 }
 
+static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps) {
+    none_shader_backend.shader_get_caps(devtype, gl_info, caps);
+}
+
 const shader_backend_t glsl_shader_backend = {
     &shader_glsl_select,
     &shader_glsl_select_depth_blt,
@@ -3538,5 +3542,6 @@ const shader_backend_t glsl_shader_backend = {
     &shader_glsl_dirty_const,
     &shader_glsl_generate_pshader,
     &shader_glsl_generate_vshader,
+    &shader_glsl_get_caps,
     FFPStateTable
 };

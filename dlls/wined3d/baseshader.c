@@ -28,6 +28,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
@@ -1105,6 +1106,203 @@ static void shader_none_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
     FIXME("NONE shader backend asked to generate a vertex shader\n");
 }
 
+#define GLINFO_LOCATION      (*gl_info)
+static void shader_none_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {
+    int ps_selected_mode, vs_selected_mode;
+
+    pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD         |
+                            WINED3DTEXOPCAPS_ADDSIGNED   |
+                            WINED3DTEXOPCAPS_ADDSIGNED2X |
+                            WINED3DTEXOPCAPS_MODULATE    |
+                            WINED3DTEXOPCAPS_MODULATE2X  |
+                            WINED3DTEXOPCAPS_MODULATE4X  |
+                            WINED3DTEXOPCAPS_SELECTARG1  |
+                            WINED3DTEXOPCAPS_SELECTARG2  |
+                            WINED3DTEXOPCAPS_DISABLE;
+
+    if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE) ||
+        GL_SUPPORT(EXT_TEXTURE_ENV_COMBINE) ||
+        GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA  |
+                                WINED3DTEXOPCAPS_BLENDTEXTUREALPHA  |
+                                WINED3DTEXOPCAPS_BLENDFACTORALPHA   |
+                                WINED3DTEXOPCAPS_BLENDCURRENTALPHA  |
+                                WINED3DTEXOPCAPS_LERP               |
+                                WINED3DTEXOPCAPS_SUBTRACT;
+    }
+    if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3) ||
+        GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_ADDSMOOTH              |
+                                WINED3DTEXOPCAPS_MULTIPLYADD            |
+                                WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
+                                WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
+                                WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
+    }
+    if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3))
+        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
+
+    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR |
+                WINED3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA;
+    }
+
+    if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
+    } else if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+        /* Bump mapping is supported already in NV_TEXTURE_SHADER, but that extension does
+         * not support 3D textures. This asks for trouble if an app uses both bump mapping
+         * and 3D textures. It also allows us to keep the code simpler by having texture
+         * shaders constantly enabled.
+         */
+        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
+        /* TODO: Luminance bump map? */
+    }
+
+#if 0
+    /* FIXME: Add
+            pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE
+            WINED3DTEXOPCAPS_PREMODULATE */
+#endif
+
+    pCaps->MaxTextureBlendStages   = GL_LIMITS(texture_stages);
+    pCaps->MaxSimultaneousTextures = GL_LIMITS(textures);
+
+    /* FIXME: This doesn't belong here. Its just here to make the initial shader model caps selection
+     * a NOP
+     */
+    select_shader_mode(&GLINFO_LOCATION, devtype, &ps_selected_mode, &vs_selected_mode);
+
+    if (vs_selected_mode == SHADER_GLSL) {
+        /* Nvidia Geforce6/7 or Ati R4xx/R5xx cards with GLSL support, support VS 3.0 but older Nvidia/Ati
+        * models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support using
+        * vs_nv_version which is based on NV_vertex_program.
+        * For Ati cards there's no way using glsl (it abstracts the lowlevel info away) and also not
+        * using ARB_vertex_program. It is safe to assume that when a card supports pixel shader 2.0 it
+        * supports vertex shader 2.0 too and the way around. We can detect ps2.0 using the maximum number
+        * of native instructions, so use that here. For more info see the pixel shader versioning code below. */
+        if((GLINFO_LOCATION.vs_nv_version == VS_VERSION_20) || (GLINFO_LOCATION.ps_arb_max_instructions <= 512))
+            pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
+        else
+            pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
+        TRACE_(d3d_caps)("Hardware vertex shader version %d.%d enabled (GLSL)\n", (pCaps->VertexShaderVersion >> 8) & 0xff, pCaps->VertexShaderVersion & 0xff);
+    } else if (vs_selected_mode == SHADER_ARB) {
+        pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
+        TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
+    } else {
+        pCaps->VertexShaderVersion  = 0;
+        TRACE_(d3d_caps)("Vertex shader functionality not available\n");
+    }
+
+    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
+
+    if (ps_selected_mode == SHADER_GLSL) {
+        /* Older DX9-class videocards (GeforceFX / Radeon >9500/X*00) only support pixel shader 2.0/2.0a/2.0b.
+         * In OpenGL the extensions related to GLSL abstract lowlevel GL info away which is needed
+         * to distinguish between 2.0 and 3.0 (and 2.0a/2.0b). In case of Nvidia we use their fragment
+         * program extensions. On other hardware including ATI GL_ARB_fragment_program offers the info
+         * in max native instructions. Intel and others also offer the info in this extension but they
+         * don't support GLSL (at least on Windows).
+         *
+         * PS2.0 requires at least 96 instructions, 2.0a/2.0b go up to 512. Assume that if the number
+         * of instructions is 512 or less we have to do with ps2.0 hardware.
+         * NOTE: ps3.0 hardware requires 512 or more instructions but ati and nvidia offer 'enough' (1024 vs 4096) on their most basic ps3.0 hardware.
+         */
+        if((GLINFO_LOCATION.ps_nv_version == PS_VERSION_20) || (GLINFO_LOCATION.ps_arb_max_instructions <= 512))
+            pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
+        else
+            pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
+        /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
+         * Direct3D minimum requirement.
+         *
+         * Both GL_ARB_fragment_program and GLSL require a "maximum representable magnitude"
+         * of colors to be 2^10, and 2^32 for other floats. Should we use 1024 here?
+         *
+         * The problem is that the refrast clamps temporary results in the shader to
+         * [-MaxValue;+MaxValue]. If the card's max value is bigger than the one we advertize here,
+         * then applications may miss the clamping behavior. On the other hand, if it is smaller,
+         * the shader will generate incorrect results too. Unfortunately, GL deliberately doesn't
+         * offer a way to query this.
+         */
+        pCaps->PixelShader1xMaxValue = 8.0;
+        TRACE_(d3d_caps)("Hardware pixel shader version %d.%d enabled (GLSL)\n", (pCaps->PixelShaderVersion >> 8) & 0xff, pCaps->PixelShaderVersion & 0xff);
+    } else if (ps_selected_mode == SHADER_ARB) {
+        pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
+        pCaps->PixelShader1xMaxValue = 8.0;
+        TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
+    } else {
+        pCaps->PixelShaderVersion    = 0;
+        pCaps->PixelShader1xMaxValue = 0.0;
+        TRACE_(d3d_caps)("Pixel shader functionality not available\n");
+    }
+
+    if(pCaps->VertexShaderVersion == WINED3DVS_VERSION(3,0)) {
+        /* Where possible set the caps based on OpenGL extensions and if they aren't set (in case of software rendering)
+        use the VS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum VS3.0 value. */
+        pCaps->VS20Caps.Caps                     = WINED3DVS20CAPS_PREDICATION;
+        pCaps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* VS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
+        pCaps->VS20Caps.NumTemps                 = max(32, GLINFO_LOCATION.vs_arb_max_temps);
+        pCaps->VS20Caps.StaticFlowControlDepth   = WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH ; /* level of nesting in loops / if-statements; VS 3.0 requires MAX (4) */
+
+        pCaps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs at least 65535, some cards even use 2^32-1 */
+        pCaps->MaxVertexShader30InstructionSlots = max(512, GLINFO_LOCATION.vs_arb_max_instructions);
+    } else if(pCaps->VertexShaderVersion == WINED3DVS_VERSION(2,0)) {
+        pCaps->VS20Caps.Caps                     = 0;
+        pCaps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
+        pCaps->VS20Caps.NumTemps                 = max(12, GLINFO_LOCATION.vs_arb_max_temps);
+        pCaps->VS20Caps.StaticFlowControlDepth   = 1;
+
+        pCaps->MaxVShaderInstructionsExecuted    = 65535;
+        pCaps->MaxVertexShader30InstructionSlots = 0;
+    } else { /* VS 1.x */
+        pCaps->VS20Caps.Caps                     = 0;
+        pCaps->VS20Caps.DynamicFlowControlDepth  = 0;
+        pCaps->VS20Caps.NumTemps                 = 0;
+        pCaps->VS20Caps.StaticFlowControlDepth   = 0;
+
+        pCaps->MaxVShaderInstructionsExecuted    = 0;
+        pCaps->MaxVertexShader30InstructionSlots = 0;
+    }
+
+    if(pCaps->PixelShaderVersion == WINED3DPS_VERSION(3,0)) {
+        /* Where possible set the caps based on OpenGL extensions and if they aren't set (in case of software rendering)
+        use the PS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum PS 3.0 value. */
+
+        /* Caps is more or less undocumented on MSDN but it appears to be used for PS20Caps based on results from R9600/FX5900/Geforce6800 cards from Windows */
+        pCaps->PS20Caps.Caps                     = WINED3DPS20CAPS_ARBITRARYSWIZZLE     |
+                WINED3DPS20CAPS_GRADIENTINSTRUCTIONS |
+                WINED3DPS20CAPS_PREDICATION          |
+                WINED3DPS20CAPS_NODEPENDENTREADLIMIT |
+                WINED3DPS20CAPS_NOTEXINSTRUCTIONLIMIT;
+        pCaps->PS20Caps.DynamicFlowControlDepth  = WINED3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
+        pCaps->PS20Caps.NumTemps                 = max(32, GLINFO_LOCATION.ps_arb_max_temps);
+        pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MAX_STATICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_STATICFLOWCONTROLDEPTH (4) */
+        pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS; /* PS 3.0 requires MAX_NUMINSTRUCTIONSLOTS (512) */
+
+        pCaps->MaxPShaderInstructionsExecuted    = 65535;
+        pCaps->MaxPixelShader30InstructionSlots  = max(WINED3DMIN30SHADERINSTRUCTIONS, GLINFO_LOCATION.ps_arb_max_instructions);
+    } else if(pCaps->PixelShaderVersion == WINED3DPS_VERSION(2,0)) {
+        /* Below we assume PS2.0 specs, not extended 2.0a(GeforceFX)/2.0b(Radeon R3xx) ones */
+        pCaps->PS20Caps.Caps                     = 0;
+        pCaps->PS20Caps.DynamicFlowControlDepth  = 0; /* WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
+        pCaps->PS20Caps.NumTemps                 = max(12, GLINFO_LOCATION.ps_arb_max_temps);
+        pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minimum: 1 */
+        pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS; /* Minimum number (64 ALU + 32 Texture), a GeforceFX uses 512 */
+
+        pCaps->MaxPShaderInstructionsExecuted    = 512; /* Minimum value, a GeforceFX uses 1024 */
+        pCaps->MaxPixelShader30InstructionSlots  = 0;
+    } else { /* PS 1.x */
+        pCaps->PS20Caps.Caps                     = 0;
+        pCaps->PS20Caps.DynamicFlowControlDepth  = 0;
+        pCaps->PS20Caps.NumTemps                 = 0;
+        pCaps->PS20Caps.StaticFlowControlDepth   = 0;
+        pCaps->PS20Caps.NumInstructionSlots      = 0;
+
+        pCaps->MaxPShaderInstructionsExecuted    = 0;
+        pCaps->MaxPixelShader30InstructionSlots  = 0;
+    }
+}
+#undef GLINFO_LOCATION
+
 const shader_backend_t none_shader_backend = {
     &shader_none_select,
     &shader_none_select_depth_blt,
@@ -1118,6 +1316,7 @@ const shader_backend_t none_shader_backend = {
     &shader_none_dirty_const,
     &shader_none_generate_pshader,
     &shader_none_generate_vshader,
+    &shader_none_get_caps,
     FFPStateTable
 };
 

@@ -2042,6 +2042,10 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
     }
 }
 
+static void shader_arb_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps) {
+    none_shader_backend.shader_get_caps(devtype, gl_info, caps);
+}
+
 const shader_backend_t arb_program_shader_backend = {
     &shader_arb_select,
     &shader_arb_select_depth_blt,
@@ -2055,5 +2059,6 @@ const shader_backend_t arb_program_shader_backend = {
     &shader_arb_dirty_const,
     &shader_arb_generate_pshader,
     &shader_arb_generate_vshader,
+    &shader_arb_get_caps,
     FFPStateTable
 };
