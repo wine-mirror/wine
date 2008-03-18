@@ -280,13 +280,9 @@ static void pshader_set_limits(
 /** Generate a pixel shader string using either GL_FRAGMENT_PROGRAM_ARB
     or GLSL and send it to the card */
 static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
-    IWineD3DPixelShader *iface,
-    shader_reg_maps* reg_maps,
-    CONST DWORD *pFunction) {
-
+    IWineD3DPixelShader *iface) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     SHADER_BUFFER buffer;
-    const char *fragcolor;
 
 #if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
         it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
@@ -304,168 +300,7 @@ static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
     buffer.lineNo = 0;
     buffer.newline = TRUE;
 
-    if (This->baseShader.shader_mode == SHADER_GLSL) {
-
-        /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
-        GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
-
-        if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
-            shader_addline(&buffer, "#extension GL_ARB_draw_buffers : enable\n");
-        }
-        if (GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-            /* The spec says that it doesn't have to be explicitly enabled, but the nvidia
-             * drivers write a warning if we don't do so
-             */
-            shader_addline(&buffer, "#extension GL_ARB_texture_rectangle : enable\n");
-        }
-
-        /* Base Declarations */
-        shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
-
-        /* Pack 3.0 inputs */
-        if (This->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
-
-            if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed) {
-                This->vertexprocessing = pretransformed;
-                pshader_glsl_input_pack(&buffer, This->semantics_in, iface);
-            } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device)) {
-                This->vertexprocessing = fixedfunction;
-                pshader_glsl_input_pack(&buffer, This->semantics_in, iface);
-            } else {
-                This->vertexprocessing = vertexshader;
-            }
-        }
-
-        /* Base Shader Body */
-        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
-
-        /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
-        if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
-            /* Some older cards like GeforceFX ones don't support multiple buffers, so also not gl_FragData */
-            if(GL_SUPPORT(ARB_DRAW_BUFFERS))
-                shader_addline(&buffer, "gl_FragData[0] = R0;\n");
-            else
-                shader_addline(&buffer, "gl_FragColor = R0;\n");
-        }
-
-        if(GL_SUPPORT(ARB_DRAW_BUFFERS)) {
-            fragcolor = "gl_FragData[0]";
-        } else {
-            fragcolor = "gl_FragColor";
-        }
-        if(This->srgb_enabled) {
-            shader_addline(&buffer, "tmp0.xyz = pow(%s.xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
-                            fragcolor, srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
-                            srgb_sub_high, srgb_sub_high, srgb_sub_high);
-            shader_addline(&buffer, "tmp1.xyz = %s.xyz * srgb_mul_low.xyz;\n", fragcolor);
-            shader_addline(&buffer, "%s.x = %s.x < srgb_comparison.x ? tmp1.x : tmp0.x;\n", fragcolor, fragcolor);
-            shader_addline(&buffer, "%s.y = %s.y < srgb_comparison.y ? tmp1.y : tmp0.y;\n", fragcolor, fragcolor);
-            shader_addline(&buffer, "%s.z = %s.z < srgb_comparison.z ? tmp1.z : tmp0.z;\n", fragcolor, fragcolor);
-            shader_addline(&buffer, "%s = clamp(%s, 0.0, 1.0);\n", fragcolor, fragcolor);
-        }
-        /* Pixel shader < 3.0 do not replace the fog stage.
-         * This implements linear fog computation and blending.
-         * TODO: non linear fog
-         * NOTE: gl_Fog.start and gl_Fog.end don't hold fog start s and end e but
-         * -1/(e-s) and e/(e-s) respectively.
-         */
-        if(This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
-            shader_addline(&buffer, "float Fog = clamp(gl_FogFragCoord * gl_Fog.start + gl_Fog.end, 0.0, 1.0);\n");
-            shader_addline(&buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
-        }
-
-        shader_addline(&buffer, "}\n");
-
-        TRACE("Compiling shader object %u\n", shader_obj);
-        GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer.buffer, NULL));
-        GL_EXTCALL(glCompileShaderARB(shader_obj));
-        print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
-
-        /* Store the shader object */
-        This->baseShader.prgId = shader_obj;
-
-    } else if (This->baseShader.shader_mode == SHADER_ARB) {
-        /*  Create the hw ARB shader */
-        shader_addline(&buffer, "!!ARBfp1.0\n");
-
-        shader_addline(&buffer, "TEMP TMP;\n");     /* Used in matrix ops */
-        shader_addline(&buffer, "TEMP TMP2;\n");    /* Used in matrix ops */
-        shader_addline(&buffer, "TEMP TA;\n");      /* Used for modifiers */
-        shader_addline(&buffer, "TEMP TB;\n");      /* Used for modifiers */
-        shader_addline(&buffer, "TEMP TC;\n");      /* Used for modifiers */
-        shader_addline(&buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
-        shader_addline(&buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
-        shader_addline(&buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
-
-        /* Base Declarations */
-        shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
-
-        /* We need two variables for fog blending */
-        shader_addline(&buffer, "TEMP TMP_FOG;\n");
-        if (This->baseShader.hex_version >= WINED3DPS_VERSION(2,0)) {
-            shader_addline(&buffer, "TEMP TMP_COLOR;\n");
-        }
-
-        /* Base Shader Body */
-        shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
-
-        /* calculate fog and blend it
-         * NOTE: state.fog.params.y and state.fog.params.z don't hold fog start s and end e but
-         * -1/(e-s) and e/(e-s) respectively.
-         */
-        shader_addline(&buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
-
-        if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
-            fragcolor = "R0";
-        } else {
-            fragcolor = "TMP_COLOR";
-        }
-        if(This->srgb_enabled) {
-            /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
-
-            /* Calculate the > 0.0031308 case */
-            shader_addline(&buffer, "POW TMP.x, %s.x, srgb_pow.x;\n", fragcolor);
-            shader_addline(&buffer, "POW TMP.y, %s.y, srgb_pow.y;\n", fragcolor);
-            shader_addline(&buffer, "POW TMP.z, %s.z, srgb_pow.z;\n", fragcolor);
-            shader_addline(&buffer, "MUL TMP, TMP, srgb_mul_hi;\n");
-            shader_addline(&buffer, "SUB TMP, TMP, srgb_sub_hi;\n");
-            /* Calculate the < case */
-            shader_addline(&buffer, "MUL TMP2, srgb_mul_low, %s;\n", fragcolor);
-            /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
-            shader_addline(&buffer, "SLT TA, srgb_comparison, %s;\n", fragcolor);
-            shader_addline(&buffer, "SGE TB, srgb_comparison, %s;\n", fragcolor);
-            /* Store the components > 0.0031308 in the destination */
-            shader_addline(&buffer, "MUL %s, TMP, TA;\n", fragcolor);
-            /* Add the components that are < 0.0031308 */
-            shader_addline(&buffer, "MAD result.color.xyz, TMP2, TB, %s;\n", fragcolor);
-            /* [0.0;1.0] clamping. Not needed, this is done implicitly */
-        }
-        if (This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
-            shader_addline(&buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
-            shader_addline(&buffer, "MOV result.color.a, %s.a;\n", fragcolor);
-        }
-
-        shader_addline(&buffer, "END\n"); 
-
-        /* TODO: change to resource.glObjectHandle or something like that */
-        GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
-
-        TRACE("Creating a hw pixel shader, prg=%d\n", This->baseShader.prgId);
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->baseShader.prgId));
-
-        TRACE("Created hw pixel shader, prg=%d\n", This->baseShader.prgId);
-        /* Create the program and check for errors */
-        GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
-            buffer.bsize, buffer.buffer));
-
-        if (glGetError() == GL_INVALID_OPERATION) {
-            GLint errPos;
-            glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
-            FIXME("HW PixelShader Error at position %d: %s\n",
-                  errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-            This->baseShader.prgId = -1;
-        }
-    }
+    ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_pshader(iface, &buffer);
 
 #if 1 /* if were using the data buffer of device then we don't need to free it */
   HeapFree(GetProcessHeap(), 0, buffer.buffer);
@@ -652,7 +487,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
-    IWineD3DPixelShaderImpl_GenerateShader(iface, &This->baseShader.reg_maps, function);
+    IWineD3DPixelShaderImpl_GenerateShader(iface);
 
     This->baseShader.is_compiled = TRUE;
 

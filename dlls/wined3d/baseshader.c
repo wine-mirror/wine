@@ -1098,6 +1098,12 @@ static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 static HRESULT shader_none_alloc(IWineD3DDevice *iface) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDevice *iface) {}
 static BOOL shader_none_dirty_const(IWineD3DDevice *iface) {return FALSE;}
+static void shader_none_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
+    FIXME("NONE shader backend asked to generate a pixel shader\n");
+}
+static void shader_none_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
+    FIXME("NONE shader backend asked to generate a vertex shader\n");
+}
 
 const shader_backend_t none_shader_backend = {
     &shader_none_select,
@@ -1110,6 +1116,8 @@ const shader_backend_t none_shader_backend = {
     &shader_none_alloc,
     &shader_none_free,
     &shader_none_dirty_const,
+    &shader_none_generate_pshader,
+    &shader_none_generate_vshader,
     FFPStateTable
 };
 

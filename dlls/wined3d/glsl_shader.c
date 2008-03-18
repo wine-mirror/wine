@@ -3362,6 +3362,147 @@ static BOOL shader_glsl_dirty_const(IWineD3DDevice *iface) {
     return FALSE;
 }
 
+static void shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
+    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
+    shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
+    CONST DWORD *function = This->baseShader.function;
+    const char *fragcolor;
+    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+
+    /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
+    GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
+
+    if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
+        shader_addline(buffer, "#extension GL_ARB_draw_buffers : enable\n");
+    }
+    if (GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+        /* The spec says that it doesn't have to be explicitly enabled, but the nvidia
+         * drivers write a warning if we don't do so
+         */
+        shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
+    }
+
+    /* Base Declarations */
+    shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
+
+    /* Pack 3.0 inputs */
+    if (This->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
+
+        if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed) {
+            This->vertexprocessing = pretransformed;
+            pshader_glsl_input_pack(buffer, This->semantics_in, iface);
+        } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device)) {
+            This->vertexprocessing = fixedfunction;
+            pshader_glsl_input_pack(buffer, This->semantics_in, iface);
+        } else {
+            This->vertexprocessing = vertexshader;
+        }
+    }
+
+    /* Base Shader Body */
+    shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
+
+    /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
+    if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
+        /* Some older cards like GeforceFX ones don't support multiple buffers, so also not gl_FragData */
+        if(GL_SUPPORT(ARB_DRAW_BUFFERS))
+            shader_addline(buffer, "gl_FragData[0] = R0;\n");
+        else
+            shader_addline(buffer, "gl_FragColor = R0;\n");
+    }
+
+    if(GL_SUPPORT(ARB_DRAW_BUFFERS)) {
+        fragcolor = "gl_FragData[0]";
+    } else {
+        fragcolor = "gl_FragColor";
+    }
+    if(This->srgb_enabled) {
+        shader_addline(buffer, "tmp0.xyz = pow(%s.xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
+                        fragcolor, srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
+                        srgb_sub_high, srgb_sub_high, srgb_sub_high);
+        shader_addline(buffer, "tmp1.xyz = %s.xyz * srgb_mul_low.xyz;\n", fragcolor);
+        shader_addline(buffer, "%s.x = %s.x < srgb_comparison.x ? tmp1.x : tmp0.x;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "%s.y = %s.y < srgb_comparison.y ? tmp1.y : tmp0.y;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "%s.z = %s.z < srgb_comparison.z ? tmp1.z : tmp0.z;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "%s = clamp(%s, 0.0, 1.0);\n", fragcolor, fragcolor);
+    }
+    /* Pixel shader < 3.0 do not replace the fog stage.
+     * This implements linear fog computation and blending.
+     * TODO: non linear fog
+     * NOTE: gl_Fog.start and gl_Fog.end don't hold fog start s and end e but
+     * -1/(e-s) and e/(e-s) respectively.
+     */
+    if(This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
+        shader_addline(buffer, "float Fog = clamp(gl_FogFragCoord * gl_Fog.start + gl_Fog.end, 0.0, 1.0);\n");
+        shader_addline(buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
+    }
+
+    shader_addline(buffer, "}\n");
+
+    TRACE("Compiling shader object %u\n", shader_obj);
+    GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer->buffer, NULL));
+    GL_EXTCALL(glCompileShaderARB(shader_obj));
+    print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
+
+    /* Store the shader object */
+    This->baseShader.prgId = shader_obj;
+}
+
+static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
+    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
+    shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
+    CONST DWORD *function = This->baseShader.function;
+    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+
+    /* Create the hw GLSL shader program and assign it as the baseShader.prgId */
+    GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
+
+    /* Base Declarations */
+    shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
+
+    /* Base Shader Body */
+    shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
+
+    /* Unpack 3.0 outputs */
+    if (This->baseShader.hex_version >= WINED3DVS_VERSION(3,0)) {
+        shader_addline(buffer, "order_ps_input(OUT);\n");
+    } else {
+        shader_addline(buffer, "order_ps_input();\n");
+    }
+
+    /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
+    if (!reg_maps->fog)
+        shader_addline(buffer, "gl_FogFragCoord = gl_Position.z;\n");
+
+    /* Write the final position.
+     *
+     * OpenGL coordinates specify the center of the pixel while d3d coords specify
+     * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
+     * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
+     * contains 1.0 to allow a mad.
+     */
+    shader_addline(buffer, "gl_Position.y = gl_Position.y * posFixup.y;\n");
+    shader_addline(buffer, "gl_Position.xy += posFixup.zw * gl_Position.ww;\n");
+
+    /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
+     *
+     * Basically we want (in homogeneous coordinates) z = z * 2 - 1. However, shaders are run
+     * before the homogeneous divide, so we have to take the w into account: z = ((z / w) * 2 - 1) * w,
+     * which is the same as z = z / 2 - w.
+     */
+    shader_addline(buffer, "gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;\n");
+
+    shader_addline(buffer, "}\n");
+
+    TRACE("Compiling shader object %u\n", shader_obj);
+    GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer->buffer, NULL));
+    GL_EXTCALL(glCompileShaderARB(shader_obj));
+    print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
+
+    /* Store the shader object */
+    This->baseShader.prgId = shader_obj;
+}
+
 const shader_backend_t glsl_shader_backend = {
     &shader_glsl_select,
     &shader_glsl_select_depth_blt,
@@ -3373,5 +3514,7 @@ const shader_backend_t glsl_shader_backend = {
     &shader_glsl_alloc,
     &shader_glsl_free,
     &shader_glsl_dirty_const,
+    &shader_glsl_generate_pshader,
+    &shader_glsl_generate_vshader,
     FFPStateTable
 };

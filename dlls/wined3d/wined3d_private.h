@@ -249,6 +249,14 @@ extern wined3d_settings_t wined3d_settings;
 /* Shader backends */
 struct SHADER_OPCODE_ARG;
 
+#define SHADER_PGMSIZE 65535
+typedef struct SHADER_BUFFER {
+    char* buffer;
+    unsigned int bsize;
+    unsigned int lineNo;
+    BOOL newline;
+} SHADER_BUFFER;
+
 typedef struct {
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(IWineD3DDevice *iface);
@@ -260,6 +268,8 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
+    void (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
+    void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     const struct StateEntry *StateTable;
 } shader_backend_t;
 
@@ -1803,14 +1813,6 @@ typedef struct shader_reg_maps {
     char fog;
 
 } shader_reg_maps;
-
-#define SHADER_PGMSIZE 65535
-typedef struct SHADER_BUFFER {
-    char* buffer;
-    unsigned int bsize;
-    unsigned int lineNo;
-    BOOL newline;
-} SHADER_BUFFER;
 
 /* Undocumented opcode controls */
 #define INST_CONTROLS_SHIFT 16

@@ -1873,6 +1873,175 @@ static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
     return TRUE;
 }
 
+static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
+    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
+    shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
+    CONST DWORD *function = This->baseShader.function;
+    const char *fragcolor;
+    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+
+    /*  Create the hw ARB shader */
+    shader_addline(buffer, "!!ARBfp1.0\n");
+
+    shader_addline(buffer, "TEMP TMP;\n");     /* Used in matrix ops */
+    shader_addline(buffer, "TEMP TMP2;\n");    /* Used in matrix ops */
+    shader_addline(buffer, "TEMP TA;\n");      /* Used for modifiers */
+    shader_addline(buffer, "TEMP TB;\n");      /* Used for modifiers */
+    shader_addline(buffer, "TEMP TC;\n");      /* Used for modifiers */
+    shader_addline(buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
+    shader_addline(buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
+    shader_addline(buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
+
+    /* Base Declarations */
+    shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
+
+    /* We need two variables for fog blending */
+    shader_addline(buffer, "TEMP TMP_FOG;\n");
+    if (This->baseShader.hex_version >= WINED3DPS_VERSION(2,0)) {
+        shader_addline(buffer, "TEMP TMP_COLOR;\n");
+    }
+
+    /* Base Shader Body */
+    shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
+
+    /* calculate fog and blend it
+     * NOTE: state.fog.params.y and state.fog.params.z don't hold fog start s and end e but
+     * -1/(e-s) and e/(e-s) respectively.
+     */
+    shader_addline(buffer, "MAD_SAT TMP_FOG, fragment.fogcoord, state.fog.params.y, state.fog.params.z;\n");
+
+    if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
+        fragcolor = "R0";
+    } else {
+        fragcolor = "TMP_COLOR";
+    }
+    if(This->srgb_enabled) {
+        /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
+
+        /* Calculate the > 0.0031308 case */
+        shader_addline(buffer, "POW TMP.x, %s.x, srgb_pow.x;\n", fragcolor);
+        shader_addline(buffer, "POW TMP.y, %s.y, srgb_pow.y;\n", fragcolor);
+        shader_addline(buffer, "POW TMP.z, %s.z, srgb_pow.z;\n", fragcolor);
+        shader_addline(buffer, "MUL TMP, TMP, srgb_mul_hi;\n");
+        shader_addline(buffer, "SUB TMP, TMP, srgb_sub_hi;\n");
+        /* Calculate the < case */
+        shader_addline(buffer, "MUL TMP2, srgb_mul_low, %s;\n", fragcolor);
+        /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
+        shader_addline(buffer, "SLT TA, srgb_comparison, %s;\n", fragcolor);
+        shader_addline(buffer, "SGE TB, srgb_comparison, %s;\n", fragcolor);
+        /* Store the components > 0.0031308 in the destination */
+        shader_addline(buffer, "MUL %s, TMP, TA;\n", fragcolor);
+        /* Add the components that are < 0.0031308 */
+        shader_addline(buffer, "MAD result.color.xyz, TMP2, TB, %s;\n", fragcolor);
+        /* [0.0;1.0] clamping. Not needed, this is done implicitly */
+    }
+    if (This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
+        shader_addline(buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
+        shader_addline(buffer, "MOV result.color.a, %s.a;\n", fragcolor);
+    }
+
+    shader_addline(buffer, "END\n");
+
+    /* TODO: change to resource.glObjectHandle or something like that */
+    GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
+
+    TRACE("Creating a hw pixel shader, prg=%d\n", This->baseShader.prgId);
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->baseShader.prgId));
+
+    TRACE("Created hw pixel shader, prg=%d\n", This->baseShader.prgId);
+    /* Create the program and check for errors */
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+               buffer->bsize, buffer->buffer));
+
+    if (glGetError() == GL_INVALID_OPERATION) {
+        GLint errPos;
+        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+        FIXME("HW PixelShader Error at position %d: %s\n",
+              errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        This->baseShader.prgId = -1;
+    }
+}
+
+static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
+    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
+    shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
+    CONST DWORD *function = This->baseShader.function;
+    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+
+    /*  Create the hw ARB shader */
+    shader_addline(buffer, "!!ARBvp1.0\n");
+    shader_addline(buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);
+
+    /* Mesa supports only 95 constants */
+    if (GL_VEND(MESA) || GL_VEND(WINE))
+        This->baseShader.limits.constant_float =
+                min(95, This->baseShader.limits.constant_float);
+
+    shader_addline(buffer, "TEMP TMP;\n");
+
+    /* Base Declarations */
+    shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
+
+    /* We need a constant to fixup the final position */
+    shader_addline(buffer, "PARAM posFixup = program.env[%d];\n", ARB_SHADER_PRIVCONST_POS);
+
+    if((GLINFO_LOCATION).set_texcoord_w) {
+        int i;
+        for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
+            if(This->baseShader.reg_maps.texcoord_mask[i] != 0 &&
+               This->baseShader.reg_maps.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL) {
+                shader_addline(buffer, "MOV result.texcoord[%u].w, -helper_const.y;\n", i);
+            }
+        }
+    }
+
+    /* Base Shader Body */
+    shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
+
+    /* If this shader doesn't use fog copy the z coord to the fog coord so that we can use table fog */
+    if (!reg_maps->fog)
+        shader_addline(buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
+
+    /* Write the final position.
+     *
+     * OpenGL coordinates specify the center of the pixel while d3d coords specify
+     * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
+     * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
+     * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
+     */
+    shader_addline(buffer, "MUL TMP, posFixup, TMP_OUT.w;\n");
+    shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TMP.z;\n");
+    shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TMP.w;\n");
+
+    /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
+     * and the glsl equivalent
+     */
+    shader_addline(buffer, "MAD TMP_OUT.z, TMP_OUT.z, helper_const.x, -TMP_OUT.w;\n");
+
+    shader_addline(buffer, "MOV result.position, TMP_OUT;\n");
+
+    shader_addline(buffer, "END\n");
+
+    /* TODO: change to resource.glObjectHandle or something like that */
+    GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
+
+    TRACE("Creating a hw vertex shader, prg=%d\n", This->baseShader.prgId);
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->baseShader.prgId));
+
+    TRACE("Created hw vertex shader, prg=%d\n", This->baseShader.prgId);
+    /* Create the program and check for errors */
+    GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+               buffer->bsize, buffer->buffer));
+
+    if (glGetError() == GL_INVALID_OPERATION) {
+        GLint errPos;
+        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+        FIXME("HW VertexShader Error at position %d: %s\n",
+              errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        This->baseShader.prgId = -1;
+    }
+}
+
 const shader_backend_t arb_program_shader_backend = {
     &shader_arb_select,
     &shader_arb_select_depth_blt,
@@ -1884,5 +2053,7 @@ const shader_backend_t arb_program_shader_backend = {
     &shader_arb_alloc,
     &shader_arb_free,
     &shader_arb_dirty_const,
+    &shader_arb_generate_pshader,
+    &shader_arb_generate_vshader,
     FFPStateTable
 };
