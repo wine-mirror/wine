@@ -2235,10 +2235,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
             /* Check if the texture format is around */
             if(CheckTextureCapability(Adapter, CheckFormat)) {
-                /* No usage checks were requested, so return because we know that the format is supported */
-                if(!Usage)
-                    return WINED3D_OK;
-
                 if(Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
                     /* Check for automatic mipmap generation support */
                     if(GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
@@ -2327,10 +2323,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
         /* Check if the texture format is around */
         if(CheckTextureCapability(Adapter, CheckFormat)) {
-            /* No usage checks were requested, so return because we know that the format is supported */
-            if(!Usage)
-                return WINED3D_OK;
-
             if(Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
                 /* Check for automatic mipmap generation support */
                 if(GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
