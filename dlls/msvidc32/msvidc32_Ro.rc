@@ -1,5 +1,6 @@
 /*
  * Copyright 2005 Dmitry Timoshkov
+ * Copyright 2008 Michael Stefaniuc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,17 +17,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "msvidc32_private.h"
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
-#include "msvidc32_De.rc"
-#include "msvidc32_Fr.rc"
-#include "msvidc32_En.rc"
-#include "msvidc32_Hu.rc"
-#include "msvidc32_Ko.rc"
-#include "msvidc32_Nl.rc"
-#include "msvidc32_No.rc"
-#include "msvidc32_Pl.rc"
-#include "msvidc32_Ro.rc"
-#include "msvidc32_Sv.rc"
-#include "msvidc32_Tr.rc"
+STRINGTABLE DISCARDABLE
+{
+    IDS_NAME "MS-CRAM"
+    IDS_DESCRIPTION "Codecul video Wine Video 1"
+}
