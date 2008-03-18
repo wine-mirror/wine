@@ -974,7 +974,7 @@ static struct regsvr_mediatype_parsing const mediatype_parsing_list[] = {
     {	&MEDIATYPE_Stream,
 	&MEDIASUBTYPE_MPEG1Audio,
 	{   "0, 2, FFE0, FFE0",
-	    "0, 10, FFFFFFFF000000000000, 494433030080808080",
+            "0, 10, FFFFFF00000080808080, 494433000000000000",
 	    NULL }
     },
     {	&MEDIATYPE_Stream,
