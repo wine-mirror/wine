@@ -7029,6 +7029,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         This->depth_blt_texture = 0;
     }
     This->shader_backend->shader_destroy_depth_blt(iface);
+    This->shader_backend->shader_free_private(iface);
 
     for (i = 0; i < GL_LIMITS(textures); i++) {
         /* Textures are recreated below */
@@ -7123,6 +7124,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
                                           &swapchain->presentParms);
     swapchain->num_contexts = 1;
     This->activeContext = swapchain->context[0];
+    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
 
     hr = IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *) This->stateBlock);
     if(FAILED(hr)) {
@@ -7130,11 +7132,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     }
     create_dummy_textures(This);
 
+
+    hr = This->shader_backend->shader_alloc_private(iface);
+    if(FAILED(hr)) {
+        ERR("Failed to recreate shader private data\n");
+        return hr;
+    }
+
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
      * first use
      */
-
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     return WINED3D_OK;
 }
 

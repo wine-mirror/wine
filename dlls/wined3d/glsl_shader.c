@@ -3378,6 +3378,7 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
 static void shader_glsl_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
+    This->shader_priv = NULL;
 }
 
 static BOOL shader_glsl_dirty_const(IWineD3DDevice *iface) {
