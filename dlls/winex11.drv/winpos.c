@@ -68,7 +68,7 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
     XExposeEvent *event = &xev->xexpose;
     RECT rect;
     struct x11drv_win_data *data;
-    int flags = RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN;
+    int flags = RDW_INVALIDATE | RDW_ERASE;
 
     TRACE( "win %p (%lx) %d,%d %dx%d\n",
            hwnd, event->window, event->x, event->y, event->width, event->height );
@@ -89,22 +89,24 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
-    if (event->window == root_window)
-        OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
-
-    SERVER_START_REQ( update_window_zorder )
+    if (event->window != root_window)
     {
-        req->window      = hwnd;
-        req->rect.left   = rect.left;
-        req->rect.top    = rect.top;
-        req->rect.right  = rect.right;
-        req->rect.bottom = rect.bottom;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
+        SERVER_START_REQ( update_window_zorder )
+        {
+            req->window      = hwnd;
+            req->rect.left   = rect.left;
+            req->rect.top    = rect.top;
+            req->rect.right  = rect.right;
+            req->rect.bottom = rect.bottom;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
 
-    /* make position relative to client area instead of parent */
-    OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
+        /* make position relative to client area instead of parent */
+        OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
+        flags |= RDW_ALLCHILDREN;
+    }
+
     RedrawWindow( hwnd, &rect, 0, flags );
 }
 
