@@ -47,6 +47,9 @@ typedef struct WAVEParserImpl
     IMediaSample * pCurrentSample;
     LONGLONG StartOfFile; /* in media time */
     LONGLONG EndOfFile;
+    DWORD dwSampleSize;
+    FLOAT fSamplesPerSec;
+    DWORD dwLength;
 } WAVEParserImpl;
 
 static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
@@ -133,14 +136,14 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
 
                 pOutputPin->dwSamplesProcessed++;
 
-                if (pOutputPin->dwSampleSize)
-                    tAviStart = (LONGLONG)ceil(10000000.0 * (float)(pOutputPin->dwSamplesProcessed - 1) * (float)IMediaSample_GetActualDataLength(This->pCurrentSample) / ((float)pOutputPin->dwSampleSize * pOutputPin->fSamplesPerSec));
+                if (This->dwSampleSize)
+                    tAviStart = (LONGLONG)ceil(10000000.0 * (float)(pOutputPin->dwSamplesProcessed - 1) * (float)IMediaSample_GetActualDataLength(This->pCurrentSample) / ((float)This->dwSampleSize * This->fSamplesPerSec));
                 else
-                    tAviStart = (LONGLONG)ceil(10000000.0 * (float)(pOutputPin->dwSamplesProcessed - 1) / (float)pOutputPin->fSamplesPerSec);
-                if (pOutputPin->dwSampleSize)
-                    tAviStop = (LONGLONG)ceil(10000000.0 * (float)pOutputPin->dwSamplesProcessed * (float)IMediaSample_GetActualDataLength(This->pCurrentSample) / ((float)pOutputPin->dwSampleSize * pOutputPin->fSamplesPerSec));
+                    tAviStart = (LONGLONG)ceil(10000000.0 * (float)(pOutputPin->dwSamplesProcessed - 1) / (float)This->fSamplesPerSec);
+                if (This->dwSampleSize)
+                    tAviStop = (LONGLONG)ceil(10000000.0 * (float)pOutputPin->dwSamplesProcessed * (float)IMediaSample_GetActualDataLength(This->pCurrentSample) / ((float)This->dwSampleSize * This->fSamplesPerSec));
                 else
-                    tAviStop = (LONGLONG)ceil(10000000.0 * (float)pOutputPin->dwSamplesProcessed / (float)pOutputPin->fSamplesPerSec);
+                    tAviStop = (LONGLONG)ceil(10000000.0 * (float)pOutputPin->dwSamplesProcessed / (float)This->fSamplesPerSec);
 
                 IMediaSample_SetTime(This->pCurrentSample, &tAviStart, &tAviStop);
 
@@ -220,10 +223,8 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     PIN_INFO piOutput;
     ALLOCATOR_PROPERTIES props;
     AM_MEDIA_TYPE amt;
-    float fSamplesPerSec = 0.0f;
-    DWORD dwSampleSize = 0;
-    DWORD dwLength = 0;
     WAVEParserImpl * pWAVEParser = (WAVEParserImpl *)This->pin.pinInfo.pFilter;
+    LONGLONG length, avail;
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)This;
@@ -292,8 +293,11 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     props.cbPrefix = 0;
     props.cbBuffer = 4096;
     props.cBuffers = 2;
-    
-    hr = Parser_AddPin(&(pWAVEParser->Parser), &piOutput, &props, &amt, fSamplesPerSec, dwSampleSize, dwLength);
+    pWAVEParser->dwSampleSize = ((WAVEFORMATEX*)amt.pbFormat)->nBlockAlign;
+    IAsyncReader_Length(This->pReader, &length, &avail);
+    pWAVEParser->dwLength = length / (ULONGLONG)pWAVEParser->dwSampleSize;
+    pWAVEParser->fSamplesPerSec = ((WAVEFORMATEX*)amt.pbFormat)->nAvgBytesPerSec / ((WAVEFORMATEX*)amt.pbFormat)->nBlockAlign;
+    hr = Parser_AddPin(&(pWAVEParser->Parser), &piOutput, &props, &amt);
     
     TRACE("WAVE File ok\n");
 

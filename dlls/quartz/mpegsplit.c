@@ -52,12 +52,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 #define MPEG_AUDIO_HEADER 1
 #define MPEG_NO_HEADER 0
 
-
 typedef struct MPEGSplitterImpl
 {
     ParserImpl Parser;
     IMediaSample *pCurrentSample;
     LONGLONG EndOfFile;
+    DWORD dwSampleSize, dwLength;
+    FLOAT fSamplesPerSec;
 } MPEGSplitterImpl;
 
 static int MPEGSplitter_head_check(const BYTE *header)
@@ -169,12 +170,12 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
             {
                 REFERENCE_TIME tMPEGStart, tMPEGStop;
 
-                pOutputPin->dwSamplesProcessed = (BYTES_FROM_MEDIATIME(tStart)+used_bytes) / pOutputPin->dwSampleSize;
+                pOutputPin->dwSamplesProcessed = (BYTES_FROM_MEDIATIME(tStart)+used_bytes) / This->dwSampleSize;
 
                 tMPEGStart = (tStart + MEDIATIME_FROM_BYTES(used_bytes-bytes_written)) /
-                             (pOutputPin->fSamplesPerSec*pOutputPin->dwSampleSize);
+                             (This->fSamplesPerSec*This->dwSampleSize);
                 tMPEGStop  = (tStart + MEDIATIME_FROM_BYTES(used_bytes)) /
-                             (pOutputPin->fSamplesPerSec*pOutputPin->dwSampleSize);
+                             (This->fSamplesPerSec*This->dwSampleSize);
 
                 /* If the start of the sample has a valid MPEG header, it's a
                  * sync point */
@@ -219,12 +220,12 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
             {
                 REFERENCE_TIME tMPEGStart, tMPEGStop;
 
-                pOutputPin->dwSamplesProcessed = (BYTES_FROM_MEDIATIME(tStart)+used_bytes) / pOutputPin->dwSampleSize;
+                pOutputPin->dwSamplesProcessed = (BYTES_FROM_MEDIATIME(tStart)+used_bytes) / This->dwSampleSize;
 
                 tMPEGStart = (tStart + MEDIATIME_FROM_BYTES(used_bytes-bytes_written)) /
-                             (pOutputPin->fSamplesPerSec*pOutputPin->dwSampleSize);
+                             (This->fSamplesPerSec*This->dwSampleSize);
                 tMPEGStop  = (tStart + MEDIATIME_FROM_BYTES(used_bytes)) /
-                             (pOutputPin->fSamplesPerSec*pOutputPin->dwSampleSize);
+                             (This->fSamplesPerSec*This->dwSampleSize);
 
                 if (MPEGSplitter_head_check(pbDstStream) == MPEG_AUDIO_HEADER)
                     IMediaSample_SetSyncPoint(This->pCurrentSample, TRUE);
@@ -490,12 +491,10 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
                 props.cbBuffer = 0x4000 / format->nBlockAlign *
                                  format->nBlockAlign;
                 props.cBuffers = 1;
-
-                hr = Parser_AddPin(&(This->Parser), &piOutput, &props, &amt,
-                                   (float)format->nAvgBytesPerSec /
-                                    (float)format->nBlockAlign,
-                                   format->nBlockAlign,
-                                   total);
+                This->fSamplesPerSec = (float)format->nAvgBytesPerSec / (float)format->nBlockAlign;
+                This->dwSampleSize = format->nBlockAlign;
+                This->dwLength = total;
+                hr = Parser_AddPin(&(This->Parser), &piOutput, &props, &amt);
             }
 
             if (FAILED(hr))

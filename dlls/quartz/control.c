@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-HRESULT MediaSeekingImpl_Init(LPVOID pUserData, CHANGEPROC fnChangeStop, CHANGEPROC fnChangeStart, CHANGEPROC fnChangeRate, MediaSeekingImpl * pSeeking)
+HRESULT MediaSeekingImpl_Init(IBaseFilter *pUserData, CHANGEPROC fnChangeStop, CHANGEPROC fnChangeStart, CHANGEPROC fnChangeRate, MediaSeekingImpl * pSeeking)
 {
     assert(fnChangeStop && fnChangeStart && fnChangeRate);
 
@@ -242,9 +242,8 @@ HRESULT WINAPI MediaSeekingImpl_SetRate(IMediaSeeking * iface, double dRate)
     BOOL bChangeRate = (dRate != This->dRate);
 
     TRACE("(%e)\n", dRate);
-	
+
     This->dRate = dRate;
-	
     if (bChangeRate)
         return This->fnChangeRate(This->pUserData);
     else

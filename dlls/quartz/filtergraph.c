@@ -1582,7 +1582,7 @@ static HRESULT WINAPI MediaControl_Stop(IMediaControl *iface) {
     SendFilterMessage(iface, SendStop);
     This->state = State_Stopped;
     LeaveCriticalSection(&This->cs);
-    return S_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface,

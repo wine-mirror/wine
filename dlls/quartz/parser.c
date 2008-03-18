@@ -43,15 +43,15 @@ static const IPinVtbl Parser_OutputPin_Vtbl;
 static const IPinVtbl Parser_InputPin_Vtbl;
 
 static HRESULT Parser_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt);
-static HRESULT Parser_ChangeStart(LPVOID iface);
-static HRESULT Parser_ChangeStop(LPVOID iface);
-static HRESULT Parser_ChangeRate(LPVOID iface);
+static HRESULT Parser_ChangeStart(IBaseFilter *iface);
+static HRESULT Parser_ChangeStop(IBaseFilter *iface);
+static HRESULT Parser_ChangeRate(IBaseFilter *iface);
 
 static HRESULT Parser_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
-static inline Parser_OutputPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
+static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
-    return (Parser_OutputPin *)((char*)iface - FIELD_OFFSET(Parser_OutputPin, mediaSeeking.lpVtbl));
+    return (ParserImpl *)((char*)iface - FIELD_OFFSET(ParserImpl, mediaSeeking.lpVtbl));
 }
 
 
@@ -80,6 +80,9 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     piInput.pFilter = (IBaseFilter *)pParser;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
+    MediaSeekingImpl_Init((IBaseFilter*)pParser, Parser_ChangeStop, Parser_ChangeStart, Parser_ChangeRate, &pParser->mediaSeeking);
+    pParser->mediaSeeking.lpVtbl = &Parser_Seeking_Vtbl;
+
     hr = Parser_InputPin_Construct(&piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, &pParser->csFilter, (IPin **)&pParser->pInputPin);
 
     if (SUCCEEDED(hr))
@@ -98,21 +101,16 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     return hr;
 }
 
-static HRESULT Parser_OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, const AM_MEDIA_TYPE * pmt, float fSamplesPerSec, LPCRITICAL_SECTION pCritSec, Parser_OutputPin * pPinImpl)
+static HRESULT Parser_OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, const AM_MEDIA_TYPE * pmt, LPCRITICAL_SECTION pCritSec, Parser_OutputPin * pPinImpl)
 {
     pPinImpl->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     CopyMediaType(pPinImpl->pmt, pmt);
     pPinImpl->dwSamplesProcessed = 0;
-    pPinImpl->dwSampleSize = 0;
-    pPinImpl->fSamplesPerSec = fSamplesPerSec;
-
-    MediaSeekingImpl_Init((LPVOID)pPinInfo->pFilter, Parser_ChangeStop, Parser_ChangeStart, Parser_ChangeRate, &pPinImpl->mediaSeeking);
-    pPinImpl->mediaSeeking.lpVtbl = &Parser_Seeking_Vtbl;
 
     return OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pCritSec, &pPinImpl->pin);
 }
 
-static HRESULT Parser_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, const AM_MEDIA_TYPE * pmt, float fSamplesPerSec, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+static HRESULT Parser_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, const AM_MEDIA_TYPE * pmt, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     Parser_OutputPin * pPinImpl;
 
@@ -125,7 +123,7 @@ static HRESULT Parser_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_P
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(Parser_OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pmt, fSamplesPerSec, pCritSec, pPinImpl)))
+    if (SUCCEEDED(Parser_OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pmt, pCritSec, pPinImpl)))
     {
         pPinImpl->pin.pin.lpVtbl = &Parser_OutputPin_Vtbl;
 
@@ -152,6 +150,8 @@ static HRESULT WINAPI Parser_QueryInterface(IBaseFilter * iface, REFIID riid, LP
         *ppv = (LPVOID)This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
         *ppv = (LPVOID)This;
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+        *ppv = (LPVOID)&This->mediaSeeking;
 
     if (*ppv)
     {
@@ -290,10 +290,12 @@ static HRESULT WINAPI Parser_Pause(IBaseFilter * iface)
         {
             for (i = 1; i < This->cStreams + 1; i++)
             {
-                Parser_OutputPin* StreamPin = (Parser_OutputPin *)This->ppPins[i];
-                OutputPin_DeliverNewSegment((OutputPin *)This->ppPins[i], 0, (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec), 1.0);
-                StreamPin->mediaSeeking.llDuration = (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec);
-                StreamPin->mediaSeeking.llStop = (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec);
+                LONGLONG duration;
+                DOUBLE speed;
+
+                IMediaSeeking_GetDuration((IMediaSeeking *)&This->mediaSeeking, &duration);
+                IMediaSeeking_GetRate((IMediaSeeking *)&This->mediaSeeking, &speed);
+                OutputPin_DeliverNewSegment((OutputPin *)This->ppPins[i], 0, duration, speed);
                 OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
             }
 
@@ -497,8 +499,7 @@ static const IBaseFilterVtbl Parser_Vtbl =
     Parser_QueryVendorInfo
 };
 
-HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props,
-                      const AM_MEDIA_TYPE * amt, float fSamplesPerSec, DWORD dwSampleSize, DWORD dwLength)
+HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt)
 {
     IPin ** ppOldPins;
     HRESULT hr;
@@ -508,12 +509,10 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
     This->ppPins = CoTaskMemAlloc((This->cStreams + 2) * sizeof(IPin *));
     memcpy(This->ppPins, ppOldPins, (This->cStreams + 1) * sizeof(IPin *));
 
-    hr = Parser_OutputPin_Construct(piOutput, props, NULL, Parser_OutputPin_QueryAccept, amt, fSamplesPerSec, &This->csFilter, This->ppPins + This->cStreams + 1);
+    hr = Parser_OutputPin_Construct(piOutput, props, NULL, Parser_OutputPin_QueryAccept, amt, &This->csFilter, This->ppPins + This->cStreams + 1);
 
     if (SUCCEEDED(hr))
     {
-        ((Parser_OutputPin *)(This->ppPins[This->cStreams + 1]))->dwSampleSize = dwSampleSize;
-        ((Parser_OutputPin *)(This->ppPins[This->cStreams + 1]))->dwLength = dwLength;
         ((Parser_OutputPin *)(This->ppPins[This->cStreams + 1]))->pin.pin.pUserData = (LPVOID)This->ppPins[This->cStreams + 1];
         This->cStreams++;
         CoTaskMemFree(ppOldPins);
@@ -551,19 +550,19 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
     return S_OK;
 }
 
-static HRESULT Parser_ChangeStart(LPVOID iface)
+static HRESULT Parser_ChangeStart(IBaseFilter *iface)
 {
     FIXME("(%p)\n", iface);
     return S_OK;
 }
 
-static HRESULT Parser_ChangeStop(LPVOID iface)
+static HRESULT Parser_ChangeStop(IBaseFilter *iface)
 {
     FIXME("(%p)\n", iface);
     return S_OK;
 }
 
-static HRESULT Parser_ChangeRate(LPVOID iface)
+static HRESULT Parser_ChangeRate(IBaseFilter *iface)
 {
     FIXME("(%p)\n", iface);
     return S_OK;
@@ -572,21 +571,21 @@ static HRESULT Parser_ChangeRate(LPVOID iface)
 
 static HRESULT WINAPI Parser_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
 {
-    Parser_OutputPin *This = impl_from_IMediaSeeking(iface);
+    ParserImpl *This = impl_from_IMediaSeeking(iface);
 
     return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
 }
 
 static ULONG WINAPI Parser_Seeking_AddRef(IMediaSeeking * iface)
 {
-    Parser_OutputPin *This = impl_from_IMediaSeeking(iface);
+    ParserImpl *This = impl_from_IMediaSeeking(iface);
 
     return IUnknown_AddRef((IUnknown *)This);
 }
 
 static ULONG WINAPI Parser_Seeking_Release(IMediaSeeking * iface)
 {
-    Parser_OutputPin *This = impl_from_IMediaSeeking(iface);
+    ParserImpl *This = impl_from_IMediaSeeking(iface);
 
     return IUnknown_Release((IUnknown *)This);
 }
@@ -628,7 +627,9 @@ static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid,
     else if (IsEqualIID(riid, &IID_IPin))
         *ppv = (LPVOID)iface;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = (LPVOID)&This->mediaSeeking;
+    {
+        return IBaseFilter_QueryInterface((IBaseFilter*)&This->pin.pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
+    }
 
     if (*ppv)
     {
