@@ -438,7 +438,11 @@ BOOL HCR_GetFolderAttributes(LPCITEMIDLIST pidlFolder, LPDWORD pdwAttributes)
     TRACE("(pidlFolder=%p, pdwAttributes=%p)\n", pidlFolder, pdwAttributes);
        
     if (!_ILIsPidlSimple(pidlFolder)) { 
-        ERR("HCR_GetFolderAttributes should be called for simple PIDL's only!\n");    
+        static int firstHit = 1;
+        if (firstHit) {
+            ERR("HCR_GetFolderAttributes should be called for simple PIDL's only!\n");
+            firstHit = 0;
+        }
         return FALSE;
     }
     
