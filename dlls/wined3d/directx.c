@@ -2638,6 +2638,22 @@ static HRESULT  WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface,
     return WINED3D_OK;
 }
 
+static const shader_backend_t *select_shader_backend(UINT Adapter, WINED3DDEVTYPE DeviceType) {
+    const shader_backend_t *ret;
+    int vs_selected_mode;
+    int ps_selected_mode;
+
+    select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
+    if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) {
+        ret = &glsl_shader_backend;
+    } else if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) {
+        ret = &arb_program_shader_backend;
+    } else {
+        ret = &none_shader_backend;
+    }
+    return ret;
+}
+
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
       subset of a D3DCAPS9 structure. However, it has to come via a void *
       as the d3d8 interface cannot import the d3d9 header                  */
@@ -3221,27 +3237,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     return WINED3D_OK;
 }
 
-static unsigned int glsl_program_key_hash(void *key) {
-    glsl_program_key_t *k = (glsl_program_key_t *)key;
-
-    unsigned int hash = k->vshader | k->pshader << 16;
-    hash += ~(hash << 15);
-    hash ^=  (hash >> 10);
-    hash +=  (hash << 3);
-    hash ^=  (hash >> 6);
-    hash += ~(hash << 11);
-    hash ^=  (hash >> 16);
-
-    return hash;
-}
-
-static BOOL glsl_program_key_compare(void *keya, void *keyb) {
-    glsl_program_key_t *ka = (glsl_program_key_t *)keya;
-    glsl_program_key_t *kb = (glsl_program_key_t *)keyb;
-
-    return ka->vshader == kb->vshader && ka->pshader == kb->pshader;
-}
-
 /* Note due to structure differences between dx8 and dx9 D3DPRESENT_PARAMETERS,
    and fields being inserted in the middle, a new structure is used in place    */
 static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, HWND hFocusWindow,
@@ -3302,15 +3297,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->devType                      = DeviceType;
 
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &object->ps_selected_mode, &object->vs_selected_mode);
-    if (object->ps_selected_mode == SHADER_GLSL || object->vs_selected_mode == SHADER_GLSL) {
-        object->shader_backend = &glsl_shader_backend;
-        object->glsl_program_lookup = hash_table_create(&glsl_program_key_hash, &glsl_program_key_compare);
-    } else if (object->ps_selected_mode == SHADER_ARB || object->vs_selected_mode == SHADER_ARB) {
-        object->shader_backend = &arb_program_shader_backend;
-    } else {
-        object->shader_backend = &none_shader_backend;
-    }
-    if(FAILED(object->shader_backend->shader_alloc_private((IWineD3DDevice *) object))) {
+    object->shader_backend = select_shader_backend(Adapter, DeviceType);    if(FAILED(object->shader_backend->shader_alloc_private((IWineD3DDevice *) object))) {
         IWineD3D_Release(object->wineD3D);
         HeapFree(GetProcessHeap(), 0, object);
         *ppReturnedDeviceInterface = NULL;

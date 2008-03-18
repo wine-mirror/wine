@@ -3346,9 +3346,31 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     This->baseShader.is_compiled = FALSE;
 }
 
+static unsigned int glsl_program_key_hash(void *key) {
+    glsl_program_key_t *k = (glsl_program_key_t *)key;
+
+    unsigned int hash = k->vshader | k->pshader << 16;
+    hash += ~(hash << 15);
+    hash ^=  (hash >> 10);
+    hash +=  (hash << 3);
+    hash ^=  (hash >> 6);
+    hash += ~(hash << 11);
+    hash ^=  (hash >> 16);
+
+    return hash;
+}
+
+static BOOL glsl_program_key_compare(void *keya, void *keyb) {
+    glsl_program_key_t *ka = (glsl_program_key_t *)keya;
+    glsl_program_key_t *kb = (glsl_program_key_t *)keyb;
+
+    return ka->vshader == kb->vshader && ka->pshader == kb->pshader;
+}
+
 static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     This->shader_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
+    This->glsl_program_lookup = hash_table_create(&glsl_program_key_hash, &glsl_program_key_compare);
     return WINED3D_OK;
 }
 
