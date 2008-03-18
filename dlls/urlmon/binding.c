@@ -1083,7 +1083,7 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
     task = heap_alloc(sizeof(switch_task_t));
-    memcpy(&task->data, pProtocolData, sizeof(PROTOCOLDATA));
+    task->data = *pProtocolData;
 
     push_task(This, &task->header, switch_proc);
 
@@ -1382,7 +1382,7 @@ static HRESULT WINAPI InternetBindInfo_GetBindInfo(IInternetBindInfo *iface,
 
     *grfBINDF = This->bindf;
 
-    memcpy(pbindinfo, &This->bindinfo, sizeof(BINDINFO));
+    *pbindinfo = This->bindinfo;
 
     if(pbindinfo->szExtraInfo || pbindinfo->szCustomVerb)
         FIXME("copy strings\n");

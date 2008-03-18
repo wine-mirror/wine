@@ -398,7 +398,7 @@ HRESULT WINAPI CopyStgMedium(const STGMEDIUM *src, STGMEDIUM *dst)
     if(!src || !dst)
         return E_POINTER;
 
-    memcpy(dst, src, sizeof(STGMEDIUM));
+    *dst = *src;
 
     switch(dst->tymed) {
     case TYMED_NULL:
