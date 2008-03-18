@@ -303,10 +303,10 @@ static HRESULT WINAPI IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9EX iface, UINT Ada
         return D3DERR_INVALIDCALL; /*well this is what MSDN says to return*/
     }
     memset(pCaps, 0, sizeof(*pCaps));
-    D3D9CAPSTOWINECAPS(pCaps, pWineCaps)
     EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, pWineCaps);
     LeaveCriticalSection(&d3d9_cs);
+    WINECAPSTOD3D9CAPS(pCaps, pWineCaps)
     HeapFree(GetProcessHeap(), 0, pWineCaps);
 
     /* Some functionality is implemented in d3d9.dll, not wined3d.dll. Add the needed caps */

@@ -1096,111 +1096,111 @@ typedef struct _WINED3DINDEXBUFFER_DESC {
  */
 
 typedef struct _WINED3DVSHADERCAPS2_0 {
-  DWORD  *Caps;
-  INT    *DynamicFlowControlDepth;
-  INT    *NumTemps;
-  INT    *StaticFlowControlDepth;
+  DWORD  Caps;
+  INT    DynamicFlowControlDepth;
+  INT    NumTemps;
+  INT    StaticFlowControlDepth;
 } WINED3DVSHADERCAPS2_0;
 
 typedef struct _WINED3DPSHADERCAPS2_0 {
-  DWORD  *Caps;
-  INT    *DynamicFlowControlDepth;
-  INT    *NumTemps;
-  INT    *StaticFlowControlDepth;
-  INT    *NumInstructionSlots;
+  DWORD  Caps;
+  INT    DynamicFlowControlDepth;
+  INT    NumTemps;
+  INT    StaticFlowControlDepth;
+  INT    NumInstructionSlots;
 } WINED3DPSHADERCAPS2_0;
 
 typedef struct _WINED3DCAPS {
-  WINED3DDEVTYPE      *DeviceType;
-  UINT                *AdapterOrdinal;
+  WINED3DDEVTYPE      DeviceType;
+  UINT                AdapterOrdinal;
 
-  DWORD               *Caps;
-  DWORD               *Caps2;
-  DWORD               *Caps3;
-  DWORD               *PresentationIntervals;
+  DWORD               Caps;
+  DWORD               Caps2;
+  DWORD               Caps3;
+  DWORD               PresentationIntervals;
 
-  DWORD               *CursorCaps;
+  DWORD               CursorCaps;
 
-  DWORD               *DevCaps;
+  DWORD               DevCaps;
 
-  DWORD               *PrimitiveMiscCaps;
-  DWORD               *RasterCaps;
-  DWORD               *ZCmpCaps;
-  DWORD               *SrcBlendCaps;
-  DWORD               *DestBlendCaps;
-  DWORD               *AlphaCmpCaps;
-  DWORD               *ShadeCaps;
-  DWORD               *TextureCaps;
-  DWORD               *TextureFilterCaps;
-  DWORD               *CubeTextureFilterCaps;
-  DWORD               *VolumeTextureFilterCaps;
-  DWORD               *TextureAddressCaps;
-  DWORD               *VolumeTextureAddressCaps;
+  DWORD               PrimitiveMiscCaps;
+  DWORD               RasterCaps;
+  DWORD               ZCmpCaps;
+  DWORD               SrcBlendCaps;
+  DWORD               DestBlendCaps;
+  DWORD               AlphaCmpCaps;
+  DWORD               ShadeCaps;
+  DWORD               TextureCaps;
+  DWORD               TextureFilterCaps;
+  DWORD               CubeTextureFilterCaps;
+  DWORD               VolumeTextureFilterCaps;
+  DWORD               TextureAddressCaps;
+  DWORD               VolumeTextureAddressCaps;
 
-  DWORD               *LineCaps;
+  DWORD               LineCaps;
 
-  DWORD               *MaxTextureWidth;
-  DWORD               *MaxTextureHeight;
-  DWORD               *MaxVolumeExtent;
+  DWORD               MaxTextureWidth;
+  DWORD               MaxTextureHeight;
+  DWORD               MaxVolumeExtent;
 
-  DWORD               *MaxTextureRepeat;
-  DWORD               *MaxTextureAspectRatio;
-  DWORD               *MaxAnisotropy;
-  float               *MaxVertexW;
+  DWORD               MaxTextureRepeat;
+  DWORD               MaxTextureAspectRatio;
+  DWORD               MaxAnisotropy;
+  float               MaxVertexW;
 
-  float               *GuardBandLeft;
-  float               *GuardBandTop;
-  float               *GuardBandRight;
-  float               *GuardBandBottom;
+  float               GuardBandLeft;
+  float               GuardBandTop;
+  float               GuardBandRight;
+  float               GuardBandBottom;
 
-  float               *ExtentsAdjust;
-  DWORD               *StencilCaps;
+  float               ExtentsAdjust;
+  DWORD               StencilCaps;
 
-  DWORD               *FVFCaps;
-  DWORD               *TextureOpCaps;
-  DWORD               *MaxTextureBlendStages;
-  DWORD               *MaxSimultaneousTextures;
+  DWORD               FVFCaps;
+  DWORD               TextureOpCaps;
+  DWORD               MaxTextureBlendStages;
+  DWORD               MaxSimultaneousTextures;
 
-  DWORD               *VertexProcessingCaps;
-  DWORD               *MaxActiveLights;
-  DWORD               *MaxUserClipPlanes;
-  DWORD               *MaxVertexBlendMatrices;
-  DWORD               *MaxVertexBlendMatrixIndex;
+  DWORD               VertexProcessingCaps;
+  DWORD               MaxActiveLights;
+  DWORD               MaxUserClipPlanes;
+  DWORD               MaxVertexBlendMatrices;
+  DWORD               MaxVertexBlendMatrixIndex;
 
-  float               *MaxPointSize;
+  float               MaxPointSize;
 
-  DWORD               *MaxPrimitiveCount;
-  DWORD               *MaxVertexIndex;
-  DWORD               *MaxStreams;
-  DWORD               *MaxStreamStride;
+  DWORD               MaxPrimitiveCount;
+  DWORD               MaxVertexIndex;
+  DWORD               MaxStreams;
+  DWORD               MaxStreamStride;
 
-  DWORD               *VertexShaderVersion;
-  DWORD               *MaxVertexShaderConst;
+  DWORD               VertexShaderVersion;
+  DWORD               MaxVertexShaderConst;
 
-  DWORD               *PixelShaderVersion;
-  float               *PixelShader1xMaxValue;
+  DWORD               PixelShaderVersion;
+  float               PixelShader1xMaxValue;
 
   /* DX 9 */
-  DWORD               *DevCaps2;
+  DWORD               DevCaps2;
 
-  float               *MaxNpatchTessellationLevel;
-  DWORD               *Reserved5; /*undocumented*/
+  float               MaxNpatchTessellationLevel;
+  DWORD               Reserved5; /*undocumented*/
 
-  UINT                *MasterAdapterOrdinal;
-  UINT                *AdapterOrdinalInGroup;
-  UINT                *NumberOfAdaptersInGroup;
-  DWORD               *DeclTypes;
-  DWORD               *NumSimultaneousRTs;
-  DWORD               *StretchRectFilterCaps;
+  UINT                MasterAdapterOrdinal;
+  UINT                AdapterOrdinalInGroup;
+  UINT                NumberOfAdaptersInGroup;
+  DWORD               DeclTypes;
+  DWORD               NumSimultaneousRTs;
+  DWORD               StretchRectFilterCaps;
   WINED3DVSHADERCAPS2_0   VS20Caps;
   WINED3DPSHADERCAPS2_0   PS20Caps;
-  DWORD               *VertexTextureFilterCaps;
-  DWORD               *MaxVShaderInstructionsExecuted;
-  DWORD               *MaxPShaderInstructionsExecuted;
-  DWORD               *MaxVertexShader30InstructionSlots; 
-  DWORD               *MaxPixelShader30InstructionSlots;
-  DWORD               *Reserved2;/* Not in the microsoft headers but documented */
-  DWORD               *Reserved3;
+  DWORD               VertexTextureFilterCaps;
+  DWORD               MaxVShaderInstructionsExecuted;
+  DWORD               MaxPShaderInstructionsExecuted;
+  DWORD               MaxVertexShader30InstructionSlots;
+  DWORD               MaxPixelShader30InstructionSlots;
+  DWORD               Reserved2;/* Not in the microsoft headers but documented */
+  DWORD               Reserved3;
 
 } WINED3DCAPS;
 

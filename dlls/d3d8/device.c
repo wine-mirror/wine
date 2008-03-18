@@ -192,10 +192,10 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDeviceCaps(LPDIRECT3DDEVICE8 iface
         return D3DERR_INVALIDCALL; /* well this is what MSDN says to return */
     }
 
-    D3D8CAPSTOWINECAPS(pCaps, pWineCaps)
     EnterCriticalSection(&d3d8_cs);
     hrc = IWineD3DDevice_GetDeviceCaps(This->WineD3DDevice, pWineCaps);
     LeaveCriticalSection(&d3d8_cs);
+    WINECAPSTOD3D8CAPS(pCaps, pWineCaps)
     HeapFree(GetProcessHeap(), 0, pWineCaps);
 
     /* D3D8 doesn't support SM 2.0 or higher, so clamp to 1.x */
