@@ -326,7 +326,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     data->whole_rect  = *rectWindow;
     data->client_rect = *rectClient;
     X11DRV_window_to_X_rect( data, &data->whole_rect );
-    if (memcmp( &visible_rect, &data->whole_rect, sizeof(RECT) ))
+    if (memcmp( visible_rect, &data->whole_rect, sizeof(RECT) ))
     {
         TRACE( "%p: need to update visible rect %s -> %s\n", hwnd,
                wine_dbgstr_rect(visible_rect), wine_dbgstr_rect(&data->whole_rect) );
