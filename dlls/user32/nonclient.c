@@ -1123,7 +1123,7 @@ LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
  *
  * Handle a WM_NCACTIVATE message. Called from DefWindowProc().
  */
-LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
+LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     WND* wndPtr = WIN_GetPtr( hwnd );
 
@@ -1138,10 +1138,16 @@ LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
     else wndPtr->flags &= ~WIN_NCACTIVATED;
     WIN_ReleasePtr( wndPtr );
 
-    if (IsIconic(hwnd))
-        WINPOS_RedrawIconTitle( hwnd );
-    else
-        NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
+    /* This isn't documented but is reproducible in at least XP SP2 and
+     * Outlook 2007 depends on it
+     */
+    if (lParam != -1)
+    {
+        if (IsIconic(hwnd))
+            WINPOS_RedrawIconTitle( hwnd );
+        else
+            NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
+    }
 
     return TRUE;
 }
