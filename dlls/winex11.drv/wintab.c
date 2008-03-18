@@ -577,7 +577,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
 
             if (! is_tablet_cursor(target->name, device_type))
             {
-                WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device.  If this is wrong, please report to http://forums.winehq.org\n",
+                WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device.  If this is wrong, please report it to wine-devel@winehq.org\n",
                      loop, devices[loop].name, device_type ? device_type : "");
                 XFree(device_type);
                 cursor_target --;
