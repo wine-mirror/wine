@@ -2258,6 +2258,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     }
                 }
 
+                /* Always report software processing */
+                if(Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
+                    UsageCaps |= WINED3DUSAGE_SOFTWAREPROCESSING;
+
                 /* Check QUERY_FILTER support */
                 if(Usage & WINED3DUSAGE_QUERY_FILTER) {
                     if(CheckFilterCapability(CheckFormat)) {
@@ -2350,6 +2354,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                  }
             }
 
+            /* Always report software processing */
+            if(Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
+                UsageCaps |= WINED3DUSAGE_SOFTWAREPROCESSING;
+
             /* Check QUERY_FILTER support */
             if(Usage & WINED3DUSAGE_QUERY_FILTER) {
                 if(CheckFilterCapability(CheckFormat)) {
@@ -2410,6 +2418,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             /* Always report dynamic locking */
             if(Usage & WINED3DUSAGE_DYNAMIC)
                 UsageCaps |= WINED3DUSAGE_DYNAMIC;
+
+            /* Always report software processing */
+            if(Usage & WINED3DUSAGE_SOFTWAREPROCESSING)
+                UsageCaps |= WINED3DUSAGE_SOFTWAREPROCESSING;
 
             /* Check QUERY_FILTER support */
             if(Usage & WINED3DUSAGE_QUERY_FILTER) {
