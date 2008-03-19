@@ -521,6 +521,7 @@ ALL_MAKEFILES = \
 	programs/notepad/Makefile \
 	programs/oleview/Makefile \
 	programs/progman/Makefile \
+	programs/reg/Makefile \
 	programs/regedit/Makefile \
 	programs/regsvr32/Makefile \
 	programs/rpcss/Makefile \
@@ -939,6 +940,7 @@ programs/net/Makefile: programs/net/Makefile.in programs/Makeprog.rules
 programs/notepad/Makefile: programs/notepad/Makefile.in programs/Makeprog.rules
 programs/oleview/Makefile: programs/oleview/Makefile.in programs/Makeprog.rules
 programs/progman/Makefile: programs/progman/Makefile.in programs/Makeprog.rules
+programs/reg/Makefile: programs/reg/Makefile.in programs/Makeprog.rules
 programs/regedit/Makefile: programs/regedit/Makefile.in programs/Makeprog.rules
 programs/regsvr32/Makefile: programs/regsvr32/Makefile.in programs/Makeprog.rules
 programs/rpcss/Makefile: programs/rpcss/Makefile.in programs/Makeprog.rules

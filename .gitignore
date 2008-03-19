@@ -566,6 +566,7 @@ programs/net/net
 programs/notepad/notepad
 programs/oleview/oleview
 programs/progman/progman
+programs/reg/reg
 programs/regedit/regedit
 programs/regsvr32/regsvr32
 programs/rpcss/irot.h

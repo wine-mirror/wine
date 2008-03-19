@@ -21904,6 +21904,8 @@ ac_config_files="$ac_config_files programs/oleview/Makefile"
 
 ac_config_files="$ac_config_files programs/progman/Makefile"
 
+ac_config_files="$ac_config_files programs/reg/Makefile"
+
 ac_config_files="$ac_config_files programs/regedit/Makefile"
 
 ac_config_files="$ac_config_files programs/regsvr32/Makefile"
@@ -22913,6 +22915,7 @@ do
     "programs/notepad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/notepad/Makefile" ;;
     "programs/oleview/Makefile") CONFIG_FILES="$CONFIG_FILES programs/oleview/Makefile" ;;
     "programs/progman/Makefile") CONFIG_FILES="$CONFIG_FILES programs/progman/Makefile" ;;
+    "programs/reg/Makefile") CONFIG_FILES="$CONFIG_FILES programs/reg/Makefile" ;;
     "programs/regedit/Makefile") CONFIG_FILES="$CONFIG_FILES programs/regedit/Makefile" ;;
     "programs/regsvr32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/regsvr32/Makefile" ;;
     "programs/rpcss/Makefile") CONFIG_FILES="$CONFIG_FILES programs/rpcss/Makefile" ;;

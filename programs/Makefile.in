@@ -21,6 +21,7 @@ SUBDIRS = \
 	notepad \
 	oleview \
 	progman \
+	reg \
 	regedit \
 	regsvr32 \
 	rpcss \
@@ -66,6 +67,7 @@ INSTALLSUBDIRS = \
 	notepad \
 	oleview \
 	progman \
+	reg \
 	regedit \
 	regsvr32 \
 	rpcss \
