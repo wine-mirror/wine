@@ -3830,8 +3830,8 @@ static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
                 return (GET_BE_WORD(cf2->RangeRecord[i].StartCoverageIndex) +
                     glyph - GET_BE_WORD(cf2->RangeRecord[i].Start));
             }
-            return -1;
         }
+        return -1;
     }
     else
         ERR("Unknown CoverageFormat %i\n",GET_BE_WORD(cf1->CoverageFormat));
