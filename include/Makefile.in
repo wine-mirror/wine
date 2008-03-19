@@ -11,6 +11,7 @@ IDL_H_SRCS = \
 	amvideo.idl \
 	austream.idl \
 	bits.idl \
+	bits1_5.idl \
 	comcat.idl \
 	control.idl \
 	d3d10.idl \

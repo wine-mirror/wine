@@ -168,7 +168,7 @@ static const IEnumBackgroundCopyFilesVtbl BITS_IEnumBackgroundCopyFiles_Vtbl =
     BITS_IEnumBackgroundCopyFiles_GetCount
 };
 
-HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj, IBackgroundCopyJob* iCopyJob)
+HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj, IBackgroundCopyJob2 *iCopyJob)
 {
     EnumBackgroundCopyFilesImpl *This;
     BackgroundCopyFileImpl *file;

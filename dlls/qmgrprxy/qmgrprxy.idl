@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google (Roy Shea)
+ * Copyright 2007, 2008 Google (Roy Shea, Dan Hipschman)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,3 +17,6 @@
  */
 
 #include "bits.idl"
+
+#define DO_NO_IMPORTS
+#include "bits1_5.idl"

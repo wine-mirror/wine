@@ -25,7 +25,7 @@
 #include "objbase.h"
 
 #define COBJMACROS
-#include "bits.h"
+#include "bits1_5.h"
 
 #include <string.h>
 #include "wine/list.h"
@@ -33,7 +33,7 @@
 /* Background copy job vtbl and related data */
 typedef struct
 {
-    const IBackgroundCopyJobVtbl *lpVtbl;
+    const IBackgroundCopyJob2Vtbl *lpVtbl;
     LONG ref;
     LPWSTR displayName;
     BG_JOB_TYPE type;
@@ -106,7 +106,7 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
                                       LPCWSTR remoteName, LPCWSTR localName,
                                       LPVOID *ppObj);
 HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj,
-                                           IBackgroundCopyJob* copyJob);
+                                           IBackgroundCopyJob2 *copyJob);
 DWORD WINAPI fileTransfer(void *param);
 void processJob(BackgroundCopyJobImpl *job);
 BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job);

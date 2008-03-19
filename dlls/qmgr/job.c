@@ -35,20 +35,21 @@ static void BackgroundCopyJobDestructor(BackgroundCopyJobImpl *This)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
-static ULONG WINAPI BITS_IBackgroundCopyJob_AddRef(IBackgroundCopyJob* iface)
+static ULONG WINAPI BITS_IBackgroundCopyJob_AddRef(IBackgroundCopyJob2 *iface)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
     return InterlockedIncrement(&This->ref);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_QueryInterface(
-    IBackgroundCopyJob* iface, REFIID riid, LPVOID *ppvObject)
+    IBackgroundCopyJob2 *iface, REFIID riid, LPVOID *ppvObject)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
     TRACE("IID: %s\n", debugstr_guid(riid));
 
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IBackgroundCopyJob))
+        || IsEqualGUID(riid, &IID_IBackgroundCopyJob)
+        || IsEqualGUID(riid, &IID_IBackgroundCopyJob2))
     {
         *ppvObject = &This->lpVtbl;
         BITS_IBackgroundCopyJob_AddRef(iface);
@@ -59,7 +60,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI BITS_IBackgroundCopyJob_Release(IBackgroundCopyJob* iface)
+static ULONG WINAPI BITS_IBackgroundCopyJob_Release(IBackgroundCopyJob2 *iface)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -73,7 +74,7 @@ static ULONG WINAPI BITS_IBackgroundCopyJob_Release(IBackgroundCopyJob* iface)
 /*** IBackgroundCopyJob methods ***/
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFileSet(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     ULONG cFileCount,
     BG_FILE_INFO *pFileSet)
 {
@@ -89,7 +90,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFileSet(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFile(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     LPCWSTR RemoteUrl,
     LPCWSTR LocalName)
 {
@@ -118,7 +119,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_AddFile(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_EnumFiles(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     IEnumBackgroundCopyFiles **ppEnum)
 {
     TRACE("\n");
@@ -126,14 +127,14 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_EnumFiles(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Suspend(
-    IBackgroundCopyJob* iface)
+    IBackgroundCopyJob2 *iface)
 {
     FIXME("Not implemented\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Resume(
-    IBackgroundCopyJob* iface)
+    IBackgroundCopyJob2 *iface)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
     HRESULT rv = S_OK;
@@ -160,14 +161,14 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_Resume(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Cancel(
-    IBackgroundCopyJob* iface)
+    IBackgroundCopyJob2 *iface)
 {
     FIXME("Not implemented\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_Complete(
-    IBackgroundCopyJob* iface)
+    IBackgroundCopyJob2 *iface)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
     HRESULT rv = S_OK;
@@ -209,7 +210,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_Complete(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetId(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     GUID *pVal)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
@@ -218,7 +219,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetId(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetType(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     BG_JOB_TYPE *pVal)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
@@ -231,7 +232,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetType(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetProgress(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     BG_JOB_PROGRESS *pVal)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
@@ -250,7 +251,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetProgress(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetTimes(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     BG_JOB_TIMES *pVal)
 {
     FIXME("Not implemented\n");
@@ -258,7 +259,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetTimes(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetState(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     BG_JOB_STATE *pVal)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
@@ -272,7 +273,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetState(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetError(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     IBackgroundCopyError **ppError)
 {
     FIXME("Not implemented\n");
@@ -280,7 +281,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetError(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetOwner(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     LPWSTR *pVal)
 {
     FIXME("Not implemented\n");
@@ -288,7 +289,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetOwner(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetDisplayName(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     LPCWSTR Val)
 {
     FIXME("Not implemented\n");
@@ -296,7 +297,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetDisplayName(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetDisplayName(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     LPWSTR *pVal)
 {
     BackgroundCopyJobImpl *This = (BackgroundCopyJobImpl *) iface;
@@ -314,7 +315,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetDisplayName(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetDescription(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     LPCWSTR Val)
 {
     FIXME("Not implemented\n");
@@ -322,7 +323,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetDescription(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetDescription(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     LPWSTR *pVal)
 {
     FIXME("Not implemented\n");
@@ -330,7 +331,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetDescription(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetPriority(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     BG_JOB_PRIORITY Val)
 {
     FIXME("Not implemented\n");
@@ -338,7 +339,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetPriority(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetPriority(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     BG_JOB_PRIORITY *pVal)
 {
     FIXME("Not implemented\n");
@@ -346,7 +347,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetPriority(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNotifyFlags(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     ULONG Val)
 {
     FIXME("Not implemented\n");
@@ -354,7 +355,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNotifyFlags(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNotifyFlags(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     ULONG *pVal)
 {
     FIXME("Not implemented\n");
@@ -362,7 +363,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNotifyFlags(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNotifyInterface(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     IUnknown *Val)
 {
     FIXME("Not implemented\n");
@@ -370,7 +371,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNotifyInterface(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNotifyInterface(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     IUnknown **pVal)
 {
     FIXME("Not implemented\n");
@@ -378,7 +379,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNotifyInterface(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetMinimumRetryDelay(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     ULONG Seconds)
 {
     FIXME("Not implemented\n");
@@ -386,7 +387,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetMinimumRetryDelay(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetMinimumRetryDelay(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     ULONG *Seconds)
 {
     FIXME("Not implemented\n");
@@ -394,7 +395,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetMinimumRetryDelay(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNoProgressTimeout(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     ULONG Seconds)
 {
     FIXME("Not implemented\n");
@@ -402,7 +403,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNoProgressTimeout(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNoProgressTimeout(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     ULONG *Seconds)
 {
     FIXME("Not implemented\n");
@@ -410,7 +411,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNoProgressTimeout(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetErrorCount(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     ULONG *Errors)
 {
     FIXME("Not implemented\n");
@@ -418,7 +419,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetErrorCount(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetProxySettings(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     BG_JOB_PROXY_USAGE ProxyUsage,
     const WCHAR *ProxyList,
     const WCHAR *ProxyBypassList)
@@ -428,7 +429,7 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetProxySettings(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetProxySettings(
-    IBackgroundCopyJob* iface,
+    IBackgroundCopyJob2 *iface,
     BG_JOB_PROXY_USAGE *pProxyUsage,
     LPWSTR *pProxyList,
     LPWSTR *pProxyBypassList)
@@ -438,14 +439,81 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetProxySettings(
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_TakeOwnership(
-    IBackgroundCopyJob* iface)
+    IBackgroundCopyJob2 *iface)
 {
     FIXME("Not implemented\n");
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNotifyCmdLine(
+    IBackgroundCopyJob2 *iface,
+    LPCWSTR prog,
+    LPCWSTR params)
+{
+    FIXME("Not implemented\n");
+    return E_NOTIMPL;
+}
 
-static const IBackgroundCopyJobVtbl BITS_IBackgroundCopyJob_Vtbl =
+static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNotifyCmdLine(
+    IBackgroundCopyJob2 *iface,
+    LPWSTR prog,
+    LPWSTR params)
+{
+    FIXME("Not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BITS_IBackgroundCopyJob_GetReplyProgress(
+    IBackgroundCopyJob2 *iface,
+    BG_JOB_REPLY_PROGRESS *progress)
+{
+    FIXME("Not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BITS_IBackgroundCopyJob_GetReplyData(
+    IBackgroundCopyJob2 *iface,
+    byte **pBuffer,
+    UINT64 *pLength)
+{
+    FIXME("Not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BITS_IBackgroundCopyJob_SetReplyFileName(
+    IBackgroundCopyJob2 *iface,
+    LPCWSTR filename)
+{
+    FIXME("Not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BITS_IBackgroundCopyJob_GetReplyFileName(
+    IBackgroundCopyJob2 *iface,
+    LPWSTR *pFilename)
+{
+    FIXME("Not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BITS_IBackgroundCopyJob_SetCredentials(
+    IBackgroundCopyJob2 *iface,
+    BG_AUTH_CREDENTIALS *cred)
+{
+    FIXME("Not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BITS_IBackgroundCopyJob_RemoveCredentials(
+    IBackgroundCopyJob2 *iface,
+    BG_AUTH_TARGET target,
+    BG_AUTH_SCHEME scheme)
+{
+    FIXME("Not implemented\n");
+    return E_NOTIMPL;
+}
+
+static const IBackgroundCopyJob2Vtbl BITS_IBackgroundCopyJob_Vtbl =
 {
     BITS_IBackgroundCopyJob_QueryInterface,
     BITS_IBackgroundCopyJob_AddRef,
@@ -482,6 +550,14 @@ static const IBackgroundCopyJobVtbl BITS_IBackgroundCopyJob_Vtbl =
     BITS_IBackgroundCopyJob_SetProxySettings,
     BITS_IBackgroundCopyJob_GetProxySettings,
     BITS_IBackgroundCopyJob_TakeOwnership,
+    BITS_IBackgroundCopyJob_SetNotifyCmdLine,
+    BITS_IBackgroundCopyJob_GetNotifyCmdLine,
+    BITS_IBackgroundCopyJob_GetReplyProgress,
+    BITS_IBackgroundCopyJob_GetReplyData,
+    BITS_IBackgroundCopyJob_SetReplyFileName,
+    BITS_IBackgroundCopyJob_GetReplyFileName,
+    BITS_IBackgroundCopyJob_SetCredentials,
+    BITS_IBackgroundCopyJob_RemoveCredentials
 };
 
 HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,

@@ -473,6 +473,7 @@ include/amstream.h
 include/amvideo.h
 include/austream.h
 include/bits.h
+include/bits1_5.h
 include/comcat.h
 include/config.h
 include/control.h
