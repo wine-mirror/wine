@@ -45,6 +45,7 @@
 #include "msrle_No.rc"
 #include "msrle_Pl.rc"
 #include "msrle_Pt.rc"
+#include "msrle_Ro.rc"
 #include "msrle_Ru.rc"
 #include "msrle_Si.rc"
 #include "msrle_Sv.rc"
