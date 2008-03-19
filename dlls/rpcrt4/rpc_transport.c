@@ -392,7 +392,7 @@ static int rpcrt4_conn_np_write(RpcConnection *Connection,
   while (bytes_left)
   {
     DWORD bytes_written;
-    ret = WriteFile(npc->pipe, buf, count, &bytes_written, NULL);
+    ret = WriteFile(npc->pipe, buf, bytes_left, &bytes_written, NULL);
     if (!ret || !bytes_written)
         break;
     bytes_left -= bytes_written;
