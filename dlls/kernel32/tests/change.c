@@ -39,12 +39,14 @@
 static DWORD CALLBACK NotificationThread(LPVOID arg)
 {
     HANDLE change = (HANDLE) arg;
+    BOOL notified = FALSE;
     BOOL ret = FALSE;
     DWORD status;
 
     status = WaitForSingleObject(change, 100);
 
     if (status == WAIT_OBJECT_0 ) {
+        notified = TRUE;
         ret = FindNextChangeNotification(change);
     }
 
@@ -52,7 +54,7 @@ static DWORD CALLBACK NotificationThread(LPVOID arg)
     ok( ret, "FindCloseChangeNotification error: %d\n",
        GetLastError());
 
-    ExitThread((DWORD)ret);
+    ExitThread((DWORD)notified);
 }
 
 static HANDLE StartNotificationThread(LPCSTR path, BOOL subtree, DWORD flags)
@@ -150,7 +152,8 @@ static void test_FindFirstChangeNotification(void)
     thread = StartNotificationThread(dirname1, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = MoveFileA(dirname1, dirname2);
     ok(ret, "MoveFileA error: %d\n", GetLastError());
-    ok(FinishNotificationThread(thread), "Missed notification\n");
+    ret = FinishNotificationThread(thread);
+    ok(!ret, "Unexpected notification\n");
 
     /* What if we remove the directory we registered notification for? */
     thread = StartNotificationThread(dirname2, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
