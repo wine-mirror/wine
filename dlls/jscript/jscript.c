@@ -24,12 +24,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
-    const IActiveScriptVtbl  *lpIActiveScriptVtbl;
+    const IActiveScriptVtbl          *lpIActiveScriptVtbl;
+    const IActiveScriptParseVtbl     *lpIActiveScriptParseVtbl;
 
     LONG ref;
 } JScript;
 
-#define ACTSCRIPT(x)  ((IActiveScript*)      &(x)->lpIActiveScriptVtbl)
+#define ACTSCRIPT(x)  ((IActiveScript*)          &(x)->lpIActiveScriptVtbl)
+#define ASPARSE(x)    ((IActiveScriptParse*)     &(x)->lpIActiveScriptParseVtbl)
 
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
 
@@ -45,6 +47,9 @@ static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, 
     }else if(IsEqualGUID(riid, &IID_IActiveScript)) {
         TRACE("(%p)->(IID_IActiveScript %p)\n", This, ppv);
         *ppv = ACTSCRIPT(This);
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptParse)) {
+        TRACE("(%p)->(IID_IActiveScriptParse %p)\n", This, ppv);
+        *ppv = ASPARSE(This);
     }
 
     if(*ppv) {
@@ -200,6 +205,70 @@ static const IActiveScriptVtbl JScriptVtbl = {
     JScript_Clone
 };
 
+#define ASPARSE_THIS(iface) DEFINE_THIS(JScript, IActiveScriptParse, iface)
+
+static HRESULT WINAPI JScriptParse_QueryInterface(IActiveScriptParse *iface, REFIID riid, void **ppv)
+{
+    JScript *This = ASPARSE_THIS(iface);
+    return IActiveScript_QueryInterface(ACTSCRIPT(This), riid, ppv);
+}
+
+static ULONG WINAPI JScriptParse_AddRef(IActiveScriptParse *iface)
+{
+    JScript *This = ASPARSE_THIS(iface);
+    return IActiveScript_AddRef(ACTSCRIPT(This));
+}
+
+static ULONG WINAPI JScriptParse_Release(IActiveScriptParse *iface)
+{
+    JScript *This = ASPARSE_THIS(iface);
+    return IActiveScript_Release(ACTSCRIPT(This));
+}
+
+static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
+{
+    JScript *This = ASPARSE_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JScriptParse_AddScriptlet(IActiveScriptParse *iface,
+        LPCOLESTR pstrDefaultName, LPCOLESTR pstrCode, LPCOLESTR pstrItemName,
+        LPCOLESTR pstrSubItemName, LPCOLESTR pstrEventName, LPCOLESTR pstrDelimiter,
+        DWORD dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags,
+        BSTR *pbstrName, EXCEPINFO *pexcepinfo)
+{
+    JScript *This = ASPARSE_THIS(iface);
+    FIXME("(%p)->(%s %s %s %s %s %s %x %u %x %p %p)\n", This, debugstr_w(pstrDefaultName),
+          debugstr_w(pstrCode), debugstr_w(pstrItemName), debugstr_w(pstrSubItemName),
+          debugstr_w(pstrEventName), debugstr_w(pstrDelimiter), dwSourceContextCookie,
+          ulStartingLineNumber, dwFlags, pbstrName, pexcepinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
+        LPCOLESTR pstrCode, LPCOLESTR pstrItemName, IUnknown *punkContext,
+        LPCOLESTR pstrDelimiter, DWORD dwSourceContextCookie, ULONG ulStartingLine,
+        DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
+{
+    JScript *This = ASPARSE_THIS(iface);
+    FIXME("(%p)->(%s %s %p %s %x %u %x %p %p)\n", This, debugstr_w(pstrCode),
+          debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
+          dwSourceContextCookie, ulStartingLine, dwFlags, pvarResult, pexcepinfo);
+    return E_NOTIMPL;
+}
+
+#undef ASPARSE_THIS
+
+static const IActiveScriptParseVtbl JScriptParseVtbl = {
+    JScriptParse_QueryInterface,
+    JScriptParse_AddRef,
+    JScriptParse_Release,
+    JScriptParse_InitNew,
+    JScriptParse_AddScriptlet,
+    JScriptParse_ParseScriptText
+};
+
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
                                              REFIID riid, void **ppv)
 {
@@ -210,7 +279,8 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
 
     ret = heap_alloc(sizeof(*ret));
 
-    ret->lpIActiveScriptVtbl = &JScriptVtbl;
+    ret->lpIActiveScriptVtbl          = &JScriptVtbl;
+    ret->lpIActiveScriptParseVtbl     = &JScriptParseVtbl;
     ret->ref = 1;
 
     hres = IActiveScript_QueryInterface(ACTSCRIPT(ret), riid, ppv);
