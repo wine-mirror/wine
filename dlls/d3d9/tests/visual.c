@@ -5413,6 +5413,90 @@ void test_vshader_input(IDirect3DDevice9 *device)
     IDirect3DVertexDeclaration9_Release(decl_color_float);
 }
 
+static void srgbtexture_test(IDirect3DDevice9 *device)
+{
+    /* Fill a texture with 0x7f (~ .5), and then turn on the D3DSAMP_SRGBTEXTURE
+     * texture stage state to render a quad using that texture.  The resulting
+     * color components should be 0x36 (~ 0.21), per this formula:
+     *    linear_color = ((srgb_color + 0.055) / 1.055) ^ 2.4
+     * This is true where srgb_color > 0.04045.
+     */
+    IDirect3D9 *d3d = NULL;
+    HRESULT hr;
+    LPDIRECT3DTEXTURE9 texture = NULL;
+    LPDIRECT3DSURFACE9 surface = NULL;
+    D3DLOCKED_RECT lr;
+    DWORD color;
+    float quad[] = {
+        -1.0,       1.0,       0.0,     0.0,    0.0,
+         1.0,       1.0,       0.0,     1.0,    0.0,
+        -1.0,      -1.0,       0.0,     0.0,    1.0,
+         1.0,      -1.0,       0.0,     1.0,    1.0,
+    };
+
+
+    memset(&lr, 0, sizeof(lr));
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                                    D3DUSAGE_QUERY_SRGBREAD, D3DRTYPE_TEXTURE,
+                                    D3DFMT_A8R8G8B8) != D3D_OK) {
+        skip("D3DFMT_A8R8G8B8 textures with SRGBREAD not supported\n");
+        goto out;
+    }
+
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0,
+                                        D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+                                        &texture, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed with %s\n", DXGetErrorString9(hr));
+    if(!texture) {
+        skip("Failed to create A8R8G8B8 texture with SRGBREAD\n");
+        goto out;
+    }
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %s\n", DXGetErrorString9(hr));
+
+    fill_surface(surface, 0xff7f7f7f);
+    IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, TRUE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
+
+
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+    color = getPixelColor(device, 320, 240);
+    ok(color == 0x00363636, "srgb quad has color %08x, expected 0x00363636\n", color);
+
+out:
+    if(texture) IDirect3DTexture9_Release(texture);
+    IDirect3D9_Release(d3d);
+}
+
 static void fog_srgbwrite_test(IDirect3DDevice9 *device)
 {
     /* Draw a black quad, half fogged with white fog -> grey color. Enable sRGB writing.
@@ -7280,6 +7364,7 @@ START_TEST(visual)
     }
     offscreen_test(device_ptr);
     alpha_test(device_ptr);
+    srgbtexture_test(device_ptr);
     release_buffer_test(device_ptr);
     float_texture_test(device_ptr);
     g16r16_texture_test(device_ptr);
