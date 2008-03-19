@@ -18,8 +18,9 @@
 
 #include <windef.h>
 
-#include <reg.h>
+#include "reg.h"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #include "En.rc"
+#include "Nl.rc"
