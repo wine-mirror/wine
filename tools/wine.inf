@@ -208,6 +208,7 @@ HKCU,%Desktop%,"DragFullWindows",2,"0"
 HKCU,%Desktop%,"SmoothScroll",3,00,00,00,00
 HKCU,%Desktop%,"UserPreferenceMask",3,10,00,00,80
 HKCU,%Desktop%,"LowPowerActive",,"0"
+HKCU,%Desktop%,"MenuShowDelay",2,"400"
 
 [Metrics]
 HKCU,%Metrics%,"ScrollWidth",2,"16"
