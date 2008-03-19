@@ -37,6 +37,105 @@ static const IPinVtbl PullPin_Vtbl;
 #define ALIGNDOWN(value,boundary) ((value)/(boundary)*(boundary))
 #define ALIGNUP(value,boundary) (ALIGNDOWN((value)+(boundary)-1, (boundary)))
 
+typedef HRESULT (*SendPinFunc)( IPin *to, LPVOID arg );
+
+/** Helper function, there are a lot of places where the error code is inherited
+ * The following rules apply:
+ *
+ * Return the first received error code (E_NOTIMPL is ignored)
+ * If no errors occur: return the first received non-error-code that isn't S_OK
+ */
+static HRESULT updatehres( HRESULT original, HRESULT new )
+{
+    if (FAILED( original ) || new == E_NOTIMPL)
+        return original;
+
+    if (FAILED( new ) || original == S_OK)
+        return new;
+
+    return original;
+}
+
+/** Sends a message from a pin further to other, similar pins
+ * fnMiddle is called on each pin found further on the stream.
+ * fnEnd (can be NULL) is called when the message can't be sent any further (this is a renderer or source)
+ *
+ * If the pin given is an input pin, the message will be sent downstream to other input pins
+ * If the pin given is an output pin, the message will be sent upstream to other output pins
+ */
+static HRESULT SendFurther( IPin *from, SendPinFunc fnMiddle, LPVOID arg, SendPinFunc fnEnd )
+{
+    PIN_INFO pin_info;
+    ULONG amount = 0;
+    HRESULT hr = S_OK;
+    HRESULT hr_return = S_OK;
+    IEnumPins *enumpins = NULL;
+    BOOL foundend = TRUE;
+    PIN_DIRECTION from_dir;
+
+    IPin_QueryDirection( from, &from_dir );
+
+    hr = IPin_QueryInternalConnections( from, NULL, &amount );
+    if (hr != E_NOTIMPL && amount)
+        FIXME("Use QueryInternalConnections!\n");
+     hr = S_OK;
+
+    pin_info.pFilter = NULL;
+    hr = IPin_QueryPinInfo( from, &pin_info );
+    if (FAILED(hr))
+        goto out;
+
+    hr = IBaseFilter_EnumPins( pin_info.pFilter, &enumpins );
+    if (FAILED(hr))
+        goto out;
+
+    hr = IEnumPins_Reset( enumpins );
+    while (hr == S_OK) {
+        IPin *pin = NULL;
+        hr = IEnumPins_Next( enumpins, 1, &pin, NULL );
+        if (hr == VFW_E_ENUM_OUT_OF_SYNC)
+        {
+            hr = IEnumPins_Reset( enumpins );
+            continue;
+        }
+        if (pin)
+        {
+            PIN_DIRECTION dir;
+
+            IPin_QueryDirection( pin, &dir );
+            if (dir != from_dir)
+            {
+                IPin *connected = NULL;
+
+                foundend = FALSE;
+                IPin_ConnectedTo( pin, &connected );
+                if (connected)
+                {
+                    HRESULT hr_local;
+
+                    hr_local = fnMiddle( pin, arg );
+                    hr_return = updatehres( hr_return, hr_local );
+                    IPin_Release(connected);
+                }
+            }
+            IPin_Release( pin );
+        }
+    } while (hr == S_OK);
+    if (!foundend)
+        hr = hr_return;
+    else if (fnEnd) {
+        HRESULT hr_local;
+
+        hr_local = fnEnd( from, arg );
+        hr_return = updatehres( hr_return, hr_local );
+    }
+
+out:
+    if (pin_info.pFilter)
+        IBaseFilter_Release( pin_info.pFilter );
+    return hr;
+}
+
 static inline InputPin *impl_from_IMemInputPin( IMemInputPin *iface )
 {
     return (InputPin *)((char*)iface - FIELD_OFFSET(InputPin, lpVtblMemInput));
@@ -488,36 +587,73 @@ HRESULT WINAPI InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, cons
     return hr;
 }
 
+static HRESULT deliver_endofstream(IPin* pin, LPVOID unused)
+{
+    return IPin_EndOfStream( pin );
+}
+
 HRESULT WINAPI InputPin_EndOfStream(IPin * iface)
 {
-    TRACE("()\n");
+    FIXME("() stub\n");
 
-    return S_OK;
+    /* Should do an end of stream notification?
+     * Also, don't accept any more samples from now!
+     * TODO: Don't accept any more packets
+     */
+
+    return SendFurther( iface, deliver_endofstream, NULL, NULL );
+}
+
+static HRESULT deliver_beginflush(IPin* pin, LPVOID unused)
+{
+    return IPin_BeginFlush( pin );
 }
 
 HRESULT WINAPI InputPin_BeginFlush(IPin * iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    FIXME("() stub\n");
+
+    /* TODO: Drop all cached packets, and don't accept any more samples! */
+    return SendFurther( iface, deliver_beginflush, NULL, NULL );
+}
+
+static HRESULT deliver_endflush(IPin* pin, LPVOID unused)
+{
+    return IPin_EndFlush( pin );
 }
 
 HRESULT WINAPI InputPin_EndFlush(IPin * iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    FIXME("() stub\n");
+
+    /* TODO: Accept any samples again */
+    return SendFurther( iface, deliver_endflush, NULL, NULL );
+}
+
+typedef struct newsegmentargs
+{
+    REFERENCE_TIME tStart, tStop;
+    double rate;
+} newsegmentargs;
+
+static HRESULT deliver_newsegment(IPin *pin, LPVOID data)
+{
+    newsegmentargs *args = data;
+    return IPin_NewSegment(pin, args->tStart, args->tStop, args->rate);
 }
 
 HRESULT WINAPI InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
     InputPin *This = (InputPin *)iface;
+    newsegmentargs args;
 
     TRACE("(%x%08x, %x%08x, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
 
-    This->tStart = tStart;
-    This->tStop = tStop;
-    This->dRate = dRate;
+    args.tStart = This->tStart = tStart;
+    args.tStop = This->tStop = tStop;
+    args.rate = This->dRate = dRate;
 
-    return S_OK;
+    return SendFurther( iface, deliver_newsegment, &args, NULL );
 }
 
 static const IPinVtbl InputPin_Vtbl = 
