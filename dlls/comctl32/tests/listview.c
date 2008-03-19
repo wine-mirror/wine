@@ -564,7 +564,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
-    todo_wine ok(item.state == 0x2aab, "state %x\n", item.state);
+    ok(item.state == 0x2aab, "state %x\n", item.state);
 
     r = SendMessage(hwnd, WM_KEYDOWN, VK_SPACE, 0);
     expect(0, r);

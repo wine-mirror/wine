@@ -1353,6 +1353,19 @@ static inline BOOL is_autoarrange(const LISTVIEW_INFO *infoPtr)
 	   (uView == LVS_ICON || uView == LVS_SMALLICON);
 }
 
+static void toggle_checkbox_state(LISTVIEW_INFO *infoPtr, INT nItem)
+{
+    DWORD state = STATEIMAGEINDEX(LISTVIEW_GetItemState(infoPtr, nItem, LVIS_STATEIMAGEMASK));
+    if(state == 1 || state == 2)
+    {
+        LVITEMW lvitem;
+        state ^= 3;
+        lvitem.state = INDEXTOSTATEIMAGEMASK(state);
+        lvitem.stateMask = LVIS_STATEIMAGEMASK;
+        LISTVIEW_SetItemState(infoPtr, nItem, &lvitem);
+    }
+}
+
 /******** Internal API functions ************************************/
 
 static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(const LISTVIEW_INFO *infoPtr, INT nSubItem)
@@ -8283,6 +8296,8 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
   {
   case VK_SPACE:
     nItem = infoPtr->nFocusedItem;
+    if (infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES)
+        toggle_checkbox_state(infoPtr, infoPtr->nFocusedItem);
     break;
 
   case VK_RETURN:
@@ -8475,15 +8490,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   {
     if ((infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) && (lvHitTestInfo.flags & LVHT_ONITEMSTATEICON))
     {
-        DWORD state = STATEIMAGEINDEX(LISTVIEW_GetItemState(infoPtr, nItem, LVIS_STATEIMAGEMASK));
-        if(state == 1 || state == 2)
-        {
-            LVITEMW lvitem;
-            state ^= 3;
-            lvitem.state = INDEXTOSTATEIMAGEMASK(state);
-            lvitem.stateMask = LVIS_STATEIMAGEMASK;
-            LISTVIEW_SetItemState(infoPtr, nItem, &lvitem);
-        }
+        toggle_checkbox_state(infoPtr, nItem);
         return 0;
     }
 
