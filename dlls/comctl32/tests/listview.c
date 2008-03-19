@@ -539,6 +539,44 @@ static void test_checkboxes(void)
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
     ok(item.state == 0x1aaa, "state %x\n", item.state);
 
+    /* Toggle checkbox tests (bug 9934) */
+    memset (&item, 0xcc, sizeof(item));
+    item.mask = LVIF_STATE;
+    item.iItem = 3;
+    item.iSubItem = 0;
+    item.state = LVIS_FOCUSED;
+    item.stateMask = LVIS_FOCUSED;
+    r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM) &item);
+    expect(1, r);
+
+    item.iItem = 3;
+    item.mask = LVIF_STATE;
+    item.stateMask = 0xffff;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(item.state == 0x1aab, "state %x\n", item.state);
+
+    r = SendMessage(hwnd, WM_KEYDOWN, VK_SPACE, 0);
+    expect(0, r);
+    r = SendMessage(hwnd, WM_KEYUP, VK_SPACE, 0);
+    expect(0, r);
+
+    item.iItem = 3;
+    item.mask = LVIF_STATE;
+    item.stateMask = 0xffff;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    todo_wine ok(item.state == 0x2aab, "state %x\n", item.state);
+
+    r = SendMessage(hwnd, WM_KEYDOWN, VK_SPACE, 0);
+    expect(0, r);
+    r = SendMessage(hwnd, WM_KEYUP, VK_SPACE, 0);
+    expect(0, r);
+
+    item.iItem = 3;
+    item.mask = LVIF_STATE;
+    item.stateMask = 0xffff;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(item.state == 0x1aab, "state %x\n", item.state);
+
     DestroyWindow(hwnd);
 }
 
