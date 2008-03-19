@@ -1,5 +1,6 @@
 /*
- * Copyright 2007 Mikolaj Zalewski
+ * Copyright (C) 2007 Mikolaj Zalewski
+ * Copyright (C) 2008 Michael Stefaniuc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,17 +17,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
-#include "resources.h"
+#pragma code_page(65001)
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+STRINGTABLE
+{
+    IDS_FAILED, "Execuția Wordpad a eșuat"
+}
 
-#include "En.rc"
-#include "Fr.rc"
-#include "Ko.rc"
-#include "Nl.rc"
-#include "No.rc"
-#include "Pl.rc"
-#include "Ro.rc"
-#include "Ru.rc"
+#pragma code_page(default)
