@@ -53,9 +53,10 @@ BEGIN
         BEGIN
             MENUITEM "&Schlüssel",                        ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "&Zeichenkette",               ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Binärwert",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&Zeichenfolge",              ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binärwert",                 ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD Wert",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Mehrteilige Zeichenfolge",  ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Löschen\tEntf",                ID_EDIT_DELETE
@@ -103,9 +104,10 @@ BEGIN
         BEGIN
             MENUITEM "&Schlüssel",                  ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "&Zeichenkette",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Zeichenfolge",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binärwert",                  ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD Wert",                 ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Mehrteilige Zeichenfolge",   ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Löschen\tEntf",                ID_EDIT_DELETE
@@ -156,8 +158,8 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT          "NAME:",IDC_STATIC,5,5,119,8
     EDITTEXT       IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
-    DEFPUSHBUTTON  "OK",IDOK,140,40,30,11, WS_GROUP
-    PUSHBUTTON     "Abbrechen",IDCANCEL,175,40,30,11, WS_GROUP
+    DEFPUSHBUTTON  "OK",IDOK,110,40,45,11, WS_GROUP
+    PUSHBUTTON     "Abbrechen",IDCANCEL,160,40,45,11, WS_GROUP
 END
 
 IDD_DELFAVORITE DIALOG DISCARDABLE  22,17, 210, 90
@@ -167,21 +169,21 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT          "Name:",IDC_STATIC,5,5,119,8
     LISTBOX        IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
-    DEFPUSHBUTTON  "OK",IDOK,140,73,30,11, WS_GROUP
-    PUSHBUTTON     "Abbrechen",IDCANCEL,175,73,30,11, WS_GROUP
+    DEFPUSHBUTTON  "OK",IDOK,110,73,45,11,WS_GROUP
+    PUSHBUTTON     "Abbrechen",IDCANCEL,160,73,45,11,WS_GROUP
 END
 
 IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Zeichenkette ändern"
+CAPTION "Zeichenfolge ändern"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "&Name:",IDC_STATIC,5,5,119,8
+    LTEXT           "Name:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "&Daten:",IDC_STATIC,5,30,119,8
+    LTEXT           "Daten:",IDC_STATIC,5,30,119,8
     EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
-    PUSHBUTTON      "Abbrechen",IDCANCEL,175,60,30,11,WS_GROUP
+    DEFPUSHBUTTON   "OK",IDOK,110,60,45,11,WS_GROUP
+    PUSHBUTTON      "Abbrechen",IDCANCEL,160,60,45,11,WS_GROUP
 END
 
 IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
@@ -189,15 +191,15 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "DWORD Wert editieren"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "&Name:",IDC_STATIC,5,5,119,8
+    LTEXT           "Name:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "&Daten:",IDC_STATIC,5,30,90,8
+    LTEXT           "Daten:",IDC_STATIC,5,30,90,8
     EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
     GROUPBOX        "Basis", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
     AUTORADIOBUTTON "Hexadezimal", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
     AUTORADIOBUTTON "Dezimal", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
-    PUSHBUTTON      "Abbrechen",IDCANCEL,175,80,30,11,WS_GROUP
+    DEFPUSHBUTTON   "OK",IDOK,110,80,45,11,WS_GROUP
+    PUSHBUTTON      "Abbrechen",IDCANCEL,160,80,45,11,WS_GROUP
 END
 
 IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
@@ -205,12 +207,25 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Binären Wert editieren"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "&Name:",IDC_STATIC,5,5,119,8
+    LTEXT           "Name:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "&Daten:",IDC_STATIC,5,30,90,8
+    LTEXT           "Daten:",IDC_STATIC,5,30,90,8
     CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
-    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
-    PUSHBUTTON      "Abbrechen",IDCANCEL,175,80,30,11,WS_GROUP
+    DEFPUSHBUTTON   "OK",IDOK,110,85,45,11,WS_GROUP
+    PUSHBUTTON      "Abbrechen",IDCANCEL,160,85,45,11,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Mehrteilige Zeichenfolge editieren"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Name:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Daten:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,110,160,45,11,WS_GROUP
+    PUSHBUTTON      "Abbrechen",IDCANCEL,160,160,45,11,WS_GROUP
 END
 
 /*
@@ -243,9 +258,10 @@ STRINGTABLE DISCARDABLE
 BEGIN
     ID_EDIT_MODIFY          "Ändert die Daten eines Wertes"
     ID_EDIT_NEW_KEY         "Fügt einen neuen Schlüssel hinzu"
-    ID_EDIT_NEW_STRINGVALUE "Fügt einen neue Zeichenkette hinzu "
+    ID_EDIT_NEW_STRINGVALUE "Fügt eine neue Zeichenfolge hinzu "
     ID_EDIT_NEW_BINARYVALUE "Fügt einen neuen Binärwert hinzu"
     ID_EDIT_NEW_DWORDVALUE  "Fügt einen neuen DWORD Wert hinzu"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Fügt eine neue mehrteilige Zeichenfolge hinzu"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importiert eine Textdatei in die Registry"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exportiert Teile oder die ganze Registry in eine Textdatei"
@@ -269,8 +285,8 @@ BEGIN
     ID_EDIT_DELETE          "Löscht die Auswahl"
     ID_EDIT_RENAME          "Benennt die Auswahl um"
     ID_EDIT_COPYKEYNAME     "Kopiert den Schlüsselnamen in die Zwischenablage"
-    ID_EDIT_FIND            "Findet eine Zeichenkette in einem Schlüssel, einem Namen oder in Daten"
-    ID_EDIT_FINDNEXT        "Findet die nächste Zeichenkette"
+    ID_EDIT_FIND            "Findet eine Zeichenfolge in einem Schlüssel, einem Namen oder in Daten"
+    ID_EDIT_FINDNEXT        "Findet die nächste Zeichenfolge"
 END
 
 STRINGTABLE DISCARDABLE
