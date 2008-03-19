@@ -196,10 +196,7 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
 
     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
     if (ex_style & WS_EX_TOPMOST)
-    {
         new_state |= (1 << NET_WM_STATE_ABOVE);
-        ERR("switching window %p/%lx to STATE_ABOVE\n", data->hwnd, data->whole_window);
-    }
     if (ex_style & WS_EX_TOOLWINDOW)
         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER);
 
