@@ -320,6 +320,7 @@ imp_statements:					{}
 	| imp_statements moduledef		{ if (!parse_only) add_typelib_entry($2); }
 	| imp_statements statement		{}
 	| imp_statements importlib		{}
+	| imp_statements librarydef		{}
 	;
 
 int_statements:					{ $$ = NULL; }
@@ -363,12 +364,12 @@ importlib: tIMPORTLIB '(' aSTRING ')'		{ if(!parse_only) add_importlib($3); }
 
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	;
-library_start: attributes libraryhdr '{'	{ start_typelib($2, $1);
+library_start: attributes libraryhdr '{'	{ if (!parse_only) start_typelib($2, $1);
 						  if (!parse_only && do_header) write_library($2, $1);
 						  if (!parse_only && do_idfile) write_libid($2, $1);
 						}
 	;
-librarydef: library_start imp_statements '}'	{ end_typelib(); }
+librarydef: library_start imp_statements '}'	{ if (!parse_only) end_typelib(); }
 	;
 
 m_args:						{ $$ = NULL; }
