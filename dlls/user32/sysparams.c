@@ -1127,7 +1127,7 @@ static void load_nonclient_metrics(void)
 
     if (hkey) RegCloseKey( hkey );
     normalize_nonclientmetrics( &ncm);
-    memcpy( &nonclient_metrics, &ncm, sizeof(nonclient_metrics) );
+    nonclient_metrics = ncm;
     spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
 }
 
@@ -1546,7 +1546,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
 
         if (lpnm && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
-            memcpy( lpnm, &nonclient_metrics, sizeof(*lpnm) );
+            *lpnm = nonclient_metrics;
         else
             ret = FALSE;
         break;
@@ -1602,9 +1602,9 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                     METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME,
                     &lpnm->lfMessageFont, fWinIni);
             if( ret) {
-                memcpy( &ncm, lpnm, sizeof(nonclient_metrics) );
+                ncm = *lpnm;
                 normalize_nonclientmetrics( &ncm);
-                memcpy( &nonclient_metrics, &ncm, sizeof(nonclient_metrics) );
+                nonclient_metrics = ncm;
                 spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
             }
         }
@@ -1616,7 +1616,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         MINIMIZEDMETRICS * lpMm = pvParam;
         if (lpMm && lpMm->cbSize == sizeof(*lpMm)) {
             if( spi_loaded[SPI_MINIMIZEDMETRICS_IDX]) load_minimized_metrics();
-            memcpy( lpMm, &minimized_metrics, sizeof(*lpMm) );
+            *lpMm = minimized_metrics;
         } else
             ret = FALSE;
         break;

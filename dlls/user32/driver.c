@@ -65,7 +65,7 @@ static const USER_DRIVER *load_driver(void)
         driver_load_error = GetLastError();
 
     driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
-    memcpy( driver, &null_driver, sizeof(*driver) );
+    *driver = null_driver;
 
     if (graphics_driver)
     {
