@@ -7034,6 +7034,7 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
         SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE, dwStyle);
     }
 
+    LISTVIEW_InvalidateList(infoPtr);
     return dwOldExStyle;
 }
 
