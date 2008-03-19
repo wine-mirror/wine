@@ -26,12 +26,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 typedef struct {
     const IActiveScriptVtbl          *lpIActiveScriptVtbl;
     const IActiveScriptParseVtbl     *lpIActiveScriptParseVtbl;
+    const IActiveScriptPropertyVtbl  *lpIActiveScriptPropertyVtbl;
 
     LONG ref;
 } JScript;
 
 #define ACTSCRIPT(x)  ((IActiveScript*)          &(x)->lpIActiveScriptVtbl)
 #define ASPARSE(x)    ((IActiveScriptParse*)     &(x)->lpIActiveScriptParseVtbl)
+#define ACTSCPPROP(x) ((IActiveScriptProperty*)  &(x)->lpIActiveScriptPropertyVtbl)
 
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
 
@@ -50,6 +52,9 @@ static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, 
     }else if(IsEqualGUID(riid, &IID_IActiveScriptParse)) {
         TRACE("(%p)->(IID_IActiveScriptParse %p)\n", This, ppv);
         *ppv = ASPARSE(This);
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptProperty)) {
+        TRACE("(%p)->(IID_IActiveScriptProperty %p)\n", This, ppv);
+        *ppv = ACTSCPPROP(This);
     }
 
     if(*ppv) {
@@ -269,6 +274,52 @@ static const IActiveScriptParseVtbl JScriptParseVtbl = {
     JScriptParse_ParseScriptText
 };
 
+#define ACTSCPPROP_THIS(iface) DEFINE_THIS(JScript, IActiveScriptProperty, iface)
+
+static HRESULT WINAPI JScriptProperty_QueryInterface(IActiveScriptProperty *iface, REFIID riid, void **ppv)
+{
+    JScript *This = ACTSCPPROP_THIS(iface);
+    return IActiveScript_QueryInterface(ACTSCRIPT(This), riid, ppv);
+}
+
+static ULONG WINAPI JScriptProperty_AddRef(IActiveScriptProperty *iface)
+{
+    JScript *This = ACTSCPPROP_THIS(iface);
+    return IActiveScript_AddRef(ACTSCRIPT(This));
+}
+
+static ULONG WINAPI JScriptProperty_Release(IActiveScriptProperty *iface)
+{
+    JScript *This = ACTSCPPROP_THIS(iface);
+    return IActiveScript_Release(ACTSCRIPT(This));
+}
+
+static HRESULT WINAPI JScriptProperty_GetProperty(IActiveScriptProperty *iface, DWORD dwProperty,
+        VARIANT *pvarIndex, VARIANT *pvarValue)
+{
+    JScript *This = ACTSCPPROP_THIS(iface);
+    FIXME("(%p)->(%x %p %p)\n", This, dwProperty, pvarIndex, pvarValue);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JScriptProperty_SetProperty(IActiveScriptProperty *iface, DWORD dwProperty,
+        VARIANT *pvarIndex, VARIANT *pvarValue)
+{
+    JScript *This = ACTSCPPROP_THIS(iface);
+    FIXME("(%p)->(%x %p %p)\n", This, dwProperty, pvarIndex, pvarValue);
+    return E_NOTIMPL;
+}
+
+#undef ACTSCPPROP_THIS
+
+static const IActiveScriptPropertyVtbl JScriptPropertyVtbl = {
+    JScriptProperty_QueryInterface,
+    JScriptProperty_AddRef,
+    JScriptProperty_Release,
+    JScriptProperty_GetProperty,
+    JScriptProperty_SetProperty
+};
+
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
                                              REFIID riid, void **ppv)
 {
@@ -281,6 +332,7 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
 
     ret->lpIActiveScriptVtbl          = &JScriptVtbl;
     ret->lpIActiveScriptParseVtbl     = &JScriptParseVtbl;
+    ret->lpIActiveScriptPropertyVtbl  = &JScriptPropertyVtbl;
     ret->ref = 1;
 
     hres = IActiveScript_QueryInterface(ACTSCRIPT(ret), riid, ppv);
