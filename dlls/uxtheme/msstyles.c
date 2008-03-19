@@ -751,27 +751,27 @@ static BOOL parse_handle_nonclient_font (struct PARSENONCLIENTSTATE* state,
         switch (iPropertyId)
         {
 	  case TMT_CAPTIONFONT:
-	      memcpy (&state->metrics.lfCaptionFont, &font, sizeof (LOGFONTW));
+	      state->metrics.lfCaptionFont = font;
 	      state->metricsDirty = TRUE;
 	      break;
 	  case TMT_SMALLCAPTIONFONT:
-	      memcpy (&state->metrics.lfSmCaptionFont, &font, sizeof (LOGFONTW));
+	      state->metrics.lfSmCaptionFont = font;
 	      state->metricsDirty = TRUE;
 	      break;
 	  case TMT_MENUFONT:
-	      memcpy (&state->metrics.lfMenuFont, &font, sizeof (LOGFONTW));
+	      state->metrics.lfMenuFont = font;
 	      state->metricsDirty = TRUE;
 	      break;
 	  case TMT_STATUSFONT:
-	      memcpy (&state->metrics.lfStatusFont, &font, sizeof (LOGFONTW));
+	      state->metrics.lfStatusFont = font;
 	      state->metricsDirty = TRUE;
 	      break;
 	  case TMT_MSGBOXFONT:
-	      memcpy (&state->metrics.lfMessageFont, &font, sizeof (LOGFONTW));
+	      state->metrics.lfMessageFont = font;
 	      state->metricsDirty = TRUE;
 	      break;
 	  case TMT_ICONTITLEFONT:
-	      memcpy (&state->iconTitleFont, &font, sizeof (LOGFONTW));
+	      state->iconTitleFont = font;
 	      state->metricsDirty = TRUE;
 	      break;
         }
