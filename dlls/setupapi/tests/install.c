@@ -28,6 +28,7 @@
 #include "winnls.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "winsvc.h"
 #include "setupapi.h"
 
 #include "wine/test.h"
@@ -83,10 +84,9 @@ static const char *cmdline_inf = "[Version]\n"
     "[Add.Settings]\n"
     "HKCU,Software\\Wine\\setupapitest,,\n";
 
-static void ok_cmdline(LPCSTR section, int mode, LPCSTR path, BOOL expectsuccess)
+static void run_cmdline(LPCSTR section, int mode, LPCSTR path)
 {
     CHAR cmdline[MAX_PATH * 2];
-    LONG ret;
 
     sprintf(cmdline, "%s %d %s", section, mode, path);
     if (pInstallHinfSectionA) pInstallHinfSectionA(NULL, NULL, cmdline, 0);
@@ -96,6 +96,11 @@ static void ok_cmdline(LPCSTR section, int mode, LPCSTR path, BOOL expectsuccess
         MultiByteToWideChar(CP_ACP, 0, cmdline, -1, cmdlinew, MAX_PATH*2);
         pInstallHinfSectionW(NULL, NULL, cmdlinew, 0);
     }
+}
+
+static void ok_registry(BOOL expectsuccess)
+{
+    LONG ret;
 
     /* Functional tests for success of install and clean up */
     ret = RegDeleteKey(HKEY_CURRENT_USER, "Software\\Wine\\setupapitest");
@@ -114,19 +119,97 @@ static void test_cmdline(void)
 
     create_inf_file(inffile, cmdline_inf);
     sprintf(path, "%s\\%s", CURR_DIR, inffile);
-    ok_cmdline("DefaultInstall", 128, path, TRUE);
+    run_cmdline("DefaultInstall", 128, path);
+    ok_registry(TRUE);
     ok(DeleteFile(inffile), "Expected source inf to exist, last error was %d\n", GetLastError());
 
     /* Test handling of spaces in path, unquoted and quoted */
     create_inf_file(infwithspaces, cmdline_inf);
 
     sprintf(path, "%s\\%s", CURR_DIR, infwithspaces);
-    ok_cmdline("DefaultInstall", 128, path, TRUE);
+    run_cmdline("DefaultInstall", 128, path);
+    ok_registry(TRUE);
 
     sprintf(path, "\"%s\\%s\"", CURR_DIR, infwithspaces);
-    ok_cmdline("DefaultInstall", 128, path, FALSE);
+    run_cmdline("DefaultInstall", 128, path);
+    ok_registry(FALSE);
 
     ok(DeleteFile(infwithspaces), "Expected source inf to exist, last error was %d\n", GetLastError());
+}
+
+static void test_driver_install(void)
+{
+    HANDLE handle;
+    SC_HANDLE scm_handle, svc_handle;
+    BOOL ret;
+    char path[MAX_PATH], windir[MAX_PATH], driver[MAX_PATH];
+    DWORD attrs;
+    /* Minimal stuff needed */
+    static const char *inf =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "[DestinationDirs]\n"
+        "Winetest.DriverFiles=12\n"
+        "[DefaultInstall]\n"
+        "CopyFiles=Winetest.DriverFiles\n"
+        "[DefaultInstall.Services]\n"
+        "AddService=Winetest,,Winetest.Service\n"
+        "[Winetest.Service]\n"
+        "ServiceBinary=%12%\\winetest.sys\n"
+        "ServiceType=1\n"
+        "StartType=4\n"
+        "ErrorControl=1\n"
+        "[Winetest.DriverFiles]\n"
+        "winetest.sys";
+
+    /* Bail out if we are on win98 */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+
+    if (!scm_handle && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
+        return;
+    }
+    CloseServiceHandle(scm_handle);
+
+    /* Place where we expect the driver to be installed */
+    GetWindowsDirectoryA(windir, MAX_PATH);
+    lstrcpyA(driver, windir);
+    lstrcatA(driver, "\\system32\\drivers\\winetest.sys");
+
+    /* Create a dummy driver file */
+    handle = CreateFileA("winetest.sys", GENERIC_WRITE, 0, NULL,
+                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    CloseHandle(handle);
+
+    create_inf_file(inffile, inf);
+    sprintf(path, "%s\\%s", CURR_DIR, inffile);
+    run_cmdline("DefaultInstall", 128, path);
+
+    /* Driver should have been installed */
+    attrs = GetFileAttributes(driver);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "Expected driver to exist\n");
+
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+
+    /* Open the service to see if it's really there */
+    svc_handle = OpenServiceA(scm_handle, "Winetest", DELETE);
+    todo_wine
+    ok(svc_handle != NULL, "Service was not created\n");
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteService(svc_handle);
+    todo_wine
+    ok(ret, "Service could not be deleted : %d\n", GetLastError());
+
+    CloseServiceHandle(svc_handle);
+    CloseServiceHandle(scm_handle);
+
+    /* File cleanup */
+    DeleteFile(inffile);
+    DeleteFile("winetest.sys");
+    DeleteFile(driver);
 }
 
 START_TEST(install)
@@ -171,6 +254,7 @@ START_TEST(install)
         assert(hhook != 0);
 
         test_cmdline();
+        test_driver_install();
 
         UnhookWindowsHookEx(hhook);
     }
