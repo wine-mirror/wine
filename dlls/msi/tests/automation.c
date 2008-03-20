@@ -1814,6 +1814,7 @@ static void test_Installer_RegistryValue(void)
     VARIANTARG vararg;
     WCHAR szString[MAX_PATH];
     HKEY hkey, hkey_sub;
+    HKEY curr_user = (HKEY)1;
     HRESULT hr;
     BOOL bRet;
 
@@ -1821,16 +1822,16 @@ static void test_Installer_RegistryValue(void)
     if (!RegOpenKeyW( HKEY_CURRENT_USER, szKey, &hkey )) delete_key( hkey );
 
     /* Does our key exist? Shouldn't; check with all three possible value parameter types */
-    hr = Installer_RegistryValueE(HKEY_CURRENT_USER, szKey, &bRet);
+    hr = Installer_RegistryValueE(curr_user, szKey, &bRet);
     ok(hr == S_OK, "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
     ok(!bRet, "Registry key expected to not exist, but Installer_RegistryValue claims it does\n");
 
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, NULL, szString);
+    hr = Installer_RegistryValueW(curr_user, szKey, NULL, szString);
     ok(hr == DISP_E_BADINDEX, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
 
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, 0, szString, VT_BSTR);
+    hr = Installer_RegistryValueI(curr_user, szKey, 0, szString, VT_BSTR);
     ok(hr == DISP_E_BADINDEX, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
 
     /* Create key */
@@ -1859,87 +1860,87 @@ static void test_Installer_RegistryValue(void)
 
     /* Does our key exist? It should, and make sure we retrieve the correct default value */
     bRet = FALSE;
-    hr = Installer_RegistryValueE(HKEY_CURRENT_USER, szKey, &bRet);
+    hr = Installer_RegistryValueE(curr_user, szKey, &bRet);
     ok(hr == S_OK, "Installer_RegistryValueE failed, hresult 0x%08x\n", hr);
     ok(bRet, "Registry key expected to exist, but Installer_RegistryValue claims it does not\n");
 
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, NULL, szString);
+    hr = Installer_RegistryValueW(curr_user, szKey, NULL, szString);
     ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Default registry value \"%s\" does not match expected \"%s\"\n", szString, szOne);
 
     /* Ask for the value of a nonexistent key */
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szExpand, szString);
+    hr = Installer_RegistryValueW(curr_user, szKey, szExpand, szString);
     ok(hr == DISP_E_BADINDEX, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
 
     /* Get values of keys */
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szOne, szString);
+    hr = Installer_RegistryValueW(curr_user, szKey, szOne, szString);
     ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szOne);
 
     VariantInit(&vararg);
     V_VT(&vararg) = VT_BSTR;
     V_BSTR(&vararg) = SysAllocString(szTwo);
-    hr = Installer_RegistryValue(HKEY_CURRENT_USER, szKey, vararg, &varresult, VT_I4);
+    hr = Installer_RegistryValue(curr_user, szKey, vararg, &varresult, VT_I4);
     ok(hr == S_OK, "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
     ok(V_I4(&varresult) == 305419896, "Registry value %d does not match expected value\n", V_I4(&varresult));
     VariantClear(&varresult);
 
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szThree, szString);
+    hr = Installer_RegistryValueW(curr_user, szKey, szThree, szString);
     ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szREG_BINARY);
 
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szFour, szString);
+    hr = Installer_RegistryValueW(curr_user, szKey, szFour, szString);
     ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szFour);
 
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szFive, szString);
+    hr = Installer_RegistryValueW(curr_user, szKey, szFive, szString);
     ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szFiveHi);
 
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueW(HKEY_CURRENT_USER, szKey, szSix, szString);
+    hr = Installer_RegistryValueW(curr_user, szKey, szSix, szString);
     ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szREG_);
 
     VariantInit(&vararg);
     V_VT(&vararg) = VT_BSTR;
     V_BSTR(&vararg) = SysAllocString(szSeven);
-    hr = Installer_RegistryValue(HKEY_CURRENT_USER, szKey, vararg, &varresult, VT_EMPTY);
+    hr = Installer_RegistryValue(curr_user, szKey, vararg, &varresult, VT_EMPTY);
     ok(hr == S_OK, "Installer_RegistryValue failed, hresult 0x%08x\n", hr);
 
     /* Get string class name for the key */
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, 0, szString, VT_BSTR);
+    hr = Installer_RegistryValueI(curr_user, szKey, 0, szString, VT_BSTR);
     ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
     ok_w2("Registry name \"%s\" does not match expected \"%s\"\n", szString, szBlank);
 
     /* Get name of a value by positive number (RegEnumValue like), valid index */
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, 2, szString, VT_BSTR);
+    hr = Installer_RegistryValueI(curr_user, szKey, 2, szString, VT_BSTR);
     ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
     /* RegEnumValue order seems different on wine */
     todo_wine ok_w2("Registry name \"%s\" does not match expected \"%s\"\n", szString, szTwo);
 
     /* Get name of a value by positive number (RegEnumValue like), invalid index */
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, 10, szString, VT_EMPTY);
+    hr = Installer_RegistryValueI(curr_user, szKey, 10, szString, VT_EMPTY);
     ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
 
     /* Get name of a subkey by negative number (RegEnumValue like), valid index */
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, -1, szString, VT_BSTR);
+    hr = Installer_RegistryValueI(curr_user, szKey, -1, szString, VT_BSTR);
     ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
     ok_w2("Registry name \"%s\" does not match expected \"%s\"\n", szString, szEight);
 
     /* Get name of a subkey by negative number (RegEnumValue like), invalid index */
     memset(szString, 0, sizeof(szString));
-    hr = Installer_RegistryValueI(HKEY_CURRENT_USER, szKey, -10, szString, VT_EMPTY);
+    hr = Installer_RegistryValueI(curr_user, szKey, -10, szString, VT_EMPTY);
     ok(hr == S_OK, "Installer_RegistryValueI failed, hresult 0x%08x\n", hr);
 
     /* clean up */

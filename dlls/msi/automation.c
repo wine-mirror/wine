@@ -39,6 +39,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
+#define REG_INDEX_CLASSES_ROOT 0
+#define REG_INDEX_DYN_DATA 6
+
 /*
  * AutomationObject - "base" class for all automation objects. For each interface, we implement Invoke function
  *                    called from AutomationObject::Invoke, and pass this function to create_automation_object.
@@ -1711,6 +1714,11 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     VariantClear(&varg1);
                     return hr;
                 }
+
+                if (V_I4(&varg0) >= REG_INDEX_CLASSES_ROOT &&
+                    V_I4(&varg0) <= REG_INDEX_DYN_DATA)
+                    V_I4(&varg0) |= (UINT)HKEY_CLASSES_ROOT;
+
                 ret = RegOpenKeyW((HKEY)V_I4(&varg0), V_BSTR(&varg1), &hkey);
 
                 /* Third parameter can be VT_EMPTY, VT_I4, or VT_BSTR */
