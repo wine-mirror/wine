@@ -2,6 +2,7 @@
  * WineBoot resources
  *
  * Copyright (C) 2007 Robert Shearman for CodeWeavers
+ * Copyright (C) 2008 Michael Stefaniuc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,23 +20,21 @@
  *
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winnls.h"
-#include "winuser.h"
-#include "commctrl.h"
-#include "resource.h"
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
-#include "wineboot_De.rc"
-#include "wineboot_En.rc"
-#include "wineboot_Es.rc"
-#include "wineboot_Fr.rc"
-#include "wineboot_Ja.rc"
-#include "wineboot_Ko.rc"
-#include "wineboot_Nl.rc"
-#include "wineboot_No.rc"
-#include "wineboot_Pl.rc"
-#include "wineboot_Ro.rc"
-#include "wineboot_Ru.rc"
-#include "wineboot_Sv.rc"
+#pragma code_page(65001)
+
+IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Așteptare program"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "Renunță",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "Termină procesul",IDOK,51,49,71,15
+    LTEXT           "O ieșire sau oprire simulată este în curs dar acest proces nu răspunde.",
+                    IDC_STATIC,7,7,172,19
+    LTEXT           "Prin terminarea acestui proces se pot pierde datele nesalvate.",
+                    IDC_STATIC,7,28,172,15
+END
+
+#pragma code_page(default)
