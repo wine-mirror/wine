@@ -469,6 +469,30 @@ static DWORD align_check_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_
     return ExceptionContinueExecution;
 }
 
+/* Test the direction flag handling. */
+static const BYTE direction_flag_code[] = {
+    0x55,                  	/* push   %ebp */
+    0x89,0xe5,             	/* mov    %esp,%ebp */
+    0xfd,                  	/* std */
+    0xfa,                  	/* cli - cause exception */
+    0x5d,                  	/* pop    %ebp */
+    0xc3,                  	/* ret     */
+};
+
+static DWORD direction_flag_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                     CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+#ifdef __GNUC__
+    unsigned int flags;
+    __asm__("pushfl; popl %0" : "=r" (flags) );
+    ok( !(flags & 0x400), "eflags has DF bit set\n" );
+#endif
+    ok( context->EFlags & 0x400, "context eflags has DF bit cleared\n" );
+    got_exception++;
+    context->Eip++;  /* skip cli */
+    return ExceptionContinueExecution;
+}
+
 /* test single stepping over hardware breakpoint */
 static DWORD bpx_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
                           CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
@@ -559,6 +583,11 @@ static void test_exceptions(void)
     got_exception = 0;
     run_exception_test(align_check_handler, NULL, align_check_code, sizeof(align_check_code));
     ok(got_exception == 0, "got %d alignment faults, expected 0\n", got_exception);
+
+    /* test direction flag */
+    got_exception = 0;
+    run_exception_test(direction_flag_handler, NULL, direction_flag_code, sizeof(direction_flag_code));
+    ok(got_exception == 1, "got %d exceptions, expected 1\n", got_exception);
 
     /* test single stepping over hardware breakpoint */
     memset(&ctx, 0, sizeof(ctx));
