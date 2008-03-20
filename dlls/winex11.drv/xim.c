@@ -293,9 +293,6 @@ static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_d
 static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
                                    XIMPreeditDrawCallbackStruct *P_DR)
 {
-    DWORD dwOutput;
-    WCHAR wcOutput[64];
-
     TRACE("PreEditDrawCallback %p\n",ic);
 
     if (P_DR)
@@ -306,14 +303,25 @@ static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
         {
             if (! P_DR->text->encoding_is_wchar)
             {
+                DWORD dwOutput;
+                WCHAR *wcOutput;
+
                 TRACE("multibyte\n");
                 dwOutput = MultiByteToWideChar(CP_UNIXCP, 0,
                            P_DR->text->string.multi_byte, -1,
-                           wcOutput, 64);
+                           NULL, 0);
+                wcOutput = HeapAlloc(GetProcessHeap(), 0, sizeof (WCHAR) * dwOutput);
+                if (wcOutput)
+                {
+                    dwOutput = MultiByteToWideChar(CP_UNIXCP, 0,
+                               P_DR->text->string.multi_byte, -1,
+                               wcOutput, dwOutput);
 
-                /* ignore null */
-                dwOutput --;
-                X11DRV_ImmSetInternalString (GCS_COMPSTR, sel, len, wcOutput, dwOutput);
+                    /* ignore null */
+                    dwOutput --;
+                    X11DRV_ImmSetInternalString (GCS_COMPSTR, sel, len, wcOutput, dwOutput);
+                    HeapFree(GetProcessHeap(), 0, wcOutput);
+                }
             }
             else
             {
