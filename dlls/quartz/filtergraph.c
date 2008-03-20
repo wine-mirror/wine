@@ -1914,8 +1914,8 @@ static HRESULT WINAPI FoundDuration(IFilterGraphImpl *This, IMediaSeeking *seek,
     if (FAILED(hr))
         return hr;
 
-    /* FIXME: Minimum or maximum duration? */
-    if (!*pdur < duration)
+    /* FIXME: Minimum or maximum duration? Assuming minimum */
+    if (duration > 0 && *pdur < duration)
         *pdur = duration;
 
     return hr;
@@ -1932,10 +1932,11 @@ static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface,
         return E_POINTER;
 
     EnterCriticalSection(&This->cs);
-    *pDuration = 0;
+    *pDuration = -1;
     hr = all_renderers_seek(This, FoundDuration, (DWORD_PTR)pDuration);
     LeaveCriticalSection(&This->cs);
 
+    TRACE("--->%08x\n", hr);
     return hr;
 }
 
