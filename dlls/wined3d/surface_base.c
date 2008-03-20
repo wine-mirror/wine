@@ -849,7 +849,7 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
 
     if (DestRect)
     {
-        memcpy(&xdst,DestRect,sizeof(xdst));
+        xdst = *DestRect;
     }
     else
     {
@@ -861,7 +861,7 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
 
     if (SrcRect)
     {
-        memcpy(&xsrc,SrcRect,sizeof(xsrc));
+        xsrc = *SrcRect;
     }
     else
     {

@@ -1709,7 +1709,7 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
     if (!elements)
         return 0;
 
-    memcpy(&elements[size-1], &end_element, sizeof(WINED3DVERTEXELEMENT));
+    elements[size-1] = end_element;
     idx = 0;
     if (has_pos) {
         if (!has_blend && (fvf & WINED3DFVF_XYZRHW)) {
@@ -2549,7 +2549,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
         This->updateStateBlock->changed.transform[d3dts] = TRUE;
-        memcpy(&This->updateStateBlock->transforms[d3dts], lpmatrix, sizeof(WINED3DMATRIX));
+        This->updateStateBlock->transforms[d3dts] = *lpmatrix;
         return WINED3D_OK;
     }
 
@@ -2589,7 +2589,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
 static HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE State, WINED3DMATRIX* pMatrix) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : for Transform State %s\n", This, debug_d3dtstype(State));
-    memcpy(pMatrix, &This->stateBlock->transforms[State], sizeof(WINED3DMATRIX));
+    *pMatrix = This->stateBlock->transforms[State];
     return WINED3D_OK;
 }
 
@@ -2696,7 +2696,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
     TRACE("... Range(%f), Falloff(%f), Theta(%f), Phi(%f)\n", pLight->Range, pLight->Falloff, pLight->Theta, pLight->Phi);
 
     /* Save away the information */
-    memcpy(&object->OriginalParms, pLight, sizeof(WINED3DLIGHT));
+    object->OriginalParms = *pLight;
 
     switch (pLight->Type) {
     case WINED3DLIGHT_POINT:
@@ -2788,7 +2788,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD I
         return WINED3DERR_INVALIDCALL;
     }
 
-    memcpy(pLight, &lightInfo->OriginalParms, sizeof(WINED3DLIGHT));
+    *pLight = lightInfo->OriginalParms;
     return WINED3D_OK;
 }
 
@@ -2993,7 +2993,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONS
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     This->updateStateBlock->changed.material = TRUE;
-    memcpy(&This->updateStateBlock->material, pMaterial, sizeof(WINED3DMATERIAL));
+    This->updateStateBlock->material = *pMaterial;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -3007,7 +3007,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONS
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINED3DMATERIAL* pMaterial) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    memcpy(pMaterial, &This->updateStateBlock->material, sizeof (WINED3DMATERIAL));
+    *pMaterial = This->updateStateBlock->material;
     TRACE("(%p) : Diffuse (%f,%f,%f,%f)\n", This, pMaterial->Diffuse.r, pMaterial->Diffuse.g,
         pMaterial->Diffuse.b, pMaterial->Diffuse.a);
     TRACE("(%p) : Ambient (%f,%f,%f,%f)\n", This, pMaterial->Ambient.r, pMaterial->Ambient.g,
@@ -3107,7 +3107,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONS
 
     TRACE("(%p)\n", This);
     This->updateStateBlock->changed.viewport = TRUE;
-    memcpy(&This->updateStateBlock->viewport, pViewport, sizeof(WINED3DVIEWPORT));
+    This->updateStateBlock->viewport = *pViewport;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -3126,7 +3126,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONS
 static HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINED3DVIEWPORT* pViewport) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p)\n", This);
-    memcpy(pViewport, &This->stateBlock->viewport, sizeof(WINED3DVIEWPORT));
+    *pViewport = This->stateBlock->viewport;
     return WINED3D_OK;
 }
 
@@ -5806,7 +5806,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawRectPatch(IWineD3DDevice *iface, UI
         TRACE("Tesselation density or patch info changed, retesselating\n");
 
         if(pRectPatchInfo) {
-            memcpy(&patch->RectPatchInfo, pRectPatchInfo, sizeof(*pRectPatchInfo));
+            patch->RectPatchInfo = *pRectPatchInfo;
         }
         patch->numSegs[0] = pNumSegs[0];
         patch->numSegs[1] = pNumSegs[1];

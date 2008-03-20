@@ -170,7 +170,7 @@ void stateblock_copy(
     Dest->material = This->material;
     Dest->pixelShader = This->pixelShader;
     Dest->glsl_program = This->glsl_program;
-    memcpy(&Dest->scissorRect, &This->scissorRect, sizeof(Dest->scissorRect));
+    Dest->scissorRect = This->scissorRect;
 
     /* Lights */
     memset(This->activeLights, 0, sizeof(This->activeLights));
@@ -185,7 +185,7 @@ void stateblock_copy(
         LIST_FOR_EACH(e1, &This->lightMap[l]) {
             PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry), *light2;
             light2 = HeapAlloc(GetProcessHeap(), 0, sizeof(*light));
-            memcpy(light2, light, sizeof(*light));
+            *light2 = *light;
             list_add_tail(&Dest->lightMap[l], &light2->entry);
             if(light2->glIndex != -1) Dest->activeLights[light2->glIndex] = light2;
         }
@@ -342,7 +342,7 @@ static inline void record_lights(IWineD3DStateBlockImpl *This, IWineD3DStateBloc
                 realLight = LIST_ENTRY(f, PLIGHTINFOEL, entry);
                 if(realLight->OriginalIndex == src->OriginalIndex) {
                     if(src->changed) {
-                        memcpy(&src->OriginalParms, &realLight->OriginalParms, sizeof(src->OriginalParms));
+                        src->OriginalParms = realLight->OriginalParms;
                     }
                     if(src->enabledChanged) {
                             /* Need to double check because enabledChanged does not catch enabled -> disabled -> enabled
@@ -367,7 +367,7 @@ static inline void record_lights(IWineD3DStateBlockImpl *This, IWineD3DStateBloc
                 continue;
             } else if(src->changed) {
                 /* Otherwise assign defaul params */
-                memcpy(&src->OriginalParms, &WINED3D_default_light, sizeof(src->OriginalParms));
+                src->OriginalParms = WINED3D_default_light;
             } else {
                 /* Not enabled by default */
                 src->glIndex = -1;
@@ -477,9 +477,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         /* Others + Render & Texture */
         for (i = 0; i < This->num_contained_transform_states; i++) {
             TRACE("Updating transform %d\n", i);
-            memcpy(&This->transforms[This->contained_transform_states[i]],
-                   &targetStateBlock->transforms[This->contained_transform_states[i]],
-                   sizeof(WINED3DMATRIX));
+            This->transforms[This->contained_transform_states[i]] =
+                targetStateBlock->transforms[This->contained_transform_states[i]];
         }
 
         if (This->changed.indices && ((This->pIndexData != targetStateBlock->pIndexData)
@@ -506,14 +505,14 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                                                     &This->material,
                                                     sizeof(WINED3DMATERIAL)) != 0) {
             TRACE("Updating material\n");
-            memcpy(&This->material, &targetStateBlock->material, sizeof(WINED3DMATERIAL));
+            This->material = targetStateBlock->material;
         }
 
         if (This->changed.viewport && memcmp(&targetStateBlock->viewport,
                                                     &This->viewport,
                                                     sizeof(WINED3DVIEWPORT)) != 0) {
             TRACE("Updating viewport\n");
-            memcpy(&This->viewport, &targetStateBlock->viewport, sizeof(WINED3DVIEWPORT));
+            This->viewport = targetStateBlock->viewport;
         }
 
         if(This->changed.scissorRect && memcmp(&targetStateBlock->scissorRect,
@@ -521,7 +520,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                                            sizeof(targetStateBlock->scissorRect)))
         {
             TRACE("Updating scissor rect\n");
-            memcpy(&targetStateBlock->scissorRect, &This->scissorRect, sizeof(targetStateBlock->scissorRect));
+            targetStateBlock->scissorRect = This->scissorRect;
         }
 
         for (i = 0; i < MAX_STREAMS; i++) {
