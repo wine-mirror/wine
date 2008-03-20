@@ -332,7 +332,7 @@ static HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 
         This->rtStreamStart = tStart;
 
-        hr = PullPin_Seek(This->pInputPin, tStart, ((LONGLONG)0x7fffffff << 32) | 0xffffffff);
+        hr = PullPin_Seek(This->pInputPin, 0, ((LONGLONG)0x7fffffff << 32) | 0xffffffff);
 
         if (SUCCEEDED(hr) && (This->state == State_Stopped))
         {
