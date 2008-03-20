@@ -39,6 +39,7 @@
 #include "oleaut32_No.rc"
 #include "oleaut32_Pl.rc"
 #include "oleaut32_Pt.rc"
+#include "oleaut32_Ro.rc"
 #include "oleaut32_Ru.rc"
 #include "oleaut32_Sv.rc"
 #include "oleaut32_Th.rc"
