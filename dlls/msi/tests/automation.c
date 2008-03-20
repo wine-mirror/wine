@@ -272,7 +272,6 @@ static void create_database(const CHAR *name, const msi_table *tables, int num_t
 
         write_file(table->filename, table->data, (table->size - 1) * sizeof(char));
 
-        trace("table->filename: %s\n", table->filename);
         r = MsiDatabaseImportA(db, CURR_DIR, table->filename);
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
