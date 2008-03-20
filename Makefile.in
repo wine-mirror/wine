@@ -68,6 +68,14 @@ INSTALLDIRS = $(DESTDIR)$(datadir)/aclocal
 
 @MAKE_RULES@
 
+$(SRCDIR)/configure: @MAINTAINER_MODE@ configure.ac aclocal.m4
+	cd $(SRCDIR) && autoconf --warnings=all
+
+$(SRCDIR)/include/config.h.in: @MAINTAINER_MODE@ include/stamp-h.in
+$(SRCDIR)/include/stamp-h.in: configure.ac aclocal.m4
+	cd $(SRCDIR) && autoheader --warnings=all
+	@echo timestamp > $@
+
 config.status: configure
 	@./config.status --recheck
 
@@ -119,9 +127,9 @@ RECURSE_TARGETS = \
 	$(TESTSUBDIRS:%=%/__test__) \
 	$(TESTSUBDIRS:%=%/__testclean__)
 
-depend $(RECURSE_TARGETS): $(MAKEDEP) include/config.h
+depend $(RECURSE_TARGETS): $(MAKEDEP)
 
-$(MAKEDEP):
+$(MAKEDEP): include/config.h
 	@cd $(TOOLSDIR)/tools && $(MAKE) makedep
 
 # Test rules
