@@ -45,6 +45,7 @@ static const IPinVtbl DSoundRender_InputPin_Vtbl;
 static const IMemInputPinVtbl MemInputPin_Vtbl; 
 static const IBasicAudioVtbl IBasicAudio_Vtbl;
 static const IReferenceClockVtbl IReferenceClock_Vtbl;
+static const IMediaSeekingVtbl IMediaSeeking_Vtbl;
 
 typedef struct DSoundRenderImpl
 {
@@ -71,10 +72,30 @@ typedef struct DSoundRenderImpl
     DWORD last_play_pos;
     DWORD play_loops;
     REFERENCE_TIME play_time;
+    MediaSeekingImpl mediaSeeking;
 
     long volume;
     long pan;
 } DSoundRenderImpl;
+
+static HRESULT sound_mod_stop(IBaseFilter *iface)
+{
+    FIXME("(%p) stub\n", iface);
+    return S_OK;
+}
+
+static HRESULT sound_mod_start(IBaseFilter *iface)
+{
+    FIXME("(%p) stub\n", iface);
+    return S_OK;
+}
+
+static HRESULT sound_mod_rate(IBaseFilter *iface)
+{
+    FIXME("(%p) stub\n", iface);
+    return S_OK;
+}
+
 
 static HRESULT DSoundRender_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
@@ -315,6 +336,9 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
+        MediaSeekingImpl_Init((IBaseFilter*)pDSoundRender, sound_mod_stop, sound_mod_start, sound_mod_rate, &pDSoundRender->mediaSeeking, &pDSoundRender->csFilter);
+        pDSoundRender->mediaSeeking.lpVtbl = &IMediaSeeking_Vtbl;
+
         pDSoundRender->ppPins[0] = (IPin *)pDSoundRender->pInputPin;
         *ppv = (LPVOID)pDSoundRender;
     }
@@ -350,6 +374,8 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
         *ppv = (LPVOID)&(This->IBasicAudio_vtbl);
     else if (IsEqualIID(riid, &IID_IReferenceClock))
         *ppv = (LPVOID)&(This->IReferenceClock_vtbl);
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+        *ppv = &This->mediaSeeking.lpVtbl;
 
     if (*ppv)
     {
@@ -1070,4 +1096,54 @@ static const IReferenceClockVtbl IReferenceClock_Vtbl =
     ReferenceClock_AdviseTime,
     ReferenceClock_AdvisePeriodic,
     ReferenceClock_Unadvise
+};
+
+static inline DSoundRenderImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (DSoundRenderImpl *)((char*)iface - FIELD_OFFSET(DSoundRenderImpl, mediaSeeking.lpVtbl));
+}
+
+static HRESULT WINAPI sound_seek_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
+{
+    DSoundRenderImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
+}
+
+static ULONG WINAPI sound_seek_AddRef(IMediaSeeking * iface)
+{
+    DSoundRenderImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_AddRef((IUnknown *)This);
+}
+
+static ULONG WINAPI sound_seek_Release(IMediaSeeking * iface)
+{
+    DSoundRenderImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_Release((IUnknown *)This);
+}
+
+static const IMediaSeekingVtbl IMediaSeeking_Vtbl =
+{
+    sound_seek_QueryInterface,
+    sound_seek_AddRef,
+    sound_seek_Release,
+    MediaSeekingImpl_GetCapabilities,
+    MediaSeekingImpl_CheckCapabilities,
+    MediaSeekingImpl_IsFormatSupported,
+    MediaSeekingImpl_QueryPreferredFormat,
+    MediaSeekingImpl_GetTimeFormat,
+    MediaSeekingImpl_IsUsingTimeFormat,
+    MediaSeekingImpl_SetTimeFormat,
+    MediaSeekingImpl_GetDuration,
+    MediaSeekingImpl_GetStopPosition,
+    MediaSeekingImpl_GetCurrentPosition,
+    MediaSeekingImpl_ConvertTimeFormat,
+    MediaSeekingImpl_SetPositions,
+    MediaSeekingImpl_GetPositions,
+    MediaSeekingImpl_GetAvailable,
+    MediaSeekingImpl_SetRate,
+    MediaSeekingImpl_GetRate,
+    MediaSeekingImpl_GetPreroll
 };
