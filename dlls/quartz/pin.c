@@ -45,7 +45,7 @@ typedef HRESULT (*SendPinFunc)( IPin *to, LPVOID arg );
  * Return the first received error code (E_NOTIMPL is ignored)
  * If no errors occur: return the first received non-error-code that isn't S_OK
  */
-static HRESULT updatehres( HRESULT original, HRESULT new )
+HRESULT updatehres( HRESULT original, HRESULT new )
 {
     if (FAILED( original ) || new == E_NOTIMPL)
         return original;
