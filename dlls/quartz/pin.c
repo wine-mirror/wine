@@ -1514,26 +1514,30 @@ HRESULT PullPin_Seek(PullPin * This, REFERENCE_TIME rtStart, REFERENCE_TIME rtSt
 
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 {
-    FIXME("(%p)->()\n", iface);
-    return E_NOTIMPL;
+    FIXME("(%p)->() stub\n", iface);
+
+    return SendFurther( iface, deliver_endofstream, NULL, NULL );
 }
 
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
 {
-    FIXME("(%p)->()\n", iface);
-    return E_NOTIMPL;
+    FIXME("(%p)->() stub\n", iface);
+
+    return SendFurther( iface, deliver_beginflush, NULL, NULL );
 }
 
 HRESULT WINAPI PullPin_EndFlush(IPin * iface)
 {
-    FIXME("(%p)->()\n", iface);
-    return E_NOTIMPL;
+    FIXME("(%p)->() stub\n", iface);
+
+    return SendFurther( iface, deliver_endflush, NULL, NULL );
 }
 
 HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
-    FIXME("(%p)->(%s, %s, %g)\n", iface, wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
-    return E_NOTIMPL;
+    FIXME("(%p)->(%s, %s, %g) stub\n", iface, wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
+
+    return SendFurther( iface, deliver_newsegment, NULL, NULL );
 }
 
 static const IPinVtbl PullPin_Vtbl = 
