@@ -6256,7 +6256,10 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     if (uView == LVS_REPORT)
 	rcBounds = rcBox;
     else
-	UnionRect(&rcBounds, &rcIcon, &rcLabel);
+    {
+        UnionRect(&rcBounds, &rcIcon, &rcLabel);
+        UnionRect(&rcBounds, &rcBounds, &rcState);
+    }
     TRACE("rcBounds=%s\n", wine_dbgstr_rect(&rcBounds));
     if (!PtInRect(&rcBounds, opt)) return -1;
 
