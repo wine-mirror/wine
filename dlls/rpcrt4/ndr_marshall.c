@@ -2190,6 +2190,13 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       safe_copy_to_buffer(pStubMsg, pMemory, 2);
       pMemory += 2;
       break;
+    case RPC_FC_ENUM16:
+      TRACE("enum16=%d <= %p\n", *(DWORD*)pMemory, pMemory);
+      if (32767 < *(DWORD*)pMemory)
+        RpcRaiseException(RPC_X_ENUM_VALUE_OUT_OF_RANGE);
+      safe_copy_to_buffer(pStubMsg, pMemory, 2);
+      pMemory += 4;
+      break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
@@ -2307,6 +2314,14 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       safe_copy_from_buffer(pStubMsg, pMemory, 2);
       TRACE("short=%d => %p\n", *(WORD*)pMemory, pMemory);
       pMemory += 2;
+      break;
+    case RPC_FC_ENUM16:
+      safe_copy_from_buffer(pStubMsg, pMemory, 2);
+      *(DWORD*)pMemory &= 0xffff;
+      TRACE("enum16=%d => %p\n", *(DWORD*)pMemory, pMemory);
+      if (32767 < *(DWORD*)pMemory)
+        RpcRaiseException(RPC_X_ENUM_VALUE_OUT_OF_RANGE);
+      pMemory += 4;
       break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
@@ -2427,6 +2442,10 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
       safe_buffer_length_increment(pStubMsg, 2);
       pMemory += 2;
       break;
+    case RPC_FC_ENUM16:
+      safe_buffer_length_increment(pStubMsg, 2);
+      pMemory += 4;
+      break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
@@ -2524,6 +2543,7 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
+    case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
       pMemory += 4;
       break;
@@ -2602,6 +2622,10 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       size += 2;
       safe_buffer_increment(pStubMsg, 2);
       break;
+    case RPC_FC_ENUM16:
+      size += 4;
+      safe_buffer_increment(pStubMsg, 2);
+      break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
     case RPC_FC_ENUM32:
@@ -2674,6 +2698,7 @@ unsigned long ComplexStructSize(PMIDL_STUB_MESSAGE pStubMsg,
       break;
     case RPC_FC_LONG:
     case RPC_FC_ULONG:
+    case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
       size += 4;
       break;
