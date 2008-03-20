@@ -1647,6 +1647,8 @@ static void test_msiimport(void)
     {
         /* win9x doesn't handle this case */
         skip("endlines not handled correctly.\n");
+        MsiCloseHandle(hdb);
+        DeleteFileA(msifile);
         return;
     }
 
