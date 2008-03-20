@@ -34,9 +34,11 @@ typedef struct MediaSeekingImpl
 	LONGLONG llStart;
 	LONGLONG llStop;
 	LONGLONG llDuration; /* FIXME: needed? */
+	GUID timeformat;
+	PCRITICAL_SECTION crst;
 } MediaSeekingImpl;
 
-HRESULT MediaSeekingImpl_Init(IBaseFilter *pUserData, CHANGEPROC fnChangeStop, CHANGEPROC fnChangeStart, CHANGEPROC fnChangeRate, MediaSeekingImpl * pSeeking);
+HRESULT MediaSeekingImpl_Init(IBaseFilter *pUserData, CHANGEPROC fnChangeStop, CHANGEPROC fnChangeStart, CHANGEPROC fnChangeRate, MediaSeekingImpl * pSeeking, PCRITICAL_SECTION crit_sect);
 
 HRESULT WINAPI MediaSeekingImpl_GetCapabilities(IMediaSeeking * iface, DWORD * pCapabilities);
 HRESULT WINAPI MediaSeekingImpl_CheckCapabilities(IMediaSeeking * iface, DWORD * pCapabilities);

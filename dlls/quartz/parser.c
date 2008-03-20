@@ -80,7 +80,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     piInput.pFilter = (IBaseFilter *)pParser;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    MediaSeekingImpl_Init((IBaseFilter*)pParser, Parser_ChangeStop, Parser_ChangeStart, Parser_ChangeRate, &pParser->mediaSeeking);
+    MediaSeekingImpl_Init((IBaseFilter*)pParser, Parser_ChangeStop, Parser_ChangeStart, Parser_ChangeRate, &pParser->mediaSeeking, &pParser->csFilter);
     pParser->mediaSeeking.lpVtbl = &Parser_Seeking_Vtbl;
 
     hr = Parser_InputPin_Construct(&piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, &pParser->csFilter, (IPin **)&pParser->pInputPin);
