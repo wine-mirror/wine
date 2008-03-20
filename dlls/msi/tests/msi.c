@@ -304,7 +304,8 @@ static void test_MsiGetFileHash(void)
 
     /* szFilePath is empty */
     r = pMsiGetFileHashA("", 0, &hash);
-    ok(r == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", r);
+    ok(r == ERROR_PATH_NOT_FOUND || r == ERROR_BAD_PATHNAME,
+       "Expected ERROR_PATH_NOT_FOUND or ERROR_BAD_PATHNAME, got %d\n", r);
 
     /* szFilePath is nonexistent */
     r = pMsiGetFileHashA(name, 0, &hash);
