@@ -215,7 +215,7 @@ static WND *free_window_handle( HWND hwnd )
 static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWORD tid )
 {
     HWND *list;
-    int size = 32;
+    int size = 128;
 
     for (;;)
     {

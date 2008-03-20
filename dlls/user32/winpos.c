@@ -259,7 +259,7 @@ BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
 static HWND *list_children_from_point( HWND hwnd, POINT pt )
 {
     HWND *list;
-    int size = 32;
+    int size = 128;
 
     for (;;)
     {
