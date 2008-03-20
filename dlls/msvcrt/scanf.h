@@ -331,8 +331,7 @@ _FUNCTION_ {
 		    else goto widecharstring;
 #endif /* WIDE_SCANF */
 	    charstring: { /* read a word into a char */
-		    char*str = suppress ? NULL : va_arg(ap, char*);
-                    char*sptr = str;
+		    char *sptr = suppress ? NULL : va_arg(ap, char*);
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
@@ -348,9 +347,7 @@ _FUNCTION_ {
                 }
                 break;
 	    widecharstring: { /* read a word into a wchar_t* */
-		    MSVCRT_wchar_t*str =
-			suppress ? NULL : va_arg(ap, MSVCRT_wchar_t*);
-                    MSVCRT_wchar_t*sptr = str;
+		    MSVCRT_wchar_t *sptr = suppress ? NULL : va_arg(ap, MSVCRT_wchar_t*);
                     /* skip initial whitespace */
                     while ((nch!=_EOF_) && _ISSPACE_(nch))
                         nch = _GETC_(file);
@@ -384,24 +381,26 @@ _FUNCTION_ {
 		    else goto widecharacter;
 #endif /* WIDE_SCANF */
 	  character: { /* read single character into char */
-                    if (nch!=_EOF_) {
-                        if (!suppress) {
-                            char*c = va_arg(ap, char*);
-                            *c = _CHAR2SUPPORTED_(nch);
-                        }
-                        st = 1;
+                    char *str = suppress ? NULL : va_arg(ap, char*);
+                    if (width == -1) width = 1;
+                    while ((width != 0) && (nch != _EOF_))
+                    {
+                        if (!suppress) *str++ = _CHAR2SUPPORTED_(nch);
+                        st++;
+                        width--;
                         nch = _GETC_(file);
                     }
                 }
 		break;
 	  widecharacter: { /* read single character into a wchar_t */
-                    if (nch!=_EOF_) {
-                        if (!suppress) {
-                            MSVCRT_wchar_t*c = va_arg(ap, MSVCRT_wchar_t*);
-                            *c = _WIDE2SUPPORTED_(nch);
-                        }
+                    MSVCRT_wchar_t *str = suppress ? NULL : va_arg(ap, MSVCRT_wchar_t*);
+                    if (width == -1) width = 1;
+                    while ((width != 0) && (nch != _EOF_))
+                    {
+                        if (!suppress) *str++ = _WIDE2SUPPORTED_(nch);
+                        st++;
+                        width--;
                         nch = _GETC_(file);
-                        st = 1;
                     }
 	        }
 		break;
