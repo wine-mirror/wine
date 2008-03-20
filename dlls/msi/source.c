@@ -145,7 +145,7 @@ static UINT OpenURLSubkey(HKEY rootkey, HKEY *key, BOOL create)
  */
 UINT WINAPI MsiSourceListEnumMediaDisksA(LPCSTR szProductCodeOrPatchCode,
                                          LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext,
-                                         DWORD dwOptions, DWORD dwIndex, LPWORD pdwDiskId,
+                                         DWORD dwOptions, DWORD dwIndex, LPDWORD pdwDiskId,
                                          LPSTR szVolumeLabel, LPDWORD pcchVolumeLabel,
                                          LPSTR szDiskPrompt, LPDWORD pcchDiskPrompt)
 {
@@ -204,7 +204,7 @@ done:
  */
 UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR szProductCodeOrPatchCode,
                                          LPCWSTR szUserSid, MSIINSTALLCONTEXT dwContext,
-                                         DWORD dwOptions, DWORD dwIndex, LPWORD pdwDiskId,
+                                         DWORD dwOptions, DWORD dwIndex, LPDWORD pdwDiskId,
                                          LPWSTR szVolumeLabel, LPDWORD pcchVolumeLabel,
                                          LPWSTR szDiskPrompt, LPDWORD pcchDiskPrompt)
 {

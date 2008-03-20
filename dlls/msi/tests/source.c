@@ -36,7 +36,7 @@ static UINT (WINAPI *pMsiSourceListAddMediaDiskA)
 static UINT (WINAPI *pMsiSourceListAddSourceExA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, DWORD);
 static UINT (WINAPI *pMsiSourceListEnumMediaDisksA)
-    (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPWORD, LPSTR,
+    (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPDWORD, LPSTR,
     LPDWORD, LPSTR, LPDWORD);
 static UINT (WINAPI *pMsiSourceListEnumSourcesA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPSTR, LPDWORD);
@@ -2297,7 +2297,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
     DWORD labelsz, promptsz;
     LPSTR usersid;
     DWORD val;
-    WORD id;
+    DWORD id;
     LONG res;
     UINT r;
 

@@ -599,8 +599,7 @@ static UINT find_published_source(MSIPACKAGE *package, struct media_info *mi)
     WCHAR volume[MAX_PATH];
     WCHAR prompt[MAX_PATH];
     DWORD volumesz, promptsz;
-    DWORD index, size;
-    WORD id;
+    DWORD index, size, id;
     UINT r;
 
     r = MsiSourceListGetInfoW(package->ProductCode, NULL,
