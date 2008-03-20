@@ -848,7 +848,7 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
             return E_INVALIDARG;
 
         len = ptr - (pwzUrl + sizeof(wszRes)/sizeof(WCHAR));
-        if(len > sizeof(file_part)/sizeof(WCHAR)) {
+        if(len >= sizeof(file_part)/sizeof(WCHAR)) {
             FIXME("Too long URL\n");
             return MK_E_SYNTAX;
         }
