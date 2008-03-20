@@ -1478,7 +1478,22 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
 }
 
 static HRESULT WINAPI SendRun(IBaseFilter *pFilter) {
-   return IBaseFilter_Run(pFilter, 0);
+    LONGLONG time = 0;
+    IReferenceClock *clock = NULL;
+
+    IBaseFilter_GetSyncSource(pFilter, &clock);
+    if (clock)
+    {
+        IReferenceClock_GetTime(clock, &time);
+        if (time)
+            /* Add 50 ms */
+            time += 500000;
+        if (time < 0)
+            time = 0;
+        IReferenceClock_Release(clock);
+    }
+
+    return IBaseFilter_Run(pFilter, time);
 }
 
 static HRESULT WINAPI SendPause(IBaseFilter *pFilter) {
