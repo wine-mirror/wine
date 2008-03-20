@@ -652,6 +652,7 @@ LIBS
 build_alias
 host_alias
 target_alias
+MAINTAINER_MODE
 build
 build_cpu
 build_vendor
@@ -1369,6 +1370,8 @@ Optional Features:
   --disable-win16         do not include Win16 support
   --enable-win64          build a Win64 emulator on AMD64 (won't run Win32
                           binaries)
+  --enable-maintainer-mode
+                          enable maintainer-specific build rules
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1895,6 +1898,14 @@ fi
 # Check whether --enable-win64 was given.
 if test "${enable_win64+set}" = set; then
   enableval=$enable_win64;
+fi
+
+# Check whether --enable-maintainer-mode was given.
+if test "${enable_maintainer_mode+set}" = set; then
+  enableval=$enable_maintainer_mode;
+else
+  MAINTAINER_MODE=\#
+
 fi
 
 
@@ -23056,6 +23067,7 @@ LIBS!$LIBS$ac_delim
 build_alias!$build_alias$ac_delim
 host_alias!$host_alias$ac_delim
 target_alias!$target_alias$ac_delim
+MAINTAINER_MODE!$MAINTAINER_MODE$ac_delim
 build!$build$ac_delim
 build_cpu!$build_cpu$ac_delim
 build_vendor!$build_vendor$ac_delim
@@ -23100,7 +23112,6 @@ LN!$LN$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
 LDCONFIG!$LDCONFIG$ac_delim
-INSTALL_PROGRAM!$INSTALL_PROGRAM$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 82; then
@@ -23162,6 +23173,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+INSTALL_PROGRAM!$INSTALL_PROGRAM$ac_delim
 INSTALL_SCRIPT!$INSTALL_SCRIPT$ac_delim
 INSTALL_DATA!$INSTALL_DATA$ac_delim
 LINT!$LINT$ac_delim
@@ -23237,7 +23249,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 73; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 74; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
