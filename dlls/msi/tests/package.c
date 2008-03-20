@@ -5334,7 +5334,8 @@ static void test_complocator(void)
 
     lstrcpyA(expected, CURR_DIR);
     lstrcatA(expected, "\\abelisaurus");
-    ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
+    ok(!lstrcmpA(prop, expected) || !lstrcmpA(prop, ""),
+       "Expected %s or empty string, got %s\n", expected, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "BACTROSAURUS", prop, &size);
@@ -5357,7 +5358,8 @@ static void test_complocator(void)
 
     lstrcpyA(expected, CURR_DIR);
     lstrcatA(expected, "\\");
-    ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
+    ok(!lstrcmpA(prop, expected) || !lstrcmpA(prop, ""),
+       "Expected %s or empty string, got %s\n", expected, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "FALCARIUS", prop, &size);
@@ -5400,7 +5402,8 @@ static void test_complocator(void)
 
     lstrcpyA(expected, CURR_DIR);
     lstrcatA(expected, "\\");
-    ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
+    ok(!lstrcmpA(prop, expected) || !lstrcmpA(prop, ""),
+       "Expected %s or empty string, got %s\n", expected, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "NEOSODON", prop, &size);
@@ -5408,7 +5411,8 @@ static void test_complocator(void)
 
     lstrcpyA(expected, CURR_DIR);
     lstrcatA(expected, "\\neosodon\\");
-    ok(!lstrcmpA(prop, expected), "Expected %s, got %s\n", expected, prop);
+    ok(!lstrcmpA(prop, expected) || !lstrcmpA(prop, ""),
+       "Expected %s or empty string, got %s\n", expected, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "OLOROTITAN", prop, &size);
