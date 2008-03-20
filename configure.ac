@@ -188,6 +188,14 @@ AC_SUBST(LINTFLAGS)
 dnl Check for various programs
 AC_CHECK_PROGS(FONTFORGE, fontforge, false)
 AC_CHECK_PROGS(PKG_CONFIG, pkg-config, false)
+AC_CHECK_PROGS(RSVG, rsvg, false)
+AC_CHECK_PROGS(ICOTOOL, icotool, false)
+
+if test "${enable_maintainer_mode+set}" = set
+then
+  if test "$RSVG" = "false"; then WINE_WARNING([rsvg is missing, icons can't be rebuilt.]); fi
+  if test "$ICOTOOL" = "false"; then WINE_WARNING([icotool is missing, icons can't be rebuilt.]); fi
+fi
 
 case $host_cpu in
   *i[[3456789]]86*)

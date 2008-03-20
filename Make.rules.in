@@ -53,6 +53,8 @@ MV        = mv
 LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
 FONTFORGE = @FONTFORGE@
+RSVG      = @RSVG@
+ICOTOOL   = @ICOTOOL@
 INCLUDES     = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
 EXTRACFLAGS  = @EXTRACFLAGS@
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
@@ -125,7 +127,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .sfd .ttf .man.in .man _c.c _i.c _p.c _s.c
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .sfd .ttf .man.in .man _c.c _i.c _p.c _s.c @MAINTAINER_MODE@ .svg .ico
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -183,6 +185,13 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 .man.in.man:
 	LC_ALL=C sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $< >$@ || ($(RM) $@ && false)
+
+.svg.ico:
+	$(RSVG) -w 16 -h 16 -f png $< $*-16.png
+	$(RSVG) -w 32 -h 32 -f png $< $*-32.png
+	$(RSVG) -w 48 -h 48 -f png $< $*-48.png
+	$(ICOTOOL) -c -o $@ $*-16.png $*-32.png $*-48.png
+	$(RM) $*-16.png $*-32.png $*-48.png
 
 # 'all' target first in case the enclosing Makefile didn't define any target
 
