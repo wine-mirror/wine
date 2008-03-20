@@ -209,11 +209,17 @@ cpp_quote("#endif")
   case E2: float f2;
   } encue_t;
 
+  typedef struct
+  {
+    e_t f;
+  } se_t;
+
   double square_encu(encu_t *eu);
   int sum_parr(int *a[3]);
   int sum_pcarr([size_is(n)] int *a[], int n);
   int enum_ord(e_t e);
   double square_encue(encue_t *eue);
+  void check_se2(se_t *s);
 
   int sum_toplev_conf_2n([size_is(n * 2)] int *x, int n);
   int sum_toplev_conf_cond([size_is(c ? a : b)] int *x, int a, int b, int c);

@@ -333,6 +333,12 @@ s_square_encu(encu_t *eu)
   }
 }
 
+void
+s_check_se2(se_t *s)
+{
+  ok(s->f == E2, "check_se2\n");
+}
+
 int
 s_sum_parr(int *a[3])
 {
@@ -705,6 +711,7 @@ basic_tests(void)
   str_struct_t ss = {string};
   wstr_struct_t ws = {wstring};
   str_t str;
+  se_t se;
 
   ok(int_return() == INT_CODE, "RPC int_return\n");
 
@@ -773,6 +780,9 @@ basic_tests(void)
   ok(enum_ord(E2) == 2, "RPC enum_ord\n");
   ok(enum_ord(E3) == 3, "RPC enum_ord\n");
   ok(enum_ord(E4) == 4, "RPC enum_ord\n");
+
+  se.f = E2;
+  check_se2(&se);
 
   memset(&aligns, 0, sizeof(aligns));
   aligns.c = 3;

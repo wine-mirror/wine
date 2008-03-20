@@ -1856,7 +1856,6 @@ static int get_struct_type(var_list_t *fields)
     case RPC_FC_FLOAT:
     case RPC_FC_DOUBLE:
     case RPC_FC_STRUCT:
-    case RPC_FC_ENUM16:
     case RPC_FC_ENUM32:
       break;
 
@@ -1907,6 +1906,7 @@ static int get_struct_type(var_list_t *fields)
     case RPC_FC_ENCAPSULATED_UNION:
     case RPC_FC_NON_ENCAPSULATED_UNION:
     case RPC_FC_BOGUS_STRUCT:
+    case RPC_FC_ENUM16:
       return RPC_FC_BOGUS_STRUCT;
     }
   }
