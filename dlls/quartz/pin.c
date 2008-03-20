@@ -113,7 +113,7 @@ static HRESULT SendFurther( IPin *from, SendPinFunc fnMiddle, LPVOID arg, SendPi
                 {
                     HRESULT hr_local;
 
-                    hr_local = fnMiddle( pin, arg );
+                    hr_local = fnMiddle( connected, arg );
                     hr_return = updatehres( hr_return, hr_local );
                     IPin_Release(connected);
                 }
