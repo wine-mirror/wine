@@ -307,30 +307,30 @@
 @ stdcall D3DXVec2Hermite(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec2Hermite
 @ stdcall D3DXVec2Normalize(ptr ptr) d3dx8.D3DXVec2Normalize
 @ stdcall D3DXVec2Transform(ptr ptr ptr) d3dx8.D3DXVec2Transform
-@ stub D3DXVec2TransformArray
+@ stdcall D3DXVec2TransformArray(ptr long ptr long ptr long)
 @ stdcall D3DXVec2TransformCoord(ptr ptr ptr) d3dx8.D3DXVec2TransformCoord
-@ stub D3DXVec2TransformCoordArray
+@ stdcall D3DXVec2TransformCoordArray(ptr long ptr long ptr long)
 @ stdcall D3DXVec2TransformNormal(ptr ptr ptr) d3dx8.D3DXVec2TransformNormal
-@ stub D3DXVec2TransformNormalArray
+@ stdcall D3DXVec2TransformNormalArray(ptr long ptr long ptr long)
 @ stdcall D3DXVec3BaryCentric(ptr ptr ptr ptr long long) d3dx8.D3DXVec3BaryCentric
 @ stdcall D3DXVec3CatmullRom(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec3CatmullRom
 @ stdcall D3DXVec3Hermite(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec3Hermite
 @ stdcall D3DXVec3Normalize(ptr ptr) d3dx8.D3DXVec3Normalize
 @ stdcall D3DXVec3Project(ptr ptr ptr ptr ptr ptr) d3dx8.D3DXVec3Project
-@ stub D3DXVec3ProjectArray
+@ stdcall D3DXVec3ProjectArray(ptr long ptr long ptr ptr ptr ptr long)
 @ stdcall D3DXVec3Transform(ptr ptr ptr) d3dx8.D3DXVec3Transform
-@ stub D3DXVec3TransformArray
+@ stdcall D3DXVec3TransformArray(ptr long ptr long ptr long)
 @ stdcall D3DXVec3TransformCoord(ptr ptr ptr) d3dx8.D3DXVec3TransformCoord
-@ stub D3DXVec3TransformCoordArray
+@ stdcall D3DXVec3TransformCoordArray(ptr long ptr long ptr long)
 @ stdcall D3DXVec3TransformNormal(ptr ptr ptr) d3dx8.D3DXVec3TransformNormal
-@ stub D3DXVec3TransformNormalArray
+@ stdcall D3DXVec3TransformNormalArray(ptr long ptr long ptr long)
 @ stdcall D3DXVec3Unproject(ptr ptr ptr ptr ptr ptr) d3dx8.D3DXVec3Unproject
-@ stub D3DXVec3UnprojectArray
+@ stdcall D3DXVec3UnprojectArray(ptr long ptr long ptr ptr ptr ptr long)
 @ stdcall D3DXVec4BaryCentric(ptr ptr ptr ptr long long) d3dx8.D3DXVec4BaryCentric
 @ stdcall D3DXVec4CatmullRom(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec4CatmullRom
 @ stdcall D3DXVec4Cross(ptr ptr ptr ptr) d3dx8.D3DXVec4Cross
 @ stdcall D3DXVec4Hermite(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec4Hermite
 @ stdcall D3DXVec4Normalize(ptr ptr) d3dx8.D3DXVec4Normalize
 @ stdcall D3DXVec4Transform(ptr ptr ptr) d3dx8.D3DXVec4Transform
-@ stub D3DXVec4TransformArray
+@ stdcall D3DXVec4TransformArray(ptr long ptr long ptr long)
 @ stub D3DXWeldVertices

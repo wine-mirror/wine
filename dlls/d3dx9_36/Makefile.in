@@ -8,7 +8,8 @@ IMPORTS   = d3d9 d3dx8 kernel32
 
 C_SRCS = \
 	d3dx9_36_main.c \
-	font.c
+	font.c \
+	math.c
 
 @MAKE_DLL_RULES@
 
