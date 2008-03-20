@@ -437,6 +437,14 @@ Bitte geben sie einen Wert zwischen %d und %d an."
     PD32_PRINTER_STATUS_POWER_SAVE        "Stromsparmodus; "
 }
 
+STRINGTABLE DISCARDABLE /* Font styles */
+{
+    IDS_FONT_REGULAR       "Normal"
+    IDS_FONT_BOLD          "Fett"
+    IDS_FONT_ITALIC        "Kursiv"
+    IDS_FONT_BOLD_ITALIC   "Fett Kursiv"
+}
+
 STRINGTABLE DISCARDABLE /* Color names */
 {
    IDS_COLOR_BLACK	"Schwarz"
