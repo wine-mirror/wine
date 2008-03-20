@@ -400,7 +400,7 @@ HRESULT WINAPI MediaSeekingImpl_GetAvailable(IMediaSeeking * iface, LONGLONG * p
     EnterCriticalSection(This->crst);
     *pEarliest = 0;
     *pLatest = This->llDuration;
-    EnterCriticalSection(This->crst);
+    LeaveCriticalSection(This->crst);
 
     return S_OK;
 }
