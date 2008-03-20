@@ -27,7 +27,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
-/* Some private defines, Constant associations, etc */
+/* Some private defines, Constant associations, etc
+ * Env bump matrix and per stage constant should be independent,
+ * a stage that bumpmaps can't read the per state constant
+ */
+#define ATI_FFP_CONST_BUMPMAT(i) (GL_CON_0_ATI + i)
 #define ATI_FFP_CONST_CONSTANT0 GL_CON_0_ATI
 #define ATI_FFP_CONST_CONSTANT1 GL_CON_1_ATI
 #define ATI_FFP_CONST_CONSTANT2 GL_CON_2_ATI
@@ -223,6 +227,74 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
     GL_EXTCALL(glBeginFragmentShaderATI());
     checkGLcall("GL_EXTCALL(glBeginFragmentShaderATI())");
 
+    /* Pass 1: Generate sampling instructions for perturbation maps */
+      for(stage = 0; stage < GL_LIMITS(textures); stage++) {
+        if(op[stage].cop == WINED3DTOP_DISABLE) break;
+        if(op[stage].cop != WINED3DTOP_BUMPENVMAP &&
+           op[stage].cop != WINED3DTOP_BUMPENVMAPLUMINANCE) continue;
+
+        TRACE("glSampleMapATI(GL_REG_%d_ATI, GL_TEXTURE_%d_ARB, GL_SWIZZLE_STR_ATI)\n",
+              stage, stage);
+        GL_EXTCALL(glSampleMapATI(GL_REG_0_ATI + stage,
+                   GL_TEXTURE0_ARB + stage,
+                   GL_SWIZZLE_STR_ATI));
+        TRACE("glPassTexCoordATI(GL_REG_%d_ATI, GL_TEXTURE_%d_ARB, GL_SWIZZLE_STR_ATI)\n",
+              stage + 1, stage + 1);
+        GL_EXTCALL(glPassTexCoordATI(GL_REG_0_ATI + stage + 1,
+                   GL_TEXTURE0_ARB + stage + 1,
+                   GL_SWIZZLE_STR_ATI));
+
+        /* We need GL_REG_5_ATI as a temporary register to swizzle the bump matrix. So we run into
+         * issues if we're bump mapping on stage 4 or 5
+         */
+        if(stage >= 4) {
+            FIXME("Bump mapping in stage %d\n", stage);
+        }
+    }
+
+    /* Pass 2: Generate perturbation calculations */
+    for(stage = 0; stage < GL_LIMITS(textures); stage++) {
+        if(op[stage].cop == WINED3DTOP_DISABLE) break;
+        if(op[stage].cop != WINED3DTOP_BUMPENVMAP &&
+           op[stage].cop != WINED3DTOP_BUMPENVMAPLUMINANCE) continue;
+
+        /* Nice thing, we get the color correction for free :-) */
+        if(op[stage].color_correction == WINED3DFMT_V8U8) {
+            argmodextra = GL_2X_BIT_ATI | GL_BIAS_BIT_ATI;
+        } else {
+            argmodextra = 0;
+        }
+
+        TRACE("glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_%d_ATI, GL_RED_BIT_ATI, GL_NONE, GL_REG_%d_ATI, GL_NONE, %s, ATI_FFP_CONST_BUMPMAT(%d), GL_NONE, GL_NONE, GL_REG_%d_ATI, GL_RED, GL_NONE)\n",
+              stage + 1, stage, debug_argmod(argmodextra), stage, stage + 1);
+        GL_EXTCALL(glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_RED_BIT_ATI, GL_NONE,
+                                         GL_REG_0_ATI + stage, GL_NONE, argmodextra,
+                                         ATI_FFP_CONST_BUMPMAT(stage), GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
+                                         GL_REG_0_ATI + stage + 1, GL_RED, GL_NONE));
+
+        /* FIXME: How can I make GL_DOT2_ADD_ATI read the factors from blue and alpha? It defaults to red and green,
+         * and it is fairly easy to make it read GL_BLUE or BL_ALPHA, but I can't get an R * B + G * A. So we're wasting
+         * one register and two instructions in this pass for a simple swizzling operation.
+         * For starters it might be good enough to merge the two movs into one, but even that isn't possible :-(
+         *
+         * NOTE: GL_BLUE | GL_ALPHA is not possible. It doesn't throw a compilation error, but an OR operation on the
+         * constants doesn't make sense, considering their values.
+         */
+        TRACE("glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_RED_BIT_ATI, GL_NONE, ATI_FFP_CONST_BUMPMAT(%d), GL_BLUE, GL_NONE)\n", stage);
+        GL_EXTCALL(glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_RED_BIT_ATI, GL_NONE,
+                                         ATI_FFP_CONST_BUMPMAT(stage), GL_BLUE, GL_NONE));
+        TRACE("glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_GREEN_BIT_ATI, GL_NONE, ATI_FFP_CONST_BUMPMAT(%d), GL_ALPHA, GL_NONE)\n", stage);
+        GL_EXTCALL(glColorFragmentOp1ATI(GL_MOV_ATI, GL_REG_5_ATI, GL_GREEN_BIT_ATI, GL_NONE,
+                                        ATI_FFP_CONST_BUMPMAT(stage), GL_ALPHA, GL_NONE));
+        TRACE("glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_%d_ATI, GL_GREEN_BIT_ATI, GL_NONE, GL_REG_%d_ATI, GL_NONE, %s, GL_REG_5_ATI, GL_NONE, GL_NONE, GL_REG_%d_ATI, GL_GREEN, GL_NONE)\n",
+              stage + 1, stage, debug_argmod(argmodextra), stage + 1);
+        GL_EXTCALL(glColorFragmentOp3ATI(GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_GREEN_BIT_ATI, GL_NONE,
+                                         GL_REG_0_ATI + stage, GL_NONE, argmodextra,
+                                         GL_REG_5_ATI, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
+                                         GL_REG_0_ATI + stage + 1, GL_GREEN, GL_NONE));
+    }
+
+    /* Pass 3: Generate sampling instructions for regular textures */
     for(stage = 0; stage < GL_LIMITS(textures); stage++) {
         if(op[stage].cop == WINED3DTOP_DISABLE) {
             break;
@@ -251,17 +323,26 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
            (op[stage].aarg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE ||
            (op[stage].aarg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE ||
             op[stage].cop == WINED3DTOP_BLENDTEXTUREALPHA) {
-            /* TODO 1: Handle bump mapping. In this case we have to generate a first pass,
-             * and use GL_REG_x_ATI as source instead of GL_TEXTURE_x.
-             */
-            TRACE("glSampleMapATI(GL_REG_%d_ATI, GL_TEXTURE_%d_ARB, %s)\n",
-                  stage, stage, debug_swizzle(swizzle));
-            GL_EXTCALL(glSampleMapATI(GL_REG_0_ATI + stage,
-                                      GL_TEXTURE0_ARB + stage,
-                                      swizzle));
+
+            if(stage > 0 &&
+               (op[stage - 1].cop == WINED3DTOP_BUMPENVMAP ||
+                op[stage - 1].cop == WINED3DTOP_BUMPENVMAPLUMINANCE)) {
+                TRACE("glSampleMapATI(GL_REG_%d_ATI, GL_REG_%d_ATI, GL_SWIZZLE_STR_ATI)\n",
+                      stage, stage);
+                GL_EXTCALL(glSampleMapATI(GL_REG_0_ATI + stage,
+                           GL_REG_0_ATI + stage,
+                           GL_SWIZZLE_STR_ATI));
+            } else {
+                TRACE("glSampleMapATI(GL_REG_%d_ATI, GL_TEXTURE_%d_ARB, %s)\n",
+                    stage, stage, debug_swizzle(swizzle));
+                GL_EXTCALL(glSampleMapATI(GL_REG_0_ATI + stage,
+                                        GL_TEXTURE0_ARB + stage,
+                                        swizzle));
+            }
         }
     }
 
+    /* Pass 4: Generate the arithmetic instructions */
     for(stage = 0; stage < MAX_TEXTURES; stage++) {
         if(op[stage].cop == WINED3DTOP_DISABLE) {
             if(stage == 0) {
@@ -415,6 +496,11 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
                            arg1, GL_NONE, argmod1,
                            arg2, GL_NONE, argmod2,
                            arg0, GL_NONE, argmod0));
+                break;
+
+            case WINED3DTOP_BUMPENVMAP:
+            case WINED3DTOP_BUMPENVMAPLUMINANCE:
+                /* Those are handled in the first pass of the shader(generation pass 1 and 2) alraedy */
                 break;
 
             default: FIXME("Unhandled color operation %d on stage %d\n", op[stage].cop, stage);
@@ -598,6 +684,41 @@ static void state_texfactor_atifs(DWORD state, IWineD3DStateBlockImpl *statebloc
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col)");
 }
 
+static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+    float mat[2][2];
+
+    mat[0][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]);
+    mat[1][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT01]);
+    mat[0][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT10]);
+    mat[1][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT11]);
+    /* GL_ATI_fragment_shader allows only constants from 0.0 to 1.0, but the bumpmat
+     * constants can be in any range. While they should stay between [-1.0 and 1.0] because
+     * Shader Model 1.x pixel shaders are clamped to that range negative values are used occasionally,
+     * for example by our d3d9 test. So to get negative values scale -1;1 to 0;1 and undo that in the
+     * shader(it is free). This might potentially reduce precision. However, if the hardware does
+     * support proper floats it shouldn't, and if it doesn't we can't get anything better anyway
+     */
+    mat[0][0] = (mat[0][0] + 1.0) * 0.5;
+    mat[1][0] = (mat[1][0] + 1.0) * 0.5;
+    mat[0][1] = (mat[0][1] + 1.0) * 0.5;
+    mat[1][1] = (mat[1][1] + 1.0) * 0.5;
+    GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), (float *) mat));
+    checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
+
+    /* FIXME: This should go away
+     * This is currently needed because atifs borrows a pixel shader implementation
+     * from somewhere else, but consumes bump map matrix change events. The other pixel
+     * shader implementation may need notification about the change to update the texbem
+     * constants. Once ATIFS supports real shaders on its own, and GLSL/ARB have a replacement
+     * pipeline this call can go away
+     *
+     * FIXME2: Even considering this workaround calling FFPStateTable directly isn't nice
+     * as well. Better would be to call the model's table we inherit from, but currently
+     * it is always the FFP table, and as soon as this changes we can remove the call anyway
+     */
+    FFPStateTable[state].apply(state, stateblock, context);
+}
 #undef GLINFO_LOCATION
 
 /* our state table. Borrows lots of stuff from the base implementation */
@@ -626,6 +747,11 @@ static void init_state_table() {
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG2)].representative = rep;
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG0)].apply = set_tex_op_atifs;
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG0)].representative = rep;
+
+        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00)].apply = set_bumpmat;
+        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT01)].apply = set_bumpmat;
+        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT10)].apply = set_bumpmat;
+        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT11)].apply = set_bumpmat;
     }
 
     ATIFSStateTable[STATE_RENDER(WINED3DRS_TEXTUREFACTOR)].apply = state_texfactor_atifs;
@@ -738,9 +864,10 @@ static void shader_atifs_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_in
                            WINED3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR   |
                            WINED3DTEXOPCAPS_DOTPRODUCT3                 |
                            WINED3DTEXOPCAPS_MULTIPLYADD                 |
-                           WINED3DTEXOPCAPS_LERP;
+                           WINED3DTEXOPCAPS_LERP                        |
+                           WINED3DTEXOPCAPS_BUMPENVMAP;
 
-    /* TODO: Implement WINED3DTEXOPCAPS_BUMPENVMAP, WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE
+    /* TODO: Implement WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE
     and WINED3DTEXOPCAPS_PREMODULATE */
 
     /* GL_ATI_fragment_shader only supports up to 6 textures, which was the limit on r200 cards

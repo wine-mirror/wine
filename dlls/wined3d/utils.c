@@ -3195,6 +3195,7 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct texture_stage_op op[M
     DWORD ttff;
 
     for(i = 0; i < GL_LIMITS(texture_stages); i++) {
+        IWineD3DBaseTextureImpl *texture;
         if(stateblock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
             op[i].cop = WINED3DTOP_DISABLE;
             op[i].aop = WINED3DTOP_DISABLE;
@@ -3204,7 +3205,9 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct texture_stage_op op[M
             i++;
             break;
         }
-        op[i].color_correction = WINED3DFMT_UNKNOWN;
+
+        texture = (IWineD3DBaseTextureImpl *) stateblock->textures[i];
+        op[i].color_correction = texture ? texture->baseTexture.shader_conversion_group : WINED3DFMT_UNKNOWN;
 
         op[i].cop = stateblock->textureState[i][WINED3DTSS_COLOROP];
         op[i].aop = stateblock->textureState[i][WINED3DTSS_ALPHAOP];
