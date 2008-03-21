@@ -611,6 +611,7 @@ HIMC WINAPI ImmCreateContext(void)
 
     /* hCompStr is never NULL */
     new_context->IMC.hCompStr = ImmCreateBlankCompStr();
+    new_context->IMC.hMsgBuf = ImmCreateIMCC(1);
 
     return (HIMC)new_context;
 }
@@ -2035,10 +2036,8 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
             ImmInternalPostIMEMessage(lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
 
         ImmUnlockIMCC(data->IMC.hMsgBuf);
-        ImmDestroyIMCC(data->IMC.hMsgBuf);
 
         data->IMC.dwNumMsgBuf = 0;
-        data->IMC.hMsgBuf = NULL;
     }
 
     return TRUE;
