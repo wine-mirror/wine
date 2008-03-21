@@ -71,6 +71,7 @@ int parser_error(const char *s, ...)
 	va_list ap;
 	va_start(ap, s);
 	generic_msg(s, "Error", parser_text, ap);
+        fputc( '\n', stderr );
 	va_end(ap);
 	exit(1);
 	return 1;
@@ -241,7 +242,7 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     int res;
 
     if (!codepage && str->type != type)
-        parser_error( "Current language is Unicode only, cannot convert string\n" );
+        parser_error( "Current language is Unicode only, cannot convert string" );
 
     if((str->type == str_char) && (type == str_unicode))
     {
@@ -256,7 +257,7 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
             res = wine_utf8_mbstowcs( MB_ERR_INVALID_CHARS, str->str.cstr, str->size,
                                       ret->str.wstr, ret->size );
         if (res == -2)
-            parser_error( "Invalid character in string '%.*s' for codepage %u\n",
+            parser_error( "Invalid character in string '%.*s' for codepage %u",
                    str->size, str->str.cstr, codepage );
         ret->str.wstr[ret->size] = 0;
     }
