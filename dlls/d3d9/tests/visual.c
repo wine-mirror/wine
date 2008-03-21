@@ -765,13 +765,13 @@ static void fog_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 160, 360);
     ok(color == 0x00FF0000, "Untransformed vertex with no table or vertex fog has color %08x\n", color);
     color = getPixelColor(device, 160, 120);
-    ok(color == 0x0000FF00, "Untransformed vertex with linear vertex fog has color %08x\n", color);
+    ok(color == 0x0000FF00 || color == 0x0000FE00, "Untransformed vertex with linear vertex fog has color %08x\n", color);
     color = getPixelColor(device, 480, 120);
     ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
     if(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE)
     {
         color = getPixelColor(device, 480, 360);
-        ok(color == 0x0000FF00, "Transformed vertex with linear table fog has color %08x\n", color);
+        ok(color == 0x0000FF00 || color == 0x0000FE00, "Transformed vertex with linear table fog has color %08x\n", color);
     }
     else
     {
@@ -835,9 +835,9 @@ static void fog_test(IDirect3DDevice9 *device)
     }
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     color = getPixelColor(device, 160, 360);
-    ok(color == 0x0000FF00, "Untransformed vertex with vertex fog and z = 0.1 has color %08x\n", color);
+    ok(color == 0x0000FF00 || color == 0x0000FE00, "Untransformed vertex with vertex fog and z = 0.1 has color %08x\n", color);
     color = getPixelColor(device, 160, 120);
-    ok(color == 0x0000FF00, "Untransformed vertex with vertex fog and z = 1.0 has color %08x\n", color);
+    ok(color == 0x0000FF00 || color == 0x0000FE00, "Untransformed vertex with vertex fog and z = 1.0 has color %08x\n", color);
     color = getPixelColor(device, 480, 120);
     ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
 
@@ -882,7 +882,7 @@ static void fog_test(IDirect3DDevice9 *device)
         }
         IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         color = getPixelColor(device, 160, 360);
-        ok(color == 0x0000FF00, "Reversed %s fog: z=0.1 has color 0x%08x, expected 0x0000ff00\n", mode, color);
+        ok(color == 0x0000FF00 || color == 0x0000FE00, "Reversed %s fog: z=0.1 has color 0x%08x, expected 0x0000ff00\n", mode, color);
 
         color = getPixelColor(device, 160, 120);
         r = (color & 0x00ff0000) >> 16;
