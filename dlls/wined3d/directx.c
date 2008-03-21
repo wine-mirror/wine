@@ -2311,6 +2311,9 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                         return WINED3DERR_NOTAVAILABLE;
                     }
                 }
+            } else {
+                TRACE_(d3d_caps)("[FAILED] - Cube texture format not supported\n");
+                return WINED3DERR_NOTAVAILABLE;
             }
         } else {
             TRACE_(d3d_caps)("[FAILED] - No cube texture support\n");
@@ -2423,6 +2426,9 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         } else if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
+        } else {
+            TRACE_(d3d_caps)("[FAILED] - Texture format not supported\n");
+            return WINED3DERR_NOTAVAILABLE;
         }
     } else if((RType == WINED3DRTYPE_VOLUME) || (RType == WINED3DRTYPE_VOLUMETEXTURE)) {
         /* Volume is to VolumeTexture what Surface is to Texture but its usage caps are not documented.
