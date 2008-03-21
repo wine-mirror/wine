@@ -1227,6 +1227,13 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             return 0;
         }
 
+        if(ft_face->family_name[0] == '.') /* Ignore fonts with names beginning with a dot */
+        {
+            TRACE("Ignoring %s since its family name begins with a dot\n", debugstr_a(file));
+            pFT_Done_Face(ft_face);
+            return 0;
+        }
+
         if (target_family)
         {
             localised_family = get_familyname(ft_face);
