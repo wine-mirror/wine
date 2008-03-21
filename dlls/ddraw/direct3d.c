@@ -1131,6 +1131,7 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
     HRESULT hr;
     int i;
+    WINED3DDISPLAYMODE d3ddm;
 
     /* Order matters. Specifically, BattleZone II (full version) expects the
      * 16-bit depth formats to be listed before the 24 and 32 ones. */
@@ -1145,6 +1146,11 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
 
     TRACE("(%p)->(%s,%p,%p): Relay\n", iface, debugstr_guid(refiidDevice), Callback, Context);
 
+    if(IWineD3D_GetAdapterDisplayMode(This->wineD3D, WINED3DADAPTER_DEFAULT, &d3ddm ) != WINED3D_OK) {
+        ERR("Unable to retrieve a default display mode for quering the z-buffer formats!\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     if(!Callback)
         return DDERR_INVALIDPARAMS;
 
@@ -1154,9 +1160,9 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
         hr = IWineD3D_CheckDeviceFormat(This->wineD3D,
                                         0 /* Adapter */,
                                         0 /* DeviceType */,
-                                        0 /* AdapterFormat */,
+                                        d3ddm.Format /* AdapterFormat */,
                                         WINED3DUSAGE_DEPTHSTENCIL /* Usage */,
-                                        0 /* ResourceType */,
+                                        WINED3DRTYPE_SURFACE /* ResourceType */,
                                         FormatList[i]);
         if(hr == D3D_OK)
         {
