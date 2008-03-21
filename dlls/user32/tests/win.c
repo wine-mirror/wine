@@ -59,7 +59,7 @@ static DWORD our_pid;
 #define COUNTOF(arr) (sizeof(arr)/sizeof(arr[0]))
 
 /* try to make sure pending X events have been processed before continuing */
-static void flush_events(void)
+static void flush_events( BOOL remove_messages )
 {
     MSG msg;
     int diff = 200;
@@ -69,7 +69,8 @@ static void flush_events(void)
     while (diff > 0)
     {
         if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
-        while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        if (remove_messages)
+            while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
         diff = time - GetTickCount();
         min_timeout = 10;
     }
@@ -631,7 +632,10 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	}
         case WM_COMMAND:
             if (test_lbuttondown_flag)
+            {
                 ShowWindow((HWND)wparam, SW_SHOW);
+                flush_events( FALSE );
+            }
             break;
     }
 
@@ -2546,14 +2550,14 @@ static void test_keyboard_input(HWND hwnd)
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
-    flush_events();
+    flush_events( TRUE );
 
     ok(GetActiveWindow() == hwnd, "wrong active window %p\n", GetActiveWindow());
 
     SetFocus(hwnd);
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
-    flush_events();
+    flush_events( TRUE );
 
     PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
@@ -2580,7 +2584,7 @@ static void test_keyboard_input(HWND hwnd)
     SetFocus(0);
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
-    flush_events();
+    flush_events( TRUE );
 
     PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
@@ -2639,7 +2643,7 @@ static void test_mouse_input(HWND hwnd)
     GetCursorPos(&pt);
     ok(x == pt.x && y == pt.y, "wrong cursor pos (%d,%d), expected (%d,%d)\n", pt.x, pt.y, x, y);
 
-    flush_events();
+    flush_events( TRUE );
 
     /* Check that setting the same position will generate WM_MOUSEMOVE */
     SetCursorPos(x, y);
@@ -2652,7 +2656,7 @@ static void test_mouse_input(HWND hwnd)
      * otherwise it won't generate relative mouse movements below.
      */
     mouse_event(MOUSEEVENTF_MOVE, -1, -1, 0, 0);
-    flush_events();
+    flush_events( TRUE );
 
     msg.message = 0;
     mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
@@ -2668,20 +2672,20 @@ static void test_mouse_input(HWND hwnd)
     ShowWindow(popup, SW_HIDE);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
     ok(msg.hwnd == hwnd && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    flush_events();
+    flush_events( TRUE );
 
     mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
     ShowWindow(hwnd, SW_HIDE);
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
     ok( !ret, "message %04x available\n", msg.message);
-    flush_events();
+    flush_events( TRUE );
 
     /* test mouse clicks */
 
     ShowWindow(hwnd, SW_SHOW);
-    flush_events();
+    flush_events( TRUE );
     ShowWindow(popup, SW_SHOW);
-    flush_events();
+    flush_events( TRUE );
 
     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
@@ -2720,7 +2724,7 @@ static void test_mouse_input(HWND hwnd)
     ok(!ret, "message %04x available\n", msg.message);
 
     ShowWindow(popup, SW_HIDE);
-    flush_events();
+    flush_events( TRUE );
 
     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
     mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
@@ -2777,7 +2781,7 @@ static void test_mouse_input(HWND hwnd)
     TEST_MOUSEACTIVATE(HTHELP,MA_ACTIVATE);
 
     /* Clear any messages left behind by WM_MOUSEACTIVATE tests */
-    flush_events();
+    flush_events( TRUE );
 
     DestroyWindow(popup);
 }
@@ -3031,7 +3035,7 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
                     dwStyleIn, 0, 0, 0, 0, hwndParent, NULL, NULL, &ss);
     assert(hwnd);
 
-    flush_events();
+    flush_events( TRUE );
 
     dwActualStyle = GetWindowLong(hwnd, GWL_STYLE);
     dwActualExStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
@@ -3256,7 +3260,7 @@ static void test_scrolldc( HWND parent)
             25, 50, 100, 100, parent, 0, 0, NULL);
     ShowWindow( parent, SW_SHOW);
     UpdateWindow( parent);
-    flush_events();
+    flush_events( TRUE );
     GetClientRect( hwnd1, &rc);
     hdc = GetDC( hwnd1);
     /* paint the upper half of the window black */
@@ -3691,47 +3695,47 @@ static void test_csparentdc(void)
    ShowWindow(hwndMain, SW_SHOW);
    ShowWindow(hwnd1, SW_SHOW);
    ShowWindow(hwnd2, SW_SHOW);
-   flush_events();
+   flush_events( TRUE );
 
    zero_parentdc_test(&test_answer);
    InvalidateRect(hwndMain, NULL, TRUE);
-   flush_events();
+   flush_events( TRUE );
    parentdc_ok(test1, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 0, 0, 50, 50);
    InvalidateRect(hwndMain, &rc, TRUE);
-   flush_events();
+   flush_events( TRUE );
    parentdc_ok(test2, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 0, 0, 10, 10);
    InvalidateRect(hwndMain, &rc, TRUE);
-   flush_events();
+   flush_events( TRUE );
    parentdc_ok(test3, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 40, 40, 50, 50);
    InvalidateRect(hwndMain, &rc, TRUE);
-   flush_events();
+   flush_events( TRUE );
    parentdc_ok(test4, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 20, 20, 60, 60);
    InvalidateRect(hwndMain, &rc, TRUE);
-   flush_events();
+   flush_events( TRUE );
    parentdc_ok(test5, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, 0, 0, 10, 10);
    InvalidateRect(hwnd1, &rc, TRUE);
-   flush_events();
+   flush_events( TRUE );
    parentdc_ok(test6, test_answer);
 
    zero_parentdc_test(&test_answer);
    SetRect(&rc, -5, -5, 65, 65);
    InvalidateRect(hwnd1, &rc, TRUE);
-   flush_events();
+   flush_events( TRUE );
    parentdc_ok(test7, test_answer);
 
    DestroyWindow(hwndMain);
@@ -4465,7 +4469,7 @@ static void test_GetUpdateRect(void)
 
     ShowWindow(hgrandparent, SW_SHOW);
     UpdateWindow(hgrandparent);
-    flush_events();
+    flush_events( TRUE );
 
     ShowWindow(hchild, SW_HIDE);
     SetRect(&rc2, 0, 0, 0, 0);
@@ -4525,7 +4529,7 @@ static void test_GetUpdateRect(void)
 
     ShowWindow(hgrandparent, SW_SHOW);
     UpdateWindow(hgrandparent);
-    flush_events();
+    flush_events( TRUE );
 
     ret = GetUpdateRect(hgrandparent, &rc1, FALSE);
     ok(!ret, "GetUpdateRect returned not empty region\n");
