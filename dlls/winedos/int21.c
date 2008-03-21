@@ -2959,7 +2959,7 @@ static BOOL INT21_Fat32( CONTEXT86 *context )
             source = &INT21_GetHeapPointer()->misc_dpb_list[drive];
 
             *ptr = sizeof(INT21_DPB);
-            memcpy( target, source, sizeof(INT21_DPB));
+            *target = *source;
 
             if (LOWORD(context->Esi) != 0xF1A6)
             {
