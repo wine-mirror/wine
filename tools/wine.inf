@@ -2188,6 +2188,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,infosoft.dll,1
 11,,inseng.dll,1
 11,,itss.dll,1
+11,,jscript.dll,1
 11,,mlang.dll,1
 11,,mshtml.dll,1
 11,,msi.dll,1
