@@ -1132,6 +1132,7 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
     HRESULT hr;
     int i;
     WINED3DDISPLAYMODE d3ddm;
+    WINED3DDEVTYPE type;
 
     /* Order matters. Specifically, BattleZone II (full version) expects the
      * 16-bit depth formats to be listed before the 24 and 32 ones. */
@@ -1146,23 +1147,56 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
 
     TRACE("(%p)->(%s,%p,%p): Relay\n", iface, debugstr_guid(refiidDevice), Callback, Context);
 
-    if(IWineD3D_GetAdapterDisplayMode(This->wineD3D, WINED3DADAPTER_DEFAULT, &d3ddm ) != WINED3D_OK) {
-        ERR("Unable to retrieve a default display mode for quering the z-buffer formats!\n");
-        return DDERR_INVALIDPARAMS;
-    }
-
     if(!Callback)
         return DDERR_INVALIDPARAMS;
 
+    if(IsEqualGUID(refiidDevice, &IID_IDirect3DHALDevice)    ||
+       IsEqualGUID(refiidDevice, &IID_IDirect3DTnLHalDevice) ||
+       IsEqualGUID(refiidDevice, &IID_D3DDEVICE_WineD3D))
+    {
+        TRACE("Asked for HAL device\n");
+        type = WINED3DDEVTYPE_HAL;
+    }
+    else if(IsEqualGUID(refiidDevice, &IID_IDirect3DRGBDevice) ||
+            IsEqualGUID(refiidDevice, &IID_IDirect3DMMXDevice))
+    {
+        TRACE("Asked for SW device\n");
+        type = WINED3DDEVTYPE_SW;
+    }
+    else if(IsEqualGUID(refiidDevice, &IID_IDirect3DRefDevice))
+    {
+        TRACE("Asked for REF device\n");
+        type = WINED3DDEVTYPE_REF;
+    }
+    else if(IsEqualGUID(refiidDevice, &IID_IDirect3DNullDevice))
+    {
+        TRACE("Asked for NULLREF device\n");
+        type = WINED3DDEVTYPE_NULLREF;
+    }
+    else
+    {
+        FIXME("Unexpected device GUID %s\n", debugstr_guid(refiidDevice));
+        type = WINED3DDEVTYPE_HAL;
+    }
+
     EnterCriticalSection(&ddraw_cs);
-    for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
+    /* We need an adapter format from somewhere to please wined3d and WGL. Use the current display mode.
+     * So far all cards offer the same depth stencil format for all modes, but if some do not and apps
+     * do not like that we'll have to find some workaround, like iterating over all imaginable formats
+     * and collecting all the depth stencil formats we can get
+     */
+    hr = IWineD3DDevice_GetDisplayMode(This->wineD3DDevice,
+                                       0 /* swapchain 0 */,
+                                       &d3ddm);
+
+    for(i = 0; i < (sizeof(FormatList) / sizeof(FormatList[0])); i++)
     {
         hr = IWineD3D_CheckDeviceFormat(This->wineD3D,
-                                        0 /* Adapter */,
-                                        0 /* DeviceType */,
+                                        WINED3DADAPTER_DEFAULT /* Adapter */,
+                                        type /* DeviceType */,
                                         d3ddm.Format /* AdapterFormat */,
                                         WINED3DUSAGE_DEPTHSTENCIL /* Usage */,
-                                        WINED3DRTYPE_SURFACE /* ResourceType */,
+                                        WINED3DRTYPE_SURFACE,
                                         FormatList[i]);
         if(hr == D3D_OK)
         {
