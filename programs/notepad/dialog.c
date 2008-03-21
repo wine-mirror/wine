@@ -783,9 +783,10 @@ VOID DIALOG_HelpNoWarranty(VOID)
 
 VOID DIALOG_HelpAboutWine(VOID)
 {
-    static const WCHAR notepadW[] = { 'N','o','t','e','p','a','d','\n',0 };
+    static const WCHAR notepadW[] = { 'W','i','n','e',' ','N','o','t','e','p','a','d',0 };
     WCHAR szNotepad[MAX_STRING_LEN];
-    HICON icon = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD));
+    HICON icon = LoadImageW( Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD),
+                             IMAGE_ICON, 48, 48, LR_SHARED );
 
     LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
     ShellAbout(Globals.hMainWnd, szNotepad, notepadW, icon);
