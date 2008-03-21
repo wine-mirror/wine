@@ -57,8 +57,10 @@ typedef struct MPEGSplitterImpl
     ParserImpl Parser;
     IMediaSample *pCurrentSample;
     LONGLONG EndOfFile;
-    DWORD dwSampleSize, dwLength;
-    FLOAT fSamplesPerSec;
+    LONGLONG duration;
+    LONGLONG position;
+    DWORD skipbytes;
+    DWORD remaining_bytes;
 } MPEGSplitterImpl;
 
 static int MPEGSplitter_head_check(const BYTE *header)
@@ -87,20 +89,250 @@ static int MPEGSplitter_head_check(const BYTE *header)
     return MPEG_NO_HEADER;
 }
 
+static const WCHAR wszAudioStream[] = {'A','u','d','i','o',0};
+static const WCHAR wszVideoStream[] = {'V','i','d','e','o',0};
+
+static const DWORD freqs[10] = { 44100, 48000, 32000, 22050, 24000, 16000, 11025, 12000,  8000, 0 };
+
+static const DWORD tabsel_123[2][3][16] = {
+    { {0,32,64,96,128,160,192,224,256,288,320,352,384,416,448,},
+      {0,32,48,56, 64, 80, 96,112,128,160,192,224,256,320,384,},
+      {0,32,40,48, 56, 64, 80, 96,112,128,160,192,224,256,320,} },
+
+    { {0,32,48,56,64,80,96,112,128,144,160,176,192,224,256,},
+      {0,8,16,24,32,40,48,56,64,80,96,112,128,144,160,},
+      {0,8,16,24,32,40,48,56,64,80,96,112,128,144,160,} }
+};
+
+
+static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
+{
+    LONGLONG duration = *pduration;
+
+    int bitrate_index, freq_index, mode_ext, emphasis, lsf = 1, mpeg1, layer, mode, padding, bitrate, length;
+
+    if (!(header[0] == 0xff && ((header[1]>>5)&0x7) == 0x7 &&
+       ((header[1]>>1)&0x3) != 0 && ((header[2]>>4)&0xf) != 0xf &&
+       ((header[2]>>2)&0x3) != 0x3))
+    {
+        WARN("Not a valid header: %02x:%02x\n", header[0], header[1]);
+        return E_INVALIDARG;
+    }
+
+    mpeg1 = (header[1]>>4)&0x1;
+    if (mpeg1)
+        lsf = ((header[1]>>3)&0x1)^1;
+
+    layer = 4-((header[1]>>1)&0x3);
+    bitrate_index = ((header[2]>>4)&0xf);
+    freq_index = ((header[2]>>2)&0x3) + (mpeg1?(lsf*3):6);
+    padding = ((header[2]>>1)&0x1);
+    mode = ((header[3]>>6)&0x3);
+    mode_ext = ((header[3]>>4)&0x3);
+    emphasis = ((header[3]>>0)&0x3);
+
+    bitrate = tabsel_123[lsf][layer-1][bitrate_index] * 1000;
+    if (layer == 3 || layer == 2)
+        length = 144 * bitrate / freqs[freq_index] + padding;
+    else
+        length = 4 * (12 * bitrate / freqs[freq_index] + padding);
+
+    duration = (ULONGLONG)10000000 * (ULONGLONG)(length) / (ULONGLONG)(bitrate/8);
+    *plen = length;
+    *pduration += duration;
+    return S_OK;
+}
+
+
+static void skip_data(BYTE** from, DWORD *flen, DWORD amount)
+{
+    *flen -= amount;
+    if (!*flen)
+        *from = NULL;
+    else
+        *from += amount;
+}
+
+static HRESULT copy_data(IMediaSample *to, BYTE** from, DWORD *flen, DWORD amount)
+{
+    HRESULT hr = S_OK;
+    BYTE *ptr = NULL;
+    DWORD oldlength = IMediaSample_GetActualDataLength(to);
+
+    hr = IMediaSample_SetActualDataLength(to, oldlength + amount);
+    if (FAILED(hr))
+    {
+        if (!oldlength || oldlength <= 4)
+            WARN("Could not set require length\n");
+        return hr;
+    }
+
+    IMediaSample_GetPointer(to, &ptr);
+    memcpy(ptr + oldlength, *from, amount);
+    skip_data(from, flen, amount);
+    return hr;
+}
+
+static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen)
+{
+    Parser_OutputPin * pOutputPin = (Parser_OutputPin*)This->Parser.ppPins[1];
+    LONGLONG length = 0;
+    HRESULT hr = S_OK;
+    DWORD dlen;
+    LONGLONG time = This->position, sampleduration = 0;
+
+    TRACE("Source length: %u, skip length: %u, remaining: %u\n", *flen, This->skipbytes, This->remaining_bytes);
+
+    /* Case where bytes are skipped */
+    if (This->skipbytes)
+    {
+        DWORD skip = min(This->skipbytes, *flen);
+        skip_data(fbuf, flen, skip);
+        This->skipbytes -= skip;
+        return S_OK;
+    }
+
+    /* Case where there is already an output sample being held */
+    if (This->remaining_bytes)
+    {
+        DWORD towrite = min(This->remaining_bytes, *flen);
+
+        hr = copy_data(This->pCurrentSample, fbuf, flen, towrite);
+        if (FAILED(hr))
+        {
+            WARN("Could not resize sample: %08x\n", hr);
+            goto release;
+        }
+
+        This->remaining_bytes -= towrite;
+        if (This->remaining_bytes)
+            return hr;
+
+        /* Optimize: Try appending more samples to the stream */
+        goto out_append;
+    }
+
+    /* Special case, last source sample might (or might not have) had a header, and now we want to retrieve it */
+    dlen = IMediaSample_GetActualDataLength(This->pCurrentSample);
+    if (dlen > 0 && dlen < 4)
+    {
+        BYTE *header = NULL;
+        DWORD attempts = 0;
+
+        /* Shoot anyone with a small sample! */
+        assert(*flen >= 6);
+
+        hr = IMediaSample_GetPointer(This->pCurrentSample, &header);
+
+        if (SUCCEEDED(hr))
+            hr = IMediaSample_SetActualDataLength(This->pCurrentSample, 7);
+
+        if (FAILED(hr))
+        {
+            WARN("Could not resize sample: %08x\n", hr);
+            goto release;
+        }
+
+        memcpy(header + dlen, *fbuf, 6 - dlen);
+
+        while (FAILED(parse_header(header+attempts, &length, &This->position)) && attempts < dlen)
+        {
+            attempts++;
+        }
+
+        /* No header found */
+        if (attempts == dlen)
+        {
+            hr = IMediaSample_SetActualDataLength(This->pCurrentSample, 0);
+            return hr;
+        }
+
+        IMediaSample_SetActualDataLength(This->pCurrentSample, 4);
+        IMediaSample_SetTime(This->pCurrentSample, &time, &This->position);
+
+        /* Move header back to beginning */
+        if (attempts)
+            memmove(header, header+attempts, 4);
+
+        This->remaining_bytes = length - 4;
+        *flen -= (4 - dlen + attempts);
+        *fbuf += (4 - dlen + attempts);
+        return hr;
+    }
+
+    /* Destination sample should contain no data! But the source sample should */
+    assert(!dlen);
+    assert(*flen);
+
+    /* Find the next valid header.. it <SHOULD> be right here */
+    while (*flen > 3 && FAILED(parse_header(*fbuf, &length, &This->position)))
+    {
+        skip_data(fbuf, flen, 1);
+    }
+
+    /* Uh oh, no header found! */
+    if (*flen < 4)
+    {
+        assert(!length);
+        hr = copy_data(This->pCurrentSample, fbuf, flen, *flen);
+        return hr;
+    }
+
+    IMediaSample_SetTime(This->pCurrentSample, &time, &This->position);
+
+    if (*flen < length)
+    {
+        /* Partial copy: Copy 4 bytes, the rest will be copied by the logic for This->remaining_bytes */
+        This->remaining_bytes = length - 4;
+        copy_data(This->pCurrentSample, fbuf, flen, 4);
+        return hr;
+    }
+
+    hr = copy_data(This->pCurrentSample, fbuf, flen, length);
+    if (FAILED(hr))
+    {
+        WARN("Couldn't set data size to %lld\n", length);
+        This->skipbytes = length;
+        return hr;
+    }
+
+out_append:
+    /* Optimize: Send multiple samples! */
+    while (*flen >= 4)
+    {
+        if (FAILED(parse_header(*fbuf, &length, &sampleduration)))
+            break;
+
+        if (length > *flen)
+            break;
+
+        if (FAILED(copy_data(This->pCurrentSample, fbuf, flen, length)))
+            break;
+
+        This->position += sampleduration;
+        sampleduration = 0;
+        IMediaSample_SetTime(This->pCurrentSample, &time, &This->position);
+    }
+    TRACE("Media time: %lld.%03lld\n", (This->position/10000000), (This->position/10000)%1000);
+
+    hr = OutputPin_SendSample(&pOutputPin->pin, This->pCurrentSample);
+    if (FAILED(hr))
+        WARN("Error sending sample (%x)\n", hr);
+release:
+    IMediaSample_Release(This->pCurrentSample);
+    This->pCurrentSample = NULL;
+    return hr;
+}
+
 
 static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
 {
     MPEGSplitterImpl *This = (MPEGSplitterImpl*)iface;
-    LPBYTE pbSrcStream = NULL;
+    BYTE *pbSrcStream;
     DWORD cbSrcStream = 0;
-    DWORD used_bytes = 0;
     REFERENCE_TIME tStart, tStop;
-    HRESULT hr;
-    BYTE *pbDstStream;
-    DWORD cbDstStream;
-    long remaining_bytes = 0;
     Parser_OutputPin * pOutputPin;
-    DWORD bytes_written = 0;
+    HRESULT hr;
 
     pOutputPin = (Parser_OutputPin*)This->Parser.ppPins[1];
 
@@ -114,132 +346,47 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
     /* trace removed for performance reasons */
     /* TRACE("(%p), %llu -> %llu\n", pSample, tStart, tStop); */
 
-    if (This->pCurrentSample)
-        bytes_written = IMediaSample_GetActualDataLength(This->pCurrentSample);
-
-    while (hr == S_OK && used_bytes < cbSrcStream)
+    /* Now, try to find a new header */
+    while (cbSrcStream > 0)
     {
-        remaining_bytes = (long)(This->EndOfFile - BYTES_FROM_MEDIATIME(tStart) - used_bytes);
-        if (remaining_bytes <= 0)
-            break;
-
         if (!This->pCurrentSample)
         {
-            /* cache media sample until it is ready to be despatched
-             * (i.e. we reach the end of the chunk) */
-            hr = OutputPin_GetDeliveryBuffer(&pOutputPin->pin, &This->pCurrentSample, NULL, NULL, 0);
-            if (FAILED(hr))
+            if (FAILED(hr = OutputPin_GetDeliveryBuffer(&pOutputPin->pin, &This->pCurrentSample, NULL, NULL, 0)))
             {
-                TRACE("Skipping sending sample due to error (%x)\n", hr);
-                This->pCurrentSample = NULL;
+                FIXME("Failed with hres: %08x!\n", hr);
                 break;
             }
 
             IMediaSample_SetTime(This->pCurrentSample, NULL, NULL);
-            hr = IMediaSample_SetActualDataLength(This->pCurrentSample, 0);
-            assert(hr == S_OK);
-            bytes_written = 0;
+            if (FAILED(hr = IMediaSample_SetActualDataLength(This->pCurrentSample, 0)))
+                goto fail;
+            IMediaSample_SetSyncPoint(This->pCurrentSample, TRUE);
         }
-
-        hr = IMediaSample_GetPointer(This->pCurrentSample, &pbDstStream);
+        hr = FillBuffer(This, &pbSrcStream, &cbSrcStream);
         if (SUCCEEDED(hr))
-        {
-            cbDstStream = IMediaSample_GetSize(This->pCurrentSample);
-            remaining_bytes = min(remaining_bytes, (long)(cbDstStream - bytes_written));
+            continue;
 
-            assert(remaining_bytes >= 0);
-
-            /* trace removed for performance reasons */
-            /* TRACE("remaining_bytes: %d, cbSrcStream: 0x%x\n", remaining_bytes, cbSrcStream); */
-        }
-
-        if (remaining_bytes <= (long)(cbSrcStream-used_bytes))
-        {
-            if (SUCCEEDED(hr))
-            {
-                memcpy(pbDstStream + bytes_written, pbSrcStream + used_bytes, remaining_bytes);
-                bytes_written += remaining_bytes;
-
-                hr = IMediaSample_SetActualDataLength(This->pCurrentSample, bytes_written);
-                assert(hr == S_OK);
-
-                used_bytes += remaining_bytes;
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                REFERENCE_TIME tMPEGStart, tMPEGStop;
-
-                pOutputPin->dwSamplesProcessed = (BYTES_FROM_MEDIATIME(tStart)+used_bytes) / This->dwSampleSize;
-
-                tMPEGStart = (tStart + MEDIATIME_FROM_BYTES(used_bytes-bytes_written)) /
-                             (This->fSamplesPerSec*This->dwSampleSize);
-                tMPEGStop  = (tStart + MEDIATIME_FROM_BYTES(used_bytes)) /
-                             (This->fSamplesPerSec*This->dwSampleSize);
-
-                /* If the start of the sample has a valid MPEG header, it's a
-                 * sync point */
-                if (MPEGSplitter_head_check(pbDstStream) == MPEG_AUDIO_HEADER)
-                    IMediaSample_SetSyncPoint(This->pCurrentSample, TRUE);
-                else
-                    IMediaSample_SetSyncPoint(This->pCurrentSample, FALSE);
-                IMediaSample_SetTime(This->pCurrentSample, &tMPEGStart, &tMPEGStop);
-
-                hr = OutputPin_SendSample(&pOutputPin->pin, This->pCurrentSample);
-                if (FAILED(hr))
-                    WARN("Error sending sample (%x)\n", hr);
-            }
-
-            if (This->pCurrentSample)
-                IMediaSample_Release(This->pCurrentSample);
-            This->pCurrentSample = NULL;
-        }
-        else
-        {
-            if (SUCCEEDED(hr))
-            {
-                memcpy(pbDstStream + bytes_written, pbSrcStream + used_bytes, cbSrcStream - used_bytes);
-                bytes_written += cbSrcStream - used_bytes;
-                IMediaSample_SetActualDataLength(This->pCurrentSample, bytes_written);
-
-                used_bytes += cbSrcStream - used_bytes;
-            }
-        }
+fail:
+        FIXME("Failed with hres: %08x!\n", hr);
+        This->skipbytes += This->remaining_bytes;
+        This->remaining_bytes = 0;
+        IMediaSample_Release(This->pCurrentSample);
+        This->pCurrentSample = NULL;
     }
 
     if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile)
     {
         int i;
 
-        TRACE("End of file reached (%d out of %d bytes used)\n", used_bytes, cbSrcStream);
+        TRACE("End of file reached\n");
 
         if (This->pCurrentSample)
         {
-            /* Make sure the last bit of data, if any, is sent */
-            if (IMediaSample_GetActualDataLength(This->pCurrentSample) > 0)
-            {
-                REFERENCE_TIME tMPEGStart, tMPEGStop;
-
-                pOutputPin->dwSamplesProcessed = (BYTES_FROM_MEDIATIME(tStart)+used_bytes) / This->dwSampleSize;
-
-                tMPEGStart = (tStart + MEDIATIME_FROM_BYTES(used_bytes-bytes_written)) /
-                             (This->fSamplesPerSec*This->dwSampleSize);
-                tMPEGStop  = (tStart + MEDIATIME_FROM_BYTES(used_bytes)) /
-                             (This->fSamplesPerSec*This->dwSampleSize);
-
-                if (MPEGSplitter_head_check(pbDstStream) == MPEG_AUDIO_HEADER)
-                    IMediaSample_SetSyncPoint(This->pCurrentSample, TRUE);
-                else
-                    IMediaSample_SetSyncPoint(This->pCurrentSample, FALSE);
-                IMediaSample_SetTime(This->pCurrentSample, &tMPEGStart, &tMPEGStop);
-
-                hr = OutputPin_SendSample(&pOutputPin->pin, This->pCurrentSample);
-                if (FAILED(hr))
-                    WARN("Error sending sample (%x)\n", hr);
-            }
+            /* Drop last data, it's likely to be garbage anyway */
+            IMediaSample_SetActualDataLength(This->pCurrentSample, 0);
             IMediaSample_Release(This->pCurrentSample);
+            This->pCurrentSample = NULL;
         }
-        This->pCurrentSample = NULL;
 
         for (i = 0; i < This->Parser.cStreams; i++)
         {
@@ -285,29 +432,13 @@ static HRESULT MPEGSplitter_query_accept(LPVOID iface, const AM_MEDIA_TYPE *pmt)
 }
 
 
-static const WCHAR wszAudioStream[] = {'A','u','d','i','o',0};
-static const WCHAR wszVideoStream[] = {'V','i','d','e','o',0};
-
 static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *header, PIN_INFO *ppiOutput, AM_MEDIA_TYPE *pamt)
 {
-    static const DWORD freqs[10] = { 44100, 48000, 32000, 22050, 24000,
-                                     16000, 11025, 12000,  8000, 0 };
-    static const DWORD tabsel_123[2][3][16] = {
-        { {0,32,64,96,128,160,192,224,256,288,320,352,384,416,448,},
-          {0,32,48,56, 64, 80, 96,112,128,160,192,224,256,320,384,},
-          {0,32,40,48, 56, 64, 80, 96,112,128,160,192,224,256,320,} },
-
-        { {0,32,48,56,64,80,96,112,128,144,160,176,192,224,256,},
-          {0,8,16,24,32,40,48,56,64,80,96,112,128,144,160,},
-          {0,8,16,24,32,40,48,56,64,80,96,112,128,144,160,} }
-    };
-
     WAVEFORMATEX *format;
     int bitrate_index;
     int freq_index;
     int mode_ext;
     int emphasis;
-    int padding;
     int lsf = 1;
     int mpeg1;
     int layer;
@@ -323,7 +454,7 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
     pamt->subtype = MEDIASUBTYPE_MPEG1AudioPayload;
 
     pamt->lSampleSize = 0;
-    pamt->bFixedSizeSamples = TRUE;
+    pamt->bFixedSizeSamples = FALSE;
     pamt->bTemporalCompression = 0;
 
     mpeg1 = (header[1]>>4)&0x1;
@@ -333,10 +464,16 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
     layer         = 4-((header[1]>>1)&0x3);
     bitrate_index =   ((header[2]>>4)&0xf);
     freq_index    =   ((header[2]>>2)&0x3) + (mpeg1?(lsf*3):6);
-    padding       =   ((header[2]>>1)&0x1);
     mode          =   ((header[3]>>6)&0x3);
     mode_ext      =   ((header[3]>>4)&0x3);
     emphasis      =   ((header[3]>>0)&0x3);
+
+    if (!bitrate_index)
+    {
+        /* Set to highest bitrate so samples will fit in for sure */
+        FIXME("Variable-bitrate audio not fully supported.\n");
+        bitrate_index = 15;
+    }
 
     pamt->cbFormat = ((layer==3)? sizeof(MPEGLAYER3WAVEFORMAT) :
                                   sizeof(MPEG1WAVEFORMAT));
@@ -351,22 +488,15 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
     format->nChannels       = ((mode == 3) ? 1 : 2);
     format->nSamplesPerSec  = freqs[freq_index];
     format->nAvgBytesPerSec = tabsel_123[lsf][layer-1][bitrate_index] * 1000 / 8;
-    if (format->nAvgBytesPerSec == 0)
-    {
-        WARN("Variable-bitrate audio is not supported.\n");
-        return E_FAIL;
-    }
 
     if (layer == 3)
         format->nBlockAlign = format->nAvgBytesPerSec * 8 * 144 /
-                              (format->nSamplesPerSec<<lsf) +
-                              (padding - 4);
+                              (format->nSamplesPerSec<<lsf) + 1;
     else if (layer == 2)
         format->nBlockAlign = format->nAvgBytesPerSec * 8 * 144 /
-                              format->nSamplesPerSec + (padding - 4);
+                              format->nSamplesPerSec + 1;
     else
-        format->nBlockAlign = ((format->nAvgBytesPerSec * 8 * 12 /
-                                format->nSamplesPerSec + padding) << 2) - 4;
+        format->nBlockAlign = 4 * (format->nAvgBytesPerSec * 8 * 12 / format->nSamplesPerSec + 1);
 
     format->wBitsPerSample = 0;
 
@@ -377,9 +507,7 @@ static HRESULT MPEGSplitter_init_audio(MPEGSplitterImpl *This, const BYTE *heade
         format->cbSize = MPEGLAYER3_WFX_EXTRA_BYTES;
 
         mp3format->wID = MPEGLAYER3_ID_MPEG;
-        mp3format->fdwFlags = (padding ?
-                               MPEGLAYER3_FLAG_PADDING_OFF :
-                               MPEGLAYER3_FLAG_PADDING_ON);
+        mp3format->fdwFlags = MPEGLAYER3_FLAG_PADDING_ON;
         mp3format->nBlockSize = format->nBlockAlign;
         mp3format->nFramesPerBlock = 1;
 
@@ -471,15 +599,21 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
     {
         TRACE("%x:%x:%x:%x\n", header[0], header[1], header[2], header[3]);
         /* No valid header yet; shift by a byte and check again */
-        memcpy(header, header+1, 3);
+        memmove(header, header+1, 3);
         hr = IAsyncReader_SyncRead(pPin->pReader, pos++, 1, header + 3);
     }
     if (FAILED(hr))
         return hr;
+    pos -= 4;
+    This->skipbytes = pos;
 
     switch(streamtype)
     {
         case MPEG_AUDIO_HEADER:
+        {
+            LONGLONG duration = 0;
+            DWORD ticks = GetTickCount();
+
             hr = MPEGSplitter_init_audio(This, header, &piOutput, &amt);
             if (SUCCEEDED(hr))
             {
@@ -491,9 +625,6 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
                 props.cbBuffer = 0x4000 / format->nBlockAlign *
                                  format->nBlockAlign;
                 props.cBuffers = 1;
-                This->fSamplesPerSec = (float)format->nAvgBytesPerSec / (float)format->nBlockAlign;
-                This->dwSampleSize = format->nBlockAlign;
-                This->dwLength = total;
                 hr = Parser_AddPin(&(This->Parser), &piOutput, &props, &amt);
             }
 
@@ -502,8 +633,39 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
                 if (amt.pbFormat)
                     CoTaskMemFree(amt.pbFormat);
                 ERR("Could not create pin for MPEG audio stream (%x)\n", hr);
+                break;
             }
+
+            /* Check for idv1 tag, and remove it from stream if found */
+            hr = IAsyncReader_SyncRead(pPin->pReader, This->EndOfFile-128, 3, header+4);
+            if (FAILED(hr))
+                break;
+            if (!strncmp((char*)header+4, "TAG", 3))
+                This->EndOfFile -= 128;
+
+            /* http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm has a whole readup on audio headers */
+            while (pos < This->EndOfFile && SUCCEEDED(hr))
+            {
+                LONGLONG length = 0;
+                while (parse_header(header, &length, &duration))
+                {
+                    /* No valid header yet; shift by a byte and check again */
+                    memmove(header, header+1, 3);
+                    hr = IAsyncReader_SyncRead(pPin->pReader, pos++, 1, header + 3);
+                    if (FAILED(hr))
+                       break;
+                }
+                if (SUCCEEDED(hr))
+                {
+                    pos += length;
+                    hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, header);
+                }
+            }
+            hr = S_OK;
+            TRACE("Duration: %lld seconds\n", duration / 10000000);
+            TRACE("Parsing took %u ms\n", GetTickCount() - ticks);
             break;
+        }
         case MPEG_VIDEO_HEADER:
             FIXME("MPEG video processing not yet supported!\n");
             hr = E_FAIL;
@@ -516,6 +678,8 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
         default:
             break;
     }
+    This->remaining_bytes = 0;
+    This->position = 0;
 
     return hr;
 }
