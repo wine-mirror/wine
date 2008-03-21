@@ -426,6 +426,12 @@ HRESULT WINAPI MediaSeekingImpl_SetRate(IMediaSeeking * iface, double dRate)
 
     TRACE("(%e)\n", dRate);
 
+    if (dRate > 100 || dRate < .001)
+    {
+        FIXME("Excessive rate %e, ignoring\n", dRate);
+        return VFW_E_UNSUPPORTED_AUDIO;
+    }
+
     EnterCriticalSection(This->crst);
     This->dRate = dRate;
     if (bChangeRate)
