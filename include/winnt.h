@@ -3535,7 +3535,7 @@ typedef struct {
 typedef struct _SID_AND_ATTRIBUTES {
   PSID  Sid;
   DWORD Attributes;
-} SID_AND_ATTRIBUTES;
+} SID_AND_ATTRIBUTES, *PSID_AND_ATTRIBUTES;
 
 /* security entities */
 #define SECURITY_NULL_RID			(0x00000000L)
