@@ -296,6 +296,7 @@ TESTSUBDIRS = \
 	d3d9/tests \
 	d3drm/tests \
 	d3dx8/tests \
+	d3dx9_36/tests \
 	ddraw/tests \
 	dinput/tests \
 	dnsapi/tests \

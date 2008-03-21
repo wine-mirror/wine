@@ -34,6 +34,7 @@ TESTBINS = \
 	d3d9_test.exe \
 	d3drm_test.exe \
 	d3dx8_test.exe \
+	d3dx9_36_test.exe \
 	ddraw_test.exe \
 	dinput_test.exe \
 	dnsapi_test.exe \
@@ -126,6 +127,8 @@ d3drm_test.exe: $(DLLDIR)/d3drm/tests/d3drm_test.exe$(DLLEXT)
 	cp $(DLLDIR)/d3drm/tests/d3drm_test.exe$(DLLEXT) $@ && $(STRIP) $@
 d3dx8_test.exe: $(DLLDIR)/d3dx8/tests/d3dx8_test.exe$(DLLEXT)
 	cp $(DLLDIR)/d3dx8/tests/d3dx8_test.exe$(DLLEXT) $@ && $(STRIP) $@
+d3dx9_36_test.exe: $(DLLDIR)/d3dx9_36/tests/d3dx9_36_test.exe$(DLLEXT)
+	cp $(DLLDIR)/d3dx9_36/tests/d3dx9_36_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ddraw_test.exe: $(DLLDIR)/ddraw/tests/ddraw_test.exe$(DLLEXT)
 	cp $(DLLDIR)/ddraw/tests/ddraw_test.exe$(DLLEXT) $@ && $(STRIP) $@
 dinput_test.exe: $(DLLDIR)/dinput/tests/dinput_test.exe$(DLLEXT)
