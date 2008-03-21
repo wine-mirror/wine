@@ -507,6 +507,10 @@ HRESULT WINAPI InputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
         *ppv = (LPVOID)iface;
     else if (IsEqualIID(riid, &IID_IMemInputPin))
         *ppv = (LPVOID)&This->lpVtblMemInput;
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+    {
+        return IBaseFilter_QueryInterface(This->pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
+    }
 
     if (*ppv)
     {
@@ -803,6 +807,10 @@ HRESULT WINAPI OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
         *ppv = (LPVOID)iface;
     else if (IsEqualIID(riid, &IID_IPin))
         *ppv = (LPVOID)iface;
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+    {
+        return IBaseFilter_QueryInterface(This->pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
+    }
 
     if (*ppv)
     {
@@ -1279,6 +1287,10 @@ HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
         *ppv = (LPVOID)iface;
     else if (IsEqualIID(riid, &IID_IPin))
         *ppv = (LPVOID)iface;
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+    {
+        return IBaseFilter_QueryInterface(This->pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
+    }
 
     if (*ppv)
     {

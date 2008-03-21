@@ -628,7 +628,7 @@ static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid,
         *ppv = (LPVOID)iface;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
     {
-        return IBaseFilter_QueryInterface((IBaseFilter*)&This->pin.pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
+        return IBaseFilter_QueryInterface(This->pin.pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
     }
 
     if (*ppv)
