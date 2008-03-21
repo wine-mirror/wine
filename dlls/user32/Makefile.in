@@ -78,6 +78,8 @@ C_SRCS16 = \
 
 RC_SRCS = resources/user32.rc
 
+SVG_SRCS = resources/oic_winlogo.svg
+
 RC_SRCS16 = \
 	resources/display.rc \
 	resources/mouse.rc \
