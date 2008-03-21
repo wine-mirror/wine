@@ -1,0 +1,17 @@
+@ stub CopyPDBs
+@ stub ClearDownloadCache
+@ stub CreateApplicationContext
+@ stub CreateAssemblyCache
+@ stub CreateAssemblyEnum
+@ stub CreateAssemblyNameObject
+@ stub CreateHistoryReader
+@ stub CreateInstallReferenceEnum
+@ stub GetCachePath
+@ stub GetHistoryFileDirectory
+@ stub InitializeFusion
+@ stub InstallCustomAssembly
+@ stub InstallCustomModule
+@ stub LookupHistoryAssembly
+@ stub NukeDownloadedCache
+@ stub PreBindAssembly
+@ stub PreBindAssemblyEx

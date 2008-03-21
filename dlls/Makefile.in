@@ -94,6 +94,7 @@ BASEDIRS = \
 	dwmapi \
 	dxdiagn \
 	faultrep \
+	fusion \
 	gdi32 \
 	gdiplus \
 	gphoto2.ds \
