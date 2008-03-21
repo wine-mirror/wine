@@ -343,6 +343,15 @@ interface IActiveScriptParseProcedure : IUnknown
 }
 
 [
+    object,
+    uuid(71ee5b20-fb04-11d1-b3a8-00a0c911e8b2),
+    pointer_default(unique)
+]
+interface IActiveScriptParseProcedure2 : IActiveScriptParseProcedure
+{
+}
+
+[
 object,
 uuid(63CDBCB0-C1B1-11d0-9336-00A0C90DCAA9),
 pointer_default(unique)
