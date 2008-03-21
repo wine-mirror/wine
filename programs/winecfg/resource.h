@@ -24,7 +24,6 @@
  */
 
 #define IDC_STATIC                     -1
-#define IDS_WINE_VERSION                1
 #define IDS_TAB_APPLICATIONS            2
 #define IDS_TAB_DLLS                    3
 #define IDS_TAB_DRIVES                  4

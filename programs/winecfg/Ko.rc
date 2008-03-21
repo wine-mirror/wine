@@ -209,7 +209,6 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_WINE_VERSION        "CVS"
     IDS_TAB_APPLICATIONS    "프로그램"
     IDS_TAB_DLLS            "라이브러리"
     IDS_TAB_DRIVES          "드라이브"

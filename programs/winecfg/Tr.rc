@@ -206,7 +206,6 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_WINE_VERSION        "CVS"
     IDS_TAB_APPLICATIONS    "Uygulamalar"
     IDS_TAB_DLLS            "Kitaplýklar"
     IDS_TAB_DRIVES          "Sürücüler"

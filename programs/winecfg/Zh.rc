@@ -206,7 +206,6 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_WINE_VERSION        "CVS"
     IDS_TAB_APPLICATIONS    "應用程式"
     IDS_TAB_DLLS            "函式庫"
     IDS_TAB_DRIVES          "儲存槽"

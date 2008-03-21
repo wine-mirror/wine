@@ -298,7 +298,6 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_WINE_VERSION        "CVS"
     IDS_TAB_GENERAL         "Geral"
     IDS_TAB_DLLS            "Bibliotecas"
     IDS_TAB_DRIVES          "Unidades"

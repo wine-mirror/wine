@@ -211,7 +211,6 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_WINE_VERSION        "CVS"
     IDS_TAB_APPLICATIONS    "Aplikacje"
     IDS_TAB_DLLS            "Biblioteki"
     IDS_TAB_DRIVES          "Dyski"

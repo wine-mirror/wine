@@ -203,7 +203,6 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_WINE_VERSION        "CVS"
     IDS_TAB_APPLICATIONS    "Alkalmazások"
     IDS_TAB_DLLS            "Függvénykönyvtárak"
     IDS_TAB_DRIVES          "Meghajtók"

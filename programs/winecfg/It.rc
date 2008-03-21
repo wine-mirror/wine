@@ -170,7 +170,6 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_WINE_VERSION        "CVS"
     IDS_TAB_GENERAL         "Generale"
     IDS_TAB_DLLS            "Librerie"
     IDS_TAB_DRIVES          "Drive"
