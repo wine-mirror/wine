@@ -1614,24 +1614,44 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_Pixe
     if(!cfg)
         return FALSE;
 
-    if(!getColorBits(Format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits)) {
-        ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(Format));
+    if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
+        if(!getColorBits(Format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits)) {
+            ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(Format));
+            return FALSE;
+        }
+
+        if(cfg->redSize < redSize)
+            return FALSE;
+
+        if(cfg->greenSize < greenSize)
+            return FALSE;
+
+        if(cfg->blueSize < blueSize)
+            return FALSE;
+
+        if(cfg->alphaSize < alphaSize)
+            return FALSE;
+
+        return TRUE;
+    } else if(cfg->iPixelType == WGL_TYPE_RGBA_FLOAT_ARB) { /* Float RGBA formats; TODO: WGL_NV_float_buffer */
+        if(Format == WINED3DFMT_R16F)
+            return (cfg->redSize == 16 && cfg->greenSize == 0 && cfg->blueSize == 0 && cfg->alphaSize == 0);
+        if(Format == WINED3DFMT_G16R16F)
+            return (cfg->redSize == 16 && cfg->greenSize == 16 && cfg->blueSize == 0 && cfg->alphaSize == 0);
+        if(Format == WINED3DFMT_A16B16G16R16F)
+            return (cfg->redSize == 16 && cfg->greenSize == 16 && cfg->blueSize == 16 && cfg->alphaSize == 16);
+        if(Format == WINED3DFMT_R32F)
+            return (cfg->redSize == 32 && cfg->greenSize == 0 && cfg->blueSize == 0 && cfg->alphaSize == 0);
+        if(Format == WINED3DFMT_G32R32F)
+            return (cfg->redSize == 32 && cfg->greenSize == 32 && cfg->blueSize == 0 && cfg->alphaSize == 0);
+        if(Format == WINED3DFMT_A32B32G32R32F)
+            return (cfg->redSize == 32 && cfg->greenSize == 32 && cfg->blueSize == 32 && cfg->alphaSize == 32);
+    } else {
+        /* Probably a color index mode */
         return FALSE;
     }
 
-    if(cfg->redSize < redSize)
-        return FALSE;
-
-    if(cfg->greenSize < greenSize)
-        return FALSE;
-
-    if(cfg->blueSize < blueSize)
-        return FALSE;
-
-    if(cfg->alphaSize < alphaSize)
-        return FALSE;
-
-    return TRUE;
+    return FALSE;
 }
 
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format) {
@@ -3882,6 +3902,7 @@ BOOL InitAdapters(void) {
         PUSH1(WGL_DEPTH_BITS_ARB)
         PUSH1(WGL_STENCIL_BITS_ARB)
         PUSH1(WGL_DRAW_TO_WINDOW_ARB)
+        PUSH1(WGL_PIXEL_TYPE_ARB)
 
         for(iPixelFormat=1; iPixelFormat<=Adapters[0].nCfgs; iPixelFormat++) {
             res = GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, nAttribs, attribs, values));
@@ -3898,6 +3919,7 @@ BOOL InitAdapters(void) {
             cfgs->depthSize = values[4];
             cfgs->stencilSize = values[5];
             cfgs->windowDrawable = values[6];
+            cfgs->iPixelType = values[7];
 
             cfgs->pbufferDrawable = FALSE;
             /* Check for pbuffer support when it is around as wglGetPixelFormatAttribiv fails for unknown
@@ -3909,7 +3931,7 @@ attributes. */
                     cfgs->pbufferDrawable = value;
             }
 
-            TRACE("iPixelFormat=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
+            TRACE("iPixelFormat=%d, iPixelType=%#x, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
             cfgs++;
         }
 
