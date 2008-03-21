@@ -24,6 +24,7 @@
 #include "advpub.h"
 #include "activscp.h"
 #include "activaut.h"
+#include "objsafe.h"
 
 #include "wine/debug.h"
 

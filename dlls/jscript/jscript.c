@@ -18,6 +18,7 @@
 
 #include "jscript.h"
 #include "activscp.h"
+#include "objsafe.h"
 
 #include "wine/debug.h"
 
@@ -28,6 +29,7 @@ typedef struct {
     const IActiveScriptParseVtbl            *lpIActiveScriptParseVtbl;
     const IActiveScriptParseProcedure2Vtbl  *lpIActiveScriptParseProcedure2Vtbl;
     const IActiveScriptPropertyVtbl         *lpIActiveScriptPropertyVtbl;
+    const IObjectSafetyVtbl                 *lpIObjectSafetyVtbl;
 
     LONG ref;
 } JScript;
@@ -36,6 +38,7 @@ typedef struct {
 #define ASPARSE(x)      ((IActiveScriptParse*)            &(x)->lpIActiveScriptParseVtbl)
 #define ASPARSEPROC(x)  ((IActiveScriptParseProcedure2*)  &(x)->lpIActiveScriptParseProcedure2Vtbl)
 #define ACTSCPPROP(x)   ((IActiveScriptProperty*)         &(x)->lpIActiveScriptPropertyVtbl)
+#define OBJSAFETY(x)    ((IObjectSafety*)                 &(x)->lpIObjectSafetyVtbl)
 
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
 
@@ -63,6 +66,9 @@ static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, 
     }else if(IsEqualGUID(riid, &IID_IActiveScriptProperty)) {
         TRACE("(%p)->(IID_IActiveScriptProperty %p)\n", This, ppv);
         *ppv = ACTSCPPROP(This);
+    }else if(IsEqualGUID(riid, &IID_IObjectSafety)) {
+        TRACE("(%p)->(IID_IObjectSafety %p)\n", This, ppv);
+        *ppv = OBJSAFETY(This);
     }
 
     if(*ppv) {
@@ -367,6 +373,52 @@ static const IActiveScriptPropertyVtbl JScriptPropertyVtbl = {
     JScriptProperty_SetProperty
 };
 
+#define OBJSAFETY_THIS(iface) DEFINE_THIS(JScript, IObjectSafety, iface)
+
+static HRESULT WINAPI JScriptSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
+{
+    JScript *This = OBJSAFETY_THIS(iface);
+    return IActiveScript_QueryInterface(ACTSCRIPT(This), riid, ppv);
+}
+
+static ULONG WINAPI JScriptSafety_AddRef(IObjectSafety *iface)
+{
+    JScript *This = OBJSAFETY_THIS(iface);
+    return IActiveScript_AddRef(ACTSCRIPT(This));
+}
+
+static ULONG WINAPI JScriptSafety_Release(IObjectSafety *iface)
+{
+    JScript *This = OBJSAFETY_THIS(iface);
+    return IActiveScript_Release(ACTSCRIPT(This));
+}
+
+static HRESULT WINAPI JScriptSafety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
+{
+    JScript *This = OBJSAFETY_THIS(iface);
+    FIXME("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI JScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD dwOptionSetMask, DWORD dwEnabledOptions)
+{
+    JScript *This = OBJSAFETY_THIS(iface);
+    FIXME("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+    return S_OK;
+}
+
+#undef OBJSAFETY_THIS
+
+static const IObjectSafetyVtbl JScriptSafetyVtbl = {
+    JScriptSafety_QueryInterface,
+    JScriptSafety_AddRef,
+    JScriptSafety_Release,
+    JScriptSafety_GetInterfaceSafetyOptions,
+    JScriptSafety_SetInterfaceSafetyOptions
+};
+
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
                                              REFIID riid, void **ppv)
 {
@@ -381,6 +433,7 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
     ret->lpIActiveScriptParseVtbl            = &JScriptParseVtbl;
     ret->lpIActiveScriptParseProcedure2Vtbl  = &JScriptParseProcedureVtbl;
     ret->lpIActiveScriptPropertyVtbl         = &JScriptPropertyVtbl;
+    ret->lpIObjectSafetyVtbl                 = &JScriptSafetyVtbl;
     ret->ref = 1;
 
     hres = IActiveScript_QueryInterface(ACTSCRIPT(ret), riid, ppv);
