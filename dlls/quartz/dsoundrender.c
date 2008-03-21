@@ -252,7 +252,6 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
         ERR("Cannot get sample time (%x)\n", hr);
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
-
     TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, cbSrcStream);
 
 #if 0 /* For debugging purpose */
@@ -796,15 +795,26 @@ static HRESULT WINAPI DSoundRender_InputPin_Disconnect(IPin * iface)
 static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
 {
     InputPin* This = (InputPin*)iface;
+    DSoundRenderImpl *me = (DSoundRenderImpl*)This->pin.pinInfo.pFilter;
     IMediaEventSink* pEventSink;
     HRESULT hr;
 
     TRACE("(%p/%p)->()\n", This, iface);
+    InputPin_EndOfStream(iface);
 
-    hr = IFilterGraph_QueryInterface(((DSoundRenderImpl*)This->pin.pinInfo.pFilter)->filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+    hr = IFilterGraph_QueryInterface(me->filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
     if (SUCCEEDED(hr))
     {
-        /* FIXME: We should wait that all audio data has been played */
+        BYTE * silence;
+
+        silence = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, me->buf_size);
+        if (silence)
+        {
+            memset(silence, 0, me->buf_size);
+            DSoundRender_SendSampleData((DSoundRenderImpl*)This->pin.pinInfo.pFilter, silence, me->buf_size);
+            HeapFree(GetProcessHeap(), 0, silence);
+        }
+
         hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
         IMediaEventSink_Release(pEventSink);
     }
