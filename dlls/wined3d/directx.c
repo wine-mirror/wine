@@ -2472,6 +2472,9 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
+        } else {
+            TRACE_(d3d_caps)("[FAILED] - No volume texture support\n");
+            return WINED3DERR_NOTAVAILABLE;
         }
 
         /* Filter formats that need conversion; For one part, this conversion is unimplemented,
