@@ -2004,6 +2004,26 @@ static BOOL CheckSrgbReadCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
     return FALSE;
 }
 
+static BOOL CheckSrgbWriteCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat)
+{
+    /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
+     * doing the color fixup in shaders.
+     * Note Windows drivers (at least on the Geforce 8800) also offer this on R5G6B5. */
+    if((CheckFormat == WINED3DFMT_X8R8G8B8) || (CheckFormat == WINED3DFMT_X8R8G8B8)) {
+        int vs_selected_mode;
+        int ps_selected_mode;
+        select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
+
+        if((ps_selected_mode == SHADER_ARB) || (ps_selected_mode == SHADER_GLSL)) {
+            TRACE_(d3d_caps)("[OK]\n");
+            return TRUE;
+        }
+    }
+
+    TRACE_(d3d_caps)("[FAILED] - no SRGB writing support on format=%s\n", debug_d3dformat(CheckFormat));
+    return FALSE;
+}
+
 /* Check if a texture format is supported on the given adapter */
 static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
@@ -2301,6 +2321,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     }
                 }
 
+                /* Check QUERY_SRGBWRITE support */
+                if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
+                    if(CheckSrgbWriteCapability(Adapter, DeviceType, CheckFormat)) {
+                        UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
+                    } else {
+                        TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                }
+
                 /* Check QUERY_VERTEXTEXTURE support */
                 if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
                     if(CheckVertexTextureCapability(Adapter, CheckFormat)) {
@@ -2413,6 +2443,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 }
             }
 
+            /* Check QUERY_SRGBWRITE support */
+            if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
+                if(CheckSrgbWriteCapability(Adapter, DeviceType, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+
             /* Check QUERY_VERTEXTEXTURE support */
             if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
                 if(CheckVertexTextureCapability(Adapter, CheckFormat)) {
@@ -2470,6 +2510,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
                 } else {
                     TRACE_(d3d_caps)("[FAILED] - No query srgbread support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+
+            /* Check QUERY_SRGBWRITE support */
+            if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
+                if(CheckSrgbWriteCapability(Adapter, DeviceType, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query srgbwrite support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
