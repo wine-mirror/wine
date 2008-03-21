@@ -2053,6 +2053,121 @@ QueryServiceConfigW( SC_HANDLE hService,
 }
 
 /******************************************************************************
+ * QueryServiceConfig2A [ADVAPI32.@]
+ *
+ * Note
+ *   observed unter win2k:
+ *   The functions QueryServiceConfig2A and QueryServiceConfig2W return the same
+ *   required buffer size (in byte) at least for dwLevel SERVICE_CONFIG_DESCRIPTION
+ */
+BOOL WINAPI QueryServiceConfig2A(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffer,
+                                 DWORD size, LPDWORD needed)
+{
+    BOOL ret;
+    LPBYTE bufferW = NULL;
+
+    if(buffer && size)
+        bufferW = HeapAlloc( GetProcessHeap(), 0, size);
+
+    ret = QueryServiceConfig2W(hService, dwLevel, bufferW, size, needed);
+    if(!ret) goto cleanup;
+
+    switch(dwLevel) {
+        case SERVICE_CONFIG_DESCRIPTION:
+            {   LPSERVICE_DESCRIPTIONA configA = (LPSERVICE_DESCRIPTIONA) buffer;
+                LPSERVICE_DESCRIPTIONW configW = (LPSERVICE_DESCRIPTIONW) bufferW;
+                if (configW->lpDescription) {
+                    DWORD sz;
+                    configA->lpDescription = (LPSTR)(configA + 1);
+                    sz = WideCharToMultiByte( CP_ACP, 0, configW->lpDescription, -1,
+                             configA->lpDescription, size - sizeof(SERVICE_DESCRIPTIONA), NULL, NULL );
+                    if (!sz) {
+                        FIXME("WideCharToMultiByte failed for configW->lpDescription\n");
+                        ret = FALSE;
+                        configA->lpDescription = NULL;
+                    }
+                }
+                else configA->lpDescription = NULL;
+            }
+        break;
+        default:
+            FIXME("conversation W->A not implemented for level %d\n", dwLevel);
+            ret = FALSE;
+    }
+
+cleanup:
+    HeapFree( GetProcessHeap(), 0, bufferW);
+    return ret;
+}
+
+/******************************************************************************
+ * QueryServiceConfig2W [ADVAPI32.@]
+ */
+BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffer,
+                                 DWORD size, LPDWORD needed)
+{
+    DWORD sz, type;
+    HKEY hKey;
+    LONG r;
+    struct sc_service *hsvc;
+
+    if(dwLevel != SERVICE_CONFIG_DESCRIPTION) {
+        if((dwLevel == SERVICE_CONFIG_DELAYED_AUTO_START_INFO) ||
+           (dwLevel == SERVICE_CONFIG_FAILURE_ACTIONS) ||
+           (dwLevel == SERVICE_CONFIG_FAILURE_ACTIONS_FLAG) ||
+           (dwLevel == SERVICE_CONFIG_PRESHUTDOWN_INFO) ||
+           (dwLevel == SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO) ||
+           (dwLevel == SERVICE_CONFIG_SERVICE_SID_INFO))
+            FIXME("Level %d not implemented\n", dwLevel);
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+    if(!needed || (!buffer && size)) {
+        SetLastError(ERROR_INVALID_ADDRESS);
+        return FALSE;
+    }
+
+    TRACE("%p 0x%d %p 0x%d %p\n", hService, dwLevel, buffer, size, needed);
+
+    hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
+    if (!hsvc)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    hKey = hsvc->hkey;
+
+    switch(dwLevel) {
+        case SERVICE_CONFIG_DESCRIPTION: {
+            static const WCHAR szDescription[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
+            LPSERVICE_DESCRIPTIONW config = (LPSERVICE_DESCRIPTIONW) buffer;
+            LPBYTE strbuf = NULL;
+            *needed = sizeof (SERVICE_DESCRIPTIONW);
+            sz = size - *needed;
+            if(config && (*needed <= size))
+                strbuf = (LPBYTE) (config + 1);
+            r = RegQueryValueExW( hKey, szDescription, 0, &type, strbuf, &sz );
+            if((r == ERROR_SUCCESS) && ( type != REG_SZ)) {
+                FIXME("SERVICE_CONFIG_DESCRIPTION: don't know how to handle type %d\n", type);
+                return FALSE;
+            }
+            *needed += sz;
+            if(config) {
+                if(r == ERROR_SUCCESS)
+                    config->lpDescription = (LPWSTR) (config + 1);
+                else
+                    config->lpDescription = NULL;
+            }
+        }
+        break;
+    }
+    if(*needed > size)
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+
+    return (*needed <= size);
+}
+
+/******************************************************************************
  * EnumServicesStatusA [ADVAPI32.@]
  */
 BOOL WINAPI

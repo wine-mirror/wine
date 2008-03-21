@@ -947,6 +947,13 @@ static void test_queryconfig2(void)
     ok(ERROR_INVALID_ADDRESS == GetLastError(), "expected error ERROR_INVALID_ADDRESS, got %d\n", GetLastError());
 
     needed = 0;
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,sizeof(SERVICE_DESCRIPTIONA)-1,&needed);
+    ok(!ret, "expected QueryServiceConfig2A to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(), "expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(needed == sizeof(SERVICE_DESCRIPTIONA), "got %d\n", needed);
+
+    needed = 0;
     pConfig->lpDescription = (LPSTR)0xdeadbeef;
     ret = pQueryServiceConfig2A(svc_handle, SERVICE_CONFIG_DESCRIPTION,buffer,sizeof(SERVICE_DESCRIPTIONA),&needed);
     ok(ret, "expected QueryServiceConfig2A to succeed\n");

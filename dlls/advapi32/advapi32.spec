@@ -448,8 +448,8 @@
 # @ stub QueryAllTracesA
 # @ stub QueryAllTracesW
 # @ stub QueryRecoveryAgentsOnEncryptedFile
-# @ stub QueryServiceConfig2A
-# @ stub QueryServiceConfig2W
+@ stdcall QueryServiceConfig2A(long long ptr long ptr)
+@ stdcall QueryServiceConfig2W(long long ptr long ptr)
 @ stdcall QueryServiceConfigA(long ptr long ptr)
 @ stdcall QueryServiceConfigW(long ptr long ptr)
 @ stdcall QueryServiceLockStatusA(long ptr long ptr)
