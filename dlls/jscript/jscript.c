@@ -24,16 +24,18 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
-    const IActiveScriptVtbl          *lpIActiveScriptVtbl;
-    const IActiveScriptParseVtbl     *lpIActiveScriptParseVtbl;
-    const IActiveScriptPropertyVtbl  *lpIActiveScriptPropertyVtbl;
+    const IActiveScriptVtbl                 *lpIActiveScriptVtbl;
+    const IActiveScriptParseVtbl            *lpIActiveScriptParseVtbl;
+    const IActiveScriptParseProcedure2Vtbl  *lpIActiveScriptParseProcedure2Vtbl;
+    const IActiveScriptPropertyVtbl         *lpIActiveScriptPropertyVtbl;
 
     LONG ref;
 } JScript;
 
-#define ACTSCRIPT(x)  ((IActiveScript*)          &(x)->lpIActiveScriptVtbl)
-#define ASPARSE(x)    ((IActiveScriptParse*)     &(x)->lpIActiveScriptParseVtbl)
-#define ACTSCPPROP(x) ((IActiveScriptProperty*)  &(x)->lpIActiveScriptPropertyVtbl)
+#define ACTSCRIPT(x)    ((IActiveScript*)                 &(x)->lpIActiveScriptVtbl)
+#define ASPARSE(x)      ((IActiveScriptParse*)            &(x)->lpIActiveScriptParseVtbl)
+#define ASPARSEPROC(x)  ((IActiveScriptParseProcedure2*)  &(x)->lpIActiveScriptParseProcedure2Vtbl)
+#define ACTSCPPROP(x)   ((IActiveScriptProperty*)         &(x)->lpIActiveScriptPropertyVtbl)
 
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
 
@@ -52,6 +54,12 @@ static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, 
     }else if(IsEqualGUID(riid, &IID_IActiveScriptParse)) {
         TRACE("(%p)->(IID_IActiveScriptParse %p)\n", This, ppv);
         *ppv = ASPARSE(This);
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptParseProcedure)) {
+        TRACE("(%p)->(IID_IActiveScriptParseProcedure %p)\n", This, ppv);
+        *ppv = ASPARSEPROC(This);
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptParseProcedure2)) {
+        TRACE("(%p)->(IID_IActiveScriptParseProcedure2 %p)\n", This, ppv);
+        *ppv = ASPARSEPROC(This);
     }else if(IsEqualGUID(riid, &IID_IActiveScriptProperty)) {
         TRACE("(%p)->(IID_IActiveScriptProperty %p)\n", This, ppv);
         *ppv = ACTSCPPROP(This);
@@ -274,6 +282,45 @@ static const IActiveScriptParseVtbl JScriptParseVtbl = {
     JScriptParse_ParseScriptText
 };
 
+#define ASPARSEPROC_THIS(iface) DEFINE_THIS(JScript, IActiveScriptParse, iface)
+
+static HRESULT WINAPI JScriptParseProcedure_QueryInterface(IActiveScriptParseProcedure2 *iface, REFIID riid, void **ppv)
+{
+    JScript *This = ASPARSEPROC_THIS(iface);
+    return IActiveScript_QueryInterface(ACTSCRIPT(This), riid, ppv);
+}
+
+static ULONG WINAPI JScriptParseProcedure_AddRef(IActiveScriptParseProcedure2 *iface)
+{
+    JScript *This = ASPARSEPROC_THIS(iface);
+    return IActiveScript_AddRef(ACTSCRIPT(This));
+}
+
+static ULONG WINAPI JScriptParseProcedure_Release(IActiveScriptParseProcedure2 *iface)
+{
+    JScript *This = ASPARSEPROC_THIS(iface);
+    return IActiveScript_Release(ACTSCRIPT(This));
+}
+
+static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptParseProcedure2 *iface,
+        LPCOLESTR pstrCode, LPCOLESTR pstrFormalParams, LPCOLESTR pstrProcedureName,
+        LPCOLESTR pstrItemName, IUnknown *punkContext, LPCOLESTR pstrDelimiter,
+        DWORD dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
+{
+    JScript *This = ASPARSEPROC_THIS(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+#undef ASPARSEPROC_THIS
+
+static const IActiveScriptParseProcedure2Vtbl JScriptParseProcedureVtbl = {
+    JScriptParseProcedure_QueryInterface,
+    JScriptParseProcedure_AddRef,
+    JScriptParseProcedure_Release,
+    JScriptParseProcedure_ParseProcedureText,
+};
+
 #define ACTSCPPROP_THIS(iface) DEFINE_THIS(JScript, IActiveScriptProperty, iface)
 
 static HRESULT WINAPI JScriptProperty_QueryInterface(IActiveScriptProperty *iface, REFIID riid, void **ppv)
@@ -330,9 +377,10 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
 
     ret = heap_alloc(sizeof(*ret));
 
-    ret->lpIActiveScriptVtbl          = &JScriptVtbl;
-    ret->lpIActiveScriptParseVtbl     = &JScriptParseVtbl;
-    ret->lpIActiveScriptPropertyVtbl  = &JScriptPropertyVtbl;
+    ret->lpIActiveScriptVtbl                 = &JScriptVtbl;
+    ret->lpIActiveScriptParseVtbl            = &JScriptParseVtbl;
+    ret->lpIActiveScriptParseProcedure2Vtbl  = &JScriptParseProcedureVtbl;
+    ret->lpIActiveScriptPropertyVtbl         = &JScriptPropertyVtbl;
     ret->ref = 1;
 
     hres = IActiveScript_QueryInterface(ACTSCRIPT(ret), riid, ppv);
