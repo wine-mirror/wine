@@ -562,6 +562,25 @@ void WINAPI MmFreeNonCachedMemory( void *addr, SIZE_T size )
 }
 
 /***********************************************************************
+ *           MmIsAddressValid   (NTOSKRNL.EXE.@)
+ *
+ * Check if the process can access the virtual address without a pagefault
+ *
+ * PARAMS
+ *  VirtualAddress [I] Address to check
+ *
+ * RETURNS
+ *  Failure: FALSE
+ *  Success: TRUE  (Accessing the Address works without a Pagefault)
+ *
+ */
+BOOLEAN WINAPI MmIsAddressValid(PVOID VirtualAddress)
+{
+    TRACE("(%p)\n", VirtualAddress);
+    return !IsBadWritePtr(VirtualAddress, 1);
+}
+
+/***********************************************************************
  *           MmPageEntireDriver   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmPageEntireDriver(PVOID AddrInSection)

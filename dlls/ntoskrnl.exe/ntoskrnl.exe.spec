@@ -679,7 +679,7 @@
 @ stub MmGetVirtualForPhysical
 @ stub MmGrowKernelStack
 @ stub MmHighestUserAddress
-@ stub MmIsAddressValid
+@ stdcall MmIsAddressValid(ptr)
 @ stub MmIsDriverVerifying
 @ stub MmIsNonPagedSystemAddressValid
 @ stub MmIsRecursiveIoFault
