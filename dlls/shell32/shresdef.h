@@ -160,4 +160,10 @@ FIXME: Need to add them, but for now just let them use the same: searching.avi
 #define IDR_AVI_FILENUKE           163
 #define IDR_AVI_FILEDELETE         164
 
+/* about box */
+#define IDC_ABOUT_WINE_TEXT      98
+#define IDC_ABOUT_LISTBOX        99
+#define IDC_ABOUT_STATIC_TEXT1   100
+#define IDC_ABOUT_STATIC_TEXT2   101
+
 #endif

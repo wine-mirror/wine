@@ -25,6 +25,7 @@
 #include "wingdi.h"
 #include "shlobj.h"
 #include "shresdef.h"
+#include "dlgs.h"
 
 #include "version.rc"
 
