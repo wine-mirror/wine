@@ -192,7 +192,7 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
             DDPixelFormat->u2.dwStencilBitDepth = 0;
             DDPixelFormat->u3.dwZBitMask = 0x0000FFFF;
             DDPixelFormat->u4.dwStencilBitMask = 0x0;
-            DDPixelFormat->u5.dwRGBZBitMask = 0x0000FFFF;
+            DDPixelFormat->u5.dwRGBZBitMask = 0x00000000;
             break;
 
         case WINED3DFMT_D32:
@@ -202,17 +202,17 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
             DDPixelFormat->u2.dwStencilBitDepth = 0;
             DDPixelFormat->u3.dwZBitMask = 0xFFFFFFFF;
             DDPixelFormat->u4.dwStencilBitMask = 0x0;
-            DDPixelFormat->u5.dwRGBZBitMask = 0xFFFFFFFF;
+            DDPixelFormat->u5.dwRGBZBitMask = 0x00000000;
             break;
 
         case WINED3DFMT_D24X4S4:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER | DDPF_STENCILBUFFER;
             DDPixelFormat->dwFourCC = 0;
             /* Should I set dwZBufferBitDepth to 32 here? */
-            DDPixelFormat->u1.dwZBufferBitDepth = 24;
+            DDPixelFormat->u1.dwZBufferBitDepth = 32;
             DDPixelFormat->u2.dwStencilBitDepth = 4;
-            DDPixelFormat->u3.dwZBitMask = 0x0;
-            DDPixelFormat->u4.dwStencilBitMask = 0x0;
+            DDPixelFormat->u3.dwZBitMask = 0x00FFFFFF;
+            DDPixelFormat->u4.dwStencilBitMask = 0x0F000000;
             DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
             break;
 
@@ -220,31 +220,30 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
             DDPixelFormat->dwFlags = DDPF_ZBUFFER | DDPF_STENCILBUFFER;
             DDPixelFormat->dwFourCC = 0;
             /* Should I set dwZBufferBitDepth to 32 here? */
-            DDPixelFormat->u1.dwZBufferBitDepth = 24;
+            DDPixelFormat->u1.dwZBufferBitDepth = 32;
             DDPixelFormat->u2.dwStencilBitDepth = 8;
-            DDPixelFormat->u3.dwZBitMask = 0x0;
-            DDPixelFormat->u4.dwStencilBitMask = 0x0;
+            DDPixelFormat->u3.dwZBitMask = 0x00FFFFFFFF;
+            DDPixelFormat->u4.dwStencilBitMask = 0xFF000000;
             DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
             break;
 
         case WINED3DFMT_D24X8:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER;
             DDPixelFormat->dwFourCC = 0;
-            DDPixelFormat->u1.dwZBufferBitDepth = 24;
-            DDPixelFormat->u2.dwStencilBitDepth = 8;
-            DDPixelFormat->u3.dwZBitMask = 0x0;
-            DDPixelFormat->u4.dwStencilBitMask = 0x0;
+            DDPixelFormat->u1.dwZBufferBitDepth = 32;
+            DDPixelFormat->u2.dwStencilBitDepth = 0;
+            DDPixelFormat->u3.dwZBitMask = 0x00FFFFFFFF;
+            DDPixelFormat->u4.dwStencilBitMask = 0x00000000;
             DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
 
             break;
         case WINED3DFMT_D15S1:
             DDPixelFormat->dwFlags = DDPF_ZBUFFER | DDPF_STENCILBUFFER;
             DDPixelFormat->dwFourCC = 0;
-            /* Should I set dwZBufferBitDepth to 16 here? */
-            DDPixelFormat->u1.dwZBufferBitDepth = 15;
+            DDPixelFormat->u1.dwZBufferBitDepth = 16;
             DDPixelFormat->u2.dwStencilBitDepth = 1;
-            DDPixelFormat->u3.dwZBitMask = 0x0;
-            DDPixelFormat->u4.dwStencilBitMask = 0x0;
+            DDPixelFormat->u3.dwZBitMask = 0x7fff;
+            DDPixelFormat->u4.dwStencilBitMask = 0x8000;
             DDPixelFormat->u5.dwRGBAlphaBitMask = 0x0;
             break;
 
@@ -495,19 +494,20 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
             switch(DDPixelFormat->u1.dwZBufferBitDepth)
             {
                 case 8:
-                    ERR("8 Bits Z+Stencil buffer pixelformat is not supported. Returning WINED3DFMT_UNKNOWN\n");
+                    FIXME("8 Bits Z+Stencil buffer pixelformat is not supported. Returning WINED3DFMT_UNKNOWN\n");
                     return WINED3DFMT_UNKNOWN;
 
                 case 15:
+                    FIXME("15 bit depth buffer not handled yet, assuming 16 bit\n");
                 case 16:
                     if(DDPixelFormat->u2.dwStencilBitDepth == 1)
                         return WINED3DFMT_D15S1;
 
-                    ERR("Don't know how to handle a 16 bit Z buffer with %d bit stencil buffer pixelformat\n", DDPixelFormat->u2.dwStencilBitDepth);
+                    FIXME("Don't know how to handle a 16 bit Z buffer with %d bit stencil buffer pixelformat\n", DDPixelFormat->u2.dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
 
                 case 24:
-                    ERR("Don't know how to handle a 24 bit depth buffer with stencil bits\n");
+                    FIXME("Don't know how to handle a 24 bit depth buffer with stencil bits\n");
                     return WINED3DFMT_D24S8;
 
                 case 32:
@@ -533,10 +533,15 @@ PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat)
                     return WINED3DFMT_D16;
 
                 case 24:
-                    return WINED3DFMT_D24X8;
-
+                    FIXME("24 Bit depth buffer, treating like a 32 bit one\n");
                 case 32:
-                    return WINED3DFMT_D32;
+                    if(DDPixelFormat->u3.dwZBitMask == 0x00FFFFFF) {
+                        return WINED3DFMT_D24X8;
+                    } else if(DDPixelFormat->u3.dwZBitMask == 0xFFFFFFFF) {
+                        return WINED3DFMT_D32;
+                    }
+                    FIXME("Unhandled 32 bit depth buffer bitmasks, returning WINED3DFMT_D24X8\n");
+                    return WINED3DFMT_D24X8; /* That's most likely to make games happy */
 
                 default:
                     ERR("Unsupported Z buffer depth %d\n", DDPixelFormat->u1.dwZBufferBitDepth);
