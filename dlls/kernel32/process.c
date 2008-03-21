@@ -2928,8 +2928,17 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
  */
 BOOL WINAPI IsWow64Process(HANDLE hProcess, PBOOL Wow64Process)
 {
-    FIXME("(%p %p) stub!\n", hProcess, Wow64Process);
-    *Wow64Process = FALSE;
+    ULONG pbi;
+    NTSTATUS status;
+
+    status = NtQueryInformationProcess( hProcess, ProcessWow64Information, &pbi, sizeof(pbi), NULL );
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    *Wow64Process = (pbi != 0);
     return TRUE;
 }
 
