@@ -3871,6 +3871,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
                 coords[1].x =  1;   coords[1].y = -1;   coords[1].z = -1;
                 coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
                 coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+                break;
 
             default:
                 ERR("Unexpected texture target\n");
