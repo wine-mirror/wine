@@ -2312,6 +2312,9 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     }
                 }
             }
+        } else {
+            TRACE_(d3d_caps)("[FAILED] - No cube texture support\n");
+            return WINED3DERR_NOTAVAILABLE;
         }
     } else if(RType == WINED3DRTYPE_SURFACE) {
         /* Surface allows:
