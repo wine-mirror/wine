@@ -22,6 +22,7 @@
 #include "gdiplus.h"
 #include "wine/test.h"
 #include <math.h>
+#include "wingdi.h"
 
 #define expect(expected, got) ok(((UINT)got) == ((UINT)expected), "Expected %.8x, got %.8x\n", (UINT)expected, (UINT)got)
 
@@ -335,6 +336,87 @@ static void test_LockBits(void)
     expect(Ok, stat);
 }
 
+static void test_GdipCreateBitmapFromHBITMAP(void)
+{
+    GpBitmap* gpbm = NULL;
+    HBITMAP hbm = NULL;
+    HPALETTE hpal = NULL;
+    GpStatus stat;
+    BYTE buff[1000];
+    LOGPALETTE* LogPal = NULL;
+    REAL width, height;
+    const REAL WIDTH1 = 5;
+    const REAL HEIGHT1 = 15;
+    const REAL WIDTH2 = 10;
+    const REAL HEIGHT2 = 20;
+    HDC hdc;
+    BITMAPINFO bmi;
+
+    stat = GdipCreateBitmapFromHBITMAP(NULL, NULL, NULL);
+    expect(InvalidParameter, stat);
+
+    hbm = CreateBitmap(WIDTH1, HEIGHT1, 1, 1, NULL);
+    stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
+    expect(Ok, stat);
+    expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
+    ok(fabs(WIDTH1 - width) < .0001, "width wrong\n");
+    ok(fabs(HEIGHT1 - height) < .0001, "height wrong\n");
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)gpbm);
+    GlobalFree(hbm);
+
+    hbm = CreateBitmap(WIDTH2, HEIGHT2, 1, 1, &buff);
+    stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
+    expect(Ok, stat);
+    expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
+    ok(fabs(WIDTH2 - width) < .0001, "width wrong\n");
+    ok(fabs(HEIGHT2 - height) < .0001, "height wrong\n");
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)gpbm);
+    GlobalFree(hbm);
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != NULL, "CreateCompatibleDC failed\n");
+    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+    bmi.bmiHeader.biHeight = HEIGHT1;
+    bmi.bmiHeader.biWidth = WIDTH1;
+    bmi.bmiHeader.biBitCount = 24;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    hbm = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+    ok(hbm != NULL, "CreateDIBSection failed\n");
+
+    stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
+    expect(Ok, stat);
+    expect(Ok, GdipGetImageDimension((GpImage*) gpbm, &width, &height));
+    ok(fabs(WIDTH1 - width) < .0001, "width wrong\n");
+    ok(fabs(HEIGHT1 - height) < .0001, "height wrong\n");
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)gpbm);
+
+    LogPal = GdipAlloc(sizeof(LOGPALETTE));
+    ok(LogPal != NULL, "unable to allocate LOGPALETTE\n");
+    LogPal->palVersion = 0x300;
+    hpal = CreatePalette((const LOGPALETTE*) LogPal);
+    ok(hpal != NULL, "CreatePalette failed\n");
+    GdipFree(LogPal);
+
+    stat = GdipCreateBitmapFromHBITMAP(hbm, hpal, &gpbm);
+    todo_wine
+    {
+        expect(Ok, stat);
+    }
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)gpbm);
+
+    GlobalFree(hpal);
+    GlobalFree(hbm);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -353,6 +435,7 @@ START_TEST(image)
     test_SavingImages();
     test_encoders();
     test_LockBits();
+    test_GdipCreateBitmapFromHBITMAP();
 
     GdiplusShutdown(gdiplusToken);
 }

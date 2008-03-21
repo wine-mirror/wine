@@ -1051,3 +1051,49 @@ GpStatus WINGDIPAPI GdipGetImageEncoders(UINT numEncoders, UINT size, ImageCodec
 
     return Ok;
 }
+GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBitmap** bitmap)
+{
+    BITMAP bm;
+    GpStatus retval;
+    PixelFormat format;
+
+    if(!hbm || !bitmap)
+        return InvalidParameter;
+
+    /* TODO: Support for device-dependent bitmaps */
+    if(hpal){
+        FIXME("no support for device-dependent bitmaps\n");
+        return NotImplemented;
+    }
+
+    if (GetObjectA(hbm, sizeof(bm), &bm) != sizeof(bm))
+            return InvalidParameter;
+
+    /* TODO: Figure out the correct format for 16, 32, 64 bpp */
+    switch(bm.bmBitsPixel) {
+        case 1:
+            format = PixelFormat1bppIndexed;
+            break;
+        case 4:
+            format = PixelFormat4bppIndexed;
+            break;
+        case 8:
+            format = PixelFormat8bppIndexed;
+            break;
+        case 24:
+            format = PixelFormat24bppRGB;
+            break;
+        case 48:
+            format = PixelFormat48bppRGB;
+            break;
+        default:
+            FIXME("don't know how to handle %d bpp\n", bm.bmBitsPixel);
+            return InvalidParameter;
+            break;
+    }
+
+    retval = GdipCreateBitmapFromScan0(bm.bmWidth, bm.bmHeight, bm.bmWidthBytes,
+        format, bm.bmBits, bitmap);
+
+    return retval;
+}
