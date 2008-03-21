@@ -1,6 +1,7 @@
 /*
  * Copyright 2005, 2007 Henri Verbeet
  * Copyright (C) 2007 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2008 Jason Green(for TransGaming)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -5497,6 +5498,136 @@ out:
     IDirect3D9_Release(d3d);
 }
 
+static void shademode_test(IDirect3DDevice9 *device)
+{
+    /* Render a quad and try all of the different fixed function shading models. */
+    HRESULT hr;
+    DWORD color0, color1;
+    DWORD shademode = D3DSHADE_FLAT;
+    DWORD primtype = D3DPT_TRIANGLESTRIP;
+    LPVOID data = NULL;
+    LPDIRECT3DVERTEXBUFFER9 vb_strip = NULL;
+    LPDIRECT3DVERTEXBUFFER9 vb_list = NULL;
+    UINT i, j;
+    struct vertex quad_strip[] =
+    {
+        {-1.0f, -1.0f,  0.0f, 0xffff0000  },
+        {-1.0f,  1.0f,  0.0f, 0xff00ff00  },
+        { 1.0f, -1.0f,  0.0f, 0xff0000ff  },
+        { 1.0f,  1.0f,  0.0f, 0xffffffff  }
+    };
+    struct vertex quad_list[] =
+    {
+        {-1.0f, -1.0f,  0.0f, 0xffff0000  },
+        {-1.0f,  1.0f,  0.0f, 0xff00ff00  },
+        { 1.0f, -1.0f,  0.0f, 0xff0000ff  },
+
+        {-1.0f,  1.0f,  0.0f, 0xff00ff00  },
+        { 1.0f, -1.0f,  0.0f, 0xff0000ff  },
+        { 1.0f,  1.0f,  0.0f, 0xffffffff  }
+    };
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad_strip),
+                                             0, 0, D3DPOOL_MANAGED, &vb_strip, NULL);
+    ok(hr == D3D_OK, "CreateVertexBuffer failed with %s\n", DXGetErrorString9(hr));
+    if (FAILED(hr)) goto bail;
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad_list),
+                                             0, 0, D3DPOOL_MANAGED, &vb_list, NULL);
+    ok(hr == D3D_OK, "CreateVertexBuffer failed with %s\n", DXGetErrorString9(hr));
+    if (FAILED(hr)) goto bail;
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DVertexBuffer9_Lock(vb_strip, 0, sizeof(quad_strip), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, quad_strip, sizeof(quad_strip));
+    hr = IDirect3DVertexBuffer9_Unlock(vb_strip);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DVertexBuffer9_Lock(vb_list, 0, sizeof(quad_list), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, quad_list, sizeof(quad_list));
+    hr = IDirect3DVertexBuffer9_Unlock(vb_list);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %s\n", DXGetErrorString9(hr));
+
+    /* Try it first with a TRIANGLESTRIP.  Do it with different geometry because
+     * the color fixups we have to do for FLAT shading will be dependent on that. */
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb_strip, 0, sizeof(quad_strip[0]));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
+
+    /* First loop uses a TRIANGLESTRIP geometry, 2nd uses a TRIANGLELIST */
+    for (j=0; j<2; j++) {
+
+        /* Inner loop just changes the D3DRS_SHADEMODE */
+        for (i=0; i<3; i++) {
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SHADEMODE, shademode);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+            if(SUCCEEDED(hr))
+            {
+                hr = IDirect3DDevice9_DrawPrimitive(device, primtype, 0, 2);
+                ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitive failed with %s\n", DXGetErrorString9(hr));
+
+                hr = IDirect3DDevice9_EndScene(device);
+                ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+            }
+
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+            /* Sample two spots from the output */
+            color0 = getPixelColor(device, 100, 100); /* Inside first triangle */
+            color1 = getPixelColor(device, 500, 350); /* Inside second triangle */
+            switch(shademode) {
+                case D3DSHADE_FLAT:
+                    /* Should take the color of the first vertex of each triangle */
+                    todo_wine ok(color0 == 0x00ff0000, "FLAT shading has color0 %08x, expected 0x00ff0000 (todo)\n", color0);
+                    todo_wine ok(color1 == 0x0000ff00, "FLAT shading has color1 %08x, expected 0x0000ff00 (todo)\n", color1);
+                    shademode = D3DSHADE_GOURAUD;
+                    break;
+                case D3DSHADE_GOURAUD:
+                    /* Should be an interpolated blend */
+                    ok(color0 == 0x000dca28, "GOURAUD shading has color0 %08x, expected 0x000dca28\n", color0);
+                    ok(color1 == 0x000d45c7, "GOURAUD shading has color1 %08x, expected 0x000d45c7\n", color1);
+                    shademode = D3DSHADE_PHONG;
+                    break;
+                case D3DSHADE_PHONG:
+                    /* Should be the same as GOURAUD, since no hardware implements this */
+                    ok(color0 == 0x000dca28, "PHONG shading has color0 %08x, expected 0x000dca28\n", color0);
+                    ok(color1 == 0x000d45c7, "PHONG shading has color1 %08x, expected 0x000d45c7\n", color1);
+                    break;
+            }
+        }
+        /* Now, do it all over again with a TRIANGLELIST */
+        hr = IDirect3DDevice9_SetStreamSource(device, 0, vb_list, 0, sizeof(quad_list[0]));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
+        primtype = D3DPT_TRIANGLELIST;
+        shademode = D3DSHADE_FLAT;
+    }
+
+bail:
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+    if (vb_strip)
+        IDirect3DVertexBuffer9_Release(vb_strip);
+    if (vb_list)
+        IDirect3DVertexBuffer9_Release(vb_list);
+}
+
+
 static void fog_srgbwrite_test(IDirect3DDevice9 *device)
 {
     /* Draw a black quad, half fogged with white fog -> grey color. Enable sRGB writing.
@@ -7364,6 +7495,7 @@ START_TEST(visual)
     }
     offscreen_test(device_ptr);
     alpha_test(device_ptr);
+    shademode_test(device_ptr);
     srgbtexture_test(device_ptr);
     release_buffer_test(device_ptr);
     float_texture_test(device_ptr);
