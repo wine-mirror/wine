@@ -2421,8 +2421,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
         }
-    } else if(RType == WINED3DRTYPE_VOLUMETEXTURE) {
-        /* Volumetexture allows:
+    } else if((RType == WINED3DRTYPE_VOLUME) || (RType == WINED3DRTYPE_VOLUMETEXTURE)) {
+        /* Volume is to VolumeTexture what Surface is to Texture but its usage caps are not documented.
+         * Most driver seem to offer (nearly) the same on Volume and VolumeTexture, so do that too.
+         *
+         * Volumetexture allows:
          *                      - D3DUSAGE_DYNAMIC
          *                      - D3DUSAGE_NONSECURE (d3d9ex)
          *                      - D3DUSAGE_SOFTWAREPROCESSING
