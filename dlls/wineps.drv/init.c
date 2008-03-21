@@ -352,7 +352,7 @@ BOOL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devi
 	return FALSE;
     }
 
-    memcpy( physDev->Devmode, pi->Devmode, sizeof(PSDRV_DEVMODEA) );
+    *physDev->Devmode = *pi->Devmode;
 
     physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
     physDev->logPixelsY = physDev->pi->ppd->DefaultResolution;
@@ -566,7 +566,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
 	if (pi->Devmode == NULL)
 	    goto cleanup;
-	memcpy(pi->Devmode, &DefaultDevmode, sizeof(DefaultDevmode) );
+	*pi->Devmode = DefaultDevmode;
 	lstrcpynA((LPSTR)pi->Devmode->dmPublic.dmDeviceName,name,CCHDEVICENAME);
 	using_default_devmode = TRUE;
 

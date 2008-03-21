@@ -107,7 +107,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 		ibi->GraphicsRect.left,
 		ibi->GraphicsRect.right
 	);
-	memcpy (obi, ibi, sizeof(*ibi));
+	*obi = *ibi;
 	return 1;
     }
     case NEXTBAND:

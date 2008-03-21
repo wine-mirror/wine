@@ -279,7 +279,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
     di = (PSDRV_DLGINFO *)GetWindowLongPtrW(hwnd, DWLP_USER);
     switch(nmhdr->code) {
     case PSN_APPLY:
-      memcpy(di->pi->Devmode, di->dlgdm, sizeof(PSDRV_DEVMODEA));
+      *di->pi->Devmode = *di->dlgdm;
       SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, PSNRET_NOERROR);
       return TRUE;
 
@@ -370,7 +370,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     pPropertySheet = (void*)GetProcAddress(hinstComctl32, "PropertySheetW");
     memset(&psp,0,sizeof(psp));
     dlgdm = HeapAlloc( PSDRV_Heap, 0, sizeof(*dlgdm) );
-    memcpy(dlgdm, pi->Devmode, sizeof(*dlgdm));
+    *dlgdm = *pi->Devmode;
     di = HeapAlloc( PSDRV_Heap, 0, sizeof(*di) );
     di->pi = pi;
     di->dlgdm = dlgdm;
