@@ -886,13 +886,24 @@ done:
  */
 static void create_config_dir(void)
 {
-    const char *config_dir = wine_get_config_dir();
+    const char *p, *config_dir = wine_get_config_dir();
     char *tmp_dir;
     int fd;
     pid_t pid, wret;
 
     if (!(tmp_dir = malloc( strlen(config_dir) + sizeof("-XXXXXX") )))
         fatal_error( "out of memory\n" );
+
+    if ((p = strrchr( config_dir, '/' )) && p != config_dir)
+    {
+        struct stat st;
+
+        memcpy( tmp_dir, config_dir, p - config_dir );
+        tmp_dir[p - config_dir] = 0;
+        if (!stat( tmp_dir, &st ) && st.st_uid != getuid())
+            fatal_error( "'%s' is not owned by you, refusing to create a configuration directory there\n",
+                         tmp_dir );
+    }
     strcpy( tmp_dir, config_dir );
     strcat( tmp_dir, "-XXXXXX" );
     if ((fd = mkstemps( tmp_dir, 0 )) == -1)
