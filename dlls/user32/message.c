@@ -1702,17 +1702,9 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
            (msg->hwnd != GetDesktopWindow()))
         {
             /* Handle F1 key by sending out WM_HELP message */
-            if(msg->wParam == VK_F1 &&
-               !MENU_IsMenuActive())
+            if (msg->wParam == VK_F1)
             {
-                HELPINFO hi;
-                hi.cbSize = sizeof(HELPINFO);
-                hi.iContextType = HELPINFO_WINDOW;
-                hi.iCtrlId = GetWindowLongPtrA( msg->hwnd, GWLP_ID );
-                hi.hItemHandle = msg->hwnd;
-                hi.dwContextId = GetWindowContextHelpId( msg->hwnd );
-                hi.MousePos = msg->pt;
-                SendMessageW( msg->hwnd, WM_HELP, 0, (LPARAM)&hi );
+                PostMessageW( msg->hwnd, WM_KEYF1, 0, 0 );
             }
             else if(msg->wParam >= VK_BROWSER_BACK &&
                     msg->wParam <= VK_LAUNCH_APP2)

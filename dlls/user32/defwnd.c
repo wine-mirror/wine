@@ -723,6 +723,29 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 SendMessageW( parent, msg, wParam, lParam );
             break;
         }
+    case WM_KEYF1:
+        {
+            HELPINFO hi;
+
+            hi.cbSize = sizeof(HELPINFO);
+            GetCursorPos( &hi.MousePos );
+            if (MENU_IsMenuActive())
+            {
+                hi.iContextType = HELPINFO_MENUITEM;
+                hi.hItemHandle = MENU_IsMenuActive();
+                hi.iCtrlId = MenuItemFromPoint( hwnd, hi.hItemHandle, hi.MousePos );
+                hi.dwContextId = GetMenuContextHelpId( hi.hItemHandle );
+            }
+            else
+            {
+                hi.iContextType = HELPINFO_WINDOW;
+                hi.hItemHandle = hwnd;
+                hi.iCtrlId = GetWindowLongPtrA( hwnd, GWLP_ID );
+                hi.dwContextId = GetWindowContextHelpId( hwnd );
+            }
+            SendMessageW( hwnd, WM_HELP, 0, (LPARAM)&hi );
+            break;
+        }
     }
 
     return 0;

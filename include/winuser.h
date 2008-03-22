@@ -1160,6 +1160,7 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
   /* Win32 4.0 messages */
 #define WM_COPYDATA		0x004a
 #define WM_CANCELJOURNAL	0x004b
+#define WM_KEYF1		0x004d
 #define WM_NOTIFY		0x004e
 #define WM_INPUTLANGCHANGEREQUEST       0x0050
 #define WM_INPUTLANGCHANGE              0x0051
