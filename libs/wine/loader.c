@@ -596,7 +596,18 @@ static void set_max_limit( int limit )
     if (!getrlimit( limit, &rlimit ))
     {
         rlimit.rlim_cur = rlimit.rlim_max;
-        setrlimit( limit, &rlimit );
+        if (setrlimit( limit, &rlimit ) != 0)
+        {
+#if defined(__APPLE__) && defined(RLIMIT_NOFILE) && defined(OPEN_MAX)
+            /* On Leopard, setrlimit(RLIMIT_NOFILE, ...) fails on attempts to set
+             * rlim_cur above OPEN_MAX (even if rlim_max > OPEN_MAX). */
+            if (limit == RLIMIT_NOFILE && rlimit.rlim_cur > OPEN_MAX)
+            {
+                rlimit.rlim_cur = OPEN_MAX;
+                setrlimit( limit, &rlimit );
+            }
+#endif
+        }
     }
 #endif
 }
