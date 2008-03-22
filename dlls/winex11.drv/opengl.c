@@ -2528,8 +2528,7 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
 static int WINAPI X11DRV_wglReleasePbufferDCARB(HPBUFFERARB hPbuffer, HDC hdc)
 {
     TRACE("(%p, %p)\n", hPbuffer, hdc);
-    DeleteDC(hdc);
-    return 0;
+    return DeleteDC(hdc);
 }
 
 /**
