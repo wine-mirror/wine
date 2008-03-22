@@ -263,6 +263,42 @@ end:
     CloseHandle( file );
 }
 
+static void test_find_resource(void)
+{
+    HRSRC rsrc;
+
+    rsrc = FindResourceW( GetModuleHandle(0), (LPCWSTR)MAKEINTRESOURCE(1), (LPCWSTR)RT_MENU );
+    ok( rsrc != 0, "resource not found\n" );
+    rsrc = FindResourceExW( GetModuleHandle(0), (LPCWSTR)RT_MENU, (LPCWSTR)MAKEINTRESOURCE(1),
+                            MAKELANGID( LANG_NEUTRAL, SUBLANG_NEUTRAL ));
+    ok( rsrc != 0, "resource not found\n" );
+    rsrc = FindResourceExW( GetModuleHandle(0), (LPCWSTR)RT_MENU, (LPCWSTR)MAKEINTRESOURCE(1),
+                            MAKELANGID( LANG_GERMAN, SUBLANG_DEFAULT ));
+    ok( rsrc != 0, "resource not found\n" );
+
+    SetLastError( 0xdeadbeef );
+    rsrc = FindResourceW( GetModuleHandle(0), (LPCWSTR)MAKEINTRESOURCE(1), (LPCWSTR)RT_DIALOG );
+    ok( !rsrc, "resource found\n" );
+    ok( GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    rsrc = FindResourceW( GetModuleHandle(0), (LPCWSTR)MAKEINTRESOURCE(2), (LPCWSTR)RT_MENU );
+    ok( !rsrc, "resource found\n" );
+    ok( GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    rsrc = FindResourceExW( GetModuleHandle(0), (LPCWSTR)RT_MENU, (LPCWSTR)MAKEINTRESOURCE(1),
+                            MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT ) );
+    ok( !rsrc, "resource found\n" );
+    ok( GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    rsrc = FindResourceExW( GetModuleHandle(0), (LPCWSTR)RT_MENU, (LPCWSTR)MAKEINTRESOURCE(1),
+                            MAKELANGID( LANG_FRENCH, SUBLANG_DEFAULT ) );
+    ok( !rsrc, "resource found\n" );
+    ok( GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND, "wrong error %u\n", GetLastError() );
+}
+
 START_TEST(resource)
 {
     DeleteFile( filename );
@@ -283,4 +319,5 @@ START_TEST(resource)
     update_resources_version();
     check_exe( check_not_empty );
     DeleteFile( filename );
+    test_find_resource();
 }
