@@ -127,7 +127,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .sfd .ttf .man.in .man _c.c _i.c _p.c _s.c @MAINTAINER_MODE@ .svg .ico
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c @MAINTAINER_MODE@ .sfd .ttf .svg .ico
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<

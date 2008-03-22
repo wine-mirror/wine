@@ -6443,6 +6443,7 @@ test -n "$ICOTOOL" || ICOTOOL="false"
 
 if test "${enable_maintainer_mode+set}" = set
 then
+  if test "$FONTFORGE" = "false"; then wine_warnings="$wine_warnings|fontforge is missing, fonts can't be rebuilt."; fi
   if test "$RSVG" = "false"; then wine_warnings="$wine_warnings|rsvg is missing, icons can't be rebuilt."; fi
   if test "$ICOTOOL" = "false"; then wine_warnings="$wine_warnings|icotool is missing, icons can't be rebuilt."; fi
 fi
@@ -14009,11 +14010,7 @@ _ACEOF
     fi
 fi
 
-if test "$FONTFORGE" = "false"
-then
-    wine_warnings="$wine_warnings|FontForge is missing.
-Fonts will not be built. Dialog text may be invisible or unaligned."
-elif test "x$FREETYPELIBS" = "x"
+if test "x$FREETYPELIBS" = "x"
 then
     wine_warnings="$wine_warnings|FreeType development files not found.
 Fonts will not be built. Dialog text may be invisible or unaligned."

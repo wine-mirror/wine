@@ -193,6 +193,7 @@ AC_CHECK_PROGS(ICOTOOL, icotool, false)
 
 if test "${enable_maintainer_mode+set}" = set
 then
+  if test "$FONTFORGE" = "false"; then WINE_WARNING([fontforge is missing, fonts can't be rebuilt.]); fi
   if test "$RSVG" = "false"; then WINE_WARNING([rsvg is missing, icons can't be rebuilt.]); fi
   if test "$ICOTOOL" = "false"; then WINE_WARNING([icotool is missing, icons can't be rebuilt.]); fi
 fi
@@ -1002,12 +1003,8 @@ then
     fi
 fi
 
-dnl Only build the fonts dir if we have both freetype and fontforge
-if test "$FONTFORGE" = "false"
-then
-    WINE_WARNING([FontForge is missing.
-Fonts will not be built. Dialog text may be invisible or unaligned.])
-elif test "x$FREETYPELIBS" = "x"
+dnl Only build the fonts dir if we have freetype
+if test "x$FREETYPELIBS" = "x"
 then
     WINE_WARNING([FreeType development files not found.
 Fonts will not be built. Dialog text may be invisible or unaligned.])
