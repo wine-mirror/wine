@@ -1872,7 +1872,7 @@ static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
                 return FALSE;
         }
     }
-    if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+    if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP) || GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
         switch (CheckFormat) {
             case WINED3DFMT_V8U8:
                 TRACE_(d3d_caps)("[OK]\n");
@@ -2119,7 +2119,8 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
          *  and are still playable even without bump mapping
          */
         case WINED3DFMT_V8U8:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER) || GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+            if(GL_SUPPORT(NV_TEXTURE_SHADER) || GL_SUPPORT(ATI_ENVMAP_BUMPMAP) ||
+               GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
                 return TRUE;
             }
             TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
