@@ -2054,6 +2054,23 @@ static BOOL CheckSrgbWriteCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WI
     return FALSE;
 }
 
+/* Check if a format support blending in combination with pixel shaders */
+static BOOL CheckPostPixelShaderBlendingCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
+{
+    const GlPixelFormatDesc *glDesc;
+    const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
+
+    /* Fail if we weren't able to get a description of the format */
+    if(!desc || !glDesc)
+        return FALSE;
+
+    /* The flags entry of a format contains the post pixel shader blending capability */
+    if(glDesc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
+        return TRUE;
+
+    return FALSE;
+}
+
 /* Check if a texture format is supported on the given adapter */
 static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
@@ -2342,6 +2359,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     }
                 }
 
+                /* Check QUERY_POSTPIXELSHADER_BLENDING support */
+                if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
+                    if(CheckPostPixelShaderBlendingCapability(Adapter, CheckFormat)) {
+                        UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+                    } else {
+                        TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                }
+
                 /* Check QUERY_SRGBREAD support */
                 if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
                     if(CheckSrgbReadCapability(Adapter, CheckFormat)) {
@@ -2464,6 +2491,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 }
             }
 
+            /* Check QUERY_POSTPIXELSHADER_BLENDING support */
+            if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
+                if(CheckPostPixelShaderBlendingCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+
             /* Check QUERY_SRGBREAD support */
             if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
                 if(CheckSrgbReadCapability(Adapter, CheckFormat)) {
@@ -2531,6 +2568,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
                 } else {
                     TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+
+            /* Check QUERY_POSTPIXELSHADER_BLENDING support */
+            if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
+                if(CheckPostPixelShaderBlendingCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
