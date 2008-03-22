@@ -59,7 +59,9 @@ static void test_FindFirstVolume(void)
 
     handle = pFindFirstVolumeA( volume, 0 );
     ok( handle == INVALID_HANDLE_VALUE, "succeeded with short buffer\n" );
-    ok( GetLastError() == ERROR_FILENAME_EXCED_RANGE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_MORE_DATA ||  /* XP */
+        GetLastError() == ERROR_FILENAME_EXCED_RANGE,  /* Vista */
+        "wrong error %u\n", GetLastError() );
     handle = pFindFirstVolumeA( volume, 49 );
     ok( handle == INVALID_HANDLE_VALUE, "succeeded with short buffer\n" );
     ok( GetLastError() == ERROR_FILENAME_EXCED_RANGE, "wrong error %u\n", GetLastError() );
