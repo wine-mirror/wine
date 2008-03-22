@@ -541,7 +541,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     memset(&tmpsrb,0,sizeof(tmpsrb));
 
     /* Copy header */
-    memcpy(&tmpsrb.common,&(lpSRB->common),sizeof(tmpsrb.common));
+    tmpsrb.common = lpSRB->common;
 
     tmpsrb.cmd.SRB_Flags	|= 8; /* target to host */
     tmpsrb.cmd.SRB_Cmd 		= SC_EXEC_SCSI_CMD;
