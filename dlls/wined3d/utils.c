@@ -3156,3 +3156,149 @@ void *hash_table_get(hash_table_t *table, void *key)
 
     return entry ? entry->value : NULL;
 }
+
+#define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
+void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct texture_stage_op op[MAX_TEXTURES]) {
+#define ARG1 0x01
+#define ARG2 0x02
+#define ARG0 0x04
+    static const unsigned char args[WINED3DTOP_LERP + 1] = {
+        /* undefined                        */  0,
+        /* D3DTOP_DISABLE                   */  0,
+        /* D3DTOP_SELECTARG1                */  ARG1,
+        /* D3DTOP_SELECTARG2                */  ARG2,
+        /* D3DTOP_MODULATE                  */  ARG1 | ARG2,
+        /* D3DTOP_MODULATE2X                */  ARG1 | ARG2,
+        /* D3DTOP_MODULATE4X                */  ARG1 | ARG2,
+        /* D3DTOP_ADD                       */  ARG1 | ARG2,
+        /* D3DTOP_ADDSIGNED                 */  ARG1 | ARG2,
+        /* D3DTOP_ADDSIGNED2X               */  ARG1 | ARG2,
+        /* D3DTOP_SUBTRACT                  */  ARG1 | ARG2,
+        /* D3DTOP_ADDSMOOTH                 */  ARG1 | ARG2,
+        /* D3DTOP_BLENDDIFFUSEALPHA         */  ARG1 | ARG2,
+        /* D3DTOP_BLENDTEXTUREALPHA         */  ARG1 | ARG2,
+        /* D3DTOP_BLENDFACTORALPHA          */  ARG1 | ARG2,
+        /* D3DTOP_BLENDTEXTUREALPHAPM       */  ARG1 | ARG2,
+        /* D3DTOP_BLENDCURRENTALPHA         */  ARG1 | ARG2,
+        /* D3DTOP_PREMODULATE               */  ARG1 | ARG2,
+        /* D3DTOP_MODULATEALPHA_ADDCOLOR    */  ARG1 | ARG2,
+        /* D3DTOP_MODULATECOLOR_ADDALPHA    */  ARG1 | ARG2,
+        /* D3DTOP_MODULATEINVALPHA_ADDCOLOR */  ARG1 | ARG2,
+        /* D3DTOP_MODULATEINVCOLOR_ADDALPHA */  ARG1 | ARG2,
+        /* D3DTOP_BUMPENVMAP                */  ARG1 | ARG2,
+        /* D3DTOP_BUMPENVMAPLUMINANCE       */  ARG1 | ARG2,
+        /* D3DTOP_DOTPRODUCT3               */  ARG1 | ARG2,
+        /* D3DTOP_MULTIPLYADD               */  ARG1 | ARG2 | ARG0,
+        /* D3DTOP_LERP                      */  ARG1 | ARG2 | ARG0
+    };
+    unsigned int i;
+    DWORD ttff;
+
+    for(i = 0; i < GL_LIMITS(texture_stages); i++) {
+        if(stateblock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
+            op[i].cop = WINED3DTOP_DISABLE;
+            op[i].aop = WINED3DTOP_DISABLE;
+            op[i].carg0 = op[i].carg1 = op[i].carg2 = 0xffffffff;
+            op[i].aarg0 = op[i].aarg1 = op[i].aarg2 = 0xffffffff;
+            op[i].color_correction = WINED3DFMT_UNKNOWN;
+            i++;
+            break;
+        }
+        op[i].color_correction = WINED3DFMT_UNKNOWN;
+
+        op[i].cop = stateblock->textureState[i][WINED3DTSS_COLOROP];
+        op[i].aop = stateblock->textureState[i][WINED3DTSS_ALPHAOP];
+
+        op[i].carg1 = (args[op[i].cop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_COLORARG1] : 0xffffffff;
+        op[i].carg2 = (args[op[i].cop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_COLORARG2] : 0xffffffff;
+        op[i].carg0 = (args[op[i].cop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_COLORARG0] : 0xffffffff;
+
+        if(is_invalid_op(stateblock->wineD3DDevice, i, op[i].cop, op[i].carg1, op[i].carg2, op[i].carg0)) {
+            op[i].carg0 = 0xffffffff;
+            op[i].carg2 = 0xffffffff;
+            op[i].carg1 = WINED3DTA_CURRENT;
+            op[i].cop = WINED3DTOP_SELECTARG1;
+        }
+
+        op[i].aarg1 = (args[op[i].aop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG1] : 0xffffffff;
+        op[i].aarg2 = (args[op[i].aop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG2] : 0xffffffff;
+        op[i].aarg0 = (args[op[i].aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : 0xffffffff;
+
+        if(is_invalid_op(stateblock->wineD3DDevice, i, op[i].aop, op[i].aarg1, op[i].aarg2, op[i].aarg0)) {
+            op[i].aarg0 = 0xffffffff;
+            op[i].aarg2 = 0xffffffff;
+            op[i].aarg1 = WINED3DTA_CURRENT;
+            op[i].aop = WINED3DTOP_SELECTARG1;
+        } else if(i == 0 && stateblock->textures[0] &&
+                  stateblock->renderState[WINED3DRS_COLORKEYENABLE] &&
+                 (stateblock->textureDimensions[0] == GL_TEXTURE_2D ||
+                  stateblock->textureDimensions[0] == GL_TEXTURE_RECTANGLE_ARB)) {
+            IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
+
+            if(surf->CKeyFlags & WINEDDSD_CKSRCBLT &&
+               getFormatDescEntry(surf->resource.format, NULL, NULL)->alphaMask == 0x00000000) {
+
+                if(op[0].aop == WINED3DTOP_DISABLE) {
+                    op[0].aarg1 = WINED3DTA_TEXTURE;
+                    op[0].aop = WINED3DTOP_SELECTARG1;
+                }
+                else if(op[0].aop == WINED3DTOP_SELECTARG1 && op[0].aarg1 != WINED3DTA_TEXTURE) {
+                    if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
+                        op[0].aarg2 = WINED3DTA_TEXTURE;
+                        op[0].aop = WINED3DTOP_MODULATE;
+                    }
+                    else op[0].aarg1 = WINED3DTA_TEXTURE;
+                }
+                else if(op[0].aop == WINED3DTOP_SELECTARG2 && op[0].aarg2 != WINED3DTA_TEXTURE) {
+                    if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
+                        op[0].aarg1 = WINED3DTA_TEXTURE;
+                        op[0].aop = WINED3DTOP_MODULATE;
+                    }
+                    else op[0].aarg2 = WINED3DTA_TEXTURE;
+                }
+            }
+        }
+
+        if(op[i].carg1 == WINED3DTA_TEXTURE || op[i].carg2 == WINED3DTA_TEXTURE || op[i].carg0 == WINED3DTA_TEXTURE ||
+           op[i].aarg1 == WINED3DTA_TEXTURE || op[i].aarg2 == WINED3DTA_TEXTURE || op[i].aarg0 == WINED3DTA_TEXTURE) {
+            ttff = stateblock->textureState[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+            if(ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT3)) {
+                op[i].projected = proj_count3;
+            } else if(ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT4)) {
+                op[i].projected = proj_count4;
+            } else {
+                op[i].projected = proj_none;
+            }
+        } else {
+            op[i].projected = proj_none;
+        }
+    }
+
+    /* Clear unsupported stages */
+    for(; i < MAX_TEXTURES; i++) {
+        memset(&op[i], 0xff, sizeof(op[i]));
+    }
+}
+#undef GLINFO_LOCATION
+
+struct ffp_desc *find_ffp_shader(struct list *shaders, struct texture_stage_op op[MAX_TEXTURES])
+{
+    struct ffp_desc *entry;
+
+    /* TODO: Optimize this. Finding the shader can be optimized by e.g. sorting the list,
+     * or maybe consider using hashtables
+     */
+    LIST_FOR_EACH_ENTRY(entry, shaders, struct ffp_desc, entry) {
+        if(memcmp(op, entry->op, sizeof(struct texture_stage_op) * MAX_TEXTURES) == 0) {
+            TRACE("Found shader entry %p. size %d\n", entry, sizeof(struct texture_stage_op) * MAX_TEXTURES);
+            return entry;
+        }
+    }
+
+    TRACE("Shader not found\n");
+    return NULL;
+}
+
+void add_ffp_shader(struct list *shaders, struct ffp_desc *desc) {
+    list_add_head(shaders, &desc->entry);
+}

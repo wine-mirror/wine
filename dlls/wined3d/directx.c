@@ -377,6 +377,8 @@ void select_shader_mode(
         *ps_selected = SHADER_GLSL;
     } else if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
         *ps_selected = SHADER_ARB;
+    } else if (gl_info->supported[ATI_FRAGMENT_SHADER]) {
+        *ps_selected = SHADER_ATI;
     } else {
         *ps_selected = SHADER_NONE;
     }
@@ -821,6 +823,13 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              * Won't occur in any real world situation though
              */
             gl_info->supported[ATI_ENVMAP_BUMPMAP] = FALSE;
+            if(gl_info->supported[NV_REGISTER_COMBINERS]) {
+                /* Also disable ATI_FRAGMENT_SHADER if register combienrs and texture_shader2
+                 * are supported. The nv extensions provide the same functionality as the
+                 * ATI one, and a bit more(signed pixelformats)
+                 */
+                gl_info->supported[ATI_FRAGMENT_SHADER] = FALSE;
+            }
         }
         if (gl_info->supported[ARB_DRAW_BUFFERS]) {
             glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
@@ -970,6 +979,19 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              * This saves a few redundant glDisable calls
              */
             gl_info->supported[ARB_TEXTURE_RECTANGLE] = FALSE;
+        }
+        if(gl_info->supported[ATI_FRAGMENT_SHADER]) {
+            /* Disable NV_register_combiners and fragment shader if this is supported.
+             * generally the NV extensions are prefered over the ATI one, and this
+             * extension is disabled if register_combiners and texture_shader2 are both
+             * supported. So we reach this place only if we have incomplete NV dxlevel 8
+             * fragment processing support
+             */
+            gl_info->supported[NV_REGISTER_COMBINERS] = FALSE;
+            gl_info->supported[NV_REGISTER_COMBINERS2] = FALSE;
+            gl_info->supported[NV_TEXTURE_SHADER] = FALSE;
+            gl_info->supported[NV_TEXTURE_SHADER2] = FALSE;
+            gl_info->supported[NV_TEXTURE_SHADER3] = FALSE;
         }
 
     }
@@ -2647,6 +2669,9 @@ static const shader_backend_t *select_shader_backend(UINT Adapter, WINED3DDEVTYP
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
     if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) {
         ret = &glsl_shader_backend;
+    } else if (vs_selected_mode == SHADER_ARB && ps_selected_mode != SHADER_NONE &&
+              !GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        ret = &atifs_shader_backend;
     } else if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) {
         ret = &arb_program_shader_backend;
     } else {

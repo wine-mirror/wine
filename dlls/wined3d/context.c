@@ -407,7 +407,11 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + s - 1);
             checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...\n");
         }
+    } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
+        glEnable(GL_FRAGMENT_SHADER_ATI);
+        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
     }
+
     if(GL_SUPPORT(ARB_POINT_SPRITE)) {
         for(s = 0; s < GL_LIMITS(textures); s++) {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
@@ -667,6 +671,9 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
         glDisable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
+    } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
+        glDisable(GL_FRAGMENT_SHADER_ATI);
+        checkGLcall("glDisable(GL_FRAGMENT_SHADER_ATI)");
     }
 }
 
@@ -945,9 +952,14 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             break;
 
         case CTXUSAGE_CLEAR:
-            if(context->last_was_blit && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                glEnable(GL_TEXTURE_SHADER_NV);
-                checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
+            if(context->last_was_blit) {
+                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+                    glEnable(GL_TEXTURE_SHADER_NV);
+                    checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
+                } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
+                    glEnable(GL_FRAGMENT_SHADER_ATI);
+                    checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+                }
             }
 
             glEnable(GL_SCISSOR_TEST);
@@ -959,9 +971,14 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
         case CTXUSAGE_DRAWPRIM:
             /* This needs all dirty states applied */
-            if(context->last_was_blit && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                glEnable(GL_TEXTURE_SHADER_NV);
-                checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
+            if(context->last_was_blit) {
+                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+                    glEnable(GL_TEXTURE_SHADER_NV);
+                    checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
+                } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
+                    glEnable(GL_FRAGMENT_SHADER_ATI);
+                    checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+                }
             }
 
             IWineD3DDeviceImpl_FindTexUnitMap(This);

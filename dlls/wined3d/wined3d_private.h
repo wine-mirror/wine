@@ -217,7 +217,8 @@ static inline unsigned short float_32_to_16(const float *in) {
 
 #define SHADER_ARB  1
 #define SHADER_GLSL 2
-#define SHADER_NONE 3
+#define SHADER_ATI  3
+#define SHADER_NONE 4
 
 #define RTL_DISABLE   -1
 #define RTL_AUTO       0
@@ -295,6 +296,7 @@ typedef struct {
     const struct StateEntry *StateTable;
 } shader_backend_t;
 
+extern const shader_backend_t atifs_shader_backend;
 extern const shader_backend_t glsl_shader_backend;
 extern const shader_backend_t arb_program_shader_backend;
 extern const shader_backend_t none_shader_backend;
@@ -712,6 +714,35 @@ struct WineD3DRectPatch
 
 HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This, struct WineD3DRectPatch *patch);
 
+enum projection_types
+{
+    proj_none,
+    proj_count3,
+    proj_count4
+};
+
+/*****************************************************************************
+ * Fixed function pipeline replacements
+ */
+struct texture_stage_op
+{
+    WINED3DTEXTUREOP        cop, aop;
+    DWORD                   carg1, carg2, carg0;
+    DWORD                   aarg1, aarg2, aarg0;
+    WINED3DFORMAT           color_correction;
+    enum projection_types   projected;
+};
+
+struct ffp_desc
+{
+    struct texture_stage_op     op[MAX_TEXTURES];
+    struct list                 entry;
+};
+
+void gen_ffp_op(IWineD3DStateBlockImpl *stateblock,struct texture_stage_op op[MAX_TEXTURES]);
+struct ffp_desc *find_ffp_shader(struct list *shaders, struct texture_stage_op op[MAX_TEXTURES]);
+void add_ffp_shader(struct list *shaders, struct ffp_desc *desc);
+
 /*****************************************************************************
  * IWineD3D implementation structure
  */
@@ -789,9 +820,6 @@ struct IWineD3DDeviceImpl
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
     unsigned int            highest_dirty_ps_const, highest_dirty_vs_const;
-
-    /* TODO: Move this into the shader model private data */
-    struct list             fragment_shaders; /* A linked list to track fragment pipeline replacement shaders */
 
     /* Render Target Support */
     IWineD3DSurface       **render_targets;

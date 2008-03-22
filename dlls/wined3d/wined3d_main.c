@@ -93,6 +93,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        DWORD len;
        WNDCLASSA wc;
 
+       atifs_shader_backend.shader_dll_load_init();
        glsl_shader_backend.shader_dll_load_init();
        arb_program_shader_backend.shader_dll_load_init();
        none_shader_backend.shader_dll_load_init();

@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	arb_program_shader.c \
+	ati_fragment_shader.c \
 	baseshader.c \
 	basetexture.c \
 	clipper.c \
