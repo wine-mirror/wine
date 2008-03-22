@@ -91,6 +91,7 @@ static void test_LoadStringA (void)
 
         ok (len == expected, "bufsiz=%d: got %d, expected %d\n",
             bufsiz, len, expected);
+        if (len != expected) continue;
         ok (!memcmp (buf, str, len),
             "bufsiz=%d: got '%s', expected '%.*s'\n",
             bufsiz, buf, len, str);
