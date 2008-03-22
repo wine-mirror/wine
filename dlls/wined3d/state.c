@@ -3003,7 +3003,7 @@ static inline void unloadVertexData(IWineD3DStateBlockImpl *stateblock) {
  */
 static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock) {
     /* disable any attribs (this is the same for both GLSL and ARB modes) */
-    GLint maxAttribs;
+    GLint maxAttribs = 16;
     int i;
 
     /* Leave all the attribs disabled */
