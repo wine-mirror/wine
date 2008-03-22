@@ -3030,19 +3030,106 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     shader_backend = select_shader_backend(Adapter, DeviceType);
     shader_backend->shader_get_caps(DeviceType, &GLINFO_LOCATION, &shader_caps);
 
+    /* This takes care for disabling vertex shader or pixel shader caps while leaving the other one enabled.
+     * Ignore shader model capabilities if disabled in config
+     */
+    if(vs_selected_mode == SHADER_NONE) {
+        TRACE_(d3d_caps)("Vertex shader disabled in config, reporting version 0.0\n");
+        pCaps->VertexShaderVersion          = WINED3DVS_VERSION(0,0);
+        pCaps->MaxVertexShaderConst         = 0;
+    } else {
+        pCaps->VertexShaderVersion          = shader_caps.VertexShaderVersion;
+        pCaps->MaxVertexShaderConst         = shader_caps.MaxVertexShaderConst;
+    }
+
+    if(ps_selected_mode == SHADER_NONE) {
+        TRACE_(d3d_caps)("Pixel shader disabled in config, reporting version 0.0\n");
+        pCaps->PixelShaderVersion           = WINED3DPS_VERSION(0,0);
+        pCaps->PixelShader1xMaxValue        = 0.0;
+    } else {
+        pCaps->PixelShaderVersion           = shader_caps.PixelShaderVersion;
+        pCaps->PixelShader1xMaxValue        = shader_caps.PixelShader1xMaxValue;
+    }
+
     pCaps->TextureOpCaps                    = shader_caps.TextureOpCaps;
     pCaps->MaxTextureBlendStages            = shader_caps.MaxTextureBlendStages;
     pCaps->MaxSimultaneousTextures          = shader_caps.MaxSimultaneousTextures;
-    pCaps->VertexShaderVersion              = shader_caps.VertexShaderVersion;
-    pCaps->MaxVertexShaderConst             = shader_caps.MaxVertexShaderConst;
-    pCaps->PixelShaderVersion               = shader_caps.PixelShaderVersion;
-    pCaps->PixelShader1xMaxValue            = shader_caps.PixelShader1xMaxValue;
     pCaps->VS20Caps                         = shader_caps.VS20Caps;
     pCaps->MaxVShaderInstructionsExecuted   = shader_caps.MaxVShaderInstructionsExecuted;
     pCaps->MaxVertexShader30InstructionSlots= shader_caps.MaxVertexShader30InstructionSlots;
     pCaps->PS20Caps                         = shader_caps.PS20Caps;
     pCaps->MaxPShaderInstructionsExecuted   = shader_caps.MaxPShaderInstructionsExecuted;
     pCaps->MaxPixelShader30InstructionSlots = shader_caps.MaxPixelShader30InstructionSlots;
+
+    /* The following caps are shader specific, but they are things we cannot detect, or which
+     * are the same among all shader models. So to avoid code duplication set the shader version
+     * specific, but otherwise constant caps here
+     */
+    if(pCaps->VertexShaderVersion == WINED3DVS_VERSION(3,0)) {
+        /* Where possible set the caps based on OpenGL extensions and if they aren't set (in case of software rendering)
+        use the VS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum VS3.0 value. */
+        pCaps->VS20Caps.Caps                     = WINED3DVS20CAPS_PREDICATION;
+        pCaps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* VS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
+        pCaps->VS20Caps.NumTemps                 = max(32, GLINFO_LOCATION.vs_arb_max_temps);
+        pCaps->VS20Caps.StaticFlowControlDepth   = WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH ; /* level of nesting in loops / if-statements; VS 3.0 requires MAX (4) */
+
+        pCaps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs at least 65535, some cards even use 2^32-1 */
+        pCaps->MaxVertexShader30InstructionSlots = max(512, GLINFO_LOCATION.vs_arb_max_instructions);
+    } else if(pCaps->VertexShaderVersion == WINED3DVS_VERSION(2,0)) {
+        pCaps->VS20Caps.Caps                     = 0;
+        pCaps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
+        pCaps->VS20Caps.NumTemps                 = max(12, GLINFO_LOCATION.vs_arb_max_temps);
+        pCaps->VS20Caps.StaticFlowControlDepth   = 1;
+
+        pCaps->MaxVShaderInstructionsExecuted    = 65535;
+        pCaps->MaxVertexShader30InstructionSlots = 0;
+    } else { /* VS 1.x */
+        pCaps->VS20Caps.Caps                     = 0;
+        pCaps->VS20Caps.DynamicFlowControlDepth  = 0;
+        pCaps->VS20Caps.NumTemps                 = 0;
+        pCaps->VS20Caps.StaticFlowControlDepth   = 0;
+
+        pCaps->MaxVShaderInstructionsExecuted    = 0;
+        pCaps->MaxVertexShader30InstructionSlots = 0;
+    }
+
+    if(pCaps->PixelShaderVersion == WINED3DPS_VERSION(3,0)) {
+        /* Where possible set the caps based on OpenGL extensions and if they aren't set (in case of software rendering)
+        use the PS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum PS 3.0 value. */
+
+        /* Caps is more or less undocumented on MSDN but it appears to be used for PS20Caps based on results from R9600/FX5900/Geforce6800 cards from Windows */
+        pCaps->PS20Caps.Caps                     = WINED3DPS20CAPS_ARBITRARYSWIZZLE     |
+                WINED3DPS20CAPS_GRADIENTINSTRUCTIONS |
+                WINED3DPS20CAPS_PREDICATION          |
+                WINED3DPS20CAPS_NODEPENDENTREADLIMIT |
+                WINED3DPS20CAPS_NOTEXINSTRUCTIONLIMIT;
+        pCaps->PS20Caps.DynamicFlowControlDepth  = WINED3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
+        pCaps->PS20Caps.NumTemps                 = max(32, GLINFO_LOCATION.ps_arb_max_temps);
+        pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MAX_STATICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_STATICFLOWCONTROLDEPTH (4) */
+        pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS; /* PS 3.0 requires MAX_NUMINSTRUCTIONSLOTS (512) */
+
+        pCaps->MaxPShaderInstructionsExecuted    = 65535;
+        pCaps->MaxPixelShader30InstructionSlots  = max(WINED3DMIN30SHADERINSTRUCTIONS, GLINFO_LOCATION.ps_arb_max_instructions);
+    } else if(pCaps->PixelShaderVersion == WINED3DPS_VERSION(2,0)) {
+        /* Below we assume PS2.0 specs, not extended 2.0a(GeforceFX)/2.0b(Radeon R3xx) ones */
+        pCaps->PS20Caps.Caps                     = 0;
+        pCaps->PS20Caps.DynamicFlowControlDepth  = 0; /* WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
+        pCaps->PS20Caps.NumTemps                 = max(12, GLINFO_LOCATION.ps_arb_max_temps);
+        pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minimum: 1 */
+        pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS; /* Minimum number (64 ALU + 32 Texture), a GeforceFX uses 512 */
+
+        pCaps->MaxPShaderInstructionsExecuted    = 512; /* Minimum value, a GeforceFX uses 1024 */
+        pCaps->MaxPixelShader30InstructionSlots  = 0;
+    } else { /* PS 1.x */
+        pCaps->PS20Caps.Caps                     = 0;
+        pCaps->PS20Caps.DynamicFlowControlDepth  = 0;
+        pCaps->PS20Caps.NumTemps                 = 0;
+        pCaps->PS20Caps.StaticFlowControlDepth   = 0;
+        pCaps->PS20Caps.NumInstructionSlots      = 0;
+
+        pCaps->MaxPShaderInstructionsExecuted    = 0;
+        pCaps->MaxPixelShader30InstructionSlots  = 0;
+    }
 
     if(pCaps->VertexShaderVersion >= WINED3DVS_VERSION(2,0)) {
         /* OpenGL supports all the formats below, perhaps not always

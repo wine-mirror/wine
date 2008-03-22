@@ -34,6 +34,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
 #define GLINFO_LOCATION      (*gl_info)
 
@@ -2042,8 +2043,19 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
     }
 }
 
-static void shader_arb_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps) {
-    none_shader_backend.shader_get_caps(devtype, gl_info, caps);
+static void shader_arb_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {
+    /* We don't have an ARB fixed function pipeline yet, so let the none backend set its caps,
+     * then overwrite the shader specific ones
+     */
+    none_shader_backend.shader_get_caps(devtype, gl_info, pCaps);
+
+    pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
+    TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
+    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
+
+    pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
+    pCaps->PixelShader1xMaxValue = 8.0;
+    TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
 }
 
 const shader_backend_t arb_program_shader_backend = {

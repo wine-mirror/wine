@@ -33,6 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
 #define GLINFO_LOCATION      (*gl_info)
 
@@ -3525,8 +3526,57 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
     This->baseShader.prgId = shader_obj;
 }
 
-static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps) {
-    none_shader_backend.shader_get_caps(devtype, gl_info, caps);
+static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {
+    /* We don't have a GLSL fixed function pipeline yet, so let the none backend set its caps,
+     * then overwrite the shader specific ones
+     */
+    none_shader_backend.shader_get_caps(devtype, gl_info, pCaps);
+
+    /* Nvidia Geforce6/7 or Ati R4xx/R5xx cards with GLSL support, support VS 3.0 but older Nvidia/Ati
+     * models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support using
+     * vs_nv_version which is based on NV_vertex_program.
+     * For Ati cards there's no way using glsl (it abstracts the lowlevel info away) and also not
+     * using ARB_vertex_program. It is safe to assume that when a card supports pixel shader 2.0 it
+     * supports vertex shader 2.0 too and the way around. We can detect ps2.0 using the maximum number
+     * of native instructions, so use that here. For more info see the pixel shader versioning code below.
+     */
+    if((GLINFO_LOCATION.vs_nv_version == VS_VERSION_20) || (GLINFO_LOCATION.ps_arb_max_instructions <= 512))
+        pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
+    else
+        pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
+    TRACE_(d3d_caps)("Hardware vertex shader version %d.%d enabled (GLSL)\n", (pCaps->VertexShaderVersion >> 8) & 0xff, pCaps->VertexShaderVersion & 0xff);
+    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
+
+    /* Older DX9-class videocards (GeforceFX / Radeon >9500/X*00) only support pixel shader 2.0/2.0a/2.0b.
+     * In OpenGL the extensions related to GLSL abstract lowlevel GL info away which is needed
+     * to distinguish between 2.0 and 3.0 (and 2.0a/2.0b). In case of Nvidia we use their fragment
+     * program extensions. On other hardware including ATI GL_ARB_fragment_program offers the info
+     * in max native instructions. Intel and others also offer the info in this extension but they
+     * don't support GLSL (at least on Windows).
+     *
+     * PS2.0 requires at least 96 instructions, 2.0a/2.0b go up to 512. Assume that if the number
+     * of instructions is 512 or less we have to do with ps2.0 hardware.
+     * NOTE: ps3.0 hardware requires 512 or more instructions but ati and nvidia offer 'enough' (1024 vs 4096) on their most basic ps3.0 hardware.
+     */
+    if((GLINFO_LOCATION.ps_nv_version == PS_VERSION_20) || (GLINFO_LOCATION.ps_arb_max_instructions <= 512))
+        pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
+    else
+        pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
+
+    /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
+     * Direct3D minimum requirement.
+     *
+     * Both GL_ARB_fragment_program and GLSL require a "maximum representable magnitude"
+     * of colors to be 2^10, and 2^32 for other floats. Should we use 1024 here?
+     *
+     * The problem is that the refrast clamps temporary results in the shader to
+     * [-MaxValue;+MaxValue]. If the card's max value is bigger than the one we advertize here,
+     * then applications may miss the clamping behavior. On the other hand, if it is smaller,
+     * the shader will generate incorrect results too. Unfortunately, GL deliberately doesn't
+     * offer a way to query this.
+     */
+    pCaps->PixelShader1xMaxValue = 8.0;
+    TRACE_(d3d_caps)("Hardware pixel shader version %d.%d enabled (GLSL)\n", (pCaps->PixelShaderVersion >> 8) & 0xff, pCaps->PixelShaderVersion & 0xff);
 }
 
 const shader_backend_t glsl_shader_backend = {
