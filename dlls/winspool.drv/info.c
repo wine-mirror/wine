@@ -251,6 +251,13 @@ static const DWORD di_sizeof[] = {0, sizeof(DRIVER_INFO_1W), sizeof(DRIVER_INFO_
                                      sizeof(DRIVER_INFO_5W), sizeof(DRIVER_INFO_6W),
                                   0, sizeof(DRIVER_INFO_8W)};
 
+
+static const DWORD pi_sizeof[] = {0, sizeof(PRINTER_INFO_1W), sizeof(PRINTER_INFO_2W),
+                                     sizeof(PRINTER_INFO_3),  sizeof(PRINTER_INFO_4W),
+                                     sizeof(PRINTER_INFO_5W), sizeof(PRINTER_INFO_6),
+                                     sizeof(PRINTER_INFO_7W), sizeof(PRINTER_INFO_8W),
+                                     sizeof(PRINTER_INFO_9W)};
+
 /******************************************************************
  *  validate the user-supplied printing-environment [internal]
  *
@@ -1728,6 +1735,223 @@ static LPDEVMODEA DEVMODEdupWtoA(const DEVMODEW *dmW)
     dmA->dmSize = size;
     memcpy((char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize, dmW->dmDriverExtra);
     return dmA;
+}
+
+/******************************************************************
+ * convert_printerinfo_W_to_A [internal]
+ *
+ */
+static void convert_printerinfo_W_to_A(LPBYTE out, LPBYTE pPrintersW,
+                                       DWORD level, DWORD outlen, DWORD numentries)
+{
+    DWORD id = 0;
+    LPSTR ptr;
+    INT len;
+
+    TRACE("(%p, %p, %d, %u, %u)\n", out, pPrintersW, level, outlen, numentries);
+
+    len = pi_sizeof[level] * numentries;
+    ptr = (LPSTR) out + len;
+    outlen -= len;
+
+    /* copy the numbers of all PRINTER_INFO_* first */
+    memcpy(out, pPrintersW, len);
+
+    while (id < numentries) {
+        switch (level) {
+            case 1:
+                {
+                    PRINTER_INFO_1W * piW = (PRINTER_INFO_1W *) pPrintersW;
+                    PRINTER_INFO_1A * piA = (PRINTER_INFO_1A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(piW->pName));
+                    if (piW->pDescription) {
+                        piA->pDescription = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pDescription, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pName) {
+                        piA->pName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pComment) {
+                        piA->pComment = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pComment, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    break;
+                }
+
+            case 2:
+                {
+                    PRINTER_INFO_2W * piW = (PRINTER_INFO_2W *) pPrintersW;
+                    PRINTER_INFO_2A * piA = (PRINTER_INFO_2A *) out;
+                    LPDEVMODEA dmA;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(piW->pPrinterName));
+                    if (piW->pServerName) {
+                        piA->pServerName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pServerName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pPrinterName) {
+                        piA->pPrinterName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pPrinterName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pShareName) {
+                        piA->pShareName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pShareName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pPortName) {
+                        piA->pPortName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pPortName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pDriverName) {
+                        piA->pDriverName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pDriverName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pComment) {
+                        piA->pComment = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pComment, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pLocation) {
+                        piA->pLocation = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pLocation, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+
+                    dmA = DEVMODEdupWtoA(piW->pDevMode);
+                    if (dmA) {
+                        /* align DEVMODEA to a DWORD boundary */
+                        len = (4 - ( (DWORD_PTR) ptr & 3)) & 3;
+                        ptr += len;
+                        outlen -= len;
+
+                        piA->pDevMode = (LPDEVMODEA) ptr;
+                        len = dmA->dmSize + dmA->dmDriverExtra;
+                        memcpy(ptr, dmA, len);
+                        HeapFree(GetProcessHeap(), 0, dmA);
+
+                        ptr += len;
+                        outlen -= len;
+                    }
+
+                    if (piW->pSepFile) {
+                        piA->pSepFile = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pSepFile, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pPrintProcessor) {
+                        piA->pPrintProcessor = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pPrintProcessor, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pDatatype) {
+                        piA->pDatatype = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pDatatype, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pParameters) {
+                        piA->pParameters = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pParameters, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pSecurityDescriptor) {
+                        piA->pSecurityDescriptor = NULL;
+                        FIXME("pSecurityDescriptor ignored: %s\n", debugstr_w(piW->pPrinterName));
+                    }
+                    break;
+                }
+
+            case 4:
+                {
+                    PRINTER_INFO_4W * piW = (PRINTER_INFO_4W *) pPrintersW;
+                    PRINTER_INFO_4A * piA = (PRINTER_INFO_4A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(piW->pPrinterName));
+
+                    if (piW->pPrinterName) {
+                        piA->pPrinterName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pPrinterName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pServerName) {
+                        piA->pServerName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pServerName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    break;
+                }
+
+            case 5:
+                {
+                    PRINTER_INFO_5W * piW = (PRINTER_INFO_5W *) pPrintersW;
+                    PRINTER_INFO_5A * piA = (PRINTER_INFO_5A *) out;
+
+                    TRACE("(%u) #%u: %s\n", level, id, debugstr_w(piW->pPrinterName));
+
+                    if (piW->pPrinterName) {
+                        piA->pPrinterName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pPrinterName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    if (piW->pPortName) {
+                        piA->pPortName = ptr;
+                        len = WideCharToMultiByte(CP_ACP, 0, piW->pPortName, -1,
+                                                  ptr, outlen, NULL, NULL);
+                        ptr += len;
+                        outlen -= len;
+                    }
+                    break;
+                }
+
+            default:
+                FIXME("for level %u\n", level);
+        }
+        pPrintersW += pi_sizeof[level];
+        out += pi_sizeof[level];
+        id++;
+    }
 }
 
 /***********************************************************
@@ -4485,23 +4709,35 @@ BOOL  WINAPI EnumPrintersW(
 }
 
 /******************************************************************
- *              EnumPrintersA        [WINSPOOL.@]
+ * EnumPrintersA    [WINSPOOL.@]
+ *
+ * See EnumPrintersW
  *
  */
-BOOL WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
-			  DWORD dwLevel, LPBYTE lpbPrinters,
-			  DWORD cbBuf, LPDWORD lpdwNeeded,
-			  LPDWORD lpdwReturned)
+BOOL WINAPI EnumPrintersA(DWORD flags, LPSTR pName, DWORD level, LPBYTE pPrinters,
+                          DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    BOOL ret, unicode = FALSE;
-    UNICODE_STRING lpszNameW;
-    PWSTR pwstrNameW;
+    BOOL ret;
+    UNICODE_STRING pNameU;
+    LPWSTR pNameW;
+    LPBYTE pPrintersW;
 
-    pwstrNameW = asciitounicode(&lpszNameW,lpszName);
-    if(!cbBuf) unicode = TRUE; /* return a buffer that's big enough for the unicode version */
-    ret = WINSPOOL_EnumPrinters(dwType, pwstrNameW, dwLevel, lpbPrinters, cbBuf,
-				lpdwNeeded, lpdwReturned, unicode);
-    RtlFreeUnicodeString(&lpszNameW);
+    TRACE("(0x%x, %s, %u, %p, %d, %p, %p)\n", flags, debugstr_a(pName), level,
+                                              pPrinters, cbBuf, pcbNeeded, pcReturned);
+
+    pNameW = asciitounicode(&pNameU, pName);
+
+    /* Request a buffer with a size, that is big enough for EnumPrintersW.
+       MS Office need this */
+    pPrintersW = (pPrinters && cbBuf) ? HeapAlloc(GetProcessHeap(), 0, cbBuf) : NULL;
+
+    ret = EnumPrintersW(flags, pNameW, level, pPrintersW, cbBuf, pcbNeeded, pcReturned);
+
+    RtlFreeUnicodeString(&pNameU);
+    if (ret) {
+        convert_printerinfo_W_to_A(pPrinters, pPrintersW, level, *pcbNeeded, *pcReturned);
+    }
+    HeapFree(GetProcessHeap(), 0, pPrintersW);
     return ret;
 }
 
