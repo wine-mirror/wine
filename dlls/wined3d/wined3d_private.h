@@ -291,6 +291,7 @@ typedef struct {
     void (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
+    void (*shader_dll_load_init)(void);
     const struct StateEntry *StateTable;
 } shader_backend_t;
 
@@ -788,6 +789,9 @@ struct IWineD3DDeviceImpl
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
     unsigned int            highest_dirty_ps_const, highest_dirty_vs_const;
+
+    /* TODO: Move this into the shader model private data */
+    struct list             fragment_shaders; /* A linked list to track fragment pipeline replacement shaders */
 
     /* Render Target Support */
     IWineD3DSurface       **render_targets;

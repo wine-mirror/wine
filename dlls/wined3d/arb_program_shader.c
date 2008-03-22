@@ -2058,6 +2058,9 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info
     TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
 }
 
+static void shader_arb_load_init(void) {
+}
+
 const shader_backend_t arb_program_shader_backend = {
     &shader_arb_select,
     &shader_arb_select_depth_blt,
@@ -2072,5 +2075,6 @@ const shader_backend_t arb_program_shader_backend = {
     &shader_arb_generate_pshader,
     &shader_arb_generate_vshader,
     &shader_arb_get_caps,
+    &shader_arb_load_init,
     FFPStateTable
 };

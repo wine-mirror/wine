@@ -93,6 +93,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        DWORD len;
        WNDCLASSA wc;
 
+       glsl_shader_backend.shader_dll_load_init();
+       arb_program_shader_backend.shader_dll_load_init();
+       none_shader_backend.shader_dll_load_init();
+
        /* We need our own window class for a fake window which we use to retrieve GL capabilities */
        /* We might need CS_OWNDC in the future if we notice strange things on Windows.
         * Various articles/posts about OpenGL problems on Windows recommend this. */
