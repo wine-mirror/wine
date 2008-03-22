@@ -99,8 +99,7 @@ static BOOL SOFTPUB_GetFileSubject(CRYPT_PROVIDER_DATA *data)
     }
     else
     {
-        memcpy(&data->u.pPDSip->gSubject,
-         data->pWintrustData->u.pFile->pgKnownSubject, sizeof(GUID));
+        data->u.pPDSip->gSubject = *data->pWintrustData->u.pFile->pgKnownSubject;
         ret = TRUE;
     }
     TRACE("returning %d\n", ret);
@@ -284,8 +283,7 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
                  * add a cert to it
                  */
                 if (data->pWintrustData->u.pCert->psftVerifyAsOf)
-                    memcpy(&data->sftSystemTime, &signer.sftVerifyAsOf,
-                     sizeof(FILETIME));
+                    data->sftSystemTime = signer.sftVerifyAsOf;
                 else
                 {
                     SYSTEMTIME sysTime;
@@ -394,7 +392,7 @@ static BOOL WINTRUST_SaveSigner(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
         CRYPT_PROVIDER_SGNR sgnr = { sizeof(sgnr), { 0 } };
 
         sgnr.psSigner = signerInfo;
-        memcpy(&sgnr.sftVerifyAsOf, &data->sftSystemTime, sizeof(FILETIME));
+        sgnr.sftVerifyAsOf = data->sftSystemTime;
         ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, signerIdx, &sgnr);
     }
     else
@@ -581,8 +579,7 @@ static void WINTRUST_CreateChainPolicyCreateInfo(
 {
     chainPara->cbSize = sizeof(CERT_CHAIN_PARA);
     if (data->pRequestUsage)
-        memcpy(&chainPara->RequestedUsage, data->pRequestUsage,
-         sizeof(CERT_USAGE_MATCH));
+        chainPara->RequestedUsage = *data->pRequestUsage;
     info->u.cbSize = sizeof(WTD_GENERIC_CHAIN_POLICY_CREATE_INFO);
     info->hChainEngine = NULL;
     info->pChainPara = chainPara;
