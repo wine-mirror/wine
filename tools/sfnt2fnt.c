@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,6 +114,18 @@ struct fontinfo
     FNT_HEADER hdr;
     CHAR_TABLE_ENTRY dfCharTable[258];
     BYTE *data;
+};
+
+static const BYTE MZ_hdr[] =
+{
+    'M',  'Z',  0x0d, 0x01, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00,
+    0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+    0x0e, 0x1f, 0xba, 0x0e, 0x00, 0xb4, 0x09, 0xcd, 0x21, 0xb8, 0x01, 0x4c, 0xcd, 0x21, 'T',  'h',
+    'i',  's',  ' ',  'P',  'r',  'o',  'g',  'r',  'a',  'm',  ' ',  'c',  'a',  'n',  'n',  'o',
+    't',  ' ',  'b',  'e',  ' ',  'r',  'u',  'n',  ' ',  'i',  'n',  ' ',  'D',  'O',  'S',  ' ',
+    'm',  'o',  'd',  'e',  0x0d, 0x0a, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
 static const char *output_name;
@@ -502,25 +515,25 @@ static void write_fontinfo( const struct fontinfo *info, FILE *fp )
 
 int main(int argc, char **argv)
 {
-    int ppem, enc;
-    int dpi, avg_width;
-    unsigned int def_char;
-    FILE *fp;
-    char output[256];
-    char name[256];
-    char *cp;
-    struct fontinfo *info;
+    int i, j;
+    FILE *ofp;
+    short align, num_files;
+    int resource_table_len, non_resident_name_len, resident_name_len;
+    unsigned short resource_table_off, resident_name_off, module_ref_off, non_resident_name_off, fontdir_off, font_off;
+    char resident_name[200];
+    int fontdir_len = 2;
+    char non_resident_name[200];
+    unsigned short first_res = 0x0050, pad, res;
+    IMAGE_OS2_HEADER NE_hdr;
+    NE_TYPEINFO rc_type;
+    NE_NAMEINFO rc_name;
+    struct fontinfo **info;
+    char *p;
 
-    if(argc != 7) {
+    if(argc <= 3) {
         usage(argv);
-        exit(0);
+        exit(1);
     }
-
-    ppem = atoi(argv[2]);
-    enc = atoi(argv[3]);
-    dpi = atoi(argv[4]);
-    def_char = atoi(argv[5]);
-    avg_width = atoi(argv[6]);
 
     if(FT_Init_FreeType(&ft_library))
         error("ft init failure\n");
@@ -528,17 +541,68 @@ int main(int argc, char **argv)
     FT_Version.major=FT_Version.minor=FT_Version.patch=-1;
     FT_Library_Version(ft_library,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
 
-    if (!(info = fill_fontinfo( argv[1], ppem, enc, dpi, def_char, avg_width ))) exit(1);
-
-    strcpy(name, get_face_name(info));
-    /* FIXME: should add a -o option instead */
-    for(cp = name; *cp; cp++)
+    num_files = argc - 3;
+    info = malloc( num_files * sizeof(*info) );
+    for (i = 0; i < num_files; i++)
     {
-        if(*cp == ' ') *cp = '_';
-        else if (*cp >= 'A' && *cp <= 'Z') *cp += 'a' - 'A';
+        int ppem, enc, dpi, def_char, avg_width;
+        const char *name;
+
+        if (sscanf( argv[i+3], "%d,%d,%d,%d,%d", &ppem, &enc, &dpi, &def_char, &avg_width ) != 5)
+        {
+            usage(argv);
+            exit(1);
+        }
+        if (!(info[i] = fill_fontinfo( argv[1], ppem, enc, dpi, def_char, avg_width ))) exit(1);
+
+        name = get_face_name( info[i] );
+        fontdir_len += 0x74 + strlen(name) + 1;
+        if(i == 0) {
+            sprintf(non_resident_name, "FONTRES 100,%d,%d : %s %d",
+                    info[i]->hdr.fi.dfVertRes, info[i]->hdr.fi.dfHorizRes,
+                    name, info[i]->hdr.fi.dfPoints );
+            strcpy(resident_name, name);
+        } else {
+            sprintf(non_resident_name + strlen(non_resident_name), ",%d", info[i]->hdr.fi.dfPoints );
+        }
     }
 
-    sprintf(output, "%s-%d-%d-%d.fnt", name, enc, dpi, ppem);
+    if(info[0]->hdr.fi.dfVertRes <= 108)
+        strcat(non_resident_name, " (VGA res)");
+    else
+        strcat(non_resident_name, " (8514 res)");
+    non_resident_name_len = strlen(non_resident_name) + 4;
+
+    /* shift count + fontdir entry + num_files of font + nul type + \007FONTDIR */
+    resource_table_len = sizeof(align) + sizeof("FONTDIR") +
+                         sizeof(NE_TYPEINFO) + sizeof(NE_NAMEINFO) +
+                         sizeof(NE_TYPEINFO) + sizeof(NE_NAMEINFO) * num_files +
+                         sizeof(NE_TYPEINFO);
+    resource_table_off = sizeof(NE_hdr);
+    resident_name_off = resource_table_off + resource_table_len;
+    resident_name_len = strlen(resident_name) + 4;
+    module_ref_off = resident_name_off + resident_name_len;
+    non_resident_name_off = sizeof(MZ_hdr) + module_ref_off + sizeof(align);
+
+    memset(&NE_hdr, 0, sizeof(NE_hdr));
+    NE_hdr.ne_magic = 0x454e;
+    NE_hdr.ne_ver = 5;
+    NE_hdr.ne_rev = 1;
+    NE_hdr.ne_flags = NE_FFLAGS_LIBMODULE | NE_FFLAGS_GUI;
+    NE_hdr.ne_cbnrestab = non_resident_name_len;
+    NE_hdr.ne_segtab = sizeof(NE_hdr);
+    NE_hdr.ne_rsrctab = sizeof(NE_hdr);
+    NE_hdr.ne_restab = resident_name_off;
+    NE_hdr.ne_modtab = module_ref_off;
+    NE_hdr.ne_imptab = module_ref_off;
+    NE_hdr.ne_enttab = NE_hdr.ne_modtab;
+    NE_hdr.ne_nrestab = non_resident_name_off;
+    NE_hdr.ne_align = 4;
+    NE_hdr.ne_exetyp = NE_OSFLAGS_WINDOWS;
+    NE_hdr.ne_expver = 0x400;
+
+    fontdir_off = (non_resident_name_off + non_resident_name_len + 15) & ~0xf;
+    font_off = (fontdir_off + fontdir_len + 15) & ~0x0f;
 
     atexit( cleanup );
     signal( SIGTERM, exit_on_signal );
@@ -547,14 +611,120 @@ int main(int argc, char **argv)
     signal( SIGHUP, exit_on_signal );
 #endif
 
-    if (!(fp = fopen(output, "w")))
+    /* check for .fnt extension on output file (FIXME: should be a cmdline option instead) */
+    if ((p = strrchr( argv[2], '.' )) && !strcmp( p, ".fnt" ))
     {
-        perror( output );
+        if (num_files > 1) error( ".fnt generation mode can only contain one font\n" );
+        output_name = argv[2];
+        if (!(ofp = fopen(output_name, "wb")))
+        {
+            perror( output_name );
+            exit(1);
+        }
+        write_fontinfo( info[0], ofp );
+        fclose( ofp );
+        output_name = NULL;
+        exit(0);
+    }
+
+    output_name = argv[2];
+    if (!(ofp = fopen(output_name, "wb")))
+    {
+        perror( output_name );
         exit(1);
     }
-    output_name = output;
-    write_fontinfo( info, fp );
-    fclose(fp);
+
+    fwrite(MZ_hdr, sizeof(MZ_hdr), 1, ofp);
+    fwrite(&NE_hdr, sizeof(NE_hdr), 1, ofp);
+
+    align = 4;
+    fwrite(&align, sizeof(align), 1, ofp);
+
+    rc_type.type_id = NE_RSCTYPE_FONTDIR;
+    rc_type.count = 1;
+    rc_type.resloader = 0;
+    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+
+    rc_name.offset = fontdir_off >> 4;
+    rc_name.length = (fontdir_len + 15) >> 4;
+    rc_name.flags = NE_SEGFLAGS_MOVEABLE | NE_SEGFLAGS_PRELOAD;
+    rc_name.id = resident_name_off - sizeof("FONTDIR") - NE_hdr.ne_rsrctab;
+    rc_name.handle = 0;
+    rc_name.usage = 0;
+    fwrite(&rc_name, sizeof(rc_name), 1, ofp);
+
+    rc_type.type_id = NE_RSCTYPE_FONT;
+    rc_type.count = num_files;
+    rc_type.resloader = 0;
+    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+
+    for(res = first_res | 0x8000, i = 0; i < num_files; i++, res++) {
+        int len = (info[i]->hdr.dfSize + 15) & ~0xf;
+
+        rc_name.offset = font_off >> 4;
+        rc_name.length = len >> 4;
+        rc_name.flags = NE_SEGFLAGS_MOVEABLE | NE_SEGFLAGS_SHAREABLE | NE_SEGFLAGS_DISCARDABLE;
+        rc_name.id = res;
+        rc_name.handle = 0;
+        rc_name.usage = 0;
+        fwrite(&rc_name, sizeof(rc_name), 1, ofp);
+
+        font_off += len;
+    }
+
+    /* empty type info */
+    memset(&rc_type, 0, sizeof(rc_type));
+    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+
+    fputc(strlen("FONTDIR"), ofp);
+    fwrite("FONTDIR", strlen("FONTDIR"), 1, ofp);
+    fputc(strlen(resident_name), ofp);
+    fwrite(resident_name, strlen(resident_name), 1, ofp);
+
+    fputc(0x00, ofp);    fputc(0x00, ofp);
+    fputc(0x00, ofp);
+    fputc(0x00, ofp);    fputc(0x00, ofp);
+
+    fputc(strlen(non_resident_name), ofp);
+    fwrite(non_resident_name, strlen(non_resident_name), 1, ofp);
+    fputc(0x00, ofp); /* terminator */
+
+    /* empty ne_modtab and ne_imptab */
+    fputc(0x00, ofp);
+    fputc(0x00, ofp);
+
+    pad = ftell(ofp) & 0xf;
+    if(pad != 0)
+        pad = 0x10 - pad;
+    for(i = 0; i < pad; i++)
+        fputc(0x00, ofp);
+
+    /* FONTDIR resource */
+    fwrite(&num_files, sizeof(num_files), 1, ofp);
+
+    for(res = first_res, i = 0; i < num_files; i++, res++) {
+        const char *name = get_face_name( info[i] );
+        fwrite(&res, sizeof(res), 1, ofp);
+        fwrite(&info[i]->hdr, FIELD_OFFSET(FNT_HEADER,fi.dfBitsOffset), 1, ofp);
+        fputc(0x00, ofp);
+        fwrite(name, strlen(name) + 1, 1, ofp);
+    }
+
+    pad = ftell(ofp) & 0xf;
+    if(pad != 0)
+        pad = 0x10 - pad;
+    for(i = 0; i < pad; i++)
+        fputc(0x00, ofp);
+
+    for(res = first_res, i = 0; i < num_files; i++, res++) {
+        write_fontinfo( info[i], ofp );
+        pad = info[i]->hdr.dfSize & 0xf;
+        if(pad != 0)
+            pad = 0x10 - pad;
+        for(j = 0; j < pad; j++)
+            fputc(0x00, ofp);
+    }
+    fclose(ofp);
     output_name = NULL;
     exit(0);
 }
