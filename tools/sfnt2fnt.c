@@ -51,6 +51,7 @@ typedef struct
     WORD dfVersion;
     DWORD dfSize;
     char dfCopyright[60];
+    FONTINFO16 fi;
 } FNT_HEADER;
 
 typedef struct {
@@ -107,7 +108,16 @@ static FT_Version_t FT_Version;
 
 #include "poppack.h"
 
+struct fontinfo
+{
+    FNT_HEADER hdr;
+    CHAR_TABLE_ENTRY dfCharTable[258];
+    BYTE *data;
+};
+
 static const char *output_name;
+
+static FT_Library ft_library;
 
 static void usage(char **argv)
 {
@@ -140,6 +150,11 @@ static void error(const char *s, ...)
     vfprintf(stderr, s, ap);
     va_end(ap);
     exit(1);
+}
+
+static const char *get_face_name( const struct fontinfo *info )
+{
+    return (const char *)info->data + info->hdr.fi.dfFace - info->hdr.fi.dfBitsOffset;
 }
 
 static int lookup_charset(int enc)
@@ -234,14 +249,13 @@ static FT_Error load_sfnt_table(FT_Face ft_face, FT_ULong table, FT_Long offset,
     return err;
 }
 
-static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned char def_char, int avg_width)
+static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc, int dpi,
+                                       unsigned char def_char, int avg_width )
 {
-    int ascent = 0, il, el, ppem, descent = 0, width_bytes = 0, space_size, max_width = 0;
-    FNT_HEADER hdr;
-    FONTINFO16 fi;
+    FT_Face face;
+    int ascent = 0, il, el, descent = 0, width_bytes = 0, space_size, max_width = 0;
     BYTE left_byte, right_byte, byte;
     DWORD start;
-    CHAR_TABLE_ENTRY *dfCharTable;
     int i, x, y, x_off, x_end, first_char;
     FT_UInt gi;
     int num_names;
@@ -252,6 +266,11 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     eblcHeader_t *eblc;
     bitmapSizeTable_t *size_table;
     int num_sizes;
+    struct fontinfo *info;
+    size_t data_pos;
+
+    if (FT_New_Face(ft_library, face_name, 0, &face)) error( "Cannot open face %s\n", face_name );
+    if (FT_Set_Pixel_Sizes(face, ppem, ppem)) error( "cannot set face size to %u\n", ppem );
 
     cptable = wine_cp_get_table(enc);
     if(!cptable)
@@ -264,7 +283,7 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
             error("Can't find codepage 1252\n");
     }
 
-    ppem = face->size->metrics.y_ppem;
+    assert( face->size->metrics.y_ppem == ppem );
 
     needed = 0;
     if (load_sfnt_table(face, TTAG_EBLC, 0, NULL, &needed))
@@ -303,7 +322,7 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
         descent = ppem - ascent;
     }
 
-    start = sizeof(FNT_HEADER) + sizeof(FONTINFO16);
+    start = sizeof(FNT_HEADER);
 
     if(FT_Load_Char(face, 'M', FT_LOAD_DEFAULT))
         error("Can't find M\n");
@@ -323,22 +342,20 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
         first_char = 32; /* FT_Get_Next_Char for some reason returns too high
                             number in this case */
 
-    dfCharTable = malloc((255 + 3) * sizeof(*dfCharTable));
-    memset(dfCharTable, 0, (255 + 3) * sizeof(*dfCharTable));
+    info = calloc( 1, sizeof(*info) );
 
-    memset(&fi, 0, sizeof(fi));
-    fi.dfFirstChar = first_char;
-    fi.dfLastChar = 0xff;
-    start += ((unsigned char)fi.dfLastChar - (unsigned char)fi.dfFirstChar + 3 ) * sizeof(*dfCharTable);
+    info->hdr.fi.dfFirstChar = first_char;
+    info->hdr.fi.dfLastChar = 0xff;
+    start += ((unsigned char)info->hdr.fi.dfLastChar - (unsigned char)info->hdr.fi.dfFirstChar + 3 ) * sizeof(*info->dfCharTable);
 
     num_names = FT_Get_Sfnt_Name_Count(face);
     for(i = 0; i <num_names; i++) {
         FT_Get_Sfnt_Name(face, i, &sfntname);
         if(sfntname.platform_id == 1 && sfntname.encoding_id == 0 &&
            sfntname.language_id == 0 && sfntname.name_id == 0) {
-            size_t len = min( sfntname.string_len, sizeof(hdr.dfCopyright)-1 );
-            memcpy(hdr.dfCopyright, sfntname.string, len);
-            hdr.dfCopyright[len] = 0;
+            size_t len = min( sfntname.string_len, sizeof(info->hdr.dfCopyright)-1 );
+            memcpy(info->hdr.dfCopyright, sfntname.string, len);
+            info->hdr.dfCopyright[len] = 0;
         }
     }
 
@@ -347,104 +364,104 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
         int c = get_char(cptable, enc, i);
         gi = FT_Get_Char_Index(face, c);
         if(gi == 0)
-            fprintf(stderr, "Missing glyph for char %04x\n", cptable->sbcs.cp2uni[i]);
+            fprintf(stderr, "warning: %s %u: missing glyph for char %04x\n",
+                    face->family_name, ppem, cptable->sbcs.cp2uni[i]);
         if(FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
             fprintf(stderr, "error loading char %d - bad news!\n", i);
             continue;
         }
-        dfCharTable[i].width = face->glyph->metrics.horiAdvance >> 6;
-        dfCharTable[i].offset = start + (width_bytes * ppem);
+        info->dfCharTable[i].width = face->glyph->metrics.horiAdvance >> 6;
+        info->dfCharTable[i].offset = start + (width_bytes * ppem);
         width_bytes += ((face->glyph->metrics.horiAdvance >> 6) + 7) >> 3;
         if(max_width < (face->glyph->metrics.horiAdvance >> 6))
             max_width = face->glyph->metrics.horiAdvance >> 6;
     }
     /* space */
     space_size = (ppem + 3) / 4;
-    dfCharTable[i].width = space_size;
-    dfCharTable[i].offset = start + (width_bytes * ppem);
+    info->dfCharTable[i].width = space_size;
+    info->dfCharTable[i].offset = start + (width_bytes * ppem);
     width_bytes += (space_size + 7) >> 3;
     /* sentinel */
-    dfCharTable[++i].width = 0;
-    dfCharTable[i].offset = start + (width_bytes * ppem);
+    info->dfCharTable[++i].width = 0;
+    info->dfCharTable[i].offset = start + (width_bytes * ppem);
 
-    fi.dfType = 0;
-    fi.dfPoints = ((ppem - il) * 72 + dpi/2) / dpi;
-    fi.dfVertRes = dpi;
-    fi.dfHorizRes = dpi;
-    fi.dfAscent = ascent;
-    fi.dfInternalLeading = il;
-    fi.dfExternalLeading = el;
-    fi.dfItalic = (face->style_flags & FT_STYLE_FLAG_ITALIC) ? 1 : 0;
-    fi.dfUnderline = 0;
-    fi.dfStrikeOut = 0;
-    fi.dfWeight = os2->usWeightClass;
-    fi.dfCharSet = lookup_charset(enc);
-    fi.dfPixWidth = (face->face_flags & FT_FACE_FLAG_FIXED_WIDTH) ?
-        avg_width : 0;
-    fi.dfPixHeight = ppem;
-    fi.dfPitchAndFamily = FT_IS_FIXED_WIDTH(face) ? 0 : TMPF_FIXED_PITCH;
+    info->hdr.fi.dfType = 0;
+    info->hdr.fi.dfPoints = ((ppem - il) * 72 + dpi/2) / dpi;
+    info->hdr.fi.dfVertRes = dpi;
+    info->hdr.fi.dfHorizRes = dpi;
+    info->hdr.fi.dfAscent = ascent;
+    info->hdr.fi.dfInternalLeading = il;
+    info->hdr.fi.dfExternalLeading = el;
+    info->hdr.fi.dfItalic = (face->style_flags & FT_STYLE_FLAG_ITALIC) ? 1 : 0;
+    info->hdr.fi.dfUnderline = 0;
+    info->hdr.fi.dfStrikeOut = 0;
+    info->hdr.fi.dfWeight = os2->usWeightClass;
+    info->hdr.fi.dfCharSet = lookup_charset(enc);
+    info->hdr.fi.dfPixWidth = (face->face_flags & FT_FACE_FLAG_FIXED_WIDTH) ? avg_width : 0;
+    info->hdr.fi.dfPixHeight = ppem;
+    info->hdr.fi.dfPitchAndFamily = FT_IS_FIXED_WIDTH(face) ? 0 : TMPF_FIXED_PITCH;
     switch(os2->panose[PAN_FAMILYTYPE_INDEX]) {
     case PAN_FAMILY_SCRIPT:
-        fi.dfPitchAndFamily |= FF_SCRIPT;
+        info->hdr.fi.dfPitchAndFamily |= FF_SCRIPT;
 	break;
     case PAN_FAMILY_DECORATIVE:
     case PAN_FAMILY_PICTORIAL:
-        fi.dfPitchAndFamily |= FF_DECORATIVE;
+        info->hdr.fi.dfPitchAndFamily |= FF_DECORATIVE;
 	break;
     case PAN_FAMILY_TEXT_DISPLAY:
-        if(fi.dfPitchAndFamily == 0) /* fixed */
-	    fi.dfPitchAndFamily = FF_MODERN;
+        if(info->hdr.fi.dfPitchAndFamily == 0) /* fixed */
+	    info->hdr.fi.dfPitchAndFamily = FF_MODERN;
 	else {
 	    switch(os2->panose[PAN_SERIFSTYLE_INDEX]) {
 	    case PAN_SERIF_NORMAL_SANS:
 	    case PAN_SERIF_OBTUSE_SANS:
 	    case PAN_SERIF_PERP_SANS:
-	        fi.dfPitchAndFamily |= FF_SWISS;
+	        info->hdr.fi.dfPitchAndFamily |= FF_SWISS;
 		break;
 	    default:
-	        fi.dfPitchAndFamily |= FF_ROMAN;
+	        info->hdr.fi.dfPitchAndFamily |= FF_ROMAN;
 	    }
 	}
 	break;
     default:
-        fi.dfPitchAndFamily |= FF_DONTCARE;
+        info->hdr.fi.dfPitchAndFamily |= FF_DONTCARE;
     }
 
-    fi.dfAvgWidth = avg_width;
-    fi.dfMaxWidth = max_width;
-    fi.dfDefaultChar = def_char - fi.dfFirstChar;
-    fi.dfBreakChar = ' ' - fi.dfFirstChar;
-    fi.dfWidthBytes = (width_bytes + 1) & ~1;
+    info->hdr.fi.dfAvgWidth = avg_width;
+    info->hdr.fi.dfMaxWidth = max_width;
+    info->hdr.fi.dfDefaultChar = def_char - info->hdr.fi.dfFirstChar;
+    info->hdr.fi.dfBreakChar = ' ' - info->hdr.fi.dfFirstChar;
+    info->hdr.fi.dfWidthBytes = (width_bytes + 1) & ~1;
 
-    fi.dfFace = start + fi.dfWidthBytes * ppem;
-    fi.dfBitsOffset = start;
-    fi.dfFlags = 0x10; /* DFF_1COLOR */
-    fi.dfFlags |= FT_IS_FIXED_WIDTH(face) ? 1 : 2; /* DFF_FIXED : DFF_PROPORTIONAL */
+    info->hdr.fi.dfFace = start + info->hdr.fi.dfWidthBytes * ppem;
+    info->hdr.fi.dfBitsOffset = start;
+    info->hdr.fi.dfFlags = 0x10; /* DFF_1COLOR */
+    info->hdr.fi.dfFlags |= FT_IS_FIXED_WIDTH(face) ? 1 : 2; /* DFF_FIXED : DFF_PROPORTIONAL */
 
-    hdr.dfVersion = 0x300;
-    hdr.dfSize = start + fi.dfWidthBytes * ppem + strlen(face->family_name) + 1;
-    fwrite(&hdr, sizeof(hdr), 1, fp);
-    fwrite(&fi, sizeof(fi), 1, fp);
-    fwrite(dfCharTable + fi.dfFirstChar, sizeof(*dfCharTable), ((unsigned char)fi.dfLastChar - (unsigned char)fi.dfFirstChar) + 3, fp);
+    info->hdr.dfVersion = 0x300;
+    info->hdr.dfSize = start + info->hdr.fi.dfWidthBytes * ppem + strlen(face->family_name) + 1;
+
+    info->data = calloc( info->hdr.dfSize - start, 1 );
+    data_pos = 0;
 
     for(i = first_char; i < 0x100; i++) {
         int c = get_char(cptable, enc, i);
         if(FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
             continue;
         }
-        assert(dfCharTable[i].width == face->glyph->metrics.horiAdvance >> 6);
+        assert(info->dfCharTable[i].width == face->glyph->metrics.horiAdvance >> 6);
 
-        for(x = 0; x < ((dfCharTable[i].width + 7) / 8); x++) {
+        for(x = 0; x < ((info->dfCharTable[i].width + 7) / 8); x++) {
             for(y = 0; y < ppem; y++) {
                 if(y < ascent - face->glyph->bitmap_top ||
                    y >=  face->glyph->bitmap.rows + ascent - face->glyph->bitmap_top) {
-                    fputc('\0', fp);
+                    info->data[data_pos++] = 0;
                     continue;
                 }
                 x_off = face->glyph->bitmap_left / 8;
                 x_end = (face->glyph->bitmap_left + face->glyph->bitmap.width - 1) / 8;
                 if(x < x_off || x > x_end) {
-                    fputc('\0', fp);
+                    info->data[data_pos++] = 0;
                     continue;
                 }
                 if(x == x_off)
@@ -460,36 +477,40 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
 
                 byte = (left_byte << (8 - (face->glyph->bitmap_left & 7))) & 0xff;
                 byte |= ((right_byte >> (face->glyph->bitmap_left & 7)) & 0xff);
-                fputc(byte, fp);
+                info->data[data_pos++] = byte;
             }
         }
     }
-    for(x = 0; x < (space_size + 7) / 8; x++) {
-        for(y = 0; y < ppem; y++)
-            fputc('\0', fp);
-    }
+    data_pos += ((space_size + 7) / 8) * ppem;
+    if (width_bytes & 1) data_pos += ppem;
 
-    if(width_bytes & 1) {
-        for(y = 0; y < ppem; y++)
-            fputc('\0', fp);
-    }
-    fprintf(fp, "%s", face->family_name);
-    fputc('\0', fp);
+    memcpy( info->data + data_pos, face->family_name, strlen( face->family_name ));
+    data_pos += strlen( face->family_name ) + 1;
+    assert( start + data_pos == info->hdr.dfSize );
 
+    FT_Done_Face( face );
+    return info;
 }
 
+static void write_fontinfo( const struct fontinfo *info, FILE *fp )
+{
+    fwrite( &info->hdr, sizeof(info->hdr), 1, fp );
+    fwrite( info->dfCharTable + info->hdr.fi.dfFirstChar, sizeof(*info->dfCharTable),
+            ((unsigned char)info->hdr.fi.dfLastChar - (unsigned char)info->hdr.fi.dfFirstChar) + 3, fp );
+    fwrite( info->data, info->hdr.dfSize - info->hdr.fi.dfBitsOffset, 1, fp );
+}
 
 int main(int argc, char **argv)
 {
     int ppem, enc;
-    FT_Face face;
-    FT_Library lib;
     int dpi, avg_width;
     unsigned int def_char;
     FILE *fp;
     char output[256];
     char name[256];
     char *cp;
+    struct fontinfo *info;
+
     if(argc != 7) {
         usage(argv);
         exit(0);
@@ -501,25 +522,15 @@ int main(int argc, char **argv)
     def_char = atoi(argv[5]);
     avg_width = atoi(argv[6]);
 
-    if(FT_Init_FreeType(&lib))
+    if(FT_Init_FreeType(&ft_library))
         error("ft init failure\n");
 
     FT_Version.major=FT_Version.minor=FT_Version.patch=-1;
-    FT_Library_Version(lib,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
+    FT_Library_Version(ft_library,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
 
-    if(FT_New_Face(lib, argv[1], 0, &face)) {
-        fprintf(stderr, "Can't open face\n");
-        usage(argv);
-        exit(1);
-    }
+    if (!(info = fill_fontinfo( argv[1], ppem, enc, dpi, def_char, avg_width ))) exit(1);
 
-    if(FT_Set_Pixel_Sizes(face, ppem, ppem)) {
-        fprintf(stderr, "Can't set size\n");
-        usage(argv);
-        exit(1);
-    }
-
-    strcpy(name, face->family_name);
+    strcpy(name, get_face_name(info));
     /* FIXME: should add a -o option instead */
     for(cp = name; *cp; cp++)
     {
@@ -536,10 +547,13 @@ int main(int argc, char **argv)
     signal( SIGHUP, exit_on_signal );
 #endif
 
-    fp = fopen(output, "w");
+    if (!(fp = fopen(output, "w")))
+    {
+        perror( output );
+        exit(1);
+    }
     output_name = output;
-
-    fill_fontinfo(face, enc, fp, dpi, def_char, avg_width);
+    write_fontinfo( info, fp );
     fclose(fp);
     output_name = NULL;
     exit(0);
