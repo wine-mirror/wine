@@ -806,7 +806,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
         formatEntry->bitmaps[glyph] = buf;
     }
 
-    memcpy(&formatEntry->gis[glyph], &gi, sizeof(gi));
+    formatEntry->gis[glyph] = gi;
 
     return TRUE;
 }

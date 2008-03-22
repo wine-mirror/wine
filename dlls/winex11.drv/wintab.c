@@ -984,7 +984,7 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
  */
 int X11DRV_GetCurrentPacket(LPWTPACKET packet)
 {
-    memcpy(packet,&gMsgPacket,sizeof(WTPACKET));
+    *packet = gMsgPacket;
     return 1;
 }
 

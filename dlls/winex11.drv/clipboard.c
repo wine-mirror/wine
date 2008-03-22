@@ -2900,7 +2900,7 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
                 }
 
                 /* Set up an XSelectionRequestEvent for this (target,property) pair */
-                memcpy( &event, pevent, sizeof(XSelectionRequestEvent) );
+                event = *pevent;
                 event.target = targetPropList[i];
                 event.property = targetPropList[i+1];
 
