@@ -715,7 +715,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
      */
     if(oldFmt != newFmt) {
         const StaticPixelFormatDesc *old = getFormatDescEntry(oldFmt, NULL, NULL);
-        const StaticPixelFormatDesc *new = getFormatDescEntry(oldFmt, NULL, NULL);
+        const StaticPixelFormatDesc *new = getFormatDescEntry(newFmt, NULL, NULL);
 
         if((old->alphaMask && !new->alphaMask) || (!old->alphaMask && new->alphaMask)) {
             Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE));
