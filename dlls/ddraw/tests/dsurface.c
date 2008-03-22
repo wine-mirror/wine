@@ -2371,7 +2371,9 @@ static void BltParamTest(void)
 static void PaletteTest(void)
 {
     HRESULT hr;
-    IDirectDrawPalette *palette;
+    LPDIRECTDRAWSURFACE lpSurf = NULL;
+    DDSURFACEDESC ddsd;
+    IDirectDrawPalette *palette = NULL;
     PALETTEENTRY Table[256];
     PALETTEENTRY palEntries[256];
     int i;
@@ -2387,7 +2389,7 @@ static void PaletteTest(void)
     /* Create a 8bit palette without DDPCAPS_ALLOW256 set */
     hr = IDirectDraw_CreatePalette(lpDD, DDPCAPS_8BIT, Table, &palette, NULL);
     ok(hr == DD_OK, "CreatePalette failed with %08x\n", hr);
-
+    if (FAILED(hr)) goto err;
     /* Read back the palette and verify the entries. Without DDPCAPS_ALLOW256 set
     /  entry 0 and 255 should have been overwritten with black and white */
     IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
@@ -2428,6 +2430,8 @@ static void PaletteTest(void)
     /* Create a 8bit palette with DDPCAPS_ALLOW256 set */
     hr = IDirectDraw_CreatePalette(lpDD, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, Table, &palette, NULL);
     ok(hr == DD_OK, "CreatePalette failed with %08x\n", hr);
+    if (FAILED(hr)) goto err;
+
     IDirectDrawPalette_GetEntries(palette , 0, 0, 256, &palEntries[0]);
     ok(hr == DD_OK, "GetEntries failed with %08x\n", hr);
     if(hr == DD_OK)
@@ -2438,7 +2442,39 @@ static void PaletteTest(void)
                "Palette entry %d should have contained (255,0,0) but was set to %d,%d,%d)\n",
                i, palEntries[i].peRed, palEntries[i].peGreen, palEntries[i].peBlue);
     }
+
+    /* Try to set palette to a non-palettized surface */
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    ddsd.dwWidth = 800;
+    ddsd.dwHeight = 600;
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0xFF0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x00FF00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000FF;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpSurf, NULL);
+    ok(hr==DD_OK, "CreateSurface returned: %x\n",hr);
+    if (FAILED(hr)) {
+	skip("failed to create surface\n");
+	goto err;
+    }
+
+    hr = IDirectDrawSurface_SetPalette(lpSurf, palette);
+    ok(hr == DDERR_INVALIDPIXELFORMAT, "CreateSurface returned: %x\n",hr);
+
     IDirectDrawPalette_Release(palette);
+    palette = NULL;
+
+    hr = IDirectDrawSurface_GetPalette(lpSurf, &palette);
+    ok(hr == DDERR_NOPALETTEATTACHED, "CreateSurface returned: %x\n",hr);
+
+    err:
+
+    if (lpSurf) IDirectDrawSurface_Release(lpSurf);
+    if (palette) IDirectDrawPalette_Release(palette);
 }
 
 static void StructSizeTest(void)
