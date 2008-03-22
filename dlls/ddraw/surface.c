@@ -2501,6 +2501,11 @@ IDirectDrawSurfaceImpl_SetPalette(IDirectDrawSurface7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, Pal);
 
+    if (!(This->surface_desc.u4.ddpfPixelFormat.dwFlags & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2 |
+            DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXEDTO8))) {
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+
     /* Find the old palette */
     EnterCriticalSection(&ddraw_cs);
     hr = IDirectDrawSurface_GetPalette(iface, &oldPal);
