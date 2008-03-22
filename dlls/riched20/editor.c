@@ -459,8 +459,10 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.cTabCount = 0;
     fmt.dxOffset = fmt.dxStartIndent = fmt.dxRightIndent = 0;
     fmt.wBorderWidth = fmt.wBorders = 0;
+    fmt.wBorderSpace = 0;
     fmt.bLineSpacingRule = 0;
     fmt.dySpaceBefore = fmt.dySpaceAfter = 0;
+    fmt.dyLineSpacing = 0;
     RTFFlushOutputBuffer(info);
     ME_GetParagraph(info->editor->pCursors[0].pRun)->member.para.bTable = FALSE;
     break;
