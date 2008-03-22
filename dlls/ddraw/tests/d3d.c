@@ -1088,6 +1088,30 @@ static void Direct3D1Test(void)
     hr = IDirect3DDevice_Execute(Direct3DDevice1, ExecuteBuffer, Viewport, D3DEXECUTE_CLIPPED);
     ok(hr == D3D_OK, "IDirect3DDevice_Execute returned %08x\n", hr);
 
+    /* Test rendering 0 triangles */
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+
+    hr = IDirect3DExecuteBuffer_Lock(ExecuteBuffer, &desc);
+    ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Lock failed: %08x\n", hr);
+
+    memset(desc.lpData, 0, 128);
+    instr = desc.lpData;
+    idx = 0;
+
+    instr->bOpcode = D3DOP_TRIANGLE;
+    instr->bSize = sizeof(D3DOP_TRIANGLE);
+    instr->wCount = 0;
+    instr = ((D3DINSTRUCTION*)(instr))+1;
+    instr->bOpcode = D3DOP_EXIT;
+    instr->bSize = 0;
+    instr->wCount = 0;
+    hr = IDirect3DExecuteBuffer_Unlock(ExecuteBuffer);
+    ok(hr == D3D_OK, "IDirect3DExecuteBuffer_Unlock failed: %08x\n", hr);
+
+    hr = IDirect3DDevice_Execute(Direct3DDevice1, ExecuteBuffer, Viewport, D3DEXECUTE_CLIPPED);
+    ok(hr == D3D_OK, "IDirect3DDevice_Execute returned %08x\n", hr);
+
     memset(&transformdata, 0, sizeof(transformdata));
     transformdata.dwSize = sizeof(transformdata);
     transformdata.lpIn = (void *) testverts;
