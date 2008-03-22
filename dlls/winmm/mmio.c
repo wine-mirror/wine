@@ -936,7 +936,7 @@ MMRESULT WINAPI mmioGetInfo(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    memcpy(lpmmioinfo, &wm->info, sizeof(MMIOINFO));
+    *lpmmioinfo = wm->info;
     /* don't expose 16 bit ioproc:s */
     if (wm->ioProc->type != MMIO_PROC_16)
         lpmmioinfo->pIOProc = wm->ioProc->pIOProc;
