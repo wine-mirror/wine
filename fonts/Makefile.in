@@ -61,121 +61,121 @@ all: $(FONTS)
 @MAKE_RULES@
 
 coure.fon: courier.ttf
-	$(LDPATH) $(SFNT2FNT) courier.ttf $@ 13,1252,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 courier.ttf 13,1252,8
 
 couree.fon: courier.ttf
-	$(LDPATH) $(SFNT2FNT) courier.ttf $@ 13,1250,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 courier.ttf 13,1250,8
 
 courer.fon: courier.ttf
-	$(LDPATH) $(SFNT2FNT) courier.ttf $@ 13,1251,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 courier.ttf 13,1251,8
 
 coureg.fon: courier.ttf
-	$(LDPATH) $(SFNT2FNT) courier.ttf $@ 13,1253,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 courier.ttf 13,1253,8
 
 couret.fon: courier.ttf
-	$(LDPATH) $(SFNT2FNT) courier.ttf $@ 13,1254,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 courier.ttf 13,1254,8
 
 coue1255.fon: courier.ttf
-	$(LDPATH) $(SFNT2FNT) courier.ttf $@ 13,1255,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 courier.ttf 13,1255,8
 
 coue1256.fon: courier.ttf
-	$(LDPATH) $(SFNT2FNT) courier.ttf $@ 13,1256,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 courier.ttf 13,1256,8
 
 coue1257.fon: courier.ttf
-	$(LDPATH) $(SFNT2FNT) courier.ttf $@ 13,1257,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 courier.ttf 13,1257,8
 
 sserife.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,1252,96,129,5 16,1252,96,129,7 20,1252,96,129,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,1252,5 16,1252,7 20,1252,8
 
 sserifee.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,1250,96,129,5 16,1250,96,129,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,1250,5 16,1250,7
 
 sserifer.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,1251,96,129,5 16,1251,96,129,7 20,1251,96,129,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,1251,5 16,1251,7 20,1251,8
 
 sserifeg.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,1253,96,129,5 16,1253,96,129,7 20,1253,96,129,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,1253,5 16,1253,7 20,1253,8
 
 sserifet.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,1254,96,129,5 16,1254,96,129,7 20,1254,96,129,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,1254,5 16,1254,7 20,1254,8
 
 ssee1255.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,1255,96,129,5 16,1255,96,129,7 20,1255,96,129,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,1255,5 16,1255,7 20,1255,8
 
 ssee1256.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,1256,96,129,5 16,1256,96,129,7 20,1256,96,129,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,1256,5 16,1256,7 20,1256,8
 
 ssee1257.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,1257,96,129,5 16,1257,96,129,7 20,1257,96,129,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,1257,5 16,1257,7 20,1257,8
 
 ssee874.fon: ms_sans_serif.ttf
-	$(LDPATH) $(SFNT2FNT) ms_sans_serif.ttf $@ 13,874,96,129,5 16,874,96,129,7 20,874,96,129,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 129 ms_sans_serif.ttf 13,874,5 16,874,7 20,874,8
 
 smalle.fon: small_fonts.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf $@ 11,1252,96,128,5
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts.ttf 11,1252,5
 
 smallee.fon: small_fonts.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf $@ 11,1250,96,128,5
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts.ttf 11,1250,5
 
 smaller.fon: small_fonts.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf $@ 11,1251,96,128,5
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts.ttf 11,1251,5
 
 smalleg.fon: small_fonts.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf $@ 11,1253,96,128,5
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts.ttf 11,1253,5
 
 smallet.fon: small_fonts.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf $@ 11,1254,96,128,5
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts.ttf 11,1254,5
 
 smae1255.fon: small_fonts.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf $@ 11,1255,96,128,5
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts.ttf 11,1255,5
 
 smae1256.fon: small_fonts.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf $@ 11,1256,96,128,5
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts.ttf 11,1256,5
 
 smae1257.fon: small_fonts.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts.ttf $@ 11,1257,96,128,5
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts.ttf 11,1257,5
 
 jsmalle.fon: small_fonts_jp.ttf
-	$(LDPATH) $(SFNT2FNT) small_fonts_jp.ttf $@ 11,932,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 small_fonts_jp.ttf 11,932,7
 
 vgasys.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,1252,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,1252,7
 
 vgasyse.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,1250,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,1250,7
 
 vgasysr.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,1251,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,1251,7
 
 vgasysg.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,1253,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,1253,7
 
 vgasyst.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,1254,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,1254,7
 
 vgas1255.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,1255,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,1255,7
 
 vgas1256.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,1256,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,1256,7
 
 vgas1257.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,1257,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,1257,7
 
 vgas874.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,874,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,874,7
 
 jvgasys.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 18,932,96,128,8
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 18,932,8
 
 svgasys.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,936,96,128,7 16,1252,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,936,7 16,1252,7
 
 hvgasys.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,949,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,949,7
 
 cvgasys.fon: system.ttf
-	$(LDPATH) $(SFNT2FNT) system.ttf $@ 16,950,96,128,7 16,1252,96,128,7
+	$(LDPATH) $(SFNT2FNT) -o $@ -d 128 system.ttf 16,950,7 16,1252,7
 
 $(BITMAP_FONTS): $(SFNT2FNT)
 

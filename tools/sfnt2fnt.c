@@ -27,6 +27,9 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
 
 #ifdef HAVE_FREETYPE
 
@@ -128,14 +131,26 @@ static const BYTE MZ_hdr[] =
     'm',  'o',  'd',  'e',  0x0d, 0x0a, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+static char *option_output;
+static int option_defchar = ' ';
+static int option_dpi = 96;
+static int option_fnt_mode = 0;
+static int option_quiet = 0;
+
 static const char *output_name;
 
 static FT_Library ft_library;
 
 static void usage(char **argv)
 {
-    fprintf(stderr, "%s foo.ttf ppem enc dpi def_char avg_width\n", argv[0]);
-    return;
+    fprintf(stderr, "%s [options] input.ttf ppem,enc,avg_width ...\n", argv[0]);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -h       Display help\n" );
+    fprintf(stderr, "  -d char  Set the font default char\n" );
+    fprintf(stderr, "  -o file  Set output file name\n" );
+    fprintf(stderr, "  -q       Quiet mode\n" );
+    fprintf(stderr, "  -r dpi   Set resolution in DPI (default: 96)\n" );
+    fprintf(stderr, "  -s       Single .fnt file mode\n" );
 }
 
 #ifndef __GNUC__
@@ -376,7 +391,7 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     for(i = first_char; i < 0x100; i++) {
         int c = get_char(cptable, enc, i);
         gi = FT_Get_Char_Index(face, c);
-        if(gi == 0)
+        if(gi == 0 && !option_quiet)
             fprintf(stderr, "warning: %s %u: missing glyph for char %04x\n",
                     face->family_name, ppem, cptable->sbcs.cp2uni[i]);
         if(FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
@@ -513,6 +528,41 @@ static void write_fontinfo( const struct fontinfo *info, FILE *fp )
     fwrite( info->data, info->hdr.dfSize - info->hdr.fi.dfBitsOffset, 1, fp );
 }
 
+/* parse options from the argv array and remove all the recognized ones */
+static char **parse_options( int argc, char **argv )
+{
+    int optc;
+
+    while ((optc = getopt( argc, argv, "d:ho:qr:s" )) != -1)
+    {
+        switch(optc)
+        {
+        case 'd':
+            option_defchar = atoi( optarg );
+            break;
+        case 'o':
+            option_output = strdup( optarg );
+            break;
+        case 'q':
+            option_quiet = 1;
+            break;
+        case 'r':
+            option_dpi = atoi( optarg );
+            break;
+        case 's':
+            option_fnt_mode = 1;
+            break;
+        case 'h':
+            usage(argv);
+            exit(0);
+        case '?':
+            usage(argv);
+            exit(1);
+        }
+    }
+    return &argv[optind];
+}
+
 int main(int argc, char **argv)
 {
     int i, j;
@@ -528,9 +578,14 @@ int main(int argc, char **argv)
     NE_TYPEINFO rc_type;
     NE_NAMEINFO rc_name;
     struct fontinfo **info;
-    char *p;
+    char *input_file;
+    char **args;
 
-    if(argc <= 3) {
+    args = parse_options( argc, argv );
+
+    input_file = *args++;
+    if (!input_file || !*args)
+    {
         usage(argv);
         exit(1);
     }
@@ -541,19 +596,25 @@ int main(int argc, char **argv)
     FT_Version.major=FT_Version.minor=FT_Version.patch=-1;
     FT_Library_Version(ft_library,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
 
-    num_files = argc - 3;
+    num_files = 0;
+    while (args[num_files]) num_files++;
+
+    if (option_fnt_mode && num_files > 1)
+        error( "can only specify one font in .fnt mode\n" );
+
     info = malloc( num_files * sizeof(*info) );
     for (i = 0; i < num_files; i++)
     {
-        int ppem, enc, dpi, def_char, avg_width;
+        int ppem, enc, avg_width;
         const char *name;
 
-        if (sscanf( argv[i+3], "%d,%d,%d,%d,%d", &ppem, &enc, &dpi, &def_char, &avg_width ) != 5)
+        if (sscanf( args[i], "%d,%d,%d", &ppem, &enc, &avg_width ) != 3)
         {
             usage(argv);
             exit(1);
         }
-        if (!(info[i] = fill_fontinfo( argv[1], ppem, enc, dpi, def_char, avg_width ))) exit(1);
+        if (!(info[i] = fill_fontinfo( input_file, ppem, enc, option_dpi, option_defchar, avg_width )))
+            exit(1);
 
         name = get_face_name( info[i] );
         fontdir_len += 0x74 + strlen(name) + 1;
@@ -567,7 +628,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if(info[0]->hdr.fi.dfVertRes <= 108)
+    if (option_dpi <= 108)
         strcat(non_resident_name, " (VGA res)");
     else
         strcat(non_resident_name, " (8514 res)");
@@ -611,27 +672,28 @@ int main(int argc, char **argv)
     signal( SIGHUP, exit_on_signal );
 #endif
 
-    /* check for .fnt extension on output file (FIXME: should be a cmdline option instead) */
-    if ((p = strrchr( argv[2], '.' )) && !strcmp( p, ".fnt" ))
+    if (!option_output)  /* build a default output name */
     {
-        if (num_files > 1) error( ".fnt generation mode can only contain one font\n" );
-        output_name = argv[2];
-        if (!(ofp = fopen(output_name, "wb")))
-        {
-            perror( output_name );
-            exit(1);
-        }
-        write_fontinfo( info[0], ofp );
-        fclose( ofp );
-        output_name = NULL;
-        exit(0);
+        char *p = strrchr( input_file, '/' );
+        if (p) p++;
+        else p = input_file;
+        option_output = malloc( strlen(p) + sizeof(".fon") );
+        strcpy( option_output, p );
+        p = strrchr( option_output, '.' );
+        if (!p) p = option_output + strlen(option_output);
+        strcpy( p, option_fnt_mode ? ".fnt" : ".fon" );
     }
 
-    output_name = argv[2];
-    if (!(ofp = fopen(output_name, "wb")))
+    if (!(ofp = fopen(option_output, "wb")))
     {
-        perror( output_name );
+        perror( option_output );
         exit(1);
+    }
+    output_name = option_output;
+    if (option_fnt_mode)
+    {
+        write_fontinfo( info[0], ofp );
+        goto done;
     }
 
     fwrite(MZ_hdr, sizeof(MZ_hdr), 1, ofp);
@@ -724,6 +786,7 @@ int main(int argc, char **argv)
         for(j = 0; j < pad; j++)
             fputc(0x00, ofp);
     }
+done:
     fclose(ofp);
     output_name = NULL;
     exit(0);
