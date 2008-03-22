@@ -214,8 +214,7 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
             else
             {
                 TRACE("Placed in queue %p index %i\n",ptr->handle,tgt);
-                memcpy(&ptr->PacketQueue[tgt], packet, sizeof
-                        (WTPACKET));
+                ptr->PacketQueue[tgt] = *packet;
                 ptr->PacketsQueued++;
 
                 if (ptr->ActiveCursor != packet->pkCursor)
@@ -440,7 +439,7 @@ HCTX WINAPI WTOpenW(HWND hWnd, LPLOGCONTEXTW lpLogCtx, BOOL fEnable)
     DUMPCONTEXT(*lpLogCtx);
 
     newcontext = HeapAlloc(GetProcessHeap(), 0 , sizeof(OPENCONTEXT));
-    memcpy(&(newcontext->context),lpLogCtx,sizeof(LOGCONTEXTW));
+    newcontext->context = *lpLogCtx;
     newcontext->hwndOwner = hWnd;
     newcontext->enabled = fEnable;
     newcontext->ActiveCursor = -1;
