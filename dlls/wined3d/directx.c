@@ -2090,7 +2090,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
          */
         case WINED3DFMT_V8U8:
             if(GL_SUPPORT(NV_TEXTURE_SHADER) || GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
-                return WINED3D_OK;
+                return TRUE;
             }
             TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
             return FALSE;
