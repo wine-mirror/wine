@@ -2979,7 +2979,7 @@ static DWORD CALLBACK INTERNET_WorkerThreadFunc(LPVOID lpvParam)
 
     TRACE("\n");
 
-    memcpy(&workRequest, lpRequest, sizeof(WORKREQUEST));
+    workRequest = *lpRequest;
     HeapFree(GetProcessHeap(), 0, lpRequest);
 
     workRequest.asyncproc(&workRequest);
@@ -3008,7 +3008,7 @@ BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
     if (!lpNewRequest)
         return FALSE;
 
-    memcpy(lpNewRequest, lpWorkRequest, sizeof(WORKREQUEST));
+    *lpNewRequest = *lpWorkRequest;
 
     bSuccess = QueueUserWorkItem(INTERNET_WorkerThreadFunc, lpNewRequest, WT_EXECUTELONGFUNCTION);
     if (!bSuccess)
