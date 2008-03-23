@@ -454,7 +454,6 @@ IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     WINED3DVERTEXBUFFER_DESC WDesc;
     HRESULT hr;
-    DWORD size;
     TRACE("(%p)->(%p)\n", This, Desc);
 
     if(!Desc) return DDERR_INVALIDPARAMS;
@@ -469,12 +468,7 @@ IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
         return hr;
     }
 
-    /* Clear the return value of garbage */
-    size = Desc->dwSize;
-    memset(Desc, 0, size);
-
     /* Now fill the Desc structure */
-    Desc->dwSize = size;
     Desc->dwCaps = This->Caps;
     Desc->dwFVF = WDesc.FVF;
     Desc->dwNumVertices = WDesc.Size / get_flexible_vertex_size(WDesc.FVF);

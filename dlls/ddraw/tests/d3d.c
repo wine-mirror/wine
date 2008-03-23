@@ -1530,6 +1530,67 @@ static void TextureLoadTest(void)
     if (Texture2) IDirect3DTexture_Release(Texture2);
 }
 
+static void VertexBufferDescTest(void)
+{
+    HRESULT rc;
+    D3DVERTEXBUFFERDESC desc;
+    union mem_t
+    {
+        D3DVERTEXBUFFERDESC desc2;
+        unsigned char buffer[512];
+    } mem;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwCaps = 0;
+    desc.dwFVF = D3DFVF_XYZ;
+    desc.dwNumVertices = 1;
+    rc = IDirect3D7_CreateVertexBuffer(lpD3D, &desc, &lpVBufSrc, 0);
+    ok(rc==D3D_OK || rc==E_OUTOFMEMORY, "CreateVertexBuffer returned: %x\n", rc);
+    if (!lpVBufSrc)
+    {
+        trace("IDirect3D7::CreateVertexBuffer() failed with an error %x\n", rc);
+        goto out;
+    }
+
+    memset(mem.buffer, 0x12, sizeof(mem.buffer));
+    mem.desc2.dwSize = sizeof(D3DVERTEXBUFFERDESC)*2;
+    rc = IDirect3DVertexBuffer7_GetVertexBufferDesc(lpVBufSrc, &mem.desc2);
+    if(rc != D3D_OK)
+        skip("GetVertexBuffer Failed!\n");
+    ok( mem.desc2.dwSize == sizeof(D3DVERTEXBUFFERDESC)*2, "Size returned from GetVertexBufferDesc does not match the value put in\n" );
+    ok( mem.buffer[sizeof(D3DVERTEXBUFFERDESC)] == 0x12, "GetVertexBufferDesc cleared outside of the struct! (dwSize was double the size of the struct)\n");
+    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x \n", mem.desc2.dwCaps, desc.dwCaps);
+    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x \n", mem.desc2.dwFVF, desc.dwFVF);
+    ok (mem.desc2.dwNumVertices == desc.dwNumVertices, "dwNumVertices returned differs. Got %x, expected %x\n", mem.desc2.dwNumVertices, desc.dwNumVertices);
+
+    memset(mem.buffer, 0x12, sizeof(mem.buffer));
+    mem.desc2.dwSize = 0;
+    rc = IDirect3DVertexBuffer7_GetVertexBufferDesc(lpVBufSrc, &mem.desc2);
+    if(rc != D3D_OK)
+        skip("GetVertexBuffer Failed!\n");
+    ok( mem.desc2.dwSize == 0, "Size returned from GetVertexBufferDesc does not match the value put in\n" );
+    ok( mem.buffer[sizeof(D3DVERTEXBUFFERDESC)] == 0x12, "GetVertexBufferDesc cleared outside of the struct! (dwSize was 0)\n");
+    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x \n", mem.desc2.dwCaps, desc.dwCaps);
+    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x \n", mem.desc2.dwFVF, desc.dwFVF);
+    ok (mem.desc2.dwNumVertices == desc.dwNumVertices, "dwNumVertices returned differs. Got %x, expected %x\n", mem.desc2.dwNumVertices, desc.dwNumVertices);
+
+    memset(mem.buffer, 0x12, sizeof(mem.buffer));
+    mem.desc2.dwSize = sizeof(D3DVERTEXBUFFERDESC);
+    rc = IDirect3DVertexBuffer7_GetVertexBufferDesc(lpVBufSrc, &mem.desc2);
+    if(rc != D3D_OK)
+        skip("GetVertexBuffer Failed!\n");
+    ok( mem.desc2.dwSize == sizeof(D3DVERTEXBUFFERDESC), "Size returned from GetVertexBufferDesc does not match the value put in\n" );
+    ok( mem.buffer[sizeof(D3DVERTEXBUFFERDESC)] == 0x12, "GetVertexBufferDesc cleared outside of the struct! (dwSize was the size of the struct)\n");
+    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x \n", mem.desc2.dwCaps, desc.dwCaps);
+    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x \n", mem.desc2.dwFVF, desc.dwFVF);
+    ok (mem.desc2.dwNumVertices == desc.dwNumVertices, "dwNumVertices returned differs. Got %x, expected %x\n", mem.desc2.dwNumVertices, desc.dwNumVertices);
+
+out:
+    IDirect3DVertexBuffer7_Release(lpVBufSrc);
+}
+
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -1548,6 +1609,7 @@ START_TEST(d3d)
         LimitTest();
         D3D7EnumTest();
         CapsTest();
+        VertexBufferDescTest();
         ReleaseDirect3D();
     }
 
