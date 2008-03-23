@@ -816,55 +816,6 @@ static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_re
     *post_data_len_ret = post_data_len;
 }
 
-void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
-                          LPCWSTR uri, nsIInputStream *post_data_stream, DWORD hlnf)
-{
-    BSCallback *callback;
-    IBindCtx *bindctx;
-    IMoniker *mon;
-    IHlink *hlink;
-    HRESULT hr;
-
-    callback = create_channelbsc(NULL);
-
-    if(post_data_stream) {
-        parse_post_data(post_data_stream, &callback->headers, &callback->post_data,
-                        &callback->post_data_len);
-        TRACE("headers = %s post_data = %s\n", debugstr_w(callback->headers),
-              debugstr_an(callback->post_data, callback->post_data_len));
-    }
-
-    hr = CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &bindctx);
-    if (FAILED(hr)) {
-        IBindStatusCallback_Release(STATUSCLB(callback));
-        return;
-    }
-
-    hr = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER, &IID_IHlink, (LPVOID*)&hlink);
-    if (FAILED(hr)) {
-        IBindCtx_Release(bindctx);
-        IBindStatusCallback_Release(STATUSCLB(callback));
-        return;
-    }
-
-    hr = CreateURLMoniker(NULL, uri, &mon);
-    if (SUCCEEDED(hr)) {
-        IHlink_SetMonikerReference(hlink, 0, mon, NULL);
-
-        if(hlnf & HLNF_OPENINNEWWINDOW) {
-            static const WCHAR wszBlank[] = {'_','b','l','a','n','k',0};
-            IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
-        }
-
-        IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(callback), hlink);
-
-        IMoniker_Release(mon);
-    }
-
-    IBindCtx_Release(bindctx);
-    IBindStatusCallback_Release(STATUSCLB(callback));
-}
-
 HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback, IBindCtx *bctx)
 {
     IStream *str = NULL;
@@ -964,4 +915,53 @@ void channelbsc_set_channel(BSCallback *This, nsChannel *channel, nsIStreamListe
         nsISupports_AddRef(context);
         This->nscontext = context;
     }
+}
+
+void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
+                          LPCWSTR uri, nsIInputStream *post_data_stream, DWORD hlnf)
+{
+    BSCallback *callback;
+    IBindCtx *bindctx;
+    IMoniker *mon;
+    IHlink *hlink;
+    HRESULT hr;
+
+    callback = create_channelbsc(NULL);
+
+    if(post_data_stream) {
+        parse_post_data(post_data_stream, &callback->headers, &callback->post_data,
+                        &callback->post_data_len);
+        TRACE("headers = %s post_data = %s\n", debugstr_w(callback->headers),
+              debugstr_an(callback->post_data, callback->post_data_len));
+    }
+
+    hr = CreateAsyncBindCtx(0, STATUSCLB(callback), NULL, &bindctx);
+    if (FAILED(hr)) {
+        IBindStatusCallback_Release(STATUSCLB(callback));
+        return;
+    }
+
+    hr = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER, &IID_IHlink, (LPVOID*)&hlink);
+    if (FAILED(hr)) {
+        IBindCtx_Release(bindctx);
+        IBindStatusCallback_Release(STATUSCLB(callback));
+        return;
+    }
+
+    hr = CreateURLMoniker(NULL, uri, &mon);
+    if (SUCCEEDED(hr)) {
+        IHlink_SetMonikerReference(hlink, 0, mon, NULL);
+
+        if(hlnf & HLNF_OPENINNEWWINDOW) {
+            static const WCHAR wszBlank[] = {'_','b','l','a','n','k',0};
+            IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
+        }
+
+        IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx, STATUSCLB(callback), hlink);
+
+        IMoniker_Release(mon);
+    }
+
+    IBindCtx_Release(bindctx);
+    IBindStatusCallback_Release(STATUSCLB(callback));
 }
