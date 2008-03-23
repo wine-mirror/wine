@@ -908,3 +908,17 @@ HRESULT load_stream(BSCallback *bscallback, IStream *stream)
 
     return hres;
 }
+
+void channelbsc_set_channel(BSCallback *This, nsChannel *channel, nsIStreamListener *listener, nsISupports *context)
+{
+    nsIChannel_AddRef(NSCHANNEL(channel));
+    This->nschannel = channel;
+
+    nsIStreamListener_AddRef(listener);
+    This->nslistener = listener;
+
+    if(context) {
+        nsISupports_AddRef(context);
+        This->nscontext = context;
+    }
+}

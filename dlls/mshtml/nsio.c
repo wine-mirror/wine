@@ -685,16 +685,7 @@ static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
     *open = FALSE;
 
     if(container->bscallback) {
-        nsIChannel_AddRef(NSCHANNEL(This));
-        container->bscallback->nschannel = This;
-
-        nsIStreamListener_AddRef(listener);
-        container->bscallback->nslistener = listener;
-
-        if(context) {
-            nsISupports_AddRef(context);
-            container->bscallback->nscontext = context;
-        }
+        channelbsc_set_channel(container->bscallback, This, listener, context);
 
         if(container->doc && container->doc->mime) {
             DWORD len;
@@ -781,16 +772,7 @@ static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamLis
     bscallback = create_bscallback(mon);
     IMoniker_Release(mon);
 
-    nsIChannel_AddRef(NSCHANNEL(This));
-    bscallback->nschannel = This;
-
-    nsIStreamListener_AddRef(listener);
-    bscallback->nslistener = listener;
-
-    if(context) {
-        nsISupports_AddRef(context);
-        bscallback->nscontext = context;
-    }
+    channelbsc_set_channel(bscallback, This, listener, context);
 
     task = heap_alloc(sizeof(task_t));
 

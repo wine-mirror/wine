@@ -434,6 +434,8 @@ HRESULT load_stream(BSCallback*,IStream*);
 void set_document_bscallback(HTMLDocument*,BSCallback*);
 void set_current_mon(HTMLDocument*,IMoniker*);
 
+void channelbsc_set_channel(BSCallback*,nsChannel*,nsIStreamListener*,nsISupports*);
+
 IHTMLSelectionObject *HTMLSelectionObject_Create(HTMLDocument*,nsISelection*);
 IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument*,nsIDOMRange*);
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration*);
