@@ -6950,7 +6950,9 @@ static void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAM
     } else  {
         surface->Flags &= ~SFLAG_NONPOW2;
     }
-    HeapFree(GetProcessHeap(), 0, surface->resource.allocatedMemory);
+    HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+    surface->resource.allocatedMemory = NULL;
+    surface->resource.heapMemory = NULL;
     surface->resource.size = IWineD3DSurface_GetPitch((IWineD3DSurface *) surface) * surface->pow2Width;
 }
 
