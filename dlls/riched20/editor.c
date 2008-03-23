@@ -3207,12 +3207,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case EM_SETTARGETDEVICE:
     if (wParam == 0)
     {
-        switch (lParam)
-        {
-        case 0: editor->bWordWrap = TRUE; break;
-        case 1: editor->bWordWrap = FALSE; break;
-        default: FIXME("Unknown option to EM_SETTARGETDEVICE(NULL,%ld)\n", lParam);
-        }
+      editor->bWordWrap = (lParam == 0);
     }
     else FIXME("Unsupported yet non NULL device in EM_SETTARGETDEVICE\n");
     break;
