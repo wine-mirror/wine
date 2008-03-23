@@ -984,6 +984,8 @@ void drawPrimitive(IWineD3DDevice *iface,
     IWineD3DSurfaceImpl          *target;
     int i;
 
+    if (NumPrimitives == 0) return;
+
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
 
