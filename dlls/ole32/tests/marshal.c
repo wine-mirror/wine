@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "shlguid.h"
+#include "shobjidl.h"
 
 #include "wine/test.h"
 
