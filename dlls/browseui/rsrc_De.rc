@@ -1,5 +1,6 @@
 /*
  * Copyright 2007 Mikolaj Zalewski
+ * Copyright 2008 Michael Stefaniuc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,21 +17,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winuser.h"
-#include "commctrl.h"
 
-#include "resids.h"
+LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
-#include "version.rc"
+STRINGTABLE
+{
+    IDS_CANCELLING    "Abbrechen..."
+}
 
-#include "rsrc_De.rc"
-#include "rsrc_En.rc"
-#include "rsrc_Es.rc"
-#include "rsrc_Fr.rc"
-#include "rsrc_Ko.rc"
-#include "rsrc_Nl.rc"
-#include "rsrc_No.rc"
-#include "rsrc_Pl.rc"
-#include "rsrc_Ro.rc"
-#include "rsrc_Ru.rc"
+IDD_PROGRESS_DLG DIALOG 0, 0, 260, 85
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU
+CAPTION ""
+FONT 8, "MS Shell Dlg"
+{
+    CONTROL "", IDC_ANIMATION, ANIMATE_CLASSA, 0, 12, 10, 236, 25 /* TODO: style */
+    LTEXT "", IDC_TEXT_LINE, 7, 45, 250, 10, SS_LEFT|SS_NOPREFIX
+    LTEXT "", IDC_TEXT_LINE + 1, 7, 55, 250, 10, SS_LEFT|SS_NOPREFIX
+    CONTROL "", IDC_PROGRESS_BAR, PROGRESS_CLASSA, WS_BORDER, 7, 65, 190, 8
+    PUSHBUTTON "&Abbrechen", IDCANCEL, 205, 65, 45, 15, WS_GROUP | WS_TABSTOP | WS_VISIBLE
+    LTEXT "", IDC_TEXT_LINE + 2, 7, 75, 190, 10, SS_LEFT|SS_NOPREFIX
+}
