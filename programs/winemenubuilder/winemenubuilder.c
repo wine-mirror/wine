@@ -76,7 +76,13 @@
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 #include "wine.xpm"
+
+#ifdef HAVE_PNG_H
+#undef FAR
+#include <png.h>
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(menubuilder);
 
@@ -144,6 +150,174 @@ typedef struct
  * FIXME: should not use stdio
  */
 
+#define MASK(x,y) (pAND[(x) / 8 + (nHeight - (y) - 1) * nANDWidthBytes] & (1 << (7 - (x) % 8)))
+
+/* PNG-specific code */
+#ifdef SONAME_LIBPNG
+
+static void *libpng_handle;
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(png_create_info_struct);
+MAKE_FUNCPTR(png_create_write_struct);
+MAKE_FUNCPTR(png_destroy_write_struct);
+MAKE_FUNCPTR(png_init_io);
+MAKE_FUNCPTR(png_set_bgr);
+MAKE_FUNCPTR(png_set_text);
+MAKE_FUNCPTR(png_set_IHDR);
+MAKE_FUNCPTR(png_write_end);
+MAKE_FUNCPTR(png_write_info);
+MAKE_FUNCPTR(png_write_row);
+#undef MAKE_FUNCPTR
+
+static void *load_libpng(void)
+{
+    if ((libpng_handle = wine_dlopen(SONAME_LIBPNG, RTLD_NOW, NULL, 0)) != NULL)
+    {
+#define LOAD_FUNCPTR(f) \
+    if((p##f = wine_dlsym(libpng_handle, #f, NULL, 0)) == NULL) { \
+        libpng_handle = NULL; \
+        return NULL; \
+    }
+        LOAD_FUNCPTR(png_create_info_struct);
+        LOAD_FUNCPTR(png_create_write_struct);
+        LOAD_FUNCPTR(png_destroy_write_struct);
+        LOAD_FUNCPTR(png_init_io);
+        LOAD_FUNCPTR(png_set_bgr);
+        LOAD_FUNCPTR(png_set_IHDR);
+        LOAD_FUNCPTR(png_set_text);
+        LOAD_FUNCPTR(png_write_end);
+        LOAD_FUNCPTR(png_write_info);
+        LOAD_FUNCPTR(png_write_row);
+#undef LOAD_FUNCPTR
+    }
+    return libpng_handle;
+}
+
+static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, LPCWSTR commentW)
+{
+    static const char comment_key[] = "Created from";
+    FILE *fp;
+    png_structp png_ptr;
+    png_infop info_ptr;
+    png_text comment;
+    int nXORWidthBytes, nANDWidthBytes, color_type = 0, i, j;
+    BYTE *pXOR, *row;
+    const BYTE *pAND = NULL;
+    int nWidth  = pIcon->bmiHeader.biWidth;
+    int nHeight = pIcon->bmiHeader.biHeight;
+    int nBpp    = pIcon->bmiHeader.biBitCount;
+
+    switch (nBpp)
+    {
+    case 32:
+        color_type |= PNG_COLOR_MASK_ALPHA;
+        /* fall through */
+    case 24:
+        color_type |= PNG_COLOR_MASK_COLOR;
+        break;
+    default:
+        return FALSE;
+    }
+
+    if (!libpng_handle && !load_libpng())
+    {
+        WINE_WARN("Unable to load libpng\n");
+        return FALSE;
+    }
+
+    if (!(fp = fopen(png_filename, "w")))
+    {
+        WINE_ERR("unable to open '%s' for writing: %s\n", png_filename, strerror(errno));
+        return FALSE;
+    }
+
+    nXORWidthBytes = 4 * ((nWidth * nBpp + 31) / 32);
+    nANDWidthBytes = 4 * ((nWidth + 31 ) / 32);
+    pXOR = (BYTE*) pIcon + sizeof(BITMAPINFOHEADER) + pIcon->bmiHeader.biClrUsed * sizeof(RGBQUAD);
+    if (nHeight > nWidth)
+    {
+        nHeight /= 2;
+        pAND = pXOR + nHeight * nXORWidthBytes;
+    }
+
+    /* image and mask are upside down reversed */
+    row = pXOR + (nHeight - 1) * nXORWidthBytes;
+
+    /* Apply mask if present */
+    if (pAND)
+    {
+        RGBQUAD bgColor;
+
+        /* top left corner */
+        bgColor.rgbRed   = row[0];
+        bgColor.rgbGreen = row[1];
+        bgColor.rgbBlue  = row[2];
+        bgColor.rgbReserved = 0;
+
+        for (i = 0; i < nHeight; i++, row -= nXORWidthBytes)
+            for (j = 0; j < nWidth; j++, row += nBpp >> 3)
+                if (MASK(j, i))
+                {
+                    RGBQUAD *pixel = (RGBQUAD *)row;
+                    pixel->rgbBlue  = bgColor.rgbBlue;
+                    pixel->rgbGreen = bgColor.rgbGreen;
+                    pixel->rgbRed   = bgColor.rgbRed;
+                    if (nBpp == 32)
+                        pixel->rgbReserved = bgColor.rgbReserved;
+                }
+    }
+
+    comment.text = NULL;
+
+    if (!(png_ptr = ppng_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL)) ||
+        !(info_ptr = ppng_create_info_struct(png_ptr)))
+        goto error;
+
+    if (setjmp(png_jmpbuf(png_ptr)))
+    {
+        /* All future errors jump here */
+        WINE_ERR("png error\n");
+        goto error;
+    }
+
+    ppng_init_io(png_ptr, fp);
+    ppng_set_IHDR(png_ptr, info_ptr, nWidth, nHeight, 8,
+                  color_type,
+                  PNG_INTERLACE_NONE,
+                  PNG_COMPRESSION_TYPE_DEFAULT,
+                  PNG_FILTER_TYPE_DEFAULT);
+
+    /* Set comment */
+    comment.compression = PNG_TEXT_COMPRESSION_NONE;
+    comment.key = (png_charp)comment_key;
+    i = WideCharToMultiByte(CP_UNIXCP, 0, commentW, -1, NULL, 0, NULL, NULL);
+    comment.text = HeapAlloc(GetProcessHeap(), 0, i);
+    WideCharToMultiByte(CP_UNIXCP, 0, commentW, -1, comment.text, i, NULL, NULL);
+    comment.text_length = i - 1;
+    ppng_set_text(png_ptr, info_ptr, &comment, 1);
+
+
+    ppng_write_info(png_ptr, info_ptr);
+    ppng_set_bgr(png_ptr);
+    for (i = nHeight - 1; i >= 0 ; i--)
+        ppng_write_row(png_ptr, (png_bytep)pXOR + nXORWidthBytes * i);
+    ppng_write_end(png_ptr, info_ptr);
+
+    ppng_destroy_write_struct(&png_ptr, &info_ptr);
+    if (png_ptr) ppng_destroy_write_struct(&png_ptr, NULL);
+    fclose(fp);
+    HeapFree(GetProcessHeap(), 0, comment.text);
+    return TRUE;
+
+ error:
+    if (png_ptr) ppng_destroy_write_struct(&png_ptr, NULL);
+    fclose(fp);
+    unlink(png_filename);
+    HeapFree(GetProcessHeap(), 0, comment.text);
+    return FALSE;
+}
+#endif /* SONAME_LIBPNG */
+
 static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName, LPCWSTR commentW)
 {
     FILE *fXPMFile;
@@ -186,7 +360,6 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName,
     pXOR = (const BYTE*) pIcon + sizeof (BITMAPINFOHEADER) + (nColors * sizeof (RGBQUAD));
     pAND = pXOR + nHeight * nXORWidthBytes;
 
-#define MASK(x,y) (pAND[(x) / 8 + (nHeight - (y) - 1) * nANDWidthBytes] & (1 << (7 - (x) % 8)))
 #define COLOR(x,y) (b8BitColors ? pXOR[(x) + (nHeight - (y) - 1) * nXORWidthBytes] : (x) % 2 ? pXOR[(x) / 2 + (nHeight - (y) - 1) * nXORWidthBytes] & 0xF : (pXOR[(x) / 2 + (nHeight - (y) - 1) * nXORWidthBytes] & 0xF0) >> 4)
 
     for (i = 0; i < nHeight; i++) {
@@ -262,7 +435,7 @@ static BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCWSTR lpszType, LPWSTR l
         return TRUE;
 }
 
-static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFileName)
+static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
 {
     HMODULE hModule;
     HRSRC hResInfo;
@@ -340,8 +513,16 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
         {
             if ((pIcon = LockResource(hResData)))
             {
-                if(SaveIconResAsXPM(pIcon, szXPMFileName, szFileName))
+#ifdef SONAME_LIBPNG
+                if (SaveIconResAsPNG(pIcon, szXPMFileName, szFileName))
                     ret = TRUE;
+                else
+#endif
+                {
+                    memcpy(szXPMFileName + strlen(szXPMFileName) - 3, "xpm", 3);
+                    if (SaveIconResAsXPM(pIcon, szXPMFileName, szFileName))
+                        ret = TRUE;
+                }
             }
 
             FreeResource(hResData);
@@ -352,7 +533,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
     return ret;
 }
 
-static BOOL ExtractFromEXEDLL(LPCWSTR szFileName, int nIndex, const char *szXPMFileName)
+static BOOL ExtractFromEXEDLL(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
 {
     if (!extract_icon32(szFileName, nIndex, szXPMFileName) /*&&
         !extract_icon16(szFileName, szXPMFileName)*/)
@@ -360,53 +541,66 @@ static BOOL ExtractFromEXEDLL(LPCWSTR szFileName, int nIndex, const char *szXPMF
     return TRUE;
 }
 
-static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
+static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
 {
-    FILE *fICOFile;
+    FILE *fICOFile = NULL;
     ICONDIR iconDir;
-    ICONDIRENTRY *pIconDirEntry;
+    ICONDIRENTRY *pIconDirEntry = NULL;
     int nMax = 0, nMaxBits = 0;
     int nIndex = 0;
-    void *pIcon;
+    void *pIcon = NULL;
     int i;
-    char *filename;
+    char *filename = NULL;
 
     filename = wine_get_unix_file_name(szFileName);
     if (!(fICOFile = fopen(filename, "r")))
     {
         WINE_TRACE("unable to open '%s' for reading: %s\n", filename, strerror(errno));
-        goto error1;
+        goto error;
     }
 
     if (fread(&iconDir, sizeof (ICONDIR), 1, fICOFile) != 1 ||
         (iconDir.idReserved != 0) || (iconDir.idType != 1))
     {
         WINE_WARN("Invalid ico file format\n");
-        goto error2;
+        goto error;
     }
 
     if ((pIconDirEntry = HeapAlloc(GetProcessHeap(), 0, iconDir.idCount * sizeof (ICONDIRENTRY))) == NULL)
-        goto error2;
+        goto error;
     if (fread(pIconDirEntry, sizeof (ICONDIRENTRY), iconDir.idCount, fICOFile) != iconDir.idCount)
-        goto error3;
+        goto error;
 
     for (i = 0; i < iconDir.idCount; i++)
-        if (pIconDirEntry[i].wBitCount <= 8 && pIconDirEntry[i].wBitCount >= nMaxBits &&
+    {
+        WINE_TRACE("[%d]: %d x %d @ %d\n", i, pIconDirEntry[i].bWidth, pIconDirEntry[i].bHeight, pIconDirEntry[i].wBitCount);
+        if (pIconDirEntry[i].wBitCount >= nMaxBits &&
             (pIconDirEntry[i].bHeight * pIconDirEntry[i].bWidth) >= nMax)
         {
             nIndex = i;
             nMax = pIconDirEntry[i].bHeight * pIconDirEntry[i].bWidth;
             nMaxBits = pIconDirEntry[i].wBitCount;
         }
-    if ((pIcon = HeapAlloc(GetProcessHeap(), 0, pIconDirEntry[nIndex].dwBytesInRes)) == NULL)
-        goto error3;
-    if (fseek(fICOFile, pIconDirEntry[nIndex].dwImageOffset, SEEK_SET))
-        goto error4;
-    if (fread(pIcon, pIconDirEntry[nIndex].dwBytesInRes, 1, fICOFile) != 1)
-        goto error4;
+    }
+    WINE_TRACE("Selected: %d\n", nIndex);
 
-    if(!SaveIconResAsXPM(pIcon, szXPMFileName, szFileName))
-        goto error4;
+    if ((pIcon = HeapAlloc(GetProcessHeap(), 0, pIconDirEntry[nIndex].dwBytesInRes)) == NULL)
+        goto error;
+    if (fseek(fICOFile, pIconDirEntry[nIndex].dwImageOffset, SEEK_SET))
+        goto error;
+    if (fread(pIcon, pIconDirEntry[nIndex].dwBytesInRes, 1, fICOFile) != 1)
+        goto error;
+
+
+    /* Prefer PNG over XPM */
+#ifdef SONAME_LIBPNG
+    if (!SaveIconResAsPNG(pIcon, szXPMFileName, szFileName))
+#endif
+    {
+        memcpy(szXPMFileName + strlen(szXPMFileName) - 3, "xpm", 3);
+        if (!SaveIconResAsXPM(pIcon, szXPMFileName, szFileName))
+            goto error;
+    }
 
     HeapFree(GetProcessHeap(), 0, pIcon);
     HeapFree(GetProcessHeap(), 0, pIconDirEntry);
@@ -414,13 +608,10 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
     HeapFree(GetProcessHeap(), 0, filename);
     return 1;
 
- error4:
+ error:
     HeapFree(GetProcessHeap(), 0, pIcon);
- error3:
     HeapFree(GetProcessHeap(), 0, pIconDirEntry);
- error2:
-    fclose(fICOFile);
- error1:
+    if (fICOFile) fclose(fICOFile);
     HeapFree(GetProcessHeap(), 0, filename);
     return 0;
 }
@@ -544,17 +735,20 @@ static char *extract_icon( LPCWSTR path, int index, BOOL bWait )
 
     /* Try to treat the source file as an exe */
     xpm_path=HeapAlloc(GetProcessHeap(), 0, strlen(iconsdir)+1+4+1+strlen(ico_name)+1+12+1+3);
-    sprintf(xpm_path,"%s/%04x_%s.%d.xpm",iconsdir,crc,ico_name,index);
+    sprintf(xpm_path,"%s/%04x_%s.%d.png",iconsdir,crc,ico_name,index);
     if (ExtractFromEXEDLL( path, index, xpm_path ))
         goto end;
 
     /* Must be something else, ignore the index in that case */
-    sprintf(xpm_path,"%s/%04x_%s.xpm",iconsdir,crc,ico_name);
+    sprintf(xpm_path,"%s/%04x_%s.png",iconsdir,crc,ico_name);
     if (ExtractFromICO( path, xpm_path))
         goto end;
     if (!bWait)
+    {
+        sprintf(xpm_path,"%s/%04x_%s.xpm",iconsdir,crc,ico_name);
         if (create_default_icon( xpm_path, ico_path ))
             goto end;
+    }
 
     HeapFree( GetProcessHeap(), 0, xpm_path );
     xpm_path=NULL;
