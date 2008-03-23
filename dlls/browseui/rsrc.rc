@@ -31,4 +31,5 @@
 #include "rsrc_Nl.rc"
 #include "rsrc_No.rc"
 #include "rsrc_Pl.rc"
+#include "rsrc_Ro.rc"
 #include "rsrc_Ru.rc"
