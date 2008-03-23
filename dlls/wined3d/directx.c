@@ -2613,7 +2613,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     } else if((UsageCaps == (Usage & ~WINED3DUSAGE_AUTOGENMIPMAP)) && (Usage & WINED3DUSAGE_AUTOGENMIPMAP)){
         return WINED3DOK_NOAUTOGEN;
     } else {
-        TRACE_(d3d_caps)("[FAILED] - Usage=%#08x requested but only %#08x is available\n", Usage, UsageCaps);
+        TRACE_(d3d_caps)("[FAILED] - Usage=%#08x requested for CheckFormat=%s and RType=%d but only %#08x is available\n", Usage, debug_d3dformat(CheckFormat), RType, UsageCaps);
         return WINED3DERR_NOTAVAILABLE;
     }
 }
