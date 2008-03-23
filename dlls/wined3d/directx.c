@@ -2009,7 +2009,7 @@ static BOOL CheckSrgbWriteCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WI
     /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
      * doing the color fixup in shaders.
      * Note Windows drivers (at least on the Geforce 8800) also offer this on R5G6B5. */
-    if((CheckFormat == WINED3DFMT_X8R8G8B8) || (CheckFormat == WINED3DFMT_X8R8G8B8)) {
+    if((CheckFormat == WINED3DFMT_X8R8G8B8) || (CheckFormat == WINED3DFMT_A8R8G8B8)) {
         int vs_selected_mode;
         int ps_selected_mode;
         select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
