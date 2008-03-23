@@ -116,10 +116,11 @@ copy_icon()
 {
     if [ -f "$icon" ]
     then
-        xpmicon=`basename "$icon" .xpm`
+        xpmicon=`basename "$icon"`
+        xpmicon=${xpmicon%.*}
 
         mkdir -p "$1"
-        cp "$icon" "$1/$xpmicon.xpm"
+        cp "$icon" "$1"
     else
         xpmicon=""
     fi
