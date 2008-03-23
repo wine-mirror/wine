@@ -22,6 +22,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "rpc.h"
+#include "rpcdce.h"
 #include "ntdsapi.h"
 
 #include "wine/test.h"
