@@ -138,32 +138,32 @@ static void test_aggregation(const CLSID clsidOuter, const CLSID clsidInner,
 
 static void test_video_renderer_aggregations(void)
 {
-    IID iids[] = {
-        IID_IMediaFilter, IID_IBaseFilter, IID_IBasicVideo, IID_IVideoWindow
+    const IID * iids[] = {
+        &IID_IMediaFilter, &IID_IBaseFilter, &IID_IBasicVideo, &IID_IVideoWindow
     };
     int i;
 
     for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
     {
         test_aggregation(CLSID_SystemClock, CLSID_VideoRenderer,
-                         IID_IReferenceClock, iids[i]);
+                         IID_IReferenceClock, *iids[i]);
     }
 }
 
 static void test_filter_graph_aggregations(void)
 {
-    IID iids[] = {
-        IID_IFilterGraph2, IID_IMediaControl, IID_IGraphBuilder,
-        IID_IFilterGraph, IID_IMediaSeeking, IID_IBasicAudio, IID_IBasicVideo,
-        IID_IVideoWindow, IID_IMediaEventEx, IID_IMediaFilter,
-        IID_IMediaEventSink, IID_IGraphConfig, IID_IMediaPosition
+    const IID * iids[] = {
+        &IID_IFilterGraph2, &IID_IMediaControl, &IID_IGraphBuilder,
+        &IID_IFilterGraph, &IID_IMediaSeeking, &IID_IBasicAudio, &IID_IBasicVideo,
+        &IID_IVideoWindow, &IID_IMediaEventEx, &IID_IMediaFilter,
+        &IID_IMediaEventSink, &IID_IGraphConfig, &IID_IMediaPosition
     };
     int i;
 
     for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
     {
         test_aggregation(CLSID_SystemClock, CLSID_FilterGraph,
-                         IID_IReferenceClock, iids[i]);
+                         IID_IReferenceClock, *iids[i]);
     }
 }
 
