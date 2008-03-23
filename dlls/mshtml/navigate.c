@@ -41,7 +41,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define CONTENT_LENGTH "Content-Length"
 #define UTF16_STR "utf-16"
 
+typedef struct {
+    const nsIInputStreamVtbl *lpInputStreamVtbl;
+
+    LONG ref;
+
+    char buf[1024];
+    DWORD buf_size;
+} nsProtocolStream;
+
 #define NSINSTREAM(x) ((nsIInputStream*) &(x)->lpInputStreamVtbl)
+
+struct BSCallback {
+    const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
+    const IServiceProviderVtbl    *lpServiceProviderVtbl;
+    const IHttpNegotiate2Vtbl     *lpHttpNegotiate2Vtbl;
+    const IInternetBindInfoVtbl   *lpInternetBindInfoVtbl;
+
+    LONG ref;
+
+    LPWSTR headers;
+    HGLOBAL post_data;
+    ULONG post_data_len;
+    ULONG readed;
+
+    nsChannel *nschannel;
+    nsIStreamListener *nslistener;
+    nsISupports *nscontext;
+
+    IMoniker *mon;
+    IBinding *binding;
+
+    HTMLDocument *doc;
+
+    nsProtocolStream *nsstream;
+
+    struct list entry;
+};
 
 #define NSINSTREAM_THIS(iface) DEFINE_THIS(nsProtocolStream, InputStream, iface)
 

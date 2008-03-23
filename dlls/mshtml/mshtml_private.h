@@ -235,42 +235,6 @@ typedef struct {
 } nsChannel;
 
 typedef struct {
-    const nsIInputStreamVtbl *lpInputStreamVtbl;
-
-    LONG ref;
-
-    char buf[1024];
-    DWORD buf_size;
-} nsProtocolStream;
-
-struct BSCallback {
-    const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
-    const IServiceProviderVtbl    *lpServiceProviderVtbl;
-    const IHttpNegotiate2Vtbl     *lpHttpNegotiate2Vtbl;
-    const IInternetBindInfoVtbl   *lpInternetBindInfoVtbl;
-
-    LONG ref;
-
-    LPWSTR headers;
-    HGLOBAL post_data;
-    ULONG post_data_len;
-    ULONG readed;
-
-    nsChannel *nschannel;
-    nsIStreamListener *nslistener;
-    nsISupports *nscontext;
-
-    IMoniker *mon;
-    IBinding *binding;
-
-    HTMLDocument *doc;
-
-    nsProtocolStream *nsstream;
-
-    struct list entry;
-};
-
-typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
     void (*destructor)(HTMLDOMNode*);
 } NodeImplVtbl;
