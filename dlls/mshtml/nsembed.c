@@ -1138,16 +1138,22 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
     nsIWineURI_SetNSContainer(wine_uri, This);
     nsIWineURI_SetIsDocumentURI(wine_uri, TRUE);
 
-    if(This->bscallback && This->bscallback->mon) {
-        LPWSTR wine_url;
-        HRESULT hres;
+    if(This->bscallback) {
+        IMoniker *mon = get_channelbsc_mon(This->bscallback);
 
-        hres = IMoniker_GetDisplayName(This->bscallback->mon, NULL, 0, &wine_url);
-        if(SUCCEEDED(hres)) {
-            nsIWineURI_SetWineURL(wine_uri, wine_url);
-            CoTaskMemFree(wine_url);
-        }else {
-            WARN("GetDisplayName failed: %08x\n", hres);
+        if(mon) {
+            LPWSTR wine_url;
+            HRESULT hres;
+
+            hres = IMoniker_GetDisplayName(mon, NULL, 0, &wine_url);
+            if(SUCCEEDED(hres)) {
+                nsIWineURI_SetWineURL(wine_uri, wine_url);
+                CoTaskMemFree(wine_url);
+            }else {
+                WARN("GetDisplayName failed: %08x\n", hres);
+            }
+
+            IMoniker_Release(mon);
         }
     }
 

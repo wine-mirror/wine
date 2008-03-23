@@ -866,6 +866,13 @@ HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback, IBindCtx *bctx)
     return S_OK;
 }
 
+IMoniker *get_channelbsc_mon(BSCallback *This)
+{
+    if(This->mon)
+        IMoniker_AddRef(This->mon);
+    return This->mon;
+}
+
 void set_document_bscallback(HTMLDocument *doc, BSCallback *callback)
 {
     BSCallback *iter;
