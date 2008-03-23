@@ -660,7 +660,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     BSCServiceProvider_QueryService
 };
 
-BSCallback *create_bscallback(IMoniker *mon)
+BSCallback *create_channelbsc(IMoniker *mon)
 {
     BSCallback *ret = heap_alloc(sizeof(BSCallback));
 
@@ -789,7 +789,7 @@ void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
     IHlink *hlink;
     HRESULT hr;
 
-    callback = create_bscallback(NULL);
+    callback = create_channelbsc(NULL);
 
     if(post_data_stream) {
         parse_post_data(post_data_stream, &callback->headers, &callback->post_data,
@@ -897,7 +897,7 @@ void set_document_bscallback(HTMLDocument *doc, BSCallback *callback)
     }
 }
 
-HRESULT load_stream(BSCallback *bscallback, IStream *stream)
+HRESULT channelbsc_load_stream(BSCallback *bscallback, IStream *stream)
 {
     HRESULT hres;
 

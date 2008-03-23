@@ -54,6 +54,7 @@
 typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
+typedef struct BSCallback nsChannelBSC;
 
 typedef struct {
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
@@ -138,7 +139,7 @@ struct HTMLDocument {
 
     IOleUndoManager *undomgr;
 
-    BSCallback *bscallback;
+    nsChannelBSC *bscallback;
     IMoniker *mon;
     LPOLESTR url;
     struct list bindings;
@@ -211,7 +212,7 @@ struct NSContainer {
 
     HWND hwnd;
 
-    BSCallback *bscallback; /* hack */
+    nsChannelBSC *bscallback; /* hack */
     HWND reset_focus; /* hack */
 };
 
@@ -428,14 +429,16 @@ void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 
-BSCallback *create_bscallback(IMoniker*);
-HRESULT start_binding(HTMLDocument*,BSCallback*,IBindCtx*);
-HRESULT load_stream(BSCallback*,IStream*);
-void set_document_bscallback(HTMLDocument*,BSCallback*);
+void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);
+HRESULT start_binding(HTMLDocument*,BSCallback*,IBindCtx*);
 
-void channelbsc_set_channel(BSCallback*,nsChannel*,nsIStreamListener*,nsISupports*);
-IMoniker *get_channelbsc_mon(BSCallback*);
+HRESULT bind_mon_to_buffer(HTMLDocument*,IMoniker*,void**);
+
+nsChannelBSC *create_channelbsc(IMoniker*);
+HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*);
+void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*);
+IMoniker *get_channelbsc_mon(nsChannelBSC*);
 
 IHTMLSelectionObject *HTMLSelectionObject_Create(HTMLDocument*,nsISelection*);
 IHTMLTxtRange *HTMLTxtRange_Create(HTMLDocument*,nsIDOMRange*);

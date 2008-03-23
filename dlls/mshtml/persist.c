@@ -185,7 +185,7 @@ void set_current_mon(HTMLDocument *This, IMoniker *mon)
 
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
 {
-    BSCallback *bscallback;
+    nsChannelBSC *bscallback;
     LPOLESTR url = NULL;
     task_t *task;
     HRESULT hres;
@@ -271,7 +271,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
         }
     }
 
-    bscallback = create_bscallback(mon);
+    bscallback = create_channelbsc(mon);
 
     if(This->frame) {
         task = heap_alloc(sizeof(task_t));
@@ -305,7 +305,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
         if(NS_SUCCEEDED(nsres)) {
             /* FIXME: don't return here (URL Moniker needs to be good enough) */
 
-            IBindStatusCallback_Release(STATUSCLB(bscallback));
+            IUnknown_Release((IUnknown*)bscallback);
             CoTaskMemFree(url);
 
             if(bind_complete)
@@ -317,7 +317,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     }
 
     set_document_bscallback(This, bscallback);
-    IBindStatusCallback_Release(STATUSCLB(bscallback));
+    IUnknown_Release((IUnknown*)bscallback);
     CoTaskMemFree(url);
 
     if(bind_complete)
@@ -422,7 +422,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         return hres;
 
     if(!bind_complete)
-        return start_binding(This, This->bscallback, pibc);
+        return start_binding(This, (BSCallback*)This->bscallback, pibc);
 
     return S_OK;
 }
@@ -687,7 +687,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
     if(FAILED(hres))
         return hres;
 
-    return load_stream(This->bscallback, pStm);
+    return channelbsc_load_stream(This->bscallback, pStm);
 }
 
 static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStm,

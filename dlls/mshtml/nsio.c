@@ -727,7 +727,7 @@ static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
 static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamListener *listener,
         nsISupports *context)
 {
-    BSCallback *bscallback;
+    nsChannelBSC *bscallback;
     IMoniker *mon = NULL;
     nsresult nsres;
     task_t *task;
@@ -769,7 +769,7 @@ static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamLis
     if(FAILED(hres))
         return NS_ERROR_UNEXPECTED;
 
-    bscallback = create_bscallback(mon);
+    bscallback = create_channelbsc(mon);
     IMoniker_Release(mon);
 
     channelbsc_set_channel(bscallback, This, listener, context);
