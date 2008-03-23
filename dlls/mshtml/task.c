@@ -215,7 +215,7 @@ static void task_start_binding(HTMLDocument *doc, BSCallback *bscallback)
 {
     if(doc)
         start_binding(doc, bscallback, NULL);
-    IBindStatusCallback_Release(STATUSCLB(bscallback));
+    IUnknown_Release((IUnknown*)bscallback);
 }
 
 static void process_task(task_t *task)
@@ -231,7 +231,7 @@ static void process_task(task_t *task)
         set_progress(task->doc);
         break;
     case TASK_START_BINDING:
-        task_start_binding(task->doc, task->bscallback);
+        task_start_binding(task->doc, (BSCallback*)task->bscallback);
         break;
     default:
         ERR("Wrong task_id %d\n", task->task_id);

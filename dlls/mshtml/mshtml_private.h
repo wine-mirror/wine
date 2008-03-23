@@ -54,7 +54,7 @@
 typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
-typedef struct BSCallback nsChannelBSC;
+typedef struct nsChannelBSC nsChannelBSC;
 
 typedef struct {
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
@@ -479,7 +479,7 @@ typedef struct task_t {
         TASK_START_BINDING
     } task_id;
 
-    BSCallback *bscallback;
+    nsChannelBSC *bscallback;
 
     struct task_t *next;
 } task_t;
