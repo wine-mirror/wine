@@ -377,7 +377,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
 /*   wc.para_style = tp->member.para.style; */
   wc.style = NULL;
   wc.nFirstMargin = ME_twips2pointsX(c, tp->member.para.pFmt->dxStartIndent) + beginofs;
-  wc.nLeftMargin = wc.nFirstMargin + ME_twips2pointsX(c, tp->member.para.pFmt->dxOffset) + beginofs;
+  wc.nLeftMargin = wc.nFirstMargin + ME_twips2pointsX(c, tp->member.para.pFmt->dxOffset);
   wc.nRightMargin = ME_twips2pointsX(c, tp->member.para.pFmt->dxRightIndent);
   wc.nRow = 0;
   wc.pt.x = 0;
