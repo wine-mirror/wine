@@ -437,9 +437,9 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			    dst->u3.sz = (src->u1.x * mat._13) + (src->u2.y * mat._23) + (src->u3.z * mat._33) + (1.0 * mat._43);
 			    dst->u4.rhw = (src->u1.x * mat._14) + (src->u2.y * mat._24) + (src->u3.z * mat._34) + (1.0 * mat._44);
 
-			    dst->u1.sx = dst->u1.sx / dst->u4.rhw * Viewport->dwWidth / 2
+			    dst->u1.sx = dst->u1.sx / dst->u4.rhw * Viewport->dvScaleX
 				       + Viewport->dwX + Viewport->dwWidth / 2;
-			    dst->u2.sy = (-dst->u2.sy) / dst->u4.rhw * Viewport->dwHeight / 2
+			    dst->u2.sy = (-dst->u2.sy) / dst->u4.rhw * Viewport->dvScaleY
 				       + Viewport->dwY + Viewport->dwHeight / 2;
 			    dst->u3.sz /= dst->u4.rhw;
 			    dst->u4.rhw = 1 / dst->u4.rhw;
@@ -460,8 +460,8 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			    dump_D3DMATRIX(&proj_mat);
 			    TRACE("  View       Matrix : (%p)\n",&view_mat);
 			    dump_D3DMATRIX(&view_mat);
-			    TRACE("  World Matrix : (%p)\n", &mat);
-			    dump_D3DMATRIX(&mat);
+			    TRACE("  World Matrix : (%p)\n", &world_mat);
+			    dump_D3DMATRIX(&world_mat);
 			}
 
 			multiply_matrix(&mat,&view_mat,&world_mat);
@@ -479,8 +479,11 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			    dst->u3.sz = (src->u1.x * mat._13) + (src->u2.y * mat._23) + (src->u3.z * mat._33) + (1.0 * mat._43);
 			    dst->u4.rhw = (src->u1.x * mat._14) + (src->u2.y * mat._24) + (src->u3.z * mat._34) + (1.0 * mat._44);
 
-			    dst->u1.sx /= dst->u4.rhw * Viewport->dvScaleX * Viewport->dwWidth / 2 + Viewport->dwX;
-			    dst->u2.sy /= dst->u4.rhw * Viewport->dvScaleY * Viewport->dwHeight / 2 + Viewport->dwY;
+			    dst->u1.sx = dst->u1.sx / dst->u4.rhw * Viewport->dvScaleX
+				       + Viewport->dwX + Viewport->dwWidth / 2;
+			    dst->u2.sy = (-dst->u2.sy) / dst->u4.rhw * Viewport->dvScaleY
+				       + Viewport->dwY + Viewport->dwHeight / 2;
+
 			    dst->u3.sz /= dst->u4.rhw;
 			    dst->u4.rhw = 1 / dst->u4.rhw;
 
