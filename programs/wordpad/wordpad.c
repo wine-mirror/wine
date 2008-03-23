@@ -350,7 +350,7 @@ static void update_font_list(void)
     fmt.cbSize = sizeof(fmt);
 
     SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
-    SendMessageW(hFontListEdit, WM_GETTEXT, MAX_PATH, (LPARAM)fontName);
+    if (!SendMessageW(hFontListEdit, WM_GETTEXT, MAX_PATH, (LPARAM)fontName)) return;
 
     if(lstrcmpW(fontName, fmt.szFaceName))
     {
