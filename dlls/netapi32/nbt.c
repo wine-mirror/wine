@@ -67,15 +67,6 @@
 
 #include "config.h"
 #include <stdarg.h>
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-# include <sys/poll.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
 
 #include "winsock2.h"
 #include "windef.h"
@@ -311,12 +302,13 @@ static UCHAR NetBTWaitForNameResponse(const NetBTAdapter *adapter, SOCKET fd,
     while (!found && ret == NRC_GOODRET && (now = GetTickCount()) < waitUntil)
     {
         DWORD msToWait = waitUntil - now;
-        struct pollfd pfd;
+        struct fd_set fds;
+        struct timeval timeout = { msToWait / 1000, msToWait % 1000 };
         int r;
 
-        pfd.fd = fd;
-        pfd.events = POLLIN;
-        r = poll(&pfd, 1, msToWait);
+        FD_ZERO(&fds);
+        FD_SET(fd, &fds);
+        r = select(fd + 1, &fds, NULL, NULL, &timeout);
         if (r < 0)
             ret = NRC_SYSTEM;
         else if (r == 1)
