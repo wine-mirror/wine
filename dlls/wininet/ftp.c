@@ -937,7 +937,7 @@ BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDir
     LPWININETAPPINFOW hIC = NULL;
     BOOL r = FALSE;
 
-    TRACE("len(%d)\n", *lpdwCurrentDirectory);
+    TRACE("%p %p %p\n", hFtpSession, lpszCurrentDirectory, lpdwCurrentDirectory);
 
     lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
     if (NULL == lpwfs)
@@ -1014,8 +1014,6 @@ static BOOL FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
     INT nResCode;
     LPWININETAPPINFOW hIC = NULL;
     DWORD bSuccess = FALSE;
-
-    TRACE("len(%d)\n", *lpdwCurrentDirectory);
 
     /* Clear any error information */
     INTERNET_SetLastError(0);

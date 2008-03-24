@@ -26,7 +26,6 @@
  *     Add W-function tests.
  *     Add missing function tests:
  *         FtpFindFirstFile
- *         FtpGetCurrentDirectory
  *         FtpGetFileSize
  *         FtpSetCurrentDirectory
  */
