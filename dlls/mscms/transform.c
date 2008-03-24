@@ -135,15 +135,21 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
 {
     HTRANSFORM ret = NULL;
 #ifdef HAVE_LCMS
-    cmsHTRANSFORM cmstransform;
+    struct transform transform;
+    struct profile *dst, *tgt = NULL;
     cmsHPROFILE cmsinput, cmsoutput, cmstarget = NULL;
     DWORD in_format, out_format, proofing = 0;
     int intent;
 
     TRACE( "( %p, %p, %p, 0x%08x )\n", space, dest, target, flags );
 
-    if (!space || !dest) return FALSE;
+    if (!space || !(dst = grab_profile( dest ))) return FALSE;
 
+    if (target && !(tgt = grab_profile( target )))
+    {
+        release_profile( dst );
+        return FALSE;
+    }
     intent = space->lcsIntent > 3 ? INTENT_PERCEPTUAL : space->lcsIntent;
 
     TRACE( "lcsIntent:   %x\n", space->lcsIntent );
@@ -157,13 +163,16 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
     if (target)
     {
         proofing = cmsFLAGS_SOFTPROOFING;
-        cmstarget = MSCMS_hprofile2cmsprofile( target );
+        cmstarget = tgt->cmsprofile;
     }
-    cmsoutput = MSCMS_hprofile2cmsprofile( dest );
-    cmstransform = cmsCreateProofingTransform(cmsinput, in_format, cmsoutput, out_format, cmstarget,
-                                              intent, INTENT_ABSOLUTE_COLORIMETRIC, proofing);
+    cmsoutput = dst->cmsprofile;
+    transform.cmstransform = cmsCreateProofingTransform(cmsinput, in_format, cmsoutput, out_format, cmstarget,
+                                                        intent, INTENT_ABSOLUTE_COLORIMETRIC, proofing);
 
-    ret = MSCMS_create_htransform_handle( cmstransform );
+    ret = create_transform( &transform );
+
+    if (tgt) release_profile( tgt );
+    release_profile( dst );
 
 #endif /* HAVE_LCMS */
     return ret;
@@ -191,7 +200,8 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
     HTRANSFORM ret = NULL;
 #ifdef HAVE_LCMS
     cmsHPROFILE *cmsprofiles, cmsconvert = NULL;
-    cmsHTRANSFORM cmstransform;
+    struct transform transform;
+    struct profile *profile0, *profile1;
     DWORD in_format, out_format;
 
     TRACE( "( %p, 0x%08x, %p, 0x%08x, 0x%08x, 0x%08x )\n",
@@ -205,6 +215,14 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
         return NULL;
     }
 
+    profile0 = grab_profile( profiles[0] );
+    if (!profile0) return NULL;
+    profile1 = grab_profile( profiles[1] );
+    if (!profile1)
+    {
+        release_profile( profile0 );
+        return NULL;
+    }
     in_format  = from_profile( profiles[0] );
     out_format = from_profile( profiles[nprofiles - 1] );
 
@@ -218,22 +236,25 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
     cmsprofiles = HeapAlloc( GetProcessHeap(), 0, (nprofiles + 1) * sizeof(cmsHPROFILE *) );
     if (cmsprofiles)
     {
-        cmsprofiles[0] = MSCMS_hprofile2cmsprofile( profiles[0] );
+        cmsprofiles[0] = profile0->cmsprofile;
         if (cmsconvert)
         {
             cmsprofiles[1] = cmsconvert;
-            cmsprofiles[2] = MSCMS_hprofile2cmsprofile( profiles[1] );
+            cmsprofiles[2] = profile1->cmsprofile;
             nprofiles++;
         }
         else
         {
-            cmsprofiles[1] = MSCMS_hprofile2cmsprofile( profiles[1] );
+            cmsprofiles[1] = profile1->cmsprofile;
         }
-        cmstransform = cmsCreateMultiprofileTransform( cmsprofiles, nprofiles, in_format, out_format, *intents, 0 );
+        transform.cmstransform = cmsCreateMultiprofileTransform( cmsprofiles, nprofiles, in_format, out_format, *intents, 0 );
 
         HeapFree( GetProcessHeap(), 0, cmsprofiles );
-        ret = MSCMS_create_htransform_handle( cmstransform );
+        ret = create_transform( &transform );
     }
+
+    release_profile( profile0 );
+    release_profile( profile1 );
 
 #endif /* HAVE_LCMS */
     return ret;
@@ -251,19 +272,14 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
  *  Success: TRUE
  *  Failure: FALSE
  */ 
-BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
+BOOL WINAPI DeleteColorTransform( HTRANSFORM handle )
 {
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS
-    cmsHTRANSFORM cmstransform;
 
-    TRACE( "( %p )\n", transform );
+    TRACE( "( %p )\n", handle );
 
-    cmstransform = MSCMS_htransform2cmstransform( transform );
-    cmsDeleteTransform( cmstransform );
-
-    MSCMS_destroy_htransform_handle( transform );
-    ret = TRUE;
+    ret = close_transform( handle );
 
 #endif /* HAVE_LCMS */
     return ret;
@@ -291,22 +307,23 @@ BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
  *  Success: TRUE
  *  Failure: FALSE
  */
-BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT input,
+BOOL WINAPI TranslateBitmapBits( HTRANSFORM handle, PVOID srcbits, BMFORMAT input,
     DWORD width, DWORD height, DWORD inputstride, PVOID destbits, BMFORMAT output,
     DWORD outputstride, PBMCALLBACKFN callback, ULONG data )
 {
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS
-    cmsHTRANSFORM cmstransform;
+    struct transform *transform = grab_transform( handle );
 
     TRACE( "( %p, %p, 0x%08x, 0x%08x, 0x%08x, 0x%08x, %p, 0x%08x, 0x%08x, %p, 0x%08x )\n",
-           transform, srcbits, input, width, height, inputstride, destbits, output,
+           handle, srcbits, input, width, height, inputstride, destbits, output,
            outputstride, callback, data );
 
-    cmstransform = MSCMS_htransform2cmstransform( transform );
-    cmsChangeBuffersFormat( cmstransform, from_bmformat(input), from_bmformat(output) );
+    if (!transform) return FALSE;
+    cmsChangeBuffersFormat( transform->cmstransform, from_bmformat(input), from_bmformat(output) );
 
-    cmsDoTransform( cmstransform, srcbits, destbits, width * height );
+    cmsDoTransform( transform->cmstransform, srcbits, destbits, width * height );
+    release_transform( transform );
     ret = TRUE;
 
 #endif /* HAVE_LCMS */
@@ -330,16 +347,20 @@ BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT i
  *  Success: TRUE
  *  Failure: FALSE
  */
-BOOL WINAPI TranslateColors( HTRANSFORM transform, PCOLOR in, DWORD count,
+BOOL WINAPI TranslateColors( HTRANSFORM handle, PCOLOR in, DWORD count,
                              COLORTYPE input_type, PCOLOR out, COLORTYPE output_type )
 {
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS
-    cmsHTRANSFORM xfrm = MSCMS_htransform2cmstransform( transform );
+    struct transform *transform = grab_transform( handle );
+    cmsHTRANSFORM xfrm;
     unsigned int i;
 
-    TRACE( "( %p, %p, %d, %d, %p, %d )\n", transform, in, count, input_type, out, output_type );
+    TRACE( "( %p, %p, %d, %d, %p, %d )\n", handle, in, count, input_type, out, output_type );
 
+    if (!transform) return FALSE;
+
+    xfrm = transform->cmstransform;
     cmsChangeBuffersFormat( xfrm, from_type(input_type), from_type(output_type) );
 
     switch (input_type)
@@ -418,6 +439,7 @@ BOOL WINAPI TranslateColors( HTRANSFORM transform, PCOLOR in, DWORD count,
         FIXME("unhandled input/output pair: %d/%d\n", input_type, output_type);
         break;
     }
+    release_transform( transform );
 
 #endif /* HAVE_LCMS */
     return ret;

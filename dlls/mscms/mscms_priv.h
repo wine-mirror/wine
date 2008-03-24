@@ -66,21 +66,39 @@
 #define DWORD   DWORD
 #define LPDWORD LPDWORD
 
-extern DWORD MSCMS_hprofile2access( HPROFILE );
-extern HPROFILE MSCMS_handle2hprofile( HANDLE file );
-extern HPROFILE MSCMS_cmsprofile2hprofile( cmsHPROFILE cmsprofile );
-extern HPROFILE MSCMS_iccprofile2hprofile( const icProfile *iccprofile );
-extern HANDLE MSCMS_hprofile2handle( HPROFILE profile );
-extern cmsHPROFILE MSCMS_hprofile2cmsprofile( HPROFILE profile );
-extern icProfile *MSCMS_hprofile2iccprofile( HPROFILE profile );
+/*  A simple structure to tie together a pointer to an icc profile, an lcms
+ *  color profile handle and a Windows file handle. If the profile is memory
+ *  based the file handle field is set to INVALID_HANDLE_VALUE. The 'access'
+ *  field records the access parameter supplied to an OpenColorProfile()
+ *  call, i.e. PROFILE_READ or PROFILE_READWRITE.
+ */
 
-extern HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile,
-                                              cmsHPROFILE cmsprofile, DWORD access );
-extern void MSCMS_destroy_hprofile_handle( HPROFILE profile );
+struct profile
+{
+    HANDLE file;
+    DWORD access;
+    icProfile *iccprofile;
+    cmsHPROFILE cmsprofile;
+};
 
-extern cmsHTRANSFORM MSCMS_htransform2cmstransform( HTRANSFORM transform );
-extern HTRANSFORM MSCMS_create_htransform_handle( cmsHTRANSFORM cmstransform );
-extern void MSCMS_destroy_htransform_handle( HTRANSFORM transform );
+struct transform
+{
+    cmsHTRANSFORM cmstransform;
+};
+
+extern HPROFILE create_profile( struct profile * );
+extern BOOL close_profile( HPROFILE );
+
+extern HTRANSFORM create_transform( struct transform * );
+extern BOOL close_transform( HTRANSFORM );
+
+struct profile *grab_profile( HPROFILE );
+struct transform *grab_transform( HTRANSFORM );
+
+void release_profile( struct profile * );
+void release_transform( struct transform * );
+
+extern void free_handle_tables( void );
 
 extern DWORD MSCMS_get_tag_count( const icProfile *iccprofile );
 extern void MSCMS_get_tag_by_index( icProfile *iccprofile, DWORD index, icTag *tag );
