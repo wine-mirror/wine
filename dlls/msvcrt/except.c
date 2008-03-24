@@ -497,6 +497,7 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
         }
         break;
     case EXCEPTION_ILLEGAL_INSTRUCTION:
+    case EXCEPTION_PRIV_INSTRUCTION:
         if ((handler = sighandlers[MSVCRT_SIGILL]) != MSVCRT_SIG_DFL)
         {
             if (handler != MSVCRT_SIG_IGN)
