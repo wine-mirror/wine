@@ -385,7 +385,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwi->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+    wwi->waveDesc = *lpDesc;
     ALSA_copyFormat(lpDesc->lpFormat, &wwi->format);
 
     if (wwi->format.Format.wBitsPerSample == 0) {

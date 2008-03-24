@@ -640,7 +640,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwo->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+    wwo->waveDesc = *lpDesc;
     ALSA_copyFormat(lpDesc->lpFormat, &wwo->format);
 
     TRACE("Requested this format: %dx%dx%d %s\n",

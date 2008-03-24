@@ -1128,8 +1128,8 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	if (!type)
             return;
 
-	memcpy(&MidiOutDev[MODM_NumDevs].addr, snd_seq_port_info_get_addr(pinfo), sizeof(snd_seq_addr_t));
-		
+	MidiOutDev[MODM_NumDevs].addr = *snd_seq_port_info_get_addr(pinfo);
+
 	/* Manufac ID. We do not have access to this with soundcard.h
 	 * Does not seem to be a problem, because in mmsystem.h only
 	 * Microsoft's ID is listed.
@@ -1184,8 +1184,8 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	if (!type)
 	    return;
 
-	memcpy(&MidiInDev[MIDM_NumDevs].addr, snd_seq_port_info_get_addr(pinfo), sizeof(snd_seq_addr_t));
-		
+	MidiInDev[MIDM_NumDevs].addr = *snd_seq_port_info_get_addr(pinfo);
+
 	/* Manufac ID. We do not have access to this with soundcard.h
 	 * Does not seem to be a problem, because in mmsystem.h only
 	 * Microsoft's ID is listed.

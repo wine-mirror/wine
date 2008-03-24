@@ -850,7 +850,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(PIDSCDRIVER iface, PDSD
 {
     IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p,%p)\n",iface,pDesc);
-    memcpy(pDesc, &(WInDev[This->wDevID].ds_desc), sizeof(DSDRIVERDESC));
+    *pDesc			= WInDev[This->wDevID].ds_desc;
     pDesc->dwFlags		= 0;
     pDesc->dnDevNode		= WInDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId		= 0;
@@ -1026,7 +1026,7 @@ DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
  */
 DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
-    memcpy(desc, &(WInDev[wDevID].ds_desc), sizeof(DSDRIVERDESC));
+    *desc = WInDev[wDevID].ds_desc;
     return MMSYSERR_NOERROR;
 }
 
