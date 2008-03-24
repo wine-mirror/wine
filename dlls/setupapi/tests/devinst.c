@@ -649,7 +649,7 @@ static void testGetDeviceInterfaceDetail(void)
             /* Windows 2000 and up check for the exact size. Win9x returns ERROR_INVALID_PARAMETER
              * on every call (so doesn't get here) and NT4 doesn't have this function.
              */
-            detail->cbSize = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char);
+            detail->cbSize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath[1]);
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
                     size, &size, NULL);
             ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %d\n",
