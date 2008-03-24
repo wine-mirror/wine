@@ -2300,7 +2300,8 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
             switch(msg.message)
             {
             case WM_MOUSEMOVE:
-                pt = msg.pt;
+                pt.x = min( max( msg.pt.x, rectWindow.left ), rectWindow.right - 1 );
+                pt.y = min( max( msg.pt.y, rectWindow.top ), rectWindow.bottom - 1 );
                 hittest = SendMessageW( hwnd, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ) );
                 if ((hittest < HTLEFT) || (hittest > HTBOTTOMRIGHT)) hittest = 0;
                 break;
