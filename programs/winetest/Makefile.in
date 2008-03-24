@@ -48,6 +48,7 @@ TESTBINS = \
 	infosoft_test.exe \
 	iphlpapi_test.exe \
 	itss_test.exe \
+	jscript_test.exe \
 	kernel32_test.exe \
 	localspl_test.exe \
 	localui_test.exe \
@@ -155,6 +156,8 @@ iphlpapi_test.exe: $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 itss_test.exe: $(DLLDIR)/itss/tests/itss_test.exe$(DLLEXT)
 	cp $(DLLDIR)/itss/tests/itss_test.exe$(DLLEXT) $@ && $(STRIP) $@
+jscript_test.exe: $(DLLDIR)/jscript/tests/jscript_test.exe$(DLLEXT)
+	cp $(DLLDIR)/jscript/tests/jscript_test.exe$(DLLEXT) $@ && $(STRIP) $@
 kernel32_test.exe: $(DLLDIR)/kernel32/tests/kernel32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/kernel32/tests/kernel32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 localspl_test.exe: $(DLLDIR)/localspl/tests/localspl_test.exe$(DLLEXT)

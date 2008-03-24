@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = jscript.dll
+IMPORTS   = ole32 kernel32
+
+CTESTS = \
+	jscript.c
+
+@MAKE_TEST_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

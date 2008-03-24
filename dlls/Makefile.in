@@ -311,6 +311,7 @@ TESTSUBDIRS = \
 	infosoft/tests \
 	iphlpapi/tests \
 	itss/tests \
+	jscript/tests \
 	kernel32/tests \
 	localspl/tests \
 	localui/tests \

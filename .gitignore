@@ -163,6 +163,9 @@ dlls/iphlpapi/tests/testlist.c
 dlls/itss/tests/*.ok
 dlls/itss/tests/itss_crosstest.exe
 dlls/itss/tests/testlist.c
+dlls/jscript/tests/*.ok
+dlls/jscript/tests/jscript_crosstest.exe
+dlls/jscript/tests/testlist.c
 dlls/kernel32/libkernel32.def
 dlls/kernel32/nls/winerr_deu.mc.rc
 dlls/kernel32/nls/winerr_enu.mc.rc
@@ -629,6 +632,7 @@ programs/winetest/inetcomm_test.exe
 programs/winetest/infosoft_test.exe
 programs/winetest/iphlpapi_test.exe
 programs/winetest/itss_test.exe
+programs/winetest/jscript_test.exe
 programs/winetest/kernel32_test.exe
 programs/winetest/localspl_test.exe
 programs/winetest/localui_test.exe
