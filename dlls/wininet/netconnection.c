@@ -23,6 +23,12 @@
 #include "config.h"
 #include "wine/port.h"
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -610,19 +616,16 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 
     if (!connection->useSSL)
     {
-	struct timeval tv;
-	fd_set infd;
+        struct pollfd pfd;
 	BOOL bSuccess = FALSE;
 	DWORD nRecv = 0;
 
-	FD_ZERO(&infd);
-	FD_SET(connection->socketFD, &infd);
-	tv.tv_sec=RESPONSE_TIMEOUT;
-	tv.tv_usec=0;
+        pfd.fd = connection->socketFD;
+        pfd.events = POLLIN;
 
 	while (nRecv < *dwBuffer)
 	{
-	    if (select(connection->socketFD+1,&infd,NULL,NULL,&tv) > 0)
+	    if (poll(&pfd,1, RESPONSE_TIMEOUT * 1000) > 0)
 	    {
 		if (recv(connection->socketFD, &lpszBuffer[nRecv], 1, 0) <= 0)
 		{

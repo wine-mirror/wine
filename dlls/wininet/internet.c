@@ -38,6 +38,12 @@
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -3049,22 +3055,19 @@ LPSTR INTERNET_GetResponseBuffer(void)
 
 LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen)
 {
-    struct timeval tv;
-    fd_set infd;
+    struct pollfd pfd;
     BOOL bSuccess = FALSE;
     INT nRecv = 0;
     LPSTR lpszBuffer = INTERNET_GetResponseBuffer();
 
     TRACE("\n");
 
-    FD_ZERO(&infd);
-    FD_SET(nSocket, &infd);
-    tv.tv_sec=RESPONSE_TIMEOUT;
-    tv.tv_usec=0;
+    pfd.fd = nSocket;
+    pfd.events = POLLIN;
 
     while (nRecv < MAX_REPLY_LEN)
     {
-        if (select(nSocket+1,&infd,NULL,NULL,&tv) > 0)
+        if (poll(&pfd,1, RESPONSE_TIMEOUT * 1000) > 0)
         {
             if (recv(nSocket, &lpszBuffer[nRecv], 1, 0) <= 0)
             {
