@@ -88,6 +88,138 @@ interface IAssemblyCacheItem : IUnknown
 interface IAssemblyName: IUnknown
 {
     typedef [unique] IAssemblyName *LPASSEMBLYNAME;
+
+    typedef enum
+    {
+        CANOF_PARSE_DISPLAY_NAME = 0x1,
+        CANOF_SET_DEFAULT_VALUES = 0x2,
+        CANOF_VERIFY_FRIEND_ASSEMBLYNAME = 0x4,
+        CANOF_PARSE_FRIEND_DISPLAY_NAME = CANOF_PARSE_DISPLAY_NAME |
+                                          CANOF_VERIFY_FRIEND_ASSEMBLYNAME
+    } CREATE_ASM_NAME_OBJ_FLAGS;
+
+    typedef enum
+    {
+        ASM_NAME_PUBLIC_KEY = 0,
+        ASM_NAME_PUBLIC_KEY_TOKEN,
+        ASM_NAME_HASH_VALUE,
+        ASM_NAME_NAME,
+        ASM_NAME_MAJOR_VERSION,
+        ASM_NAME_MINOR_VERSION,
+        ASM_NAME_BUILD_NUMBER,
+        ASM_NAME_REVISION_NUMBER,
+        ASM_NAME_CULTURE,
+        ASM_NAME_PROCESSOR_ID_ARRAY,
+        ASM_NAME_OSINFO_ARRAY,
+        ASM_NAME_HASH_ALGID,
+        ASM_NAME_ALIAS,
+        ASM_NAME_CODEBASE_URL,
+        ASM_NAME_CODEBASE_LASTMOD,
+        ASM_NAME_NULL_PUBLIC_KEY,
+        ASM_NAME_NULL_PUBLIC_KEY_TOKEN,
+        ASM_NAME_CUSTOM,
+        ASM_NAME_NULL_CUSTOM,
+        ASM_NAME_MVID,
+        ASM_NAME_FILE_MAJOR_VERSION,
+        ASM_NAME_FILE_MINOR_VERSION,
+        ASM_NAME_FILE_BUILD_NUMBER,
+        ASM_NAME_FILE_REVISION_NUMBER,
+        ASM_NAME_RETARGET,
+        ASM_NAME_SIGNATURE_BLOB,
+        ASM_NAME_CONFIG_MASK,
+        ASM_NAME_ARCHITECTURE,
+        ASM_NAME_MAX_PARAMS
+    } ASM_NAME;
+
+    typedef enum
+    {
+        ASM_DISPLAYF_VERSION = 0x1,
+        ASM_DISPLAYF_CULTURE = 0x2,
+        ASM_DISPLAYF_PUBLIC_KEY_TOKEN = 0x4,
+        ASM_DISPLAYF_PUBLIC_KEY = 0x8,
+        ASM_DISPLAYF_CUSTOM = 0x10,
+        ASM_DISPLAYF_PROCESSORARCHITECTURE = 0x20,
+        ASM_DISPLAYF_LANGUAGEID = 0x40,
+        ASM_DISPLAYF_RETARGET = 0x80,
+        ASM_DISPLAYF_CONFIG_MASK = 0x100,
+        ASM_DISPLAYF_MVID = 0x200,
+
+        ASM_DISPLAYF_FULL = ASM_DISPLAYF_VERSION |
+                            ASM_DISPLAYF_CULTURE |
+                            ASM_DISPLAYF_PUBLIC_KEY_TOKEN |
+                            ASM_DISPLAYF_RETARGET |
+                            ASM_DISPLAYF_PROCESSORARCHITECTURE,
+    } ASM_DISPLAY_FLAGS;
+
+    typedef enum
+    {
+        ASM_CMPF_NAME               = 0x1,
+        ASM_CMPF_MAJOR_VERSION      = 0x2,
+        ASM_CMPF_MINOR_VERSION      = 0x4,
+        ASM_CMPF_BUILD_NUMBER       = 0x8,
+        ASM_CMPF_REVISION_NUMBER    = 0x10,
+        ASM_CMPF_VERSION = ASM_CMPF_MAJOR_VERSION |
+                           ASM_CMPF_MINOR_VERSION |
+                           ASM_CMPF_BUILD_NUMBER |
+                           ASM_CMPF_REVISION_NUMBER,
+        ASM_CMPF_PUBLIC_KEY_TOKEN   = 0x20,
+        ASM_CMPF_CULTURE            = 0x40,
+        ASM_CMPF_CUSTOM             = 0x80,
+        ASM_CMPF_DEFAULT            = 0x100,
+        ASM_CMPF_RETARGET           = 0x200,
+        ASM_CMPF_ARCHITECTURE       = 0x400,
+        ASM_CMPF_CONFIG_MASK        = 0x800,
+        ASM_CMPF_MVID               = 0x1000,
+        ASM_CMPF_SIGNATURE          = 0x2000,
+        ASM_CMPF_IL_ALL = ASM_CMPF_NAME |
+                          ASM_CMPF_VERSION |
+                          ASM_CMPF_PUBLIC_KEY_TOKEN |
+                          ASM_CMPF_CULTURE,
+        ASM_CMPF_IL_NO_VERSION = ASM_CMPF_NAME |
+                                 ASM_CMPF_PUBLIC_KEY_TOKEN |
+                                 ASM_CMPF_CULTURE
+    } ASM_CMP_FLAGS;
+
+    HRESULT SetProperty(
+        [in] DWORD PropertyId,
+        [in] LPVOID pvProperty,
+        [in] DWORD cbProperty);
+
+    HRESULT GetProperty(
+        [in] DWORD PropertyId,
+        [out] LPVOID pvProperty,
+        [in, out] LPDWORD pcbProperty);
+
+    HRESULT Finalize();
+
+    HRESULT GetDisplayName(
+        [out] LPOLESTR szDisplayName,
+        [in, out] LPDWORD pccDisplayName,
+        [in] DWORD dwDisplayFlags);
+
+    HRESULT Reserved(
+        [in] REFIID refIID,
+        [in] IUnknown *pUnkReserved1,
+        [in] IUnknown *pUnkReserved2,
+        [in] LPCOLESTR szReserved,
+        [in] LONGLONG llReserved,
+        [in] LPVOID pvReserved,
+        [in] DWORD cbReserved,
+        [out] LPVOID *ppReserved);
+
+    HRESULT GetName(
+        [in, out] LPDWORD lpcwBuffer,
+        [out] WCHAR *pwzName);
+
+    HRESULT GetVersion(
+        [out] LPDWORD pdwVersionHi,
+        [out] LPDWORD pdwVersionLow);
+
+    HRESULT IsEqual(
+        [in] IAssemblyName *pName,
+        [in] DWORD dwCmpFlags);
+
+    HRESULT Clone([out] IAssemblyName **pName);
 }
 
 [
