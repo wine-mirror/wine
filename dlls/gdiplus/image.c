@@ -1089,7 +1089,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
         default:
             FIXME("don't know how to handle %d bpp\n", bm.bmBitsPixel);
             return InvalidParameter;
-            break;
     }
 
     retval = GdipCreateBitmapFromScan0(bm.bmWidth, bm.bmHeight, bm.bmWidthBytes,
