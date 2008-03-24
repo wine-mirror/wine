@@ -23,6 +23,7 @@ IDL_H_SRCS = \
 	dxgi.idl \
 	dxgitype.idl \
 	exdisp.idl \
+	fusion.idl \
 	hlink.idl \
 	htiframe.idl \
 	iads.idl \

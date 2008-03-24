@@ -489,6 +489,7 @@ include/downloadmgr.h
 include/dxgi.h
 include/dxgitype.h
 include/exdisp.h
+include/fusion.h
 include/hlink.h
 include/htiframe.h
 include/iads.h

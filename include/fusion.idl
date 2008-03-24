@@ -1,0 +1,133 @@
+/*
+ * Copyright 2008 James Hawkins
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "objidl.idl";
+
+interface IAssemblyCache;
+interface IAssemblyCacheItem;
+interface IAssemblyEnum;
+interface IAssemblyName;
+
+typedef enum
+{
+    ASM_CACHE_ZAP       = 0x1,
+    ASM_CACHE_GAC       = 0x2,
+    ASM_CACHE_DOWNLOAD  = 0x4,
+    ASM_CACHE_ROOT      = 0x8
+} ASM_CACHE_FLAGS;
+
+typedef enum
+{
+    peNone      = 0x00000000,
+    peMSIL      = 0x00000001,
+    peI386      = 0x00000002,
+    peIA64      = 0x00000003,
+    peAMD64     = 0x00000004,
+    peInvalid   = 0xffffffff
+} PEKIND;
+
+typedef enum _tagAssemblyComparisonResult
+{
+    ACR_Unknown,
+    ACR_EquivalentFullMatch,
+    ACR_EquivalentWeakNamed,
+    ACR_EquivalentFXUnified,
+    ACR_EquivalentUnified,
+    ACR_NonEquivalentVersion,
+    ACR_NonEquivalent,
+    ACR_EquivalentPartialMatch,
+    ACR_EquivalentPartialWeakNamed,
+    ACR_EquivalentPartialUnified,
+    ACR_EquivalentPartialFXUnified,
+    ACR_NonEquivalentPartialVersion
+} AssemblyComparisonResult;
+
+[
+    local,
+    object,
+    uuid(e707dcde-d1cd-11d2-bab9-00c04f8eceae),
+    pointer_default(unique)
+]
+interface IAssemblyCache : IUnknown
+{
+
+}
+
+[
+    local,
+    object,
+    uuid(9e3aaeb4-d1cd-11d2-bab9-00c04f8eceae),
+    pointer_default(unique)
+]
+interface IAssemblyCacheItem : IUnknown
+{
+
+}
+
+[
+    local,
+    object,
+    uuid(CD193BC0-B4BC-11d2-9833-00C04FC31D2E),
+    pointer_default(unique)
+]
+interface IAssemblyName: IUnknown
+{
+    typedef [unique] IAssemblyName *LPASSEMBLYNAME;
+}
+
+[
+    local,
+    object,
+    uuid(21b8916c-f28e-11d2-a473-00c04f8ef448),
+    pointer_default(unique)
+]
+interface IAssemblyEnum : IUnknown
+{
+
+}
+
+[
+    local,
+    object,
+    uuid(582dac66-e678-449f-aba6-6faaec8a9394),
+    pointer_default(unique)
+]
+interface IInstallReferenceItem : IUnknown
+{
+
+}
+
+[
+    local,
+    object,
+    uuid(56b1a988-7c0c-4aa2-8639-c3eb5a90226f),
+    pointer_default(unique)
+]
+interface IInstallReferenceEnum : IUnknown
+{
+
+}
+
+cpp_quote("HRESULT WINAPI ClearDownloadCache(void);")
+cpp_quote("HRESULT WINAPI CompareAssemblyIdentity(LPCWSTR,BOOL,LPCWSTR,BOOL,BOOL*,AssemblyComparisonResult*);")
+cpp_quote("HRESULT WINAPI CreateAssemblyCache(IAssemblyCache**,DWORD);")
+cpp_quote("HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum**,IUnknown*,IAssemblyName*,DWORD,LPVOID);")
+cpp_quote("HRESULT WINAPI CreateAssemblyNameObject(LPASSEMBLYNAME*,LPCWSTR,DWORD,LPVOID);")
+cpp_quote("HRESULT WINAPI CreateInstallReferenceEnum(IInstallReferenceEnum**,IAssemblyName*,DWORD,LPVOID);")
+cpp_quote("HRESULT WINAPI GetAssemblyIdentityFromFile(LPCWSTR,REFIID,IUnknown**);")
+cpp_quote("HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS,LPWSTR,PDWORD);")
