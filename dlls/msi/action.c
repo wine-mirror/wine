@@ -4678,6 +4678,130 @@ static UINT ACTION_StartServices( MSIPACKAGE *package )
     return rc;
 }
 
+static BOOL stop_service_dependents(SC_HANDLE scm, SC_HANDLE service)
+{
+    DWORD i, needed, count;
+    ENUM_SERVICE_STATUSW *dependencies;
+    SERVICE_STATUS ss;
+    SC_HANDLE depserv;
+
+    if (EnumDependentServicesW(service, SERVICE_ACTIVE, NULL,
+                               0, &needed, &count))
+        return TRUE;
+
+    if (GetLastError() != ERROR_MORE_DATA)
+        return FALSE;
+
+    dependencies = msi_alloc(needed);
+    if (!dependencies)
+        return FALSE;
+
+    if (!EnumDependentServicesW(service, SERVICE_ACTIVE, dependencies,
+                                needed, &needed, &count))
+        goto error;
+
+    for (i = 0; i < count; i++)
+    {
+        depserv = OpenServiceW(scm, dependencies[i].lpServiceName,
+                               SERVICE_STOP | SERVICE_QUERY_STATUS);
+        if (!depserv)
+            goto error;
+
+        if (!ControlService(depserv, SERVICE_CONTROL_STOP, &ss))
+            goto error;
+    }
+
+    return TRUE;
+
+error:
+    msi_free(dependencies);
+    return FALSE;
+}
+
+static UINT ITERATE_StopService(MSIRECORD *rec, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE *)param;
+    MSICOMPONENT *comp;
+    SERVICE_STATUS status;
+    SERVICE_STATUS_PROCESS ssp;
+    SC_HANDLE scm = NULL, service = NULL;
+    LPWSTR name, args;
+    DWORD event, needed;
+
+    event = MSI_RecordGetInteger(rec, 3);
+    if (!(event & msidbServiceControlEventStop))
+        return ERROR_SUCCESS;
+
+    comp = get_loaded_component(package, MSI_RecordGetString(rec, 6));
+    if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
+        return ERROR_SUCCESS;
+
+    deformat_string(package, MSI_RecordGetString(rec, 2), &name);
+    deformat_string(package, MSI_RecordGetString(rec, 4), &args);
+    args = strdupW(MSI_RecordGetString(rec, 4));
+
+    scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!scm)
+    {
+        WARN("Failed to open the SCM: %d\n", GetLastError());
+        goto done;
+    }
+
+    service = OpenServiceW(scm, name,
+                           SERVICE_STOP |
+                           SERVICE_QUERY_STATUS |
+                           SERVICE_ENUMERATE_DEPENDENTS);
+    if (!service)
+    {
+        WARN("Failed to open service (%s): %d\n",
+              debugstr_w(name), GetLastError());
+        goto done;
+    }
+
+    if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, (LPBYTE)&ssp,
+                              sizeof(SERVICE_STATUS_PROCESS), &needed))
+    {
+        WARN("Failed to query service status (%s): %d\n",
+             debugstr_w(name), GetLastError());
+        goto done;
+    }
+
+    if (ssp.dwCurrentState == SERVICE_STOPPED)
+        goto done;
+
+    stop_service_dependents(scm, service);
+
+    if (!ControlService(service, SERVICE_STOP, &status))
+        WARN("Failed to stop service (%s): %d\n", debugstr_w(name), GetLastError());
+
+done:
+    CloseServiceHandle(service);
+    CloseServiceHandle(scm);
+    msi_free(name);
+    msi_free(args);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_StopServices( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_StopService, package);
+    msiobj_release(&view->hdr);
+
+    return rc;
+}
+
 static MSIFILE *msi_find_file( MSIPACKAGE *package, LPCWSTR filename )
 {
     MSIFILE *file;
@@ -5508,13 +5632,6 @@ static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'S','e','l','f','R','e','g',0 };
     return msi_unimplemented_action_stub( package, "SelfUnregModules", table );
-}
-
-static UINT ACTION_StopServices( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = {
-        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
-    return msi_unimplemented_action_stub( package, "StopServices", table );
 }
 
 static UINT ACTION_DeleteServices( MSIPACKAGE *package )
