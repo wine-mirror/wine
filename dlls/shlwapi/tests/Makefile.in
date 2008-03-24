@@ -10,6 +10,7 @@ CTESTS = \
 	clist.c \
 	clsid.c \
 	generated.c \
+	istream.c \
 	ordinal.c \
 	path.c \
 	shreg.c \
