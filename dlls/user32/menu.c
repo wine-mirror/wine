@@ -2963,6 +2963,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     INT executedMenuId = -1;
     MTRACKER mt;
     BOOL enterIdleSent = FALSE;
+    HWND capture_win;
 
     mt.trackFlags = 0;
     mt.hCurrentMenu = hmenu;
@@ -2991,7 +2992,9 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
     if (wFlags & TF_ENDMENU) fEndMenu = TRUE;
 
-    set_capture_window( mt.hOwnerWnd, GUI_INMENUMODE, NULL );
+    /* owner may not be visible when tracking a popup, so use the menu itself */
+    capture_win = (wFlags & TPM_POPUPMENU) ? menu->hWnd : mt.hOwnerWnd;
+    set_capture_window( capture_win, GUI_INMENUMODE, NULL );
 
     while (!fEndMenu)
     {
