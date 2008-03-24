@@ -33,6 +33,7 @@
 static HMODULE hShlwapi;
 static HRESULT (WINAPI *pSHCreateStreamOnFileA)(LPCSTR file, DWORD mode, IStream **stream);
 static HRESULT (WINAPI *pSHCreateStreamOnFileW)(LPCWSTR file, DWORD mode, IStream **stream);
+static HRESULT (WINAPI *pSHCreateStreamOnFileEx)(LPCWSTR file, DWORD mode, DWORD attributes, BOOL create, IStream *template, IStream **stream);
 
 
 static void test_SHCreateStreamOnFileA(DWORD mode)
@@ -204,12 +205,142 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
 }
 
 
+static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
+{
+    IStream * stream;
+    IStream * template = NULL;
+    HRESULT ret;
+    ULONG refcount;
+    static const WCHAR test_file[] = { 'c', ':', '\\', 't', 'e', 's', 't', '.', 't', 'x', 't' };
+
+    printf("SHCreateStreamOnFileEx: testing mode %d, STGM flags %08x\n", mode, stgm);
+
+    /* invalid arguments */
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(NULL, mode, 0, FALSE, NULL, &stream);
+    ok(ret == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* XP */
+       ret == E_INVALIDARG /* Vista */,
+      "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) or E_INVALIDARG, got 0x%08x\n", ret);
+    ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, template, &stream);
+    todo_wine
+    ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
+    ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
+
+#if 0 /* This test crashes on WinXP SP2 */
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, NULL, NULL);
+    ok(ret == E_INVALIDARG, "SHCreateStreamOnFileEx: expected E_INVALIDARG, got 0x%08x\n", ret);
+#endif
+
+    /* file does not exist */
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, FALSE, NULL, &stream);
+    todo_wine
+    ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
+    ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, TRUE, NULL, &stream);
+    todo_wine
+    ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
+    todo_wine
+    ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
+
+    if (stream) {
+        refcount = IStream_Release(stream);
+        ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
+
+        ok(DeleteFileW(test_file), "SHCreateStreamOnFileEx: could not delete the test file, got error %d\n", GetLastError());
+    }
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
+    todo_wine
+    ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
+    todo_wine
+    ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
+
+    if (stream) {
+        refcount = IStream_Release(stream);
+        ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
+
+        ok(DeleteFileW(test_file), "SHCreateStreamOnFileEx: could not delete the test file, got error %d\n", GetLastError());
+    }
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
+    todo_wine
+    ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
+    todo_wine
+    ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
+
+    if (stream) {
+        refcount = IStream_Release(stream);
+        ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
+    }
+
+    /* NOTE: don't delete the file, as it will be used for the file exists tests. */
+
+    /* file exists */
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, FALSE, NULL, &stream);
+    todo_wine
+    ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
+    todo_wine
+    ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
+
+    if (stream) {
+        refcount = IStream_Release(stream);
+        ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
+    }
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, TRUE, NULL, &stream);
+    todo_wine
+    ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), got 0x%08x\n", ret);
+    ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
+    todo_wine
+    ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
+    todo_wine
+    ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
+
+    if (stream) {
+        refcount = IStream_Release(stream);
+        ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
+    }
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
+    todo_wine
+    ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
+    todo_wine
+    ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
+
+    if (stream) {
+        refcount = IStream_Release(stream);
+        ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
+    }
+
+    todo_wine
+    ok(DeleteFileW(test_file), "SHCreateStreamOnFileEx: could not delete the test file, got error %d\n", GetLastError());
+}
+
+
 START_TEST(istream)
 {
     hShlwapi = GetModuleHandleA("shlwapi.dll");
 
     pSHCreateStreamOnFileA = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileA");
     pSHCreateStreamOnFileW = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileW");
+    pSHCreateStreamOnFileEx = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileEx");
 
     if (!pSHCreateStreamOnFileA)
         printf("SHCreateStreamOnFileA not found... skipping tests.\n");
@@ -225,5 +356,25 @@ START_TEST(istream)
         test_SHCreateStreamOnFileW(STGM_READ);
         test_SHCreateStreamOnFileW(STGM_WRITE);
         test_SHCreateStreamOnFileW(STGM_READWRITE);
+    }
+
+    if (!pSHCreateStreamOnFileEx)
+        printf("SHCreateStreamOnFileEx not found... skipping tests.\n");
+    else {
+        test_SHCreateStreamOnFileEx(STGM_READ, 0);
+        test_SHCreateStreamOnFileEx(STGM_WRITE, 0);
+        test_SHCreateStreamOnFileEx(STGM_READWRITE, 0);
+
+        test_SHCreateStreamOnFileEx(STGM_READ, STGM_CONVERT);
+        test_SHCreateStreamOnFileEx(STGM_WRITE, STGM_CONVERT);
+        test_SHCreateStreamOnFileEx(STGM_READWRITE, STGM_CONVERT);
+
+        test_SHCreateStreamOnFileEx(STGM_READ, STGM_DELETEONRELEASE);
+        test_SHCreateStreamOnFileEx(STGM_WRITE, STGM_DELETEONRELEASE);
+        test_SHCreateStreamOnFileEx(STGM_READWRITE, STGM_DELETEONRELEASE);
+
+        test_SHCreateStreamOnFileEx(STGM_READ, STGM_CONVERT | STGM_DELETEONRELEASE);
+        test_SHCreateStreamOnFileEx(STGM_WRITE, STGM_CONVERT | STGM_DELETEONRELEASE);
+        test_SHCreateStreamOnFileEx(STGM_READWRITE, STGM_CONVERT | STGM_DELETEONRELEASE);
     }
 }
