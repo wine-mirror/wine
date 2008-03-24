@@ -3206,9 +3206,12 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-    ok(sz == 0, "Expected 0, got %d\n", sz);
+    if (r != ERROR_UNKNOWN_PROPERTY)
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+        ok(sz == 0, "Expected 0, got %d\n", sz);
+    }
 
     res = RegSetValueExA(propkey, "AuthorizedLUAApp", 0, REG_DWORD,
                          (const BYTE *)&val, sizeof(DWORD));
@@ -3218,9 +3221,12 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-    ok(sz == 0, "Expected 0, got %d\n", sz);
+    if (r != ERROR_UNKNOWN_PROPERTY)
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+        ok(sz == 0, "Expected 0, got %d\n", sz);
+    }
 
     res = RegSetValueExA(prodkey, "AuthorizedLUAApp", 0, REG_SZ, (LPBYTE)"auth", 5);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -3229,9 +3235,12 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(buf, "auth"), "Expected \"auth\", got \"%s\"\n", buf);
-    ok(sz == 4, "Expected 4, got %d\n", sz);
+    if (r != ERROR_UNKNOWN_PROPERTY)
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, "auth"), "Expected \"auth\", got \"%s\"\n", buf);
+        ok(sz == 4, "Expected 4, got %d\n", sz);
+    }
 
     res = RegSetValueExA(prodkey, "AuthorizedLUAApp", 0, REG_DWORD,
                          (const BYTE *)&val, sizeof(DWORD));
@@ -3241,9 +3250,12 @@ static void test_MsiGetProductInfo(void)
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_AUTHORIZED_LUA_APP, buf, &sz);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
-    ok(sz == 2, "Expected 2, got %d\n", sz);
+    if (r != ERROR_UNKNOWN_PROPERTY)
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
+        ok(sz == 2, "Expected 2, got %d\n", sz);
+    }
 
     RegDeleteValueA(propkey, "HelpLink");
     RegDeleteValueA(propkey, "DisplayName");
