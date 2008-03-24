@@ -77,7 +77,7 @@ void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 static HMODULE opengl32_handle;
 
-static char  internal_gl_disabled_extensions[512];
+static char* internal_gl_disabled_extensions = NULL;
 static char* internal_gl_extensions = NULL;
 
 typedef struct wine_glcontext {
@@ -609,7 +609,7 @@ const GLubyte * WINAPI wine_glGetString( GLenum name )
 	TRACE("- %s:", ThisExtn);
 	
 	/* test if supported API is disabled by config */
-	if (NULL == strstr(internal_gl_disabled_extensions, ThisExtn)) {
+	if (!internal_gl_disabled_extensions || !strstr(internal_gl_disabled_extensions, ThisExtn)) {
 	  strcat(internal_gl_extensions, " ");
 	  strcat(internal_gl_extensions, ThisExtn);
 	  TRACE(" active\n");
@@ -639,7 +639,7 @@ void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params )
 static BOOL process_attach(void)
 {
   HMODULE mod_x11, mod_gdi32;
-  DWORD size = sizeof(internal_gl_disabled_extensions);
+  DWORD size;
   HKEY hkey = 0;
 
   GetDesktopWindow();  /* make sure winex11 is loaded (FIXME) */
@@ -662,10 +662,11 @@ static BOOL process_attach(void)
   wine_wgl.p_wglFinish = (void *)wine_wgl.p_wglGetProcAddress("wglFinish");
   wine_wgl.p_wglFlush = (void *)wine_wgl.p_wglGetProcAddress("wglFlush");
 
-  internal_gl_disabled_extensions[0] = 0;
   if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey)) {
-    if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, (LPBYTE)internal_gl_disabled_extensions, &size)) {
-      TRACE("found DisabledExtensions=\"%s\"\n", internal_gl_disabled_extensions);
+    if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, NULL, &size)) {
+      internal_gl_disabled_extensions = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+      RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, (LPBYTE)internal_gl_disabled_extensions, &size);
+      TRACE("found DisabledExtensions=%s\n", debugstr_a(internal_gl_disabled_extensions));
     }
     RegCloseKey(hkey);
   }
@@ -679,6 +680,7 @@ static BOOL process_attach(void)
 static void process_detach(void)
 {
   HeapFree(GetProcessHeap(), 0, internal_gl_extensions);
+  HeapFree(GetProcessHeap(), 0, internal_gl_disabled_extensions);
 }
 
 /***********************************************************************
