@@ -1048,20 +1048,8 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
             changes.stack_mode = Above;
             mask |= CWStackMode;
         }
-        else
-        {
-            /* should use stack_mode Below but most window managers don't get it right */
-            /* so move it above the next one in Z order */
-            HWND next = GetWindow( data->hwnd, GW_HWNDNEXT );
-            while (next && !(GetWindowLongW( next, GWL_STYLE ) & WS_VISIBLE))
-                next = GetWindow( next, GW_HWNDNEXT );
-            if (next)
-            {
-                changes.stack_mode = Above;
-                changes.sibling = X11DRV_get_whole_window(next);
-                mask |= CWStackMode | CWSibling;
-            }
-        }
+        /* should use stack_mode Below but most window managers don't get it right */
+        /* and Above with a sibling doesn't work so well either, so we ignore it */
     }
 
     /* only the size is allowed to change for the desktop window */
@@ -1071,8 +1059,8 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
     {
         DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
 
-        TRACE( "setting win %lx pos %d,%d,%dx%d after %lx changes=%x\n",
-               data->whole_window, data->whole_rect.left, data->whole_rect.top,
+        TRACE( "setting win %p/%lx pos %d,%d,%dx%d after %lx changes=%x\n",
+               data->hwnd, data->whole_window, data->whole_rect.left, data->whole_rect.top,
                data->whole_rect.right - data->whole_rect.left,
                data->whole_rect.bottom - data->whole_rect.top, changes.sibling, mask );
 
