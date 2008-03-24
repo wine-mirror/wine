@@ -272,6 +272,7 @@ static void test_MsiSourceListGetInfo(void)
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
 
     /* size is non-NULL while value is NULL */
+    size = MAX_PATH;
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
@@ -283,6 +284,7 @@ static void test_MsiSourceListGetInfo(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* user product key exists */
+    size = MAX_PATH;
     r = pMsiSourceListGetInfoA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
                               MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAME, NULL, &size);
     ok(r == ERROR_BAD_CONFIGURATION, "Expected ERROR_BAD_CONFIGURATION, got %d\n", r);
