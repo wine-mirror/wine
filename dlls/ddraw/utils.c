@@ -640,7 +640,7 @@ static void DDRAW_dump_flags_nolf(DWORD flags, const flag_info* names,
     for (i=0; i < num_names; i++)
         if ((flags & names[i].val) ||      /* standard flag value */
             ((!flags) && (!names[i].val))) /* zero value only */
-            TRACE("%s\n", names[i].name);
+            TRACE("%s ", names[i].name);
 }
 
 static void DDRAW_dump_flags(DWORD flags, const flag_info* names, size_t num_names)
