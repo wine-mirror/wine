@@ -43,9 +43,9 @@ NameList: Adobe Glyph List
 DisplaySize: 16
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 960 20 13
+WinInfo: 42 42 15
 OnlyBitmaps: 1
-BeginChars: 65536 475
+BeginChars: 65536 484
 StartChar: space
 Encoding: 32 32 0
 Width: 4
@@ -861,12 +861,12 @@ Flags: W
 EndChar
 StartChar: Aogonek
 Encoding: 260 260 157
-Width: 8
+Width: 9
 Flags: W
 EndChar
 StartChar: aogonek
 Encoding: 261 261 158
-Width: 8
+Width: 7
 Flags: W
 EndChar
 StartChar: Cacute
@@ -911,7 +911,7 @@ Flags: W
 EndChar
 StartChar: Eogonek
 Encoding: 280 280 167
-Width: 9
+Width: 6
 Flags: W
 EndChar
 StartChar: eogonek
@@ -1301,13 +1301,13 @@ Flags: W
 EndChar
 StartChar: Scaron
 Encoding: 352 352 238
-Width: 9
+Width: 8
 Flags: W
 Ligature: 0 0 'liga' S uni030C
 EndChar
 StartChar: scaron
 Encoding: 353 353 239
-Width: 8
+Width: 6
 Flags: W
 Ligature: 0 0 'liga' s uni030C
 EndChar
@@ -1379,13 +1379,13 @@ Flags: W
 EndChar
 StartChar: Zcaron
 Encoding: 381 381 253
-Width: 9
+Width: 7
 Flags: W
 Ligature: 0 0 'liga' Z uni030C
 EndChar
 StartChar: zcaron
 Encoding: 382 382 254
-Width: 4
+Width: 6
 Flags: W
 Ligature: 0 0 'liga' z uni030C
 EndChar
@@ -2618,8 +2618,61 @@ Width: 16
 Flags: HW
 TeX: 0 0 0 0
 EndChar
+StartChar: Iogonek
+Encoding: 302 302 475
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: iogonek
+Encoding: 303 303 476
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: Umacron
+Encoding: 362 362 477
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: umacron
+Encoding: 363 363 478
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: Uogonek
+Encoding: 370 370 479
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: uogonek
+Encoding: 371 371 480
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: Edotaccent
+Encoding: 278 278 481
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: edotaccent
+Encoding: 279 279 482
+Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: uni001B
+Encoding: 27 27 483
+Width: 16
+TeX: 0 0 0 0
+EndChar
 EndChars
-BitmapFont: 16 475 13 3 1
+BitmapFont: 16 485 13 3 1
 BDFChar: 0 32 4 14 14 0 0
 z
 BDFChar: 1 33 4 1 2 0 9
@@ -2935,9 +2988,9 @@ _gVS&(d'omAnHM0_Z0Z:
 BDFChar: 156 259 8 1 7 0 10
 `dB`GGg$SDbfkG7
 BDFChar: 157 260 8 0 7 -3 9
-(`5@tAnGY(_oDri#64`(
+(`5@tAnGY(_nuQ\!rr<$
 BDFChar: 158 261 8 1 6 -3 6
-Gg$SDbfkGO0H:&m
+Gg$SDbfkGC(^pBE
 BDFChar: 159 262 9 1 8 0 12
 $lAt,B#DF"^qdj"49,?]
 BDFChar: 160 263 7 1 6 0 10
@@ -2955,9 +3008,9 @@ IK3jX@=Vd:rIFis@=Vd:@fUrX
 BDFChar: 166 273 8 1 7 0 9
 %"8V4bfn;Tb^9Bj
 BDFChar: 167 280 9 1 7 -3 9
-rkQ=br4p+`_#>0))uos=
+rkQ=br4p+`_#=`Z$ig8-
 BDFChar: 168 281 8 1 6 -3 6
-Gg+D,^s%$W?oS,d
+Gg+D,^s%$?0Gjci
 BDFChar: 169 282 9 1 7 0 12
 CcDFo^qdb`^qdb$rVuou
 BDFChar: 170 283 8 1 6 0 10
@@ -3570,8 +3623,26 @@ BDFChar: 473 1168 8 1 7 0 11
 !WrA:^qdb$^qdb$
 BDFChar: 474 1169 6 1 5 0 7
 #l)3N^qdb$
+BDFChar: 475 302 4 1 3 -3 9
+^qdb$^qdb$^qa?n?iU0,
+BDFChar: 476 303 4 1 3 -3 9
+^q]rc^qdb$^qa?n?iU0,
+BDFChar: 477 362 10 1 8 0 12
+IXV:7_o'C0_o'B(49,?]
+BDFChar: 478 363 8 1 6 0 9
+r;6Q=bfn;Tb^9Bj
+BDFChar: 479 370 10 1 8 -3 9
+_o'C0_o'C0Aip8+"onW'
+BDFChar: 480 371 8 1 6 -3 6
+bfn;TbfkGC(^pBE
+BDFChar: 481 278 9 1 7 0 12
+0JEM+^qdb`^qdb$rVuou
+BDFChar: 482 279 8 1 6 0 9
+0JEKObfojtb]j*f
+BDFChar: 483 27 16 0 0 0 0
+z
 EndBitmapFont
-BitmapFont: 18 475 16 2 1
+BitmapFont: 18 485 16 2 1
 BDFChar: 0 32 6 0 0 0 0
 z
 BDFChar: 1 33 7 3 3 0 13
@@ -3882,6 +3953,18 @@ BDFChar: 153 254 8 1 6 -3 9
 ^qdb\bfn;TbkSuh^]4?7
 BDFChar: 154 255 8 0 7 -3 9
 AnD%\_e*LC4;\nh?iU0,
+BDFChar: 157 260 11 1 9 -2 12
+#QP,1'EAgI+oiee+ojn/IfMb7J:N0#J:IY#!It.M
+BDFChar: 158 261 8 1 6 -2 6
+Gg$SDbfkG?$ig8-
+BDFChar: 161 268 11 1 9 0 15
+'EAC=!!!u=+ojn/J:N.MJ,k*"J,k*"J:Koc+oiS_
+BDFChar: 162 269 8 1 6 0 10
+b]kfAGg*t=^s%$'
+BDFChar: 167 280 7 1 5 -2 12
+pjdmFJFJ)>J:N0#p^e8B
+BDFChar: 168 281 9 1 6 -2 6
+Gg+D,^s%$7(]XO9
 BDFChar: 183 141 8 1 6 -1 13
 r;?Kjr;?Kjr;?Kjr;?Hm
 BDFChar: 184 143 8 1 6 -1 13
@@ -3972,6 +4055,14 @@ BDFChar: 226 237 4 0 3 0 10
 E+$H]?smAM?sm@B
 BDFChar: 227 238 4 0 3 0 9
 @.4/(?smAM?sis7
+BDFChar: 238 352 9 1 7 0 15
+-kHA<7"U"U0F.d_Jq?BM
+BDFChar: 239 353 7 1 6 0 10
+b]kfAGg'PL(sI4)
+BDFChar: 253 381 8 0 7 0 15
+'F4^=!<NB,#S7Oi5X9l"
+BDFChar: 254 382 7 1 6 0 10
+b]kfAr!XDr@)2[?
 BDFChar: 339 8240 16 0 14 0 9
 E+%>6fmn,D"oo&3)k8h[B(j-4
 BDFChar: 348 138 8 1 6 -1 13
@@ -3988,5 +4079,23 @@ BDFChar: 353 158 8 1 6 -1 13
 r;?Kjr;?Kjr;?Kjr;?Hm
 BDFChar: 354 159 8 1 6 -1 13
 r;?Kjr;?Kjr;?Kjr;?Hm
+BDFChar: 475 302 5 1 3 -2 12
+i'9Om5X7S"5X7S"i':ZM
+BDFChar: 476 303 3 1 2 -2 9
+^q]rc^qdb$^qbK9
+BDFChar: 477 362 11 2 8 0 14
+HiSbMJqAT+JqAT+Jj_Qu
+BDFChar: 478 363 8 1 6 0 9
+r;6Q=bfn;Tb^9Bj
+BDFChar: 479 370 11 2 8 -2 12
+JqAT+JqAT+JqASB3!]om
+BDFChar: 480 371 8 1 6 -2 6
+bfn;TbfkG?$ig8-
+BDFChar: 481 278 7 1 5 0 14
++9;1eJ:N1>J:N0#J:RCp
+BDFChar: 482 279 9 1 6 0 9
+0JEKObfojtb]j*f
+BDFChar: 483 27 18 0 0 0 0
+z
 EndBitmapFont
 EndSplineFont

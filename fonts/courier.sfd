@@ -43,10 +43,10 @@ NameList: Adobe Glyph List
 DisplaySize: 13
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 946 22 21
+WinInfo: 208 26 11
 OnlyBitmaps: 1
 TeXData: 1 0 0 346030 173015 115343 0 1048576 115343 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 362
+BeginChars: 65536 370
 StartChar: space
 Encoding: 32 32 0
 Width: 8
@@ -1891,8 +1891,56 @@ Width: 8
 Flags: HW
 TeX: 0 0 0 0
 EndChar
+StartChar: Edotaccent
+Encoding: 278 278 362
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: edotaccent
+Encoding: 279 279 363
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: Iogonek
+Encoding: 302 302 364
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: iogonek
+Encoding: 303 303 365
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: Umacron
+Encoding: 362 362 366
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: umacron
+Encoding: 363 363 367
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: Uogonek
+Encoding: 370 370 368
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: uogonek
+Encoding: 371 371 369
+Width: 8
+Flags: HW
+TeX: 0 0 0 0
+EndChar
 EndChars
-BitmapFont: 13 362 11 2 1
+BitmapFont: 13 370 11 2 1
 BDFChar: 0 32 8 0 0 0 0
 z
 BDFChar: 1 33 8 4 4 0 8
@@ -2617,5 +2665,21 @@ BDFChar: 360 1168 8 2 7 0 10
 "9eWf5X7S"5X=6-
 BDFChar: 361 1169 8 1 5 0 6
 #l&q#J:N.M
+BDFChar: 362 278 8 1 7 0 10
+&-2\r5Y-,j5XPGM
+BDFChar: 363 279 8 1 7 0 7
+&-.*0rd]TJ
+BDFChar: 364 302 8 2 6 -2 8
+p`L\%+<VdLp`M6j
+BDFChar: 365 303 8 2 6 -2 8
++92E"+<VdLp`M6j
+BDFChar: 366 362 8 1 7 0 10
+HiWS&6psF26ps!7
+BDFChar: 367 363 8 1 7 0 7
+GQ>rU6ps^,
+BDFChar: 368 370 8 1 7 -2 8
+mR0H26psF23"Qo,
+BDFChar: 369 371 8 1 7 -2 5
+bX=ie9K!.b
 EndBitmapFont
 EndSplineFont

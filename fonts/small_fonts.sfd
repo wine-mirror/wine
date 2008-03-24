@@ -53,7 +53,7 @@ NameList: Adobe Glyph List
 DisplaySize: 11
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 704 32 21
+WinInfo: 0 61 20
 OnlyBitmaps: 1
 TeXData: 1 0 0 189792 94896 63264 0 1048576 63264 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
 BeginChars: 65536 416
@@ -2548,7 +2548,7 @@ Flags: HW
 TeX: 0 0 0 0
 EndChar
 EndChars
-BitmapFont: 11 416 9 2 1
+BitmapFont: 11 417 9 2 1
 BDFChar: 0 65 7 1 6 0 6
 0JH$gG_C_M
 BDFChar: 1 33 2 1 1 0 6
@@ -3147,14 +3147,14 @@ BDFChar: 297 342 7 1 6 -2 6
 pk4=qKS5!i0E;(Q
 BDFChar: 298 343 3 0 2 -2 4
 ?pHtB5X<*b
-BDFChar: 299 302 3 1 2 -2 6
-J:N0#J:N0#^]4?7
+BDFChar: 299 302 3 0 1 -2 6
+5X7S"5X7Sb5QCca
 BDFChar: 300 256 7 1 6 0 8
 GQ9EO84[uYKE(uP
 BDFChar: 301 274 5 1 4 0 8
 n,Vs.JFJ)>n,NFg
-BDFChar: 302 278 5 1 4 0 8
-5QL;(JFJ)>n,NFg
+BDFChar: 302 278 5 0 4 0 8
++9;1eJFJ)>p](9o
 BDFChar: 303 290 7 1 6 -2 6
 G_CU;KT(!q?iU0,
 BDFChar: 304 310 6 1 5 -2 6
@@ -3171,8 +3171,8 @@ BDFChar: 309 370 6 1 5 -2 6
 LkpkCLkp!m0E;(Q
 BDFChar: 310 362 6 1 5 0 8
 Dub]MLkpkCDu]k<
-BDFChar: 311 303 3 1 3 -3 6
-J,k+MJ:N0#^gI-B
+BDFChar: 311 303 3 0 1 -2 6
+5QF&75X7Sb5QCca
 BDFChar: 312 257 5 1 4 0 6
 Dua8WE0,#=
 BDFChar: 313 275 5 1 4 0 6
