@@ -57,7 +57,7 @@ HRESULT InternetTransport_GetServerInfo(InternetTransport *This, LPINETSERVER pI
     if (This->Status == IXP_DISCONNECTED)
         return IXP_E_NOT_CONNECTED;
 
-    memcpy(pInetServer, &This->ServerInfo, sizeof(*pInetServer));
+    *pInetServer = This->ServerInfo;
     return S_OK;
 }
 
@@ -80,7 +80,7 @@ HRESULT InternetTransport_Connect(InternetTransport *This,
     if (This->Status != IXP_DISCONNECTED)
         return IXP_E_ALREADY_CONNECTED;
 
-    memcpy(&This->ServerInfo, pInetServer, sizeof(This->ServerInfo));
+    This->ServerInfo = *pInetServer;
     This->fCommandLogging = fCommandLogging;
 
     This->hwnd = CreateWindowW(wszClassName, wszClassName, 0, 0, 0, 0, 0, NULL, NULL, NULL, 0);
