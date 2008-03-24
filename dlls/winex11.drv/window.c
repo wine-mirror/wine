@@ -1563,7 +1563,7 @@ void X11DRV_SetCapture( HWND hwnd, UINT flags )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
 
-    if (!(flags & GUI_INMOVESIZE)) return;
+    if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
 
     if (hwnd)
     {
@@ -1574,7 +1574,7 @@ void X11DRV_SetCapture( HWND hwnd, UINT flags )
         XFlush( gdi_display );
         XGrabPointer( thread_data->display, grab_win, False,
                       PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
-                      GrabModeAsync, GrabModeAsync, root_window, None, CurrentTime );
+                      GrabModeAsync, GrabModeAsync, None, None, CurrentTime );
         wine_tsx11_unlock();
         thread_data->grab_window = grab_win;
     }
