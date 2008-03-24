@@ -410,7 +410,7 @@ DWORD WINAPI WsControl(DWORD protocol,
                   TRACE("Found IP info for tei_instance 0x%x:\n", index);
                   TRACE("IP 0x%08x, mask 0x%08x\n", table->table[i].dwAddr,
                    table->table[i].dwMask);
-                  memcpy(baseIPInfo, &table->table[i], sizeof(MIB_IPADDRROW));
+                  *baseIPInfo = table->table[i];
                   break;
                }
             }
