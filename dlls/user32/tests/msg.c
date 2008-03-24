@@ -7176,14 +7176,16 @@ static LRESULT CALLBACK cbt_global_hook_proc(int nCode, WPARAM wParam, LPARAM lP
     /* WH_MOUSE_LL hook */
     if (nCode == HC_ACTION)
     {
-	struct message msg;
         MSLLHOOKSTRUCT *mhll = (MSLLHOOKSTRUCT *)lParam;
 
         /* we can't test for real mouse events */
         if (mhll->flags & LLMHF_INJECTED)
         {
+	    struct message msg;
+
+	    memset (&msg, 0, sizeof (msg));
 	    msg.message = wParam;
-            msg.flags = hook;
+	    msg.flags = hook;
 	    add_message(&msg);
         }
 	return CallNextHookEx(hCBT_global_hook, nCode, wParam, lParam);
