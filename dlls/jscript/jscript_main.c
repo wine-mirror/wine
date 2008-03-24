@@ -30,6 +30,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
+LONG module_ref = 0;
+
 static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 static const CLSID CLSID_JScriptAuthor =
@@ -75,6 +77,12 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
 {
     TRACE("(%p)->(%x)\n", iface, fLock);
+
+    if(fLock)
+        lock_module();
+    else
+        unlock_module();
+
     return S_OK;
 }
 
@@ -127,8 +135,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("()\n");
-    return S_FALSE;
+    TRACE("() ref=%d\n", module_ref);
+
+    return module_ref ? S_FALSE : S_OK;
 }
 
 /***********************************************************************

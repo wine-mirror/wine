@@ -28,6 +28,18 @@
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
+extern LONG module_ref;
+
+static inline void lock_module(void)
+{
+    InterlockedIncrement(&module_ref);
+}
+
+static inline void unlock_module(void)
+{
+    InterlockedDecrement(&module_ref);
+}
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);

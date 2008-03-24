@@ -97,8 +97,10 @@ static ULONG WINAPI JScript_Release(IActiveScript *iface)
 
     TRACE("(%p) ref=%d\n", iface, ref);
 
-    if(!ref)
+    if(!ref) {
         heap_free(This);
+        unlock_module();
+    }
 
     return ref;
 }
@@ -426,6 +428,8 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
     HRESULT hres;
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
+
+    lock_module();
 
     ret = heap_alloc(sizeof(*ret));
 
