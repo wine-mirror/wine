@@ -1,12 +1,12 @@
 @ stub CopyPDBs
-@ stub ClearDownloadCache
+@ stdcall ClearDownloadCache()
 @ stub CreateApplicationContext
-@ stub CreateAssemblyCache
-@ stub CreateAssemblyEnum
-@ stub CreateAssemblyNameObject
+@ stdcall CreateAssemblyCache(ptr long)
+@ stdcall CreateAssemblyEnum(ptr ptr ptr long ptr)
+@ stdcall CreateAssemblyNameObject(ptr wstr long ptr)
 @ stub CreateHistoryReader
-@ stub CreateInstallReferenceEnum
-@ stub GetCachePath
+@ stdcall CreateInstallReferenceEnum(ptr ptr long ptr)
+@ stdcall GetCachePath(long wstr ptr)
 @ stub GetHistoryFileDirectory
 @ stub InitializeFusion
 @ stub InstallCustomAssembly
