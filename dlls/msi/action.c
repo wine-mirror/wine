@@ -4771,7 +4771,7 @@ static UINT ITERATE_StopService(MSIRECORD *rec, LPVOID param)
 
     stop_service_dependents(scm, service);
 
-    if (!ControlService(service, SERVICE_STOP, &status))
+    if (!ControlService(service, SERVICE_CONTROL_STOP, &status))
         WARN("Failed to stop service (%s): %d\n", debugstr_w(name), GetLastError());
 
 done:
