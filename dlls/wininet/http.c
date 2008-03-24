@@ -63,6 +63,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
+static const WCHAR g_szHttp1_0[] = {'H','T','T','P','/','1','.','0',0};
 static const WCHAR g_szHttp1_1[] = {'H','T','T','P','/','1','.','1',0};
 static const WCHAR g_szReferer[] = {'R','e','f','e','r','e','r',0};
 static const WCHAR g_szAccept[] = {'A','c','c','e','p','t',0};
@@ -3997,13 +3998,11 @@ static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
  */
 static BOOL HTTP_VerifyValidHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field)
 {
-    BOOL rc = TRUE;
-
     /* Accept-Encoding is stripped from HTTP/1.0 requests. It is invalid */
-    if (strcmpiW(field,szAccept_Encoding)==0)
+    if (!strcmpW(lpwhr->lpszVersion, g_szHttp1_0) && !strcmpiW(field, szAccept_Encoding))
         return FALSE;
 
-    return rc;
+    return TRUE;
 }
 
 /***********************************************************************
