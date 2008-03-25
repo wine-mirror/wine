@@ -72,6 +72,16 @@
 @ stdcall LoadStringRCEx(long long ptr long long ptr)
 @ stub LockClrVersion
 @ stub MetaDataGetDispenser
+@ stdcall ND_CopyObjDst(ptr ptr long long)
+@ stdcall ND_CopyObjSrc(ptr long ptr long)
+@ stdcall ND_RI2(ptr long)
+@ stdcall ND_RI4(ptr long)
+@ stdcall -ret64 ND_RI8(ptr long)
+@ stdcall ND_RU1(ptr long)
+@ stdcall ND_WI2(ptr long long)
+@ stdcall ND_WI4(ptr long long)
+@ stdcall ND_WI8(ptr long long long)
+@ stdcall ND_WU1(ptr long long)
 @ stub OpenCtrs
 @ stub ReOpenMetaDataWithMemoryEx
 @ stub RunDll@ShimW
