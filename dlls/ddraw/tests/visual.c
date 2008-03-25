@@ -1720,6 +1720,201 @@ static void D3D1_TextureMapBlendTest(void)
     if (Texture) IDirect3DTexture_Release(Texture);
 }
 
+static void p8_surface_fill_rect(IDirectDrawSurface *dest, UINT x, UINT y, UINT w, UINT h, BYTE colorindex)
+{
+    DDSURFACEDESC ddsd;
+    HRESULT hr;
+    UINT i, i1;
+    BYTE *p;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+
+    hr = IDirectDrawSurface_Lock(dest, NULL, &ddsd, DDLOCK_WRITEONLY | DDLOCK_WAIT, NULL);
+    ok(hr==DD_OK, "IDirectDrawSurface_Lock returned: %x\n", hr);
+
+    p = (BYTE *)ddsd.lpSurface + ddsd.lPitch * y;
+
+    for (i = 0; i < h; i++) {
+        for (i1 = 0; i1 < w; i1++) {
+            p[i1] = colorindex;
+        }
+        p += ddsd.lPitch;
+    }
+
+    hr = IDirectDrawSurface_Unlock(dest, NULL);
+    ok(hr==DD_OK, "IDirectDrawSurface_UnLock returned: %x\n", hr);
+}
+
+static COLORREF getPixelColor_GDI(IDirectDrawSurface *Surface, UINT x, UINT y)
+{
+    COLORREF clr = CLR_INVALID;
+    HDC hdc;
+    HRESULT hr;
+
+    hr = IDirectDrawSurface_GetDC(Surface, &hdc);
+    ok(hr==DD_OK, "IDirectDrawSurface_GetDC returned: %x\n", hr);
+
+    if (SUCCEEDED(hr)) {
+        clr = GetPixel(hdc, x, y);
+
+        hr = IDirectDrawSurface_ReleaseDC(Surface, hdc);
+        ok(hr==DD_OK, "IDirectDrawSurface_ReleaseDC returned: %x\n", hr);
+    }
+
+    return clr;
+}
+
+static BOOL colortables_check_equality(PALETTEENTRY table1[256], RGBQUAD table2[256])
+{
+    int i;
+
+    for (i = 0; i < 256; i++) {
+       if (table1[i].peRed != table2[i].rgbRed || table1[i].peGreen != table2[i].rgbGreen ||
+           table1[i].peBlue != table2[i].rgbBlue) return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void p8_primary_test()
+{
+    /* Test 8bit mode used by games like StarCraft, C&C Red Alert I etc */
+    DDSURFACEDESC ddsd;
+    HDC hdc;
+    HRESULT hr;
+    PALETTEENTRY entries[256];
+    RGBQUAD coltable[256];
+    UINT i;
+    IDirectDrawPalette *ddprimpal;
+    IDirectDrawSurface *offscreen = NULL;
+    WNDCLASS wc = {0};
+    DDBLTFX ddbltfx;
+    COLORREF color;
+
+    /* An IDirect3DDevice cannot be queryInterfaced from an IDirect3DDevice7 on windows */
+    hr = DirectDrawCreate(NULL, &DirectDraw1, NULL);
+
+    ok(hr==DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreate returned: %x\n", hr);
+    if (FAILED(hr)) {
+        goto out;
+    }
+
+    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpszClassName = "p8_primary_test_wc";
+    RegisterClass(&wc);
+    window = CreateWindow("p8_primary_test_wc", "p8_primary_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+
+    hr = IDirectDraw_SetCooperativeLevel(DirectDraw1, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr==DD_OK, "SetCooperativeLevel returned: %x\n", hr);
+    if(FAILED(hr)) {
+        goto out;
+    }
+
+    hr = IDirectDraw_SetDisplayMode(DirectDraw1, 640, 480, 8);
+    ok(hr==DD_OK || hr == DDERR_UNSUPPORTED, "SetDisplayMode returned: %x\n", hr);
+    if (FAILED(hr)) {
+        goto out;
+    }
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &Surface1, NULL);
+    ok(hr==DD_OK, "CreateSurface returned: %x\n", hr);
+    if (FAILED(hr)) {
+        goto out;
+    }
+
+    memset(entries, 0, sizeof(entries));
+    entries[0].peRed = 0xff;
+    entries[1].peGreen = 0xff;
+    entries[2].peBlue = 0xff;
+
+    hr = IDirectDraw_CreatePalette(DirectDraw1, DDPCAPS_ALLOW256 | DDPCAPS_8BIT, entries, &ddprimpal, NULL);
+    ok(hr == DD_OK, "CreatePalette returned %08x\n", hr);
+    if (FAILED(hr)) {
+        skip("IDirectDraw_CreatePalette failed; skipping further tests\n");
+        goto out;
+    }
+
+    hr = IDirectDrawSurface_SetPalette(Surface1, ddprimpal);
+    ok(hr==DD_OK, "IDirectDrawSurface_SetPalette returned: %x\n", hr);
+
+    p8_surface_fill_rect(Surface1, 0, 0, 640, 480, 2);
+
+    color = getPixelColor_GDI(Surface1, 10, 10);
+    ok(GetRValue(color) == 0 && GetGValue(color) == 0 && GetBValue(color) == 0xFF,
+            "got R %02X G %02X B %02X, expected R 00 G 00 B FF\n",
+            GetRValue(color), GetGValue(color), GetBValue(color));
+
+    memset(&ddbltfx, 0, sizeof(ddbltfx));
+    ddbltfx.dwSize = sizeof(ddbltfx);
+    U5(ddbltfx).dwFillColor = 0;
+    hr = IDirectDrawSurface_Blt(Surface1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
+    ok(hr == DD_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
+
+    color = getPixelColor_GDI(Surface1, 10, 10);
+    ok(GetRValue(color) == 0xFF && GetGValue(color) == 0 && GetBValue(color) == 0,
+            "got R %02X G %02X B %02X, expected R FF G 00 B 00\n",
+            GetRValue(color), GetGValue(color), GetBValue(color));
+
+    memset (&ddsd, 0, sizeof (ddsd));
+    ddsd.dwSize = sizeof (ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 16;
+    ddsd.dwHeight = 16;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount      = 8;
+    hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &offscreen, NULL);
+    ok(hr == DD_OK, "IDirectDraw_CreateSurface returned %08x\n", hr);
+    if (FAILED(hr)) goto out;
+
+    memset(entries, 0, sizeof(entries));
+    for (i = 0; i < 256; i++) {
+        entries[i].peBlue = i;
+        }
+    hr = IDirectDrawPalette_SetEntries(ddprimpal, 0, 0, 256, entries);
+    ok(hr == DD_OK, "IDirectDrawPalette_SetEntries failed with %08x\n", hr);
+
+    hr = IDirectDrawSurface_GetDC(offscreen, &hdc);
+    ok(hr==DD_OK, "IDirectDrawSurface_GetDC returned: %x\n", hr);
+    i = GetDIBColorTable(hdc, 0, 256, coltable);
+    ok(i == 256, "GetDIBColorTable returned %u, last error: %x\n", i, GetLastError());
+    hr = IDirectDrawSurface_ReleaseDC(offscreen, hdc);
+    ok(hr==DD_OK, "IDirectDrawSurface_ReleaseDC returned: %x\n", hr);
+
+    ok(colortables_check_equality(entries, coltable), "unexpected colortable on offscreen surface\n");
+
+    p8_surface_fill_rect(offscreen, 0, 0, 16, 16, 1);
+
+    memset(entries, 0, sizeof(entries));
+    entries[0].peRed = 0xff;
+    entries[1].peGreen = 0xff;
+    entries[2].peBlue = 0xff;
+    hr = IDirectDrawPalette_SetEntries(ddprimpal, 0, 0, 256, entries);
+    ok(hr == DD_OK, "IDirectDrawPalette_SetEntries failed with %08x\n", hr);
+
+    hr = IDirectDrawSurface_BltFast(Surface1, 0, 0, offscreen, NULL, 0);
+    ok(hr==DD_OK, "IDirectDrawSurface_BltFast returned: %x\n", hr);
+
+    color = getPixelColor_GDI(Surface1, 1, 1);
+    ok(GetRValue(color) == 0 && GetGValue(color) == 0xFF && GetBValue(color) == 0,
+            "got R %02X G %02X B %02X, expected R 00 G FF B 00\n",
+            GetRValue(color), GetGValue(color), GetBValue(color));
+
+    out:
+
+    if(ddprimpal) IDirectDrawPalette_Release(ddprimpal);
+    if(offscreen) IDirectDrawSurface_Release(offscreen);
+    if(Surface1) IDirectDrawSurface_Release(Surface1);
+    if(DirectDraw1) IDirectDraw_Release(DirectDraw1);
+    if(window) DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     HRESULT hr;
@@ -1776,6 +1971,9 @@ START_TEST(visual)
         D3D1_TextureMapBlendTest();
     }
     D3D1_releaseObjects();
+
+    p8_primary_test();
+
     return ;
 
 cleanup:
