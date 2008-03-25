@@ -1425,6 +1425,7 @@ COMCTL32_RefreshSysColors(void)
     comctl32_color.clrBtnFace = GetSysColor (COLOR_BTNFACE);
     comctl32_color.clrHighlight = GetSysColor (COLOR_HIGHLIGHT);
     comctl32_color.clrHighlightText = GetSysColor (COLOR_HIGHLIGHTTEXT);
+    comctl32_color.clrHotTrackingColor = GetSysColor (COLOR_HOTLIGHT);
     comctl32_color.clr3dHilight = GetSysColor (COLOR_3DHILIGHT);
     comctl32_color.clr3dShadow = GetSysColor (COLOR_3DSHADOW);
     comctl32_color.clr3dDkShadow = GetSysColor (COLOR_3DDKSHADOW);
