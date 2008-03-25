@@ -74,7 +74,7 @@ FONT 8, "MS Shell Dlg"
 {
  LTEXT "Drucker:", 1088, 6, 6, 40, 9
  LTEXT "", 1089, 60, 6, 150, 9
- GROUPBOX "Druckbereicht", 1072, 6, 30, 160, 65, BS_GROUPBOX
+ GROUPBOX "Druckbereich", 1072, 6, 30, 160, 65, BS_GROUPBOX
  RADIOBUTTON "&Alles", rad1, 16, 45, 60, 12
  RADIOBUTTON "A&uswahl", rad2, 16, 60, 60, 12
  RADIOBUTTON "&Seiten", rad3, 16, 75, 60, 12
