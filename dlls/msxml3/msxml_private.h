@@ -89,6 +89,7 @@ extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, B
 extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
+extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj );
 
 /* typelibs */
 enum tid_t {

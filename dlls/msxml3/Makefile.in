@@ -26,6 +26,7 @@ C_SRCS = \
 	pi.c \
 	queryresult.c \
 	regsvr.c \
+	saxreader.c \
 	schema.c \
 	text.c \
 	uuid.c \
