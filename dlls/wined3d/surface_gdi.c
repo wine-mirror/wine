@@ -579,28 +579,25 @@ HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     if(This->resource.format == WINED3DFMT_P8 ||
        This->resource.format == WINED3DFMT_A8P8) {
         unsigned int n;
+        PALETTEENTRY *pal = NULL;
+
         if(This->palette) {
-            PALETTEENTRY ent[256];
-
-            GetPaletteEntries(This->palette->hpal, 0, 256, ent);
-            for (n=0; n<256; n++) {
-                col[n].rgbRed   = ent[n].peRed;
-                col[n].rgbGreen = ent[n].peGreen;
-                col[n].rgbBlue  = ent[n].peBlue;
-                col[n].rgbReserved = 0;
-            }
+            pal = This->palette->palents;
         } else {
-            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+            IWineD3DSurfaceImpl *dds_primary = (IWineD3DSurfaceImpl *)This->resource.wineD3DDevice->ddraw_primary;
+            if (dds_primary && dds_primary->palette)
+                pal = dds_primary->palette->palents;
+        }
 
+        if (pal) {
             for (n=0; n<256; n++) {
-                col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
-                col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
-                col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
+                col[n].rgbRed   = pal[n].peRed;
+                col[n].rgbGreen = pal[n].peGreen;
+                col[n].rgbBlue  = pal[n].peBlue;
                 col[n].rgbReserved = 0;
             }
-
+            SetDIBColorTable(This->hDC, 0, 256, col);
         }
-        SetDIBColorTable(This->hDC, 0, 256, col);
     }
 
     *pHDC = This->hDC;
