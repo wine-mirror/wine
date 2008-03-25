@@ -690,6 +690,8 @@ void X11DRV_make_systray_window( HWND hwnd )
     struct x11drv_win_data *data;
     Window systray_window;
 
+    if (root_window != DefaultRootWindow(display)) return;
+
     if (!(data = X11DRV_get_win_data( hwnd )) &&
         !(data = X11DRV_create_win_data( hwnd ))) return;
 
