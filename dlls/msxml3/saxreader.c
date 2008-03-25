@@ -38,7 +38,7 @@
 
 #include "msxml_private.h"
 
-#include "libxml/SAX2.h"
+#include <libxml/SAX2.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
