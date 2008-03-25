@@ -889,7 +889,7 @@ static INT_PTR FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer
         {
             /* 'n' includes trailing \0 */
             bufW[n-1] = '\\';
-            memcpy( &bufW[n], lpstrFileList, (size-n)*sizeof(WCHAR) );
+            lstrcpynW( &bufW[n], lpstrFileList, size - n );
         }
         TRACE("returned -> %s\n",debugstr_wn(bufW, total));
     }
@@ -931,16 +931,15 @@ static INT_PTR FILEDLG95_Handle_GetFileSpec(HWND hwnd, DWORD size, LPVOID buffer
     FILEDLG95_FILENAME_GetFileNames(hwnd, &lpstrFileList, &sizeUsed, ' ');
     if( fodInfos->unicode )
     {
-        LPWSTR bufW = buffer;
-        memcpy( bufW, lpstrFileList, sizeof(WCHAR)*sizeUsed );
+        lstrcpynW( buffer, lpstrFileList, size );
     }
     else
     {
         LPSTR bufA = buffer;
-        sizeUsed = WideCharToMultiByte( CP_ACP, 0, lpstrFileList, sizeUsed,
-                                        NULL, 0, NULL, NULL);
-        WideCharToMultiByte(CP_ACP, 0, lpstrFileList, sizeUsed,
-                            bufA, size, NULL, NULL);
+        DWORD sizeA = WideCharToMultiByte( CP_ACP, 0, lpstrFileList, sizeUsed, NULL, 0, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, lpstrFileList, sizeUsed, bufA, size, NULL, NULL);
+        if (size && size < sizeA) bufA[size - 1] = 0;
+        sizeUsed = sizeA;
     }
     MemFree(lpstrFileList);
 
@@ -3237,29 +3236,27 @@ static int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, U
 	    while ((lpstrEdit[nStrCharCount]!='"') && (nStrCharCount <= nStrLen))
 	    {
 	      (*lpstrFileList)[nFileIndex++] = lpstrEdit[nStrCharCount];
-	      (*sizeUsed)++;
 	      nStrCharCount++;
 	    }
 	    (*lpstrFileList)[nFileIndex++] = separator;
-	    (*sizeUsed)++;
 	    nFileCount++;
 	  }
 	  nStrCharCount++;
 	}
 
 	/* single, unquoted string */
-	if ((nStrLen > 0) && (*sizeUsed == 0) )
+	if ((nStrLen > 0) && (nFileIndex == 0) )
 	{
 	  lstrcpyW(*lpstrFileList, lpstrEdit);
 	  nFileIndex = lstrlenW(lpstrEdit) + 1;
-	  (*sizeUsed) = nFileIndex;
 	  nFileCount = 1;
 	}
 
-	/* trailing \0 */
-	(*lpstrFileList)[nFileIndex] = '\0';
-	(*sizeUsed)++;
+        /* trailing \0 */
+        if (nFileIndex && separator) nFileIndex--;  /* remove trailing separator */
+        (*lpstrFileList)[nFileIndex++] = '\0';
 
+        *sizeUsed = nFileIndex;
 	MemFree(lpstrEdit);
 	return nFileCount;
 }
