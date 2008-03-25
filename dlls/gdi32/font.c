@@ -2751,7 +2751,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
  * BUGS
  *
  *   All flags except GCP_REORDER are not yet implemented.
- *   Reordering is not 100% complient to the Windows BiDi method.
+ *   Reordering is not 100% compliant to the Windows BiDi method.
  *   Caret positioning is not yet implemented for BiDi.
  *   Classes are not yet implemented.
  *

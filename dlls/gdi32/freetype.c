@@ -224,7 +224,7 @@ MAKE_FUNCPTR(FcPatternGetString);
 #define GET_BE_WORD(x) RtlUshortByteSwap(x)
 #endif
 
-/* This is bascially a copy of FT_Bitmap_Size with an extra element added */
+/* This is basically a copy of FT_Bitmap_Size with an extra element added */
 typedef struct {
     FT_Short height;
     FT_Short width;
@@ -483,7 +483,7 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
  *  FONTS.FON       System
  *  OEMFONT.FON     Terminal
  *  LogPixels       Current dpi set by the display control panel applet
- *                  (HKLM\\Software\\Microsft\\Windows NT\\CurrentVersion\\FontDPI
+ *                  (HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\FontDPI
  *                  also has a LogPixels value that appears to mirror this)
  *
  * On my system these values have data: vgafix.fon, vgasys.fon, vga850.fon and 96 respectively
@@ -2216,7 +2216,7 @@ static void update_font_info(void)
                    (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR));
     sprintf( cpbuf, "%u,%u", ansi_cp, oem_cp );
 
-    /* Setup DefaultFallback usage */
+    /* Setup Default_Fallback usage */
     if (ansi_cp == 932)
         use_default_fallback = TRUE;
 
@@ -3188,7 +3188,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
         /*
          * Check for a leading '@' this signals that the font is being
-         * requested in tategaki mode (vertical writing subtitution) but
+         * requested in tategaki mode (vertical writing substitution) but
          * does not affect the fontface that is to be selected.
          */
         if (lf.lfFaceName[0]=='@')
@@ -5264,7 +5264,7 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
     else
         len = cbData;
 
-    if(table) { /* MS tags differ in endidness from FT ones */
+    if(table) { /* MS tags differ in endianness from FT ones */
         table = table >> 24 | table << 24 |
 	  (table >> 8 & 0xff00) | (table << 8 & 0xff0000);
     }

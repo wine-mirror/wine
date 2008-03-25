@@ -993,7 +993,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
  * PARAMS
  *   lpXform [I] World-space to logical-space transformation data.
  *   dwCount [I] Size of the data pointed to by rgndata, in bytes.
- *   rgndata [I] Data that specifes the region.
+ *   rgndata [I] Data that specifies the region.
  *
  * RETURNS
  *   Success: Handle to region.
@@ -1239,7 +1239,7 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 /***********************************************************************
  *           CombineRgn   (GDI32.@)
  *
- * Combines two regions with the specifed operation and stores the result
+ * Combines two regions with the specified operation and stores the result
  * in the specified destination region.
  *
  * PARAMS

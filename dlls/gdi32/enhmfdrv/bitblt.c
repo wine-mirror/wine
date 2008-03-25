@@ -158,7 +158,7 @@ static BOOL EMFDRV_BitBlockTransfer(
        device colors are important. */
     lpBmiH->biClrImportant = 0; 
 
-    /* Initiliaze bitmap bits */
+    /* Initialize bitmap bits */
     if (GetDIBits(physDevSrc->hdc, hBitmap, 0, (UINT)lpBmiH->biHeight,
                   (BYTE*)pEMR + pEMR->offBitsSrc,
                   (LPBITMAPINFO)lpBmiH, DIB_RGB_COLORS))

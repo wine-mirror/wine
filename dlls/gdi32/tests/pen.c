@@ -195,7 +195,7 @@ static void test_logpen(void)
         }
         if (pen[i].style == PS_INSIDEFRAME)
         {
-            /* This style is applicable only for gemetric pens */
+            /* This style is applicable only for geometric pens */
             ok(hpen == 0, "ExtCreatePen should fail\n");
             goto test_geometric_pens;
         }
@@ -347,7 +347,7 @@ test_geometric_pens:
         memset(&lp, 0xb0, sizeof(lp));
         SetLastError(0xdeadbeef);
         size = GetObject(hpen, sizeof(lp), &lp);
-        /* for some reason XP differenciates PS_NULL here */
+        /* for some reason XP differentiates PS_NULL here */
         if (pen[i].style == PS_NULL)
         {
             ok(size == sizeof(LOGPEN), "GetObject returned %d, error %d\n", size, GetLastError());
@@ -404,7 +404,7 @@ test_geometric_pens:
             break;
         }
 
-        /* for some reason XP differenciates PS_NULL here */
+        /* for some reason XP differentiates PS_NULL here */
         if (pen[i].style == PS_NULL)
             ok(ext_pen.elp.elpPenStyle == pen[i].ret_style, "expected %x, got %x\n", pen[i].ret_style, ext_pen.elp.elpPenStyle);
         else

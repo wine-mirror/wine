@@ -375,7 +375,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
 
         /**
          * The file name can be dos based, we have to find its
-         * Unix correspondant file name
+         * corresponding Unix file name.
          */
         MultiByteToWideChar(CP_ACP, 0, psCmdP, -1, psCmdPW, MAX_PATH);
         if ((buffer = wine_get_unix_file_name(psCmdPW)))

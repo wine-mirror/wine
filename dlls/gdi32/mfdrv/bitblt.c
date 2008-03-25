@@ -49,7 +49,7 @@ BOOL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
 
 /***********************************************************************
  *           MFDRV_StretchBlt
- * this function contains TWO ways for procesing StretchBlt in metafiles,
+ * this function contains TWO ways for processing StretchBlt in metafiles,
  * decide between rdFunction values  META_STRETCHBLT or META_DIBSTRETCHBLT
  * via #define STRETCH_VIA_DIB
  */

@@ -182,7 +182,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     }
     else
     {
-        /* PS_INSIDEFRAME is applicable only for gemetric pens */
+        /* PS_INSIDEFRAME is applicable only for geometric pens */
         if ((style & PS_STYLE_MASK) == PS_INSIDEFRAME || width != 1)
         {
             SetLastError(ERROR_INVALID_PARAMETER);

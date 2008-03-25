@@ -1500,7 +1500,7 @@ WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
  */
 INT WINAPI SetICMMode(HDC hdc, INT iEnableICM)
 {
-/*FIXME  Asuming that ICM is always off, and cannot be turned on */
+/*FIXME:  Assume that ICM is always off, and cannot be turned on */
     if (iEnableICM == ICM_OFF) return ICM_OFF;
     if (iEnableICM == ICM_ON) return 0;
     if (iEnableICM == ICM_QUERY) return ICM_OFF;
