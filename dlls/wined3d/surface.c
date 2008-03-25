@@ -2031,15 +2031,13 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
             return;
         }
 
-        /* Still no palette? Use the device's palette */
-        /* can ddraw and d3d < 8 surfaces use device's palette (d3d >= 8 feature)? */
+        /*  Direct3D >= 8 palette usage style: P8 textures use device palettes, palette entry format is A8R8G8B8,
+            alpha is stored in peFlags and may be used by the app if D3DPTEXTURECAPS_ALPHAPALETTE device
+            capability flag is present (wine does advertise this capability) */
         for (i = 0; i < 256; i++) {
             table[i][0] = device->palettes[device->currentPalette][i].peRed;
             table[i][1] = device->palettes[device->currentPalette][i].peGreen;
             table[i][2] = device->palettes[device->currentPalette][i].peBlue;
-            /* Direct3D >= 8 palette usage style: P8 textures use device palettes, palette entry format is A8R8G8B8,
-               alpha is stored in peFlags and may be used by the app if D3DPTEXTURECAPS_ALPHAPALETTE device
-               capability flag is present (wine does advertise this capability) */
             table[i][3] = device->palettes[device->currentPalette][i].peFlags;
         }
     } else {
