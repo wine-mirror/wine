@@ -44,6 +44,7 @@
 #include "crypt.h"
 #include "winnls.h"
 #include "winreg.h"
+#include "rpc.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "winternl.h"
@@ -266,6 +267,54 @@ error:
 #undef CRYPT_GetProvFuncOpt
 
 
+static void CRYPT_CreateMachineGuid(void)
+{
+	static const WCHAR cryptographyW[] = {
+                'S','o','f','t','w','a','r','e','\\',
+                'M','i','c','r','o','s','o','f','t','\\',
+                'C','r','y','p','t','o','g','r','a','p','h','y',0 };
+	static const WCHAR machineGuidW[] = {
+		'M','a','c','h','i','n','e','G','u','i','d',0 };
+	LONG r;
+	HKEY key;
+
+	r = RegOpenKeyExW(HKEY_LOCAL_MACHINE, cryptographyW, 0, KEY_ALL_ACCESS,
+			  &key);
+	if (!r)
+	{
+		DWORD size;
+
+		r = RegQueryValueExW(key, machineGuidW, NULL, NULL, NULL, &size);
+		if (r == ERROR_FILE_NOT_FOUND)
+		{
+			static const WCHAR rpcrt4[] = {
+				'r','p','c','r','t','4',0 };
+			HMODULE lib = LoadLibraryW(rpcrt4);
+
+			if (lib)
+			{
+				RPC_STATUS (RPC_ENTRY *pUuidCreate)(UUID *);
+				RPC_STATUS (RPC_ENTRY *pUuidToString)(UUID *, WCHAR **);
+				RPC_STATUS (RPC_ENTRY *pRpcStringFree)(WCHAR **);
+				UUID uuid;
+				WCHAR *uuidStr;
+
+				pUuidCreate = GetProcAddress(lib, "UuidCreate");
+				pUuidToString = GetProcAddress(lib, "UuidToStringW");
+				pRpcStringFree = GetProcAddress(lib, "RpcStringFreeW");
+				pUuidCreate(&uuid);
+				pUuidToString(&uuid, &uuidStr);
+				RegSetValueExW(key, machineGuidW, 0, REG_SZ,
+					       (const BYTE *)uuidStr,
+					       (lstrlenW(uuidStr)+1)*sizeof(WCHAR));
+				pRpcStringFree(&uuidStr);
+				FreeLibrary(lib);
+			}
+		}
+		RegCloseKey(key);
+	}
+}
+
 /******************************************************************************
  * CryptAcquireContextW (ADVAPI32.@)
  *
@@ -308,6 +357,9 @@ BOOL WINAPI CryptAcquireContextW (HCRYPTPROV *phProv, LPCWSTR pszContainer,
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
+
+	/* Make sure the MachineGuid value exists */
+	CRYPT_CreateMachineGuid();
 
 	if (!pszProvider || !*pszProvider)
 	{

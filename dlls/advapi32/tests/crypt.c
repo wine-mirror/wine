@@ -907,10 +907,8 @@ static void test_machine_guid(void)
    /* Check that MachineGuid was created */
    size = sizeof(guid);
    r = RegQueryValueExA(key, "MachineGuid", NULL, NULL, (BYTE *)guid, &size);
-   todo_wine
    ok(!r, "expected to find MachineGuid: %d\n", r);
    r = RegDeleteValueA(key, "MachineGuid");
-   todo_wine
    ok(!r, "RegDeleteValueA failed: %d\n", r);
    if (restoreGuid)
        RegSetValueExA(key, "MachineGuid", 0, REG_SZ, (const BYTE *)originalGuid,
