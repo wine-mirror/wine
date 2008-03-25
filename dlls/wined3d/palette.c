@@ -157,17 +157,6 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface, DW
         }
     }
 
-    /* If the palette is the primary palette, set the entries to the device */
-    if(This->Flags & WINEDDPCAPS_PRIMARYSURFACE) {
-        unsigned int i;
-        IWineD3DDeviceImpl *device = This->wineD3DDevice;
-        PALETTEENTRY *entry = PalEnt;
-
-        for(i = Start; i < Start+Count; i++) {
-            device->palettes[device->currentPalette][i] = *entry++;
-        }
-    }
-
     return WINED3D_OK;
 }
 
