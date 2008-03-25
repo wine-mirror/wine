@@ -1656,6 +1656,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_Pixe
 
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format) {
     short depthSize, stencilSize;
+    BOOL lockable = FALSE;
 
     if(!cfg)
         return FALSE;
@@ -1665,7 +1666,13 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_Pixel
         return FALSE;
     }
 
-    if(cfg->depthSize != depthSize)
+    if((Format == WINED3DFMT_D16_LOCKABLE) || (Format == WINED3DFMT_D32F_LOCKABLE))
+        lockable = TRUE;
+
+    /* On some modern cards like the Geforce8/9 GLX doesn't offer some dephthstencil formats which D3D9 reports.
+     * We can safely report 'compatible' formats (e.g. D24 can be used for D16) as long as we aren't dealing with
+     * a lockable format. This also helps D3D <= 7 as they expect D16 which isn't offered without this on Geforce8 cards. */
+    if(!(cfg->depthSize == depthSize || (!lockable && cfg->depthSize > depthSize)))
         return FALSE;
 
     if(cfg->stencilSize != stencilSize)
