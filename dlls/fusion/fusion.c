@@ -54,15 +54,6 @@ HRESULT WINAPI CompareAssemblyIdentity(LPCWSTR pwzAssemblyIdentity1, BOOL fUnifi
 }
 
 /******************************************************************
- *  CreateAssemblyCache   (FUSION.@)
- */
-HRESULT WINAPI CreateAssemblyCache(IAssemblyCache **ppAsmCache, DWORD dwReserved)
-{
-    FIXME("(%p, %d) stub!\n", ppAsmCache, dwReserved);
-    return E_NOTIMPL;
-}
-
-/******************************************************************
  *  CreateAssemblyEnum   (FUSION.@)
  */
 HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum **pEnum, IUnknown *pUnkReserved,

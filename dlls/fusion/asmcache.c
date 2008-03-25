@@ -147,6 +147,32 @@ static const IAssemblyCacheVtbl AssemblyCacheVtbl = {
     IAssemblyCacheImpl_InstallAssembly
 };
 
+/******************************************************************
+ *  CreateAssemblyCache   (FUSION.@)
+ */
+HRESULT WINAPI CreateAssemblyCache(IAssemblyCache **ppAsmCache, DWORD dwReserved)
+{
+    IAssemblyCacheImpl *cache;
+
+    TRACE("(%p, %d)\n", ppAsmCache, dwReserved);
+
+    if (!ppAsmCache)
+        return E_INVALIDARG;
+
+    *ppAsmCache = NULL;
+
+    cache = HeapAlloc(GetProcessHeap(), 0, sizeof(IAssemblyCacheImpl));
+    if (!cache)
+        return E_OUTOFMEMORY;
+
+    cache->lpIAssemblyCacheVtbl = &AssemblyCacheVtbl;
+    cache->ref = 1;
+
+    *ppAsmCache = (IAssemblyCache *)cache;
+
+    return S_OK;
+}
+
 /* IAssemblyCacheItem */
 
 typedef struct {
