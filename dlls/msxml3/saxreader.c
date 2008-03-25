@@ -38,11 +38,11 @@
 
 #include "msxml_private.h"
 
-#include <libxml/SAX2.h>
-
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
+
+#include <libxml/SAX2.h>
 
 typedef struct _saxreader
 {
