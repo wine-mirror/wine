@@ -57,7 +57,20 @@ static REFIID tid_ids[] = {
     &IID_IXMLDOMSchemaCollection,
     &IID_IXMLDOMText,
     &IID_IXMLElement,
-    &IID_IXMLDOMDocument
+    &IID_IXMLDOMDocument,
+    &IID_IVBSAXAttributes,
+    &IID_IVBSAXContentHandler,
+    &IID_IVBSAXDeclHandler,
+    &IID_IVBSAXDTDHandler,
+    &IID_IVBSAXEntityResolver,
+    &IID_IVBSAXErrorHandler,
+    &IID_IVBSAXLexicalHandler,
+    &IID_IVBSAXLocator,
+    &IID_IVBSAXXMLFilter,
+    &IID_IVBSAXXMLReader,
+    &IID_IMXAttributes,
+    &IID_IMXReaderControl,
+    &IID_IMXWriter,
 };
 
 HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)

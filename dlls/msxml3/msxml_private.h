@@ -108,6 +108,19 @@ enum tid_t {
     IXMLDOMText_tid,
     IXMLElement_tid,
     IXMLDocument_tid,
+    IVBSAXAttributes_tid,
+    IVBSAXContentHandler_tid,
+    IVBSAXDeclHandler_tid,
+    IVBSAXDTDHandler_tid,
+    IVBSAXEntityResolver_tid,
+    IVBSAXErrorHandler_tid,
+    IVBSAXLexicalHandler_tid,
+    IVBSAXLocator_tid,
+    IVBSAXXMLFilter_tid,
+    IVBSAXXMLReader_tid,
+    IMXAttributes_tid,
+    IMXReaderControl_tid,
+    IMXWriter_tid,
     LAST_tid
 };
 
