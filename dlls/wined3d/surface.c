@@ -789,19 +789,24 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         }
     }
 
+    LEAVE_GL();
+
     /* For P8 textures we need to perform an inverse palette lookup. This is done by searching for a palette
      * index which matches the RGB value. Note this isn't guaranteed to work when there are multiple entries for
      * the same color but we have no choice.
      * In case of P8 render targets, the index is stored in the alpha component so no conversion is needed.
      */
     if((This->resource.format == WINED3DFMT_P8) && !primary_render_target_is_p8(myDevice)) {
-        PALETTEENTRY *pal;
+        PALETTEENTRY *pal = NULL;
         DWORD width = pitch / 3;
         int x, y, c;
+
         if(This->palette) {
             pal = This->palette->palents;
         } else {
-            pal = This->resource.wineD3DDevice->palettes[This->resource.wineD3DDevice->currentPalette];
+            ERR("Palette is missing, cannot perform inverse palette lookup\n");
+            HeapFree(GetProcessHeap(), 0, mem);
+            return ;
         }
 
         for(y = local_rect.top; y < local_rect.bottom; y++) {
@@ -824,7 +829,6 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         }
         HeapFree(GetProcessHeap(), 0, mem);
     }
-    LEAVE_GL();
 }
 
 /* Read the framebuffer contents into a texture */
