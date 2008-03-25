@@ -65,7 +65,65 @@ typedef enum _tagAssemblyComparisonResult
 ]
 interface IAssemblyCache : IUnknown
 {
+    typedef struct _FUSION_INSTALL_REFERENCE_
+    {
+        DWORD cbSize;
+        DWORD dwFlags;
+        GUID guidScheme;
+        LPCWSTR szIdentifier;
+        LPCWSTR szNonCannonicalData;
+    } FUSION_INSTALL_REFERENCE, *LPFUSION_INSTALL_REFERENCE;
 
+    typedef const FUSION_INSTALL_REFERENCE  *LPCFUSION_INSTALL_REFERENCE;
+
+    typedef struct _ASSEMBLY_INFO
+    {
+        ULONG cbAssemblyInfo;
+        DWORD dwAssemblyFlags;
+        ULARGE_INTEGER uliAssemblySizeInKB;
+        LPWSTR pszCurrentAssemblyPathBuf;
+        ULONG cchBuf;
+    } ASSEMBLY_INFO;
+
+    cpp_quote("#define IASSEMBLYCACHE_INSTALL_FLAG_REFRESH       0x00000001")
+    cpp_quote("#define IASSEMBLYCACHE_INSTALL_FLAG_FORCE_REFRESH 0x00000002")
+
+    cpp_quote("#define IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED 1")
+    cpp_quote("#define IASSEMBLYCACHE_UNINSTALL_DISPOSITION_STILL_IN_USE 2")
+    cpp_quote("#define IASSEMBLYCACHE_UNINSTALL_DISPOSITION_ALREADY_UNINSTALLED 3")
+    cpp_quote("#define IASSEMBLYCACHE_UNINSTALL_DISPOSITION_DELETE_PENDING 4")
+    cpp_quote("#define IASSEMBLYCACHE_UNINSTALL_DISPOSITION_HAS_INSTALL_REFERENCES 5")
+    cpp_quote("#define IASSEMBLYCACHE_UNINSTALL_DISPOSITION_REFERENCE_NOT_FOUND 6")
+
+    cpp_quote("#define QUERYASMINFO_FLAG_VALIDATE   0x00000001")
+    cpp_quote("#define QUERYASMINFO_FLAG_GETSIZE    0x00000002")
+
+    cpp_quote("#define ASSEMBLYINFO_FLAG_INSTALLED       0x00000001")
+    cpp_quote("#define ASSEMBLYINFO_FLAG_PAYLOADRESIDENT 0x00000002")
+
+    HRESULT UninstallAssembly(
+        [in] DWORD dwFlags,
+        [in] LPCWSTR pszAssemblyName,
+        [in] LPCFUSION_INSTALL_REFERENCE pRefData,
+        [out, optional] ULONG *pulDisposition);
+
+    HRESULT QueryAssemblyInfo(
+        [in] DWORD dwFlags,
+        [in] LPCWSTR pszAssemblyName,
+        [in, out] ASSEMBLY_INFO *pAsmInfo);
+
+    HRESULT CreateAssemblyCacheItem(
+        [in] DWORD dwFlags,
+        [in] PVOID pvReserved,
+        [out] IAssemblyCacheItem **ppAsmItem,
+        [in, optional] LPCWSTR pszAssemblyName);
+
+    HRESULT CreateAssemblyScavenger([out] IUnknown **ppUnkReserved);
+
+    HRESULT InstallAssembly(
+        [in] DWORD dwFlags,
+        [in] LPCWSTR pszManifestFilePath,
+        [in] LPCFUSION_INSTALL_REFERENCE pRefData);
 }
 
 [
@@ -76,7 +134,31 @@ interface IAssemblyCache : IUnknown
 ]
 interface IAssemblyCacheItem : IUnknown
 {
+    cpp_quote("#define STREAM_FORMAT_COMPLIB_MODULE    0")
+    cpp_quote("#define STREAM_FORMAT_COMPLIB_MANIFEST  1")
+    cpp_quote("#define STREAM_FORMAT_WIN32_MODULE      2")
+    cpp_quote("#define STREAM_FORMAT_WIN32_MANIFEST    4")
 
+    cpp_quote("#define IASSEMBLYCACHEITEM_COMMIT_FLAG_REFRESH       0x00000001")
+    cpp_quote("#define IASSEMBLYCACHEITEM_COMMIT_FLAG_FORCE_REFRESH 0x00000002")
+
+    cpp_quote("#define IASSEMBLYCACHEITEM_COMMIT_DISPOSITION_INSTALLED 1")
+    cpp_quote("#define IASSEMBLYCACHEITEM_COMMIT_DISPOSITION_REFRESHED 2")
+    cpp_quote("#define IASSEMBLYCACHEITEM_COMMIT_DISPOSITION_ALREADY_INSTALLED 3")
+
+    HRESULT CreateStream(
+        [in] DWORD dwFlags,
+        [in] LPCWSTR pszStreamName,
+        [in] DWORD dwFormat,
+        [in] DWORD dwFormatFlags,
+        [out] IStream **ppIStream,
+        [in, optional] ULARGE_INTEGER *puliMaxSize);
+
+    HRESULT Commit(
+        [in] DWORD dwFlags,
+        [out, optional] ULONG *pulDisposition);
+
+    HRESULT AbortItem();
 }
 
 [

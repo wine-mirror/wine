@@ -6,6 +6,7 @@ MODULE    = fusion.dll
 IMPORTS   = kernel32
 
 C_SRCS = \
+	asmcache.c \
 	asmname.c \
 	fusion.c \
 	fusion_main.c
