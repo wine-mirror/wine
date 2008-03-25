@@ -46,7 +46,9 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         DisableThreadLibraryCalls( hinst );
         break;
     case DLL_PROCESS_DETACH:
+#ifdef HAVE_LCMS
         free_handle_tables();
+#endif
         break;
     }
     return TRUE;
