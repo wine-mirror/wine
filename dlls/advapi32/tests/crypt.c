@@ -871,6 +871,53 @@ static void test_set_provider_ex(void)
 	LocalFree(pszProvName);
 }
 
+static void test_machine_guid(void)
+{
+   char originalGuid[40], guid[40];
+   LONG r;
+   HKEY key;
+   DWORD size;
+   HCRYPTPROV hCryptProv;
+   BOOL restoreGuid = FALSE, ret;
+
+   r = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography",
+                     0, KEY_ALL_ACCESS, &key);
+   if (r != ERROR_SUCCESS)
+   {
+       skip("couldn't open HKLM\\Software\\Microsoft\\Cryptography\n");
+       return;
+   }
+   /* Cache existing MachineGuid, and delete it */
+   size = sizeof(originalGuid);
+   r = RegQueryValueExA(key, "MachineGuid", NULL, NULL, (BYTE *)originalGuid,
+                        &size);
+   if (r == ERROR_SUCCESS)
+   {
+       restoreGuid = TRUE;
+       r = RegDeleteValueA(key, "MachineGuid");
+       ok(!r, "RegDeleteValueA failed: %d\n", r);
+   }
+   else
+       ok(r == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n",
+          r);
+   /* Create and release a provider */
+   ret = pCryptAcquireContextA(&hCryptProv, szKeySet, NULL, PROV_RSA_FULL, 0);
+   ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
+   CryptReleaseContext(hCryptProv, 0);
+   /* Check that MachineGuid was created */
+   size = sizeof(guid);
+   r = RegQueryValueExA(key, "MachineGuid", NULL, NULL, (BYTE *)guid, &size);
+   todo_wine
+   ok(!r, "expected to find MachineGuid: %d\n", r);
+   r = RegDeleteValueA(key, "MachineGuid");
+   todo_wine
+   ok(!r, "RegDeleteValueA failed: %d\n", r);
+   if (restoreGuid)
+       RegSetValueExA(key, "MachineGuid", 0, REG_SZ, (const BYTE *)originalGuid,
+                      strlen(originalGuid)+1);
+   RegCloseKey(key);
+}
+
 START_TEST(crypt)
 {
 	init_function_pointers();
@@ -879,6 +926,7 @@ START_TEST(crypt)
 	test_acquire_context();
 	test_incorrect_api_usage();
 	test_verify_sig();
+	test_machine_guid();
 	clean_up_environment();
 	}
 	
