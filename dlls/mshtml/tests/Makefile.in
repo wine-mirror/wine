@@ -10,7 +10,8 @@ CTESTS = \
 	dom.c \
 	htmldoc.c \
 	misc.c \
-	protocol.c
+	protocol.c \
+	script.c
 
 @MAKE_TEST_RULES@
 
