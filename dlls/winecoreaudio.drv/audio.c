@@ -855,12 +855,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     wwo->state = WINE_WS_STOPPED;
-                
+
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-    
-    memcpy(&wwo->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
+
+    wwo->waveDesc = *lpDesc;
     memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
-    
+
     if (wwo->format.wBitsPerSample == 0) {
 	WARN("Resetting zeroed wBitsPerSample\n");
 	wwo->format.wBitsPerSample = 8 *
@@ -1450,7 +1450,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
      * DirectSound clients.  However, it only does this if we respond
      * successfully to the DRV_QUERYDSOUNDDESC message.  It's enough to fill in
      * the driver and device names of the description output parameter. */
-    memcpy(desc, &(WOutDev[wDevID].cadev->ds_desc), sizeof(DSDRIVERDESC));
+    *desc = WOutDev[wDevID].cadev->ds_desc;
     return MMSYSERR_NOERROR;
 }
 
@@ -1837,7 +1837,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwi->state = WINE_WS_STOPPED;
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwi->waveDesc, lpDesc,              sizeof(WAVEOPENDESC));
+    wwi->waveDesc = *lpDesc;
     memcpy(&wwi->format,   lpDesc->lpFormat,    sizeof(PCMWAVEFORMAT));
 
     if (wwi->format.wBitsPerSample == 0)
