@@ -30,6 +30,7 @@
 #include "imm.h"
 #include "ddk/imm.h"
 #include "winnls.h"
+#include "winreg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
@@ -1178,23 +1179,83 @@ DWORD WINAPI ImmGetGuideLineW(HIMC hIMC, DWORD dwIndex, LPWSTR lpBuf, DWORD dwBu
 /***********************************************************************
  *		ImmGetIMEFileNameA (IMM32.@)
  */
-UINT WINAPI ImmGetIMEFileNameA(
-  HKL hKL, LPSTR lpszFileName, UINT uBufLen)
+UINT WINAPI ImmGetIMEFileNameA( HKL hKL, LPSTR lpszFileName, UINT uBufLen)
 {
-  FIXME("(%p, %p, %d): stub\n", hKL, lpszFileName, uBufLen);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    LPWSTR bufW = NULL;
+    UINT wBufLen = uBufLen;
+    UINT rc;
+
+    if (uBufLen && lpszFileName)
+        bufW = HeapAlloc(GetProcessHeap(),0,uBufLen * sizeof(WCHAR));
+    else /* We need this to get the number of byte required */
+    {
+        bufW = HeapAlloc(GetProcessHeap(),0,MAX_PATH * sizeof(WCHAR));
+        wBufLen = MAX_PATH;
+    }
+
+    rc = ImmGetIMEFileNameW(hKL,bufW,wBufLen);
+
+    if (rc > 0)
+    {
+        if (uBufLen && lpszFileName)
+            rc = WideCharToMultiByte(CP_ACP, 0, bufW, -1, lpszFileName,
+                                 uBufLen, NULL, NULL);
+        else /* get the length */
+            rc = WideCharToMultiByte(CP_ACP, 0, bufW, -1, NULL, 0, NULL,
+                                     NULL);
+    }
+
+    HeapFree(GetProcessHeap(),0,bufW);
+    return rc;
 }
 
 /***********************************************************************
  *		ImmGetIMEFileNameW (IMM32.@)
  */
-UINT WINAPI ImmGetIMEFileNameW(
-  HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
+UINT WINAPI ImmGetIMEFileNameW(HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
 {
-  FIXME("(%p, %p, %d): stub\n", hKL, lpszFileName, uBufLen);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    static const WCHAR szImeFileW[] = {'I','m','e',' ','F','i','l','e',0};
+    static const WCHAR fmt[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s','\\','%','0','8','x',0};
+
+    HKEY hkey;
+    DWORD length;
+    DWORD rc;
+    WCHAR regKey[sizeof(fmt)/sizeof(WCHAR)+8];
+
+    wsprintfW( regKey, fmt, (unsigned)hKL );
+    rc = RegOpenKeyW( HKEY_LOCAL_MACHINE, regKey, &hkey);
+    if (rc != ERROR_SUCCESS)
+    {
+        SetLastError(rc);
+        return 0;
+    }
+
+    length = 0;
+    rc = RegGetValueW(hkey, NULL, szImeFileW, RRF_RT_REG_SZ, NULL, NULL, &length);
+
+    if (rc != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkey);
+        SetLastError(rc);
+        return 0;
+    }
+    if (length > uBufLen * sizeof(WCHAR) || !lpszFileName)
+    {
+        RegCloseKey(hkey);
+        if (lpszFileName)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return 0;
+        }
+        else
+            return length / sizeof(WCHAR);
+    }
+
+    RegGetValueW(hkey, NULL, szImeFileW, RRF_RT_REG_SZ, NULL, lpszFileName, &length);
+
+    RegCloseKey(hkey);
+
+    return length / sizeof(WCHAR);
 }
 
 /***********************************************************************
