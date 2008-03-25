@@ -839,7 +839,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->unixdev = audio;
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwo->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
+    wwo->waveDesc = *lpDesc;
     memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
 
     if (wwo->format.wBitsPerSample == 0) {
@@ -1954,7 +1954,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwi->dwTotalRecorded = 0;
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwi->waveDesc, lpDesc,           sizeof(WAVEOPENDESC));
+    wwi->waveDesc = *lpDesc;
     memcpy(&wwi->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
 
     if (wwi->format.wBitsPerSample == 0) {
