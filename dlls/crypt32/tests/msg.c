@@ -2062,7 +2062,6 @@ static void test_decode_msg_update(void)
     /* as does a second (probably to update the detached portion).. */
     ret = CryptMsgUpdate(msg, detachedSignedContent,
      sizeof(detachedSignedContent), TRUE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     /* while a third fails. */
     ret = CryptMsgUpdate(msg, detachedSignedContent,

@@ -52,6 +52,7 @@ BOOL CRYPT_DefaultMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
 typedef enum _CryptMsgState {
     MsgStateInit,
     MsgStateUpdated,
+    MsgStateDataFinalized,
     MsgStateFinalized
 } CryptMsgState;
 
@@ -1663,10 +1664,30 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
         SetLastError(CRYPT_E_MSG_ERROR);
     else if (msg->base.streamed)
     {
-        ret = CDecodeMsg_CopyData(msg, pbData, cbData);
         FIXME("(%p, %p, %d, %d): streamed update stub\n", hCryptMsg, pbData,
          cbData, fFinal);
-        msg->base.state = fFinal ? MsgStateFinalized : MsgStateUpdated;
+        if (fFinal)
+        {
+            if (msg->base.open_flags & CMSG_DETACHED_FLAG &&
+             msg->base.state != MsgStateDataFinalized)
+            {
+                ret = CDecodeMsg_CopyData(msg, pbData, cbData);
+                msg->base.state = MsgStateDataFinalized;
+            }
+            else
+            {
+                FIXME("(%p, %p, %d, %d): detached update stub\n", hCryptMsg,
+                 pbData, cbData, fFinal);
+                ret = TRUE;
+                msg->base.state = MsgStateFinalized;
+            }
+        }
+        else
+        {
+            ret = CDecodeMsg_CopyData(msg, pbData, cbData);
+            if (msg->base.state == MsgStateInit)
+                msg->base.state = MsgStateUpdated;
+        }
     }
     else
     {
@@ -1674,10 +1695,24 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             SetLastError(CRYPT_E_MSG_ERROR);
         else
         {
-            ret = CDecodeMsg_CopyData(msg, pbData, cbData);
-            if (ret)
-                ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data, msg->type);
-            msg->base.state = MsgStateFinalized;
+            if (msg->base.state == MsgStateInit)
+            {
+                ret = CDecodeMsg_CopyData(msg, pbData, cbData);
+                if (ret)
+                    ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data,
+                     msg->type);
+                if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+                    msg->base.state = MsgStateDataFinalized;
+                else
+                    msg->base.state = MsgStateFinalized;
+            }
+            else if (msg->base.state == MsgStateDataFinalized)
+            {
+                FIXME("(%p, %p, %d, %d): detached update stub\n", hCryptMsg,
+                 pbData, cbData, fFinal);
+                ret = TRUE;
+                msg->base.state = MsgStateFinalized;
+            }
         }
     }
     return ret;
