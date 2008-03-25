@@ -312,7 +312,14 @@ interface IAssemblyName: IUnknown
 ]
 interface IAssemblyEnum : IUnknown
 {
+    HRESULT GetNextAssembly(
+        [in] LPVOID pvReserved,
+        [out] IAssemblyName **ppName,
+        [in] DWORD dwFlags);
 
+    HRESULT Reset(void);
+
+    HRESULT Clone([out] IAssemblyEnum **ppEnum);
 }
 
 [
