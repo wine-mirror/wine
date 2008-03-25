@@ -635,30 +635,22 @@ HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
     unsigned int n;
     TRACE("(%p)\n", This);
 
+    if (!pal) return WINED3D_OK;
+
     if(This->Flags & SFLAG_DIBSECTION) {
         TRACE("(%p): Updating the hdc's palette\n", This);
         for (n=0; n<256; n++) {
-            if(pal) {
-                col[n].rgbRed   = pal->palents[n].peRed;
-                col[n].rgbGreen = pal->palents[n].peGreen;
-                col[n].rgbBlue  = pal->palents[n].peBlue;
-            } else {
-                IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-                /* Use the default device palette */
-                col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
-                col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
-                col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
-            }
+            col[n].rgbRed   = pal->palents[n].peRed;
+            col[n].rgbGreen = pal->palents[n].peGreen;
+            col[n].rgbBlue  = pal->palents[n].peBlue;
             col[n].rgbReserved = 0;
         }
         SetDIBColorTable(This->hDC, 0, 256, col);
     }
 
-    /* Update the image because of the palette change. Note that this function is also
-     * called on a palette removal. In such a case we don't have to update the screen.
-     * Some games like e.g Red Alert call SetEntries a lot to implement fading.
-     */
-    if(pal && This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+    /* Update the image because of the palette change. Some games like e.g Red Alert
+       call SetEntries a lot to implement fading. */
+    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
         x11_copy_to_screen(This, NULL);
 
     return WINED3D_OK;

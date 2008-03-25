@@ -3574,6 +3574,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
     unsigned int n;
     TRACE("(%p)\n", This);
 
+    if (!pal) return WINED3D_OK;
+
     if(This->resource.format == WINED3DFMT_P8 ||
        This->resource.format == WINED3DFMT_A8P8)
     {
@@ -3588,26 +3590,17 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
     if(This->Flags & SFLAG_DIBSECTION) {
         TRACE("(%p): Updating the hdc's palette\n", This);
         for (n=0; n<256; n++) {
-            if(pal) {
-                col[n].rgbRed   = pal->palents[n].peRed;
-                col[n].rgbGreen = pal->palents[n].peGreen;
-                col[n].rgbBlue  = pal->palents[n].peBlue;
-            } else {
-                IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-                /* Use the default device palette */
-                col[n].rgbRed   = device->palettes[device->currentPalette][n].peRed;
-                col[n].rgbGreen = device->palettes[device->currentPalette][n].peGreen;
-                col[n].rgbBlue  = device->palettes[device->currentPalette][n].peBlue;
-            }
+            col[n].rgbRed   = pal->palents[n].peRed;
+            col[n].rgbGreen = pal->palents[n].peGreen;
+            col[n].rgbBlue  = pal->palents[n].peBlue;
             col[n].rgbReserved = 0;
         }
         SetDIBColorTable(This->hDC, 0, 256, col);
     }
 
-    /* Propagate the changes to the drawable when we have a palette. This function is also called
-     * when the palette is removed.
+    /* Propagate the changes to the drawable when we have a palette.
      * TODO: in case of hardware p8 palettes we should only upload the palette. */
-    if(pal && (This->resource.usage & WINED3DUSAGE_RENDERTARGET))
+    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
         IWineD3DSurface_LoadLocation(iface, SFLAG_INDRAWABLE, NULL);
 
     return WINED3D_OK;
