@@ -497,7 +497,6 @@ static BOOL PRINTDLG_PaperSizeA(
     for (i=0;i<NrOfEntries;i++)
 	if (Words[i] == PaperSize)
 	    break;
-    HeapFree(GetProcessHeap(),0,Words);
     if (i == NrOfEntries) {
 	FIXME("Papersize %d not found in list?\n",PaperSize);
 	goto out;
@@ -555,7 +554,6 @@ static BOOL PRINTDLG_PaperSizeW(
     for (i=0;i<NrOfEntries;i++)
 	if (!lstrcmpW(PaperSize,Names+(64*i)))
 	    break;
-    HeapFree(GetProcessHeap(),0,Names);
     if (i==NrOfEntries) {
 	FIXME("Papersize %s not found in list?\n",debugstr_w(PaperSize));
 	goto out;
