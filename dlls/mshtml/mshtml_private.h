@@ -144,6 +144,8 @@ struct HTMLDocument {
     LPOLESTR url;
     struct list bindings;
 
+    struct list script_hosts;
+
     HWND hwnd;
     HWND tooltips_hwnd;
 
@@ -435,6 +437,9 @@ void HTMLElement_destructor(HTMLDOMNode*);
 
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);
+
+void release_script_hosts(HTMLDocument*);
+void doc_insert_script(HTMLDocument*,nsIDOMHTMLScriptElement*);
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*);
 

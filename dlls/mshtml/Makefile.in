@@ -43,6 +43,7 @@ C_SRCS = \
 	olewnd.c \
 	persist.c \
 	protocol.c \
+	script.c \
 	selection.c \
 	service.c \
 	task.c \

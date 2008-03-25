@@ -159,6 +159,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 
     if(!ref) {
         remove_doc_tasks(This);
+        release_script_hosts(This);
 
         if(This->client)
             IOleObject_SetClientSite(OLEOBJ(This), NULL);
@@ -1256,6 +1257,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->option_factory = NULL;
 
     list_init(&ret->bindings);
+    list_init(&ret->script_hosts);
     list_init(&ret->selection_list);
     list_init(&ret->range_list);
 

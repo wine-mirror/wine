@@ -161,6 +161,31 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     return NS_OK;
 }
 
+static nsresult NSAPI handle_node_insert(nsIDOMEventListener *iface, nsIDOMEvent *event)
+{
+    NSContainer *This = NSEVENTLIST_THIS(iface)->This;
+    nsIDOMHTMLScriptElement *script;
+    nsIDOMEventTarget *target;
+    nsresult nsres;
+
+    TRACE("(%p %p)\n", This, event);
+
+    nsres = nsIDOMEvent_GetTarget(event, &target);
+    if(NS_FAILED(nsres)) {
+        ERR("GetTarget failed: %08x\n", nsres);
+        return nsres;
+    }
+
+    nsres = nsISupports_QueryInterface(target, &IID_nsIDOMHTMLScriptElement, (void**)&script);
+    if(SUCCEEDED(nsres)) {
+        doc_insert_script(This->doc, script);
+        nsIDOMHTMLScriptElement_Release(script);
+    }
+
+    nsIDOMEventTarget_Release(target);
+    return NS_OK;
+}
+
 #undef NSEVENTLIST_THIS
 
 #define EVENTLISTENER_VTBL(handler) \
@@ -175,6 +200,7 @@ static const nsIDOMEventListenerVtbl blur_vtbl =      EVENTLISTENER_VTBL(handle_
 static const nsIDOMEventListenerVtbl focus_vtbl =     EVENTLISTENER_VTBL(handle_focus);
 static const nsIDOMEventListenerVtbl keypress_vtbl =  EVENTLISTENER_VTBL(handle_keypress);
 static const nsIDOMEventListenerVtbl load_vtbl =      EVENTLISTENER_VTBL(handle_load);
+static const nsIDOMEventListenerVtbl node_insert_vtbl = EVENTLISTENER_VTBL(handle_node_insert);
 
 static void init_event(nsIDOMEventTarget *target, const PRUnichar *type,
         nsIDOMEventListener *listener, BOOL capture)
@@ -207,11 +233,14 @@ void init_nsevents(NSContainer *This)
     static const PRUnichar wsz_focus[]     = {'f','o','c','u','s',0};
     static const PRUnichar wsz_keypress[]  = {'k','e','y','p','r','e','s','s',0};
     static const PRUnichar wsz_load[]      = {'l','o','a','d',0};
+    static const PRUnichar DOMNodeInsertedW[] =
+        {'D','O','M','N','o','d','e','I','n','s','e','r','t','e','d',0};
 
     init_listener(&This->blur_listener,        This, &blur_vtbl);
     init_listener(&This->focus_listener,       This, &focus_vtbl);
     init_listener(&This->keypress_listener,    This, &keypress_vtbl);
     init_listener(&This->load_listener,        This, &load_vtbl);
+    init_listener(&This->node_insert_listener, This, &node_insert_vtbl);
 
     nsres = nsIWebBrowser_GetContentDOMWindow(This->webbrowser, &dom_window);
     if(NS_FAILED(nsres)) {
@@ -230,6 +259,7 @@ void init_nsevents(NSContainer *This)
     init_event(target, wsz_focus,      NSEVENTLIST(&This->focus_listener),       TRUE);
     init_event(target, wsz_keypress,   NSEVENTLIST(&This->keypress_listener),    FALSE);
     init_event(target, wsz_load,       NSEVENTLIST(&This->load_listener),        TRUE);
+    init_event(target, DOMNodeInsertedW,NSEVENTLIST(&This->node_insert_listener),TRUE);
 
     nsIDOMEventTarget_Release(target);
 }
