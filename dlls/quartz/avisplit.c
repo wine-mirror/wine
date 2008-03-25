@@ -622,7 +622,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->pCurrentSample = NULL;
     This->streams = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup);
+    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup, NULL, NULL, NULL);
 
     if (FAILED(hr))
         return hr;

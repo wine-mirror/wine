@@ -721,7 +721,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
         return E_OUTOFMEMORY;
 
     ZeroMemory(This, sizeof(MPEGSplitterImpl));
-    hr = Parser_Create(&(This->Parser), &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup);
+    hr = Parser_Create(&(This->Parser), &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup, NULL, NULL, NULL);
     if (FAILED(hr))
     {
         CoTaskMemFree(This);
