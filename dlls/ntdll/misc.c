@@ -23,6 +23,7 @@
 #include <time.h>
 #include <math.h>
 
+#include "wine/library.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
@@ -137,6 +138,22 @@ double CDECL NTDLL__CIpow(double x,double y)
 }
 #endif /* !defined(__i386__) */
 
+
+/*********************************************************************
+ *                  wine_get_version   (NTDLL.@)
+ */
+const char * CDECL NTDLL_wine_get_version(void)
+{
+    return wine_get_version();
+}
+
+/*********************************************************************
+ *                  wine_get_build_id   (NTDLL.@)
+ */
+const char * CDECL NTDLL_wine_get_build_id(void)
+{
+    return wine_get_build_id();
+}
 
 /*********************************************************************
  *                  abs   (NTDLL.@)

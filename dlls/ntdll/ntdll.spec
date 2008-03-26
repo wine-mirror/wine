@@ -1382,6 +1382,10 @@
 @ cdecl wine_server_send_fd(long)
 @ cdecl __wine_make_process_system()
 
+# Version
+@ cdecl wine_get_version() NTDLL_wine_get_version
+@ cdecl wine_get_build_id() NTDLL_wine_get_build_id
+
 # Codepages
 @ cdecl __wine_init_codepages(ptr ptr ptr)
 
