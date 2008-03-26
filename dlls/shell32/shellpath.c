@@ -47,6 +47,7 @@
 #include "wine/unicode.h"
 #include "shlwapi.h"
 #include "xdg.h"
+#include "sddl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -1356,6 +1357,39 @@ static HRESULT _SHGetCurrentVersionPath(DWORD dwFlags, BYTE folder,
     return hr;
 }
 
+static LPWSTR _GetUserSidStringFromToken(HANDLE Token)
+{
+    char InfoBuffer[64];
+    PTOKEN_USER UserInfo;
+    DWORD InfoSize;
+    LPWSTR SidStr;
+
+    UserInfo = (PTOKEN_USER) InfoBuffer;
+    if (! GetTokenInformation(Token, TokenUser, InfoBuffer, sizeof(InfoBuffer),
+                              &InfoSize))
+    {
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            return NULL;
+        UserInfo = HeapAlloc(GetProcessHeap(), 0, InfoSize);
+        if (UserInfo == NULL)
+            return NULL;
+        if (! GetTokenInformation(Token, TokenUser, UserInfo, InfoSize,
+                                  &InfoSize))
+        {
+            HeapFree(GetProcessHeap(), 0, UserInfo);
+            return NULL;
+        }
+    }
+
+    if (! ConvertSidToStringSidW(UserInfo->User.Sid, &SidStr))
+        SidStr = NULL;
+
+    if (UserInfo != (PTOKEN_USER) InfoBuffer)
+        HeapFree(GetProcessHeap(), 0, UserInfo);
+
+    return SidStr;
+}
+
 /* Gets the user's path (unexpanded) for the CSIDL with index folder:
  * If SHGFP_TYPE_DEFAULT is set, calls _SHGetDefaultValue for it.  Otherwise
  * calls _SHGetUserShellFolderPath for it.  Where it looks depends on hToken:
@@ -1378,22 +1412,15 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
     if (!pszPath)
         return E_INVALIDARG;
 
-    /* Only the current user and the default user are supported right now
-     * I'm afraid.
-     * FIXME: should be able to call GetTokenInformation on the token,
-     * then call ConvertSidToStringSidW on it to get the user prefix.
-     * But Wine's registry doesn't store user info by sid, it stores it
-     * by user name (and I don't know how to convert from a token to a
-     * user name).
-     */
-    if (hToken != NULL && hToken != (HANDLE)-1)
-    {
-        FIXME("unsupported for user other than current or default\n");
-        return E_FAIL;
-    }
-
     if (dwFlags & SHGFP_TYPE_DEFAULT)
+    {
+        if (hToken != NULL && hToken != (HANDLE)-1)
+        {
+            FIXME("unsupported for user other than current or default\n");
+            return E_FAIL;
+        }
         hr = _SHGetDefaultValue(folder, pszPath);
+    }
     else
     {
         LPCWSTR userPrefix = NULL;
@@ -1404,8 +1431,18 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
             hRootKey = HKEY_USERS;
             userPrefix = DefaultW;
         }
-        else /* hToken == NULL, other values disallowed above */
+        else if (hToken == NULL)
             hRootKey = HKEY_CURRENT_USER;
+        else
+        {
+            hRootKey = HKEY_USERS;
+            userPrefix = _GetUserSidStringFromToken(hToken);
+            if (userPrefix == NULL)
+            {
+                hr = E_FAIL;
+                goto error;
+            }
+        }
         hr = _SHGetUserShellFolderPath(hRootKey, userPrefix,
          CSIDL_Data[folder].szValueName, pszPath);
         if (FAILED(hr) && hRootKey != HKEY_LOCAL_MACHINE)
@@ -1413,7 +1450,10 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
              CSIDL_Data[folder].szValueName, pszPath);
         if (FAILED(hr))
             hr = _SHGetDefaultValue(folder, pszPath);
+        if (userPrefix != NULL && userPrefix != DefaultW)
+            LocalFree((HLOCAL) userPrefix);
     }
+error:
     TRACE("returning 0x%08x (output path is %s)\n", hr, debugstr_w(pszPath));
     return hr;
 }
