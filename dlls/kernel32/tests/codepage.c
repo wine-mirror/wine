@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <limits.h>
 
 #include "wine/test.h"
 #include "windef.h"
@@ -145,6 +146,56 @@ static void test_negative_source_length(void)
        "MultiByteToWideChar(-1): len=%d error=%u\n", len, GetLastError());
 }
 
+#define LONGBUFLEN 100000
+static void test_negative_dest_length(void)
+{
+    int len, i;
+    static char buf[LONGBUFLEN];
+    static WCHAR originalW[LONGBUFLEN];
+    static char originalA[LONGBUFLEN];
+    DWORD theError;
+
+    /* Test return on -1 dest length */
+    SetLastError( 0xdeadbeef );
+    memset(buf,'x',sizeof(buf));
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buf, -1, NULL, NULL);
+    todo_wine {
+      ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER,
+         "WideCharToMultiByte(destlen -1): len=%d error=%x\n", len, GetLastError());
+    }
+
+    /* Test return on -1000 dest length */
+    SetLastError( 0xdeadbeef );
+    memset(buf,'x',sizeof(buf));
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buf, -1000, NULL, NULL);
+    todo_wine {
+      ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER,
+         "WideCharToMultiByte(destlen -1000): len=%d error=%x\n", len, GetLastError());
+    }
+
+    /* Test return on INT_MAX dest length */
+    SetLastError( 0xdeadbeef );
+    memset(buf,'x',sizeof(buf));
+    len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buf, INT_MAX, NULL, NULL);
+    ok(len == 7 && !lstrcmpA(buf, "foobar") && GetLastError() == 0xdeadbeef,
+       "WideCharToMultiByte(destlen INT_MAX): len=%d error=%x\n", len, GetLastError());
+
+    /* Test return on INT_MAX dest length and very long input */
+    SetLastError( 0xdeadbeef );
+    memset(buf,'x',sizeof(buf));
+    for (i=0; i < LONGBUFLEN - 1; i++) {
+        originalW[i] = 'Q';
+        originalA[i] = 'Q';
+    }
+    originalW[LONGBUFLEN-1] = 0;
+    originalA[LONGBUFLEN-1] = 0;
+    len = WideCharToMultiByte(CP_ACP, 0, originalW, -1, buf, INT_MAX, NULL, NULL);
+    theError = GetLastError();
+    ok(len == LONGBUFLEN && !lstrcmpA(buf, originalA) && theError == 0xdeadbeef,
+       "WideCharToMultiByte(srclen %d, destlen INT_MAX): len %d error=%x\n", LONGBUFLEN, len, theError);
+
+}
+
 static void test_overlapped_buffers(void)
 {
     static const WCHAR strW[] = {'j','u','s','t',' ','a',' ','t','e','s','t',0};
@@ -163,5 +214,6 @@ START_TEST(codepage)
     test_destination_buffer();
     test_null_source();
     test_negative_source_length();
+    test_negative_dest_length();
     test_overlapped_buffers();
 }
