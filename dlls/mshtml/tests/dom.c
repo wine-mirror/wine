@@ -163,6 +163,12 @@ static REFIID const script_iids[] = {
     NULL
 };
 
+static REFIID const location_iids[] = {
+    &IID_IDispatch,
+    &IID_IHTMLLocation,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -1002,6 +1008,27 @@ static void test_compatmode(IHTMLDocument2 *doc)
     SysFreeString(mode);
 }
 
+static void test_location(IHTMLDocument2 *doc)
+{
+    IHTMLLocation *location, *location2;
+    ULONG ref;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_location(doc, &location);
+    ok(hres == S_OK, "get_location failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_location(doc, &location2);
+    ok(hres == S_OK, "get_location failed: %08x\n", hres);
+
+    ok(location == location2, "location != location2\n");
+
+    test_ifaces((IUnknown*)location, location_iids);
+
+    IHTMLLocation_Release(location2);
+    ref = IHTMLLocation_Release(location);
+    ok(!ref, "location chould be destroyed here\n");
+}
+
 static void test_default_style(IHTMLStyle *style)
 {
     VARIANT_BOOL b;
@@ -1114,6 +1141,7 @@ static void test_defaults(IHTMLDocument2 *doc)
 
     test_default_style(style);
     test_compatmode(doc);
+    test_location(doc);
 
     IHTMLStyle_Release(style);
 

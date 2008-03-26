@@ -20,6 +20,7 @@ C_SRCS = \
 	htmlelem.c \
 	htmlelem2.c \
 	htmlinput.c \
+	htmllocation.c \
 	htmlnode.c \
 	htmloption.c \
 	htmlscript.c \
