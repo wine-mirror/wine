@@ -37,6 +37,70 @@ struct edit_notify {
 
 static struct edit_notify notifications;
 
+static INT_PTR CALLBACK bug_11841_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            SetFocus(GetDlgItem(hdlg, 1000));
+            switch (lparam)
+            {
+                case 0:
+                    PostMessage(GetDlgItem(hdlg, 1000), WM_KEYDOWN, 0x1b, 0x10001);
+                    break;
+                case 1:
+                    PostMessage(GetDlgItem(hdlg, 1000), WM_KEYDOWN, 0xd, 0x1c0001);
+                    break;
+                case 2:
+                    PostMessage(GetDlgItem(hdlg, 1000), WM_KEYDOWN, 0x9, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0xdeadbeef);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        }
+
+        case WM_COMMAND:
+            if (HIWORD(wparam) != BN_CLICKED)
+                break;
+
+            switch (LOWORD(wparam))
+            {
+                case IDOK:
+                    EndDialog(hdlg, 111);
+                    break;
+
+                case IDCANCEL:
+                    EndDialog(hdlg, 222);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+
+        case WM_USER:
+            if (wparam != 0xdeadbeef || lparam != 0xdeadbeef)
+                break;
+            if (GetFocus() == GetDlgItem(hdlg, IDOK))
+                EndDialog(hdlg, 444);
+            else
+                EndDialog(hdlg, 555);
+            break;
+
+        case WM_CLOSE:
+            EndDialog(hdlg, 333);
+            break;
+
+        default:
+            break;
+    }
+
+    return FALSE;
+}
+
 static HINSTANCE hinst;
 static HWND hwndET2;
 static const char szEditTest2Class[] = "EditTest2Class";
@@ -1134,6 +1198,17 @@ static void test_undo(void)
     DestroyWindow (hwEdit);
 }
 
+static void test_bug_11841(void)
+{
+    int r;
+    r = DialogBoxParam(hinst, "BUG_11841_DIALOG", NULL, (DLGPROC)bug_11841_proc, 0);
+    ok(333 == r, "Expected %d, got %d\n", 333, r);
+    r = DialogBoxParam(hinst, "BUG_11841_DIALOG", NULL, (DLGPROC)bug_11841_proc, 1);
+    ok(111 == r, "Expected %d, got %d\n", 111, r);
+    r = DialogBoxParam(hinst, "BUG_11841_DIALOG", NULL, (DLGPROC)bug_11841_proc, 2);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+}
+
 static BOOL RegisterWindowClasses (void)
 {
     WNDCLASSA test2;
@@ -1202,6 +1277,7 @@ START_TEST(edit)
     test_text_position();
     test_espassword();
     test_undo();
+    test_bug_11841();
 
     UnregisterWindowClasses();
 }
