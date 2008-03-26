@@ -1564,7 +1564,7 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
-static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
+static DWORD HTTP_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
     int bytes_read;
 
@@ -1611,7 +1611,7 @@ static DWORD get_chunk_size(const char *buffer)
     return size;
 }
 
-static DWORD HTTPREQ_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
+static DWORD HTTP_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
     char reply[MAX_REPLY_LEN], *p = buffer;
     DWORD buflen, to_write = size;
@@ -1677,20 +1677,25 @@ static DWORD HTTPREQ_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size,
     return ERROR_SUCCESS;
 }
 
-static DWORD HTTPREQ_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size, DWORD *read)
+static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
-    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
-    static WCHAR encoding[20];
+    WCHAR encoding[20];
     DWORD buflen = sizeof(encoding);
     static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
 
     if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_TRANSFER_ENCODING, encoding, &buflen, NULL) &&
         !strcmpiW(encoding, szChunked))
     {
-        return HTTPREQ_ReadChunked(req, buffer, size, read, TRUE);
+        return HTTP_ReadChunked(req, buffer, size, read, sync);
     }
     else
-        return HTTPREQ_Read(req, buffer, size, read, TRUE);
+        return HTTP_Read(req, buffer, size, read, sync);
+}
+
+static DWORD HTTPREQ_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size, DWORD *read)
+{
+    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    return HTTPREQ_Read(req, buffer, size, read, TRUE);
 }
 
 static void HTTPREQ_AsyncReadFileExProc(WORKREQUEST *workRequest)
@@ -2018,7 +2023,7 @@ static void HTTP_DrainContent(WININETHTTPREQW *req)
     do
     {
         char buffer[2048];
-        if (HTTPREQ_Read(req, buffer, sizeof(buffer), &bytes_read, TRUE) != ERROR_SUCCESS)
+        if (HTTP_Read(req, buffer, sizeof(buffer), &bytes_read, TRUE) != ERROR_SUCCESS)
             return;
     } while (bytes_read);
 }
