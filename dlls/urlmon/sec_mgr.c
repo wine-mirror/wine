@@ -445,7 +445,7 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManager *ifa
         return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
     }
 
-    WideCharToMultiByte(CP_ACP, 0, url, -1, (LPSTR)pbSecurityId, -1, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, url, -1, (LPSTR)pbSecurityId, len, NULL, NULL);
     heap_free(url);
 
     *(DWORD*)(pbSecurityId+len) = zone;
