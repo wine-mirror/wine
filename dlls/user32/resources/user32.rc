@@ -61,6 +61,7 @@
 #include "resources/user32_No.rc"
 #include "resources/user32_Pl.rc"
 #include "resources/user32_Pt.rc"
+#include "resources/user32_Ro.rc"
 #include "resources/user32_Ru.rc"
 #include "resources/user32_Si.rc"
 #include "resources/user32_Sk.rc"
