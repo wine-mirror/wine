@@ -5642,6 +5642,7 @@ static void shademode_test(IDirect3DDevice9 *device)
     /* Render a quad and try all of the different fixed function shading models. */
     HRESULT hr;
     DWORD color0, color1;
+    BYTE r, g, b;
     DWORD shademode = D3DSHADE_FLAT;
     DWORD primtype = D3DPT_TRIANGLESTRIP;
     LPVOID data = NULL;
@@ -5736,14 +5737,31 @@ static void shademode_test(IDirect3DDevice9 *device)
                     break;
                 case D3DSHADE_GOURAUD:
                     /* Should be an interpolated blend */
-                    ok(color0 == 0x000dca28, "GOURAUD shading has color0 %08x, expected 0x000dca28\n", color0);
-                    ok(color1 == 0x000d45c7, "GOURAUD shading has color1 %08x, expected 0x000d45c7\n", color1);
+
+                    r = (color0 & 0x00ff0000) >> 16;
+                    g = (color0 & 0x0000ff00) >>  8;
+                    b = (color0 & 0x000000ff);
+                    ok(r >= 0x0d && r <= 0x0e && g == 0xca && b >= 0x27 && b <= 0x28,
+                       "GOURAUD shading has color0 %08x, expected 0x000dca28\n", color0);
+                    r = (color1 & 0x00ff0000) >> 16;
+                    g = (color1 & 0x0000ff00) >>  8;
+                    b = (color1 & 0x000000ff);
+                    ok(r == 0x0d && g >= 0x44 && g <= 0x45 && b >= 0xc7 && b <= 0xc8,
+                       "GOURAUD shading has color1 %08x, expected 0x000d45c7\n", color1);
                     shademode = D3DSHADE_PHONG;
                     break;
                 case D3DSHADE_PHONG:
                     /* Should be the same as GOURAUD, since no hardware implements this */
-                    ok(color0 == 0x000dca28, "PHONG shading has color0 %08x, expected 0x000dca28\n", color0);
-                    ok(color1 == 0x000d45c7, "PHONG shading has color1 %08x, expected 0x000d45c7\n", color1);
+                    r = (color0 & 0x00ff0000) >> 16;
+                    g = (color0 & 0x0000ff00) >>  8;
+                    b = (color0 & 0x000000ff);
+                    ok(r >= 0x0d && r <= 0x0e && g == 0xca && b >= 0x27 && b <= 0x28,
+                       "PHONG shading has color0 %08x, expected 0x000dca28\n", color0);
+                    r = (color1 & 0x00ff0000) >> 16;
+                    g = (color1 & 0x0000ff00) >>  8;
+                    b = (color1 & 0x000000ff);
+                    ok(r == 0x0d && g >= 0x44 && g <= 0x45 && b >= 0xc7 && b <= 0xc8,
+                       "PHONG shading has color1 %08x, expected 0x000d45c7\n", color1);
                     break;
             }
         }
