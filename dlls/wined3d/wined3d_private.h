@@ -74,7 +74,7 @@ void hash_table_put(hash_table_t *table, void *key, void *value);
 void hash_table_remove(hash_table_t *table, void *key);
 
 /* Device caps */
-#define MAX_PALETTES            256
+#define MAX_PALETTES            65536
 #define MAX_STREAMS             16
 #define MAX_TEXTURES            8
 #define MAX_FRAGMENT_SAMPLERS   16
@@ -364,7 +364,6 @@ extern int num_lock;
                          /* Maximum number of constants provided to the shaders */
 #define HIGHEST_TRANSFORMSTATE 512 
                          /* Highest value in WINED3DTRANSFORMSTATETYPE */
-#define MAX_PALETTES      256
 
 /* Checking of API calls */
 /* --------------------- */
@@ -834,7 +833,8 @@ struct IWineD3DDeviceImpl
     IWineD3DSwapChain      *lastActiveSwapChain;
 
     /* palettes texture management */
-    PALETTEENTRY            palettes[MAX_PALETTES][256];
+    UINT                    NumberOfPalettes;
+    PALETTEENTRY            **palettes;
     UINT                    currentPalette;
     UINT                    paletteConversionShader;
 

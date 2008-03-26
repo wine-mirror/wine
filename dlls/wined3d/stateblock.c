@@ -1239,18 +1239,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->textures[i]         = NULL;
     }
 
-    /* Defaulting palettes - Note these are device wide but reinitialized here for convenience*/
-    for (i = 0; i < MAX_PALETTES; ++i) {
-      int j;
-      for (j = 0; j < 256; ++j) {
-        This->wineD3DDevice->palettes[i][j].peRed   = 0xFF;
-        This->wineD3DDevice->palettes[i][j].peGreen = 0xFF;
-        This->wineD3DDevice->palettes[i][j].peBlue  = 0xFF;
-        This->wineD3DDevice->palettes[i][j].peFlags = 0xFF;
-      }
-    }
-    This->wineD3DDevice->currentPalette = 0;
-
     /* Set default GLSL program to NULL.  We won't actually create one
      * until the app sets a vertex or pixel shader */
     This->glsl_program = NULL;

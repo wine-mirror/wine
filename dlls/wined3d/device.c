@@ -2006,6 +2006,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     IWineD3DSwapChainImpl *swapchain = NULL;
     HRESULT hr;
     DWORD state;
+    unsigned int i;
 
     TRACE("(%p)->(%p,%p)\n", This, pPresentationParameters, D3DCB_CreateAdditionalSwapChain);
     if(This->d3d_initialized) return WINED3DERR_INVALIDCALL;
@@ -2034,6 +2035,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
     This->fbo_color_attachments = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
     This->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GLenum) * GL_LIMITS(buffers));
+
+    This->NumberOfPalettes = 1;
+    This->palettes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PALETTEENTRY*));
+    if(!This->palettes || !This->render_targets || !This->fbo_color_attachments || !This->draw_buffers) {
+        ERR("Out of memory!\n");
+        goto err_out;
+    }
+    This->palettes[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * 256);
+    if(!This->palettes[0]) {
+        ERR("Out of memory!\n");
+        goto err_out;
+    }
+    for (i = 0; i < 256; ++i) {
+        This->palettes[0][i].peRed   = 0xFF;
+        This->palettes[0][i].peGreen = 0xFF;
+        This->palettes[0][i].peBlue  = 0xFF;
+        This->palettes[0][i].peFlags = 0xFF;
+    }
+    This->currentPalette = 0;
 
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (state = 0; state < MAX_COMBINED_SAMPLERS; ++state) {
@@ -2157,6 +2177,11 @@ err_out:
     HeapFree(GetProcessHeap(), 0, This->draw_buffers);
     HeapFree(GetProcessHeap(), 0, This->swapchains);
     This->NumberOfSwapChains = 0;
+    if(This->palettes) {
+        HeapFree(GetProcessHeap(), 0, This->palettes[0]);
+        HeapFree(GetProcessHeap(), 0, This->palettes);
+    }
+    This->NumberOfPalettes = 0;
     if(swapchain) {
         IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
     }
@@ -2275,13 +2300,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     This->swapchains = NULL;
     This->NumberOfSwapChains = 0;
 
+    for (i = 0; i < This->NumberOfPalettes; i++) HeapFree(GetProcessHeap(), 0, This->palettes[i]);
+    HeapFree(GetProcessHeap(), 0, This->palettes);
+    This->palettes = NULL;
+    This->NumberOfPalettes = 0;
+
     HeapFree(GetProcessHeap(), 0, This->render_targets);
     HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
     HeapFree(GetProcessHeap(), 0, This->draw_buffers);
     This->render_targets = NULL;
     This->fbo_color_attachments = NULL;
     This->draw_buffers = NULL;
-
 
     This->d3d_initialized = FALSE;
     return WINED3D_OK;
@@ -5452,11 +5481,38 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     int j;
+    UINT NewSize;
+    PALETTEENTRY **palettes;
+
     TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
+
     if (PaletteNumber >= MAX_PALETTES) {
-        WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
+        ERR("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
         return WINED3DERR_INVALIDCALL;
     }
+
+    if (PaletteNumber >= This->NumberOfPalettes) {
+        NewSize = This->NumberOfPalettes;
+        do {
+           NewSize *= 2;
+        } while(PaletteNumber >= NewSize);
+        palettes = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->palettes, sizeof(PALETTEENTRY*) * NewSize);
+        if (!palettes) {
+            ERR("Out of memory!\n");
+            return E_OUTOFMEMORY;
+        }
+        This->palettes = palettes;
+        This->NumberOfPalettes = NewSize;
+    }
+
+    if (!This->palettes[PaletteNumber]) {
+        This->palettes[PaletteNumber] = HeapAlloc(GetProcessHeap(),  0, sizeof(PALETTEENTRY) * 256);
+        if (!This->palettes[PaletteNumber]) {
+            ERR("Out of memory!\n");
+            return E_OUTOFMEMORY;
+        }
+    }
+
     for (j = 0; j < 256; ++j) {
         This->palettes[PaletteNumber][j].peRed   = pEntries[j].peRed;
         This->palettes[PaletteNumber][j].peGreen = pEntries[j].peGreen;
@@ -5471,8 +5527,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *ifa
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     int j;
     TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
-    if (PaletteNumber >= MAX_PALETTES) {
-        WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
+    if (PaletteNumber >= This->NumberOfPalettes || !This->palettes[PaletteNumber]) {
+        /* What happens in such situation isn't documented; Native seems to silently abort
+           on such conditions. Return Invalid Call. */
+        ERR("(%p) : (%u) Non-existent palette. NumberOfPalettes %u\n", This, PaletteNumber, This->NumberOfPalettes);
         return WINED3DERR_INVALIDCALL;
     }
     for (j = 0; j < 256; ++j) {
@@ -5488,8 +5546,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *ifa
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCurrentTexturePalette(IWineD3DDevice *iface, UINT PaletteNumber) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
-    if (PaletteNumber >= MAX_PALETTES) {
-        WARN("(%p) : (%u) Out of range 0-%u, returning Invalid Call\n", This, PaletteNumber, MAX_PALETTES);
+    /* Native appears to silently abort on attempt to make an uninitialized palette current and render.
+       (tested with reference rasterizer). Return Invalid Call. */
+    if (PaletteNumber >= This->NumberOfPalettes || !This->palettes[PaletteNumber]) {
+        ERR("(%p) : (%u) Non-existent palette. NumberOfPalettes %u\n", This, PaletteNumber, This->NumberOfPalettes);
         return WINED3DERR_INVALIDCALL;
     }
     /*TODO: stateblocks */
