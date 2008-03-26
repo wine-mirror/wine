@@ -48,7 +48,7 @@ extern const PSID security_local_system_sid;
 
 extern struct token *token_create_admin(void);
 extern struct token *token_duplicate( struct token *src_token, unsigned primary,
-                                      SECURITY_IMPERSONATION_LEVEL impersonation_level );
+                                      int impersonation_level );
 extern int token_check_privileges( struct token *token, int all_required,
                                    const LUID_AND_ATTRIBUTES *reqprivs,
                                    unsigned int count, LUID_AND_ATTRIBUTES *usedprivs);

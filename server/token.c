@@ -90,7 +90,7 @@ struct token
     unsigned       primary;         /* is this a primary or impersonation token? */
     ACL           *default_dacl;    /* the default DACL to assign to objects created by this user */
     TOKEN_SOURCE   source;          /* source of the token */
-    SECURITY_IMPERSONATION_LEVEL impersonation_level; /* impersonation level this token is capable of if non-primary token */
+    int            impersonation_level; /* impersonation level this token is capable of if non-primary token */
 };
 
 struct privilege
@@ -421,7 +421,7 @@ static struct token *create_token( unsigned primary, const SID *user,
                                    const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count,
                                    const ACL *default_dacl, TOKEN_SOURCE source,
                                    const luid_t *modified_id,
-                                   SECURITY_IMPERSONATION_LEVEL impersonation_level )
+                                   int impersonation_level )
 {
     struct token *token = alloc_object( &token_ops );
     if (token)
@@ -506,7 +506,7 @@ static struct token *create_token( unsigned primary, const SID *user,
 }
 
 struct token *token_duplicate( struct token *src_token, unsigned primary,
-                               SECURITY_IMPERSONATION_LEVEL impersonation_level )
+                               int impersonation_level )
 {
     const luid_t *modified_id =
         primary || (impersonation_level == src_token->impersonation_level) ?
@@ -515,20 +515,19 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
     struct privilege *privilege;
     struct group *group;
 
-    if ((impersonation_level < SecurityAnonymous) ||
-        (impersonation_level > SecurityDelegation))
+    if (!primary &&
+        (impersonation_level < SecurityAnonymous ||
+         impersonation_level > SecurityDelegation ||
+         (!src_token->primary && (impersonation_level > src_token->impersonation_level))))
     {
         set_error( STATUS_BAD_IMPERSONATION_LEVEL );
         return NULL;
     }
 
-    if (primary || (impersonation_level <= src_token->impersonation_level))
-        token = create_token( primary, src_token->user, NULL, 0,
-                              NULL, 0, src_token->default_dacl,
-                              src_token->source, modified_id,
-                              impersonation_level );
-    else set_error( STATUS_BAD_IMPERSONATION_LEVEL );
-
+    token = create_token( primary, src_token->user, NULL, 0,
+                          NULL, 0, src_token->default_dacl,
+                          src_token->source, modified_id,
+                          impersonation_level );
     if (!token) return token;
 
     /* copy groups */
@@ -1013,7 +1012,7 @@ DECL_HANDLER(open_token)
         {
             if (thread->token)
             {
-                if (thread->token->impersonation_level <= SecurityAnonymous)
+                if (!thread->token->primary && thread->token->impersonation_level <= SecurityAnonymous)
                     set_error( STATUS_CANT_OPEN_ANONYMOUS );
                 else
                     reply->token = alloc_handle( current->process, thread->token,
