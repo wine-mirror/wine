@@ -246,8 +246,10 @@ static void test_GetProgress_preTransfer(void)
         return;
     }
 
-    ok(progress.BytesTotal == 0, "Incorrect BytesTotal: %llu\n", progress.BytesTotal);
-    ok(progress.BytesTransferred == 0, "Incorrect BytesTransferred: %llu\n", progress.BytesTransferred);
+    ok(progress.BytesTotal == 0, "Incorrect BytesTotal: %x%08x\n",
+       (DWORD)(progress.BytesTotal >> 32), (DWORD)progress.BytesTotal);
+    ok(progress.BytesTransferred == 0, "Incorrect BytesTransferred: %x%08x\n",
+       (DWORD)(progress.BytesTransferred >> 32), (DWORD)progress.BytesTransferred);
     ok(progress.FilesTotal == 0, "Incorrect FilesTotal: %u\n", progress.FilesTotal);
     ok(progress.FilesTransferred == 0, "Incorrect FilesTransferred %u\n", progress.FilesTransferred);
 }
