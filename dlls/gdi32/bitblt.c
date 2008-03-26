@@ -20,6 +20,11 @@
 
 #include <stdarg.h>
 
+#include <math.h>
+#ifdef HAVE_FLOAT_H
+#include <float.h>
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -522,9 +527,75 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
  *
  */
 BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
-                        HDC hdcSrc, INT nXDest, INT nYDest, INT nWidth,
+                        HDC hdcSrc, INT nXSrc, INT nYSrc, INT nWidth,
                         INT nHeight, HBITMAP hbmMask, INT xMask, INT yMask)
 {
-    FIXME("PlgBlt, stub\n");
-        return 1;
+    int oldgMode;
+    /* parallelogram coords */
+    POINT plg[3];
+    /* rect coords */
+    POINT rect[3];
+    XFORM xf;
+    XFORM SrcXf;
+    XFORM oldDestXf;
+    FLOAT det;
+
+    /* save actual mode, set GM_ADVANCED */
+    oldgMode = SetGraphicsMode(hdcDest,GM_ADVANCED);
+    if (oldgMode == 0)
+        return FALSE;
+
+    memcpy(plg,lpPoint,sizeof(POINT)*3);
+    rect[0].x = nXSrc;
+    rect[0].y = nYSrc;
+    rect[1].x = nXSrc + nWidth;
+    rect[1].y = nYSrc;
+    rect[2].x = nXSrc;
+    rect[2].y = nYSrc + nHeight;
+    /* calc XFORM matrix to transform hdcDest -> hdcSrc (parallelogram to rectangle) */
+    /* determinant */
+    det = (FLOAT)(rect[1].x*(rect[2].y - rect[0].y) - rect[2].x*(rect[1].y - rect[0].y) - rect[0].x*(rect[2].y - rect[1].y));
+
+    if (fabs(det) < 1e-5)
+    {
+        SetGraphicsMode(hdcDest,oldgMode);
+        return FALSE;
+    }
+
+    TRACE("hdcSrc=%p %d,%d,%dx%d -> hdcDest=%p %d,%d,%d,%d,%d,%d\n",
+        hdcSrc, nXSrc, nYSrc, nWidth, nHeight, hdcDest, plg[0].x, plg[0].y, plg[1].x, plg[1].y, plg[2].x, plg[2].y);
+
+    /* X components */
+    xf.eM11 = (plg[1].x*(rect[2].y - rect[0].y) - plg[2].x*(rect[1].y - rect[0].y) - plg[0].x*(rect[2].y - rect[1].y)) / det;
+    xf.eM21 = (rect[1].x*(plg[2].x - plg[0].x) - rect[2].x*(plg[1].x - plg[0].x) - rect[0].x*(plg[2].x - plg[1].x)) / det;
+    xf.eDx  = (rect[0].x*(rect[1].y*plg[2].x - rect[2].y*plg[1].x) -
+               rect[1].x*(rect[0].y*plg[2].x - rect[2].y*plg[0].x) +
+               rect[2].x*(rect[0].y*plg[1].x - rect[1].y*plg[0].x)
+               ) / det;
+
+    /* Y components */
+    xf.eM12 = (plg[1].y*(rect[2].y - rect[0].y) - plg[2].y*(rect[1].y - rect[0].y) - plg[0].y*(rect[2].y - rect[1].y)) / det;
+    xf.eM22 = (plg[1].x*(rect[2].y - rect[0].y) - plg[2].x*(rect[1].y - rect[0].y) - plg[0].x*(rect[2].y - rect[1].y)) / det;
+    xf.eDy  = (rect[0].x*(rect[1].y*plg[2].y - rect[2].y*plg[1].y) -
+               rect[1].x*(rect[0].y*plg[2].y - rect[2].y*plg[0].y) +
+               rect[2].x*(rect[0].y*plg[1].y - rect[1].y*plg[0].y)
+               ) / det;
+
+    GetWorldTransform(hdcSrc,&SrcXf);
+    CombineTransform(&xf,&xf,&SrcXf);
+
+    /* save actual dest transform */
+    GetWorldTransform(hdcDest,&oldDestXf);
+
+    SetWorldTransform(hdcDest,&xf);
+    /* now destination and source DCs use same coords */
+    MaskBlt(hdcDest,nXSrc,nYSrc,nWidth,nHeight,
+            hdcSrc, nXSrc,nYSrc,
+            hbmMask,xMask,yMask,
+            SRCCOPY);
+    /* restore dest DC */
+    SetWorldTransform(hdcDest,&oldDestXf);
+    SetGraphicsMode(hdcDest,oldgMode);
+
+    return TRUE;
 }
