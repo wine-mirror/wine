@@ -1307,9 +1307,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     dwFlags &= ~WAVE_DIRECTSOUND;  /* direct sound not supported, ignore the flag */
 
-    wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-    
-    memcpy(&wwo->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
+
+    wwo->waveDesc = *lpDesc;
     memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
 
     /* open up jack ports for this device */
@@ -2111,8 +2110,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     dwFlags &= ~WAVE_DIRECTSOUND;  /* direct sound not supported, ignore the flag */
 
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-    
-    memcpy(&wwi->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
+
+    wwi->waveDesc = *lpDesc;
     memcpy(&wwi->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
 
     LeaveCriticalSection(&wwi->access_crst);
