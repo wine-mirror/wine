@@ -727,7 +727,7 @@ struct StateEntry ATIFSStateTable[STATE_HIGHEST + 1];
 static void init_state_table() {
     unsigned int i;
     const DWORD rep = STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP);
-    memcpy(ATIFSStateTable, FFPStateTable, sizeof(ATIFSStateTable));
+    memcpy(ATIFSStateTable, arb_program_shader_backend.StateTable, sizeof(ATIFSStateTable));
 
     for(i = 0; i < MAX_TEXTURES; i++) {
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP)].apply = set_tex_op_atifs;
@@ -835,8 +835,8 @@ static BOOL shader_atifs_dirty_const(IWineD3DDevice *iface) {
 }
 
 static void shader_atifs_load_init(void) {
-    init_state_table();
     arb_program_shader_backend.shader_dll_load_init();
+    init_state_table();
 }
 
 static void shader_atifs_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps) {
