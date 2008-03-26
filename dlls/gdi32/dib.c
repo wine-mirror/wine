@@ -188,18 +188,19 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
                        const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
     DC *dc;
+    INT ret;
 
     if (!bits || !info)
 	return 0;
 
-    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     if(dc->funcs->pStretchDIBits)
     {
         update_dc( dc );
-        heightSrc = dc->funcs->pStretchDIBits(dc->physDev, xDst, yDst, widthDst,
-                                              heightDst, xSrc, ySrc, widthSrc,
-                                              heightSrc, bits, info, wUsage, dwRop);
+        ret = dc->funcs->pStretchDIBits(dc->physDev, xDst, yDst, widthDst,
+                                        heightDst, xSrc, ySrc, widthSrc,
+                                        heightSrc, bits, info, wUsage, dwRop);
         release_dc_ptr( dc );
     }
     else /* use StretchBlt */
@@ -248,7 +249,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         {
             /* fast path */
             TRACE("using fast path\n");
-            heightSrc = SetDIBits( hdc, hBitmap, 0, height, bits, info, wUsage);
+            ret = SetDIBits( hdc, hBitmap, 0, height, bits, info, wUsage);
         }
         else
         {
@@ -290,13 +291,13 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
                             dwRop );
             }
 
-            heightSrc = SetDIBits(hdcMem, hBitmap, 0, height, bits, info, wUsage);
+            ret = SetDIBits(hdcMem, hBitmap, 0, height, bits, info, wUsage);
 
             /* Origin for DIBitmap may be bottom left (positive biHeight) or top
                left (negative biHeight) */
-            if (heightSrc) StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
-                                       hdcMem, xSrc, abs(height) - heightSrc - ySrc,
-                                       widthSrc, heightSrc, dwRop );
+            if (ret) StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
+                                 hdcMem, xSrc, abs(height) - heightSrc - ySrc,
+                                 widthSrc, heightSrc, dwRop );
             if(hpal)
                 SelectPalette(hdcMem, hpal, FALSE);
             SelectObject( hdcMem, hOldBitmap );
@@ -304,7 +305,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
             DeleteObject( hBitmap );
         }
     }
-    return heightSrc;
+    return ret;
 }
 
 
