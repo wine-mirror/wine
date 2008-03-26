@@ -485,14 +485,21 @@ static nsresult NSAPI nsChannel_SetContentType(nsIHttpChannel *iface,
                                                const nsACString *aContentType)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+    const char *content_type;
 
     TRACE("(%p)->(%p)\n", This, aContentType);
+
+    nsACString_GetData(aContentType, &content_type);
+
+    TRACE("content_type %s\n", content_type);
+
+    heap_free(This->content_type);
+    This->content_type = heap_strdupA(content_type);
 
     if(This->channel)
         return nsIChannel_SetContentType(This->channel, aContentType);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetContentCharset(nsIHttpChannel *iface,
