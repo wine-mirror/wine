@@ -68,6 +68,11 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileA: expected E_INVALIDARG, got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
 
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_TRANSACTED, &stream);
+    ok(ret == E_INVALIDARG, "SHCreateStreamOnFileA: expected E_INVALIDARG, got 0x%08x\n", ret);
+    ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
+
     /* file does not exist */
 
     stream = NULL;
@@ -150,6 +155,11 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_DELETEONRELEASE, &stream);
+    ok(ret == E_INVALIDARG, "SHCreateStreamOnFileW: expected E_INVALIDARG, got 0x%08x\n", ret);
+    ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
+
+    stream = NULL;
+    ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_TRANSACTED, &stream);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileW: expected E_INVALIDARG, got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
 
@@ -239,8 +249,18 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, FALSE, NULL, &stream);
-    todo_wine
-    ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
+    if ((stgm & STGM_TRANSACTED) == STGM_TRANSACTED && mode == STGM_READ) {
+        ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* XP */ || ret == E_INVALIDARG /* Vista */,
+          "SHCreateStreamOnFileEx: expected E_INVALIDARG or HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
+
+        if (ret == E_INVALIDARG) {
+            printf("SHCreateStreamOnFileEx: STGM_TRANSACTED not supported in this configuration... skipping.\n");
+            return;
+        }
+    } else {
+        todo_wine
+        ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
+    }
     ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
@@ -336,6 +356,16 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
 START_TEST(istream)
 {
+    static const DWORD stgm_flags[] = {
+        0,
+        STGM_CONVERT,
+        STGM_DELETEONRELEASE,
+        STGM_CONVERT | STGM_DELETEONRELEASE,
+        STGM_TRANSACTED | STGM_CONVERT,
+        STGM_TRANSACTED | STGM_DELETEONRELEASE,
+        STGM_TRANSACTED | STGM_CONVERT | STGM_DELETEONRELEASE
+    };
+
     hShlwapi = GetModuleHandleA("shlwapi.dll");
 
     pSHCreateStreamOnFileA = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileA");
@@ -361,20 +391,12 @@ START_TEST(istream)
     if (!pSHCreateStreamOnFileEx)
         printf("SHCreateStreamOnFileEx not found... skipping tests.\n");
     else {
-        test_SHCreateStreamOnFileEx(STGM_READ, 0);
-        test_SHCreateStreamOnFileEx(STGM_WRITE, 0);
-        test_SHCreateStreamOnFileEx(STGM_READWRITE, 0);
+        int i;
 
-        test_SHCreateStreamOnFileEx(STGM_READ, STGM_CONVERT);
-        test_SHCreateStreamOnFileEx(STGM_WRITE, STGM_CONVERT);
-        test_SHCreateStreamOnFileEx(STGM_READWRITE, STGM_CONVERT);
-
-        test_SHCreateStreamOnFileEx(STGM_READ, STGM_DELETEONRELEASE);
-        test_SHCreateStreamOnFileEx(STGM_WRITE, STGM_DELETEONRELEASE);
-        test_SHCreateStreamOnFileEx(STGM_READWRITE, STGM_DELETEONRELEASE);
-
-        test_SHCreateStreamOnFileEx(STGM_READ, STGM_CONVERT | STGM_DELETEONRELEASE);
-        test_SHCreateStreamOnFileEx(STGM_WRITE, STGM_CONVERT | STGM_DELETEONRELEASE);
-        test_SHCreateStreamOnFileEx(STGM_READWRITE, STGM_CONVERT | STGM_DELETEONRELEASE);
+        for (i = 0; i != sizeof(stgm_flags)/sizeof(stgm_flags[0]); i++) {
+            test_SHCreateStreamOnFileEx(STGM_READ, stgm_flags[i]);
+            test_SHCreateStreamOnFileEx(STGM_WRITE, stgm_flags[i]);
+            test_SHCreateStreamOnFileEx(STGM_READWRITE, stgm_flags[i]);
+        }
     }
 }
