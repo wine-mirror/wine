@@ -2056,7 +2056,7 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwo->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+    wwo->waveDesc = *lpDesc;
     copy_format(lpDesc->lpFormat, &wwo->waveFormat);
 
     if (wwo->waveFormat.Format.wBitsPerSample == 0) {
@@ -2943,7 +2943,7 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwi->dwTotalRead = 0;
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwi->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
+    wwi->waveDesc = *lpDesc;
     copy_format(lpDesc->lpFormat, &wwi->waveFormat);
 
     if (wwi->waveFormat.Format.wBitsPerSample == 0) {

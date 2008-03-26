@@ -710,7 +710,7 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface,
     TRACE("(%p,%p)\n",iface,pDesc);
 
     /* copy version from driver */
-    memcpy(pDesc, &(WOutDev[This->wDevID].ossdev.ds_desc), sizeof(DSDRIVERDESC));
+    *pDesc = WOutDev[This->wDevID].ossdev.ds_desc;
 
     pDesc->dwFlags |= DSDDESC_DOMMSYSTEMOPEN | DSDDESC_DOMMSYSTEMSETFORMAT |
         DSDDESC_USESYSTEMMEMORY | DSDDESC_DONTNEEDPRIMARYLOCK |
@@ -761,7 +761,7 @@ static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCap
 {
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
     TRACE("(%p,%p)\n",iface,pCaps);
-    memcpy(pCaps, &(WOutDev[This->wDevID].ossdev.ds_caps), sizeof(DSDRIVERCAPS));
+    *pCaps = WOutDev[This->wDevID].ossdev.ds_caps;
     return DS_OK;
 }
 
@@ -960,7 +960,7 @@ DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 {
     TRACE("(%d,%p)\n",wDevID,desc);
-    memcpy(desc, &(WOutDev[wDevID].ossdev.ds_desc), sizeof(DSDRIVERDESC));
+    *desc = WOutDev[wDevID].ossdev.ds_desc;
     return MMSYSERR_NOERROR;
 }
 

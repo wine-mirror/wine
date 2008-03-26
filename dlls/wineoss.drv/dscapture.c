@@ -769,7 +769,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(
     }
 
     /* copy version from driver */
-    memcpy(pDesc, &(WInDev[This->wDevID].ossdev.ds_desc), sizeof(DSDRIVERDESC));
+    *pDesc = WInDev[This->wDevID].ossdev.ds_desc;
 
     pDesc->dnDevNode            = WInDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId               = 0;
@@ -809,7 +809,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(
 {
     IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
     TRACE("(%p,%p)\n",This,pCaps);
-    memcpy(pCaps, &(WInDev[This->wDevID].ossdev.dsc_caps), sizeof(DSCDRIVERCAPS));
+    *pCaps = WInDev[This->wDevID].ossdev.dsc_caps;
     return DS_OK;
 }
 
