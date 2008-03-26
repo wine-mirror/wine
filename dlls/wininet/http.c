@@ -107,7 +107,7 @@ struct HttpAuthInfo
 };
 
 static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
-static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr);
+static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear);
 static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
 static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
 static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr);
@@ -846,7 +846,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
             INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    responseLen = HTTP_GetResponseHeaders(lpwhr);
+    responseLen = HTTP_GetResponseHeaders(lpwhr, TRUE);
     if (responseLen)
 	    rc = TRUE;
 
@@ -1573,8 +1573,7 @@ static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD 
         if(req->dwContentLength != -1 && req->dwContentRead != req->dwContentLength)
             ERR("not all data received %d/%d\n", req->dwContentRead, req->dwContentLength);
 
-        /* always returns TRUE, even if the network layer returns an
-         * error */
+        /* always return success, even if the network layer returns an error */
         *read = 0;
         HTTP_FinishedReading(req);
         return ERROR_SUCCESS;
@@ -1597,11 +1596,101 @@ static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD 
     return ERROR_SUCCESS;
 }
 
+static DWORD get_chunk_size(const char *buffer)
+{
+    const char *p;
+    DWORD size = 0;
+
+    for (p = buffer; *p; p++)
+    {
+        if (*p >= '0' && *p <= '9') size = size * 16 + *p - '0';
+        else if (*p >= 'a' && *p <= 'f') size = size * 16 + *p - 'a' + 10;
+        else if (*p >= 'A' && *p <= 'F') size = size * 16 + *p - 'A' + 10;
+        else if (*p == ';') break;
+    }
+    return size;
+}
+
+static DWORD HTTPREQ_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
+{
+    char reply[MAX_REPLY_LEN], *p = buffer;
+    DWORD buflen, to_write = size;
+    size_t to_read;
+    int bytes_read;
+
+    *read = 0;
+    for (;;)
+    {
+        if (*read == size) break;
+
+        if (req->dwContentLength == ~0UL) /* new chunk */
+        {
+            buflen = sizeof(reply);
+            if (!NETCON_getNextLine(&req->netConnection, reply, &buflen)) break;
+
+            if (!(req->dwContentLength = get_chunk_size(reply)))
+            {
+                /* zero sized chunk marks end of transfer; read any trailing headers and return */
+                HTTP_GetResponseHeaders(req, FALSE);
+                break;
+            }
+        }
+        to_read = min(to_write, req->dwContentLength - req->dwContentRead);
+
+        if (!NETCON_recv(&req->netConnection, p, to_read, sync ? MSG_WAITALL : 0, &bytes_read))
+        {
+            if (bytes_read != to_read)
+                ERR("Not all data received %d/%d\n", bytes_read, to_read);
+
+            /* always return success, even if the network layer returns an error */
+            *read = 0;
+            break;
+        }
+        if (!bytes_read) break;
+
+        req->dwContentRead += bytes_read;
+        to_write -= bytes_read;
+        *read += bytes_read;
+
+        if (req->lpszCacheFile)
+        {
+            if (!WriteFile(req->hCacheFile, p, bytes_read, NULL, NULL))
+                WARN("WriteFile failed: %u\n", GetLastError());
+        }
+        p += bytes_read;
+
+        if (req->dwContentRead == req->dwContentLength) /* chunk complete */
+        {
+            req->dwContentRead = 0;
+            req->dwContentLength = ~0UL;
+
+            buflen = sizeof(reply);
+            if (!NETCON_getNextLine(&req->netConnection, reply, &buflen))
+            {
+                ERR("Malformed chunk\n");
+                *read = 0;
+                break;
+            }
+        }
+    }
+    if (!*read) HTTP_FinishedReading(req);
+    return ERROR_SUCCESS;
+}
+
 static DWORD HTTPREQ_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size, DWORD *read)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    static WCHAR encoding[20];
+    DWORD buflen = sizeof(encoding);
+    static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
 
-    return HTTPREQ_Read(req, buffer, size, read, TRUE);
+    if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_TRANSFER_ENCODING, encoding, &buflen, NULL) &&
+        !strcmpiW(encoding, szChunked))
+    {
+        return HTTPREQ_ReadChunked(req, buffer, size, read, TRUE);
+    }
+    else
+        return HTTPREQ_Read(req, buffer, size, read, TRUE);
 }
 
 static void HTTPREQ_AsyncReadFileExProc(WORKREQUEST *workRequest)
@@ -3002,7 +3091,7 @@ static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
     if (!ret || cnt < 0)
         return FALSE;
 
-    responseLen = HTTP_GetResponseHeaders( lpwhr );
+    responseLen = HTTP_GetResponseHeaders( lpwhr, TRUE );
     if (!responseLen)
         return FALSE;
 
@@ -3128,7 +3217,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             if (cnt < 0)
                 goto lend;
     
-            responseLen = HTTP_GetResponseHeaders(lpwhr);
+            responseLen = HTTP_GetResponseHeaders(lpwhr, TRUE);
             if (responseLen)
                 bSuccess = TRUE;
     
@@ -3523,7 +3612,7 @@ static void HTTP_clear_response_headers( LPWININETHTTPREQW lpwhr )
  *   TRUE  on success
  *   FALSE on error
  */
-static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
+static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
 {
     INT cbreaks = 0;
     WCHAR buffer[MAX_REPLY_LEN];
@@ -3541,7 +3630,7 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     TRACE("-->\n");
 
     /* clear old response headers (eg. from a redirect response) */
-    HTTP_clear_response_headers( lpwhr );
+    if (clear) HTTP_clear_response_headers( lpwhr );
 
     if (!NETCON_connected(&lpwhr->netConnection))
         goto lend;
