@@ -2423,6 +2423,11 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     status = wine_call_on_stack( attach_process_dlls, wm, NtCurrentTeb()->Tib.StackBase );
     if (status != STATUS_SUCCESS) goto error;
 
+    /* clear the stack contents before calling the main entry point, some broken apps need that */
+    wine_anon_mmap( NtCurrentTeb()->Tib.StackLimit,
+                    (char *)NtCurrentTeb()->Tib.StackBase - (char *)NtCurrentTeb()->Tib.StackLimit,
+                    PROT_READ | PROT_WRITE, MAP_FIXED );
+
     if (nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) VIRTUAL_UseLargeAddressSpace();
     return;
 
