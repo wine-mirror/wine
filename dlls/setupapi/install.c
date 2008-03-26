@@ -1080,6 +1080,16 @@ BOOL WINAPI SetupInstallServicesFromInfSectionW( HINF Inf, PCWSTR SectionName, D
  */
 BOOL WINAPI SetupInstallServicesFromInfSectionA( HINF Inf, PCSTR SectionName, DWORD Flags)
 {
-    FIXME("(%p, %s, %d) stub!\n", Inf, debugstr_a(SectionName), Flags);
-    return FALSE;
+    UNICODE_STRING SectionNameW;
+    BOOL ret = FALSE;
+
+    if (RtlCreateUnicodeStringFromAsciiz( &SectionNameW, SectionName ))
+    {
+        ret = SetupInstallServicesFromInfSectionW( Inf, SectionNameW.Buffer, Flags );
+        RtlFreeUnicodeString( &SectionNameW );
+    }
+    else
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+
+    return ret;
 }
