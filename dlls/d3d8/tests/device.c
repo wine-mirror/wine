@@ -337,8 +337,8 @@ static void test_refcount(void)
     /**
      * Check refcount of implicit surfaces. Findings:
      *   - the container is the device
-     *   - they hold a refernce to the device
-     *   - they are created with a refcount of 0 (Get/Release returns orignial refcount)
+     *   - they hold a reference to the device
+     *   - they are created with a refcount of 0 (Get/Release returns original refcount)
      *   - they are not freed if refcount reaches 0.
      *   - the refcount is not forwarded to the container.
      */

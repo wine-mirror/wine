@@ -356,8 +356,8 @@ static void test_refcount(void)
     /**
      * Check refcount of implicit surfaces and implicit swapchain. Findings:
      *   - the container is the device OR swapchain
-     *   - they hold a refernce to the device
-     *   - they are created with a refcount of 0 (Get/Release returns orignial refcount)
+     *   - they hold a reference to the device
+     *   - they are created with a refcount of 0 (Get/Release returns original refcount)
      *   - they are not freed if refcount reaches 0.
      *   - the refcount is not forwarded to the container.
      */
@@ -1921,7 +1921,7 @@ static void test_display_formats()
 {
     /* Direct3D9 offers 4 display formats R5G6B5, X1R5G5B5, X8R8G8B8 and A2R10G10B10.
      * Next to these there are 6 different backbuffer formats. Only a fixed number of
-     * mixings are possible in FULLSCREEN mode. In windowed mode more combinations are
+     * combinations are possible in FULLSCREEN mode. In windowed mode more combinations are
      * allowed due to depth conversion and this is likely driver dependent.
      * This test checks which combinations are possible in fullscreen mode and this should not be driver dependent.
      * TODO: handle A2R10G10B10 but what hardware supports it? Parhelia? It is very rare. */

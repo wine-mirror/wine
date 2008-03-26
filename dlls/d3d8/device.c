@@ -1090,7 +1090,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_EndStateBlock(LPDIRECT3DDEVICE8 iface
 
     TRACE("(%p) Relay\n", This);
 
-    /* Tell wineD3D to endstatablock before anything else (in case we run out
+    /* Tell wineD3D to endstateblock before anything else (in case we run out
      * of memory later and cause locking problems)
      */
     EnterCriticalSection(&d3d8_cs);
@@ -1555,7 +1555,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
         HeapFree(GetProcessHeap(), 0, object);
         *ppShader = 0;
     } else {
-        /* TODO: Store the VS declarations locally so that they can be derefferenced with a value higher than VS_HIGHESTFIXEDFXF */
+        /* TODO: Store the VS declarations locally so that they can be dereferenced with a value higher than VS_HIGHESTFIXEDFXF */
         shader_handle *handle = alloc_shader_handle(This);
         if (!handle) {
             ERR("Failed to allocate shader handle\n");

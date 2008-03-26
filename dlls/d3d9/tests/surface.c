@@ -363,7 +363,7 @@ static void test_private_data(IDirect3DDevice9 *device)
     hr = IDirect3DSurface9_GetPrivateData(surface, &IID_IDirect3DSurface9, &ptr, &size);
     ok(hr == D3D_OK, "IDirect3DSurface9_GetPrivateData failed with %08x\n", hr);
     ref2 = getref((IUnknown *) device);
-    /* Object is NOT beein addrefed */
+    /* Object is NOT being addrefed */
     ok(ptr == (IUnknown *) device, "Returned interface pointer is %p, expected %p\n", ptr, device);
     ok(ref2 == ref + 2, "Object reference is %d, expected %d. ptr at %p, orig at %p\n", ref2, ref + 2, ptr, device);
     IUnknown_Release(ptr);

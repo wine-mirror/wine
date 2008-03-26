@@ -129,7 +129,7 @@ extern CRITICAL_SECTION d3d9_cs;
     _pD3D9Caps->MaxPixelShader30InstructionSlots  = _pWineCaps->MaxPixelShader30InstructionSlots;
 
 /* ===========================================================================
-    D3D9 interfactes
+    D3D9 interfaces
    =========================================================================== */
 
 /* ---------- */

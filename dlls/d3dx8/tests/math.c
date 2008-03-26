@@ -536,7 +536,7 @@ static void D3DXPlaneTest(void)
     expectedvec.x = 20.0f/3.0f; expectedvec.y = 17.0f/3.0f; expectedvec.z = 14.0f/3.0f;
     D3DXPlaneIntersectLine(&gotvec,&plane,&vec1,&vec2);
     expect_vec3(expectedvec, gotvec);
-    /* Test a parallele line */
+    /* Test a parallel line */
     vec1.x = 11.0f; vec1.y = 13.0f; vec1.z = 15.0f;
     vec2.x = 17.0f; vec2.y = 31.0f; vec2.z = 24.0f;
     expectedvec.x = 20.0f/3.0f; expectedvec.y = 17.0f/3.0f; expectedvec.z = 14.0f/3.0f;

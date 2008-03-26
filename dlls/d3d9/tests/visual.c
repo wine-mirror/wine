@@ -1040,7 +1040,7 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
 
         /* Due to the nature of this test, we sample essentially at the edge
          * between two faces. Because of this it's undefined from which face
-         * the driver will sample. Furtunately that's not important for this
+         * the driver will sample. Fortunately that's not important for this
          * test, since all we care about is that it doesn't sample from the
          * other side of the surface or from the border. */
         color = getPixelColor(device, 320, 240);
@@ -1121,7 +1121,7 @@ static void offscreen_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
         ok(hr == D3D_OK, "Clear failed, hr = %s\n", DXGetErrorString9(hr));
 
-        /* Draw without textures - Should resut in a white quad */
+        /* Draw without textures - Should result in a white quad */
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
         ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %s\n", DXGetErrorString9(hr));
 
@@ -1542,7 +1542,7 @@ static void texbem_test(IDirect3DDevice9 *device)
         D3DDECL_END()
     } };
 
-    /* use assymetric matrix to test loading */
+    /* use asymmetric matrix to test loading */
     float bumpenvmat[4] = {0.0,0.5,-0.5,0.0};
 
     IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
@@ -6916,7 +6916,7 @@ static void vFace_register_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 4, quad, sizeof(float) * 3);
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%s\n", DXGetErrorString9(hr));
 
-        /* Blit the texture ontp the back buffer to make it visible */
+        /* Blit the texture onto the back buffer to make it visible */
         hr = IDirect3DDevice9_SetPixelShader(device, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed, hr=%s\n", DXGetErrorString9(hr));
         hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
@@ -6974,7 +6974,7 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
         D3DDECL_END()
     };
 
-    /* use assymetric matrix to test loading */
+    /* use asymmetric matrix to test loading */
     float bumpenvmat[4] = {0.0,0.5,-0.5,0.0};
 
     IDirect3DVertexDeclaration9 *vertex_declaration = NULL;

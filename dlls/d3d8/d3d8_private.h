@@ -127,7 +127,7 @@ typedef struct IDirect3DVertexShader8Impl IDirect3DVertexShader8Impl;
 extern CRITICAL_SECTION d3d8_cs;
 
 /* ===========================================================================
-    The interfactes themselves
+    The interfaces themselves
    =========================================================================== */
 
 /* ---------- */
