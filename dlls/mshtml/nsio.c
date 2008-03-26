@@ -209,7 +209,7 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIInterfaceRequestor_Release(This->notif_callback);
         if(This->original_uri)
             nsIURI_Release(This->original_uri);
-        heap_free(This->content);
+        heap_free(This->content_type);
         heap_free(This->charset);
         heap_free(This);
     }
@@ -468,8 +468,8 @@ static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString
 
     TRACE("(%p)->(%p)\n", This, aContentType);
 
-    if(This->content) {
-        nsACString_SetData(aContentType, This->content);
+    if(This->content_type) {
+        nsACString_SetData(aContentType, This->content_type);
         return S_OK;
     }
 
@@ -688,13 +688,8 @@ static nsresult async_open_doc_uri(nsChannel *This, NSContainer *container,
         channelbsc_set_channel(container->bscallback, This, listener, context);
 
         if(container->doc && container->doc->mime) {
-            DWORD len;
-
-            heap_free(This->content);
-
-            len = WideCharToMultiByte(CP_ACP, 0, container->doc->mime, -1, NULL, 0, NULL, NULL);
-            This->content = heap_alloc(len);
-            WideCharToMultiByte(CP_ACP, 0, container->doc->mime, -1, This->content, -1, NULL, NULL);
+            heap_free(This->content_type);
+            This->content_type = heap_strdupWtoA(container->doc->mime);
         }
 
         if(do_load_from_moniker_hack(This))
@@ -2155,20 +2150,13 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
         return channel ? NS_OK : NS_ERROR_UNEXPECTED;
     }
 
-    ret = heap_alloc(sizeof(nsChannel));
+    ret = heap_alloc_zero(sizeof(nsChannel));
 
     ret->lpHttpChannelVtbl = &nsChannelVtbl;
     ret->lpUploadChannelVtbl = &nsUploadChannelVtbl;
     ret->ref = 1;
     ret->channel = channel;
-    ret->http_channel = NULL;
     ret->uri = wine_uri;
-    ret->post_data_stream = NULL;
-    ret->load_group = NULL;
-    ret->notif_callback = NULL;
-    ret->load_flags = 0;
-    ret->content = NULL;
-    ret->charset = NULL;
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;

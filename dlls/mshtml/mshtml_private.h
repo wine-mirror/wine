@@ -241,7 +241,7 @@ typedef struct {
     nsIInterfaceRequestor *notif_callback;
     nsLoadFlags load_flags;
     nsIURI *original_uri;
-    char *content;
+    char *content_type;
     char *charset;
 } nsChannel;
 
@@ -568,6 +568,21 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     return ret;
 }
 
+static inline char *heap_strdupA(const char *str)
+{
+    char *ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = strlen(str)+1;
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
 static inline WCHAR *heap_strdupAtoW(const char *str)
 {
     LPWSTR ret = NULL;
@@ -578,6 +593,19 @@ static inline WCHAR *heap_strdupAtoW(const char *str)
         len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
         ret = heap_alloc(len*sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, str, -1, ret, -1);
+    }
+
+    return ret;
+}
+
+static inline char *heap_strdupWtoA(LPCWSTR str)
+{
+    char *ret = NULL;
+
+    if(str) {
+        DWORD size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+        ret = heap_alloc(size);
+        WideCharToMultiByte(CP_ACP, 0, str, -1, ret, size, NULL, NULL);
     }
 
     return ret;

@@ -884,17 +884,12 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
     nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
 
     switch(status_code) {
-    case BINDSTATUS_MIMETYPEAVAILABLE: {
-        int len;
-
+    case BINDSTATUS_MIMETYPEAVAILABLE:
         if(!This->nschannel)
             return S_OK;
-        heap_free(This->nschannel->content);
 
-        len = WideCharToMultiByte(CP_ACP, 0, status_text, -1, NULL, 0, NULL, NULL);
-        This->nschannel->content = heap_alloc(len*sizeof(WCHAR));
-        WideCharToMultiByte(CP_ACP, 0, status_text, -1, This->nschannel->content, -1, NULL, NULL);
-    }
+        heap_free(This->nschannel->content_type);
+        This->nschannel->content_type = heap_strdupWtoA(status_text);
     }
 
     return S_OK;
@@ -958,10 +953,8 @@ HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
 
     add_nsrequest(bscallback);
 
-    if(bscallback->nschannel) {
-        bscallback->nschannel->content = heap_alloc(sizeof(text_html));
-        memcpy(bscallback->nschannel->content, text_html, sizeof(text_html));
-    }
+    if(bscallback->nschannel)
+        bscallback->nschannel->content_type = heap_strdupA(text_html);
 
     hres = read_stream_data(bscallback, stream);
     IBindStatusCallback_OnStopBinding(STATUSCLB(&bscallback->bsc), hres, ERROR_SUCCESS);
