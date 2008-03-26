@@ -559,7 +559,6 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 
     if(in) {
         char *stra;
-        DWORD len;
 
         if(V_VT(in) != VT_BSTR) {
             FIXME("Unsupported vt=%d\n", V_VT(out));
@@ -568,12 +567,8 @@ static HRESULT exec_fontname(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, 
 
         TRACE("%s\n", debugstr_w(V_BSTR(in)));
 
-        len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, NULL, 0, NULL, NULL);
-        stra = heap_alloc(len);
-        WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, stra, -1, NULL, NULL);
-
+        stra = heap_strdupWtoA(V_BSTR(in));
         set_ns_fontname(This->nscontainer, stra);
-
         heap_free(stra);
 
         update_doc(This, UPDATE_UI);

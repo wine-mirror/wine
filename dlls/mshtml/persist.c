@@ -134,7 +134,7 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
         data = heap_alloc(headers_len+post_len+sizeof(content_length)+8);
 
         if(headers_len) {
-            WideCharToMultiByte(CP_ACP, 0, headers, -1, data, -1, NULL, NULL);
+            WideCharToMultiByte(CP_ACP, 0, headers, -1, data, headers_len, NULL, NULL);
             len = fix_headers(data, post_len);
         }
 

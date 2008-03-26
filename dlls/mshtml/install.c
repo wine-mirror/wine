@@ -135,7 +135,7 @@ static BOOL install_cab(LPCWSTR file_name)
     char install_dir[MAX_PATH];
     HRESULT (WINAPI *pExtractFilesA)(LPCSTR,LPCSTR,DWORD,LPCSTR,LPVOID,DWORD);
     LPSTR file_name_a;
-    DWORD res, len;
+    DWORD res;
     HRESULT hres;
 
     static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
@@ -160,11 +160,8 @@ static BOOL install_cab(LPCWSTR file_name)
     advpack = LoadLibraryW(wszAdvpack);
     pExtractFilesA = (void *)GetProcAddress(advpack, "ExtractFiles");
 
-    len = WideCharToMultiByte(CP_ACP, 0, file_name, -1, NULL, 0, NULL, NULL);
-    file_name_a = heap_alloc(len);
-    WideCharToMultiByte(CP_ACP, 0, file_name, -1, file_name_a, -1, NULL, NULL);
-
     /* FIXME: Use unicode version (not yet implemented) */
+    file_name_a = heap_strdupWtoA(file_name);
     hres = pExtractFilesA(file_name_a, install_dir, 0, NULL, NULL, 0);
     FreeLibrary(advpack);
     heap_free(file_name_a);
