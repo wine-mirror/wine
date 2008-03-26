@@ -119,6 +119,35 @@ static const CHAR szExampleXML[] =
 "    </elem>\n"
 "</root>\n";
 
+static  const CHAR szTransformXML[] =
+"<?xml version=\"1.0\"?>\n"
+"<greeting>\n"
+"Hello World\n"
+"</greeting>";
+
+static  const CHAR szTransformSSXML[] =
+"<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"1.0\">\n"
+"   <xsl:output method=\"html\"/>\n"
+"   <xsl:template match=\"/\">\n"
+"       <xsl:apply-templates select=\"greeting\"/>\n"
+"   </xsl:template>\n"
+"   <xsl:template match=\"greeting\">\n"
+"       <html>\n"
+"           <body>\n"
+"               <h1>\n"
+"                   <xsl:value-of select=\".\"/>\n"
+"               </h1>\n"
+"           </body>\n"
+"       </html>\n"
+"   </xsl:template>\n"
+"</xsl:stylesheet>";
+
+static  const CHAR szTransformOutput[] =
+"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+"<html><body><h1>\n"
+"Hello World\n"
+"</h1></body></html>\n";
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -3130,6 +3159,51 @@ static void test_DocumentSaveToDocument(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_testTransforms(void)
+{
+    IXMLDOMDocument *doc = NULL;
+    IXMLDOMDocument *docSS = NULL;
+    IXMLDOMNode *pNode;
+    VARIANT_BOOL bSucc;
+
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&docSS );
+    if( hr != S_OK )
+    {
+        IXMLDOMDocument_Release(doc);
+        return;
+    }
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szTransformXML), &bSucc);
+    ok(hr == S_OK, "ret %08x\n", hr );
+
+    hr = IXMLDOMDocument_loadXML(docSS, _bstr_(szTransformSSXML), &bSucc);
+    ok(hr == S_OK, "ret %08x\n", hr );
+
+    hr = IXMLDOMDocument_QueryInterface(docSS, &IID_IXMLDOMNode, (LPVOID*)&pNode );
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if(hr == S_OK)
+    {
+        BSTR bOut;
+
+        hr = IXMLDOMDocument_transformNode(doc, pNode, &bOut);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok( !lstrcmpW( bOut, _bstr_(szTransformOutput) ), "Stylesheet output not correct\n");
+
+        IXMLDOMNode_Release(pNode);
+    }
+
+    IXMLDOMDocument_Release(docSS);
+    IXMLDOMDocument_Release(doc);
+
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -3152,6 +3226,7 @@ START_TEST(domdoc)
     test_xmlTypes();
     test_nodeTypeTests();
     test_DocumentSaveToDocument();
+    test_testTransforms();
 
     CoUninitialize();
 }

@@ -35,6 +35,10 @@
 
 #include "msxml_private.h"
 
+#ifdef HAVE_LIBXSLT
+#include <libxslt/xslt.h>
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 static HINSTANCE hInstance;
@@ -171,10 +175,16 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 #ifdef HAVE_LIBXML2
         xmlInitParser();
 #endif
+#ifdef HAVE_LIBXSLT
+        xsltInit();
+#endif
         hInstance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
+#ifdef HAVE_LIBXSLT
+        xsltCleanupGlobals();
+#endif
 #ifdef HAVE_LIBXML2
         xmlCleanupParser();
         process_detach();

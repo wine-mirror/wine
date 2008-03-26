@@ -33,6 +33,17 @@
 
 #include "msxml_private.h"
 
+#ifdef HAVE_LIBXSLT
+# ifdef HAVE_LIBXSLT_PATTERN_H
+#  include <libxslt/pattern.h>
+# endif
+# ifdef HAVE_LIBXSLT_TRANSFORM_H
+#  include <libxslt/transform.h>
+# endif
+# include <libxslt/xsltutils.h>
+# include <libxslt/xsltInternals.h>
+#endif
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
@@ -1030,8 +1041,61 @@ static HRESULT WINAPI xmlnode_transformNode(
     IXMLDOMNode* styleSheet,
     BSTR* xmlString)
 {
-    FIXME("\n");
+#ifdef HAVE_LIBXSLT
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlnode *pStyleSheet = NULL;
+    xsltStylesheetPtr xsltSS = NULL;
+    xmlDocPtr result = NULL;
+    IXMLDOMNode *ssNew;
+
+    TRACE("%p %p %p\n", This, styleSheet, xmlString);
+
+    if(!styleSheet || !xmlString)
+        return E_INVALIDARG;
+
+    *xmlString = NULL;
+
+    if(IXMLDOMNode_QueryInterface(styleSheet, &IID_IXMLDOMNode, (LPVOID)&ssNew) == S_OK)
+    {
+        pStyleSheet = impl_from_IXMLDOMNode( ssNew );
+
+        xsltSS = xsltParseStylesheetDoc( pStyleSheet->node->doc);
+        if(xsltSS)
+        {
+            result = xsltApplyStylesheet(xsltSS, This->node->doc, NULL);
+            if(result)
+            {
+                xmlBufferPtr pXmlBuf;
+                int nSize;
+
+                pXmlBuf = xmlBufferCreate();
+                if(pXmlBuf)
+                {
+                    nSize = xmlNodeDump(pXmlBuf, NULL, (xmlNodePtr)result, 0, 0);
+                    if(nSize > 0)
+                    {
+                        const xmlChar *pContent;
+
+                        pContent = xmlBufferContent(pXmlBuf);
+                        *xmlString = bstr_from_xmlChar(pContent);
+
+                        xmlBufferFree(pXmlBuf);
+                    }
+                }
+            }
+        }
+
+        IXMLDOMNode_Release(ssNew);
+    }
+
+    if(*xmlString == NULL)
+        *xmlString = SysAllocStringLen(NULL, 0);
+
+    return S_OK;
+#else
+    FIXME("libxslt headers were not found at compile time\n");
     return E_NOTIMPL;
+#endif
 }
 
 static HRESULT WINAPI xmlnode_selectNodes(
