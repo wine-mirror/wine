@@ -128,7 +128,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	assert(hr == S_OK);
 
         assert(ash.cbSrcLengthUsed);
-        TRACE("Sample start time: %lld.%03lld\n", (tStart/10000000), (tStart/10000)%1000);
+        TRACE("Sample start time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
         if (ash.cbSrcLengthUsed == cbSrcStream)
         {
             IMediaSample_SetTime(pOutSample, &tStart, &tStop);
@@ -146,7 +146,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
             ERR("No valid timestamp found\n");
             IMediaSample_SetTime(pOutSample, NULL, NULL);
         }
-        TRACE("Sample stop time: %lld.%03lld\n", (tStart/10000000), (tStart/10000)%1000);
+        TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
         hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {

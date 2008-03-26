@@ -291,7 +291,7 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen)
     hr = copy_data(This->pCurrentSample, fbuf, flen, length);
     if (FAILED(hr))
     {
-        WARN("Couldn't set data size to %lld\n", length);
+        WARN("Couldn't set data size to %x%08x\n", (DWORD)(length >> 32), (DWORD)length);
         This->skipbytes = length;
         return hr;
     }
@@ -313,7 +313,7 @@ out_append:
         sampleduration = 0;
         IMediaSample_SetTime(This->pCurrentSample, &time, &This->position);
     }
-    TRACE("Media time: %lld.%03lld\n", (This->position/10000000), (This->position/10000)%1000);
+    TRACE("Media time: %u.%03u\n", (DWORD)(This->position/10000000), (DWORD)((This->position/10000)%1000));
 
     hr = OutputPin_SendSample(&pOutputPin->pin, This->pCurrentSample);
     if (FAILED(hr))
@@ -662,7 +662,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
                 }
             }
             hr = S_OK;
-            TRACE("Duration: %lld seconds\n", duration / 10000000);
+            TRACE("Duration: %d seconds\n", (DWORD)(duration / 10000000));
             TRACE("Parsing took %u ms\n", GetTickCount() - ticks);
             break;
         }
