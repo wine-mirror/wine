@@ -24,6 +24,12 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+# include <valgrind/memcheck.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -2313,6 +2319,65 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 }
 
 
+/***********************************************************************
+ *           alloc_process_stack
+ *
+ * Allocate the stack of new process.
+ */
+static NTSTATUS alloc_process_stack( IMAGE_NT_HEADERS *nt )
+{
+    NTSTATUS status;
+    void *base = NULL;
+    SIZE_T stack_size, page_size = getpagesize();
+
+    stack_size = max( nt->OptionalHeader.SizeOfStackReserve, nt->OptionalHeader.SizeOfStackCommit );
+    stack_size += page_size;  /* for the guard page */
+    stack_size = (stack_size + 0xffff) & ~0xffff;  /* round to 64K boundary */
+    if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
+
+    if ((status = NtAllocateVirtualMemory( GetCurrentProcess(), &base, 16, &stack_size,
+                                           MEM_COMMIT, PAGE_READWRITE )))
+        return status;
+
+    /* note: limit is lower than base since the stack grows down */
+    NtCurrentTeb()->DeallocationStack = base;
+    NtCurrentTeb()->Tib.StackBase     = (char *)base + stack_size;
+    NtCurrentTeb()->Tib.StackLimit    = (char *)base + page_size;
+
+#ifdef VALGRIND_STACK_REGISTER
+    /* no need to de-register the stack as it's the one of the main thread */
+    VALGRIND_STACK_REGISTER(NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase);
+#endif
+
+    /* setup guard page */
+    NtProtectVirtualMemory( GetCurrentProcess(), &base, &page_size, PAGE_NOACCESS, NULL );
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           attach_process_dlls
+ *
+ * Initial attach to all the dlls loaded by the process.
+ */
+static NTSTATUS attach_process_dlls( void *wm )
+{
+    NTSTATUS status;
+
+    RtlEnterCriticalSection( &loader_section );
+    if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS)
+    {
+        if (last_failed_modref)
+            ERR( "%s failed to initialize, aborting\n",
+                 debugstr_w(last_failed_modref->ldr.BaseDllName.Buffer) + 1 );
+        return status;
+    }
+    attach_implicitly_loaded_dlls( (LPVOID)1 );
+    RtlLeaveCriticalSection( &loader_section );
+    return status;
+}
+
+
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
@@ -2344,8 +2409,8 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
     InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
 
-    status = server_init_process_done();
-    if (status != STATUS_SUCCESS) goto error;
+    if ((status = alloc_process_stack( nt )) != STATUS_SUCCESS) goto error;
+    if ((status = server_init_process_done()) != STATUS_SUCCESS) goto error;
 
     actctx_init();
     load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
@@ -2355,17 +2420,8 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
 
     pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
 
-    RtlEnterCriticalSection( &loader_section );
-
-    if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS)
-    {
-        if (last_failed_modref)
-            ERR( "%s failed to initialize, aborting\n", debugstr_w(last_failed_modref->ldr.BaseDllName.Buffer) + 1 );
-        goto error;
-    }
-    attach_implicitly_loaded_dlls( (LPVOID)1 );
-
-    RtlLeaveCriticalSection( &loader_section );
+    status = wine_call_on_stack( attach_process_dlls, wm, NtCurrentTeb()->Tib.StackBase );
+    if (status != STATUS_SUCCESS) goto error;
 
     if (nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) VIRTUAL_UseLargeAddressSpace();
     return;

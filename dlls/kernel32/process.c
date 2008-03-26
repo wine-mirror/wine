@@ -52,10 +52,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-#include <valgrind/memcheck.h>
-#endif
-
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -818,44 +814,6 @@ static HANDLE start_wineboot(void)
 
 
 /***********************************************************************
- *           init_stack
- *
- * Allocate the stack of new process.
- */
-static void *init_stack(void)
-{
-    void *base;
-    SIZE_T stack_size, page_size = getpagesize();
-    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
-
-    stack_size = max( nt->OptionalHeader.SizeOfStackReserve, nt->OptionalHeader.SizeOfStackCommit );
-    stack_size += page_size;  /* for the guard page */
-    stack_size = (stack_size + 0xffff) & ~0xffff;  /* round to 64K boundary */
-    if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
-
-    if (!(base = VirtualAlloc( NULL, stack_size, MEM_COMMIT, PAGE_READWRITE )))
-    {
-        ERR( "failed to allocate main process stack\n" );
-        ExitProcess( 1 );
-    }
-
-    /* note: limit is lower than base since the stack grows down */
-    NtCurrentTeb()->DeallocationStack = base;
-    NtCurrentTeb()->Tib.StackBase     = (char *)base + stack_size;
-    NtCurrentTeb()->Tib.StackLimit    = (char *)base + page_size;
-
-#ifdef VALGRIND_STACK_REGISTER
-    /* no need to de-register the stack as it's the one of the main thread */
-    VALGRIND_STACK_REGISTER(NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase);
-#endif
-
-    /* setup guard page */
-    VirtualProtect( base, page_size, PAGE_NOACCESS, NULL );
-    return NtCurrentTeb()->Tib.StackBase;
-}
-
-
-/***********************************************************************
  *           start_process
  *
  * Startup routine of a new process. Runs on the new process stack.
@@ -867,8 +825,6 @@ static void start_process( void *arg )
         PEB *peb = NtCurrentTeb()->Peb;
         IMAGE_NT_HEADERS *nt;
         LPTHREAD_START_ROUTINE entry;
-
-        LdrInitializeThunk( 0, 0, 0, 0 );
 
         nt = RtlImageNtHeader( peb->ImageBaseAddress );
         entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
@@ -1000,8 +956,9 @@ void __wine_kernel_init(void)
         CloseHandle( boot_event );
     }
 
+    LdrInitializeThunk( 0, 0, 0, 0 );
     /* switch to the new stack */
-    wine_switch_to_stack( start_process, NULL, init_stack() );
+    wine_switch_to_stack( start_process, NULL, NtCurrentTeb()->Tib.StackBase );
 
  error:
     ExitProcess( GetLastError() );
