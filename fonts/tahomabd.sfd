@@ -18,7 +18,7 @@ OS2Version: 2
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1169210120
-ModificationTime: 1206440933
+ModificationTime: 1206557454
 PfmFamily: 33
 TTFWeight: 700
 TTFWidth: 5
@@ -93,7 +93,7 @@ NameList: Adobe Glyph List
 DisplaySize: 12
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 0 38 14
+WinInfo: 84 28 11
 BeginPrivate: 10
 BlueValues 27 [-30 0 1120 1177 1522 1522]
 OtherBlues 11 [-426 -426]
@@ -3407,10 +3407,10 @@ StartChar: Ntilde
 Encoding: 209 209 142
 Width: 1578
 Flags: W
-HStem: 0 21<152 337 995 1217> 1675 374<555 734>
-VStem: 152 185<0 1284> 312 422<1675 2049> 1032 185<310 1489>
+HStem: 0 21<152 337 995 1217> 1675 147<805.588 945.167> 1795 148<422.833 562.153>
+VStem: 152 185<0 1284> 1032 185<310 1489>
+Refer: 231 732 S 1 0 0 1 124.5 333 2
 Refer: 47 78 N 1 0 0 1 0 0 2
-Refer: 65 96 N 1 0 0 1 64 373 2
 EndChar
 StartChar: Ograve
 Encoding: 210 210 143
