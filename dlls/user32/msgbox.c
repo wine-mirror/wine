@@ -74,7 +74,9 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     HMONITOR monitor = 0;
     MONITORINFO mon_info;
     LPCWSTR lpszText;
-    WCHAR buf[256];
+    WCHAR *buffer = NULL;
+    const WCHAR *ptr;
+
     /* Index the order the buttons need to appear to an ID* constant */
     static const int buttonOrder[10] = { 6, 7, 1, 3, 4, 2, 5, 10, 11, 9 };
 
@@ -93,26 +95,30 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     if (HIWORD(lpmb->lpszCaption)) {
        SetWindowTextW(hwnd, lpmb->lpszCaption);
     } else {
-       UINT res_id = LOWORD(lpmb->lpszCaption);
-       if (res_id)
-       {
-           if (LoadStringW(lpmb->hInstance, res_id, buf, 256))
-               SetWindowTextW(hwnd, buf);
-       }
-       else
-       {
-           if (LoadStringW(user32_module, IDS_ERROR, buf, 256))
-               SetWindowTextW(hwnd, buf);
-       }
+        UINT len = LoadStringW( lpmb->hInstance, LOWORD(lpmb->lpszCaption), (LPWSTR)&ptr, 0 );
+        if (!len) len = LoadStringW( user32_module, IDS_ERROR, (LPWSTR)&ptr, 0 );
+        buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
+        if (buffer)
+        {
+            memcpy( buffer, ptr, len * sizeof(WCHAR) );
+            buffer[len] = 0;
+            SetWindowTextW( hwnd, buffer );
+            HeapFree( GetProcessHeap(), 0, buffer );
+            buffer = NULL;
+        }
     }
     if (HIWORD(lpmb->lpszText)) {
        lpszText = lpmb->lpszText;
     } else {
-       lpszText = buf;
-       if (!LoadStringW(lpmb->hInstance, LOWORD(lpmb->lpszText), buf, 256))
-	  *buf = 0;	/* FIXME ?? */
+        UINT len = LoadStringW( lpmb->hInstance, LOWORD(lpmb->lpszText), (LPWSTR)&ptr, 0 );
+        lpszText = buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
+        if (buffer)
+        {
+            memcpy( buffer, ptr, len * sizeof(WCHAR) );
+            buffer[len] = 0;
+        }
     }
-    
+
     TRACE_(msgbox)("%s\n", debugstr_w(lpszText));
     SetWindowTextW(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpszText);
 
@@ -310,6 +316,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     if (((lpmb->dwStyle & MB_TASKMODAL) && (lpmb->hwndOwner==NULL)) || (lpmb->dwStyle & MB_SYSTEMMODAL))
         SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
+    HeapFree( GetProcessHeap(), 0, buffer );
     return hFont;
 }
 
