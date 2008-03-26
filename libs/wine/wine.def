@@ -77,6 +77,7 @@ EXPORTS
     wine_exec_wine_binary
     wine_fold_string
     wine_get_build_dir
+    wine_get_build_id
     wine_get_config_dir
     wine_get_cs
     wine_get_data_dir
@@ -88,6 +89,7 @@ EXPORTS
     wine_get_sortkey
     wine_get_ss
     wine_get_user_name
+    wine_get_version
     wine_init
     wine_init_argv0_path
     wine_is_dbcs_leadbyte

@@ -96,6 +96,8 @@ C_SRCS = \
 	c_28605.c \
 	c_28606.c
 
+EXTRA_OBJS = version.o
+
 all: $(MODULE) $(MODULE:.dll=.a)
 
 @MAKE_RULES@
@@ -173,8 +175,14 @@ uninstall::
 	-cd $(DESTDIR)$(libdir) && $(RM) libwine.a libwine.dll libwine.so libwine.so.$(VERSION) \
 		libwine.so.$(SOVERSION) libwine.dylib libwine.$(VERSION).dylib libwine.$(SOVERSION).dylib
 
+version-stamp: dummy
+	(GIT_DIR=$(TOPSRCDIR)/.git git describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -e 's/\(.*\)/const char wine_build[] = "\1";/' >$@ || ($(RM) $@ && exit 1)
+
+version.c: version-stamp
+	@cmp -s version-stamp $@ || cp version-stamp $@
+
 clean::
-	$(RM) libwine.so.$(SOVERSION) libwine.so.$(VERSION)
+	$(RM) libwine.so.$(SOVERSION) libwine.so.$(VERSION) version.c version-stamp
 
 $(RELPATH):
 	@cd $(TOOLSDIR)/tools && $(MAKE) relpath

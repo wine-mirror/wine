@@ -38,6 +38,8 @@ extern const char *wine_get_config_dir(void);
 extern const char *wine_get_data_dir(void);
 extern const char *wine_get_server_dir(void);
 extern const char *wine_get_user_name(void);
+extern const char *wine_get_version(void);
+extern const char *wine_get_build_id(void);
 extern void wine_init_argv0_path( const char *argv0 );
 extern void wine_exec_wine_binary( const char *name, char **argv, const char *env_var );
 

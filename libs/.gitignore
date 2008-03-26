@@ -1,2 +1,4 @@
 *.dylib
 *.so.*
+wine/version-stamp
+wine/version.c

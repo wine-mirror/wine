@@ -407,6 +407,19 @@ const char *wine_get_user_name(void)
     return user_name;
 }
 
+/* return the standard version string */
+const char *wine_get_version(void)
+{
+    return PACKAGE_VERSION;
+}
+
+/* return the build id string */
+const char *wine_get_build_id(void)
+{
+    extern const char wine_build[];
+    return wine_build;
+}
+
 /* exec a binary using the preloader if requested; helper for wine_exec_wine_binary */
 static void preloader_exec( char **argv, int use_preloader )
 {

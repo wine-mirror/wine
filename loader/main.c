@@ -68,7 +68,6 @@ static inline void reserve_area( void *addr, size_t size )
  */
 static void check_command_line( int argc, char *argv[] )
 {
-    extern const char wine_version[];
     static const char usage[] =
         "Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program\n"
         "       wine --help                   Display this help and exit\n"
@@ -86,7 +85,7 @@ static void check_command_line( int argc, char *argv[] )
     }
     if (!strcmp( argv[1], "--version" ))
     {
-        printf( "%s\n", wine_version );
+        printf( "%s\n", wine_get_build_id() );
         exit(0);
     }
 }

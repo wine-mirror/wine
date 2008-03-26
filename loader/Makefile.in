@@ -12,8 +12,8 @@ C_SRCS = \
 	preloader.c \
 	pthread.c
 
-KTHREAD_OBJS = kthread.o main.o version.o
-PTHREAD_OBJS = pthread.o main.o version.o
+KTHREAD_OBJS = kthread.o main.o
+PTHREAD_OBJS = pthread.o main.o
 
 MAIN_BINARY    = @MAIN_BINARY@
 EXTRA_BINARIES = @EXTRA_BINARIES@
@@ -96,14 +96,5 @@ uninstall::
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
-
-clean::
-	$(RM) version.c version-stamp
-
-version-stamp: dummy
-	(GIT_DIR=$(TOPSRCDIR)/.git git-describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -e 's/\(.*\)/const char wine_version[] = "\1";/' >$@ || ($(RM) $@ && exit 1)
-
-version.c: version-stamp
-	@cmp -s version-stamp $@ || cp version-stamp $@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
