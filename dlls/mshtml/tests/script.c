@@ -432,7 +432,10 @@ static void test_simple_script(void)
     IHTMLDocument2 *doc;
 
     SET_EXPECT(CreateInstance);
+
     doc = create_and_load_doc(simple_script_str);
+    if(!doc) return;
+
     CHECK_CALLED(CreateInstance);
 
     IHTMLDocument2_Release(doc);
