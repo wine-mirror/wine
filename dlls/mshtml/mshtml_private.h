@@ -592,7 +592,7 @@ static inline WCHAR *heap_strdupAtoW(const char *str)
 
         len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
         ret = heap_alloc(len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, -1);
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     }
 
     return ret;
