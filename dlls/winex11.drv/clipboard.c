@@ -72,6 +72,7 @@
 # include <unistd.h>
 #endif
 #include <fcntl.h>
+#include <limits.h>
 #include <time.h>
 #include <assert.h>
 
@@ -2006,71 +2007,55 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Window w, Atom prop,
     Display *display = thread_display();
     Atom atype = AnyPropertyType;
     int aformat;
-    unsigned long total, nitems, remain, val_cnt;
-    long  reqlen, bwc;
-    unsigned char* val;
-    unsigned char* buffer;
+    unsigned long pos = 0, nitems, remain, count;
+    unsigned char *val = NULL, *buffer;
 
     if (prop == None)
         return FALSE;
 
-    TRACE("Reading property %d from X window %d\n",
-        (unsigned int)prop, (unsigned int)w);
+    TRACE("Reading property %lu from X window %lx\n", prop, w);
 
-    /*
-     * First request a zero length in order to figure out the request size.
-     */
-    wine_tsx11_lock();
-    if(XGetWindowProperty(display,w,prop,0,0,False, AnyPropertyType,
-        &atype, &aformat, &nitems, &remain, &buffer) != Success)
+    for (;;)
     {
+        wine_tsx11_lock();
+        if (XGetWindowProperty(display, w, prop, pos, INT_MAX / 4, False,
+                               AnyPropertyType, &atype, &aformat, &nitems, &remain, &buffer) != Success)
+        {
+            wine_tsx11_unlock();
+            WARN("Failed to read property\n");
+            HeapFree( GetProcessHeap(), 0, val );
+            return FALSE;
+        }
+
+        count = nitems * (aformat / 8);
+        if (!val) *data = HeapAlloc( GetProcessHeap(), 0, pos * sizeof(int) + count + 1 );
+        else *data = HeapReAlloc( GetProcessHeap(), 0, val, pos * sizeof(int) + count + 1 );
+
+        if (!*data)
+        {
+            XFree( buffer );
+            wine_tsx11_unlock();
+            HeapFree( GetProcessHeap(), 0, val );
+            return FALSE;
+        }
+        val = *data;
+        memcpy( (int *)val + pos, buffer, count );
+        XFree( buffer );
         wine_tsx11_unlock();
-        WARN("Failed to get property size\n");
-        return FALSE;
-    }
-
-    /* Free zero length return data if any */
-    if (buffer)
-    {
-       XFree(buffer);
-       buffer = NULL;
-    }
-
-    bwc = aformat/8;
-    reqlen = remain * bwc;
-
-    TRACE("Retrieving %ld bytes\n", reqlen);
-
-    val = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, reqlen);
-
-    /* Read property in 4K blocks */
-    for (total = 0, val_cnt = 0; remain;)
-    {
-       if (XGetWindowProperty(display, w, prop, (total / 4), 4096, False,
-           AnyPropertyType, &atype, &aformat, &nitems, &remain, &buffer) != Success)
-       {
-           wine_tsx11_unlock();
-           WARN("Failed to read property\n");
-           HeapFree(GetProcessHeap(), 0, val);
-           return FALSE;
-       }
-
-       bwc = aformat/8;
-       memcpy(&val[val_cnt], buffer, nitems * bwc);
-       val_cnt += nitems * bwc;
-       total += nitems*bwc;
-       XFree(buffer);
+        if (!remain)
+        {
+            *datasize = pos * sizeof(int) + count;
+            val[*datasize] = 0;
+            break;
+        }
+        pos += count / sizeof(int);
     }
 
     /* Delete the property on the window now that we are done
      * This will send a PropertyNotify event to the selection owner. */
+    wine_tsx11_lock();
     XDeleteProperty(display, w, prop);
-
     wine_tsx11_unlock();
-
-    *data = val;
-    *datasize = total;
-
     return TRUE;
 }
 
