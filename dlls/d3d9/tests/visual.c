@@ -5642,6 +5642,7 @@ static void shademode_test(IDirect3DDevice9 *device)
     /* Render a quad and try all of the different fixed function shading models. */
     HRESULT hr;
     DWORD color0, color1;
+    DWORD color0_gouraud = 0, color1_gouraud = 0;
     BYTE r, g, b;
     DWORD shademode = D3DSHADE_FLAT;
     DWORD primtype = D3DPT_TRIANGLESTRIP;
@@ -5748,6 +5749,10 @@ static void shademode_test(IDirect3DDevice9 *device)
                     b = (color1 & 0x000000ff);
                     ok(r == 0x0d && g >= 0x44 && g <= 0x45 && b >= 0xc7 && b <= 0xc8,
                        "GOURAUD shading has color1 %08x, expected 0x000d45c7\n", color1);
+
+                    color0_gouraud = color0;
+                    color1_gouraud = color1;
+
                     shademode = D3DSHADE_PHONG;
                     break;
                 case D3DSHADE_PHONG:
@@ -5762,6 +5767,11 @@ static void shademode_test(IDirect3DDevice9 *device)
                     b = (color1 & 0x000000ff);
                     ok(r == 0x0d && g >= 0x44 && g <= 0x45 && b >= 0xc7 && b <= 0xc8,
                        "PHONG shading has color1 %08x, expected 0x000d45c7\n", color1);
+
+                    ok(color0 == color0_gouraud, "difference between GOURAUD and PHONG shading detected: %08x %08x\n",
+                            color0_gouraud, color0);
+                    ok(color1 == color1_gouraud, "difference between GOURAUD and PHONG shading detected: %08x %08x\n",
+                            color1_gouraud, color1);
                     break;
             }
         }
