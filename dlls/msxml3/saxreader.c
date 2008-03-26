@@ -362,7 +362,10 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->lpVtbl = &saxreader_vtbl;
     reader->ref = 1;
 
+    *ppObj = &reader->lpVtbl;
+
     TRACE("returning iface %p\n", *ppObj);
+
     return S_OK;
 }
 
