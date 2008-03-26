@@ -50,6 +50,7 @@ EXPORTS
     vsnprintfW
     vsprintfW
     wine_anon_mmap
+    wine_call_on_stack
     wine_casemap_lower
     wine_casemap_upper
     wine_compare_string
@@ -65,7 +66,7 @@ EXPORTS
     wine_dbgstr_an
     wine_dbgstr_wn
     wine_dlclose
-    wine_dll_enum_load_path;
+    wine_dll_enum_load_path
     wine_dll_get_owner
     wine_dll_load
     wine_dll_load_main_exe

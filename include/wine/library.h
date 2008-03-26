@@ -66,6 +66,7 @@ extern void wine_init( int argc, char *argv[], char *error, int error_size );
 /* portability */
 
 extern void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, void *stack );
+extern int wine_call_on_stack( int (*func)(void *), void *arg, void *stack );
 extern void wine_set_pe_load_area( void *base, size_t size );
 extern void wine_free_pe_load_area(void);
 
