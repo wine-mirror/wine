@@ -1560,8 +1560,8 @@ static void VertexBufferDescTest(void)
         skip("GetVertexBuffer Failed!\n");
     ok( mem.desc2.dwSize == sizeof(D3DVERTEXBUFFERDESC)*2, "Size returned from GetVertexBufferDesc does not match the value put in\n" );
     ok( mem.buffer[sizeof(D3DVERTEXBUFFERDESC)] == 0x12, "GetVertexBufferDesc cleared outside of the struct! (dwSize was double the size of the struct)\n");
-    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x \n", mem.desc2.dwCaps, desc.dwCaps);
-    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x \n", mem.desc2.dwFVF, desc.dwFVF);
+    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x\n", mem.desc2.dwCaps, desc.dwCaps);
+    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x\n", mem.desc2.dwFVF, desc.dwFVF);
     ok (mem.desc2.dwNumVertices == desc.dwNumVertices, "dwNumVertices returned differs. Got %x, expected %x\n", mem.desc2.dwNumVertices, desc.dwNumVertices);
 
     memset(mem.buffer, 0x12, sizeof(mem.buffer));
@@ -1571,8 +1571,8 @@ static void VertexBufferDescTest(void)
         skip("GetVertexBuffer Failed!\n");
     ok( mem.desc2.dwSize == 0, "Size returned from GetVertexBufferDesc does not match the value put in\n" );
     ok( mem.buffer[sizeof(D3DVERTEXBUFFERDESC)] == 0x12, "GetVertexBufferDesc cleared outside of the struct! (dwSize was 0)\n");
-    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x \n", mem.desc2.dwCaps, desc.dwCaps);
-    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x \n", mem.desc2.dwFVF, desc.dwFVF);
+    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x\n", mem.desc2.dwCaps, desc.dwCaps);
+    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x\n", mem.desc2.dwFVF, desc.dwFVF);
     ok (mem.desc2.dwNumVertices == desc.dwNumVertices, "dwNumVertices returned differs. Got %x, expected %x\n", mem.desc2.dwNumVertices, desc.dwNumVertices);
 
     memset(mem.buffer, 0x12, sizeof(mem.buffer));
@@ -1582,8 +1582,8 @@ static void VertexBufferDescTest(void)
         skip("GetVertexBuffer Failed!\n");
     ok( mem.desc2.dwSize == sizeof(D3DVERTEXBUFFERDESC), "Size returned from GetVertexBufferDesc does not match the value put in\n" );
     ok( mem.buffer[sizeof(D3DVERTEXBUFFERDESC)] == 0x12, "GetVertexBufferDesc cleared outside of the struct! (dwSize was the size of the struct)\n");
-    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x \n", mem.desc2.dwCaps, desc.dwCaps);
-    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x \n", mem.desc2.dwFVF, desc.dwFVF);
+    ok( mem.desc2.dwCaps == desc.dwCaps, "dwCaps returned differs. Got %x, expected %x\n", mem.desc2.dwCaps, desc.dwCaps);
+    ok( mem.desc2.dwFVF == desc.dwFVF, "dwFVF returned differs. Got %x, expected %x\n", mem.desc2.dwFVF, desc.dwFVF);
     ok (mem.desc2.dwNumVertices == desc.dwNumVertices, "dwNumVertices returned differs. Got %x, expected %x\n", mem.desc2.dwNumVertices, desc.dwNumVertices);
 
 out:
