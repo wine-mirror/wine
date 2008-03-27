@@ -82,7 +82,7 @@ static UINT WM_MSIME_DOCUMENTFEED;
 static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
 static void UpdateDataInDefaultIMEWindow(HWND hwnd, BOOL showable);
-static void ImmInternalPostIMEMessage(UINT, WPARAM, LPARAM);
+static void ImmInternalPostIMEMessage(InputContextData*, UINT, WPARAM, LPARAM);
 static void ImmInternalSetOpenStatus(BOOL fOpen);
 static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len);
 
@@ -100,7 +100,7 @@ static VOID IMM_PostResult(InputContextData *data)
     ResultStr = (LPWSTR)(compdata + compstr->dwResultStrOffset);
 
     for (i = 0; i < compstr->dwResultStrLen; i++)
-        ImmInternalPostIMEMessage (WM_IME_CHAR, ResultStr[i], 1);
+        ImmInternalPostIMEMessage (root_context, WM_IME_CHAR, ResultStr[i], 1);
 
     ImmUnlockIMCC(root_context->IMC.hCompStr);
 
@@ -173,20 +173,20 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 }
 
 /* for posting messages as the IME */
-static void ImmInternalPostIMEMessage(UINT msg, WPARAM wParam, LPARAM lParam)
+static void ImmInternalPostIMEMessage(InputContextData *data, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     HWND target = GetFocus();
     if (!target)
-       PostMessageW(root_context->IMC.hWnd,msg,wParam,lParam);
+       PostMessageW(data->IMC.hWnd,msg,wParam,lParam);
     else
        PostMessageW(target, msg, wParam, lParam);
 }
 
-static LRESULT ImmInternalSendIMENotify(WPARAM notify, LPARAM lParam)
+static LRESULT ImmInternalSendIMENotify(InputContextData *data, WPARAM notify, LPARAM lParam)
 {
     HWND target;
 
-    target = root_context->IMC.hWnd;
+    target = data->IMC.hWnd;
     if (!target) target = GetFocus();
 
     if (target)
@@ -221,7 +221,7 @@ static void ImmInternalSetOpenStatus(BOOL fOpen)
     root_context->IMC.fOpen = fOpen;
     root_context->bInternalState = fOpen;
 
-    ImmInternalSendIMENotify(IMN_SETOPENSTATUS, 0);
+    ImmInternalSendIMENotify(root_context, IMN_SETOPENSTATUS, 0);
 }
 
 static int updateField(DWORD origLen, DWORD origOffset, DWORD currentOffset,
@@ -1501,7 +1501,7 @@ BOOL WINAPI ImmNotifyIME(
                         root_context->IMC.hCompStr = ImmCreateBlankCompStr();
 
                         if (send)
-                            ImmInternalPostIMEMessage(WM_IME_COMPOSITION, 0,
+                            ImmInternalPostIMEMessage(root_context, WM_IME_COMPOSITION, 0,
                                                   GCS_COMPSTR);
                         rc = TRUE;
                     }
@@ -1542,15 +1542,15 @@ BOOL WINAPI ImmNotifyIME(
 
                             root_context->bRead = FALSE;
 
-                            ImmInternalPostIMEMessage(WM_IME_COMPOSITION, 0,
+                            ImmInternalPostIMEMessage(root_context, WM_IME_COMPOSITION, 0,
                                                   GCS_COMPSTR);
 
-                            ImmInternalPostIMEMessage(WM_IME_COMPOSITION,
+                            ImmInternalPostIMEMessage(root_context, WM_IME_COMPOSITION,
                                             param,
                                             GCS_RESULTSTR|GCS_RESULTCLAUSE);
                         }
 
-                        ImmInternalPostIMEMessage(WM_IME_ENDCOMPOSITION, 0, 0);
+                        ImmInternalPostIMEMessage(root_context, WM_IME_ENDCOMPOSITION, 0, 0);
                         root_context->bInComposition = FALSE;
                     }
                     break;
@@ -1653,7 +1653,7 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
     MultiByteToWideChar(CP_ACP, 0, lplf->lfFaceName, -1, data->IMC.lfFont.W.lfFaceName,
                         LF_FACESIZE);
 
-    ImmInternalSendIMENotify(IMN_SETCOMPOSITIONFONT, 0);
+    ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONFONT, 0);
 
     if (data->textfont)
     {
@@ -1677,7 +1677,7 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
         return FALSE;
 
     data->IMC.lfFont.W = *lplf;
-    ImmInternalSendIMENotify(IMN_SETCOMPOSITIONFONT, 0);
+    ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONFONT, 0);
 
     if (data->textfont)
     {
@@ -1766,7 +1766,7 @@ BOOL WINAPI ImmSetCompositionStringW(
         HIMCC newCompStr;
         if (!root_context->bInComposition)
         {
-            ImmInternalPostIMEMessage(WM_IME_STARTCOMPOSITION, 0, 0);
+            ImmInternalPostIMEMessage(root_context, WM_IME_STARTCOMPOSITION, 0, 0);
             root_context->bInComposition = TRUE;
         }
 
@@ -1791,7 +1791,7 @@ BOOL WINAPI ImmSetCompositionStringW(
 
      UpdateDataInDefaultIMEWindow(hwndDefault,FALSE);
 
-     ImmInternalPostIMEMessage(WM_IME_COMPOSITION, wParam, flags);
+     ImmInternalPostIMEMessage(root_context, WM_IME_COMPOSITION, wParam, flags);
 
      return TRUE;
 }
@@ -1826,7 +1826,7 @@ BOOL WINAPI ImmSetCompositionWindow(
     if (reshow)
         ShowWindow(hwndDefault,SW_SHOWNOACTIVATE);
 
-    ImmInternalSendIMENotify(IMN_SETCOMPOSITIONWINDOW, 0);
+    ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONWINDOW, 0);
     return TRUE;
 }
 
@@ -1860,7 +1860,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
     if (hIMC == (HIMC)FROM_IME)
     {
         ImmInternalSetOpenStatus(fOpen);
-        ImmInternalSendIMENotify(IMN_SETOPENSTATUS, 0);
+        ImmInternalSendIMENotify(data, IMN_SETOPENSTATUS, 0);
         return TRUE;
     }
 
@@ -1873,17 +1873,17 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
             pX11DRV_ForceXIMReset(data->IMC.hWnd);
 
         if (fOpen == FALSE)
-            ImmInternalPostIMEMessage(WM_IME_ENDCOMPOSITION,0,0);
+            ImmInternalPostIMEMessage(data, WM_IME_ENDCOMPOSITION,0,0);
         else
-            ImmInternalPostIMEMessage(WM_IME_STARTCOMPOSITION,0,0);
+            ImmInternalPostIMEMessage(data, WM_IME_STARTCOMPOSITION,0,0);
 
         ImmInternalSetOpenStatus(fOpen);
         ImmInternalSetOpenStatus(!fOpen);
 
         if (data->IMC.fOpen == FALSE)
-            ImmInternalPostIMEMessage(WM_IME_ENDCOMPOSITION,0,0);
+            ImmInternalPostIMEMessage(data, WM_IME_ENDCOMPOSITION,0,0);
         else
-            ImmInternalPostIMEMessage(WM_IME_STARTCOMPOSITION,0,0);
+            ImmInternalPostIMEMessage(data, WM_IME_STARTCOMPOSITION,0,0);
 
         return FALSE;
     }
@@ -2094,7 +2094,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
 
         lpTransMsg = (LPTRANSMSG)ImmLockIMCC(data->IMC.hMsgBuf);
         for (i = 0; i < data->IMC.dwNumMsgBuf; i++)
-            ImmInternalPostIMEMessage(lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
+            ImmInternalPostIMEMessage(data, lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
 
         ImmUnlockIMCC(data->IMC.hMsgBuf);
 
