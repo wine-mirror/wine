@@ -24,6 +24,13 @@
 
 #include "resource.h"
 
+#ifdef BUILD_SHA1
+STRINGTABLE
+BEGIN
+    IDS_BUILD_ID BUILD_SHA1
+END
+#endif
+
 IDD_TAG DIALOG 0, 0, 150, 65
 STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "No tag supplied"

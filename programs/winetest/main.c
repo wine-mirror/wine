@@ -501,6 +501,7 @@ run_tests (char *logname)
     int logfile;
     char *strres, *eol, *nextline;
     DWORD strsize;
+    char build[64];
 
     SetErrorMode (SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
@@ -539,7 +540,8 @@ run_tests (char *logname)
     xprintf ("Version 4\n");
     strres = extract_rcdata (MAKEINTRESOURCE(WINE_BUILD), STRINGRES, &strsize);
     xprintf ("Tests from build ");
-    if (strres) xprintf ("%.*s", strsize, strres);
+    if (LoadStringA( 0, IDS_BUILD_ID, build, sizeof(build) )) xprintf( "%s\n", build );
+    else if (strres) xprintf ("%.*s", strsize, strres);
     else xprintf ("-\n");
     strres = extract_rcdata (MAKEINTRESOURCE(TESTS_URL), STRINGRES, &strsize);
     xprintf ("Archive: ");

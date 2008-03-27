@@ -6,6 +6,8 @@ MODULE    = winetest.exe
 APPMODE   = -mconsole
 IMPORTS   = comctl32 version user32 gdi32 advapi32 wsock32 kernel32
 
+EXTRARCFLAGS = -DBUILD_SHA1=\"$$(GIT_DIR=$(TOPSRCDIR)/.git git rev-parse HEAD 2>/dev/null)\"
+
 C_SRCS = \
 	gui.c \
 	main.c \

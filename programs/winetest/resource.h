@@ -42,6 +42,8 @@
 #define IDC_EDIT  4000
 #define IDC_ABOUT 4001
 
+#define IDS_BUILD_ID 1
+
 /* Resource types */
 
 #define TESTRES   1000
