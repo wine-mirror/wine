@@ -2588,7 +2588,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
     DWORD headerlen;
     LPWSTR header = NULL;
 
-    TRACE("(%p, %p, %p, %08x, %08lx): stub\n", hRequest, lpBuffersIn,
+    TRACE("(%p, %p, %p, %08x, %08lx)\n", hRequest, lpBuffersIn,
 	    lpBuffersOut, dwFlags, dwContext);
 
     if (lpBuffersIn)
