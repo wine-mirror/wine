@@ -853,12 +853,22 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		    MultiByteToWideChar(CP_ACP, 0, &charA, 1, &charW, 1);
 		}
 
-		if ((charW == VK_RETURN || charW == VK_ESCAPE) && es->hwndListBox)
-		{
-		   if (SendMessageW(GetParent(hwnd), CB_GETDROPPEDSTATE, 0, 0))
-		      SendMessageW(GetParent(hwnd), WM_KEYDOWN, charW, 0);
-		   break;
-		}
+                if (es->hwndListBox)
+                {
+                    if (charW == VK_RETURN || charW == VK_ESCAPE)
+                    {
+                        if (SendMessageW(GetParent(hwnd), CB_GETDROPPEDSTATE, 0, 0))
+                        {
+                            SendMessageW(GetParent(hwnd), WM_KEYDOWN, charW, 0);
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                  if (charW == VK_TAB || charW == VK_RETURN)
+                      break;
+                }
 		EDIT_WM_Char(es, charW);
 		break;
 	}

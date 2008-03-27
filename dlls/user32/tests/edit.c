@@ -1296,9 +1296,9 @@ static void test_edit_dialog(void)
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 3);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 4);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 5);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
 
     /* tests for WM_KEYDOWN + WM_CHAR */
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 6);
@@ -1306,7 +1306,7 @@ static void test_edit_dialog(void)
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 7);
     todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 8);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
 }
 
 static BOOL RegisterWindowClasses (void)
