@@ -3293,7 +3293,7 @@ struct ffp_desc *find_ffp_shader(struct list *shaders, struct texture_stage_op o
      */
     LIST_FOR_EACH_ENTRY(entry, shaders, struct ffp_desc, entry) {
         if(memcmp(op, entry->op, sizeof(struct texture_stage_op) * MAX_TEXTURES) == 0) {
-            TRACE("Found shader entry %p. size %d\n", entry, sizeof(struct texture_stage_op) * MAX_TEXTURES);
+            TRACE("Found shader entry %p\n", entry);
             return entry;
         }
     }
