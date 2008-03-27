@@ -139,9 +139,6 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "Br&uk av hjelp\tF1",             ID_HELP_USING
         MENUITEM SEPARATOR
         MENUITEM "&Informasjon om Filbehandling . . .",     ID_ABOUT
-#ifdef __WINE__
-        MENUITEM "Informasjon om &Wine . . .",         ID_ABOUT_WINE
-#endif
     }
 }
 
@@ -242,7 +239,6 @@ STRINGTABLE
     IDS_SHELL               "Skall"
     IDS_TITLEFMT            "%s - %s"
     IDS_NO_IMPL             "Ikke implementert ennå"
-    IDS_WINE                "WINE"
     IDS_WINE_FILE           "Filbehandling"
 }
 

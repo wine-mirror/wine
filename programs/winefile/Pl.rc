@@ -142,9 +142,6 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "&U¿ywanie pomocy",            ID_HELP_USING
         MENUITEM SEPARATOR
         MENUITEM "&Winefile...",                ID_ABOUT
-#ifdef __WINE__
-        MENUITEM "W&ine...",                    ID_ABOUT_WINE
-#endif
     }
 }
 
@@ -244,7 +241,6 @@ STRINGTABLE
     IDS_SHELL               "Pulpit"       /* t³umaczenie nie dos³owne, ale chyba lepiej pasuje */
     IDS_TITLEFMT            "%s - %s"
     IDS_NO_IMPL             "Jeszcze nie zaimplementowane"
-    IDS_WINE                "WINE"
     IDS_WINE_FILE           "Wine File"
 }
 

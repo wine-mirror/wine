@@ -2509,8 +2509,6 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 				/*TODO: There are even more menu items! */
 
-#ifndef _NO_EXTENSIONS
-#ifdef __WINE__
 				case ID_LICENSE:
 					WineLicense(Globals.hMainWnd);
 					break;
@@ -2519,15 +2517,9 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					WineWarranty(Globals.hMainWnd);
 					break;
 
-				case ID_ABOUT_WINE:
-					ShellAbout(hwnd, RS(b2,IDS_WINE), RS(b1,IDS_WINEFILE), 0);
-					break;
-#endif
-
 				case ID_ABOUT:
 					ShellAbout(hwnd, RS(b1,IDS_WINEFILE), NULL, 0);
 					break;
-#endif	/* _NO_EXTENSIONS */
 
 				default:
 					/*TODO: if (wParam >= PM_FIRST_LANGUAGE && wParam <= PM_LAST_LANGUAGE)

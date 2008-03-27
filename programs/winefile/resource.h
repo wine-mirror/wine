@@ -101,7 +101,6 @@
 
 /* winefile extensions */
 
-#define ID_ABOUT_WINE                   0x8000
 #define ID_LICENSE                      0x8001
 #define ID_NO_WARRANTY                  0x8002
 #define ID_WINDOW_AUTOSORT              0x8003
@@ -122,8 +121,7 @@
 #define IDS_SHELL                       1205
 #define IDS_TITLEFMT                    1206
 #define IDS_NO_IMPL                     1207
-#define IDS_WINE                        1208
-#define IDS_WINE_FILE                   1209
+#define IDS_WINE_FILE                   1208
 
 #define IDS_COL_NAME                    1210
 #define IDS_COL_SIZE                    1211

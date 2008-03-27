@@ -139,9 +139,6 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "&Usando la ayuda\tF1",        ID_HELP_USING
         MENUITEM SEPARATOR
         MENUITEM "&Acerca de Winefile...",      ID_ABOUT
-#ifdef __WINE__
-        MENUITEM "Acerca de &Wine...",          ID_ABOUT_WINE
-#endif
     }
 }
 
@@ -242,7 +239,6 @@ STRINGTABLE
     IDS_SHELL               "Shell"
     IDS_TITLEFMT            "%s - %s"
     IDS_NO_IMPL             "Aún no implementado"
-    IDS_WINE                "WINE"
     IDS_WINE_FILE           "Wine File"
 }
 
