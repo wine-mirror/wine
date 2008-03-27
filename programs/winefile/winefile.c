@@ -2518,7 +2518,9 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					break;
 
 				case ID_ABOUT:
-					ShellAbout(hwnd, RS(b1,IDS_WINEFILE), NULL, 0);
+                                        ShellAbout(hwnd, RS(b1,IDS_WINEFILE), NULL,
+                                                   LoadImage( Globals.hInstance, MAKEINTRESOURCE(IDI_WINEFILE),
+                                                              IMAGE_ICON, 48, 48, LR_SHARED ));
 					break;
 
 				default:
