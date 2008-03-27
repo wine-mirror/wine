@@ -184,9 +184,13 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                     fprintf(server, ",\n");
                 if (is_context_handle(var->type))
                 {
+                    /* if the context_handle attribute appears in the chain of types
+                     * without pointers being followed, then the context handle must
+                     * be direct, otherwise it is a pointer */
+                    int is_ch_ptr = is_aliaschain_attr(var->type, ATTR_CONTEXTHANDLE) ? FALSE : TRUE;
                     print_server("(");
                     write_type_decl_left(server, var->type);
-                    fprintf(server, ")%sNDRSContextValue(%s)", is_ptr(var->type) ? "" : "*", var->name);
+                    fprintf(server, ")%sNDRSContextValue(%s)", is_ch_ptr ? "" : "*", var->name);
                 }
                 else
                 {

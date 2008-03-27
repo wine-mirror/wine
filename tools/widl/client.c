@@ -203,9 +203,13 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         }
         else if (context_handle_var)
         {
-            print_client("if (%s%s != 0)\n", is_ptr(context_handle_var->type) ? "*" : "", context_handle_var->name);
+            /* if the context_handle attribute appears in the chain of types
+             * without pointers being followed, then the context handle must
+             * be direct, otherwise it is a pointer */
+            int is_ch_ptr = is_aliaschain_attr(context_handle_var->type, ATTR_CONTEXTHANDLE) ? FALSE : TRUE;
+            print_client("if (%s%s != 0)\n", is_ch_ptr ? "*" : "", context_handle_var->name);
             indent++;
-            print_client("_Handle = NDRCContextBinding(%s%s);\n", is_ptr(context_handle_var->type) ? "*" : "", context_handle_var->name);
+            print_client("_Handle = NDRCContextBinding(%s%s);\n", is_ch_ptr ? "*" : "", context_handle_var->name);
             indent--;
             fprintf(client, "\n");
         }

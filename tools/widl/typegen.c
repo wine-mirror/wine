@@ -2778,9 +2778,13 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
         {
             if (pass == PASS_IN)
             {
+                /* if the context_handle attribute appears in the chain of types
+                 * without pointers being followed, then the context handle must
+                 * be direct, otherwise it is a pointer */
+                int is_ch_ptr = is_aliaschain_attr(type, ATTR_CONTEXTHANDLE) ? FALSE : TRUE;
                 print_file(file, indent, "NdrClientContextMarshall(\n");
                 print_file(file, indent + 1, "&_StubMsg,\n");
-                print_file(file, indent + 1, "(NDR_CCONTEXT)%s%s,\n", is_ptr(type) ? "*" : "", var->name);
+                print_file(file, indent + 1, "(NDR_CCONTEXT)%s%s,\n", is_ch_ptr ? "*" : "", var->name);
                 print_file(file, indent + 1, "%s);\n", in_attr && out_attr ? "1" : "0");
             }
             else
