@@ -36,6 +36,155 @@ static HRESULT (WINAPI *pSHCreateStreamOnFileW)(LPCWSTR file, DWORD mode, IStrea
 static HRESULT (WINAPI *pSHCreateStreamOnFileEx)(LPCWSTR file, DWORD mode, DWORD attributes, BOOL create, IStream *template, IStream **stream);
 
 
+static void test_IStream_invalid_operations(IStream * stream, DWORD mode)
+{
+    HRESULT ret;
+    IStream * clone;
+    ULONG refcount;
+    ULARGE_INTEGER uzero;
+    ULARGE_INTEGER uret;
+    LARGE_INTEGER zero;
+    ULONG count;
+    char data[256];
+
+    U(uzero).HighPart = 0;
+    U(uzero).LowPart = 0;
+    U(uret).HighPart = 0;
+    U(uret).LowPart = 0;
+    U(zero).HighPart = 0;
+    U(zero).LowPart = 0;
+
+    /* IStream::Read */
+
+    /* IStream_Read from the COBJMACROS is undefined by shlwapi.h, replaced by the IStream_Read helper function. */
+
+    ret = stream->lpVtbl->Read(stream, NULL, 0, &count);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    ret = stream->lpVtbl->Read(stream, data, 5, NULL);
+    ok(ret == S_FALSE || ret == S_OK, "expected S_FALSE or S_OK, got 0x%08x\n", ret);
+
+    ret = stream->lpVtbl->Read(stream, data, 0, NULL);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    ret = stream->lpVtbl->Read(stream, data, 3, &count);
+    ok(ret == S_FALSE || ret == S_OK, "expected S_FALSE or S_OK, got 0x%08x\n", ret);
+
+    /* IStream::Write */
+
+    /* IStream_Write from the COBJMACROS is undefined by shlwapi.h, replaced by the IStream_Write helper function. */
+
+    ret = stream->lpVtbl->Write(stream, NULL, 0, &count);
+    if (mode == STGM_READ)
+        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+    else
+        ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    strcpy(data, "Hello");
+    ret = stream->lpVtbl->Write(stream, data, 5, NULL);
+    if (mode == STGM_READ)
+        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+    else
+        ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    strcpy(data, "Hello");
+    ret = stream->lpVtbl->Write(stream, data, 0, NULL);
+    if (mode == STGM_READ)
+        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+    else
+        ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    strcpy(data, "Hello");
+    ret = stream->lpVtbl->Write(stream, data, 0, &count);
+    if (mode == STGM_READ)
+        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+    else
+        ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    strcpy(data, "Hello");
+    ret = stream->lpVtbl->Write(stream, data, 3, &count);
+    if (mode == STGM_READ)
+        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+    else
+        ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    /* IStream::Seek */
+
+    ret = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    ret = IStream_Seek(stream, zero, 20, NULL);
+    ok(ret == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", ret);
+
+    /* IStream::CopyTo */
+
+    ret = IStream_CopyTo(stream, NULL, uzero, &uret, &uret);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    clone = NULL;
+    ret = IStream_CopyTo(stream, clone, uzero, &uret, &uret);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    ret = IStream_CopyTo(stream, stream, uzero, &uret, &uret);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    ret = IStream_CopyTo(stream, stream, uzero, &uret, NULL);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    ret = IStream_CopyTo(stream, stream, uzero, NULL, &uret);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    /* IStream::Commit */
+
+    ret = IStream_Commit(stream, STGC_DEFAULT);
+    ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+    /* IStream::Revert */
+
+    ret = IStream_Revert(stream);
+    ok(ret == E_NOTIMPL, "expected E_NOTIMPL, got 0x%08x\n", ret);
+
+    /* IStream::LockRegion */
+
+    ret = IStream_LockRegion(stream, uzero, uzero, 0);
+    ok(ret == E_NOTIMPL /* XP */ || ret == S_OK /* Vista */,
+      "expected E_NOTIMPL or S_OK, got 0x%08x\n", ret);
+
+    /* IStream::UnlockRegion */
+
+    if (ret == E_NOTIMPL) /* XP */ {
+        ret = IStream_UnlockRegion(stream, uzero, uzero, 0);
+        ok(ret == E_NOTIMPL, "expected E_NOTIMPL, got 0x%08x\n", ret);
+    } else /* Vista */ {
+        ret = IStream_UnlockRegion(stream, uzero, uzero, 0);
+        ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
+
+        ret = IStream_UnlockRegion(stream, uzero, uzero, 0);
+        ok(ret == STG_E_LOCKVIOLATION, "expected STG_E_LOCKVIOLATION, got 0x%08x\n", ret);
+    }
+
+    /* IStream::Stat */
+
+    ret = IStream_Stat(stream, NULL, 0);
+    ok(ret == STG_E_INVALIDPOINTER, "expected STG_E_INVALIDPOINTER, got 0x%08x\n", ret);
+
+    /* IStream::Clone */
+
+    ret = IStream_Clone(stream, NULL);
+    ok(ret == E_NOTIMPL, "expected E_NOTIMPL, got 0x%08x\n", ret);
+
+    clone = NULL;
+    ret = IStream_Clone(stream, &clone);
+    ok(ret == E_NOTIMPL, "expected E_NOTIMPL, got 0x%08x\n", ret);
+    ok(clone == NULL, "expected a NULL IStream object, got %p\n", stream);
+
+    if (clone) {
+        refcount = IStream_Release(clone);
+        ok(refcount == 0, "expected 0, got %d\n", refcount);
+    }
+}
+
+
 static void test_SHCreateStreamOnFileA(DWORD mode)
 {
     IStream * stream;
@@ -89,6 +238,8 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileA: expected 0, got %d\n", refcount);
     }
@@ -105,6 +256,8 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileA: expected 0, got %d\n", refcount);
     }
@@ -117,6 +270,8 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileA: expected 0, got %d\n", refcount);
 
@@ -179,6 +334,8 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileW: expected 0, got %d\n", refcount);
     }
@@ -195,6 +352,8 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileW: expected 0, got %d\n", refcount);
     }
@@ -207,6 +366,8 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileW: expected 0, got %d\n", refcount);
 
@@ -271,6 +432,8 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
 
@@ -285,6 +448,8 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
 
@@ -299,6 +464,8 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
     }
@@ -315,6 +482,8 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
     }
@@ -333,6 +502,8 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
     }
@@ -345,6 +516,8 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
+        test_IStream_invalid_operations(stream, mode);
+
         refcount = IStream_Release(stream);
         ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
     }
