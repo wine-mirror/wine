@@ -880,6 +880,27 @@ static void test_shader(void)
         D3DVSD_REG(D3DVSDE_POSITION,  D3DVSDT_FLOAT3),
         D3DVSD_END()
     };
+    DWORD decl_normal_float2[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),  /* D3DVSDE_POSITION, Register v0 */
+        D3DVSD_REG(D3DVSDE_NORMAL,   D3DVSDT_FLOAT2),  /* D3DVSDE_NORMAL,   Register v1 */
+        D3DVSD_END()
+    };
+    DWORD decl_normal_float4[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),  /* D3DVSDE_POSITION, Register v0 */
+        D3DVSD_REG(D3DVSDE_NORMAL,   D3DVSDT_FLOAT4),  /* D3DVSDE_NORMAL,   Register v1 */
+        D3DVSD_END()
+    };
+    DWORD decl_normal_d3dcolor[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),  /* D3DVSDE_POSITION, Register v0 */
+        D3DVSD_REG(D3DVSDE_NORMAL,   D3DVSDT_D3DCOLOR),/* D3DVSDE_NORMAL,   Register v1 */
+        D3DVSD_END()
+    };
     const DWORD vertex_decl_size = sizeof(dwVertexDecl);
     const DWORD simple_vs_size = sizeof(simple_vs);
     const DWORD simple_ps_size = sizeof(simple_ps);
@@ -961,6 +982,23 @@ static void test_shader(void)
     hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
     ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %#08x\n", hr);
     ok(hTempHandle == 0, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, 0);
+
+    /* Test a broken declaration. 3DMark2001 tries to use normals with 2 components
+     * First try the fixed function shader function, then a custom one
+     */
+    hr = IDirect3DDevice8_CreateVertexShader(pDevice, decl_normal_float2, 0, &hVertexShader, 0);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
+    if(SUCCEEDED(hr)) IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
+    hr = IDirect3DDevice8_CreateVertexShader(pDevice, decl_normal_float4, 0, &hVertexShader, 0);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
+    if(SUCCEEDED(hr)) IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
+    hr = IDirect3DDevice8_CreateVertexShader(pDevice, decl_normal_d3dcolor, 0, &hVertexShader, 0);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
+    if(SUCCEEDED(hr)) IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
+
+    hr = IDirect3DDevice8_CreateVertexShader(pDevice, decl_normal_float2, simple_vs, &hVertexShader, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
+    if(SUCCEEDED(hr)) IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
 
     if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 0))
     {

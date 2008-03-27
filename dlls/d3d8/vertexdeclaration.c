@@ -118,7 +118,7 @@ static const char *debug_d3dvsde_register(D3DVSDE_REGISTER d3dvsde_register)
     }
 }
 
-static size_t parse_token(const DWORD* pToken)
+size_t parse_token(const DWORD* pToken)
 {
     const DWORD token = *pToken;
     size_t tokenlen = 1;

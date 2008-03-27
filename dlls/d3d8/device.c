@@ -1522,6 +1522,23 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
     HRESULT hrc = D3D_OK;
     IDirect3DVertexShader8Impl *object;
     IWineD3DVertexDeclaration *wined3d_vertex_declaration;
+    const DWORD *token = pDeclaration;
+
+    /* Test if the vertex declaration is valid */
+    while (D3DVSD_END() != *token) {
+        D3DVSD_TOKENTYPE token_type = ((*token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
+
+        if (token_type == D3DVSD_TOKEN_STREAMDATA && !(token_type & 0x10000000)) {
+            DWORD type = ((*token & D3DVSD_DATATYPEMASK) >> D3DVSD_DATATYPESHIFT);
+            DWORD reg  = ((*token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
+
+            if(reg == D3DVSDE_NORMAL && type != D3DVSDT_FLOAT3 && !pFunction) {
+                WARN("Attempt to use a non-FLOAT3 normal with the fixed function function\n");
+                return D3DERR_INVALIDCALL;
+            }
+        }
+        token += parse_token(token);
+    }
 
     /* Setup a stub object for now */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
