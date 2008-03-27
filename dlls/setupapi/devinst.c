@@ -2971,7 +2971,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
     }
     info = (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
     if (info->symbolicLink)
-        bytesNeeded += lstrlenW(info->symbolicLink);
+        bytesNeeded += sizeof(WCHAR)*lstrlenW(info->symbolicLink);
     if (DeviceInterfaceDetailDataSize >= bytesNeeded)
     {
         if (info->symbolicLink)

@@ -627,6 +627,7 @@ static void testGetDeviceInterfaceDetail(void)
             LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
             SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail =
                 (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buf;
+            DWORD expectedsize = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath) + sizeof(WCHAR)*(1 + strlen(path));
 
             detail->cbSize = 0;
             SetLastError(0xdeadbeef);
@@ -656,6 +657,10 @@ static void testGetDeviceInterfaceDetail(void)
                     GetLastError());
             ok(!lstrcmpiA(path, detail->DevicePath), "Unexpected path %s\n",
                     detail->DevicePath);
+            /* Check SetupDiGetDeviceInterfaceDetailW */
+            ret = SetupDiGetDeviceInterfaceDetailW(set, &interfaceData, NULL, 0, &size, NULL);
+            ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got error code: %d\n", GetLastError());
+            ok(expectedsize == size, "SetupDiGetDeviceInterfaceDetailW returned wrong reqsize: expected %d, got %d\n", expectedsize, size);
             HeapFree(GetProcessHeap(), 0, buf);
         }
         pSetupDiDestroyDeviceInfoList(set);
