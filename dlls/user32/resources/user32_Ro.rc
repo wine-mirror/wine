@@ -33,7 +33,7 @@ SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
     MENUITEM SEPARATOR
     MENUITEM "&Comută la ...\tCtrl-Esc", 61744
     MENUITEM SEPARATOR
-    MENUITEM "&Despre WINE ...", 61761
+    MENUITEM "&Despre Wine ...", 61761
     MENUITEM SEPARATOR
     MENUITEM "&Pune 'Debug mark' în jurnalul de depanare", 61762
 }
