@@ -603,10 +603,7 @@ static HRESULT WINAPI domtext_appendData(
         if(xmlTextConcat(pDOMNode->node, pContent, SysStringLen(p) ) == 0)
             hr = S_OK;
         else
-        {
             hr = E_FAIL;
-            xmlFree(pContent);
-        }
     }
     else
         hr = E_FAIL;
