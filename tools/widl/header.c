@@ -34,9 +34,12 @@
 #include "parser.h"
 #include "header.h"
 
+typedef struct _user_type_t generic_handle_t;
+
 static int indentation = 0;
 user_type_list_t user_type_list = LIST_INIT(user_type_list);
 static context_handle_list_t context_handle_list = LIST_INIT(context_handle_list);
+static struct list generic_handle_list = LIST_INIT(generic_handle_list);
 
 static void indent(FILE *h, int delta)
 {
@@ -343,7 +346,18 @@ static int context_handle_registered(const char *name)
   return 0;
 }
 
-void check_for_user_types_and_context_handles(const var_list_t *list)
+static int generic_handle_registered(const char *name)
+{
+  generic_handle_t *gh;
+  LIST_FOR_EACH_ENTRY(gh, &generic_handle_list, generic_handle_t, entry)
+    if (!strcmp(name, gh->name))
+      return 1;
+  return 0;
+}
+
+/* check for types which require additional prototypes to be generated in the
+ * header */
+void check_for_additional_prototype_types(const var_list_t *list)
 {
   const var_t *v;
 
@@ -365,6 +379,16 @@ void check_for_user_types_and_context_handles(const var_list_t *list)
         /* don't carry on parsing fields within this type */
         break;
       }
+      if (type->type != RPC_FC_BIND_PRIMITIVE && is_attr(type->attrs, ATTR_HANDLE)) {
+        if (!generic_handle_registered(name))
+        {
+          generic_handle_t *gh = xmalloc(sizeof(*gh));
+          gh->name = xstrdup(name);
+          list_add_tail(&generic_handle_list, &gh->entry);
+        }
+        /* don't carry on parsing fields within this type */
+        break;
+      }
       if (is_attr(type->attrs, ATTR_WIREMARSHAL)) {
         if (!user_type_registered(name))
         {
@@ -378,7 +402,7 @@ void check_for_user_types_and_context_handles(const var_list_t *list)
       }
       else
       {
-        check_for_user_types_and_context_handles(type->fields);
+        check_for_additional_prototype_types(type->fields);
       }
     }
   }
@@ -404,6 +428,17 @@ void write_context_handle_rundowns(void)
   {
     const char *name = ch->name;
     fprintf(header, "void __RPC_USER %s_rundown(%s);\n", name, name);
+  }
+}
+
+void write_generic_handle_routines(void)
+{
+  generic_handle_t *gh;
+  LIST_FOR_EACH_ENTRY(gh, &generic_handle_list, generic_handle_t, entry)
+  {
+    const char *name = gh->name;
+    fprintf(header, "handle_t __RPC_USER %s_bind(%s);\n", name, name);
+    fprintf(header, "void __RPC_USER %s_unbind(%s, handle_t);\n", name, name);
   }
 }
 
@@ -532,6 +567,29 @@ const var_t* get_explicit_handle_var(const func_t* func)
 
     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
         if (var->type->type == RPC_FC_BIND_PRIMITIVE)
+            return var;
+
+    return NULL;
+}
+
+const type_t* get_explicit_generic_handle_type(const var_t* var)
+{
+    const type_t *t;
+    for (t = var->type; is_ptr(t); t = t->ref)
+        if (t->type != RPC_FC_BIND_PRIMITIVE && is_attr(t->attrs, ATTR_HANDLE))
+            return t;
+    return NULL;
+}
+
+const var_t* get_explicit_generic_handle_var(const func_t* func)
+{
+    const var_t* var;
+
+    if (!func->args)
+        return NULL;
+
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+        if (get_explicit_generic_handle_type(var))
             return var;
 
     return NULL;

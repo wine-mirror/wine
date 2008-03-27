@@ -312,7 +312,7 @@ struct _user_type_t {
 extern unsigned char pointer_default;
 
 extern user_type_list_t user_type_list;
-void check_for_user_types_and_context_handles(const var_list_t *list);
+void check_for_additional_prototype_types(const var_list_t *list);
 
 void init_types(void);
 type_t *alloc_type(void);

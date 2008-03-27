@@ -99,16 +99,21 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
     {
         const var_t *def = func->def;
         const var_t* explicit_handle_var;
+        const var_t* explicit_generic_handle_var = NULL;
         const var_t* context_handle_var = NULL;
         int has_full_pointer = is_full_pointer_function(func);
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
         if (!explicit_handle_var)
-            context_handle_var = get_context_handle_var(func);
+        {
+            explicit_generic_handle_var = get_explicit_generic_handle_var(func);
+            if (!explicit_generic_handle_var)
+                context_handle_var = get_context_handle_var(func);
+        }
         if (explicit_handle)
         {
-            if (!explicit_handle_var || !context_handle_var)
+            if (!explicit_handle_var || !explicit_generic_handle_var || !context_handle_var)
             {
                 error("%s() does not define an explicit binding handle!\n", def->name);
                 return;
@@ -148,7 +153,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             fprintf(client, " _RetVal;\n");
         }
 
-        if (implicit_handle || explicit_handle_var || context_handle_var)
+        if (implicit_handle || explicit_handle_var || explicit_generic_handle_var || context_handle_var)
             print_client("RPC_BINDING_HANDLE _Handle = 0;\n");
 
         print_client("RPC_MESSAGE _RpcMessage;\n");
@@ -189,12 +194,20 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             print_client("_Handle = %s;\n", explicit_handle_var->name);
             fprintf(client, "\n");
         }
+        else if (explicit_generic_handle_var)
+        {
+            print_client("_Handle = %s_bind(%s);\n",
+                get_explicit_generic_handle_type(explicit_generic_handle_var)->name,
+                explicit_generic_handle_var->name);
+            fprintf(client, "\n");
+        }
         else if (context_handle_var)
         {
             print_client("if (%s%s != 0)\n", is_ptr(context_handle_var->type) ? "*" : "", context_handle_var->name);
             indent++;
             print_client("_Handle = NDRCContextBinding(%s%s);\n", is_ptr(context_handle_var->type) ? "*" : "", context_handle_var->name);
             indent--;
+            fprintf(client, "\n");
         }
 
         write_remoting_arguments(client, indent, func, PASS_IN, PHASE_BUFFERSIZE);
@@ -203,7 +216,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent++;
         print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
         print_client("_StubMsg.BufferLength,\n");
-        if (implicit_handle || explicit_handle_var || context_handle_var)
+        if (implicit_handle || explicit_handle_var || explicit_generic_handle_var || context_handle_var)
             print_client("_Handle);\n");
         else
             print_client("%s__MIDL_AutoBindHandle);\n", iface->name);
@@ -277,6 +290,17 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             write_full_pointer_free(client, indent, func);
 
         print_client("NdrFreeBuffer((PMIDL_STUB_MESSAGE)&_StubMsg);\n");
+
+        if (!implicit_handle && explicit_generic_handle_var)
+        {
+            fprintf(client, "\n");
+            print_client("if (_Handle)\n");
+            indent++;
+            print_client("%s_unbind(%s, _Handle);\n",
+                get_explicit_generic_handle_type(explicit_generic_handle_var)->name,
+                explicit_generic_handle_var->name);
+            indent--;
+        }
 
         indent--;
         print_client("}\n");

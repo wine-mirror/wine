@@ -62,7 +62,10 @@ extern void write_externdef(const var_t *v);
 extern void write_library(const char *name, const attr_list_t *attr);
 extern void write_user_types(void);
 extern void write_context_handle_rundowns(void);
+extern void write_generic_handle_routines(void);
 extern const var_t* get_explicit_handle_var(const func_t* func);
+extern const type_t* get_explicit_generic_handle_type(const var_t* var);
+extern const var_t* get_explicit_generic_handle_var(const func_t* func);
 extern int has_out_arg_or_return(const func_t *func);
 extern void write_guid(FILE *f, const char *guid_prefix, const char *name,
                        const UUID *uuid);
