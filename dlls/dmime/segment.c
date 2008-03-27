@@ -175,7 +175,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrack (LP
     if (FALSE == IsEqualGUID(&GUID_NULL, rguidType)) {
       /**
        * it rguidType is not null we must check if CLSID are equals
-       * and the unqiue way to get it its using IPersistStream Interface
+       * and the unique way to get it is using IPersistStream Interface
        */
       hr = IDirectMusicTrack_QueryInterface(pIt->pTrack, &IID_IPersistStream, (void**) &pCLSIDStream);
       if (FAILED(hr)) {

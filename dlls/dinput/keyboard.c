@@ -288,7 +288,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 }
 
 /******************************************************************************
-  *     GetCapabilities : get the device capablitites
+  *     GetCapabilities : get the device capabilities
   */
 static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE8A iface,

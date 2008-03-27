@@ -295,7 +295,7 @@ ULONG WINAPI D3D8CB_DestroyRenderTarget(IWineD3DSurface *pSurface) {
     return IDirect3DSurface8_Release((IDirect3DSurface8*) surfaceParent);
 }
 
-/* Callback for creating the implicite swapchain when the device is created */
+/* Callback for creating the implicit swapchain when the device is created */
 static HRESULT WINAPI D3D8CB_CreateAdditionalSwapChain(IUnknown *device,
                                                 WINED3DPRESENT_PARAMETERS* pPresentationParameters,
                                                 IWineD3DSwapChain ** ppSwapChain){

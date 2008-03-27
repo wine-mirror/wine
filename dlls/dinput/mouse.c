@@ -590,7 +590,7 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 }
 
 /******************************************************************************
-  *     GetCapabilities : get the device capablitites
+  *     GetCapabilities : get the device capabilities
   */
 static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE8A iface,

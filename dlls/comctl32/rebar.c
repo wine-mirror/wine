@@ -1153,7 +1153,7 @@ static int get_row_end_for_band(const REBAR_INFO *infoPtr, INT iBand)
     return iBand;
 }
 
-/* Compute the rcBand.{left,right} from the cxEffective bands widths computed earier.
+/* Compute the rcBand.{left,right} from the cxEffective bands widths computed earlier.
  * iBeginBand must be visible */
 static void REBAR_SetRowRectsX(const REBAR_INFO *infoPtr, INT iBeginBand, INT iEndBand)
 {

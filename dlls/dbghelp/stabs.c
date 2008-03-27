@@ -1147,7 +1147,7 @@ static void pending_flush(struct pending_block* pending, struct module* module,
  * Ends function creation: mainly:
  * - cleans up line number information
  * - tries to set up a debug-start tag (FIXME: heuristic to be enhanced)
- * - for stabs which have abolute address in them, initializes the size of the 
+ * - for stabs which have absolute address in them, initializes the size of the
  *   function (assuming that current function ends where next function starts)
  */
 static void stabs_finalize_function(struct module* module, struct symt_function* func,

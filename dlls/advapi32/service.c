@@ -2056,7 +2056,7 @@ QueryServiceConfigW( SC_HANDLE hService,
  * QueryServiceConfig2A [ADVAPI32.@]
  *
  * Note
- *   observed unter win2k:
+ *   observed under win2k:
  *   The functions QueryServiceConfig2A and QueryServiceConfig2W return the same
  *   required buffer size (in byte) at least for dwLevel SERVICE_CONFIG_DESCRIPTION
  */
