@@ -147,6 +147,23 @@ static void test_DrawTextCalcRect(void)
                 "rectangle should NOT be empty.\n");
     }
 
+    /* More test cases from bug 12226 */
+    SetRect(&rect, 0, 0, 0, 0);
+    textheight = DrawTextA(hdc, emptystring, -1, &rect, DT_CALCRECT | DT_LEFT | DT_SINGLELINE);
+    todo_wine ok(textheight, "DrawTextA error %u\n", GetLastError());
+    ok(0 == rect.left, "expected 0, got %d\n", rect.left);
+    ok(0 == rect.right, "expected 0, got %d\n", rect.right);
+    ok(0 == rect.top, "expected 0, got %d\n", rect.top);
+    todo_wine ok(rect.bottom, "rect.bottom should not be 0\n");
+
+    SetRect(&rect, 0, 0, 0, 0);
+    textheight = DrawTextW(hdc, emptystringW, -1, &rect, DT_CALCRECT | DT_LEFT | DT_SINGLELINE);
+    todo_wine ok(textheight, "DrawTextW error %u\n", GetLastError());
+    ok(0 == rect.left, "expected 0, got %d\n", rect.left);
+    ok(0 == rect.right, "expected 0, got %d\n", rect.right);
+    ok(0 == rect.top, "expected 0, got %d\n", rect.top);
+    todo_wine ok(rect.bottom, "rect.bottom should not be 0\n");
+
     SelectObject(hdc, hOldFont);
     ret = DeleteObject(hFont);
     ok( ret, "DeleteObject error %u\n", GetLastError());
