@@ -132,6 +132,7 @@ static void print_version (void)
     OSVERSIONINFOEX ver;
     BOOL ext;
     int is_win2k3_r2;
+    const char *(*wine_get_build_id)(void);
 
     ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     if (!(ext = GetVersionEx ((OSVERSIONINFO *) &ver)))
@@ -147,6 +148,9 @@ static void print_version (void)
              "    dwBuildNumber=%ld\n    PlatformId=%ld\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
              ver.dwPlatformId, ver.szCSDVersion);
+
+    wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
+    if (wine_get_build_id) xprintf( "    WineBuild=%s\n", wine_get_build_id() );
 
     is_win2k3_r2 = GetSystemMetrics(SM_SERVERR2);
     if(is_win2k3_r2)
