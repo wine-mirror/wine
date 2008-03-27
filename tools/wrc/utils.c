@@ -405,6 +405,7 @@ static const struct lang2cp lang2cps[] =
     { LANG_PORTUGUESE,     SUBLANG_NEUTRAL,              1252 },
     { LANG_PUNJABI,        SUBLANG_NEUTRAL,              0    },
     { LANG_ROMANIAN,       SUBLANG_NEUTRAL,              1250 },
+    { LANG_ROMANSH,        SUBLANG_NEUTRAL,              1252 },
     { LANG_RUSSIAN,        SUBLANG_NEUTRAL,              1251 },
     { LANG_SANSKRIT,       SUBLANG_NEUTRAL,              0    },
     { LANG_SERBIAN,        SUBLANG_NEUTRAL,              1250 },
