@@ -59,7 +59,7 @@ BEGIN
         MENUITEM "検索(&F)\tCtrl+F",               ID_EDIT_FIND, GRAYED
         MENUITEM "次の検索候補(&x)\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
-    POPUP "表示(&V)"
+    POPUP "表\示(&V)"
     BEGIN
         MENUITEM "ステータスバー(&B)",                 ID_VIEW_STATUSBAR
         MENUITEM SEPARATOR
