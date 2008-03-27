@@ -37,23 +37,24 @@ struct edit_notify {
 
 static struct edit_notify notifications;
 
-static INT_PTR CALLBACK bug_11841_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
         case WM_INITDIALOG:
         {
-            SetFocus(GetDlgItem(hdlg, 1000));
+            HWND hedit = GetDlgItem(hdlg, 1000);
+            SetFocus(hedit);
             switch (lparam)
             {
                 case 0:
-                    PostMessage(GetDlgItem(hdlg, 1000), WM_KEYDOWN, 0x1b, 0x10001);
+                    PostMessage(hedit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
                     break;
                 case 1:
-                    PostMessage(GetDlgItem(hdlg, 1000), WM_KEYDOWN, 0xd, 0x1c0001);
+                    PostMessage(hedit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
                     break;
                 case 2:
-                    PostMessage(GetDlgItem(hdlg, 1000), WM_KEYDOWN, 0x9, 0xf0001);
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
                     PostMessage(hdlg, WM_USER, 0xdeadbeef, 0xdeadbeef);
                     break;
                 default:
@@ -1198,14 +1199,16 @@ static void test_undo(void)
     DestroyWindow (hwEdit);
 }
 
-static void test_bug_11841(void)
+static void test_edit_dialog(void)
 {
     int r;
-    r = DialogBoxParam(hinst, "BUG_11841_DIALOG", NULL, (DLGPROC)bug_11841_proc, 0);
+
+    /* from bug 11841 */
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 0);
     ok(333 == r, "Expected %d, got %d\n", 333, r);
-    r = DialogBoxParam(hinst, "BUG_11841_DIALOG", NULL, (DLGPROC)bug_11841_proc, 1);
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 1);
     ok(111 == r, "Expected %d, got %d\n", 111, r);
-    r = DialogBoxParam(hinst, "BUG_11841_DIALOG", NULL, (DLGPROC)bug_11841_proc, 2);
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 2);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 }
 
@@ -1277,7 +1280,7 @@ START_TEST(edit)
     test_text_position();
     test_espassword();
     test_undo();
-    test_bug_11841();
+    test_edit_dialog();
 
     UnregisterWindowClasses();
 }
