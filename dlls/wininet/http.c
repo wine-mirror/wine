@@ -1733,9 +1733,7 @@ static DWORD HTTPREQ_ReadFileExA(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSA *bu
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    /* FIXME: IRF_ASYNC may not be the right thing to test here;
-     * hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC is probably better */
-    if (flags & IRF_ASYNC) {
+    if (hdr->dwFlags & INTERNET_FLAG_ASYNC) {
         DWORD available = 0;
 
         NETCON_query_data_available(&req->netConnection, &available);

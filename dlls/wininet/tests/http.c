@@ -659,6 +659,8 @@ static void InternetReadFileExA_test(int flags)
             if (GetLastError() == ERROR_IO_PENDING)
             {
                 trace("InternetReadFileEx -> PENDING\n");
+                ok(flags & INTERNET_FLAG_ASYNC,
+                   "Should not get ERROR_IO_PENDING without INTERNET_FLAG_ASYNC\n");
                 CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
                 WaitForSingleObject(hCompleteEvent, INFINITE);
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
