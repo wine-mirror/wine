@@ -2442,7 +2442,7 @@ static LRESULT LISTBOX_HandleKeyDown( LB_DESCR *descr, DWORD key )
             LISTBOX_SetSelection( descr, caret, TRUE, FALSE);
         if (descr->style & LBS_NOTIFY)
         {
-            if( descr->lphc )
+            if (descr->lphc && IsWindowVisible( descr->self ))
             {
                 /* make sure that combo parent doesn't hide us */
                 descr->lphc->wState |= CBF_NOROLLUP;

@@ -884,16 +884,9 @@ static HBRUSH COMBO_PrepareColors(
   }
   else
   {
-    if (lphc->wState & CBF_EDIT)
-    {
+      /* FIXME: In which cases WM_CTLCOLORLISTBOX should be sent? */
       hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLOREDIT,
 				       (WPARAM)hDC, (LPARAM)lphc->self );
-    }
-    else
-    {
-      hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLORLISTBOX,
-				       (WPARAM)hDC, (LPARAM)lphc->self );
-    }
   }
 
   /*
@@ -1350,6 +1343,14 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 
                 TRACE("[%p]: lbox selection change [%x]\n", lphc->self, lphc->wState );
 
+                /* do not roll up if selection is being tracked
+                 * by arrowkeys in the dropdown listbox */
+                if (!(lphc->wState & CBF_NOROLLUP))
+                {
+                    CBRollUp( lphc, (HIWORD(wParam) == LBN_SELCHANGE), TRUE );
+                }
+                else lphc->wState &= ~CBF_NOROLLUP;
+
 		CB_NOTIFY( lphc, CBN_SELCHANGE );
 
 		if( HIWORD(wParam) == LBN_SELCHANGE)
@@ -1363,17 +1364,11 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		       SendMessageW(lphc->hWndEdit, EM_SETSEL, 0, (LPARAM)(-1));
 		   }
 		   else
+                   {
 		       InvalidateRect(lphc->self, &lphc->textRect, TRUE);
+                       UpdateWindow(lphc->self);
+                   }
 		}
-
-		/* do not roll up if selection is being tracked
-		 * by arrowkeys in the dropdown listbox */
-                if( ((lphc->wState & CBF_DROPPED) && !(lphc->wState & CBF_NOROLLUP)) )
-                {
-                   CBRollUp( lphc, (HIWORD(wParam) == LBN_SELCHANGE), TRUE );
-                }
-		else lphc->wState &= ~CBF_NOROLLUP;
-
                 break;
 
 	   case LBN_SETFOCUS:

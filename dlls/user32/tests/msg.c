@@ -43,6 +43,10 @@
 
 #define SW_NORMALNA	        0xCC    /* undoc. flag in MinMaximize */
 
+#ifndef WM_KEYF1
+#define WM_KEYF1 0x004d
+#endif
+
 #ifndef WM_SYSTIMER
 #define WM_SYSTIMER	    0x0118
 #endif
@@ -2740,7 +2744,6 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
         message != WM_NCPAINT &&
         message != WM_SYNCPAINT &&
         message != WM_ERASEBKGND &&
-        message != WM_NCPAINT &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_MDIGETACTIVE &&
@@ -2793,7 +2796,6 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_NCPAINT &&
         message != WM_SYNCPAINT &&
         message != WM_ERASEBKGND &&
-        message != WM_NCPAINT &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_GETICON &&
@@ -2863,7 +2865,6 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_NCPAINT &&
         message != WM_SYNCPAINT &&
         message != WM_ERASEBKGND &&
-        message != WM_NCPAINT &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_GETICON &&
@@ -4855,7 +4856,6 @@ static LRESULT CALLBACK static_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
     msg.lParam = lParam;
     add_message(&msg);
 
-
     defwndproc_counter++;
     ret = CallWindowProcA(old_static_proc, hwnd, message, wParam, lParam);
     defwndproc_counter--;
@@ -4916,6 +4916,111 @@ static void test_static_messages(void)
 
 	DestroyWindow(hwnd);
     }
+}
+
+/****************** ComboBox message test *************************/
+#define ID_COMBOBOX 0x000f
+
+static const struct message WmKeyDownComboSeq[] =
+{
+    { WM_KEYDOWN, sent|wparam|lparam, VK_DOWN, 0 },
+    { WM_COMMAND, sent|wparam, MAKEWPARAM(1000, LBN_SELCHANGE) },
+    { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_COMBOBOX, CBN_SELENDOK) },
+    { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_COMBOBOX, CBN_SELCHANGE) },
+    { WM_CTLCOLOREDIT, sent|parent },
+    { WM_KEYUP, sent|wparam|lparam, VK_DOWN, 0 },
+    { 0 }
+};
+
+static WNDPROC old_combobox_proc;
+
+static LRESULT CALLBACK combobox_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_NCPAINT &&
+        message != WM_SYNCPAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCHITTEST &&
+        message != WM_GETTEXT &&
+        message != WM_GETICON &&
+        message != WM_DEVICECHANGE)
+    {
+        trace("combo: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        add_message(&msg);
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(old_combobox_proc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static void subclass_combobox(void)
+{
+    WNDCLASSA cls;
+
+    if (!GetClassInfoA(0, "ComboBox", &cls)) assert(0);
+
+    old_combobox_proc = cls.lpfnWndProc;
+
+    cls.hInstance = GetModuleHandle(0);
+    cls.lpfnWndProc = combobox_hook_proc;
+    cls.lpszClassName = "my_combobox_class";
+    UnregisterClass(cls.lpszClassName, cls.hInstance);
+    if (!RegisterClassA(&cls)) assert(0);
+}
+
+static void test_combobox_messages(void)
+{
+    HWND parent, combo;
+    LRESULT ret;
+
+    subclass_combobox();
+
+    parent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                             100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(parent != 0, "Failed to create parent window\n");
+    flush_sequence();
+
+    combo = CreateWindowEx(0, "my_combobox_class", "test", WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
+                           0, 0, 100, 150, parent, (HMENU)ID_COMBOBOX, 0, NULL);
+    ok(combo != 0, "Failed to create combobox window\n");
+
+    UpdateWindow(combo);
+
+    ret = SendMessage(combo, WM_GETDLGCODE, 0, 0);
+    ok(ret == (DLGC_WANTCHARS | DLGC_WANTARROWS), "wrong dlg_code %08lx\n", ret);
+
+    ret = SendMessage(combo, CB_ADDSTRING, 0, (LPARAM)"item 0");
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ret = SendMessage(combo, CB_ADDSTRING, 0, (LPARAM)"item 1");
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+    ret = SendMessage(combo, CB_ADDSTRING, 0, (LPARAM)"item 2");
+    ok(ret == 2, "expected 2, got %ld\n", ret);
+
+    SendMessage(combo, CB_SETCURSEL, 0, 0);
+    SetFocus(combo);
+    flush_sequence();
+
+    log_all_parent_messages++;
+    SendMessage(combo, WM_KEYDOWN, VK_DOWN, 0);
+    SendMessage(combo, WM_KEYUP, VK_DOWN, 0);
+    log_all_parent_messages--;
+    ok_sequence(WmKeyDownComboSeq, "WM_KEYDOWN/VK_DOWN on a ComboBox", FALSE);
+
+    DestroyWindow(combo);
+    DestroyWindow(parent);
 }
 
 /************* painting message test ********************/
@@ -10038,6 +10143,8 @@ static LRESULT (WINAPI *listbox_orig_proc)(HWND, UINT, WPARAM, LPARAM);
 
 static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
+    static long defwndproc_counter = 0;
+    LRESULT ret;
     struct message msg;
 
     /* do not log painting messages */
@@ -10059,7 +10166,11 @@ static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPAR
         add_message(&msg);
     }
 
-    return CallWindowProcA(listbox_orig_proc, hwnd, message, wp, lp);
+    defwndproc_counter++;
+    ret = CallWindowProcA(listbox_orig_proc, hwnd, message, wp, lp);
+    defwndproc_counter--;
+
+    return ret;
 }
 
 static void check_lb_state_dbg(HWND listbox, int count, int cur_sel,
@@ -10078,7 +10189,7 @@ static void check_lb_state_dbg(HWND listbox, int count, int cur_sel,
     ok_(__FILE__, line)(ret == top_index, "expected top index %d, got %ld\n", top_index, ret);
 }
 
-static void test_listbox(void)
+static void test_listbox_messages(void)
 {
     HWND parent, listbox;
     LRESULT ret;
@@ -10135,6 +10246,7 @@ static void test_listbox(void)
 
     log_all_parent_messages--;
 
+    DestroyWindow(listbox);
     DestroyWindow(parent);
 }
 
@@ -10192,6 +10304,8 @@ START_TEST(msg)
     test_mdi_messages();
     test_button_messages();
     test_static_messages();
+    test_listbox_messages();
+    test_combobox_messages();
     test_paint_messages();
     test_interthread_messages();
     test_message_conversion();
@@ -10216,7 +10330,6 @@ START_TEST(msg)
     test_nullCallback();
     test_SetForegroundWindow();
     test_dbcs_wm_char();
-    test_listbox();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
