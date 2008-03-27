@@ -304,8 +304,11 @@ void release_script_hosts(HTMLDocument *doc)
 {
     ScriptHost *iter;
 
-    LIST_FOR_EACH_ENTRY(iter, &doc->script_hosts, ScriptHost, entry) {
+    while(!list_empty(&doc->script_hosts)) {
+        iter = LIST_ENTRY(list_head(&doc->script_hosts), ScriptHost, entry);
+
+        list_remove(&iter->entry);
         iter->doc = NULL;
-        IActiveScriptSite_Release(ACTSCPSITE(iter));
+        IActiveScript_Release(ACTSCPSITE(iter));
     }
 }
