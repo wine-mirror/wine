@@ -2181,7 +2181,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
         return type->typestring_offset;
     }
 
-    if ((last_ptr(type) || last_array(type)) && is_ptrchain_attr(var, ATTR_STRING))
+    if (is_string_type(var->attrs, type))
         return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset, TRUE);
 
     if (is_array(type))

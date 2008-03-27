@@ -66,6 +66,19 @@ int is_ptrchain_attr(const var_t *var, enum attr_type t)
     }
 }
 
+int is_aliaschain_attr(const type_t *type, enum attr_type attr)
+{
+    const type_t *t = type;
+    for (;;)
+    {
+        if (is_attr(t->attrs, attr))
+            return 1;
+        else if (t->kind == TKIND_ALIAS)
+            t = t->orig;
+        else return 0;
+    }
+}
+
 int is_attr(const attr_list_t *list, enum attr_type t)
 {
     const attr_t *attr;
