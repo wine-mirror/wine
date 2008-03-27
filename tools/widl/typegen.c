@@ -58,6 +58,9 @@ static size_t write_struct_tfs(FILE *file, type_t *type, const char *name, unsig
 static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
                                 const char *name, int write_ptr, unsigned int *tfsoff);
 static const var_t *find_array_or_string_in_struct(const type_t *type);
+static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
+                               type_t *type,
+                               const char *name, unsigned int *typestring_offset);
 
 const char *string_of_type(unsigned char type)
 {
@@ -981,27 +984,13 @@ static unsigned int write_nonsimple_pointer(FILE *file, const type_t *type, size
     return 4;
 }
 
-static unsigned char conf_string_type_of_char_type(unsigned char t)
-{
-    switch (t)
-    {
-    case RPC_FC_BYTE:
-    case RPC_FC_CHAR:
-        return RPC_FC_C_CSTRING;
-    case RPC_FC_WCHAR:
-        return RPC_FC_C_WSTRING;
-    }
-
-    error("string_type_of_char_type: unrecognized type %d\n", t);
-    return 0;
-}
-
 static unsigned int write_simple_pointer(FILE *file, const type_t *type)
 {
-    unsigned char fc
-        = is_string_type(type->attrs, type)
-        ? conf_string_type_of_char_type(type->ref->type)
-        : type->ref->type;
+    unsigned char fc = type->ref->type;
+    /* for historical reasons, write_simple_pointer also handled string types,
+     * but no longer does. catch bad uses of the function with this check */
+    if (is_string_type(type->attrs, type))
+        error("write_simple_pointer: can't handle type %s which is a string type\n", type->name);
     print_file(file, 2, "0x%02x, 0x8,\t/* %s [simple_pointer] */\n",
                type->type, string_of_type(type->type));
     print_file(file, 2, "0x%02x,\t/* %s */\n", fc, string_of_type(fc));
@@ -1202,7 +1191,12 @@ static int write_no_repeat_pointer_descriptions(
         *typestring_offset += 6;
 
         if (is_ptr(type))
-            write_pointer_tfs(file, type, typestring_offset);
+        {
+            if (is_string_type(type->attrs, type))
+                write_string_tfs(file, NULL, type, NULL, typestring_offset);
+            else
+                write_pointer_tfs(file, type, typestring_offset);
+        }
         else
         {
             unsigned absoff = type->typestring_offset;
@@ -1268,7 +1262,9 @@ static int write_pointer_description_offsets(
         }
         *typestring_offset += 4;
 
-        if (processed(type->ref) || is_base_type(type->ref->type))
+        if (is_string_type(attrs, type))
+            write_string_tfs(file, NULL, type, NULL, typestring_offset);
+        else if (processed(type->ref) || is_base_type(type->ref->type))
             write_pointer_tfs(file, type, typestring_offset);
         else
             error("write_pointer_description_offsets: type format string unknown\n");
@@ -1535,18 +1531,18 @@ int is_declptr(const type_t *t)
 
 static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
                                type_t *type,
-                               const char *name, unsigned int *typestring_offset,
-                               int toplevel)
+                               const char *name, unsigned int *typestring_offset)
 {
     size_t start_offset;
     unsigned char rtype;
 
-    if (toplevel && is_declptr(type))
+    if (is_declptr(type))
     {
         unsigned char flag = is_conformant_array(type) ? 0 : RPC_FC_P_SIMPLEPOINTER;
         int pointer_type = is_ptr(type) ? type->type : get_attrv(attrs, ATTR_POINTERTYPE);
         if (!pointer_type)
             pointer_type = RPC_FC_RP;
+        print_start_tfs_comment(file, type, *typestring_offset);
         print_file(file, 2,"0x%x, 0x%x,\t/* %s%s */\n",
                    pointer_type, flag, string_of_type(pointer_type),
                    flag ? " [simple_pointer]" : "");
@@ -1828,7 +1824,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
     if (array && !processed(array->type))
         array_offset
             = is_attr(array->attrs, ATTR_STRING)
-            ? write_string_tfs(file, array->attrs, array->type, array->name, tfsoff, FALSE)
+            ? write_string_tfs(file, array->attrs, array->type, array->name, tfsoff)
             : write_array_tfs(file, array->attrs, array->type, array->name, tfsoff);
 
     corroff = *tfsoff;
@@ -1891,7 +1887,12 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         {
             type_t *ft = f->type;
             if (is_ptr(ft))
-                write_pointer_tfs(file, ft, tfsoff);
+            {
+                if (is_string_type(f->attrs, ft))
+                    write_string_tfs(file, f->attrs, ft, f->name, tfsoff);
+                else
+                    write_pointer_tfs(file, ft, tfsoff);
+            }
             else if (!ft->declarray && is_conformant_array(ft))
             {
                 unsigned int absoff = ft->typestring_offset;
@@ -2182,7 +2183,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
     }
 
     if (is_string_type(var->attrs, type))
-        return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset, TRUE);
+        return write_string_tfs(file, var->attrs, type, var->name, typeformat_offset);
 
     if (is_array(type))
     {
@@ -2286,6 +2287,10 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     {
         write_user_tfs(file, type, tfsoff);
     }
+    else if (is_string_type(attrs, type))
+    {
+        write_string_tfs(file, attrs, type, name, tfsoff);
+    }
     else if (is_ptr(type))
     {
         type_t *ref = type->ref;
@@ -2306,10 +2311,6 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
 
             retmask |= 1;
         }
-    }
-    else if (last_array(type) && is_attr(attrs, ATTR_STRING))
-    {
-        write_string_tfs(file, attrs, type, name, tfsoff, FALSE);
     }
     else if (type->declarray && is_conformant_array(type))
         ;    /* conformant arrays and strings are handled specially */
