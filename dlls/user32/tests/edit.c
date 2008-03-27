@@ -47,6 +47,7 @@ static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPA
             SetFocus(hedit);
             switch (lparam)
             {
+                /* from bug 11841 */
                 case 0:
                     PostMessage(hedit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
                     break;
@@ -55,8 +56,40 @@ static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPA
                     break;
                 case 2:
                     PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
-                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0xdeadbeef);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 1);
                     break;
+
+                /* more test cases for WM_CHAR */
+                case 3:
+                    PostMessage(hedit, WM_CHAR, VK_ESCAPE, 0x10001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+                case 4:
+                    PostMessage(hedit, WM_CHAR, VK_RETURN, 0x1c0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+                case 5:
+                    PostMessage(hedit, WM_CHAR, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+
+                /* more test cases for WM_KEYDOWN + WM_CHAR */
+                case 6:
+                    PostMessage(hedit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+                    PostMessage(hedit, WM_CHAR, VK_ESCAPE, 0x10001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+                case 7:
+                    PostMessage(hedit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+                    PostMessage(hedit, WM_CHAR, VK_RETURN, 0x1c0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 1);
+                    break;
+                case 8:
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hedit, WM_CHAR, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 1);
+                    break;
+
                 default:
                     break;
             }
@@ -83,13 +116,37 @@ static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPA
             break;
 
         case WM_USER:
-            if (wparam != 0xdeadbeef || lparam != 0xdeadbeef)
+        {
+            int len;
+            HWND hok = GetDlgItem(hdlg, IDOK);
+            HWND hedit = GetDlgItem(hdlg, 1000);
+
+            if (wparam != 0xdeadbeef)
                 break;
-            if (GetFocus() == GetDlgItem(hdlg, IDOK))
-                EndDialog(hdlg, 444);
-            else
-                EndDialog(hdlg, 555);
+
+            switch (lparam)
+            {
+                case 0:
+                    len = SendMessage(hedit, WM_GETTEXTLENGTH, 0, 0);
+                    if (len == 0)
+                        EndDialog(hdlg, 444);
+                    else
+                        EndDialog(hdlg, 555);
+                    break;
+
+                case 1:
+                    len = SendMessage(hedit, WM_GETTEXTLENGTH, 0, 0);
+                    if ((GetFocus() == hok) && len == 0)
+                        EndDialog(hdlg, 444);
+                    else
+                        EndDialog(hdlg, 555);
+                    break;
+
+                default:
+                    EndDialog(hdlg, 555);
+            }
             break;
+        }
 
         case WM_CLOSE:
             EndDialog(hdlg, 333);
@@ -1210,6 +1267,46 @@ static void test_edit_dialog(void)
     ok(111 == r, "Expected %d, got %d\n", 111, r);
     r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 2);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* more tests for WM_CHAR */
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 3);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 4);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 5);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* more tests for WM_KEYDOWN + WM_CHAR */
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 6);
+    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 7);
+    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_READONLY_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 8);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* tests with an editable edit control */
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 0);
+    ok(333 == r, "Expected %d, got %d\n", 333, r);
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 1);
+    ok(111 == r, "Expected %d, got %d\n", 111, r);
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 2);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* tests for WM_CHAR */
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 3);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 4);
+    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 5);
+    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* tests for WM_KEYDOWN + WM_CHAR */
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 6);
+    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 7);
+    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 8);
+    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
 }
 
 static BOOL RegisterWindowClasses (void)
