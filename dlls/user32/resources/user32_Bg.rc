@@ -30,7 +30,7 @@ SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
  MENUITEM SEPARATOR
  MENUITEM "Прев&ключи на ...\tCtrl-Esc", 61744
  MENUITEM SEPARATOR
- MENUITEM "&Относно WINE ...", 61761
+ MENUITEM "&Относно Wine ...", 61761
  MENUITEM SEPARATOR
  MENUITEM "От&бележи в дневника за отстраняване на грешки", 61762
 }

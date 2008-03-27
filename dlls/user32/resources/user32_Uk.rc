@@ -30,7 +30,7 @@ SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
  MENUITEM SEPARATOR
  MENUITEM "П&еремикнутися на ...\tCtrl-Esc", 61744
  MENUITEM SEPARATOR
- MENUITEM "Пр&о проект WINE ...", 61761
+ MENUITEM "Пр&о проект Wine ...", 61761
  MENUITEM SEPARATOR
  MENUITEM "Помістити позначку до файлу від&ладження", 61762
 }

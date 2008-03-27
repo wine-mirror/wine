@@ -1596,7 +1596,7 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
             if (hmodule)
             {
                 FARPROC aboutproc = GetProcAddress( hmodule, "ShellAboutA" );
-                if (aboutproc) aboutproc( hwnd, PACKAGE_NAME, PACKAGE_STRING, 0 );
+                if (aboutproc) aboutproc( hwnd, PACKAGE_STRING, NULL, 0 );
                 FreeLibrary( hmodule );
             }
         }
