@@ -134,6 +134,8 @@
 #include "nls/ptb.nls"   /* 0x0416  LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN */
 #include "nls/ptg.nls"   /* 0x0816  LANG_PORTUGUESE, SUBLANG_PORTUGUESE */
 
+#include "nls/rmc.nls"   /* 0x0417  LANG_ROMANSH, SUBLANG_ROMANSH_SWITZERLAND */
+
 #include "nls/rom.nls"   /* 0x0418  LANG_ROMANIAN, SUBLANG_DEFAULT */
 
 #include "nls/rus.nls"   /* 0x0419  LANG_RUSSIAN, SUBLANG_DEFAULT */
