@@ -243,8 +243,18 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]      ||
         stateblock->renderState[WINED3DRS_EDGEANTIALIAS]         ||
         stateblock->renderState[WINED3DRS_ANTIALIASEDLINEENABLE]) {
-        glEnable(GL_BLEND);
-        checkGLcall("glEnable GL_BLEND");
+        const GlPixelFormatDesc *glDesc;
+        getFormatDescEntry(target->resource.format, &GLINFO_LOCATION, &glDesc);
+
+        /* When pixel shaders are used on a format that doesn't offer blending, disable blending else we could face a big performance penalty. */
+        if(!(glDesc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING) && use_ps(stateblock->wineD3DDevice)) {
+            glDisable(GL_BLEND);
+            checkGLcall("glDisable GL_BLEND");
+            return;
+        } else {
+            glEnable(GL_BLEND);
+            checkGLcall("glEnable GL_BLEND");
+        }
     } else {
         glDisable(GL_BLEND);
         checkGLcall("glDisable GL_BLEND");

@@ -724,10 +724,12 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
      * the alpha blend state changes with different render target formats
      */
     if(oldFmt != newFmt) {
+        const GlPixelFormatDesc *glDesc;
         const StaticPixelFormatDesc *old = getFormatDescEntry(oldFmt, NULL, NULL);
-        const StaticPixelFormatDesc *new = getFormatDescEntry(newFmt, NULL, NULL);
+        const StaticPixelFormatDesc *new = getFormatDescEntry(newFmt, &GLINFO_LOCATION, &glDesc);
 
-        if((old->alphaMask && !new->alphaMask) || (!old->alphaMask && new->alphaMask)) {
+        /* Disable blending when the alphaMask has changed and when a format doesn't support blending */
+        if((old->alphaMask && !new->alphaMask) || (!old->alphaMask && new->alphaMask) || !(glDesc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)) {
             Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
         }
     }

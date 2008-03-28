@@ -30,6 +30,9 @@ typedef enum {
     WINED3D_DCS_NO_COPY = 2
 } WINED3D_DEPTHCOPYSTATE;
 
+/* WineD3D pixel format flags */
+#define WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING 0x1
+
 /** DCL usage masks **/
 #define WINED3DSP_DCL_USAGE_SHIFT 0
 #define WINED3DSP_DCL_USAGE_MASK  0x0000000f
