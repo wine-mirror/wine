@@ -41,7 +41,8 @@ static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
 
 typedef struct {
-    const IActiveScriptSiteVtbl  *lpActiveScriptSiteVtbl;
+    const IActiveScriptSiteVtbl               *lpIActiveScriptSiteVtbl;
+    const IActiveScriptSiteInterruptPollVtbl  *lpIActiveScriptSiteInterruptPollVtbl;
 
     LONG ref;
 
@@ -56,7 +57,8 @@ typedef struct {
     struct list entry;
 } ScriptHost;
 
-#define ACTSCPSITE(x)  ((IActiveScriptSite*)               &(x)->lpActiveScriptSiteVtbl)
+#define ACTSCPSITE(x)  ((IActiveScriptSite*)               &(x)->lpIActiveScriptSiteVtbl)
+#define ACTSCPPOLL(x)  ((IActiveScriptSiteInterruptPoll*)  &(x)->lpIActiveScriptSiteInterruptPollVtbl)
 
 static BOOL init_script_engine(ScriptHost *script_host)
 {
@@ -181,7 +183,7 @@ void connect_scripts(HTMLDocument *doc)
     }
 }
 
-#define ACTSCPSITE_THIS(iface) DEFINE_THIS(ScriptHost, ActiveScriptSite, iface)
+#define ACTSCPSITE_THIS(iface) DEFINE_THIS(ScriptHost, IActiveScriptSite, iface)
 
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
 {
@@ -195,6 +197,9 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSite, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSite %p)\n", This, ppv);
         *ppv = ACTSCPSITE(This);
+    }else if(IsEqualGUID(&IID_IActiveScriptSiteInterruptPoll, riid)) {
+        TRACE("(%p)->(IID_IActiveScriptSiteInterruprtPoll %p)\n", This, ppv);
+        *ppv = ACTSCPPOLL(This);
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         return E_NOINTERFACE;
@@ -308,13 +313,51 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_OnLeaveScript
 };
 
+#define ACTSCPPOLL_THIS(iface) DEFINE_THIS(ScriptHost, IActiveScriptSiteInterruptPoll, iface)
+
+static HRESULT WINAPI ActiveScriptSiteInterruptPoll_QueryInterface(IActiveScriptSiteInterruptPoll *iface,
+        REFIID riid, void **ppv)
+{
+    ScriptHost *This = ACTSCPPOLL_THIS(iface);
+    return IActiveScriptSite_QueryInterface(ACTSCPSITE(This), riid, ppv);
+}
+
+static ULONG WINAPI ActiveScriptSiteInterruptPoll_AddRef(IActiveScriptSiteInterruptPoll *iface)
+{
+    ScriptHost *This = ACTSCPPOLL_THIS(iface);
+    return IActiveScriptSite_AddRef(ACTSCPSITE(This));
+}
+
+static ULONG WINAPI ActiveScriptSiteInterruptPoll_Release(IActiveScriptSiteInterruptPoll *iface)
+{
+    ScriptHost *This = ACTSCPPOLL_THIS(iface);
+    return IActiveScriptSite_Release(ACTSCPSITE(This));
+}
+
+static HRESULT WINAPI ActiveScriptSiteInterruptPoll_QueryContinue(IActiveScriptSiteInterruptPoll *iface)
+{
+    ScriptHost *This = ACTSCPPOLL_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+#undef ACTSCPPOLL_THIS
+
+static const IActiveScriptSiteInterruptPollVtbl ActiveScriptSiteInterruptPollVtbl = {
+    ActiveScriptSiteInterruptPoll_QueryInterface,
+    ActiveScriptSiteInterruptPoll_AddRef,
+    ActiveScriptSiteInterruptPoll_Release,
+    ActiveScriptSiteInterruptPoll_QueryContinue
+};
+
 static ScriptHost *create_script_host(HTMLDocument *doc, GUID *guid)
 {
     ScriptHost *ret;
     HRESULT hres;
 
     ret = heap_alloc_zero(sizeof(*ret));
-    ret->lpActiveScriptSiteVtbl = &ActiveScriptSiteVtbl;
+    ret->lpIActiveScriptSiteVtbl               = &ActiveScriptSiteVtbl;
+    ret->lpIActiveScriptSiteInterruptPollVtbl  = &ActiveScriptSiteInterruptPollVtbl;
     ret->ref = 1;
     ret->doc = doc;
 
