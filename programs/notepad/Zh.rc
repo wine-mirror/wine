@@ -54,11 +54,7 @@ POPUP "帮助（&H）" {
   MENUITEM "搜索（&S）...",        CMD_HELP_SEARCH
   MENUITEM "如何使用帮助（&H）",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "资料信息（&O）" {
-   MENUITEM "用户许可协议（&L）...",         CMD_LICENSE
-   MENUITEM "责任无关（&N）...",     CMD_NO_WARRANTY
-   MENUITEM "关于 Wine（&A）...",      CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

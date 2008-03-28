@@ -59,11 +59,7 @@ POPUP "Aid&e" {
   MENUITEM "&Rechercher...",    CMD_HELP_SEARCH
   MENUITEM "&Utiliser l'aide",  CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&o" {
-   MENUITEM "&Licence...",         CMD_LICENSE
-   MENUITEM "&AUCUNE GARANTIE...", CMD_NO_WARRANTY
-   MENUITEM "À &propos de Wine...",        CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -122,31 +118,4 @@ STRING_OUT_OF_MEMORY,                           "Pas assez de mémoire pour compl
 tâche. \nFermez une ou plusieurs applications pour libérer\n\
 de la mémoire."
 
-}
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
-{
-IDS_LICENSE_CAPTION,            "LICENCE"
-IDS_LICENSE,
-"Cette bibliothèque est libre, vous pouvez la redistribuer et/ou \
-la modifier selon les termes de la Licence Publique Générale GNU \
-Limitée publiée par la Free Software Foundation (version 2.1 ou \
-bien toute autre version ultérieure choisie par vous).\n\
-Cette bibliothèque est distribuée car potentiellement utile, \
-mais SANS AUCUNE GARANTIE, ni explicite ni implicite, y compris \
-les garanties de commercialisation ou d'adaptation dans un but \
-spécifique. Reportez-vous à la Licence Publique Générale GNU \
-Limitée pour plus de détails.\n\
-Vous devez avoir reçu une copie de la Licence Publique Générale \
-GNU Limitée en même temps que cette bibliothèque ; si ce n'est pas \
-le cas, écrivez à la Free Software Foundation, Inc., 51 Franklin St, \
-Fifth Floor, Boston, MA 02111-1301, États-Unis."
-
-IDS_WARRANTY_CAPTION, "AUCUNE GARANTIE"
-IDS_WARRANTY,
-"Cette bibliothèque est distribuée car potentiellement utile, \
-mais SANS AUCUNE GARANTIE, ni explicite ni implicite, y compris \
-les garanties de commercialisation ou d'adaptation dans un but \
-spécifique. Reportez-vous à la Licence Publique Générale GNU \
-Limitée pour plus de détails."
 }

@@ -59,11 +59,7 @@ POPUP "&Hilfe" {
   MENUITEM "&Suchen...",        CMD_HELP_SEARCH
   MENUITEM "&Hilfe benutzen",   CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&o" {
-   MENUITEM "&Lizenz...",          CMD_LICENSE
-   MENUITEM "&KEINE GARANTIE...",  CMD_NO_WARRANTY
-   MENUITEM "&Über Wine...",       CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -124,31 +120,4 @@ um diese Funktion \nabzuschließen. Beenden Sie eine oder mehrere \
 \nAnwendungen, um den verfügbaren Arbeitsspeicher zu \nerhöhen."
 
 
-}
-
-STRINGTABLE DISCARDABLE
-{
-IDS_LICENSE_CAPTION,            "LIZENZ"
-IDS_LICENSE,
-"Diese Bibliothek ist freie Software; Sie dürfen sie unter den \
-Bedingungen der GNU Lesser General Public License, wie von der \
-Free Software Foundation veröffentlicht, weiterverteilen und/oder \
-modifizieren; entweder gemäß Version 2.1 der Lizenz oder (nach \
-Ihrer Option) jeder späteren Version.\n\
-Diese Bibliothek wird in der Hoffnung weiterverbreitet, daß sie \
-nützlich sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne \
-die implizierte Garantie der MARKTREIFE oder der VERWENDBARKEIT \
-FÜR EINEN BESTIMMTEN ZWECK. Mehr Details finden Sie in der \
-GNU Lesser General Public License.\n\
-Sie sollten eine Kopie der GNU Lesser General Public License zusammen \
-mit dieser Bibliothek erhalten haben; falls nicht, schreiben Sie an \
-die Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, \
-Boston, MA 02110, USA."
-
-IDS_WARRANTY_CAPTION, "KEINE GARANTIE"
-IDS_WARRANTY,
-"Diese Bibliothek wird in der Hoffnung weiterverbreitet, daß sie nützlich \
-sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne die implizierte Garantie \
-der MARKTREIFE oder der VERWENDBARKEIT FÜR EINEN BESTIMMTEN ZWECK. Mehr Details \
-finden Sie in der GNU Lesser General Public License."
 }

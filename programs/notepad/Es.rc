@@ -61,11 +61,7 @@ POPUP "A&yuda" {
   MENUITEM "&Buscar...",            CMD_HELP_SEARCH
   MENUITEM "A&yuda sobre la ayuda", CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "&Información" {
-   MENUITEM "&Licencia...",            CMD_LICENSE
-   MENUITEM "SIN &GARANTÍA...",        CMD_NO_WARRANTY
-   MENUITEM "&Acerca de Wine...",      CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

@@ -59,11 +59,7 @@ POPUP "ヘルプ(&H)" {
   MENUITEM "検索(&S)...",        CMD_HELP_SEARCH
   MENUITEM "ヘルプの使い方(&H)",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "情報(&o)" {
-   MENUITEM "ライセンス(&L)...",         CMD_LICENSE
-   MENUITEM "未保証(&N)...",     CMD_NO_WARRANTY
-   MENUITEM "Wineについて(&A)...",      CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

@@ -56,11 +56,7 @@ POPUP "&Apua" {
   MENUITEM "&Etsi...",		CMD_HELP_SEARCH
   MENUITEM "Apua &Opastuksesta",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&o" {
-   MENUITEM "&Lisenssi...",	CMD_LICENSE
-   MENUITEM "&EI TAKUUTA...",	CMD_NO_WARRANTY
-   MENUITEM "&Tietoja Wine:ista...",	CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

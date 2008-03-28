@@ -60,11 +60,7 @@ POPUP "Pomo&c" {
   MENUITEM "&Szukaj...",        CMD_HELP_SEARCH
   MENUITEM "&Pomoc",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "In&fo" {
-   MENUITEM "&Licencja...",         CMD_LICENSE
-   MENUITEM "&BEZ GWARANCJI...",    CMD_NO_WARRANTY
-   MENUITEM "&O Wine...",           CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -122,29 +118,4 @@ STRING_NOTFOUND,                                        "Nie mo¿na odnaleŸæ '%s'
 STRING_OUT_OF_MEMORY,                   "Za ma³o pamiêci do wykonania tego zadania.\n \
 Zamknij jedn¹ lub wiêcej aplikacji aby zwiêkszyæ iloœæ wolnej pamiêci."
 
-}
-
-
-STRINGTABLE DISCARDABLE
-{
-IDS_LICENSE_CAPTION,            "LICENCJA"
-IDS_LICENSE,
-"This library is free software; you can redistribute it and/or \
-modify it under the terms of the GNU Lesser General Public \
-License as published by the Free Software Foundation; either \
-version 2.1 of the License, or (at your option) any later version.\n\
-This library is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details.\n\
-You should have received a copy of the GNU Lesser General Public \
-License along with this library; if not, write to the Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
-
-IDS_WARRANTY_CAPTION, "BEZ GWARANCJI"
-IDS_WARRANTY,
-"This library is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details."
 }

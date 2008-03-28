@@ -765,23 +765,7 @@ VOID DIALOG_HelpHelp(VOID)
     WinHelp(Globals.hMainWnd, helpfileW, HELP_HELPONHELP, 0);
 }
 
-VOID DIALOG_HelpLicense(VOID)
-{
-    TCHAR cap[20], text[1024];
-    LoadString(Globals.hInstance, IDS_LICENSE, text, 1024);
-    LoadString(Globals.hInstance, IDS_LICENSE_CAPTION, cap, 20);
-    MessageBox(Globals.hMainWnd, text, cap, MB_ICONINFORMATION | MB_OK);
-}
-
-VOID DIALOG_HelpNoWarranty(VOID)
-{
-    TCHAR cap[20], text[1024];
-    LoadString(Globals.hInstance, IDS_WARRANTY, text, 1024);
-    LoadString(Globals.hInstance, IDS_WARRANTY_CAPTION, cap, 20);
-    MessageBox(Globals.hMainWnd, text, cap, MB_ICONEXCLAMATION | MB_OK);
-}
-
-VOID DIALOG_HelpAboutWine(VOID)
+VOID DIALOG_HelpAboutNotepad(VOID)
 {
     static const WCHAR notepadW[] = { 'W','i','n','e',' ','N','o','t','e','p','a','d',0 };
     WCHAR szNotepad[MAX_STRING_LEN];

@@ -57,11 +57,7 @@ POPUP "&Справка" {
   MENUITEM "&Поиск...",        CMD_HELP_SEARCH
   MENUITEM "&Использование справки",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "&Сведения" {
-   MENUITEM "&Лицензия...",         CMD_LICENSE
-   MENUITEM "&БЕЗ ГАРАНТИЙ...",     CMD_NO_WARRANTY
-   MENUITEM "&O Wine...",      CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

@@ -52,9 +52,7 @@
 #define CMD_HELP_CONTENTS       0x130
 #define CMD_HELP_SEARCH         0x131
 #define CMD_HELP_ON_HELP        0x132
-#define CMD_LICENSE             0x135
-#define CMD_NO_WARRANTY         0x136
-#define CMD_ABOUT_WINE          0x137
+#define CMD_HELP_ABOUT_NOTEPAD  0x134
 
 /* Control IDs */
 #define IDC_PAGESETUP_HEADERVALUE 0x141
@@ -82,8 +80,3 @@
 
 #define STRING_NOTFOUND 0x17B
 #define STRING_OUT_OF_MEMORY 0x17C
-
-#define IDS_LICENSE_CAPTION       0x180
-#define IDS_LICENSE               0x181
-#define IDS_WARRANTY_CAPTION      0x182
-#define IDS_WARRANTY              0x183

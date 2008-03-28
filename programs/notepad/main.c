@@ -297,9 +297,7 @@ static int NOTEPAD_MenuCommand(WPARAM wParam)
     case CMD_HELP_CONTENTS:    DIALOG_HelpContents(); break;
     case CMD_HELP_SEARCH:      DIALOG_HelpSearch(); break;
     case CMD_HELP_ON_HELP:     DIALOG_HelpHelp(); break;
-    case CMD_LICENSE:          DIALOG_HelpLicense(); break;
-    case CMD_NO_WARRANTY:      DIALOG_HelpNoWarranty(); break;
-    case CMD_ABOUT_WINE:       DIALOG_HelpAboutWine(); break;
+    case CMD_HELP_ABOUT_NOTEPAD: DIALOG_HelpAboutNotepad(); break;
 
     default:
 	break;

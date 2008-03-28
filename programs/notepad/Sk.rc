@@ -57,11 +57,7 @@ POPUP "&Help" {
   MENUITEM "&Search...",	CMD_HELP_SEARCH
   MENUITEM "&Help on help",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&o" {
-   MENUITEM "&License...",	CMD_LICENSE
-   MENUITEM "&NO WARRANTY...",	CMD_NO_WARRANTY
-   MENUITEM "&About Wine...",	CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

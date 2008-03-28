@@ -57,11 +57,7 @@ POPUP "&Helpo" {
   MENUITEM "Seræu...",        CMD_HELP_SEARCH
   MENUITEM "Pri Helpanto",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Pri..." {
-   MENUITEM "&Licenco",         CMD_LICENSE
-   MENUITEM "&Garantio",     CMD_NO_WARRANTY
-   MENUITEM "Pri Notepad",      CMD_ABOUT_WINE
-  }
+  MENUITEM "Pri Notepad...",  CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

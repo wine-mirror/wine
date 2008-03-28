@@ -60,11 +60,7 @@ POPUP "도움말(&H)" {
   MENUITEM "찾기(&S)...",               CMD_HELP_SEARCH
   MENUITEM "도움말 사용법(&H)",         CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "정보(&O)" {
-   MENUITEM "라이센스(&L)...",          CMD_LICENSE
-   MENUITEM "무보증(&N)...",            CMD_NO_WARRANTY
-   MENUITEM "Wine 정보(&A)...",         CMD_ABOUT_WINE
-  }
+  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -122,28 +118,4 @@ STRING_NOTFOUND,                                "%s 문자열을 찾을 수 없습니다."
 STRING_OUT_OF_MEMORY,                           "이 작업을 완료하는 데 필요한 메모리가 부족합니다.\
 \n사용 가능한 메모리의 양을 확보하기 위해 하나 이상의 응용 프로그램을 닫아 주십시오.\n"
 
-}
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
-{
-IDS_LICENSE_CAPTION,            "라이센스"
-IDS_LICENSE,
-"This library is free software; you can redistribute it and/or \
-modify it under the terms of the GNU Lesser General Public \
-License as published by the Free Software Foundation; either \
-version 2.1 of the License, or (at your option) any later version.\n\
-This library is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details.\n\
-You should have received a copy of the GNU Lesser General Public \
-License along with this library; if not, write to the Free Software \
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
-
-IDS_WARRANTY_CAPTION, "무보증"
-IDS_WARRANTY,
-"This library is distributed in the hope that it will be useful, \
-but WITHOUT ANY WARRANTY; without even the implied warranty of \
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
-Lesser General Public License for more details."
 }
