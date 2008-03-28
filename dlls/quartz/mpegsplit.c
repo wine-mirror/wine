@@ -370,8 +370,12 @@ fail:
         FIXME("Failed with hres: %08x!\n", hr);
         This->skipbytes += This->remaining_bytes;
         This->remaining_bytes = 0;
-        IMediaSample_Release(This->pCurrentSample);
-        This->pCurrentSample = NULL;
+        if (This->pCurrentSample)
+        {
+            IMediaSample_SetActualDataLength(This->pCurrentSample, 0);
+            IMediaSample_Release(This->pCurrentSample);
+            This->pCurrentSample = NULL;
+        }
     }
 
     if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile)
@@ -647,6 +651,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
             while (pos < This->EndOfFile && SUCCEEDED(hr))
             {
                 LONGLONG length = 0;
+                hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, header);
                 while (parse_header(header, &length, &duration))
                 {
                     /* No valid header yet; shift by a byte and check again */
@@ -655,11 +660,8 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
                     if (FAILED(hr))
                        break;
                 }
-                if (SUCCEEDED(hr))
-                {
-                    pos += length;
-                    hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, header);
-                }
+                pos += length;
+                TRACE("Pos: %x%08x/%x%08x\n", (DWORD)(pos >> 32), (DWORD)pos, (DWORD)(This->EndOfFile>>32), (DWORD)This->EndOfFile);
             }
             hr = S_OK;
             TRACE("Duration: %d seconds\n", (DWORD)(duration / 10000000));
