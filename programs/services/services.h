@@ -23,9 +23,18 @@
 
 #include "wine/list.h"
 
+struct scmdatabase
+{
+    HKEY root_key;
+    LONG service_start_lock;
+    struct list services;
+    CRITICAL_SECTION cs;
+};
+
 struct service_entry
 {
     struct list entry;
+    struct scmdatabase *db;
     LONG ref_count;                    /* number of references - if goes to zero and the service is deleted the structure will be freed */
     LPWSTR name;
     SERVICE_STATUS_PROCESS status;
@@ -38,21 +47,33 @@ struct service_entry
     HANDLE status_changed_event;
 };
 
+extern struct scmdatabase *active_database;
+
+/* SCM database functions */
+
+struct service_entry *scmdatabase_find_service(struct scmdatabase *db, LPCWSTR name);
+struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase *db, LPCWSTR name);
+DWORD scmdatabase_add_service(struct scmdatabase *db, struct service_entry *entry);
+DWORD scmdatabase_remove_service(struct scmdatabase *db, struct service_entry *entry);
+
+DWORD scmdatabase_lock_startup(struct scmdatabase *db);
+void scmdatabase_unlock_startup(struct scmdatabase *db);
+
+void scmdatabase_lock_shared(struct scmdatabase *db);
+void scmdatabase_lock_exclusive(struct scmdatabase *db);
+void scmdatabase_unlock(struct scmdatabase *db);
+
+/* Service functions */
+
+DWORD service_create(LPCWSTR name, struct service_entry **entry);
 BOOL validate_service_name(LPCWSTR name);
 BOOL validate_service_config(struct service_entry *entry);
-struct service_entry *find_service(LPCWSTR name);
-struct service_entry *find_service_by_displayname(LPCWSTR name);
-DWORD add_service(struct service_entry *entry);
-DWORD remove_service(struct service_entry *entry);
 DWORD save_service_config(struct service_entry *entry);
 void free_service_entry(struct service_entry *entry);
 void release_service(struct service_entry *service);
-
-DWORD lock_service_database(void);
-void unlock_service_database(void);
-
-void lock_services(void);
-void unlock_services(void);
+void service_lock_shared(struct service_entry *service);
+void service_lock_exclusive(struct service_entry *service);
+void service_unlock(struct service_entry *service);
 
 extern HANDLE g_hStartedEvent;
 

@@ -38,16 +38,6 @@ extern HANDLE __wine_make_process_system(void);
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
-static CRITICAL_SECTION g_handle_table_cs;
-static CRITICAL_SECTION_DEBUG g_handle_table_cs_debug =
-{
-    0, 0, &g_handle_table_cs,
-    { &g_handle_table_cs_debug.ProcessLocksList,
-      &g_handle_table_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": g_handle_table_cs") }
-};
-static CRITICAL_SECTION g_handle_table_cs = { &g_handle_table_cs_debug, -1, 0, 0, 0, 0 };
-
 static const GENERIC_MAPPING g_scm_generic =
 {
     (STANDARD_RIGHTS_READ | SC_MANAGER_ENUMERATE_SERVICE | SC_MANAGER_QUERY_LOCK_STATUS),
@@ -77,12 +67,13 @@ struct sc_handle
     DWORD access;
 };
 
-struct sc_manager       /* service control manager handle */
+struct sc_manager_handle       /* service control manager handle */
 {
     struct sc_handle hdr;
+    struct scmdatabase *db;
 };
 
-struct sc_service       /* service handle */
+struct sc_service_handle       /* service handle */
 {
     struct sc_handle hdr;
     struct service_entry *service_entry;
@@ -90,7 +81,7 @@ struct sc_service       /* service handle */
 
 struct sc_lock
 {
-    char dummy; /* no state currently used */
+    struct scmdatabase *db;
 };
 
 /* Check if the given handle is of the required type and allows the requested access. */
@@ -114,21 +105,21 @@ static DWORD validate_context_handle(SC_RPC_HANDLE handle, DWORD type, DWORD nee
     return ERROR_SUCCESS;
 }
 
-static DWORD validate_scm_handle(SC_RPC_HANDLE handle, DWORD needed_access, struct sc_manager **manager)
+static DWORD validate_scm_handle(SC_RPC_HANDLE handle, DWORD needed_access, struct sc_manager_handle **manager)
 {
     struct sc_handle *hdr;
     DWORD err = validate_context_handle(handle, SC_HTYPE_MANAGER, needed_access, &hdr);
     if (err == ERROR_SUCCESS)
-        *manager = (struct sc_manager *)hdr;
+        *manager = (struct sc_manager_handle *)hdr;
     return err;
 }
 
-static DWORD validate_service_handle(SC_RPC_HANDLE handle, DWORD needed_access, struct sc_service **service)
+static DWORD validate_service_handle(SC_RPC_HANDLE handle, DWORD needed_access, struct sc_service_handle **service)
 {
     struct sc_handle *hdr;
     DWORD err = validate_context_handle(handle, SC_HTYPE_SERVICE, needed_access, &hdr);
     if (err == ERROR_SUCCESS)
-        *service = (struct sc_service *)hdr;
+        *service = (struct sc_service_handle *)hdr;
     return err;
 }
 
@@ -138,7 +129,7 @@ DWORD svcctl_OpenSCManagerW(
     DWORD dwAccessMask,
     SC_RPC_HANDLE *handle)
 {
-    struct sc_manager *manager;
+    struct sc_manager_handle *manager;
 
     WINE_TRACE("(%s, %s, %x)\n", wine_dbgstr_w(MachineName), wine_dbgstr_w(DatabaseName), dwAccessMask);
 
@@ -159,6 +150,7 @@ DWORD svcctl_OpenSCManagerW(
         dwAccessMask |= SC_MANAGER_ALL_ACCESS;
     manager->hdr.access = dwAccessMask;
     RtlMapGenericMask(&manager->hdr.access, &g_scm_generic);
+    manager->db = active_database;
     *handle = &manager->hdr;
 
     return ERROR_SUCCESS;
@@ -171,13 +163,13 @@ static void SC_RPC_HANDLE_destroy(SC_RPC_HANDLE handle)
     {
         case SC_HTYPE_MANAGER:
         {
-            struct sc_manager *manager = (struct sc_manager *)hdr;
+            struct sc_manager_handle *manager = (struct sc_manager_handle *)hdr;
             HeapFree(GetProcessHeap(), 0, manager);
             break;
         }
         case SC_HTYPE_SERVICE:
         {
-            struct sc_service *service = (struct sc_service *)hdr;
+            struct sc_service_handle *service = (struct sc_service_handle *)hdr;
             release_service(service->service_entry);
             HeapFree(GetProcessHeap(), 0, service);
             break;
@@ -195,7 +187,7 @@ DWORD svcctl_GetServiceDisplayNameW(
     DWORD cchBufSize,
     DWORD *cchLength)
 {
-    struct sc_manager *manager;
+    struct sc_manager_handle *manager;
     struct service_entry *entry;
     DWORD err;
 
@@ -204,12 +196,14 @@ DWORD svcctl_GetServiceDisplayNameW(
     if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
         return err;
 
-    lock_services();
+    scmdatabase_lock_shared(manager->db);
 
-    entry = find_service(lpServiceName);
+    entry = scmdatabase_find_service(manager->db, lpServiceName);
     if (entry != NULL)
     {
-        LPCWSTR name = get_display_name(entry);
+        LPCWSTR name;
+        service_lock_shared(entry);
+        name = get_display_name(entry);
         *cchLength = strlenW(name);
         if (*cchLength < cchBufSize)
         {
@@ -218,6 +212,7 @@ DWORD svcctl_GetServiceDisplayNameW(
         }
         else
             err = ERROR_INSUFFICIENT_BUFFER;
+        service_unlock(entry);
     }
     else
     {
@@ -225,9 +220,10 @@ DWORD svcctl_GetServiceDisplayNameW(
         err = ERROR_SERVICE_DOES_NOT_EXIST;
     }
 
+    scmdatabase_unlock(manager->db);
+
     if (err != ERROR_SUCCESS && cchBufSize > 0)
         lpBuffer[0] = 0;
-    unlock_services();
 
     return err;
 }
@@ -240,7 +236,7 @@ DWORD svcctl_GetServiceKeyNameW(
     DWORD *cchLength)
 {
     struct service_entry *entry;
-    struct sc_manager *manager;
+    struct sc_manager_handle *manager;
     DWORD err;
 
     WINE_TRACE("(%s, %d)\n", wine_dbgstr_w(lpServiceDisplayName), cchBufSize);
@@ -248,11 +244,12 @@ DWORD svcctl_GetServiceKeyNameW(
     if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
         return err;
 
-    lock_services();
+    scmdatabase_lock_shared(manager->db);
 
-    entry = find_service_by_displayname(lpServiceDisplayName);
+    entry = scmdatabase_find_service_by_displayname(manager->db, lpServiceDisplayName);
     if (entry != NULL)
     {
+        service_lock_shared(entry);
         *cchLength = strlenW(entry->name);
         if (*cchLength < cchBufSize)
         {
@@ -261,6 +258,7 @@ DWORD svcctl_GetServiceKeyNameW(
         }
         else
             err = ERROR_INSUFFICIENT_BUFFER;
+        service_unlock(entry);
     }
     else
     {
@@ -268,16 +266,17 @@ DWORD svcctl_GetServiceKeyNameW(
         err = ERROR_SERVICE_DOES_NOT_EXIST;
     }
 
+    scmdatabase_unlock(manager->db);
+
     if (err != ERROR_SUCCESS && cchBufSize > 0)
         lpBuffer[0] = 0;
-    unlock_services();
 
     return err;
 }
 
 static DWORD create_handle_for_service(struct service_entry *entry, DWORD dwDesiredAccess, SC_RPC_HANDLE *phService)
 {
-    struct sc_service *service;
+    struct sc_service_handle *service;
 
     if (!(service = HeapAlloc(GetProcessHeap(), 0, sizeof(*service))))
     {
@@ -302,7 +301,7 @@ DWORD svcctl_OpenServiceW(
     DWORD dwDesiredAccess,
     SC_RPC_HANDLE *phService)
 {
-    struct sc_manager *manager;
+    struct sc_manager_handle *manager;
     struct service_entry *entry;
     DWORD err;
 
@@ -313,11 +312,11 @@ DWORD svcctl_OpenServiceW(
     if (!validate_service_name(lpServiceName))
         return ERROR_INVALID_NAME;
 
-    lock_services();
-    entry = find_service(lpServiceName);
+    scmdatabase_lock_shared(manager->db);
+    entry = scmdatabase_find_service(manager->db, lpServiceName);
     if (entry != NULL)
         entry->ref_count++;
-    unlock_services();
+    scmdatabase_unlock(manager->db);
 
     if (entry == NULL)
         return ERROR_SERVICE_DOES_NOT_EXIST;
@@ -343,7 +342,7 @@ DWORD svcctl_CreateServiceW(
     DWORD dwPasswordSize,
     SC_RPC_HANDLE *phService)
 {
-    struct sc_manager *manager;
+    struct sc_manager_handle *manager;
     struct service_entry *entry;
     DWORD err;
 
@@ -362,8 +361,9 @@ DWORD svcctl_CreateServiceW(
     if (lpDependencies)
         WINE_FIXME("Dependencies not supported yet\n");
 
-    entry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*entry));
-    entry->name = strdupW(lpServiceName);
+    err = service_create(lpServiceName, &entry);
+    if (err != ERROR_SUCCESS)
+        return err;
     entry->config.dwServiceType = dwServiceType;
     entry->config.dwStartType = dwStartType;
     entry->config.dwErrorControl = dwErrorControl;
@@ -371,7 +371,6 @@ DWORD svcctl_CreateServiceW(
     entry->config.lpLoadOrderGroup = strdupW(lpLoadOrderGroup);
     entry->config.lpServiceStartName = strdupW(lpServiceStartName);
     entry->config.lpDisplayName = strdupW(lpDisplayName);
-    entry->control_pipe = INVALID_HANDLE_VALUE;
 
     if (lpdwTagId)      /* TODO: in most situations a non-NULL tagid will generate a ERROR_INVALID_PARAMETER */
         entry->config.dwTagId = *lpdwTagId;
@@ -387,30 +386,30 @@ DWORD svcctl_CreateServiceW(
         return ERROR_INVALID_PARAMETER;
     }
 
-    lock_services();
+    scmdatabase_lock_exclusive(manager->db);
 
-    if (find_service(lpServiceName))
+    if (scmdatabase_find_service(manager->db, lpServiceName))
     {
-        unlock_services();
+        scmdatabase_unlock(manager->db);
         free_service_entry(entry);
         return ERROR_SERVICE_EXISTS;
     }
 
-    if (find_service_by_displayname(get_display_name(entry)))
+    if (scmdatabase_find_service_by_displayname(manager->db, get_display_name(entry)))
     {
-        unlock_services();
+        scmdatabase_unlock(manager->db);
         free_service_entry(entry);
         return ERROR_DUPLICATE_SERVICE_NAME;
     }
 
-    err = add_service(entry);
+    err = scmdatabase_add_service(manager->db, entry);
     if (err != ERROR_SUCCESS)
     {
-        unlock_services();
+        scmdatabase_unlock(manager->db);
         free_service_entry(entry);
         return err;
     }
-    unlock_services();
+    scmdatabase_unlock(manager->db);
 
     return create_handle_for_service(entry, dwDesiredAccess, phService);
 }
@@ -418,20 +417,22 @@ DWORD svcctl_CreateServiceW(
 DWORD svcctl_DeleteService(
     SC_RPC_HANDLE hService)
 {
-    struct sc_service *service;
+    struct sc_service_handle *service;
     DWORD err;
 
     if ((err = validate_service_handle(hService, DELETE, &service)) != ERROR_SUCCESS)
         return err;
 
-    lock_services();
+    scmdatabase_lock_exclusive(service->service_entry->db);
+    service_lock_exclusive(service->service_entry);
 
     if (!is_marked_for_delete(service->service_entry))
-        err = remove_service(service->service_entry);
+        err = scmdatabase_remove_service(service->service_entry->db, service->service_entry);
     else
         err = ERROR_SERVICE_MARKED_FOR_DELETE;
 
-    unlock_services();
+    service_unlock(service->service_entry);
+    scmdatabase_unlock(service->service_entry->db);
 
     return err;
 }
@@ -440,7 +441,7 @@ DWORD svcctl_QueryServiceConfigW(
         SC_RPC_HANDLE hService,
         QUERY_SERVICE_CONFIGW *config)
 {
-    struct sc_service *service;
+    struct sc_service_handle *service;
     DWORD err;
 
     WINE_TRACE("(%p)\n", config);
@@ -448,7 +449,7 @@ DWORD svcctl_QueryServiceConfigW(
     if ((err = validate_service_handle(hService, SERVICE_QUERY_CONFIG, &service)) != 0)
         return err;
 
-    lock_services();
+    service_lock_shared(service->service_entry);
     config->dwServiceType = service->service_entry->config.dwServiceType;
     config->dwStartType = service->service_entry->config.dwStartType;
     config->dwErrorControl = service->service_entry->config.dwErrorControl;
@@ -458,7 +459,7 @@ DWORD svcctl_QueryServiceConfigW(
     config->lpDependencies = NULL; /* TODO */
     config->lpServiceStartName = strdupW(service->service_entry->config.lpServiceStartName);
     config->lpDisplayName = strdupW(service->service_entry->config.lpDisplayName);
-    unlock_services();
+    service_unlock(service->service_entry);
 
     return ERROR_SUCCESS;
 }
@@ -479,7 +480,7 @@ DWORD svcctl_ChangeServiceConfigW(
         LPCWSTR lpDisplayName)
 {
     struct service_entry new_entry;
-    struct sc_service *service;
+    struct sc_service_handle *service;
     DWORD err;
 
     WINE_TRACE("\n");
@@ -491,17 +492,18 @@ DWORD svcctl_ChangeServiceConfigW(
         return ERROR_INVALID_PARAMETER;
 
     /* first check if the new configuration is correct */
-    lock_services();
+    service_lock_exclusive(service->service_entry);
 
     if (is_marked_for_delete(service->service_entry))
     {
-        unlock_services();
+        service_unlock(service->service_entry);
         return ERROR_SERVICE_MARKED_FOR_DELETE;
     }
 
-    if (lpDisplayName != NULL && find_service_by_displayname(lpDisplayName))
+    if (lpDisplayName != NULL &&
+        scmdatabase_find_service_by_displayname(service->service_entry->db, lpDisplayName))
     {
-        unlock_services();
+        service_unlock(service->service_entry);
         return ERROR_DUPLICATE_SERVICE_NAME;
     }
 
@@ -540,7 +542,7 @@ DWORD svcctl_ChangeServiceConfigW(
     if (!validate_service_config(&new_entry))
     {
         WINE_ERR("The configuration after the change wouldn't be valid");
-        unlock_services();
+        service_unlock(service->service_entry);
         return ERROR_INVALID_PARAMETER;
     }
 
@@ -571,7 +573,7 @@ DWORD svcctl_ChangeServiceConfigW(
 
     *service->service_entry = new_entry;
     save_service_config(service->service_entry);
-    unlock_services();
+    service_unlock(service->service_entry);
 
     return ERROR_SUCCESS;
 }
@@ -580,7 +582,7 @@ DWORD svcctl_SetServiceStatus(
     SC_RPC_HANDLE hServiceStatus,
     LPSERVICE_STATUS lpServiceStatus)
 {
-    struct sc_service *service;
+    struct sc_service_handle *service;
     DWORD err;
 
     WINE_TRACE("(%p, %p)\n", hServiceStatus, lpServiceStatus);
@@ -588,7 +590,7 @@ DWORD svcctl_SetServiceStatus(
     if ((err = validate_service_handle(hServiceStatus, SERVICE_SET_STATUS, &service)) != 0)
         return err;
 
-    lock_services();
+    service_lock_exclusive(service->service_entry);
     /* FIXME: be a bit more discriminant about what parts of the status we set
      * and check that fields are valid */
     service->service_entry->status.dwServiceType = lpServiceStatus->dwServiceType;
@@ -598,7 +600,7 @@ DWORD svcctl_SetServiceStatus(
     service->service_entry->status.dwServiceSpecificExitCode = lpServiceStatus->dwServiceSpecificExitCode;
     service->service_entry->status.dwCheckPoint = lpServiceStatus->dwCheckPoint;
     service->service_entry->status.dwWaitHint = lpServiceStatus->dwWaitHint;
-    unlock_services();
+    service_unlock(service->service_entry);
 
     if (service->service_entry->status_changed_event)
         SetEvent(service->service_entry->status_changed_event);
@@ -613,7 +615,7 @@ DWORD svcctl_QueryServiceStatusEx(
     DWORD cbBufSize,
     LPDWORD pcbBytesNeeded)
 {
-    struct sc_service *service;
+    struct sc_service_handle *service;
     DWORD err;
     LPSERVICE_STATUS_PROCESS pSvcStatusData;
 
@@ -635,7 +637,7 @@ DWORD svcctl_QueryServiceStatusEx(
         return ERROR_INSUFFICIENT_BUFFER;
     }
 
-    lock_services();
+    service_lock_shared(service->service_entry);
 
     pSvcStatusData->dwServiceType = service->service_entry->status.dwServiceType;
     pSvcStatusData->dwCurrentState = service->service_entry->status.dwCurrentState;
@@ -647,7 +649,7 @@ DWORD svcctl_QueryServiceStatusEx(
     pSvcStatusData->dwProcessId = service->service_entry->status.dwProcessId;
     pSvcStatusData->dwServiceFlags = service->service_entry->status.dwServiceFlags;
 
-    unlock_services();
+    service_unlock(service->service_entry);
 
     return ERROR_SUCCESS;
 }
@@ -702,7 +704,7 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
     DWORD size;
     BOOL r;
 
-    lock_services();
+    service_lock_exclusive(service_entry);
 
     if (service_entry->config.dwServiceType == SERVICE_KERNEL_DRIVER)
     {
@@ -732,17 +734,21 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
         si.lpDesktop = desktopW;
     }
 
-    unlock_services();
+    service_entry->status.dwCurrentState = SERVICE_START_PENDING;
+    service_entry->status.dwProcessId = pi.dwProcessId;
+
+    service_unlock(service_entry);
 
     r = CreateProcessW(NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     HeapFree(GetProcessHeap(),0,path);
     if (!r)
+    {
+        service_lock_exclusive(service_entry);
+        service_entry->status.dwCurrentState = SERVICE_STOPPED;
+        service_entry->status.dwProcessId = 0;
+        service_unlock(service_entry);
         return GetLastError();
-
-    lock_services();
-    service_entry->status.dwCurrentState = SERVICE_START_PENDING;
-    service_entry->status.dwProcessId = pi.dwProcessId;
-    unlock_services();
+    }
 
     *process = pi.hProcess;
     CloseHandle( pi.hThread );
@@ -762,9 +768,9 @@ static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDL
         ret = WaitForMultipleObjects(sizeof(handles)/sizeof(handles[0]), handles, FALSE, 20000);
         if (ret != WAIT_OBJECT_0)
             return ERROR_SERVICE_REQUEST_TIMEOUT;
-        lock_services();
+        service_lock_shared(service_entry);
         dwCurrentStatus = service_entry->status.dwCurrentState;
-        unlock_services();
+        service_unlock(service_entry);
         if (dwCurrentStatus == SERVICE_RUNNING)
         {
             WINE_TRACE("Service started successfully\n");
@@ -907,7 +913,7 @@ DWORD svcctl_StartServiceW(
     DWORD dwNumServiceArgs,
     LPCWSTR *lpServiceArgVectors)
 {
-    struct sc_service *service;
+    struct sc_service_handle *service;
     DWORD err;
     LPWSTR name;
     HANDLE process_handle = NULL;
@@ -917,13 +923,13 @@ DWORD svcctl_StartServiceW(
     if ((err = validate_service_handle(hService, SERVICE_START, &service)) != 0)
         return err;
 
-    err = lock_service_database();
+    err = scmdatabase_lock_startup(service->service_entry->db);
     if (err != ERROR_SUCCESS)
         return err;
 
     if (service->service_entry->control_pipe != INVALID_HANDLE_VALUE)
     {
-        unlock_service_database();
+        scmdatabase_unlock_startup(service->service_entry->db);
         return ERROR_SERVICE_ALREADY_RUNNING;
     }
 
@@ -940,7 +946,7 @@ DWORD svcctl_StartServiceW(
     {
         WINE_ERR("failed to create pipe for %s, error = %d\n",
             wine_dbgstr_w(service->service_entry->name), GetLastError());
-        unlock_service_database();
+        scmdatabase_unlock_startup(service->service_entry->db);
         return GetLastError();
     }
 
@@ -962,7 +968,7 @@ DWORD svcctl_StartServiceW(
         CloseHandle(process_handle);
 
     ReleaseMutex(service->service_entry->control_mutex);
-    unlock_service_database();
+    scmdatabase_unlock_startup(service->service_entry->db);
 
     return err;
 }
@@ -973,7 +979,7 @@ DWORD svcctl_ControlService(
     SERVICE_STATUS *lpServiceStatus)
 {
     DWORD access_required;
-    struct sc_service *service;
+    struct sc_service_handle *service;
     DWORD err;
     BOOL ret;
     HANDLE control_mutex;
@@ -1008,7 +1014,7 @@ DWORD svcctl_ControlService(
     if ((err = validate_service_handle(hService, access_required, &service)) != 0)
         return err;
 
-    lock_services();
+    service_lock_exclusive(service->service_entry);
 
     if (lpServiceStatus)
     {
@@ -1023,21 +1029,21 @@ DWORD svcctl_ControlService(
 
     if (!service_accepts_control(service->service_entry, dwControl))
     {
-        unlock_services();
+        service_unlock(service->service_entry);
         return ERROR_INVALID_SERVICE_CONTROL;
     }
 
     switch (service->service_entry->status.dwCurrentState)
     {
     case SERVICE_STOPPED:
-        unlock_services();
+        service_unlock(service->service_entry);
         return ERROR_SERVICE_NOT_ACTIVE;
     case SERVICE_START_PENDING:
         if (dwControl==SERVICE_CONTROL_STOP)
             break;
         /* fall thru */
     case SERVICE_STOP_PENDING:
-        unlock_services();
+        service_unlock(service->service_entry);
         return ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
     }
 
@@ -1051,7 +1057,7 @@ DWORD svcctl_ControlService(
         service->service_entry->control_pipe = NULL;
     }
 
-    unlock_services();
+    service_unlock(service->service_entry);
 
     ret = WaitForSingleObject(control_mutex, 30000);
     if (ret)
@@ -1094,8 +1100,9 @@ DWORD svcctl_CloseServiceHandle(
 
 static void SC_RPC_LOCK_destroy(SC_RPC_LOCK hLock)
 {
-    unlock_service_database();
-    HeapFree(GetProcessHeap(), 0, hLock);
+    struct sc_lock *lock = hLock;
+    scmdatabase_unlock_startup(lock->db);
+    HeapFree(GetProcessHeap(), 0, lock);
 }
 
 void __RPC_USER SC_RPC_LOCK_rundown(SC_RPC_LOCK hLock)
@@ -1107,7 +1114,7 @@ DWORD svcctl_LockServiceDatabase(
     SC_RPC_HANDLE hSCManager,
     SC_RPC_LOCK *phLock)
 {
-    struct sc_manager *manager;
+    struct sc_manager_handle *manager;
     DWORD err;
 
     WINE_TRACE("(%p, %p)\n", hSCManager, phLock);
@@ -1115,13 +1122,16 @@ DWORD svcctl_LockServiceDatabase(
     if ((err = validate_scm_handle(hSCManager, SC_MANAGER_LOCK, &manager)) != ERROR_SUCCESS)
         return err;
 
-    err = lock_service_database();
+    err = scmdatabase_lock_startup(manager->db);
     if (err != ERROR_SUCCESS)
         return err;
 
     *phLock = HeapAlloc(GetProcessHeap(), 0, sizeof(struct sc_lock));
     if (!*phLock)
+    {
+        scmdatabase_unlock_startup(manager->db);
         return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+    }
 
     return ERROR_SUCCESS;
 }

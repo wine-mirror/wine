@@ -36,18 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
 HANDLE g_hStartedEvent;
-
-static struct list g_services;
-
-static CRITICAL_SECTION services_list_cs;
-static CRITICAL_SECTION_DEBUG services_list_cs_debug =
-{
-    0, 0, &services_list_cs,
-    { &services_list_cs_debug.ProcessLocksList,
-      &services_list_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": services_list_cs") }
-};
-static CRITICAL_SECTION services_list_cs = { &services_list_cs_debug, -1, 0, 0, 0, 0 };
+struct scmdatabase *active_database;
 
 static const WCHAR SZ_LOCAL_SYSTEM[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
 
@@ -69,6 +58,21 @@ static const WCHAR SZ_OBJECT_NAME[]       = {'O','b','j','e','c','t','N','a','m'
 static const WCHAR SZ_TAG[]               = {'T','a','g',0};
 static const WCHAR SZ_DESCRIPTION[]       = {'D','e','s','c','r','i','p','t','i','o','n',0};
 
+
+DWORD service_create(LPCWSTR name, struct service_entry **entry)
+{
+    *entry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**entry));
+    if (!*entry)
+        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+    (*entry)->name = strdupW(name);
+    if (!(*entry)->name)
+    {
+        HeapFree(GetProcessHeap(), 0, *entry);
+        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+    }
+    (*entry)->control_pipe = INVALID_HANDLE_VALUE;
+    return ERROR_SUCCESS;
+}
 
 void free_service_entry(struct service_entry *entry)
 {
@@ -145,15 +149,10 @@ static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
 
 DWORD save_service_config(struct service_entry *entry)
 {
-    HKEY hServicesRootKey;
     DWORD err;
     HKEY hKey = NULL;
 
-    if ((err = RegCreateKeyW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, &hServicesRootKey)) != 0)
-        goto cleanup;
-
-    err = RegCreateKeyW(hServicesRootKey, entry->name, &hKey);
-    RegCloseKey(hServicesRootKey);
+    err = RegCreateKeyW(entry->db->root_key, entry->name, &hKey);
     if (err != ERROR_SUCCESS)
         goto cleanup;
 
@@ -189,29 +188,25 @@ cleanup:
     return err;
 }
 
-DWORD add_service(struct service_entry *service)
+DWORD scmdatabase_add_service(struct scmdatabase *db, struct service_entry *service)
 {
     int err;
+    service->db = db;
     if ((err = save_service_config(service)) != ERROR_SUCCESS)
     {
         WINE_ERR("Couldn't store service configuration: error %u\n", err);
         return ERROR_GEN_FAILURE;
     }
 
-    list_add_tail(&g_services, &service->entry);
+    list_add_tail(&db->services, &service->entry);
     return ERROR_SUCCESS;
 }
 
-DWORD remove_service(struct service_entry *service)
+DWORD scmdatabase_remove_service(struct scmdatabase *db, struct service_entry *service)
 {
     int err;
-    HKEY hKey;
 
-    if ((err = RegOpenKeyW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, &hKey)) != 0)
-        return err;
-
-    err = RegDeleteTreeW(hKey, service->name);
-    RegCloseKey(hKey);
+    err = RegDeleteTreeW(db->root_key, service->name);
 
     if (err != 0)
         return err;
@@ -277,35 +272,12 @@ BOOL validate_service_config(struct service_entry *entry)
     return TRUE;
 }
 
-static LONG service_lock = FALSE;
 
-DWORD lock_service_database(void)
-{
-    if (InterlockedCompareExchange(&service_lock, TRUE, FALSE))
-        return ERROR_SERVICE_DATABASE_LOCKED;
-    return ERROR_SUCCESS;
-}
-
-void unlock_service_database(void)
-{
-    InterlockedCompareExchange(&service_lock, FALSE, TRUE);
-}
-
-void lock_services(void)
-{
-    EnterCriticalSection(&services_list_cs);
-}
-
-void unlock_services(void)
-{
-    LeaveCriticalSection(&services_list_cs);
-}
-
-struct service_entry *find_service(LPCWSTR name)
+struct service_entry *scmdatabase_find_service(struct scmdatabase *db, LPCWSTR name)
 {
     struct service_entry *service;
 
-    LIST_FOR_EACH_ENTRY(service, &g_services, struct service_entry, entry)
+    LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
     {
         if (strcmpiW(name, service->name) == 0)
             return service;
@@ -314,11 +286,11 @@ struct service_entry *find_service(LPCWSTR name)
     return NULL;
 }
 
-struct service_entry *find_service_by_displayname(LPCWSTR name)
+struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase *db, LPCWSTR name)
 {
     struct service_entry *service;
 
-    LIST_FOR_EACH_ENTRY(service, &g_services, struct service_entry, entry)
+    LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
     {
         if (strcmpiW(name, service->config.lpDisplayName) == 0)
             return service;
@@ -333,19 +305,39 @@ void release_service(struct service_entry *service)
         free_service_entry(service);
 }
 
-static DWORD load_services(void)
+static DWORD scmdatabase_create(struct scmdatabase **db)
 {
-    HKEY hServicesRootKey;
+    DWORD err;
+
+    *db = HeapAlloc(GetProcessHeap(), 0, sizeof(**db));
+    if (!*db)
+        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+
+    (*db)->service_start_lock = FALSE;
+    list_init(&(*db)->services);
+
+    InitializeCriticalSection(&(*db)->cs);
+
+    err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, 0, NULL,
+                          REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL,
+                          &(*db)->root_key, NULL);
+    if (err != ERROR_SUCCESS)
+        HeapFree(GetProcessHeap(), 0, *db);
+
+    return err;
+}
+
+static void scmdatabase_destroy(struct scmdatabase *db)
+{
+    RegCloseKey(db->root_key);
+    DeleteCriticalSection(&db->cs);
+    HeapFree(GetProcessHeap(), 0, db);
+}
+
+static DWORD scmdatabase_load_services(struct scmdatabase *db)
+{
     DWORD err;
     int i;
-
-    if ((err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, 0, NULL,
-                               REG_OPTION_NON_VOLATILE, KEY_READ, NULL,
-                               &hServicesRootKey, NULL)) != ERROR_SUCCESS)
-    {
-        WINE_ERR("Couldn't open services key\n");
-        return err;
-    }
 
     for (i = 0; TRUE; i++)
     {
@@ -353,7 +345,7 @@ static DWORD load_services(void)
         struct service_entry *entry;
         HKEY hServiceKey;
 
-        err = RegEnumKeyW(hServicesRootKey, i, szName, MAX_SERVICE_NAME);
+        err = RegEnumKeyW(db->root_key, i, szName, MAX_SERVICE_NAME);
         if (err == ERROR_NO_MORE_ITEMS)
             break;
 
@@ -363,12 +355,12 @@ static DWORD load_services(void)
             continue;
         }
 
-        entry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*entry));
-        entry->name = strdupW(szName);
-        entry->control_pipe = INVALID_HANDLE_VALUE;
+        err = service_create(szName, &entry);
+        if (err != ERROR_SUCCESS)
+            break;
 
         WINE_TRACE("Loading service %s\n", wine_dbgstr_w(szName));
-        err = RegOpenKeyExW(hServicesRootKey, szName, 0, KEY_READ | KEY_WRITE, &hServiceKey);
+        err = RegOpenKeyExW(db->root_key, szName, 0, KEY_READ | KEY_WRITE, &hServiceKey);
         if (err == ERROR_SUCCESS)
         {
             err = load_service_config(hServiceKey, entry);
@@ -400,12 +392,54 @@ static DWORD load_services(void)
         entry->status.dwServiceType = entry->config.dwServiceType;
         entry->status.dwCurrentState = SERVICE_STOPPED;
         entry->status.dwWin32ExitCode = ERROR_SERVICE_NEVER_STARTED;
+        entry->db = db;
         /* all other fields are zero */
 
-        list_add_tail(&g_services, &entry->entry);
+        list_add_tail(&db->services, &entry->entry);
     }
-    RegCloseKey(hServicesRootKey);
     return ERROR_SUCCESS;
+}
+
+DWORD scmdatabase_lock_startup(struct scmdatabase *db)
+{
+    if (InterlockedCompareExchange(&db->service_start_lock, TRUE, FALSE))
+        return ERROR_SERVICE_DATABASE_LOCKED;
+    return ERROR_SUCCESS;
+}
+
+void scmdatabase_unlock_startup(struct scmdatabase *db)
+{
+    InterlockedCompareExchange(&db->service_start_lock, FALSE, TRUE);
+}
+
+void scmdatabase_lock_shared(struct scmdatabase *db)
+{
+    EnterCriticalSection(&db->cs);
+}
+
+void scmdatabase_lock_exclusive(struct scmdatabase *db)
+{
+    EnterCriticalSection(&db->cs);
+}
+
+void scmdatabase_unlock(struct scmdatabase *db)
+{
+    LeaveCriticalSection(&db->cs);
+}
+
+void service_lock_shared(struct service_entry *service)
+{
+    EnterCriticalSection(&service->db->cs);
+}
+
+void service_lock_exclusive(struct service_entry *service)
+{
+    EnterCriticalSection(&service->db->cs);
+}
+
+void service_unlock(struct service_entry *service)
+{
+    LeaveCriticalSection(&service->db->cs);
 }
 
 int main(int argc, char *argv[])
@@ -413,8 +447,12 @@ int main(int argc, char *argv[])
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
     DWORD err;
     g_hStartedEvent = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
-    list_init(&g_services);
-    if ((err = load_services()) != ERROR_SUCCESS)
+    err = scmdatabase_create(&active_database);
+    if (err != ERROR_SUCCESS)
         return err;
-    return RPC_MainLoop();
+    if ((err = scmdatabase_load_services(active_database)) != ERROR_SUCCESS)
+        return err;
+    err = RPC_MainLoop();
+    scmdatabase_destroy(active_database);
+    return err;
 }
