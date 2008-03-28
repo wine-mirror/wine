@@ -652,44 +652,54 @@ DWORD svcctl_QueryServiceStatusEx(
     return ERROR_SUCCESS;
 }
 
-static HANDLE service_get_event_handle(LPCWSTR service)
+/* only one service started at a time, so there is no race on the registry
+ * value here */
+static LPWSTR service_get_pipe_name(void)
 {
-    static const WCHAR prefix[] = {
-           '_','_','w','i','n','e','s','e','r','v','i','c','e','_',0};
+    static const WCHAR format[] = { '\\','\\','.','\\','p','i','p','e','\\',
+        'n','e','t','\\','N','t','C','o','n','t','r','o','l','P','i','p','e','%','u',0};
+    static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
     LPWSTR name;
     DWORD len;
-    HANDLE handle;
+    HKEY service_current_key;
+    DWORD service_current = -1;
+    LONG ret;
+    DWORD type;
 
-    len = sizeof prefix + strlenW(service)*sizeof(WCHAR);
-    name = HeapAlloc(GetProcessHeap(), 0, len);
-    strcpyW(name, prefix);
-    strcatW(name, service);
-    handle = CreateEventW(NULL, TRUE, FALSE, name);
-    HeapFree(GetProcessHeap(), 0, name);
-    return handle;
-}
-
-static LPWSTR service_get_pipe_name(LPCWSTR service)
-{
-    static const WCHAR prefix[] = { '\\','\\','.','\\','p','i','p','e','\\',
-                   '_','_','w','i','n','e','s','e','r','v','i','c','e','_',0};
-    LPWSTR name;
-    DWORD len;
-
-    len = sizeof prefix + strlenW(service)*sizeof(WCHAR);
-    name = HeapAlloc(GetProcessHeap(), 0, len);
-    strcpyW(name, prefix);
-    strcatW(name, service);
+    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, service_current_key_str, 0,
+        NULL, REG_OPTION_VOLATILE, KEY_SET_VALUE | KEY_QUERY_VALUE, NULL,
+        &service_current_key, NULL);
+    if (ret != ERROR_SUCCESS)
+        return NULL;
+    len = sizeof(service_current);
+    ret = RegQueryValueExW(service_current_key, NULL, NULL, &type,
+        (BYTE *)&service_current, &len);
+    if ((ret == ERROR_SUCCESS && type == REG_DWORD) || ret == ERROR_FILE_NOT_FOUND)
+    {
+        service_current++;
+        RegSetValueExW(service_current_key, NULL, 0, REG_DWORD,
+            (BYTE *)&service_current, sizeof(service_current));
+    }
+    RegCloseKey(service_current_key);
+    if ((ret != ERROR_SUCCESS || type != REG_DWORD) && (ret != ERROR_FILE_NOT_FOUND))
+        return NULL;
+    len = sizeof(format)/sizeof(WCHAR) + 10 /* strlenW("4294967295") */;
+    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!name)
+        return NULL;
+    snprintfW(name, len, format, service_current);
     return name;
 }
 
-static DWORD service_start_process(struct service_entry *service_entry)
+static DWORD service_start_process(struct service_entry *service_entry, HANDLE *process)
 {
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
     LPWSTR path = NULL;
-    DWORD size, ret;
-    HANDLE handles[2];
+    DWORD size;
     BOOL r;
 
     lock_services();
@@ -714,8 +724,6 @@ static DWORD service_start_process(struct service_entry *service_entry)
         ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,path,size);
     }
 
-    /* wait for the process to start and set an event or terminate */
-    handles[0] = service_get_event_handle( service_entry->name );
     ZeroMemory(&si, sizeof(STARTUPINFOW));
     si.cb = sizeof(STARTUPINFOW);
     if (!(service_entry->config.dwServiceType & SERVICE_INTERACTIVE_PROCESS))
@@ -729,36 +737,30 @@ static DWORD service_start_process(struct service_entry *service_entry)
     r = CreateProcessW(NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     HeapFree(GetProcessHeap(),0,path);
     if (!r)
-    {
-        CloseHandle( handles[0] );
         return GetLastError();
-    }
 
-    handles[1] = pi.hProcess;
-    ret = WaitForMultipleObjectsEx(2, handles, FALSE, 30000, FALSE);
-    CloseHandle( pi.hThread );
-    CloseHandle( pi.hProcess );
-    CloseHandle( handles[0] );
-
-    if(ret != WAIT_OBJECT_0)
-        return ERROR_SERVICE_REQUEST_TIMEOUT;
-
-    /* FIXME */
+    lock_services();
     service_entry->status.dwCurrentState = SERVICE_START_PENDING;
     service_entry->status.dwProcessId = pi.dwProcessId;
+    unlock_services();
+
+    *process = pi.hProcess;
+    CloseHandle( pi.hThread );
 
     return ERROR_SUCCESS;
 }
 
-static DWORD service_wait_for_startup(struct service_entry *service_entry)
+static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDLE process_handle)
 {
     WINE_TRACE("%p\n", service_entry);
 
     for (;;)
     {
         DWORD dwCurrentStatus;
-        DWORD ret = WaitForSingleObject(service_entry->status_changed_event, 20000);
-        if (ret == WAIT_TIMEOUT)
+        HANDLE handles[2] = { service_entry->status_changed_event, process_handle };
+        DWORD ret;
+        ret = WaitForMultipleObjects(sizeof(handles)/sizeof(handles[0]), handles, FALSE, 20000);
+        if (ret != WAIT_OBJECT_0)
             return ERROR_SERVICE_REQUEST_TIMEOUT;
         lock_services();
         dwCurrentStatus = service_entry->status.dwCurrentState;
@@ -785,6 +787,7 @@ static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
 
     WINE_TRACE("%p %p %d\n", pipe, argv, argc);
 
+    /* FIXME: this can block so should be done in another thread */
     r = ConnectNamedPipe(pipe, NULL);
     if (!r && GetLastError() != ERROR_PIPE_CONNECTED)
     {
@@ -907,6 +910,7 @@ DWORD svcctl_StartServiceW(
     struct sc_service *service;
     DWORD err;
     LPWSTR name;
+    HANDLE process_handle = NULL;
 
     WINE_TRACE("(%p, %d, %p)\n", hService, dwNumServiceArgs, lpServiceArgVectors);
 
@@ -928,7 +932,7 @@ DWORD svcctl_StartServiceW(
     if (!service->service_entry->status_changed_event)
         service->service_entry->status_changed_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-    name = service_get_pipe_name(service->service_entry->name);
+    name = service_get_pipe_name();
     service->service_entry->control_pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX,
                   PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL );
     HeapFree(GetProcessHeap(), 0, name);
@@ -940,9 +944,7 @@ DWORD svcctl_StartServiceW(
         return GetLastError();
     }
 
-    err = service_start_process(service->service_entry);
-
-    unlock_service_database();
+    err = service_start_process(service->service_entry, &process_handle);
 
     if (err == ERROR_SUCCESS)
     {
@@ -954,9 +956,13 @@ DWORD svcctl_StartServiceW(
     WINE_TRACE("returning %d\n", err);
 
     if (err == ERROR_SUCCESS)
-        err = service_wait_for_startup(service->service_entry);
+        err = service_wait_for_startup(service->service_entry, process_handle);
+
+    if (process_handle)
+        CloseHandle(process_handle);
 
     ReleaseMutex(service->service_entry->control_mutex);
+    unlock_service_database();
 
     return err;
 }

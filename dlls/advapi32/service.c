@@ -421,23 +421,42 @@ static inline LONG service_write_values( HKEY hKey,
 /******************************************************************************
  * Service IPC functions
  */
-static LPWSTR service_get_pipe_name(LPCWSTR service)
+static LPWSTR service_get_pipe_name(void)
 {
-    static const WCHAR prefix[] = { '\\','\\','.','\\','p','i','p','e','\\',
-                   '_','_','w','i','n','e','s','e','r','v','i','c','e','_',0};
+    static const WCHAR format[] = { '\\','\\','.','\\','p','i','p','e','\\',
+        'n','e','t','\\','N','t','C','o','n','t','r','o','l','P','i','p','e','%','u',0};
+    static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
     LPWSTR name;
     DWORD len;
+    HKEY service_current_key;
+    DWORD service_current;
+    LONG ret;
+    DWORD type;
 
-    len = sizeof prefix + strlenW(service)*sizeof(WCHAR);
-    name = HeapAlloc(GetProcessHeap(), 0, len);
-    strcpyW(name, prefix);
-    strcatW(name, service);
+    ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, service_current_key_str, 0,
+        KEY_QUERY_VALUE, &service_current_key);
+    if (ret != ERROR_SUCCESS)
+        return NULL;
+    len = sizeof(service_current);
+    ret = RegQueryValueExW(service_current_key, NULL, NULL, &type,
+        (BYTE *)&service_current, &len);
+    RegCloseKey(service_current_key);
+    if (ret != ERROR_SUCCESS || type != REG_DWORD)
+        return NULL;
+    len = sizeof(format)/sizeof(WCHAR) + 10 /* strlenW("4294967295") */;
+    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!name)
+        return NULL;
+    snprintfW(name, len, format, service_current);
     return name;
 }
 
-static HANDLE service_open_pipe(LPCWSTR service)
+static HANDLE service_open_pipe(void)
 {
-    LPWSTR szPipe = service_get_pipe_name( service );
+    LPWSTR szPipe = service_get_pipe_name();
     HANDLE handle = INVALID_HANDLE_VALUE;
 
     do {
@@ -450,26 +469,6 @@ static HANDLE service_open_pipe(LPCWSTR service)
     } while (WaitNamedPipeW(szPipe, NMPWAIT_WAIT_FOREVER));
     HeapFree(GetProcessHeap(), 0, szPipe);
 
-    return handle;
-}
-
-/******************************************************************************
- * service_get_event_handle
- */
-static HANDLE service_get_event_handle(LPCWSTR service)
-{
-    static const WCHAR prefix[] = { 
-           '_','_','w','i','n','e','s','e','r','v','i','c','e','_',0};
-    LPWSTR name;
-    DWORD len;
-    HANDLE handle;
-
-    len = sizeof prefix + strlenW(service)*sizeof(WCHAR);
-    name = HeapAlloc(GetProcessHeap(), 0, len);
-    strcpyW(name, prefix);
-    strcatW(name, service);
-    handle = CreateEventW(NULL, TRUE, FALSE, name);
-    HeapFree(GetProcessHeap(), 0, name);
     return handle;
 }
 
@@ -596,22 +595,18 @@ static BOOL service_handle_control(HANDLE pipe, service_data *service,
 static DWORD WINAPI service_control_dispatcher(LPVOID arg)
 {
     service_data *service = arg;
-    HANDLE pipe, event;
+    HANDLE pipe;
 
     TRACE("%p %s\n", service, debugstr_w(service->name));
 
-    pipe = service_open_pipe(service->name);
+    pipe = service_open_pipe();
 
     if (pipe==INVALID_HANDLE_VALUE)
+    {
         ERR("failed to create pipe for %s, error = %d\n",
             debugstr_w(service->name), GetLastError());
-
-    /* let the process who started us know we've tried to create a pipe */
-    event = service_get_event_handle(service->name);
-    SetEvent(event);
-    CloseHandle(event);
-
-    if (pipe==INVALID_HANDLE_VALUE) return 0;
+        return 0;
+    }
 
     /* dispatcher loop */
     while (1)
