@@ -2025,10 +2025,14 @@ static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface,
 						LONGLONG *pCurrent,
 						LONGLONG *pStop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%p, %p): stub !!!\n", This, iface, pCurrent, pStop);
+    TRACE("(%p/%p)->(%p, %p)\n", This, iface, pCurrent, pStop);
+    hr = IMediaSeeking_GetCurrentPosition(iface, pCurrent);
+    if (SUCCEEDED(hr))
+        hr = IMediaSeeking_GetStopPosition(iface, pStop);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI MediaSeeking_GetAvailable(IMediaSeeking *iface,
