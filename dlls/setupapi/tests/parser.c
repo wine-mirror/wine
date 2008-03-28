@@ -461,11 +461,6 @@ static void test_pSetupGetField(void)
         field = pSetupGetField( &context, i );
         ok( field != NULL, "Failed to get field %i\n", i );
         ok( !lstrcmpW( getfield_res[i], field ), "Wrong string returned\n" );
-
-        ret = HeapFree( GetProcessHeap(), 0, (LPVOID)field );
-        ok( !ret, "Expected HeapFree to fail\n" );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError() );
     }
 
     field = pSetupGetField( &context, 3 );
