@@ -499,14 +499,12 @@ static void test_GLE(void)
     SetLastError(0xdeadbeef);
     retb = SetupFindFirstLineA( hinf, "ImNotThere", NULL, &context );
     ok(!retb, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_LINE_NOT_FOUND,
         "Expected ERROR_LINE_NOT_FOUND, got %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     retb = SetupFindFirstLineA( hinf, "ImNotThere", "ImNotThere", &context );
     ok(!retb, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_LINE_NOT_FOUND,
         "Expected ERROR_LINE_NOT_FOUND, got %08x\n", GetLastError());
 
@@ -555,7 +553,6 @@ static void test_GLE(void)
     SetLastError(0xdeadbeef);
     retb = SetupGetLineTextA( NULL, hinf, "ImNotThere", "ImNotThere", buf, bufsize, &retsize);
     ok(!retb, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_LINE_NOT_FOUND,
         "Expected ERROR_LINE_NOT_FOUND, got %08x\n", GetLastError());
 
