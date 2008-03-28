@@ -27,8 +27,10 @@
 #include "winreg.h"
 #include "ole2.h"
 
+#include "initguid.h"
 #include "cor.h"
 #include "mscoree.h"
+#include "mscoree_private.h"
 
 #include "wine/debug.h"
 
@@ -301,8 +303,12 @@ HRESULT WINAPI CorBindToRuntimeEx(LPWSTR szVersion, LPWSTR szBuildFlavor, DWORD 
     FIXME("%s %s %d %s %s %p\n", debugstr_w(szVersion), debugstr_w(szBuildFlavor), nflags, debugstr_guid( rslsid ),
           debugstr_guid( riid ), ppv);
 
+    if(IsEqualGUID( riid, &IID_ICorRuntimeHost ))
+    {
+        *ppv = create_corruntimehost();
+        return S_OK;
+    }
     *ppv = NULL;
-
     return E_NOTIMPL;
 }
 
