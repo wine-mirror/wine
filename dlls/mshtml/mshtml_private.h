@@ -450,6 +450,7 @@ HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);
 
 void release_script_hosts(HTMLDocument*);
+void connect_scripts(HTMLDocument*);
 void doc_insert_script(HTMLDocument*,nsIDOMHTMLScriptElement*);
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*);

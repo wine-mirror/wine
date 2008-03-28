@@ -171,6 +171,16 @@ static void release_script_engine(ScriptHost *This)
     This->script_state = SCRIPTSTATE_UNINITIALIZED;
 }
 
+void connect_scripts(HTMLDocument *doc)
+{
+    ScriptHost *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, &doc->script_hosts, ScriptHost, entry) {
+        if(iter->script_state == SCRIPTSTATE_STARTED)
+            IActiveScript_SetScriptState(iter->script, SCRIPTSTATE_CONNECTED);
+    }
+}
+
 #define ACTSCPSITE_THIS(iface) DEFINE_THIS(ScriptHost, ActiveScriptSite, iface)
 
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
