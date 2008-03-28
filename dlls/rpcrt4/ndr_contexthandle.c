@@ -89,7 +89,10 @@ RPC_BINDING_HANDLE WINAPI NDRCContextBinding(NDR_CCONTEXT CContext)
     LeaveCriticalSection(&ndr_context_cs);
 
     if (!handle)
+    {
+        ERR("invalid handle %p\n", CContext);
         RpcRaiseException(ERROR_INVALID_HANDLE);
+    }
     return handle;
 }
 
