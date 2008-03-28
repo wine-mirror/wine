@@ -20,13 +20,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* FIXME: This file is in the Vallader Romansh dialect and not in the
+   official Rumantsch Grischun. */
+
 /* Menu */
 
-/*
-*  language : switzerland romanch
-*  not supported today
-*/
-MAIN_MENU MENU LANGUAGE LANG_, SUBLANG_DEFAULT
+MAIN_MENU MENU LANGUAGE LANG_ROMANSH, SUBLANG_DEFAULT
 {
  POPUP "&Datoteca" {
   MENUITEM "&Rivir", MNID_FILE_OPEN
@@ -44,33 +43,32 @@ MAIN_MENU MENU LANGUAGE LANG_, SUBLANG_DEFAULT
  POPUP "&Marca" {
    MENUITEM "&Definir...", MNID_BKMK_DEFINE
  }
- POPUP "&Agüd" {
-   MENUITEM "&Douvrar l'agüd", MNID_HELP_HELPON
-   MENUITEM "Adüna da&vant", MNID_HELP_HELPTOP
+ POPUP "&Agï¿½d" {
+   MENUITEM "&Douvrar l'agï¿½d", MNID_HELP_HELPON
+   MENUITEM "Adï¿½na da&vant", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "I&nfuormaziuns", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "Davart &WINE", MNID_HELP_WINE
+   MENUITEM "Davart &Wine", MNID_HELP_WINE
 #endif
  }
 }
 
 /* Strings */
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE LANGUAGE LANG_ROMANSH, SUBLANG_DEFAULT
 {
-WINE_HELP, 		"WINE agüd"
-WHERROR, 		"SBAGL"
-WARNING,  		"ATTENZIUN"
-INFO,  			"INFUORMAZIUN"
-NOT_IMPLEMENTED, 	"Na implementa"
-HLPFILE_ERROR_s, 	"Sbagl cun leger la datoteca d'agüd `%s'"
-CONTENTS, 		"&Cuntgnü"
-SEARCH, 		"&Tscherchar"
-BACK, 			"&Inavo"
-HISTORY, 		"&Fin qua"
-TOPICS,			"T&opics"
-ALL_FILES, 		"Tuot las datotecas (*.*)"
-HELP_FILES_HLP, 	"Datotecas d'agüd (*.hlp)"
+STID_WINE_HELP,         "WINE agï¿½d"
+STID_WHERROR,           "SBAGL"
+STID_WARNING,           "ATTENZIUN"
+STID_INFO,              "INFUORMAZIUN"
+STID_NOT_IMPLEMENTED,   "Na implementa"
+STID_HLPFILE_ERROR_s,   "Sbagl cun leger la datoteca d'agï¿½d `%s'"
+STID_CONTENTS,          "&Cuntgnï¿½"
+STID_SEARCH,            "&Tscherchar"
+STID_BACK,              "&Inavo"
+STID_HISTORY,           "&Fin qua"
+STID_TOPICS,            "T&opics"
+STID_ALL_FILES,         "Tuot las datotecas (*.*)"
+STID_HELP_FILES_HLP,    "Datotecas d'agï¿½d (*.hlp)"
 STID_FILE_NOT_FOUND_s   "Cannot find '%s'. Do you want to find this file yourself?"
 }
