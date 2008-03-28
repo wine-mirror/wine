@@ -1786,7 +1786,7 @@ static void p8_primary_test()
     PALETTEENTRY entries[256];
     RGBQUAD coltable[256];
     UINT i;
-    IDirectDrawPalette *ddprimpal;
+    IDirectDrawPalette *ddprimpal = NULL;
     IDirectDrawSurface *offscreen = NULL;
     WNDCLASS wc = {0};
     DDBLTFX ddbltfx;
