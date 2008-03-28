@@ -43,6 +43,9 @@ typedef struct {
     LONG ref;
 
     IActiveScript *script;
+
+    SCRIPTSTATE script_state;
+
     HTMLDocument *doc;
 
     GUID guid;
@@ -133,8 +136,11 @@ static HRESULT WINAPI ActiveScriptSite_OnScriptTerminate(IActiveScriptSite *ifac
 static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, SCRIPTSTATE ssScriptState)
 {
     ScriptHost *This = ACTSCPSITE_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, ssScriptState);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, ssScriptState);
+
+    This->script_state = ssScriptState;
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
