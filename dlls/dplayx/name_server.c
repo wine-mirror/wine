@@ -140,7 +140,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
     return;
   }
 
-  CopyMemory( lpCacheNode->data, &lpcMsg->sd, sizeof( *lpCacheNode->data ) );
+  *lpCacheNode->data = lpcMsg->sd;
   len = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1, NULL, 0, NULL, NULL );
   if ((lpCacheNode->data->u1.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0, len )))
   {
@@ -240,7 +240,7 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
   lpMsg->dwPasswordSize = 0; /* FIXME: If enumerating passwords..? */
   lpMsg->dwFlags        = dwFlags;
 
-  CopyMemory( &lpMsg->guidApplication, lpcGuid, sizeof( *lpcGuid ) );
+  lpMsg->guidApplication = *lpcGuid;
 
   return (lpSpData->lpCB->EnumSessions)( &data );
 }

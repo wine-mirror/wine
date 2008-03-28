@@ -2303,7 +2303,7 @@ static HRESULT WINAPI DP_IF_EnumSessions
         /* FIXME: need to kill the thread on object deletion */
         lpData->lpSpData  = &This->dp2->spData;
 
-        CopyMemory( &lpData->requestGuid, &lpsd->guidApplication, sizeof(GUID) );
+        lpData->requestGuid = lpsd->guidApplication;
         lpData->dwEnumSessionFlags = dwFlags;
         lpData->dwTimeout = dwTimeout;
 

@@ -662,7 +662,7 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, const DPLCONNECTION *src )
 {
   BYTE* lpStartOfFreeSpace;
 
-  CopyMemory( dest, src, sizeof( DPLCONNECTION ) );
+  *dest = *src;
 
   lpStartOfFreeSpace = ((BYTE*)dest) + sizeof( DPLCONNECTION );
 
@@ -671,7 +671,7 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, const DPLCONNECTION *src )
   {
     dest->lpSessionDesc = (LPDPSESSIONDESC2)lpStartOfFreeSpace;
     lpStartOfFreeSpace += sizeof( DPSESSIONDESC2 );
-    CopyMemory( dest->lpSessionDesc, src->lpSessionDesc, sizeof( DPSESSIONDESC2 ) );
+    *dest->lpSessionDesc = *src->lpSessionDesc;
 
     /* Session names may or may not exist */
     if( src->lpSessionDesc->u1.lpszSessionNameA )
@@ -696,7 +696,7 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, const DPLCONNECTION *src )
   {
     dest->lpPlayerName = (LPDPNAME)lpStartOfFreeSpace;
     lpStartOfFreeSpace += sizeof( DPNAME );
-    CopyMemory( dest->lpPlayerName, src->lpPlayerName, sizeof( DPNAME ) );
+    *dest->lpPlayerName = *src->lpPlayerName;
 
     if( src->lpPlayerName->u1.lpszShortNameA )
     {
@@ -784,7 +784,7 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, const DPLCONNECTION *src )
 {
   BYTE*              lpStartOfFreeSpace;
 
-  CopyMemory( dest, src, sizeof( DPLCONNECTION ) );
+  *dest = *src;
 
   lpStartOfFreeSpace = ( (BYTE*)dest) + sizeof( DPLCONNECTION );
 
@@ -793,7 +793,7 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, const DPLCONNECTION *src )
   {
     dest->lpSessionDesc = (LPDPSESSIONDESC2)lpStartOfFreeSpace;
     lpStartOfFreeSpace += sizeof( DPSESSIONDESC2 );
-    CopyMemory( dest->lpSessionDesc, src->lpSessionDesc, sizeof( DPSESSIONDESC2 ) );
+    *dest->lpSessionDesc = *src->lpSessionDesc;
 
     /* Session names may or may not exist */
     if( src->lpSessionDesc->u1.lpszSessionName )
@@ -818,7 +818,7 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, const DPLCONNECTION *src )
   {
     dest->lpPlayerName = (LPDPNAME)lpStartOfFreeSpace;
     lpStartOfFreeSpace += sizeof( DPNAME );
-    CopyMemory( dest->lpPlayerName, src->lpPlayerName, sizeof( DPNAME ) );
+    *dest->lpPlayerName = *src->lpPlayerName;
 
     if( src->lpPlayerName->u1.lpszShortName )
     {
