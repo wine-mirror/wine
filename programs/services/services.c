@@ -79,6 +79,9 @@ void free_service_entry(struct service_entry *entry)
     HeapFree(GetProcessHeap(), 0, entry->config.lpServiceStartName);
     HeapFree(GetProcessHeap(), 0, entry->config.lpDisplayName);
     HeapFree(GetProcessHeap(), 0, entry->description);
+    CloseHandle(entry->control_mutex);
+    CloseHandle(entry->control_pipe);
+    CloseHandle(entry->status_changed_event);
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
@@ -362,6 +365,7 @@ static DWORD load_services(void)
 
         entry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*entry));
         entry->name = strdupW(szName);
+        entry->control_pipe = INVALID_HANDLE_VALUE;
 
         WINE_TRACE("Loading service %s\n", wine_dbgstr_w(szName));
         err = RegOpenKeyExW(hServicesRootKey, szName, 0, KEY_READ | KEY_WRITE, &hServiceKey);

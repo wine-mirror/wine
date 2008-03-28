@@ -31,6 +31,16 @@ cpp_quote("#define SVCCTL_ENDPOINT {'\\\\','p','i','p','e','\\\\','s','v','c','c
 /* Not the Windows event name - if needed the true one can be found in Inside Windows */
 cpp_quote("#define SVCCTL_STARTED_EVENT {'_','_','w','i','n','e','_','S','v','c','c','t','l','S','t','a','r','t','e','d',0}")
 
+/* Service startup protocol over control pipe - not compatible with Windows */
+cpp_quote("typedef struct service_start_info_t")
+cpp_quote("{")
+cpp_quote("    DWORD cmd;")
+cpp_quote("    DWORD size;")
+cpp_quote("    WCHAR str[1];")
+cpp_quote("} service_start_info;")
+
+cpp_quote("#define WINESERV_STARTINFO   1")
+cpp_quote("#define WINESERV_SENDCONTROL 2")
 
 [
     uuid(367abb81-9844-35f1-ad32-98f038001003),
@@ -44,6 +54,9 @@ interface svcctl
     typedef [handle] LPCWSTR MACHINE_HANDLEW;
     typedef [context_handle] void *SC_RPC_HANDLE;
     typedef [context_handle] void *SC_RPC_LOCK;
+
+    /* undocumented access rights */
+    cpp_quote("#define SERVICE_SET_STATUS   0x8000")
 
     /* undocumented access rights */
     cpp_quote("#define SERVICE_SET_STATUS   0x8000")
@@ -80,6 +93,13 @@ cpp_quote("#endif")
     /* Compatible with Windows function 0x00 */
     DWORD svcctl_CloseServiceHandle(
         [in,out] SC_RPC_HANDLE *handle
+    );
+
+    /* Compatible with Windows function 0x01 */
+    DWORD svcctl_ControlService(
+        [in] SC_RPC_HANDLE hService,
+        [in] DWORD dwControl,
+        [out] SERVICE_STATUS *lpServiceStatus
     );
 
     /* Compatible with Windows function 0x02 */
@@ -161,6 +181,13 @@ cpp_quote("#endif")
     DWORD svcctl_QueryServiceConfigW(
         [in] SC_RPC_HANDLE hService,
         [out] QUERY_SERVICE_CONFIGW *config);
+
+    /* Untested with Windows function 0x13 */
+    DWORD svcctl_StartServiceW(
+        [in] SC_RPC_HANDLE hService,
+        [in] DWORD dwNumServiceArgs,
+        [in,unique,size_is(dwNumServiceArgs)] LPCWSTR *lpServiceArgVectors
+    );
 
     /* Compatible with Windows function 0x14 */
     DWORD svcctl_GetServiceDisplayNameW(

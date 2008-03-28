@@ -371,6 +371,7 @@ DWORD svcctl_CreateServiceW(
     entry->config.lpLoadOrderGroup = strdupW(lpLoadOrderGroup);
     entry->config.lpServiceStartName = strdupW(lpServiceStartName);
     entry->config.lpDisplayName = strdupW(lpDisplayName);
+    entry->control_pipe = INVALID_HANDLE_VALUE;
 
     if (lpdwTagId)      /* TODO: in most situations a non-NULL tagid will generate a ERROR_INVALID_PARAMETER */
         entry->config.dwTagId = *lpdwTagId;
@@ -599,6 +600,9 @@ DWORD svcctl_SetServiceStatus(
     service->service_entry->status.dwWaitHint = lpServiceStatus->dwWaitHint;
     unlock_services();
 
+    if (service->service_entry->status_changed_event)
+        SetEvent(service->service_entry->status_changed_event);
+
     return ERROR_SUCCESS;
 }
 
@@ -646,6 +650,429 @@ DWORD svcctl_QueryServiceStatusEx(
     unlock_services();
 
     return ERROR_SUCCESS;
+}
+
+static HANDLE service_get_event_handle(LPCWSTR service)
+{
+    static const WCHAR prefix[] = {
+           '_','_','w','i','n','e','s','e','r','v','i','c','e','_',0};
+    LPWSTR name;
+    DWORD len;
+    HANDLE handle;
+
+    len = sizeof prefix + strlenW(service)*sizeof(WCHAR);
+    name = HeapAlloc(GetProcessHeap(), 0, len);
+    strcpyW(name, prefix);
+    strcatW(name, service);
+    handle = CreateEventW(NULL, TRUE, FALSE, name);
+    HeapFree(GetProcessHeap(), 0, name);
+    return handle;
+}
+
+static LPWSTR service_get_pipe_name(LPCWSTR service)
+{
+    static const WCHAR prefix[] = { '\\','\\','.','\\','p','i','p','e','\\',
+                   '_','_','w','i','n','e','s','e','r','v','i','c','e','_',0};
+    LPWSTR name;
+    DWORD len;
+
+    len = sizeof prefix + strlenW(service)*sizeof(WCHAR);
+    name = HeapAlloc(GetProcessHeap(), 0, len);
+    strcpyW(name, prefix);
+    strcatW(name, service);
+    return name;
+}
+
+static DWORD service_start_process(struct service_entry *service_entry)
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    LPWSTR path = NULL;
+    DWORD size, ret;
+    HANDLE handles[2];
+    BOOL r;
+
+    lock_services();
+
+    if (service_entry->config.dwServiceType == SERVICE_KERNEL_DRIVER)
+    {
+        static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',' ',0};
+        DWORD len = GetSystemDirectoryW( NULL, 0 ) + sizeof(winedeviceW)/sizeof(WCHAR) + strlenW(service_entry->name);
+
+        if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+            return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+        GetSystemDirectoryW( path, len );
+        lstrcatW( path, winedeviceW );
+        lstrcatW( path, service_entry->name );
+    }
+    else
+    {
+        size = ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,NULL,0);
+        path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
+        if (!path)
+            return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+        ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,path,size);
+    }
+
+    /* wait for the process to start and set an event or terminate */
+    handles[0] = service_get_event_handle( service_entry->name );
+    ZeroMemory(&si, sizeof(STARTUPINFOW));
+    si.cb = sizeof(STARTUPINFOW);
+    if (!(service_entry->config.dwServiceType & SERVICE_INTERACTIVE_PROCESS))
+    {
+        static WCHAR desktopW[] = {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n','\\','D','e','f','a','u','l','t',0};
+        si.lpDesktop = desktopW;
+    }
+
+    unlock_services();
+
+    r = CreateProcessW(NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    HeapFree(GetProcessHeap(),0,path);
+    if (!r)
+    {
+        CloseHandle( handles[0] );
+        return GetLastError();
+    }
+
+    handles[1] = pi.hProcess;
+    ret = WaitForMultipleObjectsEx(2, handles, FALSE, 30000, FALSE);
+    CloseHandle( pi.hThread );
+    CloseHandle( pi.hProcess );
+    CloseHandle( handles[0] );
+
+    if(ret != WAIT_OBJECT_0)
+        return ERROR_SERVICE_REQUEST_TIMEOUT;
+
+    /* FIXME */
+    service_entry->status.dwCurrentState = SERVICE_START_PENDING;
+    service_entry->status.dwProcessId = pi.dwProcessId;
+
+    return ERROR_SUCCESS;
+}
+
+static DWORD service_wait_for_startup(struct service_entry *service_entry)
+{
+    WINE_TRACE("%p\n", service_entry);
+
+    for (;;)
+    {
+        DWORD dwCurrentStatus;
+        DWORD ret = WaitForSingleObject(service_entry->status_changed_event, 20000);
+        if (ret == WAIT_TIMEOUT)
+            return ERROR_SERVICE_REQUEST_TIMEOUT;
+        lock_services();
+        dwCurrentStatus = service_entry->status.dwCurrentState;
+        unlock_services();
+        if (dwCurrentStatus == SERVICE_RUNNING)
+        {
+            WINE_TRACE("Service started successfully\n");
+            return ERROR_SUCCESS;
+        }
+        if (dwCurrentStatus != SERVICE_START_PENDING)
+            return ERROR_SERVICE_REQUEST_TIMEOUT;
+    }
+}
+
+/******************************************************************************
+ * service_send_start_message
+ */
+static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
+{
+    DWORD i, len, count, result;
+    service_start_info *ssi;
+    LPWSTR p;
+    BOOL r;
+
+    WINE_TRACE("%p %p %d\n", pipe, argv, argc);
+
+    r = ConnectNamedPipe(pipe, NULL);
+    if (!r && GetLastError() != ERROR_PIPE_CONNECTED)
+    {
+        WINE_ERR("pipe connect failed\n");
+        return FALSE;
+    }
+
+    /* calculate how much space do we need to send the startup info */
+    len = 1;
+    for (i=0; i<argc; i++)
+        len += strlenW(argv[i])+1;
+
+    ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, str[len]));
+    ssi->cmd = WINESERV_STARTINFO;
+    ssi->size = len;
+
+    /* copy service args into a single buffer*/
+    p = &ssi->str[0];
+    for (i=0; i<argc; i++)
+    {
+        strcpyW(p, argv[i]);
+        p += strlenW(p) + 1;
+    }
+    *p=0;
+
+    r = WriteFile(pipe, ssi, FIELD_OFFSET(service_start_info, str[len]), &count, NULL);
+    if (r)
+    {
+        r = ReadFile(pipe, &result, sizeof result, &count, NULL);
+        if (r && result)
+        {
+            SetLastError(result);
+            r = FALSE;
+        }
+    }
+
+    HeapFree(GetProcessHeap(),0,ssi);
+
+    return r;
+}
+
+/******************************************************************************
+ * service_accepts_control
+ */
+static BOOL service_accepts_control(const struct service_entry *service, DWORD dwControl)
+{
+    DWORD a = service->status.dwControlsAccepted;
+
+    switch (dwControl)
+    {
+    case SERVICE_CONTROL_INTERROGATE:
+        return TRUE;
+    case SERVICE_CONTROL_STOP:
+        if (a&SERVICE_ACCEPT_STOP)
+            return TRUE;
+        break;
+    case SERVICE_CONTROL_SHUTDOWN:
+        if (a&SERVICE_ACCEPT_SHUTDOWN)
+            return TRUE;
+        break;
+    case SERVICE_CONTROL_PAUSE:
+    case SERVICE_CONTROL_CONTINUE:
+        if (a&SERVICE_ACCEPT_PAUSE_CONTINUE)
+            return TRUE;
+        break;
+    case SERVICE_CONTROL_PARAMCHANGE:
+        if (a&SERVICE_ACCEPT_PARAMCHANGE)
+            return TRUE;
+        break;
+    case SERVICE_CONTROL_NETBINDADD:
+    case SERVICE_CONTROL_NETBINDREMOVE:
+    case SERVICE_CONTROL_NETBINDENABLE:
+    case SERVICE_CONTROL_NETBINDDISABLE:
+        if (a&SERVICE_ACCEPT_NETBINDCHANGE)
+            return TRUE;
+    case SERVICE_CONTROL_HARDWAREPROFILECHANGE:
+        if (a&SERVICE_ACCEPT_HARDWAREPROFILECHANGE)
+            return TRUE;
+        break;
+    case SERVICE_CONTROL_POWEREVENT:
+        if (a&SERVICE_ACCEPT_POWEREVENT)
+            return TRUE;
+        break;
+    case SERVICE_CONTROL_SESSIONCHANGE:
+        if (a&SERVICE_ACCEPT_SESSIONCHANGE)
+            return TRUE;
+        break;
+    }
+    return FALSE;
+}
+
+/******************************************************************************
+ * service_send_control
+ */
+static BOOL service_send_control(HANDLE pipe, DWORD dwControl, DWORD *result)
+{
+    DWORD cmd[2], count = 0;
+    BOOL r;
+
+    cmd[0] = WINESERV_SENDCONTROL;
+    cmd[1] = dwControl;
+    r = WriteFile(pipe, cmd, sizeof cmd, &count, NULL);
+    if (!r || count != sizeof cmd)
+    {
+        WINE_ERR("service protocol error - failed to write pipe!\n");
+        return r;
+    }
+    r = ReadFile(pipe, result, sizeof *result, &count, NULL);
+    if (!r || count != sizeof *result)
+        WINE_ERR("service protocol error - failed to read pipe "
+            "r = %d  count = %d!\n", r, count);
+    return r;
+}
+
+DWORD svcctl_StartServiceW(
+    SC_RPC_HANDLE hService,
+    DWORD dwNumServiceArgs,
+    LPCWSTR *lpServiceArgVectors)
+{
+    struct sc_service *service;
+    DWORD err;
+    LPWSTR name;
+
+    WINE_TRACE("(%p, %d, %p)\n", hService, dwNumServiceArgs, lpServiceArgVectors);
+
+    if ((err = validate_service_handle(hService, SERVICE_START, &service)) != 0)
+        return err;
+
+    err = lock_service_database();
+    if (err != ERROR_SUCCESS)
+        return err;
+
+    if (service->service_entry->control_pipe != INVALID_HANDLE_VALUE)
+    {
+        unlock_service_database();
+        return ERROR_SERVICE_ALREADY_RUNNING;
+    }
+
+    service->service_entry->control_mutex = CreateMutexW(NULL, TRUE, NULL);
+
+    if (!service->service_entry->status_changed_event)
+        service->service_entry->status_changed_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    name = service_get_pipe_name(service->service_entry->name);
+    service->service_entry->control_pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX,
+                  PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL );
+    HeapFree(GetProcessHeap(), 0, name);
+    if (service->service_entry->control_pipe==INVALID_HANDLE_VALUE)
+    {
+        WINE_ERR("failed to create pipe for %s, error = %d\n",
+            wine_dbgstr_w(service->service_entry->name), GetLastError());
+        unlock_service_database();
+        return GetLastError();
+    }
+
+    err = service_start_process(service->service_entry);
+
+    unlock_service_database();
+
+    if (err == ERROR_SUCCESS)
+    {
+        if (!service_send_start_message(service->service_entry->control_pipe,
+                lpServiceArgVectors, dwNumServiceArgs))
+            err = ERROR_SERVICE_REQUEST_TIMEOUT;
+    }
+
+    WINE_TRACE("returning %d\n", err);
+
+    if (err == ERROR_SUCCESS)
+        err = service_wait_for_startup(service->service_entry);
+
+    ReleaseMutex(service->service_entry->control_mutex);
+
+    return err;
+}
+
+DWORD svcctl_ControlService(
+    SC_RPC_HANDLE hService,
+    DWORD dwControl,
+    SERVICE_STATUS *lpServiceStatus)
+{
+    DWORD access_required;
+    struct sc_service *service;
+    DWORD err;
+    BOOL ret;
+    HANDLE control_mutex;
+    HANDLE control_pipe;
+
+    WINE_TRACE("(%p, %d, %p)\n", hService, dwControl, lpServiceStatus);
+
+    switch (dwControl)
+    {
+    case SERVICE_CONTROL_CONTINUE:
+    case SERVICE_CONTROL_NETBINDADD:
+    case SERVICE_CONTROL_NETBINDDISABLE:
+    case SERVICE_CONTROL_NETBINDENABLE:
+    case SERVICE_CONTROL_NETBINDREMOVE:
+    case SERVICE_CONTROL_PARAMCHANGE:
+    case SERVICE_CONTROL_PAUSE:
+        access_required = SERVICE_PAUSE_CONTINUE;
+        break;
+    case SERVICE_CONTROL_INTERROGATE:
+        access_required = SERVICE_INTERROGATE;
+        break;
+    case SERVICE_CONTROL_STOP:
+        access_required = SERVICE_STOP;
+        break;
+    default:
+        if (dwControl >= 128 && dwControl <= 255)
+            access_required = SERVICE_USER_DEFINED_CONTROL;
+        else
+            return ERROR_INVALID_PARAMETER;
+    }
+
+    if ((err = validate_service_handle(hService, access_required, &service)) != 0)
+        return err;
+
+    lock_services();
+
+    if (lpServiceStatus)
+    {
+        lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
+        lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
+        lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
+        lpServiceStatus->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
+        lpServiceStatus->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
+        lpServiceStatus->dwCheckPoint = service->service_entry->status.dwCheckPoint;
+        lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
+    }
+
+    if (!service_accepts_control(service->service_entry, dwControl))
+    {
+        unlock_services();
+        return ERROR_INVALID_SERVICE_CONTROL;
+    }
+
+    switch (service->service_entry->status.dwCurrentState)
+    {
+    case SERVICE_STOPPED:
+        unlock_services();
+        return ERROR_SERVICE_NOT_ACTIVE;
+    case SERVICE_START_PENDING:
+        if (dwControl==SERVICE_CONTROL_STOP)
+            break;
+        /* fall thru */
+    case SERVICE_STOP_PENDING:
+        unlock_services();
+        return ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
+    }
+
+    /* prevent races by caching these variables and clearing them on
+     * stop here instead of outside the services lock */
+    control_mutex = service->service_entry->control_mutex;
+    control_pipe = service->service_entry->control_pipe;
+    if (dwControl == SERVICE_CONTROL_STOP)
+    {
+        service->service_entry->control_mutex = NULL;
+        service->service_entry->control_pipe = NULL;
+    }
+
+    unlock_services();
+
+    ret = WaitForSingleObject(control_mutex, 30000);
+    if (ret)
+    {
+        DWORD result = ERROR_SUCCESS;
+
+        ret = service_send_control(control_pipe, dwControl, &result);
+
+        if (dwControl == SERVICE_CONTROL_STOP)
+        {
+            CloseHandle(control_mutex);
+            CloseHandle(control_pipe);
+        }
+        else
+            ReleaseMutex(control_mutex);
+
+        return result;
+    }
+    else
+    {
+        if (dwControl == SERVICE_CONTROL_STOP)
+        {
+            CloseHandle(control_mutex);
+            CloseHandle(control_pipe);
+        }
+        return ERROR_SERVICE_REQUEST_TIMEOUT;
+    }
 }
 
 DWORD svcctl_CloseServiceHandle(

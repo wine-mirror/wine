@@ -33,6 +33,9 @@ struct service_entry
     LPWSTR description;
     LPWSTR dependOnServices;
     LPWSTR dependOnGroups;
+    HANDLE control_mutex;
+    HANDLE control_pipe;
+    HANDLE status_changed_event;
 };
 
 BOOL validate_service_name(LPCWSTR name);
