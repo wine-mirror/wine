@@ -956,49 +956,6 @@ static int compare(resource_t *resource1, resource_t *resource2) {
 	}
 }
 
-static void dump_stringtable(resource_t *res)
-{
-    stringtable_t *stt = res->res.stt;
-    int j;
-
-    printf("DUMP ");
-    assert((stt->idbase%16) == 0);
-    assert(stt->nentries == 16);
-    for (j = 0; j < stt->nentries; j++)
-    {
-        stt_entry_t *entry = &stt->entries[j];
-        language_t *lang = stt->lvc.language;
-        string_t *newstr;
-        WCHAR *wstr;
-        int k;
-
-        if (entry->str)
-        {
-            newstr = convert_string(entry->str, str_unicode, get_language_codepage(lang->id, lang->sub));
-            printf("%02x%02x", newstr->size & 0xff, (newstr->size >> 8) & 0xff);
-            wstr = newstr->str.wstr;
-            for (k = 0; k < newstr->size; k++)
-                printf("%02x%02x", wstr[k] & 0xff, wstr[k] >> 8);
-            free_string(newstr);
-        }
-        else
-            printf("0000");
-    }
-    putchar('\n');
-}
-
-static void dump(resource_t *res)
-{
-    switch (res->type)
-    {
-        case res_stt:
-            dump_stringtable(res);
-            return;
-        default:
-            break;
-    }
-}
-
 typedef struct resource_lang_node
 {
     language_t lang;
@@ -1159,7 +1116,6 @@ void verify_translations(resource_t *top) {
             for (langnode = idnode->langs; langnode; langnode = langnode->next)
             {
                 printf("EXIST %03x:%02x\n", langnode->lang.id, langnode->lang.sub);
-                dump(langnode->res);
                 if (compare(langnode->res, mainres))
                 {
                     printf("DIFF %03x:%02x\n", langnode->lang.id, langnode->lang.sub);
