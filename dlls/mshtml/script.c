@@ -27,12 +27,15 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "activscp.h"
+#include "objsafe.h"
 
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+
+static const WCHAR windowW[] = {'w','i','n','d','o','w',0};
 
 static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
@@ -43,6 +46,7 @@ typedef struct {
     LONG ref;
 
     IActiveScript *script;
+    IActiveScriptParse *parse;
 
     SCRIPTSTATE script_state;
 
@@ -53,6 +57,119 @@ typedef struct {
 } ScriptHost;
 
 #define ACTSCPSITE(x)  ((IActiveScriptSite*)               &(x)->lpActiveScriptSiteVtbl)
+
+static BOOL init_script_engine(ScriptHost *script_host)
+{
+    IActiveScriptProperty *property;
+    IObjectSafety *safety;
+    SCRIPTSTATE state;
+    DWORD supported_opts=0, enabled_opts=0;
+    HRESULT hres;
+
+    hres = IActiveScript_QueryInterface(script_host->script, &IID_IActiveScriptParse, (void**)&script_host->parse);
+    if(FAILED(hres)) {
+        WARN("Could not get IActiveScriptHost: %08x\n", hres);
+        return FALSE;
+    }
+
+    hres = IActiveScript_QueryInterface(script_host->script, &IID_IObjectSafety, (void**)&safety);
+    if(FAILED(hres)) {
+        FIXME("Could not get IObjectSafety: %08x\n", hres);
+        return FALSE;
+    }
+
+    hres = IObjectSafety_GetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse, &supported_opts, &enabled_opts);
+    if(FAILED(hres)) {
+        FIXME("GetInterfaceSafetyOptions failed: %08x\n", hres);
+    }else if(!(supported_opts & INTERFACE_USES_DISPEX)) {
+        FIXME("INTERFACE_USES_DISPEX is not supported\n");
+    }else {
+        hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse,
+                INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER,
+                INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER);
+        if(FAILED(hres))
+            FIXME("SetInterfaceSafetyOptions failed: %08x\n", hres);
+    }
+
+    IObjectSafety_Release(safety);
+    if(FAILED(hres))
+        return FALSE;
+
+    hres = IActiveScript_QueryInterface(script_host->script, &IID_IActiveScriptProperty, (void**)&property);
+    if(SUCCEEDED(hres)) {
+        VARIANT var;
+
+        V_VT(&var) = VT_BOOL;
+        V_BOOL(&var) = VARIANT_TRUE;
+        hres = IActiveScriptProperty_SetProperty(property, SCRIPTPROP_HACK_TRIDENTEVENTSINK, NULL, &var);
+        if(FAILED(hres))
+            WARN("SetProperty failed: %08x\n", hres);
+
+        IActiveScriptProperty_Release(property);
+    }else {
+        WARN("Could not get IActiveScriptProperty: %08x\n", hres);
+    }
+
+    hres = IActiveScriptParse_InitNew(script_host->parse);
+    if(FAILED(hres)) {
+        WARN("InitNew failed: %08x\n", hres);
+        return FALSE;
+    }
+
+    hres = IActiveScript_SetScriptSite(script_host->script, ACTSCPSITE(script_host));
+    if(FAILED(hres)) {
+        WARN("SetScriptSite failed: %08x\n", hres);
+        IActiveScript_Close(script_host->script);
+        return FALSE;
+    }
+
+    hres = IActiveScript_GetScriptState(script_host->script, &state);
+    if(FAILED(hres))
+        WARN("GetScriptState failed: %08x\n", hres);
+    else if(state != SCRIPTSTATE_INITIALIZED)
+        FIXME("state = %x\n", state);
+
+    hres = IActiveScript_SetScriptState(script_host->script, SCRIPTSTATE_STARTED);
+    if(FAILED(hres)) {
+        WARN("Starting script failed: %08x\n", hres);
+        return FALSE;
+    }
+
+    hres = IActiveScript_AddNamedItem(script_host->script, windowW,
+            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    if(FAILED(hres))
+       WARN("AddNamedItem failed: %08x\n", hres);
+
+    /* FIXME: QI for IActiveScriptParseProcedure2 and IActiveScriptParseProcedure */
+
+    return TRUE;
+}
+
+static void release_script_engine(ScriptHost *This)
+{
+    if(!This->script)
+        return;
+
+    switch(This->script_state) {
+    case SCRIPTSTATE_CONNECTED:
+        IActiveScript_SetScriptState(This->script, SCRIPTSTATE_DISCONNECTED);
+
+    case SCRIPTSTATE_STARTED:
+    case SCRIPTSTATE_DISCONNECTED:
+    case SCRIPTSTATE_INITIALIZED:
+        IActiveScript_Close(This->script);
+
+    default:
+        if(This->parse) {
+            IActiveScriptParse_Release(This->parse);
+            This->parse = NULL;
+        }
+    }
+
+    IActiveScript_Release(This->script);
+    This->script = NULL;
+    This->script_state = SCRIPTSTATE_UNINITIALIZED;
+}
 
 #define ACTSCPSITE_THIS(iface) DEFINE_THIS(ScriptHost, ActiveScriptSite, iface)
 
@@ -95,6 +212,7 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        release_script_engine(This);
         if(This->doc)
             list_remove(&This->entry);
         heap_free(This);
@@ -195,8 +313,10 @@ static ScriptHost *create_script_host(HTMLDocument *doc, GUID *guid)
 
     hres = CoCreateInstance(&ret->guid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&ret->script);
-   if(FAILED(hres))
+    if(FAILED(hres))
         WARN("Could not load script engine: %08x\n", hres);
+    else if(!init_script_engine(ret))
+        release_script_engine(ret);
 
     return ret;
 }
@@ -313,6 +433,7 @@ void release_script_hosts(HTMLDocument *doc)
     while(!list_empty(&doc->script_hosts)) {
         iter = LIST_ENTRY(list_head(&doc->script_hosts), ScriptHost, entry);
 
+        release_script_engine(iter);
         list_remove(&iter->entry);
         iter->doc = NULL;
         IActiveScript_Release(ACTSCPSITE(iter));
