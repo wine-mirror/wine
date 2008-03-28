@@ -113,6 +113,15 @@ cpp_quote("#endif")
         [out] SC_RPC_LOCK *phLock
     );
 
+    /* Not compatible with Windows function 0x04 */
+    DWORD svcctl_QueryServiceObjectSecurity(/* FIXME */);
+
+    /* Not compatible with Windows function 0x05 */
+    DWORD svcctl_SetServiceObjectSecurity(/* FIXME */);
+
+    /* Not compatible with Windows function 0x06 */
+    DWORD svcctl_QueryServiceStatus(/* FIXME */);
+
     /* Compatible with Windows function 0x07 */
     DWORD svcctl_SetServiceStatus(
         [in] SC_RPC_HANDLE hServiceStatus,
@@ -123,6 +132,12 @@ cpp_quote("#endif")
     DWORD svcctl_UnlockServiceDatabase(
         [in,out] SC_RPC_LOCK *phLock
     );
+
+    /* Not compatible with Windows function 0x09 */
+    DWORD svcctl_NotifyBootConfigStatus(/* FIXME */);
+
+    /* Not compatible with Windows function 0x0a */
+    DWORD svcctl_SCSetServiceBitsW(/* FIXME */);
 
     /* Compatible with Windows function 0x0b */
     DWORD svcctl_ChangeServiceConfigW(
@@ -161,6 +176,12 @@ cpp_quote("#endif")
         [out] SC_RPC_HANDLE *phService
     );
 
+    /* Not compatible with Windows function 0x0d */
+    DWORD svcctl_EnumDependentServicesW(/* FIXME */);
+
+    /* Not compatible with Windows function 0x0e */
+    DWORD svcctl_EnumServicesStatusW(/* FIXME */);
+
     /* Compatible with Windows function 0x0f */
     DWORD svcctl_OpenSCManagerW(
         [in,unique] MACHINE_HANDLEW MachineName,
@@ -181,6 +202,9 @@ cpp_quote("#endif")
     DWORD svcctl_QueryServiceConfigW(
         [in] SC_RPC_HANDLE hService,
         [out] QUERY_SERVICE_CONFIGW *config);
+
+    /* Not compatible with Windows function 0x12 */
+    DWORD svcctl_QueryServiceLockStatusW(/* FIXME */);
 
     /* Untested with Windows function 0x13 */
     DWORD svcctl_StartServiceW(
@@ -204,6 +228,60 @@ cpp_quote("#endif")
         [out,size_is(cchBufSize)] WCHAR lpBuffer[],
         [in] DWORD cchBufSize,
         [out] DWORD *cchLength);
+
+    /* Not compatible with Windows function 0x16 */
+    DWORD svcctl_SCSetServiceBitsA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x17 */
+    DWORD svcctl_ChangeServiceConfigA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x18 */
+    DWORD svcctl_CreateServiceA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x19 */
+    DWORD svcctl_EnumDependentServicesA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x1a */
+    DWORD svcctl_EnumServicesStatusA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x1b */
+    DWORD svcctl_OpenSCManagerA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x1c */
+    DWORD svcctl_OpenServiceA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x1d */
+    DWORD svcctl_QueryServiceConfigA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x1e */
+    DWORD svcctl_QueryServiceLockStatusA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x1f */
+    DWORD svcctl_StartServiceA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x20 */
+    DWORD svcctl_GetServiceDisplayNameA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x21 */
+    DWORD svcctl_GetServiceKeyNameA(/* FIXME */);
+
+    /* Not compatible with Windows function 0x22 */
+    DWORD svcctl_GetCurrentGroupStateW(/* FIXME */);
+
+    /* Not compatible with Windows function 0x23 */
+    DWORD svcctl_EnumServiceGroupW(/* FIXME */);
+
+    /* Not compatible with Windows function 0x24 */
+    DWORD svcctl_ChangeServiceConfig2A(/* FIXME */);
+
+    /* Not compatible with Windows function 0x25 */
+    DWORD svcctl_ChangeServiceConfig2W(/* FIXME */);
+
+    /* Not compatible with Windows function 0x26 */
+    DWORD svcctl_QueryServiceConfig2A(/* FIXME */);
+
+    /* Not compatible with Windows function 0x27 */
+    DWORD svcctl_QueryServiceConfig2W(/* FIXME */);
 
     /* Untested with Windows function 0x28 */
     DWORD svcctl_QueryServiceStatusEx(

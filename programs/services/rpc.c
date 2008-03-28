@@ -1147,6 +1147,192 @@ DWORD svcctl_UnlockServiceDatabase(
     return ERROR_SUCCESS;
 }
 
+DWORD svcctl_QueryServiceObjectSecurity(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_SetServiceObjectSecurity(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_QueryServiceStatus(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+
+DWORD svcctl_NotifyBootConfigStatus(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_SCSetServiceBitsW(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+
+DWORD svcctl_EnumDependentServicesW(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_EnumServicesStatusW(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+
+DWORD svcctl_QueryServiceLockStatusW(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_SCSetServiceBitsA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_ChangeServiceConfigA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_CreateServiceA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_EnumDependentServicesA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_EnumServicesStatusA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_OpenSCManagerA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_OpenServiceA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_QueryServiceConfigA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_QueryServiceLockStatusA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_StartServiceA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_GetServiceDisplayNameA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_GetServiceKeyNameA(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_GetCurrentGroupStateW(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_EnumServiceGroupW(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_ChangeServiceConfig2A(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_ChangeServiceConfig2W(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_QueryServiceConfig2A(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+DWORD svcctl_QueryServiceConfig2W(
+    void)
+{
+    WINE_FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+
 DWORD RPC_MainLoop(void)
 {
     WCHAR transport[] = SVCCTL_TRANSPORT;
