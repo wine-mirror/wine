@@ -1,5 +1,6 @@
 /*
  * Copyright 2003 Vincent Béron
+ * Copyright 2007, 2008 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -324,6 +325,7 @@ static int compare_control(control_t *control1, control_t *control2) {
 static int compare_dialog(dialog_t *dialog1, dialog_t *dialog2) {
 	int different = 0;
 	char *nameid = NULL;
+	control_t *ctrl1, *ctrl2;
 	if(!different &&
 	   ((dialog1->memopt != dialog2->memopt) ||
 	   (dialog1->lvc.version != dialog2->lvc.version) ||
@@ -355,14 +357,22 @@ static int compare_dialog(dialog_t *dialog1, dialog_t *dialog2) {
 	if(!different && strcmp(nameid, get_nameid_str(dialog2->dlgclass)))
 		different = 1;
 	free(nameid);
-	if(!different)
-		different = compare_control(dialog1->controls, dialog2->controls);
+
+        ctrl1 = dialog1->controls;
+        ctrl2 = dialog2->controls;
+        while(!different && (ctrl1 || ctrl2))
+        {
+            different = compare_control(ctrl1, ctrl2);
+            if (ctrl1) ctrl1 = ctrl1->next;
+            if (ctrl2) ctrl2 = ctrl2->next;
+        }
 	return different;
 }
 
 static int compare_dialogex(dialogex_t *dialogex1, dialogex_t *dialogex2) {
 	int different = 0;
 	char *nameid = NULL;
+	control_t *ctrl1, *ctrl2;
 	if(!different &&
 	   ((dialogex1->memopt != dialogex2->memopt) ||
 	   (dialogex1->lvc.version != dialogex2->lvc.version) ||
@@ -401,8 +411,15 @@ static int compare_dialogex(dialogex_t *dialogex1, dialogex_t *dialogex2) {
 	if(!different && strcmp(nameid, get_nameid_str(dialogex2->dlgclass)))
 		different = 1;
 	free(nameid);
-	if(!different)
-		different = compare_control(dialogex1->controls, dialogex2->controls);
+
+        ctrl1 = dialogex1->controls;
+        ctrl2 = dialogex2->controls;
+        while(!different && (ctrl1 || ctrl2))
+        {
+            different = compare_control(ctrl1, ctrl2);
+            if (ctrl1) ctrl1 = ctrl1->next;
+            if (ctrl2) ctrl2 = ctrl2->next;
+        }
 	return different;
 }
 
