@@ -571,7 +571,6 @@ static void test_GLE(void)
     SetLastError(0xdeadbeef);
     retb = SetupGetLineByIndexA( hinf, "ImNotThere", 1, &context );
     ok(!retb, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_LINE_NOT_FOUND,
         "Expected ERROR_LINE_NOT_FOUND, got %08x\n", GetLastError());
 
