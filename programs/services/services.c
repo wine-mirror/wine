@@ -274,6 +274,20 @@ BOOL validate_service_config(struct service_entry *entry)
     return TRUE;
 }
 
+static LONG service_lock = FALSE;
+
+DWORD lock_service_database(void)
+{
+    if (InterlockedCompareExchange(&service_lock, TRUE, FALSE))
+        return ERROR_SERVICE_DATABASE_LOCKED;
+    return ERROR_SUCCESS;
+}
+
+void unlock_service_database(void)
+{
+    InterlockedCompareExchange(&service_lock, FALSE, TRUE);
+}
+
 void lock_services(void)
 {
     EnterCriticalSection(&services_list_cs);

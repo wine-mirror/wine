@@ -43,6 +43,7 @@ interface svcctl
     /* handle types */
     typedef [handle] LPCWSTR MACHINE_HANDLEW;
     typedef [context_handle] void *SC_RPC_HANDLE;
+    typedef [context_handle] void *SC_RPC_LOCK;
 
     /* undocumented access rights */
     cpp_quote("#define SERVICE_SET_STATUS   0x8000")
@@ -86,10 +87,21 @@ cpp_quote("#endif")
         [in] SC_RPC_HANDLE hService
     );
 
+    /* Compatible with Windows function 0x03 */
+    DWORD svcctl_LockServiceDatabase(
+        [in] SC_RPC_HANDLE hSCManager,
+        [out] SC_RPC_LOCK *phLock
+    );
+
     /* Compatible with Windows function 0x07 */
     DWORD svcctl_SetServiceStatus(
         [in] SC_RPC_HANDLE hServiceStatus,
         [in] LPSERVICE_STATUS lpServiceStatus
+    );
+
+    /* Compatible with Windows function 0x08 */
+    DWORD svcctl_UnlockServiceDatabase(
+        [in,out] SC_RPC_LOCK *phLock
     );
 
     /* Compatible with Windows function 0x0b */

@@ -88,6 +88,11 @@ struct sc_service       /* service handle */
     struct service_entry *service_entry;
 };
 
+struct sc_lock
+{
+    char dummy; /* no state currently used */
+};
+
 /* Check if the given handle is of the required type and allows the requested access. */
 static DWORD validate_context_handle(SC_RPC_HANDLE handle, DWORD type, DWORD needed_access, struct sc_handle **out_hdr)
 {
@@ -650,6 +655,51 @@ DWORD svcctl_CloseServiceHandle(
 
     SC_RPC_HANDLE_destroy(*handle);
     *handle = NULL;
+
+    return ERROR_SUCCESS;
+}
+
+static void SC_RPC_LOCK_destroy(SC_RPC_LOCK hLock)
+{
+    unlock_service_database();
+    HeapFree(GetProcessHeap(), 0, hLock);
+}
+
+void __RPC_USER SC_RPC_LOCK_rundown(SC_RPC_LOCK hLock)
+{
+    SC_RPC_LOCK_destroy(hLock);
+}
+
+DWORD svcctl_LockServiceDatabase(
+    SC_RPC_HANDLE hSCManager,
+    SC_RPC_LOCK *phLock)
+{
+    struct sc_manager *manager;
+    DWORD err;
+
+    WINE_TRACE("(%p, %p)\n", hSCManager, phLock);
+
+    if ((err = validate_scm_handle(hSCManager, SC_MANAGER_LOCK, &manager)) != ERROR_SUCCESS)
+        return err;
+
+    err = lock_service_database();
+    if (err != ERROR_SUCCESS)
+        return err;
+
+    *phLock = HeapAlloc(GetProcessHeap(), 0, sizeof(struct sc_lock));
+    if (!*phLock)
+        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+
+    return ERROR_SUCCESS;
+}
+
+DWORD svcctl_UnlockServiceDatabase(
+    SC_RPC_LOCK *phLock)
+{
+    WINE_TRACE("(&%p)\n", *phLock);
+
+    SC_RPC_LOCK_destroy(*phLock);
+    *phLock = NULL;
 
     return ERROR_SUCCESS;
 }

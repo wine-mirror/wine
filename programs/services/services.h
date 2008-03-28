@@ -45,6 +45,9 @@ DWORD save_service_config(struct service_entry *entry);
 void free_service_entry(struct service_entry *entry);
 void release_service(struct service_entry *service);
 
+DWORD lock_service_database(void);
+void unlock_service_database(void);
+
 void lock_services(void);
 void unlock_services(void);
 

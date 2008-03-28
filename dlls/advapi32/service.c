@@ -954,21 +954,26 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
  */
 SC_LOCK WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
 {
-    HANDLE ret;
+    struct sc_manager *hscm;
+    SC_RPC_LOCK hLock;
+    DWORD err;
 
     TRACE("%p\n",hSCManager);
 
-    ret = CreateSemaphoreW( NULL, 1, 1, szSCMLock );
-    if( ret && GetLastError() == ERROR_ALREADY_EXISTS )
+    hscm = sc_handle_get_handle_data( hSCManager, SC_HTYPE_MANAGER );
+    if (!hscm)
     {
-        CloseHandle( ret );
-        ret = NULL;
-        SetLastError( ERROR_SERVICE_DATABASE_LOCKED );
+        SetLastError( ERROR_INVALID_HANDLE );
+        return NULL;
     }
 
-    TRACE("returning %p\n", ret);
-
-    return ret;
+    err = svcctl_LockServiceDatabase(hscm->hdr.server_handle, &hLock);
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError(err);
+        return NULL;
+    }
+    return hLock;
 }
 
 /******************************************************************************
@@ -976,9 +981,18 @@ SC_LOCK WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
  */
 BOOL WINAPI UnlockServiceDatabase (SC_LOCK ScLock)
 {
+    DWORD err;
+    SC_RPC_LOCK hRpcLock = ScLock;
+
     TRACE("%p\n",ScLock);
 
-    return CloseHandle( ScLock );
+    err = svcctl_UnlockServiceDatabase(&hRpcLock);
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError(err);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /******************************************************************************
