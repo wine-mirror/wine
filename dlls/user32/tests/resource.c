@@ -74,8 +74,8 @@ static void test_LoadStringA (void)
     static const char str[] = "String resource"; /* same in resource.rc */
     char buf[128];
     struct string_test {
-        int bufsiz;
-        int expected;
+        unsigned int bufsiz;
+        unsigned int expected;
     };
     struct string_test tests[] = {{sizeof buf, sizeof str - 1},
                                   {sizeof str, sizeof str - 1},
@@ -85,8 +85,8 @@ static void test_LoadStringA (void)
 
     assert (sizeof str < sizeof buf);
     for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
-        const int bufsiz = tests[i].bufsiz;
-        const int expected = tests[i].expected;
+        const unsigned int bufsiz = tests[i].bufsiz;
+        const unsigned int expected = tests[i].expected;
         const int len = LoadStringA (hInst, 0, buf, bufsiz);
 
         ok (len == expected, "bufsiz=%d: got %d, expected %d\n",
