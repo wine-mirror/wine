@@ -137,6 +137,152 @@ static void test_cmdline(void)
     ok(DeleteFile(infwithspaces), "Expected source inf to exist, last error was %d\n", GetLastError());
 }
 
+static void test_install_svc_from(void)
+{
+    char inf[2048];
+    char path[MAX_PATH];
+    HINF infhandle;
+    BOOL ret;
+    SC_HANDLE scm_handle, svc_handle;
+
+    /* Bail out if we are on win98 */
+    SetLastError(0xdeadbeef);
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+
+    if (!scm_handle && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        skip("OpenSCManagerA is not implemented, we are most likely on win9x\n");
+        return;
+    }
+    CloseServiceHandle(scm_handle);
+
+    /* Basic inf file to satisfy SetupOpenInfFileA */
+    strcpy(inf, "[Version]\nSignature=\"$Chicago$\"\n");
+    create_inf_file(inffile, inf);
+    sprintf(path, "%s\\%s", CURR_DIR, inffile);
+    infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+
+    /* Nothing but the Version section */
+    SetLastError(0xdeadbeef);
+    ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SECTION_NOT_FOUND,
+        "Expected ERROR_SECTION_NOT_FOUND, got %08x\n", GetLastError());
+    SetupCloseInfFile(infhandle);
+    DeleteFile(inffile);
+
+    /* Add the section */
+    strcat(inf, "[Winetest.Services]\n");
+    create_inf_file(inffile, inf);
+    infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    SetLastError(0xdeadbeef);
+    ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_SECTION_NOT_FOUND,
+        "Expected ERROR_SECTION_NOT_FOUND, got %08x\n", GetLastError());
+    SetupCloseInfFile(infhandle);
+    DeleteFile(inffile);
+
+    /* Add a reference */
+    strcat(inf, "AddService=Winetest,,Winetest.Service\n");
+    create_inf_file(inffile, inf);
+    infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    SetLastError(0xdeadbeef);
+    ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
+        "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
+    SetupCloseInfFile(infhandle);
+    DeleteFile(inffile);
+
+    /* Add the section */
+    strcat(inf, "[Winetest.Service]\n");
+    create_inf_file(inffile, inf);
+    infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    SetLastError(0xdeadbeef);
+    ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
+        "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
+    SetupCloseInfFile(infhandle);
+    DeleteFile(inffile);
+
+    /* Just the ServiceBinary */
+    strcat(inf, "ServiceBinary=%12%\\winetest.sys\n");
+    create_inf_file(inffile, inf);
+    infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    SetLastError(0xdeadbeef);
+    ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
+        "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
+    SetupCloseInfFile(infhandle);
+    DeleteFile(inffile);
+
+    /* Add the ServiceType */
+    strcat(inf, "ServiceType=1\n");
+    create_inf_file(inffile, inf);
+    infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    SetLastError(0xdeadbeef);
+    ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
+        "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
+    SetupCloseInfFile(infhandle);
+    DeleteFile(inffile);
+
+    /* Add the StartType */
+    strcat(inf, "StartType=4\n");
+    create_inf_file(inffile, inf);
+    infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    SetLastError(0xdeadbeef);
+    ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
+        "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
+    SetupCloseInfFile(infhandle);
+    DeleteFile(inffile);
+
+    /* This should be it, the minimal entries to install a service */
+    strcat(inf, "ErrorControl=1");
+    create_inf_file(inffile, inf);
+    infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    SetLastError(0xdeadbeef);
+    ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
+    todo_wine
+    {
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS,
+        "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+    }
+    SetupCloseInfFile(infhandle);
+    DeleteFile(inffile);
+
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
+
+    /* Open the service to see if it's really there */
+    svc_handle = OpenServiceA(scm_handle, "Winetest", DELETE);
+    todo_wine
+    ok(svc_handle != NULL, "Service was not created\n");
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteService(svc_handle);
+    todo_wine
+    ok(ret, "Service could not be deleted : %d\n", GetLastError());
+
+    CloseServiceHandle(svc_handle);
+    CloseServiceHandle(scm_handle);
+
+    /* TODO: Test the Flags */
+}
+
 static void test_driver_install(void)
 {
     HANDLE handle;
@@ -254,6 +400,7 @@ START_TEST(install)
         assert(hhook != 0);
 
         test_cmdline();
+        test_install_svc_from();
         test_driver_install();
 
         UnhookWindowsHookEx(hhook);
