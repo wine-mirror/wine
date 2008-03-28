@@ -768,10 +768,15 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     const GlPixelFormatDesc *glDesc;
     getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
-
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#x\n", This, Width, Height, Levels, Usage);
     TRACE("Format %#x (%s), Pool %#x, ppTexture %p, pSharedHandle %p, parent %p\n",
             Format, debug_d3dformat(Format), Pool, ppTexture, pSharedHandle, parent);
+
+    if((Usage & (WINED3DUSAGE_AUTOGENMIPMAP | WINED3DUSAGE_RENDERTARGET)) ==
+                (WINED3DUSAGE_AUTOGENMIPMAP | WINED3DUSAGE_RENDERTARGET)) {
+        WARN("Application requests both D3DUSAGE_AUTOGENMIPMAP and D3DUSAGE_RENDERTARGET, which are mutually exclusive\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */
@@ -1038,6 +1043,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     unsigned int pow2EdgeLength  = EdgeLength;
     const GlPixelFormatDesc *glDesc;
     getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
+
+    if((Usage & (WINED3DUSAGE_AUTOGENMIPMAP | WINED3DUSAGE_RENDERTARGET)) ==
+                (WINED3DUSAGE_AUTOGENMIPMAP | WINED3DUSAGE_RENDERTARGET)) {
+        WARN("Application requests both D3DUSAGE_AUTOGENMIPMAP and D3DUSAGE_RENDERTARGET, which are mutually exclusive\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     /* TODO: It should only be possible to create textures for formats 
              that are reported as supported */

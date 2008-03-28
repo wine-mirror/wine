@@ -137,7 +137,7 @@ static void test_cube_texture_mipmap_gen(IDirect3DDevice9 *device_ptr)
     hr = IDirect3DDevice9_CreateCubeTexture(device_ptr, 64, 0, (D3DUSAGE_RENDERTARGET |
                                             D3DUSAGE_AUTOGENMIPMAP), D3DFMT_X8R8G8B8,
                                             D3DPOOL_MANAGED, &texture_ptr, 0);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_CreateTexture returned 0x%08x, expected 0x%08x\n",
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_CreateTexture returned 0x%08x, expected 0x%08x\n",
        hr, D3DERR_INVALIDCALL);
     if (texture_ptr) IDirect3DCubeTexture9_Release(texture_ptr);
     texture_ptr = NULL;
@@ -186,7 +186,7 @@ static void test_mipmap_gen(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, (D3DUSAGE_RENDERTARGET |
                                         D3DUSAGE_AUTOGENMIPMAP), D3DFMT_X8R8G8B8,
                                         D3DPOOL_MANAGED, &texture, 0);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_CreateTexture returned 0x%08x, expected 0x%08x\n",
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_CreateTexture returned 0x%08x, expected 0x%08x\n",
        hr, D3DERR_INVALIDCALL);
     if (texture) IDirect3DTexture9_Release(texture);
     texture = NULL;
