@@ -40,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 #define MAXDPI 480
 #define DEFDPI 96
 
+#define IDT_DPIEDIT 0x1234
+
 static const WCHAR logpixels_reg[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s','\\','C','u','r','r','e','n','t','\\','S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
 static const WCHAR logpixels[] = {'L','o','g','P','i','x','e','l','s',0};
 
@@ -253,18 +255,16 @@ static INT read_logpixels_reg(void)
 
 static void init_dpi_editbox(HWND hDlg)
 {
-    HWND hDpiEditBox = GetDlgItem(hDlg, IDC_RES_DPIEDIT);
     DWORD dwLogpixels;
     char szLogpixels[MAXBUFLEN];
 
     updating_ui = TRUE;
 
     dwLogpixels = read_logpixels_reg();
-    WINE_TRACE("%d\n", (int) dwLogpixels);
+    WINE_TRACE("%u\n", dwLogpixels);
 
-    szLogpixels[0] = 0;
-    sprintf(szLogpixels, "%d", dwLogpixels);
-    SendMessage(hDpiEditBox, WM_SETTEXT, 0, (LPARAM) szLogpixels);
+    sprintf(szLogpixels, "%u", dwLogpixels);
+    SetDlgItemText(hDlg, IDC_RES_DPIEDIT, szLogpixels);
 
     updating_ui = FALSE;
 }
@@ -284,6 +284,40 @@ static void init_trackbar(HWND hDlg)
     updating_ui = FALSE;
 }
 
+static void update_dpi_trackbar_from_edit(HWND hDlg, BOOL fix)
+{
+    DWORD dpi;
+
+    updating_ui = TRUE;
+
+    dpi = GetDlgItemInt(hDlg, IDC_RES_DPIEDIT, NULL, FALSE);
+
+    if (fix)
+    {
+        DWORD fixed_dpi = dpi;
+
+        if (dpi < MINDPI) fixed_dpi = MINDPI;
+        if (dpi > MAXDPI) fixed_dpi = MAXDPI;
+
+        if (fixed_dpi != dpi)
+        {
+            char buf[16];
+
+            dpi = fixed_dpi;
+            sprintf(buf, "%u", dpi);
+            SetDlgItemText(hDlg, IDC_RES_DPIEDIT, buf);
+        }
+    }
+
+    if (dpi >= MINDPI && dpi <= MAXDPI)
+    {
+        SendDlgItemMessage(hDlg, IDC_RES_TRACKBAR, TBM_SETPOS, TRUE, dpi);
+        set_reg_key_dwordW(HKEY_LOCAL_MACHINE, logpixels_reg, logpixels, dpi);
+    }
+
+    updating_ui = FALSE;
+}
+
 INT_PTR CALLBACK
 GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -296,6 +330,14 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_SHOWWINDOW:
             set_window_title(hDlg);
             break;
+
+        case WM_TIMER:
+            if (wParam == IDT_DPIEDIT)
+            {
+                KillTimer(hDlg, IDT_DPIEDIT);
+                update_dpi_trackbar_from_edit(hDlg, TRUE);
+            }
+            break;
             
 	case WM_COMMAND:
 	    switch(HIWORD(wParam)) {
@@ -304,6 +346,11 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 		    if ( ((LOWORD(wParam) == IDC_DESKTOP_WIDTH) || (LOWORD(wParam) == IDC_DESKTOP_HEIGHT)) && !updating_ui )
 			set_from_desktop_edits(hDlg);
+                    else if (LOWORD(wParam) == IDC_RES_DPIEDIT)
+                    {
+                        update_dpi_trackbar_from_edit(hDlg, FALSE);
+                        SetTimer(hDlg, IDT_DPIEDIT, 1500, NULL);
+                    }
 		    break;
 		}
 		case BN_CLICKED: {
