@@ -192,6 +192,8 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
 
     service_handle = RegisterServiceCtrlHandlerExW( driver_name, service_handler, NULL );
+    if (!service_handle)
+        return;
 
     status.dwServiceType             = SERVICE_WIN32;
     status.dwCurrentState            = SERVICE_START_PENDING;
