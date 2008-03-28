@@ -1986,21 +1986,24 @@ static void SETUPDI_AddDeviceInterfaces(SP_DEVINFO_DATA *dev, HKEY key,
             HKEY subKey;
             SP_DEVICE_INTERFACE_DATA *iface = NULL;
 
-            /* The subkey name is the reference string, with a '#' prepended */
-            SETUPDI_AddInterfaceInstance(dev, interface, subKeyName + 1,
-                    &iface);
-            l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
-            if (!l)
+            if (*subKeyName == '#')
             {
-                WCHAR symbolicLink[MAX_PATH];
-                DWORD dataType;
+                /* The subkey name is the reference string, with a '#' prepended */
+                SETUPDI_AddInterfaceInstance(dev, interface, subKeyName + 1,
+                        &iface);
+                l = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
+                if (!l)
+                {
+                    WCHAR symbolicLink[MAX_PATH];
+                    DWORD dataType;
 
-                len = sizeof(symbolicLink);
-                l = RegQueryValueExW(subKey, SymbolicLink, NULL, &dataType,
-                        (BYTE *)symbolicLink, &len);
-                if (!l && dataType == REG_SZ)
-                    SETUPDI_SetInterfaceSymbolicLink(iface, symbolicLink);
-                RegCloseKey(subKey);
+                    len = sizeof(symbolicLink);
+                    l = RegQueryValueExW(subKey, SymbolicLink, NULL, &dataType,
+                            (BYTE *)symbolicLink, &len);
+                    if (!l && dataType == REG_SZ)
+                        SETUPDI_SetInterfaceSymbolicLink(iface, symbolicLink);
+                    RegCloseKey(subKey);
+                }
             }
             /* Allow enumeration to continue */
             l = ERROR_SUCCESS;
