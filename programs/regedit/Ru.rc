@@ -49,6 +49,7 @@ BEGIN
             MENUITEM "&Строковое значение",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Бинарное значение",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD значение",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Много-строковое значение",       ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Удалить\tDel",                ID_EDIT_DELETE
@@ -80,10 +81,145 @@ BEGIN
     END
 END
 
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Изменить",                   ID_EDIT_MODIFY
+	MENUITEM "Изменить &бинарное значение", ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Удалить\tDel",               ID_EDIT_DELETE
+	MENUITEM "&Переименовать",              ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "Созд&ать"
+        BEGIN
+            MENUITEM "Кл&юч",                   ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Строковое значение",     ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Бинарное значение",      ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD значение",         ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Много-строковое значение", ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Удалить\tDel",               ID_EDIT_DELETE
+        MENUITEM "&Переименовать\tF2",          ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "С&копировать имя ключа",      ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Найти\tCtrl+F",              ID_EDIT_FIND, GRAYED
+  END
+END
+
 
 /*
  * Dialog
  */
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Экспорт реестра", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "&Весь реестр", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "В&ыбранную ветку:", IDC_EXPORT_SELECTED, 12, 30, 80, 12
+    EDITTEXT IDC_EXPORT_PATH, 92, 30, 174, 12
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Поиск"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Найти:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,120,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "Искать в:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Ключах", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Названиях значений", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Содержимом", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Всю строку целиком", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Искать",IDOK,170,5,35,11,WS_GROUP
+    PUSHBUTTON      "Закрыть",IDCANCEL,170,22,35,11, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Добавить избранное"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Имя:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,130,40,30,11,WS_GROUP
+    PUSHBUTTON      "Отменить",IDCANCEL,165,40,40,11, WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Удалить избранное"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Имя:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,130,73,30,11,WS_GROUP
+    PUSHBUTTON      "Отменить",IDCANCEL,165,73,40,11, WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Изменить строку"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Название значения:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Данные:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,130,60,30,11,WS_GROUP
+    PUSHBUTTON      "Отменить",IDCANCEL,165,60,40,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Изменить DWORD"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Название значения:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Данные:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Исчисление", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "16-ти ричное", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Десятичное", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,130,80,30,11,WS_GROUP
+    PUSHBUTTON      "Отменить",IDCANCEL,165,80,40,11,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Изменить бинарные данные"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Название значения:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Данные:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
+    DEFPUSHBUTTON   "OK",IDOK,130,80,30,11,WS_GROUP
+    PUSHBUTTON      "Отменить",IDCANCEL,165,80,40,11,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Изменить много-строковые данные"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Название значения:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Данные:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,130,160,30,11,WS_GROUP
+    PUSHBUTTON      "Отменить",IDCANCEL,165,160,40,11,WS_GROUP
+END
 
 /*
  * String Table
@@ -118,6 +254,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Добавляет новое строковое значение"
     ID_EDIT_NEW_BINARYVALUE "Добавляет новое бинарное значение"
     ID_EDIT_NEW_DWORDVALUE  "Добавляет новое DWORD-значение"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Добавляет новое много-строковое значение"
     ID_REGISTRY_IMPORTREGISTRYFILE "Импортирует текстовой файл в реестр"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Экспортирует весь реестр или его часть в текстовой файл"
@@ -143,6 +280,36 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Копирует имя выделенного ключа в буфер обмена"
     ID_EDIT_FIND            "Ищет текстовую строку в ключе, значении или данных"
     ID_EDIT_FINDNEXT        "Ищет следующее совпадение текста, заданного в предыдущем поиске"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "Ошыбка"
+    IDS_BAD_KEY		    "Невозможно запросить ключ '%s'"
+    IDS_BAD_VALUE           "Невозможно запросить значение '%s'"
+    IDS_UNSUPPORTED_TYPE    "Редактирование ключей типа (%ld) не поддерживается"
+    IDS_TOO_BIG_VALUE       "Значение слишком велико (%ld)"
+    IDS_DELETE_BOX_TITLE    "Подтверждение"
+    IDS_DELETE_BOX_TEXT     "Удалить значение '%s'?"
+    IDS_NEWKEY              "Новый ключ #%d"
+    IDS_NEWVALUE            "Новое значени #%d"
+    IDS_NOTFOUND            "Искомая строка '%s' не найдена"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Импорт файла реестра"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Экспорт файла реестра"
+    IDS_FILEDIALOG_FILTER         "Все файлы реестра\0*.reg\0Файлы реестра для Win9x/NT4 (REGEDIT4)\0*.reg\0Все файлы (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "Мой Компьютер"
+    IDS_REGISTRY_DEFAULT_VALUE       "(По умолчанию)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(значение не задано)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(невозможно отобразить)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(неизвестно %d)"
 END
 
 /*****************************************************************/

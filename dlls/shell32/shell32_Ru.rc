@@ -106,6 +106,37 @@ FONT 8, "MS Shell Dlg"
 	        4, 40, 180, 120
 }
 
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Обзор"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT "", IDD_TITLE, 10, 8, 198, 24
+    LTEXT "", IDD_STATUS, 10, 25, 198, 12
+    LTEXT "Папка:", IDD_FOLDER, 10, 156, 40, 12
+    CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+                TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+                WS_BORDER | WS_TABSTOP,
+                12, 38, 194, 105
+    EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Создать &новую папку", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+    DEFPUSHBUTTON "Да", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Отменить", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Сообщение"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Да", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Да для &всех", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Нет", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Отменить", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "О %s"
@@ -147,10 +178,13 @@ STRINGTABLE
     IDS_SHV_COLUMN9		"Комментарий"
     IDS_SHV_COLUMN10		"Владелец"
     IDS_SHV_COLUMN11		"Группа"
+    IDS_SHV_COLUMN_DELFROM	"Исходное местонаходение"
+    IDS_SHV_COLUMN_DELDATE	"Время удаления"
 
     /* special folders */
     IDS_DESKTOP			"Рабочий стол"
     IDS_MYCOMPUTER		"Мой компьютер"
+    IDS_RECYCLEBIN_FOLDER_NAME  "Корзина"
 
     /* context menus */
     IDS_VIEW_LARGE		"&Большие значки"
@@ -166,7 +200,12 @@ STRINGTABLE
     IDS_DELETEFOLDER_CAPTION	"Подтверждение удаления папки"
     IDS_DELETEITEM_TEXT		"Удалить '%1'?"
     IDS_DELETEMULTIPLE_TEXT	"Удалить эти обьекты (%1)?"
-    IDS_OVERWRITEFILE_TEXT "Папка уже содержит файл '%1'.\n\nВы хотите заменить его?"
+    IDS_DELETESELECTED_TEXT     "Удалить выбранные обьекты?"
+    IDS_TRASHITEM_TEXT          "Переместить '%1' в корзину?"
+    IDS_TRASHFOLDER_TEXT        "Переместить папку '%1' и все ее содержимое корзину?"
+    IDS_TRASHMULTIPLE_TEXT      "Переместить обьекты %1 в корзину?"
+    IDS_CANTTRASH_TEXT          "Обьект '%1' не может быть послан в корзину. Вы хотите его удаить?"
+    IDS_OVERWRITEFILE_TEXT      "Папка уже содержит файл '%1'.\n\nВы хотите заменить его?"
     IDS_OVERWRITEFILE_CAPTION	"Подтверждение замены файла"
     IDS_OVERWRITEFOLDER_TEXT "Эта папка уже содержит папку '%1'.\n\n"\
 	    "Если файлы в конечной папке имеют те же имена, что и файлы в выбранной\n"\
