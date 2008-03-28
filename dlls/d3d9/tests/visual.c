@@ -7701,6 +7701,182 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(backbuf);
 }
 
+struct formats {
+    const char *fmtName;
+    D3DFORMAT textureFormat;
+    DWORD resultColorBlending;
+    DWORD resultColorNoBlending;
+};
+
+const struct formats test_formats[] = {
+  { "D3DFMT_G16R16", D3DFMT_G16R16, 0x00181800, 0x002010ff},
+  { "D3DFMT_R16F", D3DFMT_R16F, 0x0018ffff, 0x0020ffff },
+  { "D3DFMT_G16R16F", D3DFMT_G16R16F, 0x001818ff, 0x002010ff },
+  { "D3DFMT_A16B16G16R16F", D3DFMT_A16B16G16R16F, 0x00181800, 0x00201000 },
+  { "D3DFMT_R32F", D3DFMT_R32F, 0x0018ffff, 0x0020ffff },
+  { "D3DFMT_G32R32F", D3DFMT_G32R32F, 0x001818ff, 0x002010ff },
+  { "D3DFMT_A32B32G32R32F", D3DFMT_A32B32G32R32F, 0x00181800, 0x00201000 },
+  { NULL, 0 }
+};
+
+static void pixelshader_blending_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DTexture9 *offscreenTexture = NULL;
+    IDirect3DSurface9 *backbuffer = NULL, *offscreen = NULL;
+    IDirect3D9 *d3d = NULL;
+    DWORD color;
+    int fmt_index;
+
+    static const float quad[][5] = {
+        {-0.5f, -0.5f, 0.1f, 0.0f, 0.0f},
+        {-0.5f,  0.5f, 0.1f, 0.0f, 1.0f},
+        { 0.5f, -0.5f, 0.1f, 1.0f, 0.0f},
+        { 0.5f,  0.5f, 0.1f, 1.0f, 1.0f},
+    };
+
+    /* Quad with R=0x10, G=0x20 */
+    static const struct vertex quad1[] = {
+        {-1.0f, -1.0f, 0.1f, 0x80102000},
+        {-1.0f,  1.0f, 0.1f, 0x80102000},
+        { 1.0f, -1.0f, 0.1f, 0x80102000},
+        { 1.0f,  1.0f, 0.1f, 0x80102000},
+    };
+
+    /* Quad with R=0x20, G=0x10 */
+    static const struct vertex quad2[] = {
+        {-1.0f, -1.0f, 0.1f, 0x80201000},
+        {-1.0f,  1.0f, 0.1f, 0x80201000},
+        { 1.0f, -1.0f, 0.1f, 0x80201000},
+        { 1.0f,  1.0f, 0.1f, 0x80201000},
+    };
+
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(hr == D3D_OK, "Can't get back buffer, hr = %s\n", DXGetErrorString9(hr));
+    if(!backbuffer) {
+        goto out;
+    }
+
+    for(fmt_index=0; test_formats[fmt_index].textureFormat != 0; fmt_index++)
+    {
+        D3DFORMAT fmt = test_formats[fmt_index].textureFormat;
+        if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, fmt) != D3D_OK) {
+           skip("%s textures not supported\n", test_formats[fmt_index].fmtName);
+           continue;
+        }
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+        ok(hr == D3D_OK, "Clear failed, hr = %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
+        ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %s\n", DXGetErrorString9(hr));
+        if(!offscreenTexture) {
+            continue;
+        }
+
+        hr = IDirect3DTexture9_GetSurfaceLevel(offscreenTexture, 0, &offscreen);
+        ok(hr == D3D_OK, "Can't get offscreen surface, hr = %s\n", DXGetErrorString9(hr));
+        if(!offscreen) {
+            continue;
+        }
+
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+        ok(hr == D3D_OK, "SetFVF failed, hr = %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+        ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+        ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+        ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MINFILTER failed (0x%08x)\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+        ok(SUCCEEDED(hr), "SetSamplerState D3DSAMP_MAGFILTER failed (0x%08x)\n", hr);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
+
+        /* Below we will draw two quads with different colors and try to blend them together.
+         * The result color is compared with the expected outcome.
+         */
+        if(IDirect3DDevice9_BeginScene(device) == D3D_OK) {
+            hr = IDirect3DDevice9_SetRenderTarget(device, 0, offscreen);
+            ok(hr == D3D_OK, "SetRenderTarget failed, hr = %s\n", DXGetErrorString9(hr));
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ffffff, 0.0, 0);
+            ok(hr == D3D_OK, "Clear failed, hr = %s\n", DXGetErrorString9(hr));
+
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHABLENDENABLE, TRUE);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
+
+            /* Draw a quad using color 0x0010200 */
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRCBLEND, D3DBLEND_ONE);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DESTBLEND, D3DBLEND_ZERO);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(quad1[0]));
+            ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %#08x\n", hr);
+
+            /* Draw a quad using color 0x0020100 */
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(quad2[0]));
+            ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %#08x\n", hr);
+
+            /* We don't want to blend the result on the backbuffer */
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHABLENDENABLE, FALSE);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
+
+            /* Prepare rendering the 'blended' texture quad to the backbuffer */
+            hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+            ok(hr == D3D_OK, "SetRenderTarget failed, hr = %s\n", DXGetErrorString9(hr));
+            hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) offscreenTexture);
+            ok(hr == D3D_OK, "SetTexture failed, %s\n", DXGetErrorString9(hr));
+
+            hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+            ok(hr == D3D_OK, "SetFVF failed, hr = %s\n", DXGetErrorString9(hr));
+
+            /* This time with the texture */
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+            ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %s\n", DXGetErrorString9(hr));
+
+            IDirect3DDevice9_EndScene(device);
+        }
+        IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+
+        if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING, D3DRTYPE_TEXTURE, fmt) == D3D_OK) {
+            /* Compare the color of the center quad with our expectation */
+            color = getPixelColor(device, 320, 240);
+            trace("[Blending] %s: expected=%x, result=%x\n", test_formats[fmt_index].fmtName, test_formats[fmt_index].resultColorBlending, color);
+            ok(color == test_formats[fmt_index].resultColorBlending, "Offscreen failed for %s: Got color %#08x, expected %#08x.\n", test_formats[fmt_index].fmtName, color, test_formats[fmt_index].resultColorBlending);
+        } else {
+            /* No pixel shader blending is supported so expected garbage.The type of 'garbage' depends on the driver version and OS.
+             * E.g. on G16R16 ati reports (on old r9600 drivers) 0x00ffffff and on modern ones 0x002010ff which is also what Nvidia
+             * reports. On Vista Nvidia seems to report 0x00ffffff on Geforce7 cards. */
+            color = getPixelColor(device, 320, 240);
+            trace("[No blending] %s: expected %x  or 0x00ffffff, result=%x\n", test_formats[fmt_index].fmtName, test_formats[fmt_index].resultColorNoBlending, color);
+            todo_wine ok((color == 0x00ffffff) || (color == test_formats[fmt_index].resultColorNoBlending), "Offscreen failed for %s: expected garbage but color %#08x, matches the result we would have with blending. (todo)\n", test_formats[fmt_index].fmtName, color);
+        }
+
+        IDirect3DDevice9_SetTexture(device, 0, NULL);
+        if(offscreenTexture) {
+            IDirect3DTexture9_Release(offscreenTexture);
+        }
+        if(offscreen) {
+            IDirect3DSurface9_Release(offscreen);
+        }
+    }
+
+out:
+    /* restore things */
+    if(backbuffer) {
+        IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+        IDirect3DSurface9_Release(backbuffer);
+    }
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -7781,6 +7957,7 @@ START_TEST(visual)
     release_buffer_test(device_ptr);
     float_texture_test(device_ptr);
     g16r16_texture_test(device_ptr);
+    pixelshader_blending_test(device_ptr);
     texture_transform_flags_test(device_ptr);
     autogen_mipmap_test(device_ptr);
     fixed_function_decl_test(device_ptr);
