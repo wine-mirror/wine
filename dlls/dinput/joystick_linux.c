@@ -423,7 +423,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->base.lpVtbl = jvt;
     newDevice->base.ref = 1;
     newDevice->base.dinput = dinput;
-    CopyMemory(&newDevice->base.guid, rguid, sizeof(*rguid));
+    newDevice->base.guid = *rguid;
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
 
