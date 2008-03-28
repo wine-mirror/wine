@@ -133,3 +133,12 @@ LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 	9  "Dispozitiv WaveOut implicit"
 	10 "Dispozitiv MidiOut implicit"
 }
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+{
+	7  "Стандартный DirectSound"
+	8  "DirectSound: %s"
+	9  "Звуковое устройство вывода по умолчанию"
+	10 "Устройство вывода MIDI по умолчанию"
+}
