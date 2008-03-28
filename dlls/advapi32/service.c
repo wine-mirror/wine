@@ -646,29 +646,6 @@ static BOOL service_handle_get_status(HANDLE pipe, const service_data *service)
 }
 
 /******************************************************************************
- * service_get_status
- */
-static BOOL service_get_status(HANDLE pipe, LPSERVICE_STATUS_PROCESS status)
-{
-    DWORD cmd[2], count = 0;
-    BOOL r;
-    
-    cmd[0] = WINESERV_GETSTATUS;
-    cmd[1] = 0;
-    r = WriteFile( pipe, cmd, sizeof cmd, &count, NULL );
-    if (!r || count != sizeof cmd)
-    {
-        ERR("service protocol error - failed to write pipe!\n");
-        return r;
-    }
-    r = ReadFile( pipe, status, sizeof *status, &count, NULL );
-    if (!r || count != sizeof *status)
-        ERR("service protocol error - failed to read pipe "
-            "r = %d  count = %d!\n", r, count);
-    return r;
-}
-
-/******************************************************************************
  * service_send_control
  */
 static BOOL service_send_control(HANDLE pipe, DWORD dwControl, DWORD *result)
@@ -1014,8 +991,8 @@ BOOL WINAPI UnlockServiceDatabase (SC_LOCK ScLock)
 BOOL WINAPI
 SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 {
-    ULONG_PTR index = HandleToULong(hService) - 1;
-    BOOL r = FALSE;
+    struct sc_service *hsvc;
+    DWORD err;
 
     TRACE("%p %x %x %x %x %x %x %x\n", hService,
           lpStatus->dwServiceType, lpStatus->dwCurrentState,
@@ -1023,16 +1000,24 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
           lpStatus->dwServiceSpecificExitCode, lpStatus->dwCheckPoint,
           lpStatus->dwWaitHint);
 
-    EnterCriticalSection( &service_cs );
-    if (index < nb_services)
+    hsvc = sc_handle_get_handle_data((SC_HANDLE)hService, SC_HTYPE_SERVICE);
+    if (!hsvc)
     {
-        memcpy( &services[index]->status, lpStatus, sizeof(SERVICE_STATUS) );
-        TRACE("Set service status to %d\n",services[index]->status.dwCurrentState);
-        r = TRUE;
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
     }
-    LeaveCriticalSection( &service_cs );
 
-    return r;
+    err = svcctl_SetServiceStatus( hsvc->hdr.server_handle, lpStatus );
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError(err);
+        return FALSE;
+    }
+
+    if (lpStatus->dwCurrentState == SERVICE_STOPPED)
+        CloseServiceHandle((SC_HANDLE)hService);
+
+    return TRUE;
 }
 
 
@@ -1695,11 +1680,12 @@ BOOL WINAPI QueryServiceStatus(SC_HANDLE hService,
 {
     SERVICE_STATUS_PROCESS SvcStatusData;
     BOOL ret;
+    DWORD dummy;
 
     TRACE("%p %p\n", hService, lpservicestatus);
 
     ret = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)&SvcStatusData,
-                                sizeof(SERVICE_STATUS_PROCESS), NULL);
+                                sizeof(SERVICE_STATUS_PROCESS), &dummy);
     if (ret) memcpy(lpservicestatus, &SvcStatusData, sizeof(SERVICE_STATUS)) ;
     return ret;
 }
@@ -1726,34 +1712,9 @@ BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
                         LPDWORD pcbBytesNeeded)
 {
     struct sc_service *hsvc;
-    DWORD size, type, val;
-    HANDLE pipe;
-    LONG r;
-    LPSERVICE_STATUS_PROCESS pSvcStatusData;
+    DWORD err;
 
     TRACE("%p %d %p %d %p\n", hService, InfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
-
-    if (InfoLevel != SC_STATUS_PROCESS_INFO)
-    {
-        SetLastError( ERROR_INVALID_LEVEL);
-        return FALSE;
-    }
-
-    pSvcStatusData = (LPSERVICE_STATUS_PROCESS) lpBuffer;
-    if (pSvcStatusData == NULL)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if (cbBufSize < sizeof(SERVICE_STATUS_PROCESS))
-    {
-        if( pcbBytesNeeded != NULL)
-            *pcbBytesNeeded = sizeof(SERVICE_STATUS_PROCESS);
-
-        SetLastError( ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
-    }
 
     hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
     if (!hsvc)
@@ -1762,30 +1723,12 @@ BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
         return FALSE;
     }
 
-    pipe = service_open_pipe(hsvc->name);
-    if (pipe != INVALID_HANDLE_VALUE)
+    err = svcctl_QueryServiceStatusEx(hsvc->hdr.server_handle, InfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
+    if (err != ERROR_SUCCESS)
     {
-        r = service_get_status(pipe, pSvcStatusData);
-        CloseHandle(pipe);
-        if (r)
-            return TRUE;
+        SetLastError(err);
+        return FALSE;
     }
-
-    TRACE("Failed to read service status\n");
-
-    /* read the service type from the registry */
-    size = sizeof(val);
-    r = RegQueryValueExA(hsvc->hkey, "Type", NULL, &type, (LPBYTE)&val, &size);
-    if (r != ERROR_SUCCESS || type != REG_DWORD)
-        val = 0;
-
-    pSvcStatusData->dwServiceType = val;
-    pSvcStatusData->dwCurrentState            = SERVICE_STOPPED;  /* stopped */
-    pSvcStatusData->dwControlsAccepted        = 0;
-    pSvcStatusData->dwWin32ExitCode           = ERROR_SERVICE_NEVER_STARTED;
-    pSvcStatusData->dwServiceSpecificExitCode = 0;
-    pSvcStatusData->dwCheckPoint              = 0;
-    pSvcStatusData->dwWaitHint                = 0;
 
     return TRUE;
 }
@@ -2569,10 +2512,20 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA( LPCSTR name, LPHANDL
 SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceName,
         LPHANDLER_FUNCTION_EX lpHandlerProc, LPVOID lpContext )
 {
-    SERVICE_STATUS_HANDLE handle = 0;
+    SC_HANDLE hService;
+    SC_HANDLE hSCM;
     unsigned int i;
+    BOOL found = FALSE;
 
     TRACE("%s %p %p\n", debugstr_w(lpServiceName), lpHandlerProc, lpContext);
+
+    hSCM = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
+    if (!hSCM)
+        return NULL;
+    hService = OpenServiceW( hSCM, lpServiceName, SERVICE_SET_STATUS );
+    CloseServiceHandle(hSCM);
+    if (!hService)
+        return NULL;
 
     EnterCriticalSection( &service_cs );
     for (i = 0; i < nb_services; i++)
@@ -2581,13 +2534,20 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceNam
         {
             services[i]->handler = lpHandlerProc;
             services[i]->context = lpContext;
-            handle = ULongToHandle( i + 1 );
+            found = TRUE;
             break;
         }
     }
     LeaveCriticalSection( &service_cs );
 
-    return handle;
+    if (!found)
+    {
+        CloseServiceHandle(hService);
+        SetLastError(ERROR_SERVICE_DOES_NOT_EXIST);
+        return NULL;
+    }
+
+    return (SERVICE_STATUS_HANDLE)hService;
 }
 
 /******************************************************************************

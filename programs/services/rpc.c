@@ -570,6 +570,79 @@ DWORD svcctl_ChangeServiceConfigW(
     return ERROR_SUCCESS;
 }
 
+DWORD svcctl_SetServiceStatus(
+    SC_RPC_HANDLE hServiceStatus,
+    LPSERVICE_STATUS lpServiceStatus)
+{
+    struct sc_service *service;
+    DWORD err;
+
+    WINE_TRACE("(%p, %p)\n", hServiceStatus, lpServiceStatus);
+
+    if ((err = validate_service_handle(hServiceStatus, SERVICE_SET_STATUS, &service)) != 0)
+        return err;
+
+    lock_services();
+    /* FIXME: be a bit more discriminant about what parts of the status we set
+     * and check that fields are valid */
+    service->service_entry->status.dwServiceType = lpServiceStatus->dwServiceType;
+    service->service_entry->status.dwCurrentState = lpServiceStatus->dwCurrentState;
+    service->service_entry->status.dwControlsAccepted = lpServiceStatus->dwControlsAccepted;
+    service->service_entry->status.dwWin32ExitCode = lpServiceStatus->dwWin32ExitCode;
+    service->service_entry->status.dwServiceSpecificExitCode = lpServiceStatus->dwServiceSpecificExitCode;
+    service->service_entry->status.dwCheckPoint = lpServiceStatus->dwCheckPoint;
+    service->service_entry->status.dwWaitHint = lpServiceStatus->dwWaitHint;
+    unlock_services();
+
+    return ERROR_SUCCESS;
+}
+
+DWORD svcctl_QueryServiceStatusEx(
+    SC_RPC_HANDLE hService,
+    SC_STATUS_TYPE InfoLevel,
+    BYTE *lpBuffer,
+    DWORD cbBufSize,
+    LPDWORD pcbBytesNeeded)
+{
+    struct sc_service *service;
+    DWORD err;
+    LPSERVICE_STATUS_PROCESS pSvcStatusData;
+
+    if ((err = validate_service_handle(hService, SERVICE_QUERY_STATUS, &service)) != 0)
+        return err;
+
+    if (InfoLevel != SC_STATUS_PROCESS_INFO)
+        return ERROR_INVALID_LEVEL;
+
+    pSvcStatusData = (LPSERVICE_STATUS_PROCESS) lpBuffer;
+    if (pSvcStatusData == NULL)
+        return ERROR_INVALID_PARAMETER;
+
+    if (cbBufSize < sizeof(SERVICE_STATUS_PROCESS))
+    {
+        if( pcbBytesNeeded != NULL)
+            *pcbBytesNeeded = sizeof(SERVICE_STATUS_PROCESS);
+
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    lock_services();
+
+    pSvcStatusData->dwServiceType = service->service_entry->status.dwServiceType;
+    pSvcStatusData->dwCurrentState = service->service_entry->status.dwCurrentState;
+    pSvcStatusData->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
+    pSvcStatusData->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
+    pSvcStatusData->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
+    pSvcStatusData->dwCheckPoint = service->service_entry->status.dwCheckPoint;
+    pSvcStatusData->dwWaitHint = service->service_entry->status.dwWaitHint;
+    pSvcStatusData->dwProcessId = service->service_entry->status.dwProcessId;
+    pSvcStatusData->dwServiceFlags = service->service_entry->status.dwServiceFlags;
+
+    unlock_services();
+
+    return ERROR_SUCCESS;
+}
+
 DWORD svcctl_CloseServiceHandle(
     SC_RPC_HANDLE *handle)
 {
