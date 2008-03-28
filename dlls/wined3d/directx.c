@@ -3676,7 +3676,7 @@ BOOL InitAdapters(void) {
     /* No need to hold any lock. The calling library makes sure only one thread calls
      * wined3d simultaneously
      */
-    if(numAdapters > 0) return TRUE;
+    if(numAdapters > 0) return Adapters[0].opengl;
 
     TRACE("Initializing adapters\n");
 
@@ -3686,7 +3686,7 @@ BOOL InitAdapters(void) {
         mod_gl = LoadLibraryA("opengl32.dll");
         if(!mod_gl) {
             ERR("Can't load opengl32.dll!\n");
-            return FALSE;
+            goto nogl_adapter;
         }
 #else
 #define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
@@ -3702,7 +3702,7 @@ BOOL InitAdapters(void) {
 
     if(!pwglGetProcAddress) {
         ERR("Unable to load wglGetProcAddress!\n");
-        return FALSE;
+        goto nogl_adapter;
     }
 
 /* Dynamically load all GL core functions */
@@ -3728,32 +3728,28 @@ BOOL InitAdapters(void) {
 
         if (!WineD3D_CreateFakeGLContext()) {
             ERR("Failed to get a gl context for default adapter\n");
-            HeapFree(GetProcessHeap(), 0, Adapters);
             WineD3D_ReleaseFakeGLContext();
-            return FALSE;
+            goto nogl_adapter;
         }
 
         ret = IWineD3DImpl_FillGLCaps(&Adapters[0].gl_info);
         if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
-            HeapFree(GetProcessHeap(), 0, Adapters);
             WineD3D_ReleaseFakeGLContext();
-            return FALSE;
+            goto nogl_adapter;
         }
         ret = initPixelFormats(&Adapters[0].gl_info);
         if(!ret) {
             ERR("Failed to init gl formats\n");
-            HeapFree(GetProcessHeap(), 0, Adapters);
             WineD3D_ReleaseFakeGLContext();
-            return FALSE;
+            goto nogl_adapter;
         }
 
         hdc = pwglGetCurrentDC();
         if(!hdc) {
             ERR("Failed to get gl HDC\n");
-            HeapFree(GetProcessHeap(), 0, Adapters);
             WineD3D_ReleaseFakeGLContext();
-            return FALSE;
+            goto nogl_adapter;
         }
 
         Adapters[0].driver = "Display";
@@ -3826,11 +3822,31 @@ attributes. */
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &Adapters[0].gl_info);
         fillGLAttribFuncs(&Adapters[0].gl_info);
         init_type_lookup(&Adapters[0].gl_info);
+        Adapters[0].opengl = TRUE;
     }
     numAdapters = 1;
     TRACE("%d adapters successfully initialized\n", numAdapters);
 
     return TRUE;
+
+nogl_adapter:
+    /* Initialize an adapter for ddraw-only memory counting */
+    memset(Adapters, 0, sizeof(Adapters));
+    Adapters[0].num = 0;
+    Adapters[0].opengl = FALSE;
+    Adapters[0].monitorPoint.x = -1;
+    Adapters[0].monitorPoint.y = -1;
+
+    Adapters[0].driver = "Display";
+    Adapters[0].description = "WineD3D DirectDraw Emulation";
+    if(wined3d_settings.emulated_textureram) {
+        Adapters[0].TextureRam = wined3d_settings.emulated_textureram;
+    } else {
+        Adapters[0].TextureRam = 8 * 1024 * 1024; /* This is plenty for a DDraw-only card */
+    }
+
+    numAdapters = 1;
+    return FALSE;
 }
 #undef PUSH1
 #undef GLINFO_LOCATION
