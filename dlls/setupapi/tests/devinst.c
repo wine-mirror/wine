@@ -47,6 +47,7 @@ static HKEY     (WINAPI *pSetupDiCreateDevRegKeyW)(HDEVINFO, PSP_DEVINFO_DATA, D
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailA)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
+static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailW)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_W, DWORD, PDWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiRegisterDeviceInfo)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
 
 static void init_function_pointers(void)
@@ -63,6 +64,7 @@ static void init_function_pointers(void)
     pSetupDiEnumDeviceInterfaces = (void *)GetProcAddress(hSetupAPI, "SetupDiEnumDeviceInterfaces");
     pSetupDiGetDeviceInstanceIdA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInstanceIdA");
     pSetupDiGetDeviceInterfaceDetailA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailA");
+    pSetupDiGetDeviceInterfaceDetailW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceInterfaceDetailW");
     pSetupDiInstallClassA = (void *)GetProcAddress(hSetupAPI, "SetupDiInstallClassA");
     pSetupDiOpenClassRegKeyExA = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenClassRegKeyExA");
     pSetupDiOpenDevRegKey = (void *)GetProcAddress(hSetupAPI, "SetupDiOpenDevRegKey");
@@ -658,9 +660,15 @@ static void testGetDeviceInterfaceDetail(void)
             ok(!lstrcmpiA(path, detail->DevicePath), "Unexpected path %s\n",
                     detail->DevicePath);
             /* Check SetupDiGetDeviceInterfaceDetailW */
-            ret = SetupDiGetDeviceInterfaceDetailW(set, &interfaceData, NULL, 0, &size, NULL);
-            ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got error code: %d\n", GetLastError());
-            ok(expectedsize == size, "SetupDiGetDeviceInterfaceDetailW returned wrong reqsize: expected %d, got %d\n", expectedsize, size);
+            if (pSetupDiGetDeviceInterfaceDetailW)
+            {
+                ret = pSetupDiGetDeviceInterfaceDetailW(set, &interfaceData, NULL, 0, &size, NULL);
+                ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got error code: %d\n", GetLastError());
+                ok(expectedsize == size, "SetupDiGetDeviceInterfaceDetailW returned wrong reqsize: expected %d, got %d\n", expectedsize, size);
+            }
+            else
+                skip("SetupDiGetDeviceInterfaceDetailW is not available\n");
+
             HeapFree(GetProcessHeap(), 0, buf);
         }
         pSetupDiDestroyDeviceInfoList(set);
