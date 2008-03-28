@@ -1887,28 +1887,20 @@ static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 }
 
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */
-static BOOL CheckDepthStencilCapability(UINT Adapter, WINED3DFORMAT DisplayFormat,
-WINED3DFORMAT DepthStencilFormat)
+static BOOL CheckDepthStencilCapability(UINT Adapter, WINED3DFORMAT DisplayFormat, WINED3DFORMAT DepthStencilFormat)
 {
     int it=0;
     WineD3D_PixelFormat *cfgs = Adapters[Adapter].cfgs;
+    const GlPixelFormatDesc *glDesc;
+    const StaticPixelFormatDesc *desc = getFormatDescEntry(DepthStencilFormat, &GLINFO_LOCATION, &glDesc);
+
+    /* Fail if we weren't able to get a description of the format */
+    if(!desc || !glDesc)
+        return FALSE;
 
     /* Only allow depth/stencil formats */
-    switch (DepthStencilFormat) {
-        case WINED3DFMT_D16_LOCKABLE:
-        case WINED3DFMT_D16:
-        case WINED3DFMT_D15S1:
-        case WINED3DFMT_D24X8:
-        case WINED3DFMT_D24X4S4:
-        case WINED3DFMT_D24S8:
-        case WINED3DFMT_D24FS8:
-        case WINED3DFMT_D32:
-        case WINED3DFMT_D32F_LOCKABLE:
-            break;
-
-        default:
-            return FALSE;
-    }
+    if(!(glDesc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+        return FALSE;
 
     /* Walk through all WGL pixel formats to find a match */
     cfgs = Adapters[Adapter].cfgs;

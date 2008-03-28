@@ -232,25 +232,25 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
         ,0 },
     /* Depth stencil formats */
     {WINED3DFMT_D16_LOCKABLE   ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_UNSIGNED_SHORT
-        ,0 },
+        ,WINED3DFMT_FLAG_DEPTH },
     {WINED3DFMT_D32            ,GL_DEPTH_COMPONENT32_ARB         ,GL_DEPTH_COMPONENT32_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_UNSIGNED_INT
-        ,0 },
+        ,WINED3DFMT_FLAG_DEPTH },
     {WINED3DFMT_D15S1          ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_UNSIGNED_SHORT
-        ,0 },
+        ,WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL },
     {WINED3DFMT_D24S8          ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_UNSIGNED_INT
-        ,WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL },
     {WINED3DFMT_D24X8          ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_UNSIGNED_INT
-        ,0 },
+        ,WINED3DFMT_FLAG_DEPTH },
     {WINED3DFMT_D24X4S4        ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_UNSIGNED_INT
-        ,0 },
+        ,WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL },
     {WINED3DFMT_D16            ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_UNSIGNED_SHORT
-        ,WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH },
     {WINED3DFMT_L16            ,GL_LUMINANCE16_EXT               ,GL_LUMINANCE16_EXT                     , 0,           GL_LUMINANCE              ,GL_UNSIGNED_SHORT
         ,WINED3DFMT_FLAG_FILTERING },
     {WINED3DFMT_D32F_LOCKABLE  ,GL_DEPTH_COMPONENT32_ARB         ,GL_DEPTH_COMPONENT32_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_FLOAT
-        ,0 },
+        ,WINED3DFMT_FLAG_DEPTH },
     {WINED3DFMT_D24FS8         ,GL_DEPTH_COMPONENT24_ARB         ,GL_DEPTH_COMPONENT24_ARB               , 0,           GL_DEPTH_COMPONENT        ,GL_FLOAT
-        ,0 },
+        ,WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL},
     /* Is this a vertex buffer? */
     {WINED3DFMT_VERTEXDATA     ,0                                ,0                                      , 0,           0                         ,0
         ,0 },
