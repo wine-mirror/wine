@@ -949,8 +949,8 @@ static BOOL D3D1_createObjects(void)
     ddsd.dwWidth = 256;
     ddsd.dwHeight = 256;
     hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &Surface1, NULL);
-    ok(hr==DD_OK, "CreateSurface returned: %x\n", hr);
     if (!Surface1) {
+        skip("DDSCAPS_3DDEVICE surface not available\n");
         return FALSE;
     }
 
