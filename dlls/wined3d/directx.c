@@ -1923,19 +1923,20 @@ WINED3DFORMAT DepthStencilFormat)
     return FALSE;
 }
 
-static BOOL CheckFilterCapability(WINED3DFORMAT CheckFormat)
+static BOOL CheckFilterCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
-    switch (CheckFormat) {
-        /* Filtering not supported */
-        case WINED3DFMT_R32F:
-        case WINED3DFMT_A32B32G32R32F:
-            TRACE_(d3d_caps)("[FAILED]\n");
-            return FALSE;
-        default:
-            break;
-    }
+    const GlPixelFormatDesc *glDesc;
+    const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
 
-    return TRUE;
+    /* Fail if we weren't able to get a description of the format */
+    if(!desc || !glDesc)
+        return FALSE;
+
+    /* The flags entry of a format contains the filtering capability */
+    if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING)
+        return TRUE;
+
+    return FALSE;
 }
 
 /* Check the render target capabilities of a format */
@@ -2351,7 +2352,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
                 /* Check QUERY_FILTER support */
                 if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                    if(CheckFilterCapability(CheckFormat)) {
+                    if(CheckFilterCapability(Adapter, CheckFormat)) {
                         UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
                     } else {
                         TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
@@ -2473,7 +2474,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_FILTER support */
             if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                if(CheckFilterCapability(CheckFormat)) {
+                if(CheckFilterCapability(Adapter, CheckFormat)) {
                     UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
                 } else {
                     TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
@@ -2564,7 +2565,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_FILTER support */
             if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                if(CheckFilterCapability(CheckFormat)) {
+                if(CheckFilterCapability(Adapter, CheckFormat)) {
                     UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
                 } else {
                     TRACE_(d3d_caps)("[FAILED] - No query filter support\n");
