@@ -1,0 +1,59 @@
+/*
+ * svcctl interface definitions - exported by services.exe to access the
+ * services database
+ *
+ * Copyright 2007 Google (Mikolaj Zalewski)
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "wtypes.idl";
+
+/*
+ * some defined for the C code
+ */
+cpp_quote("#define SVCCTL_TRANSPORT {'n','c','a','c','n','_','n','p',0}")
+cpp_quote("#define SVCCTL_ENDPOINT {'\\\\','p','i','p','e','\\\\','s','v','c','c','t','l',0}")
+
+/* Not the Windows event name - if needed the true one can be found in Inside Windows */
+cpp_quote("#define SVCCTL_STARTED_EVENT {'_','_','w','i','n','e','_','S','v','c','c','t','l','S','t','a','r','t','e','d',0}")
+
+
+[
+    uuid(367abb81-9844-35f1-ad32-98f038001003),
+    version(2.0),
+    pointer_default(unique),
+    endpoint("ncacn_np:[\\pipe\\svcctl]")
+]
+interface svcctl
+{
+    /* handle types */
+    typedef [handle] LPCWSTR MACHINE_HANDLEW;
+    typedef [context_handle] void *SC_RPC_HANDLE;
+
+    /* Compatible with Windows function 0x00 */
+    DWORD svcctl_CloseServiceHandle(
+        [in,out] SC_RPC_HANDLE *handle
+    );
+
+    /* Compatible with Windows function 0x0f */
+    DWORD svcctl_OpenSCManagerW(
+        [in,unique] MACHINE_HANDLEW MachineName,
+        [in,unique] LPCWSTR DatabaseName,
+        [in] DWORD dwAccessMask,
+        [out] SC_RPC_HANDLE *handle
+    );
+
+}

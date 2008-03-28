@@ -5,11 +5,14 @@ VPATH     = @srcdir@
 MODULE    = services.exe
 APPMODE   = -mconsole
 IMPORTS   = kernel32
-IMPORTS   = advapi32 kernel32
+IMPORTS   = rpcrt4 advapi32 kernel32 ntdll
 
 C_SRCS = \
+	rpc.c \
 	services.c \
 	utils.c
+
+IDL_S_SRCS = svcctl.idl
 
 @MAKE_PROG_RULES@
 

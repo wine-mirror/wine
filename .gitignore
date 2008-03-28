@@ -20,6 +20,8 @@ dlls/actxprxy/actxprxy_servprov.h
 dlls/actxprxy/actxprxy_servprov_i.c
 dlls/actxprxy/actxprxy_servprov_p.c
 dlls/advapi32/libadvapi32.def
+dlls/advapi32/svcctl.h
+dlls/advapi32/svcctl_c.c
 dlls/advapi32/tests/*.ok
 dlls/advapi32/tests/advapi32_crosstest.exe
 dlls/advapi32/tests/testlist.c
@@ -538,6 +540,7 @@ include/unknwn.h
 include/urlhist.h
 include/urlmon.h
 include/wine/itss.h
+include/wine/svcctl.h
 include/wtypes.h
 include/xmldom.h
 include/xmldso.h
@@ -583,6 +586,8 @@ programs/rpcss/rpcss
 programs/rundll32/rundll32
 programs/secedit/secedit
 programs/services/services
+programs/services/svcctl.h
+programs/services/svcctl_s.c
 programs/spoolsv/spoolsv
 programs/start/start
 programs/svchost/svchost

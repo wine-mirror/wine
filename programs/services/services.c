@@ -23,16 +23,20 @@
 #include <stdarg.h>
 #include <windows.h>
 #include <winsvc.h>
+#include <rpc.h>
 
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "svcctl.h"
 
 #include "services.h"
 
 #define MAX_SERVICE_NAME 260
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
+
+HANDLE g_hStartedEvent;
 
 static struct list g_services;
 
@@ -196,9 +200,11 @@ static DWORD load_services(void)
 
 int main(int argc, char *argv[])
 {
+    static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
     DWORD err;
+    g_hStartedEvent = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
     list_init(&g_services);
     if ((err = load_services()) != ERROR_SUCCESS)
         return err;
-    return 0;
+    return RPC_MainLoop();
 }

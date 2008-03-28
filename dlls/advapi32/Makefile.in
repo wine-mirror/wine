@@ -7,6 +7,7 @@ MODULE    = advapi32.dll
 IMPORTLIB = advapi32
 IMPORTS   = kernel32 ntdll
 EXTRALIBS = @SECURITYLIB@
+DELAYIMPORTS = rpcrt4
 
 C_SRCS = \
 	advapi.c \
@@ -23,6 +24,8 @@ C_SRCS = \
 	registry.c \
 	security.c \
 	service.c
+
+IDL_C_SRCS = svcctl.idl
 
 RC_SRCS = version.rc
 

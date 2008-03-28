@@ -36,6 +36,8 @@
 #include "lmcons.h"
 #include "lmserver.h"
 
+#include "svcctl.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
 static const WCHAR szLocalSystem[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
@@ -44,6 +46,16 @@ static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
       'S','e','r','v','i','c','e','s',0 };
 static const WCHAR  szSCMLock[] = {'A','D','V','A','P','I','_','S','C','M',
                                    'L','O','C','K',0};
+
+void  __RPC_FAR * __RPC_USER MIDL_user_allocate(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+void __RPC_USER MIDL_user_free(void __RPC_FAR * ptr)
+{
+    HeapFree(GetProcessHeap(), 0, ptr);
+}
 
 static const GENERIC_MAPPING scm_generic = {
     (STANDARD_RIGHTS_READ | SC_MANAGER_ENUMERATE_SERVICE | SC_MANAGER_QUERY_LOCK_STATUS),
@@ -117,6 +129,7 @@ struct sc_handle
     SC_HANDLE_TYPE htype;
     DWORD ref_count;
     sc_handle_destructor destroy;
+    SC_RPC_HANDLE server_handle;     /* server-side handle */
 };
 
 struct sc_manager       /* service control manager handle */
@@ -228,6 +241,102 @@ static inline LPWSTR SERV_dupmulti(LPCSTR str)
     wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, str, n, wstr, len );
     return wstr;
+}
+
+/******************************************************************************
+ * RPC connection with servies.exe
+ */
+
+static BOOL check_services_exe(void)
+{
+    static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
+    HANDLE hEvent = OpenEventW(SYNCHRONIZE, FALSE, svcctl_started_event);
+    if (hEvent == NULL)       /* need to start services.exe */
+    {
+        static const WCHAR services[] = {'\\','s','e','r','v','i','c','e','s','.','e','x','e',0};
+        PROCESS_INFORMATION out;
+        STARTUPINFOW si;
+        HANDLE wait_handles[2];
+        WCHAR path[MAX_PATH];
+
+        if (!GetSystemDirectoryW(path, MAX_PATH - strlenW(services)))
+            return FALSE;
+        strcatW(path, services);
+        ZeroMemory(&si, sizeof(si));
+        si.cb = sizeof(si);
+        if (!CreateProcessW(path, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &out))
+        {
+            ERR("Couldn't start services.exe: error %u\n", GetLastError());
+            return FALSE;
+        }
+        CloseHandle(out.hThread);
+
+        hEvent = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
+        wait_handles[0] = hEvent;
+        wait_handles[1] = out.hProcess;
+
+        /* wait for the event to become available or the process to exit */
+        if ((WaitForMultipleObjects(2, wait_handles, FALSE, INFINITE)) == WAIT_OBJECT_0 + 1)
+        {
+            DWORD exit_code;
+            GetExitCodeProcess(out.hProcess, &exit_code);
+            ERR("Unexpected termination of services.exe - exit code %d\n", exit_code);
+            CloseHandle(out.hProcess);
+            CloseHandle(hEvent);
+            return FALSE;
+        }
+
+        TRACE("services.exe started successfully\n");
+        CloseHandle(out.hProcess);
+        CloseHandle(hEvent);
+        return TRUE;
+    }
+
+    TRACE("Waiting for services.exe to be available\n");
+    WaitForSingleObject(hEvent, INFINITE);
+    TRACE("Services.exe are available\n");
+    CloseHandle(hEvent);
+
+    return TRUE;
+}
+
+handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW MachineName)
+{
+    WCHAR transport[] = SVCCTL_TRANSPORT;
+    WCHAR endpoint[] = SVCCTL_ENDPOINT;
+    LPWSTR server_copy = NULL;
+    RPC_WSTR binding_str;
+    RPC_STATUS status;
+    handle_t rpc_handle;
+
+    /* unlike Windows we start services.exe on demand. We start it always as
+     * checking if this is our address can be tricky */
+    if (!check_services_exe())
+        return NULL;
+
+    status = RpcStringBindingComposeW(NULL, transport, (RPC_WSTR)MachineName, endpoint, NULL, &binding_str);
+    HeapFree(GetProcessHeap(), 0, server_copy);
+    if (status != RPC_S_OK)
+    {
+        ERR("RpcStringBindingComposeW failed (%d)\n", (DWORD)status);
+        return NULL;
+    }
+
+    status = RpcBindingFromStringBindingW(binding_str, &rpc_handle);
+    RpcStringFreeW(&binding_str);
+
+    if (status != RPC_S_OK)
+    {
+        ERR("Couldn't connect to services.exe: error code %u\n", (DWORD)status);
+        return NULL;
+    }
+
+    return rpc_handle;
+}
+
+void __RPC_USER MACHINE_HANDLEW_unbind(MACHINE_HANDLEW MachineName, handle_t h)
+{
+    RpcBindingFree(&h);
 }
 
 /******************************************************************************
@@ -959,28 +1068,14 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     TRACE("(%s,%s,0x%08x)\n", debugstr_w(lpMachineName),
           debugstr_w(lpDatabaseName), dwDesiredAccess);
 
-    if( lpDatabaseName && lpDatabaseName[0] )
-    {
-        if( strcmpiW( lpDatabaseName, SERVICES_ACTIVE_DATABASEW ) == 0 )
-        {
-            /* noop, all right */
-        }
-        else if( strcmpiW( lpDatabaseName, SERVICES_FAILED_DATABASEW ) == 0 )
-        {
-            SetLastError( ERROR_DATABASE_DOES_NOT_EXIST );
-            return NULL;
-        }
-        else
-        {
-            SetLastError( ERROR_INVALID_NAME );
-            return NULL;
-        }
-    }
-
     manager = sc_handle_alloc( SC_HTYPE_MANAGER, sizeof (struct sc_manager),
                                sc_handle_destroy_manager );
     if (!manager)
          return NULL;
+
+    r = svcctl_OpenSCManagerW(lpMachineName, lpDatabaseName, dwDesiredAccess, &manager->hdr.server_handle);
+    if (r!=ERROR_SUCCESS)
+        goto error;
 
     r = RegConnectRegistryW(lpMachineName,HKEY_LOCAL_MACHINE,&hReg);
     if (r!=ERROR_SUCCESS)
@@ -1093,10 +1188,28 @@ BOOL WINAPI ControlService( SC_HANDLE hService, DWORD dwControl,
 BOOL WINAPI
 CloseServiceHandle( SC_HANDLE hSCObject )
 {
+    struct sc_handle *obj;
+    DWORD err;
+
     TRACE("%p\n", hSCObject);
+    if (hSCObject == NULL)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
 
-    sc_handle_free( (struct sc_handle*) hSCObject );
+    obj = (struct sc_handle *)hSCObject;
+    if (obj->server_handle)   /* service handles currently don't have RPC connections */
+        err = svcctl_CloseServiceHandle(&obj->server_handle);
+    else
+        err = ERROR_SUCCESS;
+    sc_handle_free( obj );
 
+    if (err != ERROR_SUCCESS)
+    {
+        SetLastError(err);
+        return FALSE;
+    }
     return TRUE;
 }
 
