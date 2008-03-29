@@ -50,9 +50,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Ustawienia aplikacji",IDC_STATIC, 8,4,244,240
     LTEXT           "Wine mo¿e udawaæ ró¿ne wersje Windows dla ró¿nych aplikacji.  Wybór w tej zak³adce jest powi¹zany z zak³adkami Biblioteki i Grafika - ustawienia tam równie¿ dotycz¹ wszystkich aplikacji lub tylko wybranej.",
-                    IDC_STATIC,15,20,227,30
+                    IDC_STATIC,15,20,227,36
     CONTROL         "Aplikacje",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,50,230,150
+                    15,56,230,144
     PUSHBUTTON	    "&Dodaj aplikacjê...",IDC_APP_ADDAPP, 90,204,75,14
     PUSHBUTTON	    "&Usuñ aplikacjê",IDC_APP_REMOVEAPP, 170,204,75,14
     LTEXT           "&Wersja Windows:",IDC_STATIC,17,226,58,8
@@ -66,21 +66,22 @@ BEGIN
     GROUPBOX        " Ustawienia okna ",IDC_STATIC,8,4,244,180
 
     CONTROL	    "Zezwalaj aplikacjom DirectX na zablokowanie opuszczania okna przez kursor myszki",IDC_DX_MOUSE_GRAB,"Button",BS_MULTILINE|BS_AUTOCHECKBOX | WS_TABSTOP,15,14,231,16
+
+    CONTROL	    "Pozwój mened¿erowi okien zarz¹dzaæ oknami Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
+
     LTEXT 	    "Je¿eli okna s¹ zarz¹dane przez mened¿era okien, to bêd¹ mia³y standardow¹ ramkê, wspó³pracowa³y z wirtualnymi pulpitami i pojawia³y siê na liœcie okien.\n\n\
 Je¿eli okna nie s¹ zarz¹dane to nie bêd¹ zauwa¿one przez mened¿era. To znaczy, ¿e okna bêd¹ gorzej wspó³pracowa³y z reszt¹ pulpitu, ale emulacja bêdzie dok³adniejsza.\
 Niektórym aplikacjom mo¿e to pomóc w lepszym dzia³aniu.",
-		    IDC_STATIC,15,37,228,80
-    CONTROL	    "Pozwój mened¿erowi okien zarz¹dzaæ oknami Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
+		    IDC_STATIC,19,51,225,80
 
-    LTEXT           "Uruchamiane aplikacje Windows mog¹ byæ albo zawarte w jednym okinie, które bêdzie pe³ni³o rolê wirtualnego pulpitu, albo mieæ w³asne okna jak inne aplikacje.",
-                    IDC_STATIC,15,125,228,28
-    LTEXT           "Rozmiar pulpitu:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
     CONTROL         "Emuluj wirtualny pulpit",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
-
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
+    LTEXT           "Uruchamiane aplikacje Windows mog¹ byæ albo zawarte w jednym okinie, które bêdzie pe³ni³o rolê wirtualnego pulpitu, albo mieæ w³asne okna jak inne aplikacje.",
+                    IDC_STATIC,19,138,225,28
+    LTEXT           "Rozmiar pulpitu:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,168,8,8,WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,50
 
@@ -88,7 +89,7 @@ Niektórym aplikacjom mo¿e to pomóc w lepszym dzia³aniu.",
     COMBOBOX	    IDC_D3D_VSHADER_MODE,100,197,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     CONTROL         "Obs³uguj Pixel Shader (je¿eli s¹ obs³ugiwane przez kartê graficzn¹)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
-    GROUPBOX        " Screen Resolution ",IDC_STATIC,8,242,244,25
+    GROUPBOX        " Rozdzielczoœæ ",IDC_STATIC,8,242,244,25
     CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
     EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT           "dpi",IDC_STATIC,235,252,10,8
@@ -138,8 +139,8 @@ BEGIN
 
     /* editing drive details */
     LTEXT           "&Œcie¿ka:",IDC_STATIC,15,123,25,9
-    EDITTEXT        IDC_EDIT_PATH,46,120,150,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Przegl¹daj...",IDC_BUTTON_BROWSE_PATH,201,120,45,13
+    EDITTEXT        IDC_EDIT_PATH,46,120,145,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Przegl¹daj...",IDC_BUTTON_BROWSE_PATH,196,120,50,13
 
     LTEXT           "&Typ:",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -310,5 +311,5 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Tytu³ aktywnego okna"
     IDC_SYSPARAMS_INACTIVE_TITLE    "T³o nag³ówka nieaktywnego okna"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Tytu³ nieaktywnego okna"
-    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Tekst okien komunikatów"
 END
