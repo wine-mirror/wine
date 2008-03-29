@@ -452,6 +452,72 @@ static ScriptHost *create_script_host(HTMLDocument *doc, GUID *guid)
     return ret;
 }
 
+static void parse_text(ScriptHost *script_host, LPCWSTR text)
+{
+    EXCEPINFO excepinfo;
+    VARIANT var;
+    HRESULT hres;
+
+    static const WCHAR script_endW[] = {'<','/','S','C','R','I','P','T','>',0};
+
+    TRACE("%s\n", debugstr_w(text));
+
+    VariantInit(&var);
+    memset(&excepinfo, 0, sizeof(excepinfo));
+    hres = IActiveScriptParse_ParseScriptText(script_host->parse, text, windowW, NULL, script_endW,
+                                              0, 0, SCRIPTTEXT_ISVISIBLE|SCRIPTTEXT_HOSTMANAGESSOURCE,
+                                              &var, &excepinfo);
+    if(FAILED(hres))
+        WARN("ParseScriptText failed: %08x\n", hres);
+
+}
+
+static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
+{
+    FIXME("%p %s\n", script_host, debugstr_w(src));
+}
+
+static void parse_inline_script(ScriptHost *script_host, nsIDOMHTMLScriptElement *nsscript)
+{
+    const PRUnichar *text;
+    nsAString text_str;
+    nsresult nsres;
+
+    nsAString_Init(&text_str, NULL);
+
+    nsres = nsIDOMHTMLScriptElement_GetText(nsscript, &text_str);
+
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&text_str, &text);
+        parse_text(script_host, text);
+    }else {
+        ERR("GetText failed: %08x\n", nsres);
+    }
+
+    nsAString_Finish(&text_str);
+}
+
+static void parse_script_elem(ScriptHost *script_host, nsIDOMHTMLScriptElement *nsscript)
+{
+    const PRUnichar *src;
+    nsAString src_str;
+    nsresult nsres;
+
+    nsAString_Init(&src_str, NULL);
+
+    nsres = nsIDOMHTMLScriptElement_GetSrc(nsscript, &src_str);
+    nsAString_GetData(&src_str, &src);
+
+    if(NS_FAILED(nsres))
+        ERR("GetSrc failed: %08x\n", nsres);
+    else if(*src)
+        parse_extern_script(script_host, src);
+    else
+        parse_inline_script(script_host, nsscript);
+
+    nsAString_Finish(&src_str);
+}
+
 static BOOL get_guid_from_type(LPCWSTR type, GUID *guid)
 {
     const WCHAR text_javascriptW[] =
@@ -554,7 +620,14 @@ static ScriptHost *get_script_host(HTMLDocument *doc, nsIDOMHTMLScriptElement *n
 
 void doc_insert_script(HTMLDocument *doc, nsIDOMHTMLScriptElement *nsscript)
 {
-    get_script_host(doc, nsscript);
+    ScriptHost *script_host;
+
+    script_host = get_script_host(doc, nsscript);
+    if(!script_host)
+        return;
+
+    if(script_host->parse)
+        parse_script_elem(script_host, nsscript);
 }
 
 void release_script_hosts(HTMLDocument *doc)
