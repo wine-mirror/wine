@@ -792,10 +792,11 @@ static inline int stabs_pts_read_array(struct ParseTypedefData* ptd,
 static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typename,
                                    struct symt** ret_dt)
 {
+    static struct symt null_dt = {SymTagNull};
     int			idx;
-    long                sz = -1;
-    struct symt*        new_dt = NULL; /* newly created data type */
-    struct symt*        ref_dt;		   /* referenced data type (pointer...) */
+    long		sz = -1;
+    struct symt*	new_dt = &null_dt; /* newly created data type */
+    struct symt*	ref_dt;		   /* referenced data type (pointer...) */
     long		filenr1, subnr1, tmp;
 
     /* things are a bit complicated because of the way the typedefs are stored inside
@@ -807,7 +808,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
     while (*ptd->ptr == '=')
     {
 	ptd->ptr++;
-	PTS_ABORTIF(ptd, new_dt != btNoType);
+	PTS_ABORTIF(ptd, new_dt->tag != SymTagNull);
 
 	/* first handle attribute if any */
 	switch (*ptd->ptr)      
