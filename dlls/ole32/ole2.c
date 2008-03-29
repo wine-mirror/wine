@@ -2811,7 +2811,7 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
         return hr;
 
     /* this will deal with most cases */
-    CopyMemory(pvarDest, pvarSrc, sizeof(*pvarDest));
+    *pvarDest = *pvarSrc;
 
     switch(pvarSrc->vt)
     {
@@ -2825,7 +2825,7 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
         break;
     case VT_CLSID:
         pvarDest->u.puuid = CoTaskMemAlloc(sizeof(CLSID));
-        CopyMemory(pvarDest->u.puuid, pvarSrc->u.puuid, sizeof(CLSID));
+        *pvarDest->u.puuid = *pvarSrc->u.puuid;
         break;
     case VT_LPSTR:
         len = strlen(pvarSrc->u.pszVal);
