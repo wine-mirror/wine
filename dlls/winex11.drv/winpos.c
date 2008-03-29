@@ -199,7 +199,7 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
         new_state |= (1 << NET_WM_STATE_ABOVE);
     if (ex_style & WS_EX_TOOLWINDOW)
         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER);
-    if (GetWindow( data->hwnd, GW_OWNER ))
+    if (!(ex_style & WS_EX_APPWINDOW) && GetWindow( data->hwnd, GW_OWNER ))
         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR);
 
     xev.xclient.type = ClientMessage;
