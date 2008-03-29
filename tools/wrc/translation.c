@@ -281,6 +281,7 @@ static int compare_cursor_group(cursor_group_t *cursor_group1, cursor_group_t *c
 static int compare_control(control_t *control1, control_t *control2) {
 	int different = 0;
 	char *nameid = NULL;
+	int ignore_style;
 	if(!different &&
 		((control1 && !control2) ||
 		(!control1 && control2)))
@@ -291,13 +292,21 @@ static int compare_control(control_t *control1, control_t *control2) {
 	if(!different && strcmp(nameid, get_nameid_str(control2->ctlclass)))
 		different = 1;
 	free(nameid);
+        if (different)
+            return different;
+
+        /* allow the translators to set some styles */
+        ignore_style = 0;
+        if (control1->ctlclass->type == name_ord && control1->ctlclass->name.i_name == CT_BUTTON)
+            ignore_style = 0x2000;          /* BS_MULTILINE*/
+
 	if(!different && 
 	   (control1->id != control2->id))
 		different = 1;
 	if(!different && control1->gotstyle && control2->gotstyle) {
 		if((!control1->style || !control2->style) ||
 		   (control1->style->and_mask || control2->style->and_mask) ||
-		   (control1->style->or_mask != control2->style->or_mask))
+		   ((control1->style->or_mask & ~ignore_style) != (control2->style->or_mask & ~ignore_style)))
 			different = 1;
 	} else if(!different &&
 		  ((control1->gotstyle && !control2->gotstyle) ||
