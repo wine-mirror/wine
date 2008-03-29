@@ -6741,7 +6741,7 @@ static void alpha_test(IDirect3DDevice9 *device)
     green = (color & 0x0000ff00) >>  8;
     blue =  (color & 0x000000ff);
     ok(red >= 0x7e && red <= 0x81 && green == 0x00 && blue >= 0x7e && blue <= 0x81,
-       "DSTALPHA on texture returned color %08x, expected foo\n", color);
+       "DSTALPHA on texture returned color %08x, expected 0x00800080\n", color);
 
     out:
     /* restore things */
