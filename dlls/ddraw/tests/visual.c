@@ -1915,6 +1915,160 @@ static void p8_primary_test()
     if(window) DestroyWindow(window);
 }
 
+static void cubemap_test(IDirect3DDevice7 *device)
+{
+    IDirect3D7 *d3d;
+    IDirectDraw7 *ddraw;
+    IDirectDrawSurface7 *cubemap, *surface;
+    D3DDEVICEDESC7 d3dcaps;
+    HRESULT hr;
+    DWORD color;
+    DDSURFACEDESC2 ddsd;
+    DDBLTFX DDBltFx;
+    DDSCAPS2 caps;
+    static float quad[] = {
+      -1.0,   -1.0,    0.1,    1.0,    0.0,    0.0, /* Lower left */
+       0.0,   -1.0,    0.1,    1.0,    0.0,    0.0,
+      -1.0,    0.0,    0.1,    1.0,    0.0,    0.0,
+       0.0,    0.0,    0.1,    1.0,    0.0,    0.0,
+
+       0.0,   -1.0,    0.1,    0.0,    1.0,    0.0, /* Lower right */
+       1.0,   -1.0,    0.1,    0.0,    1.0,    0.0,
+       0.0,    0.0,    0.1,    0.0,    1.0,    0.0,
+       1.0,    0.0,    0.1,    0.0,    1.0,    0.0,
+
+       0.0,    0.0,    0.1,    0.0,    0.0,    1.0, /* upper right */
+       1.0,    0.0,    0.1,    0.0,    0.0,    1.0,
+       0.0,    1.0,    0.1,    0.0,    0.0,    1.0,
+       1.0,    1.0,    0.1,    0.0,    0.0,    1.0,
+
+      -1.0,    0.0,    0.1,   -1.0,    0.0,    0.0, /* Upper left */
+       0.0,    0.0,    0.1,   -1.0,    0.0,    0.0,
+      -1.0,    1.0,    0.1,   -1.0,    0.0,    0.0,
+       0.0,    1.0,    0.1,   -1.0,    0.0,    0.0,
+    };
+
+    memset(&DDBltFx, 0, sizeof(DDBltFx));
+    DDBltFx.dwSize = sizeof(DDBltFx);
+
+    memset(&d3dcaps, 0, sizeof(d3dcaps));
+    hr = IDirect3DDevice7_GetCaps(device, &d3dcaps);
+    ok(hr == D3D_OK, "IDirect3DDevice7_GetCaps returned %08x\n", hr);
+    if(!(d3dcaps.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_CUBEMAP))
+    {
+        skip("No cubemap support\n");
+        return;
+    }
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(hr == D3D_OK, "IDirect3DDevice7_GetDirect3D returned %08x\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **) &ddraw);
+    ok(hr == D3D_OK, "IDirect3D7_QueryInterface returned %08x\n", hr);
+    IDirect3D7_Release(d3d);
+
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.dwWidth = 16;
+    ddsd.dwHeight = 16;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
+    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES | DDSCAPS2_TEXTUREMANAGE;
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00FF0000;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000FF00;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000FF;
+
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &cubemap, NULL);
+    ok(hr == DD_OK, "IDirectDraw7_CreateSurface returned %08x\n", hr);
+    IDirectDraw7_Release(ddraw);
+
+    /* Positive X */
+    DDBltFx.dwFillColor = 0x00ff0000;
+    hr = IDirectDrawSurface7_Blt(cubemap, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
+
+    memset(&caps, 0, sizeof(caps));
+    caps.dwCaps = DDSCAPS_TEXTURE;
+    caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEX;
+    hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
+    DDBltFx.dwFillColor = 0x0000ffff;
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
+
+    caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEZ;
+    hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
+    DDBltFx.dwFillColor = 0x0000ff00;
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
+
+    caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEZ;
+    hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
+    DDBltFx.dwFillColor = 0x000000ff;
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
+
+    caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEY;
+    hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
+    DDBltFx.dwFillColor = 0x00ffff00;
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
+
+    caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEY;
+    hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
+    DDBltFx.dwFillColor = 0x00ff00ff;
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
+
+    hr = IDirect3DDevice7_SetTexture(device, 0, cubemap);
+    ok(hr == DD_OK, "IDirect3DDevice7_SetTexture returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == DD_OK, "IDirect3DDevice7_SetTextureStageState returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == DD_OK, "IDirect3DDevice7_SetTextureStageState returned %08x\n", hr);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == DD_OK, "IDirect3DDevice7_BeginScene returned %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1, quad + 0 * 6, 4, 0);
+        ok(hr == DD_OK, "IDirect3DDevice7_DrawPrimitive returned %08x\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1, quad + 4 * 6, 4, 0);
+        ok(hr == DD_OK, "IDirect3DDevice7_DrawPrimitive returned %08x\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1, quad + 8 * 6, 4, 0);
+        ok(hr == DD_OK, "IDirect3DDevice7_DrawPrimitive returned %08x\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1, quad + 12* 6, 4, 0);
+        ok(hr == DD_OK, "IDirect3DDevice7_DrawPrimitive returned %08x\n", hr);
+
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(hr == DD_OK, "IDirect3DDevice7_EndScene returned %08x\n", hr);
+    }
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(hr == DD_OK, "IDirect3DDevice7_SetTextureStageState returned %08x\n", hr);
+
+    color = getPixelColor(device, 160, 360); /* lower left quad - positivex */
+    ok(color == 0x00ff0000, "DDSCAPS2_CUBEMAP_POSITIVEX has color 0x%08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 160, 120); /* upper left quad - negativex */
+    ok(color == 0x0000ffff, "DDSCAPS2_CUBEMAP_NEGATIVEX has color 0x%08x, expected 0x0000ffff\n", color);
+    color = getPixelColor(device, 480, 360); /* lower right quad - positivey */
+    ok(color == 0x00ff00ff, "DDSCAPS2_CUBEMAP_POSITIVEY has color 0x%08x, expected 0x00ff00ff\n", color);
+    color = getPixelColor(device, 480, 120); /* upper right quad - positivez */
+    ok(color == 0x000000ff, "DDSCAPS2_CUBEMAP_POSITIVEZ has color 0x%08x, expected 0x000000ff\n", color);
+    hr = IDirect3DDevice7_SetTexture(device, 0, NULL);
+    ok(hr == DD_OK, "IDirect3DDevice7_SetTexture returned %08x\n", hr);
+    IDirectDrawSurface7_Release(cubemap);
+}
+
 START_TEST(visual)
 {
     HRESULT hr;
@@ -1961,6 +2115,7 @@ START_TEST(visual)
     offscreen_test(Direct3DDevice);
     alpha_test(Direct3DDevice);
     rhw_zero_test(Direct3DDevice);
+    cubemap_test(Direct3DDevice);
 
     releaseObjects(); /* release DX7 interfaces to test D3D1 */
 
