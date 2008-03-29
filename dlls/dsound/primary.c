@@ -1173,7 +1173,7 @@ HRESULT PrimaryBufferImpl_Create(
 	dsb->device = device;
 	dsb->lpVtbl = &dspbvt;
 
-	CopyMemory(&device->dsbd, dsbd, sizeof(*dsbd));
+	device->dsbd = *dsbd;
 
 	TRACE("Created primary buffer at %p\n", dsb);
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"

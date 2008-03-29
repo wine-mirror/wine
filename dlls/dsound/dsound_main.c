@@ -254,19 +254,19 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
 
     if ( IsEqualGUID( &DSDEVID_DefaultPlayback, pGuidSrc ) ||
     	 IsEqualGUID( &DSDEVID_DefaultVoicePlayback, pGuidSrc ) ) {
-	CopyMemory(pGuidDest, &DSOUND_renderer_guids[ds_default_playback], sizeof(GUID));
+	*pGuidDest = DSOUND_renderer_guids[ds_default_playback];
         TRACE("returns %s\n", get_device_id(pGuidDest));
 	return DS_OK;
     }
 
     if ( IsEqualGUID( &DSDEVID_DefaultCapture, pGuidSrc ) ||
     	 IsEqualGUID( &DSDEVID_DefaultVoiceCapture, pGuidSrc ) ) {
-	CopyMemory(pGuidDest, &DSOUND_capture_guids[ds_default_capture], sizeof(GUID));
+	*pGuidDest = DSOUND_capture_guids[ds_default_capture];
         TRACE("returns %s\n", get_device_id(pGuidDest));
 	return DS_OK;
     }
 
-    CopyMemory(pGuidDest, pGuidSrc, sizeof(GUID));
+    *pGuidDest = *pGuidSrc;
     TRACE("returns %s\n", get_device_id(pGuidDest));
 
     return DS_OK;

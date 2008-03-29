@@ -1366,7 +1366,7 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
 
         if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
 	    device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX));
-            CopyMemory(device->pwfx, wfex, sizeof(WAVEFORMATEX));
+            *device->pwfx = *wfex;
 	    device->pwfx->cbSize = 0;
 	} else {
 	    device->pwfx = HeapAlloc(GetProcessHeap(),0,sizeof(WAVEFORMATEX)+wfex->cbSize);
