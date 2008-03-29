@@ -1170,10 +1170,12 @@ static void shader_none_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_inf
     pCaps->PixelShaderVersion    = 0;
     pCaps->PixelShader1xMaxValue = 0.0;
 
+    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_TSSARGTEMP;
+    }
+
     /* The caps below can be supported but aren't handled yet in utils.c 'd3dta_to_combiner_input', disable them until support is fixed */
 #if 0
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS))
-    pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_TSSARGTEMP;
     if (GL_SUPPORT(NV_REGISTER_COMBINERS2))
     pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_PERSTAGECONSTANT;
 #endif
