@@ -259,6 +259,8 @@ typedef struct SHADER_BUFFER {
 } SHADER_BUFFER;
 
 struct shader_caps {
+    DWORD               PrimitiveMiscCaps;
+
     DWORD               TextureOpCaps;
     DWORD               MaxTextureBlendStages;
     DWORD               MaxSimultaneousTextures;
@@ -730,6 +732,7 @@ struct texture_stage_op
     DWORD                   carg1, carg2, carg0;
     DWORD                   aarg1, aarg2, aarg0;
     WINED3DFORMAT           color_correction;
+    DWORD                   dst;
     enum projection_types   projected;
 };
 

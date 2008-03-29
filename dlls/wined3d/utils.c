@@ -3271,6 +3271,7 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct texture_stage_op op[M
             op[i].carg0 = op[i].carg1 = op[i].carg2 = 0xffffffff;
             op[i].aarg0 = op[i].aarg1 = op[i].aarg2 = 0xffffffff;
             op[i].color_correction = WINED3DFMT_UNKNOWN;
+            op[i].dst = 0xffffffff;
             i++;
             break;
         }
@@ -3344,6 +3345,8 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct texture_stage_op op[M
         } else {
             op[i].projected = proj_none;
         }
+
+        op[i].dst = stateblock->textureState[i][WINED3DTSS_RESULTARG];
     }
 
     /* Clear unsupported stages */

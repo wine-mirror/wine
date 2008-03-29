@@ -2791,14 +2791,6 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     if(GL_SUPPORT(EXT_BLEND_EQUATION_SEPARATE) && GL_SUPPORT(EXT_BLEND_FUNC_SEPARATE))
         pCaps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_SEPARATEALPHABLEND;
 
-/* The caps below can be supported but aren't handled yet in utils.c 'd3dta_to_combiner_input', disable them until support is fixed */
-#if 0
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS))
-        pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_TSSARGTEMP;
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS2))
-        pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_PERSTAGECONSTANT;
-#endif
-
     pCaps->RasterCaps              = WINED3DPRASTERCAPS_DITHER    |
                                      WINED3DPRASTERCAPS_PAT       |
                                      WINED3DPRASTERCAPS_WFOG      |
@@ -3088,6 +3080,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     memset(&shader_caps, 0, sizeof(shader_caps));
     shader_backend = select_shader_backend(Adapter, DeviceType);
     shader_backend->shader_get_caps(DeviceType, &GLINFO_LOCATION, &shader_caps);
+
+    /* Add shader misc caps. Only some of them belong to the shader parts of the pipeline */
+    pCaps->PrimitiveMiscCaps |= shader_caps.PrimitiveMiscCaps;
 
     /* This takes care for disabling vertex shader or pixel shader caps while leaving the other one enabled.
      * Ignore shader model capabilities if disabled in config

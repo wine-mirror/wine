@@ -208,13 +208,73 @@ static GLuint register_for_arg(DWORD arg, WineD3D_GL_Info *gl_info, unsigned int
     return ret;
 }
 
+static GLuint find_tmpreg(struct texture_stage_op op[MAX_TEXTURES]) {
+    int lowest_read = -1;
+    int lowest_write = -1;
+    int i;
+    BOOL tex_used[MAX_TEXTURES];
+
+    memset(tex_used, 0, sizeof(tex_used));
+    for(i = 0; i < MAX_TEXTURES; i++) {
+        if(op[i].cop == WINED3DTOP_DISABLE) {
+            break;
+        }
+
+        if(lowest_read == -1 &&
+          (op[i].carg1 == WINED3DTA_TEMP || op[i].carg2 == WINED3DTA_TEMP || op[i].carg0 == WINED3DTA_TEMP ||
+           op[i].aarg1 == WINED3DTA_TEMP || op[i].aarg2 == WINED3DTA_TEMP || op[i].aarg0 == WINED3DTA_TEMP)) {
+            lowest_read = i;
+        }
+
+        if(lowest_write == -1 && op[i].dst == WINED3DTA_TEMP) {
+            lowest_write = i;
+        }
+
+        if(op[i].carg1 == WINED3DTA_TEXTURE || op[i].carg2 == WINED3DTA_TEXTURE || op[i].carg0 == WINED3DTA_TEXTURE ||
+           op[i].aarg1 == WINED3DTA_TEXTURE || op[i].aarg2 == WINED3DTA_TEXTURE || op[i].aarg0 == WINED3DTA_TEXTURE) {
+            tex_used[i] = TRUE;
+        }
+    }
+
+    /* Temp reg not read? We don't need it, return GL_NONE */
+    if(lowest_read == -1) return GL_NONE;
+
+    if(lowest_write >= lowest_read) {
+        FIXME("Temp register read before beeing written\n");
+    }
+
+    if(lowest_write == -1) {
+        /* This needs a test. Maybe we are supposed to return 0.0/0.0/0.0/0.0, or fail drawprim, or whatever */
+        FIXME("Temp register read without beeing written\n");
+        return GL_REG_1_ATI;
+    } else if(lowest_write >= 1) {
+        /* If we're writing to the temp reg at earliest in stage 1, we can use register 1 for the temp result.
+         * there may be texture data stored in reg 1, but we do not need it any longer since stage 1 already
+         * read it
+         */
+        return GL_REG_1_ATI;
+    } else {
+        /* Search for a free texture register. We have 6 registers available. GL_REG_0_ATI is already used
+         * for the regular result
+         */
+        for(i = 1; i < 6; i++) {
+            if(!tex_used[i]) {
+                return GL_REG_0_ATI + i;
+            }
+        }
+        /* What to do here? Report it in ValidateDevice? */
+        FIXME("Could not find a register for the temporary register\n");
+        return 0;
+    }
+}
+
 static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_GL_Info *gl_info) {
     GLuint ret = GL_EXTCALL(glGenFragmentShadersATI(1));
     unsigned int stage;
     GLuint arg0, arg1, arg2, extrarg;
     GLuint dstmod, argmod0, argmod1, argmod2, argmodextra;
     GLuint swizzle;
-    GLuint tmparg = -1;
+    GLuint tmparg = find_tmpreg(op);
     GLuint dstreg;
 
     if(!ret) {
@@ -358,7 +418,16 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
             break;
         }
 
-        dstreg = GL_REG_0_ATI;
+        if(op[stage].dst == WINED3DTA_TEMP) {
+            /* If we're writing to D3DTA_TEMP, but never reading from it we don't have to write there in the first place.
+             * skip the entire stage, this saves some GPU time
+             */
+            if(tmparg == GL_NONE) continue;
+
+            dstreg = tmparg;
+        } else {
+            dstreg = GL_REG_0_ATI;
+        }
 
         arg0 = register_for_arg(op[stage].carg0, gl_info, stage, &argmod0, tmparg);
         arg1 = register_for_arg(op[stage].carg1, gl_info, stage, &argmod1, tmparg);
@@ -803,6 +872,9 @@ static void init_state_table() {
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG0)].apply = set_tex_op_atifs;
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG0)].representative = rep;
 
+        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_RESULTARG)].apply = set_tex_op_atifs;
+        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_RESULTARG)].representative = rep;
+
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00)].apply = set_bumpmat;
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT01)].apply = set_bumpmat;
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT10)].apply = set_bumpmat;
@@ -942,6 +1014,8 @@ static void shader_atifs_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_in
         WARN("but GL_ATI_fragment_shader limits this to 6\n");
         caps->MaxSimultaneousTextures = 6;
     }
+
+    caps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_TSSARGTEMP;
 }
 
 static void shader_atifs_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
