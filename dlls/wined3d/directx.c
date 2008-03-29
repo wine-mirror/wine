@@ -1935,24 +1935,16 @@ static BOOL CheckFilterCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 static BOOL CheckRenderTargetCapability(WINED3DFORMAT AdapterFormat, WINED3DFORMAT CheckFormat)
 {
     UINT Adapter = 0;
+    const GlPixelFormatDesc *glDesc;
+    const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
+
+    /* Fail if we weren't able to get a description of the format */
+    if(!desc || !glDesc)
+        return FALSE;
 
     /* Filter out non-RT formats */
-    switch(CheckFormat)
-    {
-        /* Don't offer 8bit, windows doesn't either although we could emulate it */
-        case WINED3DFMT_A8P8:
-        case WINED3DFMT_P8:
-
-        /* No DXTC render targets */
-        case WINED3DFMT_DXT1:
-        case WINED3DFMT_DXT2:
-        case WINED3DFMT_DXT3:
-        case WINED3DFMT_DXT4:
-        case WINED3DFMT_DXT5:
-            return FALSE;
-        default:
-            break;
-    }
+    if(!(glDesc->Flags & WINED3DFMT_FLAG_RENDERTARGET))
+        return FALSE;
 
     if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
         WineD3D_PixelFormat *cfgs = Adapters[Adapter].cfgs;

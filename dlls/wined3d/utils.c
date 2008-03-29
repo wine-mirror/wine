@@ -153,21 +153,21 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
         ,0 },
     /* IEEE formats */
     {WINED3DFMT_R32F           ,GL_RGB32F_ARB                    ,GL_RGB32F_ARB                          , 0,           GL_RED                    ,GL_FLOAT
-        ,0 },
+        ,WINED3DFMT_FLAG_RENDERTARGET },
     {WINED3DFMT_G32R32F        ,0                                ,0                                      , 0,           0                         ,0
-        ,0 },
+        ,WINED3DFMT_FLAG_RENDERTARGET },
     {WINED3DFMT_A32B32G32R32F  ,GL_RGBA32F_ARB                   ,GL_RGBA32F_ARB                         , 0,           GL_RGBA                   ,GL_FLOAT
-        ,0 },
+        ,WINED3DFMT_FLAG_RENDERTARGET },
     /* Hmm? */
     {WINED3DFMT_CxV8U8         ,0                                ,0                                      , 0,           0                         ,0
         ,0 },
     /* Float */
     {WINED3DFMT_R16F           ,GL_RGB16F_ARB                    ,GL_RGB16F_ARB                          , 0,           GL_RED                    ,GL_HALF_FLOAT_ARB
-        ,WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
     {WINED3DFMT_G16R16F        ,0                                ,0                                      , 0,           0                         ,0
-        ,WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
     {WINED3DFMT_A16B16G16R16F  ,GL_RGBA16F_ARB                   ,GL_RGBA16F_ARB                         , 0,           GL_RGBA                   ,GL_HALF_FLOAT_ARB
-        ,WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
     /* Palettized formats */
     {WINED3DFMT_A8P8,           0                                ,0                                      , 0,           0                         ,0
         ,0 },
@@ -175,13 +175,13 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
         ,0 },
     /* Standard ARGB formats */
     {WINED3DFMT_R8G8B8         ,GL_RGB8                          ,GL_RGB8                                , 0,           GL_BGR                    ,GL_UNSIGNED_BYTE
-        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
     {WINED3DFMT_A8R8G8B8       ,GL_RGBA8                         ,GL_SRGB8_ALPHA8_EXT                    , 0,           GL_BGRA                   ,GL_UNSIGNED_INT_8_8_8_8_REV
-        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
     {WINED3DFMT_X8R8G8B8       ,GL_RGB8                          ,GL_SRGB8_EXT                           , 0,           GL_BGRA                   ,GL_UNSIGNED_INT_8_8_8_8_REV
-        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
     {WINED3DFMT_R5G6B5         ,GL_RGB5                          ,GL_RGB5                                , GL_RGB8,     GL_RGB                    ,GL_UNSIGNED_SHORT_5_6_5
-        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
     {WINED3DFMT_X1R5G5B5       ,GL_RGB5                          ,GL_RGB5_A1                             , 0,           GL_BGRA                   ,GL_UNSIGNED_SHORT_1_5_5_5_REV
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
     {WINED3DFMT_A1R5G5B5       ,GL_RGB5_A1                       ,GL_RGB5_A1                             , 0,           GL_BGRA                   ,GL_UNSIGNED_SHORT_1_5_5_5_REV
@@ -207,7 +207,7 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_A2R10G10B10    ,GL_RGBA                          ,GL_RGBA                                , 0,           GL_BGRA                   ,GL_UNSIGNED_INT_2_10_10_10_REV
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
     {WINED3DFMT_A16B16G16R16   ,GL_RGBA16_EXT                    ,GL_RGBA16_EXT                          , 0,           GL_RGBA                   ,GL_UNSIGNED_SHORT
-        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
+        ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
     /* Luminance */
     {WINED3DFMT_L8             ,GL_LUMINANCE8                    ,GL_SLUMINANCE8_EXT                     , 0,           GL_LUMINANCE              ,GL_UNSIGNED_BYTE
         ,WINED3DFMT_FLAG_FILTERING },
