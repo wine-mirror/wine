@@ -175,7 +175,7 @@ static DWORD getPixelColor(IDirect3DDevice7 *device, UINT x, UINT y)
      * really important for these tests
      */
     ret = ((DWORD *) ddsd.lpSurface)[0] & 0x00ffffff;
-    hr = IDirectDrawSurface7_Unlock(surf, &rectToLock);
+    hr = IDirectDrawSurface7_Unlock(surf, NULL);
     if(FAILED(hr))
     {
         trace("Can't unlock the offscreen surface, hr=%08x\n", hr);
@@ -971,7 +971,7 @@ static DWORD D3D1_getPixelColor(IDirectDraw *DirectDraw1, IDirectDrawSurface *Su
      * really important for these tests
      */
     ret = ((DWORD *) ddsd.lpSurface)[0] & 0x00ffffff;
-    hr = IDirectDrawSurface_Unlock(surf, &rectToLock);
+    hr = IDirectDrawSurface_Unlock(surf, NULL);
     if(FAILED(hr))
     {
         trace("Can't unlock the offscreen surface, hr=%08x\n", hr);
