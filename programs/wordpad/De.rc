@@ -57,7 +57,7 @@ BEGIN
             MENUITEM "Zeichen&format",              ID_EDIT_CHARFORMAT
             MENUITEM "&Standardzeichenformat",      ID_EDIT_DEFCHARFORMAT
             MENUITEM "&Absatzformat",               ID_EDIT_PARAFORMAT
-            MENUITEM "&Get text",                   ID_EDIT_GETTEXT
+            MENUITEM "&Text holen",                 ID_EDIT_GETTEXT
         END
     END
     POPUP "&Ansicht"
@@ -213,8 +213,8 @@ BEGIN
     STRING_PREVIEW_PRINT,            "&Drucken"
     STRING_PREVIEW_NEXTPAGE,         "&N‰chste"
     STRING_PREVIEW_PREVPAGE,         "&Vorherige"
-    STRING_PREVIEW_TWOPAGES,         "Two pages"
-    STRING_PREVIEW_ONEPAGE,          "One page"
+    STRING_PREVIEW_TWOPAGES,         "Zwei Seiten"
+    STRING_PREVIEW_ONEPAGE,          "Eine Seite"
     STRING_PREVIEW_CLOSE,            "&Schlieﬂen"
 END
 
