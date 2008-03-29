@@ -184,7 +184,7 @@ install:: $(FONTS) $(INSTALLDIRS)
 	for i in $(TRUETYPE_FONTS); do $(INSTALL_DATA) $(SRCDIR)/$$i $(DESTDIR)$(fontdir)/$$i || exit 1; done
 
 uninstall::
-	-cd $(DESTDIR)$(fontdir) && $(RM) $(FONTS)
+	-cd $(DESTDIR)$(fontdir) && $(RM) $(BITMAP_FONTS) $(TRUETYPE_FONTS)
 	-rmdir $(DESTDIR)$(fontdir)
 
 clean::
