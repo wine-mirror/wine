@@ -23,7 +23,7 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "Использование:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_USAGE, "Использование:\n\nNET [ HELP | START | STOP | USE ]\n"
     STRING_START_USAGE, "Укажите запускаемую службу.\n"
     STRING_STOP_USAGE, "Укажите останавливаемую службу.\n"
     STRING_STOP_DEP, "Остановка зависимой службы: %s\n"
@@ -36,5 +36,9 @@ STRINGTABLE
     STRING_STOP_SVC, "Остановка службы %s.\n"
     STRING_STOP_SVC_SUCCESS, "Служба %s успешно остановлена.\n"
     STRING_STOP_SVC_FAIL, "Ошибка при остановке службы %s.\n"
-    STRING_HELP_USAGE, "Использование:\n\nNET HELP команда\n    -или-\nNET команда /HELP\n\n   Доступные команды:\n   NET HELP    NET START     NET STOP\n"
+    STRING_HELP_USAGE, "Использование:\n\nNET HELP команда\n    -или-\nNET команда /HELP\n\n"\
+                       "   Доступные команды:\n   NET HELP    NET START     NET STOP     NET USE\n"
+    STRING_NO_ENTRIES, "Список пуст.\n"
+    STRING_USE_HEADER, "\nСтатус  Локальный  Удалённый\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY,  "%s      %S         %S      Открытых ресурсов: %lu\n"
 }

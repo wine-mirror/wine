@@ -38,6 +38,21 @@ IDS_DLG_TIT_DEFAULT,     "Настройка - Установки по умолчанию"
 IDS_DLG_TIT_CURRENT,     "Настройка - Текущие установки"
 IDS_DLG_TIT_ERROR,     "Ошибка настройки"
 IDS_DLG_ERR_SBWINSIZE,     "Размер буфера экрана должен быть не менее буфера окна"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Не верно указан код события\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: Не известный backend\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Указанная опция не найдена\n"
+IDS_CMD_ABOUT              "Запуск программы в консоли Wine\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Не удался запуск программы '%s'.\n"\
+                           "Не верно указанна команда.\n"
+
+IDS_USAGE_HEADER           "\nВызов:\n  wineconsole [опции] <комана>\n\nОпции:\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Выбор 'user' откроет новое окно с полной поддержкой\n"\
+                           "                            всех режимов работы консоли. 'curses' - использует\n"\
+                           "                            текущее окно с ограниченной функциональностью\n"\
+IDS_USAGE_COMMAND          "  <команда>                Имя программы для запуска в консоли Wine\n"
+IDS_USAGE_FOOTER           "\nНапример:\n  wineconsole cmd\nЗапустить командный процессор Wine в консоли Wine\n\n"
+
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
