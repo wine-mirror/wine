@@ -1,5 +1,8 @@
 /*
- * Copyright 2008 Andrew Riedi
+ * REG.EXE - Wine-compatible reg program.
+ * Norwegian (Bokmål) language support
+ *
+ * Copyright 2008 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,13 +19,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-#include "reg.h"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "En.rc"
-#include "Nl.rc"
-#include "No.rc"
-#include "Pl.rc"
+STRINGTABLE
+{
+    STRING_USAGE, "Programmer kjøres som følger:\n\nREG [ ADD | DELETE | QUERY ]\nREG kommando /?\n"
+    STRING_ADD_USAGE, "REG ADD nøkkelnavn [/v verdi | /ve] [/t type] [/s separator] [/d data] [/f]\n"
+    STRING_DELETE_USAGE, "REG DELETE nøkkelnavn [/v verdi | /ve | /va] [/f]\n"
+    STRING_QUERY_USAGE, "REG QUERY nøkkelnavn [/v verdi | /ve] [/s]\n"
+}
