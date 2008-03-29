@@ -2786,7 +2786,7 @@ static void WINAPI MimeAlloc_Free(
         IMimeAllocator* iface,
         LPVOID pv)
 {
-    return CoTaskMemFree(pv);
+    CoTaskMemFree(pv);
 }
 
 static ULONG WINAPI MimeAlloc_GetSize(
