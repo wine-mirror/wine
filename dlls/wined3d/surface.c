@@ -7,7 +7,7 @@
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2006-2007 Stefan Dösinger for CodeWeavers
+ * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2007 Henri Verbeet
  * Copyright 2006-2008 Roderick Colenbrander
  *

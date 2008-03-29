@@ -9,6 +9,7 @@
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2006 Jason Green
  * Copyright 2006 Henri Verbeet
+ * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

@@ -4,6 +4,7 @@
  * Copyright 2002-2003 The wine-d3d team
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004      Jason Edmeades
+ * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
