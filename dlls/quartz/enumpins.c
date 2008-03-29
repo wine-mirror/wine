@@ -45,7 +45,7 @@ HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** pp
     pEnumPins->lpVtbl = &IEnumPinsImpl_Vtbl;
     pEnumPins->refCount = 1;
     pEnumPins->uIndex = 0;
-    CopyMemory(&pEnumPins->enumPinDetails, pDetails, sizeof(ENUMPINDETAILS));
+    pEnumPins->enumPinDetails = *pDetails;
     *ppEnum = (IEnumPins *)(&pEnumPins->lpVtbl);
 
     TRACE("Created new enumerator (%p)\n", *ppEnum);
