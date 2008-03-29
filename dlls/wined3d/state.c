@@ -246,8 +246,9 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         const GlPixelFormatDesc *glDesc;
         getFormatDescEntry(target->resource.format, &GLINFO_LOCATION, &glDesc);
 
-        /* When pixel shaders are used on a format that doesn't offer blending, disable blending else we could face a big performance penalty. */
-        if(!(glDesc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING) && use_ps(stateblock->wineD3DDevice)) {
+        /* Disable blending in all cases even without pixelshaders. With blending on we could face a big performance penalty.
+         * The d3d9 visual test confirms the behavior. */
+        if(!(glDesc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)) {
             glDisable(GL_BLEND);
             checkGLcall("glDisable GL_BLEND");
             return;

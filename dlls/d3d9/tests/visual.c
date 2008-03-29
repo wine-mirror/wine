@@ -7857,7 +7857,7 @@ static void pixelshader_blending_test(IDirect3DDevice9 *device)
              * reports. On Vista Nvidia seems to report 0x00ffffff on Geforce7 cards. */
             color = getPixelColor(device, 320, 240);
             trace("[No blending] %s: expected %x  or 0x00ffffff, result=%x\n", test_formats[fmt_index].fmtName, test_formats[fmt_index].resultColorNoBlending, color);
-            todo_wine ok((color == 0x00ffffff) || (color == test_formats[fmt_index].resultColorNoBlending), "Offscreen failed for %s: expected garbage but color %#08x, matches the result we would have with blending. (todo)\n", test_formats[fmt_index].fmtName, color);
+            ok((color == 0x00ffffff) || (color == test_formats[fmt_index].resultColorNoBlending), "Offscreen failed for %s: expected no color blending but received it anyway.\n", test_formats[fmt_index].fmtName);
         }
 
         IDirect3DDevice9_SetTexture(device, 0, NULL);
