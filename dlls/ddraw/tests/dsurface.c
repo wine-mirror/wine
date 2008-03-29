@@ -1504,7 +1504,6 @@ static void CubeMapTest(void)
     IDirectDrawSurface7_EnumAttachedSurfaces(cubemap,
                                              &num,
                                              CubeTestLvl1Enum);
-    trace("Enumerated %d surfaces in total\n", num);
     ok(num == 6, "Surface has %d attachments\n", num);
     IDirectDrawSurface7_Release(cubemap);
 
@@ -2110,7 +2109,6 @@ static void SizeTest(void)
     desc.dwSize = sizeof(desc);
     desc.dwFlags = DDSD_CAPS;
     desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
-    trace("before offscreenplain create dsurface = %p\n", dsurface);
     ret = IDirectDraw_CreateSurface(lpDD, &desc, &dsurface, NULL);
     ok(ret == DDERR_INVALIDPARAMS, "Creating an offscreen plain surface without a size info returned %08x (dsurface=%p)\n", ret, dsurface);
     if(dsurface)
