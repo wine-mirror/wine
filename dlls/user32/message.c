@@ -1683,6 +1683,21 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
 {
     EVENTMSG event;
 
+    if (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN ||
+        msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
+        switch (msg->wParam)
+        {
+            case VK_LSHIFT: case VK_RSHIFT:
+                msg->wParam = VK_SHIFT;
+                break;
+            case VK_LCONTROL: case VK_RCONTROL:
+                msg->wParam = VK_CONTROL;
+                break;
+            case VK_LMENU: case VK_RMENU:
+                msg->wParam = VK_MENU;
+                break;
+        }
+
     /* FIXME: is this really the right place for this hook? */
     event.message = msg->message;
     event.hwnd    = msg->hwnd;
