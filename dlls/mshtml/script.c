@@ -474,7 +474,31 @@ static void parse_text(ScriptHost *script_host, LPCWSTR text)
 
 static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
 {
-    FIXME("%p %s\n", script_host, debugstr_w(src));
+    IMoniker *mon;
+    char *buf;
+    WCHAR *text;
+    HRESULT hres;
+
+    static const WCHAR wine_schemaW[] = {'w','i','n','e',':'};
+
+    if(strlenW(src) > sizeof(wine_schemaW)/sizeof(WCHAR) && !memcmp(src, wine_schemaW, sizeof(wine_schemaW)))
+        src += sizeof(wine_schemaW)/sizeof(WCHAR);
+
+    hres = CreateURLMoniker(NULL, src, &mon);
+    if(FAILED(hres))
+        return;
+
+    hres = bind_mon_to_buffer(script_host->doc, mon, (void**)&buf);
+    IMoniker_Release(mon);
+    if(FAILED(hres))
+        return;
+
+    text = heap_strdupAtoW(buf);
+    heap_free(buf);
+
+    parse_text(script_host, text);
+
+    heap_free(text);
 }
 
 static void parse_inline_script(ScriptHost *script_host, nsIDOMHTMLScriptElement *nsscript)

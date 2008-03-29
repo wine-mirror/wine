@@ -718,6 +718,117 @@ HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback, IBindCtx *bctx)
     return S_OK;
 }
 
+typedef struct {
+    BSCallback bsc;
+
+    DWORD size;
+    BYTE *buf;
+    HRESULT hres;
+} BufferBSC;
+
+#define BUFFERBSC_THIS(bsc) ((BufferBSC*) bsc)
+
+static void BufferBSC_destroy(BSCallback *bsc)
+{
+    BufferBSC *This = BUFFERBSC_THIS(bsc);
+
+    heap_free(This->buf);
+    heap_free(This);
+}
+
+static HRESULT BufferBSC_start_binding(BSCallback *bsc)
+{
+    return S_OK;
+}
+
+static HRESULT BufferBSC_stop_binding(BSCallback *bsc, HRESULT result)
+{
+    BufferBSC *This = BUFFERBSC_THIS(bsc);
+
+    This->hres = result;
+
+    if(FAILED(result)) {
+        heap_free(This->buf);
+        This->buf = NULL;
+        This->size = 0;
+    }
+
+    return S_OK;
+}
+
+static HRESULT BufferBSC_read_data(BSCallback *bsc, IStream *stream)
+{
+    BufferBSC *This = BUFFERBSC_THIS(bsc);
+    DWORD readed;
+    HRESULT hres;
+
+    if(!This->buf) {
+        This->size = 128;
+        This->buf = heap_alloc(This->size);
+    }
+
+    do {
+        if(This->bsc.readed == This->size) {
+            This->size <<= 1;
+            This->buf = heap_realloc(This->buf, This->size);
+        }
+
+        readed = 0;
+        hres = IStream_Read(stream, This->buf+This->bsc.readed, This->size-This->bsc.readed, &readed);
+        This->bsc.readed += readed;
+    }while(hres == S_OK);
+
+    return S_OK;
+}
+
+static HRESULT BufferBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR status_text)
+{
+    return S_OK;
+}
+
+#undef BUFFERBSC_THIS
+
+static const BSCallbackVtbl BufferBSCVtbl = {
+    BufferBSC_destroy,
+    BufferBSC_start_binding,
+    BufferBSC_stop_binding,
+    BufferBSC_read_data,
+    BufferBSC_on_progress,
+};
+
+
+static BufferBSC *create_bufferbsc(IMoniker *mon)
+{
+    BufferBSC *ret = heap_alloc_zero(sizeof(*ret));
+
+    init_bscallback(&ret->bsc, &BufferBSCVtbl, mon, 0);
+    ret->hres = E_FAIL;
+
+    return ret;
+}
+
+HRESULT bind_mon_to_buffer(HTMLDocument *doc, IMoniker *mon, void **buf)
+{
+    BufferBSC *bsc = create_bufferbsc(mon);
+    HRESULT hres;
+
+    *buf = NULL;
+
+    hres = start_binding(doc, &bsc->bsc, NULL);
+    if(SUCCEEDED(hres)) {
+        hres = bsc->hres;
+        if(SUCCEEDED(hres)) {
+            *buf = bsc->buf;
+            bsc->buf = NULL;
+            bsc->size = 0;
+        }
+    }
+
+    IBindStatusCallback_Release(STATUSCLB(&bsc->bsc));
+
+    return hres;
+}
+
 struct nsChannelBSC {
     BSCallback bsc;
 
