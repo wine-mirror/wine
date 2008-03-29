@@ -255,8 +255,27 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
         DWORD dwReturnMask, IUnknown **ppiunkItem, ITypeInfo **ppti)
 {
     ScriptHost *This = ACTSCPSITE_THIS(iface);
-    FIXME("(%p)->(%s %x %p %p)\n", This, debugstr_w(pstrName), dwReturnMask, ppiunkItem, ppti);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %x %p %p)\n", This, debugstr_w(pstrName), dwReturnMask, ppiunkItem, ppti);
+
+    if(dwReturnMask != SCRIPTINFO_IUNKNOWN) {
+        FIXME("Unsupported mask %x\n", dwReturnMask);
+        return E_NOTIMPL;
+    }
+
+    *ppiunkItem = NULL;
+
+    if(strcmpW(pstrName, windowW))
+        return DISP_E_MEMBERNOTFOUND;
+
+    if(!This->doc)
+        return E_FAIL;
+
+    /* FIXME: Return proxy object */
+    *ppiunkItem = (IUnknown*)HTMLWINDOW2(This->doc->window);
+    IUnknown_AddRef(*ppiunkItem);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSite_GetDocVersionString(IActiveScriptSite *iface, BSTR *pbstrVersion)
