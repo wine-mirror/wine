@@ -34,7 +34,7 @@ BEGIN
                     CBS_NOINTEGRALHEIGHT | WS_TABSTOP,80,62,126,87
     LTEXT           "&Has³o:",IDC_STATIC,8,80,72,12,SS_CENTERIMAGE
     EDITTEXT        IDC_PASSWORD,80,80,126,12,ES_PASSWORD | ES_AUTOHSCROLL
-    CONTROL         "&Remember my password",IDC_SAVE,"Button",
+    CONTROL         "&Zapamiêtaj has³o",IDC_SAVE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,80,98,126,12
     DEFPUSHBUTTON   "&OK",IDOK,97,128,50,14
     PUSHBUTTON      "&Anuluj",IDCANCEL,156,128,50,14
