@@ -702,8 +702,8 @@ static void loaderdrv_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags
                                     const RECT *window_rect, const RECT *client_rect,
                                     const RECT *visible_rect, const RECT *valid_rects )
 {
-    return load_driver()->pSetWindowPos( hwnd, insert_after, swp_flags, window_rect,
-                                         client_rect, visible_rect, valid_rects );
+    load_driver()->pSetWindowPos( hwnd, insert_after, swp_flags, window_rect,
+                                  client_rect, visible_rect, valid_rects );
 }
 
 static int loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
