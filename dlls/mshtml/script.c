@@ -244,8 +244,11 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
 static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *plcid)
 {
     ScriptHost *This = ACTSCPSITE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, plcid);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, plcid);
+
+    *plcid = GetUserDefaultLCID();
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR pstrName,
