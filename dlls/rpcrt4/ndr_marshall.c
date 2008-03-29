@@ -5469,7 +5469,7 @@ void WINAPI NdrEncapsulatedUnionFree(PMIDL_STUB_MESSAGE pStubMsg,
 
     pMemory += increment;
 
-    return union_arm_free(pStubMsg, pMemory, switch_value, pFormat);
+    union_arm_free(pStubMsg, pMemory, switch_value, pFormat);
 }
 
 /***********************************************************************
@@ -5624,7 +5624,7 @@ void WINAPI NdrNonEncapsulatedUnionFree(PMIDL_STUB_MESSAGE pStubMsg,
     pFormat = ComputeConformance(pStubMsg, pMemory, pFormat, 0);
     TRACE("got switch value 0x%lx\n", pStubMsg->MaxCount);
 
-    return union_arm_free(pStubMsg, pMemory, pStubMsg->MaxCount, pFormat + *(const SHORT*)pFormat);
+    union_arm_free(pStubMsg, pMemory, pStubMsg->MaxCount, pFormat + *(const SHORT*)pFormat);
 }
 
 /***********************************************************************
