@@ -1,6 +1,6 @@
 /*
  * Copyright 2005, 2007 Henri Verbeet
- * Copyright (C) 2007 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2007-2008 Stefan Dösinger(for CodeWeavers)
  * Copyright (C) 2008 Jason Green(for TransGaming)
  *
  * This library is free software; you can redistribute it and/or
@@ -6426,12 +6426,12 @@ static void shademode_test(IDirect3DDevice9 *device)
                     r = (color0 & 0x00ff0000) >> 16;
                     g = (color0 & 0x0000ff00) >>  8;
                     b = (color0 & 0x000000ff);
-                    ok(r >= 0x0d && r <= 0x0e && g == 0xca && b >= 0x27 && b <= 0x28,
+                    ok(r >= 0x0c && r <= 0x0e && g == 0xca && b >= 0x27 && b <= 0x28,
                        "GOURAUD shading has color0 %08x, expected 0x000dca28\n", color0);
                     r = (color1 & 0x00ff0000) >> 16;
                     g = (color1 & 0x0000ff00) >>  8;
                     b = (color1 & 0x000000ff);
-                    ok(r == 0x0d && g >= 0x44 && g <= 0x45 && b >= 0xc7 && b <= 0xc8,
+                    ok(r >= 0x0c && r <= 0x0d && g >= 0x44 && g <= 0x45 && b >= 0xc7 && b <= 0xc8,
                        "GOURAUD shading has color1 %08x, expected 0x000d45c7\n", color1);
 
                     color0_gouraud = color0;
@@ -6444,12 +6444,12 @@ static void shademode_test(IDirect3DDevice9 *device)
                     r = (color0 & 0x00ff0000) >> 16;
                     g = (color0 & 0x0000ff00) >>  8;
                     b = (color0 & 0x000000ff);
-                    ok(r >= 0x0d && r <= 0x0e && g == 0xca && b >= 0x27 && b <= 0x28,
+                    ok(r >= 0x0c && r <= 0x0e && g == 0xca && b >= 0x27 && b <= 0x28,
                        "PHONG shading has color0 %08x, expected 0x000dca28\n", color0);
                     r = (color1 & 0x00ff0000) >> 16;
                     g = (color1 & 0x0000ff00) >>  8;
                     b = (color1 & 0x000000ff);
-                    ok(r == 0x0d && g >= 0x44 && g <= 0x45 && b >= 0xc7 && b <= 0xc8,
+                    ok(r >= 0x0c && r <= 0x0d && g >= 0x44 && g <= 0x45 && b >= 0xc7 && b <= 0xc8,
                        "PHONG shading has color1 %08x, expected 0x000d45c7\n", color1);
 
                     ok(color0 == color0_gouraud, "difference between GOURAUD and PHONG shading detected: %08x %08x\n",
