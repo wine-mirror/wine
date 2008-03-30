@@ -1470,7 +1470,7 @@ static void test_basic_request(int port, const char *verb, const char *url)
     DWORD r, count;
     char buffer[0x100];
 
-    hi = InternetOpen(NULL, 0, NULL, NULL, 0);
+    hi = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     ok(hi != NULL, "open failed\n");
 
     hc = InternetConnect(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
