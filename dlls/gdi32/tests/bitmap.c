@@ -1595,6 +1595,62 @@ todo_wine
     ReleaseDC(0, hdc);
 }
 
+static void test_GetDIBits_BI_BITFIELDS(void)
+{
+    /* Try a screen resolution detection technique
+     * from the September 1999 issue of Windows Developer's Journal
+     * which seems to be in widespread use.
+     * http://www.lesher.ws/highcolor.html
+     * http://www.lesher.ws/vidfmt.c
+     * It hinges on being able to retrieve the bitmaps
+     * for the three primary colors in nonpaletted 16 bit mode.
+     */
+    char dibinfo_buf[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
+    LPBITMAPINFO dibinfo = (LPBITMAPINFO) dibinfo_buf;
+    HDC hdc;
+    HBITMAP hbm;
+    int ret;
+
+    memset(dibinfo, 0, sizeof(dibinfo_buf));
+    dibinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+
+    hdc = GetDC(NULL);
+    ok(hdc != NULL, "GetDC failed?\n");
+    hbm = CreateCompatibleBitmap(hdc, 1, 1);
+    ok(hbm != NULL, "CreateCompatibleBitmap failed?\n");
+
+    /* Call GetDIBits to fill in bmiHeader.  */
+    ret = GetDIBits(hdc, hbm, 0, 1, NULL, dibinfo, DIB_RGB_COLORS);
+    ok(ret == 1, "GetDIBits failed\n");
+    if (dibinfo->bmiHeader.biBitCount == 16
+    &&  dibinfo->bmiHeader.biCompression == BI_BITFIELDS) {
+         /* In the BITMAPINFOHEADER doc, this little struct is implicit.
+          * Making explicit for clarity.
+          */
+         struct bi_bitfields_s {
+             DWORD red;
+             DWORD blue;
+             DWORD green;
+         } *bitmasks;
+
+         /* Retrieve the BI_BITFIELDS info (requires second call, honest). */
+         ret = GetDIBits(hdc, hbm, 0, 1, NULL, dibinfo, DIB_RGB_COLORS);
+         ok(ret == 1, "GetDIBits failed\n");
+
+         bitmasks = (struct bi_bitfields_s *) dibinfo->bmiColors;
+         todo_wine {
+             ok(bitmasks->red != 0, "expected space for red pixels\n");
+             ok(bitmasks->blue != 0, "expected space for blue pixels\n");
+             ok(bitmasks->green != 0, "expected space for green pixels\n");
+         }
+    } else {
+         skip("not in 16 bpp BI_BITFIELDS mode, skipping that test\n");
+    }
+
+    DeleteObject(hbm);
+    ReleaseDC(NULL, hdc);
+}
+
 static void test_select_object(void)
 {
     HDC hdc;
@@ -2036,6 +2092,7 @@ START_TEST(bitmap)
     test_GetDIBits_selected_DDB(TRUE);
     test_GetDIBits_selected_DDB(FALSE);
     test_GetDIBits();
+    test_GetDIBits_BI_BITFIELDS();
     test_select_object();
     test_CreateBitmap();
     test_GdiAlphaBlend();
