@@ -237,6 +237,13 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             PUSH2(WGL_AUX_BUFFERS_ARB, 2);
         }
 
+        /* DirectDraw supports 8bit paletted render targets and these are used by old games like Starcraft and C&C.
+         * Most modern hardware doesn't support 8bit natively so we perform some form of 8bit -> 32bit conversion.
+         * The conversion (ab)uses the alpha component for storing the palette index. For this reason we require
+         * a format with 8bit alpha, so request A8R8G8B8. */
+        if(fmt == WINED3DFMT_P8)
+            fmt = WINED3DFMT_A8R8G8B8;
+
         if(!getColorBits(fmt, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
             ERR("Unable to get color bits for format %#x!\n", target->resource.format);
             return FALSE;
