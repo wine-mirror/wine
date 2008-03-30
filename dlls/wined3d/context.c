@@ -351,6 +351,11 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     /* Set up the context defaults */
     oldCtx  = pwglGetCurrentContext();
     oldDrawable = pwglGetCurrentDC();
+    if(oldCtx && oldDrawable && GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
+        /* See comment in ActivateContext context switching */
+        glDisable(GL_FRAGMENT_SHADER_ATI);
+        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+    }
     if(pwglMakeCurrent(hdc, ctx) == FALSE) {
         ERR("Cannot activate context to set up defaults\n");
         goto out;
@@ -414,9 +419,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + s - 1);
             checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...\n");
         }
-    } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
-        glEnable(GL_FRAGMENT_SHADER_ATI);
-        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
     }
 
     if(GL_SUPPORT(ARB_POINT_SPRITE)) {
@@ -428,8 +430,15 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
     LEAVE_GL();
 
+    /* Never keep GL_FRAGMENT_SHADER_ATI enabled on a context that we switch away from,
+     * but enable it for the first context we create, and reenable it on the old context
+     */
     if(oldDrawable && oldCtx) {
         pwglMakeCurrent(oldDrawable, oldCtx);
+    }
+    if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
+        glEnable(GL_FRAGMENT_SHADER_ATI);
+        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
     }
 
 out:
@@ -928,9 +937,23 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         }
         else {
             TRACE("Switching gl ctx to %p, hdc=%p ctx=%p\n", context, context->hdc, context->glCtx);
+
+            if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
+                /* Mesa crashes when enabling a context with GL_FRAGMENT_SHADER_ATI enabled.
+                 * Thus we disable it before deactivating any context, and re-enable it afterwards.
+                 *
+                 * This bug is filed as bug #15269 on bugs.freedesktop.org
+                 */
+                glDisable(GL_FRAGMENT_SHADER_ATI);
+                checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+            }
+
             ret = pwglMakeCurrent(context->hdc, context->glCtx);
             if(ret == FALSE) {
                 ERR("Failed to activate the new context\n");
+            } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER) && !context->last_was_blit) {
+                glEnable(GL_FRAGMENT_SHADER_ATI);
+                checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
             }
         }
         if(This->activeContext->vshader_const_dirty) {
