@@ -357,45 +357,43 @@ static BOOL INTERNET_ConfigureProxy( LPWININETAPPINFOW lpwai )
     if (RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )) return FALSE;
 
     len = sizeof enabled;
-    if (!RegQueryValueExW( key, szProxyEnable, NULL, &type, (BYTE *)&enabled, &len ) &&
-        (type == REG_DWORD))
+    if (RegQueryValueExW( key, szProxyEnable, NULL, &type, (BYTE *)&enabled, &len ) || type != REG_DWORD)
+        RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE *)&enabled, sizeof(REG_DWORD) );
+
+    if (enabled)
     {
-        if (enabled)
+        TRACE("Proxy is enabled.\n");
+
+        /* figure out how much memory the proxy setting takes */
+        if (!RegQueryValueExW( key, szProxyServer, NULL, &type, NULL, &len ) && len && (type == REG_SZ))
         {
-            TRACE("Proxy is enabled.\n");
+            LPWSTR szProxy, p;
+            static const WCHAR szHttp[] = {'h','t','t','p','=',0};
 
-            /* figure out how much memory the proxy setting takes */
-            if (!RegQueryValueExW( key, szProxyServer, NULL, &type, NULL, &len ) &&
-                len && (type == REG_SZ))
+            if (!(szProxy = HeapAlloc( GetProcessHeap(), 0, len )))
             {
-                LPWSTR szProxy, p;
-                static const WCHAR szHttp[] = {'h','t','t','p','=',0};
-
-                if (!(szProxy = HeapAlloc( GetProcessHeap(), 0, len )))
-                {
-                    RegCloseKey( key );
-                    return FALSE;
-                }
-                RegQueryValueExW( key, szProxyServer, NULL, &type, (BYTE*)szProxy, &len );
-
-                /* find the http proxy, and strip away everything else */
-                p = strstrW( szProxy, szHttp );
-                if (p)
-                {
-                    p += lstrlenW( szHttp );
-                    lstrcpyW( szProxy, p );
-                }
-                p = strchrW( szProxy, ' ' );
-                if (p) *p = 0;
-
-                lpwai->dwAccessType = INTERNET_OPEN_TYPE_PROXY;
-                lpwai->lpszProxy = szProxy;
-
-                TRACE("http proxy = %s\n", debugstr_w(lpwai->lpszProxy));
+                RegCloseKey( key );
+                return FALSE;
             }
-            else
-                ERR("Couldn't read proxy server settings from registry.\n");
+            RegQueryValueExW( key, szProxyServer, NULL, &type, (BYTE*)szProxy, &len );
+
+            /* find the http proxy, and strip away everything else */
+            p = strstrW( szProxy, szHttp );
+            if (p)
+            {
+                p += lstrlenW( szHttp );
+                lstrcpyW( szProxy, p );
+            }
+            p = strchrW( szProxy, ' ' );
+            if (p) *p = 0;
+
+            lpwai->dwAccessType = INTERNET_OPEN_TYPE_PROXY;
+            lpwai->lpszProxy = szProxy;
+
+            TRACE("http proxy = %s\n", debugstr_w(lpwai->lpszProxy));
         }
+        else
+            ERR("Couldn't read proxy server settings from registry.\n");
     }
     else if ((envproxy = getenv( "http_proxy" )))
     {
