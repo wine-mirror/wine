@@ -583,35 +583,49 @@ static void test_GetGlyphIndices(void)
     WCHAR    testtext[] = {'T','e','s','t',0xffff,0};
     WORD     glyphs[(sizeof(testtext)/2)-1];
     TEXTMETRIC textm;
+    HFONT hOldFont;
 
     if (!pGetGlyphIndicesW) {
         skip("GetGlyphIndices not available on platform\n");
         return;
     }
 
-    if(!is_font_installed("Symbol"))
-    {
-        skip("Symbol is not installed so skipping this test\n");
-        return;
-    }
-
-    memset(&lf, 0, sizeof(lf));
-    strcpy(lf.lfFaceName, "Symbol");
-    lf.lfHeight = 20;
-
-    hfont = CreateFontIndirectA(&lf);
     hdc = GetDC(0);
 
     ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
     flags |= GGI_MARK_NONEXISTING_GLYPHS;
     charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
     ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
-    ok((glyphs[4] == 0x001f || glyphs[4] == UNICODE_NOCHAR /* Vista */), "GetGlyphIndices should have returned a nonexistent char not %04x\n", glyphs[4]);
+    ok((glyphs[4] == 0x001f || glyphs[4] == 0xffff /* Vista */), "GetGlyphIndices should have returned a nonexistent char not %04x\n", glyphs[4]);
     flags = 0;
     charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
     ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
-    ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndices should have returned a %04x not %04x\n", 
+    ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndices should have returned a %04x not %04x\n",
                     textm.tmDefaultChar, glyphs[4]);
+
+    if(!is_font_installed("Tahoma"))
+    {
+        skip("Tahoma is not installed so skipping this test\n");
+        return;
+    }
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = 20;
+
+    hfont = CreateFontIndirectA(&lf);
+    hOldFont = SelectObject(hdc, hfont);
+    ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
+    flags |= GGI_MARK_NONEXISTING_GLYPHS;
+    charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
+    ok(glyphs[4] == 0xffff, "GetGlyphIndices should have returned 0xffff char not %04x\n", glyphs[4]);
+    flags = 0;
+    testtext[0] = textm.tmDefaultChar;
+    charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
+    todo_wine ok(glyphs[0] == 0, "GetGlyphIndices for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
+    ok(glyphs[4] == 0, "GetGlyphIndices should have returned 0 not %04x\n", glyphs[4]);
+    DeleteObject(SelectObject(hdc, hOldFont));
 }
 
 static void test_GetKerningPairs(void)

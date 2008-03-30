@@ -4068,26 +4068,33 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
 /*************************************************************
  * WineEngGetGlyphIndices
  *
- * FIXME: add support for GGI_MARK_NONEXISTING_GLYPHS
  */
 DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
 				LPWORD pgi, DWORD flags)
 {
     int i;
-    WCHAR default_char = 0;
-    TEXTMETRICW textm;
+    int default_char = -1;
 
-    if  (flags & GGI_MARK_NONEXISTING_GLYPHS) default_char = 0x001f;  /* Indicate non existence */
+    if  (flags & GGI_MARK_NONEXISTING_GLYPHS) default_char = 0xffff;  /* XP would use 0x1f for bitmap fonts */
 
     for(i = 0; i < count; i++)
     {
         pgi[i] = get_glyph_index(font, lpstr[i]);
         if  (pgi[i] == 0)
         {
-            if (!default_char)
+            if (default_char == -1)
             {
-                WineEngGetTextMetrics(font, &textm);
-                default_char = textm.tmDefaultChar;
+                if (FT_IS_SFNT(font->ft_face))
+                {
+                    TT_OS2 *pOS2 = pFT_Get_Sfnt_Table(font->ft_face, ft_sfnt_os2);
+                    default_char = (pOS2->usDefaultChar ? get_glyph_index(font, pOS2->usDefaultChar) : 0);
+                }
+                else
+                {
+                    TEXTMETRICW textm;
+                    WineEngGetTextMetrics(font, &textm);
+                    default_char = textm.tmDefaultChar;
+                }
             }
             pgi[i] = default_char;
         }
