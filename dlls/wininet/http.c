@@ -3971,9 +3971,10 @@ BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
     {
         WCHAR szConnectionResponse[20];
         dwBufferSize = sizeof(szConnectionResponse);
-        if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse,
-                                 &dwBufferSize, NULL) ||
-            strcmpiW(szConnectionResponse, szKeepAlive))
+        if ((!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) ||
+             strcmpiW(szConnectionResponse, szKeepAlive)) &&
+            (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) ||
+             strcmpiW(szConnectionResponse, szKeepAlive)))
         {
             HTTPREQ_CloseConnection(&lpwhr->hdr);
         }
