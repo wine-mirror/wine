@@ -1231,6 +1231,36 @@ static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, struct HttpAuthIn
     return TRUE;
 }
 
+static WCHAR *HTTP_BuildProxyRequestUrl(WININETHTTPREQW *req)
+{
+    WCHAR new_location[2048], *url;
+    DWORD size;
+
+    size = sizeof(new_location);
+    if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_LOCATION, new_location, &size, NULL))
+    {
+        if (!(url = HeapAlloc( GetProcessHeap(), 0, size + sizeof(WCHAR) ))) return NULL;
+        strcpyW( url, new_location );
+    }
+    else
+    {
+        static const WCHAR slash[] = { '/',0 };
+        static const WCHAR format[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
+        WININETHTTPSESSIONW *session = req->lpHttpSession;
+
+        size = 15; /* "http://" + sizeof(port#) + ":/\0" */
+        size += strlenW( session->lpszHostName ) + strlenW( req->lpszPath );
+
+        if (!(url = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return FALSE;
+
+        sprintfW( url, format, session->lpszHostName, session->nHostPort );
+        if (req->lpszPath[0] != '/') strcatW( url, slash );
+        strcatW( url, req->lpszPath );
+    }
+    TRACE("url=%s\n", debugstr_w(url));
+    return url;
+}
+
 /***********************************************************************
  *           HTTP_DealWithProxy
  */
@@ -1242,9 +1272,8 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     WCHAR* url;
     static WCHAR szNul[] = { 0 };
     URL_COMPONENTSW UrlComponents;
-    static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 }, szSlash[] = { '/',0 } ;
-    static const WCHAR szFormat1[] = { 'h','t','t','p',':','/','/','%','s',0 };
-    static const WCHAR szFormat2[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
+    static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 };
+    static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',0 };
     int len;
 
     memset( &UrlComponents, 0, sizeof UrlComponents );
@@ -1254,7 +1283,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
 
     if( CSTR_EQUAL != CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
                                  hIC->lpszProxy,strlenW(szHttp),szHttp,strlenW(szHttp)) )
-        sprintfW(proxy, szFormat1, hIC->lpszProxy);
+        sprintfW(proxy, szFormat, hIC->lpszProxy);
     else
 	strcpyW(proxy, hIC->lpszProxy);
     if( !InternetCrackUrlW(proxy, 0, 0, &UrlComponents) )
@@ -1272,15 +1301,6 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
 
     if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
-
-    sprintfW(url, szFormat2, lpwhs->lpszHostName, lpwhs->nHostPort);
-
-    if( lpwhr->lpszPath[0] != '/' )
-        strcatW( url, szSlash );
-    strcatW(url, lpwhr->lpszPath);
-    if(lpwhr->lpszPath != szNul)
-        HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
-    lpwhr->lpszPath = url;
 
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
     lpwhs->lpszServerName = WININET_strdupW(UrlComponents.lpszHostName);
@@ -3177,7 +3197,15 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
 
-        requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, lpwhr->lpszVersion);
+        if (lpwhr->lpHttpSession->lpAppInfo->lpszProxy && lpwhr->lpHttpSession->lpAppInfo->lpszProxy[0])
+        {
+            WCHAR *url = HTTP_BuildProxyRequestUrl(lpwhr);
+            requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, url, lpwhr->lpszVersion);
+            HeapFree(GetProcessHeap(), 0, url);
+        }
+        else
+            requestString = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, lpwhr->lpszVersion);
+
  
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
