@@ -1045,7 +1045,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         return 0;
     }
 
-    if (TRACE_ON(opengl)) {
+    if (TRACE_ON(wgl)) {
         TRACE("(%p,%p)\n", physDev, ppfd);
 
         dump_PIXELFORMATDESCRIPTOR(ppfd);
@@ -1388,7 +1388,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 
   ppfd->iLayerType = PFD_MAIN_PLANE;
 
-  if (TRACE_ON(opengl)) {
+  if (TRACE_ON(wgl)) {
     dump_PIXELFORMATDESCRIPTOR(ppfd);
   }
 
@@ -1492,7 +1492,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 
   physDev->current_pf = iPixelFormat;
 
-  if (TRACE_ON(opengl)) {
+  if (TRACE_ON(wgl)) {
     int gl_test = 0;
 
     gl_test = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_FBCONFIG_ID, &value);
@@ -1904,7 +1904,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
              gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
          }
          if (GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, NULL) == GDI_ERROR) goto error;
-         if (TRACE_ON(opengl)) {
+         if (TRACE_ON(wgl)) {
              unsigned int height, width, bitmask;
              unsigned char *bitmap_ = (unsigned char *) bitmap;
 
