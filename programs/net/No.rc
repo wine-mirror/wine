@@ -1,0 +1,43 @@
+/*
+ * NET.EXE - Wine-compatible net program
+ * Norwegian (Bokmål) language support
+ *
+ * Copyright (C) 2008 Alexander N. Sørnes <alex@thehandofagony.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
+
+STRINGTABLE
+{
+    STRING_USAGE, "Programmet brukes som følger:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_START_USAGE, "Oppgi navnet på tjeneren soms skal startes.\n"
+    STRING_STOP_USAGE, "Oppgi navnet på tjeneren som skal stoppes.\n"
+    STRING_STOP_DEP, "Stopper avhengig tjeneste: %s\n"
+    STRING_CANT_STOP, "Klarte ikke stoppe tjenesten «%s»\n"
+    STRING_NO_SCM, "Klarte ikke nå tjenestebehandleren.\n"
+    STRING_NO_SVCHANDLE, "Klarte ikke nå tjenesten.\n"
+    STRING_START_SVC, "Tjenesten «%s» starter.\n"
+    STRING_START_SVC_SUCCESS, "Tjenesten «%s» ble startet vellykket.\n"
+    STRING_START_SVC_FAIL, "Tjenesten «%s» klarte ikke starte.\n"
+    STRING_STOP_SVC, "Tjenesten «%s» stopper.\n"
+    STRING_STOP_SVC_SUCCESS, "Tjenesten «%s» ble stoppet vellykket.\n"
+    STRING_STOP_SVC_FAIL, "Klarte ikke stoppe tjenesten «%s».\n"
+    STRING_HELP_USAGE, "Hjelp brukes som følgende:\n\nNET HELP kommando\n    -eller-\nNET kommando /HELP\n\n   Tilgjengelige kommandoer:\n   NET HELP    NET START     NET STOP\n"
+    STRING_NO_ENTRIES, "Det er ingen oppføringer på listen.\n"
+    STRING_USE_HEADER, "\nStatus    Lokal   Remote\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY, "%s      %S      %S      Åpne ressurser: %lu\n"
+}
