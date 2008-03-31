@@ -62,30 +62,30 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Venster-instellingen ",IDC_STATIC,8,4,244,180
+    GROUPBOX        " Venster-instellingen ",IDC_STATIC,8,4,244,184
 
-    CONTROL	    "Een DirectX programma kan de muis in een venster vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
+    CONTROL	    "Een DirectX programma kan de muis in een venster vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
     
+    CONTROL         "Laat de window manager de vensters beheren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     LTEXT           "Wanneer de vensters door de window manager worden beheerd hebben deze de standaard kaders, er wordt rekening gehouden met de virtuele desktop en ze staan in de lijst met vensters.\n\nAls de vensters niet worden beheerd, worden ze losgekoppeld van de window manager. Dit betekent dat vensters niet perfect met uw desktop integreren. De 'emulatie' is echter exacter en kan ervoor zorgen dat programma's beter werken.",
-                    IDC_STATIC,15,37,228,80
-    CONTROL         "Laat de window manager de vensters beheren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
+                    IDC_STATIC,19,51,225,80
     
+    CONTROL         "Emuleer een virtuele desktop",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
     /* FIXME: the wording of this explanation could be a lot better */
     LTEXT           "U kunt kiezen voor een virtuele windows desktop waarop alle vensters geplaatst worden, of u kunt er voor kiezen dat de vensters op uw standaard desktop geplaatst worden.",
-                    IDC_STATIC,15,125,228,28
-    CONTROL         "Emuleer een virtuele desktop",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
-    LTEXT           "Desktop afmetingen:",IDC_DESKTOP_SIZE,15,168,69,8,WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_WIDTH,89,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,133,168,8,8,WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,142,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+                    IDC_STATIC,19,138,225,28
+    LTEXT           "Desktop afmetingen:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,109,168,8,8,WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,50
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,190,244,48
 
-    LTEXT	    "Vertex Shader ondersteuning: ",IDC_STATIC,15,199,100,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,197,130,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT	    "Vertex Shader ondersteuning: ",IDC_STATIC,15,203,100,32
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,201,125,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Pixel Shader toestaan (indien ondersteund door de hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
+    CONTROL         "Pixel Shader toestaan (indien ondersteund door de hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
     GROUPBOX        " Screen Resolution ",IDC_STATIC,8,242,244,25
     CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
     EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
@@ -167,8 +167,8 @@ BEGIN
     GROUPBOX        " Stuurprogramma selectie ",IDC_STATIC,8,4,244,195
     LTEXT           "Selecteer een geluids-stuurprogramma door het aanvinken van het gewenste stuurprogramma. Zet het geluid uit door geen stuurprogramma te selecteren. Het selecteren van meerdere stuurprogramma's wordt niet aanbevolen. Configureer een stuurprogramma d.m.v. een rechter muisklik hierop.",IDC_STATIC,15,20,227,45
     CONTROL         "Apparaten",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,65,140,125
-    PUSHBUTTON	    "Configuratiescherm",IDC_AUDIO_CONTROL_PANEL,170,65,79,14
-    PUSHBUTTON      "Geluidstest",IDC_AUDIO_TEST,170,85,79,14
+    PUSHBUTTON      "Geluidstest",IDC_AUDIO_TEST,165,65,79,14
+    PUSHBUTTON	    "Configuratiescherm",IDC_AUDIO_CONTROL_PANEL,165,85,79,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Hardwareversnelling: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
