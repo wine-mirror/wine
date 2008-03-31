@@ -1145,96 +1145,109 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         /* Below we will do a number of checks to select the 'best' pixelformat.
          * We assume the precedence cColorBits > cAlphaBits > cDepthBits > cStencilBits -> cAuxBuffers.
          * The code works by trying to match the most important options as close as possible.
-         * When a reasonable format is found, we will try to match more options. */
+         * When a reasonable format is found, we will try to match more options.
+         * It appears (see the opengl32 test) that Windows opengl drivers ignore options
+         * like cColorBits, cAlphaBits and friends if they are set to 0, so they are considered
+         * as DONTCARE. At least Serious Sam TSE relies on this behavior. */
 
         /* Color bits */
-        if( ((ppfd->cColorBits > bestColor) && (color > bestColor)) ||
-            ((color >= ppfd->cColorBits) && (color < bestColor)) )
-        {
-            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
-            bestStereo = dwFlags & PFD_STEREO;
-            bestAlpha = alpha;
-            bestColor = color;
-            bestDepth = depth;
-            bestStencil = stencil;
-            bestAux = aux;
-            bestFormat = i;
-            continue;
-        } else if(bestColor != color) {  /* Do further checks if the format is compatible */
-            TRACE("color mismatch for iPixelFormat=%d\n", i+1);
-            continue;
+        if(ppfd->cColorBits) {
+            if( ((ppfd->cColorBits > bestColor) && (color > bestColor)) ||
+                ((color >= ppfd->cColorBits) && (color < bestColor)) )
+            {
+                bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+                bestStereo = dwFlags & PFD_STEREO;
+                bestAlpha = alpha;
+                bestColor = color;
+                bestDepth = depth;
+                bestStencil = stencil;
+                bestAux = aux;
+                bestFormat = i;
+                continue;
+            } else if(bestColor != color) {  /* Do further checks if the format is compatible */
+                TRACE("color mismatch for iPixelFormat=%d\n", i+1);
+                continue;
+            }
         }
 
         /* Alpha bits */
-        if( ((ppfd->cAlphaBits > bestAlpha) && (alpha > bestAlpha)) ||
-            ((alpha >= ppfd->cAlphaBits) && (alpha < bestAlpha)) )
-        {
-            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
-            bestStereo = dwFlags & PFD_STEREO;
-            bestAlpha = alpha;
-            bestColor = color;
-            bestDepth = depth;
-            bestStencil = stencil;
-            bestAux = aux;
-            bestFormat = i;
-            continue;
-        } else if(bestAlpha != alpha) {
-            TRACE("alpha mismatch for iPixelFormat=%d\n", i+1);
-            continue;
+        if(ppfd->cAlphaBits) {
+            if( ((ppfd->cAlphaBits > bestAlpha) && (alpha > bestAlpha)) ||
+                ((alpha >= ppfd->cAlphaBits) && (alpha < bestAlpha)) )
+            {
+                bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+                bestStereo = dwFlags & PFD_STEREO;
+                bestAlpha = alpha;
+                bestColor = color;
+                bestDepth = depth;
+                bestStencil = stencil;
+                bestAux = aux;
+                bestFormat = i;
+                continue;
+            } else if(bestAlpha != alpha) {
+                TRACE("alpha mismatch for iPixelFormat=%d\n", i+1);
+                continue;
+            }
         }
 
         /* Depth bits */
-        if( ((ppfd->cDepthBits > bestDepth) && (depth > bestDepth)) ||
-            ((depth >= ppfd->cDepthBits) && (depth < bestDepth)) )
-        {
-            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
-            bestStereo = dwFlags & PFD_STEREO;
-            bestAlpha = alpha;
-            bestColor = color;
-            bestDepth = depth;
-            bestStencil = stencil;
-            bestAux = aux;
-            bestFormat = i;
-            continue;
-        } else if(bestDepth != depth) {
-            TRACE("depth mismatch for iPixelFormat=%d\n", i+1);
-            continue;
+        if(ppfd->cDepthBits) {
+            if( ((ppfd->cDepthBits > bestDepth) && (depth > bestDepth)) ||
+                ((depth >= ppfd->cDepthBits) && (depth < bestDepth)) )
+            {
+                bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+                bestStereo = dwFlags & PFD_STEREO;
+                bestAlpha = alpha;
+                bestColor = color;
+                bestDepth = depth;
+                bestStencil = stencil;
+                bestAux = aux;
+                bestFormat = i;
+                continue;
+            } else if(bestDepth != depth) {
+                TRACE("depth mismatch for iPixelFormat=%d\n", i+1);
+                continue;
+            }
         }
 
         /* Stencil bits */
-        if( ((ppfd->cStencilBits > bestStencil) && (stencil > bestStencil)) ||
-            ((stencil >= ppfd->cStencilBits) && (stencil < bestStencil)) )
-        {
-            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
-            bestStereo = dwFlags & PFD_STEREO;
-            bestAlpha = alpha;
-            bestColor = color;
-            bestDepth = depth;
-            bestStencil = stencil;
-            bestAux = aux;
-            bestFormat = i;
-            continue;
-        } else if(bestStencil != stencil) {
-            TRACE("stencil mismatch for iPixelFormat=%d\n", i+1);
-            continue;
+        if(ppfd->cStencilBits) {
+            if( ((ppfd->cStencilBits > bestStencil) && (stencil > bestStencil)) ||
+                ((stencil >= ppfd->cStencilBits) && (stencil < bestStencil)) )
+            {
+                bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+                bestStereo = dwFlags & PFD_STEREO;
+                bestAlpha = alpha;
+                bestColor = color;
+                bestDepth = depth;
+                bestStencil = stencil;
+                bestAux = aux;
+                bestFormat = i;
+                continue;
+            } else if(bestStencil != stencil) {
+                TRACE("stencil mismatch for iPixelFormat=%d\n", i+1);
+                continue;
+            }
         }
 
         /* Aux buffers */
-        if( ((ppfd->cAuxBuffers > bestAux) && (aux > bestAux)) ||
-            ((aux >= ppfd->cAuxBuffers) && (aux < bestAux)) )
-        {
-            bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
-            bestStereo = dwFlags & PFD_STEREO;
-            bestAlpha = alpha;
-            bestColor = color;
-            bestDepth = depth;
-            bestStencil = stencil;
-            bestAux = aux;
-            bestFormat = i;
-            continue;
-        } else if(bestAux != aux) {
-            TRACE("aux mismatch for iPixelFormat=%d\n", i+1);
-            continue;
+        if(ppfd->cAuxBuffers) {
+            if( ((ppfd->cAuxBuffers > bestAux) && (aux > bestAux)) ||
+                ((aux >= ppfd->cAuxBuffers) && (aux < bestAux)) )
+            {
+                bestDBuffer = dwFlags & PFD_DOUBLEBUFFER;
+                bestStereo = dwFlags & PFD_STEREO;
+                bestAlpha = alpha;
+                bestColor = color;
+                bestDepth = depth;
+                bestStencil = stencil;
+                bestAux = aux;
+                bestFormat = i;
+                continue;
+            } else if(bestAux != aux) {
+                TRACE("aux mismatch for iPixelFormat=%d\n", i+1);
+                continue;
+            }
         }
     }
 

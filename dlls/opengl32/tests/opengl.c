@@ -176,6 +176,80 @@ static void test_pbuffers(HDC hdc)
     else skip("Pbuffer test for offscreen pixelformat skipped as no offscreen-only format with pbuffer capabilities has been found\n");
 }
 
+static void test_choosepixelformat(HDC hdc)
+{
+    int iPixelFormat;
+    int nFormats;
+    BOOL found=FALSE;
+    PIXELFORMATDESCRIPTOR pfd = {
+        sizeof(PIXELFORMATDESCRIPTOR),
+        1,                     /* version */
+        PFD_DRAW_TO_WINDOW |
+        PFD_SUPPORT_OPENGL |
+        PFD_DOUBLEBUFFER,
+        PFD_TYPE_RGBA,
+        32,                    /* 32-bit color depth */
+        0, 0, 0, 0, 0, 0,      /* color bits */
+        0,                     /* alpha buffer */
+        0,                     /* shift bit */
+        0,                     /* accumulation buffer */
+        0, 0, 0, 0,            /* accum bits */
+        0,                     /* z-buffer */
+        0,                     /* stencil buffer */
+        0,                     /* auxiliary buffer */
+        PFD_MAIN_PLANE,        /* main layer */
+        0,                     /* reserved */
+        0, 0, 0                /* layer masks */
+    };
+
+    /* Below we test the behavior of ChoosePixelFormat. As documented on MSDN this
+     * function doesn't give any guarantees about its outcome. Programs should not
+     * rely on weird behavior of the function but unfortunately a few programs like
+     * e.g. Serious Sam TSE rely on it.
+     *
+     * MSDN documents of a few flags like double buffering / stereo that they can be set to DONTCARE.
+     * It appears that a 0 value on other options like alpha, red, .. means DONTCARE. The hypothesis
+     * is that ChoosePixelFormat returns the first available format which matches the criteria.
+     *
+     * This test tries to proof the DONTCARE behavior by passing an almost 'empty' pfd to
+     * ChoosePixelFormat. The pfd only has some really needed flags (RGBA, window, double buffer) set.
+     * Further a 32 bit color buffer has been requested. The idea is that when a format with e.g. depth or stencil bits
+     * is returned, while there are also 'better' candidates in the list wihtout them (but located AFTER the returned one)
+     * that an option set to zero means DONTCARE. We try to proof this by checking the aux/depth/stencil bits.
+     * Proofing this behavior for the color bits isn't possible as all formats have red/green/blue/(alpha), so we assume
+     * that if it holds for aux/depth/stencil it also holds for the others.
+     *
+     * The test below passes at least on various ATI cards (rv250, r300) and Nvidia cards.
+     */
+
+    iPixelFormat = ChoosePixelFormat(hdc, &pfd);
+    if(iPixelFormat) {
+        PIXELFORMATDESCRIPTOR pfd_tmp;
+        BOOL res;
+        int i;
+
+        memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+        res = DescribePixelFormat(hdc, iPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
+
+        nFormats = DescribePixelFormat(hdc, 0, 0, NULL);
+        /* Start testing from iPixelFormat, second formats start counting from index=1, so use '<=' */
+        for(i=iPixelFormat; i<=nFormats; i++) {
+            memset(&pfd_tmp, 0, sizeof(PIXELFORMATDESCRIPTOR));
+            res = DescribePixelFormat(hdc, i, sizeof(PIXELFORMATDESCRIPTOR), &pfd_tmp);
+            if(!res)
+                continue;
+
+            /* Check if there is a format which better matches the requirements */
+            if((pfd_tmp.cAuxBuffers < pfd.cAuxBuffers) || (pfd_tmp.cDepthBits < pfd.cDepthBits) || (pfd_tmp.cStencilBits < pfd.cStencilBits))
+                found = TRUE;
+        }
+
+        /* When found=TRUE we were able to confirm our hypothesis */
+        ok(found == TRUE, "Unable to confirm DONTCARE behavior of unset pixelformatdescriptor flags\n");
+    }
+
+}
+
 static void test_setpixelformat(HDC winhdc)
 {
     int res = 0;
@@ -398,6 +472,7 @@ START_TEST(opengl)
         ok(res, "wglMakeCurrent failed!\n");
         init_functions();
 
+        test_choosepixelformat(hdc);
         test_setpixelformat(hdc);
         test_colorbits(hdc);
         test_gdi_dbuf(hdc);
