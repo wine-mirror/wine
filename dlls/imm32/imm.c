@@ -1860,7 +1860,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
     if (hIMC == (HIMC)FROM_IME)
     {
         ImmInternalSetOpenStatus(fOpen);
-        ImmInternalSendIMENotify(data, IMN_SETOPENSTATUS, 0);
+        ImmInternalSendIMENotify(root_context, IMN_SETOPENSTATUS, 0);
         return TRUE;
     }
 
