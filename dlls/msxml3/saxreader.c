@@ -194,6 +194,9 @@ static HRESULT WINAPI saxxmlreader_getFeature(
     const WCHAR *pFeature,
     VARIANT_BOOL *pValue)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(pFeature), pValue);
     return E_NOTIMPL;
 }
 
@@ -202,6 +205,9 @@ static HRESULT WINAPI saxxmlreader_putFeature(
     const WCHAR *pFeature,
     VARIANT_BOOL vfValue)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(pFeature), vfValue);
     return E_NOTIMPL;
 }
 
@@ -210,6 +216,9 @@ static HRESULT WINAPI saxxmlreader_getProperty(
     const WCHAR *pProp,
     VARIANT *pValue)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(pProp), pValue);
     return E_NOTIMPL;
 }
 
@@ -218,6 +227,9 @@ static HRESULT WINAPI saxxmlreader_putProperty(
     const WCHAR *pProp,
     VARIANT value)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(pProp));
     return E_NOTIMPL;
 }
 
@@ -225,6 +237,9 @@ static HRESULT WINAPI saxxmlreader_getEntityResolver(
     IVBSAXXMLReader* iface,
     IVBSAXEntityResolver **pEntityResolver)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pEntityResolver);
     return E_NOTIMPL;
 }
 
@@ -232,6 +247,9 @@ static HRESULT WINAPI saxxmlreader_putEntityResolver(
     IVBSAXXMLReader* iface,
     IVBSAXEntityResolver *pEntityResolver)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pEntityResolver);
     return E_NOTIMPL;
 }
 
@@ -239,6 +257,9 @@ static HRESULT WINAPI saxxmlreader_getContentHandler(
     IVBSAXXMLReader* iface,
     IVBSAXContentHandler **ppContentHandler)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, ppContentHandler);
     return E_NOTIMPL;
 }
 
@@ -246,6 +267,9 @@ static HRESULT WINAPI saxxmlreader_putContentHandler(
     IVBSAXXMLReader* iface,
     IVBSAXContentHandler *contentHandler)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, contentHandler);
     return E_NOTIMPL;
 }
 
@@ -253,6 +277,9 @@ static HRESULT WINAPI saxxmlreader_getDTDHandler(
     IVBSAXXMLReader* iface,
     IVBSAXDTDHandler **pDTDHandler)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pDTDHandler);
     return E_NOTIMPL;
 }
 
@@ -260,6 +287,9 @@ static HRESULT WINAPI saxxmlreader_putDTDHandler(
     IVBSAXXMLReader* iface,
     IVBSAXDTDHandler *pDTDHandler)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pDTDHandler);
     return E_NOTIMPL;
 }
 
@@ -267,6 +297,9 @@ static HRESULT WINAPI saxxmlreader_getErrorHandler(
     IVBSAXXMLReader* iface,
     IVBSAXErrorHandler **pErrorHandler)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pErrorHandler);
     return E_NOTIMPL;
 }
 
@@ -274,6 +307,9 @@ static HRESULT WINAPI saxxmlreader_putErrorHandler(
     IVBSAXXMLReader* iface,
     IVBSAXErrorHandler *errorHandler)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, errorHandler);
     return E_NOTIMPL;
 }
 
@@ -281,6 +317,9 @@ static HRESULT WINAPI saxxmlreader_getBaseURL(
     IVBSAXXMLReader* iface,
     const WCHAR **pBaseUrl)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pBaseUrl);
     return E_NOTIMPL;
 }
 
@@ -288,6 +327,9 @@ static HRESULT WINAPI saxxmlreader_putBaseURL(
     IVBSAXXMLReader* iface,
     const WCHAR *pBaseUrl)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(pBaseUrl));
     return E_NOTIMPL;
 }
 
@@ -295,6 +337,9 @@ static HRESULT WINAPI saxxmlreader_getSecureBaseURL(
     IVBSAXXMLReader* iface,
     const WCHAR **pSecureBaseUrl)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pSecureBaseUrl);
     return E_NOTIMPL;
 }
 
@@ -303,6 +348,9 @@ static HRESULT WINAPI saxxmlreader_putSecureBaseURL(
     IVBSAXXMLReader* iface,
     const WCHAR *secureBaseUrl)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(secureBaseUrl));
     return E_NOTIMPL;
 }
 
@@ -310,6 +358,9 @@ static HRESULT WINAPI saxxmlreader_parse(
     IVBSAXXMLReader* iface,
     VARIANT varInput)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p) stub\n", This);
     return E_NOTIMPL;
 }
 
@@ -317,6 +368,9 @@ static HRESULT WINAPI saxxmlreader_parseURL(
     IVBSAXXMLReader* iface,
     const WCHAR *url)
 {
+    saxreader *This = impl_from_IVBSAXXMLReader( iface );
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(url));
     return E_NOTIMPL;
 }
 
