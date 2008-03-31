@@ -2864,16 +2864,12 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
 {
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
     LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
+    BOOL using_proxy = hIC->lpszProxy && hIC->lpszProxy[0];
     WCHAR path[2048];
 
     if(lpszUrl[0]=='/')
     {
         /* if it's an absolute path, keep the same session info */
-        lstrcpynW(path, lpszUrl, 2048);
-    }
-    else if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
-    {
-        TRACE("Redirect through proxy\n");
         lstrcpynW(path, lpszUrl, 2048);
     }
     else
@@ -2997,11 +2993,9 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
                            HTTP_ADDHDR_FLAG_ADD_IF_NEW);
 #endif
         
-        HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
-        lpwhs->lpszServerName = WININET_strdupW(hostName);
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
         if (urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT &&
-                urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
+            urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
         {
             int len;
             static const WCHAR fmt[] = {'%','s',':','%','i',0};
@@ -3015,20 +3009,27 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
 
         HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
-        
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
         lpwhs->lpszUserName = NULL;
         if (userName[0])
             lpwhs->lpszUserName = WININET_strdupW(userName);
-        lpwhs->nServerPort = urlComponents.nPort;
 
-        if (!HTTP_ResolveName(lpwhr))
-            return FALSE;
+        if (!using_proxy)
+        {
+            HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
+            lpwhs->lpszServerName = WININET_strdupW(hostName);
+            lpwhs->nServerPort = urlComponents.nPort;
 
-        NETCON_close(&lpwhr->netConnection);
+            if (!HTTP_ResolveName(lpwhr))
+                return FALSE;
 
-        if (!NETCON_init(&lpwhr->netConnection,lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
-            return FALSE;
+            NETCON_close(&lpwhr->netConnection);
+
+            if (!NETCON_init(&lpwhr->netConnection,lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
+                return FALSE;
+        }
+        else
+            TRACE("Redirect through proxy\n");
     }
 
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
