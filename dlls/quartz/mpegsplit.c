@@ -363,8 +363,11 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
             IMediaSample_SetSyncPoint(This->pCurrentSample, TRUE);
         }
         hr = FillBuffer(This, &pbSrcStream, &cbSrcStream);
-        if (SUCCEEDED(hr))
+        if (SUCCEEDED(hr)) {
+            if (hr == S_FALSE)
+                break;
             continue;
+        }
 
 fail:
         FIXME("Failed with hres: %08x!\n", hr);
