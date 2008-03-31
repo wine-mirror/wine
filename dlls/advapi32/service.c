@@ -615,9 +615,15 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         DWORD count, req[2] = {0,0};
 
         r = ReadFile( pipe, &req, sizeof req, &count, NULL );
-        if (!r || count!=sizeof req)
+        if (!r)
         {
-            ERR("pipe read failed\n");
+            if (GetLastError() != ERROR_BROKEN_PIPE)
+                ERR( "pipe read failed error %u\n", GetLastError() );
+            break;
+        }
+        if (count != sizeof(req))
+        {
+            ERR( "partial pipe read %u\n", count );
             break;
         }
 
