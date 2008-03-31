@@ -356,7 +356,7 @@ __ASM_GLOBAL_FUNC(call_thread_entry_point,
                   "movl 8(%ebp),%eax\n\t"
                   "call *%eax\n\t"
                   "leave\n\t"
-                  "ret" );
+                  "ret" )
 #else
 static inline DWORD call_thread_entry_point( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
