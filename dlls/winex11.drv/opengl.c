@@ -664,6 +664,11 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       TRACE("pAttr[%d] = GLX_DOUBLEBUFFER: %d\n", cur, pop);
       doublebuf = pop;
       break;
+    case WGL_STEREO_ARB:
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_STEREO, pop);
+      TRACE("pAttr[%d] = GLX_STEREO: %d\n", cur, pop);
+      break;
 
     case WGL_PIXEL_TYPE_ARB:
       pop = iWGLAttr[++cur];
