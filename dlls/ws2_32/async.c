@@ -126,8 +126,8 @@ CRITICAL_SECTION csWSgetXXXbyYYY = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* protoptypes of some functions in socket.c
  */
-UINT16 wsaErrno(void);
-UINT16 wsaHerrno(int errnr);
+UINT wsaErrno(void);
+UINT wsaHerrno(int errnr);
 
 #define AQ_WIN16	0x00
 #define AQ_WIN32	0x04
