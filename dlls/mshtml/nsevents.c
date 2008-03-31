@@ -195,7 +195,7 @@ static nsresult NSAPI handle_node_insert(nsIDOMEventListener *iface, nsIDOMEvent
         nsDOMEventListener_AddRef, \
         nsDOMEventListener_Release, \
         handler, \
-    };
+    }
 
 static const nsIDOMEventListenerVtbl blur_vtbl =      EVENTLISTENER_VTBL(handle_blur);
 static const nsIDOMEventListenerVtbl focus_vtbl =     EVENTLISTENER_VTBL(handle_focus);
