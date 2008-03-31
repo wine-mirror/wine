@@ -54,7 +54,7 @@ typedef struct _saxreader
 static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
 {
     return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpVtbl));
-};
+}
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI saxxmlreader_QueryInterface(IVBSAXXMLReader* iface, REFIID riid, void **ppvObject)
