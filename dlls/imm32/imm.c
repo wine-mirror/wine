@@ -31,6 +31,7 @@
 #include "ddk/imm.h"
 #include "winnls.h"
 #include "winreg.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
@@ -44,6 +45,35 @@ typedef struct tagIMCCInternal
     DWORD dwSize;
 } IMCCInternal;
 
+#define MAKE_FUNCPTR(f) typeof(f) * p##f
+typedef struct _tagImmHkl{
+    struct list entry;
+    HKL         hkl;
+    HMODULE     hIME;
+    IMEINFO     imeInfo;
+    WCHAR       imeClassName[17]; /* 16 character max */
+    ULONG       uSelected;
+
+    /* Function Pointers */
+    MAKE_FUNCPTR(ImeInquire);
+    MAKE_FUNCPTR(ImeConfigure);
+    MAKE_FUNCPTR(ImeDestroy);
+    MAKE_FUNCPTR(ImeEscape);
+    MAKE_FUNCPTR(ImeSelect);
+    MAKE_FUNCPTR(ImeSetActiveContext);
+    MAKE_FUNCPTR(ImeToAsciiEx);
+    MAKE_FUNCPTR(NotifyIME);
+    MAKE_FUNCPTR(ImeRegisterWord);
+    MAKE_FUNCPTR(ImeUnregisterWord);
+    MAKE_FUNCPTR(ImeEnumRegisterWord);
+    MAKE_FUNCPTR(ImeSetCompositionString);
+    MAKE_FUNCPTR(ImeConversionList);
+    MAKE_FUNCPTR(ImeProcessKey);
+    MAKE_FUNCPTR(ImeGetRegisterWordStyle);
+    MAKE_FUNCPTR(ImeGetImeMenuItems);
+} ImmHkl;
+#undef MAKE_FUNCPTR
+
 typedef struct tagInputContextData
 {
         BOOL            bInternalState;
@@ -53,6 +83,8 @@ typedef struct tagInputContextData
 
         DWORD           dwLock;
         INPUTCONTEXT    IMC;
+
+        ImmHkl          *immKbd;
 } InputContextData;
 
 typedef struct _tagTRANSMSG {
@@ -66,6 +98,8 @@ static HWND hwndDefault = NULL;
 static HANDLE hImeInst;
 static const WCHAR WC_IMECLASSNAME[] = {'I','M','E',0};
 static ATOM atIMEClass = 0;
+
+static struct list ImmHklList = LIST_INIT(ImmHklList);
 
 /* MSIME messages */
 static UINT WM_MSIME_SERVICE;
@@ -85,6 +119,77 @@ static void UpdateDataInDefaultIMEWindow(HWND hwnd, BOOL showable);
 static void ImmInternalPostIMEMessage(InputContextData*, UINT, WPARAM, LPARAM);
 static void ImmInternalSetOpenStatus(BOOL fOpen);
 static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len);
+
+/* ImmHkl loading and freeing */
+#define LOAD_FUNCPTR(f) if((ptr->p##f = (LPVOID)GetProcAddress(ptr->hIME, #f)) == NULL){WARN("Can't find function %s in ime\n", #f);}
+static ImmHkl *IMM_GetImmHkl(HKL hkl)
+{
+    ImmHkl *ptr;
+    WCHAR filename[MAX_PATH];
+
+    TRACE("Seeking ime for keyboard 0x%x\n",(unsigned)hkl);
+
+    LIST_FOR_EACH_ENTRY(ptr, &ImmHklList, ImmHkl, entry)
+    {
+        if (ptr->hkl == hkl)
+            return ptr;
+    }
+    /* not found... create it */
+
+    ptr = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ImmHkl));
+
+    ptr->hkl = hkl;
+    ImmGetIMEFileNameW(hkl, filename, MAX_PATH);
+    ptr->hIME = LoadLibraryW(filename);
+    if (ptr->hIME)
+    {
+        LOAD_FUNCPTR(ImeInquire);
+        LOAD_FUNCPTR(ImeDestroy);
+        LOAD_FUNCPTR(ImeSelect);
+        if (!ptr->pImeInquire || !ptr->pImeDestroy || !ptr->pImeSelect)
+        {
+            FreeLibrary(ptr->hIME);
+            ptr->hIME = NULL;
+        }
+        else
+        {
+            ptr->pImeInquire(&ptr->imeInfo, ptr->imeClassName, NULL);
+            LOAD_FUNCPTR(ImeConfigure);
+            LOAD_FUNCPTR(ImeEscape);
+            LOAD_FUNCPTR(ImeSetActiveContext);
+            LOAD_FUNCPTR(ImeToAsciiEx);
+            LOAD_FUNCPTR(NotifyIME);
+            LOAD_FUNCPTR(ImeRegisterWord);
+            LOAD_FUNCPTR(ImeUnregisterWord);
+            LOAD_FUNCPTR(ImeEnumRegisterWord);
+            LOAD_FUNCPTR(ImeSetCompositionString);
+            LOAD_FUNCPTR(ImeConversionList);
+            LOAD_FUNCPTR(ImeProcessKey);
+            LOAD_FUNCPTR(ImeGetRegisterWordStyle);
+            LOAD_FUNCPTR(ImeGetImeMenuItems);
+        }
+    }
+    list_add_head(&ImmHklList,&ptr->entry);
+
+    return ptr;
+}
+#undef LOAD_FUNCPTR
+
+static void IMM_FreeAllImmHkl(void)
+{
+    ImmHkl *ptr,*cursor2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(ptr, cursor2, &ImmHklList, ImmHkl, entry);
+    {
+        list_remove(&ptr->entry);
+        if (ptr->hIME)
+        {
+            ptr->pImeDestroy(1);
+            FreeLibrary(ptr->hIME);
+        }
+        HeapFree(GetProcessHeap(),0,ptr);
+    }
+}
 
 static VOID IMM_PostResult(InputContextData *data)
 {
@@ -167,6 +272,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
                 hwndDefault = 0;
             }
             IMM_Unregister();
+            IMM_FreeAllImmHkl();
             break;
     }
     return TRUE;
@@ -610,9 +716,33 @@ HIMC WINAPI ImmCreateContext(void)
 
     new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
 
+    /* Load the IME */
+    new_context->immKbd = IMM_GetImmHkl(GetKeyboardLayout(0));
+
+    /*
+     * Once we depend on the IME for all the processing like we should
+     * these will become hard errors and result in creation failures
+     */
+    if (!new_context->immKbd->hIME)
+        TRACE("IME dll could not be loaded\n");
+
     /* hCompStr is never NULL */
     new_context->IMC.hCompStr = ImmCreateBlankCompStr();
     new_context->IMC.hMsgBuf = ImmCreateIMCC(1);
+
+    /* Initialize the IME Private */
+    new_context->IMC.hPrivate = ImmCreateIMCC(new_context->immKbd->imeInfo.dwPrivateDataSize);
+
+    if (new_context->immKbd->hIME &&
+        !new_context->immKbd->pImeSelect(new_context, TRUE))
+    {
+        TRACE("Selection of IME failed\n");
+        ImmDestroyContext(new_context);
+        return 0;
+    }
+
+    new_context->immKbd->uSelected++;
+    TRACE("Created context 0x%x\n",(UINT)new_context);
 
     return (HIMC)new_context;
 }
@@ -628,6 +758,10 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 
     if (hIMC)
     {
+        data->immKbd->uSelected --;
+        if (data->immKbd->hIME)
+            data->immKbd->pImeSelect(hIMC, FALSE);
+
         ImmDestroyIMCC(data->IMC.hCompStr);
         ImmDestroyIMCC(data->IMC.hCandInfo);
         ImmDestroyIMCC(data->IMC.hGuideLine);
