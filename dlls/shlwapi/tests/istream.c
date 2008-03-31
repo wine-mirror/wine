@@ -529,6 +529,12 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
 START_TEST(istream)
 {
+    static const DWORD stgm_access[] = {
+        STGM_READ,
+        STGM_WRITE,
+        STGM_READWRITE
+    };
+
     static const DWORD stgm_flags[] = {
         0,
         STGM_CONVERT,
@@ -539,6 +545,8 @@ START_TEST(istream)
         STGM_TRANSACTED | STGM_CONVERT | STGM_DELETEONRELEASE
     };
 
+    int i, j;
+
     hShlwapi = GetModuleHandleA("shlwapi.dll");
 
     pSHCreateStreamOnFileA = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileA");
@@ -546,30 +554,24 @@ START_TEST(istream)
     pSHCreateStreamOnFileEx = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileEx");
 
     if (!pSHCreateStreamOnFileA)
-        printf("SHCreateStreamOnFileA not found... skipping tests.\n");
-    else {
-        test_SHCreateStreamOnFileA(STGM_READ);
-        test_SHCreateStreamOnFileA(STGM_WRITE);
-        test_SHCreateStreamOnFileA(STGM_READWRITE);
-    }
+        printf("SHCreateStreamOnFileA not found... those tests will be skipped.\n");
 
     if (!pSHCreateStreamOnFileW)
-        printf("SHCreateStreamOnFileW not found... skipping tests.\n");
-    else {
-        test_SHCreateStreamOnFileW(STGM_READ);
-        test_SHCreateStreamOnFileW(STGM_WRITE);
-        test_SHCreateStreamOnFileW(STGM_READWRITE);
-    }
+        printf("SHCreateStreamOnFileW not found... those tests will be skipped.\n");
 
     if (!pSHCreateStreamOnFileEx)
-        printf("SHCreateStreamOnFileEx not found... skipping tests.\n");
-    else {
-        int i;
+        printf("SHCreateStreamOnFileEx not found... those tests will be skipped.\n");
 
-        for (i = 0; i != sizeof(stgm_flags)/sizeof(stgm_flags[0]); i++) {
-            test_SHCreateStreamOnFileEx(STGM_READ, stgm_flags[i]);
-            test_SHCreateStreamOnFileEx(STGM_WRITE, stgm_flags[i]);
-            test_SHCreateStreamOnFileEx(STGM_READWRITE, stgm_flags[i]);
+    for (i = 0; i != sizeof(stgm_access)/sizeof(stgm_access[0]); i++) {
+        if (pSHCreateStreamOnFileA)
+            test_SHCreateStreamOnFileA(stgm_access[i]);
+
+        if (pSHCreateStreamOnFileW)
+            test_SHCreateStreamOnFileW(stgm_access[i]);
+
+        if (pSHCreateStreamOnFileEx) {
+            for (j = 0; j != sizeof(stgm_flags)/sizeof(stgm_flags[0]); j++)
+                test_SHCreateStreamOnFileEx(stgm_access[i], stgm_flags[j]);
         }
     }
 }
