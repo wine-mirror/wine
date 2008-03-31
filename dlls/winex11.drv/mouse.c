@@ -1110,6 +1110,7 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
 
     if (!hwnd) return;
     if (event->detail == NotifyVirtual || event->detail == NotifyNonlinearVirtual) return;
+    if (event->window == x11drv_thread_data()->grab_window) return;
 
     /* simulate a mouse motion event */
     update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
