@@ -870,7 +870,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,NULL) &&
             (dwCode==302 || dwCode==301))
         {
-            WCHAR szNewLocation[2048];
+            WCHAR szNewLocation[INTERNET_MAX_URL_LENGTH];
             dwBufferSize=sizeof(szNewLocation);
             if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
             {
@@ -1233,7 +1233,7 @@ static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, struct HttpAuthIn
 
 static WCHAR *HTTP_BuildProxyRequestUrl(WININETHTTPREQW *req)
 {
-    WCHAR new_location[2048], *url;
+    WCHAR new_location[INTERNET_MAX_URL_LENGTH], *url;
     DWORD size;
 
     size = sizeof(new_location);
@@ -2865,12 +2865,12 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
     LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
     BOOL using_proxy = hIC->lpszProxy && hIC->lpszProxy[0];
-    WCHAR path[2048];
+    WCHAR path[INTERNET_MAX_URL_LENGTH];
 
     if(lpszUrl[0]=='/')
     {
         /* if it's an absolute path, keep the same session info */
-        lstrcpynW(path, lpszUrl, 2048);
+        lstrcpynW(path, lpszUrl, INTERNET_MAX_URL_LENGTH);
     }
     else
     {
@@ -3272,7 +3272,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
             if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && bSuccess)
             {
-                WCHAR szNewLocation[2048];
+                WCHAR szNewLocation[INTERNET_MAX_URL_LENGTH];
                 dwBufferSize=sizeof(szNewLocation);
                 if ((dwStatusCode==HTTP_STATUS_REDIRECT || dwStatusCode==HTTP_STATUS_MOVED) &&
                     HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
