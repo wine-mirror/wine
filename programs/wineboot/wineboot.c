@@ -762,9 +762,5 @@ int main( int argc, char *argv[] )
     WINE_TRACE("Operation done\n");
 
     SetEvent( event );
-
-    /* FIXME: the wait is needed to keep services running */
-    /* it should be removed once we have a proper services.exe */
-    if (!restart) WaitForSingleObject( __wine_make_process_system(), INFINITE );
     return 0;
 }
