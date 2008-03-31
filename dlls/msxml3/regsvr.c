@@ -555,6 +555,14 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Msxml2.XMLSchemaCache",
         "3.0"
     },
+    {   &CLSID_SAXXMLReader,
+        "SAX XML Reader",
+        NULL,
+        "msxml3.dll",
+        "Both",
+        "Msxml2.SAXXMLReader",
+        "3.0"
+    },
     { NULL }			/* list terminator */
 };
 
