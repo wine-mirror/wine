@@ -100,6 +100,7 @@ SRCDIR_INCLUDES = \
 	commdlg.h \
 	compobj.h \
 	cor.h \
+	corerror.h \
 	cpl.h \
 	custcntl.h \
 	cvconst.h \
