@@ -129,6 +129,9 @@ dlls/dsound/tests/*.ok
 dlls/dsound/tests/dsound_crosstest.exe
 dlls/dsound/tests/testlist.c
 dlls/dwmapi/libdwmapi.def
+dlls/fusion/tests/*.ok
+dlls/fusion/tests/fusion_crosstest.exe
+dlls/fusion/tests/testlist.c
 dlls/gdi.exe16
 dlls/gdi32/libgdi32.def
 dlls/gdi32/tests/*.ok
@@ -630,6 +633,7 @@ programs/winetest/dinput_test.exe
 programs/winetest/dnsapi_test.exe
 programs/winetest/dplayx_test.exe
 programs/winetest/dsound_test.exe
+programs/winetest/fusion_test.exe
 programs/winetest/gdi32_test.exe
 programs/winetest/gdiplus_test.exe
 programs/winetest/hlink_test.exe

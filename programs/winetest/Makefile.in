@@ -44,6 +44,7 @@ TESTBINS = \
 	dnsapi_test.exe \
 	dplayx_test.exe \
 	dsound_test.exe \
+	fusion_test.exe \
 	gdi32_test.exe \
 	gdiplus_test.exe \
 	hlink_test.exe \
@@ -144,6 +145,8 @@ dplayx_test.exe: $(DLLDIR)/dplayx/tests/dplayx_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dplayx/tests/dplayx_test.exe$(DLLEXT) $@ && $(STRIP) $@
 dsound_test.exe: $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT) $@ && $(STRIP) $@
+fusion_test.exe: $(DLLDIR)/fusion/tests/fusion_test.exe$(DLLEXT)
+	cp $(DLLDIR)/fusion/tests/fusion_test.exe$(DLLEXT) $@ && $(STRIP) $@
 gdi32_test.exe: $(DLLDIR)/gdi32/tests/gdi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/gdi32/tests/gdi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 gdiplus_test.exe: $(DLLDIR)/gdiplus/tests/gdiplus_test.exe$(DLLEXT)

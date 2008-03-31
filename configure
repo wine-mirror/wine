@@ -21482,6 +21482,8 @@ ac_config_files="$ac_config_files dlls/faultrep/Makefile"
 
 ac_config_files="$ac_config_files dlls/fusion/Makefile"
 
+ac_config_files="$ac_config_files dlls/fusion/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/gdi32/Makefile"
 
 ac_config_files="$ac_config_files dlls/gdi32/tests/Makefile"
@@ -22765,6 +22767,7 @@ do
     "dlls/dxguid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxguid/Makefile" ;;
     "dlls/faultrep/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/faultrep/Makefile" ;;
     "dlls/fusion/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/Makefile" ;;
+    "dlls/fusion/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/tests/Makefile" ;;
     "dlls/gdi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/Makefile" ;;
     "dlls/gdi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdi32/tests/Makefile" ;;
     "dlls/gdiplus/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/gdiplus/Makefile" ;;

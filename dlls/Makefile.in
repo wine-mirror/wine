@@ -303,6 +303,7 @@ TESTSUBDIRS = \
 	dnsapi/tests \
 	dplayx/tests \
 	dsound/tests \
+	fusion/tests \
 	gdi32/tests \
 	gdiplus/tests \
 	hlink/tests \

@@ -267,6 +267,7 @@ ALL_MAKEFILES = \
 	dlls/dxguid/Makefile \
 	dlls/faultrep/Makefile \
 	dlls/fusion/Makefile \
+	dlls/fusion/tests/Makefile \
 	dlls/gdi32/Makefile \
 	dlls/gdi32/tests/Makefile \
 	dlls/gdiplus/Makefile \
@@ -691,6 +692,7 @@ dlls/dxerr9/Makefile: dlls/dxerr9/Makefile.in dlls/Makeimplib.rules
 dlls/dxguid/Makefile: dlls/dxguid/Makefile.in dlls/Makeimplib.rules
 dlls/faultrep/Makefile: dlls/faultrep/Makefile.in dlls/Makedll.rules
 dlls/fusion/Makefile: dlls/fusion/Makefile.in dlls/Makedll.rules
+dlls/fusion/tests/Makefile: dlls/fusion/tests/Makefile.in dlls/Maketest.rules
 dlls/gdi32/Makefile: dlls/gdi32/Makefile.in dlls/Makedll.rules
 dlls/gdi32/tests/Makefile: dlls/gdi32/tests/Makefile.in dlls/Maketest.rules
 dlls/gdiplus/Makefile: dlls/gdiplus/Makefile.in dlls/Makedll.rules
