@@ -1269,12 +1269,10 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
 {
     WCHAR buf[MAXHOSTNAME];
     WCHAR proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
-    WCHAR* url;
     static WCHAR szNul[] = { 0 };
     URL_COMPONENTSW UrlComponents;
     static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 };
     static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',0 };
-    int len;
 
     memset( &UrlComponents, 0, sizeof UrlComponents );
     UrlComponents.dwStructSize = sizeof UrlComponents;
@@ -1293,11 +1291,6 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
 
     if( !lpwhr->lpszPath )
         lpwhr->lpszPath = szNul;
-    TRACE("server=%s path=%s\n",
-          debugstr_w(lpwhs->lpszHostName), debugstr_w(lpwhr->lpszPath));
-    /* for constant 15 see above */
-    len = strlenW(lpwhs->lpszHostName) + strlenW(lpwhr->lpszPath) + 15;
-    url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
 
     if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
@@ -1306,6 +1299,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     lpwhs->lpszServerName = WININET_strdupW(UrlComponents.lpszHostName);
     lpwhs->nServerPort = UrlComponents.nPort;
 
+    TRACE("proxy server=%s port=%d\n", debugstr_w(lpwhs->lpszServerName), lpwhs->nServerPort);
     return TRUE;
 }
 
