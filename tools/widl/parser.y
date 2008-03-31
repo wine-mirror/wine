@@ -100,7 +100,7 @@ static var_t *make_var(char *name);
 static pident_list_t *append_pident(pident_list_t *list, pident_t *p);
 static pident_t *make_pident(var_t *var);
 static func_list_t *append_func(func_list_t *list, func_t *func);
-static func_t *make_func(var_t *def, var_list_t *args);
+static func_t *make_func(var_t *def);
 static type_t *make_class(char *name);
 static type_t *make_safearray(type_t *type);
 static type_t *make_builtin(char *name);
@@ -259,7 +259,7 @@ static void check_all_user_types(ifref_list_t *ifaces);
 %type <var> arg field s_field case enum constdef externdef
 %type <var_list> m_args no_args args fields cases enums enum_list dispint_props
 %type <var> m_ident t_ident ident
-%type <pident> p_ident pident
+%type <pident> pident func_ident direct_ident
 %type <pident_list> pident_list
 %type <func> funcdef
 %type <func_list> int_statements dispint_meths
@@ -393,17 +393,6 @@ arg:	  attributes type pident array		{ $$ = $3->var;
 	| type pident array			{ $$ = $2->var;
 						  set_type($$, $1, $2->ptr_level, $3, TRUE);
 						  free($2);
-						}
-	| attributes type pident '(' m_args ')'	{ $$ = $3->var;
-						  $$->attrs = $1;
-						  set_type($$, $2, $3->ptr_level - 1, NULL, TRUE);
-						  free($3);
-						  $$->args = $5;
-						}
-	| type pident '(' m_args ')'		{ $$ = $2->var;
-						  set_type($$, $1, $2->ptr_level - 1, NULL, TRUE);
-						  free($2);
-						  $$->args = $4;
 						}
 	;
 
@@ -654,12 +643,11 @@ s_field:  m_attributes type pident array	{ $$ = $3->var;
 	;
 
 funcdef:
-	  m_attributes type callconv pident
-	  '(' m_args ')'			{ var_t *v = $4->var;
+	  m_attributes type callconv pident     { var_t *v = $4->var;
 						  v->attrs = $1;
 						  set_type(v, $2, $4->ptr_level, NULL, FALSE);
 						  free($4);
-						  $$ = make_func(v, $6);
+						  $$ = make_func(v);
 						  if (is_attr(v->attrs, ATTR_IN)) {
 						    error_loc("inapplicable attribute [in] for function '%s'\n",$$->def->name);
 						  }
@@ -859,13 +847,19 @@ moduledef: modulehdr '{' int_statements '}'	{ $$ = $1;
 						}
 	;
 
-p_ident:  '*' pident %prec PPTR			{ $$ = $2; $$->ptr_level++; }
-	| tCONST p_ident			{ $$ = $2; /* FIXME */ }
+pident:   '*' pident %prec PPTR			{ $$ = $2; $$->ptr_level++; }
+	| tCONST pident				{ $$ = $2; /* FIXME */ }
+	| direct_ident
 	;
 
-pident:	  ident					{ $$ = make_pident($1); }
-	| p_ident
+func_ident: direct_ident '(' m_args ')'		{ $$ = $1; $1->var->args = $3; }
+
+direct_ident: ident				{ $$ = make_pident($1); }
 	| '(' pident ')'			{ $$ = $2; }
+	| func_ident				{ $$ = $1;
+						  $$->func_ptr_level = $$->ptr_level;
+						  $$->ptr_level = 0;
+						}
 	;
 
 pident_list:
@@ -1521,6 +1515,7 @@ static pident_t *make_pident(var_t *var)
   pident_t *p = xmalloc(sizeof(*p));
   p->var = var;
   p->ptr_level = 0;
+  p->func_ptr_level = 0;
   return p;
 }
 
@@ -1536,11 +1531,12 @@ static func_list_t *append_func(func_list_t *list, func_t *func)
     return list;
 }
 
-static func_t *make_func(var_t *def, var_list_t *args)
+static func_t *make_func(var_t *def)
 {
   func_t *f = xmalloc(sizeof(func_t));
   f->def = def;
-  f->args = args;
+  f->args = def->args;
+  def->args = NULL;
   f->ignore = parse_only;
   f->idx = -1;
   return f;

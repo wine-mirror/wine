@@ -244,6 +244,8 @@ struct _var_t {
 struct _pident_t {
   var_t *var;
   int ptr_level;
+  /* levels of indirection for function pointers */
+  int func_ptr_level;
 
   /* parser-internal */
   struct list entry;
