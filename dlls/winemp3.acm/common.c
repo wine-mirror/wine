@@ -28,6 +28,9 @@
 #include <fcntl.h>
 
 #include "mpg123.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(mpeg3);
 
 const struct parameter param = { 1 , 1 , 0 , 0 };
 
@@ -109,7 +112,7 @@ int decode_header(struct frame *fr,unsigned long newhead)
 
     if(!fr->bitrate_index)
     {
-      fprintf(stderr,"Free format not supported.\n");
+      FIXME("Free format not supported.\n");
       return (0);
     }
 
@@ -125,7 +128,7 @@ int decode_header(struct frame *fr,unsigned long newhead)
         fr->framesize /= freqs[fr->sampling_frequency];
         fr->framesize  = ((fr->framesize+fr->padding)<<2)-4;
 #else
-        fprintf(stderr,"Not supported!\n");
+        FIXME("Layer 1 not supported!\n");
 #endif
         break;
       case 2:
@@ -138,7 +141,7 @@ int decode_header(struct frame *fr,unsigned long newhead)
         fr->framesize /= freqs[fr->sampling_frequency];
         fr->framesize += fr->padding - 4;
 #else
-        fprintf(stderr,"Not supported!\n");
+        FIXME("Layer 2 not supported!\n");
 #endif
         break;
       case 3:
@@ -159,7 +162,7 @@ int decode_header(struct frame *fr,unsigned long newhead)
           fr->framesize = fr->framesize + fr->padding - 4;
         break;
       default:
-        fprintf(stderr,"Sorry, unknown layer type.\n");
+        FIXME("Unknown layer type: %d\n", fr->lay);
         return (0);
     }
     return 1;
@@ -171,15 +174,15 @@ void print_header(struct frame *fr)
 	static const char * const modes[4] = { "Stereo", "Joint-Stereo", "Dual-Channel", "Single-Channel" };
 	static const char * const layers[4] = { "Unknown" , "I", "II", "III" };
 
-	fprintf(stderr,"MPEG %s, Layer: %s, Freq: %ld, mode: %s, modext: %d, BPF : %d\n",
+	FIXME("MPEG %s, Layer: %s, Freq: %ld, mode: %s, modext: %d, BPF : %d\n",
 		fr->mpeg25 ? "2.5" : (fr->lsf ? "2.0" : "1.0"),
 		layers[fr->lay],freqs[fr->sampling_frequency],
 		modes[fr->mode],fr->mode_ext,fr->framesize+4);
-	fprintf(stderr,"Channels: %d, copyright: %s, original: %s, CRC: %s, emphasis: %d.\n",
+	FIXME("Channels: %d, copyright: %s, original: %s, CRC: %s, emphasis: %d.\n",
 		fr->stereo,fr->copyright?"Yes":"No",
 		fr->original?"Yes":"No",fr->error_protection?"Yes":"No",
 		fr->emphasis);
-	fprintf(stderr,"Bitrate: %d Kbits/s, Extension value: %d\n",
+	FIXME("Bitrate: %d Kbits/s, Extension value: %d\n",
 		tabsel_123[fr->lsf][fr->lay-1][fr->bitrate_index],fr->extension);
 }
 
@@ -188,7 +191,7 @@ void print_header_compact(struct frame *fr)
 	static const char * const modes[4] = { "stereo", "joint-stereo", "dual-channel", "mono" };
 	static const char * const layers[4] = { "Unknown" , "I", "II", "III" };
 
-	fprintf(stderr,"MPEG %s layer %s, %d kbit/s, %ld Hz %s\n",
+	FIXME("MPEG %s layer %s, %d kbit/s, %ld Hz %s\n",
 		fr->mpeg25 ? "2.5" : (fr->lsf ? "2.0" : "1.0"),
 		layers[fr->lay],
 		tabsel_123[fr->lsf][fr->lay-1][fr->bitrate_index],

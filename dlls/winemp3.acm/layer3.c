@@ -20,13 +20,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
 #include <stdlib.h>
+#include "wine/debug.h"
 #include "mpg123.h"
 #include "mpglib.h"
 #include "huffman.h"
 
 #define MPEG1
-
+WINE_DEFAULT_DEBUG_CHANNEL(mpeg3);
 
 static real ispow[8207];
 static real aa_ca[8],aa_cs[8];
@@ -333,7 +335,7 @@ static int III_get_side_info_1(struct III_sideinfo *si,int stereo,
        gr_info->part2_3_length = getbits(12);
        gr_info->big_values = getbits_fast(9);
        if(gr_info->big_values > 288) {
-          fprintf(stderr,"big_values too large!\n");
+          FIXME("big_values (%d) too large!\n", gr_info->big_values);
           gr_info->big_values = 288;
        }
        gr_info->pow2gain = gainpow2+256 - getbits_fast(8) + powdiff;
@@ -357,7 +359,7 @@ static int III_get_side_info_1(struct III_sideinfo *si,int stereo,
            gr_info->full_gain[i] = gr_info->pow2gain + (getbits_fast(3)<<3);
 
          if(gr_info->block_type == 0) {
-           fprintf(stderr,"Blocktype == 0 and window-switching == 1 not allowed.\n");
+           FIXME("Blocktype == 0 and window-switching == 1 not allowed.\n");
            return 0;
          }
          /* region_count/start parameters are implicit in this case. */
@@ -407,7 +409,7 @@ static int III_get_side_info_2(struct III_sideinfo *si,int stereo,
        gr_info->part2_3_length = getbits(12);
        gr_info->big_values = getbits_fast(9);
        if(gr_info->big_values > 288) {
-         fprintf(stderr,"big_values too large!\n");
+         FIXME("big_values(%d) too large!\n", gr_info->big_values);
          gr_info->big_values = 288;
        }
        gr_info->pow2gain = gainpow2+256 - getbits_fast(8) + powdiff;
@@ -431,7 +433,7 @@ static int III_get_side_info_2(struct III_sideinfo *si,int stereo,
            gr_info->full_gain[i] = gr_info->pow2gain + (getbits_fast(3)<<3);
 
          if(gr_info->block_type == 0) {
-           fprintf(stderr,"Blocktype == 0 and window-switching == 1 not allowed.\n");
+           FIXME("Blocktype == 0 and window-switching == 1 not allowed.\n");
            return 0;
          }
          /* region_count/start parameters are implicit in this case. */
@@ -968,7 +970,7 @@ static int III_dequantize_sample(real xr[SBLIMIT][SSLIMIT],int *scf,
   if(part2remain > 0)
     getbits(part2remain);
   else if(part2remain < 0) {
-    fprintf(stderr,"mpg123: Can't rewind stream by %d bits!\n",-part2remain);
+    FIXME("mpg123: Can't rewind stream by %d bits!\n",-part2remain);
     return 1; /* -> error */
   }
   return 0;
@@ -1379,7 +1381,7 @@ static int III_dequantize_sample_ms(real xr[2][SBLIMIT][SSLIMIT],int *scf,
   if(part2remain > 0 )
     getbits(part2remain);
   else if(part2remain < 0) {
-    fprintf(stderr,"mpg123_ms: Can't rewind stream by %d bits!\n",-part2remain);
+    FIXME("mpg123_ms: Can't rewind stream by %d bits!\n",-part2remain);
     return 1; /* -> error */
   }
   return 0;
@@ -1917,7 +1919,7 @@ int do_layer3(struct frame *fr,unsigned char *pcm_sample,int *pcm_point)
     if(!III_get_side_info_1(&sideinfo,stereo,ms_stereo,sfreq,single))
       return -1;
 #else
-    fprintf(stderr,"Not supported\n");
+    FIXME("Not supported\n");
 #endif
   }
 
@@ -1938,7 +1940,7 @@ int do_layer3(struct frame *fr,unsigned char *pcm_sample,int *pcm_point)
 #ifdef MPEG1
         part2bits = III_get_scale_factors_1(scalefacs[0],gr_info);
 #else
-	fprintf(stderr,"Not supported\n");
+	FIXME("Not supported\n");
 #endif
       }
       if(III_dequantize_sample(hybridIn[0], scalefacs[0],gr_info,sfreq,part2bits))
@@ -1953,7 +1955,7 @@ int do_layer3(struct frame *fr,unsigned char *pcm_sample,int *pcm_point)
 #ifdef MPEG1
         part2bits = III_get_scale_factors_1(scalefacs[1],gr_info);
 #else
-	fprintf(stderr,"Not supported\n");
+	FIXME("Not supported\n");
 #endif
       }
 
