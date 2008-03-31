@@ -651,16 +651,18 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
                 This->EndOfFile -= 128;
 
             /* http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm has a whole readup on audio headers */
-            while (pos < This->EndOfFile && SUCCEEDED(hr))
+            while (pos + 3 < This->EndOfFile)
             {
                 LONGLONG length = 0;
                 hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, header);
+                if (hr != S_OK)
+                    break;
                 while (parse_header(header, &length, &duration))
                 {
                     /* No valid header yet; shift by a byte and check again */
                     memmove(header, header+1, 3);
                     hr = IAsyncReader_SyncRead(pPin->pReader, pos++, 1, header + 3);
-                    if (FAILED(hr))
+                    if (hr != S_OK || This->EndOfFile - pos < 4)
                        break;
                 }
                 pos += length;
