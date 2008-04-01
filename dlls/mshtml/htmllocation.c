@@ -16,17 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
-#include <stdio.h>
 
 #define COBJMACROS
 
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "winnls.h"
 #include "ole2.h"
 
 #include "wine/debug.h"
@@ -37,8 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define HTMLLOCATION_THIS(iface) DEFINE_THIS(HTMLLocation, HTMLLocation, iface)
-
-static struct list window_list = LIST_INIT(window_list);
 
 static HRESULT WINAPI HTMLLocation_QueryInterface(IHTMLLocation *iface, REFIID riid, void **ppv)
 {
