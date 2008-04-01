@@ -37,6 +37,20 @@ int output_string(int msg, ...)
     return 0;
 }
 
+BOOL output_error_string(DWORD error)
+{
+    LPSTR pBuffer;
+    if (FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+            NULL, error, 0, (LPSTR)&pBuffer, 0, NULL))
+    {
+        fputs(pBuffer, stdout);
+        LocalFree(pBuffer);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static BOOL net_use(int argc, char *argv[])
 {
     USE_INFO_2 *buffer, *connection;
@@ -140,14 +154,22 @@ static BOOL net_service(int operation, char *service_name)
         result = StartService(serviceHandle, 0, NULL);
 
         if(result) output_string(STRING_START_SVC_SUCCESS, service_display_name);
-        else output_string(STRING_START_SVC_FAIL, service_display_name);
+        else
+        {
+            if (!output_error_string(GetLastError()))
+                output_string(STRING_START_SVC_FAIL, service_display_name);
+        }
         break;
     case NET_STOP:
         output_string(STRING_STOP_SVC, service_display_name);
         result = StopService(SCManager, serviceHandle);
 
         if(result) output_string(STRING_STOP_SVC_SUCCESS, service_display_name);
-        else output_string(STRING_STOP_SVC_FAIL, service_display_name);
+        else
+        {
+            if (!output_error_string(GetLastError()))
+                output_string(STRING_STOP_SVC_FAIL, service_display_name);
+        }
         break;
     }
 
