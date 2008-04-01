@@ -24,6 +24,7 @@
 #include <time.h>
 #include <windows.h>
 #include <stdlib.h>
+#include <shellapi.h>
 #include "main.h"
 #include "resource.h"
 
@@ -235,8 +236,14 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
 
         case IDM_ABOUT:
-            DialogBox( board.hInst, "DLG_ABOUT", hWnd, AboutDlgProc );
+        {
+            WCHAR appname[256], other[256];
+            LoadStringW( board.hInst, IDS_APPNAME, appname, sizeof(appname)/sizeof(WCHAR) );
+            LoadStringW( board.hInst, IDS_ABOUT, other, sizeof(other)/sizeof(WCHAR) );
+            ShellAboutW( hWnd, appname, other,
+                         LoadImageA( board.hInst, "WINEMINE", IMAGE_ICON, 48, 48, LR_SHARED ));
             return 0;
+        }
         default:
             WINE_TRACE("Unknown WM_COMMAND command message received\n");
             break;

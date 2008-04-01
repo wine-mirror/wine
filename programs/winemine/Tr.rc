@@ -24,6 +24,7 @@ LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 STRINGTABLE {
      IDS_APPNAME, "Wine Mayýn Tarlasý"
      IDS_NOBODY,  "Hiç kimse"
+     IDS_ABOUT,   "Telif hakký 2000, Joshua Thielen"
 }
 
 MENU_WINEMINE MENU DISCARDABLE
@@ -87,16 +88,4 @@ CAPTION "Özel Oyun"
     EDITTEXT             IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER
     DEFPUSHBUTTON   "Tamam",     IDOK,      40,  30,  50,  15
     PUSHBUTTON      "Ýptal", IDCANCEL,  40,  50,  50,  15
-}
-
-DLG_ABOUT DIALOG DISCARDABLE  0, 0, 160, 80
-STYLE  DS_MODALFRAME | DS_3DLOOK |
-    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Hakkýnda"
-{
-    LTEXT                     "Wine Mayýn Tarlasý", IDIGNORE,  10,  10,  80,  10
-    LTEXT       "Telif hakký 2000, Joshua Thielen", IDIGNORE,  35,  25, 115,  10
-    LTEXT           "LGPL aktýnda lisanslanmýþtýr", IDIGNORE,  35,  35, 115,  10
-    ICON                                "WINEMINE", IDIGNORE,  10,  25,  20,  20
-    DEFPUSHBUTTON                          "Tamam", IDOK,      50,  60,  60,  15
 }

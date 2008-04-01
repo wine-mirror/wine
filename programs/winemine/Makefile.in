@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = winemine.exe
 APPMODE   = -mwindows
 IMPORTS   = user32 gdi32 advapi32 kernel32
+DELAYIMPORTS = shell32
 
 C_SRCS = \
         dialog.c \
