@@ -2972,6 +2972,7 @@ static void dump_create_desktop_reply( const struct create_desktop_reply *req )
 
 static void dump_open_desktop_request( const struct open_desktop_request *req )
 {
+    fprintf( stderr, " winsta=%p,", req->winsta );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " attributes=%08x,", req->attributes );

@@ -2,6 +2,7 @@
  * Window messaging support
  *
  * Copyright 2001 Alexandre Julliard
+ * Copyright 2008 Maarten Lankhorst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3343,6 +3344,105 @@ UINT WINAPI RegisterWindowMessageW( LPCWSTR str )
     return ret;
 }
 
+typedef struct BroadcastParm
+{
+    DWORD flags;
+    LPDWORD recipients;
+    UINT msg;
+    WPARAM wp;
+    LPARAM lp;
+    DWORD success;
+    HWINSTA winsta;
+} BroadcastParm;
+
+static BOOL CALLBACK bcast_childwindow( HWND hw, LPARAM lp )
+{
+    BroadcastParm *parm = (BroadcastParm*)lp;
+    DWORD_PTR retval = 0;
+    LONG lresult;
+
+    if (parm->flags & BSF_IGNORECURRENTTASK && WIN_IsCurrentProcess(hw))
+    {
+        TRACE("Not telling myself %p\n", hw);
+        return TRUE;
+    }
+
+    /* I don't know 100% for sure if this is what Windows does, but it fits the tests */
+    if (parm->flags & BSF_QUERY)
+    {
+        TRACE("Telling window %p using SendMessageTimeout\n", hw);
+
+        /* Not tested for conflicting flags */
+        if (parm->flags & BSF_FORCEIFHUNG || parm->flags & BSF_NOHANG)
+            lresult = SendMessageTimeoutW( hw, parm->msg, parm->wp, parm->lp, SMTO_ABORTIFHUNG, 2000, &retval );
+        else if (parm->flags & BSF_NOTIMEOUTIFNOTHUNG)
+            lresult = SendMessageTimeoutW( hw, parm->msg, parm->wp, parm->lp, SMTO_NOTIMEOUTIFNOTHUNG, 2000, &retval );
+        else
+            lresult = SendMessageTimeoutW( hw, parm->msg, parm->wp, parm->lp, SMTO_NORMAL, 2000, &retval );
+
+        if (!lresult && GetLastError() == ERROR_TIMEOUT)
+        {
+            WARN("Timed out!\n");
+            if (!(parm->flags & BSF_FORCEIFHUNG))
+                goto fail;
+        }
+        if (retval == BROADCAST_QUERY_DENY)
+            goto fail;
+
+        return TRUE;
+
+fail:
+        parm->success = 0;
+        return FALSE;
+    }
+    else if (parm->flags & BSF_POSTMESSAGE)
+    {
+        TRACE("Telling window %p using PostMessage\n", hw);
+        PostMessageW( hw, parm->msg, parm->wp, parm->lp );
+    }
+    else
+    {
+        TRACE("Telling window %p using SendNotifyMessage\n", hw);
+        SendNotifyMessageW( hw, parm->msg, parm->wp, parm->lp );
+    }
+
+    return TRUE;
+}
+
+static BOOL CALLBACK bcast_desktop( LPWSTR desktop, LPARAM lp )
+{
+    BOOL ret;
+    HDESK hdesktop;
+    BroadcastParm *parm = (BroadcastParm*)lp;
+
+    TRACE("desktop: %s\n", debugstr_w( desktop ));
+
+    hdesktop = open_winstation_desktop( parm->winsta, desktop, 0, FALSE, DESKTOP_ENUMERATE|DESKTOP_WRITEOBJECTS|STANDARD_RIGHTS_WRITE );
+    if (!hdesktop)
+    {
+        FIXME("Could not open desktop %s\n", debugstr_w(desktop));
+        return TRUE;
+    }
+
+    ret = EnumDesktopWindows( hdesktop, bcast_childwindow, lp );
+    CloseDesktop(hdesktop);
+    TRACE("-->%d\n", ret);
+    return parm->success;
+}
+
+static BOOL CALLBACK bcast_winsta( LPWSTR winsta, LPARAM lp )
+{
+    BOOL ret;
+    HWINSTA hwinsta = OpenWindowStationW( winsta, FALSE, WINSTA_ENUMDESKTOPS );
+    TRACE("hwinsta: %p/%s/%08x\n", hwinsta, debugstr_w( winsta ), GetLastError());
+    if (!hwinsta)
+        return TRUE;
+    ((BroadcastParm *)lp)->winsta = hwinsta;
+    ret = EnumDesktopsW( hwinsta, bcast_desktop, lp );
+    CloseWindowStation( hwinsta );
+    TRACE("-->%d\n", ret);
+    return ret;
+}
 
 /***********************************************************************
  *		BroadcastSystemMessageA (USER32.@)
@@ -3350,17 +3450,7 @@ UINT WINAPI RegisterWindowMessageW( LPCWSTR str )
  */
 LONG WINAPI BroadcastSystemMessageA( DWORD flags, LPDWORD recipients, UINT msg, WPARAM wp, LPARAM lp )
 {
-    if ((*recipients & BSM_APPLICATIONS) || (*recipients == BSM_ALLCOMPONENTS))
-    {
-        FIXME( "(%08x,%08x,%08x,%08lx,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
-        PostMessageA( HWND_BROADCAST, msg, wp, lp );
-        return 1;
-    }
-    else
-    {
-        FIXME( "(%08x,%08x,%08x,%08lx,%08lx): stub!\n", flags, *recipients, msg, wp, lp);
-        return -1;
-    }
+    return BroadcastSystemMessageExA( flags, recipients, msg, wp, lp, NULL );
 }
 
 
@@ -3369,19 +3459,65 @@ LONG WINAPI BroadcastSystemMessageA( DWORD flags, LPDWORD recipients, UINT msg, 
  */
 LONG WINAPI BroadcastSystemMessageW( DWORD flags, LPDWORD recipients, UINT msg, WPARAM wp, LPARAM lp )
 {
-    if ((*recipients & BSM_APPLICATIONS) || (*recipients == BSM_ALLCOMPONENTS))
-    {
-        FIXME( "(%08x,%08x,%08x,%08lx,%08lx): semi-stub!\n", flags, *recipients, msg, wp, lp );
-        PostMessageW( HWND_BROADCAST, msg, wp, lp );
-        return 1;
-    }
-    else
-    {
-        FIXME( "(%08x,%08x,%08x,%08lx,%08lx): stub!\n", flags, *recipients, msg, wp, lp );
-        return -1;
-    }
+    return BroadcastSystemMessageExW( flags, recipients, msg, wp, lp, NULL );
 }
 
+/***********************************************************************
+ *              BroadcastSystemMessageExA (USER32.@)
+ */
+LONG WINAPI BroadcastSystemMessageExA( DWORD flags, LPDWORD recipients, UINT msg, WPARAM wp, LPARAM lp, PBSMINFO pinfo )
+{
+    map_wparam_AtoW( msg, &wp, WMCHAR_MAP_NOMAPPING );
+    return BroadcastSystemMessageExW( flags, recipients, msg, wp, lp, NULL );
+}
+
+
+/***********************************************************************
+ *              BroadcastSystemMessageExW (USER32.@)
+ */
+LONG WINAPI BroadcastSystemMessageExW( DWORD flags, LPDWORD recipients, UINT msg, WPARAM wp, LPARAM lp, PBSMINFO pinfo )
+{
+    BroadcastParm parm;
+    DWORD recips = BSM_ALLCOMPONENTS;
+    BOOL ret = TRUE;
+    static const DWORD all_flags = ( BSF_QUERY | BSF_IGNORECURRENTTASK | BSF_FLUSHDISK | BSF_NOHANG
+                                   | BSF_POSTMESSAGE | BSF_FORCEIFHUNG | BSF_NOTIMEOUTIFNOTHUNG
+                                   | BSF_ALLOWSFW | BSF_SENDNOTIFYMESSAGE | BSF_RETURNHDESK | BSF_LUID );
+
+    TRACE("Flags: %08x, recipients: %p(0x%x), msg: %04x, wparam: %08lx, lparam: %08lx\n", flags, recipients,
+         (recipients ? *recipients : recips), msg, wp, lp);
+
+    if (flags & ~all_flags)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (!recipients)
+        recipients = &recips;
+
+    if ( pinfo && flags & BSF_QUERY )
+        FIXME("Not returning PBSMINFO information yet\n");
+
+    parm.flags = flags;
+    parm.recipients = recipients;
+    parm.msg = msg;
+    parm.wp = wp;
+    parm.lp = lp;
+    parm.success = TRUE;
+
+    if (*recipients & BSM_ALLDESKTOPS || *recipients == BSM_ALLCOMPONENTS)
+        ret = EnumWindowStationsW(bcast_winsta, (LONG_PTR)&parm);
+    else if (*recipients & BSM_APPLICATIONS)
+    {
+        EnumWindows(bcast_childwindow, (LONG_PTR)&parm);
+        ret = parm.success;
+    }
+    else
+        FIXME("Recipients %08x not supported!\n", *recipients);
+
+    return ret;
+}
 
 /***********************************************************************
  *		SetMessageQueue (USER32.@)

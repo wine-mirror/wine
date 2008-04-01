@@ -317,10 +317,7 @@ HDESK WINAPI OpenDesktopA( LPCSTR name, DWORD flags, BOOL inherit, ACCESS_MASK a
 }
 
 
-/******************************************************************************
- *              OpenDesktopW   (USER32.@)
- */
-HDESK WINAPI OpenDesktopW( LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK access )
+HDESK open_winstation_desktop( HWINSTA hwinsta, LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK access )
 {
     HANDLE ret = 0;
     DWORD len = name ? strlenW(name) : 0;
@@ -331,6 +328,7 @@ HDESK WINAPI OpenDesktopW( LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK 
     }
     SERVER_START_REQ( open_desktop )
     {
+        req->winsta     = hwinsta;
         req->flags      = flags;
         req->access     = access;
         req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
@@ -339,6 +337,15 @@ HDESK WINAPI OpenDesktopW( LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK 
     }
     SERVER_END_REQ;
     return ret;
+}
+
+
+/******************************************************************************
+ *              OpenDesktopW   (USER32.@)
+ */
+HDESK WINAPI OpenDesktopW( LPCWSTR name, DWORD flags, BOOL inherit, ACCESS_MASK access )
+{
+    return open_winstation_desktop( NULL, name, flags, inherit, access );
 }
 
 

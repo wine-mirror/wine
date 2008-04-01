@@ -16,8 +16,8 @@
 @ stdcall BringWindowToTop(long)
 @ stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessageA
 @ stdcall BroadcastSystemMessageA(long ptr long long long)
-# @ stub BroadcastSystemMessageExA
-# @ stub BroadcastSystemMessageExW
+@ stdcall BroadcastSystemMessageExA(long ptr long long long ptr)
+@ stdcall BroadcastSystemMessageExW(long ptr long long long ptr)
 @ stdcall BroadcastSystemMessageW(long ptr long long long)
 # @ stub BuildReasonArray
 @ stdcall CalcChildScroll(long long)

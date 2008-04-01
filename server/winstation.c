@@ -508,7 +508,14 @@ DECL_HANDLER(open_desktop)
     struct unicode_str name;
 
     get_req_unicode_str( &name );
-    if ((winstation = get_process_winstation( current->process, 0 /* FIXME: access rights? */ )))
+
+    /* FIXME: check access rights */
+    if (!req->winsta)
+        winstation = get_process_winstation( current->process, 0 );
+    else
+        winstation = (struct winstation *)get_handle_obj( current->process, req->winsta, 0, &winstation_ops );
+
+    if (winstation)
     {
         struct unicode_str full_str;
         WCHAR *full_name;

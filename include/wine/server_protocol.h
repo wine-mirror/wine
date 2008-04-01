@@ -3299,6 +3299,7 @@ struct create_desktop_reply
 struct open_desktop_request
 {
     struct request_header __header;
+    obj_handle_t winsta;
     unsigned int flags;
     unsigned int access;
     unsigned int attributes;
@@ -4995,6 +4996,6 @@ union generic_reply
     struct add_fd_completion_reply add_fd_completion_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 338
+#define SERVER_PROTOCOL_VERSION 339
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
