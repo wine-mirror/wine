@@ -816,7 +816,6 @@ static void testRegisterAndGetDetail(void)
 
     SetLastError(0xdeadbeef);
     ret = pSetupDiEnumDeviceInterfaces(set, NULL, &guid, 0, &interfaceData);
-    todo_wine
     ok(ret, "SetupDiEnumDeviceInterfaces failed: %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, NULL, 0, &dwSize, NULL);
@@ -836,7 +835,6 @@ static void testRegisterAndGetDetail(void)
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData,
              detail, dwSize, &dwSize, NULL);
             ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %08x\n", GetLastError());
-            todo_wine
             ok(!lstrcmpiA(path, detail->DevicePath), "Unexpected path %s\n",
                     detail->DevicePath);
             HeapFree(GetProcessHeap(), 0, detail);

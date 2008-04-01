@@ -2650,20 +2650,31 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
                     samDesired, NULL, &interfKey, NULL);
             if (!l)
             {
-                if (instancePath)
-                {
-                    LONG l;
+                struct DeviceInfo *devInfo =
+                        (struct DeviceInfo *)ifaceInfo->device->Reserved;
 
-                    l = RegCreateKeyExW(interfKey, instancePath, 0, NULL, 0,
-                            samDesired, NULL, &key, NULL);
-                    if (l)
+                l = RegSetValueExW(interfKey, DeviceInstance, 0, REG_SZ,
+                        (BYTE *)devInfo->instanceId,
+                        (lstrlenW(devInfo->instanceId) + 1) * sizeof(WCHAR));
+                if (!l)
+                {
+                    if (instancePath)
                     {
-                        SetLastError(l);
-                        key = INVALID_HANDLE_VALUE;
+                        LONG l;
+
+                        l = RegCreateKeyExW(interfKey, instancePath, 0, NULL, 0,
+                                samDesired, NULL, &key, NULL);
+                        if (l)
+                        {
+                            SetLastError(l);
+                            key = INVALID_HANDLE_VALUE;
+                        }
+                        else if (InfHandle)
+                            FIXME("INF section installation unsupported\n");
                     }
-                    else if (InfHandle)
-                        FIXME("INF section installation unsupported\n");
                 }
+                else
+                    SetLastError(l);
                 RegCloseKey(interfKey);
             }
             else
