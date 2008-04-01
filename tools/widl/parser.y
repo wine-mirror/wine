@@ -267,6 +267,7 @@ static void check_all_user_types(ifref_list_t *ifaces);
 %type <num> pointer_type version
 %type <str> libraryhdr
 %type <uuid> uuid_string
+%type <num> import_start
 
 %left ','
 %right '?' ':'
@@ -328,8 +329,11 @@ int_statements:					{ $$ = NULL; }
 	| int_statements statement		{ $$ = $1; }
 	;
 
-statement: ';'					{}
-	| constdef ';'				{ if (!parse_only && do_header) { write_constdef($1); } }
+semicolon_opt:
+	| ';'
+	;
+
+statement: constdef ';'				{ if (!parse_only && do_header) { write_constdef($1); } }
 	| cppquote				{}
 	| enumdef ';'				{ if (!parse_only && do_header) {
 						    write_type_def_or_decl(header, $1, FALSE, NULL);
@@ -354,12 +358,17 @@ statement: ';'					{}
 cppquote: tCPPQUOTE '(' aSTRING ')'		{ if (!parse_only && do_header) fprintf(header, "%s\n", $3); }
 	;
 import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
-						  if (!do_import($2)) yychar = aEOF; }
-	;
-import:   import_start imp_statements aEOF	{}
+						  $$ = do_import($2);
+						  if (!$$) yychar = aEOF;
+						}
 	;
 
-importlib: tIMPORTLIB '(' aSTRING ')'		{ if(!parse_only) add_importlib($3); }
+import: import_start imp_statements aEOF
+						{ if ($1) pop_import(); }
+	;
+
+importlib: tIMPORTLIB '(' aSTRING ')'
+	   semicolon_opt			{ if(!parse_only) add_importlib($3); }
 	;
 
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
@@ -369,7 +378,8 @@ library_start: attributes libraryhdr '{'	{ if (!parse_only) start_typelib($2, $1
 						  if (!parse_only && do_idfile) write_libid($2, $1);
 						}
 	;
-librarydef: library_start imp_statements '}'	{ if (!parse_only) end_typelib(); }
+librarydef: library_start imp_statements '}'
+	    semicolon_opt			{ if (!parse_only) end_typelib(); }
 	;
 
 m_args:						{ $$ = NULL; }
@@ -726,7 +736,8 @@ coclasshdr: attributes coclass			{ $$ = $2;
 						}
 	;
 
-coclassdef: coclasshdr '{' coclass_ints '}'	{ $$ = $1;
+coclassdef: coclasshdr '{' coclass_ints '}' semicolon_opt
+						{ $$ = $1;
 						  $$->ifaces = $3;
 						  $$->defined = TRUE;
 						}
@@ -774,7 +785,7 @@ dispinterfacedef: dispinterfacehdr '{'
 						  if (!parse_only && do_idfile) write_diid($$);
 						}
 	| dispinterfacehdr
-	 '{' interface ';' '}'			{ $$ = $1;
+	 '{' interface ';' '}' 			{ $$ = $1;
 						  $$->fields = $3->fields;
 						  $$->funcs = $3->funcs;
 						  if (!parse_only && do_header) write_dispinterface($$);
@@ -802,7 +813,7 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 	;
 
 interfacedef: interfacehdr inherit
-	  '{' int_statements '}'		{ $$ = $1.interface;
+	  '{' int_statements '}' semicolon_opt	{ $$ = $1.interface;
 						  $$->ref = $2;
 						  $$->funcs = $4;
 						  compute_method_indexes($$);
@@ -814,7 +825,8 @@ interfacedef: interfacehdr inherit
 /* MIDL is able to import the definition of a base class from inside the
  * definition of a derived class, I'll try to support it with this rule */
 	| interfacehdr ':' aIDENTIFIER
-	  '{' import int_statements '}'		{ $$ = $1.interface;
+	  '{' import int_statements '}'
+	   semicolon_opt			{ $$ = $1.interface;
 						  $$->ref = find_type2($3, 0);
 						  if (!$$->ref) error_loc("base class '%s' not found in import\n", $3);
 						  $$->funcs = $6;
@@ -824,7 +836,7 @@ interfacedef: interfacehdr inherit
 						  if (!parse_only && do_idfile) write_iid($$);
 						  pointer_default = $1.old_pointer_default;
 						}
-	| dispinterfacedef			{ $$ = $1; }
+	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
 
 interfacedec:
@@ -841,7 +853,8 @@ modulehdr: attributes module			{ $$ = $2;
 						}
 	;
 
-moduledef: modulehdr '{' int_statements '}'	{ $$ = $1;
+moduledef: modulehdr '{' int_statements '}'
+	   semicolon_opt			{ $$ = $1;
 						  $$->funcs = $3;
 						  /* FIXME: if (!parse_only && do_header) write_module($$); */
 						}

@@ -79,8 +79,6 @@ struct {
 } import_stack[MAX_IMPORT_DEPTH];
 int import_stack_ptr = 0;
 
-static void pop_import(void);
-
 UUID *parse_uuid(const char *u)
 {
   UUID* uuid = xmalloc(sizeof(UUID));
@@ -166,10 +164,8 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 <INITIAL,ATTR>\>\>	return SHR;
 <INITIAL,ATTR>.		return yytext[0];
 <<EOF>>			{
-				if (import_stack_ptr) {
-					pop_import();
+				if (import_stack_ptr)
 					return aEOF;
-				}
 				else yyterminate();
 			}
 %%
@@ -367,7 +363,7 @@ static char *get_buffered_cstring(void)
 	return xstrdup(cbuffer);
 }
 
-static void pop_import(void)
+void pop_import(void)
 {
 	int ptr = import_stack_ptr-1;
 
