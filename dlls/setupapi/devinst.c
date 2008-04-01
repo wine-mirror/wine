@@ -2631,21 +2631,44 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyW(
             struct InterfaceInfo *ifaceInfo =
                 (struct InterfaceInfo *)DeviceInterfaceData->Reserved;
             PWSTR instancePath = SETUPDI_GetInstancePath(ifaceInfo);
+            PWSTR interfKeyName = HeapAlloc(GetProcessHeap(), 0,
+                    (lstrlenW(ifaceInfo->symbolicLink) + 1) * sizeof(WCHAR));
+            HKEY interfKey;
+            WCHAR *ptr;
 
-            if (instancePath)
+            lstrcpyW(interfKeyName, ifaceInfo->symbolicLink);
+            if (lstrlenW(ifaceInfo->symbolicLink) > 3)
             {
-                LONG l;
-
-                l = RegCreateKeyExW(parent, instancePath, 0, NULL, 0,
-                        samDesired, NULL, &key, NULL);
-                if (l)
-                {
-                    SetLastError(l);
-                    key = INVALID_HANDLE_VALUE;
-                }
-                else if (InfHandle)
-                    FIXME("INF section installation unsupported\n");
+                interfKeyName[0] = '#';
+                interfKeyName[1] = '#';
+                interfKeyName[3] = '#';
             }
+            ptr = strchrW(interfKeyName, '\\');
+            if (ptr)
+                *ptr = 0;
+            l = RegCreateKeyExW(parent, interfKeyName, 0, NULL, 0,
+                    samDesired, NULL, &interfKey, NULL);
+            if (!l)
+            {
+                if (instancePath)
+                {
+                    LONG l;
+
+                    l = RegCreateKeyExW(interfKey, instancePath, 0, NULL, 0,
+                            samDesired, NULL, &key, NULL);
+                    if (l)
+                    {
+                        SetLastError(l);
+                        key = INVALID_HANDLE_VALUE;
+                    }
+                    else if (InfHandle)
+                        FIXME("INF section installation unsupported\n");
+                }
+                RegCloseKey(interfKey);
+            }
+            else
+                SetLastError(l);
+            HeapFree(GetProcessHeap(), 0, interfKeyName);
             HeapFree(GetProcessHeap(), 0, instancePath);
             RegCloseKey(parent);
         }
