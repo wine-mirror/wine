@@ -1017,7 +1017,10 @@ RPC_STATUS WINAPI I_RpcNegotiateTransferSyntax(PRPC_MESSAGE pMsg)
                                 &cif->InterfaceId);
 
     if (status == RPC_S_OK)
+    {
       pMsg->ReservedForRuntime = conn;
+      RPCRT4_AddRefBinding(bind);
+    }
   }
 
   return status;
@@ -1114,6 +1117,7 @@ RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
   {
     RpcConnection *conn = pMsg->ReservedForRuntime;
     RPCRT4_CloseBinding(bind, conn);
+    RPCRT4_ReleaseBinding(bind);
     pMsg->ReservedForRuntime = NULL;
   }
   I_RpcFree(pMsg->Buffer);

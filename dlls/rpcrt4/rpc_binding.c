@@ -249,14 +249,12 @@ RPC_STATUS RPCRT4_MakeBinding(RpcBinding** Binding, RpcConnection* Connection)
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_ExportBinding(RpcBinding** Binding, RpcBinding* OldBinding)
+void RPCRT4_AddRefBinding(RpcBinding* Binding)
 {
-  InterlockedIncrement(&OldBinding->refs);
-  *Binding = OldBinding;
-  return RPC_S_OK;
+  InterlockedIncrement(&Binding->refs);
 }
 
-RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding)
+RPC_STATUS RPCRT4_ReleaseBinding(RpcBinding* Binding)
 {
   if (InterlockedDecrement(&Binding->refs))
     return RPC_S_OK;
@@ -661,7 +659,7 @@ RPC_STATUS WINAPI RpcBindingFree( RPC_BINDING_HANDLE* Binding )
 {
   RPC_STATUS status;
   TRACE("(%p) = %p\n", Binding, *Binding);
-  status = RPCRT4_DestroyBinding(*Binding);
+  status = RPCRT4_ReleaseBinding(*Binding);
   if (status == RPC_S_OK) *Binding = 0;
   return status;
 }
@@ -741,7 +739,7 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingA( RPC_CSTR StringBinding, RPC_BIND
   if (ret == RPC_S_OK) 
     *Binding = (RPC_BINDING_HANDLE)bind;
   else 
-    RPCRT4_DestroyBinding(bind);
+    RPCRT4_ReleaseBinding(bind);
 
   return ret;
 }
@@ -780,7 +778,7 @@ RPC_STATUS WINAPI RpcBindingFromStringBindingW( RPC_WSTR StringBinding, RPC_BIND
   if (ret == RPC_S_OK)
     *Binding = (RPC_BINDING_HANDLE)bind;
   else
-    RPCRT4_DestroyBinding(bind);
+    RPCRT4_ReleaseBinding(bind);
 
   return ret;
 }
