@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef QUARTZ_CONTROL_H
+#define QUARTZ_CONTROL_H
+
 typedef HRESULT (* CHANGEPROC)(IBaseFilter *pUserData);
 
 typedef struct MediaSeekingImpl
@@ -55,3 +58,5 @@ HRESULT WINAPI MediaSeekingImpl_GetAvailable(IMediaSeeking * iface, LONGLONG * p
 HRESULT WINAPI MediaSeekingImpl_SetRate(IMediaSeeking * iface, double dRate);
 HRESULT WINAPI MediaSeekingImpl_GetRate(IMediaSeeking * iface, double * dRate);
 HRESULT WINAPI MediaSeekingImpl_GetPreroll(IMediaSeeking * iface, LONGLONG * pPreroll);
+
+#endif /*QUARTZ_CONTROL_H*/

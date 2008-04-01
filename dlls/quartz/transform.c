@@ -143,7 +143,76 @@ static HRESULT TransformFilter_OutputPin_Construct(const PIN_INFO * pPinInfo, co
     return E_FAIL;
 }
 
-HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSID* pClsid, const TransformFuncsTable* pFuncsTable)
+
+static inline TransformFilterImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (TransformFilterImpl *)((char*)iface - FIELD_OFFSET(TransformFilterImpl, mediaSeeking.lpVtbl));
+}
+
+static HRESULT WINAPI TransformFilter_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
+{
+    TransformFilterImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
+}
+
+static ULONG WINAPI TransformFilter_Seeking_AddRef(IMediaSeeking * iface)
+{
+    TransformFilterImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_AddRef((IUnknown *)This);
+}
+
+static ULONG WINAPI TransformFilter_Seeking_Release(IMediaSeeking * iface)
+{
+    TransformFilterImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_Release((IUnknown *)This);
+}
+
+static const IMediaSeekingVtbl TransformFilter_Seeking_Vtbl =
+{
+    TransformFilter_Seeking_QueryInterface,
+    TransformFilter_Seeking_AddRef,
+    TransformFilter_Seeking_Release,
+    MediaSeekingImpl_GetCapabilities,
+    MediaSeekingImpl_CheckCapabilities,
+    MediaSeekingImpl_IsFormatSupported,
+    MediaSeekingImpl_QueryPreferredFormat,
+    MediaSeekingImpl_GetTimeFormat,
+    MediaSeekingImpl_IsUsingTimeFormat,
+    MediaSeekingImpl_SetTimeFormat,
+    MediaSeekingImpl_GetDuration,
+    MediaSeekingImpl_GetStopPosition,
+    MediaSeekingImpl_GetCurrentPosition,
+    MediaSeekingImpl_ConvertTimeFormat,
+    MediaSeekingImpl_SetPositions,
+    MediaSeekingImpl_GetPositions,
+    MediaSeekingImpl_GetAvailable,
+    MediaSeekingImpl_SetRate,
+    MediaSeekingImpl_GetRate,
+    MediaSeekingImpl_GetPreroll
+};
+
+static HRESULT TransformFilter_ChangeCurrent(IBaseFilter *iface)
+{
+    FIXME("(%p) filter hasn't implemented current position change!\n", iface);
+    return S_OK;
+}
+
+static HRESULT TransformFilter_ChangeStop(IBaseFilter *iface)
+{
+    FIXME("(%p) filter hasn't implemented stop position change!\n", iface);
+    return S_OK;
+}
+
+static HRESULT TransformFilter_ChangeRate(IBaseFilter *iface)
+{
+    FIXME("(%p) filter hasn't implemented rate change!\n", iface);
+    return S_OK;
+}
+
+HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSID* pClsid, const TransformFuncsTable* pFuncsTable, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate)
 {
     HRESULT hr;
     PIN_INFO piInput;
@@ -184,8 +253,20 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
 
         hr = TransformFilter_OutputPin_Construct(&piOutput, &props, pTransformFilter, TransformFilter_Output_QueryAccept, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
 
-	if (FAILED(hr))
-	    ERR("Cannot create output pin (%x)\n", hr);
+        if (FAILED(hr))
+            ERR("Cannot create output pin (%x)\n", hr);
+        else
+        {
+            if (!stop)
+                stop = TransformFilter_ChangeStop;
+            if (!current)
+                current = TransformFilter_ChangeCurrent;
+            if (!rate)
+                rate = TransformFilter_ChangeRate;
+
+            MediaSeekingImpl_Init((IBaseFilter*)pTransformFilter, stop, current, rate, &pTransformFilter->mediaSeeking, &pTransformFilter->csFilter);
+            pTransformFilter->mediaSeeking.lpVtbl = &TransformFilter_Seeking_Vtbl;
+        }
     }
     else
     {
@@ -213,6 +294,8 @@ static HRESULT WINAPI TransformFilter_QueryInterface(IBaseFilter * iface, REFIID
         *ppv = (LPVOID)This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
         *ppv = (LPVOID)This;
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+        *ppv = &This->mediaSeeking;
 
     if (*ppv)
     {

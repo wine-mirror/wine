@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "control_private.h"
+
 typedef struct TransformFilterImpl TransformFilterImpl;
 
 typedef struct TransformFuncsTable {
@@ -40,10 +42,11 @@ struct TransformFilterImpl
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
     CLSID clsid;
+    struct MediaSeekingImpl mediaSeeking;
 
     IPin ** ppPins;
 
     const TransformFuncsTable * pFuncsTable;
 };
 
-HRESULT TransformFilter_Create(TransformFilterImpl*, const CLSID*, const TransformFuncsTable* pFuncsTable);
+HRESULT TransformFilter_Create(TransformFilterImpl*, const CLSID*, const TransformFuncsTable* pFuncsTable, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate);
