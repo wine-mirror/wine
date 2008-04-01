@@ -2015,16 +2015,50 @@ static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface,
     return S_OK;
 }
 
+struct pos_args {
+    LONGLONG* current, *stop;
+    DWORD curflags, stopflags;
+};
+
+static HRESULT WINAPI found_setposition(IFilterGraphImpl *This, IMediaSeeking *seek, DWORD_PTR pargs)
+{
+    struct pos_args *args = (void*)pargs;
+
+    return IMediaSeeking_SetPositions(seek, args->current, args->curflags, args->stop, args->stopflags);
+}
+
 static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface,
 						LONGLONG *pCurrent,
 						DWORD dwCurrentFlags,
 						LONGLONG *pStop,
 						DWORD dwStopFlags) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
+    HRESULT hr = S_OK;
+    FILTER_STATE state;
+    struct pos_args args;
 
-    FIXME("(%p/%p)->(%p, %08x, %p, %08x): stub !!!\n", This, iface, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
+    TRACE("(%p/%p)->(%p, %08x, %p, %08x)\n", This, iface, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
 
-    return S_OK;
+    EnterCriticalSection(&This->cs);
+    state = This->state;
+    TRACE("State: %s\n", state == State_Running ? "Running" : (state == State_Paused ? "Paused" : (state == State_Stopped ? "Stopped" : "UNKNOWN")));
+
+    if ((dwCurrentFlags & 0x7) == AM_SEEKING_AbsolutePositioning)
+        This->position = *pCurrent;
+    else if ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning)
+        FIXME("Adjust method %x not handled yet!\n", dwCurrentFlags & 0x7);
+
+    if ((dwStopFlags & 0x7) != AM_SEEKING_NoPositioning)
+        FIXME("Stop position not handled yet!\n");
+
+    args.current = pCurrent;
+    args.stop = pStop;
+    args.curflags = dwCurrentFlags;
+    args.stopflags = dwStopFlags;
+    hr = all_renderers_seek(This, found_setposition, (DWORD_PTR)&args);
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface,
