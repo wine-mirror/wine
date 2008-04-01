@@ -83,6 +83,8 @@ void free_service_entry(struct service_entry *entry)
     HeapFree(GetProcessHeap(), 0, entry->config.lpServiceStartName);
     HeapFree(GetProcessHeap(), 0, entry->config.lpDisplayName);
     HeapFree(GetProcessHeap(), 0, entry->description);
+    HeapFree(GetProcessHeap(), 0, entry->dependOnServices);
+    HeapFree(GetProcessHeap(), 0, entry->dependOnGroups);
     CloseHandle(entry->control_mutex);
     CloseHandle(entry->control_pipe);
     CloseHandle(entry->status_changed_event);
