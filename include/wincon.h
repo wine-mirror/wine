@@ -23,6 +23,9 @@
 extern "C" {
 #endif
 
+#define CONSOLE_FULLSCREEN          1
+#define CONSOLE_FULLSCREEN_HARDWARE 2
+
 #define CTRL_C_EVENT        0
 #define CTRL_BREAK_EVENT    1
 #define CTRL_CLOSE_EVENT    2
