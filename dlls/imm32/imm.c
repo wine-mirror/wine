@@ -917,9 +917,19 @@ BOOL WINAPI ImmGetCandidateWindow(
  */
 BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
 {
-  FIXME("(%p, %p): stub\n", hIMC, lplf);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    LOGFONTW lfW;
+    BOOL rc;
+
+    TRACE("(%p, %p):\n", hIMC, lplf);
+
+    rc = ImmGetCompositionFontW(hIMC,&lfW);
+    if (rc)
+    {
+        memcpy(lplf,&lfW,sizeof(LOGFONTA));
+        WideCharToMultiByte(CP_ACP, 0, lfW.lfFaceName, -1, lplf->lfFaceName,
+                        LF_FACESIZE, NULL, NULL);
+    }
+    return rc;
 }
 
 /***********************************************************************
@@ -927,9 +937,16 @@ BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
  */
 BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 {
-  FIXME("(%p, %p): stub\n", hIMC, lplf);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("(%p, %p):\n", hIMC, lplf);
+
+    if (!data)
+        return FALSE;
+
+    *lplf = data->IMC.lfFont.W;
+
+    return TRUE;
 }
 
 /***********************************************************************
