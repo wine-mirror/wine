@@ -27,9 +27,6 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-# include <valgrind/memcheck.h>
-#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -2320,42 +2317,6 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 
 
 /***********************************************************************
- *           alloc_process_stack
- *
- * Allocate the stack of new process.
- */
-static NTSTATUS alloc_process_stack( IMAGE_NT_HEADERS *nt )
-{
-    NTSTATUS status;
-    void *base = NULL;
-    SIZE_T stack_size, page_size = getpagesize();
-
-    stack_size = max( nt->OptionalHeader.SizeOfStackReserve, nt->OptionalHeader.SizeOfStackCommit );
-    stack_size += page_size;  /* for the guard page */
-    stack_size = (stack_size + 0xffff) & ~0xffff;  /* round to 64K boundary */
-    if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
-
-    if ((status = NtAllocateVirtualMemory( GetCurrentProcess(), &base, 16, &stack_size,
-                                           MEM_COMMIT, PAGE_READWRITE )))
-        return status;
-
-    /* note: limit is lower than base since the stack grows down */
-    NtCurrentTeb()->DeallocationStack = base;
-    NtCurrentTeb()->Tib.StackBase     = (char *)base + stack_size;
-    NtCurrentTeb()->Tib.StackLimit    = (char *)base + page_size;
-
-#ifdef VALGRIND_STACK_REGISTER
-    /* no need to de-register the stack as it's the one of the main thread */
-    VALGRIND_STACK_REGISTER(NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase);
-#endif
-
-    /* setup guard page */
-    NtProtectVirtualMemory( GetCurrentProcess(), &base, &page_size, PAGE_NOACCESS, NULL );
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
  *           attach_process_dlls
  *
  * Initial attach to all the dlls loaded by the process.
@@ -2387,6 +2348,7 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     NTSTATUS status;
     WINE_MODREF *wm;
     LPCWSTR load_path;
+    SIZE_T stack_size;
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
 
@@ -2409,7 +2371,10 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
     InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
 
-    if ((status = alloc_process_stack( nt )) != STATUS_SUCCESS) goto error;
+    stack_size = max( nt->OptionalHeader.SizeOfStackReserve, nt->OptionalHeader.SizeOfStackCommit );
+    if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
+
+    if ((status = virtual_alloc_thread_stack( NULL, stack_size )) != STATUS_SUCCESS) goto error;
     if ((status = server_init_process_done()) != STATUS_SUCCESS) goto error;
 
     actctx_init();

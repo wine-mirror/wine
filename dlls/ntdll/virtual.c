@@ -41,6 +41,9 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+# include <valgrind/memcheck.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -1249,6 +1252,53 @@ void virtual_init(void)
 void virtual_init_threading(void)
 {
     use_locks = 1;
+}
+
+
+/***********************************************************************
+ *           virtual_alloc_thread_stack
+ */
+NTSTATUS virtual_alloc_thread_stack( void *base, SIZE_T size )
+{
+    FILE_VIEW *view;
+    NTSTATUS status;
+    sigset_t sigset;
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+
+    if (base)  /* already allocated, create a system view */
+    {
+        size = ROUND_SIZE( base, size );
+        base = ROUND_ADDR( base, page_mask );
+        if ((status = create_view( &view, base, size,
+                                   VPROT_READ | VPROT_WRITE | VPROT_COMMITTED )) != STATUS_SUCCESS)
+            goto done;
+        view->flags |= VFLAG_VALLOC | VFLAG_SYSTEM;
+    }
+    else
+    {
+        size = (size + 0xffff) & ~0xffff;  /* round to 64K boundary */
+        if ((status = map_view( &view, NULL, size, 0xffff, 0,
+                                VPROT_READ | VPROT_WRITE | VPROT_COMMITTED )) != STATUS_SUCCESS)
+            goto done;
+        view->flags |= VFLAG_VALLOC;
+#ifdef VALGRIND_STACK_REGISTER
+    /* no need to de-register the stack as it's the one of the main thread */
+        VALGRIND_STACK_REGISTER( view->base, (char *)view->base + view->size );
+#endif
+    }
+
+    /* setup no access guard page */
+    VIRTUAL_SetProt( view, view->base, page_size, VPROT_COMMITTED );
+
+    /* note: limit is lower than base since the stack grows down */
+    NtCurrentTeb()->DeallocationStack = view->base;
+    NtCurrentTeb()->Tib.StackBase     = (char *)view->base + view->size;
+    NtCurrentTeb()->Tib.StackLimit    = (char *)view->base + page_size;
+
+done:
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    return status;
 }
 
 

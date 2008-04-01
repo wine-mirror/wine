@@ -418,7 +418,6 @@ static void start_thread( struct wine_pthread_thread_info *info )
     PRTL_THREAD_START_ROUTINE func = startup_info->entry_point;
     void *arg = startup_info->entry_arg;
     struct debug_info debug_info;
-    SIZE_T size, page_size = getpagesize();
 
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
@@ -428,20 +427,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     SIGNAL_Init();
     server_init_thread( info->pid, info->tid, func );
     pthread_functions.init_thread( info );
-
-    /* allocate a memory view for the stack */
-    size = info->stack_size;
-    teb->DeallocationStack = info->stack_base;
-    NtAllocateVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, 0,
-                             &size, MEM_SYSTEM, PAGE_READWRITE );
-    /* limit is lower than base since the stack grows down */
-    teb->Tib.StackBase  = (char *)info->stack_base + info->stack_size;
-    teb->Tib.StackLimit = (char *)info->stack_base + page_size;
-
-    /* setup the guard page */
-    size = page_size;
-    NtProtectVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, &size, PAGE_NOACCESS, NULL );
-
+    virtual_alloc_thread_stack( info->stack_base, info->stack_size );
     pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
 
     RtlAcquirePebLock();
