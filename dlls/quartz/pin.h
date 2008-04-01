@@ -85,6 +85,9 @@ typedef struct PullPin
 	REFERENCE_TIME rtStart;
 	REFERENCE_TIME rtStop;
 	REFERENCE_TIME rtCurrent;
+	FILTER_STATE state;
+	BOOL stop_playback;
+	double dRate;
 } PullPin;
 
 /*** Initializers ***/
@@ -161,7 +164,6 @@ HRESULT PullPin_InitProcessing(PullPin * This);
 HRESULT PullPin_StartProcessing(PullPin * This);
 HRESULT PullPin_StopProcessing(PullPin * This);
 HRESULT PullPin_PauseProcessing(PullPin * This);
-HRESULT PullPin_Seek(PullPin * This, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop);
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface);
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface);
 HRESULT WINAPI PullPin_EndFlush(IPin * iface);

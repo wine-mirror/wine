@@ -259,11 +259,11 @@ static HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
             LeaveCriticalSection(&This->csFilter);
             return S_OK;
         }
-        hr = PullPin_StopProcessing(This->pInputPin);
         This->state = State_Stopped;
     }
     LeaveCriticalSection(&This->csFilter);
-    
+
+    hr = PullPin_StopProcessing(This->pInputPin);
     return hr;
 }
 
@@ -290,8 +290,6 @@ static HRESULT WINAPI Parser_Pause(IBaseFilter * iface)
     if (bInit)
     {
         unsigned int i;
-
-        hr = PullPin_Seek(This->pInputPin, 0, ((LONGLONG)0x7fffffff << 32) | 0xffffffff);
 
         if (SUCCEEDED(hr))
             hr = PullPin_InitProcessing(This->pInputPin);
@@ -342,11 +340,11 @@ static HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 
         This->rtStreamStart = tStart;
 
-        hr = PullPin_Seek(This->pInputPin, 0, ((LONGLONG)0x7fffffff << 32) | 0xffffffff);
-
         if (SUCCEEDED(hr) && (This->state == State_Stopped))
         {
+            LeaveCriticalSection(&This->csFilter);
             hr = PullPin_InitProcessing(This->pInputPin);
+            EnterCriticalSection(&This->csFilter);
 
             if (SUCCEEDED(hr))
             { 
@@ -358,7 +356,11 @@ static HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
         }
 
         if (SUCCEEDED(hr))
+        {
+            LeaveCriticalSection(&This->csFilter);
             hr = PullPin_StartProcessing(This->pInputPin);
+            EnterCriticalSection(&This->csFilter);
+        }
 
         if (SUCCEEDED(hr))
             This->state = State_Running;

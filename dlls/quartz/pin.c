@@ -1195,11 +1195,12 @@ HRESULT PullPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID p
     pPinImpl->pAlloc = NULL;
     pPinImpl->pReader = NULL;
     pPinImpl->hThread = NULL;
-    pPinImpl->hEventStateChanged = CreateEventW(NULL, FALSE, TRUE, NULL);
+    pPinImpl->hEventStateChanged = CreateEventW(NULL, TRUE, TRUE, NULL);
 
     pPinImpl->rtStart = 0;
     pPinImpl->rtCurrent = 0;
     pPinImpl->rtStop = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
+    pPinImpl->state = State_Stopped;
 
     return S_OK;
 }
@@ -1337,8 +1338,11 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
     ALLOCATOR_PROPERTIES allocProps;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    
+
+    EnterCriticalSection(This->pin.pCritSec);
     SetEvent(This->hEventStateChanged);
+    This->state = State_Running;
+    LeaveCriticalSection(This->pin.pCritSec);
 
     hr = IMemAllocator_GetProperties(This->pAlloc, &allocProps);
 
@@ -1347,7 +1351,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
     TRACE("Start\n");
 
-    while (This->rtCurrent < This->rtStop && hr == S_OK)
+    while (This->rtCurrent < This->rtStop && hr == S_OK && !This->stop_playback)
     {
         /* FIXME: to improve performance by quite a bit this should be changed
          * so that one sample is processed while one sample is fetched. However,
@@ -1375,7 +1379,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
             hr = IAsyncReader_Request(This->pReader, pSample, (ULONG_PTR)0);
 
         if (SUCCEEDED(hr))
-            hr = IAsyncReader_WaitForNext(This->pReader, 10000, &pSample, &dwUser);
+            hr = IAsyncReader_WaitForNext(This->pReader, 1000, &pSample, &dwUser);
 
         if (SUCCEEDED(hr))
         {
@@ -1395,9 +1399,26 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
     }
 
     CoUninitialize();
-
+    EnterCriticalSection(This->pin.pCritSec);
+    This->state = State_Paused;
+    LeaveCriticalSection(This->pin.pCritSec);
     TRACE("End\n");
 }
+
+static void CALLBACK PullPin_Thread_Pause(ULONG_PTR iface)
+{
+    PullPin *This = (PullPin *)iface;
+
+    TRACE("(%p/%p)->()\n", This, (LPVOID)iface);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    {
+        This->state = State_Paused;
+        SetEvent(This->hEventStateChanged);
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+}
+
 
 static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
 {
@@ -1413,10 +1434,11 @@ static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
         This->hThread = NULL;
         if (FAILED(hr = IMemAllocator_Decommit(This->pAlloc)))
             ERR("Allocator decommit failed with error %x. Possible memory leak\n", hr);
+
+        SetEvent(This->hEventStateChanged);
+        This->state = State_Stopped;
     }
     LeaveCriticalSection(This->pin.pCritSec);
-
-    SetEvent(This->hEventStateChanged);
 
     IBaseFilter_Release(This->pin.pinInfo.pFilter);
 
@@ -1429,16 +1451,16 @@ HRESULT PullPin_InitProcessing(PullPin * This)
 
     TRACE("(%p)->()\n", This);
 
-    assert(!This->hThread);
-
     /* if we are connected */
     if (This->pAlloc)
     {
+        WaitForSingleObject(This->hEventStateChanged, INFINITE);
         EnterCriticalSection(This->pin.pCritSec);
+        if (This->state == State_Stopped)
         {
             DWORD dwThreadId;
             assert(!This->hThread);
-        
+
             /* AddRef the filter to make sure it and it's pins will be around
              * as long as the thread */
             IBaseFilter_AddRef(This->pin.pinInfo.pFilter);
@@ -1451,8 +1473,13 @@ HRESULT PullPin_InitProcessing(PullPin * This)
             }
 
             if (SUCCEEDED(hr))
+            {
                 hr = IMemAllocator_Commit(This->pAlloc);
+                This->state = State_Paused;
+                SetEvent(This->hEventStateChanged);
+            }
         }
+        else assert(This->hThread);
         LeaveCriticalSection(This->pin.pCritSec);
     }
 
@@ -1468,8 +1495,10 @@ HRESULT PullPin_StartProcessing(PullPin * This)
     if(This->pAlloc)
     {
         assert(This->hThread);
-        
+
+        PullPin_WaitForStateChange(This, INFINITE);
         ResetEvent(This->hEventStateChanged);
+        This->stop_playback = 0;
 
         if (!QueueUserAPC(PullPin_Thread_Process, This->hThread, (ULONG_PTR)This))
             return HRESULT_FROM_WIN32(GetLastError());
@@ -1480,8 +1509,21 @@ HRESULT PullPin_StartProcessing(PullPin * This)
 
 HRESULT PullPin_PauseProcessing(PullPin * This)
 {
-    /* make the processing function exit its loop */
-    This->rtStop = 0;
+    /* if we are connected */
+    TRACE("(%p)->()\n", This);
+    if(This->pAlloc)
+    {
+        assert(This->hThread);
+
+        PullPin_WaitForStateChange(This, INFINITE);
+        EnterCriticalSection(This->pin.pCritSec);
+        This->stop_playback = 0;
+        LeaveCriticalSection(This->pin.pCritSec);
+        ResetEvent(This->hEventStateChanged);
+
+        if (!QueueUserAPC(PullPin_Thread_Pause, This->hThread, (ULONG_PTR)This))
+            return HRESULT_FROM_WIN32(GetLastError());
+    }
 
     return S_OK;
 }
@@ -1489,13 +1531,12 @@ HRESULT PullPin_PauseProcessing(PullPin * This)
 HRESULT PullPin_StopProcessing(PullPin * This)
 {
     /* if we are connected */
-    if (This->pAlloc)
+    if (This->pAlloc && This->hThread)
     {
-        assert(This->hThread);
+        PullPin_WaitForStateChange(This, INFINITE);
 
+        This->stop_playback = 0;
         ResetEvent(This->hEventStateChanged);
-
-        PullPin_PauseProcessing(This);
 
         if (!QueueUserAPC(PullPin_Thread_Stop, This->hThread, (ULONG_PTR)This))
             return HRESULT_FROM_WIN32(GetLastError());
@@ -1511,19 +1552,6 @@ HRESULT PullPin_WaitForStateChange(PullPin * This, DWORD dwMilliseconds)
     return S_OK;
 }
 
-HRESULT PullPin_Seek(PullPin * This, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop)
-{
-    FIXME("(%p)->(%x%08x, %x%08x)\n", This, (LONG)(rtStart >> 32), (LONG)rtStart, (LONG)(rtStop >> 32), (LONG)rtStop);
-
-    PullPin_BeginFlush((IPin *)This);
-    /* FIXME: need critical section? */
-    This->rtStart = rtStart;
-    This->rtStop = rtStop;
-    PullPin_EndFlush((IPin *)This);
-
-    return S_OK;
-}
-
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 {
     FIXME("(%p)->() stub\n", iface);
@@ -1533,23 +1561,37 @@ HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
 {
+    PullPin *This = (PullPin *)iface;
     FIXME("(%p)->() stub\n", iface);
 
-    return SendFurther( iface, deliver_beginflush, NULL, NULL );
+    SendFurther( iface, deliver_beginflush, NULL, NULL );
+
+    if (This->state == State_Running)
+        return PullPin_PauseProcessing(This);
+    return S_OK;
 }
 
 HRESULT WINAPI PullPin_EndFlush(IPin * iface)
 {
-    FIXME("(%p)->() stub\n", iface);
+    FILTER_STATE state;
+    PullPin *This = (PullPin *)iface;
 
-    return SendFurther( iface, deliver_endflush, NULL, NULL );
+    FIXME("(%p)->() stub\n", iface);
+    SendFurther( iface, deliver_endflush, NULL, NULL );
+
+    return IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
 }
 
 HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
+    newsegmentargs args;
     FIXME("(%p)->(%s, %s, %g) stub\n", iface, wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
 
-    return SendFurther( iface, deliver_newsegment, NULL, NULL );
+    args.tStart = tStart;
+    args.tStop = tStop;
+    args.rate = dRate;
+
+    return SendFurther( iface, deliver_newsegment, &args, NULL );
 }
 
 static const IPinVtbl PullPin_Vtbl = 

@@ -58,6 +58,17 @@ static void rungraph(void)
     hr = IMediaControl_Run(pmc);
     ok(hr==S_FALSE, "Cannot run the graph returned: %x\n", hr);
 
+    Sleep(100);
+    /* Crash fun */
+    hr = IMediaControl_Stop(pmc);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot stop the graph returned: %x\n", hr);
+    hr = IMediaControl_Run(pmc);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
+    hr = IMediaControl_Pause(pmc);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot pause the graph returned: %x\n", hr);
+    hr = IMediaControl_Run(pmc);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
+
     hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaEvent, (LPVOID*)&pme);
     ok(hr==S_OK, "Cannot get IMediaEvent interface returned: %x\n", hr);
 
