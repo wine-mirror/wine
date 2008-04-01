@@ -52,6 +52,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "urlmon.h"
 #define _NO_AUTHOR_GUIDS
 #include "activaut.h"
+#include "activdbg.h"
 #define _NO_SCRIPT_GUIDS
 #include "activscp.h"
 #include "dispex.h"
