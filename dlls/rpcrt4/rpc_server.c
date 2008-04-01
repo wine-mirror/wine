@@ -138,7 +138,9 @@ static RpcServerInterface* RPCRT4_find_interface(UUID* object,
   }
   LeaveCriticalSection(&server_cs);
   if (&cif->entry == &server_interfaces) cif = NULL;
-  TRACE("returning %p for %s\n", cif, debugstr_guid(object));
+  TRACE("returning %p for object %s, if_id { %d.%d %s }\n", cif,
+    debugstr_guid(object), if_id->SyntaxVersion.MajorVersion,
+    if_id->SyntaxVersion.MinorVersion, debugstr_guid(&if_id->SyntaxGUID));
   return cif;
 }
 
