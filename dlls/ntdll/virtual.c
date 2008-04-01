@@ -1303,11 +1303,13 @@ NTSTATUS virtual_alloc_thread_stack( void *base, SIZE_T size )
 
     /* setup no access guard page */
     VIRTUAL_SetProt( view, view->base, page_size, VPROT_COMMITTED );
+    VIRTUAL_SetProt( view, (char *)view->base + page_size, page_size,
+                     VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
 
     /* note: limit is lower than base since the stack grows down */
     NtCurrentTeb()->DeallocationStack = view->base;
     NtCurrentTeb()->Tib.StackBase     = (char *)view->base + view->size;
-    NtCurrentTeb()->Tib.StackLimit    = (char *)view->base + page_size;
+    NtCurrentTeb()->Tib.StackLimit    = (char *)view->base + 2 * page_size;
 
 done:
     server_leave_uninterrupted_section( &csVirtual, &sigset );

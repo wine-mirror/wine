@@ -1026,6 +1026,7 @@ static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *s
         DWORD             ebp;
         DWORD             eip;
     } *stack = stack_ptr;
+    DWORD exception_code = 0;
 
     /* stack sanity checks */
 
@@ -1040,22 +1041,37 @@ static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *s
     }
 
     if (stack - 1 > stack || /* check for overflow in subtraction */
-        (char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit ||
+        (char *)stack <= (char *)NtCurrentTeb()->DeallocationStack ||
         (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
     {
-        UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)stack;
-        if (diff < 4096)
+        WARN( "exception outside of stack limits in thread %04x eip %08x esp %08x stack %p-%p\n",
+              GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
+              (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
+              NtCurrentTeb()->Tib.StackBase );
+    }
+    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->DeallocationStack + 4096)
+    {
+        /* stack overflow on last page, unrecoverable */
+        UINT diff = (char *)NtCurrentTeb()->DeallocationStack + 4096 - (char *)(stack - 1);
+        WINE_ERR( "stack overflow %u bytes in thread %04x eip %08x esp %08x stack %p-%p-%p\n",
+                  diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
+                  (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
+                  NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        server_abort_thread(1);
+    }
+    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
+    {
+        /* stack access below stack limit, may be recoverable */
+        if (virtual_handle_stack_fault( stack - 1 )) exception_code = EXCEPTION_STACK_OVERFLOW;
+        else
         {
-            WINE_ERR( "stack overflow %u bytes in thread %04x eip %08x esp %08x stack %p-%p\n",
+            UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)(stack - 1);
+            WINE_ERR( "stack overflow %u bytes in thread %04x eip %08x esp %08x stack %p-%p-%p\n",
                       diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
-                      (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
-                      NtCurrentTeb()->Tib.StackBase );
+                      (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
+                      NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
             server_abort_thread(1);
         }
-        else WARN( "exception outside of stack limits in thread %04x eip %08x esp %08x stack %p-%p\n",
-                   GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
-                   (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
-                   NtCurrentTeb()->Tib.StackBase );
     }
 
     stack--;  /* push the stack_layout structure */
@@ -1069,6 +1085,7 @@ static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *s
     stack->context_ptr  = &stack->context;
 
     stack->rec.ExceptionRecord  = NULL;
+    stack->rec.ExceptionCode    = exception_code;
     stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     stack->rec.ExceptionAddress = (LPVOID)EIP_sig(sigcontext);
     stack->rec.NumberParameters = 0;
@@ -1280,9 +1297,18 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         (char *)siginfo->si_addr >= (char *)NtCurrentTeb()->DeallocationStack &&
         (char *)siginfo->si_addr < (char *)NtCurrentTeb()->Tib.StackBase &&
         virtual_handle_stack_fault( siginfo->si_addr ))
+    {
+        /* check if this was the last guard page */
+        if ((char *)siginfo->si_addr < (char *)NtCurrentTeb()->DeallocationStack + 2*4096)
+        {
+            rec = setup_exception_record( context, stack, fs, gs, raise_segv_exception );
+            rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+        }
         return;
+    }
 
     rec = setup_exception_record( context, stack, fs, gs, raise_segv_exception );
+    if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) return;
 
     switch(get_trap_code(context))
     {
