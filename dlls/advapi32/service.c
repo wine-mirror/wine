@@ -244,78 +244,18 @@ static inline DWORD multisz_cb(LPCWSTR wmultisz)
 }
 
 /******************************************************************************
- * RPC connection with servies.exe
+ * RPC connection with services.exe
  */
-
-static BOOL check_services_exe(void)
-{
-    static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
-    HANDLE hEvent = OpenEventW(SYNCHRONIZE, FALSE, svcctl_started_event);
-    if (hEvent == NULL)       /* need to start services.exe */
-    {
-        static const WCHAR services[] = {'\\','s','e','r','v','i','c','e','s','.','e','x','e',0};
-        PROCESS_INFORMATION out;
-        STARTUPINFOW si;
-        HANDLE wait_handles[2];
-        WCHAR path[MAX_PATH];
-
-        if (!GetSystemDirectoryW(path, MAX_PATH - strlenW(services)))
-            return FALSE;
-        strcatW(path, services);
-        ZeroMemory(&si, sizeof(si));
-        si.cb = sizeof(si);
-        if (!CreateProcessW(path, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &out))
-        {
-            ERR("Couldn't start services.exe: error %u\n", GetLastError());
-            return FALSE;
-        }
-        CloseHandle(out.hThread);
-
-        hEvent = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
-        wait_handles[0] = hEvent;
-        wait_handles[1] = out.hProcess;
-
-        /* wait for the event to become available or the process to exit */
-        if ((WaitForMultipleObjects(2, wait_handles, FALSE, INFINITE)) == WAIT_OBJECT_0 + 1)
-        {
-            DWORD exit_code;
-            GetExitCodeProcess(out.hProcess, &exit_code);
-            ERR("Unexpected termination of services.exe - exit code %d\n", exit_code);
-            CloseHandle(out.hProcess);
-            CloseHandle(hEvent);
-            return FALSE;
-        }
-
-        TRACE("services.exe started successfully\n");
-        CloseHandle(out.hProcess);
-        CloseHandle(hEvent);
-        return TRUE;
-    }
-
-    TRACE("Waiting for services.exe to be available\n");
-    WaitForSingleObject(hEvent, INFINITE);
-    TRACE("Services.exe are available\n");
-    CloseHandle(hEvent);
-
-    return TRUE;
-}
 
 handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW MachineName)
 {
     WCHAR transport[] = SVCCTL_TRANSPORT;
     WCHAR endpoint[] = SVCCTL_ENDPOINT;
-    LPWSTR server_copy = NULL;
     RPC_WSTR binding_str;
     RPC_STATUS status;
     handle_t rpc_handle;
 
-    /* unlike Windows we start services.exe on demand. We start it always as
-     * checking if this is our address can be tricky */
-    if (!check_services_exe())
-        return NULL;
-
     status = RpcStringBindingComposeW(NULL, transport, (RPC_WSTR)MachineName, endpoint, NULL, &binding_str);
-    HeapFree(GetProcessHeap(), 0, server_copy);
     if (status != RPC_S_OK)
     {
         ERR("RpcStringBindingComposeW failed (%d)\n", (DWORD)status);

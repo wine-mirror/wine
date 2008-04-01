@@ -61,6 +61,7 @@
 # include <getopt.h>
 #endif
 #include <windows.h>
+#include <wine/svcctl.h>
 #include <wine/unicode.h>
 #include <wine/debug.h>
 
@@ -542,6 +543,46 @@ static int ProcessWindowsFileProtection(void)
     return 1;
 }
 
+static BOOL start_services_process(void)
+{
+    static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
+    static const WCHAR services[] = {'\\','s','e','r','v','i','c','e','s','.','e','x','e',0};
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    HANDLE wait_handles[2];
+    WCHAR path[MAX_PATH];
+
+    if (!GetSystemDirectoryW(path, MAX_PATH - strlenW(services)))
+        return FALSE;
+    strcatW(path, services);
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    if (!CreateProcessW(path, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        WINE_ERR("Couldn't start services.exe: error %u\n", GetLastError());
+        return FALSE;
+    }
+    CloseHandle(pi.hThread);
+
+    wait_handles[0] = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
+    wait_handles[1] = pi.hProcess;
+
+    /* wait for the event to become available or the process to exit */
+    if ((WaitForMultipleObjects(2, wait_handles, FALSE, INFINITE)) == WAIT_OBJECT_0 + 1)
+    {
+        DWORD exit_code;
+        GetExitCodeProcess(pi.hProcess, &exit_code);
+        WINE_ERR("Unexpected termination of services.exe - exit code %d\n", exit_code);
+        CloseHandle(pi.hProcess);
+        CloseHandle(wait_handles[0]);
+        return FALSE;
+    }
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(wait_handles[0]);
+    return TRUE;
+}
+
 /* start services */
 static void start_services(void)
 {
@@ -554,6 +595,9 @@ static void start_services(void)
     WCHAR name[MAX_PATH];
     SC_HANDLE manager;
 
+    if (!start_services_process()) return;
+
+    /* FIXME: do all of this in services.exe instead */
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, servicesW, &hkey )) return;
 
     if (!(manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_ALL_ACCESS )))
