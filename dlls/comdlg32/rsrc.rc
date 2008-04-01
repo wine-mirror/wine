@@ -47,6 +47,7 @@
 #include "cdlg_Cs.rc"
 #include "cdlg_Da.rc"
 #include "cdlg_De.rc"
+#include "cdlg_El.rc"
 #include "cdlg_En.rc"
 #include "cdlg_Eo.rc"
 #include "cdlg_Es.rc"
