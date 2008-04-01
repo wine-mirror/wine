@@ -244,7 +244,7 @@ static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
     /* omit length of format specifiers, but include NULL terminator: */
     len = lstrlenW(fmt) - 4 + 1;
     len += lstrlenW(instanceId) + lstrlenW(guidStr);
-    if (ReferenceString)
+    if (ReferenceString && *ReferenceString)
     {
         /* space for a hash between string and reference string: */
         len += lstrlenW(ReferenceString) + 1;
@@ -258,10 +258,10 @@ static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
         /* replace '\\' with '#' after the "\\\\?\\" beginning */
         for (ptr = strchrW(ret + 4, '\\'); ptr; ptr = strchrW(ptr + 1, '\\'))
             *ptr = '#';
-        if (ReferenceString)
+        if (ReferenceString && *ReferenceString)
         {
-            ret[printed - 1] = '\\';
-            lstrcpyW(ret + printed, ReferenceString);
+            ret[printed] = '\\';
+            lstrcpyW(ret + printed + 1, ReferenceString);
         }
     }
     return ret;
