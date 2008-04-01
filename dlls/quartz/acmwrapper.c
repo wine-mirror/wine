@@ -47,7 +47,6 @@ typedef struct ACMWrapperImpl
     HACMSTREAM has;
     LPWAVEFORMATEX pWfIn;
     LPWAVEFORMATEX pWfOut;
-    BOOL reinit_codec; /* FIXME: Should use sync points instead */
 } ACMWrapperImpl;
 
 static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilter, IMediaSample *pSample)
@@ -115,19 +114,31 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	}
 	unprepare_header = TRUE;
 
-	if ((res = acmStreamConvert(This->has, &ash, This->reinit_codec ? ACM_STREAMCONVERTF_START : 0))) {
+        if (IMediaSample_IsDiscontinuity(pSample) == S_OK)
+            res = acmStreamConvert(This->has, &ash, ACM_STREAMCONVERTF_START);
+        else
+            res = acmStreamConvert(This->has, &ash, 0);
+
+
+        if (res)
+        {
 	    if(res != MMSYSERR_MOREDATA)
 	        ERR("Cannot convert data header %d\n", res);
 	    goto error;
 	}
-	This->reinit_codec = FALSE;
 
 	TRACE("used in %u/%u, used out %u/%u\n", ash.cbSrcLengthUsed, ash.cbSrcLength, ash.cbDstLengthUsed, ash.cbDstLength);
 
 	hr = IMediaSample_SetActualDataLength(pOutSample, ash.cbDstLengthUsed);
 	assert(hr == S_OK);
 
-        assert(ash.cbSrcLengthUsed);
+        if (!ash.cbSrcLengthUsed)
+        {
+            WARN("Sample was skipped\n");
+            ash.cbSrcLength = 0;
+            goto error;
+        }
+
         TRACE("Sample start time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
         if (ash.cbSrcLengthUsed == cbSrcStream)
         {
@@ -148,7 +159,11 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
         }
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
-        hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
+        if (IMediaSample_IsDiscontinuity(pSample) == S_FALSE)
+            hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
+        else
+            TRACE("Skipping first sample: Discontinuity\n");
+
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
             if (FAILED(hr))
                 ERR("Error sending sample (%x)\n", hr);
@@ -258,8 +273,6 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
     /* Note: This memory is managed by the transform filter once created */
     This = CoTaskMemAlloc(sizeof(ACMWrapperImpl));
     ZeroMemory(This, sizeof(ACMWrapperImpl));
-
-    This->reinit_codec = TRUE;
 
     hr = TransformFilter_Create(&(This->tf), &CLSID_ACMWrapper, &ACMWrapper_FuncsTable, NULL, NULL, NULL);
 
