@@ -60,7 +60,9 @@ typedef struct MPEGSplitterImpl
     LONGLONG duration;
     LONGLONG position;
     DWORD skipbytes;
+    DWORD header_bytes;
     DWORD remaining_bytes;
+    BOOL seek;
 } MPEGSplitterImpl;
 
 static int MPEGSplitter_head_check(const BYTE *header)
@@ -115,7 +117,7 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
        ((header[1]>>1)&0x3) != 0 && ((header[2]>>4)&0xf) != 0xf &&
        ((header[2]>>2)&0x3) != 0x3))
     {
-        WARN("Not a valid header: %02x:%02x\n", header[0], header[1]);
+        FIXME("Not a valid header: %02x:%02x\n", header[0], header[1]);
         return E_INVALIDARG;
     }
 
@@ -132,6 +134,13 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
     emphasis = ((header[3]>>0)&0x3);
 
     bitrate = tabsel_123[lsf][layer-1][bitrate_index] * 1000;
+    if (!bitrate || layer != 3)
+    {
+        ERR("Not a valid header: %02x:%02x:%02x:%02x\n", header[0], header[1], header[2], header[3]);
+        return E_INVALIDARG;
+    }
+
+
     if (layer == 3 || layer == 2)
         length = 144 * bitrate / freqs[freq_index] + padding;
     else
@@ -173,7 +182,7 @@ static HRESULT copy_data(IMediaSample *to, BYTE** from, DWORD *flen, DWORD amoun
     return hr;
 }
 
-static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen)
+static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen, IMediaSample *pCurrentSample)
 {
     Parser_OutputPin * pOutputPin = (Parser_OutputPin*)This->Parser.ppPins[1];
     LONGLONG length = 0;
@@ -197,11 +206,11 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen)
     {
         DWORD towrite = min(This->remaining_bytes, *flen);
 
-        hr = copy_data(This->pCurrentSample, fbuf, flen, towrite);
+        hr = copy_data(pCurrentSample, fbuf, flen, towrite);
         if (FAILED(hr))
         {
             WARN("Could not resize sample: %08x\n", hr);
-            goto release;
+            return hr;
         }
 
         This->remaining_bytes -= towrite;
@@ -213,7 +222,7 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen)
     }
 
     /* Special case, last source sample might (or might not have) had a header, and now we want to retrieve it */
-    dlen = IMediaSample_GetActualDataLength(This->pCurrentSample);
+    dlen = IMediaSample_GetActualDataLength(pCurrentSample);
     if (dlen > 0 && dlen < 4)
     {
         BYTE *header = NULL;
@@ -222,15 +231,15 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen)
         /* Shoot anyone with a small sample! */
         assert(*flen >= 6);
 
-        hr = IMediaSample_GetPointer(This->pCurrentSample, &header);
+        hr = IMediaSample_GetPointer(pCurrentSample, &header);
 
         if (SUCCEEDED(hr))
-            hr = IMediaSample_SetActualDataLength(This->pCurrentSample, 7);
+            hr = IMediaSample_SetActualDataLength(pCurrentSample, 7);
 
         if (FAILED(hr))
         {
             WARN("Could not resize sample: %08x\n", hr);
-            goto release;
+            return hr;
         }
 
         memcpy(header + dlen, *fbuf, 6 - dlen);
@@ -243,12 +252,12 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen)
         /* No header found */
         if (attempts == dlen)
         {
-            hr = IMediaSample_SetActualDataLength(This->pCurrentSample, 0);
+            hr = IMediaSample_SetActualDataLength(pCurrentSample, 0);
             return hr;
         }
 
-        IMediaSample_SetActualDataLength(This->pCurrentSample, 4);
-        IMediaSample_SetTime(This->pCurrentSample, &time, &This->position);
+        IMediaSample_SetActualDataLength(pCurrentSample, 4);
+        IMediaSample_SetTime(pCurrentSample, &time, &This->position);
 
         /* Move header back to beginning */
         if (attempts)
@@ -274,21 +283,21 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen)
     if (*flen < 4)
     {
         assert(!length);
-        hr = copy_data(This->pCurrentSample, fbuf, flen, *flen);
+        hr = copy_data(pCurrentSample, fbuf, flen, *flen);
         return hr;
     }
 
-    IMediaSample_SetTime(This->pCurrentSample, &time, &This->position);
+    IMediaSample_SetTime(pCurrentSample, &time, &This->position);
 
     if (*flen < length)
     {
         /* Partial copy: Copy 4 bytes, the rest will be copied by the logic for This->remaining_bytes */
         This->remaining_bytes = length - 4;
-        copy_data(This->pCurrentSample, fbuf, flen, 4);
+        copy_data(pCurrentSample, fbuf, flen, 4);
         return hr;
     }
 
-    hr = copy_data(This->pCurrentSample, fbuf, flen, length);
+    hr = copy_data(pCurrentSample, fbuf, flen, length);
     if (FAILED(hr))
     {
         WARN("Couldn't set data size to %x%08x\n", (DWORD)(length >> 32), (DWORD)length);
@@ -306,21 +315,33 @@ out_append:
         if (length > *flen)
             break;
 
-        if (FAILED(copy_data(This->pCurrentSample, fbuf, flen, length)))
+        if (FAILED(copy_data(pCurrentSample, fbuf, flen, length)))
             break;
 
         This->position += sampleduration;
         sampleduration = 0;
-        IMediaSample_SetTime(This->pCurrentSample, &time, &This->position);
+        IMediaSample_SetTime(pCurrentSample, &time, &This->position);
     }
     TRACE("Media time: %u.%03u\n", (DWORD)(This->position/10000000), (DWORD)((This->position/10000)%1000));
 
-    hr = OutputPin_SendSample(&pOutputPin->pin, This->pCurrentSample);
+    IMediaSample_AddRef(pCurrentSample);
+    LeaveCriticalSection(&This->Parser.csFilter);
+
+    hr = OutputPin_SendSample(&pOutputPin->pin, pCurrentSample);
+
+    EnterCriticalSection(&This->Parser.csFilter);
+    IMediaSample_Release(pCurrentSample);
+
     if (FAILED(hr))
+    {
         WARN("Error sending sample (%x)\n", hr);
-release:
-    IMediaSample_Release(This->pCurrentSample);
-    This->pCurrentSample = NULL;
+        return hr;
+    }
+    if (This->pCurrentSample)
+    {
+        IMediaSample_Release(pCurrentSample);
+        This->pCurrentSample = NULL;
+    }
     return hr;
 }
 
@@ -346,6 +367,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
     /* trace removed for performance reasons */
     /* TRACE("(%p), %llu -> %llu\n", pSample, tStart, tStop); */
 
+    EnterCriticalSection(&This->Parser.csFilter);
     /* Now, try to find a new header */
     while (cbSrcStream > 0)
     {
@@ -361,16 +383,16 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
             if (FAILED(hr = IMediaSample_SetActualDataLength(This->pCurrentSample, 0)))
                 goto fail;
             IMediaSample_SetSyncPoint(This->pCurrentSample, TRUE);
+            IMediaSample_SetDiscontinuity(This->pCurrentSample, This->seek);
+            This->seek = FALSE;
         }
-        hr = FillBuffer(This, &pbSrcStream, &cbSrcStream);
-        if (SUCCEEDED(hr)) {
-            if (hr == S_FALSE)
-                break;
+        hr = FillBuffer(This, &pbSrcStream, &cbSrcStream, This->pCurrentSample);
+        if (SUCCEEDED(hr) && hr != S_FALSE)
             continue;
-        }
 
 fail:
-        FIXME("Failed with hres: %08x!\n", hr);
+        if (hr != S_FALSE)
+            FIXME("Failed with hres: %08x!\n", hr);
         This->skipbytes += This->remaining_bytes;
         This->remaining_bytes = 0;
         if (This->pCurrentSample)
@@ -379,6 +401,7 @@ fail:
             IMediaSample_Release(This->pCurrentSample);
             This->pCurrentSample = NULL;
         }
+        break;
     }
 
     if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile)
@@ -416,6 +439,7 @@ fail:
         hr = S_FALSE;
     }
 
+    LeaveCriticalSection(&This->Parser.csFilter);
     return hr;
 }
 
@@ -612,7 +636,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
     if (FAILED(hr))
         return hr;
     pos -= 4;
-    This->skipbytes = pos;
+    This->header_bytes = This->skipbytes = pos;
 
     switch(streamtype)
     {
@@ -671,6 +695,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
             hr = S_OK;
             TRACE("Duration: %d seconds\n", (DWORD)(duration / 10000000));
             TRACE("Parsing took %u ms\n", GetTickCount() - ticks);
+            This->duration = duration;
             break;
         }
         case MPEG_VIDEO_HEADER:
@@ -701,8 +726,17 @@ static HRESULT MPEGSplitter_cleanup(LPVOID iface)
         IMediaSample_Release(This->pCurrentSample);
     This->pCurrentSample = NULL;
 
+    if (This->Parser.pInputPin && !This->seek)
+    {
+        This->skipbytes += This->remaining_bytes;
+        This->Parser.pInputPin->rtCurrent += MEDIATIME_FROM_BYTES(This->skipbytes);
+    }
+    if (!This->seek)
+        This->skipbytes = This->remaining_bytes = 0;
+
     return S_OK;
 }
+
 
 HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
@@ -727,6 +761,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
         CoTaskMemFree(This);
         return hr;
     }
+    This->seek = TRUE;
 
     /* Note: This memory is managed by the parser filter once created */
     *ppv = (LPVOID)This;
