@@ -571,6 +571,19 @@ static BOOL VIRTUAL_SetProt( FILE_VIEW *view, /* [in] Pointer to view */
     TRACE("%p-%p %s\n",
           base, (char *)base + size - 1, VIRTUAL_GetProtStr( vprot ) );
 
+    /* if setting stack guard pages, store the permissions first, as the guard may be
+     * triggered at any point after mprotect and change the permissions again */
+    if ((vprot & VPROT_GUARD) &&
+        ((char *)base >= (char *)NtCurrentTeb()->DeallocationStack) &&
+        ((char *)base < (char *)NtCurrentTeb()->Tib.StackBase))
+    {
+        memset( view->prot + (((char *)base - (char *)view->base) >> page_shift),
+                vprot, size >> page_shift );
+        mprotect( base, size, unix_prot );
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
+        return TRUE;
+    }
+
     if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
     {
         TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
@@ -1323,6 +1336,36 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
         }
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
+    return ret;
+}
+
+
+
+/***********************************************************************
+ *           virtual_handle_stack_fault
+ *
+ * Handle an access fault inside the current thread stack.
+ * Called from inside a signal handler.
+ */
+BOOL virtual_handle_stack_fault( void *addr )
+{
+    FILE_VIEW *view;
+    BOOL ret = FALSE;
+
+    RtlEnterCriticalSection( &csVirtual );  /* no need for signal masking inside signal handler */
+    if ((view = VIRTUAL_FindView( addr )))
+    {
+        void *page = ROUND_ADDR( addr, page_mask );
+        BYTE vprot = view->prot[((const char *)page - (const char *)view->base) >> page_shift];
+        if (vprot & VPROT_GUARD)
+        {
+            VIRTUAL_SetProt( view, page, page_size, vprot & ~VPROT_GUARD );
+            if ((char *)page + page_size == NtCurrentTeb()->Tib.StackLimit)
+                NtCurrentTeb()->Tib.StackLimit = page;
+            ret = TRUE;
+        }
+    }
+    RtlLeaveCriticalSection( &csVirtual );
     return ret;
 }
 

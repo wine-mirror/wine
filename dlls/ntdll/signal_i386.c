@@ -1009,13 +1009,12 @@ static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /***********************************************************************
- *           setup_exception
+ *           setup_exception_record
  *
- * Setup a proper stack frame for the raise function, and modify the
- * sigcontext so that the return from the signal handler will call
- * the raise function.
+ * Setup the exception record and context on the thread stack.
  */
-static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func func )
+static EXCEPTION_RECORD *setup_exception_record( SIGCONTEXT *sigcontext, void *stack_ptr,
+                                                 WORD fs, WORD gs, raise_func func )
 {
     struct stack_layout
     {
@@ -1026,11 +1025,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
         EXCEPTION_RECORD  rec;
         DWORD             ebp;
         DWORD             eip;
-    } *stack;
-
-    WORD fs, gs;
-
-    stack = init_handler( sigcontext, &fs, &gs );
+    } *stack = stack_ptr;
 
     /* stack sanity checks */
 
@@ -1093,6 +1088,22 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     SS_sig(sigcontext)  = wine_get_ss();
 
     return stack->rec_ptr;
+}
+
+
+/***********************************************************************
+ *           setup_exception
+ *
+ * Setup a proper stack frame for the raise function, and modify the
+ * sigcontext so that the return from the signal handler will call
+ * the raise function.
+ */
+static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func func )
+{
+    WORD fs, gs;
+    void *stack = init_handler( sigcontext, &fs, &gs );
+
+    return setup_exception_record( sigcontext, stack, fs, gs, func );
 }
 
 
@@ -1259,8 +1270,19 @@ static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
+    WORD fs, gs;
+    EXCEPTION_RECORD *rec;
     SIGCONTEXT *context = sigcontext;
-    EXCEPTION_RECORD *rec = setup_exception( context, raise_segv_exception );
+    void *stack = init_handler( sigcontext, &fs, &gs );
+
+    /* check for page fault inside the thread stack */
+    if (get_trap_code(context) == TRAP_x86_PAGEFLT &&
+        (char *)siginfo->si_addr >= (char *)NtCurrentTeb()->DeallocationStack &&
+        (char *)siginfo->si_addr < (char *)NtCurrentTeb()->Tib.StackBase &&
+        virtual_handle_stack_fault( siginfo->si_addr ))
+        return;
+
+    rec = setup_exception_record( context, stack, fs, gs, raise_segv_exception );
 
     switch(get_trap_code(context))
     {
