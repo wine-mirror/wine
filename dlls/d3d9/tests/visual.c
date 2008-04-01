@@ -48,6 +48,48 @@ static HWND create_window(void)
     return ret;
 }
 
+/* Locks a given surface and returns the color at (x,y).  It's the caller's
+ * responsibility to only pass in lockable surfaces and valid x,y coordinates */
+static DWORD getPixelColorFromSurface(IDirect3DSurface9 *surface, UINT x, UINT y)
+{
+    DWORD color;
+    HRESULT hr;
+    D3DSURFACE_DESC desc;
+    RECT rectToLock = {x, y, x+1, y+1};
+    D3DLOCKED_RECT lockedRect;
+
+    hr = IDirect3DSurface9_GetDesc(surface, &desc);
+    if(FAILED(hr))  /* This is not a test */
+    {
+        trace("Can't get the surface description, hr=%s\n", DXGetErrorString9(hr));
+        return 0xdeadbeef;
+    }
+
+    hr = IDirect3DSurface9_LockRect(surface, &lockedRect, &rectToLock, D3DLOCK_READONLY);
+    if(FAILED(hr))  /* This is not a test */
+    {
+        trace("Can't lock the surface, hr=%s\n", DXGetErrorString9(hr));
+        return 0xdeadbeef;
+    }
+    switch(desc.Format) {
+        case D3DFMT_A8R8G8B8:
+        {
+            color = ((DWORD *) lockedRect.pBits)[0] & 0xffffffff;
+            break;
+        }
+        default:
+            trace("Error: unknown surface format: %d\n", desc.Format);
+            color = 0xdeadbeef;
+            break;
+    }
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    if(FAILED(hr))
+    {
+        trace("Can't unlock the surface, hr=%s\n", DXGetErrorString9(hr));
+    }
+    return color;
+}
+
 static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
 {
     DWORD ret;
@@ -1992,6 +2034,529 @@ static void fill_surface(IDirect3DSurface9 *surface, DWORD color)
     }
     hr = IDirect3DSurface9_UnlockRect(surface);
     ok(hr == D3D_OK, "IDirect3DSurface9_UnlockRect failed with %s\n", DXGetErrorString9(hr));
+}
+
+/* This tests a variety of possible StretchRect() situations */
+static void stretchrect_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DTexture9 *tex_rt32 = NULL, *tex_rt64 = NULL, *tex_rt_dest64;
+    IDirect3DSurface9 *surf_tex_rt32 = NULL, *surf_tex_rt64 = NULL, *surf_tex_rt_dest64;
+    IDirect3DTexture9 *tex32 = NULL, *tex64 = NULL, *tex_dest64 = NULL;
+    IDirect3DSurface9 *surf_tex32 = NULL, *surf_tex64 = NULL, *surf_tex_dest64 = NULL;
+    IDirect3DSurface9 *surf_rt32 = NULL, *surf_rt64 = NULL, *surf_rt_dest64 = NULL;
+    IDirect3DSurface9 *surf_offscreen32 = NULL, *surf_offscreen64 = NULL, *surf_offscreen_dest64 = NULL;
+    IDirect3DSurface9 *surf_temp32 = NULL, *surf_temp64 = NULL;
+    IDirect3DSurface9 *orig_rt = NULL;
+    DWORD color;
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &orig_rt);
+    ok(hr == D3D_OK, "Can't get render target, hr = %s\n", DXGetErrorString9(hr));
+    if(!orig_rt) {
+        goto out;
+    }
+
+    /* Create our temporary surfaces in system memory */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf_temp32, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf_temp64, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+
+    /* Create offscreen plain surfaces in D3DPOOL_DEFAULT */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf_offscreen32, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf_offscreen64, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf_offscreen_dest64, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+
+    /* Create render target surfaces */
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surf_rt32, NULL );
+    ok(hr == D3D_OK, "Creating the render target surface failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 64, 64, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surf_rt64, NULL );
+    ok(hr == D3D_OK, "Creating the render target surface failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 64, 64, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surf_rt_dest64, NULL );
+    ok(hr == D3D_OK, "Creating the render target surface failed with %s\n", DXGetErrorString9(hr));
+
+    /* Create render target textures */
+    hr = IDirect3DDevice9_CreateTexture(device, 32, 32, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt32, NULL);
+    ok(hr == D3D_OK, "Creating the render target texture failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt64, NULL);
+    ok(hr == D3D_OK, "Creating the render target texture failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt_dest64, NULL);
+    ok(hr == D3D_OK, "Creating the render target texture failed with %s\n", DXGetErrorString9(hr));
+    if (tex_rt32) {
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt32, 0, &surf_tex_rt32);
+        ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %s\n", DXGetErrorString9(hr));
+    }
+    if (tex_rt64) {
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt64, 0, &surf_tex_rt64);
+        ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %s\n", DXGetErrorString9(hr));
+    }
+    if (tex_rt_dest64) {
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt_dest64, 0, &surf_tex_rt_dest64);
+        ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    /* Create regular textures in D3DPOOL_DEFAULT */
+    hr = IDirect3DDevice9_CreateTexture(device, 32, 32, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex32, NULL);
+    ok(hr == D3D_OK, "Creating the regular texture failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex64, NULL);
+    ok(hr == D3D_OK, "Creating the regular texture failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_dest64, NULL);
+    ok(hr == D3D_OK, "Creating the regular texture failed with %s\n", DXGetErrorString9(hr));
+    if (tex32) {
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex32, 0, &surf_tex32);
+        ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %s\n", DXGetErrorString9(hr));
+    }
+    if (tex64) {
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex64, 0, &surf_tex64);
+        ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %s\n", DXGetErrorString9(hr));
+    }
+    if (tex_dest64) {
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex_dest64, 0, &surf_tex_dest64);
+        ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    /*********************************************************************
+     * Tests for when the source parameter is an offscreen plain surface *
+     *********************************************************************/
+
+    /* Fill the offscreen 64x64 surface with green */
+    if (surf_offscreen64)
+        fill_surface(surf_offscreen64, 0xff00ff00);
+
+    /* offscreenplain ==> offscreenplain, same size */
+    if(surf_offscreen64 && surf_offscreen_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_offscreen_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_offscreen_dest64, 32, 32);
+            ok(color == 0xff00ff00, "StretchRect offscreen ==> offscreen same size failed: Got color 0x%08x, expected 0xff00ff00.\n", color);
+        }
+    }
+
+    /* offscreenplain ==> rendertarget texture, same size */
+    if(surf_offscreen64 && surf_tex_rt_dest64 && surf_temp64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_tex_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        /* We can't lock rendertarget textures, so copy to our temp surface first */
+        if (hr == D3D_OK) {
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
+            ok( hr == D3D_OK, "IDirect3DDevice9_GetRenderTargetData failed with %s\n", DXGetErrorString9(hr));
+        }
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_temp64, 32, 32);
+            ok(color == 0xff00ff00, "StretchRect offscreen ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xff00ff00.\n", color);
+        }
+    }
+
+    /* offscreenplain ==> rendertarget surface, same size */
+    if(surf_offscreen64 && surf_rt_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
+            ok(color == 0xff00ff00, "StretchRect offscreen ==> rendertarget surface same size failed: Got color 0x%08x, expected 0xff00ff00.\n", color);
+        }
+    }
+
+    /* offscreenplain ==> texture, same size (should fail) */
+    if(surf_offscreen64 && surf_tex_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_tex_dest64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* Fill the smaller offscreen surface with red */
+    fill_surface(surf_offscreen32, 0xffff0000);
+
+    /* offscreenplain ==> offscreenplain, scaling (should fail) */
+    if(surf_offscreen32 && surf_offscreen64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_offscreen64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* offscreenplain ==> rendertarget texture, scaling */
+    if(surf_offscreen32 && surf_tex_rt_dest64 && surf_temp64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_tex_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        /* We can't lock rendertarget textures, so copy to our temp surface first */
+        if (hr == D3D_OK) {
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
+            ok( hr == D3D_OK, "IDirect3DDevice9_GetRenderTargetData failed with %s\n", DXGetErrorString9(hr));
+        }
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_temp64, 48, 48);
+            ok(color == 0xffff0000, "StretchRect offscreen ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xffff0000.\n", color);
+        }
+    }
+
+    /* offscreenplain ==> rendertarget surface, scaling */
+    if(surf_offscreen32 && surf_rt_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        color = getPixelColorFromSurface(surf_rt_dest64, 48, 48);
+        ok(color == 0xffff0000, "StretchRect offscreen ==> rendertarget surface scaling failed: Got color 0x%08x, expected 0xffff0000.\n", color);
+    }
+
+    /* offscreenplain ==> texture, scaling (should fail) */
+    if(surf_offscreen32 && surf_tex_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_tex_dest64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /************************************************************
+     * Tests for when the source parameter is a regular texture *
+     ************************************************************/
+
+    /* Fill the surface of the regular texture with blue */
+    if (surf_tex64 && surf_temp64) {
+        /* Can't fill the surf_tex directly because it's created in D3DPOOL_DEFAULT */
+        fill_surface(surf_temp64, 0xff0000ff);
+        hr = IDirect3DDevice9_UpdateSurface(device, surf_temp64, NULL, surf_tex64, NULL);
+        ok( hr == D3D_OK, "IDirect3DDevice9_UpdateSurface failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    /* texture ==> offscreenplain, same size */
+    if(surf_tex64 && surf_offscreen64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_offscreen64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* texture ==> rendertarget texture, same size */
+    if(surf_tex64 && surf_tex_rt_dest64 && surf_temp64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_tex_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        /* We can't lock rendertarget textures, so copy to our temp surface first */
+        if (hr == D3D_OK) {
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
+            ok( hr == D3D_OK, "IDirect3DDevice9_GetRenderTargetData failed with %s\n", DXGetErrorString9(hr));
+        }
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_temp64, 32, 32);
+            ok(color == 0xff0000ff, "StretchRect texture ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xff0000ff.\n", color);
+        }
+    }
+
+    /* texture ==> rendertarget surface, same size */
+    if(surf_tex64 && surf_rt_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
+            ok(color == 0xff0000ff, "StretchRect texture ==> rendertarget surface same size failed: Got color 0x%08x, expected 0xff0000ff.\n", color);
+        }
+    }
+
+    /* texture ==> texture, same size (should fail) */
+    if(surf_tex64 && surf_tex_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_tex_dest64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* Fill the surface of the smaller regular texture with red */
+    if (surf_tex32 && surf_temp32) {
+        /* Can't fill the surf_tex directly because it's created in D3DPOOL_DEFAULT */
+        fill_surface(surf_temp32, 0xffff0000);
+        hr = IDirect3DDevice9_UpdateSurface(device, surf_temp32, NULL, surf_tex32, NULL);
+        ok( hr == D3D_OK, "IDirect3DDevice9_UpdateSurface failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    /* texture ==> offscreenplain, scaling (should fail) */
+    if(surf_tex32 && surf_offscreen64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_offscreen64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* texture ==> rendertarget texture, scaling */
+    if(surf_tex32 && surf_tex_rt_dest64 && surf_temp64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_tex_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        /* We can't lock rendertarget textures, so copy to our temp surface first */
+        if (hr == D3D_OK) {
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
+            ok( hr == D3D_OK, "IDirect3DDevice9_GetRenderTargetData failed with %s\n", DXGetErrorString9(hr));
+        }
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_temp64, 48, 48);
+            ok(color == 0xffff0000, "StretchRect texture ==> rendertarget texture scaling failed: Got color 0x%08x, expected 0xffff0000.\n", color);
+        }
+    }
+
+    /* texture ==> rendertarget surface, scaling */
+    if(surf_tex32 && surf_rt_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        color = getPixelColorFromSurface(surf_rt_dest64, 48, 48);
+        ok(color == 0xffff0000, "StretchRect texture ==> rendertarget surface scaling failed: Got color 0x%08x, expected 0xffff0000.\n", color);
+    }
+
+    /* texture ==> texture, scaling (should fail) */
+    if(surf_tex32 && surf_tex_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_tex_dest64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /*****************************************************************
+     * Tests for when the source parameter is a rendertarget texture *
+     *****************************************************************/
+
+    /* Fill the surface of the rendertarget texture with white */
+    if (surf_tex_rt64 && surf_temp64) {
+        /* Can't fill the surf_tex_rt directly because it's created in D3DPOOL_DEFAULT */
+        fill_surface(surf_temp64, 0xffffffff);
+        hr = IDirect3DDevice9_UpdateSurface(device, surf_temp64, NULL, surf_tex_rt64, NULL);
+        ok( hr == D3D_OK, "IDirect3DDevice9_UpdateSurface failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    /* rendertarget texture ==> offscreenplain, same size */
+    if(surf_tex_rt64 && surf_offscreen64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_offscreen64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* rendertarget texture ==> rendertarget texture, same size */
+    if(surf_tex_rt64 && surf_tex_rt_dest64 && surf_temp64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_tex_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        /* We can't lock rendertarget textures, so copy to our temp surface first */
+        if (hr == D3D_OK) {
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
+            ok( hr == D3D_OK, "IDirect3DDevice9_GetRenderTargetData failed with %s\n", DXGetErrorString9(hr));
+        }
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_temp64, 32, 32);
+            ok(color == 0xffffffff, "StretchRect rendertarget texture ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xffffffff.\n", color);
+        }
+    }
+
+    /* rendertarget texture ==> rendertarget surface, same size */
+    if(surf_tex_rt64 && surf_rt_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
+            ok(color == 0xffffffff, "StretchRect rendertarget texture ==> rendertarget surface same size failed: Got color 0x%08x, expected 0xffffffff.\n", color);
+        }
+    }
+
+    /* rendertarget texture ==> texture, same size (should fail) */
+    if(surf_tex_rt64 && surf_tex_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_tex_dest64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* Fill the surface of the smaller rendertarget texture with red */
+    if (surf_tex_rt32 && surf_temp32) {
+        /* Can't fill the surf_tex_rt directly because it's created in D3DPOOL_DEFAULT */
+        fill_surface(surf_temp32, 0xffff0000);
+        hr = IDirect3DDevice9_UpdateSurface(device, surf_temp32, NULL, surf_tex_rt32, NULL);
+        ok( hr == D3D_OK, "IDirect3DDevice9_UpdateSurface failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    /* rendertarget texture ==> offscreenplain, scaling (should fail) */
+    if(surf_tex_rt32 && surf_offscreen64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_offscreen64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* rendertarget texture ==> rendertarget texture, scaling */
+    if(surf_tex_rt32 && surf_tex_rt_dest64 && surf_temp64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_tex_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        /* We can't lock rendertarget textures, so copy to our temp surface first */
+        if (hr == D3D_OK) {
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
+            ok( hr == D3D_OK, "IDirect3DDevice9_GetRenderTargetData failed with %s\n", DXGetErrorString9(hr));
+        }
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_temp64, 48, 48);
+            ok(color == 0xffff0000, "StretchRect rendertarget texture ==> rendertarget texture scaling failed: Got color 0x%08x, expected 0xffff0000.\n", color);
+        }
+    }
+
+    /* rendertarget texture ==> rendertarget surface, scaling */
+    if(surf_tex_rt32 && surf_rt_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        color = getPixelColorFromSurface(surf_rt_dest64, 48, 48);
+        ok(color == 0xffff0000, "StretchRect rendertarget texture ==> rendertarget surface scaling failed: Got color 0x%08x, expected 0xffff0000.\n", color);
+    }
+
+    /* rendertarget texture ==> texture, scaling (should fail) */
+    if(surf_tex_rt32 && surf_tex_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_tex_dest64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /*****************************************************************
+     * Tests for when the source parameter is a rendertarget surface *
+     *****************************************************************/
+
+    /* Fill the surface of the rendertarget surface with black */
+    if (surf_rt64)
+        fill_surface(surf_rt64, 0xff000000);
+
+    /* rendertarget texture ==> offscreenplain, same size */
+    if(surf_rt64 && surf_offscreen64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_offscreen64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* rendertarget surface ==> rendertarget texture, same size */
+    if(surf_rt64 && surf_tex_rt_dest64 && surf_temp64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_tex_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        /* We can't lock rendertarget textures, so copy to our temp surface first */
+        if (hr == D3D_OK) {
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
+            ok( hr == D3D_OK, "IDirect3DDevice9_GetRenderTargetData failed with %s\n", DXGetErrorString9(hr));
+        }
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_temp64, 32, 32);
+            ok(color == 0xff000000, "StretchRect rendertarget surface ==> rendertarget texture same size failed: Got color 0x%08x, expected 0xff000000.\n", color);
+        }
+    }
+
+    /* rendertarget surface ==> rendertarget surface, same size */
+    if(surf_rt64 && surf_rt_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
+            ok(color == 0xff000000, "StretchRect rendertarget surface ==> rendertarget surface same size failed: Got color 0x%08x, expected 0xff000000.\n", color);
+        }
+    }
+
+    /* rendertarget surface ==> texture, same size (should fail) */
+    if(surf_rt64 && surf_tex_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_tex_dest64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* Fill the surface of the smaller rendertarget texture with red */
+    if (surf_rt32)
+        fill_surface(surf_rt32, 0xffff0000);
+
+    /* rendertarget surface ==> offscreenplain, scaling (should fail) */
+    if(surf_rt32 && surf_offscreen64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_offscreen64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* rendertarget surface ==> rendertarget texture, scaling */
+    if(surf_rt32 && surf_tex_rt_dest64 && surf_temp64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_tex_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        /* We can't lock rendertarget textures, so copy to our temp surface first */
+        if (hr == D3D_OK) {
+            hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
+            ok( hr == D3D_OK, "IDirect3DDevice9_GetRenderTargetData failed with %s\n", DXGetErrorString9(hr));
+        }
+
+        if (hr == D3D_OK) {
+            color = getPixelColorFromSurface(surf_temp64, 48, 48);
+            ok(color == 0xffff0000, "StretchRect rendertarget surface ==> rendertarget texture scaling failed: Got color 0x%08x, expected 0xffff0000.\n", color);
+        }
+    }
+
+    /* rendertarget surface ==> rendertarget surface, scaling */
+    if(surf_rt32 && surf_rt_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_rt_dest64, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+
+        color = getPixelColorFromSurface(surf_rt_dest64, 48, 48);
+        ok(color == 0xffff0000, "StretchRect rendertarget surface ==> rendertarget surface scaling failed: Got color 0x%08x, expected 0xffff0000.\n", color);
+    }
+
+    /* rendertarget surface ==> texture, scaling (should fail) */
+    if(surf_rt32 && surf_tex_dest64) {
+        hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_tex_dest64, NULL, 0);
+        todo_wine ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect succeeded, shouldn't happen (todo)\n");
+    }
+
+    /* TODO: Test when source and destination RECT parameters are given... */
+    /* TODO: Test format conversions */
+
+
+out:
+    /* Clean up */
+    if (surf_rt32)
+        IDirect3DSurface9_Release(surf_rt32);
+    if (surf_rt64)
+        IDirect3DSurface9_Release(surf_rt64);
+    if (surf_rt_dest64)
+        IDirect3DSurface9_Release(surf_rt_dest64);
+    if (surf_temp32)
+        IDirect3DSurface9_Release(surf_temp32);
+    if (surf_temp64)
+        IDirect3DSurface9_Release(surf_temp64);
+    if (surf_offscreen32)
+        IDirect3DSurface9_Release(surf_offscreen32);
+    if (surf_offscreen64)
+        IDirect3DSurface9_Release(surf_offscreen64);
+    if (surf_offscreen_dest64)
+        IDirect3DSurface9_Release(surf_offscreen_dest64);
+
+    if (tex_rt32) {
+        if (surf_tex_rt32)
+            IDirect3DSurface9_Release(surf_tex_rt32);
+        IDirect3DTexture9_Release(tex_rt32);
+    }
+    if (tex_rt64) {
+        if (surf_tex_rt64)
+            IDirect3DSurface9_Release(surf_tex_rt64);
+        IDirect3DTexture9_Release(tex_rt64);
+    }
+    if (tex_rt_dest64) {
+        if (surf_tex_rt_dest64)
+            IDirect3DSurface9_Release(surf_tex_rt_dest64);
+        IDirect3DTexture9_Release(tex_rt_dest64);
+    }
+    if (tex32) {
+        if (surf_tex32)
+            IDirect3DSurface9_Release(surf_tex32);
+        IDirect3DTexture9_Release(tex32);
+    }
+    if (tex64) {
+        if (surf_tex64)
+            IDirect3DSurface9_Release(surf_tex64);
+        IDirect3DTexture9_Release(tex64);
+    }
+    if (tex_dest64) {
+        if (surf_tex_dest64)
+            IDirect3DSurface9_Release(surf_tex_dest64);
+        IDirect3DTexture9_Release(tex_dest64);
+    }
+
+    if (orig_rt) {
+        hr = IDirect3DDevice9_SetRenderTarget(device, 0, orig_rt);
+        ok(hr == D3D_OK, "IDirect3DSetRenderTarget failed with %s\n", DXGetErrorString9(hr));
+        IDirect3DSurface9_Release(orig_rt);
+    }
 }
 
 static void maxmip_test(IDirect3DDevice9 *device)
@@ -8051,6 +8616,7 @@ START_TEST(visual)
     }
 
     /* Now execute the real tests */
+    stretchrect_test(device_ptr);
     lighting_test(device_ptr);
     clear_test(device_ptr);
     fog_test(device_ptr);
