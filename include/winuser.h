@@ -104,6 +104,13 @@ typedef struct tagUSEROBJECTFLAGS {
     DWORD dwFlags;
 } USEROBJECTFLAGS, *PUSEROBJECTFLAGS;
 
+typedef struct tagBSMINFO {
+    UINT  cbSize;
+    HDESK hdesk;
+    HWND  hwnd;
+    LUID  luid;
+} BSMINFO, *PBSMINFO;
+
 /* Window stations */
 #define WINSTA_ENUMDESKTOPS         0x0001
 #define WINSTA_READATTRIBUTES       0x0002
@@ -4324,6 +4331,9 @@ WINUSERAPI BOOL        WINAPI BringWindowToTop(HWND);
 WINUSERAPI LONG        WINAPI BroadcastSystemMessageA(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
 WINUSERAPI LONG        WINAPI BroadcastSystemMessageW(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
 #define                       BroadcastSystemMessage WINELIB_NAME_AW(BroadcastSystemMessage)
+WINUSERAPI LONG        WINAPI BroadcastSystemMessageExA(DWORD,LPDWORD,UINT,WPARAM,LPARAM,PBSMINFO);
+WINUSERAPI LONG        WINAPI BroadcastSystemMessageExW(DWORD,LPDWORD,UINT,WPARAM,LPARAM,PBSMINFO);
+#define                       BroadcastSystemMessageEx WINELIB_NAME_AW(BroadcastSystemMessageEx)
 WINUSERAPI void        WINAPI CalcChildScroll(HWND, INT);
 WINUSERAPI BOOL        WINAPI CallMsgFilterA(LPMSG,INT);
 WINUSERAPI BOOL        WINAPI CallMsgFilterW(LPMSG,INT);
