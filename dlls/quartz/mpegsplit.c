@@ -737,6 +737,84 @@ static HRESULT MPEGSplitter_cleanup(LPVOID iface)
     return S_OK;
 }
 
+static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
+{
+    MPEGSplitterImpl *This = (MPEGSplitterImpl*)iface;
+    PullPin *pPin = This->Parser.pInputPin;
+    LONGLONG newpos, timepos, bytepos;
+    HRESULT hr = S_OK;
+    BYTE header[4];
+
+    /* Position, in bytes */
+    bytepos = This->header_bytes;
+
+    /* Position, in media time, current and new */
+    timepos = 0;
+    newpos = This->Parser.mediaSeeking.llCurrent;
+
+    if (newpos > This->duration)
+    {
+        FIXME("Requesting position %x%08x beyond end of stream %x%08x\n", (DWORD)(newpos>>32), (DWORD)newpos, (DWORD)(This->duration>>32), (DWORD)This->duration);
+        return E_INVALIDARG;
+    }
+
+    if (This->position/1000000 == newpos/1000000)
+    {
+        FIXME("Requesting position %x%08x same as current position %x%08x\n", (DWORD)(newpos>>32), (DWORD)newpos, (DWORD)(This->position>>32), (DWORD)This->position);
+        return S_OK;
+    }
+
+    hr = IAsyncReader_SyncRead(pPin->pReader, bytepos, 4, header);
+
+    while (bytepos < This->EndOfFile && SUCCEEDED(hr))
+    {
+        LONGLONG length = 0;
+        hr = IAsyncReader_SyncRead(pPin->pReader, bytepos, 4, header);
+        while (parse_header(header, &length, &timepos))
+        {
+            /* No valid header yet; shift by a byte and check again */
+            memmove(header, header+1, 3);
+            hr = IAsyncReader_SyncRead(pPin->pReader, ++bytepos, 1, header + 3);
+            if (FAILED(hr))
+                break;
+         }
+         bytepos += length;
+         TRACE("Pos: %x%08x/%x%08x\n", (DWORD)(bytepos >> 32), (DWORD)bytepos, (DWORD)(This->EndOfFile>>32), (DWORD)This->EndOfFile);
+         if (timepos >= newpos)
+             break;
+    }
+    if (SUCCEEDED(hr))
+    {
+        FILTER_STATE state;
+        PullPin *pin = This->Parser.pInputPin;
+
+        TRACE("Moving sound to %x%08x bytes!\n", (DWORD)(bytepos>>32), (DWORD)bytepos);
+
+        IPin_BeginFlush((IPin *)pin);
+        IPin_NewSegment((IPin*)pin, newpos, This->duration, pin->dRate);
+        IPin_EndFlush((IPin *)pin);
+
+        /* Make sure this is done while stopped */
+        EnterCriticalSection(&This->Parser.csFilter);
+        pin->rtStart = pin->rtCurrent = MEDIATIME_FROM_BYTES(bytepos);
+        pin->rtStop = MEDIATIME_FROM_BYTES((REFERENCE_TIME)This->EndOfFile);
+        This->seek = TRUE;
+        This->skipbytes = This->remaining_bytes = 0;
+        This->position = newpos;
+        if (This->pCurrentSample)
+        {
+            IMediaSample_Release(This->pCurrentSample);
+            This->pCurrentSample = NULL;
+        }
+        state = This->Parser.state;
+        LeaveCriticalSection(&This->Parser.csFilter);
+
+        if (state == State_Running && pin->state == State_Paused)
+            PullPin_StartProcessing(pin);
+
+    }
+    return hr;
+}
 
 HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
@@ -755,7 +833,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
         return E_OUTOFMEMORY;
 
     ZeroMemory(This, sizeof(MPEGSplitterImpl));
-    hr = Parser_Create(&(This->Parser), &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup, NULL, NULL, NULL);
+    hr = Parser_Create(&(This->Parser), &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup, NULL, MPEGSplitter_seek, NULL);
     if (FAILED(hr))
     {
         CoTaskMemFree(This);
