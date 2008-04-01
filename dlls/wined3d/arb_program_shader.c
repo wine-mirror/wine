@@ -2049,13 +2049,17 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info
      */
     none_shader_backend.shader_get_caps(devtype, gl_info, pCaps);
 
-    pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
-    TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
-    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
+    if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+        pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
+        TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
+        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
+    }
 
-    pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
-    pCaps->PixelShader1xMaxValue = 8.0;
-    TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
+    if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
+        pCaps->PixelShader1xMaxValue = 8.0;
+        TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
+    }
 }
 
 static void shader_arb_load_init(void) {
