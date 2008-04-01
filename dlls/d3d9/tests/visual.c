@@ -3897,6 +3897,125 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(shader_11);
 }
 
+static void dp2add_ps_test(IDirect3DDevice9 *device)
+{
+    IDirect3DPixelShader9 *shader_dp2add = NULL;
+    IDirect3DPixelShader9 *shader_dp2add_sat = NULL;
+    HRESULT hr;
+    DWORD color;
+
+    /* DP2ADD is defined as:  (src0.r * src1.r) + (src0.g * src1.g) + src2.
+     * One D3D restriction of all shader instructions except SINCOS is that no more than 2
+     * source tokens can be constants.  So, for this excercise, we move contents of c0 to
+     * r0 first.
+     * The result here for the r,g,b components should be rougly 0.5:
+     *   (0.5 * 0.5) + (0.5 * 0.5) + 0.0 = 0.5 */
+    static const DWORD shader_code_dp2add[] =  {
+        0xffff0200,                                                             /* ps_2_0                       */
+        0x05000051, 0xa00f0000, 0x3f000000, 0x3f000000, 0x3f800000, 0x00000000, /* def c0, 0.5, 0.5, 1.0, 0     */
+
+        0x02000001, 0x800f0000, 0xa0e40000,                                     /* mov r0, c0                   */
+        0x0400005a, 0x80070000, 0x80000000, 0x80000000, 0x80ff0000,             /* dp2add r0.rgb, r0, r0, r0.a  */
+
+        0x02000001, 0x80080000, 0xa0aa0000,                                     /* mov r0.a, c0.b               */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                  */
+        0x0000ffff                                                              /* end                          */
+    };
+
+    /* Test the _sat modifier, too.  Result here should be:
+     *   DP2: (-0.5 * -0.5) + (-0.5 * -0.5) + 2.0 = 2.5
+     *      _SAT: ==> 1.0
+     *   ADD: (1.0 + -0.5) = 0.5
+     */
+    static const DWORD shader_code_dp2add_sat[] =  {
+        0xffff0200,                                                             /* ps_2_0                           */
+        0x05000051, 0xa00f0000, 0xbf000000, 0xbf000000, 0x3f800000, 0x40000000, /* def c0, -0.5, -0.5, 1.0, 2.0     */
+
+        0x02000001, 0x800f0000, 0xa0e40000,                                     /* mov r0, c0                       */
+        0x0400005a, 0x80170000, 0x80000000, 0x80000000, 0x80ff0000,             /* dp2add_sat r0.rgb, r0, r0, r0.a  */
+        0x03000002, 0x80070000, 0x80e40000, 0xa0000000,                         /* add r0.rgb, r0, c0.r             */
+
+        0x02000001, 0x80080000, 0xa0aa0000,                                     /* mov r0.a, c0.b                   */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                      */
+        0x0000ffff                                                              /* end                              */
+    };
+
+    const float quad[] = {
+        -1.0,   -1.0,   0.1,
+         1.0,   -1.0,   0.1,
+        -1.0,    1.0,   0.1,
+         1.0,    1.0,   0.1
+    };
+
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_dp2add, &shader_dp2add);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_dp2add_sat, &shader_dp2add_sat);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %s\n", DXGetErrorString9(hr));
+
+    if (shader_dp2add) {
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_dp2add);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+        if(SUCCEEDED(hr))
+        {
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
+            ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+        }
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+        color = getPixelColor(device, 360, 240);
+        ok(color == 0x007f7f7f || color == 0x00808080, "dp2add pixel has color %08x, expected ~0x007f7f7f\n", color);
+
+        IDirect3DPixelShader9_Release(shader_dp2add);
+    } else {
+        skip("dp2add shader creation failed\n");
+    }
+
+    if (shader_dp2add_sat) {
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader_dp2add_sat);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+        if(SUCCEEDED(hr))
+        {
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
+            ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+        }
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+        color = getPixelColor(device, 360, 240);
+        ok(color == 0x007f7f7f || color == 0x00808080, "dp2add pixel has color %08x, expected ~0x007f7f7f\n", color);
+
+        IDirect3DPixelShader9_Release(shader_dp2add_sat);
+    } else {
+        skip("dp2add shader creation failed\n");
+    }
+
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %s\n", DXGetErrorString9(hr));
+}
+
 static void cnd_test(IDirect3DDevice9 *device)
 {
     IDirect3DPixelShader9 *shader_11, *shader_12, *shader_13, *shader_14;
@@ -8005,20 +8124,25 @@ START_TEST(visual)
         if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 4)) {
             constant_clamp_ps_test(device_ptr);
             cnd_test(device_ptr);
-            if (caps.PixelShaderVersion >= D3DPS_VERSION(3, 0)) {
-                nested_loop_test(device_ptr);
-                fixed_function_varying_test(device_ptr);
-                vFace_register_test(device_ptr);
-                vpos_register_test(device_ptr);
-                multiple_rendertargets_test(device_ptr);
-                if(caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
-                    vshader_version_varying_test(device_ptr);
-                    pshader_version_varying_test(device_ptr);
+            if (caps.PixelShaderVersion >= D3DPS_VERSION(2, 0)) {
+                dp2add_ps_test(device_ptr);
+                if (caps.PixelShaderVersion >= D3DPS_VERSION(3, 0)) {
+                    nested_loop_test(device_ptr);
+                    fixed_function_varying_test(device_ptr);
+                    vFace_register_test(device_ptr);
+                    vpos_register_test(device_ptr);
+                    multiple_rendertargets_test(device_ptr);
+                    if(caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
+                        vshader_version_varying_test(device_ptr);
+                        pshader_version_varying_test(device_ptr);
+                    } else {
+                        skip("No vs_3_0 support\n");
+                    }
                 } else {
-                    skip("No vs_3_0 support\n");
+                    skip("No ps_3_0 support\n");
                 }
             } else {
-                skip("No ps_3_0 support\n");
+                skip("No ps_2_0 support\n");
             }
         }
     }
