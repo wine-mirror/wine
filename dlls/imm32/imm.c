@@ -139,8 +139,7 @@ static ImmHkl *IMM_GetImmHkl(HKL hkl)
     ptr = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ImmHkl));
 
     ptr->hkl = hkl;
-    ImmGetIMEFileNameW(hkl, filename, MAX_PATH);
-    ptr->hIME = LoadLibraryW(filename);
+    if (ImmGetIMEFileNameW(hkl, filename, MAX_PATH)) ptr->hIME = LoadLibraryW(filename);
     if (ptr->hIME)
     {
         LOAD_FUNCPTR(ImeInquire);
@@ -179,7 +178,7 @@ static void IMM_FreeAllImmHkl(void)
 {
     ImmHkl *ptr,*cursor2;
 
-    LIST_FOR_EACH_ENTRY_SAFE(ptr, cursor2, &ImmHklList, ImmHkl, entry);
+    LIST_FOR_EACH_ENTRY_SAFE(ptr, cursor2, &ImmHklList, ImmHkl, entry)
     {
         list_remove(&ptr->entry);
         if (ptr->hIME)
