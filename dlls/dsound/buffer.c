@@ -465,11 +465,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(
 	}
 
 	*status = 0;
+	RtlAcquireResourceShared(&This->lock, TRUE);
 	if ((This->state == STATE_STARTING) || (This->state == STATE_PLAYING)) {
 		*status |= DSBSTATUS_PLAYING;
 		if (This->playflags & DSBPLAY_LOOPING)
 			*status |= DSBSTATUS_LOOPING;
 	}
+	RtlReleaseResource(&This->lock);
 
 	TRACE("status=%x\n", *status);
 	return DS_OK;
