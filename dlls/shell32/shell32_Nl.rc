@@ -1,5 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
+ * Copyright 2008 Frans Kool
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -113,7 +114,7 @@ FONT 8, "MS Shell Dlg"
 {
  LTEXT "", IDD_TITLE, 10, 8, 198, 24
  LTEXT "", IDD_STATUS, 10, 25, 198, 12
- LTEXT "Folder:", IDD_FOLDER, 10, 156, 40, 12
+ LTEXT "Map:", IDD_FOLDER, 10, 156, 40, 12
  CONTROL "", IDD_TREEVIEW, "SysTreeView32",
 	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
 	WS_BORDER | WS_TABSTOP,
@@ -143,10 +144,12 @@ CAPTION "Info %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 50, 12, WS_TABSTOP
+ PUSHBUTTON "Wine &licentie...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 137, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 137, 10
+ LTEXT "Draait op %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
  LTEXT "Wine is geschreven door:", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
 }
 
@@ -248,4 +251,22 @@ STRINGTABLE
 	IDS_CDBURN_AREA             "Lokale Instellingen\\Applicatie Data\\Microsoft\\CD Branden"
 
 	IDS_NEWFOLDER		"Nieuwe Map"
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Wine Licentie"
+/* Only translated the title, since there is no official translation of the LGPL */
+IDS_LICENSE,
+"Wine is free software; you can redistribute it and/or \
+modify it under the terms of the GNU Lesser General Public \
+License as published by the Free Software Foundation; either \
+version 2.1 of the License, or (at your option) any later version.\n\n\
+Wine is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details.\n\n\
+You should have received a copy of the GNU Lesser General Public \
+License along with this library; if not, write to the Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 }
