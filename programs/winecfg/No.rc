@@ -2,7 +2,7 @@
  * WineCfg resources
  * Norwegian Bokmål Language Support
  *
- * Copyright 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2008 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,7 +46,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Programminnstillinger ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine kan etterligne forskjellige Windows-versjoner for hvert program. Denne fanen er koblet med bibliotek- og grafikkfanene, sånn at du kan endre innstillinger for hele systemet eller enkelte program der også.",
+    LTEXT           "Wine kan etterligne forskjellige Windows-versjoner for hvert program. Denne fanen er koblet med bibliotek- og grafikkfanene, sånn at du kan endre innstillinger for hele systemet eller enkelte programmer der også.",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Programmer",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,150
@@ -62,27 +62,27 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Vinduinnstillinger ",IDC_STATIC,8,5,244,180
 
-    CONTROL	    "Tillat DirectX-programmer å hindre musen fra å forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,230,8
-    LTEXT 	    "Hvis vinduer kontrolleres av din standardvindusbehandler, får de vanlige rammer, og respekterer det virtuelle skrivebordet ditt og vises i vinduslisten.\n\nHvis de er ukontrollerte er de koblet fra vindusbehandleren. Dette betyr at de ikke integreres like godt med skrivebordet ditt, men emuleringen blir mer presis sånn at noen programmer virker bedre.",
-		    IDC_STATIC,15,38,228,80
-    CONTROL	    "Tillat vindusbehandleren å kontrollere vinduene",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,112,230,8
-    
-    LTEXT           "Du kan velge å emulere et Windows-skrivebord, der alle vinduene er bundet i en virtuell skjerm, eller du kan få vinduene til å oppføre seg som andre programmer på skrivebordet.",
-                    IDC_STATIC,15,126,228,28
-    LTEXT           "Størrelse:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,168,8,8,WS_DISABLED
+    CONTROL         "Tillat DirectX-programmer å hindre musen fra å forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
+
+    CONTROL	        "Tillat vindusbehandleren å kontrollere vinduene",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
+    LTEXT            "Hvis vinduer kontrolleres av din standardvindusbehandler, får de vanlige rammer, og respekterer det virtuelle skrivebordet ditt og vises i vinduslisten.\n\nHvis de er ukontrollerte er de koblet fra vindusbehandleren. Dette betyr at de ikke integreres like godt med skrivebordet ditt, men emuleringen blir mer presis sånn at noen programmer virker bedre.",
+		           IDC_STATIC,19,51,225,80
+
     CONTROL         "Vis et virtuelt skrivebord",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,153,230,10
-		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,168,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,168,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
+    LTEXT           "Du kan velge å emulere et Windows-skrivebord, der alle vinduene er bundet i en virtuell skjerm, eller du kan få vinduene til å oppføre seg som andre programmer på skrivebordet.",
+                    IDC_STATIC,19,138,225,28
+    LTEXT           "Størrelse:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,109,168,8,8,WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,190,244,50
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,190,244,48
 
-    LTEXT	    "Verteks-skyggelegging: ",IDC_STATIC,15,200,80,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,100,198,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Verteks-skyggelegging: ",IDC_STATIC,15,203,80,32
+    COMBOBOX        IDC_D3D_VSHADER_MODE,100,201,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL         "Tillat piksel-skyggelegger (hvis maskinvaren støtter det)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,217,230,10
+    CONTROL         "Tillat piksel-skyggelegger (hvis maskinvaren støtter det)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
     GROUPBOX        " Skjermoppløsning (styrer skriftstørrelse) ",IDC_STATIC,8,242,244,25
     CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
     EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
@@ -196,7 +196,7 @@ BEGIN
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
     PUSHBUTTON      "Skrift",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " Skallkatalog ",IDC_STATIC,8,114,244,100
+    GROUPBOX        " Spesielle mapper ",IDC_STATIC,8,114,244,100
     CONTROL         "Listevisning",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
     CONTROL         "Pek til:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
@@ -222,7 +222,7 @@ BEGIN
     IDS_THEMEFILE           "Temafiler"
     IDS_THEMEFILE_SELECT    "Velg en temafil"
     IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\n\nog trykk «Bruk» for at endringene skal tre i kraft."
-    IDS_SHELL_FOLDER        "Skallkatalog"
+    IDS_SHELL_FOLDER        "Mappe"
     IDS_LINKS_TO            "Peker til"
 END
     
@@ -306,4 +306,19 @@ BEGIN
     IDC_SYSPARAMS_INACTIVE_TITLE    "Inaktiv tittellinje"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inaktiv titteltekst"
     IDC_SYSPARAMS_MSGBOX_TEXT       "Meldingsvindutekst"
+    IDC_SYSPARAMS_APPWORKSPACE      "Arbeidsområde i program"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Visrusramme"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Aktiv kant"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Inaktiv kant"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Kontrollerskygge"
+    IDC_SYSPARAMS_GRAY_TEXT         "Grå tekst"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Merket kontroller"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Mørk skygge i kontroller"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Kontrollerlys"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Bakgrunn for skiftende kontroller"
+    IDC_SYSPARAMS_HOT_TRACKING      "Merket element"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Gradient for aktiv tittellinje"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Gradient for inaktiv tittellinje"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Menymerking"
+    IDC_SYSPARAMS_MENUBAR           "Menylinje"
 END
