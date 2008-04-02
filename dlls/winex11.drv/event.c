@@ -687,28 +687,19 @@ int get_window_wm_state( Display *display, struct x11drv_win_data *data )
 
 
 /***********************************************************************
- *           EVENT_PropertyNotify
+ *           handle_wm_state_notify
+ *
+ * Handle a PropertyNotify for WM_STATE.
  */
-static void EVENT_PropertyNotify( HWND hwnd, XEvent *xev )
+static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent *event )
 {
-    XPropertyEvent *event = &xev->xproperty;
-    struct x11drv_win_data *data;
-
-    if (!hwnd) return;
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-
     switch(event->state)
     {
     case PropertyDelete:
-        if (event->atom == x11drv_atom(WM_STATE))
-        {
-            data->wm_state = WithdrawnState;
-            TRACE( "%p/%lx: WM_STATE deleted\n", data->hwnd, data->whole_window );
-        }
+        data->wm_state = WithdrawnState;
+        TRACE( "%p/%lx: WM_STATE deleted\n", data->hwnd, data->whole_window );
         break;
-
     case PropertyNewValue:
-        if (event->atom == x11drv_atom(WM_STATE))
         {
             int new_state = get_window_wm_state( event->display, data );
             if (new_state != -1 && new_state != data->wm_state)
@@ -719,6 +710,21 @@ static void EVENT_PropertyNotify( HWND hwnd, XEvent *xev )
         }
         break;
     }
+}
+
+
+/***********************************************************************
+ *           EVENT_PropertyNotify
+ */
+static void EVENT_PropertyNotify( HWND hwnd, XEvent *xev )
+{
+    XPropertyEvent *event = &xev->xproperty;
+    struct x11drv_win_data *data;
+
+    if (!hwnd) return;
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+
+    if (event->atom == x11drv_atom(WM_STATE)) handle_wm_state_notify( data, event );
 }
 
 
@@ -744,7 +750,25 @@ void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, B
 
     while (data->whole_window && ((data->wm_state == WithdrawnState) == !set))
     {
-        if (!process_events( display, is_wm_state_notify, data->whole_window ))
+        XEvent event;
+        int count = 0;
+
+        wine_tsx11_lock();
+        while (XCheckIfEvent( display, &event, is_wm_state_notify, (char *)data->whole_window ))
+        {
+            count++;
+            if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
+            if (event.type == DestroyNotify) call_event_handler( display, &event );
+            else
+            {
+                wine_tsx11_unlock();
+                handle_wm_state_notify( data, &event.xproperty );
+                wine_tsx11_lock();
+            }
+        }
+        wine_tsx11_unlock();
+
+        if (!count)
         {
             struct pollfd pfd;
             int timeout = end - GetTickCount();
