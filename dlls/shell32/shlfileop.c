@@ -1186,8 +1186,12 @@ static HRESULT copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, const FIL
     if (op->req->fFlags & FOF_MULTIDESTFILES && flFrom->bAnyFromWildcard)
         return ERROR_CANCELLED;
 
-    if (!(op->req->fFlags & FOF_MULTIDESTFILES) && flTo->dwNumFiles != 1)
+    if (!(op->req->fFlags & FOF_MULTIDESTFILES) &&
+        flFrom->dwNumFiles != 1 && flTo->dwNumFiles != 1 &&
+        !flFrom->bAnyFromWildcard)
+    {
         return ERROR_CANCELLED;
+    }
 
     if (op->req->fFlags & FOF_MULTIDESTFILES && flFrom->dwNumFiles != 1 &&
         flFrom->dwNumFiles != flTo->dwNumFiles)
@@ -1243,7 +1247,8 @@ static HRESULT copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, const FIL
         }
 
         if ((flFrom->dwNumFiles > 1 && flTo->dwNumFiles == 1) ||
-            (flFrom->dwNumFiles == 1 && IsAttribDir(fileDest->attributes)))
+            (IsAttribDir(fileDest->attributes) &&
+             (flFrom->dwNumFiles == 1 || flFrom->bAnyFromWildcard)))
         {
             copy_to_dir(op, entryToCopy, fileDest);
         }
@@ -1537,7 +1542,7 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 
     if (ret == ERROR_CANCELLED)
         lpFileOp->fAnyOperationsAborted = TRUE;
-    
+
     return ret;
 }
 

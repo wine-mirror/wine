@@ -839,6 +839,117 @@ static void test_copy(void)
     retval = SHFileOperation(&shfo);
     ok(retval == 0, "Expected 0, got %d\n", retval);
     ok(file_has_content("testdir2\\test4.txt\\test1.txt", "test4.txt\\.\\test1.txt\n"), "The file was not copied\n");
+
+    createTestFile("one.txt");
+
+    /* no double-NULL terminator for pFrom */
+    memset(from, 'a', MAX_PATH);
+    lstrcpyA(from, "one.txt");
+    shfo.pFrom = from;
+    shfo.pTo = "two.txt\0";
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == 1148, "Expected 1148, got %d\n", retval);
+    }
+    ok(DeleteFileA("one.txt"), "Expected file to exist\n");
+    ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
+
+    createTestFile("one.txt");
+
+    /* no double-NULL terminator for pTo */
+    memset(to, 'a', MAX_PATH);
+    lstrcpyA(to, "two.txt");
+    shfo.pFrom = "one.txt\0";
+    shfo.pTo = to;
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+    ok(DeleteFileA("one.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+
+    createTestFile("one.txt");
+
+    /* no FOF_MULTIDESTFILES, two files in pTo */
+    shfo.pFrom = "one.txt\0";
+    shfo.pTo = "two.txt\0three.txt\0";
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+    ok(DeleteFileA("one.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+
+    createTestFile("one.txt");
+
+    /* no double-NULL terminator for pFrom and pTo */
+    memset(from, 'a', MAX_PATH);
+    memset(to, 'a', MAX_PATH);
+    lstrcpyA(from, "one.txt");
+    lstrcpyA(to, "two.txt");
+    shfo.pFrom = from;
+    shfo.pTo = to;
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperation(&shfo);
+    todo_wine
+    {
+        ok(retval == 1148, "Expected 1148, got %d\n", retval);
+    }
+    ok(DeleteFileA("one.txt"), "Expected file to exist\n");
+    ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
+
+    createTestFile("one.txt");
+
+    /* no double-NULL terminator for pTo, FOF_MULTIDESTFILES */
+    memset(to, 'a', MAX_PATH);
+    lstrcpyA(to, "two.txt");
+    shfo.pFrom = "one.txt\0";
+    shfo.pTo = to;
+    shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
+                  FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+    ok(DeleteFileA("one.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+
+    createTestFile("one.txt");
+    createTestFile("two.txt");
+
+    /* no double-NULL terminator for pTo,
+     * multiple source files, FOF_MULTIDESTFILES
+     */
+    memset(to, 'a', 2 * MAX_PATH);
+    lstrcpyA(to, "three.txt");
+    shfo.pFrom = "one.txt\0two.txt\0";
+    shfo.pTo = to;
+    shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
+                  FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_CANCELLED, "Expected ERROR_CANCELLED, got %d\n", retval);
+    ok(DeleteFileA("one.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+    todo_wine
+    {
+        ok(!DeleteFileA("three.txt"), "Expected file to not exist\n");
+    }
+
+    createTestFile("aa.txt");
+    createTestFile("ab.txt");
+    CreateDirectoryA("one", NULL);
+    CreateDirectoryA("two", NULL);
+
+    /* pFrom has a glob, pTo has more than one dest */
+    shfo.pFrom = "a*.txt\0";
+    shfo.pTo = "one\0two\0";
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperation(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+    ok(DeleteFileA("one\\aa.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("one\\ab.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("aa.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("ab.txt"), "Expected file to exist\n");
+    ok(RemoveDirectoryA("one"), "Expected dir to exist\n");
+    ok(RemoveDirectoryA("two"), "Expected dir to exist\n");
 }
 
 /* tests the FO_MOVE action */
