@@ -1021,9 +1021,9 @@ static const WORD nonchar_key_vkey[256] =
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFD0 */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFD8 */
     /* modifier keys */
-    0, VK_SHIFT, VK_SHIFT, VK_CONTROL,                          /* FFE0 */
-    VK_CONTROL, VK_CAPITAL, 0, VK_MENU,
-    VK_MENU, VK_MENU, VK_MENU, 0, 0, 0, 0, 0,                   /* FFE8 */
+    0, VK_LSHIFT, VK_RSHIFT, VK_LCONTROL,                       /* FFE0 */
+    VK_RCONTROL, VK_CAPITAL, 0, VK_MENU,
+    VK_MENU, VK_LMENU, VK_RMENU, 0, 0, 0, 0, 0,                 /* FFE8 */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFF0 */
     0, 0, 0, 0, 0, 0, 0, VK_DELETE                              /* FFF8 */
 };
@@ -1067,7 +1067,7 @@ static const WORD nonchar_key_scan[256] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFD0 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFD8 */
     /* modifier keys */
-    0x00, 0x2A, 0x36, 0x1D, 0x11D, 0x3A, 0x00, 0x38,             /* FFE0 */
+    0x00, 0x2A, 0x136, 0x1D, 0x11D, 0x3A, 0x00, 0x38,            /* FFE0 */
     0x138, 0x38, 0x138, 0x00, 0x00, 0x00, 0x00, 0x00,            /* FFE8 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FFF0 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x153              /* FFF8 */
@@ -1151,19 +1151,9 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
     UINT message;
     KEYLP keylp;
     KBDLLHOOKSTRUCT hook;
-    WORD wVkStripped;
+    WORD wVkStripped, wVkL, wVkR, vk_hook = wVk;
 
     wVk = LOBYTE(wVk);
-
-    /* strip left/right for menu, control, shift */
-    if (wVk == VK_LMENU || wVk == VK_RMENU)
-        wVkStripped = VK_MENU;
-    else if (wVk == VK_LCONTROL || wVk == VK_RCONTROL)
-        wVkStripped = VK_CONTROL;
-    else if (wVk == VK_LSHIFT || wVk == VK_RSHIFT)
-        wVkStripped = VK_SHIFT;
-    else
-        wVkStripped = wVk;
 
     keylp.lp2 = 0;
     keylp.lp1.count = 1;
@@ -1173,6 +1163,33 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
                                 * don't remember where I read it - AK */
                                 /* it's '1' under windows, when a dialog box appears
                                  * and you press one of the underlined keys - DF*/
+
+    /* strip left/right for menu, control, shift */
+    switch (wVk)
+    {
+    case VK_MENU: case VK_LMENU: case VK_RMENU:
+        wVk = keylp.lp1.extended ? VK_RMENU : VK_LMENU;
+        wVkStripped = VK_MENU;
+        wVkL = VK_LMENU;
+        wVkR = VK_RMENU;
+        break;
+
+    case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
+        wVk = keylp.lp1.extended ? VK_RCONTROL : VK_LCONTROL;
+        wVkStripped = VK_CONTROL;
+        wVkL = VK_LCONTROL;
+        wVkR = VK_RCONTROL;
+        break;
+
+    case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
+        wVk = keylp.lp1.extended ? VK_RSHIFT : VK_LSHIFT;
+        wVkStripped = VK_SHIFT;
+        wVkL = VK_LSHIFT;
+        wVkR = VK_RSHIFT;
+        break;
+    default:
+        wVkStripped = wVkL = wVkR = wVk;
+    }
 
     /* note that there is a test for all this */
     if (dwFlags & KEYEVENTF_KEYUP )
@@ -1187,8 +1204,6 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
                 message = WM_SYSKEYUP;
             TrackSysKey = 0;
         }
-        key_state_table[wVk] &= ~0x80;
-        key_state_table[wVkStripped] &= ~0x80;
         keylp.lp1.previous = 1;
         keylp.lp1.transition = 1;
     }
@@ -1196,29 +1211,42 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
     {
         keylp.lp1.previous = (key_state_table[wVk] & 0x80) != 0;
         keylp.lp1.transition = 0;
-        if (!(key_state_table[wVk] & 0x80)) key_state_table[wVk] ^= 0x01;
-        key_state_table[wVk] |= 0xc0;
-        key_state_table[wVkStripped] |= 0xc0;
 
         message = WM_KEYDOWN;
-        if ((key_state_table[VK_MENU] & 0x80) && !(key_state_table[VK_CONTROL] & 0x80))
+        if ((key_state_table[VK_MENU] & 0x80 || wVkStripped == VK_MENU) &&
+            !(key_state_table[VK_CONTROL] & 0x80 || wVkStripped == VK_CONTROL))
         {
             message = WM_SYSKEYDOWN;
             TrackSysKey = wVkStripped;
         }
     }
 
-    keylp.lp1.context = (key_state_table[VK_MENU] & 0x80) != 0; /* 1 if alt */
-
     TRACE_(key)(" wParam=%04x, lParam=%08lx, InputKeyState=%x\n",
                 wVk, keylp.lp2, key_state_table[wVk] );
 
-    hook.vkCode      = wVk;
+    /* Hook gets whatever key was sent. */
+    hook.vkCode      = vk_hook;
     hook.scanCode    = wScan;
     hook.flags       = (keylp.lp2 >> 24) | injected_flags;
     hook.time        = time;
     hook.dwExtraInfo = dwExtraInfo;
     if (HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook, TRUE )) return;
+
+    if (dwFlags & KEYEVENTF_KEYUP )
+    {
+        key_state_table[wVk] &= ~0x80;
+        key_state_table[wVkStripped] = key_state_table[wVkL] | key_state_table[wVkR];
+    }
+    else
+    {
+        if (!(key_state_table[wVk] & 0x80)) key_state_table[wVk] ^= 0x01;
+        key_state_table[wVk] |= 0xc0;
+        key_state_table[wVkStripped] = key_state_table[wVkL] | key_state_table[wVkR];
+    }
+
+    keylp.lp1.context = (key_state_table[VK_MENU] & 0x80) != 0; /* 1 if alt */
+
+    if (wVkStripped == VK_SHIFT) keylp.lp1.extended = 0;
 
     SERVER_START_REQ( send_hardware_message )
     {

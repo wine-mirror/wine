@@ -391,66 +391,266 @@ static void empty_message_queue(void) {
 struct transition_s {
     WORD wVk;
     BYTE before_state;
-    BOOL _todo_wine;
+};
+
+typedef enum {
+    sent=0x1,
+    posted=0x2,
+    parent=0x4,
+    wparam=0x8,
+    lparam=0x10,
+    defwinproc=0x20,
+    beginpaint=0x40,
+    optional=0x80,
+    hook=0x100,
+    winevent_hook=0x200
+} msg_flags_t;
+
+struct message {
+    UINT message;          /* the WM_* code */
+    msg_flags_t flags;     /* message props */
+    WPARAM wParam;         /* expected value of wParam */
+    LPARAM lParam;         /* expected value of lParam */
 };
 
 struct sendinput_test_s {
     WORD wVk;
     DWORD dwFlags;
+    BOOL _todo_wine;
     struct transition_s expected_transitions[MAXKEYEVENTS+1];
-    UINT expected_messages[MAXKEYMESSAGES+1];
+    struct message expected_messages[MAXKEYMESSAGES+1];
 } sendinput_test[] = {
     /* test ALT+F */
-    {VK_LMENU, 0, {{VK_MENU, 0x00, 0}, {VK_LMENU, 0x00, 0}, {0}},
-        {WM_SYSKEYDOWN, 0}},
-    {'F', 0, {{'F', 0x00, 0}, {0}},
-        {WM_SYSKEYDOWN, WM_SYSCHAR, WM_SYSCOMMAND, 0}},
-    {'F', KEYEVENTF_KEYUP, {{'F', 0x80, 0}, {0}}, {WM_SYSKEYUP, 0}},
-    {VK_LMENU, KEYEVENTF_KEYUP, {{VK_MENU, 0x80, 0}, {VK_LMENU, 0x80, 0}, {0}},
-        {WM_KEYUP, 0}},
+    {VK_LMENU, 0, 0, {{VK_MENU, 0x00}, {VK_LMENU, 0x00}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam, VK_LMENU}, {WM_SYSKEYDOWN}, {0}}},
+    {'F', 0, 0, {{'F', 0x00}, {0}},
+        {{WM_SYSKEYDOWN, hook}, {WM_SYSKEYDOWN},
+        {WM_SYSCHAR},
+        {WM_SYSCOMMAND}, {0}}},
+    {'F', KEYEVENTF_KEYUP, 0, {{'F', 0x80}, {0}},
+        {{WM_SYSKEYUP, hook}, {WM_SYSKEYUP}, {0}}},
+    {VK_LMENU, KEYEVENTF_KEYUP, 0, {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {0}},
+        {{WM_KEYUP, hook}, {WM_KEYUP}, {0}}},
 
     /* test CTRL+O */
-    {VK_LCONTROL, 0, {{VK_CONTROL, 0x00, 0}, {VK_LCONTROL, 0x00, 0}, {0}},
-        {WM_KEYDOWN, 0}},
-    {'O', 0, {{'O', 0x00, 0}, {0}}, {WM_KEYDOWN, WM_CHAR, 0}},
-    {'O', KEYEVENTF_KEYUP, {{'O', 0x80, 0}, {0}}, {WM_KEYUP, 0}},
-    {VK_LCONTROL, KEYEVENTF_KEYUP,
-        {{VK_CONTROL, 0x80, 0}, {VK_LCONTROL, 0x80, 0}, {0}}, {WM_KEYUP, 0}},
+    {VK_LCONTROL, 0, 0, {{VK_CONTROL, 0x00}, {VK_LCONTROL, 0x00}, {0}},
+        {{WM_KEYDOWN, hook}, {WM_KEYDOWN}, {0}}},
+    {'O', 0, 0, {{'O', 0x00}, {0}},
+        {{WM_KEYDOWN, hook}, {WM_KEYDOWN}, {WM_CHAR}, {0}}},
+    {'O', KEYEVENTF_KEYUP, 0, {{'O', 0x80}, {0}},
+        {{WM_KEYUP, hook}, {WM_KEYUP}, {0}}},
+    {VK_LCONTROL, KEYEVENTF_KEYUP, 0, {{VK_CONTROL, 0x80}, {VK_LCONTROL, 0x80}, {0}},
+        {{WM_KEYUP, hook}, {WM_KEYUP}, {0}}},
 
     /* test ALT+CTRL+X */
-    {VK_LMENU, 0, {{VK_MENU, 0x00, 0}, {VK_LMENU, 0x00, 0}, {0}},
-        {WM_SYSKEYDOWN, 0}},
-    {VK_LCONTROL, 0, {{VK_CONTROL, 0x00, 0}, {VK_LCONTROL, 0x00, 0}, {0}},
-        {WM_KEYDOWN, 0}},
-    {'X', 0, {{'X', 0x00, 0}, {0}}, {WM_KEYDOWN, 0}},
-    {'X', KEYEVENTF_KEYUP, {{'X', 0x80, 0}, {0}}, {WM_KEYUP, 0}},
-    {VK_LCONTROL, KEYEVENTF_KEYUP,
-        {{VK_CONTROL, 0x80, 0}, {VK_LCONTROL, 0x80, 0}, {0}},
-        {WM_SYSKEYUP, 0}},
-    {VK_LMENU, KEYEVENTF_KEYUP, {{VK_MENU, 0x80, 0}, {VK_LMENU, 0x80, 0}, {0}},
-        {WM_KEYUP, 0}},
+    {VK_LMENU, 0, 0, {{VK_MENU, 0x00}, {VK_LMENU, 0x00}, {0}},
+        {{WM_SYSKEYDOWN, hook}, {WM_SYSKEYDOWN}, {0}}},
+    {VK_LCONTROL, 0, 0, {{VK_CONTROL, 0x00}, {VK_LCONTROL, 0x00}, {0}},
+        {{WM_KEYDOWN, hook}, {WM_KEYDOWN}, {0}}},
+    {'X', 0, 0, {{'X', 0x00}, {0}},
+        {{WM_KEYDOWN, hook}, {WM_KEYDOWN}, {0}}},
+    {'X', KEYEVENTF_KEYUP, 0, {{'X', 0x80}, {0}},
+        {{WM_KEYUP, hook}, {WM_KEYUP}, {0}}},
+    {VK_LCONTROL, KEYEVENTF_KEYUP, 0, {{VK_CONTROL, 0x80}, {VK_LCONTROL, 0x80}, {0}},
+        {{WM_SYSKEYUP, hook}, {WM_SYSKEYUP}, {0}}},
+    {VK_LMENU, KEYEVENTF_KEYUP, 0, {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {0}},
+        {{WM_KEYUP, hook}, {WM_KEYUP}, {0}}},
 
     /* test SHIFT+A */
-    {VK_LSHIFT, 0,
-        {{VK_SHIFT, 0x00, 0}, {VK_LSHIFT, 0x00, 0}, {0}}, {WM_KEYDOWN, 0}},
-    {'A', 0, {{'A', 0x00, 0}, {0}}, {WM_KEYDOWN, WM_CHAR, 0}},
-    {'A', KEYEVENTF_KEYUP, {{'A', 0x80, 0}, {0}}, {WM_KEYUP, 0}},
-    {VK_LSHIFT, KEYEVENTF_KEYUP,
-        {{VK_SHIFT, 0x80, 0}, {VK_LSHIFT, 0x80, 0}, {0}}, {WM_KEYUP, 0}},
+    {VK_LSHIFT, 0, 0, {{VK_SHIFT, 0x00}, {VK_LSHIFT, 0x00}, {0}},
+        {{WM_KEYDOWN, hook}, {WM_KEYDOWN}, {0}}},
+    {'A', 0, 0, {{'A', 0x00}, {0}},
+        {{WM_KEYDOWN, hook}, {WM_KEYDOWN}, {WM_CHAR}, {0}}},
+    {'A', KEYEVENTF_KEYUP, 0, {{'A', 0x80}, {0}},
+        {{WM_KEYUP, hook}, {WM_KEYUP}, {0}}},
+    {VK_LSHIFT, KEYEVENTF_KEYUP, 0, {{VK_SHIFT, 0x80}, {VK_LSHIFT, 0x80}, {0}},
+        {{WM_KEYUP, hook}, {WM_KEYUP}, {0}}},
+    /* test L-SHIFT & R-SHIFT: */
+    /* RSHIFT == LSHIFT */
+    {VK_RSHIFT, 0, 0,
+        {{VK_SHIFT, 0x00}, {VK_LSHIFT, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam, VK_RSHIFT},
+        {WM_KEYDOWN}, {0}}},
+    {VK_RSHIFT, KEYEVENTF_KEYUP, 0,
+        {{VK_SHIFT, 0x80}, {VK_LSHIFT, 0x80}, {0}},
+        {{WM_KEYUP, hook, hook|wparam, VK_RSHIFT},
+        {WM_KEYUP}, {0}}},
 
-    {0, 0, {{0}}, {0}} /* end */
+    /* LSHIFT | KEYEVENTF_EXTENDEDKEY == RSHIFT */
+    {VK_LSHIFT, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_SHIFT, 0x00}, {VK_RSHIFT, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_LSHIFT, LLKHF_EXTENDED},
+        {WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0}, {0}}},
+    {VK_LSHIFT, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_SHIFT, 0x80}, {VK_RSHIFT, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_LSHIFT, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_KEYUP, wparam|lparam, VK_SHIFT, KF_UP}, {0}}},
+    /* RSHIFT | KEYEVENTF_EXTENDEDKEY == RSHIFT */
+    {VK_RSHIFT, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_SHIFT, 0x00}, {VK_RSHIFT, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_RSHIFT, LLKHF_EXTENDED},
+        {WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0}, {0}}},
+    {VK_RSHIFT, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_SHIFT, 0x80}, {VK_RSHIFT, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_RSHIFT, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_KEYUP, wparam|lparam, VK_SHIFT, KF_UP}, {0}}},
+    /* SHIFT == LSHIFT */
+    {VK_SHIFT, 0, 0,
+        {{VK_SHIFT, 0x00}, {VK_LSHIFT, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_SHIFT, 0},
+        {WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0}, {0}}},
+    {VK_SHIFT, KEYEVENTF_KEYUP, 0,
+        {{VK_SHIFT, 0x80}, {VK_LSHIFT, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_SHIFT, LLKHF_UP},
+        {WM_KEYUP, wparam|lparam, VK_SHIFT, KF_UP}, {0}}},
+    /* SHIFT | KEYEVENTF_EXTENDEDKEY == RSHIFT */
+    {VK_SHIFT, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_SHIFT, 0x00}, {VK_RSHIFT, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_SHIFT, LLKHF_EXTENDED},
+        {WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0}, {0}}},
+    {VK_SHIFT, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_SHIFT, 0x80}, {VK_RSHIFT, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_SHIFT, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_KEYUP, wparam|lparam, VK_SHIFT, KF_UP}, {0}}},
+
+    /* test L-CONTROL & R-CONTROL: */
+    /* RCONTROL == LCONTROL */
+    {VK_RCONTROL, 0, 0,
+        {{VK_CONTROL, 0x00}, {VK_LCONTROL, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam, VK_RCONTROL},
+        {WM_KEYDOWN, wparam|lparam, VK_CONTROL, 0}, {0}}},
+    {VK_RCONTROL, KEYEVENTF_KEYUP, 0,
+        {{VK_CONTROL, 0x80}, {VK_LCONTROL, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam, VK_RCONTROL},
+        {WM_KEYUP, wparam|lparam, VK_CONTROL, KF_UP}, {0}}},
+    /* LCONTROL | KEYEVENTF_EXTENDEDKEY == RCONTROL */
+    {VK_LCONTROL, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_CONTROL, 0x00}, {VK_RCONTROL, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_LCONTROL, LLKHF_EXTENDED},
+        {WM_KEYDOWN, wparam|lparam, VK_CONTROL, KF_EXTENDED}, {0}}},
+    {VK_LCONTROL, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_CONTROL, 0x80}, {VK_RCONTROL, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_LCONTROL, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_KEYUP, wparam|lparam, VK_CONTROL, KF_UP|KF_EXTENDED}, {0}}},
+    /* RCONTROL | KEYEVENTF_EXTENDEDKEY == RCONTROL */
+    {VK_RCONTROL, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_CONTROL, 0x00}, {VK_RCONTROL, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_RCONTROL, LLKHF_EXTENDED},
+        {WM_KEYDOWN, wparam|lparam, VK_CONTROL, KF_EXTENDED}, {0}}},
+    {VK_RCONTROL, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_CONTROL, 0x80}, {VK_RCONTROL, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_RCONTROL, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_KEYUP, wparam|lparam, VK_CONTROL, KF_UP|KF_EXTENDED}, {0}}},
+    /* CONTROL == LCONTROL */
+    {VK_CONTROL, 0, 0,
+        {{VK_CONTROL, 0x00}, {VK_LCONTROL, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam, VK_CONTROL},
+        {WM_KEYDOWN, wparam|lparam, VK_CONTROL, 0}, {0}}},
+    {VK_CONTROL, KEYEVENTF_KEYUP, 0,
+        {{VK_CONTROL, 0x80}, {VK_LCONTROL, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam, VK_CONTROL},
+        {WM_KEYUP, wparam|lparam, VK_CONTROL, KF_UP}, {0}}},
+    /* CONTROL | KEYEVENTF_EXTENDEDKEY == RCONTROL */
+    {VK_CONTROL, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_CONTROL, 0x00}, {VK_RCONTROL, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_CONTROL, LLKHF_EXTENDED},
+        {WM_KEYDOWN, wparam|lparam, VK_CONTROL, KF_EXTENDED}, {0}}},
+    {VK_CONTROL, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_CONTROL, 0x80}, {VK_RCONTROL, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_CONTROL, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_KEYUP, wparam|lparam, VK_CONTROL, KF_UP|KF_EXTENDED}, {0}}},
+
+    /* test L-MENU & R-MENU: */
+    /* RMENU == LMENU */
+    {VK_RMENU, 0, 0,
+        {{VK_MENU, 0x00}, {VK_LMENU, 0x00}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam, VK_RMENU},
+        {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0}, {0}}},
+    {VK_RMENU, KEYEVENTF_KEYUP, 1,
+        {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam, VK_RMENU},
+        {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP},
+        {WM_SYSCOMMAND}, {0}}},
+    /* LMENU | KEYEVENTF_EXTENDEDKEY == RMENU */
+    {VK_LMENU, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam|lparam, VK_LMENU, LLKHF_EXTENDED},
+        {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, KF_EXTENDED}, {0}}},
+    {VK_LMENU, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 1,
+        {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_LMENU, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP|KF_EXTENDED},
+        {WM_SYSCOMMAND}, {0}}},
+    /* RMENU | KEYEVENTF_EXTENDEDKEY == RMENU */
+    {VK_RMENU, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam|lparam, VK_RMENU, LLKHF_EXTENDED},
+        {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, KF_EXTENDED}, {0}}},
+    {VK_RMENU, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 1,
+        {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_RMENU, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP|KF_EXTENDED},
+        {WM_SYSCOMMAND}, {0}}},
+    /* MENU == LMENU */
+    {VK_MENU, 0, 0,
+        {{VK_MENU, 0x00}, {VK_LMENU, 0x00}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam, VK_MENU},
+        {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0}, {0}}},
+    {VK_MENU, KEYEVENTF_KEYUP, 1,
+        {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam, VK_MENU},
+        {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP},
+        {WM_SYSCOMMAND}, {0}}},
+    /* MENU | KEYEVENTF_EXTENDEDKEY == RMENU */
+    {VK_MENU, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {0}},
+        {{WM_SYSKEYDOWN, hook|wparam|lparam, VK_MENU, LLKHF_EXTENDED},
+        {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, KF_EXTENDED}, {0}}},
+    {VK_MENU, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 1,
+        {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_MENU, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP|KF_EXTENDED},
+        {WM_SYSCOMMAND}, {0}}},
+
+    /* test LSHIFT & RSHIFT */
+    {VK_LSHIFT, 0, 0,
+        {{VK_SHIFT, 0x00}, {VK_LSHIFT, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_LSHIFT, 0},
+        {WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0}, {0}}},
+    {VK_RSHIFT, KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_RSHIFT, 0x00}, {0}},
+        {{WM_KEYDOWN, hook|wparam|lparam, VK_RSHIFT, LLKHF_EXTENDED},
+        {WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0}, {0}}},
+    {VK_RSHIFT, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
+        {{VK_RSHIFT, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam|lparam, VK_RSHIFT, LLKHF_UP|LLKHF_EXTENDED},
+        {WM_KEYUP, optional}, {0}}},
+    {VK_LSHIFT, KEYEVENTF_KEYUP, 0,
+        {{VK_SHIFT, 0x80}, {VK_LSHIFT, 0x80}, {0}},
+        {{WM_KEYUP, hook|wparam, VK_LSHIFT},
+        {WM_KEYUP, wparam|lparam, VK_SHIFT, KF_UP}, {0}}},
+
+    {0, 0, 0, {{0}}, {{0}}} /* end */
 };
 
-static struct sendinput_test_s *pTest = sendinput_test;
-static UINT *pMsg = sendinput_test[0].expected_messages;
+static struct message sent_messages[MAXKEYMESSAGES];
+static UINT sent_messages_cnt;
 
 /* Verify that only specified key state transitions occur */
-static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct transition_s *t) {
-    int i;
+static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_test_s *test)
+{
+    int i, failcount = 0;
+    struct transition_s *t = test->expected_transitions;
+    UINT actual_cnt = 0;
+    const struct message *expected = test->expected_messages;
+
     while (t->wVk) {
         int matched = ((ks1[t->wVk]&0x80) == (t->before_state&0x80)
                        && (ks2[t->wVk]&0x80) == (~t->before_state&0x80));
-        if (t->_todo_wine) {
+
+        if (!matched && test->_todo_wine)
+        {
+            failcount++;
             todo_wine {
                 ok(matched, "%02d: %02x from %02x -> %02x "
                    "instead of %02x -> %02x\n", id, t->wVk,
@@ -467,25 +667,150 @@ static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct transition_s 
         t++;
     }
     for (i = 0; i < 256; i++)
-        ok(ks2[i] == ks1[i], "%02d: %02x from %02x -> %02x unexpected\n",
-           id, i, ks1[i], ks2[i]);
+        if (ks2[i] != ks1[i] && test->_todo_wine)
+        {
+            failcount++;
+            todo_wine
+                ok(FALSE, "%02d: %02x from %02x -> %02x unexpected\n", id, i, ks1[i], ks2[i]);
+        }
+        else
+            ok(ks2[i] == ks1[i], "%02d: %02x from %02x -> %02x unexpected\n",
+               id, i, ks1[i], ks2[i]);
+
+    while (expected->message && actual_cnt < sent_messages_cnt)
+    {
+        const struct message *actual = &sent_messages[actual_cnt];
+
+        if (expected->message == actual->message)
+        {
+            ok((expected->flags & hook) == (actual->flags & hook),
+               "%x/%x: the msg 0x%04x should have been sent by a hook\n",
+               test->wVk, test->dwFlags, expected->message);
+
+            if (expected->flags & wparam)
+            {
+                if (expected->wParam != actual->wParam && test->_todo_wine)
+                {
+                    failcount++;
+                    todo_wine
+                        ok(FALSE, "%x/%x: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
+                           test->wVk, test->dwFlags, expected->message, expected->wParam, actual->wParam);
+                }
+                else
+                    ok(expected->wParam == actual->wParam,
+                       "%x/%x: in msg 0x%04x expecting wParam 0x%lx got 0x%lx\n",
+                       test->wVk, test->dwFlags, expected->message, expected->wParam, actual->wParam);
+            }
+            if (expected->flags & lparam)
+            {
+                if (expected->lParam != actual->lParam && test->_todo_wine)
+                {
+                    failcount++;
+                    todo_wine
+                        ok(FALSE, "%x/%x: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
+                           test->wVk, test->dwFlags, expected->message, expected->lParam, actual->lParam);
+                }
+                else
+                    ok(expected->lParam == actual->lParam,
+                       "%x/%x: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
+                       test->wVk, test->dwFlags, expected->message, expected->lParam, actual->lParam);
+            }
+        }
+        else if (expected->flags & optional)
+        {
+            expected++;
+            continue;
+        }
+        else if (test->_todo_wine)
+        {
+            failcount++;
+            todo_wine
+            ok(FALSE,
+               "%x/%x: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+               test->wVk, test->dwFlags, expected->message, actual->message);
+        }
+        else
+            ok(FALSE,
+               "%x/%x: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+               test->wVk, test->dwFlags, expected->message, actual->message);
+
+        actual_cnt++;
+        expected++;
+    }
+    /* skip all optional trailing messages */
+    while (expected->message && (expected->flags & optional))
+        expected++;
+
+
+    if (expected->message || actual_cnt < sent_messages_cnt)
+    {
+        if (test->_todo_wine)
+        {
+            failcount++;
+            todo_wine
+                ok(FALSE, "%x/%x: the msg sequence is not complete: expected %04x - actual %04x\n",
+                   test->wVk, test->dwFlags, expected->message, sent_messages[actual_cnt].message);
+        }
+        else
+            ok(FALSE, "%x/%x: the msg sequence is not complete: expected %04x - actual %04x\n",
+               test->wVk, test->dwFlags, expected->message, sent_messages[actual_cnt].message);
+    }
+
+    if( test->_todo_wine && !failcount) /* succeeded yet marked todo */
+        todo_wine
+            ok(TRUE, "%x/%x: marked \"todo_wine\" but succeeds\n", test->wVk, test->dwFlags);
+
+    sent_messages_cnt = 0;
 }
 
 /* WndProc2 checks that we get at least the messages specified */
 static LRESULT CALLBACK WndProc2(HWND hWnd, UINT Msg, WPARAM wParam,
                                    LPARAM lParam)
 {
-    if (pTest->wVk != 0) { /* not end */
-        while(pTest->wVk != 0 && *pMsg == 0) {
-            pTest++;
-            pMsg = pTest->expected_messages;
-        }
-        if (Msg == *pMsg)
-            pMsg++;
+    if (winetest_debug > 1) trace("MSG:  %8x W:%8lx L:%8lx\n", Msg, wParam, lParam);
+
+    if (Msg != WM_PAINT &&
+        Msg != WM_NCPAINT &&
+        Msg != WM_SYNCPAINT &&
+        Msg != WM_ERASEBKGND &&
+        Msg != WM_NCHITTEST &&
+        Msg != WM_GETTEXT &&
+        Msg != WM_GETICON &&
+        Msg != WM_DEVICECHANGE)
+    {
+        sent_messages[sent_messages_cnt].message = Msg;
+        sent_messages[sent_messages_cnt].flags = 0;
+        sent_messages[sent_messages_cnt].wParam = wParam;
+        sent_messages[sent_messages_cnt++].lParam = HIWORD(lParam) & (KF_UP|KF_EXTENDED);
     }
     return DefWindowProc(hWnd, Msg, wParam, lParam);
 }
 
+static LRESULT CALLBACK hook_proc(int code, WPARAM wparam, LPARAM lparam)
+{
+    KBDLLHOOKSTRUCT *hook_info = (KBDLLHOOKSTRUCT *)lparam;
+
+    if (code == HC_ACTION)
+    {
+        sent_messages[sent_messages_cnt].message = wparam;
+        sent_messages[sent_messages_cnt].flags = hook;
+        sent_messages[sent_messages_cnt].wParam = hook_info->vkCode;
+        sent_messages[sent_messages_cnt++].lParam = hook_info->flags & (LLKHF_UP|LLKHF_EXTENDED);
+
+if(0) /* For some reason not stable on Wine */
+{
+        if (wparam == WM_KEYDOWN || wparam == WM_SYSKEYDOWN)
+            ok(!(GetAsyncKeyState(hook_info->vkCode) & 0x8000), "key %x should be up\n", hook_info->vkCode);
+        else if (wparam == WM_KEYUP || wparam == WM_SYSKEYUP)
+            ok(GetAsyncKeyState(hook_info->vkCode) & 0x8000, "key %x should be down\n", hook_info->vkCode);
+}
+
+        if (winetest_debug > 1)
+            trace("Hook:   w=%lx vk:%8x sc:%8x fl:%8x %lx\n", wparam,
+                  hook_info->vkCode, hook_info->scanCode, hook_info->flags, hook_info->dwExtraInfo);
+    }
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
 static void test_Input_blackbox(void)
 {
     TEST_INPUT i;
@@ -493,6 +818,7 @@ static void test_Input_blackbox(void)
     BYTE ks1[256], ks2[256];
     LONG_PTR prevWndProc;
     HWND window;
+    HHOOK hook;
 
     if (!pSendInput)
     {
@@ -505,6 +831,8 @@ static void test_Input_blackbox(void)
         NULL, NULL);
     ok(window != NULL, "error: %d\n", (int) GetLastError());
 
+    hook = SetWindowsHookExA(WH_KEYBOARD_LL, hook_proc, GetModuleHandleA( NULL ), 0);
+
     /* must process all initial messages, otherwise X11DRV_KeymapNotify unsets
      * key state set by SendInput(). */
     empty_message_queue();
@@ -514,30 +842,24 @@ static void test_Input_blackbox(void)
        "error: %d\n", (int) GetLastError());
 
     i.type = INPUT_KEYBOARD;
-    i.u.ki.wScan = 0;
     i.u.ki.time = 0;
     i.u.ki.dwExtraInfo = 0;
 
     for (ii = 0; ii < sizeof(sendinput_test)/sizeof(struct sendinput_test_s)-1;
          ii++) {
         GetKeyboardState(ks1);
+        i.u.ki.wScan = ii+1 /* useful for debugging */;
         i.u.ki.dwFlags = sendinput_test[ii].dwFlags;
         i.u.ki.wVk = sendinput_test[ii].wVk;
         pSendInput(1, (INPUT*)&i, sizeof(TEST_INPUT));
         empty_message_queue();
         GetKeyboardState(ks2);
-        compare_and_check(ii, ks1, ks2,
-                          sendinput_test[ii].expected_transitions);
+        compare_and_check(ii, ks1, ks2, &sendinput_test[ii]);
     }
 
-    /* *pMsg should be 0 and (++pTest)->wVk should be 0 */
-    if (pTest->wVk && *pMsg == 0) pTest++;
-    while(pTest->wVk && pTest->expected_messages[0] == 0) {
-        ++pTest;
-    }
-    ok(*pMsg == 0 && pTest->wVk == 0,
-       "not enough messages found; looking for %x\n", *pMsg);
+    empty_message_queue();
     DestroyWindow(window);
+    UnhookWindowsHookEx(hook);
 }
 
 static void test_keynames(void)

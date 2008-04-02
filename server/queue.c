@@ -1122,7 +1122,7 @@ static void set_input_key_state( struct thread_input *input, unsigned char key, 
 static void update_input_key_state( struct thread_input *input, const struct message *msg )
 {
     unsigned char key;
-    int down = 0, extended;
+    int down = 0;
 
     switch (msg->msg)
     {
@@ -1158,29 +1158,22 @@ static void update_input_key_state( struct thread_input *input, const struct mes
     case WM_KEYUP:
     case WM_SYSKEYUP:
         key = (unsigned char)msg->wparam;
-        extended = ((msg->lparam >> 16) & KF_EXTENDED) != 0;
         set_input_key_state( input, key, down );
         switch(key)
         {
-        case VK_SHIFT:
-            set_input_key_state( input, extended ? VK_RSHIFT : VK_LSHIFT, down );
-            break;
-        case VK_CONTROL:
-            set_input_key_state( input, extended ? VK_RCONTROL : VK_LCONTROL, down );
-            break;
-        case VK_MENU:
-            set_input_key_state( input, extended ? VK_RMENU : VK_LMENU, down );
-            break;
         case VK_LCONTROL:
         case VK_RCONTROL:
+            down = (input->keystate[VK_LCONTROL] | input->keystate[VK_RCONTROL]) & 0x80;
             set_input_key_state( input, VK_CONTROL, down );
             break;
         case VK_LMENU:
         case VK_RMENU:
+            down = (input->keystate[VK_LMENU] | input->keystate[VK_RMENU]) & 0x80;
             set_input_key_state( input, VK_MENU, down );
             break;
         case VK_LSHIFT:
         case VK_RSHIFT:
+            down = (input->keystate[VK_LSHIFT] | input->keystate[VK_RSHIFT]) & 0x80;
             set_input_key_state( input, VK_SHIFT, down );
             break;
         }
