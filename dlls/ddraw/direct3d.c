@@ -750,7 +750,7 @@ Thunk_IDirect3DImpl_1_FindDevice(IDirect3D *iface,
  *
  * Params:
  *  refiid: IID of the device to create
- *  Surface: Inititial rendertarget
+ *  Surface: Initial rendertarget
  *  Device: Address to return the interface pointer
  *
  * Returns:
@@ -1293,7 +1293,7 @@ IDirect3DImpl_GetCaps(IWineD3D *WineD3D,
     WINED3DCAPS WCaps;
     HRESULT hr;
 
-    /* Some Variables to asign to the pointers in WCaps */
+    /* Some variables to assign to the pointers in WCaps */
     TRACE("()->(%p,%p,%p\n", WineD3D, Desc123, Desc7);
 
     memset(&WCaps, 0, sizeof(WCaps));

@@ -648,7 +648,7 @@ static void SrcColorKey32BlitTest(void)
     rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDEST, &fx);
     ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
 
-    /* With korrectly passed override keys no key in the surface is needed.
+    /* With correctly passed override keys no key in the surface is needed.
      * Again, the result was checked before, no need to do that again
      */
     rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDESTOVERRIDE, &fx);
@@ -2253,7 +2253,7 @@ static void PrivateDataTest(void)
     hr = IDirectDrawSurface7_GetPrivateData(surface7, &IID_IDirectDrawSurface7, &ptr, &size);
     ok(hr == DD_OK, "IDirectDrawSurface7_GetPrivateData failed with %08x\n", hr);
     ref2 = getref((IUnknown *) lpDD);
-    /* Object is NOT beein addrefed */
+    /* Object is NOT being addrefed */
     ok(ptr == (IUnknown *) lpDD, "Returned interface pointer is %p, expected %p\n", ptr, lpDD);
     ok(ref2 == ref + 1, "Object reference is %d, expected %d. ptr at %p, orig at %p\n", ref2, ref + 1, ptr, lpDD);
 

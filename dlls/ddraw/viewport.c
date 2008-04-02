@@ -620,7 +620,7 @@ IDirect3DViewportImpl_SetBackgroundDepth(IDirect3DViewport3 *iface,
  *
  * Params:
  *  lplpDDSurface: Address to store the interface pointer
- *  lpValid: Set to TRUE if a depth is asigned, FALSE otherwise
+ *  lpValid: Set to TRUE if a depth is assigned, FALSE otherwise
  *
  * Returns:
  *  D3D_OK, because it's a stub

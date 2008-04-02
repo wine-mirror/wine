@@ -502,7 +502,7 @@ IDirect3DDeviceImpl_7_GetCaps(IDirect3DDevice7 *iface,
  *
  * Parameters:
  *  HWDesc: Structure to fill with the HW caps
- *  HelDesc: Structure to fill with the hardare emulation caps
+ *  HelDesc: Structure to fill with the hardware emulation caps
  *
  * Returns:
  *  D3D_OK on success
@@ -1067,7 +1067,7 @@ IDirect3DDeviceImpl_1_Pick(IDirect3DDevice *iface,
  * Params:
  *  Count: Pointer to a DWORD containing the numbers of pick records to
  *         retrieve
- *  D3DPickRec: Address to store the resulting D3DPICKRECORD arry.
+ *  D3DPickRec: Address to store the resulting D3DPICKRECORD array.
  *
  * Returns:
  *  D3D_OK, because it's a stub

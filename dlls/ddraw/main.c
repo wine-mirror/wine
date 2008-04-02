@@ -649,7 +649,7 @@ IDirectDrawClassFactoryImpl_Release(IClassFactory *iface)
  * What is this? Seems to create DirectDraw objects...
  *
  * Params
- *  The ususal things???
+ *  The usual things???
  *
  * RETURNS
  *  ???
@@ -931,7 +931,7 @@ DllMain(HINSTANCE hInstDLL,
             struct list *entry, *entry2;
             WARN("There are still existing DirectDraw interfaces. Wine bug or buggy application?\n");
 
-            /* We remove elemets from this loop */
+            /* We remove elements from this loop */
             LIST_FOR_EACH_SAFE(entry, entry2, &global_ddraw_list)
             {
                 HRESULT hr;
@@ -950,7 +950,7 @@ DllMain(HINSTANCE hInstDLL,
 
                 /* Does a D3D device exist? Destroy it
                     * TODO: Destroy all Vertex buffers, Lights, Materials
-                    * and execture buffers too
+                    * and execute buffers too
                     */
                 if(ddraw->d3ddevice)
                 {

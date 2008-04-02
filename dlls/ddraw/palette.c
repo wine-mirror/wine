@@ -125,7 +125,7 @@ IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
  * DDERR_ALREADYINITIALIZED
  *
  * Params:
- *  DD: DirectDraw interface this palette is asigned to
+ *  DD: DirectDraw interface this palette is assigned to
  *  Flags: Some flags, as usual
  *  ColorTable: The startup color table
  *

@@ -339,7 +339,7 @@ IDirectDrawImpl_Release(IDirectDraw7 *iface)
  *
  * Unsure about these: DDSCL_FPUSETUP DDSCL_FPURESERVE
  *
- * These seem not really imporant for wine
+ * These don't seem very important for wine:
  *  DDSCL_ALLOWREBOOT, DDSCL_NOWINDOWCHANGES, DDSCL_ALLOWMODEX
  *
  * Returns:
@@ -2186,12 +2186,12 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
  * the WineD3DSurface when the ddraw surface is destroyed.
  *
  * However, for all surfaces which can be in a container in WineD3D,
- * we have to do this. These surfaces are ususally complex surfaces,
+ * we have to do this. These surfaces are usually complex surfaces,
  * so this concerns primary surfaces with a front and a back buffer,
  * and textures.
  *
  * |------------------------|               |-----------------|
- * | DDraw surface          |               | Containter      |
+ * | DDraw surface          |               | Container       |
  * |                        |               |                 |
  * |                  Child |<------------->| Parent          |
  * |                Texture |<------------->|                 |
@@ -2633,7 +2633,7 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
         {
             Pool = WINED3DPOOL_SYSTEMMEM;
         }
-        /* Should I forward the MANEGED cap to the managed pool ? */
+        /* Should I forward the MANAGED cap to the managed pool ? */
 
         /* Get the format. It's set already by CreateNewSurface */
         Format = PixelFormat_DD2WineD3D(&object->surface_desc.u4.ddpfPixelFormat);

@@ -359,7 +359,7 @@ static void LightTest(void)
     ok(rc == D3D_OK, "IDirect3DDevice7_GetCaps failed with %x\n", rc);
 
     if ( caps.dwMaxActiveLights == (DWORD) -1) {
-        /* Some cards without T&L Support return -1 (Examples: Vodoo banshee, RivaTNT / NV4) */
+        /* Some cards without T&L Support return -1 (Examples: Voodoo Banshee, RivaTNT / NV4) */
         skip("T&L not supported\n");
         return;
     }
@@ -518,7 +518,7 @@ static void ProcessVerticesTest(void)
     rc = IDirect3DVertexBuffer7_Lock(lpVBufDest2, 0, (void **) &out2, NULL);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %x\n", rc);
     if(!out2) goto out;
-    /* Small thing without much practial meaning, but I stumbled upon it,
+    /* Small thing without much practical meaning, but I stumbled upon it,
      * so let's check for it: If the output vertex buffer has to RHW value,
      * The RHW value of the last vertex is written into the next vertex
      */
