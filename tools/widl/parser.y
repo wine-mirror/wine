@@ -64,6 +64,7 @@
 #endif
 
 unsigned char pointer_default = RPC_FC_UP;
+static int is_object_interface = FALSE;
 
 typedef struct list typelist_t;
 struct typenode {
@@ -265,7 +266,7 @@ static void check_all_user_types(ifref_list_t *ifaces);
 %type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
-%type <str> libraryhdr
+%type <str> libraryhdr callconv
 %type <uuid> uuid_string
 %type <num> import_start
 
@@ -518,8 +519,8 @@ uuid_string:
 						  $$ = parse_uuid($1); }
         ;
 
-callconv:
-	| tSTDCALL
+callconv: tCDECL				{ $$ = $<str>1; }
+	| tSTDCALL				{ $$ = $<str>1; }
 	;
 
 cases:						{ $$ = NULL; }
@@ -653,11 +654,11 @@ s_field:  m_attributes type pident array	{ $$ = $3->var;
 	;
 
 funcdef:
-	  m_attributes type callconv pident     { var_t *v = $4->var;
-						  var_list_t *args = $4->args;
+	  m_attributes type pident		{ var_t *v = $3->var;
+						  var_list_t *args = $3->args;
 						  v->attrs = $1;
-						  set_type(v, $2, $4, NULL, FALSE);
-						  free($4);
+						  set_type(v, $2, $3, NULL, FALSE);
+						  free($3);
 						  $$ = make_func(v, args);
 						  if (is_attr(v->attrs, ATTR_IN)) {
 						    error_loc("inapplicable attribute [in] for function '%s'\n",$$->def->name);
@@ -757,6 +758,7 @@ dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); $$->kind = 
 	;
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
+						  is_object_interface = TRUE;
 						  $$ = $2;
 						  if ($$->defined) error_loc("multiple definition error\n");
 						  attrs = make_attr(ATTR_DISPINTERFACE);
@@ -806,6 +808,7 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 						  $$.old_pointer_default = pointer_default;
 						  if (is_attr($1, ATTR_POINTERDEFAULT))
 						    pointer_default = get_attrv($1, ATTR_POINTERDEFAULT);
+						  is_object_interface = is_object($1);
 						  if ($2->defined) error_loc("multiple definition error\n");
 						  $2->attrs = $1;
 						  $2->defined = TRUE;
@@ -863,10 +866,19 @@ moduledef: modulehdr '{' int_statements '}'
 
 pident:   '*' pident %prec PPTR			{ $$ = $2; $$->ptr_level++; }
 	| tCONST pident				{ $$ = $2; /* FIXME */ }
+	| callconv pident                       { $$ = $2;
+						  if ($$->callconv) parser_warning("multiple calling conventions %s, %s for function %s\n", $$->callconv, $1, $$->var->name);
+						  $$->callconv = $1;
+						}
 	| direct_ident
 	;
 
-func_ident: direct_ident '(' m_args ')'		{ $$ = $1; $1->args = $3; $1->is_func = TRUE; }
+func_ident: direct_ident '(' m_args ')'
+						{ $$ = $1;
+						  $1->args = $3;
+						  $1->is_func = TRUE;
+						}
+	;
 
 direct_ident: ident				{ $$ = make_pident($1); }
 	| '(' pident ')'			{ $$ = $2; }
@@ -1363,6 +1375,13 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
     if (func_ptr_level == 1) func_ptr_level = 0;
     v->type = make_type(RPC_FC_FUNCTION, v->type);
     v->type->fields_or_args = pident->args;
+    if (pident->callconv)
+      v->type->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, pident->callconv));
+    else if (is_object_interface) {
+      static char *stdmethodcalltype;
+      if (!stdmethodcalltype) stdmethodcalltype = strdup("STDMETHODCALLTYPE");
+      v->type->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
+    }
     for (; func_ptr_level > 0; func_ptr_level--)
       v->type = make_type(ptr_type, v->type);
   }
@@ -1542,6 +1561,7 @@ static pident_t *make_pident(var_t *var)
   p->ptr_level = 0;
   p->func_ptr_level = 0;
   p->args = NULL;
+  p->callconv = NULL;
   return p;
 }
 
@@ -1720,6 +1740,13 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
         cur->fields_or_args = pident->args;
         for (; func_ptr_level > 0; func_ptr_level--)
           cur = make_type(pointer_default, cur);
+        if (pident->callconv)
+          cur->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, pident->callconv));
+        else if (is_object_interface) {
+          static char *stdmethodcalltype;
+          if (!stdmethodcalltype) stdmethodcalltype = strdup("STDMETHODCALLTYPE");
+          cur->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
+        }
       }
       cur = alias(cur, name->name);
       cur->attrs = attrs;

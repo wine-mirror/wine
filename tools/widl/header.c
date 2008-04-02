@@ -298,13 +298,24 @@ void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
 {
   if (!h) return;
 
-  write_type_left(h, t, declonly);
+  if (t->type == RPC_FC_FUNCTION) {
+    const char *callconv = get_attrp(t->attrs, ATTR_CALLCONV);
+    if (!callconv) callconv = "";
+    write_type_left(h, t->ref, declonly);
+    fprintf(h, " (%s *", callconv);
+  } else
+    write_type_left(h, t, declonly);
   if (fmt) {
     if (needs_space_after(t))
       fprintf(h, " ");
     vfprintf(h, fmt, args);
   }
-  write_type_right(h, t, is_field);
+  if (t->type == RPC_FC_FUNCTION) {
+    fprintf(h, ")(");
+    write_args(h, t->fields_or_args, NULL, 0, FALSE);
+    fprintf(h, ")");
+  } else
+    write_type_right(h, t, is_field);
 }
 
 void write_type_def_or_decl(FILE *f, type_t *t, int field, const char *fmt, ...)
@@ -690,17 +701,7 @@ void write_args(FILE *h, const var_list_t *args, const char *name, int method, i
         }
         else fprintf(h, ",");
     }
-    if (arg->type->type == RPC_FC_FUNCTION)
-    {
-      write_type_decl_left(h, arg->type->ref);
-      fprintf(h, " (STDMETHODCALLTYPE *");
-      write_name(h,arg);
-      fprintf(h, ")(");
-      write_args(h, arg->type->fields_or_args, NULL, 0, FALSE);
-      fprintf(h, ")");
-    }
-    else
-      write_type_decl(h, arg->type, "%s", arg->name);
+    write_type_decl(h, arg->type, "%s", arg->name);
     count++;
   }
   if (do_indent) indentation--;

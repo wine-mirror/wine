@@ -70,6 +70,7 @@ enum attr_type
     ATTR_AUTO_HANDLE,
     ATTR_BINDABLE,
     ATTR_CALLAS,
+    ATTR_CALLCONV, /* calling convention pseudo-attribute */
     ATTR_CASE,
     ATTR_CONTEXTHANDLE,
     ATTR_CONTROL,
@@ -250,6 +251,7 @@ struct _pident_t {
   /* levels of indirection for function pointers */
   int func_ptr_level;
   var_list_t *args;
+  char *callconv;
 
   /* parser-internal */
   struct list entry;
