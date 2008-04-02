@@ -110,6 +110,7 @@ static UINT WM_MSIME_RECONVERT;
 static UINT WM_MSIME_QUERYPOSITION;
 static UINT WM_MSIME_DOCUMENTFEED;
 
+static const WCHAR szwWineIMCProperty[] = {'W','i','n','e','I','m','m','H','I','M','C','P','r','o','p','e','r','t','y',0};
 /*
  * prototypes
  */
@@ -623,12 +624,10 @@ static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len)
  */
 HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 {
+    HIMC old = NULL;
     InputContextData *data = (InputContextData*)hIMC;
 
-    WARN("(%p, %p): semi-stub\n", hWnd, hIMC);
-
-    if (!hIMC)
-        return NULL;
+    TRACE("(%p, %p):\n", hWnd, hIMC);
 
     /*
      * WINE SPECIFIC! MAY CONFLICT
@@ -642,8 +641,29 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     /*
      * If already associated just return
      */
-    if (data->IMC.hWnd == hWnd)
+    if (hIMC && data->IMC.hWnd == hWnd)
         return hIMC;
+
+    if (hWnd)
+    {
+        old = (HIMC)RemovePropW(hWnd,szwWineIMCProperty);
+
+        if (old == NULL)
+            old = (HIMC)root_context;
+        else if (old == (HIMC)-1)
+            old = NULL;
+
+        if (hIMC != (HIMC)root_context)
+        {
+            if (hIMC == NULL) /* Meaning disable imm for that window*/
+                SetPropW(hWnd,szwWineIMCProperty,(HANDLE)-1);
+            else
+                SetPropW(hWnd,szwWineIMCProperty,(HANDLE)hIMC);
+        }
+    }
+
+    if (!hIMC)
+        return old;
 
     if (IsWindow(data->IMC.hWnd))
     {
@@ -663,11 +683,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
         SendMessageW(data->IMC.hWnd, WM_IME_SETCONTEXT, TRUE, ISC_SHOWUIALL);
     }
 
-    /*
-     * TODO: We need to keep track of the old context associated
-     * with a window and return it for now we will return NULL;
-     */
-    return NULL;
+    return old;
 }
 
 /***********************************************************************
@@ -1176,13 +1192,24 @@ BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
  */
 HIMC WINAPI ImmGetContext(HWND hWnd)
 {
+    HIMC rc = NULL;
+
     TRACE("%p\n", hWnd);
 
-    if (!root_context)
-        return NULL;
+    rc = (HIMC)GetPropW(hWnd,szwWineIMCProperty);
+    if (rc == (HIMC)-1)
+        rc = NULL;
+    else if (rc == NULL)
+        rc = (HIMC)root_context;
 
-    root_context->IMC.hWnd = hWnd;
-    return (HIMC)root_context;
+    if (rc)
+    {
+        InputContextData *data = (InputContextData*)rc;
+        data->IMC.hWnd = hWnd;
+    }
+    TRACE("returning %p\n", rc);
+
+    return rc;
 }
 
 /***********************************************************************
