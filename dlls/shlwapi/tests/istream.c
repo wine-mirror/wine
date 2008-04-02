@@ -285,7 +285,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
     IStream * stream;
     HRESULT ret;
     ULONG refcount;
-    static const WCHAR test_file[] = { 'c', ':', '\\', 't', 'e', 's', 't', '.', 't', 'x', 't' };
+    static const WCHAR test_file[] = { 'c', ':', '\\', 't', 'e', 's', 't', '.', 't', 'x', 't', '\0' };
 
     trace("SHCreateStreamOnFileW: testing mode %d\n", mode);
 
@@ -382,7 +382,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     IStream * template = NULL;
     HRESULT ret;
     ULONG refcount;
-    static const WCHAR test_file[] = { 'c', ':', '\\', 't', 'e', 's', 't', '.', 't', 'x', 't' };
+    static const WCHAR test_file[] = { 'c', ':', '\\', 't', 'e', 's', 't', '.', 't', 'x', 't', '\0' };
 
     trace("SHCreateStreamOnFileEx: testing mode %d, STGM flags %08x\n", mode, stgm);
 
