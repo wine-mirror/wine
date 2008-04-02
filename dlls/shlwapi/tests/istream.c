@@ -192,7 +192,7 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
     ULONG refcount;
     static const char * test_file = "c:\\test.txt";
 
-    printf("SHCreateStreamOnFileA: testing mode %d\n", mode);
+    trace("SHCreateStreamOnFileA: testing mode %d\n", mode);
 
     /* invalid arguments */
 
@@ -287,7 +287,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
     ULONG refcount;
     static const WCHAR test_file[] = { 'c', ':', '\\', 't', 'e', 's', 't', '.', 't', 'x', 't' };
 
-    printf("SHCreateStreamOnFileW: testing mode %d\n", mode);
+    trace("SHCreateStreamOnFileW: testing mode %d\n", mode);
 
     /* invalid arguments */
 
@@ -384,7 +384,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ULONG refcount;
     static const WCHAR test_file[] = { 'c', ':', '\\', 't', 'e', 's', 't', '.', 't', 'x', 't' };
 
-    printf("SHCreateStreamOnFileEx: testing mode %d, STGM flags %08x\n", mode, stgm);
+    trace("SHCreateStreamOnFileEx: testing mode %d, STGM flags %08x\n", mode, stgm);
 
     /* invalid arguments */
 
@@ -415,7 +415,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
           "SHCreateStreamOnFileEx: expected E_INVALIDARG or HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
 
         if (ret == E_INVALIDARG) {
-            printf("SHCreateStreamOnFileEx: STGM_TRANSACTED not supported in this configuration... skipping.\n");
+            skip("SHCreateStreamOnFileEx: STGM_TRANSACTED not supported in this configuration.\n");
             return;
         }
     } else {
@@ -554,13 +554,13 @@ START_TEST(istream)
     pSHCreateStreamOnFileEx = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileEx");
 
     if (!pSHCreateStreamOnFileA)
-        printf("SHCreateStreamOnFileA not found... those tests will be skipped.\n");
+        skip("SHCreateStreamOnFileA not found.\n");
 
     if (!pSHCreateStreamOnFileW)
-        printf("SHCreateStreamOnFileW not found... those tests will be skipped.\n");
+        skip("SHCreateStreamOnFileW not found.\n");
 
     if (!pSHCreateStreamOnFileEx)
-        printf("SHCreateStreamOnFileEx not found... those tests will be skipped.\n");
+        skip("SHCreateStreamOnFileEx not found.\n");
 
     for (i = 0; i != sizeof(stgm_access)/sizeof(stgm_access[0]); i++) {
         if (pSHCreateStreamOnFileA)
