@@ -181,6 +181,7 @@ static void check_all_user_types(ifref_list_t *ifaces);
 %token tENTRY tENUM tERRORSTATUST
 %token tEXPLICITHANDLE tEXTERN
 %token tFALSE
+%token tFASTCALL
 %token tFLOAT
 %token tHANDLE
 %token tHANDLET
@@ -208,6 +209,7 @@ static void check_all_user_types(ifref_list_t *ifaces);
 %token tOBJECT tODL tOLEAUTOMATION
 %token tOPTIONAL
 %token tOUT
+%token tPASCAL
 %token tPOINTERDEFAULT
 %token tPROPERTIES
 %token tPROPGET tPROPPUT tPROPPUTREF
@@ -520,6 +522,8 @@ uuid_string:
         ;
 
 callconv: tCDECL				{ $$ = $<str>1; }
+	| tFASTCALL				{ $$ = $<str>1; }
+	| tPASCAL				{ $$ = $<str>1; }
 	| tSTDCALL				{ $$ = $<str>1; }
 	;
 
