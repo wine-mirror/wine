@@ -5413,6 +5413,10 @@ static BOOL move_files_wildcard(LPWSTR source, LPWSTR dest, int options)
         msi_free(path);
     }
 
+    /* no files match the wildcard */
+    if (list_empty(&files.entry))
+        goto done;
+
     /* only the first wildcard match gets renamed to dest */
     file = LIST_ENTRY(list_head(&files.entry), FILE_LIST, entry);
     size = (strrchrW(file->dest, '\\') - file->dest) + lstrlenW(file->destname) + 2;
