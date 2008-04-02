@@ -743,17 +743,13 @@ static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent
 
         TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
         data->iconic = FALSE;
-        data->lock_changes++;
         SetWindowPlacement( data->hwnd, &wp );
-        data->lock_changes--;
     }
     else if (!data->iconic && data->wm_state == IconicState)
     {
         TRACE( "minimizing win %p/%lx\n", data->hwnd, data->whole_window );
         data->iconic = TRUE;
-        data->lock_changes++;
         ShowWindow( data->hwnd, SW_MINIMIZE );
-        data->lock_changes--;
     }
 }
 

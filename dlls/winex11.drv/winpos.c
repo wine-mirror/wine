@@ -300,10 +300,12 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
                           const RECT *rectWindow, const RECT *rectClient,
                           const RECT *visible_rect, const RECT *valid_rects )
 {
-    Display *display = thread_display();
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    Display *display = thread_data->display;
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
     RECT old_window_rect, old_whole_rect, old_client_rect;
+    int event_type;
 
     if (!data)
     {
@@ -379,7 +381,19 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     X11DRV_sync_client_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
 
-    if (!data->whole_window || data->lock_changes) return;  /* nothing more to do */
+    if (!data->whole_window) return;
+
+    /* check if we are currently processing an event relevant to this window */
+    event_type = 0;
+    if (thread_data->current_event && thread_data->current_event->xany.window == data->whole_window)
+        event_type = thread_data->current_event->type;
+
+    if (event_type == ConfigureNotify || event_type == PropertyNotify)
+    {
+        TRACE( "not changing window %p/%lx while processing event %u\n",
+               hwnd, data->whole_window, event_type );
+        return;
+    }
 
     if (data->mapped && (!(new_style & WS_VISIBLE) || !X11DRV_is_window_rect_mapped( rectWindow )))
     {
@@ -578,9 +592,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
                hwnd, rect.right - rect.left, rect.bottom - rect.top, cx, cy );
 
-    data->lock_changes++;
     SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
-    data->lock_changes--;
 }
 
 

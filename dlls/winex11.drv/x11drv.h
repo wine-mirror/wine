@@ -678,7 +678,6 @@ struct x11drv_win_data
     BOOL        iconic : 1;     /* is window in iconic state? */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
-    unsigned int lock_changes;  /* lock count for X11 change requests */
     HBITMAP     hWMIconBitmap;
     HBITMAP     hWMIconMask;
 };
