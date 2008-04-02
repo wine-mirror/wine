@@ -3395,13 +3395,18 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
              * 'clear' expect it in ARGB format => we need to do some conversion :-)
              */
             if (This->resource.format == WINED3DFMT_P8) {
+                DWORD alpha;
+
+                if (primary_render_target_is_p8(myDevice)) alpha = DDBltFx->u5.dwFillColor << 24;
+                else alpha = 0xFF000000;
+
                 if (This->palette) {
-                    color = ((0xFF000000) |
+                    color = (alpha |
                             (This->palette->palents[DDBltFx->u5.dwFillColor].peRed << 16) |
                             (This->palette->palents[DDBltFx->u5.dwFillColor].peGreen << 8) |
                             (This->palette->palents[DDBltFx->u5.dwFillColor].peBlue));
                 } else {
-                    color = 0xFF000000;
+                    color = alpha;
                 }
             }
             else if (This->resource.format == WINED3DFMT_R5G6B5) {
