@@ -72,7 +72,7 @@
 @ stub LdrLoadAlternateResourceModule
 @ stdcall LdrLoadDll(wstr long ptr ptr)
 @ stdcall LdrLockLoaderLock(long ptr ptr)
-@ stub LdrProcessRelocationBlock
+@ stdcall LdrProcessRelocationBlock(ptr long ptr long)
 @ stub LdrQueryImageFileExecutionOptions
 @ stdcall LdrQueryProcessModuleInformation(ptr long ptr)
 @ stub LdrSetAppCompatDllRedirectionCallback

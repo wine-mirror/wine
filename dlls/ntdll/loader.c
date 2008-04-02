@@ -2035,6 +2035,41 @@ NTSTATUS WINAPI LdrAddRefDll( ULONG flags, HMODULE module )
 }
 
 
+/***********************************************************************
+ *           LdrProcessRelocationBlock  (NTDLL.@)
+ *
+ * Apply relocations to a given page of a mapped PE image.
+ */
+IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count,
+                                                          USHORT *relocs, INT delta )
+{
+    while (count--)
+    {
+        USHORT offset = *relocs & 0xfff;
+        int type = *relocs >> 12;
+        switch(type)
+        {
+        case IMAGE_REL_BASED_ABSOLUTE:
+            break;
+        case IMAGE_REL_BASED_HIGH:
+            *(short *)((char *)page + offset) += HIWORD(delta);
+            break;
+        case IMAGE_REL_BASED_LOW:
+            *(short *)((char *)page + offset) += LOWORD(delta);
+            break;
+        case IMAGE_REL_BASED_HIGHLOW:
+            *(int *)((char *)page + offset) += delta;
+            break;
+        default:
+            FIXME("Unknown/unsupported fixup type %x.\n", type);
+            return NULL;
+        }
+        relocs++;
+    }
+    return (IMAGE_BASE_RELOCATION *)relocs;  /* return address of next block */
+}
+
+
 /******************************************************************
  *		LdrQueryProcessModuleInformation
  *
