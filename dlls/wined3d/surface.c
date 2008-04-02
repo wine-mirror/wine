@@ -441,7 +441,9 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
 
         if(This->Flags & SFLAG_PBO) {
             /* Delete the PBO */
+            ENTER_GL();
             GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
+            LEAVE_GL();
         }
 
         if(This->Flags & SFLAG_DIBSECTION) {
@@ -461,10 +463,12 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         if(iface == device->ddraw_primary)
             device->ddraw_primary = NULL;
 
+        ENTER_GL();
         LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry) {
             GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
             HeapFree(GetProcessHeap(), 0, entry);
         }
+        LEAVE_GL();
 
         TRACE("(%p) Released\n", This);
         HeapFree(GetProcessHeap(), 0, This);
