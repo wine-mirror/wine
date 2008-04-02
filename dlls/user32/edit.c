@@ -811,9 +811,6 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
                    {
                        switch (vk)
                        {
-                           case VK_RETURN:
-                               SendMessageW(GetParent(hwnd), WM_COMMAND, IDOK, (LPARAM)GetDlgItem(GetParent(hwnd), IDOK));
-                               break;
                            case VK_ESCAPE:
                                SendMessageW(GetParent(hwnd), WM_CLOSE, 0, 0);
                                break;
@@ -4608,6 +4605,8 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 				  MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
  			      (LPARAM)GetDlgItem( hwndParent, LOWORD(dw) ) );
 		}
+                else
+                    SendMessageW( hwndParent, WM_COMMAND, IDOK, (LPARAM)GetDlgItem( hwndParent, IDOK ) );
 	    }
 	    break;
 	}

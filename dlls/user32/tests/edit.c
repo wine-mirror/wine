@@ -39,6 +39,7 @@ static struct edit_notify notifications;
 
 static INT_PTR CALLBACK multi_edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    static int num_ok_commands = 0;
     switch (msg)
     {
         case WM_INITDIALOG:
@@ -62,6 +63,13 @@ static INT_PTR CALLBACK multi_edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wpara
                     PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
                     break;
 
+                /* test cases for pressing enter */
+                case 3:
+                    num_ok_commands = 0;
+                    PostMessage(hedit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 1);
+                    break;
+
                 default:
                     break;
             }
@@ -75,11 +83,7 @@ static INT_PTR CALLBACK multi_edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wpara
             switch (LOWORD(wparam))
             {
                 case IDOK:
-                    EndDialog(hdlg, 111);
-                    break;
-
-                case IDCANCEL:
-                    EndDialog(hdlg, 222);
+                    num_ok_commands++;
                     break;
 
                 default:
@@ -108,6 +112,12 @@ static INT_PTR CALLBACK multi_edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wpara
                         EndDialog(hdlg, 3333);
                     else
                         EndDialog(hdlg, 4444);
+                    break;
+                case 1:
+                    if ((hfocus == hedit) && (num_ok_commands == 0))
+                        EndDialog(hdlg, 11);
+                    else
+                        EndDialog(hdlg, 22);
                     break;
                 default:
                     EndDialog(hdlg, 5555);
@@ -1441,6 +1451,8 @@ static void test_multi_edit_dialog(void)
     ok(1111 == r, "Expected %d, got %d\n", 1111, r);
     r = DialogBoxParam(hinst, "MULTI_EDIT_DIALOG", NULL, (DLGPROC)multi_edit_dialog_proc, 2);
     ok(2222 == r, "Expected %d, got %d\n", 2222, r);
+    r = DialogBoxParam(hinst, "MULTI_EDIT_DIALOG", NULL, (DLGPROC)multi_edit_dialog_proc, 3);
+    ok(11 == r, "Expected %d, got %d\n", 11, r);
 }
 
 static BOOL RegisterWindowClasses (void)
