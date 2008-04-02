@@ -500,6 +500,8 @@ XIM X11DRV_SetupXIM(Display *display, const char *input_style)
     }
 
     wine_tsx11_unlock();
+    IME_XIMPresent(TRUE);
+    IME_UpdateAssociation(NULL);
 
     if(!hImmDll)
     {

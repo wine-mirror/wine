@@ -277,6 +277,20 @@ extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);
 extern XIC X11DRV_CreateIC(XIM xim, Display *display, Window win);
 extern XIM X11DRV_SetupXIM(Display *display, const char *input_style);
 extern void X11DRV_XIMLookupChars( const char *str, DWORD count );
+extern void X11DRV_ForceXIMReset(HWND hwnd);
+
+/* IME support */
+extern void IME_RegisterClasses(HINSTANCE hImeInst);
+extern void IME_UnregisterClasses(HINSTANCE hImeInst);
+extern void IME_SetOpenStatus(BOOL fOpen);
+extern void IME_XIMPresent(BOOL present);
+extern LRESULT IME_SendMessageToSelectedHWND(UINT msg, WPARAM wParam, LPARAM lParam);
+extern INT IME_GetCursorPos();
+extern void IME_UpdateAssociation(HWND focus);
+extern BOOL IME_SetCompositionString(DWORD dwIndex, LPCVOID lpComp,
+                                     DWORD dwCompLen, LPCVOID lpRead,
+                                     DWORD dwReadLen);
+extern BOOL IME_NotifyIME(DWORD dwAction, DWORD dwIndex, DWORD dwValue);
 
 extern void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event );
 extern void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event );

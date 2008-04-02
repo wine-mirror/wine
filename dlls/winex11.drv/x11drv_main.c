@@ -672,12 +672,14 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         ret = process_attach();
+        IME_RegisterClasses(hinst);
         break;
     case DLL_THREAD_DETACH:
         thread_detach();
         break;
     case DLL_PROCESS_DETACH:
         process_detach();
+        IME_UnregisterClasses(hinst);
         break;
     }
     return ret;
