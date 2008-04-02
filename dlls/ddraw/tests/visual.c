@@ -1860,6 +1860,17 @@ static void p8_primary_test()
             "got R %02X G %02X B %02X, expected R FF G 00 B 00\n",
             GetRValue(color), GetGValue(color), GetBValue(color));
 
+    memset(&ddbltfx, 0, sizeof(ddbltfx));
+    ddbltfx.dwSize = sizeof(ddbltfx);
+    U5(ddbltfx).dwFillColor = 1;
+    hr = IDirectDrawSurface_Blt(Surface1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
+    ok(hr == DD_OK, "IDirectDrawSurface_Blt failed with %08x\n", hr);
+
+    color = getPixelColor_GDI(Surface1, 10, 10);
+    ok(GetRValue(color) == 0 && GetGValue(color) == 0xFF && GetBValue(color) == 0,
+            "got R %02X G %02X B %02X, expected R 00 G FF B 00\n",
+            GetRValue(color), GetGValue(color), GetBValue(color));
+
     memset (&ddsd, 0, sizeof (ddsd));
     ddsd.dwSize = sizeof (ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
