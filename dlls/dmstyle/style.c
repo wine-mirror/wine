@@ -735,7 +735,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
       IStream_Read (pStm, &pNewMotif->pattern, Chunk.dwSize, NULL);
       /** TODO trace pattern */
 
-      /** reset all datas, as a new pattern begin */
+      /** reset all data, as a new pattern begin */
       DM_STRUCT_INIT(&pNewMotif->desc);
       list_init (&pNewMotif->Items);
       break;
@@ -757,7 +757,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
     }
     case FOURCC_RIFF: {
       /**
-       * sould be embededs Bands into pattern
+       * should be embedded Bands into pattern
        */
       IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
       TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
@@ -785,7 +785,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
 	pNewMotif->pBand = pBand;
 	IDirectMusicBand_AddRef(pBand);
 
-	IDirectMusicTrack_Release(pBand); pBand = NULL;  /* now we can release at as it inserted */
+	IDirectMusicTrack_Release(pBand); pBand = NULL;  /* now we can release it as it's inserted */
 	
 	/** now safe move the cursor */
 	liMove.QuadPart = ListSize[1];
@@ -897,7 +897,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParseStyleForm (LPPERSISTST
       }   
       case FOURCC_RIFF: {
 	/**
-	 * sould be embededs Bands into style
+	 * should be embedded Bands into style
 	 */
 	IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
 	TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
@@ -932,9 +932,9 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParseStyleForm (LPPERSISTST
 	  IDirectMusicBand_AddRef(pBand);
 	  list_add_tail (&This->Bands, &pNewBand->entry);
 
-	  IDirectMusicTrack_Release(pBand); pBand = NULL;  /* now we can release at as it inserted */
+	  IDirectMusicTrack_Release(pBand); pBand = NULL;  /* now we can release it as it's inserted */
 	
-	  /** now safe move the cursor */
+	  /** now safely move the cursor */
 	  liMove.QuadPart = ListSize[0];
 	  IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 	  

@@ -100,7 +100,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject
 			return E_POINTER;
 		}
 	}
-	/* check if we wszAlias is big enough */
+	/* check if wszAlias is big enough */
 	if (pwszAlias && IsBadWritePtr (pwszAlias, DMUS_MAX_FILENAME_SIZE)) {
 		ERR(": wszAlias bad write pointer\n");
 		return E_POINTER;		
@@ -158,7 +158,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_GetDescriptor
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
 	TRACE("(%p, %p):\n", This, pDesc);
 	
-	/* check if whe can write to whole pDesc */
+	/* check if we can write to whole pDesc */
 	if (IsBadReadPtr (pDesc, sizeof(DWORD))) {
 		ERR(": pDesc->dwSize bad read pointer\n");
 		return E_POINTER;
@@ -184,7 +184,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_SetDescriptor
 	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ObjectVtbl, iface);
 	TRACE("(%p, %p):\n", This, pDesc);
 
-	/* check if whe can read whole pDesc */
+	/* check if we can read whole pDesc */
 	if (IsBadReadPtr (pDesc, sizeof(DWORD))) {
 		ERR(": pDesc->dwSize bad read pointer\n");
 		return E_POINTER;
@@ -461,7 +461,7 @@ static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTST
 		ERR(": pStm bad read pointer\n");
 		return E_POINTER;
 	}
-	/* if stream is already set, this means we're loaded already */
+	/* if stream is already set, this means the container is already loaded */
 	if (This->pStream) {
 		TRACE(": stream is already set, which means container is already loaded\n");
 		return DMUS_E_ALREADY_LOADED;
@@ -923,9 +923,9 @@ HRESULT WINAPI DMUSIC_DestroyDirectMusicContainerImpl (LPDIRECTMUSICCONTAINER if
 	LIST_FOR_EACH (pEntry, This->pContainedObjects) {
 		pContainedObject = LIST_ENTRY (pEntry, WINE_CONTAINER_ENTRY, entry);
 		/* my tests indicate that container releases objects *only* 
-		   if they were loaded at it's load-time (makes sense, it doesn't
+		   if they were loaded at its load-time (makes sense, it doesn't
 		   have pointers to objects otherwise); BTW: native container seems
-		   ti ignore the flags (I won't) */
+		   to ignore the flags (I won't) */
 		if (pContainedObject->pObject && !(pContainedObject->dwFlags & DMUS_CONTAINED_OBJF_KEEP)) {
 			/* flags say it shouldn't be kept in loader's cache */
 			IDirectMusicLoader_ReleaseObject (pLoader, pContainedObject->pObject);

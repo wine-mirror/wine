@@ -1388,7 +1388,7 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_SetConnectionSettings
 
   hr = DPLAYX_SetConnectionSettingsW( dwFlags, dwAppID, lpConn );
 
-  /* FIXME: Don't think that this is supposed to fail, but the docuementation
+  /* FIXME: Don't think that this is supposed to fail, but the documentation
             is somewhat sketchy. I'll try creating a lobby application
             for this... */
   if( hr == DPERR_NOTLOBBIED )
@@ -1422,7 +1422,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_SetConnectionSettings
 
   hr = DPLAYX_SetConnectionSettingsA( dwFlags, dwAppID, lpConn );
 
-  /* FIXME: Don't think that this is supposed to fail, but the docuementation
+  /* FIXME: Don't think that this is supposed to fail, but the documentation
             is somewhat sketchy. I'll try creating a lobby application
             for this... */
   if( hr == DPERR_NOTLOBBIED )

@@ -41,7 +41,7 @@ static const WCHAR SZ_EXCLUSIONLIST_KEY[] = {
  * AddERExcludedApplicationW  [FAULTREP.@]
  *
  * Adds an application to a list of applications for which fault reports
- * shouldn't be genereated
+ * shouldn't be generated
  *
  * PARAMS
  * lpAppFileName  [I] The filename of the application executable
@@ -53,7 +53,7 @@ static const WCHAR SZ_EXCLUSIONLIST_KEY[] = {
  * Wine doesn't use this data but stores it in the registry (in the same place
  * as Windows would) in case it will be useful in a future version
  *
- * According to MSDN this function should succeed even if the user have no write
+ * According to MSDN this function should succeed even if the user has no write
  * access to HKLM. This probably means that there is no error checking.
  */
 BOOL WINAPI AddERExcludedApplicationW(LPCWSTR lpAppFileName)

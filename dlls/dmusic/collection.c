@@ -588,7 +588,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTS
 														case FOURCC_INS: {
 															LPDMUS_PRIVATE_INSTRUMENTENTRY pNewInstrument = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_INSTRUMENTENTRY));
 															TRACE_(dmfile)(": instrument list\n");
-															DMUSIC_CreateDirectMusicInstrumentImpl (&IID_IDirectMusicInstrument, (LPVOID*)&pNewInstrument->pInstrument, NULL); /* only way to create this one... even M$ does it discretly */
+															DMUSIC_CreateDirectMusicInstrumentImpl (&IID_IDirectMusicInstrument, (LPVOID*)&pNewInstrument->pInstrument, NULL); /* only way to create this one... even M$ does it discretely */
                                                                                                                         {
                                                                                                                             ICOM_NAME_MULTI (IDirectMusicInstrumentImpl, InstrumentVtbl, pNewInstrument->pInstrument, pInstrument);
                                                                                                                             liMove.QuadPart = 0;

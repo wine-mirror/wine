@@ -31,7 +31,7 @@ static BOOL CALLBACK EnumConnectionsCallback(LPCGUID lpguidSP, LPVOID lpConnecti
 
     if(IsEqualGUID(lpguidSP,&DPSPGUID_TCPIP))
     {
-        /*I'm forcing TCP/IP Sevice provider*/
+        /*I'm forcing the TCP/IP Service provider*/
         hr = IDirectPlayX_InitializeConnection((LPDIRECTPLAY4) lpContext, lpConnection, 0);
         if( SUCCEEDED( hr ))
             validSP = TRUE;

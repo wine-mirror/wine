@@ -4471,9 +4471,9 @@ static void dp2add_ps_test(IDirect3DDevice9 *device)
 
     /* DP2ADD is defined as:  (src0.r * src1.r) + (src0.g * src1.g) + src2.
      * One D3D restriction of all shader instructions except SINCOS is that no more than 2
-     * source tokens can be constants.  So, for this excercise, we move contents of c0 to
+     * source tokens can be constants.  So, for this exercise, we move contents of c0 to
      * r0 first.
-     * The result here for the r,g,b components should be rougly 0.5:
+     * The result here for the r,g,b components should be roughly 0.5:
      *   (0.5 * 0.5) + (0.5 * 0.5) + 0.0 = 0.5 */
     static const DWORD shader_code_dp2add[] =  {
         0xffff0200,                                                             /* ps_2_0                       */

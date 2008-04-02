@@ -22,7 +22,7 @@
  *  o DPMSGCMD_ENUMSESSIONSREPLY & DPMSGCMD_ENUMSESSIONSREQUEST
  *    Have most fields understood, but not all.  Everything seems to work.
  *  o DPMSGCMD_REQUESTNEWPLAYERID & DPMSGCMD_NEWPLAYERIDREPLY
- *    Barely work. This needs to be completed for sessions to start.
+ *    Barely works. This needs to be completed for sessions to start.
  *  o A small issue will be the fact that DirectX 6.1(ie. DirectPlay4)
  *    introduces a layer of functionality inside the DP objects which 
  *    provide guaranteed protocol delivery.  This is even if the native
@@ -30,7 +30,7 @@
  *    to leave this kind of implementation to as close to the end as 
  *    possible. However, I will implement an abstraction layer, where 
  *    possible, for this functionality. It will do nothing to start, but 
- *    will require only the implementation of the guaranteness to give 
+ *    will require only the implementation of the guarantee to give
  *    final implementation.
  *
  * TODO:
@@ -102,7 +102,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
   HRESULT hr = ( gdwDPlaySPRefCount > 0 ) ? S_FALSE : S_OK;
 
   /* FIXME: Should I be putting a check in for class factory objects
-   *        as well
+   *        as well?
    */
 
   TRACE( ": returning 0x%08x\n", hr );

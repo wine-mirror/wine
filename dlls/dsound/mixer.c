@@ -615,7 +615,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mi
 		return 0;
 	}
 
-	/* take into acount already mixed data */
+	/* take into account already mixed data */
 	mixlen -= primary_done;
 
 	TRACE("primary_done=%d, mixlen (primary) = %i\n", primary_done, mixlen);
@@ -742,7 +742,7 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 	/* calculate the current wave frag position */
 	wave_fragpos = (device->pwplay + device->pwqueue) % device->helfrags;
 
-	/* calculte the current wave write position */
+	/* calculate the current wave write position */
 	wave_writepos = wave_fragpos * device->fraglen;
 
 	TRACE("wave_fragpos = %i, wave_writepos = %i, pwqueue = %i, prebuf = %i\n",
@@ -908,7 +908,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		else
 			device->normfunction(device->mix_buffer + DSOUND_bufpos_to_mixpos(device, writepos), device->buffer + writepos, frag);
 
-		/* update the mix position, taking wrap-around into acount */
+		/* update the mix position, taking wrap-around into account */
 		device->mixpos = writepos + frag;
 		device->mixpos %= device->buflen;
 
