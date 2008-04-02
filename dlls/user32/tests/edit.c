@@ -90,6 +90,19 @@ static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPA
                     PostMessage(hdlg, WM_USER, 0xdeadbeef, 1);
                     break;
 
+                /* multiple tab tests */
+                case 9:
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 2);
+                    break;
+                case 10:
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 2);
+                    break;
+
                 default:
                     break;
             }
@@ -119,7 +132,9 @@ static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPA
         {
             int len;
             HWND hok = GetDlgItem(hdlg, IDOK);
+            HWND hcancel = GetDlgItem(hdlg, IDCANCEL);
             HWND hedit = GetDlgItem(hdlg, 1000);
+            HWND hfocus = GetFocus();
 
             if (wparam != 0xdeadbeef)
                 break;
@@ -136,10 +151,21 @@ static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPA
 
                 case 1:
                     len = SendMessage(hedit, WM_GETTEXTLENGTH, 0, 0);
-                    if ((GetFocus() == hok) && len == 0)
+                    if ((hfocus == hok) && len == 0)
                         EndDialog(hdlg, 444);
                     else
                         EndDialog(hdlg, 555);
+                    break;
+
+                case 2:
+                    if (hfocus == hok)
+                        EndDialog(hdlg, 11);
+                    else if (hfocus == hcancel)
+                        EndDialog(hdlg, 22);
+                    else if (hfocus == hedit)
+                        EndDialog(hdlg, 33);
+                    else
+                        EndDialog(hdlg, 44);
                     break;
 
                 default:
@@ -1307,6 +1333,12 @@ static void test_edit_dialog(void)
     todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 8);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* multiple tab tests */
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 9);
+    ok(22 == r, "Expected %d, got %d\n", 22, r);
+    r = DialogBoxParam(hinst, "EDIT_DIALOG", NULL, (DLGPROC)edit_dialog_proc, 10);
+    ok(33 == r, "Expected %d, got %d\n", 33, r);
 }
 
 static BOOL RegisterWindowClasses (void)
