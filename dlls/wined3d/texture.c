@@ -115,7 +115,7 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     }
 
     IWineD3DTexture_BindTexture(iface);
-    ENTER_GL();
+
     /* If the texture is marked dirty or the srgb sampler setting has changed since the last load then reload the surfaces */
     if (This->baseTexture.dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {
@@ -135,7 +135,6 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     } else {
         TRACE("(%p) Texture not dirty, nothing to do\n" , iface);
     }
-    LEAVE_GL();
 
     /* No longer dirty */
     This->baseTexture.dirty = FALSE;
