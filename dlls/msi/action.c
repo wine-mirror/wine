@@ -1053,7 +1053,7 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script,
 
     if (!handled)
     {
-        FIXME("unhandled msi action %s\n",debugstr_w(action));
+        WARN("unhandled msi action %s\n",debugstr_w(action));
         rc = ERROR_FUNCTION_NOT_CALLED;
     }
 
@@ -1077,7 +1077,7 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT scrip
 
     if (!handled)
     {
-        FIXME("unhandled msi action %s\n",debugstr_w(action));
+        WARN("unhandled msi action %s\n",debugstr_w(action));
         rc = ERROR_FUNCTION_NOT_CALLED;
     }
 

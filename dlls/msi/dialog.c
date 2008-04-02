@@ -2917,7 +2917,7 @@ static MSIRECORD *msi_get_dialog_record( msi_dialog *dialog )
 
     rec = MSI_QueryGetRecord( package->db, query, dialog->name );
     if( !rec )
-        ERR("query failed for dialog %s\n", debugstr_w(dialog->name));
+        WARN("query failed for dialog %s\n", debugstr_w(dialog->name));
 
     return rec;
 }
