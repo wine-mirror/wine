@@ -557,7 +557,7 @@ static BOOL start_services_process(void)
     strcatW(path, services);
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
-    if (!CreateProcessW(path, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    if (!CreateProcessW(path, path, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
     {
         WINE_ERR("Couldn't start services.exe: error %u\n", GetLastError());
         return FALSE;
@@ -749,6 +749,7 @@ int main( int argc, char *argv[] )
     int optc;
     int end_session = 0, force = 0, init = 0, kill = 0, restart = 0, shutdown = 0;
     HANDLE event;
+    SECURITY_ATTRIBUTES sa;
 
     GetWindowsDirectoryW( windowsdir, MAX_PATH );
     if( !SetCurrentDirectoryW( windowsdir ) )
@@ -781,7 +782,11 @@ int main( int argc, char *argv[] )
 
     if (shutdown) return 0;
 
-    event = CreateEventW( NULL, TRUE, FALSE, wineboot_eventW );
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;  /* so that services.exe inherits it */
+    event = CreateEventW( &sa, TRUE, FALSE, wineboot_eventW );
+
     ResetEvent( event );  /* in case this is a restart */
 
     wininit();
