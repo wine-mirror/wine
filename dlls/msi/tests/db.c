@@ -3213,6 +3213,11 @@ static void test_join(void)
     MsiViewClose(hview);
     MsiCloseHandle(hview);
 
+    query = "SELECT * FROM `Nonexistent`, `One`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok( r == ERROR_BAD_QUERY_SYNTAX,
+        "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r );
+
     MsiCloseHandle(hdb);
     DeleteFile(msifile);
 }

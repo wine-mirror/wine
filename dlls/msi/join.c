@@ -341,7 +341,8 @@ UINT JOIN_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR tables )
         r = TABLE_CreateView( db, tables, &table->view );
         if( r != ERROR_SUCCESS )
         {
-            ERR("can't create table\n");
+            WARN("can't create table: %s\n", debugstr_w(tables));
+            r = ERROR_BAD_QUERY_SYNTAX;
             goto end;
         }
 
