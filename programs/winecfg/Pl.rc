@@ -295,8 +295,8 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDC_SYSPARAMS_BUTTON            "T³o kontrolek"
-    IDC_SYSPARAMS_BUTTON_TEXT       "Tekst kontrolek"
+    IDC_SYSPARAMS_BUTTON            "Kontrolki - t³o"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Kontrolki - tekst"
     IDC_SYSPARAMS_DESKTOP           "Pulpit"
     IDC_SYSPARAMS_MENU              "T³o menu"
     IDC_SYSPARAMS_MENU_TEXT         "Tekst menu"
@@ -312,4 +312,19 @@ BEGIN
     IDC_SYSPARAMS_INACTIVE_TITLE    "T³o nag³ówka nieaktywnego okna"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Tytu³ nieaktywnego okna"
     IDC_SYSPARAMS_MSGBOX_TEXT       "Tekst okien komunikatów"
+    IDC_SYSPARAMS_APPWORKSPACE      "Wnêtrze okna aplikacji"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Ramka okna"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Obramowanie aktywnego okna"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Obramowanie nieaktywnego okna"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Kontrolki - cieñ"
+    IDC_SYSPARAMS_GRAY_TEXT         "Szary tekst"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Kontrolki - podœwietlenie"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Kontrolki - g³êbszy cieñ"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Kontrolki - jaœniejszy cieñ"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Kontrolki - alternatywne t³o"
+    IDC_SYSPARAMS_HOT_TRACKING      "Œledzony element"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Gradient nag³ówka aktywnego okna"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Gradient nag³ówka nieaktywnego okna"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Podœwietlone menu"
+    IDC_SYSPARAMS_MENUBAR           "Pasek menu"
 END
