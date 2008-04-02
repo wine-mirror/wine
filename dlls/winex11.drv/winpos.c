@@ -388,14 +388,11 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     if (thread_data->current_event && thread_data->current_event->xany.window == data->whole_window)
         event_type = thread_data->current_event->type;
 
-    if (event_type == ConfigureNotify || event_type == PropertyNotify)
-    {
-        TRACE( "not changing window %p/%lx while processing event %u\n",
-               hwnd, data->whole_window, event_type );
-        return;
-    }
+    if (event_type != ConfigureNotify && event_type != PropertyNotify)
+        event_type = 0;  /* ignore other events */
 
-    if (data->mapped && (!(new_style & WS_VISIBLE) || !X11DRV_is_window_rect_mapped( rectWindow )))
+    if (data->mapped && (!(new_style & WS_VISIBLE) ||
+                         (!event_type && !X11DRV_is_window_rect_mapped( rectWindow ))))
     {
         TRACE( "unmapping win %p/%lx\n", hwnd, data->whole_window );
         wait_for_withdrawn_state( display, data, FALSE );
@@ -408,7 +405,8 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     }
 
     /* don't change position if we are about to minimize or maximize a managed window */
-    if (!(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & (WS_MINIMIZE|WS_MAXIMIZE))))
+    if (!event_type &&
+        !(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & (WS_MINIMIZE|WS_MAXIMIZE))))
         X11DRV_sync_window_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
 
     if ((new_style & WS_VISIBLE) &&
