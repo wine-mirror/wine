@@ -1421,7 +1421,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
 
     /* fill out the basic type information */
     typedata[0] = typedata_size | (index << 16);
-    encode_var(typeinfo->typelib, func->def->type, func->def, &typedata[1], NULL, NULL, &decoded_size);
+    encode_var(typeinfo->typelib, get_func_return_type(func), func->def, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
     typedata[4] = (next_idx << 16) | (callconv << 8) | (invokekind << 3) | funckind;

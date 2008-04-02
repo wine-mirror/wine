@@ -164,7 +164,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         assign_stub_out_args(server, indent, func);
 
         /* Call the real server function */
-        if (!is_void(def->type))
+        if (!is_void(get_func_return_type(func)))
             print_server("_RetVal = ");
         else
             print_server("");
@@ -212,7 +212,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         {
             write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_BUFFERSIZE);
 
-            if (!is_void(def->type))
+            if (!is_void(get_func_return_type(func)))
                 write_remoting_arguments(server, indent, func, PASS_RETURN, PHASE_BUFFERSIZE);
 
             print_server("_pRpcMessage->BufferLength = _StubMsg.BufferLength;\n");
@@ -231,7 +231,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_MARSHAL);
 
         /* marshall the return value */
-        if (!is_void(def->type))
+        if (!is_void(get_func_return_type(func)))
             write_remoting_arguments(server, indent, func, PASS_RETURN, PHASE_MARSHAL);
 
         indent--;

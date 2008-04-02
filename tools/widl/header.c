@@ -599,7 +599,7 @@ int has_out_arg_or_return(const func_t *func)
 {
     const var_t *var;
 
-    if (!is_void(func->def->type))
+    if (!is_void(get_func_return_type(func)))
         return 1;
 
     if (!func->args)
@@ -718,7 +718,7 @@ static void write_cpp_method_def(const type_t *iface)
     if (!is_callas(def->attrs)) {
       indent(header, 0);
       fprintf(header, "virtual ");
-      write_type_decl_left(header, def->type);
+      write_type_decl_left(header, get_func_return_type(cur));
       fprintf(header, " STDMETHODCALLTYPE ");
       write_name(header, def);
       fprintf(header, "(\n");
@@ -743,7 +743,7 @@ static void do_write_c_method_def(const type_t *iface, const char *name)
     const var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       indent(header, 0);
-      write_type_decl_left(header, def->type);
+      write_type_decl_left(header, get_func_return_type(cur));
       fprintf(header, " (STDMETHODCALLTYPE *");
       write_name(header, def);
       fprintf(header, ")(\n");
@@ -775,7 +775,7 @@ static void write_method_proto(const type_t *iface)
 
     if (!is_local(def->attrs)) {
       /* proxy prototype */
-      write_type_decl_left(header, def->type);
+      write_type_decl_left(header, get_func_return_type(cur));
       fprintf(header, " CALLBACK %s_", iface->name);
       write_name(header, def);
       fprintf(header, "_Proxy(\n");
@@ -815,14 +815,14 @@ void write_locals(FILE *fp, const type_t *iface, int body)
       if (&m->entry != iface->funcs) {
         const var_t *mdef = m->def;
         /* proxy prototype - use local prototype */
-        write_type_decl_left(fp, mdef->type);
+        write_type_decl_left(fp, get_func_return_type(m));
         fprintf(fp, " CALLBACK %s_", iface->name);
         write_name(fp, mdef);
         fprintf(fp, "_Proxy(\n");
         write_args(fp, m->args, iface->name, 1, TRUE);
         fprintf(fp, ")");
         if (body) {
-          type_t *rt = mdef->type;
+          type_t *rt = get_func_return_type(m);
           fprintf(fp, "\n{\n");
           fprintf(fp, "    %s\n", comment);
           if (rt->name && strcmp(rt->name, "HRESULT") == 0)
@@ -839,7 +839,7 @@ void write_locals(FILE *fp, const type_t *iface, int body)
         else
           fprintf(fp, ";\n");
         /* stub prototype - use remotable prototype */
-        write_type_decl_left(fp, def->type);
+        write_type_decl_left(fp, get_func_return_type(cur));
         fprintf(fp, " __RPC_STUB %s_", iface->name);
         write_name(fp, mdef);
         fprintf(fp, "_Stub(\n");
@@ -862,7 +862,7 @@ static void write_function_proto(const type_t *iface, const func_t *fun, const c
   var_t *def = fun->def;
 
   /* FIXME: do we need to handle call_as? */
-  write_type_decl_left(header, def->type);
+  write_type_decl_left(header, get_func_return_type(fun));
   fprintf(header, " ");
   write_prefix_name(header, prefix, def);
   fprintf(header, "(\n");

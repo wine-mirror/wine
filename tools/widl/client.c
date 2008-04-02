@@ -128,8 +128,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             }
         }
 
-        write_type_decl_left(client, def->type);
-        if (needs_space_after(def->type))
+        write_type_decl_left(client, get_func_return_type(func));
+        if (needs_space_after(get_func_return_type(func)))
           fprintf(client, " ");
         write_prefix_name(client, prefix_client, def);
         fprintf(client, "(\n");
@@ -146,10 +146,10 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent++;
 
         /* declare return value '_RetVal' */
-        if (!is_void(def->type))
+        if (!is_void(get_func_return_type(func)))
         {
             print_client("");
-            write_type_decl_left(client, def->type);
+            write_type_decl_left(client, get_func_return_type(func));
             fprintf(client, " _RetVal;\n");
         }
 
@@ -158,7 +158,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         print_client("RPC_MESSAGE _RpcMessage;\n");
         print_client("MIDL_STUB_MESSAGE _StubMsg;\n");
-        if (!is_void(def->type) && decl_indirect(def->type))
+        if (!is_void(get_func_return_type(func)) && decl_indirect(get_func_return_type(func)))
         {
             print_client("void *_p_%s = &%s;\n",
                          "_RetVal", "_RetVal");
@@ -261,11 +261,11 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         write_remoting_arguments(client, indent, func, PASS_OUT, PHASE_UNMARSHAL);
 
         /* unmarshal return value */
-        if (!is_void(def->type))
+        if (!is_void(get_func_return_type(func)))
         {
-            if (decl_indirect(def->type))
+            if (decl_indirect(get_func_return_type(func)))
                 print_client("MIDL_memset(&%s, 0, sizeof(%s));\n", "_RetVal", "_RetVal");
-            else if (is_ptr(def->type) || is_array(def->type))
+            else if (is_ptr(get_func_return_type(func)) || is_array(get_func_return_type(func)))
                 print_client("%s = 0;\n", "_RetVal");
             write_remoting_arguments(client, indent, func, PASS_RETURN, PHASE_UNMARSHAL);
         }
@@ -274,10 +274,10 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         if (func->args)
         {
             LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                *proc_offset += get_size_procformatstring_var(var);
+                *proc_offset += get_size_procformatstring_type(var->name, var->type, var->attrs);
         }
-        if (!is_void(def->type))
-            *proc_offset += get_size_procformatstring_var(def);
+        if (!is_void(get_func_return_type(func)))
+            *proc_offset += get_size_procformatstring_type("return value", get_func_return_type(func), NULL);
         else
             *proc_offset += 2; /* FC_END and FC_PAD */
 
@@ -312,7 +312,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
 
         /* emit return code */
-        if (!is_void(def->type))
+        if (!is_void(get_func_return_type(func)))
         {
             fprintf(client, "\n");
             print_client("return _RetVal;\n");
