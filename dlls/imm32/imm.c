@@ -121,6 +121,32 @@ static void ImmInternalPostIMEMessage(InputContextData*, UINT, WPARAM, LPARAM);
 static void ImmInternalSetOpenStatus(BOOL fOpen);
 static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len);
 
+#define is_kbd_ime_unicode(p)  (p->imeInfo.fdwProperty & IME_PROP_UNICODE)
+
+static inline WCHAR *strdupAtoW( const char *str )
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+            MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
+    }
+    return ret;
+}
+
+static inline CHAR *strdupWtoA( const WCHAR *str )
+{
+    CHAR *ret = NULL;
+    if (str)
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+        if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    }
+    return ret;
+}
+
 /* ImmHkl loading and freeing */
 #define LOAD_FUNCPTR(f) if((ptr->p##f = (LPVOID)GetProcAddress(ptr->hIME, #f)) == NULL){WARN("Can't find function %s in ime\n", #f);}
 static ImmHkl *IMM_GetImmHkl(HKL hkl)
@@ -702,11 +728,30 @@ BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
 BOOL WINAPI ImmConfigureIMEA(
   HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
 {
-  FIXME("(%p, %p, %d, %p): stub\n",
-    hKL, hWnd, dwMode, lpData
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+
+    TRACE("(%p, %p, %d, %p):\n", hKL, hWnd, dwMode, lpData);
+
+    if (immHkl->hIME && immHkl->pImeConfigure)
+    {
+        if (dwMode != IME_CONFIG_REGISTERWORD || !is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeConfigure(hKL,hWnd,dwMode,lpData);
+        else
+        {
+            REGISTERWORDW rww;
+            REGISTERWORDA *rwa = (REGISTERWORDA*)lpData;
+            BOOL rc;
+
+            rww.lpReading = strdupAtoW(rwa->lpReading);
+            rww.lpWord = strdupAtoW(rwa->lpWord);
+            rc = immHkl->pImeConfigure(hKL,hWnd,dwMode,&rww);
+            HeapFree(GetProcessHeap(),0,rww.lpReading);
+            HeapFree(GetProcessHeap(),0,rww.lpWord);
+            return rc;
+        }
+    }
+    else
+        return FALSE;
 }
 
 /***********************************************************************
@@ -715,11 +760,30 @@ BOOL WINAPI ImmConfigureIMEA(
 BOOL WINAPI ImmConfigureIMEW(
   HKL hKL, HWND hWnd, DWORD dwMode, LPVOID lpData)
 {
-  FIXME("(%p, %p, %d, %p): stub\n",
-    hKL, hWnd, dwMode, lpData
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+
+    TRACE("(%p, %p, %d, %p):\n", hKL, hWnd, dwMode, lpData);
+
+    if (immHkl->hIME && immHkl->pImeConfigure)
+    {
+        if (dwMode != IME_CONFIG_REGISTERWORD || is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeConfigure(hKL,hWnd,dwMode,lpData);
+        else
+        {
+            REGISTERWORDW *rww = (REGISTERWORDW*)lpData;
+            REGISTERWORDA rwa;
+            BOOL rc;
+
+            rwa.lpReading = strdupWtoA(rww->lpReading);
+            rwa.lpWord = strdupWtoA(rww->lpWord);
+            rc = immHkl->pImeConfigure(hKL,hWnd,dwMode,&rwa);
+            HeapFree(GetProcessHeap(),0,rwa.lpReading);
+            HeapFree(GetProcessHeap(),0,rwa.lpWord);
+            return rc;
+        }
+    }
+    else
+        return FALSE;
 }
 
 /***********************************************************************
