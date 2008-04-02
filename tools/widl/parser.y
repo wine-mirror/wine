@@ -1375,8 +1375,6 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
 
   if (pident && pident->is_func) {
     int func_ptr_level = pident->func_ptr_level;
-    /* function pointers always have one implicit level of pointer */
-    if (func_ptr_level == 1) func_ptr_level = 0;
     v->type = make_type(RPC_FC_FUNCTION, v->type);
     v->type->fields_or_args = pident->args;
     if (pident->callconv)
@@ -1738,12 +1736,8 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
       }
       if (pident->is_func) {
         int func_ptr_level = pident->func_ptr_level;
-        /* function pointers always have one implicit level of pointer */
-        if (func_ptr_level == 1) func_ptr_level = 0;
         cur = make_type(RPC_FC_FUNCTION, cur);
         cur->fields_or_args = pident->args;
-        for (; func_ptr_level > 0; func_ptr_level--)
-          cur = make_type(pointer_default, cur);
         if (pident->callconv)
           cur->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, pident->callconv));
         else if (is_object_interface) {
@@ -1751,6 +1745,8 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
           if (!stdmethodcalltype) stdmethodcalltype = strdup("STDMETHODCALLTYPE");
           cur->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
         }
+        for (; func_ptr_level > 0; func_ptr_level--)
+          cur = make_type(pointer_default, cur);
       }
       cur = alias(cur, name->name);
       cur->attrs = attrs;

@@ -296,24 +296,36 @@ void write_type_right(FILE *h, type_t *t, int is_field)
 void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
                   const char *fmt, va_list args)
 {
+  type_t *pt;
+  int ptr_level = 0;
+
   if (!h) return;
 
-  if (t->type == RPC_FC_FUNCTION) {
-    const char *callconv = get_attrp(t->attrs, ATTR_CALLCONV);
+  for (pt = t; is_ptr(pt); pt = pt->ref, ptr_level++)
+    ;
+
+  if (pt->type == RPC_FC_FUNCTION) {
+    int i;
+    const char *callconv = get_attrp(pt->attrs, ATTR_CALLCONV);
     if (!callconv) callconv = "";
-    write_type_left(h, t->ref, declonly);
-    fprintf(h, " (%s *", callconv);
+    write_type_left(h, pt->ref, declonly);
+    fputc(' ', h);
+    if (ptr_level) fputc('(', h);
+    fprintf(h, "%s ", callconv);
+    for (i = 0; i < ptr_level; i++)
+      fputc('*', h);
   } else
     write_type_left(h, t, declonly);
   if (fmt) {
     if (needs_space_after(t))
-      fprintf(h, " ");
+      fputc(' ', h);
     vfprintf(h, fmt, args);
   }
-  if (t->type == RPC_FC_FUNCTION) {
-    fprintf(h, ")(");
-    write_args(h, t->fields_or_args, NULL, 0, FALSE);
-    fprintf(h, ")");
+  if (pt->type == RPC_FC_FUNCTION) {
+    if (ptr_level) fputc(')', h);
+    fputc('(', h);
+    write_args(h, pt->fields_or_args, NULL, 0, FALSE);
+    fputc(')', h);
   } else
     write_type_right(h, t, is_field);
 }
