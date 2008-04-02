@@ -301,8 +301,10 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
             /* Neither NONPOW2, DIBSECTION nor OVERSIZE flags can be set on compressed textures */
             This->Flags |= SFLAG_CLIENT;
             mem = (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+            ENTER_GL();
             GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
                        width, height, 0 /* border */, This->resource.size, mem));
+            LEAVE_GL();
         }
 
         return;
