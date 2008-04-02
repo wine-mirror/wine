@@ -437,7 +437,6 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
 void X11DRV_MapNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
-    int state;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
     if (!data->mapped) return;
@@ -446,70 +445,9 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
     {
         HWND hwndFocus = GetFocus();
         if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
-        return;
     }
-    if (!data->iconic) return;
-
-    state = get_window_wm_state( event->xmap.display, data );
-    if (state == NormalState)
-    {
-        int x, y;
-        unsigned int width, height, border, depth;
-        Window root, top;
-        WINDOWPLACEMENT wp;
-        RECT rect;
-
-        /* FIXME: hack */
-        wine_tsx11_lock();
-        XGetGeometry( event->xmap.display, data->whole_window, &root, &x, &y, &width, &height,
-                        &border, &depth );
-        XTranslateCoordinates( event->xmap.display, data->whole_window, root, 0, 0, &x, &y, &top );
-        wine_tsx11_unlock();
-        rect.left   = x;
-        rect.top    = y;
-        rect.right  = x + width;
-        rect.bottom = y + height;
-        OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
-        X11DRV_X_to_window_rect( data, &rect );
-
-        wp.length = sizeof(wp);
-        GetWindowPlacement( hwnd, &wp );
-        wp.flags = 0;
-        wp.showCmd = SW_RESTORE;
-        wp.rcNormalPosition = rect;
-
-        TRACE( "restoring win %p/%lx\n", hwnd, data->whole_window );
-        data->iconic = FALSE;
-        data->lock_changes++;
-        SetWindowPlacement( hwnd, &wp );
-        data->lock_changes--;
-    }
-    else TRACE( "win %p/%lx ignoring since state=%d\n", hwnd, data->whole_window, state );
 }
 
-
-/**********************************************************************
- *              X11DRV_UnmapNotify
- */
-void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
-{
-    struct x11drv_win_data *data;
-    int state;
-
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->managed || !data->mapped || data->iconic) return;
-
-    state = get_window_wm_state( event->xunmap.display, data );
-    if (state == IconicState)
-    {
-        TRACE( "minimizing win %p/%lx\n", hwnd, data->whole_window );
-        data->iconic = TRUE;
-        data->lock_changes++;
-        ShowWindow( hwnd, SW_MINIMIZE );
-        data->lock_changes--;
-    }
-    else TRACE( "win %p/%lx ignoring since state=%d\n", hwnd, data->whole_window, state );
-}
 
 struct desktop_resize_data
 {
