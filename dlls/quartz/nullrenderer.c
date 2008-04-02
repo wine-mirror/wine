@@ -65,6 +65,7 @@ typedef struct NullRendererImpl
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
+    MediaSeekingImpl mediaSeeking;
 } NullRendererImpl;
 
 static const IMemInputPinVtbl MemInputPin_Vtbl =
@@ -145,6 +146,62 @@ static HRESULT NullRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
     return S_OK;
 }
 
+static inline NullRendererImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (NullRendererImpl *)((char*)iface - FIELD_OFFSET(NullRendererImpl, mediaSeeking.lpVtbl));
+}
+
+static HRESULT WINAPI NullRendererImpl_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
+{
+    NullRendererImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
+}
+
+static ULONG WINAPI NullRendererImpl_Seeking_AddRef(IMediaSeeking * iface)
+{
+    NullRendererImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_AddRef((IUnknown *)This);
+}
+
+static ULONG WINAPI NullRendererImpl_Seeking_Release(IMediaSeeking * iface)
+{
+    NullRendererImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_Release((IUnknown *)This);
+}
+
+static const IMediaSeekingVtbl TransformFilter_Seeking_Vtbl =
+{
+    NullRendererImpl_Seeking_QueryInterface,
+    NullRendererImpl_Seeking_AddRef,
+    NullRendererImpl_Seeking_Release,
+    MediaSeekingImpl_GetCapabilities,
+    MediaSeekingImpl_CheckCapabilities,
+    MediaSeekingImpl_IsFormatSupported,
+    MediaSeekingImpl_QueryPreferredFormat,
+    MediaSeekingImpl_GetTimeFormat,
+    MediaSeekingImpl_IsUsingTimeFormat,
+    MediaSeekingImpl_SetTimeFormat,
+    MediaSeekingImpl_GetDuration,
+    MediaSeekingImpl_GetStopPosition,
+    MediaSeekingImpl_GetCurrentPosition,
+    MediaSeekingImpl_ConvertTimeFormat,
+    MediaSeekingImpl_SetPositions,
+    MediaSeekingImpl_GetPositions,
+    MediaSeekingImpl_GetAvailable,
+    MediaSeekingImpl_SetRate,
+    MediaSeekingImpl_GetRate,
+    MediaSeekingImpl_GetPreroll
+};
+
+static HRESULT NullRendererImpl_Change(IBaseFilter *iface)
+{
+    TRACE("(%p)\n", iface);
+    return S_OK;
+}
+
 HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -181,6 +238,9 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (SUCCEEDED(hr))
     {
         pNullRenderer->ppPins[0] = (IPin *)pNullRenderer->pInputPin;
+        MediaSeekingImpl_Init((IBaseFilter*)pNullRenderer, NullRendererImpl_Change, NullRendererImpl_Change, NullRendererImpl_Change, &pNullRenderer->mediaSeeking, &pNullRenderer->csFilter);
+        pNullRenderer->mediaSeeking.lpVtbl = &TransformFilter_Seeking_Vtbl;
+
         *ppv = (LPVOID)pNullRenderer;
     }
     else
@@ -212,6 +272,8 @@ static HRESULT WINAPI NullRendererInner_QueryInterface(IUnknown * iface, REFIID 
         *ppv = (LPVOID)This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
         *ppv = (LPVOID)This;
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+        *ppv = &This->mediaSeeking;
 
     if (*ppv)
     {
