@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -55,6 +58,52 @@ static LDR_MODULE *find_ldr_module( HMODULE module )
         if (ldr->BaseAddress == module) return ldr;
         if (ldr->BaseAddress > (void *)module) break;
     }
+    return NULL;
+}
+
+/* load the driver module file */
+static HMODULE load_driver_module( const WCHAR *name )
+{
+    const IMAGE_NT_HEADERS *nt;
+    size_t page_size = getpagesize();
+    int delta;
+    HMODULE module = LoadLibraryW( name );
+
+    if (!module) return NULL;
+    nt = RtlImageNtHeader( module );
+
+    if (!(delta = (char *)module - (char *)nt->OptionalHeader.ImageBase)) return module;
+
+    /* the loader does not apply relocations to non page-aligned binaries or executables,
+     * we have to do it ourselves */
+
+    if (nt->OptionalHeader.SectionAlignment < page_size ||
+        !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
+    {
+        ULONG size;
+        DWORD old;
+        IMAGE_BASE_RELOCATION *rel, *end;
+
+        if ((rel = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &size )))
+        {
+            WINE_TRACE( "%s: relocating from %p to %p\n",
+                        wine_dbgstr_w(name), (char *)module - delta, module );
+            end = (IMAGE_BASE_RELOCATION *)((char *)rel + size);
+            while (rel < end && rel->SizeOfBlock)
+            {
+                void *page = (char *)module + rel->VirtualAddress;
+                VirtualProtect( page, page_size, PAGE_EXECUTE_READWRITE, &old );
+                rel = LdrProcessRelocationBlock( page, (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
+                                                 (USHORT *)(rel + 1), delta );
+                if (old != PAGE_EXECUTE_READWRITE) VirtualProtect( page, page_size, old, NULL );
+                if (!rel) goto error;
+            }
+        }
+    }
+    return module;
+
+error:
+    FreeLibrary( module );
     return NULL;
 }
 
@@ -146,7 +195,7 @@ static BOOL load_driver(void)
 
     WINE_TRACE( "loading driver %s\n", wine_dbgstr_w(str) );
 
-    module = LoadLibraryW( str );
+    module = load_driver_module( str );
     HeapFree( GetProcessHeap(), 0, path );
     if (!module) return FALSE;
 
