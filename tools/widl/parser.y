@@ -63,6 +63,8 @@
 # endif
 #endif
 
+#define YYERROR_VERBOSE
+
 unsigned char pointer_default = RPC_FC_UP;
 static int is_object_interface = FALSE;
 
