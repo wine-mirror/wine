@@ -37,6 +37,95 @@ struct edit_notify {
 
 static struct edit_notify notifications;
 
+static INT_PTR CALLBACK multi_edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            HWND hedit = GetDlgItem(hdlg, 1000);
+            SetFocus(hedit);
+            switch (lparam)
+            {
+                /* test cases related to bug 12319 */
+                case 0:
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+                case 1:
+                    PostMessage(hedit, WM_CHAR, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+                case 2:
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hedit, WM_CHAR, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+        }
+
+        case WM_COMMAND:
+            if (HIWORD(wparam) != BN_CLICKED)
+                break;
+
+            switch (LOWORD(wparam))
+            {
+                case IDOK:
+                    EndDialog(hdlg, 111);
+                    break;
+
+                case IDCANCEL:
+                    EndDialog(hdlg, 222);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+
+        case WM_USER:
+        {
+            HWND hfocus = GetFocus();
+            HWND hedit = GetDlgItem(hdlg, 1000);
+            HWND hedit2 = GetDlgItem(hdlg, 1001);
+            HWND hedit3 = GetDlgItem(hdlg, 1002);
+
+            if (wparam != 0xdeadbeef)
+                break;
+
+            switch (lparam)
+            {
+                case 0:
+                    if (hfocus == hedit)
+                        EndDialog(hdlg, 1111);
+                    else if (hfocus == hedit2)
+                        EndDialog(hdlg, 2222);
+                    else if (hfocus == hedit3)
+                        EndDialog(hdlg, 3333);
+                    else
+                        EndDialog(hdlg, 4444);
+                    break;
+                default:
+                    EndDialog(hdlg, 5555);
+            }
+            break;
+        }
+
+        case WM_CLOSE:
+            EndDialog(hdlg, 333);
+            break;
+
+        default:
+            break;
+    }
+
+    return FALSE;
+}
+
 static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -1341,6 +1430,19 @@ static void test_edit_dialog(void)
     ok(33 == r, "Expected %d, got %d\n", 33, r);
 }
 
+static void test_multi_edit_dialog(void)
+{
+    int r;
+
+    /* test for multiple edit dialogs (bug 12319) */
+    r = DialogBoxParam(hinst, "MULTI_EDIT_DIALOG", NULL, (DLGPROC)multi_edit_dialog_proc, 0);
+    ok(2222 == r, "Expected %d, got %d\n", 2222, r);
+    r = DialogBoxParam(hinst, "MULTI_EDIT_DIALOG", NULL, (DLGPROC)multi_edit_dialog_proc, 1);
+    ok(1111 == r, "Expected %d, got %d\n", 1111, r);
+    r = DialogBoxParam(hinst, "MULTI_EDIT_DIALOG", NULL, (DLGPROC)multi_edit_dialog_proc, 2);
+    ok(2222 == r, "Expected %d, got %d\n", 2222, r);
+}
+
 static BOOL RegisterWindowClasses (void)
 {
     WNDCLASSA test2;
@@ -1410,6 +1512,7 @@ START_TEST(edit)
     test_espassword();
     test_undo();
     test_edit_dialog();
+    test_multi_edit_dialog();
 
     UnregisterWindowClasses();
 }

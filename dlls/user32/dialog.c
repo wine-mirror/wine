@@ -1094,7 +1094,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
     {
     case WM_KEYDOWN:
         dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, msg->wParam, (LPARAM)msg );
-        if (dlgCode & DLGC_WANTMESSAGE) break;
+        if (dlgCode & (DLGC_WANTCHARS|DLGC_WANTMESSAGE)) break;
 
         switch(msg->wParam)
         {
