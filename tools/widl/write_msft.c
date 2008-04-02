@@ -1948,8 +1948,8 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     if (dispinterface->funcs)
         LIST_FOR_EACH_ENTRY( func, dispinterface->funcs, const func_t, entry ) idx++;
 
-    if (dispinterface->fields)
-        LIST_FOR_EACH_ENTRY( var, dispinterface->fields, var_t, entry )
+    if (dispinterface->fields_or_args)
+        LIST_FOR_EACH_ENTRY( var, dispinterface->fields_or_args, var_t, entry )
             add_var_desc(msft_typeinfo, idx++, var);
 
     if (dispinterface->funcs)
@@ -2032,8 +2032,8 @@ static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_RECORD, structure->name, structure->attrs);
     msft_typeinfo->typeinfo->size = 0;
 
-    if (structure->fields)
-        LIST_FOR_EACH_ENTRY( cur, structure->fields, var_t, entry )
+    if (structure->fields_or_args)
+        LIST_FOR_EACH_ENTRY( cur, structure->fields_or_args, var_t, entry )
             add_var_desc(msft_typeinfo, idx++, cur);
 }
 
@@ -2047,8 +2047,8 @@ static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ENUM, enumeration->name, enumeration->attrs);
     msft_typeinfo->typeinfo->size = 0;
 
-    if (enumeration->fields)
-        LIST_FOR_EACH_ENTRY( cur, enumeration->fields, var_t, entry )
+    if (enumeration->fields_or_args)
+        LIST_FOR_EACH_ENTRY( cur, enumeration->fields_or_args, var_t, entry )
             add_var_desc(msft_typeinfo, idx++, cur);
 }
 

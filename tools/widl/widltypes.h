@@ -34,6 +34,8 @@ typedef GUID UUID;
 #define TRUE 1
 #define FALSE 0
 
+#define RPC_FC_FUNCTION 0xfe
+
 typedef struct _attr_t attr_t;
 typedef struct _expr_t expr_t;
 typedef struct _type_t type_t;
@@ -212,7 +214,7 @@ struct _type_t {
   struct _type_t *ref;
   const attr_list_t *attrs;
   func_list_t *funcs;             /* interfaces and modules */
-  var_list_t *fields;             /* interfaces, structures and enumerations */
+  var_list_t *fields_or_args;     /* interfaces, structures, enumerations and functions (for args) */
   ifref_list_t *ifaces;           /* coclasses */
   unsigned long dim;              /* array dimension */
   expr_t *size_is, *length_is;
@@ -233,7 +235,6 @@ struct _type_t {
 struct _var_t {
   char *name;
   type_t *type;
-  var_list_t *args;  /* for function pointers */
   attr_list_t *attrs;
   expr_t *eval;
 
@@ -244,8 +245,11 @@ struct _var_t {
 struct _pident_t {
   var_t *var;
   int ptr_level;
+
+  int is_func;
   /* levels of indirection for function pointers */
   int func_ptr_level;
+  var_list_t *args;
 
   /* parser-internal */
   struct list entry;
@@ -332,7 +336,7 @@ int is_union(unsigned char tc);
 
 static inline type_t *get_func_return_type(const func_t *func)
 {
-  return func->def->type;
+  return func->def->type->ref;
 }
 
 #endif

@@ -227,7 +227,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           else fprintf(h, "enum {\n");
           t->written = TRUE;
           indentation++;
-          write_enums(h, t->fields);
+          write_enums(h, t->fields_or_args);
           indent(h, -1);
           fprintf(h, "}");
         }
@@ -245,7 +245,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           else fprintf(h, "struct {\n");
           t->written = TRUE;
           indentation++;
-          write_fields(h, t->fields);
+          write_fields(h, t->fields_or_args);
           indent(h, -1);
           fprintf(h, "}");
         }
@@ -257,7 +257,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           else fprintf(h, "union {\n");
           t->written = TRUE;
           indentation++;
-          write_fields(h, t->fields);
+          write_fields(h, t->fields_or_args);
           indent(h, -1);
           fprintf(h, "}");
         }
@@ -402,7 +402,7 @@ void check_for_additional_prototype_types(const var_list_t *list)
       }
       else
       {
-        check_for_additional_prototype_types(type->fields);
+        check_for_additional_prototype_types(type->fields_or_args);
       }
     }
   }
@@ -690,13 +690,13 @@ void write_args(FILE *h, const var_list_t *args, const char *name, int method, i
         }
         else fprintf(h, ",");
     }
-    if (arg->args)
+    if (arg->type->type == RPC_FC_FUNCTION)
     {
-      write_type_decl_left(h, arg->type);
+      write_type_decl_left(h, arg->type->ref);
       fprintf(h, " (STDMETHODCALLTYPE *");
       write_name(h,arg);
       fprintf(h, ")(");
-      write_args(h, arg->args, NULL, 0, FALSE);
+      write_args(h, arg->type->fields_or_args, NULL, 0, FALSE);
       fprintf(h, ")");
     }
     else

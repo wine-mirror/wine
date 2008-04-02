@@ -168,7 +168,7 @@ static int type_has_pointers(const type_t *type)
     else if (is_struct(type->type))
     {
         const var_t *field;
-        if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
+        if (type->fields_or_args) LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
         {
             if (type_has_pointers(field->type))
                 return TRUE;
@@ -180,11 +180,11 @@ static int type_has_pointers(const type_t *type)
         const var_t *field;
         if (type->type == RPC_FC_ENCAPSULATED_UNION)
         {
-            const var_t *uv = LIST_ENTRY(list_tail(type->fields), const var_t, entry);
-            fields = uv->type->fields;
+            const var_t *uv = LIST_ENTRY(list_tail(type->fields_or_args), const var_t, entry);
+            fields = uv->type->fields_or_args;
         }
         else
-            fields = type->fields;
+            fields = type->fields_or_args;
         if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
         {
             if (field->type && type_has_pointers(field->type))
@@ -208,7 +208,7 @@ static int type_has_full_pointer(const type_t *type)
     else if (is_struct(type->type))
     {
         const var_t *field;
-        if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
+        if (type->fields_or_args) LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
         {
             if (type_has_full_pointer(field->type))
                 return TRUE;
@@ -220,11 +220,11 @@ static int type_has_full_pointer(const type_t *type)
         const var_t *field;
         if (type->type == RPC_FC_ENCAPSULATED_UNION)
         {
-            const var_t *uv = LIST_ENTRY(list_tail(type->fields), const var_t, entry);
-            fields = uv->type->fields;
+            const var_t *uv = LIST_ENTRY(list_tail(type->fields_or_args), const var_t, entry);
+            fields = uv->type->fields_or_args;
         }
         else
-            fields = type->fields;
+            fields = type->fields_or_args;
         if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
         {
             if (field->type && type_has_full_pointer(field->type))
@@ -710,7 +710,7 @@ static size_t write_conf_or_var_desc(FILE *file, const type_t *structure,
         size_t offset = 0;
         const var_t *var;
 
-        if (structure->fields) LIST_FOR_EACH_ENTRY( var, structure->fields, const var_t, entry )
+        if (structure->fields_or_args) LIST_FOR_EACH_ENTRY( var, structure->fields_or_args, const var_t, entry )
         {
             unsigned int align = 0;
             /* FIXME: take alignment into account */
@@ -925,11 +925,11 @@ size_t type_memsize(const type_t *t, unsigned int *align)
     case RPC_FC_CSTRUCT:
     case RPC_FC_PSTRUCT:
     case RPC_FC_BOGUS_STRUCT:
-        size = fields_memsize(t->fields, align);
+        size = fields_memsize(t->fields_or_args, align);
         break;
     case RPC_FC_ENCAPSULATED_UNION:
     case RPC_FC_NON_ENCAPSULATED_UNION:
-        size = union_memsize(t->fields, align);
+        size = union_memsize(t->fields_or_args, align);
         break;
     case RPC_FC_SMFARRAY:
     case RPC_FC_LGFARRAY:
@@ -1147,7 +1147,7 @@ static void write_end(FILE *file, unsigned int *tfsoff)
 static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
 {
     unsigned int offset = 0;
-    var_list_t *fs = type->fields;
+    var_list_t *fs = type->fields_or_args;
     var_t *f;
 
     if (fs) LIST_FOR_EACH_ENTRY(f, fs, var_t, entry)
@@ -1221,7 +1221,7 @@ static int write_no_repeat_pointer_descriptions(
     if (is_non_complex_struct(type))
     {
         const var_t *v;
-        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+        LIST_FOR_EACH_ENTRY( v, type->fields_or_args, const var_t, entry )
             written += write_no_repeat_pointer_descriptions(
                 file, v->type,
                 offset_in_memory, offset_in_buffer, typestring_offset);
@@ -1283,7 +1283,7 @@ static int write_pointer_description_offsets(
     {
         /* otherwise search for interesting fields to parse */
         const var_t *v;
-        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+        LIST_FOR_EACH_ENTRY( v, type->fields_or_args, const var_t, entry )
         {
             written += write_pointer_description_offsets(
                 file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
@@ -1346,7 +1346,7 @@ static int write_fixed_array_pointer_descriptions(
     else if (is_struct(type->type))
     {
         const var_t *v;
-        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+        LIST_FOR_EACH_ENTRY( v, type->fields_or_args, const var_t, entry )
         {
             pointer_count += write_fixed_array_pointer_descriptions(
                 file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
@@ -1457,7 +1457,7 @@ static int write_varying_array_pointer_descriptions(
     else if (is_struct(type->type))
     {
         const var_t *v;
-        LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
+        LIST_FOR_EACH_ENTRY( v, type->fields_or_args, const var_t, entry )
         {
             pointer_count += write_varying_array_pointer_descriptions(
                 file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
@@ -1730,7 +1730,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type
 
 static const var_t *find_array_or_string_in_struct(const type_t *type)
 {
-    const var_t *last_field = LIST_ENTRY( list_tail(type->fields), const var_t, entry );
+    const var_t *last_field = LIST_ENTRY( list_tail(type->fields_or_args), const var_t, entry );
     const type_t *ft = last_field->type;
 
     if (ft->declarray && is_conformant_array(ft))
@@ -1750,7 +1750,7 @@ static void write_struct_members(FILE *file, const type_t *type,
     int salign = -1;
     int padding;
 
-    if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
+    if (type->fields_or_args) LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
     {
         type_t *ft = field->type;
         if (!ft->declarray || !is_conformant_array(ft))
@@ -1816,7 +1816,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
         error("structure size for %s exceeds %d bytes by %d bytes\n",
               name, USHRT_MAX, total_size - USHRT_MAX);
 
-    if (type->fields) LIST_FOR_EACH_ENTRY(f, type->fields, var_t, entry)
+    if (type->fields_or_args) LIST_FOR_EACH_ENTRY(f, type->fields_or_args, var_t, entry)
         has_pointers |= write_embedded_types(file, f->attrs, f->type, f->name,
                                              FALSE, tfsoff);
     if (!has_pointers) has_pointers = type_has_pointers(type);
@@ -1880,7 +1880,7 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
 
     if (type->type == RPC_FC_BOGUS_STRUCT)
     {
-        const var_list_t *fs = type->fields;
+        const var_list_t *fs = type->fields_or_args;
         const var_t *f;
 
         type->ptrdesc = *tfsoff;
@@ -1990,11 +1990,11 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
 
     if (type->type == RPC_FC_ENCAPSULATED_UNION)
     {
-        const var_t *uv = LIST_ENTRY(list_tail(type->fields), const var_t, entry);
-        fields = uv->type->fields;
+        const var_t *uv = LIST_ENTRY(list_tail(type->fields_or_args), const var_t, entry);
+        fields = uv->type->fields_or_args;
     }
     else
-        fields = type->fields;
+        fields = type->fields_or_args;
 
     if (fields) LIST_FOR_EACH_ENTRY(f, fields, var_t, entry)
     {
@@ -2010,7 +2010,7 @@ static size_t write_union_tfs(FILE *file, type_t *type, unsigned int *tfsoff)
     print_start_tfs_comment(file, type, start_offset);
     if (type->type == RPC_FC_ENCAPSULATED_UNION)
     {
-        const var_t *sv = LIST_ENTRY(list_head(type->fields), const var_t, entry);
+        const var_t *sv = LIST_ENTRY(list_head(type->fields_or_args), const var_t, entry);
         const type_t *st = sv->type;
 
         switch (st->type)
@@ -2458,8 +2458,8 @@ static unsigned int get_required_buffer_size_type(
         {
             size_t size = 0;
             const var_t *field;
-            if (!type->fields) return 0;
-            LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
+            if (!type->fields_or_args) return 0;
+            LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
             {
                 unsigned int alignment;
                 size += get_required_buffer_size_type(field->type, field->name,
@@ -2513,8 +2513,8 @@ static unsigned int get_required_buffer_size(const var_t *var, unsigned int *ali
                 const var_t *field;
                 unsigned int size = 36;
 
-                if (!type->fields) return size;
-                LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
+                if (!type->fields_or_args) return size;
+                LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
                 {
                     unsigned int align;
                     size += get_required_buffer_size_type(
@@ -2543,8 +2543,8 @@ static unsigned int get_required_buffer_size(const var_t *var, unsigned int *ali
                     unsigned int size = 36;
                     const var_t *field;
 
-                    if (!type->fields) return size;
-                    LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
+                    if (!type->fields_or_args) return size;
+                    LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
                     {
                         unsigned int align;
                         size += get_required_buffer_size_type(
@@ -3311,7 +3311,7 @@ int write_expr_eval_routines(FILE *file, const char *iface)
     LIST_FOR_EACH_ENTRY(eval, &expr_eval_routines, struct expr_eval_routine, entry)
     {
         const char *name = eval->structure->name;
-        const var_list_t *fields = eval->structure->fields;
+        const var_list_t *fields = eval->structure->fields_or_args;
         result = 1;
 
         print_file(file, 0, "static void __RPC_USER %s_%sExprEval_%04u(PMIDL_STUB_MESSAGE pStubMsg)\n",
