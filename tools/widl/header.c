@@ -871,7 +871,7 @@ static void write_function_proto(const type_t *iface, const func_t *fun, const c
     write_args(header, fun->args, iface->name, 0, TRUE);
   else
     fprintf(header, "    void");
-  fprintf(header, ");\n");
+  fprintf(header, ");\n\n");
 }
 
 static void write_function_protos(const type_t *iface)
