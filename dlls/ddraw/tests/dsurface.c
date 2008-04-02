@@ -1012,6 +1012,7 @@ static void EnumTest(void)
     ok(rc == DD_OK, "GetAttachedSurface returned %08x\n", rc);
     rc = IDirectDrawSurface_GetAttachedSurface(ctx.expected[2], &ddsd.ddsCaps, &ctx.expected[3]);
     ok(rc == DDERR_NOTFOUND, "GetAttachedSurface returned %08x\n", rc);
+    ok(!ctx.expected[3], "expected NULL pointer\n");
     ctx.count = 0;
 
     rc = IDirectDraw_EnumSurfaces(lpDD, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL, &ddsd, (void *) &ctx, enumCB);
@@ -1077,6 +1078,9 @@ static void AttachmentTest7(void)
     ok(num == 0, "Second mip level has %d surfaces attached, expected 1\n", num);
     /* Done level 2 */
     /* Mip level 3 is still needed */
+    hr = IDirectDrawSurface7_GetAttachedSurface(surface3, &caps, &surface4);
+    ok(hr == DDERR_NOTFOUND, "GetAttachedSurface returned %08x\n", hr);
+    ok(!surface4, "expected NULL pointer\n");
 
     /* Try to attach a 16x16 miplevel - Should not work as far I can see */
     memset(&ddsd, 0, sizeof(ddsd));

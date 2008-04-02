@@ -540,6 +540,8 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
 
     TRACE("(%p) Didn't find a valid surface\n", This);
     LeaveCriticalSection(&ddraw_cs);
+
+    *Surface = NULL;
     return DDERR_NOTFOUND;
 }
 

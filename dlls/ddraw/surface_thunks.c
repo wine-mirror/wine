@@ -228,9 +228,8 @@ IDirectDrawSurface3Impl_GetAttachedSurface(LPDIRECTDRAWSURFACE3 This,
 
     hr = IDirectDrawSurface7_GetAttachedSurface(CONVERT(This), &caps,
 						&pAttached7);
-    if (FAILED(hr)) return hr;
-
-    *ppAttached = CONVERT_REV(pAttached7);
+    if (FAILED(hr)) *ppAttached = NULL;
+    else *ppAttached = CONVERT_REV(pAttached7);
     return hr;
 }
 
