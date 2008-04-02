@@ -1517,7 +1517,7 @@ HRESULT PullPin_PauseProcessing(PullPin * This)
 
         PullPin_WaitForStateChange(This, INFINITE);
         EnterCriticalSection(This->pin.pCritSec);
-        This->stop_playback = 0;
+        This->stop_playback = 1;
         LeaveCriticalSection(This->pin.pCritSec);
         ResetEvent(This->hEventStateChanged);
 
@@ -1535,7 +1535,7 @@ HRESULT PullPin_StopProcessing(PullPin * This)
     {
         PullPin_WaitForStateChange(This, INFINITE);
 
-        This->stop_playback = 0;
+        This->stop_playback = 1;
         ResetEvent(This->hEventStateChanged);
 
         if (!QueueUserAPC(PullPin_Thread_Stop, This->hThread, (ULONG_PTR)This))
