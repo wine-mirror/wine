@@ -2054,6 +2054,9 @@ static UINT TABLE_sort(struct tagMSIVIEW *view, column_info *columns)
     if (r != ERROR_SUCCESS)
         return r;
 
+    if (rows == 0)
+        return ERROR_SUCCESS;
+
     order = msi_alloc_zero(sizeof(MSIORDERINFO) + sizeof(UINT) * cols);
     if (!order)
         return ERROR_OUTOFMEMORY;
