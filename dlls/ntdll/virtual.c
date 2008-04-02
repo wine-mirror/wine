@@ -880,76 +880,6 @@ static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t siz
 
 
 /***********************************************************************
- *           do_relocations
- *
- * Apply the relocations to a mapped PE image
- */
-static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
-                           int delta, SIZE_T total_size )
-{
-    IMAGE_BASE_RELOCATION *rel;
-
-    TRACE_(module)( "relocating from %p-%p to %p-%p\n",
-                    base - delta, base - delta + total_size, base, base + total_size );
-
-    for (rel = (IMAGE_BASE_RELOCATION *)(base + dir->VirtualAddress);
-         ((char *)rel < base + dir->VirtualAddress + dir->Size) && rel->SizeOfBlock;
-         rel = (IMAGE_BASE_RELOCATION*)((char*)rel + rel->SizeOfBlock) )
-    {
-        char *page = base + rel->VirtualAddress;
-        WORD *TypeOffset = (WORD *)(rel + 1);
-        int i, count = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(*TypeOffset);
-
-        if (!count) continue;
-
-        /* sanity checks */
-        if ((char *)rel + rel->SizeOfBlock > base + dir->VirtualAddress + dir->Size)
-        {
-            ERR_(module)("invalid relocation %p,%x,%d at %p,%x,%x\n",
-                         rel, rel->VirtualAddress, rel->SizeOfBlock,
-                         base, dir->VirtualAddress, dir->Size );
-            return 0;
-        }
-
-        if (page > base + total_size)
-        {
-            WARN_(module)("skipping %d relocations for page %p beyond module %p-%p\n",
-                          count, page, base, base + total_size );
-            continue;
-        }
-
-        TRACE_(module)("%d relocations for page %x\n", count, rel->VirtualAddress);
-
-        /* patching in reverse order */
-        for (i = 0 ; i < count; i++)
-        {
-            int offset = TypeOffset[i] & 0xFFF;
-            int type = TypeOffset[i] >> 12;
-            switch(type)
-            {
-            case IMAGE_REL_BASED_ABSOLUTE:
-                break;
-            case IMAGE_REL_BASED_HIGH:
-                *(short*)(page+offset) += HIWORD(delta);
-                break;
-            case IMAGE_REL_BASED_LOW:
-                *(short*)(page+offset) += LOWORD(delta);
-                break;
-            case IMAGE_REL_BASED_HIGHLOW:
-                *(int*)(page+offset) += delta;
-                /* FIXME: if this is an exported address, fire up enhanced logic */
-                break;
-            default:
-                FIXME_(module)("Unknown/unsupported fixup type %d.\n", type);
-                break;
-            }
-        }
-    }
-    return 1;
-}
-
-
-/***********************************************************************
  *           map_image
  *
  * Map an executable (PE format) image into memory.
@@ -1055,16 +985,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         VIRTUAL_SetProt( view, ptr, total_size,
                          VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
 
-        /* perform relocations if necessary */
-        /* FIXME: not 100% compatible, Windows doesn't do this for non page-aligned binaries */
-        if (ptr != base)
-        {
-            const IMAGE_DATA_DIRECTORY *relocs;
-            relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-            if (relocs->VirtualAddress && relocs->Size)
-                do_relocations( ptr, relocs, ptr - base, total_size );
-        }
-
+        /* no relocations are performed on non page-aligned binaries */
         goto done;
     }
 
@@ -1167,27 +1088,31 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
           !NtCurrentTeb()->Peb->ImageBaseAddress) )
     {
+        int delta = ptr - base;
+        IMAGE_BASE_RELOCATION *rel, *end;
         const IMAGE_DATA_DIRECTORY *relocs;
 
-        relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
         if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
         {
-            WARN_(module)( "Need to relocate module from addr %lx, but there are no relocation records\n",
-                  (ULONG_PTR)nt->OptionalHeader.ImageBase );
+            WARN_(module)( "Need to relocate module from %p to %p, but there are no relocation records\n",
+                           base, ptr );
             status = STATUS_CONFLICTING_ADDRESSES;
             goto error;
         }
 
-        /* FIXME: If we need to relocate a system DLL (base > 2GB) we should
-         *        really make sure that the *new* base address is also > 2GB.
-         *        Some DLLs really check the MSB of the module handle :-/
-         */
-        if ((nt->OptionalHeader.ImageBase & 0x80000000) && !((ULONG_PTR)base & 0x80000000))
-            ERR_(module)( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
+        TRACE_(module)( "relocating from %p-%p to %p-%p\n",
+                        base, base + total_size, ptr, ptr + total_size );
 
-        if (!do_relocations( ptr, relocs, ptr - base, total_size ))
+        relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+        rel = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress);
+        end = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress + relocs->Size);
+
+        while (rel < end && rel->SizeOfBlock)
         {
-            goto error;
+            rel = LdrProcessRelocationBlock( ptr + rel->VirtualAddress,
+                                             (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
+                                             (USHORT *)(rel + 1), delta );
+            if (!rel) goto error;
         }
     }
 
