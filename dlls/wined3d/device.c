@@ -5490,6 +5490,18 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
+static void dirtify_p8_texture_samplers(IWineD3DDeviceImpl *device)
+{
+    int i;
+
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
+            IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl*)device->stateBlock->textures[i];
+            if (texture && (texture->resource.format == WINED3DFMT_P8 || texture->resource.format == WINED3DFMT_A8P8)) {
+                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
+            }
+        }
+}
+
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     int j;
@@ -5531,6 +5543,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *ifa
         This->palettes[PaletteNumber][j].peBlue  = pEntries[j].peBlue;
         This->palettes[PaletteNumber][j].peFlags = pEntries[j].peFlags;
     }
+    if (PaletteNumber == This->currentPalette) dirtify_p8_texture_samplers(This);
     TRACE("(%p) : returning\n", This);
     return WINED3D_OK;
 }
@@ -5565,7 +5578,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCurrentTexturePalette(IWineD3DDevi
         return WINED3DERR_INVALIDCALL;
     }
     /*TODO: stateblocks */
-    This->currentPalette = PaletteNumber;
+    if (This->currentPalette != PaletteNumber) {
+        This->currentPalette = PaletteNumber;
+        dirtify_p8_texture_samplers(This);
+    }
     TRACE("(%p) : returning\n", This);
     return WINED3D_OK;
 }

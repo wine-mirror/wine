@@ -1041,14 +1041,12 @@ static void p8_texture_test(IDirect3DDevice8 *device)
     ok(red == 0xff && blue == 0 && green == 0,
        "got color %08x, expected 0x00ff0000\n", color);
 
-    todo_wine {
-        color = getPixelColor(device, 32, 320);
-        red   = (color & 0x00ff0000) >> 16;
-        green = (color & 0x0000ff00) >>  8;
-        blue  = (color & 0x000000ff) >>  0;
-        ok(red == 0 && blue == 0xff && green == 0,
-        "got color %08x, expected 0x000000ff\n", color);
-    }
+    color = getPixelColor(device, 32, 320);
+    red   = (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue  = (color & 0x000000ff) >>  0;
+    ok(red == 0 && blue == 0xff && green == 0,
+    "got color %08x, expected 0x000000ff\n", color);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed, hr = %08x\n", hr);
@@ -1069,14 +1067,12 @@ static void p8_texture_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
 
-    todo_wine {
-        color = getPixelColor(device, 32, 32);
-        red   = (color & 0x00ff0000) >> 16;
-        green = (color & 0x0000ff00) >>  8;
-        blue  = (color & 0x000000ff) >>  0;
-        ok(red == 0 && blue == 0xff && green == 0,
-        "got color %08x, expected 0x000000ff\n", color);
-    }
+    color = getPixelColor(device, 32, 32);
+    red   = (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue  = (color & 0x000000ff) >>  0;
+    ok(red == 0 && blue == 0xff && green == 0,
+    "got color %08x, expected 0x000000ff\n", color);
 
     /* Test palettes with alpha */
     IDirect3DDevice8_GetDeviceCaps(device, &caps);
@@ -1134,21 +1130,19 @@ static void p8_texture_test(IDirect3DDevice8 *device)
         hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
 
-        todo_wine {
-            color = getPixelColor(device, 32, 32);
-            red   = (color & 0x00ff0000) >> 16;
-            green = (color & 0x0000ff00) >>  8;
-            blue  = (color & 0x000000ff) >>  0;
-            ok(red >= 0x7e && red <= 0x81 && blue == 0 && green == 0,
-            "got color %08x, expected 0x00800000 or near\n", color);
+        color = getPixelColor(device, 32, 32);
+        red   = (color & 0x00ff0000) >> 16;
+        green = (color & 0x0000ff00) >>  8;
+        blue  = (color & 0x000000ff) >>  0;
+        ok(red >= 0x7e && red <= 0x81 && blue == 0 && green == 0,
+        "got color %08x, expected 0x00800000 or near\n", color);
 
-            color = getPixelColor(device, 32, 320);
-            red   = (color & 0x00ff0000) >> 16;
-            green = (color & 0x0000ff00) >>  8;
-            blue  = (color & 0x000000ff) >>  0;
-            ok(red == 0 && blue >= 0x7e && blue <= 0x81 && green == 0,
-            "got color %08x, expected 0x00000080 or near\n", color);
-        }
+        color = getPixelColor(device, 32, 320);
+        red   = (color & 0x00ff0000) >> 16;
+        green = (color & 0x0000ff00) >>  8;
+        blue  = (color & 0x000000ff) >>  0;
+        ok(red == 0 && blue >= 0x7e && blue <= 0x81 && green == 0,
+        "got color %08x, expected 0x00000080 or near\n", color);
     }
 
     hr = IDirect3DDevice8_SetTexture(device, 0, NULL);

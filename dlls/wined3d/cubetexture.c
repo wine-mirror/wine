@@ -125,6 +125,19 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     }
     IWineD3DCubeTexture_BindTexture(iface);
 
+    if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) {
+        for (i = 0; i < This->baseTexture.levels; i++) {
+            for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
+                if(palette9_changed((IWineD3DSurfaceImpl *)This->surfaces[j][i])) {
+                    TRACE("Reloading surface because the d3d8/9 palette was changed\n");
+                    /* TODO: This is not necessarily needed with hw palettized texture support */
+                    IWineD3DSurface_LoadLocation(This->surfaces[j][i], SFLAG_INSYSMEM, NULL);
+                    /* Make sure the texture is reloaded because of the palette change, this kills performance though :( */
+                    IWineD3DSurface_ModifyLocation(This->surfaces[j][i], SFLAG_INTEXTURE, FALSE);
+                }
+            }
+        }
+    }
     /* If the texture is marked dirty or the srgb sampler setting has changed since the last load then reload the surfaces */
     if (This->baseTexture.dirty) {
         for (i = 0; i < This->baseTexture.levels; i++) {

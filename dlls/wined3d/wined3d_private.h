@@ -1409,6 +1409,8 @@ typedef enum {
 
 HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode);
 
+BOOL palette9_changed(IWineD3DSurfaceImpl *This);
+
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
  */

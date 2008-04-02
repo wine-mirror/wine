@@ -499,6 +499,15 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
 
+        if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) {
+            if(palette9_changed(This)) {
+                TRACE("Reloading surface because the d3d8/9 palette was changed\n");
+                /* TODO: This is not necessarily needed with hw palettized texture support */
+                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+                /* Make sure the texture is reloaded because of the palette change, this kills performance though :( */
+                IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
+            }
+        }
         ENTER_GL();
         glEnable(This->glDescription.target);/* make sure texture support is enabled in this context */
         if (!This->glDescription.level) {
@@ -2149,7 +2158,7 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
     }
 }
 
-static BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
+BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
     if(This->palette || (This->resource.format != WINED3DFMT_P8 && This->resource.format != WINED3DFMT_A8P8)) {
@@ -2226,13 +2235,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
         /* Make sure the texture is reloaded because of the color key change, this kills performance though :( */
         /* TODO: This is not necessarily needed with hw palettized texture support */
-        This->Flags &= ~SFLAG_INTEXTURE;
-    } else if(palette9_changed(This)) {
-        TRACE("Reloading surface because the d3d8/9 palette was changed\n");
-        /* TODO: This is not necessarily needed with hw palettized texture support */
-        IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
-
-        /* Make sure the texture is reloaded because of the color key change, this kills performance though :( */
         This->Flags &= ~SFLAG_INTEXTURE;
     } else {
         TRACE("surface is already in texture\n");
