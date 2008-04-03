@@ -1987,12 +1987,27 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
     /* We need a constant to fixup the final position */
     shader_addline(buffer, "PARAM posFixup = program.env[%d];\n", ARB_SHADER_PRIVCONST_POS);
 
-    if((GLINFO_LOCATION).set_texcoord_w) {
-        int i;
-        for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
-            if(This->baseShader.reg_maps.texcoord_mask[i] != 0 &&
-               This->baseShader.reg_maps.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL) {
-                shader_addline(buffer, "MOV result.texcoord[%u].w, -helper_const.y;\n", i);
+    /* Initialize output parameters. GL_ARB_vertex_program does not require special initialization values
+     * for output parameters. D3D in theory does not do that either, but some applications depend on a
+     * proper initialization of the secondary color, and programs using the fixed function pipeline without
+     * a replacement shader depend on the texcoord.w beeing set properly.
+     *
+     * GL_NV_vertex_program defines that all output values are initialized to {0.0, 0.0, 0.0, 1.0}. This
+     * assetion is in effect even when using GL_ARB_vertex_program without any NV specific additions. So
+     * skip this if NV_vertex_program is supported. Otherwise, initialize the secondary color. For the tex-
+     * coords, we have a flag in the opengl caps. Many cards do not require the texcoord beeing set, and
+     * this can eat a number of instructions, so skip it unless this cap is set as well
+     */
+    if(!GL_SUPPORT(NV_VERTEX_PROGRAM)) {
+        shader_addline(buffer, "MOV result.color.secondary, -helper_const.wwwy;\n");
+
+        if((GLINFO_LOCATION).set_texcoord_w) {
+            int i;
+            for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
+                if(This->baseShader.reg_maps.texcoord_mask[i] != 0 &&
+                This->baseShader.reg_maps.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL) {
+                    shader_addline(buffer, "MOV result.texcoord[%u].w, -helper_const.y;\n", i);
+                }
             }
         }
     }
