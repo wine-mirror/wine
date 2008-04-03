@@ -1836,7 +1836,7 @@ static void test_null_provider(void)
     dataLen = sizeof(szName);
     result = CryptGetProvParam(prov, PP_UNIQUE_CONTAINER, (LPBYTE)szName, &dataLen, 0);
     ok(result && dataLen == strlen(szContainer)+1 && strcmp(szContainer,szName) == 0,
-        "failed getting PP_CONTAINER. result = %s. Error 0x%08X. returned length = %d\n",
+        "failed getting PP_UNIQUE_CONTAINER. result = %s. Error 0x%08X. returned length = %d\n",
         (result)? "TRUE":"FALSE",GetLastError(),dataLen);
     result = CryptGetUserKey(prov, AT_KEYEXCHANGE, &key);
     ok(!result && GetLastError() == NTE_NO_KEY,
