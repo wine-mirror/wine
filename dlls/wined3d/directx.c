@@ -2126,11 +2126,19 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
                GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
                 return TRUE;
             }
+            if(GL_SUPPORT(ARB_FRAGMENT_SHADER) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+                /* Shader emulated */
+                return TRUE;
+            }
             TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
             return FALSE;
 
         case WINED3DFMT_X8L8V8U8:
         case WINED3DFMT_L6V5U5:
+            if(GL_SUPPORT(ARB_FRAGMENT_SHADER) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+                /* Shader emulated */
+                return TRUE;
+            }
             WARN_(d3d_caps)("[FAILED]\n");
             return FALSE;
 
@@ -2138,6 +2146,10 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
         case WINED3DFMT_V16U16:
             if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
                 WARN_(d3d_caps)("[Not supported, but pretended to do]\n");
+                return TRUE;
+            }
+            if(GL_SUPPORT(ARB_FRAGMENT_SHADER) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+                /* Shader emulated */
                 return TRUE;
             }
             TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
