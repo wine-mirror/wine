@@ -3027,11 +3027,11 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
     DWORD dwTemp;
     HKEY hKey;
    
-    /* This is for dwParam 41, which does not seem to be documented
-     * on MSDN. IE6 SP1 asks for it in the 'About' dialog, however.
+    /* This is for dwParam PP_CRYPT_COUNT_KEY_USE.
+     * IE6 SP1 asks for it in the 'About' dialog.
      * Returning this BLOB seems to satisfy IE. The marked 0x00 seem 
      * to be 'don't care's. If you know anything more specific about
-     * provider parameter 41, please report to wine-devel@winehq.org */
+     * this provider parameter, please report to wine-devel@winehq.org */
     static CONST BYTE abWTF[96] = { 
         0xb0, 0x25,     0x63,     0x86, 0x9c, 0xab,     0xb6,     0x37, 
         0xe8, 0x82, /**/0x00,/**/ 0x72, 0x06, 0xb2, /**/0x00,/**/ 0x3b, 
@@ -3175,7 +3175,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
                                   sizeof(PROV_ENUMALGS_EX));
             }
 
-        case 41: /* Undocumented. Asked for by IE About dialog */
+        case PP_CRYPT_COUNT_KEY_USE: /* Asked for by IE About dialog */
             return copy_param(pbData, pdwDataLen, abWTF, sizeof(abWTF));
 
         default:

@@ -1816,14 +1816,6 @@ static const WCHAR MS_ENH_RSA_AES_PROV_W[] =           { 'M','i','c','r','o','s'
 
 /* FLAGS Section */
 
-/* Provider Parameters */
-#define PP_ENUMALGS             1
-#define PP_ENUMCONTAINERS       2
-#define PP_IMPTYPE              3
-#define PP_NAME                 4
-#define PP_VERSION              5
-#define PP_CONTAINER            6
-
 #define CRYPT_FIRST             1
 #define CRYPT_NEXT              2
 
@@ -1880,6 +1872,11 @@ static const WCHAR MS_ENH_RSA_AES_PROV_W[] =           { 'M','i','c','r','o','s'
 #define PP_USE_HARDWARE_RNG     38
 #define PP_KEYSPEC              39
 #define PP_ENUMEX_SIGNING_PROT  40
+#define PP_CRYPT_COUNT_KEY_USE  41
+#define PP_USER_CERTSTORE       42
+#define PP_SMARTCARD_READER     43
+#define PP_SMARTCARD_GUID       45
+#define PP_ROOT_CERTSTORE       46
 
 /* Values returned by CryptGetProvParam of PP_KEYSTORAGE */
 #define CRYPT_SEC_DESCR         0x00000001
