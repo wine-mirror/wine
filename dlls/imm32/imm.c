@@ -20,6 +20,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -147,6 +148,37 @@ static inline CHAR *strdupWtoA( const WCHAR *str )
     return ret;
 }
 
+static HMODULE LoadDefaultWineIME(void)
+{
+    char buffer[MAX_PATH], libname[32], *name, *next;
+    HMODULE module = 0;
+    HKEY hkey;
+
+    TRACE("Attempting to fall back to wine default IME\n");
+
+    strcpy( buffer, "x11" );  /* default value */
+    /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
+    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
+    {
+        DWORD type, count = sizeof(buffer);
+        RegQueryValueExA( hkey, "Ime", 0, &type, (LPBYTE) buffer, &count );
+        RegCloseKey( hkey );
+    }
+
+    name = buffer;
+    while (name)
+    {
+        next = strchr( name, ',' );
+        if (next) *next++ = 0;
+
+        snprintf( libname, sizeof(libname), "wine%s.drv", name );
+        if ((module = LoadLibraryA( libname )) != 0) break;
+        name = next;
+    }
+
+    return module;
+}
+
 /* ImmHkl loading and freeing */
 #define LOAD_FUNCPTR(f) if((ptr->p##f = (LPVOID)GetProcAddress(ptr->hIME, #f)) == NULL){WARN("Can't find function %s in ime\n", #f);}
 static ImmHkl *IMM_GetImmHkl(HKL hkl)
@@ -167,32 +199,49 @@ static ImmHkl *IMM_GetImmHkl(HKL hkl)
 
     ptr->hkl = hkl;
     if (ImmGetIMEFileNameW(hkl, filename, MAX_PATH)) ptr->hIME = LoadLibraryW(filename);
+    if (!ptr->hIME)
+        ptr->hIME = LoadDefaultWineIME();
     if (ptr->hIME)
     {
         LOAD_FUNCPTR(ImeInquire);
-        LOAD_FUNCPTR(ImeDestroy);
-        LOAD_FUNCPTR(ImeSelect);
-        if (!ptr->pImeInquire || !ptr->pImeDestroy || !ptr->pImeSelect)
+        if (!ptr->pImeInquire || !ptr->pImeInquire(&ptr->imeInfo, ptr->imeClassName, NULL))
         {
             FreeLibrary(ptr->hIME);
             ptr->hIME = NULL;
         }
         else
         {
-            ptr->pImeInquire(&ptr->imeInfo, ptr->imeClassName, NULL);
-            LOAD_FUNCPTR(ImeConfigure);
-            LOAD_FUNCPTR(ImeEscape);
-            LOAD_FUNCPTR(ImeSetActiveContext);
-            LOAD_FUNCPTR(ImeToAsciiEx);
-            LOAD_FUNCPTR(NotifyIME);
-            LOAD_FUNCPTR(ImeRegisterWord);
-            LOAD_FUNCPTR(ImeUnregisterWord);
-            LOAD_FUNCPTR(ImeEnumRegisterWord);
-            LOAD_FUNCPTR(ImeSetCompositionString);
-            LOAD_FUNCPTR(ImeConversionList);
-            LOAD_FUNCPTR(ImeProcessKey);
-            LOAD_FUNCPTR(ImeGetRegisterWordStyle);
-            LOAD_FUNCPTR(ImeGetImeMenuItems);
+            LOAD_FUNCPTR(ImeDestroy);
+            LOAD_FUNCPTR(ImeSelect);
+            if (!ptr->pImeSelect || !ptr->pImeDestroy)
+            {
+                FreeLibrary(ptr->hIME);
+                ptr->hIME = NULL;
+            }
+            else
+            {
+                LOAD_FUNCPTR(ImeConfigure);
+                LOAD_FUNCPTR(ImeEscape);
+                LOAD_FUNCPTR(ImeSetActiveContext);
+                LOAD_FUNCPTR(ImeToAsciiEx);
+                LOAD_FUNCPTR(NotifyIME);
+                LOAD_FUNCPTR(ImeRegisterWord);
+                LOAD_FUNCPTR(ImeUnregisterWord);
+                LOAD_FUNCPTR(ImeEnumRegisterWord);
+                LOAD_FUNCPTR(ImeSetCompositionString);
+                LOAD_FUNCPTR(ImeConversionList);
+                LOAD_FUNCPTR(ImeProcessKey);
+                LOAD_FUNCPTR(ImeGetRegisterWordStyle);
+                LOAD_FUNCPTR(ImeGetImeMenuItems);
+                /* make sure our classname is WCHAR */
+                if (!is_kbd_ime_unicode(ptr))
+                {
+                    WCHAR bufW[17];
+                    MultiByteToWideChar(CP_ACP, 0, (LPSTR)ptr->imeClassName,
+                                        -1, bufW, 17);
+                    lstrcpyW(ptr->imeClassName, bufW);
+                }
+            }
         }
     }
     list_add_head(&ImmHklList,&ptr->entry);
