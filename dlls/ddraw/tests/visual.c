@@ -1733,7 +1733,7 @@ static void p8_surface_fill_rect(IDirectDrawSurface *dest, UINT x, UINT y, UINT 
     hr = IDirectDrawSurface_Lock(dest, NULL, &ddsd, DDLOCK_WRITEONLY | DDLOCK_WAIT, NULL);
     ok(hr==DD_OK, "IDirectDrawSurface_Lock returned: %x\n", hr);
 
-    p = (BYTE *)ddsd.lpSurface + ddsd.lPitch * y;
+    p = (BYTE *)ddsd.lpSurface + ddsd.lPitch * y + x;
 
     for (i = 0; i < h; i++) {
         for (i1 = 0; i1 < w; i1++) {
@@ -1785,12 +1785,14 @@ static void p8_primary_test()
     HRESULT hr;
     PALETTEENTRY entries[256];
     RGBQUAD coltable[256];
-    UINT i;
+    UINT i, i1, i2;
     IDirectDrawPalette *ddprimpal = NULL;
     IDirectDrawSurface *offscreen = NULL;
     WNDCLASS wc = {0};
     DDBLTFX ddbltfx;
     COLORREF color;
+    RECT rect;
+    unsigned differences;
 
     /* An IDirect3DDevice cannot be queryInterfaced from an IDirect3DDevice7 on windows */
     hr = DirectDrawCreate(NULL, &DirectDraw1, NULL);
@@ -1916,6 +1918,107 @@ static void p8_primary_test()
     ok(GetRValue(color) == 0 && GetGValue(color) == 0xFF && GetBValue(color) == 0,
             "got R %02X G %02X B %02X, expected R 00 G FF B 00\n",
             GetRValue(color), GetGValue(color), GetBValue(color));
+
+    /* Test blitting and locking patterns that are likely to trigger bugs in opengl renderer (p8
+       surface conversion and uploading/downloading to/from opengl texture). Similar patterns (
+       blitting front buffer areas to/from an offscreen surface mixed with locking) are used by C&C
+       Red Alert I. */
+    IDirectDrawSurface_Release(offscreen);
+
+    memset (&ddsd, 0, sizeof (ddsd));
+    ddsd.dwSize = sizeof (ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 640;
+    ddsd.dwHeight = 480;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount      = 8;
+    hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &offscreen, NULL);
+    ok(hr == DD_OK, "IDirectDraw_CreateSurface returned %08x\n", hr);
+
+    if (FAILED(hr)) goto out;
+
+    /* Test two times, first time front buffer has a palette and second time front buffer
+       has no palette; the latter is somewhat contrived example, but an app could set
+       front buffer palette later. */
+    for (i2 = 0; i2 < 2; i2++) {
+        if (i2 == 1) {
+            hr = IDirectDrawSurface_SetPalette(Surface1, NULL);
+            ok(hr==DD_OK, "IDirectDrawSurface_SetPalette returned: %x\n", hr);
+        }
+
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface_Lock(Surface1, NULL, &ddsd, DDLOCK_WAIT, NULL);
+        ok(hr==DD_OK, "IDirectDrawSurface_Lock returned: %x\n", hr);
+
+        for (i = 0; i < 256; i++) {
+            unsigned x = (i % 128) * 4;
+            unsigned y = (i / 128) * 4;
+            BYTE *p = (BYTE *)ddsd.lpSurface + ddsd.lPitch * y + x;
+
+            for (i1 = 0; i1 < 4; i1++) {
+                p[0] = p[1] = p[2] = p[3] = i;
+                p += ddsd.lPitch;
+            }
+        }
+
+        hr = IDirectDrawSurface_Unlock(Surface1, NULL);
+        ok(hr==DD_OK, "IDirectDrawSurface_UnLock returned: %x\n", hr);
+
+        hr = IDirectDrawSurface_BltFast(offscreen, 0, 0, Surface1, NULL, 0);
+        ok(hr==DD_OK, "IDirectDrawSurface_BltFast returned: %x\n", hr);
+
+        /* This ensures offscreen surface contens will be downloaded to system memory. */
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface_Lock(offscreen, NULL, &ddsd, DDLOCK_WAIT, NULL);
+        ok(hr==DD_OK, "IDirectDrawSurface_Lock returned: %x\n", hr);
+        hr = IDirectDrawSurface_Unlock(offscreen, NULL);
+        ok(hr==DD_OK, "IDirectDrawSurface_UnLock returned: %x\n", hr);
+
+        /* Offscreen surface data will have to be converted and uploaded to texture. */
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = 16;
+        rect.bottom = 16;
+        hr = IDirectDrawSurface_BltFast(offscreen, 600, 400, Surface1, &rect, 0);
+        ok(hr==DD_OK, "IDirectDrawSurface_BltFast returned: %x\n", hr);
+
+        /* This ensures offscreen surface contens will be downloaded to system memory. */
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface_Lock(offscreen, NULL, &ddsd, DDLOCK_WAIT, NULL);
+        ok(hr==DD_OK, "IDirectDrawSurface_Lock returned: %x\n", hr);
+        hr = IDirectDrawSurface_Unlock(offscreen, NULL);
+        ok(hr==DD_OK, "IDirectDrawSurface_UnLock returned: %x\n", hr);
+
+        hr = IDirectDrawSurface_BltFast(Surface1, 0, 0, offscreen, NULL, 0);
+        ok(hr==DD_OK, "IDirectDrawSurface_BltFast returned: %x\n", hr);
+
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        hr = IDirectDrawSurface_Lock(Surface1, NULL, &ddsd, DDLOCK_WAIT, NULL);
+        ok(hr==DD_OK, "IDirectDrawSurface_Lock returned: %x\n", hr);
+
+        differences = 0;
+
+        for (i = 0; i < 256; i++) {
+            unsigned x = (i % 128) * 4 + 1;
+            unsigned y = (i / 128) * 4 + 1;
+            BYTE *p = (BYTE *)ddsd.lpSurface + ddsd.lPitch * y + x;
+
+            if (*p != i) differences++;
+        }
+
+        hr = IDirectDrawSurface_Unlock(Surface1, NULL);
+        ok(hr==DD_OK, "IDirectDrawSurface_UnLock returned: %x\n", hr);
+
+        ok(differences == 0, i2 == 0 ? "Pass 1. Unexpected front buffer contens after blit (%u differences)\n" :
+                "Pass 2 (with NULL front buffer palette). Unexpected front buffer contens after blit (%u differences)\n",
+                differences);
+    }
 
     out:
 
