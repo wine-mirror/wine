@@ -2416,6 +2416,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                  return WINED3DERR_NOTAVAILABLE;
             }
         }
+
+        /* Check QUERY_POSTPIXELSHADER_BLENDING support */
+        if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
+            if(CheckPostPixelShaderBlendingCapability(Adapter, CheckFormat)) {
+                UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+            } else {
+                TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+        }
     } else if(RType == WINED3DRTYPE_TEXTURE) {
         /* Texture allows:
          *                - D3DUSAGE_AUTOGENMIPMAP
