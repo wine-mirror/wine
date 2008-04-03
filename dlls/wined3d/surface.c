@@ -3093,6 +3093,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Blit from render target to texture */
         WINED3DRECT srect;
         BOOL upsideDown, stretchx;
+        BOOL paletteOverride = FALSE;
 
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             TRACE("Color keying not supported by frame buffer to texture blit\n");
@@ -3139,6 +3140,14 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             stretchx = FALSE;
         }
 
+        /* When blitting from a render target a texture, the texture isn't required to have a palette.
+         * In this case grab the palette from the render target. */
+        if((This->resource.format == WINED3DFMT_P8) && (This->palette == NULL)) {
+            paletteOverride = TRUE;
+            TRACE("Source surface (%p) lacks palette, overriding palette with palette %p of destination surface (%p)\n", Src, This->palette, This);
+            This->palette = Src->palette;
+        }
+
         /* Blt is a pretty powerful call, while glCopyTexSubImage2D is not. glCopyTexSubImage cannot
          * flip the image nor scale it.
          *
@@ -3165,6 +3174,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             TRACE("Using hardware stretching to flip / stretch the texture\n");
             fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, &srect, &rect, upsideDown, Filter);
         }
+
+        /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
+        if(paletteOverride)
+            This->palette = NULL;
 
         if(!(This->Flags & SFLAG_DONOTFREE)) {
             HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
