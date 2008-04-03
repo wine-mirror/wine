@@ -158,7 +158,8 @@ static INT CALLBACK font_enum_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DW
     return 1; /* continue enumeration */
 }
 
-static void test_font_metrics(HDC hdc, HFONT hfont, LONG lfHeight, const char *test_str,
+static void test_font_metrics(HDC hdc, HFONT hfont, LONG lfHeight,
+                              LONG lfWidth, const char *test_str,
 			      INT test_str_len, const TEXTMETRICA *tm_orig,
 			      const SIZE *size_orig, INT width_of_A_orig,
 			      INT scale_x, INT scale_y)
@@ -188,9 +189,14 @@ static void test_font_metrics(HDC hdc, HFONT hfont, LONG lfHeight, const char *t
     ok(tm.tmAveCharWidth == tm_orig->tmAveCharWidth * scale_x, "%d != %d\n", tm.tmAveCharWidth, tm_orig->tmAveCharWidth * scale_x);
     ok(tm.tmMaxCharWidth == tm_orig->tmMaxCharWidth * scale_x, "%d != %d\n", tm.tmAveCharWidth, tm_orig->tmMaxCharWidth * scale_x);
 
-    ok(lf.lfHeight == lfHeight, "lf %d !=  %d\n", lf.lfHeight, lfHeight);
-    if (lf.lfWidth)
-        ok(lf.lfWidth == tm.tmAveCharWidth, "lf %d != tm %d\n", lf.lfWidth, tm.tmAveCharWidth);
+    ok(lf.lfHeight == lfHeight, "lf %d != %d\n", lf.lfHeight, lfHeight);
+    if (lf.lfHeight)
+    {
+        if (lf.lfWidth)
+            ok(lf.lfWidth == tm.tmAveCharWidth, "lf %d != tm %d\n", lf.lfWidth, tm.tmAveCharWidth);
+    }
+    else
+        ok(lf.lfWidth == lfWidth, "lf %d != %d\n", lf.lfWidth, lfWidth);
 
     GetTextExtentPoint32A(hdc, test_str, test_str_len, &size);
 
@@ -213,7 +219,7 @@ static void test_bitmap_font(void)
     HFONT hfont, old_hfont;
     TEXTMETRICA tm_orig;
     SIZE size_orig;
-    INT ret, i, width_orig, height_orig, scale;
+    INT ret, i, width_orig, height_orig, scale, lfWidth;
 
     hdc = GetDC(0);
 
@@ -229,14 +235,24 @@ static void test_bitmap_font(void)
     trace("found bitmap font %s, height %d\n", bitmap_lf.lfFaceName, bitmap_lf.lfHeight);
 
     height_orig = bitmap_lf.lfHeight;
-    hfont = create_font("bitmap", &bitmap_lf);
+    lfWidth = bitmap_lf.lfWidth;
 
+    hfont = create_font("bitmap", &bitmap_lf);
     old_hfont = SelectObject(hdc, hfont);
     ok(GetTextMetricsA(hdc, &tm_orig), "GetTextMetricsA failed\n");
     ok(GetTextExtentPoint32A(hdc, test_str, sizeof(test_str), &size_orig), "GetTextExtentPoint32A failed\n");
     ok(GetCharWidthA(hdc, 'A', 'A', &width_orig), "GetCharWidthA failed\n");
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
+
+    bitmap_lf.lfHeight = 0;
+    bitmap_lf.lfWidth = 4;
+    hfont = create_font("bitmap", &bitmap_lf);
+    test_font_metrics(hdc, hfont, 0, 4, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, 1);
+    DeleteObject(hfont);
+
+    bitmap_lf.lfHeight = height_orig;
+    bitmap_lf.lfWidth = lfWidth;
 
     /* test fractional scaling */
     for (i = 1; i <= height_orig * 3; i++)
@@ -249,7 +265,7 @@ static void test_bitmap_font(void)
         nearest_height = scale * height_orig;
         /* XP allows not more than 10% deviation */
         if (scale > 1 && nearest_height - i > nearest_height / 10) scale--;
-        test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, scale);
+        test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, scale);
 	DeleteObject(hfont);
     }
 
@@ -257,14 +273,14 @@ static void test_bitmap_font(void)
     bitmap_lf.lfHeight = height_orig * 2;
     bitmap_lf.lfWidth *= 3;
     hfont = create_font("3x2", &bitmap_lf);
-    test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 2);
+    test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 2);
     DeleteObject(hfont);
 
     /* test integer scaling 3x3 */
     bitmap_lf.lfHeight = height_orig * 3;
     bitmap_lf.lfWidth = 0;
     hfont = create_font("3x3", &bitmap_lf);
-    test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 3);
+    test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 3);
     DeleteObject(hfont);
 
     ReleaseDC(0, hdc);

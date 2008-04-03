@@ -3378,14 +3378,13 @@ found:
     TRACE("Chosen: %s %s (%s/%p:%ld)\n", debugstr_w(family->FamilyName),
 	  debugstr_w(face->StyleName), face->file, face->font_data_ptr, face->face_index);
 
-    ret->aveWidth = abs(lf.lfWidth);
+    ret->aveWidth = height ? abs(lf.lfWidth) : 0;
 
     if(!face->scalable) {
         /* Windows uses integer scaling factors for bitmap fonts */
         INT scale, scaled_height;
 
         if (height != 0) height = diff;
-        else height = 0;
         height += face->size.height;
 
         scale = (height + face->size.height - 1) / face->size.height;
