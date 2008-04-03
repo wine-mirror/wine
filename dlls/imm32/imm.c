@@ -122,6 +122,7 @@ static void ImmInternalPostIMEMessage(InputContextData*, UINT, WPARAM, LPARAM);
 static void ImmInternalSetOpenStatus(BOOL fOpen);
 static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len);
 
+#define is_himc_ime_unicode(p)  (p->immKbd->imeInfo.fdwProperty & IME_PROP_UNICODE)
 #define is_kbd_ime_unicode(p)  (p->imeInfo.fdwProperty & IME_PROP_UNICODE)
 
 static inline WCHAR *strdupAtoW( const char *str )
@@ -2233,9 +2234,61 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC hIMC, DWORD dwFlags, DWORD dwType,
    LPIMEMENUITEMINFOA lpImeParentMenu, LPIMEMENUITEMINFOA lpImeMenu,
     DWORD dwSize)
 {
-  FIXME("(%p, %i, %i, %p, %p, %i): stub\n", hIMC, dwFlags, dwType,
-    lpImeParentMenu, lpImeMenu, dwSize);
-  return 0;
+    InputContextData *data = (InputContextData*)hIMC;
+    TRACE("(%p, %i, %i, %p, %p, %i):\n", hIMC, dwFlags, dwType,
+        lpImeParentMenu, lpImeMenu, dwSize);
+    if (data->immKbd->hIME && data->immKbd->pImeGetImeMenuItems)
+    {
+        if (!is_himc_ime_unicode(data) || (!lpImeParentMenu && !lpImeMenu))
+            return data->immKbd->pImeGetImeMenuItems(hIMC, dwFlags, dwType,
+                                (IMEMENUITEMINFOW*)lpImeParentMenu,
+                                (IMEMENUITEMINFOW*)lpImeMenu, dwSize);
+        else
+        {
+            IMEMENUITEMINFOW lpImeParentMenuW;
+            IMEMENUITEMINFOW *lpImeMenuW, *parent = NULL;
+            DWORD rc;
+
+            if (lpImeParentMenu)
+                parent = &lpImeParentMenuW;
+            if (lpImeMenu)
+            {
+                int count = dwSize / sizeof(LPIMEMENUITEMINFOA);
+                dwSize = count * sizeof(IMEMENUITEMINFOW);
+                lpImeMenuW = HeapAlloc(GetProcessHeap(), 0, dwSize);
+            }
+            else
+                lpImeMenuW = NULL;
+
+            rc = data->immKbd->pImeGetImeMenuItems(hIMC, dwFlags, dwType,
+                                parent, lpImeMenuW, dwSize);
+
+            if (lpImeParentMenu)
+            {
+                memcpy(lpImeParentMenu,&lpImeParentMenuW,sizeof(IMEMENUITEMINFOA));
+                lpImeParentMenu->hbmpItem = lpImeParentMenuW.hbmpItem;
+                WideCharToMultiByte(CP_ACP, 0, lpImeParentMenuW.szString,
+                    -1, lpImeParentMenu->szString, IMEMENUITEM_STRING_SIZE,
+                    NULL, NULL);
+            }
+            if (lpImeMenu && rc)
+            {
+                int i;
+                for (i = 0; i < rc; i++)
+                {
+                    memcpy(&lpImeMenu[i],&lpImeMenuW[1],sizeof(IMEMENUITEMINFOA));
+                    lpImeMenu[i].hbmpItem = lpImeMenuW[i].hbmpItem;
+                    WideCharToMultiByte(CP_ACP, 0, lpImeMenuW[i].szString,
+                        -1, lpImeMenu[i].szString, IMEMENUITEM_STRING_SIZE,
+                        NULL, NULL);
+                }
+            }
+            HeapFree(GetProcessHeap(),0,lpImeMenuW);
+            return rc;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
@@ -2245,9 +2298,59 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC hIMC, DWORD dwFlags, DWORD dwType,
    LPIMEMENUITEMINFOW lpImeParentMenu, LPIMEMENUITEMINFOW lpImeMenu,
    DWORD dwSize)
 {
-  FIXME("(%p, %i, %i, %p, %p, %i): stub\n", hIMC, dwFlags, dwType,
-    lpImeParentMenu, lpImeMenu, dwSize);
-  return 0;
+    InputContextData *data = (InputContextData*)hIMC;
+    TRACE("(%p, %i, %i, %p, %p, %i):\n", hIMC, dwFlags, dwType,
+        lpImeParentMenu, lpImeMenu, dwSize);
+    if (data->immKbd->hIME && data->immKbd->pImeGetImeMenuItems)
+    {
+        if (is_himc_ime_unicode(data) || (!lpImeParentMenu && !lpImeMenu))
+            return data->immKbd->pImeGetImeMenuItems(hIMC, dwFlags, dwType,
+                                lpImeParentMenu, lpImeMenu, dwSize);
+        else
+        {
+            IMEMENUITEMINFOA lpImeParentMenuA;
+            IMEMENUITEMINFOA *lpImeMenuA, *parent = NULL;
+            DWORD rc;
+
+            if (lpImeParentMenu)
+                parent = &lpImeParentMenuA;
+            if (lpImeMenu)
+            {
+                int count = dwSize / sizeof(LPIMEMENUITEMINFOW);
+                dwSize = count * sizeof(IMEMENUITEMINFOA);
+                lpImeMenuA = HeapAlloc(GetProcessHeap(), 0, dwSize);
+            }
+            else
+                lpImeMenuA = NULL;
+
+            rc = data->immKbd->pImeGetImeMenuItems(hIMC, dwFlags, dwType,
+                                (IMEMENUITEMINFOW*)parent,
+                                (IMEMENUITEMINFOW*)lpImeMenuA, dwSize);
+
+            if (lpImeParentMenu)
+            {
+                memcpy(lpImeParentMenu,&lpImeParentMenuA,sizeof(IMEMENUITEMINFOA));
+                lpImeParentMenu->hbmpItem = lpImeParentMenuA.hbmpItem;
+                MultiByteToWideChar(CP_ACP, 0, lpImeParentMenuA.szString,
+                    -1, lpImeParentMenu->szString, IMEMENUITEM_STRING_SIZE);
+            }
+            if (lpImeMenu && rc)
+            {
+                int i;
+                for (i = 0; i < rc; i++)
+                {
+                    memcpy(&lpImeMenu[i],&lpImeMenuA[1],sizeof(IMEMENUITEMINFOA));
+                    lpImeMenu[i].hbmpItem = lpImeMenuA[i].hbmpItem;
+                    MultiByteToWideChar(CP_ACP, 0, lpImeMenuA[i].szString,
+                        -1, lpImeMenu[i].szString, IMEMENUITEM_STRING_SIZE);
+                }
+            }
+            HeapFree(GetProcessHeap(),0,lpImeMenuA);
+            return rc;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
