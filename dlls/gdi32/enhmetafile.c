@@ -1670,7 +1670,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         LPVOID lpPackedStruct;
 
         /* Check that offsets and data are contained within the record
-         * (including checking for wrap arounds).
+         * (including checking for wrap-arounds).
          */
         if (    lpCreate->offBmi  + lpCreate->cbBmi  > mr->nSize
              || lpCreate->offBits + lpCreate->cbBits > mr->nSize

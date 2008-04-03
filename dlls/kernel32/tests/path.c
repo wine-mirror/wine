@@ -859,7 +859,7 @@ static void test_GetTempPathW(char* tmp_dir)
 
     /* This one is different from ANSI version: ANSI version doesn't
      * touch the buffer, unicode version usually truncates the buffer
-     * to zero size. NT still exagerates the required buffer size
+     * to zero size. NT still exaggerates the required buffer size
      * sometimes so we cannot test for an exact match. Finally, the
      * 'len_with_null - 1' case is so buggy on Windows it's not testable.
      * For instance on NT4 it will sometimes return a path without the

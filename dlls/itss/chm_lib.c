@@ -1162,7 +1162,7 @@ static Int64 _chm_decompress_block(struct chmFile *h,
     Int64 cmpLen;                                       /* compressed len    */
     int indexSlot;                                      /* cache index slot  */
     UChar *lbuffer;                                     /* local buffer ptr  */
-    UInt32 blockAlign = (UInt32)(block % h->reset_blkcount); /* reset intvl. aln. */
+    UInt32 blockAlign = (UInt32)(block % h->reset_blkcount); /* reset interval align */
     UInt32 i;                                           /* local loop index  */
 
     /* let the caching system pull its weight! */

@@ -2418,7 +2418,7 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
           debugstr_w(lpszCurrentPath) );
 
     /* fHidden=1 - only visible for the calling app, read-only, not
-     * enumbered with EnumFonts/EnumFontFamilies
+     * enumerated with EnumFonts/EnumFontFamilies
      * lpszCurrentPath can be NULL
      */
 

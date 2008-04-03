@@ -174,7 +174,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 
 	if (!TRACE_ON(snoop) || !pModule || !HIWORD(origfun))
 		return origfun;
-	if (!*(LPBYTE)MapSL((SEGPTR)origfun)) /* 0x00 is an imposs. opcode, poss. dataref. */
+	if (!*(LPBYTE)MapSL((SEGPTR)origfun)) /* 0x00 is an impossible opcode, possible dataref. */
 		return origfun;
 	while (dll) {
 		if (hmod == dll->hmod)

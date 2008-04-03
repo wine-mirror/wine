@@ -391,7 +391,7 @@ BOOL WINAPI SetSystemTimeAdjustment( DWORD dwTimeAdjustment, BOOL bTimeAdjustmen
  *  TIME_ZONE_ID_INVALID    An error occurred
  *  TIME_ZONE_ID_UNKNOWN    There are no transition time known
  *  TIME_ZONE_ID_STANDARD   Current time is standard time
- *  TIME_ZONE_ID_DAYLIGHT   Current time is dayligh savings time
+ *  TIME_ZONE_ID_DAYLIGHT   Current time is daylight savings time
  */
 DWORD WINAPI GetTimeZoneInformation( LPTIME_ZONE_INFORMATION tzinfo )
 {

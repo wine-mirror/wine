@@ -73,7 +73,7 @@ char *getInterfaceNameByIndex(DWORD index, char *name);
  */
 DWORD getInterfaceIndexByName(const char *name, PDWORD index);
 
-/* Gets a few physical charactersistics of a device:  MAC addr len, MAC addr,
+/* Gets a few physical characteristics of a device:  MAC addr len, MAC addr,
  * and type as one of the MIB_IF_TYPEs.
  * len's in-out: on in, needs to say how many bytes are available in addr,
  * which to be safe should be MAX_INTERFACE_PHYSADDR.  On out, it's how many

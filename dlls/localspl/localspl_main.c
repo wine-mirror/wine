@@ -394,7 +394,7 @@ static BOOL WINAPI fpGetPrinterDriverDirectory(LPWSTR pName, LPWSTR pEnvironment
  *  myAddPrinterDriverEx [internal]
  *
  * Install a Printer Driver with the Option to upgrade / downgrade the Files
- * and a special mode with lazy error ckecking
+ * and a special mode with lazy error checking.
  *
  */
 static BOOL WINAPI myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCopyFlags, BOOL lazy)

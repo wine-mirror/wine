@@ -82,7 +82,7 @@ struct tagActiveDS
     GPContext		*context;
 #endif
 
-    /* Capabiblities */
+    /* Capabilities */
     TW_UINT32		capXferMech;		/* ICAP_XFERMECH */
     TW_UINT16		pixeltype;		/* ICAP_PIXELTYPE */
     TW_UINT16		pixelflavor;		/* ICAP_PIXELFLAVOR */

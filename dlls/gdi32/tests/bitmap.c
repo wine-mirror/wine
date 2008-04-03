@@ -1603,7 +1603,7 @@ static void test_GetDIBits_BI_BITFIELDS(void)
      * http://www.lesher.ws/highcolor.html
      * http://www.lesher.ws/vidfmt.c
      * It hinges on being able to retrieve the bitmaps
-     * for the three primary colors in nonpaletted 16 bit mode.
+     * for the three primary colors in non-paletted 16 bit mode.
      */
     char dibinfo_buf[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
     LPBITMAPINFO dibinfo = (LPBITMAPINFO) dibinfo_buf;

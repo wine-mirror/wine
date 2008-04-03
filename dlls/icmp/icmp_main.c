@@ -72,7 +72,7 @@
 #include "icmpapi.h"
 #include "wine/debug.h"
 
-/* Set up endiannes macros for the ip and ip_icmp BSD headers */
+/* Set up endianness macros for the ip and ip_icmp BSD headers */
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN       4321
 #endif
