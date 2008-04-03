@@ -407,7 +407,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
         LPWSTR * pNewNames = CoTaskMemAlloc(newCapacity * sizeof(LPWSTR));
         memcpy(ppNewFilters, This->ppFiltersInGraph, This->nFilters * sizeof(IBaseFilter*));
         memcpy(pNewNames, This->pFilterNames, This->nFilters * sizeof(LPWSTR));
-        if (!This->filterCapacity)
+        if (This->filterCapacity)
         {
             CoTaskMemFree(This->ppFiltersInGraph);
             CoTaskMemFree(This->pFilterNames);
