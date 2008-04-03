@@ -47,6 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran);
 static UINT ACTION_ProcessUISequence(MSIPACKAGE *package);
 static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI);
+static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action, UINT* rc, BOOL force);
 
 /*
  * consts and values used
@@ -232,8 +233,6 @@ struct _actions {
     LPCWSTR action;
     STANDARDACTIONHANDLER handler;
 };
-
-static const struct _actions StandardActions[];
 
 
 /********************************************************
@@ -965,56 +964,6 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
 /********************************************************
  * ACTION helper functions and functions that perform the actions
  *******************************************************/
-static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action, 
-                                        UINT* rc, BOOL force )
-{
-    BOOL ret = FALSE; 
-    BOOL run = force;
-    int i;
-
-    if (!run && !package->script->CurrentlyScripting)
-        run = TRUE;
-   
-    if (!run)
-    {
-        if (strcmpW(action,szInstallFinalize) == 0 ||
-            strcmpW(action,szInstallExecute) == 0 ||
-            strcmpW(action,szInstallExecuteAgain) == 0) 
-                run = TRUE;
-    }
-    
-    i = 0;
-    while (StandardActions[i].action != NULL)
-    {
-        if (strcmpW(StandardActions[i].action, action)==0)
-        {
-            if (!run)
-            {
-                ui_actioninfo(package, action, TRUE, 0);
-                *rc = schedule_action(package,INSTALL_SCRIPT,action);
-                ui_actioninfo(package, action, FALSE, *rc);
-            }
-            else
-            {
-                ui_actionstart(package, action);
-                if (StandardActions[i].handler)
-                {
-                    *rc = StandardActions[i].handler(package);
-                }
-                else
-                {
-                    FIXME("unhandled standard action %s\n",debugstr_w(action));
-                    *rc = ERROR_SUCCESS;
-                }
-            }
-            ret = TRUE;
-            break;
-        }
-        i++;
-    }
-    return ret;
-}
-
 static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
                                        UINT* rc, UINT script, BOOL force )
 {
@@ -5852,3 +5801,53 @@ static const struct _actions StandardActions[] = {
     { szWriteRegistryValues, ACTION_WriteRegistryValues },
     { NULL, NULL },
 };
+
+static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
+                                        UINT* rc, BOOL force )
+{
+    BOOL ret = FALSE;
+    BOOL run = force;
+    int i;
+
+    if (!run && !package->script->CurrentlyScripting)
+        run = TRUE;
+
+    if (!run)
+    {
+        if (strcmpW(action,szInstallFinalize) == 0 ||
+            strcmpW(action,szInstallExecute) == 0 ||
+            strcmpW(action,szInstallExecuteAgain) == 0)
+                run = TRUE;
+    }
+
+    i = 0;
+    while (StandardActions[i].action != NULL)
+    {
+        if (strcmpW(StandardActions[i].action, action)==0)
+        {
+            if (!run)
+            {
+                ui_actioninfo(package, action, TRUE, 0);
+                *rc = schedule_action(package,INSTALL_SCRIPT,action);
+                ui_actioninfo(package, action, FALSE, *rc);
+            }
+            else
+            {
+                ui_actionstart(package, action);
+                if (StandardActions[i].handler)
+                {
+                    *rc = StandardActions[i].handler(package);
+                }
+                else
+                {
+                    FIXME("unhandled standard action %s\n",debugstr_w(action));
+                    *rc = ERROR_SUCCESS;
+                }
+            }
+            ret = TRUE;
+            break;
+        }
+        i++;
+    }
+    return ret;
+}
