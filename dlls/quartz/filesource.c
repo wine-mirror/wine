@@ -1093,16 +1093,13 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
     *ppSample = NULL;
     *pdwUser = 0;
 
-    /* we return immediately if flushing */
-    if (This->bFlushing)
-        hr = VFW_E_WRONG_STATE;
-
-    if (SUCCEEDED(hr))
+    if (!This->bFlushing)
     {
         /* wait for the read to finish or timeout */
         if (WaitForSingleObject(This->hEvent, dwTimeout) == WAIT_TIMEOUT)
             hr = VFW_E_TIMEOUT;
     }
+
     if (SUCCEEDED(hr))
     {
         EnterCriticalSection(&This->csList);
@@ -1116,7 +1113,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         LeaveCriticalSection(&This->csList);
     }
 
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr) && !This->bFlushing)
     {
         /* get any errors */
         if (!GetOverlappedResult(This->hFile, &pDataRq->ovl, &dwBytes, FALSE))
@@ -1132,7 +1129,14 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
 
     /* no need to close event handle since we will close it when the pin is destroyed */
     CoTaskMemFree(pDataRq);
-    
+
+    /* Return the sample if flushing so it can be destroyed */
+    if (This->bFlushing && SUCCEEDED(hr))
+    {
+        hr = VFW_E_WRONG_STATE;
+        IMediaSample_SetActualDataLength(pDataRq->pSample, 0);
+    }
+
     TRACE("-- %x\n", hr);
     return hr;
 }
