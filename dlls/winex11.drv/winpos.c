@@ -426,6 +426,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
             wine_tsx11_unlock();
             data->mapped = TRUE;
             data->iconic = (new_style & WS_MINIMIZE) != 0;
+            update_net_wm_states( display, data );
         }
         else if ((swp_flags & SWP_STATECHANGED) && (!data->iconic != !(new_style & WS_MINIMIZE)))
         {
@@ -437,8 +438,12 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
             else if (X11DRV_is_window_rect_mapped( rectWindow ))
                 XMapWindow( display, data->whole_window );
             wine_tsx11_unlock();
+            update_net_wm_states( display, data );
         }
-        update_net_wm_states( display, data );
+        else if (!event_type)
+        {
+            update_net_wm_states( display, data );
+        }
     }
 }
 
