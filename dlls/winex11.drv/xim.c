@@ -358,15 +358,31 @@ BOOL X11DRV_InitXIM( const char *input_style )
 }
 
 
+static void X11DRV_OpenIM(Display *display, XPointer p, XPointer data);
+
+static void X11DRV_DestroyIM(XIM xim, XPointer p, XPointer data)
+{
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+
+    TRACE("xim = %p, p = %p\n", xim, p);
+    thread_data->xim = NULL;
+    ximStyle = 0;
+    wine_tsx11_lock();
+    XRegisterIMInstantiateCallback( thread_data->display, NULL, NULL, NULL, X11DRV_OpenIM, NULL );
+    wine_tsx11_unlock();
+}
+
 /***********************************************************************
 *           X11DRV Ime creation
 */
-XIM X11DRV_SetupXIM( Display *display )
+static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
 {
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
     XIMStyle ximStyleCallback, ximStyleNone;
     XIMStyles *ximStyles = NULL;
     INT i;
     XIM xim;
+    XIMCallback destroy;
 
     wine_tsx11_lock();
 
@@ -374,9 +390,18 @@ XIM X11DRV_SetupXIM( Display *display )
     if (xim == NULL)
     {
         WARN("Could not open input method.\n");
-        goto err;
+        wine_tsx11_unlock();
+        return;
     }
 
+    destroy.client_data = NULL;
+    destroy.callback = X11DRV_DestroyIM;
+    if (XSetIMValues(xim, XNDestroyCallback, &destroy, NULL))
+    {
+        WARN("Could not set destroy callback.\n");
+    }
+
+    TRACE("xim = %p\n", xim);
     TRACE("X display of IM = %p\n", XDisplayOfIM(xim));
     TRACE("Using %s locale of Input Method\n", XLocaleOfIM(xim));
 
@@ -384,6 +409,9 @@ XIM X11DRV_SetupXIM( Display *display )
     if (ximStyles == 0)
     {
         WARN("Could not find supported input style.\n");
+        XCloseIM(xim);
+        wine_tsx11_unlock();
+        return;
     }
     else
     {
@@ -443,29 +471,45 @@ XIM X11DRV_SetupXIM( Display *display )
 
     }
 
+    thread_data->xim = xim;
+    XUnregisterIMInstantiateCallback(display, NULL, NULL, NULL, X11DRV_OpenIM, NULL);
     wine_tsx11_unlock();
     IME_XIMPresent(TRUE);
     IME_UpdateAssociation(NULL);
-
-    return xim;
-
-err:
-    wine_tsx11_unlock();
-    return NULL;
 }
 
 
-XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
+void X11DRV_SetupXIM(void)
+{
+    wine_tsx11_lock();
+    XRegisterIMInstantiateCallback(thread_display(), NULL, NULL, NULL, X11DRV_OpenIM, NULL);
+    wine_tsx11_unlock();
+}
+
+static BOOL X11DRV_DestroyIC(XIC xic, XPointer p, XPointer data)
+{
+    struct x11drv_win_data *win_data = (struct x11drv_win_data *)p;
+    TRACE("xic = %p, win = %lx\n", xic, win_data->whole_window);
+    win_data->xic = NULL;
+    return TRUE;
+}
+
+
+XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
 {
     XPoint spot = {0};
     XVaNestedList preedit = NULL;
     XVaNestedList status = NULL;
     XIC xic;
+    XICCallback destroy = {(XPointer)data, X11DRV_DestroyIC};
     XIMCallback P_StartCB;
     XIMCallback P_DoneCB;
     XIMCallback P_DrawCB;
     XIMCallback P_CaretCB;
     LANGID langid = PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale()));
+    Window win = data->whole_window;
+
+    TRACE("xim = %p\n", xim);
 
     wine_tsx11_lock();
 
@@ -478,8 +522,10 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
                         XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
                         XNClientWindow, win,
                         XNFocusWindow, win,
+                        XNDestroyCallback, &destroy,
                         NULL);
         wine_tsx11_unlock();
+        data->xic = xic;
         return xic;
     }
 
@@ -531,6 +577,7 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
               XNStatusAttributes, status,
               XNClientWindow, win,
               XNFocusWindow, win,
+              XNDestroyCallback, &destroy,
               NULL);
      }
     else if (preedit != NULL)
@@ -540,6 +587,7 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
               XNPreeditAttributes, preedit,
               XNClientWindow, win,
               XNFocusWindow, win,
+              XNDestroyCallback, &destroy,
               NULL);
     }
     else if (status != NULL)
@@ -549,6 +597,7 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
               XNStatusAttributes, status,
               XNClientWindow, win,
               XNFocusWindow, win,
+              XNDestroyCallback, &destroy,
               NULL);
     }
     else
@@ -557,10 +606,12 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
               XNInputStyle, ximStyle,
               XNClientWindow, win,
               XNFocusWindow, win,
+              XNDestroyCallback, &destroy,
               NULL);
     }
 
     TRACE("xic = %p\n", xic);
+    data->xic = xic;
 
     if (preedit != NULL)
         XFree(preedit);

@@ -653,7 +653,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     set_queue_display_fd( data->display );
     TlsSetValue( thread_data_tls_index, data );
 
-    if (use_xim) data->xim = X11DRV_SetupXIM( data->display );
+    if (use_xim) X11DRV_SetupXIM();
     X11DRV_SetCursor( NULL );
 
     return data;

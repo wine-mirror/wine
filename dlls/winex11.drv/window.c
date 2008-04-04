@@ -1040,7 +1040,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
 {
     int cx, cy, mask;
     XSetWindowAttributes attr;
-    XIM xim;
     WCHAR text[1024];
     HRGN hrgn;
 
@@ -1079,9 +1078,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
         wine_tsx11_unlock();
         return 0;
     }
-
-    xim = x11drv_thread_data()->xim;
-    if (xim) data->xic = X11DRV_CreateIC( xim, display, data->whole_window );
 
     set_initial_wm_hints( display, data );
     X11DRV_set_wm_hints( display, data );
@@ -1404,9 +1400,12 @@ Window X11DRV_get_client_window( HWND hwnd )
 XIC X11DRV_get_ic( HWND hwnd )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    XIM xim;
 
     if (!data) return 0;
-    return data->xic;
+    if (data->xic) return data->xic;
+    if (!(xim = x11drv_thread_data()->xim)) return 0;
+    return X11DRV_CreateIC( xim, data );
 }
 
 

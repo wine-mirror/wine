@@ -273,13 +273,6 @@ extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev);
 extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);
 
-/* XIM support */
-extern BOOL X11DRV_InitXIM( const char *input_style );
-extern XIC X11DRV_CreateIC(XIM xim, Display *display, Window win);
-extern XIM X11DRV_SetupXIM(Display *display);
-extern void X11DRV_XIMLookupChars( const char *str, DWORD count );
-extern void X11DRV_ForceXIMReset(HWND hwnd);
-
 /* IME support */
 extern void IME_RegisterClasses(HINSTANCE hImeInst);
 extern void IME_UnregisterClasses(HINSTANCE hImeInst);
@@ -771,6 +764,13 @@ LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
                                             int reserve_depths);
 
 extern void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr, LPVIDMEM fb_mem);
+
+/* XIM support */
+extern BOOL X11DRV_InitXIM( const char *input_style );
+extern XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data);
+extern void X11DRV_SetupXIM(void);
+extern void X11DRV_XIMLookupChars( const char *str, DWORD count );
+extern void X11DRV_ForceXIMReset(HWND hwnd);
 
 /* FIXME: private functions imported from user32 */
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
