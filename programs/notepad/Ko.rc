@@ -60,7 +60,7 @@ POPUP "도움말(&H)" {
   MENUITEM "찾기(&S)...",               CMD_HELP_SEARCH
   MENUITEM "도움말 사용법(&H)",         CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "노트패드 정보(&A)", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
