@@ -827,7 +827,7 @@ static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 	    Sleep(10);
     }
 
-    /* sanitiy reset */
+    /* sanity reset */
     wmm->dwStatus = MCI_MODE_STOP;
 
     TRACE("wmm->dwStatus=%d\n", wmm->dwStatus);

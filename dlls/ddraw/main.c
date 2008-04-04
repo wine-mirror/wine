@@ -941,7 +941,7 @@ DllMain(HINSTANCE hInstDLL,
 
                 WARN("DDraw %p has a refcount of %d\n", ddraw, ddraw->ref7 + ddraw->ref4 + ddraw->ref3 + ddraw->ref2 + ddraw->ref1);
 
-                /* Add references to each interface to avoid freeing them unexpectadely */
+                /* Add references to each interface to avoid freeing them unexpectedly */
                 IDirectDraw_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw));
                 IDirectDraw2_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw2));
                 IDirectDraw3_AddRef(ICOM_INTERFACE(ddraw, IDirectDraw3));

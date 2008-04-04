@@ -204,7 +204,7 @@ static IOleUndoManager *create_undomgr(void)
 }
 
 /**********************************************************
- * IServiceProvider impementation
+ * IServiceProvider implementation
  */
 
 #define SERVPROV_THIS(iface) DEFINE_THIS(HTMLDocument, ServiceProvider, iface)

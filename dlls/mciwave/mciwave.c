@@ -784,7 +784,7 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lp
 
     /* go back to beginning of chunk plus the requested position */
     /* FIXME: I'm not sure this is correct, notably because some data linked to
-     * the decompression state machine will not be correcly initialized.
+     * the decompression state machine will not be correctly initialized.
      * try it this way (other way would be to decompress from 0 up to dwPosition
      * and to start sending to hWave when dwPosition is reached)
      */

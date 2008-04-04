@@ -910,7 +910,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
   return DP_OK;
 }
 
-/* Store the structure into the shared data structre. Ensure that allocs for
+/* Store the structure into the shared data structure. Ensure that allocs for
  * variable length strings come from the shared data structure.
  * FIXME: We need to free information as well
  */

@@ -371,7 +371,7 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
 /*
  * FIXME
  * List looks really ugly here. We should use a better data structure or
- * (better) find a way to store HTMLDOMelement poiner in nsIDOMNode.
+ * (better) find a way to store HTMLDOMelement pointer in nsIDOMNode.
  */
 
 HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode)

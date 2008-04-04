@@ -3742,7 +3742,7 @@ static void test_HTMLDocument(BOOL do_load)
     test_Window(unk, TRUE);
     test_InPlaceDeactivate(unk, TRUE);
 
-    /* Calling test_OleCommandTarget here couses Segmentation Fault with native
+    /* Calling test_OleCommandTarget here causes Segmentation Fault with native
      * MSHTML. It doesn't with Wine. */
 
     test_Window(unk, FALSE);

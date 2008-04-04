@@ -387,7 +387,7 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
     if(collapsed) {
         nsISelection_Collapse(nsselection, (nsIDOMNode*)elem, 0);
     }else {
-        /* Remove all size attrbutes from the range */
+        /* Remove all size attributes from the range */
         remove_child_attr(elem, wszFont, &size_str);
         nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)elem);
     }

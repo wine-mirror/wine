@@ -1970,7 +1970,7 @@ static void p8_primary_test()
         hr = IDirectDrawSurface_BltFast(offscreen, 0, 0, Surface1, NULL, 0);
         ok(hr==DD_OK, "IDirectDrawSurface_BltFast returned: %x\n", hr);
 
-        /* This ensures offscreen surface contens will be downloaded to system memory. */
+        /* This ensures offscreen surface contents will be downloaded to system memory. */
         memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
         hr = IDirectDrawSurface_Lock(offscreen, NULL, &ddsd, DDLOCK_WAIT, NULL);
@@ -1986,7 +1986,7 @@ static void p8_primary_test()
         hr = IDirectDrawSurface_BltFast(offscreen, 600, 400, Surface1, &rect, 0);
         ok(hr==DD_OK, "IDirectDrawSurface_BltFast returned: %x\n", hr);
 
-        /* This ensures offscreen surface contens will be downloaded to system memory. */
+        /* This ensures offscreen surface contents will be downloaded to system memory. */
         memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
         hr = IDirectDrawSurface_Lock(offscreen, NULL, &ddsd, DDLOCK_WAIT, NULL);
@@ -2015,8 +2015,8 @@ static void p8_primary_test()
         hr = IDirectDrawSurface_Unlock(Surface1, NULL);
         ok(hr==DD_OK, "IDirectDrawSurface_UnLock returned: %x\n", hr);
 
-        ok(differences == 0, i2 == 0 ? "Pass 1. Unexpected front buffer contens after blit (%u differences)\n" :
-                "Pass 2 (with NULL front buffer palette). Unexpected front buffer contens after blit (%u differences)\n",
+        ok(differences == 0, i2 == 0 ? "Pass 1. Unexpected front buffer contents after blit (%u differences)\n" :
+                "Pass 2 (with NULL front buffer palette). Unexpected front buffer contents after blit (%u differences)\n",
                 differences);
     }
 
