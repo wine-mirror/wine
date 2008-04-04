@@ -983,11 +983,9 @@ static BOOL show_window( HWND hwnd, INT cmd )
 	    break;
 
 	case SW_SHOWMINNOACTIVE:
-            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-            /* fall through */
         case SW_MINIMIZE:
         case SW_FORCEMINIMIZE: /* FIXME: Does not work if thread is hung. */
-            if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
 	case SW_SHOWMINIMIZED:
             swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
