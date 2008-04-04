@@ -39,7 +39,7 @@ MAIN_MENU MENU
  }
  POPUP "정보(&O)" {
   MENUITEM "라이센스(&L)...", IDM_LICENSE
-  MENUITEM "무 보증 (&N)...", IDM_NOWARRANTY
+  MENUITEM "보증 없음 (&N)...", IDM_NOWARRANTY
   MENUITEM "시계 정보(&A)...", IDM_ABOUT
  }
 }
