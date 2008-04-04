@@ -24,7 +24,7 @@
 LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
 
 STRINGTABLE {
-     IDS_APPNAME, "WineMine"
+     IDS_APPNAME, "Wine지뢰찾기"
      IDS_NOBODY,  "아무개"
      IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
 }
@@ -38,13 +38,13 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM SEPARATOR
         MENUITEM "초보자(&B)",      IDM_BEGINNER
         MENUITEM "중급자(&A)",      IDM_ADVANCED
-        MENUITEM "전문가(&E)",        IDM_EXPERT
+        MENUITEM "상급자(&E)",        IDM_EXPERT
         MENUITEM "사용자 정의(&C)",        IDM_CUSTOM
         MENUITEM SEPARATOR
         MENUITEM "나가기(&X)\tAlt+X",   IDM_EXIT
     }
     POPUP "도움말(&I)" {
-        MENUITEM "최단 시간(&F)",    IDM_TIMES
+        MENUITEM "가장 빠른 시간(&F)",    IDM_TIMES
         MENUITEM "정보(&A)",         IDM_ABOUT
     }
 }
@@ -52,7 +52,7 @@ MENU_WINEMINE MENU DISCARDABLE
 DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "최단 시간"
+CAPTION "가장 빠른 시간"
 FONT 8, "MS Shell Dlg"
 {
     GROUPBOX        "최단 시간", IDIGNORE,  10,  10, 140,  45
@@ -82,12 +82,12 @@ FONT 8, "MS Shell Dlg"
 DLG_CUSTOM DIALOG DISCARDABLE  0, 0, 100, 100
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "사용자 정의 게임"
+CAPTION "게임 사용자 정의 "
 FONT 8, "MS Shell Dlg"
 {
     LTEXT           "가로줄",   IDIGNORE,   5,   5,  30,  10
     LTEXT           "새로줄",   IDIGNORE,   5,  35,  30,  10
-    LTEXT           "지뢰들",  IDIGNORE,   5,  65,  30,  10
+    LTEXT           "지뢰",  IDIGNORE,   5,  65,  30,  10
     EDITTEXT              IDC_EDITROWS,   5,  15,  20,  12, ES_NUMBER
     EDITTEXT              IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
     EDITTEXT             IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER
