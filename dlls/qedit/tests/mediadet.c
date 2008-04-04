@@ -25,22 +25,88 @@
 #include "wine/test.h"
 #include "qedit.h"
 
+static WCHAR test_avi_filename[MAX_PATH];
+
+static BOOL init_tests(void)
+{
+    static WCHAR temp_path[MAX_PATH];
+    static WCHAR prefix[] = {'D','E','S',0};
+    static WCHAR avi[] = {'a','v','i',0};
+    HRSRC res;
+    HGLOBAL data;
+    char *mem;
+    DWORD size, written;
+    HANDLE fh;
+
+    res = FindResourceW(NULL, (LPWSTR) 1, (LPWSTR) 256);
+    if (!res)
+        return FALSE;
+
+    data = LoadResource(NULL, res);
+    if (!data)
+        return FALSE;
+
+    mem = LockResource(data);
+    if (!mem)
+        return FALSE;
+
+    size = SizeofResource(NULL, res);
+    if (size == 0)
+        return FALSE;
+
+    if (!GetTempPathW(sizeof temp_path, temp_path))
+        return FALSE;
+
+    /* We might end up relying on the extension here, so .TMP is no good.  */
+    if (!GetTempFileNameW(temp_path, prefix, 0, test_avi_filename))
+        return FALSE;
+
+    DeleteFileW(test_avi_filename);
+    lstrcpyW(test_avi_filename + lstrlenW(test_avi_filename) - 3, avi);
+
+    fh = CreateFileW(test_avi_filename, GENERIC_WRITE, 0, NULL,
+                     CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (fh == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (!WriteFile(fh, mem, size, &written, NULL) || written != size)
+        return FALSE;
+
+    CloseHandle(fh);
+
+    return TRUE;
+}
+
 static void test_mediadet(void)
 {
     HRESULT hr;
     IMediaDet *pM = NULL;
+    BSTR filename = NULL;
 
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (LPVOID*)&pM);
     ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
     ok(pM != NULL, "pM is NULL\n");
 
+    filename = SysAllocString(test_avi_filename);
+    hr = IMediaDet_put_Filename(pM, filename);
+    todo_wine ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
+    SysFreeString(filename);
+
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
+
+    DeleteFileW(test_avi_filename);
 }
 
 START_TEST(mediadet)
 {
+    if (!init_tests())
+    {
+        skip("Couldn't initialize tests!\n");
+        return;
+    }
+
     CoInitialize(NULL);
     test_mediadet();
     CoUninitialize();

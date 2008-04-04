@@ -3,11 +3,13 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = qedit.dll
-IMPORTS   = ole32 kernel32
+IMPORTS   = oleaut32 ole32 kernel32
 EXTRALIBS = -lstrmiids -luuid
 
 CTESTS = \
 	mediadet.c
+
+RC_SRCS = qedit.rc
 
 @MAKE_TEST_RULES@
 
