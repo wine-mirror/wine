@@ -1570,6 +1570,9 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
     if (This->state == State_Running) return S_OK;
 
     EnterCriticalSection(&This->cs);
+    if (This->state == State_Stopped)
+        This->EcCompleteCount = 0;
+
     if (This->refClock)
     {
         IReferenceClock_GetTime(This->refClock, &This->start_time);
@@ -1590,6 +1593,9 @@ static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface) {
     if (This->state == State_Paused) return S_OK;
 
     EnterCriticalSection(&This->cs);
+    if (This->state == State_Stopped)
+        This->EcCompleteCount = 0;
+
     if (This->state == State_Running && This->refClock)
     {
         LONGLONG time = This->start_time;
