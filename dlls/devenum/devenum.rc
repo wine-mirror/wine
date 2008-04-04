@@ -142,3 +142,12 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 	9  "Звуковое устройство вывода по умолчанию"
 	10 "Устройство вывода MIDI по умолчанию"
 }
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+{
+	7  "기본 다이렉트 사운드"
+	8  "다이렉트 사운드: %s"
+	9  "기본 웨이브 출력 장치"
+	10 "기본 미디출력 장치"
+}
