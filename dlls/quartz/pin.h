@@ -35,6 +35,13 @@ typedef HRESULT (* QUERYACCEPTPROC)(LPVOID userdata, const AM_MEDIA_TYPE * pmt);
  */
 typedef HRESULT (* PRECONNECTPROC)(IPin * iface, IPin * pConnectPin);
 
+/* This function is called whenever a cleanup operation has to occur,
+ * this is usually after a flush, seek, or end of stream notification.
+ * This code may even be repeated multiple times, so build your code to
+ * tolerate this behavior. Return value is ignored and should be S_OK.
+ */
+typedef HRESULT (* CLEANUPPROC) (LPVOID userdata);
+
 typedef struct IPinImpl
 {
 	const struct IPinVtbl * lpVtbl;
@@ -56,6 +63,7 @@ typedef struct InputPin
 	const IMemInputPinVtbl * lpVtblMemInput;
 	IMemAllocator * pAllocator;
 	SAMPLEPROC fnSampleProc;
+	CLEANUPPROC fnCleanProc;
 	REFERENCE_TIME tStart;
 	REFERENCE_TIME tStop;
 	double dRate;
@@ -82,24 +90,19 @@ typedef struct PullPin
 	PRECONNECTPROC fnPreConnect;
 	HANDLE hThread;
 	HANDLE hEventStateChanged;
+	CLEANUPPROC fnCleanProc;
 	REFERENCE_TIME rtStart;
 	REFERENCE_TIME rtStop;
 	REFERENCE_TIME rtCurrent;
+	double dRate;
 	FILTER_STATE state;
 	BOOL stop_playback;
-	double dRate;
 } PullPin;
 
-/*** Initializers ***/
-HRESULT InputPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, InputPin * pPinImpl);
-HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES *props, LPVOID pUserData,
-                       QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl);
-HRESULT PullPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl);
-
 /*** Constructors ***/
-HRESULT InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
-HRESULT OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
-HRESULT PullPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT OutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, long outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
 /**************************/
 /*** Pin Implementation ***/

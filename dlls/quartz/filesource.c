@@ -893,23 +893,18 @@ static HRESULT FileAsyncReaderPin_ConnectSpecific(IPin * iface, IPin * pReceiveP
 
 static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
-    FileAsyncReader * pPinImpl;
     PIN_INFO piOutput;
+    HRESULT hr;
 
     *ppPin = NULL;
-
-    pPinImpl = CoTaskMemAlloc(sizeof(*pPinImpl));
-
-    if (!pPinImpl)
-        return E_OUTOFMEMORY;
-
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = pBaseFilter;
     strcpyW(piOutput.achName, wszOutputPinName);
+    hr = OutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, NULL, pBaseFilter, AcceptProcAFR, pCritSec, ppPin);
 
-    if (SUCCEEDED(OutputPin_Init(&piOutput, NULL, pBaseFilter, AcceptProcAFR, pCritSec, &pPinImpl->pin)))
+    if (SUCCEEDED(hr))
     {
-        pPinImpl->pin.pin.lpVtbl = &FileAsyncReaderPin_Vtbl;
+        FileAsyncReader *pPinImpl =  (FileAsyncReader *)*ppPin;
         pPinImpl->lpVtblAR = &FileAsyncReader_Vtbl;
         pPinImpl->hFile = hFile;
         pPinImpl->hEvent = CreateEventW(NULL, 0, 0, NULL);
@@ -918,13 +913,8 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
         pPinImpl->pin.pConnectSpecific = FileAsyncReaderPin_ConnectSpecific;
         InitializeCriticalSection(&pPinImpl->csList);
         pPinImpl->csList.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FileAsyncReader.csList");
-
-        *ppPin = (IPin *)(&pPinImpl->pin.pin.lpVtbl);
-        return S_OK;
     }
-
-    CoTaskMemFree(pPinImpl);
-    return E_FAIL;
+    return hr;
 }
 
 /* IAsyncReader */

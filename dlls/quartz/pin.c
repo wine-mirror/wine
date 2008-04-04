@@ -225,38 +225,8 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
     return hr;
 }
 
-HRESULT InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
-{
-    InputPin * pPinImpl;
-
-    *ppPin = NULL;
-
-    if (pPinInfo->dir != PINDIR_INPUT)
-    {
-        ERR("Pin direction(%x) != PINDIR_INPUT\n", pPinInfo->dir);
-        return E_INVALIDARG;
-    }
-
-    pPinImpl = CoTaskMemAlloc(sizeof(*pPinImpl));
-
-    if (!pPinImpl)
-        return E_OUTOFMEMORY;
-
-    if (SUCCEEDED(InputPin_Init(pPinInfo, pSampleProc, pUserData, pQueryAccept, pCritSec, pPinImpl)))
-    {
-        pPinImpl->pin.lpVtbl = &InputPin_Vtbl;
-        pPinImpl->lpVtblMemInput = &MemInputPin_Vtbl;
-
-        *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
-        return S_OK;
-    }
-
-    CoTaskMemFree(pPinImpl);
-    return E_FAIL;
-}
-
-/* Note that we don't init the vtables here (like C++ constructor) */
-HRESULT InputPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, InputPin * pPinImpl)
+static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData,
+                             QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, InputPin * pPinImpl)
 {
     TRACE("\n");
 
@@ -271,21 +241,24 @@ HRESULT InputPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID 
 
     /* Input pin attributes */
     pPinImpl->fnSampleProc = pSampleProc;
+    pPinImpl->fnCleanProc = pCleanUp;
     pPinImpl->pAllocator = NULL;
     pPinImpl->tStart = 0;
     pPinImpl->tStop = 0;
     pPinImpl->dRate = 0;
+    pPinImpl->pin.lpVtbl = InputPin_Vtbl;
+    pPinImpl->lpVtblMemInput = &MemInputPin_Vtbl;
 
     return S_OK;
 }
 
-HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES * props, LPVOID pUserData,
-                       QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl)
+static HRESULT OutputPin_Init(const IPinVtbl *OutputPin_Vtbl, const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES * props, LPVOID pUserData,
+                              QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl)
 {
     TRACE("\n");
 
     /* Common attributes */
-    pPinImpl->pin.lpVtbl = &OutputPin_Vtbl;
+    pPinImpl->pin.lpVtbl = OutputPin_Vtbl;
     pPinImpl->pin.refCount = 1;
     pPinImpl->pin.pConnectedTo = NULL;
     pPinImpl->pin.fnQueryAccept = pQueryAccept;
@@ -309,7 +282,34 @@ HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES * p
     return S_OK;
 }
 
-HRESULT OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+{
+    InputPin * pPinImpl;
+
+    *ppPin = NULL;
+
+    if (pPinInfo->dir != PINDIR_INPUT)
+    {
+        ERR("Pin direction(%x) != PINDIR_INPUT\n", pPinInfo->dir);
+        return E_INVALIDARG;
+    }
+
+    pPinImpl = CoTaskMemAlloc(sizeof(*pPinImpl));
+
+    if (!pPinImpl)
+        return E_OUTOFMEMORY;
+
+    if (SUCCEEDED(InputPin_Init(InputPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCritSec, pPinImpl)))
+    {
+        *ppPin = (IPin *)pPinImpl;
+        return S_OK;
+    }
+
+    CoTaskMemFree(pPinImpl);
+    return E_FAIL;
+}
+
+HRESULT OutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, long outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     OutputPin * pPinImpl;
 
@@ -321,15 +321,15 @@ HRESULT OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *pro
         return E_INVALIDARG;
     }
 
-    pPinImpl = CoTaskMemAlloc(sizeof(*pPinImpl));
+    assert(outputpin_size >= sizeof(OutputPin));
+
+    pPinImpl = CoTaskMemAlloc(outputpin_size);
 
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pCritSec, pPinImpl)))
+    if (SUCCEEDED(OutputPin_Init(OutputPin_Vtbl, pPinInfo, props, pUserData, pQueryAccept, pCritSec, pPinImpl)))
     {
-        pPinImpl->pin.lpVtbl = &OutputPin_Vtbl;
-
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
@@ -1149,7 +1149,37 @@ HRESULT OutputPin_DeliverDisconnect(OutputPin * This)
 }
 
 
-HRESULT PullPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData,
+                            QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl)
+{
+    /* Common attributes */
+    pPinImpl->pin.lpVtbl = PullPin_Vtbl;
+    pPinImpl->pin.refCount = 1;
+    pPinImpl->pin.pConnectedTo = NULL;
+    pPinImpl->pin.fnQueryAccept = pQueryAccept;
+    pPinImpl->pin.pUserData = pUserData;
+    pPinImpl->pin.pCritSec = pCritSec;
+    Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
+    ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
+
+    /* Input pin attributes */
+    pPinImpl->fnSampleProc = pSampleProc;
+    pPinImpl->fnCleanProc = pCleanUp;
+    pPinImpl->fnPreConnect = NULL;
+    pPinImpl->pAlloc = NULL;
+    pPinImpl->pReader = NULL;
+    pPinImpl->hThread = NULL;
+    pPinImpl->hEventStateChanged = CreateEventW(NULL, TRUE, TRUE, NULL);
+
+    pPinImpl->rtStart = 0;
+    pPinImpl->rtCurrent = 0;
+    pPinImpl->rtStop = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
+    pPinImpl->state = State_Stopped;
+
+    return S_OK;
+}
+
+HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     PullPin * pPinImpl;
 
@@ -1166,43 +1196,14 @@ HRESULT PullPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPV
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(PullPin_Init(pPinInfo, pSampleProc, pUserData, pQueryAccept, pCritSec, pPinImpl)))
+    if (SUCCEEDED(PullPin_Init(PullPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCritSec, pPinImpl)))
     {
-        pPinImpl->pin.lpVtbl = &PullPin_Vtbl;
-
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
     }
 
     CoTaskMemFree(pPinImpl);
     return E_FAIL;
-}
-
-HRESULT PullPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl)
-{
-    /* Common attributes */
-    pPinImpl->pin.refCount = 1;
-    pPinImpl->pin.pConnectedTo = NULL;
-    pPinImpl->pin.fnQueryAccept = pQueryAccept;
-    pPinImpl->pin.pUserData = pUserData;
-    pPinImpl->pin.pCritSec = pCritSec;
-    Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
-    ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
-
-    /* Input pin attributes */
-    pPinImpl->fnSampleProc = pSampleProc;
-    pPinImpl->fnPreConnect = NULL;
-    pPinImpl->pAlloc = NULL;
-    pPinImpl->pReader = NULL;
-    pPinImpl->hThread = NULL;
-    pPinImpl->hEventStateChanged = CreateEventW(NULL, TRUE, TRUE, NULL);
-
-    pPinImpl->rtStart = 0;
-    pPinImpl->rtCurrent = 0;
-    pPinImpl->rtStop = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
-    pPinImpl->state = State_Stopped;
-
-    return S_OK;
 }
 
 HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)

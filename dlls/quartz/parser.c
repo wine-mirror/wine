@@ -47,8 +47,6 @@ static HRESULT Parser_ChangeCurrent(IBaseFilter *iface);
 static HRESULT Parser_ChangeStop(IBaseFilter *iface);
 static HRESULT Parser_ChangeRate(IBaseFilter *iface);
 
-static HRESULT Parser_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
-
 static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
     return (ParserImpl *)((char*)iface - FIELD_OFFSET(ParserImpl, mediaSeeking.lpVtbl));
@@ -92,7 +90,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     MediaSeekingImpl_Init((IBaseFilter*)pParser, stop, current, rate, &pParser->mediaSeeking, &pParser->csFilter);
     pParser->mediaSeeking.lpVtbl = &Parser_Seeking_Vtbl;
 
-    hr = Parser_InputPin_Construct(&piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, &pParser->csFilter, (IPin **)&pParser->pInputPin);
+    hr = PullPin_Construct(&Parser_InputPin_Vtbl, &piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, fnCleanup, &pParser->csFilter, (IPin **)&pParser->pInputPin);
 
     if (SUCCEEDED(hr))
     {
@@ -108,40 +106,6 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     }
 
     return hr;
-}
-
-static HRESULT Parser_OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, const AM_MEDIA_TYPE * pmt, LPCRITICAL_SECTION pCritSec, Parser_OutputPin * pPinImpl)
-{
-    pPinImpl->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-    CopyMediaType(pPinImpl->pmt, pmt);
-    pPinImpl->dwSamplesProcessed = 0;
-
-    return OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pCritSec, &pPinImpl->pin);
-}
-
-static HRESULT Parser_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, const AM_MEDIA_TYPE * pmt, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
-{
-    Parser_OutputPin * pPinImpl;
-
-    *ppPin = NULL;
-
-    assert(pPinInfo->dir == PINDIR_OUTPUT);
-
-    pPinImpl = CoTaskMemAlloc(sizeof(Parser_OutputPin));
-
-    if (!pPinImpl)
-        return E_OUTOFMEMORY;
-
-    if (SUCCEEDED(Parser_OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pmt, pCritSec, pPinImpl)))
-    {
-        pPinImpl->pin.pin.lpVtbl = &Parser_OutputPin_Vtbl;
-
-        *ppPin = (IPin *)pPinImpl;
-        return S_OK;
-    }
-
-    CoTaskMemFree(pPinImpl);
-    return E_FAIL;
 }
 
 static HRESULT WINAPI Parser_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
@@ -521,11 +485,17 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
     This->ppPins = CoTaskMemAlloc((This->cStreams + 2) * sizeof(IPin *));
     memcpy(This->ppPins, ppOldPins, (This->cStreams + 1) * sizeof(IPin *));
 
-    hr = Parser_OutputPin_Construct(piOutput, props, NULL, Parser_OutputPin_QueryAccept, amt, &This->csFilter, This->ppPins + This->cStreams + 1);
+    hr = OutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, props, NULL, Parser_OutputPin_QueryAccept, &This->csFilter, This->ppPins + This->cStreams + 1);
 
     if (SUCCEEDED(hr))
     {
-        ((Parser_OutputPin *)(This->ppPins[This->cStreams + 1]))->pin.pin.pUserData = (LPVOID)This->ppPins[This->cStreams + 1];
+        IPin *pPin = This->ppPins[This->cStreams + 1];
+        Parser_OutputPin *pin = (Parser_OutputPin *)pPin;
+        pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+        CopyMediaType(pin->pmt, amt);
+        pin->dwSamplesProcessed = 0;
+
+        pin->pin.pin.pUserData = (LPVOID)This->ppPins[This->cStreams + 1];
         This->cStreams++;
         CoTaskMemFree(ppOldPins);
     }
@@ -717,35 +687,6 @@ static const IPinVtbl Parser_OutputPin_Vtbl =
     OutputPin_EndFlush,
     OutputPin_NewSegment
 };
-
-static HRESULT Parser_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
-{
-    PullPin * pPinImpl;
-
-    *ppPin = NULL;
-
-    if (pPinInfo->dir != PINDIR_INPUT)
-    {
-        ERR("Pin direction(%x) != PINDIR_INPUT\n", pPinInfo->dir);
-        return E_INVALIDARG;
-    }
-
-    pPinImpl = CoTaskMemAlloc(sizeof(*pPinImpl));
-
-    if (!pPinImpl)
-        return E_OUTOFMEMORY;
-
-    if (SUCCEEDED(PullPin_Init(pPinInfo, pSampleProc, pUserData, pQueryAccept, pCritSec, pPinImpl)))
-    {
-        pPinImpl->pin.lpVtbl = &Parser_InputPin_Vtbl;
-
-        *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
-        return S_OK;
-    }
-
-    CoTaskMemFree(pPinImpl);
-    return E_FAIL;
-}
 
 static HRESULT WINAPI Parser_InputPin_Disconnect(IPin * iface)
 {
