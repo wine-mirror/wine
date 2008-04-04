@@ -342,7 +342,6 @@ TESTSUBDIRS = \
 	riched20/tests \
 	riched32/tests \
 	rpcrt4/tests \
-	rsabase/tests \
 	rsaenh/tests \
 	schannel/tests \
 	secur32/tests \

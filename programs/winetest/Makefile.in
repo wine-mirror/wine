@@ -83,7 +83,6 @@ TESTBINS = \
 	riched20_test.exe \
 	riched32_test.exe \
 	rpcrt4_test.exe \
-	rsabase_test.exe \
 	rsaenh_test.exe \
 	schannel_test.exe \
 	secur32_test.exe \
@@ -223,8 +222,6 @@ riched32_test.exe: $(DLLDIR)/riched32/tests/riched32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/riched32/tests/riched32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rpcrt4_test.exe: $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rpcrt4/tests/rpcrt4_test.exe$(DLLEXT) $@ && $(STRIP) $@
-rsabase_test.exe: $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT)
-	cp $(DLLDIR)/rsabase/tests/rsabase_test.exe$(DLLEXT) $@ && $(STRIP) $@
 rsaenh_test.exe: $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT)
 	cp $(DLLDIR)/rsaenh/tests/rsaenh_test.exe$(DLLEXT) $@ && $(STRIP) $@
 schannel_test.exe: $(DLLDIR)/schannel/tests/schannel_test.exe$(DLLEXT)

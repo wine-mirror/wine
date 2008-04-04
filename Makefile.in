@@ -412,7 +412,6 @@ ALL_MAKEFILES = \
 	dlls/rpcrt4/Makefile \
 	dlls/rpcrt4/tests/Makefile \
 	dlls/rsabase/Makefile \
-	dlls/rsabase/tests/Makefile \
 	dlls/rsaenh/Makefile \
 	dlls/rsaenh/tests/Makefile \
 	dlls/sane.ds/Makefile \
@@ -837,7 +836,6 @@ dlls/riched32/tests/Makefile: dlls/riched32/tests/Makefile.in dlls/Maketest.rule
 dlls/rpcrt4/Makefile: dlls/rpcrt4/Makefile.in dlls/Makedll.rules
 dlls/rpcrt4/tests/Makefile: dlls/rpcrt4/tests/Makefile.in dlls/Maketest.rules
 dlls/rsabase/Makefile: dlls/rsabase/Makefile.in dlls/Makedll.rules
-dlls/rsabase/tests/Makefile: dlls/rsabase/tests/Makefile.in dlls/Maketest.rules
 dlls/rsaenh/Makefile: dlls/rsaenh/Makefile.in dlls/Makedll.rules
 dlls/rsaenh/tests/Makefile: dlls/rsaenh/tests/Makefile.in dlls/Maketest.rules
 dlls/sane.ds/Makefile: dlls/sane.ds/Makefile.in dlls/Makedll.rules

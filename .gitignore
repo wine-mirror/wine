@@ -350,9 +350,6 @@ dlls/rpcrt4/tests/server.h
 dlls/rpcrt4/tests/server_c.c
 dlls/rpcrt4/tests/server_s.c
 dlls/rpcrt4/tests/testlist.c
-dlls/rsabase/tests/*.ok
-dlls/rsabase/tests/rsabase_crosstest.exe
-dlls/rsabase/tests/testlist.c
 dlls/rsaenh/librsaenh.def
 dlls/rsaenh/tests/*.ok
 dlls/rsaenh/tests/rsaenh_crosstest.exe
@@ -673,7 +670,6 @@ programs/winetest/quartz_test.exe
 programs/winetest/riched20_test.exe
 programs/winetest/riched32_test.exe
 programs/winetest/rpcrt4_test.exe
-programs/winetest/rsabase_test.exe
 programs/winetest/rsaenh_test.exe
 programs/winetest/schannel_test.exe
 programs/winetest/secur32_test.exe
