@@ -22,6 +22,8 @@
 
 #define COBJMACROS
 
+#include "ole2.h"
+#include "uuids.h"
 #include "wine/test.h"
 #include "qedit.h"
 
@@ -84,6 +86,7 @@ static void test_mediadet(void)
     BSTR filename = NULL;
     long nstrms = 0;
     long strm;
+    AM_MEDIA_TYPE mt;
 
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (LPVOID*)&pM);
@@ -113,6 +116,12 @@ static void test_mediadet(void)
     hr = IMediaDet_get_CurrentStream(pM, &strm);
     todo_wine ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
     todo_wine ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+
+    ZeroMemory(&mt, sizeof mt);
+    hr = IMediaDet_get_StreamMediaType(pM, &mt);
+    todo_wine ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    todo_wine ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Video),
+                 "IMediaDet_get_StreamMediaType\n");
 
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
