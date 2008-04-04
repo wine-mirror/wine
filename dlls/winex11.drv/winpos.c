@@ -549,7 +549,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     if (!hwnd) return;
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->mapped) return;
+    if (!data->mapped || data->iconic) return;
 
     /* Get geometry */
 
@@ -586,7 +586,6 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
                hwnd, rect.left, rect.top, x, y );
 
     if ((rect.right - rect.left == cx && rect.bottom - rect.top == cy) ||
-        IsIconic(hwnd) ||
         (IsRectEmpty( &rect ) && event->width == 1 && event->height == 1))
     {
         if (flags & SWP_NOMOVE) return;  /* if nothing changed, don't do anything */
