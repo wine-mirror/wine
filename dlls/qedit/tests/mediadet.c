@@ -83,6 +83,7 @@ static void test_mediadet(void)
     IMediaDet *pM = NULL;
     BSTR filename = NULL;
     long nstrms = 0;
+    long strm;
 
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (LPVOID*)&pM);
@@ -104,6 +105,14 @@ static void test_mediadet(void)
     todo_wine ok(lstrcmpW(filename, test_avi_filename) == 0,
                  "IMediaDet_get_Filename\n");
     SysFreeString(filename);
+
+    hr = IMediaDet_put_CurrentStream(pM, 0);
+    todo_wine ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+
+    strm = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &strm);
+    todo_wine ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+    todo_wine ok(strm == 0, "IMediaDet_get_CurrentStream\n");
 
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
