@@ -624,9 +624,28 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_StretchRect(LPDIRECT3DDEVICE9EX ifa
 static HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9EX iface, IDirect3DSurface9* pSurface, CONST RECT* pRect, D3DCOLOR color) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DSurface9Impl *surface = (IDirect3DSurface9Impl *)pSurface;
+    WINED3DPOOL pool;
+    WINED3DRESOURCETYPE restype;
+    DWORD usage;
+    WINED3DSURFACE_DESC desc;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
+    memset(&desc, 0, sizeof(desc));
+    desc.Usage = &usage;
+    desc.Pool = &pool;
+    desc.Type = &restype;
+    IWineD3DSurface_GetDesc(surface->wineD3DSurface, &desc);
+
+    /* This method is only allowed with surfaces that are render targets, or offscreen plain surfaces
+     * in D3DPOOL_DEFAULT
+     */
+    if(!(usage & WINED3DUSAGE_RENDERTARGET) && (pool != D3DPOOL_DEFAULT || restype != D3DRTYPE_SURFACE)) {
+        WARN("Surface is not a render target, or not a stand-alone D3DPOOL_DEFAULT surface\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* Colorfill can only be used on rendertarget surfaces, or offscreen plain surfaces in D3DPOOL_DEFAULT */
     /* Note: D3DRECT is compatible with WINED3DRECT */
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_ColorFill(This->WineD3DDevice, surface->wineD3DSurface, (CONST WINED3DRECT*)pRect, color);
