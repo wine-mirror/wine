@@ -423,28 +423,30 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         renderbuffer_entry_t *entry, *entry2;
         TRACE("(%p) : cleaning up\n", This);
 
+        /* Need a context to destroy the texture. Use the currently active render target, but only if
+         * the primary render target exists. Otherwise lastActiveRenderTarget is garbage, see above.
+         * When destroying the primary rt, Uninit3D will activate a context before doing anything
+         */
+        if(device->render_targets && device->render_targets[0]) {
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        }
+
+        ENTER_GL();
         if (This->glDescription.textureName != 0) { /* release the openGL texture.. */
-
-            /* Need a context to destroy the texture. Use the currently active render target, but only if
-             * the primary render target exists. Otherwise lastActiveRenderTarget is garbage, see above.
-             * When destroying the primary rt, Uninit3D will activate a context before doing anything
-             */
-            if(device->render_targets && device->render_targets[0]) {
-                ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-            }
-
             TRACE("Deleting texture %d\n", This->glDescription.textureName);
-            ENTER_GL();
             glDeleteTextures(1, &This->glDescription.textureName);
-            LEAVE_GL();
         }
 
         if(This->Flags & SFLAG_PBO) {
             /* Delete the PBO */
-            ENTER_GL();
             GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
-            LEAVE_GL();
         }
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry) {
+            GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
+            HeapFree(GetProcessHeap(), 0, entry);
+        }
+        LEAVE_GL();
 
         if(This->Flags & SFLAG_DIBSECTION) {
             /* Release the DC */
@@ -462,13 +464,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         if(iface == device->ddraw_primary)
             device->ddraw_primary = NULL;
-
-        ENTER_GL();
-        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry) {
-            GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
-            HeapFree(GetProcessHeap(), 0, entry);
-        }
-        LEAVE_GL();
 
         TRACE("(%p) Released\n", This);
         HeapFree(GetProcessHeap(), 0, This);
