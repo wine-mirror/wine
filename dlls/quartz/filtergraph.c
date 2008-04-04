@@ -1472,9 +1472,8 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
             CoTaskMemFree(ppPins);
         }
         TRACE("Doing stuff with filter %p\n", PinInfo.pFilter);
-        LeaveCriticalSection(&pGraph->cs);
+
         FoundFilter(PinInfo.pFilter);
-        EnterCriticalSection(&pGraph->cs);
     }
 
     if (PinInfo.pFilter) IBaseFilter_Release(PinInfo.pFilter);
@@ -1778,9 +1777,9 @@ static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek,
             IBaseFilter_QueryInterface(pfilter, &IID_IMediaSeeking, (void**)&seek);
             if (!seek)
                 continue;
-            LeaveCriticalSection(&This->cs);
+
             hr = FoundSeek(This, seek, arg);
-            EnterCriticalSection(&This->cs);
+
             IMediaSeeking_Release(seek);
             if (hr_return != E_NOTIMPL)
                 allnotimpl = FALSE;
