@@ -2212,7 +2212,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,notepad.exe
 10,,regedit.exe
 10,,twain_32.dll
-10,,winebrowser.exe
 10,,winhelp.exe
 10,command,start.exe
 11,,actxprxy.dll
@@ -2272,6 +2271,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,urlmon.dll
 11,,user32.dll
 11,,version.dll
+11,,winebrowser.exe
 11,,wininet.dll
 11,,winmm.dll
 11,,winspool.drv
