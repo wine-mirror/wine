@@ -98,6 +98,13 @@ static void test_mediadet(void)
     todo_wine ok(hr == S_OK, "IMediaDet_get_OutputStreams\n");
     todo_wine ok(nstrms == 1, "IMediaDet_get_OutputStreams\n");
 
+    filename = NULL;
+    hr = IMediaDet_get_Filename(pM, &filename);
+    todo_wine ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    todo_wine ok(lstrcmpW(filename, test_avi_filename) == 0,
+                 "IMediaDet_get_Filename\n");
+    SysFreeString(filename);
+
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
 
