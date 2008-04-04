@@ -45,4 +45,8 @@ STRINGTABLE DISCARDABLE
 {
  IDS_TITLEFORMAT     " %s 연결"
  IDS_MESSAGEFORMAT   " %s 연결중"
+ IDS_INCORRECTPASSWORDTITLE  "로그온  실패"
+ IDS_INCORRECTPASSWORD       "당신의 사용자 이름과 암호가 \n올바른지 확인하십시오"
+ IDS_CAPSLOCKONTITLE "Caps Lock  커짐"
+ IDS_CAPSLOCKON      "Caps Lock 이 커져 있으면 암호가 잘못입력될 수 있습니다.\n\n 암호를 입력하기 전에 \n키보드의 Caps Lock 키를 끄시기 바랍니다."
 }
