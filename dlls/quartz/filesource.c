@@ -432,6 +432,8 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
         This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
         This->lpVtbl = NULL;
+        CoTaskMemFree(This->pszFileName);
+        FreeMediaType(This->pmt);
         CoTaskMemFree(This);
         return 0;
     }
@@ -639,8 +641,13 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     /* store file name & media type */
     if (SUCCEEDED(hr))
     {
+        CoTaskMemFree(This->pszFileName);
+        if (This->pmt)
+            FreeMediaType(This->pmt);
+
         This->pszFileName = CoTaskMemAlloc((strlenW(pszFileName) + 1) * sizeof(WCHAR));
         strcpyW(This->pszFileName, pszFileName);
+
         This->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         if (!pmt)
         {
@@ -674,7 +681,9 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
         }
 
         CoTaskMemFree(This->pszFileName);
+        FreeMediaType(This->pmt);
         This->pszFileName = NULL;
+        This->pmt = NULL;
 
         CloseHandle(hFile);
     }
