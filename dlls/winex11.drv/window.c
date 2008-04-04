@@ -1036,8 +1036,22 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
                                   UINT swp_flags, const RECT *old_client_rect,
                                   const RECT *old_whole_rect )
 {
+    DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
     XWindowChanges changes;
-    int mask = get_window_changes( &changes, old_whole_rect, &data->whole_rect );
+    int mask = CWWidth | CWHeight;
+
+    if (data->managed && data->iconic) return;
+
+    if ((changes.width = data->whole_rect.right - data->whole_rect.left) <= 0) changes.width = 1;
+    if ((changes.height = data->whole_rect.bottom - data->whole_rect.top) <= 0) changes.height = 1;
+
+    /* only the size is allowed to change for the desktop window */
+    if (data->whole_window != root_window)
+    {
+        changes.x = data->whole_rect.left - virtual_screen_rect.left;
+        changes.y = data->whole_rect.top - virtual_screen_rect.top;
+        mask |= CWX | CWY;
+    }
 
     if (!(swp_flags & SWP_NOZORDER))
     {
@@ -1054,26 +1068,16 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
         /* and Above with a sibling doesn't work so well either, so we ignore it */
     }
 
-    /* only the size is allowed to change for the desktop window */
-    if (data->whole_window == root_window) mask &= CWWidth | CWHeight;
+    TRACE( "setting win %p/%lx pos %d,%d,%dx%d after %lx changes=%x\n",
+           data->hwnd, data->whole_window, data->whole_rect.left, data->whole_rect.top,
+           data->whole_rect.right - data->whole_rect.left,
+           data->whole_rect.bottom - data->whole_rect.top, changes.sibling, mask );
 
-    if (mask)
-    {
-        DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
-
-        TRACE( "setting win %p/%lx pos %d,%d,%dx%d after %lx changes=%x\n",
-               data->hwnd, data->whole_window, data->whole_rect.left, data->whole_rect.top,
-               data->whole_rect.right - data->whole_rect.left,
-               data->whole_rect.bottom - data->whole_rect.top, changes.sibling, mask );
-
-        wine_tsx11_lock();
-        if (mask & (CWWidth|CWHeight)) set_size_hints( display, data, style );
-        if (mask & CWX) changes.x -= virtual_screen_rect.left;
-        if (mask & CWY) changes.y -= virtual_screen_rect.top;
-        XReconfigureWMWindow( display, data->whole_window,
-                              DefaultScreen(display), mask, &changes );
-        wine_tsx11_unlock();
-    }
+    wine_tsx11_lock();
+    set_size_hints( display, data, style );
+    XReconfigureWMWindow( display, data->whole_window,
+                          DefaultScreen(display), mask, &changes );
+    wine_tsx11_unlock();
 }
 
 
