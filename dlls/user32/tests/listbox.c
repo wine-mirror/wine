@@ -44,6 +44,8 @@ static const char * const strings[4] = {
   "Fourth added which is very long because at some time we only had a 256 byte character buffer and that was overflowing in one of those applications that had a common dialog file open box and tried to add a 300 characters long custom filter string which of course the code did not like and crashed. Just make sure this string is longer than 256 characters."
 };
 
+static const char BAD_EXTENSION[] = "*.txtbad";
+
 static HWND
 create_listbox (DWORD add_style, HWND parent)
 {
@@ -591,10 +593,10 @@ static void test_listbox_LB_DIR()
         itemCount - 1, res);
 
     /* This tests behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, 0, (LPARAM)pathBuffer);
-    ok (res == -1, "SendMessage(LB_DIR, 0, *.txt) returned %d, expected -1\n", res);
+    ok (res == -1, "SendMessage(LB_DIR, 0, %s) returned %d, expected -1\n", BAD_EXTENSION, res);
 
     /* There should be NO content in the listbox */
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
@@ -649,10 +651,10 @@ static void test_listbox_LB_DIR()
         itemCount - 1, res);
 
     /* This tests behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY, (LPARAM)pathBuffer);
-    ok (res == -1, "SendMessage(LB_DIR, DDL_DIRECTORY, *.txt) returned %d, expected -1\n", res);
+    ok (res == -1, "SendMessage(LB_DIR, DDL_DIRECTORY, %s) returned %d, expected -1\n", BAD_EXTENSION, res);
 
     /* There should be NO content in the listbox */
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
@@ -722,11 +724,11 @@ static void test_listbox_LB_DIR()
     }
 
     /* This tests behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
-    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, *.txt) returned %d, expected %d\n",
-        res, itemCount_justDrives -1);
+    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DRIVES|DDL_EXCLUSIVE, %s) returned %d, expected %d\n",
+        BAD_EXTENSION, res, itemCount_justDrives -1);
 
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
     ok (itemCount == itemCount_justDrives, "SendMessage(LB_DIR) returned %d expected %d\n",
@@ -753,11 +755,11 @@ static void test_listbox_LB_DIR()
     ok(res + 1 == itemCount, "SendMessage(LB_DIR, DDL_DRIVES, w*.c) returned incorrect index!\n");
 
     /* This tests behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DRIVES, (LPARAM)pathBuffer);
-    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DRIVES, *.txt) returned %d, expected %d\n",
-        res, itemCount_justDrives -1);
+    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DRIVES, %s) returned %d, expected %d\n",
+        BAD_EXTENSION, res, itemCount_justDrives -1);
 
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
     ok (itemCount == res + 1, "SendMessage(LB_DIR) returned %d expected %d\n", itemCount, res + 1);
@@ -828,11 +830,11 @@ static void test_listbox_LB_DIR()
     }
 
     /* This tests behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES, (LPARAM)pathBuffer);
-    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, *.txt) returned %d, expected %d\n",
-        res, itemCount_justDrives -1);
+    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES, %s) returned %d, expected %d\n",
+        BAD_EXTENSION, res, itemCount_justDrives -1);
 
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
     ok (itemCount == res + 1, "SendMessage(LB_DIR) returned %d expected %d\n", itemCount, res + 1);
@@ -891,11 +893,11 @@ static void test_listbox_LB_DIR()
     ok( !strcmp(pathBuffer, "[..]"), "First (and only) element is not [..]\n");
 
     /* This tests behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
-    ok (res == -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, *.txt) returned %d, expected %d\n",
-        res, -1);
+    ok (res == -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_EXCLUSIVE, %s) returned %d, expected %d\n",
+        BAD_EXTENSION, res, -1);
 
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
     ok (itemCount == res + 1, "SendMessage(LB_DIR) returned %d expected %d\n", itemCount, res + 1);
@@ -939,11 +941,11 @@ static void test_listbox_LB_DIR()
     }
 
     /* This tests behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, (LPARAM)pathBuffer);
-    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, *.txt) returned %d, expected %d\n",
-        res, itemCount_justDrives -1);
+    ok (res == itemCount_justDrives -1, "SendMessage(LB_DIR, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE, %s) returned %d, expected %d\n",
+        BAD_EXTENSION, res, itemCount_justDrives -1);
 
     itemCount = SendMessage(hList, LB_GETCOUNT, 0, 0);
     ok (itemCount == res + 1, "SendMessage(LB_DIR) returned %d expected %d\n", itemCount, res + 1);
@@ -1109,9 +1111,9 @@ static void test_listbox_dlgdir(void)
     }
 
     /* Test behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL, 0);
-    ok (res == 1, "DlgDirList(*.txt, 0) returned %d expected 1\n", res);
+    ok (res == 1, "DlgDirList(%s, 0) returned %d expected 1\n", BAD_EXTENSION, res);
 
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
     ok (itemCount == 0, "DlgDirList() DID fill the listbox!\n");
@@ -1145,10 +1147,10 @@ static void test_listbox_dlgdir(void)
     }
 
     /* Test behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DIRECTORY);
-    ok (res == 1, "DlgDirList(*.txt, DDL_DIRECTORY) returned %d expected 1\n", res);
+    ok (res == 1, "DlgDirList(%s, DDL_DIRECTORY) returned %d expected 1\n", BAD_EXTENSION, res);
 
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
     ok (itemCount == 1, "DlgDirList() incorrectly filled the listbox! (expected 1 got %d)\n",
@@ -1194,10 +1196,10 @@ static void test_listbox_dlgdir(void)
     }
 
     /* Test behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DRIVES);
-    ok (res == 1, "DlgDirList(*.txt, DDL_DRIVES) returned %d expected 1\n", res);
+    ok (res == 1, "DlgDirList(%s, DDL_DRIVES) returned %d expected 1\n", BAD_EXTENSION, res);
 
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
     ok (itemCount == itemCount_justDrives, "DlgDirList() incorrectly filled the listbox!\n");
@@ -1238,10 +1240,10 @@ static void test_listbox_dlgdir(void)
     }
 
     /* Test behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DIRECTORY|DDL_DRIVES);
-    ok (res == 1, "DlgDirList(*.txt, DDL_DIRECTORY|DDL_DRIVES) returned %d expected 1\n", res);
+    ok (res == 1, "DlgDirList(%s, DDL_DIRECTORY|DDL_DRIVES) returned %d expected 1\n", BAD_EXTENSION, res);
 
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
     ok (itemCount == itemCount_justDrives + 1,
@@ -1268,10 +1270,10 @@ static void test_listbox_dlgdir(void)
 
 
     /* Test behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DIRECTORY|DDL_EXCLUSIVE);
-    ok (res == 1, "DlgDirList(*.txt, DDL_DIRECTORY|DDL_EXCLUSIVE) returned %d expected 1\n", res);
+    ok (res == 1, "DlgDirList(%s, DDL_DIRECTORY|DDL_EXCLUSIVE) returned %d expected 1\n", BAD_EXTENSION, res);
 
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
     ok (itemCount == 1, "DlgDirList() incorrectly filled the listbox!\n");
@@ -1302,10 +1304,10 @@ static void test_listbox_dlgdir(void)
     }
 
     /* Test behavior when no files match the wildcard */
-    strcpy(pathBuffer, "*.txt");
+    strcpy(pathBuffer, BAD_EXTENSION);
     res = DlgDirList(hWnd, pathBuffer, ID_TEST_LISTBOX, ID_TEST_LABEL,
         DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE);
-    ok (res == 1, "DlgDirList(*.txt, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE) returned %d expected 1\n", res);
+    ok (res == 1, "DlgDirList(%s, DDL_DIRECTORY|DDL_DRIVES|DDL_EXCLUSIVE) returned %d expected 1\n", BAD_EXTENSION, res);
 
     itemCount = SendMessage(g_listBox, LB_GETCOUNT, 0, 0);
     ok (itemCount == itemCount_justDrives + 1, "DlgDirList() incorrectly filled the listbox!\n");
