@@ -43,4 +43,5 @@ START_TEST(mediadet)
 {
     CoInitialize(NULL);
     test_mediadet();
+    CoUninitialize();
 }
