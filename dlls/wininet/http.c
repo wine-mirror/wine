@@ -1628,8 +1628,7 @@ static DWORD get_chunk_size(const char *buffer)
 static DWORD HTTP_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
     char reply[MAX_REPLY_LEN], *p = buffer;
-    DWORD buflen, to_write = size;
-    size_t to_read;
+    DWORD buflen, to_read, to_write = size;
     int bytes_read;
 
     *read = 0;
