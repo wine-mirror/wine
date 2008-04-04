@@ -165,3 +165,11 @@ STRINGTABLE DISCARDABLE
     IDS_LIFETIME_SIGNING "평생 서명"
     IDS_ANY_CERT_POLICY "모든 배포 방침"
 }
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_LOCALIZEDNAME_ROOT "신회 할 수 있는 루트 검사증기관"
+    IDS_LOCALIZEDNAME_MY "개인적"
+    IDS_LOCALIZEDNAME_CA "중간 검증 기관ㄴIntermediate Certification Authorities"
+    IDS_LOCALIZEDNAME_ADDRESSBOOK "다른 사람"
+}
