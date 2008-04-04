@@ -131,6 +131,20 @@ BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
 
 
 /***********************************************************************
+ *		is_window_resizable
+ *
+ * Check if window should be made resizable by the window manager
+ */
+static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD style )
+{
+    if (style & WS_THICKFRAME) return TRUE;
+    /* Metacity needs the window to be resizable to make it fullscreen */
+    return (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
+            data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height);
+}
+
+
+/***********************************************************************
  *              get_mwm_decorations
  */
 static unsigned long get_mwm_decorations( DWORD style, DWORD ex_style )
@@ -798,20 +812,13 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
             size_hints->flags |= PWinGravity | PPosition;
         }
 
-        if ( !(style & WS_THICKFRAME) )
+        if (!is_window_resizable( data, style ))
         {
-            /* If we restrict window resizing Metacity decides that it should
-             * disable fullscreen support for this window as well.
-             */
-            if (!(data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
-                  data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height))
-            {
-                size_hints->max_width = data->whole_rect.right - data->whole_rect.left;
-                size_hints->max_height = data->whole_rect.bottom - data->whole_rect.top;
-                size_hints->min_width = size_hints->max_width;
-                size_hints->min_height = size_hints->max_height;
-                size_hints->flags |= PMinSize | PMaxSize;
-            }
+            size_hints->max_width = data->whole_rect.right - data->whole_rect.left;
+            size_hints->max_height = data->whole_rect.bottom - data->whole_rect.top;
+            size_hints->min_width = size_hints->max_width;
+            size_hints->min_height = size_hints->max_height;
+            size_hints->flags |= PMinSize | PMaxSize;
         }
         XSetWMNormalHints( display, data->whole_window, size_hints );
         XFree( size_hints );
@@ -958,7 +965,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
     mwm_hints.decorations = get_mwm_decorations( style, ex_style );
     mwm_hints.functions = MWM_FUNC_MOVE;
-    if (style & WS_THICKFRAME)  mwm_hints.functions |= MWM_FUNC_RESIZE;
+    if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
     if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
     if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
     if (style & WS_SYSMENU)     mwm_hints.functions |= MWM_FUNC_CLOSE;
