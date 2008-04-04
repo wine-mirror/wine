@@ -341,6 +341,9 @@ static HRESULT WINAPI TransformFilter_Pause(IBaseFilter * iface)
 
     EnterCriticalSection(&This->csFilter);
     {
+        if (This->state == State_Stopped)
+            ((InputPin *)This->ppPins[0])->end_of_stream = 0;
+
         This->state = State_Paused;
     }
     LeaveCriticalSection(&This->csFilter);
@@ -357,6 +360,9 @@ static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tS
 
     EnterCriticalSection(&This->csFilter);
     {
+        if (This->state == State_Stopped)
+            ((InputPin *)This->ppPins[0])->end_of_stream = 0;
+
         This->rtStreamStart = tStart;
         This->state = State_Running;
         OutputPin_CommitAllocator((OutputPin *)This->ppPins[1]);

@@ -394,6 +394,8 @@ static HRESULT WINAPI NullRenderer_Pause(IBaseFilter * iface)
 
     EnterCriticalSection(&This->csFilter);
     {
+        if (This->state == State_Stopped)
+            This->pInputPin->end_of_stream = 0;
         This->state = State_Paused;
     }
     LeaveCriticalSection(&This->csFilter);
@@ -411,6 +413,7 @@ static HRESULT WINAPI NullRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tStar
     {
         This->rtStreamStart = tStart;
         This->state = State_Running;
+        This->pInputPin->end_of_stream = 0;
     }
     LeaveCriticalSection(&This->csFilter);
 

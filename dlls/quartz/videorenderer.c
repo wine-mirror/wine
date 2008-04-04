@@ -645,6 +645,9 @@ static HRESULT WINAPI VideoRenderer_Pause(IBaseFilter * iface)
 
     EnterCriticalSection(&This->csFilter);
     {
+        if (This->state == State_Stopped)
+            This->pInputPin->end_of_stream = 0;
+
         This->state = State_Paused;
     }
     LeaveCriticalSection(&This->csFilter);
@@ -660,6 +663,9 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
 
     EnterCriticalSection(&This->csFilter);
     {
+        if (This->state == State_Stopped)
+            This->pInputPin->end_of_stream = 0;
+
         This->rtStreamStart = tStart;
         This->state = State_Running;
     }

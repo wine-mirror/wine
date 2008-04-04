@@ -248,6 +248,7 @@ static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPi
     pPinImpl->dRate = 0;
     pPinImpl->pin.lpVtbl = InputPin_Vtbl;
     pPinImpl->lpVtblMemInput = &MemInputPin_Vtbl;
+    pPinImpl->flushing = pPinImpl->end_of_stream = 0;
 
     return S_OK;
 }
@@ -598,12 +599,10 @@ static HRESULT deliver_endofstream(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI InputPin_EndOfStream(IPin * iface)
 {
-    FIXME("() stub\n");
+    InputPin *This = (InputPin *)iface;
+    TRACE("(%p)\n", This);
 
-    /* Should do an end of stream notification?
-     * Also, don't accept any more samples from now!
-     * TODO: Don't accept any more packets
-     */
+    This->end_of_stream = 1;
 
     return SendFurther( iface, deliver_endofstream, NULL, NULL );
 }
@@ -615,10 +614,21 @@ static HRESULT deliver_beginflush(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI InputPin_BeginFlush(IPin * iface)
 {
-    FIXME("() stub\n");
+    InputPin *This = (InputPin *)iface;
+    HRESULT hr;
+    TRACE("() semi-stub\n");
 
-    /* TODO: Drop all cached packets, and don't accept any more samples! */
-    return SendFurther( iface, deliver_beginflush, NULL, NULL );
+    /* Assign this outside the critical section so that _Receive loops can be broken */
+    This->flushing = 1;
+
+    EnterCriticalSection(This->pin.pCritSec);
+
+    if (This->fnCleanProc)
+        This->fnCleanProc(This->pin.pUserData);
+
+    hr = SendFurther( iface, deliver_beginflush, NULL, NULL );
+    LeaveCriticalSection(This->pin.pCritSec);
+    return hr;
 }
 
 static HRESULT deliver_endflush(IPin* pin, LPVOID unused)
@@ -628,10 +638,17 @@ static HRESULT deliver_endflush(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI InputPin_EndFlush(IPin * iface)
 {
-    FIXME("() stub\n");
+    InputPin *This = (InputPin *)iface;
+    HRESULT hr;
+    TRACE("(%p)\n", This);
 
-    /* TODO: Accept any samples again */
-    return SendFurther( iface, deliver_endflush, NULL, NULL );
+    EnterCriticalSection(This->pin.pCritSec);
+    This->flushing = 0;
+
+    hr = SendFurther( iface, deliver_endflush, NULL, NULL );
+    LeaveCriticalSection(This->pin.pCritSec);
+
+    return hr;
 }
 
 typedef struct newsegmentargs
@@ -747,11 +764,18 @@ HRESULT WINAPI MemInputPin_GetAllocatorRequirements(IMemInputPin * iface, ALLOCA
 HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * pSample)
 {
     InputPin *This = impl_from_IMemInputPin(iface);
+    HRESULT hr;
 
     /* this trace commented out for performance reasons */
     /*TRACE("(%p/%p)->(%p)\n", This, iface, pSample);*/
 
-    return This->fnSampleProc(This->pin.pUserData, pSample);
+    EnterCriticalSection(This->pin.pCritSec);
+    if (!This->end_of_stream && !This->flushing && !This->end_of_stream)
+        hr = This->fnSampleProc(This->pin.pUserData, pSample);
+    else
+        hr = S_FALSE;
+    LeaveCriticalSection(This->pin.pCritSec);
+    return hr;
 }
 
 HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSample ** pSamples, long nSamples, long *nSamplesProcessed)

@@ -67,6 +67,7 @@ typedef struct InputPin
 	REFERENCE_TIME tStart;
 	REFERENCE_TIME tStop;
 	double dRate;
+	BOOL flushing, end_of_stream;
 } InputPin;
 
 typedef struct OutputPin
