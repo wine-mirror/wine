@@ -49,7 +49,7 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                    "lock; cmpxchg8b (%esi)\n\t"
                    "pop %esi\n\t"
                    "pop %ebx\n\t"
-                   "ret");
+                   "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
