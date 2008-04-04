@@ -800,10 +800,11 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
 {
     XSizeHints* size_hints;
 
-    if ((size_hints = XAllocSizeHints()))
-    {
-        size_hints->flags = 0;
+    if (!(size_hints = XAllocSizeHints())) return;
 
+    /* don't update size hints if window is not in normal state */
+    if (!(style & (WS_MINIMIZE | WS_MAXIMIZE)))
+    {
         if (data->hwnd != GetDesktopWindow())  /* don't force position of desktop */
         {
             size_hints->win_gravity = StaticGravity;
@@ -820,9 +821,9 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
             size_hints->min_height = size_hints->max_height;
             size_hints->flags |= PMinSize | PMaxSize;
         }
-        XSetWMNormalHints( display, data->whole_window, size_hints );
-        XFree( size_hints );
     }
+    XSetWMNormalHints( display, data->whole_window, size_hints );
+    XFree( size_hints );
 }
 
 
