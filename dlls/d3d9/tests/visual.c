@@ -6116,7 +6116,7 @@ void test_vshader_input(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
 
-        color = getPixelColor(device, 480, 360);
+        color = getPixelColor(device, 480, 350);
         /* vs_1_1 may fail, accept the clear color
          *
          * NOTE: This test fails on the reference rasterizer. In the refrast, the 4 vertices have different colors,
