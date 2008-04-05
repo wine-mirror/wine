@@ -3350,6 +3350,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         rc = MSIREG_OpenLocalClassesProductKey(package->ProductCode, &hukey, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
+
+        rc = MSIREG_OpenLocalSystemInstallProps(package->ProductCode, &props, TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
     }
     else
     {
@@ -3358,6 +3362,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
             goto end;
 
         rc = MSIREG_OpenUserProductsKey(package->ProductCode,&hukey,TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+
+        rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &props, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
     }
@@ -3369,10 +3377,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     RegCloseKey(source);
 
     rc = MSIREG_OpenUserDataProductKey(package->ProductCode,&hudkey,TRUE);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &props, TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
@@ -3995,9 +3999,18 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &props, TRUE);
-    if (rc != ERROR_SUCCESS)
-        return rc;
+    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        rc = MSIREG_OpenLocalSystemInstallProps(package->ProductCode, &props, TRUE);
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
+    else
+    {
+        rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &props, TRUE);
+        if (rc != ERROR_SUCCESS)
+            return rc;
+    }
 
     /* dump all the info i can grab */
     /* FIXME: Flesh out more information */
@@ -4069,7 +4082,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 
         msi_free(upgrade_code);
     }
-    
+
     RegCloseKey(hkey);
 
     rc = MSIREG_OpenUserDataProductKey(package->ProductCode, &hudkey, TRUE);
