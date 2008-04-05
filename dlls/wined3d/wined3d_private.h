@@ -104,13 +104,15 @@ extern const DWORD SavedVertexStates_S[NUM_SAVEDVERTEXSTATES_S];
 
 typedef enum _WINELOOKUP {
     WINELOOKUP_WARPPARAM = 0,
-    WINELOOKUP_MAGFILTER = 1,
-    MAX_LOOKUPS          = 2
+    MAX_LOOKUPS          = 1
 } WINELOOKUP;
 
 extern int minLookup[MAX_LOOKUPS];
 extern int maxLookup[MAX_LOOKUPS];
 extern DWORD *stateLookup[MAX_LOOKUPS];
+
+typedef DWORD magLookup_t[WINED3DTEXF_ANISOTROPIC + 1];
+extern magLookup_t magLookup;
 
 typedef DWORD minMipLookup_t[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 extern minMipLookup_t minMipLookup;

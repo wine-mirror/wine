@@ -2799,7 +2799,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     /* No issue with overriding these - the sampler is dirty due to blit usage */
     glTexParameteri(texture_target, GL_TEXTURE_MAG_FILTER,
-                    stateLookup[WINELOOKUP_MAGFILTER][Filter - minLookup[WINELOOKUP_MAGFILTER]]);
+                    magLookup[Filter - WINED3DTEXF_NONE]);
     checkGLcall("glTexParameteri");
     glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER,
                     minMipLookup[Filter][WINED3DTEXF_NONE]);
@@ -3321,7 +3321,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
         /* Filtering for StretchRect */
         glTexParameteri(Src->glDescription.target, GL_TEXTURE_MAG_FILTER,
-                        stateLookup[WINELOOKUP_MAGFILTER][Filter - minLookup[WINELOOKUP_MAGFILTER]]);
+                        magLookup[Filter - WINED3DTEXF_NONE]);
         checkGLcall("glTexParameteri");
         glTexParameteri(Src->glDescription.target, GL_TEXTURE_MIN_FILTER,
                         minMipLookup[Filter][WINED3DTEXF_NONE]);

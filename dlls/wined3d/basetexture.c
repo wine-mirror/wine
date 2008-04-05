@@ -431,10 +431,10 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
     if(samplerStates[WINED3DSAMP_MAGFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MAGFILTER]) {
         GLint glValue;
         state = samplerStates[WINED3DSAMP_MAGFILTER];
-        if (state < minLookup[WINELOOKUP_MAGFILTER] || state > maxLookup[WINELOOKUP_MAGFILTER]) {
+        if (state < WINED3DTEXF_NONE || state > WINED3DTEXF_ANISOTROPIC) {
             FIXME("Unrecognized or unsupported MAGFILTER* value %d\n", state);
         }
-        glValue = stateLookup[WINELOOKUP_MAGFILTER][state - minLookup[WINELOOKUP_MAGFILTER]];
+        glValue = magLookup[state - WINED3DTEXF_NONE];
         TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
         glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
         /* We need to reset the Anisotropic filtering state when we change the mag filter to WINED3DTEXF_ANISOTROPIC (this seems a bit weird, check the documentation to see how it should be switched off. */
