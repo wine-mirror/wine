@@ -3345,13 +3345,22 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
     /* ok there is a lot more done here but i need to figure out what */
 
-    rc = MSIREG_OpenProductsKey(package->ProductCode,&hkey,TRUE);
-    if (rc != ERROR_SUCCESS)
-        goto end;
+    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        rc = MSIREG_OpenLocalClassesProductKey(package->ProductCode, &hukey, TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+    }
+    else
+    {
+        rc = MSIREG_OpenProductsKey(package->ProductCode,&hkey,TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
 
-    rc = MSIREG_OpenUserProductsKey(package->ProductCode,&hukey,TRUE);
-    if (rc != ERROR_SUCCESS)
-        goto end;
+        rc = MSIREG_OpenUserProductsKey(package->ProductCode,&hukey,TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+    }
 
     rc = RegCreateKeyW(hukey, szSourceList, &source);
     if (rc != ERROR_SUCCESS)
@@ -3400,19 +3409,19 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
     buffer = strrchrW( package->PackagePath, '\\') + 1;
     rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
-                                MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                                package->Context, MSICODE_PRODUCT,
                                 INSTALLPROPERTY_PACKAGENAMEW, buffer );
     if (rc != ERROR_SUCCESS)
         goto end;
 
     rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
-                                MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                                package->Context, MSICODE_PRODUCT,
                                 INSTALLPROPERTY_MEDIAPACKAGEPATHW, szEmpty );
     if (rc != ERROR_SUCCESS)
         goto end;
 
     rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
-                                MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                                package->Context, MSICODE_PRODUCT,
                                 INSTALLPROPERTY_DISKPROMPTW, szEmpty );
     if (rc != ERROR_SUCCESS)
         goto end;
@@ -4221,13 +4230,13 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
         DWORD size = 0;
 
         rc = MsiSourceListGetInfoW(package->ProductCode, NULL, 
-                MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                package->Context, MSICODE_PRODUCT,
                 INSTALLPROPERTY_DISKPROMPTW,NULL,&size);
         if (rc == ERROR_MORE_DATA)
         {
             prompt = msi_alloc(size * sizeof(WCHAR));
             MsiSourceListGetInfoW(package->ProductCode, NULL, 
-                    MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                    package->Context, MSICODE_PRODUCT,
                     INSTALLPROPERTY_DISKPROMPTW,prompt,&size);
         }
         else

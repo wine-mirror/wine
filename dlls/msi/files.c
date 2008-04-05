@@ -581,11 +581,11 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
     }
 
     if (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE)
-        msi_package_add_media_disk(package, MSIINSTALLCONTEXT_USERUNMANAGED,
+        msi_package_add_media_disk(package, package->Context,
                                    MSICODE_PRODUCT, mi->disk_id,
                                    mi->volume_label, mi->disk_prompt);
 
-    msi_package_add_info(package, MSIINSTALLCONTEXT_USERUNMANAGED,
+    msi_package_add_info(package, package->Context,
                          options, INSTALLPROPERTY_LASTUSEDSOURCEW, source);
 
     msi_free(source_dir);
@@ -603,7 +603,7 @@ static UINT find_published_source(MSIPACKAGE *package, struct media_info *mi)
     UINT r;
 
     r = MsiSourceListGetInfoW(package->ProductCode, NULL,
-                              MSIINSTALLCONTEXT_USERUNMANAGED, MSICODE_PRODUCT,
+                              package->Context, MSICODE_PRODUCT,
                               INSTALLPROPERTY_LASTUSEDSOURCEW, source, &size);
     if (r != ERROR_SUCCESS)
         return r;
@@ -612,7 +612,7 @@ static UINT find_published_source(MSIPACKAGE *package, struct media_info *mi)
     volumesz = MAX_PATH;
     promptsz = MAX_PATH;
     while (MsiSourceListEnumMediaDisksW(package->ProductCode, NULL,
-                                        MSIINSTALLCONTEXT_USERUNMANAGED,
+                                        package->Context,
                                         MSICODE_PRODUCT, index++, &id,
                                         volume, &volumesz, prompt, &promptsz) == ERROR_SUCCESS)
     {

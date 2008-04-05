@@ -307,6 +307,7 @@ typedef struct tagMSIPACKAGE
     float center_y;
 
     UINT WordCount;
+    UINT Context;
 
     struct list subscriptions;
 
