@@ -857,12 +857,12 @@ static void test_sequence(void)
     SetLastError(0xdeadbeef);
     ret = QueryServiceConfigA(svc_handle, config, given, &needed);
     ok(ret, "Expected success\n");
-    todo_wine
-    {
     ok(GetLastError() == ERROR_SUCCESS    /* W2K3 */||
        GetLastError() == 0xdeadbeef       /* NT4, XP, Vista */ ||
        GetLastError() == ERROR_IO_PENDING /* W2K */,
         "Expected ERROR_SUCCESS, ERROR_IO_PENDING or 0xdeadbeef, got %d\n", GetLastError());
+    todo_wine
+    {
     ok(given == needed, "Expected the given (%d) and needed (%d) buffersizes to be equal\n", given, needed);
     }
     ok(config->lpBinaryPathName && config->lpLoadOrderGroup && config->lpDependencies && config->lpServiceStartName &&

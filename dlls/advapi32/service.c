@@ -1352,15 +1352,19 @@ done:
 static DWORD move_string_to_buffer(BYTE **buf, LPWSTR *string_ptr)
 {
     DWORD cb;
-    WCHAR empty_str[] = {0};
 
     if (!*string_ptr)
-        *string_ptr = empty_str;
+    {
+        cb = sizeof(WCHAR);
+        memset(*buf, 0, cb);
+    }
+    else
+    {
+        cb = (strlenW(*string_ptr) + 1)*sizeof(WCHAR);
+        memcpy(*buf, *string_ptr, cb);
+        MIDL_user_free(*string_ptr);
+    }
 
-    cb = (strlenW(*string_ptr) + 1)*sizeof(WCHAR);
-
-    memcpy(*buf, *string_ptr, cb);
-    MIDL_user_free(*string_ptr);
     *string_ptr = (LPWSTR)*buf;
     *buf += cb;
 
