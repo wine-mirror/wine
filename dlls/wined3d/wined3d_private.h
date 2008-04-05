@@ -114,6 +114,7 @@ extern DWORD *stateLookup[MAX_LOOKUPS];
 
 typedef DWORD minMipLookup_t[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 extern minMipLookup_t minMipLookup;
+extern minMipLookup_t minMipLookup_noFilter;
 
 void init_type_lookup(WineD3D_GL_Info *gl_info);
 #define WINED3D_ATR_TYPE(type)          GLINFO_LOCATION.glTypeLookup[type].d3dType
