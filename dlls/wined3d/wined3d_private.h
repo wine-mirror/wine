@@ -113,6 +113,7 @@ extern DWORD *stateLookup[MAX_LOOKUPS];
 
 typedef DWORD magLookup_t[WINED3DTEXF_ANISOTROPIC + 1];
 extern magLookup_t magLookup;
+extern magLookup_t magLookup_noFilter;
 
 typedef DWORD minMipLookup_t[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 extern minMipLookup_t minMipLookup;
@@ -1095,6 +1096,7 @@ typedef struct IWineD3DBaseTextureClass
     WINED3DFORMAT           shader_conversion_group;
     float                   pow2Matrix[16];
     minMipLookup_t          *minMipLookup;
+    magLookup_t             *magLookup;
 } IWineD3DBaseTextureClass;
 
 typedef struct IWineD3DBaseTextureImpl

@@ -792,8 +792,10 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
 
     if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING) {
         object->baseTexture.minMipLookup = &minMipLookup;
+        object->baseTexture.magLookup    = &magLookup;
     } else {
         object->baseTexture.minMipLookup = &minMipLookup_noFilter;
+        object->baseTexture.magLookup    = &magLookup_noFilter;
     }
 
     /** Non-power2 support **/
@@ -942,8 +944,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
 
     if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING) {
         object->baseTexture.minMipLookup = &minMipLookup;
+        object->baseTexture.magLookup    = &magLookup;
     } else {
         object->baseTexture.minMipLookup = &minMipLookup_noFilter;
+        object->baseTexture.magLookup    = &magLookup_noFilter;
     }
 
     /* Calculate levels for mip mapping */
@@ -1095,8 +1099,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
 
     if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING) {
         object->baseTexture.minMipLookup = &minMipLookup;
+        object->baseTexture.magLookup    = &magLookup;
     } else {
         object->baseTexture.minMipLookup = &minMipLookup_noFilter;
+        object->baseTexture.magLookup    = &magLookup_noFilter;
     }
 
     /* Calculate levels for mip mapping */

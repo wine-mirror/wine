@@ -163,6 +163,9 @@ DWORD minMipLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1]
 };
 
 DWORD magLookup[WINED3DTEXF_ANISOTROPIC + 1];
+DWORD magLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1] = {
+    GL_NEAREST, GL_NEAREST, GL_NEAREST, GL_NEAREST
+};
 
 /* drawStridedSlow attributes */
 glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
