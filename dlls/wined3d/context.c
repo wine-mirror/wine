@@ -997,6 +997,12 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                 }
             }
 
+            /* Blending and clearing should be orthogonal, but tests on the nvidia driver show that disabling
+             * blending when clearing improves the clearing performance increadibly
+             */
+            glDisable(GL_BLEND);
+            Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+
             glEnable(GL_SCISSOR_TEST);
             checkGLcall("glEnable GL_SCISSOR_TEST");
             context->last_was_blit = FALSE;
