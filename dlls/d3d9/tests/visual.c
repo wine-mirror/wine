@@ -5421,18 +5421,18 @@ static void vshader_version_varying_test(IDirect3DDevice9 *device) {
     color = getPixelColor(device, 160, 120);
     ok((color & 0x00ff0000) >= 0x00190000 && (color & 0x00ff0000) <= 0x00210000 &&
        (color & 0x0000ff00) >= 0x00003300 && (color & 0x0000ff00) <= 0x00003500 &&
-       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00210068,
+       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00000068,
        "vs_3_0 returned color 0x%08x, expected 0x00203366\n", color);
     color = getPixelColor(device, 160, 360);
     ok((color & 0x00ff0000) >= 0x003c0000 && (color & 0x00ff0000) <= 0x004e0000 &&
        (color & 0x0000ff00) >= 0x00000000 && (color & 0x0000ff00) <= 0x00000000 &&
-       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00210068,
-       "vs_1_1 returned color 0x%08x, expected 0x00808080\n", color);
+       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00000068,
+       "vs_1_1 returned color 0x%08x, expected 0x004c0066\n", color);
     color = getPixelColor(device, 480, 360);
     ok((color & 0x00ff0000) >= 0x003c0000 && (color & 0x00ff0000) <= 0x004e0000 &&
        (color & 0x0000ff00) >= 0x00000000 && (color & 0x0000ff00) <= 0x00000000 &&
-       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00210068,
-       "vs_2_0 returned color 0x%08x, expected 0x00000000\n", color);
+       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00000068,
+       "vs_2_0 returned color 0x%08x, expected 0x004c0066\n", color);
 
     /* cleanup */
     hr = IDirect3DDevice9_SetPixelShader(device, NULL);
@@ -7321,7 +7321,7 @@ static void test_vshader_float16(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexDeclaration failed hr=%s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexShader failed hr=%s\n", DXGetErrorString9(hr));
-    IDirect3DDevice9_SetVertexShader(device, shader);
+    hr = IDirect3DDevice9_SetVertexShader(device, shader);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetVertexShader failed hr=%s\n", DXGetErrorString9(hr));
 
     hr = IDirect3DDevice9_BeginScene(device);
