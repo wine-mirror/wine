@@ -5625,9 +5625,10 @@ static void pshader_version_varying_test(IDirect3DDevice9 *device) {
        (color & 0x000000ff) == 0x00000000,
        "ps_2_0 returned color 0x%08x, expected 0x00203300\n", color);
     color = getPixelColor(device, 480, 160);
-    ok((color & 0x00ff0000) >= 0x00190000 && (color & 0x00ff0000) <= 0x00210000 &&
+    ok( color == 0x00ffffff /* Nvidia driver garbage with HW vp */ || (
+       (color & 0x00ff0000) >= 0x00190000 && (color & 0x00ff0000) <= 0x00210000 &&
        (color & 0x0000ff00) >= 0x00003200 && (color & 0x0000ff00) <= 0x00003400 &&
-       (color & 0x000000ff) == 0x00000000,
+       (color & 0x000000ff) == 0x00000000),
        "fixed function fragment processing returned color 0x%08x, expected 0x00203300\n", color);
 
     /* cleanup */
