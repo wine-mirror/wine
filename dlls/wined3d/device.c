@@ -789,6 +789,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     D3DINITIALIZEBASETEXTURE(object->baseTexture);    
     object->width  = Width;
     object->height = Height;
+    object->baseTexture.minMipLookup = &minMipLookup;
 
     /** Non-power2 support **/
     if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
@@ -933,6 +934,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     object->baseTexture.pow2Matrix[ 5] = 1.0;
     object->baseTexture.pow2Matrix[10] = 1.0;
     object->baseTexture.pow2Matrix[15] = 1.0;
+
+    object->baseTexture.minMipLookup = &minMipLookup;
 
     /* Calculate levels for mip mapping */
     if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
@@ -1080,6 +1083,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     object->baseTexture.pow2Matrix[ 5] = ((float)EdgeLength) / ((float)pow2EdgeLength);
     object->baseTexture.pow2Matrix[10] = ((float)EdgeLength) / ((float)pow2EdgeLength);
     object->baseTexture.pow2Matrix[15] = 1.0;
+
+    object->baseTexture.minMipLookup = &minMipLookup;
 
     /* Calculate levels for mip mapping */
     if (Usage & WINED3DUSAGE_AUTOGENMIPMAP) {

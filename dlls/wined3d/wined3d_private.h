@@ -112,7 +112,8 @@ extern int minLookup[MAX_LOOKUPS];
 extern int maxLookup[MAX_LOOKUPS];
 extern DWORD *stateLookup[MAX_LOOKUPS];
 
-extern DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
+typedef DWORD minMipLookup_t[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
+extern minMipLookup_t minMipLookup;
 
 void init_type_lookup(WineD3D_GL_Info *gl_info);
 #define WINED3D_ATR_TYPE(type)          GLINFO_LOCATION.glTypeLookup[type].d3dType
@@ -1090,6 +1091,7 @@ typedef struct IWineD3DBaseTextureClass
     UINT                    srgb_mode_change_count;
     WINED3DFORMAT           shader_conversion_group;
     float                   pow2Matrix[16];
+    minMipLookup_t          *minMipLookup;
 } IWineD3DBaseTextureClass;
 
 typedef struct IWineD3DBaseTextureImpl

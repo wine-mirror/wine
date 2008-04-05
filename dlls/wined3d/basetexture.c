@@ -463,7 +463,8 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                   This->baseTexture.states[WINED3DTEXSTA_MINFILTER],
                   This->baseTexture.states[WINED3DTEXSTA_MIPFILTER]);
         }
-        glValue = minMipLookup[min(max(samplerStates[WINED3DSAMP_MINFILTER],WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC)]
+        glValue = (*This->baseTexture.minMipLookup)
+                [min(max(samplerStates[WINED3DSAMP_MINFILTER],WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC)]
                 [min(max(samplerStates[WINED3DSAMP_MIPFILTER],WINED3DTEXF_NONE), WINED3DTEXF_LINEAR)];
 
         TRACE("ValueMIN=%d, ValueMIP=%d, setting MINFILTER to %x\n",
