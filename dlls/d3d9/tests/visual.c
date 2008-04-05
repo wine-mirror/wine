@@ -8533,14 +8533,12 @@ static void pixelshader_blending_test(IDirect3DDevice9 *device)
         if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING, D3DRTYPE_TEXTURE, fmt) == D3D_OK) {
             /* Compare the color of the center quad with our expectation */
             color = getPixelColor(device, 320, 240);
-            trace("[Blending] %s: expected=%x, result=%x\n", test_formats[fmt_index].fmtName, test_formats[fmt_index].resultColorBlending, color);
             ok(color == test_formats[fmt_index].resultColorBlending, "Offscreen failed for %s: Got color %#08x, expected %#08x.\n", test_formats[fmt_index].fmtName, color, test_formats[fmt_index].resultColorBlending);
         } else {
             /* No pixel shader blending is supported so expected garbage.The type of 'garbage' depends on the driver version and OS.
              * E.g. on G16R16 ati reports (on old r9600 drivers) 0x00ffffff and on modern ones 0x002010ff which is also what Nvidia
              * reports. On Vista Nvidia seems to report 0x00ffffff on Geforce7 cards. */
             color = getPixelColor(device, 320, 240);
-            trace("[No blending] %s: expected %x  or 0x00ffffff, result=%x\n", test_formats[fmt_index].fmtName, test_formats[fmt_index].resultColorNoBlending, color);
             ok((color == 0x00ffffff) || (color == test_formats[fmt_index].resultColorNoBlending), "Offscreen failed for %s: expected no color blending but received it anyway.\n", test_formats[fmt_index].fmtName);
         }
 
