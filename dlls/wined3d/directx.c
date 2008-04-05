@@ -2053,6 +2053,19 @@ static BOOL CheckPostPixelShaderBlendingCapability(UINT Adapter, WINED3DFORMAT C
     return FALSE;
 }
 
+static BOOL CheckWrapAndMipCapability(UINT Adapter, WINED3DFORMAT CheckFormat) {
+    /* OpenGL supports mipmapping on all formats basically. Wrapping is unsupported,
+     * but we have to report mipmapping so we cannot reject this flag. Tests show that
+     * windows reports WRAPANDMIP on unfilterable surfaces as well, apparently to show
+     * that wrapping is supported. The lack of filtering will sort out the mipmapping
+     * capability anyway.
+     *
+     * For now lets report this on all formats, but in the future we may want to
+     * restrict it to some should games need that
+     */
+    return TRUE;
+}
+
 /* Check if a texture format is supported on the given adapter */
 static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
@@ -2312,6 +2325,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                    - D3DUSAGE_NONSECURE (d3d9ex)
          *                    - D3DUSAGE_RENDERTARGET
          *                    - D3DUSAGE_SOFTWAREPROCESSING
+         *                    - D3DUSAGE_QUERY_WRAPANDMIP
          */
         if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
             /* Check if the texture format is around */
@@ -2392,6 +2406,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                         return WINED3DERR_NOTAVAILABLE;
                     }
                 }
+
+                /* Check QUERY_WRAPANDMIP support */
+                if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
+                    if(CheckWrapAndMipCapability(Adapter, CheckFormat)) {
+                        UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
+                    } else {
+                        TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
+                        return WINED3DERR_NOTAVAILABLE;
+                    }
+                }
             } else {
                 TRACE_(d3d_caps)("[FAILED] - Cube texture format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -2444,6 +2468,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                - D3DUSAGE_RENDERTARGET
          *                - D3DUSAGE_SOFTWAREPROCESSING
          *                - D3DUSAGE_TEXTAPI (d3d9ex)
+         *                - D3DUSAGE_QUERY_WRAPANDMIP
          */
 
         /* Check if the texture format is around */
@@ -2534,6 +2559,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
+
+            /* Check QUERY_WRAPANDMIP support */
+            if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
+                if(CheckWrapAndMipCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
         } else if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
                 UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
@@ -2549,6 +2584,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                      - D3DUSAGE_DYNAMIC
          *                      - D3DUSAGE_NONSECURE (d3d9ex)
          *                      - D3DUSAGE_SOFTWAREPROCESSING
+         *                      - D3DUSAGE_QUERY_WRAPANDMIP
          */
 
         /* Check volume texture and volume usage caps */
@@ -2612,6 +2648,16 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
                 } else {
                     TRACE_(d3d_caps)("[FAILED] - No query vertextexture support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+
+            /* Check QUERY_WRAPANDMIP support */
+            if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
+                if(CheckWrapAndMipCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
