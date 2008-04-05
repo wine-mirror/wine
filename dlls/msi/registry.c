@@ -753,17 +753,33 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     return rc;
 }
 
-UINT MSIREG_OpenInstallPropertiesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
+static UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, LPCWSTR szUserSID,
+                                    HKEY *key, BOOL create)
 {
     UINT rc;
     WCHAR squished_pc[GUID_SIZE];
     WCHAR keypath[0x200];
-    LPWSTR usersid;
 
     TRACE("%s\n", debugstr_w(szProduct));
     if (!squash_guid(szProduct, squished_pc))
         return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath, szInstallProperties_fmt, szUserSID, squished_pc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+    else
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    return rc;
+}
+
+UINT MSIREG_OpenCurrentUserInstallProps(LPCWSTR szProduct, HKEY *key,
+                                               BOOL create)
+{
+    UINT rc;
+    LPWSTR usersid;
 
     rc = get_user_sid(&usersid);
     if (rc != ERROR_SUCCESS || !usersid)
@@ -772,15 +788,18 @@ UINT MSIREG_OpenInstallPropertiesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
         return rc;
     }
 
-    sprintfW(keypath, szInstallProperties_fmt, usersid, squished_pc);
-
-    if (create)
-        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
-    else
-        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+    rc = MSIREG_OpenInstallProps(szProduct, usersid, key, create);
 
     LocalFree(usersid);
     return rc;
+}
+
+UINT MSIREG_OpenLocalSystemInstallProps(LPCWSTR szProduct, HKEY *key,
+                                        BOOL create)
+{
+    static const WCHAR localsid[] = {'S','-','1','-','5','-','1','8',0};
+
+    return MSIREG_OpenInstallProps(szProduct, localsid, key, create);
 }
 
 UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
