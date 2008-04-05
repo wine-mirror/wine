@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey);
 static inline void clear_unused_channels(IWineD3DSurfaceImpl *This);
+static void surface_remove_pbo(IWineD3DSurfaceImpl *This);
 
 static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
     GLint active_texture;
@@ -4038,6 +4039,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             width = This->currentDesc.Width;
             pitch = IWineD3DSurface_GetPitch(iface);
 
+            /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
+             * but it isn't set (yet) in all cases it is getting called. */
+            if((convert != NO_CONVERSION) && (This->Flags & SFLAG_PBO)) {
+                TRACE("Removing the pbo attached to surface %p\n", This);
+                surface_remove_pbo(This);
+            }
+
             if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
                 int height = This->currentDesc.Height;
 
@@ -4091,6 +4099,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             /* The width is in 'length' not in bytes */
             width = This->currentDesc.Width;
             pitch = IWineD3DSurface_GetPitch(iface);
+
+            /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
+             * but it isn't set (yet) in all cases it is getting called. */
+            if((convert != NO_CONVERSION) && (This->Flags & SFLAG_PBO)) {
+                TRACE("Removing the pbo attached to surface %p\n", This);
+                surface_remove_pbo(This);
+            }
 
             if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
                 int height = This->currentDesc.Height;
