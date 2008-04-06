@@ -6208,7 +6208,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        ENTER_GL();
         color_fill_fbo(iface, pSurface, pRect, color);
+        LEAVE_GL();
         return WINED3D_OK;
     } else {
         /* Just forward this to the DirectDraw blitting engine */
