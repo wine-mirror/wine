@@ -2642,8 +2642,8 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
 
 
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
-    ENTER_GL();
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
+    ENTER_GL();
 
     /* TODO: Do we need GL_TEXTURE_2D enabled fpr copyteximage? */
     glEnable(This->glDescription.target);
@@ -2733,13 +2733,19 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     UINT fbheight = Src->currentDesc.Height;
     GLenum drawBuffer = GL_BACK;
     GLenum texture_target;
+    BOOL noBackBufferBackup;
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
-    ENTER_GL();
-
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
+
+    noBackBufferBackup = !swapchain && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
+    if(!noBackBufferBackup && Src->glDescription.textureName == 0) {
+        /* Get it a description */
+        IWineD3DSurface_PreLoad(SrcSurface);
+    }
+    ENTER_GL();
 
     /* Try to use an aux buffer for drawing the rectangle. This way it doesn't need restoring.
      * This way we don't have to wait for the 2nd readback to finish to leave this function.
@@ -2752,7 +2758,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         drawBuffer = GL_AUX0;
     }
 
-    if(!swapchain && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+    if(noBackBufferBackup) {
         glGenTextures(1, &backup);
         checkGLcall("glGenTextures\n");
         glBindTexture(GL_TEXTURE_2D, backup);
@@ -2762,10 +2768,6 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
          * we are reading from the back buffer, the backup can be used as source texture
          */
-        if(Src->glDescription.textureName == 0) {
-            /* Get it a description */
-            IWineD3DSurface_PreLoad(SrcSurface);
-        }
         texture_target = Src->glDescription.target;
         glBindTexture(texture_target, Src->glDescription.textureName);
         checkGLcall("glBindTexture(texture_target, Src->glDescription.textureName)");
