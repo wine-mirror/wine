@@ -2567,6 +2567,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *ifa
     UINT oldFlags = This->updateStateBlock->streamFlags[StreamNumber];
     UINT oldFreq = This->updateStateBlock->streamFreq[StreamNumber];
 
+    /* Verify input at least in d3d9 this is invalid*/
+    if( (Divider & WINED3DSTREAMSOURCE_INSTANCEDATA) && (Divider & WINED3DSTREAMSOURCE_INDEXEDDATA)){
+        WARN("INSTANCEDATA and INDEXEDDATA were set, returning D3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if( (Divider & WINED3DSTREAMSOURCE_INSTANCEDATA) && StreamNumber == 0 ){
+        WARN("INSTANCEDATA used on stream 0, returning D3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    if( Divider == 0 ){
+        WARN("Divider is 0, returning D3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     TRACE("(%p) StreamNumber(%d), Divider(%d)\n", This, StreamNumber, Divider);
     This->updateStateBlock->streamFlags[StreamNumber] = Divider & (WINED3DSTREAMSOURCE_INSTANCEDATA  | WINED3DSTREAMSOURCE_INDEXEDDATA );
 
