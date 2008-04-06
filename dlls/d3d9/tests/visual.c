@@ -8657,6 +8657,287 @@ static void tssargtemp_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "SetTextureStageState failed, hr = %s\n", DXGetErrorString9(hr));
 }
 
+struct testdata
+{
+    DWORD idxVertex; /* number of instances in the first stream */
+    DWORD idxColor; /* number of instances in the second stream */
+    DWORD idxInstance; /* should be 1 ?? */
+    DWORD color1; /* color 1 instance */
+    DWORD color2; /* color 2 instance */
+    DWORD color3; /* color 3 instance */
+    DWORD color4; /* color 4 instance */
+    WORD strVertex; /* specify which stream to use 0-2*/
+    WORD strColor;
+    WORD strInstance;
+};
+
+static const struct testdata testcases[]=
+{
+    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  0 */
+    {3, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0, 1, 2}, /*  1 */
+    {2, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /*  2 */
+    {1, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /*  3 */
+    {0, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /*  4 */
+    {4, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  5 */
+    {4, 2, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  6 */
+    {4, 1, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  7 */
+    {4, 0, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  8 */
+    {3, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0, 1, 2}, /*  9 */
+    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 1, 0, 2}, /* 10 */
+    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 2, 1}, /* 11 */
+    {4, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 3, 1}, /* 12 */
+    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 2, 0, 1}, /* 13 */
+    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 1, 2, 3}, /* 14 */
+/*
+    This case is handled in a stand alone test, SetStreamSourceFreq(0,(D3DSTREAMSOURCE_INSTANCEDATA | 1))  has to return D3DERR_INVALIDCALL!
+    {4, 4, 1, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 1, 0, D3DERR_INVALIDCALL},
+*/
+};
+
+/* Drawing Indexed Geometry with instances*/
+static void stream_test(IDirect3DDevice9 *device)
+{
+    IDirect3DVertexBuffer9 *vb = NULL;
+    IDirect3DVertexBuffer9 *vb2 = NULL;
+    IDirect3DVertexBuffer9 *vb3 = NULL;
+    IDirect3DIndexBuffer9 *ib = NULL;
+    IDirect3DVertexDeclaration9 *pDecl = NULL;
+    IDirect3DVertexShader9 *shader = NULL;
+    HRESULT hr;
+    BYTE *data;
+    DWORD color;
+    DWORD ind;
+    int i;
+
+    const DWORD shader_code[] =
+    {
+        0xfffe0101,                                     /* vs_1_1 */
+        0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position v0 */
+        0x0000001f, 0x8000000a, 0x900f0001,             /* dcl_color0 v1 */
+        0x0000001f, 0x80000005, 0x900f0002,             /* dcl_texcoord v2 */
+        0x00000001, 0x800f0000, 0x90e40000,             /* mov r0, v0 */
+        0x00000002, 0xc00f0000, 0x80e40000, 0x90e40002, /* add oPos, r0, v2 */
+        0x00000001, 0xd00f0000, 0x90e40001,             /* mov oD0, v1 */
+        0x0000ffff
+    };
+
+    const float quad[][3] =
+    {
+        {-0.5f, -0.5f,  1.1f}, /*0 */
+        {-0.5f,  0.5f,  1.1f}, /*1 */
+        { 0.5f, -0.5f,  1.1f}, /*2 */
+        { 0.5f,  0.5f,  1.1f}, /*3 */
+    };
+
+    const float vertcolor[][4] =
+    {
+        {1.0f, 0.0f, 0.0f, 1.0f}, /*0 */
+        {1.0f, 0.0f, 0.0f, 1.0f}, /*1 */
+        {1.0f, 0.0f, 0.0f, 1.0f}, /*2 */
+        {1.0f, 0.0f, 0.0f, 1.0f}, /*3 */
+    };
+
+    /* 4 position for 4 instances */
+    const float instancepos[][3] =
+    {
+        {-0.6f,-0.6f, 0.0f},
+        { 0.6f,-0.6f, 0.0f},
+        { 0.6f, 0.6f, 0.0f},
+        {-0.6f, 0.6f, 0.0f},
+    };
+
+    short indices[] = {0, 1, 2, 1, 2, 3};
+
+    D3DVERTEXELEMENT9 decl[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {1, 0,  D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        {2, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+
+    /* set the default value because it isn't done in wine? */
+    hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+
+    /* check for D3DSTREAMSOURCE_INDEXEDDATA at stream0 */
+    hr = IDirect3DDevice9_SetStreamSourceFreq(device, 0, (D3DSTREAMSOURCE_INSTANCEDATA | 1));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+
+    /* check wrong cases */
+    hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, 0);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_GetStreamSourceFreq(device, 1, &ind);
+    ok(hr == D3D_OK && ind == 1, "IDirect3DDevice9_GetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, 2);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_GetStreamSourceFreq(device, 1, &ind);
+    ok(hr == D3D_OK && ind == 2, "IDirect3DDevice9_GetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, (D3DSTREAMSOURCE_INDEXEDDATA | 0));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_GetStreamSourceFreq(device, 1, &ind);
+    ok(hr == D3D_OK && ind == (D3DSTREAMSOURCE_INDEXEDDATA | 0), "IDirect3DDevice9_GetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, (D3DSTREAMSOURCE_INSTANCEDATA | 0));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_GetStreamSourceFreq(device, 1, &ind);
+    ok(hr == D3D_OK && ind == (0 | D3DSTREAMSOURCE_INSTANCEDATA), "IDirect3DDevice9_GetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, (D3DSTREAMSOURCE_INSTANCEDATA | D3DSTREAMSOURCE_INDEXEDDATA | 0));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_GetStreamSourceFreq(device, 1, &ind);
+    ok(hr == D3D_OK && ind == (0 | D3DSTREAMSOURCE_INSTANCEDATA), "IDirect3DDevice9_GetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+
+    /* set the default value back */
+    hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s\n", DXGetErrorString9(hr));
+
+    /* create all VertexBuffers*/
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0, 0, D3DPOOL_MANAGED, &vb, NULL);
+    ok(hr == D3D_OK, "CreateVertexBuffer failed with %s\n", DXGetErrorString9(hr));
+    if(!vb) {
+        skip("Failed to create a vertex buffer\n");
+        return;
+    }
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(vertcolor), 0, 0, D3DPOOL_MANAGED, &vb2, NULL);
+    ok(hr == D3D_OK, "CreateVertexBuffer failed with %s\n", DXGetErrorString9(hr));
+    if(!vb2) {
+        skip("Failed to create a vertex buffer\n");
+        goto out;
+    }
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(instancepos), 0, 0, D3DPOOL_MANAGED, &vb3, NULL);
+    ok(hr == D3D_OK, "CreateVertexBuffer failed with %s\n", DXGetErrorString9(hr));
+    if(!vb3) {
+        skip("Failed to create a vertex buffer\n");
+        goto out;
+    }
+
+    /* create IndexBuffer*/
+    hr = IDirect3DDevice9_CreateIndexBuffer(device, sizeof(indices), 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &ib, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateIndexBuffer failed with %s\n", DXGetErrorString9(hr));
+    if(!ib) {
+        skip("Failed to create a index buffer\n");
+        goto out;
+    }
+
+    /* copy all Buffers (Vertex + Index)*/
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer9_Unlock(vb);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DVertexBuffer9_Lock(vb2, 0, sizeof(vertcolor), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, vertcolor, sizeof(vertcolor));
+    hr = IDirect3DVertexBuffer9_Unlock(vb2);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DVertexBuffer9_Lock(vb3, 0, sizeof(instancepos), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, instancepos, sizeof(instancepos));
+    hr = IDirect3DVertexBuffer9_Unlock(vb3);
+    ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DIndexBuffer9_Lock(ib, 0, sizeof(indices), (void **) &data, 0);
+    ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Lock failed with %s\n", DXGetErrorString9(hr));
+    memcpy(data, indices, sizeof(indices));
+    hr = IDirect3DIndexBuffer9_Unlock(ib);
+    ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %s\n", DXGetErrorString9(hr));
+
+    /* create VertexShader */
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexShader failed hr=%s\n", DXGetErrorString9(hr));
+    if(!shader) {
+        skip("Failed to create a vetex shader\n");
+        goto out;
+    }
+
+    hr = IDirect3DDevice9_SetVertexShader(device, shader);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetVertexShader failed hr=%s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_SetIndices(device, ib);
+    ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %s\n", DXGetErrorString9(hr));
+
+    /* run all tests */
+    for( i = 0; i < sizeof(testcases)/sizeof(testcases[0]); ++i)
+    {
+        struct testdata act = testcases[i];
+        decl[0].Stream = act.strVertex;
+        decl[1].Stream = act.strColor;
+        decl[2].Stream = act.strInstance;
+        /* create VertexDeclarations */
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl, &pDecl);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexDeclaration failed hr=%s (case %i)\n", DXGetErrorString9(hr), i);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x (case %i)\n", hr, i);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x (case %i)\n", hr, i);
+        if(SUCCEEDED(hr))
+        {
+            hr = IDirect3DDevice9_SetVertexDeclaration(device, pDecl);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %08x (case %i)\n", hr, i);
+
+            hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.strVertex, (D3DSTREAMSOURCE_INDEXEDDATA | act.idxVertex));
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+            hr = IDirect3DDevice9_SetStreamSource(device, act.strVertex, vb, 0, sizeof(quad[0]));
+            ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+
+            hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.strColor, (D3DSTREAMSOURCE_INDEXEDDATA | act.idxColor));
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+            hr = IDirect3DDevice9_SetStreamSource(device, act.strColor, vb2, 0, sizeof(vertcolor[0]));
+            ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+
+            hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.strInstance, (D3DSTREAMSOURCE_INSTANCEDATA | act.idxInstance));
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+            hr = IDirect3DDevice9_SetStreamSource(device, act.strInstance, vb3, 0, sizeof(instancepos[0]));
+            ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+
+            /* don't know if this is right (1*3 and 4*1)*/
+            hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0, 0, 1 * 3 , 0, 4*1);
+            ok(hr == D3D_OK, "IDirect3DDevice9_DrawIndexedPrimitive failed with %08x (case %i)\n", hr, i);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x (case %i)\n", hr, i);
+
+            /* set all StreamSource && StreamSourceFreq back to default */
+            hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.strVertex, 1);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+            hr = IDirect3DDevice9_SetStreamSource(device, act.strVertex, NULL, 0, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x (case %i)\n", hr, i);
+            hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.idxColor, 1);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+            hr = IDirect3DDevice9_SetStreamSource(device, act.idxColor, NULL, 0, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x (case %i)\n", hr, i);
+            hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.idxInstance, 1);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSourceFreq failed with %s (case %i)\n", DXGetErrorString9(hr), i);
+            hr = IDirect3DDevice9_SetStreamSource(device, act.idxInstance, NULL, 0, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x (case %i)\n", hr, i);
+        }
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x (case %i)\n", hr, i);
+
+        hr = IDirect3DVertexDeclaration9_Release(pDecl);
+        ok(hr == D3D_OK, "IDirect3DVertexDeclaration9_Release failed with %08x (case %i)\n", hr, i);
+
+        color = getPixelColor(device, 160, 360);
+        ok(color == act.color1, "has color 0x%08x, expected 0x%08x (case %i)\n", color, act.color1, i);
+        color = getPixelColor(device, 480, 360);
+        ok(color == act.color2, "has color 0x%08x, expected 0x%08x (case %i)\n", color, act.color2, i);
+        color = getPixelColor(device, 480, 120);
+        ok(color == act.color3, "has color 0x%08x, expected 0x%08x (case %i)\n", color, act.color3, i);
+        color = getPixelColor(device, 160, 120);
+        ok(color == act.color4, "has color 0x%08x, expected 0x%08x (case %i)\n", color, act.color4, i);
+    }
+
+    hr = IDirect3DDevice9_SetIndices(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetIndices failed with %08x\n", hr);
+
+out:
+    if(vb) IDirect3DVertexBuffer9_Release(vb);
+    if(vb2)IDirect3DVertexBuffer9_Release(vb2);
+    if(vb3)IDirect3DVertexBuffer9_Release(vb3);
+    if(ib)IDirect3DIndexBuffer9_Release(ib);
+    if(shader)IDirect3DVertexShader9_Release(shader);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -8765,6 +9046,7 @@ START_TEST(visual)
         if (caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
             test_vshader_input(device_ptr);
             test_vshader_float16(device_ptr);
+            stream_test(device_ptr);
         } else {
             skip("No vs_3_0 support\n");
         }
