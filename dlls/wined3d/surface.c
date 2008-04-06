@@ -4043,7 +4043,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
         /* Download the surface to system memory */
         if(This->Flags & SFLAG_INTEXTURE) {
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            if(!device->isInDraw) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             surface_bind_and_dirtify(This);
 
             surface_download_data(This);
@@ -4101,7 +4101,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         } else { /* Upload from system memory */
             d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
 
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            if(!device->isInDraw) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             surface_bind_and_dirtify(This);
             ENTER_GL();
 
