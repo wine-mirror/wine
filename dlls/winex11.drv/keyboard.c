@@ -87,7 +87,7 @@ static BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYS
 static int min_keycode, max_keycode, keysyms_per_keycode;
 static WORD keyc2vkey[256], keyc2scan[256];
 
-static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
+static int NumLockMask, ScrollLockMask, AltGrMask; /* mask in the XKeyEvent state */
 
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 
@@ -1640,6 +1640,11 @@ void X11DRV_InitKeyboard( Display *display )
 		    {
                         NumLockMask = 1 << i;
                         TRACE_(key)("NumLockMask is %x\n", NumLockMask);
+		    }
+                    else if (XKeycodeToKeysym(display, *kcp, k) == XK_Scroll_Lock)
+		    {
+                        ScrollLockMask = 1 << i;
+                        TRACE_(key)("ScrollLockMask is %x\n", ScrollLockMask);
 		    }
             }
     }
