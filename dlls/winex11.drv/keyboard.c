@@ -1139,8 +1139,6 @@ static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
     return keyc2vkey[e->keycode];
 }
 
-static BOOL NumState=FALSE, CapsState=FALSE;
-
 
 /***********************************************************************
  *           X11DRV_send_keyboard_input
@@ -1265,53 +1263,6 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
 }
 
 
-/**********************************************************************
- *		KEYBOARD_GenerateMsg
- *
- * Generate Down+Up messages when NumLock or CapsLock is pressed.
- *
- * Convention : called with vkey only VK_NUMLOCK or VK_CAPITAL
- *
- */
-static void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, DWORD event_time )
-{
-  BOOL * State = (vkey==VK_NUMLOCK? &NumState : &CapsState);
-  DWORD up, down;
-
-  if (*State) {
-    /* The INTERMEDIARY state means : just after a 'press' event, if a 'release' event comes,
-       don't treat it. It's from the same key press. Then the state goes to ON.
-       And from there, a 'release' event will switch off the toggle key. */
-    *State=FALSE;
-    TRACE("INTERM : don't treat release of toggle key. key_state_table[%#x] = %#x\n",
-          vkey,key_state_table[vkey]);
-  } else
-    {
-        down = (vkey==VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0);
-        up = (vkey==VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0) | KEYEVENTF_KEYUP;
-	if ( key_state_table[vkey] & 0x1 ) /* it was ON */
-	  {
-	    if (Evtype!=KeyPress)
-	      {
-		TRACE("ON + KeyRelease => generating DOWN and UP messages.\n");
-	        X11DRV_send_keyboard_input( vkey, scan, down, event_time, 0, 0 );
-	        X11DRV_send_keyboard_input( vkey, scan, up, event_time, 0, 0 );
-		*State=FALSE;
-		key_state_table[vkey] &= ~0x01; /* Toggle state to off. */
-	      }
-	  }
-	else /* it was OFF */
-	  if (Evtype==KeyPress)
-	    {
-	      TRACE("OFF + Keypress => generating DOWN and UP messages.\n");
-	      X11DRV_send_keyboard_input( vkey, scan, down, event_time, 0, 0 );
-	      X11DRV_send_keyboard_input( vkey, scan, up, event_time, 0, 0 );
-	      *State=TRUE; /* Goes to intermediary state before going to ON */
-	      key_state_table[vkey] |= 0x01; /* Toggle state to on. */
-	    }
-    }
-}
-
 /***********************************************************************
  *           KEYBOARD_UpdateOneState
  *
@@ -1368,6 +1319,16 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     KEYBOARD_UpdateOneState( VK_MENU, alt, time );
     KEYBOARD_UpdateOneState( VK_CONTROL, control, time );
     KEYBOARD_UpdateOneState( VK_SHIFT, shift, time );
+}
+
+static void update_lock_state(BYTE vkey, WORD scan, DWORD time)
+{
+    DWORD flags = vkey == VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0;
+
+    if (key_state_table[vkey] & 0x80) flags ^= KEYEVENTF_KEYUP;
+
+    X11DRV_send_keyboard_input( vkey, scan, flags, time, 0, 0 );
+    X11DRV_send_keyboard_input( vkey, scan, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
 }
 
 /***********************************************************************
@@ -1443,47 +1404,44 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     TRACE_(key)("keycode 0x%x converted to vkey 0x%x\n",
                 event->keycode, vkey);
 
-   if (vkey)
-   {
-    switch (vkey & 0xff)
+    if (!vkey) return;
+
+    dwFlags = 0;
+    if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
+    if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+
+    /* Note: X sets the below states on key down and clears them on key up.
+       Windows triggers them on key down. */
+
+    /* Adjust the CAPSLOCK state if it has been changed outside wine */
+    if (!(key_state_table[VK_CAPITAL] & 0x01) != !(event->state & LockMask) &&
+        vkey != VK_CAPITAL)
     {
-    case VK_NUMLOCK:
-      KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, event->type, event_time );
-      break;
-    case VK_CAPITAL:
-      TRACE("Caps Lock event. (type %d). State before : %#.2x\n",event->type,key_state_table[vkey]);
-      KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, event->type, event_time );
-      TRACE("State after : %#.2x\n",key_state_table[vkey]);
-      break;
-    default:
-        /* Adjust the NUMLOCK state if it has been changed outside wine */
-	if (!(key_state_table[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
-	  {
-	    TRACE("Adjusting NumLock state.\n");
-	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyPress, event_time );
-	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyRelease, event_time );
-	  }
-        /* Adjust the CAPSLOCK state if it has been changed outside wine */
-	if (!(key_state_table[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
-	  {
-              TRACE("Adjusting Caps Lock state.\n");
-	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyPress, event_time );
-	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyRelease, event_time );
-	  }
-	/* Not Num nor Caps : end of intermediary states for both. */
-	NumState = FALSE;
-	CapsState = FALSE;
-
-	bScan = keyc2scan[event->keycode] & 0xFF;
-	TRACE_(key)("bScan = 0x%02x.\n", bScan);
-
-	dwFlags = 0;
-	if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
-	if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
-
-        X11DRV_send_keyboard_input( vkey & 0xff, bScan, dwFlags, event_time, 0, 0 );
+        TRACE("Adjusting CapsLock state (%#.2x)\n", key_state_table[VK_CAPITAL]);
+        update_lock_state(VK_CAPITAL, 0x3A, event_time);
     }
-   }
+
+    /* Adjust the NUMLOCK state if it has been changed outside wine */
+    if (!(key_state_table[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask) &&
+        (vkey & 0xff) != VK_NUMLOCK)
+    {
+        TRACE("Adjusting NumLock state (%#.2x)\n", key_state_table[VK_NUMLOCK]);
+        update_lock_state(VK_NUMLOCK, 0x45, event_time);
+    }
+
+    /* Adjust the SCROLLLOCK state if it has been changed outside wine */
+    if (!(key_state_table[VK_SCROLL] & 0x01) != !(event->state & ScrollLockMask) &&
+        vkey != VK_SCROLL)
+    {
+        TRACE("Adjusting ScrLock state (%#.2x)\n", key_state_table[VK_SCROLL]);
+        update_lock_state(VK_SCROLL, 0x46, event_time);
+    }
+
+    bScan = keyc2scan[event->keycode] & 0xFF;
+    TRACE_(key)("bScan = 0x%02x.\n", bScan);
+
+    X11DRV_send_keyboard_input( vkey & 0xff, bScan, dwFlags, event_time, 0, 0 );
 }
 
 /**********************************************************************
