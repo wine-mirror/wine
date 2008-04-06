@@ -2121,11 +2121,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     }
 
     /* Set up some starting GL setup */
-    ENTER_GL();
 
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
     create_dummy_textures(This);
+
+    ENTER_GL();
+
 #if 0
     IWineD3DImpl_CheckGraphicsMemory();
 #endif
