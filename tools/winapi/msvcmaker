@@ -603,22 +603,22 @@ sub _generate_dsp($$) {
 	print OUT " /c";
 	print OUT "\r\n";
 
-	my @defines2;
+	my @defines2 = qw(_CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE);
 	if($debug) {
 	    if($lib) {
 		print OUT "# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od";
-		@defines2 = qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 _DEBUG _WINDOWS _MBCS _LIB);
+		push @defines2, qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 _DEBUG _WINDOWS _MBCS _LIB);
 	    } else {
 		print OUT "# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od";
-		@defines2 = qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x700 _DEBUG WIN32 _WINDOWS _MBCS _USRDLL);
+		push @defines2, qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x700 _DEBUG WIN32 _WINDOWS _MBCS _USRDLL);
 	    }
 	} else {
 	    if($lib) {
 		print OUT "# ADD CPP /nologo /MD /W3 /GX /O2";
-		@defines2 = qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 NDEBUG _WINDOWS _MBCS _LIB);
+		push @defines2, qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 NDEBUG _WINDOWS _MBCS _LIB);
 	    } else {
 		print OUT "# ADD CPP /nologo /MD /W3 /GX /O2";
-		@defines2 = qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 NDEBUG WIN32 _WINDOWS _MBCS _USRDLL);
+		push @defines2, qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 NDEBUG WIN32 _WINDOWS _MBCS _USRDLL);
 	    }
 	}
 
