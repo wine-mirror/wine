@@ -2761,9 +2761,9 @@ static void release_buffer_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %s\n", DXGetErrorString9(hr));
 
     hr = IDirect3DDevice9_SetIndices(device, ib);
-    ok(hr == D3D_OK, "IDirect3DIndexBuffer8_Unlock failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetIndices failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, sizeof(quad[0]));
-    ok(hr == D3D_OK, "IDirect3DIndexBuffer8_Unlock failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %s\n", DXGetErrorString9(hr));
 
