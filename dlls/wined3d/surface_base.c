@@ -545,7 +545,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     TRACE("DIBSection at : %p\n", This->dib.bitmap_data);
     /* copy the existing surface to the dib section */
     if(This->resource.allocatedMemory) {
-        memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, b_info->bmiHeader.biSizeImage);
+        memcpy(This->dib.bitmap_data, This->resource.allocatedMemory,  This->currentDesc.Height * IWineD3DSurface_GetPitch(iface));
     } else {
         /* This is to make LockRect read the gl Texture although memory is allocated */
         This->Flags &= ~SFLAG_INSYSMEM;
