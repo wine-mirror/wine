@@ -1372,11 +1372,13 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
 
     i = glRenderMode(GL_RENDER);
     if(i == -1) {
+        LEAVE_GL();
         ERR("Feedback failed. Expected %d elements back\n", buffer_size);
         Sleep(10000);
         HeapFree(GetProcessHeap(), 0, feedbuffer);
         return WINED3DERR_DRIVERINTERNALERROR;
     } else if(i != buffer_size) {
+        LEAVE_GL();
         ERR("Unexpected amount of elements returned. Expected %d, got %d\n", buffer_size, i);
         Sleep(10000);
         HeapFree(GetProcessHeap(), 0, feedbuffer);
