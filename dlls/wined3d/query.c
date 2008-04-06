@@ -462,6 +462,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  D
         if(ctx != This->wineD3DDevice->activeContext || ctx->tid != GetCurrentThreadId()) {
             WARN("Not the owning context, can't start query\n");
         } else {
+            ENTER_GL();
             /* This is allowed according to msdn and our tests. Reset the query and restart */
             if (dwIssueFlags & WINED3DISSUE_BEGIN) {
                 if(This->state == QUERY_BUILDING) {
@@ -482,6 +483,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  D
                     checkGLcall("glEndQuery()");
                 }
             }
+            LEAVE_GL();
         }
     } else {
         FIXME("(%p) : Occlusion queries not supported\n", This);
