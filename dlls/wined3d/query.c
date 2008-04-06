@@ -62,6 +62,7 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
+        ENTER_GL();
         if(This->type == WINED3DQUERYTYPE_EVENT) {
             if(GL_SUPPORT(APPLE_FENCE)) {
                 GL_EXTCALL(glDeleteFencesAPPLE(1, &((WineQueryEventData *)(This->extendedData))->fenceId));
@@ -74,6 +75,7 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
             GL_EXTCALL(glDeleteQueriesARB(1, &((WineQueryOcclusionData *)(This->extendedData))->queryId));
             checkGLcall("glDeleteQueriesARB");
         }
+        LEAVE_GL();
 
         HeapFree(GetProcessHeap(), 0, This->extendedData);
         HeapFree(GetProcessHeap(), 0, This);
