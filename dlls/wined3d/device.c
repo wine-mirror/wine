@@ -7362,6 +7362,7 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
                     }
                 }
 
+                ENTER_GL();
                 for (i = 0; i < GL_LIMITS(buffers); ++i) {
                     if (This->fbo_color_attachments[i] == (IWineD3DSurface *)resource) {
                         bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
@@ -7374,6 +7375,7 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
                     set_depth_stencil_fbo(iface, NULL);
                     This->fbo_depth_attachment = NULL;
                 }
+                LEAVE_GL();
             }
 
             break;
