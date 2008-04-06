@@ -429,11 +429,15 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
              */
             WARN("Query context not active\n");
         } else if(GL_SUPPORT(APPLE_FENCE)) {
+            ENTER_GL();
             GL_EXTCALL(glSetFenceAPPLE(((WineQueryEventData *)This->extendedData)->fenceId));
             checkGLcall("glSetFenceAPPLE");
+            LEAVE_GL();
         } else if (GL_SUPPORT(NV_FENCE)) {
+            ENTER_GL();
             GL_EXTCALL(glSetFenceNV(((WineQueryEventData *)This->extendedData)->fenceId, GL_ALL_COMPLETED_NV));
             checkGLcall("glSetFenceNV");
+            LEAVE_GL();
         }
     } else if(dwIssueFlags & WINED3DISSUE_BEGIN) {
         /* Started implicitly at device creation */
