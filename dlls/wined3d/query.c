@@ -288,6 +288,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
         GLuint samples;
         GLuint queryId = ((WineQueryOcclusionData *)This->extendedData)->queryId;
 
+        ENTER_GL();
         GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
         checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)\n");
         TRACE("(%p) : available %d.\n", This, available);
@@ -303,6 +304,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
         } else {
             res = S_FALSE;
         }
+        LEAVE_GL();
     } else {
         WARN("(%p) : Occlusion queries not supported, or wrong context. Returning 1.\n", This);
         *data = 1;
