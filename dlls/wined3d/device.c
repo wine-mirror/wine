@@ -2232,7 +2232,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
 
     /* Delete the palette conversion shader if it is around */
     if(This->paletteConversionShader) {
+        ENTER_GL();
         GL_EXTCALL(glDeleteProgramsARB(1, &This->paletteConversionShader));
+        LEAVE_GL();
         This->paletteConversionShader = 0;
     }
 
