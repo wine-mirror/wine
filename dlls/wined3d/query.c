@@ -327,11 +327,15 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void
         WARN("Query context not active, reporting GPU idle\n");
         *data = TRUE;
     } else if(GL_SUPPORT(APPLE_FENCE)) {
+        ENTER_GL();
         *data = GL_EXTCALL(glTestFenceAPPLE(((WineQueryEventData *)This->extendedData)->fenceId));
         checkGLcall("glTestFenceAPPLE");
+        LEAVE_GL();
     } else if(GL_SUPPORT(NV_FENCE)) {
+        ENTER_GL();
         *data = GL_EXTCALL(glTestFenceNV(((WineQueryEventData *)This->extendedData)->fenceId));
         checkGLcall("glTestFenceNV");
+        LEAVE_GL();
     } else {
         WARN("(%p): reporting GPU idle\n", This);
         *data = TRUE;
