@@ -256,11 +256,9 @@ typedef struct tagFace {
     void *font_data_ptr;
     DWORD font_data_size;
     FT_Long face_index;
-    BOOL Italic;
-    BOOL Bold;
     FONTSIGNATURE fs;
     FONTSIGNATURE fs_links;
-    DWORD ntmFlags;  /* Only some bits stored here. Others are computed on the fly */
+    DWORD ntmFlags;
     FT_Fixed font_version;
     BOOL scalable;
     Bitmap_Size size;     /* set if face is a bitmap */
@@ -1380,8 +1378,12 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 face->font_data_size = font_data_size;
             }
             face->face_index = face_index;
-            face->Italic = (ft_face->style_flags & FT_STYLE_FLAG_ITALIC) ? 1 : 0;
-            face->Bold = (ft_face->style_flags & FT_STYLE_FLAG_BOLD) ? 1 : 0;
+            face->ntmFlags = 0;
+            if (ft_face->style_flags & FT_STYLE_FLAG_ITALIC)
+                face->ntmFlags |= NTM_ITALIC;
+            if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
+                face->ntmFlags |= NTM_BOLD;
+            if (face->ntmFlags == 0) face->ntmFlags = NTM_REGULAR;
             face->font_version = pHeader ? pHeader->Font_Revision : 0;
             face->family = family;
             face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
@@ -1409,10 +1411,8 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             if (pFT_Load_Sfnt_Table && !pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('C','F','F',' '), 0, NULL, &tmp_size))
             {
                 TRACE("Font %s/%p is OTF Type1\n", wine_dbgstr_a(file), font_data_ptr);
-                face->ntmFlags = NTM_PS_OPENTYPE;
+                face->ntmFlags |= NTM_PS_OPENTYPE;
             }
-            else
-                face->ntmFlags = 0;
 
             TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
                   face->fs.fsCsb[0], face->fs.fsCsb[1],
@@ -3335,11 +3335,15 @@ found:
     {
         if((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0])
         {
-            new_score = (face->Italic ^ it) + (face->Bold ^ bd);
+            BOOL italic, bold;
+
+            italic = (face->ntmFlags & NTM_ITALIC) ? 1 : 0;
+            bold = (face->ntmFlags & NTM_BOLD) ? 1 : 0;
+            new_score = (italic ^ it) + (bold ^ bd);
             if(!best || new_score <= score)
             {
                 TRACE("(it=%d, bd=%d) is selected for (it=%d, bd=%d)\n",
-                      face->Italic, face->Bold, it, bd);
+                      italic, bold, it, bd);
                 score = new_score;
                 best = face;
                 if(best->scalable  && score == 0) break;
@@ -3363,8 +3367,8 @@ found:
     }
     if(best)
         face = best->scalable ? best : best_bitmap;
-    ret->fake_italic = (it && !face->Italic);
-    ret->fake_bold = (bd && !face->Bold);
+    ret->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
+    ret->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
 
     ret->fs = face->fs;
 
