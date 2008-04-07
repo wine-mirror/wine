@@ -284,6 +284,134 @@ static INT_PTR CALLBACK edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPA
     return FALSE;
 }
 
+static INT_PTR CALLBACK edit_singleline_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_INITDIALOG:
+        {
+            HWND hedit = GetDlgItem(hdlg, 1000);
+            SetFocus(hedit);
+            switch (lparam)
+            {
+                /* test cases for WM_KEYDOWN */
+                case 0:
+                    PostMessage(hedit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+                    break;
+                case 1:
+                    PostMessage(hedit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+                    /* needed so the test does not wait for user input */
+                    PostMessage(hdlg, WM_USER, 0xfeedbeef, 0);
+                    break;
+                case 2:
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 1);
+                    break;
+
+                /* test cases for WM_CHAR */
+                case 3:
+                    PostMessage(hedit, WM_CHAR, VK_ESCAPE, 0x10001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+                case 4:
+                    PostMessage(hedit, WM_CHAR, VK_RETURN, 0x1c0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+                case 5:
+                    PostMessage(hedit, WM_CHAR, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 0);
+                    break;
+
+                /* test cases for WM_KEYDOWN + WM_CHAR */
+                case 6:
+                    PostMessage(hedit, WM_KEYDOWN, VK_ESCAPE, 0x10001);
+                    PostMessage(hedit, WM_CHAR, VK_ESCAPE, 0x10001);
+                    break;
+                case 7:
+                    PostMessage(hedit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+                    PostMessage(hedit, WM_CHAR, VK_RETURN, 0x1c0001);
+                    /* needed so the test does not wait for user input */
+                    PostMessage(hdlg, WM_USER, 0xfeedbeef, 0);
+                    break;
+                case 8:
+                    PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
+                    PostMessage(hedit, WM_CHAR, VK_TAB, 0xf0001);
+                    PostMessage(hdlg, WM_USER, 0xdeadbeef, 1);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+        }
+
+        case WM_COMMAND:
+            if (HIWORD(wparam) != BN_CLICKED)
+                break;
+
+            switch (LOWORD(wparam))
+            {
+                case IDOK:
+                    EndDialog(hdlg, 111);
+                    break;
+
+                case IDCANCEL:
+                    EndDialog(hdlg, 222);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+
+        case WM_USER:
+        {
+            HWND hok = GetDlgItem(hdlg, IDOK);
+            HWND hedit = GetDlgItem(hdlg, 1000);
+            HWND hfocus = GetFocus();
+            int len = SendMessage(hedit, WM_GETTEXTLENGTH, 0, 0);
+
+            if (wparam == 0xfeedbeef)
+            {
+                EndDialog(hdlg, 66);
+                break;
+            }
+            if (wparam != 0xdeadbeef)
+                break;
+
+            switch (lparam)
+            {
+                case 0:
+                    if ((hfocus == hedit) && len == 0)
+                        EndDialog(hdlg, 444);
+                    else
+                        EndDialog(hdlg, 555);
+                    break;
+
+                case 1:
+                    if ((hfocus == hok) && len == 0)
+                        EndDialog(hdlg, 444);
+                    else
+                        EndDialog(hdlg, 555);
+                    break;
+
+                default:
+                    EndDialog(hdlg, 55);
+            }
+            break;
+        }
+
+        case WM_CLOSE:
+            EndDialog(hdlg, 333);
+            break;
+
+        default:
+            break;
+    }
+
+    return FALSE;
+}
+
 static INT_PTR CALLBACK edit_wantreturn_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -1613,6 +1741,59 @@ static void test_wantreturn_edit_dialog(void)
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 }
 
+static void test_singleline_wantreturn_edit_dialog(void)
+{
+    int r;
+
+    /* tests for WM_KEYDOWN */
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 0);
+    todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 1);
+    ok(111 == r, "Expected %d, got %d\n", 111, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 2);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* tests for WM_CHAR */
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 3);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 4);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 5);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* tests for WM_KEYDOWN + WM_CHAR */
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 6);
+    todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 7);
+    ok(111 == r, "Expected %d, got %d\n", 111, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 8);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* tests for WM_KEYDOWN */
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 0);
+    todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 1);
+    todo_wine ok(111 == r, "Expected %d, got %d\n", 111, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 2);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* tests for WM_CHAR */
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 3);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 4);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 5);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+
+    /* tests for WM_KEYDOWN + WM_CHAR */
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 6);
+    todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 7);
+    todo_wine ok(111 == r, "Expected %d, got %d\n", 111, r);
+    r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 8);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
+}
+
 static BOOL RegisterWindowClasses (void)
 {
     WNDCLASSA test2;
@@ -1684,6 +1865,7 @@ START_TEST(edit)
     test_edit_dialog();
     test_multi_edit_dialog();
     test_wantreturn_edit_dialog();
+    test_singleline_wantreturn_edit_dialog();
 
     UnregisterWindowClasses();
 }
