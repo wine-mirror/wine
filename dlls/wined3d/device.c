@@ -5165,6 +5165,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, WI
                                debug_d3dprimitivetype(PrimitiveType),
                                StartVertex, PrimitiveCount);
 
+    if(!This->stateBlock->vertexDecl) {
+        WARN("(%p) : Called without a valid vertex declaration set\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
+
     /* The index buffer is not needed here, but restore it, otherwise it is hell to keep track of */
     if(This->stateBlock->streamIsUP) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
@@ -5199,6 +5204,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
          * D3D8 simply dies, but I doubt it can do much harm to return
          * D3DERR_INVALIDCALL there as well. */
         ERR("(%p) : Called without a valid index buffer set, returning WINED3DERR_INVALIDCALL\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(!This->stateBlock->vertexDecl) {
+        WARN("(%p) : Called without a valid vertex declaration set\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -5240,6 +5250,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
              debug_d3dprimitivetype(PrimitiveType),
              PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
 
+    if(!This->stateBlock->vertexDecl) {
+        WARN("(%p) : Called without a valid vertex declaration set\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
+
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     vb = This->stateBlock->streamSource[0];
     This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
@@ -5279,6 +5294,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
              This, PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
              MinVertexIndex, NumVertices, PrimitiveCount, pIndexData,
              IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
+
+    if(!This->stateBlock->vertexDecl) {
+        WARN("(%p) : Called without a valid vertex declaration set\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
 
     if (IndexDataFormat == WINED3DFMT_INDEX16) {
         idxStride = 2;

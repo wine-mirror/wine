@@ -1505,7 +1505,7 @@ static void test_draw_indexed(void)
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
     ok(SUCCEEDED(hr), "SetVertexDeclaration failed (0x%08x)\n", hr);
 
     hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0, 0, D3DPOOL_DEFAULT, &vertex_buffer, NULL);
@@ -1538,9 +1538,17 @@ static void test_draw_indexed(void)
     ok(hr == D3DERR_INVALIDCALL, "DrawIndexedPrimitive returned 0x%08x, expected D3DERR_INVALIDCALL (0x%08x)\n",
             hr, D3DERR_INVALIDCALL);
 
-    /* Valid index buffer. Should succeed */
+    /* Valid index buffer, NULL vertex declaration. Should fail */
     hr = IDirect3DDevice9_SetIndices(device, index_buffer);
     ok(SUCCEEDED(hr), "SetIndices failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */, 0 /* MinIndex */,
+            4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
+    ok(hr == D3DERR_INVALIDCALL, "DrawIndexedPrimitive returned 0x%08x, expected D3DERR_INVALIDCALL (0x%08x)\n",
+            hr, D3DERR_INVALIDCALL);
+
+    /* Valid index buffer and vertex declaration. Should succeed */
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (0x%08x)\n", hr);
     hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */, 0 /* MinIndex */,
             4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
     ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed (0x%08x)\n", hr);
