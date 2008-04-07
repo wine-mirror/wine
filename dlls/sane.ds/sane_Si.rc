@@ -1,7 +1,7 @@
 /*
- * Top level resource file for Twain
+ * Slovenian resources for Twain
  *
- * Copyright 2006 CodeWeavers, Aric Stewart
+ * Copyright 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,22 +18,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
+#pragma code_page(65001)
 
-#include "resource.h"
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-#include "sane_De.rc"
-#include "sane_En.rc"
-#include "sane_Es.rc"
-#include "sane_Fi.rc"
-#include "sane_Fr.rc"
-#include "sane_Ko.rc"
-#include "sane_Nl.rc"
-#include "sane_No.rc"
-#include "sane_Pl.rc"
-#include "sane_Ru.rc"
-#include "sane_Si.rc"
-#include "sane_Sv.rc"
+IDD_DIALOG1 DIALOG DISCARDABLE 0, 0, 186, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | DS_CENTER | DS_SETFOREGROUND
+CAPTION "Skeniranje"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT   "Skeniram.... Prosim, počakajte",IDC_STATIC,5,19,176,8, SS_CENTER
+END
+
+STRINGTABLE DISCARDABLE
+{
+ 0 ""
+ 1 "px"
+ 2 "b"
+ 3 "mm"
+ 4 "dpi"
+ 5 "%"
+ 6 "ns"
+}
+
+#pragma code_page(default)
