@@ -6078,11 +6078,13 @@ void test_vshader_input(IDirect3DDevice9 *device)
             ok(color == 0x00FFFF80 || color == 0x00FFFF7f || color == 0x00FFFF81,
                "Input test: Quad 1(2crd) returned color 0x%08x, expected 0x00FFFF80\n", color);
 
-            /* The last value of the read but undefined stream is used */
+            /* The last value of the read but undefined stream is used, it is 0x00. The defined input is vec4(1, 0, 0, 0) */
             color = getPixelColor(device, 480, 360);
-            ok(color == 0x00FFFF00, "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00FFFF00\n", color);
+            ok(color == 0x00FFFF00 || color ==0x00FF0000,
+               "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00FFFF00\n", color);
             color = getPixelColor(device, 160, 120);
-            ok(color == 0x00FF0080 || color == 0x00FF007f || color == 0x00FF0081,
+            /* Same as above, accept both the last used value and 0.0 for the undefined streams */
+            ok(color == 0x00FF0080 || color == 0x00FF007f || color == 0x00FF0081 || color == 0x00FF0000,
                "Input test: Quad 3(2crd-wrongidx) returned color 0x%08x, expected 0x00FF0080\n", color);
 
             color = getPixelColor(device, 480, 160);
@@ -6149,7 +6151,8 @@ void test_vshader_input(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
 
         color = getPixelColor(device, 480, 350);
-        /* vs_1_1 may fail, accept the clear color
+        /* vs_1_1 may fail, accept the clear color. Some drivers also set the undefined streams to 0, accept that
+         * as well.
          *
          * NOTE: This test fails on the reference rasterizer. In the refrast, the 4 vertices have different colors,
          * i.e., the whole old stream is read, and not just the last used attribute. Some games require that this
@@ -6158,8 +6161,8 @@ void test_vshader_input(IDirect3DDevice9 *device)
          *
          * A test app for this behavior is Half Life 2 Episode 2 in dxlevel 95, and related games(Portal, TF2).
          */
-        ok(color == 0x000000FF || color == 0x00808080,
-           "Input test: Quad 2(different colors) returned color 0x%08x, expected 0x000000FF\n", color);
+        ok(color == 0x000000FF || color == 0x00808080 || color == 0x00000000,
+           "Input test: Quad 2(different colors) returned color 0x%08x, expected 0x000000FF, 0x00808080 or 0x00000000\n", color);
         color = getPixelColor(device, 160, 120);
 
         IDirect3DDevice9_SetVertexShader(device, NULL);

@@ -3017,6 +3017,14 @@ static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock) {
     for (i = 0; i < maxAttribs; ++i) {
         GL_EXTCALL(glDisableVertexAttribArrayARB(i));
         checkGLcall("glDisableVertexAttribArrayARB(reg)");
+        /* Some Windows drivers(NV GF 7) use the latest value that was used when drawing with the now
+         * deactivated stream disabled, some other drivers(ATI, NV GF 8) set the undefined values to 0x00.
+         * Let's set them to 0x00 to avoid hitting some undefined aspects of OpenGL. All that is really
+         * important here is the glDisableVertexAttribArrayARB call above. The test shows that the refrast
+         * keeps dereferencing the pointers, which would cause crashes in some games like Half Life 2 Eposide 2
+         */
+        GL_EXTCALL(glVertexAttrib4NubARB(i, 0, 0, 0, 0));
+        checkGLcall("glVertexAttrib4NubARB(i, 0, 0, 0, 0)");
     }
 }
 
