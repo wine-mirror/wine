@@ -2,7 +2,7 @@
  * WineMine
  * Slovenian Language Support
  *
- * Copyright 2003 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2003, 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,24 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 STRINGTABLE {
      IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Nobody"
+     IDS_NOBODY,  "NihÄe"
      IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
 }
 
 MENU_WINEMINE MENU DISCARDABLE
 {
-    POPUP "&Možnosti" {
+    POPUP "&MoÅ¾nosti" {
         MENUITEM "&Nova igra\tF2",           IDM_NEW
         MENUITEM SEPARATOR
-        MENUITEM "&Vprašaji", IDM_MARKQ
+        MENUITEM "&VpraÅ¡aji", IDM_MARKQ
         MENUITEM SEPARATOR
-        MENUITEM "&Zaèetnik",      IDM_BEGINNER
+        MENUITEM "&ZaÄetnik",      IDM_BEGINNER
         MENUITEM "&Napreden",      IDM_ADVANCED
         MENUITEM "&Strokovnjak",        IDM_EXPERT
         MENUITEM "&Poljubno",        IDM_CUSTOM
@@ -42,7 +44,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "Iz&hod\tAlt+X",          IDM_EXIT
     }
     POPUP "&Info" {
-        MENUITEM "&Najboljši èasi",    IDM_TIMES
+        MENUITEM "&NajboljÅ¡i Äasi",    IDM_TIMES
         MENUITEM "&O programu",         IDM_ABOUT
     }
 }
@@ -50,10 +52,10 @@ MENU_WINEMINE MENU DISCARDABLE
 DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Najboljši èasi"
+CAPTION "NajboljÅ¡i Äasi"
 {
-    GROUPBOX        "Najboljši èasi", IDIGNORE,  10,  10, 140,  45
-    LTEXT           "Zaèetnik",      IDIGNORE,  20,  20,  40,   8
+    GROUPBOX        "NajboljÅ¡i Äasi", IDIGNORE,  10,  10, 140,  45
+    LTEXT           "ZaÄetnik",      IDIGNORE,  20,  20,  40,   8
     LTEXT           "Napreden",      IDIGNORE,  20,  30,  40,   8
     LTEXT           "Strokovnjak",        IDIGNORE,  20,  40,  40,   8
     LTEXT           "999",          IDC_TIME1,  70,  20,  15,   8
@@ -68,7 +70,7 @@ CAPTION "Najboljši èasi"
 DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Èestitamo!"
+CAPTION "ÄŒestitamo!"
 {
     LTEXT           "Vnesite svoje ime", IDIGNORE,  10,  10, 150,  10
     EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
@@ -87,5 +89,7 @@ CAPTION "Poljubna igra"
     EDITTEXT              IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
     EDITTEXT             IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER
     DEFPUSHBUTTON   "V redu",     IDOK,      40,  30,  50,  15
-    PUSHBUTTON      "Preklièi", IDCANCEL,  40,  50,  50,  15
+    PUSHBUTTON      "PrekliÄi", IDCANCEL,  40,  50,  50,  15
 }
+
+#pragma code_page(default)
