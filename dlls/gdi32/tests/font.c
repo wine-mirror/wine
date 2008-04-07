@@ -1494,6 +1494,71 @@ else
     ReleaseDC(0, hdc);
 }
 
+static void test_negative_width(HDC hdc, const LOGFONTA *lf)
+{
+    HFONT hfont, hfont_prev;
+    DWORD ret;
+    GLYPHMETRICS gm1, gm2;
+    LOGFONTA lf2 = *lf;
+    WORD idx;
+    MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
+
+    /* negative widths are handled just as positive ones */
+    lf2.lfWidth = -lf->lfWidth;
+
+    SetLastError(0xdeadbeef);
+    hfont = CreateFontIndirectA(lf);
+    ok(hfont != 0, "CreateFontIndirect error %u\n", GetLastError());
+    check_font("original", lf, hfont);
+
+    hfont_prev = SelectObject(hdc, hfont);
+
+    ret = GetGlyphIndicesA(hdc, "x", 1, &idx, GGI_MARK_NONEXISTING_GLYPHS);
+    if (ret == GDI_ERROR || idx == 0xffff)
+    {
+        SelectObject(hdc, hfont_prev);
+        DeleteObject(hfont);
+        skip("This font doesn't contain 'x', skipping the test\n");
+        return;
+    }
+
+    /* filling with 0xaa causes false pass under WINEDEBUG=warn+heap */
+    memset(&gm1, 0xab, sizeof(gm1));
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineA(hdc, 'x', GGO_METRICS, &gm1, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutline error 0x%x\n", GetLastError());
+
+    SelectObject(hdc, hfont_prev);
+    DeleteObject(hfont);
+
+    SetLastError(0xdeadbeef);
+    hfont = CreateFontIndirectA(&lf2);
+    ok(hfont != 0, "CreateFontIndirect error %u\n", GetLastError());
+    check_font("negative width", &lf2, hfont);
+
+    hfont_prev = SelectObject(hdc, hfont);
+
+    memset(&gm2, 0xbb, sizeof(gm2));
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineA(hdc, 'x', GGO_METRICS, &gm2, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutline error 0x%x\n", GetLastError());
+
+    SelectObject(hdc, hfont_prev);
+    DeleteObject(hfont);
+
+    ok(gm1.gmBlackBoxX == gm2.gmBlackBoxX &&
+       gm1.gmBlackBoxY == gm2.gmBlackBoxY &&
+       gm1.gmptGlyphOrigin.x == gm2.gmptGlyphOrigin.x &&
+       gm1.gmptGlyphOrigin.y == gm2.gmptGlyphOrigin.y &&
+       gm1.gmCellIncX == gm2.gmCellIncX &&
+       gm1.gmCellIncY == gm2.gmCellIncY,
+       "gm1=%d,%d,%d,%d,%d,%d gm2=%d,%d,%d,%d,%d,%d\n",
+       gm1.gmBlackBoxX, gm1.gmBlackBoxY, gm1.gmptGlyphOrigin.x,
+       gm1.gmptGlyphOrigin.y, gm1.gmCellIncX, gm1.gmCellIncY,
+       gm2.gmBlackBoxX, gm2.gmBlackBoxY, gm2.gmptGlyphOrigin.x,
+       gm2.gmptGlyphOrigin.y, gm2.gmCellIncX, gm2.gmCellIncY);
+}
+
 /* PANOSE is 10 bytes in size, need to pack the structure properly */
 #include "pshpack2.h"
 typedef struct
@@ -1577,47 +1642,6 @@ static void test_text_metrics(const LOGFONTA *lf)
     ok(hfont != 0, "CreateFontIndirect error %u\n", GetLastError());
 
     hfont_old = SelectObject(hdc, hfont);
-
-    if(lf->lfWidth > 0) {
-        HFONT hfont2, hfont_prev;
-        GLYPHMETRICS gm1, gm2;
-        LOGFONTA lf2 = *lf;
-        MAT2 mat2 = { {0,1}, {0,0}, {0,0}, {0,1} };
-
-        /* negative widths are handled just as positive ones */
-        lf2.lfWidth *= -1;
-
-        SetLastError(0xdeadbeef);
-        hfont2 = CreateFontIndirectA(&lf2);
-        ok(hfont2 != 0, "CreateFontIndirect error %u\n", GetLastError());
-        hfont_prev = SelectObject(hdc, hfont2);
-
-        /* filling with 0xaa causes false pass under WINEDEBUG=warn+heap */
-        memset(&gm1, 0xab, sizeof(gm1));
-        SetLastError(0xdeadbeef);
-        ret = GetGlyphOutlineA(hdc, 'x', GGO_METRICS, &gm1, 0, NULL, &mat2);
-        ok(ret != GDI_ERROR, "GetGlyphOutline error 0x%x\n", GetLastError());
-
-        SelectObject(hdc, hfont_prev);
-        DeleteObject(hfont2);
-
-        memset(&gm2, 0xbb, sizeof(gm2));
-        SetLastError(0xdeadbeef);
-        ret = GetGlyphOutlineA(hdc, 'x', GGO_METRICS, &gm2, 0, NULL, &mat2);
-        ok(ret != GDI_ERROR, "GetGlyphOutline error 0x%x\n", GetLastError());
-
-        ok(gm1.gmBlackBoxX == gm2.gmBlackBoxX &&
-           gm1.gmBlackBoxY == gm2.gmBlackBoxY &&
-           gm1.gmptGlyphOrigin.x == gm2.gmptGlyphOrigin.x &&
-           gm1.gmptGlyphOrigin.y == gm2.gmptGlyphOrigin.y &&
-           gm1.gmCellIncX == gm2.gmCellIncX &&
-           gm1.gmCellIncY == gm2.gmCellIncY,
-           "gm1=%d,%d,%d,%d,%d,%d gm2=%d,%d,%d,%d,%d,%d\n",
-           gm1.gmBlackBoxX, gm1.gmBlackBoxY, gm1.gmptGlyphOrigin.x,
-           gm1.gmptGlyphOrigin.y, gm1.gmCellIncX, gm1.gmCellIncY,
-           gm2.gmBlackBoxX, gm2.gmBlackBoxY, gm2.gmptGlyphOrigin.x,
-           gm2.gmptGlyphOrigin.y, gm2.gmCellIncX, gm2.gmCellIncY);
-    }
 
     size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
     if (size == GDI_ERROR)
@@ -1710,6 +1734,8 @@ static void test_text_metrics(const LOGFONTA *lf)
         ok(tmW.tmDigitizedAspectX == ret, "W: tmDigitizedAspectY %u != %u\n",
            tmW.tmDigitizedAspectX, ret);
     }
+
+    test_negative_width(hdc, lf);
 
 end_of_test:
     SelectObject(hdc, hfont_old);
