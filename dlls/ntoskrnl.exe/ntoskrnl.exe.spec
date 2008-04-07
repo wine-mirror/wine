@@ -569,7 +569,7 @@
 @ stub KeProfileInterrupt
 @ stub KeProfileInterruptWithSource
 @ stub KePulseEvent
-@ stub KeQueryActiveProcessors
+@ stdcall KeQueryActiveProcessors()
 @ stub KeQueryInterruptTime
 @ stub KeQueryPriorityThread
 @ stub KeQueryRuntimeThread

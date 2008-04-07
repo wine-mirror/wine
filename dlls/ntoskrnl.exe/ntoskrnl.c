@@ -511,6 +511,24 @@ void WINAPI KeInitializeTimer( PKTIMER Timer )
 }
 
 
+/**********************************************************************
+ *           KeQueryActiveProcessors   (NTOSKRNL.EXE.@)
+ *
+ * Return the active Processors as bitmask
+ *
+ * RETURNS
+ *   active Processors as bitmask
+ *
+ */
+KAFFINITY WINAPI KeQueryActiveProcessors( void )
+{
+    DWORD_PTR AffinityMask;
+
+    GetProcessAffinityMask( GetCurrentProcess(), &AffinityMask, NULL);
+    return AffinityMask;
+}
+
+
 /***********************************************************************
  *           KeQuerySystemTime   (NTOSKRNL.EXE.@)
  */
