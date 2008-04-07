@@ -731,6 +731,7 @@ static void test_edit_control_2(void)
 {
     HWND hwndMain;
     char szLocalString[MAXLEN];
+    LONG r;
 
     /* Create main and edit windows. */
     hwndMain = CreateWindow(szEditTest2Class, "ET2", WS_OVERLAPPEDWINDOW,
@@ -749,9 +750,12 @@ static void test_edit_control_2(void)
 
     trace("EDIT: SETTEXT atomicity\n");
     /* Send messages to "type" in the word 'foo'. */
-    SendMessage(hwndET2, WM_CHAR, 'f', 1);
-    SendMessage(hwndET2, WM_CHAR, 'o', 1);
-    SendMessage(hwndET2, WM_CHAR, 'o', 1);
+    r = SendMessage(hwndET2, WM_CHAR, 'f', 1);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    r = SendMessage(hwndET2, WM_CHAR, 'o', 1);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    r = SendMessage(hwndET2, WM_CHAR, 'o', 1);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
     /* 'foo' should have been changed to 'bar' by the UPDATE handler. */
     GetWindowText(hwndET2, szLocalString, MAXLEN);
     ok(lstrcmp(szLocalString, "bar")==0,
@@ -1553,7 +1557,8 @@ static void test_espassword(void)
 
     /* select all, cut (ctrl-x) */
     SendMessage(hwEdit, EM_SETSEL, 0, -1);
-    SendMessage(hwEdit, WM_CHAR, 24, 0);
+    r = SendMessage(hwEdit, WM_CHAR, 24, 0);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     r = SendMessage(hwEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
@@ -1569,8 +1574,10 @@ static void test_espassword(void)
 
     /* select all, copy (ctrl-c) and paste (ctrl-v) */
     SendMessage(hwEdit, EM_SETSEL, 0, -1);
-    SendMessage(hwEdit, WM_CHAR, 3, 0);
-    SendMessage(hwEdit, WM_CHAR, 22, 0);
+    r = SendMessage(hwEdit, WM_CHAR, 3, 0);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    r = SendMessage(hwEdit, WM_CHAR, 22, 0);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
@@ -1607,7 +1614,7 @@ static void test_undo(void)
 
     /* cut (ctrl-x) */
     r = SendMessage(hwEdit, WM_CHAR, 24, 0);
-    todo_wine { ok(1 == r, "Expected: %d, got: %d\n", 1, r); }
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
@@ -1617,7 +1624,7 @@ static void test_undo(void)
 
     /* undo (ctrl-z) */
     r = SendMessage(hwEdit, WM_CHAR, 26, 0);
-    todo_wine { ok(1 == r, "Expected: %d, got: %d\n", 1, r); }
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
@@ -1627,7 +1634,7 @@ static void test_undo(void)
 
     /* undo again (ctrl-z) */
     r = SendMessage(hwEdit, WM_CHAR, 26, 0);
-    todo_wine { ok(1 == r, "Expected: %d, got: %d\n", 1, r); }
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;

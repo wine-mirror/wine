@@ -257,7 +257,7 @@ static BOOL	EDIT_EM_Undo(EDITSTATE *es);
 /*
  *	WM_XXX message handlers
  */
-static void	EDIT_WM_Char(EDITSTATE *es, WCHAR c);
+static LRESULT	EDIT_WM_Char(EDITSTATE *es, WCHAR c);
 static void	EDIT_WM_Command(EDITSTATE *es, INT code, INT id, HWND conrtol);
 static void	EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y);
 static void	EDIT_WM_Copy(EDITSTATE *es);
@@ -834,7 +834,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
                 strng[1] = wParam & 0xff;
                 if (strng[0]) MultiByteToWideChar(CP_ACP, 0, strng, 2, &charW, 1);
                 else MultiByteToWideChar(CP_ACP, 0, &strng[1], 1, &charW, 1);
-		EDIT_WM_Char(es, charW);
+		result = EDIT_WM_Char(es, charW);
 		break;
             }
             /* fall through */
@@ -866,7 +866,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
                   if (charW == VK_TAB || charW == VK_RETURN)
                       break;
                 }
-		EDIT_WM_Char(es, charW);
+		result = EDIT_WM_Char(es, charW);
 		break;
 	}
 
@@ -3994,7 +3994,7 @@ static BOOL EDIT_EM_Undo(EDITSTATE *es)
  *	WM_CHAR
  *
  */
-static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
+static LRESULT EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 {
         BOOL control;
 
@@ -4065,6 +4065,7 @@ static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
  		}
 		break;
 	}
+    return 1;
 }
 
 
