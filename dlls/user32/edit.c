@@ -4596,7 +4596,7 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 		break;
 	case VK_RETURN:
 	    /* If the edit doesn't want the return send a message to the default object */
-	    if(!(es->style & ES_WANTRETURN))
+	    if(!(es->style & ES_MULTILINE) || !(es->style & ES_WANTRETURN))
 	    {
 		HWND hwndParent = GetParent(es->hwndSelf);
 		DWORD dw = SendMessageW( hwndParent, DM_GETDEFID, 0, 0 );

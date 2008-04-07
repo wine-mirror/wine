@@ -1898,7 +1898,7 @@ static void test_singleline_wantreturn_edit_dialog(void)
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 0);
     todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 1);
-    todo_wine ok(111 == r, "Expected %d, got %d\n", 111, r);
+    ok(111 == r, "Expected %d, got %d\n", 111, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 2);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 
@@ -1914,7 +1914,7 @@ static void test_singleline_wantreturn_edit_dialog(void)
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 6);
     todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 7);
-    todo_wine ok(111 == r, "Expected %d, got %d\n", 111, r);
+    ok(111 == r, "Expected %d, got %d\n", 111, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 8);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 }
