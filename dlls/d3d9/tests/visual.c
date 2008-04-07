@@ -6336,7 +6336,7 @@ static void srgbtexture_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
 
     color = getPixelColor(device, 320, 240);
-    ok(color == 0x00363636, "srgb quad has color %08x, expected 0x00363636\n", color);
+    ok(color == 0x00363636 || color == 0x00373737, "srgb quad has color %08x, expected 0x00363636\n", color);
 
 out:
     if(texture) IDirect3DTexture9_Release(texture);
