@@ -1,0 +1,504 @@
+/*
+ *  Task Manager
+ *
+ *  Copyright 2008 Rok Mandeljc
+ *
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+
+/*
+ Menu
+*/
+
+IDR_TASKMANAGER MENU DISCARDABLE
+BEGIN
+    POPUP "&Datoteka"
+    BEGIN
+        MENUITEM "&Novo opravilo",          ID_FILE_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "Iz&hod",          ID_FILE_EXIT
+    END
+    POPUP "&Možnosti"
+    BEGIN
+        MENUITEM "Vedno na &vrhu",              ID_OPTIONS_ALWAYSONTOP
+        , CHECKED
+        MENUITEM "Poman&jšaj ob uporabi",            ID_OPTIONS_MINIMIZEONUSE
+        , CHECKED
+        MENUITEM "&Skrij ob pomanjšanju",        ID_OPTIONS_HIDEWHENMINIMIZED
+        , CHECKED
+        MENUITEM "Prika&ži 16-bitna opravila",          ID_OPTIONS_SHOW16BITTASKS
+        , CHECKED
+    END
+    POPUP "&Pogled"
+    BEGIN
+        MENUITEM "&Osveži",                ID_VIEW_REFRESH
+        POPUP "&Hitrost osveževanja"
+        BEGIN
+            MENUITEM "&Viskoka",                       ID_VIEW_UPDATESPEED_HIGH
+            MENUITEM "&Običajna",                     ID_VIEW_UPDATESPEED_NORMAL
+            , CHECKED
+            MENUITEM "&Nizka",                        ID_VIEW_UPDATESPEED_LOW
+            MENUITEM "&Zaustavljeno",                     ID_VIEW_UPDATESPEED_PAUSED
+
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Veli&ke ikone",                ID_VIEW_LARGE
+        MENUITEM "M&ale ikone",                ID_VIEW_SMALL
+        MENUITEM "&Podrobnosti",                    ID_VIEW_DETAILS, CHECKED
+        MENUITEM "&Izberi stolpce ...",          ID_VIEW_SELECTCOLUMNS
+        POPUP "Zgodovina &CPE"
+        BEGIN
+            MENUITEM "&En graf, vse CPE",        ID_VIEW_CPUHISTORY_ONEGRAPHALL
+
+            MENUITEM "En graf za &vsako CPE",          ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
+            , CHECKED
+        END
+        MENUITEM "Prikaži &čase jedra",          ID_VIEW_SHOWKERNELTIMES
+    END
+    POPUP "&Okna"
+    BEGIN
+        MENUITEM "&Horizontalna razporeditev",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "&Vertikalna razporeditev",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "Po&manjšaj",                   ID_WINDOWS_MINIMIZE
+        MENUITEM "Ra&zširi",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "V &kaskado",                    ID_WINDOWS_CASCADE
+        MENUITEM "V &ospredje",             ID_WINDOWS_BRINGTOFRONT
+    END
+    POPUP "&Pomoč"
+    BEGIN
+        MENUITEM "Teme pomoči",   ID_HELP_TOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&O Upravitelju opravil",         ID_HELP_ABOUT
+    END
+END
+
+IDR_WINDOWSMENU MENU DISCARDABLE
+BEGIN
+    MENUITEM "&Horizontalna poravnava",          ID_WINDOWS_TILEHORIZONTALLY
+    MENUITEM "&Vertikalna poravnava",            ID_WINDOWS_TILEVERTICALLY
+    MENUITEM "&Pomanjšaj",                   ID_WINDOWS_MINIMIZE
+    MENUITEM "Ra&zširi",                   ID_WINDOWS_MAXIMIZE
+    MENUITEM "V &kaskado",                    ID_WINDOWS_CASCADE
+    MENUITEM "V &ospredje",             ID_WINDOWS_BRINGTOFRONT
+END
+
+IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&Novo opravilo",          ID_FILE_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Velike ikone",                ID_VIEW_LARGE
+        MENUITEM "&Male ikone",                ID_VIEW_SMALL
+        MENUITEM "&Podrobnosti",                    ID_VIEW_DETAILS, CHECKED
+    END
+END
+
+IDR_APPLICATION_PAGE_CONTEXT2 MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&Preklopi na",                  ID_APPLICATION_PAGE_SWITCHTO
+        MENUITEM "V &ospredje",             ID_WINDOWS_BRINGTOFRONT
+        MENUITEM SEPARATOR
+        MENUITEM "&Horizontalna poravnava",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "&Vertikalna poravnava",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "&Pomanjšaj",                   ID_WINDOWS_MINIMIZE
+        MENUITEM "Ra&zširi",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "V &kaskado",                    ID_WINDOWS_CASCADE
+        MENUITEM SEPARATOR
+        MENUITEM "Z&aključi opravilo",                   ID_APPLICATION_PAGE_ENDTASK
+        MENUITEM "Poj&di na proces",              ID_APPLICATION_PAGE_GOTOPROCESS
+    END
+END
+
+IDR_TRAY_POPUP MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "O&bnovi",                    ID_RESTORE
+        MENUITEM "&Zapri",                      ID_FILE_EXIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Vedno na vrhu",              ID_OPTIONS_ALWAYSONTOP
+    END
+END
+
+IDR_PROCESS_PAGE_CONTEXT MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "Za&ključi proces",                ID_PROCESS_PAGE_ENDPROCESS
+        MENUITEM "Zaključi procesno &drevo",           ID_PROCESS_PAGE_ENDPROCESSTREE
+
+        MENUITEM "&Razhroščevanje",                      ID_PROCESS_PAGE_DEBUG
+        MENUITEM SEPARATOR
+        POPUP "Nastavi &prioriteto"
+        BEGIN
+            MENUITEM "&Realni čas",                   ID_PROCESS_PAGE_SETPRIORITY_REALTIME
+
+            MENUITEM "&Visoka",                       ID_PROCESS_PAGE_SETPRIORITY_HIGH
+
+            MENUITEM "&Nadpovprečna",                ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+
+            MENUITEM "&Povprečna",                     ID_PROCESS_PAGE_SETPRIORITY_NORMAL
+
+            MENUITEM "Po&dpovprečna",                ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+
+            MENUITEM "&Nizka",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
+
+        END
+        MENUITEM "Nastavi &afiniteto ...",            ID_PROCESS_PAGE_SETAFFINITY
+        MENUITEM "Uredi razhroščevalne &kanale ...",	ID_PROCESS_PAGE_DEBUGCHANNELS
+    END
+END
+
+/*
+ Dialog
+*/
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 259, 210
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "O Upravitelju opravil"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "Upravitelj opravil v1.0\nCopyright (C) 1999 - 2001\nby Brian Palmer (brianp@reactos.org)",
+                    IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,53,28,
+                    122,26
+    DEFPUSHBUTTON   "V redu",IDOK,183,189,44,14,WS_GROUP
+    ICON            IDI_TASKMANAGER,IDC_STATIC,19,30,20,20
+    EDITTEXT        IDC_LICENSE_EDIT,53,63,174,107,ES_MULTILINE |
+                    ES_READONLY | WS_VSCROLL
+END
+
+IDD_TASKMGR_DIALOG DIALOG DISCARDABLE  0, 0, 264, 246
+STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
+    WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
+    WS_THICKFRAME
+CAPTION "Upravitelj opravil"
+MENU IDR_TASKMANAGER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "Tab1",IDC_TAB,"SysTabControl32",WS_TABSTOP,3,3,257,228
+END
+
+IDD_APPLICATION_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
+                    LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
+    PUSHBUTTON      "&Novo opravilo ...",IDC_NEWTASK,182,189,60,14
+    PUSHBUTTON      "&Preklopi na",IDC_SWITCHTO,117,189,60,14,WS_DISABLED
+    PUSHBUTTON      "&Zaključi opravilo",IDC_ENDTASK,52,189,60,14,WS_DISABLED
+END
+
+IDD_PROCESS_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_PROCESSLIST,"SysListView32",LVS_REPORT |
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
+                    WS_BORDER | WS_TABSTOP,7,7,233,177
+    PUSHBUTTON      "&Zaključi proces",IDC_ENDPROCESS,171,189,69,14
+    CONTROL         "&Pokaži procese vseh uporabnikov",IDC_SHOWALLPROCESSES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,120,10
+END
+
+/*IDD_PERFORMANCE_PAGE DIALOGEX 0, 0, 247, 210*/
+IDD_PERFORMANCE_PAGE DIALOGEX DISCARDABLE  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Uporaba CPE",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
+    GROUPBOX        "Uporaba pomn.",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
+    GROUPBOX        "Skupno",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Zagotovljeni pomnilnik (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Fizični pomnilnik (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Pomnilnik jedra (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
+    LTEXT           "Kode dostopa",IDS_TOTALS_HANDLE_COUNT,12,131,46,8
+    LTEXT           "Niti",IDS_TOTALS_THREAD_COUNT,12,140,46,8
+    LTEXT           "Procesi",IDS_TOTALS_PROCESS_COUNT,12,149,46,8
+    EDITTEXT        IDC_TOTALS_HANDLE_COUNT,65,131,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_TOTALS_THREAD_COUNT,65,140,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_TOTALS_PROCESS_COUNT,65,149,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Skupno",IDS_COMMIT_CHARGE_TOTAL,12,175,46,8
+    LTEXT           "Omejitev",IDS_COMMIT_CHARGE_LIMIT,12,184,46,8
+    LTEXT           "Temenska vr.",IDS_COMMIT_CHARGE_PEAK,12,193,46,8
+    EDITTEXT        IDC_COMMIT_CHARGE_TOTAL,65,174,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_COMMIT_CHARGE_LIMIT,65,184,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_COMMIT_CHARGE_PEAK,65,193,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Skupno",IDS_PHYSICAL_MEMORY_TOTAL,137,131,46,8
+    LTEXT           "Razpoložljivo",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,46,8
+    LTEXT           "Sis. predpomn.",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,48,8
+    EDITTEXT        IDC_PHYSICAL_MEMORY_TOTAL,185,131,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_PHYSICAL_MEMORY_AVAILABLE,185,140,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,185,149,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Skupno",IDS_KERNEL_MEMORY_TOTAL,137,174,46,8
+    LTEXT           "Izmenjano",IDS_KERNEL_MEMORY_PAGED,137,184,46,8
+    LTEXT           "Neizmenjano",IDS_KERNEL_MEMORY_NONPAGED,137,193,46,8
+    EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_KERNEL_MEMORY_PAGED,185,184,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_KERNEL_MEMORY_NONPAGED,185,193,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    GROUPBOX        "Zgodovina uporabe CPE",IDC_CPU_USAGE_HISTORY_FRAME,74,5,168,54,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Zgodovina uporabe pomnilnika",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
+    PUSHBUTTON      "Prikaz uporabe CPE",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
+		    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Prikaz uporabe pomnilnika",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
+                    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Zgodovina uporabe CPE",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
+                    153,37,0,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Zgodovina uporabe CPE",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
+                    153,37,0,WS_EX_CLIENTEDGE
+END
+
+IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Razhroščevalni kanali"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP |
+		    LVS_SORTASCENDING,7,7,233,177
+    PUSHBUTTON      "Zapri",IDOK,171,189,69,14
+END
+
+IDD_AFFINITY_DIALOG DIALOG DISCARDABLE  0, 0, 231, 154
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Afiniteta procesorjev"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "V redu",IDOK,120,133,50,14
+    PUSHBUTTON      "Prekliči",IDCANCEL,174,133,50,14
+    LTEXT           "Afiniteta procesorjev določa, na katerih procesorjih se bo proces lahko izvajal.",
+                    IDC_STATIC,5,5,220,16
+    CONTROL         "CPE 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    11,28,37,10
+    CONTROL         "CPE 1",IDC_CPU1,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,41,37,10
+    CONTROL         "CPE 2",IDC_CPU2,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,54,37,10
+    CONTROL         "CPE 3",IDC_CPU3,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,67,37,10
+    CONTROL         "CPE 4",IDC_CPU4,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,80,37,10
+    CONTROL         "CPE 5",IDC_CPU5,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,93,37,10
+    CONTROL         "CPE 6",IDC_CPU6,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,106,37,10
+    CONTROL         "CPE 7",IDC_CPU7,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,119,37,10
+    CONTROL         "CPE 8",IDC_CPU8,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,61,28,37,10
+    CONTROL         "CPE 9",IDC_CPU9,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,61,41,37,10
+    CONTROL         "CPE 10",IDC_CPU10,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,54,41,10
+    CONTROL         "CPE 11",IDC_CPU11,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,67,41,10
+    CONTROL         "CPE 12",IDC_CPU12,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,80,41,10
+    CONTROL         "CPE 13",IDC_CPU13,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,93,41,10
+    CONTROL         "CPE 14",IDC_CPU14,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,106,41,10
+    CONTROL         "CPE 15",IDC_CPU15,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,119,41,10
+    CONTROL         "CPE 16",IDC_CPU16,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,28,41,10
+    CONTROL         "CPE 17",IDC_CPU17,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,41,41,10
+    CONTROL         "CPE 18",IDC_CPU18,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,54,41,10
+    CONTROL         "CPE 19",IDC_CPU19,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,67,41,10
+    CONTROL         "CPE 20",IDC_CPU20,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,80,41,10
+    CONTROL         "CPE 21",IDC_CPU21,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,93,41,10
+    CONTROL         "CPE 22",IDC_CPU22,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,106,41,10
+    CONTROL         "CPE 23",IDC_CPU23,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,119,41,10
+    CONTROL         "CPE 24",IDC_CPU24,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,28,41,10
+    CONTROL         "CPE 25",IDC_CPU25,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,41,41,10
+    CONTROL         "CPE 26",IDC_CPU26,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,54,41,10
+    CONTROL         "CPE 27",IDC_CPU27,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,67,41,10
+    CONTROL         "CPE 28",IDC_CPU28,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,80,41,10
+    CONTROL         "CPE 29",IDC_CPU29,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,93,41,10
+    CONTROL         "CPE 30",IDC_CPU30,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,106,41,10
+    CONTROL         "CPE 31",IDC_CPU31,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,119,41,10
+END
+
+IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 254, 199
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Izbira stolpcev"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "V redu",IDOK,84,178,50,14
+    PUSHBUTTON      "Prekliči",IDCANCEL,138,178,50,14
+    LTEXT           "Izberite stolpce, ki naj bodo prikazani na strani Procesi.",
+                    IDC_STATIC,37,7,180,17
+    CONTROL         "&Ime",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,7,28,116,10
+    CONTROL         "&PID (ID procesa)",IDC_PID,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,39,116,10
+    CONTROL         "Uporaba &CPE",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,50,116,10
+    CONTROL         "&Čas CPE",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,61,116,10
+    CONTROL         "Uporaba &pomnilnika",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,72,116,10
+    CONTROL         "&Delta uporabe pomnilnika",IDC_MEMORYUSAGEDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,83,116,10
+    CONTROL         "Te&m. vr. uporabe pomnilnika",IDC_PEAKMEMORYUSAGE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,94,116,10
+    CONTROL         "Napake i&zmenjevanja",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,105,116,10
+    CONTROL         "&USER predmeti",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,116,116,10
+    CONTROL         "V/I branje",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,127,116,10
+    CONTROL         "V/I branje (bajti)",IDC_IOREADBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,138,116,10
+    CONTROL         "ID &Seje",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,149,116,10
+    CONTROL         "Uporabniško &ime",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,160,116,10
+    CONTROL         "D&elta napak izmenjevanja",IDC_PAGEFAULTSDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,28,116,10
+    CONTROL         "Velikost na&videznega pomnilnika",IDC_VIRTUALMEMORYSIZE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,39,116,10
+    CONTROL         "I&zmenjana zaloga",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,131,50,116,10
+    CONTROL         "Ne&izmenjana zaloga",IDC_NONPAGEDPOOL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,61,116,10
+    CONTROL         "Osnovna p&rioriteta",IDC_BASEPRIORITY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,72,116,10
+    CONTROL         "Število &dostopnih kod",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,131,83,116,10
+    CONTROL         "Število &niti",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,131,94,116,10
+    CONTROL         "GDI predmeti",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,131,105,116,10
+    CONTROL         "V/I pisanje",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,131,116,116,10
+    CONTROL         "V/I pisanje (bajti)",IDC_IOWRITEBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,127,116,10
+    CONTROL         "V/I ostalo",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,131,138,116,10
+    CONTROL         "V/I ostalo (bajti)",IDC_IOOTHERBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,149,116,10
+END
+
+/*
+ String Table
+*/
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Upravitelj opravil"
+    IDC_TASKMGR             "Upravitelj opravil"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_FILE_NEW             "Zažene nov program"
+    ID_OPTIONS_ALWAYSONTOP  "Upravitelj opravil ostane na vrhu vseh ostalih oken, razen, če je pomanjšan"
+    ID_OPTIONS_MINIMIZEONUSE
+                            "Upravitelj opravil je pomanjpan, kadar izvedete operacijo Preklopi na"
+    ID_OPTIONS_HIDEWHENMINIMIZED "Skrije Upravitelja opravil, ko je le-ta pomanjšan"
+    ID_VIEW_REFRESH         "Prisili Upravitelja opravil, da osveži, ne glede na hitrost osveževanja"
+    ID_VIEW_LARGE           "Prikaže opravila kot velike ikone"
+    ID_VIEW_SMALL           "Prikaže opravila kot male ikone"
+    ID_VIEW_DETAILS         "Prikaže podrobnosti o opravilih"
+    ID_VIEW_UPDATESPEED_HIGH "Osveži prikaz dvakrat na sekundo"
+    ID_VIEW_UPDATESPEED_NORMAL "Osveži prikaz vsaki dve sekundi"
+    ID_VIEW_UPDATESPEED_LOW "Osveži prikaz vsake štiri sekunde"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_VIEW_UPDATESPEED_PAUSED "Ne osvežuje samodejno"
+    ID_WINDOWS_TILEHORIZONTALLY
+                            "Horizontalno razvrsti okna po namizju"
+    ID_WINDOWS_TILEVERTICALLY "Vertikalno razvrsti okna po namizju"
+    ID_WINDOWS_MINIMIZE     "Pomanjša okna"
+    ID_WINDOWS_MAXIMIZE     "Razširi okna"
+    ID_WINDOWS_CASCADE      "Razvrsti okna v kaskado"
+    ID_WINDOWS_BRINGTOFRONT "Privede okno v ospredje, vendar ne preklopi nanj"
+    ID_HELP_TOPICS          "Prikaže teme pomoči Upravitelja opravil"
+    ID_HELP_ABOUT           "Prikaže podatke o programu, različici in avtorskih pravicah"
+    ID_FILE_EXIT            "Izhod iz Upravitelja opravil"
+    ID_OPTIONS_SHOW16BITTASKS
+                            "Prikaže 16-bitna opravila pod ustreznim ntvdm.exe"
+    ID_VIEW_SELECTCOLUMNS   "Izbor stolpcev, ki naj bodo prikazani na strani Procesi"
+    ID_VIEW_SHOWKERNELTIMES "Prikaže čas jedra na grafih"
+    ID_VIEW_CPUHISTORY_ONEGRAPHALL
+                            "Prikaže skupno uporabo vseh CPE na enem samem grafu"
+    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Vsaka CPE ima svoj graf"
+    ID_APPLICATION_PAGE_SWITCHTO
+                            "Privede opravilo v ospredje"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_ENDTASK              "Zaključi izbrana opravila"
+    ID_GOTOPROCESS          "Preseli pozornost na proces(e) izbranega opravila"
+    ID_RESTORE              "Obnovi Upravitelja opravil iz prikritega stanja"
+    ID_PROCESS_PAGE_ENDPROCESS "Odstrani proces iz sistema"
+    ID_PROCESS_PAGE_ENDPROCESSTREE
+                            "Odstrani proces in vse njegove potomce iz sistema"
+    ID_PROCESS_PAGE_DEBUG   "Izbranemu procesu priključi razhroščevalnik"
+    ID_PROCESS_PAGE_SETAFFINITY
+    "Določi, na katerih procesorjih se bo proces lahko izvajal"
+    ID_PROCESS_PAGE_SETPRIORITY_REALTIME
+                            "Dodeli proces v REALNOČASNOVNI prioritetni razred"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Dodeli proces v VISOK prioritetni razred"
+    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+                            "Dodeli proces v NADPOVPREČNI prioritetni razred"
+    ID_PROCESS_PAGE_SETPRIORITY_NORMAL
+                            "Dodeli proces v POVPREČNI prioritetni razred"
+    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+                            "Dodeli proces v PODPOVPREČNI prioritetni razred"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW "Dodeli proces v NIZEK prioritetni razred"
+    IDS_LICENSE             "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.\r\n\r\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.\r\n\r\nYou should have received a copy of the GNU Lesser General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+END
+
+#pragma code_page(default)
