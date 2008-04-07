@@ -1,7 +1,7 @@
 /*
  * Notepad (Slovenian resources)
  *
- * Copyright 2002-2003 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2002, 2003, 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,14 +18,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 MAIN_MENU MENU
 {
  POPUP "&Datoteka" {
-  MENUITEM "&Nova\tCtrl+N",           CMD_NEW
-  MENUITEM "&Odpri ...\tCtrl+O",             CMD_OPEN
-  MENUITEM "&Shrani\tCtrl+S",             CMD_SAVE
+  MENUITEM "&Nova\tCtrl+N",      CMD_NEW
+  MENUITEM "&Odpri ...\tCtrl+O",  CMD_OPEN
+  MENUITEM "&Shrani\tCtrl+S",     CMD_SAVE
   MENUITEM "Shrani &kot ...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "Na&tisni ...\tCtrl+P",            CMD_PRINT
@@ -37,26 +39,27 @@ MAIN_MENU MENU
 POPUP "&Urejanje" {
   MENUITEM "&Razveljavi\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "&Izreûi\tCtrl+X",      CMD_CUT
+  MENUITEM "&Izre≈æi\tCtrl+X",      CMD_CUT
   MENUITEM "&Kopiraj\tCtrl+C",     CMD_COPY
   MENUITEM "&Prilepi\tCtrl+V",    CMD_PASTE
-  MENUITEM "Izbri&öi\tDel",      CMD_DELETE
+  MENUITEM "Iznri&≈°i\tDel",      CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Izberi &vse",       CMD_SELECT_ALL
-  MENUITEM "»as/&Datum\tF5",    CMD_TIME_DATE
+  MENUITEM "Izberi &vse\tCtrl+A",       CMD_SELECT_ALL
+  MENUITEM "&Datum/ƒças\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "Pr&elom vrstice",  CMD_WRAP
+  MENUITEM "Pre&lom dolgih vrstic",  CMD_WRAP
+  MENUITEM "Pi&sava ...",          CMD_FONT
  }
 POPUP "&Iskanje" {
-  MENUITEM "&Najdi ...",           CMD_SEARCH
-  MENUITEM "Na&daljuj iskanje\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Najdi ...\tCtrl+F",   CMD_SEARCH
+  MENUITEM "Najdi na&slednje\tF3",  CMD_SEARCH_NEXT
  }
-POPUP "&PomoË" {
-  MENUITEM "&Teme pomoËi",         CMD_HELP_CONTENTS
-  MENUITEM "&Najdi ...",        CMD_HELP_SEARCH
-  MENUITEM "&O pomoËi",     CMD_HELP_ON_HELP
+POPUP "&Pomoƒç" {
+  MENUITEM "&Teme pomoƒçi",         CMD_HELP_CONTENTS
+  MENUITEM "&Iskanje ...",        CMD_HELP_SEARCH
+  MENUITEM "&O pomoƒçi",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&O Bele≈ænici ...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -65,26 +68,26 @@ POPUP "&PomoË" {
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
-CAPTION "Page Setup"
+CAPTION "Priprava strani"
 {
-LTEXT    "&Glava:",  0x140,   10, 07, 40, 15
+LTEXT    "&Glava:",  0x140,  10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
 LTEXT    "&Noga:",  0x142,   10, 24, 40, 15
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
-GROUPBOX "Robovi",      0x144,     10, 43,160, 45
+GROUPBOX "&Robovi (v milimeterih):",      0x144,     10, 43,160, 45
 LTEXT    "&Levo:",        0x145,   20, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "&Desno:",         0x148,    20, 73, 30, 10, WS_CHILD
+LTEXT    "&Zgoraj:",         0x148,    20, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "&Zgoraj:",       0x14B, 100, 55, 30, 10, WS_CHILD
+LTEXT    "&Desno:",       0x14B, 100, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_RIGHTVALUE,   130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Spodaj:",      0x14E,100, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
 DEFPUSHBUTTON "V redu",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
-PUSHBUTTON    "PrekliËi",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
-PUSHBUTTON    "&PomoË",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
+PUSHBUTTON    "Prekliƒçi",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "&Pomoƒç",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
 
 STRINGTABLE DISCARDABLE
@@ -92,7 +95,7 @@ STRINGTABLE DISCARDABLE
 STRING_PAGESETUP_HEADERVALUE,   "&f"
 STRING_PAGESETUP_FOOTERVALUE,   "Stran &p"
 
-STRING_NOTEPAD,                                 "Beleûnica"
+STRING_NOTEPAD,                                 "Bele≈ænica"
 STRING_ERROR,                                   "NAPAKA"
 STRING_WARNING,                                 "OPOZORILO"
 STRING_INFO,                                    "Informacija"
@@ -102,16 +105,18 @@ STRING_UNTITLED,                                "Neimenovana"
 STRING_ALL_FILES,                               "Vse datoteke (*.*)"
 STRING_TEXT_FILES_TXT,                  "Datoteke z besedilom (*.txt)"
 
-STRING_TOOLARGE,                                "Datoteka '%s' je prevelika za Beleûnico.\n \
+STRING_TOOLARGE,                                "Datotka '%s' je prevelika za Bele≈ænico.\n \
 Uporabite drug urejevalnik."
 STRING_NOTEXT,                                  "Niste vnesli besedila. \
 \nVnesite besedilo in poskusite znova."
-STRING_DOESNOTEXIST,                            "Datoteka '%s' ne obstaja.\n\n \
-Ali ûelite ustvariti novo datoteko?"
-STRING_NOTSAVED,                                "Vsebina datoteke '%s'je bila spremenjena.\n\n \
-Ali ûelite shraniti spremembe?"
-STRING_NOTFOUND,                                        "Ni mogoËe najti '%s'."
-STRING_OUT_OF_MEMORY,                   "Na voljo ni dovolj pomnilnika, da bi bilo mogoËe dokonËati to \
-operacijo. \n»e ga ûelite sprostiti, konËajte enega ali veË programov in poskusite znova. "
+STRING_DOESNOTEXIST,                            "Datoteka '%s'\nne obstaja\n\n \
+Ali jo ≈æelite ustvariti?"
+STRING_NOTSAVED,                                "Datoteka '%s'\nje bila spremenjena\n\n \
+Ali ≈æelite shraniti spremembe?"
+STRING_NOTFOUND,                                        "Niza '%s' ni mogoƒçe najti."
+STRING_OUT_OF_MEMORY,                   "Za dokonƒçanje operacije je na voljo premalo \
+pomnilnika. \nZaprite enega ali veƒç programov in poskusite znova."
 
 }
+
+#pragma code_page(default)
