@@ -177,10 +177,8 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
     };
 
     DWORD i, style, ex_style, new_state = 0;
-    XEvent xev;
 
     if (!data->managed) return;
-    if (!data->mapped) return;
 
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
     if (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
@@ -202,30 +200,55 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
     if (!(ex_style & WS_EX_APPWINDOW) && GetWindow( data->hwnd, GW_OWNER ))
         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR);
 
-    xev.xclient.type = ClientMessage;
-    xev.xclient.window = data->whole_window;
-    xev.xclient.message_type = x11drv_atom(_NET_WM_STATE);
-    xev.xclient.serial = 0;
-    xev.xclient.display = display;
-    xev.xclient.send_event = True;
-    xev.xclient.format = 32;
-    xev.xclient.data.l[3] = 1;
-
-    for (i = 0; i < NB_NET_WM_STATES; i++)
+    if (!data->mapped)  /* set the _NET_WM_STATE atom directly */
     {
-        if (!((data->net_wm_state ^ new_state) & (1 << i))) continue;  /* unchanged */
+        Atom atoms[NB_NET_WM_STATES+1];
+        DWORD count;
 
-        TRACE( "setting wm state %u for window %p/%lx to %u prev %u\n",
-               i, data->hwnd, data->whole_window,
-               (new_state & (1 << i)) != 0, (data->net_wm_state & (1 << i)) != 0 );
-
-        xev.xclient.data.l[0] = (new_state & (1 << i)) ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
-        xev.xclient.data.l[1] = X11DRV_Atoms[state_atoms[i] - FIRST_XATOM];
-        xev.xclient.data.l[2] = ((state_atoms[i] == XATOM__NET_WM_STATE_MAXIMIZED_VERT) ?
-                                 x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ) : 0);
+        for (i = count = 0; i < NB_NET_WM_STATES; i++)
+        {
+            if (!(new_state & (1 << i))) continue;
+            TRACE( "setting wm state %u for unmapped window %p/%lx\n",
+                   i, data->hwnd, data->whole_window );
+            atoms[count++] = X11DRV_Atoms[state_atoms[i] - FIRST_XATOM];
+            if (state_atoms[i] == XATOM__NET_WM_STATE_MAXIMIZED_VERT)
+                atoms[count++] = x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ);
+        }
         wine_tsx11_lock();
-        XSendEvent( display, root_window, False, SubstructureRedirectMask | SubstructureNotifyMask, &xev );
+        XChangeProperty( display, data->whole_window, x11drv_atom(_NET_WM_STATE), XA_ATOM,
+                         32, PropModeReplace, (unsigned char *)atoms, count );
         wine_tsx11_unlock();
+    }
+    else  /* ask the window manager to do it for us */
+    {
+        XEvent xev;
+
+        xev.xclient.type = ClientMessage;
+        xev.xclient.window = data->whole_window;
+        xev.xclient.message_type = x11drv_atom(_NET_WM_STATE);
+        xev.xclient.serial = 0;
+        xev.xclient.display = display;
+        xev.xclient.send_event = True;
+        xev.xclient.format = 32;
+        xev.xclient.data.l[3] = 1;
+
+        for (i = 0; i < NB_NET_WM_STATES; i++)
+        {
+            if (!((data->net_wm_state ^ new_state) & (1 << i))) continue;  /* unchanged */
+
+            TRACE( "setting wm state %u for window %p/%lx to %u prev %u\n",
+                   i, data->hwnd, data->whole_window,
+                   (new_state & (1 << i)) != 0, (data->net_wm_state & (1 << i)) != 0 );
+
+            xev.xclient.data.l[0] = (new_state & (1 << i)) ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+            xev.xclient.data.l[1] = X11DRV_Atoms[state_atoms[i] - FIRST_XATOM];
+            xev.xclient.data.l[2] = ((state_atoms[i] == XATOM__NET_WM_STATE_MAXIMIZED_VERT) ?
+                                     x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ) : 0);
+            wine_tsx11_lock();
+            XSendEvent( display, root_window, False,
+                        SubstructureRedirectMask | SubstructureNotifyMask, &xev );
+            wine_tsx11_unlock();
+        }
     }
     data->net_wm_state = new_state;
 }
@@ -419,6 +442,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
         {
             TRACE( "mapping win %p/%lx\n", hwnd, data->whole_window );
             wait_for_withdrawn_state( display, data, TRUE );
+            update_net_wm_states( display, data );
             X11DRV_sync_window_style( display, data );
             wine_tsx11_lock();
             XMapWindow( display, data->whole_window );
@@ -426,7 +450,6 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
             wine_tsx11_unlock();
             data->mapped = TRUE;
             data->iconic = (new_style & WS_MINIMIZE) != 0;
-            update_net_wm_states( display, data );
         }
         else if ((swp_flags & SWP_STATECHANGED) && (!data->iconic != !(new_style & WS_MINIMIZE)))
         {
