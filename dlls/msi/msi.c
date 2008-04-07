@@ -1066,7 +1066,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
         if (!prod && !classes)
             goto done;
 
-        /* FIME */
+        /* FIXME */
         val = strdupW(empty);
         r = msi_copy_outval(val, szValue, pcchValue);
     }

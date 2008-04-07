@@ -2767,7 +2767,7 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
         }
     }
     
-    /* add a count for permenent */
+    /* add a count for permanent */
     if (comp->Attributes & msidbComponentAttributesPermanent)
         count ++;
     
@@ -2826,7 +2826,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                             comp->RefCount);
         /*
          * Write the keypath out if the component is to be registered
-         * and delete the key if the component is to be deregistered
+         * and delete the key if the component is to be unregistered
          */
         if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
         {
@@ -3101,7 +3101,7 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     buffer = MSI_RecordGetString(row,2);
     target_folder = resolve_folder(package, buffer,FALSE,FALSE,TRUE,NULL);
 
-    /* may be needed because of a bug somehwere else */
+    /* may be needed because of a bug somewhere else */
     create_full_pathW(target_folder);
 
     filename = msi_dup_record_field( row, 3 );

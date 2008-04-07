@@ -3512,7 +3512,7 @@ static void set_transform_summary_info(void)
     UINT r;
     MSIHANDLE suminfo = 0;
 
-    /* build summmary info */
+    /* build summary info */
     r = MsiGetSummaryInformation(0, mstfile, 3, &suminfo);
     todo_wine
     {

@@ -19,7 +19,7 @@
  */
 
 /*
- * Here are helper functions formally in action.c that are used by a variaty of
+ * Here are helper functions formally in action.c that are used by a variety of
  * actions and functions.
  */
 
@@ -885,7 +885,7 @@ LPWSTR create_component_advertise_string(MSIPACKAGE* package,
     return output;
 }
 
-/* update compoennt state based on a feature change */
+/* update component state based on a feature change */
 void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
 {
     INSTALLSTATE newstate;
