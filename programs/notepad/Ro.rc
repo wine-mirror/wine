@@ -1,0 +1,117 @@
+/*
+ *  Copyright 1997,98 Marcel Baur
+ *  Copyright 2002 Sylvain Petreolle
+ *  Copyright 2008 Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+MAIN_MENU MENU
+{
+ POPUP "&Fișier" {
+  MENUITEM "&Nou\tCtrl+N",              CMD_NEW
+  MENUITEM "&Deschide...\tCtrl+O",      CMD_OPEN
+  MENUITEM "&Salvează\tCtrl+S",         CMD_SAVE
+  MENUITEM "Salvează &ca...",           CMD_SAVE_AS
+  MENUITEM SEPARATOR
+  MENUITEM "&Tipărește...\tCtrl+P",     CMD_PRINT
+  MENUITEM "S&etare pagină...",         CMD_PAGE_SETUP
+  MENUITEM "Setare im&primantă...",     CMD_PRINTER_SETUP
+  MENUITEM SEPARATOR
+  MENUITEM "&Ieșire",                   CMD_EXIT
+ }
+POPUP "&Editează" {
+  MENUITEM "&Refă\tCtrl+Z",             CMD_UNDO
+  MENUITEM SEPARATOR
+  MENUITEM "&Taie\tCtrl+X",             CMD_CUT
+  MENUITEM "&Copiază\tCtrl+C",          CMD_COPY
+  MENUITEM "&Lipește\tCtrl+V",          CMD_PASTE
+  MENUITEM "&Șterge\tDel",              CMD_DELETE
+  MENUITEM SEPARATOR
+  MENUITEM "S&electeză tot\tCtrl+A",    CMD_SELECT_ALL
+  MENUITEM "&Ora/data\tF5",             CMD_TIME_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Desparte liniile lungi",   CMD_WRAP
+  MENUITEM "&Font...",                  CMD_FONT
+ }
+POPUP "&Caută" {
+  MENUITEM "&Caută...\tCtrl+F",         CMD_SEARCH
+  MENUITEM "Caută &următorul\tF3",      CMD_SEARCH_NEXT
+ }
+POPUP "&Ajutor" {
+  MENUITEM "C&onținut",                 CMD_HELP_CONTENTS
+  MENUITEM "&Caută...",                 CMD_HELP_SEARCH
+  MENUITEM "&Ajutor la ajutor",         CMD_HELP_ON_HELP
+  MENUITEM SEPARATOR
+  MENUITEM "&Despre notepad...",        CMD_HELP_ABOUT_NOTEPAD
+ }
+}
+
+/* Dialog `Page setup' */
+
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Setare pagină"
+{
+LTEXT    "Colon&titlu:",  0x140,  10, 07, 40, 15
+EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
+LTEXT    "&Coloncifru:",  0x142,  10, 24, 40, 15
+EDITTEXT IDC_PAGESETUP_FOOTERVALUE,  60, 22,110, 12, WS_BORDER | WS_TABSTOP
+
+GROUPBOX "&Margini (milimetri):",  0x144, 10, 43,160, 45
+LTEXT    "&Stânga:",  0x145, 20, 55, 30, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_LEFTVALUE,  50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "S&us:",  0x148, 20, 73, 30, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Dreapta:",  0x14B, 100, 55, 30, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_RIGHTVALUE,  130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Jos:",  0x14E,100, 73, 30, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+
+DEFPUSHBUTTON "OK",      IDOK,     180,  3, 40, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță", IDCANCEL, 180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "&Ajutor", IDHELP,   180, 39, 40, 15, WS_TABSTOP
+}
+
+STRINGTABLE DISCARDABLE
+{
+STRING_PAGESETUP_HEADERVALUE,   "&f"
+STRING_PAGESETUP_FOOTERVALUE,   "Pagina &p"
+
+STRING_NOTEPAD,                 "Notepad"
+STRING_ERROR,                   "EROARE"
+STRING_WARNING,                 "ATENȚIE"
+STRING_INFO,                    "Informație"
+
+STRING_UNTITLED,                "(fără titlu)"
+
+STRING_ALL_FILES,               "Toate fișierele (*.*)"
+STRING_TEXT_FILES_TXT,          "Toate fișierele text (*.txt)"
+
+STRING_TOOLARGE,                "Fișierul '%s' este prea mare pentru notepad.\n Folosoți un alt editor."
+STRING_NOTEXT,                  "Nu ați introdus nici un text.\nIntroduceți ceva și încercați din nou."
+STRING_DOESNOTEXIST,            "Fișierul '%s'\nnu există\n\n Vreți să creați un fișier nou?"
+STRING_NOTSAVED,                "Fișierul '%s'\na fost modificat\n\nVreți să salvați modificările?"
+STRING_NOTFOUND,                "'%s' nu a fost găsit."
+STRING_OUT_OF_MEMORY,           "Nu este destulă memorie pentru a completa această sarcină.\nÎnchideți una sau mai multe aplicații pentru a mări memoria liberă."
+
+}
+
+#pragma code_page(default)
