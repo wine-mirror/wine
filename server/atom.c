@@ -65,7 +65,7 @@ struct atom_table
     int                 count;               /* count of atom handles */
     int                 last;                /* last handle in-use */
     struct atom_entry **handles;             /* atom handles */
-    int                 entries_count;       /* humber of hash entries */
+    int                 entries_count;       /* number of hash entries */
     struct atom_entry **entries;             /* hash table entries */
 };
 

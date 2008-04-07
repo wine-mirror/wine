@@ -418,7 +418,7 @@ static void put_raw_data(res_t *res, raw_data_t *raw, int offset)
 /*
  *****************************************************************************
  * Function	: put_res_header
- * Syntax	: intput_res_header(res_t *res, int type, name_id_t *ntype,
+ * Syntax	: input_res_header(res_t *res, int type, name_id_t *ntype,
  *				    name_id_t *name, DWORD memopt, lvc_t *lvc)
  *
  * Input	:

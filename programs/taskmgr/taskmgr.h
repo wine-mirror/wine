@@ -141,7 +141,7 @@ extern HWND hApplicationPageSwitchToButton;  /* Application Switch To button */
 extern HWND hApplicationPageNewTaskButton;   /* Application New Task button */
 
 
-/* Foward declarations of functions included in this code module: */
+/* Forward declarations of functions included in this code module: */
 void FillSolidRect(HDC hDC, LPCRECT lpRect, COLORREF clr);
 void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr);
 void Draw3dRect(HDC hDC, int x, int y, int cx, int cy, COLORREF clrTopLeft, COLORREF clrBottomRight);

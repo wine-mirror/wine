@@ -240,12 +240,12 @@ static GLuint find_tmpreg(struct texture_stage_op op[MAX_TEXTURES]) {
     if(lowest_read == -1) return GL_NONE;
 
     if(lowest_write >= lowest_read) {
-        FIXME("Temp register read before beeing written\n");
+        FIXME("Temp register read before being written\n");
     }
 
     if(lowest_write == -1) {
         /* This needs a test. Maybe we are supposed to return 0.0/0.0/0.0/0.0, or fail drawprim, or whatever */
-        FIXME("Temp register read without beeing written\n");
+        FIXME("Temp register read without being written\n");
         return GL_REG_1_ATI;
     } else if(lowest_write >= 1) {
         /* If we're writing to the temp reg at earliest in stage 1, we can use register 1 for the temp result.

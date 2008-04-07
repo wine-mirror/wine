@@ -107,7 +107,7 @@ DWORD get_dpi(void)
  *
  *           NOTEPAD_SaveSettingToRegistry
  *
- *  Save settring to registry HKCU\Software\Microsoft\Notepad.
+ *  Save setting to registry HKCU\Software\Microsoft\Notepad.
  */
 static VOID NOTEPAD_SaveSettingToRegistry(void)
 {

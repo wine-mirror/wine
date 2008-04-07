@@ -5580,7 +5580,7 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
 /***********************************************************************
  *		DispCallFunc (OLEAUT32.@)
  *
- * Invokes a function of the specifed calling convention, passing the
+ * Invokes a function of the specified calling convention, passing the
  * specified arguments and returns the result.
  *
  * PARAMS

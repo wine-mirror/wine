@@ -925,7 +925,7 @@ void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
     /* In case of error, return empty string */
     *owner = 0x00;
 
-    /* Find out how much space we need for the owner security descritpor */
+    /* Find out how much space we need for the owner security descriptor */
     GetFileSecurity(filename, OWNER_SECURITY_INFORMATION, 0, 0, &sizeNeeded);
     rc = GetLastError();
 

@@ -277,7 +277,7 @@ static void test_enumstations(void)
     {
         SetLastError(0xbabefeed);
         ret = EnumWindowStationsA(NULL, 0);
-        ok(!ret, "EnumWindowStationsA returned succesfully!\n");
+        ok(!ret, "EnumWindowStationsA returned successfully!\n");
         ok(GetLastError() == ERROR_INVALID_PARAMETER, "LastError is set to %08x\n", GetLastError());
     }
 
@@ -323,7 +323,7 @@ static void test_enumdesktops(void)
     {
         SetLastError(0xbabefeed);
         ret = EnumDesktopsA(GetProcessWindowStation(), NULL, 0);
-        ok(!ret, "EnumDesktopsA returned succesfully!\n");
+        ok(!ret, "EnumDesktopsA returned successfully!\n");
         ok(GetLastError() == ERROR_INVALID_PARAMETER, "LastError is set to %08x\n", GetLastError());
     }
 

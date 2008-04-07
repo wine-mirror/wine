@@ -983,7 +983,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         }
         if(gl_info->supported[ATI_FRAGMENT_SHADER]) {
             /* Disable NV_register_combiners and fragment shader if this is supported.
-             * generally the NV extensions are prefered over the ATI one, and this
+             * generally the NV extensions are preferred over the ATI ones, and this
              * extension is disabled if register_combiners and texture_shader2 are both
              * supported. So we reach this place only if we have incomplete NV dxlevel 8
              * fragment processing support
@@ -1972,7 +1972,7 @@ static BOOL CheckRenderTargetCapability(WINED3DFORMAT AdapterFormat, WINED3DFORM
             }
         }
     } else if(wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER) {
-        /* We can propably use this function in FBO mode too on some drivers to get some basic indication of the capabilities. */
+        /* We can probably use this function in FBO mode too on some drivers to get some basic indication of the capabilities. */
         WineD3D_PixelFormat *cfgs = Adapters[Adapter].cfgs;
         int it;
 

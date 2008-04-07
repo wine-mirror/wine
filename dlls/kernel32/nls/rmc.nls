@@ -20,7 +20,7 @@
  */
 
 /*
-- Windows Vista (at least the NLS informations about it on www.microsoft.com)
+- Windows Vista (at least the NLS information about it on www.microsoft.com)
   has the wrong short date format dd/MM/yyyy e.g. 01/08/1996 instead of the
   correct d-M-yyyy e.g 1-8-1996. This file uses the right short date format as
   seen on http://www.liarumantscha.ch/ and in the glibc-morelocales.patch for

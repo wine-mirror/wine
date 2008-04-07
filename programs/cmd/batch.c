@@ -187,7 +187,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where) {
           param[0] = '\0';
           i++;
         } else {
-          s++; /* Skip delimter */
+          s++; /* Skip delimiter */
         }
         p = param;
     }

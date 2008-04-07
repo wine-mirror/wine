@@ -141,7 +141,7 @@ static void test_QueryInterface(void)
         ok(hres == S_OK,"IFont_QI does not return S_OK, but 0x%08x\n", hres);
         ok(pvObj != NULL,"IFont_QI does return NULL, instead of a ptr\n");
 
-        /* Orignial ref and QueryInterface ref both have to be released */
+        /* Original ref and QueryInterface ref both have to be released */
         IFont_Release(font);
         IFont_Release(font);
 }

@@ -663,7 +663,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 	    continue;
 	
 	len = read(midiSeqFD, buffer, sizeof(buffer));
-	TRACE("Reveived %d bytes\n", len);
+	TRACE("Received %d bytes\n", len);
 
 	if (len < 0) continue;
 	if ((len % 4) != 0) {

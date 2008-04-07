@@ -5555,7 +5555,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *ifa
     if (PaletteNumber >= This->NumberOfPalettes || !This->palettes[PaletteNumber]) {
         /* What happens in such situation isn't documented; Native seems to silently abort
            on such conditions. Return Invalid Call. */
-        ERR("(%p) : (%u) Non-existent palette. NumberOfPalettes %u\n", This, PaletteNumber, This->NumberOfPalettes);
+        ERR("(%p) : (%u) Nonexistent palette. NumberOfPalettes %u\n", This, PaletteNumber, This->NumberOfPalettes);
         return WINED3DERR_INVALIDCALL;
     }
     for (j = 0; j < 256; ++j) {
@@ -5574,7 +5574,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCurrentTexturePalette(IWineD3DDevi
     /* Native appears to silently abort on attempt to make an uninitialized palette current and render.
        (tested with reference rasterizer). Return Invalid Call. */
     if (PaletteNumber >= This->NumberOfPalettes || !This->palettes[PaletteNumber]) {
-        ERR("(%p) : (%u) Non-existent palette. NumberOfPalettes %u\n", This, PaletteNumber, This->NumberOfPalettes);
+        ERR("(%p) : (%u) Nonexistent palette. NumberOfPalettes %u\n", This, PaletteNumber, This->NumberOfPalettes);
         return WINED3DERR_INVALIDCALL;
     }
     /*TODO: stateblocks */

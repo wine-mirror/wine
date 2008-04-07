@@ -218,7 +218,7 @@ static void be_i386_print_context(HANDLE hThread, const CONTEXT* ctx, int all_re
     if (ctx->EFlags & 0x00000040) *pt-- = 'Z'; /* Zero Flag */
     if (ctx->EFlags & 0x00000080) *pt-- = 'S'; /* Sign Flag */
     if (ctx->EFlags & 0x00000100) *pt-- = 'T'; /* Trap/Trace Flag */
-    if (ctx->EFlags & 0x00000200) *pt-- = 'I'; /* Interupt Enable Flag */
+    if (ctx->EFlags & 0x00000200) *pt-- = 'I'; /* Interrupt Enable Flag */
     if (ctx->EFlags & 0x00000400) *pt-- = 'D'; /* Direction Indicator */
     if (ctx->EFlags & 0x00000800) *pt-- = 'O'; /* Overflow flags */
     if (ctx->EFlags & 0x00001000) *pt-- = '1'; /* I/O Privilege Level */

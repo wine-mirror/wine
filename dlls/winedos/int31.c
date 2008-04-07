@@ -1067,7 +1067,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0200: /* get real mode interrupt vector */
-        TRACE( "get realmode interupt vector (0x%02x)\n",
+        TRACE( "get realmode interrupt vector (0x%02x)\n",
                BL_reg(context) );
         {
             FARPROC16 proc = DOSVM_GetRMHandler( BL_reg(context) );

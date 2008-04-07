@@ -243,7 +243,7 @@ void WCMD_copy (void) {
  *
  * Create a directory.
  *
- * this works recursivly. so mkdir dir1\dir2\dir3 will create dir1 and dir2 if
+ * this works recursively. so mkdir dir1\dir2\dir3 will create dir1 and dir2 if
  * they do not already exist.
  */
 
@@ -452,7 +452,7 @@ BOOL WCMD_delete (WCHAR *command, BOOL expectDir) {
                     }
 
                     /* Now check result, keeping a running boolean about whether it
-                       matches all parsed attribues so far                         */
+                       matches all parsed attributes so far                         */
                     if (attribute && !negate) {
                         stillOK = stillOK;
                     } else if (!attribute && negate) {
@@ -1823,7 +1823,7 @@ void WCMD_setshow_default (WCHAR *command) {
     }
     *pos = 0x00;
 
-    /* Search for approprate directory */
+    /* Search for appropriate directory */
     WINE_TRACE("Looking for directory '%s'\n", wine_dbgstr_w(string));
     hff = FindFirstFile (string, &fd);
     while (hff != INVALID_HANDLE_VALUE) {
@@ -2277,7 +2277,7 @@ void WCMD_more (WCHAR *command) {
 
     /* Wine implements pipes via temporary files, and hence stdin is
        effectively reading from the file. This means the prompts for
-       more are satistied by the next line from the input (file). To
+       more are satisfied by the next line from the input (file). To
        avoid this, ensure stdin is to the console                    */
     HANDLE hstdin  = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE hConIn = CreateFile(conInW, GENERIC_READ | GENERIC_WRITE,

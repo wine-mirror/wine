@@ -124,10 +124,10 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
     WINE_TRACE("Group                = %s\n", wine_dbgstr_w(entry->config.lpLoadOrderGroup) );
     WINE_TRACE("Service account name = %s\n", wine_dbgstr_w(entry->config.lpServiceStartName) );
     WINE_TRACE("Display name         = %s\n", wine_dbgstr_w(entry->config.lpDisplayName) );
-    WINE_TRACE("Service dependancies : %s\n", entry->dependOnServices[0] ? "" : "(none)");
+    WINE_TRACE("Service dependencies : %s\n", entry->dependOnServices[0] ? "" : "(none)");
     for (wptr = entry->dependOnServices; *wptr; wptr += strlenW(wptr) + 1)
         WINE_TRACE("    * %s\n", wine_dbgstr_w(wptr));
-    WINE_TRACE("Group dependancies   : %s\n", entry->dependOnGroups[0] ? "" : "(none)");
+    WINE_TRACE("Group dependencies   : %s\n", entry->dependOnGroups[0] ? "" : "(none)");
     for (wptr = entry->dependOnGroups; *wptr; wptr += strlenW(wptr) + 1)
         WINE_TRACE("    * %s\n", wine_dbgstr_w(wptr));
 
