@@ -1,7 +1,7 @@
 /*
  * Slovenian resource file for MS-RLE
  *
- * Copyright 2003 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2003, 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,11 +18,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
 	IDS_NAME	"WINE-MS-RLE"
 	IDS_DESCRIPTION	"Wine MS-RLE video kodek"
-	IDS_ABOUT       "Wine MS-RLE video kodek\nCopyright 2002 by Michael Günnewig"
+	IDS_ABOUT       "Wine MS-RLE video kodek\nCopyright 2002 by Michael GÃ¼nnewig"
 }
+
+#pragma code_page(default)
