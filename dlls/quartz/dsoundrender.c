@@ -188,7 +188,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, const BYTE *d
         /* Wait for enough of the buffer to empty before filling it */
         if(buf_free < This->buf_size/4)
         {
-            Sleep(10);
+            Sleep(50);
             continue;
         }
 
