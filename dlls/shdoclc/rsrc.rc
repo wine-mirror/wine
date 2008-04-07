@@ -32,5 +32,6 @@
 #include "Ko.rc"
 #include "Nl.rc"
 #include "No.rc"
+#include "Si.rc"
 #include "Sv.rc"
 #include "Tr.rc"
