@@ -563,14 +563,21 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
          * Implicit resources stay however. So this means we have an implicit render target
          * or depth stencil. The content may be destroyed, but we still have to tear down
          * opengl resources, so we cannot leave early.
+         *
+         * Put the most up to date surface location into the drawable. D3D-wise this content
+         * is undefined, so it would be nowhere, but that would make the location management
+         * more complicated. The drawable is a sane location, because if we mark sysmem or
+         * texture up to date, drawPrim will copy the uninitialized texture or sysmem to the
+         * uninitialized drawable. That's pointless and we'd have to allocate the texture /
+         * sysmem copy here.
          */
-        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, TRUE);
     } else {
         /* Load the surface into system memory */
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
     }
     IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
-    IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
     This->Flags &= ~SFLAG_ALLOCATED;
 
     /* Destroy PBOs, but load them into real sysmem before */
