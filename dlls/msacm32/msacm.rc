@@ -36,6 +36,7 @@
 #include "msacm_No.rc"
 #include "msacm_Pl.rc"
 #include "msacm_Pt.rc"
+#include "msacm_Ro.rc"
 #include "msacm_Ru.rc"
 #include "msacm_Si.rc"
 #include "msacm_Sv.rc"
