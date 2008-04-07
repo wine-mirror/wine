@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2003, 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,6 +15,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#pragma code_page(65001)
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
@@ -32,7 +34,7 @@ SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
  MENUITEM SEPARATOR
  MENUITEM "&O Wine ...", 61761
  MENUITEM SEPARATOR
- MENUITEM "&Naredi zaznamek v dnevnik", 61762
+ MENUITEM "&Napravi zaznamek v dnevnik", 61762
 }
 
 EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
@@ -41,10 +43,10 @@ EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 	BEGIN
 		MENUITEM "&Razveljavi", EM_UNDO
 		MENUITEM SEPARATOR
-		MENUITEM "&Izreûi", WM_CUT
+		MENUITEM "&Izre≈æi", WM_CUT
 		MENUITEM "&Kopiraj", WM_COPY
 		MENUITEM "&Prilepi", WM_PASTE
-		MENUITEM "Izbri&öi", WM_CLEAR
+		MENUITEM "Izbri&≈°i", WM_CLEAR
 		MENUITEM SEPARATOR
 		MENUITEM "Izberi &vse", EM_SETSEL
 	END
@@ -55,16 +57,16 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYS
 BEGIN
         ICON "", 1088, 8, 20, 16, 16, WS_CHILD | WS_VISIBLE
         LTEXT "", 100, 32, 4, 176, 48, WS_CHILD | WS_VISIBLE | WS_GROUP | SS_NOPREFIX
-        PUSHBUTTON "V redu", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "PrekliËi", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&V redu", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "&Prekliƒçi", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "P&rekini", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "P&onovi", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "Pr&ezri", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Da", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Ne", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "&Try Again", 10, 352, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "&Continue", 11, 400, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "Help", 9, 448, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "Poskusi &znova", 10, 352, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "Nada&ljuj", 11, 400, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "Pomoƒç", 9, 448, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
 
 MDI_MOREWINDOWS DIALOG FIXED IMPURE 20, 20, 232, 122
@@ -74,12 +76,14 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     LISTBOX         MDI_IDC_LISTBOX, 5, 7, 222, 90, WS_VSCROLL | WS_HSCROLL /* defined in mdi.h */
     DEFPUSHBUTTON   "V redu", IDOK, 75, 100, 35, 14
-    PUSHBUTTON      "PrekliËi", IDCANCEL, 120, 100, 35, 14
+    PUSHBUTTON      "Prekliƒçi", IDCANCEL, 120, 100, 35, 14
 END
 
 
 STRINGTABLE DISCARDABLE
 {
     IDS_ERROR "Napaka"
-    IDS_MDI_MOREWINDOWS "&Dodatna okna ..."
+    IDS_MDI_MOREWINDOWS "&Veƒç oken ..."
 }
+
+#pragma code_page(default)
