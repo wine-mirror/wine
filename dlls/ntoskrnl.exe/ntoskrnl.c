@@ -529,6 +529,21 @@ KAFFINITY WINAPI KeQueryActiveProcessors( void )
 }
 
 
+/**********************************************************************
+ *           KeQueryInterruptTime   (NTOSKRNL.EXE.@)
+ *
+ * Return the interrupt time count
+ *
+ */
+ULONGLONG WINAPI KeQueryInterruptTime( void )
+{
+    LARGE_INTEGER totaltime;
+
+    KeQueryTickCount(&totaltime);
+    return totaltime.QuadPart;
+}
+
+
 /***********************************************************************
  *           KeQuerySystemTime   (NTOSKRNL.EXE.@)
  */
