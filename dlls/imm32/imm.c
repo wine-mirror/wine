@@ -1472,9 +1472,17 @@ BOOL WINAPI ImmSetCompositionStringA(
     WCHAR *CompBuffer = NULL;
     WCHAR *ReadBuffer = NULL;
     BOOL rc;
+    InputContextData *data = (InputContextData*)hIMC;
 
     TRACE("(%p, %d, %p, %d, %p, %d):\n",
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
+
+    if (!data)
+        return FALSE;
+
+    if (!is_himc_ime_unicode(data))
+        return data->immKbd->pImeSetCompositionString(hIMC, dwIndex, lpComp,
+                        dwCompLen, lpRead, dwReadLen);
 
     comp_len = MultiByteToWideChar(CP_ACP, 0, lpComp, dwCompLen, NULL, 0);
     if (comp_len)
@@ -1507,19 +1515,48 @@ BOOL WINAPI ImmSetCompositionStringW(
 	LPCVOID lpComp, DWORD dwCompLen,
 	LPCVOID lpRead, DWORD dwReadLen)
 {
-     InputContextData *data = (InputContextData*)hIMC;
+    DWORD comp_len;
+    DWORD read_len;
+    CHAR *CompBuffer = NULL;
+    CHAR *ReadBuffer = NULL;
+    BOOL rc;
+    InputContextData *data = (InputContextData*)hIMC;
 
-     TRACE("(%p, %d, %p, %d, %p, %d):\n",
-             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
+    TRACE("(%p, %d, %p, %d, %p, %d):\n",
+            hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
 
-     if (!data)
+    if (!data)
         return FALSE;
 
-     if (is_himc_ime_unicode(data))
+    if (is_himc_ime_unicode(data))
         return data->immKbd->pImeSetCompositionString(hIMC, dwIndex, lpComp,
                         dwCompLen, lpRead, dwReadLen);
-     else
-        return FALSE;
+
+    comp_len = WideCharToMultiByte(CP_ACP, 0, lpComp, dwCompLen, NULL, 0, NULL,
+                                   NULL);
+    if (comp_len)
+    {
+        CompBuffer = HeapAlloc(GetProcessHeap(),0,comp_len);
+        WideCharToMultiByte(CP_ACP, 0, lpComp, dwCompLen, CompBuffer, comp_len,
+                            NULL, NULL);
+    }
+
+    read_len = WideCharToMultiByte(CP_ACP, 0, lpRead, dwReadLen, NULL, 0, NULL,
+                                   NULL);
+    if (read_len)
+    {
+        ReadBuffer = HeapAlloc(GetProcessHeap(),0,read_len);
+        WideCharToMultiByte(CP_ACP, 0, lpRead, dwReadLen, ReadBuffer, read_len,
+                            NULL, NULL);
+    }
+
+    rc =  ImmSetCompositionStringA(hIMC, dwIndex, CompBuffer, comp_len,
+                                   ReadBuffer, read_len);
+
+    HeapFree(GetProcessHeap(), 0, CompBuffer);
+    HeapFree(GetProcessHeap(), 0, ReadBuffer);
+
+    return rc;
 }
 
 /***********************************************************************
