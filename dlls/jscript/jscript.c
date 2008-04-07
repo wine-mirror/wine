@@ -32,6 +32,8 @@ typedef struct {
     const IObjectSafetyVtbl                 *lpIObjectSafetyVtbl;
 
     LONG ref;
+
+    DWORD safeopt;
 } JScript;
 
 #define ACTSCRIPT(x)    ((IActiveScript*)                 &(x)->lpIActiveScriptVtbl)
@@ -395,19 +397,35 @@ static ULONG WINAPI JScriptSafety_Release(IObjectSafety *iface)
     return IActiveScript_Release(ACTSCRIPT(This));
 }
 
+#define SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER)
+
 static HRESULT WINAPI JScriptSafety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
         DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
 {
     JScript *This = OBJSAFETY_THIS(iface);
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
+
+    if(!pdwSupportedOptions || !pdwEnabledOptions)
+        return E_POINTER;
+
+    *pdwSupportedOptions = SUPPORTED_OPTIONS;
+    *pdwEnabledOptions = This->safeopt;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JScriptSafety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
         DWORD dwOptionSetMask, DWORD dwEnabledOptions)
 {
     JScript *This = OBJSAFETY_THIS(iface);
-    FIXME("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+
+    TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+
+    if(dwOptionSetMask & ~SUPPORTED_OPTIONS)
+        return E_FAIL;
+
+    This->safeopt = dwEnabledOptions & dwEnabledOptions;
     return S_OK;
 }
 
@@ -439,6 +457,7 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
     ret->lpIActiveScriptPropertyVtbl         = &JScriptPropertyVtbl;
     ret->lpIObjectSafetyVtbl                 = &JScriptSafetyVtbl;
     ret->ref = 1;
+    ret->safeopt = INTERFACE_USES_DISPEX;
 
     hres = IActiveScript_QueryInterface(ACTSCRIPT(ret), riid, ppv);
     IActiveScript_Release(ACTSCRIPT(ret));
