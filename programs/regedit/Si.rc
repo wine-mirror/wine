@@ -1,7 +1,7 @@
 /*
- * Regedit resources
+ * Slovenian Regedit resources
  *
- * Copyright 2003 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2003, 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-LANGUAGE LANG_SLOVENIAN, SUBLANG_NEUTRAL
+#pragma code_page(65001)
+
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 /*
  * Menu
@@ -31,8 +33,8 @@ BEGIN
         MENUITEM "&Uvozi registrsko datoteko ...",    ID_REGISTRY_IMPORTREGISTRYFILE
         MENUITEM "&Izvozi registrsko datoteko ...",    ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
-        MENUITEM "P&oveûi se z omreûnim registrom ...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
-        MENUITEM "P&rekini povezavo z omreûnim registrom ...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "P&ove≈æi se z omre≈ænim registrom ...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "P&rekini povezavo z omre≈ænim registrom ...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Na&tisni\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
@@ -42,48 +44,184 @@ BEGIN
     BEGIN
         MENUITEM "&Spremeni",                     ID_EDIT_MODIFY
         MENUITEM SEPARATOR
-        POPUP "&Nova"
+        POPUP "&Nov(a)"
         BEGIN
-            MENUITEM "&KljuË",                        ID_EDIT_NEW_KEY
+            MENUITEM "&Kljuƒç",                        ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "&Niz",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "Znakovni &niz",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binarna vrednost",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD vrednost",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Veƒç-nizna vrednost",         ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
-        MENUITEM "Izbri&öi\tDel",                ID_EDIT_DELETE
-        MENUITEM "Prei&menuj\tF2",                     ID_EDIT_RENAME
+        MENUITEM "Izbri&≈°i\tDel",                ID_EDIT_DELETE
+        MENUITEM "Prei&menuj\tF2",                 ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Kopiraj ime kljuËa",              ID_EDIT_COPYKEYNAME
+        MENUITEM "&Kopiraj ime kljuƒça",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Najdi\tCtrl+F",               ID_EDIT_FIND, GRAYED
-        MENUITEM "Na&daljuj iskanje\tF3",              ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "Najdi nas&lednje\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
-    POPUP "Pogl&ed"
+    POPUP "P&ogled"
     BEGIN
         MENUITEM "&Vrstica stanja",                 ID_VIEW_STATUSBAR
         MENUITEM SEPARATOR
-        MENUITEM "&Delilna Ërta",                      ID_VIEW_SPLIT
+        MENUITEM "&Delilna ƒçrta",                      ID_VIEW_SPLIT
         MENUITEM SEPARATOR
-        MENUITEM "&Osveûi\tF5",                ID_VIEW_REFRESH
+        MENUITEM "&Osve≈æi\tF5",                ID_VIEW_REFRESH
     END
-    POPUP "&Priljubljene"
+    POPUP "Pri&ljubljene"
     BEGIN
         MENUITEM "&Dodaj med Priljubljene",          ID_FAVORITES_ADDTOFAVORITES
         MENUITEM "&Odstrani iz Priljubljenih",           ID_FAVORITES_REMOVEFAVORITE
     END
-    POPUP "&PomoË"
+    POPUP "&Pomoƒç"
     BEGIN
-        MENUITEM "&Teme pomoËi",                ID_HELP_HELPTOPICS
+        MENUITEM "&Teme pomoƒçi\tF1",            ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
         MENUITEM "&O Urejevalniku registra",      ID_HELP_ABOUT
     END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Spremeni",                     ID_EDIT_MODIFY
+	MENUITEM "Spremeni binarno vrednost",          ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "Izbri&≈°i\tDel",                ID_EDIT_DELETE
+	MENUITEM "Prei&menij",                     ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Nov(a)"
+        BEGIN
+            MENUITEM "&Kljuƒç",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "Znakovni &niz",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binarna vrednost",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD vrednost",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Veƒç-nizna vrednost",         ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Izbri&≈°i\tDel",                ID_EDIT_DELETE
+        MENUITEM "Prei&menuj\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopiraj ime kljuƒça",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Najdi\tCtrl+F",               ID_EDIT_FIND, GRAYED
+  END
 END
 
 
 /*
  * Dialog
  */
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Izvozi", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "&Vse", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "I&zbrano vejo:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Iskanje"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Najdi:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "I≈°ƒçi v:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Kljuƒçi", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Imena vrednosti", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Vsebina vrednosti", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Samo celoten niz", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Najdi",IDOK,175,5,30,11,WS_GROUP
+    PUSHBUTTON      "Zapri",IDCANCEL,175,22,30,11, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Dodaj med Priljubljene"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ime:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "V redu",IDOK,140,40,30,11,WS_GROUP
+    PUSHBUTTON      "Prekliƒçi",IDCANCEL,175,40,30,11, WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Odstrani iz Priljubljenih"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ime:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "V redu",IDOK,140,73,30,11,WS_GROUP
+    PUSHBUTTON      "Prekliƒçi",IDCANCEL,175,73,30,11, WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Urejanje niza"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ime vrednosti:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Vsebina vrednosti:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "V redu",IDOK,140,60,30,11,WS_GROUP
+    PUSHBUTTON   "Prekliƒçi",IDCANCEL,175,60,30,11,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Urejanje DWORD vrednosti"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ime vrednosti:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Vsebina vrednosti:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Osnova", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Heksadecimalno", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Decimalno", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "V redu",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Prekliƒçi",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Urejanje binarne vrednosti"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ime vrednosti:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Vsebina vrednosti:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
+    DEFPUSHBUTTON   "V redu",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Prekliƒçi",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Urejanje veƒç-nizne vrednosti"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ime vrendnosti:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Vsebina vrednosti:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "V redu",IDOK,140,160,30,11,WS_GROUP
+    PUSHBUTTON   "Prekliƒçi",IDCANCEL,175,160,30,11,WS_GROUP
+END
 
 /*
  * String Table
@@ -93,7 +231,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_LIST_COLUMN_NAME    "Ime"
     IDS_LIST_COLUMN_TYPE    "Vrsta"
-    IDS_LIST_COLUMN_DATA    "Podatki"
+    IDS_LIST_COLUMN_DATA    "Vsebina"
 END
 
 STRINGTABLE DISCARDABLE
@@ -104,45 +242,76 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_MENU        "Ukazi za delo s celotnim registrom"
-    ID_EDIT_MENU            "Ukazi za urejanje vrednosti in kljuËev"
-    ID_VIEW_MENU            "Ukazi za prilagajanje registrskega okna"
-    ID_FAVORITES_MENU       "Ukazi za dostop do nedavno odprtih kljuËev"
-    ID_HELP_MENU            "Ukazi za prikazovanje pomoËi in informacij o programu"
-    ID_EDIT_NEW_MENU        "Ukazi za ustvarjanje novih kljuËev in vrednosti"
+    ID_EDIT_MENU            "Ukazi za urejanje vrednosti in kljuƒçev"
+    ID_VIEW_MENU            "Ukazi za prilagajanje okna Urejevalniak registra"
+    ID_FAVORITES_MENU       "Ukazi za dostop do pogosto uporabljanih kljuƒçev"
+    ID_HELP_MENU            "Ukazi za prikaz pomoƒçi in informacij o Urejevalniku registra"
+    ID_EDIT_NEW_MENU        "Ukazi za ustvarjanje novih kljuƒçev in vrednosti"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_EDIT_MODIFY          "Spremeni podatke vrednosti"
-    ID_EDIT_NEW_KEY         "Doda nov kljuË"
-    ID_EDIT_NEW_STRINGVALUE "Doda nov niz"
+    ID_EDIT_MODIFY          "Spremeni vsebino vrednosti"
+    ID_EDIT_NEW_KEY         "Doda nov kljuƒç"
+    ID_EDIT_NEW_STRINGVALUE "Doda nov znakovni niz"
     ID_EDIT_NEW_BINARYVALUE "Doda novo binarno vrednost"
     ID_EDIT_NEW_DWORDVALUE  "Doda novo DWORD vrednost"
-    ID_REGISTRY_IMPORTREGISTRYFILE "V register uvozi datoteko z besedilom"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Doda novo veƒç-nizno vrednost"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Uvozi besedilno datoteko v register"
     ID_REGISTRY_EXPORTREGISTRYFILE
-                            "Registrsko datoteko ali njen del izvozi v besedilno datoteko"
+                            "Izvozi ves register oz. del registra v besedilno datoteko"
     ID_REGISTRY_CONNECTNETWORKREGISTRY
-                            "Vzpostavi povezavo z registrom oddaljenega raËunalnika"
+                            "Vzpostavi povezavo z registrom oddaljenega raƒçunalnika"
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
-                            "Prekine povezavo z registrom oddaljenega raËunalnika"
-    ID_REGISTRY_PRINT       "Natisne registrsko datoteko ali njen del"
-/*    ID_HELP_HELPTOPICS      "Odpre pomoC" */
-    ID_HELP_ABOUT           "Informacije o programu, ötevilki razliËice in avtorskih pravicah"
+                            "Prekine povezavo z registrom oddaljenega raƒçunalnika"
+    ID_REGISTRY_PRINT       "Natisne ves register oz. del registra"
+/*    ID_HELP_HELPTOPICS      "Odpre pomoƒç Urejevalnika registra" */
+    ID_HELP_ABOUT           "Prika≈æe informacije o programu, njegovo razliƒçico ter avtorske pravice"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_REGISTRY_EXIT        "KonËa program"
-    ID_FAVORITES_ADDTOFAVORITES "Doda kljuË med Priljubljene"
-    ID_FAVORITES_REMOVEFAVORITE "Odstrani kljuË iz Priljubljenih"
-    ID_VIEW_STATUSBAR       "Prikaûe ali skrije vrstico stanja"
-    ID_VIEW_SPLIT           "Spremeni poloûaj med delilne Ërte med podokni"
-    ID_VIEW_REFRESH         "Osveûi okno"
-    ID_EDIT_DELETE          "Izbriöe izbor"
+    ID_REGISTRY_EXIT        "Konƒça program"
+    ID_FAVORITES_ADDTOFAVORITES "Doda kljuƒçe na seznam priljubljenih"
+    ID_FAVORITES_REMOVEFAVORITE "Odstrani kljuƒçe s seznama priljubljenih"
+    ID_VIEW_STATUSBAR       "Prika≈æe oz. skrije vrstico stanja"
+    ID_VIEW_SPLIT           "Spremeni polo≈æaj delilne ƒçrte med podokni"
+    ID_VIEW_REFRESH         "Osve≈æi okno"
+    ID_EDIT_DELETE          "Izbri≈°e izbor"
     ID_EDIT_RENAME          "Preimenuje izbor"
-    ID_EDIT_COPYKEYNAME     "Prekopira ime izbranega kljuËa v odloûiöËe"
-    ID_EDIT_FIND            "IöËe niz v kljuËu, vrednosti ali podatkih"
-    ID_EDIT_FINDNEXT        "IöËe naslednjo ponovitev iskanega besedila"
+    ID_EDIT_COPYKEYNAME     "Kopira ime izbranega kljuƒça na odlo≈æi≈°ƒçe"
+    ID_EDIT_FIND            "Poi≈°ƒçe znakovni niz v kljuƒçu, vrednosti ali vsebini vrednosti"
+    ID_EDIT_FINDNEXT        "Poi≈°ƒçe naslednjo ponovitev iskanega besedila"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "Napaka"
+    IDS_BAD_KEY		    "Ne morem pridobiti podatkov o kljuƒçu '%s'"
+    IDS_BAD_VALUE           "Ne morem pridobiti podatkov o vrednosti '%s'"
+    IDS_UNSUPPORTED_TYPE    "Kljuƒçev te vrste (%ld) ni mogoƒçe spreminjati"
+    IDS_TOO_BIG_VALUE       "Vrednost (%ld) je prevelika"
+    IDS_DELETE_BOX_TITLE    "Potrditev brisanja vrednosti"
+    IDS_DELETE_BOX_TEXT     "Ali ste prepriƒçani, da ≈æelite izbrisati vrednost '%s'?"
+    IDS_NEWKEY              "Nov kljuƒç #%d"
+    IDS_NEWVALUE            "Nova vrednost #%d"
+    IDS_NOTFOUND            "Iskanega niza '%s' ni mogoƒçe najti"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Uvozi registrsko datoteko"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Izvozi registrsko datoteko"
+    IDS_FILEDIALOG_FILTER         "Registrske datoteke\0*.reg\0Win9x/NT4 registrske datoteke (REGEDIT4)\0*.reg\0Vse datoteke (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "Moj raƒçunalnik"
+    IDS_REGISTRY_DEFAULT_VALUE       "(privzeto)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(vsebina ni nastavljena)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(vsebine ni mogoƒçe prikazati)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(neznana vrsta %d)"
 END
 
 /*****************************************************************/
@@ -165,9 +334,11 @@ END
 /*
  *STRINGTABLE DISCARDABLE
  *BEGIN
- *    ID_HELP_HELPTOPICS      "Odpre pomoË."
- *    ID_HELP_ABOUT           "Informacije o programu, ötevilki razliËice in avtorskih pravicah."
+ *    ID_HELP_HELPTOPICS      "Odpre pomoƒç Urejevalnika registra."
+ *    ID_HELP_ABOUT           "Prika≈æe informacije o programu, njegovo razliƒçico ter avtorske pravice."
  *END
  */
 
 /*****************************************************************/
+
+#pragma code_page(default)
