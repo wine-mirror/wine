@@ -98,6 +98,11 @@ typedef struct PullPin
 	double dRate;
 	FILTER_STATE state;
 	BOOL stop_playback;
+
+	/* Any code that touches the thread must hold the thread lock,
+	 * lock order: thread_lock and then the filter critical section
+	 */
+	CRITICAL_SECTION thread_lock;
 } PullPin;
 
 /*** Constructors ***/
@@ -164,12 +169,14 @@ HRESULT WINAPI MemInputPin_ReceiveCanBlock(IMemInputPin * iface);
 HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
 ULONG   WINAPI PullPin_Release(IPin * iface);
-HRESULT PullPin_InitProcessing(PullPin * This);
-HRESULT PullPin_StartProcessing(PullPin * This);
-HRESULT PullPin_StopProcessing(PullPin * This);
-HRESULT PullPin_PauseProcessing(PullPin * This);
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface);
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface);
 HRESULT WINAPI PullPin_EndFlush(IPin * iface);
 HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
+
+/* Thread interaction functions: Hold the thread_lock before calling them */
+HRESULT PullPin_InitProcessing(PullPin * This);
+HRESULT PullPin_StartProcessing(PullPin * This);
+HRESULT PullPin_StopProcessing(PullPin * This);
+HRESULT PullPin_PauseProcessing(PullPin * This);
 HRESULT PullPin_WaitForStateChange(PullPin * This, DWORD dwMilliseconds);

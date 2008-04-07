@@ -213,9 +213,11 @@ static HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
 {
     HRESULT hr;
     ParserImpl *This = (ParserImpl *)iface;
+    PullPin *pin = (PullPin *)This->ppPins[0];
 
     TRACE("()\n");
 
+    EnterCriticalSection(&pin->thread_lock);
     EnterCriticalSection(&This->csFilter);
     {
         if (This->state == State_Stopped)
@@ -228,60 +230,40 @@ static HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
     LeaveCriticalSection(&This->csFilter);
 
     hr = PullPin_StopProcessing(This->pInputPin);
+    LeaveCriticalSection(&pin->thread_lock);
     return hr;
 }
 
 static HRESULT WINAPI Parser_Pause(IBaseFilter * iface)
 {
     HRESULT hr = S_OK;
-    BOOL bInit;
     ParserImpl *This = (ParserImpl *)iface;
-    
+    PullPin *pin = (PullPin *)This->ppPins[0];
+
     TRACE("()\n");
 
+    EnterCriticalSection(&pin->thread_lock);
     EnterCriticalSection(&This->csFilter);
+
+    if (This->state == State_Paused)
     {
-        if (This->state == State_Paused)
-        {
-            LeaveCriticalSection(&This->csFilter);
-            return S_OK;
-        }
-        bInit = (This->state == State_Stopped);
-        This->state = State_Paused;
+        LeaveCriticalSection(&This->csFilter);
+        return S_OK;
     }
+
+    if (This->state == State_Stopped)
+    {
+        LeaveCriticalSection(&This->csFilter);
+        hr = IBaseFilter_Run(iface, -1);
+        EnterCriticalSection(&This->csFilter);
+    }
+
+    This->state = State_Paused;
+
     LeaveCriticalSection(&This->csFilter);
-
-    if (bInit)
-    {
-        unsigned int i;
-
-        if (SUCCEEDED(hr))
-            hr = PullPin_InitProcessing(This->pInputPin);
-
-        if (SUCCEEDED(hr))
-        {
-            for (i = 1; i < This->cStreams + 1; i++)
-            {
-                LONGLONG duration;
-                DOUBLE speed;
-
-                IMediaSeeking_GetDuration((IMediaSeeking *)&This->mediaSeeking, &duration);
-                IMediaSeeking_GetRate((IMediaSeeking *)&This->mediaSeeking, &speed);
-                OutputPin_DeliverNewSegment((OutputPin *)This->ppPins[i], 0, duration, speed);
-                OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
-            }
-
-            /* FIXME: this is a little hacky: we have to deliver (at least?) one sample
-             * to each renderer before they will complete their transitions. We should probably
-             * seek through the stream for the first of each, rather than do it this way which is
-             * probably a bit prone to deadlocking */
-            hr = PullPin_StartProcessing(This->pInputPin);
-        }
-    }
-    /* FIXME: else pause thread */
-
     if (SUCCEEDED(hr))
         hr = PullPin_PauseProcessing(This->pInputPin);
+    LeaveCriticalSection(&pin->thread_lock);
 
     return hr;
 }
@@ -290,10 +272,13 @@ static HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     HRESULT hr = S_OK;
     ParserImpl *This = (ParserImpl *)iface;
+    PullPin *pin = (PullPin *)This->ppPins[0];
+
     int i;
 
     TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
 
+    EnterCriticalSection(&pin->thread_lock);
     EnterCriticalSection(&This->csFilter);
     {
         if (This->state == State_Running)
@@ -330,6 +315,7 @@ static HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
             This->state = State_Running;
     }
     LeaveCriticalSection(&This->csFilter);
+    LeaveCriticalSection(&pin->thread_lock);
 
     return hr;
 }
@@ -337,31 +323,33 @@ static HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 static HRESULT WINAPI Parser_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
 {
     ParserImpl *This = (ParserImpl *)iface;
+    PullPin *pin = (PullPin *)This->ppPins[0];
+    HRESULT hr = S_OK;
 
     TRACE("(%d, %p)\n", dwMilliSecsTimeout, pState);
 
+    EnterCriticalSection(&pin->thread_lock);
     EnterCriticalSection(&This->csFilter);
     {
         *pState = This->state;
     }
     LeaveCriticalSection(&This->csFilter);
 
-    /* FIXME: this is a little bit unsafe, but I don't see that we can do this
-     * while in the critical section. Maybe we could copy the pointer and addref in the
-     * critical section and then release after this.
-     */
     if (This->pInputPin && (PullPin_WaitForStateChange(This->pInputPin, dwMilliSecsTimeout) == S_FALSE))
-        return VFW_S_STATE_INTERMEDIATE;
+        hr = VFW_S_STATE_INTERMEDIATE;
+    LeaveCriticalSection(&pin->thread_lock);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
 {
     ParserImpl *This = (ParserImpl *)iface;
+    PullPin *pin = (PullPin *)This->ppPins[0];
 
     TRACE("(%p)\n", pClock);
 
+    EnterCriticalSection(&pin->thread_lock);
     EnterCriticalSection(&This->csFilter);
     {
         if (This->pClock)
@@ -371,6 +359,7 @@ static HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock 
             IReferenceClock_AddRef(This->pClock);
     }
     LeaveCriticalSection(&This->csFilter);
+    LeaveCriticalSection(&pin->thread_lock);
 
     return S_OK;
 }

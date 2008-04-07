@@ -618,16 +618,15 @@ HRESULT WINAPI InputPin_BeginFlush(IPin * iface)
     HRESULT hr;
     TRACE("() semi-stub\n");
 
-    /* Assign this outside the critical section so that _Receive loops can be broken */
-    This->flushing = 1;
-
     EnterCriticalSection(This->pin.pCritSec);
+    This->flushing = 1;
 
     if (This->fnCleanProc)
         This->fnCleanProc(This->pin.pUserData);
 
     hr = SendFurther( iface, deliver_beginflush, NULL, NULL );
     LeaveCriticalSection(This->pin.pCritSec);
+
     return hr;
 }
 
@@ -965,7 +964,7 @@ HRESULT WINAPI OutputPin_Disconnect(IPin * iface)
             hr = S_FALSE;
     }
     LeaveCriticalSection(This->pin.pCritSec);
-    
+
     return hr;
 }
 
@@ -1200,6 +1199,9 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
     pPinImpl->rtStop = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
     pPinImpl->state = State_Stopped;
 
+    InitializeCriticalSection(&pPinImpl->thread_lock);
+    pPinImpl->thread_lock.DebugInfo->Spare[0] = (DWORD_PTR)( __FILE__ ": PullPin.thread_lock");
+
     return S_OK;
 }
 
@@ -1343,6 +1345,8 @@ ULONG WINAPI PullPin_Release(IPin * iface)
         if(This->pReader)
             IAsyncReader_Release(This->pReader);
         CloseHandle(This->hEventStateChanged);
+        This->thread_lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->thread_lock);
         CoTaskMemFree(This);
         return 0;
     }
@@ -1555,6 +1559,8 @@ HRESULT PullPin_PauseProcessing(PullPin * This)
 
 HRESULT PullPin_StopProcessing(PullPin * This)
 {
+    TRACE("(%p)->()\n", This);
+
     /* if we are connected */
     if (This->pAlloc && This->hThread)
     {
@@ -1587,24 +1593,51 @@ HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
 {
     PullPin *This = (PullPin *)iface;
-    FIXME("(%p)->() stub\n", iface);
+    TRACE("(%p)->()\n", iface);
 
-    SendFurther( iface, deliver_beginflush, NULL, NULL );
+    EnterCriticalSection(&This->thread_lock);
+    {
+        if (This->state == State_Running)
+            PullPin_PauseProcessing(This);
 
-    if (This->state == State_Running)
-        return PullPin_PauseProcessing(This);
+        PullPin_WaitForStateChange(This, INFINITE);
+    }
+    LeaveCriticalSection(&This->thread_lock);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    {
+        This->fnCleanProc(This->pin.pUserData);
+
+        SendFurther( iface, deliver_beginflush, NULL, NULL );
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+
     return S_OK;
 }
 
 HRESULT WINAPI PullPin_EndFlush(IPin * iface)
 {
-    FILTER_STATE state;
     PullPin *This = (PullPin *)iface;
 
-    FIXME("(%p)->() stub\n", iface);
-    SendFurther( iface, deliver_endflush, NULL, NULL );
+    TRACE("(%p)->()\n", iface);
 
-    return IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
+    EnterCriticalSection(&This->thread_lock);
+    {
+        FILTER_STATE state;
+        IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
+
+        if (state == State_Running && This->state == State_Paused)
+            PullPin_StartProcessing(This);
+
+        PullPin_WaitForStateChange(This, INFINITE);
+    }
+    LeaveCriticalSection(&This->thread_lock);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    SendFurther( iface, deliver_endflush, NULL, NULL );
+    LeaveCriticalSection(This->pin.pCritSec);
+
+    return S_OK;
 }
 
 HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
@@ -1624,7 +1657,7 @@ static const IPinVtbl PullPin_Vtbl =
     PullPin_QueryInterface,
     IPinImpl_AddRef,
     PullPin_Release,
-    OutputPin_Connect,
+    InputPin_Connect,
     PullPin_ReceiveConnection,
     IPinImpl_Disconnect,
     IPinImpl_ConnectedTo,
