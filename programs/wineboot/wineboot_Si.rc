@@ -1,7 +1,7 @@
 /*
  * WineBoot resources
  *
- * Copyright (C) 2007 Robert Shearman for CodeWeavers
+ * Copyright (C) 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,24 +19,21 @@
  *
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winnls.h"
-#include "winuser.h"
-#include "commctrl.h"
-#include "resource.h"
+#pragma code_page(65001)
 
-#include "wineboot_De.rc"
-#include "wineboot_En.rc"
-#include "wineboot_Es.rc"
-#include "wineboot_Fr.rc"
-#include "wineboot_Ja.rc"
-#include "wineboot_Ko.rc"
-#include "wineboot_Nl.rc"
-#include "wineboot_No.rc"
-#include "wineboot_Pl.rc"
-#include "wineboot_Ro.rc"
-#include "wineboot_Ru.rc"
-#include "wineboot_Si.rc"
-#include "wineboot_Sv.rc"
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+
+IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Čakam na konec programa"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "Prekliči",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "Končaj program",IDOK,51,49,71,15
+    LTEXT           "Izvajam simulirano odjavo oziroma izklop, vendar se program ne odziva.",
+                    IDC_STATIC,7,7,172,19
+    LTEXT           "Če se odločite za končanje programa, lahko izgubite neshranjene podatke.",
+                    IDC_STATIC,7,28,172,15
+END
+
+#pragma code_page(default)
