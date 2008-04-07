@@ -5181,6 +5181,7 @@ static void fixed_function_varying_test(IDirect3DDevice9 *device) {
     HRESULT hr;
     unsigned int i;
     DWORD color, r, g, b, r_e, g_e, b_e;
+    BOOL drawok;
 
     memcpy(data2, data, sizeof(data2));
     data2[0].pos_x = 0;     data2[0].pos_y = 0;
@@ -5212,15 +5213,24 @@ static void fixed_function_varying_test(IDirect3DDevice9 *device) {
 
         hr = IDirect3DDevice9_BeginScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+        drawok = FALSE;
         if(SUCCEEDED(hr))
         {
             hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, data, sizeof(data[0]));
-            ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+            ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "DrawPrimitiveUP failed (%08x)\n", hr);
+            drawok = SUCCEEDED(hr);
             hr = IDirect3DDevice9_EndScene(device);
             ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
         }
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
+
+        /* Some drivers reject the combination of ps_3_0 and fixed function vertex processing. Accept
+         * the failure and do not check the color if it failed
+         */
+        if(!drawok) {
+            continue;
+        }
 
         color = getPixelColor(device, 360, 240);
         r = color & 0x00ff0000 >> 16;
