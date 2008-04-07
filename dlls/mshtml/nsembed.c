@@ -1602,14 +1602,17 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     ret->editor = NULL;
     ret->reset_focus = NULL;
 
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
+            NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
+    if(NS_FAILED(nsres)) {
+        ERR("Creating WebBrowser failed: %08x\n", nsres);
+        heap_free(ret);
+        return NULL;
+    }
+
     if(parent)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(parent));
     ret->parent = parent;
-
-    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
-            NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
-    if(NS_FAILED(nsres))
-        ERR("Creating WebBrowser failed: %08x\n", nsres);
 
     nsres = nsIWebBrowser_SetContainerWindow(ret->webbrowser, NSWBCHROME(ret));
     if(NS_FAILED(nsres))
