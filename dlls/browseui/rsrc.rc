@@ -34,3 +34,4 @@
 #include "rsrc_Pl.rc"
 #include "rsrc_Ro.rc"
 #include "rsrc_Ru.rc"
+#include "rsrc_Si.rc"
