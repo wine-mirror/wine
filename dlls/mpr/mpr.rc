@@ -39,6 +39,7 @@
 #include "mpr_No.rc"
 #include "mpr_Pl.rc"
 #include "mpr_Pt.rc"
+#include "mpr_Ro.rc"
 #include "mpr_Ru.rc"
 #include "mpr_Si.rc"
 #include "mpr_Sv.rc"
