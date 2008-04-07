@@ -1733,13 +1733,13 @@ static void p8_surface_fill_rect(IDirectDrawSurface *dest, UINT x, UINT y, UINT 
     hr = IDirectDrawSurface_Lock(dest, NULL, &ddsd, DDLOCK_WRITEONLY | DDLOCK_WAIT, NULL);
     ok(hr==DD_OK, "IDirectDrawSurface_Lock returned: %x\n", hr);
 
-    p = (BYTE *)ddsd.lpSurface + ddsd.lPitch * y + x;
+    p = (BYTE *)ddsd.lpSurface + U1(ddsd).lPitch * y + x;
 
     for (i = 0; i < h; i++) {
         for (i1 = 0; i1 < w; i1++) {
             p[i1] = colorindex;
         }
-        p += ddsd.lPitch;
+        p += U1(ddsd).lPitch;
     }
 
     hr = IDirectDrawSurface_Unlock(dest, NULL);
@@ -1956,11 +1956,11 @@ static void p8_primary_test()
         for (i = 0; i < 256; i++) {
             unsigned x = (i % 128) * 4;
             unsigned y = (i / 128) * 4;
-            BYTE *p = (BYTE *)ddsd.lpSurface + ddsd.lPitch * y + x;
+            BYTE *p = (BYTE *)ddsd.lpSurface + U1(ddsd).lPitch * y + x;
 
             for (i1 = 0; i1 < 4; i1++) {
                 p[0] = p[1] = p[2] = p[3] = i;
-                p += ddsd.lPitch;
+                p += U1(ddsd).lPitch;
             }
         }
 
@@ -2007,7 +2007,7 @@ static void p8_primary_test()
         for (i = 0; i < 256; i++) {
             unsigned x = (i % 128) * 4 + 1;
             unsigned y = (i / 128) * 4 + 1;
-            BYTE *p = (BYTE *)ddsd.lpSurface + ddsd.lPitch * y + x;
+            BYTE *p = (BYTE *)ddsd.lpSurface + U1(ddsd).lPitch * y + x;
 
             if (*p != i) differences++;
         }
@@ -2086,24 +2086,24 @@ static void cubemap_test(IDirect3DDevice7 *device)
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
     ddsd.dwWidth = 16;
     ddsd.dwHeight = 16;
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
     ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES | DDSCAPS2_TEXTUREMANAGE;
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
-    ddsd.ddpfPixelFormat.dwRBitMask = 0x00FF0000;
-    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000FF00;
-    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000FF;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00FF0000;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000FF00;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000FF;
 
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &cubemap, NULL);
     ok(hr == DD_OK, "IDirectDraw7_CreateSurface returned %08x\n", hr);
     IDirectDraw7_Release(ddraw);
 
     /* Positive X */
-    DDBltFx.dwFillColor = 0x00ff0000;
+    U5(DDBltFx).dwFillColor = 0x00ff0000;
     hr = IDirectDrawSurface7_Blt(cubemap, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
 
@@ -2112,35 +2112,35 @@ static void cubemap_test(IDirect3DDevice7 *device)
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEX;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
-    DDBltFx.dwFillColor = 0x0000ffff;
+    U5(DDBltFx).dwFillColor = 0x0000ffff;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
 
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEZ;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
-    DDBltFx.dwFillColor = 0x0000ff00;
+    U5(DDBltFx).dwFillColor = 0x0000ff00;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
 
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEZ;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
-    DDBltFx.dwFillColor = 0x000000ff;
+    U5(DDBltFx).dwFillColor = 0x000000ff;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
 
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEY;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
-    DDBltFx.dwFillColor = 0x00ffff00;
+    U5(DDBltFx).dwFillColor = 0x00ffff00;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
 
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEY;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned %08x\n", hr);
-    DDBltFx.dwFillColor = 0x00ff00ff;
+    U5(DDBltFx).dwFillColor = 0x00ff00ff;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
 
