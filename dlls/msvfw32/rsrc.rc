@@ -30,5 +30,6 @@
 #include "msvfw32_No.rc"
 #include "msvfw32_Pl.rc"
 #include "msvfw32_Ru.rc"
+#include "msvfw32_Si.rc"
 #include "msvfw32_Sv.rc"
 #include "msvfw32_Tr.rc"
