@@ -45,4 +45,5 @@
 #include "spl_Pl.rc"
 #include "spl_Ro.rc"
 #include "spl_Ru.rc"
+#include "spl_Si.rc"
 #include "spl_Sv.rc"
