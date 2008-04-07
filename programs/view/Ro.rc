@@ -1,0 +1,73 @@
+/*
+ * Copyright 1998 Douglas Ridgway
+ * Copyright 2003 Marcelo Duarte
+ * Copyright 2008 Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+/*
+ *
+ * Menu
+ *
+ */
+
+VIEW MENU
+BEGIN
+    POPUP "&Fișier"
+    BEGIN
+        MENUITEM "&Deschide",                   IDM_OPEN
+        MENUITEM "&Ieșire",                     IDM_EXIT
+    END
+    POPUP "&Plasare"
+    BEGIN
+        MENUITEM "&Scalează la fereastră",      IDM_SET_EXT_TO_WIN
+        MENUITEM SEPARATOR
+        MENUITEM "&Stânga",                     IDM_LEFT
+        MENUITEM "D&reapta",                    IDM_RIGHT
+        MENUITEM "&Sus",                        IDM_UP
+        MENUITEM "&Jos",                        IDM_DOWN
+    END
+END
+
+
+/*
+ *
+ * Accelerator
+ *
+ */
+
+VIEW ACCELERATORS
+BEGIN
+    "Q", IDM_EXIT, VIRTKEY, CONTROL
+END
+
+
+/*
+ *
+ * String Table
+ *
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DESCRIPTION         "Vizualizator de fișiere metafile normale"
+END
+
+#pragma code_page(default)
