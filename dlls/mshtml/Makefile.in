@@ -42,6 +42,7 @@ C_SRCS = \
 	olecmd.c \
 	oleobj.c \
 	olewnd.c \
+	omnavigator.c \
 	persist.c \
 	protocol.c \
 	script.c \
