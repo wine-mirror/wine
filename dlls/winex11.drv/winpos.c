@@ -179,6 +179,7 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
     DWORD i, style, ex_style, new_state = 0;
 
     if (!data->managed) return;
+    if (data->whole_window == root_window) return;
 
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
     if (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
