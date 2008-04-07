@@ -3120,6 +3120,8 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
         LeaveCriticalSection( &freetype_cs );
         return NULL;
     }
+    lf.lfWidth = abs(lf.lfWidth);
+
     can_use_bitmap = GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE;
 
     TRACE("%s, h=%d, it=%d, weight=%d, PandF=%02x, charset=%d orient %d escapement %d\n",
@@ -3382,7 +3384,7 @@ found:
     TRACE("Chosen: %s %s (%s/%p:%ld)\n", debugstr_w(family->FamilyName),
 	  debugstr_w(face->StyleName), face->file, face->font_data_ptr, face->face_index);
 
-    ret->aveWidth = height ? abs(lf.lfWidth) : 0;
+    ret->aveWidth = height ? lf.lfWidth : 0;
 
     if(!face->scalable) {
         /* Windows uses integer scaling factors for bitmap fonts */
