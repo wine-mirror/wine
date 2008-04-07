@@ -86,10 +86,13 @@ typedef struct _tagTRANSMSG {
     LPARAM lParam;
 } TRANSMSG, *LPTRANSMSG;
 
-static InputContextData *root_context = NULL;
-static HWND hwndDefault = NULL;
-static HANDLE hImeInst;
+typedef struct _tagIMMThreadData {
+    HIMC defaultContext;
+    HWND hwndDefault;
+} IMMThreadData;
 
+static HANDLE hImeInst;
+static DWORD tlsIndex = 0;
 static struct list ImmHklList = LIST_INIT(ImmHklList);
 
 /* MSIME messages */
@@ -128,6 +131,29 @@ static inline CHAR *strdupWtoA( const WCHAR *str )
             WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
+}
+
+static IMMThreadData* IMM_GetThreadData(void)
+{
+    return (IMMThreadData*)TlsGetValue(tlsIndex);
+}
+
+static void IMM_InitThreadData(void)
+{
+    IMMThreadData* data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                    sizeof(IMMThreadData));
+    TlsSetValue(tlsIndex,data);
+
+    TRACE("Thread Data Created\n");
+}
+
+static void IMM_FreeThreadData(void)
+{
+    IMMThreadData* data = TlsGetValue(tlsIndex);
+    ImmDestroyContext(data->defaultContext);
+    DestroyWindow(data->hwndDefault);
+    HeapFree(GetProcessHeap(),0,data);
+    TRACE("Thread Data Destroyed\n");
 }
 
 static HMODULE LoadDefaultWineIME(void)
@@ -265,12 +291,21 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hInstDLL);
             hImeInst = hInstDLL;
             IMM_RegisterMessages();
+            tlsIndex = TlsAlloc();
+            IMM_InitThreadData();
+            break;
+        case DLL_THREAD_ATTACH:
+            IMM_InitThreadData();
+            break;
+        case DLL_THREAD_DETACH:
+            IMM_FreeThreadData();
             break;
         case DLL_PROCESS_DETACH:
+            IMM_FreeThreadData();
             IMM_FreeAllImmHkl();
+            TlsFree(tlsIndex);
             break;
     }
     return TRUE;
@@ -321,8 +356,8 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 
     TRACE("(%p, %p):\n", hWnd, hIMC);
 
-    if (!root_context)
-        root_context = ImmCreateContext();
+    if (!IMM_GetThreadData()->defaultContext)
+        IMM_GetThreadData()->defaultContext = ImmCreateContext();
 
     /*
      * If already associated just return
@@ -335,11 +370,11 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
         old = (HIMC)RemovePropW(hWnd,szwWineIMCProperty);
 
         if (old == NULL)
-            old = (HIMC)root_context;
+            old = IMM_GetThreadData()->defaultContext;
         else if (old == (HIMC)-1)
             old = NULL;
 
-        if (hIMC != (HIMC)root_context)
+        if (hIMC != IMM_GetThreadData()->defaultContext)
         {
             if (hIMC == NULL) /* Meaning disable imm for that window*/
                 SetPropW(hWnd,szwWineIMCProperty,(HANDLE)-1);
@@ -499,8 +534,8 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
         data->immKbd->uSelected --;
         data->immKbd->pImeSelect(hIMC, FALSE);
 
-        if (hwndDefault == data->imeWnd)
-            hwndDefault = NULL;
+        if (IMM_GetThreadData()->hwndDefault == data->imeWnd)
+            IMM_GetThreadData()->hwndDefault = NULL;
         DestroyWindow(data->imeWnd);
 
         ImmDestroyIMCC(data->IMC.hCompStr);
@@ -913,14 +948,14 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
     HIMC rc = NULL;
 
     TRACE("%p\n", hWnd);
-    if (!root_context)
-        root_context = ImmCreateContext();
+    if (!IMM_GetThreadData()->defaultContext)
+        IMM_GetThreadData()->defaultContext = ImmCreateContext();
 
     rc = (HIMC)GetPropW(hWnd,szwWineIMCProperty);
     if (rc == (HIMC)-1)
         rc = NULL;
     else if (rc == NULL)
-        rc = (HIMC)root_context;
+        rc = IMM_GetThreadData()->defaultContext;
 
     if (rc)
     {
@@ -981,8 +1016,8 @@ BOOL WINAPI ImmGetConversionStatus(
  */
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
-    TRACE("Default is %x\n",(unsigned)hwndDefault);
-    return hwndDefault;
+    TRACE("Default is %x\n",(unsigned)IMM_GetThreadData()->hwndDefault);
+    return IMM_GetThreadData()->hwndDefault;
 }
 
 /***********************************************************************
@@ -1288,11 +1323,11 @@ BOOL WINAPI ImmIsUIMessageA(
         (msg == WM_MSIME_DOCUMENTFEED))
 
     {
-        if (!hwndDefault)
+        if (!IMM_GetThreadData()->hwndDefault)
             ImmGetDefaultIMEWnd(NULL);
 
         if (hWndIME == NULL)
-            PostMessageA(hwndDefault, msg, wParam, lParam);
+            PostMessageA(IMM_GetThreadData()->hwndDefault, msg, wParam, lParam);
 
         rc = TRUE;
     }
@@ -1306,7 +1341,7 @@ BOOL WINAPI ImmIsUIMessageW(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     BOOL rc = FALSE;
-    TRACE("(%p, %d, %ld, %ld): stub\n", hWndIME, msg, wParam, lParam);
+    TRACE("(%p, %d, %ld, %ld):\n", hWndIME, msg, wParam, lParam);
     if ((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
         (msg >= WM_IME_SETCONTEXT && msg <= WM_IME_KEYUP) ||
         (msg == WM_MSIME_SERVICE) ||
@@ -1506,16 +1541,16 @@ BOOL WINAPI ImmSetCompositionWindow(
 
     data->IMC.cfCompForm = *lpCompForm;
 
-    if (IsWindowVisible(hwndDefault))
+    if (IsWindowVisible(IMM_GetThreadData()->hwndDefault))
     {
         reshow = TRUE;
-        ShowWindow(hwndDefault,SW_HIDE);
+        ShowWindow(IMM_GetThreadData()->hwndDefault,SW_HIDE);
     }
 
     /* FIXME: this is a partial stub */
 
     if (reshow)
-        ShowWindow(hwndDefault,SW_SHOWNOACTIVATE);
+        ShowWindow(IMM_GetThreadData()->hwndDefault,SW_SHOWNOACTIVATE);
 
     ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONWINDOW, 0);
     return TRUE;
@@ -1558,7 +1593,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
                     data->immKbd->imeClassName,
                     NULL, WS_POPUP, 0, 0, 1, 1, 0, 0, hImeInst, 0);
         SetWindowLongW(data->imeWnd, IMMGWL_IMC, (LONG)data);
-        hwndDefault = data->imeWnd;
+        IMM_GetThreadData()->hwndDefault = data->imeWnd;
     }
 
     data->IMC.fOpen = fOpen;
