@@ -35,23 +35,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-/* this must match with imm32/imm.c */
-#define FROM_IME 0xcafe1337
-
 BOOL ximInComposeMode=FALSE;
 
-typedef struct tagInputContextData
-{
-    BOOL            bInternalState;
-    BOOL            bRead;
-    BOOL            bInComposition;
-    HFONT           textfont;
-
-    DWORD           dwLock;
-    INPUTCONTEXT    IMC;
-} InputContextData;
-
-static HIMC root_context;
 static XIMStyle ximStyle = 0;
 static XIMStyle ximStyleRoot = 0;
 
@@ -63,17 +48,6 @@ static LPBYTE ResultString = NULL;
 static DWORD dwResultStringSize = 0;
 static DWORD dwPreeditPos = 0;
 
-static HMODULE hImmDll = NULL;
-static HIMC (WINAPI *pImmAssociateContext)(HWND,HIMC);
-static HIMC (WINAPI *pImmCreateContext)(void);
-static VOID (WINAPI *pImmSetOpenStatus)(HIMC,BOOL);
-static BOOL (WINAPI *pImmSetCompositionString)(HIMC, DWORD, LPWSTR,
-                                               DWORD, LPWSTR, DWORD);
-static LONG (WINAPI *pImmGetCompositionString)(HIMC, DWORD, LPVOID, DWORD);
-static VOID (WINAPI *pImmNotifyIME)(HIMC, DWORD, DWORD, DWORD);
-
-/* WINE specific messages from the xim in x11drv level */
-
 #define STYLE_OFFTHESPOT (XIMPreeditArea | XIMStatusArea)
 #define STYLE_OVERTHESPOT (XIMPreeditPosition | XIMStatusNothing)
 #define STYLE_ROOT (XIMPreeditNothing | XIMStatusNothing)
@@ -81,41 +55,6 @@ static VOID (WINAPI *pImmNotifyIME)(HIMC, DWORD, DWORD, DWORD);
 #define STYLE_CALLBACK (XIMPreeditCallbacks | XIMStatusNothing)
 /* inorder to enable deadkey support */
 #define STYLE_NONE (XIMPreeditNothing | XIMStatusNothing)
-
-/*
- * here are the functions that sort of marshall calls into IMM32.DLL
- */
-static void LoadImmDll(void)
-{
-    hImmDll = LoadLibraryA("imm32.dll");
-
-    pImmAssociateContext = (void *)GetProcAddress(hImmDll, "ImmAssociateContext");
-    if (!pImmAssociateContext)
-        WARN("IMM: pImmAssociateContext not found in DLL\n");
-
-    pImmCreateContext = (void *)GetProcAddress(hImmDll, "ImmCreateContext");
-    if (!pImmCreateContext)
-        WARN("IMM: pImmCreateContext not found in DLL\n");
-
-    pImmSetOpenStatus = (void *)GetProcAddress( hImmDll, "ImmSetOpenStatus");
-    if (!pImmSetOpenStatus)
-        WARN("IMM: pImmSetOpenStatus not found in DLL\n");
-
-    pImmSetCompositionString =(void *)GetProcAddress(hImmDll, "ImmSetCompositionStringW");
-
-    if (!pImmSetCompositionString)
-        WARN("IMM: pImmSetCompositionStringW not found in DLL\n");
-
-    pImmGetCompositionString =(void *)GetProcAddress(hImmDll, "ImmGetCompositionStringW");
-
-    if (!pImmGetCompositionString)
-        WARN("IMM: pImmGetCompositionStringW not found in DLL\n");
-
-    pImmNotifyIME = (void *)GetProcAddress( hImmDll, "ImmNotifyIME");
-
-    if (!pImmNotifyIME)
-        WARN("IMM: pImmNotifyIME not found in DLL\n");
-}
 
 static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
                                         DWORD selLength, LPWSTR lpComp, DWORD dwCompLen)
@@ -211,10 +150,8 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
             }
         }
 
-        if (pImmSetCompositionString)
-            rc = pImmSetCompositionString((HIMC)FROM_IME, SCS_SETSTR,
-                                 (LPWSTR)CompositionString, dwCompStringLength,
-                                  NULL, 0);
+        rc = IME_SetCompositionString(SCS_SETSTR, (LPWSTR)CompositionString,
+                                      dwCompStringLength, NULL, 0);
     }
     else if ((dwIndex == GCS_RESULTSTR) && (lpComp) && (dwCompLen))
     {
@@ -224,13 +161,10 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
         ResultString= HeapAlloc(GetProcessHeap(),0,byte_length);
         memcpy(ResultString,lpComp,byte_length);
 
-        if (pImmSetCompositionString)
-            rc = pImmSetCompositionString((HIMC)FROM_IME, SCS_SETSTR,
-                                 (LPWSTR)ResultString, dwResultStringSize,
-                                  NULL, 0);
+        rc = IME_SetCompositionString(SCS_SETSTR, (LPWSTR)ResultString,
+                                     dwResultStringSize, NULL, 0);
 
-        if (pImmNotifyIME)
-            pImmNotifyIME((HIMC)FROM_IME, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
+        IME_NotifyIME( NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
     }
 
     return rc;
@@ -244,8 +178,8 @@ void X11DRV_XIMLookupChars( const char *str, DWORD count )
 
     dwOutput = MultiByteToWideChar(CP_UNIXCP, 0, str, count, wcOutput, sizeof(wcOutput)/sizeof(WCHAR));
 
-    if (pImmAssociateContext && (focus = GetFocus()))
-        pImmAssociateContext(focus,root_context);
+    if ((focus = GetFocus()))
+        IME_UpdateAssociation(focus);
 
     X11DRV_ImmSetInternalString(GCS_RESULTSTR,0,0,wcOutput,dwOutput);
 }
@@ -268,8 +202,7 @@ static void X11DRV_ImmSetOpenStatus(BOOL fOpen)
         ResultString = NULL;
     }
 
-    if (pImmSetOpenStatus)
-        pImmSetOpenStatus((HIMC)FROM_IME,fOpen);
+    IME_SetOpenStatus(fOpen);
 }
 
 static int XIMPreEditStartCallback(XIC ic, XPointer client_data, XPointer call_data)
@@ -277,8 +210,7 @@ static int XIMPreEditStartCallback(XIC ic, XPointer client_data, XPointer call_d
     TRACE("PreEditStartCallback %p\n",ic);
     X11DRV_ImmSetOpenStatus(TRUE);
     ximInComposeMode = TRUE;
-    SendMessageW(((InputContextData*)root_context)->IMC.hWnd,
-                 EM_GETSEL, 0, (LPARAM)&dwPreeditPos);
+    IME_SendMessageToSelectedHWND(EM_GETSEL, 0, (LPARAM)&dwPreeditPos);
     return -1;
 }
 
@@ -344,7 +276,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
 
     if (P_C)
     {
-        int pos = pImmGetCompositionString(root_context, GCS_CURSORPOS, NULL, 0);
+        int pos = IME_GetCursorPos();
         TRACE("pos: %d\n", pos);
         switch(P_C->direction)
         {
@@ -373,8 +305,8 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
                 FIXME("Not implemented\n");
                 break;
         }
-        SendMessageW(((InputContextData*)root_context)->IMC.hWnd,
-                     EM_SETSEL, dwPreeditPos + pos, dwPreeditPos + pos);
+        IME_SendMessageToSelectedHWND( EM_SETSEL, dwPreeditPos + pos,
+                     dwPreeditPos + pos);
         P_C->position = pos;
     }
     TRACE("Finished\n");
@@ -502,18 +434,6 @@ XIM X11DRV_SetupXIM(Display *display, const char *input_style)
     wine_tsx11_unlock();
     IME_XIMPresent(TRUE);
     IME_UpdateAssociation(NULL);
-
-    if(!hImmDll)
-    {
-        LoadImmDll();
-
-        if (pImmCreateContext)
-        {
-            root_context = pImmCreateContext();
-            if (pImmAssociateContext)
-                pImmAssociateContext(0,root_context);
-        }
-    }
 
     return xim;
 
