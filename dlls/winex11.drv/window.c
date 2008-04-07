@@ -866,7 +866,7 @@ static char *get_process_name(void)
  */
 static void set_initial_wm_hints( Display *display, struct x11drv_win_data *data )
 {
-    int i;
+    long i;
     Atom protocols[3];
     Atom dndVersion = 4;
     XClassHint *class_hints;

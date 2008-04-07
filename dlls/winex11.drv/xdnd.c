@@ -286,7 +286,7 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
             AnyPropertyType, &acttype, &actfmt, &icount, &bytesret, &data);
         wine_tsx11_unlock();
 
-        entries += X11DRV_XDND_MapFormat(types[i], data, icount * (actfmt / 8));
+        entries += X11DRV_XDND_MapFormat(types[i], data, get_property_size( actfmt, icount ));
         wine_tsx11_lock();
         XFree(data);
         wine_tsx11_unlock();

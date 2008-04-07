@@ -677,7 +677,7 @@ int get_window_wm_state( Display *display, struct x11drv_win_data *data )
                              sizeof(*state)/sizeof(CARD32), False, x11drv_atom(WM_STATE),
                              &type, &format, &count, &remaining, (unsigned char **)&state ))
     {
-        if (type == x11drv_atom(WM_STATE) && format && count >= sizeof(*state)/(format/8))
+        if (type == x11drv_atom(WM_STATE) && get_property_size( format, count ) >= sizeof(*state))
             ret = state->state;
         XFree( state );
     }

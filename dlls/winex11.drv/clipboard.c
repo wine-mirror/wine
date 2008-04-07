@@ -1902,8 +1902,8 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
         * The TARGETS property should have returned us a list of atoms
         * corresponding to each selection target format supported.
         */
-       if (atype == XA_ATOM || atype == x11drv_atom(TARGETS))
-           X11DRV_CLIPBOARD_InsertSelectionProperties(display, targetList, (cSelectionTargets * aformat / (8 * sizeof(Atom))));
+       if (aformat == 32 && (atype == XA_ATOM || atype == x11drv_atom(TARGETS)))
+           X11DRV_CLIPBOARD_InsertSelectionProperties(display, targetList, cSelectionTargets);
 
        /* Free the list of targets */
        wine_tsx11_lock();
@@ -2027,7 +2027,7 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Window w, Atom prop,
             return FALSE;
         }
 
-        count = nitems * (aformat / 8);
+        count = get_property_size( aformat, nitems );
         if (!val) *data = HeapAlloc( GetProcessHeap(), 0, pos * sizeof(int) + count + 1 );
         else *data = HeapReAlloc( GetProcessHeap(), 0, val, pos * sizeof(int) + count + 1 );
 

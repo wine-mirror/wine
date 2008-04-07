@@ -520,6 +520,13 @@ static inline struct x11drv_thread_data *x11drv_thread_data(void)
 
 static inline Display *thread_display(void) { return x11drv_thread_data()->display; }
 
+static inline size_t get_property_size( int format, unsigned long count )
+{
+    /* format==32 means long, which can be 64 bits... */
+    if (format == 32) return count * sizeof(long);
+    return count * (format / 8);
+}
+
 extern Visual *visual;
 extern Window root_window;
 extern unsigned int screen_width;

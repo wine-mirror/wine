@@ -1394,7 +1394,7 @@ static unsigned char *get_icm_profile( unsigned long *size )
                         &type, &format, &count, &remaining, &profile );
     if (format && count)
     {
-        *size = count * (format / 8);
+        *size = get_property_size( format, count );
         if ((ret = HeapAlloc( GetProcessHeap(), 0, *size ))) memcpy( ret, profile, *size );
         XFree( profile );
     }

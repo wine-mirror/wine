@@ -618,7 +618,7 @@ static BOOL is_netwm_supported( Display *display, Atom atom )
         if (!XGetWindowProperty( display, DefaultRootWindow(display), x11drv_atom(_NET_SUPPORTED), 0,
                                  ~0UL, False, XA_ATOM, &type, &format, &count,
                                  &remaining, (unsigned char **)&net_supported ))
-            net_supported_count = count * (format / 8) / sizeof(Atom);
+            net_supported_count = get_property_size( format, count ) / sizeof(Atom);
         else
             net_supported_count = 0;
     }
