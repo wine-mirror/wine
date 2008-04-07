@@ -1,5 +1,8 @@
 /*
- * Copyright 2008 Andrew Riedi
+ * REG.EXE - Wine-compatible reg program.
+ * Slovenian language support
+ *
+ * Copyright 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,15 +19,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
+#pragma code_page(65001)
 
-#include "reg.h"
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+STRINGTABLE
+{
+    STRING_USAGE, "Sintaksa ukaza:\n\nREG [ ADD | DELETE | QUERY ]\nREG ukaz /?\n"
+    STRING_ADD_USAGE, "REG ADD ime_ključa [/v ime_vrednosti | /ve] [/t vrsta] [/s ločilo] [/d podatki] [/f]\n"
+    STRING_DELETE_USAGE, "REG DELETE ime_ključa [/v ime_vrednosti | /ve | /va] [/f]\n"
+    STRING_QUERY_USAGE, "REG QUERY ime_ključa [/v ime_vrednosti | /ve] [/s]\n"
+}
 
-#include "En.rc"
-#include "Nl.rc"
-#include "No.rc"
-#include "Pl.rc"
-#include "Ru.rc"
-#include "Si.rc"
+#pragma code_page(default)
