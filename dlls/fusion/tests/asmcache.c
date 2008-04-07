@@ -809,16 +809,16 @@ static void create_assembly(LPCSTR file)
     DWORD written;
 
     /* nameless unions initialized here */
-    assembly.tableshdr.MaskValid.HighPart = 0x101;
-    assembly.tableshdr.MaskValid.LowPart = 0x00000005;
-    assembly.tableshdr.MaskSorted.HighPart = 0x1600;
-    assembly.tableshdr.MaskSorted.LowPart = 0x3301FA00;
-    assembly.labelres.Name = 0x10;
-    assembly.labelres.OffsetToData = 0x80000018;
-    assembly.label11res.Name = 0x1;
-    assembly.label11res.OffsetToData = 0x80000030;
-    assembly.label10res.Name = 0x0;
-    assembly.label10res.OffsetToData = 0x48;
+    assembly.tableshdr.MaskValid.u.HighPart = 0x101;
+    assembly.tableshdr.MaskValid.u.LowPart = 0x00000005;
+    assembly.tableshdr.MaskSorted.u.HighPart = 0x1600;
+    assembly.tableshdr.MaskSorted.u.LowPart = 0x3301FA00;
+    U1(assembly.labelres).Name = 0x10;
+    U2(assembly.labelres).OffsetToData = 0x80000018;
+    U1(assembly.label11res).Name = 0x1;
+    U2(assembly.label11res).OffsetToData = 0x80000030;
+    U1(assembly.label10res).Name = 0x0;
+    U2(assembly.label10res).OffsetToData = 0x48;
 
     hfile = CreateFileA(file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
 
