@@ -986,9 +986,6 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     if (NumPrimitives == 0) return;
 
-    /* Signals other modules that a drawing is in progress and the stateblock finalized */
-    This->isInDraw = TRUE;
-
     /* Invalidate the back buffer memory so LockRect will read it the next time */
     for(i = 0; i < GL_LIMITS(buffers); i++) {
         target = (IWineD3DSurfaceImpl *) This->render_targets[i];
@@ -1031,6 +1028,9 @@ void drawPrimitive(IWineD3DDevice *iface,
             }
         }
     }
+
+    /* Signals other modules that a drawing is in progress and the stateblock finalized */
+    This->isInDraw = TRUE;
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
 
