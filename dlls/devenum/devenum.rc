@@ -141,6 +141,16 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 	8  "DirectSound: %s"
 	9  "Звуковое устройство вывода по умолчанию"
 	10 "Устройство вывода MIDI по умолчанию"
+
+}
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+{
+	7  "Privzeta DirectSound naprava"
+	8  "DirectSound: %s"
+	9  "Privzeta WaveOut naprava"
+	10 "Privzeta MidiOut naprava"
 }
 
 STRINGTABLE DISCARDABLE
