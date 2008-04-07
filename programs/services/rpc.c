@@ -541,7 +541,7 @@ DWORD svcctl_ChangeServiceConfigW(
 
     if (!validate_service_config(&new_entry))
     {
-        WINE_ERR("The configuration after the change wouldn't be valid");
+        WINE_ERR("The configuration after the change wouldn't be valid\n");
         service_unlock(service->service_entry);
         return ERROR_INVALID_PARAMETER;
     }
@@ -1348,7 +1348,7 @@ DWORD RPC_MainLoop(void)
 
     if ((err = RpcServerRegisterIf(svcctl_v2_0_s_ifspec, 0, 0)) != ERROR_SUCCESS)
     {
-        WINE_ERR("RpcServerRegisterIf failed with error %u", err);
+        WINE_ERR("RpcServerRegisterIf failed with error %u\n", err);
         return err;
     }
 
