@@ -16,10 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 
 #include <stdarg.h>
-#include <stdio.h>
 
 #define COBJMACROS
 
@@ -27,7 +25,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
-#include "winnls.h"
 #include "ole2.h"
 #include "shlwapi.h"
 
