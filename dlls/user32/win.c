@@ -274,6 +274,7 @@ static HWND *list_window_parents( HWND hwnd )
         }
         list[pos] = current = win->parent;
         WIN_ReleasePtr( win );
+        if (!current) return list;
         if (++pos == size - 1)
         {
             /* need to grow the list */
