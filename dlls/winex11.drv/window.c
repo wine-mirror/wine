@@ -730,31 +730,21 @@ void X11DRV_make_systray_window( HWND hwnd )
     {
         XEvent ev;
         unsigned long info[2];
-                
-        /* Put the window offscreen so it isn't mapped. The window _cannot_ be 
-         * mapped if we intend to dock with an XEMBED tray. If the window is 
-         * mapped when we dock, it may become visible as a child of the root 
-         * window after it docks, which isn't the proper behavior. 
-         *
-         * For more information on this problem, see
-         * http://standards.freedesktop.org/xembed-spec/latest/ar01s04.html */
-        
-        SetWindowPos( data->hwnd, NULL, virtual_screen_rect.right + 1, virtual_screen_rect.bottom + 1,
-                      0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE );
+
+        /* the window _cannot_ be mapped if we intend to dock with an XEMBED tray */
+        if (data->mapped) FIXME( "trying to dock mapped window %p\n", data->hwnd );
 
         /* set XEMBED protocol data on the window */
         info[0] = 0; /* protocol version */
         info[1] = 1; /* mapped = true */
-        
+
         wine_tsx11_lock();
         XChangeProperty( display, data->whole_window,
                          x11drv_atom(_XEMBED_INFO),
                          x11drv_atom(_XEMBED_INFO), 32, PropModeReplace,
                          (unsigned char*)info, 2 );
-        wine_tsx11_unlock();
-    
+
         /* send the docking request message */
-        ZeroMemory( &ev, sizeof(ev) ); 
         ev.xclient.type = ClientMessage;
         ev.xclient.window = systray_window;
         ev.xclient.message_type = x11drv_atom( _NET_SYSTEM_TRAY_OPCODE );
@@ -764,11 +754,10 @@ void X11DRV_make_systray_window( HWND hwnd )
         ev.xclient.data.l[2] = data->whole_window;
         ev.xclient.data.l[3] = 0;
         ev.xclient.data.l[4] = 0;
-        
-        wine_tsx11_lock();
         XSendEvent( display, systray_window, False, NoEventMask, &ev );
         wine_tsx11_unlock();
 
+        data->mapped = TRUE;
     }
     else
     {
