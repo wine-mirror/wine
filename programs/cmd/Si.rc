@@ -2,7 +2,7 @@
  * Wine command prompt
  * Slovenian Language Support
  *
- * Copyright (C) 2003 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright (C) 2003, 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,249 +19,257 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "Help about ATTRIB\n"
+  WCMD_ATTRIB, "Pomoč za ATTRIB\n"
   WCMD_CALL,
-"CALL <batchfilename> is used within a batch file to execute commands\n\
-from another batch file. When the batch file exits, control returns to\n\
-the file which called it. The CALL command may supply parameters to the\n\
-called procedure.\n\
+"CALL <ime_paketne_datoteke> uporabimo znotraj paketne datoteke (batch file), \n\
+kadar želimo izvršiti ukaze iz druge paketne datoteke. Ko klicana paketna\n\
+datoteka preneha z izvajanjem, vrne nadzor nadrejeni datoteki (klicatelju).\n\
+Ukazu CALL je možno posredovati tudi parametre, ki naj bodo posredovani klicani\n\
+paketni datoteki.\n\
 \n\
-Changes to default directory, environment variables etc made within a\n\
-called procedure are inherited by the caller.\n"
+Spremembe trenutne mape, spremenljivk okolja, ipd., ki so napravljene znotraj\n\
+klicane paketne datoteke, so posredovane klicatelju (nadrejeni datoteki).\n"
+  WCMD_CD,     "Pomoč za CD\n"
+  WCMD_CHDIR,  "Pomoč za CHDIR\n"
 
-  WCMD_CD,     "Help about CD\n"
-  WCMD_CHDIR,  "Help about CHDIR\n"
+  WCMD_CLS,    "CLS počisti zaslon konzole\n"
 
-  WCMD_CLS,    "CLS clears the console screen\n"
-
-  WCMD_COPY,   "Help about COPY\n"
-  WCMD_CTTY,   "Help about CTTY\n"
-  WCMD_DATE,   "Help about DATE\n"
-  WCMD_DEL,    "Help about DEL\n"
-  WCMD_DIR,    "Help about DIR\n"
+  WCMD_COPY,   "Pomoč za COPY\n"
+  WCMD_CTTY,   "Pomoč za CTTY\n"
+  WCMD_DATE,   "Pomoč za DATE\n"
+  WCMD_DEL,    "Pomoč za DEL\n"
+  WCMD_DIR,    "Pomoč za DIR\n"
 
   WCMD_ECHO,
-"ECHO <string> displays <string> on the current terminal device.\n\
+"ECHO <niz> prikaže <niz> v trenutni konzoli.\n\
 \n\
-ECHO ON causes all subsequent commands in a batch file to be displayed\n\
-on the terminal device before they are executed.\n\
+ECHO ON povzroči izpis vseh sledečih ukazov iz paketne datoteke pred dejansko\n\
+izvršitvijo le-teh.\n\
 \n\
-ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n\
-default). The ECHO OFF command can be prevented from displaying by\n\
-preceding it with an @ sign.\n"
+ECHO OFF izključi učinek ukaza ECHO ON (privzeta vrednost za ECHO je OFF).\n\
+Izpis ukaza ECHO OFF lahko preprečimo tako, da predenj dodamo znak @.\n"
 
-  WCMD_ERASE,  "Help about ERASE\n"
+  WCMD_ERASE,  "Pomoč za ERASE\n"
 
   WCMD_FOR,
-"The FOR command is used to execute a command for each of a set of files.\n\
+"Ukaz FOR uporabimo za izvršitev ukaza za vsako datoteko iz podanega nabora datotek.\n\
 \n\
-Syntax: FOR %variable IN (set) DO command\n\
+Sintaksa: FOR %spremenljivka IN (nabor) DO ukaz\n\
 \n\
-The requirement to double the % sign when using FOR in a batch file does\n\
-not exist in cmd.\n"
+Wine-ov cmd ne zahteva uporabe dvojnega znaka % pri uporabi ukaza FOR v\n\
+paketnih datotekah.\n"
 
   WCMD_GOTO,
-"The GOTO command transfers execution to another statement within a\n\
-batch file.\n\
+"Ukaz GOTO premakne izvrševanje na drug stavek v paketni datoteki.\n\
 \n\
-The label which is the target of a GOTO may be up to 255 characters\n\
-long but may not include spaces (this is different from other operating\n\
-systems). If two or more identical labels exist in a batch file the\n\
-first one will always be executed. Attempting to GOTO a nonexistent\n\
-label terminates the batch file execution.\n\
+Ciljna oznaka za ukaz GOTO je lahko dolga največ 255 znakov, vendar za razliko\n\
+od ostalih operacijskih sistemov ne sme vsebovati presledkov. Če v paketni\n\
+datoteki obstajata dve enaki oznaki, bo vedno izvršena le prva. Poskus uporabe\n\
+ukaza GOTO z neobstoječo oznako povzroči konec izvrševanja paketne datoteke.\n\
 \n\
-GOTO has no effect when used interactively.\n"
+V interaktivnem načinu ukaz GOTO nima nobenega učinka.\n"
 
-  WCMD_HELP,   "Help about HELP\n"
+  WCMD_HELP,   "Pomoč za HELP\n"
 
   WCMD_IF,
-"IF is used to conditionally execute a command.\n\
+"IF uporabljamo za pogojno izvrševanje ukazov.\n\
 \n\
-Syntax:	IF [NOT] EXIST filename command\n\
-	IF [NOT] string1==string2 command\n\
-	IF [NOT] ERRORLEVEL number command\n\
+Sintaksa:	IF [NOT] EXIST ime_datoteke ukaz\n\
+	IF [NOT] niz1==niz2 ukaz\n\
+	IF [NOT] ERRORLEVEL stevilo ukaz\n\
 \n\
-In the second form of the command, string1 and string2 must be in double\n\
-quotes. The comparison is not case-sensitive.\n"
+V drugem primeru zgoraj morata biti niz1 in niz2 v dvojnih navednicah.\n\
+Primerjava razlikuje med malimi in velikimi črkami.\n"
 
-  WCMD_LABEL,  "LABEL is used to set a disk volume label.  \n\
+  WCMD_LABEL,  "LABEL uporabljamo za nastavljanje oznake pogona.  \n\
 \n\
-Syntax: LABEL [drive:]\n\
-The command will prompt you for the new volume label for the given drive.\n\
-You can display the disk volume label with the VOL command.\n"
+Sintaksa: LABEL [pogon:]\n\
+Ukaz povpraša po novi oznaki za želeni pogon.\n\
+Trenutno oznako pogona lahko prikažete z ukazom VOL.\n"
 
-  WCMD_MD,     "Help about MD\n"
-  WCMD_MKDIR,  "Help about MKDIR\n"
+  WCMD_MD,     "Pomoč za MD\n"
+  WCMD_MKDIR,  "Pomoč za MKDIR\n"
   WCMD_MOVE,
-"MOVE relocates a file or directory to a new point within the file system.\n\
+"MOVE prestavi datoteko ali mapo na novo mesto v datotečnem sistemu.\n\
 \n\
-If the item being moved is a directory then all the files and subdirectories\n\
-below the item are moved as well.\n\
+Če premikate mapo, bo premaknjena tudi vsa vsebina (datoteke in podmape) le-te.\n\
 \n\
-MOVE fails if the old and new locations are on different DOS drive letters.\n"
+MOVE ne more premikati datotek oz. map med mesti na različnih pogonih.\n"
 
   WCMD_PATH,
-"PATH displays or changes the cmd search path.\n\
+"PATH prikaže oz. spremeni iskalno pot za cmd.\n\
 \n\
-Entering PATH will display the current PATH setting (initially this is\n\
-the value given in your wine.conf file). To change the setting follow the\n\
-PATH command with the new value.\n\
+Sam ukaz PATH prikaže trenutno nastavitev PATH (v osnovi je le-ta enaka\n\
+vrednosti, ki je podana v datoteki wine.conf). Če želite spremeniti nastavitev,\n\
+podajte novo vrednost kot parameter ukaza PATH.\n\
 \n\
-It is also possible to modify the PATH by using the PATH environment\n\
-variable, for example:\n\
+Nastavitev PATH je prav tako možno spremeniti z uporabo spremeljivke okolja\n\
+PATH:\n\
 		PATH %PATH%;c:\\temp \n"
 
   WCMD_PAUSE,
-"PAUSE displays a message on the screen 'Press Return key to continue'\n\
-and waits for the user to press the Return key. It is mainly useful in\n\
-batch files to allow the user to read the output of a previous command\n\
-before it scrolls off the screen.\n"
+"PAUSE izpiše na zaslonu sporočilo 'Za nadaljevanje pritisnite Return'\n\
+in počaka, da uporabnik pritisne tipko Return. Ukaz je uporaben v paketnih\n\
+datotekah, ko želimo omogočiti uporabniku, da prebere izhodna sporočila\n\
+prejšnjih ukazov, preden le-ta izginejo z zaslona.\n"
 
   WCMD_PROMPT,
-"PROMPT sets the command-line prompt.\n\
+"PROMPT spremeni ukazni poziv ukazne vrstice.\n\
 \n\
-The string following the PROMPT command (and the space immediately after)\n\
-appears at the beginning of the line when cmd is waiting for input.\n\
+Niz, ki sledi ukazu PROMPT (vključno s presledkom, ki mu sledi)\n\
+se pojavi na začetku vrstice, ko cmd čaka na vnos.\n\
 \n\
-The following character strings have the special meaning shown:\n\
+Sledeči nizi imajo poseben pomen:\n\
 \n\
-$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n\
-$d    Current date        $e    Escape              $g    > sign\n\
-$l    < sign              $n    Current drive       $p    Current path\n\
-$q    Equal sign          $t    Current time        $v    cmd version\n\
+$$    Znak za dolar       $_    Linefeed            $b    Znak |\n\
+$d    Trenutni datum      $e    Escape              $g    Znak >\n\
+$l    Znak <              $n    Trenutni pogon      $p    Trenutna pot\n\
+$q    Enačaj              $t    Trenutni čas        $v    različica cmd\n\
 \n\
-Note that entering the PROMPT command without a prompt-string resets the\n\
-prompt to the default, which is the current drive letter followed by its\n\
-current directory and a greater-than (>) sign.\n\
-(like a command PROMPT $p$g).\n\
+Ukaz PROMPT brez niza za nov poziv povzroči ponastavitev ukaznega poziva. Le-ta\n\
+je sestavljen iz poti trenutne mape (vključno s črko pogona), ki ji sledi znak\n\
+> (ekvivalento ukazu PROMPT $p$g).\n\
 \n\
-The prompt can also be changed by altering the PROMPT environment variable,\n\
-so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
+Ukazni poziv je prav tako možno spremeniti z uporabo spremenljivke okolja PROMPT;\n\
+ukaz 'SET PROMPT=text' ima enak učinek kot 'PROMPT text'.\n"
 
   WCMD_REM,
-"A command line beginning REM (followed by a space) performs no\n\
-action, and can therefore be used as a comment in a batch file.\n"
+"Vrstica, ki se začenja z REM (kateremu sledi presledek), se ne izvede in jo\n\
+zato lahko uporabimo kot komentar v paketni datoteki.\n"
 
-  WCMD_REN,    "Help about REN\n"
-  WCMD_RENAME, "Help about RENAME\n"
-  WCMD_RD,     "Help about RD\n"
-  WCMD_RMDIR,  "Help about RMDIR\n"
+  WCMD_REN,    "Pomoč za REN\n"
+  WCMD_RENAME, "Pomoč za RENAME\n"
+  WCMD_RD,     "Pomoč za RD\n"
+  WCMD_RMDIR,  "Pomoč za RMDIR\n"
 
   WCMD_SET,
-"SET displays or changes the cmd environment variables.\n\
+"SET prikaže oz. nastavi vrednost spremenljivke okolja.\n\
 \n\
-SET without parameters shows all of the current environment.\n\
+SET brez parametrov prikaže vse spremenljivke trenutnega okolja.\n\
 \n\
-To create or modify an environment variable the syntax is:\n\
+Sintaksa za ustvarjanje spremenljivke oz. spremninjaje njene vrednosti je:\n\
 \n\
-      SET <variable>=<value>\n\
+      SET <spremenljivka>=<vrednost>\n\
 \n\
-where <variable> and <value> are character strings. There must be no\n\
-spaces before the equals sign, nor can the variable name\n\
-have embedded spaces.\n\
+kjer sta tako <spremenljivka> kot <vrednost> znakovna niza. Pred enačajem ne\n\
+sme biti presledka. Ime spremenljivke prav tako ne sme vsebovati presledkov.\n\
 \n\
-Under Wine, the environment of the underlying operating system is\n\
-included into the Win32 environment, there will generally therefore be\n\
-many more values than in a native Win32 implementation. Note that it is\n\
-not possible to affect the operating system environment from within cmd.\n"
+Pri Wine-u je okolje matičnega operacijskega sistema vključeno v Win32 okolje,\n\
+zato v splošnem le-to vsebuje več spremenljivk okolja kot bi jih resnično\n\
+Win32 okolje. S programom cmd ni mogoče vplivati na okolje matičnega\n\
+operacijskega sistema.\n"
 
   WCMD_SHIFT,
-"SHIFT is used in a batch file to remove one parameter from the head of\n\
-the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n\
-if called from the command line.\n"
+"SHIFT uprabimo v paketni datoteki, da odstranimo prvi parameter s seznama\n\
+parametrov; parameter 2 tako postane parameter 1, itd. Ukaz nima nobenega\n\
+učinka, če ga uporabimo iz ukazne vrstice.\n"
 
-  WCMD_TIME,   "Help about TIME\n"
+  WCMD_TIME,   "Pomoč za TIME\n"
 
-  WCMD_TITLE,  "Sets the window title for the cmd window, syntax TITLE [string]\n"
+  WCMD_TITLE,  "Nastavi naslov za cmd okno; sintaksa je: TITLE [niz]\n"
 
   WCMD_TYPE,
-"TYPE <filename> copies <filename> to the console device (or elsewhere\n\
-if redirected). No check is made that the file is readable text.\n"
+"TYPE <ime_datoteke> prikaže vsebino datoteke <ime_datoteke> na zaslonu (oz.\n\
+drugje, če gre za preusmeritev). Ukaz ne preveri, ali je vsebina datoteke v\n\
+resnici berljivo besedilo.\n"
 
   WCMD_VERIFY,
-"VERIFY is used to set, clear or test the verify flag. Valid forms are:\n\
+"VERIFY uporabimo za nastavljanje, brisanje ali testiranje zastavice prevejanja.\n\
+Veljavne oblike ukaza so:\n\
 \n\
-VERIFY ON	Set the flag\n\
-VERIFY OFF	Clear the flag\n\
-VERIFY		Displays ON or OFF as appropriate.\n\
+VERIFY ON	Vključi zastavico\n\
+VERIFY OFF	Izključi zastavico\n\
+VERIFY		Prikaže ON oz. OFF.\n\
 \n\
-The verify flag has no function in Wine.\n"
+Zastavica preverjanja nima nobene funkcije v Wine.\n"
 
   WCMD_VER,
-"VER displays the version of cmd you are running\n"
+"VER prikaže različico cmd\n"
 
-  WCMD_VOL,    "Help about VOL\n"
+  WCMD_VOL,    "Pomoč za VOL\n"
 
-  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+  WCMD_PUSHD,  "PUSHD <ime_mape> shrani trenutno mapo in se nato preseli v\n\
+navedeno mapo.\n"
+
+  WCMD_POPD,   "POPD se preseli iz trenutne mape v mapo, ki je bila nazadnje\n\
+shranjena z ukazom PUSHD.\n"
+
+  WCMD_MORE,   "MORE prikaže vsebino datotek ali preusmerjenega vnosa po straneh.\n"
 
   WCMD_EXIT,
-"EXIT terminates the current command session and returns\n\
-to the operating system or shell from which you invoked cmd.\n"
+"EXIT konča trenutno ukazno sejo in vrne ustrezno stanje operacijskemu sistemu\n\
+oziroma ukazni lupini, iz katere ste zagnali cmd.\n"
 
-  WCMD_ALLHELP, "CMD built-in commands are:\n\
-ATTRIB\t\tShow or change DOS file attributes\n\
-CALL\t\tInvoke a batch file from inside another\n\
-CD (CHDIR)\tChange current default directory\n\
-CLS\t\tClear the console screen\n\
-COPY\t\tCopy file\n\
-CTTY\t\tChange input/output device\n\
-DATE\t\tShow or change the system date\n\
-DEL (ERASE)\tDelete a file or set of files\n\
-DIR\t\tList the contents of a directory\n\
-ECHO\t\tCopy text directly to the console output\n\
-HELP\t\tShow brief help details on a topic\n\
-MD (MKDIR)\tCreate a subdirectory\n\
-MORE\t\tDisplay output in pages\n\
-MOVE\t\tMove a file, set of files or directory tree\n\
-PATH\t\tSet or show the search path\n\
-PROMPT\t\tChange the command prompt\n\
-REN (RENAME)\tRename a file\n\
-RD (RMDIR)\tDelete a subdirectory\n\
-SET\t\tSet or show environment variables\n\
-TIME\t\tSet or show the current system time\n\
-TITLE\t\tSet the window title for the CMD session\n\
-TYPE\t\tType the contents of a text file\n\
-VER\t\tShow the current version of CMD\n\
-VOL\t\tShow the volume label of a disk device\n\
-EXIT\t\tClose down CMD\n\n\
-Enter HELP <command> for further information on any of the above commands\n"
+  WCMD_ALLHELP, "Vgrajeni ukazi CMD so:\n\
+ATTRIB\t\tPrikaže ali spremeni DOS atribute datotek\n\
+CALL\t\tPokliče paketni program iz drugega paketnega programa\n\
+CD (CHDIR)\tSpremeni trenutno mapo\n\
+CLS\t\tPočisti zaslon\n\
+COPY\t\tKopira datoteko\n\
+CTTY\t\tSpremeni vhodno/izhodno napravo\n\
+DATE\t\tPrikaže oz. spremeni sistemski datum\n\
+DEL (ERASE)\tIzbriše eno ali več datotek\n\
+DIR\t\tIzpiše vsebino mape\n\
+ECHO\t\tPrikaže besedilo v konzoli\n\
+HELP\t\tPrikaže kratko besedilo s pomočjo o želeni temi\n\
+MD (MKDIR)\tUstvari podmapo\n\
+MORE\t\tIzpiše besedilo po straneh\n\
+MOVE\t\tPremakne eno ali več datotek ali map\n\
+PATH\t\tNastavi oz. prikaže iskalno pot\n\
+POPD\t\tNastavi trenutno mapo na mapo, nazadnje shranjeno z ukazom PUSHD\n\
+PROMPT\t\tSpremeni ukazni poziv\n\
+PUSHD\t\tShrani trenutno mapo in se preseli v navedeno mapo\n\
+REN (RENAME)\tPreimenuje datoteko\n\
+RD (RMDIR)\tIzbriše podmapo\n\
+SET\t\tNastavi oz. prikaže vrednost spremenljivke okolja\n\
+TIME\t\tNastavi oz. prikaže trenutni sistemski čas\n\
+TITLE\t\tNastavi naslov okna CMD seje\n\
+TYPE\t\tPrikaže vsebino besedilne datoteke\n\
+VER\t\tPrikaže trenutno različico CMD\n\
+VOL\t\tPrikaže oznako pogona\n\
+EXIT\t\tZapre CMD sejo\n\n\
+Uporabite HELP <ukaz> za več informacijo o kateremkoli od zgoraj navedenih ukazov\n"
 
-  WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
+  WCMD_CONFIRM, "Ali ste prepričani?"
+  WCMD_YES, "D"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "File association missing for extension %s\n"
-  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
-  WCMD_OVERWRITE, "Overwrite %s"
-  WCMD_MORESTR, "More..."
-  WCMD_TRUNCATEDLINE, "Line in Batch processing possibly truncated. Using:\n"
-  WCMD_NYI, "Not Yet Implemented\n\n"
-  WCMD_NOARG, "Argument missing\n"
-  WCMD_SYNTAXERR, "Syntax error\n"
-  WCMD_FILENOTFOUND, "%s : File Not Found\n"
-  WCMD_NOCMDHELP, "No help available for %s\n"
-  WCMD_NOTARGET, "Target to GOTO not found\n"
-  WCMD_CURRENTDATE, "Current Date is %s\n"
-  WCMD_CURRENTTIME, "Current Time is %s\n"
-  WCMD_NEWDATE, "Enter new date: "
-  WCMD_NEWTIME, "Enter new time: "
-  WCMD_MISSINGENV, "Environment variable %s not defined\n"
-  WCMD_READFAIL, "Failed to open '%s'\n"
-  WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
+  WCMD_NOASSOC, "Manjkajoča povezava s programom za končnico %s\n"
+  WCMD_NOFTYPE, "Noben ukaz ni povezan z vrsto datotek '%s'\n"
+  WCMD_OVERWRITE, "Ali naj prepišem %s?"
+  WCMD_MORESTR, "Več ..."
+  WCMD_TRUNCATEDLINE, "Vrstica v paketni datoteki je morda skrajšana. Uporabljam:\n"
+  WCMD_NYI, "Ni (še) na voljo\n\n"
+  WCMD_NOARG, "Manjkajoč argument\n"
+  WCMD_SYNTAXERR, "Napaka v sintaksi\n"
+  WCMD_FILENOTFOUND, "%s : datoteke ni mogoče najti\n"
+  WCMD_NOCMDHELP, "Za ukaz %s pomoč ni na voljo\n"
+  WCMD_NOTARGET, "Cilja ukaza GOTO ni mogoče najti\n"
+  WCMD_CURRENTDATE, "Trenuten datum je %s\n"
+  WCMD_CURRENTTIME, "Trenuten čas je %s\n"
+  WCMD_NEWDATE, "Vnesite nov datum: "
+  WCMD_NEWTIME, "Vnesite nov čas: "
+  WCMD_MISSINGENV, "Spremenljivka okolja %s ni definirana\n"
+  WCMD_READFAIL, "Napaka pri odpiranju '%s'\n"
+  WCMD_CALLINSCRIPT, "Klic paketne oznake zunaj paketne datoteke ni mogoč\n"
   WCMD_ALL, "A"
-  WCMD_DELPROMPT, "%s, Delete"
-  WCMD_ECHOPROMPT, "Echo is %s\n"
-  WCMD_VERIFYPROMPT, "Verify is %s\n"
-  WCMD_VERIFYERR, "Verify must be ON or OFF\n";
-  WCMD_ARGERR, "Parameter error\n"
-  WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
-  WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"
-  WCMD_NOPATH, "PATH not found\n"
-  WCMD_ANYKEY,"Press Return key to continue: "
-  WCMD_CONSTITLE,"Wine Command Prompt"
-  WCMD_VERSION,"CMD Version %s\n\n"
-  WCMD_MOREPROMPT, "More? "
+  WCMD_DELPROMPT, "Ali naj izbrišem %s?"
+  WCMD_ECHOPROMPT, "Odmev je %s\n"
+  WCMD_VERIFYPROMPT, "Zastavica preverjanja je nastavljena na %s\n"
+  WCMD_VERIFYERR, "Vrednost zastavice preverjanja mora biti ON ali OFF\n";
+  WCMD_ARGERR, "Napaka parametra\n"
+  WCMD_VOLUMEDETAIL, "Podatkovni nosilec v pogonu %c je %s\nSerijska št. nosilca je %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "Oznaka podatkovnega nosilca (11 znakov, ENTER za brez)?"
+  WCMD_NOPATH, "Poit PATH ni mogoče najti\n"
+  WCMD_ANYKEY,"Za nadaljevanje pritisnite Return: "
+  WCMD_CONSTITLE,"Wine ukazni poziv"
+  WCMD_VERSION,"CMD različica %s\n\n"
+  WCMD_MOREPROMPT, "Več? "
 }
+
+#pragma code_page(default)
