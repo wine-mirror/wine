@@ -4610,6 +4610,10 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
                     SendMessageW( hwndParent, WM_COMMAND, IDOK, (LPARAM)GetDlgItem( hwndParent, IDOK ) );
 	    }
 	    break;
+        case VK_ESCAPE:
+	    if (!(es->style & ES_MULTILINE))
+                SendMessageW(GetParent(es->hwndSelf), WM_COMMAND, IDCANCEL, (LPARAM)GetDlgItem( GetParent(es->hwndSelf), IDCANCEL ) );
+            break;
 	}
 	return 0;
 }

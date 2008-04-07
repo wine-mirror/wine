@@ -300,8 +300,6 @@ static INT_PTR CALLBACK edit_singleline_dialog_proc(HWND hdlg, UINT msg, WPARAM 
                     break;
                 case 1:
                     PostMessage(hedit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
-                    /* needed so the test does not wait for user input */
-                    PostMessage(hdlg, WM_USER, 0xfeedbeef, 0);
                     break;
                 case 2:
                     PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
@@ -330,8 +328,6 @@ static INT_PTR CALLBACK edit_singleline_dialog_proc(HWND hdlg, UINT msg, WPARAM 
                 case 7:
                     PostMessage(hedit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
                     PostMessage(hedit, WM_CHAR, VK_RETURN, 0x1c0001);
-                    /* needed so the test does not wait for user input */
-                    PostMessage(hdlg, WM_USER, 0xfeedbeef, 0);
                     break;
                 case 8:
                     PostMessage(hedit, WM_KEYDOWN, VK_TAB, 0xf0001);
@@ -371,11 +367,6 @@ static INT_PTR CALLBACK edit_singleline_dialog_proc(HWND hdlg, UINT msg, WPARAM 
             HWND hfocus = GetFocus();
             int len = SendMessage(hedit, WM_GETTEXTLENGTH, 0, 0);
 
-            if (wparam == 0xfeedbeef)
-            {
-                EndDialog(hdlg, 66);
-                break;
-            }
             if (wparam != 0xdeadbeef)
                 break;
 
@@ -1872,7 +1863,7 @@ static void test_singleline_wantreturn_edit_dialog(void)
 
     /* tests for WM_KEYDOWN */
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 0);
-    todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
+    ok(222 == r, "Expected %d, got %d\n", 222, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 1);
     ok(111 == r, "Expected %d, got %d\n", 111, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 2);
@@ -1888,7 +1879,7 @@ static void test_singleline_wantreturn_edit_dialog(void)
 
     /* tests for WM_KEYDOWN + WM_CHAR */
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 6);
-    todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
+    ok(222 == r, "Expected %d, got %d\n", 222, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 7);
     ok(111 == r, "Expected %d, got %d\n", 111, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 8);
@@ -1896,7 +1887,7 @@ static void test_singleline_wantreturn_edit_dialog(void)
 
     /* tests for WM_KEYDOWN */
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 0);
-    todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
+    ok(222 == r, "Expected %d, got %d\n", 222, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 1);
     ok(111 == r, "Expected %d, got %d\n", 111, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 2);
@@ -1912,7 +1903,7 @@ static void test_singleline_wantreturn_edit_dialog(void)
 
     /* tests for WM_KEYDOWN + WM_CHAR */
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 6);
-    todo_wine ok(222 == r, "Expected %d, got %d\n", 222, r);
+    ok(222 == r, "Expected %d, got %d\n", 222, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 7);
     ok(111 == r, "Expected %d, got %d\n", 111, r);
     r = DialogBoxParam(hinst, "EDIT_SINGLELINE_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_singleline_dialog_proc, 8);
