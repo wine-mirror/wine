@@ -2,7 +2,7 @@
  * Start
  * Slovenian Language Support
  *
- * Copyright 2003 Rok Mandeljc <rok.mandeljc@gimb.org>
+ * Copyright 2003, 2008 Rok Mandeljc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,29 +19,31 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 {
-STRING_USAGE,                                   "Zaûene program ali odpre dokument s programom, ki obiËajno odpira dokumente te vrste. \n\
+STRING_USAGE,                                   "Za≈æene program oziroma odpre dokument v programu, ki je povezan z datotekami te vrste. \n\
 Uporaba: \n\
-start [moûnosti] ime_programa [...] \n\
-start [moûnosti] ime_dokumenta \n\
+start [mo≈ænosti] ime_programa [...] \n\
+start [mo≈ænosti] ime_dokumenta \n\
  \n\
-Moûnosti: \n\
-/M[inimized] Zaûene program program v minimiranem naËinu. \n\
-/MAX[imized] Zaûene program program v maksimiranem naËinu. \n\
-/R[estored]  Zaûene program program v navadnem naËinu (ne minimiran in ne maksimiran). \n\
-/W[ait]      PoËaka, da se zagnani program konËa in se zakljuËi z njegovo izhodno kodo. \n\
-/L           Pokaû licenËno pogodbo. \n\
+Mo≈ænosti: \n\
+/M[inimized] Za≈æene program s pomanj≈°anim oknom. \n\
+/MAX[imized] Za≈æene program z raz≈°irjenim oknom. \n\
+/R[estored]  Za≈æene program z obiƒçajno velikostjo okna. \n\
+/W[ait]      Poƒçaka, da se zagnani program zakljuƒçi, nato se zakljuƒçi in vrne izhodno kodo programa. \n\
+/L           Prika≈æe licenƒçno pogodbo. \n\
  \n\
-start.exe razliËica 0.2 Copyright (C) 2003, Dan Kegel \n\
-Start prihaja popolnoma BREZ GARANCIJE; za podrobnosti uporabite moûnost /L. \n\
+start.exe razliƒçica 0.2 Copyright (C) 2003, Dan Kegel \n\
+Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option. \n\
 This is free software, and you are welcome to redistribute it \n\
 under certain conditions; run 'start /L' for details. \n\
 "
 
-STRING_LICENSE, "start.exe razliËica 0.2 Copyright (C) 2003, Dan Kegel \n\
+STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
 This program is free software; you can redistribute it and/or \n\
 modify it under the terms of the GNU Lesser Public License \n\
 as published by the Free Software Foundation; either version 2.1 \n\
@@ -59,5 +61,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. \n\
 See the COPYING.LIB file for license information. \n\
 "
 
-STRING_EXECFAIL "Programa ni bilo mogoËe zagnati ali pa z dano vrsto dokumenta ni povezan noben program.\nShellExecuteEx je spodletel"
+STRING_EXECFAIL "Programa ni mogoƒçe zagnati ali pa z datoteko te vrste ni povezan noben program.\nUkaz ShellExecuteEx ni uspel"
 }
+
+#pragma code_page(default)
