@@ -42,6 +42,7 @@
 #include "oleaut32_Pt.rc"
 #include "oleaut32_Ro.rc"
 #include "oleaut32_Ru.rc"
+#include "oleaut32_Si.rc"
 #include "oleaut32_Sv.rc"
 #include "oleaut32_Th.rc"
 #include "oleaut32_Tr.rc"
@@ -49,6 +50,6 @@
 /*
  * FIXME:
  *  Finnish, Greek, Hebrew, Japanese, Korean,
- *  Turkish, Slovenian (at least) are localised in XP Home.
+ *  Turkish (at least) are localised in XP Home.
  *  I expect Chinese etc are localised in Asian Editions also.
  */
