@@ -29,3 +29,4 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #include "No.rc"
 #include "Pl.rc"
 #include "Ru.rc"
+#include "Si.rc"

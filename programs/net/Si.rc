@@ -1,0 +1,48 @@
+/*
+ * NET.EXE - Wine-compatible net program
+ * Slovenian language support
+ *
+ * Copyright (C) 2008 Rok Mandeljc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "Sintaksa ukaza:\n\nNET [ HELP | START | STOP | USE]\n"
+    STRING_START_USAGE, "Navedite ime storitve, ki naj jo zaženem.\n"
+    STRING_STOP_USAGE, "Navedite ime storitve, ki naj jo ustavim.\n"
+    STRING_STOP_DEP, "Ustavljam odvisno storitev: %s\n"
+    STRING_CANT_STOP, "Ustavljanje storitve %s ni uspelo\n"
+    STRING_NO_SCM, "Napaka pri povezovanju z Upraviteljem storitev.\n"
+    STRING_NO_SVCHANDLE, "Napaka pri povezovanju s storitvijo.\n"
+    STRING_START_SVC, "Zaganjam storitev %s.\n"
+    STRING_START_SVC_SUCCESS, "Zagon storitve %s je uspel.\n"
+    STRING_START_SVC_FAIL, "Zagon storitve %s ni uspel.\n"
+    STRING_STOP_SVC, "Ustavljam storitev %s.\n"
+    STRING_STOP_SVC_SUCCESS, "Ustavljanje storitve %s je uspelo.\n"
+    STRING_STOP_SVC_FAIL, "Ustavljanje storitve %s ni uspelo.\n"
+    STRING_HELP_USAGE, "Sintaksa ukaza je:\n\nNET HELP ukaz\n    -ali-\nNET ukaz /HELP\n\n"\
+                       "   Razpoložljivi ukazi:\n   NET HELP    NET START     NET STOP     NET USE\n"
+    STRING_NO_ENTRIES, "Na seznamu ni vnosov.\n"
+    STRING_USE_HEADER, "\nStanje  Lokalno   Oddaljeno\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY,  "%s      %S      %S      Porabljena sredstva: %lu\n"
+}
+
+#pragma code_page(default)
