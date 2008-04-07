@@ -1707,6 +1707,55 @@ static void test_enter(void)
     DestroyWindow (hwEdit);
 }
 
+static void test_tab(void)
+{
+    HWND hwEdit;
+    LONG r;
+    char buffer[16];
+
+    /* multiline */
+    hwEdit = create_editcontrol(ES_MULTILINE, 0);
+    r = get_edit_style(hwEdit);
+    ok(ES_MULTILINE == r, "Wrong style expected 0x%x got: 0x%x\n", ES_MULTILINE, r);
+
+    /* set text */
+    r = SendMessage(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
+    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+
+    r = SendMessage(hwEdit, WM_CHAR, VK_TAB, 0);
+    todo_wine ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+
+    /* get text */
+    buffer[0] = 0;
+    r = SendMessage(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
+    todo_wine {
+    ok(1 == r, "Expected: %d, got len %d\n", 1, r);
+    ok(0 == strcmp(buffer, "\t"), "expected \"\\t\", got \"%s\"\n", buffer);
+    }
+
+    DestroyWindow (hwEdit);
+
+    /* single line */
+    hwEdit = create_editcontrol(0, 0);
+    r = get_edit_style(hwEdit);
+    ok(0 == r, "Wrong style expected 0x%x got: 0x%x\n", 0, r);
+
+    /* set text */
+    r = SendMessage(hwEdit , WM_SETTEXT, 0, (LPARAM) "");
+    ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
+
+    r = SendMessage(hwEdit, WM_CHAR, VK_TAB, 0);
+    todo_wine ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+
+    /* get text */
+    buffer[0] = 0;
+    r = SendMessage(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
+    ok(0 == r, "Expected: %d, got len %d\n", 0, r);
+    ok(0 == strcmp(buffer, ""), "expected \"\", got \"%s\"\n", buffer);
+
+    DestroyWindow (hwEdit);
+}
+
 static void test_edit_dialog(void)
 {
     int r;
@@ -1932,6 +1981,7 @@ START_TEST(edit)
     test_espassword();
     test_undo();
     test_enter();
+    test_tab();
     test_edit_dialog();
     test_multi_edit_dialog();
     test_wantreturn_edit_dialog();
