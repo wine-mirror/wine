@@ -54,6 +54,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
 
 #include <stdio.h>
@@ -65,7 +66,6 @@
 #include <wine/unicode.h>
 #include <wine/debug.h>
 
-#define COBJMACROS
 #include <shlobj.h>
 #include <shobjidl.h>
 #include <shlwapi.h>
