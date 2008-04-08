@@ -223,6 +223,7 @@ static HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
         if (This->state == State_Stopped)
         {
             LeaveCriticalSection(&This->csFilter);
+            LeaveCriticalSection(&pin->thread_lock);
             return S_OK;
         }
         This->state = State_Stopped;
@@ -248,6 +249,7 @@ static HRESULT WINAPI Parser_Pause(IBaseFilter * iface)
     if (This->state == State_Paused)
     {
         LeaveCriticalSection(&This->csFilter);
+        LeaveCriticalSection(&pin->thread_lock);
         return S_OK;
     }
 
@@ -284,6 +286,7 @@ static HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
         if (This->state == State_Running)
         {
             LeaveCriticalSection(&This->csFilter);
+            LeaveCriticalSection(&pin->thread_lock);
             return S_OK;
         }
 
