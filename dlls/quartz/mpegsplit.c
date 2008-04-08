@@ -52,6 +52,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 #define MPEG_AUDIO_HEADER 1
 #define MPEG_NO_HEADER 0
 
+#define SEEK_INTERVAL (ULONGLONG)(30 * 10000000) /* Add an entry every 30 seconds */
+
+struct seek_entry {
+    ULONGLONG bytepos;
+    ULONGLONG timepos;
+};
+
 typedef struct MPEGSplitterImpl
 {
     ParserImpl Parser;
@@ -63,6 +70,8 @@ typedef struct MPEGSplitterImpl
     DWORD header_bytes;
     DWORD remaining_bytes;
     BOOL seek;
+    ULONG seek_entries;
+    struct seek_entry *seektable;
 } MPEGSplitterImpl;
 
 static int MPEGSplitter_head_check(const BYTE *header)
@@ -649,11 +658,16 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
     This->header_bytes = pos;
     This->skipbytes = 0;
 
+    This->seektable[0].bytepos = pos;
+    This->seektable[0].timepos = 0;
+
     switch(streamtype)
     {
         case MPEG_AUDIO_HEADER:
         {
             LONGLONG duration = 0;
+            DWORD last_entry = 0;
+
             DWORD ticks = GetTickCount();
 
             hr = MPEGSplitter_init_audio(This, header, &piOutput, &amt);
@@ -703,6 +717,25 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
                        break;
                 }
                 pos += length;
+
+                if (This->seektable && (duration / SEEK_INTERVAL) > last_entry)
+                {
+                    if (last_entry + 1 > duration / SEEK_INTERVAL)
+                    {
+                        ERR("Somehow skipped %d interval lengths instead of 1\n", (DWORD)(duration/SEEK_INTERVAL) - (last_entry + 1));
+                    }
+                    ++last_entry;
+
+                    TRACE("Entry: %u\n", last_entry);
+                    if (last_entry >= This->seek_entries)
+                    {
+                        This->seek_entries += 64;
+                        This->seektable = CoTaskMemRealloc(This->seektable, (This->seek_entries)*sizeof(struct seek_entry));
+                    }
+                    This->seektable[last_entry].bytepos = pos;
+                    This->seektable[last_entry].timepos = duration;
+                }
+
                 TRACE("Pos: %x%08x/%x%08x\n", (DWORD)(pos >> 32), (DWORD)pos, (DWORD)(This->EndOfFile>>32), (DWORD)This->EndOfFile);
             }
             hr = S_OK;
@@ -751,11 +784,6 @@ static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
     HRESULT hr = S_OK;
     BYTE header[4];
 
-    /* Position, in bytes */
-    bytepos = This->header_bytes;
-
-    /* Position, in media time, current and new */
-    timepos = 0;
     newpos = This->Parser.mediaSeeking.llCurrent;
 
     if (newpos > This->duration)
@@ -770,23 +798,28 @@ static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
         return S_OK;
     }
 
+    /* Position, cached */
+    bytepos = This->seektable[newpos / SEEK_INTERVAL].bytepos;
+    timepos = This->seektable[newpos / SEEK_INTERVAL].timepos;
+
     hr = IAsyncReader_SyncRead(pPin->pReader, bytepos, 4, header);
-    while (bytepos < This->EndOfFile && SUCCEEDED(hr))
+    while (timepos < newpos && bytepos + 3 < This->EndOfFile)
     {
         LONGLONG length = 0;
         hr = IAsyncReader_SyncRead(pPin->pReader, bytepos, 4, header);
-        while (parse_header(header, &length, &timepos))
+        if (hr != S_OK)
+            break;
+
+        while (parse_header(header, &length, &timepos) && bytepos + 3 < This->EndOfFile)
         {
             /* No valid header yet; shift by a byte and check again */
             memmove(header, header+1, 3);
             hr = IAsyncReader_SyncRead(pPin->pReader, ++bytepos, 1, header + 3);
-            if (FAILED(hr))
+            if (hr != S_OK)
                 break;
          }
          bytepos += length;
          TRACE("Pos: %x%08x/%x%08x\n", (DWORD)(bytepos >> 32), (DWORD)bytepos, (DWORD)(This->EndOfFile>>32), (DWORD)This->EndOfFile);
-         if (timepos >= newpos)
-             break;
     }
 
     if (SUCCEEDED(hr))
@@ -836,6 +869,14 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
         return E_OUTOFMEMORY;
 
     ZeroMemory(This, sizeof(MPEGSplitterImpl));
+    This->seektable = CoTaskMemAlloc(sizeof(struct seek_entry) * 64);
+    if (!This->seektable)
+    {
+        CoTaskMemFree(This);
+        return E_OUTOFMEMORY;
+    }
+    This->seek_entries = 64;
+
     hr = Parser_Create(&(This->Parser), &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup, NULL, MPEGSplitter_seek, NULL);
     if (FAILED(hr))
     {
