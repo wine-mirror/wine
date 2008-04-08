@@ -1902,8 +1902,22 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
         * The TARGETS property should have returned us a list of atoms
         * corresponding to each selection target format supported.
         */
-       if (aformat == 32 && (atype == XA_ATOM || atype == x11drv_atom(TARGETS)))
-           X11DRV_CLIPBOARD_InsertSelectionProperties(display, targetList, cSelectionTargets);
+       if (atype == XA_ATOM || atype == x11drv_atom(TARGETS))
+       {
+           if (aformat == 32)
+           {
+               X11DRV_CLIPBOARD_InsertSelectionProperties(display, targetList, cSelectionTargets);
+           }
+           else if (aformat == 8)  /* work around quartz-wm brain damage */
+           {
+               unsigned long i, count = cSelectionTargets / sizeof(CARD32);
+               Atom *atoms = HeapAlloc( GetProcessHeap(), 0, count * sizeof(Atom) );
+               for (i = 0; i < count; i++)
+                   atoms[i] = ((CARD32 *)targetList)[i];  /* FIXME: byte swapping */
+               X11DRV_CLIPBOARD_InsertSelectionProperties( display, atoms, count );
+               HeapFree( GetProcessHeap(), 0, atoms );
+           }
+       }
 
        /* Free the list of targets */
        wine_tsx11_lock();
