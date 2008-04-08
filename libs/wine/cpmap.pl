@@ -74,6 +74,7 @@ $DEF_CHAR = ord '?';
     [ 1256,  "VENDORS/MICSFT/WINDOWS/CP1256.TXT", 0, "ANSI Arabic" ],
     [ 1257,  "VENDORS/MICSFT/WINDOWS/CP1257.TXT", 0, "ANSI Baltic" ],
     [ 1258,  "VENDORS/MICSFT/WINDOWS/CP1258.TXT", 0, "ANSI/OEM Viet Nam" ],
+    [ 1361,  "OBSOLETE/EASTASIA/KSC/JOHAB.TXT",   0, "Korean Johab" ],
     [ 10000, "VENDORS/MICSFT/MAC/ROMAN.TXT",      0, "Mac Roman" ],
     [ 10006, "VENDORS/MICSFT/MAC/GREEK.TXT",      0, "Mac Greek" ],
     [ 10007, "VENDORS/MICSFT/MAC/CYRILLIC.TXT",   0, "Mac Cyrillic" ],
@@ -391,6 +392,11 @@ sub READ_FILE
             $uni = hex $2;
             $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
             $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
+            if ($cp > 0xff && !defined($cp2uni[$cp >> 8]))
+            {
+                push @lead_bytes,$cp >> 8;
+                $cp2uni[$cp >> 8] = 0;
+            }
             next;
         }
         die "$name: Unrecognized line $_\n";
@@ -633,7 +639,7 @@ sub DUMP_SORTKEYS
     # output the default values
 
     printf OUTPUT "    /* defaults */\n";
-    printf OUTPUT "%s", DUMP_ARRAY( "0x%08x", 0, (-1) x 256 );
+    printf OUTPUT "%s", DUMP_ARRAY( "0x%08x", 0, (0xffffffff) x 256 );
 
     # output all the key ranges
 
@@ -641,7 +647,7 @@ sub DUMP_SORTKEYS
     {
         next if $offsets[$i] == 256;
         printf OUTPUT ",\n    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
-        printf OUTPUT "%s", DUMP_ARRAY( "0x%08x", -1, @keys[($i<<8) .. ($i<<8)+255] );
+        printf OUTPUT "%s", DUMP_ARRAY( "0x%08x", 0xffffffff, @keys[($i<<8) .. ($i<<8)+255] );
     }
     printf OUTPUT "\n};\n";
     close OUTPUT;
@@ -1244,7 +1250,7 @@ sub HANDLE_FILE
 sub save_file($)
 {
     my $file = shift;
-    if (!system "cmp $file $file.new >/dev/null")
+    if (-f $file && !system "cmp $file $file.new >/dev/null")
     {
         unlink "$file.new";
     }
