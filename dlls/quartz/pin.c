@@ -120,7 +120,8 @@ static HRESULT SendFurther( IPin *from, SendPinFunc fnMiddle, LPVOID arg, SendPi
             }
             IPin_Release( pin );
         }
-    } while (hr == S_OK);
+    }
+
     if (!foundend)
         hr = hr_return;
     else if (fnEnd) {
