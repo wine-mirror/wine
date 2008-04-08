@@ -223,6 +223,7 @@ static void dock_systray_window( HWND hwnd, Window systray_window )
     Display *display = thread_display();
     struct x11drv_win_data *data;
     XEvent ev;
+    XSetWindowAttributes attr;
     unsigned long info[2];
 
     if (!(data = X11DRV_get_win_data( hwnd )) &&
@@ -252,6 +253,10 @@ static void dock_systray_window( HWND hwnd, Window systray_window )
     ev.xclient.data.l[3] = 0;
     ev.xclient.data.l[4] = 0;
     XSendEvent( display, systray_window, False, NoEventMask, &ev );
+    attr.background_pixmap = ParentRelative;
+    attr.bit_gravity = ForgetGravity;
+    XChangeWindowAttributes( display, data->whole_window, CWBackPixmap | CWBitGravity, &attr );
+    XChangeWindowAttributes( display, data->client_window, CWBackPixmap | CWBitGravity, &attr );
     wine_tsx11_unlock();
 
     data->mapped = TRUE;
@@ -295,7 +300,6 @@ static BOOL show_icon( struct tray_icon *icon )
         class.lpfnWndProc   = tray_wndproc;
         class.hCursor       = LoadCursorW( 0, (LPCWSTR)IDC_ARROW );
         class.lpszClassName = tray_classname;
-        class.hbrBackground = (HBRUSH)COLOR_WINDOW;
         class.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 
         if (!RegisterClassExW(&class) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
@@ -344,7 +348,10 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
         icon->image = CopyIcon(nid->hIcon);
 
         if (!icon->hidden)
-            RedrawWindow(icon->window, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
+        {
+            struct x11drv_win_data *data = X11DRV_get_win_data( icon->window );
+            if (data) XClearArea( gdi_display, data->client_window, 0, 0, 0, 0, True );
+        }
     }
 
     if (nid->uFlags & NIF_MESSAGE)
