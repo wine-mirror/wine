@@ -918,6 +918,8 @@ int CDECL MSVCRT_fseek(MSVCRT_FILE* file, long offset, int whence)
   if(file->_flag & MSVCRT__IORW) {
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
   }
+  /* Clear end of file flag */
+  file->_flag &= ~MSVCRT__IOEOF;
   return (_lseek(file->_file,offset,whence) == -1)?-1:0;
 }
 

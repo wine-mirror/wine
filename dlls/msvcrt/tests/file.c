@@ -241,7 +241,7 @@ static void test_readmode( BOOL ascii_mode )
     ok(fread(buffer,1,1,file)==0,"fread failure in %s\n", IOMODE);
     ok(feof(file)!=0,"feof failure in %s\n", IOMODE);
     ok(fseek(file,-3,SEEK_CUR)==0,"seek failure in %s\n", IOMODE);
-    todo_wine ok(feof(file)==0,"feof failure in %s\n", IOMODE);
+    ok(feof(file)==0,"feof failure in %s\n", IOMODE);
     ok(fread(buffer,2,1,file)==1,"fread failed in %s\n", IOMODE);
     ok(feof(file)==0,"feof failure in %s\n", IOMODE);
     ok(fread(buffer,2,1,file)==0,"fread failure in %s\n",IOMODE);
