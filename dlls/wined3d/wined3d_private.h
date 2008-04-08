@@ -620,6 +620,7 @@ struct WineD3DContext {
     HDC                     hdc;
     HPBUFFERARB             pbuffer;
     BOOL                    isPBuffer;
+    GLint                   aux_buffers;
 };
 
 typedef enum ContextUsage {

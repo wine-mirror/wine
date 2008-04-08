@@ -362,6 +362,9 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
 
     ENTER_GL();
+
+    glGetIntegerv(GL_AUX_BUFFERS, &ret->aux_buffers);
+
     TRACE("Setting up the screen\n");
     /* Clear the screen */
     glClearColor(1.0, 0.0, 0.0, 0.0);

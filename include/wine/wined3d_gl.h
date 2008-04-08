@@ -3824,7 +3824,6 @@ typedef struct _WineD3D_GL_Info {
   float  max_pointsize, max_pointsizemin;
   UINT   max_blends;
   UINT   max_anisotropy;
-  UINT   max_aux_buffers;
   UINT   max_glsl_varyings;
   float  max_shininess;
 

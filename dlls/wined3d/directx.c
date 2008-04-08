@@ -724,10 +724,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     gl_info->max_pointsize = gl_floatv[1];
     TRACE_(d3d_caps)("Maximum point size support - max point size=%f\n", gl_floatv[1]);
 
-    glGetIntegerv(GL_AUX_BUFFERS, &gl_max);
-    gl_info->max_aux_buffers = gl_max;
-    TRACE_(d3d_caps)("Offscreen rendering support - number of aux buffers=%d\n", gl_max);
-
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = (const char *) glGetString(GL_EXTENSIONS);
     TRACE_(d3d_caps)("GL_Extensions reported:\n");
