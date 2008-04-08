@@ -96,6 +96,7 @@ static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GU
     size = sizeof(keying);
     if (!l)
         l = RegQueryValueExW(hsub, subtype_name, NULL, NULL, (LPBYTE)keying, &size);
+
     if (!l)
         CLSIDFromString(keying, minorType);
 
@@ -433,7 +434,8 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
         DeleteCriticalSection(&This->csFilter);
         This->lpVtbl = NULL;
         CoTaskMemFree(This->pszFileName);
-        FreeMediaType(This->pmt);
+        if (This->pmt)
+            FreeMediaType(This->pmt);
         CoTaskMemFree(This);
         return 0;
     }
@@ -681,7 +683,8 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
         }
 
         CoTaskMemFree(This->pszFileName);
-        FreeMediaType(This->pmt);
+        if (This->pmt)
+            FreeMediaType(This->pmt);
         This->pszFileName = NULL;
         This->pmt = NULL;
 
