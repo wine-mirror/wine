@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winex11.drv
 IMPORTS   = user32 gdi32 advapi32 imm32 kernel32 ntdll
+DELAYIMPORTS = comctl32
 EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@
 
@@ -30,6 +31,7 @@ C_SRCS = \
 	pen.c \
 	scroll.c \
 	settings.c \
+	systray.c \
 	text.c \
 	window.c \
 	winpos.c \

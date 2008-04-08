@@ -64,9 +64,6 @@ static const char gl_drawable_prop[]  = "__wine_x11_gl_drawable";
 static const char pixmap_prop[]       = "__wine_x11_pixmap";
 static const char managed_prop[]      = "__wine_x11_managed";
 
-/* for XDG systray icons */
-#define SYSTEM_TRAY_REQUEST_DOCK    0
-
 extern int usexcomposite;
 
 /***********************************************************************
@@ -689,93 +686,6 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data, HICO
         hints->icon_mask = X11DRV_get_pixmap(data->hWMIconMask);
         destroy_icon_window( display, data );
         hints->flags = (hints->flags & ~IconWindowHint) | IconPixmapHint | IconMaskHint;
-    }
-}
-
-/***********************************************************************
- *              wine_make_systray_window   (X11DRV.@)
- *
- * Docks the given X window with the NETWM system tray.
- */
-void X11DRV_make_systray_window( HWND hwnd )
-{
-    static Atom systray_atom;
-    Display *display = thread_display();
-    struct x11drv_win_data *data;
-    Window systray_window;
-
-    if (root_window != DefaultRootWindow(display)) return;
-
-    if (!(data = X11DRV_get_win_data( hwnd )) &&
-        !(data = X11DRV_create_win_data( hwnd ))) return;
-
-    wine_tsx11_lock();
-    if (!systray_atom)
-    {
-        if (DefaultScreen( display ) == 0)
-            systray_atom = x11drv_atom(_NET_SYSTEM_TRAY_S0);
-        else
-        {
-            char systray_buffer[29]; /* strlen(_NET_SYSTEM_TRAY_S4294967295)+1 */
-            sprintf( systray_buffer, "_NET_SYSTEM_TRAY_S%u", DefaultScreen( display ) );
-            systray_atom = XInternAtom( display, systray_buffer, False );
-        }
-    }
-    systray_window = XGetSelectionOwner( display, systray_atom );
-    wine_tsx11_unlock();
-
-    TRACE("Docking tray icon %p\n", data->hwnd);
-
-    if (systray_window != None)
-    {
-        XEvent ev;
-        unsigned long info[2];
-
-        /* the window _cannot_ be mapped if we intend to dock with an XEMBED tray */
-        if (data->mapped) FIXME( "trying to dock mapped window %p\n", data->hwnd );
-
-        /* set XEMBED protocol data on the window */
-        info[0] = 0; /* protocol version */
-        info[1] = 1; /* mapped = true */
-
-        wine_tsx11_lock();
-        XChangeProperty( display, data->whole_window,
-                         x11drv_atom(_XEMBED_INFO),
-                         x11drv_atom(_XEMBED_INFO), 32, PropModeReplace,
-                         (unsigned char*)info, 2 );
-
-        /* send the docking request message */
-        ev.xclient.type = ClientMessage;
-        ev.xclient.window = systray_window;
-        ev.xclient.message_type = x11drv_atom( _NET_SYSTEM_TRAY_OPCODE );
-        ev.xclient.format = 32;
-        ev.xclient.data.l[0] = CurrentTime;
-        ev.xclient.data.l[1] = SYSTEM_TRAY_REQUEST_DOCK;
-        ev.xclient.data.l[2] = data->whole_window;
-        ev.xclient.data.l[3] = 0;
-        ev.xclient.data.l[4] = 0;
-        XSendEvent( display, systray_window, False, NoEventMask, &ev );
-        wine_tsx11_unlock();
-
-        data->mapped = TRUE;
-    }
-    else
-    {
-        int val = 1;
-
-        /* fall back to he KDE hints if the WM doesn't support XEMBED'ed
-         * systrays */
-        
-        wine_tsx11_lock();
-        XChangeProperty( display, data->whole_window, 
-                         x11drv_atom(KWM_DOCKWINDOW),
-                         x11drv_atom(KWM_DOCKWINDOW), 32, PropModeReplace,
-                         (unsigned char*)&val, 1 );
-        XChangeProperty( display, data->whole_window,
-                         x11drv_atom(_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR),
-                         XA_WINDOW, 32, PropModeReplace,
-                         (unsigned char*)&data->whole_window, 1 );
-       wine_tsx11_unlock();
     }
 }
 

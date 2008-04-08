@@ -45,6 +45,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(systray);
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
+static BOOL (*wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
+
 static const WCHAR adaptor_classname[] = /* Adaptor */ {'A','d','a','p','t','o','r',0};
 
 /* tray state */
@@ -146,7 +148,6 @@ static void update_tooltip_text(struct icon *icon)
  */
 static BOOL display_icon(struct icon *icon, BOOL hide)
 {
-    HMODULE x11drv = GetModuleHandleA("winex11.drv");
     RECT rect;
     static const WCHAR adaptor_windowname[] = /* Wine System Tray Adaptor */ {'W','i','n','e',' ','S','y','s','t','e','m',' ','T','r','a','y',' ','A','d','a','p','t','o','r',0};
 
@@ -182,11 +183,6 @@ static BOOL display_icon(struct icon *icon, BOOL hide)
                                   rect.right - rect.left,
                                   rect.bottom - rect.top,
                                   NULL, NULL, NULL, icon);
-    if (x11drv)
-    {
-        void (*make_systray_window)(HWND) = (void *)GetProcAddress(x11drv, "wine_make_systray_window");
-        if (make_systray_window) make_systray_window(icon->window);
-    }
 
     if (!hide_systray)
         ShowWindow(icon->window, SW_SHOWNA);
@@ -355,6 +351,12 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
                                buffer, buffer + cbMaskBits);
     }
 
+    if (wine_notify_icon && wine_notify_icon( cds->dwData, &nid ))
+    {
+        if (nid.uFlags & NIF_ICON) DestroyIcon( nid.hIcon );
+        return TRUE;
+    }
+
     switch (cds->dwData)
     {
     case NIM_ADD:
@@ -484,12 +486,16 @@ static BOOL is_systray_hidden(void)
 /* this function creates the listener window */
 void initialize_systray(void)
 {
+    HMODULE x11drv;
     WNDCLASSEX class;
     static const WCHAR classname[] = /* Shell_TrayWnd */ {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
     static const WCHAR winname[]   = /* Wine Systray Listener */
         {'W','i','n','e',' ','S','y','s','t','r','a','y',' ','L','i','s','t','e','n','e','r',0};
 
     WINE_TRACE("initiaizing\n");
+
+    if ((x11drv = GetModuleHandleA( "winex11.drv" )))
+        wine_notify_icon = (void *)GetProcAddress( x11drv, "wine_notify_icon" );
 
     hide_systray = is_systray_hidden();
 
