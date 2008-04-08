@@ -56,7 +56,7 @@ static BOOL init_tests(void)
     if (size == 0)
         return FALSE;
 
-    if (!GetTempPathW(sizeof temp_path, temp_path))
+    if (!GetTempPathW(MAX_PATH, temp_path))
         return FALSE;
 
     /* We might end up relying on the extension here, so .TMP is no good.  */
