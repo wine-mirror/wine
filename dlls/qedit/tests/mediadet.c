@@ -120,10 +120,36 @@ static void test_mediadet(void)
     ok(hr == E_INVALIDARG, "IMediaDet_get_OutputStreams\n");
     ok(nstrms == -1, "IMediaDet_get_OutputStreams\n");
 
+    strm = -1;
+    /* The stream defaults to 0, even without a file!  */
+    hr = IMediaDet_get_CurrentStream(pM, &strm);
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+
+    hr = IMediaDet_get_CurrentStream(pM, NULL);
+    ok(hr == E_POINTER, "IMediaDet_get_CurrentStream\n");
+
+    /* But put_CurrentStream doesn't.  */
+    hr = IMediaDet_put_CurrentStream(pM, 0);
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+
+    hr = IMediaDet_put_CurrentStream(pM, -1);
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
     ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
     SysFreeString(filename);
+
+    strm = -1;
+    /* The stream defaults to 0.  */
+    hr = IMediaDet_get_CurrentStream(pM, &strm);
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+
+    /* Even before get_OutputStreams.  */
+    hr = IMediaDet_put_CurrentStream(pM, 1);
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
 
     hr = IMediaDet_get_OutputStreams(pM, &nstrms);
     ok(hr == S_OK, "IMediaDet_get_OutputStreams\n");
@@ -139,13 +165,33 @@ static void test_mediadet(void)
     hr = IMediaDet_get_Filename(pM, NULL);
     ok(hr == E_POINTER, "IMediaDet_get_Filename\n");
 
+    strm = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &strm);
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+
+    hr = IMediaDet_get_CurrentStream(pM, NULL);
+    ok(hr == E_POINTER, "IMediaDet_get_CurrentStream\n");
+
+    hr = IMediaDet_put_CurrentStream(pM, -1);
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+
+    hr = IMediaDet_put_CurrentStream(pM, 1);
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+
+    /* Try again.  */
+    strm = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &strm);
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+
     hr = IMediaDet_put_CurrentStream(pM, 0);
-    todo_wine ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
 
     strm = -1;
     hr = IMediaDet_get_CurrentStream(pM, &strm);
-    todo_wine ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-    todo_wine ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+    ok(strm == 0, "IMediaDet_get_CurrentStream\n");
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
@@ -185,7 +231,7 @@ static void test_mediadet(void)
     flags = 0;
 
     hr = IMediaDet_put_CurrentStream(pM, 0);
-    todo_wine ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
@@ -197,7 +243,12 @@ static void test_mediadet(void)
                  : 0));
 
     hr = IMediaDet_put_CurrentStream(pM, 1);
-    todo_wine ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+    ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+
+    strm = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &strm);
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+    ok(strm == 1, "IMediaDet_get_CurrentStream\n");
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
@@ -209,6 +260,14 @@ static void test_mediadet(void)
                  : 0));
 
     todo_wine ok(flags == 3, "IMediaDet_get_StreamMediaType\n");
+
+    hr = IMediaDet_put_CurrentStream(pM, 2);
+    ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
+
+    strm = -1;
+    hr = IMediaDet_get_CurrentStream(pM, &strm);
+    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+    ok(strm == 1, "IMediaDet_get_CurrentStream\n");
 
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);

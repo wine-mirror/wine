@@ -37,6 +37,8 @@ typedef struct MediaDetImpl {
     IGraphBuilder *graph;
     IBaseFilter *source;
     IBaseFilter *splitter;
+    long num_streams;
+    long cur_stream;
 } MediaDetImpl;
 
 static void MD_cleanup(MediaDetImpl *This)
@@ -47,6 +49,8 @@ static void MD_cleanup(MediaDetImpl *This)
     This->splitter = NULL;
     if (This->graph) IGraphBuilder_Release(This->graph);
     This->graph = NULL;
+    This->num_streams = -1;
+    This->cur_stream = 0;
 }
 
 static ULONG WINAPI MediaDet_AddRef(IMediaDet* iface)
@@ -116,6 +120,12 @@ static HRESULT WINAPI MediaDet_get_OutputStreams(IMediaDet* iface, long *pVal)
     if (!This->splitter)
         return E_INVALIDARG;
 
+    if (This->num_streams != -1)
+    {
+        *pVal = This->num_streams;
+        return S_OK;
+    }
+
     *pVal = 0;
 
     hr = IBaseFilter_EnumPins(This->splitter, &pins);
@@ -138,21 +148,42 @@ static HRESULT WINAPI MediaDet_get_OutputStreams(IMediaDet* iface, long *pVal)
     }
     IEnumPins_Release(pins);
 
+    This->num_streams = *pVal;
     return S_OK;
 }
 
 static HRESULT WINAPI MediaDet_get_CurrentStream(IMediaDet* iface, long *pVal)
 {
     MediaDetImpl *This = (MediaDetImpl *)iface;
-    FIXME("(%p)->(%p): not implemented!\n", This, pVal);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+
+    if (!pVal)
+        return E_POINTER;
+
+    *pVal = This->cur_stream;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaDet_put_CurrentStream(IMediaDet* iface, long newVal)
 {
     MediaDetImpl *This = (MediaDetImpl *)iface;
-    FIXME("(%p)->(%ld): not implemented!\n", This, newVal);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%ld)\n", This, newVal);
+
+    if (This->num_streams == -1)
+    {
+        long n;
+        hr = MediaDet_get_OutputStreams(iface, &n);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    if (newVal < 0 || This->num_streams <= newVal)
+        return E_INVALIDARG;
+
+    This->cur_stream = newVal;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaDet_get_StreamType(IMediaDet* iface, GUID *pVal)
@@ -469,6 +500,8 @@ HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
     obj->graph = NULL;
     obj->source = NULL;
     obj->splitter = NULL;
+    obj->num_streams = -1;
+    obj->cur_stream = 0;
     *ppv = obj;
 
     return S_OK;
