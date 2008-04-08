@@ -1,5 +1,5 @@
 /*
- * Resource file for qedit tests.
+ * Resource identifiers for qedit tests.
  *
  * Copyright 2008 Google (Dan Hipschman)
  *
@@ -18,9 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "rc.h"
+#ifndef QEDIT_TESTS_RC_INCLUDED
+#define QEDIT_TESTS_RC_INCLUDED
 
-/* @makedep: test.avi */
-TEST_AVI_RES       AVI_RES_TYPE test.avi
-/* @makedep: sound_test.avi */
-TEST_SOUND_AVI_RES AVI_RES_TYPE test_sound.avi
+#define TEST_AVI_RES       1
+#define TEST_SOUND_AVI_RES 2
+
+#define AVI_RES_TYPE 256
+
+#endif /* QEDIT_TESTS_RC_INCLUDED */

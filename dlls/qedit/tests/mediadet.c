@@ -26,10 +26,12 @@
 #include "uuids.h"
 #include "wine/test.h"
 #include "qedit.h"
+#include "rc.h"
 
 static WCHAR test_avi_filename[MAX_PATH];
+static WCHAR test_sound_avi_filename[MAX_PATH];
 
-static BOOL init_tests(void)
+static BOOL unpack_avi_file(int id, WCHAR name[MAX_PATH])
 {
     static WCHAR temp_path[MAX_PATH];
     static WCHAR prefix[] = {'D','E','S',0};
@@ -40,7 +42,7 @@ static BOOL init_tests(void)
     DWORD size, written;
     HANDLE fh;
 
-    res = FindResourceW(NULL, (LPWSTR) 1, (LPWSTR) 256);
+    res = FindResourceW(NULL, (LPWSTR) id, (LPWSTR) AVI_RES_TYPE);
     if (!res)
         return FALSE;
 
@@ -60,14 +62,14 @@ static BOOL init_tests(void)
         return FALSE;
 
     /* We might end up relying on the extension here, so .TMP is no good.  */
-    if (!GetTempFileNameW(temp_path, prefix, 0, test_avi_filename))
+    if (!GetTempFileNameW(temp_path, prefix, 0, name))
         return FALSE;
 
-    DeleteFileW(test_avi_filename);
-    lstrcpyW(test_avi_filename + lstrlenW(test_avi_filename) - 3, avi);
+    DeleteFileW(name);
+    lstrcpyW(name + lstrlenW(name) - 3, avi);
 
-    fh = CreateFileW(test_avi_filename, GENERIC_WRITE, 0, NULL,
-                     CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    fh = CreateFileW(name, GENERIC_WRITE, 0, NULL, CREATE_NEW,
+                     FILE_ATTRIBUTE_NORMAL, NULL);
     if (fh == INVALID_HANDLE_VALUE)
         return FALSE;
 
@@ -79,6 +81,12 @@ static BOOL init_tests(void)
     return TRUE;
 }
 
+static BOOL init_tests(void)
+{
+    return unpack_avi_file(TEST_AVI_RES, test_avi_filename)
+        && unpack_avi_file(TEST_SOUND_AVI_RES, test_sound_avi_filename);
+}
+
 static void test_mediadet(void)
 {
     HRESULT hr;
@@ -87,7 +95,9 @@ static void test_mediadet(void)
     long nstrms = 0;
     long strm;
     AM_MEDIA_TYPE mt;
+    int flags;
 
+    /* test.avi has one video stream.  */
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (LPVOID*)&pM);
     ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
@@ -105,14 +115,19 @@ static void test_mediadet(void)
     ok(hr == S_OK, "IMediaDet_get_Filename\n");
     ok(filename == NULL, "IMediaDet_get_Filename\n");
 
+    nstrms = -1;
+    hr = IMediaDet_get_OutputStreams(pM, &nstrms);
+    ok(hr == E_INVALIDARG, "IMediaDet_get_OutputStreams\n");
+    ok(nstrms == -1, "IMediaDet_get_OutputStreams\n");
+
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
     ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
     SysFreeString(filename);
 
     hr = IMediaDet_get_OutputStreams(pM, &nstrms);
-    todo_wine ok(hr == S_OK, "IMediaDet_get_OutputStreams\n");
-    todo_wine ok(nstrms == 1, "IMediaDet_get_OutputStreams\n");
+    ok(hr == S_OK, "IMediaDet_get_OutputStreams\n");
+    ok(nstrms == 1, "IMediaDet_get_OutputStreams\n");
 
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
@@ -142,6 +157,63 @@ static void test_mediadet(void)
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
 
     DeleteFileW(test_avi_filename);
+
+    /* test_sound.avi has one video stream and one audio stream.  */
+    hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaDet, (LPVOID*)&pM);
+    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    ok(pM != NULL, "pM is NULL\n");
+
+    filename = SysAllocString(test_sound_avi_filename);
+    hr = IMediaDet_put_Filename(pM, filename);
+    ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
+    SysFreeString(filename);
+
+    hr = IMediaDet_get_OutputStreams(pM, &nstrms);
+    ok(hr == S_OK, "IMediaDet_get_OutputStreams\n");
+    ok(nstrms == 2, "IMediaDet_get_OutputStreams\n");
+
+    filename = NULL;
+    hr = IMediaDet_get_Filename(pM, &filename);
+    ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    ok(lstrcmpW(filename, test_sound_avi_filename) == 0,
+       "IMediaDet_get_Filename\n");
+    SysFreeString(filename);
+
+    /* I don't know if the stream order is deterministic.  Just check
+       for both an audio and video stream.  */
+    flags = 0;
+
+    hr = IMediaDet_put_CurrentStream(pM, 0);
+    todo_wine ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+
+    ZeroMemory(&mt, sizeof mt);
+    hr = IMediaDet_get_StreamMediaType(pM, &mt);
+    todo_wine ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
+              ? 1
+              : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
+                 ? 2
+                 : 0));
+
+    hr = IMediaDet_put_CurrentStream(pM, 1);
+    todo_wine ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+
+    ZeroMemory(&mt, sizeof mt);
+    hr = IMediaDet_get_StreamMediaType(pM, &mt);
+    todo_wine ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
+              ? 1
+              : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
+                 ? 2
+                 : 0));
+
+    todo_wine ok(flags == 3, "IMediaDet_get_StreamMediaType\n");
+
+    hr = IMediaDet_Release(pM);
+    ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
+
+    DeleteFileW(test_sound_avi_filename);
 }
 
 START_TEST(mediadet)
