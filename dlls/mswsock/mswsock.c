@@ -104,7 +104,7 @@ VOID WINAPI GetAcceptExSockaddrs(
 BOOL WINAPI TransmitFile(
         SOCKET hSocket, /* [in] Handle to a connected socket */
 	HANDLE hFile,   /* [in] Handle to the open file that should be
-                           transmited */
+                           transmitted */
 	DWORD nNumberOfBytesToWrite, /* [in] Number of file bytes to 
                                         transmit */
 	DWORD nNumberOfBytesPerSend, /* [in] Size in bytes of each block of

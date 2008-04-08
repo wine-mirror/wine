@@ -103,7 +103,7 @@ static void wprint_mac(WCHAR* buffer, int len, const MIB_IFROW *ifRow)
 
 /* Theoretically this could be too short, except that MS defines
  * MAX_ADAPTER_NAME as 128, and MAX_INTERFACE_NAME_LEN as 256, and both
- * represent a count of WCHARs, so even with an extroardinarily long header
+ * represent a count of WCHARs, so even with an extraordinarily long header
  * this will be plenty
  */
 #define MAX_TRANSPORT_NAME MAX_INTERFACE_NAME_LEN

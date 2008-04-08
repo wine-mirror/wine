@@ -1866,7 +1866,7 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
  *
  * Convert a file name from NT namespace to Unix namespace.
  *
- * If disposition is not FILE_OPEN or FILE_OVERWRITTE, the last path
+ * If disposition is not FILE_OPEN or FILE_OVERWRITE, the last path
  * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
  * returned, but the unix name is still filled in properly.
  */

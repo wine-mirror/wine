@@ -1126,8 +1126,8 @@ static NTSTATUS RTL_GetKeyHandle(ULONG RelativeTo, PCWSTR Path, PHANDLE handle)
  *  RelativeTo  [I] Registry path that Path refers to
  *  Path        [I] Path to key
  *  QueryTable  [I] Table of key values to query
- *  Context     [I] Paremeter to pass to the application defined QueryRoutine function
- *  Environment [I] Optional parameter to use when performing expantion
+ *  Context     [I] Parameter to pass to the application defined QueryRoutine function
+ *  Environment [I] Optional parameter to use when performing expansion
  *
  * RETURNS
  *  STATUS_SUCCESS or an appropriate NTSTATUS error code.

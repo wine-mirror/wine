@@ -1007,7 +1007,7 @@ static HRESULT WINAPI xmlnode_get_xml(
         {
             const xmlChar *pContent;
 
-            /* Attribute Nodes return a space infront of their name */
+            /* Attribute Nodes return a space in front of their name */
             pContent = xmlBufferContent(pXmlBuf);
             if( ((char*)pContent)[0] == ' ')
                 *xmlString = bstr_from_xmlChar(pContent+1);

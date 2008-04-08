@@ -428,7 +428,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
 /******************************************************************
  *		RtlDosSearchPath_U
  *
- * Searchs a file of name 'name' into a ';' separated list of paths
+ * Searches a file of name 'name' into a ';' separated list of paths
  * (stored in paths)
  * Doesn't seem to search elsewhere than the paths list
  * Stores the result in buffer (file_part will point to the position

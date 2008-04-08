@@ -516,7 +516,7 @@ static char* get_template_name(struct parsed_symbol* sym)
  * template argument list). The class name components appear in the reverse
  * order in the mangled name, e.g aaa@bbb@ccc@@ will be demangled to
  * ccc::bbb::aaa
- * For each of this class name componets a string will be allocated in the
+ * For each of these class name components a string will be allocated in the
  * array.
  */
 static BOOL get_class(struct parsed_symbol* sym)
@@ -678,7 +678,7 @@ static const char* get_simple_type(char c)
 }
 
 /*******************************************************************
- *         get_extented_type
+ *         get_extended_type
  * Return a string containing an allocated string for a simple data type
  */
 static const char* get_extended_type(char c)

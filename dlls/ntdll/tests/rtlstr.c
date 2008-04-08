@@ -1282,7 +1282,7 @@ static const str2int_t str2int[] = {
     { 0, "0o7",                   7, STATUS_SUCCESS}, /* one digit octal */
     { 0, "0o8",                   0, STATUS_SUCCESS}, /* empty octal */
     { 0, "0o",                    0, STATUS_SUCCESS}, /* empty octal */
-    { 0, "0d1011101100",          0, STATUS_SUCCESS}, /* explizit decimal with 0d */
+    { 0, "0d1011101100",          0, STATUS_SUCCESS}, /* explicit decimal with 0d */
     { 0, "x89abcdef",             0, STATUS_SUCCESS}, /* Hex with lower case digits a-f (x-notation) */
     { 0, "xFEDCBA00",             0, STATUS_SUCCESS}, /* Hex with upper case digits A-F (x-notation) */
     { 0, "-xFEDCBA00",            0, STATUS_SUCCESS}, /* Negative Hexadecimal (x-notation) */

@@ -576,11 +576,11 @@ static void test_wcscpy_s(void)
         return;
     }
 
-    /* Test NULl Dest */
+    /* Test NULL Dest */
     ret = p_wcscpy_s(NULL, 18, szLongText);
     ok(ret == EINVAL, "p_wcscpy_s expect EINVAL got %d\n", ret);
 
-    /* Test NULl Source */
+    /* Test NULL Source */
     szDest[0] = 'A';
     ret = p_wcscpy_s(szDest, 18, NULL);
     ok(ret == EINVAL, "expected EINVAL got %d\n", ret);

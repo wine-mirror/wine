@@ -418,7 +418,7 @@ static void test_directory(void)
     pRtlFreeUnicodeString(&str);
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
 
-    /* Test inavalid paths */
+    /* Test invalid paths */
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\om.c-mutant");
     status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
     ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,

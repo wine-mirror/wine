@@ -647,7 +647,7 @@ static void test_RtlRandom(void)
         seed, seed_expected);
 /*
  * Seed is not equal to result as with RtlUniform. To see more we
- * call RtlRandom aggain with seed set to 0:
+ * call RtlRandom again with seed set to 0:
  */
     seed = 0;
     result_expected = 0x7fffffc3;
@@ -701,7 +701,7 @@ static void test_RtlRandom(void)
  * RtlRandom(&seed);
  *
  * assigns to seed. Putting these two findings together leads to
- * the concluson that RtlRandom saves the value in some variable,
+ * the conclusion that RtlRandom saves the value in some variable,
  * like in the following algorithm:
  *
  * result = saved_value;

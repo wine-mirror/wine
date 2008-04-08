@@ -699,7 +699,7 @@ FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *export
     if (!check_from_module( debug_from_snoop_includelist, debug_from_snoop_excludelist, user ))
         return origfun; /* the calling module was explicitly excluded */
 
-    if (!*(LPBYTE)origfun) /* 0x00 is an imposs. opcode, poss. dataref. */
+    if (!*(LPBYTE)origfun) /* 0x00 is an impossible opcode, possible dataref. */
         return origfun;
 
     sec = RtlImageRvaToSection( RtlImageNtHeader(hmod), hmod, (char *)origfun - (char *)hmod );

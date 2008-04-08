@@ -214,7 +214,7 @@ static void testExpand(void)
          * Interestingly enough, with a 8 WCHAR buffers, we get on 2k:
          *      helloIII
          * so it seems like strings overflowing the buffer are written 
-         * (troncated) but the write cursor is not advanced :-/
+         * (truncated) but the write cursor is not advanced :-/
          */
         {NULL, NULL}
     };

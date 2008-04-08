@@ -283,7 +283,7 @@ static void test_RtlQueryRegistryValues(void)
     8)DefaultLength     Test Default Length with DefaultType = REG_SZ
    9)DefaultLength      Test Default Length with DefaultType = REG_MULTI_SZ
    10)DefaultLength     Test Default Length with DefaultType = REG_EXPAND_SZ
-   11)DefaultData       Test whether DefaultData is used while DefaltType = REG_NONE(shouldn't be)
+   11)DefaultData       Test whether DefaultData is used while DefaultType = REG_NONE(shouldn't be)
    12)Delete            Try to delete value key
 
     */

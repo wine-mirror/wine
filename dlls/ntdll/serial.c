@@ -1079,7 +1079,7 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, DWORD* events)
         (status = get_modem_status(fd, &commio->mstat)))
         goto out_now;
 
-    /* We might have received something or the TX bufffer is delivered */
+    /* We might have received something or the TX buffer is delivered */
     *events = check_events(fd, commio->evtmask,
                                &commio->irq_info, &commio->irq_info,
                                commio->mstat, commio->mstat);

@@ -206,7 +206,7 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
 
     TRACE("%p\n", This );
 
-    /* Cannot set data to a PI node whos target is 'xml' */
+    /* Cannot set data to a PI node whose target is 'xml' */
     hr = dom_pi_get_nodeName(iface, &sTarget);
     if(hr == S_OK)
     {
@@ -530,7 +530,7 @@ static HRESULT WINAPI dom_pi_put_data(
 
     TRACE("%p %s\n", This, debugstr_w(data) );
 
-    /* Cannot set data to a PI node whos target is 'xml' */
+    /* Cannot set data to a PI node whose target is 'xml' */
     hr = dom_pi_get_nodeName(iface, &sTarget);
     if(hr == S_OK)
     {

@@ -1783,7 +1783,7 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XPath")));
     ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
 
-    /* contrary to what MSDN calims you can switch back from XPath to XSLPattern */
+    /* contrary to what MSDN claims you can switch back from XPath to XSLPattern */
     ole_check(IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionLanguage"), &var));
     expect_eq(V_VT(&var), VT_BSTR, int, "%x");
     expect_bstr_eq_and_free(V_BSTR(&var), "XSLPattern");
