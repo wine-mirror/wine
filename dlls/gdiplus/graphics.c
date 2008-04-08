@@ -2088,3 +2088,15 @@ GpStatus WINGDIPAPI GdipTranslateWorldTransform(GpGraphics *graphics, REAL dx,
 
     return GdipTranslateMatrix(graphics->worldtrans, dx, dy, order);
 }
+
+GpStatus WINGDIPAPI GdipSetClipRectI(GpGraphics *graphics, INT x, INT y,
+                                     INT width, INT height,
+                                     CombineMode combineMode)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
