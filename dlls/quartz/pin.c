@@ -1595,6 +1595,12 @@ HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
     PullPin *This = (PullPin *)iface;
     TRACE("(%p)->()\n", iface);
 
+    EnterCriticalSection(This->pin.pCritSec);
+    {
+        SendFurther( iface, deliver_beginflush, NULL, NULL );
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+
     EnterCriticalSection(&This->thread_lock);
     {
         if (This->state == State_Running)
@@ -1607,8 +1613,6 @@ HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
     EnterCriticalSection(This->pin.pCritSec);
     {
         This->fnCleanProc(This->pin.pUserData);
-
-        SendFurther( iface, deliver_beginflush, NULL, NULL );
     }
     LeaveCriticalSection(This->pin.pCritSec);
 
