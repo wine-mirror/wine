@@ -71,6 +71,7 @@ typedef struct DSoundRenderImpl
 
     DWORD last_play_pos;
     DWORD play_loops;
+
     REFERENCE_TIME play_time;
     MediaSeekingImpl mediaSeeking;
 
@@ -103,31 +104,20 @@ static inline HRESULT DSoundRender_GetPos(DSoundRenderImpl *This, DWORD *pPlayPo
     EnterCriticalSection(&This->csFilter);
     {
         DWORD state;
+        DWORD write_pos;
 
         hr = IDirectSoundBuffer_GetStatus(This->dsbuffer, &state);
         if (SUCCEEDED(hr) && !(state & DSBSTATUS_PLAYING) && This->state == State_Running)
         {
-            LPBYTE buf;
-            DWORD size;
             TRACE("Not playing, kickstarting the engine\n");
-            This->write_pos = 0;
-            IDirectSoundBuffer_SetCurrentPosition(This->dsbuffer, 0);
-
-            hr = IDirectSoundBuffer_Lock(This->dsbuffer, 0, 0, (void**)&buf, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER);
-            if (hr != DS_OK)
-                ERR("Unable to lock sound buffer! (%x)\n", hr);
-            else
-                memset(buf, 0, size);
-            hr = IDirectSoundBuffer_Unlock(This->dsbuffer, buf, size, NULL, 0);
 
             hr = IDirectSoundBuffer_Play(This->dsbuffer, 0, 0, DSBPLAY_LOOPING);
             if (FAILED(hr))
                 ERR("Can't play sound buffer (%x)\n", hr);
-            hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, &This->last_play_pos, &This->write_pos);
-            *pPlayPos = This->last_play_pos;
         }
-        else if (SUCCEEDED(hr))
-            hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, pPlayPos, NULL);
+
+        if (SUCCEEDED(hr))
+            hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, pPlayPos, &write_pos);
         if (hr == S_OK)
         {
             DWORD play_pos = *pPlayPos;
@@ -136,10 +126,13 @@ static inline HRESULT DSoundRender_GetPos(DSoundRenderImpl *This, DWORD *pPlayPo
                 This->play_loops++;
             This->last_play_pos = play_pos;
 
-            /* If we're really falling behind, kick the play time back */
+            /* If we really fell behind, start at the next possible position
+             * Also happens when just starting playback for the first time,
+             * or when flushing
+             */
             if ((This->play_loops*This->buf_size)+play_pos >=
                 (This->write_loops*This->buf_size)+This->write_pos)
-                This->play_loops--;
+                This->write_pos = write_pos;
 
             if (pRefTime)
             {
@@ -172,7 +165,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, const BYTE *d
     DWORD size2;
     DWORD play_pos,buf_free;
 
-    while (size && This->state == State_Running && !This->pInputPin->flushing) {
+    do {
 
         hr = DSoundRender_GetPos(This, &play_pos, NULL);
         if (hr != DS_OK)
@@ -216,7 +209,7 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, const BYTE *d
             This->write_pos -= This->buf_size;
             This->write_loops++;
         }
-    }
+    } while (size && This->state == State_Running);
 
     return hr;
 }
@@ -778,6 +771,8 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
     IMediaEventSink* pEventSink;
     HRESULT hr;
 
+    EnterCriticalSection(This->pin.pCritSec);
+
     TRACE("(%p/%p)->()\n", This, iface);
     InputPin_EndOfStream(iface);
 
@@ -797,6 +792,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
         hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
         IMediaEventSink_Release(pEventSink);
     }
+    LeaveCriticalSection(This->pin.pCritSec);
 
     return hr;
 }
@@ -806,13 +802,28 @@ static HRESULT WINAPI DSoundRender_InputPin_BeginFlush(IPin * iface)
     InputPin *This = (InputPin *)iface;
     DSoundRenderImpl *pFilter = (DSoundRenderImpl *)This->pin.pinInfo.pFilter;
     HRESULT hr;
+    LPBYTE buffer;
+    DWORD size;
 
     TRACE("\n");
-    hr = InputPin_BeginFlush(iface);
 
     EnterCriticalSection(This->pin.pCritSec);
+    hr = InputPin_BeginFlush(iface);
+
     if (pFilter->dsbuffer)
+    {
         IDirectSoundBuffer_Stop(pFilter->dsbuffer);
+
+        /* Force a reset */
+        IDirectSoundBuffer_SetCurrentPosition(pFilter->dsbuffer, 0);
+        pFilter->write_pos = pFilter->last_play_pos = 0;
+        ++pFilter->play_loops;
+        pFilter->write_loops = pFilter->play_loops;
+
+        IDirectSoundBuffer_Lock(pFilter->dsbuffer, 0, 0, (LPVOID *)&buffer, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER);
+        memset(buffer, 0, size);
+        IDirectSoundBuffer_Unlock(pFilter->dsbuffer, buffer, size, NULL, 0);
+    }
     LeaveCriticalSection(This->pin.pCritSec);
 
     return hr;
