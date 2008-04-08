@@ -109,6 +109,8 @@ static const WCHAR szwWineIMCProperty[] = {'W','i','n','e','I','m','m','H','I','
 #define is_himc_ime_unicode(p)  (p->immKbd->imeInfo.fdwProperty & IME_PROP_UNICODE)
 #define is_kbd_ime_unicode(p)  (p->imeInfo.fdwProperty & IME_PROP_UNICODE)
 
+static BOOL IMM_DestroyContext(HIMC hIMC);
+
 static inline WCHAR *strdupAtoW( const char *str )
 {
     WCHAR *ret = NULL;
@@ -150,7 +152,7 @@ static void IMM_InitThreadData(void)
 static void IMM_FreeThreadData(void)
 {
     IMMThreadData* data = TlsGetValue(tlsIndex);
-    ImmDestroyContext(data->defaultContext);
+    IMM_DestroyContext(data->defaultContext);
     DestroyWindow(data->hwndDefault);
     HeapFree(GetProcessHeap(),0,data);
     TRACE("Thread Data Destroyed\n");
@@ -510,7 +512,7 @@ HIMC WINAPI ImmCreateContext(void)
     if (!new_context->immKbd->pImeSelect(new_context, TRUE))
     {
         TRACE("Selection of IME failed\n");
-        ImmDestroyContext(new_context);
+        IMM_DestroyContext(new_context);
         return 0;
     }
 
@@ -520,10 +522,7 @@ HIMC WINAPI ImmCreateContext(void)
     return (HIMC)new_context;
 }
 
-/***********************************************************************
- *		ImmDestroyContext (IMM32.@)
- */
-BOOL WINAPI ImmDestroyContext(HIMC hIMC)
+static BOOL IMM_DestroyContext(HIMC hIMC)
 {
     InputContextData *data = (InputContextData*)hIMC;
 
@@ -547,6 +546,17 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
         HeapFree(GetProcessHeap(),0,data);
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *		ImmDestroyContext (IMM32.@)
+ */
+BOOL WINAPI ImmDestroyContext(HIMC hIMC)
+{
+    if (hIMC != IMM_GetThreadData()->defaultContext)
+        return IMM_DestroyContext(hIMC);
+    else
+        return FALSE;
 }
 
 /***********************************************************************
