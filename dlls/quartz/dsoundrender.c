@@ -231,6 +231,9 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
 
     TRACE("%p %p\n", iface, pSample);
 
+    if (This->state == State_Paused)
+        return S_FALSE;
+
     if (This->state == State_Stopped)
         return VFW_E_WRONG_STATE;
 
@@ -804,9 +807,9 @@ static HRESULT WINAPI DSoundRender_InputPin_BeginFlush(IPin * iface)
     DSoundRenderImpl *pFilter = (DSoundRenderImpl *)This->pin.pinInfo.pFilter;
     HRESULT hr;
 
+    TRACE("\n");
     hr = InputPin_BeginFlush(iface);
 
-    FIXME("Requested flush\n");
     EnterCriticalSection(This->pin.pCritSec);
     if (pFilter->dsbuffer)
         IDirectSoundBuffer_Stop(pFilter->dsbuffer);
