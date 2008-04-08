@@ -185,6 +185,10 @@ static LRESULT WINAPI tray_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         }
         break;
 
+    case WM_TIMER:
+        if (!IsWindow( icon->owner )) delete_icon( icon );
+        return 0;
+
     default:
         return DefWindowProcW(hwnd, msg, wparam, lparam);
     }
@@ -323,6 +327,7 @@ static BOOL show_icon( struct tray_icon *icon )
                                     NULL, NULL, NULL, icon );
     create_tooltip( icon );
     dock_systray_window( icon->window, systray_window );
+    SetTimer( icon->window, 1, 1000, NULL );
     ShowWindow( icon->window, SW_SHOWNA );
     icon->hidden = FALSE;
     return TRUE;
