@@ -17,6 +17,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "ole2.h"
+
 #include "qedit_private.h"
 #include "wine/debug.h"
 
@@ -137,8 +146,37 @@ static HRESULT WINAPI MediaDet_get_StreamLength(IMediaDet* iface, double *pVal)
 static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
 {
     MediaDetImpl *This = (MediaDetImpl *)iface;
-    FIXME("(%p)->(%p): not implemented!\n", This, pVal);
-    return E_NOTIMPL;
+    IFileSourceFilter *file;
+    LPOLESTR name;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    if (!pVal)
+        return E_POINTER;
+
+    *pVal = NULL;
+    /* MSDN says it should return E_FAIL if no file is open, but tests
+       show otherwise.  */
+    if (!This->source)
+        return S_OK;
+
+    hr = IBaseFilter_QueryInterface(This->source, &IID_IFileSourceFilter,
+                                    (void **) &file);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IFileSourceFilter_GetCurFile(file, &name, NULL);
+    IFileSourceFilter_Release(file);
+    if (FAILED(hr))
+        return hr;
+
+    *pVal = SysAllocString(name);
+    CoTaskMemFree(name);
+    if (!*pVal)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)

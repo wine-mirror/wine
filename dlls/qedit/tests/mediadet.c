@@ -93,6 +93,18 @@ static void test_mediadet(void)
     ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
     ok(pM != NULL, "pM is NULL\n");
 
+    filename = NULL;
+    hr = IMediaDet_get_Filename(pM, &filename);
+    /* Despite what MSDN claims, this returns S_OK.  */
+    ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    ok(filename == NULL, "IMediaDet_get_Filename\n");
+
+    filename = (BSTR) -1;
+    hr = IMediaDet_get_Filename(pM, &filename);
+    /* Despite what MSDN claims, this returns S_OK.  */
+    ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    ok(filename == NULL, "IMediaDet_get_Filename\n");
+
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
     ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
@@ -104,10 +116,13 @@ static void test_mediadet(void)
 
     filename = NULL;
     hr = IMediaDet_get_Filename(pM, &filename);
-    todo_wine ok(hr == S_OK, "IMediaDet_get_Filename\n");
-    todo_wine ok(lstrcmpW(filename, test_avi_filename) == 0,
-                 "IMediaDet_get_Filename\n");
+    ok(hr == S_OK, "IMediaDet_get_Filename\n");
+    ok(lstrcmpW(filename, test_avi_filename) == 0,
+       "IMediaDet_get_Filename\n");
     SysFreeString(filename);
+
+    hr = IMediaDet_get_Filename(pM, NULL);
+    ok(hr == E_POINTER, "IMediaDet_get_Filename\n");
 
     hr = IMediaDet_put_CurrentStream(pM, 0);
     todo_wine ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
