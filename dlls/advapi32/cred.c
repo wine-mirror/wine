@@ -82,7 +82,7 @@ static DWORD read_credential_blob(HKEY hkey, const BYTE key_data[KEY_SIZE],
         else if (type != REG_BINARY)
             return ERROR_REGISTRY_CORRUPT;
 
-        key.Length = key.MaximumLength = sizeof(key_data);
+        key.Length = key.MaximumLength = KEY_SIZE;
         key.Buffer = (unsigned char *)key_data;
 
         data.Length = data.MaximumLength = *credential_blob_size;
@@ -442,7 +442,7 @@ static DWORD write_credential_blob(HKEY hkey, LPCWSTR target_name, DWORD type,
     struct ustring key;
     DWORD ret;
 
-    key.Length = key.MaximumLength = sizeof(key_data);
+    key.Length = key.MaximumLength = KEY_SIZE;
     key.Buffer = (unsigned char *)key_data;
 
     encrypted_credential_blob = HeapAlloc(GetProcessHeap(), 0, credential_blob_size);
