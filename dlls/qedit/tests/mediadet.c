@@ -95,7 +95,7 @@ static void test_mediadet(void)
 
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
-    todo_wine ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
+    ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
     SysFreeString(filename);
 
     hr = IMediaDet_get_OutputStreams(pM, &nstrms);

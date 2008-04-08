@@ -25,7 +25,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 typedef struct MediaDetImpl {
     const IMediaDetVtbl *MediaDet_Vtbl;
     LONG refCount;
+    IGraphBuilder *graph;
+    IBaseFilter *source;
 } MediaDetImpl;
+
+static void MD_cleanup(MediaDetImpl *This)
+{
+    if (This->source) IBaseFilter_Release(This->source);
+    This->source = NULL;
+    if (This->graph) IGraphBuilder_Release(This->graph);
+    This->graph = NULL;
+}
 
 static ULONG WINAPI MediaDet_AddRef(IMediaDet* iface)
 {
@@ -43,6 +53,7 @@ static ULONG WINAPI MediaDet_Release(IMediaDet* iface)
 
     if (refCount == 0)
     {
+        MD_cleanup(This);
         CoTaskMemFree(This);
         return 0;
     }
@@ -132,9 +143,35 @@ static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
 
 static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
 {
+    static const WCHAR reader[] = {'R','e','a','d','e','r',0};
     MediaDetImpl *This = (MediaDetImpl *)iface;
-    FIXME("(%p)->(%p): not implemented!\n", This, newVal);
-    return E_NOTIMPL;
+    IGraphBuilder *gb;
+    IBaseFilter *bf;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(newVal));
+
+    if (This->graph)
+    {
+        WARN("MSDN says not to call this method twice\n");
+        MD_cleanup(This);
+    }
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IGraphBuilder, (void **) &gb);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IGraphBuilder_AddSourceFilter(gb, newVal, reader, &bf);
+    if (FAILED(hr))
+    {
+        IGraphBuilder_Release(gb);
+        return hr;
+    }
+
+    This->graph = gb;
+    This->source = bf;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaDet_GetBitmapBits(IMediaDet* iface,
@@ -228,6 +265,8 @@ HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
 
     obj->refCount = 1;
     obj->MediaDet_Vtbl = &IMediaDet_VTable;
+    obj->graph = NULL;
+    obj->source = NULL;
     *ppv = obj;
 
     return S_OK;
