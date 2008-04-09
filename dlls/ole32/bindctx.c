@@ -46,7 +46,7 @@ typedef struct BindCtxObject{
 
 } BindCtxObject;
 
-/* BindCtx data strucrture */
+/* BindCtx data structure */
 typedef struct BindCtxImpl{
 
     const IBindCtxVtbl *lpVtbl; /* VTable relative to the IBindCtx interface.*/

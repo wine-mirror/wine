@@ -396,7 +396,7 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
   if (object_is_running(This))
     IOleObject_SetHostNames(This->pOleDelegate, szContainerApp, szContainerObj);
 
-  /* Be sure to cleanup before re-assinging the strings. */
+  /* Be sure to cleanup before re-assigning the strings. */
   HeapFree( GetProcessHeap(), 0, This->containerApp );
   This->containerApp = NULL;
   HeapFree( GetProcessHeap(), 0, This->containerObj );

@@ -66,7 +66,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  * PresentationDataHeader
  *
  * This structure represents the header of the \002OlePresXXX stream in
- * the OLE object strorage.
+ * the OLE object storage.
  */
 typedef struct PresentationDataHeader
 {
@@ -2252,7 +2252,7 @@ static const IOleCacheControlVtbl DataCache_IOleCacheControl_VTable =
  *
  * NOTES
  *  The following interfaces are supported by the returned data cache object:
- *  IOleCache, IOleCache2, IOleCacheControl, IPersistStorae, IDataObject,
+ *  IOleCache, IOleCache2, IOleCacheControl, IPersistStorage, IDataObject,
  *  IViewObject and IViewObject2.
  */
 HRESULT WINAPI CreateDataCache(

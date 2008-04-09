@@ -812,8 +812,8 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
             wine_dbgstr_longlong(This->oxid));
         return RPC_E_WRONG_THREAD;
     }
-    /* this situation should be impossible in multi-threaded apartments,
-     * because the calling thread isn't re-entrable.
+    /* This situation should be impossible in multi-threaded apartments,
+     * because the calling thread isn't re-enterable.
      * Note: doing a COM call during the processing of a sent message is
      * only disallowed if a client call is already being waited for
      * completion */
@@ -1172,7 +1172,7 @@ static HRESULT unmarshal_ORPC_EXTENT_ARRAY(RPC_MESSAGE *msg, const char *end,
 
         msg->Buffer = (char *)msg->Buffer + sizeof(DWORD);
 
-        /* arbritary limit for security (don't know what native does) */
+        /* arbitrary limit for security (don't know what native does) */
         if (extensions->size > 256)
         {
             ERR("too many extensions: %ld\n", extensions->size);

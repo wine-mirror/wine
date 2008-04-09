@@ -542,7 +542,7 @@ static void PointerMonikerImpl_Construct(PointerMonikerImpl* This, IUnknown *pun
 {
     TRACE("(%p)\n",This);
 
-    /* Initialize the virtual fgunction table. */
+    /* Initialize the virtual function table. */
     This->lpvtbl       = &VT_PointerMonikerImpl;
     This->ref          = 1;
     if (punk)

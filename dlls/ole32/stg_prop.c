@@ -2025,7 +2025,7 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
         ps->grfFlags = grfFlags;
         if (ps->grfFlags & PROPSETFLAG_CASE_SENSITIVE)
             ps->format = 1;
-        /* default to Unicode unless told not to, as specified here on mdsn */
+        /* default to Unicode unless told not to, as specified on msdn */
         if (ps->grfFlags & PROPSETFLAG_ANSI)
             ps->codePage = GetACP();
         else

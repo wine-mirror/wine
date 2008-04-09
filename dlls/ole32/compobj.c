@@ -1690,8 +1690,8 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     }
     RegCloseKey(hkey);
 
-    /* We have the CLSid we want back from the registry as a string, so
-       lets convert it into a CLSID structure */
+    /* We have the CLSID we want back from the registry as a string, so
+       let's convert it into a CLSID structure */
     if (CLSIDFromString(value, pclsid) != NOERROR)
         return REGDB_E_IIDNOTREG;
 

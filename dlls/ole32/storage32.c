@@ -121,7 +121,7 @@ typedef struct
     DWORD dwOleObjFileNameLength;
     DWORD dwMetaFileWidth;
     DWORD dwMetaFileHeight;
-    CHAR  strUnknown[8]; /* don't know what is this 8 byts information in OLE stream. */
+    CHAR  strUnknown[8]; /* don't know what this 8 byte information in OLE stream is. */
     DWORD dwDataLength;
     BYTE *pData;
 }OLECONVERT_OLESTREAM_DATA;
@@ -142,7 +142,7 @@ typedef struct
 }OLECONVERT_ISTORAGE_COMPOBJ;
 
 
-/* Ole Presention Stream structure */
+/* Ole Presentation Stream structure */
 /* Used for OleConvertIStorageToOLESTREAM and OleConvertOLESTREAMToIStorage */
 typedef struct
 {
@@ -263,7 +263,7 @@ static ULONG BLOCK_GetBigBlockOffset(ULONG index)
 }
 
 /************************************************************************
-** Storage32BaseImpl implementatiion
+** Storage32BaseImpl implementation
 */
 static HRESULT StorageImpl_ReadAt(StorageImpl* This,
   ULARGE_INTEGER offset,
@@ -659,7 +659,7 @@ end:
  * Storage32BaseImpl_EnumElements (IStorage)
  *
  * This method will create an enumerator object that can be used to
- * retrieve informatino about all the properties in the storage object.
+ * retrieve information about all the properties in the storage object.
  *
  * See Windows documentation for more details on IStorage methods.
  */
@@ -1410,12 +1410,12 @@ static ULONG getFreeProperty(
  *
  * Internal Method
  *
- * Case insensitive comparaison of StgProperty.name by first considering
+ * Case insensitive comparison of StgProperty.name by first considering
  * their size.
  *
- * Returns <0 when newPrpoerty < currentProperty
- *         >0 when newPrpoerty > currentProperty
- *          0 when newPrpoerty == currentProperty
+ * Returns <0 when newProperty < currentProperty
+ *         >0 when newProperty > currentProperty
+ *          0 when newProperty == currentProperty
  */
 static LONG propertyNameCmp(
     const OLECHAR *newProperty,
@@ -6574,7 +6574,7 @@ static DWORD GetCreationModeFromSTGM(DWORD stgm)
  * RETURNS
  *     Success:  S_OK
  *     Failure:  CONVERT10_E_OLESTREAM_GET for invalid Get
- *               CONVERT10_E_OLESTREAM_FMT if the OLEID is invalide
+ *               CONVERT10_E_OLESTREAM_FMT if the OLEID is invalid
  *
  * NOTES
  *     This function is used by OleConvertOLESTREAMToIStorage only.
@@ -6694,7 +6694,7 @@ static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM
 				}
 			}
 
-			if(hRes == S_OK) /* I don't know what is this 8 byts information is we have to figure out */
+			if(hRes == S_OK) /* I don't know what this 8 byte information is. We have to figure out */
 			{
 				if(!bStrem1) /* if it is a second OLE stream data */
 				{
@@ -7649,7 +7649,7 @@ static void OLECONVERT_GetOle20PresData(LPSTORAGE pStorage, OLECONVERT_OLESTREAM
  * Read info on MSDN
  *
  * TODO
- *      DVTARGETDEVICE paramenter is not handled
+ *      DVTARGETDEVICE parameter is not handled
  *      Still unsure of some mem fields for OLE 10 Stream
  *      Still some unknowns for the IStorage: "\002OlePres000", "\001CompObj",
  *      and "\001OLE" streams
