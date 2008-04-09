@@ -19,6 +19,7 @@ C_SRCS = \
 	matrix.c \
 	pathiterator.c \
 	pen.c \
+	region.c \
 	stringformat.c
 
 @MAKE_DLL_RULES@
