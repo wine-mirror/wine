@@ -69,8 +69,6 @@ static BOOL delete_icon( struct tray_icon *icon );
 #define SYSTEM_TRAY_BEGIN_MESSAGE   1
 #define SYSTEM_TRAY_CANCEL_MESSAGE  2
 
-#define XEMBED_MAPPED  (1 << 0)
-
 #define ICON_BORDER 2
 
 /* retrieves icon record by owner window and ID */
@@ -228,23 +226,13 @@ static void dock_systray_window( HWND hwnd, Window systray_window )
     struct x11drv_win_data *data;
     XEvent ev;
     XSetWindowAttributes attr;
-    unsigned long info[2];
 
     if (!(data = X11DRV_get_win_data( hwnd )) &&
         !(data = X11DRV_create_win_data( hwnd ))) return;
 
     TRACE( "icon window %p/%lx managed %u\n", data->hwnd, data->whole_window, data->managed );
 
-    /* the window _cannot_ be mapped if we intend to dock with an XEMBED tray */
-    assert( !data->mapped );
-
-    /* set XEMBED protocol data on the window */
-    info[0] = 0; /* protocol version */
-    info[1] = XEMBED_MAPPED;  /* flags */
-
-    wine_tsx11_lock();
-    XChangeProperty( display, data->whole_window, x11drv_atom(_XEMBED_INFO),
-                     x11drv_atom(_XEMBED_INFO), 32, PropModeReplace, (unsigned char*)info, 2 );
+    make_window_embedded( display, data );
 
     /* send the docking request message */
     ev.xclient.type = ClientMessage;
@@ -256,15 +244,13 @@ static void dock_systray_window( HWND hwnd, Window systray_window )
     ev.xclient.data.l[2] = data->whole_window;
     ev.xclient.data.l[3] = 0;
     ev.xclient.data.l[4] = 0;
+    wine_tsx11_lock();
     XSendEvent( display, systray_window, False, NoEventMask, &ev );
     attr.background_pixmap = ParentRelative;
     attr.bit_gravity = ForgetGravity;
     XChangeWindowAttributes( display, data->whole_window, CWBackPixmap | CWBitGravity, &attr );
     XChangeWindowAttributes( display, data->client_window, CWBackPixmap | CWBitGravity, &attr );
     wine_tsx11_unlock();
-
-    data->mapped = TRUE;
-    data->wm_state = NormalState;
 }
 
 

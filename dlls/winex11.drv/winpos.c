@@ -205,18 +205,41 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
 
 
 /***********************************************************************
+ *     set_xembed_flags
+ */
+static void set_xembed_flags( Display *display, struct x11drv_win_data *data, unsigned long flags )
+{
+    unsigned long info[2];
+
+    info[0] = 0; /* protocol version */
+    info[1] = flags;
+    wine_tsx11_lock();
+    XChangeProperty( display, data->whole_window, x11drv_atom(_XEMBED_INFO),
+                     x11drv_atom(_XEMBED_INFO), 32, PropModeReplace, (unsigned char*)info, 2 );
+    wine_tsx11_unlock();
+}
+
+
+/***********************************************************************
  *     map_window
  */
 static void map_window( Display *display, struct x11drv_win_data *data, DWORD new_style )
 {
     TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
+
     wait_for_withdrawn_state( display, data, TRUE );
-    update_net_wm_states( display, data );
-    X11DRV_sync_window_style( display, data );
-    wine_tsx11_lock();
-    XMapWindow( display, data->whole_window );
-    XFlush( display );
-    wine_tsx11_unlock();
+
+    if (!data->embedded)
+    {
+        update_net_wm_states( display, data );
+        X11DRV_sync_window_style( display, data );
+        wine_tsx11_lock();
+        XMapWindow( display, data->whole_window );
+        XFlush( display );
+        wine_tsx11_unlock();
+    }
+    else set_xembed_flags( display, data, XEMBED_MAPPED );
+
     data->mapped = TRUE;
     data->iconic = (new_style & WS_MINIMIZE) != 0;
 }
@@ -228,13 +251,39 @@ static void map_window( Display *display, struct x11drv_win_data *data, DWORD ne
 static void unmap_window( Display *display, struct x11drv_win_data *data )
 {
     TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-    wait_for_withdrawn_state( display, data, FALSE );
-    wine_tsx11_lock();
-    if (data->managed) XWithdrawWindow( display, data->whole_window, DefaultScreen(display) );
-    else XUnmapWindow( display, data->whole_window );
-    wine_tsx11_unlock();
+
+    if (!data->embedded)
+    {
+        wait_for_withdrawn_state( display, data, FALSE );
+        wine_tsx11_lock();
+        if (data->managed) XWithdrawWindow( display, data->whole_window, DefaultScreen(display) );
+        else XUnmapWindow( display, data->whole_window );
+        wine_tsx11_unlock();
+    }
+    else set_xembed_flags( display, data, 0 );
+
     data->mapped = FALSE;
     data->net_wm_state = 0;
+}
+
+
+/***********************************************************************
+ *     make_window_embedded
+ */
+void make_window_embedded( Display *display, struct x11drv_win_data *data )
+{
+    if (data->mapped)
+    {
+        /* the window cannot be mapped before being embedded */
+        unmap_window( display, data );
+        data->embedded = TRUE;
+        map_window( display, data, 0 );
+    }
+    else
+    {
+        data->embedded = TRUE;
+        set_xembed_flags( display, data, 0 );
+    }
 }
 
 

@@ -695,6 +695,7 @@ struct x11drv_win_data
     BOOL        managed : 1;    /* is window managed? */
     BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
     BOOL        iconic : 1;     /* is window in iconic state? */
+    BOOL        embedded : 1;   /* is window an XEMBED client? */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     HBITMAP     hWMIconBitmap;
@@ -717,6 +718,7 @@ extern void flush_gl_drawable( X11DRV_PDEVICE *physDev );
 
 extern int get_window_wm_state( Display *display, struct x11drv_win_data *data );
 extern void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, BOOL set );
+extern void make_window_embedded( Display *display, struct x11drv_win_data *data );
 
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
@@ -772,5 +774,7 @@ extern void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr, LPVIDMEM 
 /* FIXME: private functions imported from user32 */
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
 extern void WIN_invalidate_dce( HWND hwnd, const RECT *rect );
+
+#define XEMBED_MAPPED  (1 << 0)
 
 #endif  /* __WINE_X11DRV_H */
