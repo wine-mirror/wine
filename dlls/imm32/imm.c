@@ -1294,9 +1294,26 @@ DWORD WINAPI ImmGetProperty(HKL hKL, DWORD fdwIndex)
 UINT WINAPI ImmGetRegisterWordStyleA(
   HKL hKL, UINT nItem, LPSTYLEBUFA lpStyleBuf)
 {
-  FIXME("(%p, %d, %p): stub\n", hKL, nItem, lpStyleBuf);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %d, %p):\n", hKL, nItem, lpStyleBuf);
+    if (immHkl->hIME && immHkl->pImeGetRegisterWordStyle)
+    {
+        if (!is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeGetRegisterWordStyle(nItem,(LPSTYLEBUFW)lpStyleBuf);
+        else
+        {
+            STYLEBUFW sbw;
+            UINT rc;
+
+            rc = immHkl->pImeGetRegisterWordStyle(nItem,&sbw);
+            WideCharToMultiByte(CP_ACP, 0, sbw.szDescription, -1,
+                lpStyleBuf->szDescription, 32, NULL, NULL);
+            lpStyleBuf->dwStyle = sbw.dwStyle;
+            return rc;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
@@ -1305,9 +1322,26 @@ UINT WINAPI ImmGetRegisterWordStyleA(
 UINT WINAPI ImmGetRegisterWordStyleW(
   HKL hKL, UINT nItem, LPSTYLEBUFW lpStyleBuf)
 {
-  FIXME("(%p, %d, %p): stub\n", hKL, nItem, lpStyleBuf);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %d, %p):\n", hKL, nItem, lpStyleBuf);
+    if (immHkl->hIME && immHkl->pImeGetRegisterWordStyle)
+    {
+        if (is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeGetRegisterWordStyle(nItem,lpStyleBuf);
+        else
+        {
+            STYLEBUFA sba;
+            UINT rc;
+
+            rc = immHkl->pImeGetRegisterWordStyle(nItem,(LPSTYLEBUFW)&sba);
+            MultiByteToWideChar(CP_ACP, 0, sba.szDescription, -1,
+                lpStyleBuf->szDescription, 32);
+            lpStyleBuf->dwStyle = sba.dwStyle;
+            return rc;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
