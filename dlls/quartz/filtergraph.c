@@ -203,6 +203,7 @@ typedef struct _IFilterGraphImpl {
     GUID timeformatseek;
     LONGLONG start_time;
     LONGLONG position;
+    LONGLONG stop_position;
 } IFilterGraphImpl;
 
 static HRESULT WINAPI Filtergraph_QueryInterface(IFilterGraphImpl *This,
@@ -2038,10 +2039,23 @@ static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface,
 static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface,
 						   LONGLONG *pStop) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaSeeking_vtbl, iface);
+    HRESULT hr = S_OK;
 
-    FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pStop);
+    TRACE("(%p/%p)->(%p)\n", This, iface, pStop);
 
-    return S_OK;
+    if (!pStop)
+        return E_POINTER;
+
+    EnterCriticalSection(&This->cs);
+    if (This->stop_position < 0)
+        /* Stop position not set, use duration instead */
+        hr = IMediaSeeking_GetDuration(iface, pStop);
+    else
+        *pStop = This->stop_position;
+
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface,
@@ -2116,7 +2130,9 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface,
     else if ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning)
         FIXME("Adjust method %x not handled yet!\n", dwCurrentFlags & 0x7);
 
-    if ((dwStopFlags & 0x7) != AM_SEEKING_NoPositioning)
+    if ((dwStopFlags & 0x7) == AM_SEEKING_AbsolutePositioning)
+        This->stop_position = *pStop;
+    else if ((dwStopFlags & 0x7) != AM_SEEKING_NoPositioning)
         FIXME("Stop position not handled yet!\n");
 
     args.current = pCurrent;
@@ -5084,6 +5100,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->nItfCacheEntries = 0;
     memcpy(&fimpl->timeformatseek, &TIME_FORMAT_MEDIA_TIME, sizeof(GUID));
     fimpl->start_time = fimpl->position = 0;
+    fimpl->stop_position = -1;
 
     hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&fimpl->pFilterMapper2);
     if (FAILED(hr)) {
