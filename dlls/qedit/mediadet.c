@@ -252,8 +252,8 @@ static HRESULT WINAPI MediaDet_get_StreamTypeB(IMediaDet* iface, BSTR *pVal)
 static HRESULT WINAPI MediaDet_get_StreamLength(IMediaDet* iface, double *pVal)
 {
     MediaDetImpl *This = (MediaDetImpl *)iface;
-    FIXME("(%p)->(%p): not implemented!\n", This, pVal);
-    return E_NOTIMPL;
+    FIXME("(%p): stub!\n", This);
+    return VFW_E_INVALIDMEDIATYPE;
 }
 
 static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
