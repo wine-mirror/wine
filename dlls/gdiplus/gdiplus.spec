@@ -521,7 +521,7 @@
 @ stdcall GdipSetCustomLineCapWidthScale(ptr long)
 @ stdcall GdipSetEffectParameters(ptr ptr long)
 @ stdcall GdipSetEmpty(ptr)
-@ stub GdipSetImageAttributesCachedBackground
+@ stdcall GdipSetImageAttributesCachedBackground(ptr long)
 @ stdcall GdipSetImageAttributesColorKeys(ptr long long long long)
 @ stdcall GdipSetImageAttributesColorMatrix(ptr long long ptr ptr long)
 @ stub GdipSetImageAttributesGamma
