@@ -29,6 +29,176 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+typedef struct PassThruImpl {
+    const ISeekingPassThruVtbl *IPassThru_vtbl;
+    const IUnknownVtbl * IInner_vtbl;
+
+    LONG ref;
+    IUnknown * pUnkOuter;
+    BOOL bUnkOuterValid;
+    BOOL bAggregatable;
+} PassThruImpl;
+
+static HRESULT WINAPI SeekInner_QueryInterface(IUnknown * iface,
+					  REFIID riid,
+					  LPVOID *ppvObj) {
+    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    TRACE("(%p)->(%s (%p), %p)\n", This, debugstr_guid(riid), riid, ppvObj);
+
+    if (This->bAggregatable)
+        This->bUnkOuterValid = TRUE;
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+    {
+        *ppvObj = &(This->IInner_vtbl);
+        TRACE("   returning IUnknown interface (%p)\n", *ppvObj);
+    } else if (IsEqualGUID(&IID_ISeekingPassThru, riid)) {
+        *ppvObj = &(This->IPassThru_vtbl);
+        TRACE("   returning IMediaSeeking interface (%p)\n", *ppvObj);
+    } else {
+        *ppvObj = NULL;
+        FIXME("unknown interface %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)(*ppvObj));
+    return S_OK;
+}
+
+static ULONG WINAPI SeekInner_AddRef(IUnknown * iface) {
+    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI SeekInner_Release(IUnknown * iface) {
+    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
+
+    if (ref == 0)
+    {
+        CoTaskMemFree(This);
+    }
+    return ref;
+}
+
+static const IUnknownVtbl IInner_VTable =
+{
+    SeekInner_QueryInterface,
+    SeekInner_AddRef,
+    SeekInner_Release
+};
+
+/* Generic functions for aggegration */
+static HRESULT WINAPI SeekOuter_QueryInterface(PassThruImpl *This, REFIID riid, LPVOID *ppv)
+{
+    if (This->bAggregatable)
+        This->bUnkOuterValid = TRUE;
+
+    if (This->pUnkOuter)
+    {
+        if (This->bAggregatable)
+            return IUnknown_QueryInterface(This->pUnkOuter, riid, ppv);
+
+        if (IsEqualIID(riid, &IID_IUnknown))
+        {
+            HRESULT hr;
+
+            IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
+            hr = IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
+            IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
+            This->bAggregatable = TRUE;
+            return hr;
+        }
+
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    return IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
+}
+
+static ULONG WINAPI SeekOuter_AddRef(PassThruImpl *This)
+{
+    if (This->pUnkOuter && This->bUnkOuterValid)
+        return IUnknown_AddRef(This->pUnkOuter);
+    return IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
+}
+
+static ULONG WINAPI SeekOuter_Release(PassThruImpl *This)
+{
+    if (This->pUnkOuter && This->bUnkOuterValid)
+        return IUnknown_Release(This->pUnkOuter);
+    return IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
+}
+
+static HRESULT WINAPI SeekingPassThru_QueryInterface(ISeekingPassThru *iface, REFIID riid, LPVOID *ppvObj)
+{
+    ICOM_THIS_MULTI(PassThruImpl, IPassThru_vtbl, iface);
+
+    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+
+    return SeekOuter_QueryInterface(This, riid, ppvObj);
+}
+
+static ULONG WINAPI SeekingPassThru_AddRef(ISeekingPassThru *iface)
+{
+    ICOM_THIS_MULTI(PassThruImpl, IPassThru_vtbl, iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return SeekOuter_AddRef(This);
+}
+
+static ULONG WINAPI SeekingPassThru_Release(ISeekingPassThru *iface)
+{
+    ICOM_THIS_MULTI(PassThruImpl, IPassThru_vtbl, iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return SeekOuter_Release(This);
+}
+
+static HRESULT WINAPI SeekingPassThru_Init(ISeekingPassThru *iface, BOOL renderer, IPin *pin)
+{
+    ICOM_THIS_MULTI(PassThruImpl, IPassThru_vtbl, iface);
+
+    FIXME("(%p/%p)->(%d, %p) stub\n", This, iface, renderer, pin);
+
+    return S_OK;
+}
+
+static const ISeekingPassThruVtbl ISeekingPassThru_Vtbl =
+{
+    SeekingPassThru_QueryInterface,
+    SeekingPassThru_AddRef,
+    SeekingPassThru_Release,
+    SeekingPassThru_Init
+};
+
+HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
+    PassThruImpl *fimpl;
+
+    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+
+    *ppObj = fimpl = CoTaskMemAlloc(sizeof(*fimpl));
+    if (!fimpl)
+        return E_OUTOFMEMORY;
+
+    fimpl->pUnkOuter = pUnkOuter;
+    fimpl->bUnkOuterValid = FALSE;
+    fimpl->bAggregatable = FALSE;
+    fimpl->IInner_vtbl = &IInner_VTable;
+    fimpl->IPassThru_vtbl = &ISeekingPassThru_Vtbl;
+    fimpl->ref = 1;
+    return S_OK;
+}
 
 typedef HRESULT (*SeekFunc)( IMediaSeeking *to, LPVOID arg );
 

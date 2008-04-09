@@ -57,6 +57,7 @@ HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv);
+HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
 HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum);
 
