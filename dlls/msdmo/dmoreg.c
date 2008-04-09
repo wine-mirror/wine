@@ -293,11 +293,11 @@ lend:
  */
 HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR szName[])
 {
-#define NAME_SIZE   80  /* Size of szName[] */
     WCHAR szguid[64];
     HRESULT hres;
     HKEY hrkey = 0;
     HKEY hkey = 0;
+    static const INT max_name_len = 80;
     DWORD count;
 
     TRACE("%s\n", debugstr_guid(clsidDMO));
@@ -312,7 +312,7 @@ HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR szName[])
     if (ERROR_SUCCESS != hres)
         goto lend;
 
-    count = NAME_SIZE;
+    count = max_name_len * sizeof(WCHAR);
     hres = RegQueryValueExW(hkey, NULL, NULL, NULL, 
         (LPBYTE) szName, &count); 
 
@@ -324,7 +324,6 @@ lend:
         RegCloseKey(hkey);
 
     return hres;
-#undef NAME_SIZE
 }
 
 
