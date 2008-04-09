@@ -110,57 +110,6 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
     RedrawWindow( hwnd, &rect, 0, flags );
 }
 
-/***********************************************************************
- *		SetWindowStyle   (X11DRV.@)
- *
- * Update the X state of a window to reflect a style change
- */
-void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
-{
-    Display *display = thread_display();
-    struct x11drv_win_data *data;
-    DWORD new_style, changed;
-
-    if (hwnd == GetDesktopWindow()) return;
-    new_style = GetWindowLongW( hwnd, GWL_STYLE );
-    changed = new_style ^ old_style;
-
-    if ((changed & WS_VISIBLE) && (new_style & WS_VISIBLE))
-    {
-        /* we don't unmap windows, that causes trouble with the window manager */
-        if (!(data = X11DRV_get_win_data( hwnd )) &&
-            !(data = X11DRV_create_win_data( hwnd ))) return;
-
-        if (data->whole_window && X11DRV_is_window_rect_mapped( &data->window_rect ))
-        {
-            X11DRV_set_wm_hints( display, data );
-            if (!data->mapped)
-            {
-                TRACE( "mapping win %p/%lx\n", hwnd, data->whole_window );
-                wait_for_withdrawn_state( display, data, TRUE );
-                X11DRV_sync_window_style( display, data );
-                wine_tsx11_lock();
-                XMapWindow( display, data->whole_window );
-                wine_tsx11_unlock();
-                data->mapped = TRUE;
-                data->iconic = (new_style & WS_MINIMIZE) != 0;
-            }
-        }
-    }
-
-    if (changed & WS_DISABLED)
-    {
-        data = X11DRV_get_win_data( hwnd );
-        if (data && data->wm_hints)
-        {
-            wine_tsx11_lock();
-            data->wm_hints->input = !(new_style & WS_DISABLED);
-            XSetWMHints( display, data->whole_window, data->wm_hints );
-            wine_tsx11_unlock();
-        }
-    }
-}
-
 
 /***********************************************************************
  *     update_net_wm_states
@@ -256,6 +205,82 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
 
 
 /***********************************************************************
+ *     map_window
+ */
+static void map_window( Display *display, struct x11drv_win_data *data, DWORD new_style )
+{
+    TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
+    wait_for_withdrawn_state( display, data, TRUE );
+    update_net_wm_states( display, data );
+    X11DRV_sync_window_style( display, data );
+    wine_tsx11_lock();
+    XMapWindow( display, data->whole_window );
+    XFlush( display );
+    wine_tsx11_unlock();
+    data->mapped = TRUE;
+    data->iconic = (new_style & WS_MINIMIZE) != 0;
+}
+
+
+/***********************************************************************
+ *     unmap_window
+ */
+static void unmap_window( Display *display, struct x11drv_win_data *data )
+{
+    TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
+    wait_for_withdrawn_state( display, data, FALSE );
+    wine_tsx11_lock();
+    if (data->managed) XWithdrawWindow( display, data->whole_window, DefaultScreen(display) );
+    else XUnmapWindow( display, data->whole_window );
+    wine_tsx11_unlock();
+    data->mapped = FALSE;
+    data->net_wm_state = 0;
+}
+
+
+/***********************************************************************
+ *		SetWindowStyle   (X11DRV.@)
+ *
+ * Update the X state of a window to reflect a style change
+ */
+void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
+{
+    Display *display = thread_display();
+    struct x11drv_win_data *data;
+    DWORD new_style, changed;
+
+    if (hwnd == GetDesktopWindow()) return;
+    new_style = GetWindowLongW( hwnd, GWL_STYLE );
+    changed = new_style ^ old_style;
+
+    if ((changed & WS_VISIBLE) && (new_style & WS_VISIBLE))
+    {
+        /* we don't unmap windows, that causes trouble with the window manager */
+        if (!(data = X11DRV_get_win_data( hwnd )) &&
+            !(data = X11DRV_create_win_data( hwnd ))) return;
+
+        if (data->whole_window && X11DRV_is_window_rect_mapped( &data->window_rect ))
+        {
+            X11DRV_set_wm_hints( display, data );
+            if (!data->mapped) map_window( display, data, new_style );
+        }
+    }
+
+    if (changed & WS_DISABLED)
+    {
+        data = X11DRV_get_win_data( hwnd );
+        if (data && data->wm_hints)
+        {
+            wine_tsx11_lock();
+            data->wm_hints->input = !(new_style & WS_DISABLED);
+            XSetWMHints( display, data->whole_window, data->wm_hints );
+            wine_tsx11_unlock();
+        }
+    }
+}
+
+
+/***********************************************************************
  *		move_window_bits
  *
  * Move the window bits when a window is moved.
@@ -342,15 +367,9 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, rectWindow ))
     {
         TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
+        if (data->mapped) unmap_window( display, data );
         data->managed = TRUE;
         SetPropA( hwnd, managed_prop, (HANDLE)1 );
-        if (data->mapped)
-        {
-            wine_tsx11_lock();
-            XUnmapWindow( display, data->whole_window );
-            wine_tsx11_unlock();
-            data->mapped = FALSE;
-        }
     }
 
     old_window_rect = data->window_rect;
@@ -417,16 +436,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     if (data->mapped && (!(new_style & WS_VISIBLE) ||
                          (!event_type && !X11DRV_is_window_rect_mapped( rectWindow ))))
-    {
-        TRACE( "unmapping win %p/%lx\n", hwnd, data->whole_window );
-        wait_for_withdrawn_state( display, data, FALSE );
-        wine_tsx11_lock();
-        if (data->managed) XWithdrawWindow( display, data->whole_window, DefaultScreen(display) );
-        else XUnmapWindow( display, data->whole_window );
-        wine_tsx11_unlock();
-        data->mapped = FALSE;
-        data->net_wm_state = 0;
-    }
+        unmap_window( display, data );
 
     /* don't change position if we are about to minimize or maximize a managed window */
     if (!event_type &&
@@ -441,16 +451,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
         if (!data->mapped)
         {
-            TRACE( "mapping win %p/%lx\n", hwnd, data->whole_window );
-            wait_for_withdrawn_state( display, data, TRUE );
-            update_net_wm_states( display, data );
-            X11DRV_sync_window_style( display, data );
-            wine_tsx11_lock();
-            XMapWindow( display, data->whole_window );
-            XFlush( display );
-            wine_tsx11_unlock();
-            data->mapped = TRUE;
-            data->iconic = (new_style & WS_MINIMIZE) != 0;
+            map_window( display, data, new_style );
         }
         else if ((swp_flags & SWP_STATECHANGED) && (!data->iconic != !(new_style & WS_MINIMIZE)))
         {
