@@ -55,7 +55,6 @@ struct tray_icon
     HWND           tooltip;  /* Icon tooltip */
     UINT           id;       /* the unique id given by the app */
     UINT           callback_message;
-    BOOL           hidden;   /* icon display state */
     WCHAR          tiptext[128]; /* Tooltip text. If empty => tooltip disabled */
 };
 
@@ -259,14 +258,12 @@ static BOOL hide_icon( struct tray_icon *icon )
 {
     TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
-    if (!icon->window || icon->hidden) return TRUE;  /* already hidden */
+    if (!icon->window) return TRUE;  /* already hidden */
 
-    if (icon->window)
-    {
-        DestroyWindow(icon->window);
-        DestroyWindow(icon->tooltip);
-    }
-    icon->hidden = TRUE;
+    DestroyWindow(icon->window);
+    DestroyWindow(icon->tooltip);
+    icon->window = 0;
+    icon->tooltip = 0;
     return TRUE;
 }
 
@@ -279,7 +276,7 @@ static BOOL show_icon( struct tray_icon *icon )
 
     TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
-    if (icon->window && !icon->hidden) return TRUE;  /* already shown */
+    if (icon->window) return TRUE;  /* already shown */
 
     if (!class_registered)
     {
@@ -315,7 +312,6 @@ static BOOL show_icon( struct tray_icon *icon )
     dock_systray_window( icon->window, systray_window );
     SetTimer( icon->window, 1, 1000, NULL );
     ShowWindow( icon->window, SW_SHOWNA );
-    icon->hidden = FALSE;
     return TRUE;
 }
 
@@ -330,15 +326,11 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
         else show_icon( icon );
     }
 
-    /* startup case*/
-    if (!icon->window && !icon->hidden) show_icon( icon );
-
     if (nid->uFlags & NIF_ICON)
     {
         if (icon->image) DestroyIcon(icon->image);
         icon->image = CopyIcon(nid->hIcon);
-
-        if (!icon->hidden)
+        if (icon->window)
         {
             struct x11drv_win_data *data = X11DRV_get_win_data( icon->window );
             if (data) XClearArea( gdi_display, data->client_window, 0, 0, 0, 0, True );
@@ -352,8 +344,7 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
     if (nid->uFlags & NIF_TIP)
     {
         lstrcpynW(icon->tiptext, nid->szTip, sizeof(icon->tiptext)/sizeof(WCHAR));
-        if (!icon->hidden)
-            update_tooltip_text(icon);
+        if (icon->tooltip) update_tooltip_text(icon);
     }
     if (nid->uFlags & NIF_INFO && nid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
@@ -387,11 +378,9 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
 
     list_add_tail(&icon_list, &icon->entry);
 
-    /*
-     * Both icon->window and icon->hidden are zero. modify_icon function
-     * will treat this case as a startup, i.e. icon window will be created if
-     * NIS_HIDDEN flag is not set.
-     */
+    /* if hidden state is specified, modify_icon will take care of it */
+    if (!((nid->uFlags & NIF_STATE) && (nid->dwStateMask & NIS_HIDDEN)))
+        show_icon( icon );
 
     return modify_icon( icon, nid );
 }
