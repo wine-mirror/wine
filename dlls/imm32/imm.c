@@ -1027,11 +1027,22 @@ DWORD WINAPI ImmGetConversionListA(
   LPCSTR pSrc, LPCANDIDATELIST lpDst,
   DWORD dwBufLen, UINT uFlag)
 {
-  FIXME("(%p, %p, %s, %p, %d, %d): stub\n",
-    hKL, hIMC, debugstr_a(pSrc), lpDst, dwBufLen, uFlag
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %p, %s, %p, %d, %d):\n", hKL, hIMC, debugstr_a(pSrc), lpDst,
+                dwBufLen, uFlag);
+    if (immHkl->hIME && immHkl->pImeConversionList)
+    {
+        if (!is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeConversionList(hIMC,(LPCWSTR)pSrc,lpDst,dwBufLen,uFlag);
+        else
+        {
+            FIXME("A procedure called with W ime back end\n");
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return 0;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
@@ -1042,11 +1053,22 @@ DWORD WINAPI ImmGetConversionListW(
   LPCWSTR pSrc, LPCANDIDATELIST lpDst,
   DWORD dwBufLen, UINT uFlag)
 {
-  FIXME("(%p, %p, %s, %p, %d, %d): stub\n",
-    hKL, hIMC, debugstr_w(pSrc), lpDst, dwBufLen, uFlag
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %p, %s, %p, %d, %d):\n", hKL, hIMC, debugstr_w(pSrc), lpDst,
+                dwBufLen, uFlag);
+    if (immHkl->hIME && immHkl->pImeConversionList)
+    {
+        if (is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeConversionList(hIMC,pSrc,lpDst,dwBufLen,uFlag);
+        else
+        {
+            FIXME("W procedure called with A ime back end\n");
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return 0;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
