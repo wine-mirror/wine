@@ -522,16 +522,6 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         if(FAILED(ITypeInfo_GetDocumentation(pTypeInfo, pFuncDesc->memid, &bstrName,
                 &bstrHelpString, NULL, NULL))) continue;
 
-        bstrParamNames = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(BSTR*)*(pFuncDesc->cParams+1));
-        if(FAILED(ITypeInfo_GetNames(pTypeInfo, pFuncDesc->memid, bstrParamNames,
-                pFuncDesc->cParams+1, &namesNo)))
-        {
-            HeapFree(GetProcessHeap(), 0, bstrParamNames);
-            continue;
-        }
-        SysFreeString(bstrParamNames[0]);
-
         memset(wszText, 0, sizeof(wszText));
         memset(wszAfter, 0, sizeof(wszAfter));
         tld = InitializeTLData();
@@ -605,12 +595,25 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
             AddToTLDataStrW(tld, wszNewLine);
         }
 
-        if(pTypeAttr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)
+        if(pTypeAttr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION) {
             AddToTLDataStrW(tld, wszVT_HRESULT);
+            if(strcmpW(wszText, wszVT_VOID)) pFuncDesc->cParams++;
+        }
         else {
             AddToTLDataStrW(tld, wszText);
             AddToTLDataStrW(tld, wszAfter);
         }
+
+        bstrParamNames = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(BSTR*)*(pFuncDesc->cParams+1));
+        if(FAILED(ITypeInfo_GetNames(pTypeInfo, pFuncDesc->memid, bstrParamNames,
+                pFuncDesc->cParams+1, &namesNo)))
+        {
+            HeapFree(GetProcessHeap(), 0, bstrParamNames);
+            continue;
+        }
+        SysFreeString(bstrParamNames[0]);
+
         AddToTLDataStrW(tld, wszSpace);
         if(pFuncDesc->memid >= MIN_FUNC_ID)
         {
