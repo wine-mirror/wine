@@ -511,7 +511,7 @@
 @ stub GdipSetClipPath
 @ stub GdipSetClipRect
 @ stdcall GdipSetClipRectI(ptr long long long long long)
-@ stub GdipSetClipRegion
+@ stdcall GdipSetClipRegion(ptr ptr long)
 @ stdcall GdipSetCompositingMode(ptr long)
 @ stdcall GdipSetCompositingQuality(ptr long)
 @ stub GdipSetCustomLineCapBaseCap

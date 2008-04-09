@@ -38,6 +38,7 @@ class GpLineGradient : public GpBrush {};
 class GpTexture : public GpBrush {};
 class GpFont {};
 class GpStringFormat {};
+class GpRegion {};
 
 #else /* end of c++ declarations */
 
@@ -58,6 +59,7 @@ typedef struct GpLineGradient GpLineGradient;
 typedef struct GpTexture GpTexture;
 typedef struct GpFont GpFont;
 typedef struct GpStringFormat GpStringFormat;
+typedef struct GpRegion GpRegion;
 
 #endif /* end of c declarations */
 

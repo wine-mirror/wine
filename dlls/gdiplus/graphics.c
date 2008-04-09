@@ -2100,3 +2100,14 @@ GpStatus WINGDIPAPI GdipSetClipRectI(GpGraphics *graphics, INT x, INT y,
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
+                                     CombineMode combineMode)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
