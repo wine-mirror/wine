@@ -120,6 +120,7 @@ typedef struct
     WCHAR wszInsertAfter[MAX_LOAD_STRING];
     INT idlLen;
     BOOL bPredefine;
+    BOOL bHide;
 }TYPELIB_DATA;
 
 extern GLOBALS globals;

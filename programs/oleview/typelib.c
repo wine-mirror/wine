@@ -758,8 +758,10 @@ static void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
     {
         tvi.hItem = hCur;
         SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-        AddToTLDataStrW(pTLData, wszNewLine);
-        AddToTLDataStrWithTabsW(pTLData, ((TYPELIB_DATA*)(tvi.lParam))->idl);
+        if(!((TYPELIB_DATA*)(tvi.lParam))->bHide) {
+            AddToTLDataStrW(pTLData, wszNewLine);
+            AddToTLDataStrWithTabsW(pTLData, ((TYPELIB_DATA*)(tvi.lParam))->idl);
+        }
         hCur = TreeView_GetNextSibling(typelib.hTree, hCur);
     }
 }
@@ -788,7 +790,8 @@ static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
     {
         tvi.hItem = hCur;
         SendMessage(typelib.hTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-        if(((TYPELIB_DATA*)(tvi.lParam))->bPredefine)
+        if(((TYPELIB_DATA*)(tvi.lParam))->bPredefine &&
+                !((TYPELIB_DATA*)(tvi.lParam))->bHide)
         {
             AddToStrW(wszText, wszSemicolon);
             AddToTLDataStrWithTabsW(pTLData, wszText);
@@ -1164,6 +1167,8 @@ static int PopulateTree(void)
                 CreateInterfaceInfo(pTypeInfo, pTypeAttr->cImplTypes, bstrName,
                         bstrData, ulHelpContext, pTypeAttr, tld);
                 tld->bPredefine = TRUE;
+                if(pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL)
+                    tld->bHide = TRUE;
                 AddToStrW(wszText, wszTKIND_DISPATCH);
                 AddToStrW(wszText, bstrName);
 
