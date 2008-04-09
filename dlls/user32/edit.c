@@ -855,10 +855,8 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
                     if (charW == VK_RETURN || charW == VK_ESCAPE)
                     {
                         if (SendMessageW(GetParent(hwnd), CB_GETDROPPEDSTATE, 0, 0))
-                        {
                             SendMessageW(GetParent(hwnd), WM_KEYDOWN, charW, 0);
-                            break;
-                        }
+                        break;
                     }
                 }
 		result = EDIT_WM_Char(es, charW);
