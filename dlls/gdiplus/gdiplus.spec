@@ -525,7 +525,7 @@
 @ stdcall GdipSetImageAttributesColorKeys(ptr long long long long)
 @ stdcall GdipSetImageAttributesColorMatrix(ptr long long ptr ptr long)
 @ stdcall GdipSetImageAttributesGamma(ptr long long long)
-@ stub GdipSetImageAttributesNoOp
+@ stdcall GdipSetImageAttributesNoOp(ptr long long)
 @ stub GdipSetImageAttributesOutputChannel
 @ stub GdipSetImageAttributesOutputChannelColorProfile
 @ stub GdipSetImageAttributesRemapTable
