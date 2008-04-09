@@ -54,7 +54,7 @@ __ASM_GLOBAL_FUNC( pthread_kill_syscall,
                    "int $0x80\n\t"
                    "jae 1f\n\t"
                    "negl %eax\n"
-                   "1:\tret" );
+                   "1:\tret" )
 #else
 static inline int pthread_kill_syscall( mach_port_t, int )
 {
