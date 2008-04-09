@@ -610,6 +610,7 @@ static Window create_icon_window( Display *display, struct x11drv_win_data *data
                                        InputOutput, visual,
                                        CWEventMask | CWBitGravity | CWBackingStore | CWColormap, &attr );
     XSaveContext( display, data->icon_window, winContext, (char *)data->hwnd );
+    XFlush( display );  /* make sure the window exists before we start painting to it */
     wine_tsx11_unlock();
 
     TRACE( "created %lx\n", data->icon_window );
@@ -1097,6 +1098,9 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
         if (GetWindowRgn( data->hwnd, hrgn ) != ERROR) sync_window_region( display, data, hrgn );
         DeleteObject( hrgn );
     }
+    wine_tsx11_lock();
+    XFlush( display );  /* make sure the window exists before we start painting to it */
+    wine_tsx11_unlock();
     return data->whole_window;
 }
 
