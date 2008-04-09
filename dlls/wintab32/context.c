@@ -692,11 +692,21 @@ BOOL WINAPI WTGetW(HCTX hCtx, LPLOGCONTEXTW lpLogCtx)
  */
 BOOL WINAPI WTSetA(HCTX hCtx, LPLOGCONTEXTA lpLogCtx)
 {
-    FIXME("(%p, %p): stub\n", hCtx, lpLogCtx);
+    LPOPENCONTEXT context;
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    TRACE("hCtx=%p, lpLogCtx=%p\n", hCtx, lpLogCtx);
 
-    return FALSE;
+    if (!hCtx || !lpLogCtx) return FALSE;
+
+    /* TODO: if cur process not owner of hCtx only modify
+     * attribs not locked by owner */
+
+    EnterCriticalSection(&csTablet);
+    context = TABLET_FindOpenContext(hCtx);
+    LOGCONTEXTAtoW(lpLogCtx, &context->context);
+    LeaveCriticalSection(&csTablet);
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -704,11 +714,21 @@ BOOL WINAPI WTSetA(HCTX hCtx, LPLOGCONTEXTA lpLogCtx)
  */
 BOOL WINAPI WTSetW(HCTX hCtx, LPLOGCONTEXTW lpLogCtx)
 {
-    FIXME("(%p, %p): stub\n", hCtx, lpLogCtx);
+    LPOPENCONTEXT context;
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    TRACE("hCtx=%p, lpLogCtx=%p\n", hCtx, lpLogCtx);
 
-    return FALSE;
+    if (!hCtx || !lpLogCtx) return FALSE;
+
+    /* TODO: if cur process not hCtx owner only modify
+     * attribs not locked by owner */
+
+    EnterCriticalSection(&csTablet);
+    context = TABLET_FindOpenContext(hCtx);
+    memmove(&context->context, lpLogCtx, sizeof(LOGCONTEXTW));
+    LeaveCriticalSection(&csTablet);
+
+    return TRUE;
 }
 
 /***********************************************************************
