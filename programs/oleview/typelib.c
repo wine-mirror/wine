@@ -517,6 +517,8 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         TYPELIB_DATA *tld;
 
         if(FAILED(ITypeInfo_GetFuncDesc(pTypeInfo, i, &pFuncDesc))) continue;
+        if(pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL && pFuncDesc->memid >= MIN_FUNC_ID) continue;
+
         if(FAILED(ITypeInfo_GetDocumentation(pTypeInfo, pFuncDesc->memid, &bstrName,
                 &bstrHelpString, NULL, NULL))) continue;
 
