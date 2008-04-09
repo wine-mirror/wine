@@ -304,7 +304,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
 		h = wine_server_call_err( req ) ? 0 : (HANDLE)reply->handle;
 	    }
 	    SERVER_END_REQ;
-	    WINE_TRACE(" active(%d)", (int)h);
+	    WINE_TRACE(" active(%p)", h);
 	    if (h)
 	    {
 		CloseHandle(data->hConOut);
