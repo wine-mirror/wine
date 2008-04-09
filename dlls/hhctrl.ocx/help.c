@@ -575,7 +575,7 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
     {
         LPWSTR szBuf = HH_LoadString(buttons[dwIndex].idCommand);
         DWORD dwLen = strlenW(szBuf);
-        szBuf[dwLen + 2] = 0; /* Double-null terminate */
+        szBuf[dwLen + 1] = 0; /* Double-null terminate */
 
         buttons[dwIndex].iString = (DWORD)SendMessageW(hToolbar, TB_ADDSTRINGW, 0, (LPARAM)szBuf);
         heap_free(szBuf);
