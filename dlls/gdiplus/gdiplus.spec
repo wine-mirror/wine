@@ -517,7 +517,7 @@
 @ stdcall GdipSetCustomLineCapBaseCap(ptr long)
 @ stdcall GdipSetCustomLineCapBaseInset(ptr long)
 @ stdcall GdipSetCustomLineCapStrokeCaps(ptr long long)
-@ stub GdipSetCustomLineCapStrokeJoin
+@ stdcall GdipSetCustomLineCapStrokeJoin(ptr long)
 @ stub GdipSetCustomLineCapWidthScale
 @ stub GdipSetEffectParameters
 @ stub GdipSetEmpty
