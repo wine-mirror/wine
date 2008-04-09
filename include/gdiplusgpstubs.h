@@ -39,6 +39,7 @@ class GpTexture : public GpBrush {};
 class GpFont {};
 class GpStringFormat {};
 class GpRegion {};
+class CGpEffect {};
 
 #else /* end of c++ declarations */
 
@@ -60,6 +61,7 @@ typedef struct GpTexture GpTexture;
 typedef struct GpFont GpFont;
 typedef struct GpStringFormat GpStringFormat;
 typedef struct GpRegion GpRegion;
+typedef struct CGpEffect CGpEffect;
 
 #endif /* end of c declarations */
 
