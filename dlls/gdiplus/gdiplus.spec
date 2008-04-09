@@ -514,7 +514,7 @@
 @ stdcall GdipSetClipRegion(ptr ptr long)
 @ stdcall GdipSetCompositingMode(ptr long)
 @ stdcall GdipSetCompositingQuality(ptr long)
-@ stub GdipSetCustomLineCapBaseCap
+@ stdcall GdipSetCustomLineCapBaseCap(ptr long)
 @ stub GdipSetCustomLineCapBaseInset
 @ stdcall GdipSetCustomLineCapStrokeCaps(ptr long long)
 @ stub GdipSetCustomLineCapStrokeJoin
