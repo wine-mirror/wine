@@ -1486,11 +1486,28 @@ BOOL WINAPI ImmNotifyIME(
 BOOL WINAPI ImmRegisterWordA(
   HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszRegister)
 {
-  FIXME("(%p, %s, %d, %s): stub\n",
-    hKL, debugstr_a(lpszReading), dwStyle, debugstr_a(lpszRegister)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %s, %d, %s):\n", hKL, debugstr_a(lpszReading), dwStyle,
+                    debugstr_a(lpszRegister));
+    if (immHkl->hIME && immHkl->pImeRegisterWord)
+    {
+        if (!is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeRegisterWord((LPCWSTR)lpszReading,dwStyle,
+                                            (LPCWSTR)lpszRegister);
+        else
+        {
+            LPWSTR lpszwReading = strdupAtoW(lpszReading);
+            LPWSTR lpszwRegister = strdupAtoW(lpszRegister);
+            BOOL rc;
+
+            rc = immHkl->pImeRegisterWord(lpszwReading,dwStyle,lpszwRegister);
+            HeapFree(GetProcessHeap(),0,lpszwReading);
+            HeapFree(GetProcessHeap(),0,lpszwRegister);
+            return rc;
+        }
+    }
+    else
+        return FALSE;
 }
 
 /***********************************************************************
@@ -1499,11 +1516,28 @@ BOOL WINAPI ImmRegisterWordA(
 BOOL WINAPI ImmRegisterWordW(
   HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszRegister)
 {
-  FIXME("(%p, %s, %d, %s): stub\n",
-    hKL, debugstr_w(lpszReading), dwStyle, debugstr_w(lpszRegister)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %s, %d, %s):\n", hKL, debugstr_w(lpszReading), dwStyle,
+                    debugstr_w(lpszRegister));
+    if (immHkl->hIME && immHkl->pImeRegisterWord)
+    {
+        if (is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeRegisterWord(lpszReading,dwStyle,lpszRegister);
+        else
+        {
+            LPSTR lpszaReading = strdupWtoA(lpszReading);
+            LPSTR lpszaRegister = strdupWtoA(lpszRegister);
+            BOOL rc;
+
+            rc = immHkl->pImeRegisterWord((LPCWSTR)lpszaReading,dwStyle,
+                                          (LPCWSTR)lpszaRegister);
+            HeapFree(GetProcessHeap(),0,lpszaReading);
+            HeapFree(GetProcessHeap(),0,lpszaRegister);
+            return rc;
+        }
+    }
+    else
+        return FALSE;
 }
 
 /***********************************************************************
