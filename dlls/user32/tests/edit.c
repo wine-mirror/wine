@@ -1719,15 +1719,13 @@ static void test_tab(void)
     ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
 
     r = SendMessage(hwEdit, WM_CHAR, VK_TAB, 0);
-    todo_wine ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessage(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
-    todo_wine {
     ok(1 == r, "Expected: %d, got len %d\n", 1, r);
     ok(0 == strcmp(buffer, "\t"), "expected \"\\t\", got \"%s\"\n", buffer);
-    }
 
     DestroyWindow (hwEdit);
 
@@ -1741,7 +1739,7 @@ static void test_tab(void)
     ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
 
     r = SendMessage(hwEdit, WM_CHAR, VK_TAB, 0);
-    todo_wine ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
