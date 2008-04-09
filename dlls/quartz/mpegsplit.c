@@ -4,6 +4,7 @@
  * Copyright 2003 Robert Shearman
  * Copyright 2004-2005 Christian Costa
  * Copyright 2007 Chris Robinson
+ * Copyright 2008 Maarten Lankhorst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -426,16 +427,22 @@ fail:
         This->remaining_bytes = 0;
 
         This->Parser.pInputPin->rtCurrent = MEDIATIME_FROM_BYTES(BYTES_FROM_MEDIATIME(tStop) - cbSrcStream);
-        if (This->pCurrentSample)
+
+        /* If set to S_FALSE we keep the sample, to transmit it next time */
+        if (hr != S_FALSE && This->pCurrentSample)
         {
             IMediaSample_SetActualDataLength(This->pCurrentSample, 0);
             IMediaSample_Release(This->pCurrentSample);
             This->pCurrentSample = NULL;
         }
+
+        /* Sample was rejected because of whatever reason (paused/flushing/etc), no need to terminate the processing */
+        if (hr == S_FALSE)
+            hr = S_OK;
         break;
     }
 
-    if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile)
+    if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile || This->position >= This->Parser.mediaSeeking.llStop)
     {
         int i;
 
@@ -742,6 +749,10 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
             TRACE("Duration: %d seconds\n", (DWORD)(duration / 10000000));
             TRACE("Parsing took %u ms\n", GetTickCount() - ticks);
             This->duration = duration;
+
+            This->Parser.mediaSeeking.llCurrent = 0;
+            This->Parser.mediaSeeking.llDuration = duration;
+            This->Parser.mediaSeeking.llStop = duration;
             break;
         }
         case MPEG_VIDEO_HEADER:
@@ -829,6 +840,7 @@ static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
 
         TRACE("Moving sound to %08u bytes!\n", (DWORD)bytepos);
 
+        EnterCriticalSection(&pin->thread_lock);
         IPin_BeginFlush((IPin *)pin);
 
         /* Make sure this is done while stopped, BeginFlush takes care of this */
@@ -848,6 +860,7 @@ static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
 
         TRACE("Done flushing\n");
         IPin_EndFlush((IPin *)pin);
+        LeaveCriticalSection(&pin->thread_lock);
     }
     return hr;
 }
