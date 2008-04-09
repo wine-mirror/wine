@@ -101,3 +101,14 @@ GpStatus WINGDIPAPI GdipSetImageAttributesCachedBackground(GpImageAttributes *im
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetImageAttributesGamma(GpImageAttributes *imageAttr,
+    ColorAdjustType type, BOOL enableFlag, REAL gamma)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
