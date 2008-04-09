@@ -43,7 +43,7 @@ typedef struct tagLINE_INFO
  */
 
 static WNDPROC g_orgListWndProc;
-static DWORD g_columnToSort = ~0UL;
+static DWORD g_columnToSort = ~0U;
 static BOOL  g_invertSort = FALSE;
 static LPTSTR g_valueName;
 static LPTSTR g_currentPath;
@@ -327,7 +327,7 @@ static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSor
     if (!l->name) return -1;
     if (!r->name) return +1;
         
-    if (g_columnToSort == ~0UL) 
+    if (g_columnToSort == ~0U)
         g_columnToSort = 0;
     
     if (g_columnToSort == 1 && l->dwValType != r->dwValType)
@@ -454,7 +454,7 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 }
 
 
-HWND CreateListView(HWND hwndParent, int id)
+HWND CreateListView(HWND hwndParent, UINT id)
 {
     RECT rcClient;
     HWND hwndLV;
@@ -467,7 +467,7 @@ HWND CreateListView(HWND hwndParent, int id)
     hwndLV = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, _T("List View"),
                             WS_VISIBLE | WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_EDITLABELS,
                             0, 0, rcClient.right, rcClient.bottom,
-                            hwndParent, (HMENU)id, hInst, NULL);
+                            hwndParent, (HMENU)ULongToHandle(id), hInst, NULL);
     if (!hwndLV) return NULL;
     SendMessage(hwndLV, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
@@ -510,7 +510,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
         free(((LINE_INFO*)item.lParam)->name);
         HeapFree(GetProcessHeap(), 0, (void*)item.lParam);
     }
-    g_columnToSort = ~0UL;
+    g_columnToSort = ~0U;
     SendMessage( hwndLV, LVM_DELETEALLITEMS, 0, 0L );
 
     /* get size information and resize the buffers if necessary */

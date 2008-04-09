@@ -118,7 +118,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         DWORD dwError = GetLastError();
     } */
 
-    hFrameWnd = CreateWindowEx(0, (LPCTSTR)(int)hFrameWndClass, szTitle,
+    hFrameWnd = CreateWindowEx(0, MAKEINTRESOURCE(hFrameWndClass), szTitle,
                                WS_OVERLAPPEDWINDOW | WS_EX_CLIENTEDGE,
                                CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                                NULL, hMenuFrame, hInstance, NULL/*lpParam*/);

@@ -106,7 +106,7 @@ extern void SetupStatusBar(HWND hWnd, BOOL bResize);
 extern void UpdateStatusBar(void);
 
 /* listview.c */
-extern HWND CreateListView(HWND hwndParent, int id);
+extern HWND CreateListView(HWND hwndParent, UINT id);
 extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highlightValue);
 extern HWND StartValueRename(HWND hwndLV);
 extern LPCTSTR GetValueName(HWND hwndLV);
@@ -114,7 +114,7 @@ extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Res
 extern BOOL IsDefaultValue(HWND hwndLV, int i);
 
 /* treeview.c */
-extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id);
+extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, UINT id);
 extern BOOL RefreshTreeView(HWND hWndTV);
 extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
 extern LPTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);

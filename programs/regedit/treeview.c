@@ -650,7 +650,7 @@ BOOL OnTreeExpanding(HWND hwndTV, NMTREEVIEW* pnmtv)
  * Returns the handle to the new control if successful, or NULL otherwise.
  * hwndParent - handle to the control's parent window.
  */
-HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id)
+HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, UINT id)
 {
     RECT rcClient;
     HWND hwndTV;
@@ -660,7 +660,7 @@ HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id)
     hwndTV = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, _T("Tree View"),
                             WS_VISIBLE | WS_CHILD | WS_TABSTOP | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT,
                             0, 0, rcClient.right, rcClient.bottom,
-                            hwndParent, (HMENU)id, hInst, NULL);
+                            hwndParent, (HMENU)ULongToHandle(id), hInst, NULL);
     /* Initialize the image list, and add items to the control.  */
     if (!InitTreeViewImageLists(hwndTV) || !InitTreeViewItems(hwndTV, pHostName)) {
         DestroyWindow(hwndTV);
