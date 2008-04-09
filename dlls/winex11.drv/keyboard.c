@@ -1274,11 +1274,16 @@ static inline void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
     /* Do something if internal table state != X state for keycode */
     if (((key_state_table[vkey] & 0x80)!=0) != state)
     {
+        DWORD flags = 0;
+
+        if (!state) flags |= KEYEVENTF_KEYUP;
+        if (vkey == VK_RSHIFT || vkey == VK_RCONTROL || vkey == VK_RMENU) flags |= KEYEVENTF_EXTENDEDKEY;
+
         TRACE("Adjusting state for vkey %#.2x. State before %#.2x\n",
               vkey, key_state_table[vkey]);
 
         /* Fake key being pressed inside wine */
-        X11DRV_send_keyboard_input( vkey, 0, state? 0 : KEYEVENTF_KEYUP, time, 0, 0 );
+        X11DRV_send_keyboard_input( vkey, 0, flags, time, 0, 0 );
 
         TRACE("State after %#.2x\n",key_state_table[vkey]);
     }
@@ -1295,10 +1300,9 @@ static inline void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
  */
 void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
 {
-    int i, j, alt, control, shift;
+    int i, j, alt_r = 0, alt_l = 0, control_r = 0, control_l = 0, shift_r = 0, shift_l = 0;
     DWORD time = GetCurrentTime();
 
-    alt = control = shift = 0;
     /* the minimum keycode is always greater or equal to 8, so we can
      * skip the first 8 values, hence start at 1
      */
@@ -1310,15 +1314,21 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
             if (!(event->xkeymap.key_vector[i] & (1<<j))) continue;
             switch(keyc2vkey[(i * 8) + j] & 0xff)
             {
-            case VK_MENU:    alt = 1; break;
-            case VK_CONTROL: control = 1; break;
-            case VK_SHIFT:   shift = 1; break;
+            case VK_LMENU:    alt_l = 1; break;
+            case VK_RMENU:    alt_r = 1; break;
+            case VK_LCONTROL: control_l = 1; break;
+            case VK_RCONTROL: control_r = 1; break;
+            case VK_LSHIFT:   shift_l = 1; break;
+            case VK_RSHIFT:   shift_r = 1; break;
             }
         }
     }
-    KEYBOARD_UpdateOneState( VK_MENU, alt, time );
-    KEYBOARD_UpdateOneState( VK_CONTROL, control, time );
-    KEYBOARD_UpdateOneState( VK_SHIFT, shift, time );
+    KEYBOARD_UpdateOneState( VK_LMENU, alt_l, time );
+    KEYBOARD_UpdateOneState( VK_RMENU, alt_r, time );
+    KEYBOARD_UpdateOneState( VK_LCONTROL, control_l, time );
+    KEYBOARD_UpdateOneState( VK_RCONTROL, control_r, time );
+    KEYBOARD_UpdateOneState( VK_LSHIFT, shift_l, time );
+    KEYBOARD_UpdateOneState( VK_RSHIFT, shift_r, time );
 }
 
 static void update_lock_state(BYTE vkey, WORD scan, DWORD time)
