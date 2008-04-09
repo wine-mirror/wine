@@ -1728,6 +1728,11 @@ static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selec
 }
 
 
+static int is_atom_error( Display *display, XErrorEvent *event, void *arg )
+{
+    return (event->error_code == BadAtom);
+}
+
 /**************************************************************************
  *		X11DRV_CLIPBOARD_InsertSelectionProperties
  *
@@ -1759,7 +1764,7 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(lpFormat, properties[i]);
              }
          }
-         else
+         else if (properties[i])
          {
              /* add it to the list of atoms that we don't know about yet */
              if (!atoms) atoms = HeapAlloc( GetProcessHeap(), 0,
@@ -1774,13 +1779,13 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
          char **names = HeapAlloc( GetProcessHeap(), 0, nb_atoms * sizeof(*names) );
          if (names)
          {
-             wine_tsx11_lock();
-             /* FIXME: we're at the mercy of the app sending the event here.
-              * Currently if they send a bogus atom, we will crash.
-              * We should handle BadAtom errors gracefully in this call.
-              */
-             XGetAtomNames( display, atoms, nb_atoms, names );
-             wine_tsx11_unlock();
+             X11DRV_expect_error( display, is_atom_error, NULL );
+             if (!XGetAtomNames( display, atoms, nb_atoms, names )) nb_atoms = 0;
+             if (X11DRV_check_error())
+             {
+                 WARN( "got some bad atoms, ignoring\n" );
+                 nb_atoms = 0;
+             }
              for (i = 0; i < nb_atoms; i++)
              {
                  WINE_CLIPFORMAT *lpFormat;
