@@ -629,11 +629,22 @@ LRESULT WINAPI ImmEscapeA(
   HKL hKL, HIMC hIMC,
   UINT uEscape, LPVOID lpData)
 {
-  FIXME("(%p, %p, %d, %p): stub\n",
-    hKL, hIMC, uEscape, lpData
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %p, %d, %p):\n", hKL, hIMC, uEscape, lpData);
+
+    if (immHkl->hIME && immHkl->pImeEscape)
+    {
+        if (!is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeEscape(hIMC,uEscape,lpData);
+        else
+        {
+            FIXME("A procedure called with W ime back end\n");
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return 0;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
@@ -643,11 +654,22 @@ LRESULT WINAPI ImmEscapeW(
   HKL hKL, HIMC hIMC,
   UINT uEscape, LPVOID lpData)
 {
-  FIXME("(%p, %p, %d, %p): stub\n",
-    hKL, hIMC, uEscape, lpData
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %p, %d, %p):\n", hKL, hIMC, uEscape, lpData);
+
+    if (immHkl->hIME && immHkl->pImeEscape)
+    {
+        if (is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeEscape(hIMC,uEscape,lpData);
+        else
+        {
+            FIXME("W procedure called with A ime back end\n");
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return 0;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
