@@ -1805,11 +1805,28 @@ BOOL WINAPI ImmSimulateHotKey(HWND hWnd, DWORD dwHotKeyID)
 BOOL WINAPI ImmUnregisterWordA(
   HKL hKL, LPCSTR lpszReading, DWORD dwStyle, LPCSTR lpszUnregister)
 {
-  FIXME("(%p, %s, %d, %s): stub\n",
-    hKL, debugstr_a(lpszReading), dwStyle, debugstr_a(lpszUnregister)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %s, %d, %s):\n", hKL, debugstr_a(lpszReading), dwStyle,
+            debugstr_a(lpszUnregister));
+    if (immHkl->hIME && immHkl->pImeUnregisterWord)
+    {
+        if (!is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeUnregisterWord((LPCWSTR)lpszReading,dwStyle,
+                                              (LPCWSTR)lpszUnregister);
+        else
+        {
+            LPWSTR lpszwReading = strdupAtoW(lpszReading);
+            LPWSTR lpszwUnregister = strdupAtoW(lpszUnregister);
+            BOOL rc;
+
+            rc = immHkl->pImeUnregisterWord(lpszwReading,dwStyle,lpszwUnregister);
+            HeapFree(GetProcessHeap(),0,lpszwReading);
+            HeapFree(GetProcessHeap(),0,lpszwUnregister);
+            return rc;
+        }
+    }
+    else
+        return FALSE;
 }
 
 /***********************************************************************
@@ -1818,11 +1835,28 @@ BOOL WINAPI ImmUnregisterWordA(
 BOOL WINAPI ImmUnregisterWordW(
   HKL hKL, LPCWSTR lpszReading, DWORD dwStyle, LPCWSTR lpszUnregister)
 {
-  FIXME("(%p, %s, %d, %s): stub\n",
-    hKL, debugstr_w(lpszReading), dwStyle, debugstr_w(lpszUnregister)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %s, %d, %s):\n", hKL, debugstr_w(lpszReading), dwStyle,
+            debugstr_w(lpszUnregister));
+    if (immHkl->hIME && immHkl->pImeUnregisterWord)
+    {
+        if (is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeUnregisterWord(lpszReading,dwStyle,lpszUnregister);
+        else
+        {
+            LPSTR lpszaReading = strdupWtoA(lpszReading);
+            LPSTR lpszaUnregister = strdupWtoA(lpszUnregister);
+            BOOL rc;
+
+            rc = immHkl->pImeUnregisterWord((LPCWSTR)lpszaReading,dwStyle,
+                                            (LPCWSTR)lpszaUnregister);
+            HeapFree(GetProcessHeap(),0,lpszaReading);
+            HeapFree(GetProcessHeap(),0,lpszaUnregister);
+            return rc;
+        }
+    }
+    else
+        return FALSE;
 }
 
 /***********************************************************************
