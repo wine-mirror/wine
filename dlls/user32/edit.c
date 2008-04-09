@@ -863,7 +863,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
                 }
                 else
                 {
-                  if (charW == VK_TAB || charW == VK_RETURN)
+                  if (charW == VK_TAB)
                       break;
                 }
 		result = EDIT_WM_Char(es, charW);
@@ -3989,6 +3989,32 @@ static BOOL EDIT_EM_Undo(EDITSTATE *es)
 }
 
 
+/* Helper function for WM_CHAR
+ *
+ * According to an MSDN blog article titled "Just because you're a control
+ * doesn't mean that you're necessarily inside a dialog box," multiline edit
+ * controls without ES_WANTRETURN would attempt to detect whether it is inside
+ * a dialog box or not.
+ */
+static BOOL EDIT_IsInsideDialog(EDITSTATE *es)
+{
+    WND *pParent;
+    BOOL r = FALSE;
+
+    if (es->hwndParent)
+    {
+        pParent = WIN_GetPtr(es->hwndParent);
+        if (pParent && pParent != WND_OTHER_PROCESS && pParent != WND_DESKTOP)
+        {
+            if (pParent->flags & WIN_ISDIALOG)
+                r = TRUE;
+            WIN_ReleasePtr(pParent);
+        }
+    }
+    return r;
+}
+
+
 /*********************************************************************
  *
  *	WM_CHAR
@@ -4002,9 +4028,13 @@ static LRESULT EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 
 	switch (c) {
 	case '\r':
-	    /* If the edit doesn't want the return and it's not a multiline edit, do nothing */
-	    if(!(es->style & ES_MULTILINE) && !(es->style & ES_WANTRETURN))
-		break;
+            /* If it's not a multiline edit box, it would be ignored below.
+             * For multiline edit without ES_WANTRETURN, we have to make a
+             * special case.
+             */
+            if ((es->style & ES_MULTILINE) && !(es->style & ES_WANTRETURN))
+                if (EDIT_IsInsideDialog(es))
+                    break;
 	case '\n':
 		if (es->style & ES_MULTILINE) {
 			if (es->style & ES_READONLY) {

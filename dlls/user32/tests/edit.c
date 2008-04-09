@@ -1652,15 +1652,13 @@ static void test_enter(void)
     ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
 
     r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0);
-    todo_wine ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
     r = SendMessage(hwEdit, WM_GETTEXT, 16, (LPARAM) buffer);
-    todo_wine {
     ok(2 == r, "Expected: %d, got len %d\n", 2, r);
     ok(0 == strcmp(buffer, "\r\n"), "expected \"\\r\\n\", got \"%s\"\n", buffer);
-    }
 
     DestroyWindow (hwEdit);
 
@@ -1674,7 +1672,7 @@ static void test_enter(void)
     ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
 
     r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0);
-    todo_wine ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
@@ -1694,7 +1692,7 @@ static void test_enter(void)
     ok(TRUE == r, "Expected: %d, got: %d\n", TRUE, r);
 
     r = SendMessage(hwEdit, WM_CHAR, VK_RETURN, 0);
-    todo_wine ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
 
     /* get text */
     buffer[0] = 0;
@@ -1844,7 +1842,7 @@ static void test_wantreturn_edit_dialog(void)
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 3);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 4);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 5);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 
@@ -1852,7 +1850,7 @@ static void test_wantreturn_edit_dialog(void)
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 6);
     todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 7);
-    todo_wine ok(444 == r, "Expected %d, got %d\n", 444, r);
+    ok(444 == r, "Expected %d, got %d\n", 444, r);
     r = DialogBoxParam(hinst, "EDIT_WANTRETURN_DIALOG", NULL, (DLGPROC)edit_wantreturn_dialog_proc, 8);
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 }
