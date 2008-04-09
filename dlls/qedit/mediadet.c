@@ -524,8 +524,30 @@ static HRESULT WINAPI MediaDet_GetSampleGrabber(IMediaDet* iface,
 static HRESULT WINAPI MediaDet_get_FrameRate(IMediaDet* iface, double *pVal)
 {
     MediaDetImpl *This = (MediaDetImpl *)iface;
-    FIXME("(%p)->(%p): not implemented!\n", This, pVal);
-    return E_NOTIMPL;
+    AM_MEDIA_TYPE mt;
+    VIDEOINFOHEADER *vh;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    if (!pVal)
+        return E_POINTER;
+
+    hr = MediaDet_get_StreamMediaType(iface, &mt);
+    if (FAILED(hr))
+        return hr;
+
+    if (!IsEqualGUID(&mt.majortype, &MEDIATYPE_Video))
+    {
+        CoTaskMemFree(mt.pbFormat);
+        return VFW_E_INVALIDMEDIATYPE;
+    }
+
+    vh = (VIDEOINFOHEADER *) mt.pbFormat;
+    *pVal = 1.0e7 / (double) vh->AvgTimePerFrame;
+
+    CoTaskMemFree(mt.pbFormat);
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaDet_EnterBitmapGrabMode(IMediaDet* iface,

@@ -23,6 +23,7 @@
 #define COBJMACROS
 
 #include "ole2.h"
+#include "vfwmsgs.h"
 #include "uuids.h"
 #include "wine/test.h"
 #include "qedit.h"
@@ -95,7 +96,9 @@ static void test_mediadet(void)
     long nstrms = 0;
     long strm;
     AM_MEDIA_TYPE mt;
+    double fps;
     int flags;
+    int i;
 
     /* test.avi has one video stream.  */
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
@@ -211,6 +214,13 @@ static void test_mediadet(void)
                  "IMediaDet_get_StreamMediaType\n");
     CoTaskMemFree(mt.pbFormat);
 
+    hr = IMediaDet_get_FrameRate(pM, NULL);
+    ok(hr == E_POINTER, "IMediaDet_get_FrameRate\n");
+
+    hr = IMediaDet_get_FrameRate(pM, &fps);
+    ok(hr == S_OK, "IMediaDet_get_FrameRate\n");
+    ok(fps == 10.0, "IMediaDet_get_FrameRate\n");
+
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
 
@@ -242,37 +252,33 @@ static void test_mediadet(void)
        for both an audio and video stream.  */
     flags = 0;
 
-    hr = IMediaDet_put_CurrentStream(pM, 0);
-    ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+    for (i = 0; i < 2; ++i)
+    {
+        hr = IMediaDet_put_CurrentStream(pM, i);
+        ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
 
-    ZeroMemory(&mt, sizeof mt);
-    hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
-    flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
-              ? 1
-              : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
-                 ? 2
-                 : 0));
-    CoTaskMemFree(mt.pbFormat);
+        strm = -1;
+        hr = IMediaDet_get_CurrentStream(pM, &strm);
+        ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
+        ok(strm == i, "IMediaDet_get_CurrentStream\n");
 
-    hr = IMediaDet_put_CurrentStream(pM, 1);
-    ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
+        ZeroMemory(&mt, sizeof mt);
+        hr = IMediaDet_get_StreamMediaType(pM, &mt);
+        ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+        flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
+                  ? 1
+                  : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
+                     ? 2
+                     : 0));
 
-    strm = -1;
-    hr = IMediaDet_get_CurrentStream(pM, &strm);
-    ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
-    ok(strm == 1, "IMediaDet_get_CurrentStream\n");
+        if (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio))
+        {
+            hr = IMediaDet_get_FrameRate(pM, &fps);
+            ok(hr == VFW_E_INVALIDMEDIATYPE, "IMediaDet_get_FrameRate\n");
+        }
 
-    ZeroMemory(&mt, sizeof mt);
-    hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
-    flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
-              ? 1
-              : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
-                 ? 2
-                 : 0));
-    CoTaskMemFree(mt.pbFormat);
-
+        CoTaskMemFree(mt.pbFormat);
+    }
     ok(flags == 3, "IMediaDet_get_StreamMediaType\n");
 
     hr = IMediaDet_put_CurrentStream(pM, 2);
