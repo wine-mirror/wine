@@ -637,7 +637,6 @@ static BOOL ProcessStartupItems(void)
 {
     BOOL ret = FALSE;
     HRESULT hr;
-    int iRet;
     IMalloc *ppM = NULL;
     IShellFolder *psfDesktop = NULL, *psfStartup = NULL;
     LPITEMIDLIST pidlStartup = NULL, pidlItem;
@@ -695,8 +694,13 @@ static BOOL ProcessStartupItems(void)
 	    if (FAILED(hr))
 		WINE_TRACE("Unable to parse display name.\n");
 	    else
-		if ((iRet = (int)ShellExecuteW(NULL, NULL, wszCommand, NULL, NULL, SW_SHOWNORMAL)) <= 32)
-		    WINE_WARN("Error %d executing command %s.\n", iRet, wine_dbgstr_w(wszCommand));
+            {
+                HINSTANCE hinst;
+
+                hinst = ShellExecuteW(NULL, NULL, wszCommand, NULL, NULL, SW_SHOWNORMAL);
+                if (PtrToUlong(hinst) <= 32)
+                    WINE_WARN("Error %p executing command %s.\n", hinst, wine_dbgstr_w(wszCommand));
+            }
 	}
 
 	IMalloc_Free(ppM, pidlItem);
