@@ -1,7 +1,7 @@
 /*
  * Unit tests for Media Detector
  *
- * Copyright (C) 2008 Google (Lei Zhang)
+ * Copyright (C) 2008 Google (Lei Zhang, Dan Hipschman)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -136,6 +136,12 @@ static void test_mediadet(void)
     hr = IMediaDet_put_CurrentStream(pM, -1);
     ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");
 
+    hr = IMediaDet_get_StreamMediaType(pM, &mt);
+    ok(hr == E_INVALIDARG, "IMediaDet_get_StreamMediaType\n");
+
+    hr = IMediaDet_get_StreamMediaType(pM, NULL);
+    ok(hr == E_POINTER, "IMediaDet_get_StreamMediaType\n");
+
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
     ok(hr == S_OK, "IMediaDet_put_Filename -> %x\n", hr);
@@ -146,6 +152,11 @@ static void test_mediadet(void)
     hr = IMediaDet_get_CurrentStream(pM, &strm);
     ok(hr == S_OK, "IMediaDet_get_CurrentStream\n");
     ok(strm == 0, "IMediaDet_get_CurrentStream\n");
+
+    ZeroMemory(&mt, sizeof mt);
+    hr = IMediaDet_get_StreamMediaType(pM, &mt);
+    ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    CoTaskMemFree(mt.pbFormat);
 
     /* Even before get_OutputStreams.  */
     hr = IMediaDet_put_CurrentStream(pM, 1);
@@ -195,9 +206,10 @@ static void test_mediadet(void)
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    todo_wine ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
-    todo_wine ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Video),
+    ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Video),
                  "IMediaDet_get_StreamMediaType\n");
+    CoTaskMemFree(mt.pbFormat);
 
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
@@ -235,12 +247,13 @@ static void test_mediadet(void)
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    todo_wine ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
     flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
               ? 1
               : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
                  ? 2
                  : 0));
+    CoTaskMemFree(mt.pbFormat);
 
     hr = IMediaDet_put_CurrentStream(pM, 1);
     ok(hr == S_OK, "IMediaDet_put_CurrentStream\n");
@@ -252,14 +265,15 @@ static void test_mediadet(void)
 
     ZeroMemory(&mt, sizeof mt);
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
-    todo_wine ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
+    ok(hr == S_OK, "IMediaDet_get_StreamMediaType\n");
     flags += (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video)
               ? 1
               : (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio)
                  ? 2
                  : 0));
+    CoTaskMemFree(mt.pbFormat);
 
-    todo_wine ok(flags == 3, "IMediaDet_get_StreamMediaType\n");
+    ok(flags == 3, "IMediaDet_get_StreamMediaType\n");
 
     hr = IMediaDet_put_CurrentStream(pM, 2);
     ok(hr == E_INVALIDARG, "IMediaDet_put_CurrentStream\n");

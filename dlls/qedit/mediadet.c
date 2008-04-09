@@ -1,6 +1,6 @@
 /*              DirectShow Media Detector object (QEDIT.DLL)
  *
- * Copyright 2008 Google (Lei Zhang)
+ * Copyright 2008 Google (Lei Zhang, Dan Hipschman)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -39,10 +40,13 @@ typedef struct MediaDetImpl {
     IBaseFilter *splitter;
     long num_streams;
     long cur_stream;
+    IPin *cur_pin;
 } MediaDetImpl;
 
 static void MD_cleanup(MediaDetImpl *This)
 {
+    if (This->cur_pin) IPin_Release(This->cur_pin);
+    This->cur_pin = NULL;
     if (This->source) IBaseFilter_Release(This->source);
     This->source = NULL;
     if (This->splitter) IBaseFilter_Release(This->splitter);
@@ -164,6 +168,47 @@ static HRESULT WINAPI MediaDet_get_CurrentStream(IMediaDet* iface, long *pVal)
     return S_OK;
 }
 
+static HRESULT SetCurPin(MediaDetImpl *This, long strm)
+{
+    IEnumPins *pins;
+    IPin *pin;
+    HRESULT hr;
+
+    assert(This->splitter);
+    assert(0 <= strm && strm < This->num_streams);
+
+    if (This->cur_pin)
+    {
+        IPin_Release(This->cur_pin);
+        This->cur_pin = NULL;
+    }
+
+    hr = IBaseFilter_EnumPins(This->splitter, &pins);
+    if (FAILED(hr))
+        return hr;
+
+    while (IEnumPins_Next(pins, 1, &pin, NULL) == S_OK && !This->cur_pin)
+    {
+        PIN_DIRECTION dir;
+        hr = IPin_QueryDirection(pin, &dir);
+        if (FAILED(hr))
+        {
+            IPin_Release(pin);
+            IEnumPins_Release(pins);
+            return hr;
+        }
+
+        if (dir == PINDIR_OUTPUT && strm-- == 0)
+            This->cur_pin = pin;
+        else
+            IPin_Release(pin);
+    }
+    IEnumPins_Release(pins);
+
+    assert(This->cur_pin);
+    return S_OK;
+}
+
 static HRESULT WINAPI MediaDet_put_CurrentStream(IMediaDet* iface, long newVal)
 {
     MediaDetImpl *This = (MediaDetImpl *)iface;
@@ -181,6 +226,10 @@ static HRESULT WINAPI MediaDet_put_CurrentStream(IMediaDet* iface, long newVal)
 
     if (newVal < 0 || This->num_streams <= newVal)
         return E_INVALIDARG;
+
+    hr = SetCurPin(This, newVal);
+    if (FAILED(hr))
+        return hr;
 
     This->cur_stream = newVal;
     return S_OK;
@@ -403,7 +452,11 @@ static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
 
     This->graph = gb;
     This->source = bf;
-    return GetSplitter(This);
+    hr = GetSplitter(This);
+    if (FAILED(hr))
+        return hr;
+
+    return MediaDet_put_CurrentStream(iface, 0);
 }
 
 static HRESULT WINAPI MediaDet_GetBitmapBits(IMediaDet* iface,
@@ -430,8 +483,34 @@ static HRESULT WINAPI MediaDet_get_StreamMediaType(IMediaDet* iface,
                                                    AM_MEDIA_TYPE *pVal)
 {
     MediaDetImpl *This = (MediaDetImpl *)iface;
-    FIXME("(%p)->(%p): not implemented!\n", This, pVal);
-    return E_NOTIMPL;
+    IEnumMediaTypes *types;
+    AM_MEDIA_TYPE *pmt;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    if (!pVal)
+        return E_POINTER;
+
+    if (!This->cur_pin)
+        return E_INVALIDARG;
+
+    hr = IPin_EnumMediaTypes(This->cur_pin, &types);
+    if (SUCCEEDED(hr))
+    {
+        hr = (IEnumMediaTypes_Next(types, 1, &pmt, NULL) == S_OK
+              ? S_OK
+              : E_NOINTERFACE);
+        IEnumMediaTypes_Release(types);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        *pVal = *pmt;
+        CoTaskMemFree(pmt);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaDet_GetSampleGrabber(IMediaDet* iface,
@@ -500,6 +579,7 @@ HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
     obj->graph = NULL;
     obj->source = NULL;
     obj->splitter = NULL;
+    obj->cur_pin = NULL;
     obj->num_streams = -1;
     obj->cur_stream = 0;
     *ppv = obj;
