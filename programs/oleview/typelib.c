@@ -78,9 +78,10 @@ static const WCHAR wszVT_DATE[] = { 'D','A','T','E','\0' };
 static const WCHAR wszVT_R8[] = { 'd','o','u','b','l','e','\0' };
 static const WCHAR wszVT_SAFEARRAY[] = { 'S','A','F','E','A','R','R','A','Y','\0' };
 
-const WCHAR wszFormat[] = { '0','x','%','.','8','l','x','\0' };
+static const WCHAR wszFormat[] = { '0','x','%','.','8','l','x','\0' };
 static const WCHAR wszStdCall[] = { '_','s','t','d','c','a','l','l','\0' };
 static const WCHAR wszId[] = { 'i','d','\0' };
+static const WCHAR wszHelpstring[] = { 'h','e','l','p','s','t','r','i','n','g','\0' };
 static const WCHAR wszPropPut[] = { 'p','r','o','p','p','u','t','\0' };
 static const WCHAR wszPropGet[] = { 'p','r','o','p','g','e','t','\0' };
 static const WCHAR wszPropPutRef[] = { 'p','r','o','p','p','u','t','r','e','f','\0' };
@@ -494,11 +495,11 @@ static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
 
 static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
 {
-    int i, j, tabSize;
+    int i, j;
     unsigned namesNo;
     TVINSERTSTRUCT tvis;
     FUNCDESC *pFuncDesc;
-    BSTR bstrName, *bstrParamNames;
+    BSTR bstrName, bstrHelpString, *bstrParamNames;
     WCHAR wszText[MAX_LOAD_STRING];
     WCHAR wszAfter[MAX_LOAD_STRING];
     WCHAR szRhs[] = {'r','h','s',0};    /* Right-hand side of a propput */
@@ -514,7 +515,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
 
         if(FAILED(ITypeInfo_GetFuncDesc(pTypeInfo, i, &pFuncDesc))) continue;
         if(FAILED(ITypeInfo_GetDocumentation(pTypeInfo, pFuncDesc->memid, &bstrName,
-                NULL, NULL, NULL))) continue;
+                &bstrHelpString, NULL, NULL))) continue;
 
         bstrParamNames = HeapAlloc(GetProcessHeap(), 0,
                 sizeof(BSTR*)*(pFuncDesc->cParams+1));
@@ -543,6 +544,20 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
             AddToTLDataStrW(tld, wszText);
             AddToTLDataStrW(tld, wszCloseBrackets2);
             memset(wszText, 0, sizeof(wszText));
+        }
+        if(SysStringLen(bstrHelpString)) {
+            if(bFirst) AddToTLDataStrW(tld, wszOpenBrackets1);
+            else {
+                AddToTLDataStrW(tld, wszComa);
+                AddToTLDataStrW(tld, wszSpace);
+            }
+            bFirst = FALSE;
+            AddToTLDataStrW(tld, wszHelpstring);
+            AddToTLDataStrW(tld, wszOpenBrackets2);
+            AddToTLDataStrW(tld, wszInvertedComa);
+            AddToTLDataStrW(tld, bstrHelpString);
+            AddToTLDataStrW(tld, wszInvertedComa);
+            AddToTLDataStrW(tld, wszCloseBrackets2);
         }
         CreateTypeInfo(wszText, wszAfter, pFuncDesc->elemdescFunc.tdesc, pTypeInfo);
         switch(pFuncDesc->invkind)
@@ -584,6 +599,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
             AddToTLDataStrW(tld, wszCloseBrackets1);
             AddToTLDataStrW(tld, wszNewLine);
         }
+
         AddToTLDataStrW(tld, wszText);
         AddToTLDataStrW(tld, wszAfter);
         AddToTLDataStrW(tld, wszSpace);
@@ -592,7 +608,6 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
             AddToTLDataStrW(tld, wszStdCall);
             AddToTLDataStrW(tld, wszSpace);
         }
-        tabSize = tld->idlLen;
         AddToTLDataStrW(tld, bstrName);
         AddToTLDataStrW(tld, wszOpenBrackets2);
 
@@ -602,7 +617,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
             if(pFuncDesc->cParams != 1)
             {
                 AddToTLDataStrW(tld, wszNewLine);
-                AddSpaces(tld, tabSize);
+                AddSpaces(tld, 4);
             }
             bFirst = TRUE;
 #define ENUM_PARAM_FLAG(x)\
@@ -676,6 +691,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
         SendMessage(typelib.hTree, TVM_INSERTITEM, 0, (LPARAM)&tvis);
         HeapFree(GetProcessHeap(), 0, bstrParamNames);
         SysFreeString(bstrName);
+        SysFreeString(bstrHelpString);
         ITypeInfo_ReleaseFuncDesc(pTypeInfo, pFuncDesc);
     }
 
@@ -795,7 +811,6 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
     const WCHAR wszInterface[] = { 'i','n','t','e','r','f','a','c','e',' ','\0' };
     const WCHAR wszDispinterface[]
         = { 'd','i','s','p','i','n','t','e','r','f','a','c','e',' ','\0' };
-    const WCHAR wszHelpstring[] = { 'h','e','l','p','s','t','r','i','n','g','\0' };
     const WCHAR wszHelpcontext[] = { 'h','e','l','p','c','o','n','t','e','x','t','\0' };
     const WCHAR wszTYPEFLAG_FAPPOBJECT[] = { 'a','p','p','o','b','j','e','c','t','\0' };
     const WCHAR wszTYPEFLAG_FCANCREATE[] = { 'c','a','n','c','r','e','a','t','e','\0' };
@@ -998,7 +1013,6 @@ static int PopulateTree(void)
     const WCHAR wszTKIND_UNION[]
         = { 't','y','p','e','d','e','f',' ','u','n','i','o','n',' ','\0' };
 
-    const WCHAR wszHelpString[] = { 'h','e','l','p','s','t','r','i','n','g','\0' };
     const WCHAR wszLibrary[] = { 'l','i','b','r','a','r','y',' ','\0' };
     const WCHAR wszTag[] = { 't','a','g','\0' };
 
@@ -1050,7 +1064,7 @@ static int PopulateTree(void)
     AddToTLDataStrW(tld, wszComa);
     AddToTLDataStrW(tld, wszNewLine);
     AddSpaces(tld, 4);
-    AddToTLDataStrW(tld, wszHelpString);
+    AddToTLDataStrW(tld, wszHelpstring);
     AddToTLDataStrW(tld, wszOpenBrackets2);
     AddToTLDataStrW(tld, wszInvertedComa);
     AddToTLDataStrW(tld, bstrData);
