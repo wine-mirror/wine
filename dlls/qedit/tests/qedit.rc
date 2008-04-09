@@ -22,5 +22,5 @@
 
 /* @makedep: test.avi */
 TEST_AVI_RES       AVI_RES_TYPE test.avi
-/* @makedep: sound_test.avi */
+/* @makedep: test_sound.avi */
 TEST_SOUND_AVI_RES AVI_RES_TYPE test_sound.avi
