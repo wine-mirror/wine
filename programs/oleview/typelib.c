@@ -493,9 +493,10 @@ static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
     return 0;
 }
 
-static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
+static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParent)
 {
     int i, j;
+    int cFuncs;
     unsigned namesNo;
     TVINSERTSTRUCT tvis;
     FUNCDESC *pFuncDesc;
@@ -508,6 +509,8 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     tvis.hInsertAfter = (HTREEITEM)TVI_LAST;
     tvis.hParent = hParent;
+
+    cFuncs = pTypeAttr->cFuncs;
 
     for(i=0; i<cFuncs; i++)
     {
@@ -600,8 +603,12 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
             AddToTLDataStrW(tld, wszNewLine);
         }
 
-        AddToTLDataStrW(tld, wszText);
-        AddToTLDataStrW(tld, wszAfter);
+        if(pTypeAttr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)
+            AddToTLDataStrW(tld, wszVT_HRESULT);
+        else {
+            AddToTLDataStrW(tld, wszText);
+            AddToTLDataStrW(tld, wszAfter);
+        }
         AddToTLDataStrW(tld, wszSpace);
         if(pFuncDesc->memid >= MIN_FUNC_ID)
         {
@@ -735,7 +742,7 @@ static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent
 
         hParent = TreeView_InsertItem(typelib.hTree, &tvis);
         EnumVars(pRefTypeInfo, pTypeAttr->cVars, hParent);
-        EnumFuncs(pRefTypeInfo, pTypeAttr->cFuncs, hParent);
+        EnumFuncs(pRefTypeInfo, pTypeAttr, hParent);
         EnumImplTypes(pRefTypeInfo, pTypeAttr->cImplTypes, hParent);
 
         SysFreeString(bstrName);
@@ -1195,7 +1202,7 @@ static int PopulateTree(void)
                 AddToTLDataStrW(tld, wszColon);
                 AddToTLDataStrW(tld, wszNewLine);
                 tvis.hParent = TreeView_InsertItem(typelib.hTree, &tvis);
-                EnumFuncs(pTypeInfo, pTypeAttr->cFuncs, tvis.hParent);
+                EnumFuncs(pTypeInfo, pTypeAttr, tvis.hParent);
                 AddChildrenData(tvis.hParent, tld);
 
                 EnumImplTypes(pTypeInfo, pTypeAttr->cImplTypes, hParent);
@@ -1254,7 +1261,7 @@ static int PopulateTree(void)
             hParent = TreeView_InsertItem(typelib.hTree, &tvis);
 
             EnumVars(pTypeInfo, pTypeAttr->cVars, hParent);
-            EnumFuncs(pTypeInfo, pTypeAttr->cFuncs, hParent);
+            EnumFuncs(pTypeInfo, pTypeAttr, hParent);
             EnumImplTypes(pTypeInfo, pTypeAttr->cImplTypes, hParent);
 
             if(memcmp(bstrName, wszVT_UNKNOWN, sizeof(wszVT_UNKNOWN)))
