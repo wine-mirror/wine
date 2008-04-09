@@ -982,3 +982,13 @@ interface IKsPropertySet : IUnknown
                             [out] DWORD *pTypeSupport);
 }
 cpp_quote("#endif /* _IKsPropertySet_ */")
+
+[
+    object,
+    uuid(36b73883-c2c8-11cf-8b46-00805f6cef60),
+    pointer_default(unique)
+]
+interface ISeekingPassThru : IUnknown
+{
+    HRESULT Init( [in] BOOL bSupportRendering, [in] IPin *pPin);
+}
