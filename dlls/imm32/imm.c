@@ -576,13 +576,23 @@ UINT WINAPI ImmEnumRegisterWordA(
   LPCSTR lpszReading, DWORD dwStyle,
   LPCSTR lpszRegister, LPVOID lpData)
 {
-  FIXME("(%p, %p, %s, %d, %s, %p): stub\n",
-    hKL, lpfnEnumProc,
-    debugstr_a(lpszReading), dwStyle,
-    debugstr_a(lpszRegister), lpData
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %p, %s, %d, %s, %p):\n", hKL, lpfnEnumProc,
+        debugstr_a(lpszReading), dwStyle, debugstr_a(lpszRegister), lpData);
+    if (immHkl->hIME && immHkl->pImeEnumRegisterWord)
+    {
+        if (!is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeEnumRegisterWord((REGISTERWORDENUMPROCW)lpfnEnumProc,
+                (LPCWSTR)lpszReading, dwStyle, (LPCWSTR)lpszRegister, lpData);
+        else
+        {
+            FIXME("A procedure called with W ime back end\n");
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return 0;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
@@ -593,13 +603,23 @@ UINT WINAPI ImmEnumRegisterWordW(
   LPCWSTR lpszReading, DWORD dwStyle,
   LPCWSTR lpszRegister, LPVOID lpData)
 {
-  FIXME("(%p, %p, %s, %d, %s, %p): stub\n",
-    hKL, lpfnEnumProc,
-    debugstr_w(lpszReading), dwStyle,
-    debugstr_w(lpszRegister), lpData
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    ImmHkl *immHkl = IMM_GetImmHkl(hKL);
+    TRACE("(%p, %p, %s, %d, %s, %p):\n", hKL, lpfnEnumProc,
+        debugstr_w(lpszReading), dwStyle, debugstr_w(lpszRegister), lpData);
+    if (immHkl->hIME && immHkl->pImeEnumRegisterWord)
+    {
+        if (is_kbd_ime_unicode(immHkl))
+            return immHkl->pImeEnumRegisterWord(lpfnEnumProc, lpszReading, dwStyle,
+                                            lpszRegister, lpData);
+        else
+        {
+            FIXME("W procedure called with A ime back end\n");
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return 0;
+        }
+    }
+    else
+        return 0;
 }
 
 /***********************************************************************
