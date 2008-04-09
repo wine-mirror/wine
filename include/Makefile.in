@@ -195,6 +195,7 @@ SRCDIR_INCLUDES = \
 	fci.h \
 	fdi.h \
 	gdiplus.h \
+	gdipluscolor.h \
 	gdipluscolormatrix.h \
 	gdiplusenums.h \
 	gdiplusflat.h \

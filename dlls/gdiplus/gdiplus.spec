@@ -526,7 +526,7 @@
 @ stdcall GdipSetImageAttributesColorMatrix(ptr long long ptr ptr long)
 @ stdcall GdipSetImageAttributesGamma(ptr long long long)
 @ stdcall GdipSetImageAttributesNoOp(ptr long long)
-@ stub GdipSetImageAttributesOutputChannel
+@ stdcall GdipSetImageAttributesOutputChannel(ptr long long long)
 @ stub GdipSetImageAttributesOutputChannelColorProfile
 @ stub GdipSetImageAttributesRemapTable
 @ stub GdipSetImageAttributesThreshold

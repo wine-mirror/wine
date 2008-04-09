@@ -123,3 +123,14 @@ GpStatus WINGDIPAPI GdipSetImageAttributesNoOp(GpImageAttributes *imageAttr,
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetImageAttributesOutputChannel(GpImageAttributes *imageAttr,
+    ColorAdjustType type, BOOL enableFlag, ColorChannelFlags channelFlags)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
