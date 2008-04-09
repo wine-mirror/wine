@@ -117,7 +117,7 @@ INSTALLPROGS = \
 
 INSTALLDIRS = $(DESTDIR)$(bindir)
 
-PROGRAMS = wineapploader winelauncher
+PROGRAMS = wineapploader
 
 @MAKE_RULES@
 
@@ -125,9 +125,6 @@ all: $(PROGRAMS) $(SUBDIRS)
 
 wineapploader: wineapploader.in
 	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
-
-winelauncher: winelauncher.in
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@libdir\@,$(libdir),g' -e 's,@dlldir\@,$(dlldir),g' $(SRCDIR)/winelauncher.in >$@ || ($(RM) $@ && false)
 
 # Rules for installation
 

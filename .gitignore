@@ -607,7 +607,6 @@ programs/winedbg/winedbg
 programs/winedbg/winedbg.man
 programs/winedevice/winedevice
 programs/winefile/winefile
-programs/winelauncher
 programs/winemenubuilder/winemenubuilder
 programs/winemine/winemine
 programs/winepath/winepath
