@@ -2,6 +2,7 @@
 Type=Application
 Name=Wine Windows Emulator
 Name[de]=Wine Windows-Emulator
+Name[es]=Emulador Windows de Wine
 Name[nl]=Wine Windows-emulator
 Name[sv]=Windows-emulatorn Wine
 Name[ru]=Wine Эмулятор Windows
