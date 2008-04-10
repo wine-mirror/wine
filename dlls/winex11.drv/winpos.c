@@ -752,6 +752,15 @@ LRESULT X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
         }
         break;
 
+    case SC_KEYMENU:
+        /* prevent a simple ALT press+release from activating the system menu,
+         * as that can get confusing on managed windows */
+        if ((WCHAR)lparam) return -1;  /* got an explicit char */
+        if (GetMenu( hwnd )) return -1;  /* window has a real menu */
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_SYSMENU)) return -1;  /* no system menu */
+        TRACE( "ignoring SC_KEYMENU wp %lx lp %lx\n", wparam, lparam );
+        return 0;
+
     default:
         return -1;
     }

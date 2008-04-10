@@ -3365,13 +3365,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
 
     MENU_SelectItem( hwnd, hTrackMenu, uItem, TRUE, 0 );
 
-    if (wParam & HTSYSMENU && wChar != ' ')
-    {
-        /* prevent sysmenu activation for managed windows on Alt down/up */
-        if (GetPropA( hwnd, "__wine_x11_managed" ))
-            wFlags |= TF_ENDMENU; /* schedule end of menu tracking */
-    }
-    else
+    if (!(wParam & HTSYSMENU) || wChar == ' ')
     {
         if( uItem == NO_SELECTED_ITEM )
             MENU_MoveSelection( hwnd, hTrackMenu, ITEM_NEXT );
