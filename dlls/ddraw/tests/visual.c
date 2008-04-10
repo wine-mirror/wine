@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2008 Alexander Dorofeyev
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2165,6 +2166,7 @@ static void p8_primary_test()
     DDBLTFX ddbltfx;
     COLORREF color;
     RECT rect;
+    DDCOLORKEY clrKey;
     unsigned differences;
 
     /* An IDirect3DDevice cannot be queryInterfaced from an IDirect3DDevice7 on windows */
@@ -2275,12 +2277,13 @@ static void p8_primary_test()
 
     ok(colortables_check_equality(entries, coltable), "unexpected colortable on offscreen surface\n");
 
-    p8_surface_fill_rect(offscreen, 0, 0, 16, 16, 1);
+    p8_surface_fill_rect(offscreen, 0, 0, 16, 16, 2);
 
     memset(entries, 0, sizeof(entries));
     entries[0].peRed = 0xff;
     entries[1].peGreen = 0xff;
     entries[2].peBlue = 0xff;
+    entries[3].peRed = 0x80;
     hr = IDirectDrawPalette_SetEntries(ddprimpal, 0, 0, 256, entries);
     ok(hr == DD_OK, "IDirectDrawPalette_SetEntries failed with %08x\n", hr);
 
@@ -2288,8 +2291,28 @@ static void p8_primary_test()
     ok(hr==DD_OK, "IDirectDrawSurface_BltFast returned: %x\n", hr);
 
     color = getPixelColor_GDI(Surface1, 1, 1);
+    ok(GetRValue(color) == 0 && GetGValue(color) == 0x00 && GetBValue(color) == 0xFF,
+            "got R %02X G %02X B %02X, expected R 00 G 00 B FF\n",
+            GetRValue(color), GetGValue(color), GetBValue(color));
+
+    /* Color keyed blit. */
+    p8_surface_fill_rect(offscreen, 0, 0, 8, 8, 3);
+    clrKey.dwColorSpaceLowValue = 3;
+    clrKey.dwColorSpaceHighValue = 3;
+    hr = IDirectDrawSurface_SetColorKey(offscreen, DDCKEY_SRCBLT, &clrKey);
+    ok(hr==D3D_OK, "IDirectDrawSurfac_SetColorKey returned: %x\n", hr);
+
+    hr = IDirectDrawSurface_BltFast(Surface1, 100, 100, offscreen, NULL, DDBLTFAST_SRCCOLORKEY);
+    ok(hr==DD_OK, "IDirectDrawSurface_BltFast returned: %x\n", hr);
+
+    color = getPixelColor_GDI(Surface1, 105, 105);
     ok(GetRValue(color) == 0 && GetGValue(color) == 0xFF && GetBValue(color) == 0,
             "got R %02X G %02X B %02X, expected R 00 G FF B 00\n",
+            GetRValue(color), GetGValue(color), GetBValue(color));
+
+    color = getPixelColor_GDI(Surface1, 112, 112);
+    ok(GetRValue(color) == 0 && GetGValue(color) == 0x00 && GetBValue(color) == 0xFF,
+            "got R %02X G %02X B %02X, expected R 00 G 00 B FF\n",
             GetRValue(color), GetGValue(color), GetBValue(color));
 
     /* Test blitting and locking patterns that are likely to trigger bugs in opengl renderer (p8
