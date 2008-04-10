@@ -53,27 +53,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
-typedef union
-{
-    struct
-    {
-#ifndef BITFIELDS_BIGENDIAN
-        unsigned long count : 16;
-#endif
-        unsigned long code : 8;
-        unsigned long extended : 1;
-        unsigned long unused : 2;
-        unsigned long win_internal : 2;
-        unsigned long context : 1;
-        unsigned long previous : 1;
-        unsigned long transition : 1;
-#ifdef BITFIELDS_BIGENDIAN
-        unsigned long count : 16;
-#endif
-    } lp1;
-    unsigned long lp2;
-} KEYLP;
-
 /* key state table bits:
   0x80 -> key is pressed
   0x40 -> key got pressed since last time
@@ -1143,44 +1122,42 @@ static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
 /***********************************************************************
  *           X11DRV_send_keyboard_input
  */
-void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time,
+void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD event_flags, DWORD time,
                                  DWORD dwExtraInfo, UINT injected_flags )
 {
     UINT message;
-    KEYLP keylp;
     KBDLLHOOKSTRUCT hook;
-    WORD wVkStripped, wVkL, wVkR, vk_hook = wVk;
+    WORD flags, wVkStripped, wVkL, wVkR, vk_hook = wVk;
 
     wVk = LOBYTE(wVk);
+    flags = LOBYTE(wScan);
 
-    keylp.lp2 = 0;
-    keylp.lp1.count = 1;
-    keylp.lp1.code = wScan;
-    keylp.lp1.extended = (dwFlags & KEYEVENTF_EXTENDEDKEY) != 0;
-    keylp.lp1.win_internal = 0; /* this has something to do with dialogs,
-                                * don't remember where I read it - AK */
-                                /* it's '1' under windows, when a dialog box appears
-                                 * and you press one of the underlined keys - DF*/
+    if (event_flags & KEYEVENTF_EXTENDEDKEY) flags |= KF_EXTENDED;
+    /* FIXME: set KF_DLGMODE and KF_MENUMODE when needed */
 
     /* strip left/right for menu, control, shift */
     switch (wVk)
     {
-    case VK_MENU: case VK_LMENU: case VK_RMENU:
-        wVk = keylp.lp1.extended ? VK_RMENU : VK_LMENU;
+    case VK_MENU:
+    case VK_LMENU:
+    case VK_RMENU:
+        wVk = (event_flags & KEYEVENTF_EXTENDEDKEY) ? VK_RMENU : VK_LMENU;
         wVkStripped = VK_MENU;
         wVkL = VK_LMENU;
         wVkR = VK_RMENU;
         break;
-
-    case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
-        wVk = keylp.lp1.extended ? VK_RCONTROL : VK_LCONTROL;
+    case VK_CONTROL:
+    case VK_LCONTROL:
+    case VK_RCONTROL:
+        wVk = (event_flags & KEYEVENTF_EXTENDEDKEY) ? VK_RCONTROL : VK_LCONTROL;
         wVkStripped = VK_CONTROL;
         wVkL = VK_LCONTROL;
         wVkR = VK_RCONTROL;
         break;
-
-    case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
-        wVk = keylp.lp1.extended ? VK_RSHIFT : VK_LSHIFT;
+    case VK_SHIFT:
+    case VK_LSHIFT:
+    case VK_RSHIFT:
+        wVk = (event_flags & KEYEVENTF_EXTENDEDKEY) ? VK_RSHIFT : VK_LSHIFT;
         wVkStripped = VK_SHIFT;
         wVkL = VK_LSHIFT;
         wVkR = VK_RSHIFT;
@@ -1189,8 +1166,7 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
         wVkStripped = wVkL = wVkR = wVk;
     }
 
-    /* note that there is a test for all this */
-    if (dwFlags & KEYEVENTF_KEYUP )
+    if (event_flags & KEYEVENTF_KEYUP)
     {
         message = WM_KEYUP;
         if ((key_state_table[VK_MENU] & 0x80) &&
@@ -1202,14 +1178,10 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
                 message = WM_SYSKEYUP;
             TrackSysKey = 0;
         }
-        keylp.lp1.previous = 1;
-        keylp.lp1.transition = 1;
+        flags |= KF_REPEAT | KF_UP;
     }
     else
     {
-        keylp.lp1.previous = (key_state_table[wVk] & 0x80) != 0;
-        keylp.lp1.transition = 0;
-
         message = WM_KEYDOWN;
         if ((key_state_table[VK_MENU] & 0x80 || wVkStripped == VK_MENU) &&
             !(key_state_table[VK_CONTROL] & 0x80 || wVkStripped == VK_CONTROL))
@@ -1217,20 +1189,21 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
             message = WM_SYSKEYDOWN;
             TrackSysKey = wVkStripped;
         }
+        if (key_state_table[wVk] & 0x80) flags |= KF_REPEAT;
     }
 
     TRACE_(key)(" wParam=%04x, lParam=%08lx, InputKeyState=%x\n",
-                wVk, keylp.lp2, key_state_table[wVk] );
+                wVk, MAKELPARAM( 1, flags ), key_state_table[wVk] );
 
     /* Hook gets whatever key was sent. */
     hook.vkCode      = vk_hook;
     hook.scanCode    = wScan;
-    hook.flags       = (keylp.lp2 >> 24) | injected_flags;
+    hook.flags       = (flags >> 8) | injected_flags;
     hook.time        = time;
     hook.dwExtraInfo = dwExtraInfo;
     if (HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook, TRUE )) return;
 
-    if (dwFlags & KEYEVENTF_KEYUP )
+    if (event_flags & KEYEVENTF_KEYUP)
     {
         key_state_table[wVk] &= ~0x80;
         key_state_table[wVkStripped] = key_state_table[wVkL] | key_state_table[wVkR];
@@ -1242,9 +1215,9 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
         key_state_table[wVkStripped] = key_state_table[wVkL] | key_state_table[wVkR];
     }
 
-    keylp.lp1.context = (key_state_table[VK_MENU] & 0x80) != 0; /* 1 if alt */
+    if (key_state_table[VK_MENU] & 0x80) flags |= KF_ALTDOWN;
 
-    if (wVkStripped == VK_SHIFT) keylp.lp1.extended = 0;
+    if (wVkStripped == VK_SHIFT) flags &= ~KF_EXTENDED;
 
     SERVER_START_REQ( send_hardware_message )
     {
@@ -1252,7 +1225,7 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time
         req->win      = 0;
         req->msg      = message;
         req->wparam   = wVk;
-        req->lparam   = keylp.lp2;
+        req->lparam   = MAKELPARAM( 1 /* repeat count */, flags );
         req->x        = cursor_pos.x;
         req->y        = cursor_pos.y;
         req->time     = time;
