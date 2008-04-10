@@ -113,7 +113,7 @@ static void set_registry(LPCSTR install_dir)
 
     len = MultiByteToWideChar(CP_ACP, 0, install_dir, -1, NULL, 0)-1;
     gecko_path = heap_alloc((len+1)*sizeof(WCHAR)+sizeof(wszWineGecko));
-    MultiByteToWideChar(CP_ACP, 0, install_dir, -1, gecko_path, (len+1)*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, install_dir, -1, gecko_path, len+1);
 
     if (len && gecko_path[len-1] != '\\')
         gecko_path[len++] = '\\';
