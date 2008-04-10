@@ -675,3 +675,14 @@ GpStatus WINGDIPAPI GdipSetLineLinearBlend(GpLineGradient *brush, REAL focus,
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetLinePresetBlend(GpLineGradient *brush,
+    GDIPCONST ARGB *blend, GDIPCONST REAL* positions, INT count)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}

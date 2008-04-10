@@ -539,7 +539,7 @@
 @ stdcall GdipSetLineColors(ptr long long)
 @ stdcall GdipSetLineGammaCorrection(ptr long)
 @ stdcall GdipSetLineLinearBlend(ptr long long)
-@ stub GdipSetLinePresetBlend
+@ stdcall GdipSetLinePresetBlend(ptr ptr ptr long)
 @ stdcall GdipSetLineSigmaBlend(ptr long long)
 @ stub GdipSetLineTransform
 @ stdcall GdipSetLineWrapMode(ptr long)
