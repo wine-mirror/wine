@@ -158,3 +158,14 @@ GpStatus WINGDIPAPI GdipSetImageAttributesRemapTable(GpImageAttributes *imageAtt
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetImageAttributesThreshold(GpImageAttributes *imageAttr,
+    ColorAdjustType type, BOOL enableFlag, REAL threshold)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
