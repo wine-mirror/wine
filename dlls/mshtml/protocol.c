@@ -593,7 +593,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ResProtocol *This = PROTOCOL_THIS(iface);
     DWORD grfBINDF = 0, len;
     BINDINFO bindinfo;
-    LPWSTR url_dll, url_file, url, mime;
+    LPWSTR url_dll, url_file, url, mime, res_type = (LPWSTR)RT_HTML;
     HMODULE hdll;
     HRSRC src;
     HRESULT hres;
@@ -636,13 +636,26 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     *url_file++ = 0;
     hdll = LoadLibraryExW(url_dll, NULL, LOAD_LIBRARY_AS_DATAFILE);
     if(!hdll) {
-        WARN("Could not open dll: %s\n", debugstr_w(url_dll));
-        IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
-        heap_free(url);
-        return HRESULT_FROM_WIN32(GetLastError());
+        if (!(res_type = strrchrW(url_dll, '/'))) {
+            WARN("Could not open dll: %s\n", debugstr_w(url_dll));
+            IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
+            heap_free(url);
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+        *res_type++ = 0;
+
+        hdll = LoadLibraryExW(url_dll, NULL, LOAD_LIBRARY_AS_DATAFILE);
+        if(!hdll) {
+            WARN("Could not open dll: %s\n", debugstr_w(url_dll));
+            IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
+            heap_free(url);
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
     }
 
-    src = FindResourceW(hdll, url_file, (LPCWSTR)RT_HTML);
+    TRACE("trying to find resource type %s, name %s\n", debugstr_w(res_type), debugstr_w(url_file));
+
+    src = FindResourceW(hdll, url_file, res_type);
     if(!src) {
         LPWSTR endpoint = NULL;
         DWORD file_id = strtolW(url_file, &endpoint, 10);
