@@ -1720,6 +1720,379 @@ static void D3D1_TextureMapBlendTest(void)
     if (Texture) IDirect3DTexture_Release(Texture);
 }
 
+static void D3D1_ViewportClearTest(void)
+{
+    HRESULT hr;
+    IDirect3DMaterial *bgMaterial = NULL;
+    D3DMATERIAL mat;
+    D3DMATERIALHANDLE hMat;
+    D3DVIEWPORT vp_data;
+    IDirect3DViewport *Viewport2 = NULL;
+    DWORD color, red, green, blue;
+
+    hr = IDirect3D_CreateMaterial(Direct3D1, &bgMaterial, NULL);
+    ok(hr == D3D_OK, "IDirect3D_CreateMaterial failed: %08x\n", hr);
+    if (FAILED(hr)) {
+        goto out;
+    }
+
+    hr = IDirect3D_CreateViewport(Direct3D1, &Viewport2, NULL);
+    ok(hr == D3D_OK, "IDirect3D_CreateViewport failed: %08x\n", hr);
+    if (FAILED(hr)) {
+        goto out;
+    }
+
+    hr = IDirect3DViewport_Initialize(Viewport2, Direct3D1);
+    ok(hr == D3D_OK || hr == DDERR_ALREADYINITIALIZED, "IDirect3DViewport_Initialize returned %08x\n", hr);
+    hr = IDirect3DDevice_AddViewport(Direct3DDevice1, Viewport2);
+    ok(hr == D3D_OK, "IDirect3DDevice_AddViewport returned %08x\n", hr);
+    vp_data.dwSize = sizeof(vp_data);
+    vp_data.dwX = 200;
+    vp_data.dwY = 200;
+    vp_data.dwWidth = 100;
+    vp_data.dwHeight = 100;
+    vp_data.dvScaleX = 1;
+    vp_data.dvScaleY = 1;
+    vp_data.dvMaxX = 100;
+    vp_data.dvMaxY = 100;
+    vp_data.dvMinZ = 0;
+    vp_data.dvMaxZ = 1;
+    hr = IDirect3DViewport_SetViewport(Viewport2, &vp_data);
+    ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U1(mat).diffuse).r = 1.0f;
+    hr = IDirect3DMaterial_SetMaterial(bgMaterial, &mat);
+    ok(hr == D3D_OK, "IDirect3DMaterial_SetMaterial failed: %08x\n", hr);
+
+    hr = IDirect3DMaterial_GetHandle(bgMaterial, Direct3DDevice1, &hMat);
+    ok(hr == D3D_OK, "IDirect3DMaterial_GetHandle failed: %08x\n", hr);
+
+    hr = IDirect3DViewport_SetBackground(Viewport, hMat);
+    ok(hr == D3D_OK, "IDirect3DViewport_SetBackground failed: %08x\n", hr);
+    hr = IDirect3DViewport_SetBackground(Viewport2, hMat);
+    ok(hr == D3D_OK, "IDirect3DViewport_SetBackground failed: %08x\n", hr);
+
+    hr = IDirect3DDevice_BeginScene(Direct3DDevice1);
+    ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+
+    if (SUCCEEDED(hr)) {
+        D3DRECT rect;
+
+        rect.x1 = rect.y1 = 0;
+        rect.x2 = 640;
+        rect.y2 = 480;
+
+        hr = IDirect3DViewport_Clear(Viewport,  1,  &rect, D3DCLEAR_TARGET);
+        ok(hr == D3D_OK, "IDirect3DViewport_Clear failed: %08x\n", hr);
+
+        memset(&mat, 0, sizeof(mat));
+        mat.dwSize = sizeof(mat);
+        U1(U1(mat).diffuse).b = 1.0f;
+        hr = IDirect3DMaterial_SetMaterial(bgMaterial, &mat);
+        ok(hr == D3D_OK, "IDirect3DMaterial_SetMaterial failed: %08x\n", hr);
+
+        hr = IDirect3DViewport_Clear(Viewport2,  1,  &rect, D3DCLEAR_TARGET);
+        ok(hr == D3D_OK, "IDirect3DViewport_Clear failed: %08x\n", hr);
+
+        hr = IDirect3DDevice_EndScene(Direct3DDevice1);
+        ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        }
+
+    color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 5);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red == 0xff && green == 0 && blue == 0, "Got color %08x, expected 00ff0000\n", color);
+
+    color = D3D1_getPixelColor(DirectDraw1, Surface1, 205, 205);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red == 0 && green == 0 && blue == 0xff, "Got color %08x, expected 000000ff\n", color);
+
+    out:
+
+    if (bgMaterial) IDirect3DMaterial_Release(bgMaterial);
+    if (Viewport2) IDirect3DViewport_Release(Viewport2);
+}
+
+static DWORD D3D3_getPixelColor(IDirectDraw4 *DirectDraw, IDirectDrawSurface4 *Surface, UINT x, UINT y)
+{
+    DWORD ret;
+    HRESULT hr;
+    DDSURFACEDESC2 ddsd;
+    RECT rectToLock = {x, y, x+1, y+1};
+    IDirectDrawSurface4 *surf = NULL;
+
+    /* Some implementations seem to dislike direct locking on the front buffer. Thus copy the front buffer
+     * to an offscreen surface and lock it instead of the front buffer
+     */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+    ddsd.dwWidth = 640;
+    ddsd.dwHeight = 480;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw4_CreateSurface(DirectDraw, &ddsd, &surf, NULL);
+    ok(hr == DD_OK, "IDirectDraw_CreateSurface failed with %08x\n", hr);
+    if(!surf)
+    {
+        trace("cannot create helper surface\n");
+        return 0xdeadbeef;
+    }
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+
+    hr = IDirectDrawSurface4_BltFast(surf, 0, 0, Surface, NULL, 0);
+    ok(hr == DD_OK, "IDirectDrawSurface_BltFast returned %08x\n", hr);
+    if(FAILED(hr))
+    {
+        trace("Cannot blit\n");
+        ret = 0xdeadbee;
+        goto out;
+    }
+
+    hr = IDirectDrawSurface4_Lock(surf, &rectToLock, &ddsd, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+    if(FAILED(hr))
+    {
+        trace("Can't lock the offscreen surface, hr=%08x\n", hr);
+        ret = 0xdeadbeec;
+        goto out;
+    }
+
+    /* Remove the X channel for now. DirectX and OpenGL have different ideas how to treat it apparently, and it isn't
+     * really important for these tests
+     */
+    ret = ((DWORD *) ddsd.lpSurface)[0] & 0x00ffffff;
+    hr = IDirectDrawSurface4_Unlock(surf, NULL);
+    if(FAILED(hr))
+    {
+        trace("Can't unlock the offscreen surface, hr=%08x\n", hr);
+    }
+
+out:
+    IDirectDrawSurface4_Release(surf);
+    return ret;
+}
+
+static void D3D3_ViewportClearTest(void)
+{
+    HRESULT hr;
+    IDirectDraw *DirectDraw1 = NULL;
+    IDirectDraw4 *DirectDraw4 = NULL;
+    IDirectDrawSurface4 *Primary = NULL;
+    IDirect3D3 *Direct3D3 = NULL;
+    IDirect3DViewport3 *Viewport3 = NULL;
+    IDirect3DViewport3 *SmallViewport3 = NULL;
+    IDirect3DDevice3 *Direct3DDevice3 = NULL;
+    WNDCLASS wc = {0};
+    DDSURFACEDESC2 ddsd;
+    D3DVIEWPORT2 vp_data;
+    DWORD color, red, green, blue;
+    D3DRECT rect;
+    float mat[16] = { 1.0f, 0.0f, 0.0f, 0.0f,
+                      0.0f, 1.0f, 0.0f, 0.0f,
+                      0.0f, 0.0f, 1.0f, 0.0f,
+                      0.0f, 0.0f, 0.0f, 1.0f };
+    struct vertex quad[] =
+    {
+        {-1.0f, -1.0f,   0.1f,                          0xffffffff},
+        {-1.0f,  1.0f,   0.1f,                          0xffffffff},
+        { 1.0f,  1.0f,   0.1f,                          0xffffffff},
+        { 1.0f, -1.0f,   0.1f,                          0xffffffff},
+    };
+
+    WORD Indices[] = {0, 1, 2, 2, 3, 0};
+    DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+
+    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpszClassName = "D3D3_ViewportClearTest_wc";
+    RegisterClass(&wc);
+    window = CreateWindow("D3D3_ViewportClearTest_wc", "D3D3_ViewportClearTest",
+                            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+
+    hr = DirectDrawCreate( NULL, &DirectDraw1, NULL );
+    ok(hr==DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreate returned: %x\n", hr);
+    if(FAILED(hr)) goto out;
+
+    hr = IDirectDraw_SetCooperativeLevel(DirectDraw1, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr==DD_OK, "SetCooperativeLevel returned: %x\n", hr);
+    if(FAILED(hr)) goto out;
+
+    hr = IDirectDraw_SetDisplayMode(DirectDraw1, 640, 480, 32);
+    if(FAILED(hr)) {
+        /* 24 bit is fine too */
+        hr = IDirectDraw_SetDisplayMode(DirectDraw1, 640, 480, 24);
+    }
+    ok(hr==DD_OK || hr == DDERR_UNSUPPORTED, "SetDisplayMode returned: %x\n", hr);
+    if (FAILED(hr)) goto out;
+
+    hr = IDirectDraw_QueryInterface(DirectDraw1, &IID_IDirectDraw4, (void**)&DirectDraw4);
+    ok(hr==DD_OK, "QueryInterface returned: %08x\n", hr);
+    if(FAILED(hr)) goto out;
+
+    memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
+    ddsd.dwSize = sizeof(DDSURFACEDESC2);
+    ddsd.dwFlags    = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE;
+
+    hr = IDirectDraw_CreateSurface(DirectDraw4, &ddsd, &Primary, NULL);
+    ok(hr==DD_OK, "IDirectDraw_CreateSurface returned: %08x\n", hr);
+    if(FAILED(hr)) goto out;
+
+    hr = IDirectDraw4_QueryInterface(DirectDraw4, &IID_IDirect3D3, (void**)&Direct3D3);
+    ok(hr==DD_OK, "IDirectDraw4_QueryInterface returned: %08x\n", hr);
+    if(FAILED(hr)) goto out;
+
+    hr = IDirect3D3_CreateDevice(Direct3D3, &IID_IDirect3DHALDevice, Primary, &Direct3DDevice3, NULL);
+    if(FAILED(hr)) {
+        trace("Creating a HAL device failed, trying Ref\n");
+        hr = IDirect3D3_CreateDevice(Direct3D3, &IID_IDirect3DRefDevice, Primary, &Direct3DDevice3, NULL);
+    }
+    ok(hr==D3D_OK, "Creating 3D device returned: %x\n", hr);
+    if(FAILED(hr)) goto out;
+
+    hr = IDirect3D3_CreateViewport(Direct3D3, &Viewport3, NULL);
+    ok(hr==DD_OK, "IDirect3D3_CreateViewport returned: %08x\n", hr);
+    if(FAILED(hr)) goto out;
+
+    hr = IDirect3DDevice3_AddViewport(Direct3DDevice3, Viewport3);
+    ok(hr==DD_OK, "IDirect3DDevice3_AddViewport returned: %08x\n", hr);
+
+    memset(&vp_data, 0, sizeof(D3DVIEWPORT2));
+    vp_data.dwSize = sizeof(D3DVIEWPORT2);
+    vp_data.dwWidth = 640;
+    vp_data.dwHeight = 480;
+    vp_data.dvClipX = -1.0f;
+    vp_data.dvClipWidth = 2.0f;
+    vp_data.dvClipY = 1.0f;
+    vp_data.dvClipHeight = 2.0f;
+    vp_data.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport3_SetViewport2(Viewport3, &vp_data);
+    ok(hr==DD_OK, "IDirect3DViewport3_SetViewport2 returned: %08x\n", hr);
+
+    hr = IDirect3D3_CreateViewport(Direct3D3, &SmallViewport3, NULL);
+    ok(hr==DD_OK, "IDirect3D3_CreateViewport returned: %08x\n", hr);
+    if(FAILED(hr)) goto out;
+
+    hr = IDirect3DDevice3_AddViewport(Direct3DDevice3, SmallViewport3);
+    ok(hr==DD_OK, "IDirect3DDevice3_AddViewport returned: %08x\n", hr);
+
+    memset(&vp_data, 0, sizeof(D3DVIEWPORT2));
+    vp_data.dwSize = sizeof(D3DVIEWPORT2);
+    vp_data.dwX = 400;
+    vp_data.dwY = 100;
+    vp_data.dwWidth = 100;
+    vp_data.dwHeight = 100;
+    vp_data.dvClipX = -1.0f;
+    vp_data.dvClipWidth = 2.0f;
+    vp_data.dvClipY = 1.0f;
+    vp_data.dvClipHeight = 2.0f;
+    vp_data.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport3_SetViewport2(SmallViewport3, &vp_data);
+    ok(hr==DD_OK, "IDirect3DViewport3_SetViewport2 returned: %08x\n", hr);
+
+    hr = IDirect3DDevice3_BeginScene(Direct3DDevice3);
+    ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+
+    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *) mat);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetTransform returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_VIEW, (D3DMATRIX *)mat);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetTransform returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_PROJECTION, (D3DMATRIX *) mat);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetTransform returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_CLIPPING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_FOGENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_STENCILENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_ALPHATESTENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState failed with %08x\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
+
+    if (SUCCEEDED(hr)) {
+        rect.x1 = rect.y1 = 0;
+        rect.x2 = 640;
+        rect.y2 = 480;
+
+        hr = IDirect3DViewport3_Clear2(Viewport3, 1, &rect, D3DCLEAR_TARGET, 0x00ff00, 0.0f, 0);
+        ok(hr == D3D_OK, "IDirect3DViewport3_Clear2 failed, hr = %08x\n", hr);
+
+        hr = IDirect3DViewport3_Clear2(SmallViewport3, 1, &rect, D3DCLEAR_TARGET, 0xff0000, 0.0f, 0);
+        ok(hr == D3D_OK, "IDirect3DViewport3_Clear2 failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice3_EndScene(Direct3DDevice3);
+        ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        }
+
+    color = D3D3_getPixelColor(DirectDraw4, Primary, 5, 5);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red == 0 && green == 0xff && blue == 0, "Got color %08x, expected 0000ff00\n", color);
+
+    color = D3D3_getPixelColor(DirectDraw4, Primary, 405, 105);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red == 0xff && green == 0 && blue == 0, "Got color %08x, expected 00ff0000\n", color);
+
+    /* Test that clearing viewport doesn't interfere with rendering to previously active viewport. */
+    hr = IDirect3DDevice3_BeginScene(Direct3DDevice3);
+    ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+
+    if (SUCCEEDED(hr)) {
+        hr = IDirect3DDevice3_SetCurrentViewport(Direct3DDevice3, SmallViewport3);
+        ok(hr == D3D_OK, "IDirect3DDevice3_SetCurrentViewport failed with %08x\n", hr);
+
+        hr = IDirect3DViewport3_Clear2(Viewport3, 1, &rect, D3DCLEAR_TARGET, 0x000000, 0.0f, 0);
+        ok(hr == D3D_OK, "IDirect3DViewport3_Clear2 failed, hr = %08x\n", hr);
+
+        hr = IDirect3DDevice3_DrawIndexedPrimitive(Direct3DDevice3, D3DPT_TRIANGLELIST, fvf, quad, 4 /* NumVerts */,
+                                                    Indices, 6 /* Indexcount */, 0 /* flags */);
+        ok(hr == D3D_OK, "IDirect3DDevice3_DrawIndexedPrimitive failed with %08x\n", hr);
+
+        hr = IDirect3DDevice3_EndScene(Direct3DDevice3);
+        ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        }
+
+    color = D3D3_getPixelColor(DirectDraw4, Primary, 5, 5);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red == 0 && green == 0 && blue == 0, "Got color %08x, expected 00000000\n", color);
+
+    color = D3D3_getPixelColor(DirectDraw4, Primary, 405, 105);
+    red =   (color & 0x00ff0000) >> 16;
+    green = (color & 0x0000ff00) >>  8;
+    blue =  (color & 0x000000ff);
+    ok(red == 0xff && green == 0xff && blue == 0xff, "Got color %08x, expected 00ffffff\n", color);
+
+    out:
+
+    if (SmallViewport3) IDirect3DViewport3_Release(SmallViewport3);
+    if (Viewport3) IDirect3DViewport3_Release(Viewport3);
+    if (Direct3DDevice3) IDirect3DDevice3_Release(Direct3DDevice3);
+    if (Direct3D3) IDirect3D3_Release(Direct3D3);
+    if (Primary) IDirectDrawSurface4_Release(Primary);
+    if (DirectDraw1) IDirectDraw_Release(DirectDraw1);
+    if (DirectDraw4) IDirectDraw4_Release(DirectDraw4);
+    if(window) DestroyWindow(window);
+}
+
 static void p8_surface_fill_rect(IDirectDrawSurface *dest, UINT x, UINT y, UINT w, UINT h, BYTE colorindex)
 {
     DDSURFACEDESC ddsd;
@@ -2238,9 +2611,11 @@ START_TEST(visual)
     }
     else {
         D3D1_TextureMapBlendTest();
+        D3D1_ViewportClearTest();
     }
     D3D1_releaseObjects();
 
+    D3D3_ViewportClearTest();
     p8_primary_test();
 
     return ;
