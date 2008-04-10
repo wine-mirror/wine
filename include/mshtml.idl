@@ -34,6 +34,7 @@ cpp_quote("#define SID_SElementBehaviorFactory IID_IElementBehaviorFactory")
 
 interface IHTMLDocument2;
 interface IHTMLStyleSheetsCollection;
+interface IHTMLFrameBase;
 
 /*****************************************************************************
  *    IHTMLFiltersCollection interface
@@ -4054,6 +4055,46 @@ interface IHTMLLocation : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLDataTransfer interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4b3-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDataTransfer : IDispatch
+{
+    [id(DISPID_IHTMLDATATRANSFER_SETDATA)]
+    HRESULT setData(
+            [in] BSTR format,
+            [in] VARIANT *data,
+            [out, retval] VARIANT_BOOL *pret);
+
+    [id(DISPID_IHTMLDATATRANSFER_GETDATA)]
+    HRESULT getData(
+            [in] BSTR format,
+            [out, retval] VARIANT *pvarRet);
+
+    [id(DISPID_IHTMLDATATRANSFER_CLEARDATA)]
+    HRESULT clearData(
+            [in] BSTR format,
+            [out, retval] VARIANT_BOOL *pret);
+
+    [propput, id(DISPID_IHTMLDATATRANSFER_DROPEFFECT)]
+    HRESULT dropEffect([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDATATRANSFER_DROPEFFECT)]
+    HRESULT dropEffect([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLDATATRANSFER_EFFECTALLOWED)]
+    HRESULT effectAllowed([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDATATRANSFER_EFFECTALLOWED)]
+    HRESULT effectAllowed([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
  *    IHTMLEventObj interface
  */
 [
@@ -4444,6 +4485,291 @@ interface IHTMLWindow2 : IHTMLFramesCollection2
 
     [propget, id(DISPID_IHTMLWINDOW2_EXTERNAL)]
     HRESULT external([retval, out] IDispatch **p);
+}
+
+/*****************************************************************************
+ *    DispHTMLWindow2 dispinterface
+ */
+[
+    hidden,
+    uuid(3050f55d-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLWindow2
+{
+properties:
+methods:
+    [id(DISPID_IHTMLFRAMESCOLLECTION2_ITEM)]
+    VARIANT item([in] VARIANT *pvarIndex);
+
+    [propget, id(DISPID_IHTMLFRAMESCOLLECTION2_LENGTH)]
+    long length();
+
+    [propget, id(DISPID_IHTMLWINDOW2_FRAMES)]
+    IHTMLFramesCollection2 *frames();
+
+    [propput, id(DISPID_IHTMLWINDOW2_DEFAULTSTATUS)]
+    void defaultStatus(BSTR v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_DEFAULTSTATUS)]
+    BSTR defaultStatus();
+
+    [propput, id(DISPID_IHTMLWINDOW2_STATUS)]
+    void status(BSTR v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_STATUS)]
+    BSTR status();
+
+    [id(DISPID_IHTMLWINDOW2_CLEARTIMEOUT)]
+    void clearTimeout([in] long timerID);
+
+    [id(DISPID_IHTMLWINDOW2_ALERT)]
+    void alert([in, defaultvalue("")] BSTR message);
+
+    [id(DISPID_IHTMLWINDOW2_CONFIRM)]
+    VARIANT_BOOL confirm([in, defaultvalue("")] BSTR message);
+
+    [id(DISPID_IHTMLWINDOW2_PROMPT)]
+    VARIANT prompt(
+            [in, defaultvalue("")] BSTR message,
+            [in, defaultvalue("undefined")] BSTR defstr);
+
+    [propget, id(DISPID_IHTMLWINDOW2_IMAGE)]
+    IHTMLImageElementFactory *Image();
+
+    [propget, id(DISPID_IHTMLWINDOW2_LOCATION)]
+    IHTMLLocation *location();
+
+    [propget, id(DISPID_IHTMLWINDOW2_HISTORY)]
+    IOmHistory *history();
+
+    [id(DISPID_IHTMLWINDOW2_CLOSE)]
+    void close();
+
+    [propput, id(DISPID_IHTMLWINDOW2_OPENER)]
+    void opener(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_OPENER)]
+    VARIANT opener();
+
+    [propget, id(DISPID_IHTMLWINDOW2_NAVIGATOR)]
+    IOmNavigator *navigator();
+
+    [propput, id(DISPID_IHTMLWINDOW2_NAME)]
+    void name(BSTR v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_NAME)]
+    BSTR name();
+
+    [propget, id(DISPID_IHTMLWINDOW2_PARENT)]
+    IHTMLWindow2 *parent();
+
+    [id(DISPID_IHTMLWINDOW2_OPEN)]
+    IHTMLWindow2 *open(
+            [in, defaultvalue("")] BSTR url,
+            [in, defaultvalue("")] BSTR name,
+            [in, defaultvalue("")] BSTR features,
+            [in, defaultvalue(0)]  VARIANT_BOOL replace);
+
+    [propget, id(DISPID_IHTMLWINDOW2_SELF)]
+    IHTMLWindow2 *self();
+
+    [propget, id(DISPID_IHTMLWINDOW2_TOP)]
+    IHTMLWindow2 *top();
+
+    [propget, id(DISPID_IHTMLWINDOW2_WINDOW)]
+    IHTMLWindow2 *window();
+
+    [id(DISPID_IHTMLWINDOW2_NAVIGATE)]
+    void navigate([in] BSTR url);
+
+    [propput, id(DISPID_IHTMLWINDOW2_ONFOCUS), displaybind, bindable]
+    void onfocus(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONFOCUS), displaybind, bindable]
+    VARIANT onfocus();
+
+    [propput, id(DISPID_IHTMLWINDOW2_ONBLUR), displaybind, bindable]
+    void onblur(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONBLUR), displaybind, bindable]
+    VARIANT onblur();
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONLOAD), displaybind, bindable]
+    VARIANT onload();
+
+    [propput, id(DISPID_IHTMLWINDOW2_ONBEFOREUNLOAD), displaybind, bindable]
+    void onbeforeunload(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONBEFOREUNLOAD), displaybind, bindable]
+    VARIANT onbeforeunload();
+
+    [propput, id(DISPID_IHTMLWINDOW2_ONUNLOAD), displaybind, bindable]
+    void onunload(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONUNLOAD), displaybind, bindable]
+    VARIANT onunload();
+
+    [propput, id(DISPID_IHTMLWINDOW2_ONHELP), displaybind, bindable]
+    void onhelp(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONHELP), displaybind, bindable]
+    VARIANT onhelp();
+
+    [propput, id(DISPID_IHTMLWINDOW2_ONERROR), displaybind, bindable]
+    void onerror(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONERROR), displaybind, bindable]
+    VARIANT onerror();
+
+    [propput, id(DISPID_IHTMLWINDOW2_ONRESIZE), displaybind, bindable]
+    void onresize(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONRESIZE), displaybind, bindable]
+    VARIANT onresize();
+
+    [propput, id(DISPID_IHTMLWINDOW2_ONSCROLL), displaybind, bindable]
+    void onscroll(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_ONSCROLL), displaybind, bindable]
+    VARIANT onscroll();
+
+    [propget, id(DISPID_IHTMLWINDOW2_DOCUMENT), source]
+    IHTMLDocument2 *document();
+
+    [propget, id(DISPID_IHTMLWINDOW2_EVENT)]
+    IHTMLEventObj *event();
+
+    [propget, id(DISPID_IHTMLWINDOW2__NEWENUM), hidden, restricted]
+    IUnknown *_newEnum();
+
+    [id(DISPID_IHTMLWINDOW2_SHOWMODALDIALOG)]
+    VARIANT showModalDialog(
+            [in] BSTR dialog,
+            [in, optional] VARIANT *varArgIn,
+            [in, optional] VARIANT *varOptions);
+
+    [id(DISPID_IHTMLWINDOW2_SHOWHELP)]
+    void showHelp(
+            [in] BSTR helpURL,
+            [in, optional] VARIANT helpArg,
+            [in, defaultvalue("")] BSTR features);
+
+    [propget, id(DISPID_IHTMLWINDOW2_SCREEN)]
+    IHTMLScreen *screen();
+
+    [propget, id(DISPID_IHTMLWINDOW2_OPTION)]
+    IHTMLOptionElementFactory *Option();
+
+    [id(DISPID_IHTMLWINDOW2_FOCUS)]
+    void focus();
+
+    [propget, id(DISPID_IHTMLWINDOW2_CLOSED)]
+    VARIANT_BOOL closed();
+
+    [id(DISPID_IHTMLWINDOW2_BLUR)]
+    void blur();
+
+    [id(DISPID_IHTMLWINDOW2_SCROLL)]
+    void scroll([in] long x, [in] long y);
+
+    [propget, id(DISPID_IHTMLWINDOW2_CLIENTINFORMATION)]
+    IOmNavigator *clientInformation();
+
+    [id(DISPID_IHTMLWINDOW2_CLEARINTERVAL)]
+    void clearInterval([in] long timerID);
+
+    [propput, id(DISPID_IHTMLWINDOW2_OFFSCREENBUFFERING)]
+    void offscreenBuffering(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW2_OFFSCREENBUFFERING)]
+    VARIANT offscreenBuffering();
+
+    [id(DISPID_IHTMLWINDOW2_EXECSCRIPT)]
+    VARIANT execScript(
+            [in] BSTR _code,
+            [in, defaultvalue("JScript")] BSTR language);
+
+    [id(DISPID_IHTMLWINDOW2_TOSTRING)]
+    BSTR toString();
+
+    [id(DISPID_IHTMLWINDOW2_SCROLLBY)]
+    void scrollBy([in] long x, [in] long y);
+
+    [id(DISPID_IHTMLWINDOW2_SCROLLTO)]
+    void scrollTo([in] long x, [in] long y);
+
+    [id(DISPID_IHTMLWINDOW2_MOVETO)]
+    void moveTo([in] long x, [in] long y);
+
+    [id(DISPID_IHTMLWINDOW2_MOVEBY)]
+    void moveBy([in] long x, [in] long y);
+
+    [id(DISPID_IHTMLWINDOW2_RESIZETO)]
+    void resizeTo([in] long x, [in] long y);
+
+    [id(DISPID_IHTMLWINDOW2_RESIZEBY)]
+    void resizeBy([in] long x, [in] long y);
+
+    [propget, id(DISPID_IHTMLWINDOW2_EXTERNAL)]
+    IDispatch *external();
+
+    [propget, id(DISPID_IHTMLWINDOW3_SCREENLEFT)]
+    long screenLeft();
+
+    [propget, id(DISPID_IHTMLWINDOW3_SCREENTOP)]
+    long screenTop();
+
+    [id(DISPID_IHTMLWINDOW3_ATTACHEVENT)]
+    VARIANT_BOOL attachEvent(
+             [in] BSTR event,
+             [in] IDispatch *pDisp);
+
+    [id(DISPID_IHTMLWINDOW3_DETACHEVENT)]
+    void detachEvent(
+            [in] BSTR event,
+            [in] IDispatch *pDisp);
+
+    [id(DISPID_IHTMLWINDOW3_SETTIMEOUT)]
+    long setTimeout(
+            [in] VARIANT *expression,
+            [in] long msec,
+            [in, optional] VARIANT *language);
+
+    [id(DISPID_IHTMLWINDOW3_SETINTERVAL)]
+    long setInterval(
+            [in] VARIANT *expression,
+            [in] long msec,
+            [in, optional] VARIANT *language);
+
+    [id(DISPID_IHTMLWINDOW3_PRINT)]
+    void print();
+
+    [propput, id(DISPID_IHTMLWINDOW3_ONBEFOREPRINT), displaybind, bindable]
+    void onbeforeprint(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW3_ONBEFOREPRINT), displaybind, bindable]
+    VARIANT onbeforeprint();
+
+    [propput, id(DISPID_IHTMLWINDOW3_ONAFTERPRINT), displaybind, bindable]
+    void onafterprint(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW3_ONAFTERPRINT), displaybind, bindable]
+    VARIANT onafterprint();
+
+    [propget, id(DISPID_IHTMLWINDOW3_CLIPBOARDDATA)]
+    IHTMLDataTransfer *clipboardData();
+
+    [id(DISPID_IHTMLWINDOW3_SHOWMODELESSDIALOG)]
+    IHTMLWindow2 *showModelessDialog(
+            [in, defaultvalue("")] BSTR url,
+            [in, optional] VARIANT *varArgIn,
+            [in, optional] VARIANT *options);
+
+    [id(DISPID_IHTMLWINDOW4_CREATEPOPUP)]
+    IDispatch *createPopup([in, optional] VARIANT *varArgIn);
+
+    [propget, id(DISPID_IHTMLWINDOW4_FRAMEELEMENT)]
+    IHTMLFrameBase *frameElement();
 }
 
 /*****************************************************************************
@@ -6735,6 +7061,72 @@ interface IHTMLScriptElement2 : IDispatch
 
     [propget, id(DISPID_IHTMLSCRIPTELEMENT2_CHARSET), displaybind, bindable]
     HRESULT charset([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLFrameBase interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f311-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLFrameBase : IDispatch
+{
+    [propput, id(DISPID_IHTMLFRAMEBASE_SRC)]
+    HRESULT src([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_SRC)]
+    HRESULT src([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE_NAME)]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_NAME)]
+    HRESULT name([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE_BORDER)]
+    HRESULT border([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_BORDER)]
+    HRESULT border([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE_FRAMEBORDER)]
+    HRESULT frameBorder([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_FRAMEBORDER)]
+    HRESULT frameBorder([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE_FRAMESPACING)]
+    HRESULT frameSpacing([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_FRAMESPACING)]
+    HRESULT frameSpacing([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE_MARGINWIDTH)]
+    HRESULT marginWidth([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_MARGINWIDTH)]
+    HRESULT marginWidth([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE_MARGINHEIGHT)]
+    HRESULT marginHeight([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_MARGINHEIGHT)]
+    HRESULT marginHeight([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE_NORESIZE)]
+    HRESULT noResize([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_NORESIZE)]
+    HRESULT noResize([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE_SCROLLING)]
+    HRESULT scrolling([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE_SCROLLING)]
+    HRESULT scrolling([out, retval] BSTR *p);
 }
 
 /*****************************************************************************
