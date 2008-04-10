@@ -148,6 +148,8 @@ static unsigned long get_mwm_decorations( DWORD style, DWORD ex_style )
 {
     unsigned long ret = 0;
 
+    if (!decorated_mode) return ret;
+
     if (ex_style & WS_EX_TOOLWINDOW) return 0;
 
     if ((style & WS_CAPTION) == WS_CAPTION)

@@ -82,6 +82,7 @@ int use_xkb = 1;
 int use_take_focus = 1;
 int use_primary_selection = 0;
 int managed_mode = 1;
+int decorated_mode = 1;
 int private_color_map = 0;
 int primary_monitor = 0;
 int client_side_with_core = 1;
@@ -359,6 +360,9 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "Managed", buffer, sizeof(buffer) ))
         managed_mode = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "Decorated", buffer, sizeof(buffer) ))
+        decorated_mode = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "DXGrab", buffer, sizeof(buffer) ))
         dxgrab = IS_OPTION_TRUE( buffer[0] );

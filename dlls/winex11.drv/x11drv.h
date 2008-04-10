@@ -548,6 +548,7 @@ extern int use_xkb;
 extern int use_take_focus;
 extern int use_primary_selection;
 extern int managed_mode;
+extern int decorated_mode;
 extern int private_color_map;
 extern int primary_monitor;
 extern int copy_default_colors;
