@@ -255,6 +255,7 @@ LPITEMIDLIST	_ILCreateNetwork	(void);
 LPITEMIDLIST	_ILCreateNetHood	(void);
 LPITEMIDLIST	_ILCreateBitBucket	(void);
 LPITEMIDLIST	_ILCreateDrive		(LPCWSTR);
+LPITEMIDLIST    _ILCreateEntireNetwork  (void);
 
 /*
  * helper functions (getting struct-pointer)

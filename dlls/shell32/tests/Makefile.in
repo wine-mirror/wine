@@ -10,6 +10,7 @@ CTESTS = \
 	generated.c \
 	shelllink.c \
 	shellpath.c \
+	shfldr_netplaces.c \
 	shlexec.c \
 	shlfileop.c \
 	shlfolder.c \

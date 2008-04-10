@@ -1570,6 +1570,23 @@ LPITEMIDLIST _ILCreateDrive(LPCWSTR lpszNew)
     return pidlOut;
 }
 
+LPITEMIDLIST _ILCreateEntireNetwork(void)
+{
+    LPITEMIDLIST pidlOut;
+
+    TRACE("\n");
+
+    pidlOut = _ILAlloc(PT_NETWORK, FIELD_OFFSET(PIDLDATA, u.network.szNames[sizeof("Entire Network")]));
+    if (pidlOut)
+    {
+        LPPIDLDATA pData = _ILGetDataPointer(pidlOut);
+
+        pData->u.network.dummy = 0;
+        strcpy(pData->u.network.szNames, "Entire Network");
+    }
+    return pidlOut;
+}
+
 /**************************************************************************
  *  _ILGetDrive()
  *

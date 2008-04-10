@@ -43,6 +43,7 @@
 #include "shell32_main.h"
 #include "shresdef.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "debughlp.h"
 #include "shfldr.h"
 
@@ -181,17 +182,53 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnParseDisplayName (IShellFolder2 * ifac
                HWND hwndOwner, LPBC pbcReserved, LPOLESTR lpszDisplayName,
                DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
 {
+    static const WCHAR wszEntireNetwork[] = {'E','n','t','i','r','e','N','e','t','w','o','r','k'}; /* not nul-terminated */
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
-
-    HRESULT hr = E_UNEXPECTED;
+    HRESULT hr = E_INVALIDARG;
+    LPCWSTR szNext = NULL;
+    WCHAR szElement[MAX_PATH];
+    LPITEMIDLIST pidlTemp = NULL;
+    int len;
 
     TRACE ("(%p)->(HWND=%p,%p,%p=%s,%p,pidl=%p,%p)\n", This,
             hwndOwner, pbcReserved, lpszDisplayName, debugstr_w (lpszDisplayName),
             pchEaten, ppidl, pdwAttributes);
 
-    *ppidl = 0;
-    if (pchEaten)
-        *pchEaten = 0;		/* strange but like the original */
+    *ppidl = NULL;
+
+    szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
+    len = strlenW(szElement);
+    if (len == sizeof(wszEntireNetwork)/sizeof(wszEntireNetwork[0]) &&
+        !strncmpiW(szElement, wszEntireNetwork, sizeof(wszEntireNetwork)/sizeof(wszEntireNetwork[0])))
+    {
+        pidlTemp = _ILCreateEntireNetwork();
+        if (pidlTemp)
+            hr = S_OK;
+        else
+            hr = E_OUTOFMEMORY;
+    }
+    else
+        FIXME("not implemented for %s\n", debugstr_w(lpszDisplayName));
+
+    if (SUCCEEDED(hr) && pidlTemp)
+    {
+        if (szNext && *szNext)
+        {
+            hr = SHELL32_ParseNextElement(iface, hwndOwner, pbcReserved,
+                    &pidlTemp, (LPOLESTR) szNext, pchEaten, pdwAttributes);
+        }
+        else
+        {
+            if (pdwAttributes && *pdwAttributes)
+                hr = SHELL32_GetItemAttributes(_IShellFolder_ (This),
+                                               pidlTemp, pdwAttributes);
+        }
+    }
+
+    if (SUCCEEDED(hr))
+        *ppidl = pidlTemp;
+    else
+        ILFree(pidlTemp);
 
     TRACE ("(%p)->(-- ret=0x%08x)\n", This, hr);
 
