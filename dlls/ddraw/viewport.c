@@ -312,10 +312,12 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
     This->viewports.vp1.dvMaxZ = 1.0;
 
     if (This->active_device) {
-      IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
-      if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
-          This->activate(This, FALSE);
-      if(current_viewport) IDirect3DViewport3_Release(current_viewport);
+        IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
+        if (current_viewport) {
+            if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
+                This->activate(This, FALSE);
+            IDirect3DViewport3_Release(current_viewport);
+        }
     }
     LeaveCriticalSection(&ddraw_cs);
 
@@ -900,10 +902,12 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
     memcpy(&(This->viewports.vp2), lpData, lpData->dwSize);
 
     if (This->active_device) {
-      IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
-      if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
-        This->activate(This, FALSE);
-      IDirect3DViewport3_Release(current_viewport);
+        IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
+        if (current_viewport) {
+            if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
+                This->activate(This, FALSE);
+            IDirect3DViewport3_Release(current_viewport);
+        }
     }
     LeaveCriticalSection(&ddraw_cs);
 

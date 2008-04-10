@@ -817,6 +817,8 @@ IDirect3DDeviceImpl_3_AddViewport(IDirect3DDevice3 *iface,
     EnterCriticalSection(&ddraw_cs);
     vp->next = This->viewport_list;
     This->viewport_list = vp;
+    vp->active_device = This; /* Viewport must be usable for Clear() after AddViewport,
+                                    so set active_device here. */
     LeaveCriticalSection(&ddraw_cs);
 
     return D3D_OK;
