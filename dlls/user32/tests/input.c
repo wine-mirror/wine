@@ -78,7 +78,7 @@ static const int GETVKEY[]={0, VK_MENU, VK_MENU, 'X', 'X', VK_SHIFT, VK_SHIFT, V
 /* matching scan codes */
 static const int GETSCAN[]={0, 0x38, 0x38, 0x2D, 0x2D, 0x2A, 0x2A, 0x1D, 0x1D };
 /* matching updown events */
-static const int GETUPDOWN[]={0, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP};
+static const int GETFLAGS[]={0, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP};
 /* matching descripts */
 static const char *getdesc[]={"", "+alt","-alt","+X","-X","+shift","-shift","+ctrl","-ctrl"};
 
@@ -98,7 +98,7 @@ typedef struct
 inputs[evtctr].type = INPUT_KEYBOARD; \
     ((TEST_INPUT*)inputs)[evtctr].u.ki.wVk = GETVKEY[ kev]; \
     ((TEST_INPUT*)inputs)[evtctr].u.ki.wScan = GETSCAN[ kev]; \
-    ((TEST_INPUT*)inputs)[evtctr].u.ki.dwFlags = GETUPDOWN[ kev]; \
+    ((TEST_INPUT*)inputs)[evtctr].u.ki.dwFlags = GETFLAGS[ kev]; \
     ((TEST_INPUT*)inputs)[evtctr].u.ki.dwExtraInfo = 0; \
     ((TEST_INPUT*)inputs)[evtctr].u.ki.time = ++timetag; \
     if( kev) evtctr++;
@@ -132,21 +132,6 @@ static BYTE InputKeyStateTable[256];
 static BYTE AsyncKeyStateTable[256];
 static BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
                          or a WM_KEYUP message */
-typedef union
-{
-    struct
-    {
-	unsigned long count : 16;
-	unsigned long code : 8;
-	unsigned long extended : 1;
-	unsigned long unused : 2;
-	unsigned long win_internal : 2;
-	unsigned long context : 1;
-	unsigned long previous : 1;
-	unsigned long transition : 1;
-    } lp1;
-    unsigned long lp2;
-} KEYLP;
 
 static void init_function_pointers(void)
 {
@@ -167,16 +152,12 @@ static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
 {
     UINT message;
     int VKey = GETVKEY[kev];
-    KEYLP keylp;
+    WORD flags;
 
-    keylp.lp2 = 0;
+    flags = LOBYTE(GETSCAN[kev]);
+    if (GETFLAGS[kev] & KEYEVENTF_EXTENDEDKEY) flags |= KF_EXTENDED;
 
-    keylp.lp1.count = 1;
-    keylp.lp1.code = GETSCAN[kev];
-    keylp.lp1.extended = 0 ;/*  FIXME (ki->dwFlags & KEYEVENTF_EXTENDEDKEY) != 0; */
-    keylp.lp1.win_internal = 0;
-
-    if (GETUPDOWN[kev] & KEYEVENTF_KEYUP )
+    if (GETFLAGS[kev] & KEYEVENTF_KEYUP )
     {
         message = WM_KEYUP;
         if( (InputKeyStateTable[VK_MENU] & 0x80) && (
@@ -188,13 +169,11 @@ static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
                 TrackSysKey = 0;
         }
         InputKeyStateTable[VKey] &= ~0x80;
-        keylp.lp1.previous = 1;
-        keylp.lp1.transition = 1;
+        flags |= KF_REPEAT | KF_UP;
     }
     else
     {
-        keylp.lp1.previous = (InputKeyStateTable[VKey] & 0x80) != 0;
-        keylp.lp1.transition = 0;
+        if (InputKeyStateTable[VKey] & 0x80) flags |= KF_REPEAT;
         if (!(InputKeyStateTable[VKey] & 0x80)) InputKeyStateTable[VKey] ^= 0x01;
         InputKeyStateTable[VKey] |= 0x80;
         AsyncKeyStateTable[VKey] |= 0x80;
@@ -207,9 +186,9 @@ static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
         }
     }
 
-    keylp.lp1.context = (InputKeyStateTable[VK_MENU] & 0x80) != 0; /* 1 if alt */
+    if (InputKeyStateTable[VK_MENU] & 0x80) flags |= KF_ALTDOWN;
 
-    if( plParam) *plParam = keylp.lp2;
+    if( plParam) *plParam = MAKELPARAM( 1, flags );
     if( pwParam) *pwParam = VKey;
     return message;
 }
