@@ -3,10 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = softpub.dll
-IMPORTS   = kernel32
-
-C_SRCS = \
-	main.c
+IMPORTS   = wintrust kernel32
 
 @MAKE_DLL_RULES@
 
