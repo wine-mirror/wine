@@ -634,7 +634,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
             if(pFuncDesc->cParams != 1)
             {
                 AddToTLDataStrW(tld, wszNewLine);
-                AddSpaces(tld, 4);
+                AddSpaces(tld, TAB_SIZE);
             }
             bFirst = TRUE;
 #define ENUM_PARAM_FLAG(x)\
@@ -808,7 +808,7 @@ static void EnumCoclassImplTypes(ITypeInfo *pTypeInfo,
             continue;
         }
 
-        AddSpaces(pTLData, 4);
+        AddSpaces(pTLData, TAB_SIZE);
         ITypeInfo_GetImplTypeFlags(pTypeInfo, i, &flags);
         bFirst = TRUE;
 #define ENUM_IMPLTYPEFLAG(x)\
@@ -943,12 +943,12 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
     AddToTLDataStrW(pTLData, wszNewLine);
     if(pTypeAttr->typekind != TKIND_DISPATCH)
     {
-        AddSpaces(pTLData, 4);
+        AddSpaces(pTLData, TAB_SIZE);
         AddToTLDataStrW(pTLData, wszOdl);
         AddToTLDataStrW(pTLData, wszComa);
         AddToTLDataStrW(pTLData, wszNewLine);
     }
-    AddSpaces(pTLData, 4);
+    AddSpaces(pTLData, TAB_SIZE);
     AddToTLDataStrW(pTLData, wszUUID);
     AddToTLDataStrW(pTLData, wszOpenBrackets2);
     StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
@@ -959,7 +959,7 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
     {
         AddToTLDataStrW(pTLData, wszComa);
         AddToTLDataStrW(pTLData, wszNewLine);
-        AddSpaces(pTLData, 4);
+        AddSpaces(pTLData, TAB_SIZE);
         AddToTLDataStrW(pTLData, wszHelpstring);
         AddToTLDataStrW(pTLData, wszOpenBrackets2);
         AddToTLDataStrW(pTLData, wszInvertedComa);
@@ -971,7 +971,7 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
     {
         AddToTLDataStrW(pTLData, wszComa);
         AddToTLDataStrW(pTLData, wszNewLine);
-        AddSpaces(pTLData, 4);
+        AddSpaces(pTLData, TAB_SIZE);
         AddToTLDataStrW(pTLData, wszHelpcontext);
         AddToTLDataStrW(pTLData, wszOpenBrackets2);
         wsprintfW(wszHelpContext, wszFormat, ulHelpContext);
@@ -985,7 +985,7 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
         {\
             AddToTLDataStrW(pTLData, wszComa);\
             AddToTLDataStrW(pTLData, wszNewLine);\
-            AddSpaces(pTLData, 4);\
+            AddSpaces(pTLData, TAB_SIZE);\
             AddToTLDataStrW(pTLData, wsz##x);\
         }
         ENUM_FLAGS(TYPEFLAG_FAPPOBJECT);
@@ -1078,9 +1078,49 @@ static void CreateTypedefHeader(ITypeInfo *pTypeInfo,
 static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
         TYPEATTR *pTypeAttr, TYPELIB_DATA *pTLData)
 {
+    WCHAR wszGuid[MAX_LOAD_STRING];
+    BSTR bstrHelpString;
+    const WCHAR wszNoncreatable[]
+        = { 'n','o','n','c','r','e','a','t','a','b','l','e','\0' };
+
     AddToTLDataStrW(pTLData, wszOpenBrackets1);
     AddToTLDataStrW(pTLData, wszNewLine);
 
+    AddSpaces(pTLData, TAB_SIZE);
+    AddToTLDataStrW(pTLData, wszUUID);
+    AddToTLDataStrW(pTLData, wszOpenBrackets2);
+    StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
+    wszGuid[lstrlenW(wszGuid)-1] = '\0';
+    AddToTLDataStrW(pTLData, &wszGuid[1]);
+    AddToTLDataStrW(pTLData, wszCloseBrackets2);
+
+    if(SUCCEEDED(ITypeInfo_GetDocumentation(pTypeInfo, MEMBERID_NIL, NULL,
+            &bstrHelpString, NULL, NULL)))
+    {
+        if(SysStringLen(bstrHelpString))
+        {
+            AddToTLDataStrW(pTLData, wszComa);
+            AddToTLDataStrW(pTLData, wszNewLine);
+            AddSpaces(pTLData, TAB_SIZE);
+            AddToTLDataStrW(pTLData, wszHelpstring);
+            AddToTLDataStrW(pTLData, wszOpenBrackets1);
+            AddToTLDataStrW(pTLData, wszInvertedComa);
+            AddToTLDataStrW(pTLData, bstrHelpString);
+            AddToTLDataStrW(pTLData, wszInvertedComa);
+            AddToTLDataStrW(pTLData, wszCloseBrackets1);
+        }
+        SysFreeString(bstrHelpString);
+    }
+
+    if(!(pTypeAttr->wTypeFlags & TYPEFLAG_FCANCREATE))
+    {
+        AddToTLDataStrW(pTLData, wszComa);
+        AddToTLDataStrW(pTLData, wszNewLine);
+        AddSpaces(pTLData, TAB_SIZE);
+        AddToTLDataStrW(pTLData, wszNoncreatable);
+    }
+
+    AddToTLDataStrW(pTLData, wszNewLine);
     AddToTLDataStrW(pTLData, wszCloseBrackets1);
     AddToTLDataStrW(pTLData, wszNewLine);
 }
@@ -1165,7 +1205,7 @@ static int PopulateTree(void)
     AddToTLDataStrW(tld, wszNewLine);
     AddToTLDataStrW(tld, wszOpenBrackets1);
     AddToTLDataStrW(tld, wszNewLine);
-    AddSpaces(tld, 4);
+    AddSpaces(tld, TAB_SIZE);
     AddToTLDataStrW(tld, wszUUID);
     AddToTLDataStrW(tld, wszOpenBrackets2);
     StringFromGUID2(&(pTLibAttr->guid), wszText, MAX_LOAD_STRING);
@@ -1174,12 +1214,12 @@ static int PopulateTree(void)
     AddToTLDataStrW(tld, wszCloseBrackets2);
     AddToTLDataStrW(tld, wszComa);
     AddToTLDataStrW(tld, wszNewLine);
-    AddSpaces(tld, 4);
+    AddSpaces(tld, TAB_SIZE);
     wsprintfW(wszText, wszFormat2, pTLibAttr->wMajorVerNum, pTLibAttr->wMinorVerNum);
     AddToTLDataStrW(tld, wszText);
     AddToTLDataStrW(tld, wszComa);
     AddToTLDataStrW(tld, wszNewLine);
-    AddSpaces(tld, 4);
+    AddSpaces(tld, TAB_SIZE);
     AddToTLDataStrW(tld, wszHelpstring);
     AddToTLDataStrW(tld, wszOpenBrackets2);
     AddToTLDataStrW(tld, wszInvertedComa);
