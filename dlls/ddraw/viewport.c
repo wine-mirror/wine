@@ -667,6 +667,7 @@ IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
     DWORD color = 0x00000000;
     HRESULT hr;
+    LPDIRECT3DVIEWPORT3 current_viewport;
 
     TRACE("(%p/%p)->(%08x,%p,%08x)\n", This, iface, dwCount, lpRects, dwFlags);
     if (This->active_device == NULL) {
@@ -687,6 +688,10 @@ IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
 	}
     }
 
+    /* Need to temporarily activate viewport to clear it. Previously active one will be restored
+        afterwards. */
+    This->activate(This, TRUE);
+
     hr = IDirect3DDevice7_Clear(ICOM_INTERFACE(This->active_device, IDirect3DDevice7),
                                 dwCount,
                                 lpRects,
@@ -694,6 +699,14 @@ IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
                                 color,
                                 1.0,
                                 0x00000000);
+
+    IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
+    if(current_viewport) {
+        IDirect3DViewportImpl *vp = ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport);
+        vp->activate(vp, TRUE);
+        IDirect3DViewport3_Release(current_viewport);
+    }
+
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -989,6 +1002,7 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
     HRESULT hr;
+    LPDIRECT3DVIEWPORT3 current_viewport;
     TRACE("(%p)->(%08x,%p,%08x,%08x,%f,%08x)\n", This, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
 
     EnterCriticalSection(&ddraw_cs);
@@ -997,6 +1011,10 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
         LeaveCriticalSection(&ddraw_cs);
         return D3DERR_VIEWPORTHASNODEVICE;
     }
+    /* Need to temporarily activate viewport to clear it. Previously active one will be restored
+        afterwards. */
+    This->activate(This, TRUE);
+
     hr = IDirect3DDevice7_Clear(ICOM_INTERFACE(This->active_device, IDirect3DDevice7),
                                 dwCount,
                                 lpRects,
@@ -1004,6 +1022,12 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
                                 dwColor,
                                 dvZ,
                                 dwStencil);
+    IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
+    if(current_viewport) {
+        IDirect3DViewportImpl *vp = ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport);
+        vp->activate(vp, TRUE);
+        IDirect3DViewport3_Release(current_viewport);
+    }
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
