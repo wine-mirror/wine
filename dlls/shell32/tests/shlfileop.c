@@ -850,10 +850,7 @@ static void test_copy(void)
     shfo.pTo = "two.txt\0";
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
-    todo_wine
-    {
-        ok(retval == 1148, "Expected 1148, got %d\n", retval);
-    }
+    ok(retval == 1148 || retval == 1026, "Expected 1148 or 1026, got %d\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
 
@@ -892,10 +889,7 @@ static void test_copy(void)
     shfo.pTo = to;
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
-    todo_wine
-    {
-        ok(retval == 1148, "Expected 1148, got %d\n", retval);
-    }
+    ok(retval == 1148 || retval == 1026, "Expected 1148 or 1026, got %d\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
 
@@ -975,10 +969,9 @@ static void test_copy(void)
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
     ok(!RemoveDirectoryA("threedir"), "Expected dir to not exist\n");
-    todo_wine
-    {
-        ok(!DeleteFileA("threedir"), "Expected file to not exist\n");
-    }
+
+    /* file exists in win2k */
+    DeleteFileA("threedir");
 
     createTestFile("one.txt");
     createTestFile("two.txt");
