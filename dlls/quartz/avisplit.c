@@ -28,11 +28,10 @@
 #include "pin.h"
 
 #include "uuids.h"
+#include "vfw.h"
 #include "aviriff.h"
 #include "vfwmsgs.h"
 #include "amvideo.h"
-
-#include "fourcc.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -41,6 +40,12 @@
 #include <assert.h>
 
 #include "parser.h"
+
+#define TWOCCFromFOURCC(fcc) HIWORD(fcc)
+
+/* four character codes used in AVI files */
+#define ckidINFO       mmioFOURCC('I','N','F','O')
+#define ckidREC        mmioFOURCC('R','E','C',' ')
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
@@ -140,15 +145,15 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 
         switch (This->CurrentChunk.fcc)
         {
-        case ckidJUNK:
-        case aviFCC('i','d','x','1'): /* Index is not handled */
+        case ckidAVIPADDING:
+        case ckidAVIOLDINDEX: /* Index is not handled */
             /* silently ignore */
             if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                 bMoreData = FALSE;
             continue;
-        case ckidLIST:
+        case FOURCC_LIST:
 	    /* We only handle the 'rec ' list which contains the stream data */
-	    if ((*(DWORD*)(pbSrcStream + BYTES_FROM_MEDIATIME(This->CurrentChunkOffset-tStart) + sizeof(RIFFCHUNK))) == aviFCC('r','e','c',' '))
+	    if ((*(DWORD*)(pbSrcStream + BYTES_FROM_MEDIATIME(This->CurrentChunkOffset-tStart) + sizeof(RIFFCHUNK))) == ckidREC)
 	    {
 		/* FIXME: We only advanced to the first chunk inside the list without keeping track that we are in it.
 		 *        This is not clean and the parser should be improved for that but it is enough for most AVI files. */
@@ -194,7 +199,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 
         if (streamId > This->Parser.cStreams)
         {
-            ERR("Corrupted AVI file (contains stream id %d, but supposed to only have %d streams)\n", streamId, This->Parser.cStreams);
+            ERR("Corrupted AVI file (contains stream id (%s) %d, but supposed to only have %d streams)\n", debugstr_an((char *)&This->CurrentChunk.fcc, 4), streamId, This->Parser.cStreams);
             hr = E_FAIL;
             break;
         }
@@ -448,7 +453,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
         case ckidSTREAMHANDLERDATA:
             FIXME("process stream handler data\n");
             break;
-        case ckidJUNK:
+        case ckidAVIPADDING:
             TRACE("JUNK chunk ignored\n");
             break;
         default:
@@ -491,24 +496,24 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     pos += sizeof(list);
 
-    if (list.fcc != ckidRIFF)
+    if (list.fcc != FOURCC_RIFF)
     {
         ERR("Input stream not a RIFF file\n");
         return E_FAIL;
     }
-    if (list.fccListType != ckidAVI)
+    if (list.fccListType != formtypeAVI)
     {
         ERR("Input stream not an AVI RIFF file\n");
         return E_FAIL;
     }
 
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
-    if (list.fcc != ckidLIST)
+    if (list.fcc != FOURCC_LIST)
     {
         ERR("Expected LIST chunk, but got %.04s\n", (LPSTR)&list.fcc);
         return E_FAIL;
     }
-    if (list.fccListType != ckidHEADERLIST)
+    if (list.fccListType != listtypeAVIHEADER)
     {
         ERR("Header list expected. Got: %.04s\n", (LPSTR)&list.fccListType);
         return E_FAIL;
@@ -529,7 +534,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
             /* AVIMAINHEADER includes the structure that is pCurrentChunk at the moment */
             memcpy(&pAviSplit->AviHeader, pCurrentChunk, sizeof(pAviSplit->AviHeader));
             break;
-        case ckidLIST:
+        case FOURCC_LIST:
             pList = (RIFFLIST *)pCurrentChunk;
             switch (pList->fccListType)
             {
@@ -541,7 +546,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
                 break;
             }
             break;
-        case ckidJUNK:
+        case ckidAVIPADDING:
             /* ignore */
             break;
         default:
@@ -559,18 +564,18 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     pos += sizeof(RIFFCHUNK) + list.cb;
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
 
-    while (list.fcc == ckidJUNK || (list.fcc == ckidLIST && list.fccListType == ckidINFO))
+    while (list.fcc == ckidAVIPADDING || (list.fcc == FOURCC_LIST && list.fccListType == ckidINFO))
     {
         pos += sizeof(RIFFCHUNK) + list.cb;
         hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     }
 
-    if (list.fcc != ckidLIST)
+    if (list.fcc != FOURCC_LIST)
     {
         ERR("Expected LIST, but got %.04s\n", (LPSTR)&list.fcc);
         return E_FAIL;
     }
-    if (list.fccListType != ckidAVIMOVIE)
+    if (list.fccListType != listtypeAVIMOVIE)
     {
         ERR("Expected AVI movie list, but got %.04s\n", (LPSTR)&list.fccListType);
         return E_FAIL;

@@ -27,8 +27,6 @@
 #include "vfwmsgs.h"
 #include "mmsystem.h"
 
-#include "fourcc.h"
-
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -328,7 +326,7 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     pos += sizeof(list);
 
-    if (list.fcc != ckidRIFF)
+   if (list.fcc != FOURCC_RIFF)
     {
         ERR("Input stream not a RIFF file\n");
         return E_FAIL;
