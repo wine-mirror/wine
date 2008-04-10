@@ -657,7 +657,7 @@ int VGA_GetWindowStart(void)
  *
  * Callback for VGA_ShowMouse.
  */
-static WINAPI void VGA_DoShowMouse( ULONG_PTR show )
+static void WINAPI VGA_DoShowMouse( ULONG_PTR show )
 {
     INT rv;
 
