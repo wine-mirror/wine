@@ -37,9 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 BOOL ximInComposeMode=FALSE;
 
-static XIMStyle ximStyle = 0;
-static XIMStyle ximStyleRoot = 0;
-
 /* moved here from imm32 for dll separation */
 static DWORD dwCompStringLength = 0;
 static LPBYTE CompositionString = NULL;
@@ -55,6 +52,10 @@ static DWORD dwPreeditPos = 0;
 #define STYLE_CALLBACK (XIMPreeditCallbacks | XIMStatusNothing)
 /* inorder to enable deadkey support */
 #define STYLE_NONE (XIMPreeditNothing | XIMStatusNothing)
+
+static XIMStyle ximStyle = 0;
+static XIMStyle ximStyleRoot = 0;
+static XIMStyle ximStyleRequest = STYLE_CALLBACK;
 
 static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
                                         DWORD selLength, LPWSTR lpComp, DWORD dwCompLen)
@@ -327,16 +328,13 @@ void X11DRV_ForceXIMReset(HWND hwnd)
 }
 
 /***********************************************************************
-*           X11DRV Ime creation
-*/
-XIM X11DRV_SetupXIM(Display *display, const char *input_style)
+ *           X11DRV_InitXIM
+ *
+ * Process-wide XIM initialization.
+ */
+BOOL X11DRV_InitXIM( const char *input_style )
 {
-    XIMStyle ximStyleRequest, ximStyleCallback, ximStyleNone;
-    XIMStyles *ximStyles = NULL;
-    INT i;
-    XIM xim;
-
-    ximStyleRequest = STYLE_CALLBACK;
+    BOOL ret;
 
     if (!strcasecmp(input_style, "offthespot"))
         ximStyleRequest = STYLE_OFFTHESPOT;
@@ -346,17 +344,31 @@ XIM X11DRV_SetupXIM(Display *display, const char *input_style)
         ximStyleRequest = STYLE_ROOT;
 
     wine_tsx11_lock();
-
-    if(!XSupportsLocale())
+    if (!(ret = XSupportsLocale()))
     {
         WARN("X does not support locale.\n");
-        goto err;
     }
-    if(XSetLocaleModifiers("") == NULL)
+    else if (XSetLocaleModifiers("") == NULL)
     {
         WARN("Could not set locale modifiers.\n");
-        goto err;
+        ret = FALSE;
     }
+    wine_tsx11_unlock();
+    return ret;
+}
+
+
+/***********************************************************************
+*           X11DRV Ime creation
+*/
+XIM X11DRV_SetupXIM( Display *display )
+{
+    XIMStyle ximStyleCallback, ximStyleNone;
+    XIMStyles *ximStyles = NULL;
+    INT i;
+    XIM xim;
+
+    wine_tsx11_lock();
 
     xim = XOpenIM(display, NULL, NULL, NULL);
     if (xim == NULL)

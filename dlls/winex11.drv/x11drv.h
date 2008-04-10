@@ -274,8 +274,9 @@ extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev);
 extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);
 
 /* XIM support */
+extern BOOL X11DRV_InitXIM( const char *input_style );
 extern XIC X11DRV_CreateIC(XIM xim, Display *display, Window win);
-extern XIM X11DRV_SetupXIM(Display *display, const char *input_style);
+extern XIM X11DRV_SetupXIM(Display *display);
 extern void X11DRV_XIMLookupChars( const char *str, DWORD count );
 extern void X11DRV_ForceXIMReset(HWND hwnd);
 

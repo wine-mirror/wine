@@ -538,6 +538,7 @@ static BOOL process_attach(void)
 
     X11DRV_InitKeyboard( gdi_display );
     X11DRV_InitClipboard();
+    if (use_xim) use_xim = X11DRV_InitXIM( input_style );
 
     return TRUE;
 }
@@ -649,12 +650,12 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (TRACE_ON(synchronous)) XSynchronize( data->display, True );
     wine_tsx11_unlock();
 
-    if (use_xim && !(data->xim = X11DRV_SetupXIM( data->display, input_style )))
-        WARN("Input Method is not available\n");
-
     set_queue_display_fd( data->display );
     TlsSetValue( thread_data_tls_index, data );
+
+    if (use_xim) data->xim = X11DRV_SetupXIM( data->display );
     X11DRV_SetCursor( NULL );
+
     return data;
 }
 
