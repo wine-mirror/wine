@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = jscript.dll
 IMPORTS   = ole32 kernel32
+EXTRALIBS = -luuid
 
 CTESTS = \
 	jscript.c
