@@ -664,3 +664,14 @@ GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient *brush, ARGB color1,
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetLineLinearBlend(GpLineGradient *brush, REAL focus,
+    REAL scale)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
