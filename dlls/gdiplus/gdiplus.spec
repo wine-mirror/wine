@@ -536,7 +536,7 @@
 @ stdcall GdipSetInfinite(ptr)
 @ stdcall GdipSetInterpolationMode(ptr long)
 @ stdcall GdipSetLineBlend(ptr ptr ptr long)
-@ stub GdipSetLineColors
+@ stdcall GdipSetLineColors(ptr long long)
 @ stdcall GdipSetLineGammaCorrection(ptr long)
 @ stub GdipSetLineLinearBlend
 @ stub GdipSetLinePresetBlend
