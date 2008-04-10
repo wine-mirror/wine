@@ -132,7 +132,7 @@ static HRESULT WINAPI Parser_QueryInterface(IBaseFilter * iface, REFIID riid, LP
         return S_OK;
     }
 
-    if (!IsEqualIID(riid, &IID_IPin))
+    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow))
         FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
 
     return E_NOINTERFACE;

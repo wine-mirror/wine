@@ -394,7 +394,7 @@ static HRESULT WINAPI AsyncReader_QueryInterface(IBaseFilter * iface, REFIID rii
         return S_OK;
     }
 
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IMediaSeeking))
+    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IMediaSeeking) && !IsEqualIID(riid, &IID_IVideoWindow))
         FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
 
     return E_NOINTERFACE;

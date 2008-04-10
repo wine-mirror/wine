@@ -249,7 +249,7 @@ static HRESULT WINAPI NullRendererInner_QueryInterface(IUnknown * iface, REFIID 
         return S_OK;
     }
 
-    if (!IsEqualIID(riid, &IID_IPin))
+    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow))
         FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
 
     return E_NOINTERFACE;
