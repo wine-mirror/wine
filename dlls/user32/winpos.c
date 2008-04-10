@@ -2381,8 +2381,6 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     TRACE("hwnd %p command %04lx, hittest %d, pos %d,%d\n",
           hwnd, syscommand, hittest, pt.x, pt.y);
 
-    if (USER_Driver->pSysCommandSizeMove( hwnd, wParam )) return;
-
     if (syscommand == SC_MOVE)
     {
         if (!hittest) hittest = start_size_move( hwnd, wParam, &capturePoint, style );

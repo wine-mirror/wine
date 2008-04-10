@@ -712,13 +712,12 @@ static BOOL is_netwm_supported( Display *display, Atom atom )
 
 
 /***********************************************************************
- *           SysCommandSizeMove   (X11DRV.@)
+ *           SysCommand   (X11DRV.@)
  *
- * Perform SC_MOVE and SC_SIZE commands.
+ * Perform WM_SYSCOMMAND handling.
  */
-BOOL X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
+LRESULT X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
-    WPARAM syscommand = wparam & 0xfff0;
     WPARAM hittest = wparam & 0x0f;
     DWORD dwPoint;
     int x, y, dir;
@@ -726,24 +725,18 @@ BOOL X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
     Display *display = thread_display();
     struct x11drv_win_data *data;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
-    if (!data->whole_window || !data->managed) return FALSE;
+    if (!(data = X11DRV_get_win_data( hwnd ))) return -1;
+    if (!data->whole_window || !data->managed || !data->mapped) return -1;
 
-    if (!is_netwm_supported( display, x11drv_atom(_NET_WM_MOVERESIZE) ))
+    switch (wparam & 0xfff0)
     {
-        TRACE( "_NET_WM_MOVERESIZE not supported\n" );
-        return FALSE;
-    }
-
-    if (syscommand == SC_MOVE)
-    {
+    case SC_MOVE:
         if (!hittest) dir = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
         else dir = _NET_WM_MOVERESIZE_MOVE;
-    }
-    else
-    {
+        break;
+    case SC_SIZE:
         /* windows without WS_THICKFRAME are not resizable through the window manager */
-        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_THICKFRAME)) return FALSE;
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_THICKFRAME)) return -1;
 
         switch (hittest)
         {
@@ -757,6 +750,18 @@ BOOL X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
         case WMSZ_BOTTOMRIGHT: dir = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT; break;
         default:               dir = _NET_WM_MOVERESIZE_SIZE_KEYBOARD; break;
         }
+        break;
+
+    default:
+        return -1;
+    }
+
+    if (IsZoomed(hwnd)) return -1;
+
+    if (!is_netwm_supported( display, x11drv_atom(_NET_WM_MOVERESIZE) ))
+    {
+        TRACE( "_NET_WM_MOVERESIZE not supported\n" );
+        return -1;
     }
 
     dwPoint = GetMessagePos();
@@ -784,5 +789,5 @@ BOOL X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wparam )
     XUngrabPointer( display, CurrentTime );
     XSendEvent(display, root_window, False, SubstructureNotifyMask, &xev);
     wine_tsx11_unlock();
-    return TRUE;
+    return 0;
 }

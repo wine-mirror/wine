@@ -1533,6 +1533,9 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     if (HOOK_CallHooks( WH_CBT, HCBT_SYSCOMMAND, wParam, lParam, TRUE ))
         return 0;
 
+    if (!USER_Driver->pSysCommand( hwnd, wParam, lParam ))
+        return 0;
+
     switch (wParam & 0xfff0)
     {
     case SC_SIZE:

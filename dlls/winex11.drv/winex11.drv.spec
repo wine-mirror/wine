@@ -112,7 +112,7 @@
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long) X11DRV_SetWindowStyle
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
-@ cdecl SysCommandSizeMove(long long) X11DRV_SysCommandSizeMove
+@ cdecl SysCommand(long long) X11DRV_SysCommand
 @ cdecl WindowMessage(long long long long) X11DRV_WindowMessage
 
 # WinTab32
