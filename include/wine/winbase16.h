@@ -300,18 +300,19 @@ typedef struct
      */
 } NE_TYPEINFO;
 
-#define NE_RSCTYPE_CURSOR         0x8001
-#define NE_RSCTYPE_BITMAP         0x8002
-#define NE_RSCTYPE_ICON           0x8003
-#define NE_RSCTYPE_MENU           0x8004
-#define NE_RSCTYPE_DIALOG         0x8005
-#define NE_RSCTYPE_STRING         0x8006
-#define NE_RSCTYPE_FONTDIR        0x8007
-#define NE_RSCTYPE_FONT           0x8008
-#define NE_RSCTYPE_ACCELERATOR    0x8009
-#define NE_RSCTYPE_RCDATA         0x800a
-#define NE_RSCTYPE_GROUP_CURSOR   0x800c
-#define NE_RSCTYPE_GROUP_ICON     0x800e
+#define NE_RSCTYPE_CURSOR             0x8001
+#define NE_RSCTYPE_BITMAP             0x8002
+#define NE_RSCTYPE_ICON               0x8003
+#define NE_RSCTYPE_MENU               0x8004
+#define NE_RSCTYPE_DIALOG             0x8005
+#define NE_RSCTYPE_STRING             0x8006
+#define NE_RSCTYPE_FONTDIR            0x8007
+#define NE_RSCTYPE_FONT               0x8008
+#define NE_RSCTYPE_ACCELERATOR        0x8009
+#define NE_RSCTYPE_RCDATA             0x800a
+#define NE_RSCTYPE_GROUP_CURSOR       0x800c
+#define NE_RSCTYPE_GROUP_ICON         0x800e
+#define NE_RSCTYPE_SCALABLE_FONTPATH  0x80cc   /* Resource found in .fot files */
 
 
 #define __AHSHIFT  3  /* don't change! */
