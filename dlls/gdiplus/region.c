@@ -39,3 +39,13 @@ GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *region)
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *region)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}

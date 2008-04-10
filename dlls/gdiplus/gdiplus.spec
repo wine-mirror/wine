@@ -533,7 +533,7 @@
 @ stdcall GdipSetImageAttributesToIdentity(ptr long)
 @ stdcall GdipSetImageAttributesWrapMode(ptr long long long)
 @ stdcall GdipSetImagePalette(ptr ptr)
-@ stub GdipSetInfinite
+@ stdcall GdipSetInfinite(ptr)
 @ stdcall GdipSetInterpolationMode(ptr long)
 @ stdcall GdipSetLineBlend(ptr ptr ptr long)
 @ stub GdipSetLineColors
