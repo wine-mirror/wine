@@ -54,16 +54,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
  * activates the viewport using IDirect3DDevice7::SetViewport
  *
  *****************************************************************************/
-void viewport_activate(IDirect3DViewportImpl* This) {
+void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights) {
     IDirect3DLightImpl* light;
     D3DVIEWPORT7 vp;
-    
-    /* Activate all the lights associated with this context */
-    light = This->lights;
 
-    while (light != NULL) {
-        light->activate(light);
-	light = light->next;
+    if (!ignore_lights) {
+        /* Activate all the lights associated with this context */
+        light = This->lights;
+
+        while (light != NULL) {
+            light->activate(light);
+            light = light->next;
+        }
     }
 
     /* And copy the values in the structure used by the device */
@@ -312,7 +314,7 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
     if (This->active_device) {
       IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
       if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
-          This->activate(This);
+          This->activate(This, FALSE);
       if(current_viewport) IDirect3DViewport3_Release(current_viewport);
     }
     LeaveCriticalSection(&ddraw_cs);
@@ -900,7 +902,7 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
     if (This->active_device) {
       IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
       if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
-        This->activate(This);
+        This->activate(This, FALSE);
       IDirect3DViewport3_Release(current_viewport);
     }
     LeaveCriticalSection(&ddraw_cs);
