@@ -169,3 +169,14 @@ GpStatus WINGDIPAPI GdipSetImageAttributesThreshold(GpImageAttributes *imageAttr
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetImageAttributesToIdentity(GpImageAttributes *imageAttr,
+    ColorAdjustType type)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
