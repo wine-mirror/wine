@@ -833,8 +833,8 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
 #define IDirect3DViewport3_DeleteLight(p,a)             (p)->lpVtbl->DeleteLight(p,a)
 #define IDirect3DViewport3_NextLight(p,a,b,c)           (p)->lpVtbl->NextLight(p,a,b,c)
 /*** IDirect3DViewport2 methods ***/
-#define IDirect3DViewport3_GetViewport3(p,a) (p)->lpVtbl->GetViewport2(p,a)
-#define IDirect3DViewport3_SetViewport3(p,a) (p)->lpVtbl->SetViewport2(p,a)
+#define IDirect3DViewport3_GetViewport2(p,a) (p)->lpVtbl->GetViewport2(p,a)
+#define IDirect3DViewport3_SetViewport2(p,a) (p)->lpVtbl->SetViewport2(p,a)
 /*** IDirect3DViewport3 methods ***/
 #define IDirect3DViewport3_SetBackgroundDepth2(p,a)   (p)->lpVtbl->SetBackgroundDepth2(p,a)
 #define IDirect3DViewport3_GetBackgroundDepth2(p,a,b) (p)->lpVtbl->GetBackgroundDepth2(p,a,b)
@@ -859,8 +859,8 @@ DECLARE_INTERFACE_(IDirect3DViewport3,IDirect3DViewport2)
 #define IDirect3DViewport3_DeleteLight(p,a)             (p)->DeleteLight(a)
 #define IDirect3DViewport3_NextLight(p,a,b,c)           (p)->NextLight(a,b,c)
 /*** IDirect3DViewport2 methods ***/
-#define IDirect3DViewport3_GetViewport3(p,a) (p)->GetViewport2(a)
-#define IDirect3DViewport3_SetViewport3(p,a) (p)->SetViewport2(a)
+#define IDirect3DViewport3_GetViewport2(p,a) (p)->GetViewport2(a)
+#define IDirect3DViewport3_SetViewport2(p,a) (p)->SetViewport2(a)
 /*** IDirect3DViewport3 methods ***/
 #define IDirect3DViewport3_SetBackgroundDepth2(p,a)   (p)->SetBackgroundDepth2(a)
 #define IDirect3DViewport3_GetBackgroundDepth2(p,a,b) (p)->GetBackgroundDepth2(a,b)
