@@ -763,6 +763,84 @@ static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent
     return 0;
 }
 
+static void EnumCoclassImplTypes(ITypeInfo *pTypeInfo,
+        int cImplTypes, TYPELIB_DATA *pTLData)
+{
+    int i;
+    ITypeInfo *pRefTypeInfo;
+    HREFTYPE hRefType;
+    TYPEATTR *pTypeAttr;
+    BSTR bstrName;
+    BOOL bFirst;
+    INT flags;
+    const WCHAR wszTKIND_INTERFACE[] = { 'i','n','t','e','r','f','a','c','e',' ','\0' };
+    const WCHAR wszTKIND_DISPATCH[]
+        = { 'd','i','s','p','i','n','t','e','r','f','a','c','e',' ','\0' };
+    const WCHAR wszIMPLTYPEFLAG_FDEFAULT[]
+        = { 'd','e','f','a','u','l','t','\0' };
+    const WCHAR wszIMPLTYPEFLAG_FSOURCE[]
+        = { 's','o','u','r','c','e','\0' };
+    const WCHAR wszIMPLTYPEFLAG_FRESTRICTED[]
+        = { 'r','e','s','t','r','i','c','t','e','d','\0' };
+
+    for(i=0; i<cImplTypes; i++)
+    {
+        if(FAILED(ITypeInfo_GetRefTypeOfImplType(pTypeInfo, i, &hRefType))) continue;
+        if(FAILED(ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo)))
+            continue;
+        if(FAILED(ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
+                        NULL, NULL, NULL)))
+        {
+            ITypeInfo_Release(pRefTypeInfo);
+            continue;
+        }
+        if(FAILED(ITypeInfo_GetTypeAttr(pRefTypeInfo, &pTypeAttr)))
+        {
+            ITypeInfo_Release(pRefTypeInfo);
+            continue;
+        }
+
+        AddSpaces(pTLData, 4);
+        ITypeInfo_GetImplTypeFlags(pTypeInfo, i, &flags);
+        bFirst = TRUE;
+#define ENUM_IMPLTYPEFLAG(x)\
+        if(flags & x) \
+        {\
+            if(bFirst) AddToTLDataStrW(pTLData,\
+                    wszOpenBrackets1);\
+            else\
+            {\
+                AddToTLDataStrW(pTLData, wszComa);\
+                AddToTLDataStrW(pTLData, wszSpace);\
+            }\
+            bFirst = FALSE;\
+            AddToTLDataStrW(pTLData, wsz##x);\
+        }
+        ENUM_IMPLTYPEFLAG(IMPLTYPEFLAG_FDEFAULT);
+        ENUM_IMPLTYPEFLAG(IMPLTYPEFLAG_FSOURCE);
+        ENUM_IMPLTYPEFLAG(IMPLTYPEFLAG_FRESTRICTED);
+        if(!bFirst)
+        {
+            AddToTLDataStrW(pTLData, wszCloseBrackets1);
+            AddToTLDataStrW(pTLData, wszSpace);
+        }
+
+        if(pTypeAttr->typekind == TKIND_INTERFACE)
+            AddToTLDataStrW(pTLData, wszTKIND_INTERFACE);
+        else if(pTypeAttr->typekind == TKIND_DISPATCH)
+            AddToTLDataStrW(pTLData, wszTKIND_DISPATCH);
+        AddToTLDataStrW(pTLData, wszSpace);
+
+        AddToTLDataStrW(pTLData, bstrName);
+        AddToTLDataStrW(pTLData, wszSemicolon);
+        AddToTLDataStrW(pTLData, wszNewLine);
+
+        SysFreeString(bstrName);
+        ITypeInfo_ReleaseTypeAttr(pRefTypeInfo, pTypeAttr);
+        ITypeInfo_Release(pRefTypeInfo);
+    }
+}
+
 static void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
 {
     TVITEM tvi;
@@ -989,6 +1067,16 @@ static void CreateTypedefHeader(ITypeInfo *pTypeInfo,
     }
 }
 
+static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
+        TYPEATTR *pTypeAttr, TYPELIB_DATA *pTLData)
+{
+    AddToTLDataStrW(pTLData, wszOpenBrackets1);
+    AddToTLDataStrW(pTLData, wszNewLine);
+
+    AddToTLDataStrW(pTLData, wszCloseBrackets1);
+    AddToTLDataStrW(pTLData, wszNewLine);
+}
+
 static int PopulateTree(void)
 {
     TVINSERTSTRUCT tvis;
@@ -1175,6 +1263,23 @@ static int PopulateTree(void)
             case TKIND_COCLASS:
                 AddToStrW(wszText, wszTKIND_COCLASS);
                 AddToStrW(wszText, bstrName);
+
+                CreateCoclassHeader(pTypeInfo, pTypeAttr, tld);
+                AddToTLDataStrW(tld, wszTKIND_COCLASS);
+                AddToTLDataStrW(tld, bstrName);
+                AddToTLDataStrW(tld, wszSpace);
+                AddToTLDataStrW(tld, wszOpenBrackets3);
+                AddToTLDataStrW(tld, wszNewLine);
+
+                EnumCoclassImplTypes(pTypeInfo, pTypeAttr->cImplTypes, tld);
+
+                AddToStrW(tld->wszInsertAfter, wszCloseBrackets3);
+                AddToStrW(tld->wszInsertAfter, wszSemicolon);
+                AddToStrW(tld->wszInsertAfter, wszNewLine);
+
+                bInsert = FALSE;
+                hParent = TreeView_InsertItem(typelib.hTree, &tvis);
+                AddToTLDataStrW(tld, tld->wszInsertAfter);
                 break;
             case TKIND_UNION:
                 AddToStrW(wszText, wszTKIND_UNION);
