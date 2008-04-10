@@ -235,7 +235,6 @@ static void map_window( Display *display, struct x11drv_win_data *data, DWORD ne
         X11DRV_sync_window_style( display, data );
         wine_tsx11_lock();
         XMapWindow( display, data->whole_window );
-        XFlush( display );
         wine_tsx11_unlock();
     }
     else set_xembed_flags( display, data, XEMBED_MAPPED );
@@ -471,6 +470,10 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
             move_window_bits( data, &valid_rects[1], &valid_rects[0], &old_client_rect );
     }
 
+    wine_tsx11_lock();
+    XFlush( gdi_display );  /* make sure painting is done before we move the window */
+    wine_tsx11_unlock();
+
     X11DRV_sync_client_position( display, data, swp_flags, &old_client_rect, &old_whole_rect );
 
     if (!data->whole_window) return;
@@ -519,6 +522,10 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
             update_net_wm_states( display, data );
         }
     }
+
+    wine_tsx11_lock();
+    XFlush( display );  /* make sure changes are done before we start painting again */
+    wine_tsx11_unlock();
 }
 
 

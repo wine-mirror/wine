@@ -549,6 +549,7 @@ static void sync_gl_drawable(Display *display, struct x11drv_win_data *data)
     data->pixmap = pix;
     data->gl_drawable = glxp;
 
+    XFlush( display );
     wine_tsx11_unlock();
 
     SetPropA(data->hwnd, gl_drawable_prop, (HANDLE)data->gl_drawable);
@@ -1020,14 +1021,6 @@ void X11DRV_sync_client_position( Display *display, struct x11drv_win_data *data
     }
 
     if (data->gl_drawable && (mask & (CWWidth|CWHeight))) sync_gl_drawable( display, data );
-
-    /* make sure the changes get to the server before we start painting */
-    if (data->client_window || data->gl_drawable)
-    {
-        wine_tsx11_lock();
-        XFlush(display);
-        wine_tsx11_unlock();
-    }
 }
 
 
