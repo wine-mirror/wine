@@ -814,9 +814,6 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
                            case VK_ESCAPE:
                                SendMessageW(GetParent(hwnd), WM_CLOSE, 0, 0);
                                break;
-                           case VK_TAB:
-                               SendMessageW(GetParent(hwnd), WM_NEXTDLGCTL, (GetKeyState(VK_SHIFT) & 0x8000), 0);
-                               break;
                            default:
                                break;
                        }
@@ -4638,6 +4635,9 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
         case VK_ESCAPE:
 	    if (!(es->style & ES_MULTILINE))
                 SendMessageW(GetParent(es->hwndSelf), WM_COMMAND, IDCANCEL, (LPARAM)GetDlgItem( GetParent(es->hwndSelf), IDCANCEL ) );
+            break;
+        case VK_TAB:
+            SendMessageW(es->hwndParent, WM_NEXTDLGCTL, shift, 0);
             break;
 	}
 	return 0;
