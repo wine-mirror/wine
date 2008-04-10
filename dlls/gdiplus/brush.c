@@ -686,3 +686,14 @@ GpStatus WINGDIPAPI GdipSetLinePresetBlend(GpLineGradient *brush,
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetLineTransform(GpLineGradient *brush,
+    GDIPCONST GpMatrix *matrix)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}

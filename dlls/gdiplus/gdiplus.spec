@@ -541,7 +541,7 @@
 @ stdcall GdipSetLineLinearBlend(ptr long long)
 @ stdcall GdipSetLinePresetBlend(ptr ptr ptr long)
 @ stdcall GdipSetLineSigmaBlend(ptr long long)
-@ stub GdipSetLineTransform
+@ stdcall GdipSetLineTransform(ptr ptr)
 @ stdcall GdipSetLineWrapMode(ptr long)
 @ stdcall GdipSetMatrixElements(ptr long long long long long long)
 @ stub GdipSetMetafileDownLevelRasterizationLimit
