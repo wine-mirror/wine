@@ -146,3 +146,15 @@ GpStatus WINGDIPAPI GdipSetImageAttributesOutputChannelColorProfile(GpImageAttri
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetImageAttributesRemapTable(GpImageAttributes *imageAttr,
+    ColorAdjustType type, BOOL enableFlag, UINT mapSize,
+    GDIPCONST ColorMap *map)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}

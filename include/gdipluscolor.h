@@ -28,7 +28,21 @@ enum ColorChannelFlags
     ColorChannelFlagsLast
 };
 
-#ifndef __cplusplus
+#ifdef __cplusplus
+
+/* FIXME: missing the methods. */
+class Color
+{
+protected:
+    ARGB Argb;
+};
+
+#else /* end of c++ typedefs */
+
+typedef struct Color
+{
+    ARGB Argb;
+} Color;
 
 typedef enum ColorChannelFlags ColorChannelFlags;
 

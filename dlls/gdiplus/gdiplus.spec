@@ -528,7 +528,7 @@
 @ stdcall GdipSetImageAttributesNoOp(ptr long long)
 @ stdcall GdipSetImageAttributesOutputChannel(ptr long long long)
 @ stdcall GdipSetImageAttributesOutputChannelColorProfile(ptr long long ptr)
-@ stub GdipSetImageAttributesRemapTable
+@ stdcall GdipSetImageAttributesRemapTable(ptr long long long ptr)
 @ stub GdipSetImageAttributesThreshold
 @ stub GdipSetImageAttributesToIdentity
 @ stdcall GdipSetImageAttributesWrapMode(ptr long long long)

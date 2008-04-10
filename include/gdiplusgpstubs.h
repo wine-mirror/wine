@@ -80,5 +80,6 @@ typedef DashStyle GpDashStyle;
 typedef MatrixOrder GpMatrixOrder;
 typedef Point GpPoint;
 typedef WrapMode GpWrapMode;
+typedef Color GpColor;
 
 #endif
