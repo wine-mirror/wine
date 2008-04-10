@@ -143,6 +143,7 @@
 
 /* graphics */
 #define IDC_ENABLE_MANAGED              1100
+#define IDC_ENABLE_DECORATED            1101
 #define IDC_DX_MOUSE_GRAB               1102
 #define IDC_USE_TAKE_FOCUS              1103
 #define IDC_DOUBLE_BUFFER               1104

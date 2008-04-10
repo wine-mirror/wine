@@ -147,6 +147,14 @@ static void init_dialog(HWND dialog)
 	CheckDlgButton(dialog, IDC_ENABLE_MANAGED, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 
+    buf = get_reg_key(config_key, keypath("X11 Driver"), "Decorated", "Y");
+    if (IS_OPTION_TRUE(*buf))
+	CheckDlgButton(dialog, IDC_ENABLE_DECORATED, BST_CHECKED);
+    else
+	CheckDlgButton(dialog, IDC_ENABLE_DECORATED, BST_UNCHECKED);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+
     SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_RESETCONTENT, 0, 0);
     for (it = 0; 0 != D3D_VS_Modes[it].displayStrID; ++it) {
       SendDlgItemMessageW (dialog, IDC_D3D_VSHADER_MODE, CB_ADDSTRING, 0,
@@ -222,6 +230,16 @@ static void on_enable_managed_clicked(HWND dialog) {
         set_reg_key(config_key, keypath("X11 Driver"), "Managed", "Y");
     } else {
         set_reg_key(config_key, keypath("X11 Driver"), "Managed", "N");
+    }
+}
+
+static void on_enable_decorated_clicked(HWND dialog) {
+    WINE_TRACE("\n");
+
+    if (IsDlgButtonChecked(dialog, IDC_ENABLE_DECORATED) == BST_CHECKED) {
+        set_reg_key(config_key, keypath("X11 Driver"), "Decorated", "Y");
+    } else {
+        set_reg_key(config_key, keypath("X11 Driver"), "Decorated", "N");
     }
 }
 
@@ -359,6 +377,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    switch(LOWORD(wParam)) {
 			case IDC_ENABLE_DESKTOP: on_enable_desktop_clicked(hDlg); break;
                         case IDC_ENABLE_MANAGED: on_enable_managed_clicked(hDlg); break;
+                        case IDC_ENABLE_DECORATED: on_enable_decorated_clicked(hDlg); break;
 			case IDC_DX_MOUSE_GRAB:  on_dx_mouse_grab_clicked(hDlg); break;
 		        case IDC_D3D_PSHADER_MODE: on_d3d_pshader_mode_clicked(hDlg); break;
 		    }
