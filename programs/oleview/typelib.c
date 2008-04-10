@@ -512,12 +512,17 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
 
     cFuncs = pTypeAttr->cFuncs;
 
-    for(i=0; i<cFuncs; i++)
+    i = 0;
+    if(pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL) { /* skip 7 members of IDispatch */
+        cFuncs += 7;
+        i += 7;
+    }
+
+    for(; i<cFuncs; i++)
     {
         TYPELIB_DATA *tld;
 
         if(FAILED(ITypeInfo_GetFuncDesc(pTypeInfo, i, &pFuncDesc))) continue;
-        if(pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL && pFuncDesc->memid >= MIN_FUNC_ID) continue;
 
         if(FAILED(ITypeInfo_GetDocumentation(pTypeInfo, pFuncDesc->memid, &bstrName,
                 &bstrHelpString, NULL, NULL))) continue;
@@ -529,7 +534,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         U(tvis).item.pszText = bstrName;
         U(tvis).item.lParam = (LPARAM) tld;
         bFirst = TRUE;
-        if(pFuncDesc->memid < MIN_FUNC_ID)
+        if(pFuncDesc->memid < MIN_FUNC_ID || pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL)
         {
             AddToTLDataStrW(tld, wszOpenBrackets1);
             bFirst = FALSE;
