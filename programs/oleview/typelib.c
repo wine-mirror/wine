@@ -744,8 +744,16 @@ static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent
         if(FAILED(ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo)))
             continue;
         if(FAILED(ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
-                NULL, NULL, NULL))) continue;
-        if(FAILED(ITypeInfo_GetTypeAttr(pRefTypeInfo, &pTypeAttr))) continue;
+                NULL, NULL, NULL)))
+        {
+            ITypeInfo_Release(pRefTypeInfo);
+            continue;
+        }
+        if(FAILED(ITypeInfo_GetTypeAttr(pRefTypeInfo, &pTypeAttr)))
+        {
+            ITypeInfo_Release(pRefTypeInfo);
+            continue;
+        }
 
         U(tvis).item.cchTextMax = SysStringLen(bstrName);
         U(tvis).item.pszText = bstrName;
