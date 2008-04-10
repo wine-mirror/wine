@@ -99,10 +99,12 @@ static void testOIDToAlgID(void)
     /* Test with a bogus one */
     SetLastError(0xdeadbeef);
     alg = CertOIDToAlgId("1.2.3");
-    ok(!alg && (GetLastError() == 0xdeadbeef ||
-     GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND),
-     "Expected ERROR_RESOURCE_NAME_NOT_FOUND or no error set, got %08x\n",
-     GetLastError());
+    ok(!alg, "Expected failure, got %d\n", alg);
+    ok(GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND ||
+       GetLastError() == ERROR_SUCCESS, /* win2k */
+       "Expected ERROR_RESOURCE_NAME_NOT_FOUND, ERROR_SUCCESS "
+       "or no error set, got %08x\n", GetLastError());
 
     for (i = 0; i < sizeof(oidToAlgID) / sizeof(oidToAlgID[0]); i++)
     {

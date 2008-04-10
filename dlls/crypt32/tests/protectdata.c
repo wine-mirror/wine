@@ -71,7 +71,9 @@ static void test_cryptprotectdata(void)
     protected = pCryptProtectData(&plain,desc,NULL,NULL,NULL,0,&cipher);
     ok(protected, "Encrypting without entropy.\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
+    ok(r == ERROR_SUCCESS ||
+       r == ERROR_IO_PENDING, /* win2k */
+       "Expected ERROR_SUCCESS or ERROR_IO_PENDING, got %d\n",r);
 
     cipher_entropy.pbData=NULL;
     cipher_entropy.cbData=0;
@@ -81,7 +83,9 @@ static void test_cryptprotectdata(void)
     protected = pCryptProtectData(&plain,desc,&entropy,NULL,NULL,0,&cipher_entropy);
     ok(protected, "Encrypting with entropy.\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
+    ok(r == ERROR_SUCCESS ||
+       r == ERROR_IO_PENDING, /* win2k */
+       "Expected ERROR_SUCCESS or ERROR_IO_PENDING, got %d\n",r);
 
     cipher_no_desc.pbData=NULL;
     cipher_no_desc.cbData=0;
@@ -91,9 +95,17 @@ static void test_cryptprotectdata(void)
     plain.cbData=strlen(secret2)+1;
     SetLastError(0xDEADBEEF);
     protected = pCryptProtectData(&plain,NULL,&entropy,NULL,NULL,0,&cipher_no_desc);
-    ok(protected, "Encrypting with entropy and no description.\n");
     r = GetLastError();
-    ok(r == ERROR_SUCCESS, "Wrong (%u) GetLastError seen\n",r);
+    if (protected)
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+    else
+    {
+        /* fails in win2k */
+        ok(r == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    }
 }
 
 static void test_cryptunprotectdata(void)
@@ -107,8 +119,12 @@ static void test_cryptunprotectdata(void)
     entropy.pbData=(void*)key;
     entropy.cbData=strlen(key)+1;
 
-    ok(protected, "CryptProtectData failed to run, so I can't test its output\n");
-    if (!protected) return;
+    /* fails in win2k */
+    if (!protected)
+    {
+        skip("CryptProtectData failed to run\\n");
+        return;
+    }
 
     plain.pbData=NULL;
     plain.cbData=0;
