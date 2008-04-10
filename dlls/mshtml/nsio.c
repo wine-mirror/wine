@@ -656,6 +656,9 @@ static NSContainer *get_nscontainer_from_load_group(nsChannel *This)
         return NULL;
     }
 
+    if(!req)
+        return NULL;
+
     nsres = nsIRequest_QueryInterface(req, &IID_nsIChannel, (void**)&channel);
     nsIRequest_Release(req);
     if(NS_FAILED(nsres)) {
