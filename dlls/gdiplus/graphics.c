@@ -2111,3 +2111,14 @@ GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpGraphics *graphics,
+    UINT limitDpi)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}

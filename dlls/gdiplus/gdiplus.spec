@@ -544,7 +544,7 @@
 @ stdcall GdipSetLineTransform(ptr ptr)
 @ stdcall GdipSetLineWrapMode(ptr long)
 @ stdcall GdipSetMatrixElements(ptr long long long long long long)
-@ stub GdipSetMetafileDownLevelRasterizationLimit
+@ stdcall GdipSetMetafileDownLevelRasterizationLimit(ptr long)
 @ stdcall GdipSetPageScale(ptr long)
 @ stdcall GdipSetPageUnit(ptr long)
 @ stdcall GdipSetPathFillMode(ptr long)
