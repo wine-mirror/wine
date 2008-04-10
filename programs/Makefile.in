@@ -141,11 +141,10 @@ install-progs.so: $(INSTALLPROGS:%=%/__installprog__)
 
 install-progs: # nothing to do here
 
-install:: winelauncher install-progs$(DLLEXT) $(INSTALLDIRS)
-	$(INSTALL_SCRIPT) winelauncher $(DESTDIR)$(bindir)/winelauncher
+install:: install-progs$(DLLEXT) $(INSTALLDIRS)
 
 uninstall::
-	-cd $(DESTDIR)$(bindir) && $(RM) wineapploader winelauncher $(INSTALLPROGS)
+	-cd $(DESTDIR)$(bindir) && $(RM) wineapploader $(INSTALLPROGS)
 	-rmdir $(DESTDIR)$(dlldir)
 
 # Rules for testing
