@@ -359,6 +359,7 @@ static void test_GetComputerName(void)
     ret = pGetComputerNameExA(ComputerNameDnsDomain, (LPSTR)0xdeadbeef, &size);
     error = GetLastError();
     ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExA should have failed with ERROR_MORE_DATA instead of %d\n", error);
+    trace("domain size is %d\n", size);
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = pGetComputerNameExA(ComputerNameDnsDomain, name, &size);
@@ -370,6 +371,7 @@ static void test_GetComputerName(void)
     ret = pGetComputerNameExA(ComputerNameDnsFullyQualified, (LPSTR)0xdeadbeef, &size);
     error = GetLastError();
     ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExA should have failed with ERROR_MORE_DATA instead of %d\n", error);
+    trace("fully qualified hostname size is %d\n", size);
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = pGetComputerNameExA(ComputerNameDnsFullyQualified, name, &size);
@@ -381,6 +383,7 @@ static void test_GetComputerName(void)
     ret = pGetComputerNameExA(ComputerNameDnsHostname, (LPSTR)0xdeadbeef, &size);
     error = GetLastError();
     ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExA should have failed with ERROR_MORE_DATA instead of %d\n", error);
+    trace("hostname size is %d\n", size);
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = pGetComputerNameExA(ComputerNameDnsHostname, name, &size);
@@ -392,6 +395,7 @@ static void test_GetComputerName(void)
     ret = pGetComputerNameExA(ComputerNameNetBIOS, (LPSTR)0xdeadbeef, &size);
     error = GetLastError();
     ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExA should have failed with ERROR_MORE_DATA instead of %d\n", error);
+    trace("NetBIOS size is %d\n", size);
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = pGetComputerNameExA(ComputerNameNetBIOS, name, &size);
