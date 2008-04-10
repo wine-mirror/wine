@@ -176,3 +176,15 @@ interface IObjectIdentity : IUnknown
     HRESULT IsEqualObject( 
             [in] IUnknown *punk);
 }
+
+[
+    object,
+    uuid(c5598e60-b307-11d1-b27d-006008c3fbfb),
+    pointer_default(unique)
+]
+interface ICanHandleException : IUnknown
+{
+    HRESULT CanHandleException(
+            [in] EXCEPINFO *pExcepInfo,
+            [in] VARIANT *pvar);
+}
