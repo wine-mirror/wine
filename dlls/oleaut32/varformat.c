@@ -151,7 +151,7 @@ static const WCHAR szPercentZeroStar_d[] = { '%','0','*','d','\0' };
  * Common format definitions
  */
 
- /* Fomat types */
+ /* Format types */
 #define FMT_TYPE_UNKNOWN 0x0
 #define FMT_TYPE_GENERAL 0x1
 #define FMT_TYPE_NUMBER  0x2

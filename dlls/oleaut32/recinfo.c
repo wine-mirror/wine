@@ -211,7 +211,7 @@ static HRESULT WINAPI IRecordInfoImpl_RecordClear(IRecordInfo *iface, PVOID pvEx
         var = ((PBYTE)pvExisting)+This->fields[i].offset;
         switch(This->fields[i].vt) {
             case VT_BSTR:
-                /* NOTE: Windows implementatino reads DWORD (len) before string,
+                /* NOTE: Windows implementation reads DWORD (len) before string,
                  *       but it seems to do nothing with this */
                 *(BSTR*)var = NULL;
                 break;

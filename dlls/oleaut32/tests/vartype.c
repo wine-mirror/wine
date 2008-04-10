@@ -3322,7 +3322,7 @@ static void test_VarDateFromStr(void)
   CHECKPTR(VarDateFromStr);
   CHECKPTR(SystemTimeToVariantTime);
 
-  /* Some date formats are relative, so we need to find the cuurent year */
+  /* Some date formats are relative, so we need to find the current year */
   GetSystemTime(&st);
   st.wHour = st.wMinute = st.wSecond = st.wMilliseconds = 0;
   DFS(NULL); EXPECT_MISMATCH;
@@ -4928,7 +4928,7 @@ static void test_VarBstrCmp(void)
     bstr = SysAllocString(sz);
     bstrempty = SysAllocString(szempty);
     
-    /* NULL handling. Yepp, MSDN is totaly wrong here */
+    /* NULL handling. Yepp, MSDN is totally wrong here */
     VARBSTRCMP(NULL,NULL,0,VARCMP_EQ);
     VARBSTRCMP(bstr,NULL,0,VARCMP_GT);
     VARBSTRCMP(NULL,bstr,0,VARCMP_LT);

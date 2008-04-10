@@ -22,7 +22,7 @@
  *
  * BUGS
  *
- * Support PICTYPE_BITMAP and PICTYPE_ICON, altough only bitmaps very well..
+ * Support PICTYPE_BITMAP and PICTYPE_ICON, although only bitmaps very well..
  * Lots of methods are just stubs.
  *
  *

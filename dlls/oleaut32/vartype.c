@@ -5311,7 +5311,7 @@ static HRESULT VARIANT_DI_normalize(VARIANT_DI * val, int exponent2, int isDoubl
             VARIANT_int_add(val->bitsnum, 3, &x, 1);
         }
     }
-    /* This step is requierd in order to remove excess bits of precision from the
+    /* This step is requiered in order to remove excess bits of precision from the
        end of the bit representation, down to the precision guaranteed by the
        floating point number. */
     if (isDouble) {
@@ -7348,7 +7348,7 @@ VARIANT_MakeDate_OK:
  *
  * RETURNS
  *  Success: S_OK. pdateOut contains the converted value.
- *  FAILURE: An HRESULT error code indicating the prolem.
+ *  FAILURE: An HRESULT error code indicating the problem.
  *
  * NOTES
  *  Any date format that can be created using the date formats from lcid

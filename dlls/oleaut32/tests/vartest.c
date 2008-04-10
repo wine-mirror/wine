@@ -1050,7 +1050,7 @@ static void test_VarParseNumFromStr(void)
   EXPECT(1,NUMPRS_HEX_OCT,0,1,0,0);
   EXPECT2(0,FAILDIG);
 
-  /* Doesn't recognise hex in .asm sytax */
+  /* Doesn't recognise hex in .asm syntax */
   CONVERT("0h", NUMPRS_HEX_OCT);
   EXPECT(1,NUMPRS_HEX_OCT,0,1,0,0);
   EXPECT2(0,FAILDIG);
@@ -5261,7 +5261,7 @@ static void test_VarCat(void)
         }
     }
 
-    /* Runnning single comparison tests to compare outputs */
+    /* Running single comparison tests to compare outputs */
 
     /* Test concat strings */
     V_VT(&left) = VT_BSTR;
@@ -6273,7 +6273,7 @@ static void test_VarCmp(void)
         }
     }
 
-    /* VARCMP{,EX} run each 4 tests with a permutation of all posible
+    /* VARCMP{,EX} run each 4 tests with a permutation of all possible
        input variants with (1) and without (0) VT_RESERVED set. The order
        of the permutations is (0,0); (1,0); (0,1); (1,1) */
     VARCMP(INT,4711,I2,4711,VARCMP_EQ);
