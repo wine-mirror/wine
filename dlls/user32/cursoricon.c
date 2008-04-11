@@ -2148,8 +2148,19 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     }
     else
     {
+        BITMAPFILEHEADER * bmfh;
+
         if (!(ptr = map_fileW( name, NULL ))) return 0;
         info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
+        bmfh = (BITMAPFILEHEADER *)ptr;
+        if (!(  bmfh->bfType == 0x4d42 /* 'BM' */ &&
+                bmfh->bfReserved1 == 0 &&
+                bmfh->bfReserved2 == 0))
+        {
+            WARN("Invalid/unsupported bitmap format!\n");
+            UnmapViewOfFile( ptr );
+            return 0;
+        }
     }
 
     size = bitmap_info_size(info, DIB_RGB_COLORS);
