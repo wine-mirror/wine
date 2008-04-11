@@ -234,9 +234,33 @@ static void test_GdiConvertToDevmodeW(void)
     HeapFree(GetProcessHeap(), 0, dmW);
 }
 
+static void test_CreateCompatibleDC(void)
+{
+    BOOL bRet;
+    HDC hDC;
+    HDC hNewDC;
+
+    /* Create a DC compatible with the screen */
+    hDC = CreateCompatibleDC(NULL);
+    ok(hDC != NULL, "CreateCompatibleDC returned %p\n", hDC);
+
+    /* Delete this DC, this should succeed */
+    bRet = DeleteDC(hDC);
+    ok(bRet == TRUE, "DeleteDC returned %u\n", bRet);
+
+todo_wine
+{
+    /* Try to create a DC compatible to the deleted DC. This has to fail */
+    hNewDC = CreateCompatibleDC(hDC);
+    ok(hNewDC == NULL, "CreateCompatibleDC returned %p\n", hNewDC);
+}
+
+}
+
 START_TEST(dc)
 {
     test_savedc();
     test_savedc_2();
     test_GdiConvertToDevmodeW();
+    test_CreateCompatibleDC();
 }
