@@ -1,4 +1,5 @@
 ;; .INF script for the basic Wine configuration
+;; Version: @PACKAGE_STRING@
 ;;
 ;; This should be run through setupapi:
 ;;   rundll32 setupapi.dll,InstallHinfSection DefaultInstall 128 wine.inf

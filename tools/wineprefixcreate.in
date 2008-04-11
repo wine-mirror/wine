@@ -79,21 +79,7 @@ then
         LD_LIBRARY_PATH="$topdir/libs/wine"
     fi
     export LD_LIBRARY_PATH
-
-    # find the source directory
-    link=`readlink "$WINELOADER"`
-    if [ -z "$link" ]
-    then
-        topsrcdir="$topdir"
-    else
-        link=`dirname "$link"`
-        case "$link" in
-            /*) topsrcdir=`cd "$link/.." && pwd` ;;
-             *) topsrcdir=`cd "$topdir/$link/.." && pwd` ;;
-        esac
-    fi
-    dlldir="$topdir/programs"
-    datadir="$topsrcdir/tools"
+    datadir="$topdir/tools"
 fi
 
 while [ $# -gt 0 ]
