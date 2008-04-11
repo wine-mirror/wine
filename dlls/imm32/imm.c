@@ -496,6 +496,8 @@ BOOL WINAPI ImmConfigureIMEW(
 HIMC WINAPI ImmCreateContext(void)
 {
     InputContextData *new_context;
+    LPGUIDELINE gl;
+    LPCANDIDATEINFO ci;
 
     new_context = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputContextData));
 
@@ -509,9 +511,19 @@ HIMC WINAPI ImmCreateContext(void)
         return 0;
     }
 
-    /* hCompStr is never NULL */
+    /* the HIMCCs are never NULL */
     new_context->IMC.hCompStr = ImmCreateBlankCompStr();
-    new_context->IMC.hMsgBuf = ImmCreateIMCC(1);
+    new_context->IMC.hMsgBuf = ImmCreateIMCC(0);
+    new_context->IMC.hCandInfo = ImmCreateIMCC(sizeof(CANDIDATEINFO));
+    ci = ImmLockIMCC(new_context->IMC.hCandInfo);
+    memset(ci,0,sizeof(CANDIDATEINFO));
+    ci->dwSize = sizeof(CANDIDATEINFO);
+    ImmUnlockIMCC(new_context->IMC.hCandInfo);
+    new_context->IMC.hGuideLine = ImmCreateIMCC(sizeof(GUIDELINE));
+    gl = ImmLockIMCC(new_context->IMC.hGuideLine);
+    memset(gl,0,sizeof(GUIDELINE));
+    gl->dwSize = sizeof(GUIDELINE);
+    ImmUnlockIMCC(new_context->IMC.hGuideLine);
 
     /* Initialize the IME Private */
     new_context->IMC.hPrivate = ImmCreateIMCC(new_context->immKbd->imeInfo.dwPrivateDataSize);

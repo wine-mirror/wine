@@ -84,6 +84,24 @@ typedef struct tagCOMPOSITIONSTRING {
     DWORD dwPrivateOffset;
 } COMPOSITIONSTRING, *LPCOMPOSITIONSTRING;
 
+typedef struct tagGUIDELINE {
+    DWORD dwSize;
+    DWORD dwLevel;
+    DWORD dwIndex;
+    DWORD dwStrLen;
+    DWORD dwStrOffset;
+    DWORD dwPrivateSize;
+    DWORD dwPrivateOffset;
+} GUIDELINE, *LPGUIDELINE;
+
+typedef struct tagCANDIDATEINFO {
+    DWORD               dwSize;
+    DWORD               dwCount;
+    DWORD               dwOffset[32];
+    DWORD               dwPrivateSize;
+    DWORD               dwPrivateOffset;
+} CANDIDATEINFO, *LPCANDIDATEINFO;
+
 LPINPUTCONTEXT WINAPI ImmLockIMC(HIMC);
 BOOL  WINAPI ImmUnlockIMC(HIMC);
 DWORD WINAPI ImmGetIMCLockCount(HIMC);
