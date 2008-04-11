@@ -3,6 +3,7 @@
  *
  * Copyright 2003 Robert Shearman
  * Copyright 2004-2005 Christian Costa
+ * Copyright 2008 Maarten Lankhorst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -340,6 +341,60 @@ static HRESULT AVISplitter_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
     return S_FALSE;
 }
 
+static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, LONGLONG qwOffset, DWORD cb)
+{
+    AVISTDINDEX *pIndex;
+    int x;
+    long rest;
+
+    if (cb < sizeof(AVISTDINDEX))
+    {
+        FIXME("size %u too small\n", cb);
+        return E_INVALIDARG;
+    }
+
+    pIndex = CoTaskMemAlloc(cb);
+    if (!pIndex)
+        return E_OUTOFMEMORY;
+
+    IAsyncReader_SyncRead(((PullPin *)This->Parser.ppPins[0])->pReader, qwOffset, cb, (BYTE *)pIndex);
+    pIndex = CoTaskMemRealloc(pIndex, pIndex->cb);
+    if (!pIndex)
+        return E_OUTOFMEMORY;
+
+    IAsyncReader_SyncRead(((PullPin *)This->Parser.ppPins[0])->pReader, qwOffset, pIndex->cb, (BYTE *)pIndex);
+    rest = pIndex->cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex[0]) * ANYSIZE_ARRAY;
+
+    TRACE("wLongsPerEntry: %hd\n", pIndex->wLongsPerEntry);
+    TRACE("bIndexSubType: %hd\n", pIndex->bIndexSubType);
+    TRACE("bIndexType: %hd\n", pIndex->bIndexType);
+    TRACE("nEntriesInUse: %u\n", pIndex->nEntriesInUse);
+    TRACE("dwChunkId: %.4s\n", (char *)&pIndex->dwChunkId);
+    TRACE("qwBaseOffset: %x%08x\n", (DWORD)(pIndex->qwBaseOffset >> 32), (DWORD)pIndex->qwBaseOffset);
+    TRACE("dwReserved_3: %u\n", pIndex->dwReserved_3);
+
+    if (pIndex->bIndexType != AVI_INDEX_OF_CHUNKS
+        || pIndex->wLongsPerEntry != 2
+        || rest < (pIndex->nEntriesInUse * sizeof(DWORD) * pIndex->wLongsPerEntry)
+        || (pIndex->bIndexSubType != AVI_INDEX_SUB_DEFAULT))
+    {
+        FIXME("Invalid index chunk encountered\n");
+        return E_INVALIDARG;
+    }
+
+    for (x = 0; x < pIndex->nEntriesInUse; ++x)
+    {
+        BOOL keyframe = !(pIndex->aIndex[x].dwOffset >> 31);
+        DWORDLONG offset = pIndex->qwBaseOffset + (pIndex->aIndex[x].dwOffset & ~(1<<31));
+        TRACE("dwOffset: %x%08x\n", (DWORD)(offset >> 32), (DWORD)offset);
+        TRACE("dwSize: %u\n", pIndex->aIndex[x].dwSize);
+        TRACE("Frame is a keyframe: %s\n", keyframe ? "yes" : "no");
+    }
+
+    CoTaskMemFree(pIndex);
+    return S_OK;
+}
+
 static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE * pData, DWORD cb)
 {
     PIN_INFO piOutput;
@@ -388,6 +443,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                     amt.formattype = FORMAT_WaveFormatEx;
                     break;
                 default:
+                    FIXME("fccType %.4s not handled yet\n", (char *)&pStrHdr->fccType);
                     amt.formattype = FORMAT_None;
                 }
                 amt.majortype = MEDIATYPE_Video;
@@ -456,6 +512,48 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
         case ckidAVIPADDING:
             TRACE("JUNK chunk ignored\n");
             break;
+        case ckidAVISUPERINDEX:
+        {
+            const AVISUPERINDEX *pIndex = (const AVISUPERINDEX *)pChunk;
+            int x;
+            long rest = pIndex->cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex[0]) * ANYSIZE_ARRAY;
+
+            if (pIndex->cb < sizeof(AVISUPERINDEX) - sizeof(RIFFCHUNK))
+            {
+                FIXME("%u < %u?!\n", pIndex->cb, sizeof(AVISUPERINDEX) - sizeof(RIFFCHUNK));
+                break;
+            }
+
+            TRACE("wLongsPerEntry: %hd\n", pIndex->wLongsPerEntry);
+            TRACE("bIndexSubType: %hd\n", pIndex->bIndexSubType);
+            TRACE("bIndexType: %hd\n", pIndex->bIndexType);
+            TRACE("nEntriesInUse: %u\n", pIndex->nEntriesInUse);
+            TRACE("dwChunkId: %.4s\n", (char *)&pIndex->dwChunkId);
+            if (pIndex->dwReserved[0])
+                TRACE("dwReserved[0]: %u\n", pIndex->dwReserved[0]);
+            if (pIndex->dwReserved[2])
+                TRACE("dwReserved[1]: %u\n", pIndex->dwReserved[1]);
+            if (pIndex->dwReserved[2])
+                TRACE("dwReserved[2]: %u\n", pIndex->dwReserved[2]);
+
+            if (pIndex->bIndexType != AVI_INDEX_OF_INDEXES
+                || pIndex->wLongsPerEntry != 4
+                || rest < (pIndex->nEntriesInUse * sizeof(DWORD) * pIndex->wLongsPerEntry)
+                || (pIndex->bIndexSubType != AVI_INDEX_SUB_2FIELD && pIndex->bIndexSubType != AVI_INDEX_SUB_DEFAULT))
+            {
+                FIXME("Invalid index chunk encountered\n");
+                break;
+            }
+            for (x = 0; x < pIndex->nEntriesInUse; ++x)
+            {
+                TRACE("qwOffset: %x%08x\n", (DWORD)(pIndex->aIndex[x].qwOffset >> 32), (DWORD)pIndex->aIndex[x].qwOffset);
+                TRACE("dwSize: %u\n", pIndex->aIndex[x].dwSize);
+                AVISplitter_ProcessIndex(This, pIndex->aIndex[x].qwOffset, pIndex->aIndex[x].dwSize);
+
+                TRACE("dwDuration: %u (unreliable)\n", pIndex->aIndex[x].dwDuration);
+            }
+            break;
+        }
         default:
             FIXME("unknown chunk type \"%.04s\" ignored\n", (LPCSTR)&pChunk->fcc);
         }
@@ -480,6 +578,42 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     hr = Parser_AddPin(&(This->Parser), &piOutput, &props, &amt);
 
     return hr;
+}
+
+static HRESULT AVISplitter_ProcessODML(AVISplitterImpl * This, const BYTE * pData, DWORD cb)
+{
+    const RIFFCHUNK * pChunk;
+
+    for (pChunk = (const RIFFCHUNK *)pData;
+         ((const BYTE *)pChunk >= pData) && ((const BYTE *)pChunk + sizeof(RIFFCHUNK) < pData + cb) && (pChunk->cb > 0);
+         pChunk = (const RIFFCHUNK *)((const BYTE*)pChunk + sizeof(RIFFCHUNK) + pChunk->cb)
+        )
+    {
+        switch (pChunk->fcc)
+        {
+        case ckidAVIEXTHEADER:
+            {
+                int x;
+                const AVIEXTHEADER * pExtHdr = (const AVIEXTHEADER *)pChunk;
+
+                TRACE("processing extension header\n");
+                if (pExtHdr->cb != sizeof(AVIEXTHEADER) - sizeof(RIFFCHUNK))
+                {
+                    FIXME("Size: %u, other size: %u\n", pExtHdr->cb, sizeof(AVIEXTHEADER) - sizeof(RIFFCHUNK));
+                    break;
+                }
+                TRACE("dwGrandFrames: %u\n", pExtHdr->dwGrandFrames);
+                for (x = 0; x < 61; ++x)
+                    if (pExtHdr->dwFuture[x])
+                        FIXME("dwFuture[%i] = %u (0x%08x)\n", x, pExtHdr->dwFuture[x], pExtHdr->dwFuture[x]);
+                break;
+            }
+        default:
+            FIXME("unknown chunk type \"%.04s\" ignored\n", (LPCSTR)&pChunk->fcc);
+        }
+    }
+
+    return S_OK;
 }
 
 /* FIXME: fix leaks on failure here */
@@ -542,7 +676,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
                 hr = AVISplitter_ProcessStreamList(pAviSplit, (BYTE *)pCurrentChunk + sizeof(RIFFLIST), pCurrentChunk->cb + sizeof(RIFFCHUNK) - sizeof(RIFFLIST));
                 break;
             case ckidODML:
-                FIXME("process ODML header\n");
+                hr = AVISplitter_ProcessODML(pAviSplit, (BYTE *)pCurrentChunk + sizeof(RIFFLIST), pCurrentChunk->cb + sizeof(RIFFCHUNK) - sizeof(RIFFLIST));
                 break;
             }
             break;
