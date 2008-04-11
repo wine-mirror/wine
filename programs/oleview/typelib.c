@@ -833,7 +833,8 @@ static void EnumCoclassImplTypes(ITypeInfo *pTypeInfo,
             AddToTLDataStrW(pTLData, wszSpace);
         }
 
-        if(pTypeAttr->typekind == TKIND_INTERFACE)
+        if(pTypeAttr->typekind == TKIND_INTERFACE ||
+                (pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL))
             AddToTLDataStrW(pTLData, wszTKIND_INTERFACE);
         else if(pTypeAttr->typekind == TKIND_DISPATCH)
             AddToTLDataStrW(pTLData, wszTKIND_DISPATCH);
