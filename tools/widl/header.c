@@ -879,10 +879,12 @@ void write_locals(FILE *fp, const type_t *iface, int body)
 static void write_function_proto(const type_t *iface, const func_t *fun, const char *prefix)
 {
   var_t *def = fun->def;
+  const char *callconv = get_attrp(def->type->attrs, ATTR_CALLCONV);
 
   /* FIXME: do we need to handle call_as? */
   write_type_decl_left(header, get_func_return_type(fun));
   fprintf(header, " ");
+  if (callconv) fprintf(header, "%s ", callconv);
   write_prefix_name(header, prefix, def);
   fprintf(header, "(\n");
   if (fun->args)
