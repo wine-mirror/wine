@@ -38,6 +38,8 @@
 
 #include "svcctl.h"
 
+#include "wine/exception.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
 static const WCHAR szLocalSystem[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
@@ -277,6 +279,24 @@ handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW MachineName)
 void __RPC_USER MACHINE_HANDLEW_unbind(MACHINE_HANDLEW MachineName, handle_t h)
 {
     RpcBindingFree(&h);
+}
+
+static LONG WINAPI rpc_filter(EXCEPTION_POINTERS *eptr)
+{
+    return I_RpcExceptionFilter(eptr->ExceptionRecord->ExceptionCode);
+}
+
+static DWORD map_exception_code(DWORD exception_code)
+{
+    switch (exception_code)
+    {
+    case RPC_X_NULL_REF_POINTER:
+    case RPC_X_ENUM_VALUE_OUT_OF_RANGE:
+    case RPC_X_BYTE_COUNT_TOO_SMALL:
+        return ERROR_INVALID_PARAMETER;
+    default:
+        return exception_code;
+    }
 }
 
 /******************************************************************************
@@ -661,7 +681,15 @@ SC_LOCK WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
         return NULL;
     }
 
-    err = svcctl_LockServiceDatabase(hscm->hdr.server_handle, &hLock);
+    __TRY
+    {
+        err = svcctl_LockServiceDatabase(hscm->hdr.server_handle, &hLock);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     if (err != ERROR_SUCCESS)
     {
         SetLastError(err);
@@ -680,7 +708,15 @@ BOOL WINAPI UnlockServiceDatabase (SC_LOCK ScLock)
 
     TRACE("%p\n",ScLock);
 
-    err = svcctl_UnlockServiceDatabase(&hRpcLock);
+    __TRY
+    {
+        err = svcctl_UnlockServiceDatabase(&hRpcLock);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     if (err != ERROR_SUCCESS)
     {
         SetLastError(err);
@@ -715,7 +751,15 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
         return FALSE;
     }
 
-    err = svcctl_SetServiceStatus( hsvc->hdr.server_handle, lpStatus );
+    __TRY
+    {
+        err = svcctl_SetServiceStatus( hsvc->hdr.server_handle, lpStatus );
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     if (err != ERROR_SUCCESS)
     {
         SetLastError(err);
@@ -778,7 +822,15 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     if (!manager)
          return NULL;
 
-    r = svcctl_OpenSCManagerW(lpMachineName, lpDatabaseName, dwDesiredAccess, &manager->hdr.server_handle);
+    __TRY
+    {
+        r = svcctl_OpenSCManagerW(lpMachineName, lpDatabaseName, dwDesiredAccess, &manager->hdr.server_handle);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        r = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     if (r!=ERROR_SUCCESS)
         goto error;
 
@@ -836,7 +888,15 @@ BOOL WINAPI ControlService( SC_HANDLE hService, DWORD dwControl,
         return FALSE;
     }
 
-    err = svcctl_ControlService(hsvc->hdr.server_handle, dwControl, lpServiceStatus);
+    __TRY
+    {
+        err = svcctl_ControlService(hsvc->hdr.server_handle, dwControl, lpServiceStatus);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     if (err != ERROR_SUCCESS)
     {
         SetLastError(err);
@@ -872,7 +932,15 @@ CloseServiceHandle( SC_HANDLE hSCObject )
     }
 
     obj = (struct sc_handle *)hSCObject;
-    err = svcctl_CloseServiceHandle(&obj->server_handle);
+    __TRY
+    {
+        err = svcctl_CloseServiceHandle(&obj->server_handle);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     sc_handle_free( obj );
 
     if (err != ERROR_SUCCESS)
@@ -957,7 +1025,15 @@ SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     hscm->hdr.ref_count++;
     hsvc->scm = hscm;
 
-    err = svcctl_OpenServiceW(hscm->hdr.server_handle, lpServiceName, dwDesiredAccess, &hsvc->hdr.server_handle);
+    __TRY
+    {
+        err = svcctl_OpenServiceW(hscm->hdr.server_handle, lpServiceName, dwDesiredAccess, &hsvc->hdr.server_handle);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
 
     if (err != ERROR_SUCCESS)
     {
@@ -1031,11 +1107,19 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     hsvc->scm = hscm;
     hscm->hdr.ref_count++;
 
-    err = svcctl_CreateServiceW(hscm->hdr.server_handle, lpServiceName,
-            lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
-            lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (LPBYTE)lpDependencies,
-            multisz_cb(lpDependencies), lpServiceStartName, (LPBYTE)lpPassword, passwdlen,
-            &hsvc->hdr.server_handle);
+    __TRY
+    {
+        err = svcctl_CreateServiceW(hscm->hdr.server_handle, lpServiceName,
+                lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
+                lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (LPBYTE)lpDependencies,
+                multisz_cb(lpDependencies), lpServiceStartName, (LPBYTE)lpPassword, passwdlen,
+                &hsvc->hdr.server_handle);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
 
     if (err != ERROR_SUCCESS)
     {
@@ -1124,7 +1208,15 @@ BOOL WINAPI DeleteService( SC_HANDLE hService )
         return FALSE;
     }
 
-    err = svcctl_DeleteService(hsvc->hdr.server_handle);
+    __TRY
+    {
+        err = svcctl_DeleteService(hsvc->hdr.server_handle);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     if (err != 0)
     {
         SetLastError(err);
@@ -1210,7 +1302,15 @@ BOOL WINAPI StartServiceW(SC_HANDLE hService, DWORD dwNumServiceArgs,
         return FALSE;
     }
 
-    err = svcctl_StartServiceW(hsvc->hdr.server_handle, dwNumServiceArgs, lpServiceArgVectors);
+    __TRY
+    {
+        err = svcctl_StartServiceW(hsvc->hdr.server_handle, dwNumServiceArgs, lpServiceArgVectors);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     if (err != ERROR_SUCCESS)
     {
         SetLastError(err);
@@ -1276,7 +1376,15 @@ BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
         return FALSE;
     }
 
-    err = svcctl_QueryServiceStatusEx(hsvc->hdr.server_handle, InfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
+    __TRY
+    {
+        err = svcctl_QueryServiceStatusEx(hsvc->hdr.server_handle, InfoLevel, lpBuffer, cbBufSize, pcbBytesNeeded);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
     if (err != ERROR_SUCCESS)
     {
         SetLastError(err);
@@ -1402,7 +1510,17 @@ QueryServiceConfigW( SC_HANDLE hService,
 
     memset(&config, 0, sizeof(config));
 
-    if ((err = svcctl_QueryServiceConfigW(hsvc->hdr.server_handle, &config)) != 0)
+    __TRY
+    {
+        err = svcctl_QueryServiceConfigW(hsvc->hdr.server_handle, &config);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
+
+    if (err != ERROR_SUCCESS)
     {
         TRACE("services.exe: error %u\n", err);
         SetLastError(err);
@@ -1700,8 +1818,16 @@ BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
         return FALSE;
     }
 
-    err = svcctl_GetServiceKeyNameW(hscm->hdr.server_handle,
-            lpDisplayName, lpServiceName, lpServiceName ? *lpcchBuffer : 0, lpcchBuffer);
+    __TRY
+    {
+        err = svcctl_GetServiceKeyNameW(hscm->hdr.server_handle,
+                lpDisplayName, lpServiceName, lpServiceName ? *lpcchBuffer : 0, lpcchBuffer);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
 
     if (err)
         SetLastError(err);
@@ -1804,8 +1930,16 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         return FALSE;
     }
 
-    err = svcctl_GetServiceDisplayNameW(hscm->hdr.server_handle,
-            lpServiceName, lpDisplayName, lpDisplayName ? *lpcchBuffer : 0, lpcchBuffer);
+    __TRY
+    {
+        err = svcctl_GetServiceDisplayNameW(hscm->hdr.server_handle,
+                lpServiceName, lpDisplayName, lpDisplayName ? *lpcchBuffer : 0, lpcchBuffer);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
 
     if (err)
         SetLastError(err);
@@ -1839,10 +1973,18 @@ BOOL WINAPI ChangeServiceConfigW( SC_HANDLE hService, DWORD dwServiceType,
 
     cb_pwd = lpPassword ? (strlenW(lpPassword) + 1)*sizeof(WCHAR) : 0;
 
-    err = svcctl_ChangeServiceConfigW(hsvc->hdr.server_handle, dwServiceType,
-            dwStartType, dwErrorControl, lpBinaryPathName, lpLoadOrderGroup, lpdwTagId,
-            (const BYTE *)lpDependencies, multisz_cb(lpDependencies), lpServiceStartName,
-            (const BYTE *)lpPassword, cb_pwd, lpDisplayName);
+    __TRY
+    {
+        err = svcctl_ChangeServiceConfigW(hsvc->hdr.server_handle, dwServiceType,
+                dwStartType, dwErrorControl, lpBinaryPathName, lpLoadOrderGroup, lpdwTagId,
+                (const BYTE *)lpDependencies, multisz_cb(lpDependencies), lpServiceStartName,
+                (const BYTE *)lpPassword, cb_pwd, lpDisplayName);
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code(GetExceptionCode());
+    }
+    __ENDTRY
 
     if (err != ERROR_SUCCESS)
         SetLastError(err);
