@@ -937,6 +937,22 @@ LONG WINAPI I_RpcMapWin32Status(RPC_STATUS status)
 }
 
 /******************************************************************************
+ * I_RpcExceptionFilter   (rpcrt4.@)
+ */
+int WINAPI I_RpcExceptionFilter(ULONG ExceptionCode)
+{
+    TRACE("0x%x\n", ExceptionCode);
+    switch (ExceptionCode)
+    {
+    case EXCEPTION_ACCESS_VIOLATION:
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+        return EXCEPTION_CONTINUE_SEARCH;
+    default:
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+}
+
+/******************************************************************************
  * RpcErrorStartEnumeration   (rpcrt4.@)
  */
 RPC_STATUS RPC_ENTRY RpcErrorStartEnumeration(RPC_ERROR_ENUM_HANDLE* EnumHandle)
