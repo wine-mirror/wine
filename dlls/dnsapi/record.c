@@ -644,7 +644,7 @@ BOOL WINAPI DnsRecordSetCompare( PDNS_RECORD set1, PDNS_RECORD set2,
                                  PDNS_RECORD *diff1, PDNS_RECORD *diff2 )
 {
     BOOL ret = TRUE;
-    DNS_RECORD *r, *s1, *s2, *t, *u;
+    DNS_RECORD *r, *t, *u;
     DNS_RRSET rr1, rr2;
 
     TRACE( "(%p,%p,%p,%p)\n", set1, set2, diff1, diff2 );
@@ -668,9 +668,9 @@ BOOL WINAPI DnsRecordSetCompare( PDNS_RECORD set1, PDNS_RECORD set2,
     DNS_RRSET_INIT( rr1 );
     DNS_RRSET_INIT( rr2 );
 
-    for (r = s1 = set1; (s1 = r); r = r->pNext)
+    for (r = set1; r; r = r->pNext)
     {
-        for (t = s2 = set2; (s2 = t); t = t->pNext)
+        for (t = set2; t; t = t->pNext)
         {
             u = DnsRecordCopyEx( r, r->Flags.S.CharSet, t->Flags.S.CharSet );
             if (!u) goto error;
@@ -684,9 +684,9 @@ BOOL WINAPI DnsRecordSetCompare( PDNS_RECORD set1, PDNS_RECORD set2,
         }
     }
 
-    for (t = s2 = set2; (s2 = t); t = t->pNext)
+    for (t = set2; t; t = t->pNext)
     {
-        for (r = s1 = set1; (s1 = r); r = r->pNext)
+        for (r = set1; r; r = r->pNext)
         {
             u = DnsRecordCopyEx( t, t->Flags.S.CharSet, r->Flags.S.CharSet );
             if (!u) goto error;
