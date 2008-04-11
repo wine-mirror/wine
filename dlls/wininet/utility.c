@@ -71,6 +71,7 @@ time_t ConvertTimeString(LPCWSTR asctime)
     tmpChar[22]='\0';
     tmpChar[25]='\0';
 
+    memset( &t, 0, sizeof(t) );
     t.tm_year = atoiW(tmpChar+12) - 1900;
     t.tm_mday = atoiW(tmpChar+5);
     t.tm_hour = atoiW(tmpChar+17);
