@@ -259,7 +259,7 @@ static BOOL CALLBACK extract_icons_callback(HMODULE hModule, LPCWSTR pwszType, L
     LONG_PTR lParam) 
 {
     struct extract_icons_state *pState = (struct extract_icons_state *)lParam;
-    INT idCurrent = (INT)pwszName;
+    INT idCurrent = LOWORD(pwszName);
 
     /* If the handle array pointer is NULL, we just count the number of icons in the module. */
     if (!pState->pahIcon) {

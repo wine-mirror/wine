@@ -2607,7 +2607,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
 	    CREATESTRUCTW *lpcs = (CREATESTRUCTW *)lParam;
 	    if (lpcs->style & LBS_COMBOBOX) lphc = (LPHEADCOMBO)lpcs->lpCreateParams;
             if (!LISTBOX_Create( hwnd, lphc )) return -1;
-            TRACE("creating wnd=%p descr=%x\n", hwnd, GetWindowLongPtrW( hwnd, 0 ) );
+            TRACE("creating hwnd %p descr %p\n", hwnd, (void *)GetWindowLongPtrW( hwnd, 0 ) );
             return 0;
         }
         /* Ignore all other messages before we get a WM_CREATE */
