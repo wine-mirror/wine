@@ -383,6 +383,13 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
             else
                 SetPropW(hWnd,szwWineIMCProperty,(HANDLE)hIMC);
         }
+
+        if (old)
+        {
+            InputContextData *old_data = (InputContextData*)old;
+            if (old_data->IMC.hWnd == hWnd)
+                old_data->IMC.hWnd = NULL;
+        }
     }
 
     if (!hIMC)
