@@ -180,6 +180,7 @@ SRCDIR_INCLUDES = \
 	dshow.h \
 	dsound.h \
 	dsrole.h \
+	dvdmedia.h \
 	dwmapi.h \
 	dxdiag.h \
 	dxerr8.h \
