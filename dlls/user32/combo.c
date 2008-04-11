@@ -1107,7 +1107,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
       {
             if (nItems < 5)
                 nDroppedHeight = (nItems+1)*nIHeight;
-            else
+            else if (nDroppedHeight < 6*nIHeight)
                 nDroppedHeight = 6*nIHeight;
       }
    }
