@@ -3359,7 +3359,7 @@ static BOOL CALLBACK bcast_childwindow( HWND hw, LPARAM lp )
 {
     BroadcastParm *parm = (BroadcastParm*)lp;
     DWORD_PTR retval = 0;
-    LONG lresult;
+    LRESULT lresult;
 
     if (parm->flags & BSF_IGNORECURRENTTASK && WIN_IsCurrentProcess(hw))
     {
