@@ -23,4 +23,4 @@
 HANDLE RPC_RpcssNPConnect(void);
 BOOL RPCRT4_SendReceiveNPMsg(HANDLE, PRPCSS_NP_MESSAGE, char *,  PRPCSS_NP_REPLY);
 
-#endif /* __RPCSS_NP_CLINET_H */
+#endif /* __RPCSS_NP_CLIENT_H */

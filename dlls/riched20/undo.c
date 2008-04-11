@@ -247,7 +247,7 @@ void ME_Undo(ME_TextEditor *editor) {
   if (!editor->pUndoStack)
     return;
     
-  /* watch out for uncommited transactions ! */
+  /* watch out for uncommitted transactions ! */
   assert(editor->pUndoStack->type == diUndoEndTransaction);
   
   editor->nUndoMode = umAddToRedo;
@@ -280,7 +280,7 @@ void ME_Redo(ME_TextEditor *editor) {
   if (!editor->pRedoStack)
     return;
     
-  /* watch out for uncommited transactions ! */
+  /* watch out for uncommitted transactions ! */
   assert(editor->pRedoStack->type == diUndoEndTransaction);
   
   editor->nUndoMode = umAddBackToUndo;

@@ -595,7 +595,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   switch (type)
   {
     case 1:
-      /*Scroll absolutly*/
+      /*Scroll absolutely*/
       si.nPos = value;
       break;
     case 2:
@@ -628,7 +628,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
  
  void ME_UpdateScrollBar(ME_TextEditor *editor)
 { 
-  /* Note that this is the only funciton that should ever call SetScrolLInfo 
+  /* Note that this is the only function that should ever call SetScrolLInfo
    * with SIF_PAGE or SIF_RANGE. SetScrollPos and SetScrollRange should never
    * be used at all. */
   

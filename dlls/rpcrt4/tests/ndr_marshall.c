@@ -698,7 +698,7 @@ todo_wine {
     my_alloc_called = 0;
     ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
 
-    /* if we're a server we still use the suppiled memory */
+    /* If we're a server we still use the supplied memory */
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.IsClient = 0;
     ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 0 );

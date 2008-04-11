@@ -708,7 +708,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin)
             This->Parser.pInputPin->rtStop = MEDIATIME_FROM_BYTES(This->EndOfFile);
             This->Parser.pInputPin->rtStart = This->Parser.pInputPin->rtCurrent = MEDIATIME_FROM_BYTES(This->header_bytes);
 
-            /* http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm has a whole readup on audio headers */
+            /* http://mpgedit.org/mpgedit/mpeg_format/mpeghdr.htm has a whole read up on audio headers */
             while (pos + 3 < This->EndOfFile)
             {
                 LONGLONG length = 0;

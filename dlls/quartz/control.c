@@ -102,7 +102,7 @@ static const IUnknownVtbl IInner_VTable =
     SeekInner_Release
 };
 
-/* Generic functions for aggegration */
+/* Generic functions for aggregation */
 static HRESULT WINAPI SeekOuter_QueryInterface(PassThruImpl *This, REFIID riid, LPVOID *ppv)
 {
     if (This->bAggregatable)

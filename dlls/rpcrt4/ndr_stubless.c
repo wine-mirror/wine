@@ -448,7 +448,7 @@ static void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     /* counter */
     unsigned short i;
 
-    /* NOTE: V1 style format does't terminate on the number_of_params
+    /* NOTE: V1 style format doesn't terminate on the number_of_params
      * condition as it doesn't have this attribute. Instead it
      * terminates when the stack size given in the header is exceeded.
      */
@@ -837,7 +837,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     return RetVal;
 }
 
-/* calls a function with the specificed arguments, restoring the stack
+/* Calls a function with the specified arguments, restoring the stack
  * properly afterwards as we don't know the calling convention of the
  * function */
 #if defined __i386__ && defined _MSC_VER

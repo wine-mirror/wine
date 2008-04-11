@@ -783,7 +783,7 @@ static HRESULT AcceptProcAFR(LPVOID iface, const AM_MEDIA_TYPE *pmt)
     return S_FALSE;
 }
 
-/* overriden pin functions */
+/* overridden pin functions */
 
 static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {

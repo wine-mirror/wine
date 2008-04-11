@@ -265,7 +265,7 @@ int WINAPI UuidEqual(UUID *Uuid1, UUID *Uuid2, RPC_STATUS *Status)
  *
  * PARAMS
  *     UUID *Uuid         [I] Uuid to compare
- *     RPC_STATUS *Status [O] retuns RPC_S_OK
+ *     RPC_STATUS *Status [O] returns RPC_S_OK
  *
  * RETURNS
  *     TRUE/FALSE

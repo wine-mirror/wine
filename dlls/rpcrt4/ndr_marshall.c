@@ -1901,7 +1901,7 @@ unsigned char * WINAPI NdrPointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
-  /* incremement the buffer here instead of in PointerMarshall,
+  /* Increment the buffer here instead of in PointerMarshall,
    * as that is used by embedded pointers which already handle the incrementing
    * the buffer, and shouldn't write any additional pointer data to the wire */
   if (*pFormat != RPC_FC_RP)

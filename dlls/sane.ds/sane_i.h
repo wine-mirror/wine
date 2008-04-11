@@ -70,7 +70,7 @@ struct tagActiveDS
     BOOL                sane_param_valid;  /* true if valid sane_param*/
     INT                 deviceIndex;    /* index of the current device */
 #endif
-    /* Capabiblities */
+    /* Capabilities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
 } activeDS;
 

@@ -97,7 +97,7 @@ static void test_pbuffers(HDC hdc)
      * and a pixelformat that's only available for offscreen rendering (this means that only
      * wglChoosePixelFormatARB and friends know about the format.
      *
-     * The first thing we need are pixelformats with pbuffer capabilites.
+     * The first thing we need are pixelformats with pbuffer capabilities.
      */
     res = pwglChoosePixelFormatARB(hdc, iAttribList, NULL, MAX_FORMATS, iFormats, &nFormats);
     if(res <= 0)
@@ -214,7 +214,7 @@ static void test_choosepixelformat(HDC hdc)
      * This test tries to proof the DONTCARE behavior by passing an almost 'empty' pfd to
      * ChoosePixelFormat. The pfd only has some really needed flags (RGBA, window, double buffer) set.
      * Further a 32 bit color buffer has been requested. The idea is that when a format with e.g. depth or stencil bits
-     * is returned, while there are also 'better' candidates in the list wihtout them (but located AFTER the returned one)
+     * is returned, while there are also 'better' candidates in the list without them (but located AFTER the returned one)
      * that an option set to zero means DONTCARE. We try to proof this by checking the aux/depth/stencil bits.
      * Proofing this behavior for the color bits isn't possible as all formats have red/green/blue/(alpha), so we assume
      * that if it holds for aux/depth/stencil it also holds for the others.

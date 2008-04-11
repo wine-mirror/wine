@@ -147,8 +147,8 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
             twCC = TWCC_CAPUNSUPPORTED;
             break;
         case CAP_XFERCOUNT:
-            /* This is a required capability that every source need to
-               support but we havev't implemented yet. */
+            /* This is a required capability that every source needs to
+               support but we haven't implemented it yet. */
             twCC = TWCC_SUCCESS;
             break;
         /*case ICAP_COMPRESSION:*/

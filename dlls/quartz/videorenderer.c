@@ -493,7 +493,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
 HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
-    /* TODO: Attenmpt to use the VMR-7 renderer instead when possible */
+    /* TODO: Attempt to use the VMR-7 renderer instead when possible */
     return VideoRenderer_create(pUnkOuter, ppv);
 }
 

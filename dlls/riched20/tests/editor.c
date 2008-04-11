@@ -852,7 +852,7 @@ static void test_EM_SCROLL(void)
                   "a LONG LINE LONG LINE LONG LINE LONG LINE LONG LINE "
                   "LONG LINE LONG LINE LONG LINE LONG LINE LONG LINE "
                   "LONG LINE \nb\nc\nd\ne");
-    for (j = 0; j < 12; j++) /* reset scrol position to top */
+    for (j = 0; j < 12; j++) /* reset scroll position to top */
       SendMessage(hwndRichEdit, EM_SCROLL, SB_PAGEUP, 0);
 
     /* get first visible line */
@@ -1532,7 +1532,7 @@ static DWORD CALLBACK test_EM_GETMODIFY_esCallback(DWORD_PTR dwCookie,
 {
   const char** str = (const char**)dwCookie;
   int size = strlen(*str);
-  if(size > 3)  /* let's make it peice-meal for fun */
+  if(size > 3)  /* let's make it piecemeal for fun */
     size = 3;
   *pcb = cb;
   if (*pcb > size) {
