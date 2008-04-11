@@ -351,10 +351,9 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     /* Set up the context defaults */
     oldCtx  = pwglGetCurrentContext();
     oldDrawable = pwglGetCurrentDC();
-    if(oldCtx && oldDrawable && GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
+    if(oldCtx && oldDrawable) {
         /* See comment in ActivateContext context switching */
-        glDisable(GL_FRAGMENT_SHADER_ATI);
-        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+        This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, FALSE);
     }
     if(pwglMakeCurrent(hdc, ctx) == FALSE) {
         ERR("Cannot activate context to set up defaults\n");
@@ -439,10 +438,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     if(oldDrawable && oldCtx) {
         pwglMakeCurrent(oldDrawable, oldCtx);
     }
-    if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
-        glEnable(GL_FRAGMENT_SHADER_ATI);
-        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
-    }
+    This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, TRUE);
 
 out:
     return ret;
@@ -687,13 +683,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     checkGLcall("glViewport");
     Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
 
-    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-        glDisable(GL_TEXTURE_SHADER_NV);
-        checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
-    } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
-        glDisable(GL_FRAGMENT_SHADER_ATI);
-        checkGLcall("glDisable(GL_FRAGMENT_SHADER_ATI)");
-    }
+    This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, FALSE);
 }
 
 /*****************************************************************************
@@ -941,22 +931,12 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         else {
             TRACE("Switching gl ctx to %p, hdc=%p ctx=%p\n", context, context->hdc, context->glCtx);
 
-            if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
-                /* Mesa crashes when enabling a context with GL_FRAGMENT_SHADER_ATI enabled.
-                 * Thus we disable it before deactivating any context, and re-enable it afterwards.
-                 *
-                 * This bug is filed as bug #15269 on bugs.freedesktop.org
-                 */
-                glDisable(GL_FRAGMENT_SHADER_ATI);
-                checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
-            }
-
+            This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, FALSE);
             ret = pwglMakeCurrent(context->hdc, context->glCtx);
             if(ret == FALSE) {
                 ERR("Failed to activate the new context\n");
-            } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER) && !context->last_was_blit) {
-                glEnable(GL_FRAGMENT_SHADER_ATI);
-                checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+            } else if(!context->last_was_blit) {
+                This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, TRUE);
             }
         }
         if(This->activeContext->vshader_const_dirty) {
@@ -988,13 +968,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
         case CTXUSAGE_CLEAR:
             if(context->last_was_blit) {
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glEnable(GL_TEXTURE_SHADER_NV);
-                    checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
-                } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
-                    glEnable(GL_FRAGMENT_SHADER_ATI);
-                    checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
-                }
+                This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, TRUE);
             }
 
             /* Blending and clearing should be orthogonal, but tests on the nvidia driver show that disabling
@@ -1013,13 +987,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         case CTXUSAGE_DRAWPRIM:
             /* This needs all dirty states applied */
             if(context->last_was_blit) {
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glEnable(GL_TEXTURE_SHADER_NV);
-                    checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
-                } else if(GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
-                    glEnable(GL_FRAGMENT_SHADER_ATI);
-                    checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
-                }
+                This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, TRUE);
             }
 
             IWineD3DDeviceImpl_FindTexUnitMap(This);

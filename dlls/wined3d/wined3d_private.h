@@ -300,6 +300,7 @@ typedef struct {
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     void (*shader_dll_load_init)(void);
+    void (*shader_fragment_enable)(IWineD3DDevice *iface, BOOL enable);
     const struct StateEntry *StateTable;
 } shader_backend_t;
 

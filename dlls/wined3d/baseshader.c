@@ -1182,6 +1182,22 @@ static void shader_none_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_inf
 #endif
 
 }
+
+static void shader_none_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+
+    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+        if(enable) {
+            glEnable(GL_TEXTURE_SHADER_NV);
+            checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
+        } else {
+            glDisable(GL_TEXTURE_SHADER_NV);
+            checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
+        }
+    }
+}
+
 #undef GLINFO_LOCATION
 
 const shader_backend_t none_shader_backend = {
@@ -1199,6 +1215,7 @@ const shader_backend_t none_shader_backend = {
     &shader_none_generate_vshader,
     &shader_none_get_caps,
     &shader_none_load_init,
+    &shader_none_fragment_enable,
     FFPStateTable
 };
 

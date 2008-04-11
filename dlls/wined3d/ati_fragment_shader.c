@@ -1026,6 +1026,16 @@ static void shader_atifs_generate_vshader(IWineD3DVertexShader *iface, SHADER_BU
     arb_program_shader_backend.shader_generate_vshader(iface, buffer);
 }
 
+static void shader_atifs_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
+    if(enable) {
+        glEnable(GL_FRAGMENT_SHADER_ATI);
+        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+    } else {
+        glDisable(GL_FRAGMENT_SHADER_ATI);
+        checkGLcall("glDisable(GL_FRAGMENT_SHADER_ATI)");
+    }
+}
+
 const shader_backend_t atifs_shader_backend = {
     shader_atifs_select,
     shader_atifs_select_depth_blt,
@@ -1041,5 +1051,6 @@ const shader_backend_t atifs_shader_backend = {
     shader_atifs_generate_vshader,
     shader_atifs_get_caps,
     shader_atifs_load_init,
+    shader_atifs_fragment_enable,
     ATIFSStateTable
 };
