@@ -78,6 +78,7 @@ typedef struct tagInputContextData
 
         ImmHkl          *immKbd;
         HWND            imeWnd;
+        UINT            lastVK;
 } InputContextData;
 
 typedef struct _tagTRANSMSG {
@@ -2146,4 +2147,98 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+*       ImmTranslateMessage(IMM32.@)
+*       ( Undocumented, call internally and from user32.dll )
+*/
+BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WCHAR chr, LPARAM lKeyData)
+{
+    InputContextData *data;
+    HIMC imc = ImmGetContext(hwnd);
+    BYTE state[256];
+    UINT scancode;
+    LPVOID list = 0;
+    UINT msg_count;
+    UINT uVirtKey;
+    static const int list_count = 10;
+
+    TRACE("%p %x '%c' %x\n",hwnd, msg, chr, (UINT)lKeyData);
+
+    if (imc)
+        data = (InputContextData*)imc;
+    else
+        return FALSE;
+
+    if (!data->immKbd->hIME || !data->immKbd->pImeToAsciiEx)
+        return FALSE;
+
+    GetKeyboardState(state);
+    scancode = lKeyData >> 0x10 & 0xff;
+
+    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, list_count * sizeof(TRANSMSG) + sizeof(DWORD));
+    ((DWORD*)list)[0] = list_count;
+
+    if (data->immKbd->imeInfo.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
+    {
+        if (!is_himc_ime_unicode(data))
+            ToAscii(data->lastVK, scancode, state, &chr, 0);
+        uVirtKey = MAKELONG(data->lastVK,chr);
+    }
+    else
+        uVirtKey = data->lastVK;
+
+    msg_count = data->immKbd->pImeToAsciiEx(uVirtKey, scancode, state, list, 0, imc);
+    TRACE("%i messages generated\n",msg_count);
+    if (msg_count && msg_count <= list_count)
+    {
+        int i;
+        LPTRANSMSG msgs = (LPTRANSMSG)((LPBYTE)list + sizeof(DWORD));
+
+        for (i = 0; i < msg_count; i++)
+            ImmInternalPostIMEMessage(data, msgs[i].message, msgs[i].wParam, msgs[i].lParam);
+    }
+    else if (msg_count > list_count)
+        ImmGenerateMessage(imc);
+
+    HeapFree(GetProcessHeap(),0,list);
+
+    return (msg_count > 0);
+}
+
+/***********************************************************************
+*		ImmProcessKey(IMM32.@)
+*       ( Undocumented, called from user32.dll )
+*/
+BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD unknown)
+{
+    InputContextData *data;
+    HIMC imc = ImmGetContext(hwnd);
+    BYTE state[256];
+
+    TRACE("%p %p %x %x %x\n",hwnd, hKL, vKey, (UINT)lKeyData, unknown);
+
+    if (imc)
+        data = (InputContextData*)imc;
+    else
+        return FALSE;
+
+    if (!data->immKbd->hIME || !data->immKbd->pImeProcessKey)
+        return FALSE;
+
+    GetKeyboardState(state);
+    data->lastVK = vKey;
+
+    if (data->immKbd->pImeProcessKey(imc, vKey, lKeyData, state))
+    {
+        WCHAR key;
+        UINT scancode;
+
+        scancode = lKeyData >> 0x10 & 0xff;
+        ToUnicodeEx(vKey, scancode, state, &key, 1, 0, hKL);
+        return ImmTranslateMessage(hwnd, WM_KEYDOWN, key, lKeyData );
+    }
+
+    return FALSE;
 }

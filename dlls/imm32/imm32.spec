@@ -72,7 +72,7 @@
 @ stub ImmLockImeDpi
 @ stdcall ImmNotifyIME(long long long long)
 @ stub ImmPenAuxInput
-@ stub ImmProcessKey
+@ stdcall ImmProcessKey(long long long long long)
 @ stub ImmPutImeMenuItemsIntoMappedFile
 @ stdcall ImmReSizeIMCC(long long)
 @ stub ImmRegisterClient
@@ -99,7 +99,7 @@
 @ stub ImmShowSoftKeyboard
 @ stdcall ImmSimulateHotKey(long long)
 @ stub ImmSystemHandler
-@ stub ImmTranslateMessage
+@ stdcall ImmTranslateMessage(long long long long)
 @ stub ImmUnlockClientImc
 @ stdcall ImmUnlockIMC(long)
 @ stdcall ImmUnlockIMCC(long)
