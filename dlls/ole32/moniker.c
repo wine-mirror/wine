@@ -56,14 +56,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static LONG WINAPI rpc_filter(EXCEPTION_POINTERS *eptr)
 {
-    switch (eptr->ExceptionRecord->ExceptionCode)
-    {
-    case EXCEPTION_ACCESS_VIOLATION:
-    case EXCEPTION_ILLEGAL_INSTRUCTION:
-        return EXCEPTION_CONTINUE_SEARCH;
-    default:
-        return EXCEPTION_EXECUTE_HANDLER;
-    }
+    return I_RpcExceptionFilter(eptr->ExceptionRecord->ExceptionCode);
 }
 
 /* define the structure of the running object table elements */
