@@ -218,6 +218,53 @@ DWORD scmdatabase_remove_service(struct scmdatabase *db, struct service_entry *s
     return ERROR_SUCCESS;
 }
 
+static void scmdatabase_autostart_services(struct scmdatabase *db)
+{
+    struct service_entry **services_list;
+    unsigned int i = 0;
+    unsigned int size = 32;
+    struct service_entry *service;
+
+    services_list = HeapAlloc(GetProcessHeap(), 0, size * sizeof(services_list[0]));
+    if (!services_list)
+        return;
+
+    scmdatabase_lock_shared(db);
+
+    LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
+    {
+        if (service->config.dwStartType == SERVICE_BOOT_START ||
+            service->config.dwStartType == SERVICE_SYSTEM_START ||
+            service->config.dwStartType == SERVICE_AUTO_START)
+        {
+            if (i+1 >= size)
+            {
+                size *= 2;
+                services_list = HeapReAlloc(GetProcessHeap(), 0, services_list, size * sizeof(services_list[0]));
+                if (!services_list)
+                    break;
+            }
+            services_list[i] = service;
+            service->ref_count++;
+            i++;
+        }
+    }
+
+    scmdatabase_unlock(db);
+
+    size = i;
+    for (i = 0; i < size; i++)
+    {
+        DWORD err;
+        service = services_list[i];
+        err = service_start(service, 0, NULL);
+        /* FIXME: do something if the service failed to start */
+        release_service(service);
+    }
+
+    HeapFree(GetProcessHeap(), 0, services_list);
+}
+
 BOOL validate_service_name(LPCWSTR name)
 {
     return (name && name[0] && !strchrW(name, '/') && !strchrW(name, '\\'));
@@ -444,6 +491,244 @@ void service_unlock(struct service_entry *service)
     LeaveCriticalSection(&service->db->cs);
 }
 
+/* only one service started at a time, so there is no race on the registry
+ * value here */
+static LPWSTR service_get_pipe_name(void)
+{
+    static const WCHAR format[] = { '\\','\\','.','\\','p','i','p','e','\\',
+        'n','e','t','\\','N','t','C','o','n','t','r','o','l','P','i','p','e','%','u',0};
+    static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
+    LPWSTR name;
+    DWORD len;
+    HKEY service_current_key;
+    DWORD service_current = -1;
+    LONG ret;
+    DWORD type;
+
+    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, service_current_key_str, 0,
+        NULL, REG_OPTION_VOLATILE, KEY_SET_VALUE | KEY_QUERY_VALUE, NULL,
+        &service_current_key, NULL);
+    if (ret != ERROR_SUCCESS)
+        return NULL;
+    len = sizeof(service_current);
+    ret = RegQueryValueExW(service_current_key, NULL, NULL, &type,
+        (BYTE *)&service_current, &len);
+    if ((ret == ERROR_SUCCESS && type == REG_DWORD) || ret == ERROR_FILE_NOT_FOUND)
+    {
+        service_current++;
+        RegSetValueExW(service_current_key, NULL, 0, REG_DWORD,
+            (BYTE *)&service_current, sizeof(service_current));
+    }
+    RegCloseKey(service_current_key);
+    if ((ret != ERROR_SUCCESS || type != REG_DWORD) && (ret != ERROR_FILE_NOT_FOUND))
+        return NULL;
+    len = sizeof(format)/sizeof(WCHAR) + 10 /* strlenW("4294967295") */;
+    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!name)
+        return NULL;
+    snprintfW(name, len, format, service_current);
+    return name;
+}
+
+static DWORD service_start_process(struct service_entry *service_entry, HANDLE *process)
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    LPWSTR path = NULL;
+    DWORD size;
+    BOOL r;
+
+    service_lock_exclusive(service_entry);
+
+    if (service_entry->config.dwServiceType == SERVICE_KERNEL_DRIVER)
+    {
+        static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',' ',0};
+        DWORD len = GetSystemDirectoryW( NULL, 0 ) + sizeof(winedeviceW)/sizeof(WCHAR) + strlenW(service_entry->name);
+
+        if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+            return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+        GetSystemDirectoryW( path, len );
+        lstrcatW( path, winedeviceW );
+        lstrcatW( path, service_entry->name );
+    }
+    else
+    {
+        size = ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,NULL,0);
+        path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
+        if (!path)
+            return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+        ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,path,size);
+    }
+
+    ZeroMemory(&si, sizeof(STARTUPINFOW));
+    si.cb = sizeof(STARTUPINFOW);
+    if (!(service_entry->config.dwServiceType & SERVICE_INTERACTIVE_PROCESS))
+    {
+        static WCHAR desktopW[] = {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n','\\','D','e','f','a','u','l','t',0};
+        si.lpDesktop = desktopW;
+    }
+
+    service_entry->status.dwCurrentState = SERVICE_START_PENDING;
+    service_entry->status.dwProcessId = pi.dwProcessId;
+
+    service_unlock(service_entry);
+
+    r = CreateProcessW(NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    HeapFree(GetProcessHeap(),0,path);
+    if (!r)
+    {
+        service_lock_exclusive(service_entry);
+        service_entry->status.dwCurrentState = SERVICE_STOPPED;
+        service_entry->status.dwProcessId = 0;
+        service_unlock(service_entry);
+        return GetLastError();
+    }
+
+    *process = pi.hProcess;
+    CloseHandle( pi.hThread );
+
+    return ERROR_SUCCESS;
+}
+
+static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDLE process_handle)
+{
+    WINE_TRACE("%p\n", service_entry);
+
+    for (;;)
+    {
+        DWORD dwCurrentStatus;
+        HANDLE handles[2] = { service_entry->status_changed_event, process_handle };
+        DWORD ret;
+        ret = WaitForMultipleObjects(sizeof(handles)/sizeof(handles[0]), handles, FALSE, 20000);
+        if (ret != WAIT_OBJECT_0)
+            return ERROR_SERVICE_REQUEST_TIMEOUT;
+        service_lock_shared(service_entry);
+        dwCurrentStatus = service_entry->status.dwCurrentState;
+        service_unlock(service_entry);
+        if (dwCurrentStatus == SERVICE_RUNNING)
+        {
+            WINE_TRACE("Service started successfully\n");
+            return ERROR_SUCCESS;
+        }
+        if (dwCurrentStatus != SERVICE_START_PENDING)
+            return ERROR_SERVICE_REQUEST_TIMEOUT;
+    }
+}
+
+/******************************************************************************
+ * service_send_start_message
+ */
+static BOOL service_send_start_message(HANDLE pipe, LPCWSTR *argv, DWORD argc)
+{
+    DWORD i, len, count, result;
+    service_start_info *ssi;
+    LPWSTR p;
+    BOOL r;
+
+    WINE_TRACE("%p %p %d\n", pipe, argv, argc);
+
+    /* FIXME: this can block so should be done in another thread */
+    r = ConnectNamedPipe(pipe, NULL);
+    if (!r && GetLastError() != ERROR_PIPE_CONNECTED)
+    {
+        WINE_ERR("pipe connect failed\n");
+        return FALSE;
+    }
+
+    /* calculate how much space do we need to send the startup info */
+    len = 1;
+    for (i=0; i<argc; i++)
+        len += strlenW(argv[i])+1;
+
+    ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, str[len]));
+    ssi->cmd = WINESERV_STARTINFO;
+    ssi->size = len;
+
+    /* copy service args into a single buffer*/
+    p = &ssi->str[0];
+    for (i=0; i<argc; i++)
+    {
+        strcpyW(p, argv[i]);
+        p += strlenW(p) + 1;
+    }
+    *p=0;
+
+    r = WriteFile(pipe, ssi, FIELD_OFFSET(service_start_info, str[len]), &count, NULL);
+    if (r)
+    {
+        r = ReadFile(pipe, &result, sizeof result, &count, NULL);
+        if (r && result)
+        {
+            SetLastError(result);
+            r = FALSE;
+        }
+    }
+
+    HeapFree(GetProcessHeap(),0,ssi);
+
+    return r;
+}
+
+DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *service_argv)
+{
+    DWORD err;
+    LPWSTR name;
+    HANDLE process_handle = NULL;
+
+    err = scmdatabase_lock_startup(service->db);
+    if (err != ERROR_SUCCESS)
+        return err;
+
+    if (service->control_pipe != INVALID_HANDLE_VALUE)
+    {
+        scmdatabase_unlock_startup(service->db);
+        return ERROR_SERVICE_ALREADY_RUNNING;
+    }
+
+    service->control_mutex = CreateMutexW(NULL, TRUE, NULL);
+
+    if (!service->status_changed_event)
+        service->status_changed_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    name = service_get_pipe_name();
+    service->control_pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX,
+                  PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL );
+    HeapFree(GetProcessHeap(), 0, name);
+    if (service->control_pipe==INVALID_HANDLE_VALUE)
+    {
+        WINE_ERR("failed to create pipe for %s, error = %d\n",
+            wine_dbgstr_w(service->name), GetLastError());
+        scmdatabase_unlock_startup(service->db);
+        return GetLastError();
+    }
+
+    err = service_start_process(service, &process_handle);
+
+    if (err == ERROR_SUCCESS)
+    {
+        if (!service_send_start_message(service->control_pipe,
+                service_argv, service_argc))
+            err = ERROR_SERVICE_REQUEST_TIMEOUT;
+    }
+
+    WINE_TRACE("returning %d\n", err);
+
+    if (err == ERROR_SUCCESS)
+        err = service_wait_for_startup(service, process_handle);
+
+    if (process_handle)
+        CloseHandle(process_handle);
+
+    ReleaseMutex(service->control_mutex);
+    scmdatabase_unlock_startup(service->db);
+
+    return err;
+}
+
+
 int main(int argc, char *argv[])
 {
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
@@ -455,7 +740,10 @@ int main(int argc, char *argv[])
     if ((err = scmdatabase_load_services(active_database)) != ERROR_SUCCESS)
         return err;
     if ((err = RPC_Init()) == ERROR_SUCCESS)
+    {
+        scmdatabase_autostart_services(active_database);
         RPC_MainLoop();
+    }
     scmdatabase_destroy(active_database);
     return err;
 }
