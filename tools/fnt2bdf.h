@@ -30,8 +30,8 @@ enum data_types {dfChar, dfShort, dfLong, dfString};
 
 typedef struct tagFontHeader
 {
-    short dfVersion;		/* Version */
-    long dfSize;		/* Total File Size */
+    SHORT dfVersion;		/* Version */
+    LONG dfSize;		/* Total File Size */
     char dfCopyright[60];	/* Copyright notice */
     FONTINFO16 fi;		/* FONTINFO structure */
 } fnt_hdrS;

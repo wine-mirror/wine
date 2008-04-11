@@ -40,8 +40,8 @@
 #include "pshpack1.h"
 struct _fnt_header
 {
-    short dfVersion;
-    long dfSize;
+    SHORT dfVersion;
+    LONG dfSize;
     char dfCopyright[60];
     FONTINFO16 fi;
 };
