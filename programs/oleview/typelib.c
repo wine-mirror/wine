@@ -545,20 +545,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
             AddToTLDataStrW(tld, wszCloseBrackets2);
             memset(wszText, 0, sizeof(wszText));
         }
-        if(SysStringLen(bstrHelpString)) {
-            if(bFirst) AddToTLDataStrW(tld, wszOpenBrackets1);
-            else {
-                AddToTLDataStrW(tld, wszComa);
-                AddToTLDataStrW(tld, wszSpace);
-            }
-            bFirst = FALSE;
-            AddToTLDataStrW(tld, wszHelpstring);
-            AddToTLDataStrW(tld, wszOpenBrackets2);
-            AddToTLDataStrW(tld, wszInvertedComa);
-            AddToTLDataStrW(tld, bstrHelpString);
-            AddToTLDataStrW(tld, wszInvertedComa);
-            AddToTLDataStrW(tld, wszCloseBrackets2);
-        }
+
         CreateTypeInfo(wszText, wszAfter, pFuncDesc->elemdescFunc.tdesc, pTypeInfo);
         switch(pFuncDesc->invkind)
         {
@@ -593,6 +580,22 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
                 AddToTLDataStrW(tld, wszPropPutRef);
                 break;
             default:;
+        }
+        if(SysStringLen(bstrHelpString))
+        {
+            if(bFirst) AddToTLDataStrW(tld, wszOpenBrackets1);
+            else
+            {
+                AddToTLDataStrW(tld, wszComa);
+                AddToTLDataStrW(tld, wszSpace);
+            }
+            bFirst = FALSE;
+            AddToTLDataStrW(tld, wszHelpstring);
+            AddToTLDataStrW(tld, wszOpenBrackets2);
+            AddToTLDataStrW(tld, wszInvertedComa);
+            AddToTLDataStrW(tld, bstrHelpString);
+            AddToTLDataStrW(tld, wszInvertedComa);
+            AddToTLDataStrW(tld, wszCloseBrackets2);
         }
         if(!bFirst)
         {
@@ -1104,11 +1107,11 @@ static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
             AddToTLDataStrW(pTLData, wszNewLine);
             AddSpaces(pTLData, TAB_SIZE);
             AddToTLDataStrW(pTLData, wszHelpstring);
-            AddToTLDataStrW(pTLData, wszOpenBrackets1);
+            AddToTLDataStrW(pTLData, wszOpenBrackets2);
             AddToTLDataStrW(pTLData, wszInvertedComa);
             AddToTLDataStrW(pTLData, bstrHelpString);
             AddToTLDataStrW(pTLData, wszInvertedComa);
-            AddToTLDataStrW(pTLData, wszCloseBrackets1);
+            AddToTLDataStrW(pTLData, wszCloseBrackets2);
         }
         SysFreeString(bstrHelpString);
     }
