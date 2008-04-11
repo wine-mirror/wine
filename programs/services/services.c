@@ -454,7 +454,8 @@ int main(int argc, char *argv[])
         return err;
     if ((err = scmdatabase_load_services(active_database)) != ERROR_SUCCESS)
         return err;
-    err = RPC_MainLoop();
+    if ((err = RPC_Init()) == ERROR_SUCCESS)
+        RPC_MainLoop();
     scmdatabase_destroy(active_database);
     return err;
 }

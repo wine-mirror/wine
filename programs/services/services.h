@@ -77,6 +77,7 @@ void service_unlock(struct service_entry *service);
 
 extern HANDLE g_hStartedEvent;
 
+DWORD RPC_Init(void);
 DWORD RPC_MainLoop(void);
 
 /* from utils.c */

@@ -1333,11 +1333,10 @@ DWORD svcctl_QueryServiceConfig2W(
 }
 
 
-DWORD RPC_MainLoop(void)
+DWORD RPC_Init(void)
 {
     WCHAR transport[] = SVCCTL_TRANSPORT;
     WCHAR endpoint[] = SVCCTL_ENDPOINT;
-    HANDLE hSleepHandle;
     DWORD err;
 
     if ((err = RpcServerUseProtseqEpW(transport, 0, endpoint, NULL)) != ERROR_SUCCESS)
@@ -1357,17 +1356,26 @@ DWORD RPC_MainLoop(void)
         WINE_ERR("RpcServerListen failed with error %u\n", err);
         return err;
     }
+    return ERROR_SUCCESS;
+}
+
+DWORD RPC_MainLoop(void)
+{
+    DWORD err;
+    HANDLE hExitEvent = __wine_make_process_system();
+
+    SetEvent(g_hStartedEvent);
 
     WINE_TRACE("Entered main loop\n");
-    hSleepHandle = __wine_make_process_system();
-    SetEvent(g_hStartedEvent);
+
     do
     {
-        err = WaitForSingleObjectEx(hSleepHandle, INFINITE, TRUE);
+        err = WaitForSingleObjectEx(hExitEvent, INFINITE, TRUE);
         WINE_TRACE("Wait returned %d\n", err);
     } while (err != WAIT_OBJECT_0);
 
     WINE_TRACE("Object signaled - wine shutdown\n");
+    CloseHandle(hExitEvent);
     return ERROR_SUCCESS;
 }
 
