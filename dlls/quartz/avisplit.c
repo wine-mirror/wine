@@ -138,6 +138,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
         WORD streamId;
         Parser_OutputPin * pOutputPin;
         BOOL bSyncPoint = TRUE;
+        BYTE *fcc = (BYTE *)&This->CurrentChunk.fcc;
 
         if (This->CurrentChunkOffset >= tStart)
             offset_src = (long)BYTES_FROM_MEDIATIME(This->CurrentChunkOffset - tStart) + sizeof(RIFFCHUNK);
@@ -194,6 +195,13 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
                 continue;
             }
 #endif
+        }
+
+        if (fcc[0] == 'i' && fcc[1] == 'x')
+        {
+            if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
+                bMoreData = FALSE;
+            continue;
         }
 
         streamId = StreamFromFOURCC(This->CurrentChunk.fcc);
