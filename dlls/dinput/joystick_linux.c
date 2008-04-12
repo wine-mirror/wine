@@ -471,6 +471,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     for (i = 0; i < newDevice->buttons; i++)
     {
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + 12], df->dwObjSize);
+        df->rgodf[idx  ].pguid = &GUID_Button;
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_PSHBUTTON;
     }
     newDevice->base.data_format.wine_df = df;

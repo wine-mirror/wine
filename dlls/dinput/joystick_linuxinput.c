@@ -373,7 +373,7 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   if (id >= have_joydevs) {
     return FALSE;
   }
- 
+
   if (!((dwDevType == 0) ||
         ((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 0x0800)) ||
         (((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))))
@@ -498,6 +498,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[newDevice->numButtons + WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS], df->dwObjSize);
 	newDevice->buttons[i] = 0x80 | newDevice->numButtons;
+        df->rgodf[idx  ].pguid = &GUID_Button;
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numButtons++) | DIDFT_PSHBUTTON;
     }
     df->dwNumObjs = idx;
