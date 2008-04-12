@@ -456,7 +456,7 @@ PVOID WINAPI ImageDirectoryEntryToDataEx( PVOID base, BOOLEAN image, USHORT dir,
     *size = nt->OptionalHeader.DataDirectory[dir].Size;
     if (image || addr < nt->OptionalHeader.SizeOfHeaders)
     {
-        if (*section) *section = NULL;
+        if (section) *section = NULL;
         return (char *)base + addr;
     }
 
