@@ -147,8 +147,9 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 
         switch (This->CurrentChunk.fcc)
         {
+        case ckidAVIOLDINDEX: /* Should not be popping up here! */
+            ERR("There should be no index in the stream data!\n");
         case ckidAVIPADDING:
-        case ckidAVIOLDINDEX: /* Index is not handled */
             /* silently ignore */
             if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream, FALSE))
                 bMoreData = FALSE;
@@ -633,6 +634,8 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     LONGLONG pos = 0; /* in bytes */
     BYTE * pBuffer;
     RIFFCHUNK * pCurrentChunk;
+    LONGLONG total, avail;
+
     AVISplitterImpl * pAviSplit = (AVISplitterImpl *)This->pin.pinInfo.pFilter;
 
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
@@ -709,6 +712,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     while (list.fcc == ckidAVIPADDING || (list.fcc == FOURCC_LIST && list.fccListType == ckidINFO))
     {
         pos += sizeof(RIFFCHUNK) + list.cb;
+
         hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     }
 
@@ -723,11 +727,88 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
         return E_FAIL;
     }
 
+    IAsyncReader_Length(This->pReader, &total, &avail);
+
+    /* FIXME: AVIX files are added ("eXtended") beyond the "AVI " length, and thus won't be played here	 */
     if (hr == S_OK)
     {
-        pAviSplit->CurrentChunkOffset = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFLIST));
-        pAviSplit->EndOfFile = MEDIATIME_FROM_BYTES(pos + list.cb + sizeof(RIFFLIST));
+        This->rtStart = pAviSplit->CurrentChunkOffset = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFLIST));
+        pos += list.cb + sizeof(RIFFCHUNK);
+
+        pAviSplit->EndOfFile = This->rtStop = MEDIATIME_FROM_BYTES(pos);
+        if (pos > total)
+        {
+            ERR("File smaller (%x%08x) then EndOfFile (%x%08x)\n", (DWORD)(total >> 32), (DWORD)total, (DWORD)(pAviSplit->EndOfFile >> 32), (DWORD)pAviSplit->EndOfFile);
+            return E_FAIL;
+        }
+
         hr = IAsyncReader_SyncRead(This->pReader, BYTES_FROM_MEDIATIME(pAviSplit->CurrentChunkOffset), sizeof(pAviSplit->CurrentChunk), (BYTE *)&pAviSplit->CurrentChunk);
+    }
+
+    /* Now peek into the idx1 index, if available */
+    if (hr == S_OK && (total - pos) > sizeof(RIFFCHUNK))
+    {
+        memset(&list, 0, sizeof(list));
+
+        hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
+        if (list.fcc == ckidAVIOLDINDEX)
+        {
+            int x = 0;
+            AVIOLDINDEX * pAviOldIndex = CoTaskMemAlloc(list.cb + sizeof(RIFFCHUNK));
+            if (!pAviOldIndex)
+                return E_OUTOFMEMORY;
+            hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(RIFFCHUNK) + list.cb, (BYTE *)pAviOldIndex);
+            if (hr == S_OK)
+            {
+                for (x = 0; x < list.cb / sizeof(pAviOldIndex->aIndex[0]); ++x)
+                {
+                    DWORD temp, temp2, offset, chunkid;
+                    ULONGLONG mov_pos = BYTES_FROM_MEDIATIME(pAviSplit->CurrentChunkOffset) - sizeof(DWORD);
+                    BOOL relative;
+
+                    offset = pAviOldIndex->aIndex[x].dwOffset;
+                    chunkid = pAviOldIndex->aIndex[x].dwChunkId;
+
+                    IAsyncReader_SyncRead(This->pReader, offset, sizeof(DWORD), (BYTE *)&temp);
+                    relative = (chunkid != temp);
+
+                    if (chunkid == mmioFOURCC('7','F','x','x')
+                        && ((char *)&temp)[0] == 'i' && ((char *)&temp)[1] == 'x')
+                        relative = FALSE;
+
+                    if (relative)
+                    {
+                        if (offset + mov_pos < BYTES_FROM_MEDIATIME(pAviSplit->EndOfFile))
+                            hr = IAsyncReader_SyncRead(This->pReader, offset + mov_pos, sizeof(DWORD), (BYTE *)&temp2);
+                        else hr = S_FALSE;
+
+                        if (hr == S_OK && chunkid == mmioFOURCC('7','F','x','x')
+                            && ((char *)&temp2)[0] == 'i' && ((char *)&temp2)[1] == 'x')
+                        {
+                            /* Do nothing, all is great */
+                        }
+                        else if (hr == S_OK && temp2 != chunkid)
+                        {
+                            ERR("Faulty index or bug in handling: Wanted FOURCC: %s, Absolute FOURCC: %s (@ %u), Relative FOURCC: %s (@ %lld)\n",
+                                debugstr_an((char *)&chunkid, 4), debugstr_an((char *)&temp, 4), offset, debugstr_an((char *)&temp2, 4), mov_pos + offset);
+                        }
+                        else if (hr != S_OK)
+                        {
+                            TRACE("hr: %08x\n", hr);
+                        }
+                    }
+
+                    TRACE("Scanned dwChunkId: %s\n", debugstr_an((char *)&temp, 4));
+                    TRACE("dwChunkId: %.4s\n", (char *)&chunkid);
+                    TRACE("dwFlags: %08x\n", pAviOldIndex->aIndex[x].dwFlags);
+                    TRACE("dwOffset (%s): %08x\n", relative ? "relative" : "absolute", offset);
+                    TRACE("dwSize: %08x\n", pAviOldIndex->aIndex[x].dwSize);
+                }
+            }
+
+            CoTaskMemFree(pAviOldIndex);
+        }
+        hr = S_OK;
     }
 
     if (hr != S_OK)
