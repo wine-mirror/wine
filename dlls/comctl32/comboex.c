@@ -530,13 +530,11 @@ static UINT COMBOEX_GetListboxText(COMBOEX_INFO *infoPtr, int n, LPWSTR buf)
 
 static INT COMBOEX_DeleteItem (COMBOEX_INFO *infoPtr, INT index)
 {
-    CBE_ITEMDATA const *item;
-
     TRACE("(index=%d)\n", index);
 
     /* if item number requested does not exist then return failure */
     if ((index >= infoPtr->nb_items) || (index < 0)) return CB_ERR;
-    if (!(item = COMBOEX_FindItem(infoPtr, index))) return CB_ERR;
+    if (!COMBOEX_FindItem(infoPtr, index)) return CB_ERR;
 
     /* doing this will result in WM_DELETEITEM being issued */
     SendMessageW (infoPtr->hwndCombo, CB_DELETESTRING, (WPARAM)index, 0);
