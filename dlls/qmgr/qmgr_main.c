@@ -141,6 +141,9 @@ static HRESULT register_server(BOOL do_register)
 {
     HRESULT hr;
     STRTABLEA strtable;
+    HMODULE hAdvpack;
+    HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
+    static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
 
     TRACE("(%x)\n", do_register);
 
@@ -150,9 +153,12 @@ static HRESULT register_server(BOOL do_register)
         return hr;
     }
 
+    hAdvpack = LoadLibraryW(wszAdvpack);
+    pRegInstall = (void *)GetProcAddress(hAdvpack, "RegInstall");
+
     hr = init_register_strtable(&strtable);
     if (SUCCEEDED(hr))
-        hr = RegInstallA(hInst, do_register ? "RegisterDll" : "UnregisterDll",
+        hr = pRegInstall(hInst, do_register ? "RegisterDll" : "UnregisterDll",
                          &strtable);
     cleanup_register_strtable(&strtable);
 
