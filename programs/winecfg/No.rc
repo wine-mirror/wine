@@ -60,9 +60,11 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Vinduinnstillinger ",IDC_STATIC,8,5,244,180
+    GROUPBOX        " Vinduinnstillinger ",IDC_STATIC,8,4,244,184
 
-    CONTROL         "Tillat DirectX-programmer å hindre musen fra å forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
+    CONTROL         "Tillat DirectX-programmer å hindre musen fra å forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+
+    CONTROL         "Tillat vindusbehandleren å &dekorere vinduer",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
 
     CONTROL	        "Tillat vindusbehandleren å kontrollere vinduene",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     LTEXT            "Hvis vinduer kontrolleres av din standardvindusbehandler, får de vanlige rammer, og respekterer det virtuelle skrivebordet ditt og vises i vinduslisten.\n\nHvis de er ukontrollerte er de koblet fra vindusbehandleren. Dette betyr at de ikke integreres like godt med skrivebordet ditt, men emuleringen blir mer presis sånn at noen programmer virker bedre.",
