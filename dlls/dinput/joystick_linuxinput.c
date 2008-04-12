@@ -423,7 +423,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     int i, idx = 0;
     char buffer[MAX_PATH+16];
     HKEY hkey, appkey;
-    LONG def_deadzone = -1;
+    LONG def_deadzone = 0;
 
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
@@ -471,9 +471,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
         newDevice->props[idx].lMin    = 0;
         newDevice->props[idx].lMax    = 0xffff;
         newDevice->props[idx].lSaturation = 0;
-        newDevice->props[idx].lDeadZone = def_deadzone >= 0 ? def_deadzone :
-            MulDiv(newDevice->joydev->axes[i].flat, 0xffff,
-             newDevice->props[idx].lDevMax - newDevice->props[idx].lDevMin);
+        newDevice->props[idx].lDeadZone = def_deadzone;
 
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numAxes++) | DIDFT_ABSAXIS;
     }
