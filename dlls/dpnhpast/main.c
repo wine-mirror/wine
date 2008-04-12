@@ -55,12 +55,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  *
  */
-#if 0
-HRESULT WINAPI DPNHPAST_DirectPlayNATHelpCreate(void)
+HRESULT WINAPI DirectPlayNATHelpCreate(LPCGUID pIID, PVOID *ppvInterface)
 {
-	/* @stub in .spec */
+    TRACE("(%p, %p) stub\n", pIID, ppvInterface);
+    return E_NOTIMPL;
 }
-#endif
 
 
 /******************************************************************
