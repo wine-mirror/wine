@@ -64,7 +64,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Nastavitve oken ",IDC_STATIC,8,4,244,184
 
-    CONTROL         "Dovoli DirectX programom, da preprečijo &miški zapuščanje njihovega okna",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
+    CONTROL         "Dovoli DirectX programom, da preprečijo &miški zapuščanje okna",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+
+    CONTROL         "Dovoli upravljalniku oken, da okra&si okna",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
 
     CONTROL	        "Dovoli upravljalniku &oken, da upravlja z Wine-ovimi okni",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     LTEXT           "Če z Wine-ovimi okni upravlja upravljalnik oken, so robovi, obnašanje in ostale nastavitve le-teh enake, kot za ostala okna vašega namizja, kar omogoča boljšo združitev z vašim namizjem.\n\nV nasprotnem primeru okna ne bodo tako tesno povezana z vašim namizjem, kar pa v nekaterih primerih omogoča pravilnejšo emulacijo in izboljša delovanje nekaterih programoh.",
