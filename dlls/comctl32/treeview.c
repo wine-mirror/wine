@@ -3575,12 +3575,11 @@ TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    TREEVIEW_ITEM *editItem = infoPtr->selectedItem;
 	    HDC hdc = GetDC(infoPtr->hwndEdit);
 	    SIZE sz;
-	    int len;
 	    HFONT hFont, hOldFont = 0;
 
 	    infoPtr->bLabelChanged = TRUE;
 
-	    len = GetWindowTextW(infoPtr->hwndEdit, buffer, sizeof(buffer)/sizeof(buffer[0]));
+	    GetWindowTextW(infoPtr->hwndEdit, buffer, sizeof(buffer)/sizeof(buffer[0]));
 
 	    /* Select font to get the right dimension of the string */
 	    hFont = (HFONT)SendMessageW(infoPtr->hwndEdit, WM_GETFONT, 0, 0);

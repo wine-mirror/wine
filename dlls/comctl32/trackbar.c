@@ -822,7 +822,6 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
     HBITMAP hOldBmp = 0, hOffScreenBmp = 0;
     NMCUSTOMDRAW nmcd;
     int gcdrf, icdrf;
-    HTHEME theme;
 
     if (infoPtr->flags & TB_THUMBCHANGED) {
         TRACKBAR_UpdateThumb (infoPtr);
@@ -867,7 +866,7 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
     /* Erase background */
     if (gcdrf == CDRF_DODEFAULT ||
         notify_customdraw(infoPtr, &nmcd, CDDS_PREERASE) != CDRF_SKIPDEFAULT) {
-        if ((theme = GetWindowTheme (infoPtr->hwndSelf))) {
+        if (GetWindowTheme (infoPtr->hwndSelf)) {
             DrawThemeParentBackground (infoPtr->hwndSelf, hdc, 0);
         }
         else

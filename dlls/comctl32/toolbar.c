@@ -1280,7 +1280,7 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
     TBUTTON_INFO *btnPtr;
     INT x, cx, i, j;
     RECT rc;
-    BOOL bWrap, bButtonWrap;
+    BOOL bButtonWrap;
 
     /* 	When the toolbar window style is not TBSTYLE_WRAPABLE,	*/
     /*	no layout is necessary. Applications may use this style */
@@ -1314,7 +1314,6 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 
     for (i = 0; i < infoPtr->nNumButtons; i++ )
     {
-	bWrap = FALSE;
 	btnPtr[i].fsState &= ~TBSTATE_WRAP;
 
 	if (btnPtr[i].fsState & TBSTATE_HIDDEN)
