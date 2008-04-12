@@ -50,6 +50,7 @@ MIDIERR_NODEVICE, 		"Trenutna nastavitev MIDI se sklicuje na MIDI napravo, ki ni
 MIDIERR_INVALIDSETUP, 		"Trenutna nastavitev MIDI je pošodovana. Namestite originalno datoteko MIDIMAP.CFG v sistemsko mapo Oken in poskusite znova."
 
 /* MCI errors */
+MCIERR_INVALID_DEVICE_ID,      "Neveljaven ID MCI naprave. Uporabite ID, ki ga vrne odpiranje MCI naprave."
 MCIERR_UNRECOGNIZED_KEYWORD, 	"Naveden parameter ukaza ni definiran v naboru MCI ukazov."
 MCIERR_UNRECOGNIZED_COMMAND,	"Naveden ukaz je neveljaven MCI ukaz."
 MCIERR_HARDWARE, 		"Z večpredstavnostno napravo so težave. Preverite, ali naprava deluje pravilno ali pa se posvetujte z izdelovalcem."
