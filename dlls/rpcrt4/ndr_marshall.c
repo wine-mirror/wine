@@ -24,7 +24,7 @@
  *  - transmit_as/represent as
  *  - Multi-dimensional arrays
  *  - Conversion functions (NdrConvert)
- *  - Checks for integer addition overflow in base type and user marshall functions
+ *  - Checks for integer addition overflow in user marshall functions
  */
 
 #include <stdarg.h>
@@ -2003,11 +2003,70 @@ void WINAPI NdrSimpleTypeMarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 
 /***********************************************************************
  *           NdrSimpleTypeUnmarshall [RPCRT4.@]
+ *
+ * Unmarshall a base type.
+ *
+ * NOTES
+ *  Doesn't check that the buffer is long enough before copying, so the caller
+ * should do this.
  */
 void WINAPI NdrSimpleTypeUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
                                      unsigned char FormatChar )
 {
-    NdrBaseTypeUnmarshall(pStubMsg, &pMemory, &FormatChar, 0);
+#define BASE_TYPE_UNMARSHALL(type) \
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(type)); \
+	TRACE("pMemory: %p\n", pMemory); \
+	*(type *)pMemory = *(type *)pStubMsg->Buffer; \
+        pStubMsg->Buffer += sizeof(type);
+
+    switch(FormatChar)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+        BASE_TYPE_UNMARSHALL(UCHAR);
+        TRACE("value: 0x%02x\n", *pMemory);
+        break;
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+        BASE_TYPE_UNMARSHALL(USHORT);
+        TRACE("value: 0x%04x\n", *(USHORT *)pMemory);
+        break;
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+    case RPC_FC_ERROR_STATUS_T:
+    case RPC_FC_ENUM32:
+        BASE_TYPE_UNMARSHALL(ULONG);
+        TRACE("value: 0x%08x\n", *(ULONG *)pMemory);
+        break;
+   case RPC_FC_FLOAT:
+        BASE_TYPE_UNMARSHALL(float);
+        TRACE("value: %f\n", *(float *)pMemory);
+        break;
+    case RPC_FC_DOUBLE:
+        BASE_TYPE_UNMARSHALL(double);
+        TRACE("value: %f\n", *(double *)pMemory);
+        break;
+    case RPC_FC_HYPER:
+        BASE_TYPE_UNMARSHALL(ULONGLONG);
+        TRACE("value: %s\n", wine_dbgstr_longlong(*(ULONGLONG *)pMemory));
+        break;
+    case RPC_FC_ENUM16:
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(USHORT));
+        TRACE("pMemory: %p\n", pMemory);
+        /* 16-bits on the wire, but int in memory */
+        *(UINT *)pMemory = *(USHORT *)pStubMsg->Buffer;
+        pStubMsg->Buffer += sizeof(USHORT);
+        TRACE("value: 0x%08x\n", *(UINT *)pMemory);
+        break;
+    case RPC_FC_IGNORE:
+        break;
+    default:
+        FIXME("Unhandled base type: 0x%02x\n", FormatChar);
+    }
+#undef BASE_TYPE_UNMARSHALL
 }
 
 /***********************************************************************
@@ -6013,7 +6072,7 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
             TRACE("*ppMemory: %p\n", *ppMemory); \
             **(type **)ppMemory = *(type *)pStubMsg->Buffer; \
         } \
-        pStubMsg->Buffer += sizeof(type);
+	safe_buffer_increment(pStubMsg, sizeof(type));
 
     switch(*pFormat)
     {
