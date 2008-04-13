@@ -52,7 +52,7 @@ struct modify_ldt_s
     unsigned int  read_exec_only : 1;
     unsigned int  limit_in_pages : 1;
     unsigned int  seg_not_present : 1;
-    unsigned int  useable : 1;
+    unsigned int  usable : 1;
     unsigned int  garbage : 25;
 };
 
@@ -65,7 +65,7 @@ static inline void fill_modify_ldt_struct( struct modify_ldt_s *ptr, const LDT_E
     ptr->read_exec_only  = !(entry->HighWord.Bits.Type & 2);
     ptr->limit_in_pages  = entry->HighWord.Bits.Granularity;
     ptr->seg_not_present = !entry->HighWord.Bits.Pres;
-    ptr->useable         = entry->HighWord.Bits.Sys;
+    ptr->usable          = entry->HighWord.Bits.Sys;
     ptr->garbage         = 0;
 }
 
