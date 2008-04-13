@@ -151,13 +151,37 @@ static WCHAR *build_args( int argc, WCHAR **argvW )
 	return ret;
 }
 
+static WCHAR *get_parent_dir(WCHAR* path)
+{
+	WCHAR *last_slash;
+	WCHAR *result;
+	int len;
+
+	last_slash = strrchrW( path, '\\' );
+	if (last_slash == NULL)
+		len = 1;
+	else
+		len = last_slash - path + 1;
+
+	result = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+	CopyMemory(result, path, (len-1)*sizeof(WCHAR));
+	result[len-1] = '\0';
+
+	return result;
+}
+
 int wmain (int argc, WCHAR *argv[])
 {
 	SHELLEXECUTEINFOW sei;
 	WCHAR *args = NULL;
 	int i;
+	int unix_mode = 0;
+	WCHAR *dos_filename = NULL;
+	WCHAR *parent_directory = NULL;
+	DWORD binary_type;
 
 	static const WCHAR openW[] = { 'o', 'p', 'e', 'n', 0 };
+	static const WCHAR unixW[] = { 'u', 'n', 'i', 'x', 0 };
 
 	memset(&sei, 0, sizeof(sei));
 	sei.cbSize = sizeof(sei);
@@ -176,6 +200,10 @@ int wmain (int argc, WCHAR *argv[])
 		int ci;
 
 		if (argv[i][0] != '/')
+			break;
+
+		/* Unix paths can start with / so we have to assume anything following /U is not a flag */
+		if (unix_mode)
 			break;
 
 		/* Handle all options in this word */
@@ -197,6 +225,15 @@ int wmain (int argc, WCHAR *argv[])
 			case 'r':
 			case 'R':
 				/* sei.nShow = SW_SHOWNORMAL; */
+				break;
+			case 'u':
+			case 'U':
+				if (strncmpiW(&argv[i][ci], unixW, 4) == 0)
+					unix_mode = 1;
+				else {
+					WINE_ERR("Option '%s' not recognized\n", wine_dbgstr_w( argv[i]+ci-1));
+					usage();
+				}
 				break;
 			case 'w':
 			case 'W':
@@ -220,10 +257,68 @@ int wmain (int argc, WCHAR *argv[])
 	args = build_args( argc - i, &argv[i] );
 	sei.lpParameters = args;
 
-	if (!ShellExecuteExW(&sei))
+	if (unix_mode) {
+		LPWSTR (*wine_get_dos_file_name_ptr)(LPCSTR);
+		char* multibyte_unixpath;
+		int multibyte_unixpath_len;
+
+		wine_get_dos_file_name_ptr = (void*)GetProcAddress(GetModuleHandle("KERNEL32"), "wine_get_dos_file_name");
+
+		if (!wine_get_dos_file_name_ptr)
+			fatal_string(STRING_UNIXFAIL);
+
+		multibyte_unixpath_len = WideCharToMultiByte(CP_UNIXCP, 0, sei.lpFile, -1, NULL, 0, NULL, NULL);
+		multibyte_unixpath = HeapAlloc(GetProcessHeap(), 0, multibyte_unixpath_len);
+
+		WideCharToMultiByte(CP_UNIXCP, 0, sei.lpFile, -1, multibyte_unixpath, multibyte_unixpath_len, NULL, NULL);
+
+		dos_filename = wine_get_dos_file_name_ptr(multibyte_unixpath);
+
+		HeapFree(GetProcessHeap(), 0, multibyte_unixpath);
+
+		if (!dos_filename)
+			fatal_string(STRING_UNIXFAIL);
+
+		sei.lpFile = dos_filename;
+		sei.lpDirectory = parent_directory = get_parent_dir(dos_filename);
+
+                if (GetBinaryTypeW(sei.lpFile, &binary_type)) {
+                    WCHAR *commandline;
+                    STARTUPINFOW startup_info;
+                    PROCESS_INFORMATION process_information;
+                    static WCHAR commandlineformat[] = {'"','%','s','"','%','s',0};
+
+                    /* explorer on windows always quotes the filename when running a binary on windows (see bug 5224) so we have to use CreateProcessW in this case */
+
+                    commandline = HeapAlloc(GetProcessHeap(), 0, (strlenW(sei.lpFile)+3+strlenW(sei.lpParameters))*sizeof(WCHAR));
+                    sprintfW(commandline, commandlineformat, sei.lpFile, sei.lpParameters);
+
+                    ZeroMemory(&startup_info, sizeof(startup_info));
+                    startup_info.cb = sizeof(startup_info);
+
+                    if (!CreateProcessW(
+                            NULL, /* lpApplicationName */
+                            commandline, /* lpCommandLine */
+                            NULL, /* lpProcessAttributes */
+                            NULL, /* lpThreadAttributes */
+                            FALSE, /* bInheritHandles */
+                            CREATE_NEW_CONSOLE, /* dwCreationFlags */
+                            NULL, /* lpEnvironment */
+                            sei.lpDirectory, /* lpCurrentDirectory */
+                            &startup_info, /* lpStartupInfo */
+                            &process_information /* lpProcessInformation */ ))
+                    {
+			fatal_string_error(STRING_EXECFAIL, GetLastError());
+                    }
+                    sei.hProcess = process_information.hProcess;
+                }
+	}
+	else if (!ShellExecuteExW(&sei))
 	    	fatal_string_error(STRING_EXECFAIL, GetLastError());
 
 	HeapFree( GetProcessHeap(), 0, args );
+	HeapFree( GetProcessHeap(), 0, dos_filename );
+	HeapFree( GetProcessHeap(), 0, parent_directory );
 
 	if (sei.fMask & SEE_MASK_NOCLOSEPROCESS) {
 		DWORD exitcode;

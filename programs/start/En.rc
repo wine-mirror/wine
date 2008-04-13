@@ -33,6 +33,7 @@ Options: \n\
 /MAX[imized] Start the program maximized. \n\
 /R[estored]  Start the program normally (neither minimized nor maximized). \n\
 /W[ait]      Wait for started program to finish, then exit with its exit code. \n\
+/Unix        Use a Unix filename and start the file like windows explorer. \n\
 /L           Show end-user license. \n\
  \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
@@ -59,5 +60,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. \n\
 See the COPYING.LIB file for license information. \n\
 "
 
-STRING_EXECFAIL "Application could not be started, or no application associated with the specified file.\nShellExecuteEx failed"
+STRING_EXECFAIL, "Application could not be started, or no application associated with the specified file.\nShellExecuteEx failed"
+
+STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
 }
