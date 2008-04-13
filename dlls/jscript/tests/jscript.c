@@ -68,7 +68,7 @@ static void test_safety(IUnknown *unk)
             INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER
                 |INTERFACESAFE_FOR_UNTRUSTED_CALLER,
             INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER);
-    ok(hres == E_FAIL, "SetInterfaceSafetyOptions failed: %08x\n, expected E_FAIL", hres);
+    ok(hres == E_FAIL, "SetInterfaceSafetyOptions failed: %08x, expected E_FAIL\n", hres);
 
     hres = IObjectSafety_SetInterfaceSafetyOptions(safety, &IID_IActiveScriptParse,
             INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER,
