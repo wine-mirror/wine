@@ -139,21 +139,25 @@ static const IMediaSeekingVtbl TransformFilter_Seeking_Vtbl =
     MediaSeekingImpl_GetPreroll
 };
 
+/* These shouldn't be implemented by default.
+ * Usually only source filters should implement these
+ * and even it's not needed all of the time
+ */
 static HRESULT TransformFilter_ChangeCurrent(IBaseFilter *iface)
 {
-    FIXME("(%p) filter hasn't implemented current position change!\n", iface);
+    TRACE("(%p) filter hasn't implemented current position change!\n", iface);
     return S_OK;
 }
 
 static HRESULT TransformFilter_ChangeStop(IBaseFilter *iface)
 {
-    FIXME("(%p) filter hasn't implemented stop position change!\n", iface);
+    TRACE("(%p) filter hasn't implemented stop position change!\n", iface);
     return S_OK;
 }
 
 static HRESULT TransformFilter_ChangeRate(IBaseFilter *iface)
 {
-    FIXME("(%p) filter hasn't implemented rate change!\n", iface);
+    TRACE("(%p) filter hasn't implemented rate change!\n", iface);
     return S_OK;
 }
 
