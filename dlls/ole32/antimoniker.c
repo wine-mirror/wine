@@ -532,7 +532,7 @@ static ULONG WINAPI AntiMonikerROTDataImpl_Release(IROTData* iface)
 }
 
 /******************************************************************************
- *        AntiMonikerIROTData_GetComparaisonData
+ *        AntiMonikerIROTData_GetComparisonData
  ******************************************************************************/
 static HRESULT WINAPI
 AntiMonikerROTDataImpl_GetComparisonData(IROTData* iface, BYTE* pbData,

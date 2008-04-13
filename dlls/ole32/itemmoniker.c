@@ -956,7 +956,7 @@ ULONG   WINAPI ItemMonikerROTDataImpl_Release(IROTData* iface)
 }
 
 /******************************************************************************
- *        ItemMonikerIROTData_GetComparaisonData
+ *        ItemMonikerIROTData_GetComparisonData
  ******************************************************************************/
 HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData* iface,
                                                          BYTE* pbData,

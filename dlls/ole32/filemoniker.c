@@ -1264,7 +1264,7 @@ FileMonikerROTDataImpl_Release(IROTData* iface)
 }
 
 /******************************************************************************
- *        FileMonikerIROTData_GetComparaisonData
+ *        FileMonikerIROTData_GetComparisonData
  */
 static HRESULT WINAPI
 FileMonikerROTDataImpl_GetComparisonData(IROTData* iface, BYTE* pbData,
