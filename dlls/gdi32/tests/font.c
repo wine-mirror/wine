@@ -1518,7 +1518,7 @@ static void test_negative_width(HDC hdc, const LOGFONTA *lf)
     {
         SelectObject(hdc, hfont_prev);
         DeleteObject(hfont);
-        skip("This font doesn't contain 'x', skipping the test\n");
+        skip("Font %s doesn't contain 'x', skipping the test\n", lf->lfFaceName);
         return;
     }
 
