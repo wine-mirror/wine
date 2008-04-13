@@ -246,7 +246,7 @@ static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPi
     pPinImpl->pAllocator = NULL;
     pPinImpl->tStart = 0;
     pPinImpl->tStop = 0;
-    pPinImpl->dRate = 0;
+    pPinImpl->dRate = 1.0;
     pPinImpl->pin.lpVtbl = InputPin_Vtbl;
     pPinImpl->lpVtblMemInput = &MemInputPin_Vtbl;
     pPinImpl->flushing = pPinImpl->end_of_stream = 0;
@@ -1198,6 +1198,7 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
     pPinImpl->rtStart = 0;
     pPinImpl->rtCurrent = 0;
     pPinImpl->rtStop = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
+    pPinImpl->dRate = 1.0;
     pPinImpl->state = State_Stopped;
 
     InitializeCriticalSection(&pPinImpl->thread_lock);
