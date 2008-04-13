@@ -1242,23 +1242,22 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD event_flags, DWORD 
  * Updates internal state for <vkey>, depending on key <state> under X
  *
  */
-static inline void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
+static inline void KEYBOARD_UpdateOneState ( WORD vkey, WORD scan, int state, DWORD time )
 {
     /* Do something if internal table state != X state for keycode */
-    if (((key_state_table[vkey] & 0x80)!=0) != state)
+    if (((key_state_table[vkey & 0xff] & 0x80)!=0) != state)
     {
-        DWORD flags = 0;
+        DWORD flags = vkey & 0x100 ? KEYEVENTF_EXTENDEDKEY : 0;
 
         if (!state) flags |= KEYEVENTF_KEYUP;
-        if (vkey == VK_RSHIFT || vkey == VK_RCONTROL || vkey == VK_RMENU) flags |= KEYEVENTF_EXTENDEDKEY;
 
         TRACE("Adjusting state for vkey %#.2x. State before %#.2x\n",
-              vkey, key_state_table[vkey]);
+              vkey, key_state_table[vkey & 0xff]);
 
         /* Fake key being pressed inside wine */
-        X11DRV_send_keyboard_input( vkey, 0, flags, time, 0, 0 );
+        X11DRV_send_keyboard_input( vkey & 0xff, scan & 0xff, flags, time, 0, 0 );
 
-        TRACE("State after %#.2x\n",key_state_table[vkey]);
+        TRACE("State after %#.2x\n", key_state_table[vkey & 0xff]);
     }
 }
 
@@ -1273,7 +1272,7 @@ static inline void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
  */
 void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
 {
-    int i, j, alt_r = 0, alt_l = 0, control_r = 0, control_l = 0, shift_r = 0, shift_l = 0;
+    int i, j;
     DWORD time = GetCurrentTime();
 
     /* the minimum keycode is always greater or equal to 8, so we can
@@ -1281,27 +1280,25 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
      */
     for (i = 1; i < 32; i++)
     {
-        if (!event->xkeymap.key_vector[i]) continue;
         for (j = 0; j < 8; j++)
         {
-            if (!(event->xkeymap.key_vector[i] & (1<<j))) continue;
-            switch(keyc2vkey[(i * 8) + j] & 0xff)
+            WORD vkey = keyc2vkey[(i * 8) + j];
+            WORD scan = keyc2scan[(i * 8) + j];
+            int state = (event->xkeymap.key_vector[i] & (1<<j)) != 0;
+
+            switch(vkey & 0xff)
             {
-            case VK_LMENU:    alt_l = 1; break;
-            case VK_RMENU:    alt_r = 1; break;
-            case VK_LCONTROL: control_l = 1; break;
-            case VK_RCONTROL: control_r = 1; break;
-            case VK_LSHIFT:   shift_l = 1; break;
-            case VK_RSHIFT:   shift_r = 1; break;
+            case VK_LMENU:
+            case VK_RMENU:
+            case VK_LCONTROL:
+            case VK_RCONTROL:
+            case VK_LSHIFT:
+            case VK_RSHIFT:
+                KEYBOARD_UpdateOneState( vkey, scan, state, time );
+                break;
             }
         }
     }
-    KEYBOARD_UpdateOneState( VK_LMENU, alt_l, time );
-    KEYBOARD_UpdateOneState( VK_RMENU, alt_r, time );
-    KEYBOARD_UpdateOneState( VK_LCONTROL, control_l, time );
-    KEYBOARD_UpdateOneState( VK_RCONTROL, control_r, time );
-    KEYBOARD_UpdateOneState( VK_LSHIFT, shift_l, time );
-    KEYBOARD_UpdateOneState( VK_RSHIFT, shift_r, time );
 }
 
 static void update_lock_state(BYTE vkey, WORD scan, DWORD time)
