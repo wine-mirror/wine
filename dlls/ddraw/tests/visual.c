@@ -1763,7 +1763,7 @@ static void D3D1_ViewportClearTest(void)
 
     memset(&mat, 0, sizeof(mat));
     mat.dwSize = sizeof(mat);
-    U1(U1(mat).diffuse).r = 1.0f;
+    U1(U(mat).diffuse).r = 1.0f;
     hr = IDirect3DMaterial_SetMaterial(bgMaterial, &mat);
     ok(hr == D3D_OK, "IDirect3DMaterial_SetMaterial failed: %08x\n", hr);
 
@@ -1781,16 +1781,16 @@ static void D3D1_ViewportClearTest(void)
     if (SUCCEEDED(hr)) {
         D3DRECT rect;
 
-        rect.x1 = rect.y1 = 0;
-        rect.x2 = 640;
-        rect.y2 = 480;
+        U1(rect).x1 = U2(rect).y1 = 0;
+        U3(rect).x2 = 640;
+        U4(rect).y2 = 480;
 
         hr = IDirect3DViewport_Clear(Viewport,  1,  &rect, D3DCLEAR_TARGET);
         ok(hr == D3D_OK, "IDirect3DViewport_Clear failed: %08x\n", hr);
 
         memset(&mat, 0, sizeof(mat));
         mat.dwSize = sizeof(mat);
-        U1(U1(mat).diffuse).b = 1.0f;
+        U3(U(mat).diffuse).b = 1.0f;
         hr = IDirect3DMaterial_SetMaterial(bgMaterial, &mat);
         ok(hr == D3D_OK, "IDirect3DMaterial_SetMaterial failed: %08x\n", hr);
 
@@ -1832,7 +1832,7 @@ static DWORD D3D3_getPixelColor(IDirectDraw4 *DirectDraw, IDirectDrawSurface4 *S
      */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
     ddsd.dwWidth = 640;
     ddsd.dwHeight = 480;
@@ -1847,7 +1847,7 @@ static DWORD D3D3_getPixelColor(IDirectDraw4 *DirectDraw, IDirectDrawSurface4 *S
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
 
     hr = IDirectDrawSurface4_BltFast(surf, 0, 0, Surface, NULL, 0);
     ok(hr == DD_OK, "IDirectDrawSurface_BltFast returned %08x\n", hr);
@@ -2025,9 +2025,9 @@ static void D3D3_ViewportClearTest(void)
     ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
 
     if (SUCCEEDED(hr)) {
-        rect.x1 = rect.y1 = 0;
-        rect.x2 = 640;
-        rect.y2 = 480;
+        U1(rect).x1 = U2(rect).y1 = 0;
+        U3(rect).x2 = 640;
+        U4(rect).y2 = 480;
 
         hr = IDirect3DViewport3_Clear2(Viewport3, 1, &rect, D3DCLEAR_TARGET, 0x00ff00, 0.0f, 0);
         ok(hr == D3D_OK, "IDirect3DViewport3_Clear2 failed, hr = %08x\n", hr);
