@@ -146,11 +146,14 @@ static HRESULT AVIDec_ProcessEnd(TransformFilterImpl* pTransformFilter)
 
     TRACE("(%p)->()\n", This);
 
+    if (!This->hvid)
+        return S_OK;
+
     result = ICDecompressEnd(This->hvid);
     if (result != ICERR_OK)
     {
         ERR("Cannot stop processing (%d)\n", result);
-	return E_FAIL;
+        return E_FAIL;
     }
     return S_OK;
 }
