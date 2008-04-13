@@ -34,5 +34,6 @@
 #include "gphoto2_Nl.rc"
 #include "gphoto2_No.rc"
 #include "gphoto2_Pl.rc"
+#include "gphoto2_Ru.rc"
 #include "gphoto2_Si.rc"
 #include "gphoto2_Sv.rc"
