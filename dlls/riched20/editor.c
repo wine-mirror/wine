@@ -3207,7 +3207,12 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case EM_SETTARGETDEVICE:
     if (wParam == 0)
     {
-      editor->bWordWrap = (lParam == 0);
+      BOOL new = (lParam == 0);
+      if (editor->bWordWrap != new)
+      {
+        editor->bWordWrap = new;
+        ME_RewrapRepaint(editor);
+      }
     }
     else FIXME("Unsupported yet non NULL device in EM_SETTARGETDEVICE\n");
     break;
