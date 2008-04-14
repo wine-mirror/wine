@@ -50,7 +50,6 @@ typedef enum tagWORDREP_BREAK_TYPE
  *    IWordSink interface
  */
 [
-    unique,
     uuid(cc907054-c058-101a-b554-08002b33b0e6),
     object,
     local
@@ -77,7 +76,6 @@ interface IWordSink : IUnknown
  *    IPhraseSink interface
  */
 [
-    unique,
     uuid(cc906ff0-c058-101a-b554-08002b33b0e6),
     object,
     local
@@ -99,7 +97,6 @@ interface IPhraseSink: IUnknown
  *    IWordBreaker interface
  */
 [
-    unique,
     uuid(d53552c8-77e3-101a-b552-08002b33b0e6),
     object,
     local
