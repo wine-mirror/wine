@@ -37,7 +37,7 @@ BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    LTEXT           "Cette bibliothèque est un logiciel libre ; vous pouvez la redistribuer et/ou la modifier conformément aux dispositions de la Licence Publique Générale GNU, telle que publiée par la Free Software Foundation ; version 2.1 de la licence, ou encore (à votre choix) toute version ultérieure."
+    LTEXT           "Cette bibliothèque est un logiciel libre ; vous pouvez la redistribuer et/ou la modifier suivant les termes de la Licence Générale Publique Limitée, telle que publiée par la Free Software Foundation ; soit la version 2.1 de la License, soit (à votre gré) toute version ultérieure."
                     IDC_STATIC,119,44,124,72
 END
 
@@ -63,6 +63,8 @@ BEGIN
     GROUPBOX        " Paramètres des fenêtres ",IDC_STATIC,8,4,244,180
 
     CONTROL	    "Permettre aux applications DirectX d'empêcher la souris de quitter leur fenêtre",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP | BS_MULTILINE,15,14,230,16
+
+    CONTROL         "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
 
     CONTROL	        "Permettre au gestionnaire de &fenêtres de contrôler les fenêtres",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     LTEXT 	    "Si les fenêtres sont gérées par votre gestionnaire de fenêtres, elles auront des bordures standard, elles respecteront votre bureau virtuel et apparaîtront dans la liste des fenêtres.\n\nSi les fenêtres ne sont pas gérées, elles seront déconnectées de votre gestionnaire de fenêtres. Ceci signifie qu'elle ne seront pas parfaitement intégrées à votre bureau, mais que l'émulation sera plus précise ce qui permet à certains programmes de mieux fonctionner.",
@@ -305,5 +307,20 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Texte de la barre de titre active"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Barre de titre inactive"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Texte de la barre de titre inactive"
-    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Texte des boîtes de messages"
+    IDC_SYSPARAMS_APPWORKSPACE      "Espace de travail de l'application"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Cadre de la fenêtre"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Bordure active"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Bordure inactive"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Ombre des contrôles"
+    IDC_SYSPARAMS_GRAY_TEXT         "Texte gris"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Surbrillance des contrôles"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Ombre sombre des contrôles"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Lumière des contrôles"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Fond alternatif des contrôles"
+    IDC_SYSPARAMS_HOT_TRACKING      "Élément actif"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Dégradé de la barre de titre active"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Dégradé de la barre de titre inactive"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Surbrillance du menu"
+    IDC_SYSPARAMS_MENUBAR           "Barre de menu"
 END
