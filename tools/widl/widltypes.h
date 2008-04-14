@@ -307,7 +307,7 @@ struct _importlib_t {
 struct _typelib_t {
     char *name;
     char *filename;
-    attr_list_t *attrs;
+    const attr_list_t *attrs;
     struct list entries;
     struct list importlibs;
 };
