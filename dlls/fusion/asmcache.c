@@ -19,17 +19,77 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #define COBJMACROS
 
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winver.h"
+#include "wincrypt.h"
+#include "winreg.h"
+#include "shlwapi.h"
+#include "dbghelp.h"
 #include "ole2.h"
 #include "fusion.h"
+#include "corerror.h"
+
+#include "fusionpriv.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(fusion);
+
+static BOOL create_full_path(LPCSTR path)
+{
+    LPSTR new_path;
+    BOOL ret = TRUE;
+    int len;
+
+    new_path = HeapAlloc(GetProcessHeap(), 0, lstrlenA(path) + 1);
+    if (!new_path)
+        return FALSE;
+
+    lstrcpyA(new_path, path);
+
+    while ((len = lstrlenA(new_path)) && new_path[len - 1] == '\\')
+        new_path[len - 1] = 0;
+
+    while (!CreateDirectoryA(new_path, NULL))
+    {
+        LPSTR slash;
+        DWORD last_error = GetLastError();
+
+        if(last_error == ERROR_ALREADY_EXISTS)
+            break;
+
+        if(last_error != ERROR_PATH_NOT_FOUND)
+        {
+            ret = FALSE;
+            break;
+        }
+
+        if(!(slash = strrchr(new_path, '\\')))
+        {
+            ret = FALSE;
+            break;
+        }
+
+        len = slash - new_path;
+        new_path[len] = 0;
+        if(!create_full_path(new_path))
+        {
+            ret = FALSE;
+            break;
+        }
+
+        new_path[len] = '\\';
+    }
+
+    HeapFree(GetProcessHeap(), 0, new_path);
+    return ret;
+}
 
 /* IAssemblyCache */
 
@@ -130,10 +190,80 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
                                                          LPCWSTR pszManifestFilePath,
                                                          LPCFUSION_INSTALL_REFERENCE pRefData)
 {
-    FIXME("(%p, %d, %s, %p) stub!\n", iface, dwFlags,
+    ASSEMBLY *assembly;
+    LPSTR filename;
+    LPSTR name = NULL;
+    LPSTR token = NULL;
+    LPSTR version = NULL;
+    LPSTR asmpath = NULL;
+    CHAR path[MAX_PATH];
+    CHAR windir[MAX_PATH];
+    LPWSTR ext;
+    HRESULT hr;
+
+    static const WCHAR ext_exe[] = {'.','e','x','e',0};
+    static const WCHAR ext_dll[] = {'.','d','l','l',0};
+
+    TRACE("(%p, %d, %s, %p)\n", iface, dwFlags,
           debugstr_w(pszManifestFilePath), pRefData);
 
-    return E_NOTIMPL;
+    if (!pszManifestFilePath || !*pszManifestFilePath)
+        return E_INVALIDARG;
+
+    if (!(ext = strrchrW(pszManifestFilePath, '.')))
+        return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
+
+    if (lstrcmpW(ext, ext_exe) && lstrcmpW(ext, ext_dll))
+        return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
+
+    if (GetFileAttributesW(pszManifestFilePath) == INVALID_FILE_ATTRIBUTES)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    hr = assembly_create(&assembly, pszManifestFilePath);
+    if (FAILED(hr))
+    {
+        hr = COR_E_ASSEMBLYEXPECTED;
+        goto done;
+    }
+
+    hr = assembly_get_name(assembly, &name);
+    if (FAILED(hr))
+        goto done;
+
+    hr = assembly_get_pubkey_token(assembly, &token);
+    if (FAILED(hr))
+        goto done;
+
+    hr = assembly_get_version(assembly, &version);
+    if (FAILED(hr))
+        goto done;
+
+    GetWindowsDirectoryA(windir, MAX_PATH);
+
+    FIXME("Ignoring assembly architecture!\n");
+
+    sprintf(path, "%s\\assembly\\GAC_MSIL\\%s\\%s__%s\\", windir, name,
+            version, token);
+
+    create_full_path(path);
+
+    hr = assembly_get_path(assembly, &asmpath);
+    if (FAILED(hr))
+        goto done;
+
+    filename = PathFindFileNameA(asmpath);
+
+    lstrcatA(path, filename);
+    if (!CopyFileA(asmpath, path, FALSE))
+        hr = HRESULT_FROM_WIN32(GetLastError());
+
+done:
+    HeapFree(GetProcessHeap(), 0, name);
+    HeapFree(GetProcessHeap(), 0, token);
+    HeapFree(GetProcessHeap(), 0, version);
+    HeapFree(GetProcessHeap(), 0, asmpath);
+    assembly_release(assembly);
+    return hr;
 }
 
 static const IAssemblyCacheVtbl AssemblyCacheVtbl = {

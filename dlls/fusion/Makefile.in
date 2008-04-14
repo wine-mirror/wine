@@ -3,11 +3,12 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = fusion.dll
-IMPORTS   = kernel32
+IMPORTS   = advapi32 dbghelp kernel32 shlwapi version
 
 C_SRCS = \
 	asmcache.c \
 	asmname.c \
+	assembly.c \
 	fusion.c \
 	fusion_main.c
 

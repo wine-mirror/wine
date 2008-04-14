@@ -853,6 +853,7 @@ static void test_InstallAssembly(void)
     IAssemblyCache *cache;
     HRESULT hr;
     ULONG disp;
+    DWORD attr;
 
     static const WCHAR empty[] = {0};
     static const WCHAR noext[] = {'f','i','l','e',0};
@@ -877,64 +878,44 @@ static void test_InstallAssembly(void)
 
     /* NULL pszManifestFilePath */
     hr = IAssemblyCache_InstallAssembly(cache, 0, NULL, NULL);
-    todo_wine
-    {
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
-    }
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     /* empty pszManifestFilePath */
     hr = IAssemblyCache_InstallAssembly(cache, 0, empty, NULL);
-    todo_wine
-    {
-        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
-    }
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     /* pszManifestFilePath has no extension */
     hr = IAssemblyCache_InstallAssembly(cache, 0, noext, NULL);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME),
-           "Expected HRESULT_FROM_WIN32(ERROR_INVALID_NAME), got %08x\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME),
+       "Expected HRESULT_FROM_WIN32(ERROR_INVALID_NAME), got %08x\n", hr);
 
     /* pszManifestFilePath has bad extension */
     hr = IAssemblyCache_InstallAssembly(cache, 0, badext, NULL);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME),
-           "Expected HRESULT_FROM_WIN32(ERROR_INVALID_NAME), got %08x\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME),
+       "Expected HRESULT_FROM_WIN32(ERROR_INVALID_NAME), got %08x\n", hr);
 
     /* pszManifestFilePath has dll extension */
     hr = IAssemblyCache_InstallAssembly(cache, 0, dllext, NULL);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
 
     /* pszManifestFilePath has exe extension */
     hr = IAssemblyCache_InstallAssembly(cache, 0, exeext, NULL);
-    todo_wine
-    {
-        ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-           "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
-    }
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
 
     /* empty file */
     hr = IAssemblyCache_InstallAssembly(cache, 0, testdll, NULL);
-    todo_wine
-    {
-        ok(hr == COR_E_ASSEMBLYEXPECTED,
-           "Expected COR_E_ASSEMBLYEXPECTED, got %08x\n", hr);
-    }
+    ok(hr == COR_E_ASSEMBLYEXPECTED,
+       "Expected COR_E_ASSEMBLYEXPECTED, got %08x\n", hr);
 
     /* wine assembly */
     hr = IAssemblyCache_InstallAssembly(cache, 0, winedll, NULL);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    attr = GetFileAttributes("C:\\windows\\assembly\\GAC_MSIL\\wine\\"
+                             "1.0.0.0__2d03617b1c31e2f5/wine.dll");
+    ok(attr != INVALID_FILE_ATTRIBUTES, "Expected assembly to exist\n");
 
     /* uninstall the assembly from the GAC */
     hr = IAssemblyCache_UninstallAssembly(cache, 0, wine, NULL, &disp);
@@ -944,6 +925,12 @@ static void test_InstallAssembly(void)
         ok(disp == IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED,
            "Expected IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED, got %d\n", disp);
     }
+
+    /* FIXME: remove once UninstallAssembly is implemented */
+    DeleteFileA("C:\\windows\\assembly\\GAC_MSIL\\wine\\"
+                "1.0.0.0__2d03617b1c31e2f5\\wine.dll");
+    RemoveDirectoryA("C:\\windows\\assembly\\GAC_MSIL\\wine\\1.0.0.0__2d03617b1c31e2f5");
+    RemoveDirectoryA("C:\\windows\\assembly\\GAC_MSIL\\wine");
 
     DeleteFileA("test.dll");
     DeleteFileA("wine.dll");
