@@ -506,14 +506,13 @@ BOOL DOSMEM_MapDosLayout(void)
         unsigned short  sel;
         LDT_ENTRY       entry;
 
-        if (DOSMEM_dosmem)
+        if (DOSMEM_dosmem || !VirtualProtect( NULL, DOSMEM_SIZE, PAGE_EXECUTE_READWRITE, NULL ))
         {
-            ERR( "Needs access to the first megabyte for DOS mode\n" );
+            ERR( "Need full access to the first megabyte for DOS mode\n" );
             ExitProcess(1);
         }
         MESSAGE( "Warning: unprotecting memory to allow real-mode calls.\n"
                  "         NULL pointer accesses will no longer be caught.\n" );
-        VirtualProtect( NULL, DOSMEM_SIZE, PAGE_EXECUTE_READWRITE, NULL );
         /* copy the BIOS and ISR area down */
         memcpy( DOSMEM_dosmem, DOSMEM_sysmem, 0x400 + 0x100 );
         DOSMEM_sysmem = DOSMEM_dosmem;

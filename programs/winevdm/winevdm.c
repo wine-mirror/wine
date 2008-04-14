@@ -383,6 +383,7 @@ int main( int argc, char *argv[] )
     char *cmdline, *appname, **first_arg;
     char *p;
     HMODULE winedos;
+    MEMORY_BASIC_INFORMATION mem_info;
 
     if (!argv[1]) usage();
 
@@ -405,7 +406,12 @@ int main( int argc, char *argv[] )
     if (!(winedos = LoadLibraryA( "winedos.dll" )) ||
         !(wine_load_dos_exe = (void *)GetProcAddress( winedos, "wine_load_dos_exe" )))
     {
-        WINE_MESSAGE( "winevdm: unable to exec '%s': 16-bit support missing\n", argv[1] );
+        WINE_MESSAGE( "winevdm: unable to exec '%s': DOS support unavailable\n", appname );
+        ExitProcess(1);
+    }
+    if (!VirtualQuery( NULL, &mem_info, sizeof(mem_info) ) || mem_info.State == MEM_FREE)
+    {
+        WINE_MESSAGE( "winevdm: unable to exec '%s': DOS memory range unavailable\n", appname );
         ExitProcess(1);
     }
 
