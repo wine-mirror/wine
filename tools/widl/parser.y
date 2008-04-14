@@ -130,6 +130,8 @@ static char *gen_name(void);
 static void process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
 static void check_all_user_types(ifref_list_t *ifaces);
+static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t *attrs);
+static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -662,13 +664,10 @@ s_field:  m_attributes type pident array	{ $$ = $3->var;
 funcdef:
 	  m_attributes type pident		{ var_t *v = $3->var;
 						  var_list_t *args = $3->args;
-						  v->attrs = $1;
+						  v->attrs = check_function_attrs(v->name, $1);
 						  set_type(v, $2, $3, NULL, FALSE);
 						  free($3);
 						  $$ = make_func(v, args);
-						  if (is_attr(v->attrs, ATTR_IN)) {
-						    error_loc("inapplicable attribute [in] for function '%s'\n",$$->def->name);
-						  }
 						}
 	;
 
@@ -816,7 +815,7 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 						    pointer_default = get_attrv($1, ATTR_POINTERDEFAULT);
 						  is_object_interface = is_object($1);
 						  if ($2->defined) error_loc("multiple definition error\n");
-						  $2->attrs = $1;
+						  $2->attrs = check_iface_attrs($2->name, $1);
 						  $2->defined = TRUE;
 						  if (!parse_only && do_header) write_forward($2);
 						}
@@ -2114,12 +2113,140 @@ static void process_typedefs(pident_list_t *pidents)
   }
 }
 
+struct allowed_attr
+{
+    unsigned int dce_compatible : 1;
+    unsigned int acf : 1;
+    unsigned int on_interface : 1;
+    unsigned int on_function : 1;
+    unsigned int on_arg : 1;
+    unsigned int on_type : 1;
+    unsigned int on_field : 1;
+    unsigned int on_library : 1;
+    unsigned int on_dispinterface : 1;
+    unsigned int on_module : 1;
+    unsigned int on_coclass : 1;
+    const char *display_name;
+};
+
+struct allowed_attr allowed_attr[] =
+{
+    /* attr                     { D ACF I Fn ARG T Fi  L  DI M  C  <display name> } */
+    /* ATTR_AGGREGATABLE */     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "aggregatable" },
+    /* ATTR_APPOBJECT */        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "appobject" },
+    /* ATTR_ASYNC */            { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, "async" },
+    /* ATTR_AUTO_HANDLE */      { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, "auto_handle" },
+    /* ATTR_BINDABLE */         { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "bindable" },
+    /* ATTR_CALLAS */           { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "call_as" },
+    /* ATTR_CALLCONV */         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
+    /* ATTR_CASE */             { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "case" },
+    /* ATTR_CONTEXTHANDLE */    { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "context_handle" },
+    /* ATTR_CONTROL */          { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, "control" },
+    /* ATTR_DEFAULT */          { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, "default" },
+    /* ATTR_DEFAULTCOLLELEM */  { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "defaultcollelem" },
+    /* ATTR_DEFAULTVALUE_EXPR */ { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "defaultvalue" },
+    /* ATTR_DEFAULTVALUE_STRING */ { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "defaultvalue" },
+    /* ATTR_DEFAULTVTABLE */    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "defaultvtable" },
+    /* ATTR_DISPINTERFACE */    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
+    /* ATTR_DISPLAYBIND */      { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "displaybind" },
+    /* ATTR_DLLNAME */          { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, "dllname" },
+    /* ATTR_DUAL */             { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "dual" },
+    /* ATTR_ENDPOINT */         { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "endpoint" },
+    /* ATTR_ENTRY_ORDINAL */    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "entry" },
+    /* ATTR_ENTRY_STRING */     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "entry" },
+    /* ATTR_EXPLICIT_HANDLE */  { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, "explicit_handle" },
+    /* ATTR_HANDLE */           { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "handle" },
+    /* ATTR_HELPCONTEXT */      { 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, "helpcontext" },
+    /* ATTR_HELPFILE */         { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "helpfile" },
+    /* ATTR_HELPSTRING */       { 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, "helpstring" },
+    /* ATTR_HELPSTRINGCONTEXT */ { 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, "helpstringcontext" },
+    /* ATTR_HELPSTRINGDLL */    { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "helpstringdll" },
+    /* ATTR_HIDDEN */           { 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, "hidden" },
+    /* ATTR_ID */               { 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, "id" },
+    /* ATTR_IDEMPOTENT */       { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "idempotent" },
+    /* ATTR_IIDIS */            { 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, "iid_is" },
+    /* ATTR_IMMEDIATEBIND */    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "immediatebind" },
+    /* ATTR_IMPLICIT_HANDLE */  { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, "implicit_handle" },
+    /* ATTR_IN */               { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "in" },
+    /* ATTR_INPUTSYNC */        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "inputsync" },
+    /* ATTR_LENGTHIS */         { 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, "length_is" },
+    /* ATTR_LOCAL */            { 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, "local" },
+    /* ATTR_NONBROWSABLE */     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "nonbrowsable" },
+    /* ATTR_NONCREATABLE */     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "noncreatable" },
+    /* ATTR_NONEXTENSIBLE */    { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "nonextensible" },
+    /* ATTR_OBJECT */           { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "object" },
+    /* ATTR_ODL */              { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "odl" },
+    /* ATTR_OLEAUTOMATION */    { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "oleautomation" },
+    /* ATTR_OPTIONAL */         { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "optional" },
+    /* ATTR_OUT */              { 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "out" },
+    /* ATTR_POINTERDEFAULT */   { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "pointer_default" },
+    /* ATTR_POINTERTYPE */      { 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, "ref, unique or ptr" },
+    /* ATTR_PROPGET */          { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "propget" },
+    /* ATTR_PROPPUT */          { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "propput" },
+    /* ATTR_PROPPUTREF */       { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "propputref" },
+    /* ATTR_PUBLIC */           { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "public" },
+    /* ATTR_RANGE */            { 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, "range" },
+    /* ATTR_READONLY */         { 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, "readonly" },
+    /* ATTR_REQUESTEDIT */      { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "requestedit" },
+    /* ATTR_RESTRICTED */       { 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, "restricted" },
+    /* ATTR_RETVAL */           { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "retval" },
+    /* ATTR_SIZEIS */           { 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, "size_is" },
+    /* ATTR_SOURCE */           { 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, "source" },
+    /* ATTR_STRICTCONTEXTHANDLE */ { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "strict_context_handle" },
+    /* ATTR_STRING */           { 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, "string" },
+    /* ATTR_SWITCHIS */         { 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, "switch_is" },
+    /* ATTR_SWITCHTYPE */       { 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, "switch_type" },
+    /* ATTR_TRANSMITAS */       { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "transmit_as" },
+    /* ATTR_UUID */             { 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, "uuid" },
+    /* ATTR_V1ENUM */           { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "v1_enum" },
+    /* ATTR_VARARG */           { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "vararg" },
+    /* ATTR_VERSION */          { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, "version" },
+    /* ATTR_WIREMARSHAL */      { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "wire_marshal" },
+};
+
+static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t *attrs)
+{
+  const attr_t *attr;
+  if (!attrs) return attrs;
+  LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+  {
+    if (!allowed_attr[attr->type].on_interface)
+      error_loc("inapplicable attribute %s for interface %s\n",
+                allowed_attr[attr->type].display_name, name);
+  }
+  return attrs;
+}
+
+static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs)
+{
+  const attr_t *attr;
+  if (!attrs) return attrs;
+  LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+  {
+    if (!allowed_attr[attr->type].on_function)
+      error_loc("inapplicable attribute %s for function %s\n",
+                allowed_attr[attr->type].display_name, name);
+  }
+  return attrs;
+}
+
 static void check_arg(var_t *arg)
 {
-  type_t *t = arg->type;
+  const type_t *t = arg->type;
+  const attr_t *attr;
 
   if (t->type == 0 && ! is_var_ptr(arg))
     error_loc("argument '%s' has void type\n", arg->name);
+
+  if (arg->attrs)
+  {
+    LIST_FOR_EACH_ENTRY(attr, arg->attrs, const attr_t, entry)
+    {
+      if (!allowed_attr[attr->type].on_arg)
+        error_loc("inapplicable attribute %s for argument %s\n",
+                  allowed_attr[attr->type].display_name, arg->name);
+    }
+  }
 }
 
 static void check_all_user_types(ifref_list_t *ifrefs)
