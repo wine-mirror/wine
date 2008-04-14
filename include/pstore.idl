@@ -42,9 +42,13 @@ typedef struct _PST_PROVIDERINFO
     LPWSTR szProviderName;
 } PST_PROVIDERINFO, *PPST_PROVIDERINFO;
 
-typedef void *PPST_PROMPTIFO;
-
-
+typedef struct _PST_PROMPTINFO
+{
+    DWORD cbSize;
+    DWORD dwPromptFlags;
+    HWND hwndApp;
+    LPCWSTR szPrompt;
+} PST_PROMPTINFO, *PPST_PROMPTINFO;
 
 typedef struct {
     DWORD cbSize;
@@ -70,13 +74,6 @@ typedef struct {
     DWORD cbSize;
     LPWSTR szDisplayName;
 } PST_TYPEINFO, *PPST_TYPEINFO;
-
-typedef struct {
-    DWORD cbSize;
-    DWORD dwPromptFlags;
-    DWORD_PTR  hwndApp;
-    LPCWSTR szPrompt;
-} PST_PROMPTINFO, *PPST_PROMPTINFO;
 
 [
   object,
@@ -222,7 +219,7 @@ interface IPStore : IUnknown
         [in] LPCWSTR szItemName,
         [in] DWORD *cbData,
         [in] BYTE** pbData,
-        [in] PPST_PROMPTIFO pPromptInfo,
+        [in] PPST_PROMPTINFO pPromptInfo,
         [in] DWORD dwFlags );
 
     HRESULT WriteItem(
@@ -232,7 +229,7 @@ interface IPStore : IUnknown
         [in] LPCWSTR szItemName,
         [in] DWORD cbData,
         [in,size_is(cbData)] BYTE *ppbData,
-        [in] PPST_PROMPTIFO pPromptInfo,
+        [in] PPST_PROMPTINFO pPromptInfo,
         [in] DWORD dwDefaultConfirmationStyle,
         [in] DWORD dwFlags);
 
@@ -242,7 +239,7 @@ interface IPStore : IUnknown
         [in] const GUID* pItemSubtype,
         [in] LPCWSTR szItemName,
         [in] PST_ACCESSMODE ModeFlags,
-        [in] PPST_PROMPTIFO pProomptInfo,
+        [in] PPST_PROMPTINFO pProomptInfo,
         [in] DWORD dwFlags );
 
     HRESULT CloseItem( 

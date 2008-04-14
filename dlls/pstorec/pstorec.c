@@ -264,7 +264,7 @@ static HRESULT WINAPI PStore_fnDeleteItem( IPStore* This, PST_KEY Key,
  */
 static HRESULT WINAPI PStore_fnReadItem( IPStore* This, PST_KEY Key,
     const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName,
-    DWORD *cbData, BYTE** pbData, PPST_PROMPTIFO pPromptInfo, DWORD dwFlags)
+    DWORD *cbData, BYTE** pbData, PPST_PROMPTINFO pPromptInfo, DWORD dwFlags)
 {
     FIXME("%p %08x %s %s %s %p %p %p %08x\n", This, Key,
           debugstr_guid(pItemType), debugstr_guid(pItemSubtype),
@@ -277,7 +277,7 @@ static HRESULT WINAPI PStore_fnReadItem( IPStore* This, PST_KEY Key,
  */
 static HRESULT WINAPI PStore_fnWriteItem( IPStore* This, PST_KEY Key,
     const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName,
-    DWORD cbData, BYTE* ppbData, PPST_PROMPTIFO pPromptInfo,
+    DWORD cbData, BYTE* ppbData, PPST_PROMPTINFO pPromptInfo,
     DWORD dwDefaultConfirmationStyle, DWORD dwFlags)
 {
     FIXME("%p %08x %s %s %s %d %p %p %08x\n", This, Key,
@@ -291,7 +291,7 @@ static HRESULT WINAPI PStore_fnWriteItem( IPStore* This, PST_KEY Key,
  */
 static HRESULT WINAPI PStore_fnOpenItem( IPStore* This, PST_KEY Key,
     const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName,
-    PST_ACCESSMODE ModeFlags, PPST_PROMPTIFO pProomptInfo, DWORD dwFlags )
+    PST_ACCESSMODE ModeFlags, PPST_PROMPTINFO pProomptInfo, DWORD dwFlags )
 {
     FIXME("%p %08x %s %s %p %08x %p %08x\n", This, Key,
            debugstr_guid(pItemType), debugstr_guid(pItemSubtype),
