@@ -186,6 +186,16 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         indent--;
         fprintf(client, "\n");
 
+        if (is_attr(def->attrs, ATTR_IDEMPOTENT) || is_attr(def->attrs, ATTR_BROADCAST))
+        {
+            print_client("_RpcMessage.RpcFlags = ( RPC_NCA_FLAGS_DEFAULT ");
+            if (is_attr(def->attrs, ATTR_IDEMPOTENT))
+                fprintf(client, "| RPC_NCA_FLAGS_IDEMPOTENT ");
+            if (is_attr(def->attrs, ATTR_BROADCAST))
+                fprintf(client, "| RPC_NCA_FLAGS_BROADCAST ");
+            fprintf(client, ");\n\n");
+        }
+
         if (implicit_handle)
         {
             print_client("_Handle = %s;\n", implicit_handle);

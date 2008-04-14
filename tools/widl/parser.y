@@ -457,6 +457,7 @@ attribute:					{ $$ = NULL; }
 	| tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
 	| tAUTOHANDLE				{ $$ = make_attr(ATTR_AUTO_HANDLE); }
 	| tBINDABLE				{ $$ = make_attr(ATTR_BINDABLE); }
+	| tBROADCAST				{ $$ = make_attr(ATTR_BROADCAST); }
 	| tCALLAS '(' ident ')'			{ $$ = make_attrp(ATTR_CALLAS, $3); }
 	| tCASE '(' expr_list_const ')'		{ $$ = make_attrp(ATTR_CASE, $3); }
 	| tCONTEXTHANDLE			{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); }
@@ -2154,6 +2155,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_ASYNC */            { 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, "async" },
     /* ATTR_AUTO_HANDLE */      { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, "auto_handle" },
     /* ATTR_BINDABLE */         { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "bindable" },
+    /* ATTR_BROADCAST */        { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "broadcast" },
     /* ATTR_CALLAS */           { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "call_as" },
     /* ATTR_CALLCONV */         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
     /* ATTR_CASE */             { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "case" },

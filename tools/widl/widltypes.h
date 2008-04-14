@@ -69,6 +69,7 @@ enum attr_type
     ATTR_ASYNC,
     ATTR_AUTO_HANDLE,
     ATTR_BINDABLE,
+    ATTR_BROADCAST,
     ATTR_CALLAS,
     ATTR_CALLCONV, /* calling convention pseudo-attribute */
     ATTR_CASE,
