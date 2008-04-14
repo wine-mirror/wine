@@ -120,7 +120,7 @@ HKCR,"InternetShortcut",,,"Internet Shortcut"
 HKCR,"InternetShortcut","EditFlags",2,"2"
 HKCR,"InternetShortcut","IsShortcut",,
 HKCR,"InternetShortcut","NeverShowExt",,
-HKCR,"InternetShortcut\CLSID",,,"%CLSID_InteretShortcut%"
+HKCR,"InternetShortcut\CLSID",,,"%CLSID_InternetShortcut%"
 HKCR,"InternetShortcut\DefaultIcon",,,"url.dll,0"
 HKCR,"InternetShortcut\shell\open\command",,,"rundll32.exe shdocvw.dll,OpenURL %l"
 HKCR,"InternetShortcut\shell\print\command",,,"rundll32.exe mshtml.dll,PrintHTML ""%1"""
