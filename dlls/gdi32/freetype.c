@@ -4064,7 +4064,7 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
         return get_GSUB_vert_glyph(font,ret);
     }
 
-    if(font->charset == SYMBOL_CHARSET && glyph < 0x100)
+    if(font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL && glyph < 0x100)
         glyph = glyph + 0xf000;
     glyphId = pFT_Get_Char_Index(font->ft_face, glyph);
     return get_GSUB_vert_glyph(font,glyphId);
