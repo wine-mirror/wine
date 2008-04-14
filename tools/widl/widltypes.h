@@ -36,6 +36,7 @@ typedef GUID UUID;
 
 #define RPC_FC_FUNCTION 0xfe
 
+typedef struct _loc_info_t loc_info_t;
 typedef struct _attr_t attr_t;
 typedef struct _expr_t expr_t;
 typedef struct _type_t type_t;
@@ -176,6 +177,13 @@ enum type_kind
     TKIND_MAX
 };
 
+struct _loc_info_t
+{
+    const char *input_name;
+    int line_number;
+    const char *near_text;
+};
+
 struct str_list_entry_t
 {
     char *str;
@@ -239,6 +247,8 @@ struct _var_t {
   type_t *type;
   attr_list_t *attrs;
   expr_t *eval;
+
+  struct _loc_info_t loc_info;
 
   /* parser-internal */
   struct list entry;

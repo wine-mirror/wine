@@ -1560,6 +1560,9 @@ static var_t *make_var(char *name)
   v->type = NULL;
   v->attrs = NULL;
   v->eval = NULL;
+  v->loc_info.input_name = input_name ? input_name : "stdin";
+  v->loc_info.line_number = line_number;
+  v->loc_info.near_text = parser_text;
   return v;
 }
 
