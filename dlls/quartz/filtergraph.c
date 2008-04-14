@@ -2126,7 +2126,9 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface,
     TRACE("State: %s\n", state == State_Running ? "Running" : (state == State_Paused ? "Paused" : (state == State_Stopped ? "Stopped" : "UNKNOWN")));
 
     if ((dwCurrentFlags & 0x7) == AM_SEEKING_AbsolutePositioning)
+    {
         This->position = *pCurrent;
+    }
     else if ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning)
         FIXME("Adjust method %x not handled yet!\n", dwCurrentFlags & 0x7);
 
@@ -2140,6 +2142,12 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface,
     args.curflags = dwCurrentFlags;
     args.stopflags = dwStopFlags;
     hr = all_renderers_seek(This, found_setposition, (DWORD_PTR)&args);
+
+    if (This->refClock && ((dwCurrentFlags & 0x7) != AM_SEEKING_NoPositioning))
+    {
+        /* Update start time, prevents weird jumps */
+        IReferenceClock_GetTime(This->refClock, &This->start_time);
+    }
     LeaveCriticalSection(&This->cs);
 
     return hr;
