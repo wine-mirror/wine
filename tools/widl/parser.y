@@ -132,6 +132,8 @@ static void check_arg(var_t *arg);
 static void check_all_user_types(ifref_list_t *ifaces);
 static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t *attrs);
 static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
+static attr_list_t *check_typedef_attrs(attr_list_t *attrs);
+static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -655,7 +657,7 @@ field:	  s_field ';'				{ $$ = $1; }
 	;
 
 s_field:  m_attributes type pident array	{ $$ = $3->var;
-						  $$->attrs = $1;
+						  $$->attrs = check_field_attrs($$->name, $1);
 						  set_type($$, $2, $3, $4, FALSE);
 						  free($3);
 						}
@@ -928,7 +930,7 @@ type:	  tVOID					{ $$ = duptype(find_type("void", 0), 1); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
 	;
 
-typedef: tTYPEDEF m_attributes type pident_list	{ reg_typedefs($3, $4, $2);
+typedef: tTYPEDEF m_attributes type pident_list	{ reg_typedefs($3, $4, check_typedef_attrs($2));
 						  process_typedefs($4);
 						}
 	;
@@ -2247,6 +2249,32 @@ static void check_arg(var_t *arg)
                   allowed_attr[attr->type].display_name, arg->name);
     }
   }
+}
+
+static attr_list_t *check_typedef_attrs(attr_list_t *attrs)
+{
+  const attr_t *attr;
+  if (!attrs) return attrs;
+  LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+  {
+    if (!allowed_attr[attr->type].on_type)
+      error_loc("inapplicable attribute %s for typedef\n",
+                allowed_attr[attr->type].display_name);
+  }
+  return attrs;
+}
+
+static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs)
+{
+  const attr_t *attr;
+  if (!attrs) return attrs;
+  LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+  {
+    if (!allowed_attr[attr->type].on_field)
+      error_loc("inapplicable attribute %s for field %s\n",
+                allowed_attr[attr->type].display_name, name);
+  }
+  return attrs;
 }
 
 static void check_all_user_types(ifref_list_t *ifrefs)
