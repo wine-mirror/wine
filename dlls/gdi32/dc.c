@@ -785,6 +785,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         release_dc_ptr( origDC );
         if (funcs) funcs = DRIVER_get_driver( funcs );
     }
+    else if (hdc) return 0;
 
     if (!funcs && !(funcs = DRIVER_load_driver( displayW ))) return 0;
 

@@ -248,13 +248,9 @@ static void test_CreateCompatibleDC(void)
     bRet = DeleteDC(hDC);
     ok(bRet == TRUE, "DeleteDC returned %u\n", bRet);
 
-todo_wine
-{
     /* Try to create a DC compatible to the deleted DC. This has to fail */
     hNewDC = CreateCompatibleDC(hDC);
     ok(hNewDC == NULL, "CreateCompatibleDC returned %p\n", hNewDC);
-}
-
 }
 
 START_TEST(dc)
