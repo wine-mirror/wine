@@ -35,6 +35,7 @@
 #include "winnls.h"
 #include "dbt.h"
 #include "dde.h"
+#include "imm.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
 #include "user_private.h"
@@ -2993,6 +2994,9 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
 
     TRACE_(key)("Translating key %s (%04lx), scancode %02x\n",
                  SPY_GetVKeyName(msg->wParam), msg->wParam, LOBYTE(HIWORD(msg->lParam)));
+
+    if (ImmProcessKey(msg->hwnd, GetKeyboardLayout(0), msg->wParam, msg->lParam,0))
+        return TRUE;
 
     GetKeyboardState( state );
     /* FIXME : should handle ToUnicode yielding 2 */
