@@ -61,7 +61,8 @@ cpp_quote("#define AMDSS_PRIMARY (AMDDS_DCIPS | AMDDS_PS)")
 
 [
     object,
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IDirectDrawVideo : IUnknown
 {
@@ -85,7 +86,8 @@ interface IDirectDrawVideo : IUnknown
 
 [
     object,
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IQualProp : IUnknown
 {
@@ -124,7 +126,8 @@ interface IFullScreenVideo : IUnknown
 
 [
     object,
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IFullScreenVideoEx : IFullScreenVideo
 {
@@ -137,7 +140,8 @@ interface IFullScreenVideoEx : IFullScreenVideo
 
 [
     object,
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IBaseVideoMixer : IUnknown
 {

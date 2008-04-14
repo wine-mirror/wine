@@ -716,7 +716,8 @@ cpp_quote("#define IShellLink WINELIB_NAME_AW(IShellLink)")
 [
     object,
     uuid(000214e8-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IShellExtInit : IUnknown
 {
@@ -869,7 +870,8 @@ cpp_quote("#define CDBOSC_STATECHANGE  0x00000004")
 [
     object,
     uuid(47d2657a-7b27-11d0-8ca9-00a0c92dbfe8),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IDockingWindowFrame : IOleWindow
 {
@@ -1152,9 +1154,9 @@ interface IShellExecuteHookW : IUnknown
 ]
 interface IShellLinkDataList : IUnknown
 {
-    HRESULT AddDataBlock(
+    [local] HRESULT AddDataBlock(
                 [in] void *pDataBlock);
-    HRESULT CopyDataBlock(
+    [local] HRESULT CopyDataBlock(
                 [in] DWORD dwSig,
                 [out] void **ppDataBlock);
     HRESULT RemoveDataBlock(
