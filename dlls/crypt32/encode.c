@@ -1227,7 +1227,6 @@ static BOOL WINAPI CRYPT_DEREncodeItemsAsSet(DWORD dwCertEncodingType,
     if (ret)
     {
         DWORD bytesNeeded = 0, lenBytes;
-        BOOL ret;
 
         for (i = 0; i < setOf.cBlob; i++)
             bytesNeeded += setOf.rgBlob[i].cbData;
