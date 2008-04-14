@@ -938,7 +938,6 @@ BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
 {
     HKEY key;
     LPWSTR dlls;
-    LPCWSTR existing;
     BOOL ret = FALSE;
 
     TRACE("(%x, %s, %d, %s)\n", dwEncodingType, debugstr_a(pszFuncName),
@@ -954,7 +953,7 @@ BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
         return FALSE;
 
     dlls = CRYPT_GetDefaultOIDDlls(key);
-    if ((existing = CRYPT_FindStringInMultiString(dlls, pwszDll)))
+    if (CRYPT_FindStringInMultiString(dlls, pwszDll))
         SetLastError(ERROR_FILE_EXISTS);
     else
     {

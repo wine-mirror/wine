@@ -291,7 +291,6 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
     PWINECRYPT_CERTSTORE store = NULL;
     HKEY root;
     LPCWSTR base;
-    BOOL ret;
 
     TRACE("(%ld, %08x, %s)\n", hCryptProv, dwFlags,
      debugstr_w((LPCWSTR)pvPara));
@@ -304,7 +303,6 @@ static PWINECRYPT_CERTSTORE CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
     if (!lstrcmpiW(storeName, rootW))
         return CRYPT_RootOpenStore(hCryptProv, dwFlags);
 
-    ret = TRUE;
     switch (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK)
     {
     case CERT_SYSTEM_STORE_LOCAL_MACHINE:
