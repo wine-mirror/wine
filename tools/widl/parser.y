@@ -134,6 +134,10 @@ static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t 
 static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_typedef_attrs(attr_list_t *attrs);
 static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs);
+static const attr_list_t *check_library_attrs(const char *name, const attr_list_t *attrs);
+static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
+static const attr_list_t *check_module_attrs(const char *name, const attr_list_t *attrs);
+static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_t *attrs);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -382,7 +386,8 @@ importlib: tIMPORTLIB '(' aSTRING ')'
 
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	;
-library_start: attributes libraryhdr '{'	{ if (!parse_only) start_typelib($2, $1);
+library_start: attributes libraryhdr '{'	{ check_library_attrs($2, $1);
+						  if (!parse_only) start_typelib($2, $1);
 						  if (!parse_only && do_header) write_library($2, $1);
 						  if (!parse_only && do_idfile) write_libid($2, $1);
 						}
@@ -737,7 +742,7 @@ coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
 	;
 
 coclasshdr: attributes coclass			{ $$ = $2;
-						  $$->attrs = $1;
+						  $$->attrs = check_coclass_attrs($2->name, $1);
 						  if (!parse_only && do_header)
 						    write_coclass($$);
 						  if (!parse_only && do_idfile)
@@ -769,7 +774,7 @@ dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
 						  $$ = $2;
 						  if ($$->defined) error_loc("multiple definition error\n");
 						  attrs = make_attr(ATTR_DISPINTERFACE);
-						  $$->attrs = append_attr( $1, attrs );
+						  $$->attrs = append_attr( check_dispiface_attrs($2->name, $1), attrs );
 						  $$->ref = find_type("IDispatch", 0);
 						  if (!$$->ref) error_loc("IDispatch is undefined\n");
 						  $$->defined = TRUE;
@@ -860,7 +865,7 @@ module:   tMODULE aIDENTIFIER			{ $$ = make_type(0, NULL); $$->name = $2; $$->ki
 	;
 
 modulehdr: attributes module			{ $$ = $2;
-						  $$->attrs = $1;
+						  $$->attrs = check_module_attrs($2->name, $1);
 						}
 	;
 
@@ -2272,6 +2277,58 @@ static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs)
   {
     if (!allowed_attr[attr->type].on_field)
       error_loc("inapplicable attribute %s for field %s\n",
+                allowed_attr[attr->type].display_name, name);
+  }
+  return attrs;
+}
+
+static const attr_list_t *check_library_attrs(const char *name, const attr_list_t *attrs)
+{
+  const attr_t *attr;
+  if (!attrs) return attrs;
+  LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+  {
+    if (!allowed_attr[attr->type].on_library)
+      error_loc("inapplicable attribute %s for library %s\n",
+                allowed_attr[attr->type].display_name, name);
+  }
+  return attrs;
+}
+
+static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs)
+{
+  const attr_t *attr;
+  if (!attrs) return attrs;
+  LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+  {
+    if (!allowed_attr[attr->type].on_dispinterface)
+      error_loc("inapplicable attribute %s for dispinterface %s\n",
+                allowed_attr[attr->type].display_name, name);
+  }
+  return attrs;
+}
+
+static const attr_list_t *check_module_attrs(const char *name, const attr_list_t *attrs)
+{
+  const attr_t *attr;
+  if (!attrs) return attrs;
+  LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+  {
+    if (!allowed_attr[attr->type].on_module)
+      error_loc("inapplicable attribute %s for module %s\n",
+                allowed_attr[attr->type].display_name, name);
+  }
+  return attrs;
+}
+
+static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_t *attrs)
+{
+  const attr_t *attr;
+  if (!attrs) return attrs;
+  LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
+  {
+    if (!allowed_attr[attr->type].on_coclass)
+      error_loc("inapplicable attribute %s for coclass %s\n",
                 allowed_attr[attr->type].display_name, name);
   }
   return attrs;
