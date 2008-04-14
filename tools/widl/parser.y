@@ -138,6 +138,7 @@ static const attr_list_t *check_library_attrs(const char *name, const attr_list_
 static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 static const attr_list_t *check_module_attrs(const char *name, const attr_list_t *attrs);
 static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_t *attrs);
+const char *get_attr_display_name(enum attr_type type);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -1031,12 +1032,21 @@ static str_list_t *append_str(str_list_t *list, char *str)
 
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr)
 {
+    attr_t *attr_existing;
     if (!attr) return list;
     if (!list)
     {
         list = xmalloc( sizeof(*list) );
         list_init( list );
     }
+    LIST_FOR_EACH_ENTRY(attr_existing, list, attr_t, entry)
+        if (attr_existing->type == attr->type)
+        {
+            parser_warning("duplicate attribute %s\n", get_attr_display_name(attr->type));
+            /* use the last attribute, like MIDL does */
+            list_remove(&attr_existing->entry);
+            break;
+        }
     list_add_tail( list, &attr->entry );
     return list;
 }
@@ -2210,6 +2220,11 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_VERSION */          { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, "version" },
     /* ATTR_WIREMARSHAL */      { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "wire_marshal" },
 };
+
+const char *get_attr_display_name(enum attr_type type)
+{
+    return allowed_attr[type].display_name;
+}
 
 static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t *attrs)
 {
