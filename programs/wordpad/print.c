@@ -500,7 +500,7 @@ static void add_ruler_units(HDC hdcRuler, RECT* drawRect, BOOL NewMetrics, long 
             DeleteObject(hBitmap);
         }
 
-        hdc =  CreateCompatibleDC(hdc);
+        hdc = CreateCompatibleDC(0);
 
         CmPixels = twips_to_pixels(TWIPS_PER_CM, GetDeviceCaps(hdc, LOGPIXELSX));
         QuarterCmPixels = (int)((float)CmPixels / 4.0);
