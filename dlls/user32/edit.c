@@ -1277,9 +1277,9 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc, current_position,
 					current_line->net_length, es->tabs_count, es->tabs));
 		    }
-		    else if (orig_net_length <  current_line->net_length  &&
-			current_line == start_line &&
-			current_line->index != nstart_index) {
+		    else if (current_line == start_line &&
+                             current_line->index != nstart_index &&
+                             orig_net_length < current_line->net_length) {
 			/* The previous line expanded but it's still not as wide as the client rect */
 			/* The expansion is due to an upwards line wrap so we must partially include
 			   it in the update region */
