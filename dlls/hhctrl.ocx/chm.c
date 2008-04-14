@@ -229,7 +229,7 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
         info->WinType.cbStruct=sizeof(info->WinType);
         info->WinType.fUniCodeStrings=TRUE;
         info->WinType.pszType=strdupW(defaultwinW);
-        info->WinType.pszToc = strdupW(info->pCHMInfo->defToc);
+        info->WinType.pszToc = strdupW(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : null);
         info->WinType.pszIndex = strdupW(null);
         info->WinType.fsValidMembers=0;
         info->WinType.fsWinProperties=HHWIN_PROP_TRI_PANE;
@@ -391,7 +391,7 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
             &ret->strings_stream);
     if(FAILED(hres)) {
         WARN("Could not open #STRINGS stream: %08x\n", hres);
-        return CloseCHM(ret);
+        /* It's not critical, so we pass */
     }
 
     if(!ReadChmSystem(ret)) {
