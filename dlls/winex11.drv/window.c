@@ -829,15 +829,21 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     Window group_leader;
     Atom window_type;
     MwmHints mwm_hints;
-    DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
-    DWORD ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
-    HWND owner = GetWindow( data->hwnd, GW_OWNER );
+    DWORD style, ex_style;
+    HWND owner;
 
     if (data->hwnd == GetDesktopWindow())
     {
         /* force some styles for the desktop to get the correct decorations */
-        style |= WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+        style = WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+        ex_style = WS_EX_APPWINDOW;
         owner = 0;
+    }
+    else
+    {
+        style = GetWindowLongW( data->hwnd, GWL_STYLE );
+        ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
+        owner = GetWindow( data->hwnd, GW_OWNER );
     }
 
     /* transient for hint */
