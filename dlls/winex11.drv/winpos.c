@@ -136,7 +136,7 @@ static void update_net_wm_states( Display *display, struct x11drv_win_data *data
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
             new_state |= (1 << NET_WM_STATE_MAXIMIZED);
-        else
+        else if (!(style & WS_MINIMIZE))
             new_state |= (1 << NET_WM_STATE_FULLSCREEN);
     }
     else if (style & WS_MAXIMIZE)
