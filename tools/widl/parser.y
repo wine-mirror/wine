@@ -67,6 +67,8 @@
 
 unsigned char pointer_default = RPC_FC_UP;
 static int is_object_interface = FALSE;
+/* are we inside a library block? */
+static int is_inside_library = FALSE;
 
 typedef struct list typelist_t;
 struct typenode {
@@ -129,6 +131,7 @@ static int compute_method_indexes(type_t *iface);
 static char *gen_name(void);
 static void process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
+static void check_functions(const type_t *iface);
 static void check_all_user_types(ifref_list_t *ifaces);
 static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t *attrs);
 static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
@@ -391,10 +394,11 @@ library_start: attributes libraryhdr '{'	{ check_library_attrs($2, $1);
 						  if (!parse_only) start_typelib($2, $1);
 						  if (!parse_only && do_header) write_library($2, $1);
 						  if (!parse_only && do_idfile) write_libid($2, $1);
+						  is_inside_library = TRUE;
 						}
 	;
 librarydef: library_start imp_statements '}'
-	    semicolon_opt			{ if (!parse_only) end_typelib(); }
+	    semicolon_opt			{ if (!parse_only) end_typelib(); is_inside_library = FALSE; }
 	;
 
 m_args:						{ $$ = NULL; }
@@ -834,6 +838,7 @@ interfacedef: interfacehdr inherit
 	  '{' int_statements '}' semicolon_opt	{ $$ = $1.interface;
 						  $$->ref = $2;
 						  $$->funcs = $4;
+						  check_functions($$);
 						  compute_method_indexes($$);
 						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
@@ -2352,6 +2357,69 @@ static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_
                 allowed_attr[attr->type].display_name, name);
   }
   return attrs;
+}
+
+/* checks that arguments for a function make sense for marshalling and unmarshalling */
+static void check_remoting_args(const func_t *func)
+{
+    const char *funcname = func->def->name;
+    const var_t *arg;
+
+    if (func->args) LIST_FOR_EACH_ENTRY( arg, func->args, const var_t, entry )
+    {
+        int ptr_level = 0;
+        const type_t *type = arg->type;
+        int is_wire_marshal = 0;
+        int is_context_handle = 0;
+
+        /* get pointer level and fundamental type for the argument */
+        for (;;)
+        {
+            if (!is_wire_marshal && is_attr(type->attrs, ATTR_WIREMARSHAL))
+                is_wire_marshal = 1;
+            if (!is_context_handle && is_attr(type->attrs, ATTR_CONTEXTHANDLE))
+                is_context_handle = 1;
+            if (type->kind == TKIND_ALIAS)
+                type = type->orig;
+            else if (is_ptr(type))
+            {
+                ptr_level++;
+                type = type->ref;
+            }
+            else
+                break;
+        }
+
+        /* check that [out] parameters have enough pointer levels */
+        if (is_attr(arg->attrs, ATTR_OUT))
+        {
+            if (!is_array(type))
+            {
+                if (!ptr_level)
+                    error_loc_info(&arg->loc_info, "out parameter \'%s\' of function \'%s\' is not a pointer\n", arg->name, funcname);
+                if (type->type == RPC_FC_IP && ptr_level == 1)
+                    error_loc_info(&arg->loc_info, "out interface pointer \'%s\' of function \'%s\' is not a double pointer\n", arg->name, funcname);
+            }
+        }
+
+        if (type->type == 0 && !is_attr(arg->attrs, ATTR_IIDIS) && !is_wire_marshal && !is_context_handle)
+            error_loc_info(&arg->loc_info, "parameter \'%s\' of function \'%s\' cannot derive from void *\n", arg->name, funcname);
+        else if (type->type == RPC_FC_FUNCTION)
+            error_loc_info(&arg->loc_info, "parameter \'%s\' of function \'%s\' cannot be a function pointer\n", arg->name, funcname);
+    }
+}
+
+static void check_functions(const type_t *iface)
+{
+    if (!is_inside_library && !is_attr(iface->attrs, ATTR_LOCAL))
+    {
+        const func_t *func;
+        if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
+        {
+            if (!is_attr(func->def->attrs, ATTR_LOCAL))
+                check_remoting_args(func);
+        }
+    }
 }
 
 static void check_all_user_types(ifref_list_t *ifrefs)
