@@ -108,7 +108,9 @@
 
 static struct wine_preload_info preload_info[] =
 {
-    { (void *)0x00000000, 0x60000000 },  /* low memory area */
+    { (void *)0x00000000, 0x00010000 },  /* low 64k */
+    { (void *)0x00010000, 0x00100000 },  /* DOS area */
+    { (void *)0x00110000, 0x5fef0000 },  /* low memory area */
     { (void *)0x7f000000, 0x02000000 },  /* top-down allocations + shared heap */
     { 0, 0 },                            /* PE exe range set with WINEPRELOADRESERVE */
     { 0, 0 }                             /* end of list */
@@ -919,7 +921,7 @@ static void preload_reserve( const char *str )
     const char *p;
     unsigned long result = 0;
     void *start = NULL, *end = NULL;
-    int first = 1;
+    int i, first = 1;
 
     for (p = str; *p; p++)
     {
@@ -948,15 +950,22 @@ static void preload_reserve( const char *str )
         start = end = NULL;
     }
 
-    /* check for overlap with low memory area */
-    if ((char *)end <= (char *)preload_info[0].addr + preload_info[0].size)
-        start = end = NULL;
-    else if ((char *)start < (char *)preload_info[0].addr + preload_info[0].size)
-        start = (char *)preload_info[0].addr + preload_info[0].size;
+    /* check for overlap with low memory areas */
+    for (i = 0; preload_info[i].size; i++)
+    {
+        if ((char *)preload_info[i].addr > (char *)0x00110000) break;
+        if ((char *)end <= (char *)preload_info[i].addr + preload_info[i].size)
+        {
+            start = end = NULL;
+            break;
+        }
+        if ((char *)start < (char *)preload_info[i].addr + preload_info[i].size)
+            start = (char *)preload_info[i].addr + preload_info[i].size;
+    }
 
-    /* entry 2 is for the PE exe */
-    preload_info[2].addr = start;
-    preload_info[2].size = (char *)end - (char *)start;
+    while (preload_info[i].size) i++;
+    preload_info[i].addr = start;
+    preload_info[i].size = (char *)end - (char *)start;
     return;
 
 error:
