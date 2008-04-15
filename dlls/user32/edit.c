@@ -211,7 +211,7 @@ static void	EDIT_LockBuffer(EDITSTATE *es);
 static BOOL	EDIT_MakeFit(EDITSTATE *es, UINT size);
 static BOOL	EDIT_MakeUndoFit(EDITSTATE *es, UINT size);
 static void	EDIT_MoveBackward(EDITSTATE *es, BOOL extend);
-static void	EDIT_MoveEnd(EDITSTATE *es, BOOL extend);
+static void	EDIT_MoveEnd(EDITSTATE *es, BOOL extend, BOOL ctrl);
 static void	EDIT_MoveForward(EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveHome(EDITSTATE *es, BOOL extend, BOOL ctrl);
 static void	EDIT_MoveWordBackward(EDITSTATE *es, BOOL extend);
@@ -2012,13 +2012,13 @@ static void EDIT_MoveDown_ML(EDITSTATE *es, BOOL extend)
  *	EDIT_MoveEnd
  *
  */
-static void EDIT_MoveEnd(EDITSTATE *es, BOOL extend)
+static void EDIT_MoveEnd(EDITSTATE *es, BOOL extend, BOOL ctrl)
 {
 	BOOL after_wrap = FALSE;
 	INT e;
 
 	/* Pass a high value in x to make sure of receiving the end of the line */
-	if (es->style & ES_MULTILINE)
+	if (!ctrl && (es->style & ES_MULTILINE))
 		e = EDIT_CharFromPos(es, 0x3fffffff,
 			HIWORD(EDIT_EM_PosFromChar(es, es->selection_end, es->flags & EF_AFTER_WRAP)), &after_wrap);
 	else
@@ -4568,7 +4568,7 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 		EDIT_MoveHome(es, shift, control);
 		break;
 	case VK_END:
-		EDIT_MoveEnd(es, shift);
+		EDIT_MoveEnd(es, shift, control);
 		break;
 	case VK_PRIOR:
 		if (es->style & ES_MULTILINE)
@@ -4598,7 +4598,7 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 				} else if (control) {
 					/* delete to end of line */
 					EDIT_EM_SetSel(es, (UINT)-1, 0, FALSE);
-					EDIT_MoveEnd(es, TRUE);
+					EDIT_MoveEnd(es, TRUE, FALSE);
 					EDIT_WM_Clear(es);
 				} else {
 					/* delete character right of caret */
