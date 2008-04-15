@@ -226,7 +226,7 @@ static HRESULT WINAPI DataObjectImpl_QueryGetData(IDataObject* iface, FORMATETC 
     BOOL foundFormat = FALSE;
 
     if (!expect_DataObjectImpl_QueryGetData)
-        todo_wine ok(0, "unexpected call to DataObjectImpl_QueryGetData\n");
+        ok(0, "unexpected call to DataObjectImpl_QueryGetData\n");
 
     if(pformatetc->lindex != -1)
         return DV_E_LINDEX;
@@ -343,25 +343,26 @@ static void test_get_clipboard(void)
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
     fmtetc.dwAspect = 0xdeadbeef;
     hr = IDataObject_QueryGetData(data_obj, &fmtetc);
-    todo_wine
+    ok(hr == DV_E_FORMATETC, "IDataObject_QueryGetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.dwAspect = DVASPECT_THUMBNAIL;
+    hr = IDataObject_QueryGetData(data_obj, &fmtetc);
     ok(hr == DV_E_FORMATETC, "IDataObject_QueryGetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
 
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
     fmtetc.lindex = 256;
     hr = IDataObject_QueryGetData(data_obj, &fmtetc);
-    todo_wine
     ok(hr == DV_E_FORMATETC, "IDataObject_QueryGetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
 
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
     fmtetc.cfFormat = CF_RIFF;
     hr = IDataObject_QueryGetData(data_obj, &fmtetc);
-    todo_wine
     ok(hr == DV_E_CLIPFORMAT, "IDataObject_QueryGetData should have failed with DV_E_CLIPFORMAT instead of 0x%08x\n", hr);
 
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
     fmtetc.tymed = TYMED_FILE;
     hr = IDataObject_QueryGetData(data_obj, &fmtetc);
-    todo_wine
     ok(hr == S_OK, "IDataObject_QueryGetData failed with error 0x%08x\n", hr);
 
     expect_DataObjectImpl_QueryGetData = TRUE;
