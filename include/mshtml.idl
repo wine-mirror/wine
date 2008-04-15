@@ -4488,6 +4488,74 @@ interface IHTMLWindow2 : IHTMLFramesCollection2
 }
 
 /*****************************************************************************
+ *    IHTMLWindow3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4ae-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLWindow3 : IDispatch
+{
+    [propget, id(DISPID_IHTMLWINDOW3_SCREENLEFT)]
+    HRESULT screenLeft([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLWINDOW3_SCREENTOP)]
+    HRESULT screenTop([out, retval] long *p);
+
+    [id(DISPID_IHTMLWINDOW3_ATTACHEVENT)]
+    HRESULT attachEvent(
+            [in] BSTR event,
+            [in] IDispatch *pDisp,
+            [out, retval] VARIANT_BOOL *pfResult);
+
+    [id(DISPID_IHTMLWINDOW3_DETACHEVENT)]
+    HRESULT detachEvent(
+            [in] BSTR event,
+            [in] IDispatch *pDisp);
+
+    [id(DISPID_IHTMLWINDOW3_SETTIMEOUT)]
+    HRESULT setTimeout(
+            [in] VARIANT *expression,
+            [in] long msec,
+            [in, optional] VARIANT *language,
+            [out, retval] long *timerID);
+
+    [id(DISPID_IHTMLWINDOW3_SETINTERVAL)]
+    HRESULT setInterval(
+            [in] VARIANT *expression,
+            [in] long msec,
+            [in, optional] VARIANT *language,
+            [out, retval] long *timerID);
+
+    [id(DISPID_IHTMLWINDOW3_PRINT)]
+    HRESULT print();
+
+    [propput, id(DISPID_IHTMLWINDOW3_ONBEFOREPRINT), displaybind, bindable]
+    HRESULT onbeforeprint([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW3_ONBEFOREPRINT), displaybind, bindable]
+    HRESULT onbeforeprint([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLWINDOW3_ONAFTERPRINT), displaybind, bindable]
+    HRESULT onafterprint([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW3_ONAFTERPRINT), displaybind, bindable]
+    HRESULT onafterprint([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLWINDOW3_CLIPBOARDDATA)]
+    HRESULT clipboardData([out, retval] IHTMLDataTransfer **p);
+
+    [id(DISPID_IHTMLWINDOW3_SHOWMODELESSDIALOG)]
+    HRESULT showModelessDialog(
+            [in, defaultvalue("")] BSTR url,
+            [in, optional] VARIANT *varArgIn,
+            [in, optional] VARIANT *options,
+            [out, retval] IHTMLWindow2 **pDialog);
+}
+
+/*****************************************************************************
  *    DispHTMLWindow2 dispinterface
  */
 [
