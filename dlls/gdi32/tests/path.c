@@ -422,6 +422,87 @@ static void test_closefigure(void) {
     ReleaseDC(0, hdc);
 }
 
+static void WINAPI linedda_callback(INT x, INT y, LPARAM lparam)
+{
+    POINT **pt = (POINT**)lparam;
+    ok((*pt)->x == x && (*pt)->y == y, "point mismatch expect(%d,%d) got(%d,%d)\n",
+       (*pt)->x, (*pt)->y, x, y);
+
+    (*pt)++;
+    return;
+}
+
+static void test_linedda(void)
+{
+    const POINT *pt;
+    static const POINT array_10_20_20_40[] = {{10,20},{10,21},{11,22},{11,23},
+                                              {12,24},{12,25},{13,26},{13,27},
+                                              {14,28},{14,29},{15,30},{15,31},
+                                              {16,32},{16,33},{17,34},{17,35},
+                                              {18,36},{18,37},{19,38},{19,39},
+                                              {-1,-1}};
+    static const POINT array_10_20_20_43[] = {{10,20},{10,21},{11,22},{11,23},
+                                              {12,24},{12,25},{13,26},{13,27},
+                                              {13,28},{14,29},{14,30},{15,31},
+                                              {15,32},{16,33},{16,34},{17,35},
+                                              {17,36},{17,37},{18,38},{18,39},
+                                              {19,40},{19,41},{20,42},{-1,-1}};
+
+    static const POINT array_10_20_10_20[] = {{-1,-1}};
+    static const POINT array_10_20_11_27[] = {{10,20},{10,21},{10,22},{10,23},
+                                              {11,24},{11,25},{11,26},{-1,-1}};
+
+    static const POINT array_20_43_10_20[] = {{20,43},{20,42},{19,41},{19,40},
+                                              {18,39},{18,38},{17,37},{17,36},
+                                              {17,35},{16,34},{16,33},{15,32},
+                                              {15,31},{14,30},{14,29},{13,28},
+                                              {13,27},{13,26},{12,25},{12,24},
+                                              {11,23},{11,22},{10,21},{-1,-1}};
+
+    static const POINT array_20_20_10_43[] = {{20,20},{20,21},{19,22},{19,23},
+                                              {18,24},{18,25},{17,26},{17,27},
+                                              {17,28},{16,29},{16,30},{15,31},
+                                              {15,32},{14,33},{14,34},{13,35},
+                                              {13,36},{13,37},{12,38},{12,39},
+                                              {11,40},{11,41},{10,42},{-1,-1}};
+
+    static const POINT array_20_20_43_10[] = {{20,20},{21,20},{22,19},{23,19},
+                                              {24,18},{25,18},{26,17},{27,17},
+                                              {28,17},{29,16},{30,16},{31,15},
+                                              {32,15},{33,14},{34,14},{35,13},
+                                              {36,13},{37,13},{38,12},{39,12},
+                                              {40,11},{41,11},{42,10},{-1,-1}};
+
+
+    pt = array_10_20_20_40;
+    LineDDA(10, 20, 20, 40, linedda_callback, (LPARAM)&pt);
+    ok(pt->x == -1 && pt->y == -1, "didn't find terminator\n");
+
+    pt = array_10_20_20_43;
+    LineDDA(10, 20, 20, 43, linedda_callback, (LPARAM)&pt);
+    ok(pt->x == -1 && pt->y == -1, "didn't find terminator\n");
+
+    pt = array_10_20_10_20;
+    LineDDA(10, 20, 10, 20, linedda_callback, (LPARAM)&pt);
+    ok(pt->x == -1 && pt->y == -1, "didn't find terminator\n");
+
+    pt = array_10_20_11_27;
+    LineDDA(10, 20, 11, 27, linedda_callback, (LPARAM)&pt);
+    ok(pt->x == -1 && pt->y == -1, "didn't find terminator\n");
+
+    pt = array_20_43_10_20;
+    LineDDA(20, 43, 10, 20, linedda_callback, (LPARAM)&pt);
+    ok(pt->x == -1 && pt->y == -1, "didn't find terminator\n");
+
+    pt = array_20_20_10_43;
+    LineDDA(20, 20, 10, 43, linedda_callback, (LPARAM)&pt);
+    ok(pt->x == -1 && pt->y == -1, "didn't find terminator\n");
+
+    pt = array_20_20_43_10;
+    LineDDA(20, 20, 43, 10, linedda_callback, (LPARAM)&pt);
+    ok(pt->x == -1 && pt->y == -1, "didn't find terminator\n");
+}
+
 START_TEST(path)
 {
     test_widenpath();
@@ -429,4 +510,5 @@ START_TEST(path)
     test_anglearc();
     test_polydraw();
     test_closefigure();
+    test_linedda();
 }
