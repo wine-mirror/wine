@@ -151,6 +151,8 @@ static INT find_joystick_devices(void)
             if ((fd = open(device_name, O_RDONLY)) < 0) continue;
         }
 
+        close(fd);
+
         if (!(str = HeapAlloc(GetProcessHeap(), 0, len))) break;
         memcpy(str, device_name, len);
 
