@@ -961,7 +961,8 @@ interface IDropTargetHelper : IUnknown
 [
     object,
     uuid(000214e4-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IContextMenu : IUnknown
 {
