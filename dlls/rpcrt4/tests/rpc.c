@@ -610,6 +610,46 @@ static void test_RpcStringBindingParseA(void)
     ok(options == NULL, "options was %p instead of NULL\n", options);
 }
 
+static void test_I_RpcExceptionFilter(void)
+{
+    ULONG exception;
+    int retval;
+    int (WINAPI *pI_RpcExceptionFilter)(ULONG) = (void *)GetProcAddress(GetModuleHandle("rpcrt4.dll"), "I_RpcExceptionFilter");
+
+    if (!pI_RpcExceptionFilter)
+    {
+        skip("I_RpcExceptionFilter not exported\n");
+        return;
+    }
+
+    for (exception = 0; exception < STATUS_REG_NAT_CONSUMPTION; exception++)
+    {
+        /* skip over uninteresting bits of the number space */
+        if (exception == 2000) exception = 0x40000000;
+        if (exception == 0x40000005) exception = 0x80000000;
+        if (exception == 0x80000005) exception = 0xc0000000;
+
+        retval = pI_RpcExceptionFilter(exception);
+        switch (exception)
+        {
+        case STATUS_DATATYPE_MISALIGNMENT:
+        case STATUS_BREAKPOINT:
+        case STATUS_ACCESS_VIOLATION:
+        case STATUS_ILLEGAL_INSTRUCTION:
+        case STATUS_PRIVILEGED_INSTRUCTION:
+        case 0xc00000aa /* STATUS_INSTRUCTION_MISALIGNMENT */:
+        case STATUS_STACK_OVERFLOW:
+        case 0xc0000194 /* STATUS_POSSIBLE_DEADLOCK */:
+            ok(retval == EXCEPTION_CONTINUE_SEARCH, "I_RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
+               exception, EXCEPTION_CONTINUE_SEARCH, retval);
+            break;
+        default:
+            ok(retval == EXCEPTION_EXECUTE_HANDLER, "I_RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
+               exception, EXCEPTION_EXECUTE_HANDLER, retval);
+        }
+    }
+}
+
 START_TEST( rpc )
 {
     trace ( " ** Uuid Conversion and Comparison Tests **\n" );
@@ -620,4 +660,5 @@ START_TEST( rpc )
     test_towers();
     test_I_RpcMapWin32Status();
     test_RpcStringBindingParseA();
+    test_I_RpcExceptionFilter();
 }
