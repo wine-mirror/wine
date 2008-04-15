@@ -416,6 +416,8 @@ static void test_CompleteLocalURL(void)
     if (!urlA || !urlB)
     {
         skip("Unable to allocate memory for URLs\n");
+        HeapFree(GetProcessHeap(), 0, urlA);
+        HeapFree(GetProcessHeap(), 0, urlB);
         return;
     }
 
@@ -428,6 +430,8 @@ static void test_CompleteLocalURL(void)
     if (hres != S_OK)
     {
         skip("Unable to add file to job\n");
+        HeapFree(GetProcessHeap(), 0, urlA);
+        HeapFree(GetProcessHeap(), 0, urlB);
         return;
     }
 
@@ -435,6 +439,8 @@ static void test_CompleteLocalURL(void)
     if (hres != S_OK)
     {
         skip("Unable to add file to job\n");
+        HeapFree(GetProcessHeap(), 0, urlA);
+        HeapFree(GetProcessHeap(), 0, urlB);
         return;
     }
 
