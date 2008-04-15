@@ -324,6 +324,7 @@ static HRESULT WINAPI ProgressDialog_StartProgressDialog(IProgressDialog *iface,
     hThread = CreateThread(NULL, 0, dialog_thread, &params, 0, NULL);
     WaitForSingleObject(params.hEvent, INFINITE);
 
+    CloseHandle(hThread);
     This->hwndDisabledParent = NULL;
     if (hwndParent && (dwFlags & PROGDLG_MODAL))
     {
