@@ -1190,7 +1190,7 @@ static expr_t *make_expr1(enum expr_type type, expr_t *expr)
 {
   expr_t *e;
   if (type == EXPR_ADDRESSOF && expr->type != EXPR_IDENTIFIER)
-    error("address-of operator applied to invalid expression\n");
+    error_loc("address-of operator applied to invalid expression\n");
   e = xmalloc(sizeof(expr_t));
   e->type = type;
   e->ref = expr;
@@ -1394,7 +1394,7 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
       }
     }
     else if (!arr && ptr_attr)
-      error("%s: pointer attribute applied to non-pointer type\n", v->name);
+      error_loc("%s: pointer attribute applied to non-pointer type\n", v->name);
   }
 
   if (pident && pident->is_func) {
@@ -1416,7 +1416,7 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
   if (arr) LIST_FOR_EACH_ENTRY_REV(dim, arr, expr_t, entry)
   {
     if (sizeless)
-      error("%s: only the first array dimension can be unspecified\n", v->name);
+      error_loc("%s: only the first array dimension can be unspecified\n", v->name);
 
     if (dim->is_const)
     {
@@ -1424,10 +1424,10 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
       size_t size = type_memsize(v->type, &align);
 
       if (dim->cval <= 0)
-        error("%s: array dimension must be positive\n", v->name);
+        error_loc("%s: array dimension must be positive\n", v->name);
 
       if (0xffffffffuL / size < (unsigned long) dim->cval)
-        error("%s: total array size is too large\n", v->name);
+        error_loc("%s: total array size is too large\n", v->name);
       else if (0xffffuL < size * dim->cval)
         v->type = make_type(RPC_FC_LGFARRAY, v->type);
       else
@@ -1453,10 +1453,10 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
       atype = *ptype = duptype(*ptype, 0);
 
       if (atype->type == RPC_FC_SMFARRAY || atype->type == RPC_FC_LGFARRAY)
-        error("%s: cannot specify size_is for a fixed sized array\n", v->name);
+        error_loc("%s: cannot specify size_is for a fixed sized array\n", v->name);
 
       if (atype->type != RPC_FC_CARRAY && !is_ptr(atype))
-        error("%s: size_is attribute applied to illegal type\n", v->name);
+        error_loc("%s: size_is attribute applied to illegal type\n", v->name);
 
       atype->type = RPC_FC_CARRAY;
       atype->size_is = dim;
@@ -1464,7 +1464,7 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
 
     ptype = &(*ptype)->ref;
     if (*ptype == NULL)
-      error("%s: too many expressions in size_is attribute\n", v->name);
+      error_loc("%s: too many expressions in size_is attribute\n", v->name);
   }
 
   ptype = &v->type;
@@ -1482,14 +1482,14 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
       else if (atype->type == RPC_FC_CARRAY)
         atype->type = RPC_FC_CVARRAY;
       else
-        error("%s: length_is attribute applied to illegal type\n", v->name);
+        error_loc("%s: length_is attribute applied to illegal type\n", v->name);
 
       atype->length_is = dim;
     }
 
     ptype = &(*ptype)->ref;
     if (*ptype == NULL)
-      error("%s: too many expressions in length_is attribute\n", v->name);
+      error_loc("%s: too many expressions in length_is attribute\n", v->name);
   }
 
   if (has_varconf && !last_array(v->type))
