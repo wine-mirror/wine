@@ -5778,7 +5778,6 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     POINT pt;
     INT   nHit;
     INT   nOldIndex = -1;
-    BOOL  bSendMessage = TRUE;
     NMHDR hdr;
     NMMOUSE nmmouse;
     NMTOOLBARA nmtb;
@@ -5865,8 +5864,6 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		if (btnPtr->fsStyle & BTNS_GROUP) {
 		    nOldIndex = TOOLBAR_GetCheckedGroupButtonIndex (infoPtr,
 			nHit);
-		    if (nOldIndex == nHit)
-			bSendMessage = FALSE;
 		    if ((nOldIndex != nHit) &&
 			(nOldIndex != -1))
 			infoPtr->buttons[nOldIndex].fsState &= ~TBSTATE_CHECKED;
