@@ -945,6 +945,9 @@
 /* Define to 1 if you have the <X11/Xutil.h> header file. */
 #undef HAVE_X11_XUTIL_H
 
+/* Define to 1 if `callback' is member of `XICCallback'. */
+#undef HAVE_XICCALLBACK_CALLBACK
+
 /* Define if you have the XKB extension */
 #undef HAVE_XKB
 

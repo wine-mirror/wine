@@ -698,6 +698,12 @@ then
         WINE_NOTICE_WITH(xcomposite,[test "x$ac_cv_lib_soname_Xcomposite" = "x"],
                          [libxcomposite development files not found, Xcomposite won't be supported.])
 
+        dnl *** Check for XICCallback struct
+        AC_CHECK_MEMBERS([XICCallback.callback],,,
+[#ifdef HAVE_X11_XLIB_H
+#include <X11/Xlib.h>
+#endif])
+
     dnl *** End of X11/Xlib.h check
 
     dnl Check for the presence of OpenGL

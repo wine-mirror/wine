@@ -35,6 +35,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
+#ifndef HAVE_XICCALLBACK_CALLBACK
+#define XICCallback XIMCallback
+#define XICProc XIMProc
+#endif
+
 BOOL ximInComposeMode=FALSE;
 
 /* moved here from imm32 for dll separation */
@@ -501,11 +506,8 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     XVaNestedList preedit = NULL;
     XVaNestedList status = NULL;
     XIC xic;
-    XICCallback destroy = {(XPointer)data, X11DRV_DestroyIC};
-    XIMCallback P_StartCB;
-    XIMCallback P_DoneCB;
-    XIMCallback P_DrawCB;
-    XIMCallback P_CaretCB;
+    XICCallback destroy = {(XPointer)data, (XICProc)X11DRV_DestroyIC};
+    XICCallback P_StartCB, P_DoneCB, P_DrawCB, P_CaretCB;
     LANGID langid = PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale()));
     Window win = data->whole_window;
 
@@ -531,13 +533,13 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
 
     /* create callbacks */
     P_StartCB.client_data = NULL;
-    P_StartCB.callback = (XIMProc)XIMPreEditStartCallback;
     P_DoneCB.client_data = NULL;
-    P_DoneCB.callback = (XIMProc)XIMPreEditDoneCallback;
     P_DrawCB.client_data = NULL;
-    P_DrawCB.callback = (XIMProc)XIMPreEditDrawCallback;
     P_CaretCB.client_data = NULL;
-    P_CaretCB.callback = (XIMProc)XIMPreEditCaretCallback;
+    P_StartCB.callback = (XICProc)XIMPreEditStartCallback;
+    P_DoneCB.callback = (XICProc)XIMPreEditDoneCallback;
+    P_DrawCB.callback = (XICProc)XIMPreEditDrawCallback;
+    P_CaretCB.callback = (XICProc)XIMPreEditCaretCallback;
 
     if ((ximStyle & (XIMPreeditNothing | XIMPreeditNone)) == 0)
     {
