@@ -57,6 +57,8 @@ typedef struct EnumFormatImpl {
     UINT cur;
 } EnumFormatImpl;
 
+static BOOL expect_DataObjectImpl_QueryGetData = TRUE;
+
 static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT size, LPENUMFORMATETC *lplpformatetc);
 
 static HRESULT WINAPI EnumFormatImpl_QueryInterface(IEnumFORMATETC *iface, REFIID riid, LPVOID *ppvObj)
@@ -223,6 +225,9 @@ static HRESULT WINAPI DataObjectImpl_QueryGetData(IDataObject* iface, FORMATETC 
     UINT i;
     BOOL foundFormat = FALSE;
 
+    if (!expect_DataObjectImpl_QueryGetData)
+        todo_wine ok(0, "unexpected call to DataObjectImpl_QueryGetData\n");
+
     if(pformatetc->lindex != -1)
         return DV_E_LINDEX;
 
@@ -316,6 +321,54 @@ static HRESULT DataObjectImpl_CreateText(LPCSTR text, LPDATAOBJECT *lplpdataobj)
     return S_OK;
 }
 
+static void test_get_clipboard(void)
+{
+    HRESULT hr;
+    IDataObject *data_obj;
+    FORMATETC fmtetc;
+
+    hr = OleGetClipboard(NULL);
+    ok(hr == E_INVALIDARG, "OleGetClipboard(NULL) should return E_INVALIDARG instead of 0x%08x\n", hr);
+
+    hr = OleGetClipboard(&data_obj);
+    ok(hr == S_OK, "OleGetClipboard failed with error 0x%08x\n", hr);
+
+    /* clipboard's IDataObject_QueryGetData shouldn't defer to our IDataObject_QueryGetData */
+    expect_DataObjectImpl_QueryGetData = FALSE;
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    hr = IDataObject_QueryGetData(data_obj, &fmtetc);
+    ok(hr == S_OK, "IDataObject_QueryGetData failed with error 0x%08x\n", hr);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.dwAspect = 0xdeadbeef;
+    hr = IDataObject_QueryGetData(data_obj, &fmtetc);
+    todo_wine
+    ok(hr == DV_E_FORMATETC, "IDataObject_QueryGetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.lindex = 256;
+    hr = IDataObject_QueryGetData(data_obj, &fmtetc);
+    todo_wine
+    ok(hr == DV_E_FORMATETC, "IDataObject_QueryGetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.cfFormat = CF_RIFF;
+    hr = IDataObject_QueryGetData(data_obj, &fmtetc);
+    todo_wine
+    ok(hr == DV_E_CLIPFORMAT, "IDataObject_QueryGetData should have failed with DV_E_CLIPFORMAT instead of 0x%08x\n", hr);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.tymed = TYMED_FILE;
+    hr = IDataObject_QueryGetData(data_obj, &fmtetc);
+    todo_wine
+    ok(hr == S_OK, "IDataObject_QueryGetData failed with error 0x%08x\n", hr);
+
+    expect_DataObjectImpl_QueryGetData = TRUE;
+
+    IDataObject_Release(data_obj);
+}
+
 static void test_set_clipboard(void)
 {
     HRESULT hr;
@@ -349,6 +402,8 @@ static void test_set_clipboard(void)
     ok(hr == S_OK, "expected current clipboard to be data1, hr = 0x%08x\n", hr);
     hr = OleIsCurrentClipboard(data2);
     ok(hr == S_FALSE, "did not expect current clipboard to be data2, hr = 0x%08x\n", hr);
+
+    test_get_clipboard();
 
     hr = OleSetClipboard(data2);
     ok(hr == S_OK, "failed to set clipboard to data2, hr = 0x%08x\n", hr);
