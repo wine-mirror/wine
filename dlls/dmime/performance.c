@@ -222,8 +222,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANC
 	  This->pDirectSound = pDirectSound;
 	  IDirectSound_AddRef(This->pDirectSound);
 	} else {
-	  HRESULT hr;
-	  hr = DirectSoundCreate8(NULL, (LPDIRECTSOUND8*) &This->pDirectSound, NULL);
+	  DirectSoundCreate8(NULL, (LPDIRECTSOUND8*) &This->pDirectSound, NULL);
 	  if (!This->pDirectSound) return DSERR_NODRIVER;
 
 	  if (NULL != hWnd) {

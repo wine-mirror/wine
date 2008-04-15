@@ -822,9 +822,9 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
   /*ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);*/
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
+  DWORD StreamSize, StreamCount, ListSize[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
-  
+
   DMUS_IO_TRACK_HEADER        track_hdr;
   DMUS_IO_TRACK_EXTRAS_HEADER track_xhdr;
   IDirectMusicTrack*          pTrack = NULL;
@@ -869,7 +869,6 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
       IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
       TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
       ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
-      ListCount[0] = 0;
       if (Chunk.fccID == track_hdr.fccType && 0 == track_hdr.ckid) {
 	LPSTREAM pClonedStream = NULL;
 
@@ -982,7 +981,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackList (LPPERSIST
 
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
+  DWORD StreamSize, ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
   if (pChunk->fccID != DMUS_FOURCC_TRACK_LIST) {
@@ -1002,7 +1001,6 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackList (LPPERSIST
       IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
       TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
       StreamSize = Chunk.dwSize - sizeof(FOURCC);
-      StreamCount = 0;
       switch (Chunk.fccID) {
       case  DMUS_FOURCC_TRACK_FORM: {
 	TRACE_(dmfile)(": TRACK form\n");
@@ -1192,14 +1190,13 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadWave (LPPERSISTSTREAM
 
 static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  
+
   HRESULT hr;
   DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamSize, StreamCount;
+  DWORD StreamSize;
   /*DWORD ListSize[3], ListCount[3];*/
   LARGE_INTEGER liMove; /* used when skipping chunks */
-  
-  
+
   TRACE("(%p, %p): Loading\n", This, pStm);
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
   TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
@@ -1208,7 +1205,6 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTR
     IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
     TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
     StreamSize = Chunk.dwSize - sizeof(FOURCC);
-    StreamCount = 0;
     switch (Chunk.fccID) {
     case DMUS_FOURCC_SEGMENT_FORM: {
       TRACE_(dmfile)(": segment form\n");

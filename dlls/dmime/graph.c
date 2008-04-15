@@ -108,7 +108,6 @@ static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_StampPMsg (LPDIREC
 static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_InsertTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool, DWORD* pdwPChannels, DWORD cPChannels, LONG lIndex) {
   ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
 
-  HRESULT hr; 
   struct list* pEntry = NULL;
   struct list* pPrevEntry = NULL;
   LPDMUS_PRIVATE_GRAPH_TOOL pIt = NULL;
@@ -142,14 +141,14 @@ static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_InsertTool (LPDIRE
   pNewTool->pTool = pTool;
   pNewTool->dwIndex = lIndex;
   IDirectMusicTool8_AddRef(pTool);
-  hr = IDirectMusicTool8_Init(pTool, iface);
+  IDirectMusicTool8_Init(pTool, iface);
   list_add_tail (pPrevEntry->next, &pNewTool->entry);
 
 #if 0
   DWORD dwNum = 0;
-  hr = IDirectMusicTool8_GetMediaTypes(pTool, &dwNum);
+  IDirectMusicTool8_GetMediaTypes(pTool, &dwNum);
 #endif
- 
+
   return DS_OK;
 }
 
