@@ -659,28 +659,23 @@ DECL_HANDLER(enum_desktop)
 {
     struct winstation *winstation;
     struct desktop *desktop;
-    unsigned int index = req->index;
-    obj_handle_t handle;
+    unsigned int index = 0;
 
     if (!(winstation = (struct winstation *)get_handle_obj( current->process, req->winstation,
                                                             WINSTA_ENUMDESKTOPS, &winstation_ops )))
         return;
 
-    while ((handle = enumerate_handles( current->process, &desktop_ops, &index )))
+    LIST_FOR_EACH_ENTRY( desktop, &winstation->desktops, struct desktop, entry )
     {
-        if (!(desktop = get_desktop_obj( current->process, handle, DESKTOP_ENUMERATE )))
-            continue;
-
-        if (desktop->winstation == winstation)
-        {
-            set_reply_data_obj_name( &desktop->obj );
-            release_object( desktop );
-            release_object( winstation );
-            clear_error();
-            reply->next = index;
-            return;
-        }
-        release_object( desktop );
+        unsigned int access = DESKTOP_ENUMERATE;
+        if (req->index > index++) continue;
+        if (!desktop->obj.name) continue;
+        if (!check_object_access( &desktop->obj, &access )) continue;
+        set_reply_data_obj_name( &desktop->obj );
+        release_object( winstation );
+        clear_error();
+        reply->next = index;
+        return;
     }
 
     release_object( winstation );
