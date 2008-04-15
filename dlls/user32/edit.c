@@ -213,7 +213,7 @@ static BOOL	EDIT_MakeUndoFit(EDITSTATE *es, UINT size);
 static void	EDIT_MoveBackward(EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveEnd(EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveForward(EDITSTATE *es, BOOL extend);
-static void	EDIT_MoveHome(EDITSTATE *es, BOOL extend);
+static void	EDIT_MoveHome(EDITSTATE *es, BOOL extend, BOOL ctrl);
 static void	EDIT_MoveWordBackward(EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveWordForward(EDITSTATE *es, BOOL extend);
 static void	EDIT_PaintLine(EDITSTATE *es, HDC hdc, INT line, BOOL rev);
@@ -2058,12 +2058,12 @@ static void EDIT_MoveForward(EDITSTATE *es, BOOL extend)
  *	Home key: move to beginning of line.
  *
  */
-static void EDIT_MoveHome(EDITSTATE *es, BOOL extend)
+static void EDIT_MoveHome(EDITSTATE *es, BOOL extend, BOOL ctrl)
 {
 	INT e;
 
 	/* Pass the x_offset in x to make sure of receiving the first position of the line */
-	if (es->style & ES_MULTILINE)
+	if (!ctrl && (es->style & ES_MULTILINE))
 		e = EDIT_CharFromPos(es, -es->x_offset,
 			HIWORD(EDIT_EM_PosFromChar(es, es->selection_end, es->flags & EF_AFTER_WRAP)), NULL);
 	else
@@ -4028,7 +4028,7 @@ static LRESULT EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 	case '\n':
 		if (es->style & ES_MULTILINE) {
 			if (es->style & ES_READONLY) {
-				EDIT_MoveHome(es, FALSE);
+				EDIT_MoveHome(es, FALSE, FALSE);
 				EDIT_MoveDown_ML(es, FALSE);
 			} else {
 				static const WCHAR cr_lfW[] = {'\r','\n',0};
@@ -4565,7 +4565,7 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 			EDIT_MoveForward(es, shift);
 		break;
 	case VK_HOME:
-		EDIT_MoveHome(es, shift);
+		EDIT_MoveHome(es, shift, control);
 		break;
 	case VK_END:
 		EDIT_MoveEnd(es, shift);
