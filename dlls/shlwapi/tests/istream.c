@@ -198,7 +198,6 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileA)(NULL, mode, &stream);
-    todo_wine
     ok(ret == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "SHCreateStreamOnFileA: expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
 
@@ -226,15 +225,12 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_FAILIFTHERE, &stream);
-    todo_wine
     ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileA: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_CREATE, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileA: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -250,9 +246,7 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_FAILIFTHERE, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileA: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -264,9 +258,7 @@ static void test_SHCreateStreamOnFileA(DWORD mode)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_CREATE, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileA: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -322,15 +314,12 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_FAILIFTHERE, &stream);
-    todo_wine
     ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileW: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_CREATE, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileW: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -346,9 +335,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_FAILIFTHERE, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileW: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -360,9 +347,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_CREATE, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileW: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -397,7 +382,6 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, template, &stream);
-    todo_wine
     ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
 
@@ -419,16 +403,13 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
             return;
         }
     } else {
-        todo_wine
         ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
     }
     ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, TRUE, NULL, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -442,9 +423,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -458,9 +437,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -476,9 +453,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, FALSE, NULL, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -490,15 +465,12 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, TRUE, NULL, &stream);
-    todo_wine
     ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -510,9 +482,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
-    todo_wine
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
-    todo_wine
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
     if (stream) {
@@ -522,7 +492,6 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
         ok(refcount == 0, "SHCreateStreamOnFileEx: expected 0, got %d\n", refcount);
     }
 
-    todo_wine
     ok(DeleteFileW(test_file), "SHCreateStreamOnFileEx: could not delete the test file, got error %d\n", GetLastError());
 }
 
