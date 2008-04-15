@@ -2043,8 +2043,8 @@ static void fill_surface(IDirect3DSurface9 *surface, DWORD color)
 static void stretchrect_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
-    IDirect3DTexture9 *tex_rt32 = NULL, *tex_rt64 = NULL, *tex_rt_dest64;
-    IDirect3DSurface9 *surf_tex_rt32 = NULL, *surf_tex_rt64 = NULL, *surf_tex_rt_dest64;
+    IDirect3DTexture9 *tex_rt32 = NULL, *tex_rt64 = NULL, *tex_rt_dest64 = NULL;
+    IDirect3DSurface9 *surf_tex_rt32 = NULL, *surf_tex_rt64 = NULL, *surf_tex_rt_dest64 = NULL;
     IDirect3DTexture9 *tex32 = NULL, *tex64 = NULL, *tex_dest64 = NULL;
     IDirect3DSurface9 *surf_tex32 = NULL, *surf_tex64 = NULL, *surf_tex_dest64 = NULL;
     IDirect3DSurface9 *surf_rt32 = NULL, *surf_rt64 = NULL, *surf_rt_dest64 = NULL;
