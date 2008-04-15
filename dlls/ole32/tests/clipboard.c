@@ -58,6 +58,7 @@ typedef struct EnumFormatImpl {
 } EnumFormatImpl;
 
 static BOOL expect_DataObjectImpl_QueryGetData = TRUE;
+static ULONG DataObjectImpl_GetData_calls = 0;
 
 static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT size, LPENUMFORMATETC *lplpformatetc);
 
@@ -196,6 +197,8 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
 {
     DataObjectImpl *This = (DataObjectImpl*)iface;
 
+    DataObjectImpl_GetData_calls++;
+
     if(pformatetc->lindex != -1)
         return DV_E_LINDEX;
 
@@ -326,12 +329,15 @@ static void test_get_clipboard(void)
     HRESULT hr;
     IDataObject *data_obj;
     FORMATETC fmtetc;
+    STGMEDIUM stgmedium;
 
     hr = OleGetClipboard(NULL);
     ok(hr == E_INVALIDARG, "OleGetClipboard(NULL) should return E_INVALIDARG instead of 0x%08x\n", hr);
 
     hr = OleGetClipboard(&data_obj);
     ok(hr == S_OK, "OleGetClipboard failed with error 0x%08x\n", hr);
+
+    /* test IDataObject_QueryGetData */
 
     /* clipboard's IDataObject_QueryGetData shouldn't defer to our IDataObject_QueryGetData */
     expect_DataObjectImpl_QueryGetData = FALSE;
@@ -366,6 +372,45 @@ static void test_get_clipboard(void)
     ok(hr == S_OK, "IDataObject_QueryGetData failed with error 0x%08x\n", hr);
 
     expect_DataObjectImpl_QueryGetData = TRUE;
+
+    /* test IDataObject_GetData */
+
+    DataObjectImpl_GetData_calls = 0;
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    ok(hr == S_OK, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    ReleaseStgMedium(&stgmedium);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.dwAspect = 0xdeadbeef;
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    ok(hr == S_OK, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    ReleaseStgMedium(&stgmedium);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.dwAspect = DVASPECT_THUMBNAIL;
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    ok(hr == S_OK, "IDataObject_GetData failed with error 0x%08x\n", hr);
+    ReleaseStgMedium(&stgmedium);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.lindex = 256;
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    todo_wine
+    ok(hr == DV_E_FORMATETC, "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.cfFormat = CF_RIFF;
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    ok(hr == DV_E_FORMATETC, "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+
+    InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
+    fmtetc.tymed = TYMED_FILE;
+    hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
+    ok(hr == DV_E_TYMED, "IDataObject_GetData should have failed with DV_E_TYMED instead of 0x%08x\n", hr);
+
+    ok(DataObjectImpl_GetData_calls == 6, "DataObjectImpl_GetData should have been called 6 times instead of %d times\n", DataObjectImpl_GetData_calls);
 
     IDataObject_Release(data_obj);
 }
