@@ -1761,16 +1761,27 @@ BOOL WINAPI ImmSetCompositionWindow(
 BOOL WINAPI ImmSetConversionStatus(
   HIMC hIMC, DWORD fdwConversion, DWORD fdwSentence)
 {
-  static int shown = 0;
+    InputContextData *data = (InputContextData*)hIMC;
 
-  if (!shown) {
-      FIXME("(%p, %d, %d): stub\n",
-          hIMC, fdwConversion, fdwSentence
-      );
-      shown = 1;
-  }
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    TRACE("%p %d %d\n", hIMC, fdwConversion, fdwSentence);
+
+    if (!data)
+        return FALSE;
+
+    if ( fdwConversion != data->IMC.fdwConversion )
+    {
+        data->IMC.fdwConversion = fdwConversion;
+        ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCONVERSIONMODE);
+        ImmInternalSendIMENotify(data, IMN_SETCONVERSIONMODE, 0);
+    }
+    if ( fdwSentence != data->IMC.fdwSentence )
+    {
+        data->IMC.fdwSentence = fdwSentence;
+        ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETSENTENCEMODE);
+        ImmInternalSendIMENotify(data, IMN_SETSENTENCEMODE, 0);
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
