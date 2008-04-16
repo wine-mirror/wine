@@ -586,7 +586,10 @@ static HRESULT WINAPI StdMediaSample2_SetSyncPoint(IMediaSample2 * iface, BOOL b
 
     TRACE("(%s)\n", bIsSyncPoint ? "TRUE" : "FALSE");
 
-    This->props.dwSampleFlags = (This->props.dwSampleFlags & ~AM_SAMPLE_SPLICEPOINT) | bIsSyncPoint ? AM_SAMPLE_SPLICEPOINT : 0;
+    if (bIsSyncPoint)
+        This->props.dwSampleFlags |= AM_SAMPLE_SPLICEPOINT;
+    else
+        This->props.dwSampleFlags &= ~AM_SAMPLE_SPLICEPOINT;
 
     return S_OK;
 }
@@ -606,7 +609,10 @@ static HRESULT WINAPI StdMediaSample2_SetPreroll(IMediaSample2 * iface, BOOL bIs
 
     TRACE("(%s)\n", bIsPreroll ? "TRUE" : "FALSE");
 
-    This->props.dwSampleFlags = (This->props.dwSampleFlags & ~AM_SAMPLE_PREROLL) | bIsPreroll ? AM_SAMPLE_PREROLL : 0;
+    if (bIsPreroll)
+        This->props.dwSampleFlags &= ~AM_SAMPLE_PREROLL;
+    else
+        This->props.dwSampleFlags |= AM_SAMPLE_PREROLL;
 
     return S_OK;
 }
