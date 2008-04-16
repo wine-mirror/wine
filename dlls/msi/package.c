@@ -1812,10 +1812,19 @@ static HRESULT WINAPI mrp_SetInstallLevel( IWineMsiRemotePackage *iface, int lev
 }
 
 static HRESULT WINAPI mrp_FormatRecord( IWineMsiRemotePackage *iface, MSIHANDLE record,
-                                 BSTR value, DWORD *size )
+                                        BSTR *value)
 {
+    DWORD size = 0;
     msi_remote_package_impl* This = mrp_from_IWineMsiRemotePackage( iface );
-    UINT r = MsiFormatRecordW(This->package, record, (LPWSTR)value, size);
+    UINT r = MsiFormatRecordW(This->package, record, NULL, &size);
+    if (r == ERROR_SUCCESS)
+    {
+        *value = SysAllocStringLen(NULL, size);
+        if (!*value)
+            return E_OUTOFMEMORY;
+        size++;
+        r = MsiFormatRecordW(This->package, record, *value, &size);
+    }
     return HRESULT_FROM_WIN32(r);
 }
 
