@@ -403,6 +403,27 @@ GpStatus WINGDIPAPI GdipCreatePath2(GDIPCONST GpPointF* points,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreatePath2I(GDIPCONST GpPoint* points,
+    GDIPCONST BYTE* types, INT count, GpFillMode fill, GpPath **path)
+{
+    GpPointF *ptF;
+    GpStatus ret;
+    INT i;
+
+    ptF = GdipAlloc(sizeof(GpPointF)*count);
+
+    for(i = 0;i < count; i++){
+        ptF[i].X = (REAL)points[i].X;
+        ptF[i].Y = (REAL)points[i].Y;
+    }
+
+    ret = GdipCreatePath2(ptF, types, count, fill, path);
+
+    GdipFree(ptF);
+
+    return ret;
+}
+
 GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
 {
     if(!path)
