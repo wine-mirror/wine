@@ -1002,7 +1002,9 @@ static void test_CompareStringA(void)
     ok(ret == 2, "a vs a expected 2, got %d\n", ret);
 
     ret = CompareStringA(lcid, 0, "a\0b", 4, "a", 2);
-    ok(ret == 3, "a\\0b vs a expected 3, got %d\n", ret);
+    ok(ret == CSTR_EQUAL || /* win2k */
+       ret == CSTR_GREATER_THAN,
+       "a\\0b vs a expected CSTR_EQUAL or CSTR_GREATER_THAN, got %d\n", ret);
 
     ret = CompareStringA(lcid, 0, "\2", 2, "\1", 2);
     todo_wine ok(ret != 2, "\\2 vs \\1 expected unequal\n");
