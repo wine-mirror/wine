@@ -364,6 +364,8 @@ static void test_GetComputerNameExA(void)
     LPSTR name;
     DWORD error;
 
+    static const int MAX_COMP_NAME = 32767;
+
     if (!pGetComputerNameExA)
     {
         skip("GetComputerNameExA function not implemented\n");
@@ -373,8 +375,11 @@ static void test_GetComputerNameExA(void)
     size = 0;
     ret = pGetComputerNameExA(ComputerNameDnsDomain, (LPSTR)0xdeadbeef, &size);
     error = GetLastError();
-    ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExA should have failed with ERROR_MORE_DATA instead of %d\n", error);
-    trace("domain size is %d\n", size);
+    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(error == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", error);
+
+    /* size is not set in win2k */
+    size = MAX_COMP_NAME;
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = pGetComputerNameExA(ComputerNameDnsDomain, name, &size);
@@ -385,8 +390,11 @@ static void test_GetComputerNameExA(void)
     size = 0;
     ret = pGetComputerNameExA(ComputerNameDnsFullyQualified, (LPSTR)0xdeadbeef, &size);
     error = GetLastError();
-    ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExA should have failed with ERROR_MORE_DATA instead of %d\n", error);
-    trace("fully qualified hostname size is %d\n", size);
+    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(error == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", error);
+
+    /* size is not set in win2k */
+    size = MAX_COMP_NAME;
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = pGetComputerNameExA(ComputerNameDnsFullyQualified, name, &size);
@@ -397,8 +405,11 @@ static void test_GetComputerNameExA(void)
     size = 0;
     ret = pGetComputerNameExA(ComputerNameDnsHostname, (LPSTR)0xdeadbeef, &size);
     error = GetLastError();
-    ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExA should have failed with ERROR_MORE_DATA instead of %d\n", error);
-    trace("hostname size is %d\n", size);
+    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(error == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", error);
+
+    /* size is not set in win2k */
+    size = MAX_COMP_NAME;
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = pGetComputerNameExA(ComputerNameDnsHostname, name, &size);
@@ -409,8 +420,11 @@ static void test_GetComputerNameExA(void)
     size = 0;
     ret = pGetComputerNameExA(ComputerNameNetBIOS, (LPSTR)0xdeadbeef, &size);
     error = GetLastError();
-    ok(!ret && error == ERROR_MORE_DATA, "GetComputerNameExA should have failed with ERROR_MORE_DATA instead of %d\n", error);
-    trace("NetBIOS size is %d\n", size);
+    ok(ret == 0, "Expected 0, got %d\n", ret);
+    ok(error == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", error);
+
+    /* size is not set in win2k */
+    size = MAX_COMP_NAME;
     name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = pGetComputerNameExA(ComputerNameNetBIOS, name, &size);
