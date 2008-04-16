@@ -360,12 +360,13 @@ static HRESULT AVISplitter_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
     return S_FALSE;
 }
 
-static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, LONGLONG qwOffset, DWORD cb)
+static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **index, LONGLONG qwOffset, DWORD cb)
 {
     AVISTDINDEX *pIndex;
     int x;
     long rest;
 
+    *index = NULL;
     if (cb < sizeof(AVISTDINDEX))
     {
         FIXME("size %u too small\n", cb);
@@ -410,7 +411,7 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, LONGLONG qwOffset
         TRACE("Frame is a keyframe: %s\n", keyframe ? "yes" : "no");
     }
 
-    CoTaskMemFree(pIndex);
+    *index = pIndex;
     return S_OK;
 }
 
@@ -482,11 +483,15 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     static const WCHAR wszStreamTemplate[] = {'S','t','r','e','a','m',' ','%','0','2','d',0};
     StreamData *stream;
 
+    AVISUPERINDEX *superindex = NULL;
+    AVISTDINDEX **stdindex = NULL;
+    DWORD nstdindex = 0;
+
     props.cbAlign = 1;
     props.cbPrefix = 0;
     props.cbBuffer = 0x20000;
     props.cBuffers = 2;
-    
+
     ZeroMemory(&amt, sizeof(amt));
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)This;
@@ -598,6 +603,12 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                 break;
             }
 
+            if (nstdindex > 0)
+            {
+                ERR("Stream %d got more then 1 superindex?\n", This->Parser.cStreams);
+                break;
+            }
+
             TRACE("wLongsPerEntry: %hd\n", pIndex->wLongsPerEntry);
             TRACE("bIndexSubType: %hd\n", pIndex->bIndexSubType);
             TRACE("bIndexType: %hd\n", pIndex->bIndexType);
@@ -618,13 +629,24 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                 FIXME("Invalid index chunk encountered\n");
                 break;
             }
+
+            superindex = CoTaskMemAlloc(pIndex->cb + sizeof(RIFFCHUNK));
+            if (!superindex)
+            {
+                WARN("Out of memory\n");
+                break;
+            }
+            memcpy(superindex, pIndex, pIndex->cb + sizeof(RIFFCHUNK));
+
             for (x = 0; x < pIndex->nEntriesInUse; ++x)
             {
                 TRACE("qwOffset: %x%08x\n", (DWORD)(pIndex->aIndex[x].qwOffset >> 32), (DWORD)pIndex->aIndex[x].qwOffset);
                 TRACE("dwSize: %u\n", pIndex->aIndex[x].dwSize);
-                AVISplitter_ProcessIndex(This, pIndex->aIndex[x].qwOffset, pIndex->aIndex[x].dwSize);
-
                 TRACE("dwDuration: %u (unreliable)\n", pIndex->aIndex[x].dwDuration);
+
+                ++nstdindex;
+                stdindex = CoTaskMemRealloc(stdindex, sizeof(*stdindex) * nstdindex);
+                AVISplitter_ProcessIndex(This, &stdindex[nstdindex-1], pIndex->aIndex[x].qwOffset, pIndex->aIndex[x].dwSize);
             }
             break;
         }
@@ -644,10 +666,14 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     TRACE("dwSampleSize = %x\n", dwSampleSize);
     TRACE("dwLength = %x\n", dwLength);
     This->streams = CoTaskMemRealloc(This->streams, sizeof(StreamData) * (This->Parser.cStreams+1));
+
     stream = This->streams + This->Parser.cStreams;
     stream->fSamplesPerSec = fSamplesPerSec;
     stream->dwSampleSize = dwSampleSize;
     stream->dwLength = dwLength; /* TODO: Use this for mediaseeking */
+    stream->superindex = superindex;
+    stream->entries = nstdindex;
+    stream->stdindex = stdindex;
 
     hr = Parser_AddPin(&(This->Parser), &piOutput, &props, &amt);
     CoTaskMemFree(amt.pbFormat);
@@ -862,10 +888,25 @@ static HRESULT AVISplitter_Cleanup(LPVOID iface)
 static HRESULT AVISplitter_Disconnect(LPVOID iface)
 {
     AVISplitterImpl *This = iface;
+    int x;
 
     /* TODO: Remove other memory that's allocated during connect */
     CoTaskMemFree(This->oldindex);
     This->oldindex = NULL;
+
+    for (x = 0; x < This->Parser.cStreams; ++x)
+    {
+        int i;
+
+        StreamData *stream = &This->streams[x];
+
+        for (i = 0; i < stream->entries; ++i)
+            CoTaskMemFree(stream->stdindex[i]);
+
+        CoTaskMemFree(stream->stdindex);
+        CoTaskMemFree(stream->superindex);
+    }
+    CoTaskMemFree(This->streams);
 
     return S_OK;
 }
