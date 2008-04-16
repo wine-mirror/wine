@@ -242,12 +242,11 @@ static void test_ExpandEnvironmentStringsA(void)
     /* Try to get the required buffer size 'the natural way' */
     strcpy(buf, "%EnvVar%");
     ret_size = ExpandEnvironmentStringsA(buf, NULL, 0);
-    /* v5.1.2600.2945 (XP SP2) returns len + 2 here! */
-    ok(ret_size == strlen(value)+1 || ret_size == strlen(value)+2 || ret_size == 0 /* Win95 */,
-       "ExpandEnvironmentStrings returned %d instead of %d\n",
-       ret_size, lstrlenA(value)+1);
-    if (ret_size == strlen(value)+2)
-        trace("ExpandEnvironmentStrings is buggy: it returned len + 2\n");
+    ok(ret_size == strlen(value)+1 || /* win98 */
+       ret_size == strlen(value)+2 || /* win2k, XP, win2k3 */
+       ret_size == 0 /* Win95 */,
+       "ExpandEnvironmentStrings returned %d instead of %d, %d or %d\n",
+       ret_size, lstrlenA(value)+1, lstrlenA(value)+2, 0);
 
     /* Again, side-stepping the Win95 bug */
     ret_size = ExpandEnvironmentStringsA(buf, buf1, 0);
