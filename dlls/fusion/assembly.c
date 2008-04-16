@@ -416,7 +416,7 @@ HRESULT assembly_get_name(ASSEMBLY *assembly, LPSTR *name)
     ULONG offset;
 
     offset = assembly->tables[0x20].offset; /* FIXME: add constants */
-    if (offset < 0)
+    if (offset == -1)
         return E_FAIL;
 
     asmtbl = (ASSEMBLYTABLE *)assembly_data_offset(assembly, offset);
@@ -527,7 +527,7 @@ HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPSTR *token)
     *token = NULL;
 
     offset = assembly->tables[0x20].offset; /* FIXME: add constants */
-    if (offset < 0)
+    if (offset == -1)
         return E_FAIL;
 
     asmtbl = (ASSEMBLYTABLE *)assembly_data_offset(assembly, offset);
