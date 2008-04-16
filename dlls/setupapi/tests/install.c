@@ -166,7 +166,6 @@ static void test_install_svc_from(void)
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_SECTION_NOT_FOUND,
         "Expected ERROR_SECTION_NOT_FOUND, got %08x\n", GetLastError());
     SetupCloseInfFile(infhandle);
@@ -179,7 +178,6 @@ static void test_install_svc_from(void)
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_SECTION_NOT_FOUND,
         "Expected ERROR_SECTION_NOT_FOUND, got %08x\n", GetLastError());
     SetupCloseInfFile(infhandle);
@@ -192,7 +190,6 @@ static void test_install_svc_from(void)
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
         "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
     SetupCloseInfFile(infhandle);
@@ -205,7 +202,6 @@ static void test_install_svc_from(void)
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
         "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
     SetupCloseInfFile(infhandle);
@@ -218,7 +214,6 @@ static void test_install_svc_from(void)
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
         "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
     SetupCloseInfFile(infhandle);
@@ -231,7 +226,6 @@ static void test_install_svc_from(void)
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
         "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
     SetupCloseInfFile(infhandle);
@@ -244,7 +238,6 @@ static void test_install_svc_from(void)
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
     ok(!ret, "Expected failure\n");
-    todo_wine
     ok(GetLastError() == ERROR_BAD_SERVICE_INSTALLSECT,
         "Expected ERROR_BAD_SERVICE_INSTALLSECT, got %08x\n", GetLastError());
     SetupCloseInfFile(infhandle);
@@ -256,12 +249,9 @@ static void test_install_svc_from(void)
     infhandle = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
     SetLastError(0xdeadbeef);
     ret = SetupInstallServicesFromInfSectionA(infhandle, "Winetest.Services", 0);
-    todo_wine
-    {
     ok(ret, "Expected success\n");
     ok(GetLastError() == ERROR_SUCCESS,
         "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
-    }
     SetupCloseInfFile(infhandle);
     DeleteFile(inffile);
 
@@ -269,12 +259,10 @@ static void test_install_svc_from(void)
 
     /* Open the service to see if it's really there */
     svc_handle = OpenServiceA(scm_handle, "Winetest", DELETE);
-    todo_wine
     ok(svc_handle != NULL, "Service was not created\n");
 
     SetLastError(0xdeadbeef);
     ret = DeleteService(svc_handle);
-    todo_wine
     ok(ret, "Service could not be deleted : %d\n", GetLastError());
 
     CloseServiceHandle(svc_handle);
