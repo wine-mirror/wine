@@ -53,7 +53,7 @@ static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 }
 
 
-HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate)
+HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate)
 {
     HRESULT hr;
     PIN_INFO piInput;
@@ -68,6 +68,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     pParser->state = State_Stopped;
     pParser->pClock = NULL;
     pParser->fnCleanup = fnCleanup;
+    pParser->fnDisconnect = fnDisconnect;
     ZeroMemory(&pParser->filterInfo, sizeof(FILTER_INFO));
 
     pParser->cStreams = 0;
@@ -680,7 +681,7 @@ static const IPinVtbl Parser_OutputPin_Vtbl =
     OutputPin_NewSegment
 };
 
-static HRESULT WINAPI Parser_InputPin_Disconnect(IPin * iface)
+static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
 {
     HRESULT hr;
     IPinImpl *This = (IPinImpl *)iface;
@@ -692,10 +693,11 @@ static HRESULT WINAPI Parser_InputPin_Disconnect(IPin * iface)
         if (This->pConnectedTo)
         {
             FILTER_STATE state;
+            ParserImpl *Parser = (ParserImpl *)This->pinInfo.pFilter;
 
             hr = IBaseFilter_GetState(This->pinInfo.pFilter, 0, &state);
 
-            if (SUCCEEDED(hr) && (state == State_Stopped))
+            if (SUCCEEDED(hr) && (state == State_Stopped) && SUCCEEDED(Parser->fnDisconnect(Parser)))
             {
                 IPin_Release(This->pConnectedTo);
                 This->pConnectedTo = NULL;
@@ -738,7 +740,7 @@ static const IPinVtbl Parser_InputPin_Vtbl =
     PullPin_Release,
     OutputPin_Connect,
     Parser_PullPin_ReceiveConnection,
-    Parser_InputPin_Disconnect,
+    Parser_PullPin_Disconnect,
     IPinImpl_ConnectedTo,
     IPinImpl_ConnectionMediaType,
     IPinImpl_QueryPinInfo,

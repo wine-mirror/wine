@@ -22,6 +22,7 @@
 /* FIXME:
  * - we don't do anything with indices yet (we could use them when seeking)
  * - we don't support multiple RIFF sections (i.e. large AVI files > 2Gb)
+ * - Memory leaks, and lots of them
  */
 
 #include "quartz_private.h"
@@ -55,6 +56,10 @@ typedef struct StreamData
     DWORD dwSampleSize;
     FLOAT fSamplesPerSec;
     DWORD dwLength;
+
+    AVISUPERINDEX *superindex;
+    DWORD entries;
+    AVISTDINDEX **stdindex;
 } StreamData;
 
 typedef struct AVISplitterImpl
@@ -65,6 +70,11 @@ typedef struct AVISplitterImpl
     LONGLONG CurrentChunkOffset; /* in media time */
     LONGLONG EndOfFile;
     AVIMAINHEADER AviHeader;
+    AVIEXTHEADER ExtHeader;
+
+    /* TODO: Handle old style index, probably by creating an opendml style new index from it for within StreamData */
+    AVIOLDINDEX *oldindex;
+
     StreamData *streams;
 } AVISplitterImpl;
 
@@ -404,6 +414,61 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, LONGLONG qwOffset
     return S_OK;
 }
 
+static HRESULT AVISplitter_ProcessOldIndex(AVISplitterImpl *This)
+{
+    AVIOLDINDEX *pAviOldIndex = This->oldindex;
+    int relative = -1;
+    int x;
+
+    for (x = 0; x < pAviOldIndex->cb / sizeof(pAviOldIndex->aIndex[0]); ++x)
+    {
+        DWORD temp, temp2 = 0, offset, chunkid;
+        ULONGLONG mov_pos = BYTES_FROM_MEDIATIME(This->CurrentChunkOffset) - sizeof(DWORD);
+        PullPin *pin = This->Parser.pInputPin;
+
+        offset = pAviOldIndex->aIndex[x].dwOffset;
+        chunkid = pAviOldIndex->aIndex[x].dwChunkId;
+
+        /* Only scan once, or else this will take too long */
+        if (relative == -1)
+        {
+            IAsyncReader_SyncRead(pin->pReader, offset, sizeof(DWORD), (BYTE *)&temp);
+            relative = (chunkid != temp);
+
+            if (chunkid == mmioFOURCC('7','F','x','x')
+                && ((char *)&temp)[0] == 'i' && ((char *)&temp)[1] == 'x')
+                relative = FALSE;
+
+            if (relative)
+            {
+                if (offset + mov_pos < BYTES_FROM_MEDIATIME(This->EndOfFile))
+                    IAsyncReader_SyncRead(pin->pReader, offset + mov_pos, sizeof(DWORD), (BYTE *)&temp2);
+
+                if (chunkid == mmioFOURCC('7','F','x','x')
+                    && ((char *)&temp2)[0] == 'i' && ((char *)&temp2)[1] == 'x')
+                {
+                    /* Do nothing, all is great */
+                }
+                else if (temp2 != chunkid)
+                {
+                    ERR("Faulty index or bug in handling: Wanted FCC: %s, Abs FCC: %s (@ %x), Rel FCC: %s (@ %.0x%08x)\n",
+                        debugstr_an((char *)&chunkid, 4), debugstr_an((char *)&temp, 4), offset,
+                        debugstr_an((char *)&temp2, 4), (DWORD)((mov_pos + offset) >> 32), (DWORD)(mov_pos + offset));
+                    relative = -1;
+                }
+            }
+        }
+
+        TRACE("Scanned dwChunkId: %s\n", debugstr_an((char *)&temp, 4));
+        TRACE("dwChunkId: %.4s\n", (char *)&chunkid);
+        TRACE("dwFlags: %08x\n", pAviOldIndex->aIndex[x].dwFlags);
+        TRACE("dwOffset (%s): %08x\n", relative ? "relative" : "absolute", offset);
+        TRACE("dwSize: %08x\n", pAviOldIndex->aIndex[x].dwSize);
+    }
+
+    return S_OK;
+}
+
 static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE * pData, DWORD cb)
 {
     PIN_INFO piOutput;
@@ -585,6 +650,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     stream->dwLength = dwLength; /* TODO: Use this for mediaseeking */
 
     hr = Parser_AddPin(&(This->Parser), &piOutput, &props, &amt);
+    CoTaskMemFree(amt.pbFormat);
 
     return hr;
 }
@@ -615,6 +681,7 @@ static HRESULT AVISplitter_ProcessODML(AVISplitterImpl * This, const BYTE * pDat
                 for (x = 0; x < 61; ++x)
                     if (pExtHdr->dwFuture[x])
                         FIXME("dwFuture[%i] = %u (0x%08x)\n", x, pExtHdr->dwFuture[x], pExtHdr->dwFuture[x]);
+                This->ExtHeader = *pExtHdr;
                 break;
             }
         default:
@@ -753,60 +820,20 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
         hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
         if (list.fcc == ckidAVIOLDINDEX)
         {
-            int x = 0;
-            AVIOLDINDEX * pAviOldIndex = CoTaskMemAlloc(list.cb + sizeof(RIFFCHUNK));
-            if (!pAviOldIndex)
+            pAviSplit->oldindex = CoTaskMemRealloc(pAviSplit->oldindex, list.cb + sizeof(RIFFCHUNK));
+            if (!pAviSplit->oldindex)
                 return E_OUTOFMEMORY;
-            hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(RIFFCHUNK) + list.cb, (BYTE *)pAviOldIndex);
+
+            hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(RIFFCHUNK) + list.cb, (BYTE *)pAviSplit->oldindex);
             if (hr == S_OK)
             {
-                for (x = 0; x < list.cb / sizeof(pAviOldIndex->aIndex[0]); ++x)
-                {
-                    DWORD temp, temp2, offset, chunkid;
-                    ULONGLONG mov_pos = BYTES_FROM_MEDIATIME(pAviSplit->CurrentChunkOffset) - sizeof(DWORD);
-                    BOOL relative;
-
-                    offset = pAviOldIndex->aIndex[x].dwOffset;
-                    chunkid = pAviOldIndex->aIndex[x].dwChunkId;
-
-                    IAsyncReader_SyncRead(This->pReader, offset, sizeof(DWORD), (BYTE *)&temp);
-                    relative = (chunkid != temp);
-
-                    if (chunkid == mmioFOURCC('7','F','x','x')
-                        && ((char *)&temp)[0] == 'i' && ((char *)&temp)[1] == 'x')
-                        relative = FALSE;
-
-                    if (relative)
-                    {
-                        if (offset + mov_pos < BYTES_FROM_MEDIATIME(pAviSplit->EndOfFile))
-                            hr = IAsyncReader_SyncRead(This->pReader, offset + mov_pos, sizeof(DWORD), (BYTE *)&temp2);
-                        else hr = S_FALSE;
-
-                        if (hr == S_OK && chunkid == mmioFOURCC('7','F','x','x')
-                            && ((char *)&temp2)[0] == 'i' && ((char *)&temp2)[1] == 'x')
-                        {
-                            /* Do nothing, all is great */
-                        }
-                        else if (hr == S_OK && temp2 != chunkid)
-                        {
-                            ERR("Faulty index or bug in handling: Wanted FOURCC: %s, Absolute FOURCC: %s (@ %u), Relative FOURCC: %s (@ %lld)\n",
-                                debugstr_an((char *)&chunkid, 4), debugstr_an((char *)&temp, 4), offset, debugstr_an((char *)&temp2, 4), mov_pos + offset);
-                        }
-                        else if (hr != S_OK)
-                        {
-                            TRACE("hr: %08x\n", hr);
-                        }
-                    }
-
-                    TRACE("Scanned dwChunkId: %s\n", debugstr_an((char *)&temp, 4));
-                    TRACE("dwChunkId: %.4s\n", (char *)&chunkid);
-                    TRACE("dwFlags: %08x\n", pAviOldIndex->aIndex[x].dwFlags);
-                    TRACE("dwOffset (%s): %08x\n", relative ? "relative" : "absolute", offset);
-                    TRACE("dwSize: %08x\n", pAviOldIndex->aIndex[x].dwSize);
-                }
+                AVISplitter_ProcessOldIndex(pAviSplit);
             }
-
-            CoTaskMemFree(pAviOldIndex);
+            else
+            {
+                CoTaskMemFree(pAviSplit->oldindex);
+                pAviSplit->oldindex = NULL;
+            }
         }
         hr = S_OK;
     }
@@ -832,6 +859,17 @@ static HRESULT AVISplitter_Cleanup(LPVOID iface)
     return S_OK;
 }
 
+static HRESULT AVISplitter_Disconnect(LPVOID iface)
+{
+    AVISplitterImpl *This = iface;
+
+    /* TODO: Remove other memory that's allocated during connect */
+    CoTaskMemFree(This->oldindex);
+    This->oldindex = NULL;
+
+    return S_OK;
+}
+
 HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -849,8 +887,9 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     This->pCurrentSample = NULL;
     This->streams = NULL;
+    This->oldindex = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup, NULL, NULL, NULL);
+    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup, AVISplitter_Disconnect, NULL, NULL, NULL);
 
     if (FAILED(hr))
         return hr;

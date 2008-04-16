@@ -418,6 +418,12 @@ static HRESULT WAVEParser_Cleanup(LPVOID iface)
     return S_OK;
 }
 
+static HRESULT WAVEParser_disconnect(LPVOID iface)
+{
+    /* TODO: Find and plug memory leaks */
+    return S_OK;
+}
+
 HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -435,7 +441,7 @@ HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     This->pCurrentSample = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, NULL, WAVEParserImpl_seek, NULL);
+    hr = Parser_Create(&(This->Parser), &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, WAVEParser_disconnect, NULL, WAVEParserImpl_seek, NULL);
 
     if (FAILED(hr))
         return hr;

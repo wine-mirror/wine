@@ -865,6 +865,12 @@ static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
     return hr;
 }
 
+static HRESULT MPEGSplitter_destroy(LPVOID iface)
+{
+    /* TODO: Find memory leaks etc */
+    return S_OK;
+}
+
 HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     MPEGSplitterImpl *This;
@@ -890,7 +896,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     }
     This->seek_entries = 64;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup, NULL, MPEGSplitter_seek, NULL);
+    hr = Parser_Create(&(This->Parser), &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup, MPEGSplitter_destroy, NULL, MPEGSplitter_seek, NULL);
     if (FAILED(hr))
     {
         CoTaskMemFree(This);
