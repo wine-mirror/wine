@@ -49,7 +49,7 @@ static void test_query_dos_deviceA(void)
 
 static void test_FindFirstVolume(void)
 {
-    char volume[50];
+    char volume[51];
     HANDLE handle;
 
     if (!pFindFirstVolumeA) {
@@ -65,7 +65,7 @@ static void test_FindFirstVolume(void)
     handle = pFindFirstVolumeA( volume, 49 );
     ok( handle == INVALID_HANDLE_VALUE, "succeeded with short buffer\n" );
     ok( GetLastError() == ERROR_FILENAME_EXCED_RANGE, "wrong error %u\n", GetLastError() );
-    handle = pFindFirstVolumeA( volume, 50 );
+    handle = pFindFirstVolumeA( volume, 51 );
     ok( handle != INVALID_HANDLE_VALUE, "failed err %u\n", GetLastError() );
     if (handle != INVALID_HANDLE_VALUE)
     {
