@@ -4040,12 +4040,12 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   if (!(obj_size = GetObjectW( hbitmap, sizeof(dib), &dib ))) return 0;
 
   bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*)info, &width, &tempHeight, &descr.infoBpp, &descr.compression);
-  descr.lines = tempHeight;
   if (bitmap_type == -1)
   {
       ERR("Invalid bitmap\n");
       return 0;
   }
+  descr.lines = tempHeight;
   core_header = (bitmap_type == 0);
   colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
 
