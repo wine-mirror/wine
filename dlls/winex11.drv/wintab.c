@@ -620,7 +620,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                         **         the various inputs to see what the values are.  Odds are that a
                         **         more 'correct' algorithm would condense to this one anyway.
                         */
-                        if (!axis_read_complete && Val->num_axes >= 5 && cursor->TYPE == CSR_TYPE_PEN)
+                        if (!axis_read_complete && cursor->TYPE == CSR_TYPE_PEN)
                         {
                             Axis = (XAxisInfoPtr) ((char *) Val + sizeof
                                 (XValuatorInfo));
