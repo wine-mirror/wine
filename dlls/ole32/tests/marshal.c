@@ -2550,8 +2550,9 @@ static void test_local_server(void)
     hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER, NULL,
         &IID_IClassFactory, (LPVOID*)&cf);
     ok(hr == CO_E_SERVER_STOPPING || /* NT */
+       hr == REGDB_E_CLASSNOTREG || /* win2k */
        hr == S_OK /* Win9x */,
-        "CoGetClassObject should have returned CO_E_SERVER_STOPPING instead of 0x%08x\n", hr);
+        "CoGetClassObject should have returned CO_E_SERVER_STOPPING or REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
 
     hr = CoRevokeClassObject(cookie);
     ok_ole_success(hr, CoRevokeClassObject);
@@ -2594,8 +2595,9 @@ static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 	IClassFactory *cf;
 
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
-	ok(hr == CO_E_NOTINITIALIZED,
-		"IGlobalInterfaceTable_GetInterfaceFromGlobal should have failed with error CO_E_NOTINITIALIZED instead of 0x%08x\n",
+	ok(hr == CO_E_NOTINITIALIZED ||
+		hr == E_UNEXPECTED, /* win2k */
+		"IGlobalInterfaceTable_GetInterfaceFromGlobal should have failed with error CO_E_NOTINITIALIZED or E_UNEXPECTED instead of 0x%08x\n",
 		hr);
 
 	CoInitialize(NULL);
