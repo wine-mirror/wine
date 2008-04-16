@@ -56,7 +56,7 @@ typedef struct DSoundRenderImpl
     LONG refCount;
     CRITICAL_SECTION csFilter;
     FILTER_STATE state;
-    REFERENCE_TIME rtStreamStart;
+    REFERENCE_TIME rtStreamStart, rtLastStop;
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
 
@@ -79,21 +79,38 @@ typedef struct DSoundRenderImpl
     long pan;
 } DSoundRenderImpl;
 
+/* Seeking is not needed for a renderer, rely on newsegment for the appropiate changes */
 static HRESULT sound_mod_stop(IBaseFilter *iface)
 {
-    FIXME("(%p) stub\n", iface);
+    TRACE("(%p)\n", iface);
     return S_OK;
 }
 
 static HRESULT sound_mod_start(IBaseFilter *iface)
 {
-    FIXME("(%p) stub\n", iface);
+    TRACE("(%p)\n", iface);
+
     return S_OK;
 }
 
 static HRESULT sound_mod_rate(IBaseFilter *iface)
 {
-    FIXME("(%p) stub\n", iface);
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
+
+    WAVEFORMATEX *format = (WAVEFORMATEX*)This->pInputPin->pin.mtCurrent.pbFormat;
+    DWORD freq = format->nSamplesPerSec;
+    double rate = This->mediaSeeking.dRate;
+
+    freq = (DWORD)((double)freq * rate);
+
+    TRACE("(%p)\n", iface);
+
+    if (freq > DSBFREQUENCY_MAX)
+        return VFW_E_UNSUPPORTED_AUDIO;
+
+    if (freq < DSBFREQUENCY_MIN)
+        return VFW_E_UNSUPPORTED_AUDIO;
+
     return S_OK;
 }
 
@@ -224,22 +241,29 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
 
     TRACE("%p %p\n", iface, pSample);
 
+    /* Slightly incorrect, Pause completes when a frame is received so we should signal
+     * pause completion here, but for sound receiving a single frame doesn't make sense
+     */
     if (This->state == State_Paused)
         return S_FALSE;
 
     if (This->state == State_Stopped)
-        return VFW_E_WRONG_STATE;
+        return S_FALSE;
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-	return hr;
+        return hr;
     }
 
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
     if (FAILED(hr))
         ERR("Cannot get sample time (%x)\n", hr);
+
+    if (This->rtLastStop != tStart && (IMediaSample_IsDiscontinuity(pSample) == S_FALSE))
+        FIXME("Unexpected discontinuity: Last: %lld, tStart: %lld\n", This->rtLastStop, tStart);
+    This->rtLastStop = tStop;
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
     TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, cbSrcStream);
@@ -673,6 +697,7 @@ static HRESULT WINAPI DSoundRender_InputPin_ReceiveConnection(IPin * iface, IPin
     EnterCriticalSection(This->pin.pCritSec);
     {
         DSImpl = (DSoundRenderImpl*)This->pin.pinInfo.pFilter;
+        DSImpl->rtLastStop = -1;
 
         if (This->pin.pConnectedTo)
             hr = VFW_E_ALREADY_CONNECTED;
