@@ -106,7 +106,7 @@
 @ stub GdipCreateLineBrushI
 @ stdcall GdipCreateMatrix2(long long long long long long ptr)
 @ stdcall GdipCreateMatrix3(ptr ptr ptr)
-@ stub GdipCreateMatrix3I
+@ stdcall GdipCreateMatrix3I(ptr ptr ptr)
 @ stdcall GdipCreateMatrix(ptr)
 @ stdcall GdipCreateMetafileFromEmf(ptr long ptr)
 @ stub GdipCreateMetafileFromFile
