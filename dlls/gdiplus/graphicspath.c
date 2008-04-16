@@ -97,6 +97,12 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathArcI(GpPath *path, INT x1, INT y1, INT x2,
+   INT y2, REAL startAngle, REAL sweepAngle)
+{
+    return GdipAddPathArc(path,(REAL)x1,(REAL)y1,(REAL)x2,(REAL)y2,startAngle,sweepAngle);
+}
+
 GpStatus WINGDIPAPI GdipAddPathBezierI(GpPath *path, INT x1, INT y1, INT x2,
     INT y2, INT x3, INT y3, INT x4, INT y4)
 {
