@@ -167,10 +167,8 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
             {
                 REFERENCE_TIME tAviStart, tAviStop, tOffset;
 
-                /* FIXME: hack */
-                if (pOutputPin->dwSamplesProcessed == 0) {
-                    IMediaSample_SetDiscontinuity(This->pCurrentSample, TRUE);
-	        }
+                IMediaSample_SetDiscontinuity(This->pCurrentSample, pOutputPin->dwSamplesProcessed == 0);
+
                 IMediaSample_SetSyncPoint(This->pCurrentSample, TRUE);
                 pOutputPin->dwSamplesProcessed++;
 
@@ -195,8 +193,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
             if (hr == S_FALSE)
             {
                 /* Break out */
-                offset_src += chunk_remaining_bytes;
-                This->Parser.pInputPin->rtCurrent -= BYTES_FROM_MEDIATIME(cbSrcStream - offset_src);
+                This->Parser.pInputPin->rtCurrent -= MEDIATIME_FROM_BYTES(cbSrcStream - offset_src - chunk_remaining_bytes);
                 hr = S_OK;
                 break;
             }
@@ -297,6 +294,7 @@ static HRESULT WAVEParserImpl_seek(IBaseFilter *iface)
     }
 
     pPin->rtStart = pPin->rtCurrent = bytepos;
+    ((Parser_OutputPin *)This->Parser.ppPins[1])->dwSamplesProcessed = 0;
     LeaveCriticalSection(&This->Parser.csFilter);
 
     TRACE("Done flushing\n");
