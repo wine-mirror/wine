@@ -324,7 +324,7 @@ static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
 void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD len, BOOL inmixer)
 {
 	INT	i, size;
-	BYTE	*ibp, *obp, *ibp_begin, *obp_begin;
+	BYTE	*ibp, *obp, *obp_begin;
 	INT	iAdvance = dsb->pwfx->nBlockAlign;
 	INT	oAdvance = dsb->device->pwfx->nBlockAlign;
 	DWORD freqAcc, target_writepos = 0, overshot, maxlen;
@@ -340,7 +340,6 @@ void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DW
 	maxlen = DSOUND_secpos_to_bufpos(dsb, len, 0, NULL);
 
 	ibp = dsb->buffer->memory + writepos;
-	ibp_begin = dsb->buffer->memory;
 	if (!inmixer)
 		obp_begin = dsb->tmp_buffer;
 	else if (dsb->device->tmp_buffer_len < maxlen || !dsb->device->tmp_buffer)
