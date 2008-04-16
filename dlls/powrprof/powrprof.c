@@ -216,11 +216,9 @@ BOOLEAN WINAPI IsPwrHibernateAllowed(VOID)
 
 BOOLEAN WINAPI IsPwrShutdownAllowed(VOID)
 {
-   /* FIXME: See note #2 */
    SYSTEM_POWER_CAPABILITIES PowerCaps;
-   FIXME("() stub!\n");
    NtPowerInformation(SystemPowerCapabilities, NULL, 0, &PowerCaps, sizeof(PowerCaps));
-   return FALSE;
+   return PowerCaps.SystemS5;
 }
 
 BOOLEAN WINAPI IsPwrSuspendAllowed(VOID)
