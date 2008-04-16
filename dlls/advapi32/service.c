@@ -669,7 +669,7 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
 SC_LOCK WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
 {
     struct sc_manager *hscm;
-    SC_RPC_LOCK hLock;
+    SC_RPC_LOCK hLock = NULL;
     DWORD err;
 
     TRACE("%p\n",hSCManager);
