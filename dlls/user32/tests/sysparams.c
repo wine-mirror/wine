@@ -2554,11 +2554,13 @@ static void test_EnumDisplaySettings(void)
 
     num = 1;
     while (1) {
-	SetLastError (0xdeadbeef);
-	if (!EnumDisplaySettings(NULL, num++, &devmode)) {
-		DWORD le = GetLastError();
-		ok (le == ERROR_NO_MORE_FILES, "Last error on EnumDisplaySettings was %d, expected ERROR_NO_MORE_FILES\n", le);
-		break;
+        SetLastError (0xdeadbeef);
+        if (!EnumDisplaySettings(NULL, num++, &devmode)) {
+            DWORD le = GetLastError();
+            ok(le == ERROR_NO_MORE_FILES ||
+               le == 0xdeadbeef, /* XP, 2003 */
+               "Expected ERROR_NO_MORE_FILES or 0xdeadbeef, got %d\n", le);
+            break;
 	}
     }
 }
