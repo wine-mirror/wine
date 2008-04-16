@@ -217,6 +217,30 @@ GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathLine2I(GpPath *path, GDIPCONST GpPoint *points, INT count)
+{
+    GpPointF *pointsF;
+    INT i;
+    GpStatus stat;
+
+    if(count <= 0)
+        return InvalidParameter;
+
+    pointsF = GdipAlloc(sizeof(GpPointF) * count);
+    if(!pointsF)    return OutOfMemory;
+
+    for(i = 0;i < count; i++){
+        pointsF[i].X = (REAL)points[i].X;
+        pointsF[i].Y = (REAL)points[i].Y;
+    }
+
+    stat = GdipAddPathLine2(path, pointsF, count);
+
+    GdipFree(pointsF);
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipAddPathLineI(GpPath *path, INT x1, INT y1, INT x2, INT y2)
 {
     INT old_count;
