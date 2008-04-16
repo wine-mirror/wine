@@ -29,6 +29,29 @@
 #define REGPART_RENAME "\\Rename"
 #define REG_VERSIONCONFLICT "Software\\Microsoft\\VersionConflictManager"
 
+static inline WCHAR *strdupW( const WCHAR *str )
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        int len = (lstrlenW(str) + 1) * sizeof(WCHAR);
+        if ((ret = HeapAlloc( GetProcessHeap(), 0, len ))) memcpy( ret, str, len );
+    }
+    return ret;
+}
+
+static inline char *strdupWtoA( const WCHAR *str )
+{
+    char *ret = NULL;
+    if (str)
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+        if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    }
+    return ret;
+}
+
 static inline WCHAR *strdupAtoW( const char *str )
 {
     WCHAR *ret = NULL;
