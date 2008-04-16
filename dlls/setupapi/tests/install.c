@@ -329,12 +329,10 @@ static void test_driver_install(void)
 
     /* Open the service to see if it's really there */
     svc_handle = OpenServiceA(scm_handle, "Winetest", DELETE);
-    todo_wine
     ok(svc_handle != NULL, "Service was not created\n");
 
     SetLastError(0xdeadbeef);
     ret = DeleteService(svc_handle);
-    todo_wine
     ok(ret, "Service could not be deleted : %d\n", GetLastError());
 
     CloseServiceHandle(svc_handle);

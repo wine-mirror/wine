@@ -1032,8 +1032,9 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
     static const WCHAR nt_platformW[] = {'.','n','t',0};
 #endif
     static const WCHAR nt_genericW[] = {'.','n','t',0};
+    static const WCHAR servicesW[] = {'.','S','e','r','v','i','c','e','s',0};
 
-    WCHAR *s, *path, section[MAX_PATH + sizeof(nt_platformW)/sizeof(WCHAR)];
+    WCHAR *s, *path, section[MAX_PATH + (sizeof(nt_platformW) + sizeof(servicesW)) / sizeof(WCHAR)];
     void *callback_context;
     UINT mode;
     HINF hinf;
@@ -1076,6 +1077,8 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
                                  SetupDefaultQueueCallbackW, callback_context,
                                  NULL, NULL );
     SetupTermDefaultQueueCallback( callback_context );
+    strcatW( section, servicesW );
+    SetupInstallServicesFromInfSectionW( hinf, section, 0 );
     SetupCloseInfFile( hinf );
 
     /* FIXME: should check the mode and maybe reboot */
