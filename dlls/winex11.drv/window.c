@@ -113,9 +113,6 @@ BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rect )
  */
 BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
 {
-    /* don't map if rect is empty */
-    if (IsRectEmpty( rect )) return FALSE;
-
     /* don't map if rect is off-screen */
     if (rect->left >= virtual_screen_rect.right ||
         rect->top >= virtual_screen_rect.bottom ||
@@ -144,11 +141,14 @@ static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD styl
 /***********************************************************************
  *              get_mwm_decorations
  */
-static unsigned long get_mwm_decorations( DWORD style, DWORD ex_style )
+static unsigned long get_mwm_decorations( struct x11drv_win_data *data,
+                                          DWORD style, DWORD ex_style )
 {
     unsigned long ret = 0;
 
-    if (!decorated_mode) return ret;
+    if (!decorated_mode) return 0;
+
+    if (IsRectEmpty( &data->window_rect )) return 0;
 
     if (ex_style & WS_EX_TOOLWINDOW) return 0;
 
@@ -180,7 +180,7 @@ static void get_x11_rect_offset( struct x11drv_win_data *data, RECT *rect )
 
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
     ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
-    decor = get_mwm_decorations( style, ex_style );
+    decor = get_mwm_decorations( data, style, ex_style );
 
     if (decor & MWM_DECOR_TITLE) style_mask |= WS_CAPTION;
     if (decor & MWM_DECOR_BORDER)
@@ -876,7 +876,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
 		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
 
     mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
-    mwm_hints.decorations = get_mwm_decorations( style, ex_style );
+    mwm_hints.decorations = get_mwm_decorations( data, style, ex_style );
     mwm_hints.functions = MWM_FUNC_MOVE;
     if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
     if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
