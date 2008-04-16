@@ -132,8 +132,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
             if(!res)
                 ReleaseHelpViewer(info);
         }
-
-        return NULL; /* FIXME */
+        return info->WinType.hwndHelp;
     }
     case HH_HELP_CONTEXT: {
         HHInfo *info;
@@ -149,8 +148,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
 
         NavigateToUrl(info, url);
         heap_free(url);
-
-        return NULL; /* FIXME */
+        return info->WinType.hwndHelp;
     }
     case HH_PRETRANSLATEMESSAGE: {
         static BOOL warned = FALSE;
