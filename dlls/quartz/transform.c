@@ -54,11 +54,8 @@ static HRESULT TransformFilter_Sample(LPVOID iface, IMediaSample * pSample)
 
     TRACE("%p %p\n", iface, pSample);
 
-    if (This->state == State_Paused)
-        return S_FALSE;
-
     if (This->state == State_Stopped)
-        return VFW_E_WRONG_STATE;
+        return S_FALSE;
 
     return This->pFuncsTable->pfnProcessSampleData(This, pSample);
 }
