@@ -343,40 +343,52 @@ HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file)
 
     *out = NULL;
 
-    assembly = HeapAlloc(GetProcessHeap(), 0, sizeof(ASSEMBLY));
+    assembly = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ASSEMBLY));
     if (!assembly)
         return E_OUTOFMEMORY;
 
-    ZeroMemory(assembly, sizeof(ASSEMBLY));
-
     assembly->path = strdupWtoA(file);
     if (!assembly->path)
-        return E_OUTOFMEMORY;
+    {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
 
     assembly->hfile = CreateFileW(file, GENERIC_READ, FILE_SHARE_READ,
                                   NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (!assembly->hfile)
-        return HRESULT_FROM_WIN32(GetLastError());
+    if (assembly->hfile == INVALID_HANDLE_VALUE)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
 
     assembly->hmap = CreateFileMappingW(assembly->hfile, NULL, PAGE_READONLY,
                                         0, 0, NULL);
     if (!assembly->hmap)
-        return HRESULT_FROM_WIN32(GetLastError());
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
 
     assembly->data = MapViewOfFile(assembly->hmap, FILE_MAP_READ, 0, 0, 0);
     if (!assembly->data)
-        return HRESULT_FROM_WIN32(GetLastError());
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
 
     hr = parse_pe_header(assembly);
-    if (FAILED(hr))
-        return hr;
+    if (FAILED(hr)) goto failed;
 
     hr = parse_clr_metadata(assembly);
-    if (FAILED(hr))
-        return hr;
+    if (FAILED(hr)) goto failed;
 
     *out = assembly;
     return S_OK;
+
+failed:
+    assembly_release( assembly );
+    return hr;
 }
 
 HRESULT assembly_release(ASSEMBLY *assembly)
