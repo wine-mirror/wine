@@ -92,7 +92,6 @@ typedef struct _tagIMMThreadData {
     HWND hwndDefault;
 } IMMThreadData;
 
-static HANDLE hImeInst;
 static DWORD tlsIndex = 0;
 static struct list ImmHklList = LIST_INIT(ImmHklList);
 
@@ -294,7 +293,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-            hImeInst = hInstDLL;
             IMM_RegisterMessages();
             tlsIndex = TlsAlloc();
             IMM_InitThreadData();
@@ -1800,8 +1798,8 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
     {
         /* create the ime window */
         data->imeWnd = CreateWindowExW( WS_EX_TOOLWINDOW,
-                    data->immKbd->imeClassName,
-                    NULL, WS_POPUP, 0, 0, 1, 1, 0, 0, hImeInst, 0);
+                    data->immKbd->imeClassName, NULL, WS_POPUP, 0, 0, 1, 1, 0,
+                    0, data->immKbd->hIME, 0);
         SetWindowLongW(data->imeWnd, IMMGWL_IMC, (LONG)data);
         IMM_GetThreadData()->hwndDefault = data->imeWnd;
     }
