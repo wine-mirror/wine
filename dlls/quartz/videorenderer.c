@@ -357,8 +357,11 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     REFERENCE_TIME tStart, tStop;
     HRESULT hr;
 
+    if (This->state == State_Stopped)
+        return S_FALSE;
+
     TRACE("%p %p\n", iface, pSample);
-    
+
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
