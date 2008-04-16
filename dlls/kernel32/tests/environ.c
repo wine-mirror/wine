@@ -25,6 +25,17 @@
 #include "winbase.h"
 #include "winerror.h"
 
+static BOOL (WINAPI *pGetComputerNameExA)(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
+static BOOL (WINAPI *pGetComputerNameExW)(COMPUTER_NAME_FORMAT,LPWSTR,LPDWORD);
+
+static void init_functionpointers(void)
+{
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+
+    pGetComputerNameExA = (void *)GetProcAddress(hkernel32, "GetComputerNameExA");
+    pGetComputerNameExW = (void *)GetProcAddress(hkernel32, "GetComputerNameExW");
+}
+
 static void test_GetSetEnvironmentVariableA(void)
 {
     char buf[256];
@@ -291,9 +302,6 @@ static void test_ExpandEnvironmentStringsA(void)
     SetEnvironmentVariableA("EnvVar", NULL);
 }
 
-static BOOL (WINAPI *pGetComputerNameExA)(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
-static BOOL (WINAPI *pGetComputerNameExW)(COMPUTER_NAME_FORMAT,LPWSTR,LPDWORD);
-
 static void test_GetComputerName(void)
 {
     DWORD size;
@@ -347,11 +355,18 @@ static void test_GetComputerName(void)
         ok(ret, "GetComputerNameW failed with error %d\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, nameW);
     }
+}
 
-    pGetComputerNameExA = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "GetComputerNameExA");
+static void test_GetComputerNameExA(void)
+{
+    DWORD size;
+    BOOL ret;
+    LPSTR name;
+    DWORD error;
+
     if (!pGetComputerNameExA)
     {
-        skip("GetComputerNameExA function not implemented, so not testing\n");
+        skip("GetComputerNameExA function not implemented\n");
         return;
     }
 
@@ -402,11 +417,18 @@ static void test_GetComputerName(void)
     ok(ret, "GetComputerNameExA(ComputerNameNetBIOS) failed with error %d\n", GetLastError());
     trace("NetBIOS name is \"%s\"\n", name);
     HeapFree(GetProcessHeap(), 0, name);
+}
 
-    pGetComputerNameExW = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "GetComputerNameExW");
+static void test_GetComputerNameExW(void)
+{
+    DWORD size;
+    BOOL ret;
+    LPWSTR nameW;
+    DWORD error;
+
     if (!pGetComputerNameExW)
     {
-        skip("GetComputerNameExW function not implemented, so not testing\n");
+        skip("GetComputerNameExW function not implemented\n");
         return;
     }
 
@@ -453,8 +475,12 @@ static void test_GetComputerName(void)
 
 START_TEST(environ)
 {
+    init_functionpointers();
+
     test_GetSetEnvironmentVariableA();
     test_GetSetEnvironmentVariableW();
     test_ExpandEnvironmentStringsA();
     test_GetComputerName();
+    test_GetComputerNameExA();
+    test_GetComputerNameExW();
 }
