@@ -75,6 +75,14 @@ AddReg=\
     Timezones,\
     VersionInfo
 
+[DefaultInstall.Services]
+AddService=MountMgr,0x800,MountMgrService
+AddService=Spooler,0,SpoolerService
+
+[DefaultInstall.NT.Services]
+AddService=MountMgr,0x800,MountMgrService
+AddService=Spooler,0,SpoolerService
+
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
 Mci32Str="Software\Microsoft\Windows NT\CurrentVersion\MCI32"
@@ -84,7 +92,6 @@ CurrentVersion="Software\Microsoft\Windows\CurrentVersion"
 CurrentVersionNT="Software\Microsoft\Windows NT\CurrentVersion"
 FontSubStr="Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes"
 Control="System\CurrentControlSet\Control"
-Services="System\CurrentControlSet\Services"
 
 [Classes]
 HKCR,.avi,"Content Type",2,"video/avi"
@@ -2658,22 +2665,25 @@ HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"Dlt",,"Yakutsk Dayligh
 HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"Std",,"Yakutsk Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Yakutsk Standard Time,"TZI",1,e4,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
 
+[MountMgrService]
+Description="Device mounting service"
+DisplayName="Mount Manager"
+ServiceBinary="%12%\mountmgr.sys"
+ServiceType=1
+StartType=2
+ErrorControl=1
+
+[SpoolerService]
+Description="Loads files to memory for later printing"
+DisplayName="Print Spooler"
+ServiceBinary="%11\spoolsv.exe"
+ServiceType=1
+StartType=4
+ErrorControl=1
+LoadOrderGroup="SpoolerGroup"
+
 [Services]
-HKLM,"%Services%\Spooler","Description",,"Loads files to memory for later printing."
-HKLM,"%Services%\Spooler","DisplayName",,"Print Spooler"
-HKLM,"%Services%\Spooler","ErrorControl",0x10001,1
-HKLM,"%Services%\Spooler","Group",,"SpoolerGroup"
-HKLM,"%Services%\Spooler","ImagePath",,"spoolsv.exe"
-HKLM,"%Services%\Spooler","ObjectName",,"LocalSystem"
-HKLM,"%Services%\Spooler","Start",0x10001,4
-HKLM,"%Services%\Spooler","Type",0x10001,0x110
-HKLM,"%Services%\MountMgr","Description",,"Device mounting service."
-HKLM,"%Services%\MountMgr","DisplayName",,"Mount Manager"
-HKLM,"%Services%\MountMgr","ErrorControl",0x10001,1
-HKLM,"%Services%\MountMgr","ImagePath",,"mountmgr.sys"
-HKLM,"%Services%\MountMgr","Start",0x10001,2
-HKLM,"%Services%\MountMgr","Type",0x10001,1
-HKLM,"%Services%\VxD\MSTCP",,,""
+HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,,""
 
 [VersionInfo]
 HKLM,%CurrentVersionNT%,"CurrentVersion",2,"5.1"
