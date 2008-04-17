@@ -175,7 +175,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 #ifdef HAVE_LIBXML2
         xmlInitParser();
 #endif
-#ifdef HAVE_LIBXSLT
+#ifdef HAVE_XSLTINIT
         xsltInit();
 #endif
         hInstance = hInstDLL;

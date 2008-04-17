@@ -826,17 +826,24 @@ then
         ac_xslt_libs="`xslt-config --libs 2>/dev/null`"
         ac_xslt_cflags="`xslt-config --cflags 2>/dev/null`"
     fi
+    ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $ac_xslt_cflags"
-    AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],
-            [AC_CHECK_LIB(xslt, xsltCompilePattern,
-                [AC_DEFINE(HAVE_LIBXSLT, 1, [Define if you have the libxslt library])
-                 XSLTLIBS="$ac_xslt_libs"
-                 XSLTINCL="$ac_xslt_cflags"],,$ac_xslt_libs)
-            ],,
+    AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],,,
     [#ifdef HAVE_LIBXSLT_PATTERN_H
 # include <libxslt/pattern.h>
 #endif])
     CPPFLAGS="$ac_save_CPPFLAGS"
+    if test "$ac_cv_header_libxslt_transform_h" = "yes"
+    then
+        AC_CHECK_LIB(xslt, xsltCompilePattern,
+            [AC_DEFINE(HAVE_LIBXSLT, 1, [Define if you have the libxslt library])
+             XSLTLIBS="$ac_xslt_libs"
+             XSLTINCL="$ac_xslt_cflags"
+             ac_save_LIBS="$LIBS"
+             LIBS="$LIBS $ac_xslt_libs"
+             AC_CHECK_FUNCS(xsltInit)
+             LIBS="$ac_save_LIBS"],,$ac_xslt_libs)
+    fi
 fi
 WINE_NOTICE_WITH(xslt,[test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"],
                  [libxslt development files not found, xslt won't be supported.])

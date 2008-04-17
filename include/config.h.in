@@ -960,6 +960,9 @@
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
 
+/* Define to 1 if you have the `xsltInit' function. */
+#undef HAVE_XSLTINIT
+
 /* Define to 1 if you have the `_pclose' function. */
 #undef HAVE__PCLOSE
 
