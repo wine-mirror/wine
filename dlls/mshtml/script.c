@@ -51,6 +51,7 @@ typedef struct {
 
     IActiveScript *script;
     IActiveScriptParse *parse;
+    IActiveScriptParseProcedure *parse_proc;
 
     SCRIPTSTATE script_state;
 
@@ -147,7 +148,12 @@ static BOOL init_script_engine(ScriptHost *script_host)
     if(FAILED(hres))
        WARN("AddNamedItem failed: %08x\n", hres);
 
-    /* FIXME: QI for IActiveScriptParseProcedure2 and IActiveScriptParseProcedure */
+    hres = IActiveScript_QueryInterface(script_host->script, &IID_IActiveScriptParseProcedure2,
+                                        (void**)&script_host->parse_proc);
+    if(FAILED(hres)) {
+        /* FIXME: QI for IActiveScriptParseProcedure */
+        WARN("Could not get IActiveScriptParseProcedure iface: %08x\n", hres);
+    }
 
     return TRUE;
 }
@@ -167,6 +173,11 @@ static void release_script_engine(ScriptHost *This)
         IActiveScript_Close(This->script);
 
     default:
+        if(This->parse_proc) {
+            IActiveScriptParseProcedure_Release(This->parse_proc);
+            This->parse_proc = NULL;
+        }
+
         if(This->parse) {
             IActiveScriptParse_Release(This->parse);
             This->parse = NULL;
