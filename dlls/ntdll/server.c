@@ -839,47 +839,6 @@ static int server_connect( const char *serverdir )
 
 
 /***********************************************************************
- *           rm_rf
- *
- * Remove a directory and all its contents; helper for create_config_dir.
- */
-static void rm_rf( const char *path )
-{
-    int err = errno;  /* preserve errno */
-    DIR *dir;
-    char *buffer, *p;
-    struct stat st;
-    struct dirent *de;
-
-    if (!(buffer = malloc( strlen(path) + 256 + 1 ))) goto done;
-    strcpy( buffer, path );
-    p = buffer + strlen(buffer);
-    *p++ = '/';
-
-    if ((dir = opendir( path )))
-    {
-        while ((de = readdir( dir )))
-        {
-            if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." )) continue;
-            strcpy( p, de->d_name );
-            if (unlink( buffer ) != -1) continue;
-            if (errno == EISDIR ||
-                (errno == EPERM && !lstat( buffer, &st ) && S_ISDIR(st.st_mode)))
-            {
-                /* recurse in the sub-directory */
-                rm_rf( buffer );
-            }
-        }
-        closedir( dir );
-    }
-    free( buffer );
-    rmdir( path );
-done:
-    errno = err;
-}
-
-
-/***********************************************************************
  *           create_config_dir
  *
  * Create the wine configuration dir (~/.wine).
@@ -887,55 +846,38 @@ done:
 static void create_config_dir(void)
 {
     const char *p, *config_dir = wine_get_config_dir();
-    char *tmp_dir;
-    int fd;
     pid_t pid, wret;
-
-    if (!(tmp_dir = malloc( strlen(config_dir) + sizeof("-XXXXXX") )))
-        fatal_error( "out of memory\n" );
 
     if ((p = strrchr( config_dir, '/' )) && p != config_dir)
     {
         struct stat st;
+        char *tmp_dir;
 
+        if (!(tmp_dir = malloc( p + 1 - config_dir ))) fatal_error( "out of memory\n" );
         memcpy( tmp_dir, config_dir, p - config_dir );
         tmp_dir[p - config_dir] = 0;
         if (!stat( tmp_dir, &st ) && st.st_uid != getuid())
             fatal_error( "'%s' is not owned by you, refusing to create a configuration directory there\n",
                          tmp_dir );
+        free( tmp_dir );
     }
-    strcpy( tmp_dir, config_dir );
-    strcat( tmp_dir, "-XXXXXX" );
-    if ((fd = mkstemps( tmp_dir, 0 )) == -1)
-        fatal_perror( "can't get temp file name for %s", config_dir );
-    close( fd );
-    unlink( tmp_dir );
-    if (mkdir( tmp_dir, 0777 ) == -1)
-        fatal_perror( "cannot create temp dir %s", tmp_dir );
+    if (mkdir( config_dir, 0777 ) == -1 && errno != EEXIST)
+        fatal_perror( "cannot create directory %s", config_dir );
 
     MESSAGE( "wine: creating configuration directory '%s'...\n", config_dir );
     pid = fork();
-    if (pid == -1)
-    {
-        rmdir( tmp_dir );
-        fatal_perror( "fork" );
-    }
+    if (pid == -1) fatal_perror( "fork" );
+
     if (!pid)
     {
-        char *argv[6];
+        char *argv[3];
         static char argv0[] = "tools/wineprefixcreate",
-                    argv1[] = "--quiet",
-                    argv2[] = "--wait",
-                    argv3[] = "--prefix";
+                    argv1[] = "--quiet";
 
         argv[0] = argv0;
         argv[1] = argv1;
-        argv[2] = argv2;
-        argv[3] = argv3;
-        argv[4] = tmp_dir;
-        argv[5] = NULL;
+        argv[2] = NULL;
         wine_exec_wine_binary( argv[0], argv, NULL );
-        rmdir( tmp_dir );
         fatal_perror( "could not exec wineprefixcreate" );
     }
     else
@@ -947,19 +889,8 @@ static void create_config_dir(void)
             if (wret == -1 && errno != EINTR) fatal_perror( "wait4" );
         }
         if (!WIFEXITED(status) || WEXITSTATUS(status))
-        {
-            rm_rf( tmp_dir );
             fatal_error( "wineprefixcreate failed while creating '%s'.\n", config_dir );
-        }
     }
-    if (rename( tmp_dir, config_dir ) == -1)
-    {
-        rm_rf( tmp_dir );
-        if (errno != EEXIST && errno != ENOTEMPTY)
-            fatal_perror( "rename '%s' to '%s'", tmp_dir, config_dir );
-        /* else it was probably created by a concurrent wine process */
-    }
-    free( tmp_dir );
     MESSAGE( "wine: '%s' created successfully.\n", config_dir );
 }
 
