@@ -362,6 +362,10 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 
     TRACE("%p %p\n", iface, pSample);
 
+    /* Preroll means the sample isn't shown, this is used for key frames and things like that */
+    if (IMediaSample_IsPreroll(pSample) == S_OK)
+        return S_OK;
+
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
