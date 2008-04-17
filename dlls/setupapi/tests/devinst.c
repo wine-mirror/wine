@@ -45,17 +45,24 @@ static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PV
 static HKEY     (WINAPI *pSetupDiOpenDevRegKey)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, REGSAM);
 static HKEY     (WINAPI *pSetupDiCreateDevRegKeyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCWSTR);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInfoA)(HDEVINFO, PCSTR, GUID *, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
+static BOOL     (WINAPI *pSetupDiCreateDeviceInfoW)(HDEVINFO, PCWSTR, GUID *, PCWSTR, HWND, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInstanceIdA)(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailA)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiGetDeviceInterfaceDetailW)(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_W, DWORD, PDWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiRegisterDeviceInfo)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
 static HDEVINFO (WINAPI *pSetupDiGetClassDevsA)(CONST GUID *, LPCSTR, HWND, DWORD);
+static HDEVINFO (WINAPI *pSetupDiGetClassDevsW)(CONST GUID *, LPCWSTR, HWND, DWORD);
+static BOOL     (WINAPI *pSetupDiSetDeviceRegistryPropertyA)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
+static BOOL     (WINAPI *pSetupDiSetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
+static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyA)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
+static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
 
 static void init_function_pointers(void)
 {
     hSetupAPI = GetModuleHandleA("setupapi.dll");
 
     pSetupDiCreateDeviceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoA");
+    pSetupDiCreateDeviceInfoW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoW");
     pSetupDiCreateDeviceInfoList = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoList");
     pSetupDiCreateDeviceInfoListExW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoListExW");
     pSetupDiCreateDeviceInterfaceA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInterfaceA");
@@ -72,6 +79,11 @@ static void init_function_pointers(void)
     pSetupDiCreateDevRegKeyW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDevRegKeyW");
     pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
     pSetupDiGetClassDevsA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsA");
+    pSetupDiGetClassDevsW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsW");
+    pSetupDiSetDeviceRegistryPropertyA = (void *)GetProcAddress(hSetupAPI, "SetupDiSetDeviceRegistryPropertyA");
+    pSetupDiSetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiSetDeviceRegistryPropertyW");
+    pSetupDiGetDeviceRegistryPropertyA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyA");
+    pSetupDiGetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyW");
 }
 
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
@@ -844,6 +856,196 @@ static void testRegisterAndGetDetail(void)
     pSetupDiDestroyDeviceInfoList(set);
 }
 
+static void testDeviceRegistryPropertyA()
+{
+    HDEVINFO set;
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
+    CHAR devName[] = "LEGACY_BOGUS";
+    CHAR friendlyName[] = "Bogus";
+    CHAR buf[6] = "";
+    DWORD buflen = 6;
+    DWORD size;
+    DWORD regType;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    set = pSetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsA failed: %08x\n",
+     GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiCreateDeviceInfoA(set, devName, &guid, NULL, NULL,
+     DICD_GENERATE_ID, &devInfo);
+    ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyA(NULL, NULL, -1, NULL, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyA(set, NULL, -1, NULL, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyA(set, &devInfo, -1, NULL, 0);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_REG_PROPERTY,
+     "Expected ERROR_INVALID_REG_PROPERTY, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, 0);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
+     (PBYTE)friendlyName, buflen);
+    ok(ret, "SetupDiSetDeviceRegistryPropertyA failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyA(NULL, NULL, -1, NULL, NULL, 0, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyA(set, NULL, -1, NULL, NULL, 0, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyA(set, &devInfo, -1, NULL, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_REG_PROPERTY,
+     "Expected ERROR_INVALID_REG_PROPERTY, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, NULL, buflen, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, NULL, 0, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+     "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
+    ok(buflen == size, "Unexpected size: %d\n", size);
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, (PBYTE)buf, buflen, NULL);
+    ok(ret, "SetupDiGetDeviceRegistryPropertyA failed: %08x\n", GetLastError());
+    ok(!lstrcmpiA(friendlyName, buf), "Unexpected property\n");
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
+     &regType, (PBYTE)buf, buflen, NULL);
+    ok(ret, "SetupDiGetDeviceRegistryPropertyA failed: %08x\n", GetLastError());
+    ok(!lstrcmpiA(friendlyName, buf), "Unexpected value of property\n");
+    ok(regType == REG_SZ, "Unexpected type of property: %d\n", regType);
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, 0);
+    ok(ret, "SetupDiSetDeviceRegistryPropertyA failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, (PBYTE)buf, buflen, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+    pSetupDiDestroyDeviceInfoList(set);
+}
+
+static void testDeviceRegistryPropertyW()
+{
+    HDEVINFO set;
+    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
+        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+    SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
+    WCHAR devName[] = {'L','E','G','A','C','Y','_','B','O','G','U','S',0};
+    WCHAR friendlyName[] = {'B','o','g','u','s',0};
+    WCHAR buf[6] = {0};
+    DWORD buflen = 6 * sizeof(WCHAR);
+    DWORD size;
+    DWORD regType;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    set = pSetupDiGetClassDevsW(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsW failed: %08x\n",
+     GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiCreateDeviceInfoW(set, devName, &guid, NULL, NULL,
+     DICD_GENERATE_ID, &devInfo);
+    ok(ret, "SetupDiCreateDeviceInfoW failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyW(NULL, NULL, -1, NULL, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyW(set, NULL, -1, NULL, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyW(set, &devInfo, -1, NULL, 0);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_REG_PROPERTY,
+     "Expected ERROR_INVALID_REG_PROPERTY, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, 0);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
+     (PBYTE)friendlyName, buflen);
+    ok(ret, "SetupDiSetDeviceRegistryPropertyW failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyW(NULL, NULL, -1, NULL, NULL, 0, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyW(set, NULL, -1, NULL, NULL, 0, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, -1, NULL, NULL, 0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_REG_PROPERTY,
+     "Expected ERROR_INVALID_REG_PROPERTY, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, NULL, buflen, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, NULL, 0, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+     "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
+    ok(buflen == size, "Unexpected size: %d\n", size);
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, (PBYTE)buf, buflen, NULL);
+    ok(ret, "SetupDiGetDeviceRegistryPropertyW failed: %08x\n", GetLastError());
+    ok(!lstrcmpiW(friendlyName, buf), "Unexpected property\n");
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
+     &regType, (PBYTE)buf, buflen, NULL);
+    ok(ret, "SetupDiGetDeviceRegistryPropertyW failed: %08x\n", GetLastError());
+    ok(!lstrcmpiW(friendlyName, buf), "Unexpected value of property\n");
+    ok(regType == REG_SZ, "Unexpected type of property: %d\n", regType);
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiSetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, 0);
+    ok(ret, "SetupDiSetDeviceRegistryPropertyW failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
+     NULL, (PBYTE)buf, buflen, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
+     "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
+    pSetupDiDestroyDeviceInfoList(set);
+}
+
 START_TEST(devinst)
 {
     init_function_pointers();
@@ -865,4 +1067,6 @@ START_TEST(devinst)
     testGetDeviceInterfaceDetail();
     testDevRegKey();
     testRegisterAndGetDetail();
+    testDeviceRegistryPropertyA();
+    testDeviceRegistryPropertyW();
 }
