@@ -158,11 +158,11 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
 static int comp_PageByHash(void *p, const void *key,
                            int leaf, void** next)
 {
-    ULONG_PTR lKey = (LONG_PTR)key;
-    ULONG_PTR lTest = GET_UINT(p, 0);
+    LONG lKey = (LONG_PTR)key;
+    LONG lTest = (INT)GET_UINT(p, 0);
 
     *next = (char *)p+(leaf?8:6);
-    WINE_TRACE("Comparing '%lu' with '%lu'\n", lKey, lTest);
+    WINE_TRACE("Comparing '%d' with '%d'\n", lKey, lTest);
     if (lTest < lKey) return -1;
     if (lTest > lKey) return 1;
     return 0;
@@ -184,7 +184,7 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
     if (hlpfile->version <= 16)
         return HLPFILE_PageByNumber(hlpfile, lHash);
 
-    ptr = HLPFILE_BPTreeSearch(hlpfile->Context, ULongToPtr(lHash), comp_PageByHash);
+    ptr = HLPFILE_BPTreeSearch(hlpfile->Context, LongToPtr(lHash), comp_PageByHash);
     if (!ptr)
     {
         WINE_ERR("Page of hash %x not found in file %s\n", lHash, hlpfile->lpszPath);
