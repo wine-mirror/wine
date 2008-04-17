@@ -151,7 +151,9 @@ static LONG WINTRUST_DefaultClose(HWND hwnd, GUID *actionID,
 
     if (provData)
     {
-        err = provData->psPfns->pfnCleanupPolicy(provData);
+        if (provData->psPfns->pfnCleanupPolicy)
+            err = provData->psPfns->pfnCleanupPolicy(provData);
+
         WINTRUST_Free(provData->padwTrustStepErrors);
         WINTRUST_Free(provData->u.pPDSip);
         WINTRUST_Free(provData->psPfns);
