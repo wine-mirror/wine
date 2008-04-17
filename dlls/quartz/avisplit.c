@@ -525,13 +525,14 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                 stream->streamheader = *pStrHdr;
 
                 fSamplesPerSec = (float)pStrHdr->dwRate / (float)pStrHdr->dwScale;
+                CoTaskMemFree(amt.pbFormat);
+                amt.pbFormat = NULL;
+                amt.cbFormat = 0;
 
                 switch (pStrHdr->fccType)
                 {
                 case streamtypeVIDEO:
                     amt.formattype = FORMAT_VideoInfo;
-                    amt.pbFormat = NULL;
-                    amt.cbFormat = 0;
                     break;
                 case streamtypeAUDIO:
                     amt.formattype = FORMAT_WaveFormatEx;
