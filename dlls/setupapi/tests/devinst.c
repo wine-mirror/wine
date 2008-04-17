@@ -923,7 +923,6 @@ static void testDeviceRegistryPropertyA()
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
      NULL, NULL, 0, &size);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
      "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
     ok(buflen == size, "Unexpected size: %d\n", size);
@@ -1018,7 +1017,6 @@ static void testDeviceRegistryPropertyW()
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
      NULL, NULL, 0, &size);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
      "Expected ERROR_INSUFFICIENT_BUFFER, got %08x\n", GetLastError());
     ok(buflen == size, "Unexpected size: %d\n", size);
