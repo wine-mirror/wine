@@ -1357,6 +1357,8 @@ ULONG WINAPI PullPin_Release(IPin * iface)
 
 static DWORD WINAPI PullPin_Thread_Main(LPVOID pv)
 {
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
     for (;;)
         SleepEx(INFINITE, TRUE);
 }
@@ -1368,7 +1370,6 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
     ALLOCATOR_PROPERTIES allocProps;
 
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     EnterCriticalSection(This->pin.pCritSec);
     SetEvent(This->hEventStateChanged);
@@ -1433,11 +1434,35 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
             IMediaSample_Release(pSample);
     } while (This->rtCurrent < This->rtStop && hr == S_OK && !This->stop_playback);
 
-    CoUninitialize();
     EnterCriticalSection(This->pin.pCritSec);
     This->state = State_Paused;
     LeaveCriticalSection(This->pin.pCritSec);
     TRACE("End\n");
+}
+
+static void CALLBACK PullPin_Thread_Flush(ULONG_PTR iface)
+{
+    PullPin *This = (PullPin *)iface;
+    IMediaSample *pSample;
+
+    EnterCriticalSection(This->pin.pCritSec);
+    if (This->pReader)
+    {
+        /* Flush outstanding samples */
+        IAsyncReader_BeginFlush(This->pReader);
+
+        for (;;)
+        {
+            IMemAllocator_GetBuffer(This->pAlloc, &pSample, NULL, NULL, 0);
+
+            if (!pSample)
+                break;
+            IMediaSample_Release(pSample);
+        }
+
+        IAsyncReader_EndFlush(This->pReader);
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
 }
 
 static void CALLBACK PullPin_Thread_Pause(ULONG_PTR iface)
@@ -1453,7 +1478,6 @@ static void CALLBACK PullPin_Thread_Pause(ULONG_PTR iface)
     }
     LeaveCriticalSection(This->pin.pCritSec);
 }
-
 
 static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
 {
@@ -1477,6 +1501,7 @@ static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
 
     IBaseFilter_Release(This->pin.pinInfo.pFilter);
 
+    CoUninitialize();
     ExitThread(0);
 }
 
@@ -1567,8 +1592,8 @@ HRESULT PullPin_StopProcessing(PullPin * This)
 {
     TRACE("(%p)->()\n", This);
 
-    /* if we are connected */
-    if (This->pAlloc && This->hThread)
+    /* if we are alive */
+    if (This->hThread)
     {
         PullPin_WaitForStateChange(This, INFINITE);
 
@@ -1613,6 +1638,15 @@ HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
             PullPin_PauseProcessing(This);
 
         PullPin_WaitForStateChange(This, INFINITE);
+
+        /* Workaround: The file async reader only cancels io on current thread
+         * only vista and newer have CancelIoEx, so try the thread context if available
+         * Anyone has some documentation on NtCancelFileIoEx?
+         */
+        if (This->hThread)
+            QueueUserAPC(PullPin_Thread_Flush, This->hThread, (ULONG_PTR)This);
+        else
+            PullPin_Thread_Flush((ULONG_PTR)This);
     }
     LeaveCriticalSection(&This->thread_lock);
 
