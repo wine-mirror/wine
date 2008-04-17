@@ -114,7 +114,6 @@ static void PopulateListView(HWND List)
 static void PopulateImageList(HIMAGELIST *iList, HWND list)
 {
 	struct gphoto2_file *file;
-	INT rc;
 	HWND 	progress_dialog;
 
 	progress_dialog =
@@ -143,8 +142,8 @@ static void PopulateImageList(HIMAGELIST *iList, HWND list)
 
 				SendMessageW(list, LVM_SETICONSPACING, 0,
 						MAKELONG(bmpInfo.bmWidth+6, bmpInfo.bmHeight+15) ); }
-			
-			rc = ImageList_Add(*iList, bitmap, 0);
+
+			ImageList_Add(*iList, bitmap, 0);
 
 			DeleteObject(static_bitmap);
 			static_bitmap = bitmap;
