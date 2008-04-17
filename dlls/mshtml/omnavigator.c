@@ -32,6 +32,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    DispatchEx dispex;
     const IOmNavigatorVtbl  *lpIOmNavigatorVtbl;
 
     LONG ref;
@@ -53,6 +54,9 @@ static HRESULT WINAPI OmNavigator_QueryInterface(IOmNavigator *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = OMNAVIGATOR(This);
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = DISPATCHEX(&This->dispex);
     }else if(IsEqualGUID(&IID_IOmNavigator, riid)) {
         TRACE("(%p)->(IID_IOmNavigator %p)\n", This, ppv);
         *ppv = OMNAVIGATOR(This);
@@ -304,6 +308,8 @@ IOmNavigator *OmNavigator_Create(void)
     ret = heap_alloc(sizeof(*ret));
     ret->lpIOmNavigatorVtbl = &OmNavigatorVtbl;
     ret->ref = 1;
+
+    init_dispex(&ret->dispex, (IUnknown*)OMNAVIGATOR(ret));
 
     return OMNAVIGATOR(ret);
 }

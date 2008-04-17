@@ -10,6 +10,7 @@ EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
 	conpoint.c \
+	dispex.c \
 	editor.c \
 	hlink.c \
 	htmlanchor.c \

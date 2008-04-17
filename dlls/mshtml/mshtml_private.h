@@ -21,6 +21,7 @@
 #include "mshtml.h"
 #include "mshtmhst.h"
 #include "hlink.h"
+#include "dispex.h"
 
 #include "wine/list.h"
 #include "wine/unicode.h"
@@ -55,6 +56,14 @@ typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
 typedef struct nsChannelBSC nsChannelBSC;
+
+typedef struct {
+    const IDispatchExVtbl  *lpIDispatchExVtbl;
+
+    IUnknown *outer;
+} DispatchEx;
+
+void init_dispex(DispatchEx*,IUnknown*);
 
 typedef struct {
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
@@ -333,6 +342,8 @@ typedef struct {
 
 #define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
 #define HTMLLOCATION(x)  ((IHTMLLocation*) &(x)->lpHTMLLocationVtbl)
+
+#define DISPATCHEX(x)    ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
 #define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
 #define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
