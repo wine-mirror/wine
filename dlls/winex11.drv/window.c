@@ -50,6 +50,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
+#define _NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
+#define _NET_WM_MOVERESIZE_SIZE_TOP          1
+#define _NET_WM_MOVERESIZE_SIZE_TOPRIGHT     2
+#define _NET_WM_MOVERESIZE_SIZE_RIGHT        3
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT  4
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOM       5
+#define _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT   6
+#define _NET_WM_MOVERESIZE_SIZE_LEFT         7
+#define _NET_WM_MOVERESIZE_MOVE              8
+#define _NET_WM_MOVERESIZE_SIZE_KEYBOARD     9
+#define _NET_WM_MOVERESIZE_MOVE_KEYBOARD    10
+
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;
 
@@ -1639,4 +1651,126 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     }
 
     return TRUE;
+}
+
+
+/***********************************************************************
+ *              is_netwm_supported
+ */
+static BOOL is_netwm_supported( Display *display, Atom atom )
+{
+    static Atom *net_supported;
+    static int net_supported_count = -1;
+    int i;
+
+    wine_tsx11_lock();
+    if (net_supported_count == -1)
+    {
+        Atom type;
+        int format;
+        unsigned long count, remaining;
+
+        if (!XGetWindowProperty( display, DefaultRootWindow(display), x11drv_atom(_NET_SUPPORTED), 0,
+                                 ~0UL, False, XA_ATOM, &type, &format, &count,
+                                 &remaining, (unsigned char **)&net_supported ))
+            net_supported_count = get_property_size( format, count ) / sizeof(Atom);
+        else
+            net_supported_count = 0;
+    }
+    wine_tsx11_unlock();
+
+    for (i = 0; i < net_supported_count; i++)
+        if (net_supported[i] == atom) return TRUE;
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           SysCommand   (X11DRV.@)
+ *
+ * Perform WM_SYSCOMMAND handling.
+ */
+LRESULT X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    WPARAM hittest = wparam & 0x0f;
+    DWORD dwPoint;
+    int x, y, dir;
+    XEvent xev;
+    Display *display = thread_display();
+    struct x11drv_win_data *data;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return -1;
+    if (!data->whole_window || !data->managed || !data->mapped) return -1;
+
+    switch (wparam & 0xfff0)
+    {
+    case SC_MOVE:
+        if (!hittest) dir = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
+        else dir = _NET_WM_MOVERESIZE_MOVE;
+        break;
+    case SC_SIZE:
+        /* windows without WS_THICKFRAME are not resizable through the window manager */
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_THICKFRAME)) return -1;
+
+        switch (hittest)
+        {
+        case WMSZ_LEFT:        dir = _NET_WM_MOVERESIZE_SIZE_LEFT; break;
+        case WMSZ_RIGHT:       dir = _NET_WM_MOVERESIZE_SIZE_RIGHT; break;
+        case WMSZ_TOP:         dir = _NET_WM_MOVERESIZE_SIZE_TOP; break;
+        case WMSZ_TOPLEFT:     dir = _NET_WM_MOVERESIZE_SIZE_TOPLEFT; break;
+        case WMSZ_TOPRIGHT:    dir = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT; break;
+        case WMSZ_BOTTOM:      dir = _NET_WM_MOVERESIZE_SIZE_BOTTOM; break;
+        case WMSZ_BOTTOMLEFT:  dir = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT; break;
+        case WMSZ_BOTTOMRIGHT: dir = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT; break;
+        default:               dir = _NET_WM_MOVERESIZE_SIZE_KEYBOARD; break;
+        }
+        break;
+
+    case SC_KEYMENU:
+        /* prevent a simple ALT press+release from activating the system menu,
+         * as that can get confusing on managed windows */
+        if ((WCHAR)lparam) return -1;  /* got an explicit char */
+        if (GetMenu( hwnd )) return -1;  /* window has a real menu */
+        if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_SYSMENU)) return -1;  /* no system menu */
+        TRACE( "ignoring SC_KEYMENU wp %lx lp %lx\n", wparam, lparam );
+        return 0;
+
+    default:
+        return -1;
+    }
+
+    if (IsZoomed(hwnd)) return -1;
+
+    if (!is_netwm_supported( display, x11drv_atom(_NET_WM_MOVERESIZE) ))
+    {
+        TRACE( "_NET_WM_MOVERESIZE not supported\n" );
+        return -1;
+    }
+
+    dwPoint = GetMessagePos();
+    x = (short)LOWORD(dwPoint);
+    y = (short)HIWORD(dwPoint);
+
+    TRACE("hwnd %p, x %d, y %d, dir %d\n", hwnd, x, y, dir);
+
+    xev.xclient.type = ClientMessage;
+    xev.xclient.window = X11DRV_get_whole_window(hwnd);
+    xev.xclient.message_type = x11drv_atom(_NET_WM_MOVERESIZE);
+    xev.xclient.serial = 0;
+    xev.xclient.display = display;
+    xev.xclient.send_event = True;
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = x; /* x coord */
+    xev.xclient.data.l[1] = y; /* y coord */
+    xev.xclient.data.l[2] = dir; /* direction */
+    xev.xclient.data.l[3] = 1; /* button */
+    xev.xclient.data.l[4] = 0; /* unused */
+
+    /* need to ungrab the pointer that may have been automatically grabbed
+     * with a ButtonPress event */
+    wine_tsx11_lock();
+    XUngrabPointer( display, CurrentTime );
+    XSendEvent(display, root_window, False, SubstructureNotifyMask, &xev);
+    wine_tsx11_unlock();
+    return 0;
 }
