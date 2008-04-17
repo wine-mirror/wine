@@ -414,10 +414,20 @@ static BOOL is_tablet_cursor(const char *name, const char *type)
 
 static BOOL is_stylus(const char *name, const char *type)
 {
-    if (name && match_token(name, "stylus"))
-        return TRUE;
-    if (type && match_token(type, "stylus"))
-        return TRUE;
+    int i;
+    static const char* tablet_stylus_whitelist[] = {
+        "stylus",
+        "wizardpen",
+        NULL
+    };
+
+    for (i=0; tablet_stylus_whitelist[i] != NULL; i++) {
+        if (name && match_token(name, tablet_stylus_whitelist[i]))
+            return TRUE;
+        if (type && match_token(type, tablet_stylus_whitelist[i]))
+            return TRUE;
+    }
+
     return FALSE;
 }
 
