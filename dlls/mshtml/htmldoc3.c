@@ -137,7 +137,7 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
             ERR("GetDocumentElement failed: %08x\n", nsres);
     }
     if(nselem) {
-        node = get_node(This, (nsIDOMNode *)nselem);
+        node = get_node(This, (nsIDOMNode *)nselem, TRUE);
         nsIDOMDocument_Release(nsdoc);
 
         IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);

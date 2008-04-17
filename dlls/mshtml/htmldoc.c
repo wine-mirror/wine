@@ -289,7 +289,7 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
         return S_OK;
     }
 
-    *p = create_all_collection(get_node(This, (nsIDOMNode*)nselem));
+    *p = create_all_collection(get_node(This, (nsIDOMNode*)nselem, TRUE));
 
     nsIDOMElement_Release(nselem);
     return S_OK;
@@ -331,7 +331,7 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
         return S_OK;
     }
 
-    node = get_node(This, (nsIDOMNode*)nsbody);
+    node = get_node(This, (nsIDOMNode*)nsbody, TRUE);
     nsIDOMHTMLElement_Release(nsbody);
 
     IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);

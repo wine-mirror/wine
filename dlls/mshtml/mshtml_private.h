@@ -464,7 +464,7 @@ void HTMLDOMNode_destructor(HTMLDOMNode*);
 HRESULT HTMLElement_QI(HTMLDOMNode*,REFIID,void**);
 void HTMLElement_destructor(HTMLDOMNode*);
 
-HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
+HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*,BOOL);
 void release_nodes(HTMLDocument*);
 
 void release_script_hosts(HTMLDocument*);

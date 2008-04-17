@@ -469,7 +469,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
         return E_FAIL;
     }
 
-    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(get_node(This->doc, (nsIDOMNode*)nselem)),
+    hres = IHTMLDOMNode_QueryInterface(HTMLDOMNODE(get_node(This->doc, (nsIDOMNode*)nselem, TRUE)),
             &IID_IHTMLOptionElement, (void**)optelem);
     nsIDOMElement_Release(nselem);
 

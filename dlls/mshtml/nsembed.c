@@ -1073,7 +1073,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
         FIXME("aContextFlags=%08x\n", aContextFlags);
     };
 
-    show_context_menu(This->doc, dwID, &pt, (IDispatch*)HTMLDOMNODE(get_node(This->doc, aNode)));
+    show_context_menu(This->doc, dwID, &pt, (IDispatch*)HTMLDOMNODE(get_node(This->doc, aNode, TRUE)));
 
     return NS_OK;
 }

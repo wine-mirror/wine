@@ -1067,7 +1067,7 @@ static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector 
 
         nsres = nsIDOMNode_GetNodeType(iter, &node_type);
         if(NS_SUCCEEDED(nsres) && node_type == ELEMENT_NODE)
-            elem_vector_add(buf, HTMLELEM_NODE_THIS(get_node(doc, iter)));
+            elem_vector_add(buf, HTMLELEM_NODE_THIS(get_node(doc, iter, TRUE)));
     }
 }
 
@@ -1111,7 +1111,7 @@ static void create_all_list(HTMLDocument *doc, HTMLDOMNode *elem, elem_vector *b
 
         nsres = nsIDOMNode_GetNodeType(iter, &node_type);
         if(NS_SUCCEEDED(nsres) && node_type == ELEMENT_NODE) {
-            HTMLDOMNode *node = get_node(doc, iter);
+            HTMLDOMNode *node = get_node(doc, iter, TRUE);
 
             elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
             create_all_list(doc, node, buf);

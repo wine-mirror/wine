@@ -370,7 +370,7 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
  * (better) find a way to store HTMLDOMelement pointer in nsIDOMNode.
  */
 
-HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode)
+HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode, BOOL create)
 {
     HTMLDOMNode *iter = This->nodes, *ret;
 
@@ -380,7 +380,7 @@ HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode)
         iter = iter->next;
     }
 
-    if(iter)
+    if(iter || !create)
         return iter;
 
     ret = create_node(This, nsnode);
