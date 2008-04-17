@@ -57,19 +57,29 @@
 #define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
 
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
 #endif
 #include <windows.h>
 #include <wine/svcctl.h>
 #include <wine/unicode.h>
+#include <wine/library.h>
 #include <wine/debug.h>
 
 #include <shlobj.h>
 #include <shobjidl.h>
 #include <shlwapi.h>
 #include <shellapi.h>
+#include <setupapi.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
@@ -79,6 +89,29 @@ extern BOOL shutdown_close_windows( BOOL force );
 extern void kill_processes( BOOL kill_desktop );
 
 static WCHAR windowsdir[MAX_PATH];
+
+/* retrieve the (unix) path to the wine.inf file */
+static char *get_wine_inf_path(void)
+{
+    const char *build_dir, *data_dir;
+    char *name = NULL;
+
+    if ((data_dir = wine_get_data_dir()))
+    {
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(data_dir) + sizeof("/wine.inf") )))
+            return NULL;
+        strcpy( name, data_dir );
+        strcat( name, "/wine.inf" );
+    }
+    else if ((build_dir = wine_get_build_dir()))
+    {
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(build_dir) + sizeof("/tools/wine.inf") )))
+            return NULL;
+        strcpy( name, build_dir );
+        strcat( name, "/tools/wine.inf" );
+    }
+    return name;
+}
 
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
  * Returns FALSE if there was an error, or otherwise if all is ok.
@@ -583,6 +616,40 @@ static BOOL start_services_process(void)
     return TRUE;
 }
 
+/* execute rundll32 on the wine.inf file if necessary */
+static void update_wineprefix(void)
+{
+    static const WCHAR cmdlineW[] = {'D','e','f','a','u','l','t','I','n','s','t','a','l','l',' ',
+                                     '1','2','8',' ','\\','\\','?','\\','u','n','i','x' };
+
+    const char *config_dir = wine_get_config_dir();
+    char *inf_path = get_wine_inf_path();
+    struct stat st;
+
+    if (!inf_path)
+    {
+        WINE_WARN( "cannot find path to wine.inf file\n" );
+        return;
+    }
+    if (stat( inf_path, &st ) == -1)
+        WINE_WARN( "cannot stat wine.inf file: %s\n", strerror(errno) );
+    else
+    {
+        WCHAR *buffer;
+        DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, NULL, 0 );
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(cmdlineW) + len*sizeof(WCHAR) ))) goto done;
+        memcpy( buffer, cmdlineW, sizeof(cmdlineW) );
+        MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, buffer + sizeof(cmdlineW)/sizeof(WCHAR), len );
+
+        InstallHinfSectionW( 0, 0, buffer, 0 );
+        HeapFree( GetProcessHeap(), 0, buffer );
+        WINE_MESSAGE( "wine: configuration in '%s' has been updated.\n", config_dir );
+    }
+
+done:
+    HeapFree( GetProcessHeap(), 0, inf_path );
+}
+
 /* Process items in the StartUp group of the user's Programs under the Start Menu. Some installers put
  * shell links here to restart themselves after boot. */
 static BOOL ProcessStartupItems(void)
@@ -680,6 +747,7 @@ static void usage(void)
     WINE_MESSAGE( "    -k,--kill         Kill running processes without any cleanup\n" );
     WINE_MESSAGE( "    -r,--restart      Restart only, don't do normal startup operations\n" );
     WINE_MESSAGE( "    -s,--shutdown     Shutdown only, don't reboot\n" );
+    WINE_MESSAGE( "    -u,--update       Update the wineprefix directory\n" );
 }
 
 static const char short_options[] = "efhikrs";
@@ -693,6 +761,7 @@ static const struct option long_options[] =
     { "kill",        0, 0, 'k' },
     { "restart",     0, 0, 'r' },
     { "shutdown",    0, 0, 's' },
+    { "update",      0, 0, 'u' },
     { NULL,          0, 0, 0 }
 };
 
@@ -703,16 +772,13 @@ int main( int argc, char *argv[] )
 
     /* First, set the current directory to SystemRoot */
     int optc;
-    int end_session = 0, force = 0, init = 0, kill = 0, restart = 0, shutdown = 0;
+    int end_session = 0, force = 0, init = 0, kill = 0, restart = 0, shutdown = 0, update = 0;
     HANDLE event;
     SECURITY_ATTRIBUTES sa;
 
     GetWindowsDirectoryW( windowsdir, MAX_PATH );
     if( !SetCurrentDirectoryW( windowsdir ) )
-    {
         WINE_ERR("Cannot set the dir to %s (%d)\n", wine_dbgstr_w(windowsdir), GetLastError() );
-        return 100;
-    }
 
     while ((optc = getopt_long(argc, argv, short_options, long_options, NULL )) != -1)
     {
@@ -724,6 +790,7 @@ int main( int argc, char *argv[] )
         case 'k': kill = 1; break;
         case 'r': restart = 1; break;
         case 's': shutdown = 1; break;
+        case 'u': update = 1; break;
         case 'h': usage(); return 0;
         case '?': usage(); return 1;
         }
@@ -750,11 +817,14 @@ int main( int argc, char *argv[] )
 
     ProcessWindowsFileProtection();
     ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE], TRUE, FALSE );
+
     if (init || (kill && !restart))
     {
         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES], FALSE, FALSE );
         start_services_process();
     }
+    if (update) update_wineprefix();
+
     ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE], TRUE, TRUE );
 
     if (!init && !restart)
