@@ -1030,38 +1030,22 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case WM_IME_STARTCOMPOSITION:
-	/* 
-	 * FIXME in IME: This message is not always sent like it should be
-	 */
-		if (es->selection_start != es->selection_end)
-		{
-			static const WCHAR empty_stringW[] = {0};
-			EDIT_EM_ReplaceSel(es, TRUE, empty_stringW, TRUE, TRUE);
-		}
 		es->composition_start = es->selection_end;
 		es->composition_len = 0;
 		break;
 
 	case WM_IME_COMPOSITION:
-	{
-		int caret_pos = es->selection_end;
-		if (es->composition_len == 0)
-		{
-			if (es->selection_start != es->selection_end)
-			{    
-				static const WCHAR empty_stringW[] = {0};
-				EDIT_EM_ReplaceSel(es, TRUE, empty_stringW, TRUE, TRUE);
-			}
-
-			es->composition_start = es->selection_end;
-		}
-		EDIT_ImeComposition(hwnd,lParam,es);
-		EDIT_SetCaretPos(es, caret_pos, es->flags & EF_AFTER_WRAP);
+                EDIT_ImeComposition(hwnd, lParam, es);
 		break;
-	}
 
 	case WM_IME_ENDCOMPOSITION:
-		es->composition_len= 0;
+                if (es->composition_len > 0)
+                {
+                        static const WCHAR empty_stringW[] = {0};
+                        EDIT_EM_ReplaceSel(es, TRUE, empty_stringW, TRUE, TRUE);
+                        es->selection_end = es->selection_start;
+                        es->composition_len= 0;
+                }
 		break;
 
 	case WM_IME_COMPOSITIONFULL:
@@ -5402,22 +5386,17 @@ static void EDIT_UpdateText(EDITSTATE *es, const RECT *rc, BOOL bErase)
  * The Following code is to handle inline editing from IMEs
  */
 
-static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
+static void EDIT_GetCompositionStr(HIMC hIMC, LPARAM CompFlag, EDITSTATE *es)
 {
     LONG buflen;
     LPWSTR lpCompStr = NULL;
-    HIMC hIMC;
     LPSTR lpCompStrAttr = NULL;
     DWORD dwBufLenAttr;
-
-    if (!(hIMC = ImmGetContext(hwnd)))
-        return;
 
     buflen = ImmGetCompositionStringW(hIMC, GCS_COMPSTR, NULL, 0);
 
     if (buflen < 0)
     {
-        ImmReleaseContext(hwnd, hIMC);
         return;
     }
 
@@ -5425,7 +5404,6 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
     if (!lpCompStr)
     {
         ERR("Unable to allocate IME CompositionString\n");
-        ImmReleaseContext(hwnd,hIMC);
         return;
     }
 
@@ -5448,7 +5426,6 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
             {
                 ERR("Unable to allocate IME Attribute String\n");
                 HeapFree(GetProcessHeap(),0,lpCompStr);
-                ImmReleaseContext(hwnd,hIMC);
                 return;
             }
             ImmGetCompositionStringW(hIMC,GCS_COMPATTR, lpCompStrAttr, 
@@ -5479,22 +5456,16 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
 
     HeapFree(GetProcessHeap(),0,lpCompStrAttr);
     HeapFree(GetProcessHeap(),0,lpCompStr);
-    ImmReleaseContext(hwnd,hIMC);
 }
 
-static void EDIT_GetResultStr(HWND hwnd, EDITSTATE *es)
+static void EDIT_GetResultStr(HIMC hIMC, EDITSTATE *es)
 {
     LONG buflen;
     LPWSTR lpResultStr;
-    HIMC    hIMC;
-
-    if ( !(hIMC = ImmGetContext(hwnd)))
-        return;
 
     buflen = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, NULL, 0);
     if (buflen <= 0)
     {
-        ImmReleaseContext(hwnd, hIMC);
         return;
     }
 
@@ -5502,7 +5473,6 @@ static void EDIT_GetResultStr(HWND hwnd, EDITSTATE *es)
     if (!lpResultStr)
     {
         ERR("Unable to alloc buffer for IME string\n");
-        ImmReleaseContext(hwnd, hIMC);
         return;
     }
 
@@ -5520,13 +5490,29 @@ static void EDIT_GetResultStr(HWND hwnd, EDITSTATE *es)
     es->composition_len = 0;
 
     HeapFree(GetProcessHeap(),0,lpResultStr);
-    ImmReleaseContext(hwnd, hIMC);
 }
 
 static void EDIT_ImeComposition(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
 {
+    HIMC hIMC;
+    int cursor;
+
+    if (es->composition_len == 0 && es->selection_start != es->selection_end)
+    {
+        static const WCHAR empty_stringW[] = {0};
+        EDIT_EM_ReplaceSel(es, TRUE, empty_stringW, TRUE, TRUE);
+        es->composition_start = es->selection_end;
+    }
+
+    hIMC = ImmGetContext(hwnd);
+    if (!hIMC)
+        return;
+
     if (CompFlag & GCS_RESULTSTR)
-        EDIT_GetResultStr(hwnd,es);
+        EDIT_GetResultStr(hIMC, es);
     if (CompFlag & GCS_COMPSTR)
-        EDIT_GetCompositionStr(hwnd, CompFlag, es);
+        EDIT_GetCompositionStr(hIMC, CompFlag, es);
+    cursor = ImmGetCompositionStringW(hIMC, GCS_CURSORPOS, 0, 0);
+    ImmReleaseContext(hwnd, hIMC);
+    EDIT_SetCaretPos(es, es->selection_start + cursor, es->flags & EF_AFTER_WRAP);
 }
