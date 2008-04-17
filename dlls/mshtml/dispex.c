@@ -31,6 +31,61 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
+
+static REFIID tid_ids[] = {
+    &IID_IHTMLWindow2,
+};
+
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hres;
+
+    if(!typelib) {
+        ITypeLib *tl;
+
+        hres = LoadRegTypeLib(&LIBID_MSHTML, 4, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+        if(FAILED(hres)) {
+            ERR("LoadRegTypeLib failed: %08x\n", hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+            ITypeLib_Release(tl);
+    }
+
+    if(!typeinfos[tid]) {
+        ITypeInfo *typeinfo;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &typeinfo);
+        if(FAILED(hres)) {
+            ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), typeinfo, NULL))
+            ITypeInfo_Release(typeinfo);
+    }
+
+    *typeinfo = typeinfos[tid];
+    return S_OK;
+}
+
+void release_typelib(void)
+{
+    unsigned i;
+
+    if(!typelib)
+        return;
+
+    for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+        if(typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+
+    ITypeLib_Release(typelib);
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)

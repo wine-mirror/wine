@@ -57,6 +57,12 @@ typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
 typedef struct nsChannelBSC nsChannelBSC;
 
+/* NOTE: make sure to keep in sync with dispex.c */
+typedef enum {
+    IHTMLWindow2_tid,
+    LAST_tid
+} tid_t;
+
 typedef struct {
     const IDispatchExVtbl  *lpIDispatchExVtbl;
 
@@ -524,13 +530,8 @@ HWND get_thread_hwnd(void);
 void push_task(task_t*);
 void remove_doc_tasks(const HTMLDocument*);
 
-/* typelibs */
-enum tid_t {
-    IHTMLWindow2_tid,
-    LAST_tid
-};
-
-HRESULT get_typeinfo(enum tid_t, ITypeInfo**);
+HRESULT get_typeinfo(tid_t,ITypeInfo**);
+void release_typelib(void);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
