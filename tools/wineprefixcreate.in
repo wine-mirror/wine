@@ -139,15 +139,7 @@ CROOT="$WINEPREFIX/dosdevices/c:"
 
 for i in \
     "$CROOT/windows" \
-    "$CROOT/windows/command" \
-    "$CROOT/windows/fonts" \
-    "$CROOT/windows/inf" \
-    "$CROOT/windows/system" \
-    "$CROOT/windows/system32" \
-    "$CROOT/windows/system32/spool" \
-    "$CROOT/windows/system32/spool/drivers" \
-    "$CROOT/windows/system32/spool/drivers/color" \
-    "$CROOT/windows/temp"
+    "$CROOT/windows/inf"
 do
     [ -d "$i" ] || mkdir "$i"
 done

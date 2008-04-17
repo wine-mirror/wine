@@ -2215,6 +2215,11 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,wintrust.dll,1
 
 [FakeDllsSection]
+; create some directories first
+10,inf,
+10,system,
+10,temp,
+11,spool\drivers\color,
 10,,explorer.exe
 10,,hh.exe
 10,,notepad.exe
