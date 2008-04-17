@@ -567,9 +567,8 @@ static LRESULT WINAPI ButtonWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 /**********************************************************************
  * Convert button styles to flags used by DrawText.
- * TODO: handle WS_EX_RIGHT extended style.
  */
-static UINT BUTTON_BStoDT(DWORD style)
+static UINT BUTTON_BStoDT( DWORD style, DWORD ex_style )
 {
    UINT dtStyle = DT_NOCLIP;  /* We use SelectClipRgn to limit output */
 
@@ -592,6 +591,8 @@ static UINT BUTTON_BStoDT(DWORD style)
          if (get_button_type(style) <= BS_DEFPUSHBUTTON) dtStyle |= DT_CENTER;
          /* all other flavours have left aligned text */
    }
+
+   if (ex_style & WS_EX_RIGHT) dtStyle = DT_RIGHT | (dtStyle & ~(DT_LEFT | DT_CENTER));
 
    /* DrawText ignores vertical alignment for multiline text,
     * but we use these flags to align label manually.
@@ -626,10 +627,11 @@ static UINT BUTTON_BStoDT(DWORD style)
 static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
 {
    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+   LONG ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
    WCHAR *text;
    ICONINFO    iconInfo;
    BITMAP      bm;
-   UINT        dtStyle = BUTTON_BStoDT(style);
+   UINT        dtStyle = BUTTON_BStoDT( style, ex_style );
    RECT        r = *rc;
    INT         n;
 
