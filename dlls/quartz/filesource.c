@@ -1125,29 +1125,27 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         LeaveCriticalSection(&This->csList);
     }
 
-    if (SUCCEEDED(hr) && !This->bFlushing)
-    {
-        /* get any errors */
-        if (!GetOverlappedResult(This->hFile, &pDataRq->ovl, &dwBytes, FALSE))
-            hr = HRESULT_FROM_WIN32(GetLastError());
-    }
-
     if (SUCCEEDED(hr))
     {
-        IMediaSample_SetActualDataLength(pDataRq->pSample, dwBytes);
+        /* get any errors */
+        if (!This->bFlushing && !GetOverlappedResult(This->hFile, &pDataRq->ovl, &dwBytes, FALSE))
+            hr = HRESULT_FROM_WIN32(GetLastError());
+
+        /* Return the sample no matter what so it can be destroyed */
         *ppSample = pDataRq->pSample;
         *pdwUser = pDataRq->dwUserData;
+
+        if (This->bFlushing)
+        {
+            hr = VFW_E_WRONG_STATE;
+            dwBytes = 0;
+        }
+
+        IMediaSample_SetActualDataLength(pDataRq->pSample, dwBytes);
     }
 
     /* no need to close event handle since we will close it when the pin is destroyed */
     CoTaskMemFree(pDataRq);
-
-    /* Return the sample if flushing so it can be destroyed */
-    if (This->bFlushing && SUCCEEDED(hr))
-    {
-        hr = VFW_E_WRONG_STATE;
-        IMediaSample_SetActualDataLength(pDataRq->pSample, 0);
-    }
 
     TRACE("-- %x\n", hr);
     return hr;
