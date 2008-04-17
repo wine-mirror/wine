@@ -642,7 +642,6 @@ extern void X11DRV_EnterNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_KeyEvent( HWND hwnd, XEvent *event );
 extern void X11DRV_KeymapNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_DestroyNotify( HWND hwnd, XEvent *event );
-extern void X11DRV_MapNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_SelectionRequest( HWND hWnd, XEvent *event );
 extern void X11DRV_SelectionClear( HWND hWnd, XEvent *event );

@@ -478,24 +478,6 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
 }
 
 
-/**********************************************************************
- *		X11DRV_MapNotify
- */
-void X11DRV_MapNotify( HWND hwnd, XEvent *event )
-{
-    struct x11drv_win_data *data;
-
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-    if (!data->mapped) return;
-
-    if (!data->managed)
-    {
-        HWND hwndFocus = GetFocus();
-        if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
-    }
-}
-
-
 struct desktop_resize_data
 {
     RECT  old_screen_rect;

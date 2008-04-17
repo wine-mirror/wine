@@ -76,6 +76,7 @@ extern BOOL ximInComposeMode;
 static void X11DRV_FocusIn( HWND hwnd, XEvent *event );
 static void X11DRV_FocusOut( HWND hwnd, XEvent *event );
 static void X11DRV_Expose( HWND hwnd, XEvent *event );
+static void X11DRV_MapNotify( HWND hwnd, XEvent *event );
 static void X11DRV_PropertyNotify( HWND hwnd, XEvent *event );
 static void X11DRV_ClientMessage( HWND hwnd, XEvent *event );
 
@@ -708,6 +709,24 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     }
 
     RedrawWindow( hwnd, &rect, 0, flags );
+}
+
+
+/**********************************************************************
+ *		X11DRV_MapNotify
+ */
+static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
+{
+    struct x11drv_win_data *data;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
+    if (!data->mapped) return;
+
+    if (!data->managed)
+    {
+        HWND hwndFocus = GetFocus();
+        if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
+    }
 }
 
 
