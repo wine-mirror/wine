@@ -3110,6 +3110,11 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+    if (PropertyBufferSize && PropertyBuffer == NULL)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;
     if (Property < sizeof(PropertyMap) / sizeof(PropertyMap[0])
         && PropertyMap[Property].nameA)
@@ -3164,6 +3169,11 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(
             || !DeviceInfoData->Reserved)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (PropertyBufferSize && PropertyBuffer == NULL)
+    {
+        SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
     devInfo = (struct DeviceInfo *)DeviceInfoData->Reserved;

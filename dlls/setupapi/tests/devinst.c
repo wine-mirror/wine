@@ -917,7 +917,6 @@ static void testDeviceRegistryPropertyA()
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceRegistryPropertyA(set, &devInfo, SPDRP_FRIENDLYNAME,
      NULL, NULL, buflen, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_DATA,
      "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
@@ -1011,7 +1010,6 @@ static void testDeviceRegistryPropertyW()
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceRegistryPropertyW(set, &devInfo, SPDRP_FRIENDLYNAME,
      NULL, NULL, buflen, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_DATA,
      "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
