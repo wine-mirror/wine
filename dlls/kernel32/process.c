@@ -715,12 +715,12 @@ static void init_windows_dirs(void)
         DIR_System = buffer;
     }
 
-    if (GetFileAttributesW( DIR_Windows ) == INVALID_FILE_ATTRIBUTES)
-        MESSAGE( "Warning: the specified Windows directory %s is not accessible.\n",
-                 debugstr_w(DIR_Windows) );
-    if (GetFileAttributesW( DIR_System ) == INVALID_FILE_ATTRIBUTES)
-        MESSAGE( "Warning: the specified System directory %s is not accessible.\n",
-                 debugstr_w(DIR_System) );
+    if (!CreateDirectoryW( DIR_Windows, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
+        ERR( "directory %s could not be created, error %u\n",
+             debugstr_w(DIR_Windows), GetLastError() );
+    if (!CreateDirectoryW( DIR_System, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
+        ERR( "directory %s could not be created, error %u\n",
+             debugstr_w(DIR_System), GetLastError() );
 
     TRACE_(file)( "WindowsDir = %s\n", debugstr_w(DIR_Windows) );
     TRACE_(file)( "SystemDir  = %s\n", debugstr_w(DIR_System) );
