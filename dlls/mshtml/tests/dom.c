@@ -169,6 +169,13 @@ static REFIID const location_iids[] = {
     NULL
 };
 
+static REFIID const window_iids[] = {
+    &IID_IDispatch,
+    &IID_IHTMLWindow2,
+    &IID_IHTMLWindow3,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -1038,6 +1045,7 @@ static void test_navigator(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "parentWidnow failed: %08x\n", hres);
+    test_ifaces((IUnknown*)window, window_iids);
 
     hres = IHTMLWindow2_get_navigator(window, &navigator);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);

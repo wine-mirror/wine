@@ -73,6 +73,7 @@ void init_dispex(DispatchEx*,IUnknown*);
 
 typedef struct {
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
+    const IHTMLWindow3Vtbl *lpHTMLWindow3Vtbl;
 
     LONG ref;
 
@@ -296,6 +297,7 @@ typedef struct {
 } HTMLTextContainer;
 
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
+#define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)

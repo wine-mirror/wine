@@ -55,6 +55,9 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IHTMLWindow2, riid)) {
         TRACE("(%p)->(IID_IHTMLWindow2 %p)\n", This, ppv);
         *ppv = HTMLWINDOW2(This);
+    }else if(IsEqualGUID(&IID_IHTMLWindow3, riid)) {
+        TRACE("(%p)->(IID_IHTMLWindow2 %p)\n", This, ppv);
+        *ppv = HTMLWINDOW3(This);
     }
 
     if(*ppv) {
@@ -762,6 +765,183 @@ static const IHTMLWindow2Vtbl HTMLWindow2Vtbl = {
     HTMLWindow2_get_external
 };
 
+#define HTMLWINDOW3_THIS(iface) DEFINE_THIS(HTMLWindow, HTMLWindow3, iface)
+
+static HRESULT WINAPI HTMLWindow3_QueryInterface(IHTMLWindow3 *iface, REFIID riid, void **ppv)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+
+    return IHTMLWindow2_QueryInterface(HTMLWINDOW2(This), riid, ppv);
+}
+
+static ULONG WINAPI HTMLWindow3_AddRef(IHTMLWindow3 *iface)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+
+    return IHTMLWindow2_AddRef(HTMLWINDOW2(This));
+}
+
+static ULONG WINAPI HTMLWindow3_Release(IHTMLWindow3 *iface)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+
+    return IHTMLWindow2_Release(HTMLWINDOW2(This));
+}
+
+static HRESULT WINAPI HTMLWindow3_GetTypeInfoCount(IHTMLWindow3 *iface, UINT *pctinfo)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_GetTypeInfo(IHTMLWindow3 *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_GetIDsOfNames(IHTMLWindow3 *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_Invoke(IHTMLWindow3 *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_get_screenLeft(IHTMLWindow3 *iface, long *p)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_get_screenTop(IHTMLWindow3 *iface, long *p)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_attachEvent(IHTMLWindow3 *iface, BSTR event, IDispatch *pDisp, VARIANT_BOOL *pfResult)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_detachEvent(IHTMLWindow3 *iface, BSTR event, IDispatch *pDisp)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expression, long msec,
+        VARIANT *language, long *timerID)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%p(%d) %ld %p %p)\n", This, expression, V_VT(expression), msec, language, timerID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_setInterval(IHTMLWindow3 *iface, VARIANT *expression, long msec,
+        VARIANT *language, long *timerID)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%p %ld %p %p)\n", This, expression, msec, language, timerID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_print(IHTMLWindow3 *iface)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_put_onbeforeprint(IHTMLWindow3 *iface, VARIANT v)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_get_onbeforeprint(IHTMLWindow3 *iface, VARIANT *p)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_put_onafterprint(IHTMLWindow3 *iface, VARIANT v)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_get_onafterprint(IHTMLWindow3 *iface, VARIANT *p)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_get_clipboardData(IHTMLWindow3 *iface, IHTMLDataTransfer **p)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLWindow3_showModelessDialog(IHTMLWindow3 *iface, BSTR url,
+        VARIANT *varArgIn, VARIANT *options, IHTMLWindow2 **pDialog)
+{
+    HTMLWindow *This = HTMLWINDOW3_THIS(iface);
+    FIXME("(%p)->(%s %p %p %p)\n", This, debugstr_w(url), varArgIn, options, pDialog);
+    return E_NOTIMPL;
+}
+
+#undef HTMLWINDOW3_THIS
+
+static const IHTMLWindow3Vtbl HTMLWindow3Vtbl = {
+    HTMLWindow3_QueryInterface,
+    HTMLWindow3_AddRef,
+    HTMLWindow3_Release,
+    HTMLWindow3_GetTypeInfoCount,
+    HTMLWindow3_GetTypeInfo,
+    HTMLWindow3_GetIDsOfNames,
+    HTMLWindow3_Invoke,
+    HTMLWindow3_get_screenLeft,
+    HTMLWindow3_get_screenTop,
+    HTMLWindow3_attachEvent,
+    HTMLWindow3_detachEvent,
+    HTMLWindow3_setTimeout,
+    HTMLWindow3_setInterval,
+    HTMLWindow3_print,
+    HTMLWindow3_put_onbeforeprint,
+    HTMLWindow3_get_onbeforeprint,
+    HTMLWindow3_put_onafterprint,
+    HTMLWindow3_get_onafterprint,
+    HTMLWindow3_get_clipboardData,
+    HTMLWindow3_showModelessDialog
+};
+
 static const char wineConfig_func[] =
 "window.__defineGetter__(\"external\",function() {\n"
 "    return window.__wineWindow__.external;\n"
@@ -869,6 +1049,7 @@ HTMLWindow *HTMLWindow_Create(HTMLDocument *doc)
     HTMLWindow *ret = heap_alloc(sizeof(HTMLWindow));
 
     ret->lpHTMLWindow2Vtbl = &HTMLWindow2Vtbl;
+    ret->lpHTMLWindow3Vtbl = &HTMLWindow3Vtbl;
     ret->ref = 1;
     ret->nswindow = NULL;
     ret->doc = doc;
