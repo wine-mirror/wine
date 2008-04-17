@@ -303,6 +303,35 @@ static const struct message WmSwitchChild[] = {
     { 0 }
 };
 
+/* Switch visible not maximized mdi children */
+static const struct message WmSwitchNotMaximizedChild[] = {
+    /* Switch not maximized MDI child */
+    { WM_MDIACTIVATE, sent },/* in the MDI client */
+    { WM_WINDOWPOSCHANGING, sent|wparam,SWP_NOSIZE|SWP_NOMOVE },/* in the 2nd MDI child */
+    { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_CHILDACTIVATE, sent },/* in the 2nd MDI child */
+    /* Deactivate 1st MDI child */
+    { WM_NCACTIVATE, sent|wparam|defwinproc, 0 }, /* in the 1st MDI child */
+    { WM_MDIACTIVATE, sent|defwinproc }, /* in the 1st MDI child */
+    /* Activate 2nd MDI child */
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE}, /* in the 2nd MDI child */
+    { WM_NCACTIVATE, sent|wparam|defwinproc, 1 }, /* in the 2nd MDI child */
+    { WM_SETVISIBLE, hook }, /* in the 1st MDI child */
+    { WM_KILLFOCUS, sent|defwinproc }, /* in the 1st MDI child */
+    { WM_IME_SETCONTEXT, sent|defwinproc }, /* in the 1st MDI child */
+    { WM_IME_SETCONTEXT, sent }, /* in the  MDI client */
+    { WM_SETFOCUS, sent, 0 }, /* in the  MDI client */
+    { WM_SETVISIBLE, hook },
+    { WM_KILLFOCUS, sent }, /* in the  MDI client */
+    { WM_IME_SETCONTEXT, sent }, /* in the  MDI client */
+    { WM_IME_SETCONTEXT, sent|defwinproc  }, /* in the 1st MDI child */
+    { WM_SETFOCUS, sent|defwinproc }, /* in the 2nd MDI child */
+    { WM_MDIACTIVATE, sent|defwinproc }, /* in the 2nd MDI child */
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE}, /* in the 2nd MDI child */
+    { 0 }
+};
+
+
 /* SetWindowPos(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|
                 SWP_NOZORDER|SWP_FRAMECHANGED)
  * for a visible overlapped window with WS_CLIPCHILDREN style set.
@@ -3371,6 +3400,20 @@ static void test_mdi_messages(void)
     SendMessageA(mdi_client, WM_MDIACTIVATE, (WPARAM)mdi_child, 0);
     ok_sequence(WmSwitchChild, "Child did not switch correctly", TRUE);
     trace("end of test for switch maximized MDI children\n");
+    flush_sequence();
+
+    /* Prepare for switching test of not maximized MDI children  */
+    ShowWindow( mdi_child, SW_NORMAL );
+    ok(!IsZoomed(mdi_child), "wrong zoomed state for %p(Switch test)\n", mdi_child);
+    ok(!IsZoomed(mdi_child2), "wrong zoomed state for %p(Switch test)\n", mdi_child2);
+    active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
+    ok(active_child == mdi_child, "wrong active MDI child %p(Switch test)\n", active_child);
+    flush_sequence();
+
+    SendMessageA(mdi_client, WM_MDIACTIVATE, (WPARAM)mdi_child2, 0);
+    ok_sequence(WmSwitchNotMaximizedChild, "Not maximized child did not switch correctly", TRUE);
+    trace("end of test for switch not maximized MDI children\n");
+    flush_sequence();
 
     SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
     flush_sequence();
@@ -3380,7 +3423,7 @@ static void test_mdi_messages(void)
 
     SetFocus(0);
     flush_sequence();
-    /* end of test for switch maximized MDI children */
+    /* end of tests for switch maximized/not maximized MDI children */
 
     mdi_cs.szClass = "MDI_child_Class";
     mdi_cs.szTitle = "MDI child";
