@@ -249,7 +249,7 @@
 @ stub GdipGetClipBoundsI
 @ stdcall GdipGetCompositingMode(ptr ptr)
 @ stdcall GdipGetCompositingQuality(ptr ptr)
-@ stub GdipGetCustomLineCapBaseCap
+@ stdcall GdipGetCustomLineCapBaseCap(ptr ptr)
 @ stdcall GdipGetCustomLineCapBaseInset(ptr ptr)
 @ stub GdipGetCustomLineCapStrokeCaps
 @ stub GdipGetCustomLineCapStrokeJoin
