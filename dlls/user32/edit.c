@@ -4813,6 +4813,9 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 	if (es->style & ES_COMBO)
 	   es->hwndListBox = GetDlgItem(es->hwndParent, ID_CB_LISTBOX);
 
+        /* FIXME: should we handle changes to WS_EX_RIGHT style after creation? */
+        if (lpcs->dwExStyle & WS_EX_RIGHT) es->style |= ES_RIGHT;
+
         /* Number overrides lowercase overrides uppercase (at least it
          * does in Win95).  However I'll bet that ES_NUMBER would be
          * invalid under Win 3.1.
