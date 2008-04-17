@@ -614,7 +614,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
 
             if (pIndex->cb < sizeof(AVISUPERINDEX) - sizeof(RIFFCHUNK))
             {
-                FIXME("%u < %u?!\n", pIndex->cb, sizeof(AVISUPERINDEX) - sizeof(RIFFCHUNK));
+                FIXME("size %u\n", pIndex->cb);
                 break;
             }
 
@@ -704,7 +704,7 @@ static HRESULT AVISplitter_ProcessODML(AVISplitterImpl * This, const BYTE * pDat
                 TRACE("processing extension header\n");
                 if (pExtHdr->cb != sizeof(AVIEXTHEADER) - sizeof(RIFFCHUNK))
                 {
-                    FIXME("Size: %u, other size: %u\n", pExtHdr->cb, sizeof(AVIEXTHEADER) - sizeof(RIFFCHUNK));
+                    FIXME("Size: %u\n", pExtHdr->cb);
                     break;
                 }
                 TRACE("dwGrandFrames: %u\n", pExtHdr->dwGrandFrames);
