@@ -120,6 +120,8 @@ static const struct fd_ops master_socket_fd_ops =
 struct thread *current = NULL;  /* thread handling the current request */
 unsigned int global_error = 0;  /* global error code for when no thread is current */
 timeout_t server_start_time = 0;  /* server startup time */
+int server_dir_fd = -1;    /* file descriptor for the server dir */
+int config_dir_fd = -1;    /* file descriptor for the config dir */
 
 static struct master_socket *master_socket;  /* the master socket object */
 static struct timeout_user *master_timeout;
@@ -553,7 +555,8 @@ static void create_server_dir( const char *dir )
     create_dir( server_dir, &st );
 
     if (chdir( server_dir ) == -1) fatal_perror( "chdir %s", server_dir );
-    if (stat( ".", &st2 ) == -1) fatal_perror( "stat %s", server_dir );
+    if ((server_dir_fd = open( ".", O_RDONLY )) == -1) fatal_perror( "open %s", server_dir );
+    if (fstat( server_dir_fd, &st2 ) == -1) fatal_perror( "stat %s", server_dir );
     if (st.st_dev != st2.st_dev || st.st_ino != st2.st_ino)
         fatal_error( "chdir did not end up in %s\n", server_dir );
 
@@ -733,6 +736,7 @@ static void acquire_lock(void)
 void open_master_socket(void)
 {
     const char *server_dir = wine_get_server_dir();
+    const char *config_dir = wine_get_config_dir();
     int fd, pid, status, sync_pipe[2];
     char dummy;
 
@@ -740,7 +744,10 @@ void open_master_socket(void)
     assert( sizeof(union generic_request) == sizeof(struct request_max_size) );
     assert( sizeof(union generic_reply) == sizeof(struct request_max_size) );
 
-    if (!server_dir) fatal_error( "directory %s cannot be accessed\n", wine_get_config_dir() );
+    if (!server_dir) fatal_error( "directory %s cannot be accessed\n", config_dir );
+    if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s", config_dir );
+    if ((config_dir_fd = open( ".", O_RDONLY )) == -1) fatal_perror( "open %s", config_dir );
+
     create_server_dir( server_dir );
 
     if (!foreground)

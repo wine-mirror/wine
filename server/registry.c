@@ -112,7 +112,7 @@ static void set_periodic_save_timer(void);
 struct save_branch_info
 {
     struct key  *key;
-    char        *path;
+    const char  *path;
 };
 
 #define MAX_SAVE_BRANCH_INFO 3
@@ -1396,11 +1396,9 @@ static void load_init_registry_from_file( const char *filename, struct key *key 
 
     assert( save_branch_count < MAX_SAVE_BRANCH_INFO );
 
-    if ((save_branch_info[save_branch_count].path = strdup( filename )))
-    {
-        save_branch_info[save_branch_count++].key = (struct key *)grab_object( key );
-        make_object_static( &key->obj );
-    }
+    save_branch_info[save_branch_count].path = filename;
+    save_branch_info[save_branch_count++].key = (struct key *)grab_object( key );
+    make_object_static( &key->obj );
 }
 
 static WCHAR *format_user_registry_path( const SID *sid, struct unicode_str *path )
@@ -1438,27 +1436,24 @@ void init_registry(void)
     WCHAR *current_user_path;
     struct unicode_str current_user_str;
 
-    const char *config = wine_get_config_dir();
-    char *p, *filename;
     struct key *key;
     int dummy;
+
+    /* switch to the config dir */
+
+    if (fchdir( config_dir_fd ) == -1) fatal_perror( "chdir to config dir" );
 
     /* create the root key */
     root_key = alloc_key( &root_name, time(NULL) );
     assert( root_key );
     make_object_static( &root_key->obj );
 
-    if (!(filename = malloc( strlen(config) + 16 ))) fatal_error( "out of memory\n" );
-    strcpy( filename, config );
-    p = filename + strlen(filename);
-
     /* load system.reg into Registry\Machine */
 
     if (!(key = create_key( root_key, &HKLM_name, NULL, 0, time(NULL), &dummy )))
         fatal_error( "could not create Machine registry key\n" );
 
-    strcpy( p, "/system.reg" );
-    load_init_registry_from_file( filename, key );
+    load_init_registry_from_file( "system.reg", key );
     release_object( key );
 
     /* load userdef.reg into Registry\User\.Default */
@@ -1466,8 +1461,7 @@ void init_registry(void)
     if (!(key = create_key( root_key, &HKU_name, NULL, 0, time(NULL), &dummy )))
         fatal_error( "could not create User\\.Default registry key\n" );
 
-    strcpy( p, "/userdef.reg" );
-    load_init_registry_from_file( filename, key );
+    load_init_registry_from_file( "userdef.reg", key );
     release_object( key );
 
     /* load user.reg into HKEY_CURRENT_USER */
@@ -1478,14 +1472,14 @@ void init_registry(void)
         !(key = create_key( root_key, &current_user_str, NULL, 0, time(NULL), &dummy )))
         fatal_error( "could not create HKEY_CURRENT_USER registry key\n" );
     free( current_user_path );
-    strcpy( p, "/user.reg" );
-    load_init_registry_from_file( filename, key );
+    load_init_registry_from_file( "user.reg", key );
     release_object( key );
-
-    free( filename );
 
     /* start the periodic save timer */
     set_periodic_save_timer();
+
+    /* go back to the server dir */
+    if (fchdir( server_dir_fd ) == -1) fatal_perror( "chdir to server dir" );
 }
 
 /* save a registry branch to a file */
@@ -1532,8 +1526,8 @@ static void save_registry( struct key *key, obj_handle_t handle )
 static int save_branch( struct key *key, const char *path )
 {
     struct stat st;
-    char *p, *real, *tmp = NULL;
-    int fd, count = 0, ret = 0, by_symlink;
+    char *p, *tmp = NULL;
+    int fd, count = 0, ret = 0;
     FILE *f;
 
     if (!(key->flags & KEY_DIRTY))
@@ -1542,25 +1536,13 @@ static int save_branch( struct key *key, const char *path )
         return 1;
     }
 
-    /* get the real path */
-
-    by_symlink = (!lstat(path, &st) && S_ISLNK (st.st_mode));
-    if (!(real = malloc( PATH_MAX ))) return 0;
-    if (!realpath( path, real ))
-    {
-        free( real );
-        real = NULL;
-    }
-    else path = real;
-
     /* test the file type */
 
     if ((fd = open( path, O_WRONLY )) != -1)
     {
         /* if file is not a regular file or has multiple links or is accessed
          * via symbolic links, write directly into it; otherwise use a temp file */
-        if (by_symlink ||
-            (!fstat( fd, &st ) && (!S_ISREG(st.st_mode) || st.st_nlink > 1)))
+        if (!lstat( path, &st ) && (!S_ISREG(st.st_mode) || st.st_nlink > 1))
         {
             ftruncate( fd, 0 );
             goto save;
@@ -1610,7 +1592,6 @@ static int save_branch( struct key *key, const char *path )
 
 done:
     free( tmp );
-    free( real );
     if (ret) make_clean( key );
     return ret;
 }
@@ -1620,9 +1601,11 @@ static void periodic_save( void *arg )
 {
     int i;
 
+    if (fchdir( config_dir_fd ) == -1) return;
     save_timeout_user = NULL;
     for (i = 0; i < save_branch_count; i++)
         save_branch( save_branch_info[i].key, save_branch_info[i].path );
+    if (fchdir( server_dir_fd ) == -1) fatal_perror( "chdir to server dir" );
     set_periodic_save_timer();
 }
 
@@ -1638,6 +1621,7 @@ void flush_registry(void)
 {
     int i;
 
+    if (fchdir( config_dir_fd ) == -1) return;
     for (i = 0; i < save_branch_count; i++)
     {
         if (!save_branch( save_branch_info[i].key, save_branch_info[i].path ))
@@ -1647,6 +1631,7 @@ void flush_registry(void)
             perror( " " );
         }
     }
+    if (fchdir( server_dir_fd ) == -1) fatal_perror( "chdir to server dir" );
 }
 
 
