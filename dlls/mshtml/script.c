@@ -477,6 +477,7 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
     IMoniker *mon;
     char *buf;
     WCHAR *text;
+    DWORD len, size=0;
     HRESULT hres;
 
     static const WCHAR wine_schemaW[] = {'w','i','n','e',':'};
@@ -488,13 +489,16 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
     if(FAILED(hres))
         return;
 
-    hres = bind_mon_to_buffer(script_host->doc, mon, (void**)&buf);
+    hres = bind_mon_to_buffer(script_host->doc, mon, (void**)&buf, &size);
     IMoniker_Release(mon);
     if(FAILED(hres))
         return;
 
-    text = heap_strdupAtoW(buf);
+    len = MultiByteToWideChar(CP_ACP, 0, buf, size, NULL, 0);
+    text = heap_alloc((len+1)*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, buf, size, text, len);
     heap_free(buf);
+    text[len] = 0;
 
     parse_text(script_host, text);
 

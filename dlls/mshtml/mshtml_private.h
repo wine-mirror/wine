@@ -411,7 +411,7 @@ void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);
 HRESULT start_binding(HTMLDocument*,BSCallback*,IBindCtx*);
 
-HRESULT bind_mon_to_buffer(HTMLDocument*,IMoniker*,void**);
+HRESULT bind_mon_to_buffer(HTMLDocument*,IMoniker*,void**,DWORD*);
 
 nsChannelBSC *create_channelbsc(IMoniker*);
 HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*);
