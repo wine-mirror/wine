@@ -688,6 +688,9 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
         return;
     }
 
+    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_RIGHT)
+        wFormat = DT_RIGHT | (wFormat & ~(DT_LEFT | DT_CENTER));
+
     if (style & SS_NOPREFIX)
         wFormat |= DT_NOPREFIX;
 
