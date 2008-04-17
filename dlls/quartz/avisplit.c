@@ -57,9 +57,10 @@ typedef struct StreamData
     FLOAT fSamplesPerSec;
     DWORD dwLength;
 
-    AVISUPERINDEX *superindex;
+    AVISTREAMHEADER streamheader;
     DWORD entries;
     AVISTDINDEX **stdindex;
+    DWORD frames;
 } StreamData;
 
 typedef struct AVISplitterImpl
@@ -74,6 +75,7 @@ typedef struct AVISplitterImpl
 
     /* TODO: Handle old style index, probably by creating an opendml style new index from it for within StreamData */
     AVIOLDINDEX *oldindex;
+    DWORD offset;
 
     StreamData *streams;
 } AVISplitterImpl;
@@ -417,6 +419,7 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **ind
 
 static HRESULT AVISplitter_ProcessOldIndex(AVISplitterImpl *This)
 {
+    ULONGLONG mov_pos = BYTES_FROM_MEDIATIME(This->CurrentChunkOffset) - sizeof(DWORD);
     AVIOLDINDEX *pAviOldIndex = This->oldindex;
     int relative = -1;
     int x;
@@ -424,7 +427,6 @@ static HRESULT AVISplitter_ProcessOldIndex(AVISplitterImpl *This)
     for (x = 0; x < pAviOldIndex->cb / sizeof(pAviOldIndex->aIndex[0]); ++x)
     {
         DWORD temp, temp2 = 0, offset, chunkid;
-        ULONGLONG mov_pos = BYTES_FROM_MEDIATIME(This->CurrentChunkOffset) - sizeof(DWORD);
         PullPin *pin = This->Parser.pInputPin;
 
         offset = pAviOldIndex->aIndex[x].dwOffset;
@@ -467,6 +469,17 @@ static HRESULT AVISplitter_ProcessOldIndex(AVISplitterImpl *This)
         TRACE("dwSize: %08x\n", pAviOldIndex->aIndex[x].dwSize);
     }
 
+    if (relative == -1)
+    {
+        FIXME("Dropping index: no idea whether it is relative or absolute\n");
+        CoTaskMemFree(This->oldindex);
+        This->oldindex = NULL;
+    }
+    else if (!relative)
+        This->offset = 0;
+    else
+        This->offset = (DWORD)mov_pos;
+
     return S_OK;
 }
 
@@ -483,7 +496,6 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     static const WCHAR wszStreamTemplate[] = {'S','t','r','e','a','m',' ','%','0','2','d',0};
     StreamData *stream;
 
-    AVISUPERINDEX *superindex = NULL;
     AVISTDINDEX **stdindex = NULL;
     DWORD nstdindex = 0;
 
@@ -496,6 +508,8 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)This;
     wsprintfW(piOutput.achName, wszStreamTemplate, This->Parser.cStreams);
+    This->streams = CoTaskMemRealloc(This->streams, sizeof(StreamData) * (This->Parser.cStreams+1));
+    stream = This->streams + This->Parser.cStreams;
 
     for (pChunk = (const RIFFCHUNK *)pData; 
          ((const BYTE *)pChunk >= pData) && ((const BYTE *)pChunk + sizeof(RIFFCHUNK) < pData + cb) && (pChunk->cb > 0); 
@@ -508,6 +522,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
             {
                 const AVISTREAMHEADER * pStrHdr = (const AVISTREAMHEADER *)pChunk;
                 TRACE("processing stream header\n");
+                stream->streamheader = *pStrHdr;
 
                 fSamplesPerSec = (float)pStrHdr->dwRate / (float)pStrHdr->dwScale;
 
@@ -630,14 +645,6 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                 break;
             }
 
-            superindex = CoTaskMemAlloc(pIndex->cb + sizeof(RIFFCHUNK));
-            if (!superindex)
-            {
-                WARN("Out of memory\n");
-                break;
-            }
-            memcpy(superindex, pIndex, pIndex->cb + sizeof(RIFFCHUNK));
-
             for (x = 0; x < pIndex->nEntriesInUse; ++x)
             {
                 TRACE("qwOffset: %x%08x\n", (DWORD)(pIndex->aIndex[x].qwOffset >> 32), (DWORD)pIndex->aIndex[x].qwOffset);
@@ -665,13 +672,10 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
     TRACE("fSamplesPerSec = %f\n", (double)fSamplesPerSec);
     TRACE("dwSampleSize = %x\n", dwSampleSize);
     TRACE("dwLength = %x\n", dwLength);
-    This->streams = CoTaskMemRealloc(This->streams, sizeof(StreamData) * (This->Parser.cStreams+1));
 
-    stream = This->streams + This->Parser.cStreams;
     stream->fSamplesPerSec = fSamplesPerSec;
     stream->dwSampleSize = dwSampleSize;
     stream->dwLength = dwLength; /* TODO: Use this for mediaseeking */
-    stream->superindex = superindex;
     stream->entries = nstdindex;
     stream->stdindex = stdindex;
 
@@ -718,6 +722,92 @@ static HRESULT AVISplitter_ProcessODML(AVISplitterImpl * This, const BYTE * pDat
     return S_OK;
 }
 
+static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
+{
+    int x;
+
+    if (This->oldindex)
+    {
+        DWORD nMax, n;
+
+        for (x = 0; x < This->Parser.cStreams; ++x)
+        {
+            This->streams[x].frames = 0;
+        }
+
+        nMax = This->oldindex->cb / sizeof(This->oldindex->aIndex[0]);
+
+        /* Ok, maybe this is more an excercize to see if I interpret everything correctly or not, but that is useful for now */
+        for (n = 0; n < nMax; ++n)
+        {
+            DWORD streamId = StreamFromFOURCC(This->oldindex->aIndex[n].dwChunkId);
+            if (streamId >= This->Parser.cStreams)
+            {
+                FIXME("Stream id %s ignored\n", debugstr_an((char*)&This->oldindex->aIndex[n].dwChunkId, 4));
+                continue;
+            }
+
+            if (This->streams[streamId].streamheader.dwSampleSize)
+                This->streams[streamId].frames += This->oldindex->aIndex[n].dwSize / This->streams[streamId].streamheader.dwSampleSize;
+            else
+                ++This->streams[streamId].frames;
+        }
+
+        for (x = 0; x < This->Parser.cStreams; ++x)
+        {
+            if ((DWORD)This->streams[x].frames != This->streams[x].streamheader.dwLength)
+            {
+                FIXME("stream %u: frames found: %u, frames meant to be found: %u\n", x, (DWORD)This->streams[x].frames, This->streams[x].streamheader.dwLength);
+            }
+        }
+
+    }
+    else if (!This->streams[0].entries)
+    {
+        for (x = 0; x < This->Parser.cStreams; ++x)
+        {
+            This->streams[x].frames = This->streams[x].streamheader.dwLength;
+        }
+    }
+
+    /* Not much here yet */
+    for (x = 0; x < This->Parser.cStreams; ++x)
+    {
+        StreamData *stream = This->streams + x;
+        /* WOEI! */
+        double fps;
+        int y;
+        DWORD64 frames = 0;
+
+        fps = (double)stream->streamheader.dwRate / (float)stream->streamheader.dwScale;
+        if (stream->stdindex)
+        {
+            for (y = 0; y < stream->entries; ++y)
+            {
+                frames += stream->stdindex[y]->nEntriesInUse;
+            }
+        }
+        else frames = stream->frames;
+
+        frames *= stream->streamheader.dwScale;
+        /* Keep accuracy as high as possible for duration */
+        This->Parser.mediaSeeking.llDuration = frames * 10000000;
+        This->Parser.mediaSeeking.llDuration /= stream->streamheader.dwRate;
+        This->Parser.mediaSeeking.llStop = This->Parser.mediaSeeking.llDuration;
+        This->Parser.mediaSeeking.llCurrent = 0;
+
+        frames /= stream->streamheader.dwRate;
+
+        TRACE("fps: %f\n", fps);
+        TRACE("Duration: %d days, %d hours, %d minutes and %d seconds\n", (DWORD)(frames / 86400),
+        (DWORD)((frames % 86400) / 3600), (DWORD)((frames % 3600) / 60), (DWORD)(frames % 60));
+    }
+
+    return S_OK;
+}
+
+static HRESULT AVISplitter_Disconnect(LPVOID iface);
+
 /* FIXME: fix leaks on failure here */
 static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
 {
@@ -728,6 +818,8 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     BYTE * pBuffer;
     RIFFCHUNK * pCurrentChunk;
     LONGLONG total, avail;
+    int x;
+    DWORD indexes;
 
     AVISplitterImpl * pAviSplit = (AVISplitterImpl *)This->pin.pinInfo.pFilter;
 
@@ -847,25 +939,59 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
         if (list.fcc == ckidAVIOLDINDEX)
         {
             pAviSplit->oldindex = CoTaskMemRealloc(pAviSplit->oldindex, list.cb + sizeof(RIFFCHUNK));
-            if (!pAviSplit->oldindex)
-                return E_OUTOFMEMORY;
-
-            hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(RIFFCHUNK) + list.cb, (BYTE *)pAviSplit->oldindex);
-            if (hr == S_OK)
+            if (pAviSplit->oldindex)
             {
-                AVISplitter_ProcessOldIndex(pAviSplit);
-            }
-            else
-            {
-                CoTaskMemFree(pAviSplit->oldindex);
-                pAviSplit->oldindex = NULL;
+                hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(RIFFCHUNK) + list.cb, (BYTE *)pAviSplit->oldindex);
+                if (hr == S_OK)
+                {
+                    hr = AVISplitter_ProcessOldIndex(pAviSplit);
+                }
+                else
+                {
+                    CoTaskMemFree(pAviSplit->oldindex);
+                    pAviSplit->oldindex = NULL;
+                    hr = S_OK;
+                }
             }
         }
-        hr = S_OK;
     }
 
+    indexes = 0;
+    for (x = 0; x < pAviSplit->Parser.cStreams; ++x)
+        if (pAviSplit->streams[x].entries)
+            ++indexes;
+
+    if (indexes)
+    {
+        CoTaskMemFree(pAviSplit->oldindex);
+        pAviSplit->oldindex = NULL;
+        if (indexes < pAviSplit->Parser.cStreams)
+        {
+            /* This error could possible be survived by switching to old type index,
+             * but I would rather find out why it doesn't find everything here
+             */
+            ERR("%d indexes expected, but only have %d\n", indexes, pAviSplit->Parser.cStreams);
+            indexes = 0;
+        }
+    }
+    else if (!indexes && pAviSplit->oldindex)
+        indexes = pAviSplit->Parser.cStreams;
+
+    if (!indexes && pAviSplit->AviHeader.dwFlags & AVIF_MUSTUSEINDEX)
+    {
+        FIXME("No usable index was found!\n");
+        hr = E_FAIL;
+    }
+
+    /* Now, set up the streams */
+    if (hr == S_OK)
+        hr = AVISplitter_InitializeStreams(pAviSplit);
+
     if (hr != S_OK)
+    {
+        AVISplitter_Disconnect(pAviSplit);
         return E_FAIL;
+    }
 
     TRACE("AVI File ok\n");
 
@@ -904,9 +1030,9 @@ static HRESULT AVISplitter_Disconnect(LPVOID iface)
             CoTaskMemFree(stream->stdindex[i]);
 
         CoTaskMemFree(stream->stdindex);
-        CoTaskMemFree(stream->superindex);
     }
     CoTaskMemFree(This->streams);
+    This->streams = NULL;
 
     return S_OK;
 }
