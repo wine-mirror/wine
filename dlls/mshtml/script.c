@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "activscp.h"
+#include "activdbg.h"
 #include "objsafe.h"
 
 #include "wine/debug.h"
@@ -44,6 +45,7 @@ typedef struct {
     const IActiveScriptSiteVtbl               *lpIActiveScriptSiteVtbl;
     const IActiveScriptSiteInterruptPollVtbl  *lpIActiveScriptSiteInterruptPollVtbl;
     const IActiveScriptSiteWindowVtbl         *lpIActiveScriptSiteWindowVtbl;
+    const IActiveScriptSiteDebug32Vtbl        *lpIActiveScriptSiteDebug32Vtbl;
 
     LONG ref;
 
@@ -61,6 +63,7 @@ typedef struct {
 #define ACTSCPSITE(x)  ((IActiveScriptSite*)               &(x)->lpIActiveScriptSiteVtbl)
 #define ACTSCPPOLL(x)  ((IActiveScriptSiteInterruptPoll*)  &(x)->lpIActiveScriptSiteInterruptPollVtbl)
 #define ACTSCPWIN(x)   ((IActiveScriptSiteWindow*)         &(x)->lpIActiveScriptSiteWindowVtbl)
+#define ACTSCPDBG32(x) ((IActiveScriptSiteDebug32*)        &(x)->lpIActiveScriptSiteDebug32Vtbl)
 
 static BOOL init_script_engine(ScriptHost *script_host)
 {
@@ -205,6 +208,9 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSiteWindow, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSiteWindow %p)\n", This, ppv);
         *ppv = ACTSCPWIN(This);
+    }else if(IsEqualGUID(&IID_IActiveScriptSiteDebug32, riid)) {
+        TRACE("(%p)->(IID_IActiveScriptSiteDebug32 %p)\n", This, ppv);
+        *ppv = ACTSCPDBG32(This);
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         return E_NOINTERFACE;
@@ -426,6 +432,70 @@ static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
     ActiveScriptSiteWindow_EnableModeless
 };
 
+#define ACTSCPDBG32_THIS(iface) DEFINE_THIS(ScriptHost, IActiveScriptSiteDebug32, iface)
+
+static HRESULT WINAPI ActiveScriptSiteDebug32_QueryInterface(IActiveScriptSiteDebug32 *iface,
+        REFIID riid, void **ppv)
+{
+    ScriptHost *This = ACTSCPDBG32_THIS(iface);
+    return IActiveScriptSite_QueryInterface(ACTSCPSITE(This), riid, ppv);
+}
+
+static ULONG WINAPI ActiveScriptSiteDebug32_AddRef(IActiveScriptSiteDebug32 *iface)
+{
+    ScriptHost *This = ACTSCPDBG32_THIS(iface);
+    return IActiveScriptSite_AddRef(ACTSCPSITE(This));
+}
+
+static ULONG WINAPI ActiveScriptSiteDebug32_Release(IActiveScriptSiteDebug32 *iface)
+{
+    ScriptHost *This = ACTSCPDBG32_THIS(iface);
+    return IActiveScriptSite_Release(ACTSCPSITE(This));
+}
+
+static HRESULT WINAPI ActiveScriptSiteDebug32_GetDocumentContextFromPosition(IActiveScriptSiteDebug32 *iface,
+            DWORD dwSourceContext, ULONG uCharacterOffset, ULONG uNumChars, IDebugDocumentContext **ppsc)
+{
+    ScriptHost *This = ACTSCPDBG32_THIS(iface);
+    FIXME("(%p)->(%x %u %u %p)\n", This, dwSourceContext, uCharacterOffset, uNumChars, ppsc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSiteDebug32_GetApplication(IActiveScriptSiteDebug32 *iface, IDebugApplication32 **ppda)
+{
+    ScriptHost *This = ACTSCPDBG32_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, ppda);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSiteDebug32_GetRootApplicationNode(IActiveScriptSiteDebug32 *iface,
+            IDebugApplicationNode **ppdanRoot)
+{
+    ScriptHost *This = ACTSCPDBG32_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, ppdanRoot);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSiteDebug32_OnScriptErrorDebug(IActiveScriptSiteDebug32 *iface,
+            IActiveScriptErrorDebug *pErrorDebug, BOOL *pfEnterDebugger, BOOL *pfCallOnScriptErrorWhenContinuing)
+{
+    ScriptHost *This = ACTSCPDBG32_THIS(iface);
+    FIXME("(%p)->(%p %p %p)\n", This, pErrorDebug, pfEnterDebugger, pfCallOnScriptErrorWhenContinuing);
+    return E_NOTIMPL;
+}
+
+#undef ACTSCPDBG32_THIS
+
+static const IActiveScriptSiteDebug32Vtbl ActiveScriptSiteDebug32Vtbl = {
+    ActiveScriptSiteDebug32_QueryInterface,
+    ActiveScriptSiteDebug32_AddRef,
+    ActiveScriptSiteDebug32_Release,
+    ActiveScriptSiteDebug32_GetDocumentContextFromPosition,
+    ActiveScriptSiteDebug32_GetApplication,
+    ActiveScriptSiteDebug32_GetRootApplicationNode,
+    ActiveScriptSiteDebug32_OnScriptErrorDebug
+};
+
 static ScriptHost *create_script_host(HTMLDocument *doc, GUID *guid)
 {
     ScriptHost *ret;
@@ -435,6 +505,7 @@ static ScriptHost *create_script_host(HTMLDocument *doc, GUID *guid)
     ret->lpIActiveScriptSiteVtbl               = &ActiveScriptSiteVtbl;
     ret->lpIActiveScriptSiteInterruptPollVtbl  = &ActiveScriptSiteInterruptPollVtbl;
     ret->lpIActiveScriptSiteWindowVtbl         = &ActiveScriptSiteWindowVtbl;
+    ret->lpIActiveScriptSiteDebug32Vtbl        = &ActiveScriptSiteDebug32Vtbl;
     ret->ref = 1;
     ret->doc = doc;
     ret->script_state = SCRIPTSTATE_UNINITIALIZED;
