@@ -3239,6 +3239,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         {
             DWORD dwBufferSize;
             DWORD dwStatusCode;
+            WCHAR encoding[20];
+            static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
 
             INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                 INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
@@ -3263,6 +3265,15 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
             if (lpwhr->dwContentLength == 0)
                 HTTP_FinishedReading(lpwhr);
+
+            /* Correct the case where both a Content-Length and Transfer-encoding = chuncked are set */
+
+            dwBufferSize = sizeof(encoding);
+            if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_TRANSFER_ENCODING, encoding, &dwBufferSize, NULL) &&
+                !strcmpiW(encoding, szChunked))
+            {
+                lpwhr->dwContentLength = -1;
+            }
 
             dwBufferSize = sizeof(dwStatusCode);
             if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,
