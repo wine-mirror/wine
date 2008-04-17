@@ -1851,7 +1851,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 
 static BOOL PATH_WidenPath(DC *dc)
 {
-    INT i, j, numStrokes, nLinePts, penWidth, penWidthIn, penWidthOut, size, penStyle;
+    INT i, j, numStrokes, penWidth, penWidthIn, penWidthOut, size, penStyle;
     BOOL ret = FALSE;
     GdiPath *pPath, *pNewPath, **pStrokes, *pUpPath, *pDownPath;
     EXTLOGPEN *elp;
@@ -1907,7 +1907,6 @@ static BOOL PATH_WidenPath(DC *dc)
         penWidthOut++;
 
     numStrokes = 0;
-    nLinePts = 0;
 
     pStrokes = HeapAlloc(GetProcessHeap(), 0, numStrokes * sizeof(GdiPath*));
     pStrokes[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
