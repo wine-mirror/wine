@@ -641,7 +641,6 @@ extern void X11DRV_MotionNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_EnterNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_KeyEvent( HWND hwnd, XEvent *event );
 extern void X11DRV_KeymapNotify( HWND hwnd, XEvent *event );
-extern void X11DRV_Expose( HWND hwnd, XEvent *event );
 extern void X11DRV_DestroyNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_MapNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );

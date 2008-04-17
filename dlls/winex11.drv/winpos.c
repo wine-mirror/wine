@@ -61,57 +61,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 static const char managed_prop[] = "__wine_x11_managed";
 
 /***********************************************************************
- *           X11DRV_Expose
- */
-void X11DRV_Expose( HWND hwnd, XEvent *xev )
-{
-    XExposeEvent *event = &xev->xexpose;
-    RECT rect;
-    struct x11drv_win_data *data;
-    int flags = RDW_INVALIDATE | RDW_ERASE;
-
-    TRACE( "win %p (%lx) %d,%d %dx%d\n",
-           hwnd, event->window, event->x, event->y, event->width, event->height );
-
-    if (!(data = X11DRV_get_win_data( hwnd ))) return;
-
-    if (event->window == data->whole_window)
-    {
-        rect.left = data->whole_rect.left + event->x;
-        rect.top  = data->whole_rect.top + event->y;
-        flags |= RDW_FRAME;
-    }
-    else
-    {
-        rect.left = data->client_rect.left + event->x;
-        rect.top  = data->client_rect.top + event->y;
-    }
-    rect.right  = rect.left + event->width;
-    rect.bottom = rect.top + event->height;
-
-    if (event->window != root_window)
-    {
-        SERVER_START_REQ( update_window_zorder )
-        {
-            req->window      = hwnd;
-            req->rect.left   = rect.left;
-            req->rect.top    = rect.top;
-            req->rect.right  = rect.right;
-            req->rect.bottom = rect.bottom;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-
-        /* make position relative to client area instead of parent */
-        OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
-        flags |= RDW_ALLCHILDREN;
-    }
-
-    RedrawWindow( hwnd, &rect, 0, flags );
-}
-
-
-/***********************************************************************
  *     update_net_wm_states
  */
 static void update_net_wm_states( Display *display, struct x11drv_win_data *data )
