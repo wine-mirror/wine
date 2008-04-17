@@ -36,6 +36,28 @@
 #include "winbase.h"
 #include "wingdi.h"
 
+static const char *debugstr_wn(const WCHAR *wstr, int n)
+{
+    static char buf[80];
+    char *p;
+    int i;
+
+    if (!wstr) return "(null)";
+
+    i = 0;
+    p = buf;
+    *p++ = '\"';
+    while (i < n && i < sizeof(buf) - 2 && wstr[i])
+    {
+        if (wstr[i] < 127) *p++ = wstr[i];
+        else *p++ = '.';
+        i++;
+    }
+    *p++ = '\"';
+    *p = 0;
+    return buf;
+}
+
 static unsigned int read_int(const unsigned char *buffer)
 {
     return buffer[0]
@@ -141,9 +163,42 @@ static int dump_emfrecord(void)
     EMRCASE(EMR_PLGBLT);
     EMRCASE(EMR_SETDIBITSTODEVICE);
     EMRCASE(EMR_STRETCHDIBITS);
-    EMRCASE(EMR_EXTCREATEFONTINDIRECTW);
+
+    case EMR_EXTCREATEFONTINDIRECTW:
+    {
+        const EMREXTCREATEFONTINDIRECTW *pf = (const EMREXTCREATEFONTINDIRECTW *)PRD(offset, 4);
+        const LOGFONTW *plf = &pf->elfw.elfLogFont;
+
+        printf("%-20s %08x\n", "EMR_EXTCREATEFONTINDIRECTW", length);
+        printf("(%d %d %d %d %x out %d clip %x quality %d charset %d) %s %s %s %s\n",
+               plf->lfHeight, plf->lfWidth,
+               plf->lfEscapement, plf->lfOrientation,
+               plf->lfPitchAndFamily,
+               plf->lfOutPrecision, plf->lfClipPrecision,
+               plf->lfQuality, plf->lfCharSet,
+               debugstr_wn(plf->lfFaceName, LF_FACESIZE),
+               plf->lfWeight > 400 ? "Bold" : "",
+               plf->lfItalic ? "Italic" : "",
+               plf->lfUnderline ? "Underline" : "");
+	break;
+    }
+
     EMRCASE(EMR_EXTTEXTOUTA);
-    EMRCASE(EMR_EXTTEXTOUTW);
+
+    case EMR_EXTTEXTOUTW:
+    {
+	const EMREXTTEXTOUTW *etoW = (const EMREXTTEXTOUTW *)PRD(offset, 4);
+
+        printf("%-20s %08x\n", "EMR_EXTTEXTOUTW", length);
+        printf("pt (%d,%d) rect (%d,%d - %d,%d) flags %#x, %s\n",
+               etoW->emrtext.ptlReference.x, etoW->emrtext.ptlReference.y,
+               etoW->emrtext.rcl.left, etoW->emrtext.rcl.top,
+               etoW->emrtext.rcl.right, etoW->emrtext.rcl.bottom,
+               etoW->emrtext.fOptions,
+               debugstr_wn((LPCWSTR)((const BYTE *)etoW + etoW->emrtext.offString), etoW->emrtext.nChars));
+	break;
+    }
+
     EMRCASE(EMR_POLYBEZIER16);
     EMRCASE(EMR_POLYGON16);
     EMRCASE(EMR_POLYLINE16);
