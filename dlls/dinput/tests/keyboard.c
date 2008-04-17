@@ -71,6 +71,22 @@ static void acquire_tests(LPDIRECTINPUT pDI, HWND hwnd)
     HRESULT hr;
     LPDIRECTINPUTDEVICE pKeyboard;
     BYTE kbd_state[256];
+    BYTE custom_state[4];
+    DIOBJECTDATAFORMAT dodf[] =
+        {
+            { &GUID_Key, 0, DIDFT_MAKEINSTANCE(DIK_Q)|DIDFT_BUTTON, 0 },
+            { &GUID_Key, 1, DIDFT_MAKEINSTANCE(DIK_W)|DIDFT_BUTTON, 0 },
+            { &GUID_Key, 2, DIDFT_MAKEINSTANCE(DIK_E)|DIDFT_BUTTON, 0 },
+            { &GUID_Key, 3, DIDFT_MAKEINSTANCE(DIK_R)|DIDFT_BUTTON, 0 },
+        };
+
+    DIDATAFORMAT df;
+    df.dwSize = sizeof( df );
+    df.dwObjSize = sizeof( DIOBJECTDATAFORMAT );
+    df.dwFlags = DIDF_RELAXIS;
+    df.dwDataSize = sizeof( dodf )/sizeof( dodf[0] );
+    df.dwNumObjs = sizeof( dodf )/sizeof( dodf[0] );
+    df.rgodf = dodf;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
@@ -94,6 +110,19 @@ static void acquire_tests(LPDIRECTINPUT pDI, HWND hwnd)
     ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(10,) should have failed: %s\n", DXGetErrorString8(hr));
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
     ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_Unacquire(pKeyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Uncquire() failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_SetDataFormat( pKeyboard , &df );
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_Acquire(pKeyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %s\n", DXGetErrorString8(hr));
+    todo_wine
+        {
+            hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
+            ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState(4,) failed: %s\n", DXGetErrorString8(hr));
+            hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
+            ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(256,) should have failed: %s\n", DXGetErrorString8(hr));
+        }
 
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }
