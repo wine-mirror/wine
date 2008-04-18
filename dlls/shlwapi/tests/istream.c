@@ -76,35 +76,40 @@ static void test_IStream_invalid_operations(IStream * stream, DWORD mode)
 
     ret = stream->lpVtbl->Write(stream, NULL, 0, &count);
     if (mode == STGM_READ)
-        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+        ok(ret == STG_E_ACCESSDENIED /* XP */ || ret == S_OK /* 2000 */,
+           "expected STG_E_ACCESSDENIED or S_OK, got 0x%08x\n", ret);
     else
         ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
 
     strcpy(data, "Hello");
     ret = stream->lpVtbl->Write(stream, data, 5, NULL);
     if (mode == STGM_READ)
-        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+        ok(ret == STG_E_ACCESSDENIED /* XP */ || ret == S_OK /* 2000 */,
+           "expected STG_E_ACCESSDENIED or S_OK, got 0x%08x\n", ret);
     else
         ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
 
     strcpy(data, "Hello");
     ret = stream->lpVtbl->Write(stream, data, 0, NULL);
     if (mode == STGM_READ)
-        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+        ok(ret == STG_E_ACCESSDENIED /* XP */ || ret == S_OK /* 2000 */,
+           "expected STG_E_ACCESSDENIED or S_OK, got 0x%08x\n", ret);
     else
         ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
 
     strcpy(data, "Hello");
     ret = stream->lpVtbl->Write(stream, data, 0, &count);
     if (mode == STGM_READ)
-        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+        ok(ret == STG_E_ACCESSDENIED /* XP */ || ret == S_OK /* 2000 */,
+           "expected STG_E_ACCESSDENIED or S_OK, got 0x%08x\n", ret);
     else
         ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
 
     strcpy(data, "Hello");
     ret = stream->lpVtbl->Write(stream, data, 3, &count);
     if (mode == STGM_READ)
-        ok(ret == STG_E_ACCESSDENIED, "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
+        ok(ret == STG_E_ACCESSDENIED /* XP */ || ret == S_OK /* 2000 */,
+           "expected STG_E_ACCESSDENIED or S_OK, got 0x%08x\n", ret);
     else
         ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
 
@@ -114,7 +119,8 @@ static void test_IStream_invalid_operations(IStream * stream, DWORD mode)
     ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
 
     ret = IStream_Seek(stream, zero, 20, NULL);
-    ok(ret == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", ret);
+    ok(ret == E_INVALIDARG /* XP */ || ret == S_OK /* 2000 */,
+       "expected E_INVALIDARG or S_OK, got 0x%08x\n", ret);
 
     /* IStream::CopyTo */
 
@@ -166,7 +172,8 @@ static void test_IStream_invalid_operations(IStream * stream, DWORD mode)
     /* IStream::Stat */
 
     ret = IStream_Stat(stream, NULL, 0);
-    ok(ret == STG_E_INVALIDPOINTER, "expected STG_E_INVALIDPOINTER, got 0x%08x\n", ret);
+    ok(ret == STG_E_INVALIDPOINTER /* XP */ || ret == E_NOTIMPL /* 2000 */,
+       "expected STG_E_INVALIDPOINTER or E_NOTIMPL, got 0x%08x\n", ret);
 
     /* IStream::Clone */
 
