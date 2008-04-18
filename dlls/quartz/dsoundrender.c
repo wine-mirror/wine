@@ -242,8 +242,15 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     TRACE("%p %p\n", iface, pSample);
 
     /* Slightly incorrect, Pause completes when a frame is received so we should signal
-     * pause completion here, but for sound receiving a single frame doesn't make sense
+     * pause completion here, but for sound playing a single frame doesn't make sense
      */
+
+    if (IMediaSample_IsPreroll(pSample) == S_OK)
+    {
+        TRACE("Preroll!\n");
+        return S_OK;
+    }
+
     if (This->state == State_Paused)
         return S_FALSE;
 
