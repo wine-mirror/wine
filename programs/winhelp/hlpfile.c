@@ -1572,6 +1572,9 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                            wi->size.cx, wi->size.cy);
             }
             break;
+        case 8:
+            WINE_WARN("Citation: '%s'\n", ptr + 4);
+            break;
 	default:
             WINE_WARN("Unsupported SystemRecord[%d]\n", GET_USHORT(ptr, 0));
 	}
