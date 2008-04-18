@@ -742,6 +742,8 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     case WM_NCCREATE:
         win = (WINHELP_WINDOW*) ((LPCREATESTRUCT) lParam)->lpCreateParams;
         SetWindowLongPtr(hWnd, 0, (ULONG_PTR) win);
+        if (!win->page && Globals.isBook)
+            PostMessage(hWnd, WM_COMMAND, MNID_FILE_OPEN, 0);
         win->hMainWnd = hWnd;
         break;
 
