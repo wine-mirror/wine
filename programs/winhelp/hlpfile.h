@@ -94,6 +94,7 @@ typedef struct tagHlpFilePage
 
     unsigned                    wNumber;
     unsigned                    offset;
+    DWORD                       reference;
     struct tagHlpFilePage*      next;
     struct tagHlpFilePage*      prev;
 
@@ -196,3 +197,5 @@ void          HLPFILE_FreeHlpFile(HLPFILE*);
 
 void* HLPFILE_BPTreeSearch(BYTE*, const void*, HLPFILE_BPTreeCompare);
 void  HLPFILE_BPTreeEnum(BYTE*, HLPFILE_BPTreeCallback cb, void *cookie);
+
+BOOL          HLPFILE_BrowsePage(HLPFILE_PAGE*);

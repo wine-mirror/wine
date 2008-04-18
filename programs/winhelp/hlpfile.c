@@ -72,8 +72,8 @@ static BOOL  HLPFILE_Uncompress_Topic(HLPFILE*);
 static BOOL  HLPFILE_GetContext(HLPFILE*);
 static BOOL  HLPFILE_GetKeywords(HLPFILE*);
 static BOOL  HLPFILE_GetMap(HLPFILE*);
-static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned);
-static BOOL  HLPFILE_AddParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
+static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned, unsigned);
+static BOOL  HLPFILE_SkipParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
 static void  HLPFILE_Uncompress2(HLPFILE*, const BYTE*, const BYTE*, BYTE*, const BYTE*);
 static BOOL  HLPFILE_Uncompress3(HLPFILE*, char*, const char*, const BYTE*, const BYTE*);
 static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
@@ -343,13 +343,13 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
         switch (buf[0x14])
 	{
 	case 0x02:
-            if (!HLPFILE_AddPage(hlpfile, buf, end, index * 0x8000L + offs)) return FALSE;
+            if (!HLPFILE_AddPage(hlpfile, buf, end, ref, index * 0x8000L + offs)) return FALSE;
             break;
 
 	case 0x01:
 	case 0x20:
 	case 0x23:
-            if (!HLPFILE_AddParagraph(hlpfile, buf, end, &len)) return FALSE;
+            if (!HLPFILE_SkipParagraph(hlpfile, buf, end, &len)) return FALSE;
             offs += len;
             break;
 
@@ -377,7 +377,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
  *
  *           HLPFILE_AddPage
  */
-static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned offset)
+static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned ref, unsigned offset)
 {
     HLPFILE_PAGE* page;
     BYTE*         title;
@@ -433,6 +433,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     page->first_macro     = NULL;
     page->wNumber         = GET_UINT(buf, 0x21);
     page->offset          = offset;
+    page->reference       = ref;
 
     page->browse_bwd = GET_UINT(buf, 0x19);
     page->browse_fwd = GET_UINT(buf, 0x1D);
@@ -532,6 +533,28 @@ static unsigned short fetch_ushort(BYTE** ptr)
         (*ptr)++;
     }
     return ret;
+}
+
+/***********************************************************************
+ *
+ *           HLPFILE_SkipParagraph
+ */
+static BOOL HLPFILE_SkipParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned* len)
+{
+    BYTE              *tmp;
+
+    if (!hlpfile->first_page) {WINE_WARN("no page\n"); return FALSE;};
+    if (buf + 0x19 > end) {WINE_WARN("header too small\n"); return FALSE;};
+
+    tmp = buf + 0x15;
+    if (buf[0x14] == 0x20 || buf[0x14] == 0x23)
+    {
+        fetch_long(&tmp);
+        *len = fetch_ushort(&tmp);
+    }
+    else *len = end-buf-15;
+
+    return TRUE;
 }
 
 /******************************************************************
@@ -848,11 +871,10 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG h
 
 /***********************************************************************
  *
- *           HLPFILE_AddParagraph
+ *           HLPFILE_BrowseParagraph
  */
-static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned* len)
+static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
 {
-    HLPFILE_PAGE      *page;
     HLPFILE_PARAGRAPH *paragraph, **paragraphptr;
     UINT               textsize;
     BYTE              *format, *format_end;
@@ -861,8 +883,6 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     unsigned short     bits;
     unsigned           nc, ncol = 1;
 
-    if (!hlpfile->last_page) {WINE_WARN("no page\n"); return FALSE;};
-    page = hlpfile->last_page;
     for (paragraphptr = &page->first_paragraph; *paragraphptr;
          paragraphptr = &(*paragraphptr)->next) /* Nothing */;
 
@@ -876,10 +896,10 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     if (size > blocksize - datalen)
     {
         /* need to decompress */
-        if (hlpfile->hasPhrases)
-            HLPFILE_Uncompress2(hlpfile, buf + datalen, end, (BYTE*)text, (BYTE*)text + size);
-        else if (hlpfile->hasPhrases40)
-            HLPFILE_Uncompress3(hlpfile, text, text + size, buf + datalen, end);
+        if (page->file->hasPhrases)
+            HLPFILE_Uncompress2(page->file, buf + datalen, end, (BYTE*)text, (BYTE*)text + size);
+        else if (page->file->hasPhrases40)
+            HLPFILE_Uncompress3(page->file, text, text + size, buf + datalen, end);
         else
         {
             WINE_FIXME("Text size is too long, splitting\n");
@@ -898,9 +918,8 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     if (buf[0x14] == 0x20 || buf[0x14] == 0x23)
     {
         fetch_long(&format);
-        *len = fetch_ushort(&format);
+        fetch_ushort(&format);
     }
-    else *len = end-buf-15;
 
     if (buf[0x14] == 0x23)
     {
@@ -1055,14 +1074,14 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                         switch (GET_SHORT(format, 0))
                         {
                         case 0:
-                            HLPFILE_LoadGfxByIndex(hlpfile, GET_SHORT(format, 2), 
+                            HLPFILE_LoadGfxByIndex(page->file, GET_SHORT(format, 2),
                                                    paragraph);
                             break;
                         case 1:
                             WINE_FIXME("does it work ??? %x<%lu>#%u\n", 
                                        GET_SHORT(format, 0), 
                                        size, GET_SHORT(format, 2));
-                            HLPFILE_LoadGfxByAddr(hlpfile, format + 2, size - 4, 
+                            HLPFILE_LoadGfxByAddr(page->file, format + 2, size - 4,
                                                   paragraph);
                             break;
                         default:
@@ -1115,7 +1134,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                 WINE_WARN("jump topic 1 => %u\n", GET_UINT(format, 1));
                 HLPFILE_FreeLink(attributes.link);
                 attributes.link = HLPFILE_AllocLink((*format & 1) ? hlp_link_link : hlp_link_popup,
-                                                    hlpfile->lpszPath,
+                                                    page->file->lpszPath,
                                                     GET_UINT(format, 1)-16,
                                                     1, -1);
 
@@ -1129,7 +1148,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
             case 0xE7:
                 HLPFILE_FreeLink(attributes.link);
                 attributes.link = HLPFILE_AllocLink((*format & 1) ? hlp_link_link : hlp_link_popup,
-                                                    hlpfile->lpszPath, 
+                                                    page->file->lpszPath,
                                                     GET_UINT(format, 1), 
                                                     !(*format & 4), -1);
                 format += 5;
@@ -1150,12 +1169,12 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                         wnd = *ptr;
                         /* fall through */
                     case 0:
-                        ptr = hlpfile->lpszPath;
+                        ptr = page->file->lpszPath;
                         break;
                     case 6:
-                        for (wnd = hlpfile->numWindows - 1; wnd >= 0; wnd--)
+                        for (wnd = page->file->numWindows - 1; wnd >= 0; wnd--)
                         {
-                            if (!strcmp(ptr, hlpfile->windows[wnd].name)) break;
+                            if (!strcmp(ptr, page->file->windows[wnd].name)) break;
                         }
                         if (wnd == -1)
                             WINE_WARN("Couldn't find window info for %s\n", ptr);
@@ -1182,6 +1201,69 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
 	}
     }
     HeapFree(GetProcessHeap(), 0, text_base);
+    return TRUE;
+}
+
+/******************************************************************
+ *		HLPFILE_BrowsePage
+ *
+ */
+BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page)
+{
+    HLPFILE     *hlpfile = page->file;
+    BYTE        *buf, *end;
+    DWORD       ref = page->reference;
+    unsigned    index, old_index = -1, offset, count = 0;
+
+    do
+    {
+        if (hlpfile->version <= 16)
+        {
+            index  = (ref - 0x0C) / hlpfile->dsize;
+            offset = (ref - 0x0C) % hlpfile->dsize;
+        }
+        else
+        {
+            index  = (ref - 0x0C) >> 14;
+            offset = (ref - 0x0C) & 0x3FFF;
+        }
+
+        if (hlpfile->version <= 16 && index != old_index && index != 0)
+        {
+            /* we jumped to the next block, adjust pointers */
+            ref -= 12;
+            offset -= 12;
+        }
+
+        if (index >= hlpfile->topic_maplen) {WINE_WARN("maplen\n"); break;}
+        buf = hlpfile->topic_map[index] + offset;
+        if (buf + 0x15 >= hlpfile->topic_end) {WINE_WARN("extra\n"); break;}
+        end = min(buf + GET_UINT(buf, 0), hlpfile->topic_end);
+        if (index != old_index) {old_index = index;}
+
+        switch (buf[0x14])
+        {
+        case 0x02:
+            if (count++) goto done;
+            break;
+        case 0x01:
+        case 0x20:
+        case 0x23:
+            if (!HLPFILE_BrowseParagraph(page, buf, end)) return FALSE;
+            break;
+        default:
+            WINE_ERR("buf[0x14] = %x\n", buf[0x14]);
+        }
+        if (hlpfile->version <= 16)
+        {
+            ref += GET_UINT(buf, 0xc);
+            if (GET_UINT(buf, 0xc) == 0)
+                break;
+        }
+        else
+            ref = GET_UINT(buf, 0xc);
+    } while (ref != 0xffffffff);
+done:
     return TRUE;
 }
 

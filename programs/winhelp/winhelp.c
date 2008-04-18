@@ -584,6 +584,8 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     bPrimary = !lstrcmpi(wi->name, "main");
     bPopup = !bPrimary && (wi->win_style & WS_POPUP);
 
+    if (page && !page->first_paragraph) HLPFILE_BrowsePage(page);
+
     /* Initialize WINHELP_WINDOW struct */
     win = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                     sizeof(WINHELP_WINDOW) + strlen(wi->name) + 1);
