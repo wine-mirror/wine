@@ -1143,8 +1143,26 @@ static HRESULT WINAPI xmlnode_get_namespaceURI(
     IXMLDOMNode *iface,
     BSTR* namespaceURI)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    HRESULT hr = S_FALSE;
+    xmlNsPtr *pNSList;
+
+    TRACE("%p %p\n", This, namespaceURI );
+
+    if(!namespaceURI)
+        return E_INVALIDARG;
+
+    *namespaceURI = NULL;
+
+    pNSList = xmlGetNsList(This->node->doc, This->node);
+    if(pNSList)
+    {
+        *namespaceURI = bstr_from_xmlChar( pNSList[0]->href );
+
+        hr = S_OK;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlnode_get_prefix(
