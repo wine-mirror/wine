@@ -334,20 +334,22 @@ static BOOL WINHELP_RegisterWinClasses(void)
 
     class_button_box               = class_main;
     class_button_box.lpfnWndProc   = WINHELP_ButtonBoxWndProc;
+    class_button_box.cbWndExtra    = 0;
     class_button_box.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
     class_button_box.lpszClassName = BUTTON_BOX_WIN_CLASS_NAME;
 
-    class_text = class_main;
+    class_text                     = class_main;
     class_text.lpfnWndProc         = WINHELP_TextWndProc;
     class_text.hbrBackground       = 0;
     class_text.lpszClassName       = TEXT_WIN_CLASS_NAME;
 
-    class_shadow = class_main;
+    class_shadow                   = class_main;
     class_shadow.lpfnWndProc       = WINHELP_ShadowWndProc;
+    class_shadow.cbWndExtra        = 0;
     class_shadow.hbrBackground     = (HBRUSH)(COLOR_3DDKSHADOW+1);
     class_shadow.lpszClassName     = SHADOW_WIN_CLASS_NAME;
 
-    class_history = class_main;
+    class_history                  = class_main;
     class_history.lpfnWndProc      = WINHELP_HistoryWndProc;
     class_history.lpszClassName    = HISTORY_WIN_CLASS_NAME;
 
@@ -492,7 +494,6 @@ static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin,
     win->hBrush        = CreateSolidBrush(win->info->sr_color);
 
     SetWindowLongPtr(win->hMainWnd,      0, (ULONG_PTR)win);
-    SetWindowLongPtr(win->hButtonBoxWnd, 0, (ULONG_PTR)win);
     SetWindowLongPtr(win->hTextWnd,      0, (ULONG_PTR)win);
     SetWindowLongPtr(win->hHistoryWnd,   0, (ULONG_PTR)win);
 
@@ -660,8 +661,8 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
                           Globals.hInstance, win);
     /* Create button box and text Window */
     if (!bPopup)
-        CreateWindow(BUTTON_BOX_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
-                     0, 0, 0, 0, hWnd, (HMENU)CTL_ID_BUTTON, Globals.hInstance, win);
+        win->hButtonBoxWnd = CreateWindow(BUTTON_BOX_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
+                                          0, 0, 0, 0, hWnd, (HMENU)CTL_ID_BUTTON, Globals.hInstance, NULL);
 
     CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
                  0, 0, 0, 0, hWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
@@ -859,15 +860,9 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
 
     switch (msg)
     {
-    case WM_NCCREATE:
-        win = (WINHELP_WINDOW*) ((LPCREATESTRUCT) lParam)->lpCreateParams;
-        SetWindowLongPtr(hWnd, 0, (ULONG_PTR) win);
-        win->hButtonBoxWnd = hWnd;
-        break;
-
     case WM_WINDOWPOSCHANGING:
         winpos = (WINDOWPOS*) lParam;
-        win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
+        win = (WINHELP_WINDOW*) GetWindowLongPtr(GetParent(hWnd), 0);
 
         /* Update buttons */
         button_size.cx = 0;
