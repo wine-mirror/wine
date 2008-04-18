@@ -118,10 +118,13 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	unprepare_header = TRUE;
 
         if (IMediaSample_IsDiscontinuity(pSample) == S_OK)
+        {
             res = acmStreamConvert(This->has, &ash, ACM_STREAMCONVERTF_START);
+            /* One sample could be converted to multiple packets */
+            IMediaSample_SetDiscontinuity(pSample, FALSE);
+        }
         else
             res = acmStreamConvert(This->has, &ash, 0);
-
 
         if (res)
         {
@@ -162,10 +165,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
         }
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
-        if (IMediaSample_IsDiscontinuity(pSample) == S_FALSE)
-            hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
-        else
-            TRACE("Skipping first sample: Discontinuity\n");
+        hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
 
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
             if (FAILED(hr))
