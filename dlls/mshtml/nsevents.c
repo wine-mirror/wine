@@ -167,6 +167,7 @@ static nsresult NSAPI handle_node_insert(nsIDOMEventListener *iface, nsIDOMEvent
     NSContainer *This = NSEVENTLIST_THIS(iface)->This;
     nsIDOMHTMLScriptElement *script;
     nsIDOMEventTarget *target;
+    nsIDOMElement *elem;
     nsresult nsres;
 
     TRACE("(%p %p)\n", This, event);
@@ -174,16 +175,23 @@ static nsresult NSAPI handle_node_insert(nsIDOMEventListener *iface, nsIDOMEvent
     nsres = nsIDOMEvent_GetTarget(event, &target);
     if(NS_FAILED(nsres)) {
         ERR("GetTarget failed: %08x\n", nsres);
-        return nsres;
+        return NS_OK;
     }
 
-    nsres = nsISupports_QueryInterface(target, &IID_nsIDOMHTMLScriptElement, (void**)&script);
+    nsres = nsIDOMEventTarget_QueryInterface(target, &IID_nsIDOMElement, (void**)&elem);
+    nsIDOMEventTarget_Release(target);
+    if(NS_FAILED(nsres))
+        return NS_OK;
+
+    nsres = nsIDOMElement_QueryInterface(elem, &IID_nsIDOMHTMLScriptElement, (void**)&script);
     if(SUCCEEDED(nsres)) {
         doc_insert_script(This->doc, script);
         nsIDOMHTMLScriptElement_Release(script);
     }
 
-    nsIDOMEventTarget_Release(target);
+    check_event_attr(This->doc, elem);
+
+    nsIDOMNode_Release(elem);
     return NS_OK;
 }
 

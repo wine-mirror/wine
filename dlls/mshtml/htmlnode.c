@@ -331,6 +331,8 @@ void HTMLDOMNode_destructor(HTMLDOMNode *This)
 {
     if(This->nsnode)
         nsIDOMNode_Release(This->nsnode);
+    if(This->event_target)
+        release_event_target(This->event_target);
 }
 
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
@@ -357,6 +359,7 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
     ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
     ret->ref = 1;
     ret->doc = doc;
+    ret->event_target = NULL;
 
     nsIDOMNode_AddRef(nsnode);
     ret->nsnode = nsnode;

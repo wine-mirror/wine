@@ -56,6 +56,7 @@ typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
 typedef struct nsChannelBSC nsChannelBSC;
+typedef struct event_target_t event_target_t;
 
 /* NOTE: make sure to keep in sync with dispex.c */
 typedef enum {
@@ -274,6 +275,7 @@ struct HTMLDOMNode {
 
     nsIDOMNode *nsnode;
     HTMLDocument *doc;
+    event_target_t *event_target;
 
     HTMLDOMNode *next;
 };
@@ -426,6 +428,9 @@ void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 
+void check_event_attr(HTMLDocument*,nsIDOMElement*);
+void release_event_target(event_target_t*);
+
 void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);
 HRESULT start_binding(HTMLDocument*,BSCallback*,IBindCtx*);
@@ -472,6 +477,7 @@ void release_nodes(HTMLDocument*);
 void release_script_hosts(HTMLDocument*);
 void connect_scripts(HTMLDocument*);
 void doc_insert_script(HTMLDocument*,nsIDOMHTMLScriptElement*);
+IDispatch *script_parse_event(HTMLDocument*,LPCWSTR);
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*);
 

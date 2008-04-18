@@ -37,6 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static const WCHAR windowW[] = {'w','i','n','d','o','w',0};
+static const WCHAR emptyW[] = {0};
 
 static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};
@@ -507,7 +508,7 @@ static const IActiveScriptSiteDebug32Vtbl ActiveScriptSiteDebug32Vtbl = {
     ActiveScriptSiteDebug32_OnScriptErrorDebug
 };
 
-static ScriptHost *create_script_host(HTMLDocument *doc, GUID *guid)
+static ScriptHost *create_script_host(HTMLDocument *doc, const GUID *guid)
 {
     ScriptHost *ret;
     HRESULT hres;
@@ -705,15 +706,9 @@ static BOOL get_script_guid(nsIDOMHTMLScriptElement *nsscript, GUID *guid)
     return ret;
 }
 
-static ScriptHost *get_script_host(HTMLDocument *doc, nsIDOMHTMLScriptElement *nsscript)
+static ScriptHost *get_script_host(HTMLDocument *doc, const GUID *guid)
 {
     ScriptHost *iter;
-    GUID guid;
-
-    if(!get_script_guid(nsscript, &guid)) {
-        WARN("Could not find script GUID\n");
-        return NULL;
-    }
 
     if(IsEqualGUID(&CLSID_JScript, &guid)) {
         FIXME("Ignoring JScript\n");
@@ -721,23 +716,78 @@ static ScriptHost *get_script_host(HTMLDocument *doc, nsIDOMHTMLScriptElement *n
     }
 
     LIST_FOR_EACH_ENTRY(iter, &doc->script_hosts, ScriptHost, entry) {
-        if(IsEqualGUID(&guid, &iter->guid))
+        if(IsEqualGUID(guid, &iter->guid))
             return iter;
     }
 
-    return create_script_host(doc, &guid);
+    return create_script_host(doc, guid);
 }
 
 void doc_insert_script(HTMLDocument *doc, nsIDOMHTMLScriptElement *nsscript)
 {
     ScriptHost *script_host;
+    GUID guid;
 
-    script_host = get_script_host(doc, nsscript);
+    if(!get_script_guid(nsscript, &guid)) {
+        WARN("Could not find script GUID\n");
+        return;
+    }
+
+    script_host = get_script_host(doc, &guid);
     if(!script_host)
         return;
 
     if(script_host->parse)
         parse_script_elem(script_host, nsscript);
+}
+
+IDispatch *script_parse_event(HTMLDocument *doc, LPCWSTR text)
+{
+    ScriptHost *script_host;
+    GUID guid = CLSID_JScript;
+    const WCHAR *ptr;
+    IDispatch *disp;
+    HRESULT hres;
+
+    static const WCHAR delimiterW[] = {'\"',0};
+
+    for(ptr = text; isalnumW(*ptr); ptr++);
+    if(*ptr == ':') {
+        LPWSTR language;
+        BOOL b;
+
+        language = heap_alloc((ptr-text+1)*sizeof(WCHAR));
+        memcpy(language, text, (ptr-text)*sizeof(WCHAR));
+        language[ptr-text] = 0;
+
+        b = get_guid_from_language(language, &guid);
+
+        heap_free(language);
+
+        if(!b) {
+            WARN("Could not find language\n");
+            return NULL;
+        }
+
+        ptr++;
+    }else {
+        ptr = text;
+    }
+
+    script_host = get_script_host(doc, &guid);
+    if(!script_host || !script_host->parse_proc)
+        return NULL;
+
+    hres = IActiveScriptParseProcedure_ParseProcedureText(script_host->parse_proc, ptr, NULL, emptyW,
+            NULL, NULL, delimiterW, 0 /* FIXME */, 0,
+            SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
+    if(FAILED(hres)) {
+        WARN("ParseProcedureText failed: %08x\n", hres);
+        return NULL;
+    }
+
+    TRACE("ret %p\n", disp);
+    return disp;
 }
 
 void release_script_hosts(HTMLDocument *doc)
