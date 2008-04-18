@@ -985,6 +985,19 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
 }
 
 
+static void translate( POINT *pt, UINT count, const XFORM *xform )
+{
+    while (count--)
+    {
+        FLOAT x = pt->x;
+        FLOAT y = pt->y;
+        pt->x = floor( x * xform->eM11 + y * xform->eM21 + xform->eDx + 0.5 );
+        pt->y = floor( x * xform->eM12 + y * xform->eM22 + xform->eDy + 0.5 );
+        pt++;
+    }
+}
+
+
 /***********************************************************************
  *           ExtCreateRegion   (GDI32.@)
  *
@@ -1008,16 +1021,47 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 
     TRACE(" %p %d %p\n", lpXform, dwCount, rgndata );
 
-    if( lpXform )
-        WARN("(Xform not implemented - ignored)\n");
-
-    if( rgndata->rdh.iType != RDH_RECTANGLES )
+    if (!rgndata)
     {
-	/* FIXME: We can use CreatePolyPolygonRgn() here
-	 *        for trapezoidal data */
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
+    if (rgndata->rdh.dwSize < sizeof(RGNDATAHEADER))
+        return 0;
+
+    /* XP doesn't care about the type */
+    if( rgndata->rdh.iType != RDH_RECTANGLES )
         WARN("(Unsupported region data type: %u)\n", rgndata->rdh.iType);
-	goto fail;
+
+    if (lpXform)
+    {
+        RECT *pCurRect, *pEndRect;
+
+        hrgn = CreateRectRgn( 0, 0, 0, 0 );
+
+        pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
+        for (pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
+        {
+            static const INT count = 4;
+            HRGN poly_hrgn;
+            POINT pt[4];
+
+            pt[0].x = pCurRect->left;
+            pt[0].y = pCurRect->top;
+            pt[1].x = pCurRect->right;
+            pt[1].y = pCurRect->top;
+            pt[2].x = pCurRect->right;
+            pt[2].y = pCurRect->bottom;
+            pt[3].x = pCurRect->left;
+            pt[3].y = pCurRect->bottom;
+
+            translate( pt, 4, lpXform );
+            poly_hrgn = CreatePolyPolygonRgn( pt, &count, 1, WINDING );
+            CombineRgn( hrgn, hrgn, poly_hrgn, RGN_OR );
+            DeleteObject( poly_hrgn );
+        }
+        return hrgn;
     }
 
     if( (hrgn = REGION_CreateRegion( rgndata->rdh.nCount )) )
@@ -1039,8 +1083,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
         }
 	else ERR("Could not get pointer to newborn Region!\n");
     }
-fail:
-    WARN("Failed\n");
+
     return 0;
 }
 
@@ -2742,6 +2785,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     POINTBLOCK *tmpPtBlock;
     int numFullPtBlocks = 0;
     INT poly, total;
+
+    TRACE("%p, count %d, polygons %d, mode %d\n", Pts, *Count, nbpolygons, mode);
 
     if(!(hrgn = REGION_CreateRegion(nbpolygons)))
         return 0;
