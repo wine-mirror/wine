@@ -66,6 +66,8 @@ BEGIN
 
     CONTROL	    "Een DirectX programma kan de muis in een venster vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
     
+    CONTROL         "Laat de window manager de vensters &decoreren",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
+
     CONTROL         "Laat de window manager de vensters beheren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     LTEXT           "Wanneer de vensters door de window manager worden beheerd hebben deze de standaard kaders, er wordt rekening gehouden met de virtuele desktop en ze staan in de lijst met vensters.\n\nAls de vensters niet worden beheerd, worden ze losgekoppeld van de window manager. Dit betekent dat vensters niet perfect met uw desktop integreren. De 'emulatie' is echter exacter en kan ervoor zorgen dat programma's beter werken.",
                     IDC_STATIC,19,51,225,80
