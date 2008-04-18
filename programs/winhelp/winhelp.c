@@ -324,7 +324,7 @@ static BOOL WINHELP_RegisterWinClasses(void)
     class_main.cbClsExtra          = 0;
     class_main.cbWndExtra          = sizeof(LONG);
     class_main.hInstance           = Globals.hInstance;
-    class_main.hIcon               = LoadIcon(0, IDI_APPLICATION);
+    class_main.hIcon               = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(IDI_WINHELP));
     class_main.hCursor             = LoadCursor(0, IDC_ARROW);
     class_main.hbrBackground       = (HBRUSH)(COLOR_WINDOW+1);
     class_main.lpszMenuName        = 0;

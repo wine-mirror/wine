@@ -25,6 +25,9 @@
 #include "winhelp.h"
 #include "winhelp_res.h"
 
+/* @makedep: winhelp.ico */
+IDI_WINHELP ICON DISCARDABLE winhelp.ico
+
 #include "Bg.rc"
 #include "Cs.rc"
 #include "Da.rc"

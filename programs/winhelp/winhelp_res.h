@@ -33,3 +33,5 @@
 
 #define IDD_INDEX               0x150
 #define IDC_INDEXLIST           0x151
+
+#define IDI_WINHELP             0xF00
