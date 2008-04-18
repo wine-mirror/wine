@@ -687,16 +687,22 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     TRACE("IMC_SETOPENSTATUS\n");
 
                     myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
-                    if (lpIMC->fOpen != myPrivate->bInternalState)
+                    if (lpIMC->fOpen != myPrivate->bInternalState &&
+                        myPrivate->bInComposition)
                     {
                         if(lpIMC->fOpen == FALSE)
                         {
                             X11DRV_ForceXIMReset(lpIMC->hWnd);
                             GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION,0,0);
+                            myPrivate->bInComposition = FALSE;
                         }
                         else
+                        {
                             GenerateIMEMessage(hIMC,WM_IME_STARTCOMPOSITION,0,0);
+                            GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, 0, 0);
+                        }
                     }
+                    myPrivate->bInternalState = lpIMC->fOpen;
                     bRet = TRUE;
                 }
                 break;
@@ -963,12 +969,18 @@ void IME_SetOpenStatus(BOOL fOpen)
         ImmDestroyIMCC(lpIMC->hCompStr);
         lpIMC->hCompStr = ImeCreateBlankCompStr();
     }
-    myPrivate->bInternalState = fOpen;
 
     ImmUnlockIMCC(lpIMC->hPrivate);
     UnlockRealIMC(FROM_X11);
 
-    ImmSetOpenStatus(RealIMC(FROM_X11), fOpen);
+    if (myPrivate->bInComposition && fOpen == FALSE)
+    {
+        GenerateIMEMessage(FROM_X11, WM_IME_ENDCOMPOSITION, 0, 0);
+        myPrivate->bInComposition = FALSE;
+    }
+
+    if (!myPrivate->bInternalState && fOpen == TRUE)
+        ImmSetOpenStatus(RealIMC(FROM_X11), fOpen);
 }
 
 void IME_XIMPresent(BOOL present)
