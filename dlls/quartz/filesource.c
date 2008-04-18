@@ -1127,6 +1127,9 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
 
     if (SUCCEEDED(hr))
     {
+        REFERENCE_TIME rtStart, rtStop;
+        REFERENCE_TIME rtSampleStart, rtSampleStop;
+
         /* get any errors */
         if (!This->bFlushing && !GetOverlappedResult(This->hFile, &pDataRq->ovl, &dwBytes, FALSE))
             hr = HRESULT_FROM_WIN32(GetLastError());
@@ -1141,7 +1144,18 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
             dwBytes = 0;
         }
 
+        /* Set the time on the sample */
         IMediaSample_SetActualDataLength(pDataRq->pSample, dwBytes);
+
+        rtStart = (DWORD64)pDataRq->ovl.u.s.Offset + ((DWORD64)pDataRq->ovl.u.s.OffsetHigh << 32);
+        rtStart = MEDIATIME_FROM_BYTES(rtStart);
+        rtStop = rtStart + MEDIATIME_FROM_BYTES(dwBytes);
+
+        IMediaSample_GetTime(pDataRq->pSample, &rtSampleStart, &rtSampleStop);
+        assert(rtStart == rtSampleStart);
+        assert(rtStop <= rtSampleStop);
+
+        IMediaSample_SetTime(pDataRq->pSample, &rtStart, &rtStop);
     }
 
     /* no need to close event handle since we will close it when the pin is destroyed */
