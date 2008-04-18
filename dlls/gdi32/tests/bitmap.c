@@ -1606,6 +1606,7 @@ static void test_GetDIBits_BI_BITFIELDS(void)
      * for the three primary colors in non-paletted 16 bit mode.
      */
     char dibinfo_buf[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
+    DWORD bits[32];
     LPBITMAPINFO dibinfo = (LPBITMAPINFO) dibinfo_buf;
     HDC hdc;
     HBITMAP hbm;
@@ -1622,30 +1623,61 @@ static void test_GetDIBits_BI_BITFIELDS(void)
     /* Call GetDIBits to fill in bmiHeader.  */
     ret = GetDIBits(hdc, hbm, 0, 1, NULL, dibinfo, DIB_RGB_COLORS);
     ok(ret == 1, "GetDIBits failed\n");
-    if (dibinfo->bmiHeader.biBitCount == 16
-    &&  dibinfo->bmiHeader.biCompression == BI_BITFIELDS) {
-         /* In the BITMAPINFOHEADER doc, this little struct is implicit.
-          * Making explicit for clarity.
-          */
-         struct bi_bitfields_s {
-             DWORD red;
-             DWORD blue;
-             DWORD green;
-         } *bitmasks;
+    if (dibinfo->bmiHeader.biBitCount == 16 &&
+        dibinfo->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        DWORD *bitmasks = (DWORD *)dibinfo->bmiColors;
 
-         /* Retrieve the BI_BITFIELDS info (requires second call, honest). */
-         ret = GetDIBits(hdc, hbm, 0, 1, NULL, dibinfo, DIB_RGB_COLORS);
-         ok(ret == 1, "GetDIBits failed\n");
+        ok( !bitmasks[0], "red mask is set\n" );
+        ok( !bitmasks[1], "green mask is set\n" );
+        ok( !bitmasks[2], "blue mask is set\n" );
 
-         bitmasks = (struct bi_bitfields_s *) dibinfo->bmiColors;
-         todo_wine {
-             ok(bitmasks->red != 0, "expected space for red pixels\n");
-             ok(bitmasks->blue != 0, "expected space for blue pixels\n");
-             ok(bitmasks->green != 0, "expected space for green pixels\n");
-         }
-    } else {
-         skip("not in 16 bpp BI_BITFIELDS mode, skipping that test\n");
+        /* test with NULL bits pointer and correct bpp */
+        dibinfo->bmiHeader.biSizeImage = 0xdeadbeef;
+        ret = GetDIBits(hdc, hbm, 0, 1, NULL, dibinfo, DIB_RGB_COLORS);
+        ok(ret == 1, "GetDIBits failed\n");
+
+        ok( bitmasks[0] != 0, "red mask is not set\n" );
+        ok( bitmasks[1] != 0, "green mask is not set\n" );
+        ok( bitmasks[2] != 0, "blue mask is not set\n" );
+        ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
+
+        /* test with valid bits pointer */
+        memset(dibinfo, 0, sizeof(dibinfo_buf));
+        dibinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        ret = GetDIBits(hdc, hbm, 0, 1, NULL, dibinfo, DIB_RGB_COLORS);
+        ok(ret == 1, "GetDIBits failed ret %u err %u\n",ret,GetLastError());
+        dibinfo->bmiHeader.biSizeImage = 0xdeadbeef;
+        ret = GetDIBits(hdc, hbm, 0, 1, bits, dibinfo, DIB_RGB_COLORS);
+        ok(ret == 1, "GetDIBits failed ret %u err %u\n",ret,GetLastError());
+
+        ok( bitmasks[0] != 0, "red mask is not set\n" );
+        ok( bitmasks[1] != 0, "green mask is not set\n" );
+        ok( bitmasks[2] != 0, "blue mask is not set\n" );
+        ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
+
+        /* now with bits and 0 lines */
+        memset(dibinfo, 0, sizeof(dibinfo_buf));
+        dibinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        dibinfo->bmiHeader.biSizeImage = 0xdeadbeef;
+        ret = GetDIBits(hdc, hbm, 0, 0, bits, dibinfo, DIB_RGB_COLORS);
+
+        ok( !bitmasks[0], "red mask is set\n" );
+        ok( !bitmasks[1], "green mask is set\n" );
+        ok( !bitmasks[2], "blue mask is set\n" );
+        ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
+
+        memset(bitmasks, 0, 3*sizeof(DWORD));
+        dibinfo->bmiHeader.biSizeImage = 0xdeadbeef;
+        ret = GetDIBits(hdc, hbm, 0, 0, bits, dibinfo, DIB_RGB_COLORS);
+        ok(ret == 1, "GetDIBits failed ret %u err %u\n",ret,GetLastError());
+
+        ok( bitmasks[0] != 0, "red mask is not set\n" );
+        ok( bitmasks[1] != 0, "green mask is not set\n" );
+        ok( bitmasks[2] != 0, "blue mask is not set\n" );
+        ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
     }
+    else skip("not in 16 bpp BI_BITFIELDS mode, skipping that test\n");
 
     DeleteObject(hbm);
     ReleaseDC(NULL, hdc);

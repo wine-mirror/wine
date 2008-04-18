@@ -620,8 +620,55 @@ INT WINAPI GetDIBits(
 
     /* Transfer color info */
 
-    if (bpp <= 8 && bpp > 0)
+    switch (bpp)
     {
+    case 0:  /* query bitmap info only */
+        if (core_header)
+        {
+            BITMAPCOREHEADER* coreheader = (BITMAPCOREHEADER*) info;
+            coreheader->bcWidth = bmp->bitmap.bmWidth;
+            coreheader->bcHeight = bmp->bitmap.bmHeight;
+            coreheader->bcPlanes = 1;
+            coreheader->bcBitCount = bmp->bitmap.bmBitsPixel;
+        }
+        else
+        {
+            info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
+            info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
+            info->bmiHeader.biPlanes = 1;
+            info->bmiHeader.biSizeImage =
+                DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
+                                      bmp->bitmap.bmHeight,
+                                      bmp->bitmap.bmBitsPixel );
+            switch(bmp->bitmap.bmBitsPixel)
+            {
+            case 15:
+                info->bmiHeader.biBitCount = 16;
+                info->bmiHeader.biCompression = BI_RGB;
+                break;
+            case 16:
+                info->bmiHeader.biBitCount = 16;
+                info->bmiHeader.biCompression = BI_BITFIELDS;
+                break;
+            default:
+                info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
+                info->bmiHeader.biCompression = BI_RGB;
+                break;
+            }
+            info->bmiHeader.biXPelsPerMeter = 0;
+            info->bmiHeader.biYPelsPerMeter = 0;
+            info->bmiHeader.biClrUsed = 0;
+            info->bmiHeader.biClrImportant = 0;
+
+            /* Windows 2000 doesn't touch the additional struct members if
+               it's a BITMAPV4HEADER or a BITMAPV5HEADER */
+        }
+        lines = abs(bmp->bitmap.bmHeight);
+        goto done;
+
+    case 1:
+    case 4:
+    case 8:
         if (!core_header) info->bmiHeader.biClrUsed = 0;
 
 	/* If the bitmap object already has a dib section at the
@@ -758,6 +805,25 @@ INT WINAPI GetDIBits(
                 }
             }
         }
+        break;
+
+    case 15:
+        if (info->bmiHeader.biCompression == BI_BITFIELDS)
+        {
+            ((PDWORD)info->bmiColors)[0] = 0x7c00;
+            ((PDWORD)info->bmiColors)[1] = 0x03e0;
+            ((PDWORD)info->bmiColors)[2] = 0x001f;
+        }
+        break;
+
+    case 16:
+        if (info->bmiHeader.biCompression == BI_BITFIELDS)
+        {
+            ((PDWORD)info->bmiColors)[0] = 0xf800;
+            ((PDWORD)info->bmiColors)[1] = 0x07e0;
+            ((PDWORD)info->bmiColors)[2] = 0x001f;
+        }
+        break;
     }
 
     if (bits && lines)
@@ -981,84 +1047,21 @@ INT WINAPI GetDIBits(
             }
         }
     }
-    else
-    {
-	/* fill in struct members */
+    else lines = abs(height);
 
-        if (bpp == 0)
-        {
-            if (core_header)
-            {
-                BITMAPCOREHEADER* coreheader = (BITMAPCOREHEADER*) info;
-                coreheader->bcWidth = bmp->bitmap.bmWidth;
-                coreheader->bcHeight = bmp->bitmap.bmHeight;
-                coreheader->bcPlanes = 1;
-                coreheader->bcBitCount = bmp->bitmap.bmBitsPixel;
-            }
-            else
-            {
-                info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
-                info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
-                info->bmiHeader.biPlanes = 1;
-                info->bmiHeader.biSizeImage =
-                                 DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
-                                                       bmp->bitmap.bmHeight,
-                                                       bmp->bitmap.bmBitsPixel );
-                switch(bmp->bitmap.bmBitsPixel)
-                {
-                case 15:
-                    info->bmiHeader.biBitCount = 16;
-                    info->bmiHeader.biCompression = BI_RGB;
-                    break;
-                    
-                case 16:
-                    if (bits)
-                    {
-                        /* Add color only when bits is given, as per MSDN */
-                        ((PDWORD)info->bmiColors)[0] = 0xf800;
-                        ((PDWORD)info->bmiColors)[1] = 0x07e0;
-                        ((PDWORD)info->bmiColors)[2] = 0x001f;
-                    }
-                    info->bmiHeader.biBitCount = 16;
-                    info->bmiHeader.biCompression = BI_BITFIELDS;
-                    break;
-    
-                default:
-                    info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
-                    info->bmiHeader.biCompression = BI_RGB;
-                    break;
-                }
-                info->bmiHeader.biXPelsPerMeter = 0;
-                info->bmiHeader.biYPelsPerMeter = 0;
-                info->bmiHeader.biClrUsed = 0;
-                info->bmiHeader.biClrImportant = 0;
-                
-                /* Windows 2000 doesn't touch the additional struct members if
-                   it's a BITMAPV4HEADER or a BITMAPV5HEADER */
-            }
-            lines = abs(bmp->bitmap.bmHeight);
-        }
-        else
-        {
-            /* The knowledge base article Q81498 ("DIBs and Their Uses") states that
-               if bits == NULL and bpp != 0, only biSizeImage and the color table are
-               filled in. */
-            if (!core_header)
-            {
-                /* FIXME: biSizeImage should be calculated according to the selected
-                          compression algorithm if biCompression != BI_RGB */
-                info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes( width, height, bpp );
-            }
-            lines = abs(height);
-        }
-    }
-
+    /* The knowledge base article Q81498 ("DIBs and Their Uses") states that
+       if bits == NULL and bpp != 0, only biSizeImage and the color table are
+       filled in. */
     if (!core_header)
     {
+        /* FIXME: biSizeImage should be calculated according to the selected
+           compression algorithm if biCompression != BI_RGB */
+        info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes( width, height, bpp );
         TRACE("biSizeImage = %d, ", info->bmiHeader.biSizeImage);
     }
     TRACE("biWidth = %d, biHeight = %d\n", width, height);
 
+done:
     release_dc_ptr( dc );
     GDI_ReleaseObj( hbitmap );
     return lines;
