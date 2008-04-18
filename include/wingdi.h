@@ -3722,8 +3722,12 @@ WINGDIAPI BOOL    WINAPI wglRealizeLayerPalette(HDC,INT,BOOL);
 WINGDIAPI INT     WINAPI wglSetLayerPaletteEntries(HDC,INT,INT,INT,const COLORREF *);
 WINGDIAPI BOOL    WINAPI wglShareLists(HGLRC,HGLRC);
 WINGDIAPI BOOL    WINAPI wglSwapLayerBuffers(HDC,UINT);
-WINGDIAPI BOOL    WINAPI wglUseFontBitmaps(HDC,DWORD,DWORD,DWORD);
-WINGDIAPI BOOL    WINAPI wglUseFontOutlines(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,LPGLYPHMETRICSFLOAT);
+WINGDIAPI BOOL    WINAPI wglUseFontBitmapsA(HDC,DWORD,DWORD,DWORD);
+WINGDIAPI BOOL    WINAPI wglUseFontBitmapsW(HDC,DWORD,DWORD,DWORD);
+#define                  wglUseFontBitmaps WINELIB_NAME_AW(wglUseFontBitmaps)
+WINGDIAPI BOOL    WINAPI wglUseFontOutlinesA(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,LPGLYPHMETRICSFLOAT);
+WINGDIAPI BOOL    WINAPI wglUseFontOutlinesW(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,LPGLYPHMETRICSFLOAT);
+#define                  wglUseFontOutlines WINELIB_NAME_AW(wglUseFontOutlines)
 
 #ifdef __WINESRC__
 /* the DC hook support is only exported on Win16, the 32-bit version is a Wine extension */
