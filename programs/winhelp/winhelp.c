@@ -3,7 +3,7 @@
  *
  * Copyright    1996 Ulrich Schmid <uschmid@mail.hh.provi.de>
  *              2002 Sylvain Petreolle <spetreolle@yahoo.fr>
- *              2002 Eric Pouech <eric.pouech@wanadoo.fr>
+ *              2002, 2008 Eric Pouech <eric.pouech@wanadoo.fr>
  *              2004 Ken Belleau <jamez@ivic.qc.ca>
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,8 @@ static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
 WINHELP_GLOBALS Globals = {3, NULL, NULL, TRUE, NULL, NULL, NULL, NULL};
 
+#define CTL_ID_BUTTON   0x700
+#define CTL_ID_TEXT     0x701
 
 /***********************************************************************
  *
@@ -452,7 +454,7 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
 void            WINHELP_LayoutMainWindow(WINHELP_WINDOW* win)
 {
     RECT        rect, button_box_rect;
-    INT         text_top;
+    INT         text_top = 0;
 
     GetClientRect(win->hMainWnd, &rect);
 
@@ -462,8 +464,8 @@ void            WINHELP_LayoutMainWindow(WINHELP_WINDOW* win)
                  rect.right - rect.left,
                  rect.bottom - rect.top, 0);
 
-    GetWindowRect(win->hButtonBoxWnd, &button_box_rect);
-    text_top = rect.top + button_box_rect.bottom - button_box_rect.top;
+    if (GetWindowRect(win->hButtonBoxWnd, &button_box_rect))
+        text_top = rect.top + button_box_rect.bottom - button_box_rect.top;
 
     SetWindowPos(win->hTextWnd, HWND_TOP,
                  rect.left, text_top,
@@ -578,7 +580,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     DWORD ex_style;
 
     bPrimary = !lstrcmpi(wi->name, "main");
-    bPopup = wi->win_style & WS_POPUP;
+    bPopup = !bPrimary && (wi->win_style & WS_POPUP);
 
     /* Initialize WINHELP_WINDOW struct */
     win = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -650,12 +652,22 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
 
     ex_style = 0;
     if (bPopup) ex_style = WS_EX_TOOLWINDOW;
-    hWnd = CreateWindowEx(ex_style, bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
-                        wi->caption, 
-                        bPrimary ? WS_OVERLAPPEDWINDOW : wi->win_style,
-                        wi->origin.x, wi->origin.y, wi->size.cx, wi->size.cy,
-                        NULL, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
-                        Globals.hInstance, win);
+    hWnd = CreateWindowEx(ex_style, MAIN_WIN_CLASS_NAME,
+                          wi->caption,
+                          bPrimary ? WS_OVERLAPPEDWINDOW : wi->win_style,
+                          wi->origin.x, wi->origin.y, wi->size.cx, wi->size.cy,
+                          NULL, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
+                          Globals.hInstance, win);
+    /* Create button box and text Window */
+    if (!bPopup)
+        CreateWindow(BUTTON_BOX_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
+                     0, 0, 0, 0, hWnd, (HMENU)CTL_ID_BUTTON, Globals.hInstance, win);
+
+    CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
+                 0, 0, 0, 0, hWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
+
+    WINHELP_LayoutMainWindow(win);
+    if (bPopup) Globals.hPopupWnd = hWnd;
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
@@ -728,23 +740,12 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         win->hMainWnd = hWnd;
         break;
 
-    case WM_CREATE:
-        win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
-
-        /* Create button box and text Window */
-        CreateWindow(BUTTON_BOX_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
-                     0, 0, 0, 0, hWnd, 0, Globals.hInstance, win);
-
-        CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
-                     0, 0, 0, 0, hWnd, 0, Globals.hInstance, win);
-
-        /* Fall through */
     case WM_WINDOWPOSCHANGED:
         WINHELP_LayoutMainWindow((WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0));
         break;
 
     case WM_COMMAND:
-        Globals.active_win = win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
+        win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
         switch (wParam)
 	{
             /* Menu FILE */
@@ -772,7 +773,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 if (wParam == button->wParam) break;
             if (button)
                 MACRO_ExecuteMacro(button->lpszMacro);
-            else
+            else if (!HIWORD(wParam))
                 WINHELP_MessageBoxIDS(STID_NOT_IMPLEMENTED, 0x121, MB_OK);
             break;
 	}
@@ -823,6 +824,19 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         case VK_ESCAPE:
             MACRO_Exit();
             return 0;
+        }
+        break;
+    case WM_NCDESTROY:
+        {
+            BOOL bExit;
+            win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
+            if (hWnd == Globals.hPopupWnd) Globals.hPopupWnd = 0;
+            bExit = (Globals.wVersion >= 4 && !lstrcmpi(win->lpszName, "main"));
+            WINHELP_DeleteWindow(win);
+
+            if (bExit) MACRO_Exit();
+            if (!Globals.win_list)
+                PostQuitMessage(0);
         }
         break;
     }
@@ -955,7 +969,6 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     POINT mouse;
     INT   scroll_pos;
     HWND  hPopupWnd;
-    BOOL  bExit;
 
     if (msg != WM_LBUTTONDOWN)
         WINHELP_CheckPopup(msg);
@@ -967,7 +980,6 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         SetWindowLongPtr(hWnd, 0, (ULONG_PTR) win);
         win->hTextWnd = hWnd;
         win->hBrush = CreateSolidBrush(win->info->sr_color);
-        if (win->info->win_style & WS_POPUP) Globals.hPopupWnd = win->hMainWnd = hWnd;
         WINHELP_InitFonts(hWnd);
         break;
 
@@ -985,12 +997,13 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             SIZE new_client_size;
             SIZE new_window_size;
 
-            GetWindowRect(hWnd, &old_window_rect);
+            GetWindowRect(GetParent(hWnd), &old_window_rect);
             origin.x = old_window_rect.left;
             origin.y = old_window_rect.top;
             old_window_size.cx = old_window_rect.right  - old_window_rect.left;
             old_window_size.cy = old_window_rect.bottom - old_window_rect.top;
 
+            WINHELP_LayoutMainWindow(win);
             GetClientRect(hWnd, &old_client_rect);
             old_client_size.cx = old_client_rect.right  - old_client_rect.left;
             old_client_size.cy = old_client_rect.bottom - old_client_rect.top;
@@ -1012,7 +1025,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                              new_window_size.cx, new_window_size.cy,
                              0, 0, Globals.hInstance, 0);
 
-            SetWindowPos(hWnd, HWND_TOP, origin.x, origin.y,
+            SetWindowPos(GetParent(hWnd), HWND_TOP, origin.x, origin.y,
                          new_window_size.cx, new_window_size.cy,
                          0);
             SetWindowPos(win->hShadowWnd, hWnd, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
@@ -1253,20 +1266,6 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             DestroyWindow(hPopupWnd);
         break;
 
-    case WM_NCDESTROY:
-        win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
-
-        if (hWnd == Globals.hPopupWnd) Globals.hPopupWnd = 0;
-
-        bExit = (Globals.wVersion >= 4 && !lstrcmpi(win->lpszName, "main"));
-
-        WINHELP_DeleteWindow(win);
-
-        if (bExit) MACRO_Exit();
-
-        if (!Globals.win_list)
-            PostQuitMessage(0);
-        break;
     }
 
     return DefWindowProc(hWnd, msg, wParam, lParam);
