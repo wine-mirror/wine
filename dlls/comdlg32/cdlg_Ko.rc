@@ -445,6 +445,16 @@ STRINGTABLE DISCARDABLE
     PD32_PRINTER_STATUS_POWER_SAVE        "전원 절약 모드; "
 }
 
+
+STRINGTABLE DISCARDABLE /* Font styles */
+{
+    IDS_FONT_REGULAR       "레귤러"
+    IDS_FONT_BOLD          "볼드"
+    IDS_FONT_ITALIC        "이텔릭"
+    IDS_FONT_BOLD_ITALIC   "볼드 이텔릭"
+}
+
+
 STRINGTABLE DISCARDABLE /* Color names */
 {
     IDS_COLOR_BLACK     "검정"
