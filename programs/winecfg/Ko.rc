@@ -67,7 +67,7 @@ BEGIN
     CONTROL         "DirectX 프로그램 창에서 마우스가 떠나면 정지하게 함(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
 
     CONTROL         "원래 창 관리자가 창을 꾸미도록 함(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
-
+    CONTROL         " 원래 창 관리자가 창을 제어하도록 함(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     LTEXT 	    "Wine창들이 창관리자에 의해서 관리된다면, Wine창들은 표준 창틀을 가질 것이며, 작업공간 관리자와 잘 어울릴 것입니다. 그리고 창목록에도 나타날 것입니다.\n\n만약에 Wine창들이 창관리자에 의해 관리되지 않는다면, Wine창들은 창관리자와 연결되지 않을 것입니다. 이것은 Wine창들이 데스크탑과 밀접하게 통합되지 않는다는 것을 의미합니다. 하지만 Wine의 윈도우즈 흉내내기가 더 정밀해져서 몇몇 프로그램들이 좀 더 잘 동작할 수 있도록 도와줍니다.",
     		    IDC_STATIC,15,37,228,80
     CONTROL	    "창관리자가 Wine창을 관리하도록 함(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
