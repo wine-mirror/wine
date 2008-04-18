@@ -280,6 +280,7 @@ extern void IME_SetOpenStatus(BOOL fOpen);
 extern void IME_XIMPresent(BOOL present);
 extern LRESULT IME_SendMessageToSelectedHWND(UINT msg, WPARAM wParam, LPARAM lParam);
 extern INT IME_GetCursorPos();
+extern void IME_SetCursorPos(DWORD pos);
 extern void IME_UpdateAssociation(HWND focus);
 extern BOOL IME_SetCompositionString(DWORD dwIndex, LPCVOID lpComp,
                                      DWORD dwCompLen, LPCVOID lpRead,

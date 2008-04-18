@@ -48,7 +48,6 @@ static LPBYTE CompositionString = NULL;
 static DWORD dwCompStringSize = 0;
 static LPBYTE ResultString = NULL;
 static DWORD dwResultStringSize = 0;
-static DWORD dwPreeditPos = 0;
 
 #define STYLE_OFFTHESPOT (XIMPreeditArea | XIMStatusArea)
 #define STYLE_OVERTHESPOT (XIMPreeditPosition | XIMStatusNothing)
@@ -216,7 +215,6 @@ static int XIMPreEditStartCallback(XIC ic, XPointer client_data, XPointer call_d
     TRACE("PreEditStartCallback %p\n",ic);
     X11DRV_ImmSetOpenStatus(TRUE);
     ximInComposeMode = TRUE;
-    IME_SendMessageToSelectedHWND(EM_GETSEL, 0, (LPARAM)&dwPreeditPos);
     return -1;
 }
 
@@ -225,7 +223,6 @@ static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_d
     TRACE("PreeditDoneCallback %p\n",ic);
     ximInComposeMode = FALSE;
     X11DRV_ImmSetOpenStatus(FALSE);
-    dwPreeditPos = 0;
 }
 
 static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
@@ -271,6 +268,7 @@ static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
         }
         else
             X11DRV_ImmSetInternalString (GCS_COMPSTR, sel, len, NULL, 0);
+        IME_SetCursorPos(P_DR->caret);
     }
     TRACE("Finished\n");
 }
@@ -311,8 +309,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
                 FIXME("Not implemented\n");
                 break;
         }
-        IME_SendMessageToSelectedHWND( EM_SETSEL, dwPreeditPos + pos,
-                     dwPreeditPos + pos);
+        IME_SetCursorPos(pos);
         P_C->position = pos;
     }
     TRACE("Finished\n");

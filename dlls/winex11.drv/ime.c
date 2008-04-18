@@ -1012,6 +1012,32 @@ INT IME_GetCursorPos()
     return rc;
 }
 
+void IME_SetCursorPos(DWORD pos)
+{
+    LPINPUTCONTEXT lpIMC;
+    LPCOMPOSITIONSTRING compstr;
+
+    if (!hSelectedFrom)
+        return;
+
+    lpIMC = LockRealIMC(FROM_X11);
+    if (!lpIMC)
+        return;
+
+    compstr = (LPCOMPOSITIONSTRING)ImmLockIMCC(lpIMC->hCompStr);
+    if (!compstr)
+    {
+        UnlockRealIMC(FROM_X11);
+        return;
+    }
+
+    compstr->dwCursorPos = pos;
+    ImmUnlockIMCC(lpIMC->hCompStr);
+    UnlockRealIMC(FROM_X11);
+    GenerateIMEMessage(FROM_X11, WM_IME_COMPOSITION, pos, GCS_CURSORPOS);
+    return;
+}
+
 void IME_UpdateAssociation(HWND focus)
 {
     ImmGetContext(focus);
