@@ -3114,6 +3114,7 @@ BOOL WINAPI FindNextUrlCacheEntryW(
 )
 {
     FIXME("(%p, %p, %p) stub\n", hEnumHandle, lpNextCacheEntryInfo, lpdwNextCacheEntryInfoBufferSize);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
