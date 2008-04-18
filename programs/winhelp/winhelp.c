@@ -55,7 +55,7 @@ static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
-WINHELP_GLOBALS Globals = {3, NULL, NULL, 0, TRUE, NULL, NULL, NULL, NULL};
+WINHELP_GLOBALS Globals = {3, NULL, NULL, TRUE, NULL, NULL, NULL, NULL};
 
 
 /***********************************************************************

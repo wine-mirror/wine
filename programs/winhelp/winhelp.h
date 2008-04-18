@@ -159,7 +159,6 @@ typedef struct
     UINT                wVersion;
     HANDLE              hInstance;
     HWND                hPopupWnd;
-    UINT                wStringTableOffset;
     BOOL                isBook;
     WINHELP_WINDOW*     active_win;
     WINHELP_WINDOW*     win_list;
