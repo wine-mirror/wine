@@ -2,7 +2,7 @@
  * Help Viewer
  *
  * Copyright    1996 Ulrich Schmid
- *              2002 Eric Pouech
+ *              2002, 2008 Eric Pouech
  *              2007 Kirill K. Smirnov
  *
  * This library is free software; you can redistribute it and/or
@@ -50,22 +50,6 @@ static inline unsigned GET_UINT(const BYTE* buffer, unsigned i)
 }
 
 static HLPFILE *first_hlpfile = 0;
-static BYTE    *file_buffer;
-static UINT     file_buffer_size;
-
-static struct
-{
-    UINT        num;
-    unsigned*   offsets;
-    char*       buffer;
-} phrases;
-
-static struct
-{
-    BYTE**      map;
-    BYTE*       end;
-    UINT        wMapLen;
-} topic;
 
 static struct
 {
@@ -77,8 +61,8 @@ static struct
 } attributes;
 
 static BOOL  HLPFILE_DoReadHlpFile(HLPFILE*, LPCSTR);
-static BOOL  HLPFILE_ReadFileToBuffer(HFILE);
-static BOOL  HLPFILE_FindSubFile(LPCSTR name, BYTE**, BYTE**);
+static BOOL  HLPFILE_ReadFileToBuffer(HLPFILE*, HFILE);
+static BOOL  HLPFILE_FindSubFile(HLPFILE*, LPCSTR, BYTE**, BYTE**);
 static BOOL  HLPFILE_SystemCommands(HLPFILE*);
 static INT   HLPFILE_UncompressedLZ77_Size(BYTE *ptr, BYTE *end);
 static BYTE* HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE *newptr);
@@ -90,8 +74,8 @@ static BOOL  HLPFILE_GetKeywords(HLPFILE*);
 static BOOL  HLPFILE_GetMap(HLPFILE*);
 static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned);
 static BOOL  HLPFILE_AddParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
-static void  HLPFILE_Uncompress2(const BYTE*, const BYTE*, BYTE*, const BYTE*);
-static BOOL  HLPFILE_Uncompress3(char*, const char*, const BYTE*, const BYTE*);
+static void  HLPFILE_Uncompress2(HLPFILE*, const BYTE*, const BYTE*, BYTE*, const BYTE*);
+static BOOL  HLPFILE_Uncompress3(HLPFILE*, char*, const char*, const BYTE*, const BYTE*);
 static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
 
@@ -285,22 +269,11 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
     first_hlpfile = hlpfile;
     if (hlpfile->next) hlpfile->next->prev = hlpfile;
 
-    phrases.offsets = NULL;
-    phrases.buffer = NULL;
-    topic.map = NULL;
-    topic.end = NULL;
-    file_buffer = NULL;
-
     if (!HLPFILE_DoReadHlpFile(hlpfile, lpszPath))
     {
         HLPFILE_FreeHlpFile(hlpfile);
         hlpfile = 0;
     }
-
-    HeapFree(GetProcessHeap(), 0, phrases.offsets);
-    HeapFree(GetProcessHeap(), 0, phrases.buffer);
-    HeapFree(GetProcessHeap(), 0, topic.map);
-    HeapFree(GetProcessHeap(), 0, file_buffer);
 
     return hlpfile;
 }
@@ -321,7 +294,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     hFile = OpenFile(lpszPath, &ofs, OF_READ);
     if (hFile == HFILE_ERROR) return FALSE;
 
-    ret = HLPFILE_ReadFileToBuffer(hFile);
+    ret = HLPFILE_ReadFileToBuffer(hlpfile, hFile);
     _lclose(hFile);
     if (!ret) return FALSE;
 
@@ -334,7 +307,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     if (!HLPFILE_Uncompress_Topic(hlpfile)) return FALSE;
     if (!HLPFILE_ReadFont(hlpfile)) return FALSE;
 
-    buf = topic.map[0];
+    buf = hlpfile->topic_map[0];
     old_index = -1;
     offs = 0;
     do
@@ -361,10 +334,10 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
 
         WINE_TRACE("ref=%08x => [%u/%u]\n", ref, index, offset);
 
-        if (index >= topic.wMapLen) {WINE_WARN("maplen\n"); break;}
-        buf = topic.map[index] + offset;
-        if (buf + 0x15 >= topic.end) {WINE_WARN("extra\n"); break;}
-        end = min(buf + GET_UINT(buf, 0), topic.end);
+        if (index >= hlpfile->topic_maplen) {WINE_WARN("maplen\n"); break;}
+        buf = hlpfile->topic_map[index] + offset;
+        if (buf + 0x15 >= hlpfile->topic_end) {WINE_WARN("extra\n"); break;}
+        end = min(buf + GET_UINT(buf, 0), hlpfile->topic_end);
         if (index != old_index) {offs = 0; old_index = index;}
 
         switch (buf[0x14])
@@ -426,9 +399,9 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     {
         /* need to decompress */
         if (hlpfile->hasPhrases)
-            HLPFILE_Uncompress2(title, end, (BYTE*)page->lpszTitle, (BYTE*)page->lpszTitle + titlesize);
+            HLPFILE_Uncompress2(hlpfile, title, end, (BYTE*)page->lpszTitle, (BYTE*)page->lpszTitle + titlesize);
         else if (hlpfile->hasPhrases40)
-            HLPFILE_Uncompress3(page->lpszTitle, page->lpszTitle + titlesize, title, end);
+            HLPFILE_Uncompress3(hlpfile, page->lpszTitle, page->lpszTitle + titlesize, title, end);
         else
         {
             WINE_FIXME("Text size is too long, splitting\n");
@@ -817,7 +790,7 @@ static  BOOL    HLPFILE_LoadGfxByIndex(HLPFILE *hlpfile, unsigned index,
 
     sprintf(tmp, "|bm%u", index);
 
-    if (!HLPFILE_FindSubFile(tmp, &ref, &end)) {WINE_WARN("no sub file\n"); return FALSE;}
+    if (!HLPFILE_FindSubFile(hlpfile, tmp, &ref, &end)) {WINE_WARN("no sub file\n"); return FALSE;}
 
     ref += 9;
 
@@ -904,9 +877,9 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     {
         /* need to decompress */
         if (hlpfile->hasPhrases)
-            HLPFILE_Uncompress2(buf + datalen, end, (BYTE*)text, (BYTE*)text + size);
+            HLPFILE_Uncompress2(hlpfile, buf + datalen, end, (BYTE*)text, (BYTE*)text + size);
         else if (hlpfile->hasPhrases40)
-            HLPFILE_Uncompress3(text, text + size, buf + datalen, end);
+            HLPFILE_Uncompress3(hlpfile, text, text + size, buf + datalen, end);
         else
         {
             WINE_FIXME("Text size is too long, splitting\n");
@@ -1219,7 +1192,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
     unsigned    face_num, dscr_num, face_offset, dscr_offset;
     BYTE        flag, family;
 
-    if (!HLPFILE_FindSubFile("|FONT", &ref, &end))
+    if (!HLPFILE_FindSubFile(hlpfile, "|FONT", &ref, &end))
     {
         WINE_WARN("no subfile FONT\n");
         hlpfile->numFonts = 0;
@@ -1308,7 +1281,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
  *
  *           HLPFILE_ReadFileToBuffer
  */
-static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
+static BOOL HLPFILE_ReadFileToBuffer(HLPFILE* hlpfile, HFILE hFile)
 {
     BYTE  header[16], dummy[1];
 
@@ -1318,17 +1291,17 @@ static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
     if (GET_UINT(header, 0) != 0x00035F3F)
     {WINE_WARN("wrong header\n"); return FALSE;};
 
-    file_buffer_size = GET_UINT(header, 12);
-    file_buffer = HeapAlloc(GetProcessHeap(), 0, file_buffer_size + 1);
-    if (!file_buffer) return FALSE;
+    hlpfile->file_buffer_size = GET_UINT(header, 12);
+    hlpfile->file_buffer = HeapAlloc(GetProcessHeap(), 0, hlpfile->file_buffer_size + 1);
+    if (!hlpfile->file_buffer) return FALSE;
 
-    memcpy(file_buffer, header, 16);
-    if (_hread(hFile, file_buffer + 16, file_buffer_size - 16) != file_buffer_size - 16)
+    memcpy(hlpfile->file_buffer, header, 16);
+    if (_hread(hFile, hlpfile->file_buffer + 16, hlpfile->file_buffer_size - 16) !=hlpfile->file_buffer_size - 16)
     {WINE_WARN("filesize1\n"); return FALSE;};
 
     if (_hread(hFile, dummy, 1) != 0) WINE_WARN("filesize2\n");
 
-    file_buffer[file_buffer_size] = '\0'; /* FIXME: was '0', sounds ackward to me */
+    hlpfile->file_buffer[hlpfile->file_buffer_size] = '\0'; /* FIXME: was '0', sounds ackward to me */
 
     return TRUE;
 }
@@ -1351,22 +1324,22 @@ static int comp_FindSubFile(void *p, const void *key,
  *
  *           HLPFILE_FindSubFile
  */
-static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE **subbuf, BYTE **subend)
+static BOOL HLPFILE_FindSubFile(HLPFILE* hlpfile, LPCSTR name, BYTE **subbuf, BYTE **subend)
 {
     BYTE *ptr;
 
     WINE_TRACE("looking for file '%s'\n", name);
-    ptr = HLPFILE_BPTreeSearch(file_buffer + GET_UINT(file_buffer, 4),
+    ptr = HLPFILE_BPTreeSearch(hlpfile->file_buffer + GET_UINT(hlpfile->file_buffer, 4),
                                name, comp_FindSubFile);
     if (!ptr) return FALSE;
-    *subbuf = file_buffer + GET_UINT(ptr, strlen(name)+1);
-    if (*subbuf >= file_buffer + file_buffer_size)
+    *subbuf = hlpfile->file_buffer + GET_UINT(ptr, strlen(name)+1);
+    if (*subbuf >= hlpfile->file_buffer + hlpfile->file_buffer_size)
     {
         WINE_ERR("internal file %s does not fit\n", name);
         return FALSE;
     }
     *subend = *subbuf + GET_UINT(*subbuf, 0);
-    if (*subend > file_buffer + file_buffer_size)
+    if (*subend > hlpfile->file_buffer + hlpfile->file_buffer_size)
     {
         WINE_ERR("internal file %s does not fit\n", name);
         return FALSE;
@@ -1392,7 +1365,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 
     hlpfile->lpszTitle = NULL;
 
-    if (!HLPFILE_FindSubFile("|SYSTEM", &buf, &end)) return FALSE;
+    if (!HLPFILE_FindSubFile(hlpfile, "|SYSTEM", &buf, &end)) return FALSE;
 
     magic = GET_USHORT(buf + 9, 0);
     minor = GET_USHORT(buf + 9, 2);
@@ -1594,14 +1567,14 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
     UINT i, num, dec_size, head_size;
     BYTE *buf, *end;
 
-    if (!HLPFILE_FindSubFile("|Phrases", &buf, &end)) return FALSE;
+    if (!HLPFILE_FindSubFile(hlpfile, "|Phrases", &buf, &end)) return FALSE;
 
     if (hlpfile->version <= 16)
         head_size = 13;
     else
         head_size = 17;
 
-    num = phrases.num = GET_USHORT(buf, 9);
+    num = hlpfile->num_phrases = GET_USHORT(buf, 9);
     if (buf + 2 * num + 0x13 >= end) {WINE_WARN("1a\n"); return FALSE;};
 
     if (hlpfile->version <= 16)
@@ -1609,22 +1582,22 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
     else
         dec_size = HLPFILE_UncompressedLZ77_Size(buf + 0x13 + 2 * num, end);
 
-    phrases.offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
-    phrases.buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
-    if (!phrases.offsets || !phrases.buffer)
+    hlpfile->phrases_offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
+    hlpfile->phrases_buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
+    if (!hlpfile->phrases_offsets || !hlpfile->phrases_buffer)
     {
-        HeapFree(GetProcessHeap(), 0, phrases.offsets);
-        HeapFree(GetProcessHeap(), 0, phrases.buffer);
+        HeapFree(GetProcessHeap(), 0, hlpfile->phrases_offsets);
+        HeapFree(GetProcessHeap(), 0, hlpfile->phrases_buffer);
         return FALSE;
     }
 
     for (i = 0; i <= num; i++)
-        phrases.offsets[i] = GET_USHORT(buf, head_size + 2 * i) - 2 * num - 2;
+        hlpfile->phrases_offsets[i] = GET_USHORT(buf, 0x11 + 2 * i) - 2 * num - 2;
 
     if (hlpfile->version <= 16)
-        memcpy(phrases.buffer, buf + 15 + 2*num, dec_size);
+        memcpy(hlpfile->phrases_buffer, buf + 15 + 2*num, dec_size);
     else
-        HLPFILE_UncompressLZ77(buf + 0x13 + 2 * num, end, (BYTE*)phrases.buffer);
+        HLPFILE_UncompressLZ77(buf + 0x13 + 2 * num, end, (BYTE*)hlpfile->phrases_buffer);
 
     hlpfile->hasPhrases = TRUE;
     return TRUE;
@@ -1644,12 +1617,12 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
     unsigned int i;
     unsigned short bc, n;
 
-    if (!HLPFILE_FindSubFile("|PhrIndex", &buf_idx, &end_idx) ||
-        !HLPFILE_FindSubFile("|PhrImage", &buf_phs, &end_phs)) return FALSE;
+    if (!HLPFILE_FindSubFile(hlpfile, "|PhrIndex", &buf_idx, &end_idx) ||
+        !HLPFILE_FindSubFile(hlpfile, "|PhrImage", &buf_phs, &end_phs)) return FALSE;
 
     ptr = (long*)(buf_idx + 9 + 28);
     bc = GET_USHORT(buf_idx, 9 + 24) & 0x0F;
-    num = phrases.num = GET_USHORT(buf_idx, 9 + 4);
+    num = hlpfile->num_phrases = GET_USHORT(buf_idx, 9 + 4);
 
     WINE_TRACE("Index: Magic=%08x #entries=%u CpsdSize=%u PhrImgSize=%u\n"
                "\tPhrImgCprsdSize=%u 0=%u bc=%x ukn=%x\n",
@@ -1673,18 +1646,18 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
         dec_size = max(dec_size, HLPFILE_UncompressedLZ77_Size(buf_phs + 9, end_phs));
     }
 
-    phrases.offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
-    phrases.buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
-    if (!phrases.offsets || !phrases.buffer)
+    hlpfile->phrases_offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
+    hlpfile->phrases_buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
+    if (!hlpfile->phrases_offsets || !hlpfile->phrases_buffer)
     {
-        HeapFree(GetProcessHeap(), 0, phrases.offsets);
-        HeapFree(GetProcessHeap(), 0, phrases.buffer);
+        HeapFree(GetProcessHeap(), 0, hlpfile->phrases_offsets);
+        HeapFree(GetProcessHeap(), 0, hlpfile->phrases_buffer);
         return FALSE;
     }
 
 #define getbit() (ptr += (mask < 0), mask = mask*2 + (mask<=0), (*ptr & mask) != 0)
 
-    phrases.offsets[0] = 0;
+    hlpfile->phrases_offsets[0] = 0;
     for (i = 0; i < num; i++)
     {
         for (n = 1; getbit(); n += 1 << bc);
@@ -1693,14 +1666,14 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
         if (bc > 2 && getbit()) n += 4;
         if (bc > 3 && getbit()) n += 8;
         if (bc > 4 && getbit()) n += 16;
-        phrases.offsets[i + 1] = phrases.offsets[i] + n;
+        hlpfile->phrases_offsets[i + 1] = hlpfile->phrases_offsets[i] + n;
     }
 #undef getbit
 
     if (dec_size == cpr_size)
-        memcpy(phrases.buffer, buf_phs + 9, dec_size);
+        memcpy(hlpfile->phrases_buffer, buf_phs + 9, dec_size);
     else
-        HLPFILE_UncompressLZ77(buf_phs + 9, end_phs, (BYTE*)phrases.buffer);
+        HLPFILE_UncompressLZ77(buf_phs + 9, end_phs, (BYTE*)hlpfile->phrases_buffer);
 
     hlpfile->hasPhrases40 = TRUE;
     return TRUE;
@@ -1716,16 +1689,16 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
     unsigned int i, newsize = 0;
     unsigned int topic_size;
 
-    if (!HLPFILE_FindSubFile("|TOPIC", &buf, &end))
+    if (!HLPFILE_FindSubFile(hlpfile, "|TOPIC", &buf, &end))
     {WINE_WARN("topic0\n"); return FALSE;}
 
     buf += 9; /* Skip file header */
     topic_size = end - buf;
     if (hlpfile->compressed)
     {
-        topic.wMapLen = (topic_size - 1) / hlpfile->tbsize + 1;
+        hlpfile->topic_maplen = (topic_size - 1) / hlpfile->tbsize + 1;
 
-        for (i = 0; i < topic.wMapLen; i++)
+        for (i = 0; i < hlpfile->topic_maplen; i++)
         {
             ptr = buf + i * hlpfile->tbsize;
 
@@ -1735,18 +1708,18 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
             newsize += HLPFILE_UncompressedLZ77_Size(ptr + 0xc, min(end, ptr + hlpfile->tbsize));
         }
 
-        topic.map = HeapAlloc(GetProcessHeap(), 0,
-                              topic.wMapLen * sizeof(topic.map[0]) + newsize);
-        if (!topic.map) return FALSE;
-        newptr = (BYTE*)(topic.map + topic.wMapLen);
-        topic.end = newptr + newsize;
+        hlpfile->topic_map = HeapAlloc(GetProcessHeap(), 0,
+                                       hlpfile->topic_maplen * sizeof(hlpfile->topic_map[0]) + newsize);
+        if (!hlpfile->topic_map) return FALSE;
+        newptr = (BYTE*)(hlpfile->topic_map + hlpfile->topic_maplen);
+        hlpfile->topic_end = newptr + newsize;
 
-        for (i = 0; i < topic.wMapLen; i++)
+        for (i = 0; i < hlpfile->topic_maplen; i++)
         {
             ptr = buf + i * hlpfile->tbsize;
             if (ptr + 0x44 > end) ptr = end - 0x44;
 
-            topic.map[i] = newptr;
+            hlpfile->topic_map[i] = newptr;
             newptr = HLPFILE_UncompressLZ77(ptr + 0xc, min(end, ptr + hlpfile->tbsize), newptr);
         }
     }
@@ -1755,17 +1728,17 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
         /* basically, we need to copy the TopicBlockSize byte pages
          * (removing the first 0x0C) in one single area in memory
          */
-        topic.wMapLen = (topic_size - 1) / hlpfile->tbsize + 1;
-        topic.map = HeapAlloc(GetProcessHeap(), 0,
-                              topic.wMapLen * (sizeof(topic.map[0]) + hlpfile->dsize));
-        if (!topic.map) return FALSE;
-        newptr = (BYTE*)(topic.map + topic.wMapLen);
-        topic.end = newptr + topic_size;
+        hlpfile->topic_maplen = (topic_size - 1) / hlpfile->tbsize + 1;
+        hlpfile->topic_map = HeapAlloc(GetProcessHeap(), 0,
+                                       hlpfile->topic_maplen * (sizeof(hlpfile->topic_map[0]) + hlpfile->dsize));
+        if (!hlpfile->topic_map) return FALSE;
+        newptr = (BYTE*)(hlpfile->topic_map + hlpfile->topic_maplen);
+        hlpfile->topic_end = newptr + topic_size;
 
-        for (i = 0; i < topic.wMapLen; i++)
+        for (i = 0; i < hlpfile->topic_maplen; i++)
         {
-            topic.map[i] = newptr + i * hlpfile->dsize;
-            memcpy(topic.map[i], buf + i * hlpfile->tbsize + 0x0C, hlpfile->dsize);
+            hlpfile->topic_map[i] = newptr + i * hlpfile->dsize;
+            memcpy(hlpfile->topic_map[i], buf + i * hlpfile->tbsize + 0x0C, hlpfile->dsize);
         }
     }
     return TRUE;
@@ -1776,7 +1749,7 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
  *           HLPFILE_Uncompress2
  */
 
-static void HLPFILE_Uncompress2(const BYTE *ptr, const BYTE *end, BYTE *newptr, const BYTE *newend)
+static void HLPFILE_Uncompress2(HLPFILE* hlpfile, const BYTE *ptr, const BYTE *end, BYTE *newptr, const BYTE *newend)
 {
     BYTE *phptr, *phend;
     UINT code;
@@ -1791,8 +1764,8 @@ static void HLPFILE_Uncompress2(const BYTE *ptr, const BYTE *end, BYTE *newptr, 
             code  = 0x100 * ptr[0] + ptr[1];
             index = (code - 0x100) / 2;
 
-            phptr = (BYTE*)phrases.buffer + phrases.offsets[index];
-            phend = (BYTE*)phrases.buffer + phrases.offsets[index + 1];
+            phptr = (BYTE*)hlpfile->phrases_buffer + hlpfile->phrases_offsets[index];
+            phend = (BYTE*)hlpfile->phrases_buffer + hlpfile->phrases_offsets[index + 1];
 
             if (newptr + (phend - phptr) > newend)
             {
@@ -1815,7 +1788,7 @@ static void HLPFILE_Uncompress2(const BYTE *ptr, const BYTE *end, BYTE *newptr, 
  *
  *
  */
-static BOOL HLPFILE_Uncompress3(char* dst, const char* dst_end,
+static BOOL HLPFILE_Uncompress3(HLPFILE* hlpfile, char* dst, const char* dst_end,
                                 const BYTE* src, const BYTE* src_end)
 {
     unsigned int idx, len;
@@ -1825,32 +1798,32 @@ static BOOL HLPFILE_Uncompress3(char* dst, const char* dst_end,
         if ((*src & 1) == 0)
         {
             idx = *src / 2;
-            if (idx > phrases.num) 
+            if (idx > hlpfile->num_phrases)
             {
-                WINE_ERR("index in phrases %d/%d\n", idx, phrases.num);
+                WINE_ERR("index in phrases %d/%d\n", idx, hlpfile->num_phrases);
                 len = 0;
             }
             else 
             {
-                len = phrases.offsets[idx + 1] - phrases.offsets[idx];
+                len = hlpfile->phrases_offsets[idx + 1] - hlpfile->phrases_offsets[idx];
                 if (dst + len <= dst_end)
-                    memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
+                    memcpy(dst, &hlpfile->phrases_buffer[hlpfile->phrases_offsets[idx]], len);
             }
         }
         else if ((*src & 0x03) == 0x01)
         {
             idx = (*src + 1) * 64;
             idx += *++src;
-            if (idx > phrases.num) 
+            if (idx > hlpfile->num_phrases)
             {
-                WINE_ERR("index in phrases %d/%d\n", idx, phrases.num);
+                WINE_ERR("index in phrases %d/%d\n", idx, hlpfile->num_phrases);
                 len = 0;
             }
             else
             {
-                len = phrases.offsets[idx + 1] - phrases.offsets[idx];
+                len = hlpfile->phrases_offsets[idx + 1] - hlpfile->phrases_offsets[idx];
                 if (dst + len <= dst_end)
-                    memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
+                    memcpy(dst, &hlpfile->phrases_buffer[hlpfile->phrases_offsets[idx]], len);
             }
         }
         else if ((*src & 0x07) == 0x03)
@@ -2024,7 +1997,8 @@ static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
     BYTE                *cbuf, *cend;
     unsigned            clen;
 
-    if (!HLPFILE_FindSubFile("|CONTEXT",  &cbuf, &cend)) {WINE_WARN("context0\n"); return FALSE;}
+    if (!HLPFILE_FindSubFile(hlpfile, "|CONTEXT",  &cbuf, &cend))
+    {WINE_WARN("context0\n"); return FALSE;}
 
     clen = cend - cbuf;
     hlpfile->Context = HeapAlloc(GetProcessHeap(), 0, clen);
@@ -2043,13 +2017,13 @@ static BOOL HLPFILE_GetKeywords(HLPFILE *hlpfile)
     BYTE                *cbuf, *cend;
     unsigned            clen;
 
-    if (!HLPFILE_FindSubFile("|KWBTREE",  &cbuf, &cend)) return FALSE;
+    if (!HLPFILE_FindSubFile(hlpfile, "|KWBTREE", &cbuf, &cend)) return FALSE;
     clen = cend - cbuf;
     hlpfile->kwbtree = HeapAlloc(GetProcessHeap(), 0, clen);
     if (!hlpfile->kwbtree) return FALSE;
     memcpy(hlpfile->kwbtree, cbuf, clen);
 
-    if (!HLPFILE_FindSubFile("|KWDATA",  &cbuf, &cend))
+    if (!HLPFILE_FindSubFile(hlpfile, "|KWDATA", &cbuf, &cend))
     {
         WINE_ERR("corrupted help file: kwbtree present but kwdata absent\n");
         HeapFree(GetProcessHeap(), 0, hlpfile->kwbtree);
@@ -2076,7 +2050,8 @@ static BOOL HLPFILE_GetMap(HLPFILE *hlpfile)
     BYTE                *cbuf, *cend;
     unsigned            entries, i;
 
-    if (!HLPFILE_FindSubFile("|CTXOMAP",  &cbuf, &cend)) {WINE_WARN("no map section\n"); return FALSE;}
+    if (!HLPFILE_FindSubFile(hlpfile, "|CTXOMAP",  &cbuf, &cend))
+    {WINE_WARN("no map section\n"); return FALSE;}
 
     entries = GET_USHORT(cbuf, 9);
     hlpfile->Map = HeapAlloc(GetProcessHeap(), 0, entries * sizeof(HLPFILE_MAP));
@@ -2197,5 +2172,9 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
     HeapFree(GetProcessHeap(), 0, hlpfile->Map);
     HeapFree(GetProcessHeap(), 0, hlpfile->lpszTitle);
     HeapFree(GetProcessHeap(), 0, hlpfile->lpszCopyright);
+    HeapFree(GetProcessHeap(), 0, hlpfile->file_buffer);
+    HeapFree(GetProcessHeap(), 0, hlpfile->phrases_offsets);
+    HeapFree(GetProcessHeap(), 0, hlpfile->phrases_buffer);
+    HeapFree(GetProcessHeap(), 0, hlpfile->topic_map);
     HeapFree(GetProcessHeap(), 0, hlpfile);
 }

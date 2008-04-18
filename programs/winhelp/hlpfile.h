@@ -2,7 +2,7 @@
  * Help Viewer
  *
  * Copyright    1996 Ulrich Schmid
- *              2002 Eric Pouech
+ *              2002, 2008 Eric Pouech
  *              2007 Kirill K. Smirnov
  *
  * This library is free software; you can redistribute it and/or
@@ -118,6 +118,8 @@ typedef struct
 
 typedef struct tagHlpFileFile
 {
+    BYTE*                       file_buffer;
+    UINT                        file_buffer_size;
     LPSTR                       lpszPath;
     LPSTR                       lpszTitle;
     LPSTR                       lpszCopyright;
@@ -143,6 +145,13 @@ typedef struct tagHlpFileFile
     unsigned short              compressed;
     unsigned                    hasPhrases;   /* file has |Phrases */
     unsigned                    hasPhrases40; /* file has |PhrIndex/|PhrImage */
+    UINT                        num_phrases;
+    unsigned*                   phrases_offsets;
+    char*                       phrases_buffer;
+
+    BYTE**                      topic_map;
+    BYTE*                       topic_end;
+    UINT                        topic_maplen;
 
     unsigned                    numBmps;
     HBITMAP*                    bmps;
