@@ -374,8 +374,60 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-    return E_NOTIMPL;
+    IUnknown *unk;
+    ITypeInfo *ti;
+    dispex_data_t *data;
+    UINT argerr=0;
+    int min, max, n;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    if(wFlags == DISPATCH_CONSTRUCT) {
+        FIXME("DISPATCH_CONSTRUCT not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    data = get_dispex_data(This);
+    if(!data)
+        return E_FAIL;
+
+    min = 0;
+    max = data->func_cnt-1;
+
+    while(min <= max) {
+        n = (min+max)/2;
+
+        if(data->funcs[n].id == id)
+            break;
+
+        if(data->funcs[n].id < id)
+            min = n+1;
+        else
+            max = n-1;
+    }
+
+    if(min > max) {
+        WARN("invalid id %x\n", id);
+        return DISP_E_UNKNOWNNAME;
+    }
+
+    hres = get_typeinfo(data->funcs[n].tid, &ti);
+    if(FAILED(hres)) {
+        ERR("Could not get type info: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IUnknown_QueryInterface(This->outer, tid_ids[data->funcs[n].tid], (void**)&unk);
+    if(FAILED(hres)) {
+        ERR("Could not get iface: %08x\n", hres);
+        return E_FAIL;
+    }
+
+    hres = ITypeInfo_Invoke(ti, unk, id, wFlags, pdp, pvarRes, pei, &argerr);
+
+    IUnknown_Release(unk);
+    return hres;
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
