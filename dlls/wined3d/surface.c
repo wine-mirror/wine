@@ -117,7 +117,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         int dst_pitch = 0;
 
         /* In case of P8 the index is stored in the alpha component if the primary render target uses P8 */
-        if(This->resource.format == WINED3DFMT_P8) {
+        if(This->resource.format == WINED3DFMT_P8 && primary_render_target_is_p8(This->resource.wineD3DDevice)) {
             format = GL_ALPHA;
             type = GL_UNSIGNED_BYTE;
         }
