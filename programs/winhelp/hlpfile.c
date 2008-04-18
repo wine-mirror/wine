@@ -1143,28 +1143,33 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                     char*       ptr = (char*) format + 8;
                     BYTE        type = format[3];
                     int         wnd = -1;
-                    char*       str;
 
-                    if (type == 1) wnd = *ptr++;
-                    if (type == 4 || type == 6)
+                    switch (type)
                     {
-                        str = ptr;
-                        ptr += strlen(ptr) + 1;
-                    }
-                    else
-                        str = hlpfile->lpszPath;
-                    if (type == 6)
-                    {
+                    case 1:
+                        wnd = *ptr;
+                        /* fall through */
+                    case 0:
+                        ptr = hlpfile->lpszPath;
+                        break;
+                    case 6:
                         for (wnd = hlpfile->numWindows - 1; wnd >= 0; wnd--)
                         {
                             if (!strcmp(ptr, hlpfile->windows[wnd].name)) break;
                         }
                         if (wnd == -1)
                             WINE_WARN("Couldn't find window info for %s\n", ptr);
+                        ptr += strlen(ptr) + 1;
+                        /* fall through */
+                    case 4:
+                        break;
+                    default:
+                        WINE_WARN("Unknown link type %d\n", type);
+                        break;
                     }
                     HLPFILE_FreeLink(attributes.link);
                     attributes.link = HLPFILE_AllocLink((*format & 4) ? hlp_link_link : hlp_link_popup,
-                                                        str, GET_UINT(format, 4),
+                                                        ptr, GET_UINT(format, 4),
                                                         !(*format & 1), wnd);
                 }
                 format += 3 + GET_USHORT(format, 1);
