@@ -58,7 +58,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     LPBYTE pbDstStream;
     LPBYTE pbSrcStream = NULL;
     ACMSTREAMHEADER ash;
-    BOOL unprepare_header = FALSE;
+    BOOL unprepare_header = FALSE, preroll;
     MMRESULT res;
     HRESULT hr;
     LONGLONG tStart = -1, tStop = -1, tMed;
@@ -69,6 +69,8 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
         ERR("Cannot get pointer to sample data (%x)\n", hr);
 	return hr;
     }
+
+    preroll = (IMediaSample_IsPreroll(pSample) == S_OK);
 
     IMediaSample_GetTime(pSample, &tStart, &tStop);
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
@@ -91,6 +93,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	    ERR("Unable to get delivery buffer (%x)\n", hr);
 	    return hr;
 	}
+	IMediaSample_SetPreroll(pOutSample, preroll);
 
 	hr = IMediaSample_SetActualDataLength(pOutSample, 0);
 	assert(hr == S_OK);
