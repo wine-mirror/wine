@@ -300,7 +300,7 @@ void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
 
     *b = button;
 
-    SendMessage(win->hMainWnd, WM_USER, 0, 0);
+    WINHELP_LayoutMainWindow(win);
 }
 
 void CALLBACK MACRO_ChangeEnable(LPCSTR id, LPCSTR macro)
@@ -407,7 +407,7 @@ void CALLBACK MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
         button->wParam = max(button->wParam, (*b)->wParam + 1);
     *b = button;
 
-    SendMessage(win->hMainWnd, WM_USER, 0, 0);
+    WINHELP_LayoutMainWindow(win);
 }
 
 void CALLBACK MACRO_DeleteItem(LPCSTR str)

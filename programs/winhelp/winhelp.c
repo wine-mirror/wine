@@ -449,6 +449,29 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
     return 1;
 }
 
+void            WINHELP_LayoutMainWindow(WINHELP_WINDOW* win)
+{
+    RECT        rect, button_box_rect;
+    INT         text_top;
+
+    GetClientRect(win->hMainWnd, &rect);
+
+    /* Update button box and text Window */
+    SetWindowPos(win->hButtonBoxWnd, HWND_TOP,
+                 rect.left, rect.top,
+                 rect.right - rect.left,
+                 rect.bottom - rect.top, 0);
+
+    GetWindowRect(win->hButtonBoxWnd, &button_box_rect);
+    text_top = rect.top + button_box_rect.bottom - button_box_rect.top;
+
+    SetWindowPos(win->hTextWnd, HWND_TOP,
+                 rect.left, text_top,
+                 rect.right - rect.left,
+                 rect.bottom - text_top, 0);
+
+}
+
 /******************************************************************
  *		WINHELP_ReuseWindow
  *
@@ -478,7 +501,7 @@ static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin,
 
     WINHELP_SetupText(win->hTextWnd);
     InvalidateRect(win->hTextWnd, NULL, TRUE);
-    SendMessage(win->hMainWnd, WM_USER, 0, 0);
+    WINHELP_LayoutMainWindow(win);
     ShowWindow(win->hMainWnd, nCmdShow);
     UpdateWindow(win->hTextWnd);
 
@@ -692,8 +715,8 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 {
     WINHELP_WINDOW *win;
     WINHELP_BUTTON *button;
-    RECT rect, button_box_rect;
-    INT  text_top, curPos, min, max, dy, keyDelta;
+    RECT rect;
+    INT  curPos, min, max, dy, keyDelta;
 
     WINHELP_CheckPopup(msg);
 
@@ -716,25 +739,8 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                      0, 0, 0, 0, hWnd, 0, Globals.hInstance, win);
 
         /* Fall through */
-    case WM_USER:
     case WM_WINDOWPOSCHANGED:
-        win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
-        GetClientRect(hWnd, &rect);
-
-        /* Update button box and text Window */
-        SetWindowPos(win->hButtonBoxWnd, HWND_TOP,
-                     rect.left, rect.top,
-                     rect.right - rect.left,
-                     rect.bottom - rect.top, 0);
-
-        GetWindowRect(win->hButtonBoxWnd, &button_box_rect);
-        text_top = rect.top + button_box_rect.bottom - button_box_rect.top;
-
-        SetWindowPos(win->hTextWnd, HWND_TOP,
-                     rect.left, text_top,
-                     rect.right - rect.left,
-                     rect.bottom - text_top, 0);
-
+        WINHELP_LayoutMainWindow((WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0));
         break;
 
     case WM_COMMAND:

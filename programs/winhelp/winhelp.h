@@ -180,6 +180,7 @@ INT  WINHELP_MessageBoxIDS(UINT, UINT, WORD);
 INT  WINHELP_MessageBoxIDS_s(UINT, LPCSTR, UINT, WORD);
 HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile);
 HLPFILE_WINDOWINFO* WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name);
+void WINHELP_LayoutMainWindow(WINHELP_WINDOW* win);
 
 extern const char MAIN_WIN_CLASS_NAME[];
 extern const char BUTTON_BOX_WIN_CLASS_NAME[];
