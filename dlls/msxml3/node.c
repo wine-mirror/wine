@@ -1169,8 +1169,26 @@ static HRESULT WINAPI xmlnode_get_prefix(
     IXMLDOMNode *iface,
     BSTR* prefixString)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    HRESULT hr = S_FALSE;
+    xmlNsPtr *pNSList;
+
+    TRACE("%p %p\n", This, prefixString );
+
+    if(!prefixString)
+        return E_INVALIDARG;
+
+    *prefixString = NULL;
+
+    pNSList = xmlGetNsList(This->node->doc, This->node);
+    if(pNSList)
+    {
+        *prefixString = bstr_from_xmlChar( pNSList[0]->prefix );
+
+        hr = S_OK;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlnode_get_baseName(
