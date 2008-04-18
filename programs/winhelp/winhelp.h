@@ -100,8 +100,6 @@ typedef struct tagWinHelp
     WINHELP_LINE*       first_line;
 
     HWND                hMainWnd;
-    HWND                hButtonBoxWnd;
-    HWND                hTextWnd;
     HWND                hShadowWnd;
     HWND                hHistoryWnd;
 

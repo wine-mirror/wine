@@ -457,19 +457,21 @@ void            WINHELP_LayoutMainWindow(WINHELP_WINDOW* win)
 {
     RECT        rect, button_box_rect;
     INT         text_top = 0;
+    HWND        hButtonBoxWnd = GetDlgItem(win->hMainWnd, CTL_ID_BUTTON);
+    HWND        hTextWnd = GetDlgItem(win->hMainWnd, CTL_ID_TEXT);
 
     GetClientRect(win->hMainWnd, &rect);
 
     /* Update button box and text Window */
-    SetWindowPos(win->hButtonBoxWnd, HWND_TOP,
+    SetWindowPos(hButtonBoxWnd, HWND_TOP,
                  rect.left, rect.top,
                  rect.right - rect.left,
                  rect.bottom - rect.top, 0);
 
-    if (GetWindowRect(win->hButtonBoxWnd, &button_box_rect))
+    if (GetWindowRect(hButtonBoxWnd, &button_box_rect))
         text_top = rect.top + button_box_rect.bottom - button_box_rect.top;
 
-    SetWindowPos(win->hTextWnd, HWND_TOP,
+    SetWindowPos(hTextWnd, HWND_TOP,
                  rect.left, text_top,
                  rect.right - rect.left,
                  rect.bottom - text_top, 0);
@@ -484,17 +486,16 @@ void            WINHELP_LayoutMainWindow(WINHELP_WINDOW* win)
 static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin, 
                                     HLPFILE_PAGE* page, int nCmdShow)
 {
+    HWND        hTextWnd = GetDlgItem(oldwin->hMainWnd, CTL_ID_TEXT);
     unsigned int i;
 
     win->hMainWnd      = oldwin->hMainWnd;
-    win->hButtonBoxWnd = oldwin->hButtonBoxWnd;
-    win->hTextWnd      = oldwin->hTextWnd;
     win->hHistoryWnd   = oldwin->hHistoryWnd;
-    oldwin->hMainWnd   = oldwin->hButtonBoxWnd = oldwin->hTextWnd = oldwin->hHistoryWnd = 0;
+    oldwin->hMainWnd   = oldwin->hHistoryWnd = 0;
     win->hBrush        = CreateSolidBrush(win->info->sr_color);
 
     SetWindowLongPtr(win->hMainWnd,      0, (ULONG_PTR)win);
-    SetWindowLongPtr(win->hTextWnd,      0, (ULONG_PTR)win);
+    SetWindowLongPtr(hTextWnd,           0, (ULONG_PTR)win);
     SetWindowLongPtr(win->hHistoryWnd,   0, (ULONG_PTR)win);
 
     WINHELP_InitFonts(win->hMainWnd);
@@ -502,11 +503,11 @@ static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin,
     if (page)
         SetWindowText(win->hMainWnd, page->file->lpszTitle);
 
-    WINHELP_SetupText(win->hTextWnd);
-    InvalidateRect(win->hTextWnd, NULL, TRUE);
+    WINHELP_SetupText(hTextWnd);
+    InvalidateRect(hTextWnd, NULL, TRUE);
     WINHELP_LayoutMainWindow(win);
     ShowWindow(win->hMainWnd, nCmdShow);
-    UpdateWindow(win->hTextWnd);
+    UpdateWindow(hTextWnd);
 
     if (!(win->info->win_style & WS_POPUP))
     {
@@ -661,8 +662,8 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
                           Globals.hInstance, win);
     /* Create button box and text Window */
     if (!bPopup)
-        win->hButtonBoxWnd = CreateWindow(BUTTON_BOX_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
-                                          0, 0, 0, 0, hWnd, (HMENU)CTL_ID_BUTTON, Globals.hInstance, NULL);
+        CreateWindow(BUTTON_BOX_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
+                     0, 0, 0, 0, hWnd, (HMENU)CTL_ID_BUTTON, Globals.hInstance, NULL);
 
     CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
                  0, 0, 0, 0, hWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
@@ -730,6 +731,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     WINHELP_BUTTON *button;
     RECT rect;
     INT  curPos, min, max, dy, keyDelta;
+    HWND hTextWnd;
 
     WINHELP_CheckPopup(msg);
 
@@ -799,12 +801,13 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         case VK_PRIOR:
         case VK_NEXT:
             win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
-            curPos = GetScrollPos(win->hTextWnd, SB_VERT);
-            GetScrollRange(win->hTextWnd, SB_VERT, &min, &max);
+            hTextWnd = GetDlgItem(win->hMainWnd, CTL_ID_TEXT);
+            curPos = GetScrollPos(hTextWnd, SB_VERT);
+            GetScrollRange(hTextWnd, SB_VERT, &min, &max);
 
             if (keyDelta == 0)
             {            
-                GetClientRect(win->hTextWnd, &rect);
+                GetClientRect(hTextWnd, &rect);
                 keyDelta = (rect.bottom - rect.top) / 2;
                 if (wParam == VK_PRIOR)
                     keyDelta = -keyDelta;
@@ -816,10 +819,10 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             else if (curPos < min)
                  curPos = min;
 
-            dy = GetScrollPos(win->hTextWnd, SB_VERT) - curPos;
-            SetScrollPos(win->hTextWnd, SB_VERT, curPos, TRUE);
-            ScrollWindow(win->hTextWnd, 0, dy, NULL, NULL);
-            UpdateWindow(win->hTextWnd);
+            dy = GetScrollPos(hTextWnd, SB_VERT) - curPos;
+            SetScrollPos(hTextWnd, SB_VERT, curPos, TRUE);
+            ScrollWindow(hTextWnd, 0, dy, NULL, NULL);
+            UpdateWindow(hTextWnd);
             return 0;
 
         case VK_ESCAPE:
@@ -973,7 +976,6 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     case WM_NCCREATE:
         win = (WINHELP_WINDOW*) ((LPCREATESTRUCT) lParam)->lpCreateParams;
         SetWindowLongPtr(hWnd, 0, (ULONG_PTR) win);
-        win->hTextWnd = hWnd;
         win->hBrush = CreateSolidBrush(win->info->sr_color);
         WINHELP_InitFonts(hWnd);
         break;
@@ -1926,7 +1928,7 @@ WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW* win, WPARAM wParam, LPARAM
     POINT mouse;
     WINHELP_LINE      *line;
     WINHELP_LINE_PART *part;
-    int scroll_pos = GetScrollPos(win->hTextWnd, SB_VERT);
+    int scroll_pos = GetScrollPos(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), SB_VERT);
 
     mouse.x = LOWORD(lParam);
     mouse.y = HIWORD(lParam);
