@@ -301,3 +301,30 @@ GpStatus WINGDIPAPI GdipVectorTransformMatrixPoints(GpMatrix *matrix, GpPointF *
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipVectorTransformMatrixPointsI(GpMatrix *matrix, GpPoint *pts, INT count)
+{
+    GpPointF *ptsF;
+    GpStatus ret;
+    INT i;
+
+    ptsF = GdipAlloc(sizeof(GpPointF) * count);
+    if(!ptsF)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        ptsF[i].X = (REAL)pts[i].X;
+        ptsF[i].Y = (REAL)pts[i].Y;
+    }
+
+    ret = GdipVectorTransformMatrixPoints(matrix, ptsF, count);
+    /* store back */
+    if(ret == Ok)
+        for(i = 0; i < count; i++){
+            pts[i].X = roundr(ptsF[i].X);
+            pts[i].Y = roundr(ptsF[i].Y);
+        }
+    GdipFree(ptsF);
+
+    return ret;
+}

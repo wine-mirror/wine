@@ -620,7 +620,7 @@
 @ stub GdipTranslateTextureTransform
 @ stdcall GdipTranslateWorldTransform(ptr long long long)
 @ stdcall GdipVectorTransformMatrixPoints(ptr ptr long)
-@ stub GdipVectorTransformMatrixPointsI
+@ stdcall GdipVectorTransformMatrixPointsI(ptr ptr long)
 @ stub GdipWarpPath
 @ stub GdipWidenPath
 @ stub GdipWindingModeOutline
