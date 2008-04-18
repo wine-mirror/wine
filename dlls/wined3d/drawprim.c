@@ -1062,14 +1062,26 @@ void drawPrimitive(IWineD3DDevice *iface,
         if(!use_vs(This)) {
             if(!This->strided_streams.u.s.position_transformed && This->activeContext->num_untracked_materials &&
                 This->stateBlock->renderState[WINED3DRS_LIGHTING]) {
-                FIXME("Using software emulation because not all material properties could be tracked\n");
+                static BOOL first = TRUE;
+                if(first) {
+                    FIXME("Using software emulation because not all material properties could be tracked\n");
+                    first = FALSE;
+                } else {
+                    TRACE("Using software emulation because not all material properties could be tracked\n");
+                }
                 emulation = TRUE;
             }
             else if(This->activeContext->fog_coord && This->stateBlock->renderState[WINED3DRS_FOGENABLE]) {
                 /* Either write a pipeline replacement shader or convert the specular alpha from unsigned byte
                  * to a float in the vertex buffer
                  */
-                FIXME("Using software emulation because manual fog coordinates are provided\n");
+                static BOOL first = TRUE;
+                if(first) {
+                    FIXME("Using software emulation because manual fog coordinates are provided\n");
+                    first = FALSE;
+                } else {
+                    TRACE("Using software emulation because manual fog coordinates are provided\n");
+                }
                 emulation = TRUE;
             }
 
@@ -1083,7 +1095,13 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (This->useDrawStridedSlow || emulation) {
             /* Immediate mode drawing */
             if(use_vs(This)) {
-                FIXME("Using immediate mode with vertex shaders for half float emulation\n");
+                static BOOL first = TRUE;
+                if(first) {
+                    FIXME("Using immediate mode with vertex shaders for half float emulation\n");
+                    first = FALSE;
+                } else {
+                    TRACE("Using immediate mode with vertex shaders for half float emulation\n");
+                }
                 drawStridedSlowVs(iface, strided, calculatedNumberOfindices, glPrimType,
                                   idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
             } else {
