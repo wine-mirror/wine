@@ -998,10 +998,8 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
     OSVERSIONINFOW versionInfo;
-    const IMAGE_OS2_HEADER *ne_header;
     SIZE_T mapping_size = ~0UL;  /* assume builtins don't contain invalid offsets... */
 
-    ne_header = (const IMAGE_OS2_HEADER *)((const BYTE *)mz_header + mz_header->e_lfanew);
     hModule = build_module( mz_header, mapping_size, file_name );
     if (hModule < 32) return hModule;
     pModule = GlobalLock16( hModule );

@@ -572,7 +572,7 @@ static HLOCAL16 LOCAL_FreeArena( WORD ds, WORD arena )
 {
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
     LOCALHEAPINFO *pInfo;
-    LOCALARENA *pArena, *pPrev, *pNext;
+    LOCALARENA *pArena, *pPrev;
 
     TRACE("%04x ds=%04x\n", arena, ds );
     if (!(pInfo = LOCAL_GetHeap( ds ))) return arena;
@@ -590,7 +590,6 @@ static HLOCAL16 LOCAL_FreeArena( WORD ds, WORD arena )
       /* Check if we can merge with the previous block */
 
     pPrev = ARENA_PTR( ptr, pArena->prev & ~3 );
-    pNext = ARENA_PTR( ptr, pArena->next );
     if ((pPrev->prev & 3) == LOCAL_ARENA_FREE)
     {
         arena  = pArena->prev & ~3;
