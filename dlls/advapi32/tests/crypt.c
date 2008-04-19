@@ -873,7 +873,7 @@ static void test_set_provider_ex(void)
 
 static void test_machine_guid(void)
 {
-   char originalGuid[40], guid[40];
+   char originalGuid[40];
    LONG r;
    HKEY key;
    DWORD size;
@@ -904,12 +904,7 @@ static void test_machine_guid(void)
    ret = pCryptAcquireContextA(&hCryptProv, szKeySet, NULL, PROV_RSA_FULL, 0);
    ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
    CryptReleaseContext(hCryptProv, 0);
-   /* Check that MachineGuid was created */
-   size = sizeof(guid);
-   r = RegQueryValueExA(key, "MachineGuid", NULL, NULL, (BYTE *)guid, &size);
-   ok(!r, "expected to find MachineGuid: %d\n", r);
-   r = RegDeleteValueA(key, "MachineGuid");
-   ok(!r, "RegDeleteValueA failed: %d\n", r);
+
    if (restoreGuid)
        RegSetValueExA(key, "MachineGuid", 0, REG_SZ, (const BYTE *)originalGuid,
                       strlen(originalGuid)+1);
