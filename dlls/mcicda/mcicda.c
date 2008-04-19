@@ -518,7 +518,6 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
     WINE_MCICDAUDIO*	        wmcda = MCICDA_GetOpenDrv(wDevID);
-    DWORD                       idx;
     DWORD	                ret = 0;
     CDROM_SUB_Q_DATA_FORMAT     fmt;
     SUB_Q_CHANNEL_DATA          data;
@@ -558,7 +557,6 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 		TRACE("MCI_TRACK #%u LENGTH=??? !\n", lpParms->dwTrack);
 		if (lpParms->dwTrack < toc.FirstTrack || lpParms->dwTrack > toc.LastTrack)
 		    return MCIERR_OUTOFRANGE;
-                idx = lpParms->dwTrack - toc.FirstTrack;
 		lpParms->dwReturn = FRAME_OF_TOC(toc, lpParms->dwTrack + 1) -
                     FRAME_OF_TOC(toc, lpParms->dwTrack);
 		/* Windows returns one frame less than the total track length for the
