@@ -79,22 +79,22 @@ static void rungraph(void)
     Sleep(10);
     trace("stop -> pause\n");
     hr = IMediaControl_Pause(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot pause the graph returned: %x\n", hr);
 
     Sleep(10);
     trace("pause -> run\n");
     hr = IMediaControl_Run(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot pause the graph returned: %x\n", hr);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
 
     Sleep(10);
     trace("run -> pause\n");
     hr = IMediaControl_Pause(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot pause the graph returned: %x\n", hr);
 
     Sleep(10);
     trace("pause -> stop\n");
     hr = IMediaControl_Stop(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot stop the graph returned: %x\n", hr);
 
     Sleep(10);
     trace("pause -> run\n");
@@ -103,7 +103,7 @@ static void rungraph(void)
 
     trace("run -> stop\n");
     hr = IMediaControl_Stop(pmc);
-    ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
+    ok(hr==S_OK || hr == S_FALSE, "Cannot stop the graph returned: %x\n", hr);
 
     trace("stop -> run\n");
     hr = IMediaControl_Run(pmc);
