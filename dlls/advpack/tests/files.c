@@ -402,8 +402,10 @@ static void test_ExtractFiles(void)
 
     /* extract all files in the cab to nonexistent destination directory */
     hr = pExtractFiles("extract.cab", destFolder, 0, NULL, NULL, 0);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND),
-       "Expected %d, got %d\n", HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) ||
+       hr == E_FAIL, /* win95 */
+       "Expected %08x or %08x, got %08x\n", E_FAIL,
+       HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), hr);
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
     ok(!RemoveDirectoryA("dest\\testdir"), "Expected dest\\testdir to not exist\n");
@@ -470,8 +472,18 @@ static void test_ExtractFiles(void)
 static void test_AdvInstallFile(void)
 {
     HRESULT hr;
+    HMODULE hmod;
     char CURR_DIR[MAX_PATH];
     char destFolder[MAX_PATH];
+
+    hmod = LoadLibrary("setupapi.dll");
+    if (!hmod)
+    {
+        skip("setupapi.dll not present\n");
+        return;
+    }
+
+    FreeLibrary(hmod);
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
