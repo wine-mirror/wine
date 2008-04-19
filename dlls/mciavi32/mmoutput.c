@@ -599,8 +599,6 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
 {
     void* 		pBitmapData;
     LPBITMAPINFO	pBitmapInfo;
-    int 		nWidth;
-    int 		nHeight;
 
     if (!hDC || !wma->inbih)
 	return TRUE;
@@ -633,15 +631,9 @@ LRESULT MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
     if (wma->hic) {
         pBitmapData = wma->outdata;
         pBitmapInfo = (LPBITMAPINFO)wma->outbih;
-
-        nWidth = wma->outbih->biWidth;
-        nHeight = wma->outbih->biHeight;
     } else {
         pBitmapData = wma->indata;
         pBitmapInfo = (LPBITMAPINFO)wma->inbih;
-
-        nWidth = wma->inbih->biWidth;
-        nHeight = wma->inbih->biHeight;
     }
 
     StretchDIBits(hDC,
