@@ -301,6 +301,15 @@ static const IOmNavigatorVtbl OmNavigatorVtbl = {
     OmNavigator_get_userProfile
 };
 
+static dispex_static_data_t OmNavigator_dispex = {
+    IOmNavigator_tid,
+    NULL,
+    {
+        IOmNavigator_tid,
+        0
+    }
+};
+
 IOmNavigator *OmNavigator_Create(void)
 {
     OmNavigator *ret;
@@ -309,7 +318,7 @@ IOmNavigator *OmNavigator_Create(void)
     ret->lpIOmNavigatorVtbl = &OmNavigatorVtbl;
     ret->ref = 1;
 
-    init_dispex(&ret->dispex, (IUnknown*)OMNAVIGATOR(ret));
+    init_dispex(&ret->dispex, (IUnknown*)OMNAVIGATOR(ret), &OmNavigator_dispex);
 
     return OMNAVIGATOR(ret);
 }

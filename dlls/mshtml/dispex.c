@@ -31,11 +31,28 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+typedef struct {
+    DISPID id;
+    BSTR name;
+    tid_t tid;
+} func_info_t;
+
+struct dispex_data_t {
+    DWORD func_cnt;
+    func_info_t *funcs;
+    func_info_t **name_table;
+
+    struct list entry;
+};
+
 static ITypeLib *typelib;
 static ITypeInfo *typeinfos[LAST_tid];
+static struct list dispex_data_list = LIST_INIT(dispex_data_list);
 
 static REFIID tid_ids[] = {
+    &IID_NULL,
     &IID_IHTMLWindow2,
+    &IID_IOmNavigator
 };
 
 HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
@@ -60,7 +77,7 @@ HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 
         hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &typeinfo);
         if(FAILED(hres)) {
-            ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
             return hres;
         }
 
@@ -74,7 +91,20 @@ HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 
 void release_typelib(void)
 {
+    dispex_data_t *iter;
     unsigned i;
+
+    while(!list_empty(&dispex_data_list)) {
+        iter = LIST_ENTRY(list_head(&dispex_data_list), dispex_data_t, entry);
+        list_remove(&iter->entry);
+
+        for(i=0; i < iter->func_cnt; i++)
+            SysFreeString(iter->funcs[i].name);
+
+        heap_free(iter->funcs);
+        heap_free(iter->name_table);
+        heap_free(iter);
+    }
 
     if(!typelib)
         return;
@@ -84,6 +114,122 @@ void release_typelib(void)
             ITypeInfo_Release(typeinfos[i]);
 
     ITypeLib_Release(typelib);
+}
+
+static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, DISPID id, ITypeInfo *dti)
+{
+    HRESULT hres;
+
+    if(data->func_cnt && data->funcs[data->func_cnt-1].id == id)
+        return;
+
+    if(data->func_cnt == *size)
+        data->funcs = heap_realloc(data->funcs, (*size <<= 1)*sizeof(func_info_t));
+
+    hres = ITypeInfo_GetDocumentation(dti, id, &data->funcs[data->func_cnt].name, NULL, NULL, NULL);
+    if(FAILED(hres))
+        return;
+
+    data->funcs[data->func_cnt].id = id;
+    data->funcs[data->func_cnt].tid = tid;
+
+    data->func_cnt++;
+}
+
+static int dispid_cmp(const void *p1, const void *p2)
+{
+    return ((func_info_t*)p1)->id - ((func_info_t*)p2)->id;
+}
+
+static int func_name_cmp(const void *p1, const void *p2)
+{
+    return strcmpiW((*(func_info_t**)p1)->name, (*(func_info_t**)p2)->name);
+}
+
+static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
+{
+    const tid_t *tid = This->data->iface_tids;
+    FUNCDESC *funcdesc;
+    dispex_data_t *data;
+    DWORD size = 16, i;
+    ITypeInfo *ti, *dti;
+    HRESULT hres;
+
+    TRACE("(%p)\n", This);
+
+    hres = get_typeinfo(This->data->disp_tid, &dti);
+    if(FAILED(hres)) {
+        ERR("Could not get disp type info: %08x\n", hres);
+        return NULL;
+    }
+
+    data = heap_alloc(sizeof(dispex_data_t));
+    data->func_cnt = 0;
+    data->funcs = heap_alloc(size*sizeof(func_info_t));
+    list_add_tail(&dispex_data_list, &data->entry);
+
+    while(*tid) {
+        hres = get_typeinfo(*tid, &ti);
+        if(FAILED(hres))
+            break;
+
+        i=7;
+        while(1) {
+            hres = ITypeInfo_GetFuncDesc(ti, i++, &funcdesc);
+            if(FAILED(hres))
+                break;
+
+            add_func_info(data, &size, *tid, funcdesc->memid, dti);
+            ITypeInfo_ReleaseFuncDesc(ti, funcdesc);
+        }
+
+        tid++;
+    }
+
+    if(!data->func_cnt) {
+        heap_free(data->funcs);
+        data->funcs = NULL;
+    }else if(data->func_cnt != size) {
+        data->funcs = heap_realloc(data->funcs, data->func_cnt * sizeof(func_info_t));
+    }
+
+    qsort(data->funcs, data->func_cnt, sizeof(func_info_t), dispid_cmp);
+
+    if(data->funcs) {
+        data->name_table = heap_alloc(data->func_cnt * sizeof(func_info_t*));
+        for(i=0; i < data->func_cnt; i++)
+            data->name_table[i] = data->funcs+i;
+        qsort(data->name_table, data->func_cnt, sizeof(func_info_t*), func_name_cmp);
+    }else {
+        data->name_table = NULL;
+    }
+
+    return data;
+}
+
+static CRITICAL_SECTION cs_dispex_static_data;
+static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
+{
+    0, 0, &cs_dispex_static_data,
+    { &cs_dispex_static_data_dbg.ProcessLocksList, &cs_dispex_static_data_dbg.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": dispex_static_data") }
+};
+static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
+
+
+static dispex_data_t *get_dispex_data(DispatchEx *This)
+{
+    if(This->data->data)
+        return This->data->data;
+
+    EnterCriticalSection(&cs_dispex_static_data);
+
+    if(!This->data->data)
+        This->data->data = preprocess_dispex_data(This);
+
+    LeaveCriticalSection(&cs_dispex_static_data);
+
+    return This->data->data;
 }
 
 void call_disp_func(HTMLDocument *doc, IDispatch *disp)
@@ -152,8 +298,16 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hres = get_typeinfo(This->data->disp_tid, ppTInfo);
+    if(FAILED(hres))
+        return hres;
+
+    ITypeInfo_AddRef(*ppTInfo);
+    return S_OK;
 }
 
 static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
@@ -179,8 +333,41 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
-    return E_NOTIMPL;
+    dispex_data_t *data;
+    int min, max, n, c;
+
+    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+
+    if(grfdex & (~fdexNameCaseSensitive))
+        FIXME("Unsupported grfdex %x\n", grfdex);
+
+    data = get_dispex_data(This);
+    if(!data)
+        return E_FAIL;
+
+    min = 0;
+    max = data->func_cnt-1;
+
+    while(min <= max) {
+        n = (min+max)/2;
+
+        c = strcmpiW(data->name_table[n]->name, bstrName);
+        if(!c) {
+            if((grfdex & fdexNameCaseSensitive) && strcmpW(data->name_table[n]->name, bstrName))
+                break;
+
+            *pid = data->name_table[n]->id;
+            return S_OK;
+        }
+
+        if(c > 0)
+            max = n-1;
+        else
+            min = n+1;
+    }
+
+    TRACE("not found %s\n", debugstr_w(bstrName));
+    return DISP_E_UNKNOWNNAME;
 }
 
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -253,8 +440,9 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
-void init_dispex(DispatchEx *dispex, IUnknown *outer)
+void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data)
 {
     dispex->lpIDispatchExVtbl = &DispatchExVtbl;
     dispex->outer = outer;
+    dispex->data = data;
 }
