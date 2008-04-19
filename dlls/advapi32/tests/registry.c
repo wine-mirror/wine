@@ -1102,11 +1102,17 @@ static void test_regconnectregistry( void)
     lstrcpynA(netwName+2, compName, MAX_COMPUTERNAME_LENGTH + 1);
 
     retl = RegConnectRegistryA( compName, HKEY_LOCAL_MACHINE, &hkey);
-    ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %d\n", retl);
+    ok( !retl ||
+        retl == ERROR_DLL_INIT_FAILED ||
+        retl == ERROR_BAD_NETPATH, /* some win2k */
+        "RegConnectRegistryA failed err = %d\n", retl);
     if( !retl) RegCloseKey( hkey);
 
     retl = RegConnectRegistryA( netwName, HKEY_LOCAL_MACHINE, &hkey);
-    ok( !retl || retl == ERROR_DLL_INIT_FAILED, "RegConnectRegistryA failed err = %d\n", retl);
+    ok( !retl ||
+        retl == ERROR_DLL_INIT_FAILED ||
+        retl == ERROR_BAD_NETPATH, /* some win2k */
+        "RegConnectRegistryA failed err = %d\n", retl);
     if( !retl) RegCloseKey( hkey);
 
     SetLastError(0xdeadbeef);
