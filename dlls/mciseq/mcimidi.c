@@ -1190,7 +1190,6 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 {
     int			start, end;
     MIDIHDR		midiHdr;
-    DWORD		dwRet;
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
 
     TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpParms);
@@ -1216,7 +1215,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     midiHdr.dwBufferLength = 1024;
     midiHdr.dwUser = 0L;
     midiHdr.dwFlags = 0L;
-    dwRet = midiInPrepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
+    midiInPrepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
     TRACE("After MIDM_PREPARE\n");
     wmm->dwStatus = MCI_MODE_RECORD;
     /* FIXME: there is no buffer added */
@@ -1224,12 +1223,12 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 	TRACE("wmm->dwStatus=%p %d\n",
 	      &wmm->dwStatus, wmm->dwStatus);
 	midiHdr.dwBytesRecorded = 0;
-	dwRet = midiInStart((HMIDIIN)wmm->hMidi);
+	midiInStart((HMIDIIN)wmm->hMidi);
 	TRACE("midiInStart => dwBytesRecorded=%u\n", midiHdr.dwBytesRecorded);
 	if (midiHdr.dwBytesRecorded == 0) break;
     }
     TRACE("Before MIDM_UNPREPARE\n");
-    dwRet = midiInUnprepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
+    midiInUnprepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
     TRACE("After MIDM_UNPREPARE\n");
     HeapFree(GetProcessHeap(), 0, midiHdr.lpData);
     midiHdr.lpData = NULL;
