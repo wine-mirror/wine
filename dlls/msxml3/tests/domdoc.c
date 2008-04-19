@@ -3204,6 +3204,65 @@ static void test_testTransforms(void)
     free_bstrs();
 }
 
+static void test_Namespaces(void)
+{
+    IXMLDOMDocument2 *doc = NULL;
+    IXMLDOMNode *pNode;
+    IXMLDOMNode *pNode2 = NULL;
+    VARIANT_BOOL bSucc;
+    HRESULT hr;
+    BSTR str;
+    static  const CHAR szNamespacesXML[] =
+"<?xml version=\"1.0\"?>\n"
+"<root xmlns:WEB='http://www.winehq.org'>\n"
+"<WEB:Site version=\"1.0\" />\n"
+"</root>";
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szNamespacesXML), &bSucc);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE");
+
+    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root"), &pNode );
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if(hr == S_OK)
+    {
+        hr = IXMLDOMNode_get_firstChild( pNode, &pNode2 );
+        ok( hr == S_OK, "ret %08x\n", hr );
+        ok( pNode2 != NULL, "pNode2 == NULL\n");
+
+        /* Test get_prefix */
+        hr = IXMLDOMNode_get_prefix(pNode2, NULL);
+        ok( hr == E_INVALIDARG, "ret %08x\n", hr );
+        /* NOTE: Need to test that arg2 gets cleared on Error. */
+
+        hr = IXMLDOMNode_get_prefix(pNode2, &str);
+        ok( hr == S_OK, "ret %08x\n", hr );
+        ok( !lstrcmpW( str, _bstr_("WEB")), "incorrect prefix string\n");
+        SysFreeString(str);
+
+        /* Test get_namespaceURI */
+        hr = IXMLDOMNode_get_namespaceURI(pNode2, NULL);
+        ok( hr == E_INVALIDARG, "ret %08x\n", hr );
+        /* NOTE: Need to test that arg2 gets cleared on Error. */
+
+        hr = IXMLDOMNode_get_namespaceURI(pNode2, &str);
+        ok( hr == S_OK, "ret %08x\n", hr );
+        ok( !lstrcmpW( str, _bstr_("http://www.winehq.org")), "incorrect namespaceURI string\n");
+        SysFreeString(str);
+
+        IXMLDOMNode_Release(pNode2);
+        IXMLDOMNode_Release(pNode);
+    }
+
+    IXMLDOMDocument2_Release(doc);
+
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -3227,6 +3286,7 @@ START_TEST(domdoc)
     test_nodeTypeTests();
     test_DocumentSaveToDocument();
     test_testTransforms();
+    test_Namespaces();
 
     CoUninitialize();
 }
