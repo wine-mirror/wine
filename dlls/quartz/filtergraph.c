@@ -2079,7 +2079,8 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface,
     else
         *pCurrent = This->position;
     LeaveCriticalSection(&This->cs);
-    TRACE("Time: %lld.%03lld\n", *pCurrent / 10000000, (*pCurrent / 10000)%1000);
+
+    TRACE("Time: %u.%03u\n", (DWORD)(*pCurrent / 10000000), (DWORD)((*pCurrent / 10000)%1000));
 
     return S_OK;
 }

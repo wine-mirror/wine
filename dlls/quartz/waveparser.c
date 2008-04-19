@@ -393,7 +393,7 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
 
     pWAVEParser->Parser.mediaSeeking.llCurrent = 0;
     pWAVEParser->Parser.mediaSeeking.llStop = pWAVEParser->Parser.mediaSeeking.llDuration = bytepos_to_duration(pWAVEParser, pWAVEParser->EndOfFile);
-    TRACE("Duration: %lld seconds\n", pWAVEParser->Parser.mediaSeeking.llDuration / (LONGLONG)10000000);
+    TRACE("Duration: %u seconds\n", (DWORD)(pWAVEParser->Parser.mediaSeeking.llDuration / (LONGLONG)10000000));
 
     This->rtStop = pWAVEParser->EndOfFile;
     This->rtStart = pWAVEParser->StartOfFile;
