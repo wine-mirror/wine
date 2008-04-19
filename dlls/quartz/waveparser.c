@@ -72,7 +72,7 @@ static LONGLONG duration_to_bytepos(WAVEParserImpl *This, LONGLONG duration)
     return MEDIATIME_FROM_BYTES(bytepos);
 }
 
-static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample)
+static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR cookie)
 {
     WAVEParserImpl *This = (WAVEParserImpl *)iface;
     LPBYTE pbSrcStream = NULL;

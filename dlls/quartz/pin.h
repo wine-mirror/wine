@@ -20,8 +20,12 @@
 
 /* This function will process incoming samples to the pin.
  * Any return value valid in IMemInputPin::Receive is allowed here
+ *
+ * Cookie is the cookie that was set when requesting the buffer, if you don't
+ * implement custom requesting, you can safely ignore this
  */
-typedef HRESULT (* SAMPLEPROC)(LPVOID userdata, IMediaSample * pSample);
+typedef HRESULT (* SAMPLEPROC_PUSH)(LPVOID userdata, IMediaSample * pSample);
+typedef HRESULT (* SAMPLEPROC_PULL)(LPVOID userdata, IMediaSample * pSample, DWORD_PTR cookie);
 
 /* This function will determine whether a type is supported or not.
  * It is allowed to return any error value (within reason), as opposed
@@ -41,6 +45,17 @@ typedef HRESULT (* PRECONNECTPROC)(IPin * iface, IPin * pConnectPin);
  * tolerate this behavior. Return value is ignored and should be S_OK.
  */
 typedef HRESULT (* CLEANUPPROC) (LPVOID userdata);
+
+/* This function is called whenever a request for a new sample is made,
+ * If you implement it (it can be NULL for default behavior), you have to
+ * call IMemAllocator_GetBuffer and IMemAllocator_RequestBuffer
+ * This is useful if you want to request more then 1 buffer at simultaneously
+ * If PullPin->flushed is set, it means that all buffers queued previously are gone
+ *
+ * This will also cause the Sample Proc to be called with empty buffers to indicate
+ * failure in retrieving the sample.
+ */
+typedef HRESULT (* REQUESTPROC) (LPVOID userdata);
 
 typedef struct IPinImpl
 {
@@ -62,7 +77,7 @@ typedef struct InputPin
 
 	const IMemInputPinVtbl * lpVtblMemInput;
 	IMemAllocator * pAllocator;
-	SAMPLEPROC fnSampleProc;
+	SAMPLEPROC_PUSH fnSampleProc;
 	CLEANUPPROC fnCleanProc;
 	REFERENCE_TIME tStart;
 	REFERENCE_TIME tStop;
@@ -85,30 +100,37 @@ typedef struct PullPin
 	/* inheritance C style! */
 	IPinImpl pin;
 
+	REFERENCE_TIME rtStart, rtCurrent, rtNext, rtStop;
 	IAsyncReader * pReader;
 	IMemAllocator * pAlloc;
-	SAMPLEPROC fnSampleProc;
+	SAMPLEPROC_PULL fnSampleProc;
 	PRECONNECTPROC fnPreConnect;
-	HANDLE hThread;
-	HANDLE hEventStateChanged;
+	REQUESTPROC fnCustomRequest;
 	CLEANUPPROC fnCleanProc;
-	REFERENCE_TIME rtStart;
-	REFERENCE_TIME rtStop;
-	REFERENCE_TIME rtCurrent;
 	double dRate;
-	FILTER_STATE state;
 	BOOL stop_playback;
+	DWORD cbAlign;
 
 	/* Any code that touches the thread must hold the thread lock,
 	 * lock order: thread_lock and then the filter critical section
+	 * also signal thread_sleepy so the thread knows to wake up
 	 */
 	CRITICAL_SECTION thread_lock;
+	HANDLE hThread;
+	DWORD requested_state;
+	HANDLE hEventStateChanged, thread_sleepy;
+	DWORD state;
 } PullPin;
 
+#define Req_Sleepy 0
+#define Req_Die    1
+#define Req_Run    2
+#define Req_Pause  3
+
 /*** Constructors ***/
-HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 HRESULT OutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, long outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
-HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
 /**************************/
 /*** Pin Implementation ***/

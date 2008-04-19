@@ -100,7 +100,7 @@ static HRESULT AVISplitter_NextChunk(LONGLONG * pllCurrentChunkOffset, RIFFCHUNK
     return S_OK;
 }
 
-static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
+static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR cookie)
 {
     AVISplitterImpl *This = (AVISplitterImpl *)iface;
     LPBYTE pbSrcStream = NULL;
@@ -438,6 +438,7 @@ static HRESULT AVISplitter_ProcessOldIndex(AVISplitterImpl *This)
             IAsyncReader_SyncRead(pin->pReader, offset, sizeof(DWORD), (BYTE *)&temp);
             relative = (chunkid != temp);
 
+            TRACE("dwChunkId: %.4s\n", (char *)&chunkid);
             if (chunkid == mmioFOURCC('7','F','x','x')
                 && ((char *)&temp)[0] == 'i' && ((char *)&temp)[1] == 'x')
                 relative = FALSE;
@@ -459,14 +460,16 @@ static HRESULT AVISplitter_ProcessOldIndex(AVISplitterImpl *This)
                         debugstr_an((char *)&temp2, 4), (DWORD)((mov_pos + offset) >> 32), (DWORD)(mov_pos + offset));
                     relative = -1;
                 }
+                else
+                    TRACE("Scanned dwChunkId: %s\n", debugstr_an((char *)&temp2, 4));
             }
+            else if (!relative)
+               TRACE("Scanned dwChunkId: %s\n", debugstr_an((char *)&temp, 4));
+            TRACE("dwFlags: %08x\n", pAviOldIndex->aIndex[x].dwFlags);
+            TRACE("dwOffset (%s): %08x\n", relative ? "relative" : "absolute", offset);
+            TRACE("dwSize: %08x\n", pAviOldIndex->aIndex[x].dwSize);
         }
-
-        TRACE("Scanned dwChunkId: %s\n", debugstr_an((char *)&temp, 4));
-        TRACE("dwChunkId: %.4s\n", (char *)&chunkid);
-        TRACE("dwFlags: %08x\n", pAviOldIndex->aIndex[x].dwFlags);
-        TRACE("dwOffset (%s): %08x\n", relative ? "relative" : "absolute", offset);
-        TRACE("dwSize: %08x\n", pAviOldIndex->aIndex[x].dwSize);
+        else break;
     }
 
     if (relative == -1)

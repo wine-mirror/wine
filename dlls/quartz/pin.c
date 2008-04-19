@@ -226,7 +226,7 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
     return hr;
 }
 
-static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData,
+static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData,
                              QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, InputPin * pPinImpl)
 {
     TRACE("\n");
@@ -284,7 +284,7 @@ static HRESULT OutputPin_Init(const IPinVtbl *OutputPin_Vtbl, const PIN_INFO * p
     return S_OK;
 }
 
-HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     InputPin * pPinImpl;
 
@@ -770,7 +770,7 @@ HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * pSample)
     /*TRACE("(%p/%p)->(%p)\n", This, iface, pSample);*/
 
     EnterCriticalSection(This->pin.pCritSec);
-    if (!This->end_of_stream && !This->flushing && !This->end_of_stream)
+    if (!This->end_of_stream && !This->flushing)
         hr = This->fnSampleProc(This->pin.pUserData, pSample);
     else
         hr = S_FALSE;
@@ -851,9 +851,9 @@ ULONG WINAPI OutputPin_Release(IPin * iface)
 {
     OutputPin *This = (OutputPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
-    
+
     TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
-    
+
     if (!refCount)
     {
         FreeMediaType(&This->pin.mtCurrent);
@@ -1173,8 +1173,8 @@ HRESULT OutputPin_DeliverDisconnect(OutputPin * This)
 }
 
 
-static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData,
-                            QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl)
+static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData,
+                            QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl)
 {
     /* Common attributes */
     pPinImpl->pin.lpVtbl = PullPin_Vtbl;
@@ -1194,12 +1194,15 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
     pPinImpl->pReader = NULL;
     pPinImpl->hThread = NULL;
     pPinImpl->hEventStateChanged = CreateEventW(NULL, TRUE, TRUE, NULL);
+    pPinImpl->thread_sleepy = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     pPinImpl->rtStart = 0;
     pPinImpl->rtCurrent = 0;
     pPinImpl->rtStop = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
     pPinImpl->dRate = 1.0;
-    pPinImpl->state = State_Stopped;
+    pPinImpl->state = Req_Die;
+    pPinImpl->fnCustomRequest = pCustomRequest;
+    pPinImpl->stop_playback = 1;
 
     InitializeCriticalSection(&pPinImpl->thread_lock);
     pPinImpl->thread_lock.DebugInfo->Spare[0] = (DWORD_PTR)( __FILE__ ": PullPin.thread_lock");
@@ -1207,7 +1210,7 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
     return S_OK;
 }
 
-HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     PullPin * pPinImpl;
 
@@ -1224,7 +1227,7 @@ HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInf
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(PullPin_Init(PullPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCritSec, pPinImpl)))
+    if (SUCCEEDED(PullPin_Init(PullPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCustomRequest, pCritSec, pPinImpl)))
     {
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
@@ -1333,7 +1336,7 @@ HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI PullPin_Release(IPin * iface)
+ULONG WINAPI PullPin_Release(IPin *iface)
 {
     PullPin *This = (PullPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
@@ -1346,6 +1349,7 @@ ULONG WINAPI PullPin_Release(IPin * iface)
             IMemAllocator_Release(This->pAlloc);
         if(This->pReader)
             IAsyncReader_Release(This->pReader);
+        CloseHandle(This->thread_sleepy);
         CloseHandle(This->hEventStateChanged);
         This->thread_lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->thread_lock);
@@ -1355,94 +1359,44 @@ ULONG WINAPI PullPin_Release(IPin * iface)
     return refCount;
 }
 
-static DWORD WINAPI PullPin_Thread_Main(LPVOID pv)
+static HRESULT PullPin_Standard_Request(PullPin *This, BOOL start)
 {
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
-    for (;;)
-        SleepEx(INFINITE, TRUE);
-}
-
-static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
-{
-    PullPin *This = (PullPin *)iface;
+    REFERENCE_TIME rtSampleStart;
+    REFERENCE_TIME rtSampleStop;
+    IMediaSample *sample = NULL;
     HRESULT hr;
 
-    ALLOCATOR_PROPERTIES allocProps;
+    TRACE("Requesting sample!\n");
 
+    if (start)
+        This->rtNext = This->rtCurrent;
 
-    EnterCriticalSection(This->pin.pCritSec);
-    SetEvent(This->hEventStateChanged);
-    This->state = State_Running;
-    LeaveCriticalSection(This->pin.pCritSec);
+    if (This->rtNext >= This->rtStop)
+        /* Last sample has already been queued, request nothing more */
+        return S_OK;
 
-    hr = IMemAllocator_GetProperties(This->pAlloc, &allocProps);
+    hr = IMemAllocator_GetBuffer(This->pAlloc, &sample, NULL, NULL, 0);
 
-    if (This->rtCurrent < This->rtStart)
-        This->rtCurrent = MEDIATIME_FROM_BYTES(ALIGNDOWN(BYTES_FROM_MEDIATIME(This->rtStart), allocProps.cbAlign));
-
-    TRACE("Start\n");
-
-    if (This->rtCurrent >= This->rtStop)
+    if (SUCCEEDED(hr))
     {
-        FIXME("Send an EndOfStream?\n");
+        rtSampleStart = This->rtNext;
+        rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(sample));
+        if (rtSampleStop > This->rtStop)
+            rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(This->rtStop), This->cbAlign));
+        hr = IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
+
+        This->rtCurrent = This->rtNext;
+        This->rtNext = rtSampleStop;
     }
-    else do
-    {
-        /* FIXME: to improve performance by quite a bit this should be changed
-         * so that one sample is processed while one sample is fetched. However,
-         * it is harder to debug so for the moment it will stay as it is */
-        IMediaSample * pSample = NULL;
-        REFERENCE_TIME rtSampleStart;
-        REFERENCE_TIME rtSampleStop;
-        DWORD_PTR dwUser;
 
-        TRACE("Process sample\n");
+    if (SUCCEEDED(hr))
+        hr = IAsyncReader_Request(This->pReader, sample, 0);
 
-        hr = IMemAllocator_GetBuffer(This->pAlloc, &pSample, NULL, NULL, 0);
-
-        if (SUCCEEDED(hr))
-        {
-            rtSampleStart = This->rtCurrent;
-            rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(pSample));
-            if (rtSampleStop > This->rtStop)
-                rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(This->rtStop), allocProps.cbAlign));
-            hr = IMediaSample_SetTime(pSample, &rtSampleStart, &rtSampleStop);
-            This->rtCurrent = rtSampleStop;
-        }
-
-        if (SUCCEEDED(hr))
-            hr = IAsyncReader_Request(This->pReader, pSample, (ULONG_PTR)0);
-
-        if (SUCCEEDED(hr))
-            hr = IAsyncReader_WaitForNext(This->pReader, 1000, &pSample, &dwUser);
-
-        if (SUCCEEDED(hr))
-        {
-            rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(IMediaSample_GetActualDataLength(pSample));
-            if (rtSampleStop > This->rtStop)
-                rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(This->rtStop), allocProps.cbAlign));
-            hr = IMediaSample_SetTime(pSample, &rtSampleStart, &rtSampleStop);
-        }
-
-        if (SUCCEEDED(hr))
-            hr = This->fnSampleProc(This->pin.pUserData, pSample);
-        else
-            ERR("Processing error: %x\n", hr);
-
-        if (pSample)
-            IMediaSample_Release(pSample);
-    } while (This->rtCurrent < This->rtStop && hr == S_OK && !This->stop_playback);
-
-    EnterCriticalSection(This->pin.pCritSec);
-    This->state = State_Paused;
-    LeaveCriticalSection(This->pin.pCritSec);
-    TRACE("End\n");
+    return hr;
 }
 
-static void CALLBACK PullPin_Thread_Flush(ULONG_PTR iface)
+static void CALLBACK PullPin_Flush(PullPin *This)
 {
-    PullPin *This = (PullPin *)iface;
     IMediaSample *pSample;
 
     EnterCriticalSection(This->pin.pCritSec);
@@ -1450,13 +1404,18 @@ static void CALLBACK PullPin_Thread_Flush(ULONG_PTR iface)
     {
         /* Flush outstanding samples */
         IAsyncReader_BeginFlush(This->pReader);
-
         for (;;)
         {
-            IMemAllocator_GetBuffer(This->pAlloc, &pSample, NULL, NULL, 0);
+            DWORD_PTR dwUser;
+
+            IAsyncReader_WaitForNext(This->pReader, 0, &pSample, &dwUser);
 
             if (!pSample)
                 break;
+
+            if (This->fnCustomRequest)
+                This->fnSampleProc(This->pin.pUserData, pSample, dwUser);
+
             IMediaSample_Release(pSample);
         }
 
@@ -1465,25 +1424,130 @@ static void CALLBACK PullPin_Thread_Flush(ULONG_PTR iface)
     LeaveCriticalSection(This->pin.pCritSec);
 }
 
-static void CALLBACK PullPin_Thread_Pause(ULONG_PTR iface)
+static void CALLBACK PullPin_Thread_Process(PullPin *This)
 {
-    PullPin *This = (PullPin *)iface;
+    HRESULT hr;
+    BOOL rejected = FALSE;
+    IMediaSample * pSample = NULL;
+    ALLOCATOR_PROPERTIES allocProps;
 
-    TRACE("(%p/%p)->()\n", This, (LPVOID)iface);
+    EnterCriticalSection(This->pin.pCritSec);
+    SetEvent(This->hEventStateChanged);
+    LeaveCriticalSection(This->pin.pCritSec);
+
+    hr = IMemAllocator_GetProperties(This->pAlloc, &allocProps);
+
+    This->cbAlign = allocProps.cbAlign;
+
+    if (This->rtCurrent < This->rtStart)
+        This->rtCurrent = MEDIATIME_FROM_BYTES(ALIGNDOWN(BYTES_FROM_MEDIATIME(This->rtStart), This->cbAlign));
+
+    TRACE("Start\n");
+
+    if (This->rtCurrent >= This->rtStop)
+    {
+        IPin_EndOfStream((IPin *)This);
+        return;
+    }
+
+    /* There is no sample in our buffer */
+    if (!This->fnCustomRequest)
+        hr = PullPin_Standard_Request(This, TRUE);
+    else
+        hr = This->fnCustomRequest(This->pin.pUserData);
+
+    do
+    {
+        DWORD_PTR dwUser;
+
+        TRACE("Process sample\n");
+
+        hr = IAsyncReader_WaitForNext(This->pReader, 10000, &pSample, &dwUser);
+
+        if (FAILED(hr))
+            ERR("Queueing error: %x\n", hr);
+
+        if (pSample)
+        {
+            if (!This->fnCustomRequest)
+                hr = PullPin_Standard_Request(This, FALSE);
+            else
+                hr = This->fnCustomRequest(This->pin.pUserData);
+        }
+
+        /* Return an empty sample on error to the implementation in case it does custom parsing, so it knows it's gone */
+        if (SUCCEEDED(hr) || This->fnCustomRequest)
+        {
+            REFERENCE_TIME rtStart, rtStop;
+            IMediaSample_GetTime(pSample, &rtStart, &rtStop);
+
+            do
+            {
+                hr = This->fnSampleProc(This->pin.pUserData, pSample, dwUser);
+
+                rejected = FALSE;
+
+                if (!This->fnCustomRequest)
+                {
+                    if (This->rtCurrent == rtStart)
+                    {
+                        rejected = TRUE;
+                        TRACE("DENIED!\n");
+                        Sleep(10);
+                        /* Maybe it's transient? */
+                    }
+                    /* rtNext = rtCurrent, because the next sample is already queued */
+                    else if (rtStop != This->rtCurrent && rtStop < This->rtStop)
+                    {
+                        WARN("Position changed! rtStop: %u, rtCurrent: %u\n", (DWORD)BYTES_FROM_MEDIATIME(rtStop), (DWORD)BYTES_FROM_MEDIATIME(This->rtCurrent));
+                        PullPin_Flush(This);
+                        hr = PullPin_Standard_Request(This, TRUE);
+                    }
+                }
+            } while (rejected && (This->rtCurrent < This->rtStop && hr == S_OK && !This->stop_playback));
+        }
+        else
+        {
+            /* FIXME: This is not well handled yet! */
+            ERR("Processing error: %x\n", hr);
+        }
+
+        if (pSample)
+        {
+            IMediaSample_Release(pSample);
+            pSample = NULL;
+        }
+    } while (This->rtCurrent < This->rtStop && hr == S_OK && !This->stop_playback);
+
+    /* Sample was rejected, and we are asked to terminate */
+    if (pSample)
+    {
+        IMediaSample_Release(pSample);
+    }
+
+    /* Can't reset state to Sleepy here because that might race, instead PauseProcessing will do that for us
+     * Flush remaining samples
+     */
+    PullPin_Flush(This);
+
+    TRACE("End: %08x, %d\n", hr, This->stop_playback);
+}
+
+static void CALLBACK PullPin_Thread_Pause(PullPin *This)
+{
+    TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
     {
-        This->state = State_Paused;
+        This->state = Req_Sleepy;
         SetEvent(This->hEventStateChanged);
     }
     LeaveCriticalSection(This->pin.pCritSec);
 }
 
-static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
+static void CALLBACK PullPin_Thread_Stop(PullPin *This)
 {
-    PullPin *This = (PullPin *)iface;
-
-    TRACE("(%p/%p)->()\n", This, (LPVOID)iface);
+    TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
     {
@@ -1495,7 +1559,6 @@ static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
             ERR("Allocator decommit failed with error %x. Possible memory leak\n", hr);
 
         SetEvent(This->hEventStateChanged);
-        This->state = State_Stopped;
     }
     LeaveCriticalSection(This->pin.pCritSec);
 
@@ -1503,6 +1566,28 @@ static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
 
     CoUninitialize();
     ExitThread(0);
+}
+
+static DWORD WINAPI PullPin_Thread_Main(LPVOID pv)
+{
+    PullPin *This = pv;
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    for (;;)
+    {
+        WaitForSingleObject(This->thread_sleepy, INFINITE);
+
+        TRACE("State: %d\n", This->state);
+
+        switch (This->state)
+        {
+        case Req_Die: PullPin_Thread_Stop(This); break;
+        case Req_Run: PullPin_Thread_Process(This); break;
+        case Req_Pause: PullPin_Thread_Pause(This); break;
+        case Req_Sleepy: ERR("Should not be signalled with SLEEPY!\n"); break;
+        default: ERR("Unknown state request: %d\n", This->state); break;
+        }
+    }
 }
 
 HRESULT PullPin_InitProcessing(PullPin * This)
@@ -1514,32 +1599,36 @@ HRESULT PullPin_InitProcessing(PullPin * This)
     /* if we are connected */
     if (This->pAlloc)
     {
+        DWORD dwThreadId;
+
         WaitForSingleObject(This->hEventStateChanged, INFINITE);
         EnterCriticalSection(This->pin.pCritSec);
-        if (This->state == State_Stopped)
+
+        assert(!This->hThread);
+        assert(This->state == Req_Die);
+        assert(This->stop_playback);
+        assert(WaitForSingleObject(This->thread_sleepy, 0) == WAIT_TIMEOUT);
+        This->state = Req_Sleepy;
+
+        /* AddRef the filter to make sure it and it's pins will be around
+         * as long as the thread */
+        IBaseFilter_AddRef(This->pin.pinInfo.pFilter);
+
+
+        This->hThread = CreateThread(NULL, 0, PullPin_Thread_Main, This, 0, &dwThreadId);
+        if (!This->hThread)
         {
-            DWORD dwThreadId;
-            assert(!This->hThread);
-
-            /* AddRef the filter to make sure it and it's pins will be around
-             * as long as the thread */
-            IBaseFilter_AddRef(This->pin.pinInfo.pFilter);
-
-            This->hThread = CreateThread(NULL, 0, PullPin_Thread_Main, NULL, 0, &dwThreadId);
-            if (!This->hThread)
-            {
-                hr = HRESULT_FROM_WIN32(GetLastError());
-                IBaseFilter_Release(This->pin.pinInfo.pFilter);
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                hr = IMemAllocator_Commit(This->pAlloc);
-                This->state = State_Paused;
-                SetEvent(This->hEventStateChanged);
-            }
+            hr = HRESULT_FROM_WIN32(GetLastError());
+            IBaseFilter_Release(This->pin.pinInfo.pFilter);
         }
-        else assert(This->hThread);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IMemAllocator_Commit(This->pAlloc);
+
+            SetEvent(This->hEventStateChanged);
+            /* If assert fails, that means a command was not processed before the thread previously terminated */
+        }
         LeaveCriticalSection(This->pin.pCritSec);
     }
 
@@ -1557,11 +1646,15 @@ HRESULT PullPin_StartProcessing(PullPin * This)
         assert(This->hThread);
 
         PullPin_WaitForStateChange(This, INFINITE);
-        ResetEvent(This->hEventStateChanged);
-        This->stop_playback = 0;
 
-        if (!QueueUserAPC(PullPin_Thread_Process, This->hThread, (ULONG_PTR)This))
-            return HRESULT_FROM_WIN32(GetLastError());
+        assert(This->state == Req_Sleepy);
+
+        /* Wake up! */
+        assert(WaitForSingleObject(This->thread_sleepy, 0) == WAIT_TIMEOUT);
+        This->state = Req_Run;
+        This->stop_playback = 0;
+        ResetEvent(This->hEventStateChanged);
+        SetEvent(This->thread_sleepy);
     }
 
     return S_OK;
@@ -1576,13 +1669,18 @@ HRESULT PullPin_PauseProcessing(PullPin * This)
         assert(This->hThread);
 
         PullPin_WaitForStateChange(This, INFINITE);
-        EnterCriticalSection(This->pin.pCritSec);
-        This->stop_playback = 1;
-        LeaveCriticalSection(This->pin.pCritSec);
-        ResetEvent(This->hEventStateChanged);
 
-        if (!QueueUserAPC(PullPin_Thread_Pause, This->hThread, (ULONG_PTR)This))
-            return HRESULT_FROM_WIN32(GetLastError());
+        EnterCriticalSection(This->pin.pCritSec);
+        assert(!This->stop_playback);
+        assert(This->state == Req_Run|| This->state == Req_Sleepy);
+
+        assert(WaitForSingleObject(This->thread_sleepy, 0) == WAIT_TIMEOUT);
+        This->state = Req_Pause;
+        This->stop_playback = 1;
+        ResetEvent(This->hEventStateChanged);
+        SetEvent(This->thread_sleepy);
+
+        LeaveCriticalSection(This->pin.pCritSec);
     }
 
     return S_OK;
@@ -1593,16 +1691,17 @@ HRESULT PullPin_StopProcessing(PullPin * This)
     TRACE("(%p)->()\n", This);
 
     /* if we are alive */
-    if (This->hThread)
-    {
-        PullPin_WaitForStateChange(This, INFINITE);
+    assert(This->hThread);
 
-        This->stop_playback = 1;
-        ResetEvent(This->hEventStateChanged);
+    PullPin_WaitForStateChange(This, INFINITE);
 
-        if (!QueueUserAPC(PullPin_Thread_Stop, This->hThread, (ULONG_PTR)This))
-            return HRESULT_FROM_WIN32(GetLastError());
-    }
+    assert(This->state == Req_Pause || This->state == Req_Sleepy);
+
+    This->stop_playback = 1;
+    This->state = Req_Die;
+    assert(WaitForSingleObject(This->thread_sleepy, 0) == WAIT_TIMEOUT);
+    ResetEvent(This->hEventStateChanged);
+    SetEvent(This->thread_sleepy);
 
     return S_OK;
 }
@@ -1624,7 +1723,7 @@ HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
 {
     PullPin *This = (PullPin *)iface;
-    TRACE("(%p)->()\n", iface);
+    TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
     {
@@ -1634,19 +1733,13 @@ HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
 
     EnterCriticalSection(&This->thread_lock);
     {
-        if (This->state == State_Running)
-            PullPin_PauseProcessing(This);
-
         PullPin_WaitForStateChange(This, INFINITE);
 
-        /* Workaround: The file async reader only cancels io on current thread
-         * only vista and newer have CancelIoEx, so try the thread context if available
-         * Anyone has some documentation on NtCancelFileIoEx?
-         */
-        if (This->hThread)
-            QueueUserAPC(PullPin_Thread_Flush, This->hThread, (ULONG_PTR)This);
-        else
-            PullPin_Thread_Flush((ULONG_PTR)This);
+        if (This->hThread && !This->stop_playback)
+        {
+            PullPin_PauseProcessing(This);
+            PullPin_WaitForStateChange(This, INFINITE);
+        }
     }
     LeaveCriticalSection(&This->thread_lock);
 
@@ -1670,7 +1763,7 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
         FILTER_STATE state;
         IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
 
-        if (state == State_Running && This->state == State_Paused)
+        if (This->stop_playback && state == State_Running)
             PullPin_StartProcessing(This);
 
         PullPin_WaitForStateChange(This, INFINITE);

@@ -20,7 +20,7 @@
 
 typedef struct ParserImpl ParserImpl;
 
-typedef HRESULT (*PFN_PROCESS_SAMPLE) (LPVOID iface, IMediaSample * pSample);
+typedef HRESULT (*PFN_PROCESS_SAMPLE) (LPVOID iface, IMediaSample * pSample, DWORD_PTR cookie);
 typedef HRESULT (*PFN_QUERY_ACCEPT) (LPVOID iface, const AM_MEDIA_TYPE * pmt);
 typedef HRESULT (*PFN_PRE_CONNECT) (IPin * iface, IPin * pConnectPin);
 typedef HRESULT (*PFN_CLEANUP) (LPVOID iface);

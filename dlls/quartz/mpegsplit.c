@@ -116,7 +116,6 @@ static const DWORD tabsel_123[2][3][16] = {
       {0,8,16,24,32,40,48,56,64,80,96,112,128,144,160,} }
 };
 
-
 static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
 {
     LONGLONG duration = *pduration;
@@ -361,7 +360,7 @@ out_append:
 }
 
 
-static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
+static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR cookie)
 {
     MPEGSplitterImpl *This = (MPEGSplitterImpl*)iface;
     BYTE *pbSrcStream;
@@ -419,6 +418,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample)
                 goto fail;
             IMediaSample_SetSyncPoint(This->pCurrentSample, TRUE);
             IMediaSample_SetDiscontinuity(This->pCurrentSample, This->seek);
+            IMediaSample_SetPreroll(This->pCurrentSample, (This->seek && This->position > 0));
             This->seek = FALSE;
         }
         hr = FillBuffer(This, &pbSrcStream, &cbSrcStream, This->pCurrentSample);
