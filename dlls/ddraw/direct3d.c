@@ -310,7 +310,7 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
     /* Some games (Motoracer 2 demo) have the bad idea to modify the device name string.
        Let's put the string in a sufficiently sized array in writable memory. */
     char device_name[50];
-    strcpy(device_name,"direct3d");
+    strcpy(device_name,"Direct3D HEL");
 
     TRACE("(%p)->(%p,%p)\n", This, Callback, Context);
     EnterCriticalSection(&ddraw_cs);
@@ -358,6 +358,8 @@ IDirect3DImpl_3_EnumDevices(IDirect3D3 *iface,
             return D3D_OK;
         }
     }
+
+    strcpy(device_name,"Direct3D HAL");
 
     TRACE("(%p) Enumerating HAL Direct3D device\n", This);
     d1 = dref;
