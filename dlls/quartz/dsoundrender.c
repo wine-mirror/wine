@@ -245,12 +245,6 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
      * pause completion here, but for sound playing a single frame doesn't make sense
      */
 
-    if (IMediaSample_IsPreroll(pSample) == S_OK)
-    {
-        TRACE("Preroll!\n");
-        return S_OK;
-    }
-
     if (This->state == State_Paused)
         return S_FALSE;
 
@@ -271,6 +265,12 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     if (This->rtLastStop != tStart && (IMediaSample_IsDiscontinuity(pSample) == S_FALSE))
         FIXME("Unexpected discontinuity: Last: %lld, tStart: %lld\n", This->rtLastStop, tStart);
     This->rtLastStop = tStop;
+
+    if (IMediaSample_IsPreroll(pSample) == S_OK)
+    {
+        TRACE("Preroll!\n");
+        return S_OK;
+    }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
     TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, cbSrcStream);
