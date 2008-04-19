@@ -50,10 +50,20 @@ static void rungraph(void)
     HRESULT hr;
     IMediaControl* pmc;
     IMediaEvent* pme;
+    IMediaFilter* pmf;
     HANDLE hEvent;
 
     hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaControl, (LPVOID*)&pmc);
     ok(hr==S_OK, "Cannot get IMediaControl interface returned: %x\n", hr);
+
+    hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaFilter, (LPVOID*)&pmf);
+    ok(hr==S_OK, "Cannot get IMediaFilter interface returned: %x\n", hr);
+
+    IMediaControl_Stop(pmc);
+
+    IMediaFilter_SetSyncSource(pmf, NULL);
+
+    IMediaFilter_Release(pmf);
 
     hr = IMediaControl_Run(pmc);
     ok(hr==S_FALSE, "Cannot run the graph returned: %x\n", hr);
@@ -63,6 +73,8 @@ static void rungraph(void)
     trace("run -> stop\n");
     hr = IMediaControl_Stop(pmc);
     ok(hr==S_OK || hr == S_FALSE, "Cannot stop the graph returned: %x\n", hr);
+
+    IGraphBuilder_SetDefaultSyncSource(pgraph);
 
     Sleep(10);
     trace("stop -> pause\n");
@@ -97,7 +109,6 @@ static void rungraph(void)
     hr = IMediaControl_Run(pmc);
     ok(hr==S_OK || hr == S_FALSE, "Cannot start the graph returned: %x\n", hr);
 
-
     hr = IGraphBuilder_QueryInterface(pgraph, &IID_IMediaEvent, (LPVOID*)&pme);
     ok(hr==S_OK, "Cannot get IMediaEvent interface returned: %x\n", hr);
 
@@ -107,7 +118,7 @@ static void rungraph(void)
     /* WaitForSingleObject(hEvent, INFINITE); */
     Sleep(20000);
 
-    hr = IMediaControl_Release(pme);
+    hr = IMediaEvent_Release(pme);
     ok(hr==2, "Releasing mediaevent returned: %x\n", hr);
 
     hr = IMediaControl_Stop(pmc);

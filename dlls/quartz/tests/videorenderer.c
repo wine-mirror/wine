@@ -86,6 +86,69 @@ static void test_query_interface(void)
     RELEASE_EXPECT(pVideoWindow, 1);
 }
 
+static void test_pin(IPin *pin)
+{
+    IMemInputPin *mpin = NULL;
+
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&mpin);
+
+    ok(mpin != NULL, "No IMemInputPin found!\n");
+    if (mpin)
+    {
+        ok(IMemInputPin_ReceiveCanBlock(mpin) == S_OK, "Receive can't block for pin!\n");
+        IMemInputPin_Release(mpin);
+    }
+    /* TODO */
+}
+
+static void test_basefilter(void)
+{
+    IEnumPins *pin_enum = NULL;
+    IBaseFilter *base = NULL;
+    IPin *pins[2];
+    ULONG ref;
+    HRESULT hr;
+
+    IUnknown_QueryInterface(pVideoRenderer, &IID_IBaseFilter, (void *)&base);
+    if (base == NULL)
+    {
+        /* test_query_interface handles this case */
+        skip("No IBaseFilter\n");
+        return;
+    }
+
+    hr = IBaseFilter_EnumPins(base, NULL);
+    ok(hr == E_POINTER, "hr = %08x and not E_POINTER\n", hr);
+
+    hr= IBaseFilter_EnumPins(base, &pin_enum);
+    ok(hr == S_OK, "hr = %08x and not S_OK\n", hr);
+
+    hr = IEnumPins_Next(pin_enum, 1, NULL, NULL);
+    ok(hr == E_POINTER, "hr = %08x and not E_POINTER\n", hr);
+
+    hr = IEnumPins_Next(pin_enum, 2, pins, NULL);
+    ok(hr == E_INVALIDARG, "hr = %08x and not E_INVALIDARG\n", hr);
+
+    pins[0] = (void *)0xdead;
+    pins[1] = (void *)0xdeed;
+
+    hr = IEnumPins_Next(pin_enum, 2, pins, &ref);
+    ok(hr == S_FALSE, "hr = %08x instead of S_FALSE\n", hr);
+    ok(pins[0] != (void *)0xdead && pins[0] != NULL, "pins[0] = %p\n", pins[0]);
+    if (pins[0] != (void *)0xdead && pins[0] != NULL)
+    {
+        test_pin(pins[0]);
+        IPin_Release(pins[0]);
+    }
+
+    ok(pins[1] == (void *)0xdeed, "pins[1] = %p\n", pins[1]);
+
+    ref = IEnumPins_Release(pin_enum);
+    ok(ref == 0, "ref is %u and not 0!\n", ref);
+
+    IBaseFilter_Release(base);
+}
+
 START_TEST(videorenderer)
 {
     CoInitialize(NULL);
@@ -93,6 +156,7 @@ START_TEST(videorenderer)
         return;
 
     test_query_interface();
+    test_basefilter();
 
     release_video_renderer();
 }

@@ -754,7 +754,8 @@ static HRESULT WINAPI VideoRenderer_GetSyncSource(IBaseFilter * iface, IReferenc
     EnterCriticalSection(&This->csFilter);
     {
         *ppClock = This->pClock;
-        IReferenceClock_AddRef(This->pClock);
+        if (This->pClock)
+            IReferenceClock_AddRef(This->pClock);
     }
     LeaveCriticalSection(&This->csFilter);
     

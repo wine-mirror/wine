@@ -424,7 +424,8 @@ static HRESULT WINAPI TransformFilter_GetSyncSource(IBaseFilter * iface, IRefere
     EnterCriticalSection(&This->csFilter);
     {
         *ppClock = This->pClock;
-        IReferenceClock_AddRef(This->pClock);
+        if (This->pClock)
+            IReferenceClock_AddRef(This->pClock);
     }
     LeaveCriticalSection(&This->csFilter);
 

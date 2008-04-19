@@ -463,7 +463,8 @@ static HRESULT WINAPI NullRenderer_GetSyncSource(IBaseFilter * iface, IReference
     EnterCriticalSection(&This->csFilter);
     {
         *ppClock = This->pClock;
-        IReferenceClock_AddRef(This->pClock);
+        if (This->pClock)
+            IReferenceClock_AddRef(This->pClock);
     }
     LeaveCriticalSection(&This->csFilter);
 

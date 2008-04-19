@@ -36,7 +36,12 @@ static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
 
 HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** ppEnum)
 {
-    IEnumPinsImpl * pEnumPins = CoTaskMemAlloc(sizeof(IEnumPinsImpl));
+    IEnumPinsImpl * pEnumPins;
+
+    if (!ppEnum)
+        return E_POINTER;
+
+    pEnumPins = CoTaskMemAlloc(sizeof(IEnumPinsImpl));
     if (!pEnumPins)
     {
         *ppEnum = NULL;
@@ -108,6 +113,12 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
     cFetched = min(This->enumPinDetails.cPins, This->uIndex + cPins) - This->uIndex;
 
     TRACE("(%u, %p, %p)\n", cPins, ppPins, pcFetched);
+
+    if (!ppPins)
+        return E_POINTER;
+
+    if (cPins > 1 && !pcFetched)
+        return E_INVALIDARG;
 
     if (cFetched > 0)
     {
