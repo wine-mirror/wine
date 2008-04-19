@@ -51,7 +51,9 @@ static struct list dispex_data_list = LIST_INIT(dispex_data_list);
 
 static REFIID tid_ids[] = {
     &IID_NULL,
+    &DIID_DispHTMLWindow2,
     &IID_IHTMLWindow2,
+    &IID_IHTMLWindow3,
     &IID_IOmNavigator
 };
 

@@ -61,7 +61,9 @@ typedef struct event_target_t event_target_t;
 /* NOTE: make sure to keep in sync with dispex.c */
 typedef enum {
     NULL_tid,
+    DispHTMLWindow2_tid,
     IHTMLWindow2_tid,
+    IHTMLWindow3_tid,
     IOmNavigator_tid,
     LAST_tid
 } tid_t;
@@ -85,8 +87,10 @@ typedef struct {
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
 
 typedef struct {
+    DispatchEx dispex;
     const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
     const IHTMLWindow3Vtbl *lpHTMLWindow3Vtbl;
+    const IDispatchExVtbl  *lpIDispatchExVtbl;
 
     LONG ref;
 
