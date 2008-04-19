@@ -53,7 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 #define MPEG_AUDIO_HEADER 1
 #define MPEG_NO_HEADER 0
 
-#define SEEK_INTERVAL (ULONGLONG)(30 * 10000000) /* Add an entry every 30 seconds */
+#define SEEK_INTERVAL (ULONGLONG)(10 * 10000000) /* Add an entry every 10 seconds */
 
 struct seek_entry {
     ULONGLONG bytepos;
@@ -216,6 +216,7 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen, IMed
     if (This->remaining_bytes)
     {
         DWORD towrite = min(This->remaining_bytes, *flen);
+        LONGLONG foo;
 
         hr = copy_data(pCurrentSample, fbuf, flen, towrite);
         if (FAILED(hr))
@@ -227,6 +228,11 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, BYTE** fbuf, DWORD *flen, IMed
         This->remaining_bytes -= towrite;
         if (This->remaining_bytes)
             return hr;
+
+        /* Restore the time in the time variable. This->position now points
+         * to the NEW timestamp which is slightly off
+         */
+        IMediaSample_GetTime(pCurrentSample, &time, &foo);
 
         /* Optimize: Try appending more samples to the stream */
         goto out_append;
