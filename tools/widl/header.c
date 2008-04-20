@@ -618,6 +618,20 @@ const var_t* get_explicit_generic_handle_var(const func_t* func)
     return NULL;
 }
 
+const var_t* get_context_handle_var(const func_t* func)
+{
+    const var_t* var;
+
+    if (!func->args)
+        return NULL;
+
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+        if (is_attr(var->attrs, ATTR_IN) && is_context_handle(var->type))
+            return var;
+
+    return NULL;
+}
+
 int has_out_arg_or_return(const func_t *func)
 {
     const var_t *var;

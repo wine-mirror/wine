@@ -70,25 +70,10 @@ static void check_pointers(const func_t *func)
     }
 }
 
-const var_t* get_context_handle_var(const func_t* func)
-{
-    const var_t* var;
-
-    if (!func->args)
-        return NULL;
-
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-        if (is_attr(var->attrs, ATTR_IN) && is_context_handle(var->type))
-            return var;
-
-    return NULL;
-}
-
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
     const func_t *func;
     const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
-    int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
     const var_t *var;
     int method_count = 0;
 
@@ -110,12 +95,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         {
             explicit_generic_handle_var = get_explicit_generic_handle_var(func);
             if (!explicit_generic_handle_var)
-            {
                 context_handle_var = get_context_handle_var(func);
-                if (!context_handle_var && explicit_handle)
-                    /* FIXME: should use automatically added IDL_handle parameter */
-                    error("explicit_handle attribute specified and %s() does not define an explicit binding handle - not implemented yet\n", def->name);
-            }
         }
 
         write_type_decl_left(client, get_func_return_type(func));

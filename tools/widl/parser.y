@@ -142,6 +142,7 @@ static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 static const attr_list_t *check_module_attrs(const char *name, const attr_list_t *attrs);
 static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
+static void add_explicit_handle_if_necessary(func_t *func);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -2482,8 +2483,48 @@ static void check_remoting_args(const func_t *func)
     }
 }
 
+static void add_explicit_handle_if_necessary(func_t *func)
+{
+    const var_t* explicit_handle_var;
+    const var_t* explicit_generic_handle_var = NULL;
+    const var_t* context_handle_var = NULL;
+
+    /* check for a defined binding handle */
+    explicit_handle_var = get_explicit_handle_var(func);
+    if (!explicit_handle_var)
+    {
+        explicit_generic_handle_var = get_explicit_generic_handle_var(func);
+        if (!explicit_generic_handle_var)
+        {
+            context_handle_var = get_context_handle_var(func);
+            if (!context_handle_var)
+            {
+                /* no explicit handle specified so add
+                 * "[in] handle_t IDL_handle" as the first parameter to the
+                 * function */
+                var_t *idl_handle = make_var(xstrdup("IDL_handle"));
+                idl_handle->attrs = append_attr(NULL, make_attr(ATTR_IN));
+                idl_handle->type = find_type("handle_t", 0);
+                if (!func->def->type->fields_or_args)
+                {
+                    func->def->type->fields_or_args = xmalloc( sizeof(*func->def->type->fields_or_args) );
+                    list_init( func->def->type->fields_or_args );
+                }
+                list_add_head( func->def->type->fields_or_args, &idl_handle->entry );
+                func->args = func->def->type->fields_or_args;
+            }
+        }
+    }
+}
+
 static void check_functions(const type_t *iface)
 {
+    if (is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE) && iface->funcs)
+    {
+        func_t *func;
+        LIST_FOR_EACH_ENTRY( func, iface->funcs, func_t, entry )
+            add_explicit_handle_if_necessary(func);
+    }
     if (!is_inside_library && !is_attr(iface->attrs, ATTR_LOCAL))
     {
         const func_t *func;
