@@ -98,7 +98,9 @@ static void test_FindFirstChangeNotification(void)
     /* pathetic checks */
 
     change = FindFirstChangeNotificationA("not-a-file", FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
-    ok(change == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND,
+    ok(change == INVALID_HANDLE_VALUE, "Expected INVALID_HANDLE_VALUE, got %p\n", change);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_NO_MORE_FILES, /* win95 */
        "FindFirstChangeNotification error: %d\n", GetLastError());
 
     if (0) /* This documents win2k behavior. It crashes on win98. */
@@ -152,17 +154,15 @@ static void test_FindFirstChangeNotification(void)
     thread = StartNotificationThread(dirname1, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = MoveFileA(dirname1, dirname2);
     ok(ret, "MoveFileA error: %d\n", GetLastError());
-    ret = FinishNotificationThread(thread);
-    ok(!ret, "Unexpected notification\n");
+    /* win9x and win2k behave differently here, don't check result */
+    FinishNotificationThread(thread);
 
     /* What if we remove the directory we registered notification for? */
     thread = StartNotificationThread(dirname2, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);
     ret = RemoveDirectoryA(dirname2);
     ok(ret, "RemoveDirectoryA error: %d\n", GetLastError());
-
-    /* win98 and win2k behave differently here */
-    ret = FinishNotificationThread(thread);
-    ok(ret || !ret, "You'll never read this\n");
+    /* win9x and win2k behave differently here, don't check result */
+    FinishNotificationThread(thread);
 
     /* functional checks */
 
