@@ -164,6 +164,7 @@ enum expr_type
     EXPR_MEMBERPTR,
     EXPR_MEMBER,
     EXPR_ARRAY,
+    EXPR_MOD,
 };
 
 enum type_kind

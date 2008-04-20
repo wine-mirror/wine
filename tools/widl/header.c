@@ -520,6 +520,7 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     break;
   case EXPR_SHL:
   case EXPR_SHR:
+  case EXPR_MOD:
   case EXPR_MUL:
   case EXPR_DIV:
   case EXPR_ADD:
@@ -533,6 +534,7 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     switch (e->type) {
     case EXPR_SHL: fprintf(h, " << "); break;
     case EXPR_SHR: fprintf(h, " >> "); break;
+    case EXPR_MOD: fprintf(h, " %% "); break;
     case EXPR_MUL: fprintf(h, " * "); break;
     case EXPR_DIV: fprintf(h, " / "); break;
     case EXPR_ADD: fprintf(h, " + "); break;

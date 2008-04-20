@@ -352,6 +352,7 @@ static int compare_expr(const expr_t *a, const expr_t *b)
         case EXPR_AND:
         case EXPR_ADD:
         case EXPR_SUB:
+        case EXPR_MOD:
         case EXPR_MUL:
         case EXPR_DIV:
         case EXPR_SHL:
@@ -3148,6 +3149,7 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
             break;
         case EXPR_SHL:
         case EXPR_SHR:
+        case EXPR_MOD:
         case EXPR_MUL:
         case EXPR_DIV:
         case EXPR_ADD:
@@ -3161,6 +3163,7 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
             switch (e->type) {
                 case EXPR_SHL: fprintf(h, " << "); break;
                 case EXPR_SHR: fprintf(h, " >> "); break;
+                case EXPR_MOD: fprintf(h, " %% "); break;
                 case EXPR_MUL: fprintf(h, " * "); break;
                 case EXPR_DIV: fprintf(h, " / "); break;
                 case EXPR_ADD: fprintf(h, " + "); break;

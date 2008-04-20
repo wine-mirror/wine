@@ -293,7 +293,7 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %left '|'
 %left '&'
 %left '-' '+'
-%left '*' '/'
+%left '*' '/' '%'
 %left SHL SHR
 %left '.' MEMBERPTR '[' ']'
 %right '~'
@@ -632,6 +632,7 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| expr '&' expr				{ $$ = make_expr2(EXPR_AND, $1, $3); }
 	| expr '+' expr				{ $$ = make_expr2(EXPR_ADD, $1, $3); }
 	| expr '-' expr				{ $$ = make_expr2(EXPR_SUB, $1, $3); }
+	| expr '%' expr				{ $$ = make_expr2(EXPR_MOD, $1, $3); }
 	| expr '*' expr				{ $$ = make_expr2(EXPR_MUL, $1, $3); }
 	| expr '/' expr				{ $$ = make_expr2(EXPR_DIV, $1, $3); }
 	| expr SHL expr				{ $$ = make_expr2(EXPR_SHL, $1, $3); }
@@ -1237,6 +1238,13 @@ static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
       break;
     case EXPR_SUB:
       e->cval = expr1->cval - expr2->cval;
+      break;
+    case EXPR_MOD:
+      if (expr2->cval == 0) {
+        error_loc("divide by zero in expression\n");
+        e->cval = 0;
+      } else
+        e->cval = expr1->cval % expr2->cval;
       break;
     case EXPR_MUL:
       e->cval = expr1->cval * expr2->cval;
