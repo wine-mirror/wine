@@ -356,6 +356,8 @@ static int compare_expr(const expr_t *a, const expr_t *b)
         case EXPR_DIV:
         case EXPR_SHL:
         case EXPR_SHR:
+        case EXPR_MEMBERPTR:
+        case EXPR_MEMBER:
             ret = compare_expr(a->ref, b->ref);
             if (ret != 0)
                 return ret;
@@ -3151,6 +3153,8 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
         case EXPR_SUB:
         case EXPR_AND:
         case EXPR_OR:
+        case EXPR_MEMBERPTR:
+        case EXPR_MEMBER:
             if (brackets) fprintf(h, "(");
             write_struct_expr(h, e->ref, 1, fields, structvar);
             switch (e->type) {
@@ -3162,6 +3166,8 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
                 case EXPR_SUB: fprintf(h, " - "); break;
                 case EXPR_AND: fprintf(h, " & "); break;
                 case EXPR_OR:  fprintf(h, " | "); break;
+                case EXPR_MEMBERPTR: fprintf(h, "->"); break;
+                case EXPR_MEMBER:    fprintf(h, "."); break;
                 default: break;
             }
             write_struct_expr(h, e->u.ext, 1, fields, structvar);

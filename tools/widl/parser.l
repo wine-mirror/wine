@@ -162,6 +162,7 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 <INITIAL,ATTR>{ws}
 <INITIAL,ATTR>\<\<	return SHL;
 <INITIAL,ATTR>\>\>	return SHR;
+<INITIAL,ATTR>\-\>	return MEMBERPTR;
 <INITIAL,ATTR>.		return yytext[0];
 <<EOF>>			{
 				if (import_stack_ptr)

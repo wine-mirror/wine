@@ -526,6 +526,8 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
   case EXPR_SUB:
   case EXPR_AND:
   case EXPR_OR:
+  case EXPR_MEMBERPTR:
+  case EXPR_MEMBER:
     if (brackets) fprintf(h, "(");
     write_expr(h, e->ref, 1);
     switch (e->type) {
@@ -537,6 +539,8 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     case EXPR_SUB: fprintf(h, " - "); break;
     case EXPR_AND: fprintf(h, " & "); break;
     case EXPR_OR:  fprintf(h, " | "); break;
+    case EXPR_MEMBERPTR: fprintf(h, "->"); break;
+    case EXPR_MEMBER:    fprintf(h, "."); break;
     default: break;
     }
     write_expr(h, e->u.ext, 1);

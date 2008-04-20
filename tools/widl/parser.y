@@ -180,6 +180,7 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %token <uuid> aUUID
 %token aEOF
 %token SHL SHR
+%token MEMBERPTR
 %token tAGGREGATABLE tALLOCATE tAPPOBJECT tASYNC tASYNCUUID
 %token tAUTOHANDLE tBINDABLE tBOOLEAN tBROADCAST tBYTE tBYTECOUNT
 %token tCALLAS tCALLBACK tCASE tCDECL tCHAR tCOCLASS tCODE tCOMMSTATUS
@@ -294,6 +295,7 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %left '-' '+'
 %left '*' '/'
 %left SHL SHR
+%left '.' MEMBERPTR
 %right '~'
 %right CAST
 %right PPTR
@@ -636,8 +638,10 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| expr SHR expr				{ $$ = make_expr2(EXPR_SHR, $1, $3); }
 	| '~' expr				{ $$ = make_expr1(EXPR_NOT, $2); }
 	| '-' expr %prec NEG			{ $$ = make_expr1(EXPR_NEG, $2); }
-	| '&' expr %prec ADDRESSOF      { $$ = make_expr1(EXPR_ADDRESSOF, $2); }
+	| '&' expr %prec ADDRESSOF		{ $$ = make_expr1(EXPR_ADDRESSOF, $2); }
 	| '*' expr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
+	| expr MEMBERPTR expr			{ $$ = make_expr2(EXPR_MEMBERPTR, $1, $3); }
+	| expr '.' expr				{ $$ = make_expr2(EXPR_MEMBER, $1, $3); }
 	| '(' type ')' expr %prec CAST		{ $$ = make_exprt(EXPR_CAST, $2, $4); }
 	| tSIZEOF '(' type ')'			{ $$ = make_exprt(EXPR_SIZEOF, $3, NULL); }
 	| '(' expr ')'				{ $$ = $2; }

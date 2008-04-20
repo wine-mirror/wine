@@ -161,6 +161,8 @@ enum expr_type
     EXPR_COND,
     EXPR_TRUEFALSE,
     EXPR_ADDRESSOF,
+    EXPR_MEMBERPTR,
+    EXPR_MEMBER,
 };
 
 enum type_kind
