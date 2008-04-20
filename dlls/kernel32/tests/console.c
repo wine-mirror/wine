@@ -600,6 +600,12 @@ static void testScreenBuffer(HANDLE hConOut)
     BOOL ret;
     DWORD oldcp;
 
+    if (!IsValidCodePage(866))
+    {
+        skip("Codepage 866 not available\n");
+        return;
+    }
+
     /* In the beginning set output codepage to 866 */
     oldcp = GetConsoleOutputCP();
     ok(SetConsoleOutputCP(866), "Cannot set output codepage to 866\n");
