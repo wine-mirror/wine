@@ -81,6 +81,8 @@ typedef struct {
     HTMLDocument *doc;
     nsIDOMWindow *nswindow;
 
+    IHTMLEventObj *event;
+
     struct list entry;
 } HTMLWindow;
 
@@ -428,8 +430,14 @@ void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 
+typedef enum {
+    EVENTID_LOAD,
+    EVENTID_LAST
+} eventid_t;
+
 void check_event_attr(HTMLDocument*,nsIDOMElement*);
 void release_event_target(event_target_t*);
+void fire_event(HTMLDocument*,eventid_t,nsIDOMNode*);
 
 void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);
@@ -540,6 +548,7 @@ void remove_doc_tasks(const HTMLDocument*);
 
 HRESULT get_typeinfo(tid_t,ITypeInfo**);
 void release_typelib(void);
+void call_disp_func(HTMLDocument*,IDispatch*);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

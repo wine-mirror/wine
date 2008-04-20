@@ -31,11 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef enum {
-    EVENTID_LOAD,
-    EVENTID_LAST
-} eventid;
-
 struct event_target_t {
     IDispatch *event_table[EVENTID_LAST];
 };
@@ -51,6 +46,340 @@ typedef struct {
 static const event_info_t event_info[] = {
     {loadW, onloadW}
 };
+
+typedef struct {
+    const IHTMLEventObjVtbl  *lpIHTMLEventObjVtbl;
+    LONG ref;
+} HTMLEventObj;
+
+#define HTMLEVENTOBJ(x) ((IHTMLEventObj*) &(x)->lpIHTMLEventObjVtbl)
+
+#define HTMLEVENTOBJ_THIS(iface) DEFINE_THIS(HTMLEventObj, IHTMLEventObj, iface)
+
+static HRESULT WINAPI HTMLEventObj_QueryInterface(IHTMLEventObj *iface, REFIID riid, void **ppv)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = HTMLEVENTOBJ(This);
+    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = HTMLEVENTOBJ(This);
+    }else if(IsEqualGUID(&IID_IHTMLEventObj, riid)) {
+        TRACE("(%p)->(IID_IHTMLEventObj %p)\n", This, ppv);
+        *ppv = HTMLEVENTOBJ(This);
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HTMLEventObj_AddRef(IHTMLEventObj *iface)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLEventObj_Release(IHTMLEventObj *iface)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLEventObj_GetTypeInfoCount(IHTMLEventObj *iface, UINT *pctinfo)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_GetTypeInfo(IHTMLEventObj *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_GetIDsOfNames(IHTMLEventObj *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_Invoke(IHTMLEventObj *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLElement **p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_ctrlKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_shiftKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_put_returnValue(IHTMLEventObj *iface, VARIANT v)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_returnValue(IHTMLEventObj *iface, VARIANT *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_put_cancelBubble(IHTMLEventObj *iface, VARIANT_BOOL v)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_cancelBubble(IHTMLEventObj *iface, VARIANT_BOOL *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_fromElement(IHTMLEventObj *iface, IHTMLElement **p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_toElement(IHTMLEventObj *iface, IHTMLElement **p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_put_keyCode(IHTMLEventObj *iface, long v)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%ld)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_keyCode(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_button(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_type(IHTMLEventObj *iface, BSTR *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_qualifier(IHTMLEventObj *iface, BSTR *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_reason(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_x(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_y(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_clientX(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_clientY(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_offsetX(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_offsetY(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_screenX(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_screenY(IHTMLEventObj *iface, long *p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLEventObj_get_srcFilter(IHTMLEventObj *iface, IDispatch **p)
+{
+    HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+#undef HTMLEVENTOBJ_THIS
+
+static const IHTMLEventObjVtbl HTMLEventObjVtbl = {
+    HTMLEventObj_QueryInterface,
+    HTMLEventObj_AddRef,
+    HTMLEventObj_Release,
+    HTMLEventObj_GetTypeInfoCount,
+    HTMLEventObj_GetTypeInfo,
+    HTMLEventObj_GetIDsOfNames,
+    HTMLEventObj_Invoke,
+    HTMLEventObj_get_srcElement,
+    HTMLEventObj_get_altKey,
+    HTMLEventObj_get_ctrlKey,
+    HTMLEventObj_get_shiftKey,
+    HTMLEventObj_put_returnValue,
+    HTMLEventObj_get_returnValue,
+    HTMLEventObj_put_cancelBubble,
+    HTMLEventObj_get_cancelBubble,
+    HTMLEventObj_get_fromElement,
+    HTMLEventObj_get_toElement,
+    HTMLEventObj_put_keyCode,
+    HTMLEventObj_get_keyCode,
+    HTMLEventObj_get_button,
+    HTMLEventObj_get_type,
+    HTMLEventObj_get_qualifier,
+    HTMLEventObj_get_reason,
+    HTMLEventObj_get_x,
+    HTMLEventObj_get_y,
+    HTMLEventObj_get_clientX,
+    HTMLEventObj_get_clientY,
+    HTMLEventObj_get_offsetX,
+    HTMLEventObj_get_offsetY,
+    HTMLEventObj_get_screenX,
+    HTMLEventObj_get_screenY,
+    HTMLEventObj_get_srcFilter
+};
+
+static IHTMLEventObj *create_event(void)
+{
+    HTMLEventObj *ret;
+
+    ret = heap_alloc(sizeof(*ret));
+    ret->lpIHTMLEventObjVtbl = &HTMLEventObjVtbl;
+    ret->ref = 1;
+
+    return HTMLEVENTOBJ(ret);
+}
+
+void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
+{
+    HTMLDOMNode *node;
+
+    node = get_node(doc, target, FALSE);
+    if(!node)
+        return;
+
+    if(node->event_target && node->event_target->event_table[eid]) {
+        doc->window->event = create_event();
+
+        call_disp_func(doc, node->event_target->event_table[eid]);
+
+        IHTMLEventObj_Release(doc->window->event);
+        doc->window->event = NULL;
+    }
+}
 
 void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
 {

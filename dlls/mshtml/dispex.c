@@ -86,6 +86,35 @@ void release_typelib(void)
     ITypeLib_Release(typelib);
 }
 
+void call_disp_func(HTMLDocument *doc, IDispatch *disp)
+{
+    DISPID named_arg = DISPID_THIS;
+    VARIANTARG arg;
+    DISPPARAMS params = {&arg, &named_arg, 1, 1};
+    EXCEPINFO ei;
+    IDispatchEx *dispex;
+    VARIANT res;
+    HRESULT hres;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(FAILED(hres)) {
+        FIXME("Could not get IDispatchEx interface: %08x\n", hres);
+        return;
+    }
+
+    V_VT(&arg) = VT_DISPATCH;
+    V_DISPATCH(&arg) = (IDispatch*)HTMLWINDOW2(doc->window);
+    VariantInit(&res);
+    memset(&ei, 0, sizeof(ei));
+
+    hres = IDispatchEx_InvokeEx(dispex, 0, GetUserDefaultLCID(), DISPATCH_METHOD, &params, &res, &ei, NULL);
+    IDispatchEx_Release(dispex);
+
+    TRACE("%p returned %08x\n", disp, hres);
+
+    VariantClear(&res);
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)

@@ -129,6 +129,9 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
 static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event)
 {
     NSContainer *This = NSEVENTLIST_THIS(iface)->This;
+    nsIDOMHTMLDocument *nshtmldoc;
+    nsIDOMHTMLElement *nsbody = NULL;
+    nsIDOMDocument *nsdoc;
     task_t *task;
 
     TRACE("(%p)\n", This);
@@ -158,6 +161,19 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
      * but we don't have such thread (Gecko parses HTML for us).
      */
     push_task(task);
+
+
+    nsIWebNavigation_GetDocument(This->navigation, &nsdoc);
+    nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
+    nsIDOMDocument_Release(nsdoc);
+
+    nsIDOMHTMLDocument_GetBody(nshtmldoc, &nsbody);
+    nsIDOMHTMLDocument_Release(nshtmldoc);
+
+    if(nsbody) {
+        fire_event(This->doc, EVENTID_LOAD, (nsIDOMNode*)nsbody);
+        nsIDOMHTMLElement_Release(nsbody);
+    }
 
     return NS_OK;
 }
