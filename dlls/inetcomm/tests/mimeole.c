@@ -216,7 +216,6 @@ static void test_CreateMessage(void)
     ULONG count;
     FINDBODY find_struct;
     HCHARSET hcs;
-    INETCSETINFO csi;
 
     char text[] = "text";
     HBODY *body_list;
@@ -274,7 +273,10 @@ static void test_CreateMessage(void)
 
     hr = IMimeBody_GetCharset(body, &hcs);
     ok(hr == S_OK, "ret %08x\n", hr);
-    ok(hcs == NULL, "ret %p\n", hcs);
+    todo_wine
+    {
+        ok(hcs != NULL, "Expected non-NULL charset\n");
+    }
 
     IMimeBody_Release(body);
 
@@ -309,9 +311,10 @@ static void test_CreateMessage(void)
 
     hr = IMimeMessage_GetCharset(body, &hcs);
     ok(hr == S_OK, "ret %08x\n", hr);
-    ok(hcs == NULL, "ret %p\n", hcs);
-    hr = MimeOleGetCharsetInfo(hcs, &csi);
-    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+    todo_wine
+    {
+        ok(hcs != NULL, "Expected non-NULL charset\n");
+    }
 
     IMimeMessage_Release(msg);
 
