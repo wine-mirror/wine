@@ -131,6 +131,24 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateLineBrushI(GDIPCONST GpPoint* startpoint,
+    GDIPCONST GpPoint* endpoint, ARGB startcolor, ARGB endcolor,
+    GpWrapMode wrap, GpLineGradient **line)
+{
+    GpPointF stF;
+    GpPointF endF;
+
+    if(!startpoint || !endpoint)
+        return InvalidParameter;
+
+    stF.X  = (REAL)startpoint->X;
+    stF.Y  = (REAL)startpoint->Y;
+    endF.X = (REAL)endpoint->X;
+    endF.X = (REAL)endpoint->Y;
+
+    return GdipCreateLineBrush(&stF, &endF, startcolor, endcolor, wrap, line);
+}
+
 GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,
     ARGB startcolor, ARGB endcolor, LinearGradientMode mode, GpWrapMode wrap,
     GpLineGradient **line)
