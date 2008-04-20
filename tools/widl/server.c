@@ -50,8 +50,6 @@ static void print_server(const char *format, ...)
 
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 {
-    char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
-    int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
     const func_t *func;
     const var_t *var;
     const var_t* explicit_handle_var;
@@ -64,22 +62,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
-        if (explicit_handle)
-        {
-            if (!explicit_handle_var)
-            {
-                error("%s() does not define an explicit binding handle!\n", def->name);
-                return;
-            }
-        }
-        else if (implicit_handle)
-        {
-            if (explicit_handle_var)
-            {
-                error("%s() must not define a binding handle!\n", def->name);
-                return;
-            }
-        }
 
         fprintf(server, "void __RPC_STUB\n");
         fprintf(server, "%s_", iface->name);

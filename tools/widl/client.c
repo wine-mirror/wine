@@ -110,22 +110,11 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         {
             explicit_generic_handle_var = get_explicit_generic_handle_var(func);
             if (!explicit_generic_handle_var)
+            {
                 context_handle_var = get_context_handle_var(func);
-        }
-        if (explicit_handle)
-        {
-            if (!explicit_handle_var || !explicit_generic_handle_var || !context_handle_var)
-            {
-                error("%s() does not define an explicit binding handle!\n", def->name);
-                return;
-            }
-        }
-        else if (implicit_handle)
-        {
-            if (explicit_handle_var)
-            {
-                error("%s() must not define a binding handle!\n", def->name);
-                return;
+                if (!context_handle_var && explicit_handle)
+                    /* FIXME: should use automatically added IDL_handle parameter */
+                    error("explicit_handle attribute specified and %s() does not define an explicit binding handle - not implemented yet\n", def->name);
             }
         }
 
@@ -196,12 +185,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             fprintf(client, ");\n\n");
         }
 
-        if (implicit_handle)
-        {
-            print_client("_Handle = %s;\n", implicit_handle);
-            fprintf(client, "\n");
-        }
-        else if (explicit_handle_var)
+        if (explicit_handle_var)
         {
             print_client("_Handle = %s;\n", explicit_handle_var->name);
             fprintf(client, "\n");
@@ -223,6 +207,11 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             indent++;
             print_client("_Handle = NDRCContextBinding(%s%s);\n", is_ch_ptr ? "*" : "", context_handle_var->name);
             indent--;
+            fprintf(client, "\n");
+        }
+        else if (implicit_handle)
+        {
+            print_client("_Handle = %s;\n", implicit_handle);
             fprintf(client, "\n");
         }
 

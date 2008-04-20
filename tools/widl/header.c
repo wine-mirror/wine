@@ -896,31 +896,12 @@ static void write_function_proto(const type_t *iface, const func_t *fun, const c
 
 static void write_function_protos(const type_t *iface)
 {
-  const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
-  int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
-  const var_t* explicit_handle_var;
   const func_t *cur;
   int prefixes_differ = strcmp(prefix_client, prefix_server);
 
   if (!iface->funcs) return;
   LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
   {
-    var_t *def = cur->def;
-
-    /* check for a defined binding handle */
-    explicit_handle_var = get_explicit_handle_var(cur);
-    if (explicit_handle) {
-      if (!explicit_handle_var) {
-        error("%s() does not define an explicit binding handle!\n", def->name);
-        return;
-      }
-    } else if (implicit_handle) {
-      if (explicit_handle_var) {
-        error("%s() must not define a binding handle!\n", def->name);
-        return;
-      }
-    }
-
     if (prefixes_differ) {
       fprintf(header, "/* client prototype */\n");
       write_function_proto(iface, cur, prefix_client);
