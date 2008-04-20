@@ -1002,11 +1002,21 @@ EXIT:
     return rc;
 }
 
+static unsigned int number;
+
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                                    LPCSTR lpcstrModule, LPVOID lpContext)
 {
     HRESULT rc;
     trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
+
+    /* Don't test the primary device */
+    if (!number++)
+    {
+        ok (!lpcstrModule[0], "lpcstrModule(%s) != NULL\n", lpcstrModule);
+        return 1;
+    }
+
     rc = test_dsound(lpGuid);
     if (rc == DSERR_NODRIVER)
         trace("  No Driver\n");
