@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey);
+static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert);
 static inline void clear_unused_channels(IWineD3DSurfaceImpl *This);
 static void surface_remove_pbo(IWineD3DSurfaceImpl *This);
 
@@ -3638,12 +3639,49 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
     if(This->resource.format == WINED3DFMT_P8 ||
        This->resource.format == WINED3DFMT_A8P8)
     {
-        if(!(This->Flags & SFLAG_INSYSMEM)) {
-            TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
-            IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+        int bpp;
+        GLenum format, internal, type;
+        CONVERT_TYPES convert;
+
+        /* Check if we are using a RTL mode which uses texturing for uploads */
+        BOOL use_texture = (wined3d_settings.rendertargetlock_mode == RTL_READTEX || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX);
+
+        /* Check if we have hardware palette conversion if we have convert is set to NO_CONVERSION */
+        d3dfmt_get_conv(This, TRUE, use_texture, &format, &internal, &type, &convert, &bpp, This->srgb);
+
+        if((This->resource.usage & WINED3DUSAGE_RENDERTARGET) && (convert == NO_CONVERSION))
+        {
+            ENTER_GL();
+            if (This->glDescription.textureName == 0) {
+                glGenTextures(1, &This->glDescription.textureName);
+                checkGLcall("glGenTextures");
+            }
+            glBindTexture(This->glDescription.target, This->glDescription.textureName);
+            checkGLcall("glBindTexture(This->glDescription.target, This->glDescription.textureName)");
+            LEAVE_GL();
+
+            /* Make sure the texture is up to date. This call doesn't do anything if the texture is already up to date. */
+            IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL);
+
+            /* We want to force a palette refresh, so mark the drawable as not being up to date */
+            IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
+
+            /* Re-upload the palette */
+            d3dfmt_p8_upload_palette(iface, convert);
+
+            /* Without this some palette updates are missed. This at least happens on Nvidia drivers but
+             * it works fine using Mesa. */
+            ENTER_GL();
+            glFlush();
+            LEAVE_GL();
+        } else {
+            if(!(This->Flags & SFLAG_INSYSMEM)) {
+                TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
+                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
+            }
+            TRACE("Dirtifying surface\n");
+            IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
         }
-        TRACE("Dirtifying surface\n");
-        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
     }
 
     if(This->Flags & SFLAG_DIBSECTION) {
@@ -3657,8 +3695,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
         SetDIBColorTable(This->hDC, 0, 256, col);
     }
 
-    /* Propagate the changes to the drawable when we have a palette.
-     * TODO: in case of hardware p8 palettes we should only upload the palette. */
+    /* Propagate the changes to the drawable when we have a palette. */
     if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
         IWineD3DSurface_LoadLocation(iface, SFLAG_INDRAWABLE, NULL);
 
