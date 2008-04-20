@@ -1352,6 +1352,7 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->written = FALSE;
   t->user_types_registered = FALSE;
   t->tfswrite = FALSE;
+  t->checked = FALSE;
   t->typelib_idx = -1;
   return t;
 }
@@ -2359,6 +2360,83 @@ static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_
   return attrs;
 }
 
+static void check_remoting_fields(type_t *type);
+
+/* checks that properties common to fields and arguments are consistent */
+static void check_field_common(const char *container_type,
+                               const char *container_name, const var_t *arg)
+{
+    type_t *type = arg->type;
+    int is_wire_marshal = 0;
+    int is_context_handle = 0;
+
+    if (is_attr(arg->attrs, ATTR_LENGTHIS) &&
+        (is_attr(arg->attrs, ATTR_STRING) || is_aliaschain_attr(arg->type, ATTR_STRING)))
+        error_loc_info(&arg->loc_info,
+                       "string and length_is specified for argument %s are mutually exclusive attributes\n",
+                       arg->name);
+
+    /* get fundamental type for the argument */
+    for (;;)
+    {
+        if (is_attr(type->attrs, ATTR_WIREMARSHAL))
+        {
+            is_wire_marshal = 1;
+            break;
+        }
+        if (is_attr(type->attrs, ATTR_CONTEXTHANDLE))
+        {
+            is_context_handle = 1;
+            break;
+        }
+        if (type->kind == TKIND_ALIAS)
+            type = type->orig;
+        else if (is_ptr(type) || is_array(type))
+            type = type->ref;
+        else
+            break;
+    }
+
+    if (type->type == 0 && !is_attr(arg->attrs, ATTR_IIDIS) && !is_wire_marshal && !is_context_handle)
+        error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot derive from void *\n", arg->name, container_type, container_name);
+    else if (type->type == RPC_FC_FUNCTION)
+        error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot be a function pointer\n", arg->name, container_type, container_name);
+    else if (!is_wire_marshal && (is_struct(type->type) || is_union(type->type)))
+        check_remoting_fields(type);
+}
+
+static void check_remoting_fields(type_t *type)
+{
+    const char *container_type = NULL;
+    const var_t *field;
+    const var_list_t *fields = NULL;
+
+    if (type->checked)
+        return;
+
+    type->checked = TRUE;
+
+    if (is_struct(type->type))
+    {
+        fields = type->fields_or_args;
+        container_type = "structure";
+    }
+    else if (is_union(type->type))
+    {
+        if (type->type == RPC_FC_ENCAPSULATED_UNION)
+        {
+            const var_t *uv = LIST_ENTRY(list_tail(type->fields_or_args), const var_t, entry);
+            fields = uv->type->fields_or_args;
+        }
+        else
+            fields = type->fields_or_args;
+        container_type = "union";
+    }
+
+    if (fields) LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
+        if (field->type) check_field_common(container_type, type->name, field);
+}
+
 /* checks that arguments for a function make sense for marshalling and unmarshalling */
 static void check_remoting_args(const func_t *func)
 {
@@ -2369,22 +2447,14 @@ static void check_remoting_args(const func_t *func)
     {
         int ptr_level = 0;
         const type_t *type = arg->type;
-        int is_wire_marshal = 0;
-        int is_context_handle = 0;
 
         /* get pointer level and fundamental type for the argument */
         for (;;)
         {
-            if (!is_wire_marshal && is_attr(type->attrs, ATTR_WIREMARSHAL))
-            {
-                is_wire_marshal = 1;
+            if (is_attr(type->attrs, ATTR_WIREMARSHAL))
                 break;
-            }
-            if (!is_context_handle && is_attr(type->attrs, ATTR_CONTEXTHANDLE))
-            {
-                is_context_handle = 1;
+            if (is_attr(type->attrs, ATTR_CONTEXTHANDLE))
                 break;
-            }
             if (type->kind == TKIND_ALIAS)
                 type = type->orig;
             else if (is_ptr(type))
@@ -2408,10 +2478,7 @@ static void check_remoting_args(const func_t *func)
             }
         }
 
-        if (type->type == 0 && !is_attr(arg->attrs, ATTR_IIDIS) && !is_wire_marshal && !is_context_handle)
-            error_loc_info(&arg->loc_info, "parameter \'%s\' of function \'%s\' cannot derive from void *\n", arg->name, funcname);
-        else if (type->type == RPC_FC_FUNCTION)
-            error_loc_info(&arg->loc_info, "parameter \'%s\' of function \'%s\' cannot be a function pointer\n", arg->name, funcname);
+        check_field_common("function", funcname, arg);
     }
 }
 
