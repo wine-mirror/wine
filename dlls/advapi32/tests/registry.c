@@ -786,9 +786,13 @@ static void test_get_value(void)
     ret = pRegGetValueA(hkey_main, NULL, "TP1_ZB_SZ", RRF_RT_REG_SZ, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
     /* v5.2.3790.1830 (2003 SP1) returns sTestpath1 length + 2 here. */
-    ok(size == 0, "size=%d\n", size);
+    ok(size == 0 ||
+       size == 1, /* win2k3 */
+       "size=%d\n", size);
     ok(type == REG_SZ, "type=%d\n", type);
-    ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
+    ok(!strcmp(sTestpath1, buf) ||
+       !strcmp(buf, ""),
+       "Expected \"%s\" or \"\", got \"%s\"\n", sTestpath1, buf);
 
     /* Query REG_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
