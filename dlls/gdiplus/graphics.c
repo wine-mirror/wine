@@ -1308,8 +1308,8 @@ GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
-    INT y, INT width, INT height)
+GpStatus WINGDIPAPI GdipDrawRectangle(GpGraphics *graphics, GpPen *pen, REAL x,
+    REAL y, REAL width, REAL height)
 {
     INT save_state;
     GpPointF ptf[4];
@@ -1336,6 +1336,12 @@ GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
     restore_dc(graphics, save_state);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
+    INT y, INT width, INT height)
+{
+    return GdipDrawRectangle(graphics,pen,(REAL)x,(REAL)y,(REAL)width,(REAL)height);
 }
 
 GpStatus WINGDIPAPI GdipDrawRectangles(GpGraphics *graphics, GpPen *pen,
