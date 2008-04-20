@@ -2376,9 +2376,15 @@ static void check_remoting_args(const func_t *func)
         for (;;)
         {
             if (!is_wire_marshal && is_attr(type->attrs, ATTR_WIREMARSHAL))
+            {
                 is_wire_marshal = 1;
+                break;
+            }
             if (!is_context_handle && is_attr(type->attrs, ATTR_CONTEXTHANDLE))
+            {
                 is_context_handle = 1;
+                break;
+            }
             if (type->kind == TKIND_ALIAS)
                 type = type->orig;
             else if (is_ptr(type))
