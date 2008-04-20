@@ -163,6 +163,7 @@ enum expr_type
     EXPR_ADDRESSOF,
     EXPR_MEMBERPTR,
     EXPR_MEMBER,
+    EXPR_ARRAY,
 };
 
 enum type_kind

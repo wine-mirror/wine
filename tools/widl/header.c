@@ -559,6 +559,14 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     fprintf(h, "&");
     write_expr(h, e->ref, 1);
     break;
+  case EXPR_ARRAY:
+    if (brackets) fprintf(h, "(");
+    write_expr(h, e->ref, 1);
+    fprintf(h, "[");
+    write_expr(h, e->u.ext, 1);
+    fprintf(h, "]");
+    if (brackets) fprintf(h, ")");
+    break;
   }
 }
 

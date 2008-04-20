@@ -295,7 +295,7 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %left '-' '+'
 %left '*' '/'
 %left SHL SHR
-%left '.' MEMBERPTR
+%left '.' MEMBERPTR '[' ']'
 %right '~'
 %right CAST
 %right PPTR
@@ -644,6 +644,7 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| expr '.' expr				{ $$ = make_expr2(EXPR_MEMBER, $1, $3); }
 	| '(' type ')' expr %prec CAST		{ $$ = make_exprt(EXPR_CAST, $2, $4); }
 	| tSIZEOF '(' type ')'			{ $$ = make_exprt(EXPR_SIZEOF, $3, NULL); }
+	| expr '[' expr ']'			{ $$ = make_expr2(EXPR_ARRAY, $1, $3); }
 	| '(' expr ')'				{ $$ = $2; }
 	;
 
