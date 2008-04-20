@@ -222,7 +222,9 @@ static void test_get_atom_name(void)
 
     memset( buf, '.', sizeof(buf) );
     len = GlobalGetAtomNameA( atom, buf, 6 );
-    ok( len == 0, "bad length %d\n", len );
+    ok( len == 0 ||
+        len == 5, /* win9x */
+        "bad length %d\n", len );
     ok( !memcmp( buf, "fooba\0....", 10 ), "bad buffer contents\n");
     if (unicode_OS)
     {
