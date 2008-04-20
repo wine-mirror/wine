@@ -1237,7 +1237,11 @@ static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
       e->cval = expr1->cval * expr2->cval;
       break;
     case EXPR_DIV:
-      e->cval = expr1->cval / expr2->cval;
+      if (expr2->cval == 0) {
+        error_loc("divide by zero in expression\n");
+        e->cval = 0;
+      } else
+        e->cval = expr1->cval / expr2->cval;
       break;
     case EXPR_OR:
       e->cval = expr1->cval | expr2->cval;
