@@ -1465,6 +1465,11 @@ LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
  */
 static void dump_winpos_flags(UINT flags)
 {
+    static const DWORD dumped_flags = (SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW |
+                                       SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW |
+                                       SWP_HIDEWINDOW | SWP_NOCOPYBITS | SWP_NOOWNERZORDER |
+                                       SWP_NOSENDCHANGING | SWP_DEFERERASE | SWP_ASYNCWINDOWPOS |
+                                       SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_STATECHANGED);
     TRACE("flags:");
     if(flags & SWP_NOSIZE) TRACE(" SWP_NOSIZE");
     if(flags & SWP_NOMOVE) TRACE(" SWP_NOMOVE");
@@ -1479,25 +1484,12 @@ static void dump_winpos_flags(UINT flags)
     if(flags & SWP_NOSENDCHANGING) TRACE(" SWP_NOSENDCHANGING");
     if(flags & SWP_DEFERERASE) TRACE(" SWP_DEFERERASE");
     if(flags & SWP_ASYNCWINDOWPOS) TRACE(" SWP_ASYNCWINDOWPOS");
+    if(flags & SWP_NOCLIENTSIZE) TRACE(" SWP_NOCLIENTSIZE");
+    if(flags & SWP_NOCLIENTMOVE) TRACE(" SWP_NOCLIENTMOVE");
+    if(flags & SWP_STATECHANGED) TRACE(" SWP_STATECHANGED");
 
-#define DUMPED_FLAGS \
-    (SWP_NOSIZE | \
-    SWP_NOMOVE | \
-    SWP_NOZORDER | \
-    SWP_NOREDRAW | \
-    SWP_NOACTIVATE | \
-    SWP_FRAMECHANGED | \
-    SWP_SHOWWINDOW | \
-    SWP_HIDEWINDOW | \
-    SWP_NOCOPYBITS | \
-    SWP_NOOWNERZORDER | \
-    SWP_NOSENDCHANGING | \
-    SWP_DEFERERASE | \
-    SWP_ASYNCWINDOWPOS)
-
-    if(flags & ~DUMPED_FLAGS) TRACE(" %08x", flags & ~DUMPED_FLAGS);
+    if(flags & ~dumped_flags) TRACE(" %08x", flags & ~dumped_flags);
     TRACE("\n");
-#undef DUMPED_FLAGS
 }
 
 /***********************************************************************
