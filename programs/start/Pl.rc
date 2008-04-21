@@ -24,7 +24,7 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
-STRING_USAGE,                                   "Uruchamia program lub otwiera dokument w programie który jest zwykle u¿ytwany dla tego rozszerzenia. \n\
+STRING_USAGE,                                   "Uruchamia program lub otwiera dokument w programie który jest zwykle u¿ywany dla tego rozszerzenia. \n\
 U¿ycie: \n\
 start [opcje] nazwa_programu [...] \n\
 start [opcje] nazwa_dokumentu \n\
@@ -38,7 +38,7 @@ Opcje: \n\
 /L           Poka¿ licencjê u¿ytkownika. \n\
  \n\
 start.exe wersja 0.2 Copyright (C) 2003, Dan Kegel \n\
-Start jest dostarczany BEZ ¯ADNEJ GWARANCJI; szczegó³y w opcj¹ /L. \n\
+Start jest dostarczany BEZ ¯ADNEJ GWARANCJI; szczegó³y w opcji /L. \n\
 To jest wolne oprogramowanie i mo¿esz je rozpowszechniaæ (pod pewnymi\n\
 warunkami); uruchom 'start /L' aby poznaæ szczegó³y. \n\
 "
@@ -61,5 +61,5 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. \n\
 See the COPYING.LIB file for license information. \n\
 "
 
-STRING_EXECFAIL "Nie uda³o siê uruchmiæ aplikacji lub nie ma aplikacji skojarzonej z danym plikiem.\nShellExecuteEx nie powiod³o siê"
+STRING_EXECFAIL "Nie uda³o siê uruchomiæ aplikacji lub nie ma aplikacji skojarzonej z danym plikiem.\nShellExecuteEx nie powiod³o siê"
 }

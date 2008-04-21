@@ -227,7 +227,7 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Konfiguracje Wine dla %s"
     IDS_THEMEFILE           "Pliki motywu"
     IDS_THEMEFILE_SELECT    "Wybierz plik motywu"
-    IDS_AUDIO_MISSING       "Nie wybrano sterownika dŸwiêku.\n\nZalecany sterownik zosta³ w³aœnie zaznaczony.\nMo¿esz go u¿yæ lub wybraæ jakiœ inny.\n\nAby wybór zosta³ zapamiêtany u¿yj 'Zastosuj'."
+    IDS_AUDIO_MISSING       "Nie wybrano sterownika dŸwiêku.\n\nZalecany sterownik zosta³ w³aœnie zaznaczony.\nMo¿esz go u¿yæ lub wybraæ jakiœ inny.\n\nAby wybór zosta³ zapamiêtany, u¿yj 'Zastosuj'."
     IDS_SHELL_FOLDER        "Folder"
     IDS_LINKS_TO            "Dowi¹zany do"
 END
@@ -262,7 +262,7 @@ BEGIN
     IDS_DRIVE_CDROM             "CD-ROM"
     IDS_DRIVE_LETTERS_EXCEEDED  "Nie mo¿esz dodaæ nastêpnego dysku.\n\nKa¿dy dysk musi mieæ literê od A do Z, wiêc nie mo¿e byæ ich wiêcej ni¿ 26"
     IDS_SYSTEM_DRIVE_LABEL      "Dysk systemowy"
-    IDS_CONFIRM_DELETE_C        "Czy na pewno chcesz usun¹æ dysk C?\n\nWiêkszoœæ programów dla Windows zak³ada, ¿e taki dysk istnieje i mog¹ nie dzia³aæ bez niego. Je¿eli go skasujesz nie zapomnij go znowu utworzyæ!"
+    IDS_CONFIRM_DELETE_C        "Czy na pewno chcesz usun¹æ dysk C?\n\nWiêkszoœæ programów dla Windows zak³ada, ¿e taki dysk istnieje i mog¹ nie dzia³aæ bez niego. Je¿eli go skasujesz, nie zapomnij go znowu utworzyæ!"
     IDS_COL_DRIVELETTER         "Litera"
     IDS_COL_DRIVEMAPPING        "Przyporz¹dkowany do"
     IDS_NO_DRIVE_C              "Nie masz dysku C. To mo¿e powodowaæ problemy.\n\nNie zapomnij u¿yæ 'Dodaj' w zak³adce 'Dyski', aby go utworzyæ!\n"

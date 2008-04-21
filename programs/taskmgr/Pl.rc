@@ -47,8 +47,8 @@ BEGIN
     END
     POPUP "&Widok"
     BEGIN
-        MENUITEM "&Odœwierz teraz",                ID_VIEW_REFRESH
-        POPUP "&Czêstotliwoœæ odœwierzania"
+        MENUITEM "&Odœwie¿ teraz",                ID_VIEW_REFRESH
+        POPUP "&Czêstotliwoœæ odœwie¿ania"
         BEGIN
             MENUITEM "&Wysoka",                       ID_VIEW_UPDATESPEED_HIGH
             MENUITEM "&Normalna",                     ID_VIEW_UPDATESPEED_NORMAL
@@ -371,7 +371,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,144,178,50,14
     PUSHBUTTON      "Anuluj",IDCANCEL,198,178,50,14
-    LTEXT           "Wybierz kolumny, które bêd¹ widoczna na zak³adce Procesy Mened¿era Procesów",
+    LTEXT           "Wybierz kolumny, które bêd¹ widoczne na zak³adce Procesy Mened¿era Procesów",
                     IDC_STATIC,7,7,181,17
     CONTROL         "&Nazwa obrazu",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
@@ -442,18 +442,18 @@ BEGIN
     ID_OPTIONS_MINIMIZEONUSE
                             "Mened¿er zadañ bêdzie minimalizowany po wybraniu 'Prze³¹cz na'"
     ID_OPTIONS_HIDEWHENMINIMIZED "Ukryj Mened¿era zadañ kiedy jest zminimalizowany"
-    ID_VIEW_REFRESH         "Wymuœ, odœwierzenie listy teraz, niezale¿nie od Czêstotliwoœci odœwierzania"
+    ID_VIEW_REFRESH         "Wymuœ, odœwie¿enie listy teraz, niezale¿nie od Czêstotliwoœci odœwie¿ania"
     ID_VIEW_LARGE           "Wyœwietl zadania u¿ywaj¹c du¿ych ikon"
     ID_VIEW_SMALL           "Wyœwietl zadania u¿ywaj¹c ma³ych ikon"
     ID_VIEW_DETAILS         "Wyœwietla szczegó³y ka¿dego zadania"
     ID_VIEW_UPDATESPEED_HIGH "Od¿wie¿a listê dwa razy na sekundê"
-    ID_VIEW_UPDATESPEED_NORMAL "Odœwierza listê co dwie sekundy"
-    ID_VIEW_UPDATESPEED_LOW "Odœwierza listê co cztery sekundy"
+    ID_VIEW_UPDATESPEED_NORMAL "Odœwie¿a listê co dwie sekundy"
+    ID_VIEW_UPDATESPEED_LOW "Odœwie¿a listê co cztery sekundy"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_VIEW_UPDATESPEED_PAUSED "Bez automatycznego odœwierzania listy"
+    ID_VIEW_UPDATESPEED_PAUSED "Bez automatycznego odœwie¿ania listy"
     ID_WINDOWS_TILEHORIZONTALLY
                             "Rozmieœæ wszystkie okna s¹siaduj¹co w poziomie"
     ID_WINDOWS_TILEVERTICALLY "Rozmieœæ wszystkie okna s¹siaduj¹co w pionie"
@@ -462,7 +462,7 @@ BEGIN
     ID_WINDOWS_CASCADE      "Rozmieœæ okna skoœnie w kaskadê"
     ID_WINDOWS_BRINGTOFRONT "Przesuñ okno na wierzch bez prze³¹czenie na niego"
     ID_HELP_TOPICS          "Wyœwietl tematy pomocy Mened¿era zadañ"
-    ID_HELP_ABOUT           "Wyœwietl informacje o programie, werji i prawach autorskich"
+    ID_HELP_ABOUT           "Wyœwietl informacje o programie, wersji i prawach autorskich"
     ID_FILE_EXIT            "Zakoñcz aplikacjê Mened¿era zadañ"
     ID_OPTIONS_SHOW16BITTASKS
                             "Wyœwitels 16-bitowe zadania pod odpowiednim ntvdm.exe"
@@ -477,10 +477,10 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_ENDTASK              "Poleæ wybranym zadanion zakoñczenie dzia³ania"
+    ID_ENDTASK              "Poleæ wybranym zadaniom zakoñczenie dzia³ania"
     ID_GOTOPROCESS          "Prze³¹cza na proces wybranego zadania"
     ID_RESTORE              "Przywróæ Mened¿era zadañ z jego ukrytego stanu"
-    ID_PROCESS_PAGE_ENDPROCESS "Uzuwa dane zadanie z systemu"
+    ID_PROCESS_PAGE_ENDPROCESS "Usuwa dane zadanie z systemu"
     ID_PROCESS_PAGE_ENDPROCESSTREE
                             "Usuwa dany proces i wszystkich jego potomków z systemu"
     ID_PROCESS_PAGE_DEBUG   "Pod³¹cza debuger do tego zadania"
@@ -488,9 +488,9 @@ BEGIN
                             "Ustala na jakich procesorach ten proces mo¿e siê wykonywaæ"
     ID_PROCESS_PAGE_SETPRIORITY_REALTIME
                             "Ustala priorytet procesu na czas rzeczywisty"
-    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Ustala priorytet procesu na wyski"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Ustala priorytet procesu na wysoki"
     ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
-                            "Ustala priorytet procesu na powy¿ej normalnego"
+                            "Ustala priorytet procesu powy¿ej normalnego"
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL
                             "Ustala priorytet procesu na normalny"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL

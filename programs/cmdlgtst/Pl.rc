@@ -151,7 +151,7 @@ FONT 8, "MS Shell Dlg"
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Flagi okien drukuj/ustawienia drukowanie"
+CAPTION "Flagi okien drukuj/ustawienia drukowania"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 180, 6, 50, 14
@@ -291,6 +291,6 @@ BEGIN
   LTEXT "&Dó³:", stc18, 159, 192, 23, 8
   EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
   DEFPUSHBUTTON "OK", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
-  PUSHBUTTON "Anluj", IDCANCEL, 126, 220, 50, 14
+  PUSHBUTTON "Anuluj", IDCANCEL, 126, 220, 50, 14
   PUSHBUTTON "Dru&karka...", psh3, 184, 220, 48, 14
 END

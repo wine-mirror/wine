@@ -32,7 +32,7 @@ wywo³ana (je¿eli istnieje). Komenda CALL mo¿e przekazywaæ parametry do\n\
 wywo³ywanej procedury.\n\
 \n\
 Zmiany domyœlnego katalogu, zmiennych œrodowiskowych itd. wykonane przez\n\
-wywo³an¹ procedure s¹ dziedziczone przez skrypt wywo³uj¹cy CALL.\n"
+wywo³an¹ procedurê s¹ dziedziczone przez skrypt wywo³uj¹cy CALL.\n"
 
   WCMD_CD,     "Pomoc o CD\n"
   WCMD_CHDIR,  "Pomoc o CHDIR\n"
@@ -98,17 +98,17 @@ Mo¿esz wyœwietliæ aktualn¹ etykietê komend¹ VOL.\n"
 "MOVE zmienia po³o¿enie wybranego pliku lub katalogu.\n\
 \n\
 Je¿eli przemieszczany jest katalog wszystkie podkatalogi\n\
-i pliki s¹ tak¿e przesówane.\n\
+i pliki s¹ tak¿e przesuwane.\n\
 \n\
 MOVE dzia³a tylko w obrêbie jednego dysku.\n"
 
   WCMD_PATH,
-"PATH wyœwitla lub zmienia œcie¿ke w której wyszukuje cmd.\n\
+"PATH wyœwietla lub zmienia œcie¿kê w której wyszukuje cmd.\n\
 \n\
 Komenda PATH bez parametrów wyœwietla aktualn¹ œcie¿kê. Aby j¹\n\
 zmieniæ nale¿y wywo³aæ PATH za którym wystêpuje nowa œcie¿ka.\n\
 \n\
-Umieszczenie wyra¿enia %PATH% przy poawaniu nowej œcie¿ki\n\
+Umieszczenie wyra¿enia %PATH% przy podawaniu nowej œcie¿ki\n\
 powoduje wstawienie starej œcie¿ki, na przyk³ad:\n\
 		PATH %PATH%;c:\\temp \n"
 
@@ -139,7 +139,7 @@ Polecenie 'SET PROMPT=tekst' ma taki sam efekt jak 'PROMPT tekst'\n"
 
   WCMD_REM,
 "Polecenie poprzedzone komend¹ REM nie jest wykonywane, mo¿e byæ\n\
-stosowane jako komenta¿ w pliku typu bat.\n"
+stosowane jako komentarz w pliku typu bat.\n"
 
   WCMD_REN,    "Pomoc o REN\n"
   WCMD_RENAME, "Pomoc o RENAME\n"
@@ -160,7 +160,7 @@ wystêpowaæ przed znakiem równoœci, nazwa zmiennej nie mo¿e zawieraæ\n\
 spacji.\n\
 \n\
 Pod Wine'em zmienne œrodowiskowe systemu operacyjnego s¹ dodawane do\n\
-zmiennych œrodowiskowych Win32, ztego powodu jest wiêcej zmiennych ni¿\n\
+zmiennych œrodowiskowych Win32, z tego powodu jest wiêcej zmiennych ni¿\n\
 w implementacji Win32. Wine nie modyfikuje zmiennych œrodowiskowych\n\
 systemu.\n"
 
@@ -174,7 +174,7 @@ wywo³ywane z lini komend.\n"
   WCMD_TITLE,  "Ustawia nazwê okna cmd, sk³adnia TITLE [ci¹g znaków]\n"
 
   WCMD_TYPE,
-"TYPE <nazwa pliku> wyœwietla zawartoœc pliku, nie jest sprawdzane, czy\n\
+"TYPE <nazwa pliku> wyœwietla zawartoœæ pliku, nie jest sprawdzane, czy\n\
 jest on plikiem tekstowym.\n"
 
   WCMD_VERIFY,
@@ -197,26 +197,26 @@ Ustawienia flagi nic nie zmieniaj¹ pod Wine'em.\n"
   WCMD_POPD, "POPD ustala aktualny katalog na ostatni katalog zapamiêtany przez\n\
               PUSHD\n"
 
-  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+  WCMD_MORE,   "MORE wyœwietla strona po stronie wyjœcie pliku lub potoku.\n"
 
   WCMD_EXIT,
-"EXIT koñczy bierz¹c¹ sesjê cmd i powraca do systemu operacyjnego\n\
+"EXIT koñczy bie¿¹c¹ sesjê cmd i powraca do systemu operacyjnego\n\
 lub pow³oki, w której uruchomiono cmd.\n"
 
   WCMD_ALLHELP, "CMD - wbudowane komendy:\n\
 ATTRIB\t\tPokazuje lub zmienia atrybuty pliku\n\
 CALL\t\tWywo³uje plik bat z innego pliku\n\
-CD (CHDIR)\tZmienia bierz¹cy katalog\n\
+CD (CHDIR)\tZmienia bie¿¹cy katalog\n\
 CLS\t\tCzyœci ekran konsoli\n\
 COPY\t\tKopiuje plik\n\
 CTTY\t\tZmienia urz¹dzenie wyjœcia/wejœcia\n\
-DATE\t\tPokazuje lub zmienia date systemow¹\n\
+DATE\t\tPokazuje lub zmienia datê systemow¹\n\
 DEL (ERASE)\tUsuwa plik lub pliki\n\
 DIR\t\tWyœwietla zawartoœæ katalogu\n\
 ECHO\t\tKopiuje tekst na wyjœcie konsoli\n\
 HELP\t\tWyœwietla dok³adniejsz¹ pomoc o komendzie\n\
 MD (MKDIR)\tTworzy katalog\n\
-MORE\t\tDisplay output in pages\n\
+MORE\t\tWyœwietla wyjœcie strona po stronie\n\
 MOVE\t\tPrzenosi katalog lub pliki\n\
 PATH\t\tUstawia lub wyœwietla œcie¿kê przeszukiwania\n\
 POPD\t\tWraca do katalogu zapamiêtanego przez PUSHD\n\
