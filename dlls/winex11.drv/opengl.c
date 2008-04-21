@@ -35,7 +35,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
-WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 #ifdef SONAME_LIBGL
 
@@ -3370,7 +3369,7 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
     return 0;
   }
   
-  TRACE_(opengl)("(%p)\n", physDev);
+  TRACE("(%p)\n", physDev);
 
   drawable = get_glxdrawable(physDev);
 
@@ -3491,7 +3490,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
  *		SwapBuffers (X11DRV.@)
  */
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
-  ERR_(opengl)("No OpenGL support compiled in.\n");
+  ERR("No OpenGL support compiled in.\n");
 
   return FALSE;
 }
@@ -3502,7 +3501,7 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
  * For OpenGL32 wglCopyContext.
  */
 BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
@@ -3512,7 +3511,7 @@ BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
  * For OpenGL32 wglCreateContext.
  */
 HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return NULL;
 }
 
@@ -3522,7 +3521,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev) {
  * For OpenGL32 wglDeleteContext.
  */
 BOOL X11DRV_wglDeleteContext(HGLRC hglrc) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
@@ -3532,18 +3531,18 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc) {
  * For OpenGL32 wglGetProcAddress.
  */
 PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return NULL;
 }
 
 HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *hDevice, void *hPbuffer)
 {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return NULL;
 }
 
 BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* hReadDev, HGLRC hglrc) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
@@ -3553,7 +3552,7 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* h
  * For OpenGL32 wglMakeCurrent.
  */
 BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
@@ -3563,7 +3562,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
  * For OpenGL32 wglShaderLists.
  */
 BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
@@ -3574,7 +3573,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
  */
 BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
@@ -3585,7 +3584,7 @@ BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
  */
 BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
