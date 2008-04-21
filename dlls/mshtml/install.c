@@ -93,7 +93,7 @@ static void set_registry(LPCSTR install_dir)
     WCHAR mshtml_key[100];
     LPWSTR gecko_path;
     HKEY hkey;
-    DWORD res, len, size;
+    DWORD res, len;
 
     static const WCHAR wszGeckoPath[] = {'G','e','c','k','o','P','a','t','h',0};
     static const WCHAR wszWineGecko[] = {'w','i','n','e','_','g','e','c','k','o',0};
@@ -120,7 +120,6 @@ static void set_registry(LPCSTR install_dir)
 
     memcpy(gecko_path+len, wszWineGecko, sizeof(wszWineGecko));
 
-    size = len*sizeof(WCHAR)+sizeof(wszWineGecko);
     res = RegSetValueExW(hkey, wszGeckoPath, 0, REG_SZ, (LPVOID)gecko_path,
                        len*sizeof(WCHAR)+sizeof(wszWineGecko));
     heap_free(gecko_path);
