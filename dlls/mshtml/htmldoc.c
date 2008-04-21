@@ -46,7 +46,10 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
         *ppvObject = HTMLDOC(This);
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch, %p)\n", This, ppvObject);
-        *ppvObject = HTMLDOC(This);
+        *ppvObject = DISPATCHEX(This);
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        TRACE("(%p)->(IID_IDispatchEx, %p)\n", This, ppvObject);
+        *ppvObject = DISPATCHEX(This);
     }else if(IsEqualGUID(&IID_IHTMLDocument, riid)) {
         TRACE("(%p)->(IID_IHTMLDocument, %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
@@ -1354,6 +1357,167 @@ static const IHTMLDocument2Vtbl HTMLDocumentVtbl = {
     HTMLDocument_createStyleSheet
 };
 
+#define DISPEX_THIS(iface) DEFINE_THIS(HTMLDocument, IDispatchEx, iface)
+
+static HRESULT WINAPI DocDispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IHTMLWindow2_QueryInterface(HTMLDOC(This), riid, ppv);
+}
+
+static ULONG WINAPI DocDispatchEx_AddRef(IDispatchEx *iface)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IHTMLWindow2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI DocDispatchEx_Release(IDispatchEx *iface)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IHTMLWindow2_AddRef(HTMLDOC(This));
+}
+
+static HRESULT WINAPI DocDispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->dispex), pctinfo);
+}
+
+static HRESULT WINAPI DocDispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
+                                               LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->dispex), iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DocDispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
+                                                 LPOLESTR *rgszNames, UINT cNames,
+                                                 LCID lcid, DISPID *rgDispId)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->dispex), riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI DocDispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    switch(dispIdMember) {
+    case DISPID_READYSTATE:
+        TRACE("DISPID_READYSTATE\n");
+
+        if(!(wFlags & DISPATCH_PROPERTYGET))
+            return E_INVALIDARG;
+
+        V_VT(pVarResult) = VT_I4;
+        V_I4(pVarResult) = This->readystate;
+        return S_OK;
+    }
+
+    return IDispatchEx_Invoke(DISPATCHEX(&This->dispex), dispIdMember, riid, lcid, wFlags, pDispParams,
+                              pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DocDispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_GetDispID(DISPATCHEX(&This->dispex), bstrName, grfdex, pid);
+}
+
+static HRESULT WINAPI DocDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_InvokeEx(DISPATCHEX(&This->dispex), id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+}
+
+static HRESULT WINAPI DocDispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_DeleteMemberByName(DISPATCHEX(&This->dispex), bstrName, grfdex);
+}
+
+static HRESULT WINAPI DocDispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_DeleteMemberByDispID(DISPATCHEX(&This->dispex), id);
+}
+
+static HRESULT WINAPI DocDispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_GetMemberProperties(DISPATCHEX(&This->dispex), id, grfdexFetch, pgrfdex);
+}
+
+static HRESULT WINAPI DocDispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_GetMemberName(DISPATCHEX(&This->dispex), id, pbstrName);
+}
+
+static HRESULT WINAPI DocDispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_GetNextDispID(DISPATCHEX(&This->dispex), grfdex, id, pid);
+}
+
+static HRESULT WINAPI DocDispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+{
+    HTMLDocument *This = DISPEX_THIS(iface);
+
+    return IDispatchEx_GetNameSpaceParent(DISPATCHEX(&This->dispex), ppunk);
+}
+
+#undef DISPEX_THIS
+
+static const IDispatchExVtbl DocDispatchExVtbl = {
+    DocDispatchEx_QueryInterface,
+    DocDispatchEx_AddRef,
+    DocDispatchEx_Release,
+    DocDispatchEx_GetTypeInfoCount,
+    DocDispatchEx_GetTypeInfo,
+    DocDispatchEx_GetIDsOfNames,
+    DocDispatchEx_Invoke,
+    DocDispatchEx_GetDispID,
+    DocDispatchEx_InvokeEx,
+    DocDispatchEx_DeleteMemberByName,
+    DocDispatchEx_DeleteMemberByDispID,
+    DocDispatchEx_GetMemberProperties,
+    DocDispatchEx_GetMemberName,
+    DocDispatchEx_GetNextDispID,
+    DocDispatchEx_GetNameSpaceParent
+};
+
+static dispex_static_data_t HTMLDocument_dispex = {
+    DispHTMLDocument_tid,
+    NULL,
+    {
+        IHTMLDocument2_tid,
+        IHTMLDocument3_tid,
+        IHTMLDocument4_tid,
+        IHTMLDocument5_tid,
+        0
+    }
+};
+
 HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 {
     HTMLDocument *ret;
@@ -1363,6 +1527,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     ret = heap_alloc_zero(sizeof(HTMLDocument));
     ret->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
+    ret->lpIDispatchExVtbl = &DocDispatchExVtbl;
     ret->ref = 0;
     ret->readystate = READYSTATE_UNINITIALIZED;
 
@@ -1393,6 +1558,8 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ConnectionPoint_Init(&ret->cp_propnotif, &ret->cp_container, &IID_IPropertyNotifySink);
     ConnectionPoint_Init(&ret->cp_htmldocevents, &ret->cp_container, &DIID_HTMLDocumentEvents);
     ConnectionPoint_Init(&ret->cp_htmldocevents2, &ret->cp_container, &DIID_HTMLDocumentEvents2);
+
+    init_dispex(&ret->dispex, (IUnknown*)HTMLDOC(ret), &HTMLDocument_dispex);
 
     ret->nscontainer = NSContainer_Create(ret, NULL);
     ret->window = HTMLWindow_Create(ret);

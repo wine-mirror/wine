@@ -61,7 +61,12 @@ typedef struct event_target_t event_target_t;
 /* NOTE: make sure to keep in sync with dispex.c */
 typedef enum {
     NULL_tid,
+    DispHTMLDocument_tid,
     DispHTMLWindow2_tid,
+    IHTMLDocument2_tid,
+    IHTMLDocument3_tid,
+    IHTMLDocument4_tid,
+    IHTMLDocument5_tid,
     IHTMLWindow2_tid,
     IHTMLWindow3_tid,
     IOmNavigator_tid,
@@ -149,6 +154,7 @@ typedef struct {
 } HTMLOptionElementFactory;
 
 struct HTMLDocument {
+    DispatchEx dispex;
     const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
     const IHTMLDocument3Vtbl              *lpHTMLDocument3Vtbl;
     const IHTMLDocument4Vtbl              *lpHTMLDocument4Vtbl;
@@ -168,6 +174,7 @@ struct HTMLDocument {
     const IHlinkTargetVtbl                *lpHlinkTargetVtbl;
     const IPersistStreamInitVtbl          *lpPersistStreamInitVtbl;
     const ICustomDocVtbl                  *lpCustomDocVtbl;
+    const IDispatchExVtbl                 *lpIDispatchExVtbl;
 
     LONG ref;
 
