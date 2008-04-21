@@ -184,8 +184,14 @@ static HRESULT WINAPI HTMLWindow2_setTimeout(IHTMLWindow2 *iface, BSTR expressio
         long msec, VARIANT *language, long *timerID)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%s %ld %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
-    return E_NOTIMPL;
+    VARIANT expr_var;
+
+    TRACE("(%p)->(%s %ld %p %p)\n", This, debugstr_w(expression), msec, language, timerID);
+
+    V_VT(&expr_var) = VT_BSTR;
+    V_BSTR(&expr_var) = expression;
+
+    return IHTMLWindow3_setTimeout(HTMLWINDOW3(This), &expr_var, msec, language, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow2_clearTimeout(IHTMLWindow2 *iface, long timerID)
