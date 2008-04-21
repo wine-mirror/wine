@@ -774,7 +774,6 @@ extern void X11DRV_ForceXIMReset(HWND hwnd);
 
 /* FIXME: private functions imported from user32 */
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
-extern void WIN_invalidate_dce( HWND hwnd, const RECT *rect );
 
 #define XEMBED_MAPPED  (1 << 0)
 

@@ -496,7 +496,10 @@ done:
     wine_tsx11_lock();
     XFlush( display );
     wine_tsx11_unlock();
-    WIN_invalidate_dce( hwnd, NULL );
+    /* force DCE invalidation */
+    SetWindowPos( hwnd, 0, 0, 0, 0, 0,
+                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
+                  SWP_NOREDRAW | SWP_NOSENDCHANGING | SWP_STATECHANGED);
     return TRUE;
 }
 
@@ -559,6 +562,7 @@ static void sync_gl_drawable(Display *display, struct x11drv_win_data *data)
 
     XFreePixmap(display, data->pixmap);
     destroy_glxpixmap(display, data->gl_drawable);
+    TRACE( "Recreated GL drawable %lx to replace %lx\n", glxp, data->gl_drawable );
 
     data->pixmap = pix;
     data->gl_drawable = glxp;
