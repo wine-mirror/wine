@@ -1307,6 +1307,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     dwFlags &= ~WAVE_DIRECTSOUND;  /* direct sound not supported, ignore the flag */
 
+    wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
     wwo->waveDesc = *lpDesc;
     memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
