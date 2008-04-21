@@ -810,7 +810,6 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpParms)
 static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
-    DWORD		dwRet = 0;
 
     TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpParms);
 
@@ -821,7 +820,7 @@ static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 
 	wmm->dwStatus = MCI_MODE_NOT_READY;
 	if (oldstat == MCI_MODE_PAUSE)
-	    dwRet = midiOutReset((HMIDIOUT)wmm->hMidi);
+	    midiOutReset((HMIDIOUT)wmm->hMidi);
 
 	while (wmm->dwStatus != MCI_MODE_STOP)
 	    Sleep(10);
