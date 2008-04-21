@@ -2,7 +2,7 @@
  * Start
  * Norwegian Bokmål Language Support
  *
- * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2008 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ Valg: \n\
 /MAX[imized] Start programmet maksimert. \n\
 /R[estored]  Start programmet normalt (hverken minimert eller maksimert). \n\
 /W[ait]      Vent til programmet avslutter, og avslutt med programmets \n\             avsluttingskode. \n\
+/Unix        Bruk et Unix-filnavn og start filen som Windows Utforsker (explorer). \n\
 /L           Vis sluttbruker-lisensen. \n\
  \n\
 start.exe versjon 0.2 Kopirett for 2003 tilhører Dan Kegel \n\
@@ -61,4 +62,6 @@ Se filen 'COPYING.LIB' for lisensinformasjon. \n\
 "
 
 STRING_EXECFAIL "Kunne ikke starte programmet, eller intet program er tilknyttet den oppgitte filen.\n'ShellExecuteEx' feilet"
+
+STRING_UNIXFAIL "Klarte ikke å konvertere Unix-filnavnet til et DOS-filnavn."
 }
