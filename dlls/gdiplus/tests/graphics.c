@@ -99,6 +99,7 @@ static void test_save_restore(void)
     GpGraphics *graphics1, *graphics2;
     node * state_log = NULL;
     HDC hdc = GetDC(0);
+    state_a = state_b = state_c = 0xdeadbeef;
 
     /* Invalid saving. */
     GdipCreateFromHDC(hdc, &graphics1);
