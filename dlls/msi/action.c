@@ -5068,7 +5068,7 @@ static LONG env_set_flags( LPCWSTR *name, LPCWSTR *value, DWORD *flags )
 static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
-    LPCWSTR name, value, comp;
+    LPCWSTR name, value;
     LPWSTR data = NULL, newval = NULL;
     LPWSTR deformatted = NULL, ptr;
     DWORD flags, type, size;
@@ -5088,7 +5088,6 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 
     name = MSI_RecordGetString(rec, 2);
     value = MSI_RecordGetString(rec, 3);
-    comp = MSI_RecordGetString(rec, 4);
 
     res = env_set_flags(&name, &value, &flags);
     if (res != ERROR_SUCCESS)

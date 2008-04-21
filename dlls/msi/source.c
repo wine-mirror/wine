@@ -153,7 +153,6 @@ UINT WINAPI MsiSourceListEnumMediaDisksA(LPCSTR szProductCodeOrPatchCode,
     LPWSTR usersid = NULL;
     LPWSTR volume = NULL;
     LPWSTR prompt = NULL;
-    DWORD volumesz, promptsz;
     UINT r = ERROR_INVALID_PARAMETER;
 
     TRACE("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p)\n", debugstr_a(szProductCodeOrPatchCode),
@@ -183,11 +182,11 @@ UINT WINAPI MsiSourceListEnumMediaDisksA(LPCSTR szProductCodeOrPatchCode,
         goto done;
 
     if (szVolumeLabel && pcchVolumeLabel)
-        volumesz = WideCharToMultiByte(CP_ACP, 0, volume, -1, szVolumeLabel,
+        WideCharToMultiByte(CP_ACP, 0, volume, -1, szVolumeLabel,
                             *pcchVolumeLabel + 1, NULL, NULL);
 
     if (szDiskPrompt)
-        promptsz = WideCharToMultiByte(CP_ACP, 0, prompt, -1, szDiskPrompt,
+        WideCharToMultiByte(CP_ACP, 0, prompt, -1, szDiskPrompt,
                             *pcchDiskPrompt + 1, NULL, NULL);
 
 done:
