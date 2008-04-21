@@ -302,8 +302,6 @@ static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ok(save_state == 0, "EOF save_state %d\n", save_state);
         break;
     }
-
-
     return 1;
 }
 
@@ -1158,6 +1156,199 @@ static void test_emf_ExtTextOut_on_path(void)
     DestroyWindow(hwnd);
 }
 
+static const unsigned char EMF_CLIPPING[] =
+{
+    0x01, 0x00, 0x00, 0x00, 0x6c, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x1e, 0x00, 0x00, 0x00, 0x1d, 0x00, 0x00, 0x00,
+    0x20, 0x45, 0x4d, 0x46, 0x00, 0x00, 0x01, 0x00,
+    0xd0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x05, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00,
+    0x7c, 0x01, 0x00, 0x00, 0x2c, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x60, 0xcc, 0x05, 0x00,
+    0xe0, 0x93, 0x04, 0x00, 0x36, 0x00, 0x00, 0x00,
+    0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x4b, 0x00, 0x00, 0x00,
+    0x40, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00,
+    0x05, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x10, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,
+    0x64, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00,
+    0x00, 0x04, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00,
+    0x64, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00,
+    0x00, 0x04, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00,
+    0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x10, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00
+};
+
+static void translate( POINT *pt, UINT count, const XFORM *xform )
+{
+    while (count--)
+    {
+        FLOAT x = (FLOAT)pt->x;
+        FLOAT y = (FLOAT)pt->y;
+        pt->x = (LONG)floor( x * xform->eM11 + y * xform->eM21 + xform->eDx + 0.5 );
+        pt->y = (LONG)floor( x * xform->eM12 + y * xform->eM22 + xform->eDy + 0.5 );
+        pt++;
+    }
+}
+
+static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
+                                       const ENHMETARECORD *emr, int n_objs, LPARAM param)
+{
+    if (emr->iType == EMR_EXTSELECTCLIPRGN)
+    {
+	const EMREXTSELECTCLIPRGN *clip = (const EMREXTSELECTCLIPRGN *)emr;
+        union _rgn
+        {
+            RGNDATA data;
+            char buf[sizeof(RGNDATAHEADER) + sizeof(RECT)];
+        };
+        const union _rgn *rgn1;
+        union _rgn rgn2;
+        RECT rect, rc_transformed;
+        const RECT *rc = (const RECT *)param;
+        HRGN hrgn;
+        XFORM xform;
+        INT ret;
+        BOOL is_win9x;
+
+        trace("EMR_EXTSELECTCLIPRGN: cbRgnData %#x, iMode %u\n",
+               clip->cbRgnData, clip->iMode);
+
+        ok(clip->iMode == RGN_COPY, "expected RGN_COPY, got %u\n", clip->iMode);
+        ok(clip->cbRgnData >= sizeof(RGNDATAHEADER) + sizeof(RECT),
+           "too small data block: %u bytes\n", clip->cbRgnData);
+        if (clip->cbRgnData < sizeof(RGNDATAHEADER) + sizeof(RECT))
+            return 0;
+
+        rgn1 = (const union _rgn *)clip->RgnData;
+
+        trace("size %u, type %u, count %u, rgn size %u, bound (%d,%d-%d,%d)\n",
+              rgn1->data.rdh.dwSize, rgn1->data.rdh.iType,
+              rgn1->data.rdh.nCount, rgn1->data.rdh.nRgnSize,
+              rgn1->data.rdh.rcBound.left, rgn1->data.rdh.rcBound.top,
+              rgn1->data.rdh.rcBound.right, rgn1->data.rdh.rcBound.bottom);
+
+        ok(EqualRect(&rgn1->data.rdh.rcBound, rc), "rects don't match\n");
+
+        rect = *(const RECT *)rgn1->data.Buffer;
+        trace("rect (%d,%d-%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom);
+        ok(EqualRect(&rect, rc), "rects don't match\n");
+
+        ok(rgn1->data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u", rgn1->data.rdh.dwSize);
+        ok(rgn1->data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn1->data.rdh.iType);
+        ok(rgn1->data.rdh.nCount == 1, "expected 1, got %u\n", rgn1->data.rdh.nCount);
+        ok(rgn1->data.rdh.nRgnSize == sizeof(RECT),  "expected sizeof(RECT), got %u\n", rgn1->data.rdh.nRgnSize);
+
+        hrgn = CreateRectRgn(0, 0, 0, 0);
+
+        memset(&xform, 0, sizeof(xform));
+        SetLastError(0xdeadbeef);
+        ret = GetWorldTransform(hdc, &xform);
+        is_win9x = !ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED;
+        if (!is_win9x)
+            ok(ret, "GetWorldTransform error %u\n", GetLastError());
+
+        trace("xform.eM11 %f, xform.eM22 %f\n", xform.eM11, xform.eM22);
+
+        ret = GetClipRgn(hdc, hrgn);
+        ok(ret == 0, "GetClipRgn returned %d, expected 0\n", ret);
+
+        PlayEnhMetaFileRecord(hdc, handle_table, emr, n_objs);
+
+        ret = GetClipRgn(hdc, hrgn);
+        ok(ret == 1, "GetClipRgn returned %d, expected 0\n", ret);
+
+        /* Win9x returns empty clipping region */
+        if (is_win9x) return 1;
+
+        ret = GetRegionData(hrgn, 0, NULL);
+        ok(ret == sizeof(rgn2.data.rdh) + sizeof(RECT), "expected sizeof(rgn), got %u\n", ret);
+
+        ret = GetRegionData(hrgn, sizeof(rgn2), &rgn2.data);
+
+        trace("size %u, type %u, count %u, rgn size %u, bound (%d,%d-%d,%d)\n",
+              rgn2.data.rdh.dwSize, rgn2.data.rdh.iType,
+              rgn2.data.rdh.nCount, rgn2.data.rdh.nRgnSize,
+              rgn2.data.rdh.rcBound.left, rgn2.data.rdh.rcBound.top,
+              rgn2.data.rdh.rcBound.right, rgn2.data.rdh.rcBound.bottom);
+
+        rect = rgn2.data.rdh.rcBound;
+        rc_transformed = *rc;
+        translate((POINT *)&rc_transformed, 2, &xform);
+        ok(EqualRect(&rect, &rc_transformed), "rects don't match\n");
+
+        rect = *(const RECT *)rgn2.data.Buffer;
+        trace("rect (%d,%d-%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom);
+        rc_transformed = *rc;
+        translate((POINT *)&rc_transformed, 2, &xform);
+        ok(EqualRect(&rect, &rc_transformed), "rects don't match\n");
+
+        ok(rgn2.data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u", rgn2.data.rdh.dwSize);
+        ok(rgn2.data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn2.data.rdh.iType);
+        ok(rgn2.data.rdh.nCount == 1, "expected 1, got %u\n", rgn2.data.rdh.nCount);
+        ok(rgn2.data.rdh.nRgnSize == sizeof(RECT),  "expected sizeof(RECT), got %u\n", rgn2.data.rdh.nRgnSize);
+
+        DeleteObject(hrgn);
+    }
+    return 1;
+}
+
+static void test_emf_clipping(void)
+{
+    static const RECT rc = { 0, 0, 100, 100 };
+    RECT rc_clip = { 100, 100, 1024, 1024 };
+    HWND hwnd;
+    HDC hdc;
+    HENHMETAFILE hemf;
+    HRGN hrgn;
+    INT ret;
+
+    SetLastError(0xdeadbeef);
+    hdc = CreateEnhMetaFileA(0, NULL, NULL, NULL);
+    ok(hdc != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
+
+    /* Need to write something to the emf, otherwise Windows won't play it back */
+    LineTo(hdc, 1, 1);
+
+    hrgn = CreateRectRgn(rc_clip.left, rc_clip.top, rc_clip.right, rc_clip.bottom);
+    ret = SelectClipRgn(hdc, hrgn);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    hemf = CloseEnhMetaFile(hdc);
+    ok(hemf != 0, "CloseEnhMetaFile error %d\n", GetLastError());
+
+    if (compare_emf_bits(hemf, EMF_CLIPPING, sizeof(EMF_CLIPPING),
+        "emf_clipping", TRUE) != 0)
+    {
+        dump_emf_bits(hemf, "emf_clipping");
+        dump_emf_records(hemf, "emf_clipping");
+    }
+
+    DeleteObject(hrgn);
+
+    /* Win9x doesn't play EMFs on invisible windows */
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                           0, 0, 200, 200, 0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExA error %d\n", GetLastError());
+
+    hdc = GetDC(hwnd);
+
+    ret = EnumEnhMetaFile(hdc, hemf, clip_emf_enum_proc, &rc_clip, &rc);
+    ok(ret, "EnumEnhMetaFile error %d\n", GetLastError());
+
+    DeleteEnhMetaFile(hemf);
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+}
+
 static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
 {
     LPMETAFILEPICT lpMFP = (LPMETAFILEPICT)lpData;
@@ -1617,6 +1808,7 @@ START_TEST(metafile)
     test_SetMetaFileBits();
     test_mf_ExtTextOut_on_path();
     test_emf_ExtTextOut_on_path();
+    test_emf_clipping();
 
     /* For metafile conversions */
     test_mf_conversions();

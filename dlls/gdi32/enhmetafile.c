@@ -1172,17 +1172,15 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_EXTSELECTCLIPRGN:
       {
-        static int extselectcliprgn_cases;
-#if 0
-	const EMREXTSELECTCLIPRGN lpRgn = (const EMREXTSELECTCLIPRGN *)mr;
-	HRGN hRgn = ExtCreateRegion(NULL, lpRgn->cbRgnData, (RGNDATA *)lpRgn->RgnData);
+	const EMREXTSELECTCLIPRGN *lpRgn = (const EMREXTSELECTCLIPRGN *)mr;
+	HRGN hRgn = 0;
+
+        if (mr->nSize >= sizeof(*lpRgn) + sizeof(RGNDATAHEADER))
+            hRgn = ExtCreateRegion( &info->init_transform, 0, (RGNDATA *)lpRgn->RgnData );
 
 	ExtSelectClipRgn(hdc, hRgn, (INT)(lpRgn->iMode));
 	/* ExtSelectClipRgn created a copy of the region */
 	DeleteObject(hRgn);
-#endif
-        if(!(extselectcliprgn_cases++))
-            FIXME("ExtSelectClipRgn\n");
         break;
       }
 
