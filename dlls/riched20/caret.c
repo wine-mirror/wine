@@ -537,10 +537,25 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
       ME_ReleaseStyle(end_run->member.run.style);
       end_run->member.run.style = tmp_style;
       p->nOffset = 0;
-      if(pos-str < len && *pos =='\r')
-        pos++;
-      if(pos-str < len && *pos =='\n')
-        pos++;
+      if (editor->bEmulateVersion10) {
+        const WCHAR * tpos;
+
+        tpos = pos;
+        while (tpos-str < len && *tpos == '\r') {
+          tpos++;
+        }
+        if (tpos-str >= len) {
+          if (tpos != pos) pos++;
+        } else if (*tpos == '\n')
+          pos = tpos + 1;
+        else
+          pos++;
+      } else {
+        if(pos-str < len && *pos =='\r')
+          pos++;
+        if(pos-str < len && *pos =='\n')
+          pos++;
+      }
       if(pos-str <= len) {
         len -= pos - str;
         str = pos;
