@@ -340,27 +340,67 @@ static inline BOOL UXTHEME_SizedBlt (HDC hdcDst, int nXOriginDst, int nYOriginDs
 {
     if (sizingtype == ST_TILE)
     {
-        int yOfs = nYOriginDst;
-        int yRemaining = nHeightDst;
-        while (yRemaining > 0)
+        HDC hdcTemp;
+        BOOL result = FALSE;
+
+        /* Create a DC with a bitmap consisting of a tiling of the source
+           bitmap, with standard GDI functions. This is faster than an
+           iteration with UXTHEME_Blt(). */
+        hdcTemp = CreateCompatibleDC(hdcSrc);
+        if (hdcTemp != 0)
         {
-            int bltHeight = min (yRemaining, nHeightSrc);
-            int xOfs = nXOriginDst;
-            int xRemaining = nWidthDst;
+            HBITMAP bitmapTemp;
+            HBITMAP bitmapOrig;
+            int nWidthTemp, nHeightTemp;
+            int xOfs, xRemaining;
+            int yOfs, yRemaining;
+            int growSize;
+
+            /* Calculate temp dimensions of integer multiples of source dimensions */
+            nWidthTemp = ((nWidthDst + nWidthSrc - 1) / nWidthSrc) * nWidthSrc;
+            nHeightTemp = ((nHeightDst + nHeightSrc - 1) / nHeightSrc) * nHeightSrc;
+            bitmapTemp = CreateCompatibleBitmap(hdcSrc, nWidthTemp, nHeightTemp);
+            bitmapOrig = SelectObject(hdcTemp, bitmapTemp);
+
+            /* Initial copy of bitmap */
+            BitBlt(hdcTemp, 0, 0, nWidthSrc, nHeightSrc, hdcSrc, nXOriginSrc, nYOriginSrc, SRCCOPY);
+
+            /* Extend bitmap in the X direction. Growth of width is exponential */
+            xOfs = nWidthSrc;
+            xRemaining = nWidthTemp - nWidthSrc;
+            growSize = nWidthSrc;
             while (xRemaining > 0)
             {
-                int bltWidth = min (xRemaining, nWidthSrc);
-                if (!UXTHEME_Blt (hdcDst, xOfs, yOfs, bltWidth, bltHeight,
-                                  hdcSrc, nXOriginSrc, nYOriginSrc, 
-                                  transparent, transcolor))
-                    return FALSE;
-                xOfs += nWidthSrc;
-                xRemaining -= nWidthSrc;
+                growSize = min(growSize, xRemaining);
+                BitBlt(hdcTemp, xOfs, 0, growSize, nHeightSrc, hdcTemp, 0, 0, SRCCOPY);
+                xOfs += growSize;
+                xRemaining -= growSize;
+                growSize *= 2;
             }
-            yOfs += nHeightSrc;
-            yRemaining -= nHeightSrc;
+
+            /* Extend bitmap in the Y direction. Growth of height is exponential */
+            yOfs = nHeightSrc;
+            yRemaining = nHeightTemp - nHeightSrc;
+            growSize = nHeightSrc;
+            while (yRemaining > 0)
+            {
+                growSize = min(growSize, yRemaining);
+                BitBlt(hdcTemp, 0, yOfs, nWidthTemp, growSize, hdcTemp, 0, 0, SRCCOPY);
+                yOfs += growSize;
+                yRemaining -= growSize;
+                growSize *= 2;
+            }
+
+            /* Use temporary hdc for source */
+            result = UXTHEME_Blt (hdcDst, nXOriginDst, nYOriginDst, nWidthDst, nHeightDst,
+                          hdcTemp, 0, 0,
+                          transparent, transcolor);
+
+            SelectObject(hdcTemp, bitmapOrig);
+            DeleteObject(bitmapTemp);
         }
-        return TRUE;
+        DeleteDC(hdcTemp);
+        return result;
     }
     else
     {
