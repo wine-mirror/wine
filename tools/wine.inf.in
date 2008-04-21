@@ -2681,7 +2681,7 @@ ErrorControl=1
 [SpoolerService]
 Description="Loads files to memory for later printing"
 DisplayName="Print Spooler"
-ServiceBinary="%11\spoolsv.exe"
+ServiceBinary="%11%\spoolsv.exe"
 ServiceType=1
 StartType=4
 ErrorControl=1
