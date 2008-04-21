@@ -730,6 +730,81 @@ static void start_server(void)
 
 
 /***********************************************************************
+ *           setup_config_dir
+ *
+ * Setup the wine configuration dir.
+ */
+static void setup_config_dir(void)
+{
+    const char *p, *config_dir = wine_get_config_dir();
+    pid_t pid, wret;
+
+    if (chdir( config_dir ) == -1)
+    {
+        if (errno != ENOENT) fatal_perror( "chdir to %s\n", config_dir );
+
+        if ((p = strrchr( config_dir, '/' )) && p != config_dir)
+        {
+            struct stat st;
+            char *tmp_dir;
+
+            if (!(tmp_dir = malloc( p + 1 - config_dir ))) fatal_error( "out of memory\n" );
+            memcpy( tmp_dir, config_dir, p - config_dir );
+            tmp_dir[p - config_dir] = 0;
+            if (!stat( tmp_dir, &st ) && st.st_uid != getuid())
+                fatal_error( "'%s' is not owned by you, refusing to create a configuration directory there\n",
+                             tmp_dir );
+            free( tmp_dir );
+        }
+
+        mkdir( config_dir, 0777 );
+        if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s\n", config_dir );
+        MESSAGE( "wine: creating configuration directory '%s'...\n", config_dir );
+    }
+
+    if (mkdir( "dosdevices", 0777 ) == -1)
+    {
+        if (errno == EEXIST) return;
+        fatal_perror( "cannot create %s/dosdevices\n", config_dir );
+    }
+
+    /* create the drive symlinks */
+
+    mkdir( "drive_c", 0777 );
+    symlink( "../drive_c", "dosdevices/c:" );
+    symlink( "/", "dosdevices/z:" );
+
+    pid = fork();
+    if (pid == -1) fatal_perror( "fork" );
+
+    if (!pid)
+    {
+        char *argv[3];
+        static char argv0[] = "tools/wineprefixcreate",
+                    argv1[] = "--quiet";
+
+        argv[0] = argv0;
+        argv[1] = argv1;
+        argv[2] = NULL;
+        wine_exec_wine_binary( argv[0], argv, NULL );
+        fatal_perror( "could not exec wineprefixcreate" );
+    }
+    else
+    {
+        int status;
+
+        while ((wret = waitpid( pid, &status, 0 )) != pid)
+        {
+            if (wret == -1 && errno != EINTR) fatal_perror( "wait4" );
+        }
+        if (!WIFEXITED(status) || WEXITSTATUS(status))
+            fatal_error( "wineprefixcreate failed while creating '%s'.\n", config_dir );
+    }
+    MESSAGE( "wine: '%s' created successfully.\n", config_dir );
+}
+
+
+/***********************************************************************
  *           server_connect_error
  *
  * Try to display a meaningful explanation of why we couldn't connect
@@ -768,8 +843,9 @@ static void server_connect_error( const char *serverdir )
  * Attempt to connect to an existing server socket.
  * We need to be in the server directory already.
  */
-static int server_connect( const char *serverdir )
+static int server_connect(void)
 {
+    const char *serverdir;
     struct sockaddr_un addr;
     struct stat st;
     int s, slen, retry, fd_cwd;
@@ -777,6 +853,9 @@ static int server_connect( const char *serverdir )
     /* retrieve the current directory */
     fd_cwd = open( ".", O_RDONLY );
     if (fd_cwd != -1) fcntl( fd_cwd, F_SETFD, 1 ); /* set close on exec flag */
+
+    setup_config_dir();
+    serverdir = wine_get_server_dir();
 
     /* chdir to the server directory */
     if (chdir( serverdir ) == -1)
@@ -835,63 +914,6 @@ static int server_connect( const char *serverdir )
         close( s );
     }
     server_connect_error( serverdir );
-}
-
-
-/***********************************************************************
- *           create_config_dir
- *
- * Create the wine configuration dir (~/.wine).
- */
-static void create_config_dir(void)
-{
-    const char *p, *config_dir = wine_get_config_dir();
-    pid_t pid, wret;
-
-    if ((p = strrchr( config_dir, '/' )) && p != config_dir)
-    {
-        struct stat st;
-        char *tmp_dir;
-
-        if (!(tmp_dir = malloc( p + 1 - config_dir ))) fatal_error( "out of memory\n" );
-        memcpy( tmp_dir, config_dir, p - config_dir );
-        tmp_dir[p - config_dir] = 0;
-        if (!stat( tmp_dir, &st ) && st.st_uid != getuid())
-            fatal_error( "'%s' is not owned by you, refusing to create a configuration directory there\n",
-                         tmp_dir );
-        free( tmp_dir );
-    }
-    if (mkdir( config_dir, 0777 ) == -1 && errno != EEXIST)
-        fatal_perror( "cannot create directory %s", config_dir );
-
-    MESSAGE( "wine: creating configuration directory '%s'...\n", config_dir );
-    pid = fork();
-    if (pid == -1) fatal_perror( "fork" );
-
-    if (!pid)
-    {
-        char *argv[3];
-        static char argv0[] = "tools/wineprefixcreate",
-                    argv1[] = "--quiet";
-
-        argv[0] = argv0;
-        argv[1] = argv1;
-        argv[2] = NULL;
-        wine_exec_wine_binary( argv[0], argv, NULL );
-        fatal_perror( "could not exec wineprefixcreate" );
-    }
-    else
-    {
-        int status;
-
-        while ((wret = waitpid( pid, &status, 0 )) != pid)
-        {
-            if (wret == -1 && errno != EINTR) fatal_perror( "wait4" );
-        }
-        if (!WIFEXITED(status) || WEXITSTATUS(status))
-            fatal_error( "wineprefixcreate failed while creating '%s'.\n", config_dir );
-    }
-    MESSAGE( "wine: '%s' created successfully.\n", config_dir );
 }
 
 
@@ -955,19 +977,7 @@ void server_init_process(void)
             fatal_perror( "Bad server socket %d", fd_socket );
         unsetenv( "WINESERVERSOCKET" );
     }
-    else
-    {
-        const char *server_dir = wine_get_server_dir();
-
-        if (!server_dir)  /* this means the config dir doesn't exist */
-        {
-            create_config_dir();
-            server_dir = wine_get_server_dir();
-        }
-
-        /* connect to the server */
-        fd_socket = server_connect( server_dir );
-    }
+    else fd_socket = server_connect();
 
     /* setup the signal mask */
     sigemptyset( &server_block_set );
