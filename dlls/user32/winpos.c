@@ -1909,8 +1909,8 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         USER_Driver->pSetWindowPos( hwnd, insert_after, swp_flags, window_rect,
                                     client_rect, &visible_rect, valid_rects );
 
-        if ((((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) && (new_style & WS_VISIBLE)) ||
-            (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW)))
+        if (((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
+            (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED)))
             invalidate_dce( hwnd, &old_window_rect );
     }
     return ret;
