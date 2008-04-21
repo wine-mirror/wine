@@ -30,6 +30,7 @@
 #include "mshtmcid.h"
 #include "mshtmhst.h"
 #include "docobj.h"
+#include "dispex.h"
 
 static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
@@ -266,6 +267,41 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
         if(SUCCEEDED(hres))
             IUnknown_Release(unk);
     }
+}
+
+#define test_disp(u,id) _test_disp(__LINE__,u,id)
+static void _test_disp(unsigned line, IUnknown *unk, const IID *diid)
+{
+    IDispatchEx *dispex;
+    ITypeInfo *typeinfo;
+    UINT ticnt;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IDispatch: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    ticnt = 0xdeadbeef;
+    hres = IDispatchEx_GetTypeInfoCount(dispex, &ticnt);
+    ok_(__FILE__,line) (hres == S_OK, "GetTypeInfoCount failed: %08x\n", hres);
+    ok_(__FILE__,line) (ticnt == 1, "ticnt=%u\n", ticnt);
+
+    hres = IDispatchEx_GetTypeInfo(dispex, 0, 0, &typeinfo);
+    ok_(__FILE__,line) (hres == S_OK, "GetTypeInfo failed: %08x\n", hres);
+
+    if(SUCCEEDED(hres)) {
+        TYPEATTR *type_attr;
+
+        hres = ITypeInfo_GetTypeAttr(typeinfo, &type_attr);
+        ok_(__FILE__,line) (hres == S_OK, "GetTypeAttr failed: %08x\n", hres);
+        ok_(__FILE__,line) (IsEqualGUID(&type_attr->guid, diid), "unexpected guid %s\n", dbgstr_guid(&type_attr->guid));
+
+        ITypeInfo_ReleaseTypeAttr(typeinfo, type_attr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    IDispatchEx_Release(dispex);
 }
 
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
@@ -1050,6 +1086,7 @@ static void test_navigator(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_navigator(window, &navigator);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
     ok(navigator != NULL, "navigator == NULL\n");
+    test_disp((IUnknown*)navigator, &IID_IOmNavigator);
 
     hres = IHTMLWindow2_get_navigator(window, &navigator2);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
