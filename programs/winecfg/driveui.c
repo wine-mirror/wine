@@ -427,6 +427,11 @@ static void update_controls(HWND dialog)
     if (selection == -1) selection = DRIVE_TYPE_DEFAULT;
     SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_SETCURSEL, selection, 0);
 
+    EnableWindow( GetDlgItem( dialog, IDC_BUTTON_REMOVE ), (current_drive->letter != 'C') );
+    EnableWindow( GetDlgItem( dialog, IDC_EDIT_PATH ), (current_drive->letter != 'C') );
+    EnableWindow( GetDlgItem( dialog, IDC_BUTTON_BROWSE_PATH ), (current_drive->letter != 'C') );
+    EnableWindow( GetDlgItem( dialog, IDC_COMBO_TYPE ), (current_drive->letter != 'C') );
+
     /* removeable media properties */
     label = current_drive->label;
     set_text(dialog, IDC_EDIT_LABEL, label);
