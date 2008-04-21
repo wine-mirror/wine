@@ -467,8 +467,18 @@ static HRESULT WINAPI HTMLWindow2_get_onscroll(IHTMLWindow2 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLWindow2_get_document(IHTMLWindow2 *iface, IHTMLDocument2 **p)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->doc) {
+        /* FIXME: We should return a wrapper object here */
+        *p = HTMLDOC(This->doc);
+        IHTMLDocument2_AddRef(*p);
+    }else {
+        *p = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_event(IHTMLWindow2 *iface, IHTMLEventObj **p)

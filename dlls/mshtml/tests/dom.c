@@ -1081,7 +1081,6 @@ static void test_navigator(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "parentWidnow failed: %08x\n", hres);
-    test_ifaces((IUnknown*)window, window_iids);
 
     hres = IHTMLWindow2_get_navigator(window, &navigator);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
@@ -1187,6 +1186,25 @@ static void test_default_body(IHTMLBodyElement *body)
     ok(bstr == NULL, "bstr != NULL\n");
 }
 
+static void test_window(IHTMLDocument2 *doc)
+{
+    IHTMLWindow2 *window;
+    IHTMLDocument2 *doc2 = NULL;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentElement failed: %08x\n", hres);
+    test_ifaces((IUnknown*)window, window_iids);
+    test_disp((IUnknown*)window, &DIID_DispHTMLWindow2);
+
+    hres = IHTMLWindow2_get_document(window, &doc2);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+    ok(doc2 != NULL, "doc2 == NULL\n");
+
+    IHTMLDocument_Release(doc2);
+    IHTMLWindow2_Release(window);
+}
+
 static void test_defaults(IHTMLDocument2 *doc)
 {
     IHTMLStyleSheetsCollection *stylesheetcol;
@@ -1209,6 +1227,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_style failed: %08x\n", hres);
 
     test_default_style(style);
+    test_window(doc);
     test_compatmode(doc);
     test_location(doc);
     test_navigator(doc);
