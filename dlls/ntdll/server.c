@@ -737,7 +737,6 @@ static void start_server(void)
 static void setup_config_dir(void)
 {
     const char *p, *config_dir = wine_get_config_dir();
-    pid_t pid, wret;
 
     if (chdir( config_dir ) == -1)
     {
@@ -759,7 +758,7 @@ static void setup_config_dir(void)
 
         mkdir( config_dir, 0777 );
         if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s\n", config_dir );
-        MESSAGE( "wine: creating configuration directory '%s'...\n", config_dir );
+        MESSAGE( "wine: created the configuration directory '%s'\n", config_dir );
     }
 
     if (mkdir( "dosdevices", 0777 ) == -1)
@@ -773,34 +772,6 @@ static void setup_config_dir(void)
     mkdir( "drive_c", 0777 );
     symlink( "../drive_c", "dosdevices/c:" );
     symlink( "/", "dosdevices/z:" );
-
-    pid = fork();
-    if (pid == -1) fatal_perror( "fork" );
-
-    if (!pid)
-    {
-        char *argv[3];
-        static char argv0[] = "tools/wineprefixcreate",
-                    argv1[] = "--quiet";
-
-        argv[0] = argv0;
-        argv[1] = argv1;
-        argv[2] = NULL;
-        wine_exec_wine_binary( argv[0], argv, NULL );
-        fatal_perror( "could not exec wineprefixcreate" );
-    }
-    else
-    {
-        int status;
-
-        while ((wret = waitpid( pid, &status, 0 )) != pid)
-        {
-            if (wret == -1 && errno != EINTR) fatal_perror( "wait4" );
-        }
-        if (!WIFEXITED(status) || WEXITSTATUS(status))
-            fatal_error( "wineprefixcreate failed while creating '%s'.\n", config_dir );
-    }
-    MESSAGE( "wine: '%s' created successfully.\n", config_dir );
 }
 
 

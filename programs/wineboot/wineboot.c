@@ -58,6 +58,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_GETOPT_H
@@ -111,6 +112,49 @@ static char *get_wine_inf_path(void)
         strcat( name, "/tools/wine.inf" );
     }
     return name;
+}
+
+/* update the timestamp if different from the reference time */
+static BOOL update_timestamp( const char *config_dir, unsigned long timestamp, int force )
+{
+    BOOL ret = FALSE;
+    int fd, count;
+    char buffer[100];
+    char *file = HeapAlloc( GetProcessHeap(), 0, strlen(config_dir) + sizeof("/.update-timestamp") );
+
+    if (!file) return FALSE;
+    strcpy( file, config_dir );
+    strcat( file, "/.update-timestamp" );
+
+    if ((fd = open( file, O_RDWR )) != -1)
+    {
+        if ((count = read( fd, buffer, sizeof(buffer) - 1 )) >= 0)
+        {
+            buffer[count] = 0;
+            if (!strncmp( buffer, "disable", sizeof("disable")-1 )) goto done;
+            if (!force && timestamp == strtoul( buffer, NULL, 10 )) goto done;
+        }
+        lseek( fd, 0, SEEK_SET );
+        ftruncate( fd, 0 );
+    }
+    else
+    {
+        if (errno != ENOENT) goto done;
+        if ((fd = open( file, O_WRONLY | O_CREAT | O_TRUNC, 0666 )) == -1) goto done;
+    }
+
+    count = sprintf( buffer, "%lu\n", timestamp );
+    if (write( fd, buffer, count ) != count)
+    {
+        WINE_WARN( "failed to update timestamp in %s\n", file );
+        ftruncate( fd, 0 );
+    }
+    else ret = TRUE;
+
+done:
+    if (fd != -1) close( fd );
+    HeapFree( GetProcessHeap(), 0, file );
+    return ret;
 }
 
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
@@ -617,7 +661,7 @@ static BOOL start_services_process(void)
 }
 
 /* execute rundll32 on the wine.inf file if necessary */
-static void update_wineprefix(void)
+static void update_wineprefix( int force )
 {
     static const WCHAR cmdlineW[] = {'D','e','f','a','u','l','t','I','n','s','t','a','l','l',' ',
                                      '1','2','8',' ','\\','\\','?','\\','u','n','i','x' };
@@ -632,8 +676,12 @@ static void update_wineprefix(void)
         return;
     }
     if (stat( inf_path, &st ) == -1)
+    {
         WINE_WARN( "cannot stat wine.inf file: %s\n", strerror(errno) );
-    else
+        goto done;
+    }
+
+    if (update_timestamp( config_dir, st.st_mtime, force ))
     {
         WCHAR *buffer;
         DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, NULL, 0 );
@@ -823,7 +871,7 @@ int main( int argc, char *argv[] )
         ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES], FALSE, FALSE );
         start_services_process();
     }
-    if (update) update_wineprefix();
+    if (init || update) update_wineprefix( update );
 
     ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE], TRUE, TRUE );
 
