@@ -64,6 +64,9 @@ static void test_WM_SETTEXT()
   const char * TestItem11 = "TestSomeText TestSomeText";
   const char * TestItem12 = "TestSomeText \r\nTestSomeText";
   const char * TestItem13 = "TestSomeText\r\n \r\nTestSomeText";
+  const char * TestItem14 = "TestSomeText\n";
+  const char * TestItem15 = "TestSomeText\r\r\r";
+  const char * TestItem16 = "TestSomeText\r\r\rSomeMoreText";
   char buf[1024] = {0};
   LRESULT result;
 
@@ -72,9 +75,19 @@ static void test_WM_SETTEXT()
      return it as is. In particular, \r\r\n is NOT converted, unlike riched20.
      Currently, builtin riched32 mangles solitary \r or \n when not part of
      a \r\n pair.
+
+     For riched32, the rules for breaking lines seem to be the following:
+     - \r\n is one line break. This is the normal case.
+     - \r{0,N}\n is one line break. In particular, \n by itself is a line break.
+     - \n{1,N} are that many line breaks.
+     - \r with text or other characters (except \n) past it, is a line break. That
+       is, a run of \r{N} without a terminating \n is considered N line breaks
+     - \r at the end of the text is NOT a line break. This differs from riched20,
+       where \r at the end of the text is a proper line break. This causes
+       TestItem2 to fail its test.
    */
 
-#define TEST_SETTEXT(a, b, is_todo) \
+#define TEST_SETTEXT(a, b, nlines, is_todo, is_todo2) \
   result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) a); \
   ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result); \
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf); \
@@ -88,21 +101,30 @@ static void test_WM_SETTEXT()
   } else { \
   ok(result == 0, \
         "WM_SETTEXT round trip: strcmp = %ld\n", result); \
+  } \
+  result = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0); \
+  if (is_todo2) todo_wine { \
+  ok(result == nlines, "EM_GETLINECOUNT returned %ld, expected %d\n", result, nlines); \
+  } else { \
+  ok(result == nlines, "EM_GETLINECOUNT returned %ld, expected %d\n", result, nlines); \
   }
 
-  TEST_SETTEXT(TestItem1, TestItem1, 0)
-  TEST_SETTEXT(TestItem2, TestItem2, 1)
-  TEST_SETTEXT(TestItem3, TestItem3, 1)
-  TEST_SETTEXT(TestItem4, TestItem4, 1)
-  TEST_SETTEXT(TestItem5, TestItem5, 1)
-  TEST_SETTEXT(TestItem6, TestItem6, 1)
-  TEST_SETTEXT(TestItem7, TestItem7, 1)
-  TEST_SETTEXT(TestItem8, TestItem8, 0)
-  TEST_SETTEXT(TestItem9, TestItem9, 0)
-  TEST_SETTEXT(TestItem10, TestItem10, 0)
-  TEST_SETTEXT(TestItem11, TestItem11, 0)
-  TEST_SETTEXT(TestItem12, TestItem12, 0)
-  TEST_SETTEXT(TestItem13, TestItem13, 0)
+  TEST_SETTEXT(TestItem1, TestItem1, 1, 0, 0)
+  TEST_SETTEXT(TestItem2, TestItem2, 1, 1, 1)
+  TEST_SETTEXT(TestItem3, TestItem3, 2, 1, 1)
+  TEST_SETTEXT(TestItem4, TestItem4, 3, 1, 0)
+  TEST_SETTEXT(TestItem5, TestItem5, 2, 1, 1)
+  TEST_SETTEXT(TestItem6, TestItem6, 3, 1, 1)
+  TEST_SETTEXT(TestItem7, TestItem7, 4, 1, 1)
+  TEST_SETTEXT(TestItem8, TestItem8, 2, 0, 0)
+  TEST_SETTEXT(TestItem9, TestItem9, 3, 0, 0)
+  TEST_SETTEXT(TestItem10, TestItem10, 3, 0, 0)
+  TEST_SETTEXT(TestItem11, TestItem11, 1, 0, 0)
+  TEST_SETTEXT(TestItem12, TestItem12, 2, 0, 0)
+  TEST_SETTEXT(TestItem13, TestItem13, 3, 0, 0)
+  TEST_SETTEXT(TestItem14, TestItem14, 2, 1, 0)
+  TEST_SETTEXT(TestItem15, TestItem15, 3, 1, 1)
+  TEST_SETTEXT(TestItem16, TestItem16, 4, 1, 0)
 
 #undef TEST_SETTEXT
   DestroyWindow(hwndRichEdit);
