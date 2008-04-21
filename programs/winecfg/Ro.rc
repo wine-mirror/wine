@@ -2,7 +2,7 @@
  * WineCfg resources
  * Romanian Language Support
  *
- * Copyright 2007 Michael Stefaniuc
+ * Copyright 2007,2008 Michael Stefaniuc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,13 +47,13 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Setări pentru aplicaţii ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine can mimic different Windows versions for each application.  This tab is linked to the Libraries and Graphics tabs to allow you to change systemwide or per-application settings in those tabs as well.",
-                    IDC_STATIC,15,20,227,30
-    CONTROL         "Aplicaţii",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,50,230,150
-    PUSHBUTTON      "&Adaugă o aplicaţie",IDC_APP_ADDAPP, 90,204,75,14
-    PUSHBUTTON      "&Şterge aplicaţia",IDC_APP_REMOVEAPP, 170,204,75,14
+    GROUPBOX        " Setări pentru aplicații ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine poate imita diferite versiuni de Windows pentru fiecare aplicație.  Această subfereastră stă în legătură cu subferestrele „Suprascrieri DLL” și „Setări de fereastră” și permite schimbarea setărilor globale sau pe aplicație în această subfereastră.",
+                    IDC_STATIC,15,20,227,40
+    CONTROL         "Aplicații",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,60,230,140
+    PUSHBUTTON      "&Adaugă o aplicație",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON      "&Șterge aplicația",IDC_APP_REMOVEAPP, 170,204,75,14
     LTEXT           "Versiunea &Windows:",IDC_STATIC,17,226,68,8
     COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
@@ -64,28 +64,30 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Setări de fereastră ",IDC_STATIC,8,4,244,180
 
-    CONTROL         "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
-    LTEXT           "If windows are managed by your window manager, then they will have the standard borders, they will respect your virtual desktop and appear in your window list. \n\nIf the windows are unmanaged, they will be disconnected from your window manager. This will mean the windows do not integrate as closely with your desktop, but the emulation will be more accurate so it can help some programs to work better.",
-                    IDC_STATIC,15,37,228,80
-    CONTROL         "Allow the window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8
+    CONTROL         "Permite aplicațiilor DirectX să rețină mouse-ul în ferestră",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
 
-    LTEXT           "You can either choose to have all Windows applications confined to a single window acting as a virtual desktop, or to have them behave like your other applications.",
-                    IDC_STATIC,15,125,228,28
-    LTEXT           "Mărime ecran:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
+    CONTROL         "Permite administratorul de ferestre să &decoreze ferestrele",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
+
+    CONTROL         "Permite &administratorul de ferestre să administreze ferestrele",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
+    LTEXT           "Dacă ferestrele sunt controlate de administratorul de ferestre ele vor avea margini standard, vor respecta biroul virtual și vor apărea în lista de ferestre.\n\nIar dacă ferestrele sunt necontrolate ele vor fi deconectate de administratorul de fereste și nu se vor integra în biroul D-voastră. Dar în acest caz emulația va fi mai exactă ajutând unele programe să funționeze mai bine.",
+                    IDC_STATIC,19,51,225,80
+
     CONTROL         "Emulează un ecran virtual",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
+    LTEXT           "Puteți pune toate aplicațiile Windows intr-o singură fereastră funcționând ca un ecran virtual sau ele se vor comporta ca celelalte aplicații ale D-voastră.",
+                    IDC_STATIC,19,138,225,28
+    LTEXT           "Mărime ecran:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,109,168,8,8,WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,190,244,48
 
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,50
+    LTEXT           "Suport pentru vertex shader: ",IDC_STATIC,15,203,80,30
+    COMBOBOX        IDC_D3D_VSHADER_MODE,100,201,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    LTEXT           "Suport pentru vertex shader: ",IDC_STATIC,15,199,80,30
-    COMBOBOX        IDC_D3D_VSHADER_MODE,100,197,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    CONTROL         "Allow Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
-    GROUPBOX        " Screen Resolution ",IDC_STATIC,8,242,244,25
+    CONTROL         "Permite pixel shader (dacă este oferit de hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
+    GROUPBOX        " Resoluție ecran ",IDC_STATIC,8,242,244,25
     CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
     EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT           "dpi",IDC_STATIC,235,252,10,8
@@ -96,7 +98,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Suprascieri DLL ",IDC_STATIC,8,4,244,240
-    LTEXT           "Dynamic Link Libraries can be specified individually to be either builtin (provided by Wine) or native (taken from Windows or provided by the application)."
+    LTEXT           "DLL-urile (Dynamic Link Libraries) pot fi setate individual ca builtin (furnizate de Wine) sau native (din Windows sau furnizate de aplicație)."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "Suprascriere nouă pentru librăria:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
@@ -104,7 +106,7 @@ BEGIN
     LTEXT           "Suprascrieri existente:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Editează",IDC_DLLS_EDITDLL,164,96,82,14
-    PUSHBUTTON      "&Şterge",IDC_DLLS_REMOVEDLL,164,114,82,14
+    PUSHBUTTON      "&Șterge",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
@@ -119,7 +121,7 @@ BEGIN
     CONTROL         "Nati&ve apoi Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
     CONTROL         "&Dezactivează",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
-    PUSHBUTTON      "Renunţă",IDCANCEL,57,74,45,14,WS_GROUP
+    PUSHBUTTON      "Renunță",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -130,33 +132,33 @@ BEGIN
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Adaugă",IDC_BUTTON_ADD,15,98,37,14
-    PUSHBUTTON      "&Sterge",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "&Șterge",IDC_BUTTON_REMOVE,56,98,37,14
     PUSHBUTTON      "&Detectează",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
     LTEXT           "&Calea:",IDC_STATIC,15,123,20,9
     EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Browse...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+    PUSHBUTTON      "&Navigează",IDC_BUTTON_BROWSE_PATH,206,120,40,13
 
     LTEXT           "&Tipul:",IDC_STATIC_TYPE,15,138,21,10
-    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_TYPE,41,135,82,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    LTEXT           "Eticheta şi numărul de serie",IDC_LABELSERIAL_STATIC,15,155,95,10
+    LTEXT           "Eticheta și numărul de serie",IDC_LABELSERIAL_STATIC,15,155,95,10
 
-    PUSHBUTTON      "Afişează opţiunile avan&sate",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
-    CONTROL         "Detectează automat pe dizpozitiv:",IDC_RADIO_AUTODETECT,"Button",
-                    BS_AUTORADIOBUTTON,15,166,93,10
+    PUSHBUTTON      "Afișează opțiunile avan&sate",IDC_BUTTON_SHOW_HIDE_ADVANCED,151,136,95,15
+    CONTROL         "Detectează automat de la dizpozitiv:",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,15,166,128,10
     EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Bro&wse...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    PUSHBUTTON      "Na&vigează",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
     CONTROL         "Asociază &manual:",IDC_RADIO_ASSIGN,"Button",
                     BS_AUTORADIOBUTTON,15,195,69,10
 
     LTEXT           "&Etichetă:",IDC_STATIC_LABEL,33,208,29,12
     EDITTEXT        IDC_EDIT_LABEL,63,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Număr de s&erie:",IDC_STATIC_SERIAL,33,225,29,12
+    LTEXT           "Număr de s&erie:",IDC_STATIC_SERIAL,33,219,29,15
     EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "Afişează fişierele ascunse",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+    CONTROL         "Afișează fișierele ascunse",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -164,16 +166,16 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Selectare driver ",IDC_STATIC,8,4,244,195
-    LTEXT           "Select a sound driver by checking the box of the desired driver.  Disable sound by not selecting any driver. Selection of multiple drivers is not recommended. Configure a driver by right-clicking on it.",IDC_STATIC,15,20,227,30
+    LTEXT           "Alegeți un driver de sunet prin bifarea căsuței corespunzătoare.  Sunetul este dezactivat dacă nu alegeți un driver. Selecționarea mai multor drivere nu este recomandată. Configurați un driver cu un clic dreapta pe el.",IDC_STATIC,15,20,227,30
     CONTROL         "Dispozitive",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
-    PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON      "Panoul de control",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
+    PUSHBUTTON      "&Testează sunetul",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON      "Panou de control",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
-    LTEXT           "Hardware Acceleration: ",IDC_STATIC,15,215,90,10
+    LTEXT           "Accelerație hardware: ",IDC_STATIC,15,215,90,10
     COMBOBOX        IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Rata de eşantionare implicită:",IDC_STATIC,15,232,70,8
+    LTEXT           "Rata de eșantionare implicită:",IDC_STATIC,15,232,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Default Bits Per Sample:",IDC_STATIC,137,232,80,8
+    LTEXT           "Nr. implicit biți/eșantion:",IDC_STATIC,137,232,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Emulare driver",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
@@ -203,17 +205,17 @@ BEGIN
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
     CONTROL         "Leagă la:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "Navigează",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_TAB_APPLICATIONS    "Aplicaţii"
+    IDS_TAB_APPLICATIONS    "Aplicații"
     IDS_TAB_DLLS            "Librării"
     IDS_TAB_DRIVES          "Dizpozitive"
     IDS_CHOOSE_PATH         "Select the unix target directory, please."
-    IDS_HIDE_ADVANCED       "Ascunde opţiunile avansate"
-    IDS_SHOW_ADVANCED       "Afişează opţiunile avansate"
+    IDS_HIDE_ADVANCED       "Ascunde opțiunile avansate"
+    IDS_SHOW_ADVANCED       "Afișează opțiunile avansate"
     IDS_NOTHEME             "(Fără tematică)"
     IDS_TAB_GRAPHICS        "Grafică"
     IDS_TAB_DESKTOP_INTEGRATION "Integrare ecran"
@@ -221,16 +223,16 @@ BEGIN
     IDS_TAB_ABOUT           "Despre"
     IDS_WINECFG_TITLE       "Setări Wine"
     IDS_WINECFG_TITLE_APP   "Setări Wine pentru %s"
-    IDS_THEMEFILE           "Fişere de tematică"
-    IDS_THEMEFILE_SELECT    "Selectează un fişier de tematică"
-    IDS_AUDIO_MISSING       "There is no audio driver currently specified in the registry.\n\nA recommended driver has been selected for you.\nYou can use this driver or select another driver if available.\n\nYou must click Apply for the selection to take effect."
-    IDS_SHELL_FOLDER        "Shell Folder"
+    IDS_THEMEFILE           "Fișere de tematică"
+    IDS_THEMEFILE_SELECT    "Selectează un fișier de tematică"
+    IDS_AUDIO_MISSING       "Un driver audio nu este specificat în registru.\n\nUn driver recomandat a fost ales pentru D-voastră.\nPuteți folosi acest driver ori alegeți un alt driver disponibil.\n\nDați clic pe OK ca să activați setarea."
+    IDS_SHELL_FOLDER        "Dosarul de sistem"
     IDS_LINKS_TO            "Legat la"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DLL_WARNING         "Nu se recomandează schimbarea ordinei de încărcare pentru această librărie.\nDoriţi întradevăr să schimbaţi ordinea de încărcare?"
+    IDS_DLL_WARNING         "Nu se recomandează schimbarea ordinei de încărcare pentru această librărie.\nDoriți întradevăr să schimbați ordinea de încărcare?"
     IDS_DLL_WARNING_CAPTION "Avertizare: librărie de sistem"
     IDS_DLL_NATIVE          "native"
     IDS_DLL_BUILTIN         "builtin"
@@ -239,8 +241,8 @@ BEGIN
     IDS_DLL_DISABLED        "dezactivat"
     IDS_DEFAULT_SETTINGS    "Setări implicite"
     IDS_EXECUTABLE_FILTER   "Programe Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "Foloseşte setările globale"
-    IDS_SELECT_EXECUTABLE   "Selectează un fişier executabil"
+    IDS_USE_GLOBAL_SETTINGS "Folosește setările globale"
+    IDS_SELECT_EXECUTABLE   "Selectează un fișier executabil"
 END
 
 STRINGTABLE DISCARDABLE
@@ -253,39 +255,39 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_DRIVE_UNKNOWN           "Detectează automat"
     IDS_DRIVE_FIXED             "Hard disk-ul local"
-    IDS_DRIVE_REMOTE            "Network share"
+    IDS_DRIVE_REMOTE            "Resursă din rețea"
     IDS_DRIVE_REMOVABLE         "Dischetă"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
-    IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Nu mai puteți adăuga nici o unitate.\n\nFiecare unitate trebuie să aibă o literă de la A la Z associată cu ea. Acest fapt limitează numărul de unități la 26."
+    IDS_SYSTEM_DRIVE_LABEL      "Unitate de sistem"
+    IDS_CONFIRM_DELETE_C        "Sunteți sigur că vreți să ștergeți unitatea C?\n\nFoarte multe aplicații Windows presupun că unitatea C există! Dacă nu, vor termina în mod neașteptat! Dacă executați stergerea nu uitați să recreați unitatea C!"
     IDS_COL_DRIVELETTER         "Litera"
     IDS_COL_DRIVEMAPPING        "Mapare disc"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click Add in the Drives tab to create one!\n"
+    IDS_NO_DRIVE_C              "Nu aveți unitatea C. Nu-i bine de loc.\n\nNu uitați să o adăugați în subfereastra „Mapare de discuri”!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
+    IDS_ACCEL_FULL              "Complet"
     IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
-    IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
-    IDS_DEVICES_WAVEOUT         "Wave Out Devices"
-    IDS_DEVICES_WAVEIN          "Wave In Devices"
-    IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
-    IDS_DEVICES_MIDIIN          "MIDI In Devices"
-    IDS_DEVICES_AUX             "Aux Devices"
-    IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove %s from registry?"
+    IDS_ACCEL_BASIC             "De basă"
+    IDS_ACCEL_EMULATION         "Emulare"
+    IDS_DRIVER_ALSA             "Driver ALSA"
+    IDS_DRIVER_ESOUND           "Driver Esound"
+    IDS_DRIVER_OSS              "Driver OSS"
+    IDS_DRIVER_JACK             "Driver JACK"
+    IDS_DRIVER_NAS              "Driver NAS"
+    IDS_DRIVER_AUDIOIO          "Driver Audio IO (Solaris)"
+    IDS_DRIVER_COREAUDIO        "Driver CoreAudio"
+    IDS_OPEN_DRIVER_ERROR       "Nu pot deschide %s!"
+    IDS_SOUNDDRIVERS            "Drivere de sunet"
+    IDS_DEVICES_WAVEOUT         "Dispozitive Wave Out"
+    IDS_DEVICES_WAVEIN          "Dispozitive Wave In"
+    IDS_DEVICES_MIDIOUT         "Dispozitive MIDI Out"
+    IDS_DEVICES_MIDIIN          "Dispozitive MIDI In"
+    IDS_DEVICES_AUX             "Dispozitive Aux"
+    IDS_DEVICES_MIXER           "Dispozitive Mixer"
+    IDS_UNAVAILABLE_DRIVER      "Un driver indisponibil este setat în registru!\n\nDoriți să ștergeți driver-ul „%s” din registru?"
     IDS_WARNING                 "Avertizare"
 END
 
@@ -297,8 +299,8 @@ BEGIN
     IDC_SYSPARAMS_MENU              "Fundal meniu"
     IDC_SYSPARAMS_MENU_TEXT         "Text meniu"
     IDC_SYSPARAMS_SCROLLBAR         "Bare de defilare"
-    IDC_SYSPARAMS_SELECTION         "Fundal selecţie"
-    IDC_SYSPARAMS_SELECTION_TEXT    "Text selecţie"
+    IDC_SYSPARAMS_SELECTION         "Fundal selecție"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Text selecție"
     IDC_SYSPARAMS_TOOLTIP           "Fundal baloane de ajutor"
     IDC_SYSPARAMS_TOOLTIP_TEXT      "Text baloane de ajutor"
     IDC_SYSPARAMS_WINDOW            "Fundal fereastră"
@@ -307,7 +309,22 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Text bară de titlu activă"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Bară de titlu inactivă"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Text bară de titlu inactivă"
-    IDC_SYSPARAMS_MSGBOX_TEXT       "Message Box Text"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Text MessageBox"
+    IDC_SYSPARAMS_APPWORKSPACE      "Spațiu de lucru al aplicației"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Cadru de fereastră"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Margini active"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Margini inactive"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Umbră pentru controale"
+    IDC_SYSPARAMS_GRAY_TEXT         "Text gri"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Evidențiere controale"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Umbră întunecată pentru controale"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Lumină pentru controale"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Fundal alternativ pentru controale"
+    IDC_SYSPARAMS_HOT_TRACKING      "Element cu urmărire fierbinte"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Gradient bară de titlu activă"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Gradient bară de titlu inactivă"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Evidențiere meniu"
+    IDC_SYSPARAMS_MENUBAR           "Bară de meniu"
 END
 
 #pragma code_page(default)
