@@ -179,11 +179,17 @@ static void test_ShortcutFolder(void) {
     /* Convert the wszWineTestFolder string to an ITEMIDLIST. */
     hr = IShellFolder_ParseDisplayName(pDesktopFolder, NULL, NULL, wszWineTestFolder, NULL, 
                                        &pidlWineTestFolder, NULL);
-    ok (SUCCEEDED(hr), "IShellFolder::ParseDisplayName failed! hr = %08x\n", hr);
+    todo_wine
+    {
+        ok (hr == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
+            "Expected %08x, got %08x\n", HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER), hr);
+    }
     if (FAILED(hr)) {
         IShellFolder_Release(pDesktopFolder);
         goto cleanup;
     }
+
+    /* FIXME: these tests are never run */
 
     /* Bind to a WineTest folder object. There has to be some support for this in shdocvw.dll.
      * This isn't implemented in wine yet.*/
