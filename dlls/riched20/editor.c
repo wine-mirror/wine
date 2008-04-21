@@ -1068,7 +1068,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     ME_StreamInFill(&inStream);
     if (!inStream.editstream->dwError)
     {
-      if (strncmp(inStream.buffer, "{\\rtf", 5) && strncmp(inStream.buffer, "{\\urtf", 6))
+      if ((!editor->bEmulateVersion10 && strncmp(inStream.buffer, "{\\rtf", 5) && strncmp(inStream.buffer, "{\\urtf", 6))
+	|| (editor->bEmulateVersion10 && *inStream.buffer != '{'))
       {
         format &= ~SF_RTF;
         format |= SF_TEXT;
