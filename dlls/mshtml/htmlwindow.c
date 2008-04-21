@@ -845,8 +845,19 @@ static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expre
         VARIANT *language, long *timerID)
 {
     HTMLWindow *This = HTMLWINDOW3_THIS(iface);
-    FIXME("(%p)->(%p(%d) %ld %p %p)\n", This, expression, V_VT(expression), msec, language, timerID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p(%d) %ld %p %p)\n", This, expression, V_VT(expression), msec, language, timerID);
+
+    switch(V_VT(expression)) {
+    case VT_DISPATCH:
+        *timerID = set_task_timer(This->doc, msec, V_DISPATCH(expression));
+        break;
+
+    default:
+        FIXME("unimplemented vt=%d\n", V_VT(expression));
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow3_setInterval(IHTMLWindow3 *iface, VARIANT *expression, long msec,

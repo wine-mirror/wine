@@ -555,12 +555,14 @@ typedef struct {
     HWND thread_hwnd;
     task_t *task_queue_head;
     task_t *task_queue_tail;
+    struct list timer_list;
 } thread_data_t;
 
 thread_data_t *get_thread_data(BOOL);
 HWND get_thread_hwnd(void);
 void push_task(task_t*);
 void remove_doc_tasks(const HTMLDocument*);
+DWORD set_task_timer(HTMLDocument*,DWORD,IDispatch*);
 
 HRESULT get_typeinfo(tid_t,ITypeInfo**);
 void release_typelib(void);

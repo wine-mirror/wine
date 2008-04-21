@@ -36,6 +36,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define WM_PROCESSTASK 0x8008
+#define TIMER_ID 0x3000
+
+typedef struct {
+    HTMLDocument *doc;
+    DWORD id;
+    DWORD time;
+    IDispatch *disp;
+
+    struct list entry;
+} task_timer_t;
 
 void push_task(task_t *task)
 {
@@ -66,10 +76,33 @@ static task_t *pop_task(void)
     return task;
 }
 
+static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
+{
+    list_remove(&timer->entry);
+
+    KillTimer(thread_hwnd, timer->id);
+    IDispatch_Release(timer->disp);
+
+    heap_free(timer);
+}
+
 void remove_doc_tasks(const HTMLDocument *doc)
 {
     thread_data_t *thread_data = get_thread_data(FALSE);
+    struct list *liter, *ltmp;
+    task_timer_t *timer;
     task_t *iter, *tmp;
+
+    LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->timer_list) {
+        timer = LIST_ENTRY(liter, task_timer_t, entry);
+        if(timer->doc == doc)
+            release_task_timer(thread_data->thread_hwnd, timer);
+    }
+
+    if(!list_empty(&thread_data->timer_list)) {
+        timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
+        SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time - GetTickCount(), NULL);
+    }
 
     if(!thread_data)
         return;
@@ -88,6 +121,43 @@ void remove_doc_tasks(const HTMLDocument *doc)
         if(!iter->next)
             thread_data->task_queue_tail = iter;
     }
+}
+
+DWORD set_task_timer(HTMLDocument *doc, DWORD msec, IDispatch *disp)
+{
+    thread_data_t *thread_data = get_thread_data(TRUE);
+    task_timer_t *timer;
+    DWORD tc = GetTickCount();
+
+    static DWORD id_cnt = 0x20000000;
+
+    timer = heap_alloc(sizeof(task_timer_t));
+    timer->id = id_cnt++;
+    timer->doc = doc;
+    timer->time = tc + msec;
+
+    IDispatch_AddRef(disp);
+    timer->disp = disp;
+
+    if(list_empty(&thread_data->timer_list)
+       || LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry)->time > timer->time) {
+
+        list_add_head(&thread_data->timer_list, &timer->entry);
+        SetTimer(thread_data->thread_hwnd, TIMER_ID, msec, NULL);
+    }else {
+        task_timer_t *iter;
+
+        LIST_FOR_EACH_ENTRY(iter, &thread_data->timer_list, task_timer_t, entry) {
+            if(iter->time > timer->time) {
+                list_add_tail(&iter->entry, &timer->entry);
+                return timer->id;
+            }
+        }
+
+        list_add_tail(&thread_data->timer_list, &timer->entry);
+    }
+
+    return timer->id;
 }
 
 static void set_downloading(HTMLDocument *doc)
@@ -238,6 +308,28 @@ static void process_task(task_t *task)
     }
 }
 
+static LRESULT process_timer(void)
+{
+    thread_data_t *thread_data = get_thread_data(TRUE);
+    DWORD tc = GetTickCount();
+    task_timer_t *timer;
+
+    while(!list_empty(&thread_data->timer_list)) {
+        timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
+        if(timer->time > tc) {
+            SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time-tc, NULL);
+            return 0;
+        }
+
+        list_remove(&timer->entry);
+        call_disp_func(timer->doc, timer->disp);
+        release_task_timer(thread_data->thread_hwnd, timer);
+    }
+
+    KillTimer(thread_data->thread_hwnd, TIMER_ID);
+    return 0;
+}
+
 static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -252,6 +344,8 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         }
 
         return 0;
+    case WM_TIMER:
+        return process_timer();
     }
 
     if(msg > WM_USER)
@@ -307,6 +401,7 @@ thread_data_t *get_thread_data(BOOL create)
     if(!thread_data && create) {
         thread_data = heap_alloc_zero(sizeof(thread_data_t));
         TlsSetValue(mshtml_tls, thread_data);
+        list_init(&thread_data->timer_list);
     }
 
     return thread_data;
