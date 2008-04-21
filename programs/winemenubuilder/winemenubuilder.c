@@ -1180,7 +1180,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     /* running multiple instances of wineshelllink
        at the same time may be dangerous */
     hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
-    if( WAIT_OBJECT_0 != WaitForSingleObject( hsem, INFINITE ) )
+    if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hsem, FALSE, INFINITE, QS_ALLINPUT ) )
     {
         WINE_ERR("failed wait for semaphore\n");
         goto cleanup;
@@ -1243,7 +1243,7 @@ static BOOL WaitForParentProcess( void )
         goto done;
     }
 
-    if (WaitForSingleObject( hprocess, INFINITE ) == WAIT_OBJECT_0)
+    if (MsgWaitForMultipleObjects( 1, &hprocess, FALSE, INFINITE, QS_ALLINPUT ) == WAIT_OBJECT_0)
         ret = TRUE;
     else
         WINE_ERR("Unable to wait for parent process, error %d\n", GetLastError());
