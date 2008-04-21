@@ -4254,11 +4254,9 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
 	LINEDEF *pc, *pp;
 
 	if (es->hloc32W) {
-		while (LocalUnlock(es->hloc32W)) ;
 		LocalFree(es->hloc32W);
 	}
 	if (es->hloc32A) {
-		while (LocalUnlock(es->hloc32A)) ;
 		LocalFree(es->hloc32A);
 	}
 	if (es->hloc16) {
