@@ -72,20 +72,30 @@ static void check_no_duplicates(node * log)
 {
     INT dups = 0;
     node * temp = NULL;
+    node * temp2 = NULL;
+    node * orig = log;
 
     if(!log)
         goto end;
 
     do{
-        HeapFree(GetProcessHeap(), 0, temp);
         temp = log;
-        while((temp = temp->next))
-            if(log->data == temp->data)
+        while((temp = temp->next)){
+            if(log->data == temp->data){
                 dups++;
-
+                break;
+            }
+            if(dups > 0)
+                break;
+        }
     }while((log = log->next));
 
-    HeapFree(GetProcessHeap(), 0, temp);
+    temp = orig;
+    do{
+        temp2 = temp->next;
+        HeapFree(GetProcessHeap(), 0, temp);
+        temp = temp2;
+    }while(temp);
 
 end:
     expect(0, dups);
