@@ -1041,6 +1041,20 @@ static void test_ES_PASSWORD(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static DWORD CALLBACK test_WM_SETTEXT_esCallback(DWORD_PTR dwCookie,
+                                         LPBYTE pbBuff,
+                                         LONG cb,
+                                         LONG *pcb)
+{
+  char** str = (char**)dwCookie;
+  *pcb = cb;
+  if (*pcb > 0) {
+    memcpy(*str, pbBuff, *pcb);
+    *str += *pcb;
+  }
+  return 0;
+}
+
 static void test_WM_SETTEXT()
 {
   HWND hwndRichEdit = new_richedit(NULL);
@@ -1057,8 +1071,11 @@ static void test_WM_SETTEXT()
   const char * TestItem6_after = "TestSomeText \r\nTestSomeText";
   const char * TestItem7 = "TestSomeText\r\n\r\r\n\rTestSomeText";
   const char * TestItem7_after = "TestSomeText\r\n \r\nTestSomeText";
+
   char buf[1024] = {0};
   LRESULT result;
+  EDITSTREAM es;
+  char * p;
 
   /* This test attempts to show that WM_SETTEXT on a riched20 control causes
      any solitary \r to be converted to \r\n on return. Properly paired
@@ -1085,6 +1102,18 @@ static void test_WM_SETTEXT()
   TEST_SETTEXT(TestItem5, TestItem5_after)
   TEST_SETTEXT(TestItem6, TestItem6_after)
   TEST_SETTEXT(TestItem7, TestItem7_after)
+
+  /* The following test demonstrates that WM_SETTEXT supports RTF strings */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem1);
+  p = buf;
+  es.dwCookie = (DWORD_PTR)&p;
+  es.dwError = 0;
+  es.pfnCallback = test_WM_SETTEXT_esCallback;
+  memset(buf, 0, sizeof(buf));
+  SendMessage(hwndRichEdit, EM_STREAMOUT,
+              (WPARAM)(SF_RTF), (LPARAM)&es);
+  trace("EM_STREAMOUT produced: \n%s\n", buf);
+  TEST_SETTEXT(buf, TestItem1)
 
 #undef TEST_SETTEXT
   DestroyWindow(hwndRichEdit);
@@ -1126,8 +1155,10 @@ static void test_EM_SETTEXTEX(void)
                        ' ','\r', 0};
 #define MAX_BUF_LEN 1024
   WCHAR buf[MAX_BUF_LEN];
+  char * p;
   int result;
   CHARRANGE cr;
+  EDITSTREAM es;
 
   setText.codepage = 1200;  /* no constant for unicode */
   getText.codepage = 1200;  /* no constant for unicode */
@@ -1273,6 +1304,31 @@ static void test_EM_SETTEXTEX(void)
   ok(lstrlenW(buf) == 22,
       "EM_SETTEXTEX to replace selection with more text failed: %i.\n",
       lstrlenW(buf) );
+
+  /* The following test demonstrates that EM_SETTEXTEX supports RTF strings */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "TestSomeText"); /* TestItem1 */
+  p = (char *)buf;
+  es.dwCookie = (DWORD_PTR)&p;
+  es.dwError = 0;
+  es.pfnCallback = test_WM_SETTEXT_esCallback;
+  memset(buf, 0, sizeof(buf));
+  SendMessage(hwndRichEdit, EM_STREAMOUT,
+              (WPARAM)(SF_RTF), (LPARAM)&es);
+  trace("EM_STREAMOUT produced: \n%s\n", (char *)buf);
+
+  setText.codepage = CP_ACP;/* EM_STREAMOUT saved as ANSI string */
+  getText.codepage = 1200;  /* no constant for unicode */
+  getText.cb = MAX_BUF_LEN;
+  getText.flags = GT_DEFAULT;
+  getText.lpDefaultChar = NULL;
+  getText.lpUsedDefChar = NULL;
+
+  setText.flags = 0;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) buf);
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
+  ok(lstrcmpW(buf, TestItem1) == 0,
+      "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
+
 
   DestroyWindow(hwndRichEdit);
 }

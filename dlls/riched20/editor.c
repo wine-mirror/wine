@@ -115,7 +115,7 @@
   + EM_SETSCROLLPOS 3.0
   - EM_SETTABSTOPS 3.0
   - EM_SETTARGETDEVICE (partial)
-  + EM_SETTEXTEX 3.0 (no rich text insertion handling, proper style?)
+  + EM_SETTEXTEX 3.0 (proper style?)
   - EM_SETTEXTMODE 2.0
   - EM_SETTYPOGRAPHYOPTIONS 3.0
   + EM_SETUNDOLIMIT 2.0
@@ -2117,17 +2117,20 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     wszText = lParam ? ME_ToUnicode(pStruct->codepage == 1200, (void *)lParam) : NULL;
     len = wszText ? lstrlenW(wszText) : 0;
 
-    /* FIXME: this should support RTF strings too, according to MSDN */
     if (pStruct->flags & ST_SELECTION) {
       ME_GetSelection(editor, &from, &to);
       style = ME_GetSelectionInsertStyle(editor);
       ME_InternalDeleteText(editor, from, to - from);
-      ME_InsertTextFromCursor(editor, 0, wszText, len, style);
+      if (pStruct->codepage != 1200 && lParam && !strncmp((char *)lParam, "{\\rtf", 5))
+          ME_StreamInRTFString(editor, 0, (char *)lParam);
+      else ME_InsertTextFromCursor(editor, 0, wszText, len, style);
       ME_ReleaseStyle(style);
     }
     else {
       ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
-      ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
+      if (pStruct->codepage != 1200 && lParam && !strncmp((char *)lParam, "{\\rtf", 5))
+          ME_StreamInRTFString(editor, 0, (char *)lParam);
+      else ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
       len = 1;
     }
     ME_CommitUndo(editor);
