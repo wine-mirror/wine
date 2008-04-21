@@ -59,7 +59,6 @@ esac
 
 bindir=`cd "$bindir" && pwd`
 dlldir="$bindir/@bintodlldir@"
-datadir="$bindir/@bintodatadir@"
 
 do_wait=0
 quiet=0
@@ -79,7 +78,6 @@ then
         LD_LIBRARY_PATH="$topdir/libs/wine"
     fi
     export LD_LIBRARY_PATH
-    datadir="$topdir/tools"
 fi
 
 while [ $# -gt 0 ]
@@ -122,42 +120,13 @@ else
 fi
 
 WINEPREFIX=`cd "$WINEPREFIX" && pwd`
-
-# Create the drive symlinks
-
-if [ ! -d "$WINEPREFIX/dosdevices" ]
-then
-    mkdir "$WINEPREFIX/dosdevices"
-    [ -d "$WINEPREFIX/drive_c" ] || mkdir "$WINEPREFIX/drive_c"
-    ln -s "../drive_c" "$WINEPREFIX/dosdevices/c:"
-    ln -s "/" "$WINEPREFIX/dosdevices/z:"
-fi
-
-CROOT="$WINEPREFIX/dosdevices/c:"
-
-# Create the directory tree
-
-for i in \
-    "$CROOT/windows" \
-    "$CROOT/windows/inf"
-do
-    [ -d "$i" ] || mkdir "$i"
-done
-
-# Copy the .inf script and run it
-
-cp "$datadir/wine.inf" "$CROOT/windows/inf/wine.inf"
 export WINEPREFIX
-"${WINELOADER:-$bindir/wine}" rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 128 wine.inf
+
+"${WINELOADER:-$bindir/wine}" wineboot.exe --update
 
 # Wait for the wineserver to finish
 
 if [ $do_wait = 1 ]
 then
     "${WINESERVER:-$bindir/wineserver}" -w
-fi
-
-if [ $quiet = 0 ]
-then
-    echo "$WINEPREFIX updated successfully."
 fi
