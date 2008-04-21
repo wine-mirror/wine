@@ -942,7 +942,7 @@ VOID CDECL _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const M
 /*********************************************************************
  *		_searchenv (MSVCRT.@)
  *
- * Search for a file in a list of paths from an envronment variable.
+ * Search for a file in a list of paths from an environment variable.
  *
  * PARAMS
  *  file   [I] Name of the file to search for.

@@ -539,7 +539,7 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
 
     TRACE("(%04x, '%s')\n", fl, lpszBackupDest);
 
-    /* FIXME: needs to sort virtnodes in case VCPFL_INSPECIFIEDORDER
+    /* FIXME: needs to sort VIRTNODEs in case VCPFL_INSPECIFIEDORDER
      * is not set. This is done by VCP_Callback(VCPM_NODECOMPARE) */
 
     TRACE("#1\n");

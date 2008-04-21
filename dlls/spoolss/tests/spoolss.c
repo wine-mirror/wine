@@ -109,7 +109,7 @@ static void test_BuildOtherNamesFromMachineName(void)
 
     /* An array with 3 stringpointer is returned:
       entry_#0: "" (empty String)
-      entry_#1: <hostname> (this is the same as the computernam)
+      entry_#1: <hostname> (this is the same as the computername)
       entry_#2: <ip-address> (string with the ip-address of <hostname>)
     */
     todo_wine

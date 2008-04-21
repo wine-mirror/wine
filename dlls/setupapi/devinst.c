@@ -1139,7 +1139,7 @@ SetupDiCreateDeviceInfoListExA(const GUID *ClassGuid,
  * Create an empty DeviceInfoSet list.
  *
  * PARAMS
- *   ClassGuid [I] if not NULL only devices with GUID ClcassGuid are associated
+ *   ClassGuid [I] if not NULL only devices with GUID ClassGuid are associated
  *                 with this list.
  *   hwndParent [I] hwnd needed for interface related actions.
  *   MachineName [I] name of machine to create emtpy DeviceInfoSet list, if NULL

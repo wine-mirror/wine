@@ -5311,7 +5311,7 @@ static HRESULT VARIANT_DI_normalize(VARIANT_DI * val, int exponent2, int isDoubl
             VARIANT_int_add(val->bitsnum, 3, &x, 1);
         }
     }
-    /* This step is requiered in order to remove excess bits of precision from the
+    /* This step is required in order to remove excess bits of precision from the
        end of the bit representation, down to the precision guaranteed by the
        floating point number. */
     if (isDouble) {

@@ -750,7 +750,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	}
 	process_case = 1;
 	break;
-    } while(FALSE); /* a litte trick to allow easy exit from nested if's */
+    } while(FALSE); /* a little trick to allow easy exit from nested if's */
 
     ret = S_OK;
     switch (process_case) {
@@ -2312,7 +2312,7 @@ HRESULT WINAPI SHAutoComplete(HWND hwndEdit, DWORD dwFlags)
  *  dwDestLen   [I] Length of lpszDest
  *
  * RETURNS
- *  Success: S_OK. lpszDest constains the resource Url.
+ *  Success: S_OK. lpszDest contains the resource Url.
  *  Failure: E_INVALIDARG, if any argument is invalid, or
  *           E_FAIL if dwDestLen is too small.
  */

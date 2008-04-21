@@ -738,7 +738,7 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
 
         nMax = This->oldindex->cb / sizeof(This->oldindex->aIndex[0]);
 
-        /* Ok, maybe this is more an excercize to see if I interpret everything correctly or not, but that is useful for now */
+        /* Ok, maybe this is more of an excercise to see if I interpret everything correctly or not, but that is useful for now. */
         for (n = 0; n < nMax; ++n)
         {
             DWORD streamId = StreamFromFOURCC(This->oldindex->aIndex[n].dwChunkId);
@@ -915,7 +915,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
 
     IAsyncReader_Length(This->pReader, &total, &avail);
 
-    /* FIXME: AVIX files are added ("eXtended") beyond the "AVI " length, and thus won't be played here	 */
+    /* FIXME: AVIX files are added ("eXtended") beyond the "AVI" length, and thus won't be played here	 */
     if (hr == S_OK)
     {
         This->rtStart = pAviSplit->CurrentChunkOffset = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFLIST));

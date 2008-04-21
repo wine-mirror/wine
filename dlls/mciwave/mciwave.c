@@ -1015,11 +1015,11 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_RECORD_PARM
     wmw->dwPosition = WAVE_ALIGN_ON_BLOCK(wmw, wmw->dwPosition);
     wmw->ckWaveData.cksize = WAVE_ALIGN_ON_BLOCK(wmw, wmw->ckWaveData.cksize);
 
-    /* go back to beginning of chunk plus the requested position */
+    /* Go back to the beginning of the chunk plus the requested position */
     /* FIXME: I'm not sure this is correct, notably because some data linked to
-     * the decompression state machine will not be correcly initialized.
-     * try it this way (other way would be to decompress from 0 up to dwPosition
-     * and to start sending to hWave when dwPosition is reached)
+     * the decompression state machine will not be correctly initialized.
+     * Try it this way (other way would be to decompress from 0 up to dwPosition
+     * and to start sending to hWave when dwPosition is reached).
      */
     mmioSeek(wmw->hFile, wmw->ckWaveData.dwDataOffset + wmw->dwPosition, SEEK_SET); /* >= 0 */
 

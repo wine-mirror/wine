@@ -1930,7 +1930,7 @@ unsigned char * WINAPI NdrPointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
-  /* incremement the buffer here instead of in PointerUnmarshall,
+  /* Increment the buffer here instead of in PointerUnmarshall,
    * as that is used by embedded pointers which already handle the incrementing
    * the buffer, and shouldn't read any additional pointer data from the
    * buffer */
@@ -1957,7 +1957,7 @@ void WINAPI NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 {
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
-  /* incremement the buffer length here instead of in PointerBufferSize,
+  /* Increment the buffer length here instead of in PointerBufferSize,
    * as that is used by embedded pointers which already handle the buffer
    * length, and shouldn't write anything more to the wire */
   if (*pFormat != RPC_FC_RP)

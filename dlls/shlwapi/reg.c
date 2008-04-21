@@ -215,7 +215,7 @@ LONG WINAPI SHRegCloseUSKey(
  *  pszPath        [I] Key name to create or open.
  *  samDesired     [I] Wanted security access.
  *  hRelativeUSKey [I] Base path if pszPath is relative. NULL otherwise.
- *  phNewUSKey     [O] Receives a handle to the new or openened key.
+ *  phNewUSKey     [O] Receives a handle to the new or opened key.
  *  dwFlags        [I] Base key under which the key should be opened.
  *
  * RETURNS

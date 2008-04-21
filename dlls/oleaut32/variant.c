@@ -2666,8 +2666,8 @@ static HRESULT _VarChangeTypeExWrap (VARIANTARG* pvargDest,
  *  Failure:     An HRESULT error code indicating the error.
  *
  * NOTES
- *  Native VarCmp up to and including WinXP dosn't like as input variants
- *  I1, UI2, VT_UI4, UI8 and UINT. INT is accepted only as left variant.
+ *  Native VarCmp up to and including WinXP doesn't like I1, UI2, VT_UI4,
+ *  UI8 and UINT as input variants. INT is accepted only as left variant.
  *
  *  If both input variants are ERROR then VARCMP_EQ will be returned, else
  *  an ERROR variant will trigger an error.
@@ -3115,10 +3115,10 @@ VarAnd_Exit:
  *  Failure: An HRESULT error code indicating the error.
  *
  * NOTES
- *  Native VarAdd up to and including WinXP dosn't like as input variants
- *  I1, UI2, UI4, UI8, INT and UINT.
+ *  Native VarAdd up to and including WinXP doesn't like I1, UI2, UI4,
+ *  UI8, INT and UINT as input variants.
  *
- *  Native VarAdd dosn't check for NULL in/out pointers and crashes. We do the
+ *  Native VarAdd doesn't check for NULL in/out pointers and crashes. We do the
  *  same here.
  *
  * FIXME
@@ -3330,10 +3330,10 @@ end:
  *  Failure: An HRESULT error code indicating the error.
  *
  * NOTES
- *  Native VarMul up to and including WinXP dosn't like as input variants
- *  I1, UI2, UI4, UI8, INT and UINT. But it can multiply apples with oranges.
+ *  Native VarMul up to and including WinXP doesn't like I1, UI2, UI4,
+ *  UI8, INT and UINT as input variants. But it can multiply apples with oranges.
  *
- *  Native VarMul dosn't check for NULL in/out pointers and crashes. We do the
+ *  Native VarMul doesn't check for NULL in/out pointers and crashes. We do the
  *  same here.
  *
  * FIXME

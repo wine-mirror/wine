@@ -187,7 +187,7 @@ START_TEST(stringtable)
     test_StringTableLookUpString();
     test_StringTableStringFromId();
 
-    /* assume we can always distroy */
+    /* assume we can always destroy */
     pStringTableDestroy(table);
     pStringTableDestroy(table2);
 }

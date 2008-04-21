@@ -560,7 +560,7 @@ DWORD WINAPI RegSetValue16( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWO
  *
  * HACK
  *    The 16bit RegQueryValue doesn't handle selectorblocks anyway, so we just
- *    mask out the high 16 bit.  This (not so much incidently) hopefully fixes
+ *    mask out the high 16 bit.  This (not so much incidentally) hopefully fixes
  *    Aldus FH4)
  */
 DWORD WINAPI RegQueryValue16( HKEY hkey, LPCSTR name, LPSTR data, LPDWORD count

@@ -79,7 +79,7 @@ typedef struct DSoundRenderImpl
     long pan;
 } DSoundRenderImpl;
 
-/* Seeking is not needed for a renderer, rely on newsegment for the appropiate changes */
+/* Seeking is not needed for a renderer, rely on newsegment for the appropriate changes */
 static HRESULT sound_mod_stop(IBaseFilter *iface)
 {
     TRACE("(%p)\n", iface);

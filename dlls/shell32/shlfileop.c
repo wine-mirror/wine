@@ -649,11 +649,11 @@ static DWORD SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bFailIfExists)
  *  path       [I]   path of directory to create
  *
  * RETURNS
- *  ERRROR_SUCCESS or one of the following values:
+ *  ERROR_SUCCESS or one of the following values:
  *  ERROR_BAD_PATHNAME if the path is relative
  *  ERROR_FILE_EXISTS when a file with that name exists
  *  ERROR_PATH_NOT_FOUND can't find the path, probably invalid
- *  ERROR_INVLID_NAME if the path contains invalid chars
+ *  ERROR_INVALID_NAME if the path contains invalid chars
  *  ERROR_ALREADY_EXISTS when the directory already exists
  *  ERROR_FILENAME_EXCED_RANGE if the filename was to long to process
  *
@@ -682,9 +682,9 @@ DWORD WINAPI SHCreateDirectory(HWND hWnd, LPCVOID path)
  *  sec        [I]   security attributes to use or NULL
  *
  * RETURNS
- *  ERRROR_SUCCESS or one of the following values:
+ *  ERROR_SUCCESS or one of the following values:
  *  ERROR_BAD_PATHNAME or ERROR_PATH_NOT_FOUND if the path is relative
- *  ERROR_INVLID_NAME if the path contains invalid chars
+ *  ERROR_INVALID_NAME if the path contains invalid chars
  *  ERROR_FILE_EXISTS when a file with that name exists
  *  ERROR_ALREADY_EXISTS when the directory already exists
  *  ERROR_FILENAME_EXCED_RANGE if the filename was to long to process
@@ -1552,7 +1552,7 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 /*************************************************************************
  * SHFreeNameMappings      [shell32.246]
  *
- * Free the mapping handle returned by SHFileoperation if FOF_WANTSMAPPINGHANDLE
+ * Free the mapping handle returned by SHFileOperation if FOF_WANTSMAPPINGHANDLE
  * was specified.
  *
  * PARAMS

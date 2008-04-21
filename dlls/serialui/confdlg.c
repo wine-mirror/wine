@@ -168,7 +168,7 @@ static void SERIALUI_AddConfItems(HWND hDlg, DWORD id, LPCPARAM2STR table, DWORD
 }
 
 /*
- * Get the current sellection of the given combo box and set a DCB field to
+ * Get the current selection of the given combo box and set a DCB field to
  * the value matching that selection.
  */
 static BOOL SERIALUI_GetConfItems(HWND hDlg, DWORD id, LPCPARAM2STR table, LPDWORD lpdwVal)

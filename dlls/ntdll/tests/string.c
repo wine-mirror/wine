@@ -1016,7 +1016,7 @@ static const str2longlong_t str2longlong[] = {
     { "0o7",                   0   }, /* one digit octal */
     { "0o8",                   0   }, /* empty octal */
     { "0o",                    0   }, /* empty octal */
-    { "0d1011101100",          0   }, /* explizit decimal with 0d */
+    { "0d1011101100",          0   }, /* explicit decimal with 0d */
     { "x89abcdef",             0   }, /* Hex with lower case digits a-f (x-notation) */
     { "xFEDCBA00",             0   }, /* Hex with upper case digits A-F (x-notation) */
     { "-xFEDCBA00",            0   }, /* Negative Hexadecimal (x-notation) */
