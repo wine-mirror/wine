@@ -1793,7 +1793,7 @@ static void test_EM_EXSETSEL(void)
     DestroyWindow(hwndRichEdit);
 }
 
-static void test_EM_REPLACESEL(void)
+static void test_EM_REPLACESEL(int redraw)
 {
     HWND hwndRichEdit = new_richedit(NULL);
     char buffer[1024] = {0};
@@ -1818,6 +1818,9 @@ static void test_EM_REPLACESEL(void)
 
     hwndRichEdit = new_richedit(NULL);
 
+    trace("Testing EM_REPLACESEL behavior with redraw=%d\n", redraw);
+    SendMessage(hwndRichEdit, WM_SETREDRAW, redraw, 0);
+
     /* Test behavior with carriage returns and newlines */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "RichEdit1");
@@ -1834,6 +1837,10 @@ static void test_EM_REPLACESEL(void)
     ok(strcmp(buffer, "RichEdit1") == 0,
       "EM_GETTEXTEX results not what was set by EM_REPLACESEL\n");
 
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 1, "EM_GETLINECOUNT returned %d, expected 1\n", r);
+
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "RichEdit1\r");
     ok(10 == r, "EM_REPLACESEL returned %d, expected 10\n", r);
@@ -1849,6 +1856,10 @@ static void test_EM_REPLACESEL(void)
     ok(strcmp(buffer, "RichEdit1\r") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
 
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 2, "EM_GETLINECOUNT returned %d, expected 2\n", r);
+
     /* Win98's riched20 and WinXP's riched20 disagree on what to return from
        EM_REPLACESEL. The general rule seems to be that Win98's riched20
        returns the number of characters *inserted* into the control (after
@@ -1860,6 +1871,10 @@ static void test_EM_REPLACESEL(void)
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "RichEdit1\r\n");
     ok(11 == r /* WinXP */ || 10 == r /* Win98 */,
         "EM_REPLACESEL returned %d, expected 11 or 10\n", r);
+
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 2, "EM_GETLINECOUNT returned %d, expected 2\n", r);
 
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
@@ -1907,6 +1922,10 @@ static void test_EM_REPLACESEL(void)
     ok(strcmp(buffer, "\r\r") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
 
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 3, "EM_GETLINECOUNT returned %d, expected 3\n", r);
+
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n");
     ok(3 == r /* WinXP */ || 1 == r /* Win98 */,
@@ -1925,6 +1944,10 @@ static void test_EM_REPLACESEL(void)
     SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buffer);
     ok(strcmp(buffer, " ") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
+
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 1, "EM_GETLINECOUNT returned %d, expected 1\n", r);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\r\r\r\n\r\r\r");
@@ -1945,6 +1968,10 @@ static void test_EM_REPLACESEL(void)
     ok(strcmp(buffer, "\r\r\r \r\r\r") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
 
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 7, "EM_GETLINECOUNT returned %d, expected 7\n", r);
+
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n\r\n");
     ok(5 == r /* WinXP */ || 2 == r /* Win98 */,
@@ -1963,6 +1990,10 @@ static void test_EM_REPLACESEL(void)
     SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buffer);
     ok(strcmp(buffer, " \r") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
+
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 2, "EM_GETLINECOUNT returned %d, expected 2\n", r);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n\r\r");
@@ -1983,6 +2014,10 @@ static void test_EM_REPLACESEL(void)
     ok(strcmp(buffer, " \r\r") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
 
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 3, "EM_GETLINECOUNT returned %d, expected 3\n", r);
+
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\rX\r\n\r\r");
     ok(6 == r /* WinXP */ || 5 == r /* Win98 */,
@@ -2002,6 +2037,10 @@ static void test_EM_REPLACESEL(void)
     ok(strcmp(buffer, "\rX\r\r\r") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
 
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 5, "EM_GETLINECOUNT returned %d, expected 5\n", r);
+
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\n\n");
     ok(2 == r, "EM_REPLACESEL returned %d, expected 2\n", r);
@@ -2019,6 +2058,10 @@ static void test_EM_REPLACESEL(void)
     SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buffer);
     ok(strcmp(buffer, "\r\r") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
+
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 3, "EM_GETLINECOUNT returned %d, expected 3\n", r);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\n\n\n\n\r\r\r\r\n");
@@ -2038,6 +2081,10 @@ static void test_EM_REPLACESEL(void)
     SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buffer);
     ok(strcmp(buffer, "\r\r\r\r\r\r ") == 0,
       "EM_GETTEXTEX returned incorrect string\n");
+
+    /* Test number of lines reported after EM_REPLACESEL */
+    r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok(r == 7, "EM_GETLINECOUNT returned %d, expected 7\n", r);
 
     DestroyWindow(hwndRichEdit);
 }
@@ -2721,7 +2768,8 @@ START_TEST( editor )
   test_EM_FORMATRANGE();
   test_unicode_conversions();
   test_EM_GETTEXTLENGTHEX();
-  test_EM_REPLACESEL();
+  test_EM_REPLACESEL(1);
+  test_EM_REPLACESEL(0);
   test_eventMask();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows

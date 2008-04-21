@@ -109,9 +109,11 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
 {
   /* Should be called whenever the contents of the control have changed */
   ME_Cursor *pCursor;
+  BOOL wrappedParagraphs;
 
+  wrappedParagraphs = ME_WrapMarkedParagraphs(editor);
   if (!editor->bRedraw) return;
-  if (ME_WrapMarkedParagraphs(editor))
+  if (wrappedParagraphs)
     ME_UpdateScrollBar(editor);
   
   /* Ensure that the cursor is visible */
