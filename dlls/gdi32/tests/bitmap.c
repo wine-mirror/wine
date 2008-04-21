@@ -1623,10 +1623,12 @@ static void test_GetDIBits_BI_BITFIELDS(void)
     /* Call GetDIBits to fill in bmiHeader.  */
     ret = GetDIBits(hdc, hbm, 0, 1, NULL, dibinfo, DIB_RGB_COLORS);
     ok(ret == 1, "GetDIBits failed\n");
-    if (dibinfo->bmiHeader.biBitCount == 16 &&
-        dibinfo->bmiHeader.biCompression == BI_BITFIELDS)
+    if (dibinfo->bmiHeader.biBitCount > 8)
     {
         DWORD *bitmasks = (DWORD *)dibinfo->bmiColors;
+
+        ok( dibinfo->bmiHeader.biCompression == BI_BITFIELDS,
+            "compression is %u\n", dibinfo->bmiHeader.biCompression );
 
         ok( !bitmasks[0], "red mask is set\n" );
         ok( !bitmasks[1], "green mask is set\n" );
