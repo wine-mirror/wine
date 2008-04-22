@@ -1549,7 +1549,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                 else wi->type[0] = '\0';
                 if (flags & 0x0002) strcpy(wi->name, &str[12]);
                 else wi->name[0] = '\0';
-                if (flags & 0x0004) strcpy(wi->caption, &str[23]);
+                if (flags & 0x0004) strcpy(wi->caption, &str[21]);
                 else lstrcpynA(wi->caption, hlpfile->lpszTitle, sizeof(wi->caption));
                 wi->origin.x = (flags & 0x0008) ? GET_USHORT(ptr, 76) : CW_USEDEFAULT;
                 wi->origin.y = (flags & 0x0010) ? GET_USHORT(ptr, 78) : CW_USEDEFAULT;
