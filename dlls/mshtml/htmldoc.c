@@ -1361,7 +1361,7 @@ static ULONG WINAPI DocDispatchEx_Release(IDispatchEx *iface)
 {
     HTMLDocument *This = DISPEX_THIS(iface);
 
-    return IHTMLWindow2_AddRef(HTMLDOC(This));
+    return IHTMLWindow2_Release(HTMLDOC(This));
 }
 
 static HRESULT WINAPI DocDispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
