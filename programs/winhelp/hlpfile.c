@@ -148,13 +148,14 @@ static int comp_PageByHash(void *p, const void *key,
 
 /***********************************************************************
  *
- *           HLPFILE_HlpFilePageByHash
+ *           HLPFILE_PageByHash
  */
 HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative)
 {
     BYTE *ptr;
 
-    if (!hlpfile) return 0;
+    if (!hlpfile) return NULL;
+    if (!lHash) return HLPFILE_Contents(hlpfile, relative);
 
     WINE_TRACE("<%s>[%x]\n", hlpfile->lpszPath, lHash);
 

@@ -506,10 +506,7 @@ void CALLBACK MACRO_FileOpen(void)
 
     if (WINHELP_GetOpenFileName(szFile, MAX_PATH))
     {
-        HLPFILE*        hlpfile = WINHELP_LookupHelpFile(szFile);
-
-        WINHELP_CreateHelpWindowByHash(hlpfile, 0,
-                                       WINHELP_GetWindowInfo(hlpfile, "main"), SW_SHOWNORMAL);
+        MACRO_JumpContents(szFile, "main");
     }
 }
 
@@ -628,10 +625,10 @@ void CALLBACK MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
     HLPFILE*    hlpfile;
 
     WINE_TRACE("(\"%s\", \"%s\")\n", lpszPath, lpszWindow);
-    hlpfile = WINHELP_LookupHelpFile(lpszPath);
-    WINHELP_CreateHelpWindowByHash(hlpfile, 0,
-                                   WINHELP_GetWindowInfo(hlpfile, lpszWindow),
-                                   SW_NORMAL);
+    if ((hlpfile = WINHELP_LookupHelpFile(lpszPath)))
+        WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, 0,
+                               WINHELP_GetWindowInfo(hlpfile, lpszWindow),
+                               SW_NORMAL);
 }
 
 void CALLBACK MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
@@ -641,9 +638,9 @@ void CALLBACK MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context
     WINE_TRACE("(\"%s\", \"%s\", %d)\n", lpszPath, lpszWindow, context);
     hlpfile = WINHELP_LookupHelpFile(lpszPath);
     /* Some madness: what user calls 'context', hlpfile calls 'map' */
-    WINHELP_CreateHelpWindowByMap(hlpfile, context,
-                                  WINHELP_GetWindowInfo(hlpfile, lpszWindow),
-                                  SW_NORMAL);
+    WINHELP_OpenHelpWindow(HLPFILE_PageByMap, hlpfile, context,
+                           WINHELP_GetWindowInfo(hlpfile, lpszWindow),
+                           SW_NORMAL);
 }
 
 void CALLBACK MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
@@ -652,9 +649,9 @@ void CALLBACK MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
 
     WINE_TRACE("(\"%s\", \"%s\", %u)\n", lpszPath, lpszWindow, lHash);
     hlpfile = WINHELP_LookupHelpFile(lpszPath);
-    WINHELP_CreateHelpWindowByHash(hlpfile, lHash,
-                                   WINHELP_GetWindowInfo(hlpfile, lpszWindow),
-                                   SW_NORMAL);
+    WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, lHash,
+                           WINHELP_GetWindowInfo(hlpfile, lpszWindow),
+                           SW_NORMAL);
 }
 
 void CALLBACK MACRO_JumpHelpOn(void)

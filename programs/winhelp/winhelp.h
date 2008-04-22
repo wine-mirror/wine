@@ -178,10 +178,9 @@ typedef struct
 extern WINHELP_GLOBALS Globals;
 extern FARPROC         Callbacks[];
 
-BOOL WINHELP_CreateHelpWindowByHash(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
-BOOL WINHELP_CreateHelpWindowByMap(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
-BOOL WINHELP_CreateHelpWindowByOffset(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
 BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE*, int, BOOL);
+BOOL WINHELP_OpenHelpWindow(HLPFILE_PAGE* (*)(HLPFILE*, LONG, ULONG*),
+                            HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
 BOOL WINHELP_GetOpenFileName(LPSTR, int);
 BOOL WINHELP_CreateIndexWindow(void);
 void WINHELP_DeleteBackSet(WINHELP_WINDOW*);

@@ -304,8 +304,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         if (!hlpfile) return 0;
     }
     else hlpfile = NULL;
-    WINHELP_CreateHelpWindowByHash(hlpfile, lHash, 
-                                   WINHELP_GetWindowInfo(hlpfile, wndname), show);
+    WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, lHash,
+                           WINHELP_GetWindowInfo(hlpfile, wndname), show);
 
     /* Message loop */
     while (GetMessage(&msg, 0, 0, 0))
@@ -657,49 +657,17 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     return TRUE;
 }
 
-/***********************************************************************
- *
- *           WINHELP_CreateHelpWindowByHash
+/******************************************************************
+ *             WINHELP_OpenHelpWindow
+ * Main function to search for a page and display it in a window
  */
-BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash, 
-                                    HLPFILE_WINDOWINFO* wi, int nCmdShow)
+BOOL WINHELP_OpenHelpWindow(HLPFILE_PAGE* (*lookup)(HLPFILE*, LONG, ULONG*),
+                            HLPFILE* hlpfile, LONG val, HLPFILE_WINDOWINFO* wi,
+                            int nCmdShow)
 {
     WINHELP_WNDPAGE     wpage;
 
-    wpage.page = NULL;
-    if (hlpfile)
-        wpage.page = lHash ? HLPFILE_PageByHash(hlpfile, lHash, &wpage.relative) :
-            HLPFILE_Contents(hlpfile, &wpage.relative);
-    if (wpage.page) wpage.page->file->wRefCount++;
-    wpage.wininfo = wi;
-    return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
-}
-
-/***********************************************************************
- *
- *           WINHELP_CreateHelpWindowByMap
- */
-BOOL WINHELP_CreateHelpWindowByMap(HLPFILE* hlpfile, LONG lMap,
-                                   HLPFILE_WINDOWINFO* wi, int nCmdShow)
-{
-    WINHELP_WNDPAGE     wpage;
-
-    wpage.page = HLPFILE_PageByMap(hlpfile, lMap, &wpage.relative);
-    if (wpage.page) wpage.page->file->wRefCount++;
-    wpage.wininfo = wi;
-    return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
-}
-
-/***********************************************************************
- *
- *           WINHELP_CreateHelpWindowByOffset
- */
-BOOL WINHELP_CreateHelpWindowByOffset(HLPFILE* hlpfile, LONG lOffset,
-                                      HLPFILE_WINDOWINFO* wi, int nCmdShow)
-{
-    WINHELP_WNDPAGE     wpage;
-
-    wpage.page = HLPFILE_PageByOffset(hlpfile, lOffset, &wpage.relative);
+    wpage.page = lookup(hlpfile, val, &wpage.relative);
     if (wpage.page) wpage.page->file->wRefCount++;
     wpage.wininfo = wi;
     return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
@@ -1229,14 +1197,14 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                     WINE_WARN("link to window %d/%d\n", part->link->window, hlpfile->numWindows);
                     break;
                 }
-                WINHELP_CreateHelpWindowByHash(hlpfile, part->link->lHash, wi,
-                                               SW_NORMAL);
+                WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, part->link->lHash,
+                                       wi, SW_NORMAL);
                 break;
             case hlp_link_popup:
                 hlpfile = WINHELP_LookupHelpFile(part->link->lpszString);
-                if (hlpfile) WINHELP_CreateHelpWindowByHash(hlpfile, part->link->lHash, 
-                                               WINHELP_GetPopupWindowInfo(hlpfile, hWnd, &mouse),
-                                               SW_NORMAL);
+                if (hlpfile) WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, part->link->lHash,
+                                                    WINHELP_GetPopupWindowInfo(hlpfile, hWnd, &mouse),
+                                                    SW_NORMAL);
                 break;
             case hlp_link_macro:
                 MACRO_ExecuteMacro(part->link->lpszString);
@@ -2074,7 +2042,8 @@ BOOL WINHELP_CreateIndexWindow(void)
     {
         ret -= 2;
         WINE_TRACE("got %d as an offset\n", ret);
-        WINHELP_CreateHelpWindowByOffset(hlpfile, ret, Globals.active_win->info, SW_NORMAL);
+        WINHELP_OpenHelpWindow(HLPFILE_PageByOffset, hlpfile, ret,
+                               Globals.active_win->info, SW_NORMAL);
     }
     return TRUE;
 }
