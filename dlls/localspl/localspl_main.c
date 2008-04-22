@@ -399,6 +399,7 @@ static BOOL WINAPI fpGetPrinterDriverDirectory(LPWSTR pName, LPWSTR pEnvironment
  */
 static BOOL WINAPI myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCopyFlags, BOOL lazy)
 {
+    static const WCHAR emptyW[1];
     const printenv_t *env;
     apd_data_t apd;
     DRIVER_INFO_8W di;
@@ -493,14 +494,20 @@ static BOOL WINAPI myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD d
     apd_copyfile(di.pConfigFile, &apd);
 
     /* settings for level 3 */
-    RegSetValueExW(hdrv, help_fileW, 0, REG_SZ, (LPBYTE) di.pHelpFile,
-                   di.pHelpFile ? (lstrlenW(di.pHelpFile)+1)* sizeof(WCHAR) : 0);
+    if (di.pHelpFile)
+        RegSetValueExW(hdrv, help_fileW, 0, REG_SZ, (LPBYTE) di.pHelpFile,
+                       (lstrlenW(di.pHelpFile)+1)* sizeof(WCHAR));
+    else
+        RegSetValueExW(hdrv, help_fileW, 0, REG_SZ, (LPBYTE)emptyW, sizeof(emptyW));
     apd_copyfile(di.pHelpFile, &apd);
 
 
     ptr = di.pDependentFiles;
-    RegSetValueExW(hdrv, dependent_filesW, 0, REG_MULTI_SZ, (LPBYTE) di.pDependentFiles,
-                   di.pDependentFiles ? multi_sz_lenW(di.pDependentFiles) : 0);
+    if (ptr)
+        RegSetValueExW(hdrv, dependent_filesW, 0, REG_MULTI_SZ, (LPBYTE) di.pDependentFiles,
+                       multi_sz_lenW(di.pDependentFiles));
+    else
+        RegSetValueExW(hdrv, dependent_filesW, 0, REG_MULTI_SZ, (LPBYTE)emptyW, sizeof(emptyW));
     while ((ptr != NULL) && (ptr[0])) {
         if (apd_copyfile(ptr, &apd)) {
             ptr += lstrlenW(ptr) + 1;
@@ -512,15 +519,24 @@ static BOOL WINAPI myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD d
         }
     }
     /* The language-Monitor was already copied by the caller to "%SystemRoot%\system32" */
-    RegSetValueExW(hdrv, monitorW, 0, REG_SZ, (LPBYTE) di.pMonitorName,
-                   di.pMonitorName ? (lstrlenW(di.pMonitorName)+1)* sizeof(WCHAR) : 0);
+    if (di.pMonitorName)
+        RegSetValueExW(hdrv, monitorW, 0, REG_SZ, (LPBYTE) di.pMonitorName,
+                       (lstrlenW(di.pMonitorName)+1)* sizeof(WCHAR));
+    else
+        RegSetValueExW(hdrv, monitorW, 0, REG_SZ, (LPBYTE)emptyW, sizeof(emptyW));
 
-    RegSetValueExW(hdrv, datatypeW, 0, REG_SZ, (LPBYTE) di.pDefaultDataType,
-                   di.pDefaultDataType ? (lstrlenW(di.pDefaultDataType)+1)* sizeof(WCHAR) : 0);
+    if (di.pDefaultDataType)
+        RegSetValueExW(hdrv, datatypeW, 0, REG_SZ, (LPBYTE) di.pDefaultDataType,
+                       (lstrlenW(di.pDefaultDataType)+1)* sizeof(WCHAR));
+    else
+        RegSetValueExW(hdrv, datatypeW, 0, REG_SZ, (LPBYTE)emptyW, sizeof(emptyW));
 
     /* settings for level 4 */
-    RegSetValueExW(hdrv, previous_namesW, 0, REG_MULTI_SZ, (LPBYTE) di.pszzPreviousNames,
-                   di.pszzPreviousNames ? multi_sz_lenW(di.pszzPreviousNames) : 0);
+    if (di.pszzPreviousNames)
+        RegSetValueExW(hdrv, previous_namesW, 0, REG_MULTI_SZ, (LPBYTE) di.pszzPreviousNames,
+                       multi_sz_lenW(di.pszzPreviousNames));
+    else
+        RegSetValueExW(hdrv, previous_namesW, 0, REG_MULTI_SZ, (LPBYTE)emptyW, sizeof(emptyW));
 
     if (level > 5) TRACE("level %u for Driver %s is incomplete\n", level, debugstr_w(di.pName));
 
