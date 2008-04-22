@@ -759,7 +759,8 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             if (button)
                 MACRO_ExecuteMacro(button->lpszMacro);
             else if (!HIWORD(wParam))
-                WINHELP_MessageBoxIDS(STID_NOT_IMPLEMENTED, 0x121, MB_OK);
+                MessageBox(0, MAKEINTRESOURCE(STID_NOT_IMPLEMENTED),
+                           MAKEINTRESOURCE(STID_WHERROR), MB_OK);
             break;
 	}
         break;
@@ -1913,34 +1914,17 @@ static void WINHELP_InitFonts(HWND hWnd)
 
 /***********************************************************************
  *
- *           WINHELP_MessageBoxIDS
- */
-INT WINHELP_MessageBoxIDS(UINT ids_text, UINT ids_title, WORD type)
-{
-    CHAR text[MAX_STRING_LEN];
-    CHAR title[MAX_STRING_LEN];
-
-    LoadString(Globals.hInstance, ids_text, text, sizeof(text));
-    LoadString(Globals.hInstance, ids_title, title, sizeof(title));
-
-    return MessageBox(0, text, title, type);
-}
-
-/***********************************************************************
- *
- *           MAIN_MessageBoxIDS_s
+ *           WINHELP_MessageBoxIDS_s
  */
 INT WINHELP_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type)
 {
     CHAR text[MAX_STRING_LEN];
-    CHAR title[MAX_STRING_LEN];
     CHAR newtext[MAX_STRING_LEN + MAX_PATH];
 
     LoadString(Globals.hInstance, ids_text, text, sizeof(text));
-    LoadString(Globals.hInstance, ids_title, title, sizeof(title));
     wsprintf(newtext, text, str);
 
-    return MessageBox(0, newtext, title, type);
+    return MessageBox(0, newtext, MAKEINTRESOURCE(ids_title), type);
 }
 
 /******************************************************************
