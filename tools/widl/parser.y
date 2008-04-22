@@ -121,7 +121,7 @@ static type_t *get_typev(unsigned char type, var_t *name, int t);
 static int get_struct_type(var_list_t *fields);
 
 static var_t *reg_const(var_t *var);
-static var_t *find_const(char *name, int f);
+static var_t *find_const(const char *name, int f);
 
 static void write_libid(const char *name, const attr_list_t *attr);
 static void write_clsid(type_t *cls);
@@ -1212,8 +1212,6 @@ static expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr)
 static expr_t *make_expr1(enum expr_type type, expr_t *expr)
 {
   expr_t *e;
-  if (type == EXPR_ADDRESSOF && expr->type != EXPR_IDENTIFIER)
-    error_loc("address-of operator applied to invalid expression\n");
   e = xmalloc(sizeof(expr_t));
   e->type = type;
   e->ref = expr;
@@ -1347,6 +1345,263 @@ static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, exp
     }
   }
   return e;
+}
+
+struct expression_type
+{
+    int is_variable; /* is the expression resolved to a variable? */
+    int is_temporary; /* should the type be freed? */
+    type_t *type;
+};
+
+struct expr_loc
+{
+    const var_t *v;
+    const char *attr;
+};
+
+static int is_integer_type(const type_t *type)
+{
+    switch (type->type)
+    {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+    case RPC_FC_INT3264:
+    case RPC_FC_UINT3264:
+    case RPC_FC_HYPER:
+    case RPC_FC_ENUM16:
+    case RPC_FC_ENUM32:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static void check_scalar_type(const struct expr_loc *expr_loc,
+                              const type_t *cont_type, const type_t *type)
+{
+    if (!cont_type || (!is_integer_type(type) && !is_ptr(type) &&
+                          type->type != RPC_FC_FLOAT &&
+                          type->type != RPC_FC_DOUBLE))
+        error_loc_info(&expr_loc->v->loc_info, "scalar type required in expression%s%s\n",
+                       expr_loc->attr ? " for attribute " : "",
+                       expr_loc->attr ? expr_loc->attr : "");
+}
+
+static void check_arithmetic_type(const struct expr_loc *expr_loc,
+                                  const type_t *cont_type, const type_t *type)
+{
+    if (!cont_type || (!is_integer_type(type) &&
+                       type->type != RPC_FC_FLOAT &&
+                       type->type != RPC_FC_DOUBLE))
+        error_loc_info(&expr_loc->v->loc_info, "arithmetic type required in expression%s%s\n",
+                       expr_loc->attr ? " for attribute " : "",
+                       expr_loc->attr ? expr_loc->attr : "");
+}
+
+static void check_integer_type(const struct expr_loc *expr_loc,
+                               const type_t *cont_type, const type_t *type)
+{
+    if (!cont_type || !is_integer_type(type))
+        error_loc_info(&expr_loc->v->loc_info, "integer type required in expression%s%s\n",
+                       expr_loc->attr ? " for attribute " : "",
+                       expr_loc->attr ? expr_loc->attr : "");
+}
+
+static struct expression_type resolve_expression(const struct expr_loc *expr_loc,
+                                                 const type_t *cont_type,
+                                                 const expr_t *e)
+{
+    struct expression_type result;
+    result.is_variable = FALSE;
+    result.is_temporary = FALSE;
+    result.type = NULL;
+    switch (e->type)
+    {
+    case EXPR_VOID:
+        break;
+    case EXPR_HEXNUM:
+    case EXPR_NUM:
+    case EXPR_TRUEFALSE:
+        result.is_variable = FALSE;
+        result.is_temporary = FALSE;
+        result.type = find_type("int", 0);
+        break;
+    case EXPR_DOUBLE:
+        result.is_variable = FALSE;
+        result.is_temporary = FALSE;
+        result.type = find_type("double", 0);
+        break;
+    case EXPR_IDENTIFIER:
+    {
+        const var_t *field;
+        const var_list_t *fields = NULL;
+
+        if (cont_type && (cont_type->type == RPC_FC_FUNCTION || is_struct(cont_type->type)))
+            fields = cont_type->fields_or_args;
+        else if (cont_type && is_union(cont_type->type))
+        {
+            if (cont_type->type == RPC_FC_ENCAPSULATED_UNION)
+            {
+                const var_t *uv = LIST_ENTRY(list_tail(cont_type->fields_or_args), const var_t, entry);
+                fields = uv->type->fields_or_args;
+            }
+            else
+                fields = cont_type->fields_or_args;
+        }
+
+        if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
+            if (field->name && !strcmp(e->u.sval, field->name))
+            {
+                result.type = field->type;
+                break;
+            }
+
+        if (!result.type)
+        {
+            var_t *const_var = find_const(e->u.sval, 0);
+            if (const_var) result.type = const_var->type;
+        }
+        if (!result.type)
+        {
+            error_loc_info(&expr_loc->v->loc_info, "identifier %s cannot be resolved in expression%s%s\n",
+                           e->u.sval, expr_loc->attr ? " for attribute " : "",
+                           expr_loc->attr ? expr_loc->attr : "");
+        }
+        break;
+    }
+    case EXPR_LOGNOT:
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        check_scalar_type(expr_loc, cont_type, result.type);
+        result.is_variable = FALSE;
+        result.is_temporary = FALSE;
+        result.type = find_type("int", 0);
+        break;
+    case EXPR_NOT:
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        check_integer_type(expr_loc, cont_type, result.type);
+        result.is_variable = FALSE;
+        break;
+    case EXPR_POS:
+    case EXPR_NEG:
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        check_arithmetic_type(expr_loc, cont_type, result.type);
+        result.is_variable = FALSE;
+        break;
+    case EXPR_ADDRESSOF:
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        if (!result.is_variable)
+            error_loc_info(&expr_loc->v->loc_info, "address-of operator applied to non-variable type in expression%s%s\n",
+                           expr_loc->attr ? " for attribute " : "",
+                           expr_loc->attr ? expr_loc->attr : "");
+        result.is_variable = FALSE;
+        result.is_temporary = TRUE;
+        result.type = make_type(RPC_FC_RP, result.type);
+        break;
+    case EXPR_PPTR:
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        if (result.type && is_ptr(result.type))
+            result.type = result.type->ref;
+        else
+            error_loc_info(&expr_loc->v->loc_info, "dereference operator applied to non-pointer type in expression%s%s\n",
+                           expr_loc->attr ? " for attribute " : "",
+                           expr_loc->attr ? expr_loc->attr : "");
+        break;
+    case EXPR_CAST:
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        result.type = e->u.tref;
+        break;
+    case EXPR_SIZEOF:
+        result.is_variable = FALSE;
+        result.is_temporary = FALSE;
+        result.type = find_type("int", 0);
+        break;
+    case EXPR_SHL:
+    case EXPR_SHR:
+    case EXPR_MOD:
+    case EXPR_MUL:
+    case EXPR_DIV:
+    case EXPR_ADD:
+    case EXPR_SUB:
+    case EXPR_AND:
+    case EXPR_OR:
+    case EXPR_XOR:
+    {
+        struct expression_type result_right;
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        result.is_variable = FALSE;
+        result_right = resolve_expression(expr_loc, cont_type, e->u.ext);
+        /* FIXME: these checks aren't strict enough for some of the operators */
+        check_scalar_type(expr_loc, cont_type, result.type);
+        check_scalar_type(expr_loc, cont_type, result_right.type);
+        break;
+    }
+    case EXPR_LOGOR:
+    case EXPR_LOGAND:
+    case EXPR_EQUALITY:
+    case EXPR_INEQUALITY:
+    case EXPR_GTR:
+    case EXPR_LESS:
+    case EXPR_GTREQL:
+    case EXPR_LESSEQL:
+    {
+        struct expression_type result_left, result_right;
+        result_left = resolve_expression(expr_loc, cont_type, e->ref);
+        result_right = resolve_expression(expr_loc, cont_type, e->u.ext);
+        check_scalar_type(expr_loc, cont_type, result_left.type);
+        check_scalar_type(expr_loc, cont_type, result_right.type);
+        result.is_variable = FALSE;
+        result.is_temporary = FALSE;
+        result.type = find_type("int", 0);
+        break;
+    }
+    case EXPR_MEMBER:
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        if (result.type && (is_struct(result.type->type) || is_union(result.type->type) || result.type->type == RPC_FC_ENUM16 || result.type->type == RPC_FC_ENUM32))
+            result = resolve_expression(expr_loc, result.type, e->u.ext);
+        else
+            error_loc_info(&expr_loc->v->loc_info, "'.' or '->' operator applied to a type that isn't a structure, union or enumeration in expression%s%s\n",
+                           expr_loc->attr ? " for attribute " : "",
+                           expr_loc->attr ? expr_loc->attr : "");
+        break;
+    case EXPR_COND:
+    {
+        struct expression_type result_first, result_second, result_third;
+        result_first = resolve_expression(expr_loc, cont_type, e->ref);
+        check_scalar_type(expr_loc, cont_type, result_first.type);
+        result_second = resolve_expression(expr_loc, cont_type, e->u.ext);
+        result_third = resolve_expression(expr_loc, cont_type, e->ext2);
+        /* FIXME: determine the correct return type */
+        result = result_second;
+        result.is_variable = FALSE;
+        break;
+    }
+    case EXPR_ARRAY:
+        result = resolve_expression(expr_loc, cont_type, e->ref);
+        if (result.type && is_array(result.type))
+        {
+            struct expression_type index_result;
+            result.type = result.type->ref;
+            index_result = resolve_expression(expr_loc, cont_type /* FIXME */, e->u.ext);
+            if (!index_result.type || !is_integer_type(index_result.type))
+                error_loc_info(&expr_loc->v->loc_info, "array subscript not of integral type in expression%s%s\n",
+                               expr_loc->attr ? " for attribute " : "",
+                               expr_loc->attr ? expr_loc->attr : "");
+        }
+        else
+            error_loc_info(&expr_loc->v->loc_info, "array subscript operator applied to non-array type in expression%s%s\n",
+                           expr_loc->attr ? " for attribute " : "",
+                           expr_loc->attr ? expr_loc->attr : "");
+        break;
+    }
+    return result;
 }
 
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr)
@@ -2106,7 +2361,7 @@ static var_t *reg_const(var_t *var)
   return var;
 }
 
-static var_t *find_const(char *name, int f)
+static var_t *find_const(const char *name, int f)
 {
   struct rconst *cur = const_hash[hash_ident(name)];
   while (cur && strcmp(cur->name, name))
@@ -2427,6 +2682,64 @@ static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_
   return attrs;
 }
 
+static int is_allowed_conf_type(const type_t *type)
+{
+    switch (type->type)
+    {
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_BYTE:
+    case RPC_FC_USMALL:
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_ENUM16:
+    case RPC_FC_USHORT:
+    case RPC_FC_LONG:
+    case RPC_FC_ENUM32:
+    case RPC_FC_ULONG:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static int is_ptr_guid_type(const type_t *type)
+{
+    unsigned int align = 0;
+    for (;;)
+    {
+        if (type->kind == TKIND_ALIAS)
+            type = type->orig;
+        else if (is_ptr(type))
+        {
+            type = type->ref;
+            break;
+        }
+        else
+            return FALSE;
+    }
+    return (type_memsize(type, &align) == 16);
+}
+
+static void check_conformance_expr_list(const char *attr_name, const var_t *arg, const type_t *container_type, expr_list_t *expr_list)
+{
+    expr_t *dim;
+    struct expr_loc expr_loc;
+    expr_loc.v = arg;
+    expr_loc.attr = attr_name;
+    if (expr_list) LIST_FOR_EACH_ENTRY(dim, expr_list, expr_t, entry)
+    {
+        if (dim->type != EXPR_VOID)
+        {
+            struct expression_type expr_type;
+            expr_type = resolve_expression(&expr_loc, container_type, dim);
+            if (!is_allowed_conf_type(expr_type.type))
+                error_loc_info(&arg->loc_info, "expression must resolve to integral type <= 32bits for attribute %s\n",
+                               attr_name);
+        }
+    }
+}
+
 static void check_remoting_fields(const var_t *var, type_t *type);
 
 /* checks that properties common to fields and arguments are consistent */
@@ -2450,6 +2763,46 @@ static void check_field_common(const type_t *container_type,
         error_loc_info(&arg->loc_info,
                        "string and length_is specified for argument %s are mutually exclusive attributes\n",
                        arg->name);
+
+    if (is_attr(arg->attrs, ATTR_SIZEIS))
+    {
+        expr_list_t *size_is_exprs = get_attrp(arg->attrs, ATTR_SIZEIS);
+        check_conformance_expr_list("size_is", arg, container_type, size_is_exprs);
+    }
+    if (is_attr(arg->attrs, ATTR_LENGTHIS))
+    {
+        expr_list_t *length_is_exprs = get_attrp(arg->attrs, ATTR_LENGTHIS);
+        check_conformance_expr_list("length_is", arg, container_type, length_is_exprs);
+    }
+    if (is_attr(arg->attrs, ATTR_IIDIS))
+    {
+        struct expr_loc expr_loc;
+        expr_t *expr = get_attrp(arg->attrs, ATTR_IIDIS);
+        if (expr->type != EXPR_VOID)
+        {
+            struct expression_type expr_type;
+            expr_loc.v = arg;
+            expr_loc.attr = "iid_is";
+            expr_type = resolve_expression(&expr_loc, container_type, expr);
+            if (!expr_type.type || !is_ptr_guid_type(expr_type.type))
+                error_loc_info(&arg->loc_info, "expression must resolve to pointer to GUID type for attribute iid_is\n");
+        }
+    }
+    if (is_attr(arg->attrs, ATTR_SWITCHIS))
+    {
+        struct expr_loc expr_loc;
+        expr_t *expr = get_attrp(arg->attrs, ATTR_SWITCHIS);
+        if (expr->type != EXPR_VOID)
+        {
+            struct expression_type expr_type;
+            expr_loc.v = arg;
+            expr_loc.attr = "switch_is";
+            expr_type = resolve_expression(&expr_loc, container_type, expr);
+            if (!is_allowed_conf_type(expr_type.type))
+                error_loc_info(&arg->loc_info, "expression must resolve to integral type <= 32bits for attribute %s\n",
+                               expr_loc.attr);
+        }
+    }
 
     /* get fundamental type for the argument */
     for (;;)
