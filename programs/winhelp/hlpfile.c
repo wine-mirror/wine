@@ -882,6 +882,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
     long               size, blocksize, datalen;
     unsigned short     bits;
     unsigned           nc, ncol = 1;
+    BOOL               in_table = FALSE;
 
     for (paragraphptr = &page->first_paragraph; *paragraphptr;
          paragraphptr = &(*paragraphptr)->next) /* Nothing */;
@@ -925,6 +926,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
     {
         char    type;
 
+        in_table = TRUE;
         ncol = *format++;
 
         WINE_TRACE("#cols %u\n", ncol);
@@ -934,15 +936,17 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
         format += ncol * 4;
     }
 
-    for (nc = 0; nc < ncol; nc++)
+    for (nc = 0; nc < ncol; /**/)
     {
-        WINE_TRACE("looking for format at offset %lu for column %d\n", (SIZE_T)(format - (buf + 0x15)), nc);
-        if (buf[0x14] == 0x23)
+        WINE_TRACE("looking for format at offset %lu in column %d\n", (SIZE_T)(format - (buf + 0x15)), nc);
+        if (in_table)
+        {
+            nc = GET_SHORT(format, 0);
+            if (nc == -1) break;
             format += 5;
-        if (buf[0x14] == 0x01)
-            format += 6;
-        else
-            format += 4;
+        }
+        else nc++;
+        format += 4;
         bits = GET_USHORT(format, 0); format += 2;
         if (bits & 0x0001) fetch_long(&format);
         if (bits & 0x0002) fetch_short(&format);
