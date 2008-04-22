@@ -245,10 +245,17 @@ void CALLBACK MACRO_BookmarkMore(void)
 
 void CALLBACK MACRO_BrowseButtons(void)
 {
+    HLPFILE_PAGE*       page = Globals.active_win->page;
+
     WINE_TRACE("()\n");
 
     MACRO_CreateButton("BTN_PREV", "&<<", "Prev()");
     MACRO_CreateButton("BTN_NEXT", "&>>", "Next()");
+
+    if (!HLPFILE_PageByOffset(page->file, page->browse_bwd))
+        MACRO_DisableButton("BTN_PREV");
+    if (!HLPFILE_PageByOffset(page->file, page->browse_fwd))
+        MACRO_DisableButton("BTN_NEXT");
 }
 
 void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)

@@ -614,17 +614,6 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         MACRO_CreateButton("BTN_TOPICS", buffer, "Finder()");
     }
 
-    /* Initialize file specific pushbuttons */
-    if (!(wpage->wininfo->win_style & WS_POPUP) && wpage->page)
-    {
-        HLPFILE_MACRO  *macro;
-        for (macro = wpage->page->file->first_macro; macro; macro = macro->next)
-            MACRO_ExecuteMacro(macro->lpszMacro);
-
-        for (macro = wpage->page->first_macro; macro; macro = macro->next)
-            MACRO_ExecuteMacro(macro->lpszMacro);
-    }
-
     if (!bReUsed)
     {
         win->hMainWnd = CreateWindowEx((bPopup) ? WS_EX_TOOLWINDOW : 0, MAIN_WIN_CLASS_NAME,
@@ -642,6 +631,17 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
 
         CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
                      0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
+    }
+
+    /* Initialize file specific pushbuttons */
+    if (!(wpage->wininfo->win_style & WS_POPUP) && wpage->page)
+    {
+        HLPFILE_MACRO  *macro;
+        for (macro = wpage->page->file->first_macro; macro; macro = macro->next)
+            MACRO_ExecuteMacro(macro->lpszMacro);
+
+        for (macro = wpage->page->first_macro; macro; macro = macro->next)
+            MACRO_ExecuteMacro(macro->lpszMacro);
     }
 
     WINHELP_LayoutMainWindow(win);
