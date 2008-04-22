@@ -145,6 +145,10 @@ LRESULT WINAPI ImmRequestMessageA(HIMC, WPARAM, LPARAM);
 LRESULT WINAPI ImmRequestMessageW(HIMC, WPARAM, LPARAM);
 #define ImmRequestMessage WINELIB_NAME_AW(ImmRequestMessage);
 
+HWND WINAPI ImmCreateSoftKeyboard(UINT, UINT, int, int);
+BOOL WINAPI ImmDestroySoftKeyboard(HWND);
+BOOL WINAPI ImmShowSoftKeyboard(HWND, int);
+
 BOOL WINAPI ImeInquire(LPIMEINFO, LPWSTR, LPCWSTR lpszOptions);
 BOOL WINAPI ImeConfigure (HKL, HWND, DWORD, LPVOID);
 DWORD WINAPI ImeConversionList(HIMC, LPCWSTR, LPCANDIDATELIST,DWORD,UINT);

@@ -1839,6 +1839,36 @@ BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 }
 
 /***********************************************************************
+ *              ImmCreateSoftKeyboard(IMM32.@)
+ */
+HWND WINAPI ImmCreateSoftKeyboard(UINT uType, UINT hOwner, int x, int y)
+{
+    FIXME("(%d, %d, %d, %d): stub\n", uType, hOwner, x, y);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/***********************************************************************
+ *              ImmDestroySoftKeyboard(IMM32.@)
+ */
+BOOL WINAPI ImmDestroySoftKeyboard(HWND hSoftWnd)
+{
+    FIXME("(%p): stub\n", hSoftWnd);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *              ImmShowSoftKeyboard(IMM32.@)
+ */
+BOOL WINAPI ImmShowSoftKeyboard(HWND hSoftWnd, int nCmdShow)
+{
+    FIXME("(%p, %d): stub\n", hSoftWnd, nCmdShow);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *		ImmSimulateHotKey (IMM32.@)
  */
 BOOL WINAPI ImmSimulateHotKey(HWND hWnd, DWORD dwHotKeyID)
