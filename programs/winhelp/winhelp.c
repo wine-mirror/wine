@@ -53,7 +53,7 @@ static void    WINHELP_InitFonts(HWND hWnd);
 static void    WINHELP_DeleteLines(WINHELP_WINDOW*);
 static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_DeleteButtons(WINHELP_WINDOW*);
-static void    WINHELP_SetupText(HWND hWnd);
+static void    WINHELP_SetupText(HWND hWnd, ULONG relative);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
 WINHELP_GLOBALS Globals = {3, NULL, NULL, TRUE, NULL, NULL, NULL, NULL, {{{NULL,NULL}},0}};
@@ -560,7 +560,8 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
 
                 win->page = wpage->page;
                 win->info = wpage->wininfo;
-                WINHELP_SetupText(GetDlgItem(win->hMainWnd, CTL_ID_TEXT));
+                WINHELP_SetupText(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), wpage->relative);
+
                 InvalidateRect(win->hMainWnd, NULL, TRUE);
                 if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
                 break;
@@ -669,8 +670,8 @@ BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash,
 
     wpage.page = NULL;
     if (hlpfile)
-        wpage.page = lHash ? HLPFILE_PageByHash(hlpfile, lHash) :
-            HLPFILE_Contents(hlpfile);
+        wpage.page = lHash ? HLPFILE_PageByHash(hlpfile, lHash, &wpage.relative) :
+            HLPFILE_Contents(hlpfile, &wpage.relative);
     if (wpage.page) wpage.page->file->wRefCount++;
     wpage.wininfo = wi;
     return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
@@ -685,7 +686,7 @@ BOOL WINHELP_CreateHelpWindowByMap(HLPFILE* hlpfile, LONG lMap,
 {
     WINHELP_WNDPAGE     wpage;
 
-    wpage.page = HLPFILE_PageByMap(hlpfile, lMap);
+    wpage.page = HLPFILE_PageByMap(hlpfile, lMap, &wpage.relative);
     if (wpage.page) wpage.page->file->wRefCount++;
     wpage.wininfo = wi;
     return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
@@ -700,7 +701,7 @@ BOOL WINHELP_CreateHelpWindowByOffset(HLPFILE* hlpfile, LONG lOffset,
 {
     WINHELP_WNDPAGE     wpage;
 
-    wpage.page = HLPFILE_PageByOffset(hlpfile, lOffset);
+    wpage.page = HLPFILE_PageByOffset(hlpfile, lOffset, &wpage.relative);
     if (wpage.page) wpage.page->file->wRefCount++;
     wpage.wininfo = wi;
     return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
@@ -1022,7 +1023,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     case WM_WINDOWPOSCHANGED:
         winpos = (WINDOWPOS*) lParam;
 
-        if (!(winpos->flags & SWP_NOSIZE)) WINHELP_SetupText(hWnd);
+        if (!(winpos->flags & SWP_NOSIZE)) WINHELP_SetupText(hWnd, 0);
         break;
 
     case WM_MOUSEWHEEL:
@@ -1359,7 +1360,7 @@ static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND hWnd, UINT msg, WPARAM wParam
  *
  *           SetupText
  */
-static void WINHELP_SetupText(HWND hWnd)
+static void WINHELP_SetupText(HWND hWnd, ULONG relative)
 {
     HDC  hDc = GetDC(hWnd);
     RECT rect;

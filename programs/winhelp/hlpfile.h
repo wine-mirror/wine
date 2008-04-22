@@ -188,10 +188,10 @@ typedef int (*HLPFILE_BPTreeCompare)(void *p, const void *key,
 typedef void (*HLPFILE_BPTreeCallback)(void *p, void **next, void *cookie);
 
 HLPFILE*      HLPFILE_ReadHlpFile(LPCSTR lpszPath);
-HLPFILE_PAGE* HLPFILE_Contents(HLPFILE* hlpfile);
-HLPFILE_PAGE* HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash);
-HLPFILE_PAGE* HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap);
-HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset);
+HLPFILE_PAGE* HLPFILE_Contents(HLPFILE* hlpfile, ULONG* relative);
+HLPFILE_PAGE* HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative);
+HLPFILE_PAGE* HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap, ULONG* relative);
+HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relative);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
 void          HLPFILE_FreeLink(HLPFILE_LINK* link);
 void          HLPFILE_FreeHlpFile(HLPFILE*);

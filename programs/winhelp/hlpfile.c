@@ -96,21 +96,12 @@ static HLPFILE_PAGE *HLPFILE_PageByNumber(HLPFILE* hlpfile, UINT wNum)
     return page;
 }
 
-/* FIXME:
- * this finds the page containing the offset. The offset can either
- * refer to the top of the page (offset == page->offset), or
- * to some paragraph inside the page...
- * As of today, we only return the page... we should also return
- * a paragraph, and then, while opening a new page, compute the
- * y-offset of the paragraph to be shown and scroll the window
- * accordingly
- */
 /******************************************************************
  *		HLPFILE_PageByOffset
  *
  *
  */
-HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
+HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relative)
 {
     HLPFILE_PAGE*       page;
     HLPFILE_PAGE*       found;
@@ -125,7 +116,10 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
     for (found = NULL, page = hlpfile->first_page; page; page = page->next)
     {
         if (page->offset <= offset && (!found || found->offset < page->offset))
+        {
+            *relative = offset - page->offset;
             found = page;
+        }
     }
     if (!found)
         WINE_ERR("Page of offset %u not found in file %s\n",
@@ -156,7 +150,7 @@ static int comp_PageByHash(void *p, const void *key,
  *
  *           HLPFILE_HlpFilePageByHash
  */
-HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
+HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative)
 {
     BYTE *ptr;
 
@@ -166,7 +160,10 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
 
     /* For win 3.0 files hash values are really page numbers */
     if (hlpfile->version <= 16)
+    {
+        *relative = 0;
         return HLPFILE_PageByNumber(hlpfile, lHash);
+    }
 
     ptr = HLPFILE_BPTreeSearch(hlpfile->Context, LongToPtr(lHash), comp_PageByHash);
     if (!ptr)
@@ -175,14 +172,14 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
         return NULL;
     }
 
-    return HLPFILE_PageByOffset(hlpfile, GET_UINT(ptr, 4));
+    return HLPFILE_PageByOffset(hlpfile, GET_UINT(ptr, 4), relative);
 }
 
 /***********************************************************************
  *
  *           HLPFILE_PageByMap
  */
-HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap)
+HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap, ULONG* relative)
 {
     unsigned int i;
 
@@ -193,7 +190,7 @@ HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap)
     for (i = 0; i < hlpfile->wMapLen; i++)
     {
         if (hlpfile->Map[i].lMap == lMap)
-            return HLPFILE_PageByOffset(hlpfile, hlpfile->Map[i].offset);
+            return HLPFILE_PageByOffset(hlpfile, hlpfile->Map[i].offset, relative);
     }
 
     WINE_ERR("Page of Map %x not found in file %s\n", lMap, hlpfile->lpszPath);
@@ -204,14 +201,18 @@ HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap)
  *
  *           HLPFILE_Contents
  */
-HLPFILE_PAGE* HLPFILE_Contents(HLPFILE *hlpfile)
+HLPFILE_PAGE* HLPFILE_Contents(HLPFILE *hlpfile, ULONG* relative)
 {
     HLPFILE_PAGE*       page = NULL;
 
     if (!hlpfile) return NULL;
 
-    page = HLPFILE_PageByOffset(hlpfile, hlpfile->contents_start);
-    if (!page) page = hlpfile->first_page;
+    page = HLPFILE_PageByOffset(hlpfile, hlpfile->contents_start, relative);
+    if (!page)
+    {
+        page = hlpfile->first_page;
+        *relative = 0;
+    }
     return page;
 }
 

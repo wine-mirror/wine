@@ -95,6 +95,7 @@ typedef struct
 {
     HLPFILE_PAGE*       page;
     HLPFILE_WINDOWINFO* wininfo;
+    ULONG               relative;
 } WINHELP_WNDPAGE;
 
 typedef struct tagPageSet

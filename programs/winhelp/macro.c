@@ -246,15 +246,16 @@ void CALLBACK MACRO_BookmarkMore(void)
 void CALLBACK MACRO_BrowseButtons(void)
 {
     HLPFILE_PAGE*       page = Globals.active_win->page;
+    ULONG               relative;
 
     WINE_TRACE("()\n");
 
     MACRO_CreateButton("BTN_PREV", "&<<", "Prev()");
     MACRO_CreateButton("BTN_NEXT", "&>>", "Next()");
 
-    if (!HLPFILE_PageByOffset(page->file, page->browse_bwd))
+    if (!HLPFILE_PageByOffset(page->file, page->browse_bwd, &relative))
         MACRO_DisableButton("BTN_PREV");
-    if (!HLPFILE_PageByOffset(page->file, page->browse_fwd))
+    if (!HLPFILE_PageByOffset(page->file, page->browse_fwd, &relative))
         MACRO_DisableButton("BTN_NEXT");
 }
 
@@ -718,7 +719,7 @@ void CALLBACK MACRO_Next(void)
 
     WINE_TRACE("()\n");
     wp.page = Globals.active_win->page;
-    wp.page = HLPFILE_PageByOffset(wp.page->file, wp.page->browse_fwd);
+    wp.page = HLPFILE_PageByOffset(wp.page->file, wp.page->browse_fwd, &wp.relative);
     if (wp.page)
     {
         wp.page->file->wRefCount++;
@@ -758,7 +759,7 @@ void CALLBACK MACRO_Prev(void)
 
     WINE_TRACE("()\n");
     wp.page = Globals.active_win->page;
-    wp.page = HLPFILE_PageByOffset(wp.page->file, wp.page->browse_bwd);
+    wp.page = HLPFILE_PageByOffset(wp.page->file, wp.page->browse_bwd, &wp.relative);
     if (wp.page)
     {
         wp.page->file->wRefCount++;
