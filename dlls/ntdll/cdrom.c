@@ -815,7 +815,6 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
 {
     NTSTATUS            ret = STATUS_NOT_SUPPORTED;
 #ifdef linux
-    unsigned            size;
     SUB_Q_HEADER*       hdr = (SUB_Q_HEADER*)data;
     int                 io;
     struct cdrom_subchnl	sc;
@@ -860,7 +859,6 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
     switch (fmt->Format)
     {
     case IOCTL_CDROM_CURRENT_POSITION:
-        size = sizeof(SUB_Q_CURRENT_POSITION);
         RtlEnterCriticalSection( &cache_section );
 	if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS) {
           data->CurrentPosition.FormatCode = IOCTL_CDROM_CURRENT_POSITION;
@@ -889,7 +887,6 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
         RtlLeaveCriticalSection( &cache_section );
         break;
     case IOCTL_CDROM_MEDIA_CATALOG:
-        size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
         data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
         {
             struct cdrom_mcn mcn;
@@ -902,7 +899,6 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
         }
         break;
     case IOCTL_CDROM_TRACK_ISRC:
-        size = sizeof(SUB_Q_CURRENT_POSITION);
         FIXME("TrackIsrc: NIY on linux\n");
         data->TrackIsrc.FormatCode = IOCTL_CDROM_TRACK_ISRC;
         data->TrackIsrc.Tcval = 0;
@@ -913,7 +909,6 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
  end:
     ret = CDROM_GetStatusCode(io);
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    unsigned            size;
     SUB_Q_HEADER*       hdr = (SUB_Q_HEADER*)data;
     int                 io;
     struct ioc_read_subchannel	read_sc;
@@ -974,7 +969,6 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
     switch (fmt->Format)
     {
     case IOCTL_CDROM_CURRENT_POSITION:
-        size = sizeof(SUB_Q_CURRENT_POSITION);
         RtlEnterCriticalSection( &cache_section );
 	if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS) {
           data->CurrentPosition.FormatCode = IOCTL_CDROM_CURRENT_POSITION;
@@ -1000,13 +994,11 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
         RtlLeaveCriticalSection( &cache_section );
         break;
     case IOCTL_CDROM_MEDIA_CATALOG:
-        size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
         data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
         data->MediaCatalog.Mcval = sc.what.media_catalog.mc_valid;
         memcpy(data->MediaCatalog.MediaCatalog, sc.what.media_catalog.mc_number, 15);
         break;
     case IOCTL_CDROM_TRACK_ISRC:
-        size = sizeof(SUB_Q_CURRENT_POSITION);
         data->TrackIsrc.FormatCode = IOCTL_CDROM_TRACK_ISRC;
         data->TrackIsrc.Tcval = sc.what.track_info.ti_valid;
         memcpy(data->TrackIsrc.TrackIsrc, sc.what.track_info.ti_number, 15);

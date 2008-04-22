@@ -376,12 +376,11 @@ static enum loadorder get_registry_value( HANDLE hkey, const WCHAR *module )
     UNICODE_STRING valueW;
     char buffer[80];
     DWORD count;
-    BOOL ret;
 
     RtlInitUnicodeString( &valueW, module );
 
-    if ((ret = !NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation,
-                                 buffer, sizeof(buffer), &count )))
+    if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation,
+                                 buffer, sizeof(buffer), &count ))
     {
         WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)buffer)->Data;
         return parse_load_order( str );

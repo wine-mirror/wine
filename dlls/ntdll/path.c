@@ -596,7 +596,6 @@ static const WCHAR *skip_unc_prefix( const WCHAR *ptr )
 static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 {
     ULONG                       reqsize = 0, mark = 0, dep = 0, deplen;
-    DOS_PATHNAME_TYPE           type;
     LPWSTR                      ins_str = NULL;
     LPCWSTR                     ptr;
     const UNICODE_STRING*       cd;
@@ -613,7 +612,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     else
         cd = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory.DosPath;
 
-    switch (type = RtlDetermineDosPathNameType_U(name))
+    switch (RtlDetermineDosPathNameType_U(name))
     {
     case UNC_PATH:              /* \\foo   */
         ptr = skip_unc_prefix( name );
