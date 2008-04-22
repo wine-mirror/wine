@@ -20,9 +20,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+STRINGTABLE DISCARDABLE
 {
 STRING_USAGE,                                   "풀그림을 실행시키거나 보통 파일에 첨가해서 사용되는  풀그림으로 문서 열기 \n\
 Usage: \n\
@@ -33,7 +33,8 @@ Options: \n\
 /M[inimized] 풀그림 최소화 상태로 실행. \n\
 /MAX[imized] 풀그림 최대화 상태로 실행. \n\
 /R[estored]  풀그림을 보통상태로 시작시키기 (최소화도 아니고 최대화도 아님). \n\
-/W[ait]     시작된 풀그림이 끝날 때까지 기다림, 끝날 때 종료코드를 남김. \n\
+/W[ait]      시작된 풀그림이 끝날 때까지 기다림, 끝날 때 종료코드를 남김. \n\
+/Unix        Use a Unix filename and start the file like windows explorer. \n\
 /L           사용자 라이센스 보여줌 \n\
  \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
@@ -60,5 +61,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. \n\
 See the COPYING.LIB file for license information. \n\
 "
 
-STRING_EXECFAIL "풀그림을 실행되지 않았거나, 지정된 파일에는 어떤 풀그림도 연결되어있지 않습니다.\nShellExecuteEx 실패"
+STRING_EXECFAIL "프로그램을 실행할 수 없거나, 지정된 파일에 연결된 프로그램이 없습니다.\nShellExecuteEx 실패"
+
+STRING_UNIXFAIL "지정된 Unix 파일명을 DOS 파일명을로 바꿀 수 없습니다."
 }
