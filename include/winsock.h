@@ -41,7 +41,7 @@
  * This means select and all the related stuff is already defined and we
  * cannot override types and function prototypes.
  * All we can do is disable all these symbols so that they are not used
- * inadvertantly.
+ * inadvertently.
  */
 #  include <sys/types.h>
 #  undef FD_SETSIZE

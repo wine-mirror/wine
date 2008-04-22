@@ -1065,7 +1065,7 @@ static void GB_Paint( HWND hwnd, HDC hDC, UINT action )
      * But Windows doesn't clip label's rect, so do I.
      */
 
-    /* There is 1-pixel marging at the left, right, and bottom */
+    /* There is 1-pixel margin at the left, right, and bottom */
     rc.left--; rc.right++; rc.bottom++;
     FillRect(hDC, &rc, hbr);
     rc.left++; rc.right--; rc.bottom--;

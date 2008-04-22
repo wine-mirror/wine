@@ -840,13 +840,13 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVerte
     for(i = 0; i < MAX_STREAMS; i++) {
         /* Look at the streams and take the first one which matches */
         if(((stateblock->streamFlags[i] & WINED3DSTREAMSOURCE_INSTANCEDATA) || (stateblock->streamFlags[i] & WINED3DSTREAMSOURCE_INDEXEDDATA)) && stateblock->streamSource[i]) {
-            /* D3d9 could set StreamFreq 0 with (INSTANCEDATA or INDEXEDDATA) and then it is handled as 1. See d3d9/tests/visual.c-> stream_test() */
+            /* D3D9 could set streamFreq 0 with (INSTANCEDATA or INDEXEDDATA) and then it is handled as 1. See d3d9/tests/visual.c-> stream_test() */
             if(stateblock->streamFreq[i] == 0){
                 numInstances = 1;
             } else {
                 numInstances = stateblock->streamFreq[i]; /* use the specified number of instances from the first matched stream. See d3d9/tests/visual.c-> stream_test() */
             }
-            break; /* break, bacause only the first suitable value is interesting */
+            break; /* break, because only the first suitable value is interesting */
         }
     }
 

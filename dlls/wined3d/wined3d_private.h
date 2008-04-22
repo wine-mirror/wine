@@ -129,9 +129,9 @@ void init_type_lookup(WineD3D_GL_Info *gl_info);
 /* The following functions convert 16 bit floats in the FLOAT16 data type
  * to standard C floats and vice versa. They do not depend on the encoding
  * of the C float, so they are platform independent, but slow. On x86 and
- * other IEEE 754 compliant platforms the conversion can be accelerated with
- * bitshifting the exponent and mantissa. There are also some SSE-based
- * assembly routines out there
+ * other IEEE 754 compliant platforms the conversion can be accelerated by
+ * bit shifting the exponent and mantissa. There are also some SSE-based
+ * assembly routines out there.
  *
  * See GL_NV_half_float for a reference of the FLOAT16 / GL_HALF format
  */
@@ -1347,7 +1347,7 @@ void get_drawable_size_fbo(IWineD3DSurfaceImpl *This, UINT *width, UINT *height)
 /* Surface flags: */
 #define SFLAG_OVERSIZE    0x00000001 /* Surface is bigger than gl size, blts only */
 #define SFLAG_CONVERTED   0x00000002 /* Converted for color keying or Palettized */
-#define SFLAG_DIBSECTION  0x00000004 /* Has a DIB section attached for getdc */
+#define SFLAG_DIBSECTION  0x00000004 /* Has a DIB section attached for GetDC */
 #define SFLAG_LOCKABLE    0x00000008 /* Surface can be locked */
 #define SFLAG_DISCARD     0x00000010 /* ??? */
 #define SFLAG_LOCKED      0x00000020 /* Surface is locked atm */

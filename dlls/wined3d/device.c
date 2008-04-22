@@ -6970,7 +6970,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* 
     IWineD3DResourceImpl *resource;
     TRACE("(%p) : state (%u)\n", This, This->state);
 
-    /* TODO: Implement wrapping of the WndProc so that mimimize and maxamise can be monitored and the states adjusted. */
+    /* TODO: Implement wrapping of the WndProc so that mimimize and maximize can be monitored and the states adjusted. */
     switch (This->state) {
     case WINED3D_OK:
         return WINED3D_OK;
@@ -7079,7 +7079,7 @@ static void reset_fbo_state(IWineD3DDevice *iface) {
         GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->dst_fbo));
         This->dst_fbo = 0;
     }
-    checkGLcall("Tear down fbos\n");
+    checkGLcall("Tear down FBOs\n");
     LEAVE_GL();
 
     for (i = 0; i < GL_LIMITS(buffers); ++i) {

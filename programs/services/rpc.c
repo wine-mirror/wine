@@ -372,7 +372,7 @@ DWORD svcctl_CreateServiceW(
     entry->config.lpServiceStartName = strdupW(lpServiceStartName);
     entry->config.lpDisplayName = strdupW(lpDisplayName);
 
-    if (lpdwTagId)      /* TODO: in most situations a non-NULL tagid will generate a ERROR_INVALID_PARAMETER */
+    if (lpdwTagId)      /* TODO: In most situations a non-NULL TagId will generate an ERROR_INVALID_PARAMETER. */
         entry->config.dwTagId = *lpdwTagId;
     else
         entry->config.dwTagId = 0;

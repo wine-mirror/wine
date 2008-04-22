@@ -1461,7 +1461,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
                 CombineRgn( hrgnWinupd, hrgnWinupd, hrgnTemp, RGN_OR );
             RedrawWindow( hwnd, NULL, hrgnTemp, rdw_flags);
 
-           /* Catch the case where the scolling amount exceeds the size of the
+           /* Catch the case where the scrolling amount exceeds the size of the
             * original window. This generated a second update area that is the
             * location where the original scrolled content would end up.
             * This second region is not returned by the ScrollDC and sets

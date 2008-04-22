@@ -640,8 +640,8 @@ IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, WINED3D
                                  0,     /* usage */
                                  WINED3DPOOL_SCRATCH,
                                  WINED3DMULTISAMPLE_NONE,   /* TODO: Multisampled conversion */
-                                 0,     /* multisamplequality */
-                                 NULL,  /* sharedhandle */
+                                 0,     /* MultiSampleQuality */
+                                 NULL,  /* SharedHandle */
                                  IWineD3DSurface_GetImplType((IWineD3DSurface *) source),
                                  NULL); /* parent */
     if(!ret) {

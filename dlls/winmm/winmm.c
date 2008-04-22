@@ -2197,7 +2197,7 @@ UINT WINAPI waveOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
     if (lpText == NULL) ret = MMSYSERR_INVALPARAM;
     else if (uSize == 0) ret = MMSYSERR_NOERROR;
     else if (
-	       /* test has been removed 'coz MMSYSERR_BASE is 0, and gcc did emit
+	       /* test has been removed because MMSYSERR_BASE is 0, and gcc did emit
 		* a warning for the test was always true */
 	       (/*uError >= MMSYSERR_BASE && */ uError <= MMSYSERR_LASTERROR) ||
 	       (uError >= WAVERR_BASE  && uError <= WAVERR_LASTERROR)) {

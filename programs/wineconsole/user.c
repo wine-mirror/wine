@@ -1052,7 +1052,7 @@ static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
 		break;
 	    }
 	}
-	ir.Event.KeyEvent.uChar.UnicodeChar = last; /* FIXME HACKY... and buggy 'coz it should be a stack, not a single value */
+	ir.Event.KeyEvent.uChar.UnicodeChar = last; /* FIXME: HACKY... and buggy because it should be a stack, not a single value */
 	if (!down) last = 0;
     }
 

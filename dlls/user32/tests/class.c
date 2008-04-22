@@ -582,7 +582,7 @@ static void test_builtinproc(void)
     static const int NUM_NORMAL_CLASSES = (sizeof(NORMAL_CLASSES)/sizeof(NORMAL_CLASSES[0]));
     static const char classA[] = "deftest";
     static const WCHAR classW[] = {'d','e','f','t','e','s','t',0};
-    WCHAR unistring[] = {0x142, 0x40e, 0x3b4, 0};  /* a string that would be destoryed by a W->A->W conversion */
+    WCHAR unistring[] = {0x142, 0x40e, 0x3b4, 0};  /* a string that would be destroyed by a W->A->W conversion */
     WNDPROC pDefWindowProcA, pDefWindowProcW;
     WNDPROC oldproc;
     WNDCLASSEXA cls;  /* the memory layout of WNDCLASSEXA and WNDCLASSEXW is the same */

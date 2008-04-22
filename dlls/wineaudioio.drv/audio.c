@@ -430,7 +430,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
  *And libaudioio just tracks the number of blocks in the streams queue to control latency
  */
 
-	if (!AudioIOCheckWriteReady()) return FALSE;   /*  Returns false if you have execeeded your specified latency (No space left)*/
+	if (!AudioIOCheckWriteReady()) return FALSE;   /*  Returns false if you have exceeded your specified latency (No space left)*/
 
 	lpWaveHdr = wwo->lpPlayPtr;
 	if (!lpWaveHdr) {
@@ -1219,8 +1219,8 @@ DWORD WINAPI LIBAUDIOIO_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 
 /*======================================================================*
  *                  Low level DSOUND implementation			*
- *		While I have tampered somewhat with this code it is wholely unlikely that it works
- *		Elsewhere the driver returns Not Implemented for DIrectSound
+ *		While I have tampered somewhat with this code it is wholly unlikely that it works
+ *		Elsewhere the driver returns Not Implemented for DirectSound
  *		While it may be possible to map the sound device on Solaris
  *		Doing so would bypass the libaudioio library and therefore break any conversions
  *		that the libaudioio sample specification converter is doing
@@ -2091,7 +2091,7 @@ static DWORD widStop(WORD wDevID)
 	WARN("can't stop !\n");
 	return MMSYSERR_INVALHANDLE;
     }
-    /* FIXME: reset aint stop */
+    /* FIXME: reset isn't stop */
     PostThreadMessageA(WInDev[wDevID].dwThreadID, WINE_WM_RESETTING, 0, 0);
     WaitForSingleObject(WInDev[wDevID].hEvent, INFINITE);
 

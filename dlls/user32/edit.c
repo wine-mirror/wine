@@ -1180,7 +1180,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			{
 				if (current_position - es->text > iend)
 					break; /* We reached end of line modifications */
-				/* else recalulate this line */
+				/* else recalculate this line */
 			}
 		}
 
@@ -3807,8 +3807,8 @@ static void EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap)
 	 * *sorting* the interval endpoints.  Let's assume that we sort them
 	 * in this order:
 	 *        start <= end <= old_start <= old_end
-	 * Knuth 5.3.1 (p 183) asssures us that this can be done optimally
-	 * in 5 comparisons; ie it's impossible to do better than the
+	 * Knuth 5.3.1 (p 183) assures us that this can be done optimally
+	 * in 5 comparisons; i.e. it is impossible to do better than the
 	 * following: */
         ORDER_UINT(end, old_end);
         ORDER_UINT(start, old_start);

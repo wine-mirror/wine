@@ -3266,7 +3266,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             if (lpwhr->dwContentLength == 0)
                 HTTP_FinishedReading(lpwhr);
 
-            /* Correct the case where both a Content-Length and Transfer-encoding = chuncked are set */
+            /* Correct the case where both a Content-Length and Transfer-encoding = chunked are set */
 
             dwBufferSize = sizeof(encoding);
             if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_TRANSFER_ENCODING, encoding, &dwBufferSize, NULL) &&

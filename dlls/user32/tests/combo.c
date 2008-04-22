@@ -236,7 +236,7 @@ static void test_selection(DWORD style, const char * const text[],
     SendMessage(hCombo, WM_KEYDOWN, VK_UP, 0);
     ok(selchange_fired, "CBN_SELCHANGE not sent!\n");
 
-    /* programatic navigation */
+    /* programmatic navigation */
 
     expected_list_text = text[list[3]];
     expected_edit_text = text[edit[3]];

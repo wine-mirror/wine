@@ -36,7 +36,7 @@ extern "C" {
 
 
 /*****************************************************************************
- * FOURCC Definitons
+ * FOURCC Definitions
  */
 /* Common chunks */
 #define DMUS_FOURCC_GUID_CHUNK                     mmioFOURCC('g','u','i','d')

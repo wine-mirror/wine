@@ -38,7 +38,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 /* Wine doesn't use the way WinHelp API sends information in Windows, because:
- * 1/ it's not consistent acrosss Win9x, NT...
+ * 1/ it's not consistent across Win9x, NT...
  * 2/ NT implementation is not yet fully understood (and includes some shared
  *     memory mechanism)
  * 3/ uses a dynamically allocated message number (WM_WINHELP), which 

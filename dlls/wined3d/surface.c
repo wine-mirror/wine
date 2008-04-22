@@ -1027,7 +1027,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
     /* Now download the surface content from opengl
      * Use the render target readback if the surface is on a swapchain(=onscreen render target) or the current primary target
-     * Offscreen targets which are not active at the moment or are higher targets(fbos) can be locked with the texture path
+     * Offscreen targets which are not active at the moment or are higher targets(FBOs) can be locked with the texture path
      */
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
     if(swapchain || iface == myDevice->render_targets[0]) {
@@ -1189,7 +1189,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
      * catch to put the dib section in InSync mode, which leads to a crash
      * and a blocked x server on my radeon card.
      *
-     * The following lines read the dib section so it is put in inSync mode
+     * The following lines read the dib section so it is put in InSync mode
      * before glDrawPixels is called and the crash is prevented. There won't
      * be any interfering gdi accesses, because UnlockRect is called from
      * ReleaseDC, and the app won't use the dc any more afterwards.
@@ -2579,7 +2579,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
         /* Now free the old memory if any */
         HeapFree(GetProcessHeap(), 0, release);
     } else if(This->Flags & SFLAG_USERPTR) {
-        /* Lockrect and GetDC will re-create the dib section and allocated memory */
+        /* LockRect and GetDC will re-create the dib section and allocated memory */
         This->resource.allocatedMemory = NULL;
         /* HeapMemory should be NULL already */
         if(This->resource.heapMemory != NULL) ERR("User pointer surface has heap memory allocated\n");

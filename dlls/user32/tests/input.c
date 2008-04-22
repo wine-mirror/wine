@@ -21,7 +21,7 @@
  * WM_KEYUP/DOWN vs WM_SYSKEYUP/DOWN  are sent in case of combined
  * keystrokes.
  *
- * For instance <ALT>-X can be accompished by
+ * For instance <ALT>-X can be accomplished by
  * the sequence ALT-KEY-DOWN, X-KEY-DOWN, ALT-KEY-UP, X-KEY-UP
  * but also X-KEY-DOWN, ALT-KEY-DOWN, X-KEY-UP, ALT-KEY-UP
  * Whether a KEY or a SYSKEY message is sent is not always clear, it is
@@ -79,7 +79,7 @@ static const int GETVKEY[]={0, VK_MENU, VK_MENU, 'X', 'X', VK_SHIFT, VK_SHIFT, V
 static const int GETSCAN[]={0, 0x38, 0x38, 0x2D, 0x2D, 0x2A, 0x2A, 0x1D, 0x1D };
 /* matching updown events */
 static const int GETFLAGS[]={0, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP};
-/* matching descripts */
+/* matching descriptions */
 static const char *getdesc[]={"", "+alt","-alt","+X","-X","+shift","-shift","+ctrl","-ctrl"};
 
 /* The MSVC headers ignore our NONAMELESSUNION requests so we have to define our own type */

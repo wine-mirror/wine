@@ -827,7 +827,7 @@ union codeview_fieldtype
 #define T_NBASICSTR         0x0005  /* near basic string */
 #define T_FBASICSTR         0x0006  /* far basic string */
 #define T_NOTTRANS          0x0007  /* untranslated type record from MS symbol format */
-#define T_HRESULT           0x0008  /* Hresult - or error code ??? */
+#define T_HRESULT           0x0008  /* HRESULT - or error code ??? */
 #define T_CHAR              0x0010  /* signed char */
 #define T_SHORT             0x0011  /* short */
 #define T_LONG              0x0012  /* long */
@@ -962,7 +962,7 @@ union codeview_fieldtype
 
 /* 32-bit near pointers to basic types */
 #define T_32PVOID           0x0403  /* 32-bit near pointer to void */
-#define T_32PHRESULT        0x0408  /* 16:32 near pointer to Hresult - or error code ??? */
+#define T_32PHRESULT        0x0408  /* 16:32 near pointer to HRESULT - or error code ??? */
 #define T_32PCHAR           0x0410  /* 16:32 near pointer to 8-bit signed */
 #define T_32PSHORT          0x0411  /* 16:32 near pointer to 16-bit signed */
 #define T_32PLONG           0x0412  /* 16:32 near pointer to 32-bit signed */

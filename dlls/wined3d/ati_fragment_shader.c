@@ -27,9 +27,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
-/* Some private defines, Constant associations, etc
+/* Some private defines, Constant associations, etc.
  * Env bump matrix and per stage constant should be independent,
- * a stage that bumpmaps can't read the per state constant
+ * a stage that bump maps can't read the per state constant
  */
 #define ATI_FFP_CONST_BUMPMAT(i) (GL_CON_0_ATI + i)
 #define ATI_FFP_CONST_CONSTANT0 GL_CON_0_ATI
@@ -600,7 +600,7 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
 
             case WINED3DTOP_BUMPENVMAP:
             case WINED3DTOP_BUMPENVMAPLUMINANCE:
-                /* Those are handled in the first pass of the shader(generation pass 1 and 2) alraedy */
+                /* Those are handled in the first pass of the shader(generation pass 1 and 2) already */
                 break;
 
             default: FIXME("Unhandled color operation %d on stage %d\n", op[stage].cop, stage);

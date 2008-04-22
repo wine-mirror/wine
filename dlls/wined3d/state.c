@@ -682,7 +682,7 @@ state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
              * and 128.0, although in d3d neither -1 nor 129 produce an error. GL_NV_max_light_exponent
              * allows bigger values. If the extension is supported, GL_LIMITS(shininess) contains the
              * value reported by the extension, otherwise 128. For values > GL_LIMITS(shininess) clamp
-             * them, it should be safe to do so without major visual dissortions.
+             * them, it should be safe to do so without major visual distortions.
              */
             WARN("Material power = %f, limit %f\n", stateblock->material.Power, GL_LIMITS(shininess));
             glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, GL_LIMITS(shininess));
@@ -3021,7 +3021,7 @@ static inline void unloadNumberedArrays(IWineD3DStateBlockImpl *stateblock) {
          * deactivated stream disabled, some other drivers(ATI, NV GF 8) set the undefined values to 0x00.
          * Let's set them to 0x00 to avoid hitting some undefined aspects of OpenGL. All that is really
          * important here is the glDisableVertexAttribArrayARB call above. The test shows that the refrast
-         * keeps dereferencing the pointers, which would cause crashes in some games like Half Life 2 Eposide 2
+         * keeps dereferencing the pointers, which would cause crashes in some games like Half Life 2: Episode Two.
          */
         GL_EXTCALL(glVertexAttrib4NubARB(i, 0, 0, 0, 0));
         checkGLcall("glVertexAttrib4NubARB(i, 0, 0, 0, 0)");
@@ -3393,7 +3393,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     /*     go directly into fast mode from app pgm, because       */
     /*     directx requires data in BGRA format.                  */
     /* currently fixupVertices swizzles the format, but this isn't*/
-    /* very practical when using VBOS                             */
+    /* very practical when using VBOs                             */
     /* NOTE: Unless we write a vertex shader to swizzle the colour*/
     /* , or the user doesn't care and wants the speed advantage   */
 

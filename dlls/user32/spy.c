@@ -1935,7 +1935,7 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(RBN_DELETINGBAND,      NMREBAR),
     SPNFY(RBN_DELETEDBAND,       NMREBAR),
     SPNFY(RBN_CHILDSIZE,         NMREBARCHILDSIZE),
-    /* IP Adderss     0U-860U  to  0U-879U  */
+    /* IP address     0U-860U  to  0U-879U  */
     SPNFY(IPN_FIELDCHANGED,      NMHDR),
     /* Status bar     0U-880U  to  0U-899U  */
     SPNFY(SBN_SIMPLEMODECHANGE,  NMHDR),

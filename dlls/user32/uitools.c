@@ -370,7 +370,7 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
  * Well, I started testing this and found out that there are a few things
  * that weren't quite as win95. The following rewrite should reproduce
  * win95 results completely.
- * The colorselection is table-driven to avoid awfull if-statements.
+ * The colorselection is table-driven to avoid awful if-statements.
  * The table below show the color settings.
  *
  * Pen selection table for uFlags = 0

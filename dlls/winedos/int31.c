@@ -183,7 +183,7 @@ static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
 
 /**********************************************************************
  *          DPMI_xalloc
- * special virtualalloc, allocates lineary monoton growing memory.
+ * special virtualalloc, allocates linearly monoton growing memory.
  * (the usual VirtualAlloc does not satisfy that restriction)
  */
 static LPVOID DPMI_xalloc( DWORD len ) 

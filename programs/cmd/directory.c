@@ -105,7 +105,7 @@ void WCMD_directory (WCHAR *cmd) {
 
   errorlevel = 0;
 
-  /* Prefill Quals with (uppercased) DIRCMD env var */
+  /* Prefill quals with (uppercased) DIRCMD env var */
   if (GetEnvironmentVariable (dircmdW, string, sizeof(string)/sizeof(WCHAR))) {
     p = string;
     while ( (*p = toupper(*p)) ) ++p;

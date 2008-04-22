@@ -183,10 +183,10 @@ IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
 }
 
 /*****************************************************************************
- * IWineD3DSurface::Unoad, GDI version
+ * IWineD3DSurface::UnLoad, GDI version
  *
  * This call is unsupported on GDI surfaces, if it's called something went
- * wrong in the parent library. Write an informative warning
+ * wrong in the parent library. Write an informative warning.
  *
  *****************************************************************************/
 static void WINAPI IWineGDISurfaceImpl_UnLoad(IWineD3DSurface *iface)
@@ -768,7 +768,7 @@ HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
         /* Now free the old memory if any */
         HeapFree(GetProcessHeap(), 0, release);
     } else if(This->Flags & SFLAG_USERPTR) {
-        /* Lockrect and GetDC will re-create the dib section and allocated memory */
+        /* LockRect and GetDC will re-create the dib section and allocated memory */
         This->resource.allocatedMemory = NULL;
         This->Flags &= ~SFLAG_USERPTR;
     }

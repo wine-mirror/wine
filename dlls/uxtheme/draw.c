@@ -893,7 +893,7 @@ static HRESULT UXTHEME_DrawBackgroundFill(HTHEME hTheme, HDC hdc, int iPartId,
         /* FIXME: This only accounts for 2 gradient colors (out of 5) and ignores
             the gradient ratios (no idea how those work)
             Few themes use this, and the ones I've seen only use 2 colors with
-            a gradient ratio of 0 and 255 respectivly
+            a gradient ratio of 0 and 255 respectively
         */
 
         COLORREF gradient1 = RGB(0,0,0);

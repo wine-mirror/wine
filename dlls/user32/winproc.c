@@ -1526,7 +1526,7 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
         break;
     case WM_ACTIVATEAPP:
         /* We need this when SetActiveWindow sends a Sendmessage16() to
-         * a 32bit window. Might be superflous with 32bit interprocess
+         * a 32-bit window. Might be superfluous with 32-bit interprocess
          * message queues. */
         if (lParam) lParam = HTASK_32(lParam);
         ret = callback( hwnd32, msg, wParam, lParam, result, arg );

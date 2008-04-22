@@ -832,7 +832,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              */
             gl_info->supported[ATI_ENVMAP_BUMPMAP] = FALSE;
             if(gl_info->supported[NV_REGISTER_COMBINERS]) {
-                /* Also disable ATI_FRAGMENT_SHADER if register combienrs and texture_shader2
+                /* Also disable ATI_FRAGMENT_SHADER if register combiners and texture_shader2
                  * are supported. The nv extensions provide the same functionality as the
                  * ATI one, and a bit more(signed pixelformats)
                  */
@@ -2342,7 +2342,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     if(GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
                         UsageCaps |= WINED3DUSAGE_AUTOGENMIPMAP;
                     } else {
-                        /* When autogenmipmap isn't around continue and return WINED3DOK_NOAUOTGEN instead of D3D_OK */
+                        /* When autogenmipmap isn't around continue and return WINED3DOK_NOAUTOGEN instead of D3D_OK */
                         TRACE_(d3d_caps)("[FAILED] - No autogenmipmap support, but continuing\n");
                     }
                 }
@@ -2485,7 +2485,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 if(GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
                     UsageCaps |= WINED3DUSAGE_AUTOGENMIPMAP;
                 } else {
-                    /* When autogenmipmap isn't around continue and return WINED3DOK_NOAUOTGEN instead of D3D_OK */
+                    /* When autogenmipmap isn't around continue and return WINED3DOK_NOAUTOGEN instead of D3D_OK */
                     TRACE_(d3d_caps)("[FAILED] - No autogenmipmap support, but continuing\n");
                 }
             }
@@ -3427,7 +3427,7 @@ static void test_pbo_functionality(WineD3D_GL_Info *gl_info) {
      * all the texture. This function detects this bug by its symptom and disables PBOs
      * if the test fails.
      *
-     * The test uplaods a 4x4 texture via the PBO in the "native" format GL_BGRA,
+     * The test uploads a 4x4 texture via the PBO in the "native" format GL_BGRA,
      * GL_UNSIGNED_INT_8_8_8_8_REV. This format triggers the bug, and it is what we use
      * for D3DFMT_A8R8G8B8. Then the texture is read back without any PBO and the data
      * read back is compared to the original. If they are equal PBOs are assumed to work,

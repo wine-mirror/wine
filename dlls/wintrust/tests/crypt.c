@@ -82,7 +82,7 @@ static void test_context(void)
      *
      * TODO: Find out what this GUID is/does.
      *
-     * On WinXp and up there is also a TimeStamp file in some of directories that
+     * On WinXP and up there is also a TimeStamp file in some of directories that
      * seem to indicate the last change to the catalog database for that GUID.
      *
      * On Windows 2000 some files are created/updated:

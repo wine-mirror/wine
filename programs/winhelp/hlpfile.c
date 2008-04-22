@@ -1388,7 +1388,7 @@ static BOOL HLPFILE_ReadFileToBuffer(HLPFILE* hlpfile, HFILE hFile)
 
     if (_hread(hFile, dummy, 1) != 0) WINE_WARN("filesize2\n");
 
-    hlpfile->file_buffer[hlpfile->file_buffer_size] = '\0'; /* FIXME: was '0', sounds ackward to me */
+    hlpfile->file_buffer[hlpfile->file_buffer_size] = '\0'; /* FIXME: was '0', sounds backwards to me */
 
     return TRUE;
 }

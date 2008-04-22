@@ -1993,7 +1993,7 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
      * a replacement shader depend on the texcoord.w being set properly.
      *
      * GL_NV_vertex_program defines that all output values are initialized to {0.0, 0.0, 0.0, 1.0}. This
-     * assetion is in effect even when using GL_ARB_vertex_program without any NV specific additions. So
+     * assertion is in effect even when using GL_ARB_vertex_program without any NV specific additions. So
      * skip this if NV_vertex_program is supported. Otherwise, initialize the secondary color. For the tex-
      * coords, we have a flag in the opengl caps. Many cards do not require the texcoord being set, and
      * this can eat a number of instructions, so skip it unless this cap is set as well

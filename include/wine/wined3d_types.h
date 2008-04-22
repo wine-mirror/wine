@@ -1260,11 +1260,11 @@ typedef enum _WINED3DDECLTYPE {
 #define WINED3DDECL_END() {0xFF,0,WINED3DDECLTYPE_UNUSED,0,0,0,-1}
 
 typedef struct WineDirect3DStridedData {
-    BYTE     *lpData;        /* Pointer to start of data               */
-    DWORD     dwStride;      /* Stride between occurances of this data */
-    DWORD     dwType;        /* Type (as in D3DVSDT_TYPE)              */
-    int       VBO;           /* Vertex buffer object this data is in   */
-    UINT      streamNo;      /* D3D stream number                      */
+    BYTE     *lpData;        /* Pointer to start of data                */
+    DWORD     dwStride;      /* Stride between occurrences of this data */
+    DWORD     dwType;        /* Type (as in D3DVSDT_TYPE)               */
+    int       VBO;           /* Vertex buffer object this data is in    */
+    UINT      streamNo;      /* D3D stream number                       */
 } WineDirect3DStridedData;
 
 typedef struct WineDirect3DVertexStridedData {

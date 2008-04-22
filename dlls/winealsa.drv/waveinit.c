@@ -559,7 +559,7 @@ static int ALSA_AddCaptureDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcm
 **      Given an Alsa style configuration node, scan its subitems
 **  for environment variable names, and use them to find an override,
 **  if appropriate.
-**      This is essentially a long and convolunted way of doing:
+**      This is essentially a long and convoluted way of doing:
 **          getenv("ALSA_CARD")
 **          getenv("ALSA_CTL_CARD")
 **          getenv("ALSA_PCM_CARD")
@@ -619,7 +619,7 @@ static void ALSA_CheckEnvironment(snd_config_t *node, int *outvalue)
 **                          environment variable, we'll set to the
 **                          device the user specified.
 **
-**  Returns:  0 on success, < 0 on failiure
+**  Returns:  0 on success, < 0 on failure
 */
 static int ALSA_DefaultDevices(int directhw,
             long *defctlcard,
@@ -689,7 +689,7 @@ static int ALSA_DefaultDevices(int directhw,
 **      fixedpcmdev     If not -1, then gives the value of ALSA_PCM_DEVICE
 **                          or equivalent environment variable
 **
-**  Returns:  0 on success, < 0 on failiure
+**  Returns:  0 on success, < 0 on failure
 */
 static int ALSA_ScanDevices(int directhw,
         long defctlcard, long defpcmcard, long defpcmdev,

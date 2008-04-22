@@ -686,7 +686,7 @@ void shader_generate_glsl_declarations(
             shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
     }
 
-    /* Declare loop registers aLx */
+    /* Declare loop registers alx */
     for (i = 0; i < reg_maps->loop_depth; i++) {
         shader_addline(buffer, "int aL%u;\n", i);
         shader_addline(buffer, "int tmpInt%u;\n", i);

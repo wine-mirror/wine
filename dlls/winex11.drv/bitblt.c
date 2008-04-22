@@ -1322,7 +1322,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
 
     opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
 
-    /* a few optimisations for single-op rops */
+    /* a few optimizations for single-op ROPs */
     if (!fStretch && !opcode[1])
     {
         if (OP_SRCDST(*opcode) == OP_ARGS(PAT,DST))

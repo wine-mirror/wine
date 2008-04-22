@@ -28,7 +28,7 @@ extern "C" {
 #define CCHCCDESC 32
 #define CCHCCTEXT 256
 
-/* Custom Control Syte Structure */
+/* Custom Control Style Structure */
 typedef struct tagCCSYLEA {
   DWORD flStyle;
   DWORD flExtStyle;

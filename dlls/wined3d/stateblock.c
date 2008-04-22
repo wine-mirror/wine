@@ -1235,7 +1235,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     }
 
     for(i = 0; i < GL_LIMITS(textures); i++) {
-        /* Note this avoids calling settexture, so pretend it has been called */
+        /* Note: This avoids calling SetTexture, so pretend it has been called */
         This->changed.textures[i] = TRUE;
         This->textures[i]         = NULL;
     }

@@ -1091,7 +1091,7 @@ static void test_menu_iteminfo( void )
         {, S, MIIM_TYPE, MFT_OWNERDRAW, -9, -9, 0, -9, -9, -9, NULL, 4, NULL, },
         txt,  OK, OK )
     TMII_DONE
-    /* test with modifymenu: string is preserved after seting OWNERDRAW */
+    /* test with modifymenu: string is preserved after setting OWNERDRAW */
     TMII_INSMI( {, S, MIIM_STRING, MFT_STRING, -1, -1, -1, -1, -1, -1, txt, 0, -1, }, OK)
     TMII_MODM( MFT_OWNERDRAW, -1, 787, OK)
     TMII_GMII ( {, S, MIIM_FTYPE|MIIM_STRING|MIIM_DATA, -9, -9, -9, -9, -9, -9, -9, string, 80, -9, },

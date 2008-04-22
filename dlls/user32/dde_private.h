@@ -143,7 +143,7 @@ typedef struct tagWDML_CONV
 /* DDE_LINK struct defines hot, warm, and cold links */
 typedef struct tagWDML_LINK {
     struct tagWDML_LINK*	next;		/* to link all the active links */
-    HCONV			hConv;		/* to get back to the converstaion */
+    HCONV			hConv;		/* to get back to the conversation */
     UINT			transactionType;/* 0 for no link */
     HSZ				hszItem;	/* item targetted for (hot/warm) link */
     UINT			uFmt;		/* format for data */
