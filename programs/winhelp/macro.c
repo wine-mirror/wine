@@ -221,7 +221,7 @@ void CALLBACK MACRO_Back(void)
     WINE_TRACE("()\n");
 
     if (win && win->back.index >= 2)
-        WINHELP_CreateHelpWindow(&win->back.set[--win->back.index - 1], SW_SHOW);
+        WINHELP_CreateHelpWindow(&win->back.set[--win->back.index - 1], SW_SHOW, FALSE);
 }
 
 void CALLBACK MACRO_BackFlush(void)
@@ -699,7 +699,7 @@ void CALLBACK MACRO_Next(void)
     {
         wp.page->file->wRefCount++;
         wp.wininfo = Globals.active_win->info;
-        WINHELP_CreateHelpWindow(&wp, SW_NORMAL);
+        WINHELP_CreateHelpWindow(&wp, SW_NORMAL, TRUE);
     }
 }
 
@@ -739,7 +739,7 @@ void CALLBACK MACRO_Prev(void)
     {
         wp.page->file->wRefCount++;
         wp.wininfo = Globals.active_win->info;
-        WINHELP_CreateHelpWindow(&wp, SW_NORMAL);
+        WINHELP_CreateHelpWindow(&wp, SW_NORMAL, TRUE);
     }
 }
 

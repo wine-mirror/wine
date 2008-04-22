@@ -485,12 +485,10 @@ void            WINHELP_LayoutMainWindow(WINHELP_WINDOW* win)
 
 }
 
-static void     WINHELP_AddHistory(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
+static void     WINHELP_RememberPage(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
 {
     unsigned        num;
 
-    /* FIXME: when using back, we shouldn't update the history... */
-    /* add to history only if different from top of history */
     if (!Globals.history.index || Globals.history.set[0].page != page)
     {
         num = sizeof(Globals.history.set) / sizeof(Globals.history.set[0]);
@@ -527,7 +525,7 @@ static void     WINHELP_AddHistory(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
  *
  *           WINHELP_CreateHelpWindow
  */
-BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow)
+BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remember)
 {
     WINHELP_WINDOW*     win = NULL;
     BOOL                bPrimary, bPopup, bReUsed = FALSE;
@@ -590,9 +588,9 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow)
     win->hArrowCur = LoadCursorA(0, (LPSTR)IDC_ARROW);
     win->hHandCur = LoadCursorA(0, (LPSTR)IDC_HAND);
 
-    if (!bPopup && wpage->page)
+    if (!bPopup && wpage->page && remember)
     {
-        WINHELP_AddHistory(win, wpage->page);
+        WINHELP_RememberPage(win, wpage->page);
     }
 
     if (!bPopup)
@@ -609,6 +607,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow)
         MACRO_CreateButton("BTN_SEARCH", buffer, "Search()");
         LoadString(Globals.hInstance, STID_BACK, buffer, sizeof(buffer));
         MACRO_CreateButton("BTN_BACK", buffer, "Back()");
+        if (win->back.index <= 1) MACRO_DisableButton("BTN_BACK");
         LoadString(Globals.hInstance, STID_HISTORY, buffer, sizeof(buffer));
         MACRO_CreateButton("BTN_HISTORY", buffer, "History()");
         LoadString(Globals.hInstance, STID_TOPICS, buffer, sizeof(buffer));
@@ -669,7 +668,7 @@ BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash,
             HLPFILE_Contents(hlpfile);
     if (wpage.page) wpage.page->file->wRefCount++;
     wpage.wininfo = wi;
-    return WINHELP_CreateHelpWindow(&wpage, nCmdShow);
+    return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
 }
 
 /***********************************************************************
@@ -684,7 +683,7 @@ BOOL WINHELP_CreateHelpWindowByMap(HLPFILE* hlpfile, LONG lMap,
     wpage.page = HLPFILE_PageByMap(hlpfile, lMap);
     if (wpage.page) wpage.page->file->wRefCount++;
     wpage.wininfo = wi;
-    return WINHELP_CreateHelpWindow(&wpage, nCmdShow);
+    return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
 }
 
 /***********************************************************************
@@ -699,7 +698,7 @@ BOOL WINHELP_CreateHelpWindowByOffset(HLPFILE* hlpfile, LONG lOffset,
     wpage.page = HLPFILE_PageByOffset(hlpfile, lOffset);
     if (wpage.page) wpage.page->file->wRefCount++;
     wpage.wininfo = wi;
-    return WINHELP_CreateHelpWindow(&wpage, nCmdShow);
+    return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
 }
 
 /***********************************************************************
@@ -1293,7 +1292,7 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         GetTextMetrics(hDc, &tm);
         i = HIWORD(lParam) / tm.tmHeight;
         if (i < Globals.history.index)
-            WINHELP_CreateHelpWindow(&Globals.history.set[i], SW_SHOW);
+            WINHELP_CreateHelpWindow(&Globals.history.set[i], SW_SHOW, TRUE);
         ReleaseDC(hWnd, hDc);
         break;
     case WM_PAINT:
