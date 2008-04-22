@@ -492,7 +492,7 @@ static void test_GetCharABCWidths(void)
     hfont = SelectObject(hdc, hfont);
 
     nb = pGetGlyphIndicesW(hdc, str, 1, glyphs, 0);
-    ok(nb == 1, "pGetGlyphIndicesW should have returned 1\n");
+    ok(nb == 1, "GetGlyphIndicesW should have returned 1\n");
 
     ret = pGetCharABCWidthsI(NULL, 0, 1, glyphs, abc);
     ok(!ret, "GetCharABCWidthsI should have failed\n");
@@ -602,7 +602,7 @@ static void test_GetGlyphIndices(void)
     HFONT hOldFont;
 
     if (!pGetGlyphIndicesW) {
-        skip("GetGlyphIndices not available on platform\n");
+        skip("GetGlyphIndicesW not available on platform\n");
         return;
     }
 
@@ -611,12 +611,12 @@ static void test_GetGlyphIndices(void)
     ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
     flags |= GGI_MARK_NONEXISTING_GLYPHS;
     charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
-    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
-    ok((glyphs[4] == 0x001f || glyphs[4] == 0xffff /* Vista */), "GetGlyphIndices should have returned a nonexistent char not %04x\n", glyphs[4]);
+    ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
+    ok((glyphs[4] == 0x001f || glyphs[4] == 0xffff /* Vista */), "GetGlyphIndicesW should have returned a nonexistent char not %04x\n", glyphs[4]);
     flags = 0;
     charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
-    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
-    ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndices should have returned a %04x not %04x\n",
+    ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
+    ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndicesW should have returned a %04x not %04x\n",
                     textm.tmDefaultChar, glyphs[4]);
 
     if(!is_font_installed("Tahoma"))
@@ -633,14 +633,14 @@ static void test_GetGlyphIndices(void)
     ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
     flags |= GGI_MARK_NONEXISTING_GLYPHS;
     charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
-    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
-    ok(glyphs[4] == 0xffff, "GetGlyphIndices should have returned 0xffff char not %04x\n", glyphs[4]);
+    ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
+    ok(glyphs[4] == 0xffff, "GetGlyphIndicesW should have returned 0xffff char not %04x\n", glyphs[4]);
     flags = 0;
     testtext[0] = textm.tmDefaultChar;
     charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
-    ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
-    todo_wine ok(glyphs[0] == 0, "GetGlyphIndices for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
-    ok(glyphs[4] == 0, "GetGlyphIndices should have returned 0 not %04x\n", glyphs[4]);
+    ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
+    todo_wine ok(glyphs[0] == 0, "GetGlyphIndicesW for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
+    ok(glyphs[4] == 0, "GetGlyphIndicesW should have returned 0 not %04x\n", glyphs[4]);
     DeleteObject(SelectObject(hdc, hOldFont));
 }
 
@@ -1130,7 +1130,7 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
 
         SetLastError(0xdeadbeef);
         ret = pGetGlyphIndicesW(hdc, unicode_buf, count, idx, 0);
-        ok(ret == count, "GetGlyphIndicesA error %u\n", GetLastError());
+        ok(ret == count, "GetGlyphIndicesW error %u\n", GetLastError());
     }
     else
     {
@@ -1513,7 +1513,7 @@ static void test_negative_width(HDC hdc, const LOGFONTA *lf)
 
     hfont_prev = SelectObject(hdc, hfont);
 
-    ret = GetGlyphIndicesA(hdc, "x", 1, &idx, GGI_MARK_NONEXISTING_GLYPHS);
+    ret = pGetGlyphIndicesA(hdc, "x", 1, &idx, GGI_MARK_NONEXISTING_GLYPHS);
     if (ret == GDI_ERROR || idx == 0xffff)
     {
         SelectObject(hdc, hfont_prev);
