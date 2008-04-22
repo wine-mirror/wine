@@ -32,8 +32,8 @@
 
 #include "wine/test.h"
 
-typedef LONG WINAPI (*PBROADCAST)( DWORD,LPDWORD,UINT,WPARAM,LPARAM );
-typedef LONG WINAPI (*PBROADCASTEX)( DWORD,LPDWORD,UINT,WPARAM,LPARAM,PBSMINFO );
+typedef LONG (WINAPI *PBROADCAST)( DWORD,LPDWORD,UINT,WPARAM,LPARAM );
+typedef LONG (WINAPI *PBROADCASTEX)( DWORD,LPDWORD,UINT,WPARAM,LPARAM,PBSMINFO );
 static PBROADCAST pBroadcastA;
 static PBROADCAST pBroadcastW;
 static PBROADCASTEX pBroadcastExA;
@@ -249,8 +249,8 @@ static void test_parametersEx(PBROADCASTEX broadcastex)
     PulseEvent(hevent);
 }
 
-static BOOL WINAPI (*pOpenProcessToken)(HANDLE, DWORD, HANDLE*);
-static BOOL WINAPI (*pAdjustTokenPrivileges)(HANDLE, BOOL, PTOKEN_PRIVILEGES, DWORD, PTOKEN_PRIVILEGES, PDWORD);
+static BOOL (WINAPI *pOpenProcessToken)(HANDLE, DWORD, HANDLE*);
+static BOOL (WINAPI *pAdjustTokenPrivileges)(HANDLE, BOOL, PTOKEN_PRIVILEGES, DWORD, PTOKEN_PRIVILEGES, PDWORD);
 
 static void test_noprivileges(void)
 {
