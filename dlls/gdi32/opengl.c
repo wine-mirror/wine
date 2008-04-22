@@ -240,6 +240,26 @@ static BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglr
     return ret;
 }
 
+/**************************************************************************************
+ *      WINE-specific wglSetPixelFormat which can set the iPixelFormat multiple times
+ *
+ */
+static BOOL WINAPI wglSetPixelFormatWINE(HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
+{
+    INT bRet = FALSE;
+    DC * dc = get_dc_ptr( hdc );
+
+    TRACE("(%p,%d,%p)\n", hdc, iPixelFormat, ppfd);
+
+    if (!dc) return 0;
+
+    if (!dc->funcs->pwglSetPixelFormatWINE) FIXME(" :stub\n");
+    else bRet = dc->funcs->pwglSetPixelFormatWINE(dc->physDev, iPixelFormat, ppfd);
+
+    release_dc_ptr( dc );
+    return bRet;
+}
+
 /***********************************************************************
  *		wglShareLists (OPENGL32.@)
  */
@@ -333,6 +353,8 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
         return (PROC)wglMakeContextCurrentARB;
     else if(ret && strcmp(func, "wglGetPbufferDCARB") == 0)
         return (PROC)wglGetPbufferDCARB;
+    else if(ret && strcmp(func, "wglSetPixelFormatWINE") == 0)
+        return (PROC)wglSetPixelFormatWINE;
 
     return ret;
 }

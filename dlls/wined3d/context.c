@@ -296,12 +296,24 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         if(!res) {
             int oldPixelFormat = GetPixelFormat(hdc);
 
-            if(oldPixelFormat) {
+            /* By default WGL doesn't allow pixel format adjustments but we need it here.
+             * For this reason there is a WINE-specific wglSetPixelFormat which allows you to
+             * set the pixel format multiple times. Only use it when it is really needed. */
+
+            if(oldPixelFormat == iPixelFormat) {
+                /* We don't have to do anything as the formats are the same :) */
+            } else if(oldPixelFormat && GL_SUPPORT(WGL_WINE_PIXEL_FORMAT_PASSTHROUGH)) {
+                res = GL_EXTCALL(wglSetPixelFormatWINE(hdc, iPixelFormat, NULL));
+
+                if(!res) {
+                    ERR("wglSetPixelFormatWINE failed on HDC=%p for iPixelFormat=%d\n", hdc, iPixelFormat);
+                    return FALSE;
+                }
+            } else if(oldPixelFormat) {
                 /* OpenGL doesn't allow pixel format adjustments. Print an error and continue using the old format.
                  * There's a big chance that the old format works although with a performance hit and perhaps rendering errors. */
                 ERR("HDC=%p is already set to iPixelFormat=%d and OpenGL doesn't allow changes!\n", hdc, oldPixelFormat);
-            }
-            else {
+            } else {
                 ERR("SetPixelFormat failed on HDC=%p for iPixelFormat=%d\n", hdc, iPixelFormat);
                 return FALSE;
             }

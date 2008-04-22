@@ -142,6 +142,7 @@
 @ cdecl wglGetPbufferDCARB(ptr ptr) X11DRV_wglGetPbufferDCARB
 @ cdecl wglMakeContextCurrentARB(ptr ptr long) X11DRV_wglMakeContextCurrentARB
 @ cdecl wglMakeCurrent(ptr long) X11DRV_wglMakeCurrent
+@ cdecl wglSetPixelFormatWINE(ptr long ptr) X11DRV_wglSetPixelFormatWINE
 @ cdecl wglShareLists(long long) X11DRV_wglShareLists
 @ cdecl wglUseFontBitmapsA(ptr long long long) X11DRV_wglUseFontBitmapsA
 @ cdecl wglUseFontBitmapsW(ptr long long long) X11DRV_wglUseFontBitmapsW

@@ -203,6 +203,7 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(wglGetPbufferDCARB);
         GET_FUNC(wglMakeContextCurrentARB);
         GET_FUNC(wglMakeCurrent);
+        GET_FUNC(wglSetPixelFormatWINE);
         GET_FUNC(wglShareLists);
         GET_FUNC(wglUseFontBitmapsA);
         GET_FUNC(wglUseFontBitmapsW);

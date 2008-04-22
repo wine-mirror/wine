@@ -3129,6 +3129,28 @@ static void WINAPI X11DRV_wglFreeMemoryNV(GLvoid* pointer) {
 }
 
 /**
+ * X11DRV_wglSetPixelFormatWINE
+ *
+ * WGL_WINE_pixel_format_passthrough: wglSetPixelFormatWINE
+ * This is a WINE-specific wglSetPixelFormat which can set the pixel format multiple times.
+ */
+BOOL X11DRV_wglSetPixelFormatWINE(X11DRV_PDEVICE *physDev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
+{
+    TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
+
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return FALSE;
+    }
+
+    if (physDev->current_pf == iPixelFormat) return TRUE;
+
+    /* Relay to the core SetPixelFormat */
+    TRACE("Changing iPixelFormat from %d to %d\n", physDev->current_pf, iPixelFormat);
+    return internal_SetPixelFormat(physDev, iPixelFormat, ppfd);
+}
+
+/**
  * glxRequireVersion (internal)
  *
  * Check if the supported GLX version matches requiredVersion.
@@ -3266,6 +3288,14 @@ static const WineGLExtension WGL_NV_vertex_array_range =
   }
 };
 
+static const WineGLExtension WGL_WINE_pixel_format_passthrough =
+{
+  "WGL_WINE_pixel_format_passthrough",
+  {
+    { "wglSetPixelFormatWINE", X11DRV_wglSetPixelFormatWINE },
+  }
+};
+
 /**
  * X11DRV_WineGL_LoadExtensions
  */
@@ -3335,6 +3365,13 @@ static void X11DRV_WineGL_LoadExtensions(void)
     /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
     if(strstr(WineGLInfo.glExtensions, "GL_NV_vertex_array_range") != NULL)
         register_extension(&WGL_NV_vertex_array_range);
+
+    /* WINE-specific WGL Extensions */
+
+    /* In WineD3D we need the ability to set the pixel format more than once (e.g. after a device reset).
+     * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
+     */
+    register_extension(&WGL_WINE_pixel_format_passthrough);
 }
 
 
@@ -3595,6 +3632,18 @@ BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
 BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
     ERR("No OpenGL support compiled in.\n");
+    return FALSE;
+}
+
+/**
+ * X11DRV_wglSetPixelFormatWINE
+ *
+ * WGL_WINE_pixel_format_passthrough: wglSetPixelFormatWINE
+ * This is a WINE-specific wglSetPixelFormat which can set the pixel format multiple times.
+ */
+BOOL X11DRV_wglSetPixelFormatWINE(X11DRV_PDEVICE *physDev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
+{
+    ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
 

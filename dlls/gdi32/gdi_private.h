@@ -230,6 +230,7 @@ typedef struct tagDC_FUNCS
     HDC      (*pwglGetPbufferDCARB)(PHYSDEV, void*);
     BOOL     (*pwglMakeCurrent)(PHYSDEV, HGLRC);
     BOOL     (*pwglMakeContextCurrentARB)(PHYSDEV, PHYSDEV, HGLRC);
+    BOOL     (*pwglSetPixelFormatWINE)(PHYSDEV,INT,const PIXELFORMATDESCRIPTOR *);
     BOOL     (*pwglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
     BOOL     (*pwglUseFontBitmapsA)(PHYSDEV, DWORD, DWORD, DWORD);
     BOOL     (*pwglUseFontBitmapsW)(PHYSDEV, DWORD, DWORD, DWORD);

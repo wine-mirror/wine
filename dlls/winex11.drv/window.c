@@ -405,8 +405,6 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
     if (!(data = X11DRV_get_win_data(hwnd)) &&
         !(data = X11DRV_create_win_data(hwnd))) return FALSE;
 
-    if (data->fbconfig_id) return FALSE;  /* can't change it twice */
-
     wine_tsx11_lock();
     vis = visual_from_fbconfig_id(fbconfig_id);
     wine_tsx11_unlock();
@@ -451,6 +449,7 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
         attrib.colormap = data->colormap;
         XInstallColormap(gdi_display, attrib.colormap);
 
+        if(data->gl_drawable) XDestroyWindow(gdi_display, data->gl_drawable);
         data->gl_drawable = XCreateWindow(display, parent, -w, 0, w, h, 0,
                                           vis->depth, InputOutput, vis->visual,
                                           CWColormap | CWOverrideRedirect,
@@ -470,6 +469,8 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
         WARN("XComposite is not available, using GLXPixmap hack\n");
 
         wine_tsx11_lock();
+
+        if(data->pixmap) XFreePixmap(display, data->pixmap);
         data->pixmap = XCreatePixmap(display, root_window, w, h, vis->depth);
         if(!data->pixmap)
         {
@@ -478,6 +479,7 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
             return FALSE;
         }
 
+        if(data->gl_drawable) destroy_glxpixmap(display, data->gl_drawable);
         data->gl_drawable = create_glxpixmap(display, vis, data->pixmap);
         if(!data->gl_drawable)
         {
