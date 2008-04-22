@@ -893,7 +893,6 @@ static BOOL handle_data(struct parsed_symbol* sym)
     struct datatype_t   ct;
     char*               name = NULL;
     BOOL                ret = FALSE;
-    char                dt;
 
     /* 0 private static
      * 1 protected static
@@ -924,7 +923,7 @@ static BOOL handle_data(struct parsed_symbol* sym)
 
     name = get_class_string(sym, 0);
 
-    switch (dt = *sym->current++)
+    switch (*sym->current++)
     {
     case '0': case '1': case '2':
     case '3': case '4': case '5':
