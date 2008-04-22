@@ -390,7 +390,6 @@ void pop_import(void)
 		free(temp_name);
 	}
 	temp_name = import_stack[ptr].temp_name;
-	free( input_name );
 	input_name = import_stack[ptr].input_name;
 	line_number = import_stack[ptr].line_number;
 	import_stack_ptr--;
