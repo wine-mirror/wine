@@ -1711,10 +1711,10 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		}
 	    }
 
-	    strcpyW(wfileName, sei_tmp.lpFile);
+           lstrcpynW(wfileName, sei_tmp.lpFile,sizeof(wfileName)/sizeof(WCHAR));
 	}
     } else
-	strcpyW(wfileName, sei_tmp.lpFile);
+       lstrcpynW(wfileName, sei_tmp.lpFile,sizeof(wfileName)/sizeof(WCHAR));
 
     lpFile = wfileName;
 
