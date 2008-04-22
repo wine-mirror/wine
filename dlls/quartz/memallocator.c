@@ -610,9 +610,9 @@ static HRESULT WINAPI StdMediaSample2_SetPreroll(IMediaSample2 * iface, BOOL bIs
     TRACE("(%s)\n", bIsPreroll ? "TRUE" : "FALSE");
 
     if (bIsPreroll)
-        This->props.dwSampleFlags &= ~AM_SAMPLE_PREROLL;
-    else
         This->props.dwSampleFlags |= AM_SAMPLE_PREROLL;
+    else
+        This->props.dwSampleFlags &= ~AM_SAMPLE_PREROLL;
 
     return S_OK;
 }
