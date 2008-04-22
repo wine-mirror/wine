@@ -36,8 +36,10 @@ typedef HRESULT (* QUERYACCEPTPROC)(LPVOID userdata, const AM_MEDIA_TYPE * pmt);
 /* This function is called prior to finalizing a connection with
  * another pin and can be used to get things from the other pin
  * like IMemInput interfaces.
+ *
+ * props contains some defaults, but you can safely override them to your liking
  */
-typedef HRESULT (* PRECONNECTPROC)(IPin * iface, IPin * pConnectPin);
+typedef HRESULT (* PRECONNECTPROC)(IPin * iface, IPin * pConnectPin, ALLOCATOR_PROPERTIES *props);
 
 /* This function is called whenever a cleanup operation has to occur,
  * this is usually after a flush, seek, or end of stream notification.
@@ -56,6 +58,9 @@ typedef HRESULT (* CLEANUPPROC) (LPVOID userdata);
  * failure in retrieving the sample.
  */
 typedef HRESULT (* REQUESTPROC) (LPVOID userdata);
+
+#define ALIGNDOWN(value,boundary) ((value)/(boundary)*(boundary))
+#define ALIGNUP(value,boundary) (ALIGNDOWN((value)+(boundary)-1, (boundary)))
 
 typedef struct IPinImpl
 {
@@ -92,6 +97,9 @@ typedef struct OutputPin
 
 	IMemInputPin * pMemInputPin;
 	HRESULT (* pConnectSpecific)(IPin * iface, IPin * pReceiver, const AM_MEDIA_TYPE * pmt);
+	BOOL custom_allocator;
+	IMemAllocator *alloc;
+	BOOL readonly;
 	ALLOCATOR_PROPERTIES allocProps;
 } OutputPin;
 

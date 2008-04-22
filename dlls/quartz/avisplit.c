@@ -813,7 +813,7 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
 static HRESULT AVISplitter_Disconnect(LPVOID iface);
 
 /* FIXME: fix leaks on failure here */
-static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
+static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, ALLOCATOR_PROPERTIES *props)
 {
     PullPin *This = (PullPin *)iface;
     HRESULT hr;
@@ -918,7 +918,8 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
 
     IAsyncReader_Length(This->pReader, &total, &avail);
 
-    /* FIXME: AVIX files are added ("eXtended") beyond the "AVI" length, and thus won't be played here	 */
+    /* FIXME: AVIX files are extended beyond the FOURCC chunk "AVI ", and thus won't be played here,
+     * once I get one of the files I'll try to fix it */
     if (hr == S_OK)
     {
         This->rtStart = pAviSplit->CurrentChunkOffset = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFLIST));
@@ -1060,7 +1061,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->streams = NULL;
     This->oldindex = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup, AVISplitter_Disconnect, NULL, NULL, NULL);
+    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup, AVISplitter_Disconnect, NULL, NULL, NULL, NULL);
 
     if (FAILED(hr))
         return hr;

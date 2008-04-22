@@ -53,7 +53,7 @@ static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 }
 
 
-HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate)
+HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, REQUESTPROC fnRequest, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate)
 {
     HRESULT hr;
     PIN_INFO piInput;
@@ -91,7 +91,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const CLSID* pClsid, PFN_PROCESS_SAMP
     MediaSeekingImpl_Init((IBaseFilter*)pParser, stop, current, rate, &pParser->mediaSeeking, &pParser->csFilter);
     pParser->mediaSeeking.lpVtbl = &Parser_Seeking_Vtbl;
 
-    hr = PullPin_Construct(&Parser_InputPin_Vtbl, &piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, fnCleanup, NULL, &pParser->csFilter, (IPin **)&pParser->pInputPin);
+    hr = PullPin_Construct(&Parser_InputPin_Vtbl, &piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, fnCleanup, fnRequest, &pParser->csFilter, (IPin **)&pParser->pInputPin);
 
     if (SUCCEEDED(hr))
     {
@@ -489,6 +489,8 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
         pin->dwSamplesProcessed = 0;
 
         pin->pin.pin.pUserData = (LPVOID)This->ppPins[This->cStreams + 1];
+        pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
+        pin->pin.custom_allocator = 1;
         This->cStreams++;
         CoTaskMemFree(ppOldPins);
     }
@@ -649,6 +651,19 @@ static HRESULT WINAPI Parser_OutputPin_EnumMediaTypes(IPin * iface, IEnumMediaTy
     return IEnumMediaTypesImpl_Construct(&emd, ppEnum);
 }
 
+static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+{
+    Parser_OutputPin *This = (Parser_OutputPin *)iface;
+    ParserImpl *parser = (ParserImpl *)This->pin.pin.pinInfo.pFilter;
+
+    /* Set the allocator to our input pin's */
+    EnterCriticalSection(This->pin.pin.pCritSec);
+    This->pin.alloc = parser->pInputPin->pAlloc;
+    LeaveCriticalSection(This->pin.pin.pCritSec);
+
+    return OutputPin_Connect(iface, pReceivePin, pmt);
+}
+
 static HRESULT Parser_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
     Parser_OutputPin *This = (Parser_OutputPin *)iface;
@@ -664,7 +679,7 @@ static const IPinVtbl Parser_OutputPin_Vtbl =
     Parser_OutputPin_QueryInterface,
     IPinImpl_AddRef,
     Parser_OutputPin_Release,
-    OutputPin_Connect,
+    Parser_OutputPin_Connect,
     OutputPin_ReceiveConnection,
     OutputPin_Disconnect,
     IPinImpl_ConnectedTo,
@@ -692,6 +707,7 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
     {
         if (This->pConnectedTo)
         {
+            PullPin *ppin = (PullPin *)This;
             FILTER_STATE state;
             ParserImpl *Parser = (ParserImpl *)This->pinInfo.pFilter;
 
@@ -701,6 +717,8 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
             {
                 IPin_Release(This->pConnectedTo);
                 This->pConnectedTo = NULL;
+                if (FAILED(hr = IMemAllocator_Decommit(ppin->pAlloc)))
+                    ERR("Allocator decommit failed with error %x. Possible memory leak\n", hr);
                 hr = Parser_RemoveOutputPins((ParserImpl *)This->pinInfo.pFilter);
             }
             else
@@ -738,7 +756,7 @@ static const IPinVtbl Parser_InputPin_Vtbl =
     PullPin_QueryInterface,
     IPinImpl_AddRef,
     PullPin_Release,
-    OutputPin_Connect,
+    InputPin_Connect,
     Parser_PullPin_ReceiveConnection,
     Parser_PullPin_Disconnect,
     IPinImpl_ConnectedTo,

@@ -182,7 +182,7 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
         This->pMemInputPin = NULL;
         hr = IPin_QueryInterface(pReceivePin, &IID_IMemInputPin, (LPVOID)&This->pMemInputPin);
 
-        if (SUCCEEDED(hr))
+        if (SUCCEEDED(hr) && !This->custom_allocator)
         {
             hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pMemAlloc);
 
@@ -193,7 +193,7 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
 
                 if (SUCCEEDED(hr))
                 {
-                    hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, pMemAlloc, FALSE);
+                    hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, pMemAlloc, This->readonly);
                 }
             }
 
@@ -202,6 +202,15 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
 
             if (pMemAlloc)
                 IMemAllocator_Release(pMemAlloc);
+        }
+        else if (SUCCEEDED(hr))
+        {
+            if (This->alloc)
+            {
+                hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, This->alloc, This->readonly);
+            }
+            else
+                hr = VFW_E_NO_ALLOCATOR;
         }
 
         /* break connection if we couldn't get the allocator */
@@ -272,6 +281,12 @@ static HRESULT OutputPin_Init(const IPinVtbl *OutputPin_Vtbl, const PIN_INFO * p
     /* Output pin attributes */
     pPinImpl->pMemInputPin = NULL;
     pPinImpl->pConnectSpecific = OutputPin_ConnectSpecific;
+    /* If custom_allocator is set, you will need to specify an allocator
+     * in the alloc member of the struct before an output pin can connect
+     */
+    pPinImpl->custom_allocator = 0;
+    pPinImpl->alloc = NULL;
+    pPinImpl->readonly = FALSE;
     if (props)
     {
         pPinImpl->allocProps = *props;
@@ -741,6 +756,9 @@ HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllocator *
 
     TRACE("(%p/%p)->(%p, %d)\n", This, iface, pAllocator, bReadOnly);
 
+    if (bReadOnly)
+        FIXME("Read only flag not handled yet!\n");
+
     if (This->pAllocator)
         IMemAllocator_Release(This->pAllocator);
     This->pAllocator = pAllocator;
@@ -1115,11 +1133,12 @@ HRESULT OutputPin_DeliverNewSegment(OutputPin * This, REFERENCE_TIME tStart, REF
 
 HRESULT OutputPin_CommitAllocator(OutputPin * This)
 {
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
+    if (!This->custom_allocator)
     {
         if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
@@ -1137,7 +1156,7 @@ HRESULT OutputPin_CommitAllocator(OutputPin * This)
         }
     }
     LeaveCriticalSection(This->pin.pCritSec);
-    
+
     return hr;
 }
 
@@ -1151,7 +1170,7 @@ HRESULT OutputPin_DeliverDisconnect(OutputPin * This)
     {
         if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
-        else
+        else if (!This->custom_allocator)
         {
             IMemAllocator * pAlloc = NULL;
 
@@ -1166,6 +1185,13 @@ HRESULT OutputPin_DeliverDisconnect(OutputPin * This)
             if (SUCCEEDED(hr))
                 hr = IPin_Disconnect(This->pin.pConnectedTo);
         }
+        else /* Kill the allocator! */
+        {
+            hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, NULL, 0);
+            if (SUCCEEDED(hr))
+                hr = IPin_Disconnect(This->pin.pConnectedTo);
+        }
+
     }
     LeaveCriticalSection(This->pin.pCritSec);
 
@@ -1248,6 +1274,13 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
 
     EnterCriticalSection(This->pin.pCritSec);
     {
+        ALLOCATOR_PROPERTIES props;
+
+        props.cBuffers = 3;
+        props.cbBuffer = 64 * 1024; /* 64k bytes */
+        props.cbAlign = 1;
+        props.cbPrefix = 0;
+
         if (This->pin.pConnectedTo)
             hr = VFW_E_ALREADY_CONNECTED;
 
@@ -1273,19 +1306,14 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
             hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
         }
 
-        if (SUCCEEDED(hr))
-        {
-            ALLOCATOR_PROPERTIES props;
-            props.cBuffers = 3;
-            props.cbBuffer = 64 * 1024; /* 64k bytes */
-            props.cbAlign = 1;
-            props.cbPrefix = 0;
-            hr = IAsyncReader_RequestAllocator(This->pReader, NULL, &props, &This->pAlloc);
-        }
-
         if (SUCCEEDED(hr) && This->fnPreConnect)
         {
-            hr = This->fnPreConnect(iface, pReceivePin);
+            hr = This->fnPreConnect(iface, pReceivePin, &props);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IAsyncReader_RequestAllocator(This->pReader, NULL, &props, &This->pAlloc);
         }
 
         if (SUCCEEDED(hr))
@@ -1293,8 +1321,11 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
             CopyMediaType(&This->pin.mtCurrent, pmt);
             This->pin.pConnectedTo = pReceivePin;
             IPin_AddRef(pReceivePin);
+            hr = IMemAllocator_Commit(This->pAlloc);
+
         }
-        else
+
+        if (FAILED(hr))
         {
              if (This->pReader)
                  IAsyncReader_Release(This->pReader);
@@ -1387,10 +1418,12 @@ static HRESULT PullPin_Standard_Request(PullPin *This, BOOL start)
 
         This->rtCurrent = This->rtNext;
         This->rtNext = rtSampleStop;
-    }
 
-    if (SUCCEEDED(hr))
-        hr = IAsyncReader_Request(This->pReader, sample, 0);
+        if (SUCCEEDED(hr))
+            hr = IAsyncReader_Request(This->pReader, sample, 0);
+    }
+    if (FAILED(hr))
+        FIXME("Failed to queue sample : %08x\n", hr);
 
     return hr;
 }
@@ -1398,6 +1431,7 @@ static HRESULT PullPin_Standard_Request(PullPin *This, BOOL start)
 static void CALLBACK PullPin_Flush(PullPin *This)
 {
     IMediaSample *pSample;
+    TRACE("Flushing!\n");
 
     EnterCriticalSection(This->pin.pCritSec);
     if (This->pReader)
@@ -1413,6 +1447,7 @@ static void CALLBACK PullPin_Flush(PullPin *This)
             if (!pSample)
                 break;
 
+            assert(!IMediaSample_GetActualDataLength(pSample));
             if (This->fnCustomRequest)
                 This->fnSampleProc(This->pin.pUserData, pSample, dwUser);
 
@@ -1427,7 +1462,6 @@ static void CALLBACK PullPin_Flush(PullPin *This)
 static void CALLBACK PullPin_Thread_Process(PullPin *This)
 {
     HRESULT hr;
-    BOOL rejected = FALSE;
     IMediaSample * pSample = NULL;
     ALLOCATOR_PROPERTIES allocProps;
 
@@ -1456,6 +1490,9 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
     else
         hr = This->fnCustomRequest(This->pin.pUserData);
 
+    if (FAILED(hr))
+        ERR("Request error: %x\n", hr);
+
     do
     {
         DWORD_PTR dwUser;
@@ -1464,45 +1501,39 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
 
         hr = IAsyncReader_WaitForNext(This->pReader, 10000, &pSample, &dwUser);
 
-        if (FAILED(hr))
-            ERR("Queueing error: %x\n", hr);
-
-        if (pSample)
-        {
-            if (!This->fnCustomRequest)
-                hr = PullPin_Standard_Request(This, FALSE);
-            else
-                hr = This->fnCustomRequest(This->pin.pUserData);
-        }
+        /* Calling fnCustomRequest is not specifically useful here: It can be handled inside fnSampleProc */
+        if (pSample && !This->fnCustomRequest)
+            hr = PullPin_Standard_Request(This, FALSE);
 
         /* Return an empty sample on error to the implementation in case it does custom parsing, so it knows it's gone */
-        if (SUCCEEDED(hr) || This->fnCustomRequest)
+        if (SUCCEEDED(hr) || (This->fnCustomRequest && pSample))
         {
             REFERENCE_TIME rtStart, rtStop;
+            BOOL rejected;
+
             IMediaSample_GetTime(pSample, &rtStart, &rtStop);
 
             do
             {
                 hr = This->fnSampleProc(This->pin.pUserData, pSample, dwUser);
 
-                rejected = FALSE;
+                if (This->fnCustomRequest)
+                    break;
 
-                if (!This->fnCustomRequest)
+                rejected = FALSE;
+                if (This->rtCurrent == rtStart)
                 {
-                    if (This->rtCurrent == rtStart)
-                    {
-                        rejected = TRUE;
-                        TRACE("DENIED!\n");
-                        Sleep(10);
-                        /* Maybe it's transient? */
-                    }
-                    /* rtNext = rtCurrent, because the next sample is already queued */
-                    else if (rtStop != This->rtCurrent && rtStop < This->rtStop)
-                    {
-                        WARN("Position changed! rtStop: %u, rtCurrent: %u\n", (DWORD)BYTES_FROM_MEDIATIME(rtStop), (DWORD)BYTES_FROM_MEDIATIME(This->rtCurrent));
-                        PullPin_Flush(This);
-                        hr = PullPin_Standard_Request(This, TRUE);
-                    }
+                    rejected = TRUE;
+                    TRACE("DENIED!\n");
+                    Sleep(10);
+                    /* Maybe it's transient? */
+                }
+                /* rtNext = rtCurrent, because the next sample is already queued */
+                else if (rtStop != This->rtCurrent && rtStop < This->rtStop)
+                {
+                    WARN("Position changed! rtStop: %u, rtCurrent: %u\n", (DWORD)BYTES_FROM_MEDIATIME(rtStop), (DWORD)BYTES_FROM_MEDIATIME(This->rtCurrent));
+                    PullPin_Flush(This);
+                    hr = PullPin_Standard_Request(This, TRUE);
                 }
             } while (rejected && (This->rtCurrent < This->rtStop && hr == S_OK && !This->stop_playback));
         }
@@ -1551,13 +1582,8 @@ static void CALLBACK PullPin_Thread_Stop(PullPin *This)
 
     EnterCriticalSection(This->pin.pCritSec);
     {
-        HRESULT hr;
-
         CloseHandle(This->hThread);
         This->hThread = NULL;
-        if (FAILED(hr = IMemAllocator_Decommit(This->pAlloc)))
-            ERR("Allocator decommit failed with error %x. Possible memory leak\n", hr);
-
         SetEvent(This->hEventStateChanged);
     }
     LeaveCriticalSection(This->pin.pCritSec);
@@ -1624,8 +1650,6 @@ HRESULT PullPin_InitProcessing(PullPin * This)
 
         if (SUCCEEDED(hr))
         {
-            hr = IMemAllocator_Commit(This->pAlloc);
-
             SetEvent(This->hEventStateChanged);
             /* If assert fails, that means a command was not processed before the thread previously terminated */
         }
@@ -1777,6 +1801,32 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
     return S_OK;
 }
 
+HRESULT WINAPI PullPin_Disconnect(IPin *iface)
+{
+    HRESULT hr;
+    PullPin *This = (PullPin *)iface;
+
+    TRACE("()\n");
+
+    EnterCriticalSection(This->pin.pCritSec);
+    {
+        if (FAILED(hr = IMemAllocator_Decommit(This->pAlloc)))
+            ERR("Allocator decommit failed with error %x. Possible memory leak\n", hr);
+
+        if (This->pin.pConnectedTo)
+        {
+            IPin_Release(This->pin.pConnectedTo);
+            This->pin.pConnectedTo = NULL;
+            hr = S_OK;
+        }
+        else
+            hr = S_FALSE;
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+
+    return hr;
+}
+
 HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
     newsegmentargs args;
@@ -1796,7 +1846,7 @@ static const IPinVtbl PullPin_Vtbl =
     PullPin_Release,
     InputPin_Connect,
     PullPin_ReceiveConnection,
-    IPinImpl_Disconnect,
+    PullPin_Disconnect,
     IPinImpl_ConnectedTo,
     IPinImpl_ConnectionMediaType,
     IPinImpl_QueryPinInfo,
