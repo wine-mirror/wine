@@ -35,6 +35,7 @@
 #include "parser.h"
 #include "header.h"
 #include "typegen.h"
+#include "expr.h"
 
 #define END_OF_LIST(list)       \
   do {                          \

@@ -56,7 +56,6 @@ extern void write_locals(FILE *fp, const type_t *iface, int body);
 extern void write_coclass(type_t *cocl);
 extern void write_coclass_forward(type_t *cocl);
 extern void write_typedef(type_t *type);
-extern void write_expr(FILE *h, const expr_t *e, int brackets);
 extern void write_constdef(const var_t *v);
 extern void write_externdef(const var_t *v);
 extern void write_library(const char *name, const attr_list_t *attr);

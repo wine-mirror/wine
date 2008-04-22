@@ -10,6 +10,7 @@ MODULE   = none
 
 C_SRCS = \
 	client.c \
+	expr.c \
 	hash.c \
 	header.c \
 	proxy.c \

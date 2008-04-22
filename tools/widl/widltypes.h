@@ -362,6 +362,10 @@ int cant_be_null(const var_t *v);
 int is_struct(unsigned char tc);
 int is_union(unsigned char tc);
 
+var_t *find_const(const char *name, int f);
+type_t *find_type(const char *name, int t);
+type_t *make_type(unsigned char type, type_t *ref);
+
 static inline type_t *get_func_return_type(const func_t *func)
 {
   return func->def->type->ref;

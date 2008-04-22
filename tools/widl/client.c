@@ -36,6 +36,7 @@
 
 #include "widltypes.h"
 #include "typegen.h"
+#include "expr.h"
 
 static FILE* client;
 static int indent = 0;

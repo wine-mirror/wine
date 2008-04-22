@@ -38,6 +38,7 @@
 #include "header.h"
 #include "typelib.h"
 #include "typegen.h"
+#include "expr.h"
 
 #if defined(YYBYACC)
 	/* Berkeley yacc (byacc) doesn't seem to know about these */
@@ -87,15 +88,6 @@ static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned long val);
 static attr_t *make_attrp(enum attr_type type, void *val);
-static expr_t *make_expr(enum expr_type type);
-static expr_t *make_exprl(enum expr_type type, long val);
-static expr_t *make_exprd(enum expr_type type, double val);
-static expr_t *make_exprs(enum expr_type type, char *val);
-static expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr);
-static expr_t *make_expr1(enum expr_type type, expr_t *expr);
-static expr_t *make_expr2(enum expr_type type, expr_t *exp1, expr_t *exp2);
-static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, expr_t *expr3);
-static type_t *make_type(unsigned char type, type_t *ref);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
 static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_t *arr, int top);
@@ -114,14 +106,12 @@ static type_t *make_int(int sign);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_typedefs(type_t *type, var_list_t *names, attr_list_t *attrs);
-static type_t *find_type(const char *name, int t);
 static type_t *find_type2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
 static type_t *get_typev(unsigned char type, var_t *name, int t);
 static int get_struct_type(var_list_t *fields);
 
 static var_t *reg_const(var_t *var);
-static var_t *find_const(const char *name, int f);
 
 static void write_libid(const char *name, const attr_list_t *attr);
 static void write_clsid(type_t *cls);
@@ -1104,506 +1094,6 @@ static attr_t *make_attrp(enum attr_type type, void *val)
   return a;
 }
 
-static expr_t *make_expr(enum expr_type type)
-{
-  expr_t *e = xmalloc(sizeof(expr_t));
-  e->type = type;
-  e->ref = NULL;
-  e->u.lval = 0;
-  e->is_const = FALSE;
-  e->cval = 0;
-  return e;
-}
-
-static expr_t *make_exprl(enum expr_type type, long val)
-{
-  expr_t *e = xmalloc(sizeof(expr_t));
-  e->type = type;
-  e->ref = NULL;
-  e->u.lval = val;
-  e->is_const = FALSE;
-  /* check for numeric constant */
-  if (type == EXPR_NUM || type == EXPR_HEXNUM || type == EXPR_TRUEFALSE) {
-    /* make sure true/false value is valid */
-    assert(type != EXPR_TRUEFALSE || val == 0 || val == 1);
-    e->is_const = TRUE;
-    e->cval = val;
-  }
-  return e;
-}
-
-static expr_t *make_exprd(enum expr_type type, double val)
-{
-  expr_t *e = xmalloc(sizeof(expr_t));
-  e->type = type;
-  e->ref = NULL;
-  e->u.dval = val;
-  e->is_const = TRUE;
-  e->cval = val;
-  return e;
-}
-
-static expr_t *make_exprs(enum expr_type type, char *val)
-{
-  expr_t *e;
-  e = xmalloc(sizeof(expr_t));
-  e->type = type;
-  e->ref = NULL;
-  e->u.sval = val;
-  e->is_const = FALSE;
-  /* check for predefined constants */
-  if (type == EXPR_IDENTIFIER) {
-    var_t *c = find_const(val, 0);
-    if (c) {
-      e->u.sval = c->name;
-      free(val);
-      e->is_const = TRUE;
-      e->cval = c->eval->cval;
-    }
-  }
-  return e;
-}
-
-static expr_t *make_exprt(enum expr_type type, type_t *tref, expr_t *expr)
-{
-  expr_t *e;
-  e = xmalloc(sizeof(expr_t));
-  e->type = type;
-  e->ref = expr;
-  e->u.tref = tref;
-  e->is_const = FALSE;
-  /* check for cast of constant expression */
-  if (type == EXPR_SIZEOF) {
-    switch (tref->type) {
-      case RPC_FC_BYTE:
-      case RPC_FC_CHAR:
-      case RPC_FC_SMALL:
-      case RPC_FC_USMALL:
-        e->is_const = TRUE;
-        e->cval = 1;
-        break;
-      case RPC_FC_WCHAR:
-      case RPC_FC_USHORT:
-      case RPC_FC_SHORT:
-        e->is_const = TRUE;
-        e->cval = 2;
-        break;
-      case RPC_FC_LONG:
-      case RPC_FC_ULONG:
-      case RPC_FC_FLOAT:
-      case RPC_FC_ERROR_STATUS_T:
-        e->is_const = TRUE;
-        e->cval = 4;
-        break;
-      case RPC_FC_HYPER:
-      case RPC_FC_DOUBLE:
-        e->is_const = TRUE;
-        e->cval = 8;
-        break;
-    }
-  }
-  if (type == EXPR_CAST && expr->is_const) {
-    e->is_const = TRUE;
-    e->cval = expr->cval;
-  }
-  return e;
-}
-
-static expr_t *make_expr1(enum expr_type type, expr_t *expr)
-{
-  expr_t *e;
-  e = xmalloc(sizeof(expr_t));
-  e->type = type;
-  e->ref = expr;
-  e->u.lval = 0;
-  e->is_const = FALSE;
-  /* check for compile-time optimization */
-  if (expr->is_const) {
-    e->is_const = TRUE;
-    switch (type) {
-    case EXPR_LOGNOT:
-      e->cval = !expr->cval;
-      break;
-    case EXPR_POS:
-      e->cval = +expr->cval;
-      break;
-    case EXPR_NEG:
-      e->cval = -expr->cval;
-      break;
-    case EXPR_NOT:
-      e->cval = ~expr->cval;
-      break;
-    default:
-      e->is_const = FALSE;
-      break;
-    }
-  }
-  return e;
-}
-
-static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
-{
-  expr_t *e;
-  e = xmalloc(sizeof(expr_t));
-  e->type = type;
-  e->ref = expr1;
-  e->u.ext = expr2;
-  e->is_const = FALSE;
-  /* check for compile-time optimization */
-  if (expr1->is_const && expr2->is_const) {
-    e->is_const = TRUE;
-    switch (type) {
-    case EXPR_ADD:
-      e->cval = expr1->cval + expr2->cval;
-      break;
-    case EXPR_SUB:
-      e->cval = expr1->cval - expr2->cval;
-      break;
-    case EXPR_MOD:
-      if (expr2->cval == 0) {
-        error_loc("divide by zero in expression\n");
-        e->cval = 0;
-      } else
-        e->cval = expr1->cval % expr2->cval;
-      break;
-    case EXPR_MUL:
-      e->cval = expr1->cval * expr2->cval;
-      break;
-    case EXPR_DIV:
-      if (expr2->cval == 0) {
-        error_loc("divide by zero in expression\n");
-        e->cval = 0;
-      } else
-        e->cval = expr1->cval / expr2->cval;
-      break;
-    case EXPR_OR:
-      e->cval = expr1->cval | expr2->cval;
-      break;
-    case EXPR_AND:
-      e->cval = expr1->cval & expr2->cval;
-      break;
-    case EXPR_SHL:
-      e->cval = expr1->cval << expr2->cval;
-      break;
-    case EXPR_SHR:
-      e->cval = expr1->cval >> expr2->cval;
-      break;
-    case EXPR_LOGOR:
-      e->cval = expr1->cval || expr2->cval;
-      break;
-    case EXPR_LOGAND:
-      e->cval = expr1->cval && expr2->cval;
-      break;
-    case EXPR_XOR:
-      e->cval = expr1->cval ^ expr2->cval;
-      break;
-    case EXPR_EQUALITY:
-      e->cval = expr1->cval == expr2->cval;
-      break;
-    case EXPR_INEQUALITY:
-      e->cval = expr1->cval != expr2->cval;
-      break;
-    case EXPR_GTR:
-      e->cval = expr1->cval > expr2->cval;
-      break;
-    case EXPR_LESS:
-      e->cval = expr1->cval < expr2->cval;
-      break;
-    case EXPR_GTREQL:
-      e->cval = expr1->cval >= expr2->cval;
-      break;
-    case EXPR_LESSEQL:
-      e->cval = expr1->cval <= expr2->cval;
-      break;
-    default:
-      e->is_const = FALSE;
-      break;
-    }
-  }
-  return e;
-}
-
-static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, expr_t *expr3)
-{
-  expr_t *e;
-  e = xmalloc(sizeof(expr_t));
-  e->type = type;
-  e->ref = expr1;
-  e->u.ext = expr2;
-  e->ext2 = expr3;
-  e->is_const = FALSE;
-  /* check for compile-time optimization */
-  if (expr1->is_const && expr2->is_const && expr3->is_const) {
-    e->is_const = TRUE;
-    switch (type) {
-    case EXPR_COND:
-      e->cval = expr1->cval ? expr2->cval : expr3->cval;
-      break;
-    default:
-      e->is_const = FALSE;
-      break;
-    }
-  }
-  return e;
-}
-
-struct expression_type
-{
-    int is_variable; /* is the expression resolved to a variable? */
-    int is_temporary; /* should the type be freed? */
-    type_t *type;
-};
-
-struct expr_loc
-{
-    const var_t *v;
-    const char *attr;
-};
-
-static int is_integer_type(const type_t *type)
-{
-    switch (type->type)
-    {
-    case RPC_FC_BYTE:
-    case RPC_FC_CHAR:
-    case RPC_FC_SMALL:
-    case RPC_FC_USMALL:
-    case RPC_FC_WCHAR:
-    case RPC_FC_SHORT:
-    case RPC_FC_USHORT:
-    case RPC_FC_LONG:
-    case RPC_FC_ULONG:
-    case RPC_FC_INT3264:
-    case RPC_FC_UINT3264:
-    case RPC_FC_HYPER:
-    case RPC_FC_ENUM16:
-    case RPC_FC_ENUM32:
-        return TRUE;
-    default:
-        return FALSE;
-    }
-}
-
-static void check_scalar_type(const struct expr_loc *expr_loc,
-                              const type_t *cont_type, const type_t *type)
-{
-    if (!cont_type || (!is_integer_type(type) && !is_ptr(type) &&
-                          type->type != RPC_FC_FLOAT &&
-                          type->type != RPC_FC_DOUBLE))
-        error_loc_info(&expr_loc->v->loc_info, "scalar type required in expression%s%s\n",
-                       expr_loc->attr ? " for attribute " : "",
-                       expr_loc->attr ? expr_loc->attr : "");
-}
-
-static void check_arithmetic_type(const struct expr_loc *expr_loc,
-                                  const type_t *cont_type, const type_t *type)
-{
-    if (!cont_type || (!is_integer_type(type) &&
-                       type->type != RPC_FC_FLOAT &&
-                       type->type != RPC_FC_DOUBLE))
-        error_loc_info(&expr_loc->v->loc_info, "arithmetic type required in expression%s%s\n",
-                       expr_loc->attr ? " for attribute " : "",
-                       expr_loc->attr ? expr_loc->attr : "");
-}
-
-static void check_integer_type(const struct expr_loc *expr_loc,
-                               const type_t *cont_type, const type_t *type)
-{
-    if (!cont_type || !is_integer_type(type))
-        error_loc_info(&expr_loc->v->loc_info, "integer type required in expression%s%s\n",
-                       expr_loc->attr ? " for attribute " : "",
-                       expr_loc->attr ? expr_loc->attr : "");
-}
-
-static struct expression_type resolve_expression(const struct expr_loc *expr_loc,
-                                                 const type_t *cont_type,
-                                                 const expr_t *e)
-{
-    struct expression_type result;
-    result.is_variable = FALSE;
-    result.is_temporary = FALSE;
-    result.type = NULL;
-    switch (e->type)
-    {
-    case EXPR_VOID:
-        break;
-    case EXPR_HEXNUM:
-    case EXPR_NUM:
-    case EXPR_TRUEFALSE:
-        result.is_variable = FALSE;
-        result.is_temporary = FALSE;
-        result.type = find_type("int", 0);
-        break;
-    case EXPR_DOUBLE:
-        result.is_variable = FALSE;
-        result.is_temporary = FALSE;
-        result.type = find_type("double", 0);
-        break;
-    case EXPR_IDENTIFIER:
-    {
-        const var_t *field;
-        const var_list_t *fields = NULL;
-
-        if (cont_type && (cont_type->type == RPC_FC_FUNCTION || is_struct(cont_type->type)))
-            fields = cont_type->fields_or_args;
-        else if (cont_type && is_union(cont_type->type))
-        {
-            if (cont_type->type == RPC_FC_ENCAPSULATED_UNION)
-            {
-                const var_t *uv = LIST_ENTRY(list_tail(cont_type->fields_or_args), const var_t, entry);
-                fields = uv->type->fields_or_args;
-            }
-            else
-                fields = cont_type->fields_or_args;
-        }
-
-        if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
-            if (field->name && !strcmp(e->u.sval, field->name))
-            {
-                result.type = field->type;
-                break;
-            }
-
-        if (!result.type)
-        {
-            var_t *const_var = find_const(e->u.sval, 0);
-            if (const_var) result.type = const_var->type;
-        }
-        if (!result.type)
-        {
-            error_loc_info(&expr_loc->v->loc_info, "identifier %s cannot be resolved in expression%s%s\n",
-                           e->u.sval, expr_loc->attr ? " for attribute " : "",
-                           expr_loc->attr ? expr_loc->attr : "");
-        }
-        break;
-    }
-    case EXPR_LOGNOT:
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        check_scalar_type(expr_loc, cont_type, result.type);
-        result.is_variable = FALSE;
-        result.is_temporary = FALSE;
-        result.type = find_type("int", 0);
-        break;
-    case EXPR_NOT:
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        check_integer_type(expr_loc, cont_type, result.type);
-        result.is_variable = FALSE;
-        break;
-    case EXPR_POS:
-    case EXPR_NEG:
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        check_arithmetic_type(expr_loc, cont_type, result.type);
-        result.is_variable = FALSE;
-        break;
-    case EXPR_ADDRESSOF:
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        if (!result.is_variable)
-            error_loc_info(&expr_loc->v->loc_info, "address-of operator applied to non-variable type in expression%s%s\n",
-                           expr_loc->attr ? " for attribute " : "",
-                           expr_loc->attr ? expr_loc->attr : "");
-        result.is_variable = FALSE;
-        result.is_temporary = TRUE;
-        result.type = make_type(RPC_FC_RP, result.type);
-        break;
-    case EXPR_PPTR:
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        if (result.type && is_ptr(result.type))
-            result.type = result.type->ref;
-        else
-            error_loc_info(&expr_loc->v->loc_info, "dereference operator applied to non-pointer type in expression%s%s\n",
-                           expr_loc->attr ? " for attribute " : "",
-                           expr_loc->attr ? expr_loc->attr : "");
-        break;
-    case EXPR_CAST:
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        result.type = e->u.tref;
-        break;
-    case EXPR_SIZEOF:
-        result.is_variable = FALSE;
-        result.is_temporary = FALSE;
-        result.type = find_type("int", 0);
-        break;
-    case EXPR_SHL:
-    case EXPR_SHR:
-    case EXPR_MOD:
-    case EXPR_MUL:
-    case EXPR_DIV:
-    case EXPR_ADD:
-    case EXPR_SUB:
-    case EXPR_AND:
-    case EXPR_OR:
-    case EXPR_XOR:
-    {
-        struct expression_type result_right;
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        result.is_variable = FALSE;
-        result_right = resolve_expression(expr_loc, cont_type, e->u.ext);
-        /* FIXME: these checks aren't strict enough for some of the operators */
-        check_scalar_type(expr_loc, cont_type, result.type);
-        check_scalar_type(expr_loc, cont_type, result_right.type);
-        break;
-    }
-    case EXPR_LOGOR:
-    case EXPR_LOGAND:
-    case EXPR_EQUALITY:
-    case EXPR_INEQUALITY:
-    case EXPR_GTR:
-    case EXPR_LESS:
-    case EXPR_GTREQL:
-    case EXPR_LESSEQL:
-    {
-        struct expression_type result_left, result_right;
-        result_left = resolve_expression(expr_loc, cont_type, e->ref);
-        result_right = resolve_expression(expr_loc, cont_type, e->u.ext);
-        check_scalar_type(expr_loc, cont_type, result_left.type);
-        check_scalar_type(expr_loc, cont_type, result_right.type);
-        result.is_variable = FALSE;
-        result.is_temporary = FALSE;
-        result.type = find_type("int", 0);
-        break;
-    }
-    case EXPR_MEMBER:
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        if (result.type && (is_struct(result.type->type) || is_union(result.type->type) || result.type->type == RPC_FC_ENUM16 || result.type->type == RPC_FC_ENUM32))
-            result = resolve_expression(expr_loc, result.type, e->u.ext);
-        else
-            error_loc_info(&expr_loc->v->loc_info, "'.' or '->' operator applied to a type that isn't a structure, union or enumeration in expression%s%s\n",
-                           expr_loc->attr ? " for attribute " : "",
-                           expr_loc->attr ? expr_loc->attr : "");
-        break;
-    case EXPR_COND:
-    {
-        struct expression_type result_first, result_second, result_third;
-        result_first = resolve_expression(expr_loc, cont_type, e->ref);
-        check_scalar_type(expr_loc, cont_type, result_first.type);
-        result_second = resolve_expression(expr_loc, cont_type, e->u.ext);
-        result_third = resolve_expression(expr_loc, cont_type, e->ext2);
-        /* FIXME: determine the correct return type */
-        result = result_second;
-        result.is_variable = FALSE;
-        break;
-    }
-    case EXPR_ARRAY:
-        result = resolve_expression(expr_loc, cont_type, e->ref);
-        if (result.type && is_array(result.type))
-        {
-            struct expression_type index_result;
-            result.type = result.type->ref;
-            index_result = resolve_expression(expr_loc, cont_type /* FIXME */, e->u.ext);
-            if (!index_result.type || !is_integer_type(index_result.type))
-                error_loc_info(&expr_loc->v->loc_info, "array subscript not of integral type in expression%s%s\n",
-                               expr_loc->attr ? " for attribute " : "",
-                               expr_loc->attr ? expr_loc->attr : "");
-        }
-        else
-            error_loc_info(&expr_loc->v->loc_info, "array subscript operator applied to non-array type in expression%s%s\n",
-                           expr_loc->attr ? " for attribute " : "",
-                           expr_loc->attr ? expr_loc->attr : "");
-        break;
-    }
-    return result;
-}
-
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr)
 {
     if (!expr) return list;
@@ -1649,7 +1139,7 @@ void set_all_tfswrite(int val)
     node->data.tfswrite = val;
 }
 
-static type_t *make_type(unsigned char type, type_t *ref)
+type_t *make_type(unsigned char type, type_t *ref)
 {
   type_t *t = alloc_type();
   t->name = NULL;
@@ -2120,7 +1610,7 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
   return type;
 }
 
-static type_t *find_type(const char *name, int t)
+type_t *find_type(const char *name, int t)
 {
   struct rtype *cur = type_hash[hash_ident(name)];
   while (cur && (cur->t != t || strcmp(cur->name, name)))
@@ -2361,7 +1851,7 @@ static var_t *reg_const(var_t *var)
   return var;
 }
 
-static var_t *find_const(const char *name, int f)
+var_t *find_const(const char *name, int f)
 {
   struct rconst *cur = const_hash[hash_ident(name)];
   while (cur && strcmp(cur->name, name))
@@ -2731,9 +2221,8 @@ static void check_conformance_expr_list(const char *attr_name, const var_t *arg,
     {
         if (dim->type != EXPR_VOID)
         {
-            struct expression_type expr_type;
-            expr_type = resolve_expression(&expr_loc, container_type, dim);
-            if (!is_allowed_conf_type(expr_type.type))
+            const type_t *expr_type = expr_resolve_type(&expr_loc, container_type, dim);
+            if (!is_allowed_conf_type(expr_type))
                 error_loc_info(&arg->loc_info, "expression must resolve to integral type <= 32bits for attribute %s\n",
                                attr_name);
         }
@@ -2780,11 +2269,11 @@ static void check_field_common(const type_t *container_type,
         expr_t *expr = get_attrp(arg->attrs, ATTR_IIDIS);
         if (expr->type != EXPR_VOID)
         {
-            struct expression_type expr_type;
+            const type_t *expr_type;
             expr_loc.v = arg;
             expr_loc.attr = "iid_is";
-            expr_type = resolve_expression(&expr_loc, container_type, expr);
-            if (!expr_type.type || !is_ptr_guid_type(expr_type.type))
+            expr_type = expr_resolve_type(&expr_loc, container_type, expr);
+            if (!expr_type || !is_ptr_guid_type(expr_type))
                 error_loc_info(&arg->loc_info, "expression must resolve to pointer to GUID type for attribute iid_is\n");
         }
     }
@@ -2794,11 +2283,11 @@ static void check_field_common(const type_t *container_type,
         expr_t *expr = get_attrp(arg->attrs, ATTR_SWITCHIS);
         if (expr->type != EXPR_VOID)
         {
-            struct expression_type expr_type;
+            const type_t *expr_type;
             expr_loc.v = arg;
             expr_loc.attr = "switch_is";
-            expr_type = resolve_expression(&expr_loc, container_type, expr);
-            if (!is_allowed_conf_type(expr_type.type))
+            expr_type = expr_resolve_type(&expr_loc, container_type, expr);
+            if (!expr_type || !is_allowed_conf_type(expr_type))
                 error_loc_info(&arg->loc_info, "expression must resolve to integral type <= 32bits for attribute %s\n",
                                expr_loc.attr);
         }

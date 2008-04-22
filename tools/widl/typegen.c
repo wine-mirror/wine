@@ -39,6 +39,7 @@
 #include "wine/list.h"
 
 #include "typegen.h"
+#include "expr.h"
 
 static const func_t *current_func;
 static const type_t *current_structure;
@@ -305,91 +306,6 @@ static const char *get_context_handle_type_name(const type_t *type)
             return t->name;
     assert(0);
     return NULL;
-}
-
-/* This is actually fairly involved to implement precisely, due to the
-   effects attributes may have and things like that.  Right now this is
-   only used for optimization, so just check for a very small set of
-   criteria that guarantee the types are equivalent; assume every thing
-   else is different.   */
-static int compare_type(const type_t *a, const type_t *b)
-{
-    if (a == b
-        || (a->name
-            && b->name
-            && strcmp(a->name, b->name) == 0))
-        return 0;
-    /* Ordering doesn't need to be implemented yet.  */
-    return 1;
-}
-
-static int compare_expr(const expr_t *a, const expr_t *b)
-{
-    int ret;
-
-    if (a->type != b->type)
-        return a->type - b->type;
-
-    switch (a->type)
-    {
-        case EXPR_NUM:
-        case EXPR_HEXNUM:
-        case EXPR_TRUEFALSE:
-            return a->u.lval - b->u.lval;
-        case EXPR_DOUBLE:
-            return a->u.dval - b->u.dval;
-        case EXPR_IDENTIFIER:
-            return strcmp(a->u.sval, b->u.sval);
-        case EXPR_COND:
-            ret = compare_expr(a->ref, b->ref);
-            if (ret != 0)
-                return ret;
-            ret = compare_expr(a->u.ext, b->u.ext);
-            if (ret != 0)
-                return ret;
-            return compare_expr(a->ext2, b->ext2);
-        case EXPR_OR:
-        case EXPR_AND:
-        case EXPR_ADD:
-        case EXPR_SUB:
-        case EXPR_MOD:
-        case EXPR_MUL:
-        case EXPR_DIV:
-        case EXPR_SHL:
-        case EXPR_SHR:
-        case EXPR_MEMBER:
-        case EXPR_ARRAY:
-        case EXPR_LOGOR:
-        case EXPR_LOGAND:
-        case EXPR_XOR:
-        case EXPR_EQUALITY:
-        case EXPR_INEQUALITY:
-        case EXPR_GTR:
-        case EXPR_LESS:
-        case EXPR_GTREQL:
-        case EXPR_LESSEQL:
-            ret = compare_expr(a->ref, b->ref);
-            if (ret != 0)
-                return ret;
-            return compare_expr(a->u.ext, b->u.ext);
-        case EXPR_CAST:
-            ret = compare_type(a->u.tref, b->u.tref);
-            if (ret != 0)
-                return ret;
-            /* Fall through.  */
-        case EXPR_NOT:
-        case EXPR_NEG:
-        case EXPR_PPTR:
-        case EXPR_ADDRESSOF:
-        case EXPR_LOGNOT:
-        case EXPR_POS:
-            return compare_expr(a->ref, b->ref);
-        case EXPR_SIZEOF:
-            return compare_type(a->u.tref, b->u.tref);
-        case EXPR_VOID:
-            return 0;
-    }
-    return -1;
 }
 
 #define WRITE_FCTYPE(file, fctype, typestring_offset) \
