@@ -292,15 +292,11 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %right '?' ':'
 %left '|'
 %left '&'
+%left SHL SHR
 %left '-' '+'
 %left '*' '/' '%'
-%left SHL SHR
+%right '~' CAST PPTR NEG ADDRESSOF tSIZEOF
 %left '.' MEMBERPTR '[' ']'
-%right '~'
-%right CAST
-%right PPTR
-%right NEG
-%right ADDRESSOF
 
 %%
 
