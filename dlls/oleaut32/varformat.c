@@ -522,7 +522,6 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
   FMT_HEADER *header = (FMT_HEADER*)rgbTok;
   FMT_STRING_HEADER *str_header = (FMT_STRING_HEADER*)(rgbTok + sizeof(FMT_HEADER));
   FMT_NUMBER_HEADER *num_header = (FMT_NUMBER_HEADER*)str_header;
-  FMT_DATE_HEADER *date_header = (FMT_DATE_HEADER*)str_header;
   BYTE* pOut = rgbTok + sizeof(FMT_HEADER) + sizeof(FMT_STRING_HEADER);
   BYTE* pLastHours = NULL;
   BYTE fmt_number = 0;
@@ -591,7 +590,6 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
         header->starts[fmt_number] = pOut - rgbTok;
         str_header = (FMT_STRING_HEADER*)pOut;
         num_header = (FMT_NUMBER_HEADER*)pOut;
-        date_header = (FMT_DATE_HEADER*)pOut;
         memset(str_header, 0, sizeof(FMT_STRING_HEADER));
         pOut += sizeof(FMT_STRING_HEADER);
         fmt_state = 0;

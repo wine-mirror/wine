@@ -2024,7 +2024,6 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
 static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL,
                           int offset)
 {
-    int j;
     TLBRefType *ref;
 
     TRACE_(typelib)("TLB context %p, TLB offset %x\n", pcx, offset);
@@ -2046,7 +2045,7 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL,
 
         MSFT_ReadLEDWords(&impinfo, sizeof(impinfo), pcx,
                           pcx->pTblDir->pImpInfo.offset + (offset & 0xfffffffc));
-        for(j=0;pImpLib;j++){   /* search the known offsets of all import libraries */
+        while (pImpLib){   /* search the known offsets of all import libraries */
             if(pImpLib->offset==impinfo.oImpFile) break;
             pImpLib=pImpLib->next;
         }
@@ -3284,7 +3283,7 @@ static void SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
 				char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 				SLTG_TypeInfoTail *pTITail)
 {
-    char *pFirstItem, *pNextItem;
+    char *pFirstItem;
     sltg_ref_lookup_t *ref_lookup = NULL;
 
     if(pTIHeader->href_table != 0xffffffff) {
@@ -3292,10 +3291,10 @@ static void SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
 		    pNameTable);
     }
 
-    pFirstItem = pNextItem = pBlk;
+    pFirstItem = pBlk;
 
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
-        pNextItem = SLTG_DoImpls(pFirstItem, pTI, FALSE, ref_lookup);
+        SLTG_DoImpls(pFirstItem, pTI, FALSE, ref_lookup);
     }
     HeapFree(GetProcessHeap(), 0, ref_lookup);
 }
@@ -3305,7 +3304,7 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 				  char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 				  const SLTG_TypeInfoTail *pTITail)
 {
-    char *pFirstItem, *pNextItem;
+    char *pFirstItem;
     sltg_ref_lookup_t *ref_lookup = NULL;
 
     if(pTIHeader->href_table != 0xffffffff) {
@@ -3313,10 +3312,10 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
 		    pNameTable);
     }
 
-    pFirstItem = pNextItem = pBlk;
+    pFirstItem = pBlk;
 
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
-        pNextItem = SLTG_DoImpls(pFirstItem, pTI, TRUE, ref_lookup);
+        SLTG_DoImpls(pFirstItem, pTI, TRUE, ref_lookup);
     }
 
     if (pTITail->funcs_off != 0xffff)
