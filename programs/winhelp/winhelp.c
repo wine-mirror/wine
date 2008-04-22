@@ -56,7 +56,7 @@ static void    WINHELP_DeleteButtons(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd, ULONG relative);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
-WINHELP_GLOBALS Globals = {3, NULL, NULL, TRUE, NULL, NULL, NULL, NULL, {{{NULL,NULL}},0}};
+WINHELP_GLOBALS Globals = {3, NULL, TRUE, NULL, NULL, NULL, NULL, NULL, {{{NULL,NULL}},0}};
 
 #define CTL_ID_BUTTON   0x700
 #define CTL_ID_TEXT     0x701
@@ -593,7 +593,9 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         WINHELP_RememberPage(win, wpage);
     }
 
-    if (!bPopup)
+    if (bPopup)
+        Globals.active_popup = win;
+    else
         Globals.active_win = win;
 
     /* Initialize default pushbuttons */
@@ -649,7 +651,6 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     }
 
     WINHELP_LayoutMainWindow(win);
-    if (bPopup) Globals.hPopupWnd = win->hMainWnd;
 
     ShowWindow(win->hMainWnd, nCmdShow);
     UpdateWindow(win->hMainWnd);
@@ -736,9 +737,9 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             break;
 	}
         break;
-    case WM_DESTROY:
-        if (Globals.hPopupWnd) DestroyWindow(Globals.hPopupWnd);
-        break;
+/* EPP     case WM_DESTROY: */
+/* EPP         if (Globals.hPopupWnd) DestroyWindow(Globals.hPopupWnd); */
+/* EPP         break; */
     case WM_COPYDATA:
         return WINHELP_HandleCommand((HWND)wParam, lParam);
 
@@ -789,7 +790,6 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         {
             BOOL bExit;
             win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
-            if (hWnd == Globals.hPopupWnd) Globals.hPopupWnd = 0;
             bExit = (Globals.wVersion >= 4 && !lstrcmpi(win->lpszName, "main"));
             WINHELP_DeleteWindow(win);
 
@@ -1172,8 +1172,12 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     case WM_LBUTTONDOWN:
         win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
 
-        hPopupWnd = Globals.hPopupWnd;
-        Globals.hPopupWnd = 0;
+        if (Globals.active_popup)
+        {
+            hPopupWnd = Globals.active_popup->hMainWnd;
+            Globals.active_popup = NULL;
+        }
+        else hPopupWnd = NULL;
 
         part = WINHELP_IsOverLink(win, wParam, lParam);
         if (part)
@@ -1739,7 +1743,9 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
  */
 static void WINHELP_CheckPopup(UINT msg)
 {
-    if (!Globals.hPopupWnd) return;
+    HWND        hPopup;
+
+    if (!Globals.active_popup) return;
 
     switch (msg)
     {
@@ -1750,8 +1756,9 @@ static void WINHELP_CheckPopup(UINT msg)
     case WM_NCLBUTTONDOWN:
     case WM_NCMBUTTONDOWN:
     case WM_NCRBUTTONDOWN:
-        DestroyWindow(Globals.hPopupWnd);
-        Globals.hPopupWnd = 0;
+        hPopup = Globals.active_popup->hMainWnd;
+        Globals.active_popup = NULL;
+        DestroyWindow(hPopup);
     }
 }
 
@@ -1833,6 +1840,9 @@ static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
         if (Globals.win_list)
             SetActiveWindow(Globals.win_list->hMainWnd);
     }
+
+    if (win == Globals.active_popup)
+        Globals.active_popup = NULL;
 
     WINHELP_DeleteButtons(win);
 

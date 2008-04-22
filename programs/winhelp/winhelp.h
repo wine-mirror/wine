@@ -166,9 +166,9 @@ typedef struct
 {
     UINT                wVersion;
     HANDLE              hInstance;
-    HWND                hPopupWnd;
     BOOL                isBook;
     WINHELP_WINDOW*     active_win;
+    WINHELP_WINDOW*     active_popup;
     WINHELP_WINDOW*     win_list;
     WNDPROC             button_proc;
     WINHELP_DLL*        dlls;
