@@ -354,6 +354,44 @@ static void check_integer_type(const struct expr_loc *expr_loc,
                        expr_loc->attr ? expr_loc->attr : "");
 }
 
+static type_t *find_identifier(const char *identifier, const type_t *cont_type, int *found_in_cont_type)
+{
+    type_t *type = NULL;
+    const var_t *field;
+    const var_list_t *fields = NULL;
+
+    *found_in_cont_type = 0;
+
+    if (cont_type && (cont_type->type == RPC_FC_FUNCTION || is_struct(cont_type->type)))
+        fields = cont_type->fields_or_args;
+    else if (cont_type && is_union(cont_type->type))
+    {
+        if (cont_type->type == RPC_FC_ENCAPSULATED_UNION)
+        {
+            const var_t *uv = LIST_ENTRY(list_tail(cont_type->fields_or_args), const var_t, entry);
+            fields = uv->type->fields_or_args;
+        }
+        else
+            fields = cont_type->fields_or_args;
+    }
+
+    if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
+        if (field->name && !strcmp(identifier, field->name))
+        {
+            type = field->type;
+            *found_in_cont_type = 1;
+            break;
+        }
+
+    if (!type)
+    {
+        var_t *const_var = find_const(identifier, 0);
+        if (const_var) type = const_var->type;
+    }
+
+    return type;
+}
+
 static struct expression_type resolve_expression(const struct expr_loc *expr_loc,
                                                  const type_t *cont_type,
                                                  const expr_t *e)
@@ -380,34 +418,10 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
         break;
     case EXPR_IDENTIFIER:
     {
-        const var_t *field;
-        const var_list_t *fields = NULL;
-
-        if (cont_type && (cont_type->type == RPC_FC_FUNCTION || is_struct(cont_type->type)))
-            fields = cont_type->fields_or_args;
-        else if (cont_type && is_union(cont_type->type))
-        {
-            if (cont_type->type == RPC_FC_ENCAPSULATED_UNION)
-            {
-                const var_t *uv = LIST_ENTRY(list_tail(cont_type->fields_or_args), const var_t, entry);
-                fields = uv->type->fields_or_args;
-            }
-            else
-                fields = cont_type->fields_or_args;
-        }
-
-        if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
-            if (field->name && !strcmp(e->u.sval, field->name))
-            {
-                result.type = field->type;
-                break;
-            }
-
-        if (!result.type)
-        {
-            var_t *const_var = find_const(e->u.sval, 0);
-            if (const_var) result.type = const_var->type;
-        }
+        int found_in_cont_type;
+        result.is_variable = TRUE;
+        result.is_temporary = FALSE;
+        result.type = find_identifier(e->u.sval, cont_type, &found_in_cont_type);
         if (!result.type)
         {
             error_loc_info(&expr_loc->v->loc_info, "identifier %s cannot be resolved in expression%s%s\n",
@@ -550,7 +564,9 @@ const type_t *expr_resolve_type(const struct expr_loc *expr_loc, const type_t *c
     return expr_type.type;
 }
 
-void write_expr(FILE *h, const expr_t *e, int brackets)
+void write_expr(FILE *h, const expr_t *e, int brackets,
+                int toplevel, const char *toplevel_prefix,
+                const type_t *cont_type)
 {
     switch (e->type)
     {
@@ -572,37 +588,43 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
             fprintf(h, "TRUE");
         break;
     case EXPR_IDENTIFIER:
+        if (toplevel && toplevel_prefix && cont_type)
+        {
+            int found_in_cont_type;
+            find_identifier(e->u.sval, cont_type, &found_in_cont_type);
+            if (found_in_cont_type) fprintf(h, "%s", toplevel_prefix);
+        }
         fprintf(h, "%s", e->u.sval);
         break;
     case EXPR_LOGNOT:
         fprintf(h, "!");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         break;
     case EXPR_NOT:
         fprintf(h, "~");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         break;
     case EXPR_POS:
         fprintf(h, "+");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         break;
     case EXPR_NEG:
         fprintf(h, "-");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         break;
     case EXPR_ADDRESSOF:
         fprintf(h, "&");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         break;
     case EXPR_PPTR:
         fprintf(h, "*");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         break;
     case EXPR_CAST:
         fprintf(h, "(");
         write_type_decl(h, e->u.tref, NULL);
         fprintf(h, ")");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         break;
     case EXPR_SIZEOF:
         fprintf(h, "sizeof(");
@@ -628,7 +650,7 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     case EXPR_GTREQL:
     case EXPR_LESSEQL:
         if (brackets) fprintf(h, "(");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         switch (e->type)
         {
         case EXPR_SHL:          fprintf(h, " << "); break;
@@ -651,38 +673,38 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
         case EXPR_LESSEQL:      fprintf(h, " <= "); break;
         default: break;
         }
-        write_expr(h, e->u.ext, 1);
+        write_expr(h, e->u.ext, 1, toplevel, toplevel_prefix, cont_type);
         if (brackets) fprintf(h, ")");
         break;
     case EXPR_MEMBER:
         if (brackets) fprintf(h, "(");
         if (e->ref->type == EXPR_PPTR)
         {
-            write_expr(h, e->ref->ref, 1);
+            write_expr(h, e->ref->ref, 1, toplevel, toplevel_prefix, cont_type);
             fprintf(h, "->");
         }
         else
         {
-            write_expr(h, e->ref, 1);
+            write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
             fprintf(h, ".");
         }
-        write_expr(h, e->u.ext, 1);
+        write_expr(h, e->u.ext, 1, 0, toplevel_prefix, cont_type);
         if (brackets) fprintf(h, ")");
         break;
     case EXPR_COND:
         if (brackets) fprintf(h, "(");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         fprintf(h, " ? ");
-        write_expr(h, e->u.ext, 1);
+        write_expr(h, e->u.ext, 1, toplevel, toplevel_prefix, cont_type);
         fprintf(h, " : ");
-        write_expr(h, e->ext2, 1);
+        write_expr(h, e->ext2, 1, toplevel, toplevel_prefix, cont_type);
         if (brackets) fprintf(h, ")");
         break;
     case EXPR_ARRAY:
         if (brackets) fprintf(h, "(");
-        write_expr(h, e->ref, 1);
+        write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
         fprintf(h, "[");
-        write_expr(h, e->u.ext, 1);
+        write_expr(h, e->u.ext, 1, 1, toplevel_prefix, cont_type);
         fprintf(h, "]");
         if (brackets) fprintf(h, ")");
         break;

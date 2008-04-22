@@ -2759,7 +2759,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
             if (type->size_is && is_size_needed_for_phase(phase))
             {
                 print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                write_expr(file, type->size_is, 1);
+                write_expr(file, type->size_is, 1, 1, NULL, NULL);
                 fprintf(file, ";\n");
             }
 
@@ -2789,7 +2789,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
             {
                 print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
                 print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                write_expr(file, type->length_is, 1);
+                write_expr(file, type->length_is, 1, 1, NULL, NULL);
                 fprintf(file, ";\n\n");
             }
             array_type = "VaryingArray";
@@ -2799,7 +2799,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
             if (is_size_needed_for_phase(phase))
             {
                 print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                write_expr(file, type->size_is, 1);
+                write_expr(file, type->size_is, 1, 1, NULL, NULL);
                 fprintf(file, ";\n\n");
             }
             array_type = "ConformantArray";
@@ -2811,14 +2811,14 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
                 if (type->size_is)
                 {
                     print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                    write_expr(file, type->size_is, 1);
+                    write_expr(file, type->size_is, 1, 1, NULL, NULL);
                     fprintf(file, ";\n");
                 }
                 if (type->length_is)
                 {
                     print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
                     print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                    write_expr(file, type->length_is, 1);
+                    write_expr(file, type->length_is, 1, 1, NULL, NULL);
                     fprintf(file, ";\n\n");
                 }
             }
@@ -2882,7 +2882,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
                 if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
                 {
                     print_file( file, indent, "_StubMsg.MaxCount = (unsigned long) " );
-                    write_expr( file, iid, 1 );
+                    write_expr( file, iid, 1, 1, NULL, NULL );
                     fprintf( file, ";\n\n" );
                 }
                 print_phase_function(file, indent, "Pointer", phase, var, start_offset);
@@ -2912,13 +2912,13 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
             if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
             {
                 print_file( file, indent, "_StubMsg.MaxCount = (unsigned long) " );
-                write_expr( file, iid, 1 );
+                write_expr( file, iid, 1, 1, NULL, NULL );
                 fprintf( file, ";\n\n" );
             }
             else if (sx)
             {
                 print_file(file, indent, "_StubMsg.MaxCount = (unsigned long) ");
-                write_expr(file, sx, 1);
+                write_expr(file, sx, 1, 1, NULL, NULL);
                 fprintf(file, ";\n\n");
             }
             if (var->type->ref->type == RPC_FC_IP)
@@ -3008,156 +3008,6 @@ size_t get_size_typeformatstring(const ifref_list_t *ifaces, type_pred_t pred)
     set_all_tfswrite(FALSE);
     return process_tfs(NULL, ifaces, pred);
 }
-
-static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
-                              const var_list_t *fields, const char *structvar)
-{
-    switch (e->type) {
-        case EXPR_VOID:
-            break;
-        case EXPR_NUM:
-            fprintf(h, "%lu", e->u.lval);
-            break;
-        case EXPR_HEXNUM:
-            fprintf(h, "0x%lx", e->u.lval);
-            break;
-        case EXPR_DOUBLE:
-            fprintf(h, "%#.15g", e->u.dval);
-            break;
-        case EXPR_TRUEFALSE:
-            if (e->u.lval == 0)
-                fprintf(h, "FALSE");
-            else
-                fprintf(h, "TRUE");
-            break;
-        case EXPR_IDENTIFIER:
-        {
-            const var_t *field;
-            LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
-                if (!strcmp(e->u.sval, field->name))
-                {
-                    fprintf(h, "%s->%s", structvar, e->u.sval);
-                    break;
-                }
-
-            if (&field->entry == fields) error("no field found for identifier %s\n", e->u.sval);
-            break;
-        }
-        case EXPR_LOGNOT:
-            fprintf(h, "!");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            break;
-        case EXPR_NOT:
-            fprintf(h, "~");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            break;
-        case EXPR_POS:
-            fprintf(h, "+");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            break;
-        case EXPR_NEG:
-            fprintf(h, "-");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            break;
-        case EXPR_ADDRESSOF:
-            fprintf(h, "&");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            break;
-        case EXPR_PPTR:
-            fprintf(h, "*");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            break;
-        case EXPR_CAST:
-            fprintf(h, "(");
-            write_type_decl(h, e->u.tref, NULL);
-            fprintf(h, ")");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            break;
-        case EXPR_SIZEOF:
-            fprintf(h, "sizeof(");
-            write_type_decl(h, e->u.tref, NULL);
-            fprintf(h, ")");
-            break;
-        case EXPR_SHL:
-        case EXPR_SHR:
-        case EXPR_MOD:
-        case EXPR_MUL:
-        case EXPR_DIV:
-        case EXPR_ADD:
-        case EXPR_SUB:
-        case EXPR_AND:
-        case EXPR_OR:
-        case EXPR_LOGOR:
-        case EXPR_LOGAND:
-        case EXPR_XOR:
-        case EXPR_EQUALITY:
-        case EXPR_INEQUALITY:
-        case EXPR_GTR:
-        case EXPR_LESS:
-        case EXPR_GTREQL:
-        case EXPR_LESSEQL:
-            if (brackets) fprintf(h, "(");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            switch (e->type) {
-                case EXPR_SHL:          fprintf(h, " << "); break;
-                case EXPR_SHR:          fprintf(h, " >> "); break;
-                case EXPR_MOD:          fprintf(h, " %% "); break;
-                case EXPR_MUL:          fprintf(h, " * "); break;
-                case EXPR_DIV:          fprintf(h, " / "); break;
-                case EXPR_ADD:          fprintf(h, " + "); break;
-                case EXPR_SUB:          fprintf(h, " - "); break;
-                case EXPR_AND:          fprintf(h, " & "); break;
-                case EXPR_OR:           fprintf(h, " | "); break;
-                case EXPR_MEMBER:       fprintf(h, "."); break;
-                case EXPR_LOGOR:        fprintf(h, " || "); break;
-                case EXPR_LOGAND:       fprintf(h, " && "); break;
-                case EXPR_XOR:          fprintf(h, " ^ "); break;
-                case EXPR_EQUALITY:     fprintf(h, " == "); break;
-                case EXPR_INEQUALITY:   fprintf(h, " != "); break;
-                case EXPR_GTR:          fprintf(h, " > "); break;
-                case EXPR_LESS:         fprintf(h, " < "); break;
-                case EXPR_GTREQL:       fprintf(h, " >= "); break;
-                case EXPR_LESSEQL:      fprintf(h, " <= "); break;
-                default: break;
-            }
-            write_struct_expr(h, e->u.ext, 1, fields, structvar);
-            if (brackets) fprintf(h, ")");
-            break;
-        case EXPR_MEMBER:
-            if (brackets) fprintf(h, "(");
-            if (e->ref->type == EXPR_PPTR)
-            {
-                write_expr(h, e->ref->ref, 1);
-                fprintf(h, "->");
-            }
-            else
-            {
-                write_expr(h, e->ref, 1);
-                fprintf(h, ".");
-            }
-            write_expr(h, e->u.ext, 1);
-            if (brackets) fprintf(h, ")");
-            break;
-        case EXPR_COND:
-            if (brackets) fprintf(h, "(");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            fprintf(h, " ? ");
-            write_struct_expr(h, e->u.ext, 1, fields, structvar);
-            fprintf(h, " : ");
-            write_struct_expr(h, e->ext2, 1, fields, structvar);
-            if (brackets) fprintf(h, ")");
-            break;
-        case EXPR_ARRAY:
-            if (brackets) fprintf(h, "(");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
-            fprintf(h, "[");
-            write_struct_expr(h, e->u.ext, 1, fields, structvar);
-            fprintf(h, "]");
-            if (brackets) fprintf(h, ")");
-            break;
-    }
-}
-
 
 void declare_stub_args( FILE *file, int indent, const func_t *func )
 {
@@ -3254,7 +3104,7 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
                 fprintf(file, " = NdrAllocate(&_StubMsg, ");
                 for ( ; type->size_is ; type = type->ref)
                 {
-                    write_expr(file, type->size_is, TRUE);
+                    write_expr(file, type->size_is, TRUE, TRUE, NULL, NULL);
                     fprintf(file, " * ");
                 }
                 size = type_memsize(type, &align);
@@ -3279,6 +3129,7 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
 int write_expr_eval_routines(FILE *file, const char *iface)
 {
     static const char *var_name = "pS";
+    static const char *var_name_expr = "pS->";
     int result = 0;
     struct expr_eval_routine *eval;
     unsigned short callback_offset = 0;
@@ -3286,7 +3137,6 @@ int write_expr_eval_routines(FILE *file, const char *iface)
     LIST_FOR_EACH_ENTRY(eval, &expr_eval_routines, struct expr_eval_routine, entry)
     {
         const char *name = eval->structure->name;
-        const var_list_t *fields = eval->structure->fields_or_args;
         result = 1;
 
         print_file(file, 0, "static void __RPC_USER %s_%sExprEval_%04u(PMIDL_STUB_MESSAGE pStubMsg)\n",
@@ -3296,7 +3146,7 @@ int write_expr_eval_routines(FILE *file, const char *iface)
                     name, var_name, name, eval->baseoff);
         print_file(file, 1, "pStubMsg->Offset = 0;\n"); /* FIXME */
         print_file(file, 1, "pStubMsg->MaxCount = (unsigned long)");
-        write_struct_expr(file, eval->expr, 1, fields, var_name);
+        write_expr(file, eval->expr, 1, 1, var_name_expr, eval->structure);
         fprintf(file, ";\n");
         print_file(file, 0, "}\n\n");
         callback_offset++;

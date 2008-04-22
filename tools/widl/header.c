@@ -195,7 +195,7 @@ static void write_enums(FILE *h, var_list_t *enums)
       write_name(h, v);
       if (v->eval) {
         fprintf(h, " = ");
-        write_expr(h, v->eval, 0);
+        write_expr(h, v->eval, 0, 1, NULL, NULL);
       }
     }
     if (list_next( enums, &v->entry )) fprintf(h, ",\n");
@@ -476,7 +476,7 @@ void write_typedef(type_t *type)
 void write_constdef(const var_t *v)
 {
   fprintf(header, "#define %s (", v->name);
-  write_expr(header, v->eval, 0);
+  write_expr(header, v->eval, 0, 1, NULL, NULL);
   fprintf(header, ")\n\n");
 }
 

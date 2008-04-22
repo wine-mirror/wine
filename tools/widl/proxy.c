@@ -194,7 +194,7 @@ static void free_variable( const var_t *arg )
   if (size)
   {
     print_proxy( "_StubMsg.MaxCount = " );
-    write_expr(proxy, size, 0);
+    write_expr(proxy, size, 0, 1, NULL, NULL);
     fprintf(proxy, ";\n\n");
     print_proxy( "NdrClearOutParameters( &_StubMsg, ");
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
@@ -222,7 +222,7 @@ static void free_variable( const var_t *arg )
     if( iid )
     {
       print_proxy( "_StubMsg.MaxCount = (unsigned long) " );
-      write_expr(proxy, iid, 1);
+      write_expr(proxy, iid, 1, 1, NULL, NULL);
       print_proxy( ";\n\n" );
     }
     print_proxy( "NdrClearOutParameters( &_StubMsg, ");
