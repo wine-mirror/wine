@@ -112,6 +112,12 @@ BOOL WINHELP_GetOpenFileName(LPSTR lpszFile, int len)
     return GetOpenFileName(&openfilename);
 }
 
+static char* WINHELP_GetCaption(WINHELP_WNDPAGE* wpage)
+{
+    if (wpage->wininfo->caption[0]) return wpage->wininfo->caption;
+    return wpage->page->file->lpszTitle;
+}
+
 /***********************************************************************
  *
  *           WINHELP_LookupHelpFile
@@ -540,7 +546,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow)
             {
                 WINHELP_DeleteButtons(win);
                 bReUsed = TRUE;
-                SetWindowText(win->hMainWnd, wpage->wininfo->caption);
+                SetWindowText(win->hMainWnd, WINHELP_GetCaption(wpage));
                 if (wpage->wininfo->origin.x != CW_USEDEFAULT &&
                     wpage->wininfo->origin.y != CW_USEDEFAULT)
                     SetWindowPos(win->hMainWnd, HWND_TOP,
@@ -623,7 +629,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow)
     if (!bReUsed)
     {
         win->hMainWnd = CreateWindowEx((bPopup) ? WS_EX_TOOLWINDOW : 0, MAIN_WIN_CLASS_NAME,
-                                       wpage->wininfo->caption,
+                                       WINHELP_GetCaption(wpage),
                                        bPrimary ? WS_OVERLAPPEDWINDOW : wpage->wininfo->win_style,
                                        wpage->wininfo->origin.x, wpage->wininfo->origin.y,
                                        wpage->wininfo->size.cx, wpage->wininfo->size.cy,
