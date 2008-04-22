@@ -203,7 +203,8 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
  *
  *
  */
-static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, HWND hParentWnd, POINT* mouse)
+static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile,
+                                                          WINHELP_WINDOW* parent, POINT* mouse)
 {
     static      HLPFILE_WINDOWINFO      wi;
 
@@ -212,19 +213,20 @@ static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, HWND
     wi.type[0] = wi.name[0] = wi.caption[0] = '\0';
 
     /* Calculate horizontal size and position of a popup window */
-    GetWindowRect(hParentWnd, &parent_rect);
+    GetWindowRect(parent->hMainWnd, &parent_rect);
     wi.size.cx = (parent_rect.right  - parent_rect.left) / 2;
     wi.size.cy = 10; /* need a non null value, so that border are taken into account while computing */
 
     wi.origin = *mouse;
-    ClientToScreen(hParentWnd, &wi.origin);
+    ClientToScreen(parent->hMainWnd, &wi.origin);
     wi.origin.x -= wi.size.cx / 2;
     wi.origin.x  = min(wi.origin.x, GetSystemMetrics(SM_CXSCREEN) - wi.size.cx);
     wi.origin.x  = max(wi.origin.x, 0);
 
     wi.style = SW_SHOW;
     wi.win_style = WS_POPUP | WS_BORDER;
-    wi.sr_color = wi.sr_color = 0xFFFFFF;
+    wi.sr_color = parent->info->sr_color;
+    wi.nsr_color = 0xFFFFFF;
 
     return &wi;
 }
@@ -1207,7 +1209,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             case hlp_link_popup:
                 hlpfile = WINHELP_LookupHelpFile(part->link->lpszString);
                 if (hlpfile) WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, part->link->lHash,
-                                                    WINHELP_GetPopupWindowInfo(hlpfile, hWnd, &mouse),
+                                                    WINHELP_GetPopupWindowInfo(hlpfile, win, &mouse),
                                                     SW_NORMAL);
                 break;
             case hlp_link_macro:
