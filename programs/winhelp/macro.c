@@ -230,17 +230,7 @@ void CALLBACK MACRO_BackFlush(void)
 
     WINE_TRACE("()\n");
 
-    if (win)
-    {
-        unsigned int i;
-
-        for (i = 0; i < win->back.index; i++)
-        {
-            HLPFILE_FreeHlpFile(win->back.set[i].page->file);
-            win->back.set[i].page = NULL;
-        }
-        win->back.index = 0;
-    }
+    if (win) WINHELP_DeleteBackSet(win);
 }
 
 void CALLBACK MACRO_BookmarkDefine(void)

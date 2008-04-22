@@ -549,6 +549,8 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow)
                     wpage->wininfo->size.cy != CW_USEDEFAULT)
                     SetWindowPos(win->hMainWnd, HWND_TOP,
                                  0, 0, wpage->wininfo->size.cx, wpage->wininfo->size.cy, SWP_NOMOVE);
+                if (wpage->page && wpage->page->file != win->page->file)
+                    WINHELP_DeleteBackSet(win);
                 WINHELP_InitFonts(win->hMainWnd);
 
                 win->page = wpage->page;
@@ -1814,6 +1816,22 @@ static void WINHELP_DeleteButtons(WINHELP_WINDOW* win)
     win->first_button = NULL;
 }
 
+/******************************************************************
+ *		WINHELP_DeleteBackSet
+ *
+ */
+void WINHELP_DeleteBackSet(WINHELP_WINDOW* win)
+{
+    unsigned int i;
+
+    for (i = 0; i < win->back.index; i++)
+    {
+        HLPFILE_FreeHlpFile(win->back.set[i].page->file);
+        win->back.set[i].page = NULL;
+    }
+    win->back.index = 0;
+}
+
 /***********************************************************************
  *
  *           WINHELP_DeleteWindow
@@ -1821,7 +1839,6 @@ static void WINHELP_DeleteButtons(WINHELP_WINDOW* win)
 static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
 {
     WINHELP_WINDOW**    w;
-    unsigned int        i;
 
     for (w = &Globals.win_list; *w; w = &(*w)->next)
     {
@@ -1846,8 +1863,7 @@ static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
 
     DeleteObject(win->hBrush);
 
-    for (i = 0; i < win->back.index; i++)
-        HLPFILE_FreeHlpFile(win->back.set[i].page->file);
+    WINHELP_DeleteBackSet(win);
 
     if (win->page) HLPFILE_FreeHlpFile(win->page->file);
     WINHELP_DeleteLines(win);
