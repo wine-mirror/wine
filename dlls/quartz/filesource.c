@@ -1107,6 +1107,9 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
 
     if (!This->bFlushing)
     {
+        if (!This->pHead)
+            ERR("Called without samples in queue!\n");
+
         /* wait for the read to finish or timeout */
         if (WaitForSingleObject(This->hEvent, dwTimeout) == WAIT_TIMEOUT)
             hr = VFW_E_TIMEOUT;
@@ -1139,10 +1142,10 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         *pdwUser = pDataRq->dwUserData;
 
         if (This->bFlushing)
-        {
             hr = VFW_E_WRONG_STATE;
+
+        if (FAILED(hr))
             dwBytes = 0;
-        }
 
         /* Set the time on the sample */
         IMediaSample_SetActualDataLength(pDataRq->pSample, dwBytes);
@@ -1156,6 +1159,12 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         assert(rtStop <= rtSampleStop);
 
         IMediaSample_SetTime(pDataRq->pSample, &rtStart, &rtStop);
+        assert(rtStart == rtSampleStart);
+        if (hr == S_OK)
+            assert(rtStop == rtSampleStop);
+        else
+            assert(rtStop == rtStart);
+
     }
 
     /* no need to close event handle since we will close it when the pin is destroyed */
