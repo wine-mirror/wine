@@ -854,6 +854,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_IME_COMPOSITION:
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_SELECT:
+    case WM_IME_NOTIFY:
         {
             HWND hwndIME;
 
@@ -1006,6 +1007,7 @@ LRESULT WINAPI DefWindowProcW(
     case WM_IME_COMPOSITION:
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_SELECT:
+    case WM_IME_NOTIFY:
         {
             HWND hwndIME;
 
