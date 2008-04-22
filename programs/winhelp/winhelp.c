@@ -491,16 +491,17 @@ static void     WINHELP_AddHistory(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
     if (i == Globals.history.index)
     {
         num = sizeof(Globals.history.set) / sizeof(Globals.history.set[0]);
+        /* we're full, remove latest entry */
         if (Globals.history.index == num)
         {
-            /* we're full, remove latest entry */
-            HLPFILE_FreeHlpFile(Globals.history.set[0].page->file);
-            memmove(&Globals.history.set[0], &Globals.history.set[1],
-                    (num - 1) * sizeof(Globals.history.set[0]));
+            HLPFILE_FreeHlpFile(Globals.history.set[num - 1].page->file);
             Globals.history.index--;
         }
-        Globals.history.set[Globals.history.index].page = page;
-        Globals.history.set[Globals.history.index++].wininfo = win->info;
+        memmove(&Globals.history.set[1], &Globals.history.set[0],
+                Globals.history.index * sizeof(Globals.history.set[0]));
+        Globals.history.set[0].page = page;
+        Globals.history.set[0].wininfo = win->info;
+        Globals.history.index++;
         page->file->wRefCount++;
         if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
     }
@@ -1297,7 +1298,8 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
 
         for (i = 0; i < Globals.history.index; i++)
         {
-            TextOut(hDc, 0, i * tm.tmHeight, Globals.history.set[i].page->lpszTitle,
+            TextOut(hDc, 0, i * tm.tmHeight,
+                    Globals.history.set[i].page->lpszTitle,
                     strlen(Globals.history.set[i].page->lpszTitle));
         }
         EndPaint(hWnd, &ps);
