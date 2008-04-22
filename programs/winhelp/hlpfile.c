@@ -1534,6 +1534,15 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             *m = macro;
             break;
 
+        case 5:
+            if (GET_USHORT(ptr, 4 + 4) != 1)
+                WINE_FIXME("More than one icon, picking up first\n");
+            /* 0x16 is sizeof(CURSORICONDIR), see user32/user_private.h */
+            hlpfile->hIcon = CreateIconFromResourceEx(ptr + 4 + 0x16,
+                                                      GET_USHORT(ptr, 2) - 0x16, TRUE,
+                                                      0x30000, 0, 0, 0);
+            break;
+
         case 6:
             if (GET_USHORT(ptr, 2) != 90) {WINE_WARN("system6\n");break;}
 
@@ -2261,6 +2270,7 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
     HLPFILE_DeletePage(hlpfile->first_page);
     HLPFILE_DeleteMacro(hlpfile->first_macro);
 
+    DestroyIcon(hlpfile->hIcon);
     if (hlpfile->numWindows)    HeapFree(GetProcessHeap(), 0, hlpfile->windows);
     HeapFree(GetProcessHeap(), 0, hlpfile->Context);
     HeapFree(GetProcessHeap(), 0, hlpfile->Map);

@@ -162,6 +162,7 @@ typedef struct tagHlpFileFile
 
     unsigned                    numWindows;
     HLPFILE_WINDOWINFO*         windows;
+    HICON                       hIcon;
 } HLPFILE;
 
 /*

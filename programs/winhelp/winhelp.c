@@ -530,6 +530,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     WINHELP_WINDOW*     win = NULL;
     BOOL                bPrimary, bPopup, bReUsed = FALSE;
     LPSTR               name;
+    HICON               hIcon;
 
     bPrimary = !lstrcmpi(wpage->wininfo->name, "main");
     bPopup = !bPrimary && (wpage->wininfo->win_style & WS_POPUP);
@@ -632,6 +633,10 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
                      0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
     }
+
+    hIcon = (wpage->page) ? wpage->page->file->hIcon : NULL;
+    if (!hIcon) hIcon = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(IDI_WINHELP));
+    SendMessage(win->hMainWnd, WM_SETICON, ICON_SMALL, (DWORD_PTR)hIcon);
 
     /* Initialize file specific pushbuttons */
     if (!(wpage->wininfo->win_style & WS_POPUP) && wpage->page)
