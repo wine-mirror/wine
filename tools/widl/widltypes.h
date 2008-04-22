@@ -165,6 +165,17 @@ enum expr_type
     EXPR_MEMBER,
     EXPR_ARRAY,
     EXPR_MOD,
+    EXPR_LOGOR,
+    EXPR_LOGAND,
+    EXPR_XOR,
+    EXPR_EQUALITY,
+    EXPR_INEQUALITY,
+    EXPR_GTR,
+    EXPR_LESS,
+    EXPR_GTREQL,
+    EXPR_LESSEQL,
+    EXPR_LOGNOT,
+    EXPR_POS,
 };
 
 enum type_kind

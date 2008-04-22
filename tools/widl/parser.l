@@ -163,6 +163,12 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 <INITIAL,ATTR>\<\<	return SHL;
 <INITIAL,ATTR>\>\>	return SHR;
 <INITIAL,ATTR>\-\>	return MEMBERPTR;
+<INITIAL,ATTR>==	return EQUALITY;
+<INITIAL,ATTR>!=	return INEQUALITY;
+<INITIAL,ATTR>\>=	return GREATEREQUAL;
+<INITIAL,ATTR>\<=	return LESSEQUAL;
+<INITIAL,ATTR>\|\|	return LOGICALOR;
+<INITIAL,ATTR>&&	return LOGICALAND;
 <INITIAL,ATTR>.		return yytext[0];
 <<EOF>>			{
 				if (import_stack_ptr)

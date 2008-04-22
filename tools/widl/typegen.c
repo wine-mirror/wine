@@ -360,6 +360,15 @@ static int compare_expr(const expr_t *a, const expr_t *b)
         case EXPR_MEMBERPTR:
         case EXPR_MEMBER:
         case EXPR_ARRAY:
+        case EXPR_LOGOR:
+        case EXPR_LOGAND:
+        case EXPR_XOR:
+        case EXPR_EQUALITY:
+        case EXPR_INEQUALITY:
+        case EXPR_GTR:
+        case EXPR_LESS:
+        case EXPR_GTREQL:
+        case EXPR_LESSEQL:
             ret = compare_expr(a->ref, b->ref);
             if (ret != 0)
                 return ret;
@@ -373,6 +382,8 @@ static int compare_expr(const expr_t *a, const expr_t *b)
         case EXPR_NEG:
         case EXPR_PPTR:
         case EXPR_ADDRESSOF:
+        case EXPR_LOGNOT:
+        case EXPR_POS:
             return compare_expr(a->ref, b->ref);
         case EXPR_SIZEOF:
             return compare_type(a->u.tref, b->u.tref);
@@ -3124,12 +3135,24 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
             if (&field->entry == fields) error("no field found for identifier %s\n", e->u.sval);
             break;
         }
-        case EXPR_NEG:
-            fprintf(h, "-");
+        case EXPR_LOGNOT:
+            fprintf(h, "!");
             write_struct_expr(h, e->ref, 1, fields, structvar);
             break;
         case EXPR_NOT:
             fprintf(h, "~");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            break;
+        case EXPR_POS:
+            fprintf(h, "+");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            break;
+        case EXPR_NEG:
+            fprintf(h, "-");
+            write_struct_expr(h, e->ref, 1, fields, structvar);
+            break;
+        case EXPR_ADDRESSOF:
+            fprintf(h, "&");
             write_struct_expr(h, e->ref, 1, fields, structvar);
             break;
         case EXPR_PPTR:
@@ -3158,20 +3181,38 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
         case EXPR_OR:
         case EXPR_MEMBERPTR:
         case EXPR_MEMBER:
+        case EXPR_LOGOR:
+        case EXPR_LOGAND:
+        case EXPR_XOR:
+        case EXPR_EQUALITY:
+        case EXPR_INEQUALITY:
+        case EXPR_GTR:
+        case EXPR_LESS:
+        case EXPR_GTREQL:
+        case EXPR_LESSEQL:
             if (brackets) fprintf(h, "(");
             write_struct_expr(h, e->ref, 1, fields, structvar);
             switch (e->type) {
-                case EXPR_SHL: fprintf(h, " << "); break;
-                case EXPR_SHR: fprintf(h, " >> "); break;
-                case EXPR_MOD: fprintf(h, " %% "); break;
-                case EXPR_MUL: fprintf(h, " * "); break;
-                case EXPR_DIV: fprintf(h, " / "); break;
-                case EXPR_ADD: fprintf(h, " + "); break;
-                case EXPR_SUB: fprintf(h, " - "); break;
-                case EXPR_AND: fprintf(h, " & "); break;
-                case EXPR_OR:  fprintf(h, " | "); break;
-                case EXPR_MEMBERPTR: fprintf(h, "->"); break;
-                case EXPR_MEMBER:    fprintf(h, "."); break;
+                case EXPR_SHL:          fprintf(h, " << "); break;
+                case EXPR_SHR:          fprintf(h, " >> "); break;
+                case EXPR_MOD:          fprintf(h, " %% "); break;
+                case EXPR_MUL:          fprintf(h, " * "); break;
+                case EXPR_DIV:          fprintf(h, " / "); break;
+                case EXPR_ADD:          fprintf(h, " + "); break;
+                case EXPR_SUB:          fprintf(h, " - "); break;
+                case EXPR_AND:          fprintf(h, " & "); break;
+                case EXPR_OR:           fprintf(h, " | "); break;
+                case EXPR_MEMBERPTR:    fprintf(h, "->"); break;
+                case EXPR_MEMBER:       fprintf(h, "."); break;
+                case EXPR_LOGOR:        fprintf(h, " || "); break;
+                case EXPR_LOGAND:       fprintf(h, " && "); break;
+                case EXPR_XOR:          fprintf(h, " ^ "); break;
+                case EXPR_EQUALITY:     fprintf(h, " == "); break;
+                case EXPR_INEQUALITY:   fprintf(h, " != "); break;
+                case EXPR_GTR:          fprintf(h, " > "); break;
+                case EXPR_LESS:         fprintf(h, " < "); break;
+                case EXPR_GTREQL:       fprintf(h, " >= "); break;
+                case EXPR_LESSEQL:      fprintf(h, " <= "); break;
                 default: break;
             }
             write_struct_expr(h, e->u.ext, 1, fields, structvar);
@@ -3185,10 +3226,6 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
             fprintf(h, " : ");
             write_struct_expr(h, e->ext2, 1, fields, structvar);
             if (brackets) fprintf(h, ")");
-            break;
-        case EXPR_ADDRESSOF:
-            fprintf(h, "&");
-            write_struct_expr(h, e->ref, 1, fields, structvar);
             break;
         case EXPR_ARRAY:
             if (brackets) fprintf(h, "(");

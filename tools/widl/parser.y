@@ -3,6 +3,7 @@
  * IDL Compiler
  *
  * Copyright 2002 Ove Kaaven
+ * Copyright 2006-2008 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -181,6 +182,9 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %token aEOF
 %token SHL SHR
 %token MEMBERPTR
+%token EQUALITY INEQUALITY
+%token GREATEREQUAL LESSEQUAL
+%token LOGICALOR LOGICALAND
 %token tAGGREGATABLE tALLOCATE tAPPOBJECT tASYNC tASYNCUUID
 %token tAUTOHANDLE tBINDABLE tBOOLEAN tBROADCAST tBYTE tBYTECOUNT
 %token tCALLAS tCALLBACK tCASE tCDECL tCHAR tCOCLASS tCODE tCOMMSTATUS
@@ -290,12 +294,17 @@ static void add_explicit_handle_if_necessary(func_t *func);
 
 %left ','
 %right '?' ':'
+%left LOGICALOR
+%left LOGICALAND
 %left '|'
+%left '^'
 %left '&'
+%left EQUALITY INEQUALITY
+%left '<' '>' LESSEQUAL GREATEREQUAL
 %left SHL SHR
 %left '-' '+'
 %left '*' '/' '%'
-%right '~' CAST PPTR NEG ADDRESSOF tSIZEOF
+%right '!' '~' CAST PPTR POS NEG ADDRESSOF tSIZEOF
 %left '.' MEMBERPTR '[' ']'
 
 %%
@@ -624,16 +633,27 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| tTRUE					{ $$ = make_exprl(EXPR_TRUEFALSE, 1); }
 	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
 	| expr '?' expr ':' expr		{ $$ = make_expr3(EXPR_COND, $1, $3, $5); }
+	| expr LOGICALOR expr			{ $$ = make_expr2(EXPR_LOGOR, $1, $3); }
+	| expr LOGICALAND expr			{ $$ = make_expr2(EXPR_LOGAND, $1, $3); }
 	| expr '|' expr				{ $$ = make_expr2(EXPR_OR , $1, $3); }
+	| expr '^' expr				{ $$ = make_expr2(EXPR_XOR, $1, $3); }
 	| expr '&' expr				{ $$ = make_expr2(EXPR_AND, $1, $3); }
+	| expr EQUALITY expr			{ $$ = make_expr2(EXPR_EQUALITY, $1, $3); }
+	| expr INEQUALITY expr			{ $$ = make_expr2(EXPR_INEQUALITY, $1, $3); }
+	| expr '>' expr				{ $$ = make_expr2(EXPR_GTR, $1, $3); }
+	| expr '<' expr				{ $$ = make_expr2(EXPR_LESS, $1, $3); }
+	| expr GREATEREQUAL expr		{ $$ = make_expr2(EXPR_GTREQL, $1, $3); }
+	| expr LESSEQUAL expr			{ $$ = make_expr2(EXPR_LESSEQL, $1, $3); }
+	| expr SHL expr				{ $$ = make_expr2(EXPR_SHL, $1, $3); }
+	| expr SHR expr				{ $$ = make_expr2(EXPR_SHR, $1, $3); }
 	| expr '+' expr				{ $$ = make_expr2(EXPR_ADD, $1, $3); }
 	| expr '-' expr				{ $$ = make_expr2(EXPR_SUB, $1, $3); }
 	| expr '%' expr				{ $$ = make_expr2(EXPR_MOD, $1, $3); }
 	| expr '*' expr				{ $$ = make_expr2(EXPR_MUL, $1, $3); }
 	| expr '/' expr				{ $$ = make_expr2(EXPR_DIV, $1, $3); }
-	| expr SHL expr				{ $$ = make_expr2(EXPR_SHL, $1, $3); }
-	| expr SHR expr				{ $$ = make_expr2(EXPR_SHR, $1, $3); }
+	| '!' expr				{ $$ = make_expr1(EXPR_LOGNOT, $2); }
 	| '~' expr				{ $$ = make_expr1(EXPR_NOT, $2); }
+	| '+' expr %prec POS			{ $$ = make_expr1(EXPR_POS, $2); }
 	| '-' expr %prec NEG			{ $$ = make_expr1(EXPR_NEG, $2); }
 	| '&' expr %prec ADDRESSOF		{ $$ = make_expr1(EXPR_ADDRESSOF, $2); }
 	| '*' expr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
@@ -1203,6 +1223,12 @@ static expr_t *make_expr1(enum expr_type type, expr_t *expr)
   if (expr->is_const) {
     e->is_const = TRUE;
     switch (type) {
+    case EXPR_LOGNOT:
+      e->cval = !expr->cval;
+      break;
+    case EXPR_POS:
+      e->cval = +expr->cval;
+      break;
     case EXPR_NEG:
       e->cval = -expr->cval;
       break;
@@ -1263,6 +1289,33 @@ static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
       break;
     case EXPR_SHR:
       e->cval = expr1->cval >> expr2->cval;
+      break;
+    case EXPR_LOGOR:
+      e->cval = expr1->cval || expr2->cval;
+      break;
+    case EXPR_LOGAND:
+      e->cval = expr1->cval && expr2->cval;
+      break;
+    case EXPR_XOR:
+      e->cval = expr1->cval ^ expr2->cval;
+      break;
+    case EXPR_EQUALITY:
+      e->cval = expr1->cval == expr2->cval;
+      break;
+    case EXPR_INEQUALITY:
+      e->cval = expr1->cval != expr2->cval;
+      break;
+    case EXPR_GTR:
+      e->cval = expr1->cval > expr2->cval;
+      break;
+    case EXPR_LESS:
+      e->cval = expr1->cval < expr2->cval;
+      break;
+    case EXPR_GTREQL:
+      e->cval = expr1->cval >= expr2->cval;
+      break;
+    case EXPR_LESSEQL:
+      e->cval = expr1->cval <= expr2->cval;
       break;
     default:
       e->is_const = FALSE;

@@ -495,12 +495,24 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
   case EXPR_IDENTIFIER:
     fprintf(h, "%s", e->u.sval);
     break;
-  case EXPR_NEG:
-    fprintf(h, "-");
+  case EXPR_LOGNOT:
+    fprintf(h, "!");
     write_expr(h, e->ref, 1);
     break;
   case EXPR_NOT:
     fprintf(h, "~");
+    write_expr(h, e->ref, 1);
+    break;
+  case EXPR_POS:
+    fprintf(h, "+");
+    write_expr(h, e->ref, 1);
+    break;
+  case EXPR_NEG:
+    fprintf(h, "-");
+    write_expr(h, e->ref, 1);
+    break;
+  case EXPR_ADDRESSOF:
+    fprintf(h, "&");
     write_expr(h, e->ref, 1);
     break;
   case EXPR_PPTR:
@@ -529,20 +541,38 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
   case EXPR_OR:
   case EXPR_MEMBERPTR:
   case EXPR_MEMBER:
-    if (brackets) fprintf(h, "(");
+  case EXPR_LOGOR:
+  case EXPR_LOGAND:
+  case EXPR_XOR:
+  case EXPR_EQUALITY:
+  case EXPR_INEQUALITY:
+  case EXPR_GTR:
+  case EXPR_LESS:
+  case EXPR_GTREQL:
+  case EXPR_LESSEQL:
+      if (brackets) fprintf(h, "(");
     write_expr(h, e->ref, 1);
     switch (e->type) {
-    case EXPR_SHL: fprintf(h, " << "); break;
-    case EXPR_SHR: fprintf(h, " >> "); break;
-    case EXPR_MOD: fprintf(h, " %% "); break;
-    case EXPR_MUL: fprintf(h, " * "); break;
-    case EXPR_DIV: fprintf(h, " / "); break;
-    case EXPR_ADD: fprintf(h, " + "); break;
-    case EXPR_SUB: fprintf(h, " - "); break;
-    case EXPR_AND: fprintf(h, " & "); break;
-    case EXPR_OR:  fprintf(h, " | "); break;
-    case EXPR_MEMBERPTR: fprintf(h, "->"); break;
-    case EXPR_MEMBER:    fprintf(h, "."); break;
+    case EXPR_SHL:          fprintf(h, " << "); break;
+    case EXPR_SHR:          fprintf(h, " >> "); break;
+    case EXPR_MOD:          fprintf(h, " %% "); break;
+    case EXPR_MUL:          fprintf(h, " * "); break;
+    case EXPR_DIV:          fprintf(h, " / "); break;
+    case EXPR_ADD:          fprintf(h, " + "); break;
+    case EXPR_SUB:          fprintf(h, " - "); break;
+    case EXPR_AND:          fprintf(h, " & "); break;
+    case EXPR_OR:           fprintf(h, " | "); break;
+    case EXPR_MEMBERPTR:    fprintf(h, "->"); break;
+    case EXPR_MEMBER:       fprintf(h, "."); break;
+    case EXPR_LOGOR:        fprintf(h, " || "); break;
+    case EXPR_LOGAND:       fprintf(h, " && "); break;
+    case EXPR_XOR:          fprintf(h, " ^ "); break;
+    case EXPR_EQUALITY:     fprintf(h, " == "); break;
+    case EXPR_INEQUALITY:   fprintf(h, " != "); break;
+    case EXPR_GTR:          fprintf(h, " > "); break;
+    case EXPR_LESS:         fprintf(h, " < "); break;
+    case EXPR_GTREQL:       fprintf(h, " >= "); break;
+    case EXPR_LESSEQL:      fprintf(h, " <= "); break;
     default: break;
     }
     write_expr(h, e->u.ext, 1);
@@ -556,10 +586,6 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     fprintf(h, " : ");
     write_expr(h, e->ext2, 1);
     if (brackets) fprintf(h, ")");
-    break;
-  case EXPR_ADDRESSOF:
-    fprintf(h, "&");
-    write_expr(h, e->ref, 1);
     break;
   case EXPR_ARRAY:
     if (brackets) fprintf(h, "(");
