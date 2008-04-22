@@ -547,7 +547,7 @@ cases:						{ $$ = NULL; }
 	| cases case				{ $$ = append_var( $1, $2 ); }
 	;
 
-case:	  tCASE expr ':' field			{ attr_t *a = make_attrp(ATTR_CASE, append_expr( NULL, $2 ));
+case:	  tCASE expr_const ':' field		{ attr_t *a = make_attrp(ATTR_CASE, append_expr( NULL, $2 ));
 						  $$ = $4; if (!$$) $$ = make_var(NULL);
 						  $$->attrs = append_attr( $$->attrs, a );
 						}
