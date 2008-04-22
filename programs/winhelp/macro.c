@@ -418,7 +418,7 @@ void CALLBACK MACRO_DisableButton(LPCSTR id)
 {
     WINHELP_BUTTON**    b;
 
-    WINE_FIXME("(\"%s\")\n", id);
+    WINE_TRACE("(\"%s\")\n", id);
 
     b = MACRO_LookupButton(Globals.active_win, id);
     if (!*b) {WINE_FIXME("Couldn't find button '%s'\n", id); return;}
