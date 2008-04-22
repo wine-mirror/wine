@@ -485,11 +485,11 @@ void            WINHELP_LayoutMainWindow(WINHELP_WINDOW* win)
 
 }
 
-static void     WINHELP_RememberPage(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
+static void     WINHELP_RememberPage(WINHELP_WINDOW* win, WINHELP_WNDPAGE* wpage)
 {
     unsigned        num;
 
-    if (!Globals.history.index || Globals.history.set[0].page != page)
+    if (!Globals.history.index || Globals.history.set[0].page != wpage->page)
     {
         num = sizeof(Globals.history.set) / sizeof(Globals.history.set[0]);
         /* we're full, remove latest entry */
@@ -500,10 +500,9 @@ static void     WINHELP_RememberPage(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
         }
         memmove(&Globals.history.set[1], &Globals.history.set[0],
                 Globals.history.index * sizeof(Globals.history.set[0]));
-        Globals.history.set[0].page = page;
-        Globals.history.set[0].wininfo = win->info;
+        Globals.history.set[0] = *wpage;
         Globals.history.index++;
-        page->file->wRefCount++;
+        wpage->page->file->wRefCount++;
     }
     if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
 
@@ -516,9 +515,8 @@ static void     WINHELP_RememberPage(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
                 (num - 1) * sizeof(win->back.set[0]));
         win->back.index--;
     }
-    win->back.set[win->back.index].page = page;
-    win->back.set[win->back.index++].wininfo = win->info;
-    page->file->wRefCount++;
+    win->back.set[win->back.index++] = *wpage;
+    wpage->page->file->wRefCount++;
 }
 
 /***********************************************************************
@@ -592,7 +590,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
 
     if (!bPopup && wpage->page && remember)
     {
-        WINHELP_RememberPage(win, wpage->page);
+        WINHELP_RememberPage(win, wpage);
     }
 
     if (!bPopup)
