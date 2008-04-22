@@ -481,14 +481,11 @@ void            WINHELP_LayoutMainWindow(WINHELP_WINDOW* win)
 
 static void     WINHELP_AddHistory(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
 {
-    unsigned        i, num;
+    unsigned        num;
 
     /* FIXME: when using back, we shouldn't update the history... */
-    for (i = 0; i < Globals.history.index; i++)
-        if (Globals.history.set[i].page == page) break;
-
-    /* if the new page is already in the history, do nothing */
-    if (i == Globals.history.index)
+    /* add to history only if different from top of history */
+    if (!Globals.history.index || Globals.history.set[0].page != page)
     {
         num = sizeof(Globals.history.set) / sizeof(Globals.history.set[0]);
         /* we're full, remove latest entry */
@@ -503,8 +500,8 @@ static void     WINHELP_AddHistory(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
         Globals.history.set[0].wininfo = win->info;
         Globals.history.index++;
         page->file->wRefCount++;
-        if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
     }
+    if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
 
     num = sizeof(win->back.set) / sizeof(win->back.set[0]);
     if (win->back.index == num)
@@ -1298,9 +1295,31 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
 
         for (i = 0; i < Globals.history.index; i++)
         {
-            TextOut(hDc, 0, i * tm.tmHeight,
-                    Globals.history.set[i].page->lpszTitle,
-                    strlen(Globals.history.set[i].page->lpszTitle));
+            if (Globals.history.set[i].page->file == Globals.active_win->page->file)
+            {
+                TextOut(hDc, 0, i * tm.tmHeight,
+                        Globals.history.set[i].page->lpszTitle,
+                        strlen(Globals.history.set[i].page->lpszTitle));
+            }
+            else
+            {
+                char        buffer[1024];
+                const char* ptr1;
+                const char* ptr2;
+                unsigned    len;
+
+                ptr1 = strrchr(Globals.history.set[i].page->file->lpszPath, '\\');
+                if (!ptr1) ptr1 = Globals.history.set[i].page->file->lpszPath;
+                else ptr1++;
+                ptr2 = strrchr(ptr1, '.');
+                len = ptr2 ? ptr2 - ptr1 : strlen(ptr1);
+                if (len > sizeof(buffer)) len = sizeof(buffer);
+                memcpy(buffer, ptr1, len);
+                if (len < sizeof(buffer)) buffer[len++] = ':';
+                strncpy(&buffer[len], Globals.history.set[i].page->lpszTitle, sizeof(buffer) - len);
+                buffer[sizeof(buffer) - 1] = '\0';
+                TextOut(hDc, 0, i * tm.tmHeight, buffer, strlen(buffer));
+            }
         }
         EndPaint(hWnd, &ps);
         break;
