@@ -1573,6 +1573,26 @@ BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 }
 
 /***********************************************************************
+*              ImmRequestMessageA(IMM32.@)
+*/
+LRESULT WINAPI ImmRequestMessageA(HIMC hIMC, WPARAM wParam, LPARAM lParam)
+{
+    FIXME("(%p %ld %ld): stub\n", hIMC, wParam, wParam);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/***********************************************************************
+*              ImmRequestMessageW(IMM32.@)
+*/
+LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
+{
+    FIXME("(%p %ld %ld): stub\n", hIMC, wParam, wParam);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/***********************************************************************
  *		ImmSetCandidateWindow (IMM32.@)
  */
 BOOL WINAPI ImmSetCandidateWindow(

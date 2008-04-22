@@ -79,8 +79,8 @@
 @ stdcall ImmRegisterWordA(long str long str)
 @ stdcall ImmRegisterWordW(long wstr long wstr)
 @ stdcall ImmReleaseContext(long long)
-@ stub ImmRequestMessageA
-@ stub ImmRequestMessageW
+@ stdcall ImmRequestMessageA(ptr long long)
+@ stdcall ImmRequestMessageW(ptr long long)
 @ stub ImmSendIMEMessageExA
 @ stub ImmSendIMEMessageExW
 @ stub ImmSendMessageToActiveDefImeWndW
