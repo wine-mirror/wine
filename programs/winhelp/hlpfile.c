@@ -1193,9 +1193,9 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
                         break;
                     }
                     HLPFILE_FreeLink(attributes.link);
-                    attributes.link = HLPFILE_AllocLink((*format & 4) ? hlp_link_link : hlp_link_popup,
+                    attributes.link = HLPFILE_AllocLink((*format & 1) ? hlp_link_link : hlp_link_popup,
                                                         ptr, GET_UINT(format, 4),
-                                                        !(*format & 1), wnd);
+                                                        !(*format & 4), wnd);
                 }
                 format += 3 + GET_USHORT(format, 1);
                 break;
