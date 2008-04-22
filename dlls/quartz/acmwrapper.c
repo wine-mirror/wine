@@ -120,11 +120,15 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
         if (IMediaSample_IsDiscontinuity(pSample) == S_OK)
         {
             res = acmStreamConvert(This->has, &ash, ACM_STREAMCONVERTF_START);
+            IMediaSample_SetDiscontinuity(pOutSample, TRUE);
             /* One sample could be converted to multiple packets */
             IMediaSample_SetDiscontinuity(pSample, FALSE);
         }
         else
+        {
             res = acmStreamConvert(This->has, &ash, 0);
+            IMediaSample_SetDiscontinuity(pOutSample, FALSE);
+        }
 
         if (res)
         {
