@@ -20,22 +20,26 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "이 명령어의 문법:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_USAGE, "이 명령어의 문법:\n\nNET [ HELP | START | STOP | USE ]\n"
     STRING_START_USAGE, "지정된 서비스  시작.\n"
     STRING_STOP_USAGE, "지정된 서비스  정지.\n"
-    STRING_STOP_DEP, "위존된 서비스 정지중: %s\n"
+    STRING_STOP_DEP, "종속된 서비스 정지중: %s\n"
     STRING_CANT_STOP, "%s 서비스를 정지할 수 없습니다\n"
     STRING_NO_SCM, "서비스 제어 관리자를 다룰 수 없습니다.\n"
-    STRING_NO_SVCHANDLE, "서비스를 다룰 수 없습니다.\n"
+    STRING_NO_SVCHANDLE, "서비스 핸들을 얻을 수 없습니다.\n"
     STRING_START_SVC, "%s 서비스는 시작중.\n"
     STRING_START_SVC_SUCCESS, " %s 서비스 시작 성공.\n"
     STRING_START_SVC_FAIL, "%s 서비스 시작 실패.\n"
     STRING_STOP_SVC, "%s  서비스 정지.\n"
     STRING_STOP_SVC_SUCCESS, "%s 서비스 정지 성공.\n"
     STRING_STOP_SVC_FAIL, "%s 서비스 정지 실패.\n"
-    STRING_HELP_USAGE, "명령어 문법:\n\nNET HELP 명령어 \n    -or-\nNET 명령어  /HELP\n\n  가능한 명령어:\n   NET HELP    NET START     NET STOP\n"
+    STRING_HELP_USAGE, "명령어 문법:\n\nNET HELP 명령어 \n    -or-\nNET 명령어  /HELP\n\n"\
+                       "    가능한 명령어:\n   NET HELP    NET START     NET STOP\n"
+    STRING_NO_ENTRIES, "리스트가 비어 있습니다.\n"
+    STRING_USE_HEADER, "\n상태  로컬   원격\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY,  "%s      %S      %S      열린 리소스: %lu\n"
 }
