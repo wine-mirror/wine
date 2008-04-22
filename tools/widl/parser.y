@@ -2427,15 +2427,23 @@ static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_
   return attrs;
 }
 
-static void check_remoting_fields(type_t *type);
+static void check_remoting_fields(const var_t *var, type_t *type);
 
 /* checks that properties common to fields and arguments are consistent */
-static void check_field_common(const char *container_type,
+static void check_field_common(const type_t *container_type,
                                const char *container_name, const var_t *arg)
 {
     type_t *type = arg->type;
     int is_wire_marshal = 0;
     int is_context_handle = 0;
+    const char *container_type_name = NULL;
+
+    if (is_struct(container_type->type))
+        container_type_name = "struct";
+    else if (is_union(container_type->type))
+        container_type_name = "union";
+    else if (container_type->type == RPC_FC_FUNCTION)
+        container_type_name = "function";
 
     if (is_attr(arg->attrs, ATTR_LENGTHIS) &&
         (is_attr(arg->attrs, ATTR_STRING) || is_aliaschain_attr(arg->type, ATTR_STRING)))
@@ -2465,16 +2473,15 @@ static void check_field_common(const char *container_type,
     }
 
     if (type->type == 0 && !is_attr(arg->attrs, ATTR_IIDIS) && !is_wire_marshal && !is_context_handle)
-        error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot derive from void *\n", arg->name, container_type, container_name);
+        error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot derive from void *\n", arg->name, container_type_name, container_name);
     else if (type->type == RPC_FC_FUNCTION)
-        error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot be a function pointer\n", arg->name, container_type, container_name);
+        error_loc_info(&arg->loc_info, "parameter \'%s\' of %s \'%s\' cannot be a function pointer\n", arg->name, container_type_name, container_name);
     else if (!is_wire_marshal && (is_struct(type->type) || is_union(type->type)))
-        check_remoting_fields(type);
+        check_remoting_fields(arg, type);
 }
 
-static void check_remoting_fields(type_t *type)
+static void check_remoting_fields(const var_t *var, type_t *type)
 {
-    const char *container_type = NULL;
     const var_t *field;
     const var_list_t *fields = NULL;
 
@@ -2484,10 +2491,7 @@ static void check_remoting_fields(type_t *type)
     type->checked = TRUE;
 
     if (is_struct(type->type))
-    {
         fields = type->fields_or_args;
-        container_type = "structure";
-    }
     else if (is_union(type->type))
     {
         if (type->type == RPC_FC_ENCAPSULATED_UNION)
@@ -2497,11 +2501,10 @@ static void check_remoting_fields(type_t *type)
         }
         else
             fields = type->fields_or_args;
-        container_type = "union";
     }
 
     if (fields) LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
-        if (field->type) check_field_common(container_type, type->name, field);
+        if (field->type) check_field_common(type, type->name, field);
 }
 
 /* checks that arguments for a function make sense for marshalling and unmarshalling */
@@ -2545,7 +2548,7 @@ static void check_remoting_args(const func_t *func)
             }
         }
 
-        check_field_common("function", funcname, arg);
+        check_field_common(func->def->type, funcname, arg);
     }
 }
 
