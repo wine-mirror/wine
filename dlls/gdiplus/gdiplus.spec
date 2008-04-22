@@ -50,7 +50,7 @@
 @ stub GdipCloneBitmapAreaI
 @ stdcall GdipCloneBrush(ptr ptr)
 @ stdcall GdipCloneCustomLineCap(ptr ptr)
-@ stub GdipCloneFont
+@ stdcall GdipCloneFont(ptr ptr)
 @ stub GdipCloneFontFamily
 @ stub GdipCloneImage
 @ stub GdipCloneImageAttributes

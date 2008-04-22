@@ -99,3 +99,16 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipCloneFont(GpFont *font, GpFont **cloneFont)
+{
+    if(!font || !cloneFont)
+        return InvalidParameter;
+
+    *cloneFont = GdipAlloc(sizeof(GpFont));
+    if(!*cloneFont)    return OutOfMemory;
+
+    **cloneFont = *font;
+
+    return Ok;
+}
