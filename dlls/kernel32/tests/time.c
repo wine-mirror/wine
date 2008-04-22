@@ -104,9 +104,12 @@ static void test_conversions(void)
 
     memset(&ft,0,sizeof ft);
 
+    SetLastError(0xdeadbeef);
     SETUP_EARLY(st)
     ok (!SystemTimeToFileTime(&st, &ft), "Conversion succeeded EARLY\n");
-    ok (GetLastError() == ERROR_INVALID_PARAMETER, "EARLY should be INVALID\n");
+    ok (GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == 0xdeadbeef, /* win9x */
+        "EARLY should be INVALID\n");
 
     SETUP_ZEROTIME(st)
     ok (SystemTimeToFileTime(&st, &ft), "Conversion failed ZERO_TIME\n");
