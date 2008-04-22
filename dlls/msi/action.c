@@ -2426,7 +2426,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     {
         static const WCHAR szEmpty[] = {0};
         value_data = (LPSTR)strdupW(szEmpty);
-        size = 0;
+        size = sizeof(szEmpty);
         type = REG_SZ;
     }
 
@@ -3772,8 +3772,10 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             size = strlenW(feature->Feature_Parent)*sizeof(WCHAR);
         if (!absent)
         {
+            static const WCHAR emptyW[] = {0};
+            size += sizeof(WCHAR);
             RegSetValueExW(hukey,feature->Feature,0,REG_SZ,
-                       (LPBYTE)feature->Feature_Parent,size);
+                           (LPBYTE)(feature->Feature_Parent ? feature->Feature_Parent : emptyW),size);
         }
         else
         {

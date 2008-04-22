@@ -822,7 +822,7 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     }
     else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
     {
-        DWORD size = lstrlenW(szValue)*sizeof(WCHAR);
+        DWORD size = (lstrlenW(szValue) + 1) * sizeof(WCHAR);
         rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEW, 0,
                 REG_SZ, (const BYTE *)szValue, size);
         if (rc != ERROR_SUCCESS)

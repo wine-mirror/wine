@@ -381,7 +381,7 @@ DWORD msi_version_str_to_dword(LPCWSTR p)
 
 LPWSTR msi_version_dword_to_str(DWORD version)
 {
-    const WCHAR fmt[] = { '%','u','.','%','u','.','%','u',0 };
+    static const WCHAR fmt[] = { '%','u','.','%','u','.','%','u',0 };
     LPWSTR str = msi_alloc(20);
     sprintfW(str, fmt,
              (version&0xff000000)>>24,
@@ -392,7 +392,10 @@ LPWSTR msi_version_dword_to_str(DWORD version)
 
 LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value )
 {
-    DWORD len = value ? (lstrlenW(value) + 1) * sizeof (WCHAR) : 0;
+    static const WCHAR emptyW[] = {0};
+    DWORD len;
+    if (!value) value = emptyW;
+    len = (lstrlenW(value) + 1) * sizeof (WCHAR);
     return RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)value, len );
 }
 
