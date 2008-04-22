@@ -110,7 +110,7 @@ static struct MacroDesc MACRO_Builtins[] = {
     {"JumpContext",         "JC", 0, "SSU",    (FARPROC)MACRO_JumpContext},
     {"JumpHash",            "JH", 0, "SSU",    (FARPROC)MACRO_JumpHash},
     {"JumpHelpOn",          NULL, 0, "",       (FARPROC)MACRO_JumpHelpOn},
-    {"JumpID",              "JI", 0, "SSS",    (FARPROC)MACRO_JumpID},
+    {"JumpID",              "JI", 0, "SS",     (FARPROC)MACRO_JumpID},
     {"JumpKeyword",         "JK", 0, "SSS",    (FARPROC)MACRO_JumpKeyword},
     {"KLink",               "KL", 0, "SUSS",   (FARPROC)MACRO_KLink},
     {"Menu",                "MU", 0, "",       (FARPROC)MACRO_Menu},
@@ -654,15 +654,32 @@ void CALLBACK MACRO_JumpHelpOn(void)
     WINE_FIXME("()\n");
 }
 
-/* FIXME: those two macros are wrong
- * they should only contain 2 strings, path & window are coded as path>window
- */
-void CALLBACK MACRO_JumpID(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR topic_id)
+void CALLBACK MACRO_JumpID(LPCSTR lpszPathWindow, LPCSTR topic_id)
 {
-    WINE_TRACE("(\"%s\", \"%s\", \"%s\")\n", lpszPath, lpszWindow, topic_id);
-    MACRO_JumpHash(lpszPath, lpszWindow, HLPFILE_Hash(topic_id));
+    LPSTR       ptr;
+
+    WINE_TRACE("(\"%s\", \"%s\")\n", lpszPathWindow, topic_id);
+    if ((ptr = strchr(lpszPathWindow, '>')) != NULL)
+    {
+        LPSTR   tmp;
+        size_t  sz = ptr - lpszPathWindow;
+
+        tmp = HeapAlloc(GetProcessHeap(), 0, sz + 1);
+        if (tmp)
+        {
+            memcpy(tmp, lpszPathWindow, sz);
+            tmp[sz] = '\0';
+            MACRO_JumpHash(tmp, ptr + 1, HLPFILE_Hash(topic_id));
+            HeapFree(GetProcessHeap(), 0, tmp);
+        }
+    }
+    else
+        MACRO_JumpHash(lpszPathWindow, NULL, HLPFILE_Hash(topic_id));
 }
 
+/* FIXME: this macros is wrong
+ * it should only contain 2 strings, path & window are coded as path>window
+ */
 void CALLBACK MACRO_JumpKeyword(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR keyword)
 {
     WINE_FIXME("(\"%s\", \"%s\", \"%s\")\n", lpszPath, lpszWindow, keyword);
