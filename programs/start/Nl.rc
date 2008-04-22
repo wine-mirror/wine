@@ -2,6 +2,7 @@
  * Start (Dutch resources)
  *
  * Copyright 2003 Hans Leidekker
+ * Copyright 2008 Frans Kool
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +33,7 @@ Options: \n\
 /MAX[imized] Start het programma gemaximaliseerd. \n\
 /R[estored]  Start het programma normaal (noch geminimaliseerd noch gemaximaliseerd). \n\
 /W[ait]      Wacht totdat het gestarte programma is beëindigd, eindig dan met de exit code van dat programma. \n\
+/Unix        Gebruik een Unix bestandsnaam en start het bestand als de windows verkenner. \n\
 /L           Laat de gebruikerslicentie zien. \n\
  \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
@@ -59,4 +61,6 @@ See the COPYING.LIB file for license information. \n\
 "
 
 STRING_EXECFAIL "Programma kan niet worden gestart, of er is geen programma verbonden met het opgegeven bestand.\nShellExecuteEx is mislukt"
+
+STRING_UNIXFAIL "Kon de opgegeven Unix bestandsnaam niet omzetten naar een DOS bestandsnaam."
 }
