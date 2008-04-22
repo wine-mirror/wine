@@ -56,7 +56,7 @@ static void    WINHELP_DeleteButtons(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
-WINHELP_GLOBALS Globals = {3, NULL, NULL, TRUE, NULL, NULL, NULL, NULL};
+WINHELP_GLOBALS Globals = {3, NULL, NULL, TRUE, NULL, NULL, NULL, NULL, {{{NULL,NULL}},0}};
 
 #define CTL_ID_BUTTON   0x700
 #define CTL_ID_TEXT     0x701
@@ -484,35 +484,38 @@ static void     WINHELP_AddHistory(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
     unsigned        i, num;
 
     /* FIXME: when using back, we shouldn't update the history... */
-    for (i = 0; i < win->histIndex; i++)
-        if (win->history[i] == page) break;
+    for (i = 0; i < Globals.history.index; i++)
+        if (Globals.history.set[i].page == page) break;
 
     /* if the new page is already in the history, do nothing */
-    if (i == win->histIndex)
+    if (i == Globals.history.index)
     {
-        num = sizeof(win->history) / sizeof(win->history[0]);
-        if (win->histIndex == num)
+        num = sizeof(Globals.history.set) / sizeof(Globals.history.set[0]);
+        if (Globals.history.index == num)
         {
             /* we're full, remove latest entry */
-            HLPFILE_FreeHlpFile(win->history[0]->file);
-            memmove(&win->history[0], &win->history[1],
-                    (num - 1) * sizeof(win->history[0]));
-            win->histIndex--;
+            HLPFILE_FreeHlpFile(Globals.history.set[0].page->file);
+            memmove(&Globals.history.set[0], &Globals.history.set[1],
+                    (num - 1) * sizeof(Globals.history.set[0]));
+            Globals.history.index--;
         }
-        win->history[win->histIndex++] = page;
+        Globals.history.set[Globals.history.index].page = page;
+        Globals.history.set[Globals.history.index++].wininfo = win->info;
         page->file->wRefCount++;
         if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
     }
 
-    num = sizeof(win->back) / sizeof(win->back[0]);
-    if (win->backIndex == num)
+    num = sizeof(win->back.set) / sizeof(win->back.set[0]);
+    if (win->back.index == num)
     {
         /* we're full, remove latest entry */
-        HLPFILE_FreeHlpFile(win->back[0]->file);
-        memmove(&win->back[0], &win->back[1], (num - 1) * sizeof(win->back[0]));
-        win->backIndex--;
+        HLPFILE_FreeHlpFile(win->back.set[0].page->file);
+        memmove(&win->back.set[0], &win->back.set[1],
+                (num - 1) * sizeof(win->back.set[0]));
+        win->back.index--;
     }
-    win->back[win->backIndex++] = page;
+    win->back.set[win->back.index].page = page;
+    win->back.set[win->back.index++].wininfo = win->info;
     page->file->wRefCount++;
 }
 
@@ -520,39 +523,38 @@ static void     WINHELP_AddHistory(WINHELP_WINDOW* win, HLPFILE_PAGE* page)
  *
  *           WINHELP_CreateHelpWindow
  */
-BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
-                              int nCmdShow)
+BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow)
 {
     WINHELP_WINDOW*     win = NULL;
     BOOL                bPrimary, bPopup, bReUsed = FALSE;
     LPSTR               name;
 
-    bPrimary = !lstrcmpi(wi->name, "main");
-    bPopup = !bPrimary && (wi->win_style & WS_POPUP);
+    bPrimary = !lstrcmpi(wpage->wininfo->name, "main");
+    bPopup = !bPrimary && (wpage->wininfo->win_style & WS_POPUP);
 
-    if (page && !page->first_paragraph) HLPFILE_BrowsePage(page);
+    if (wpage->page && !wpage->page->first_paragraph) HLPFILE_BrowsePage(wpage->page);
 
     if (!bPopup)
     {
         for (win = Globals.win_list; win; win = win->next)
         {
-            if (!lstrcmpi(win->lpszName, wi->name))
+            if (!lstrcmpi(win->lpszName, wpage->wininfo->name))
             {
                 WINHELP_DeleteButtons(win);
                 bReUsed = TRUE;
-                SetWindowText(win->hMainWnd, wi->caption);
-                if (wi->origin.x != CW_USEDEFAULT &&
-                    wi->origin.y != CW_USEDEFAULT)
+                SetWindowText(win->hMainWnd, wpage->wininfo->caption);
+                if (wpage->wininfo->origin.x != CW_USEDEFAULT &&
+                    wpage->wininfo->origin.y != CW_USEDEFAULT)
                     SetWindowPos(win->hMainWnd, HWND_TOP,
-                                 wi->origin.x, wi->origin.y, 0, 0, SWP_NOSIZE);
-                if (wi->size.cx != CW_USEDEFAULT &&
-                    wi->size.cy != CW_USEDEFAULT)
+                                 wpage->wininfo->origin.x, wpage->wininfo->origin.y, 0, 0, SWP_NOSIZE);
+                if (wpage->wininfo->size.cx != CW_USEDEFAULT &&
+                    wpage->wininfo->size.cy != CW_USEDEFAULT)
                     SetWindowPos(win->hMainWnd, HWND_TOP,
-                                 0, 0, wi->size.cx, wi->size.cy, SWP_NOMOVE);
+                                 0, 0, wpage->wininfo->size.cx, wpage->wininfo->size.cy, SWP_NOMOVE);
                 WINHELP_InitFonts(win->hMainWnd);
 
-                win->page = page;
-                win->info = wi;
+                win->page = wpage->page;
+                win->info = wpage->wininfo;
                 WINHELP_SetupText(GetDlgItem(win->hMainWnd, CTL_ID_TEXT));
                 InvalidateRect(win->hMainWnd, NULL, TRUE);
                 if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
@@ -565,33 +567,33 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     {
         /* Initialize WINHELP_WINDOW struct */
         win = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        sizeof(WINHELP_WINDOW) + strlen(wi->name) + 1);
+                        sizeof(WINHELP_WINDOW) + strlen(wpage->wininfo->name) + 1);
         if (!win) return FALSE;
         win->next = Globals.win_list;
         Globals.win_list = win;
 
         name = (char*)win + sizeof(WINHELP_WINDOW);
-        lstrcpy(name, wi->name);
+        lstrcpy(name, wpage->wininfo->name);
         win->lpszName = name;
         win->hHandCur = LoadCursorW(0, (LPWSTR)IDC_HAND);
-        win->histIndex = win->backIndex = 0;
+        win->back.index = 0;
     }
-    win->page = page;
-    win->info = wi;
+    win->page = wpage->page;
+    win->info = wpage->wininfo;
 
     win->hArrowCur = LoadCursorA(0, (LPSTR)IDC_ARROW);
     win->hHandCur = LoadCursorA(0, (LPSTR)IDC_HAND);
 
-    if (!bPopup && page)
+    if (!bPopup && wpage->page)
     {
-        WINHELP_AddHistory(win, page);
+        WINHELP_AddHistory(win, wpage->page);
     }
 
     if (!bPopup)
         Globals.active_win = win;
 
     /* Initialize default pushbuttons */
-    if (bPrimary && page)
+    if (bPrimary && wpage->page)
     {
         CHAR    buffer[MAX_STRING_LEN];
 
@@ -608,22 +610,23 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     }
 
     /* Initialize file specific pushbuttons */
-    if (!(wi->win_style & WS_POPUP) && page)
+    if (!(wpage->wininfo->win_style & WS_POPUP) && wpage->page)
     {
         HLPFILE_MACRO  *macro;
-        for (macro = page->file->first_macro; macro; macro = macro->next)
+        for (macro = wpage->page->file->first_macro; macro; macro = macro->next)
             MACRO_ExecuteMacro(macro->lpszMacro);
 
-        for (macro = page->first_macro; macro; macro = macro->next)
+        for (macro = wpage->page->first_macro; macro; macro = macro->next)
             MACRO_ExecuteMacro(macro->lpszMacro);
     }
 
     if (!bReUsed)
     {
         win->hMainWnd = CreateWindowEx((bPopup) ? WS_EX_TOOLWINDOW : 0, MAIN_WIN_CLASS_NAME,
-                                       wi->caption,
-                                       bPrimary ? WS_OVERLAPPEDWINDOW : wi->win_style,
-                                       wi->origin.x, wi->origin.y, wi->size.cx, wi->size.cy,
+                                       wpage->wininfo->caption,
+                                       bPrimary ? WS_OVERLAPPEDWINDOW : wpage->wininfo->win_style,
+                                       wpage->wininfo->origin.x, wpage->wininfo->origin.y,
+                                       wpage->wininfo->size.cx, wpage->wininfo->size.cy,
                                        bPopup ? Globals.active_win->hMainWnd : NULL,
                                        bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
                                        Globals.hInstance, win);
@@ -652,13 +655,15 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
 BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash, 
                                     HLPFILE_WINDOWINFO* wi, int nCmdShow)
 {
-    HLPFILE_PAGE*       page = NULL;
+    WINHELP_WNDPAGE     wpage;
 
+    wpage.page = NULL;
     if (hlpfile)
-        page = lHash ? HLPFILE_PageByHash(hlpfile, lHash) : 
+        wpage.page = lHash ? HLPFILE_PageByHash(hlpfile, lHash) :
             HLPFILE_Contents(hlpfile);
-    if (page) page->file->wRefCount++;
-    return WINHELP_CreateHelpWindow(page, wi, nCmdShow);
+    if (wpage.page) wpage.page->file->wRefCount++;
+    wpage.wininfo = wi;
+    return WINHELP_CreateHelpWindow(&wpage, nCmdShow);
 }
 
 /***********************************************************************
@@ -668,11 +673,12 @@ BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash,
 BOOL WINHELP_CreateHelpWindowByMap(HLPFILE* hlpfile, LONG lMap,
                                    HLPFILE_WINDOWINFO* wi, int nCmdShow)
 {
-    HLPFILE_PAGE*       page = NULL;
+    WINHELP_WNDPAGE     wpage;
 
-    page = HLPFILE_PageByMap(hlpfile, lMap);
-    if (page) page->file->wRefCount++;
-    return WINHELP_CreateHelpWindow(page, wi, nCmdShow);
+    wpage.page = HLPFILE_PageByMap(hlpfile, lMap);
+    if (wpage.page) wpage.page->file->wRefCount++;
+    wpage.wininfo = wi;
+    return WINHELP_CreateHelpWindow(&wpage, nCmdShow);
 }
 
 /***********************************************************************
@@ -682,11 +688,12 @@ BOOL WINHELP_CreateHelpWindowByMap(HLPFILE* hlpfile, LONG lMap,
 BOOL WINHELP_CreateHelpWindowByOffset(HLPFILE* hlpfile, LONG lOffset,
                                       HLPFILE_WINDOWINFO* wi, int nCmdShow)
 {
-    HLPFILE_PAGE*       page = NULL;
+    WINHELP_WNDPAGE     wpage;
 
-    page = HLPFILE_PageByOffset(hlpfile, lOffset);
-    if (page) page->file->wRefCount++;
-    return WINHELP_CreateHelpWindow(page, wi, nCmdShow);
+    wpage.page = HLPFILE_PageByOffset(hlpfile, lOffset);
+    if (wpage.page) wpage.page->file->wRefCount++;
+    wpage.wininfo = wi;
+    return WINHELP_CreateHelpWindow(&wpage, nCmdShow);
 }
 
 /***********************************************************************
@@ -1266,7 +1273,7 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         GetWindowRect(hWnd, &r);
 
         r.right = r.left + 30 * tm.tmAveCharWidth;
-        r.bottom = r.top + (sizeof(win->history) / sizeof(win->history[0])) * tm.tmHeight;
+        r.bottom = r.top + (sizeof(Globals.history.set) / sizeof(Globals.history.set[0])) * tm.tmHeight;
         AdjustWindowRect(&r, GetWindowLong(hWnd, GWL_STYLE), FALSE);
         if (r.left < 0) {r.right -= r.left; r.left = 0;}
         if (r.top < 0) {r.bottom -= r.top; r.top = 0;}
@@ -1279,8 +1286,8 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         hDc = GetDC(hWnd);
         GetTextMetrics(hDc, &tm);
         i = HIWORD(lParam) / tm.tmHeight;
-        if (i < win->histIndex)
-            WINHELP_CreateHelpWindow(win->history[i], win->info, SW_SHOW);
+        if (i < Globals.history.index)
+            WINHELP_CreateHelpWindow(&Globals.history.set[i], SW_SHOW);
         ReleaseDC(hWnd, hDc);
         break;
     case WM_PAINT:
@@ -1288,10 +1295,10 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
         GetTextMetrics(hDc, &tm);
 
-        for (i = 0; i < win->histIndex; i++)
+        for (i = 0; i < Globals.history.index; i++)
         {
-            TextOut(hDc, 0, i * tm.tmHeight, win->history[i]->lpszTitle, 
-                    strlen(win->history[i]->lpszTitle));
+            TextOut(hDc, 0, i * tm.tmHeight, Globals.history.set[i].page->lpszTitle,
+                    strlen(Globals.history.set[i].page->lpszTitle));
         }
         EndPaint(hWnd, &ps);
         break;
@@ -1818,13 +1825,8 @@ static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
 
     DeleteObject(win->hBrush);
 
-    for (i = 0; i < win->histIndex; i++)
-    {
-        HLPFILE_FreeHlpFile(win->history[i]->file);
-    }
-
-    for (i = 0; i < win->backIndex; i++)
-        HLPFILE_FreeHlpFile(win->back[i]->file);
+    for (i = 0; i < win->back.index; i++)
+        HLPFILE_FreeHlpFile(win->back.set[i].page->file);
 
     if (win->page) HLPFILE_FreeHlpFile(win->page->file);
     WINHELP_DeleteLines(win);

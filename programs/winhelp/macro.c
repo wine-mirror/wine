@@ -220,9 +220,8 @@ void CALLBACK MACRO_Back(void)
 
     WINE_TRACE("()\n");
 
-    if (win && win->backIndex >= 2)
-        WINHELP_CreateHelpWindow(win->back[--win->backIndex - 1],
-                                 win->info, SW_SHOW);
+    if (win && win->back.index >= 2)
+        WINHELP_CreateHelpWindow(&win->back.set[--win->back.index - 1], SW_SHOW);
 }
 
 void CALLBACK MACRO_BackFlush(void)
@@ -235,12 +234,12 @@ void CALLBACK MACRO_BackFlush(void)
     {
         unsigned int i;
 
-        for (i = 0; i < win->backIndex; i++)
+        for (i = 0; i < win->back.index; i++)
         {
-            HLPFILE_FreeHlpFile(win->back[i]->file);
-            win->back[i] = NULL;
+            HLPFILE_FreeHlpFile(win->back.set[i].page->file);
+            win->back.set[i].page = NULL;
         }
-        win->backIndex = 0;
+        win->back.index = 0;
     }
 }
 
@@ -701,15 +700,16 @@ void CALLBACK MACRO_MPrintID(LPCSTR str)
 
 void CALLBACK MACRO_Next(void)
 {
-    HLPFILE_PAGE*   page;
+    WINHELP_WNDPAGE     wp;
 
     WINE_TRACE("()\n");
-    page = Globals.active_win->page;
-    page = HLPFILE_PageByOffset(page->file, page->browse_fwd);
-    if (page)
+    wp.page = Globals.active_win->page;
+    wp.page = HLPFILE_PageByOffset(wp.page->file, wp.page->browse_fwd);
+    if (wp.page)
     {
-        page->file->wRefCount++;
-        WINHELP_CreateHelpWindow(page, Globals.active_win->info, SW_NORMAL);
+        wp.page->file->wRefCount++;
+        wp.wininfo = Globals.active_win->info;
+        WINHELP_CreateHelpWindow(&wp, SW_NORMAL);
     }
 }
 
@@ -740,15 +740,16 @@ void CALLBACK MACRO_PositionWindow(LONG i1, LONG i2, LONG u1, LONG u2, LONG u3, 
 
 void CALLBACK MACRO_Prev(void)
 {
-    HLPFILE_PAGE*   page;
+    WINHELP_WNDPAGE     wp;
 
     WINE_TRACE("()\n");
-    page = Globals.active_win->page;
-    page = HLPFILE_PageByOffset(page->file, page->browse_bwd);
-    if (page)
+    wp.page = Globals.active_win->page;
+    wp.page = HLPFILE_PageByOffset(wp.page->file, wp.page->browse_bwd);
+    if (wp.page)
     {
-        page->file->wRefCount++;
-        WINHELP_CreateHelpWindow(page, Globals.active_win->info, SW_NORMAL);
+        wp.page->file->wRefCount++;
+        wp.wininfo = Globals.active_win->info;
+        WINHELP_CreateHelpWindow(&wp, SW_NORMAL);
     }
 }
 

@@ -91,6 +91,19 @@ typedef struct tagHelpButton
     struct tagHelpButton*next;
 } WINHELP_BUTTON;
 
+typedef struct
+{
+    HLPFILE_PAGE*       page;
+    HLPFILE_WINDOWINFO* wininfo;
+} WINHELP_WNDPAGE;
+
+typedef struct tagPageSet
+{
+    /* FIXME: for now it's a fixed size */
+    WINHELP_WNDPAGE     set[40];
+    unsigned            index;
+} WINHELP_PAGESET;
+
 typedef struct tagWinHelp
 {
     LPCSTR              lpszName;
@@ -113,11 +126,7 @@ typedef struct tagWinHelp
 
     HLPFILE_WINDOWINFO* info;
 
-    /* FIXME: for now it's a fixed size */
-    HLPFILE_PAGE*       history[40];
-    unsigned            histIndex;
-    HLPFILE_PAGE*       back[40];
-    unsigned            backIndex;
+    WINHELP_PAGESET     back;
 
     struct tagWinHelp*  next;
 } WINHELP_WINDOW;
@@ -162,6 +171,7 @@ typedef struct
     WINHELP_WINDOW*     win_list;
     WNDPROC             button_proc;
     WINHELP_DLL*        dlls;
+    WINHELP_PAGESET     history;
 } WINHELP_GLOBALS;
 
 extern WINHELP_GLOBALS Globals;
@@ -170,7 +180,7 @@ extern FARPROC         Callbacks[];
 BOOL WINHELP_CreateHelpWindowByHash(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
 BOOL WINHELP_CreateHelpWindowByMap(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
 BOOL WINHELP_CreateHelpWindowByOffset(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
-BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE*, HLPFILE_WINDOWINFO*, int);
+BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE*, int);
 BOOL WINHELP_GetOpenFileName(LPSTR, int);
 BOOL WINHELP_CreateIndexWindow(void);
 INT  WINHELP_MessageBoxIDS(UINT, UINT, WORD);
