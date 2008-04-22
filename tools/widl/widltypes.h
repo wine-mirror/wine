@@ -161,7 +161,6 @@ enum expr_type
     EXPR_COND,
     EXPR_TRUEFALSE,
     EXPR_ADDRESSOF,
-    EXPR_MEMBERPTR,
     EXPR_MEMBER,
     EXPR_ARRAY,
     EXPR_MOD,

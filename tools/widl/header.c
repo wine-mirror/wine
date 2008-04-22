@@ -539,8 +539,6 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
   case EXPR_SUB:
   case EXPR_AND:
   case EXPR_OR:
-  case EXPR_MEMBERPTR:
-  case EXPR_MEMBER:
   case EXPR_LOGOR:
   case EXPR_LOGAND:
   case EXPR_XOR:
@@ -562,8 +560,6 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     case EXPR_SUB:          fprintf(h, " - "); break;
     case EXPR_AND:          fprintf(h, " & "); break;
     case EXPR_OR:           fprintf(h, " | "); break;
-    case EXPR_MEMBERPTR:    fprintf(h, "->"); break;
-    case EXPR_MEMBER:       fprintf(h, "."); break;
     case EXPR_LOGOR:        fprintf(h, " || "); break;
     case EXPR_LOGAND:       fprintf(h, " && "); break;
     case EXPR_XOR:          fprintf(h, " ^ "); break;
@@ -574,6 +570,21 @@ void write_expr(FILE *h, const expr_t *e, int brackets)
     case EXPR_GTREQL:       fprintf(h, " >= "); break;
     case EXPR_LESSEQL:      fprintf(h, " <= "); break;
     default: break;
+    }
+    write_expr(h, e->u.ext, 1);
+    if (brackets) fprintf(h, ")");
+    break;
+  case EXPR_MEMBER:
+    if (brackets) fprintf(h, "(");
+    if (e->ref->type == EXPR_PPTR)
+    {
+      write_expr(h, e->ref->ref, 1);
+      fprintf(h, "->");
+    }
+    else
+    {
+      write_expr(h, e->ref, 1);
+      fprintf(h, ".");
     }
     write_expr(h, e->u.ext, 1);
     if (brackets) fprintf(h, ")");
