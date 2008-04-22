@@ -655,6 +655,8 @@ static size_t write_conf_or_var_desc(FILE *file, const type_t *structure,
             error("write_conf_or_var_desc: couldn't find variable %s in structure\n",
                   subexpr->u.sval);
 
+        correlation_variable = expr_resolve_type(NULL, structure, expr);
+
         offset -= baseoff;
         correlation_variable_type = correlation_variable->type;
 
@@ -682,15 +684,6 @@ static size_t write_conf_or_var_desc(FILE *file, const type_t *structure,
             break;
         case RPC_FC_ULONG:
             param_type = RPC_FC_ULONG;
-            break;
-        case RPC_FC_RP:
-        case RPC_FC_UP:
-        case RPC_FC_OP:
-        case RPC_FC_FP:
-            if (sizeof(void *) == 4)  /* FIXME */
-                param_type = RPC_FC_LONG;
-            else
-                param_type = RPC_FC_HYPER;
             break;
         default:
             error("write_conf_or_var_desc: conformance variable type not supported 0x%x\n",
