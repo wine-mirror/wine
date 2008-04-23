@@ -141,6 +141,7 @@ typedef struct tagHlpFileFile
 
     unsigned short              version;
     unsigned short              flags;
+    unsigned short              charset;
     unsigned short              tbsize;     /* topic block size */
     unsigned short              dsize;      /* decompress size */
     unsigned short              compressed;

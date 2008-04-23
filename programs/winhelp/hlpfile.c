@@ -647,6 +647,7 @@ static BOOL HLPFILE_RtfAddText(struct RtfData* rd, const char* str)
     const char* p;
     const char* last;
     const char* replace;
+    unsigned    rlen;
 
     if (!rd) return TRUE; /* FIXME: TEMP */
     if (!rd->in_text)
@@ -656,15 +657,21 @@ static BOOL HLPFILE_RtfAddText(struct RtfData* rd, const char* str)
     }
     for (last = p = str; *p; p++)
     {
-        switch (*p)
+        if (*p < 0) /* escape non ASCII chars */
         {
-        case '{':  replace = "\\{";  break;
-        case '}':  replace = "\\}";  break;
-        case '\\': replace = "\\\\"; break;
+            static char         xx[8];
+            rlen = sprintf(xx, "\\'%x", *(const BYTE*)p);
+            replace = xx;
+        }
+        else switch (*p)
+        {
+        case '{':  rlen = 2; replace = "\\{";  break;
+        case '}':  rlen = 2; replace = "\\}";  break;
+        case '\\': rlen = 2; replace = "\\\\"; break;
         default:   continue;
         }
         if ((p != last && !HLPFILE_RtfAddRawString(rd, last, p - last)) ||
-            !HLPFILE_RtfAddRawString(rd, replace, 2)) return FALSE;
+            !HLPFILE_RtfAddRawString(rd, replace, rlen)) return FALSE;
         last = p + 1;
     }
     return HLPFILE_RtfAddRawString(rd, last, p - last);
@@ -1299,8 +1306,9 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
     HLPFILE     *hlpfile = page->file;
     BYTE        *buf, *end;
     DWORD       ref = page->reference;
-    unsigned    index, old_index = -1, offset, count = 0;
+    unsigned    index, old_index = -1, offset, count = 0, cpg;
     char        tmp[1024];
+    const char* ck = NULL;
 
     if (rd) { /* FIXME: TEMP */
     rd->in_text = TRUE;
@@ -1309,7 +1317,40 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
     rd->force_color = FALSE;
     }
 
-    if (!HLPFILE_RtfAddControl(rd, "{\\rtf1\\ansi\\ansicpg1252\\deff0")) return FALSE;
+    switch (hlpfile->charset)
+    {
+    case DEFAULT_CHARSET:
+    case ANSI_CHARSET:          cpg = 1252; break;
+    case SHIFTJIS_CHARSET:      cpg = 932; break;
+    case HANGEUL_CHARSET:       cpg = 949; break;
+    case GB2312_CHARSET:        cpg = 936; break;
+    case CHINESEBIG5_CHARSET:   cpg = 950; break;
+    case GREEK_CHARSET:         cpg = 1253; break;
+    case TURKISH_CHARSET:       cpg = 1254; break;
+    case HEBREW_CHARSET:        cpg = 1255; break;
+    case ARABIC_CHARSET:        cpg = 1256; break;
+    case BALTIC_CHARSET:        cpg = 1257; break;
+    case VIETNAMESE_CHARSET:    cpg = 1258; break;
+    case RUSSIAN_CHARSET:       cpg = 1251; break;
+    case EE_CHARSET:            cpg = 1250; break;
+    case THAI_CHARSET:          cpg = 874; break;
+    case JOHAB_CHARSET:         cpg = 1361; break;
+    case MAC_CHARSET:           ck = "mac"; break;
+    default:
+        WINE_FIXME("Unsupported charset %u\n", hlpfile->charset);
+        cpg = 1252;
+    }
+    if (ck)
+    {
+        sprintf(tmp, "{\\rtf1\\%s\\deff0", ck);
+        if (!HLPFILE_RtfAddControl(rd, tmp)) return FALSE;
+    }
+    else
+    {
+        sprintf(tmp, "{\\rtf1\\ansi\\ansicpg%d\\deff0", cpg);
+        if (!HLPFILE_RtfAddControl(rd, tmp)) return FALSE;
+    }
+
     /* generate font table */
     if (!HLPFILE_RtfAddControl(rd, "{\\fonttbl")) return FALSE;
     for (index = 0; index < hlpfile->numFonts; index++)
@@ -1324,9 +1365,10 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
         case FF_DECORATIVE: family = "decor";   break;
         default:            family = "nil";     break;
         }
-        sprintf(tmp, "{\\f%d\\f%s\\fprq%d\\fcharset0 %s;}",
+        sprintf(tmp, "{\\f%d\\f%s\\fprq%d\\fcharset%d %s;}",
                 index, family,
                 hlpfile->fonts[index].LogFont.lfPitchAndFamily & 0x0F,
+                hlpfile->fonts[index].LogFont.lfCharSet,
                 hlpfile->fonts[index].LogFont.lfFaceName);
         if (!HLPFILE_RtfAddControl(rd, tmp)) return FALSE;
     }
@@ -1454,7 +1496,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
         hlpfile->fonts[i].LogFont.lfItalic = (flag & 2) ? TRUE : FALSE;
         hlpfile->fonts[i].LogFont.lfUnderline = (flag & 4) ? TRUE : FALSE;
         hlpfile->fonts[i].LogFont.lfStrikeOut = (flag & 8) ? TRUE : FALSE;
-        hlpfile->fonts[i].LogFont.lfCharSet = DEFAULT_CHARSET;
+        hlpfile->fonts[i].LogFont.lfCharSet = hlpfile->charset;
         hlpfile->fonts[i].LogFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
         hlpfile->fonts[i].LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
         hlpfile->fonts[i].LogFont.lfQuality = DEFAULT_QUALITY;
@@ -1629,6 +1671,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 
     hlpfile->version = minor;
     hlpfile->flags = flags;
+    hlpfile->charset = DEFAULT_CHARSET;
 
     for (ptr = buf + 0x15; ptr + 4 <= end; ptr += GET_USHORT(ptr, 2) + 4)
     {
@@ -1721,6 +1764,10 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             break;
         case 8:
             WINE_WARN("Citation: '%s'\n", ptr + 4);
+            break;
+        case 11:
+            hlpfile->charset = ptr[4];
+            WINE_TRACE("Charset: %d\n", hlpfile->charset);
             break;
 	default:
             WINE_WARN("Unsupported SystemRecord[%d]\n", GET_USHORT(ptr, 0));
