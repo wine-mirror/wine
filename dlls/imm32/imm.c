@@ -1095,11 +1095,18 @@ DWORD WINAPI ImmGetConversionListW(
 BOOL WINAPI ImmGetConversionStatus(
   HIMC hIMC, LPDWORD lpfdwConversion, LPDWORD lpfdwSentence)
 {
-    TRACE("(%p, %p, %p): best guess\n", hIMC, lpfdwConversion, lpfdwSentence);
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("%p %p %p\n", hIMC, lpfdwConversion, lpfdwSentence);
+
+    if (!data)
+        return FALSE;
+
     if (lpfdwConversion)
-        *lpfdwConversion = IME_CMODE_NATIVE;
+        *lpfdwConversion = data->IMC.fdwConversion;
     if (lpfdwSentence)
-        *lpfdwSentence = IME_SMODE_NONE;
+        *lpfdwSentence = data->IMC.fdwSentence;
+
     return TRUE;
 }
 
