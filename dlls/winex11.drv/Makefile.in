@@ -34,7 +34,6 @@ C_SRCS = \
 	systray.c \
 	text.c \
 	window.c \
-	winpos.c \
 	wintab.c \
 	x11ddraw.c \
 	x11drv_main.c \

@@ -797,7 +797,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 /***********************************************************************
  *           get_window_wm_state
  */
-int get_window_wm_state( Display *display, struct x11drv_win_data *data )
+static int get_window_wm_state( Display *display, struct x11drv_win_data *data )
 {
     struct
     {
