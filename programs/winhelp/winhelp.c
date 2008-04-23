@@ -771,28 +771,28 @@ static HLPFILE_LINK* WINHELP_FindLink(WINHELP_WINDOW* win, LPARAM pos)
  *             WINHELP_HandleTextMouse
  *
  */
-static BOOL WINHELP_HandleTextMouse(WINHELP_WINDOW* win, const MSGFILTER* msgf)
+static BOOL WINHELP_HandleTextMouse(WINHELP_WINDOW* win, UINT msg, LPARAM lParam)
 {
     HLPFILE*                hlpfile;
     HLPFILE_LINK*           link;
     BOOL                    ret = FALSE;
 
-    switch (msgf->msg)
+    switch (msg)
     {
     case WM_MOUSEMOVE:
-        if (WINHELP_FindLink(win, msgf->lParam))
+        if (WINHELP_FindLink(win, lParam))
             SetCursor(win->hHandCur);
         else
             SetCursor(LoadCursor(0, IDC_ARROW));
         break;
 
      case WM_LBUTTONDOWN:
-         if ((win->current_link = WINHELP_FindLink(win, msgf->lParam)))
+         if ((win->current_link = WINHELP_FindLink(win, lParam)))
              ret = TRUE;
          break;
 
     case WM_LBUTTONUP:
-        if ((link = WINHELP_FindLink(win, msgf->lParam)) && link == win->current_link)
+        if ((link = WINHELP_FindLink(win, lParam)) && link == win->current_link)
         {
             HLPFILE_WINDOWINFO*     wi;
 
@@ -816,7 +816,7 @@ static BOOL WINHELP_HandleTextMouse(WINHELP_WINDOW* win, const MSGFILTER* msgf)
             case hlp_link_popup:
                 if ((hlpfile = WINHELP_LookupHelpFile(link->string)))
                     WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, link->hash,
-                                           WINHELP_GetPopupWindowInfo(hlpfile, win, msgf->lParam),
+                                           WINHELP_GetPopupWindowInfo(hlpfile, win, lParam),
                                            SW_NORMAL);
                 break;
             case hlp_link_macro:
@@ -955,8 +955,13 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             switch (((NMHDR*)lParam)->code)
             {
             case EN_MSGFILTER:
-                return WINHELP_HandleTextMouse((WINHELP_WINDOW*)GetWindowLong(hWnd, 0),
-                                               (const MSGFILTER*)lParam);
+                {
+                    const MSGFILTER*    msgf = (const MSGFILTER*)lParam;
+                    return WINHELP_HandleTextMouse((WINHELP_WINDOW*)GetWindowLong(hWnd, 0),
+                                                   msgf->msg, msgf->lParam);
+                }
+                break;
+
             case EN_REQUESTRESIZE:
                 rc = ((REQRESIZE*)lParam)->rc;
                 win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
@@ -2001,13 +2006,18 @@ static BOOL WINHELP_CheckPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
             break;
     case WM_COMMAND:
         if (use_richedit) break;
-        /* fall through */
+        goto doit;
+    case WM_LBUTTONUP:
     case WM_LBUTTONDOWN:
+        if (WINHELP_HandleTextMouse(Globals.active_popup, msg, lParam) && msg == WM_LBUTTONDOWN)
+            return FALSE;
+        /* fall through */
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
     case WM_NCLBUTTONDOWN:
     case WM_NCMBUTTONDOWN:
     case WM_NCRBUTTONDOWN:
+doit:
         hPopup = Globals.active_popup->hMainWnd;
         Globals.active_popup = NULL;
         DestroyWindow(hPopup);
