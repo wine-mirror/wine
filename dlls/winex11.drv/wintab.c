@@ -530,14 +530,15 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                 devices[loop].use == IsXKeyboard ? "IsXKeyboard" :
                     devices[loop].use == IsXPointer ? "IsXPointer" :
                     devices[loop].use == IsXExtensionDevice ? "IsXExtensionDevice" :
+                    devices[loop].use == IsXExtensionPointer ? "IsXExtensionPointer" :
                     "Unknown"
                 );
 
-        if (devices[loop].use == IsXExtensionDevice)
+        if ((devices[loop].use == IsXExtensionDevice) || (devices[loop].use == IsXExtensionPointer))
         {
             LPWTI_CURSORS_INFO cursor;
 
-            TRACE("Is Extension Device\n");
+            TRACE("Is XExtension%s\n", (devices[loop].use == IsXExtensionDevice)? "Device":"Pointer");
             cursor_target++;
             target = &devices[loop];
             cursor = &gSysCursor[cursor_target];
