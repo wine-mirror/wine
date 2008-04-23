@@ -1282,6 +1282,17 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
     HTMLElement_destructor
 };
 
+static dispex_static_data_t HTMLElement_dispex = {
+    DispHTMLUnknownElement_tid,
+    NULL,
+    {
+        IHTMLDOMNode_tid,
+        IHTMLElement_tid,
+        IHTMLElement2_tid,
+        0
+    }
+};
+
 void HTMLElement_Init(HTMLElement *This)
 {
     This->node.vtbl = &HTMLElementImplVtbl;
@@ -1343,6 +1354,9 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     nsAString_Finish(&class_name_str);
 
     ret->nselem = nselem;
+
+    if(!ret->node.dispex.data)
+        init_dispex(&ret->node.dispex, (IUnknown*)HTMLELEM(ret), &HTMLElement_dispex);
 
     return ret;
 }

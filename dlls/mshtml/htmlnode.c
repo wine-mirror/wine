@@ -313,6 +313,14 @@ HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = HTMLDOMNODE(This);
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        if(This->dispex.data) {
+            TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+            *ppv = DISPATCHEX(&This->dispex);
+        }else {
+            FIXME("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+            return E_NOINTERFACE;
+        }
     }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
         TRACE("(%p)->(IID_IHTMLDOMNode %p)\n", This, ppv);
         *ppv = HTMLDOMNODE(This);

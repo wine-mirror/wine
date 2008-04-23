@@ -62,11 +62,15 @@ typedef struct event_target_t event_target_t;
 typedef enum {
     NULL_tid,
     DispHTMLDocument_tid,
+    DispHTMLUnknownElement_tid,
     DispHTMLWindow2_tid,
     IHTMLDocument2_tid,
     IHTMLDocument3_tid,
     IHTMLDocument4_tid,
     IHTMLDocument5_tid,
+    IHTMLDOMNode_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
     IHTMLWindow2_tid,
     IHTMLWindow3_tid,
     IOmNavigator_tid,
@@ -293,6 +297,7 @@ typedef struct {
 } NodeImplVtbl;
 
 struct HTMLDOMNode {
+    DispatchEx dispex;
     const IHTMLDOMNodeVtbl *lpHTMLDOMNodeVtbl;
     const NodeImplVtbl *vtbl;
 
