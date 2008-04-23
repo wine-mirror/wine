@@ -216,6 +216,7 @@ static HRESULT WINAPI IRecordInfoImpl_RecordClear(IRecordInfo *iface, PVOID pvEx
                 break;
             case VT_I2:
             case VT_I4:
+            case VT_R4:
             case VT_R8:
             case VT_CY:
             case VT_DATE:
