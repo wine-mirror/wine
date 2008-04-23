@@ -1157,12 +1157,17 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
 {
     DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
     XWindowChanges changes;
-    int mask = CWWidth | CWHeight;
+    unsigned int mask = 0;
 
     if (data->managed && data->iconic) return;
 
-    if ((changes.width = data->whole_rect.right - data->whole_rect.left) <= 0) changes.width = 1;
-    if ((changes.height = data->whole_rect.bottom - data->whole_rect.top) <= 0) changes.height = 1;
+    /* resizing a managed maximized window is not allowed */
+    if (!(style & WS_MAXIMIZE) || !data->managed)
+    {
+        if ((changes.width = data->whole_rect.right - data->whole_rect.left) <= 0) changes.width = 1;
+        if ((changes.height = data->whole_rect.bottom - data->whole_rect.top) <= 0) changes.height = 1;
+        mask |= CWWidth | CWHeight;
+    }
 
     /* only the size is allowed to change for the desktop window */
     if (data->whole_window != root_window)
