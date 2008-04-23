@@ -20,8 +20,8 @@
  */
 
 #include <windows.h>
-#include <ctype.h>
 
+#include "wine/unicode.h"
 #include "explorer_private.h"
 
 typedef struct parametersTAG {
@@ -31,37 +31,25 @@ typedef struct parametersTAG {
 } parameters_struct;
 
 
-static int CopyPathString(LPWSTR target, LPSTR source)
+static int CopyPathString(LPWSTR target, LPWSTR source)
 {
-    CHAR temp_buf[MAX_PATH];
     INT i = 0;
 
-    while (isspace(*source)) source++;
+    while (isspaceW(*source)) source++;
 
     if (*source == '\"')
     {
         source ++;
-        while (*source != '\"')
-        {
-            temp_buf[i] = *source;
-            i++;
-            source++;
-        }
-        temp_buf[i] = 0;
+        while (*source != '\"') target[i++] = *source++;
+        target[i] = 0;
         source ++;
         i+=2;
     }
     else
     {
-        while (*source && !isspace(*source))
-        {
-            temp_buf[i] = *source;
-            i++;
-            source++;
-        }
-        temp_buf[i] = 0;
+        while (*source && !isspaceW(*source)) target[i++] = *source++;
+        target[i] = 0;
     }
-    MultiByteToWideChar(CP_ACP,0,temp_buf,-1,target,MAX_PATH);
     return i;
 }
 
@@ -98,45 +86,52 @@ static void CopyPathRoot(LPWSTR root, LPWSTR path)
  * [/root,object] Specifies the root level of the view
  * [/select,object] parent folder is opened and specified object is selected
  */
-static void ParseCommandLine(LPSTR commandline,parameters_struct *parameters)
+static void ParseCommandLine(LPWSTR commandline,parameters_struct *parameters)
 {
-    LPSTR p;
-    LPSTR p2;
-   
+    static const WCHAR arg_n[] = {'/','n'};
+    static const WCHAR arg_e[] = {'/','e',','};
+    static const WCHAR arg_root[] = {'/','r','o','o','t',','};
+    static const WCHAR arg_select[] = {'/','s','e','l','e','c','t',','};
+    static const WCHAR arg_desktop[] = {'/','d','e','s','k','t','o','p'};
+
+    LPWSTR p, p2;
+
     p2 = commandline;
-    p = strchr(commandline,'/');
+    p = strchrW(commandline,'/');
     while(p)
     {
-        p++;
-        if (strncmp(p,"n",1)==0)
+        if (strncmpW(p, arg_n, sizeof(arg_n)/sizeof(WCHAR))==0)
         {
             parameters->explorer_mode = FALSE;
-            p++;
+            p += sizeof(arg_n)/sizeof(WCHAR);
         }
-        else if (strncmp(p,"e,",2)==0)
+        else if (strncmpW(p, arg_e, sizeof(arg_e)/sizeof(WCHAR))==0)
         {
             parameters->explorer_mode = TRUE;
-            p+=2;
+            p += sizeof(arg_e)/sizeof(WCHAR);
         }
-        else if (strncmp(p,"root,",5)==0)
+        else if (strncmpW(p, arg_root, sizeof(arg_root)/sizeof(WCHAR))==0)
         {
-            p+=5;
+            p += sizeof(arg_root)/sizeof(WCHAR);
             p+=CopyPathString(parameters->root,p);
         }
-        else if (strncmp(p,"select,",7)==0)
+        else if (strncmpW(p, arg_select, sizeof(arg_select)/sizeof(WCHAR))==0)
         {
-            p+=7;
+            p += sizeof(arg_select)/sizeof(WCHAR);
             p+=CopyPathString(parameters->selection,p);
             if (!parameters->root[0])
                 CopyPathRoot(parameters->root,
                         parameters->selection);
         }
-        else if (strncmp(p,"desktop",7)==0)
+        else if (strncmpW(p, arg_desktop, sizeof(arg_desktop)/sizeof(WCHAR))==0)
         {
-            manage_desktop( p + 7 );  /* the rest of the command line is handled by desktop mode */
+            p += sizeof(arg_desktop)/sizeof(WCHAR);
+            manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
+        else p++;
+
         p2 = p;
-        p = strchr(p,'/');
+        p = strchrW(p,'/');
     }
     if (p2 && *p2)
     {
@@ -145,10 +140,10 @@ static void ParseCommandLine(LPSTR commandline,parameters_struct *parameters)
     }
 }
 
-int WINAPI WinMain(HINSTANCE hinstance,
-                   HINSTANCE previnstance,
-                   LPSTR cmdline,
-                   int cmdshow)
+int WINAPI wWinMain(HINSTANCE hinstance,
+                    HINSTANCE previnstance,
+                    LPWSTR cmdline,
+                    int cmdshow)
 {
     STARTUPINFOW si;
     PROCESS_INFORMATION info;

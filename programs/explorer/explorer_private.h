@@ -21,13 +21,7 @@
 #ifndef __WINE_EXPLORER_PRIVATE_H
 #define __WINE_EXPLORER_PRIVATE_H
 
-extern BOOL add_dos_device( const char *udi, const char *device,
-                            const char *mount_point, const char *type );
-extern BOOL remove_dos_device( const char *udi );
-
-extern void manage_desktop( char *arg );
-extern void initialize_diskarbitration(void);
-extern void initialize_hal(void);
+extern void manage_desktop( WCHAR *arg );
 extern void initialize_systray(void);
 
 #endif  /* __WINE_EXPLORER_PRIVATE_H */
