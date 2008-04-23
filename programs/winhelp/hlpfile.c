@@ -1200,9 +1200,16 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                 break;
 
             case 0x8B:
-            case 0x8C:
-                WINE_FIXME("NIY non-break space/hyphen\n");
+                if (!HLPFILE_RtfAddControl(rd, "\\~")) goto done;
                 format += 1;
+                if (rd) /* FIXME: TEMP */ rd->char_pos++;
+                break;
+
+            case 0x8C:
+                if (!HLPFILE_RtfAddControl(rd, "\\_")) goto done;
+                /* FIXME: it could be that hypen is also in input stream !! */
+                format += 1;
+                if (rd) /* FIXME: TEMP */ rd->char_pos++;
                 break;
 
 #if 0
