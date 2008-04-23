@@ -66,4 +66,5 @@ STID_TOPICS,		"&Теми"
 STID_ALL_FILES, 	"Всички файлове (*.*)"
 STID_HELP_FILES_HLP, 	"Помощни файлове (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
+STID_NO_RICHEDIT	"Cannot find a richedit implementation... Aborting"
 }

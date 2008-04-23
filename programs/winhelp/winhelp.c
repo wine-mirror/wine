@@ -35,6 +35,7 @@
 #include "winhelp.h"
 #include "winhelp_res.h"
 #include "shellapi.h"
+#include "richedit.h"
 
 #include "wine/debug.h"
 
@@ -57,6 +58,8 @@ static void    WINHELP_SetupText(HWND hWnd, ULONG relative);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
 WINHELP_GLOBALS Globals = {3, NULL, TRUE, NULL, NULL, NULL, NULL, NULL, {{{NULL,NULL}},0}};
+
+static BOOL use_richedit;
 
 #define CTL_ID_BUTTON   0x700
 #define CTL_ID_TEXT     0x701
@@ -245,6 +248,11 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     WINHELP_DLL*        dll;
 
     Globals.hInstance = hInstance;
+
+    use_richedit = getenv("WINHELP_RICHEDIT") != NULL;
+    if (use_richedit && LoadLibrary("riched20.dll") == NULL)
+        return MessageBox(0, MAKEINTRESOURCE(STID_NO_RICHEDIT),
+                          MAKEINTRESOURCE(STID_WHERROR), MB_OK);
 
     /* Get options */
     while (*cmdline && (*cmdline == ' ' || *cmdline == '-'))
@@ -643,8 +651,13 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
             CreateWindow(BUTTON_BOX_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
                          0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_BUTTON, Globals.hInstance, NULL);
 
-        CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
-                     0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
+        if (!use_richedit)
+            CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
+                         0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
+        else
+            CreateWindow(RICHEDIT_CLASS, NULL,
+                         ES_MULTILINE | ES_READONLY | WS_CHILD | WS_HSCROLL | WS_VSCROLL | WS_VISIBLE,
+                         0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, NULL);
     }
 
     hIcon = (wpage->page) ? wpage->page->file->hIcon : NULL;

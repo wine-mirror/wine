@@ -76,4 +76,5 @@ STID_TOPICS,		"&Emner"
 STID_ALL_FILES, 	"Alle filer (*.*)"
 STID_HELP_FILES_HLP, 	"Hjelp-filer (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
+STID_NO_RICHEDIT	"Cannot find a richedit implementation... Aborting"
 }

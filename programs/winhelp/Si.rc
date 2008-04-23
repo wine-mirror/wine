@@ -78,6 +78,7 @@ STID_TOPICS,		"&Vsebina"
 STID_ALL_FILES, 	"Vse datoteke (*.*)"
 STID_HELP_FILES_HLP, 	"Datoteke s pomočjo (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Ne najdem datoteke '%s'. Ali jo želite poiskati sami?"
+STID_NO_RICHEDIT	"Cannot find a richedit implementation... Aborting"
 }
 
 #pragma code_page(default)
