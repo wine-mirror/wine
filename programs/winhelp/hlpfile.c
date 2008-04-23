@@ -1113,13 +1113,15 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
 	    case 0x80:
                 {
                     unsigned    font = GET_USHORT(format, 1);
+                    unsigned    fs;
                     attributes.wFont = font;
                     WINE_TRACE("Changing font to %d\n", attributes.wFont);
                     format += 3;
+                    fs = (4 * page->file->fonts[font].LogFont.lfHeight - 3) / 5;
                     /* FIXME: missing at least colors, also bold attribute looses information */
+
                     sprintf(tmp, "\\f%d\\cf%d\\fs%d%s%s%s%s",
-                            font, font + 2,
-                            -2 * page->file->fonts[font].LogFont.lfHeight,
+                            font, font + 2, fs,
                             page->file->fonts[font].LogFont.lfWeight > 400 ? "\\b" : "\\b0",
                             page->file->fonts[font].LogFont.lfItalic ? "\\i" : "\\i0",
                             page->file->fonts[font].LogFont.lfUnderline ? "\\ul" : "\\ul0",
@@ -1530,7 +1532,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
         flag = ref[dscr_offset + i * 11 + 0];
         family = ref[dscr_offset + i * 11 + 2];
 
-        hlpfile->fonts[i].LogFont.lfHeight = -ref[dscr_offset + i * 11 + 1] / 2 - 3;
+        hlpfile->fonts[i].LogFont.lfHeight = ref[dscr_offset + i * 11 + 1];
         hlpfile->fonts[i].LogFont.lfWidth = 0;
         hlpfile->fonts[i].LogFont.lfEscapement = 0;
         hlpfile->fonts[i].LogFont.lfOrientation = 0;

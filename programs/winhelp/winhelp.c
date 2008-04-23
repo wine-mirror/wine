@@ -1803,7 +1803,11 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                     HLPFILE*    hlpfile = win->page->file;
 
                     if (!hlpfile->fonts[p->u.text.wFont].hFont)
-                        hlpfile->fonts[p->u.text.wFont].hFont = CreateFontIndirect(&hlpfile->fonts[p->u.text.wFont].LogFont);
+                    {
+                        LOGFONT lf = hlpfile->fonts[p->u.text.wFont].LogFont;
+                        lf.lfHeight = -lf.lfHeight / 2 - 3;
+                        hlpfile->fonts[p->u.text.wFont].hFont = CreateFontIndirect(&lf);
+                    }
                     hFont = hlpfile->fonts[p->u.text.wFont].hFont;
                     color = hlpfile->fonts[p->u.text.wFont].color;
                 }
