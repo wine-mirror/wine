@@ -862,7 +862,7 @@ BOOL WINAPI WintrustLoadFunctionPointers( GUID* pgActionID,
     pPfns->pfnAddStore2Chain = WINTRUST_AddStore;
     pPfns->pfnAddSgnr2Chain = WINTRUST_AddSgnr;
     pPfns->pfnAddCert2Chain = WINTRUST_AddCert;
-    pPfns->pfnAddPrivData2Chain = NULL;
+    pPfns->pfnAddPrivData2Chain = WINTRUST_AddPrivData;
     pPfns->psUIpfns = NULL;
     pPfns->pfnInitialize = (PFN_PROVIDER_INIT_CALL)WINTRUST_ReadProviderFromReg(GuidString, Initialization);
     pPfns->pfnObjectTrust = (PFN_PROVIDER_OBJTRUST_CALL)WINTRUST_ReadProviderFromReg(GuidString, Message);

@@ -81,7 +81,7 @@
 @ stdcall WTHelperGetFileName(ptr)
 @ stub WTHelperGetKnownUsages
 @ stdcall WTHelperGetProvCertFromChain(ptr long)
-@ stub WTHelperGetProvPrivateDataFromChain
+@ stdcall WTHelperGetProvPrivateDataFromChain(ptr ptr)
 @ stdcall WTHelperGetProvSignerFromChain(ptr long long long)
 @ stub WTHelperIsInRootStore
 @ stub WTHelperOpenKnownStores

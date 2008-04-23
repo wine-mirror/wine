@@ -428,6 +428,7 @@ CRYPT_PROVIDER_SGNR * WINAPI WTHelperGetProvSignerFromChain(
  CRYPT_PROVIDER_DATA *pProvData, DWORD idxSigner, BOOL fCounterSigner,
  DWORD idxCounterSigner);
 CRYPT_PROVIDER_DATA * WINAPI WTHelperProvDataFromStateData(HANDLE hStateData);
+CRYPT_PROVIDER_PRIVDATA * WINAPI WTHelperGetProvPrivateDataFromChain(CRYPT_PROVIDER_DATA *,GUID *);
 
 #define SPC_INDIRECT_DATA_OBJID      "1.3.6.1.4.1.311.2.1.4"
 #define SPC_SP_AGENCY_INFO_OBJID     "1.3.6.1.4.1.311.2.1.10"
