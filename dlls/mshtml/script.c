@@ -386,8 +386,10 @@ static ULONG WINAPI ActiveScriptSiteInterruptPoll_Release(IActiveScriptSiteInter
 static HRESULT WINAPI ActiveScriptSiteInterruptPoll_QueryContinue(IActiveScriptSiteInterruptPoll *iface)
 {
     ScriptHost *This = ACTSCPPOLL_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return S_OK;
 }
 
 #undef ACTSCPPOLL_THIS
