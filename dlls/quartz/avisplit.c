@@ -1042,6 +1042,25 @@ static HRESULT AVISplitter_Disconnect(LPVOID iface)
     return S_OK;
 }
 
+static const IBaseFilterVtbl AVISplitter_Vtbl =
+{
+    Parser_QueryInterface,
+    Parser_AddRef,
+    Parser_Release,
+    Parser_GetClassID,
+    Parser_Stop,
+    Parser_Pause,
+    Parser_Run,
+    Parser_GetState,
+    Parser_SetSyncSource,
+    Parser_GetSyncSource,
+    Parser_EnumPins,
+    Parser_FindPin,
+    Parser_QueryFilterInfo,
+    Parser_JoinFilterGraph,
+    Parser_QueryVendorInfo
+};
+
 HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -1061,7 +1080,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->streams = NULL;
     This->oldindex = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup, AVISplitter_Disconnect, NULL, NULL, NULL, NULL);
+    hr = Parser_Create(&(This->Parser), &AVISplitter_Vtbl, &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect, AVISplitter_Cleanup, AVISplitter_Disconnect, NULL, NULL, NULL, NULL);
 
     if (FAILED(hr))
         return hr;

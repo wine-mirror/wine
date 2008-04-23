@@ -423,6 +423,25 @@ static HRESULT WAVEParser_disconnect(LPVOID iface)
     return S_OK;
 }
 
+static const IBaseFilterVtbl WAVEParser_Vtbl =
+{
+    Parser_QueryInterface,
+    Parser_AddRef,
+    Parser_Release,
+    Parser_GetClassID,
+    Parser_Stop,
+    Parser_Pause,
+    Parser_Run,
+    Parser_GetState,
+    Parser_SetSyncSource,
+    Parser_GetSyncSource,
+    Parser_EnumPins,
+    Parser_FindPin,
+    Parser_QueryFilterInfo,
+    Parser_JoinFilterGraph,
+    Parser_QueryVendorInfo
+};
+
 HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -440,7 +459,7 @@ HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     This->pCurrentSample = NULL;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, WAVEParser_disconnect, WAVEParser_first_request, NULL, WAVEParserImpl_seek, NULL);
+    hr = Parser_Create(&(This->Parser), &WAVEParser_Vtbl, &CLSID_WAVEParser, WAVEParser_Sample, WAVEParser_QueryAccept, WAVEParser_InputPin_PreConnect, WAVEParser_Cleanup, WAVEParser_disconnect, WAVEParser_first_request, NULL, WAVEParserImpl_seek, NULL);
 
     if (FAILED(hr))
         return hr;

@@ -786,6 +786,25 @@ static HRESULT MPEGSplitter_first_request(LPVOID iface)
     return hr;
 }
 
+static const IBaseFilterVtbl MPEGSplitter_Vtbl =
+{
+    Parser_QueryInterface,
+    Parser_AddRef,
+    Parser_Release,
+    Parser_GetClassID,
+    Parser_Stop,
+    Parser_Pause,
+    Parser_Run,
+    Parser_GetState,
+    Parser_SetSyncSource,
+    Parser_GetSyncSource,
+    Parser_EnumPins,
+    Parser_FindPin,
+    Parser_QueryFilterInfo,
+    Parser_JoinFilterGraph,
+    Parser_QueryVendorInfo
+};
+
 HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     MPEGSplitterImpl *This;
@@ -811,7 +830,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     }
     This->seek_entries = 64;
 
-    hr = Parser_Create(&(This->Parser), &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup, MPEGSplitter_disconnect, MPEGSplitter_first_request, NULL, MPEGSplitter_seek, NULL);
+    hr = Parser_Create(&(This->Parser), &MPEGSplitter_Vtbl, &CLSID_MPEG1Splitter, MPEGSplitter_process_sample, MPEGSplitter_query_accept, MPEGSplitter_pre_connect, MPEGSplitter_cleanup, MPEGSplitter_disconnect, MPEGSplitter_first_request, NULL, MPEGSplitter_seek, NULL);
     if (FAILED(hr))
     {
         CoTaskMemFree(This);
