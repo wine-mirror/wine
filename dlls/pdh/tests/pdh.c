@@ -647,7 +647,9 @@ static void test_PdhLookupPerfNameByIndexA( void )
 
     size = sizeof(buffer);
     ret = PdhLookupPerfNameByIndexA( NULL, 674, NULL, &size );
-    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
+    ok(ret == PDH_INVALID_ARGUMENT ||
+       ret == PDH_MORE_DATA, /* win2k3 */
+       "PdhLookupPerfNameByIndexA failed 0x%08x\n", ret);
 
     size = sizeof(buffer);
     ret = PdhLookupPerfNameByIndexA( NULL, 674, buffer, &size );
@@ -677,7 +679,9 @@ static void test_PdhLookupPerfNameByIndexW( void )
 
     size = sizeof(buffer) / sizeof(WCHAR);
     ret = PdhLookupPerfNameByIndexW( NULL, 674, NULL, &size );
-    ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
+    ok(ret == PDH_INVALID_ARGUMENT ||
+       ret == PDH_MORE_DATA, /* win2k3 */
+       "PdhLookupPerfNameByIndexW failed 0x%08x\n", ret);
 
     size = sizeof(buffer) / sizeof(WCHAR);
     ret = PdhLookupPerfNameByIndexW( NULL, 674, buffer, &size );
