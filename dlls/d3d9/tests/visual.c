@@ -6552,9 +6552,15 @@ static void fog_srgbwrite_test(IDirect3DDevice9 *device)
     DWORD color;
 
     IDirect3DDevice9_GetDirect3D(device, &d3d);
+    /* Ask for srgb writing on D3DRTYPE_TEXTURE. Some Windows drivers do not report it on surfaces.
+     * For some not entirely understood reasons D3DUSAGE_RENDERTARGET | D3DUSAGE_QUERY_SRGBWRITE
+     * passes on surfaces, while asking for SRGBWRITE alone fails. Textures advertize srgb writing
+     * alone as well, so use that since it is not the point of this test to show how CheckDeviceFormat
+     * works
+     */
     if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                                     D3DUSAGE_RENDERTARGET | D3DUSAGE_QUERY_SRGBWRITE,
-                                    D3DRTYPE_SURFACE, D3DFMT_A8R8G8B8) != D3D_OK) {
+                                    D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8) != D3D_OK) {
         skip("No SRGBWRITEENABLE support on D3DFMT_X8R8G8B8\n");
         IDirect3D9_Release(d3d);
         return;
