@@ -680,9 +680,12 @@ static void test_WM_GETTEXT(void)
     /* Test for behavior in overflow case */
     memset(buffer, 0, 1024);
     result = SendMessage(hwndRichEdit, WM_GETTEXT, strlen(text), (LPARAM)buffer);
-    ok(result == 0,
-        "WM_GETTEXT returned %d, expected 0\n", result);
+    ok(result == 0 ||
+       result == lstrlenA(text) - 1, /* XP, win2k3 */
+        "WM_GETTEXT returned %d, expected 0 or %d\n", result, lstrlenA(text) - 1);
     result = strcmp(buffer,text);
+    if (result)
+        result = strncmp(buffer, text, lstrlenA(text) - 1); /* XP, win2k3 */
     ok(result == 0,
         "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
 
@@ -704,9 +707,12 @@ static void test_WM_GETTEXT(void)
     /* Test for behavior of CRLF conversion in case of overflow */
     memset(buffer, 0, 1024);
     result = SendMessage(hwndRichEdit, WM_GETTEXT, strlen(text2), (LPARAM)buffer);
-    ok(result == 0,
-        "WM_GETTEXT returned %d, expected 0\n", result);
+    ok(result == 0 ||
+       result == lstrlenA(text2) - 1, /* XP, win2k3 */
+        "WM_GETTEXT returned %d, expected 0 or %d\n", result, lstrlenA(text2) - 1);
     result = strcmp(buffer,text2);
+    if (result)
+        result = strncmp(buffer, text2, lstrlenA(text2) - 1); /* XP, win2k3 */
     ok(result == 0,
         "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
 
