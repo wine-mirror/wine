@@ -1810,118 +1810,6 @@ static void state_ckeyblend(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     }
 }
 
-/* Activates the texture dimension according to the bound D3D texture.
- * Does not care for the colorop or correct gl texture unit(when using nvrc)
- * Requires the caller to activate the correct unit before
- */
-static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL bumpmap = FALSE;
-
-    if(stage > 0 && (stateblock->textureState[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE ||
-                     stateblock->textureState[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP)) {
-        bumpmap = TRUE;
-        context->texShaderBumpMap |= (1 << stage);
-    } else {
-        context->texShaderBumpMap &= ~(1 << stage);
-    }
-
-    if(stateblock->textures[stage]) {
-        switch(stateblock->textureDimensions[stage]) {
-            case GL_TEXTURE_2D:
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_2D);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");
-                } else {
-                    glDisable(GL_TEXTURE_3D);
-                    checkGLcall("glDisable(GL_TEXTURE_3D)");
-                    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-                    }
-                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-                    }
-                    glEnable(GL_TEXTURE_2D);
-                    checkGLcall("glEnable(GL_TEXTURE_2D)");
-                }
-                break;
-            case GL_TEXTURE_RECTANGLE_ARB:
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_RECTANGLE_ARB);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");
-                } else {
-                    glDisable(GL_TEXTURE_2D);
-                    checkGLcall("glDisable(GL_TEXTURE_2D)");
-                    glDisable(GL_TEXTURE_3D);
-                    checkGLcall("glDisable(GL_TEXTURE_3D)");
-                    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-                    }
-                    glEnable(GL_TEXTURE_RECTANGLE_ARB);
-                    checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
-                }
-                break;
-            case GL_TEXTURE_3D:
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D)");
-                } else {
-                    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-                    }
-                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-                    }
-                    glDisable(GL_TEXTURE_2D);
-                    checkGLcall("glDisable(GL_TEXTURE_2D)");
-                    glEnable(GL_TEXTURE_3D);
-                    checkGLcall("glEnable(GL_TEXTURE_3D)");
-                }
-                break;
-            case GL_TEXTURE_CUBE_MAP_ARB:
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB)");
-                } else {
-                    glDisable(GL_TEXTURE_2D);
-                    checkGLcall("glDisable(GL_TEXTURE_2D)");
-                    glDisable(GL_TEXTURE_3D);
-                    checkGLcall("glDisable(GL_TEXTURE_3D)");
-                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-                    }
-                    glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                    checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
-                }
-              break;
-        }
-    } else {
-        if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-            glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
-            checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE)");
-        } else {
-            glEnable(GL_TEXTURE_2D);
-            checkGLcall("glEnable(GL_TEXTURE_2D)");
-            glDisable(GL_TEXTURE_3D);
-            checkGLcall("glDisable(GL_TEXTURE_3D)");
-            if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-            }
-            if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-                glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-            }
-            /* Binding textures is done by samplers. A dummy texture will be bound */
-        }
-    }
-}
-
 static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
@@ -1987,7 +1875,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
      * if the sampler for this stage is dirty
      */
     if(!isStateDirty(context, STATE_SAMPLER(stage))) {
-        if (tex_used) activate_dimensions(stage, stateblock, context);
+        if (tex_used) texture_activate_dimensions(stage, stateblock, context);
     }
 
     /* Set the texture combiners */
@@ -2010,7 +1898,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
             if(usesBump != usedBump) {
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage + 1));
                 checkGLcall("glActiveTextureARB");
-                activate_dimensions(stage + 1, stateblock, context);
+                texture_activate_dimensions(stage + 1, stateblock, context);
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
                 checkGLcall("glActiveTextureARB");
             }
@@ -2539,7 +2427,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
             checkGLcall("glEnable(stateblock->textureDimensions[sampler])");
         } else if(sampler < stateblock->lowest_disabled_stage) {
             if(!isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
-                activate_dimensions(sampler, stateblock, context);
+                texture_activate_dimensions(sampler, stateblock, context);
             }
 
             if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
@@ -2553,7 +2441,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
         if(sampler < stateblock->lowest_disabled_stage) {
             /* TODO: What should I do with pixel shaders here ??? */
             if(!isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
-                activate_dimensions(sampler, stateblock, context);
+                texture_activate_dimensions(sampler, stateblock, context);
             }
 
             if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
