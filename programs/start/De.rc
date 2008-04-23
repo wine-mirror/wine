@@ -61,4 +61,6 @@ Schau in die Datei COPYING.LIB für Lizenzinformationen. \n\
 "
 
 STRING_EXECFAIL "Es konnte keine Anwendung gestartet werden, oder es ist keine Anwendung mit der angegebenen Datei verknüpft.\nShellExecuteEx gescheitert"
+
+STRING_UNIXFAIL "Der angegebene Unix Dateiname konnte nicht in einen DOS Dateinamen umgewandelt werden."
 }
