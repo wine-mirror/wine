@@ -48,7 +48,7 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_ButtonWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND, UINT, WPARAM, LPARAM);
-static void    WINHELP_CheckPopup(UINT);
+static BOOL    WINHELP_CheckPopup(HWND, UINT, WPARAM, LPARAM, LRESULT*);
 static BOOL    WINHELP_SplitLines(HWND hWnd, LPSIZE);
 static void    WINHELP_InitFonts(HWND hWnd);
 static void    WINHELP_DeleteLines(WINHELP_WINDOW*);
@@ -683,10 +683,24 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
             MACRO_ExecuteMacro(macro->lpszMacro);
     }
 
-    WINHELP_LayoutMainWindow(win);
+    if (bPopup && use_richedit)
+    {
+        DWORD   mask = SendMessage(hTextWnd, EM_GETEVENTMASK, 0, 0);
 
-    ShowWindow(win->hMainWnd, nCmdShow);
-    WINHELP_SetupText(hTextWnd, win, wpage->relative);
+        WINHELP_SetupText(hTextWnd, win, wpage->relative);
+
+        /* we need the window to be shown for richedit to compute the size */
+        ShowWindow(win->hMainWnd, nCmdShow);
+        SendMessage(hTextWnd, EM_SETEVENTMASK, 0, mask | ENM_REQUESTRESIZE);
+        SendMessage(hTextWnd, EM_REQUESTRESIZE, 0, 0);
+        SendMessage(hTextWnd, EM_SETEVENTMASK, 0, mask);
+    }
+    else
+    {
+        WINHELP_SetupText(hTextWnd, win, wpage->relative);
+        WINHELP_LayoutMainWindow(win);
+        ShowWindow(win->hMainWnd, nCmdShow);
+    }
 
     return TRUE;
 }
@@ -818,8 +832,9 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     RECT rect;
     INT  curPos, min, max, dy, keyDelta;
     HWND hTextWnd;
+    LRESULT ret;
 
-    WINHELP_CheckPopup(msg);
+    if (WINHELP_CheckPopup(hWnd, msg, wParam, lParam, &ret)) return ret;
 
     switch (msg)
     {
@@ -923,8 +938,24 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     case WM_NOTIFY:
         if (wParam == CTL_ID_TEXT)
         {
-            return WINHELP_HandleTextMouse((WINHELP_WINDOW*)GetWindowLong(hWnd, 0),
-                                           (const MSGFILTER*)lParam);
+            RECT        rc;
+
+            switch (((NMHDR*)lParam)->code)
+            {
+            case EN_MSGFILTER:
+                return WINHELP_HandleTextMouse((WINHELP_WINDOW*)GetWindowLong(hWnd, 0),
+                                               (const MSGFILTER*)lParam);
+            case EN_REQUESTRESIZE:
+                rc = ((REQRESIZE*)lParam)->rc;
+                win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+                AdjustWindowRect(&rc, GetWindowLong(win->hMainWnd, GWL_STYLE),
+                                 FALSE);
+                SetWindowPos(win->hMainWnd, HWND_TOP, 0, 0,
+                             rc.right - rc.left, rc.bottom - rc.top,
+                             SWP_NOMOVE | SWP_NOZORDER);
+                WINHELP_LayoutMainWindow(win);
+                break;
+            }
         }
         break;
 
@@ -1003,7 +1034,7 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
     SIZE button_size;
     INT  x, y;
 
-    WINHELP_CheckPopup(msg);
+    if (WINHELP_CheckPopup(hWnd, msg, wParam, lParam, NULL)) return 0L;
 
     switch (msg)
     {
@@ -1080,6 +1111,8 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
  */
 static LRESULT CALLBACK WINHELP_ButtonWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if (WINHELP_CheckPopup(hWnd, msg, wParam, lParam, NULL)) return 0;
+
     if (msg == WM_KEYDOWN)
     {
         switch (wParam)
@@ -1112,7 +1145,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     HWND  hPopupWnd;
 
     if (msg != WM_LBUTTONDOWN)
-        WINHELP_CheckPopup(msg);
+        WINHELP_CheckPopup(hWnd, msg, wParam, lParam, NULL);
 
     switch (msg)
     {
@@ -1507,7 +1540,7 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
  */
 static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    WINHELP_CheckPopup(msg);
+    if (WINHELP_CheckPopup(hWnd, msg, wParam, lParam, NULL)) return 0;
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
@@ -1929,15 +1962,33 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
  *
  *           WINHELP_CheckPopup
  */
-static void WINHELP_CheckPopup(UINT msg)
+static BOOL WINHELP_CheckPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT* lret)
 {
     HWND        hPopup;
 
-    if (!Globals.active_popup) return;
+    if (!Globals.active_popup) return FALSE;
 
     switch (msg)
     {
+    case WM_NOTIFY:
+        {
+            MSGFILTER*  msgf = (MSGFILTER*)lParam;
+            if (msgf->nmhdr.code == EN_MSGFILTER)
+            {
+                if (!WINHELP_CheckPopup(hWnd, msgf->msg, msgf->wParam, msgf->lParam, NULL))
+                    return FALSE;
+                if (lret) *lret = 1;
+                return TRUE;
+            }
+        }
+        break;
+    case WM_ACTIVATE:
+        if (wParam != WA_INACTIVE || (HWND)lParam == Globals.active_win->hMainWnd ||
+            (HWND)lParam == Globals.active_popup->hMainWnd)
+            break;
     case WM_COMMAND:
+        if (use_richedit) break;
+        /* fall through */
     case WM_LBUTTONDOWN:
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
@@ -1947,7 +1998,9 @@ static void WINHELP_CheckPopup(UINT msg)
         hPopup = Globals.active_popup->hMainWnd;
         Globals.active_popup = NULL;
         DestroyWindow(hPopup);
+        return TRUE;
     }
+    return FALSE;
 }
 
 /***********************************************************************
