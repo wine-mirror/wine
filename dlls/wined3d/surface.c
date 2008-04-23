@@ -2791,8 +2791,11 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         Src->Flags &= ~SFLAG_INTEXTURE;
     }
 
-    glReadBuffer(GL_BACK);
-    checkGLcall("glReadBuffer(GL_BACK)");
+    if(swapchain) {
+        glReadBuffer(surface_get_gl_buffer(SrcSurface, (IWineD3DSwapChain *)swapchain));
+    } else {
+        glReadBuffer(myDevice->offscreenBuffer);
+    }
 
     /* TODO: Only back up the part that will be overwritten */
     glCopyTexSubImage2D(texture_target, 0,
