@@ -140,14 +140,13 @@ static void Parse_PYUV(unsigned char *destbuffer, const unsigned char *input, in
    /* We have 3 pointers, One to Y, one to Cb and 1 to Cr */
 
 /* C19 *89* declaration block (Grr julliard for not allowing C99) */
-   int uvjump, ysize, uvsize;
+   int ysize, uvsize;
    const unsigned char *pY, *pCb, *pCr;
    int swstep = 0, shstep = 0;
    int ypos = 0, xpos = 0;
    int indexUV = 0, cUv;
 /* End of Grr */
 
-   uvjump = width / wstep;
    ysize = width * height;
    uvsize = (width / wstep) * (height / hstep);
    pY = input;
