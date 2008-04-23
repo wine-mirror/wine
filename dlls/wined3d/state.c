@@ -772,32 +772,14 @@ static void state_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
 
 static void
 renderstate_stencil_twosided(IWineD3DStateBlockImpl *stateblock, GLint face, GLint func, GLint ref, GLuint mask, GLint stencilFail, GLint depthFail, GLint stencilPass ) {
-#if 0 /* Don't use OpenGL 2.0 calls for now */
-            if(GL_EXTCALL(glStencilFuncSeparate) && GL_EXTCALL(glStencilOpSeparate)) {
-                GL_EXTCALL(glStencilFuncSeparate(face, func, ref, mask));
-                checkGLcall("glStencilFuncSeparate(...)");
-                GL_EXTCALL(glStencilOpSeparate(face, stencilFail, depthFail, stencilPass));
-                checkGLcall("glStencilOpSeparate(...)");
-        }
-            else
-#endif
-    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
-        glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-        checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
-        GL_EXTCALL(glActiveStencilFaceEXT(face));
-        checkGLcall("glActiveStencilFaceEXT(...)");
-        glStencilFunc(func, ref, mask);
-        checkGLcall("glStencilFunc(...)");
-        glStencilOp(stencilFail, depthFail, stencilPass);
-        checkGLcall("glStencilOp(...)");
-    } else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
-        GL_EXTCALL(glStencilFuncSeparateATI(face, func, ref, mask));
-        checkGLcall("glStencilFuncSeparateATI(...)");
-        GL_EXTCALL(glStencilOpSeparateATI(face, stencilFail, depthFail, stencilPass));
-        checkGLcall("glStencilOpSeparateATI(...)");
-    } else {
-        ERR("Separate (two sided) stencil not supported on this version of opengl. Caps weren't honored?\n");
-    }
+    glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+    checkGLcall("glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
+    GL_EXTCALL(glActiveStencilFaceEXT(face));
+    checkGLcall("glActiveStencilFaceEXT(...)");
+    glStencilFunc(func, ref, mask);
+    checkGLcall("glStencilFunc(...)");
+    glStencilOp(stencilFail, depthFail, stencilPass);
+    checkGLcall("glStencilOp(...)");
 }
 
 static void
@@ -848,20 +830,36 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
         glEnable(GL_STENCIL_TEST);
         checkGLcall("glEnable GL_STENCIL_TEST");
 
-        /* Apply back first, then front. This function calls glActiveStencilFaceEXT,
-         * which has an effect on the code below too. If we apply the front face
-         * afterwards, we are sure that the active stencil face is set to front,
-         * and other stencil functions which do not use two sided stencil do not have
-         * to set it back
-         */
-        renderstate_stencil_twosided(stateblock, GL_BACK, func_ccw, ref, mask, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
-        renderstate_stencil_twosided(stateblock, GL_FRONT, func, ref, mask, stencilFail, depthFail, stencilPass);
+        if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
+            /* Apply back first, then front. This function calls glActiveStencilFaceEXT,
+             * which has an effect on the code below too. If we apply the front face
+             * afterwards, we are sure that the active stencil face is set to front,
+             * and other stencil functions which do not use two sided stencil do not have
+             * to set it back
+             */
+            renderstate_stencil_twosided(stateblock, GL_BACK, func_ccw, ref, mask,
+                                         stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
+            renderstate_stencil_twosided(stateblock, GL_FRONT, func, ref, mask,
+                                         stencilFail, depthFail, stencilPass);
+        } else if(GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
+            GL_EXTCALL(glStencilFuncSeparateATI(func, func_ccw, ref, mask));
+            checkGLcall("glStencilFuncSeparateATI(...)");
+            GL_EXTCALL(glStencilOpSeparateATI(GL_FRONT, stencilFail, depthFail, stencilPass));
+            checkGLcall("glStencilOpSeparateATI(GL_FRONT, ...)");
+            GL_EXTCALL(glStencilOpSeparateATI(GL_BACK, stencilFail_ccw, depthFail_ccw, stencilPass_ccw));
+            checkGLcall("glStencilOpSeparateATI(GL_BACK, ...)");
+        } else {
+            ERR("Separate (two sided) stencil not supported on this version of opengl. Caps weren't honored?\n");
+        }
     } else if(onesided_enable) {
         if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
             checkGLcall("glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT)");
         }
 
+        /* This code disables the ATI extension as well, since the standard stencil functions are equal
+         * to calling the ATI functions with GL_FRONT_AND_BACK as face parameter
+         */
         glEnable(GL_STENCIL_TEST);
         checkGLcall("glEnable GL_STENCIL_TEST");
         glStencilFunc(func, ref, mask);
