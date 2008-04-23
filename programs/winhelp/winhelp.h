@@ -126,6 +126,7 @@ typedef struct tagWinHelp
     HBRUSH              hBrush;
 
     HLPFILE_WINDOWINFO* info;
+    HLPFILE_LINK*       current_link;
 
     WINHELP_PAGESET     back;
 

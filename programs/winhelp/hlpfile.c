@@ -433,6 +433,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned ref
     page->next            = NULL;
     page->first_paragraph = NULL;
     page->first_macro     = NULL;
+    page->first_link      = NULL;
     page->wNumber         = GET_UINT(buf, 0x21);
     page->offset          = offset;
     page->reference       = ref;
@@ -904,8 +905,9 @@ static  BOOL    HLPFILE_LoadGfxByIndex(HLPFILE *hlpfile, unsigned index,
  *
  *
  */
-static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG hash,
-                                             BOOL clrChange, unsigned wnd)
+static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
+                                             const char* str, unsigned len, LONG hash,
+                                             unsigned clrChange, unsigned wnd)
 {
     HLPFILE_LINK*  link;
     char*          link_str;
@@ -913,20 +915,31 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG h
     /* FIXME: should build a string table for the attributes.link.lpszPath
      * they are reallocated for each link
      */
-    link = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_LINK) + strlen(str) + 1);
+    if (len == -1) len = strlen(str);
+    link = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_LINK) + len + 1);
     if (!link) return NULL;
 
     link->cookie     = cookie;
-    link->lpszString = link_str = (char*)link + sizeof(HLPFILE_LINK);
-    strcpy(link_str, str);
-    link->lHash      = hash;
+    link->string     = link_str = (char*)(link + 1);
+    memcpy(link_str, str, len);
+    link_str[len] = '\0';
+    link->hash       = hash;
     link->bClrChange = clrChange ? 1 : 0;
     link->window     = wnd;
-    link->wRefCount   = 1;
+    link->wRefCount  = 1;
+    if (rd) {
+    link->next       = rd->first_link;
+    rd->first_link   = link;
+    link->cpMin      = rd->char_pos;
+    link->cpMax      = 0;
+    rd->force_color  = clrChange;
+    link->wRefCount++;
+    if (rd->current_link) WINE_FIXME("Pending link\n");
+    rd->current_link = link;
+    }
 
     WINE_TRACE("Link[%d] to %s@%08x:%d\n",
-               link->cookie, link->lpszString, 
-               link->lHash, link->window);
+               link->cookie, link->string, link->hash, link->window);
     return link;
 }
 
@@ -1047,8 +1060,12 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                 paragraphptr = &paragraph->next;
 
                 paragraph->next            = NULL;
+                if (!rd)
+                {
                 paragraph->link            = attributes.link;
                 if (paragraph->link) paragraph->link->wRefCount++;
+                }
+                else paragraph->link       = NULL;
                 paragraph->cookie          = para_normal_text;
                 paragraph->u.text.wFont    = attributes.wFont;
                 paragraph->u.text.wVSpace  = attributes.wVSpace;
@@ -1060,7 +1077,12 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                 attributes.wVSpace = 0;
                 attributes.wHSpace = 0;
                 if (rd) /* FIXME: TEMP */ {
-                if (rd->force_color && !HLPFILE_RtfAddControl(rd, "{\\ul\\cf1 ")) goto done;
+                if (rd->force_color)
+                {
+                    if ((rd->current_link->cookie == hlp_link_popup) ?
+                        !HLPFILE_RtfAddControl(rd, "{\\uld\\cf1") :
+                        !HLPFILE_RtfAddControl(rd, "{\\ul\\cf1")) goto done;
+                }
                 if (!HLPFILE_RtfAddText(rd, text)) goto done;
                 if (rd->force_color && !HLPFILE_RtfAddControl(rd, "}")) goto done;
                 rd->char_pos += textsize;
@@ -1152,8 +1174,11 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                     paragraphptr = &paragraph->next;
 
                     paragraph->next        = NULL;
+                    if (!rd){
                     paragraph->link        = attributes.link;
                     if (paragraph->link) paragraph->link->wRefCount++;
+                    }
+                    else paragraph->link   = NULL;
                     paragraph->cookie      = para_bitmap;
                     paragraph->u.gfx.pos   = pos;
                     switch (type)
@@ -1197,6 +1222,14 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                 HLPFILE_FreeLink(attributes.link);
                 attributes.link = NULL;
                 format += 1;
+                if (rd) {
+                if (!rd->current_link)
+                    WINE_FIXME("No existing link\n");
+                else
+                rd->current_link->cpMax = rd->char_pos;
+                rd->current_link = NULL;
+                rd->force_color = FALSE;
+                }
                 break;
 
             case 0x8B:
@@ -1222,8 +1255,8 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
             case 0xCC:
                 WINE_TRACE("macro => %s\n", format + 3);
                 HLPFILE_FreeLink(attributes.link);
-                attributes.link = HLPFILE_AllocLink(hlp_link_macro, (const char*)format + 3, 
-                                                    0, !(*format & 4), -1);
+                attributes.link = HLPFILE_AllocLink(rd, hlp_link_macro, (const char*)format + 3,
+                                                    GET_USHORT(format, 1), 0, !(*format & 4), -1);
                 format += 3 + GET_USHORT(format, 1);
                 break;
 
@@ -1231,8 +1264,8 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
             case 0xE1:
                 WINE_WARN("jump topic 1 => %u\n", GET_UINT(format, 1));
                 HLPFILE_FreeLink(attributes.link);
-                attributes.link = HLPFILE_AllocLink((*format & 1) ? hlp_link_link : hlp_link_popup,
-                                                    page->file->lpszPath,
+                attributes.link = HLPFILE_AllocLink(rd, (*format & 1) ? hlp_link_link : hlp_link_popup,
+                                                    page->file->lpszPath, -1,
                                                     GET_UINT(format, 1)-16,
                                                     1, -1);
 
@@ -1244,10 +1277,9 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
 	    case 0xE3:
             case 0xE6:
             case 0xE7:
-                HLPFILE_FreeLink(attributes.link);
-                attributes.link = HLPFILE_AllocLink((*format & 1) ? hlp_link_link : hlp_link_popup,
-                                                    page->file->lpszPath,
-                                                    GET_UINT(format, 1), 
+                attributes.link = HLPFILE_AllocLink(rd, (*format & 1) ? hlp_link_link : hlp_link_popup,
+                                                    page->file->lpszPath, -1,
+                                                    GET_UINT(format, 1),
                                                     !(*format & 4), -1);
                 format += 5;
                 break;
@@ -1285,8 +1317,8 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                         break;
                     }
                     HLPFILE_FreeLink(attributes.link);
-                    attributes.link = HLPFILE_AllocLink((*format & 1) ? hlp_link_link : hlp_link_popup,
-                                                        ptr, GET_UINT(format, 4),
+                    attributes.link = HLPFILE_AllocLink(rd, (*format & 1) ? hlp_link_link : hlp_link_popup,
+                                                        ptr, -1, GET_UINT(format, 4),
                                                         !(*format & 4), wnd);
                 }
                 format += 3 + GET_USHORT(format, 1);
@@ -1321,6 +1353,7 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
     rd->in_text = TRUE;
     rd->data = rd->ptr = HeapAlloc(GetProcessHeap(), 0, rd->allocated = 32768);
     rd->char_pos = 0;
+    rd->first_link = rd->current_link = NULL;
     rd->force_color = FALSE;
     }
 
@@ -1451,6 +1484,8 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
             ref = GET_UINT(buf, 0xc);
     } while (ref != 0xffffffff);
 done:
+    if (rd)
+    page->first_link = rd->first_link;
     return HLPFILE_RtfAddControl(rd, "}");
 }
 
@@ -2364,7 +2399,9 @@ static BOOL HLPFILE_GetMap(HLPFILE *hlpfile)
 void HLPFILE_FreeLink(HLPFILE_LINK* link)
 {
     if (link && !--link->wRefCount)
+    {
         HeapFree(GetProcessHeap(), 0, link);
+    }
 }
 
 /***********************************************************************

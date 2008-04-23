@@ -35,14 +35,17 @@ typedef struct
     COLORREF    nsr_color;      /* color for non scrollable region */
 } HLPFILE_WINDOWINFO;
 
-typedef struct
+typedef struct tagHlpFileLink
 {
     enum {hlp_link_link, hlp_link_popup, hlp_link_macro} cookie;
-    LPCSTR      lpszString;     /* name of the file to for the link (NULL if same file) */
-    LONG        lHash;          /* topic index */
+    LPCSTR      string;         /* name of the file to for the link (NULL if same file) */
+    LONG        hash;           /* topic index */
     unsigned    bClrChange : 1, /* true if the link is green & underlined */
                 wRefCount;      /* number of internal references to this object */
     unsigned    window;         /* window number for displaying the link (-1 is current) */
+    DWORD       cpMin;
+    DWORD       cpMax;
+    struct tagHlpFileLink* next;
 } HLPFILE_LINK;
 
 enum para_type {para_normal_text, para_debug_text, para_bitmap, para_metafile};
@@ -91,6 +94,8 @@ typedef struct tagHlpFilePage
     LPSTR                       lpszTitle;
     HLPFILE_PARAGRAPH*          first_paragraph;
     HLPFILE_MACRO*              first_macro;
+
+    HLPFILE_LINK*               first_link;
 
     unsigned                    wNumber;
     unsigned                    offset;
@@ -207,6 +212,8 @@ struct RtfData {
     unsigned    allocated;      /* overall allocated size */
     unsigned    char_pos;       /* current char position (in richedit) */
     char*       where;          /* pointer to feed back richedit */
+    HLPFILE_LINK*first_link;
+    HLPFILE_LINK*current_link;
     BOOL        force_color;
 };
 

@@ -55,6 +55,7 @@ static void    WINHELP_DeleteLines(WINHELP_WINDOW*);
 static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_DeleteButtons(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd, WINHELP_WINDOW *win, ULONG relative);
+static void    WINHELP_DeletePageLinks(HLPFILE_PAGE* page);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
 WINHELP_GLOBALS Globals = {3, NULL, TRUE, NULL, NULL, NULL, NULL, NULL, {{{NULL,NULL}},0}};
@@ -207,7 +208,7 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
  *
  */
 static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile,
-                                                          WINHELP_WINDOW* parent, POINT* mouse)
+                                                          WINHELP_WINDOW* parent, LPARAM mouse)
 {
     static      HLPFILE_WINDOWINFO      wi;
 
@@ -220,7 +221,8 @@ static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile,
     wi.size.cx = (parent_rect.right  - parent_rect.left) / 2;
     wi.size.cy = 10; /* need a non null value, so that border are taken into account while computing */
 
-    wi.origin = *mouse;
+    wi.origin.x = (short)LOWORD(mouse);
+    wi.origin.y = (short)HIWORD(mouse);
     ClientToScreen(parent->hMainWnd, &wi.origin);
     wi.origin.x -= wi.size.cx / 2;
     wi.origin.x  = min(wi.origin.x, GetSystemMetrics(SM_CXSCREEN) - wi.size.cx);
@@ -657,9 +659,13 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
             hTextWnd = CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
                                     0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
         else
+        {
             hTextWnd = CreateWindow(RICHEDIT_CLASS, NULL,
                                     ES_MULTILINE | ES_READONLY | WS_CHILD | WS_HSCROLL | WS_VSCROLL | WS_VISIBLE,
                                     0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, NULL);
+            SendMessage(hTextWnd, EM_SETEVENTMASK, 0,
+                        SendMessage(hTextWnd, EM_GETEVENTMASK, 0, 0) | ENM_MOUSEEVENTS);
+        }
     }
 
     hIcon = (wpage->page) ? wpage->page->file->hIcon : NULL;
@@ -699,6 +705,106 @@ BOOL WINHELP_OpenHelpWindow(HLPFILE_PAGE* (*lookup)(HLPFILE*, LONG, ULONG*),
     if (wpage.page) wpage.page->file->wRefCount++;
     wpage.wininfo = wi;
     return WINHELP_CreateHelpWindow(&wpage, nCmdShow, TRUE);
+}
+
+/***********************************************************************
+ *
+ *           WINHELP_FindLink
+ */
+static HLPFILE_LINK* WINHELP_FindLink(WINHELP_WINDOW* win, LPARAM pos)
+{
+    HLPFILE_LINK*           link;
+    POINTL                  mouse_ptl, char_ptl, char_next_ptl;
+    DWORD                   cp;
+
+    if (!win->page) return NULL;
+
+    mouse_ptl.x = (short)LOWORD(pos);
+    mouse_ptl.y = (short)HIWORD(pos);
+    cp = SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_CHARFROMPOS,
+                      0, (LPARAM)&mouse_ptl);
+
+    for (link = win->page->first_link; link; link = link->next)
+    {
+        if (link->cpMin <= cp && cp <= link->cpMax)
+        {
+            /* check whether we're at end of line */
+            SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_POSFROMCHAR,
+                         (LPARAM)&char_ptl, cp);
+            SendMessageW(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), EM_POSFROMCHAR,
+                         (LPARAM)&char_next_ptl, cp + 1);
+            if (char_next_ptl.y != char_ptl.y || mouse_ptl.x >= char_next_ptl.x)
+                link = NULL;
+            break;
+        }
+    }
+    return link;
+}
+
+/******************************************************************
+ *             WINHELP_HandleTextMouse
+ *
+ */
+static BOOL WINHELP_HandleTextMouse(WINHELP_WINDOW* win, const MSGFILTER* msgf)
+{
+    HLPFILE*                hlpfile;
+    HLPFILE_LINK*           link;
+    BOOL                    ret = FALSE;
+
+    switch (msgf->msg)
+    {
+    case WM_MOUSEMOVE:
+        if (WINHELP_FindLink(win, msgf->lParam))
+            SetCursor(win->hHandCur);
+        else
+            SetCursor(LoadCursor(0, IDC_ARROW));
+        break;
+
+     case WM_LBUTTONDOWN:
+         if ((win->current_link = WINHELP_FindLink(win, msgf->lParam)))
+             ret = TRUE;
+         break;
+
+    case WM_LBUTTONUP:
+        if ((link = WINHELP_FindLink(win, msgf->lParam)) && link == win->current_link)
+        {
+            HLPFILE_WINDOWINFO*     wi;
+
+            switch (link->cookie)
+            {
+            case hlp_link_link:
+                if ((hlpfile = WINHELP_LookupHelpFile(link->string)))
+                {
+                    if (link->window == -1)
+                        wi = win->info;
+                    else if ((link->window >= 0) && (link->window < hlpfile->numWindows))
+                        wi = &hlpfile->windows[link->window];
+                    else
+                    {
+                        WINE_WARN("link to window %d/%d\n", link->window, hlpfile->numWindows);
+                        break;
+                    }
+                    WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, link->hash, wi, SW_NORMAL);
+                }
+                break;
+            case hlp_link_popup:
+                if ((hlpfile = WINHELP_LookupHelpFile(link->string)))
+                    WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, link->hash,
+                                           WINHELP_GetPopupWindowInfo(hlpfile, win, msgf->lParam),
+                                           SW_NORMAL);
+                break;
+            case hlp_link_macro:
+                MACRO_ExecuteMacro(link->string);
+                break;
+            default:
+                WINE_FIXME("Unknown link cookie %d\n", link->cookie);
+            }
+            ret = TRUE;
+        }
+        win->current_link = NULL;
+        break;
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -813,6 +919,15 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             return 0;
         }
         break;
+
+    case WM_NOTIFY:
+        if (wParam == CTL_ID_TEXT)
+        {
+            return WINHELP_HandleTextMouse((WINHELP_WINDOW*)GetWindowLong(hWnd, 0),
+                                           (const MSGFILTER*)lParam);
+        }
+        break;
+
     case WM_NCDESTROY:
         {
             BOOL bExit;
@@ -993,7 +1108,6 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     WINDOWPOS         *winpos;
     PAINTSTRUCT        ps;
     HDC   hDc;
-    POINT mouse;
     INT   scroll_pos;
     HWND  hPopupWnd;
 
@@ -1259,13 +1373,10 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             HLPFILE*            hlpfile;
             HLPFILE_WINDOWINFO* wi;
 
-            mouse.x = (short)LOWORD(lParam);
-            mouse.y = (short)HIWORD(lParam);
-
             if (part->link) switch (part->link->cookie)
             {
             case hlp_link_link:
-                hlpfile = WINHELP_LookupHelpFile(part->link->lpszString);
+                hlpfile = WINHELP_LookupHelpFile(part->link->string);
                 if (part->link->window == -1)
                     wi = win->info;
                 else if (part->link->window < hlpfile->numWindows)
@@ -1275,17 +1386,17 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                     WINE_WARN("link to window %d/%d\n", part->link->window, hlpfile->numWindows);
                     break;
                 }
-                WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, part->link->lHash,
+                WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, part->link->hash,
                                        wi, SW_NORMAL);
                 break;
             case hlp_link_popup:
-                hlpfile = WINHELP_LookupHelpFile(part->link->lpszString);
-                if (hlpfile) WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, part->link->lHash,
-                                                    WINHELP_GetPopupWindowInfo(hlpfile, win, &mouse),
+                hlpfile = WINHELP_LookupHelpFile(part->link->string);
+                if (hlpfile) WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, part->link->hash,
+                                                    WINHELP_GetPopupWindowInfo(hlpfile, win, lParam),
                                                     SW_NORMAL);
                 break;
             case hlp_link_macro:
-                MACRO_ExecuteMacro(part->link->lpszString);
+                MACRO_ExecuteMacro(part->link->string);
                 break;
             default:
                 WINE_FIXME("Unknown link cookie %d\n", part->link->cookie);
@@ -1894,6 +2005,22 @@ void WINHELP_DeleteBackSet(WINHELP_WINDOW* win)
     win->back.index = 0;
 }
 
+/******************************************************************
+ *             WINHELP_DeletePageLinks
+ *
+ */
+static void WINHELP_DeletePageLinks(HLPFILE_PAGE* page)
+{
+    HLPFILE_LINK*       curr;
+    HLPFILE_LINK*       next;
+
+    for (curr = page->first_link; curr; curr = next)
+    {
+        next = curr->next;
+        HeapFree(GetProcessHeap(), 0, curr);
+    }
+}
+
 /***********************************************************************
  *
  *           WINHELP_DeleteWindow
@@ -1923,6 +2050,7 @@ static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
 
     WINHELP_DeleteButtons(win);
 
+    if (win->page) WINHELP_DeletePageLinks(win->page);
     if (win->hShadowWnd) DestroyWindow(win->hShadowWnd);
     if (win->hHistoryWnd) DestroyWindow(win->hHistoryWnd);
 
@@ -2005,7 +2133,7 @@ WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW* win, WPARAM wParam, LPARAM
         for (part = &line->first_part; part; part = part->next)
         {
             if (part->link && 
-                part->link->lpszString &&
+                part->link->string &&
                 part->rect.left   <= mouse.x &&
                 part->rect.right  >= mouse.x &&
                 part->rect.top    <= mouse.y + scroll_pos &&
