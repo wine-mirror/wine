@@ -1824,8 +1824,14 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
         IMM_GetThreadData()->hwndDefault = data->imeWnd;
     }
 
-    data->IMC.fOpen = fOpen;
-    return ImmNotifyIME(hIMC,NI_CONTEXTUPDATED,0,IMC_SETOPENSTATUS);
+    if (!fOpen != !data->IMC.fOpen)
+    {
+        data->IMC.fOpen = fOpen;
+        ImmNotifyIME( hIMC, NI_CONTEXTUPDATED, 0, IMC_SETOPENSTATUS);
+        ImmInternalSendIMENotify(data, IMN_SETSENTENCEMODE, 0);
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
