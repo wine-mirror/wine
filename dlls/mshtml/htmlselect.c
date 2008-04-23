@@ -422,7 +422,7 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
 
 HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
 {
-    HTMLSelectElement *ret = heap_alloc(sizeof(HTMLSelectElement));
+    HTMLSelectElement *ret = heap_alloc_zero(sizeof(HTMLSelectElement));
     nsresult nsres;
 
     HTMLElement_Init(&ret->element);

@@ -352,14 +352,13 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
         ret = &HTMLElement_Create(nsnode)->node;
         break;
     default:
-        ret = heap_alloc(sizeof(HTMLDOMNode));
+        ret = heap_alloc_zero(sizeof(HTMLDOMNode));
         ret->vtbl = &HTMLDOMNodeImplVtbl;
     }
 
     ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
     ret->ref = 1;
     ret->doc = doc;
-    ret->event_target = NULL;
 
     nsIDOMNode_AddRef(nsnode);
     ret->nsnode = nsnode;

@@ -333,7 +333,7 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
 
 HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
 {
-    HTMLOptionElement *ret = heap_alloc(sizeof(HTMLOptionElement));
+    HTMLOptionElement *ret = heap_alloc_zero(sizeof(HTMLOptionElement));
     nsresult nsres;
 
     HTMLElement_Init(&ret->element);

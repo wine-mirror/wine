@@ -1336,7 +1336,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret = HTMLTextAreaElement_Create(nselem);
 
     if(!ret) {
-        ret = heap_alloc(sizeof(HTMLElement));
+        ret = heap_alloc_zero(sizeof(HTMLElement));
         HTMLElement_Init(ret);
     }
 
