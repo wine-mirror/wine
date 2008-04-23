@@ -710,7 +710,7 @@ static ScriptHost *get_script_host(HTMLDocument *doc, const GUID *guid)
 {
     ScriptHost *iter;
 
-    if(IsEqualGUID(&CLSID_JScript, &guid)) {
+    if(IsEqualGUID(&CLSID_JScript, guid)) {
         FIXME("Ignoring JScript\n");
         return NULL;
     }
