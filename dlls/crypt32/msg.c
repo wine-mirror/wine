@@ -1673,6 +1673,9 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             {
                 ret = CDecodeMsg_CopyData(msg, pbData, cbData);
                 msg->base.state = MsgStateDataFinalized;
+                if (ret)
+                    ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data,
+                     msg->type);
             }
             else
             {
