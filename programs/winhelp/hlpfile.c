@@ -618,6 +618,58 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
     return dst;
 }
 
+static BOOL HLPFILE_RtfAddRawString(struct RtfData* rd, const char* str, size_t sz)
+{
+    if (!rd) return TRUE; /* FIXME: TEMP */
+    if (rd->ptr + sz >= rd->data + rd->allocated)
+    {
+        char*   new = HeapReAlloc(GetProcessHeap(), 0, rd->data, rd->allocated *= 2);
+        if (!new) return FALSE;
+        rd->ptr = new + (rd->ptr - rd->data);
+        rd->data = new;
+    }
+    memcpy(rd->ptr, str, sz);
+    rd->ptr += sz;
+
+    return TRUE;
+}
+
+static BOOL HLPFILE_RtfAddControl(struct RtfData* rd, const char* str)
+{
+    if (!rd) return TRUE; /* FIXME: TEMP */
+    if (*str == '\\' || *str == '{') rd->in_text = FALSE;
+    else if (*str == '}') rd->in_text = TRUE;
+    return HLPFILE_RtfAddRawString(rd, str, strlen(str));
+}
+
+static BOOL HLPFILE_RtfAddText(struct RtfData* rd, const char* str)
+{
+    const char* p;
+    const char* last;
+    const char* replace;
+
+    if (!rd) return TRUE; /* FIXME: TEMP */
+    if (!rd->in_text)
+    {
+        if (!HLPFILE_RtfAddRawString(rd, " ", 1)) return FALSE;
+        rd->in_text = TRUE;
+    }
+    for (last = p = str; *p; p++)
+    {
+        switch (*p)
+        {
+        case '{':  replace = "\\{";  break;
+        case '}':  replace = "\\}";  break;
+        case '\\': replace = "\\\\"; break;
+        default:   continue;
+        }
+        if ((p != last && !HLPFILE_RtfAddRawString(rd, last, p - last)) ||
+            !HLPFILE_RtfAddRawString(rd, replace, 2)) return FALSE;
+        last = p + 1;
+    }
+    return HLPFILE_RtfAddRawString(rd, last, p - last);
+}
+
 /******************************************************************
  *		HLPFILE_LoadBitmap
  *
@@ -875,7 +927,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG h
  *
  *           HLPFILE_BrowseParagraph
  */
-static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
+static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE *buf, BYTE* end)
 {
     HLPFILE_PARAGRAPH *paragraph, **paragraphptr;
     UINT               textsize;
@@ -885,6 +937,8 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
     unsigned short     bits;
     unsigned           nc, ncol = 1;
     BOOL               in_table = FALSE;
+    char               tmp[256];
+    BOOL               ret = FALSE;
 
     for (paragraphptr = &page->first_paragraph; *paragraphptr;
          paragraphptr = &(*paragraphptr)->next) /* Nothing */;
@@ -976,11 +1030,11 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
         while (text < text_end && format < format_end)
         {
             WINE_TRACE("Got text: %s (%p/%p - %p/%p)\n", wine_dbgstr_a(text), text, text_end, format, format_end);
-            textsize = strlen(text) + 1;
-            if (textsize > 1)
+            textsize = strlen(text);
+            if (textsize)
             {
                 paragraph = HeapAlloc(GetProcessHeap(), 0,
-                                      sizeof(HLPFILE_PARAGRAPH) + textsize);
+                                      sizeof(HLPFILE_PARAGRAPH) + textsize + 1);
                 if (!paragraph) return FALSE;
                 *paragraphptr = paragraph;
                 paragraphptr = &paragraph->next;
@@ -998,9 +1052,15 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
 
                 attributes.wVSpace = 0;
                 attributes.wHSpace = 0;
+                if (rd) /* FIXME: TEMP */ {
+                if (rd->force_color && !HLPFILE_RtfAddControl(rd, "{\\ul\\cf1 ")) goto done;
+                if (!HLPFILE_RtfAddText(rd, text)) goto done;
+                if (rd->force_color && !HLPFILE_RtfAddControl(rd, "}")) goto done;
+                rd->char_pos += textsize;
+                }
             }
             /* else: null text, keep on storing attributes */
-            text += textsize;
+            text += textsize + 1;
 
 	    if (*format == 0xff)
             {
@@ -1022,25 +1082,43 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
                 break;
 
 	    case 0x80:
-                attributes.wFont = GET_USHORT(format, 1);
-                WINE_TRACE("Changing font to %d\n", attributes.wFont);
-                format += 3;
-                break;
+                {
+                    unsigned    font = GET_USHORT(format, 1);
+                    attributes.wFont = font;
+                    WINE_TRACE("Changing font to %d\n", attributes.wFont);
+                    format += 3;
+                    /* FIXME: missing at least colors, also bold attribute looses information */
+                    sprintf(tmp, "\\f%d\\cf%d\\fs%d%s%s%s%s",
+                            font, font + 2,
+                            -2 * page->file->fonts[font].LogFont.lfHeight,
+                            page->file->fonts[font].LogFont.lfWeight > 400 ? "\\b" : "\\b0",
+                            page->file->fonts[font].LogFont.lfItalic ? "\\i" : "\\i0",
+                            page->file->fonts[font].LogFont.lfUnderline ? "\\ul" : "\\ul0",
+                            page->file->fonts[font].LogFont.lfStrikeOut ? "\\strike" : "\\strike0");
+                    if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+                }
+               break;
 
 	    case 0x81:
+                if (!HLPFILE_RtfAddControl(rd, "\\line")) goto done;
                 attributes.wVSpace++;
                 format += 1;
+                if (rd) /* FIXME: TEMP */ rd->char_pos++;
                 break;
 
 	    case 0x82:
+                if (!HLPFILE_RtfAddControl(rd, "\\par\\pard")) goto done;
                 attributes.wVSpace++;
                 attributes.wIndent = 0;
                 format += 1;
+                if (rd)  /* FIXME: TEMP */ rd->char_pos++;
                 break;
 
 	    case 0x83:
+                if (!HLPFILE_RtfAddControl(rd, "\\tab")) goto done;
                 attributes.wIndent++;
                 format += 1;
+                if (rd)  /* FIXME: TEMP */ rd->char_pos++;
                 break;
 
 #if 0
@@ -1206,20 +1284,74 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, BYTE *buf, BYTE* end)
 	    }
 	}
     }
+    ret = TRUE;
+done:
     HeapFree(GetProcessHeap(), 0, text_base);
-    return TRUE;
+    return ret;
 }
 
 /******************************************************************
  *		HLPFILE_BrowsePage
  *
  */
-BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page)
+BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
 {
     HLPFILE     *hlpfile = page->file;
     BYTE        *buf, *end;
     DWORD       ref = page->reference;
     unsigned    index, old_index = -1, offset, count = 0;
+    char        tmp[1024];
+
+    if (rd) { /* FIXME: TEMP */
+    rd->in_text = TRUE;
+    rd->data = rd->ptr = HeapAlloc(GetProcessHeap(), 0, rd->allocated = 32768);
+    rd->char_pos = 0;
+    rd->force_color = FALSE;
+    }
+
+    if (!HLPFILE_RtfAddControl(rd, "{\\rtf1\\ansi\\ansicpg1252\\deff0")) return FALSE;
+    /* generate font table */
+    if (!HLPFILE_RtfAddControl(rd, "{\\fonttbl")) return FALSE;
+    for (index = 0; index < hlpfile->numFonts; index++)
+    {
+        const char* family;
+        switch (hlpfile->fonts[index].LogFont.lfPitchAndFamily & 0xF0)
+        {
+        case FF_MODERN:     family = "modern";  break;
+        case FF_ROMAN:      family = "roman";   break;
+        case FF_SWISS:      family = "swiss";   break;
+        case FF_SCRIPT:     family = "script";  break;
+        case FF_DECORATIVE: family = "decor";   break;
+        default:            family = "nil";     break;
+        }
+        sprintf(tmp, "{\\f%d\\f%s\\fprq%d\\fcharset0 %s;}",
+                index, family,
+                hlpfile->fonts[index].LogFont.lfPitchAndFamily & 0x0F,
+                hlpfile->fonts[index].LogFont.lfFaceName);
+        if (!HLPFILE_RtfAddControl(rd, tmp)) return FALSE;
+    }
+    if (!HLPFILE_RtfAddControl(rd, "}")) return FALSE;
+    /* generate color table */
+    if (!HLPFILE_RtfAddControl(rd, "{\\colortbl ;\\red0\\green128\\blue0;")) return FALSE;
+    for (index = 0; index < hlpfile->numFonts; index++)
+    {
+        const char* family;
+        switch (hlpfile->fonts[index].LogFont.lfPitchAndFamily & 0xF0)
+        {
+        case FF_MODERN:     family = "modern";  break;
+        case FF_ROMAN:      family = "roman";   break;
+        case FF_SWISS:      family = "swiss";   break;
+        case FF_SCRIPT:     family = "script";  break;
+        case FF_DECORATIVE: family = "decor";   break;
+        default:            family = "nil";     break;
+        }
+        sprintf(tmp, "\\red%d\\green%d\\blue%d;",
+                GetRValue(hlpfile->fonts[index].color),
+                GetGValue(hlpfile->fonts[index].color),
+                GetBValue(hlpfile->fonts[index].color));
+        if (!HLPFILE_RtfAddControl(rd, tmp)) return FALSE;
+    }
+    if (!HLPFILE_RtfAddControl(rd, "}")) return FALSE;
 
     do
     {
@@ -1255,7 +1387,7 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page)
         case 0x01:
         case 0x20:
         case 0x23:
-            if (!HLPFILE_BrowseParagraph(page, buf, end)) return FALSE;
+            if (!HLPFILE_BrowseParagraph(page, rd, buf, end)) return FALSE;
             break;
         default:
             WINE_ERR("buf[0x14] = %x\n", buf[0x14]);
@@ -1270,7 +1402,7 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page)
             ref = GET_UINT(buf, 0xc);
     } while (ref != 0xffffffff);
 done:
-    return TRUE;
+    return HLPFILE_RtfAddControl(rd, "}");
 }
 
 /******************************************************************

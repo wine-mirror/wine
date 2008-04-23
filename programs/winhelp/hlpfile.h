@@ -199,4 +199,14 @@ void          HLPFILE_FreeHlpFile(HLPFILE*);
 void* HLPFILE_BPTreeSearch(BYTE*, const void*, HLPFILE_BPTreeCompare);
 void  HLPFILE_BPTreeEnum(BYTE*, HLPFILE_BPTreeCallback cb, void *cookie);
 
-BOOL          HLPFILE_BrowsePage(HLPFILE_PAGE*);
+struct RtfData {
+    BOOL        in_text;
+    char*       data;           /* RTF stream start */
+    char*       ptr;            /* current position in stream */
+    unsigned    allocated;      /* overall allocated size */
+    unsigned    char_pos;       /* current char position (in richedit) */
+    char*       where;          /* pointer to feed back richedit */
+    BOOL        force_color;
+};
+
+BOOL          HLPFILE_BrowsePage(HLPFILE_PAGE*, struct RtfData* rd);

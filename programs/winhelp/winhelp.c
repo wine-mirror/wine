@@ -54,7 +54,7 @@ static void    WINHELP_InitFonts(HWND hWnd);
 static void    WINHELP_DeleteLines(WINHELP_WINDOW*);
 static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_DeleteButtons(WINHELP_WINDOW*);
-static void    WINHELP_SetupText(HWND hWnd, ULONG relative);
+static void    WINHELP_SetupText(HWND hWnd, WINHELP_WINDOW *win, ULONG relative);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
 WINHELP_GLOBALS Globals = {3, NULL, TRUE, NULL, NULL, NULL, NULL, NULL, {{{NULL,NULL}},0}};
@@ -539,11 +539,12 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     BOOL                bPrimary, bPopup, bReUsed = FALSE;
     LPSTR               name;
     HICON               hIcon;
+    HWND                hTextWnd = NULL;
 
     bPrimary = !lstrcmpi(wpage->wininfo->name, "main");
     bPopup = !bPrimary && (wpage->wininfo->win_style & WS_POPUP);
 
-    if (wpage->page && !wpage->page->first_paragraph) HLPFILE_BrowsePage(wpage->page);
+    if (wpage->page && !wpage->page->first_paragraph) HLPFILE_BrowsePage(wpage->page, NULL);
 
     if (!bPopup)
     {
@@ -578,7 +579,8 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
 
                 win->page = wpage->page;
                 win->info = wpage->wininfo;
-                WINHELP_SetupText(GetDlgItem(win->hMainWnd, CTL_ID_TEXT), wpage->relative);
+                hTextWnd = GetDlgItem(win->hMainWnd, CTL_ID_TEXT);
+                WINHELP_SetupText(hTextWnd, win, wpage->relative);
 
                 InvalidateRect(win->hMainWnd, NULL, TRUE);
                 if (win->hHistoryWnd) InvalidateRect(win->hHistoryWnd, NULL, TRUE);
@@ -652,12 +654,12 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
                          0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_BUTTON, Globals.hInstance, NULL);
 
         if (!use_richedit)
-            CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
-                         0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
+            hTextWnd = CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
+                                    0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, win);
         else
-            CreateWindow(RICHEDIT_CLASS, NULL,
-                         ES_MULTILINE | ES_READONLY | WS_CHILD | WS_HSCROLL | WS_VSCROLL | WS_VISIBLE,
-                         0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, NULL);
+            hTextWnd = CreateWindow(RICHEDIT_CLASS, NULL,
+                                    ES_MULTILINE | ES_READONLY | WS_CHILD | WS_HSCROLL | WS_VSCROLL | WS_VISIBLE,
+                                    0, 0, 0, 0, win->hMainWnd, (HMENU)CTL_ID_TEXT, Globals.hInstance, NULL);
     }
 
     hIcon = (wpage->page) ? wpage->page->file->hIcon : NULL;
@@ -678,7 +680,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     WINHELP_LayoutMainWindow(win);
 
     ShowWindow(win->hMainWnd, nCmdShow);
-    UpdateWindow(win->hMainWnd);
+    WINHELP_SetupText(hTextWnd, win, wpage->relative);
 
     return TRUE;
 }
@@ -825,6 +827,53 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         break;
     }
     return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+static DWORD CALLBACK WINHELP_RtfStreamIn(DWORD_PTR cookie, BYTE* buff,
+                                          LONG cb, LONG* pcb)
+{
+    struct RtfData*     rd = (struct RtfData*)cookie;
+
+    if (rd->where >= rd->ptr) return 1;
+    if (rd->where + cb > rd->ptr)
+        cb = rd->ptr - rd->where;
+    memcpy(buff, rd->where, cb);
+    rd->where += cb;
+    *pcb = cb;
+    return 0;
+}
+
+static void WINHELP_FillRichEdit(HWND hTextWnd, WINHELP_WINDOW *win, ULONG relative)
+{
+    SendMessage(hTextWnd, WM_SETREDRAW, FALSE, 0);
+    SendMessage(hTextWnd, EM_SETBKGNDCOLOR, 0, (LPARAM)win->info->sr_color);
+    /* set word-wrap to window size (undocumented) */
+    SendMessage(hTextWnd, EM_SETTARGETDEVICE, 0, 0);
+    if (win->page)
+    {
+        struct RtfData  rd;
+        EDITSTREAM      es;
+
+        if (HLPFILE_BrowsePage(win->page, &rd))
+        {
+            rd.where = rd.data;
+            es.dwCookie = (DWORD_PTR)&rd;
+            es.dwError = 0;
+            es.pfnCallback = WINHELP_RtfStreamIn;
+
+            SendMessageW(hTextWnd, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+        }
+        /* FIXME: else leaking potentially the rd.first_link chain */
+        HeapFree(GetProcessHeap(), 0, rd.data);
+    }
+    else
+    {
+        SendMessage(hTextWnd, WM_SETTEXT, 0, (LPARAM)"");
+    }
+    SendMessage(hTextWnd, WM_SETREDRAW, TRUE, 0);
+    SendMessage(hTextWnd, EM_SETSEL, 0, 0);
+    SendMessage(hTextWnd, EM_SCROLLCARET, 0, 0);
+    InvalidateRect(hTextWnd, NULL, TRUE);
 }
 
 /***********************************************************************
@@ -1014,7 +1063,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     case WM_WINDOWPOSCHANGED:
         winpos = (WINDOWPOS*) lParam;
 
-        if (!(winpos->flags & SWP_NOSIZE)) WINHELP_SetupText(hWnd, 0);
+        if (!(winpos->flags & SWP_NOSIZE)) WINHELP_SetupText(hWnd, NULL, 0);
         break;
 
     case WM_MOUSEWHEEL:
@@ -1355,12 +1404,15 @@ static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND hWnd, UINT msg, WPARAM wParam
  *
  *           SetupText
  */
-static void WINHELP_SetupText(HWND hWnd, ULONG relative)
+static void WINHELP_SetupText(HWND hWnd, WINHELP_WINDOW* win, ULONG relative)
 {
-    HDC  hDc = GetDC(hWnd);
+    HDC  hDc;
     RECT rect;
     SIZE newsize;
 
+    if (!win) win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+    if (use_richedit) return WINHELP_FillRichEdit(hWnd, win, relative);
+    hDc = GetDC(hWnd);
     ShowScrollBar(hWnd, SB_VERT, FALSE);
     if (!WINHELP_SplitLines(hWnd, NULL))
     {
