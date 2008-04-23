@@ -143,6 +143,7 @@ static IDirect3DDevice9 *init_d3d9(void)
     IDirect3DDevice9 *device_ptr = 0;
     D3DPRESENT_PARAMETERS present_parameters;
     HRESULT hr;
+    D3DADAPTER_IDENTIFIER9 identifier;
 
     d3d9_create = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
     ok(d3d9_create != NULL, "Failed to get address of Direct3DCreate9\n");
@@ -161,6 +162,16 @@ static IDirect3DDevice9 *init_d3d9(void)
     present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    memset(&identifier, 0, sizeof(identifier));
+    hr = IDirect3D9_GetAdapterIdentifier(d3d9_ptr, 0, 0, &identifier);
+    ok(hr == D3D_OK, "Failed to get adapter identifier description\n");
+    trace("Driver string: \"%s\"\n", identifier.Driver);
+    trace("Description string: \"%s\"\n", identifier.Description);
+    trace("Device name string: \"%s\"\n", identifier.DeviceName);
+    trace("Driver version %d.%d.%d.%d\n",
+          HIWORD(identifier.DriverVersion.HighPart), LOWORD(identifier.DriverVersion.HighPart),
+          HIWORD(identifier.DriverVersion.LowPart), LOWORD(identifier.DriverVersion.LowPart));
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
     if(FAILED(hr)) {
