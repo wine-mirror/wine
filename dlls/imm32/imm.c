@@ -1779,6 +1779,7 @@ BOOL WINAPI ImmSetCompositionWindow(
 BOOL WINAPI ImmSetConversionStatus(
   HIMC hIMC, DWORD fdwConversion, DWORD fdwSentence)
 {
+    DWORD oldConversion, oldSentence;
     InputContextData *data = (InputContextData*)hIMC;
 
     TRACE("%p %d %d\n", hIMC, fdwConversion, fdwSentence);
@@ -1788,14 +1789,16 @@ BOOL WINAPI ImmSetConversionStatus(
 
     if ( fdwConversion != data->IMC.fdwConversion )
     {
+        oldConversion = data->IMC.fdwConversion;
         data->IMC.fdwConversion = fdwConversion;
-        ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCONVERSIONMODE);
+        ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, oldConversion, IMC_SETCONVERSIONMODE);
         ImmInternalSendIMENotify(data, IMN_SETCONVERSIONMODE, 0);
     }
     if ( fdwSentence != data->IMC.fdwSentence )
     {
+        oldSentence = data->IMC.fdwSentence;
         data->IMC.fdwSentence = fdwSentence;
-        ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETSENTENCEMODE);
+        ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, oldSentence, IMC_SETSENTENCEMODE);
         ImmInternalSendIMENotify(data, IMN_SETSENTENCEMODE, 0);
     }
 
