@@ -2170,7 +2170,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
             break;
         case TKIND_DISPATCH:
             /* This is not -1 when the interface is a non-base dual interface or
-               when a dispinterface wraps an interface ie the idl 'dispinterface x {interface y;};'.
+               when a dispinterface wraps an interface, i.e., the idl 'dispinterface x {interface y;};'.
                Note however that GetRefTypeOfImplType(0) always returns a ref to IDispatch and
                not this interface.
             */

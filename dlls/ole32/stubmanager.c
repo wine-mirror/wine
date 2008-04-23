@@ -87,8 +87,8 @@ struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
     sm->oxid_info.dwAuthnHint = RPC_C_AUTHN_LEVEL_NONE;
     sm->oxid_info.psa = NULL /* FIXME */;
 
-    /* yes, that's right, this starts at zero. that's zero EXTERNAL
-     * refs, ie nobody has unmarshalled anything yet. we can't have
+    /* Yes, that's right, this starts at zero. that's zero EXTERNAL
+     * refs, i.e., nobody has unmarshalled anything yet. We can't have
      * negative refs because the stub manager cannot be explicitly
      * killed, it has to die by somebody unmarshalling then releasing
      * the marshalled ifptr.

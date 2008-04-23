@@ -1583,11 +1583,11 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
            the form (a1 <operation> a2). However, some of the more complex operations
            take 3 parameters. Instead of the (sensible) addition of a3, Microsoft added
            in a third parameter called a0. Therefore these are operations of the form
-           a0 <operation> a1 <operation> a2, ie the new parameter goes to the front.
+           a0 <operation> a1 <operation> a2, i.e., the new parameter goes to the front.
 
            However, below we treat the new (a0) parameter as src2/opr2, so in the actual
            functions below, expect their syntax to differ slightly to those listed in the
-           manuals, ie replace arg1 with arg3, arg2 with arg1 and arg3 with arg2
+           manuals, i.e., replace arg1 with arg3, arg2 with arg1 and arg3 with arg2
            This affects WINED3DTOP_MULTIPLYADD and WINED3DTOP_LERP                     */
 
         if (isAlpha) {

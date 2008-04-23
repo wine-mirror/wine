@@ -1015,7 +1015,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
        aLFD.charset_encoding = any;
        break;
 
-   case 255: /* no suffix - it ends eg "-ascii" */
+   case 255: /* no suffix - it ends, e.g., "-ascii" */
        aLFD.charset_encoding = NULL;
        break;
    }
@@ -1715,7 +1715,7 @@ static LPCSTR XFONT_UnAlias(char* font)
 	XFONT_InitialCapitals(font); /* to remove extra white space */
 
 	for( fa = aliasTable; fa; fa = fa->next )
-	    /* use case insensitive matching to handle eg "MS Sans Serif" */
+	    /* use case insensitive matching to handle, e.g., "MS Sans Serif" */
 	    if( !strcasecmp( fa->faAlias, font ) )
 	    {
 		TRACE("found alias '%s'->%s'\n", font, fa->faTypeFace );

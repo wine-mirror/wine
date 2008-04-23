@@ -175,9 +175,9 @@ glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
 glTexAttribFunc texcoord_funcs[WINED3DDECLTYPE_UNUSED];
 
 /**
- * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
- * ie there is no GL Context - Get a default rendering context to enable the
- * function query some info from GL
+ * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created,
+ * i.e., there is no GL Context - Get a default rendering context to enable the
+ * function query some info from GL.
  */
 
 static int             wined3d_fake_gl_context_ref = 0;

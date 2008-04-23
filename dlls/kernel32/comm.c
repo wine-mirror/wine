@@ -779,7 +779,7 @@ static void dump_dcb(const DCB* lpdcb)
  *	SetCommState    (KERNEL32.@)
  *
  *  Re-initializes all hardware and control settings of a communications device,
- *  with values from a device control block without effecting the input and output
+ *  with values from a device control block without affecting the input and output
  *  queues.
  *
  * PARAMS
@@ -789,7 +789,7 @@ static void dump_dcb(const DCB* lpdcb)
  *
  * RETURNS
  *
- *  True on success, false on failure eg if the XonChar is equal to the XoffChar.
+ *  True on success, false on failure, e.g., if the XonChar is equal to the XoffChar.
  */
 BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
 {

@@ -1749,8 +1749,8 @@ BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
     }
     SERVER_END_REQ;
 
-    /* FIXME: shall this function be synchronous, ie only return when all events
-     * have been handled by all processes in the given group ?
+    /* FIXME: Shall this function be synchronous, i.e., only return when all events
+     * have been handled by all processes in the given group?
      * As of today, we don't wait...
      */
     return ret;
