@@ -343,6 +343,8 @@ static inline BOOL UXTHEME_SizedBlt (HDC hdcDst, int nXOriginDst, int nYOriginDs
         HDC hdcTemp;
         BOOL result = FALSE;
 
+        if (!nWidthSrc || !nHeightSrc) return TRUE;
+
         /* Create a DC with a bitmap consisting of a tiling of the source
            bitmap, with standard GDI functions. This is faster than an
            iteration with UXTHEME_Blt(). */
