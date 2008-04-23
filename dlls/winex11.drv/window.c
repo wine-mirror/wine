@@ -222,6 +222,7 @@ static int get_window_attributes( Display *display, struct x11drv_win_data *data
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->cursor            = x11drv_thread_data()->cursor;
     attr->bit_gravity       = NorthWestGravity;
+    attr->win_gravity       = StaticGravity;
     attr->backing_store     = NotUseful;
     attr->event_mask        = (ExposureMask | PointerMotionMask |
                                ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
@@ -725,15 +726,17 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
 
     if (!(size_hints = XAllocSizeHints())) return;
 
+    size_hints->win_gravity = StaticGravity;
+    size_hints->flags |= PWinGravity;
+
     /* don't update size hints if window is not in normal state */
     if (!(style & (WS_MINIMIZE | WS_MAXIMIZE)))
     {
         if (data->hwnd != GetDesktopWindow())  /* don't force position of desktop */
         {
-            size_hints->win_gravity = StaticGravity;
             size_hints->x = data->whole_rect.left;
             size_hints->y = data->whole_rect.top;
-            size_hints->flags |= PWinGravity | PPosition;
+            size_hints->flags |= PPosition;
         }
 
         if (!is_window_resizable( data, style ))
