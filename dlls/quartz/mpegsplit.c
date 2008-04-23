@@ -123,7 +123,7 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
 {
     LONGLONG duration;
 
-    int bitrate_index, freq_index, mode_ext, emphasis, lsf = 1, mpeg1, layer, mode, padding, bitrate, length;
+    int bitrate_index, freq_index, lsf = 1, mpeg1, layer, padding, bitrate, length;
 
     if (!(header[0] == 0xff && ((header[1]>>5)&0x7) == 0x7 &&
        ((header[1]>>1)&0x3) != 0 && ((header[2]>>4)&0xf) != 0xf &&
@@ -141,9 +141,6 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
     bitrate_index = ((header[2]>>4)&0xf);
     freq_index = ((header[2]>>2)&0x3) + (mpeg1?(lsf*3):6);
     padding = ((header[2]>>1)&0x1);
-    mode = ((header[3]>>6)&0x3);
-    mode_ext = ((header[3]>>4)&0x3);
-    emphasis = ((header[3]>>0)&0x3);
 
     bitrate = tabsel_123[lsf][layer-1][bitrate_index] * 1000;
     if (!bitrate || layer != 3)

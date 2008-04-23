@@ -70,7 +70,6 @@ static HRESULT AVIDec_ProcessBegin(TransformFilterImpl* pTransformFilter)
 static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, IMediaSample *pSample)
 {
     AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
-    VIDEOINFOHEADER* format;
     AM_MEDIA_TYPE amt;
     HRESULT hr;
     DWORD res;
@@ -96,7 +95,6 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
 	ERR("Unable to retrieve media type\n");
 	goto error;
     }
-    format = (VIDEOINFOHEADER*)amt.pbFormat;
 
     /* Update input size to match sample size */
     This->pBihIn->biSizeImage = cbSrcStream;

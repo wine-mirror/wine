@@ -267,16 +267,11 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 {
     AM_MEDIA_TYPE amt;
     HRESULT hr = S_OK;
-    DDSURFACEDESC sdesc;
-    int width;
-    int height;
-    LPBYTE palette = NULL;
     HDC hDC;
     BITMAPINFOHEADER *bmiHeader;
 
     TRACE("%p %p %d\n", This, data, size);
 
-    sdesc.dwSize = sizeof(sdesc);
     hr = IPin_ConnectionMediaType(This->ppPins[0], &amt);
     if (FAILED(hr)) {
         ERR("Unable to retrieve media type\n");
@@ -306,10 +301,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(bmiHeader->biCompression), 4));
     TRACE("biSizeImage = %d\n", bmiHeader->biSizeImage);
 
-    width = bmiHeader->biWidth;
-    height = bmiHeader->biHeight;
-    palette = ((LPBYTE)bmiHeader) + bmiHeader->biSize;
- 
     if (!This->init)
     {
         if (!This->WindowPos.right || !This->WindowPos.bottom)
