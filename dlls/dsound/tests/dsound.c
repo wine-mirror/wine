@@ -44,6 +44,8 @@ static HRESULT (WINAPI *pDirectSoundEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
 static HRESULT (WINAPI *pDirectSoundCreate)(LPCGUID,LPDIRECTSOUND*,
     LPUNKNOWN)=NULL;
 
+static BOOL gotdx8;
+
 static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
                               LPCGUID lpGuid)
 {
@@ -569,8 +571,13 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
                         formats[f][2]);
             wfx2=wfx;
             rc=IDirectSoundBuffer_SetFormat(primary,&wfx);
-            ok(rc==DS_OK,"IDirectSoundBuffer_SetFormat(%s) failed: %s\n",
-               format_string(&wfx), DXGetErrorString8(rc));
+
+            if (wfx.wBitsPerSample <= 16)
+                ok(rc==DS_OK,"IDirectSoundBuffer_SetFormat(%s) failed: %s\n",
+                   format_string(&wfx), DXGetErrorString8(rc));
+            else
+                ok(rc==DS_OK || rc == E_INVALIDARG, "SetFormat (%s) failed: %s\n",
+                   format_string(&wfx), DXGetErrorString8(rc));
 
             /* There is no guarantee that SetFormat will actually change the
              * format to what we asked for. It depends on what the soundcard
@@ -723,14 +730,30 @@ static HRESULT test_secondary(LPGUID lpGuid)
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            if (wfx.wBitsPerSample != 8 && wfx.wBitsPerSample != 16)
-                ok(rc == DSERR_CONTROLUNAVAIL && !secondary, "IDirectSound_CreateSoundBuffer() "
-                    "should have returned DSERR_CONTROLUNAVAIL and NULL, returned: %s %p\n",
-                    DXGetErrorString8(rc), secondary);
+            if (gotdx8 || wfx.wBitsPerSample <= 16)
+            {
+                if (wfx.wBitsPerSample > 16)
+                    ok(rc == DSERR_CONTROLUNAVAIL && !secondary, "IDirectSound_CreateSoundBuffer() "
+                        "should have returned DSERR_CONTROLUNAVAIL and NULL, returned: %s %p\n",
+                        DXGetErrorString8(rc), secondary);
+                else
+                    ok(rc==DS_OK && secondary!=NULL,
+                        "IDirectSound_CreateSoundBuffer() failed to create a secondary "
+                        "buffer %s\n",DXGetErrorString8(rc));
+            }
             else
-                ok(rc==DS_OK && secondary!=NULL,
-                    "IDirectSound_CreateSoundBuffer() failed to create a secondary "
-                    "buffer %s\n",DXGetErrorString8(rc));
+                ok(rc==E_INVALIDARG, "Creating %d bpp buffer on dx < 8 returned: %p %s\n",
+                   wfx.wBitsPerSample, secondary, DXGetErrorString8(rc));
+
+            if (!gotdx8)
+            {
+                skip("Not doing the WAVE_FORMAT_EXTENSIBLE tests\n");
+                /* Apparently they succeed with bogus values,
+                 * which means that older dsound doesn't look at them
+                 */
+                goto no_wfe;
+            }
+
             if (secondary)
                 IDirectSoundBuffer_Release(secondary);
             secondary = NULL;
@@ -792,6 +815,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
                 "IDirectSound_CreateSoundBuffer() failed to create a secondary "
                 "buffer %s\n",DXGetErrorString8(rc));
 
+no_wfe:
             if (rc==DS_OK && secondary!=NULL) {
                 if (winetest_interactive) {
                     trace("  Testing a secondary buffer at %dx%dx%d "
@@ -1065,6 +1089,8 @@ START_TEST(dsound)
             "DirectSoundEnumerateA");
         pDirectSoundCreate = (void*)GetProcAddress(hDsound,
             "DirectSoundCreate");
+
+        gotdx8 = !!GetProcAddress(hDsound, "DirectSoundCreate8");
 
         IDirectSound_tests();
         dsound_tests();
