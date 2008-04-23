@@ -769,25 +769,19 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                 case CPS_REVERT: FIXME("CPS_REVERT\n"); break;
                 case CPS_CANCEL:
                 {
-                    BOOL send;
-                    LPCOMPOSITIONSTRING lpCompStr;
+                    LPIMEPRIVATE myPrivate;
 
                     TRACE("CPS_CANCEL\n");
 
                     X11DRV_ForceXIMReset(lpIMC->hWnd);
 
-                    lpCompStr = ImmLockIMCC(lpIMC->hCompStr);
-                    send = (lpCompStr->dwCompStrLen != 0);
-                    ImmUnlockIMCC(lpIMC->hCompStr);
-
-                    if (send)
+                    myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+                    if (myPrivate->bInComposition)
                     {
-                        HIMCC newCompStr;
-                        newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0);
-                        ImmDestroyIMCC(lpIMC->hCompStr);
-                        lpIMC->hCompStr = newCompStr;
-                        GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, 0, GCS_COMPSTR);
+                        GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
+                        myPrivate->bInComposition = FALSE;
                     }
+                    ImmUnlockIMCC(lpIMC->hPrivate);
                     bRet = TRUE;
                 }
                 break;
