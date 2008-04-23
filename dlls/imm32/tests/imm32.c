@@ -191,16 +191,13 @@ static int test_ImmNotifyIME(void) {
        "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
        "the composition string being canceled is empty.\n");
 
+    ImmSetCompositionString(imc, SCS_SETSTR, string, sizeof(string), NULL, 0);
     msg_spy_flush_msgs();
 
-    ImmSetCompositionString(imc, SCS_SETSTR, string, sizeof(string), NULL, 0);
     ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
-    todo_wine
-    {
-        ok(!msg_spy_find_msg(WM_IME_COMPOSITION), "Windows does not post "
-           "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
-           "the composition string being canceled is non empty.\n");
-    }
+    ok(!msg_spy_find_msg(WM_IME_COMPOSITION), "Windows does not post "
+       "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
+       "the composition string being canceled is non empty.\n");
 
     /* behavior differs between win9x and NT */
     ret = ImmGetCompositionString(imc, GCS_COMPSTR, resstr, sizeof(resstr));
