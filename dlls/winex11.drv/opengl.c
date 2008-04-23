@@ -1441,41 +1441,29 @@ int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
   return physDev->current_pf;
 }
 
-/**
- * X11DRV_SetPixelFormat
- *
- * Set the pixel-format id used by this DC
- */
-BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
+/* This function is the core of X11DRV_SetPixelFormat and X11DRV_SetPixelFormatWINE.
+ * Both functions are the same except that X11DRV_SetPixelFormatWINE allows you to
+ * set the pixel format multiple times. */
+static BOOL internal_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   int iPixelFormat,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
-  WineGLPixelFormat *fmt;
-  int value;
-  HWND hwnd;
+    WineGLPixelFormat *fmt;
+    int value;
+    HWND hwnd;
 
-  TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
+    /* SetPixelFormat is not allowed on the X root_window e.g. GetDC(0) */
+    if(get_glxdrawable(physDev) == root_window)
+    {
+        ERR("Invalid operation on root_window\n");
+        return FALSE;
+    }
 
-  if (!has_opengl()) {
-    ERR("No libGL on this box - disabling OpenGL support !\n");
-    return FALSE;
-  }
-
-  /* SetPixelFormat is not allowed on the X root_window e.g. GetDC(0) */
-  if(get_glxdrawable(physDev) == root_window)
-  {
-    ERR("Invalid operation on root_window\n");
-    return FALSE;
-  }
-
-  /* Check if iPixelFormat is in our list of supported formats to see if it is supported. */
-  fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, FALSE /* Offscreen */, &value);
-  if(!fmt) {
-    ERR("Invalid iPixelFormat: %d\n", iPixelFormat);
-    return FALSE;
-  }
-
-    if(physDev->current_pf)  /* cannot change it if already set */
-        return (physDev->current_pf == iPixelFormat);
+    /* Check if iPixelFormat is in our list of supported formats to see if it is supported. */
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, FALSE /* Offscreen */, &value);
+    if(!fmt) {
+        ERR("Invalid iPixelFormat: %d\n", iPixelFormat);
+        return FALSE;
+    }
 
     pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
 
@@ -1507,24 +1495,46 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
         FIXME("called on a non-window, non-bitmap object?\n");
     }
 
-  physDev->current_pf = iPixelFormat;
+    physDev->current_pf = iPixelFormat;
 
-  if (TRACE_ON(wgl)) {
-    int gl_test = 0;
+    if (TRACE_ON(wgl)) {
+        int gl_test = 0;
 
-    gl_test = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_FBCONFIG_ID, &value);
-    if (gl_test) {
-      ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
-    } else {
-      TRACE(" FBConfig have :\n");
-      TRACE(" - FBCONFIG_ID   0x%x\n", value);
-      pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_VISUAL_ID, &value);
-      TRACE(" - VISUAL_ID     0x%x\n", value);
-      pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
-      TRACE(" - DRAWABLE_TYPE 0x%x\n", value);
+        gl_test = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_FBCONFIG_ID, &value);
+        if (gl_test) {
+           ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+        } else {
+            TRACE(" FBConfig have :\n");
+            TRACE(" - FBCONFIG_ID   0x%x\n", value);
+            pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_VISUAL_ID, &value);
+            TRACE(" - VISUAL_ID     0x%x\n", value);
+            pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
+            TRACE(" - DRAWABLE_TYPE 0x%x\n", value);
+        }
     }
-  }
-  return TRUE;
+    return TRUE;
+}
+
+
+/**
+ * X11DRV_SetPixelFormat
+ *
+ * Set the pixel-format id used by this DC
+ */
+BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
+			   int iPixelFormat,
+			   const PIXELFORMATDESCRIPTOR *ppfd) {
+    TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
+
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return FALSE;
+    }
+
+    if(physDev->current_pf)  /* cannot change it if already set */
+        return (physDev->current_pf == iPixelFormat);
+
+    return internal_SetPixelFormat(physDev, iPixelFormat, ppfd);
 }
 
 /**
