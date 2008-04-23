@@ -686,6 +686,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     if (bPopup && use_richedit)
     {
         DWORD   mask = SendMessage(hTextWnd, EM_GETEVENTMASK, 0, 0);
+        RECT    rect;
 
         WINHELP_SetupText(hTextWnd, win, wpage->relative);
 
@@ -694,6 +695,17 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         SendMessage(hTextWnd, EM_SETEVENTMASK, 0, mask | ENM_REQUESTRESIZE);
         SendMessage(hTextWnd, EM_REQUESTRESIZE, 0, 0);
         SendMessage(hTextWnd, EM_SETEVENTMASK, 0, mask);
+
+        GetWindowRect(win->hMainWnd, &rect);
+        win->hShadowWnd = CreateWindowEx(WS_EX_TOOLWINDOW, SHADOW_WIN_CLASS_NAME,
+                                         "", WS_POPUP | WS_VISIBLE,
+                                         rect.left + SHADOW_DX, rect.top + SHADOW_DY,
+                                         rect.right - rect.left,
+                                         rect.bottom - rect.top,
+                                         Globals.active_win->hMainWnd, 0,
+                                         Globals.hInstance, NULL);
+        SetWindowPos(win->hMainWnd, win->hShadowWnd, 0, 0, 0, 0,
+                     SWP_NOSIZE | SWP_NOMOVE);
     }
     else
     {
@@ -1541,7 +1553,7 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
 static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (WINHELP_CheckPopup(hWnd, msg, wParam, lParam, NULL)) return 0;
-    return DefWindowProc(hWnd, msg, wParam, lParam);
+    return WINHELP_CheckPopup(hWnd, msg, wParam, lParam, NULL) ? 0L : DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 /***********************************************************************
@@ -1984,7 +1996,8 @@ static BOOL WINHELP_CheckPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
     case WM_ACTIVATE:
         if (wParam != WA_INACTIVE || (HWND)lParam == Globals.active_win->hMainWnd ||
-            (HWND)lParam == Globals.active_popup->hMainWnd)
+            (HWND)lParam == Globals.active_popup->hMainWnd ||
+            GetWindow((HWND)lParam, GW_OWNER) == Globals.active_win->hMainWnd)
             break;
     case WM_COMMAND:
         if (use_richedit) break;
