@@ -2696,7 +2696,11 @@ void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &src1_param);
     shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], WINED3DSP_WRITEMASK_0, &src2_param);
 
-    shader_addline(arg->buffer, "dot(%s, %s) + %s);\n", src0_param.param_str, src1_param.param_str, src2_param.param_str);
+    if (mask_size > 1) {
+        shader_addline(arg->buffer, "vec%d(dot(%s, %s) + %s));\n", mask_size, src0_param.param_str, src1_param.param_str, src2_param.param_str);
+    } else {
+        shader_addline(arg->buffer, "dot(%s, %s) + %s);\n", src0_param.param_str, src1_param.param_str, src2_param.param_str);
+    }
 }
 
 void pshader_glsl_input_pack(
