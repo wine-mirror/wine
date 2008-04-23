@@ -1365,6 +1365,7 @@ void get_drawable_size_fbo(IWineD3DSurfaceImpl *This, UINT *width, UINT *height)
 #define SFLAG_CLIENT      0x00010000 /* GL_APPLE_client_storage is used on that texture */
 #define SFLAG_ALLOCATED   0x00020000 /* A gl texture is allocated for this surface */
 #define SFLAG_PBO         0x00040000 /* Has a PBO attached for speeding up data transfers for dynamically locked surfaces */
+#define SFLAG_NORMCOORD   0x00080000   /* Set if the GL texture coords are normalized(non-texture rectangle) */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL

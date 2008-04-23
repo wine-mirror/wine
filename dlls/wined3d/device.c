@@ -663,7 +663,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     object->glDescription.level            = Level;
 
     /* Flags */
-    object->Flags      = 0;
+    object->Flags      = SFLAG_NORMCOORD; /* Default to normalized coords */
     object->Flags     |= Discard ? SFLAG_DISCARD : 0;
     object->Flags     |= (WINED3DFMT_D16_LOCKABLE == Format) ? SFLAG_LOCKABLE : 0;
     object->Flags     |= Lockable ? SFLAG_LOCKABLE : 0;

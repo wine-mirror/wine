@@ -626,6 +626,11 @@ void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT te
         IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
         IWineD3DSurface_AddDirtyRect(iface, NULL);
     }
+    if(target == GL_TEXTURE_RECTANGLE_ARB && This->glDescription.target != target) {
+        This->Flags &= ~SFLAG_NORMCOORD;
+    } else if(This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB && target != GL_TEXTURE_RECTANGLE_ARB) {
+        This->Flags |= SFLAG_NORMCOORD;
+    }
     This->glDescription.textureName = textureName;
     This->glDescription.target      = target;
     This->Flags &= ~SFLAG_ALLOCATED;
@@ -2845,15 +2850,22 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     }
     checkGLcall("glEnd and previous");
 
-    left = (float) srect->x1 / (float) Src->pow2Width;
-    right = (float) srect->x2 / (float) Src->pow2Width;
+    left = srect->x1;
+    right = srect->x2;
 
     if(upsidedown) {
-        top = (float) (Src->currentDesc.Height - srect->y1) / (float) Src->pow2Height;
-        bottom = (float) (Src->currentDesc.Height - srect->y2) / (float) Src->pow2Height;
+        top = Src->currentDesc.Height - srect->y1;
+        bottom = Src->currentDesc.Height - srect->y2;
     } else {
-        top = (float) (Src->currentDesc.Height - srect->y2) / (float) Src->pow2Height;
-        bottom = (float) (Src->currentDesc.Height - srect->y1) / (float) Src->pow2Height;
+        top = Src->currentDesc.Height - srect->y2;
+        bottom = Src->currentDesc.Height - srect->y1;
+    }
+
+    if(Src->Flags & SFLAG_NORMCOORD) {
+        left /= Src->pow2Width;
+        right /= Src->pow2Width;
+        top /= Src->pow2Height;
+        bottom /= Src->pow2Height;
     }
 
     /* draw the source texture stretched and upside down. The correct surface is bound already */
@@ -3774,7 +3786,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
             This->glDescription.target = GL_TEXTURE_RECTANGLE_ARB;
             This->pow2Width  = This->currentDesc.Width;
             This->pow2Height = This->currentDesc.Height;
-            This->Flags &= ~SFLAG_NONPOW2;
+            This->Flags &= ~(SFLAG_NONPOW2 | SFLAG_NORMCOORD);
         }
 
         /* No oversize, gl rect is the full texture size */
