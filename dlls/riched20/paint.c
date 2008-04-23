@@ -479,7 +479,7 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   RECT rc, rcPara;
   int y = c->pt.y;
   int height = 0, baseline = 0, no=0, pno = 0;
-  int xs = 0, xe = 0;
+  int xe = 0;
   BOOL visible = FALSE;
   int nMargWidth = 0;
 
@@ -494,7 +494,6 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         nMargWidth = ME_twips2pointsX(c, para->pFmt->dxStartIndent);
         if (pno != 0)
           nMargWidth += ME_twips2pointsX(c, para->pFmt->dxOffset);
-        xs = c->rcView.left+nMargWidth;
         xe = c->rcView.right - ME_twips2pointsX(c, para->pFmt->dxRightIndent);
         y += ME_DrawParaDecoration(c, para, y);
         break;

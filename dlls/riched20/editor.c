@@ -3531,7 +3531,6 @@ int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar)
   int car_pos = 0;
   int text_pos=-1;
   int URLmin, URLmax = 0;
-  CHARRANGE url;
   FINDTEXTA ft;
   CHARFORMAT2W cur_format;
   CHARFORMAT2W default_format;
@@ -3585,8 +3584,6 @@ int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar)
       }
       if (text_pos != -1) 
       {
-        url.cpMin=text_pos;
-        url.cpMax=car_pos-1;
         ME_SetCharFormat(editor, text_pos, (URLmax-text_pos), &link);
         ME_RewrapRepaint(editor);
         break;
