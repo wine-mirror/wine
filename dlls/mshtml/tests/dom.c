@@ -777,6 +777,26 @@ static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id, BOOL expect
     return elem;
 }
 
+static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id)
+{
+    IHTMLDocument3 *doc3;
+    IHTMLElement *elem;
+    BSTR tmp;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "Could not get IHTMLDocument3 iface: %08x\n", hres);
+
+    tmp = SysAllocString(id);
+    hres = IHTMLDocument3_getElementById(doc3, tmp, &elem);
+    SysFreeString(tmp);
+    ok(hres == S_OK, "getElementById(%s) failed: %08x\n", dbgstr_w(id), hres);
+
+    IHTMLDocument3_Release(doc3);
+
+    return elem;
+}
+
 static void test_select_elem(IHTMLSelectElement *select)
 {
     test_select_length(select, 2);
@@ -1357,6 +1377,15 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLElementCollection_Release(col);
 
     get_elem_by_id(doc, xxxW, FALSE);
+    elem = get_doc_elem_by_id(doc, xxxW);
+    ok(!elem, "elem != NULL\n");
+
+    elem = get_doc_elem_by_id(doc, sW);
+    ok(elem != NULL, "elem == NULL\n");
+    test_elem_type((IUnknown*)elem, ET_SELECT);
+    if(elem)
+        IHTMLElement_Release(elem);
+
     elem = get_elem_by_id(doc, sW, TRUE);
     if(elem) {
         IHTMLSelectElement *select;
