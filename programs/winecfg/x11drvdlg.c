@@ -35,9 +35,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-#define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
+#define RES_MAXLEN 5 /* max number of digits in a screen dimension. 5 digits should be plenty */
 #define MINDPI 96
-#define MAXDPI 480
+#define MAXDPI 144	/* making this too high surprises and hurts users */
 #define DEFDPI 96
 
 #define IDT_DPIEDIT 0x1234
