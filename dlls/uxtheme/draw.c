@@ -345,6 +345,18 @@ static inline BOOL UXTHEME_SizedBlt (HDC hdcDst, int nXOriginDst, int nYOriginDs
 
         if (!nWidthSrc || !nHeightSrc) return TRUE;
 
+        /* For destination width/height less than or equal to source
+           width/height, do not bother with memory bitmap optimization */
+        if (nWidthSrc >= nWidthDst && nHeightSrc >= nHeightDst)
+        {
+            int bltWidth = min (nWidthDst, nWidthSrc);
+            int bltHeight = min (nHeightDst, nHeightSrc);
+
+            return UXTHEME_Blt (hdcDst, nXOriginDst, nYOriginDst, bltWidth, bltHeight,
+                                hdcSrc, nXOriginSrc, nYOriginSrc,
+                                transparent, transcolor);
+        }
+
         /* Create a DC with a bitmap consisting of a tiling of the source
            bitmap, with standard GDI functions. This is faster than an
            iteration with UXTHEME_Blt(). */
