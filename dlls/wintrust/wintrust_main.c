@@ -111,19 +111,32 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
     provData->pgActionID = actionID;
     WintrustGetRegPolicyFlags(&provData->dwRegPolicySettings);
 
-    err = provData->psPfns->pfnInitialize(provData);
-    if (err)
-        goto done;
-    err = provData->psPfns->pfnObjectTrust(provData);
-    if (err)
-        goto done;
-    err = provData->psPfns->pfnSignatureTrust(provData);
-    if (err)
-        goto done;
-    err = provData->psPfns->pfnCertificateTrust(provData);
-    if (err)
-        goto done;
-    err = provData->psPfns->pfnFinalPolicy(provData);
+    if (provData->psPfns->pfnInitialize)
+    {
+        err = provData->psPfns->pfnInitialize(provData);
+        if (err)
+            goto done;
+    }
+    if (provData->psPfns->pfnObjectTrust)
+    {
+        err = provData->psPfns->pfnObjectTrust(provData);
+        if (err)
+            goto done;
+    }
+    if (provData->psPfns->pfnSignatureTrust)
+    {
+        err = provData->psPfns->pfnSignatureTrust(provData);
+        if (err)
+            goto done;
+    }
+    if (provData->psPfns->pfnCertificateTrust)
+    {
+        err = provData->psPfns->pfnCertificateTrust(provData);
+        if (err)
+            goto done;
+    }
+    if (provData->psPfns->pfnFinalPolicy)
+        err = provData->psPfns->pfnFinalPolicy(provData);
     goto done;
 
 oom:
