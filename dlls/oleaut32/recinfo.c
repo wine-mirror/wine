@@ -466,8 +466,13 @@ static HRESULT WINAPI IRecordInfoImpl_RecordCreateCopy(IRecordInfo *iface, PVOID
 static HRESULT WINAPI IRecordInfoImpl_RecordDestroy(IRecordInfo *iface, PVOID pvRecord)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pvRecord);
+
+    hres = IRecordInfo_RecordClear(iface, pvRecord);
+    if(FAILED(hres))
+        return hres;
 
     if(!HeapFree(GetProcessHeap(), 0, pvRecord))
         return E_INVALIDARG;
