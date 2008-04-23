@@ -878,6 +878,9 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
                 HeapFree(GetProcessHeap(),0,lpwhr->lpszVerb);
                 lpwhr->lpszVerb = WININET_strdupW(szGET);
                 HTTP_DrainContent(lpwhr);
+                INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                                      INTERNET_STATUS_REDIRECT, szNewLocation,
+                                      dwBufferSize);
                 rc = HTTP_HandleRedirect(lpwhr, szNewLocation);
                 if (rc)
                     rc = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
