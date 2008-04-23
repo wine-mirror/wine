@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wincrypt.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptdlg);
@@ -43,4 +44,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             break;
     }
     return TRUE;
+}
+
+DWORD GetFriendlyNameOfCertA(PCCERT_CONTEXT pccert, LPSTR pchBuffer,
+                             DWORD cchBuffer)
+{
+    return CertGetNameStringA(pccert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
+     pchBuffer, cchBuffer);
+}
+
+DWORD GetFriendlyNameOfCertW(PCCERT_CONTEXT pccert, LPWSTR pchBuffer,
+                             DWORD cchBuffer)
+{
+    return CertGetNameStringW(pccert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
+     pchBuffer, cchBuffer);
 }
