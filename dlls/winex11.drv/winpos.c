@@ -51,7 +51,7 @@ static const char managed_prop[] = "__wine_x11_managed";
 /***********************************************************************
  *     update_net_wm_states
  */
-static void update_net_wm_states( Display *display, struct x11drv_win_data *data )
+void update_net_wm_states( Display *display, struct x11drv_win_data *data )
 {
     static const unsigned int state_atoms[NB_NET_WM_STATES] =
     {
@@ -463,74 +463,4 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     wine_tsx11_lock();
     XFlush( display );  /* make sure changes are done before we start painting again */
     wine_tsx11_unlock();
-}
-
-
-struct desktop_resize_data
-{
-    RECT  old_screen_rect;
-    RECT  old_virtual_rect;
-};
-
-static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam )
-{
-    struct x11drv_win_data *data;
-    Display *display = thread_display();
-    struct desktop_resize_data *resize_data = (struct desktop_resize_data *)lparam;
-    int mask = 0;
-
-    if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
-
-    if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)
-    {
-        /* update the full screen state */
-        update_net_wm_states( display, data );
-    }
-
-    if (resize_data->old_virtual_rect.left != virtual_screen_rect.left) mask |= CWX;
-    if (resize_data->old_virtual_rect.top != virtual_screen_rect.top) mask |= CWY;
-    if (mask && data->whole_window)
-    {
-        XWindowChanges changes;
-
-        wine_tsx11_lock();
-        changes.x = data->whole_rect.left - virtual_screen_rect.left;
-        changes.y = data->whole_rect.top - virtual_screen_rect.top;
-        XReconfigureWMWindow( display, data->whole_window,
-                              DefaultScreen(display), mask, &changes );
-        wine_tsx11_unlock();
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		X11DRV_resize_desktop
- */
-void X11DRV_resize_desktop( unsigned int width, unsigned int height )
-{
-    HWND hwnd = GetDesktopWindow();
-    struct desktop_resize_data resize_data;
-
-    SetRect( &resize_data.old_screen_rect, 0, 0, screen_width, screen_height );
-    resize_data.old_virtual_rect = virtual_screen_rect;
-
-    xinerama_init( width, height );
-
-    if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
-    {
-        SendMessageW( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, MAKELPARAM( width, height ) );
-    }
-    else
-    {
-        TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
-        SetWindowPos( hwnd, 0, virtual_screen_rect.left, virtual_screen_rect.top,
-                      virtual_screen_rect.right - virtual_screen_rect.left,
-                      virtual_screen_rect.bottom - virtual_screen_rect.top,
-                      SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
-        SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp,
-                             MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
-    }
-
-    EnumWindows( update_windows_on_desktop_resize, (LPARAM)&resize_data );
 }

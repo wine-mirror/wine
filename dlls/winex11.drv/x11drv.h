@@ -711,6 +711,7 @@ extern void flush_gl_drawable( X11DRV_PDEVICE *physDev );
 
 extern int get_window_wm_state( Display *display, struct x11drv_win_data *data );
 extern void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, BOOL set );
+extern void update_net_wm_states( Display *display, struct x11drv_win_data *data );
 extern void make_window_embedded( Display *display, struct x11drv_win_data *data );
 
 /* X context to associate a hwnd to an X window */
