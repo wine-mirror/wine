@@ -62,12 +62,15 @@ void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
     BOOL is_spam;
 
     const char *spam[] = {
-        "Vertex shader was successfully compiled to run on hardware.\n",    /* fglrx        */
-        "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx        */
-        "Fragment shader(s) linked, vertex shader(s) linked.",              /* fglrx, no \n */
-        "Vertex shader(s) linked, no fragment shader(s) defined.",          /* fglrx, no \n */
+        "Vertex shader was successfully compiled to run on hardware.\n",    /* fglrx          */
+        "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx          */
+        "Fragment shader(s) linked, vertex shader(s) linked. \n ",          /* fglrx, with \n */
+        "Fragment shader(s) linked, vertex shader(s) linked.",              /* fglrx, no \n   */
+        "Vertex shader(s) linked, no fragment shader(s) defined. \n ",      /* fglrx, with \n */
+        "Vertex shader(s) linked, no fragment shader(s) defined.",          /* fglrx, no \n   */
         "Fragment shader was successfully compiled to run on hardware.\nWARNING: 0:1: extension 'GL_ARB_draw_buffers' is not supported",
-        "Fragment shader(s) linked, no vertex shader(s) defined."           /* fglrx, no \n */
+        "Fragment shader(s) linked, no vertex shader(s) defined.",          /* fglrx, no \n   */
+        "Fragment shader(s) linked, no vertex shader(s) defined. \n "       /* fglrx, with \n */
     };
 
     GL_EXTCALL(glGetObjectParameterivARB(obj,
