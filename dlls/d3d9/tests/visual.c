@@ -8445,6 +8445,7 @@ static void pixelshader_blending_test(IDirect3DDevice9 *device)
     IDirect3DSurface9 *backbuffer = NULL, *offscreen = NULL;
     IDirect3D9 *d3d = NULL;
     DWORD color;
+    DWORD r0, g0, b0, r1, g1, b1;
     int fmt_index;
 
     static const float quad[][5] = {
@@ -8568,7 +8569,18 @@ static void pixelshader_blending_test(IDirect3DDevice9 *device)
         if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING, D3DRTYPE_TEXTURE, fmt) == D3D_OK) {
             /* Compare the color of the center quad with our expectation */
             color = getPixelColor(device, 320, 240);
-            ok(color == test_formats[fmt_index].resultColorBlending, "Offscreen failed for %s: Got color %#08x, expected %#08x.\n", test_formats[fmt_index].fmtName, color, test_formats[fmt_index].resultColorBlending);
+            r0 = (color & 0x00ff0000) >> 16;
+            g0 = (color & 0x0000ff00) >>  8;
+            b0 = (color & 0x000000ff) >>  0;
+
+            r1 = (test_formats[fmt_index].resultColorBlending & 0x00ff0000) >> 16;
+            g1 = (test_formats[fmt_index].resultColorBlending & 0x0000ff00) >>  8;
+            b1 = (test_formats[fmt_index].resultColorBlending & 0x000000ff) >>  0;
+
+            ok(r0 >= max(r1, 1) - 1 && r0 <= r1 + 1 &&
+               g0 >= max(g1, 1) - 1 && g0 <= g1 + 1 &&
+               b0 >= max(b1, 1) - 1 && b0 <= b1 + 1,
+               "Offscreen failed for %s: Got color %#08x, expected %#08x.\n", test_formats[fmt_index].fmtName, color, test_formats[fmt_index].resultColorBlending);
         } else {
             /* No pixel shader blending is supported so expected garbage.The type of 'garbage' depends on the driver version and OS.
              * E.g. on G16R16 ati reports (on old r9600 drivers) 0x00ffffff and on modern ones 0x002010ff which is also what Nvidia
