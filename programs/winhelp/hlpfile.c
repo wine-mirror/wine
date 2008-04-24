@@ -1092,7 +1092,15 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                 if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
             }
         }
-        /* 0x0400, 0x0800 and 0x1000 don't need space */
+        switch (bits & 0xc00)
+        {
+        default: WINE_FIXME("Unsupported alignment 0xC00\n"); break;
+        case 0: if (!HLPFILE_RtfAddControl(rd, "\\ql")) goto done; break;
+        case 0x400: if (!HLPFILE_RtfAddControl(rd, "\\qr")) goto done; break;
+        case 0x800: if (!HLPFILE_RtfAddControl(rd, "\\qc")) goto done; break;
+        }
+
+        /* 0x1000 doesn't need space */
         if ((bits & 0xE080) != 0) 
             WINE_FIXME("Unsupported bits %04x, potential trouble ahead\n", bits);
 
