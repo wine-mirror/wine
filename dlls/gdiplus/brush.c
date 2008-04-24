@@ -715,3 +715,34 @@ GpStatus WINGDIPAPI GdipSetLineTransform(GpLineGradient *brush,
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipGetLineRect(GpLineGradient *brush, GpRectF *rect)
+{
+    if(!brush || !rect)
+        return InvalidParameter;
+
+    rect->X = (brush->startpoint.X < brush->endpoint.X ? brush->startpoint.X: brush->endpoint.X);
+    rect->Y = (brush->startpoint.Y < brush->endpoint.Y ? brush->startpoint.Y: brush->endpoint.Y);
+
+    rect->Width  = fabs(brush->startpoint.X - brush->endpoint.X);
+    rect->Height = fabs(brush->startpoint.Y - brush->endpoint.Y);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetLineRectI(GpLineGradient *brush, GpRect *rect)
+{
+    GpRectF  rectF;
+    GpStatus ret;
+
+    ret = GdipGetLineRect(brush, &rectF);
+
+    if(ret == Ok){
+        rect->X      = roundr(rectF.X);
+        rect->Y      = roundr(rectF.Y);
+        rect->Width  = roundr(rectF.Width);
+        rect->Height = roundr(rectF.Height);
+    }
+
+    return ret;
+}

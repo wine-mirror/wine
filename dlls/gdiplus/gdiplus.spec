@@ -306,8 +306,8 @@
 @ stdcall GdipGetLineGammaCorrection(ptr ptr)
 @ stub GdipGetLinePresetBlend
 @ stub GdipGetLinePresetBlendCount
-@ stub GdipGetLineRect
-@ stub GdipGetLineRectI
+@ stdcall GdipGetLineRect(ptr ptr)
+@ stdcall GdipGetLineRectI(ptr ptr)
 @ stub GdipGetLineSpacing
 @ stub GdipGetLineTransform
 @ stub GdipGetLineWrapMode
