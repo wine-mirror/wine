@@ -111,24 +111,31 @@ static BOOL parse_size( const WCHAR *size, unsigned int *width, unsigned int *he
     return !*end;
 }
 
-/* retrieve the default desktop size from the X11 driver config */
-/* FIXME: this is for backwards compatibility, should probably be changed */
-static BOOL get_default_desktop_size( unsigned int *width, unsigned int *height )
+/* retrieve the default desktop size from the registry */
+static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, unsigned int *height )
 {
-    static const WCHAR keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                 'X','1','1',' ','D','r','i','v','e','r',0};
-    static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
+    static const WCHAR desktop_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                         'E','x','p','l','o','r','e','r','\\',
+                                         'D','e','s','k','t','o','p','s',0};
     HKEY hkey;
     WCHAR buffer[64];
     DWORD size = sizeof(buffer);
-    BOOL ret = FALSE;
+    BOOL found = FALSE;
 
-    /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver */
-    if (RegOpenKeyW( HKEY_CURRENT_USER, keyW, &hkey )) return FALSE;
-    if (!RegQueryValueExW( hkey, desktopW, 0, NULL, (LPBYTE)buffer, &size ))
-        ret = parse_size( buffer, width, height );
-    RegCloseKey( hkey );
-    return ret;
+    *width = 800;
+    *height = 600;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Explorer\Desktops */
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, desktop_keyW, &hkey ))
+    {
+        if (!RegQueryValueExW( hkey, name, 0, NULL, (LPBYTE)buffer, &size ))
+        {
+            found = TRUE;
+            if (!parse_size( buffer, width, height )) *width = *height = 0;
+        }
+        RegCloseKey( hkey );
+    }
+    return found;
 }
 
 static void initialize_display_settings( HWND desktop )
@@ -218,20 +225,34 @@ void manage_desktop( WCHAR *arg )
     if (*arg == '=' || *arg == ',')
     {
         arg++;
+        name = arg;
         if ((p = strchrW( arg, ',' ))) *p++ = 0;
         if (!p || !parse_size( p, &width, &height ))
-        {
-            width = 800;
-            height = 600;
-        }
-        name = arg;
-        xwin = create_desktop( name, width, height );
+            get_default_desktop_size( name, &width, &height );
     }
-    else if (get_default_desktop_size( &width, &height ))
+    else  /* check for the X11 driver key for backwards compatibility (to be removed) */
     {
-        name = defaultW;
-        xwin = create_desktop( name, width, height );
+        static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
+        static const WCHAR x11_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                         'X','1','1',' ','D','r','i','v','e','r',0};
+        HKEY hkey;
+        WCHAR buffer[64];
+        DWORD size = sizeof(buffer);
+
+        width = height = 0;
+        /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver */
+        if (!RegOpenKeyW( HKEY_CURRENT_USER, x11_keyW, &hkey ))
+        {
+            if (!RegQueryValueExW( hkey, desktopW, 0, NULL, (LPBYTE)buffer, &size ))
+            {
+                name = defaultW;
+                if (!parse_size( buffer, &width, &height )) width = height = 0;
+            }
+            RegCloseKey( hkey );
+        }
     }
+
+    if (name && width && height) xwin = create_desktop( name, width, height );
 
     if (!xwin) using_root = TRUE; /* using the root window */
 
