@@ -3,7 +3,7 @@
  *
  * Copyright (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
  * Copyright (C) 2005 Marcus Meissner
- * Copyright (C) 2006 Kai Blin
+ * Copyright (C) 2006-2008 Kai Blin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -358,6 +358,8 @@ static const int ws_eai_map[][2] =
     MAP_OPTION( EAI_SOCKTYPE ),
     { 0, 0 }
 };
+
+static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
 static inline DWORD NtStatusToWSAError( const DWORD status )
 {
@@ -1427,6 +1429,18 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
                     }
                 }
 #endif
+                if (name->sa_family == WS_AF_INET)
+                {
+                    struct sockaddr_in *in4 = (struct sockaddr_in*) &uaddr;
+                    if (memcmp(&in4->sin_addr, &magic_loopback_addr, 4) == 0)
+                    {
+                        /* Trying to bind to the default host interface, using
+                         * INADDR_ANY instead*/
+                        WARN("Trying to bind to magic IP address, using "
+                             "INADDR_ANY instead.\n");
+                        in4->sin_addr.s_addr = htonl(WS_INADDR_ANY);
+                    }
+                }
                 if (bind(fd, &uaddr.addr, uaddrlen) < 0)
                 {
                     int loc_errno = errno;
@@ -3230,6 +3244,13 @@ struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
 #else
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
+    if (retval->h_addr_list[0][0] == 127 &&
+        strcmp(name, "localhost") != 0)
+    {
+        /* hostname != "localhost" but has loopback address. replace by our
+         * special address.*/
+        memcpy(retval->h_addr_list[0], magic_loopback_addr, 4);
+    }
     TRACE( "%s ret %p\n", debugstr_a(name), retval );
     return retval;
 }
