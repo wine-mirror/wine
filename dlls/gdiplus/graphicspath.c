@@ -103,8 +103,8 @@ GpStatus WINGDIPAPI GdipAddPathArcI(GpPath *path, INT x1, INT y1, INT x2,
     return GdipAddPathArc(path,(REAL)x1,(REAL)y1,(REAL)x2,(REAL)y2,startAngle,sweepAngle);
 }
 
-GpStatus WINGDIPAPI GdipAddPathBezierI(GpPath *path, INT x1, INT y1, INT x2,
-    INT y2, INT x3, INT y3, INT x4, INT y4)
+GpStatus WINGDIPAPI GdipAddPathBezier(GpPath *path, REAL x1, REAL y1, REAL x2,
+    REAL y2, REAL x3, REAL y3, REAL x4, REAL y4)
 {
     INT old_count;
 
@@ -116,14 +116,14 @@ GpStatus WINGDIPAPI GdipAddPathBezierI(GpPath *path, INT x1, INT y1, INT x2,
 
     old_count = path->pathdata.Count;
 
-    path->pathdata.Points[old_count].X = (REAL) x1;
-    path->pathdata.Points[old_count].Y = (REAL) y1;
-    path->pathdata.Points[old_count + 1].X = (REAL) x2;
-    path->pathdata.Points[old_count + 1].Y = (REAL) y2;
-    path->pathdata.Points[old_count + 2].X = (REAL) x3;
-    path->pathdata.Points[old_count + 2].Y = (REAL) y3;
-    path->pathdata.Points[old_count + 3].X = (REAL) x4;
-    path->pathdata.Points[old_count + 3].Y = (REAL) y4;
+    path->pathdata.Points[old_count].X = x1;
+    path->pathdata.Points[old_count].Y = y1;
+    path->pathdata.Points[old_count + 1].X = x2;
+    path->pathdata.Points[old_count + 1].Y = y2;
+    path->pathdata.Points[old_count + 2].X = x3;
+    path->pathdata.Points[old_count + 2].Y = y3;
+    path->pathdata.Points[old_count + 3].X = x4;
+    path->pathdata.Points[old_count + 3].Y = y4;
 
     path->pathdata.Types[old_count] =
         (path->newfigure ? PathPointTypeStart : PathPointTypeLine);
@@ -135,6 +135,13 @@ GpStatus WINGDIPAPI GdipAddPathBezierI(GpPath *path, INT x1, INT y1, INT x2,
     path->pathdata.Count += 4;
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipAddPathBezierI(GpPath *path, INT x1, INT y1, INT x2,
+    INT y2, INT x3, INT y3, INT x4, INT y4)
+{
+    return GdipAddPathBezier(path,(REAL)x1,(REAL)y1,(REAL)x2,(REAL)y2,(REAL)x3,(REAL)y3,
+                                  (REAL)x4,(REAL)y4);
 }
 
 GpStatus WINGDIPAPI GdipAddPathBeziers(GpPath *path, GDIPCONST GpPointF *points,
