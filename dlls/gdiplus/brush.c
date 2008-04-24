@@ -675,12 +675,13 @@ GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *texture,
 GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient *brush, ARGB color1,
     ARGB color2)
 {
-    static int calls;
+    if(!brush)
+        return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    brush->startcolor = color1;
+    brush->endcolor   = color2;
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetLineColors(GpLineGradient *brush, ARGB *colors)
