@@ -763,6 +763,24 @@ static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
     return child;
 }
 
+#define get_node_type(n) _get_node_type(__LINE__,n)
+static long _get_node_type(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode *node;
+    long type = -1;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode, (void**)&node);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMNode: %08x\n", hres);
+
+    hres = IHTMLDOMNode_get_nodeType(node, &type);
+    ok(hres == S_OK, "get_nodeType failed: %08x\n", hres);
+
+    IHTMLDOMNode_Release(node);
+
+    return type;
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -1406,6 +1424,7 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLElement *elem;
     IHTMLDOMNode *node, *node2;
     IDispatch *disp;
+    long type;
     HRESULT hres;
 
     static const WCHAR xW[] = {'x',0};
@@ -1484,6 +1503,9 @@ static void test_elems(IHTMLDocument2 *doc)
             IHTMLDOMNode_Release(node);
         }
 
+        type = get_node_type((IUnknown*)select);
+        ok(type == 1, "type=%ld\n", type);
+
         IHTMLSelectElement_Release(select);
         IHTMLElement_Release(elem);
     }
@@ -1512,8 +1534,12 @@ static void test_elems(IHTMLDocument2 *doc)
     if(node) {
         test_ifaces((IUnknown*)node, text_iids);
         test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode);
+
         node2 = get_first_child((IUnknown*)node);
         ok(!node2, "node2 != NULL\n");
+
+        type = get_node_type((IUnknown*)node);
+        ok(type == 3, "type=%ld\n", type);
 
         IHTMLDOMNode_Release(node);
     }

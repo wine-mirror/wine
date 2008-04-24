@@ -104,8 +104,30 @@ static HRESULT WINAPI HTMLDOMNode_Invoke(IHTMLDOMNode *iface, DISPID dispIdMembe
 static HRESULT WINAPI HTMLDOMNode_get_nodeType(IHTMLDOMNode *iface, long *p)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRUint16 type = -1;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsIDOMNode_GetNodeType(This->nsnode, &type);
+
+    switch(type) {
+    case ELEMENT_NODE:
+        *p = 1;
+        break;
+    case TEXT_NODE:
+        *p = 3;
+        break;
+    default:
+        /*
+         * FIXME:
+         * According to MSDN only ELEMENT_NODE and TEXT_NODE are supported.
+         * It needs more tests.
+         */
+        FIXME("type %u\n", type);
+        *p = 0;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_get_parentNode(IHTMLDOMNode *iface, IHTMLDOMNode **p)
