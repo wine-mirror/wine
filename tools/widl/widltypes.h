@@ -52,6 +52,7 @@ typedef struct _importinfo_t importinfo_t;
 typedef struct _typelib_t typelib_t;
 typedef struct _user_type_t user_type_t;
 typedef struct _user_type_t context_handle_t;
+typedef struct _type_list_t type_list_t;
 typedef struct _statement_t statement_t;
 
 typedef struct list attr_list_t;
@@ -357,6 +358,11 @@ struct _user_type_t {
     const char *name;
 };
 
+struct _type_list_t {
+    type_t *type;
+    struct _type_list_t *next;
+};
+
 struct _statement_t {
     struct list entry;
     enum statement_type type;
@@ -367,6 +373,7 @@ struct _statement_t {
         const char *str;
         var_t *var;
         typelib_t *lib;
+        type_list_t *type_list;
     } u;
 };
 

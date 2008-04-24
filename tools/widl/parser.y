@@ -124,7 +124,7 @@ static void write_iid(type_t *iface);
 
 static int compute_method_indexes(type_t *iface);
 static char *gen_name(void);
-static void process_typedefs(var_list_t *names);
+static statement_t *process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
 static void check_functions(const type_t *iface);
 static void check_all_user_types(const statement_list_t *stmts);
@@ -301,7 +301,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <uuid> uuid_string
 %type <num> import_start
 %type <typelib> library_start librarydef
-%type <statement> statement
+%type <statement> statement typedef
 %type <stmt_list> gbl_statements imp_statements
 
 %left ','
@@ -393,7 +393,7 @@ statement: constdef ';'				{ $$ = make_statement_init_decl($1);
 						    fprintf(header, ";\n\n");
 						  }
 						}
-	| typedef ';'				{ $$ = NULL; /* FIXME */ }
+	| typedef ';'				{ $$ = $1; }
 	| uniondef ';'				{ $$ = make_statement_type_decl($1);
 						  if (!parse_only && do_header) {
 						    write_type_def_or_decl(header, $1, FALSE, NULL);
@@ -989,7 +989,7 @@ type:	  tVOID					{ $$ = duptype(find_type("void", 0), 1); }
 	;
 
 typedef: tTYPEDEF m_attributes type pident_list	{ reg_typedefs($3, $4, check_typedef_attrs($2));
-						  process_typedefs($4);
+						  $$ = process_typedefs($4);
 						}
 	;
 
@@ -1989,26 +1989,6 @@ static char *gen_name(void)
   return name;
 }
 
-static void process_typedefs(pident_list_t *pidents)
-{
-  pident_t *pident, *next;
-
-  if (!pidents) return;
-  LIST_FOR_EACH_ENTRY_SAFE( pident, next, pidents, pident_t, entry )
-  {
-    var_t *var = pident->var;
-    type_t *type = find_type(var->name, 0);
-
-    if (! parse_only && do_header)
-      write_typedef(type);
-    if (in_typelib && type->attrs)
-      add_typelib_entry(type);
-
-    free(pident);
-    free(var);
-  }
-}
-
 struct allowed_attr
 {
     unsigned int dce_compatible : 1;
@@ -2600,6 +2580,39 @@ static statement_t *make_statement_module(type_t *type)
 {
     statement_t *stmt = make_statement(STMT_MODULE);
     stmt->u.type = type;
+    return stmt;
+}
+
+static statement_t *process_typedefs(pident_list_t *pidents)
+{
+    pident_t *pident, *next;
+    statement_t *stmt;
+    type_list_t **type_list;
+
+    if (!pidents) return NULL;
+
+    stmt = make_statement(STMT_TYPEDEF);
+    stmt->u.type_list = NULL;
+    type_list = &stmt->u.type_list;
+
+    LIST_FOR_EACH_ENTRY_SAFE( pident, next, pidents, pident_t, entry )
+    {
+        var_t *var = pident->var;
+        type_t *type = find_type(var->name, 0);
+        *type_list = xmalloc(sizeof(type_list_t));
+        (*type_list)->type = type;
+        (*type_list)->next = NULL;
+
+        if (! parse_only && do_header)
+            write_typedef(type);
+        if (in_typelib && type->attrs)
+            add_typelib_entry(type);
+
+        type_list = &(*type_list)->next;
+        free(pident);
+        free(var);
+    }
+
     return stmt;
 }
 
