@@ -1122,6 +1122,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
         }
 
         /* 0x1000 doesn't need space */
+        if ((bits & 0x1000) && !HLPFILE_RtfAddControl(rd, "\\keep")) goto done;
         if ((bits & 0xE080) != 0) 
             WINE_FIXME("Unsupported bits %04x, potential trouble ahead\n", bits);
 
