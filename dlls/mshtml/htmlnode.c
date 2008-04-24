@@ -31,8 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-#define NSSUPPORTS(x)  ((nsISupports*)  &(x)->lpSupportsVtbl)
-
 #define HTMLDOMNODE_THIS(iface) DEFINE_THIS(HTMLDOMNode, HTMLDOMNode, iface)
 
 static HRESULT WINAPI HTMLDOMNode_QueryInterface(IHTMLDOMNode *iface,
@@ -273,6 +271,8 @@ static HRESULT WINAPI HTMLDOMNode_get_nextSibling(IHTMLDOMNode *iface, IHTMLDOMN
     return E_NOTIMPL;
 }
 
+#undef HTMLDOMNODE_THIS
+
 static const IHTMLDOMNodeVtbl HTMLDOMNodeVtbl = {
     HTMLDOMNode_QueryInterface,
     HTMLDOMNode_AddRef,
@@ -303,6 +303,85 @@ static const IHTMLDOMNodeVtbl HTMLDOMNodeVtbl = {
     HTMLDOMNode_get_nextSibling
 };
 
+#define HTMLDOMNODE2_THIS(iface) DEFINE_THIS(HTMLDOMNode, HTMLDOMNode2, iface)
+
+static HRESULT WINAPI HTMLDOMNode2_QueryInterface(IHTMLDOMNode2 *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
+
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(This), riid, ppv);
+}
+
+static ULONG WINAPI HTMLDOMNode2_AddRef(IHTMLDOMNode2 *iface)
+{
+    HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
+
+    return IHTMLDOMNode_AddRef(HTMLDOMNODE(This));
+}
+
+static ULONG WINAPI HTMLDOMNode2_Release(IHTMLDOMNode2 *iface)
+{
+    HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
+
+    return IHTMLDOMNode_Release(HTMLDOMNODE(This));
+}
+
+static HRESULT WINAPI HTMLDOMNode2_GetTypeInfoCount(IHTMLDOMNode2 *iface, UINT *pctinfo)
+{
+    HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMNode2_GetTypeInfo(IHTMLDOMNode2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMNode2_GetIDsOfNames(IHTMLDOMNode2 *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMNode2_Invoke(IHTMLDOMNode2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
+    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMNode2_get_ownerDocument(IHTMLDOMNode2 *iface, IDispatch **p)
+{
+    HTMLDOMNode *This = HTMLDOMNODE2_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+#undef HTMLDOMNODE2_THIS
+
+static const IHTMLDOMNode2Vtbl HTMLDOMNode2Vtbl = {
+    HTMLDOMNode2_QueryInterface,
+    HTMLDOMNode2_AddRef,
+    HTMLDOMNode2_Release,
+    HTMLDOMNode2_GetTypeInfoCount,
+    HTMLDOMNode2_GetTypeInfo,
+    HTMLDOMNode2_GetIDsOfNames,
+    HTMLDOMNode2_Invoke,
+    HTMLDOMNode2_get_ownerDocument
+};
+
 HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -324,6 +403,9 @@ HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
         TRACE("(%p)->(IID_IHTMLDOMNode %p)\n", This, ppv);
         *ppv = HTMLDOMNODE(This);
+    }else if(IsEqualGUID(&IID_IHTMLDOMNode2, riid)) {
+        TRACE("(%p)->(IID_IHTMLDOMNode2 %p)\n", This, ppv);
+        *ppv = HTMLDOMNODE2(This);
     }
 
     if(*ppv) {
@@ -365,11 +447,14 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
     }
 
     ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
+    ret->lpHTMLDOMNode2Vtbl = &HTMLDOMNode2Vtbl;
     ret->ref = 1;
     ret->doc = doc;
 
     nsIDOMNode_AddRef(nsnode);
     ret->nsnode = nsnode;
+
+    TRACE("type %d ret %p\n", node_type, ret);
 
     return ret;
 }

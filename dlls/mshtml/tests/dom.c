@@ -88,6 +88,7 @@ static REFIID const none_iids[] = {
 
 static REFIID const elem_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IDispatchEx,
@@ -97,6 +98,7 @@ static REFIID const elem_iids[] = {
 
 static REFIID const body_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLTextContainer,
@@ -108,6 +110,7 @@ static REFIID const body_iids[] = {
 
 static REFIID const anchor_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLAnchorElement,
@@ -118,6 +121,7 @@ static REFIID const anchor_iids[] = {
 
 static REFIID const input_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLInputElement,
@@ -129,6 +133,7 @@ static REFIID const input_iids[] = {
 
 static REFIID const select_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLSelectElement,
@@ -139,6 +144,7 @@ static REFIID const select_iids[] = {
 
 static REFIID const textarea_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLTextAreaElement,
@@ -149,6 +155,7 @@ static REFIID const textarea_iids[] = {
 
 static REFIID const option_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLOptionElement,
@@ -159,6 +166,7 @@ static REFIID const option_iids[] = {
 
 static REFIID const table_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLTable,
@@ -169,6 +177,7 @@ static REFIID const table_iids[] = {
 
 static REFIID const script_iids[] = {
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLScriptElement,

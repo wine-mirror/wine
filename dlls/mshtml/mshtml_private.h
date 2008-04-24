@@ -298,7 +298,8 @@ typedef struct {
 
 struct HTMLDOMNode {
     DispatchEx dispex;
-    const IHTMLDOMNodeVtbl *lpHTMLDOMNodeVtbl;
+    const IHTMLDOMNodeVtbl   *lpHTMLDOMNodeVtbl;
+    const IHTMLDOMNode2Vtbl  *lpHTMLDOMNode2Vtbl;
     const NodeImplVtbl *vtbl;
 
     LONG ref;
@@ -377,6 +378,7 @@ typedef struct {
 #define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
 #define HTMLELEM2(x)     ((IHTMLElement2*)                &(x)->lpHTMLElement2Vtbl)
 #define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
+#define HTMLDOMNODE2(x)  ((IHTMLDOMNode2*)                &(x)->lpHTMLDOMNode2Vtbl)
 
 #define HTMLTEXTCONT(x)  ((IHTMLTextContainer*)           &(x)->lpHTMLTextContainerVtbl)
 
