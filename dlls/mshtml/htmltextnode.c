@@ -185,6 +185,17 @@ static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     HTMLDOMTextNode_destructor
 };
 
+static dispex_static_data_t HTMLDOMTextNode_dispex = {
+    DispHTMLDOMTextNode_tid,
+    0,
+    {
+        IHTMLDOMNode_tid,
+        IHTMLDOMNode2_tid,
+        IHTMLDOMTextNode_tid,
+        0
+    }
+};
+
 HTMLDOMNode *HTMLDOMTextNode_Create(nsIDOMNode *nsnode)
 {
     HTMLDOMTextNode *ret ;
@@ -192,6 +203,8 @@ HTMLDOMNode *HTMLDOMTextNode_Create(nsIDOMNode *nsnode)
     ret = heap_alloc_zero(sizeof(*ret));
     ret->node.vtbl = &HTMLDOMTextNodeImplVtbl;
     ret->lpIHTMLDOMTextNodeVtbl = &HTMLDOMTextNodeVtbl;
+
+    init_dispex(&ret->node.dispex, (IUnknown*)HTMLTEXT(ret), &HTMLDOMTextNode_dispex);
 
     return &ret->node;
 }

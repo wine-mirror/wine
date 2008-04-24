@@ -1511,6 +1511,7 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(node != NULL, "node == NULL\n");
     if(node) {
         test_ifaces((IUnknown*)node, text_iids);
+        test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode);
         node2 = get_first_child((IUnknown*)node);
         ok(!node2, "node2 != NULL\n");
 
