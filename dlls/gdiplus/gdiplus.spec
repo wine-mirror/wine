@@ -221,7 +221,7 @@
 @ stub GdipFillEllipseI
 @ stdcall GdipFillPath(ptr ptr ptr)
 @ stdcall GdipFillPie(ptr ptr long long long long long long)
-@ stub GdipFillPieI
+@ stdcall GdipFillPieI(ptr ptr long long long long long long)
 @ stub GdipFillPolygon2
 @ stub GdipFillPolygon2I
 @ stdcall GdipFillPolygon(ptr ptr ptr long long)

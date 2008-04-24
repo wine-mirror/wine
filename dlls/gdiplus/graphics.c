@@ -1626,6 +1626,12 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipFillPieI(GpGraphics *graphics, GpBrush *brush, INT x,
+    INT y, INT width, INT height, REAL startAngle, REAL sweepAngle)
+{
+    return GdipFillPie(graphics,brush,(REAL)x,(REAL)y,(REAL)width,(REAL)height,startAngle,sweepAngle);
+}
+
 GpStatus WINGDIPAPI GdipFillPolygon(GpGraphics *graphics, GpBrush *brush,
     GDIPCONST GpPointF *points, INT count, GpFillMode fillMode)
 {
