@@ -111,6 +111,33 @@ static BOOL parse_size( const WCHAR *size, unsigned int *width, unsigned int *he
     return !*end;
 }
 
+/* retrieve the desktop name to use if not specified on the command line */
+static const WCHAR *get_default_desktop_name(void)
+{
+    static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
+    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
+    static const WCHAR explorer_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                          'E','x','p','l','o','r','e','r',0};
+    static WCHAR buffer[MAX_PATH];
+    DWORD size = sizeof(buffer);
+    HDESK desk = GetThreadDesktop( GetCurrentThreadId() );
+    WCHAR *ret = NULL;
+    HKEY hkey;
+
+    if (desk && GetUserObjectInformationW( desk, UOI_NAME, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+    {
+        if (strcmpiW( buffer, defaultW )) return buffer;
+    }
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Explorer */
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, explorer_keyW, &hkey ))
+    {
+        if (!RegQueryValueExW( hkey, desktopW, 0, NULL, (LPBYTE)buffer, &size )) ret = buffer;
+        RegCloseKey( hkey );
+    }
+    return ret;
+}
+
 /* retrieve the default desktop size from the registry */
 static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, unsigned int *height )
 {
@@ -229,6 +256,10 @@ void manage_desktop( WCHAR *arg )
         if ((p = strchrW( arg, ',' ))) *p++ = 0;
         if (!p || !parse_size( p, &width, &height ))
             get_default_desktop_size( name, &width, &height );
+    }
+    else if ((name = get_default_desktop_name()))
+    {
+        if (!get_default_desktop_size( name, &width, &height )) width = height = 0;
     }
     else  /* check for the X11 driver key for backwards compatibility (to be removed) */
     {
