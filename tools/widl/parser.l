@@ -191,6 +191,7 @@ struct keyword {
 
 static const struct keyword keywords[] = {
 	{"FALSE",			tFALSE},
+	{"NULL",			tNULL},
 	{"TRUE",			tTRUE},
 	{"__cdecl",			tCDECL},
 	{"__fastcall",			tFASTCALL},

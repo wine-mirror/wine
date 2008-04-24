@@ -219,6 +219,7 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %token tNONBROWSABLE
 %token tNONCREATABLE
 %token tNONEXTENSIBLE
+%token tNULL
 %token tOBJECT tODL tOLEAUTOMATION
 %token tOPTIONAL
 %token tOUT
@@ -624,6 +625,7 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| aHEXNUM				{ $$ = make_exprl(EXPR_HEXNUM, $1); }
 	| aDOUBLE				{ $$ = make_exprd(EXPR_DOUBLE, $1); }
 	| tFALSE				{ $$ = make_exprl(EXPR_TRUEFALSE, 0); }
+	| tNULL					{ $$ = make_exprl(EXPR_NUM, 0); }
 	| tTRUE					{ $$ = make_exprl(EXPR_TRUEFALSE, 1); }
 	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
 	| expr '?' expr ':' expr		{ $$ = make_expr3(EXPR_COND, $1, $3, $5); }
