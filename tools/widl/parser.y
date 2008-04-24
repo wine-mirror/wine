@@ -98,11 +98,14 @@ static var_t *make_var(char *name);
 static pident_list_t *append_pident(pident_list_t *list, pident_t *p);
 static pident_t *make_pident(var_t *var);
 static func_list_t *append_func(func_list_t *list, func_t *func);
-static func_t *make_func(var_t *def, var_list_t *args);
+static func_t *make_func(var_t *def);
 static type_t *make_class(char *name);
 static type_t *make_safearray(type_t *type);
 static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
+static type_t *make_func_type(var_list_t *args);
+static void type_set_function_callconv(type_t *type, char *callconv);
+static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
 static type_t *reg_typedefs(type_t *type, var_list_t *names, attr_list_t *attrs);
@@ -690,11 +693,10 @@ s_field:  m_attributes type pident array	{ $$ = $3->var;
 
 funcdef:
 	  m_attributes type pident		{ var_t *v = $3->var;
-						  var_list_t *args = $3->args;
 						  v->attrs = check_function_attrs(v->name, $1);
 						  set_type(v, $2, $3, NULL, FALSE);
 						  free($3);
-						  $$ = make_func(v, args);
+						  $$ = make_func(v);
 						}
 	;
 
@@ -897,27 +899,23 @@ moduledef: modulehdr '{' int_statements '}'
 						}
 	;
 
-pident:   '*' pident %prec PPTR			{ $$ = $2; $$->ptr_level++; }
+pident:   '*' pident %prec PPTR			{ $$ = $2; $$->type = make_type(pointer_default, $$->type); }
 	| tCONST pident				{ $$ = $2; /* FIXME */ }
-	| callconv pident                       { $$ = $2;
-						  if ($$->callconv) parser_warning("multiple calling conventions %s, %s for function %s\n", $$->callconv, $1, $$->var->name);
-						  $$->callconv = $1;
-						}
+	| callconv pident                       { $$ = $2; type_set_function_callconv($$->func_type, $1); }
 	| direct_ident
 	;
 
 func_ident: direct_ident '(' m_args ')'
 						{ $$ = $1;
-						  $1->args = $3;
-						  $1->is_func = TRUE;
+                                                  $$->type = append_ptrchain_type($$->type, make_func_type($3));
 						}
 	;
 
 direct_ident: ident				{ $$ = make_pident($1); }
 	| '(' pident ')'			{ $$ = $2; }
 	| func_ident				{ $$ = $1;
-						  $$->func_ptr_level = $$->ptr_level;
-						  $$->ptr_level = 0;
+						  $$->func_type = $$->type;
+						  $$->type = NULL;
 						}
 	;
 
@@ -1170,60 +1168,68 @@ type_t *make_type(unsigned char type, type_t *ref)
   return t;
 }
 
+static type_t *make_func_type(var_list_t *args)
+{
+  type_t *t = make_type(RPC_FC_FUNCTION, NULL);
+  t->fields_or_args = args;
+  return t;
+}
+
+static void type_set_function_callconv(type_t *type, char *callconv)
+{
+  if (!type)
+    error_loc("calling convention applied to non-function-pointer type\n");
+  for (; is_ptr(type); type = type->ref)
+    ;
+  assert(type->type == RPC_FC_FUNCTION);
+  type->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, callconv));
+}
+
+static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
+{
+  type_t *ptrchain_type;
+  if (!ptrchain)
+    return type;
+  for (ptrchain_type = ptrchain; ptrchain_type->ref; ptrchain_type = ptrchain_type->ref)
+    ;
+  ptrchain_type->ref = type;
+  return ptrchain;
+}
+
 static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_t *arr,
                      int top)
 {
   expr_list_t *sizes = get_attrp(v->attrs, ATTR_SIZEIS);
   expr_list_t *lengs = get_attrp(v->attrs, ATTR_LENGTHIS);
   int ptr_attr = get_attrv(v->attrs, ATTR_POINTERTYPE);
-  int ptr_type = ptr_attr;
   int sizeless, has_varconf;
   expr_t *dim;
   type_t *atype, **ptype;
-  int ptr_level = (pident ? pident->ptr_level : 0);
 
-  v->type = type;
+  /* add type onto the end of the pointers in pident->type */
+  v->type = append_ptrchain_type(pident ? pident->type : NULL, type);
 
-  if (!ptr_type && top)
-    ptr_type = RPC_FC_RP;
-
-  for ( ; 0 < ptr_level; --ptr_level)
+  /* the highest level of pointer specified should default to the var's ptr attr
+   * or (RPC_FC_RP if not specified and it's a top level ptr), not
+   * pointer_default so we need to fix that up here */
+  if (!arr)
   {
-    v->type = make_type(pointer_default, v->type);
-    if (ptr_level == 1 && ptr_type && !arr)
+    const type_t *ptr = NULL;
+    for (ptr = v->type; ptr; )
     {
-      v->type->type = ptr_type;
-      ptr_type = 0;
+      if (ptr->kind == TKIND_ALIAS)
+        ptr = ptr->orig;
+      else
+        break;
     }
-  }
-
-  if (ptr_type && !arr)
-  {
-    if (is_ptr(v->type))
+    if (ptr && is_ptr(ptr) && (ptr_attr || top))
     {
-      if (v->type->type != ptr_type)
-      {
-        v->type = duptype(v->type, 1);
-        v->type->type = ptr_type;
-      }
+      /* duplicate type to avoid changing original type */
+      v->type = duptype(v->type, 1);
+      v->type->type = ptr_attr ? ptr_attr : RPC_FC_RP;
     }
-    else if (!arr && ptr_attr)
-      error_loc("%s: pointer attribute applied to non-pointer type\n", v->name);
-  }
-
-  if (pident && pident->is_func) {
-    int func_ptr_level = pident->func_ptr_level;
-    v->type = make_type(RPC_FC_FUNCTION, v->type);
-    v->type->fields_or_args = pident->args;
-    if (pident->callconv)
-      v->type->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, pident->callconv));
-    else if (is_object_interface) {
-      static char *stdmethodcalltype;
-      if (!stdmethodcalltype) stdmethodcalltype = strdup("STDMETHODCALLTYPE");
-      v->type->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
-    }
-    for (; func_ptr_level > 0; func_ptr_level--)
-      v->type = make_type(ptr_type, v->type);
+    else if (ptr_attr)
+       error_loc("%s: pointer attribute applied to non-pointer type\n", v->name);
   }
 
   sizeless = FALSE;
@@ -1338,6 +1344,26 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
           break;
         }
   }
+
+  /* v->type is currently pointing the the type on the left-side of the
+   * declaration, so we need to fix this up so that it is the return type of the
+   * function and make v->type point to the function side of the declaration */
+  if (pident && pident->func_type)
+  {
+    type_t *t;
+    type_t *return_type = v->type;
+    v->type = pident->func_type;
+    for (t = v->type; is_ptr(t); t = t->ref)
+      ;
+    assert(t->type == RPC_FC_FUNCTION);
+    t->ref = return_type;
+    if (is_object_interface && !is_attr(t->attrs, ATTR_CALLCONV))
+    {
+      static char *stdmethodcalltype;
+      if (!stdmethodcalltype) stdmethodcalltype = strdup("STDMETHODCALLTYPE");
+      t->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
+    }
+  }
 }
 
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface)
@@ -1400,11 +1426,8 @@ static pident_t *make_pident(var_t *var)
 {
   pident_t *p = xmalloc(sizeof(*p));
   p->var = var;
-  p->is_func = FALSE;
-  p->ptr_level = 0;
-  p->func_ptr_level = 0;
-  p->args = NULL;
-  p->callconv = NULL;
+  p->type = NULL;
+  p->func_type = NULL;
   return p;
 }
 
@@ -1420,11 +1443,11 @@ static func_list_t *append_func(func_list_t *list, func_t *func)
     return list;
 }
 
-static func_t *make_func(var_t *def, var_list_t *args)
+static func_t *make_func(var_t *def)
 {
   func_t *f = xmalloc(sizeof(func_t));
   f->def = def;
-  f->args = args;
+  f->args = def->type->fields_or_args;
   f->ignore = parse_only;
   f->idx = -1;
   return f;
@@ -1522,9 +1545,7 @@ static void fix_incomplete(void)
 
 static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *attrs)
 {
-  type_t *ptr = type;
   const pident_t *pident;
-  int ptrc = 0;
   int is_str = is_attr(attrs, ATTR_STRING);
   unsigned char ptr_type = get_attrv(attrs, ATTR_POINTERTYPE);
 
@@ -1562,32 +1583,22 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
     var_t *name = pident->var;
 
     if (name->name) {
-      type_t *cur = ptr;
-      int cptr = pident->ptr_level;
-      if (cptr > ptrc) {
-        while (cptr > ptrc) {
-          cur = ptr = make_type(pointer_default, cur);
-          ptrc++;
-        }
-      } else {
-        while (cptr < ptrc) {
-          cur = cur->ref;
-          cptr++;
-        }
-      }
-      if (pident->is_func) {
-        int func_ptr_level = pident->func_ptr_level;
-        cur = make_type(RPC_FC_FUNCTION, cur);
-        cur->fields_or_args = pident->args;
-        if (pident->callconv)
-          cur->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, pident->callconv));
-        else if (is_object_interface) {
+      type_t *cur = append_ptrchain_type(pident->type, type);
+      if (pident->func_type)
+      {
+        type_t *t;
+        type_t *return_type = cur;
+        cur = pident->func_type;
+        for (t = cur; is_ptr(t); t = t->ref)
+          ;
+        assert(t->type == RPC_FC_FUNCTION);
+        t->ref = return_type;
+        if (is_object_interface && !is_attr(t->attrs, ATTR_CALLCONV))
+        {
           static char *stdmethodcalltype;
           if (!stdmethodcalltype) stdmethodcalltype = strdup("STDMETHODCALLTYPE");
-          cur->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
+          t->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
         }
-        for (; func_ptr_level > 0; func_ptr_level--)
-          cur = make_type(pointer_default, cur);
       }
       cur = alias(cur, name->name);
       cur->attrs = attrs;

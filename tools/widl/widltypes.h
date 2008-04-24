@@ -272,13 +272,8 @@ struct _var_t {
 
 struct _pident_t {
   var_t *var;
-  int ptr_level;
-
-  int is_func;
-  /* levels of indirection for function pointers */
-  int func_ptr_level;
-  var_list_t *args;
-  char *callconv;
+  type_t *type;
+  type_t *func_type;
 
   /* parser-internal */
   struct list entry;
