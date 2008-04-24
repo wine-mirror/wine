@@ -691,7 +691,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     service->control_mutex = CreateMutexW(NULL, TRUE, NULL);
 
     if (!service->status_changed_event)
-        service->status_changed_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+        service->status_changed_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     name = service_get_pipe_name();
     service->control_pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX,
