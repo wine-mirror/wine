@@ -4602,8 +4602,12 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 	    /* If the edit doesn't want the return send a message to the default object */
 	    if(!(es->style & ES_MULTILINE) || !(es->style & ES_WANTRETURN))
 	    {
-		HWND hwndParent = GetParent(es->hwndSelf);
-		DWORD dw = SendMessageW( hwndParent, DM_GETDEFID, 0, 0 );
+		HWND hwndParent;
+		DWORD dw;
+
+                if (!EDIT_IsInsideDialog(es)) return 1;
+                hwndParent = GetParent(es->hwndSelf);
+                dw = SendMessageW( hwndParent, DM_GETDEFID, 0, 0 );
 		if (HIWORD(dw) == DC_HASDEFID)
 		{
 		    SendMessageW( hwndParent, WM_COMMAND,
