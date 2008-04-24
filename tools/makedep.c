@@ -727,6 +727,13 @@ static void parse_file( INCL_FILE *pFile, int src )
         return;
     }
 
+    /* don't try to open .tlb files */
+    if (strendswith( pFile->name, ".tlb" ))
+    {
+        pFile->filename = xstrdup( pFile->name );
+        return;
+    }
+
     file = src ? open_src_file( pFile ) : open_include_file( pFile );
     if (!file) return;
 
