@@ -40,7 +40,7 @@ static const char range_test2_str[] =
     "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
-    "<body><a href=\"http://test\" name=\"x\">link</a><input />"
+    "<body>text test<a href=\"http://test\" name=\"x\">link</a><input />"
     "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
@@ -183,6 +183,13 @@ static REFIID const script_iids[] = {
     &IID_IHTMLScriptElement,
     &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
+    NULL
+};
+
+static REFIID const text_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLDOMTextNode,
     NULL
 };
 
@@ -750,6 +757,7 @@ static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
         return NULL;
 
     hres = IHTMLDOMNode_get_firstChild(node, &child);
+    IHTMLDOMNode_Release(node);
     ok_(__FILE__,line) (hres == S_OK, "get_firstChild failed: %08x\n", hres);
 
     return child;
@@ -1396,7 +1404,7 @@ static void test_elems(IHTMLDocument2 *doc)
 {
     IHTMLElementCollection *col;
     IHTMLElement *elem;
-    IHTMLDOMNode *node;
+    IHTMLDOMNode *node, *node2;
     IDispatch *disp;
     HRESULT hres;
 
@@ -1492,7 +1500,24 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(hres == S_OK, "get_type failed: %08x\n", hres);
         ok(!lstrcmpW(type, text_javascriptW), "Unexpected type %s\n", dbgstr_w(type));
         SysFreeString(type);
+
+        IHTMLScriptElement_Release(script);
     }
+
+    hres = IHTMLDocument2_get_body(doc, &elem);
+    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    node = get_first_child((IUnknown*)elem);
+    ok(node != NULL, "node == NULL\n");
+    if(node) {
+        test_ifaces((IUnknown*)node, text_iids);
+        node2 = get_first_child((IUnknown*)node);
+        ok(!node2, "node2 != NULL\n");
+
+        IHTMLDOMNode_Release(node);
+    }
+
+    IHTMLElement_Release(elem);
 
     test_stylesheets(doc);
     test_create_option_elem(doc);

@@ -30,8 +30,9 @@ C_SRCS = \
 	htmlstyle.c \
 	htmlstylesheet.c \
 	htmltable.c \
-	htmltextcont.c \
 	htmltextarea.c \
+	htmltextcont.c \
+	htmltextnode.c \
 	htmlwindow.c \
 	install.c \
 	loadopts.c \

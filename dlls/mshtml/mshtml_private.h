@@ -490,6 +490,8 @@ IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetLis
 void detach_selection(HTMLDocument*);
 void detach_ranges(HTMLDocument*);
 
+HTMLDOMNode *HTMLDOMTextNode_Create(nsIDOMNode*);
+
 HTMLElement *HTMLElement_Create(nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
