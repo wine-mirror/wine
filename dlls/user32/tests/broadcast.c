@@ -95,7 +95,7 @@ static BOOL init_procs(void)
     return TRUE;
 }
 
-static void test_parameters(PBROADCAST broadcast)
+static void test_parameters(PBROADCAST broadcast, const char *functionname)
 {
     LONG ret;
     DWORD recips;
@@ -103,6 +103,11 @@ static void test_parameters(PBROADCAST broadcast)
     SetLastError(0xcafebabe);
     recips = BSM_APPLICATIONS;
     ret = broadcast( 0x80000000, &recips, WM_NULL, 0, 0 );
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("%s is not implemented\n", functionname);
+        return;
+    }
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error: %08x\n", GetLastError());
     ok(!ret, "Returned: %d\n", ret);
 
@@ -321,11 +326,11 @@ START_TEST(broadcast)
         return;
 
     trace("Running BroadcastSystemMessageA tests\n");
-    test_parameters(pBroadcastA);
+    test_parameters(pBroadcastA, "BroadcastSystemMessageA");
     if (pBroadcastW)
     {
         trace("Running BroadcastSystemMessageW tests\n");
-        test_parameters(pBroadcastW);
+        test_parameters(pBroadcastW, "BroadcastSystemMessageW");
     }
     else
         skip("No BroadcastSystemMessageW, skipping\n");
