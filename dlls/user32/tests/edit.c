@@ -1906,6 +1906,37 @@ static void test_singleline_wantreturn_edit_dialog(void)
     ok(444 == r, "Expected %d, got %d\n", 444, r);
 }
 
+static int child_edit_wmkeydown_num_messages = 0;
+static INT_PTR CALLBACK child_edit_wmkeydown_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_DESTROY:
+        case WM_NCDESTROY:
+            break;
+
+        default:
+            child_edit_wmkeydown_num_messages++;
+            break;
+    }
+
+    return FALSE;
+}
+
+static void test_child_edit_wmkeydown(void)
+{
+    HWND hwEdit, hwParent;
+    int r;
+
+    hwEdit = create_child_editcontrol(0, 0);
+    hwParent = GetParent(hwEdit);
+    SetWindowLong(hwParent, GWL_WNDPROC, (LONG)child_edit_wmkeydown_proc);
+    r = SendMessage(hwEdit, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+    todo_wine ok(1 == r, "expected 1, got %d\n", r);
+    todo_wine ok(0 == child_edit_wmkeydown_num_messages, "expected 0, got %d\n", child_edit_wmkeydown_num_messages);
+    destroy_child_editcontrol(hwEdit);
+}
+
 static BOOL RegisterWindowClasses (void)
 {
     WNDCLASSA test2;
@@ -1980,6 +2011,7 @@ START_TEST(edit)
     test_multi_edit_dialog();
     test_wantreturn_edit_dialog();
     test_singleline_wantreturn_edit_dialog();
+    test_child_edit_wmkeydown();
 
     UnregisterWindowClasses();
 }
