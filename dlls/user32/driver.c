@@ -27,7 +27,7 @@
 
 #include "user_private.h"
 
-static const USER_DRIVER null_driver, lazy_load_driver;
+static USER_DRIVER null_driver, lazy_load_driver;
 
 const USER_DRIVER *USER_Driver = &lazy_load_driver;
 static DWORD driver_load_error;
@@ -125,7 +125,7 @@ static const USER_DRIVER *load_driver(void)
 #undef GET_USER_FUNC
     }
 
-    prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, (void *)&lazy_load_driver );
+    prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
     if (prev != &lazy_load_driver)
     {
         /* another thread beat us to it */
@@ -410,7 +410,7 @@ static LRESULT nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
     return 0;
 }
 
-static const USER_DRIVER null_driver =
+static USER_DRIVER null_driver =
 {
     /* keyboard functions */
     nulldrv_ActivateKeyboardLayout,
@@ -736,7 +736,7 @@ static LRESULT loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return load_driver()->pWindowMessage( hwnd, msg, wparam, lparam );
 }
 
-static const USER_DRIVER lazy_load_driver =
+static USER_DRIVER lazy_load_driver =
 {
     /* keyboard functions */
     loaderdrv_ActivateKeyboardLayout,
