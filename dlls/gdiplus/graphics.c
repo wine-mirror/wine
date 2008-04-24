@@ -2161,3 +2161,47 @@ GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpGraphics *graph
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipDrawPolygon(GpGraphics *graphics,GpPen *pen,GDIPCONST GpPointF *points,
+    INT count)
+{
+    INT save_state;
+    POINT *pti;
+
+    if(!graphics || !pen || count<=0)
+        return InvalidParameter;
+
+    pti = GdipAlloc(sizeof(POINT) * count);
+
+    save_state = prepare_dc(graphics, pen);
+    SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
+
+    transform_and_round_points(graphics, pti, (GpPointF*)points, count);
+    Polygon(graphics->hdc, pti, count);
+
+    restore_dc(graphics, save_state);
+    GdipFree(pti);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipDrawPolygonI(GpGraphics *graphics,GpPen *pen,GDIPCONST GpPoint *points,
+    INT count)
+{
+    GpStatus ret;
+    GpPointF *ptf;
+    INT i;
+
+    if(count<=0)    return InvalidParameter;
+    ptf = GdipAlloc(sizeof(GpPointF) * count);
+
+    for(i = 0;i < count; i++){
+        ptf[i].X = (REAL)points[i].X;
+        ptf[i].Y = (REAL)points[i].Y;
+    }
+
+    ret = GdipDrawPolygon(graphics,pen,ptf,count);
+    GdipFree(ptf);
+
+    return ret;
+}

@@ -192,8 +192,8 @@
 @ stdcall GdipDrawPath(ptr ptr ptr)
 @ stdcall GdipDrawPie(ptr ptr long long long long long long)
 @ stdcall GdipDrawPieI(ptr ptr long long long long long long)
-@ stub GdipDrawPolygon
-@ stub GdipDrawPolygonI
+@ stdcall GdipDrawPolygon(ptr ptr ptr long)
+@ stdcall GdipDrawPolygonI(ptr ptr ptr long)
 @ stdcall GdipDrawRectangle(ptr ptr long long long long)
 @ stdcall GdipDrawRectangleI(ptr ptr long long long long)
 @ stdcall GdipDrawRectangles(ptr ptr ptr long)
