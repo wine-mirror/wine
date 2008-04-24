@@ -1002,7 +1002,7 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
 {
     LPCWSTR ptr = szFiles;
     WCHAR szCurFile[MAX_PATH];
-    DWORD i = 0, dwDirLen;
+    DWORD i = 0;
 
     if (!szFiles)
         return ERROR_INVALID_PARAMETER;
@@ -1027,7 +1027,7 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
         /* change relative to absolute path */
         if (PathIsRelativeW(ptr))
         {
-            dwDirLen = GetCurrentDirectoryW(MAX_PATH, szCurFile) + 1;
+            GetCurrentDirectoryW(MAX_PATH, szCurFile);
             PathCombineW(szCurFile, szCurFile, ptr);
             flList->feFiles[i].bFromRelative = TRUE;
         }
