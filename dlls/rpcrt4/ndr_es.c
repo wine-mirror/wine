@@ -398,7 +398,7 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
 
         client_do_args_old_format(&pEsMsg->StubMsg, pFormat, PROXY_CALCSIZE,
             pEsMsg->StubMsg.StackTop, stack_size, (unsigned char *)&RetVal,
-            FALSE /* object_proc */);
+            FALSE /* object_proc */, TRUE /* ignore_retval */);
 
         pEsMsg->ByteCount = pEsMsg->StubMsg.BufferLength - mes_proc_header_buffer_size();
         es_data_alloc(pEsMsg, pEsMsg->StubMsg.BufferLength);
@@ -407,7 +407,7 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
 
         client_do_args_old_format(&pEsMsg->StubMsg, pFormat, PROXY_MARSHAL,
             pEsMsg->StubMsg.StackTop, stack_size, (unsigned char *)&RetVal,
-            FALSE /* object_proc */);
+            FALSE /* object_proc */, TRUE /* ignore_retval */);
 
         es_data_write(pEsMsg, pEsMsg->ByteCount);
         break;
@@ -418,7 +418,7 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
 
         client_do_args_old_format(&pEsMsg->StubMsg, pFormat, PROXY_UNMARSHAL,
             pEsMsg->StubMsg.StackTop, stack_size, (unsigned char *)&RetVal,
-            FALSE /* object_proc */);
+            FALSE /* object_proc */, TRUE /* ignore_retval */);
         break;
     default:
         RpcRaiseException(RPC_S_INTERNAL_ERROR);

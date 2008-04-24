@@ -238,4 +238,5 @@ typedef struct _NDR_EHD_CONTEXT
 
 void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     PFORMAT_STRING pFormat, int phase, unsigned char *args,
-    unsigned short stack_size, unsigned char *pRetVal, BOOL object_proc);
+    unsigned short stack_size, unsigned char *pRetVal, BOOL object_proc,
+    BOOL ignore_retval);

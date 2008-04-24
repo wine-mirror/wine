@@ -441,7 +441,7 @@ static unsigned int type_stack_size(unsigned char fc)
 void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     PFORMAT_STRING pFormat, int phase, unsigned char *args,
     unsigned short stack_size,
-    unsigned char *pRetVal, BOOL object_proc)
+    unsigned char *pRetVal, BOOL object_proc, BOOL ignore_retval)
 {
     /* current format string offset */
     int current_offset = 0;
@@ -492,7 +492,8 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
                     call_marshaller(pStubMsg, pArg, pTypeFormat);
                 break;
             case PROXY_UNMARSHAL:
-                if (pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
+                if (!ignore_retval &&
+                    pParam->param_direction == RPC_FC_RETURN_PARAM_BASETYPE)
                 {
                     if (pParam->param_direction & RPC_FC_RETURN_PARAM)
                         call_unmarshaller(pStubMsg, &pRetVal, pTypeFormat, 0);
@@ -723,7 +724,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                     else
                         client_do_args_old_format(&stubMsg, pFormat, phase,
                             stubMsg.StackTop, stack_size, (unsigned char *)&RetVal,
-                            (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
+                            (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT), FALSE);
                     break;
                 default:
                     ERR("shouldn't reach here. phase %d\n", phase);
@@ -801,7 +802,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
                 else
                     client_do_args_old_format(&stubMsg, pFormat, phase,
                         stubMsg.StackTop, stack_size, (unsigned char *)&RetVal,
-                        (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT));
+                        (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT), FALSE);
                 break;
             default:
                 ERR("shouldn't reach here. phase %d\n", phase);
