@@ -422,6 +422,19 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     }
 #endif
 
+    if (newDevice->axes > 16)
+    {
+        /* There are 24 more axes for velocity that we can use */
+        FIXME("Can't support %d axes. Clamping down to 16\n", newDevice->axes);
+        newDevice->axes = 16;
+    }
+
+    if (newDevice->buttons > 128)
+    {
+        WARN("Can't support %d buttons. Clamping down to 128\n", newDevice->buttons);
+        newDevice->buttons = 128;
+    }
+
     newDevice->base.lpVtbl = jvt;
     newDevice->base.ref = 1;
     newDevice->base.dinput = dinput;
