@@ -4761,7 +4761,7 @@ TOOLBAR_SetHotItem (HWND hwnd, WPARAM wParam)
 
     TRACE("hwnd = %p, nHit = %d\n", hwnd, (INT)wParam);
 
-    if ((INT)wParam > infoPtr->nNumButtons)
+    if ((INT)wParam >= infoPtr->nNumButtons)
         return infoPtr->nHotItem;
     
     if ((INT)wParam < 0)
