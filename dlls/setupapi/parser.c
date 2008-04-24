@@ -778,7 +778,7 @@ static const WCHAR *eol_backslash_state( struct parser *parser, const WCHAR *pos
 /* handler for parser QUOTES state */
 static const WCHAR *quotes_state( struct parser *parser, const WCHAR *pos )
 {
-    const WCHAR *p, *token_end = parser->start;
+    const WCHAR *p;
 
     for (p = pos; !is_eol( parser, p ); p++)
     {
@@ -787,7 +787,7 @@ static const WCHAR *quotes_state( struct parser *parser, const WCHAR *pos )
             if (p+1 < parser->end && p[1] == '"')  /* double quotes */
             {
                 push_token( parser, p + 1 );
-                parser->start = token_end = p + 2;
+                parser->start = p + 2;
                 p++;
             }
             else  /* end of quotes */

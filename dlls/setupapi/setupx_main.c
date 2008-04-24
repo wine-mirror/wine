@@ -401,7 +401,7 @@ RETERR16 WINAPI CtlDelLdd16(LOGDISKID16 ldid)
  */
 RETERR16 WINAPI CtlFindLdd16(LPLOGDISKDESC pldd)
 {
-    LDD_LIST *pCurr, *pPrev = NULL;
+    LDD_LIST *pCurr;
 
     TRACE("(%p)\n", pldd);
 
@@ -414,10 +414,7 @@ RETERR16 WINAPI CtlFindLdd16(LPLOGDISKDESC pldd)
     pCurr = pFirstLDD;
     /* search until we find the appropriate LDD or hit the end */
     while ((pCurr != NULL) && (pldd->ldid > pCurr->pldd->ldid))
-    {
-	pPrev = pCurr;
 	pCurr = pCurr->next;
-    }
     if ( (pCurr == NULL) /* hit end of list */
       || (pldd->ldid != pCurr->pldd->ldid) )
 	return ERR_VCP_LDDFIND; /* correct ? */
@@ -534,7 +531,7 @@ RETERR16 WINAPI CtlAddLdd16(LPLOGDISKDESC pldd)
  */
 static RETERR16 SETUPX_GetLdd(LPLOGDISKDESC pldd)
 {
-    LDD_LIST *pCurr, *pPrev = NULL;
+    LDD_LIST *pCurr;
 
     if (!std_LDDs_done)
 	SETUPX_CreateStandardLDDs();
@@ -545,10 +542,7 @@ static RETERR16 SETUPX_GetLdd(LPLOGDISKDESC pldd)
     pCurr = pFirstLDD;
     /* search until we find the appropriate LDD or hit the end */
     while ((pCurr != NULL) && (pldd->ldid > pCurr->pldd->ldid))
-    {
-	 pPrev = pCurr;
-	 pCurr = pCurr->next;
-    }
+	pCurr = pCurr->next;
     if (pCurr == NULL) /* hit end of list */
 	return ERR_VCP_LDDFIND; /* correct ? */
 
