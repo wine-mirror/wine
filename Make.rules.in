@@ -125,6 +125,15 @@ OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_
 RCOBJS = $(RC_SRCS:.rc=.res.o)
 LINTS  = $(C_SRCS:.c=.ln)
 
+# 'all' target first in case the enclosing Makefile didn't define any target
+
+all:
+
+filter: dummy
+	@$(TOPSRCDIR)/tools/winapi/make_filter --make $(MAKE) all
+
+.PHONY: all filter
+
 # Implicit rules
 
 .SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c @MAINTAINER_MODE@ .sfd .ttf .svg .ico
@@ -192,15 +201,6 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(RSVG) -w 48 -h 48 -f png $< $*-48.png
 	$(ICOTOOL) -c -o $@ $*-16.png $*-32.png $*-48.png
 	$(RM) $*-16.png $*-32.png $*-48.png
-
-# 'all' target first in case the enclosing Makefile didn't define any target
-
-all:
-
-filter: dummy
-	@$(TOPSRCDIR)/tools/winapi/make_filter --make $(MAKE) all
-
-.PHONY: all filter
 
 # Rules for IDL files
 
