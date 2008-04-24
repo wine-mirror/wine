@@ -45,6 +45,7 @@ static const char elem_test_str[] =
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"></script>"
+    "<test />"
     "</body></html>";
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
@@ -74,7 +75,8 @@ typedef enum {
     ET_BR,
     ET_TABLE,
     ET_TBODY,
-    ET_SCRIPT
+    ET_SCRIPT,
+    ET_TEST
 } elem_type_t;
 
 static REFIID const none_iids[] = {
@@ -86,6 +88,7 @@ static REFIID const elem_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -96,6 +99,7 @@ static REFIID const body_iids[] = {
     &IID_IHTMLElement2,
     &IID_IHTMLTextContainer,
     &IID_IHTMLBodyElement,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -105,6 +109,7 @@ static REFIID const anchor_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLAnchorElement,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -115,6 +120,7 @@ static REFIID const input_iids[] = {
     &IID_IHTMLElement2,
     &IID_IHTMLInputElement,
     &IID_IHTMLInputTextElement,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -124,6 +130,7 @@ static REFIID const select_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLSelectElement,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -133,6 +140,7 @@ static REFIID const textarea_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLTextAreaElement,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -142,6 +150,7 @@ static REFIID const option_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLOptionElement,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -151,6 +160,7 @@ static REFIID const table_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLTable,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -160,6 +170,7 @@ static REFIID const script_iids[] = {
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLScriptElement,
+    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -174,32 +185,35 @@ static REFIID const window_iids[] = {
     &IID_IDispatch,
     &IID_IHTMLWindow2,
     &IID_IHTMLWindow3,
+    &IID_IDispatchEx,
     NULL
 };
 
 typedef struct {
     const char *tag;
     REFIID *iids;
+    const IID *dispiid;
 } elem_type_info_t;
 
 static const elem_type_info_t elem_type_infos[] = {
-    {"",          none_iids},
-    {"HTML",      elem_iids},
-    {"HEAD",      elem_iids},
-    {"TITLE",     elem_iids},
-    {"BODY",      body_iids},
-    {"A",         anchor_iids},
-    {"INPUT",     input_iids},
-    {"SELECT",    select_iids},
-    {"TEXTAREA",  textarea_iids},
-    {"OPTION",    option_iids},
-    {"STYLE",     elem_iids},
-    {"BLOCKQUOTE",elem_iids},
-    {"P",         elem_iids},
-    {"BR",        elem_iids},
-    {"TABLE",     table_iids},
-    {"TBODY",     elem_iids},
-    {"SCRIPT",    script_iids}
+    {"",          none_iids,        NULL},
+    {"HTML",      elem_iids,        NULL},
+    {"HEAD",      elem_iids,        NULL},
+    {"TITLE",     elem_iids,        NULL},
+    {"BODY",      body_iids,        NULL},
+    {"A",         anchor_iids,      NULL},
+    {"INPUT",     input_iids,       NULL},
+    {"SELECT",    select_iids,      NULL},
+    {"TEXTAREA",  textarea_iids,    NULL},
+    {"OPTION",    option_iids,      NULL},
+    {"STYLE",     elem_iids,        NULL},
+    {"BLOCKQUOTE",elem_iids,        NULL},
+    {"P",         elem_iids,        NULL},
+    {"BR",        elem_iids,        NULL},
+    {"TABLE",     table_iids,       NULL},
+    {"TBODY",     elem_iids,        NULL},
+    {"SCRIPT",    script_iids,      NULL},
+    {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -345,6 +359,9 @@ static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
 {
     _test_elem_tag(line, unk, elem_type_infos[type].tag);
     _test_ifaces(line, unk, elem_type_infos[type].iids);
+
+    if(elem_type_infos[type].dispiid)
+        _test_disp(line, unk, elem_type_infos[type].dispiid);
 }
 
 static void test_doc_elem(IHTMLDocument2 *doc)
@@ -1349,7 +1366,8 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TEXTAREA,
         ET_TABLE,
         ET_TBODY,
-        ET_SCRIPT
+        ET_SCRIPT,
+        ET_TEST
     };
 
     static const elem_type_t item_types[] = {
