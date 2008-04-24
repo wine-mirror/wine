@@ -679,6 +679,203 @@ static BOOL HLPFILE_RtfAddText(struct RtfData* rd, const char* str)
 }
 
 /******************************************************************
+ *		RtfAddHexBytes
+ *
+ */
+static BOOL HLPFILE_RtfAddHexBytes(struct RtfData* rd, const void* _ptr, unsigned sz)
+{
+    char        tmp[512];
+    unsigned    i, step;
+    const BYTE* ptr = _ptr;
+    static const char* _2hex = "0123456789abcdef";
+
+    if (!rd) return TRUE; /* FIXME: TEMP */
+    if (!rd->in_text)
+    {
+        if (!HLPFILE_RtfAddRawString(rd, " ", 1)) return FALSE;
+        rd->in_text = TRUE;
+    }
+    for (; sz; sz -= step)
+    {
+        step = min(256, sz);
+        for (i = 0; i < step; i++)
+        {
+            tmp[2 * i + 0] = _2hex[*ptr >> 4];
+            tmp[2 * i + 1] = _2hex[*ptr++ & 0xF];
+        }
+        if (!HLPFILE_RtfAddRawString(rd, tmp, 2 * step)) return FALSE;
+    }
+    return TRUE;
+}
+
+/******************************************************************
+ *		HLPFILE_RtfAddBitmap
+ *
+ */
+static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, BYTE* beg, BYTE type, BYTE pack)
+{
+    BYTE*               ptr;
+    BYTE*               pict_beg;
+    BITMAPINFO*         bi;
+    unsigned long       off, csz;
+    unsigned            nc = 0;
+    BOOL                ret = FALSE;
+    char                tmp[256];
+
+    bi = HeapAlloc(GetProcessHeap(), 0, sizeof(*bi));
+    if (!bi) return FALSE;
+
+    ptr = beg + 2; /* for type and pack */
+
+    bi->bmiHeader.biSize          = sizeof(bi->bmiHeader);
+    bi->bmiHeader.biXPelsPerMeter = fetch_ulong(&ptr);
+    bi->bmiHeader.biYPelsPerMeter = fetch_ulong(&ptr);
+    bi->bmiHeader.biPlanes        = fetch_ushort(&ptr);
+    bi->bmiHeader.biBitCount      = fetch_ushort(&ptr);
+    bi->bmiHeader.biWidth         = fetch_ulong(&ptr);
+    bi->bmiHeader.biHeight        = fetch_ulong(&ptr);
+    bi->bmiHeader.biClrUsed       = fetch_ulong(&ptr);
+    bi->bmiHeader.biClrImportant  = fetch_ulong(&ptr);
+    bi->bmiHeader.biCompression   = BI_RGB;
+    if (bi->bmiHeader.biBitCount > 32) WINE_FIXME("Unknown bit count %u\n", bi->bmiHeader.biBitCount);
+    if (bi->bmiHeader.biPlanes != 1) WINE_FIXME("Unsupported planes %u\n", bi->bmiHeader.biPlanes);
+    bi->bmiHeader.biSizeImage = (((bi->bmiHeader.biWidth * bi->bmiHeader.biBitCount + 31) & ~31) / 8) * bi->bmiHeader.biHeight;
+    WINE_TRACE("planes=%d bc=%d size=(%d,%d)\n",
+               bi->bmiHeader.biPlanes, bi->bmiHeader.biBitCount,
+               bi->bmiHeader.biWidth, bi->bmiHeader.biHeight);
+
+    csz = fetch_ulong(&ptr);
+    fetch_ulong(&ptr); /* hotspot size */
+
+    off = GET_UINT(ptr, 0);     ptr += 4;
+    /* GET_UINT(ptr, 0); hotspot offset */ ptr += 4;
+
+    /* now read palette info */
+    if (type == 0x06)
+    {
+        unsigned i;
+
+        nc = bi->bmiHeader.biClrUsed;
+        /* not quite right, especially for bitfields type of compression */
+        if (!nc && bi->bmiHeader.biBitCount <= 8)
+            nc = 1 << bi->bmiHeader.biBitCount;
+
+        bi = HeapReAlloc(GetProcessHeap(), 0, bi, sizeof(*bi) + nc * sizeof(RGBQUAD));
+        if (!bi) return FALSE;
+        for (i = 0; i < nc; i++)
+        {
+            bi->bmiColors[i].rgbBlue     = ptr[0];
+            bi->bmiColors[i].rgbGreen    = ptr[1];
+            bi->bmiColors[i].rgbRed      = ptr[2];
+            bi->bmiColors[i].rgbReserved = 0;
+            ptr += 4;
+        }
+    }
+    pict_beg = HLPFILE_DecompressGfx(beg + off, csz, bi->bmiHeader.biSizeImage, pack);
+
+
+    if (!HLPFILE_RtfAddControl(rd, "{\\pict")) goto done;
+    if (type == 0x06)
+    {
+        sprintf(tmp, "\\dibitmap0\\picw%d\\pich%d",
+                bi->bmiHeader.biWidth, bi->bmiHeader.biHeight);
+        if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+        if (!HLPFILE_RtfAddHexBytes(rd, bi, sizeof(*bi) + nc * sizeof(RGBQUAD))) goto done;
+    }
+    else
+    {
+        sprintf(tmp, "\\wbitmap0\\wbmbitspixel%d\\wbmplanes%d\\picw%d\\pich%d",
+                bi->bmiHeader.biBitCount, bi->bmiHeader.biPlanes,
+                bi->bmiHeader.biWidth, bi->bmiHeader.biHeight);
+        if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+    }
+    if (!HLPFILE_RtfAddHexBytes(rd, pict_beg, bi->bmiHeader.biSizeImage)) goto done;
+    if (!HLPFILE_RtfAddControl(rd, "}")) goto done;
+
+    ret = TRUE;
+done:
+    HeapFree(GetProcessHeap(), 0, bi);
+    if (pict_beg != beg + off) HeapFree(GetProcessHeap(), 0, pict_beg);
+
+    return ret;
+}
+
+/******************************************************************
+ *		HLPFILE_RtfAddMetaFile
+ *
+ */
+static BOOL     HLPFILE_RtfAddMetaFile(struct RtfData* rd, BYTE* beg, BYTE pack)
+{
+    return TRUE;
+}
+
+/******************************************************************
+ *		HLPFILE_RtfAddGfxByAddr
+ *
+ */
+static  BOOL    HLPFILE_RtfAddGfxByAddr(struct RtfData* rd, HLPFILE *hlpfile,
+                                        BYTE* ref, unsigned long size)
+{
+    unsigned    i, numpict;
+
+    numpict = GET_USHORT(ref, 2);
+    WINE_TRACE("Got picture magic=%04x #=%d\n", GET_USHORT(ref, 0), numpict);
+
+    for (i = 0; i < numpict; i++)
+    {
+        BYTE*   beg;
+        BYTE*   ptr;
+        BYTE    type, pack;
+
+        WINE_TRACE("Offset[%d] = %x\n", i, GET_UINT(ref, (1 + i) * 4));
+        beg = ptr = ref + GET_UINT(ref, (1 + i) * 4);
+
+        type = *ptr++;
+        pack = *ptr++;
+
+        switch (type)
+        {
+        case 5: /* device dependent bmp */
+        case 6: /* device independent bmp */
+            HLPFILE_RtfAddBitmap(rd, beg, type, pack);
+            break;
+        case 8:
+            HLPFILE_RtfAddMetaFile(rd, beg, pack);
+            break;
+        default: WINE_FIXME("Unknown type %u\n", type); return FALSE;
+        }
+
+        /* FIXME: hotspots */
+
+        /* FIXME: implement support for multiple picture format */
+        if (numpict != 1) WINE_FIXME("Supporting only one bitmap format per logical bitmap (for now). Using first format\n");
+        break;
+    }
+    return TRUE;
+}
+
+/******************************************************************
+ *		HLPFILE_RtfAddGfxByIndex
+ *
+ *
+ */
+static  BOOL    HLPFILE_RtfAddGfxByIndex(struct RtfData* rd, HLPFILE *hlpfile,
+                                         unsigned index)
+{
+    char        tmp[16];
+    BYTE        *ref, *end;
+
+    WINE_TRACE("Loading picture #%d\n", index);
+
+    sprintf(tmp, "|bm%u", index);
+
+    if (!HLPFILE_FindSubFile(hlpfile, tmp, &ref, &end)) {WINE_WARN("no sub file\n"); return FALSE;}
+
+    ref += 9;
+    return HLPFILE_RtfAddGfxByAddr(rd, hlpfile, ref, end - ref);
+}
+
+/******************************************************************
  *		HLPFILE_LoadBitmap
  *
  *
@@ -1273,6 +1470,10 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                         case 0:
                             HLPFILE_LoadGfxByIndex(page->file, GET_SHORT(format, 2),
                                                    paragraph);
+                            if (rd) { /* FIXME: TEMP */
+                            HLPFILE_RtfAddGfxByIndex(rd, page->file, GET_SHORT(format, 2));
+                            rd->char_pos++;
+                            }
                             break;
                         case 1:
                             WINE_FIXME("does it work ??? %x<%lu>#%u\n", 
@@ -1280,7 +1481,11 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                                        size, GET_SHORT(format, 2));
                             HLPFILE_LoadGfxByAddr(page->file, format + 2, size - 4,
                                                   paragraph);
-                            break;
+                            if (rd) { /* FIXME: TEMP */
+                            HLPFILE_RtfAddGfxByAddr(rd, page->file, format + 2, size - 4);
+                            rd->char_pos++;
+                            }
+                           break;
                         default:
                             WINE_FIXME("??? %u\n", GET_SHORT(format, 0));
                             break;
