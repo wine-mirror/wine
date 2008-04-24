@@ -373,46 +373,50 @@ int  ME_GetParaLineSpace(ME_Context* c, ME_Paragraph* para)
     return sp * c->editor->nZoomNumerator / c->editor->nZoomDenominator;
 }
 
-static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y)
+static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT* bounds)
 {
-  int           idx, border_width;
-  int           ybefore, yafter;
+  int           idx, border_width, top_border, bottom_border;
   RECT          rc;
 
-  if (!(para->pFmt->dwMask & (PFM_BORDER | PFM_SPACEBEFORE | PFM_SPACEAFTER))) return 0;
+  SetRectEmpty(bounds);
+  if (!(para->pFmt->dwMask & (PFM_BORDER | PFM_SPACEBEFORE | PFM_SPACEAFTER))) return;
+
+  border_width = top_border = bottom_border = 0;
+  idx = (para->pFmt->wBorders >> 8) & 0xF;
+  if ((para->pFmt->dwMask & PFM_BORDER) && idx != 0 && (para->pFmt->wBorders & 0xF))
+  {
+    if (para->pFmt->wBorders & 0x00B0)
+      FIXME("Unsupported border flags %x\n", para->pFmt->wBorders);
+    border_width = ME_GetParaBorderWidth(c->editor, para->pFmt->wBorders);
+    if (para->pFmt->wBorders & 4)       top_border = border_width;
+    if (para->pFmt->wBorders & 8)       bottom_border = border_width;
+  }
 
   if (para->pFmt->dwMask & PFM_SPACEBEFORE)
   {
     rc.left = c->rcView.left;
     rc.right = c->rcView.right;
     rc.top = y;
-    ybefore = ME_twips2pointsY(c, para->pFmt->dySpaceBefore);
-    rc.bottom = y + ybefore;
+    bounds->top = ME_twips2pointsY(c, para->pFmt->dySpaceBefore);
+    rc.bottom = y + bounds->top + top_border;
     FillRect(c->hDC, &rc, c->editor->hbrBackground);
   }
-  else ybefore = 0;
+
   if (para->pFmt->dwMask & PFM_SPACEAFTER)
   {
     rc.left = c->rcView.left;
     rc.right = c->rcView.right;
     rc.bottom = y + para->nHeight;
-    yafter = ME_twips2pointsY(c, para->pFmt->dySpaceAfter);
-    rc.top = rc.bottom - yafter;
+    bounds->bottom = ME_twips2pointsY(c, para->pFmt->dySpaceAfter);
+    rc.top = rc.bottom - bounds->bottom - bottom_border;
     FillRect(c->hDC, &rc, c->editor->hbrBackground);
   }
-  else yafter = 0;
 
-  border_width = 0;
-  idx = (para->pFmt->wBorders >> 8) & 0xF;
   if ((para->pFmt->dwMask & PFM_BORDER) && idx != 0 && (para->pFmt->wBorders & 0xF)) {
     int         pen_width;
     COLORREF    pencr;
     HPEN        pen = NULL, oldpen = NULL;
     POINT       pt;
-
-    if (para->pFmt->wBorders & 0x00B0)
-      FIXME("Unsupported border flags %x\n", para->pFmt->wBorders);
-    border_width = ME_GetParaBorderWidth(c->editor, para->pFmt->wBorders);
 
     if (para->pFmt->wBorders & 64) /* autocolor */
       pencr = GetSysColor(COLOR_WINDOWTEXT);
@@ -425,50 +429,66 @@ static int ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y)
     MoveToEx(c->hDC, 0, 0, &pt);
 
     /* before & after spaces are not included in border */
+
+    /* helper to draw the double lines in case of corner */
+#define DD(x)   ((para->pFmt->wBorders & (x)) ? (pen_width + 1) : 0)
+
     if (para->pFmt->wBorders & 1)
     {
-      MoveToEx(c->hDC, c->rcView.left, y + ybefore, NULL);
-      LineTo(c->hDC, c->rcView.left, y + para->nHeight - yafter);
+      MoveToEx(c->hDC, c->rcView.left, y + bounds->top, NULL);
+      LineTo(c->hDC, c->rcView.left, y + para->nHeight - bounds->bottom);
       if (border_details[idx].dble) {
-        MoveToEx(c->hDC, c->rcView.left + pen_width + 1, y + ybefore + pen_width + 1, NULL);
-        LineTo(c->hDC, c->rcView.left + pen_width + 1, y + para->nHeight - yafter - pen_width - 1);
+        rc.left = c->rcView.left + 1;
+        rc.right = rc.left + border_width;
+        rc.top = y + bounds->top;
+        rc.bottom = y + para->nHeight - bounds->bottom;
+        FillRect(c->hDC, &rc, c->editor->hbrBackground);
+        MoveToEx(c->hDC, c->rcView.left + pen_width + 1, y + bounds->top + DD(4), NULL);
+        LineTo(c->hDC, c->rcView.left + pen_width + 1, y + para->nHeight - bounds->bottom - DD(8));
       }
+      bounds->left += border_width;
     }
     if (para->pFmt->wBorders & 2)
     {
-      MoveToEx(c->hDC, c->rcView.right, y + ybefore, NULL);
-      LineTo(c->hDC, c->rcView.right, y + para->nHeight - yafter);
+      MoveToEx(c->hDC, c->rcView.right - 1, y + bounds->top, NULL);
+      LineTo(c->hDC, c->rcView.right - 1, y + para->nHeight - bounds->bottom);
       if (border_details[idx].dble) {
-        MoveToEx(c->hDC, c->rcView.right - pen_width - 1, y + ybefore + pen_width + 1, NULL);
-        LineTo(c->hDC, c->rcView.right - pen_width - 1, y + para->nHeight - yafter - pen_width - 1);
+        rc.left = c->rcView.right - pen_width - 1;
+        rc.right = c->rcView.right - 1;
+        rc.top = y + bounds->top;
+        rc.bottom = y + para->nHeight - bounds->bottom;
+        FillRect(c->hDC, &rc, c->editor->hbrBackground);
+        MoveToEx(c->hDC, c->rcView.right - 1 - pen_width - 1, y + bounds->top + DD(4), NULL);
+        LineTo(c->hDC, c->rcView.right - 1 - pen_width - 1, y + para->nHeight - bounds->bottom - DD(8));
       }
+      bounds->right += border_width;
     }
     if (para->pFmt->wBorders & 4)
     {
-      MoveToEx(c->hDC, c->rcView.left, y + ybefore, NULL);
-      LineTo(c->hDC, c->rcView.right, y + ybefore);
+      MoveToEx(c->hDC, c->rcView.left, y + bounds->top, NULL);
+      LineTo(c->hDC, c->rcView.right, y + bounds->top);
       if (border_details[idx].dble) {
-        MoveToEx(c->hDC, c->rcView.left + pen_width + 1, y + ybefore + pen_width + 1, NULL);
-        LineTo(c->hDC, c->rcView.right - pen_width - 1, y + ybefore + pen_width + 1);
+        MoveToEx(c->hDC, c->rcView.left + DD(1), y + bounds->top + pen_width + 1, NULL);
+        LineTo(c->hDC, c->rcView.right - DD(2), y + bounds->top + pen_width + 1);
       }
+      bounds->top += border_width;
     }
     if (para->pFmt->wBorders & 8)
     {
-      MoveToEx(c->hDC, c->rcView.left, y + para->nHeight - yafter - 1, NULL);
-      LineTo(c->hDC, c->rcView.right, y + para->nHeight - yafter - 1);
+      MoveToEx(c->hDC, c->rcView.left, y + para->nHeight - bounds->bottom - 1, NULL);
+      LineTo(c->hDC, c->rcView.right, y + para->nHeight - bounds->bottom - 1);
       if (border_details[idx].dble) {
-        MoveToEx(c->hDC, c->rcView.left + pen_width + 1, y + para->nHeight - yafter - 1 - pen_width - 1, NULL);
-        LineTo(c->hDC, c->rcView.right - pen_width - 1, y + para->nHeight - yafter - 1 - pen_width - 1);
+        MoveToEx(c->hDC, c->rcView.left + DD(1), y + para->nHeight - bounds->bottom - 1 - pen_width - 1, NULL);
+        LineTo(c->hDC, c->rcView.right - DD(2), y + para->nHeight - bounds->bottom - 1 - pen_width - 1);
       }
+      bounds->bottom += border_width;
     }
+#undef DD
 
     MoveToEx(c->hDC, pt.x, pt.y, NULL);
     SelectObject(c->hDC, oldpen);
     DeleteObject(pen);
   }
-  return ybefore +
-      ((para->pFmt->dwMask & PFM_BORDER) && (para->pFmt->wBorders & 4) ?
-       border_width : 0);
 }
 
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
@@ -476,12 +496,11 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   ME_DisplayItem *p;
   ME_Run *run;
   ME_Paragraph *para = NULL;
-  RECT rc, rcPara;
+  RECT rc, rcPara, bounds;
   int y = c->pt.y;
   int height = 0, baseline = 0, no=0, pno = 0;
-  int xe = 0;
+  int xs = 0, xe = 0;
   BOOL visible = FALSE;
-  int nMargWidth = 0;
 
   c->pt.x = c->rcView.left;
   rcPara.left = c->rcView.left;
@@ -491,11 +510,11 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
       case diParagraph:
         para = &p->member.para;
         assert(para);
-        nMargWidth = ME_twips2pointsX(c, para->pFmt->dxStartIndent);
-        if (pno != 0)
-          nMargWidth += ME_twips2pointsX(c, para->pFmt->dxOffset);
+        pno = 0;
+        xs = c->rcView.left + ME_twips2pointsX(c, para->pFmt->dxStartIndent);
         xe = c->rcView.right - ME_twips2pointsX(c, para->pFmt->dxRightIndent);
-        y += ME_DrawParaDecoration(c, para, y);
+        ME_DrawParaDecoration(c, para, y, &bounds);
+        y += bounds.top;
         break;
       case diStartRow:
         y += height;
@@ -504,16 +523,16 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         visible = RectVisible(c->hDC, &rcPara);
         if (visible) {
           /* left margin */
-          rc.left = c->rcView.left;
-          rc.right = c->rcView.left+nMargWidth;
+          rc.left = c->rcView.left + bounds.left;
+          rc.right = xs;
           rc.top = y;
           rc.bottom = y+p->member.row.nHeight;
           FillRect(c->hDC, &rc, c->editor->hbrBackground);
           /* right margin */
           rc.left = xe;
-          rc.right = c->rcView.right;
+          rc.right = c->rcView.right - bounds.right;
           FillRect(c->hDC, &rc, c->editor->hbrBackground);
-          rc.left = c->rcView.left+nMargWidth;
+          rc.left = xs;
           rc.right = xe;
           FillRect(c->hDC, &rc, c->editor->hbrBackground);
         }
@@ -529,7 +548,8 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         
         height = p->member.row.nHeight;
         baseline = p->member.row.nBaseline;
-        pno++;
+        if (!pno++)
+          xe += ME_twips2pointsX(c, para->pFmt->dxOffset);
         break;
       case diRun:
         assert(para);
