@@ -738,6 +738,23 @@ static void _test_elem_collection(unsigned line, IHTMLElementCollection *col,
     ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
 }
 
+#define get_first_child(n) _get_first_child(__LINE__,n)
+static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode *node, *child = NULL;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode, (void**)&node);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMNode: %08x\n", hres);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IHTMLDOMNode_get_firstChild(node, &child);
+    ok_(__FILE__,line) (hres == S_OK, "get_firstChild failed: %08x\n", hres);
+
+    return child;
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -1379,6 +1396,7 @@ static void test_elems(IHTMLDocument2 *doc)
 {
     IHTMLElementCollection *col;
     IHTMLElement *elem;
+    IHTMLDOMNode *node;
     IDispatch *disp;
     HRESULT hres;
 
@@ -1450,6 +1468,13 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(hres == S_OK, "Could not get IHTMLSelectElement interface: %08x\n", hres);
 
         test_select_elem(select);
+
+        node = get_first_child((IUnknown*)select);
+        ok(node != NULL, "node == NULL\n");
+        if(node) {
+            test_elem_type((IUnknown*)node, ET_OPTION);
+            IHTMLDOMNode_Release(node);
+        }
 
         IHTMLSelectElement_Release(select);
         IHTMLElement_Release(elem);

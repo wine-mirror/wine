@@ -246,8 +246,19 @@ static HRESULT WINAPI HTMLDOMNode_get_nodeValue(IHTMLDOMNode *iface, VARIANT *p)
 static HRESULT WINAPI HTMLDOMNode_get_firstChild(IHTMLDOMNode *iface, IHTMLDOMNode **p)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNode *nschild = NULL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsIDOMNode_GetFirstChild(This->nsnode, &nschild);
+    if(nschild) {
+        *p = HTMLDOMNODE(get_node(This->doc, nschild, TRUE));
+        IHTMLDOMNode_AddRef(*p);
+    }else {
+        *p = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_get_lastChild(IHTMLDOMNode *iface, IHTMLDOMNode **p)
