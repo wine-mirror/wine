@@ -2377,15 +2377,11 @@ static void test_EM_STREAMIN(void)
               (WPARAM)(SF_RTF), (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-  todo_wine {
   ok (result  == 12,
       "EM_STREAMIN: Test 0-a returned %ld, expected 12\n", result);
-  }
   result = strcmp (buffer,"TestSomeText");
-  todo_wine {
   ok (result  == 0,
       "EM_STREAMIN: Test 0-a set wrong text: Result: %s\n",buffer);
-  }
 
   /* Native richedit 2.0 ignores last \par, next-to-last \par appears */
   es.dwCookie = (DWORD_PTR)&streamText0b;
@@ -2395,15 +2391,11 @@ static void test_EM_STREAMIN(void)
               (WPARAM)(SF_RTF), (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-  todo_wine {
   ok (result  == 14,
       "EM_STREAMIN: Test 0-b returned %ld, expected 14\n", result);
-  }
   result = strcmp (buffer,"TestSomeText\r\n");
-  todo_wine {
   ok (result  == 0,
       "EM_STREAMIN: Test 0-b set wrong text: Result: %s\n",buffer);
-  }
 
   es.dwCookie = (DWORD_PTR)&streamText1;
   es.dwError = 0;
@@ -2412,15 +2404,11 @@ static void test_EM_STREAMIN(void)
               (WPARAM)(SF_RTF), (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-  todo_wine {
   ok (result  == 12,
       "EM_STREAMIN: Test 1 returned %ld, expected 12\n", result);
-  }
   result = strcmp (buffer,"TestSomeText");
-  todo_wine {
   ok (result  == 0,
       "EM_STREAMIN: Test 1 set wrong text: Result: %s\n",buffer);
-  }
 
   es.dwCookie = (DWORD_PTR)&streamText2;
   SendMessage(hwndRichEdit, EM_STREAMIN,

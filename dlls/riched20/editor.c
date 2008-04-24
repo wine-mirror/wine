@@ -1022,7 +1022,7 @@ ME_StreamInFill(ME_InStream *stream)
   stream->dwUsed = 0;
 }
 
-static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stream)
+static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stream, BOOL stripLastCR)
 {
   RTF_Info parser;
   ME_Style *style;
@@ -1101,6 +1101,20 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       if (parser.lpRichEditOle)
         IRichEditOle_Release(parser.lpRichEditOle);
 
+      /* Remove last line break, as mandated by tests */
+      if (stripLastCR) {
+        int newfrom, newto;
+        ME_GetSelection(editor, &newfrom, &newto);
+        if (newto > to) {
+          WCHAR lastchar = '\0';
+
+          ME_GetTextW(editor, &lastchar, newto - 1, 1, 0);
+          if (lastchar == '\r') {
+            ME_InternalDeleteText(editor, newto - 1, 1);
+          }
+        }
+      }
+
       style = parser.style;
     }
     else if (format & SF_TEXT)
@@ -1170,7 +1184,7 @@ ME_StreamInRTFString(ME_TextEditor *editor, BOOL selection, char *string)
   data.pos = 0;
   es.dwCookie = (DWORD)&data;
   es.pfnCallback = ME_ReadFromRTFString;
-  ME_StreamIn(editor, SF_RTF | (selection ? SFF_SELECTION : 0), &es);
+  ME_StreamIn(editor, SF_RTF | (selection ? SFF_SELECTION : 0), &es, FALSE);
 }
 
 
@@ -1923,7 +1937,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
 /* Messages specific to Richedit controls */
   
   case EM_STREAMIN:
-   return ME_StreamIn(editor, wParam, (EDITSTREAM*)lParam);
+   return ME_StreamIn(editor, wParam, (EDITSTREAM*)lParam, TRUE);
   case EM_STREAMOUT:
    return ME_StreamOut(editor, wParam, (EDITSTREAM *)lParam);
   case WM_GETDLGCODE:
@@ -2435,7 +2449,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     gds.nLength = 0;
     es.dwCookie = (DWORD)&gds;
     es.pfnCallback = dwFormat == SF_RTF ? ME_ReadFromHGLOBALRTF : ME_ReadFromHGLOBALUnicode;
-    ME_StreamIn(editor, dwFormat|SFF_SELECTION, &es);
+    ME_StreamIn(editor, dwFormat|SFF_SELECTION, &es, FALSE);
 
     CloseClipboard();
     return 0;
