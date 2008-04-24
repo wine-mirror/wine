@@ -615,8 +615,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         lstrcpyA(want_flags, "SF");
         if(fContextReq & ISC_REQ_CONFIDENTIALITY)
         {
-            char *ptr;
-            if((ptr = strstr(want_flags, "NTLMSSP_FEATURE_SEAL")) == NULL)
+            if(strstr(want_flags, "NTLMSSP_FEATURE_SEAL") == NULL)
                 lstrcatA(want_flags, " NTLMSSP_FEATURE_SEAL");
         }
         if(fContextReq & ISC_REQ_CONNECTION)
@@ -625,22 +624,19 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             ctxt_attr |= ISC_RET_EXTENDED_ERROR;
         if(fContextReq & ISC_REQ_INTEGRITY)
         {
-            char *ptr;
-            if((ptr = strstr(want_flags, "NTLMSSP_FEATURE_SIGN")) == NULL)
+            if(strstr(want_flags, "NTLMSSP_FEATURE_SIGN") == NULL)
                 lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
         }
         if(fContextReq & ISC_REQ_MUTUAL_AUTH)
             ctxt_attr |= ISC_RET_MUTUAL_AUTH;
         if(fContextReq & ISC_REQ_REPLAY_DETECT)
         {
-            char *ptr;
-            if((ptr = strstr(want_flags, "NTLMSSP_FEATURE_SIGN")) == NULL)
+            if(strstr(want_flags, "NTLMSSP_FEATURE_SIGN") == NULL)
                 lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
         }
         if(fContextReq & ISC_REQ_SEQUENCE_DETECT)
         {
-            char *ptr;
-            if((ptr = strstr(want_flags, "NTLMSSP_FEATURE_SIGN")) == NULL)
+            if(strstr(want_flags, "NTLMSSP_FEATURE_SIGN") == NULL)
                 lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
         }
         if(fContextReq & ISC_REQ_STREAM)
@@ -1974,7 +1970,6 @@ static const SecPkgInfoA infoA = {
 
 void SECUR32_initNTLMSP(void)
 {
-    SECURITY_STATUS ret;
     PNegoHelper helper;
     static CHAR version[] = "--version";
 
@@ -1983,7 +1978,7 @@ void SECUR32_initNTLMSP(void)
         version,
         NULL };
 
-    if((ret = fork_helper(&helper, ntlm_auth, args)) != SEC_E_OK)
+    if(fork_helper(&helper, ntlm_auth, args) != SEC_E_OK)
     {
         /* Cheat and allocate a helper anyway, so cleanup later will work. */
         helper = HeapAlloc(GetProcessHeap(),0, sizeof(PNegoHelper));
