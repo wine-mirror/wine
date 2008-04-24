@@ -143,10 +143,9 @@ static  const CHAR szTransformSSXML[] =
 "</xsl:stylesheet>";
 
 static  const CHAR szTransformOutput[] =
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-"<html><body><h1>\n"
-"Hello World\n"
-"</h1></body></html>\n";
+"<html><body><h1>"
+"Hello World"
+"</h1></body></html>";
 
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
@@ -240,6 +239,19 @@ static VARIANT _variantbstr_(const char *str)
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = _bstr_(str);
     return v;
+}
+
+static BOOL compareIgnoreReturns(BSTR sLeft, BSTR sRight)
+{
+    for (;;)
+    {
+        while (*sLeft == '\r' || *sLeft == '\n') sLeft++;
+        while (*sRight == '\r' || *sRight == '\n') sRight++;
+        if (*sLeft != *sRight) return FALSE;
+        if (!*sLeft) return TRUE;
+        sLeft++;
+        sRight++;
+    }
 }
 
 static void get_str_for_type(DOMNodeType type, char *buf)
@@ -3193,7 +3205,7 @@ static void test_testTransforms(void)
 
         hr = IXMLDOMDocument_transformNode(doc, pNode, &bOut);
         ok(hr == S_OK, "ret %08x\n", hr );
-        ok( !lstrcmpW( bOut, _bstr_(szTransformOutput) ), "Stylesheet output not correct\n");
+        ok( compareIgnoreReturns( bOut, _bstr_(szTransformOutput)), "Stylesheet output not correct\n");
 
         IXMLDOMNode_Release(pNode);
     }

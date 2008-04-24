@@ -44,6 +44,10 @@
 # include <libxslt/xsltInternals.h>
 #endif
 
+#ifdef HAVE_LIBXML2
+# include <libxml/HTMLtree.h>
+#endif
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
@@ -1065,21 +1069,39 @@ static HRESULT WINAPI xmlnode_transformNode(
             result = xsltApplyStylesheet(xsltSS, This->node->doc, NULL);
             if(result)
             {
-                xmlBufferPtr pXmlBuf;
-                int nSize;
+                const xmlChar *pContent;
 
-                pXmlBuf = xmlBufferCreate();
-                if(pXmlBuf)
+                if(result->type == XML_HTML_DOCUMENT_NODE)
                 {
-                    nSize = xmlNodeDump(pXmlBuf, NULL, (xmlNodePtr)result, 0, 0);
-                    if(nSize > 0)
+                    xmlOutputBufferPtr	pOutput = xmlAllocOutputBuffer(NULL);
+                    if(pOutput)
                     {
-                        const xmlChar *pContent;
+                        htmlDocContentDumpOutput(pOutput, result->doc, NULL);
+                        if(pOutput)
+                        {
+                            pContent = xmlBufferContent(pOutput->buffer);
+                            *xmlString = bstr_from_xmlChar(pContent);
+                        }
 
-                        pContent = xmlBufferContent(pXmlBuf);
-                        *xmlString = bstr_from_xmlChar(pContent);
+                        xmlOutputBufferClose(pOutput);
+                    }
+                }
+                else
+                {
+                    xmlBufferPtr pXmlBuf;
+                    int nSize;
 
-                        xmlBufferFree(pXmlBuf);
+                    pXmlBuf = xmlBufferCreate();
+                    if(pXmlBuf)
+                    {
+                        nSize = xmlNodeDump(pXmlBuf, NULL, (xmlNodePtr)result, 0, 0);
+                        if(nSize > 0)
+                        {
+                            pContent = xmlBufferContent(pXmlBuf);
+                            *xmlString = bstr_from_xmlChar(pContent);
+
+                            xmlBufferFree(pXmlBuf);
+                        }
                     }
                 }
             }
