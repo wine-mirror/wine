@@ -59,6 +59,7 @@ static REFIID tid_ids[] = {
     &IID_IHTMLDocument4,
     &IID_IHTMLDocument5,
     &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
     &IID_IHTMLElement2,
     &IID_IHTMLWindow2,

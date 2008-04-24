@@ -69,6 +69,7 @@ typedef enum {
     IHTMLDocument4_tid,
     IHTMLDocument5_tid,
     IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
     IHTMLElement_tid,
     IHTMLElement2_tid,
     IHTMLWindow2_tid,

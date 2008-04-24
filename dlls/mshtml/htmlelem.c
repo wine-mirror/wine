@@ -1287,6 +1287,7 @@ static dispex_static_data_t HTMLElement_dispex = {
     NULL,
     {
         IHTMLDOMNode_tid,
+        IHTMLDOMNode2_tid,
         IHTMLElement_tid,
         IHTMLElement2_tid,
         0
