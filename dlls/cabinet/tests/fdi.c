@@ -627,10 +627,7 @@ static void test_FDICopy(void)
                      cpuUNKNOWN, &erf);
 
     ret=FDICopy(hfdi, name, path, 0, CopyProgress, NULL, 0);
-    todo_wine
-    {
-        ok(ret, "Expected FDICopy to succeed\n");
-    }
+    ok(ret, "Expected FDICopy to succeed\n");
 
     FDIDestroy(hfdi);
     DeleteFileA(name);

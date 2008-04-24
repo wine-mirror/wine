@@ -562,9 +562,14 @@ static BOOL FDI_read_entries(
 
   /* get the number of folders */
   num_folders = EndGetI16(buf+cfhead_NumFolders);
-  if (num_folders == 0) {
-    /* PONDERME: is this really invalid? */
-    WARN("weird cabinet detect failure: no folders in cabinet\n");
+  /* if num_folders is 0, it's correct cab, but empty */
+  /* if num_folders is 1, there is no folders in this cab */
+
+  /* get the number of files */
+  num_files = EndGetI16(buf+cfhead_NumFiles);
+  if (num_files && !num_folders) {
+    /* If there at least one file in the cabinet. num_folders is always >= 1 */
+    WARN("weird cabinet detect failure: cabinet is not empty, but num_folders = 0\n");
     if (pmii) {
       PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
       PFDI_INT(hfdi)->perf->erfType = 0;
@@ -572,12 +577,9 @@ static BOOL FDI_read_entries(
     }
     return FALSE;
   }
-
-  /* get the number of files */
-  num_files = EndGetI16(buf+cfhead_NumFiles);
-  if (num_files == 0) {
-    /* PONDERME: is this really invalid? */
-    WARN("weird cabinet detect failure: no files in cabinet\n");
+  if (!num_files && num_folders) {
+  /* If cabinet consist of 0 files, num_folders must be 0 */
+    WARN("weird cabinet detect failure: no files in cabinet, but there are folders\n");
     if (pmii) {
       PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
       PFDI_INT(hfdi)->perf->erfType = 0;
@@ -2834,6 +2836,11 @@ BOOL __cdecl FDICopy(
   }
 
   /* free decompression temps */
+  if (!fol) {
+    /* Empty cabinet */
+    PFDI_CLOSE(hfdi, cabhf);
+    return TRUE; /* empty, but correct */
+  }
   switch (fol->comp_type & cffoldCOMPTYPE_MASK) {
   case cffoldCOMPTYPE_LZX:
     if (LZX(window)) {
