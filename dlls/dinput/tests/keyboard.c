@@ -116,13 +116,10 @@ static void acquire_tests(LPDIRECTINPUT pDI, HWND hwnd)
     ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
     hr = IDirectInputDevice_Acquire(pKeyboard);
     ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %s\n", DXGetErrorString8(hr));
-    todo_wine
-        {
-            hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
-            ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState(4,) failed: %s\n", DXGetErrorString8(hr));
-            hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
-            ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(256,) should have failed: %s\n", DXGetErrorString8(hr));
-        }
+    hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState(4,) failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(256,) should have failed: %s\n", DXGetErrorString8(hr));
 
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }

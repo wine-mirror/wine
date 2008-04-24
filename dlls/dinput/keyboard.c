@@ -270,7 +270,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 
     if (!This->base.acquired) return DIERR_NOTACQUIRED;
 
-    if (len != WINE_DINPUT_KEYBOARD_MAX_KEYS)
+    if (len != This->base.data_format.user_df->dwDataSize )
         return DIERR_INVALIDPARAM;
 
     EnterCriticalSection(&This->base.crit);
@@ -282,8 +282,8 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 		TRACE(" - %02X: %02x\n", i, This->DInputKeyState[i]);
 	}
     }
-    
-    memcpy(ptr, This->DInputKeyState, WINE_DINPUT_KEYBOARD_MAX_KEYS);
+
+    fill_DataFormat(ptr, This->DInputKeyState, &This->base.data_format);
     LeaveCriticalSection(&This->base.crit);
 
     return DI_OK;
