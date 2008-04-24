@@ -1037,12 +1037,36 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
         format += 4;
         bits = GET_USHORT(format, 0); format += 2;
         if (bits & 0x0001) fetch_long(&format);
-        if (bits & 0x0002) fetch_short(&format);
-        if (bits & 0x0004) fetch_short(&format);
-        if (bits & 0x0008) fetch_short(&format);
-        if (bits & 0x0010) fetch_short(&format);
-        if (bits & 0x0020) fetch_short(&format);
-        if (bits & 0x0040) fetch_short(&format);
+        if (bits & 0x0002)
+        {
+            sprintf(tmp, "\\sb%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+        }
+        if (bits & 0x0004)
+        {
+            sprintf(tmp, "\\sa%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+        }
+        if (bits & 0x0008)
+        {
+            sprintf(tmp, "\\sl%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+        }
+        if (bits & 0x0010)
+        {
+            sprintf(tmp, "\\li%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+        }
+        if (bits & 0x0020)
+        {
+            sprintf(tmp, "\\ri%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+        }
+        if (bits & 0x0040)
+        {
+            sprintf(tmp, "\\fi%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+        }
         if (bits & 0x0100) format += 3;
         if (bits & 0x0200)
         {
