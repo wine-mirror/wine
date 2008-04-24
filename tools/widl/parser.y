@@ -493,6 +493,7 @@ attribute:					{ $$ = NULL; }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
 	| tINPUTSYNC				{ $$ = make_attr(ATTR_INPUTSYNC); }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
+	| tLCID	'(' expr_const ')'		{ $$ = make_attrp(ATTR_LIBLCID, $3); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
 	| tNONBROWSABLE				{ $$ = make_attr(ATTR_NONBROWSABLE); }
 	| tNONCREATABLE				{ $$ = make_attr(ATTR_NONCREATABLE); }
@@ -2010,6 +2011,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_IN */               { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "in" },
     /* ATTR_INPUTSYNC */        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "inputsync" },
     /* ATTR_LENGTHIS */         { 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, "length_is" },
+    /* ATTR_LIBLCID */          { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "lcid" },
     /* ATTR_LOCAL */            { 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, "local" },
     /* ATTR_NONBROWSABLE */     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "nonbrowsable" },
     /* ATTR_NONCREATABLE */     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "noncreatable" },

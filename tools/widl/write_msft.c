@@ -2322,8 +2322,8 @@ static void set_help_string_context(msft_typelib_t *typelib)
 
 static void set_lcid(msft_typelib_t *typelib)
 {
-    typelib->typelib_header.lcid2 = 0x0;
-    return;
+    const expr_t *lcid_expr = get_attrp( typelib->typelib->attrs, ATTR_LIBLCID );
+    typelib->typelib_header.lcid2 = lcid_expr ? lcid_expr->cval : 0x0;
 }
 
 static void set_lib_flags(msft_typelib_t *typelib)
