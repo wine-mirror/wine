@@ -1067,7 +1067,28 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
             sprintf(tmp, "\\fi%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
-        if (bits & 0x0100) format += 3;
+        if (bits & 0x0100)
+        {
+            BYTE        brdr = *format++;
+            short       w;
+
+            if (brdr & 0x01 && !HLPFILE_RtfAddControl(rd, "\\box")) goto done;
+            if (brdr & 0x02 && !HLPFILE_RtfAddControl(rd, "\\brdrt")) goto done;
+            if (brdr & 0x04 && !HLPFILE_RtfAddControl(rd, "\\brdrl")) goto done;
+            if (brdr & 0x08 && !HLPFILE_RtfAddControl(rd, "\\brdrb")) goto done;
+            if (brdr & 0x10 && !HLPFILE_RtfAddControl(rd, "\\brdrr")) goto done;
+            if (brdr & 0x20 && !HLPFILE_RtfAddControl(rd, "\\brdrth")) goto done;
+            if (!(brdr & 0x20) && !HLPFILE_RtfAddControl(rd, "\\brdrs")) goto done;
+            if (brdr & 0x40 && !HLPFILE_RtfAddControl(rd, "\\brdrdb")) goto done;
+            /* 0x80: unknown */
+
+            w = GET_SHORT(format, 0); format += 2;
+            if (w)
+            {
+                sprintf(tmp, "\\brdrw%d", HLPFILE_HalfPointsToTwips(w));
+                if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+            }
+        }
         if (bits & 0x0200)
         {
             int                 i, ntab = fetch_short(&format);
