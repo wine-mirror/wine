@@ -1308,6 +1308,12 @@ GpStatus WINGDIPAPI GdipDrawPie(GpGraphics *graphics, GpPen *pen, REAL x,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDrawPieI(GpGraphics *graphics, GpPen *pen, INT x,
+    INT y, INT width, INT height, REAL startAngle, REAL sweepAngle)
+{
+    return GdipDrawPie(graphics,pen,(REAL)x,(REAL)y,(REAL)width,(REAL)height,startAngle,sweepAngle);
+}
+
 GpStatus WINGDIPAPI GdipDrawRectangle(GpGraphics *graphics, GpPen *pen, REAL x,
     REAL y, REAL width, REAL height)
 {
