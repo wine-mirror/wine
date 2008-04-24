@@ -1100,7 +1100,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
           srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback,
           callbackData);
 
-    if(!graphics || !image || !points || !imageAttributes || count != 3)
+    if(!graphics || !image || !points || count != 3)
          return InvalidParameter;
 
     if(srcUnit == UnitInch)
@@ -1175,6 +1175,31 @@ GpStatus WINGDIPAPI GdipDrawImageRectRectI(GpGraphics *graphics, GpImage *image,
 
     return GdipDrawImagePointsRect(graphics, image, points, 3, srcx, srcy,
                srcwidth, srcheight, srcUnit, imageAttributes, callback, callbackData);
+}
+
+GpStatus WINGDIPAPI GdipDrawImageRect(GpGraphics *graphics, GpImage *image,
+    REAL x, REAL y, REAL width, REAL height)
+{
+    RectF bounds;
+    GpUnit unit;
+    GpStatus ret;
+
+    if(!graphics || !image)
+        return InvalidParameter;
+
+    ret = GdipGetImageBounds(image, &bounds, &unit);
+    if(ret != Ok)
+        return ret;
+
+    return GdipDrawImageRectRect(graphics, image, x, y, width, height,
+                                 bounds.X, bounds.Y, bounds.Width, bounds.Height,
+                                 unit, NULL, NULL, NULL);
+}
+
+GpStatus WINGDIPAPI GdipDrawImageRectI(GpGraphics *graphics, GpImage *image,
+    INT x, INT y, INT width, INT height)
+{
+    return GdipDrawImageRect(graphics, image, (REAL)x, (REAL)y, (REAL)width, (REAL)height);
 }
 
 GpStatus WINGDIPAPI GdipDrawLine(GpGraphics *graphics, GpPen *pen, REAL x1,
