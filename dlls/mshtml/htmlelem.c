@@ -178,7 +178,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
 
     WARN("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
 
-    VariantInit(AttributeValue);
+    V_VT(AttributeValue) = VT_NULL;
 
     nsAString_Init(&attr_str, strAttributeName);
     nsAString_Init(&value_str, NULL);
@@ -206,7 +206,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
                     TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));
                 }
             }
-        }else {
+        }else if(*value) {
             V_VT(AttributeValue) = VT_BSTR;
             V_BSTR(AttributeValue) = SysAllocString(value);
             TRACE("attr_value=%s\n", debugstr_w(V_BSTR(AttributeValue)));

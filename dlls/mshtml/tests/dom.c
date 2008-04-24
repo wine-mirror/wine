@@ -58,6 +58,8 @@ static WCHAR wordW[] = {'w','o','r','d',0};
 
 static const WCHAR text_javascriptW[] = {'t','e','x','t','/','j','a','v','a','s','c','r','i','p','t',0};
 
+static const WCHAR idW[] = {'i','d',0};
+
 typedef enum {
     ET_NONE,
     ET_HTML,
@@ -362,6 +364,30 @@ static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
 
     if(elem_type_infos[type].dispiid)
         _test_disp(line, unk, elem_type_infos[type].dispiid);
+}
+
+#define test_elem_attr(e,n,v) _test_elem_attr(__LINE__,e,n,v)
+static void _test_elem_attr(unsigned line, IHTMLElement *elem, LPCWSTR name, LPCWSTR exval)
+{
+    VARIANT value;
+    BSTR tmp;
+    HRESULT hres;
+
+    VariantInit(&value);
+
+    tmp = SysAllocString(name);
+    hres = IHTMLElement_getAttribute(elem, tmp, 0, &value);
+    SysFreeString(tmp);
+    ok_(__FILE__,line) (hres == S_OK, "getAttribute failed: %08x\n", hres);
+
+    if(exval) {
+        ok_(__FILE__,line) (V_VT(&value) == VT_BSTR, "vt=%d\n", V_VT(&value));
+        ok_(__FILE__,line) (!lstrcmpW(exval, V_BSTR(&value)), "unexpected value %s\n", dbgstr_w(V_BSTR(&value)));
+    }else {
+        ok_(__FILE__,line) (V_VT(&value) == VT_NULL, "vt=%d\n", V_VT(&value));
+    }
+
+    VariantClear(&value);
 }
 
 static void test_doc_elem(IHTMLDocument2 *doc)
@@ -1400,9 +1426,12 @@ static void test_elems(IHTMLDocument2 *doc)
 
     elem = get_doc_elem_by_id(doc, sW);
     ok(elem != NULL, "elem == NULL\n");
-    test_elem_type((IUnknown*)elem, ET_SELECT);
-    if(elem)
+    if(elem) {
+        test_elem_type((IUnknown*)elem, ET_SELECT);
+        test_elem_attr(elem, xxxW, NULL);
+        test_elem_attr(elem, idW, sW);
         IHTMLElement_Release(elem);
+    }
 
     elem = get_elem_by_id(doc, sW, TRUE);
     if(elem) {
