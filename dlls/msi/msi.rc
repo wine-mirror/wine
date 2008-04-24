@@ -48,6 +48,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: msiserver.tlb */
 1 TYPELIB LOADONCALL DISCARDABLE msiserver.tlb
 
 /* @makedep: instadvert.bmp */

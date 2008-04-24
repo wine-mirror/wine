@@ -19,6 +19,8 @@
 #include "version.rc"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: shdocvw_v1.tlb */
 1 TYPELIB LOADONCALL DISCARDABLE shdocvw_v1.tlb
 
 /* @makedep: shdocvw.inf */

@@ -27,4 +27,5 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #include "wine/wine_common_ver.rc"
 
+/* @makedep: std_ole_v1.tlb */
 1 TYPELIB LOADONCALL DISCARDABLE std_ole_v1.tlb
