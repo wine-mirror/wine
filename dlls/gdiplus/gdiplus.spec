@@ -197,7 +197,7 @@
 @ stdcall GdipDrawRectangle(ptr ptr long long long long)
 @ stdcall GdipDrawRectangleI(ptr ptr long long long long)
 @ stdcall GdipDrawRectangles(ptr ptr ptr long)
-@ stub GdipDrawRectanglesI
+@ stdcall GdipDrawRectanglesI(ptr ptr ptr long)
 @ stdcall GdipDrawString(ptr ptr long ptr ptr ptr ptr)
 @ stub GdipEmfToWmfBits
 @ stub GdipEndContainer

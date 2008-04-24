@@ -1392,6 +1392,33 @@ GpStatus WINGDIPAPI GdipDrawRectangles(GpGraphics *graphics, GpPen *pen,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDrawRectanglesI(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpRect* rects, INT count)
+{
+    GpRectF *rectsF;
+    GpStatus ret;
+    INT i;
+
+    if(!rects || count<=0)
+        return InvalidParameter;
+
+    rectsF = GdipAlloc(sizeof(GpRectF) * count);
+    if(!rectsF)
+        return OutOfMemory;
+
+    for(i = 0;i < count;i++){
+        rectsF[i].X      = (REAL)rects[i].X;
+        rectsF[i].Y      = (REAL)rects[i].Y;
+        rectsF[i].Width  = (REAL)rects[i].Width;
+        rectsF[i].Height = (REAL)rects[i].Height;
+    }
+
+    ret = GdipDrawRectangles(graphics, pen, rectsF, count);
+    GdipFree(rectsF);
+
+    return ret;
+}
+
 GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string,
     INT length, GDIPCONST GpFont *font, GDIPCONST RectF *rect,
     GDIPCONST GpStringFormat *format, GDIPCONST GpBrush *brush)
