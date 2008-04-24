@@ -1694,6 +1694,125 @@ interface IHTMLDOMImplementation : IDispatch
         [retval, out] VARIANT_BOOL *pfHasFeature);
 }
 
+/*****************************************************************************
+ *    DispHTMLDOMTextNode dispinterface
+ */
+[
+    hidden,
+    uuid(3050f565-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLDOMTextNode
+{
+properties:
+methods:
+    [propput, id(DISPID_IHTMLDOMTEXTNODE_DATA)]
+    void data(BSTR v);
+
+    [propget, id(DISPID_IHTMLDOMTEXTNODE_DATA)]
+    BSTR data();
+
+    [id(DISPID_IHTMLDOMTEXTNODE_TOSTRING)]
+    BSTR toString();
+
+    [propget, id(DISPID_IHTMLDOMTEXTNODE_LENGTH)]
+    long length();
+
+    [id(DISPID_IHTMLDOMTEXTNODE_SPLITTEXT)]
+    IHTMLDOMNode *splitText([in] long offset);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_SUBSTRINGDATA)]
+    BSTR substringData(
+            [in] long offset,
+            [in] long Count);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_APPENDDATA)]
+    void appendData([in] BSTR bstrstring);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_INSERTDATA)]
+    void insertData(
+            [in] long offset,
+            [in] BSTR bstrstring);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_DELETEDATA)]
+    void deleteData(
+            [in] long offset,
+            [in] long Count);
+
+    [id(DISPID_IHTMLDOMTEXTNODE2_REPLACEDATA)]
+    void replaceData(
+            [in] long offset,
+            [in] long Count,
+            [in] BSTR bstrstring);
+
+    [propget, id(DISPID_IHTMLDOMNODE_NODETYPE)]
+    long nodeType();
+
+    [propget, id(DISPID_IHTMLDOMNODE_PARENTNODE)]
+    IHTMLDOMNode *parentNode();
+
+    [id(DISPID_IHTMLDOMNODE_HASCHILDNODES)]
+    VARIANT_BOOL hasChildNodes();
+
+    [propget, id(DISPID_IHTMLDOMNODE_CHILDNODES)]
+    IDispatch *childNodes();
+
+    [propget, id(DISPID_IHTMLDOMNODE_ATTRIBUTES)]
+    IDispatch *attributes();
+
+    [id(DISPID_IHTMLDOMNODE_INSERTBEFORE)]
+    IHTMLDOMNode *insertBefore(
+            [in] IHTMLDOMNode *newChild,
+            [in, optional] VARIANT refChild);
+
+    [id(DISPID_IHTMLDOMNODE_REMOVECHILD)]
+    IHTMLDOMNode *removeChild([in] IHTMLDOMNode *oldChild);
+
+    [id(DISPID_IHTMLDOMNODE_REPLACECHILD)]
+    IHTMLDOMNode *replaceChild(
+            [in] IHTMLDOMNode *newChild,
+            [in] IHTMLDOMNode *oldChild);
+
+    [id(DISPID_IHTMLDOMNODE_CLONENODE)]
+    IHTMLDOMNode* cloneNode([in] VARIANT_BOOL fDeep);
+
+    [id(DISPID_IHTMLDOMNODE_REMOVENODE)]
+    IHTMLDOMNode *removeNode([in, defaultvalue(0)] VARIANT_BOOL fDeep);
+
+    [id(DISPID_IHTMLDOMNODE_SWAPNODE)]
+    IHTMLDOMNode *swapNode([in] IHTMLDOMNode *otherNode);
+
+    [id(DISPID_IHTMLDOMNODE_REPLACENODE)]
+    IHTMLDOMNode *replaceNode([in] IHTMLDOMNode *replacement);
+
+    [id(DISPID_IHTMLDOMNODE_APPENDCHILD)]
+    IHTMLDOMNode *appendChild([in] IHTMLDOMNode *newChild);
+
+    [propget, id(DISPID_IHTMLDOMNODE_NODENAME)]
+    BSTR nodeName();
+
+    [propput, id(DISPID_IHTMLDOMNODE_NODEVALUE)]
+    void nodeValue(VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOMNODE_NODEVALUE)]
+    VARIANT nodeValue();
+
+    [propget, id(DISPID_IHTMLDOMNODE_FIRSTCHILD)]
+    IHTMLDOMNode *firstChild();
+
+    [propget, id(DISPID_IHTMLDOMNODE_LASTCHILD)]
+    IHTMLDOMNode *lastChild();
+
+    [propget, id(DISPID_IHTMLDOMNODE_PREVIOUSSIBLING)]
+    IHTMLDOMNode *previousSibling();
+
+    [propget, id(DISPID_IHTMLDOMNODE_NEXTSIBLING)]
+    IHTMLDOMNode* nextSibling();
+
+    [propget, id(DISPID_IHTMLDOMNODE2_OWNERDOCUMENT)]
+    IDispatch *ownerDocument();
+}
+
+
 interface IHTMLElementCollection;
 
 /*****************************************************************************
