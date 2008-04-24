@@ -1140,10 +1140,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
 
   ME_ReleaseStyle(style);
   editor->nEventMask = nEventMask;
-  if (editor->bRedraw)
-  {
-    ME_UpdateRepaint(editor);
-  }
+  ME_UpdateRepaint(editor);
   if (!(format & SFF_SELECTION)) {
     ME_ClearTempStyle(editor);
   }
