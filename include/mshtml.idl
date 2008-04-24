@@ -3378,6 +3378,45 @@ interface IHTMLElementCollection : IDispatch
 }
 
 /*****************************************************************************
+ *    DispHTMLElementCollection dispinterface
+ */
+[
+    hidden,
+    uuid(3050f56b-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLElementCollection
+{
+properties:
+methods:
+    [id(DISPID_IHTMLELEMENTCOLLECTION_TOSTRING)]
+    BSTR toString();
+
+    [propput, id(DISPID_IHTMLELEMENTCOLLECTION_LENGTH)]
+    void length(long v);
+
+    [propget, id(DISPID_IHTMLELEMENTCOLLECTION_LENGTH)]
+    long length();
+
+    [propget, id(DISPID_IHTMLELEMENTCOLLECTION__NEWENUM), hidden, restricted]
+    IUnknown *_newEnum();
+
+    [id(DISPID_IHTMLELEMENTCOLLECTION_ITEM)]
+    IDispatch *item(
+            [in, optional] VARIANT name,
+            [in, optional] VARIANT index);
+
+    [id(DISPID_IHTMLELEMENTCOLLECTION_TAGS)]
+    IDispatch *tags(
+            [in] VARIANT tagName);
+
+    [id(DISPID_IHTMLELEMENTCOLLECTION2_URNS)]
+    IDispatch *urns([in] VARIANT urn);
+
+    [id(DISPID_IHTMLELEMENTCOLLECTION3_NAMEDITEM)]
+    IDispatch *namedItem([in] BSTR name);
+}
+
+/*****************************************************************************
  *    IHTMLSelectElement interface
  */
 [
