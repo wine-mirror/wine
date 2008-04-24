@@ -103,6 +103,7 @@ static type_t *make_class(char *name);
 static type_t *make_safearray(type_t *type);
 static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
+static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *make_func_type(var_list_t *args);
 static void type_set_function_callconv(type_t *type, char *callconv);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
@@ -116,7 +117,7 @@ static int get_struct_type(var_list_t *fields);
 
 static var_t *reg_const(var_t *var);
 
-static void write_libid(const char *name, const attr_list_t *attr);
+static void write_libid(const typelib_t *typelib);
 static void write_clsid(type_t *cls);
 static void write_diid(type_t *iface);
 static void write_iid(type_t *iface);
@@ -126,7 +127,7 @@ static char *gen_name(void);
 static void process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
 static void check_functions(const type_t *iface);
-static void check_all_user_types(ifref_list_t *ifaces);
+static void check_all_user_types(const statement_list_t *stmts);
 static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t *attrs);
 static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_typedef_attrs(attr_list_t *attrs);
@@ -137,6 +138,17 @@ static const attr_list_t *check_module_attrs(const char *name, const attr_list_t
 static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
 static void add_explicit_handle_if_necessary(func_t *func);
+
+static statement_t *make_statement(enum statement_type type);
+static statement_t *make_statement_type_decl(type_t *type);
+static statement_t *make_statement_reference(type_t *type);
+static statement_t *make_statement_init_decl(var_t *var);
+static statement_t *make_statement_extern(var_t *var);
+static statement_t *make_statement_library(typelib_t *typelib);
+static statement_t *make_statement_cppquote(const char *str);
+static statement_t *make_statement_importlib(const char *str);
+static statement_t *make_statement_module(type_t *type);
+static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -157,6 +169,8 @@ static void add_explicit_handle_if_necessary(func_t *func);
 	pident_list_t *pident_list;
 	func_t *func;
 	func_list_t *func_list;
+	statement_t *statement;
+	statement_list_t *stmt_list;
 	ifref_t *ifref;
 	ifref_list_t *ifref_list;
 	char *str;
@@ -164,6 +178,7 @@ static void add_explicit_handle_if_necessary(func_t *func);
 	unsigned int num;
 	double dbl;
 	interface_info_t ifinfo;
+        typelib_t *typelib;
 }
 
 %token <str> aIDENTIFIER
@@ -272,7 +287,7 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %type <type> enumdef structdef uniondef
 %type <type> type
 %type <ifref> coclass_int
-%type <ifref_list> gbl_statements coclass_ints
+%type <ifref_list> coclass_ints
 %type <var> arg field s_field case enum constdef externdef
 %type <var_list> m_args no_args args fields cases enums enum_list dispint_props
 %type <var> m_ident t_ident ident
@@ -282,9 +297,12 @@ static void add_explicit_handle_if_necessary(func_t *func);
 %type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
-%type <str> libraryhdr callconv
+%type <str> libraryhdr callconv cppquote importlib
 %type <uuid> uuid_string
 %type <num> import_start
+%type <typelib> library_start librarydef
+%type <statement> statement
+%type <stmt_list> gbl_statements imp_statements
 
 %left ','
 %right '?' ':'
@@ -314,33 +332,36 @@ input:   gbl_statements				{ fix_incomplete();
 
 gbl_statements:					{ $$ = NULL; }
 	| gbl_statements interfacedec		{ $$ = $1; }
-	| gbl_statements interfacedef		{ $$ = append_ifref( $1, make_ifref($2) ); }
+	| gbl_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
 	| gbl_statements coclass ';'		{ $$ = $1;
 						  reg_type($2, $2->name, 0);
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
-	| gbl_statements coclassdef		{ $$ = $1;
+	| gbl_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
 						  add_typelib_entry($2);
 						  reg_type($2, $2->name, 0);
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
-	| gbl_statements moduledef		{ $$ = $1; add_typelib_entry($2); }
-	| gbl_statements librarydef		{ $$ = $1; }
-	| gbl_statements statement		{ $$ = $1; }
+	| gbl_statements moduledef		{ $$ = append_statement($1, make_statement_module($2));
+						  add_typelib_entry($2);
+						}
+	| gbl_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
+	| gbl_statements statement		{ $$ = append_statement($1, $2); }
 	;
 
-imp_statements:					{}
-	| imp_statements interfacedec		{ if (!parse_only) add_typelib_entry($2); }
-	| imp_statements interfacedef		{ if (!parse_only) add_typelib_entry($2); }
-	| imp_statements coclass ';'		{ reg_type($2, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
-	| imp_statements coclassdef		{ if (!parse_only) add_typelib_entry($2);
+imp_statements:					{ $$ = NULL; }
+	| imp_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); if (!parse_only) add_typelib_entry($2); }
+	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); if (!parse_only) add_typelib_entry($2); }
+	| imp_statements coclass ';'		{ $$ = $1; reg_type($2, $2->name, 0); if (!parse_only && do_header) write_coclass_forward($2); }
+	| imp_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
+						  if (!parse_only) add_typelib_entry($2);
 						  reg_type($2, $2->name, 0);
 						  if (!parse_only && do_header) write_coclass_forward($2);
 						}
-	| imp_statements moduledef		{ if (!parse_only) add_typelib_entry($2); }
-	| imp_statements statement		{}
-	| imp_statements importlib		{}
-	| imp_statements librarydef		{}
+	| imp_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); if (!parse_only) add_typelib_entry($2); }
+	| imp_statements statement		{ $$ = append_statement($1, $2); }
+	| imp_statements importlib		{ $$ = append_statement($1, make_statement_importlib($2)); }
+	| imp_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
 	;
 
 int_statements:					{ $$ = NULL; }
@@ -352,29 +373,36 @@ semicolon_opt:
 	| ';'
 	;
 
-statement: constdef ';'				{ if (!parse_only && do_header) { write_constdef($1); } }
-	| cppquote				{}
-	| enumdef ';'				{ if (!parse_only && do_header) {
+statement: constdef ';'				{ $$ = make_statement_init_decl($1);
+						  if (!parse_only && do_header) { write_constdef($1); }
+						}
+	| cppquote				{ $$ = make_statement_cppquote($1); }
+	| enumdef ';'				{ $$ = make_statement_type_decl($1);
+						  if (!parse_only && do_header) {
 						    write_type_def_or_decl(header, $1, FALSE, NULL);
 						    fprintf(header, ";\n\n");
 						  }
 						}
-	| externdef ';'				{ if (!parse_only && do_header) { write_externdef($1); } }
-	| import				{}
-	| structdef ';'				{ if (!parse_only && do_header) {
+	| externdef ';'				{ $$ = make_statement_extern($1);
+						  if (!parse_only && do_header) write_externdef($1);
+						}
+	| import				{ $$ = NULL; }
+	| structdef ';'				{ $$ = make_statement_type_decl($1);
+						  if (!parse_only && do_header) {
 						    write_type_def_or_decl(header, $1, FALSE, NULL);
 						    fprintf(header, ";\n\n");
 						  }
 						}
-	| typedef ';'				{}
-	| uniondef ';'				{ if (!parse_only && do_header) {
+	| typedef ';'				{ $$ = NULL; /* FIXME */ }
+	| uniondef ';'				{ $$ = make_statement_type_decl($1);
+						  if (!parse_only && do_header) {
 						    write_type_def_or_decl(header, $1, FALSE, NULL);
 						    fprintf(header, ";\n\n");
 						  }
 						}
 	;
 
-cppquote: tCPPQUOTE '(' aSTRING ')'		{ if (!parse_only && do_header) fprintf(header, "%s\n", $3); }
+cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; if (!parse_only && do_header) fprintf(header, "%s\n", $3); }
 	;
 import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
 						  $$ = do_import($2);
@@ -387,20 +415,24 @@ import: import_start imp_statements aEOF
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'
-	   semicolon_opt			{ if(!parse_only) add_importlib($3); }
+	   semicolon_opt			{ $$ = $3; if(!parse_only) add_importlib($3); }
 	;
 
 libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
 	;
-library_start: attributes libraryhdr '{'	{ check_library_attrs($2, $1);
-						  if (!parse_only) start_typelib($2, $1);
-						  if (!parse_only && do_header) write_library($2, $1);
-						  if (!parse_only && do_idfile) write_libid($2, $1);
+library_start: attributes libraryhdr '{'	{ $$ = make_library($2, check_library_attrs($2, $1));
+						  if (!parse_only) start_typelib($$);
+						  if (!parse_only && do_header) write_library($$);
+						  if (!parse_only && do_idfile) write_libid($$);
 						  is_inside_library = TRUE;
 						}
 	;
 librarydef: library_start imp_statements '}'
-	    semicolon_opt			{ if (!parse_only) end_typelib(); is_inside_library = FALSE; }
+	    semicolon_opt			{ $$ = $1;
+						  $$->stmts = $2;
+						  if (!parse_only) end_typelib();
+						  is_inside_library = FALSE;
+						}
 	;
 
 m_args:						{ $$ = NULL; }
@@ -1457,7 +1489,7 @@ static func_t *make_func(var_t *def)
 
 static type_t *make_class(char *name)
 {
-  type_t *c = make_type(0, NULL);
+  type_t *c = make_type(RPC_FC_COCLASS, NULL);
   c->name = name;
   c->kind = TKIND_COCLASS;
   return c;
@@ -1468,6 +1500,17 @@ static type_t *make_safearray(type_t *type)
   type_t *sa = duptype(find_type("SAFEARRAY", 0), 1);
   sa->ref = type;
   return make_type(pointer_default, sa);
+}
+
+static typelib_t *make_library(const char *name, const attr_list_t *attrs)
+{
+    typelib_t *typelib = xmalloc(sizeof(*typelib));
+    typelib->name = xstrdup(name);
+    typelib->filename = NULL;
+    typelib->attrs = attrs;
+    list_init( &typelib->entries );
+    list_init( &typelib->importlibs );
+    return typelib;
 }
 
 #define HASHMAX 64
@@ -1877,10 +1920,10 @@ var_t *find_const(const char *name, int f)
   return cur->var;
 }
 
-static void write_libid(const char *name, const attr_list_t *attr)
+static void write_libid(const typelib_t *typelib)
 {
-  const UUID *uuid = get_attrp(attr, ATTR_UUID);
-  write_guid(idfile, "LIBID", name, uuid);
+  const UUID *uuid = get_attrp(typelib->attrs, ATTR_UUID);
+  write_guid(idfile, "LIBID", typelib->name, uuid);
 }
 
 static void write_clsid(type_t *cls)
@@ -2462,16 +2505,21 @@ static void check_functions(const type_t *iface)
     }
 }
 
-static void check_all_user_types(ifref_list_t *ifrefs)
+static void check_all_user_types(const statement_list_t *stmts)
 {
-  const ifref_t *ifref;
-  const func_t *f;
+  const statement_t *stmt;
 
-  if (ifrefs) LIST_FOR_EACH_ENTRY(ifref, ifrefs, const ifref_t, entry)
+  if (stmts) LIST_FOR_EACH_ENTRY(stmt, stmts, const statement_t, entry)
   {
-    const func_list_t *fs = ifref->iface->funcs;
-    if (fs) LIST_FOR_EACH_ENTRY(f, fs, const func_t, entry)
-      check_for_additional_prototype_types(f->args);
+    if (stmt->type == STMT_LIBRARY)
+      check_all_user_types(stmt->u.lib->stmts);
+    else if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+    {
+      const func_t *f;
+      const func_list_t *fs = stmt->u.type->funcs;
+      if (fs) LIST_FOR_EACH_ENTRY(f, fs, const func_t, entry)
+        check_for_additional_prototype_types(f->args);
+    }
   }
 }
 
@@ -2490,4 +2538,79 @@ int is_valid_uuid(const char *s)
         return FALSE;
 
   return s[i] == '\0';
+}
+
+static statement_t *make_statement(enum statement_type type)
+{
+    statement_t *stmt = xmalloc(sizeof(*stmt));
+    stmt->type = type;
+    return stmt;
+}
+
+static statement_t *make_statement_type_decl(type_t *type)
+{
+    statement_t *stmt = make_statement(STMT_TYPE);
+    stmt->u.type = type;
+    return stmt;
+}
+
+static statement_t *make_statement_reference(type_t *type)
+{
+    statement_t *stmt = make_statement(STMT_TYPEREF);
+    stmt->u.type = type;
+    return stmt;
+}
+
+static statement_t *make_statement_init_decl(var_t *var)
+{
+    statement_t *stmt = make_statement(STMT_INITDECL);
+    stmt->u.var = var;
+    return stmt;
+}
+
+static statement_t *make_statement_extern(var_t *var)
+{
+    statement_t *stmt = make_statement(STMT_EXTERN);
+    stmt->u.var = var;
+    return stmt;
+}
+
+static statement_t *make_statement_library(typelib_t *typelib)
+{
+    statement_t *stmt = make_statement(STMT_LIBRARY);
+    stmt->u.lib = typelib;
+    return stmt;
+}
+
+static statement_t *make_statement_cppquote(const char *str)
+{
+    statement_t *stmt = make_statement(STMT_CPPQUOTE);
+    stmt->u.str = str;
+    return stmt;
+}
+
+static statement_t *make_statement_importlib(const char *str)
+{
+    statement_t *stmt = make_statement(STMT_IMPORTLIB);
+    stmt->u.str = str;
+    return stmt;
+}
+
+static statement_t *make_statement_module(type_t *type)
+{
+    statement_t *stmt = make_statement(STMT_MODULE);
+    stmt->u.type = type;
+    return stmt;
+}
+
+static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt)
+{
+    if (!stmt) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    list_add_tail( list, &stmt->entry );
+    return list;
 }

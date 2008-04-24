@@ -487,11 +487,11 @@ void write_externdef(const var_t *v)
   fprintf(header, ";\n\n");
 }
 
-void write_library(const char *name, const attr_list_t *attr)
+void write_library(const typelib_t *typelib)
 {
-  const UUID *uuid = get_attrp(attr, ATTR_UUID);
+  const UUID *uuid = get_attrp(typelib->attrs, ATTR_UUID);
   fprintf(header, "\n");
-  write_guid(header, "LIBID", name, uuid);
+  write_guid(header, "LIBID", typelib->name, uuid);
   fprintf(header, "\n");
 }
 

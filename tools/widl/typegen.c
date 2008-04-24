@@ -43,7 +43,7 @@
 
 static const func_t *current_func;
 static const type_t *current_structure;
-static const ifref_t *current_iface;
+static const type_t *current_iface;
 
 static struct list expr_eval_routines = LIST_INIT(expr_eval_routines);
 struct expr_eval_routine
@@ -370,13 +370,13 @@ static void write_formatdesc(FILE *f, int indent, const char *str)
     print_file(f, indent, "\n");
 }
 
-void write_formatstringsdecl(FILE *f, int indent, ifref_list_t *ifaces, type_pred_t pred)
+void write_formatstringsdecl(FILE *f, int indent, const statement_list_t *stmts, type_pred_t pred)
 {
     print_file(f, indent, "#define TYPE_FORMAT_STRING_SIZE %d\n",
-               get_size_typeformatstring(ifaces, pred));
+               get_size_typeformatstring(stmts, pred));
 
     print_file(f, indent, "#define PROC_FORMAT_STRING_SIZE %d\n",
-               get_size_procformatstring(ifaces, pred));
+               get_size_procformatstring(stmts, pred));
 
     fprintf(f, "\n");
     write_formatdesc(f, indent, "TYPE");
@@ -477,33 +477,23 @@ static size_t write_procformatstring_type(FILE *file, int indent,
     return size;
 }
 
-void write_procformatstring(FILE *file, const ifref_list_t *ifaces, type_pred_t pred)
+static void write_procformatstring_stmts(FILE *file, int indent, const statement_list_t *stmts, type_pred_t pred)
 {
-    const ifref_t *iface;
-    int indent = 0;
-    const var_t *var;
-
-    print_file(file, indent, "static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString =\n");
-    print_file(file, indent, "{\n");
-    indent++;
-    print_file(file, indent, "0,\n");
-    print_file(file, indent, "{\n");
-    indent++;
-
-    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
+    const statement_t *stmt;
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
-        if (!pred(iface->iface))
-            continue;
-
-        if (iface->iface->funcs)
+        if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
         {
             const func_t *func;
-            LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
+            if (!pred(stmt->u.type))
+                continue;
+            if (stmt->u.type->funcs) LIST_FOR_EACH_ENTRY( func, stmt->u.type->funcs, const func_t, entry )
             {
                 if (is_local(func->def->attrs)) continue;
                 /* emit argument data */
                 if (func->args)
                 {
+                    const var_t *var;
                     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
                         write_procformatstring_type(file, indent, var->name, var->type, var->attrs, FALSE);
                 }
@@ -518,7 +508,23 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, type_pred_t 
                     write_procformatstring_type(file, indent, "return value", get_func_return_type(func), NULL, TRUE);
             }
         }
+        else if (stmt->type == STMT_LIBRARY)
+            write_procformatstring_stmts(file, indent, stmt->u.lib->stmts, pred);
     }
+}
+
+void write_procformatstring(FILE *file, const statement_list_t *stmts, type_pred_t pred)
+{
+    int indent = 0;
+
+    print_file(file, indent, "static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString =\n");
+    print_file(file, indent, "{\n");
+    indent++;
+    print_file(file, indent, "0,\n");
+    print_file(file, indent, "{\n");
+    indent++;
+
+    write_procformatstring_stmts(file, indent, stmts, pred);
 
     print_file(file, indent, "0x0\n");
     indent--;
@@ -2261,22 +2267,32 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
     return retmask;
 }
 
-static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, type_pred_t pred)
+static size_t process_tfs_stmts(FILE *file, const statement_list_t *stmts,
+                                type_pred_t pred, unsigned int *typeformat_offset)
 {
     const var_t *var;
-    const ifref_t *iface;
-    unsigned int typeformat_offset = 2;
+    const statement_t *stmt;
 
-    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
-        if (!pred(iface->iface))
+        const type_t *iface;
+        if (stmt->type == STMT_LIBRARY)
+        {
+            process_tfs_stmts(file, stmt->u.lib->stmts, pred, typeformat_offset);
+            continue;
+        }
+        else if (stmt->type != STMT_TYPE || stmt->u.type->type != RPC_FC_IP)
             continue;
 
-        if (iface->iface->funcs)
+        iface = stmt->u.type;
+        if (!pred(iface))
+            continue;
+
+        if (iface->funcs)
         {
             const func_t *func;
             current_iface = iface;
-            LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
+            LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
             {
                 if (is_local(func->def->attrs)) continue;
 
@@ -2287,7 +2303,7 @@ static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, type_pred_t pr
                     update_tfsoff(get_func_return_type(func),
                                   write_typeformatstring_var(
                                       file, 2, NULL, get_func_return_type(func),
-                                      &v, &typeformat_offset),
+                                      &v, typeformat_offset),
                                   file);
                 }
 
@@ -2298,17 +2314,24 @@ static size_t process_tfs(FILE *file, const ifref_list_t *ifaces, type_pred_t pr
                             var->type,
                             write_typeformatstring_var(
                                 file, 2, func, var->type, var,
-                                &typeformat_offset),
+                                typeformat_offset),
                             file);
             }
         }
     }
 
-    return typeformat_offset + 1;
+    return *typeformat_offset + 1;
+}
+
+static size_t process_tfs(FILE *file, const statement_list_t *stmts, type_pred_t pred)
+{
+    unsigned int typeformat_offset = 2;
+
+    return process_tfs_stmts(file, stmts, pred, &typeformat_offset);
 }
 
 
-void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, type_pred_t pred)
+void write_typeformatstring(FILE *file, const statement_list_t *stmts, type_pred_t pred)
 {
     int indent = 0;
 
@@ -2321,7 +2344,7 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, type_pred_t 
     print_file(file, indent, "NdrFcShort(0x0),\n");
 
     set_all_tfswrite(TRUE);
-    process_tfs(file, ifaces, pred);
+    process_tfs(file, stmts, pred);
 
     print_file(file, indent, "0x0\n");
     indent--;
@@ -2984,29 +3007,39 @@ size_t get_size_procformatstring_func(const func_t *func)
     return size;
 }
 
-size_t get_size_procformatstring(const ifref_list_t *ifaces, type_pred_t pred)
+size_t get_size_procformatstring(const statement_list_t *stmts, type_pred_t pred)
 {
-    const ifref_t *iface;
+    const statement_t *stmt;
     size_t size = 1;
     const func_t *func;
 
-    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
     {
-        if (!pred(iface->iface))
+        const type_t *iface;
+        if (stmt->type == STMT_LIBRARY)
+        {
+            size += get_size_procformatstring(stmt->u.lib->stmts, pred) - 1;
+            continue;
+        }
+        else if (stmt->type != STMT_TYPE && stmt->u.type->type != RPC_FC_IP)
             continue;
 
-        if (iface->iface->funcs)
-            LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
+        iface = stmt->u.type;
+        if (!pred(iface))
+            continue;
+
+        if (iface->funcs)
+            LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
                 if (!is_local(func->def->attrs))
                     size += get_size_procformatstring_func( func );
     }
     return size;
 }
 
-size_t get_size_typeformatstring(const ifref_list_t *ifaces, type_pred_t pred)
+size_t get_size_typeformatstring(const statement_list_t *stmts, type_pred_t pred)
 {
     set_all_tfswrite(FALSE);
-    return process_tfs(NULL, ifaces, pred);
+    return process_tfs(NULL, stmts, pred);
 }
 
 void declare_stub_args( FILE *file, int indent, const func_t *func )

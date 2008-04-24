@@ -431,58 +431,69 @@ static void init_client(void)
 }
 
 
-void write_client(ifref_list_t *ifaces)
+static void write_client_ifaces(const statement_list_t *stmts, int expr_eval_routines, unsigned int *proc_offset)
+{
+    const statement_t *stmt;
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    {
+        if (stmt->type == STMT_TYPE && stmt->u.type->type == RPC_FC_IP)
+        {
+            type_t *iface = stmt->u.type;
+            if (!need_stub(iface))
+                return;
+
+            fprintf(client, "/*****************************************************************************\n");
+            fprintf(client, " * %s interface\n", iface->name);
+            fprintf(client, " */\n");
+            fprintf(client, "\n");
+
+            if (iface->funcs)
+            {
+                write_implicithandledecl(iface);
+
+                write_clientinterfacedecl(iface);
+                write_stubdescdecl(iface);
+                write_function_stubs(iface, proc_offset);
+
+                print_client("#if !defined(__RPC_WIN32__)\n");
+                print_client("#error  Invalid build platform for this stub.\n");
+                print_client("#endif\n");
+
+                fprintf(client, "\n");
+                write_stubdescriptor(iface, expr_eval_routines);
+            }
+        }
+        else if (stmt->type == STMT_LIBRARY)
+            write_client_ifaces(stmt->u.lib->stmts, expr_eval_routines, proc_offset);
+    }
+}
+
+void write_client(const statement_list_t *stmts)
 {
     unsigned int proc_offset = 0;
     int expr_eval_routines;
-    ifref_t *iface;
 
     if (!do_client)
         return;
-    if (do_everything && !need_stub_files(ifaces))
+    if (do_everything && !need_stub_files(stmts))
         return;
 
     init_client();
     if (!client)
         return;
 
-    write_formatstringsdecl(client, indent, ifaces, need_stub);
+    write_formatstringsdecl(client, indent, stmts, need_stub);
     expr_eval_routines = write_expr_eval_routines(client, client_token);
     if (expr_eval_routines)
         write_expr_eval_routine_list(client, client_token);
     write_user_quad_list(client);
 
-    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, ifref_t, entry )
-    {
-        if (!need_stub(iface->iface))
-            continue;
-
-        fprintf(client, "/*****************************************************************************\n");
-        fprintf(client, " * %s interface\n", iface->iface->name);
-        fprintf(client, " */\n");
-        fprintf(client, "\n");
-
-        if (iface->iface->funcs)
-        {
-            write_implicithandledecl(iface->iface);
-    
-            write_clientinterfacedecl(iface->iface);
-            write_stubdescdecl(iface->iface);
-            write_function_stubs(iface->iface, &proc_offset);
-
-            print_client("#if !defined(__RPC_WIN32__)\n");
-            print_client("#error  Invalid build platform for this stub.\n");
-            print_client("#endif\n");
-
-            fprintf(client, "\n");
-            write_stubdescriptor(iface->iface, expr_eval_routines);
-        }
-    }
+    write_client_ifaces(stmts, expr_eval_routines, &proc_offset);
 
     fprintf(client, "\n");
 
-    write_procformatstring(client, ifaces, need_stub);
-    write_typeformatstring(client, ifaces, need_stub);
+    write_procformatstring(client, stmts, need_stub);
+    write_typeformatstring(client, stmts, need_stub);
 
     fclose(client);
 }

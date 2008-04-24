@@ -34,6 +34,7 @@ typedef GUID UUID;
 #define TRUE 1
 #define FALSE 0
 
+#define RPC_FC_COCLASS  0xfd
 #define RPC_FC_FUNCTION 0xfe
 
 typedef struct _loc_info_t loc_info_t;
@@ -51,6 +52,7 @@ typedef struct _importinfo_t importinfo_t;
 typedef struct _typelib_t typelib_t;
 typedef struct _user_type_t user_type_t;
 typedef struct _user_type_t context_handle_t;
+typedef struct _statement_t statement_t;
 
 typedef struct list attr_list_t;
 typedef struct list str_list_t;
@@ -62,6 +64,7 @@ typedef struct list ifref_list_t;
 typedef struct list array_dims_t;
 typedef struct list user_type_list_t;
 typedef struct list context_handle_list_t;
+typedef struct list statement_list_t;
 
 enum attr_type
 {
@@ -190,6 +193,20 @@ enum type_kind
     TKIND_ALIAS,
     TKIND_UNION,
     TKIND_MAX
+};
+
+enum statement_type
+{
+    STMT_LIBRARY,
+    STMT_INITDECL,
+    STMT_EXTERN,
+    STMT_TYPE,
+    STMT_TYPEREF,
+    STMT_MODULE,
+    STMT_TYPEDEF,
+    STMT_IMPORT,
+    STMT_IMPORTLIB,
+    STMT_CPPQUOTE
 };
 
 struct _loc_info_t
@@ -332,11 +349,25 @@ struct _typelib_t {
     const attr_list_t *attrs;
     struct list entries;
     struct list importlibs;
+    statement_list_t *stmts;
 };
 
 struct _user_type_t {
     struct list entry;
     const char *name;
+};
+
+struct _statement_t {
+    struct list entry;
+    enum statement_type type;
+    union
+    {
+        ifref_t iface;
+        type_t *type;
+        const char *str;
+        var_t *var;
+        typelib_t *lib;
+    } u;
 };
 
 extern unsigned char pointer_default;

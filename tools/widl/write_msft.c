@@ -986,10 +986,11 @@ static int encode_type(
             case RPC_FC_ENUM16:
                 add_enum_typeinfo(typelib, type);
                 break;
+            case RPC_FC_COCLASS:
+                add_coclass_typeinfo(typelib, type);
+                break;
             case 0:
-                if (type->kind == TKIND_COCLASS)
-                    add_coclass_typeinfo(typelib, type);
-                else if (type->kind == TKIND_DISPATCH)
+                if (type->kind == TKIND_DISPATCH)
                     add_dispinterface_typeinfo(typelib, type);
                 else
                     error("encode_type: VT_USERDEFINED - can't yet add typedef's on the fly\n");
