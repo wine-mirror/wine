@@ -259,6 +259,33 @@ GpStatus WINGDIPAPI GdipTransformMatrixPoints(GpMatrix *matrix, GpPointF *pts,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipTransformMatrixPointsI(GpMatrix *matrix, GpPoint *pts, INT count)
+{
+    GpPointF *ptsF;
+    GpStatus ret;
+    INT i;
+
+    ptsF = GdipAlloc(sizeof(GpPointF) * count);
+    if(!ptsF)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        ptsF[i].X = (REAL)pts[i].X;
+        ptsF[i].Y = (REAL)pts[i].Y;
+    }
+
+    ret = GdipTransformMatrixPoints(matrix, ptsF, count);
+
+    if(ret == Ok)
+        for(i = 0; i < count; i++){
+            pts[i].X = roundr(ptsF[i].X);
+            pts[i].Y = roundr(ptsF[i].Y);
+        }
+    GdipFree(ptsF);
+
+    return ret;
+}
+
 GpStatus WINGDIPAPI GdipTranslateMatrix(GpMatrix *matrix, REAL offsetX,
     REAL offsetY, GpMatrixOrder order)
 {
