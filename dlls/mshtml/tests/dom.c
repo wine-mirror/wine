@@ -709,6 +709,8 @@ static void _test_elem_collection(unsigned line, IHTMLElementCollection *col,
     IDispatch *disp;
     HRESULT hres;
 
+    test_disp((IUnknown*)col, &DIID_DispHTMLElementCollection);
+
     hres = IHTMLElementCollection_get_length(col, &len);
     ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
     ok_(__FILE__,line) (len == exlen, "len=%ld, expected %ld\n", len, exlen);

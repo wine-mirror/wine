@@ -1363,6 +1363,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 }
 
 typedef struct {
+    DispatchEx dispex;
     const IHTMLElementCollectionVtbl *lpHTMLElementCollectionVtbl;
 
     IUnknown *ref_unk;
@@ -1389,6 +1390,9 @@ static HRESULT WINAPI HTMLElementCollection_QueryInterface(IHTMLElementCollectio
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = HTMLELEMCOL(This);
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = DISPATCHEX(&This->dispex);
     }else if(IsEqualGUID(&IID_IHTMLElementCollection, riid)) {
         TRACE("(%p)->(IID_IHTMLElementCollection %p)\n", This, ppv);
         *ppv = HTMLELEMCOL(This);
@@ -1664,6 +1668,15 @@ static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
     HTMLElementCollection_tags
 };
 
+static dispex_static_data_t HTMLElementCollection_dispex = {
+    DispHTMLElementCollection_tid,
+    NULL,
+    {
+        IHTMLElementCollection_tid,
+        0
+    }
+};
+
 IHTMLElementCollection *create_all_collection(HTMLDOMNode *node)
 {
     elem_vector buf = {NULL, 0, 8};
@@ -1686,6 +1699,8 @@ static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
     ret->ref = 1;
     ret->elems = elems;
     ret->len = len;
+
+    init_dispex(&ret->dispex, (IUnknown*)HTMLELEMCOL(ret), &HTMLElementCollection_dispex);
 
     IUnknown_AddRef(ref_unk);
     ret->ref_unk = ref_unk;
