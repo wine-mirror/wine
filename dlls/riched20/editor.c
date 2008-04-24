@@ -1029,6 +1029,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   int from, to, to2, nUndoMode;
   int nEventMask = editor->nEventMask;
   ME_InStream inStream;
+  BOOL invalidRTF = FALSE;
 
   TRACE("stream==%p hWnd==%p format==0x%X\n", stream, editor->hWnd, format);
   editor->nEventMask = 0;
@@ -1071,13 +1072,12 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       if ((!editor->bEmulateVersion10 && strncmp(inStream.buffer, "{\\rtf", 5) && strncmp(inStream.buffer, "{\\urtf", 6))
 	|| (editor->bEmulateVersion10 && *inStream.buffer != '{'))
       {
-        format &= ~SF_RTF;
-        format |= SF_TEXT;
+        invalidRTF = TRUE;
       }
     }
   }
 
-  if (!inStream.editstream->dwError)
+  if (!invalidRTF && !inStream.editstream->dwError)
   {
     if (format & SF_RTF) {
       /* setup the RTF parser */

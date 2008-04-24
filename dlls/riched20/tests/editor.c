@@ -2415,28 +2415,20 @@ static void test_EM_STREAMIN(void)
               (WPARAM)(SF_RTF), (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-  todo_wine {
   ok (result  == 0,
       "EM_STREAMIN: Test 2 returned %ld, expected 0\n", result);
-  }
-  todo_wine {
   ok (strlen(buffer)  == 0,
       "EM_STREAMIN: Test 2 set wrong text: Result: %s\n",buffer);
-  }
 
   es.dwCookie = (DWORD_PTR)&streamText3;
   SendMessage(hwndRichEdit, EM_STREAMIN,
               (WPARAM)(SF_RTF), (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-  todo_wine {
   ok (result  == 0,
       "EM_STREAMIN: Test 3 returned %ld, expected 9\n", result);
-  }
-  todo_wine {
   ok (strlen(buffer)  == 0,
       "EM_STREAMIN: Test 3 set wrong text: Result: %s\n",buffer);
-  }
 
   DestroyWindow(hwndRichEdit);
 }
