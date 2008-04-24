@@ -806,7 +806,43 @@ done:
  */
 static BOOL     HLPFILE_RtfAddMetaFile(struct RtfData* rd, BYTE* beg, BYTE pack)
 {
-    return TRUE;
+    BYTE*               ptr;
+    unsigned long       size, csize;
+    unsigned long       off, hsoff;
+    BYTE*               bits;
+    char                tmp[256];
+    unsigned            mm;
+    BOOL                ret;
+
+    WINE_TRACE("Loading metafile\n");
+
+    ptr = beg + 2; /* for type and pack */
+
+    mm = fetch_ushort(&ptr); /* mapping mode */
+    sprintf(tmp, "{\\pict\\wmetafile%d\\picw%d\\pich%d",
+            mm, GET_USHORT(ptr, 0), GET_USHORT(ptr, 2));
+    if (!HLPFILE_RtfAddControl(rd, tmp)) return FALSE;
+    ptr += 4;
+
+    size = fetch_ulong(&ptr); /* decompressed size */
+    csize = fetch_ulong(&ptr); /* compressed size */
+    fetch_ulong(&ptr); /* hotspot size */
+    off = GET_UINT(ptr, 0);
+    hsoff = GET_UINT(ptr, 4);
+    ptr += 8;
+
+    WINE_TRACE("sz=%lu csz=%lu offs=%lu/%u,%lu\n",
+               size, csize, off, ptr - beg, hsoff);
+
+    bits = HLPFILE_DecompressGfx(beg + off, csize, size, pack);
+    if (!bits) return FALSE;
+
+    ret = HLPFILE_RtfAddHexBytes(rd, bits, size) &&
+        HLPFILE_RtfAddControl(rd, "}");
+
+    if (bits != beg + off) HeapFree(GetProcessHeap(), 0, bits);
+
+    return ret;
 }
 
 /******************************************************************
