@@ -943,6 +943,18 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
     return link;
 }
 
+unsigned HLPFILE_HalfPointsToTwips(unsigned pts)
+{
+    static unsigned logPxY;
+    if (!logPxY)
+    {
+        HDC hdc = GetDC(NULL);
+        logPxY = GetDeviceCaps(hdc, LOGPIXELSY);
+        ReleaseDC(NULL, hdc);
+    }
+    return MulDiv(pts, 72 * 10, logPxY);
+}
+
 /***********************************************************************
  *
  *           HLPFILE_BrowseParagraph
@@ -1034,13 +1046,26 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
         if (bits & 0x0100) format += 3;
         if (bits & 0x0200)
         {
-            int                 ntab = fetch_short(&format);
-            unsigned short      ts;
+            int                 i, ntab = fetch_short(&format);
+            unsigned            tab, ts;
+            const char*         kind;
 
-            while (ntab-- > 0)
+            for (i = 0; i < ntab; i++)
             {
-                ts = fetch_ushort(&format);
-                if (ts & 0x4000) fetch_ushort(&format);
+                tab = fetch_ushort(&format);
+                ts = (tab & 0x4000) ? fetch_ushort(&format) : 0 /* left */;
+                switch (ts)
+                {
+                default: WINE_FIXME("Unknown tab style %x\n", ts);
+                /* fall through */
+                case 0: kind = ""; break;
+                case 1: kind = "\\tqr"; break;
+                case 2: kind = "\\tqc"; break;
+                }
+                /* FIXME: do kind */
+                sprintf(tmp, "%s\\tx%d",
+                        kind, HLPFILE_HalfPointsToTwips(tab & 0x3FFF));
+                if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
             }
         }
         /* 0x0400, 0x0800 and 0x1000 don't need space */

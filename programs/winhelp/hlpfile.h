@@ -201,6 +201,12 @@ HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relativ
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
 void          HLPFILE_FreeLink(HLPFILE_LINK* link);
 void          HLPFILE_FreeHlpFile(HLPFILE*);
+unsigned      HLPFILE_HalfPointsToTwips(unsigned pts);
+
+static inline unsigned HLPFILE_PointsToTwips(unsigned pts)
+{
+    return HLPFILE_HalfPointsToTwips(2 * pts);
+}
 
 void* HLPFILE_BPTreeSearch(BYTE*, const void*, HLPFILE_BPTreeCompare);
 void  HLPFILE_BPTreeEnum(BYTE*, HLPFILE_BPTreeCallback cb, void *cookie);
