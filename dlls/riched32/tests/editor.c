@@ -179,6 +179,10 @@ static void test_EM_STREAMIN(void)
   EDITSTREAM es;
   char buffer[1024] = {0};
 
+  const char * streamText0 = "{\\rtf1 TestSomeText}";
+  const char * streamText0a = "{\\rtf1 TestSomeText\\par}";
+  const char * streamText0b = "{\\rtf1 TestSomeText\\par\\par}";
+
   const char * streamText1 =
   "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang12298{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 System;}}\r\n" \
   "\\viewkind4\\uc1\\pard\\f0\\fs17 TestSomeText\\par\r\n" \
@@ -196,6 +200,48 @@ static void test_EM_STREAMIN(void)
 
   const char * streamText3 = "RichEdit1";
 
+  /* Minimal test without \par at the end */
+  es.dwCookie = (DWORD_PTR)&streamText0;
+  es.dwError = 0;
+  es.pfnCallback = test_EM_STREAMIN_esCallback;
+  SendMessage(hwndRichEdit, EM_STREAMIN,
+              (WPARAM)(SF_RTF), (LPARAM)&es);
+
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  ok (result  == 12,
+      "EM_STREAMIN: Test 0 returned %ld, expected 12\n", result);
+  result = strcmp (buffer,"TestSomeText");
+  ok (result  == 0,
+      "EM_STREAMIN: Test 0 set wrong text: Result: %s\n",buffer);
+
+  /* Native richedit 2.0 ignores last \par */
+  es.dwCookie = (DWORD_PTR)&streamText0a;
+  es.dwError = 0;
+  es.pfnCallback = test_EM_STREAMIN_esCallback;
+  SendMessage(hwndRichEdit, EM_STREAMIN,
+              (WPARAM)(SF_RTF), (LPARAM)&es);
+
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  ok (result  == 12,
+      "EM_STREAMIN: Test 0-a returned %ld, expected 12\n", result);
+  result = strcmp (buffer,"TestSomeText");
+  ok (result  == 0,
+      "EM_STREAMIN: Test 0-a set wrong text: Result: %s\n",buffer);
+
+  /* Native richedit 2.0 ignores last \par, next-to-last \par appears */
+  es.dwCookie = (DWORD_PTR)&streamText0b;
+  es.dwError = 0;
+  es.pfnCallback = test_EM_STREAMIN_esCallback;
+  SendMessage(hwndRichEdit, EM_STREAMIN,
+              (WPARAM)(SF_RTF), (LPARAM)&es);
+
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  ok (result  == 14,
+      "EM_STREAMIN: Test 0-b returned %ld, expected 14\n", result);
+  result = strcmp (buffer,"TestSomeText\r\n");
+  ok (result  == 0,
+      "EM_STREAMIN: Test 0-b set wrong text: Result: %s\n",buffer);
+
   es.dwCookie = (DWORD_PTR)&streamText1;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
@@ -203,15 +249,11 @@ static void test_EM_STREAMIN(void)
               (WPARAM)(SF_RTF), (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
-  todo_wine {
   ok (result  == 12,
       "EM_STREAMIN: Test 1 returned %ld, expected 12\n", result);
-  }
   result = strcmp (buffer,"TestSomeText");
-  todo_wine {
   ok (result  == 0,
       "EM_STREAMIN: Test 1 set wrong text: Result: %s\n",buffer);
-  }
 
 
   es.dwCookie = (DWORD_PTR)&streamText2;
@@ -236,7 +278,7 @@ static void test_EM_STREAMIN(void)
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   todo_wine {
   ok (result  == 0,
-      "EM_STREAMIN: Test 3 returned %ld, expected 9\n", result);
+      "EM_STREAMIN: Test 3 returned %ld, expected 0\n", result);
   }
   todo_wine {
   ok (strlen(buffer)  == 0,

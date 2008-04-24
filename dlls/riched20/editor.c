@@ -1105,12 +1105,13 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       if (stripLastCR) {
         int newfrom, newto;
         ME_GetSelection(editor, &newfrom, &newto);
-        if (newto > to) {
-          WCHAR lastchar = '\0';
+        if (newto > to + (editor->bEmulateVersion10 ? 1 : 0)) {
+          WCHAR lastchar[3] = {'\0', '\0'};
+          int linebreakSize = editor->bEmulateVersion10 ? 2 : 1;
 
-          ME_GetTextW(editor, &lastchar, newto - 1, 1, 0);
-          if (lastchar == '\r') {
-            ME_InternalDeleteText(editor, newto - 1, 1);
+          ME_GetTextW(editor, lastchar, newto - linebreakSize, linebreakSize, 0);
+          if (lastchar[0] == '\r' && (lastchar[1] == '\n' || lastchar[1] == '\0')) {
+            ME_InternalDeleteText(editor, newto - linebreakSize, linebreakSize);
           }
         }
       }
