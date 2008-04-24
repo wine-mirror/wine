@@ -2566,6 +2566,12 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             lpChar[0] = 0;
             ret = 0;
         }
+	else if((lpKeyState[VK_CONTROL] & 0x80) /* Control is pressed */
+		&& (keysym == XK_Return || keysym == XK_KP_Enter))
+        {
+            lpChar[0] = '\n';
+            ret = 1;
+        }
 
         /* Hack to detect an XLookupString hard-coded to Latin1 */
         if (ret == 1 && keysym >= 0x00a0 && keysym <= 0x00ff && (BYTE)lpChar[0] == keysym)
