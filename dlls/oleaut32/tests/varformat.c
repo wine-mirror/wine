@@ -431,6 +431,14 @@ static void test_VarWeekdayName(void)
 
   CHECKPTR(VarWeekdayName);
 
+  SetLastError(0xdeadbeef);
+  GetLocaleInfoW(LOCALE_USER_DEFAULT, 0, NULL, 0);
+  if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  {
+    skip("GetLocaleInfoW is not implemented\n");
+    return;
+  }
+
   /* Initialize days' names */
   for (day = 0; day <= 6; ++day)
   {
