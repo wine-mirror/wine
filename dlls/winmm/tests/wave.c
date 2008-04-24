@@ -854,9 +854,9 @@ static void wave_out_test_device(int device)
     }
 
     rc=waveOutGetDevCapsA(device,&capsA,4);
-    ok(rc==MMSYSERR_NOERROR,
-       "waveOutGetDevCapsA(%s): MMSYSERR_NOERROR expected, got %s\n",
-       dev_name(device),wave_out_error(rc));
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM,
+       "waveOutGetDevCapsA(%s): MMSYSERR_NOERROR or MMSYSERR_INVALPARAM "
+       "expected, got %s\n", dev_name(device),wave_out_error(rc));
 
     rc=waveOutGetDevCapsW(device,&capsW,4);
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
@@ -887,6 +887,13 @@ static void wave_out_test_device(int device)
     else if (rc==MMSYSERR_NOTSUPPORTED) {
         nameA=strdup("not supported");
     }
+
+    rc=waveOutGetDevCapsA(device,&capsA,sizeof(capsA));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveOutGetDevCapsA(%s): MMSYSERR_NOERROR expected, got %s\n",
+       dev_name(device),wave_out_error(rc));
+    if (rc!=MMSYSERR_NOERROR)
+        return;
 
     trace("  %s: \"%s\" (%s) %d.%d (%d:%d)\n",dev_name(device),capsA.szPname,
           (nameA?nameA:"failed"),capsA.vDriverVersion >> 8,
