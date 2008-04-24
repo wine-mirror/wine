@@ -683,6 +683,17 @@ GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient *brush, ARGB color1,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetLineColors(GpLineGradient *brush, ARGB *colors)
+{
+    if(!brush || !colors)
+        return InvalidParameter;
+
+    colors[0] = brush->startcolor;
+    colors[1] = brush->endcolor;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetLineLinearBlend(GpLineGradient *brush, REAL focus,
     REAL scale)
 {
