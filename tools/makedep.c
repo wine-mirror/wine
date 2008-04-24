@@ -791,7 +791,7 @@ static void output_include( FILE *file, INCL_FILE *pFile,
 /*******************************************************************
  *         output_src
  */
-static void output_src( FILE *file, INCL_FILE *pFile, int *column )
+static int output_src( FILE *file, INCL_FILE *pFile, int *column )
 {
     char *obj = xstrdup( pFile->name );
     char *ext = get_extension( obj );
@@ -817,23 +817,34 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         else if (!strcmp( ext, "idl" ))  /* IDL file */
         {
             char *name;
+            int got_header = 0;
+            const char *suffix = "cips";
 
-            *column += fprintf( file, "%s.h", obj );
-
-            name = strmake( "%s_c.c", obj );
-            if (find_src_file( name )) *column += fprintf( file, " %s", name );
-            free( name );
-            name = strmake( "%s_i.c", obj );
-            if (find_src_file( name )) *column += fprintf( file, " %s", name );
-            free( name );
-            name = strmake( "%s_p.c", obj );
-            if (find_src_file( name )) *column += fprintf( file, " %s", name );
-            free( name );
-            name = strmake( "%s_s.c", obj );
-            if (find_src_file( name )) *column += fprintf( file, " %s", name );
+            name = strmake( "%s.tlb", obj );
+            if (find_src_file( name )) *column += fprintf( file, "%s", name );
+            else
+            {
+                got_header = 1;
+                *column += fprintf( file, "%s.h", obj );
+            }
             free( name );
 
+            while (*suffix)
+            {
+                name = strmake( "%s_%c.c", obj, *suffix );
+                if (find_src_file( name ))
+                {
+                    if (!got_header++) *column += fprintf( file, " %s.h", obj );
+                    *column += fprintf( file, " %s", name );
+                }
+                free( name );
+                suffix++;
+            }
             *column += fprintf( file, ": %s", pFile->filename );
+        }
+        else if (!strcmp( ext, "tlb" ))
+        {
+            return 0;  /* nothing to do for typelib files */
         }
         else
         {
@@ -841,6 +852,7 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         }
     }
     free( obj );
+    return 1;
 }
 
 
@@ -875,7 +887,7 @@ static void output_dependencies(void)
     LIST_FOR_EACH_ENTRY( pFile, &sources, INCL_FILE, entry )
     {
         column = 0;
-        output_src( file, pFile, &column );
+        if (!output_src( file, pFile, &column )) continue;
         for (i = 0; i < MAX_INCLUDES; i++)
             if (pFile->files[i]) output_include( file, pFile->files[i],
                                                  pFile, &column );

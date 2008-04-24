@@ -207,10 +207,6 @@ filter: dummy
 dlldata.c: $(WIDL) Makefile.in
 	$(WIDL) $(IDLFLAGS) --dlldata-only --dlldata=$@ $(IDL_P_SRCS)
 
-# Rules for resources
-
-$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(IDL_TLB_SRCS:.idl=.tlb)
-
 # Rule for linting
 
 $(MODULE).ln : $(LINTS)
@@ -233,7 +229,10 @@ winapi_check:: dummy
 
 # Rules for dependencies
 
-DEPEND_SRCS = $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) $(IDL_GEN_C_SRCS) $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
+DEPEND_SRCS = $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) \
+              $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) \
+              $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) \
+              $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
 
 $(SUBDIRS:%=%/__depend__): dummy
 	@cd `dirname $@` && $(MAKE) depend
@@ -322,6 +321,8 @@ doc-sgml: $(DOCSUBDIRS:%=%/__doc_sgml__)
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
 
 $(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb): $(WIDL)
+
+$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC)
 
 $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)

@@ -1634,6 +1634,7 @@ Makefile: dummy\\
 \\
 \$(OBJS): \$(IDL_GEN_HEADERS)\\
 \$(IDL_GEN_C_SRCS:.c=.o): \$(IDL_GEN_C_SRCS)\\
+\$(RC_SRCS:.rc=.res): \$(IDL_TLB_SRCS:.idl=.tlb)\\
 \$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)\\
 \$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"],
 ["### Dependencies:
@@ -1645,6 +1646,7 @@ Makefile: dummy
 
 \$(OBJS): \$(IDL_GEN_HEADERS)
 \$(IDL_GEN_C_SRCS:.c=.o): \$(IDL_GEN_C_SRCS)
+\$(RC_SRCS:.rc=.res): \$(IDL_TLB_SRCS:.idl=.tlb)
 \$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
 \$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"]))
 
