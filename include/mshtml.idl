@@ -1677,6 +1677,35 @@ interface IHTMLDOMAttribute : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLDOMTextNode interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4b1-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDOMTextNode : IDispatch
+{
+    [propput, id(DISPID_IHTMLDOMTEXTNODE_DATA)]
+    HRESULT data([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDOMTEXTNODE_DATA)]
+    HRESULT data([out, retval] BSTR *p);
+
+    [id(DISPID_IHTMLDOMTEXTNODE_TOSTRING)]
+    HRESULT toString([out, retval] BSTR *String);
+
+    [propget, id(DISPID_IHTMLDOMTEXTNODE_LENGTH)]
+    HRESULT length([out, retval] long *p);
+
+    [id(DISPID_IHTMLDOMTEXTNODE_SPLITTEXT)]
+    HRESULT splitText(
+            [in] long offset,
+            [out, retval] IHTMLDOMNode **pRetNode);
+}
+
+/*****************************************************************************
  *    IHTMLDOMImplementation interface
  */
 [
