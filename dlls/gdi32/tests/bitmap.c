@@ -974,9 +974,13 @@ static void test_bitmap(void)
 
     SetLastError(0xdeadbeef);
     hbmp = CreateBitmap(0x7ffffff, 9, 1, 1, NULL);
-    ok(!hbmp, "CreateBitmap should fail\n");
-    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
-       "expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
+    if (!hbmp)
+    {
+        ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
+           "expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
+    }
+    else
+        DeleteObject(hbmp);
 
     SetLastError(0xdeadbeef);
     hbmp = CreateBitmap(0x7ffffff + 1, 1, 1, 1, NULL);
