@@ -746,11 +746,21 @@ DWORD WINAPI ImmGetCandidateListW(
  *		ImmGetCandidateWindow (IMM32.@)
  */
 BOOL WINAPI ImmGetCandidateWindow(
-  HIMC hIMC, DWORD dwBufLen, LPCANDIDATEFORM lpCandidate)
+  HIMC hIMC, DWORD dwIndex, LPCANDIDATEFORM lpCandidate)
 {
-  FIXME("(%p, %d, %p): stub\n", hIMC, dwBufLen, lpCandidate);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("%p, %d, %p\n", hIMC, dwIndex, lpCandidate);
+
+    if (!data || !lpCandidate)
+        return FALSE;
+
+    if ( dwIndex >= (sizeof(data->IMC.cfCandForm) / sizeof(CANDIDATEFORM)) )
+        return FALSE;
+
+    *lpCandidate = data->IMC.cfCandForm[dwIndex];
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1610,9 +1620,27 @@ LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 BOOL WINAPI ImmSetCandidateWindow(
   HIMC hIMC, LPCANDIDATEFORM lpCandidate)
 {
-  FIXME("(%p, %p): stub\n", hIMC, lpCandidate);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("(%p, %p)\n", hIMC, lpCandidate);
+
+    if (!data || !lpCandidate)
+        return FALSE;
+
+    TRACE("\t%x, %x, (%i,%i), (%i,%i - %i,%i)\n",
+            lpCandidate->dwIndex, lpCandidate->dwStyle,
+            lpCandidate->ptCurrentPos.x, lpCandidate->ptCurrentPos.y,
+            lpCandidate->rcArea.top, lpCandidate->rcArea.left,
+            lpCandidate->rcArea.bottom, lpCandidate->rcArea.right);
+
+    if ( lpCandidate->dwIndex >= (sizeof(data->IMC.cfCandForm) / sizeof(CANDIDATEFORM)) )
+        return FALSE;
+
+    data->IMC.cfCandForm[lpCandidate->dwIndex] = *lpCandidate;
+    ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCANDIDATEPOS);
+    ImmInternalSendIMENotify(data, IMN_SETCANDIDATEPOS, 1 << lpCandidate->dwIndex);
+
+    return TRUE;
 }
 
 /***********************************************************************
