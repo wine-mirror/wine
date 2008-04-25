@@ -1384,9 +1384,16 @@ UINT WINAPI ImmGetRegisterWordStyleW(
  */
 BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 {
-  FIXME("(%p, %p): stub\n", hIMC, lpptPos);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("(%p, %p)\n", hIMC, lpptPos);
+
+    if (!data || !lpptPos)
+        return FALSE;
+
+    *lpptPos = data->IMC.ptStatusWndPos;
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1882,9 +1889,20 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
  */
 BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 {
-  FIXME("(%p, %p): stub\n", hIMC, lpptPos);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("(%p, %p)\n", hIMC, lpptPos);
+
+    if (!data || !lpptPos)
+        return FALSE;
+
+    TRACE("\t(%i,%i)\n", lpptPos->x, lpptPos->y);
+
+    data->IMC.ptStatusWndPos = *lpptPos;
+    ImmNotifyIME( hIMC, NI_CONTEXTUPDATED, 0, IMC_SETSTATUSWINDOWPOS);
+    ImmInternalSendIMENotify(data, IMN_SETSTATUSWINDOWPOS, 0);
+
+    return TRUE;
 }
 
 /***********************************************************************
