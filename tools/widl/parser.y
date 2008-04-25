@@ -91,9 +91,11 @@ static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
 static void set_type(var_t *v, type_t *type, const declarator_t *decl, int top);
+static var_list_t *set_var_types(attr_list_t *attrs, type_t *type, declarator_list_t *decls);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_list_t *append_var(var_list_t *list, var_t *var);
+static var_list_t *append_var_list(var_list_t *list, var_list_t *vars);
 static var_t *make_var(char *name);
 static declarator_list_t *append_declarator(declarator_list_t *list, declarator_t *p);
 static declarator_t *make_declarator(var_t *var);
@@ -287,8 +289,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <type> type
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
-%type <var> arg field ne_union_field union_field s_field case enum constdef externdef
-%type <var_list> m_args no_args args fields ne_union_fields cases enums enum_list dispint_props
+%type <var> arg ne_union_field union_field s_field case enum constdef externdef
+%type <var_list> m_args no_args args fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident t_ident ident
 %type <declarator> declarator func_declarator direct_declarator
 %type <declarator_list> declarator_list
@@ -702,11 +704,16 @@ externdef: tEXTERN tCONST type ident		{ $$ = $4;
 	;
 
 fields:						{ $$ = NULL; }
-	| fields field				{ $$ = append_var( $1, $2 ); }
+	| fields field				{ $$ = append_var_list($1, $2); }
 	;
 
-field:	  s_field ';'				{ $$ = $1; }
-	| m_attributes uniondef ';'		{ $$ = make_var(NULL); $$->type = $2; $$->attrs = $1; }
+field:	  m_attributes type declarator_list ';'	{ const char *first = LIST_ENTRY(list_head($3), declarator_t, entry)->var->name;
+						  check_field_attrs(first, $1);
+						  $$ = set_var_types($1, $2, $3); }
+	| m_attributes uniondef ';'		{ var_t *v = make_var(NULL);
+						  v->type = $2; v->attrs = $1;
+						  $$ = append_var(NULL, v);
+						}
 	;
 
 ne_union_field:
@@ -1413,6 +1420,23 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
   }
 }
 
+static var_list_t *set_var_types(attr_list_t *attrs, type_t *type, declarator_list_t *decls)
+{
+  declarator_t *decl, *next;
+  var_list_t *var_list = NULL;
+
+  LIST_FOR_EACH_ENTRY_SAFE( decl, next, decls, declarator_t, entry )
+  {
+    var_t *var = decl->var;
+
+    var->attrs = attrs;
+    set_type(var, type, decl, 0);
+    var_list = append_var(var_list, var);
+    free(decl);
+  }
+  return var_list;
+}
+
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface)
 {
     if (!iface) return list;
@@ -1442,6 +1466,18 @@ static var_list_t *append_var(var_list_t *list, var_t *var)
         list_init( list );
     }
     list_add_tail( list, &var->entry );
+    return list;
+}
+
+static var_list_t *append_var_list(var_list_t *list, var_list_t *vars)
+{
+    if (!vars) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    list_move_tail( list, vars );
     return list;
 }
 
