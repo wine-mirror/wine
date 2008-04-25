@@ -226,6 +226,12 @@ GpStatus WINGDIPAPI GdipAddPathEllipse(GpPath *path, REAL x, REAL y, REAL width,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathEllipseI(GpPath *path, INT x, INT y, INT width,
+    INT height)
+{
+    return GdipAddPathEllipse(path,(REAL)x,(REAL)y,(REAL)width,(REAL)height);
+}
+
 GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     INT count)
 {
