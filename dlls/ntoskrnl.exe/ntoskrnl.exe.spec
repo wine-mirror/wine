@@ -28,11 +28,11 @@
 @ stub Exfi386InterlockedExchangeUlong
 @ stub Exfi386InterlockedIncrementLong
 @ stub HalExamineMBR
-@ stdcall InterlockedCompareExchange(ptr long long) kernel32.InterlockedCompareExchange
-@ stdcall InterlockedDecrement(ptr) kernel32.InterlockedDecrement
-@ stdcall InterlockedExchange(ptr long) kernel32.InterlockedExchange
-@ stdcall InterlockedExchangeAdd(ptr long ) kernel32.InterlockedExchangeAdd
-@ stdcall InterlockedIncrement(ptr) kernel32.InterlockedIncrement
+@ stdcall -norelay InterlockedCompareExchange(ptr long long) NTOSKRNL_InterlockedCompareExchange
+@ stdcall -norelay InterlockedDecrement(ptr) NTOSKRNL_InterlockedDecrement
+@ stdcall -norelay InterlockedExchange(ptr long) NTOSKRNL_InterlockedExchange
+@ stdcall -norelay InterlockedExchangeAdd(ptr long) NTOSKRNL_InterlockedExchangeAdd
+@ stdcall -norelay InterlockedIncrement(ptr) NTOSKRNL_InterlockedIncrement
 @ stdcall InterlockedPopEntrySList(ptr) kernel32.InterlockedPopEntrySList
 @ stdcall InterlockedPushEntrySList(ptr ptr) kernel32.InterlockedPushEntrySList
 @ stub IoAssignDriveLetters
