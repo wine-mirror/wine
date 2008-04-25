@@ -171,6 +171,31 @@ GpStatus WINGDIPAPI GdipAddPathBeziers(GpPath *path, GDIPCONST GpPointF *points,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathBeziersI(GpPath *path, GDIPCONST GpPoint *points,
+    INT count)
+{
+    GpPointF *ptsF;
+    GpStatus ret;
+    INT i;
+
+    if(!points || ((count - 1) % 3))
+        return InvalidParameter;
+
+    ptsF = GdipAlloc(sizeof(GpPointF) * count);
+    if(!ptsF)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        ptsF[i].X = (REAL)points[i].X;
+        ptsF[i].Y = (REAL)points[i].Y;
+    }
+
+    ret = GdipAddPathBeziers(path, ptsF, count);
+    GdipFree(ptsF);
+
+    return ret;
+}
+
 GpStatus WINGDIPAPI GdipAddPathEllipse(GpPath *path, REAL x, REAL y, REAL width,
     REAL height)
 {
