@@ -411,6 +411,16 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
         result.is_temporary = FALSE;
         result.type = find_type("int", 0);
         break;
+    case EXPR_STRLIT:
+        result.is_variable = FALSE;
+        result.is_temporary = TRUE;
+        result.type = make_type(RPC_FC_RP, find_type("char", 0));
+        break;
+    case EXPR_WSTRLIT:
+        result.is_variable = FALSE;
+        result.is_temporary = TRUE;
+        result.type = make_type(RPC_FC_RP, find_type("wchar_t", 0));
+        break;
     case EXPR_DOUBLE:
         result.is_variable = FALSE;
         result.is_temporary = FALSE;
@@ -596,6 +606,12 @@ void write_expr(FILE *h, const expr_t *e, int brackets,
         }
         fprintf(h, "%s", e->u.sval);
         break;
+    case EXPR_STRLIT:
+        fprintf(h, "\"%s\"", e->u.sval);
+        break;
+    case EXPR_WSTRLIT:
+        fprintf(h, "L\"%s\"", e->u.sval);
+        break;
     case EXPR_LOGNOT:
         fprintf(h, "!");
         write_expr(h, e->ref, 1, toplevel, toplevel_prefix, cont_type);
@@ -743,6 +759,8 @@ int compare_expr(const expr_t *a, const expr_t *b)
         case EXPR_DOUBLE:
             return a->u.dval - b->u.dval;
         case EXPR_IDENTIFIER:
+        case EXPR_STRLIT:
+        case EXPR_WSTRLIT:
             return strcmp(a->u.sval, b->u.sval);
         case EXPR_COND:
             ret = compare_expr(a->ref, b->ref);

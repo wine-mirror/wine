@@ -1183,7 +1183,7 @@ static unsigned long get_ulong_val(unsigned long val, int vt)
     return val;
 }
 
-static void write_value(msft_typelib_t* typelib, int *out, int vt, void *value)
+static void write_value(msft_typelib_t* typelib, int *out, int vt, const void *value)
 {
     switch(vt) {
     case VT_I2:
@@ -1199,7 +1199,7 @@ static void write_value(msft_typelib_t* typelib, int *out, int vt, void *value)
     case VT_HRESULT:
     case VT_PTR:
       {
-        const unsigned long lv = get_ulong_val(*(unsigned long*)value, vt);
+        const unsigned long lv = get_ulong_val(*(const unsigned long*)value, vt);
         if((lv & 0x3ffffff) == lv) {
             *out = 0x80000000;
             *out |= vt << 26;
@@ -1215,7 +1215,7 @@ static void write_value(msft_typelib_t* typelib, int *out, int vt, void *value)
       }
     case VT_BSTR:
       {
-        char *s = (char *) value;
+        const char *s = (const char *) value;
         int len = strlen(s), seg_len = (len + 6 + 3) & ~0x3;
         int offset = ctl2_alloc_segment(typelib, MSFT_SEG_CUSTDATA, seg_len, 0);
         *((unsigned short *)&typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
@@ -1305,7 +1305,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
       {
         num_params++;
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
-            if(attr->type == ATTR_DEFAULTVALUE_EXPR || attr->type == ATTR_DEFAULTVALUE_STRING)
+            if(attr->type == ATTR_DEFAULTVALUE)
                 num_defaults++;
             else if(attr->type == ATTR_OPTIONAL)
                 num_optional++;
@@ -1329,14 +1329,14 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
         case ATTR_DISPLAYBIND:
             funcflags |= 0x10; /* FUNCFLAG_FDISPLAYBIND */
             break;
-        case ATTR_ENTRY_ORDINAL:
+        case ATTR_ENTRY:
             extra_attr = max(extra_attr, 3);
-            entry = expr->cval;
-            entry_is_ord = 1;
-            break;
-        case ATTR_ENTRY_STRING:
-            extra_attr = max(extra_attr, 3);
-            entry = ctl2_alloc_string(typeinfo->typelib, attr->u.pval);
+            if (expr->type == EXPR_STRLIT || expr->type == EXPR_WSTRLIT)
+              entry = ctl2_alloc_string(typeinfo->typelib, attr->u.pval);
+            else {
+              entry = expr->cval;
+              entry_is_ord = 1;
+            }
             break;
         case ATTR_HELPCONTEXT:
             extra_attr = max(extra_attr, 1);
@@ -1477,7 +1477,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
 	encode_var(typeinfo->typelib, arg->type, arg, paramdata, NULL, NULL, &decoded_size);
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
             switch(attr->type) {
-            case ATTR_DEFAULTVALUE_EXPR:
+            case ATTR_DEFAULTVALUE:
               {
                 int vt;
                 expr_t *expr = (expr_t *)attr->u.pval;
@@ -1486,21 +1486,17 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
                 else
                     vt = get_type_vt(arg->type);
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
-                chat("default value %ld\n", expr->cval);
-                write_value(typeinfo->typelib, defaultdata, vt, &expr->cval);
-                break;
-              }
-            case ATTR_DEFAULTVALUE_STRING:
-              {
-                char *s = (char *)attr->u.pval;
-                int vt;
-                if (arg->type->type == RPC_FC_ENUM16)
-                  vt = VT_INT;
+                if (expr->type == EXPR_STRLIT || expr->type == EXPR_WSTRLIT)
+                {
+                  if (vt != VT_BSTR) error("string default value applied to non-string type\n");
+                  chat("default value '%s'\n", expr->u.sval);
+                  write_value(typeinfo->typelib, defaultdata, vt, expr->u.sval);
+                }
                 else
-                  vt = get_type_vt(arg->type);
-                paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
-                chat("default value '%s'\n", s);
-                write_value(typeinfo->typelib, defaultdata, vt, s);
+                {
+                  chat("default value %ld\n", expr->cval);
+                  write_value(typeinfo->typelib, defaultdata, vt, &expr->cval);
+                }
                 break;
               }
             case ATTR_IN:

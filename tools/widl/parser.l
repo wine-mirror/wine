@@ -32,6 +32,7 @@ uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 
 %x QUOTE
+%x WSTRQUOTE
 %x ATTR
 %x PP_LINE
 
@@ -133,10 +134,16 @@ UUID *parse_uuid(const char *u)
 				parser_lval.str = get_buffered_cstring();
 				return aSTRING;
 			}
-<QUOTE>\\\\		|
-<QUOTE>\\\"		addcchar(yytext[1]);
-<QUOTE>\\.		addcchar('\\'); addcchar(yytext[1]);
-<QUOTE>.		addcchar(yytext[0]);
+<INITIAL,ATTR>L\"	yy_push_state(WSTRQUOTE);
+<WSTRQUOTE>\"		{
+				yy_pop_state();
+				parser_lval.str = get_buffered_cstring();
+				return aWSTRING;
+			}
+<QUOTE,WSTRQUOTE>\\\\	|
+<QUOTE,WSTRQUOTE>\\\"	addcchar(yytext[1]);
+<QUOTE,WSTRQUOTE>\\.	addcchar('\\'); addcchar(yytext[1]);
+<QUOTE,WSTRQUOTE>.	addcchar(yytext[0]);
 <INITIAL,ATTR>\[	yy_push_state(ATTR); return '[';
 <ATTR>\]		yy_pop_state(); return ']';
 <ATTR>{cident}		return attr_token(yytext);

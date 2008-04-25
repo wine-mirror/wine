@@ -187,7 +187,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token <str> aKNOWNTYPE
 %token <num> aNUM aHEXNUM
 %token <dbl> aDOUBLE
-%token <str> aSTRING
+%token <str> aSTRING aWSTRING
 %token <uuid> aUUID
 %token aEOF
 %token SHL SHR
@@ -278,8 +278,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <attr> attribute
 %type <attr_list> m_attributes attributes attrib_list
 %type <str_list> str_list
-%type <expr> m_expr expr expr_const array
-%type <expr_list> m_exprs /* exprs expr_list */ expr_list_const
+%type <expr> m_expr expr expr_const expr_int_const array
+%type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <ifinfo> interfacehdr
 %type <type> inherit interface interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
@@ -492,31 +492,29 @@ attribute:					{ $$ = NULL; }
 	| tBINDABLE				{ $$ = make_attr(ATTR_BINDABLE); }
 	| tBROADCAST				{ $$ = make_attr(ATTR_BROADCAST); }
 	| tCALLAS '(' ident ')'			{ $$ = make_attrp(ATTR_CALLAS, $3); }
-	| tCASE '(' expr_list_const ')'		{ $$ = make_attrp(ATTR_CASE, $3); }
+	| tCASE '(' expr_list_int_const ')'	{ $$ = make_attrp(ATTR_CASE, $3); }
 	| tCONTEXTHANDLE			{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); }
 	| tCONTEXTHANDLENOSERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
 	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
 	| tCONTROL				{ $$ = make_attr(ATTR_CONTROL); }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
 	| tDEFAULTCOLLELEM			{ $$ = make_attr(ATTR_DEFAULTCOLLELEM); }
-	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE_EXPR, $3); }
-	| tDEFAULTVALUE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DEFAULTVALUE_STRING, $3); }
+	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
 	| tDEFAULTVTABLE			{ $$ = make_attr(ATTR_DEFAULTVTABLE); }
 	| tDISPLAYBIND				{ $$ = make_attr(ATTR_DISPLAYBIND); }
 	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
 	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
 	| tENDPOINT '(' str_list ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
-	| tENTRY '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENTRY_STRING, $3); }
-	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY_ORDINAL, $3); }
+	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY, $3); }
 	| tEXPLICITHANDLE			{ $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
 	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
-	| tHELPCONTEXT '(' expr_const ')'	{ $$ = make_attrp(ATTR_HELPCONTEXT, $3); }
+	| tHELPCONTEXT '(' expr_int_const ')'	{ $$ = make_attrp(ATTR_HELPCONTEXT, $3); }
 	| tHELPFILE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPFILE, $3); }
 	| tHELPSTRING '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPSTRING, $3); }
-	| tHELPSTRINGCONTEXT '(' expr_const ')'	{ $$ = make_attrp(ATTR_HELPSTRINGCONTEXT, $3); }
+	| tHELPSTRINGCONTEXT '(' expr_int_const ')'	{ $$ = make_attrp(ATTR_HELPSTRINGCONTEXT, $3); }
 	| tHELPSTRINGDLL '(' aSTRING ')'	{ $$ = make_attrp(ATTR_HELPSTRINGDLL, $3); }
 	| tHIDDEN				{ $$ = make_attr(ATTR_HIDDEN); }
-	| tID '(' expr_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
+	| tID '(' expr_int_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
 	| tIIDIS '(' expr ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
 	| tIMMEDIATEBIND			{ $$ = make_attr(ATTR_IMMEDIATEBIND); }
@@ -524,7 +522,7 @@ attribute:					{ $$ = NULL; }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
 	| tINPUTSYNC				{ $$ = make_attr(ATTR_INPUTSYNC); }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
-	| tLCID	'(' expr_const ')'		{ $$ = make_attrp(ATTR_LIBLCID, $3); }
+	| tLCID	'(' expr_int_const ')'		{ $$ = make_attrp(ATTR_LIBLCID, $3); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
 	| tNONBROWSABLE				{ $$ = make_attr(ATTR_NONBROWSABLE); }
 	| tNONCREATABLE				{ $$ = make_attr(ATTR_NONCREATABLE); }
@@ -539,9 +537,10 @@ attribute:					{ $$ = NULL; }
 	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
 	| tPROPPUTREF				{ $$ = make_attr(ATTR_PROPPUTREF); }
 	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
-	| tRANGE '(' expr_const ',' expr_const ')' { expr_list_t *list = append_expr( NULL, $3 );
-                                                     list = append_expr( list, $5 );
-                                                     $$ = make_attrp(ATTR_RANGE, list); }
+	| tRANGE '(' expr_int_const ',' expr_int_const ')'
+						{ expr_list_t *list = append_expr( NULL, $3 );
+						  list = append_expr( list, $5 );
+						  $$ = make_attrp(ATTR_RANGE, list); }
 	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
 	| tREQUESTEDIT				{ $$ = make_attr(ATTR_REQUESTEDIT); }
 	| tRESTRICTED				{ $$ = make_attr(ATTR_RESTRICTED); }
@@ -578,7 +577,7 @@ cases:						{ $$ = NULL; }
 	| cases case				{ $$ = append_var( $1, $2 ); }
 	;
 
-case:	  tCASE expr_const ':' union_field	{ attr_t *a = make_attrp(ATTR_CASE, append_expr( NULL, $2 ));
+case:	  tCASE expr_int_const ':' union_field	{ attr_t *a = make_attrp(ATTR_CASE, append_expr( NULL, $2 ));
 						  $$ = $4; if (!$$) $$ = make_var(NULL);
 						  $$->attrs = append_attr( $$->attrs, a );
 						}
@@ -612,7 +611,7 @@ enum_list: enum					{ if (!$1->eval)
 						}
 	;
 
-enum:	  ident '=' expr_const			{ $$ = reg_const($1);
+enum:	  ident '=' expr_int_const		{ $$ = reg_const($1);
 						  $$->eval = $3;
                                                   $$->type = make_int(0);
 						}
@@ -654,6 +653,8 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| tFALSE				{ $$ = make_exprl(EXPR_TRUEFALSE, 0); }
 	| tNULL					{ $$ = make_exprl(EXPR_NUM, 0); }
 	| tTRUE					{ $$ = make_exprl(EXPR_TRUEFALSE, 1); }
+	| aSTRING				{ $$ = make_exprs(EXPR_STRLIT, $1); }
+	| aWSTRING				{ $$ = make_exprs(EXPR_WSTRLIT, $1); }
 	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
 	| expr '?' expr ':' expr		{ $$ = make_expr3(EXPR_COND, $1, $3, $5); }
 	| expr LOGICALOR expr			{ $$ = make_expr2(EXPR_LOGOR, $1, $3); }
@@ -688,12 +689,18 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| '(' expr ')'				{ $$ = $2; }
 	;
 
-expr_list_const: expr_const                     { $$ = append_expr( NULL, $1 ); }
-	| expr_list_const ',' expr_const        { $$ = append_expr( $1, $3 ); }
+expr_list_int_const: expr_int_const		{ $$ = append_expr( NULL, $1 ); }
+	| expr_list_int_const ',' expr_int_const	{ $$ = append_expr( $1, $3 ); }
+	;
+
+expr_int_const: expr				{ $$ = $1;
+						  if (!$$->is_const)
+						      error_loc("expression is not an integer constant\n");
+						}
 	;
 
 expr_const: expr				{ $$ = $1;
-						  if (!$$->is_const)
+						  if (!$$->is_const && $$->type != EXPR_STRLIT && $$->type != EXPR_WSTRLIT)
 						      error_loc("expression is not constant\n");
 						}
 	;
@@ -2047,16 +2054,14 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_CONTROL */          { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, "control" },
     /* ATTR_DEFAULT */          { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, "default" },
     /* ATTR_DEFAULTCOLLELEM */  { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "defaultcollelem" },
-    /* ATTR_DEFAULTVALUE_EXPR */ { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "defaultvalue" },
-    /* ATTR_DEFAULTVALUE_STRING */ { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "defaultvalue" },
+    /* ATTR_DEFAULTVALUE */     { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "defaultvalue" },
     /* ATTR_DEFAULTVTABLE */    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "defaultvtable" },
     /* ATTR_DISPINTERFACE */    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
     /* ATTR_DISPLAYBIND */      { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "displaybind" },
     /* ATTR_DLLNAME */          { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, "dllname" },
     /* ATTR_DUAL */             { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "dual" },
     /* ATTR_ENDPOINT */         { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "endpoint" },
-    /* ATTR_ENTRY_ORDINAL */    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "entry" },
-    /* ATTR_ENTRY_STRING */     { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "entry" },
+    /* ATTR_ENTRY */            { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "entry" },
     /* ATTR_EXPLICIT_HANDLE */  { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, "explicit_handle" },
     /* ATTR_HANDLE */           { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "handle" },
     /* ATTR_HELPCONTEXT */      { 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, "helpcontext" },
