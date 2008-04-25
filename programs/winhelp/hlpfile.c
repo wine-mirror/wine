@@ -2243,7 +2243,7 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
     }
 
     for (i = 0; i <= num; i++)
-        hlpfile->phrases_offsets[i] = GET_USHORT(buf, 0x11 + 2 * i) - 2 * num - 2;
+        hlpfile->phrases_offsets[i] = GET_USHORT(buf, head_size + 2 * i) - 2 * num - 2;
 
     if (hlpfile->version <= 16)
         memcpy(hlpfile->phrases_buffer, buf + 15 + 2*num, dec_size);
