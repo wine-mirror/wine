@@ -4606,6 +4606,7 @@ static LRESULT EDIT_WM_KeyDown(EDITSTATE *es, INT key)
 		DWORD dw;
 
                 if (!EDIT_IsInsideDialog(es)) return 1;
+                if (control) break;
                 hwndParent = GetParent(es->hwndSelf);
                 dw = SendMessageW( hwndParent, DM_GETDEFID, 0, 0 );
 		if (HIWORD(dw) == DC_HASDEFID)
