@@ -1266,6 +1266,10 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
        error_loc("%s: pointer attribute applied to non-pointer type\n", v->name);
   }
 
+  if (is_attr(v->attrs, ATTR_STRING) && !is_ptr(v->type) && !arr)
+    error_loc("'%s': [string] attribute applied to non-pointer, non-array type\n",
+              v->name);
+
   sizeless = FALSE;
   if (arr) LIST_FOR_EACH_ENTRY_REV(dim, arr, expr_t, entry)
   {
@@ -1592,7 +1596,6 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
 {
   const pident_t *pident;
   int is_str = is_attr(attrs, ATTR_STRING);
-  unsigned char ptr_type = get_attrv(attrs, ATTR_POINTERTYPE);
 
   if (is_str)
   {
@@ -1628,36 +1631,13 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
     var_t *name = pident->var;
 
     if (name->name) {
-      type_t *cur = append_ptrchain_type(pident->type, type);
-      if (pident->func_type)
-      {
-        type_t *t;
-        type_t *return_type = cur;
-        cur = pident->func_type;
-        for (t = cur; is_ptr(t); t = t->ref)
-          ;
-        assert(t->type == RPC_FC_FUNCTION);
-        t->ref = return_type;
-        if (is_object_interface && !is_attr(t->attrs, ATTR_CALLCONV))
-        {
-          static char *stdmethodcalltype;
-          if (!stdmethodcalltype) stdmethodcalltype = strdup("STDMETHODCALLTYPE");
-          t->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
-        }
-      }
-      cur = alias(cur, name->name);
+      type_t *cur;
+
+      /* set the attributes to allow set_type to do some checks on them */
+      name->attrs = attrs;
+      set_type(name, type, pident, NULL, 0);
+      cur = alias(name->type, name->name);
       cur->attrs = attrs;
-      if (ptr_type)
-      {
-        if (is_ptr(cur))
-          cur->type = ptr_type;
-        else
-          error_loc("'%s': pointer attribute applied to non-pointer type\n",
-                  cur->name);
-      }
-      else if (is_str && ! is_ptr(cur))
-        error_loc("'%s': [string] attribute applied to non-pointer type\n",
-                cur->name);
 
       if (is_incomplete(cur))
         add_incomplete(cur);
