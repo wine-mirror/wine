@@ -461,6 +461,11 @@ void set_reg_key_dword(HKEY root, const char *path, const char *name, DWORD valu
     HeapFree(GetProcessHeap(), 0, wname);
 }
 
+void set_reg_keyW(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *value)
+{
+    set_reg_key_ex(root, path, name, value, REG_SZ);
+}
+
 void set_reg_key_dwordW(HKEY root, const WCHAR *path, const WCHAR *name, DWORD value)
 {
     set_reg_key_ex(root, path, name, &value, REG_DWORD);
@@ -679,6 +684,34 @@ char *keypath(const char *section)
     else
     {
         result = strdupA(section);
+    }
+
+    return result;
+}
+
+WCHAR *keypathW(const WCHAR *section)
+{
+    static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
+    static WCHAR *result = NULL;
+
+    HeapFree(GetProcessHeap(), 0, result);
+
+    if (current_app)
+    {
+        DWORD len = sizeof(appdefaultsW) + (lstrlenW(current_app) + lstrlenW(section) + 1) * sizeof(WCHAR);
+        result = HeapAlloc(GetProcessHeap(), 0, len );
+        lstrcpyW( result, appdefaultsW );
+        lstrcatW( result, current_app );
+        if (section[0])
+        {
+            len = lstrlenW(result);
+            result[len++] = '\\';
+            lstrcpyW( result + len, section );
+        }
+    }
+    else
+    {
+        result = strdupW(section);
     }
 
     return result;

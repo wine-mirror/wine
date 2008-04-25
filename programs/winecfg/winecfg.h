@@ -71,7 +71,8 @@ WCHAR* load_string (UINT id);
  
    no explicit free is needed of the string returned by this function
  */
-char *keypath(const char *section); 
+char *keypath(const char *section);
+WCHAR *keypathW(const WCHAR *section);
 
 int initialize(HINSTANCE hInstance);
 extern HKEY config_key;
