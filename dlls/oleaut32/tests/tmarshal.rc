@@ -29,3 +29,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: tmarshal.tlb */
 1 TYPELIB LOADONCALL DISCARDABLE tmarshal.tlb
+
+/* @makedep: test_tlb.tlb */
+2 TYPELIB LOADONCALL DISCARDABLE test_tlb.tlb

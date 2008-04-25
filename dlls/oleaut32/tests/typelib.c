@@ -1337,13 +1337,41 @@ static void test_dump_typelib(const char *name)
 
 #endif
 
+static const char *create_test_typelib(void)
+{
+    static char filename[MAX_PATH];
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+    DWORD written;
+
+    GetTempFileNameA( ".", "tlb", 0, filename );
+    file = CreateFile( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
+    if (file == INVALID_HANDLE_VALUE) return NULL;
+    res = FindResource( GetModuleHandle(0), MAKEINTRESOURCE(2), "TYPELIB" );
+    ok( res != 0, "couldn't find resource\n" );
+    ptr = LockResource( LoadResource( GetModuleHandle(0), res ));
+    WriteFile( file, ptr, SizeofResource( GetModuleHandle(0), res ), &written, NULL );
+    ok( written == SizeofResource( GetModuleHandle(0), res ), "couldn't write resource\n" );
+    CloseHandle( file );
+    return filename;
+}
+
 START_TEST(typelib)
 {
+    const char *filename;
+
     ref_count_test(wszStdOle2);
     test_TypeComp();
     test_CreateDispTypeInfo();
     test_TypeInfo();
     test_QueryPathOfRegTypeLib();
     test_inheritance();
-    test_dump_typelib("test_tlb.tlb");
+
+    if ((filename = create_test_typelib()))
+    {
+        test_dump_typelib( filename );
+        DeleteFile( filename );
+    }
 }
