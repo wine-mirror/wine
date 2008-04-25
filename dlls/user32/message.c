@@ -36,6 +36,7 @@
 #include "dbt.h"
 #include "dde.h"
 #include "imm.h"
+#include "ddk/imm.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
 #include "user_private.h"
@@ -1747,6 +1748,11 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
         return FALSE;
     }
     accept_hardware_message( hw_id, remove, 0 );
+
+    if ( msg->message == WM_KEYDOWN || msg->message == WM_KEYUP )
+        if ( ImmProcessKey(msg->hwnd, GetKeyboardLayout(0), msg->wParam, msg->lParam, 0) )
+            msg->wParam = VK_PROCESSKEY;
+
     return TRUE;
 }
 
@@ -2995,8 +3001,8 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     TRACE_(key)("Translating key %s (%04lx), scancode %02x\n",
                  SPY_GetVKeyName(msg->wParam), msg->wParam, LOBYTE(HIWORD(msg->lParam)));
 
-    if (ImmProcessKey(msg->hwnd, GetKeyboardLayout(0), msg->wParam, msg->lParam,0))
-        return TRUE;
+    if ( msg->wParam == VK_PROCESSKEY )
+        return ImmTranslateMessage(msg->hwnd, msg->message, msg->wParam, msg->lParam);
 
     GetKeyboardState( state );
     /* FIXME : should handle ToUnicode yielding 2 */
