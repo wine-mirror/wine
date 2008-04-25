@@ -806,8 +806,9 @@ static void test_get_value(void)
     size = 0;
     ret = pRegGetValueA(hkey_main, NULL, "TP2_EXP_SZ", RRF_RT_REG_SZ, NULL, NULL, &size);
     ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
-    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath2 length + 1 here. */
-    ok((size == strlen(expanded2)+1) || (size == strlen(sTestpath2)+1),
+    ok((size == strlen(expanded2)+1) || /* win2k3 SP1 */
+       (size == strlen(expanded2)+2) || /* win2k3 SP2 */
+       (size == strlen(sTestpath2)+1),
         "strlen(expanded2)=%d, strlen(sTestpath2)=%d, size=%d\n", lstrlenA(expanded2), lstrlenA(sTestpath2), size);
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ (ok, expands) */
