@@ -101,13 +101,8 @@ static BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
     if (hwnd == GetActiveWindow()) return TRUE;
     /* windows with caption are managed */
     if ((style & WS_CAPTION) == WS_CAPTION) return TRUE;
-    /* tool windows are not managed  */
-    ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-    if (ex_style & WS_EX_TOOLWINDOW) return FALSE;
     /* windows with thick frame are managed */
     if (style & WS_THICKFRAME) return TRUE;
-    /* application windows are managed */
-    if (ex_style & WS_EX_APPWINDOW) return TRUE;
     if (style & WS_POPUP)
     {
         /* popup with sysmenu == caption are managed */
@@ -117,6 +112,9 @@ static BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
             window_rect->top <= 0 && window_rect->bottom >= screen_height)
             return TRUE;
     }
+    /* application windows are managed */
+    ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
+    if (ex_style & WS_EX_APPWINDOW) return TRUE;
     /* default: not managed */
     return FALSE;
 }
