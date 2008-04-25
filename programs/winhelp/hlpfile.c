@@ -327,7 +327,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
             offset = (ref - 0x0C) & 0x3FFF;
         }
 
-        if (hlpfile->version <= 16 && index != old_index && index != 0)
+        if (hlpfile->version <= 16 && index != old_index && old_index != -1)
         {
             /* we jumped to the next block, adjust pointers */
             ref -= 12;
@@ -1770,7 +1770,7 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
             offset = (ref - 0x0C) & 0x3FFF;
         }
 
-        if (hlpfile->version <= 16 && index != old_index && index != 0)
+        if (hlpfile->version <= 16 && index != old_index && old_index != -1)
         {
             /* we jumped to the next block, adjust pointers */
             ref -= 12;
