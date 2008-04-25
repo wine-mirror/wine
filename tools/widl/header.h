@@ -49,6 +49,7 @@ extern int need_proxy_file(const statement_list_t *stmts);
 extern const var_t *is_callas(const attr_list_t *list);
 extern void write_args(FILE *h, const var_list_t *arg, const char *name, int obj, int do_indent);
 extern void write_array(FILE *h, array_dims_t *v, int field);
+extern void write_import(const char *fname);
 extern void write_forward(type_t *iface);
 extern void write_interface(type_t *iface);
 extern void write_dispinterface(type_t *iface);

@@ -78,6 +78,12 @@ struct typenode {
   struct list entry;
 };
 
+struct _import_t
+{
+  char *name;
+  int import_performed;
+};
+
 typelist_t incomplete_types = LIST_INIT(incomplete_types);
 
 static void add_incomplete(type_t *t);
@@ -150,6 +156,7 @@ static statement_t *make_statement_library(typelib_t *typelib);
 static statement_t *make_statement_cppquote(const char *str);
 static statement_t *make_statement_importlib(const char *str);
 static statement_t *make_statement_module(type_t *type);
+static statement_t *make_statement_import(const char *str);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
 
 #define tsENUM   1
@@ -180,7 +187,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 	unsigned int num;
 	double dbl;
 	interface_info_t ifinfo;
-        typelib_t *typelib;
+	typelib_t *typelib;
+	struct _import_t *import;
 }
 
 %token <str> aIDENTIFIER
@@ -298,9 +306,9 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
-%type <str> libraryhdr callconv cppquote importlib
+%type <str> libraryhdr callconv cppquote importlib import
 %type <uuid> uuid_string
-%type <num> import_start
+%type <import> import_start
 %type <typelib> library_start librarydef
 %type <statement> statement typedef
 %type <stmt_list> gbl_statements imp_statements
@@ -387,7 +395,7 @@ statement: constdef ';'				{ $$ = make_statement_init_decl($1);
 	| externdef ';'				{ $$ = make_statement_extern($1);
 						  if (!parse_only && do_header) write_externdef($1);
 						}
-	| import				{ $$ = NULL; }
+	| import				{ $$ = make_statement_import($1); }
 	| structdef ';'				{ $$ = make_statement_type_decl($1);
 						  if (!parse_only && do_header) {
 						    write_type_def_or_decl(header, $1, FALSE, NULL);
@@ -406,13 +414,18 @@ statement: constdef ';'				{ $$ = make_statement_init_decl($1);
 cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; if (!parse_only && do_header) fprintf(header, "%s\n", $3); }
 	;
 import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
-						  $$ = do_import($2);
-						  if (!$$) yychar = aEOF;
+						  $$ = xmalloc(sizeof(struct _import_t));
+						  $$->name = $2;
+						  $$->import_performed = do_import($2);
+						  if (!$$->import_performed) yychar = aEOF;
 						}
 	;
 
-import: import_start imp_statements aEOF
-						{ if ($1) pop_import(); }
+import: import_start imp_statements aEOF	{ $$ = $1->name;
+						  if ($1->import_performed) pop_import();
+						  free($1);
+						  if (!parse_only && do_header) write_import($$);
+						}
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'
@@ -2603,6 +2616,13 @@ static statement_t *make_statement_cppquote(const char *str)
 static statement_t *make_statement_importlib(const char *str)
 {
     statement_t *stmt = make_statement(STMT_IMPORTLIB);
+    stmt->u.str = str;
+    return stmt;
+}
+
+static statement_t *make_statement_import(const char *str)
+{
+    statement_t *stmt = make_statement(STMT_IMPORT);
     stmt->u.str = str;
     return stmt;
 }

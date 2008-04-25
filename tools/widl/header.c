@@ -1039,3 +1039,15 @@ void write_coclass_forward(type_t *cocl)
   fprintf(header, "typedef struct %s %s;\n", cocl->name, cocl->name);
   fprintf(header, "#endif /* defined __%s_FWD_DEFINED__ */\n\n", cocl->name );
 }
+
+void write_import(const char *fname)
+{
+  char *hname, *p;
+
+  hname = dup_basename(fname, ".idl");
+  p = hname + strlen(hname) - 2;
+  if (p <= hname || strcmp( p, ".h" )) strcat(hname, ".h");
+
+  fprintf(header, "#include <%s>\n", hname);
+  free(hname);
+}

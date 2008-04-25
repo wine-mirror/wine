@@ -411,19 +411,10 @@ struct imports {
 int do_import(char *fname)
 {
 	FILE *f;
-	char *hname, *path, *p;
+	char *path;
 	struct imports *import;
 	int ptr = import_stack_ptr;
 	int ret;
-
-	if (!parse_only && do_header) {
-		hname = dup_basename(fname, ".idl");
-                p = hname + strlen(hname) - 2;
-                if (p <= hname || strcmp( p, ".h" )) strcat(hname, ".h");
-
-		fprintf(header, "#include <%s>\n", hname);
-		free(hname);
-	}
 
 	import = first_import;
 	while (import && strcmp(import->name, fname))
