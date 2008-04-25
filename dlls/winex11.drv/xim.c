@@ -30,7 +30,6 @@
 #include "winnls.h"
 #include "x11drv.h"
 #include "imm.h"
-#include "ddk/imm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
