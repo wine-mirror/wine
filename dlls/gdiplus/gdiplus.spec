@@ -99,7 +99,7 @@
 @ stub GdipCreateHatchBrush
 @ stdcall GdipCreateImageAttributes(ptr)
 @ stdcall GdipCreateLineBrush(ptr ptr long long long ptr)
-@ stub GdipCreateLineBrushFromRect
+@ stdcall GdipCreateLineBrushFromRect(ptr long long long long ptr)
 @ stdcall GdipCreateLineBrushFromRectI(ptr long long long long ptr)
 @ stub GdipCreateLineBrushFromRectWithAngle
 @ stub GdipCreateLineBrushFromRectWithAngleI
