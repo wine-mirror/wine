@@ -1385,7 +1385,12 @@ BOOL WINAPI ImmGetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
 UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 {
   OSVERSIONINFOA version;
-  FIXME("(%p): stub\n", hWnd);
+  InputContextData *data = (InputContextData *)ImmGetContext( hWnd );
+  TRACE("%p\n", hWnd);
+
+  if ( data )
+      return data->lastVK;
+
   GetVersionExA( &version );
   switch(version.dwPlatformId)
   {
