@@ -106,7 +106,7 @@ void     hash_table_iter_init(const struct hash_table* ht,
 void*    hash_table_iter_up(struct hash_table_iter* hti);
 
 #define GET_ENTRY(__i, __t, __f) \
-    ((__t*)((char*)(__i) - (unsigned int)(&((__t*)0)->__f)))
+    ((__t*)((char*)(__i) - FIELD_OFFSET(__t,__f)))
 
 
 extern unsigned dbghelp_options;
