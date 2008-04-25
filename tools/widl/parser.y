@@ -300,7 +300,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <var> arg ne_union_field union_field s_field case enum constdef externdef
 %type <var_list> m_args no_args args fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident t_ident ident
-%type <declarator> declarator func_declarator direct_declarator
+%type <declarator> declarator direct_declarator
 %type <declarator_list> declarator_list
 %type <func> funcdef
 %type <func_list> int_statements dispint_meths
@@ -970,18 +970,12 @@ declarator:
 	| direct_declarator
 	;
 
-func_declarator: direct_declarator '(' m_args ')'
-						{ $$ = $1;
-                                                  $$->type = append_ptrchain_type($$->type, make_func_type($3));
-						}
-	;
-
 direct_declarator:
 	  ident					{ $$ = make_declarator($1); }
 	| '(' declarator ')'			{ $$ = $2; }
 	| direct_declarator array		{ $$ = $1; $$->array = append_array($$->array, $2); }
-	| func_declarator			{ $$ = $1;
-						  $$->func_type = $$->type;
+	| direct_declarator '(' m_args ')'	{ $$ = $1;
+						  $$->func_type = append_ptrchain_type($$->type, make_func_type($3));
 						  $$->type = NULL;
 						}
 	;
