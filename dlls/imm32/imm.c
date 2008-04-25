@@ -2233,7 +2233,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
 *       ImmTranslateMessage(IMM32.@)
 *       ( Undocumented, call internally and from user32.dll )
 */
-BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WCHAR chr, LPARAM lKeyData)
+BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyData)
 {
     InputContextData *data;
     HIMC imc = ImmGetContext(hwnd);
@@ -2244,7 +2244,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WCHAR chr, LPARAM lKeyData)
     UINT uVirtKey;
     static const int list_count = 10;
 
-    TRACE("%p %x %x %x\n",hwnd, msg, chr, (UINT)lKeyData);
+    TRACE("%p %x %x %x\n",hwnd, msg, (UINT)wParam, (UINT)lKeyData);
 
     if (imc)
         data = (InputContextData*)imc;
@@ -2262,6 +2262,8 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WCHAR chr, LPARAM lKeyData)
 
     if (data->immKbd->imeInfo.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
     {
+        WCHAR chr;
+
         if (!is_himc_ime_unicode(data))
             ToAscii(data->lastVK, scancode, state, &chr, 0);
         else
