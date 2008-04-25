@@ -818,7 +818,7 @@ LONG WINAPI ImmGetCompositionStringA(
     {
         LPWSTR ResultStr = (LPWSTR)(compdata + compstr->dwResultStrOffset);
 
-        TRACE("GSC_RESULTSTR %p %i\n",ResultStr,
+        TRACE("GCS_RESULTSTR %p %i\n",ResultStr,
                                     compstr->dwResultStrLen);
 
         buf = HeapAlloc( GetProcessHeap(), 0, compstr->dwResultStrLen * 3 );
@@ -835,7 +835,7 @@ LONG WINAPI ImmGetCompositionStringA(
     {
         LPWSTR CompString = (LPWSTR)(compdata + compstr->dwCompStrOffset);
 
-        TRACE("GSC_COMPSTR %p %i\n", CompString, compstr->dwCompStrLen);
+        TRACE("GCS_COMPSTR %p %i\n", CompString, compstr->dwCompStrLen);
 
         buf = HeapAlloc( GetProcessHeap(), 0, compstr->dwCompStrLen * 3 );
         rc = WideCharToMultiByte(CP_ACP, 0, CompString,
@@ -849,7 +849,7 @@ LONG WINAPI ImmGetCompositionStringA(
              compstr->dwCompAttrOffset > 0)
     {
         LPWSTR Compattr = (LPWSTR)(compdata + compstr->dwCompAttrOffset);
-        TRACE("GSC_COMPATTR %p %i\n", Compattr , compstr->dwCompAttrLen);
+        TRACE("GCS_COMPATTR %p %i\n", Compattr , compstr->dwCompAttrLen);
 
         rc = compstr->dwCompAttrLen;
         if (dwBufLen >= rc)
@@ -859,7 +859,7 @@ LONG WINAPI ImmGetCompositionStringA(
              compstr->dwCompClauseOffset > 0)
     {
         LPWSTR Compclause = (LPWSTR)(compdata + compstr->dwCompClauseOffset);
-        TRACE("GSC_COMPCLAUSE %p %i\n", Compclause, compstr->dwCompClauseLen);
+        TRACE("GCS_COMPCLAUSE %p %i\n", Compclause, compstr->dwCompClauseLen);
 
         rc = compstr->dwCompClauseLen;
         if (dwBufLen >= compstr->dwCompClauseLen)
@@ -869,7 +869,7 @@ LONG WINAPI ImmGetCompositionStringA(
              compstr->dwResultClauseOffset > 0)
     {
         LPWSTR Resultclause = (LPWSTR)(compdata + compstr->dwResultClauseOffset);
-        TRACE("GSC_RESULTCLAUSE %p %i\n", Resultclause, compstr->dwResultClauseLen);
+        TRACE("GCS_RESULTCLAUSE %p %i\n", Resultclause, compstr->dwResultClauseLen);
 
         rc = compstr->dwResultClauseLen;
         if (dwBufLen >= compstr->dwResultClauseLen)
@@ -877,7 +877,7 @@ LONG WINAPI ImmGetCompositionStringA(
     }
     else if (dwIndex == GCS_CURSORPOS)
     {
-        TRACE("GSC_CURSORPOS\n");
+        TRACE("GCS_CURSORPOS\n");
         rc = compstr->dwCursorPos;
     }
     else if (dwIndex == GCS_DELTASTART)
@@ -975,7 +975,7 @@ LONG WINAPI ImmGetCompositionStringW(
     }
     else if (dwIndex == GCS_CURSORPOS)
     {
-        TRACE("GSC_CURSORPOS\n");
+        TRACE("GCS_CURSORPOS\n");
         rc = compstr->dwCursorPos;
     }
     else if (dwIndex == GCS_DELTASTART)
