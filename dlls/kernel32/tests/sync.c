@@ -370,11 +370,17 @@ static void test_iocp_callback(void)
     ret = DeleteFileA(filename);
     ok( ret, "DeleteFileA: error %d\n", GetLastError());
 
+    /* win2k3 requires the Flags parameter to be zero */
+    SetLastError(0xdeadbeef);
     hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                         CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED, 0);
     ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
     retb = p_BindIoCompletionCallback(hFile, iocp_callback, 12345);
-    ok(retb == TRUE, "BindIoCompletionCallback failed with Flags != 0\n");
+    if (!retb)
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    else
+        ok(retb == TRUE, "BindIoCompletionCallback failed with Flags != 0\n");
     ret = CloseHandle(hFile);
     ok( ret, "CloseHandle: error %d\n", GetLastError());
     ret = DeleteFileA(filename);
