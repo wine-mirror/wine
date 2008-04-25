@@ -1699,7 +1699,6 @@ HRESULT WINAPI SHGetFolderPathAndSubDirA(
         pszPathW = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
         if(!pszPathW) {
             hr = HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY);
-            WARN("Failed to allocate %u bytes of memory\n", MAX_PATH * sizeof(WCHAR));
             goto cleanup;
         }
     }
@@ -1714,7 +1713,6 @@ HRESULT WINAPI SHGetFolderPathAndSubDirA(
         pszSubPathW = HeapAlloc(GetProcessHeap(), 0, length * sizeof(WCHAR));
         if(!pszSubPathW) {
             hr = HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY);
-            WARN("Failed to allocate %u bytes of memory\n", length * sizeof(WCHAR));
             goto cleanup;
         }
         MultiByteToWideChar(CP_ACP, 0, pszSubPath, -1, pszSubPathW, length);
