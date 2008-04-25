@@ -382,12 +382,6 @@ static void mixer_test_deviceA(int device)
         ok(rc==MMSYSERR_INVALFLAG,
            "mixerOpen: MMSYSERR_INVALFLAG expected, got %s\n", mmsys_error(rc));
 
-        /* Shouldn't open without a valid HWND */
-        rc=mixerOpen(&mix, device, 0, 0, CALLBACK_WINDOW);
-        ok(rc==MMSYSERR_INVALPARAM,
-           "mixerOpen: MMSYSERR_INVALPARAM expected, got %s\n", mmsys_error(rc));
-
-
         for (d=0;d<capsA.cDestinations;d++) {
             MIXERLINEA mixerlineA;
             mixerlineA.cbStruct = 0;
@@ -774,11 +768,6 @@ static void mixer_test_deviceW(int device)
         rc=mixerOpen(&mix, device, 0, 0, CALLBACK_FUNCTION);
         ok(rc==MMSYSERR_INVALFLAG,
            "mixerOpen: MMSYSERR_INVALFLAG expected, got %s\n", mmsys_error(rc));
-
-        /* Shouldn't open without a valid HWND */
-        rc=mixerOpen(&mix, device, 0, 0, CALLBACK_WINDOW);
-        ok(rc==MMSYSERR_INVALPARAM,
-           "mixerOpen: MMSYSERR_INVALPARAM expected, got %s\n", mmsys_error(rc));
 
         for (d=0;d<capsW.cDestinations;d++) {
             MIXERLINEW mixerlineW;
