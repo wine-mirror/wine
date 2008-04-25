@@ -43,7 +43,7 @@ typedef struct _expr_t expr_t;
 typedef struct _type_t type_t;
 typedef struct _typeref_t typeref_t;
 typedef struct _var_t var_t;
-typedef struct _pident_t pident_t;
+typedef struct _declarator_t declarator_t;
 typedef struct _func_t func_t;
 typedef struct _ifref_t ifref_t;
 typedef struct _typelib_entry_t typelib_entry_t;
@@ -60,7 +60,7 @@ typedef struct list str_list_t;
 typedef struct list func_list_t;
 typedef struct list expr_list_t;
 typedef struct list var_list_t;
-typedef struct list pident_list_t;
+typedef struct list declarator_list_t;
 typedef struct list ifref_list_t;
 typedef struct list array_dims_t;
 typedef struct list user_type_list_t;
@@ -288,10 +288,11 @@ struct _var_t {
   struct list entry;
 };
 
-struct _pident_t {
+struct _declarator_t {
   var_t *var;
   type_t *type;
   type_t *func_type;
+  array_dims_t *array;
 
   /* parser-internal */
   struct list entry;

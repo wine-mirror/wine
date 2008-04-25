@@ -90,13 +90,13 @@ static attr_t *make_attrv(enum attr_type type, unsigned long val);
 static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
-static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_t *arr, int top);
+static void set_type(var_t *v, type_t *type, const declarator_t *decl, int top);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_list_t *append_var(var_list_t *list, var_t *var);
 static var_t *make_var(char *name);
-static pident_list_t *append_pident(pident_list_t *list, pident_t *p);
-static pident_t *make_pident(var_t *var);
+static declarator_list_t *append_declarator(declarator_list_t *list, declarator_t *p);
+static declarator_t *make_declarator(var_t *var);
 static func_list_t *append_func(func_list_t *list, func_t *func);
 static func_t *make_func(var_t *def);
 static type_t *make_class(char *name);
@@ -165,8 +165,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 	type_t *type;
 	var_t *var;
 	var_list_t *var_list;
-	pident_t *pident;
-	pident_list_t *pident_list;
+	declarator_t *declarator;
+	declarator_list_t *declarator_list;
 	func_t *func;
 	func_list_t *func_list;
 	statement_t *statement;
@@ -276,9 +276,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <attr> attribute
 %type <attr_list> m_attributes attributes attrib_list
 %type <str_list> str_list
-%type <expr> m_expr expr expr_const
+%type <expr> m_expr expr expr_const array
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_const
-%type <array_dims> array array_list
 %type <ifinfo> interfacehdr
 %type <type> inherit interface interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
@@ -291,8 +290,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <var> arg field s_field case enum constdef externdef
 %type <var_list> m_args no_args args fields cases enums enum_list dispint_props
 %type <var> m_ident t_ident ident
-%type <pident> pident func_ident direct_ident
-%type <pident_list> pident_list
+%type <declarator> declarator func_declarator direct_declarator
+%type <declarator_list> declarator_list
 %type <func> funcdef
 %type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
@@ -448,25 +447,19 @@ args:	  arg					{ check_arg($1); $$ = append_var( NULL, $1 ); }
 	;
 
 /* split into two rules to get bison to resolve a tVOID conflict */
-arg:	  attributes type pident array		{ $$ = $3->var;
+arg:	  attributes type declarator		{ $$ = $3->var;
 						  $$->attrs = $1;
-						  set_type($$, $2, $3, $4, TRUE);
+						  set_type($$, $2, $3, TRUE);
 						  free($3);
 						}
-	| type pident array			{ $$ = $2->var;
-						  set_type($$, $1, $2, $3, TRUE);
+	| type declarator			{ $$ = $2->var;
+						  set_type($$, $1, $2, TRUE);
 						  free($2);
 						}
 	;
 
-array:						{ $$ = NULL; }
-	| '[' array_list ']'			{ $$ = $2; }
-	| '[' '*' ']'				{ $$ = append_array( NULL, make_expr(EXPR_VOID) ); }
-	;
-
-array_list: m_expr /* size of first dimension is optional */ { $$ = append_array( NULL, $1 ); }
-	| array_list ',' expr                   { $$ = append_array( $1, $3 ); }
-	| array_list ']' '[' expr               { $$ = append_array( $1, $4 ); }
+array:	  '[' m_expr ']'			{ $$ = $2; }
+	| '[' '*' ']'				{ $$ = make_expr(EXPR_VOID); }
 	;
 
 m_attributes:					{ $$ = NULL; }
@@ -594,7 +587,7 @@ case:	  tCASE expr_const ':' field		{ attr_t *a = make_attrp(ATTR_CASE, append_e
 	;
 
 constdef: tCONST type ident '=' expr_const	{ $$ = reg_const($3);
-						  set_type($$, $2, NULL, NULL, FALSE);
+						  set_type($$, $2, NULL, FALSE);
 						  $$->eval = $5;
 						}
 	;
@@ -704,7 +697,7 @@ expr_const: expr				{ $$ = $1;
 	;
 
 externdef: tEXTERN tCONST type ident		{ $$ = $4;
-						  set_type($$, $3, NULL, NULL, FALSE);
+						  set_type($$, $3, NULL, FALSE);
 						}
 	;
 
@@ -718,17 +711,17 @@ field:	  s_field ';'				{ $$ = $1; }
 	| ';'					{ $$ = NULL; }
 	;
 
-s_field:  m_attributes type pident array	{ $$ = $3->var;
+s_field:  m_attributes type declarator		{ $$ = $3->var;
 						  $$->attrs = check_field_attrs($$->name, $1);
-						  set_type($$, $2, $3, $4, FALSE);
+						  set_type($$, $2, $3, FALSE);
 						  free($3);
 						}
 	;
 
 funcdef:
-	  m_attributes type pident		{ var_t *v = $3->var;
+	  m_attributes type declarator		{ var_t *v = $3->var;
 						  v->attrs = check_function_attrs(v->name, $1);
-						  set_type(v, $2, $3, NULL, FALSE);
+						  set_type(v, $2, $3, FALSE);
 						  free($3);
 						  $$ = make_func(v);
 						}
@@ -933,29 +926,32 @@ moduledef: modulehdr '{' int_statements '}'
 						}
 	;
 
-pident:   '*' pident %prec PPTR			{ $$ = $2; $$->type = make_type(pointer_default, $$->type); }
-	| tCONST pident				{ $$ = $2; /* FIXME */ }
-	| callconv pident                       { $$ = $2; type_set_function_callconv($$->func_type, $1); }
-	| direct_ident
+declarator:
+	  '*' declarator %prec PPTR		{ $$ = $2; $$->type = make_type(pointer_default, $$->type); }
+	| tCONST declarator			{ $$ = $2; /* FIXME */ }
+	| callconv declarator			{ $$ = $2; type_set_function_callconv($$->func_type, $1); }
+	| direct_declarator
 	;
 
-func_ident: direct_ident '(' m_args ')'
+func_declarator: direct_declarator '(' m_args ')'
 						{ $$ = $1;
                                                   $$->type = append_ptrchain_type($$->type, make_func_type($3));
 						}
 	;
 
-direct_ident: ident				{ $$ = make_pident($1); }
-	| '(' pident ')'			{ $$ = $2; }
-	| func_ident				{ $$ = $1;
+direct_declarator:
+	  ident					{ $$ = make_declarator($1); }
+	| '(' declarator ')'			{ $$ = $2; }
+	| direct_declarator array		{ $$ = $1; $$->array = append_array($$->array, $2); }
+	| func_declarator			{ $$ = $1;
 						  $$->func_type = $$->type;
 						  $$->type = NULL;
 						}
 	;
 
-pident_list:
-	pident                                  { $$ = append_pident( NULL, $1 ); }
-	| pident_list ',' pident                { $$ = append_pident( $1, $3 ); }
+declarator_list:
+	  declarator				{ $$ = append_declarator( NULL, $1 ); }
+	| declarator_list ',' declarator	{ $$ = append_declarator( $1, $3 ); }
 	;
 
 pointer_type:
@@ -988,7 +984,8 @@ type:	  tVOID					{ $$ = duptype(find_type("void", 0), 1); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
 	;
 
-typedef: tTYPEDEF m_attributes type pident_list	{ reg_typedefs($3, $4, check_typedef_attrs($2));
+typedef: tTYPEDEF m_attributes type declarator_list
+						{ reg_typedefs($3, $4, check_typedef_attrs($2));
 						  $$ = process_typedefs($4);
 						}
 	;
@@ -1230,7 +1227,7 @@ static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
   return ptrchain;
 }
 
-static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_t *arr,
+static void set_type(var_t *v, type_t *type, const declarator_t *decl,
                      int top)
 {
   expr_list_t *sizes = get_attrp(v->attrs, ATTR_SIZEIS);
@@ -1239,9 +1236,10 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
   int sizeless, has_varconf;
   expr_t *dim;
   type_t *atype, **ptype;
+  array_dims_t *arr = decl ? decl->array : NULL;
 
   /* add type onto the end of the pointers in pident->type */
-  v->type = append_ptrchain_type(pident ? pident->type : NULL, type);
+  v->type = append_ptrchain_type(decl ? decl->type : NULL, type);
 
   /* the highest level of pointer specified should default to the var's ptr attr
    * or (RPC_FC_RP if not specified and it's a top level ptr), not
@@ -1386,11 +1384,11 @@ static void set_type(var_t *v, type_t *type, const pident_t *pident, array_dims_
   /* v->type is currently pointing the the type on the left-side of the
    * declaration, so we need to fix this up so that it is the return type of the
    * function and make v->type point to the function side of the declaration */
-  if (pident && pident->func_type)
+  if (decl && decl->func_type)
   {
     type_t *t;
     type_t *return_type = v->type;
-    v->type = pident->func_type;
+    v->type = decl->func_type;
     for (t = v->type; is_ptr(t); t = t->ref)
       ;
     assert(t->type == RPC_FC_FUNCTION);
@@ -1449,24 +1447,25 @@ static var_t *make_var(char *name)
   return v;
 }
 
-static pident_list_t *append_pident(pident_list_t *list, pident_t *p)
+static declarator_list_t *append_declarator(declarator_list_t *list, declarator_t *d)
 {
-  if (!p) return list;
+  if (!d) return list;
   if (!list) {
     list = xmalloc(sizeof(*list));
     list_init(list);
   }
-  list_add_tail(list, &p->entry);
+  list_add_tail(list, &d->entry);
   return list;
 }
 
-static pident_t *make_pident(var_t *var)
+static declarator_t *make_declarator(var_t *var)
 {
-  pident_t *p = xmalloc(sizeof(*p));
-  p->var = var;
-  p->type = NULL;
-  p->func_type = NULL;
-  return p;
+  declarator_t *d = xmalloc(sizeof(*d));
+  d->var = var;
+  d->type = NULL;
+  d->func_type = NULL;
+  d->array = NULL;
+  return d;
 }
 
 static func_list_t *append_func(func_list_t *list, func_t *func)
@@ -1592,9 +1591,9 @@ static void fix_incomplete(void)
   }
 }
 
-static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *attrs)
+static type_t *reg_typedefs(type_t *type, declarator_list_t *decls, attr_list_t *attrs)
 {
-  const pident_t *pident;
+  const declarator_t *decl;
   int is_str = is_attr(attrs, ATTR_STRING);
 
   if (is_str)
@@ -1608,9 +1607,9 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
     c = t->type;
     if (c != RPC_FC_CHAR && c != RPC_FC_BYTE && c != RPC_FC_WCHAR)
     {
-      pident = LIST_ENTRY( list_head( pidents ), const pident_t, entry );
+      decl = LIST_ENTRY( list_head( decls ), const declarator_t, entry );
       error_loc("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays\n",
-              pident->var->name);
+              decl->var->name);
     }
   }
 
@@ -1626,16 +1625,16 @@ static type_t *reg_typedefs(type_t *type, pident_list_t *pidents, attr_list_t *a
     type->name = gen_name();
   }
 
-  LIST_FOR_EACH_ENTRY( pident, pidents, const pident_t, entry )
+  LIST_FOR_EACH_ENTRY( decl, decls, const declarator_t, entry )
   {
-    var_t *name = pident->var;
+    var_t *name = decl->var;
 
     if (name->name) {
       type_t *cur;
 
       /* set the attributes to allow set_type to do some checks on them */
       name->attrs = attrs;
-      set_type(name, type, pident, NULL, 0);
+      set_type(name, type, decl, 0);
       cur = alias(name->type, name->name);
       cur->attrs = attrs;
 
@@ -2563,21 +2562,21 @@ static statement_t *make_statement_module(type_t *type)
     return stmt;
 }
 
-static statement_t *process_typedefs(pident_list_t *pidents)
+static statement_t *process_typedefs(declarator_list_t *decls)
 {
-    pident_t *pident, *next;
+    declarator_t *decl, *next;
     statement_t *stmt;
     type_list_t **type_list;
 
-    if (!pidents) return NULL;
+    if (!decls) return NULL;
 
     stmt = make_statement(STMT_TYPEDEF);
     stmt->u.type_list = NULL;
     type_list = &stmt->u.type_list;
 
-    LIST_FOR_EACH_ENTRY_SAFE( pident, next, pidents, pident_t, entry )
+    LIST_FOR_EACH_ENTRY_SAFE( decl, next, decls, declarator_t, entry )
     {
-        var_t *var = pident->var;
+        var_t *var = decl->var;
         type_t *type = find_type(var->name, 0);
         *type_list = xmalloc(sizeof(type_list_t));
         (*type_list)->type = type;
@@ -2589,7 +2588,7 @@ static statement_t *process_typedefs(pident_list_t *pidents)
             add_typelib_entry(type);
 
         type_list = &(*type_list)->next;
-        free(pident);
+        free(decl);
         free(var);
     }
 
