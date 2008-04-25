@@ -674,43 +674,43 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
     {
         switch (LOWORD(lpszStoreProvider))
         {
-        case (int)CERT_STORE_PROV_MSG:
+        case LOWORD(CERT_STORE_PROV_MSG):
             openFunc = CRYPT_MsgOpenStore;
             break;
-        case (int)CERT_STORE_PROV_MEMORY:
+        case LOWORD(CERT_STORE_PROV_MEMORY):
             openFunc = CRYPT_MemOpenStore;
             break;
-        case (int)CERT_STORE_PROV_FILE:
+        case LOWORD(CERT_STORE_PROV_FILE):
             openFunc = CRYPT_FileOpenStore;
             break;
-        case (int)CERT_STORE_PROV_PKCS7:
+        case LOWORD(CERT_STORE_PROV_PKCS7):
             openFunc = CRYPT_PKCSOpenStore;
             break;
-        case (int)CERT_STORE_PROV_REG:
+        case LOWORD(CERT_STORE_PROV_REG):
             openFunc = CRYPT_RegOpenStore;
             break;
-        case (int)CERT_STORE_PROV_FILENAME_A:
+        case LOWORD(CERT_STORE_PROV_FILENAME_A):
             openFunc = CRYPT_FileNameOpenStoreA;
             break;
-        case (int)CERT_STORE_PROV_FILENAME_W:
+        case LOWORD(CERT_STORE_PROV_FILENAME_W):
             openFunc = CRYPT_FileNameOpenStoreW;
             break;
-        case (int)CERT_STORE_PROV_COLLECTION:
+        case LOWORD(CERT_STORE_PROV_COLLECTION):
             openFunc = CRYPT_CollectionOpenStore;
             break;
-        case (int)CERT_STORE_PROV_SYSTEM_A:
+        case LOWORD(CERT_STORE_PROV_SYSTEM_A):
             openFunc = CRYPT_SysOpenStoreA;
             break;
-        case (int)CERT_STORE_PROV_SYSTEM_W:
+        case LOWORD(CERT_STORE_PROV_SYSTEM_W):
             openFunc = CRYPT_SysOpenStoreW;
             break;
-        case (int)CERT_STORE_PROV_SYSTEM_REGISTRY_A:
+        case LOWORD(CERT_STORE_PROV_SYSTEM_REGISTRY_A):
             openFunc = CRYPT_SysRegOpenStoreA;
             break;
-        case (int)CERT_STORE_PROV_SYSTEM_REGISTRY_W:
+        case LOWORD(CERT_STORE_PROV_SYSTEM_REGISTRY_W):
             openFunc = CRYPT_SysRegOpenStoreW;
             break;
-        case (int)CERT_STORE_PROV_PHYSICAL_W:
+        case LOWORD(CERT_STORE_PROV_PHYSICAL_W):
             openFunc = CRYPT_PhysOpenStoreW;
             break;
         default:

@@ -1780,16 +1780,16 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
     {
         switch (LOWORD(szPolicyOID))
         {
-        case (int)CERT_CHAIN_POLICY_BASE:
+        case LOWORD(CERT_CHAIN_POLICY_BASE):
             verifyPolicy = verify_base_policy;
             break;
-        case (int)CERT_CHAIN_POLICY_AUTHENTICODE:
+        case LOWORD(CERT_CHAIN_POLICY_AUTHENTICODE):
             verifyPolicy = verify_authenticode_policy;
             break;
-        case (int)CERT_CHAIN_POLICY_BASIC_CONSTRAINTS:
+        case LOWORD(CERT_CHAIN_POLICY_BASIC_CONSTRAINTS):
             verifyPolicy = verify_basic_constraints_policy;
             break;
-        case (int)CERT_CHAIN_POLICY_MICROSOFT_ROOT:
+        case LOWORD(CERT_CHAIN_POLICY_MICROSOFT_ROOT):
             verifyPolicy = verify_ms_root_policy;
             break;
         default:
