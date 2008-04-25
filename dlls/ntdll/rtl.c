@@ -904,10 +904,10 @@ static DWORD_PTR get_pointer_obfuscator( void )
         rand = RtlUniform( &seed );
 
         /* handle 64bit pointers */
-        rand ^= RtlUniform( &seed ) << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
+        rand ^= (ULONG_PTR)RtlUniform( &seed ) << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
 
         /* set the high bits so dereferencing obfuscated pointers will (usually) crash */
-        rand |= 0xc0000000 << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
+        rand |= (ULONG_PTR)0xc0000000 << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
 
         interlocked_cmpxchg_ptr( (void**) &pointer_obfuscator, (void*) rand, NULL );
     }
