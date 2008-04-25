@@ -59,6 +59,11 @@ typedef HRESULT (* CLEANUPPROC) (LPVOID userdata);
  */
 typedef HRESULT (* REQUESTPROC) (LPVOID userdata);
 
+/* This function is called after processing is done (for whatever reason that is caused)
+ * This is useful if you create processing threads that need to die
+ */
+typedef HRESULT (* STOPPROCESSPROC) (LPVOID userdata);
+
 #define ALIGNDOWN(value,boundary) ((value)/(boundary)*(boundary))
 #define ALIGNUP(value,boundary) (ALIGNDOWN((value)+(boundary)-1, (boundary)))
 
@@ -115,6 +120,7 @@ typedef struct PullPin
 	PRECONNECTPROC fnPreConnect;
 	REQUESTPROC fnCustomRequest;
 	CLEANUPPROC fnCleanProc;
+	STOPPROCESSPROC fnDone;
 	double dRate;
 	BOOL stop_playback;
 	DWORD cbAlign;
@@ -138,7 +144,7 @@ typedef struct PullPin
 /*** Constructors ***/
 HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 HRESULT OutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, long outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
-HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, STOPPROCESSPROC, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
 /**************************/
 /*** Pin Implementation ***/

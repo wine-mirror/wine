@@ -1205,7 +1205,7 @@ HRESULT OutputPin_DeliverDisconnect(OutputPin * This)
 
 
 static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData,
-                            QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl)
+                            QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone, LPCRITICAL_SECTION pCritSec, PullPin * pPinImpl)
 {
     /* Common attributes */
     pPinImpl->pin.lpVtbl = PullPin_Vtbl;
@@ -1220,6 +1220,7 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
     /* Input pin attributes */
     pPinImpl->fnSampleProc = pSampleProc;
     pPinImpl->fnCleanProc = pCleanUp;
+    pPinImpl->fnDone = pDone;
     pPinImpl->fnPreConnect = NULL;
     pPinImpl->pAlloc = NULL;
     pPinImpl->pReader = NULL;
@@ -1241,7 +1242,7 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
     return S_OK;
 }
 
-HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, REQUESTPROC pCustomRequest, STOPPROCESSPROC pDone, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     PullPin * pPinImpl;
 
@@ -1258,7 +1259,7 @@ HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInf
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(PullPin_Init(PullPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCustomRequest, pCritSec, pPinImpl)))
+    if (SUCCEEDED(PullPin_Init(PullPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCustomRequest, pDone, pCritSec, pPinImpl)))
     {
         *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
         return S_OK;
@@ -1381,6 +1382,9 @@ ULONG WINAPI PullPin_Release(IPin *iface)
 
     if (!refCount)
     {
+        WaitForSingleObject(This->hEventStateChanged, INFINITE);
+        assert(!This->hThread);
+
         if(This->pAlloc)
             IMemAllocator_Release(This->pAlloc);
         if(This->pReader)
@@ -1565,6 +1569,8 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
      * Flush remaining samples
      */
     PullPin_Flush(This);
+    if (This->fnDone)
+        This->fnDone(This->pin.pUserData);
 
     TRACE("End: %08x, %d\n", hr, This->stop_playback);
 }

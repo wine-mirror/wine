@@ -58,7 +58,7 @@ typedef struct Parser_OutputPin
 extern HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt);
 
 extern HRESULT Parser_Create(ParserImpl*, const IBaseFilterVtbl *, const CLSID*, PFN_PROCESS_SAMPLE, PFN_QUERY_ACCEPT, PFN_PRE_CONNECT,
-                             PFN_CLEANUP, PFN_DISCONNECT, REQUESTPROC, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate);
+                             PFN_CLEANUP, PFN_DISCONNECT, REQUESTPROC, STOPPROCESSPROC, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate);
 
 /* Override the _Release function and call this when releasing */
 extern void Parser_Destroy(ParserImpl *This);
