@@ -287,8 +287,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <type> type
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
-%type <var> arg field s_field case enum constdef externdef
-%type <var_list> m_args no_args args fields cases enums enum_list dispint_props
+%type <var> arg field ne_union_field union_field s_field case enum constdef externdef
+%type <var_list> m_args no_args args fields ne_union_fields cases enums enum_list dispint_props
 %type <var> m_ident t_ident ident
 %type <declarator> declarator func_declarator direct_declarator
 %type <declarator_list> declarator_list
@@ -576,11 +576,11 @@ cases:						{ $$ = NULL; }
 	| cases case				{ $$ = append_var( $1, $2 ); }
 	;
 
-case:	  tCASE expr_const ':' field		{ attr_t *a = make_attrp(ATTR_CASE, append_expr( NULL, $2 ));
+case:	  tCASE expr_const ':' union_field	{ attr_t *a = make_attrp(ATTR_CASE, append_expr( NULL, $2 ));
 						  $$ = $4; if (!$$) $$ = make_var(NULL);
 						  $$->attrs = append_attr( $$->attrs, a );
 						}
-	| tDEFAULT ':' field			{ attr_t *a = make_attr(ATTR_DEFAULT);
+	| tDEFAULT ':' union_field		{ attr_t *a = make_attr(ATTR_DEFAULT);
 						  $$ = $3; if (!$$) $$ = make_var(NULL);
 						  $$->attrs = append_attr( $$->attrs, a );
 						}
@@ -707,9 +707,19 @@ fields:						{ $$ = NULL; }
 
 field:	  s_field ';'				{ $$ = $1; }
 	| m_attributes uniondef ';'		{ $$ = make_var(NULL); $$->type = $2; $$->attrs = $1; }
-	| attributes ';'			{ $$ = make_var(NULL); $$->attrs = $1; }
-	| ';'					{ $$ = NULL; }
 	;
+
+ne_union_field:
+	  s_field ';'				{ $$ = $1; }
+	| attributes ';'			{ $$ = make_var(NULL); $$->attrs = $1; }
+
+ne_union_fields:				{ $$ = NULL; }
+	| ne_union_fields ne_union_field	{ $$ = append_var( $1, $2 ); }
+	;
+
+union_field:
+	  s_field ';'				{ $$ = $1; }
+	| ';'					{ $$ = NULL; }
 
 s_field:  m_attributes type declarator		{ $$ = $3->var;
 						  $$->attrs = check_field_attrs($$->name, $1);
@@ -990,7 +1000,8 @@ typedef: tTYPEDEF m_attributes type declarator_list
 						}
 	;
 
-uniondef: tUNION t_ident '{' fields '}'		{ $$ = get_typev(RPC_FC_NON_ENCAPSULATED_UNION, $2, tsUNION);
+uniondef: tUNION t_ident '{' ne_union_fields '}'
+						{ $$ = get_typev(RPC_FC_NON_ENCAPSULATED_UNION, $2, tsUNION);
 						  $$->kind = TKIND_UNION;
 						  $$->fields_or_args = $4;
 						  $$->defined = TRUE;
