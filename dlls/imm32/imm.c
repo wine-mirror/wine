@@ -1843,7 +1843,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
     {
         data->IMC.fOpen = fOpen;
         ImmNotifyIME( hIMC, NI_CONTEXTUPDATED, 0, IMC_SETOPENSTATUS);
-        ImmInternalSendIMENotify(data, IMN_SETSENTENCEMODE, 0);
+        ImmInternalSendIMENotify(data, IMN_SETOPENSTATUS, 0);
     }
 
     return TRUE;
