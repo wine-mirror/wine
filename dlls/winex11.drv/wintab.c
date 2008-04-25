@@ -523,21 +523,18 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     {
         int class_loop;
         char *device_type = devices[loop].type ? XGetAtomName(data->display, devices[loop].type) : NULL;
+        LPWTI_CURSORS_INFO cursor;
 
-        TRACE("Device %i:  [id %d|name %s|type %s|num_classes %d|use %s]\n",
+        TRACE("Device %i:  [id %d|name %s|type %s|num_classes %d|use %d]\n",
                 loop, (int) devices[loop].id, devices[loop].name, device_type ? device_type : "",
-                devices[loop].num_classes,
-                devices[loop].use == IsXKeyboard ? "IsXKeyboard" :
-                    devices[loop].use == IsXPointer ? "IsXPointer" :
-                    devices[loop].use == IsXExtensionDevice ? "IsXExtensionDevice" :
-                    devices[loop].use == IsXExtensionPointer ? "IsXExtensionPointer" :
-                    "Unknown"
-                );
+                devices[loop].num_classes, devices[loop].use );
 
-        if ((devices[loop].use == IsXExtensionDevice) || (devices[loop].use == IsXExtensionPointer))
+        switch (devices[loop].use)
         {
-            LPWTI_CURSORS_INFO cursor;
-
+        case IsXExtensionDevice:
+#ifdef IsXExtensionPointer
+        case IsXExtensionPointer:
+#endif
             TRACE("Is XExtension%s\n", (devices[loop].use == IsXExtensionDevice)? "Device":"Pointer");
             cursor_target++;
             target = &devices[loop];
@@ -547,8 +544,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             {
                 ERR("Input device '%s' name too long - skipping\n", wine_dbgstr_a(target->name));
                 cursor_target--;
-                XFree(device_type);
-                continue;
+                break;
             }
 
             X11DRV_expect_error(data->display, Tablet_ErrorHandler, NULL);
@@ -566,8 +562,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                     TRACE("No buttons, Non Tablet Device\n");
                     pXCloseDevice(data->display, opendevice);
                     cursor_target --;
-                    XFree(device_type);
-                    continue;
+                    break;
                 }
 
                 for (i=0; i< cursor->BUTTONS; i++,shft++)
@@ -581,8 +576,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             {
                 WARN("Unable to open device %s\n",target->name);
                 cursor_target --;
-                XFree(device_type);
-                continue;
+                break;
             }
             MultiByteToWideChar(CP_UNIXCP, 0, target->name, -1, cursor->NAME, WT_MAX_NAME_LEN);
 
@@ -590,9 +584,8 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             {
                 WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device.  If this is wrong, please report it to wine-devel@winehq.org\n",
                      loop, devices[loop].name, device_type ? device_type : "");
-                XFree(device_type);
                 cursor_target --;
-                continue;
+                break;
             }
 
             cursor->ACTIVE = 1;
@@ -727,10 +720,10 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                 }
                 any = (XAnyClassPtr) ((char*) any + any->length);
             }
+            break;
         }
 
         XFree(device_type);
-
     }
     pXFreeDeviceList(devices);
 
