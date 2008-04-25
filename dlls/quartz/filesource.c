@@ -46,6 +46,7 @@ typedef struct AsyncReader
     FILTER_INFO filterInfo;
     FILTER_STATE state;
     CRITICAL_SECTION csFilter;
+    DWORD lastpinchange;
 
     IPin * pOutputPin;
     LPOLESTR pszFileName;
@@ -353,6 +354,7 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pAsyncRead->filterInfo.achName[0] = '\0';
     pAsyncRead->filterInfo.pGraph = NULL;
     pAsyncRead->pOutputPin = NULL;
+    pAsyncRead->lastpinchange = GetTickCount();
 
     InitializeCriticalSection(&pAsyncRead->csFilter);
     pAsyncRead->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter");
@@ -520,16 +522,28 @@ static HRESULT WINAPI AsyncReader_GetSyncSource(IBaseFilter * iface, IReferenceC
 
 /** IBaseFilter methods **/
 
-static HRESULT WINAPI AsyncReader_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
+static HRESULT AsyncReader_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
 {
-    ENUMPINDETAILS epd;
     AsyncReader *This = (AsyncReader *)iface;
 
-    TRACE("(%p)\n", ppEnum);
+    /* Our pins are almost static, not changing so setting static tick count is ok */
+    *lastsynctick = This->lastpinchange;
 
-    epd.cPins = This->pOutputPin ? 1 : 0;
-    epd.ppPins = &This->pOutputPin;
-    return IEnumPinsImpl_Construct(&epd, ppEnum);
+    if (pos >= 1)
+        return S_FALSE;
+
+    *pin = (IPin *)This->pOutputPin;
+    IPin_AddRef(*pin);
+    return S_OK;
+}
+
+static HRESULT WINAPI AsyncReader_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
+{
+    AsyncReader *This = (AsyncReader *)iface;
+
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
+
+    return IEnumPinsImpl_Construct(ppEnum, AsyncReader_GetPin, iface);
 }
 
 static HRESULT WINAPI AsyncReader_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
@@ -636,6 +650,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 
     /* create pin */
     hr = FileAsyncReader_Construct(hFile, (IBaseFilter *)&This->lpVtbl, &This->csFilter, &This->pOutputPin);
+    This->lastpinchange = GetTickCount();
 
     if (SUCCEEDED(hr))
         hr = IPin_QueryInterface(This->pOutputPin, &IID_IAsyncReader, (LPVOID *)&pReader);

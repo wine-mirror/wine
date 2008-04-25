@@ -61,7 +61,6 @@ typedef struct NullRendererImpl
     FILTER_INFO filterInfo;
 
     InputPin *pInputPin;
-    IPin ** ppPins;
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
@@ -194,8 +193,6 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pNullRenderer->pClock = NULL;
     ZeroMemory(&pNullRenderer->filterInfo, sizeof(FILTER_INFO));
 
-    pNullRenderer->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
-
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pNullRenderer;
@@ -205,7 +202,6 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        pNullRenderer->ppPins[0] = (IPin *)pNullRenderer->pInputPin;
         MediaSeekingImpl_Init((IBaseFilter*)pNullRenderer, NullRendererImpl_Change, NullRendererImpl_Change, NullRendererImpl_Change, &pNullRenderer->mediaSeeking, &pNullRenderer->csFilter);
         pNullRenderer->mediaSeeking.lpVtbl = &TransformFilter_Seeking_Vtbl;
 
@@ -213,7 +209,6 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     }
     else
     {
-        CoTaskMemFree(pNullRenderer->ppPins);
         pNullRenderer->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&pNullRenderer->csFilter);
         CoTaskMemFree(pNullRenderer);
@@ -279,15 +274,15 @@ static ULONG WINAPI NullRendererInner_Release(IUnknown * iface)
         if (This->pClock)
             IReferenceClock_Release(This->pClock);
 
-        if (SUCCEEDED(IPin_ConnectedTo(This->ppPins[0], &pConnectedTo)))
+        if (SUCCEEDED(IPin_ConnectedTo((IPin *)This->pInputPin, &pConnectedTo)))
         {
             IPin_Disconnect(pConnectedTo);
             IPin_Release(pConnectedTo);
         }
-        IPin_Disconnect(This->ppPins[0]);
-        IPin_Release(This->ppPins[0]);
+        IPin_Disconnect((IPin *)This->pInputPin);
+        IPin_Release((IPin *)This->pInputPin);
 
-        CoTaskMemFree(This->ppPins);
+        CoTaskMemFree((IPin *)This->pInputPin);
         This->lpVtbl = NULL;
 
         This->csFilter.DebugInfo->Spare[0] = 0;
@@ -473,16 +468,28 @@ static HRESULT WINAPI NullRenderer_GetSyncSource(IBaseFilter * iface, IReference
 
 /** IBaseFilter implementation **/
 
+static HRESULT NullRenderer_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+{
+    NullRendererImpl *This = (NullRendererImpl *)iface;
+
+    /* Our pins are static, not changing so setting static tick count is ok */
+    *lastsynctick = 0;
+
+    if (pos >= 1)
+        return S_FALSE;
+
+    *pin = (IPin *)This->pInputPin;
+    IPin_AddRef(*pin);
+    return S_OK;
+}
+
 static HRESULT WINAPI NullRenderer_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
-    ENUMPINDETAILS epd;
     NullRendererImpl *This = (NullRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    epd.cPins = 1; /* input pin */
-    epd.ppPins = This->ppPins;
-    return IEnumPinsImpl_Construct(&epd, ppEnum);
+    return IEnumPinsImpl_Construct(ppEnum, NullRenderer_GetPin, iface);
 }
 
 static HRESULT WINAPI NullRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

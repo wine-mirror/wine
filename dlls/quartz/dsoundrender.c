@@ -61,7 +61,6 @@ typedef struct DSoundRenderImpl
     FILTER_INFO filterInfo;
 
     InputPin * pInputPin;
-    IPin ** ppPins;
 
     LPDIRECTSOUND dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
@@ -334,15 +333,6 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pDSoundRender->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter");
     pDSoundRender->state = State_Stopped;
 
-    pDSoundRender->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
-    if (!pDSoundRender->ppPins)
-    {
-        pDSoundRender->csFilter.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&pDSoundRender->csFilter);
-        CoTaskMemFree(pDSoundRender);
-        return E_OUTOFMEMORY;
-    }
-
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pDSoundRender;
@@ -361,14 +351,12 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
         MediaSeekingImpl_Init((IBaseFilter*)pDSoundRender, sound_mod_stop, sound_mod_start, sound_mod_rate, &pDSoundRender->mediaSeeking, &pDSoundRender->csFilter);
         pDSoundRender->mediaSeeking.lpVtbl = &IMediaSeeking_Vtbl;
 
-        pDSoundRender->ppPins[0] = (IPin *)pDSoundRender->pInputPin;
         *ppv = (LPVOID)pDSoundRender;
     }
     else
     {
         if (pDSoundRender->pInputPin)
             IPin_Release((IPin*)pDSoundRender->pInputPin);
-        CoTaskMemFree(pDSoundRender->ppPins);
         pDSoundRender->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&pDSoundRender->csFilter);
         CoTaskMemFree(pDSoundRender);
@@ -442,16 +430,15 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
             IDirectSound_Release(This->dsound);
         This->dsound = NULL;
        
-        if (SUCCEEDED(IPin_ConnectedTo(This->ppPins[0], &pConnectedTo)))
+        if (SUCCEEDED(IPin_ConnectedTo((IPin *)This->pInputPin, &pConnectedTo)))
         {
             IPin_Disconnect(pConnectedTo);
             IPin_Release(pConnectedTo);
         }
-        IPin_Disconnect(This->ppPins[0]);
+        IPin_Disconnect((IPin *)This->pInputPin);
 
-        IPin_Release(This->ppPins[0]);
-        
-        CoTaskMemFree(This->ppPins);
+        IPin_Release((IPin *)This->pInputPin);
+
         This->lpVtbl = NULL;
         This->IBasicAudio_vtbl = NULL;
         
@@ -609,16 +596,28 @@ static HRESULT WINAPI DSoundRender_GetSyncSource(IBaseFilter * iface, IReference
 
 /** IBaseFilter implementation **/
 
+static HRESULT DSoundRender_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+{
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
+
+    /* Our pins are static, not changing so setting static tick count is ok */
+    *lastsynctick = 0;
+
+    if (pos >= 1)
+        return S_FALSE;
+
+    *pin = (IPin *)This->pInputPin;
+    IPin_AddRef(*pin);
+    return S_OK;
+}
+
 static HRESULT WINAPI DSoundRender_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
-    ENUMPINDETAILS epd;
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    epd.cPins = 1; /* input pin */
-    epd.ppPins = This->ppPins;
-    return IEnumPinsImpl_Construct(&epd, ppEnum);
+    return IEnumPinsImpl_Construct(ppEnum, DSoundRender_GetPin, iface);
 }
 
 static HRESULT WINAPI DSoundRender_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

@@ -68,6 +68,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     pParser->fnDisconnect = fnDisconnect;
     ZeroMemory(&pParser->filterInfo, sizeof(FILTER_INFO));
 
+    pParser->lastpinchange = GetTickCount();
     pParser->cStreams = 0;
     pParser->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
 
@@ -377,16 +378,30 @@ HRESULT WINAPI Parser_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClo
 
 /** IBaseFilter implementation **/
 
-HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
+static HRESULT Parser_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
 {
-    ENUMPINDETAILS epd;
     ParserImpl *This = (ParserImpl *)iface;
 
-    TRACE("(%p)\n", ppEnum);
+    *lastsynctick = This->lastpinchange;
 
-    epd.cPins = This->cStreams + 1; /* +1 for input pin */
-    epd.ppPins = This->ppPins;
-    return IEnumPinsImpl_Construct(&epd, ppEnum);
+    TRACE("Asking for pos %x\n", pos);
+
+    /* Input pin also has a pin, hence the > and not >= */
+    if (pos > This->cStreams)
+        return S_FALSE;
+
+    *pin = This->ppPins[pos];
+    IPin_AddRef(*pin);
+    return S_OK;
+}
+
+HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
+{
+    ParserImpl *This = (ParserImpl *)iface;
+
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
+
+    return IEnumPinsImpl_Construct(ppEnum, Parser_GetPin, iface);
 }
 
 HRESULT WINAPI Parser_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
@@ -463,6 +478,7 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
         pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
         pin->pin.custom_allocator = 1;
         This->cStreams++;
+        This->lastpinchange = GetTickCount();
         CoTaskMemFree(ppOldPins);
     }
     else
@@ -493,6 +509,7 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
     }
 
     This->cStreams = 0;
+    This->lastpinchange = GetTickCount();
     CoTaskMemFree(ppOldPins);
 
     return S_OK;

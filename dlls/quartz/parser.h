@@ -43,6 +43,7 @@ struct ParserImpl
     PullPin * pInputPin;
     IPin ** ppPins;
     ULONG cStreams;
+    DWORD lastpinchange;
     MediaSeekingImpl mediaSeeking;
 };
 

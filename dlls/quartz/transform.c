@@ -434,16 +434,28 @@ static HRESULT WINAPI TransformFilter_GetSyncSource(IBaseFilter * iface, IRefere
 
 /** IBaseFilter implementation **/
 
+static HRESULT TransformFilter_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+{
+    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+
+    /* Our pins are static, not changing so setting static tick count is ok */
+    *lastsynctick = 0;
+
+    if (pos >= 2)
+        return S_FALSE;
+
+    *pin = This->ppPins[pos];
+    IPin_AddRef(*pin);
+    return S_OK;
+}
+
 static HRESULT WINAPI TransformFilter_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
-    ENUMPINDETAILS epd;
     TransformFilterImpl *This = (TransformFilterImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    epd.cPins = 2; /* input and output pins */
-    epd.ppPins = This->ppPins;
-    return IEnumPinsImpl_Construct(&epd, ppEnum);
+    return IEnumPinsImpl_Construct(ppEnum, TransformFilter_GetPin, iface);
 }
 
 static HRESULT WINAPI TransformFilter_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

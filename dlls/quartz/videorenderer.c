@@ -67,8 +67,7 @@ typedef struct VideoRendererImpl
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
 
-    InputPin * pInputPin;
-    IPin ** ppPins;
+    InputPin *pInputPin;
 
     BOOL init;
     HANDLE hThread;
@@ -267,12 +266,17 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 {
     AM_MEDIA_TYPE amt;
     HRESULT hr = S_OK;
+    DDSURFACEDESC sdesc;
+    int width;
+    int height;
+    LPBYTE palette = NULL;
     HDC hDC;
     BITMAPINFOHEADER *bmiHeader;
 
     TRACE("%p %p %d\n", This, data, size);
 
-    hr = IPin_ConnectionMediaType(This->ppPins[0], &amt);
+    sdesc.dwSize = sizeof(sdesc);
+    hr = IPin_ConnectionMediaType((IPin *)This->pInputPin, &amt);
     if (FAILED(hr)) {
         ERR("Unable to retrieve media type\n");
         return hr;
@@ -300,6 +304,10 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     TRACE("biBitCount = %d\n", bmiHeader->biBitCount);
     TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(bmiHeader->biCompression), 4));
     TRACE("biSizeImage = %d\n", bmiHeader->biSizeImage);
+
+    width = bmiHeader->biWidth;
+    height = bmiHeader->biHeight;
+    palette = ((LPBYTE)bmiHeader) + bmiHeader->biSize;
 
     if (!This->init)
     {
@@ -384,7 +392,7 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
         TRACE("\n");
     }
 #endif
-    
+
     VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
 
     return S_OK;
@@ -458,8 +466,6 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pVideoRenderer->AutoShow = 1;
     ZeroMemory(&pVideoRenderer->filterInfo, sizeof(FILTER_INFO));
 
-    pVideoRenderer->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
-
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pVideoRenderer;
@@ -469,12 +475,10 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        pVideoRenderer->ppPins[0] = (IPin *)pVideoRenderer->pInputPin;
         *ppv = (LPVOID)pVideoRenderer;
     }
     else
     {
-        CoTaskMemFree(pVideoRenderer->ppPins);
         pVideoRenderer->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&pVideoRenderer->csFilter);
         CoTaskMemFree(pVideoRenderer);
@@ -556,16 +560,15 @@ static ULONG WINAPI VideoRendererInner_Release(IUnknown * iface)
         if (This->pClock)
             IReferenceClock_Release(This->pClock);
         
-        if (SUCCEEDED(IPin_ConnectedTo(This->ppPins[0], &pConnectedTo)))
+        if (SUCCEEDED(IPin_ConnectedTo((IPin *)This->pInputPin, &pConnectedTo)))
         {
             IPin_Disconnect(pConnectedTo);
             IPin_Release(pConnectedTo);
         }
-        IPin_Disconnect(This->ppPins[0]);
+        IPin_Disconnect((IPin *)This->pInputPin);
 
-        IPin_Release(This->ppPins[0]);
-        
-        CoTaskMemFree(This->ppPins);
+        IPin_Release((IPin *)This->pInputPin);
+
         This->lpVtbl = NULL;
         
         This->csFilter.DebugInfo->Spare[0] = 0;
@@ -690,6 +693,7 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&This->csFilter);
+    if (This->state != State_Running)
     {
         if (This->state == State_Stopped)
             This->pInputPin->end_of_stream = 0;
@@ -755,16 +759,28 @@ static HRESULT WINAPI VideoRenderer_GetSyncSource(IBaseFilter * iface, IReferenc
 
 /** IBaseFilter implementation **/
 
+static HRESULT VideoRenderer_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+{
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+
+    /* Our pins are static, not changing so setting static tick count is ok */
+    *lastsynctick = 0;
+
+    if (pos >= 1)
+        return S_FALSE;
+
+    *pin = (IPin *)This->pInputPin;
+    IPin_AddRef(*pin);
+    return S_OK;
+}
+
 static HRESULT WINAPI VideoRenderer_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
-    ENUMPINDETAILS epd;
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    epd.cPins = 1; /* input pin */
-    epd.ppPins = This->ppPins;
-    return IEnumPinsImpl_Construct(&epd, ppEnum);
+    return IEnumPinsImpl_Construct(ppEnum, VideoRenderer_GetPin, iface);
 }
 
 static HRESULT WINAPI VideoRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
@@ -1804,7 +1820,7 @@ static HRESULT WINAPI Videowindow_SetWindowForeground(IVideoWindow *iface,
     if ((Focus != FALSE) && (Focus != TRUE))
         return E_INVALIDARG;
 
-    hr = IPin_ConnectedTo(This->ppPins[0], &pPin);
+    hr = IPin_ConnectedTo((IPin *)This->pInputPin, &pPin);
     if ((hr != S_OK) || !pPin)
         return VFW_E_NOT_CONNECTED;
 

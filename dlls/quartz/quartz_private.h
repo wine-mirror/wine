@@ -61,19 +61,15 @@ HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
 HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum);
 
-typedef struct tagENUMPINDETAILS
-{
-	ULONG cPins;
-	IPin ** ppPins;
-} ENUMPINDETAILS;
-
 typedef struct tagENUMEDIADETAILS
 {
 	ULONG cMediaTypes;
 	AM_MEDIA_TYPE * pMediaTypes;
 } ENUMMEDIADETAILS;
 
-HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** ppEnum);
+typedef HRESULT (* FNOBTAINPIN)(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick);
+
+HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, IBaseFilter *base);
 HRESULT IEnumMediaTypesImpl_Construct(const ENUMMEDIADETAILS * pDetails, IEnumMediaTypes ** ppEnum);
 HRESULT IEnumRegFiltersImpl_Construct(REGFILTER * pInRegFilters, const ULONG size, IEnumRegFilters ** ppEnum);
 HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEnumFilters ** ppEnum);
