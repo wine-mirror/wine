@@ -1267,7 +1267,10 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
             format += 5;
         }
         else nc++;
-        format += 4;
+        if (buf[0x14] == 0x01)
+            format += 6;
+        else
+            format += 4;
         bits = GET_USHORT(format, 0); format += 2;
         if (bits & 0x0001) fetch_long(&format);
         if (bits & 0x0002)
