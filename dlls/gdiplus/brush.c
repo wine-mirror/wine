@@ -211,6 +211,34 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreatePathGradientI(GDIPCONST GpPoint* points,
+    INT count, GpWrapMode wrap, GpPathGradient **grad)
+{
+    GpPointF *pointsF;
+    GpStatus ret;
+    INT i;
+
+    if(!points || !grad)
+        return InvalidParameter;
+
+    if(count <= 0)
+        return OutOfMemory;
+
+    pointsF = GdipAlloc(sizeof(GpPointF) * count);
+    if(!pointsF)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        pointsF[i].X = (REAL)points[i].X;
+        pointsF[i].Y = (REAL)points[i].Y;
+    }
+
+    ret = GdipCreatePathGradient(pointsF, count, wrap, grad);
+    GdipFree(pointsF);
+
+    return ret;
+}
+
 /* FIXME: path gradient brushes not truly supported (drawn as solid brushes) */
 GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     GpPathGradient **grad)
