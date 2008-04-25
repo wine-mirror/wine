@@ -2345,15 +2345,19 @@ static void test_DeviceCapabilities(void)
     ok(n_copies > 0, "DeviceCapabilities DC_COPIES failed\n");
     trace("n_copies = %d\n", n_copies);
 
-    ret = DeviceCapabilities(device, port, DC_MAXEXTENT, NULL, NULL);
-    ok(ret != -1, "DeviceCapabilities DC_MAXEXTENT failed\n");
-    ext = MAKEPOINTS(ret);
-    trace("max ext = %d x %d\n", ext.x, ext.y);
+    /* these capabilities not available on all printer drivers */
+    if (0)
+    {
+        ret = DeviceCapabilities(device, port, DC_MAXEXTENT, NULL, NULL);
+        ok(ret != -1, "DeviceCapabilities DC_MAXEXTENT failed\n");
+        ext = MAKEPOINTS(ret);
+        trace("max ext = %d x %d\n", ext.x, ext.y);
 
-    ret = DeviceCapabilities(device, port, DC_MINEXTENT, NULL, NULL);
-    ok(ret != -1, "DeviceCapabilities DC_MINEXTENT failed\n");
-    ext = MAKEPOINTS(ret);
-    trace("min ext = %d x %d\n", ext.x, ext.y);
+        ret = DeviceCapabilities(device, port, DC_MINEXTENT, NULL, NULL);
+        ok(ret != -1, "DeviceCapabilities DC_MINEXTENT failed\n");
+        ext = MAKEPOINTS(ret);
+        trace("min ext = %d x %d\n", ext.x, ext.y);
+    }
 
     fields = DeviceCapabilities(device, port, DC_FIELDS, NULL, NULL);
     ok(fields != (DWORD)-1, "DeviceCapabilities DC_FIELDS failed\n");
