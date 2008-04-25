@@ -170,7 +170,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
         if (ash.cbSrcLengthUsed == cbSrcStream)
         {
             IMediaSample_SetTime(pOutSample, &tStart, &tStop);
-            tStart = tStop;
+            tStart = tMed = tStop;
         }
         else if (tStop != tStart)
         {
