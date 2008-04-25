@@ -2239,7 +2239,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WCHAR chr, LPARAM lKeyData)
     UINT uVirtKey;
     static const int list_count = 10;
 
-    TRACE("%p %x '%c' %x\n",hwnd, msg, chr, (UINT)lKeyData);
+    TRACE("%p %x %x %x\n",hwnd, msg, chr, (UINT)lKeyData);
 
     if (imc)
         data = (InputContextData*)imc;
@@ -2259,6 +2259,8 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WCHAR chr, LPARAM lKeyData)
     {
         if (!is_himc_ime_unicode(data))
             ToAscii(data->lastVK, scancode, state, &chr, 0);
+        else
+            ToUnicodeEx(data->lastVK, scancode, state, &chr, 1, 0, GetKeyboardLayout(0));
         uVirtKey = MAKELONG(data->lastVK,chr);
     }
     else
@@ -2278,6 +2280,8 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WCHAR chr, LPARAM lKeyData)
         ImmGenerateMessage(imc);
 
     HeapFree(GetProcessHeap(),0,list);
+
+    data->lastVK = VK_PROCESSKEY;
 
     return (msg_count > 0);
 }
@@ -2303,17 +2307,12 @@ BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD 
         return FALSE;
 
     GetKeyboardState(state);
-    data->lastVK = vKey;
-
     if (data->immKbd->pImeProcessKey(imc, vKey, lKeyData, state))
     {
-        WCHAR key;
-        UINT scancode;
-
-        scancode = lKeyData >> 0x10 & 0xff;
-        ToUnicodeEx(vKey, scancode, state, &key, 1, 0, hKL);
-        return ImmTranslateMessage(hwnd, WM_KEYDOWN, key, lKeyData );
+        data->lastVK = vKey;
+        return TRUE;
     }
 
+    data->lastVK = VK_PROCESSKEY;
     return FALSE;
 }
