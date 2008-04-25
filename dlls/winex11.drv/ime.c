@@ -775,6 +775,12 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 
                     X11DRV_ForceXIMReset(lpIMC->hWnd);
 
+                    if (lpIMC->hCompStr)
+                    {
+                        ImmDestroyIMCC(lpIMC->hCompStr);
+                        lpIMC->hCompStr = NULL;
+                    }
+
                     myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
                     if (myPrivate->bInComposition)
                     {
