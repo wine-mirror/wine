@@ -130,7 +130,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pSetDeviceGammaRamp */
     EMFDRV_SetMapMode,               /* pSetMapMode */
     EMFDRV_SetMapperFlags,           /* pSetMapperFlags */
-    NULL,                            /* pSetPixel */
+    EMFDRV_SetPixel,                 /* pSetPixel */
     NULL,                            /* pSetPixelFormat */
     EMFDRV_SetPolyFillMode,          /* pSetPolyFillMode */
     EMFDRV_SetROP2,                  /* pSetROP2 */
