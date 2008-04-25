@@ -759,6 +759,13 @@ HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllocator *
     if (bReadOnly)
         FIXME("Read only flag not handled yet!\n");
 
+    /* FIXME: Should we release the allocator on disconnection? */
+    if (!pAllocator)
+    {
+        WARN("Null allocator\n");
+        return E_POINTER;
+    }
+
     if (This->pAllocator)
         IMemAllocator_Release(This->pAllocator);
     This->pAllocator = pAllocator;
@@ -1187,11 +1194,9 @@ HRESULT OutputPin_DeliverDisconnect(OutputPin * This)
         }
         else /* Kill the allocator! */
         {
-            hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, NULL, 0);
-            if (SUCCEEDED(hr))
-                hr = IPin_Disconnect(This->pin.pConnectedTo);
+            hr = IPin_Disconnect(This->pin.pConnectedTo);
         }
-
+        IPin_Disconnect((IPin *)This);
     }
     LeaveCriticalSection(This->pin.pCritSec);
 

@@ -96,6 +96,7 @@ static void test_pin(IPin *pin)
     if (mpin)
     {
         ok(IMemInputPin_ReceiveCanBlock(mpin) == S_OK, "Receive can't block for pin!\n");
+        ok(IMemInputPin_NotifyAllocator(mpin, NULL, 0) == E_POINTER, "NotifyAllocator likes a NULL pointer argument\n");
         IMemInputPin_Release(mpin);
     }
     /* TODO */
