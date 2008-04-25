@@ -774,13 +774,13 @@ BOOL WINAPI ImmGetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
     TRACE("(%p, %p):\n", hIMC, lplf);
 
     rc = ImmGetCompositionFontW(hIMC,&lfW);
-    if (rc)
-    {
-        memcpy(lplf,&lfW,sizeof(LOGFONTA));
-        WideCharToMultiByte(CP_ACP, 0, lfW.lfFaceName, -1, lplf->lfFaceName,
+    if (!rc || !lplf)
+        return FALSE;
+
+    memcpy(lplf,&lfW,sizeof(LOGFONTA));
+    WideCharToMultiByte(CP_ACP, 0, lfW.lfFaceName, -1, lplf->lfFaceName,
                         LF_FACESIZE, NULL, NULL);
-    }
-    return rc;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -792,7 +792,7 @@ BOOL WINAPI ImmGetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
 
     TRACE("(%p, %p):\n", hIMC, lplf);
 
-    if (!data)
+    if (!data || !lplf)
         return FALSE;
 
     *lplf = data->IMC.lfFont.W;
@@ -1658,12 +1658,13 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
     InputContextData *data = (InputContextData*)hIMC;
     TRACE("(%p, %p)\n", hIMC, lplf);
 
-    if (!data)
+    if (!data || !lplf)
         return FALSE;
 
     memcpy(&data->IMC.lfFont.W,lplf,sizeof(LOGFONTA));
     MultiByteToWideChar(CP_ACP, 0, lplf->lfFaceName, -1, data->IMC.lfFont.W.lfFaceName,
                         LF_FACESIZE);
+    ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT);
     ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONFONT, 0);
 
     return TRUE;
@@ -1677,10 +1678,11 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
     InputContextData *data = (InputContextData*)hIMC;
     TRACE("(%p, %p)\n", hIMC, lplf);
 
-    if (!data)
+    if (!data || !lplf)
         return FALSE;
 
     data->IMC.lfFont.W = *lplf;
+    ImmNotifyIME(hIMC, NI_CONTEXTUPDATED, 0, IMC_SETCOMPOSITIONFONT);
     ImmInternalSendIMENotify(data, IMN_SETCOMPOSITIONFONT, 0);
 
     return TRUE;
