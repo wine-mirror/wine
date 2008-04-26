@@ -103,7 +103,6 @@ static BOOL createObjects(void)
             hr = IDirect3D7_CreateDevice(Direct3D, &IID_IDirect3DRefDevice, Surface, &Direct3DDevice);
         }
     }
-    ok(hr == D3D_OK, "IDirect3D7_CreateDevice failed with %08x\n", hr);
     if(!Direct3DDevice) goto err;
     return TRUE;
 
