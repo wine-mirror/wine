@@ -2164,8 +2164,10 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
   /*  handle "don't care" bit (0x02000000) */
   if (!(lParam & 0x02000000)) {
     switch (vkey) {
-         case VK_LSHIFT:
          case VK_RSHIFT:
+                          /* R-Shift is "special" - it is an extended key with separate scan code */
+                          scanCode |= 0x100;
+         case VK_LSHIFT:
                           vkey = VK_SHIFT;
                           break;
        case VK_LCONTROL:
@@ -2175,8 +2177,6 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
           case VK_LMENU:
           case VK_RMENU:
                           vkey = VK_MENU;
-                          break;
-               default:
                           break;
     }
   }
