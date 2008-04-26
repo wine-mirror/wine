@@ -64,7 +64,9 @@ static void KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
     TRACE("(%p) %ld,%ld\n", iface, wparam, lparam);
 
     dik_code = hook->scanCode & 0xff;
-    if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
+    /* R-Shift is special - it is an extended key with separate scan code */
+    if (hook->flags & LLKHF_EXTENDED && dik_code != 0x36)
+        dik_code |= 0x80;
 
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
 
