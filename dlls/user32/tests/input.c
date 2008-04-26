@@ -1111,6 +1111,27 @@ static void test_GetMouseMovePointsEx(void)
 #undef MYERROR
 }
 
+static void test_key_map(void)
+{
+    HKL kl = GetKeyboardLayout(0);
+    UINT kL, kR, s, sL;
+
+    s  = MapVirtualKeyEx(VK_SHIFT,  MAPVK_VK_TO_VSC, kl);
+    ok(s != 0, "MapVirtualKeyEx(VK_SHIFT) should return non-zero\n");
+    sL = MapVirtualKeyEx(VK_LSHIFT, MAPVK_VK_TO_VSC, kl);
+    ok(s == sL, "%x != %x\n", s, sL);
+
+    kL = MapVirtualKeyEx(0x2a, MAPVK_VSC_TO_VK, kl);
+    ok(kL == VK_SHIFT, "Scan code -> vKey = %x (not VK_SHIFT)\n", kL);
+    kR = MapVirtualKeyEx(0x36, MAPVK_VSC_TO_VK, kl);
+    ok(kR == VK_SHIFT, "Scan code -> vKey = %x (not VK_SHIFT)\n", kR);
+
+    kL = MapVirtualKeyEx(0x2a, MAPVK_VSC_TO_VK_EX, kl);
+    ok(kL == VK_LSHIFT, "Scan code -> vKey = %x (not VK_LSHIFT)\n", kL);
+    kR = MapVirtualKeyEx(0x36, MAPVK_VSC_TO_VK_EX, kl);
+    ok(kR == VK_RSHIFT, "Scan code -> vKey = %x (not VK_RSHIFT)\n", kR);
+}
+
 START_TEST(input)
 {
     init_function_pointers();
@@ -1123,6 +1144,7 @@ START_TEST(input)
     test_Input_blackbox();
     test_keynames();
     test_mouse_ll_hook();
+    test_key_map();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
