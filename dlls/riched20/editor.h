@@ -220,7 +220,7 @@ int  ME_twips2pointsY(ME_Context *c, int y);
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run); 
 void ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end);
 void ME_MakeFirstParagraph(ME_TextEditor *editor);
-ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *rp, ME_Style *style);
+ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *rp, ME_Style *style, int numCR, int numLF);
 ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp);
 void ME_DumpParaStyle(ME_Paragraph *s);
 void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048]);

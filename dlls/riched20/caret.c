@@ -531,7 +531,15 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
       }
       tmp_style = ME_GetInsertStyle(editor, nCursor);
       /* ME_SplitParagraph increases style refcount */
-      tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style);
+
+      /* TODO: move here and fix logic for pos updating according to emulation,
+         so that number of CR and LF encoded are a result of such logic, instead
+         of hardcoded as below.
+       */
+      if (editor->bEmulateVersion10)
+        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, 1, 1);
+      else
+        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, 1, 0);
       p->pRun = ME_FindItemFwd(tp, diRun);
       end_run = ME_FindItemBack(tp, diRun);
       ME_ReleaseStyle(end_run->member.run.style);
