@@ -3278,6 +3278,9 @@ LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     
     editor->bEmulateVersion10 = TRUE;
     editor->pBuffer->pLast->member.para.nCharOfs = 2;
+    assert(editor->pBuffer->pLast->prev->type == diRun);
+    assert(editor->pBuffer->pLast->prev->member.run.nFlags & MERF_ENDPARA);
+    editor->pBuffer->pLast->prev->member.run.nLF = 1;
   }
   return result;
 }

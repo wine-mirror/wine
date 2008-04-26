@@ -73,6 +73,8 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   
   run = ME_MakeRun(style, ME_MakeString(wszParagraphSign), MERF_ENDPARA);
   run->member.run.nCharOfs = 0;
+  run->member.run.nCR = 1;
+  run->member.run.nLF = (editor->bEmulateVersion10) ? 1 : 0;
 
   ME_InsertBefore(text->pLast, para);
   ME_InsertBefore(text->pLast, run);

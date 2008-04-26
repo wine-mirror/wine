@@ -284,6 +284,74 @@ static void test_EM_STREAMIN(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static DWORD CALLBACK test_WM_SETTEXT_esCallback(DWORD_PTR dwCookie,
+                                         LPBYTE pbBuff,
+                                         LONG cb,
+                                         LONG *pcb)
+{
+  char** str = (char**)dwCookie;
+  *pcb = cb;
+  if (*pcb > 0) {
+    memcpy(*str, pbBuff, *pcb);
+    *str += *pcb;
+  }
+  return 0;
+}
+
+static void test_EM_STREAMOUT(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  int r;
+  EDITSTREAM es;
+  char buf[1024] = {0};
+  char * p;
+
+  const char * TestItem1 = "TestSomeText";
+  const char * TestItem2 = "TestSomeText\r";
+  const char * TestItem3 = "TestSomeText\r\n";
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem1);
+  p = buf;
+  es.dwCookie = (DWORD_PTR)&p;
+  es.dwError = 0;
+  es.pfnCallback = test_WM_SETTEXT_esCallback;
+  memset(buf, 0, sizeof(buf));
+  SendMessage(hwndRichEdit, EM_STREAMOUT,
+              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  r = strlen(buf);
+  ok(r == 12, "streamed text length is %d, expecting 12\n", r);
+  ok(strcmp(buf, TestItem1) == 0,
+        "streamed text different, got %s\n", buf);
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem2);
+  p = buf;
+  es.dwCookie = (DWORD_PTR)&p;
+  es.dwError = 0;
+  es.pfnCallback = test_WM_SETTEXT_esCallback;
+  memset(buf, 0, sizeof(buf));
+  SendMessage(hwndRichEdit, EM_STREAMOUT,
+              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  r = strlen(buf);
+  todo_wine { /* Currently fails because of solitary \r mangling */
+  ok(r == 13, "streamed text length is %d, expecting 13\n", r);
+  ok(strcmp(buf, TestItem2) == 0,
+        "streamed text different, got %s\n", buf);
+  }
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem3);
+  p = buf;
+  es.dwCookie = (DWORD_PTR)&p;
+  es.dwError = 0;
+  es.pfnCallback = test_WM_SETTEXT_esCallback;
+  memset(buf, 0, sizeof(buf));
+  SendMessage(hwndRichEdit, EM_STREAMOUT,
+              (WPARAM)(SF_TEXT), (LPARAM)&es);
+  r = strlen(buf);
+  ok(r == 14, "streamed text length is %d, expecting 14\n", r);
+  ok(strcmp(buf, TestItem3) == 0,
+        "streamed text different, got %s\n", buf);
+
+  DestroyWindow(hwndRichEdit);
+}
 
 START_TEST( editor )
 {
@@ -298,6 +366,7 @@ START_TEST( editor )
   test_WM_SETTEXT();
   test_WM_GETTEXTLENGTH();
   test_EM_STREAMIN();
+  test_EM_STREAMOUT();
 
   /* Set the environment variable WINETEST_RICHED32 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
