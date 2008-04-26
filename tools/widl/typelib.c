@@ -173,7 +173,7 @@ unsigned short get_type_vt(type_t *t)
     if (vt) return vt;
   }
 
-  if (t->kind == TKIND_ALIAS && t->attrs)
+  if (t->kind == TKIND_ALIAS && is_attr(t->attrs, ATTR_PUBLIC))
     return VT_USERDEFINED;
 
   switch (t->type) {

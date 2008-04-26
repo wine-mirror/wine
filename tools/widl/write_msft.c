@@ -962,8 +962,8 @@ static int encode_type(
       {
         int typeinfo_offset;
 
-        /* typedef'd types without attributes aren't included in the typelib */
-        while (type->typelib_idx < 0 && type->kind == TKIND_ALIAS && ! type->attrs)
+        /* typedef'd types without public attribute aren't included in the typelib */
+        while (type->typelib_idx < 0 && type->kind == TKIND_ALIAS && !is_attr(type->attrs, ATTR_PUBLIC))
           type = type->orig;
 
         chat("encode_type: VT_USERDEFINED - type %p name = %s type->type %d idx %d\n", type,

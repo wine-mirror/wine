@@ -1676,8 +1676,7 @@ static type_t *reg_typedefs(type_t *type, declarator_list_t *decls, attr_list_t 
 
   /* We must generate names for tagless enum, struct or union.
      Typedef-ing a tagless enum, struct or union means we want the typedef
-     to be included in a library whether it has other attributes or not,
-     hence the public attribute.  */
+     to be included in a library hence the public attribute.  */
   if ((type->kind == TKIND_ENUM || type->kind == TKIND_RECORD
        || type->kind == TKIND_UNION) && ! type->name && ! parse_only)
   {
@@ -1685,6 +1684,8 @@ static type_t *reg_typedefs(type_t *type, declarator_list_t *decls, attr_list_t 
       attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
     type->name = gen_name();
   }
+  else if (is_attr(attrs, ATTR_UUID) && !is_attr(attrs, ATTR_PUBLIC))
+    attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
 
   LIST_FOR_EACH_ENTRY( decl, decls, const declarator_t, entry )
   {
@@ -2650,7 +2651,7 @@ static statement_t *process_typedefs(declarator_list_t *decls)
 
         if (! parse_only && do_header)
             write_typedef(type);
-        if (in_typelib && type->attrs)
+        if (in_typelib && is_attr(type->attrs, ATTR_PUBLIC))
             add_typelib_entry(type);
 
         type_list = &(*type_list)->next;
