@@ -4048,7 +4048,6 @@ static void test_movefiles(void)
     create_database(msifile, mov_tables, sizeof(mov_tables) / sizeof(msi_table));
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
-    MsiEnableLog(INSTALLLOGMODE_VERBOSE | INSTALLLOGMODE_EXTRADEBUG, "log.txt", 0);
 
     /* if the source or dest property is not a full path,
      * windows tries to access it as a network resource
