@@ -626,8 +626,15 @@ static void test_FDICopy(void)
                      fdi_write, fdi_close, fdi_seek,
                      cpuUNKNOWN, &erf);
 
-    ret=FDICopy(hfdi, name, path, 0, CopyProgress, NULL, 0);
-    ok(ret, "Expected FDICopy to succeed\n");
+    /* cabinet with no files or folders */
+    SetLastError(0xdeadbeef);
+    ret = FDICopy(hfdi, name, path, 0, CopyProgress, NULL, 0);
+    ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+    todo_wine
+    {
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
+           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    }
 
     FDIDestroy(hfdi);
     DeleteFileA(name);
