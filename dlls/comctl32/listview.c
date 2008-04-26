@@ -91,7 +91,6 @@
  * Extended Styles
  *   -- LVS_EX_BORDERSELECT
  *   -- LVS_EX_FLATSB
- *   -- LVS_EX_GRIDLINES
  *   -- LVS_EX_HEADERDRAGDROP
  *   -- LVS_EX_INFOTIP
  *   -- LVS_EX_LABELTIP
@@ -2495,6 +2494,8 @@ static INT LISTVIEW_CalculateItemHeight(const LISTVIEW_INFO *infoPtr)
     else
     {
 	nItemHeight = infoPtr->ntmHeight; 
+        if (uView == LVS_REPORT && infoPtr->dwLvExStyle & LVS_EX_GRIDLINES)
+            nItemHeight++;
 	if (infoPtr->himlState)
 	    nItemHeight = max(nItemHeight, infoPtr->iconStateSize.cy);
 	if (infoPtr->himlSmall)
@@ -3873,6 +3874,11 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
         else rcLabel.left += LABEL_HOR_PADDING;
     }
     else if (uFormat & DT_RIGHT) rcLabel.right -= LABEL_HOR_PADDING;
+
+    /* for GRIDLINES reduce the bottom so the text formats correctly */
+    if (uView == LVS_REPORT && infoPtr->dwLvExStyle & LVS_EX_GRIDLINES)
+        rcLabel.bottom--;
+
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
 
 postpaint:
@@ -4029,6 +4035,86 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
 
 /***
  * DESCRIPTION:
+ * Draws the gridlines if necessary when in report display mode.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] hdc : device context handle
+ *
+ * RETURN:
+ * None
+ */
+static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
+{
+    INT rgntype;
+    INT y, itemheight;
+    HPEN hPen, hOldPen;
+    RECT rcClip, rcItem;
+    POINT Origin;
+    RANGE colRange;
+    ITERATOR j;
+
+    TRACE("()\n");
+
+    /* figure out what to draw */
+    rgntype = GetClipBox(hdc, &rcClip);
+    if (rgntype == NULLREGION) return;
+
+    /* Get scroll info once before loop */
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+
+    /* narrow down the columns we need to paint */
+    for(colRange.lower = 0; colRange.lower < DPA_GetPtrCount(infoPtr->hdpaColumns); colRange.lower++)
+    {
+        LISTVIEW_GetHeaderRect(infoPtr, colRange.lower, &rcItem);
+        if (rcItem.right + Origin.x >= rcClip.left) break;
+    }
+    for(colRange.upper = DPA_GetPtrCount(infoPtr->hdpaColumns); colRange.upper > 0; colRange.upper--)
+    {
+        LISTVIEW_GetHeaderRect(infoPtr, colRange.upper - 1, &rcItem);
+        if (rcItem.left + Origin.x < rcClip.right) break;
+    }
+    iterator_rangeitems(&j, colRange);
+
+    if ((hPen = CreatePen( PS_SOLID, 1, comctl32_color.clr3dFace )))
+    {
+        hOldPen = SelectObject ( hdc, hPen );
+
+        /* draw the vertical lines for the columns */
+        iterator_rangeitems(&j, colRange);
+        while(iterator_next(&j))
+        {
+            LISTVIEW_GetHeaderRect(infoPtr, j.nItem, &rcItem);
+            if (rcItem.left == 0) continue; /* skip first column */
+            rcItem.left += Origin.x;
+            rcItem.right += Origin.x;
+            rcItem.top = infoPtr->rcList.top;
+            rcItem.bottom = infoPtr->rcList.bottom;
+            TRACE("vert col=%d, rcItem=%s\n", j.nItem, wine_dbgstr_rect(&rcItem));
+            MoveToEx (hdc, rcItem.left, rcItem.top, NULL);
+            LineTo (hdc, rcItem.left, rcItem.bottom);
+        }
+        iterator_destroy(&j);
+
+        /* draw the horizontial lines for the rows */
+        itemheight =  LISTVIEW_CalculateItemHeight(infoPtr);
+        rcItem.left = infoPtr->rcList.left + Origin.x;
+        rcItem.right = infoPtr->rcList.right + Origin.x;
+        for(y=itemheight-1+Origin.y; y<=infoPtr->rcList.bottom; y+=itemheight)
+        {
+            rcItem.bottom = rcItem.top = y;
+            TRACE("horz rcItem=%s\n", wine_dbgstr_rect(&rcItem));
+            MoveToEx (hdc, rcItem.left, rcItem.top, NULL);
+            LineTo (hdc, rcItem.right, rcItem.top);
+        }
+
+        SelectObject( hdc, hOldPen );
+        DeleteObject( hPen );
+    }
+}
+
+/***
+ * DESCRIPTION:
  * Draws listview items when in list display mode.
  *
  * PARAMETER(S):
@@ -4175,6 +4261,12 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcEra
     iterator_destroy(&i);
     
 enddraw:
+    /* For LVS_EX_GRIDLINES go and draw lines */
+    /*  This includes the case where there were *no* items */
+    if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT &&
+        infoPtr->dwLvExStyle & LVS_EX_GRIDLINES)
+        LISTVIEW_RefreshReportGrid(infoPtr, hdc);
+
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
 	notify_postpaint(infoPtr, &nmlvcd);
 
