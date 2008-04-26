@@ -4100,6 +4100,9 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
         itemheight =  LISTVIEW_CalculateItemHeight(infoPtr);
         rcItem.left = infoPtr->rcList.left + Origin.x;
         rcItem.right = infoPtr->rcList.right + Origin.x;
+        rcItem.bottom = rcItem.top = Origin.y - 1;
+        MoveToEx(hdc, rcItem.left, rcItem.top, NULL);
+        LineTo(hdc, rcItem.right, rcItem.top);
         for(y=itemheight-1+Origin.y; y<=infoPtr->rcList.bottom; y+=itemheight)
         {
             rcItem.bottom = rcItem.top = y;
@@ -7131,6 +7134,13 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
         SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE, dwStyle);
     }
 
+    /* GRIDLINES adds decoration at top so changes sizes */
+    if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_GRIDLINES)
+    {
+        LISTVIEW_UpdateSize(infoPtr);
+    }
+
+
     LISTVIEW_InvalidateList(infoPtr);
     return dwOldExStyle;
 }
@@ -9368,10 +9378,12 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 	hl.prc = &infoPtr->rcList;
 	hl.pwpos = &wp;
 	SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
-
+        TRACE("  wp.flags=0x%08x, wp=%d,%d (%dx%d)\n", wp.flags, wp.x, wp.y, wp.cx, wp.cy);
 	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
+        TRACE("  after SWP wp=%d,%d (%dx%d)\n", wp.x, wp.y, wp.cx, wp.cy);
 
 	infoPtr->rcList.top = max(wp.cy, 0);
+        infoPtr->rcList.top += (infoPtr->dwLvExStyle & LVS_EX_GRIDLINES) ? 2 : 0;
     }
 
     TRACE("  rcList=%s\n", wine_dbgstr_rect(&infoPtr->rcList));
