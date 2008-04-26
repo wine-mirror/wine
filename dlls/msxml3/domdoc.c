@@ -34,6 +34,7 @@
 #include "urlmon.h"
 #include "winreg.h"
 #include "shlwapi.h"
+#include "ocidl.h"
 
 #include "wine/debug.h"
 
@@ -169,6 +170,7 @@ typedef struct _domdoc
 {
     const struct IXMLDOMDocument2Vtbl *lpVtbl;
     const struct IPersistStreamVtbl   *lpvtblIPersistStream;
+    const struct IObjectWithSiteVtbl  *lpvtblIObjectWithSite;
     LONG ref;
     VARIANT_BOOL async;
     VARIANT_BOOL validating;
@@ -182,6 +184,9 @@ typedef struct _domdoc
 
      /* IPersistStream */
      IStream *stream;
+
+     /* IObjectWithSite*/
+     IUnknown *site;
 } domdoc;
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
@@ -217,6 +222,11 @@ static inline xmlDocPtr get_doc( domdoc *This )
 static inline domdoc *impl_from_IPersistStream(IPersistStream *iface)
 {
     return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIPersistStream));
+}
+
+static inline domdoc *impl_from_IObjectWithSite(IObjectWithSite *iface)
+{
+    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIObjectWithSite));
 }
 
 /************************************************************************
@@ -368,6 +378,10 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
     {
         *ppvObject = (IPersistStream*)&(This->lpvtblIPersistStream);
     }
+    else if (IsEqualGUID(&IID_IObjectWithSite, riid))
+    {
+        *ppvObject = (IObjectWithSite*)&(This->lpvtblIObjectWithSite);
+    }
     else if(IsEqualGUID(&IID_IRunnableObject, riid))
     {
         TRACE("IID_IRunnableObject not supported returning NULL\n");
@@ -405,6 +419,8 @@ static ULONG WINAPI domdoc_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
+        if (This->site)
+            IUnknown_Release( This->site );
         IUnknown_Release( This->node_unk );
         if(This->schema) IXMLDOMSchemaCollection_Release( This->schema );
         if (This->stream) IStream_Release(This->stream);
@@ -1930,6 +1946,79 @@ static const struct IXMLDOMDocument2Vtbl domdoc_vtbl =
     domdoc_getProperty
 };
 
+/* xmldoc implementation of IObjectWithSite */
+static HRESULT WINAPI
+xmldoc_ObjectWithSite_QueryInterface( IObjectWithSite* iface, REFIID riid, void** ppvObject )
+{
+    domdoc *This = impl_from_IObjectWithSite(iface);
+    return IXMLDocument_QueryInterface( (IXMLDocument *)This, riid, ppvObject );
+}
+
+static ULONG WINAPI
+xmldoc_ObjectWithSite_AddRef( IObjectWithSite* iface )
+{
+    domdoc *This = impl_from_IObjectWithSite(iface);
+    return IXMLDocument_AddRef((IXMLDocument *)This);
+}
+
+static ULONG WINAPI
+xmldoc_ObjectWithSite_Release( IObjectWithSite* iface )
+{
+    domdoc *This = impl_from_IObjectWithSite(iface);
+    return IXMLDocument_Release((IXMLDocument *)This);
+}
+
+static HRESULT WINAPI
+xmldoc_GetSite( IObjectWithSite *iface, REFIID iid, void ** ppvSite )
+{
+    domdoc *This = impl_from_IObjectWithSite(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid( iid ), ppvSite );
+
+    if ( !This->site )
+        return E_FAIL;
+
+    return IUnknown_QueryInterface( This->site, iid, ppvSite );
+}
+
+static HRESULT WINAPI
+xmldoc_SetSite( IObjectWithSite *iface, IUnknown *punk )
+{
+    domdoc *This = impl_from_IObjectWithSite(iface);
+
+    TRACE("%p %p\n", iface, punk);
+
+    if(!punk)
+    {
+        if(This->site)
+        {
+            IUnknown_Release( This->site );
+            This->site = NULL;
+        }
+
+        return S_OK;
+    }
+
+    if ( punk )
+        IUnknown_AddRef( punk );
+
+    if(This->site)
+        IUnknown_Release( This->site );
+
+    This->site = punk;
+
+    return S_OK;
+}
+
+static const IObjectWithSiteVtbl domdocObjectSite =
+{
+    xmldoc_ObjectWithSite_QueryInterface,
+    xmldoc_ObjectWithSite_AddRef,
+    xmldoc_ObjectWithSite_Release,
+    xmldoc_SetSite,
+    xmldoc_GetSite,
+};
+
 HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     domdoc *doc;
@@ -1944,6 +2033,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     doc->lpVtbl = &domdoc_vtbl;
     doc->lpvtblIPersistStream = &xmldoc_IPersistStream_VTable;
+    doc->lpvtblIObjectWithSite = &domdocObjectSite;
     doc->ref = 1;
     doc->async = 0;
     doc->validating = 0;
@@ -1953,6 +2043,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->error = S_OK;
     doc->schema = NULL;
     doc->stream = NULL;
+    doc->site = NULL;
 
     xmldoc = xmlNewDoc(NULL);
     if(!xmldoc)
