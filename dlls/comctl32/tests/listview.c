@@ -1076,6 +1076,54 @@ static void test_item_position(void)
     DestroyWindow(hwnd);
 }
 
+static void test_getorigin(void)
+{
+    /* LVM_GETORIGIN */
+
+    HWND hwnd;
+    DWORD r;
+    POINT position;
+
+    position.x = position.y = 0;
+
+    hwnd = create_custom_listview_control(LVS_ICON);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    trace("test get origin results\n");
+    r = SendMessage(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+    expect(TRUE, r);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+
+    hwnd = create_custom_listview_control(LVS_SMALLICON);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    trace("test get origin results\n");
+    r = SendMessage(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+    expect(TRUE, r);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+
+    hwnd = create_custom_listview_control(LVS_LIST);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    trace("test get origin results\n");
+    r = SendMessage(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+    expect(FALSE, r);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+
+    hwnd = create_custom_listview_control(LVS_REPORT);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    trace("test get origin results\n");
+    r = SendMessage(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+    expect(FALSE, r);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -1111,4 +1159,5 @@ START_TEST(listview)
     test_item_count();
     test_item_position();
     test_columns();
+    test_getorigin();
 }

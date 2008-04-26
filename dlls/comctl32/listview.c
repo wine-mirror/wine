@@ -9632,6 +9632,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case LVM_GETORIGIN:
     if (!lParam) return FALSE;
+    if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT ||
+        (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_LIST) return FALSE;
     LISTVIEW_GetOrigin(infoPtr, (LPPOINT)lParam);
     return TRUE;
 
