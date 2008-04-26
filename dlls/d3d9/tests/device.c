@@ -166,7 +166,8 @@ static void test_swapchain(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
+       "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
     if (FAILED(hr)) goto cleanup;
 
     /* Check if the back buffer count was modified */
@@ -347,7 +348,8 @@ static void test_refcount(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
+       "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
     if (FAILED(hr)) goto cleanup;
 
     refcount = get_refcount( (IUnknown *)pDevice );
@@ -657,7 +659,8 @@ static void test_cursor(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
+       "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
     if (FAILED(hr)) goto cleanup;
 
     IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 32, 32, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &cursor, 0);
@@ -1753,7 +1756,8 @@ static void test_lights(void)
 
     hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &present_parameters, &device );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
+       "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
     if(!device)
     {
         skip("Failed to create a d3d device\n");
@@ -1813,7 +1817,8 @@ static void test_set_stream_source(void)
 
     hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
+       "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
     if(!device)
     {
         hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, hwnd,
