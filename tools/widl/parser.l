@@ -27,7 +27,7 @@ ws	[ \f\t\r]
 cident	[a-zA-Z_][0-9a-zA-Z_]*
 int	[0-9]+
 hexd	[0-9a-fA-F]
-hex	0x{hexd}+
+hex	0(x|X){hexd}+
 uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 
