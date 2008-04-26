@@ -261,6 +261,40 @@ static void test_EM_GETLINE(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_LINELENGTH(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  const char * text =
+        "richedit1\r"
+        "richedit1\n"
+        "richedit1\r\n"
+        "richedit1";
+  int offset_test[10][2] = {
+        {0, 9},
+        {5, 9},
+        {10, 9},
+        {15, 9},
+        {20, 9},
+        {25, 9},
+        {30, 9},
+        {35, 9},
+        {40, 0},
+        {45, 0},
+  };
+  int i;
+  LRESULT result;
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+
+  for (i = 0; i < 10; i++) {
+    result = SendMessage(hwndRichEdit, EM_LINELENGTH, offset_test[i][0], 0);
+    ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
+        offset_test[i][0], result, offset_test[i][1]);
+  }
+
+  DestroyWindow(hwndRichEdit);
+}
+
 static int get_scroll_pos_y(HWND hwnd)
 {
   POINT p = {-1, -1};
@@ -2972,7 +3006,6 @@ static void test_eventMask(void)
 
 }
 
-
 START_TEST( editor )
 {
   MSG msg;
@@ -2989,6 +3022,7 @@ START_TEST( editor )
   test_EM_SCROLLCARET();
   test_EM_SCROLL();
   test_WM_SETTEXT();
+  test_EM_LINELENGTH();
   test_EM_SETCHARFORMAT();
   test_EM_SETTEXTMODE();
   test_TM_PLAINTEXT();

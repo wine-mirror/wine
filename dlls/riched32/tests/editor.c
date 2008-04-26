@@ -430,6 +430,39 @@ static void test_EM_GETLINE(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_LINELENGTH(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  const char * text =
+        "richedit1\r"
+        "richedit1\n"
+        "richedit1\r\n"
+        "richedit1\r\r\r\r\r\n";
+  int offset_test[10][2] = {
+        {0, 9},
+        {5, 9},
+        {10, 9},
+        {15, 9},
+        {20, 9},
+        {25, 9},
+        {30, 9},
+        {35, 9},
+        {40, 9}, /* <----- in the middle of the \r run, but run not counted */
+        {45, 0},
+  };
+  int i;
+  LRESULT result;
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+
+  for (i = 0; i < 10; i++) {
+    result = SendMessage(hwndRichEdit, EM_LINELENGTH, offset_test[i][0], 0);
+    ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
+        offset_test[i][0], result, offset_test[i][1]);
+  }
+
+  DestroyWindow(hwndRichEdit);
+}
 
 START_TEST( editor )
 {
@@ -446,6 +479,7 @@ START_TEST( editor )
   test_EM_STREAMIN();
   test_EM_STREAMOUT();
   test_EM_GETLINE();
+  test_EM_LINELENGTH();
 
   /* Set the environment variable WINETEST_RICHED32 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

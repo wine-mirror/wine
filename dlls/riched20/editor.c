@@ -1190,6 +1190,7 @@ ME_DisplayItem *
 ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int *nItemOffset)
 {
   ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
+  int runLength;
   
   while (item && item->member.para.next_para->member.para.nCharOfs <= nOffset)
     item = ME_FindItemFwd(item, diParagraph);
@@ -1206,7 +1207,10 @@ ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int
   
   do {
     item = ME_FindItemFwd(item, diRun);
-  } while (item && (item->member.run.nCharOfs + ME_StrLen(item->member.run.strText) <= nOffset));
+    runLength = ME_StrLen(item->member.run.strText);
+    if (item->member.run.nFlags & MERF_ENDPARA)
+      runLength = item->member.run.nCR + item->member.run.nLF;
+  } while (item && (item->member.run.nCharOfs + runLength <= nOffset));
   if (item) {
     nOffset -= item->member.run.nCharOfs;
     if (nItemOffset)
@@ -2735,8 +2739,17 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (item_end->type == diStartRow)
       nNextLineOfs = ME_CharOfsFromRunOfs(editor, ME_FindItemFwd(item_end, diRun), 0);
     else
-      nNextLineOfs = ME_FindItemFwd(item, diParagraphOrEnd)->member.para.nCharOfs
-       - (editor->bEmulateVersion10?2:1);
+    {
+      ME_DisplayItem *endPara;
+
+      nNextLineOfs = ME_FindItemFwd(item, diParagraphOrEnd)->member.para.nCharOfs;
+      endPara = ME_FindItemFwd(item, diParagraphOrEnd);
+      endPara = ME_FindItemBack(endPara, diRun);
+      assert(endPara);
+      assert(endPara->type == diRun);
+      assert(endPara->member.run.nFlags & MERF_ENDPARA);
+      nNextLineOfs -= endPara->member.run.nCR + endPara->member.run.nLF;
+    }
     nChars = nNextLineOfs - nThisLineOfs;
     TRACE("EM_LINELENGTH(%ld)==%d\n",wParam, nChars);
     return nChars;
