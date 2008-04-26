@@ -55,7 +55,8 @@ struct tray_icon
     HWND           tooltip;  /* Icon tooltip */
     UINT           id;       /* the unique id given by the app */
     UINT           callback_message;
-    WCHAR          tiptext[128]; /* Tooltip text. If empty => tooltip disabled */
+    WCHAR          tiptext[256]; /* Tooltip text. If empty => tooltip disabled */
+    WCHAR          tiptitle[64]; /* Tooltip title for ballon style tooltips.  If empty => tooltip is not balloon style. */
 };
 
 static struct list icon_list = LIST_INIT( icon_list );
@@ -95,12 +96,22 @@ static void create_tooltip(struct tray_icon *icon)
         InitCommonControlsEx(&init_tooltip);
         tooltips_initialized = TRUE;
     }
-
-    icon->tooltip = CreateWindowExW( WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
-                                     WS_POPUP | TTS_ALWAYSTIP,
-                                     CW_USEDEFAULT, CW_USEDEFAULT,
-                                     CW_USEDEFAULT, CW_USEDEFAULT,
-                                     icon->window, NULL, NULL, NULL);
+    if (icon->tiptitle[0] != 0)
+    {
+        icon->tooltip = CreateWindowExW( WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
+                                         WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
+                                         CW_USEDEFAULT, CW_USEDEFAULT,
+                                         CW_USEDEFAULT, CW_USEDEFAULT,
+                                         icon->window, NULL, NULL, NULL);
+    }
+    else
+    {
+        icon->tooltip = CreateWindowExW( WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
+                                         WS_POPUP | TTS_ALWAYSTIP,
+                                         CW_USEDEFAULT, CW_USEDEFAULT,
+                                         CW_USEDEFAULT, CW_USEDEFAULT,
+                                         icon->window, NULL, NULL, NULL);
+    }
     if (icon->tooltip)
     {
         TTTOOLINFOW ti;
@@ -344,11 +355,14 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
     if (nid->uFlags & NIF_TIP)
     {
         lstrcpynW(icon->tiptext, nid->szTip, sizeof(icon->tiptext)/sizeof(WCHAR));
+        icon->tiptitle[0] = 0;
         if (icon->tooltip) update_tooltip_text(icon);
     }
     if (nid->uFlags & NIF_INFO && nid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
-        FIXME("balloon tip title %s, message %s\n", wine_dbgstr_w(nid->szInfoTitle), wine_dbgstr_w(nid->szInfo));
+        lstrcpynW(icon->tiptext, nid->szInfo, sizeof(icon->tiptext)/sizeof(WCHAR));
+        lstrcpynW(icon->tiptitle, nid->szInfoTitle, sizeof(icon->tiptitle)/sizeof(WCHAR));
+        if (icon->tooltip) update_tooltip_text(icon);
     }
     return TRUE;
 }
