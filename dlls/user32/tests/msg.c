@@ -318,13 +318,13 @@ static const struct message WmSwitchNotMaximizedChild[] = {
     { WM_NCACTIVATE, sent|wparam|defwinproc, 1 }, /* in the 2nd MDI child */
     { WM_SETVISIBLE, hook }, /* in the 1st MDI child */
     { WM_KILLFOCUS, sent|defwinproc }, /* in the 1st MDI child */
-    { WM_IME_SETCONTEXT, sent|defwinproc }, /* in the 1st MDI child */
-    { WM_IME_SETCONTEXT, sent }, /* in the  MDI client */
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional }, /* in the 1st MDI child */
+    { WM_IME_SETCONTEXT, sent|optional }, /* in the  MDI client */
     { WM_SETFOCUS, sent, 0 }, /* in the  MDI client */
     { WM_SETVISIBLE, hook },
     { WM_KILLFOCUS, sent }, /* in the  MDI client */
-    { WM_IME_SETCONTEXT, sent }, /* in the  MDI client */
-    { WM_IME_SETCONTEXT, sent|defwinproc  }, /* in the 1st MDI child */
+    { WM_IME_SETCONTEXT, sent|optional }, /* in the  MDI client */
+    { WM_IME_SETCONTEXT, sent|defwinproc|optional  }, /* in the 1st MDI child */
     { WM_SETFOCUS, sent|defwinproc }, /* in the 2nd MDI child */
     { WM_MDIACTIVATE, sent|defwinproc }, /* in the 2nd MDI child */
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE}, /* in the 2nd MDI child */
@@ -3411,7 +3411,7 @@ static void test_mdi_messages(void)
     flush_sequence();
 
     SendMessageA(mdi_client, WM_MDIACTIVATE, (WPARAM)mdi_child2, 0);
-    ok_sequence(WmSwitchNotMaximizedChild, "Not maximized child did not switch correctly", TRUE);
+    ok_sequence(WmSwitchNotMaximizedChild, "Not maximized child did not switch correctly", FALSE);
     trace("end of test for switch not maximized MDI children\n");
     flush_sequence();
 
