@@ -2608,11 +2608,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     ME_DisplayItem *run;
     const unsigned int nMaxChars = *(WORD *) lParam;
-    unsigned int nEndChars, nCharsLeft = nMaxChars;
+    unsigned int nCharsLeft = nMaxChars;
     char *dest = (char *) lParam;
-    /* rich text editor 1.0 uses \r\n for line end, 2.0 uses just \r; 
-    we need to know how if we have the extra \n or not */
-    int nLF = editor->bEmulateVersion10;
+    BOOL wroteNull = FALSE;
 
     TRACE("EM_GETLINE: row=%d, nMaxChars=%d (%s)\n", (int) wParam, nMaxChars,
           unicode ? "Unicode" : "Ansi");
@@ -2640,24 +2638,38 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       nCharsLeft -= nCopy;
     }
 
-    /* append \r\0 (or \r\n\0 in 1.0), space allowing */
-    nEndChars = min(nCharsLeft, 2 + nLF);
-    nCharsLeft -= nEndChars;
-    if (unicode)
+    /* append line termination, space allowing */
+    if (nCharsLeft > 0)
     {
-      const WCHAR src[] = {'\r', '\0'};
-      const WCHAR src10[] = {'\r', '\n', '\0'};
-      lstrcpynW((LPWSTR) dest, nLF ? src10 : src, nEndChars);
+      if (run && (run->member.run.nFlags & MERF_ENDPARA))
+      {
+        unsigned int i;
+        /* Write as many \r as encoded in end-of-paragraph, space allowing */
+        for (i = 0; i < run->member.run.nCR && nCharsLeft > 0; i++, nCharsLeft--)
+        {
+          *((WCHAR *)dest) = '\r';
+          dest += unicode ? sizeof(WCHAR) : 1;
+        }
+        /* Write as many \n as encoded in end-of-paragraph, space allowing */
+        for (i = 0; i < run->member.run.nLF && nCharsLeft > 0; i++, nCharsLeft--)
+        {
+          *((WCHAR *)dest) = '\n';
+          dest += unicode ? sizeof(WCHAR) : 1;
+        }
+      }
+      if (nCharsLeft > 0)
+      {
+        if (unicode)
+          *((WCHAR *)dest) = '\0';
+        else
+          *dest = '\0';
+        nCharsLeft--;
+        wroteNull = TRUE;
+      }
     }
-    else
-      lstrcpynA(dest, nLF ? "\r\n" : "\r", nEndChars);
 
-    TRACE("EM_GETLINE: got %u bytes\n", nMaxChars - nCharsLeft);
-
-    if (nEndChars == 2 + nLF)
-      return nMaxChars - nCharsLeft - 1; /* don't count \0 */
-    else
-      return nMaxChars - nCharsLeft;
+    TRACE("EM_GETLINE: got %u characters\n", nMaxChars - nCharsLeft);
+    return nMaxChars - nCharsLeft - (wroteNull ? 1 : 0);
   }
   case EM_GETLINECOUNT:
   {

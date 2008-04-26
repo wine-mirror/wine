@@ -353,6 +353,84 @@ static void test_EM_STREAMOUT(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static const struct getline_s {
+  int line;
+  size_t buffer_len;
+  const char *text;
+  int wine_todo;
+} gl[] = {
+  {0, 10, "foo bar\r\n", 0},
+  {1, 10, "\n", 1},
+  {2, 10, "bar\n", 1},
+  {3, 10, "\r\n", 0},
+
+  /* Buffer smaller than line length */
+  {0, 2, "foo bar\r", 0},
+  {0, 1, "foo bar\r", 0},
+  {0, 0, "foo bar\r", 0}
+};
+
+static void test_EM_GETLINE(void)
+{
+  int i;
+  HWND hwndRichEdit = new_richedit(NULL);
+  static const int nBuf = 1024;
+  char dest[1024], origdest[1024];
+  const char text[] = "foo bar\r\n"
+      "\n"
+      "bar\n";
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+
+  memset(origdest, 0xBB, nBuf);
+  for (i = 0; i < sizeof(gl)/sizeof(struct getline_s); i++)
+  {
+    int nCopied;
+    int expected_nCopied = min(gl[i].buffer_len, strlen(gl[i].text));
+    int expected_bytes_written = min(gl[i].buffer_len, strlen(gl[i].text) + 1);
+    memset(dest, 0xBB, nBuf);
+    *(WORD *) dest = gl[i].buffer_len;
+
+    /* EM_GETLINE appends a "\r\0" to the end of the line
+     * nCopied counts up to and including the '\r' */
+    nCopied = SendMessage(hwndRichEdit, EM_GETLINE, gl[i].line, (LPARAM) dest);
+    if (gl[i].wine_todo) todo_wine {
+    ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
+       expected_nCopied);
+    } else
+    ok(nCopied == expected_nCopied, "%d: %d!=%d\n", i, nCopied,
+       expected_nCopied);
+    /* two special cases since a parameter is passed via dest */
+    if (gl[i].buffer_len == 0)
+      ok(!dest[0] && !dest[1] && !strncmp(dest+2, origdest+2, nBuf-2),
+         "buffer_len=0\n");
+    else if (gl[i].buffer_len == 1)
+      ok(dest[0] == gl[i].text[0] && !dest[1] &&
+         !strncmp(dest+2, origdest+2, nBuf-2), "buffer_len=1\n");
+    else
+    {
+      if (gl[i].wine_todo) todo_wine {
+      ok(!strncmp(dest, gl[i].text, expected_bytes_written),
+         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      ok(!strncmp(dest + expected_bytes_written, origdest
+                  + expected_bytes_written, nBuf - expected_bytes_written),
+         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      }
+      else
+      {
+      ok(!strncmp(dest, gl[i].text, expected_bytes_written),
+         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      ok(!strncmp(dest + expected_bytes_written, origdest
+                  + expected_bytes_written, nBuf - expected_bytes_written),
+         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+      }
+    }
+  }
+
+  DestroyWindow(hwndRichEdit);
+}
+
+
 START_TEST( editor )
 {
   MSG msg;
@@ -367,6 +445,7 @@ START_TEST( editor )
   test_WM_GETTEXTLENGTH();
   test_EM_STREAMIN();
   test_EM_STREAMOUT();
+  test_EM_GETLINE();
 
   /* Set the environment variable WINETEST_RICHED32 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
