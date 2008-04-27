@@ -3783,8 +3783,8 @@ BOOL InitAdapters(void) {
     /* For now only one default adapter */
     {
         int iPixelFormat;
-        int attribs[8];
-        int values[8];
+        int attribs[10];
+        int values[10];
         int nAttribs = 0;
         int res;
         WineD3D_PixelFormat *cfgs;
@@ -3853,6 +3853,8 @@ BOOL InitAdapters(void) {
         PUSH1(WGL_STENCIL_BITS_ARB)
         PUSH1(WGL_DRAW_TO_WINDOW_ARB)
         PUSH1(WGL_PIXEL_TYPE_ARB)
+        PUSH1(WGL_DOUBLE_BUFFER_ARB)
+        PUSH1(WGL_AUX_BUFFERS_ARB)
 
         for(iPixelFormat=1; iPixelFormat<=Adapters[0].nCfgs; iPixelFormat++) {
             res = GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, nAttribs, attribs, values));
@@ -3870,6 +3872,8 @@ BOOL InitAdapters(void) {
             cfgs->stencilSize = values[5];
             cfgs->windowDrawable = values[6];
             cfgs->iPixelType = values[7];
+            cfgs->doubleBuffer = values[8];
+            cfgs->auxBuffers = values[9];
 
             cfgs->pbufferDrawable = FALSE;
             /* Check for pbuffer support when it is around as wglGetPixelFormatAttribiv fails for unknown
@@ -3881,7 +3885,7 @@ attributes. */
                     cfgs->pbufferDrawable = value;
             }
 
-            TRACE("iPixelFormat=%d, iPixelType=%#x, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
+            TRACE("iPixelFormat=%d, iPixelType=%#x, RGBA=%d/%d/%d/%d, doubleBuffer=%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
             cfgs++;
         }
 

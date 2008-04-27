@@ -684,6 +684,8 @@ typedef struct WineD3D_PixelFormat
     int depthSize, stencilSize;
     BOOL windowDrawable;
     BOOL pbufferDrawable;
+    BOOL doubleBuffer;
+    int auxBuffers;
 } WineD3D_PixelFormat;
 
 /* The adapter structure */
