@@ -71,7 +71,8 @@ static HRESULT WINAPI IMediaStreamImpl_QueryInterface(IMediaStream* iface, REFII
     TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IAMMultiMediaStream))
+        IsEqualGUID(riid, &IID_IAMMultiMediaStream) ||
+        IsEqualGUID(riid, &IID_IDirectDrawMediaStream))
     {
       IClassFactory_AddRef(iface);
       *ppvObject = This;
