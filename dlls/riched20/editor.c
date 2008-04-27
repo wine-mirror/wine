@@ -2702,12 +2702,30 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_DisplayItem *item = editor->pBuffer->pFirst->next;
     int nRows = 0;
 
+    ME_DisplayItem *prev_para = NULL, *last_para = NULL;
+
     while (item != editor->pBuffer->pLast)
     {
       assert(item->type == diParagraph);
+      prev_para = ME_FindItemBack(item, diRun);
+      if (prev_para) {
+        assert(prev_para->member.run.nFlags & MERF_ENDPARA);
+      }
       nRows += item->member.para.nRows;
       item = item->member.para.next_para;
     }
+    last_para = ME_FindItemBack(item, diRun);
+    assert(last_para);
+    assert(last_para->member.run.nFlags & MERF_ENDPARA);
+    if (editor->bEmulateVersion10 && prev_para && last_para->member.run.nCharOfs == 0
+        && prev_para->member.run.nCR == 1 && prev_para->member.run.nLF == 0)
+    {
+      /* In 1.0 emulation, the last solitary \r at the very end of the text
+         (if one exists) is NOT a line break.
+         FIXME: this is an ugly hack. This should have a more regular model. */
+      nRows--;
+    }
+
     TRACE("EM_GETLINECOUNT: nRows==%d\n", nRows);
     return max(1, nRows);
   }

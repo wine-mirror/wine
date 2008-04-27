@@ -110,8 +110,8 @@ static void test_WM_SETTEXT()
   }
 
   TEST_SETTEXT(TestItem1, TestItem1, 1, 0, 0)
-  TEST_SETTEXT(TestItem2, TestItem2, 1, 0, 1)
-  TEST_SETTEXT(TestItem3, TestItem3, 2, 0, 1)
+  TEST_SETTEXT(TestItem2, TestItem2, 1, 0, 0)
+  TEST_SETTEXT(TestItem3, TestItem3, 2, 0, 0)
   TEST_SETTEXT(TestItem4, TestItem4, 3, 0, 0)
   TEST_SETTEXT(TestItem5, TestItem5, 2, 0, 0)
   TEST_SETTEXT(TestItem6, TestItem6, 3, 0, 0)
@@ -123,7 +123,7 @@ static void test_WM_SETTEXT()
   TEST_SETTEXT(TestItem12, TestItem12, 2, 0, 0)
   TEST_SETTEXT(TestItem13, TestItem13, 3, 0, 0)
   TEST_SETTEXT(TestItem14, TestItem14, 2, 0, 0)
-  TEST_SETTEXT(TestItem15, TestItem15, 3, 0, 1)
+  TEST_SETTEXT(TestItem15, TestItem15, 3, 0, 0)
   TEST_SETTEXT(TestItem16, TestItem16, 4, 0, 0)
 
 #undef TEST_SETTEXT
