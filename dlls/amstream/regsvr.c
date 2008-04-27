@@ -447,6 +447,14 @@ static struct regsvr_coclass const coclass_list[] = {
 	"amstream.dll",
 	"Both"
     },
+
+    {   &CLSID_AMDirectDrawStream,
+	"ActiveMovie MultiMedia Stream",
+	NULL,
+	"amstream.dll",
+	"Both"
+    },
+
     { NULL }			/* list terminator */
 };
 
