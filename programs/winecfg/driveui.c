@@ -118,18 +118,18 @@ static void lv_get_item(HWND dialog, LVITEM *item)
 static void set_advanced(HWND dialog)
 {
     int state;
-    char text[256];
+    WCHAR text[256];
     RECT rect;
 
     if (advanced)
     {
         state = SW_NORMAL;
-        LoadString(GetModuleHandle(NULL), IDS_HIDE_ADVANCED, text, 256);
+        LoadStringW(GetModuleHandle(NULL), IDS_HIDE_ADVANCED, text, 256);
     }
     else
     {
         state = SW_HIDE;
-        LoadString(GetModuleHandle(NULL), IDS_SHOW_ADVANCED, text, 256);
+        LoadStringW(GetModuleHandle(NULL), IDS_SHOW_ADVANCED, text, 256);
     }
 
     ShowWindow(GetDlgItem(dialog, IDC_RADIO_AUTODETECT), state);
@@ -145,7 +145,7 @@ static void set_advanced(HWND dialog)
     ShowWindow(GetDlgItem(dialog, IDC_STATIC_TYPE), state);
 
     /* update the button text based on the state */
-    SetWindowText(GetDlgItem(dialog, IDC_BUTTON_SHOW_HIDE_ADVANCED), text);
+    SetWindowTextW(GetDlgItem(dialog, IDC_BUTTON_SHOW_HIDE_ADVANCED), text);
 
     /* redraw for the etched line */
     get_etched_rect(dialog, &rect);
