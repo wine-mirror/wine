@@ -3125,6 +3125,83 @@ static void test_eventMask(void)
 
 }
 
+static int received_WM_NOTIFY = 0;
+static int modify_at_WM_NOTIFY = 0;
+static HWND hwndRichedit_WM_NOTIFY;
+
+static LRESULT WINAPI WM_NOTIFY_ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if(message == WM_NOTIFY)
+    {
+      received_WM_NOTIFY = 1;
+      modify_at_WM_NOTIFY = SendMessage(hwndRichedit_WM_NOTIFY, EM_GETMODIFY, 0, 0);
+    }
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
+static void test_WM_NOTIFY(void)
+{
+    HWND parent;
+    WNDCLASSA cls;
+    CHARFORMAT2 cf2;
+
+    /* register class to capture WM_NOTIFY */
+    cls.style = 0;
+    cls.lpfnWndProc = WM_NOTIFY_ParentMsgCheckProcA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "WM_NOTIFY_ParentClass";
+    if(!RegisterClassA(&cls)) assert(0);
+
+    parent = CreateWindow(cls.lpszClassName, NULL, WS_POPUP|WS_VISIBLE,
+                          0, 0, 200, 60, NULL, NULL, NULL, NULL);
+    ok (parent != 0, "Failed to create parent window\n");
+
+    hwndRichedit_WM_NOTIFY = new_richedit(parent);
+    ok(hwndRichedit_WM_NOTIFY != 0, "Failed to create edit window\n");
+
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_SETEVENTMASK, 0, ENM_SELCHANGE);
+
+    /* Notifications for selection change should only be sent when selection
+       actually changes. EM_SETCHARFORMAT is one message that calls
+       ME_CommitUndo, which should check whether message should be sent */
+    received_WM_NOTIFY = 0;
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+             (LPARAM) &cf2);
+    cf2.dwMask = CFM_ITALIC | cf2.dwMask;
+    cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_SETCHARFORMAT, 0, (LPARAM) &cf2);
+    ok(received_WM_NOTIFY == 0, "Unexpected WM_NOTIFY was sent!\n");
+
+    /* WM_SETTEXT should NOT cause a WM_NOTIFY to be sent when selection is
+       already at 0. */
+    received_WM_NOTIFY = 0;
+    modify_at_WM_NOTIFY = 0;
+    SendMessage(hwndRichedit_WM_NOTIFY, WM_SETTEXT, 0, (LPARAM)"sometext");
+    ok(received_WM_NOTIFY == 0, "Unexpected WM_NOTIFY was sent!\n");
+    ok(modify_at_WM_NOTIFY == 0, "WM_NOTIFY callback saw text flagged as modified!\n");
+
+    received_WM_NOTIFY = 0;
+    modify_at_WM_NOTIFY = 0;
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_SETSEL, 4, 4);
+    ok(received_WM_NOTIFY == 1, "Expected WM_NOTIFY was NOT sent!\n");
+
+    received_WM_NOTIFY = 0;
+    modify_at_WM_NOTIFY = 0;
+    SendMessage(hwndRichedit_WM_NOTIFY, WM_SETTEXT, 0, (LPARAM)"sometext");
+    ok(received_WM_NOTIFY == 1, "Expected WM_NOTIFY was NOT sent!\n");
+    ok(modify_at_WM_NOTIFY == 0, "WM_NOTIFY callback saw text flagged as modified!\n");
+
+    DestroyWindow(hwndRichedit_WM_NOTIFY);
+    DestroyWindow(parent);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -3134,7 +3211,6 @@ START_TEST( editor )
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
-
   test_WM_CHAR();
   test_EM_FINDTEXT();
   test_EM_GETLINE();
@@ -3168,6 +3244,7 @@ START_TEST( editor )
   test_EM_GETTEXTLENGTHEX();
   test_EM_REPLACESEL(1);
   test_EM_REPLACESEL(0);
+  test_WM_NOTIFY();
   test_eventMask();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
