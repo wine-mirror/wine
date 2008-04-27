@@ -1600,9 +1600,11 @@ static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
     if (infoPtr->defaultFont)
 	DeleteObject (infoPtr->defaultFont);
 
+    SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
+
     /* free comboex info data */
     Free (infoPtr);
-    SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
+
     return 0;
 }
 

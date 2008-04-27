@@ -1452,9 +1452,10 @@ TRACKBAR_Destroy (TRACKBAR_INFO *infoPtr)
     if (infoPtr->hwndToolTip)
     	DestroyWindow (infoPtr->hwndToolTip);
 
-    Free (infoPtr);
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
     CloseThemeData (GetWindowTheme (infoPtr->hwndSelf));
+    Free (infoPtr);
+
     return 0;
 }
 

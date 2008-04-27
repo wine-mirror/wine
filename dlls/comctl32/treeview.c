@@ -1019,7 +1019,6 @@ static void
 TREEVIEW_FreeItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 {
     DPA_DeletePtr(infoPtr->items, DPA_GetPtrIndex(infoPtr->items, item));
-    Free(item);
     if (infoPtr->selectedItem == item)
         infoPtr->selectedItem = NULL;
     if (infoPtr->hotItem == item)
@@ -1032,6 +1031,7 @@ TREEVIEW_FreeItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
         infoPtr->dropItem = NULL;
     if (infoPtr->insertMarkItem == item)
         infoPtr->insertMarkItem = NULL;
+    Free(item);
 }
 
 
