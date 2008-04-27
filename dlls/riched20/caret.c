@@ -1330,7 +1330,15 @@ void ME_SendSelChange(ME_TextEditor *editor)
     sc.seltyp |= SEL_TEXT;
   if (sc.chrg.cpMin < sc.chrg.cpMax+1) /* wth were RICHEDIT authors thinking ? */
     sc.seltyp |= SEL_MULTICHAR;
-  SendMessageW(GetParent(editor->hWnd), WM_NOTIFY, sc.nmhdr.idFrom, (LPARAM)&sc);
+  TRACE("cpMin=%d cpMax=%d seltyp=%d (%s %s)\n",
+    sc.chrg.cpMin, sc.chrg.cpMax, sc.seltyp,
+    (sc.seltyp & SEL_TEXT) ? "SEL_TEXT" : "",
+    (sc.seltyp & SEL_MULTICHAR) ? "SEL_MULTICHAR" : "");
+  if (sc.chrg.cpMin != editor->notified_cr.cpMin || sc.chrg.cpMax != editor->notified_cr.cpMax)
+  {
+    editor->notified_cr = sc.chrg;
+    SendMessageW(GetParent(editor->hWnd), WM_NOTIFY, sc.nmhdr.idFrom, (LPARAM)&sc);
+  }
 }
 
 BOOL

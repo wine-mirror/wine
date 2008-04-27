@@ -331,6 +331,9 @@ typedef struct tagME_TextEditor
   /*for IME */
   int imeStartIndex;
   DWORD selofs, linesel, sely;
+
+  /* Track previous notified selection */
+  CHARRANGE notified_cr;
 } ME_TextEditor;
 
 typedef struct tagME_Context

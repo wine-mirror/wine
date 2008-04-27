@@ -1665,6 +1665,8 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   else
     ed->cPasswordMask = 0;
   
+  ed->notified_cr.cpMin = ed->notified_cr.cpMax = 0;
+
   return ed;
 }
 
