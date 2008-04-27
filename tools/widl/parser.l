@@ -25,9 +25,11 @@
 nl	\r?\n
 ws	[ \f\t\r]
 cident	[a-zA-Z_][0-9a-zA-Z_]*
-int	[0-9]+
+u_suffix	(u|U)
+l_suffix	(l|L)
+int	[0-9]+({l_suffix}?{u_suffix}?|{u_suffix}?{l_suffix}?)?
 hexd	[0-9a-fA-F]
-hex	0(x|X){hexd}+
+hex	0(x|X){hexd}+({l_suffix}?{u_suffix}?|{u_suffix}?{l_suffix}?)?
 uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 
