@@ -2436,10 +2436,10 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     else
       TRACE("WM_SETTEXT - NULL\n");
+    editor->nModifyStep = 0;
     ME_CommitUndo(editor);
     ME_EmptyUndoStack(editor);
     ME_SetSelection(editor, 0, 0);
-    editor->nModifyStep = 0;
     ME_UpdateRepaint(editor);
     return 1;
   }
