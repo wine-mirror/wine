@@ -524,6 +524,8 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
     if (pos-str < len) {   /* handle EOLs */
       ME_DisplayItem *tp, *end_run;
       ME_Style *tmp_style;
+      int numCR, numLF;
+
       if (pos!=str)
         ME_InternalInsertTextFromCursor(editor, nCursor, str, pos-str, style, 0);
       p = &editor->pCursors[nCursor];
@@ -534,38 +536,47 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
       tmp_style = ME_GetInsertStyle(editor, nCursor);
       /* ME_SplitParagraph increases style refcount */
 
-      /* TODO: move here and fix logic for pos updating according to emulation,
-         so that number of CR and LF encoded are a result of such logic, instead
-         of hardcoded as below.
-       */
-      if (editor->bEmulateVersion10)
-        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, 1, 1);
-      else
-        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, 1, 0);
-      p->pRun = ME_FindItemFwd(tp, diRun);
-      end_run = ME_FindItemBack(tp, diRun);
-      ME_ReleaseStyle(end_run->member.run.style);
-      end_run->member.run.style = tmp_style;
-      p->nOffset = 0;
+      /* Encode and fill number of CR and LF according to emulation mode */
       if (editor->bEmulateVersion10) {
         const WCHAR * tpos;
 
+        /* We have to find out how many consecutive \r are there, and if there
+           is a \n terminating the run of \r's. */
+        numCR = 0; numLF = 0;
         tpos = pos;
         while (tpos-str < len && *tpos == '\r') {
           tpos++;
+          numCR++;
         }
         if (tpos-str >= len) {
-          if (tpos != pos) pos++;
-        } else if (*tpos == '\n')
+          /* Reached end of text without finding anything but '\r' */
+          if (tpos != pos) {
+            pos++;
+          }
+          numCR = 1; numLF = 0;
+        } else if (*tpos == '\n') {
+          /* The entire run of \r's plus the one \n is one single line break */
           pos = tpos + 1;
-        else
+          numLF = 1;
+        } else {
+          /* Found some other content past the run of \r's */
           pos++;
+          numCR = 1; numLF = 0;
+        }
       } else {
         if(pos-str < len && *pos =='\r')
           pos++;
         if(pos-str < len && *pos =='\n')
           pos++;
+        numCR = 1; numLF = 0;
       }
+      tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, numCR, numLF);
+      p->pRun = ME_FindItemFwd(tp, diRun);
+      end_run = ME_FindItemBack(tp, diRun);
+      ME_ReleaseStyle(end_run->member.run.style);
+      end_run->member.run.style = tmp_style;
+      p->nOffset = 0;
+
       if(pos-str <= len) {
         len -= pos - str;
         str = pos;

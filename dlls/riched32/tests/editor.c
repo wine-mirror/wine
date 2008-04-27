@@ -110,21 +110,21 @@ static void test_WM_SETTEXT()
   }
 
   TEST_SETTEXT(TestItem1, TestItem1, 1, 0, 0)
-  TEST_SETTEXT(TestItem2, TestItem2, 1, 1, 1)
-  TEST_SETTEXT(TestItem3, TestItem3, 2, 1, 1)
-  TEST_SETTEXT(TestItem4, TestItem4, 3, 1, 0)
-  TEST_SETTEXT(TestItem5, TestItem5, 2, 1, 0)
-  TEST_SETTEXT(TestItem6, TestItem6, 3, 1, 0)
-  TEST_SETTEXT(TestItem7, TestItem7, 4, 1, 0)
+  TEST_SETTEXT(TestItem2, TestItem2, 1, 0, 1)
+  TEST_SETTEXT(TestItem3, TestItem3, 2, 0, 1)
+  TEST_SETTEXT(TestItem4, TestItem4, 3, 0, 0)
+  TEST_SETTEXT(TestItem5, TestItem5, 2, 0, 0)
+  TEST_SETTEXT(TestItem6, TestItem6, 3, 0, 0)
+  TEST_SETTEXT(TestItem7, TestItem7, 4, 0, 0)
   TEST_SETTEXT(TestItem8, TestItem8, 2, 0, 0)
   TEST_SETTEXT(TestItem9, TestItem9, 3, 0, 0)
   TEST_SETTEXT(TestItem10, TestItem10, 3, 0, 0)
   TEST_SETTEXT(TestItem11, TestItem11, 1, 0, 0)
   TEST_SETTEXT(TestItem12, TestItem12, 2, 0, 0)
   TEST_SETTEXT(TestItem13, TestItem13, 3, 0, 0)
-  TEST_SETTEXT(TestItem14, TestItem14, 2, 1, 0)
-  TEST_SETTEXT(TestItem15, TestItem15, 3, 1, 1)
-  TEST_SETTEXT(TestItem16, TestItem16, 4, 1, 0)
+  TEST_SETTEXT(TestItem14, TestItem14, 2, 0, 0)
+  TEST_SETTEXT(TestItem15, TestItem15, 3, 0, 1)
+  TEST_SETTEXT(TestItem16, TestItem16, 4, 0, 0)
 
 #undef TEST_SETTEXT
   DestroyWindow(hwndRichEdit);
@@ -332,11 +332,11 @@ static void test_EM_STREAMOUT(void)
   SendMessage(hwndRichEdit, EM_STREAMOUT,
               (WPARAM)(SF_TEXT), (LPARAM)&es);
   r = strlen(buf);
-  todo_wine { /* Currently fails because of solitary \r mangling */
+
   ok(r == 13, "streamed text length is %d, expecting 13\n", r);
   ok(strcmp(buf, TestItem2) == 0,
         "streamed text different, got %s\n", buf);
-  }
+
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem3);
   p = buf;
   es.dwCookie = (DWORD_PTR)&p;
@@ -360,8 +360,8 @@ static const struct getline_s {
   int wine_todo;
 } gl[] = {
   {0, 10, "foo bar\r\n", 0},
-  {1, 10, "\n", 1},
-  {2, 10, "bar\n", 1},
+  {1, 10, "\n", 0},
+  {2, 10, "bar\n", 0},
   {3, 10, "\r\n", 0},
 
   /* Buffer smaller than line length */
@@ -493,9 +493,9 @@ static void test_EM_GETTEXTRANGE(void)
     result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
     ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
         result, strlen(expect2));
-    todo_wine {
+
     ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
-    }
+
 
     DestroyWindow(hwndRichEdit);
 }
@@ -524,9 +524,9 @@ static void test_EM_GETSELTEXT(void)
     result = SendMessage(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
     ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
         result, strlen(expect2));
-    todo_wine {
+
     ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
-    }
+
 
     DestroyWindow(hwndRichEdit);
 }

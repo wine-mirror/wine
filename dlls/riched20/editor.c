@@ -1101,7 +1101,10 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       if (parser.lpRichEditOle)
         IRichEditOle_Release(parser.lpRichEditOle);
 
-      /* Remove last line break, as mandated by tests */
+      /* Remove last line break, as mandated by tests. This is not affected by
+         CR/LF counters, since RTF streaming presents only \para tokens, which
+         are converted according to the standard rules: \r for 2.0, \r\n for 1.0
+       */
       if (stripLastCR) {
         int newfrom, newto;
         ME_GetSelection(editor, &newfrom, &newto);
@@ -1213,6 +1216,21 @@ ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int
   } while (item && (item->member.run.nCharOfs + runLength <= nOffset));
   if (item) {
     nOffset -= item->member.run.nCharOfs;
+
+    /* Special case: nOffset may not point exactly at the division between the
+       \r and the \n in 1.0 emulation. If such a case happens, it is sent
+       into the next run, if one exists
+     */
+    if (   item->member.run.nFlags & MERF_ENDPARA
+        && nOffset == item->member.run.nCR
+        && item->member.run.nLF > 0) {
+      ME_DisplayItem *nextItem;
+      nextItem = ME_FindItemFwd(item, diRun);
+      if (nextItem) {
+        nOffset = 0;
+        item = nextItem;
+      }
+    }
     if (nItemOffset)
       *nItemOffset = nOffset;
   }
@@ -2487,6 +2505,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     GETTEXTLENGTHEX how;
 
+    /* CR/LF conversion required in 2.0 mode, verbatim in 1.0 mode */
     how.flags = GTL_CLOSE | (editor->bEmulateVersion10 ? 0 : GTL_USECRLF) | GTL_NUMCHARS;
     how.codepage = unicode ? 1200 : CP_ACP;
     return ME_GetTextLengthEx(editor, &how);
@@ -2552,7 +2571,10 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     else
     {
       /* potentially each char may be a CR, why calculate the exact value with O(N) when
-        we can just take a bigger buffer? :) */
+        we can just take a bigger buffer? :)
+        The above assumption still holds with CR/LF counters, since CR->CRLF expansion
+        occurs only in richedit 2.0 mode, in which line breaks have only one CR
+       */
       int crlfmul = (ex->flags & GT_USECRLF) ? 2 : 1;
       LPWSTR buffer;
       DWORD buflen = ex->cb;
