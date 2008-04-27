@@ -438,6 +438,57 @@ static void test_EM_SETCHARFORMAT(void)
              (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
 
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+             (LPARAM) &cf2);
+
+  /* Test state of modify flag before and after valid EM_SETCHARFORMAT */
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+             (LPARAM) &cf2);
+  cf2.dwMask = CFM_ITALIC | cf2.dwMask;
+  cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
+
+  /* wParam==0 is default char format, does not set modify */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, 0, (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+
+  /* wParam==SCF_SELECTION sets modify if nonempty selection */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+  SendMessage(hwndRichEdit, EM_SETSEL, 0, 2);
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == -1, "Text not marked as modified, expected modified! (%d)\n", rc);
+
+  /* wParam==SCF_ALL sets modify regardless of whether text is present */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+  rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
+  ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == -1, "Text not marked as modified, expected modified! (%d)\n", rc);
+
   DestroyWindow(hwndRichEdit);
 }
 
@@ -472,10 +523,17 @@ static void test_EM_SETTEXTMODE(void)
   cf2.dwMask = CFM_ITALIC | cf2.dwMask;
   cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
 
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+
   /*EM_SETCHARFORMAT is not yet fully implemented for all WPARAMs in wine;
   however, SCF_ALL has been implemented*/
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+
+  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+  ok(rc == -1, "Text not marked as modified, expected modified! (%d)\n", rc);
+
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "wine");
 
   /*Select the string "wine"*/

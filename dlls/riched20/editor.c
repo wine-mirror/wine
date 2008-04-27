@@ -2206,7 +2206,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return lColor;
   }
   case EM_GETMODIFY:
-    return editor->nModifyStep == 0 ? 0 : 1;
+    return editor->nModifyStep == 0 ? 0 : -1;
   case EM_SETMODIFY:
   {
     if (wParam)
@@ -2249,8 +2249,10 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     } else if (wParam == SCF_ALL) {
       if (editor->mode & TM_PLAINTEXT)
         ME_SetDefaultCharFormat(editor, p);
-      else
+      else {
         ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), p);
+        editor->nModifyStep = 1;
+      }
     } else if (editor->mode & TM_PLAINTEXT) {
       return 0;
     } else {
@@ -2258,8 +2260,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       ME_GetSelection(editor, &from, &to);
       bRepaint = (from != to);
       ME_SetSelectionCharFormat(editor, p);
+      if (from != to) editor->nModifyStep = 1;
     }
-    editor->nModifyStep = 1;
     ME_CommitUndo(editor);
     if (bRepaint)
       ME_RewrapRepaint(editor);
