@@ -753,6 +753,67 @@ static void test_WM_GETTEXT(void)
     DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_GETTEXTRANGE(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    const char * text1 = "foo bar\r\nfoo bar";
+    const char * text2 = "foo bar\rfoo bar";
+    const char * expect = "bar\rfoo";
+    char buffer[1024] = {0};
+    LRESULT result;
+    TEXTRANGEA textRange;
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
+
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 4;
+    textRange.chrg.cpMax = 11;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
+        result, strlen(expect));
+    ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
+
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 4;
+    textRange.chrg.cpMax = 11;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
+        result, strlen(expect));
+    ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    DestroyWindow(hwndRichEdit);
+}
+
+static void test_EM_GETSELTEXT(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    const char * text1 = "foo bar\r\nfoo bar";
+    const char * text2 = "foo bar\rfoo bar";
+    const char * expect = "bar\rfoo";
+    char buffer[1024] = {0};
+    LRESULT result;
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
+
+    SendMessage(hwndRichEdit, EM_SETSEL, 4, 11);
+    result = SendMessage(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
+        result, strlen(expect));
+    ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
+
+    SendMessage(hwndRichEdit, EM_SETSEL, 4, 11);
+    result = SendMessage(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
+        result, strlen(expect));
+    ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    DestroyWindow(hwndRichEdit);
+}
+
 /* FIXME: need to test unimplemented options and robustly test wparam */
 static void test_EM_SETOPTIONS(void)
 {
@@ -3028,6 +3089,8 @@ START_TEST( editor )
   test_TM_PLAINTEXT();
   test_EM_SETOPTIONS();
   test_WM_GETTEXT();
+  test_EM_GETTEXTRANGE();
+  test_EM_GETSELTEXT();
   test_EM_AUTOURLDETECT();
   test_EM_SETUNDOLIMIT();
   test_ES_PASSWORD();

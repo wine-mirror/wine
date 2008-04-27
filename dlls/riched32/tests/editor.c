@@ -464,6 +464,73 @@ static void test_EM_LINELENGTH(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_GETTEXTRANGE(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    const char * text1 = "foo bar\r\nfoo bar";
+    const char * text2 = "foo bar\rfoo bar";
+    const char * expect1 = "bar\r\nfoo";
+    const char * expect2 = "bar\rfoo";
+    char buffer[1024] = {0};
+    LRESULT result;
+    TEXTRANGEA textRange;
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
+
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 4;
+    textRange.chrg.cpMax = 12;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == 8, "EM_GETTEXTRANGE returned %ld, expected %d\n",
+        result, strlen(expect1));
+    ok(!strcmp(expect1, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
+
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 4;
+    textRange.chrg.cpMax = 11;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
+        result, strlen(expect2));
+    todo_wine {
+    ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+    }
+
+    DestroyWindow(hwndRichEdit);
+}
+
+static void test_EM_GETSELTEXT(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    const char * text1 = "foo bar\r\nfoo bar";
+    const char * text2 = "foo bar\rfoo bar";
+    const char * expect1 = "bar\r\nfoo";
+    const char * expect2 = "bar\rfoo";
+    char buffer[1024] = {0};
+    LRESULT result;
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
+
+    SendMessage(hwndRichEdit, EM_SETSEL, 4, 12);
+    result = SendMessage(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
+    ok(result == 8, "EM_GETTEXTRANGE returned %ld, expected %d\n",
+        result, strlen(expect1));
+    ok(!strcmp(expect1, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
+
+    SendMessage(hwndRichEdit, EM_SETSEL, 4, 11);
+    result = SendMessage(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
+        result, strlen(expect2));
+    todo_wine {
+    ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+    }
+
+    DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -475,6 +542,8 @@ START_TEST( editor )
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
 
   test_WM_SETTEXT();
+  test_EM_GETTEXTRANGE();
+  test_EM_GETSELTEXT();
   test_WM_GETTEXTLENGTH();
   test_EM_STREAMIN();
   test_EM_STREAMOUT();
