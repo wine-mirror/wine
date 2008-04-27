@@ -19,11 +19,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * TODO:
- * - IRunningObjectTable should work interprocess, but currently doesn't.
- *   Native (on Win2k at least) uses an undocumented RPC interface, IROT, to
- *   communicate with RPCSS which contains the table of marshalled data.
  */
 
 #include <stdarg.h>
@@ -974,9 +969,9 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize(void)
     /* initialize the virtual table function */
     runningObjectTableInstance->lpVtbl = &VT_RunningObjectTableImpl;
 
-    /* the initial reference is set to "1" ! because if set to "0" it will be not practis when */
-    /* the ROT referred many times not in the same time (all the objects in the ROT will  */
-    /* be removed every time the ROT is removed ) */
+    /* the initial reference is set to "1" so that it isn't destroyed after its
+     * first use until the process is destroyed, as the running object table is
+     * a process-wide cache of a global table */
     runningObjectTableInstance->ref = 1;
 
     list_init(&runningObjectTableInstance->rot);
