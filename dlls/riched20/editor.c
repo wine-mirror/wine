@@ -3376,6 +3376,9 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
     return 0;
   }
   
+  /* bCRLF flag is only honored in 2.0 and up. 1.0 must always return text verbatim */
+  if (editor->bEmulateVersion10) bCRLF = 0;
+
   if (nStart)
   {
     int nLen = ME_StrLen(item->member.run.strText) - nStart;
@@ -3394,6 +3397,8 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
   while(nChars && item)
   {
     int nLen = ME_StrLen(item->member.run.strText);
+    if (item->member.run.nFlags & MERF_ENDPARA)
+       nLen = item->member.run.nCR + item->member.run.nLF;
     if (nLen > nChars)
       nLen = nChars;
 
@@ -3406,16 +3411,30 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
         nLen = 0;
         nChars = 0;
       } else {
-        *buffer = '\r';
         if (bCRLF)
         {
-          *(++buffer) = '\n';
+          /* richedit 2.0 case - actual line-break is \r but should report \r\n */
+          assert(nLen == 1);
+          *buffer++ = '\r';
+          *buffer = '\n'; /* Later updated by nLen==1 at the end of the loop */
           nWritten++;
         }
-        assert(nLen == 1);
-        /* our end paragraph consists of 2 characters now */
-        if (editor->bEmulateVersion10)
-          nChars--;
+        else
+        {
+          int i, j;
+
+          /* richedit 2.0 verbatim has only \r. richedit 1.0 should honor encodings */
+          i = 0;
+          while (nChars - i > 0 && i < item->member.run.nCR)
+          {
+            buffer[i] = '\r'; i++;
+          }
+          j = 0;
+          while (nChars - i - j > 0 && j < item->member.run.nLF)
+          {
+            buffer[i+j] = '\n'; j++;
+          }
+        }
       }
     }
     else
