@@ -113,65 +113,91 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_hand
 /* This function takes care of WineD3D pixel format selection. */
 static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DFORMAT ColorFormat, WINED3DFORMAT DepthStencilFormat, BOOL auxBuffers, BOOL pbuffer, BOOL findCompatible)
 {
-    int iPixelFormat = 0;
-    int attribs[256];
-    int nAttribs = 0;
-    unsigned int nFormats;
+    int iPixelFormat=0;
     short redBits, greenBits, blueBits, alphaBits, colorBits;
     short depthBits=0, stencilBits=0;
-    BOOL result = FALSE;
 
-#define PUSH1(att)        attribs[nAttribs++] = (att);
-#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
+    int i = 0;
+    int nCfgs = This->adapter->nCfgs;
+    WineD3D_PixelFormat *cfgs = This->adapter->cfgs;
 
-    if(getColorBits(ColorFormat, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
-        PUSH2(WGL_COLOR_BITS_ARB, colorBits);
-        PUSH2(WGL_RED_BITS_ARB, redBits);
-        PUSH2(WGL_GREEN_BITS_ARB, greenBits);
-        PUSH2(WGL_BLUE_BITS_ARB, blueBits);
-        PUSH2(WGL_ALPHA_BITS_ARB, alphaBits);
-    } else {
+    if(!getColorBits(ColorFormat, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
         ERR("Unable to get color bits for format %s (%#x)!\n", debug_d3dformat(ColorFormat), ColorFormat);
         return 0;
     }
 
-    /* Request depth/stencil when we need it */
-    if(DepthStencilFormat && getDepthStencilBits(DepthStencilFormat, &depthBits, &stencilBits)) {
-        PUSH2(WGL_DEPTH_BITS_ARB, depthBits);
-        PUSH2(WGL_STENCIL_BITS_ARB, stencilBits);
+    if(DepthStencilFormat) {
+        getDepthStencilBits(DepthStencilFormat, &depthBits, &stencilBits);
     }
 
-    PUSH2(WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB); /* Make sure we don't get a float or color index format */
-    PUSH2(WGL_SUPPORT_OPENGL_ARB, GL_TRUE);
-    PUSH2(WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB); /* Make sure we receive an accelerated format. On windows (at least on ATI) this is not always the case */
+    /* Find a pixel format which EXACTLY matches our requirements (except for depth) */
+    for(i=0; i<nCfgs; i++) {
+        BOOL exactDepthMatch = TRUE;
 
-    if(auxBuffers) {
-        TRACE("Requesting 2 aux buffers\n");
-        /* We like to have two aux buffers in backbuffer mode */
-        PUSH2(WGL_AUX_BUFFERS_ARB, 2);
+        /* For now only accept RGBA formats. Perhaps some day we will
+         * allow floating point formats for pbuffers. */
+        if(cfgs->iPixelType != WGL_TYPE_RGBA_ARB)
+            continue;
 
-        PUSH2(WGL_DRAW_TO_WINDOW_ARB, GL_TRUE); /* We want to draw to a window */
-        PUSH2(WGL_DOUBLE_BUFFER_ARB, GL_TRUE);
-    } else if(pbuffer) {
-        PUSH2(WGL_DRAW_TO_PBUFFER_ARB, GL_TRUE); /* We need pbuffer support; doublebuffering isn't needed */
-    } else {
-        PUSH2(WGL_DRAW_TO_WINDOW_ARB, GL_TRUE); /* We want to draw to a window */
-        PUSH2(WGL_DOUBLE_BUFFER_ARB, GL_TRUE);
+        /* In all cases except when we are in pbuffer-mode we need a window drawable format with double buffering. */
+        if(!pbuffer && !cfgs->windowDrawable && !cfgs->doubleBuffer)
+            continue;
+
+        /* We like to have aux buffers in backbuffer mode */
+        if(auxBuffers && !cfgs->auxBuffers)
+            continue;
+
+        /* In pbuffer-mode we need a pbuffer-capable format */
+        if(pbuffer && !cfgs->pbufferDrawable)
+            continue;
+
+        if(cfgs->redSize != redBits)
+            continue;
+        if(cfgs->greenSize != greenBits)
+            continue;
+        if(cfgs->blueSize != blueBits)
+            continue;
+        if(cfgs->alphaSize != alphaBits)
+            continue;
+
+        /* We try to locate a format which matches our requirements exactly. In case of
+         * depth it is no problem to emulate 16-bit using e.g. 24-bit, so accept that. */
+        if(cfgs->depthSize < depthBits)
+            continue;
+        else if(cfgs->depthSize > depthBits)
+            exactDepthMatch = FALSE;
+
+        /* In all cases make sure the number of stencil bits matches our requirements
+         * even when we don't need stencil because it could affect performance */
+        if(!(cfgs->stencilSize == stencilBits))
+            continue;
+
+        /* When we have passed all the checks then we have found a format which matches our
+         * requirements. Note that we only check for a limit number of capabilities right now,
+         * so there can easily be a dozen of pixel formats which appear to be the 'same' but
+         * can still differ in things like multisampling, stereo, SRGB and other flags.
+         */
+
+        /* Exit the loop as we have found a format :) */
+        if(exactDepthMatch) {
+            iPixelFormat = cfgs->iPixelFormat;
+            break;
+        } else if(!iPixelFormat) {
+            /* In the end we might end up with a format which doesn't exactly match our depth
+             * requirements. Accept the first format we found because formats with higher iPixelFormat
+             * values tend to have more extended capabilities (e.g. multisampling) which we don't need. */
+            iPixelFormat = cfgs->iPixelFormat;
+        }
     }
 
-    PUSH1(0); /* end the list */
-
-#undef PUSH1
-#undef PUSH2
-
-    result = GL_EXTCALL(wglChoosePixelFormatARB(hdc, (const int*)&attribs, NULL, 1, &iPixelFormat, &nFormats));
-    if(!result && !findCompatible) {
+    /* When findCompatible is set and no suitable format was found, let ChoosePixelFormat choose a pixel format in order not to crash. */
+    if(!iPixelFormat && !findCompatible) {
         ERR("Can't find a suitable iPixelFormat\n");
         return FALSE;
     } else {
         PIXELFORMATDESCRIPTOR pfd;
 
-        TRACE("Falling back to ChoosePixelFormat as wglChoosePixelFormatARB failed\n");
+        TRACE("Falling back to ChoosePixelFormat as we weren't able to find an exactly matching pixel format\n");
         /* PixelFormat selection */
         ZeroMemory(&pfd, sizeof(pfd));
         pfd.nSize      = sizeof(pfd);
@@ -192,6 +218,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         }
     }
 
+    TRACE("Found iPixelFormat=%d for ColorFormat=%s, DepthStencilFormat=%s\n", cfgs->iPixelFormat, debug_d3dformat(ColorFormat), debug_d3dformat(DepthStencilFormat));
     return iPixelFormat;
 }
 
