@@ -6051,15 +6051,15 @@ static unsigned char *WINAPI NdrBaseTypeUnmarshall(
         { \
             *ppMemory = pStubMsg->Buffer; \
             TRACE("*ppMemory: %p\n", *ppMemory); \
+            safe_buffer_increment(pStubMsg, sizeof(type)); \
         } \
         else \
         {  \
             if (fMustAlloc) \
                 *ppMemory = NdrAllocate(pStubMsg, sizeof(type)); \
             TRACE("*ppMemory: %p\n", *ppMemory); \
-            **(type **)ppMemory = *(type *)pStubMsg->Buffer; \
-        } \
-	safe_buffer_increment(pStubMsg, sizeof(type));
+            safe_copy_from_buffer(pStubMsg, *ppMemory, sizeof(type)); \
+        }
 
     switch(*pFormat)
     {
