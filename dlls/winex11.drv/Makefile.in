@@ -13,7 +13,6 @@ C_SRCS = \
 	bitmap.c \
 	brush.c \
 	clipboard.c \
-	clipping.c \
 	codepage.c \
 	desktop.c \
 	dib.c \
