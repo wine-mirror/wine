@@ -237,13 +237,13 @@ static HRESULT WINAPI BaseMemAllocator_Commit(IMemAllocator * iface)
     {
         if (!This->pProps)
             hr = VFW_E_SIZENOTSET;
-        else if (This->bCommitted)
-            hr = S_OK;
-        else if (This->bDecommitQueued)
+        else if (This->bDecommitQueued && This->bCommitted)
         {
             This->bDecommitQueued = FALSE;
             hr = S_OK;
         }
+        else if (This->bCommitted)
+            hr = S_OK;
         else
         {
             if (!(This->hSemWaiting = CreateSemaphoreW(NULL, This->pProps->cBuffers, This->pProps->cBuffers, NULL)))

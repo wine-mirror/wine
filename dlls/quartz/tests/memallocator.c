@@ -37,13 +37,15 @@ static void CommitDecommitTest(void)
 
     if (hr == S_OK)
     {
-	ALLOCATOR_PROPERTIES RequestedProps;
-	ALLOCATOR_PROPERTIES ActualProps;
+        ALLOCATOR_PROPERTIES RequestedProps;
+        ALLOCATOR_PROPERTIES ActualProps;
 
-	RequestedProps.cBuffers = 1;
-	RequestedProps.cbBuffer = 65536;
-	RequestedProps.cbAlign = 1;
-	RequestedProps.cbPrefix = 0;
+        IMediaSample *sample = NULL, *sample2 = NULL;
+
+        RequestedProps.cBuffers = 2;
+        RequestedProps.cbBuffer = 65536;
+        RequestedProps.cbAlign = 1;
+        RequestedProps.cbPrefix = 0;
 
 	hr = IMemAllocator_SetProperties(pMemAllocator, &RequestedProps, &ActualProps);
 	ok(hr==S_OK, "SetProperties returned: %x\n", hr);
@@ -53,12 +55,30 @@ static void CommitDecommitTest(void)
 	hr = IMemAllocator_Commit(pMemAllocator);
 	ok(hr==S_OK, "Commit returned: %x\n", hr);
 
+        hr = IMemAllocator_GetBuffer(pMemAllocator, &sample, NULL, NULL, 0);
+        ok(hr==S_OK, "Could not get a buffer: %x\n", hr);
+
 	hr = IMemAllocator_Decommit(pMemAllocator);
 	ok(hr==S_OK, "Decommit returned: %x\n", hr);
 	hr = IMemAllocator_Decommit(pMemAllocator);
 	ok(hr==S_OK, "Cecommit returned: %x\n", hr);
 
-	IMemAllocator_Release(pMemAllocator);
+        /* Decommit and recommit while holding a sample */
+        if (sample)
+        {
+            hr = IMemAllocator_Commit(pMemAllocator);
+            ok(hr==S_OK, "Commit returned: %x\n", hr);
+
+            hr = IMemAllocator_GetBuffer(pMemAllocator, &sample2, NULL, NULL, 0);
+            ok(hr==S_OK, "Could not get a buffer: %x\n", hr);
+            IUnknown_Release(sample);
+            if (sample2)
+                IUnknown_Release(sample2);
+
+            hr = IMemAllocator_Decommit(pMemAllocator);
+            ok(hr==S_OK, "Cecommit returned: %x\n", hr);
+        }
+        IMemAllocator_Release(pMemAllocator);
     }
 }
 
