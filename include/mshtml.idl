@@ -9633,6 +9633,76 @@ coclass HTMLDocument
 }
 
 /*****************************************************************************
+ *    IHTMLCommentElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f20c-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLCommentElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLCOMMENTELEMENT_TEXT), displaybind, bindable]
+    HRESULT text([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLCOMMENTELEMENT_TEXT), displaybind, bindable]
+    HRESULT text([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLCOMMENTELEMENT_ATOMIC), displaybind, bindable]
+    HRESULT atomic([in] long v);
+
+    [propget, id(DISPID_IHTMLCOMMENTELEMENT_ATOMIC), displaybind, bindable]
+    HRESULT atomic([out, retval] long *p);
+}
+
+/*****************************************************************************
+ *    IHTMLCommentElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f813-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLCommentElement2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLCOMMENTELEMENT2_DATA)]
+    HRESULT data([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLCOMMENTELEMENT2_DATA)]
+    HRESULT data([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCOMMENTELEMENT2_LENGTH)]
+    HRESULT length([out, retval] long *p);
+
+    [id(DISPID_IHTMLCOMMENTELEMENT2_SUBSTRINGDATA)]
+    HRESULT substringData(
+            [in] long offset,
+            [in] long Count,
+            [out, retval] BSTR *pbstrsubString);
+
+    [id(DISPID_IHTMLCOMMENTELEMENT2_APPENDDATA)]
+    HRESULT appendData([in] BSTR bstrstring);
+
+    [id(DISPID_IHTMLCOMMENTELEMENT2_INSERTDATA)]
+    HRESULT insertData(
+            [in] long offset,
+            [in] BSTR bstrstring);
+
+    [id(DISPID_IHTMLCOMMENTELEMENT2_DELETEDATA)]
+    HRESULT deleteData(
+            [in] long offset,
+            [in] long Count);
+
+    [id(DISPID_IHTMLCOMMENTELEMENT2_REPLACEDATA)]
+    HRESULT replaceData(
+            [in] long offset,
+            [in] long Count,
+            [in] BSTR bstrstring);
+}
+
+/*****************************************************************************
  *    HTMLTableEvents dispinterface
  */
 [
