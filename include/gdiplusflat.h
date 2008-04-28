@@ -343,6 +343,9 @@ GpStatus WINGDIPAPI GdipSetStringFormatLineAlign(GpStringFormat*,StringAlignment
 GpStatus WINGDIPAPI GdipSetStringFormatTrimming(GpStringFormat*,StringTrimming);
 GpStatus WINGDIPAPI GdipCloneStringFormat(GDIPCONST GpStringFormat*,GpStringFormat**);
 
+GpStatus WINGDIPAPI GdipGetDpiX(GpGraphics*,REAL*);
+GpStatus WINGDIPAPI GdipGetDpiY(GpGraphics*,REAL*);
+
 #ifdef __cplusplus
 }
 #endif

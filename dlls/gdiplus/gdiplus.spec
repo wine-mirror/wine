@@ -256,8 +256,8 @@
 @ stub GdipGetCustomLineCapType
 @ stub GdipGetCustomLineCapWidthScale
 @ stub GdipGetDC
-@ stub GdipGetDpiX
-@ stub GdipGetDpiY
+@ stdcall GdipGetDpiX(ptr ptr)
+@ stdcall GdipGetDpiY(ptr ptr)
 @ stub GdipGetEffectParameterSize
 @ stub GdipGetEffectParameters
 @ stub GdipGetEmHeight

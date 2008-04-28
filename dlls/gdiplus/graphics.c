@@ -2398,3 +2398,23 @@ GpStatus WINGDIPAPI GdipDrawPolygonI(GpGraphics *graphics,GpPen *pen,GDIPCONST G
 
     return ret;
 }
+
+GpStatus WINGDIPAPI GdipGetDpiX(GpGraphics *graphics, REAL* dpi)
+{
+    if(!graphics || !dpi)
+        return InvalidParameter;
+
+    *dpi = (REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetDpiY(GpGraphics *graphics, REAL* dpi)
+{
+    if(!graphics || !dpi)
+        return InvalidParameter;
+
+    *dpi = (REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSY);
+
+    return Ok;
+}
