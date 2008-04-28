@@ -217,8 +217,8 @@
 @ stub GdipFillClosedCurve2I
 @ stub GdipFillClosedCurve
 @ stub GdipFillClosedCurveI
-@ stub GdipFillEllipse
-@ stub GdipFillEllipseI
+@ stdcall GdipFillEllipse(ptr ptr long long long long)
+@ stdcall GdipFillEllipseI(ptr ptr long long long long)
 @ stdcall GdipFillPath(ptr ptr ptr)
 @ stdcall GdipFillPie(ptr ptr long long long long long long)
 @ stdcall GdipFillPieI(ptr ptr long long long long long long)

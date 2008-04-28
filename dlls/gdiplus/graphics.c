@@ -1682,6 +1682,41 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x,
+    REAL y, REAL width, REAL height)
+{
+    INT save_state;
+    GpPointF ptf[2];
+    POINT pti[2];
+
+    if(!graphics || !brush)
+        return InvalidParameter;
+
+    ptf[0].X = x;
+    ptf[0].Y = y;
+    ptf[1].X = x + width;
+    ptf[1].Y = y + height;
+
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+    SelectObject(graphics->hdc, brush->gdibrush);
+    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
+
+    transform_and_round_points(graphics, pti, ptf, 2);
+
+    Ellipse(graphics->hdc, pti[0].x, pti[0].y, pti[1].x, pti[1].y);
+
+    RestoreDC(graphics->hdc, save_state);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipFillEllipseI(GpGraphics *graphics, GpBrush *brush, INT x,
+    INT y, INT width, INT height)
+{
+    return GdipFillEllipse(graphics,brush,(REAL)x,(REAL)y,(REAL)width,(REAL)height);
+}
+
 GpStatus WINGDIPAPI GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *path)
 {
     INT save_state;
