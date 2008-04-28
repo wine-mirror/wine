@@ -294,20 +294,31 @@ static void CRYPT_CreateMachineGuid(void)
 			if (lib)
 			{
 				RPC_STATUS (RPC_ENTRY *pUuidCreate)(UUID *);
-				RPC_STATUS (RPC_ENTRY *pUuidToString)(UUID *, WCHAR **);
-				RPC_STATUS (RPC_ENTRY *pRpcStringFree)(WCHAR **);
 				UUID uuid;
-				WCHAR *uuidStr;
+                                WCHAR buf[37];
+                                RPC_STATUS rs;
+                                static const WCHAR uuidFmt[] = {
+                                    '%','0','8','x','-','%','0','4','x','-',
+                                    '%','0','4','x','-','%','0','2','x',
+                                    '%','0','2','x','-','%','0','2','x',
+                                    '%','0','2','x','%','0','2','x',
+                                    '%','0','2','x','%','0','2','x',
+                                    '%','0','2','x',0 };
 
 				pUuidCreate = GetProcAddress(lib, "UuidCreate");
-				pUuidToString = GetProcAddress(lib, "UuidToStringW");
-				pRpcStringFree = GetProcAddress(lib, "RpcStringFreeW");
-				pUuidCreate(&uuid);
-				pUuidToString(&uuid, &uuidStr);
-				RegSetValueExW(key, machineGuidW, 0, REG_SZ,
-					       (const BYTE *)uuidStr,
-					       (lstrlenW(uuidStr)+1)*sizeof(WCHAR));
-				pRpcStringFree(&uuidStr);
+                                rs = pUuidCreate(&uuid);
+                                if (rs == S_OK)
+                                {
+                                    sprintfW(buf, uuidFmt,
+                                             uuid.Data1, uuid.Data2, uuid.Data3,
+                                             uuid.Data4[0], uuid.Data4[1],
+                                             uuid.Data4[2], uuid.Data4[3],
+                                             uuid.Data4[4], uuid.Data4[5],
+                                             uuid.Data4[6], uuid.Data4[7] );
+                                    RegSetValueExW(key, machineGuidW, 0, REG_SZ,
+                                                   (const BYTE *)buf,
+                                                   (lstrlenW(buf)+1)*sizeof(WCHAR));
+                                }
 				FreeLibrary(lib);
 			}
 		}
