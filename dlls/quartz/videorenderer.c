@@ -85,6 +85,7 @@ typedef struct VideoRendererImpl
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
+    REFERENCE_TIME rtLastStop;
 } VideoRendererImpl;
 
 static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -361,9 +362,26 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 
     TRACE("%p %p\n", iface, pSample);
 
+    hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
+    if (FAILED(hr))
+        ERR("Cannot get sample time (%x)\n", hr);
+
+    if (This->rtLastStop != tStart)
+    {
+        if (IMediaSample_IsDiscontinuity(pSample) == S_FALSE)
+            ERR("Unexpected discontinuity: Last: %u.%03u, tStart: %u.%03u\n",
+                (DWORD)(This->rtLastStop / 10000000),
+                (DWORD)((This->rtLastStop / 10000)%1000),
+                (DWORD)(tStart / 10000000), (DWORD)((tStart / 10000)%1000));
+        This->rtLastStop = tStart;
+    }
+
     /* Preroll means the sample isn't shown, this is used for key frames and things like that */
     if (IMediaSample_IsPreroll(pSample) == S_OK)
+    {
+        This->rtLastStop = tStop;
         return S_OK;
+    }
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
@@ -371,10 +389,6 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
         ERR("Cannot get pointer to sample data (%x)\n", hr);
         return hr;
     }
-
-    hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
-    if (FAILED(hr))
-        ERR("Cannot get sample time (%x)\n", hr);
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
@@ -392,6 +406,37 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
         TRACE("\n");
     }
 #endif
+
+    if (This->pClock && This->state == State_Running)
+    {
+        REFERENCE_TIME time, trefstart, trefstop;
+        LONG delta;
+
+        /* Perhaps I <SHOULD> use the reference clock AdviseTime function here
+         * I'm not going to! When I tried, it seemed to generate lag and
+         * it caused instability.
+         */
+        IReferenceClock_GetTime(This->pClock, &time);
+
+        trefstart = This->rtStreamStart;
+        trefstop = (REFERENCE_TIME)((double)(tStop - tStart) / This->pInputPin->dRate) + This->rtStreamStart;
+        delta = (LONG)((trefstart-time)/10000);
+        This->rtStreamStart = trefstop;
+        This->rtLastStop = tStop;
+
+        if (delta > 0)
+        {
+            TRACE("Sleeping for %u ms\n", delta);
+            Sleep(delta);
+        }
+        else if (time > trefstop)
+        {
+            TRACE("Dropping sample: Time: %lld ms trefstop: %lld ms!\n", time/10000, trefstop/10000);
+            This->rtLastStop = tStop;
+            return S_OK;
+        }
+    }
+    This->rtLastStop = tStop;
 
     VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
 
@@ -464,6 +509,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pVideoRenderer->pClock = NULL;
     pVideoRenderer->init = 0;
     pVideoRenderer->AutoShow = 1;
+    pVideoRenderer->rtLastStop = -1;
     ZeroMemory(&pVideoRenderer->filterInfo, sizeof(FILTER_INFO));
 
     /* construct input pin */
