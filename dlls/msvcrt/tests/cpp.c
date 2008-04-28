@@ -984,7 +984,7 @@ static void test_demangle(void)
 {"?$AAA@$DBAB@", "AAA<`template-parameter257'>"},
 {"?$AAA@?C@", "AAA<`template-parameter-2'>"},
 {"?$AAA@PAUBBB@@", "AAA<struct BBB *>"},
-{"??$ccccc@PAVaaa@@@bar@bb@foo@@DGPAV0@PAV0@PAVee@@IPAPAVaaa@@1@Z", "private: static class bar * __stdcall foo::bb::bar::ccccc<class aaa *>(class bar *,class ee *,unsigned int,class aaa **,class ee *)"},
+{"??$ccccc@PAVaaa@@@bar@bb@foo@@DGPAV0@PAV0@PAVee@@IPAPAVaaa@@1@Z", "private: static class bar * __stdcall foo::bb::bar::ccccc<class aaa *>(class bar *,class ee *,unsigned int,class aaa * *,class ee *)"},
 {"?f@T@@QAEHQCY1BE@BO@D@Z", "public: int __thiscall T::f(char (volatile * const)[20][30])"},
 {"?f@T@@QAEHQAY2BE@BO@CI@D@Z", "public: int __thiscall T::f(char (* const)[20][30][40])"},
 {"?f@T@@QAEHQAY1BE@BO@$$CBD@Z", "public: int __thiscall T::f(char const (* const)[20][30])"},

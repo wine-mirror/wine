@@ -410,7 +410,7 @@ static BOOL get_modifier(char ch, const char** ret)
 }
 
 static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
-                              struct array *pmt_ref, char modif)
+                              struct array *pmt_ref, char modif, BOOL in_args)
 {
     const char* modifier;
     const char* str_modif;
@@ -465,7 +465,7 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
         else
         {
             /* don't insert a space between duplicate '*' */
-            if (str_modif[0] && str_modif[1] == '*' && sub_ct.left[strlen(sub_ct.left)-1] == '*')
+            if (!in_args && str_modif[0] && str_modif[1] == '*' && sub_ct.left[strlen(sub_ct.left)-1] == '*')
                 str_modif++;
             ct->left = str_printf(sym, "%s%s", sub_ct.left, str_modif );
         }
@@ -793,17 +793,17 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
         }
         else
         {
-            if (!get_modified_type(ct, sym, pmt_ref, '?')) goto done;
+            if (!get_modified_type(ct, sym, pmt_ref, '?', in_args)) goto done;
         }
         break;
     case 'A': /* reference */
     case 'B': /* volatile reference */
-        if (!get_modified_type(ct, sym, pmt_ref, dt)) goto done;
+        if (!get_modified_type(ct, sym, pmt_ref, dt, in_args)) goto done;
         break;
     case 'Q': /* const pointer */
     case 'R': /* volatile pointer */
     case 'S': /* const volatile pointer */
-        if (!get_modified_type(ct, sym, pmt_ref, in_args ? dt : 'P')) goto done;
+        if (!get_modified_type(ct, sym, pmt_ref, in_args ? dt : 'P', in_args)) goto done;
         break;
     case 'P': /* Pointer */
         if (isdigit(*sym->current))
@@ -833,7 +833,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
             }
             else goto done;
 	}
-	else if (!get_modified_type(ct, sym, pmt_ref, 'P')) goto done;
+	else if (!get_modified_type(ct, sym, pmt_ref, 'P', in_args)) goto done;
         break;
     case 'W':
         if (*sym->current == '4')
