@@ -315,8 +315,9 @@ void DC_UpdateXforms( DC *dc )
 
     /* Reselect the font and pen back into the dc so that the size
        gets updated. */
-    if (oldworld2vport.eM11 != dc->xformWorld2Vport.eM11 ||
-        oldworld2vport.eM22 != dc->xformWorld2Vport.eM22)
+    if ((oldworld2vport.eM11 != dc->xformWorld2Vport.eM11 ||
+         oldworld2vport.eM22 != dc->xformWorld2Vport.eM22) &&
+         !GdiIsMetaFileDC(dc->hSelf))
     {
         SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
         SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_PEN));
