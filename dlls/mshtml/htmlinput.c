@@ -223,8 +223,14 @@ static HRESULT WINAPI HTMLInputElement_put_disabled(IHTMLInputElement *iface, VA
 static HRESULT WINAPI HTMLInputElement_get_disabled(IHTMLInputElement *iface, VARIANT_BOOL *p)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRBool disabled = FALSE;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsIDOMHTMLInputElement_GetDisabled(This->nsinput, &disabled);
+
+    *p = disabled ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLFormElement **p)

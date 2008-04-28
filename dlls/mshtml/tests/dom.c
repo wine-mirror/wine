@@ -40,7 +40,8 @@ static const char range_test2_str[] =
     "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
-    "<body>text test<a href=\"http://test\" name=\"x\">link</a><input />"
+    "<body>text test<a href=\"http://test\" name=\"x\">link</a>"
+    "<input id=\"in\" />"
     "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
@@ -783,6 +784,17 @@ static long _get_node_type(unsigned line, IUnknown *unk)
     return type;
 }
 
+#define test_input_get_disabled(i,b) _test_input_get_disabled(__LINE__,i,b)
+static void _test_input_get_disabled(unsigned line, IHTMLInputElement *input, VARIANT_BOOL exb)
+{
+    VARIANT_BOOL disabled = 100;
+    HRESULT hres;
+
+    hres = IHTMLInputElement_get_disabled(input, &disabled);
+    ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
+    ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -1429,6 +1441,7 @@ static void test_elems(IHTMLDocument2 *doc)
     long type;
     HRESULT hres;
 
+    static const WCHAR inW[] = {'i','n',0};
     static const WCHAR xW[] = {'x',0};
     static const WCHAR sW[] = {'s',0};
     static const WCHAR scW[] = {'s','c',0};
@@ -1526,6 +1539,19 @@ static void test_elems(IHTMLDocument2 *doc)
         SysFreeString(type);
 
         IHTMLScriptElement_Release(script);
+    }
+
+    elem = get_elem_by_id(doc, inW, TRUE);
+    if(elem) {
+        IHTMLInputElement *input;
+
+        hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLInputElement, (void**)&input);
+        ok(hres == S_OK, "Could not get IHTMLInputElement: %08x\n", hres);
+
+        test_input_get_disabled(input, VARIANT_FALSE);
+
+        IHTMLInputElement_Release(input);
+        IHTMLElement_Release(elem);
     }
 
     hres = IHTMLDocument2_get_body(doc, &elem);
