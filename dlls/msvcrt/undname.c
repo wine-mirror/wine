@@ -759,7 +759,16 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
         break;
     case '?':
         /* not all the time is seems */
-        if (!get_modified_type(ct, sym, pmt_ref, '?')) goto done;
+        if (in_args)
+        {
+            const char*   ptr;
+            if (!(ptr = get_number(sym))) goto done;
+            ct->left = str_printf(sym, "`template-parameter-%s'", ptr);
+        }
+        else
+        {
+            if (!get_modified_type(ct, sym, pmt_ref, '?')) goto done;
+        }
         break;
     case 'A': /* reference */
     case 'B': /* volatile reference */
