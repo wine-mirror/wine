@@ -24,6 +24,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "msvcrt.h"
 
 #include "wine/debug.h"
@@ -430,6 +431,31 @@ static BOOL get_modified_type(struct datatype_t *ct, struct parsed_symbol* sym,
     {
         unsigned            mark = sym->stack.num;
         struct datatype_t   sub_ct;
+
+        /* multidimensional arrays */
+        if (*sym->current == 'Y')
+        {
+            const char* n1;
+            int num;
+
+            sym->current++;
+            if (!(n1 = get_number(sym))) return FALSE;
+            num = atoi(n1);
+
+            if (str_modif[0] == ' ' && !modifier)
+                str_modif++;
+
+            if (modifier)
+            {
+                str_modif = str_printf(sym, " (%s%s)", modifier, str_modif);
+                modifier = NULL;
+            }
+            else
+                str_modif = str_printf(sym, " (%s)", str_modif);
+
+            while (num--)
+                str_modif = str_printf(sym, "%s[%s]", str_modif, get_number(sym));
+        }
 
         /* Recurse to get the referred-to type */
         if (!demangle_datatype(sym, &sub_ct, pmt_ref, FALSE))
@@ -870,6 +896,17 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 const char*   ptr;
                 if (!(ptr = get_number(sym))) goto done;
                 ct->left = str_printf(sym, "`non-type-template-parameter%s'", ptr);
+            }
+            break;
+        case '$':
+            if (*sym->current == 'C')
+            {
+                const char*   ptr;
+
+                sym->current++;
+                if (!get_modifier(*sym->current++, &ptr)) goto done;
+                if (!demangle_datatype(sym, ct, pmt_ref, in_args)) goto done;
+                ct->left = str_printf(sym, "%s %s", ct->left, ptr);
             }
             break;
         }
