@@ -301,6 +301,7 @@ static const IOmNavigatorVtbl OmNavigatorVtbl = {
 };
 
 static dispex_static_data_t OmNavigator_dispex = {
+    NULL,
     IOmNavigator_tid,
     NULL,
     {

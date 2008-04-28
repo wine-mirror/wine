@@ -186,6 +186,7 @@ static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
 };
 
 static dispex_static_data_t HTMLDOMTextNode_dispex = {
+    NULL,
     DispHTMLDOMTextNode_tid,
     0,
     {

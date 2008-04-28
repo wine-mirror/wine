@@ -1491,6 +1491,7 @@ static const IDispatchExVtbl DocDispatchExVtbl = {
 };
 
 static dispex_static_data_t HTMLDocument_dispex = {
+    NULL,
     DispHTMLDocument_tid,
     NULL,
     {

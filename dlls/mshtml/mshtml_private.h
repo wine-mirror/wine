@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Jacek Caban for CodeWeavers
+ * Copyright 2005-2008 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -84,7 +84,16 @@ typedef enum {
 
 typedef struct dispex_data_t dispex_data_t;
 
+#define MSHTML_DISPID_CUSTOM_MIN 0x60000000
+#define MSHTML_DISPID_CUSTOM_MAX 0x6fffffff
+
 typedef struct {
+    HRESULT (*get_dispid)(IUnknown*,BSTR,DWORD,DISPID*);
+    HRESULT (*invoke)(IUnknown*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
+} dispex_static_data_vtbl_t;
+
+typedef struct {
+    const dispex_static_data_vtbl_t *vtbl;
     const tid_t disp_tid;
     dispex_data_t *data;
     const tid_t iface_tids[];

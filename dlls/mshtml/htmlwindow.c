@@ -1108,6 +1108,7 @@ static const IDispatchExVtbl WindowDispExVtbl = {
 };
 
 static dispex_static_data_t HTMLWindow_dispex = {
+    NULL,
     DispHTMLWindow2_tid,
     NULL,
     {

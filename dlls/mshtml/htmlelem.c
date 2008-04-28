@@ -1283,6 +1283,7 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
 };
 
 static dispex_static_data_t HTMLElement_dispex = {
+    NULL,
     DispHTMLUnknownElement_tid,
     NULL,
     {
@@ -1669,6 +1670,7 @@ static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
 };
 
 static dispex_static_data_t HTMLElementCollection_dispex = {
+    NULL,
     DispHTMLElementCollection_tid,
     NULL,
     {

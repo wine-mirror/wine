@@ -277,6 +277,11 @@ void call_disp_func(HTMLDocument *doc, IDispatch *disp)
     VariantClear(&res);
 }
 
+static inline BOOL is_custom_dispid(DISPID id)
+{
+    return MSHTML_DISPID_CUSTOM_MIN <= id && id <= MSHTML_DISPID_CUSTOM_MAX;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -395,6 +400,14 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
             min = n+1;
     }
 
+    if(This->data->vtbl && This->data->vtbl->get_dispid) {
+        HRESULT hres;
+
+        hres = This->data->vtbl->get_dispid(This->outer, bstrName, grfdex, pid);
+        if(hres != DISP_E_UNKNOWNNAME)
+            return hres;
+    }
+
     TRACE("not found %s\n", debugstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
 }
@@ -411,6 +424,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     HRESULT hres;
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    if(is_custom_dispid(id) && This->data->vtbl && This->data->vtbl->invoke)
+        return This->data->vtbl->invoke(This->outer, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     if(wFlags == DISPATCH_CONSTRUCT) {
         FIXME("DISPATCH_CONSTRUCT not implemented\n");
