@@ -1059,6 +1059,20 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_destructor
 };
 
+static dispex_static_data_t HTMLInputElement_dispex = {
+    NULL,
+    DispHTMLInputElement_tid,
+    NULL,
+    {
+        IHTMLDOMNode_tid,
+        IHTMLDOMNode2_tid,
+        IHTMLElement_tid,
+        IHTMLElement2_tid,
+        IHTMLInputElement_tid,
+        0
+    }
+};
+
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLInputElement *ret = heap_alloc_zero(sizeof(HTMLInputElement));
@@ -1068,6 +1082,8 @@ HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)
 
     ret->lpHTMLInputElementVtbl = &HTMLInputElementVtbl;
     ret->element.node.vtbl = &HTMLInputElementImplVtbl;
+
+    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLINPUT(ret), &HTMLInputElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement,
                                              (void**)&ret->nsinput);
