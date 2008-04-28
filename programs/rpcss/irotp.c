@@ -137,23 +137,13 @@ HRESULT IrotRegister(
         }
     }
 
-    if (hr == S_OK)
-    {
-        list_add_tail(&RunningObjectTable, &rot_entry->entry);
-        /* gives a registration identifier to the registered object*/
-        *cookie = rot_entry->cookie = InterlockedIncrement(&last_cookie);
-        *ctxt_handle = rot_entry;
-    }
-    else
-    {
-        rot_entry_release(rot_entry);
-        *cookie = existing_rot_entry->cookie;
-        InterlockedIncrement(&existing_rot_entry->refs);
-        *ctxt_handle = existing_rot_entry;
-    }
-
+    list_add_tail(&RunningObjectTable, &rot_entry->entry);
 
     LeaveCriticalSection(&csRunningObjectTable);
+
+    /* gives a registration identifier to the registered object*/
+    *cookie = rot_entry->cookie = InterlockedIncrement(&last_cookie);
+    *ctxt_handle = rot_entry;
 
     return hr;
 }

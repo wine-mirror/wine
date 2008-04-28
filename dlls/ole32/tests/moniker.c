@@ -690,7 +690,6 @@ static void test_ROT_multiple_entries(void)
     hr = IRunningObjectTable_Register(pROT, 0, (IUnknown *)&Test_ClassFactory, pMoniker, &dwCookie2);
     ok(hr == MK_S_MONIKERALREADYREGISTERED, "IRunningObjectTable_Register should have returned MK_S_MONIKERALREADYREGISTERED instead of 0x%08x\n", hr);
 
-    todo_wine
     ok(dwCookie1 != dwCookie2, "cookie returned for registering duplicate object shouldn't match cookie of original object (0x%x)\n", dwCookie1);
 
     hr = IRunningObjectTable_GetObject(pROT, pMoniker, &pObject);
