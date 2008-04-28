@@ -193,8 +193,14 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
         /* close all opened MCI drivers */
         MCI_SendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0L, TRUE);
         MMDRV_Exit();
-        /* now unload all remaining drivers... */
-        DRIVER_UnloadAll();
+        /* There's no guarantee the drivers haven't already been unloaded on
+         * process shutdown.
+         */
+        if (!fImpLoad)
+        {
+            /* now unload all remaining drivers... */
+            DRIVER_UnloadAll();
+        }
 
 	WINMM_DeleteIData();
 	break;
