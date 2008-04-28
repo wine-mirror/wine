@@ -1651,6 +1651,51 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
     return S_OK;
 }
 
+#define DISPID_ELEMCOL_0 MSHTML_DISPID_CUSTOM_MIN
+
+static HRESULT HTMLElementCollection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+{
+    HTMLElementCollection *This = ELEMCOL_THIS(iface);
+    WCHAR *ptr;
+    DWORD idx=0;
+
+    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+        idx = idx*10 + (*ptr-'0');
+
+    if(*ptr || idx >= This->len)
+        return DISP_E_UNKNOWNNAME;
+
+    *dispid = DISPID_ELEMCOL_0 + idx;
+    TRACE("ret %x\n", *dispid);
+    return S_OK;
+}
+
+static HRESULT HTMLElementCollection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLElementCollection *This = ELEMCOL_THIS(iface);
+    DWORD idx;
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
+
+    idx = id - DISPID_ELEMCOL_0;
+    if(idx >= This->len)
+        return DISP_E_UNKNOWNNAME;
+
+    switch(flags) {
+    case INVOKE_PROPERTYGET:
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = (IDispatch*)HTMLELEM(This->elems[idx]);
+        IHTMLElement_AddRef(HTMLELEM(This->elems[idx]));
+        break;
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 #undef ELEMCOL_THIS
 
 static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
@@ -1669,8 +1714,13 @@ static const IHTMLElementCollectionVtbl HTMLElementCollectionVtbl = {
     HTMLElementCollection_tags
 };
 
+static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
+    HTMLElementCollection_get_dispid,
+    HTMLElementCollection_invoke
+};
+
 static dispex_static_data_t HTMLElementCollection_dispex = {
-    NULL,
+    &HTMLElementColection_dispex_vtbl,
     DispHTMLElementCollection_tid,
     NULL,
     {
