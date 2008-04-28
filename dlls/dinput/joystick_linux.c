@@ -271,6 +271,9 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
 {
     char buffer[MAX_PATH+16];
     HKEY hkey, appkey;
+    int tokens = 0;
+    int axis = 0;
+    int pov = 0;
 
     buffer[MAX_PATH]='\0';
 
@@ -283,17 +286,13 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
         TRACE("setting default deadzone to: \"%s\" %d\n", buffer, device->deadzone);
     }
 
+    device->axis_map = HeapAlloc(GetProcessHeap(), 0, device->axes * sizeof(int));
+    if (!device->axis_map) return DIERR_OUTOFMEMORY;
+
     if (!get_config_key( hkey, appkey, device->name, buffer, MAX_PATH )) {
-        int tokens = 0;
-        int axis = 0;
-        int pov = 0;
         const char *delim = ",";
         char * ptr;
         TRACE("\"%s\" = \"%s\"\n", device->name, buffer);
-
-        device->axis_map = HeapAlloc(GetProcessHeap(), 0, device->axes * sizeof(int));
-        if (device->axis_map == 0)
-            return DIERR_OUTOFMEMORY;
 
         if ((ptr = strtok(buffer, delim)) != NULL) {
             do {
@@ -355,9 +354,22 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
             }
         }
 
-        device->devcaps.dwAxes = axis;
-        device->devcaps.dwPOVs = pov;
     }
+    else
+    {
+        for (tokens = 0; tokens < device->axes; tokens++)
+        {
+            if (tokens < 8)
+                device->axis_map[tokens] = axis++;
+            else
+            {
+                device->axis_map[tokens  ] = 8 + pov;
+                device->axis_map[tokens++] = 8 + pov++;
+            }
+        }
+    }
+    device->devcaps.dwAxes = axis;
+    device->devcaps.dwPOVs = pov;
 
     if (appkey)
         RegCloseKey( appkey );
@@ -445,29 +457,17 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     /* setup_dinput_options may change these */
     newDevice->deadzone = 0;
     newDevice->devcaps.dwButtons = newDevice->buttons;
-    newDevice->devcaps.dwAxes = newDevice->axes;
-    newDevice->devcaps.dwPOVs = 0;
 
     /* do any user specified configuration */
     hr = setup_dinput_options(newDevice);
     if (hr != DI_OK)
         goto FAILED1;
 
-    if (newDevice->axis_map == 0) {
-        newDevice->axis_map = HeapAlloc(GetProcessHeap(), 0, newDevice->axes * sizeof(int));
-        if (newDevice->axis_map == 0)
-            goto FAILED;
-
-        for (i = 0; i < newDevice->axes; i++)
-            newDevice->axis_map[i] = i;
-    }
-
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto FAILED;
     memcpy(df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
 
-    /* Axes include POVs */
-    df->dwNumObjs = newDevice->axes + newDevice->buttons;
+    df->dwNumObjs = newDevice->devcaps.dwAxes + newDevice->devcaps.dwPOVs + newDevice->buttons;
     if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto FAILED;
 
     for (i = 0; i < newDevice->axes; i++)
