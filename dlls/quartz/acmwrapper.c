@@ -48,6 +48,9 @@ typedef struct ACMWrapperImpl
     LPWAVEFORMATEX pWfIn;
     LPWAVEFORMATEX pWfOut;
 
+    IMediaSample *recv, *xmit;
+    ULONG done;
+
     LONGLONG lasttime_real;
     LONGLONG lasttime_sent;
 } ACMWrapperImpl;
@@ -66,32 +69,61 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     HRESULT hr;
     LONGLONG tStart = -1, tStop = -1, tMed;
 
+    assert(pSample);
+
+    if (This->xmit)
+    {
+        hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], This->xmit);
+        if (hr != S_OK)
+            return hr;
+        IMediaSample_Release(This->xmit);
+        This->xmit = NULL;
+    }
+
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
 	return hr;
     }
-
+    cbSrcStream = IMediaSample_GetActualDataLength(pSample);
     preroll = (IMediaSample_IsPreroll(pSample) == S_OK);
 
-    IMediaSample_GetTime(pSample, &tStart, &tStop);
-    cbSrcStream = IMediaSample_GetActualDataLength(pSample);
-
-    /* Prevent discontinuities when codecs 'absorb' data but not give anything back in return */
-    if (IMediaSample_IsDiscontinuity(pSample) == S_OK)
+    if (pSample != This->recv)
     {
-        This->lasttime_real = tStart;
-        This->lasttime_sent = tStart;
-    }
-    else if (This->lasttime_real == tStart)
-        tStart = This->lasttime_sent;
-    else
-        WARN("Discontinuity\n");
+        if (This->recv)
+        {
+            /* Get rid of buffered sample first */
+            hr = ACMWrapper_ProcessSampleData(pTransformFilter, This->recv);
+            if (hr != S_OK)
+                return hr;
+            if (This->recv)
+                return S_FALSE;
+        }
 
+        IMediaSample_GetTime(pSample, &tStart, &tStop);
+
+        /* Prevent discontinuities when codecs 'absorb' data but not give anything back in return */
+        if (IMediaSample_IsDiscontinuity(pSample) == S_OK)
+        {
+            This->lasttime_real = tStart;
+            This->lasttime_sent = tStart;
+        }
+        else if (This->lasttime_real == tStart)
+            tStart = This->lasttime_sent;
+        else
+            WARN("Discontinuity\n");
+    }
+    else
+    {
+        tStart = This->lasttime_sent;
+        tStop = This->lasttime_real;
+        cbSrcStream -= This->done;
+        pbSrcStream += This->done;
+    }
     tMed = tStart;
 
-    TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, (long)cbSrcStream);
+    TRACE("Sample data ptr = %p, size = %u\n", pbSrcStream, cbSrcStream);
 
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
     if (FAILED(hr)) {
@@ -201,17 +233,44 @@ error:
         ash.pbSrc += ash.cbSrcLengthUsed;
         ash.cbSrcLength -= ash.cbSrcLengthUsed;
 
+        if (hr == S_FALSE)
+        {
+            This->xmit = pOutSample;
+            if (ash.cbSrcLength && !This->recv)
+            {
+                This->recv = pSample;
+                IMediaSample_AddRef(This->recv);
+            }
+            else if (This->recv)
+            {
+                IMediaSample_Release(This->recv);
+                This->recv = NULL;
+            }
+
+            This->done = IMediaSample_GetActualDataLength(pSample) - ash.cbSrcLength;
+            break;
+        }
+
         if (pOutSample)
             IMediaSample_Release(pOutSample);
         pOutSample = NULL;
-
     }
 
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
+
     if (hr != S_OK)
         FIXME("FATALITY: %08x\n", hr);
+    else if (This->recv)
+    {
+        assert(This->recv == pSample);
+        IMediaSample_Release(This->recv);
+        This->recv = NULL;
+    }
+
+    if (hr == S_FALSE)
+        return S_OK;
 
     return hr;
 }
@@ -277,7 +336,13 @@ static HRESULT ACMWrapper_Cleanup(TransformFilterImpl* pTransformFilter)
 
     This->has = 0;
     This->lasttime_real = This->lasttime_sent = -1;
-    
+    if (This->recv)
+        IMediaSample_Release(This->recv);
+
+    if (This->xmit)
+        IMediaSample_Release(This->xmit);
+
+    This->recv = This->xmit = NULL;
     return S_OK;
 }
 
@@ -313,6 +378,7 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     *ppv = (LPVOID)This;
     This->lasttime_real = This->lasttime_sent = -1;
+    This->recv = This->xmit = NULL;
 
     return hr;
 }
