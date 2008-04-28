@@ -111,7 +111,7 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_hand
 }
 
 /* This function takes care of WineD3D pixel format selection. */
-static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DFORMAT ColorFormat, WINED3DFORMAT DepthStencilFormat, BOOL auxBuffers, BOOL pbuffer, BOOL findCompatible)
+static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DFORMAT ColorFormat, WINED3DFORMAT DepthStencilFormat, BOOL auxBuffers, int numSamples, BOOL pbuffer, BOOL findCompatible)
 {
     int iPixelFormat=0;
     short redBits, greenBits, blueBits, alphaBits, colorBits;
@@ -171,6 +171,10 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         /* In all cases make sure the number of stencil bits matches our requirements
          * even when we don't need stencil because it could affect performance */
         if(!(cfgs->stencilSize == stencilBits))
+            continue;
+
+        /* Check multisampling support */
+        if(cfgs->numSamples != numSamples)
             continue;
 
         /* When we have passed all the checks then we have found a format which matches our
@@ -245,8 +249,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
     TRACE("(%p): Creating a %s context for render target %p\n", This, create_pbuffer ? "offscreen" : "onscreen", target);
 
-#define PUSH1(att)        attribs[nAttribs++] = (att);
-#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
     if(create_pbuffer) {
         HDC hdc_parent = GetDC(win_handle);
         int iPixelFormat = 0;
@@ -255,13 +257,13 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         WINED3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
 
         /* Try to find a pixel format with pbuffer support. */
-        iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format, StencilBufferFormat, FALSE /* auxBuffers */, TRUE /* PBUFFER */, FALSE /* findCompatible */);
+        iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format, StencilBufferFormat, FALSE /* auxBuffers */, 0 /* numSamples */, TRUE /* PBUFFER */, FALSE /* findCompatible */);
         if(!iPixelFormat) {
             TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
 
             /* For some reason we weren't able to find a format, try to find something instead of crashing.
              * A reason for failure could have been wglChoosePixelFormatARB strictness. */
-            iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format, StencilBufferFormat, FALSE /* auxBuffer */, TRUE /* PBUFFER */, TRUE /* findCompatible */);
+            iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format, StencilBufferFormat, FALSE /* auxBuffer */, 0 /* numSamples */, TRUE /* PBUFFER */, TRUE /* findCompatible */);
         }
 
         /* This shouldn't happen as ChoosePixelFormat always returns something */
@@ -295,6 +297,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         WINED3DFORMAT ColorFormat = target->resource.format;
         WINED3DFORMAT DepthStencilFormat = 0;
         BOOL auxBuffers = FALSE;
+        int numSamples = 0;
 
         hdc = GetDC(win_handle);
         if(hdc == NULL) {
@@ -327,13 +330,23 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             DepthStencilFormat = pPresentParms->AutoDepthStencilFormat;
         }
 
+        /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD */
+        if(pPresentParms->MultiSampleType && (pPresentParms->SwapEffect == WINED3DSWAPEFFECT_DISCARD)) {
+            if(!GL_SUPPORT(ARB_MULTISAMPLE))
+                ERR("The program is requesting multisampling without support!\n");
+            else {
+                ERR("Requesting MultiSampleType=%d\n", pPresentParms->MultiSampleType);
+                numSamples = pPresentParms->MultiSampleType;
+            }
+        }
+
         /* Try to find a pixel format which matches our requirements */
-        iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc, ColorFormat, DepthStencilFormat, auxBuffers, FALSE /* PBUFFER */, FALSE /* findCompatible */);
+        iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc, ColorFormat, DepthStencilFormat, auxBuffers, numSamples, FALSE /* PBUFFER */, FALSE /* findCompatible */);
 
         /* Try to locate a compatible format if we weren't able to find anything */
         if(!iPixelFormat) {
             TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
-            iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc, ColorFormat, DepthStencilFormat, auxBuffers, FALSE /* PBUFFER */, TRUE /* findCompatible */ );
+            iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc, ColorFormat, DepthStencilFormat, auxBuffers, 0 /* numSamples */, FALSE /* PBUFFER */, TRUE /* findCompatible */ );
         }
 
         /* If we still don't have a pixel format, something is very wrong as ChoosePixelFormat barely fails */
@@ -370,8 +383,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             }
         }
     }
-#undef PUSH1
-#undef PUSH2
 
     ctx = pwglCreateContext(hdc);
     if(This->numContexts) pwglShareLists(This->contexts[0]->glCtx, ctx);

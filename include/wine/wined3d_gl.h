@@ -3682,6 +3682,11 @@ typedef enum _GL_SupportedExt {
 
 /* WGL_ARB_extensions_string */
 typedef const char * (WINAPI * WINED3D_PFNWGLGETEXTENSIONSSTRINGARBPROC) (HDC hdc);
+/* WGL_ARB_multisample */
+#ifndef WGL_ARB_multisample
+#define WGL_SAMPLE_BUFFERS_ARB         0x2041
+#define WGL_SAMPLES_ARB                0x2042
+#endif
 /* WGL_ARB_pixel_format */
 #ifndef WGL_ARB_pixel_format
 #define WGL_ARB_pixel_format 1
