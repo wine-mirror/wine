@@ -1145,7 +1145,6 @@ HRESULT OutputPin_CommitAllocator(OutputPin * This)
     TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
-    if (!This->custom_allocator)
     {
         if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
@@ -1164,6 +1163,7 @@ HRESULT OutputPin_CommitAllocator(OutputPin * This)
     }
     LeaveCriticalSection(This->pin.pCritSec);
 
+    TRACE("--> %08x\n", hr);
     return hr;
 }
 
@@ -1474,10 +1474,6 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
     IMediaSample * pSample = NULL;
     ALLOCATOR_PROPERTIES allocProps;
 
-    EnterCriticalSection(This->pin.pCritSec);
-    SetEvent(This->hEventStateChanged);
-    LeaveCriticalSection(This->pin.pCritSec);
-
     hr = IMemAllocator_GetProperties(This->pAlloc, &allocProps);
 
     This->cbAlign = allocProps.cbAlign;
@@ -1501,6 +1497,10 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
 
     if (FAILED(hr))
         ERR("Request error: %x\n", hr);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    SetEvent(This->hEventStateChanged);
+    LeaveCriticalSection(This->pin.pCritSec);
 
     do
     {
@@ -1568,9 +1568,11 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
     /* Can't reset state to Sleepy here because that might race, instead PauseProcessing will do that for us
      * Flush remaining samples
      */
-    PullPin_Flush(This);
+    TRACE("Almost done..\n");
+
     if (This->fnDone)
         This->fnDone(This->pin.pUserData);
+    PullPin_Flush(This);
 
     TRACE("End: %08x, %d\n", hr, This->stop_playback);
 }
@@ -1706,6 +1708,9 @@ HRESULT PullPin_PauseProcessing(PullPin * This)
         PullPin_WaitForStateChange(This, INFINITE);
 
         EnterCriticalSection(This->pin.pCritSec);
+        /* Faster! */
+        IAsyncReader_BeginFlush(This->pReader);
+
         assert(!This->stop_playback);
         assert(This->state == Req_Run|| This->state == Req_Sleepy);
 
@@ -1737,7 +1742,6 @@ HRESULT PullPin_StopProcessing(PullPin * This)
     assert(WaitForSingleObject(This->thread_sleepy, 0) == WAIT_TIMEOUT);
     ResetEvent(This->hEventStateChanged);
     SetEvent(This->thread_sleepy);
-
     return S_OK;
 }
 
