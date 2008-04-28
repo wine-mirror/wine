@@ -329,7 +329,7 @@
 @ stub GdipGetPathGradientBlendCount
 @ stub GdipGetPathGradientCenterColor
 @ stdcall GdipGetPathGradientCenterPoint(ptr ptr)
-@ stub GdipGetPathGradientCenterPointI
+@ stdcall GdipGetPathGradientCenterPointI(ptr ptr)
 @ stdcall GdipGetPathGradientFocusScales(ptr ptr ptr)
 @ stdcall GdipGetPathGradientGammaCorrection(ptr ptr)
 @ stub GdipGetPathGradientPath

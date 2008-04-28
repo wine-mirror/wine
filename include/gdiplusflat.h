@@ -169,6 +169,7 @@ GpStatus WINGDIPAPI GdipGetLineRectI(GpLineGradient*,GpRect*);
 GpStatus WINGDIPAPI GdipGetLineColors(GpLineGradient*,ARGB*);
 GpStatus WINGDIPAPI GdipGetPathGradientCenterColor(GpPathGradient*,ARGB*);
 GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient*,GpPointF*);
+GpStatus WINGDIPAPI GdipGetPathGradientCenterPointI(GpPathGradient*,GpPoint*);
 GpStatus WINGDIPAPI GdipGetPathGradientFocusScales(GpPathGradient*,REAL*,REAL*);
 GpStatus WINGDIPAPI GdipGetPathGradientGammaCorrection(GpPathGradient*,BOOL*);
 GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient*,INT*);
