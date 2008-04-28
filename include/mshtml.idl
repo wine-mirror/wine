@@ -1841,6 +1841,49 @@ methods:
     IDispatch *ownerDocument();
 }
 
+/*****************************************************************************
+ *    IHTMLDOMChildrenCollection interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f5ab-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDOMChildrenCollection : IDispatch
+{
+    [propget, id(DISPID_IHTMLDOMCHILDRENCOLLECTION_LENGTH)]
+    HRESULT length([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLDOMCHILDRENCOLLECTION__NEWENUM), hidden, restricted]
+    HRESULT _newEnum([out, retval] IUnknown **p);
+
+    [id(DISPID_IHTMLDOMCHILDRENCOLLECTION_ITEM)]
+    HRESULT item(
+            [in] long index,
+            [out, retval] IDispatch **ppItem);
+}
+
+/*****************************************************************************
+ *    DispDOMChildrenCollection dispinterface
+ */
+[
+    hidden,
+    uuid(3050f577-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMChildrenCollection
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLDOMCHILDRENCOLLECTION_LENGTH)]
+    long length();
+
+    [propget, id(DISPID_IHTMLDOMCHILDRENCOLLECTION__NEWENUM), hidden, restricted]
+    IUnknown *_newEnum();
+
+    [id(DISPID_IHTMLDOMCHILDRENCOLLECTION_ITEM)]
+    IDispatch *item([in] long index);
+}
 
 interface IHTMLElementCollection;
 
