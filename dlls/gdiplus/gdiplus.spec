@@ -172,7 +172,7 @@
 @ stub GdipDrawDriverString
 @ stub GdipDrawEllipse
 @ stub GdipDrawEllipseI
-@ stub GdipDrawImage
+@ stdcall GdipDrawImage(ptr ptr long long)
 @ stub GdipDrawImageFX
 @ stdcall GdipDrawImageI(ptr ptr long long)
 @ stub GdipDrawImagePointRect

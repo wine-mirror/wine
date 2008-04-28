@@ -1115,6 +1115,12 @@ GpStatus WINGDIPAPI GdipDrawCurve2I(GpGraphics *graphics, GpPen *pen,
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipDrawImage(GpGraphics *graphics, GpImage *image, REAL x, REAL y)
+{
+    /* IPicture::Render uses LONG coords */
+    return GdipDrawImageI(graphics,image,roundr(x),roundr(y));
+}
+
 GpStatus WINGDIPAPI GdipDrawImageI(GpGraphics *graphics, GpImage *image, INT x,
     INT y)
 {
