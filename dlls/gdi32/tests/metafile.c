@@ -261,37 +261,174 @@ static void test_ExtTextOut(void)
     DestroyWindow(hwnd);
 }
 
+static void check_dc_state(HDC hdc, int restore_no,
+                           int wnd_org_x, int wnd_org_y, int wnd_ext_x, int wnd_ext_y,
+                           int vp_org_x, int vp_org_y, int vp_ext_x, int vp_ext_y)
+{
+    BOOL ret;
+    XFORM xform;
+    POINT vp_org, win_org;
+    SIZE vp_size, win_size;
+    FLOAT xscale, yscale, edx, edy;
+
+    SetLastError(0xdeadbeef);
+    ret = GetWorldTransform(hdc, &xform);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) goto win9x_here;
+    ok(ret, "GetWorldTransform error %u\n", GetLastError());
+
+    trace("%d: eM11 %f, eM22 %f, eDx %f, eDy %f\n", restore_no, xform.eM11, xform.eM22, xform.eDx, xform.eDy);
+
+    ok(xform.eM12 == 0.0, "%d: expected eM12 0.0, got %f\n", restore_no, xform.eM12);
+    ok(xform.eM21 == 0.0, "%d: expected eM21 0.0, got %f\n", restore_no, xform.eM21);
+
+    xscale = (FLOAT)vp_ext_x / (FLOAT)wnd_ext_x;
+    trace("x scale %f\n", xscale);
+    ok(fabs(xscale - xform.eM11) < 0.01, "%d: vp_ext_x %d, wnd_ext_cx %d, eM11 %f\n",
+       restore_no, vp_ext_x, wnd_ext_x, xform.eM11);
+
+    yscale = (FLOAT)vp_ext_y / (FLOAT)wnd_ext_y;
+    trace("y scale %f\n", yscale);
+    ok(fabs(yscale - xform.eM22) < 0.01, "%d: vp_ext_y %d, wnd_ext_y %d, eM22 %f\n",
+       restore_no, vp_ext_y, wnd_ext_y, xform.eM22);
+
+    edx = (FLOAT)vp_org_x - xform.eM11 * (FLOAT)wnd_org_x;
+    ok(fabs(edx - xform.eDx) < 0.01, "%d: edx %f != eDx %f\n", restore_no, edx, xform.eDx);
+    edy = (FLOAT)vp_org_y - xform.eM22 * (FLOAT)wnd_org_y;
+    ok(fabs(edy - xform.eDy) < 0.01, "%d: edy %f != eDy %f\n", restore_no, edy, xform.eDy);
+
+    return;
+
+win9x_here:
+
+    GetWindowOrgEx(hdc, &win_org);
+    GetViewportOrgEx(hdc, &vp_org);
+    GetWindowExtEx(hdc, &win_size);
+    GetViewportExtEx(hdc, &vp_size);
+
+    ok(wnd_org_x == win_org.x, "%d: wnd_org_x: %d != %d\n", restore_no, wnd_org_x, win_org.x);
+    ok(wnd_org_y == win_org.y, "%d: wnd_org_y: %d != %d\n", restore_no, wnd_org_y, win_org.y);
+
+    ok(vp_org_x == vp_org.x, "%d: vport_org_x: %d != %d\n", restore_no, vp_org_x, vp_org.x);
+    ok(vp_org_y == vp_org.y, "%d: vport_org_y: %d != %d\n", restore_no, vp_org_y, vp_org.y);
+
+    ok(wnd_ext_x == win_size.cx, "%d: wnd_ext_x: %d != %d\n", restore_no, wnd_ext_x, win_size.cx);
+    ok(wnd_ext_y == win_size.cy, "%d: wnd_ext_y: %d != %d\n", restore_no, wnd_ext_y, win_size.cy);
+
+    ok(vp_ext_x == vp_size.cx, "%d: vport_ext_x: %d != %d\n", restore_no, vp_ext_x, vp_size.cx);
+    ok(vp_ext_y == vp_size.cy, "%d: vport_ext_y: %d != %d\n", restore_no, vp_ext_y, vp_size.cy);
+}
+
 static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
                                          const ENHMETARECORD *emr, int n_objs, LPARAM param)
 {
+    BOOL ret;
+    XFORM xform;
+    POINT pt;
+    SIZE size;
     static int save_state;
     static int restore_no;
+
+    trace("hdc %p, emr->iType %d, emr->nSize %d, param %p\n",
+           hdc, emr->iType, emr->nSize, (void *)param);
+
+    trace("BEFORE:\n");
+    SetLastError(0xdeadbeef);
+    ret = GetWorldTransform(hdc, &xform);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        ok(GetWindowOrgEx(hdc, &pt), "GetWindowOrgEx error %u\n", GetLastError());
+        trace("window org (%d,%d)\n", pt.x, pt.y);
+        ok(GetViewportOrgEx(hdc, &pt), "GetViewportOrgEx error %u\n", GetLastError());
+        trace("vport org (%d,%d)\n", pt.x, pt.y);
+        ok(GetWindowExtEx(hdc, &size), "GetWindowExtEx error %u\n", GetLastError());
+        trace("window ext (%d,%d)\n", size.cx, size.cy);
+        ok(GetViewportExtEx(hdc, &size), "GetViewportExtEx error %u\n", GetLastError());
+        trace("vport ext (%d,%d)\n", size.cx, size.cy);
+    }
+    else
+    {
+        ok(ret, "GetWorldTransform error %u\n", GetLastError());
+        trace("eM11 %f, eM22 %f, eDx %f, eDy %f\n", xform.eM11, xform.eM22, xform.eDx, xform.eDy);
+    }
+
+    PlayEnhMetaFileRecord(hdc, handle_table, emr, n_objs);
 
     switch (emr->iType)
     {
     case EMR_HEADER:
+    {
+        static RECT exp_bounds = { 0, 0, 150, 150 };
+        RECT bounds;
+        const ENHMETAHEADER *emf = (const ENHMETAHEADER *)emr;
+
+        trace("bounds %d,%d-%d,%d, frame %d,%d-%d,%d\n",
+               emf->rclBounds.left, emf->rclBounds.top, emf->rclBounds.right, emf->rclBounds.bottom,
+               emf->rclFrame.left, emf->rclFrame.top, emf->rclFrame.right, emf->rclFrame.bottom);
+        trace("mm %d x %d, device %d x %d\n", emf->szlMillimeters.cx, emf->szlMillimeters.cy,
+               emf->szlDevice.cx, emf->szlDevice.cy);
+
+        SetRect(&bounds, emf->rclBounds.left, emf->rclBounds.top, emf->rclBounds.right, emf->rclBounds.bottom);
+        ok(EqualRect(&bounds, &exp_bounds), "wrong bounds\n");
+
         save_state = 0;
         restore_no = 0;
+        check_dc_state(hdc, restore_no, 0, 0, 1, 1, 0, 0, 1, 1);
         break;
+    }
 
+    case EMR_LINETO:
+        {
+            const EMRLINETO *line = (const EMRLINETO *)emr;
+            trace("EMR_LINETO %d,%d\n", line->ptl.x, line->ptl.x);
+            break;
+        }
+    case EMR_SETWINDOWORGEX:
+        {
+            const EMRSETWINDOWORGEX *org = (const EMRSETWINDOWORGEX *)emr;
+            trace("EMR_SETWINDOWORGEX: %d,%d\n", org->ptlOrigin.x, org->ptlOrigin.y);
+            break;
+        }
+    case EMR_SETWINDOWEXTEX:
+        {
+            const EMRSETWINDOWEXTEX *ext = (const EMRSETWINDOWEXTEX *)emr;
+            trace("EMR_SETWINDOWEXTEX: %d,%d\n", ext->szlExtent.cx, ext->szlExtent.cy);
+            break;
+        }
+    case EMR_SETVIEWPORTORGEX:
+        {
+            const EMRSETVIEWPORTORGEX *org = (const EMRSETVIEWPORTORGEX *)emr;
+            trace("EMR_SETVIEWPORTORGEX: %d,%d\n", org->ptlOrigin.x, org->ptlOrigin.y);
+            break;
+        }
+    case EMR_SETVIEWPORTEXTEX:
+        {
+            const EMRSETVIEWPORTEXTEX *ext = (const EMRSETVIEWPORTEXTEX *)emr;
+            trace("EMR_SETVIEWPORTEXTEX: %d,%d\n", ext->szlExtent.cx, ext->szlExtent.cy);
+            break;
+        }
     case EMR_SAVEDC:
         save_state++;
+        trace("EMR_SAVEDC\n");
         break;
 
     case EMR_RESTOREDC:
         {
             const EMRRESTOREDC *restoredc = (const EMRRESTOREDC *)emr;
+            trace("EMR_RESTOREDC: %d\n", restoredc->iRelative);
+
             switch(++restore_no)
             {
             case 1:
                 ok(restoredc->iRelative == -1, "first restore %d\n", restoredc->iRelative);
+                check_dc_state(hdc, restore_no, -2, -2, 8192, 8192, 20, 20, 20479, 20478);
                 break;
-
             case 2:
                 ok(restoredc->iRelative == -3, "second restore %d\n", restoredc->iRelative);
+                check_dc_state(hdc, restore_no, 0, 0, 16384, 16384, 0, 0, 17873, 17872);
                 break;
             case 3:
                 ok(restoredc->iRelative == -2, "third restore %d\n", restoredc->iRelative);
+                check_dc_state(hdc, restore_no, -4, -4, 32767, 32767, 40, 40, 3276, 3276);
                 break;
             }
             ok(restore_no <= 3, "restore_no %d\n", restore_no);
@@ -302,6 +439,27 @@ static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ok(save_state == 0, "EOF save_state %d\n", save_state);
         break;
     }
+
+    trace("AFTER:\n");
+    SetLastError(0xdeadbeef);
+    ret = GetWorldTransform(hdc, &xform);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        ok(GetWindowOrgEx(hdc, &pt), "GetWindowOrgEx error %u\n", GetLastError());
+        trace("window org (%d,%d)\n", pt.x, pt.y);
+        ok(GetViewportOrgEx(hdc, &pt), "GetViewportOrgEx error %u\n", GetLastError());
+        trace("vport org (%d,%d)\n", pt.x, pt.y);
+        ok(GetWindowExtEx(hdc, &size), "GetWindowExtEx error %u\n", GetLastError());
+        trace("window ext (%d,%d)\n", size.cx, size.cy);
+        ok(GetViewportExtEx(hdc, &size), "GetViewportExtEx error %u\n", GetLastError());
+        trace("vport ext (%d,%d)\n", size.cx, size.cy);
+    }
+    else
+    {
+        ok(ret, "GetWorldTransform error %u\n", GetLastError());
+        trace("eM11 %f, eM22 %f, eDx %f, eDy %f\n", xform.eM11, xform.eM22, xform.eDx, xform.eDy);
+    }
+
     return 1;
 }
 
@@ -311,7 +469,7 @@ static void test_SaveDC(void)
     HENHMETAFILE hMetafile;
     HWND hwnd;
     int ret;
-    static const RECT rc = { 0, 0, 100, 100 };
+    static const RECT rc = { 0, 0, 150, 150 };
 
     /* Win9x doesn't play EMFs on invisible windows */
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
@@ -324,17 +482,51 @@ static void test_SaveDC(void)
     hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
     ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
 
+    SetMapMode(hdcMetafile, MM_ANISOTROPIC);
+
     /* Need to write something to the emf, otherwise Windows won't play it back */
-    LineTo(hdcMetafile, 100, 100);
+    LineTo(hdcMetafile, 150, 150);
+
+    SetWindowOrgEx(hdcMetafile, 0, 0, NULL);
+    SetViewportOrgEx(hdcMetafile, 0, 0, NULL);
+    SetWindowExtEx(hdcMetafile, 110, 110, NULL );
+    SetViewportExtEx(hdcMetafile, 120, 120, NULL );
+
+    /* Force Win9x to update DC state */
+    SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = SaveDC(hdcMetafile);
     ok(ret == 1, "ret = %d\n", ret);
 
+    SetWindowOrgEx(hdcMetafile, -1, -1, NULL);
+    SetViewportOrgEx(hdcMetafile, 10, 10, NULL);
+    SetWindowExtEx(hdcMetafile, 150, 150, NULL );
+    SetViewportExtEx(hdcMetafile, 200, 200, NULL );
+
+    /* Force Win9x to update DC state */
+    SetPixelV(hdcMetafile, 50, 50, 0);
+
     ret = SaveDC(hdcMetafile);
     ok(ret == 2, "ret = %d\n", ret);
 
+    SetWindowOrgEx(hdcMetafile, -2, -2, NULL);
+    SetViewportOrgEx(hdcMetafile, 20, 20, NULL);
+    SetWindowExtEx(hdcMetafile, 120, 120, NULL );
+    SetViewportExtEx(hdcMetafile, 300, 300, NULL );
+
+    /* Force Win9x to update DC state */
+    SetPixelV(hdcMetafile, 50, 50, 0);
+
     ret = SaveDC(hdcMetafile);
     ok(ret == 3, "ret = %d\n", ret);
+
+    SetWindowOrgEx(hdcMetafile, -3, -3, NULL);
+    SetViewportOrgEx(hdcMetafile, 30, 30, NULL);
+    SetWindowExtEx(hdcMetafile, 200, 200, NULL );
+    SetViewportExtEx(hdcMetafile, 400, 400, NULL );
+
+    /* Force Win9x to update DC state */
+    SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = RestoreDC(hdcMetafile, -1);
     ok(ret, "ret = %d\n", ret);
@@ -344,6 +536,14 @@ static void test_SaveDC(void)
 
     ret = RestoreDC(hdcMetafile, 1);
     ok(ret, "ret = %d\n", ret);
+
+    SetWindowOrgEx(hdcMetafile, -4, -4, NULL);
+    SetViewportOrgEx(hdcMetafile, 40, 40, NULL);
+    SetWindowExtEx(hdcMetafile, 500, 500, NULL );
+    SetViewportExtEx(hdcMetafile, 50, 50, NULL );
+
+    /* Force Win9x to update DC state */
+    SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = SaveDC(hdcMetafile);
     ok(ret == 1, "ret = %d\n", ret);
@@ -1282,12 +1482,16 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         rect = rgn2.data.rdh.rcBound;
         rc_transformed = *rc;
         translate((POINT *)&rc_transformed, 2, &xform);
+        trace("transformed (%d,%d-%d,%d)\n", rc_transformed.left, rc_transformed.top,
+              rc_transformed.right, rc_transformed.bottom);
         ok(EqualRect(&rect, &rc_transformed), "rects don't match\n");
 
         rect = *(const RECT *)rgn2.data.Buffer;
         trace("rect (%d,%d-%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom);
         rc_transformed = *rc;
         translate((POINT *)&rc_transformed, 2, &xform);
+        trace("transformed (%d,%d-%d,%d)\n", rc_transformed.left, rc_transformed.top,
+              rc_transformed.right, rc_transformed.bottom);
         ok(EqualRect(&rect, &rc_transformed), "rects don't match\n");
 
         ok(rgn2.data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u", rgn2.data.rdh.dwSize);
