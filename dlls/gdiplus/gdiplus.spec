@@ -164,7 +164,7 @@
 @ stub GdipDrawClosedCurve
 @ stub GdipDrawClosedCurveI
 @ stdcall GdipDrawCurve2(ptr ptr ptr long long)
-@ stub GdipDrawCurve2I
+@ stdcall GdipDrawCurve2I(ptr ptr ptr long long)
 @ stub GdipDrawCurve3
 @ stub GdipDrawCurve3I
 @ stub GdipDrawCurve
