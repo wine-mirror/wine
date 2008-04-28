@@ -363,8 +363,8 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
                 device->axis_map[tokens] = axis++;
             else
             {
-                device->axis_map[tokens  ] = 8 + pov;
-                device->axis_map[tokens++] = 8 + pov++;
+                device->axis_map[tokens++] = 8 + pov;
+                device->axis_map[tokens  ] = 8 + pov++;
             }
         }
     }
