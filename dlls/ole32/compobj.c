@@ -2652,9 +2652,9 @@ HRESULT WINAPI CoLockObjectExternal(
     if (stubmgr)
     {
         if (fLock)
-            stub_manager_ext_addref(stubmgr, 1);
+            stub_manager_ext_addref(stubmgr, 1, FALSE);
         else
-            stub_manager_ext_release(stubmgr, 1, fLastUnlockReleases);
+            stub_manager_ext_release(stubmgr, 1, FALSE, fLastUnlockReleases);
         
         stub_manager_int_release(stubmgr);
 
@@ -2666,7 +2666,7 @@ HRESULT WINAPI CoLockObjectExternal(
 
         if (stubmgr)
         {
-            stub_manager_ext_addref(stubmgr, 1);
+            stub_manager_ext_addref(stubmgr, 1, FALSE);
             stub_manager_int_release(stubmgr);
         }
 

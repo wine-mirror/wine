@@ -701,9 +701,8 @@ static void test_ROT_multiple_entries(void)
     ok_ole_success(hr, IRunningObjectTable_Revoke);
 
     hr = IRunningObjectTable_GetObject(pROT, pMoniker, &pObject);
-    todo_wine
     ok_ole_success(hr, IRunningObjectTable_GetObject);
-    if (pObject) IUnknown_Release(pObject);
+    IUnknown_Release(pObject);
 
     hr = IRunningObjectTable_Revoke(pROT, dwCookie2);
     ok_ole_success(hr, IRunningObjectTable_Revoke);
