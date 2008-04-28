@@ -331,6 +331,20 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     HTMLOptionElement_destructor
 };
 
+static dispex_static_data_t HTMLOptionElement_dispex = {
+    NULL,
+    DispHTMLOptionElement_tid,
+    NULL,
+    {
+        IHTMLDOMNode_tid,
+        IHTMLDOMNode2_tid,
+        IHTMLElement_tid,
+        IHTMLElement2_tid,
+        IHTMLOptionElement_tid,
+        0
+    }
+};
+
 HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLOptionElement *ret = heap_alloc_zero(sizeof(HTMLOptionElement));
@@ -344,6 +358,8 @@ HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLOptionElement interface: %08x\n", nsres);
+
+    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLOPTION(ret), &HTMLOptionElement_dispex);
 
     return &ret->element;
 }
