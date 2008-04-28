@@ -144,7 +144,10 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
 
         url = FindContextAlias(info->pCHMInfo, data);
         if(!url)
+        {
+            ReleaseHelpViewer(info);
             return NULL;
+        }
 
         NavigateToUrl(info, url);
         heap_free(url);
