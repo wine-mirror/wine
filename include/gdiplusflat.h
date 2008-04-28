@@ -80,7 +80,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics*,GpImage*,
     GDIPCONST GpPointF*,INT,REAL,REAL,REAL,REAL,GpUnit,
     GDIPCONST GpImageAttributes*,DrawImageAbort,VOID*);
 GpStatus WINGDIPAPI GdipDrawImagePointsRectI(GpGraphics*,GpImage*,
-    GDIPCONST GpPointF*,INT,INT,INT,INT,INT,GpUnit,
+    GDIPCONST GpPoint*,INT,INT,INT,INT,INT,GpUnit,
     GDIPCONST GpImageAttributes*,DrawImageAbort,VOID*);
 GpStatus WINGDIPAPI GdipDrawImageRectRect(GpGraphics*,GpImage*,REAL,REAL,REAL,
     REAL,REAL,REAL,REAL,REAL,GpUnit,GDIPCONST GpImageAttributes*,DrawImageAbort,

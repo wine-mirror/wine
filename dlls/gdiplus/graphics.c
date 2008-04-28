@@ -1201,6 +1201,27 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipDrawImagePointsRectI(GpGraphics *graphics, GpImage *image,
+     GDIPCONST GpPoint *points, INT count, INT srcx, INT srcy, INT srcwidth,
+     INT srcheight, GpUnit srcUnit, GDIPCONST GpImageAttributes* imageAttributes,
+     DrawImageAbort callback, VOID * callbackData)
+{
+    GpPointF pointsF[3];
+    INT i;
+
+    if(!points || count!=3)
+        return InvalidParameter;
+
+    for(i = 0; i < count; i++){
+        pointsF[i].X = (REAL)points[i].X;
+        pointsF[i].Y = (REAL)points[i].Y;
+    }
+
+    return GdipDrawImagePointsRect(graphics, image, pointsF, count, (REAL)srcx, (REAL)srcy,
+                                   (REAL)srcwidth, (REAL)srcheight, srcUnit, imageAttributes,
+                                   callback, callbackData);
+}
+
 GpStatus WINGDIPAPI GdipDrawImageRectRect(GpGraphics *graphics, GpImage *image,
     REAL dstx, REAL dsty, REAL dstwidth, REAL dstheight, REAL srcx, REAL srcy,
     REAL srcwidth, REAL srcheight, GpUnit srcUnit,
