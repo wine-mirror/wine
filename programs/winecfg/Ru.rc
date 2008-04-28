@@ -66,17 +66,24 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Настройки окна ",IDC_STATIC,8,4,244,180
 
-    CONTROL	    "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,235,8
-    CONTROL	    "Разрешить менеджеру окон управлять окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,34,230,8
+    CONTROL         "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,235,8
+
+    CONTROL         "Разрешить менеджеру окон &декорировать окна",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
+
+    CONTROL         "Разрешить менеджеру окон управлять окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
+
+    LTEXT           "Если окна управляются Вашим менеджером окон, они будут иметь стандартный бордюр, ограничены виртуальным рабочим столом, и появятся в Вашем списке окон.\n\nЕсли окна не управляются, они не будут подключены к Вашему менеджеру окон. Это означает, что окна не интегрируются с Вашим рабочим столом, но эмуляция будет более точной, и может помочь некоторым приложениям работать лучше.",
+                    IDC_STATIC,19,51,225,80
 
     CONTROL         "Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
-    LTEXT           "Если включить эмуляцию рабочего стола, то все окна будут отображаться в одном 'виртуальном экране' заданного размера. Иначе окна размещаются, как обычно, на стандартном рабочем столе.",
-                    IDC_STATIC,15,117,228,36
-    LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
+    LTEXT           "Вы можете ограничить все приложения Windows одним окном, ведущим себя как виртуальный рабочий стол, или дать им вести себя как другие Ваши приложения.",
+                    IDC_STATIC,19,138,225,28
+
+    LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,168,84,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,149,168,8,8,WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_WIDTH,104,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,157,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,45
 
