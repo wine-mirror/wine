@@ -1006,6 +1006,37 @@ GpStatus WINGDIPAPI GdipDrawBezierI(GpGraphics *graphics, GpPen *pen, INT x1,
     return retval;
 }
 
+GpStatus WINGDIPAPI GdipDrawCurve(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPointF *points, INT count)
+{
+    return GdipDrawCurve2(graphics,pen,points,count,1.0);
+}
+
+GpStatus WINGDIPAPI GdipDrawCurveI(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPoint *points, INT count)
+{
+    GpPointF *pointsF;
+    GpStatus ret;
+    INT i;
+
+    if(!points || count <= 0)
+        return InvalidParameter;
+
+    pointsF = GdipAlloc(sizeof(GpPointF)*count);
+    if(!pointsF)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        pointsF[i].X = (REAL)points[i].X;
+        pointsF[i].Y = (REAL)points[i].Y;
+    }
+
+    ret = GdipDrawCurve(graphics,pen,pointsF,count);
+    GdipFree(pointsF);
+
+    return ret;
+}
+
 /* Approximates cardinal spline with Bezier curves. */
 GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF *points, INT count, REAL tension)

@@ -167,8 +167,8 @@
 @ stdcall GdipDrawCurve2I(ptr ptr ptr long long)
 @ stub GdipDrawCurve3
 @ stub GdipDrawCurve3I
-@ stub GdipDrawCurve
-@ stub GdipDrawCurveI
+@ stdcall GdipDrawCurve(ptr ptr ptr long)
+@ stdcall GdipDrawCurveI(ptr ptr ptr long)
 @ stub GdipDrawDriverString
 @ stub GdipDrawEllipse
 @ stub GdipDrawEllipseI
