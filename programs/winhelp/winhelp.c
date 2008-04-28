@@ -251,7 +251,11 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     Globals.hInstance = hInstance;
 
-    use_richedit = getenv("WINHELP_RICHEDIT") != NULL;
+    /* don't use richedit for rendering when WINHELP_RICHEDIT environment variable is 0 */
+    {
+        const char*     p = getenv("WINHELP_RICHEDIT");
+        use_richedit = !p || *p != '0';
+    }
     if (use_richedit && LoadLibrary("riched20.dll") == NULL)
         return MessageBox(0, MAKEINTRESOURCE(STID_NO_RICHEDIT),
                           MAKEINTRESOURCE(STID_WHERROR), MB_OK);
