@@ -133,6 +133,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
     /* Find a pixel format which EXACTLY matches our requirements (except for depth) */
     for(i=0; i<nCfgs; i++) {
         BOOL exactDepthMatch = TRUE;
+        cfgs = &This->adapter->cfgs[i];
 
         /* For now only accept RGBA formats. Perhaps some day we will
          * allow floating point formats for pbuffers. */
@@ -194,7 +195,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
     if(!iPixelFormat && !findCompatible) {
         ERR("Can't find a suitable iPixelFormat\n");
         return FALSE;
-    } else {
+    } else if(!iPixelFormat) {
         PIXELFORMATDESCRIPTOR pfd;
 
         TRACE("Falling back to ChoosePixelFormat as we weren't able to find an exactly matching pixel format\n");
@@ -218,7 +219,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         }
     }
 
-    TRACE("Found iPixelFormat=%d for ColorFormat=%s, DepthStencilFormat=%s\n", cfgs->iPixelFormat, debug_d3dformat(ColorFormat), debug_d3dformat(DepthStencilFormat));
+    TRACE("Found iPixelFormat=%d for ColorFormat=%s, DepthStencilFormat=%s\n", iPixelFormat, debug_d3dformat(ColorFormat), debug_d3dformat(DepthStencilFormat));
     return iPixelFormat;
 }
 
