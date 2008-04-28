@@ -508,6 +508,14 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
 
   ME_DestroyContext(&c, editor->hWnd);
 
+  /* Each paragraph may contain multiple rows, which should be scrollable, even
+     if the containing paragraph has nYPos == 0 */
+  item = editor->pBuffer->pFirst;
+  while ((item = ME_FindItemFwd(item, diStartRow)) != NULL) {
+    assert(item->type == diStartRow);
+    editor->nHeight = max(editor->nHeight, item->member.row.nYPos);
+  }
+
   if (bModified || editor->nTotalLength < editor->nLastTotalLength)
     ME_InvalidateMarkedParagraphs(editor);
   return bModified;
