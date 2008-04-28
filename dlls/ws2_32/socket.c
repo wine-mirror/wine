@@ -3244,7 +3244,7 @@ struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
 #else
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
-    if (retval->h_addr_list[0][0] == 127 &&
+    if (retval && retval->h_addr_list[0][0] == 127 &&
         strcmp(name, "localhost") != 0)
     {
         /* hostname != "localhost" but has loopback address. replace by our

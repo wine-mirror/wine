@@ -1765,6 +1765,73 @@ static void test_dns(void)
     ok(h != NULL, "gethostbyname(\"\") failed with %d\n", h_errno);
 }
 
+/* Our winsock headers don't define gethostname because it conflicts with the
+ * definition in unistd.h. Define it here to get rid of the warning. */
+
+int gethostname(char *name, int namelen);
+
+static void test_gethostbyname_hack(void)
+{
+    struct hostent *he;
+    char name[256];
+    static BYTE loopback[] = {127, 0, 0, 1};
+    static BYTE magic_loopback[] = {127, 12, 34, 56};
+    int ret;
+
+    ret = gethostname(name, 256);
+    ok(ret == 0, "gethostname() call failed: %d\n", WSAGetLastError());
+
+    he = gethostbyname("localhost");
+    ok(he != NULL, "gethostbyname(\"localhost\") failed: %d\n", h_errno);
+    if(he)
+    {
+        if(he->h_length != 4)
+        {
+            skip("h_length is %d, not IPv4, skipping test.\n", he->h_length);
+            return;
+        }
+
+        ok(memcmp(he->h_addr_list[0], loopback, he->h_length) == 0,
+           "gethostbyname(\"localhost\") returned %d.%d.%d.%d\n",
+           he->h_addr_list[0][0], he->h_addr_list[0][1], he->h_addr_list[0][2],
+           he->h_addr_list[0][3]);
+    }
+
+    /* No reason to test further with NULL hostname */
+    if(name == NULL)
+        return;
+
+    if(strcmp(name, "localhost") == 0)
+    {
+        skip("hostname seems to be \"localhost\", skipping test.\n");
+        return;
+    }
+
+    he = NULL;
+    he = gethostbyname(name);
+    ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, h_errno);
+    if(he)
+    {
+        if(he->h_length != 4)
+        {
+            skip("h_length is %d, not IPv4, skipping test.\n", he->h_length);
+            return;
+        }
+
+        if (he->h_addr_list[0][0] == 127)
+        {
+            ok(memcmp(he->h_addr_list[0], magic_loopback, he->h_length) == 0,
+               "gethostbyname(\"%s\") returned %d.%d.%d.%d not 127.12.34.56\n",
+               name, he->h_addr_list[0][0], he->h_addr_list[0][1],
+               he->h_addr_list[0][2], he->h_addr_list[0][3]);
+        }
+    }
+
+    he = NULL;
+    he = gethostbyname("someweirdandbogusname");
+    ok(he == NULL, "gethostbyname(\"someweirdandbogusname\") succeeded.\n");
+}
+
 static void test_inet_addr(void)
 {
     u_long addr;
@@ -1997,6 +2064,7 @@ START_TEST( sock )
     test_getsockname();
     test_inet_addr();
     test_dns();
+    test_gethostbyname_hack();
 
     test_send();
     test_write_events();
