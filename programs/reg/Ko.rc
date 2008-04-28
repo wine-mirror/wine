@@ -23,8 +23,8 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "명령어 문법:\n\nREG [ ADD | DELETE | QUERY ]\nREG command /?\n"
-    STRING_ADD_USAGE, "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
-    STRING_DELETE_USAGE, "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
-    STRING_QUERY_USAGE, "REG QUERY key_name [/v value_name | /ve] [/s]\n"
+    STRING_USAGE, "명령어 형식:\n\nREG [ ADD | DELETE | QUERY ]\nREG 명령어 /?\n"
+    STRING_ADD_USAGE, "REG ADD 값 [/v 값 | /ve] [/t 형식] [/s 분리기호] [/d 데이타] [/f]\n"
+    STRING_DELETE_USAGE, "REG DELETE 값 [/v 값 | /ve | /va] [/f]\n"
+    STRING_QUERY_USAGE, "REG QUERY 값 [/v 값| /ve] [/s]\n"
 }
