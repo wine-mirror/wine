@@ -1077,6 +1077,99 @@ static void test_tableweak_marshal_releasedata2(void)
     end_host_object(tid, thread);
 }
 
+struct weak_and_normal_marshal_data
+{
+    IStream *pStreamWeak;
+    IStream *pStreamNormal;
+    HANDLE hReadyEvent;
+    HANDLE hQuitEvent;
+};
+
+static DWORD CALLBACK weak_and_normal_marshal_thread_proc(void *p)
+{
+    HRESULT hr;
+    struct weak_and_normal_marshal_data *data = p;
+    HANDLE hQuitEvent = data->hQuitEvent;
+    MSG msg;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoMarshalInterface(data->pStreamWeak, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_TABLEWEAK);
+    ok_ole_success(hr, "CoMarshalInterface");
+
+    hr = CoMarshalInterface(data->pStreamNormal, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, "CoMarshalInterface");
+
+    /* force the message queue to be created before signaling parent thread */
+    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+    SetEvent(data->hReadyEvent);
+
+    while (WAIT_OBJECT_0 + 1 == MsgWaitForMultipleObjects(1, &hQuitEvent, FALSE, INFINITE, QS_ALLINPUT))
+    {
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            DispatchMessage(&msg);
+    }
+    CloseHandle(hQuitEvent);
+
+    CoUninitialize();
+
+    return 0;
+}
+
+/* tests interaction between table-weak and normal marshalling of an object */
+static void test_tableweak_and_normal_marshal_and_unmarshal(void)
+{
+    HRESULT hr;
+    IUnknown *pProxyWeak = NULL;
+    IUnknown *pProxyNormal = NULL;
+    DWORD tid;
+    HANDLE thread;
+    struct weak_and_normal_marshal_data data;
+
+    cLocks = 0;
+
+    data.hReadyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    data.hQuitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStreamWeak);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &data.pStreamNormal);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    thread = CreateThread(NULL, 0, weak_and_normal_marshal_thread_proc, &data, 0, &tid);
+    WaitForSingleObject(data.hReadyEvent, INFINITE);
+    CloseHandle(data.hReadyEvent);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(data.pStreamWeak, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(data.pStreamWeak, &IID_IClassFactory, (void **)&pProxyWeak);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(data.pStreamNormal, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(data.pStreamNormal, &IID_IClassFactory, (void **)&pProxyNormal);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxyNormal);
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxyWeak);
+
+    ok_no_locks();
+
+    IStream_Release(data.pStreamWeak);
+    IStream_Release(data.pStreamNormal);
+
+    SetEvent(data.hQuitEvent);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+}
+
 /* tests success case of a same-thread table-strong marshal, unmarshal, unmarshal */
 static void test_tablestrong_marshal_and_unmarshal_twice(void)
 {
@@ -2925,6 +3018,7 @@ START_TEST(marshal)
     test_tableweak_marshal_and_unmarshal_twice();
     test_tableweak_marshal_releasedata1();
     test_tableweak_marshal_releasedata2();
+    test_tableweak_and_normal_marshal_and_unmarshal();
     test_tablestrong_marshal_and_unmarshal_twice();
     test_lock_object_external();
     test_disconnect_stub();
