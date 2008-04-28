@@ -1492,11 +1492,11 @@ HRESULT WINAPI IUnknown_QueryService(IUnknown* lpUnknown, REFGUID sid, REFIID ri
  */
 BOOL WINAPI SHLoadMenuPopup(HINSTANCE hInst, LPCWSTR szName)
 {
-  HMENU hMenu, hSubMenu;
+  HMENU hMenu;
 
   if ((hMenu = LoadMenuW(hInst, szName)))
   {
-    if ((hSubMenu = GetSubMenu(hMenu, 0)))
+    if (GetSubMenu(hMenu, 0))
       RemoveMenu(hMenu, 0, MF_BYPOSITION);
 
     DestroyMenu(hMenu);
