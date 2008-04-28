@@ -1922,6 +1922,50 @@ GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics *graphics, GpBrush *brush,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipFillRectangles(GpGraphics *graphics, GpBrush *brush, GDIPCONST GpRectF *rects,
+    INT count)
+{
+    GpStatus ret;
+    INT i;
+
+    if(!rects)
+        return InvalidParameter;
+
+    for(i = 0; i < count; i++){
+        ret = GdipFillRectangle(graphics, brush, rects[i].X, rects[i].Y, rects[i].Width, rects[i].Height);
+        if(ret != Ok)   return ret;
+    }
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GDIPCONST GpRect *rects,
+    INT count)
+{
+    GpRectF *rectsF;
+    GpStatus ret;
+    INT i;
+
+    if(!rects || count <= 0)
+        return InvalidParameter;
+
+    rectsF = GdipAlloc(sizeof(GpRectF)*count);
+    if(!rectsF)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        rectsF[i].X      = (REAL)rects[i].X;
+        rectsF[i].Y      = (REAL)rects[i].Y;
+        rectsF[i].X      = (REAL)rects[i].Width;
+        rectsF[i].Height = (REAL)rects[i].Height;
+    }
+
+    ret = GdipFillRectangles(graphics,brush,rectsF,count);
+    GdipFree(rectsF);
+
+    return ret;
+}
+
 /* FIXME: Compositing mode is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetCompositingMode(GpGraphics *graphics,
     CompositingMode *mode)

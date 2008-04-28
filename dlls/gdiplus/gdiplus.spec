@@ -228,8 +228,8 @@
 @ stdcall GdipFillPolygonI(ptr ptr ptr long long)
 @ stdcall GdipFillRectangle(ptr ptr long long long long)
 @ stdcall GdipFillRectangleI(ptr ptr long long long long)
-@ stub GdipFillRectangles
-@ stub GdipFillRectanglesI
+@ stdcall GdipFillRectangles(ptr ptr long)
+@ stdcall GdipFillRectanglesI(ptr ptr long)
 @ stub GdipFillRegion
 @ stdcall GdipFindFirstImageItem(ptr ptr)
 @ stub GdipFindNextImageItem
