@@ -269,6 +269,7 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   static const WCHAR szDirectXVersionEnglish_v[] = {'4','.','0','9','.','0','0','0','0','.','0','9','0','4',0};
   static const WCHAR szDirectXVersionLongEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','o','n','g','E','n','g','l','i','s','h',0};
   static const WCHAR szDirectXVersionLongEnglish_v[] = {'=',' ','"','D','i','r','e','c','t','X',' ','9','.','0','c',' ','(','4','.','0','9','.','0','0','0','0','.','0','9','0','4',')',0};
+  static const WCHAR ullPhysicalMemory[] = {'u','l','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
   /*static const WCHAR szDxDiagVersion[] = {'s','z','D','x','D','i','a','g','V','e','r','s','i','o','n',0};*/
   /*szWindowsDir*/
   /*szWindowsDir*/
@@ -276,6 +277,7 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   /*"dwOSMinorVersion"*/
   /*"dwOSBuildNumber"*/
   /*"dwOSPlatformID"*/
+  MEMORYSTATUSEX msex;
   VARIANT v;
 
   V_VT(&v) = VT_UI4; V_UI4(&v) = 9;
@@ -295,6 +297,13 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   VariantClear(&v);
   V_VT(&v) = VT_BOOL; V_BOOL(&v) = FALSE;
   hr = IDxDiagContainerImpl_AddProp(pSubCont, bDebug, &v);
+  VariantClear(&v);
+
+  msex.dwLength = sizeof(msex);
+  GlobalMemoryStatusEx( &msex );
+  V_VT(&v) = VT_UI8;
+  V_UI8(&v) = msex.ullTotalPhys;
+  hr = IDxDiagContainerImpl_AddProp(pSubCont, ullPhysicalMemory, &v);
   VariantClear(&v);
 
   return hr;
