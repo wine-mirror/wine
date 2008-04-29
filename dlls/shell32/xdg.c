@@ -946,7 +946,7 @@ HRESULT XDG_UserDirLookup(const char ** xdg_dirs, const unsigned int num_dirs, c
     }
     hr = S_OK;
 
-    /* Remove entries for directories that do no exist */
+    /* Remove entries for directories that do not exist */
     for (i = 0; i <  num_dirs; i++)
     {
         struct stat statFolder;
