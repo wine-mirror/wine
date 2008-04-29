@@ -602,8 +602,9 @@ case:	  tCASE expr_int_const ':' union_field	{ attr_t *a = make_attrp(ATTR_CASE,
 						}
 	;
 
-constdef: tCONST decl_spec ident '=' expr_const	{ $$ = reg_const($3);
-						  set_type($$, $2, NULL, FALSE);
+constdef: tCONST decl_spec declarator '=' expr_const
+						{ $$ = reg_const($3->var);
+						  set_type($$, $2, $3, FALSE);
 						  $$->eval = $5;
 						}
 	;
@@ -720,8 +721,8 @@ expr_const: expr				{ $$ = $1;
 						}
 	;
 
-externdef: tEXTERN tCONST decl_spec ident	{ $$ = $4;
-						  set_type($$, $3, NULL, FALSE);
+externdef: tEXTERN tCONST decl_spec declarator	{ $$ = $4->var;
+						  set_type($$, $3, $4, FALSE);
 						}
 	;
 
