@@ -312,6 +312,7 @@ void write_type_v(FILE *h, type_t *t, int is_field, int declonly,
     int i;
     const char *callconv = get_attrp(pt->attrs, ATTR_CALLCONV);
     if (!callconv) callconv = "";
+    if (is_attr(pt->attrs, ATTR_INLINE)) fprintf(h, "inline ");
     write_type_left(h, pt->ref, declonly);
     fputc(' ', h);
     if (ptr_level) fputc('(', h);

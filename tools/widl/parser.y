@@ -116,7 +116,6 @@ static type_t *make_int(int sign);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *make_func_type(var_list_t *args);
 static type_t *make_pointer_type(type_t *ref, attr_list_t *attrs);
-static void type_set_function_callconv(type_t *type, char *callconv);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
@@ -139,14 +138,14 @@ static statement_t *process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
 static void check_functions(const type_t *iface);
 static void check_all_user_types(const statement_list_t *stmts);
-static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t *attrs);
+static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_typedef_attrs(attr_list_t *attrs);
 static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs);
-static const attr_list_t *check_library_attrs(const char *name, const attr_list_t *attrs);
+static attr_list_t *check_library_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
-static const attr_list_t *check_module_attrs(const char *name, const attr_list_t *attrs);
-static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_t *attrs);
+static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
+static attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
 static void add_explicit_handle_if_necessary(func_t *func);
 
@@ -234,7 +233,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tIMMEDIATEBIND
 %token tIMPLICITHANDLE
 %token tIMPORT tIMPORTLIB
-%token tIN tINLINE
+%token tIN tIN_LINE tINLINE
 %token tINPUTSYNC
 %token tINT tINT64
 %token tINTERFACE
@@ -286,7 +285,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tVOID
 %token tWCHAR tWIREMARSHAL
 
-%type <attr> attribute type_qualifier
+%type <attr> attribute type_qualifier function_specifier
 %type <attr_list> m_attributes attributes attrib_list m_type_qual_list decl_spec_no_type m_decl_spec_no_type
 %type <str_list> str_list
 %type <expr> m_expr expr expr_const expr_int_const array
@@ -968,6 +967,10 @@ moduledef: modulehdr '{' int_statements '}'
 						}
 	;
 
+function_specifier:
+	  tINLINE				{ $$ = make_attr(ATTR_INLINE); }
+	;
+
 type_qualifier:
 	  tCONST				{ $$ = make_attr(ATTR_CONST); }
 	;
@@ -987,12 +990,13 @@ m_decl_spec_no_type:				{ $$ = NULL; }
 
 decl_spec_no_type:
 	  type_qualifier m_decl_spec_no_type	{ $$ = append_attr($2, $1); }
+	| function_specifier m_decl_spec_no_type  { $$ = append_attr($2, $1); }
 	;
 
 declarator:
 	  '*' m_type_qual_list declarator %prec PPTR
 						{ $$ = $3; $$->type = append_ptrchain_type($$->type, make_pointer_type(NULL, $2)); }
-	| callconv declarator			{ $$ = $2; type_set_function_callconv($$->func_type, $1); }
+	| callconv declarator			{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
 	| direct_declarator
 	;
 
@@ -1157,6 +1161,19 @@ static attr_list_t *append_attr(attr_list_t *list, attr_t *attr)
     return list;
 }
 
+static attr_list_t *move_attr(attr_list_t *dst, attr_list_t *src, enum attr_type type)
+{
+  attr_t *attr;
+  if (!src) return dst;
+  LIST_FOR_EACH_ENTRY(attr, src, attr_t, entry)
+    if (attr->type == type)
+    {
+      list_remove(&attr->entry);
+      return append_attr(dst, attr);
+    }
+  return dst;
+}
+
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list)
 {
   struct list *entry;
@@ -1309,16 +1326,6 @@ static type_t *make_func_type(var_list_t *args)
   return t;
 }
 
-static void type_set_function_callconv(type_t *type, char *callconv)
-{
-  if (!type)
-    error_loc("calling convention applied to non-function-pointer type\n");
-  for (; is_ptr(type); type = type->ref)
-    ;
-  assert(type->type == RPC_FC_FUNCTION);
-  type->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, callconv));
-}
-
 static type_t *make_pointer_type(type_t *ref, attr_list_t *attrs)
 {
     type_t *t = make_type(pointer_default, ref);
@@ -1347,6 +1354,20 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
   expr_t *dim;
   type_t *atype, **ptype;
   array_dims_t *arr = decl ? decl->array : NULL;
+
+  if (is_attr(type->attrs, ATTR_INLINE))
+  {
+    if (!decl || !decl->func_type)
+      error_loc("inline attribute applied to non-function type\n");
+    else
+    {
+      type_t *t;
+      /* move inline attribute from return type node to function node */
+      for (t = decl->func_type; is_ptr(t); t = t->ref)
+        ;
+      t->attrs = move_attr(t->attrs, type->attrs, ATTR_INLINE);
+    }
+  }
 
   /* add type onto the end of the pointers in pident->type */
   v->type = append_ptrchain_type(decl ? decl->type : NULL, type);
@@ -1496,19 +1517,30 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
    * function and make v->type point to the function side of the declaration */
   if (decl && decl->func_type)
   {
-    type_t *t;
+    type_t *ft, *t;
     type_t *return_type = v->type;
     v->type = decl->func_type;
-    for (t = v->type; is_ptr(t); t = t->ref)
+    for (ft = v->type; is_ptr(ft); ft = ft->ref)
       ;
-    assert(t->type == RPC_FC_FUNCTION);
-    t->ref = return_type;
-    if (is_object_interface && !is_attr(t->attrs, ATTR_CALLCONV))
+    assert(ft->type == RPC_FC_FUNCTION);
+    ft->ref = return_type;
+    /* move calling convention attribute, if present, from pointer nodes to
+     * function node */
+    for (t = v->type; is_ptr(t); t = t->ref)
+      ft->attrs = move_attr(ft->attrs, t->attrs, ATTR_CALLCONV);
+    if (is_object_interface && !is_attr(ft->attrs, ATTR_CALLCONV))
     {
       static char *stdmethodcalltype;
       if (!stdmethodcalltype) stdmethodcalltype = strdup("STDMETHODCALLTYPE");
-      t->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
+      ft->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, stdmethodcalltype));
     }
+  }
+  else
+  {
+    type_t *t;
+    for (t = v->type; is_ptr(t); t = t->ref)
+      if (is_attr(t->attrs, ATTR_CALLCONV))
+        error_loc("calling convention applied to non-function-pointer type\n");
   }
 }
 
@@ -2163,6 +2195,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_IMMEDIATEBIND */    { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "immediatebind" },
     /* ATTR_IMPLICIT_HANDLE */  { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, "implicit_handle" },
     /* ATTR_IN */               { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "in" },
+    /* ATTR_INLINE */           { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "inline" },
     /* ATTR_INPUTSYNC */        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "inputsync" },
     /* ATTR_LENGTHIS */         { 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, "length_is" },
     /* ATTR_LIBLCID */          { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "lcid" },
@@ -2205,7 +2238,7 @@ const char *get_attr_display_name(enum attr_type type)
     return allowed_attr[type].display_name;
 }
 
-static const attr_list_t *check_iface_attrs(const char *name, const attr_list_t *attrs)
+static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs)
 {
   const attr_t *attr;
   if (!attrs) return attrs;
@@ -2276,7 +2309,7 @@ static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs)
   return attrs;
 }
 
-static const attr_list_t *check_library_attrs(const char *name, const attr_list_t *attrs)
+static attr_list_t *check_library_attrs(const char *name, attr_list_t *attrs)
 {
   const attr_t *attr;
   if (!attrs) return attrs;
@@ -2302,7 +2335,7 @@ static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs)
   return attrs;
 }
 
-static const attr_list_t *check_module_attrs(const char *name, const attr_list_t *attrs)
+static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs)
 {
   const attr_t *attr;
   if (!attrs) return attrs;
@@ -2315,7 +2348,7 @@ static const attr_list_t *check_module_attrs(const char *name, const attr_list_t
   return attrs;
 }
 
-static const attr_list_t *check_coclass_attrs(const char *name, const attr_list_t *attrs)
+static attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs)
 {
   const attr_t *attr;
   if (!attrs) return attrs;

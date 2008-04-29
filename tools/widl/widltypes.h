@@ -105,6 +105,7 @@ enum attr_type
     ATTR_IMMEDIATEBIND,
     ATTR_IMPLICIT_HANDLE,
     ATTR_IN,
+    ATTR_INLINE,
     ATTR_INPUTSYNC,
     ATTR_LENGTHIS,
     ATTR_LIBLCID,
@@ -256,7 +257,7 @@ struct _type_t {
   enum type_kind kind;
   unsigned char type;
   struct _type_t *ref;
-  const attr_list_t *attrs;
+  attr_list_t *attrs;
   func_list_t *funcs;             /* interfaces and modules */
   var_list_t *fields_or_args;     /* interfaces, structures, enumerations and functions (for args) */
   ifref_list_t *ifaces;           /* coclasses */
