@@ -579,7 +579,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
                 }
                 SetWindowPos(win->hMainWnd, HWND_TOP, pt.x, pt.y, sz.cx, sz.cy, flags);
 
-                if (wpage->page && wpage->page->file != win->page->file)
+                if (wpage->page && win->page && wpage->page->file != win->page->file)
                     WINHELP_DeleteBackSet(win);
                 WINHELP_InitFonts(win->hMainWnd);
 
