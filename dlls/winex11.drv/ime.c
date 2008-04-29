@@ -75,7 +75,6 @@ static const WCHAR UI_CLASS_NAME[] = {'W','i','n','e','X','1','1','I','M','E',0}
 
 static HIMC *hSelectedFrom = NULL;
 static INT  hSelectedCount = 0;
-static BOOL hXIMPresent = FALSE;
 
 /* MSIME messages */
 static UINT WM_MSIME_SERVICE;
@@ -521,11 +520,6 @@ BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass,
                        LPCWSTR lpszOption)
 {
     TRACE("\n");
-    if (!hXIMPresent)
-    {
-        ERR("No XIM in the back end\n");
-        return FALSE;
-    }
     lpIMEInfo->dwPrivateDataSize = sizeof (IMEPRIVATE);
     lpIMEInfo->fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET;
     lpIMEInfo->fdwConversionCaps = IME_CMODE_NATIVE;
@@ -589,12 +583,6 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
     if (hIMC == FROM_X11)
     {
         ERR("ImeSelect should never be called from X11\n");
-        return FALSE;
-    }
-
-    if (!hXIMPresent)
-    {
-        ERR("No XIM in the back end\n");
         return FALSE;
     }
 
@@ -979,11 +967,6 @@ void IME_SetOpenStatus(BOOL fOpen)
 
     if (!myPrivate->bInternalState && fOpen == TRUE)
         ImmSetOpenStatus(RealIMC(FROM_X11), fOpen);
-}
-
-void IME_XIMPresent(BOOL present)
-{
-    hXIMPresent  = present;
 }
 
 LRESULT IME_SendMessageToSelectedHWND(UINT msg, WPARAM wParam, LPARAM lParam)

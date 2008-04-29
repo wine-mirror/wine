@@ -475,7 +475,6 @@ static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
     thread_data->xim = xim;
     XUnregisterIMInstantiateCallback(display, NULL, NULL, NULL, X11DRV_OpenIM, NULL);
     wine_tsx11_unlock();
-    IME_XIMPresent(TRUE);
     IME_UpdateAssociation(NULL);
 }
 
