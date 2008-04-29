@@ -3643,7 +3643,7 @@ BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
  */
 BOOL X11DRV_wglSetPixelFormatWINE(X11DRV_PDEVICE *physDev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
 {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
+    ERR("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
