@@ -557,11 +557,7 @@ static void EMF_RestoreDC( enum_emh_data *info, INT level )
         info->saved_state = state->next;
         state->next = NULL;
         if (--info->save_level < level)
-        {
-            EMF_dc_state *next = info->state.next;
             info->state = *state;
-            info->state.next = next;
-        }
         HeapFree( GetProcessHeap(), 0, state );
     }
 }
@@ -2279,7 +2275,7 @@ BOOL WINAPI EnumEnhMetaFile(
         return FALSE;
     }
 
-    info = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+    info = HeapAlloc( GetProcessHeap(), 0,
 		    sizeof (enum_emh_data) + sizeof(HANDLETABLE) * emh->nHandles );
     if(!info)
     {
@@ -2298,6 +2294,7 @@ BOOL WINAPI EnumEnhMetaFile(
     info->state.world_transform.eM12 = info->state.world_transform.eM21 = 0;
     info->state.world_transform.eDx  = info->state.world_transform.eDy =  0;
 
+    info->state.next = NULL;
     info->save_level = 0;
     info->saved_state = NULL;
 
