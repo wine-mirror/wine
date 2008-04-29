@@ -355,3 +355,14 @@ GpStatus WINGDIPAPI GdipVectorTransformMatrixPointsI(GpMatrix *matrix, GpPoint *
 
     return ret;
 }
+
+GpStatus WINGDIPAPI GdipIsMatrixEqual(GDIPCONST GpMatrix *matrix, GDIPCONST GpMatrix *matrix2,
+    BOOL *result)
+{
+    if(!matrix || !matrix2 || !result)
+        return InvalidParameter;
+    /* based on single array member of GpMatrix */
+    *result = (memcmp(matrix->matrix, matrix2->matrix, sizeof(GpMatrix)) == 0);
+
+    return Ok;
+}

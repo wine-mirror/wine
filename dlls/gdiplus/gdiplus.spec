@@ -418,7 +418,7 @@
 @ stub GdipIsEmptyRegion
 @ stub GdipIsEqualRegion
 @ stub GdipIsInfiniteRegion
-@ stub GdipIsMatrixEqual
+@ stdcall GdipIsMatrixEqual(ptr ptr ptr)
 @ stub GdipIsMatrixIdentity
 @ stub GdipIsMatrixInvertible
 @ stub GdipIsOutlineVisiblePathPoint
