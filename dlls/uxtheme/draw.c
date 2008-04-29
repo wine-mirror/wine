@@ -196,7 +196,6 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
                 WCHAR szPath[MAX_PATH];
                 int imagelayout = IL_HORIZONTAL;
                 int imagecount = 1;
-                int imagenum;
                 BITMAP bmp;
                 HBITMAP hBmp;
                 BOOL hasAlpha;
@@ -209,7 +208,6 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, 
                 GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_IMAGELAYOUT, &imagelayout);
                 GetThemeInt(hTheme, iPartId, iStateId, TMT_IMAGECOUNT, &imagecount);
 
-                imagenum = max (min (imagecount, iStateId), 1) - 1;
                 GetObjectW(hBmp, sizeof(bmp), &bmp);
                 if(imagelayout == IL_VERTICAL) {
                     reqsize.x = bmp.bmWidth;
