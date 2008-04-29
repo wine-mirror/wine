@@ -1424,7 +1424,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
     if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */
         fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
-    if (!ExtTextOutW(get_cache_hdc(psc), x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL))
+    if (!ExtTextOutW(hdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL))
         hr = S_FALSE;
 
     unselect_cached_font(psc, hfont);
