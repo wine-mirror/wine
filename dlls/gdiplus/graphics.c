@@ -2418,3 +2418,21 @@ GpStatus WINGDIPAPI GdipGetDpiY(GpGraphics *graphics, REAL* dpi)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipMultiplyWorldTransform(GpGraphics *graphics, GDIPCONST GpMatrix *matrix,
+    GpMatrixOrder order)
+{
+    GpMatrix m;
+    GpStatus ret;
+
+    if(!graphics || !matrix)
+        return InvalidParameter;
+
+    m = *(graphics->worldtrans);
+
+    ret = GdipMultiplyMatrix(&m, (GpMatrix*)matrix, order);
+    if(ret == Ok)
+        *(graphics->worldtrans) = m;
+
+    return ret;
+}
