@@ -213,7 +213,9 @@ void write_type_left(FILE *h, type_t *t, int declonly)
 {
   if (!h) return;
 
-  if (t->is_const) fprintf(h, "const ");
+  if (is_attr(t->attrs, ATTR_CONST) &&
+      (t->kind == TKIND_ALIAS || t->declarray || !is_ptr(t)))
+    fprintf(h, "const ");
 
   if (t->kind == TKIND_ALIAS) fprintf(h, "%s", t->name);
   else if (t->declarray) write_type_left(h, t->ref, declonly);
@@ -273,6 +275,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
       case RPC_FC_BOGUS_ARRAY:
         write_type_left(h, t->ref, declonly);
         fprintf(h, "%s*", needs_space_after(t->ref) ? " " : "");
+        if (is_ptr(t) && is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
         break;
       default:
         fprintf(h, "%s", t->name);

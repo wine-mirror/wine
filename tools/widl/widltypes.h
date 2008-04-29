@@ -78,6 +78,7 @@ enum attr_type
     ATTR_CALLAS,
     ATTR_CALLCONV, /* calling convention pseudo-attribute */
     ATTR_CASE,
+    ATTR_CONST, /* const pseudo-attribute */
     ATTR_CONTEXTHANDLE,
     ATTR_CONTROL,
     ATTR_DEFAULT,
@@ -267,7 +268,6 @@ struct _type_t {
   int typelib_idx;
   unsigned int declarray : 1;     /* if declared as an array */
   unsigned int ignore : 1;
-  unsigned int is_const : 1;
   unsigned int defined : 1;
   unsigned int written : 1;
   unsigned int user_types_registered : 1;

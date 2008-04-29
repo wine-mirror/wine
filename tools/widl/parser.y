@@ -91,6 +91,8 @@ static void fix_incomplete(void);
 
 static str_list_t *append_str(str_list_t *list, char *str);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
+static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
+static type_t *apply_decl_spec(type_t *type, attr_list_t *list1, attr_list_t *list2);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned long val);
 static attr_t *make_attrp(enum attr_type type, void *val);
@@ -113,6 +115,7 @@ static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static type_t *make_func_type(var_list_t *args);
+static type_t *make_pointer_type(type_t *ref, attr_list_t *attrs);
 static void type_set_function_callconv(type_t *type, char *callconv);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
@@ -283,8 +286,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tVOID
 %token tWCHAR tWIREMARSHAL
 
-%type <attr> attribute
-%type <attr_list> m_attributes attributes attrib_list
+%type <attr> attribute type_qualifier
+%type <attr_list> m_attributes attributes attrib_list m_type_qual_list decl_spec_no_type m_decl_spec_no_type
 %type <str_list> str_list
 %type <expr> m_expr expr expr_const expr_int_const array
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
@@ -294,7 +297,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <type> module modulehdr moduledef
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef
-%type <type> type
+%type <type> type decl_spec
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
 %type <var> arg ne_union_field union_field s_field case enum constdef externdef
@@ -462,12 +465,12 @@ args:	  arg					{ check_arg($1); $$ = append_var( NULL, $1 ); }
 	;
 
 /* split into two rules to get bison to resolve a tVOID conflict */
-arg:	  attributes type declarator		{ $$ = $3->var;
+arg:	  attributes decl_spec declarator	{ $$ = $3->var;
 						  $$->attrs = $1;
 						  set_type($$, $2, $3, TRUE);
 						  free($3);
 						}
-	| type declarator			{ $$ = $2->var;
+	| decl_spec declarator			{ $$ = $2->var;
 						  set_type($$, $1, $2, TRUE);
 						  free($2);
 						}
@@ -600,7 +603,7 @@ case:	  tCASE expr_int_const ':' union_field	{ attr_t *a = make_attrp(ATTR_CASE,
 						}
 	;
 
-constdef: tCONST type ident '=' expr_const	{ $$ = reg_const($3);
+constdef: tCONST decl_spec ident '=' expr_const	{ $$ = reg_const($3);
 						  set_type($$, $2, NULL, FALSE);
 						  $$->eval = $5;
 						}
@@ -718,7 +721,7 @@ expr_const: expr				{ $$ = $1;
 						}
 	;
 
-externdef: tEXTERN tCONST type ident		{ $$ = $4;
+externdef: tEXTERN tCONST decl_spec ident	{ $$ = $4;
 						  set_type($$, $3, NULL, FALSE);
 						}
 	;
@@ -727,9 +730,11 @@ fields:						{ $$ = NULL; }
 	| fields field				{ $$ = append_var_list($1, $2); }
 	;
 
-field:	  m_attributes type declarator_list ';'	{ const char *first = LIST_ENTRY(list_head($3), declarator_t, entry)->var->name;
+field:	  m_attributes decl_spec declarator_list ';'
+						{ const char *first = LIST_ENTRY(list_head($3), declarator_t, entry)->var->name;
 						  check_field_attrs(first, $1);
-						  $$ = set_var_types($1, $2, $3); }
+						  $$ = set_var_types($1, $2, $3);
+						}
 	| m_attributes uniondef ';'		{ var_t *v = make_var(NULL);
 						  v->type = $2; v->attrs = $1;
 						  $$ = append_var(NULL, v);
@@ -748,7 +753,7 @@ union_field:
 	  s_field ';'				{ $$ = $1; }
 	| ';'					{ $$ = NULL; }
 
-s_field:  m_attributes type declarator		{ $$ = $3->var;
+s_field:  m_attributes decl_spec declarator	{ $$ = $3->var;
 						  $$->attrs = check_field_attrs($$->name, $1);
 						  set_type($$, $2, $3, FALSE);
 						  free($3);
@@ -756,7 +761,7 @@ s_field:  m_attributes type declarator		{ $$ = $3->var;
 	;
 
 funcdef:
-	  m_attributes type declarator		{ var_t *v = $3->var;
+	  m_attributes decl_spec declarator	{ var_t *v = $3->var;
 						  v->attrs = check_function_attrs(v->name, $1);
 						  set_type(v, $2, $3, FALSE);
 						  free($3);
@@ -963,9 +968,30 @@ moduledef: modulehdr '{' int_statements '}'
 						}
 	;
 
+type_qualifier:
+	  tCONST				{ $$ = make_attr(ATTR_CONST); }
+	;
+
+m_type_qual_list:				{ $$ = NULL; }
+	| m_type_qual_list type_qualifier	{ $$ = append_attr($1, $2); }
+	;
+
+decl_spec: type m_decl_spec_no_type		{ $$ = apply_decl_spec($1, $2, NULL); }
+	| decl_spec_no_type type m_decl_spec_no_type
+						{ $$ = apply_decl_spec($2, $1, $3); }
+	;
+
+m_decl_spec_no_type:				{ $$ = NULL; }
+	| decl_spec_no_type
+	;
+
+decl_spec_no_type:
+	  type_qualifier m_decl_spec_no_type	{ $$ = append_attr($2, $1); }
+	;
+
 declarator:
-	  '*' declarator %prec PPTR		{ $$ = $2; $$->type = make_type(pointer_default, $$->type); }
-	| tCONST declarator			{ $$ = $2; /* FIXME */ }
+	  '*' m_type_qual_list declarator %prec PPTR
+						{ $$ = $3; $$->type = append_ptrchain_type($$->type, make_pointer_type(NULL, $2)); }
 	| callconv declarator			{ $$ = $2; type_set_function_callconv($$->func_type, $1); }
 	| direct_declarator
 	;
@@ -1005,7 +1031,6 @@ structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = get_typev(RPC_FC_STRUCT, $2, ts
 type:	  tVOID					{ $$ = duptype(find_type("void", 0), 1); }
 	| aKNOWNTYPE				{ $$ = find_type($1, 0); }
 	| base_type				{ $$ = $1; }
-	| tCONST type				{ $$ = duptype($2, 1); $$->is_const = TRUE; }
 	| enumdef				{ $$ = $1; }
 	| tENUM aIDENTIFIER			{ $$ = find_type2($2, tsENUM); }
 	| structdef				{ $$ = $1; }
@@ -1015,7 +1040,7 @@ type:	  tVOID					{ $$ = duptype(find_type("void", 0), 1); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
 	;
 
-typedef: tTYPEDEF m_attributes type declarator_list
+typedef: tTYPEDEF m_attributes decl_spec declarator_list
 						{ reg_typedefs($3, $4, check_typedef_attrs($2));
 						  $$ = process_typedefs($4);
 						}
@@ -1132,6 +1157,53 @@ static attr_list_t *append_attr(attr_list_t *list, attr_t *attr)
     return list;
 }
 
+static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list)
+{
+  struct list *entry;
+
+  if (!old_list) return new_list;
+
+  while ((entry = list_head(old_list)))
+  {
+    attr_t *attr = LIST_ENTRY(entry, attr_t, entry);
+    list_remove(entry);
+    new_list = append_attr(new_list, attr);
+  }
+  return new_list;
+}
+
+static attr_list_t *dupattrs(const attr_list_t *list)
+{
+  attr_list_t *new_list;
+  const attr_t *attr;
+
+  if (!list) return NULL;
+
+  new_list = xmalloc( sizeof(*list) );
+  list_init( new_list );
+  LIST_FOR_EACH_ENTRY(attr, list, const attr_t, entry)
+  {
+    attr_t *new_attr = xmalloc(sizeof(*new_attr));
+    *new_attr = *attr;
+    list_add_tail(new_list, &new_attr->entry);
+  }
+  return new_list;
+}
+
+static type_t *apply_decl_spec(type_t *type, attr_list_t *list1, attr_list_t *list2)
+{
+  if (list1 || list2)
+  {
+    attr_list_t *attrs;
+    type = duptype(type, 1);
+    attrs = dupattrs(type->attrs);
+    attrs = append_attr_list(attrs, list1);
+    attrs = append_attr_list(attrs, list2);
+    type->attrs = attrs;
+  }
+  return type;
+}
+
 static attr_t *make_attr(enum attr_type type)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
@@ -1220,7 +1292,6 @@ type_t *make_type(unsigned char type, type_t *ref)
   t->ptrdesc = 0;
   t->declarray = FALSE;
   t->ignore = (parse_only != 0);
-  t->is_const = FALSE;
   t->sign = 0;
   t->defined = FALSE;
   t->written = FALSE;
@@ -1246,6 +1317,13 @@ static void type_set_function_callconv(type_t *type, char *callconv)
     ;
   assert(type->type == RPC_FC_FUNCTION);
   type->attrs = append_attr(NULL, make_attrp(ATTR_CALLCONV, callconv));
+}
+
+static type_t *make_pointer_type(type_t *ref, attr_list_t *attrs)
+{
+    type_t *t = make_type(pointer_default, ref);
+    t->attrs = attrs;
+    return t;
 }
 
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
@@ -2058,6 +2136,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_CALLAS */           { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "call_as" },
     /* ATTR_CALLCONV */         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
     /* ATTR_CASE */             { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "case" },
+    /* ATTR_CONST */            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "const" },
     /* ATTR_CONTEXTHANDLE */    { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "context_handle" },
     /* ATTR_CONTROL */          { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, "control" },
     /* ATTR_DEFAULT */          { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, "default" },
