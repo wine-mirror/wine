@@ -2226,7 +2226,7 @@ static void wait_message_reply( UINT flags )
 
     for (;;)
     {
-        unsigned int wake_bits = 0, changed_bits = 0;
+        unsigned int wake_bits = 0;
         DWORD dwlc, res;
 
         SERVER_START_REQ( set_queue_mask )
@@ -2235,10 +2235,7 @@ static void wait_message_reply( UINT flags )
             req->changed_mask = req->wake_mask;
             req->skip_wait    = 1;
             if (!wine_server_call( req ))
-            {
-                wake_bits    = reply->wake_bits;
-                changed_bits = reply->changed_bits;
-            }
+                wake_bits = reply->wake_bits;
         }
         SERVER_END_REQ;
 

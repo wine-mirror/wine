@@ -951,11 +951,9 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
     STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
     HANDLE16 oldDS = stack16->ds;
     HINSTANCE16 gdi_inst;
-    WORD gdi_heap;
     int userPercent, gdiPercent;
 
     if ((gdi_inst = LoadLibrary16( "GDI" )) < 32) return 0;
-    gdi_heap = gdi_inst | 7;
 
     switch(resType)
     {

@@ -679,11 +679,10 @@ MENU_AdjustMenuItemRect(const POPUPMENU *menu, LPRECT rect)
 {
     if (menu->bScrolling)
     {
-        UINT arrow_bitmap_width, arrow_bitmap_height;
+        UINT arrow_bitmap_height;
         BITMAP bmp;
 
         GetObjectW(get_up_arrow_bitmap(), sizeof(bmp), &bmp);
-        arrow_bitmap_width = bmp.bmWidth;
         arrow_bitmap_height = bmp.bmHeight;
         rect->top += arrow_bitmap_height - menu->nScrollPos;
         rect->bottom += arrow_bitmap_height - menu->nScrollPos;

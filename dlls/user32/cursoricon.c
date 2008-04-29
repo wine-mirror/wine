@@ -384,11 +384,10 @@ static ICONCACHE* CURSORICON_FindCache(HICON hIcon)
     ICONCACHE *ptr;
     ICONCACHE *pRet=NULL;
     BOOL IsFound = FALSE;
-    int count;
 
     EnterCriticalSection( &IconCrst );
 
-    for (count = 0, ptr = IconAnchor; ptr != NULL && !IsFound; ptr = ptr->next, count++ )
+    for (ptr = IconAnchor; ptr != NULL && !IsFound; ptr = ptr->next)
     {
         if ( hIcon == ptr->hIcon )
         {

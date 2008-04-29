@@ -3424,7 +3424,6 @@ static void EDIT_EM_ScrollCaret(EDITSTATE *es)
 {
 	if (es->style & ES_MULTILINE) {
 		INT l;
-		INT li;
 		INT vlc;
 		INT ww;
 		INT cw = es->char_width;
@@ -3433,7 +3432,6 @@ static void EDIT_EM_ScrollCaret(EDITSTATE *es)
 		INT dx = 0;
 
 		l = EDIT_EM_LineFromChar(es, es->selection_end);
-		li = EDIT_EM_LineIndex(es, l);
 		x = (short)LOWORD(EDIT_EM_PosFromChar(es, es->selection_end, es->flags & EF_AFTER_WRAP));
 		vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
 		if (l >= es->y_offset + vlc)

@@ -77,7 +77,6 @@ static void CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT_PTR id, DWORD cti
 {
     BOOL ret;
     RECT r;
-    int old_state = 0;
     int hidden = 0;
 
     SERVER_START_REQ( set_caret_info )
@@ -95,7 +94,6 @@ static void CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT_PTR id, DWORD cti
             r.top     = reply->old_rect.top;
             r.right   = reply->old_rect.right;
             r.bottom  = reply->old_rect.bottom;
-            old_state = reply->old_state;
             hidden    = reply->old_hide;
         }
     }
@@ -332,7 +330,6 @@ BOOL WINAPI ShowCaret( HWND hwnd )
 {
     BOOL ret;
     RECT r;
-    int old_state = 0;
     int hidden = 0;
 
     SERVER_START_REQ( set_caret_info )
@@ -350,7 +347,6 @@ BOOL WINAPI ShowCaret( HWND hwnd )
             r.top     = reply->old_rect.top;
             r.right   = reply->old_rect.right;
             r.bottom  = reply->old_rect.bottom;
-            old_state = reply->old_state;
             hidden    = reply->old_hide;
         }
     }

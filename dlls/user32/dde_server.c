@@ -165,11 +165,8 @@ HDDEDATA WINAPI DdeNameService(DWORD idInst, HSZ hsz1, HSZ hsz2, UINT afCmd)
 {
     WDML_SERVER*	pServer;
     WDML_INSTANCE*	pInstance;
-    HDDEDATA 		hDdeData;
     HWND 		hwndServer;
     WNDCLASSEXW  	wndclass;
-
-    hDdeData = NULL;
 
     TRACE("(%d,%p,%p,%x)\n", idInst, hsz1, hsz2, afCmd);
 

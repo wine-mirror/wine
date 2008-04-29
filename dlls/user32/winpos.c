@@ -1867,7 +1867,6 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     WND *win;
     BOOL ret;
     RECT visible_rect, old_window_rect;
-    DWORD new_style;
 
     if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
     if (win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
@@ -1901,7 +1900,6 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         }
     }
     SERVER_END_REQ;
-    new_style = win->dwStyle;
     WIN_ReleasePtr( win );
 
     if (ret)
