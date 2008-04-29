@@ -176,6 +176,11 @@
 #define GL_FLOAT_CLEAR_COLOR_VALUE_NV     0x888D
 #define GL_FLOAT_RGBA_MODE_NV             0x888E
 
+/** WGL_EXT_framebuffer_sRGB */
+#define WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT  0x20A9
+#ifndef GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT
+# define GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT 0x20B2
+#endif
 
 /** 
  * WGL_ATI_pixel_format_float / WGL_ARB_color_buffer_float
