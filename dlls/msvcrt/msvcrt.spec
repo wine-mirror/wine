@@ -233,8 +233,8 @@
 @ cdecl _fgetwchar()
 @ cdecl _filbuf(ptr) MSVCRT__filbuf
 # extern _fileinfo
-@ cdecl _filelength(long)
-@ cdecl -ret64 _filelengthi64(long)
+@ cdecl _filelength(long) MSVCRT__filelength
+@ cdecl -ret64 _filelengthi64(long) MSVCRT__filelengthi64
 @ cdecl _fileno(ptr) MSVCRT__fileno
 @ cdecl _findclose(long) MSVCRT__findclose
 @ cdecl _findfirst(str ptr) MSVCRT__findfirst
@@ -334,14 +334,14 @@
 @ cdecl _loaddll(str)
 @ cdecl -i386 _local_unwind2(ptr long)
 @ cdecl _lock(long)
-@ cdecl _locking(long long long)
+@ cdecl _locking(long long long) MSVCRT__locking
 @ cdecl _logb( double )
 @ cdecl -i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long)
 @ cdecl _lrotr(long long)
 @ cdecl _lsearch(ptr ptr long long ptr)
-@ cdecl _lseek(long long long)
-@ cdecl -ret64 _lseeki64(long double long)
+@ cdecl _lseek(long long long) MSVCRT__lseek
+@ cdecl -ret64 _lseeki64(long double long) MSVCRT__lseeki64
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
 @ cdecl _ltow(long ptr long) ntdll._ltow
 @ cdecl _makepath(ptr str str str str)

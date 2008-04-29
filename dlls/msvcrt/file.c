@@ -803,7 +803,7 @@ void msvcrt_free_io(void)
 /*********************************************************************
  *		_lseeki64 (MSVCRT.@)
  */
-__int64 CDECL _lseeki64(int fd, __int64 offset, int whence)
+__int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
   LARGE_INTEGER ofs, ret;
@@ -840,9 +840,9 @@ __int64 CDECL _lseeki64(int fd, __int64 offset, int whence)
 /*********************************************************************
  *		_lseek (MSVCRT.@)
  */
-LONG CDECL _lseek(int fd, LONG offset, int whence)
+LONG CDECL MSVCRT__lseek(int fd, LONG offset, int whence)
 {
-    return _lseeki64(fd, offset, whence);
+    return MSVCRT__lseeki64(fd, offset, whence);
 }
 
 /*********************************************************************
@@ -850,7 +850,7 @@ LONG CDECL _lseek(int fd, LONG offset, int whence)
  *
  * This is untested; the underlying LockFile doesn't work yet.
  */
-int CDECL _locking(int fd, int mode, LONG nbytes)
+int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
 {
   BOOL ret;
   DWORD cur_locn;
@@ -920,7 +920,7 @@ int CDECL MSVCRT_fseek(MSVCRT_FILE* file, long offset, int whence)
   }
   /* Clear end of file flag */
   file->_flag &= ~MSVCRT__IOEOF;
-  return (_lseek(file->_file,offset,whence) == -1)?-1:0;
+  return (MSVCRT__lseek(file->_file,offset,whence) == -1)?-1:0;
 }
 
 /*********************************************************************
@@ -940,10 +940,10 @@ int CDECL _chsize(int fd, long size)
     if (handle != INVALID_HANDLE_VALUE)
     {
         /* save the current file pointer */
-        cur = _lseek(fd, 0, SEEK_CUR);
+        cur = MSVCRT__lseek(fd, 0, SEEK_CUR);
         if (cur >= 0)
         {
-            pos = _lseek(fd, size, SEEK_SET);
+            pos = MSVCRT__lseek(fd, size, SEEK_SET);
             if (pos >= 0)
             {
                 ret = SetEndOfFile(handle);
@@ -951,7 +951,7 @@ int CDECL _chsize(int fd, long size)
             }
 
             /* restore the file pointer */
-            _lseek(fd, cur, SEEK_SET);
+            MSVCRT__lseek(fd, cur, SEEK_SET);
         }
     }
 
@@ -1079,16 +1079,16 @@ MSVCRT_FILE* CDECL MSVCRT__wfdopen(int fd, const MSVCRT_wchar_t *mode)
 /*********************************************************************
  *		_filelength (MSVCRT.@)
  */
-LONG CDECL _filelength(int fd)
+LONG CDECL MSVCRT__filelength(int fd)
 {
-  LONG curPos = _lseek(fd, 0, SEEK_CUR);
+  LONG curPos = MSVCRT__lseek(fd, 0, SEEK_CUR);
   if (curPos != -1)
   {
-    LONG endPos = _lseek(fd, 0, SEEK_END);
+    LONG endPos = MSVCRT__lseek(fd, 0, SEEK_END);
     if (endPos != -1)
     {
       if (endPos != curPos)
-        _lseek(fd, curPos, SEEK_SET);
+        MSVCRT__lseek(fd, curPos, SEEK_SET);
       return endPos;
     }
   }
@@ -1098,16 +1098,16 @@ LONG CDECL _filelength(int fd)
 /*********************************************************************
  *		_filelengthi64 (MSVCRT.@)
  */
-__int64 CDECL _filelengthi64(int fd)
+__int64 CDECL MSVCRT__filelengthi64(int fd)
 {
-  __int64 curPos = _lseeki64(fd, 0, SEEK_CUR);
+  __int64 curPos = MSVCRT__lseeki64(fd, 0, SEEK_CUR);
   if (curPos != -1)
   {
-    __int64 endPos = _lseeki64(fd, 0, SEEK_END);
+    __int64 endPos = MSVCRT__lseeki64(fd, 0, SEEK_END);
     if (endPos != -1)
     {
       if (endPos != curPos)
-        _lseeki64(fd, curPos, SEEK_SET);
+        MSVCRT__lseeki64(fd, curPos, SEEK_SET);
       return endPos;
     }
   }
@@ -1941,7 +1941,7 @@ int CDECL MSVCRT__wstat(const MSVCRT_wchar_t* path, struct MSVCRT__stat * buf)
  */
 long CDECL _tell(int fd)
 {
-  return _lseek(fd, 0, SEEK_CUR);
+  return MSVCRT__lseek(fd, 0, SEEK_CUR);
 }
 
 /*********************************************************************
@@ -1949,7 +1949,7 @@ long CDECL _tell(int fd)
  */
 __int64 CDECL _telli64(int fd)
 {
-  return _lseeki64(fd, 0, SEEK_CUR);
+  return MSVCRT__lseeki64(fd, 0, SEEK_CUR);
 }
 
 /*********************************************************************
@@ -2055,7 +2055,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
 
   /* If appending, go to EOF */
   if (MSVCRT_fdesc[fd].wxflag & WX_APPEND)
-    _lseek(fd, 0, FILE_END);
+    MSVCRT__lseek(fd, 0, FILE_END);
 
   if (!(MSVCRT_fdesc[fd].wxflag & WX_TEXT))
     {
@@ -2711,7 +2711,7 @@ int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
   }
 
-  return (_lseeki64(file->_file,*pos,SEEK_SET) == -1) ? -1 : 0;
+  return (MSVCRT__lseeki64(file->_file,*pos,SEEK_SET) == -1) ? -1 : 0;
 }
 
 /*********************************************************************
@@ -2741,7 +2741,7 @@ int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
   /* This code has been lifted form the MSVCRT_ftell function */
   int off=0;
 
-  *pos = _lseeki64(file->_file,0,SEEK_CUR);
+  *pos = MSVCRT__lseeki64(file->_file,0,SEEK_CUR);
 
   if (*pos == -1) return -1;
   
