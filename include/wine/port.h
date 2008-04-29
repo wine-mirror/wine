@@ -299,6 +299,10 @@ size_t getpagesize(void);
 pid_t gettid(void);
 #endif /* HAVE_GETTID */
 
+#ifndef HAVE_ISINF
+int isinf(double x);
+#endif
+
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */

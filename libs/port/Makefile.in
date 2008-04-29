@@ -15,6 +15,7 @@ C_SRCS = \
 	getpagesize.c \
 	gettid.c \
 	interlocked.c \
+	isinf.c \
 	lstat.c \
 	memcpy_unaligned.c \
 	memmove.c \

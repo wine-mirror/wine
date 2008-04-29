@@ -249,6 +249,9 @@
 /* Define to 1 if you have the <io.h> header file. */
 #undef HAVE_IO_H
 
+/* Define to 1 if you have the `isinf' function. */
+#undef HAVE_ISINF
+
 /* Define to 1 if you have the <jack/jack.h> header file. */
 #undef HAVE_JACK_JACK_H
 
