@@ -2339,6 +2339,47 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string\n");
                 SysFreeString(str);
 
+                /* test insertData */
+                str = SysAllocStringLen(NULL, 0);
+                hr = IXMLDOMComment_insertData(pComment, -1, str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, -1, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 1000, str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 1000, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 0, NULL);
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 0, str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                SysFreeString(str);
+
+                hr = IXMLDOMComment_insertData(pComment, -1, _bstr_("Inserting"));
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 1000, _bstr_("Inserting"));
+                ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 0, _bstr_("Begin "));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 17, _bstr_("Middle"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_insertData(pComment, 39, _bstr_(" End"));
+                ok(hr == S_OK, "ret %08x\n", hr );
+
+                hr = IXMLDOMComment_get_text(pComment, &str);
+                ok(hr == S_OK, "ret %08x\n", hr );
+                ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+                SysFreeString(str);
+
                 IXMLDOMComment_Release(pComment);
             }
 
