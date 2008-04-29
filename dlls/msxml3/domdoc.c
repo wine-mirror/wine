@@ -35,6 +35,7 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "ocidl.h"
+#include "objsafe.h"
 
 #include "wine/debug.h"
 
@@ -171,6 +172,7 @@ typedef struct _domdoc
     const struct IXMLDOMDocument2Vtbl *lpVtbl;
     const struct IPersistStreamVtbl   *lpvtblIPersistStream;
     const struct IObjectWithSiteVtbl  *lpvtblIObjectWithSite;
+    const struct IObjectSafetyVtbl    *lpvtblIObjectSafety;
     LONG ref;
     VARIANT_BOOL async;
     VARIANT_BOOL validating;
@@ -187,6 +189,10 @@ typedef struct _domdoc
 
      /* IObjectWithSite*/
      IUnknown *site;
+
+     /* IObjectSafety */
+     DWORD safeopt;
+
 } domdoc;
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
@@ -228,6 +234,12 @@ static inline domdoc *impl_from_IObjectWithSite(IObjectWithSite *iface)
 {
     return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIObjectWithSite));
 }
+
+static inline domdoc *impl_from_IObjectSafety(IObjectSafety *iface)
+{
+    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIObjectSafety));
+}
+
 
 /************************************************************************
  * xmldoc implementation of IPersistStream.
@@ -2019,6 +2031,64 @@ static const IObjectWithSiteVtbl domdocObjectSite =
     xmldoc_GetSite,
 };
 
+static HRESULT WINAPI xmldoc_Safety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
+{
+    domdoc *This = impl_from_IObjectSafety(iface);
+    return IXMLDocument_QueryInterface( (IXMLDocument *)This, riid, ppv );
+}
+
+static ULONG WINAPI xmldoc_Safety_AddRef(IObjectSafety *iface)
+{
+    domdoc *This = impl_from_IObjectSafety(iface);
+    return IXMLDocument_AddRef((IXMLDocument *)This);
+}
+
+static ULONG WINAPI xmldoc_Safety_Release(IObjectSafety *iface)
+{
+    domdoc *This = impl_from_IObjectSafety(iface);
+    return IXMLDocument_Release((IXMLDocument *)This);
+}
+
+#define SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_SECURITY_MANAGER)
+
+static HRESULT WINAPI xmldoc_Safety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD *pdwSupportedOptions, DWORD *pdwEnabledOptions)
+{
+    domdoc *This = impl_from_IObjectSafety(iface);
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), pdwSupportedOptions, pdwEnabledOptions);
+
+    if(!pdwSupportedOptions || !pdwEnabledOptions)
+        return E_POINTER;
+
+    *pdwSupportedOptions = SUPPORTED_OPTIONS;
+    *pdwEnabledOptions = This->safeopt;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI xmldoc_Safety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD dwOptionSetMask, DWORD dwEnabledOptions)
+{
+    domdoc *This = impl_from_IObjectSafety(iface);
+
+    TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), dwOptionSetMask, dwEnabledOptions);
+
+    if(dwOptionSetMask & ~SUPPORTED_OPTIONS)
+        return E_FAIL;
+
+    This->safeopt = dwEnabledOptions & dwEnabledOptions;
+    return S_OK;
+}
+
+static const IObjectSafetyVtbl domdocObjectSafetyVtbl = {
+    xmldoc_Safety_QueryInterface,
+    xmldoc_Safety_AddRef,
+    xmldoc_Safety_Release,
+    xmldoc_Safety_GetInterfaceSafetyOptions,
+    xmldoc_Safety_SetInterfaceSafetyOptions
+};
+
 HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     domdoc *doc;
@@ -2034,6 +2104,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->lpVtbl = &domdoc_vtbl;
     doc->lpvtblIPersistStream = &xmldoc_IPersistStream_VTable;
     doc->lpvtblIObjectWithSite = &domdocObjectSite;
+    doc->lpvtblIObjectSafety = &domdocObjectSafetyVtbl;
     doc->ref = 1;
     doc->async = 0;
     doc->validating = 0;
@@ -2044,6 +2115,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->schema = NULL;
     doc->stream = NULL;
     doc->site = NULL;
+    doc->safeopt = 0;
 
     xmldoc = xmlNewDoc(NULL);
     if(!xmldoc)
