@@ -65,33 +65,27 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Nastavení oken ",IDC_STATIC,8,4,244,180
+    GROUPBOX    " Nastavení oken ",IDC_STATIC,8,4,244,84
+    CONTROL     "Povolit aplikacím DirectX zadržet ukazatel myši ve svém oknì",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Povolit správci oken kontrolu nad okny",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "Emulace virtuálního desktopu",IDC_ENABLE_DESKTOP,"Button",
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
+    LTEXT       "Velikost desktopu:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    CONTROL	    "Povolit aplikacím DirectX zadržet ukazatel myši ve svém oknì",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
-    LTEXT 	    "Okna spravovaná vaším správcem oken budou mít standardní okraje, budou respektovat virtuální plochy a budou vidìt v seznamu oken. \n\nNespravovaná okna budou odpojena od vašeho správce oken. To znamená, že se okna nesplynou se vzhledem systému, ale vylepší to simulaci prostøedí Windows, takže nìkteré programy mohou pracovat lépe.",
-		    IDC_STATIC,15,37,228,80
-    CONTROL	    "Povolit správci oken kontrolu nad okny",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,8
+    GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
+    LTEXT       "Podpora stínování vertexù: ",IDC_STATIC,15,110,80,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Povolit stínování pixelù (spoléhá se na hardware podporu)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    LTEXT           "Mùžete si vybrat emulaci plochy windows, kde jsou okna aplikací uzavøena v jedné 'virtuální obrazovce' nebo mohou být umístìna na standardním desktopu.",
-                    IDC_STATIC,15,120,228,28
-    LTEXT           "Velikost desktopu:",IDC_DESKTOP_SIZE,15,167,64,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
-    CONTROL         "Emulace virtuálního desktopu",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,152,230,10
-		    
-    EDITTEXT        IDC_DESKTOP_WIDTH,94,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,147,167,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,60
-
-    LTEXT			"Podpora stínování vertexù: ",IDC_STATIC,15,199,100,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,105,197,140,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    CONTROL         "Povolit stínování pixelù (spoléhá se na hardware podporu)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
-    GROUPBOX        " Screen Resolution ",IDC_STATIC,8,252,244,25
-    CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,260,187,15
-    EDITTEXT        IDC_RES_DPIEDIT,204,260,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT           "dpi",IDC_STATIC,235,262,10,8
+    GROUPBOX    " Screen &Resolution ",IDC_STATIC,8,151,244,93
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
+    EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "dpi",IDC_STATIC,235,163,10,8
+    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250

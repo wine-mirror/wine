@@ -64,37 +64,27 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Настройки окна ",IDC_STATIC,8,4,244,180
+    GROUPBOX    " Настройки окна ",IDC_STATIC,8,4,244,84
+    CONTROL     "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Разрешить менеджеру окон &декорировать окна",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Разрешить менеджеру окон управлять окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
+    LTEXT       "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,70,84,8,WS_DISABLED
+    LTEXT       "X",IDC_DESKTOP_BY,149,70,8,8,WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_WIDTH,104,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_HEIGHT,157,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    CONTROL         "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,235,8
+    GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
+    LTEXT       "Вершинные шейдеры: ",IDC_STATIC,15,110,80,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Включить Pixel Shader (если поддерживается оборудованием)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    CONTROL         "Разрешить менеджеру окон &декорировать окна",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
-
-    CONTROL         "Разрешить менеджеру окон управлять окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
-
-    LTEXT           "Если окна управляются Вашим менеджером окон, они будут иметь стандартный бордюр, ограничены виртуальным рабочим столом, и появятся в Вашем списке окон.\n\nЕсли окна не управляются, они не будут подключены к Вашему менеджеру окон. Это означает, что окна не интегрируются с Вашим рабочим столом, но эмуляция будет более точной, и может помочь некоторым приложениям работать лучше.",
-                    IDC_STATIC,19,51,225,80
-
-    CONTROL         "Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
-    LTEXT           "Вы можете ограничить все приложения Windows одним окном, ведущим себя как виртуальный рабочий стол, или дать им вести себя как другие Ваши приложения.",
-                    IDC_STATIC,19,138,225,28
-
-    LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,168,84,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,149,168,8,8,WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_WIDTH,104,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,157,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,189,244,45
-
-    LTEXT	    "Вершинные шейдеры: ",IDC_STATIC,15,199,120,30
-    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,197,125,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    CONTROL         "Включить Pixel Shader (если поддерживается оборудованием)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,216,230,10
-    GROUPBOX        " Разрешение экрана ",IDC_STATIC,8,242,244,25
-    CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
-    EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT           "dpi",IDC_STATIC,235,252,10,8
+    GROUPBOX    " Разрешение экрана ",IDC_STATIC,8,151,244,93
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
+    EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "dpi",IDC_STATIC,235,163,10,8
+    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250

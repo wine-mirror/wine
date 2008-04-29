@@ -60,33 +60,27 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Fönsterinställningar ",IDC_STATIC,8,4,244,184
+    GROUPBOX    " Fönsterinställningar ",IDC_STATIC,8,4,244,84
+    CONTROL     "Tillåt DirectX-program att stoppa &musen som lämnar dess fönster",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Tillåt &fönsterhanteraren att styra fönstren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "Emulera ett virtuellt skriv&bord",IDC_ENABLE_DESKTOP,"Button",
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
+    LTEXT       "Storlek på &skrivbord:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    CONTROL         "Tillåt DirectX-program att stoppa &musen som lämnar dess fönster",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
+    GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
+    LTEXT       "Stöd för &Vertex Shader: ",IDC_STATIC,15,110,80,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Tillåt &Pixel Shader (om hårdvaran stöds)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    CONTROL	        "Tillåt &fönsterhanteraren att styra fönstren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
-    LTEXT           "Om fönster hanteras av din fönsterhanterare så kommer de att ha standardramar, de kommer att respektera ditt virtuella skrivbord och visas i din fönsterlista. \n\nOm fönstren inte hanteras kommer de att kopplas från din fönsterhanterare. Det här betyder att fönstren inte integreras så nära med ditt skrivbord, men emuleringen kommer att vara mer precis så den kan hjälpa vissa program att fungera bättre.",
-		           IDC_STATIC,19,51,225,80
-
-    CONTROL         "Emulera ett virtuellt skriv&bord",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
-    LTEXT           "Du kan antingen välja att ha alla Windows-program förpassade till ett enda fönster, som fungerar som ett virtuellt skrivbord, eller få dem att uppträda som dina andra program.",
-                    IDC_STATIC,19,138,225,28
-    LTEXT           "Storlek på &skrivbord:",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,109,168,8,8,WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,190,244,48
-
-    LTEXT           "Stöd för &Vertex Shader: ",IDC_STATIC,15,203,80,32
-    COMBOBOX        IDC_D3D_VSHADER_MODE,100,201,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    CONTROL         "Tillåt &Pixel Shader (om hårdvaran stöds)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
-    GROUPBOX        " Skärm&upplösning ",IDC_STATIC,8,242,244,25
-    CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
-    EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT           "dpi",IDC_STATIC,235,252,10,8
+    GROUPBOX    " Skärm&upplösning ",IDC_STATIC,8,151,244,93
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
+    EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "dpi",IDC_STATIC,235,163,10,8
+    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250

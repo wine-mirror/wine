@@ -63,35 +63,27 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " 창 설정 ",IDC_STATIC,8,4,244,180
+    GROUPBOX    " 창 설정 ",IDC_STATIC,8,4,244,84
+    CONTROL     "마우스 커서를 DirectX 프로그램 창안에 잡아두기(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "창관리자가 Wine창을 꾸미도록 함(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "창관리자가 Wine창을 관리하도록 함(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "가상 데스크탑 흉내내기(&D)",IDC_ENABLE_DESKTOP,"Button",
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
+    LTEXT       "데스크탑 크기(&S):",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    CONTROL         "마우스 커서를 DirectX 프로그램 창안에 잡아두기(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    GROUPBOX    " 다이렉트 3D ",IDC_STATIC,8,95,244,49
+    LTEXT       "버텍스 쉐이더 지원(&V): ",IDC_STATIC,15,110,80,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "하드웨어에서 지원할 경우, 픽셀 쉐이더 허용(&P)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    CONTROL         "창관리자가 Wine창을 꾸미도록 함(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,230,8
-
-    CONTROL         "창관리자가 Wine창을 관리하도록 함(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
-    LTEXT           "창관리자가 Wine창들을 관리하게 되면, Wine창들은 표준 창틀을 가지게 됩니다. 또한 작업공간과 잘 어울리고, 창목록에도 나타날 것입니다.\n\n창관리자가 Wine창들을 관리하지 않는다면, Wine창들은 창관리자와 연결되지 않을 것입니다. 이것은 Wine창들이 데스크탑과 밀접하게 통합되지 않는다는 것을 의미합니다. 하지만 Wine의 윈도우즈 흉내내기가 더 정밀해져서 몇몇 프로그램들이 좀 더 잘 동작할 것입니다.",
-                    IDC_STATIC,19,50,225,80
-   
-    CONTROL         "가상 데스크탑 흉내내기(&D)",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,130,230,8
-    LTEXT           "모든 윈도우 프로그램들을 하나의 가상 작업공간 창 안에서 동작하도록 할지, 다른 프로그램들처럼 행동하도록 할지를 지정할 수 있습니다.",
-                    IDC_STATIC,19,140,225,28
-    LTEXT           "데스크탑 크기(&S):",IDC_DESKTOP_SIZE,19,168,60,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,121,168,8,8,WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_WIDTH,80,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,128,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-
-    GROUPBOX        " 다이렉트 3D ",IDC_STATIC,8,190,244,48
-
-    LTEXT           "버텍스 쉐이더 지원(&V): ",IDC_STATIC,15,203,80,32
-    COMBOBOX        IDC_D3D_VSHADER_MODE,100,201,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    CONTROL         "하드웨어에서 지원할 경우, 픽셀 쉐이더 허용(&P)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
-    GROUPBOX        " 화면 해상도(&R) ",IDC_STATIC,8,242,244,25
-    CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
-    EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT           "dpi",IDC_STATIC,235,252,10,8
+    GROUPBOX    " 화면 해상도(&R) ",IDC_STATIC,8,151,244,93
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
+    EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "dpi",IDC_STATIC,235,163,10,8
+    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250

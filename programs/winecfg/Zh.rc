@@ -60,33 +60,27 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "PMingLiu"
 BEGIN
-    GROUPBOX        " 視窗設定 ",IDC_STATIC,8,4,244,184
+    GROUPBOX    " 視窗設定 ",IDC_STATIC,8,4,244,84
+    CONTROL     "允許\ DirectX 程式防止游標離開它的視窗(&m)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "允許\視窗管理器控制視窗(&w)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "模擬一個虛擬桌面(&d)",IDC_ENABLE_DESKTOP,"Button",
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
+    LTEXT       "桌面大小(&s)：",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    CONTROL         "允許\ DirectX 程式防止游標離開它的視窗(&m)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,19,230,8
+    GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
+    LTEXT       "&Vertex Shader支援：",IDC_STATIC,15,110,80,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "允許\&Pixel Shader（如果硬體支援）",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    CONTROL	        "允許\視窗管理器控制視窗(&w)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
-    LTEXT           "如果視窗是由視窗管理員所控制， 它將會有標準的邊框、 與你的虛擬桌面耦合並出現在你的視窗清單中。\n\n如果視窗不受控制， 他將與視窗管理員分離。 這表示這個視窗將不能與你的桌面耦合 ，可是能使 Wine 模擬的更準確， 某些程式會執行得更順利。",
-		           IDC_STATIC,19,51,225,80
-
-    CONTROL         "模擬一個虛擬桌面(&d)",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,128,230,10
-    LTEXT           "你可以選擇讓所有的 Windows 程式視窗限制在一個像虛擬桌面的視窗， 或是讓它們表現得像是你的其他程式。",
-                    IDC_STATIC,19,138,225,28
-    LTEXT           "桌面大小(&s)：",IDC_DESKTOP_SIZE,15,168,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,109,168,8,8,WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,166,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-
-    GROUPBOX        " Direct3D ",IDC_STATIC,8,190,244,48
-
-    LTEXT           "&Vertex Shader支援：",IDC_STATIC,15,203,80,32
-    COMBOBOX        IDC_D3D_VSHADER_MODE,100,201,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-
-    CONTROL         "允許\&Pixel Shader（如果硬體支援）",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,219,230,10
-    GROUPBOX        " 螢幕解析度(&R) ",IDC_STATIC,8,242,244,25
-    CONTROL         "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,250,187,15
-    EDITTEXT        IDC_RES_DPIEDIT,204,250,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT           "dpi",IDC_STATIC,235,252,10,8
+    GROUPBOX    " 螢幕解析度(&R) ",IDC_STATIC,8,151,244,93
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
+    EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "dpi",IDC_STATIC,235,163,10,8
+    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250

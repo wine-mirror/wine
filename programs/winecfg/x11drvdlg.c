@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define RES_MAXLEN 5 /* max number of digits in a screen dimension. 5 digits should be plenty */
 #define MINDPI 96
-#define MAXDPI 144	/* making this too high surprises and hurts users */
+#define MAXDPI 480
 #define DEFDPI 96
 
 #define IDT_DPIEDIT 0x1234
@@ -345,6 +345,36 @@ static void update_dpi_trackbar_from_edit(HWND hDlg, BOOL fix)
     updating_ui = FALSE;
 }
 
+static void update_font_preview(HWND hDlg)
+{
+    DWORD dpi;
+
+    updating_ui = TRUE;
+
+    dpi = GetDlgItemInt(hDlg, IDC_RES_DPIEDIT, NULL, FALSE);
+
+    if (dpi >= MINDPI && dpi <= MAXDPI)
+    {
+        LOGFONT lf;
+        HFONT hfont;
+
+        hfont = (HFONT)SendDlgItemMessage(hDlg, IDC_RES_FONT_PREVIEW, WM_GETFONT, 0, 0);
+
+        GetObject(hfont, sizeof(lf), &lf);
+
+        if (lstrcmp(lf.lfFaceName, "Tahoma") != 0)
+            lstrcpy(lf.lfFaceName, "Tahoma");
+        else
+            DeleteObject(hfont);
+
+        lf.lfHeight = MulDiv(-10, dpi, 72);
+        hfont = CreateFontIndirect(&lf);
+        SendDlgItemMessage(hDlg, IDC_RES_FONT_PREVIEW, WM_SETFONT, (WPARAM)hfont, 1);
+    }
+
+    updating_ui = FALSE;
+}
+
 INT_PTR CALLBACK
 GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -352,6 +382,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 	    init_dpi_editbox(hDlg);
 	    init_trackbar(hDlg);
+            update_font_preview(hDlg);
 	    break;
 
         case WM_SHOWWINDOW:
@@ -363,6 +394,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
                 KillTimer(hDlg, IDT_DPIEDIT);
                 update_dpi_trackbar_from_edit(hDlg, TRUE);
+                update_font_preview(hDlg);
             }
             break;
             
@@ -376,6 +408,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     else if (LOWORD(wParam) == IDC_RES_DPIEDIT)
                     {
                         update_dpi_trackbar_from_edit(hDlg, FALSE);
+                        update_font_preview(hDlg);
                         SetTimer(hDlg, IDT_DPIEDIT, 1500, NULL);
                     }
 		    break;
@@ -432,6 +465,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    buf[0] = 0;
 		    sprintf(buf, "%d", i);
 		    SendMessage(GetDlgItem(hDlg, IDC_RES_DPIEDIT), WM_SETTEXT, 0, (LPARAM) buf);
+                    update_font_preview(hDlg);
 		    set_reg_key_dwordW(HKEY_LOCAL_MACHINE, logpixels_reg, logpixels, i);
 		    break;
 		}

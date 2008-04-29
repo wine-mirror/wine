@@ -154,6 +154,7 @@
 
 #define IDC_RES_TRACKBAR                1107
 #define IDC_RES_DPIEDIT                 1108
+#define IDC_RES_FONT_PREVIEW            1109
 
 /* applications tab */
 #define IDC_APP_LISTVIEW                1200
