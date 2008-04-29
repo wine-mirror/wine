@@ -690,6 +690,7 @@ struct x11drv_win_data
     BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
     BOOL        iconic : 1;     /* is window in iconic state? */
     BOOL        embedded : 1;   /* is window an XEMBED client? */
+    BOOL        shaped : 1;     /* is window using a custom region shape? */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     HBITMAP     hWMIconBitmap;

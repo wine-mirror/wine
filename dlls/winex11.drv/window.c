@@ -163,6 +163,7 @@ static unsigned long get_mwm_decorations( struct x11drv_win_data *data,
     if (!decorated_mode) return 0;
 
     if (IsRectEmpty( &data->window_rect )) return 0;
+    if (data->shaped) return 0;
 
     if (ex_style & WS_EX_TOOLWINDOW) return 0;
 
@@ -321,6 +322,7 @@ static void sync_window_region( Display *display, struct x11drv_win_data *data, 
 {
 #ifdef HAVE_LIBXSHAPE
     if (!data->whole_window) return;
+    data->shaped = FALSE;
 
     if (!hrgn)
     {
@@ -341,6 +343,7 @@ static void sync_window_region( Display *display, struct x11drv_win_data *data, 
                                      pRegionData->rdh.nCount, ShapeSet, YXBanded );
             wine_tsx11_unlock();
             HeapFree(GetProcessHeap(), 0, pRegionData);
+            data->shaped = TRUE;
         }
     }
 #endif  /* HAVE_LIBXSHAPE */
