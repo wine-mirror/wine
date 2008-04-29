@@ -502,6 +502,29 @@ GpStatus WINGDIPAPI GdipGetPathPoints(GpPath *path, GpPointF* points, INT count)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathPointsI(GpPath *path, GpPoint* points, INT count)
+{
+    GpStatus ret;
+    GpPointF *ptf;
+    INT i;
+
+    if(count <= 0)
+        return InvalidParameter;
+
+    ptf = GdipAlloc(sizeof(GpPointF)*count);
+    if(!ptf)    return OutOfMemory;
+
+    ret = GdipGetPathPoints(path,ptf,count);
+    if(ret == Ok)
+        for(i = 0;i < count;i++){
+            points[i].X = roundr(ptf[i].X);
+            points[i].Y = roundr(ptf[i].Y);
+        };
+    GdipFree(ptf);
+
+    return ret;
+}
+
 GpStatus WINGDIPAPI GdipGetPathTypes(GpPath *path, BYTE* types, INT count)
 {
     if(!path)

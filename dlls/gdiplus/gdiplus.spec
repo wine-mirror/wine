@@ -344,7 +344,7 @@
 @ stub GdipGetPathGradientWrapMode
 @ stub GdipGetPathLastPoint
 @ stdcall GdipGetPathPoints(ptr ptr long)
-@ stub GdipGetPathPointsI
+@ stdcall GdipGetPathPointsI(ptr ptr long)
 @ stdcall GdipGetPathTypes(ptr ptr long)
 @ stdcall GdipGetPathWorldBounds(ptr ptr ptr ptr)
 @ stub GdipGetPathWorldBoundsI

@@ -218,6 +218,7 @@ GpStatus WINGDIPAPI GdipCreatePath2I(GDIPCONST GpPoint*,GDIPCONST BYTE*,INT,GpFi
 GpStatus WINGDIPAPI GdipDeletePath(GpPath*);
 GpStatus WINGDIPAPI GdipGetPathFillMode(GpPath*,GpFillMode*);
 GpStatus WINGDIPAPI GdipGetPathPoints(GpPath*,GpPointF*,INT);
+GpStatus WINGDIPAPI GdipGetPathPointsI(GpPath*,GpPoint*,INT);
 GpStatus WINGDIPAPI GdipGetPathTypes(GpPath*,BYTE*,INT);
 GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath*,GpRectF*,GDIPCONST GpMatrix*,GDIPCONST GpPen*);
 GpStatus WINGDIPAPI GdipGetPathWorldBoundsI(GpPath*,GpRect*,GDIPCONST GpMatrix*,GDIPCONST GpPen*);
