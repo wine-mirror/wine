@@ -629,10 +629,32 @@ BOOL WINAPI WTEnable(HCTX hCtx, BOOL fEnable)
 
 /***********************************************************************
  *		WTOverlap (WINTAB32.41)
+ *
+ *		Move context to top or bottom of overlap order
  */
 BOOL WINAPI WTOverlap(HCTX hCtx, BOOL fToTop)
 {
-    FIXME("(%p, %u): stub\n", hCtx, fToTop);
+    LPOPENCONTEXT context;
+
+    TRACE("hCtx=%p, fToTop=%u\n", hCtx, fToTop);
+
+    if (!hCtx) return FALSE;
+
+    EnterCriticalSection(&csTablet);
+    context = TABLET_FindOpenContext(hCtx);
+    if (fToTop)
+    {
+        /* TODO: Move context to top of overlap order */
+        FIXME("Not moving context to top of overlap order\n");
+        context->context.lcStatus = CXS_ONTOP;
+    }
+    else
+    {
+        /* TODO: Move context to bottom of overlap order */
+        FIXME("Not moving context to bottom of overlap order\n");
+        context->context.lcStatus = CXS_OBSCURED;
+    }
+    LeaveCriticalSection(&csTablet);
 
     return TRUE;
 }
