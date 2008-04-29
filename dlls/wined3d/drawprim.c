@@ -156,7 +156,6 @@ void primitiveDeclarationConvertToStridedData(
     int i;
     WINED3DVERTEXELEMENT *element;
     DWORD stride;
-    int reg;
     DWORD numPreloadStreams = This->stateBlock->streamIsUP ? 0 : vertexDeclaration->num_streams;
     DWORD *streams = vertexDeclaration->streams;
 
@@ -214,7 +213,6 @@ void primitiveDeclarationConvertToStridedData(
             }
         }
         data += element->Offset;
-        reg = element->Reg;
 
         TRACE("Offset %d Stream %d UsageIndex %d\n", element->Offset, element->Stream, element->UsageIndex);
 

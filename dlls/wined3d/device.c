@@ -7334,11 +7334,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetCreationParameters(IWineD3DDevice 
 
 static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice * iface, UINT iSwapChain, DWORD Flags, CONST WINED3DGAMMARAMP* pRamp) {
     IWineD3DSwapChain *swapchain;
-    HRESULT hrc = WINED3D_OK;
 
     TRACE("Relaying  to swapchain\n");
 
-    if ((hrc = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)) == WINED3D_OK) {
+    if (IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain) == WINED3D_OK) {
         IWineD3DSwapChain_SetGammaRamp(swapchain, Flags, (WINED3DGAMMARAMP *)pRamp);
         IWineD3DSwapChain_Release(swapchain);
     }
@@ -7347,12 +7346,11 @@ static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice * iface, UINT 
 
 static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT iSwapChain, WINED3DGAMMARAMP* pRamp) {
     IWineD3DSwapChain *swapchain;
-    HRESULT hrc = WINED3D_OK;
 
     TRACE("Relaying  to swapchain\n");
 
-    if ((hrc = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)) == WINED3D_OK) {
-        hrc =IWineD3DSwapChain_GetGammaRamp(swapchain, pRamp);
+    if (IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain) == WINED3D_OK) {
+        IWineD3DSwapChain_GetGammaRamp(swapchain, pRamp);
         IWineD3DSwapChain_Release(swapchain);
     }
     return;

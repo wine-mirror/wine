@@ -868,7 +868,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
     int bpp;
     GLenum format, internal, type;
     CONVERT_TYPES convert;
-    BOOL srcIsUpsideDown;
     GLint prevRead;
 
     d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
@@ -895,7 +894,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
          */
         TRACE("Locking offscreen render target\n");
         glReadBuffer(device->offscreenBuffer);
-        srcIsUpsideDown = TRUE;
     } else {
         GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
         TRACE("Locking %#x buffer\n", buffer);
@@ -903,7 +901,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
         checkGLcall("glReadBuffer");
 
         IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-        srcIsUpsideDown = FALSE;
     }
 
     if(!(This->Flags & SFLAG_ALLOCATED)) {

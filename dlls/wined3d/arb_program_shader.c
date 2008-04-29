@@ -1226,9 +1226,6 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
-     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-     DWORD flags;
 
      DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
      char dst_str[8];
@@ -1238,23 +1235,18 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
      pshader_gen_input_modifier_line(arg->shader, buffer, arg->src[0], 0, src_str);
      shader_addline(buffer, "MOV TMP.r, %s.g;\n", src_str);
      shader_addline(buffer, "MOV TMP.g, %s.b;\n", src_str);
-     flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
      shader_hw_sample(arg, reg1, dst_str, "TMP", FALSE, FALSE);
 }
 
 void pshader_hw_texreg2rgb(SHADER_OPCODE_ARG* arg) {
 
     SHADER_BUFFER* buffer = arg->buffer;
-    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-    DWORD flags;
     DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
     char dst_str[8];
     char src_str[50];
 
     sprintf(dst_str, "T%u", reg1);
     pshader_gen_input_modifier_line(arg->shader, buffer, arg->src[0], 0, src_str);
-    flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
     shader_hw_sample(arg, reg1, dst_str, src_str, FALSE, FALSE);
 }
 
