@@ -622,15 +622,27 @@ BOOL WINAPI WTEnable(HCTX hCtx, BOOL fEnable)
 {
     LPOPENCONTEXT context;
 
-    TRACE("(%p, %u)\n", hCtx, fEnable);
+    TRACE("hCtx=%p, fEnable=%u\n", hCtx, fEnable);
 
-    if (!hCtx) return 0;
+    if (!hCtx) return FALSE;
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
-    if(!fEnable)
+    /* if we want to enable and it is not enabled then */
+    if(fEnable && !context->enabled)
+    {
+        context->enabled = TRUE;
+        /* TODO: Add to top of overlap order */
+        context->context.lcStatus = CXS_ONTOP;
+    }
+    /* if we want to disable and it is not disabled then */
+    else if (!fEnable && context->enabled)
+    {
+        context->enabled = FALSE;
+        /* TODO: Remove from overlap order?? needs a test */
+        context->context.lcStatus = CXS_DISABLED;
         TABLET_FlushQueue(context);
-    context->enabled = fEnable;
+    }
     LeaveCriticalSection(&csTablet);
 
     return TRUE;
