@@ -55,6 +55,7 @@ static REFIID tid_ids[] = {
     &IID_IXMLDOMEntityReference,
     &IID_IXMLDOMImplementation,
     &IID_IXMLDOMNamedNodeMap,
+    &IID_IXMLDOMNode,
     &IID_IXMLDOMNodeList,
     &IID_IXMLDOMParseError,
     &IID_IXMLDOMProcessingInstruction,

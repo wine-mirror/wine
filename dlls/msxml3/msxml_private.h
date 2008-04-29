@@ -102,6 +102,7 @@ enum tid_t {
     IXMLDOMEntityReference_tid,
     IXMLDOMImplementation_tid,
     IXMLDOMNamedNodeMap_tid,
+    IXMLDOMNode_tid,
     IXMLDOMNodeList_tid,
     IXMLDOMParseError_tid,
     IXMLDOMProcessingInstruction_tid,
