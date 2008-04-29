@@ -435,13 +435,12 @@ HCTX WINAPI WTOpenW(HWND hWnd, LPLOGCONTEXTW lpLogCtx, BOOL fEnable)
 {
     LPOPENCONTEXT newcontext;
 
-    TRACE("(%p, %p, %u)\n", hWnd, lpLogCtx, fEnable);
+    TRACE("hWnd=%p, lpLogCtx=%p, fEnable=%u\n", hWnd, lpLogCtx, fEnable);
     DUMPCONTEXT(*lpLogCtx);
 
     newcontext = HeapAlloc(GetProcessHeap(), 0 , sizeof(OPENCONTEXT));
     newcontext->context = *lpLogCtx;
     newcontext->hwndOwner = hWnd;
-    newcontext->enabled = fEnable;
     newcontext->ActiveCursor = -1;
     newcontext->QueueSize = 10;
     newcontext->PacketsQueued = 0;
@@ -458,7 +457,17 @@ HCTX WINAPI WTOpenW(HWND hWnd, LPLOGCONTEXTW lpLogCtx, BOOL fEnable)
     TABLET_PostTabletMessage(newcontext, _WT_CTXOPEN(newcontext->context.lcMsgBase), (WPARAM)newcontext->handle,
                       newcontext->context.lcStatus, TRUE);
 
-    newcontext->context.lcStatus = CXS_ONTOP;
+    if (fEnable)
+    {
+        newcontext->enabled = TRUE;
+        /* TODO: Add to top of overlap order */
+        newcontext->context.lcStatus = CXS_ONTOP;
+    }
+    else
+    {
+        newcontext->enabled = FALSE;
+        newcontext->context.lcStatus = CXS_DISABLED;
+    }
 
     TABLET_PostTabletMessage(newcontext, _WT_CTXOVERLAP(newcontext->context.lcMsgBase),
                             (WPARAM)newcontext->handle,
