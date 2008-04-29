@@ -347,7 +347,7 @@
 @ stdcall GdipGetPathPointsI(ptr ptr long)
 @ stdcall GdipGetPathTypes(ptr ptr long)
 @ stdcall GdipGetPathWorldBounds(ptr ptr ptr ptr)
-@ stub GdipGetPathWorldBoundsI
+@ stdcall GdipGetPathWorldBoundsI(ptr ptr ptr ptr)
 @ stdcall GdipGetPenBrushFill(ptr ptr)
 @ stdcall GdipGetPenColor(ptr ptr)
 @ stub GdipGetPenCompoundArray

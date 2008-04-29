@@ -623,6 +623,24 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathWorldBoundsI(GpPath* path, GpRect* bounds,
+    GDIPCONST GpMatrix *matrix, GDIPCONST GpPen *pen)
+{
+    GpStatus ret;
+    GpRectF boundsF;
+
+    ret = GdipGetPathWorldBounds(path,&boundsF,matrix,pen);
+
+    if(ret == Ok){
+        bounds->X      = roundr(boundsF.X);
+        bounds->Y      = roundr(boundsF.Y);
+        bounds->Width  = roundr(boundsF.Width);
+        bounds->Height = roundr(boundsF.Height);
+    }
+
+    return ret;
+}
+
 GpStatus WINGDIPAPI GdipGetPointCount(GpPath *path, INT *count)
 {
     if(!path)
