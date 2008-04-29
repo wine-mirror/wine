@@ -366,3 +366,24 @@ GpStatus WINGDIPAPI GdipIsMatrixEqual(GDIPCONST GpMatrix *matrix, GDIPCONST GpMa
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipIsMatrixIdentity(GDIPCONST GpMatrix *matrix, BOOL *result)
+{
+    GpMatrix *e;
+    GpStatus ret;
+    BOOL isIdentity;
+
+    if(!matrix || !result)
+        return InvalidParameter;
+
+    ret = GdipCreateMatrix(&e);
+    if(ret != Ok) return ret;
+
+    ret = GdipIsMatrixEqual(matrix, e, &isIdentity);
+    if(ret == Ok)
+        *result = isIdentity;
+
+    GdipFree(e);
+
+    return ret;
+}

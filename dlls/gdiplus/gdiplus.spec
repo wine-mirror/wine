@@ -419,7 +419,7 @@
 @ stub GdipIsEqualRegion
 @ stub GdipIsInfiniteRegion
 @ stdcall GdipIsMatrixEqual(ptr ptr ptr)
-@ stub GdipIsMatrixIdentity
+@ stdcall GdipIsMatrixIdentity(ptr ptr)
 @ stub GdipIsMatrixInvertible
 @ stub GdipIsOutlineVisiblePathPoint
 @ stdcall GdipIsOutlineVisiblePathPointI(ptr long long ptr ptr ptr)
