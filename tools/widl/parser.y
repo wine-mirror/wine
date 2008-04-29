@@ -606,6 +606,7 @@ constdef: tCONST decl_spec declarator '=' expr_const
 						{ $$ = reg_const($3->var);
 						  set_type($$, $2, $3, FALSE);
 						  $$->eval = $5;
+						  free($3);
 						}
 	;
 
@@ -723,6 +724,7 @@ expr_const: expr				{ $$ = $1;
 
 externdef: tEXTERN tCONST decl_spec declarator	{ $$ = $4->var;
 						  set_type($$, $3, $4, FALSE);
+						  free($4);
 						}
 	;
 
@@ -1355,16 +1357,17 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
   expr_t *dim;
   type_t *atype, **ptype;
   array_dims_t *arr = decl ? decl->array : NULL;
+  type_t *func_type = decl ? decl->func_type : NULL;
 
   if (is_attr(type->attrs, ATTR_INLINE))
   {
-    if (!decl || !decl->func_type)
+    if (!func_type)
       error_loc("inline attribute applied to non-function type\n");
     else
     {
       type_t *t;
       /* move inline attribute from return type node to function node */
-      for (t = decl->func_type; is_ptr(t); t = t->ref)
+      for (t = func_type; is_ptr(t); t = t->ref)
         ;
       t->attrs = move_attr(t->attrs, type->attrs, ATTR_INLINE);
     }
@@ -1379,7 +1382,10 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
   if (!arr)
   {
     const type_t *ptr = NULL;
-    for (ptr = v->type; ptr; )
+    /* pointer attributes on the left side of the type belong to the function
+     * pointer, if one is being declared */
+    type_t **pt = func_type ? &func_type : &v->type;
+    for (ptr = *pt; ptr; )
     {
       if (ptr->kind == TKIND_ALIAS)
         ptr = ptr->orig;
@@ -1389,8 +1395,8 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
     if (ptr && is_ptr(ptr) && (ptr_attr || top))
     {
       /* duplicate type to avoid changing original type */
-      v->type = duptype(v->type, 1);
-      v->type->type = ptr_attr ? ptr_attr : RPC_FC_RP;
+      *pt = duptype(*pt, 1);
+      (*pt)->type = ptr_attr ? ptr_attr : RPC_FC_RP;
     }
     else if (ptr_attr)
        error_loc("%s: pointer attribute applied to non-pointer type\n", v->name);
@@ -1516,11 +1522,11 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
   /* v->type is currently pointing the the type on the left-side of the
    * declaration, so we need to fix this up so that it is the return type of the
    * function and make v->type point to the function side of the declaration */
-  if (decl && decl->func_type)
+  if (func_type)
   {
     type_t *ft, *t;
     type_t *return_type = v->type;
-    v->type = decl->func_type;
+    v->type = func_type;
     for (ft = v->type; is_ptr(ft); ft = ft->ref)
       ;
     assert(ft->type == RPC_FC_FUNCTION);
