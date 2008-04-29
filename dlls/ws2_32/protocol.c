@@ -403,11 +403,11 @@ INT WINAPI WSAEnumProtocolsW( LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWO
  *  Doesn't supply info on layered protocols.
  *
  */
-INT WINAPI WSCEnumProtocols( LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len, LPINT errno )
+INT WINAPI WSCEnumProtocols( LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len, LPINT err )
 {
     INT ret = WSAEnumProtocolsW( protocols, buffer, len );
 
-    if (ret == SOCKET_ERROR) *errno = WSAENOBUFS;
+    if (ret == SOCKET_ERROR) *err = WSAENOBUFS;
 
     return ret;
 }
