@@ -1073,6 +1073,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
 	|| (editor->bEmulateVersion10 && *inStream.buffer != '{'))
       {
         invalidRTF = TRUE;
+        inStream.editstream->dwError = -16;
       }
     }
   }

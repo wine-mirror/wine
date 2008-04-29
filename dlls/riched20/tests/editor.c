@@ -2575,6 +2575,7 @@ static void test_EM_STREAMIN(void)
   result = strcmp (buffer,"TestSomeText");
   ok (result  == 0,
       "EM_STREAMIN: Test 0 set wrong text: Result: %s\n",buffer);
+  ok(es.dwError == 0, "EM_STREAMIN: Test 0 set error %d, expected %d\n", es.dwError, 0);
 
   /* Native richedit 2.0 ignores last \par */
   es.dwCookie = (DWORD_PTR)&streamText0a;
@@ -2589,6 +2590,7 @@ static void test_EM_STREAMIN(void)
   result = strcmp (buffer,"TestSomeText");
   ok (result  == 0,
       "EM_STREAMIN: Test 0-a set wrong text: Result: %s\n",buffer);
+  ok(es.dwError == 0, "EM_STREAMIN: Test 0-a set error %d, expected %d\n", es.dwError, 0);
 
   /* Native richedit 2.0 ignores last \par, next-to-last \par appears */
   es.dwCookie = (DWORD_PTR)&streamText0b;
@@ -2603,6 +2605,7 @@ static void test_EM_STREAMIN(void)
   result = strcmp (buffer,"TestSomeText\r\n");
   ok (result  == 0,
       "EM_STREAMIN: Test 0-b set wrong text: Result: %s\n",buffer);
+  ok(es.dwError == 0, "EM_STREAMIN: Test 0-b set error %d, expected %d\n", es.dwError, 0);
 
   es.dwCookie = (DWORD_PTR)&streamText1;
   es.dwError = 0;
@@ -2616,8 +2619,10 @@ static void test_EM_STREAMIN(void)
   result = strcmp (buffer,"TestSomeText");
   ok (result  == 0,
       "EM_STREAMIN: Test 1 set wrong text: Result: %s\n",buffer);
+  ok(es.dwError == 0, "EM_STREAMIN: Test 1 set error %d, expected %d\n", es.dwError, 0);
 
   es.dwCookie = (DWORD_PTR)&streamText2;
+  es.dwError = 0;
   SendMessage(hwndRichEdit, EM_STREAMIN,
               (WPARAM)(SF_RTF), (LPARAM)&es);
 
@@ -2626,16 +2631,19 @@ static void test_EM_STREAMIN(void)
       "EM_STREAMIN: Test 2 returned %ld, expected 0\n", result);
   ok (strlen(buffer)  == 0,
       "EM_STREAMIN: Test 2 set wrong text: Result: %s\n",buffer);
+  ok(es.dwError == -16, "EM_STREAMIN: Test 2 set error %d, expected %d\n", es.dwError, -16);
 
   es.dwCookie = (DWORD_PTR)&streamText3;
+  es.dwError = 0;
   SendMessage(hwndRichEdit, EM_STREAMIN,
               (WPARAM)(SF_RTF), (LPARAM)&es);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 0,
-      "EM_STREAMIN: Test 3 returned %ld, expected 9\n", result);
+      "EM_STREAMIN: Test 3 returned %ld, expected 0\n", result);
   ok (strlen(buffer)  == 0,
       "EM_STREAMIN: Test 3 set wrong text: Result: %s\n",buffer);
+  ok(es.dwError == -16, "EM_STREAMIN: Test 3 set error %d, expected %d\n", es.dwError, -16);
 
   DestroyWindow(hwndRichEdit);
 }
