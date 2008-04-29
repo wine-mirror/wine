@@ -1768,7 +1768,7 @@ static void test_dns(void)
 /* Our winsock headers don't define gethostname because it conflicts with the
  * definition in unistd.h. Define it here to get rid of the warning. */
 
-int gethostname(char *name, int namelen);
+int WINAPI gethostname(char *name, int namelen);
 
 static void test_gethostbyname_hack(void)
 {
