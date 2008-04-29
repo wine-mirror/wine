@@ -642,6 +642,20 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterPoint(GpPathGradient *grad,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetPathGradientCenterPointI(GpPathGradient *grad,
+    GpPoint *point)
+{
+    GpPointF ptf;
+
+    if(!point)
+        return InvalidParameter;
+
+    ptf.X = (REAL)point->X;
+    ptf.Y = (REAL)point->Y;
+
+    return GdipSetPathGradientCenterPoint(grad,&ptf);
+}
+
 GpStatus WINGDIPAPI GdipSetPathGradientFocusScales(GpPathGradient *grad,
     REAL x, REAL y)
 {
