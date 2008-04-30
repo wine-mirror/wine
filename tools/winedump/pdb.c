@@ -210,8 +210,10 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     if (symbols->srcmodule_size)
     {
         const PDB_SYMBOL_SOURCE*src;
-        int                     i;
+        int                     i, j, cfile;
+        const WORD*             indx;
         const DWORD*            offset;
+        const char*             start_cstr;
         const char*             cstr;
 
         printf("\t----------src module------------\n");
@@ -219,35 +221,38 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
                                          symbols->module_size + symbols->offset_size + symbols->hash_size);
         printf("\tSource Modules\n"
                "\t\tnModules:         %u\n"
-               "\t\tnSrcFiles:        %u\n"
-               "\t\ttable:\n",
+               "\t\tnSrcFiles:        %u\n",
                src->nModules, src->nSrcFiles);
 
         /* usage of table seems to be as follows:
          * two arrays of WORD (src->nModules as size)
-         *  - first array contains index into files for "module" compilation (module = compilation unit ??)
-         *  - second array contains increment in index (if needed)
-         *  - usage of this later is not very clear. it could be that if second array entry is null, then no file
-         *    name is to be used ?
-         * an array of DWORD (src->nSrcFiles as size)
+         *  - first array contains index into files for "module" compilation
+         *    (module = compilation unit ??)
+         *  - second array contains the number of source files in module
+         *    an array of DWORD (src->nSrcFiles as size)
          *  - contains offset (in following string table) of the source file name
-         * a string table
-         * - each string is a pascal string (ie. with its length as first BYTE) or
-         *   0-terminated string (depending on version)
+         *    a string table
+         *  - each string is a pascal string (ie. with its length as first BYTE) or
+         *    0-terminated string (depending on version)
          */
-
+        indx = &src->table[src->nModules];
         offset = (const DWORD*)&src->table[2 * src->nModules];
         cstr = (const char*)&src->table[2 * (src->nModules + src->nSrcFiles)];
+        start_cstr = cstr;
 
-        for (i = 0; i < src->nModules; i++)
+        for (i = cfile = 0; i < src->nModules; i++)
         {
-            /* FIXME: in some cases, it's a p_string but WHEN ? */
-            if (cstr + offset[src->table[i]] < (const char*)src + symbols->srcmodule_size)
-                printf("\t\t\tmodule[%2d]: src=%s (%04x)\n",
-                       i, cstr + offset[src->table[i]], src->table[src->nModules + i]);
-            else
-                printf("\t\t\tmodule[%2d]: src=<<out of bounds>> (%04x)\n",
-                       i, src->table[src->nModules + i]);
+            printf("\t\tModule[%2d]:\n", i);
+            for (j = 0; j < indx[i]; j++, cfile++)
+            {
+                /* FIXME: in some cases, it's a p_string but WHEN ? */
+                if (src->table[cfile] < src->nSrcFiles &&
+                    cstr + offset[src->table[cfile]] >= (const char*)start_cstr /* wrap around */ &&
+                    cstr + offset[src->table[cfile]] < (const char*)src + symbols->srcmodule_size)
+                    printf("\t\t\tSource file: %s\n", cstr + offset[src->table[cfile]]);
+                else
+                    printf("\t\t\tSource file: <<out of bounds>>\n");
+            }
         }
     }
     if (symbols->pdbimport_size)
