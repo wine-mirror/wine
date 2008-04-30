@@ -111,7 +111,7 @@
 @ cdecl __fpecode() msvcrt.__fpecode
 @ cdecl __getmainargs(ptr ptr ptr long ptr) msvcrt.__getmainargs
 @ extern __initenv msvcrt.__initenv
-@ stub __iob_func
+@ cdecl __iob_func() msvcrt.__iob_func
 @ cdecl __isascii(long) msvcrt.__isascii
 @ cdecl __iscsym(long) msvcrt.__iscsym
 @ cdecl __iscsymf(long) msvcrt.__iscsymf
