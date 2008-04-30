@@ -153,8 +153,25 @@ static HRESULT WINAPI HTMLDOMChildrenCollection__newEnum(IHTMLDOMChildrenCollect
 static HRESULT WINAPI HTMLDOMChildrenCollection_item(IHTMLDOMChildrenCollection *iface, long index, IDispatch **ppItem)
 {
     HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
-    FIXME("(%p)->(%ld %p)\n", This, index, ppItem);
-    return E_NOTIMPL;
+    nsIDOMNode *nsnode = NULL;
+    PRUint32 length=0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%ld %p)\n", This, index, ppItem);
+
+    nsIDOMNodeList_GetLength(This->nslist, &length);
+    if(index < 0 || index > length)
+        return E_INVALIDARG;
+
+    nsres = nsIDOMNodeList_Item(This->nslist, index, &nsnode);
+    if(NS_FAILED(nsres) || !nsnode) {
+        ERR("Item failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *ppItem = (IDispatch*)get_node(This->doc, nsnode, TRUE);
+    IDispatch_AddRef(*ppItem);
+    return S_OK;
 }
 
 #undef HTMLCHILDCOL_THIS
