@@ -1290,6 +1290,8 @@ static void test_default_style(IHTMLStyle *style)
     BSTR str;
     HRESULT hres;
 
+    test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
+
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_fontFamily(style, &str);
     ok(hres == S_OK, "get_fontFamily failed: %08x\n", hres);

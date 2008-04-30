@@ -33,6 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    DispatchEx dispex;
     const IHTMLStyleVtbl *lpHTMLStyleVtbl;
 
     LONG ref;
@@ -40,7 +41,7 @@ typedef struct {
     nsIDOMCSSStyleDeclaration *nsstyle;
 } HTMLStyle;
 
-#define HTMLSTYLE(x)  ((IHTMLStyle*) &(x)->lpHTMLStyleVtbl);
+#define HTMLSTYLE(x)  ((IHTMLStyle*) &(x)->lpHTMLStyleVtbl)
 
 static const WCHAR attrBackgroundColor[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
@@ -213,6 +214,9 @@ static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, v
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = HTMLSTYLE(This);
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = DISPATCHEX(&This->dispex);
     }else if(IsEqualGUID(&IID_IHTMLStyle, riid)) {
         TRACE("(%p)->(IID_IHTMLStyle %p)\n", This, ppv);
         *ppv = HTMLSTYLE(This);
@@ -1841,6 +1845,16 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
     HTMLStyle_toString
 };
 
+static dispex_static_data_t HTMLStyle_dispex = {
+    NULL,
+    DispHTMLStyle_tid,
+    NULL,
+    {
+        IHTMLStyle_tid,
+        0
+    }
+};
+
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle)
 {
     HTMLStyle *ret = heap_alloc(sizeof(HTMLStyle));
@@ -1850,6 +1864,8 @@ IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle)
     ret->nsstyle = nsstyle;
 
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
+
+    init_dispex(&ret->dispex, (IUnknown*)HTMLSTYLE(ret),  &HTMLStyle_dispex);
 
     return HTMLSTYLE(ret);
 }

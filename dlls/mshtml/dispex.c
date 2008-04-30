@@ -58,6 +58,7 @@ static REFIID tid_ids[] = {
     &DIID_DispHTMLElementCollection,
     &DIID_DispHTMLInputElement,
     &DIID_DispHTMLOptionElement,
+    &DIID_DispHTMLStyle,
     &DIID_DispHTMLUnknownElement,
     &DIID_DispHTMLWindow2,
     &IID_IHTMLCommentElement,
@@ -74,6 +75,7 @@ static REFIID tid_ids[] = {
     &IID_IHTMLElementCollection,
     &IID_IHTMLInputElement,
     &IID_IHTMLOptionElement,
+    &IID_IHTMLStyle,
     &IID_IHTMLWindow2,
     &IID_IHTMLWindow3,
     &IID_IOmNavigator
