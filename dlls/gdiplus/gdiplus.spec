@@ -86,9 +86,9 @@
 @ stub GdipCreateEffect
 @ stub GdipCreateFont
 @ stub GdipCreateFontFamilyFromName
-@ stub GdipCreateFontFromDC
-@ stdcall GdipCreateFontFromLogfontA(ptr ptr ptr)
-@ stdcall GdipCreateFontFromLogfontW(ptr ptr ptr)
+@ stdcall GdipCreateFontFromDC(long ptr)
+@ stdcall GdipCreateFontFromLogfontA(long ptr ptr)
+@ stdcall GdipCreateFontFromLogfontW(long ptr ptr)
 @ stdcall GdipCreateFromHDC2(long long ptr)
 @ stdcall GdipCreateFromHDC(long ptr)
 @ stdcall GdipCreateFromHWND(long ptr)
