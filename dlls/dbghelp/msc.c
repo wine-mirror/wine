@@ -1561,7 +1561,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 while (*ptr1)
                 {
                     ptr2 = ptr1 + strlen(ptr1) + 1;
-                    TRACE("\t%s => %s\n", ptr1, ptr2); 
+                    TRACE("\t%s => %s\n", ptr1, debugstr_a(ptr2));
                     ptr1 = ptr2 + strlen(ptr2) + 1;
                 }
             }
