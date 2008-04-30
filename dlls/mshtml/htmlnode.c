@@ -134,8 +134,13 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_Invoke(IHTMLDOMChildrenCollectio
 static HRESULT WINAPI HTMLDOMChildrenCollection_get_length(IHTMLDOMChildrenCollection *iface, long *p)
 {
     HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    PRUint32 length=0;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsIDOMNodeList_GetLength(This->nslist, &length);
+    *p = length;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMChildrenCollection__newEnum(IHTMLDOMChildrenCollection *iface, IUnknown **p)
