@@ -40,7 +40,8 @@ static const char range_test2_str[] =
     "<html><body>abc<hr />123<br /><hr />def</body></html>";
 static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
-    "<body>text test<a href=\"http://test\" name=\"x\">link</a>"
+    "<body>text test<!-- a comment -->"
+    "<a href=\"http://test\" name=\"x\">link</a>"
     "<input id=\"in\" />"
     "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
@@ -79,7 +80,8 @@ typedef enum {
     ET_TABLE,
     ET_TBODY,
     ET_SCRIPT,
-    ET_TEST
+    ET_TEST,
+    ET_COMMENT
 } elem_type_t;
 
 static REFIID const none_iids[] = {
@@ -208,6 +210,17 @@ static REFIID const window_iids[] = {
     NULL
 };
 
+static REFIID const comment_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLCommentElement,
+    &IID_IDispatchEx,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -232,7 +245,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"TABLE",     table_iids,       NULL},
     {"TBODY",     elem_iids,        NULL},
     {"SCRIPT",    script_iids,      NULL},
-    {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement}
+    {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement},
+    {"!",         comment_iids,     NULL}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -793,6 +807,49 @@ static void _test_input_get_disabled(unsigned line, IHTMLInputElement *input, VA
     hres = IHTMLInputElement_get_disabled(input, &disabled);
     ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
     ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
+}
+
+#define get_child_nodes(u) _get_child_nodes(__LINE__,u)
+static IHTMLDOMChildrenCollection *_get_child_nodes(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMChildrenCollection *col = NULL;
+    IHTMLDOMNode *node;
+    IDispatch *disp;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode, (void**)&node);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMNode: %08x\n", hres);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IHTMLDOMNode_get_childNodes(node, &disp);
+    IHTMLDOMNode_Release(node);
+    ok_(__FILE__,line) (hres == S_OK, "get_childNodes failed: %08x\n", hres);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLDOMChildrenCollection, (void**)&col);
+    IDispatch_Release(disp);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMChildrenCollection: %08x\n", hres);
+
+    return col;
+}
+
+#define get_child_item(c,i) _get_child_item(__LINE__,c,i)
+static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *col, long idx)
+{
+    IHTMLDOMNode *node = NULL;
+    IDispatch *disp;
+    HRESULT hres;
+
+    hres = IHTMLDOMChildrenCollection_item(col, idx, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLDOMNode, (void**)&node);
+    IDispatch_Release(disp);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMNode: %08x\n", hres);
+
+    return node;
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
@@ -1435,6 +1492,7 @@ static void test_stylesheets(IHTMLDocument2 *doc)
 static void test_elems(IHTMLDocument2 *doc)
 {
     IHTMLElementCollection *col;
+    IHTMLDOMChildrenCollection *child_col;
     IHTMLElement *elem;
     IHTMLDOMNode *node, *node2;
     IDispatch *disp;
@@ -1453,6 +1511,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TITLE,
         ET_STYLE,
         ET_BODY,
+        ET_COMMENT,
         ET_A,
         ET_INPUT,
         ET_SELECT,
@@ -1462,7 +1521,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TABLE,
         ET_TBODY,
         ET_SCRIPT,
-        ET_TEST
+        ET_TEST,
     };
 
     static const elem_type_t item_types[] = {
@@ -1570,6 +1629,41 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(type == 3, "type=%ld\n", type);
 
         IHTMLDOMNode_Release(node);
+    }
+
+    child_col = get_child_nodes((IUnknown*)elem);
+    ok(child_col != NULL, "child_coll == NULL\n");
+    if(child_col) {
+        long length = 0;
+
+        test_disp((IUnknown*)child_col, &DIID_DispDOMChildrenCollection);
+
+        hres = IHTMLDOMChildrenCollection_get_length(child_col, &length);
+        ok(hres == S_OK, "get_length failed: %08x\n", hres);
+        ok(length, "length=0\n");
+
+        node = get_child_item(child_col, 0);
+        ok(node != NULL, "node == NULL\n");
+        if(node) {
+            type = get_node_type((IUnknown*)node);
+            ok(type == 3, "type=%ld\n", type);
+            IHTMLDOMNode_Release(node);
+        }
+
+        node = get_child_item(child_col, 1);
+        ok(node != NULL, "node == NULL\n");
+        if(node) {
+            type = get_node_type((IUnknown*)node);
+            ok(type == 8, "type=%ld\n", type);
+            IHTMLDOMNode_Release(node);
+        }
+
+        disp = (void*)0xdeadbeef;
+        hres = IHTMLDOMChildrenCollection_item(child_col, 6000, &disp);
+        ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+        ok(disp == (void*)0xdeadbeef, "disp=%p\n", disp);
+
+        IHTMLDOMChildrenCollection_Release(child_col);
     }
 
     IHTMLElement_Release(elem);
