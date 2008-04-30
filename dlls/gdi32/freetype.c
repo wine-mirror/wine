@@ -1116,6 +1116,44 @@ static FT_Error load_sfnt_table(FT_Face ft_face, FT_ULong table, FT_Long offset,
     return err;
 }
 
+static inline int TestStyles(DWORD flags, DWORD styles)
+{
+    return (flags & styles) == styles;
+}
+
+static int StyleOrdering(Face *face)
+{
+    if (TestStyles(face->ntmFlags, NTM_BOLD | NTM_ITALIC))
+        return 3;
+    if (TestStyles(face->ntmFlags, NTM_ITALIC))
+        return 2;
+    if (TestStyles(face->ntmFlags, NTM_BOLD))
+        return 1;
+    if (TestStyles(face->ntmFlags, NTM_REGULAR))
+        return 0;
+
+    WARN("Don't know how to order font %s %s with flags 0x%08x\n",
+         debugstr_w(face->family->FamilyName),
+         debugstr_w(face->StyleName),
+         face->ntmFlags);
+
+    return 9999;
+}
+
+/* Add a style of face to a font family using an ordering of the list such
+   that regular fonts come before bold and italic, and single styles come
+   before compound styles.  */
+static void AddFaceToFamily(Face *face, Family *family)
+{
+    struct list *entry;
+
+    LIST_FOR_EACH( entry, &family->faces )
+    {
+        Face *ent = LIST_ENTRY(entry, Face, entry);
+        if (StyleOrdering(face) < StyleOrdering(ent)) break;
+    }
+    list_add_before( entry, &face->entry );
+}
 
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
@@ -1363,7 +1401,6 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             }
             face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
             face->cached_enum_data = NULL;
-            list_add_tail(&family->faces, &face->entry);
             face->StyleName = StyleW;
             if (file)
             {
@@ -1438,6 +1475,9 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 
             if (!(face->fs.fsCsb[0] & FS_SYMBOL))
                 have_installed_roman_font = TRUE;
+
+            AddFaceToFamily(face, family);
+
         } while(!FT_IS_SCALABLE(ft_face) && ++bitmap_num < ft_face->num_fixed_sizes);
 
 	num_faces = ft_face->num_faces;
