@@ -522,7 +522,7 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
     for (i = 0; i < This->cStreams; i++)
     {
         hr = OutputPin_DeliverDisconnect((OutputPin *)ppOldPins[i + 1]);
-        FIXME("Other side: %08x\n", hr);
+        TRACE("Disconnect: %08x\n", hr);
         IPin_Release(ppOldPins[i + 1]);
     }
 
