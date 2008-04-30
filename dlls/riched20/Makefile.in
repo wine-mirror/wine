@@ -4,8 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = riched20.dll
 IMPORTLIB = riched20
-IMPORTS   = ole32 imm32 user32 gdi32 kernel32
-EXTRALIBS = -luuid
+IMPORTS   = uuid ole32 imm32 user32 gdi32 kernel32
 
 C_SRCS = \
 	caret.c \

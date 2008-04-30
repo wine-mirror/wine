@@ -4,8 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winecfg.exe
 APPMODE   = -mwindows
-IMPORTS   = comdlg32 comctl32 shell32 ole32 winmm shlwapi uxtheme user32 gdi32 advapi32 kernel32
-EXTRALIBS = -luuid
+IMPORTS   = uuid comdlg32 comctl32 shell32 ole32 winmm shlwapi uxtheme user32 gdi32 advapi32 kernel32
 
 C_SRCS = \
 	appdefaults.c \

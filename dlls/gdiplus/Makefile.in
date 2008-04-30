@@ -4,8 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdiplus.dll
 IMPORTLIB = gdiplus
-IMPORTS   = shlwapi oleaut32 ole32 user32 gdi32 kernel32
-EXTRALIBS = -luuid
+IMPORTS   = uuid shlwapi oleaut32 ole32 user32 gdi32 kernel32
 
 C_SRCS = \
 	brush.c \

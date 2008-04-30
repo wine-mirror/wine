@@ -3,9 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winenas.drv
-IMPORTS   = winmm user32 kernel32
+IMPORTS   = dxguid uuid winmm user32 kernel32
 EXTRAINCL = @X_CFLAGS@
-EXTRALIBS = -ldxguid -luuid @NASLIBS@
+EXTRALIBS = @NASLIBS@
 
 C_SRCS = \
 	audio.c \

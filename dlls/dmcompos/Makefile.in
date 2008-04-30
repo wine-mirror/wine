@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmcompos.dll
-IMPORTS   = ole32 user32 advapi32 kernel32
-EXTRALIBS = -ldxguid -luuid
+IMPORTS   = dxguid uuid ole32 user32 advapi32 kernel32
 
 C_SRCS = \
 	chordmap.c \

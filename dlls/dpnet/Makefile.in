@@ -4,8 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dpnet.dll
 IMPORTLIB = dpnet
-IMPORTS   = ole32 user32 advapi32 kernel32
-EXTRALIBS = -ldxguid -luuid
+IMPORTS   = dxguid uuid ole32 user32 advapi32 kernel32
 
 C_SRCS = \
 	address.c \

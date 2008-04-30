@@ -3,8 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = ddraw.dll
-IMPORTS   = ddraw user32 gdi32 kernel32
-EXTRALIBS = -ldxguid
+IMPORTS   = dxguid ddraw user32 gdi32 kernel32
 
 CTESTS = \
 	d3d.c \

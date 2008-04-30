@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = devenum.dll
-IMPORTS   = ole32 oleaut32 avicap32 winmm user32 advapi32 kernel32
-EXTRALIBS = -lstrmiids -luuid
+IMPORTS   = strmiids uuid ole32 oleaut32 avicap32 winmm user32 advapi32 kernel32
 
 C_SRCS = \
 	createdevenum.c \

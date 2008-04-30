@@ -4,8 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dx8.dll
 IMPORTLIB = d3dx8
-IMPORTS   = kernel32
-EXTRALIBS = -ldxguid -luuid
+IMPORTS   = dxguid uuid kernel32
 
 C_SRCS = \
 	d3dx8_main.c \

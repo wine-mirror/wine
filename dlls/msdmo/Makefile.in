@@ -4,8 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msdmo.dll
 IMPORTLIB = msdmo
-IMPORTS   = ole32 user32 advapi32 kernel32 
-EXTRALIBS = -luuid
+IMPORTS   = uuid ole32 user32 advapi32 kernel32 
 
 C_SRCS = \
 	dmoreg.c \

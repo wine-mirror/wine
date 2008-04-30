@@ -3,9 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineesd.drv
-IMPORTS   = winmm user32 kernel32
+IMPORTS   = dxguid uuid winmm user32 kernel32
 EXTRAINCL = @ESDINCL@
-EXTRALIBS = @ESDLIBS@ -ldxguid -luuid
+EXTRALIBS = @ESDLIBS@
 
 C_SRCS = \
 	esound.c \

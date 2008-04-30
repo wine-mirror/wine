@@ -4,8 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = odbccp32.dll
 IMPORTLIB = odbccp32
-IMPORTS   = advapi32 kernel32
-EXTRALIBS = -luuid
+IMPORTS   = uuid advapi32 kernel32
 
 C_SRCS = \
 	odbccp32.c

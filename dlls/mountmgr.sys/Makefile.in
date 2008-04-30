@@ -3,11 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mountmgr.sys
-IMPORTS   = advapi32 ntoskrnl.exe kernel32 ntdll
+IMPORTS   = uuid advapi32 ntoskrnl.exe kernel32 ntdll
 DELAYIMPORTS = user32
 EXTRADLLFLAGS = -Wb,--subsystem,native
 EXTRADEFS = @HALINCL@
-EXTRALIBS = @DISKARBITRATIONLIB@ -luuid
+EXTRALIBS = @DISKARBITRATIONLIB@
 
 C_SRCS = \
 	device.c \

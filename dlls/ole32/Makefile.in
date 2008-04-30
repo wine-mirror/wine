@@ -5,8 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ole32.dll
 IMPORTLIB = ole32
-IMPORTS   = advapi32 user32 gdi32 rpcrt4 kernel32 ntdll
-EXTRALIBS = -luuid
+IMPORTS   = uuid advapi32 user32 gdi32 rpcrt4 kernel32 ntdll
 
 C_SRCS = \
 	antimoniker.c \

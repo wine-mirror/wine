@@ -4,9 +4,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mlang.dll
 IMPORTLIB = mlang
-IMPORTS   = ole32 user32 gdi32 advapi32 kernel32
+IMPORTS   = uuid ole32 user32 gdi32 advapi32 kernel32
 DELAYIMPORTS = oleaut32
-EXTRALIBS = -luuid
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \

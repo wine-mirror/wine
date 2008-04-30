@@ -4,8 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3d8.dll
 IMPORTLIB = d3d8
-IMPORTS   = wined3d kernel32
-EXTRALIBS = -ldxguid -luuid
+IMPORTS   = dxguid uuid wined3d kernel32
 
 C_SRCS = \
 	basetexture.c \

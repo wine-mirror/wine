@@ -3,8 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = ole32.dll
-IMPORTS   = oleaut32 ole32 user32 gdi32 advapi32 kernel32
-EXTRALIBS = -luuid
+IMPORTS   = uuid oleaut32 ole32 user32 gdi32 advapi32 kernel32
 
 CTESTS = \
 	clipboard.c \

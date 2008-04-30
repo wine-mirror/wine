@@ -3,8 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = mapi32.dll
-IMPORTS   = kernel32
-EXTRALIBS = -luuid
+IMPORTS   = uuid kernel32
 
 CTESTS = \
 	imalloc.c \
