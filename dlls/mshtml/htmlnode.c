@@ -32,6 +32,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    DispatchEx dispex;
     const IHTMLDOMChildrenCollectionVtbl  *lpIHTMLDOMChildrenCollectionVtbl;
 
     LONG ref;
@@ -58,6 +59,9 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_QueryInterface(IHTMLDOMChildrenC
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = HTMLCHILDCOL(This);
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = DISPATCHEX(&This->dispex);
     }else if(IsEqualGUID(&IID_IHTMLDOMChildrenCollection, riid)) {
         TRACE("(%p)->(IID_IHTMLDOMChildrenCollection %p)\n", This, ppv);
         *ppv = HTMLCHILDCOL(This);
@@ -189,6 +193,16 @@ static const IHTMLDOMChildrenCollectionVtbl HTMLDOMChildrenCollectionVtbl = {
     HTMLDOMChildrenCollection_item
 };
 
+static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {
+    NULL,
+    DispDOMChildrenCollection_tid,
+    NULL,
+    {
+        IHTMLDOMChildrenCollection_tid,
+        0
+    }
+};
+
 static IHTMLDOMChildrenCollection *create_child_collection(HTMLDocument *doc, nsIDOMNodeList *nslist)
 {
     HTMLDOMChildrenCollection *ret;
@@ -200,6 +214,8 @@ static IHTMLDOMChildrenCollection *create_child_collection(HTMLDocument *doc, ns
     nsIDOMNodeList_AddRef(nslist);
     ret->nslist = nslist;
     ret->doc = doc;
+
+    init_dispex(&ret->dispex, (IUnknown*)HTMLCHILDCOL(ret), &HTMLDOMChildrenCollection_dispex);
 
     return HTMLCHILDCOL(ret);
 }

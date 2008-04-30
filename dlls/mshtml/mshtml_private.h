@@ -61,6 +61,7 @@ typedef struct event_target_t event_target_t;
 /* NOTE: make sure to keep in sync with dispex.c */
 typedef enum {
     NULL_tid,
+    DispDOMChildrenCollection_tid,
     DispHTMLDocument_tid,
     DispHTMLDOMTextNode_tid,
     DispHTMLElementCollection_tid,
@@ -72,6 +73,7 @@ typedef enum {
     IHTMLDocument3_tid,
     IHTMLDocument4_tid,
     IHTMLDocument5_tid,
+    IHTMLDOMChildrenCollection_tid,
     IHTMLDOMNode_tid,
     IHTMLDOMNode2_tid,
     IHTMLDOMTextNode_tid,
