@@ -34,7 +34,7 @@ Options: \n\
 /MAX[imized] 풀그림 최대화 상태로 실행. \n\
 /R[estored]  풀그림을 보통상태로 시작시키기 (최소화도 아니고 최대화도 아님). \n\
 /W[ait]      시작된 풀그림이 끝날 때까지 기다림, 끝날 때 종료코드를 남김. \n\
-/Unix        Use a Unix filename and start the file like windows explorer. \n\
+/Unix        윈도우 익스플로어같이 유닉스 파일이름을 사용해서 시작. \n\
 /L           사용자 라이센스 보여줌 \n\
  \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
@@ -63,5 +63,5 @@ See the COPYING.LIB file for license information. \n\
 
 STRING_EXECFAIL "프로그램을 실행할 수 없거나, 지정된 파일에 연결된 프로그램이 없습니다.\nShellExecuteEx 실패"
 
-STRING_UNIXFAIL "지정된 Unix 파일명을 DOS 파일명을로 바꿀 수 없습니다."
+STRING_UNIXFAIL "지정된 Unix 파일명을 DOS 파일명으로 바꿀 수 없습니다."
 }
