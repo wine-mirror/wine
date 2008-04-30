@@ -22077,6 +22077,8 @@ ac_config_files="$ac_config_files dlls/user32/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/userenv/Makefile"
 
+ac_config_files="$ac_config_files dlls/userenv/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/usp10/Makefile"
 
 ac_config_files="$ac_config_files dlls/usp10/tests/Makefile"
@@ -23170,6 +23172,7 @@ do
     "dlls/user32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user32/Makefile" ;;
     "dlls/user32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/user32/tests/Makefile" ;;
     "dlls/userenv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/userenv/Makefile" ;;
+    "dlls/userenv/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/userenv/tests/Makefile" ;;
     "dlls/usp10/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/usp10/Makefile" ;;
     "dlls/usp10/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/usp10/tests/Makefile" ;;
     "dlls/uuid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/uuid/Makefile" ;;

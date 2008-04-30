@@ -459,6 +459,7 @@ ALL_MAKEFILES = \
 	dlls/user32/Makefile \
 	dlls/user32/tests/Makefile \
 	dlls/userenv/Makefile \
+	dlls/userenv/tests/Makefile \
 	dlls/usp10/Makefile \
 	dlls/usp10/tests/Makefile \
 	dlls/uuid/Makefile \
@@ -884,6 +885,7 @@ dlls/urlmon/tests/Makefile: dlls/urlmon/tests/Makefile.in dlls/Maketest.rules
 dlls/user32/Makefile: dlls/user32/Makefile.in dlls/Makedll.rules
 dlls/user32/tests/Makefile: dlls/user32/tests/Makefile.in dlls/Maketest.rules
 dlls/userenv/Makefile: dlls/userenv/Makefile.in dlls/Makedll.rules
+dlls/userenv/tests/Makefile: dlls/userenv/tests/Makefile.in dlls/Maketest.rules
 dlls/usp10/Makefile: dlls/usp10/Makefile.in dlls/Makedll.rules
 dlls/usp10/tests/Makefile: dlls/usp10/tests/Makefile.in dlls/Maketest.rules
 dlls/uuid/Makefile: dlls/uuid/Makefile.in dlls/Makeimplib.rules

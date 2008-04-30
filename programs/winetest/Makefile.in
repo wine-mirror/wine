@@ -95,6 +95,7 @@ TESTBINS = \
 	spoolss_test.exe \
 	urlmon_test.exe \
 	user32_test.exe \
+	userenv_test.exe \
 	usp10_test.exe \
 	uxtheme_test.exe \
 	version_test.exe \
@@ -246,6 +247,8 @@ urlmon_test.exe: $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT)
 	cp $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT) $@ && $(STRIP) $@
 user32_test.exe: $(DLLDIR)/user32/tests/user32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/user32/tests/user32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+userenv_test.exe: $(DLLDIR)/userenv/tests/userenv_test.exe$(DLLEXT)
+	cp $(DLLDIR)/userenv/tests/userenv_test.exe$(DLLEXT) $@ && $(STRIP) $@
 usp10_test.exe: $(DLLDIR)/usp10/tests/usp10_test.exe$(DLLEXT)
 	cp $(DLLDIR)/usp10/tests/usp10_test.exe$(DLLEXT) $@ && $(STRIP) $@
 uxtheme_test.exe: $(DLLDIR)/uxtheme/tests/uxtheme_test.exe$(DLLEXT)

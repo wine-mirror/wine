@@ -355,6 +355,7 @@ TESTSUBDIRS = \
 	spoolss/tests \
 	urlmon/tests \
 	user32/tests \
+	userenv/tests \
 	usp10/tests \
 	uxtheme/tests \
 	version/tests \
@@ -650,6 +651,7 @@ IMPORT_LIBS = \
 	url/liburl.$(IMPLIBEXT) \
 	urlmon/liburlmon.$(IMPLIBEXT) \
 	user32/libuser32.$(IMPLIBEXT) \
+	userenv/libuserenv.$(IMPLIBEXT) \
 	usp10/libusp10.$(IMPLIBEXT) \
 	uxtheme/libuxtheme.$(IMPLIBEXT) \
 	vdmdbg/libvdmdbg.$(IMPLIBEXT) \
@@ -1012,6 +1014,9 @@ urlmon/liburlmon.$(IMPLIBEXT): urlmon/urlmon.spec $(WINEBUILD)
 
 user32/libuser32.$(IMPLIBEXT): user32/user32.spec $(WINEBUILD)
 	@cd user32 && $(MAKE) libuser32.$(IMPLIBEXT)
+
+userenv/libuserenv.$(IMPLIBEXT): userenv/userenv.spec $(WINEBUILD)
+	@cd userenv && $(MAKE) libuserenv.$(IMPLIBEXT)
 
 usp10/libusp10.$(IMPLIBEXT): usp10/usp10.spec $(WINEBUILD)
 	@cd usp10 && $(MAKE) libusp10.$(IMPLIBEXT)
