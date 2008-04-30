@@ -26,6 +26,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "fdi.h"
 #include "msi.h"
 #include "msiquery.h"
 #include "objbase.h"
@@ -132,6 +133,20 @@ typedef struct tagMSIMEDIADISK
     LPWSTR volume_label;
     LPWSTR disk_prompt;
 } MSIMEDIADISK;
+
+typedef struct tagMSIMEDIAINFO
+{
+    UINT disk_id;
+    UINT type;
+    UINT last_sequence;
+    LPWSTR disk_prompt;
+    LPWSTR cabinet;
+    LPWSTR first_volume;
+    LPWSTR volume_label;
+    BOOL is_continuous;
+    BOOL is_extracted;
+    WCHAR source[MAX_PATH];
+} MSIMEDIAINFO;
 
 typedef struct _column_info
 {
@@ -889,6 +904,10 @@ extern UINT msi_create_component_directories( MSIPACKAGE *package );
 extern void msi_ui_error( DWORD msg_id, DWORD type );
 extern UINT msi_set_last_used_source(LPCWSTR product, LPCWSTR usersid,
                         MSIINSTALLCONTEXT context, DWORD options, LPCWSTR value);
+extern UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi);
+extern void msi_free_media_info(MSIMEDIAINFO *mi);
+extern BOOL msi_cabextract(MSIPACKAGE* package, MSIMEDIAINFO *mi, PFNFDINOTIFY notify, LPVOID data);
+extern UINT msi_extract_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR destdir);
 
 /* control event stuff */
 extern VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,
