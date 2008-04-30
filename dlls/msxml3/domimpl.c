@@ -212,7 +212,7 @@ static const struct IXMLDOMImplementationVtbl dimimpl_vtbl =
     dimimpl_hasFeature
 };
 
-IUnknown* create_doc_Implementation()
+IUnknown* create_doc_Implementation(void)
 {
     domimpl *This;
 

@@ -985,7 +985,7 @@ LRESULT IME_SendMessageToSelectedHWND(UINT msg, WPARAM wParam, LPARAM lParam)
     return rc;
 }
 
-INT IME_GetCursorPos()
+INT IME_GetCursorPos(void)
 {
     LPINPUTCONTEXT lpIMC;
     INT rc = 0;

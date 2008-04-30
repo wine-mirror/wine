@@ -137,7 +137,7 @@ TW_UINT16 GPHOTO2_ImageFileXferGet (pTW_IDENTITY pOrigin,
 }
 
 #ifdef HAVE_GPHOTO2
-static TW_UINT16 _get_image_and_startup_jpeg() {
+static TW_UINT16 _get_image_and_startup_jpeg(void) {
     const char *folder = NULL, *filename = NULL;
     struct gphoto2_file *file;
     const unsigned char *filedata;
