@@ -1526,18 +1526,21 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
     if (pUrlEntry->dwOffsetHeaderInfo)
         TRACE("Header info: %s\n", debugstr_a((LPSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
 
-    if (!URLCache_CopyEntry(
-        pContainer,
-        pHeader,
-        lpCacheEntryInfo,
-        lpdwCacheEntryInfoBufferSize,
-        pUrlEntry,
-        FALSE /* ANSI */))
+    if (lpdwCacheEntryInfoBufferSize)
     {
-        URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        return FALSE;
+        if (!URLCache_CopyEntry(
+            pContainer,
+            pHeader,
+            lpCacheEntryInfo,
+            lpdwCacheEntryInfoBufferSize,
+            pUrlEntry,
+            FALSE /* ANSI */))
+        {
+            URLCacheContainer_UnlockIndex(pContainer, pHeader);
+            return FALSE;
+        }
+        TRACE("Local File Name: %s\n", debugstr_a(lpCacheEntryInfo->lpszLocalFileName));
     }
-    TRACE("Local File Name: %s\n", debugstr_a(lpCacheEntryInfo->lpszLocalFileName));
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -1590,18 +1593,21 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     TRACE("Found URL: %s\n", debugstr_a((LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
     TRACE("Header info: %s\n", debugstr_a((LPSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
 
-    if (!URLCache_CopyEntry(
-        pContainer,
-        pHeader,
-        (LPINTERNET_CACHE_ENTRY_INFOA)lpCacheEntryInfo,
-        lpdwCacheEntryInfoBufferSize,
-        pUrlEntry,
-        TRUE /* UNICODE */))
+    if (lpdwCacheEntryInfoBufferSize)
     {
-        URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        return FALSE;
+        if (!URLCache_CopyEntry(
+            pContainer,
+            pHeader,
+            (LPINTERNET_CACHE_ENTRY_INFOA)lpCacheEntryInfo,
+            lpdwCacheEntryInfoBufferSize,
+            pUrlEntry,
+            TRUE /* UNICODE */))
+        {
+            URLCacheContainer_UnlockIndex(pContainer, pHeader);
+            return FALSE;
+        }
+        TRACE("Local File Name: %s\n", debugstr_w(lpCacheEntryInfo->lpszLocalFileName));
     }
-    TRACE("Local File Name: %s\n", debugstr_w(lpCacheEntryInfo->lpszLocalFileName));
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
