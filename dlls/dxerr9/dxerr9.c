@@ -42,10 +42,6 @@
 
 #include "dxerr9.h"
 
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(dxerr);
-
 typedef struct {
     HRESULT      hr;
     const CHAR*  resultA;
@@ -59,7 +55,6 @@ typedef struct {
 const char * WINAPI DXGetErrorString9A(HRESULT hr)
 {
     unsigned int i, j, k = 0;
-    TRACE("(0x%08x)\n", hr);
 
     for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
         j = k + (i / 2);
@@ -78,7 +73,6 @@ const WCHAR * WINAPI DXGetErrorString9W(HRESULT hr)
 {
     static const WCHAR unknown[] = { 'U', 'n', 'k', 'n', 'o', 'w', 'n', 0 };
     unsigned int i, j, k = 0;
-    TRACE("(0x%08x)\n", hr);
 
     for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
         j = k + (i / 2);
@@ -96,7 +90,6 @@ const WCHAR * WINAPI DXGetErrorString9W(HRESULT hr)
 const char * WINAPI DXGetErrorDescription9A(HRESULT hr)
 {
     unsigned int i, j, k = 0;
-    TRACE("(0x%08x)\n", hr);
 
     for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
         j = k + (i / 2);
@@ -115,7 +108,6 @@ const WCHAR * WINAPI DXGetErrorDescription9W(HRESULT hr)
 {
     static const WCHAR na[] = { 'n', '/', 'a', 0 };
     unsigned int i, j, k = 0;
-    TRACE("(0x%08x)\n", hr);
 
     for (i = sizeof(info)/sizeof(info[0]); i != 0; i /= 2) {
         j = k + (i / 2);
@@ -133,7 +125,6 @@ const WCHAR * WINAPI DXGetErrorDescription9W(HRESULT hr)
 HRESULT WINAPI DXTraceA(const char* strFile, DWORD dwLine, HRESULT hr, const char*  strMsg, BOOL bPopMsgBox)
 {
     char msg[1024];
-    TRACE("(%p,%d,0x%08x,%p,%d)\n", strFile, dwLine, hr, strMsg, bPopMsgBox);
 
     if (bPopMsgBox) {
         snprintf(msg, sizeof(msg), "File: %s\nLine: %d\nError Code: %s (0x%08x)\nCalling: %s",
@@ -151,7 +142,6 @@ HRESULT WINAPI DXTraceA(const char* strFile, DWORD dwLine, HRESULT hr, const cha
 HRESULT WINAPI DXTraceW(const char* strFile, DWORD dwLine, HRESULT hr, const WCHAR* strMsg, BOOL bPopMsgBox)
 {
     WCHAR msg[1024];
-    TRACE("(%p,%d,0x%08x,%p,%d)\n", strFile, dwLine, hr, strMsg, bPopMsgBox);
 
     if (bPopMsgBox) {
         static const WCHAR format[] = { 'F','i','l','e',':',' ','%','s','\\','n','L','i','n',
