@@ -14,6 +14,7 @@ C_SRCS = \
 	hlink.c \
 	htmlanchor.c \
 	htmlbody.c \
+	htmlcomment.c \
 	htmldoc.c \
 	htmldoc3.c \
 	htmldoc5.c \

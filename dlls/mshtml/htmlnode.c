@@ -682,6 +682,9 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
     case TEXT_NODE:
         ret = HTMLDOMTextNode_Create(nsnode);
         break;
+    case COMMENT_NODE:
+        ret = &HTMLCommentElement_Create(nsnode)->node;
+        break;
     default:
         ret = heap_alloc_zero(sizeof(HTMLDOMNode));
         ret->vtbl = &HTMLDOMNodeImplVtbl;
