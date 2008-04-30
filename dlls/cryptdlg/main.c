@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
+#include "wintrust.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptdlg);
@@ -46,6 +47,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+/***********************************************************************
+ *		GetFriendlyNameOfCertA (CRYPTDLG.@)
+ */
 DWORD GetFriendlyNameOfCertA(PCCERT_CONTEXT pccert, LPSTR pchBuffer,
                              DWORD cchBuffer)
 {
@@ -53,9 +57,48 @@ DWORD GetFriendlyNameOfCertA(PCCERT_CONTEXT pccert, LPSTR pchBuffer,
      pchBuffer, cchBuffer);
 }
 
+/***********************************************************************
+ *		GetFriendlyNameOfCertW (CRYPTDLG.@)
+ */
 DWORD GetFriendlyNameOfCertW(PCCERT_CONTEXT pccert, LPWSTR pchBuffer,
                              DWORD cchBuffer)
 {
     return CertGetNameStringW(pccert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
      pchBuffer, cchBuffer);
+}
+
+/***********************************************************************
+ *		CertTrustInit (CRYPTDLG.@)
+ */
+HRESULT WINAPI CertTrustInit(CRYPT_PROVIDER_DATA *pProvData)
+{
+    FIXME("(%p)\n", pProvData);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *		CertTrustCertPolicy (CRYPTDLG.@)
+ */
+BOOL WINAPI CertTrustCertPolicy(CRYPT_PROVIDER_DATA *pProvData, DWORD idxSigner, BOOL fCounterSignerChain, DWORD idxCounterSigner)
+{
+    FIXME("(%p, %d, %s, %d)\n", pProvData, idxSigner, fCounterSignerChain ? "TRUE" : "FALSE", idxCounterSigner);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		CertTrustCleanup (CRYPTDLG.@)
+ */
+HRESULT WINAPI CertTrustCleanup(CRYPT_PROVIDER_DATA *pProvData)
+{
+    FIXME("(%p)\n", pProvData);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *		CertTrustFinalPolicy (CRYPTDLG.@)
+ */
+HRESULT WINAPI CertTrustFinalPolicy(CRYPT_PROVIDER_DATA *pProvData)
+{
+    FIXME("(%p)\n", pProvData);
+    return E_NOTIMPL;
 }

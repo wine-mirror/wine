@@ -1,9 +1,9 @@
 1 stub CertConfigureTrustA
 2 stub CertConfigureTrustW
-3 stub CertTrustCertPolicy
-4 stub CertTrustCleanup
-5 stub CertTrustFinalPolicy
-6 stub CertTrustInit
+3 stdcall CertTrustCertPolicy(ptr long long long)
+4 stdcall CertTrustCleanup(ptr)
+5 stdcall CertTrustFinalPolicy(ptr)
+6 stdcall CertTrustInit(ptr)
 7 stub DecodeAttrSequence
 8 stub DecodeRecipientID
 9 stub EncodeAttrSequence
