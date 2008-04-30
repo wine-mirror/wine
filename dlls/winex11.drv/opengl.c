@@ -104,10 +104,10 @@ typedef struct wine_glpixelformat {
 
 typedef struct wine_glcontext {
     HDC hdc;
+    BOOL do_escape;
     XVisualInfo *vis;
     WineGLPixelFormat *fmt;
     GLXContext ctx;
-    BOOL do_escape;
     HDC read_hdc;
     Drawable drawables[2];
     BOOL refresh_drawables;
