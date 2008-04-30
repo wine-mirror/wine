@@ -138,6 +138,11 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
 
     WARN("(%p)->(%s . %08x)\n", This, debugstr_w(strAttributeName), lFlags);
 
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
+
     VariantInit(&AttributeValueChanged);
 
     hres = VariantChangeType(&AttributeValueChanged, &AttributeValue, 0, VT_BSTR);
@@ -177,6 +182,11 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
     HRESULT hres = S_OK;
 
     WARN("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
+
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
 
     V_VT(AttributeValue) = VT_NULL;
 
@@ -245,6 +255,11 @@ static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
+
     nsAString_Init(&class_str, NULL);
     nsres = nsIDOMHTMLElement_GetClassName(This->nselem, &class_str);
 
@@ -286,6 +301,15 @@ static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->nselem) {
+        static const WCHAR comment_tagW[] = {'!',0};
+
+        WARN("NULL nselem, assuming comment\n");
+
+        *p = SysAllocString(comment_tagW);
+        return S_OK;
+    }
+
     nsAString_Init(&tag_str, NULL);
     nsres = nsIDOMHTMLElement_GetTagName(This->nselem, &tag_str);
     if(NS_SUCCEEDED(nsres)) {
@@ -315,6 +339,11 @@ static HRESULT WINAPI HTMLElement_get_style(IHTMLElement *iface, IHTMLStyle **p)
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
 
     nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMElementCSSInlineStyle,
                                              (void**)&nselemstyle);
@@ -627,6 +656,11 @@ static HRESULT WINAPI HTMLElement_put_innerHTML(IHTMLElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
+
     nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMNSHTMLElement: %08x\n", nsres);
@@ -701,6 +735,11 @@ static HRESULT HTMLElement_InsertAdjacentNode(HTMLElement *This, BSTR where, nsI
     static const WCHAR wszBeforeEnd[] = {'b','e','f','o','r','e','E','n','d',0};
     static const WCHAR wszAfterEnd[] = {'a','f','t','e','r','E','n','d',0};
     nsresult nsres;
+
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
 
     if (!strcmpiW(where, wszBeforeBegin))
     {
@@ -1512,6 +1551,9 @@ static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
     nsresult nsres;
 
     static const PRUnichar nameW[] = {'n','a','m','e',0};
+
+    if(!elem->nselem)
+        return FALSE;
 
     nsAString_Init(&nsstr, NULL);
     nsIDOMHTMLElement_GetId(elem->nselem, &nsstr);

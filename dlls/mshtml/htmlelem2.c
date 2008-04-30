@@ -651,6 +651,11 @@ static HRESULT WINAPI HTMLElement2_put_scrollTop(IHTMLElement2 *iface, long v)
 
     TRACE("(%p)->(%ld)\n", This, v);
 
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
+
     nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
     if(NS_SUCCEEDED(nsres)) {
         nsIDOMNSHTMLElement_SetScrollTop(nselem, v);
@@ -676,6 +681,11 @@ static HRESULT WINAPI HTMLElement2_put_scrollLeft(IHTMLElement2 *iface, long v)
     nsresult nsres;
 
     TRACE("(%p)->(%ld)\n", This, v);
+
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
 
     nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
     if(NS_SUCCEEDED(nsres)) {
