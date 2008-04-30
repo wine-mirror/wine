@@ -30,56 +30,25 @@
 
 #define TEST_URL    "http://urlcachetest.winehq.org/index.html"
 
-static void test_urlcacheA(void)
+static char filenameA[MAX_PATH + 1];
+
+static void check_cache_entry_infoA(const char *returnedfrom, LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo)
+{
+    ok(lpCacheEntryInfo->dwStructSize == sizeof(*lpCacheEntryInfo), "%s: dwStructSize was %d\n", returnedfrom, lpCacheEntryInfo->dwStructSize);
+    ok(!strcmp(lpCacheEntryInfo->lpszSourceUrlName, TEST_URL), "%s: lpszSourceUrlName should be %s instead of %s\n", returnedfrom, TEST_URL, lpCacheEntryInfo->lpszSourceUrlName);
+    ok(!strcmp(lpCacheEntryInfo->lpszLocalFileName, filenameA), "%s: lpszLocalFileName should be %s instead of %s\n", returnedfrom, filenameA, lpCacheEntryInfo->lpszLocalFileName);
+    ok(!strcmp(lpCacheEntryInfo->lpszFileExtension, "html"), "%s: lpszFileExtension should be html instead of %s\n", returnedfrom, lpCacheEntryInfo->lpszFileExtension);
+}
+
+static void test_find_url_cache_entriesA(void)
 {
     BOOL ret;
-    char filename[MAX_PATH + 1];
-    HANDLE hFile;
-    DWORD written;
-    BYTE zero_byte = 0;
-    LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo;
-    DWORD cbCacheEntryInfo;
-    DWORD cbCacheEntryInfoSaved;
-    static const FILETIME filetime_zero;
     HANDLE hEnumHandle;
     BOOL found = FALSE;
+    DWORD cbCacheEntryInfo;
+    DWORD cbCacheEntryInfoSaved;
+    LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo;
 
-    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filename, 0);
-    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
-
-    hFile = CreateFileA(filename, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA failed with error %d\n", GetLastError());
-
-    ret = WriteFile(hFile, &zero_byte, sizeof(zero_byte), &written, NULL);
-    ok(ret, "WriteFile failed with error %d\n", GetLastError());
-
-    CloseHandle(hFile);
-
-    ret = CommitUrlCacheEntry(TEST_URL, filename, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
-    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
-
-    cbCacheEntryInfo = 0;
-    ret = RetrieveUrlCacheEntryFile(TEST_URL, NULL, &cbCacheEntryInfo, 0);
-    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
-
-    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
-    ret = RetrieveUrlCacheEntryFile(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo, 0);
-    ok(ret, "RetrieveUrlCacheEntryFile failed with error %d\n", GetLastError());
-
-    ok(lpCacheEntryInfo->dwStructSize == sizeof(*lpCacheEntryInfo), "lpCacheEntryInfo->dwStructSize was %d\n", lpCacheEntryInfo->dwStructSize);
-    ok(!strcmp(lpCacheEntryInfo->lpszSourceUrlName, TEST_URL), "lpCacheEntryInfo->lpszSourceUrlName should be %s instead of %s\n", TEST_URL, lpCacheEntryInfo->lpszSourceUrlName);
-    ok(!strcmp(lpCacheEntryInfo->lpszLocalFileName, filename), "lpCacheEntryInfo->lpszLocalFileName should be %s instead of %s\n", filename, lpCacheEntryInfo->lpszLocalFileName);
-    ok(!strcmp(lpCacheEntryInfo->lpszFileExtension, "html"), "lpCacheEntryInfo->lpszFileExtension should be html instead of %s\n", lpCacheEntryInfo->lpszFileExtension);
-
-    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
-
-    ret = UnlockUrlCacheEntryFile(TEST_URL, 0);
-    ok(ret, "UnlockUrlCacheEntryFile failed with error %d\n", GetLastError());
-
-
-    /* test Find*UrlCacheEntry functions */
     cbCacheEntryInfo = 0;
     hEnumHandle = FindFirstUrlCacheEntry(NULL, NULL, &cbCacheEntryInfo);
     ok(!hEnumHandle, "FindFirstUrlCacheEntry should have failed\n");
@@ -114,12 +83,85 @@ static void test_urlcacheA(void)
 
     ret = FindCloseUrlCache(hEnumHandle);
     ok(ret, "FindCloseUrlCache failed with error %d\n", GetLastError());
+}
 
+static void test_GetUrlCacheEntryInfoExA(void)
+{
+    BOOL ret;
+    DWORD cbCacheEntryInfo;
+    LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo;
+
+    ret = GetUrlCacheEntryInfoEx(NULL, NULL, NULL, NULL, NULL, NULL, 0);
+    ok(!ret, "GetUrlCacheEntryInfoEx with NULL URL and NULL args should have failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetUrlCacheEntryInfoEx with NULL URL and NULL args should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
+
+    ret = GetUrlCacheEntryInfoEx(TEST_URL, NULL, NULL, NULL, NULL, NULL, 0);
+    ok(ret, "GetUrlCacheEntryInfoEx with NULL args failed with error %d\n", GetLastError());
+
+    cbCacheEntryInfo = 0;
+    ret = GetUrlCacheEntryInfoEx(TEST_URL, NULL, &cbCacheEntryInfo, NULL, NULL, NULL, 0);
+    ok(!ret, "GetUrlCacheEntryInfoEx with zero-length buffer should fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetUrlCacheEntryInfoEx should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
+
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfoEx(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo, NULL, NULL, NULL, 0);
+    ok(ret, "GetUrlCacheEntryInfoEx failed with error %d\n", GetLastError());
+
+    check_cache_entry_infoA("GetUrlCacheEntryInfoEx", lpCacheEntryInfo);
+
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+}
+
+static void test_urlcacheA(void)
+{
+    BOOL ret;
+    HANDLE hFile;
+    DWORD written;
+    BYTE zero_byte = 0;
+    LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo;
+    DWORD cbCacheEntryInfo;
+    static const FILETIME filetime_zero;
+
+    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
+    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+
+    hFile = CreateFileA(filenameA, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA failed with error %d\n", GetLastError());
+
+    ret = WriteFile(hFile, &zero_byte, sizeof(zero_byte), &written, NULL);
+    ok(ret, "WriteFile failed with error %d\n", GetLastError());
+
+    CloseHandle(hFile);
+
+    ret = CommitUrlCacheEntry(TEST_URL, filenameA, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+
+    cbCacheEntryInfo = 0;
+    ret = RetrieveUrlCacheEntryFile(TEST_URL, NULL, &cbCacheEntryInfo, 0);
+    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
+
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = RetrieveUrlCacheEntryFile(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo, 0);
+    ok(ret, "RetrieveUrlCacheEntryFile failed with error %d\n", GetLastError());
+
+    check_cache_entry_infoA("RetrieveUrlCacheEntryFile", lpCacheEntryInfo);
+
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+
+    ret = UnlockUrlCacheEntryFile(TEST_URL, 0);
+    ok(ret, "UnlockUrlCacheEntryFile failed with error %d\n", GetLastError());
+
+    /* test Find*UrlCacheEntry functions */
+    test_find_url_cache_entriesA();
+
+    test_GetUrlCacheEntryInfoExA();
 
     ret = DeleteUrlCacheEntry(TEST_URL);
     ok(ret, "DeleteUrlCacheEntry failed with error %d\n", GetLastError());
 
-    ret = DeleteFile(filename);
+    ret = DeleteFile(filenameA);
     todo_wine
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "local file should no longer exist\n");
 }
