@@ -1297,12 +1297,14 @@ static dispex_static_data_t HTMLElement_dispex = {
 
 void HTMLElement_Init(HTMLElement *This)
 {
-    This->node.vtbl = &HTMLElementImplVtbl;
     This->lpHTMLElementVtbl = &HTMLElementVtbl;
 
     ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)HTMLELEM(This));
 
     HTMLElement2_Init(This);
+
+    if(!This->node.dispex.data)
+        init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), &HTMLElement_dispex);
 }
 
 HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
@@ -1351,14 +1353,12 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
     if(!ret) {
         ret = heap_alloc_zero(sizeof(HTMLElement));
         HTMLElement_Init(ret);
-    }
+        ret->node.vtbl = &HTMLElementImplVtbl;
+   }
 
     nsAString_Finish(&class_name_str);
 
     ret->nselem = nselem;
-
-    if(!ret->node.dispex.data)
-        init_dispex(&ret->node.dispex, (IUnknown*)HTMLELEM(ret), &HTMLElement_dispex);
 
     return ret;
 }

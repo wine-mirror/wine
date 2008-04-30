@@ -350,16 +350,15 @@ HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
     HTMLOptionElement *ret = heap_alloc_zero(sizeof(HTMLOptionElement));
     nsresult nsres;
 
-    HTMLElement_Init(&ret->element);
-
     ret->lpHTMLOptionElementVtbl = &HTMLOptionElementVtbl;
     ret->element.node.vtbl = &HTMLOptionElementImplVtbl;
+
+    HTMLElement_Init(&ret->element);
+    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLOPTION(ret), &HTMLOptionElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLOptionElement, (void**)&ret->nsoption);
     if(NS_FAILED(nsres))
         ERR("Could not get nsIDOMHTMLOptionElement interface: %08x\n", nsres);
-
-    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLOPTION(ret), &HTMLOptionElement_dispex);
 
     return &ret->element;
 }
