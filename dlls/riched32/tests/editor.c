@@ -539,6 +539,169 @@ static void test_EM_GETSELTEXT(void)
     DestroyWindow(hwndRichEdit);
 }
 
+static const char haystack[] = "WINEWine wineWine wine WineWine";
+                             /* ^0        ^10       ^20       ^30 */
+
+struct find_s {
+  int start;
+  int end;
+  const char *needle;
+  int flags;
+  int expected_loc;
+  int _todo_wine;
+};
+
+
+struct find_s find_tests[] = {
+  /* Find in empty text */
+  {0, -1, "foo", FR_DOWN, -1, 0},
+  {0, -1, "foo", 0, -1, 0},
+  {0, -1, "", FR_DOWN, -1, 0},
+  {20, 5, "foo", FR_DOWN, -1, 0},
+  {5, 20, "foo", FR_DOWN, -1, 0}
+};
+
+struct find_s find_tests2[] = {
+  /* No-result find */
+  {0, -1, "foo", FR_DOWN | FR_MATCHCASE, -1, 0},
+  {5, 20, "WINE", FR_DOWN | FR_MATCHCASE, -1, 0},
+
+  /* Subsequent finds */
+  {0, -1, "Wine", FR_DOWN | FR_MATCHCASE, 4, 0},
+  {5, 31, "Wine", FR_DOWN | FR_MATCHCASE, 13, 0},
+  {14, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23, 0},
+  {24, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
+
+  /* Find backwards */
+  {19, 20, "Wine", FR_MATCHCASE, -1, 0},
+  {10, 20, "Wine", FR_MATCHCASE, 13, 0},
+  {20, 10, "Wine", FR_MATCHCASE, -1, 0},
+
+  /* Case-insensitive */
+  {1, 31, "wInE", FR_DOWN, 4, 0},
+  {1, 31, "Wine", FR_DOWN, 4, 0},
+
+  /* High-to-low ranges */
+  {20, 5, "Wine", FR_DOWN, -1, 0},
+  {2, 1, "Wine", FR_DOWN, -1, 0},
+  {30, 29, "Wine", FR_DOWN, -1, 0},
+  {20, 5, "Wine", 0, /*13*/ -1, 0},
+
+  /* Find nothing */
+  {5, 10, "", FR_DOWN, -1, 0},
+  {10, 5, "", FR_DOWN, -1, 0},
+  {0, -1, "", FR_DOWN, -1, 0},
+  {10, 5, "", 0, -1, 0},
+
+  /* Whole-word search */
+  {0, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 0},
+  {0, -1, "win", FR_DOWN | FR_WHOLEWORD, -1, 0},
+  {13, -1, "wine", FR_DOWN | FR_WHOLEWORD, 18, 0},
+  {0, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 0, 0},
+  {10, -1, "winewine", FR_DOWN | FR_WHOLEWORD, 23, 0},
+  {11, -1, "winewine", FR_WHOLEWORD, 23, 0},
+  {31, -1, "winewine", FR_WHOLEWORD, -1, 0},
+
+  /* Bad ranges */
+  {5, 200, "XXX", FR_DOWN, -1, 0},
+  {-20, 20, "Wine", FR_DOWN, -1, 0},
+  {-20, 20, "Wine", FR_DOWN, -1, 0},
+  {-15, -20, "Wine", FR_DOWN, -1, 0},
+  {1<<12, 1<<13, "Wine", FR_DOWN, -1, 0},
+
+  /* Check the case noted in bug 4479 where matches at end aren't recognized */
+  {23, 31, "Wine", FR_DOWN | FR_MATCHCASE, 23, 0},
+  {27, 31, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
+  {27, 32, "Wine", FR_DOWN | FR_MATCHCASE, 27, 0},
+  {13, 31, "WineWine", FR_DOWN | FR_MATCHCASE, 23, 0},
+  {13, 32, "WineWine", FR_DOWN | FR_MATCHCASE, 23, 0},
+
+  /* The backwards case of bug 4479; bounds look right
+   * Fails because backward find is wrong */
+  {19, 20, "WINE", FR_MATCHCASE, -1, 0},
+  {0, 20, "WINE", FR_MATCHCASE, 0, 0},
+
+  {0, -1, "wineWine wine", FR_DOWN, 0, 0},
+  {0, -1, "wineWine wine", 0, 0, 0},
+  {0, -1, "INEW", 0, 1, 0},
+  {0, 31, "INEW", 0, 1, 0},
+  {4, -1, "INEW", 0, 10, 0},
+};
+
+static void check_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *f, int id) {
+  int findloc;
+  FINDTEXT ft;
+  memset(&ft, 0, sizeof(ft));
+  ft.chrg.cpMin = f->start;
+  ft.chrg.cpMax = f->end;
+  ft.lpstrText = f->needle;
+  findloc = SendMessage(hwnd, EM_FINDTEXT, f->flags, (LPARAM) &ft);
+  ok(findloc == f->expected_loc,
+     "EM_FINDTEXT(%s,%d) '%s' in range(%d,%d), flags %08x, got start at %d, expected %d\n",
+     name, id, f->needle, f->start, f->end, f->flags, findloc, f->expected_loc);
+}
+
+static void check_EM_FINDTEXTEX(HWND hwnd, const char *name, struct find_s *f,
+    int id) {
+  int findloc;
+  FINDTEXTEX ft;
+  int expected_end_loc;
+
+  memset(&ft, 0, sizeof(ft));
+  ft.chrg.cpMin = f->start;
+  ft.chrg.cpMax = f->end;
+  ft.lpstrText = f->needle;
+  findloc = SendMessage(hwnd, EM_FINDTEXTEX, f->flags, (LPARAM) &ft);
+  ok(findloc == f->expected_loc,
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %d\n",
+      name, id, f->needle, f->start, f->end, f->flags, findloc);
+  ok(ft.chrgText.cpMin == f->expected_loc,
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %d, expected %d\n",
+      name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMin, f->expected_loc);
+  expected_end_loc = ((f->expected_loc == -1) ? -1
+        : f->expected_loc + strlen(f->needle));
+  ok(ft.chrgText.cpMax == expected_end_loc,
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, end at %d, expected %d\n",
+      name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMax, expected_end_loc);
+}
+
+static void run_tests_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *find,
+    int num_tests)
+{
+  int i;
+
+  for (i = 0; i < num_tests; i++) {
+    if (find[i]._todo_wine) {
+      todo_wine {
+        check_EM_FINDTEXT(hwnd, name, &find[i], i);
+        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
+      }
+    } else {
+        check_EM_FINDTEXT(hwnd, name, &find[i], i);
+        check_EM_FINDTEXTEX(hwnd, name, &find[i], i);
+    }
+  }
+}
+
+static void test_EM_FINDTEXT(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+
+  /* Empty rich edit control */
+  run_tests_EM_FINDTEXT(hwndRichEdit, "1", find_tests,
+      sizeof(find_tests)/sizeof(struct find_s));
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) haystack);
+
+  /* Haystack text */
+  run_tests_EM_FINDTEXT(hwndRichEdit, "2", find_tests2,
+      sizeof(find_tests2)/sizeof(struct find_s));
+
+  DestroyWindow(hwndRichEdit);
+}
+
+
+
 START_TEST( editor )
 {
   MSG msg;
@@ -557,6 +720,7 @@ START_TEST( editor )
   test_EM_STREAMOUT();
   test_EM_GETLINE();
   test_EM_LINELENGTH();
+  test_EM_FINDTEXT();
 
   /* Set the environment variable WINETEST_RICHED32 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

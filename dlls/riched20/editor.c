@@ -1263,12 +1263,29 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
   else
     nMax = chrg->cpMax > nTextLen ? nTextLen : chrg->cpMax;
   
+  /* In 1.0 emulation, if cpMax reaches end of text, add the FR_DOWN flag */
+  if (editor->bEmulateVersion10 && nMax == nTextLen)
+  {
+    flags |= FR_DOWN;
+  }
+
+  /* In 1.0 emulation, cpMin must always be no greater than cpMax */
+  if (editor->bEmulateVersion10 && nMax < nMin)
+  {
+    if (chrgText)
+    {
+      chrgText->cpMin = -1;
+      chrgText->cpMax = -1;
+    }
+    return -1;
+  }
+
   /* when searching up, if cpMin < cpMax, then instead of searching
    * on [cpMin,cpMax], we search on [0,cpMin], otherwise, search on
    * [cpMax, cpMin]. The exception is when cpMax is -1, in which
    * case, it is always bigger than cpMin.
    */
-  if (!(flags & FR_DOWN))
+  if (!editor->bEmulateVersion10 && !(flags & FR_DOWN))
   {
     int nSwap = nMax;
 

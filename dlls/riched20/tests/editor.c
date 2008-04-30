@@ -127,7 +127,9 @@ struct find_s find_tests2[] = {
   /* The backwards case of bug 4479; bounds look right
    * Fails because backward find is wrong */
   {19, 20, "WINE", FR_MATCHCASE, 0, 0},
-  {0, 20, "WINE", FR_MATCHCASE, -1, 0}
+  {0, 20, "WINE", FR_MATCHCASE, -1, 0},
+
+  {0, -1, "wineWine wine", 0, -1, 0},
 };
 
 static void check_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *f, int id) {
