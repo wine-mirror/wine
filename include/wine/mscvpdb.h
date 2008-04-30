@@ -1810,7 +1810,8 @@ typedef struct _PDB_SYMBOLS
     DWORD       unknown;
     DWORD       hash1_file;
     DWORD       hash2_file;
-    DWORD       gsym_file;
+    WORD        gsym_file;
+    WORD        unknown1;
     DWORD       module_size;
     DWORD       offset_size;
     DWORD       hash_size;

@@ -170,6 +170,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     case 0:            /* VC 4.0 */
     case 19960307:     /* VC 5.0 */
     case 19970606:     /* VC 6.0 */
+    case 19990903:     /* VC 7.0 */
         break;
     default:
         printf("-Unknown symbol info version %d\n", symbols->version);
@@ -180,7 +181,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
            "\tunknown:        %08x\n"
            "\thash1_file:     %08x\n"
            "\thash2_file:     %08x\n"
-           "\tgsym_file:      %08x\n"
+           "\tgsym_file:      %04x\n"
+           "\tunknown1:       %04x\n"
            "\tmodule_size:    %08x\n"
            "\toffset_size:    %08x\n"
            "\thash_size:      %08x\n"
@@ -192,6 +194,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
            symbols->hash1_file,
            symbols->hash2_file,
            symbols->gsym_file,
+           symbols->unknown1,
            symbols->module_size,
            symbols->offset_size,
            symbols->hash_size,
