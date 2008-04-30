@@ -224,6 +224,11 @@ struct dbg_process
     unsigned                    next_bp;
     struct dbg_delayed_bp*      delayed_bp;
     int				num_delayed_bp;
+    struct open_file_list*      source_ofiles;
+    char*                       search_path;
+    char                        source_current_file[MAX_PATH];
+    int                         source_start_line;
+    int                         source_end_line;
     struct dbg_process* 	next;
     struct dbg_process* 	prev;
 };
@@ -369,7 +374,8 @@ extern void             source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, in
 extern void             source_list_from_addr(const ADDRESS64* addr, int nlines);
 extern void             source_show_path(void);
 extern void             source_add_path(const char* path);
-extern void             source_nuke_path(void);
+extern void             source_nuke_path(struct dbg_process* p);
+extern void             source_free_files(struct dbg_process* p);
 
   /* stack.c */
 extern void             stack_info(void);

@@ -302,6 +302,11 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     memset(p->bp, 0, sizeof(p->bp));
     p->delayed_bp = NULL;
     p->num_delayed_bp = 0;
+    p->source_ofiles = NULL;
+    p->search_path = NULL;
+    p->source_current_file[0] = '\0';
+    p->source_start_line = -1;
+    p->source_end_line = -1;
 
     p->next = dbg_process_list;
     p->prev = NULL;
@@ -331,6 +336,8 @@ void dbg_del_process(struct dbg_process* p)
             HeapFree(GetProcessHeap(), 0, p->delayed_bp[i].u.symbol.name);
 
     HeapFree(GetProcessHeap(), 0, p->delayed_bp);
+    source_nuke_path(p);
+    source_free_files(p);
     if (p->prev) p->prev->next = p->next;
     if (p->next) p->next->prev = p->prev;
     if (p == dbg_process_list) dbg_process_list = p->next;

@@ -22,10 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef PATH_MAX
-#define PATH_MAX MAX_PATH
-#endif
-
 #include "debugger.h"
 
 struct open_file_list
@@ -38,20 +34,13 @@ struct open_file_list
     unsigned int*               linelist;
 };
 
-static struct open_file_list*   source_ofiles;
-
-static char* search_path; /* = NULL; */
-static char source_current_file[PATH_MAX];
-static int source_start_line = -1;
-static int source_end_line = -1;
-
 void source_show_path(void)
 {
     const char* ptr;
     const char* next;
 
     dbg_printf("Search list:\n");
-    for (ptr = search_path; ptr; ptr = next)
+    for (ptr = dbg_curr_process->search_path; ptr; ptr = next)
     {
         next = strchr(ptr, ';');
         if (next)
@@ -68,10 +57,10 @@ void source_add_path(const char* path)
     unsigned    size;
 
     size = strlen(path) + 1;
-    if (search_path)
+    if (dbg_curr_process->search_path)
     {
-        unsigned pos = strlen(search_path) + 1;
-        new = HeapReAlloc(GetProcessHeap(), 0, search_path, pos + size);
+        unsigned pos = strlen(dbg_curr_process->search_path) + 1;
+        new = HeapReAlloc(GetProcessHeap(), 0, dbg_curr_process->search_path, pos + size);
         if (!new) return;
         new[pos - 1] = ';';
         strcpy(&new[pos], path);
@@ -82,13 +71,13 @@ void source_add_path(const char* path)
         if (!new) return;
         strcpy(new, path);
     }
-    search_path = new;
+    dbg_curr_process->search_path = new;
 }
 
-void source_nuke_path(void)
+void source_nuke_path(struct dbg_process* p)
 {
-    HeapFree(GetProcessHeap(), 0, search_path);
-    search_path = NULL;
+    HeapFree(GetProcessHeap(), 0, p->search_path);
+    p->search_path = NULL;
 }
 
 static  void*   source_map_file(const char* name, HANDLE* hMap, unsigned* size)
@@ -115,7 +104,7 @@ static struct open_file_list* source_search_open_file(const char* name)
 {
     struct open_file_list*      ol;
 
-    for (ol = source_ofiles; ol; ol = ol->next)
+    for (ol = dbg_curr_process->source_ofiles; ol; ol = ol->next)
     {
         if (strcmp(ol->path, name) == 0) break;
     }
@@ -131,7 +120,7 @@ static BOOL     source_locate_file(const char* srcfile, char* path)
         strcpy(path, srcfile);
         found = TRUE;
     }
-    else if (search_path)
+    else if (dbg_curr_process->search_path)
     {
         const char* spath;
 
@@ -142,10 +131,32 @@ static BOOL     source_locate_file(const char* srcfile, char* path)
             if (!spath) spath = strchr(spath, '/');
             if (!spath) break;
             spath++;
-            found = SearchPathA(search_path, spath, NULL, MAX_PATH, path, NULL);
+            found = SearchPathA(dbg_curr_process->search_path, spath, NULL, MAX_PATH, path, NULL);
         }
     }
     return found;
+}
+
+static struct open_file_list* source_add_file(const char* name, const char* realpath)
+{
+    struct open_file_list*      ol;
+    size_t                      sz, nlen;
+
+    sz = sizeof(*ol);
+    nlen = strlen(name) + 1;
+    if (realpath) sz += strlen(realpath) + 1;
+    ol = HeapAlloc(GetProcessHeap(), 0, sz + nlen);
+    if (!ol) return NULL;
+    strcpy(ol->path = (char*)(ol + 1), name);
+    if (realpath)
+        strcpy(ol->real_path = ol->path + nlen, realpath);
+    else
+        ol->real_path = NULL;
+    ol->next = dbg_curr_process->source_ofiles;
+    ol->nlines = 0;
+    ol->linelist = NULL;
+    ol->size = 0;
+    return dbg_curr_process->source_ofiles = ol;
 }
 
 static int source_display(const char* sourcefile, int start, int end)
@@ -158,7 +169,7 @@ static int source_display(const char* sourcefile, int start, int end)
     char*                       pnt;
     int				rtn;
     HANDLE                      hMap;
-    char			tmppath[PATH_MAX];
+    char			tmppath[MAX_PATH];
 
     /*
      * First see whether we have the file open already.  If so, then
@@ -212,14 +223,7 @@ static int source_display(const char* sourcefile, int start, int end)
                  * OK, I guess the user doesn't really want to see it
                  * after all.
                  */
-                ol = HeapAlloc(GetProcessHeap(), 0, sizeof(*ol));
-                ol->path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(sourcefile) + 1), sourcefile);
-                ol->real_path = NULL;
-                ol->next = source_ofiles;
-                ol->nlines = 0;
-                ol->linelist = NULL;
-                ol->size = 0;
-                source_ofiles = ol;
+                ol = source_add_file(sourcefile, NULL);
                 dbg_printf("Unable to open file '%s'\n", tmppath);
                 return FALSE;
             }
@@ -227,14 +231,7 @@ static int source_display(const char* sourcefile, int start, int end)
         /*
          * Create header for file.
          */
-        ol = HeapAlloc(GetProcessHeap(), 0, sizeof(*ol));
-        ol->path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(sourcefile) + 1), sourcefile);
-        ol->real_path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(tmppath) + 1), tmppath);
-        ol->next = source_ofiles;
-        ol->nlines = 0;
-        ol->linelist = NULL;
-        ol->size = 0;
-        source_ofiles = ol;
+        ol = source_add_file(sourcefile, tmppath);
 
         addr = source_map_file(tmppath, &hMap, &ol->size);
         if (addr == (char*)-1) return FALSE;
@@ -310,7 +307,7 @@ void source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta)
     sourcefile = NULL;
     if (src1 && src1->FileName) sourcefile = src1->FileName;
     if (!sourcefile && src2 && src2->FileName) sourcefile = src2->FileName;
-    if (!sourcefile) sourcefile = source_current_file;
+    if (!sourcefile) sourcefile = dbg_curr_process->source_current_file;
 
     /*
      * Now figure out the line number range to be listed.
@@ -323,12 +320,12 @@ void source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta)
     {
         if (delta < 0)
 	{
-            end = source_start_line;
+            end = dbg_curr_process->source_start_line;
             start = end + delta;
 	}
         else
 	{
-            start = source_end_line;
+            start = dbg_curr_process->source_end_line;
             end = start + delta;
 	}
     }
@@ -340,10 +337,10 @@ void source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta)
      */
     source_display(sourcefile, start, end);
 
-    if (sourcefile != source_current_file)
-        strcpy(source_current_file, sourcefile);
-    source_start_line = start;
-    source_end_line = end;
+    if (sourcefile != dbg_curr_process->source_current_file)
+        strcpy(dbg_curr_process->source_current_file, sourcefile);
+    dbg_curr_process->source_start_line = start;
+    dbg_curr_process->source_end_line = end;
 }
 
 void source_list_from_addr(const ADDRESS64* addr, int nlines)
@@ -363,4 +360,17 @@ void source_list_from_addr(const ADDRESS64* addr, int nlines)
                            (unsigned long)memory_to_linear_addr(addr),
                            &disp, &il))
         source_list(&il, NULL, nlines);
+}
+
+void source_free_files(struct dbg_process* p)
+{
+    struct open_file_list*      ofile;
+    struct open_file_list*      ofile_next;
+
+    for (ofile = p->source_ofiles; ofile; ofile = ofile_next)
+    {
+        ofile_next = ofile->next;
+        HeapFree(GetProcessHeap(), 0, ofile->linelist);
+        HeapFree(GetProcessHeap(), 0, ofile);
+    }
 }

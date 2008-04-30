@@ -132,7 +132,7 @@ command:
     | tFRAME tNUM              	{ stack_set_frame($2); }
     | tSHOW tDIR     	       	{ source_show_path(); }
     | tDIR pathname            	{ source_add_path($2); }
-    | tDIR     		       	{ source_nuke_path(); }
+    | tDIR     		       	{ source_nuke_path(dbg_curr_process); }
     | tCOND tNUM               	{ break_add_condition($2, NULL); }
     | tCOND tNUM expr     	{ break_add_condition($2, $3); }
     | tSOURCE pathname          { parser($2); }
