@@ -843,11 +843,11 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_IME_KEYDOWN:
-        result = SendMessageA( hwnd, WM_KEYDOWN, wParam, lParam );
+        result = PostMessageA( hwnd, WM_KEYDOWN, wParam, lParam );
         break;
 
     case WM_IME_KEYUP:
-        result = SendMessageA( hwnd, WM_KEYUP, wParam, lParam );
+        result = PostMessageA( hwnd, WM_KEYUP, wParam, lParam );
         break;
 
     case WM_IME_STARTCOMPOSITION:
@@ -991,6 +991,14 @@ LRESULT WINAPI DefWindowProcW(
 
     case WM_IME_CHAR:
         PostMessageW( hwnd, WM_CHAR, wParam, lParam );
+        break;
+
+    case WM_IME_KEYDOWN:
+        result = PostMessageW( hwnd, WM_KEYDOWN, wParam, lParam );
+        break;
+
+    case WM_IME_KEYUP:
+        result = PostMessageW( hwnd, WM_KEYUP, wParam, lParam );
         break;
 
     case WM_IME_SETCONTEXT:
