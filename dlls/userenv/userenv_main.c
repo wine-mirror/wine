@@ -20,9 +20,12 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "userenv.h"
 
 #include "wine/debug.h"
@@ -49,7 +52,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
                      HANDLE hToken, BOOL bInherit )
 {
-    FIXME("%p %p %d\n", lpEnvironment, hToken, bInherit );
+    NTSTATUS r;
+
+    TRACE("%p %p %d\n", lpEnvironment, hToken, bInherit );
+
+    if (!lpEnvironment)
+        return FALSE;
+
+    r = RtlCreateEnvironment(bInherit, (WCHAR **)lpEnvironment);
+    if (r == STATUS_SUCCESS)
+        return TRUE;
     return FALSE;
 }
 

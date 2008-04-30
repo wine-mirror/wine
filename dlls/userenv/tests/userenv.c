@@ -41,7 +41,7 @@ static void test_create_env(void)
     expect(FALSE, r);
 
     r = CreateEnvironmentBlock((LPVOID) &env, NULL, FALSE);
-    todo_wine expect(TRUE, r);
+    expect(TRUE, r);
 
     r = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &htok);
     expect(TRUE, r);
@@ -50,7 +50,7 @@ static void test_create_env(void)
     expect(FALSE, r);
 
     r = CreateEnvironmentBlock((LPVOID) &env2, htok, FALSE);
-    todo_wine expect(TRUE, r);
+    expect(TRUE, r);
 }
 
 START_TEST(userenv)
