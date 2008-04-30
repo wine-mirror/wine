@@ -296,10 +296,10 @@ static HRESULT WINAPI ITStorageImpl_StgOpenStorageOnILockBytes(
 
 static HRESULT WINAPI ITStorageImpl_StgSetTimes(
     IITStorage* iface,
-    WCHAR* lpszName,
-    FILETIME* pctime,
-    FILETIME* patime,
-    FILETIME* pmtime)
+    const WCHAR* lpszName,
+    const FILETIME* pctime,
+    const FILETIME* patime,
+    const FILETIME* pmtime)
 {
     ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
