@@ -1135,6 +1135,853 @@ interface IHTMLRuleStyle : IDispatch
 }
 
 /*****************************************************************************
+ *    DispHTMLStyle dispinterface
+ */
+[
+    hidden,
+    uuid(3050f55a-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLStyle
+{
+properties:
+methods:
+    [propput, id(DISPID_IHTMLSTYLE_FONTFAMILY), displaybind, bindable]
+    void fontFamily(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_FONTFAMILY), displaybind, bindable]
+    BSTR fontFamily();
+
+    [propput, id(DISPID_IHTMLSTYLE_FONTSTYLE), displaybind, bindable]
+    void fontStyle(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_FONTSTYLE), displaybind, bindable]
+    BSTR fontStyle();
+
+    [propput, id(DISPID_IHTMLSTYLE_FONTVARIANT), displaybind, bindable]
+    void fontVariant(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_FONTVARIANT), displaybind, bindable]
+    BSTR fontVariant();
+
+    [propput, id(DISPID_IHTMLSTYLE_FONTWEIGHT), displaybind, bindable]
+    void fontWeight(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_FONTWEIGHT), displaybind, bindable]
+    BSTR fontWeight();
+
+    [propput, id(DISPID_IHTMLSTYLE_FONTSIZE), displaybind, bindable]
+    void fontSize(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_FONTSIZE), displaybind, bindable]
+    VARIANT fontSize();
+
+    [propput, id(DISPID_IHTMLSTYLE_FONT), displaybind, bindable, nonbrowsable]
+    void font(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_FONT), displaybind, bindable, nonbrowsable]
+    BSTR font();
+
+    [propput, id(DISPID_IHTMLSTYLE_COLOR), displaybind, bindable]
+    void color(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_COLOR), displaybind, bindable]
+    VARIANT color();
+
+    [propput, id(DISPID_IHTMLSTYLE_BACKGROUND), displaybind, bindable, nonbrowsable]
+    void background(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BACKGROUND), displaybind, bindable, nonbrowsable]
+    BSTR background();
+
+    [propput, id(DISPID_IHTMLSTYLE_BACKGROUNDCOLOR), displaybind, bindable]
+    void backgroundColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BACKGROUNDCOLOR), displaybind, bindable]
+    VARIANT backgroundColor();
+
+    [propput, id(DISPID_IHTMLSTYLE_BACKGROUNDIMAGE), displaybind, bindable]
+    void backgroundImage(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BACKGROUNDIMAGE), displaybind, bindable]
+    BSTR backgroundImage();
+
+    [propput, id(DISPID_IHTMLSTYLE_BACKGROUNDREPEAT), displaybind, bindable]
+    void backgroundRepeat(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BACKGROUNDREPEAT), displaybind, bindable]
+    BSTR backgroundRepeat();
+
+    [propput, id(DISPID_IHTMLSTYLE_BACKGROUNDATTACHMENT), displaybind, bindable]
+    void backgroundAttachment(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BACKGROUNDATTACHMENT), displaybind, bindable]
+    BSTR backgroundAttachment();
+
+    [propput, id(DISPID_IHTMLSTYLE_BACKGROUNDPOSITION), displaybind, bindable, nonbrowsable]
+    void backgroundPosition(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BACKGROUNDPOSITION), displaybind, bindable, nonbrowsable]
+    BSTR backgroundPosition();
+
+    [propput, id(DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONX), displaybind, bindable]
+    void backgroundPositionX(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONX), displaybind, bindable]
+    VARIANT backgroundPositionX();
+
+    [propput, id(DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY), displaybind, bindable]
+    void backgroundPositionY(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY), displaybind, bindable]
+    VARIANT backgroundPositionY();
+
+    [propput, id(DISPID_IHTMLSTYLE_WORDSPACING), displaybind, bindable]
+    void wordSpacing(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_WORDSPACING), displaybind, bindable]
+    VARIANT wordSpacing();
+
+    [propput, id(DISPID_IHTMLSTYLE_LETTERSPACING), displaybind, bindable]
+    void letterSpacing(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_LETTERSPACING), displaybind, bindable]
+    VARIANT letterSpacing();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTDECORATION), displaybind, bindable]
+    void textDecoration(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTDECORATION), displaybind, bindable]
+    BSTR textDecoration();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTDECORATIONNONE), displaybind, bindable]
+    void textDecorationNone(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTDECORATIONNONE), displaybind, bindable]
+    VARIANT_BOOL textDecorationNone();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTDECORATIONUNDERLINE), displaybind, bindable]
+    void textDecorationUnderline(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTDECORATIONUNDERLINE), displaybind, bindable]
+    VARIANT_BOOL textDecorationUnderline();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTDECORATIONOVERLINE), displaybind, bindable]
+    void textDecorationOverline(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTDECORATIONOVERLINE), displaybind, bindable]
+    VARIANT_BOOL textDecorationOverline();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTDECORATIONLINETHROUGH), displaybind, bindable]
+    void textDecorationLineThrough(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTDECORATIONLINETHROUGH), displaybind, bindable]
+    VARIANT_BOOL textDecorationLineThrough();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTDECORATIONBLINK), displaybind, bindable]
+    void textDecorationBlink(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTDECORATIONBLINK), displaybind, bindable]
+    VARIANT_BOOL textDecorationBlink();
+
+    [propput, id(DISPID_IHTMLSTYLE_VERTICALALIGN), displaybind, bindable]
+    void verticalAlign(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_VERTICALALIGN), displaybind, bindable]
+    VARIANT verticalAlign();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTTRANSFORM), displaybind, bindable]
+    void textTransform(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTTRANSFORM), displaybind, bindable]
+    BSTR textTransform();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTALIGN), displaybind, bindable]
+    void textAlign(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTALIGN), displaybind, bindable]
+    BSTR textAlign();
+
+    [propput, id(DISPID_IHTMLSTYLE_TEXTINDENT), displaybind, bindable]
+    void textIndent(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TEXTINDENT), displaybind, bindable]
+    VARIANT textIndent();
+
+    [propput, id(DISPID_IHTMLSTYLE_LINEHEIGHT), displaybind, bindable]
+    void lineHeight(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_LINEHEIGHT), displaybind, bindable]
+    VARIANT lineHeight();
+
+    [propput, id(DISPID_IHTMLSTYLE_MARGINTOP), displaybind, bindable]
+    void marginTop(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_MARGINTOP), displaybind, bindable]
+    VARIANT marginTop();
+
+    [propput, id(DISPID_IHTMLSTYLE_MARGINRIGHT), displaybind, bindable]
+    void marginRight(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_MARGINRIGHT), displaybind, bindable]
+    VARIANT marginRight();
+
+    [propput, id(DISPID_IHTMLSTYLE_MARGINBOTTOM), displaybind, bindable]
+    void marginBottom(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_MARGINBOTTOM), displaybind, bindable]
+    VARIANT marginBottom();
+
+    [propput, id(DISPID_IHTMLSTYLE_MARGINLEFT), displaybind, bindable]
+    void marginLeft(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_MARGINLEFT), displaybind, bindable]
+    VARIANT marginLeft();
+
+    [propput, id(DISPID_IHTMLSTYLE_MARGIN), displaybind, bindable, nonbrowsable]
+    void margin(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_MARGIN), displaybind, bindable, nonbrowsable]
+    BSTR margin();
+
+    [propput, id(DISPID_IHTMLSTYLE_PADDINGTOP), displaybind, bindable]
+    void paddingTop(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PADDINGTOP), displaybind, bindable]
+    VARIANT paddingTop();
+
+    [propput, id(DISPID_IHTMLSTYLE_PADDINGRIGHT), displaybind, bindable]
+    void paddingRight(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PADDINGRIGHT), displaybind, bindable]
+    VARIANT paddingRight();
+
+    [propput, id(DISPID_IHTMLSTYLE_PADDINGBOTTOM), displaybind, bindable]
+    void paddingBottom(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PADDINGBOTTOM), displaybind, bindable]
+    VARIANT paddingBottom();
+
+    [propput, id(DISPID_IHTMLSTYLE_PADDINGLEFT), displaybind, bindable]
+    void paddingLeft(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PADDINGLEFT), displaybind, bindable]
+    VARIANT paddingLeft();
+
+    [propput, id(DISPID_IHTMLSTYLE_PADDING), displaybind, bindable, nonbrowsable]
+    void padding(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PADDING), displaybind, bindable, nonbrowsable]
+    BSTR padding();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDER), displaybind, bindable, nonbrowsable]
+    void border(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDER), displaybind, bindable, nonbrowsable]
+    BSTR border();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERTOP), displaybind, bindable]
+    void borderTop(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERTOP), displaybind, bindable]
+    BSTR borderTop();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERRIGHT), displaybind, bindable]
+    void borderRight(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERRIGHT), displaybind, bindable]
+    BSTR borderRight();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERBOTTOM), displaybind, bindable]
+    void borderBottom(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERBOTTOM), displaybind, bindable]
+    BSTR borderBottom();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERLEFT), displaybind, bindable]
+    void borderLeft(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERLEFT), displaybind, bindable]
+    BSTR borderLeft();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERCOLOR), displaybind, bindable]
+    void borderColor(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERCOLOR), displaybind, bindable]
+    BSTR borderColor();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERTOPCOLOR), displaybind, bindable]
+    void borderTopColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERTOPCOLOR), displaybind, bindable]
+    VARIANT borderTopColor();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERRIGHTCOLOR), displaybind, bindable]
+    void borderRightColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERRIGHTCOLOR), displaybind, bindable]
+    VARIANT borderRightColor();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR), displaybind, bindable]
+    void borderBottomColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERBOTTOMCOLOR), displaybind, bindable]
+    VARIANT borderBottomColor();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERLEFTCOLOR), displaybind, bindable]
+    void borderLeftColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERLEFTCOLOR), displaybind, bindable]
+    VARIANT borderLeftColor();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERWIDTH), displaybind, bindable]
+    void borderWidth(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERWIDTH), displaybind, bindable]
+    BSTR borderWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERTOPWIDTH), displaybind, bindable]
+    void borderTopWidth(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERTOPWIDTH), displaybind, bindable]
+    VARIANT borderTopWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERRIGHTWIDTH), displaybind, bindable]
+    void borderRightWidth(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERRIGHTWIDTH), displaybind, bindable]
+    VARIANT borderRightWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH), displaybind, bindable]
+    void borderBottomWidth(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERBOTTOMWIDTH), displaybind, bindable]
+    VARIANT borderBottomWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERLEFTWIDTH), displaybind, bindable]
+    void borderLeftWidth(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERLEFTWIDTH), displaybind, bindable]
+    VARIANT borderLeftWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERSTYLE), displaybind, bindable]
+    void borderStyle(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERSTYLE), displaybind, bindable]
+    BSTR borderStyle();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERTOPSTYLE), displaybind, bindable]
+    void borderTopStyle(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERTOPSTYLE), displaybind, bindable]
+    BSTR borderTopStyle();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE), displaybind, bindable]
+    void borderRightStyle(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERRIGHTSTYLE), displaybind, bindable]
+    BSTR borderRightStyle();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE), displaybind, bindable]
+    void borderBottomStyle(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERBOTTOMSTYLE), displaybind, bindable]
+    BSTR borderBottomStyle();
+
+    [propput, id(DISPID_IHTMLSTYLE_BORDERLEFTSTYLE), displaybind, bindable]
+    void borderLeftStyle(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_BORDERLEFTSTYLE), displaybind, bindable]
+    BSTR borderLeftStyle();
+
+    [propput, id(DISPID_IHTMLSTYLE_WIDTH), displaybind, bindable]
+    void width(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_WIDTH), displaybind, bindable]
+    VARIANT width();
+
+    [propput, id(DISPID_IHTMLSTYLE_HEIGHT), displaybind, bindable]
+    void height(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_HEIGHT), displaybind, bindable]
+    VARIANT height();
+
+    [propput, id(DISPID_IHTMLSTYLE_STYLEFLOAT), displaybind, bindable]
+    void styleFloat(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_STYLEFLOAT), displaybind, bindable]
+    BSTR styleFloat();
+
+    [propput, id(DISPID_IHTMLSTYLE_CLEAR), displaybind, bindable]
+    void clear(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_CLEAR), displaybind, bindable]
+    BSTR clear();
+
+    [propput, id(DISPID_IHTMLSTYLE_DISPLAY), displaybind, bindable]
+    void display(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_DISPLAY), displaybind, bindable]
+    BSTR display();
+
+    [propput, id(DISPID_IHTMLSTYLE_VISIBILITY), displaybind, bindable]
+    void visibility(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_VISIBILITY), displaybind, bindable]
+    BSTR visibility();
+
+    [propput, id(DISPID_IHTMLSTYLE_LISTSTYLETYPE), displaybind, bindable]
+    void listStyleType(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_LISTSTYLETYPE), displaybind, bindable]
+    BSTR listStyleType();
+
+    [propput, id(DISPID_IHTMLSTYLE_LISTSTYLEPOSITION), displaybind, bindable]
+    void listStylePosition(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_LISTSTYLEPOSITION), displaybind, bindable]
+    BSTR listStylePosition();
+
+    [propput, id(DISPID_IHTMLSTYLE_LISTSTYLEIMAGE), displaybind, bindable]
+    void listStyleImage(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_LISTSTYLEIMAGE), displaybind, bindable]
+    BSTR listStyleImage();
+
+    [propput, id(DISPID_IHTMLSTYLE_LISTSTYLE), displaybind, bindable, nonbrowsable]
+    void listStyle(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_LISTSTYLE), displaybind, bindable, nonbrowsable]
+    BSTR listStyle();
+
+    [propput, id(DISPID_IHTMLSTYLE_WHITESPACE), displaybind, bindable]
+    void whiteSpace(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_WHITESPACE), displaybind, bindable]
+    BSTR whiteSpace();
+
+    [propput, id(DISPID_IHTMLSTYLE_TOP), displaybind, bindable]
+    void top(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_TOP), displaybind, bindable]
+    VARIANT top();
+
+    [propput, id(DISPID_IHTMLSTYLE_LEFT), displaybind, bindable]
+    void left(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_LEFT), displaybind, bindable]
+    VARIANT left();
+
+    [propput, id(DISPID_IHTMLSTYLE_ZINDEX), displaybind, bindable]
+    void zIndex(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE_ZINDEX), displaybind, bindable]
+    VARIANT zIndex();
+
+    [propput, id(DISPID_IHTMLSTYLE_OVERFLOW), displaybind, bindable]
+    void overflow(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_OVERFLOW), displaybind, bindable]
+    BSTR overflow();
+
+    [propput, id(DISPID_IHTMLSTYLE_PAGEBREAKBEFORE), displaybind, bindable]
+    void pageBreakBefore(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PAGEBREAKBEFORE), displaybind, bindable]
+    BSTR pageBreakBefore();
+
+    [propput, id(DISPID_IHTMLSTYLE_PAGEBREAKAFTER), displaybind, bindable]
+    void pageBreakAfter(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PAGEBREAKAFTER), displaybind, bindable]
+    BSTR pageBreakAfter();
+
+    [propput, id(DISPID_IHTMLSTYLE_CSSTEXT), displaybind, bindable, nonbrowsable]
+    void cssText(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_CSSTEXT), displaybind, bindable, nonbrowsable]
+    BSTR cssText();
+
+    [propput, id(DISPID_IHTMLSTYLE_PIXELTOP), displaybind, bindable, hidden]
+    void pixelTop(long v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PIXELTOP), displaybind, bindable, hidden]
+    long pixelTop();
+
+    [propput, id(DISPID_IHTMLSTYLE_PIXELLEFT), displaybind, bindable, hidden]
+    void pixelLeft(long v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PIXELLEFT), displaybind, bindable, hidden]
+    long pixelLeft();
+
+    [propput, id(DISPID_IHTMLSTYLE_PIXELWIDTH), displaybind, bindable, hidden]
+    void pixelWidth(long v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PIXELWIDTH), displaybind, bindable, hidden]
+    long pixelWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE_PIXELHEIGHT), displaybind, bindable, hidden]
+    void pixelHeight(long v);
+
+    [propget, id(DISPID_IHTMLSTYLE_PIXELHEIGHT), displaybind, bindable, hidden]
+    long pixelHeight();
+
+    [propput, id(DISPID_IHTMLSTYLE_POSTOP), displaybind, bindable]
+    void posTop(float v);
+
+    [propget, id(DISPID_IHTMLSTYLE_POSTOP), displaybind, bindable]
+    float posTop();
+
+    [propput, id(DISPID_IHTMLSTYLE_POSLEFT), displaybind, bindable]
+    void posLeft(float v);
+
+    [propget, id(DISPID_IHTMLSTYLE_POSLEFT), displaybind, bindable]
+    float posLeft();
+
+    [propput, id(DISPID_IHTMLSTYLE_POSWIDTH), displaybind, bindable]
+    void posWidth(float v);
+
+    [propget, id(DISPID_IHTMLSTYLE_POSWIDTH), displaybind, bindable]
+    float posWidth();
+
+    [propput, id(DISPID_IHTMLSTYLE_POSHEIGHT), displaybind, bindable]
+    void posHeight(float v);
+
+    [propget, id(DISPID_IHTMLSTYLE_POSHEIGHT), displaybind, bindable]
+    float posHeight();
+
+    [propput, id(DISPID_IHTMLSTYLE_CURSOR), displaybind, bindable]
+    void cursor(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_CURSOR), displaybind, bindable]
+    BSTR cursor();
+
+    [propput, id(DISPID_IHTMLSTYLE_CLIP), displaybind, bindable]
+    void clip(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_CLIP), displaybind, bindable]
+    BSTR clip();
+
+    [propput, id(DISPID_IHTMLSTYLE_FILTER), displaybind, bindable]
+    void filter(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE_FILTER), displaybind, bindable]
+    BSTR filter();
+
+    [id(DISPID_IHTMLSTYLE_SETATTRIBUTE)]
+    void setAttribute(
+            [in] BSTR strAttributeName,
+            [in] VARIANT AttributeValue,
+            [in, defaultvalue(1)] LONG lFlags);
+
+    [id(DISPID_IHTMLSTYLE_GETATTRIBUTE)]
+    VARIANT getAttribute(
+            [in] BSTR strAttributeName,
+            [in, defaultvalue(0)] LONG lFlags);
+
+    [id(DISPID_IHTMLSTYLE_REMOVEATTRIBUTE)]
+    VARIANT_BOOL removeAttribute(
+            [in] BSTR strAttributeName,
+            [in, defaultvalue(1)] LONG lFlags);
+
+    [id(DISPID_IHTMLSTYLE_TOSTRING)]
+    BSTR toString();
+
+    [propput, id(DISPID_IHTMLSTYLE2_TABLELAYOUT), displaybind, bindable]
+    void tableLayout(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TABLELAYOUT), displaybind, bindable]
+    BSTR tableLayout();
+
+    [propput, id(DISPID_IHTMLSTYLE2_BORDERCOLLAPSE), displaybind, bindable]
+    void borderCollapse(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_BORDERCOLLAPSE), displaybind, bindable]
+    BSTR borderCollapse();
+
+    [propput, id(DISPID_IHTMLSTYLE2_DIRECTION), displaybind, bindable]
+    void direction(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_DIRECTION), displaybind, bindable]
+    BSTR direction();
+
+    [propput, id(DISPID_IHTMLSTYLE2_BEHAVIOR), displaybind, bindable]
+    void behavior(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_BEHAVIOR), displaybind, bindable]
+    BSTR behavior();
+
+    [id(DISPID_IHTMLSTYLE2_SETEXPRESSION)]
+    void setExpression(
+            [in] BSTR propname,
+            [in] BSTR expression,
+            [in, defaultvalue("")] BSTR language);
+
+    [id(DISPID_IHTMLSTYLE2_GETEXPRESSION)]
+    VARIANT getExpression([in] BSTR propname);
+
+    [id(DISPID_IHTMLSTYLE2_REMOVEEXPRESSION)]
+    VARIANT_BOOL removeExpression([in] BSTR propname);
+
+    [propput, id(DISPID_IHTMLSTYLE2_POSITION), displaybind, bindable]
+    void position(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_POSITION), displaybind, bindable]
+    BSTR position();
+
+    [propput, id(DISPID_IHTMLSTYLE2_UNICODEBIDI), displaybind, bindable]
+    void unicodeBidi(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_UNICODEBIDI), displaybind, bindable]
+    BSTR unicodeBidi();
+
+    [propput, id(DISPID_IHTMLSTYLE2_BOTTOM), displaybind, bindable]
+    void bottom(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_BOTTOM), displaybind, bindable]
+    VARIANT bottom();
+
+    [propput, id(DISPID_IHTMLSTYLE2_RIGHT), displaybind, bindable]
+    void right(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_RIGHT), displaybind, bindable]
+    VARIANT right();
+
+    [propput, id(DISPID_IHTMLSTYLE2_PIXELBOTTOM), displaybind, bindable, hidden]
+    void pixelBottom(long v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_PIXELBOTTOM), displaybind, bindable, hidden]
+    long pixelBottom();
+
+    [propput, id(DISPID_IHTMLSTYLE2_PIXELRIGHT), displaybind, bindable, hidden]
+    void pixelRight(long v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_PIXELRIGHT), displaybind, bindable, hidden]
+    long pixelRight();
+
+    [propput, id(DISPID_IHTMLSTYLE2_POSBOTTOM), displaybind, bindable]
+    void posBottom(float v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_POSBOTTOM), displaybind, bindable]
+    float posBottom();
+
+    [propput, id(DISPID_IHTMLSTYLE2_POSRIGHT), displaybind, bindable]
+    void posRight(float v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_POSRIGHT), displaybind, bindable]
+    float posRight();
+
+    [propput, id(DISPID_IHTMLSTYLE2_IMEMODE), displaybind, bindable]
+    void imeMode(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_IMEMODE), displaybind, bindable]
+    BSTR imeMode();
+
+    [propput, id(DISPID_IHTMLSTYLE2_RUBYALIGN), displaybind, bindable]
+    void rubyAlign(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_RUBYALIGN), displaybind, bindable]
+    BSTR rubyAlign();
+
+    [propput, id(DISPID_IHTMLSTYLE2_RUBYPOSITION), displaybind, bindable]
+    void rubyPosition(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_RUBYPOSITION), displaybind, bindable]
+    BSTR rubyPosition();
+
+    [propput, id(DISPID_IHTMLSTYLE2_RUBYOVERHANG), displaybind, bindable]
+    void rubyOverhang(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_RUBYOVERHANG), displaybind, bindable]
+    BSTR rubyOverhang();
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDCHAR), displaybind, bindable]
+    void layoutGridChar(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDCHAR), displaybind, bindable]
+    VARIANT layoutGridChar();
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDLINE), displaybind, bindable]
+    void layoutGridLine(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDLINE), displaybind, bindable]
+    VARIANT layoutGridLine();
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDMODE), displaybind, bindable]
+    void layoutGridMode(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDMODE), displaybind, bindable]
+    BSTR layoutGridMode();
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDTYPE), displaybind, bindable]
+    void layoutGridType(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDTYPE), displaybind, bindable]
+    BSTR layoutGridType();
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRID), displaybind, bindable, nonbrowsable]
+    void layoutGrid(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRID), displaybind, bindable, nonbrowsable]
+    BSTR layoutGrid();
+
+    [propput, id(DISPID_IHTMLSTYLE2_WORDBREAK), displaybind, bindable]
+    void wordBreak(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_WORDBREAK), displaybind, bindable]
+    BSTR wordBreak();
+
+    [propput, id(DISPID_IHTMLSTYLE2_LINEBREAK), displaybind, bindable]
+    void lineBreak(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LINEBREAK), displaybind, bindable]
+    BSTR lineBreak();
+
+    [propput, id(DISPID_IHTMLSTYLE2_TEXTJUSTIFY), displaybind, bindable]
+    void textJustify(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TEXTJUSTIFY), displaybind, bindable]
+    BSTR textJustify();
+
+    [propput, id(DISPID_IHTMLSTYLE2_TEXTJUSTIFYTRIM), displaybind, bindable]
+    void textJustifyTrim(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TEXTJUSTIFYTRIM), displaybind, bindable]
+    BSTR textJustifyTrim();
+
+    [propput, id(DISPID_IHTMLSTYLE2_TEXTKASHIDA), displaybind, bindable]
+    void textKashida(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TEXTKASHIDA), displaybind, bindable]
+   VARIANT textKashida();
+
+    [propput, id(DISPID_IHTMLSTYLE2_TEXTAUTOSPACE), displaybind, bindable]
+    void textAutospace(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TEXTAUTOSPACE), displaybind, bindable]
+    BSTR textAutospace();
+
+    [propput, id(DISPID_IHTMLSTYLE2_OVERFLOWX), displaybind, bindable]
+    void overflowX(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_OVERFLOWX), displaybind, bindable]
+    BSTR overflowX();
+
+    [propput, id(DISPID_IHTMLSTYLE2_OVERFLOWY), displaybind, bindable]
+    void overflowY(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_OVERFLOWY), displaybind, bindable]
+    BSTR overflowY();
+
+    [propput, id(DISPID_IHTMLSTYLE2_ACCELERATOR), displaybind, bindable]
+    void accelerator(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_ACCELERATOR), displaybind, bindable]
+    BSTR accelerator();
+
+    [propput, id(DISPID_IHTMLSTYLE3_LAYOUTFLOW), displaybind, bindable]
+    void layoutFlow(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_LAYOUTFLOW), displaybind, bindable]
+    BSTR layoutFlow();
+
+    [propput, id(DISPID_IHTMLSTYLE3_ZOOM), displaybind, bindable]
+    void zoom(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_ZOOM), displaybind, bindable]
+    VARIANT zoom();
+
+    [propput, id(DISPID_IHTMLSTYLE3_WORDWRAP), displaybind, bindable]
+    void wordWrap(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_WORDWRAP), displaybind, bindable]
+    BSTR wordWrap();
+
+    [propput, id(DISPID_IHTMLSTYLE3_TEXTUNDERLINEPOSITION), displaybind, bindable]
+    void textUnderlinePosition(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_TEXTUNDERLINEPOSITION), displaybind, bindable]
+    BSTR textUnderlinePosition();
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARBASECOLOR), displaybind, bindable]
+    void scrollbarBaseColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARBASECOLOR), displaybind, bindable]
+    VARIANT scrollbarBaseColor();
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARFACECOLOR), displaybind, bindable]
+    void scrollbarFaceColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARFACECOLOR), displaybind, bindable]
+    VARIANT scrollbarFaceColor();
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBAR3DLIGHTCOLOR), displaybind, bindable]
+    void scrollbar3dLightColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBAR3DLIGHTCOLOR), displaybind, bindable]
+    VARIANT scrollbar3dLightColor();
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARSHADOWCOLOR), displaybind, bindable]
+    void scrollbarShadowColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARSHADOWCOLOR), displaybind, bindable]
+    VARIANT scrollbarShadowColor();
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARHIGHLIGHTCOLOR), displaybind, bindable]
+    void scrollbarHighlightColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARHIGHLIGHTCOLOR), displaybind, bindable]
+    VARIANT scrollbarHighlightColor();
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARDARKSHADOWCOLOR), displaybind, bindable]
+    void scrollbarDarkShadowColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARDARKSHADOWCOLOR), displaybind, bindable]
+    VARIANT scrollbarDarkShadowColor();
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARARROWCOLOR), displaybind, bindable]
+    void scrollbarArrowColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARARROWCOLOR), displaybind, bindable]
+    VARIANT scrollbarArrowColor();
+
+    [propput, id(DISPID_IHTMLSTYLE3_SCROLLBARTRACKCOLOR), displaybind, bindable]
+    void scrollbarTrackColor(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_SCROLLBARTRACKCOLOR), displaybind, bindable]
+    VARIANT scrollbarTrackColor();
+
+    [propput, id(DISPID_IHTMLSTYLE3_WRITINGMODE), displaybind, bindable]
+    void writingMode(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_WRITINGMODE), displaybind, bindable]
+    BSTR writingMode();
+
+    [propput, id(DISPID_IHTMLSTYLE3_TEXTALIGNLAST), displaybind, bindable]
+    void textAlignLast(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_TEXTALIGNLAST), displaybind, bindable]
+    BSTR textAlignLast();
+
+    [propput, id(DISPID_IHTMLSTYLE3_TEXTKASHIDASPACE), displaybind, bindable]
+    void textKashidaSpace(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE3_TEXTKASHIDASPACE), displaybind, bindable]
+    VARIANT textKashidaSpace();
+
+    [propput, id(DISPID_IHTMLSTYLE4_TEXTOVERFLOW), displaybind, bindable]
+    void textOverflow(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE4_TEXTOVERFLOW), displaybind, bindable]
+    BSTR textOverflow();
+
+    [propput, id(DISPID_IHTMLSTYLE4_MINHEIGHT), displaybind, bindable]
+    void minHeight(VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE4_MINHEIGHT), displaybind, bindable]
+    VARIANT minHeight();
+}
+
+/*****************************************************************************
  *    IHTMLRenderStyle interface
  */
 [
