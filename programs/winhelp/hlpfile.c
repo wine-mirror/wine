@@ -709,6 +709,89 @@ static BOOL HLPFILE_RtfAddHexBytes(struct RtfData* rd, const void* _ptr, unsigne
 }
 
 /******************************************************************
+ *             HLPFILE_RtfAddTransparentBitmap
+ *
+ * We'll transform a transparent bitmap into an metafile that
+ * we then transform into RTF
+ */
+static BOOL HLPFILE_RtfAddTransparentBitmap(struct RtfData* rd, const BITMAPINFO* bi,
+                                            const void* pict, unsigned nc)
+{
+    HDC                 hdc, hdcMask, hdcMem, hdcEMF;
+    HBITMAP             hbm, hbmMask, hbmOldMask, hbmOldMem;
+    HENHMETAFILE        hEMF;
+    BOOL                ret = FALSE;
+    void*               data;
+    UINT                sz;
+
+    hbm = CreateDIBitmap(hdc = GetDC(0), &bi->bmiHeader,
+                         CBM_INIT, pict, bi, DIB_RGB_COLORS);
+
+    hdcMem = CreateCompatibleDC(hdc);
+    hbmOldMem = SelectObject(hdcMem, hbm);
+
+    /* create the mask bitmap from the main bitmap */
+    hdcMask = CreateCompatibleDC(hdc);
+    hbmMask = CreateBitmap(bi->bmiHeader.biWidth, bi->bmiHeader.biHeight, 1, 1, NULL);
+    hbmOldMask = SelectObject(hdcMask, hbmMask);
+    SetBkColor(hdcMem,
+               RGB(bi->bmiColors[nc - 1].rgbRed,
+                   bi->bmiColors[nc - 1].rgbGreen,
+                   bi->bmiColors[nc - 1].rgbBlue));
+    BitBlt(hdcMask, 0, 0, bi->bmiHeader.biWidth, bi->bmiHeader.biHeight, hdcMem, 0, 0, SRCCOPY);
+
+    /* sets to RGB(0,0,0) the transparent bits in main bitmap */
+    SetBkColor(hdcMem, RGB(0,0,0));
+    SetTextColor(hdcMem, RGB(255,255,255));
+    BitBlt(hdcMem, 0, 0, bi->bmiHeader.biWidth, bi->bmiHeader.biHeight, hdcMask, 0, 0, SRCAND);
+
+    SelectObject(hdcMask, hbmOldMask);
+    DeleteDC(hdcMask);
+
+    SelectObject(hdcMem, hbmOldMem);
+    DeleteDC(hdcMem);
+
+    /* we create the bitmap on the fly */
+    hdcEMF = CreateEnhMetaFile(NULL, NULL, NULL, NULL);
+    hdcMem = CreateCompatibleDC(hdcEMF);
+
+    /* sets to RGB(0,0,0) the transparent bits in final bitmap */
+    hbmOldMem = SelectObject(hdcMem, hbmMask);
+    SetBkColor(hdcEMF, RGB(255, 255, 255));
+    SetTextColor(hdcEMF, RGB(0, 0, 0));
+    BitBlt(hdcEMF, 0, 0, bi->bmiHeader.biWidth, bi->bmiHeader.biHeight, hdcMem, 0, 0, SRCAND);
+
+    /* and copy the remaining bits of main bitmap */
+    SelectObject(hdcMem, hbm);
+    BitBlt(hdcEMF, 0, 0, bi->bmiHeader.biWidth, bi->bmiHeader.biHeight, hdcMem, 0, 0, SRCPAINT);
+    SelectObject(hdcMem, hbmOldMem);
+    DeleteDC(hdcMem);
+
+    /* do the cleanup */
+    ReleaseDC(0, hdc);
+    DeleteObject(hbmMask);
+    DeleteObject(hbm);
+
+    hEMF = CloseEnhMetaFile(hdcEMF);
+
+    /* generate rtf stream */
+    sz = GetEnhMetaFileBits(hEMF, 0, NULL);
+    if (sz && (data = HeapAlloc(GetProcessHeap(), 0, sz)))
+    {
+        if (sz == GetEnhMetaFileBits(hEMF, sz, data))
+        {
+            ret = HLPFILE_RtfAddControl(rd, "{\\pict\\emfblip") &&
+                HLPFILE_RtfAddHexBytes(rd, data, sz) &&
+                HLPFILE_RtfAddControl(rd, "}");
+        }
+        HeapFree(GetProcessHeap(), 0, data);
+    }
+    DeleteEnhMetaFile(hEMF);
+
+    return ret;
+}
+
+/******************************************************************
  *		HLPFILE_RtfAddBitmap
  *
  */
@@ -719,6 +802,7 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, BYTE* beg, BYTE type, BYTE 
     BITMAPINFO*         bi;
     unsigned long       off, csz;
     unsigned            nc = 0;
+    BOOL                clrImportant = FALSE;
     BOOL                ret = FALSE;
     char                tmp[256];
 
@@ -735,7 +819,8 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, BYTE* beg, BYTE type, BYTE 
     bi->bmiHeader.biWidth         = fetch_ulong(&ptr);
     bi->bmiHeader.biHeight        = fetch_ulong(&ptr);
     bi->bmiHeader.biClrUsed       = fetch_ulong(&ptr);
-    bi->bmiHeader.biClrImportant  = fetch_ulong(&ptr);
+    clrImportant  = fetch_ulong(&ptr);
+    bi->bmiHeader.biClrImportant  = (clrImportant > 1) ? clrImportant : 0;
     bi->bmiHeader.biCompression   = BI_RGB;
     if (bi->bmiHeader.biBitCount > 32) WINE_FIXME("Unknown bit count %u\n", bi->bmiHeader.biBitCount);
     if (bi->bmiHeader.biPlanes != 1) WINE_FIXME("Unsupported planes %u\n", bi->bmiHeader.biPlanes);
@@ -773,7 +858,11 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, BYTE* beg, BYTE type, BYTE 
     }
     pict_beg = HLPFILE_DecompressGfx(beg + off, csz, bi->bmiHeader.biSizeImage, pack);
 
-
+    if (clrImportant == 1 && nc > 0)
+    {
+        ret = HLPFILE_RtfAddTransparentBitmap(rd, bi, pict_beg, nc);
+        goto done;
+    }
     if (!HLPFILE_RtfAddControl(rd, "{\\pict")) goto done;
     if (type == 0x06)
     {
