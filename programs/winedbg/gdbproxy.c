@@ -1766,6 +1766,12 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
     case 'S':
         if (strncmp(gdbctx->in_packet, "Symbol::", gdbctx->in_packet_len) == 0)
             return packet_ok;
+        if (strncmp(gdbctx->in_packet, "Supported", gdbctx->in_packet_len) == 0)
+        {
+            packet_reply_open(gdbctx);
+            packet_reply_close(gdbctx);
+            return packet_done;
+        }
         break;
     case 'T':
         if (gdbctx->in_packet_len > 15 &&
