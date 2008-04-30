@@ -65,6 +65,15 @@ static void elem_vector_normalize(elem_vector *buf)
     buf->size = buf->len;
 }
 
+static BOOL is_elem_node(nsIDOMNode *node)
+{
+    PRUint16 type=0;
+
+    nsIDOMNode_GetNodeType(node, &type);
+
+    return type == ELEMENT_NODE || type == COMMENT_NODE;
+}
+
 #define HTMLELEM_THIS(iface) DEFINE_THIS(HTMLElement, HTMLElement, iface)
 
 #define HTMLELEM_NODE_THIS(iface) DEFINE_THIS2(HTMLElement, node, iface)
@@ -1081,7 +1090,6 @@ static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector 
     nsIDOMNodeList *nsnode_list;
     nsIDOMNode *iter;
     PRUint32 list_len = 0, i;
-    PRUint16 node_type;
     nsresult nsres;
 
     nsres = nsIDOMNode_GetChildNodes(elem->node.nsnode, &nsnode_list);
@@ -1104,8 +1112,7 @@ static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector 
             continue;
         }
 
-        nsres = nsIDOMNode_GetNodeType(iter, &node_type);
-        if(NS_SUCCEEDED(nsres) && node_type == ELEMENT_NODE)
+        if(is_elem_node(iter))
             elem_vector_add(buf, HTMLELEM_NODE_THIS(get_node(doc, iter, TRUE)));
     }
 }
@@ -1128,7 +1135,6 @@ static void create_all_list(HTMLDocument *doc, HTMLDOMNode *elem, elem_vector *b
     nsIDOMNodeList *nsnode_list;
     nsIDOMNode *iter;
     PRUint32 list_len = 0, i;
-    PRUint16 node_type;
     nsresult nsres;
 
     nsres = nsIDOMNode_GetChildNodes(elem->nsnode, &nsnode_list);
@@ -1148,8 +1154,7 @@ static void create_all_list(HTMLDocument *doc, HTMLDOMNode *elem, elem_vector *b
             continue;
         }
 
-        nsres = nsIDOMNode_GetNodeType(iter, &node_type);
-        if(NS_SUCCEEDED(nsres) && node_type == ELEMENT_NODE) {
+        if(is_elem_node(iter)) {
             HTMLDOMNode *node = get_node(doc, iter, TRUE);
 
             elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
