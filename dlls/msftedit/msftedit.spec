@@ -8,7 +8,7 @@
 9 stdcall RichEdit10ANSIWndProc(ptr long long long) riched20.RichEdit10ANSIWndProc
 10 stdcall RichEditANSIWndProc(ptr long long long) riched20.RichEditANSIWndProc
 11 stub SetCustomTextOutHandlerEx
-12 stub DllGetVersion
+12 stdcall -private DllGetVersion(ptr)
 13 stub RichEditWndProc
 14 stub RichListBoxWndProc
 15 stub RichComboBoxWndProc
