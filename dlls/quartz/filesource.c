@@ -1166,7 +1166,8 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
 
         if (buffer >= This->samples)
         {
-            FIXME("Returned: %u (%08x)\n", buffer, GetLastError());
+            if (buffer != This->samples)
+                FIXME("Returned: %u (%08x)\n", buffer, GetLastError());
             hr = VFW_E_TIMEOUT;
             buffer = ~0;
         }
@@ -1188,7 +1189,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         if (buffer == This->samples)
         {
             assert(!This->queued_number);
-            hr = E_FAIL;
+            hr = VFW_E_TIMEOUT;
         }
         else
         {
@@ -1342,12 +1343,16 @@ static HRESULT WINAPI FileAsyncReader_BeginFlush(IAsyncReader * iface)
 static HRESULT WINAPI FileAsyncReader_EndFlush(IAsyncReader * iface)
 {
     FileAsyncReader *This = impl_from_IAsyncReader(iface);
+    int x;
 
     TRACE("()\n");
 
     EnterCriticalSection(&This->csList);
     ResetEvent(This->handle_list[This->samples]);
     This->bFlushing = FALSE;
+    for (x = 0; x < This->samples; ++x)
+        assert(!This->sample_list[x].pSample);
+
     LeaveCriticalSection(&This->csList);
 
     return S_OK;
