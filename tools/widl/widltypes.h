@@ -198,6 +198,14 @@ enum type_kind
     TKIND_MAX
 };
 
+enum storage_class
+{
+    STG_NONE,
+    STG_STATIC,
+    STG_EXTERN,
+    STG_REGISTER,
+};
+
 enum statement_type
 {
     STMT_LIBRARY,
@@ -282,6 +290,7 @@ struct _var_t {
   type_t *type;
   attr_list_t *attrs;
   expr_t *eval;
+  enum storage_class stgclass;
 
   struct _loc_info_t loc_info;
 

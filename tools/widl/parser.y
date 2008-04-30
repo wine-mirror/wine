@@ -84,6 +84,13 @@ struct _import_t
   int import_performed;
 };
 
+typedef struct _decl_spec_t
+{
+  type_t *type;
+  attr_list_t *attrs;
+  enum storage_class stgclass;
+} decl_spec_t;
+
 typelist_t incomplete_types = LIST_INIT(incomplete_types);
 
 static void add_incomplete(type_t *t);
@@ -92,14 +99,14 @@ static void fix_incomplete(void);
 static str_list_t *append_str(str_list_t *list, char *str);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
-static type_t *apply_decl_spec(type_t *type, attr_list_t *list1, attr_list_t *list2);
+static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right, attr_t *attr, enum storage_class stgclass);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned long val);
 static attr_t *make_attrp(enum attr_type type, void *val);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
-static void set_type(var_t *v, type_t *type, const declarator_t *decl, int top);
-static var_list_t *set_var_types(attr_list_t *attrs, type_t *type, declarator_list_t *decls);
+static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl, int top);
+static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_list_t *append_var(var_list_t *list, var_t *var);
@@ -119,7 +126,7 @@ static type_t *make_pointer_type(type_t *ref, attr_list_t *attrs);
 static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
-static type_t *reg_typedefs(type_t *type, var_list_t *names, attr_list_t *attrs);
+static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
 static type_t *find_type2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
 static type_t *get_typev(unsigned char type, var_t *name, int t);
@@ -191,6 +198,8 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 	interface_info_t ifinfo;
 	typelib_t *typelib;
 	struct _import_t *import;
+	struct _decl_spec_t *declspec;
+	enum storage_class stgclass;
 }
 
 %token <str> aIDENTIFIER
@@ -286,17 +295,18 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tWCHAR tWIREMARSHAL
 
 %type <attr> attribute type_qualifier function_specifier
-%type <attr_list> m_attributes attributes attrib_list m_type_qual_list decl_spec_no_type m_decl_spec_no_type
+%type <attr_list> m_attributes attributes attrib_list m_type_qual_list
 %type <str_list> str_list
 %type <expr> m_expr expr expr_const expr_int_const array
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <ifinfo> interfacehdr
+%type <declspec> decl_spec decl_spec_no_type m_decl_spec_no_type
 %type <type> inherit interface interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
 %type <type> module modulehdr moduledef
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef
-%type <type> type decl_spec
+%type <type> type
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
 %type <var> arg ne_union_field union_field s_field case enum constdef externdef
@@ -466,10 +476,14 @@ args:	  arg					{ check_arg($1); $$ = append_var( NULL, $1 ); }
 /* split into two rules to get bison to resolve a tVOID conflict */
 arg:	  attributes decl_spec declarator	{ $$ = $3->var;
 						  $$->attrs = $1;
+						  if ($2->stgclass != STG_NONE && $2->stgclass != STG_REGISTER)
+						    error_loc("invalid storage class for function parameter\n");
 						  set_type($$, $2, $3, TRUE);
 						  free($3);
 						}
 	| decl_spec declarator			{ $$ = $2->var;
+						  if ($1->stgclass != STG_NONE && $1->stgclass != STG_REGISTER)
+						    error_loc("invalid storage class for function parameter\n");
 						  set_type($$, $1, $2, TRUE);
 						  free($2);
 						}
@@ -982,9 +996,9 @@ m_type_qual_list:				{ $$ = NULL; }
 	| m_type_qual_list type_qualifier	{ $$ = append_attr($1, $2); }
 	;
 
-decl_spec: type m_decl_spec_no_type		{ $$ = apply_decl_spec($1, $2, NULL); }
+decl_spec: type m_decl_spec_no_type		{ $$ = make_decl_spec($1, $2, NULL, NULL, STG_NONE); }
 	| decl_spec_no_type type m_decl_spec_no_type
-						{ $$ = apply_decl_spec($2, $1, $3); }
+						{ $$ = make_decl_spec($2, $1, $3, NULL, STG_NONE); }
 	;
 
 m_decl_spec_no_type:				{ $$ = NULL; }
@@ -992,8 +1006,8 @@ m_decl_spec_no_type:				{ $$ = NULL; }
 	;
 
 decl_spec_no_type:
-	  type_qualifier m_decl_spec_no_type	{ $$ = append_attr($2, $1); }
-	| function_specifier m_decl_spec_no_type  { $$ = append_attr($2, $1); }
+	  type_qualifier m_decl_spec_no_type	{ $$ = make_decl_spec(NULL, $2, NULL, $1, STG_NONE); }
+	| function_specifier m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, $1, STG_NONE); }
 	;
 
 declarator:
@@ -1210,18 +1224,55 @@ static attr_list_t *dupattrs(const attr_list_t *list)
   return new_list;
 }
 
-static type_t *apply_decl_spec(type_t *type, attr_list_t *list1, attr_list_t *list2)
+static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right, attr_t *attr, enum storage_class stgclass)
 {
-  if (list1 || list2)
+  decl_spec_t *declspec = left ? left : right;
+  if (!declspec)
+  {
+    declspec = xmalloc(sizeof(*declspec));
+    declspec->type = NULL;
+    declspec->attrs = NULL;
+    declspec->stgclass = STG_NONE;
+  }
+  declspec->type = type;
+  if (left && declspec != left)
+  {
+    declspec->attrs = append_attr_list(declspec->attrs, left->attrs);
+    if (declspec->stgclass == STG_NONE)
+      declspec->stgclass = left->stgclass;
+    else if (left->stgclass != STG_NONE)
+      error_loc("only one storage class can be specified\n");
+    assert(!left->type);
+    free(left);
+  }
+  if (right && declspec != right)
+  {
+    declspec->attrs = append_attr_list(declspec->attrs, right->attrs);
+    if (declspec->stgclass == STG_NONE)
+      declspec->stgclass = right->stgclass;
+    else if (right->stgclass != STG_NONE)
+      error_loc("only one storage class can be specified\n");
+    assert(!right->type);
+    free(right);
+  }
+
+  declspec->attrs = append_attr(declspec->attrs, attr);
+  if (declspec->stgclass == STG_NONE)
+    declspec->stgclass = stgclass;
+  else if (stgclass != STG_NONE)
+    error_loc("only one storage class can be specified\n");
+
+  /* apply attributes to type */
+  if (type && declspec->attrs)
   {
     attr_list_t *attrs;
-    type = duptype(type, 1);
+    declspec->type = duptype(type, 1);
     attrs = dupattrs(type->attrs);
-    attrs = append_attr_list(attrs, list1);
-    attrs = append_attr_list(attrs, list2);
-    type->attrs = attrs;
+    declspec->type->attrs = append_attr_list(attrs, declspec->attrs);
+    declspec->attrs = NULL;
   }
-  return type;
+
+  return declspec;
 }
 
 static attr_t *make_attr(enum attr_type type)
@@ -1347,7 +1398,7 @@ static type_t *append_ptrchain_type(type_t *ptrchain, type_t *type)
   return ptrchain;
 }
 
-static void set_type(var_t *v, type_t *type, const declarator_t *decl,
+static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
                      int top)
 {
   expr_list_t *sizes = get_attrp(v->attrs, ATTR_SIZEIS);
@@ -1358,6 +1409,7 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
   type_t *atype, **ptype;
   array_dims_t *arr = decl ? decl->array : NULL;
   type_t *func_type = decl ? decl->func_type : NULL;
+  type_t *type = decl_spec->type;
 
   if (is_attr(type->attrs, ATTR_INLINE))
   {
@@ -1375,6 +1427,7 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
 
   /* add type onto the end of the pointers in pident->type */
   v->type = append_ptrchain_type(decl ? decl->type : NULL, type);
+  v->stgclass = decl_spec->stgclass;
 
   /* the highest level of pointer specified should default to the var's ptr attr
    * or (RPC_FC_RP if not specified and it's a top level ptr), not
@@ -1551,7 +1604,7 @@ static void set_type(var_t *v, type_t *type, const declarator_t *decl,
   }
 }
 
-static var_list_t *set_var_types(attr_list_t *attrs, type_t *type, declarator_list_t *decls)
+static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls)
 {
   declarator_t *decl, *next;
   var_list_t *var_list = NULL;
@@ -1561,7 +1614,7 @@ static var_list_t *set_var_types(attr_list_t *attrs, type_t *type, declarator_li
     var_t *var = decl->var;
 
     var->attrs = attrs;
-    set_type(var, type, decl, 0);
+    set_type(var, decl_spec, decl, 0);
     var_list = append_var(var_list, var);
     free(decl);
   }
@@ -1619,6 +1672,7 @@ static var_t *make_var(char *name)
   v->type = NULL;
   v->attrs = NULL;
   v->eval = NULL;
+  v->stgclass = STG_NONE;
   v->loc_info.input_name = input_name ? input_name : "stdin";
   v->loc_info.line_number = line_number;
   v->loc_info.near_text = parser_text;
@@ -1769,14 +1823,15 @@ static void fix_incomplete(void)
   }
 }
 
-static type_t *reg_typedefs(type_t *type, declarator_list_t *decls, attr_list_t *attrs)
+static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, attr_list_t *attrs)
 {
   const declarator_t *decl;
   int is_str = is_attr(attrs, ATTR_STRING);
+  type_t *type = decl_spec->type;
 
   if (is_str)
   {
-    type_t *t = type;
+    type_t *t = decl_spec->type;
     unsigned char c;
 
     while (is_ptr(t))
@@ -1813,7 +1868,7 @@ static type_t *reg_typedefs(type_t *type, declarator_list_t *decls, attr_list_t 
 
       /* set the attributes to allow set_type to do some checks on them */
       name->attrs = attrs;
-      set_type(name, type, decl, 0);
+      set_type(name, decl_spec, decl, 0);
       cur = alias(name->type, name->name);
       cur->attrs = attrs;
 
