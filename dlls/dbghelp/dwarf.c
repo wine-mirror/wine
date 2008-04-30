@@ -1982,29 +1982,40 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
 }
 
 static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
-                                          const dwarf2_comp_unit_t* comp_unit,
                                           struct module* module,
                                           const struct elf_thunk_area* thunks,
-                                          const unsigned char* comp_unit_cursor,
+                                          dwarf2_traverse_context_t* mod_ctx,
                                           unsigned long load_offset)
 {
     dwarf2_parse_context_t ctx;
-    dwarf2_traverse_context_t traverse;
     dwarf2_traverse_context_t abbrev_ctx;
     dwarf2_debug_info_t* di;
+    dwarf2_traverse_context_t cu_ctx;
+    const unsigned char* comp_unit_start = mod_ctx->data;
+    unsigned long cu_length;
+    unsigned short cu_version;
+    unsigned long cu_abbrev_offset;
     BOOL ret = FALSE;
 
-    TRACE("Compilation Unit Header found at 0x%x:\n",
-          comp_unit_cursor - sections[section_debug].address);
-    TRACE("- length:        %lu\n", comp_unit->length);
-    TRACE("- version:       %u\n",  comp_unit->version);
-    TRACE("- abbrev_offset: %lu\n", comp_unit->abbrev_offset);
-    TRACE("- word_size:     %u\n",  comp_unit->word_size);
+    cu_length = dwarf2_parse_u4(mod_ctx);
+    cu_ctx.data = cu_ctx.start_data = mod_ctx->data;
+    cu_ctx.end_data = mod_ctx->data + cu_length;
+    mod_ctx->data += cu_length;
+    cu_version = dwarf2_parse_u2(&cu_ctx);
+    cu_abbrev_offset = dwarf2_parse_u4(&cu_ctx);
+    cu_ctx.word_size = dwarf2_parse_byte(&cu_ctx);
 
-    if (comp_unit->version != 2)
+    TRACE("Compilation Unit Header found at 0x%x:\n",
+          comp_unit_start - sections[section_debug].address);
+    TRACE("- length:        %lu\n", cu_length);
+    TRACE("- version:       %u\n",  cu_version);
+    TRACE("- abbrev_offset: %lu\n", cu_abbrev_offset);
+    TRACE("- word_size:     %u\n",  cu_ctx.word_size);
+
+    if (cu_version != 2)
     {
         WARN("%u DWARF version unsupported. Wine dbghelp only support DWARF 2.\n",
-             comp_unit->version);
+             cu_version);
         return FALSE;
     }
 
@@ -2012,26 +2023,21 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     ctx.sections = sections;
     ctx.section = section_debug;
     ctx.module = module;
-    ctx.word_size = comp_unit->word_size;
+    ctx.word_size = cu_ctx.word_size;
     ctx.thunks = thunks;
     ctx.load_offset = load_offset;
-    ctx.ref_offset = comp_unit_cursor - sections[section_debug].address;
+    ctx.ref_offset = comp_unit_start - sections[section_debug].address;
     memset(ctx.symt_cache, 0, sizeof(ctx.symt_cache));
     ctx.symt_cache[sc_void] = &symt_new_basic(module, btVoid, "void", 0)->symt;
 
-    traverse.start_data = comp_unit_cursor + sizeof(dwarf2_comp_unit_stream_t);
-    traverse.data = traverse.start_data;
-    traverse.word_size = comp_unit->word_size;
-    traverse.end_data = comp_unit_cursor + comp_unit->length + sizeof(unsigned);
-
-    abbrev_ctx.start_data = sections[section_abbrev].address + comp_unit->abbrev_offset;
+    abbrev_ctx.start_data = sections[section_abbrev].address + cu_abbrev_offset;
     abbrev_ctx.data = abbrev_ctx.start_data;
     abbrev_ctx.end_data = sections[section_abbrev].address + sections[section_abbrev].size;
-    abbrev_ctx.word_size = comp_unit->word_size;
+    abbrev_ctx.word_size = cu_ctx.word_size;
     dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx.abbrev_table, &ctx.pool);
 
     sparse_array_init(&ctx.debug_info_table, sizeof(dwarf2_debug_info_t), 128);
-    dwarf2_read_one_debug_info(&ctx, &traverse, &di);
+    dwarf2_read_one_debug_info(&ctx, &cu_ctx, &di);
 
     if (di->abbrev->tag == DW_TAG_compile_unit)
     {
@@ -2223,8 +2229,10 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 {
     dwarf2_section_t    section[section_max];
     unsigned char*      ptr;
-    const unsigned char*comp_unit_cursor = debug;
-    const unsigned char*end_debug = debug + debug_size;
+    dwarf2_traverse_context_t   mod_ctx;
+
+    mod_ctx.start_data = mod_ctx.data = debug;
+    mod_ctx.end_data = debug + debug_size;
 
     module->loc_compute = dwarf2_location_compute;
 
@@ -2251,20 +2259,9 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
         module->dwarf2_info->debug_loc.size    = loclist_size;
     }
 
-    while (comp_unit_cursor < end_debug)
+    while (mod_ctx.data < mod_ctx.end_data)
     {
-        const dwarf2_comp_unit_stream_t* comp_unit_stream;
-        dwarf2_comp_unit_t comp_unit;
-    
-        comp_unit_stream = (const dwarf2_comp_unit_stream_t*) comp_unit_cursor;
-        comp_unit.length = *(const unsigned long*)  comp_unit_stream->length;
-        comp_unit.version = *(const unsigned short*) comp_unit_stream->version;
-        comp_unit.abbrev_offset = *(const unsigned long*) comp_unit_stream->abbrev_offset;
-        comp_unit.word_size = *(const unsigned char*) comp_unit_stream->word_size;
-
-        dwarf2_parse_compilation_unit(section, &comp_unit, module,
-                                      thunks, comp_unit_cursor, load_offset);
-        comp_unit_cursor += comp_unit.length + sizeof(unsigned);
+        dwarf2_parse_compilation_unit(section, module, thunks, &mod_ctx, load_offset);
     }
     module->module.SymType = SymDia;
     module->module.CVSig = 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24);
