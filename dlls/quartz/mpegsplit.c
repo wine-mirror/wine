@@ -63,7 +63,6 @@ struct seek_entry {
 typedef struct MPEGSplitterImpl
 {
     ParserImpl Parser;
-    IMediaSample *pCurrentSample;
     LONGLONG EndOfFile;
     LONGLONG duration;
     LONGLONG position;
@@ -180,6 +179,7 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
     assert(length == len || length + 4 == len);
     IMediaSample_SetActualDataLength(pCurrentSample, length);
 
+    /* Queue the next sample */
     if (length + 4 == len)
     {
         PullPin *pin = This->Parser.pInputPin;
@@ -269,46 +269,18 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample,
     /* trace removed for performance reasons */
     /* TRACE("(%p), %llu -> %llu\n", pSample, tStart, tStop); */
 
-    /* Try to get rid of current sample, if any */
-    if (This->pCurrentSample)
-    {
-        Parser_OutputPin * pOutputPin = (Parser_OutputPin*)This->Parser.ppPins[1];
-        IMediaSample *pCurrentSample = This->pCurrentSample;
-
-        /* Requeue buffer */
-        hr = OutputPin_SendSample(&pOutputPin->pin, pCurrentSample);
-
-        if (hr != S_OK)
-        {
-            Sleep(10);
-            TRACE("Yuck!\n");
-            IMediaSample_AddRef(pSample);
-            IAsyncReader_Request(This->Parser.pInputPin->pReader, pSample, 0);
-            return hr;
-        }
-
-        IMediaSample_Release(This->pCurrentSample);
-        This->pCurrentSample = NULL;
-    }
-
     /* Now, try to find a new header */
     hr = FillBuffer(This, pSample);
     if (hr != S_OK)
     {
-        /* We still have our sample! Do damage control and send it next round */
-
         WARN("Failed with hres: %08x!\n", hr);
 
-        /* If set to S_FALSE we keep the sample, to transmit it next time */
-        if (hr == S_FALSE)
+        /* Unset progression if denied! */
+        if (hr == VFW_E_WRONG_STATE || hr == S_FALSE)
         {
-            This->pCurrentSample = pSample;
-            IMediaSample_AddRef(This->pCurrentSample);
+            memcpy(This->header, pbSrcStream, 4);
+            This->Parser.pInputPin->rtCurrent = tStart;
         }
-
-        /* Sample was rejected because of whatever reason (paused/flushing/etc), no need to terminate the processing */
-        if (hr == S_FALSE)
-            hr = S_OK;
     }
 
     if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile || This->position >= This->Parser.mediaSeeking.llStop)
@@ -555,7 +527,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
                 /* Make the output buffer a multiple of the frame size */
                 props->cbBuffer = 0x4000 / format->nBlockAlign *
                                  format->nBlockAlign;
-                props->cBuffers = 2;
+                props->cBuffers = 3;
                 hr = Parser_AddPin(&(This->Parser), &piOutput, props, &amt);
             }
 
@@ -644,11 +616,7 @@ static HRESULT MPEGSplitter_cleanup(LPVOID iface)
 {
     MPEGSplitterImpl *This = (MPEGSplitterImpl*)iface;
 
-    TRACE("(%p) Deleting sample\n", This);
-
-    if (This->pCurrentSample)
-        IMediaSample_Release(This->pCurrentSample);
-    This->pCurrentSample = NULL;
+    TRACE("(%p)\n", This);
 
     return S_OK;
 }
