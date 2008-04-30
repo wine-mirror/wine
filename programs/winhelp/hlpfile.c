@@ -1201,6 +1201,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
     long               size, blocksize, datalen;
     unsigned short     bits;
     unsigned           nc, ncol = 1;
+    short              table_width;
     BOOL               in_table = FALSE;
     char               tmp[256];
     BOOL               ret = FALSE;
@@ -1250,21 +1251,59 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
         in_table = TRUE;
         ncol = *format++;
 
-        WINE_TRACE("#cols %u\n", ncol);
+        if (!HLPFILE_RtfAddControl(rd, "\\trowd")) goto done;
         type = *format++;
         if (type == 0 || type == 2)
+        {
+            table_width = GET_SHORT(format, 0);
             format += 2;
+        }
+        else
+            table_width = 32767;
+        WINE_TRACE("New table: cols=%d type=%x width=%d\n",
+                   ncol, type, table_width);
+        if (ncol > 1)
+        {
+            int     pos;
+            sprintf(tmp, "\\trgaph%d\\trleft%d",
+                    HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 6), table_width, 32767)),
+                    HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 0), table_width, 32767)));
+            if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+            pos = HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 6) / 2, table_width, 32767));
+            for (nc = 0; nc < ncol; nc++)
+            {
+                WINE_TRACE("column(%d/%d) gap=%d width=%d\n",
+                           nc, ncol, GET_SHORT(format, nc*4),
+                           GET_SHORT(format, nc*4+2));
+                pos += GET_SHORT(format, nc * 4) + GET_SHORT(format, nc * 4 + 2);
+                sprintf(tmp, "\\cellx%d",
+                        HLPFILE_HalfPointsToTwips(MulDiv(pos, table_width, 32767)));
+                if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+            }
+        }
+        else
+        {
+            WINE_TRACE("column(0/%d) gap=%d width=%d\n",
+                       ncol, GET_SHORT(format, 0), GET_SHORT(format, 2));
+            sprintf(tmp, "\\trleft%d\\cellx%d ",
+                    HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 0), table_width, 32767)),
+                    HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 0) + GET_SHORT(format, 2),
+                                      table_width, 32767)));
+            if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
+        }
         format += ncol * 4;
     }
 
     for (nc = 0; nc < ncol; /**/)
     {
         WINE_TRACE("looking for format at offset %lu in column %d\n", (SIZE_T)(format - (buf + 0x15)), nc);
+        if (!HLPFILE_RtfAddControl(rd, "\\pard")) goto done;
         if (in_table)
         {
             nc = GET_SHORT(format, 0);
             if (nc == -1) break;
             format += 5;
+            if (!HLPFILE_RtfAddControl(rd, "\\intbl")) goto done;
         }
         else nc++;
         if (buf[0x14] == 0x01)
@@ -1453,7 +1492,18 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
                 break;
 
 	    case 0x82:
-                if (!HLPFILE_RtfAddControl(rd, "\\par\\pard")) goto done;
+                if (in_table)
+                {
+                    if (format[1] != 0xFF)
+                    {
+                        if (!HLPFILE_RtfAddControl(rd, "\\par\\intbl")) goto done;
+                    }
+                    else
+                    {
+                        if (!HLPFILE_RtfAddControl(rd, "\\cell\\pard\\intbl")) goto done;
+                    }
+                }
+                else if (!HLPFILE_RtfAddControl(rd, "\\par")) goto done;
                 attributes.wVSpace++;
                 attributes.wIndent = 0;
                 format += 1;
@@ -1655,8 +1705,14 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
 	    }
 	}
     }
+    if (in_table)
+    {
+        if (!HLPFILE_RtfAddControl(rd, "\\row\\par\\pard\\plain")) goto done;
+        rd->char_pos += 2;
+    }
     ret = TRUE;
 done:
+
     HeapFree(GetProcessHeap(), 0, text_base);
     return ret;
 }
