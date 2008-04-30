@@ -62,6 +62,7 @@ typedef struct event_target_t event_target_t;
 typedef enum {
     NULL_tid,
     DispDOMChildrenCollection_tid,
+    DispHTMLCommentElement_tid,
     DispHTMLDocument_tid,
     DispHTMLDOMTextNode_tid,
     DispHTMLElementCollection_tid,
@@ -69,6 +70,7 @@ typedef enum {
     DispHTMLOptionElement_tid,
     DispHTMLUnknownElement_tid,
     DispHTMLWindow2_tid,
+    IHTMLCommentElement_tid,
     IHTMLDocument2_tid,
     IHTMLDocument3_tid,
     IHTMLDocument4_tid,

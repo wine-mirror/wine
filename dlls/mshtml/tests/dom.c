@@ -246,7 +246,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"TBODY",     elem_iids,        NULL},
     {"SCRIPT",    script_iids,      NULL},
     {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement},
-    {"!",         comment_iids,     NULL}
+    {"!",         comment_iids,     &DIID_DispHTMLCommentElement}
 };
 
 static const char *dbgstr_w(LPCWSTR str)

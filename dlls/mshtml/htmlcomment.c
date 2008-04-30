@@ -175,6 +175,16 @@ static const NodeImplVtbl HTMLCommentElementImplVtbl = {
     HTMLCommentElement_destructor
 };
 
+static dispex_static_data_t HTMLCommentElement_dispex = {
+    NULL,
+    DispHTMLCommentElement_tid,
+    NULL,
+    {
+        IHTMLCommentElement_tid,
+        0
+    }
+};
+
 HTMLElement *HTMLCommentElement_Create(nsIDOMNode *nsnode)
 {
     HTMLCommentElement *ret = heap_alloc_zero(sizeof(*ret));
@@ -182,6 +192,7 @@ HTMLElement *HTMLCommentElement_Create(nsIDOMNode *nsnode)
     ret->element.node.vtbl = &HTMLCommentElementImplVtbl;
     ret->lpIHTMLCommentElementVtbl = &HTMLCommentElementVtbl;
 
+    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLCOMMENT(ret), &HTMLCommentElement_dispex);
     HTMLElement_Init(&ret->element);
 
     return &ret->element;
