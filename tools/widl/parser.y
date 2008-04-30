@@ -68,6 +68,7 @@
 #define YYERROR_VERBOSE
 
 unsigned char pointer_default = RPC_FC_UP;
+static int is_in_interface = FALSE;
 static int is_object_interface = FALSE;
 /* are we inside a library block? */
 static int is_inside_library = FALSE;
@@ -159,14 +160,14 @@ static void add_explicit_handle_if_necessary(func_t *func);
 static statement_t *make_statement(enum statement_type type);
 static statement_t *make_statement_type_decl(type_t *type);
 static statement_t *make_statement_reference(type_t *type);
-static statement_t *make_statement_init_decl(var_t *var);
-static statement_t *make_statement_extern(var_t *var);
+static statement_t *make_statement_declaration(var_t *var);
 static statement_t *make_statement_library(typelib_t *typelib);
 static statement_t *make_statement_cppquote(const char *str);
 static statement_t *make_statement_importlib(const char *str);
 static statement_t *make_statement_module(type_t *type);
 static statement_t *make_statement_import(const char *str);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
+static func_list_t *append_func_from_statement(func_list_t *list, statement_t *stmt);
 
 #define tsENUM   1
 #define tsSTRUCT 2
@@ -267,6 +268,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tPUBLIC
 %token tRANGE
 %token tREADONLY tREF
+%token tREGISTER
 %token tREQUESTEDIT
 %token tRESTRICTED
 %token tRETVAL
@@ -277,6 +279,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %token tSIZEIS tSIZEOF
 %token tSMALL
 %token tSOURCE
+%token tSTATIC
 %token tSTDCALL
 %token tSTRICTCONTEXTHANDLE
 %token tSTRING tSTRUCT
@@ -300,6 +303,7 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <expr> m_expr expr expr_const expr_int_const array
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <ifinfo> interfacehdr
+%type <stgclass> storage_cls_spec
 %type <declspec> decl_spec decl_spec_no_type m_decl_spec_no_type
 %type <type> inherit interface interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
@@ -309,10 +313,10 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
 %type <type> type
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
-%type <var> arg ne_union_field union_field s_field case enum constdef externdef
+%type <var> arg ne_union_field union_field s_field case enum declaration
 %type <var_list> m_args no_args args fields ne_union_fields cases enums enum_list dispint_props field
 %type <var> m_ident t_ident ident
-%type <declarator> declarator direct_declarator
+%type <declarator> declarator direct_declarator init_declarator
 %type <declarator_list> declarator_list
 %type <func> funcdef
 %type <func_list> int_statements dispint_meths
@@ -386,26 +390,23 @@ imp_statements:					{ $$ = NULL; }
 	;
 
 int_statements:					{ $$ = NULL; }
-	| int_statements funcdef ';'		{ $$ = append_func( $1, $2 ); }
-	| int_statements statement		{ $$ = $1; }
+	| int_statements statement		{ $$ = append_func_from_statement( $1, $2 ); }
 	;
 
 semicolon_opt:
 	| ';'
 	;
 
-statement: constdef ';'				{ $$ = make_statement_init_decl($1);
-						  if (!parse_only && do_header) { write_constdef($1); }
-						}
-	| cppquote				{ $$ = make_statement_cppquote($1); }
+statement:
+	  cppquote				{ $$ = make_statement_cppquote($1); }
 	| enumdef ';'				{ $$ = make_statement_type_decl($1);
 						  if (!parse_only && do_header) {
 						    write_type_def_or_decl(header, $1, FALSE, NULL);
 						    fprintf(header, ";\n\n");
 						  }
 						}
-	| externdef ';'				{ $$ = make_statement_extern($1);
-						  if (!parse_only && do_header) write_externdef($1);
+	| declaration ';'			{ $$ = make_statement_declaration($1);
+						  if (!parse_only && do_header) write_declaration($1, is_in_interface);
 						}
 	| import				{ $$ = make_statement_import($1); }
 	| structdef ';'				{ $$ = make_statement_type_decl($1);
@@ -616,14 +617,6 @@ case:	  tCASE expr_int_const ':' union_field	{ attr_t *a = make_attrp(ATTR_CASE,
 						}
 	;
 
-constdef: tCONST decl_spec declarator '=' expr_const
-						{ $$ = reg_const($3->var);
-						  set_type($$, $2, $3, FALSE);
-						  $$->eval = $5;
-						  free($3);
-						}
-	;
-
 enums:						{ $$ = NULL; }
 	| enum_list ','				{ $$ = $1; }
 	| enum_list
@@ -736,12 +729,6 @@ expr_const: expr				{ $$ = $1;
 						}
 	;
 
-externdef: tEXTERN tCONST decl_spec declarator	{ $$ = $4->var;
-						  set_type($$, $3, $4, FALSE);
-						  free($4);
-						}
-	;
-
 fields:						{ $$ = NULL; }
 	| fields field				{ $$ = append_var_list($1, $2); }
 	;
@@ -782,6 +769,19 @@ funcdef:
 						  set_type(v, $2, $3, FALSE);
 						  free($3);
 						  $$ = make_func(v);
+						}
+	;
+
+declaration:
+	  attributes decl_spec init_declarator
+						{ $$ = $3->var;
+						  $$->attrs = $1;
+						  set_type($$, $2, $3, FALSE);
+						  free($3);
+						}
+	| decl_spec init_declarator		{ $$ = $2->var;
+						  set_type($$, $1, $2, FALSE);
+						  free($2);
 						}
 	;
 
@@ -877,6 +877,7 @@ dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); $$->kind = 
 	;
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
+						  is_in_interface = TRUE;
 						  is_object_interface = TRUE;
 						  $$ = $2;
 						  if ($$->defined) error_loc("multiple definition error\n");
@@ -905,6 +906,7 @@ dispinterfacedef: dispinterfacehdr '{'
 						  $$->funcs = $4;
 						  if (!parse_only && do_header) write_dispinterface($$);
 						  if (!parse_only && do_idfile) write_diid($$);
+						  is_in_interface = FALSE;
 						}
 	| dispinterfacehdr
 	 '{' interface ';' '}' 			{ $$ = $1;
@@ -912,6 +914,7 @@ dispinterfacedef: dispinterfacehdr '{'
 						  $$->funcs = $3->funcs;
 						  if (!parse_only && do_header) write_dispinterface($$);
 						  if (!parse_only && do_idfile) write_diid($$);
+						  is_in_interface = FALSE;
 						}
 	;
 
@@ -928,6 +931,7 @@ interfacehdr: attributes interface		{ $$.interface = $2;
 						  if (is_attr($1, ATTR_POINTERDEFAULT))
 						    pointer_default = get_attrv($1, ATTR_POINTERDEFAULT);
 						  is_object_interface = is_object($1);
+						  is_in_interface = TRUE;
 						  if ($2->defined) error_loc("multiple definition error\n");
 						  $2->attrs = check_iface_attrs($2->name, $1);
 						  $2->defined = TRUE;
@@ -945,6 +949,7 @@ interfacedef: interfacehdr inherit
 						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
 						  if (!parse_only && do_idfile) write_iid($$);
 						  pointer_default = $1.old_pointer_default;
+						  is_in_interface = FALSE;
 						}
 /* MIDL is able to import the definition of a base class from inside the
  * definition of a derived class, I'll try to support it with this rule */
@@ -959,6 +964,7 @@ interfacedef: interfacehdr inherit
 						  if (!parse_only && local_stubs) write_locals(local_stubs, $$, TRUE);
 						  if (!parse_only && do_idfile) write_iid($$);
 						  pointer_default = $1.old_pointer_default;
+						  is_in_interface = FALSE;
 						}
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
@@ -982,6 +988,12 @@ moduledef: modulehdr '{' int_statements '}'
 						  $$->funcs = $3;
 						  /* FIXME: if (!parse_only && do_header) write_module($$); */
 						}
+	;
+
+storage_cls_spec:
+	  tEXTERN				{ $$ = STG_EXTERN; }
+	| tSTATIC				{ $$ = STG_STATIC; }
+	| tREGISTER				{ $$ = STG_REGISTER; }
 	;
 
 function_specifier:
@@ -1008,6 +1020,7 @@ m_decl_spec_no_type:				{ $$ = NULL; }
 decl_spec_no_type:
 	  type_qualifier m_decl_spec_no_type	{ $$ = make_decl_spec(NULL, $2, NULL, $1, STG_NONE); }
 	| function_specifier m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, $1, STG_NONE); }
+	| storage_cls_spec m_decl_spec_no_type  { $$ = make_decl_spec(NULL, $2, NULL, NULL, $1); }
 	;
 
 declarator:
@@ -1030,6 +1043,11 @@ direct_declarator:
 declarator_list:
 	  declarator				{ $$ = append_declarator( NULL, $1 ); }
 	| declarator_list ',' declarator	{ $$ = append_declarator( $1, $3 ); }
+	;
+
+init_declarator:
+	  declarator				{ $$ = $1; }
+	| declarator '=' expr_const		{ $$ = $1; $1->var->eval = $3; }
 	;
 
 pointer_type:
@@ -2228,7 +2246,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_BINDABLE */         { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "bindable" },
     /* ATTR_BROADCAST */        { 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "broadcast" },
     /* ATTR_CALLAS */           { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "call_as" },
-    /* ATTR_CALLCONV */         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
+    /* ATTR_CALLCONV */         { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, NULL },
     /* ATTR_CASE */             { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "case" },
     /* ATTR_CONST */            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "const" },
     /* ATTR_CONTEXTHANDLE */    { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "context_handle" },
@@ -2754,17 +2772,20 @@ static statement_t *make_statement_reference(type_t *type)
     return stmt;
 }
 
-static statement_t *make_statement_init_decl(var_t *var)
+static statement_t *make_statement_declaration(var_t *var)
 {
-    statement_t *stmt = make_statement(STMT_INITDECL);
+    statement_t *stmt = make_statement(STMT_DECLARATION);
     stmt->u.var = var;
-    return stmt;
-}
-
-static statement_t *make_statement_extern(var_t *var)
-{
-    statement_t *stmt = make_statement(STMT_EXTERN);
-    stmt->u.var = var;
+    if (var->stgclass == STG_EXTERN && var->eval)
+        warning("'%s' initialised and declared extern\n", var->name);
+    if (is_const_decl(var))
+    {
+        if (var->eval)
+            reg_const(var);
+    }
+    else if ((var->stgclass == STG_NONE || var->stgclass == STG_REGISTER) &&
+	     var->type->type != RPC_FC_FUNCTION)
+        error_loc("instantiation of data is illegal\n");
     return stmt;
 }
 
@@ -2845,5 +2866,19 @@ static statement_list_t *append_statement(statement_list_t *list, statement_t *s
         list_init( list );
     }
     list_add_tail( list, &stmt->entry );
+    return list;
+}
+
+static func_list_t *append_func_from_statement(func_list_t *list, statement_t *stmt)
+{
+    if (stmt->type == STMT_DECLARATION)
+    {
+        var_t *var = stmt->u.var;
+        if (var->stgclass == STG_NONE && var->type->type == RPC_FC_FUNCTION)
+        {
+            check_function_attrs(var->name, var->type->attrs);
+            return append_func(list, make_func(stmt->u.var));
+        }
+    }
     return list;
 }

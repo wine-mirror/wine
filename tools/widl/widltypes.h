@@ -209,8 +209,7 @@ enum storage_class
 enum statement_type
 {
     STMT_LIBRARY,
-    STMT_INITDECL,
-    STMT_EXTERN,
+    STMT_DECLARATION,
     STMT_TYPE,
     STMT_TYPEREF,
     STMT_MODULE,

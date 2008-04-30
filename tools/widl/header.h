@@ -57,8 +57,7 @@ extern void write_locals(FILE *fp, const type_t *iface, int body);
 extern void write_coclass(type_t *cocl);
 extern void write_coclass_forward(type_t *cocl);
 extern void write_typedef(type_t *type);
-extern void write_constdef(const var_t *v);
-extern void write_externdef(const var_t *v);
+extern void write_declaration(const var_t *v, int is_in_interface);
 extern void write_library(const typelib_t *typelib);
 extern void write_user_types(void);
 extern void write_context_handle_rundowns(void);
@@ -70,6 +69,7 @@ extern const var_t* get_context_handle_var(const func_t* func);
 extern int has_out_arg_or_return(const func_t *func);
 extern void write_guid(FILE *f, const char *guid_prefix, const char *name,
                        const UUID *uuid);
+extern int is_const_decl(const var_t *var);
 
 static inline int last_ptr(const type_t *type)
 {

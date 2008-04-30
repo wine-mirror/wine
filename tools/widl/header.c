@@ -477,18 +477,49 @@ void write_typedef(type_t *type)
   fprintf(header, ";\n");
 }
 
-void write_constdef(const var_t *v)
+int is_const_decl(const var_t *var)
 {
-  fprintf(header, "#define %s (", v->name);
-  write_expr(header, v->eval, 0, 1, NULL, NULL);
-  fprintf(header, ")\n\n");
+  const type_t *t;
+  /* strangely, MIDL accepts a const attribute on any pointer in the
+  * declaration to mean that data isn't being instantiated. this appears
+  * to be a bug, but there is no benefit to being incompatible with MIDL,
+  * so we'll do the same thing */
+  for (t = var->type; ; )
+  {
+    if (is_attr(t->attrs, ATTR_CONST))
+      return TRUE;
+    else if (is_ptr(t))
+      t = t->ref;
+    else break;
+  }
+  return FALSE;
 }
 
-void write_externdef(const var_t *v)
+void write_declaration(const var_t *v, int is_in_interface)
 {
-  fprintf(header, "extern const ");
-  write_type_def_or_decl(header, v->type, FALSE, "%s", v->name);
-  fprintf(header, ";\n\n");
+  if (is_const_decl(v) && v->eval)
+  {
+    fprintf(header, "#define %s (", v->name);
+    write_expr(header, v->eval, 0, 1, NULL, NULL);
+    fprintf(header, ")\n\n");
+  }
+  else if (v->type->type != RPC_FC_FUNCTION || !is_in_interface)
+  {
+    switch (v->stgclass)
+    {
+      case STG_NONE:
+      case STG_REGISTER: /* ignored */
+        break;
+      case STG_STATIC:
+        fprintf(header, "static ");
+        break;
+      case STG_EXTERN:
+        fprintf(header, "extern ");
+        break;
+    }
+    write_type_def_or_decl(header, v->type, FALSE, "%s", v->name);
+    fprintf(header, ";\n\n");
+  }
 }
 
 void write_library(const typelib_t *typelib)
