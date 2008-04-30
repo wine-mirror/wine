@@ -122,6 +122,32 @@ static struct open_file_list* source_search_open_file(const char* name)
     return ol;
 }
 
+static BOOL     source_locate_file(const char* srcfile, char* path)
+{
+    BOOL        found = FALSE;
+
+    if (GetFileAttributes(srcfile) != INVALID_FILE_ATTRIBUTES)
+    {
+        strcpy(path, srcfile);
+        found = TRUE;
+    }
+    else if (search_path)
+    {
+        const char* spath;
+
+        spath = srcfile;
+        while (!found)
+        {
+            spath = strchr(spath, '\\');
+            if (!spath) spath = strchr(spath, '/');
+            if (!spath) break;
+            spath++;
+            found = SearchPathA(search_path, spath, NULL, MAX_PATH, path, NULL);
+        }
+    }
+    return found;
+}
+
 static int source_display(const char* sourcefile, int start, int end)
 {
     char*                       addr;
@@ -158,9 +184,7 @@ static int source_display(const char* sourcefile, int start, int end)
         /*
          * Crapola.  We need to try and open the file.
          */
-        strcpy(tmppath, sourcefile);
-        if (GetFileAttributes(sourcefile) == INVALID_FILE_ATTRIBUTES &&
-            (!search_path || !SearchPathA(search_path, sourcefile, NULL, MAX_PATH, tmppath, NULL)))
+        if (!source_locate_file(sourcefile, tmppath))
         {
             if (dbg_interactiveP)
             {
@@ -180,6 +204,7 @@ static int source_display(const char* sourcefile, int start, int end)
                  */
                 strcat(tmppath, basename);
             }
+            else tmppath[0] = '\0';
 
             if (GetFileAttributes(tmppath) == INVALID_FILE_ATTRIBUTES)
             {
