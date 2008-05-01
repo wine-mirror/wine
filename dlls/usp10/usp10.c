@@ -1413,7 +1413,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
          hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
          piAdvance, piJustify, pGoffset);
 
-    if (!hdc && psc && !*psc) return E_INVALIDARG;
+    if (!hdc || !psc) return E_INVALIDARG;
     if (!piAdvance || !psa || !pwGlyphs) return E_INVALIDARG;
 
     fuOptions &= ETO_CLIPPED + ETO_OPAQUE;

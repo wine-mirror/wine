@@ -498,7 +498,7 @@ static void test_ScriptTextOut(HDC hdc)
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
-            ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+            ok (psc == NULL, "psc should be null\n");
 
             /* Test Rect Rgn is acceptable */
             rect.top = 10;
@@ -508,7 +508,7 @@ static void test_ScriptTextOut(HDC hdc)
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
-            ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+            ok (psc == NULL, "psc should be null\n");
 
             iCP = 1;
             hr = ScriptCPtoX(iCP, fTrailing, cChars, pcGlyphs, (const WORD *) &pwLogClust,
@@ -953,7 +953,9 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         /*
          * ScriptStringCPtoX should free ssa, hence ScriptStringFree should fail
          */
-        ok(hr == E_INVALIDARG, "ScriptStringFree should return E_INVALIDARG not %08x\n", hr);
+        ok(hr == E_INVALIDARG ||
+           hr == E_FAIL, /* win2k3 */
+           "ScriptStringFree should return E_INVALIDARG or E_FAIL not %08x\n", hr);
     }
 }
 
