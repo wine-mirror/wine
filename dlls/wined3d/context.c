@@ -140,8 +140,8 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         if(cfgs->iPixelType != WGL_TYPE_RGBA_ARB)
             continue;
 
-        /* In all cases except when we are in pbuffer-mode we need a window drawable format with double buffering. */
-        if(!pbuffer && !cfgs->windowDrawable && !cfgs->doubleBuffer)
+        /* In window mode (!pbuffer) we need a window drawable format and double buffering. */
+        if(!pbuffer && !(cfgs->windowDrawable && cfgs->doubleBuffer))
             continue;
 
         /* We like to have aux buffers in backbuffer mode */
