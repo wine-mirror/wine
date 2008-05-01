@@ -233,7 +233,26 @@ static inline void DECLSPEC_NORETURN __wine_unwind_frame( EXCEPTION_RECORD *reco
     wine_frame->ExceptionCode   = record->ExceptionCode;
     wine_frame->ExceptionRecord = wine_frame;
 
+#if defined(__GNUC__) && defined(__i386__)
+    {
+        /* RtlUnwind clobbers registers on Windows */
+        int dummy1, dummy2, dummy3;
+        __asm__ __volatile__("pushl %%ebp\n\t"
+                             "pushl %%ebx\n\t"
+                             "pushl $0\n\t"
+                             "pushl %2\n\t"
+                             "pushl $0\n\t"
+                             "pushl %1\n\t"
+                             "call *%0\n\t"
+                             "popl %%ebx\n\t"
+                             "popl %%ebp"
+                             : "=a" (dummy1), "=S" (dummy2), "=D" (dummy3)
+                             : "0" (RtlUnwind), "1" (frame), "2" (record)
+                             : "ecx", "edx", "memory" );
+    }
+#else
     RtlUnwind( frame, 0, record, 0 );
+#endif
     __wine_pop_frame( frame );
     siglongjmp( wine_frame->jmp, 1 );
 }
