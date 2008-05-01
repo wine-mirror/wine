@@ -466,56 +466,53 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
  */
 void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
 {
-    LONGLONG res;
-
     if (lvalue->type.id == dbg_itype_none)
     {
         dbg_printf("Unable to evaluate expression\n");
         return;
     }
 
-    res = types_extract_as_longlong(lvalue);
-
-    /* FIXME: this implies i386 byte ordering */
-    switch (format)
+    if (format != 0)
     {
-    case 'x':
-        dbg_printf("0x%x", (DWORD)(ULONG64)res);
-        break;
+        LONGLONG res = types_extract_as_longlong(lvalue);
+        WCHAR wch;
 
-    case 'd':
-        dbg_print_longlong(res, TRUE);
-        dbg_printf("\n");
-        break;
-
-    case 'c':
-        dbg_printf("%d = '%c'", (char)(res & 0xff), (char)(res & 0xff));
-        break;
-
-    case 'u':
+        /* FIXME: this implies i386 byte ordering */
+        switch (format)
         {
-            WCHAR wch = (WCHAR)(res & 0xFFFF);
+        case 'x':
+            dbg_printf("0x%x", (DWORD)(ULONG64)res);
+            return;
+
+        case 'd':
+            dbg_print_longlong(res, TRUE);
+            dbg_printf("\n");
+            return;
+
+        case 'c':
+            dbg_printf("%d = '%c'", (char)(res & 0xff), (char)(res & 0xff));
+            return;
+
+        case 'u':
+            wch = (WCHAR)(res & 0xFFFF);
             dbg_printf("%d = '", wch);
             dbg_outputW(&wch, 1);
             dbg_printf("'");
-        }
-        break;
+            return;
 
-    case 'i':
-    case 's':
-    case 'w':
-    case 'b':
-        dbg_printf("Format specifier '%c' is meaningless in 'print' command\n", format);
-    case 0:
-        if (lvalue->type.id == dbg_itype_segptr)
-        {
-            dbg_print_longlong(res, TRUE);
-            dbg_printf("\n");
+        case 'i':
+        case 's':
+        case 'w':
+        case 'b':
+            dbg_printf("Format specifier '%c' is meaningless in 'print' command\n", format);
         }
-        else 
-            print_typed_basic(lvalue);
-        break;
     }
+    if (lvalue->type.id == dbg_itype_segptr)
+    {
+        dbg_print_longlong(types_extract_as_longlong(lvalue), TRUE);
+        dbg_printf("\n");
+    }
+    else print_typed_basic(lvalue);
 }
 
 void print_bare_address(const ADDRESS64* addr)
