@@ -141,14 +141,16 @@ static void check_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *f, int
   ft.lpstrText = f->needle;
   findloc = SendMessage(hwnd, EM_FINDTEXT, f->flags, (LPARAM) &ft);
   ok(findloc == f->expected_loc,
-     "EM_FINDTEXT(%s,%d) '%s' in range(%d,%d), flags %08x, got start at %d\n",
-     name, id, f->needle, f->start, f->end, f->flags, findloc);
+     "EM_FINDTEXT(%s,%d) '%s' in range(%d,%d), flags %08x, got start at %d, expected %d\n",
+     name, id, f->needle, f->start, f->end, f->flags, findloc, f->expected_loc);
 }
 
 static void check_EM_FINDTEXTEX(HWND hwnd, const char *name, struct find_s *f,
     int id) {
   int findloc;
   FINDTEXTEX ft;
+  int expected_end_loc;
+
   memset(&ft, 0, sizeof(ft));
   ft.chrg.cpMin = f->start;
   ft.chrg.cpMax = f->end;
@@ -160,10 +162,11 @@ static void check_EM_FINDTEXTEX(HWND hwnd, const char *name, struct find_s *f,
   ok(ft.chrgText.cpMin == f->expected_loc,
       "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %d\n",
       name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMin);
-  ok(ft.chrgText.cpMax == ((f->expected_loc == -1) ? -1
-        : f->expected_loc + strlen(f->needle)),
-      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, end at %d\n",
-      name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMax);
+  expected_end_loc = ((f->expected_loc == -1) ? -1
+        : f->expected_loc + strlen(f->needle));
+  ok(ft.chrgText.cpMax == expected_end_loc,
+      "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, end at %d, expected %d\n",
+      name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMax, expected_end_loc);
 }
 
 static void run_tests_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *find,
@@ -187,6 +190,7 @@ static void run_tests_EM_FINDTEXT(HWND hwnd, const char *name, struct find_s *fi
 static void test_EM_FINDTEXT(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
+  CHARFORMAT2 cf2;
 
   /* Empty rich edit control */
   run_tests_EM_FINDTEXT(hwndRichEdit, "1", find_tests,
@@ -196,6 +200,30 @@ static void test_EM_FINDTEXT(void)
 
   /* Haystack text */
   run_tests_EM_FINDTEXT(hwndRichEdit, "2", find_tests2,
+      sizeof(find_tests2)/sizeof(struct find_s));
+
+  /* Setting a format on an arbitrary range should have no effect in search
+     results. This tests correct offset reporting across runs. */
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,
+             (LPARAM) &cf2);
+  cf2.dwMask = CFM_ITALIC | cf2.dwMask;
+  cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
+  SendMessage(hwndRichEdit, EM_SETSEL, 6, 20);
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  /* Haystack text, again */
+  run_tests_EM_FINDTEXT(hwndRichEdit, "2-bis", find_tests2,
+      sizeof(find_tests2)/sizeof(struct find_s));
+
+  /* Yet another range */
+  cf2.dwMask = CFM_BOLD | cf2.dwMask;
+  cf2.dwEffects = CFE_BOLD ^ cf2.dwEffects;
+  SendMessage(hwndRichEdit, EM_SETSEL, 11, 15);
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  /* Haystack text, again */
+  run_tests_EM_FINDTEXT(hwndRichEdit, "2-bisbis", find_tests2,
       sizeof(find_tests2)/sizeof(struct find_s));
 
   DestroyWindow(hwndRichEdit);

@@ -1366,7 +1366,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
               break;
           }
 
-          nStart += para->member.para.nCharOfs + pCurItem->member.run.nCharOfs;
+          nStart += para->member.para.nCharOfs + item->member.run.nCharOfs;
           if (chrgText)
           {
             chrgText->cpMin = nStart;
