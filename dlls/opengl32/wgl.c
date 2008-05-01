@@ -313,7 +313,7 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   return TRUE;
 }
 
-#ifdef HAVE_GL_GLU_H
+#ifdef SONAME_LIBGLU
 
 static void fixed_to_double(POINTFX fixed, UINT em_size, GLdouble vertex[3])
 {
@@ -503,7 +503,7 @@ error_in_list:
 
 }
 
-#else /* HAVE_GL_GLU_H */
+#else /* SONAME_LIBGLU */
 
 static BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
                                       DWORD first,
@@ -519,7 +519,7 @@ static BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
     return FALSE;
 }
 
-#endif /* HAVE_GL_GLU_H */
+#endif /* SONAME_LIBGLU */
 
 /***********************************************************************
  *		wglUseFontOutlinesA (OPENGL32.@)

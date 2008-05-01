@@ -35,6 +35,8 @@ AC_ARG_WITH(esd,       AS_HELP_STRING([--without-esd],[do not use the EsounD sou
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]),
             [if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi])
 AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Digital Camera support)]))
+AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]),
+            [if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi])
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
 AC_ARG_WITH(jack,      AS_HELP_STRING([--without-jack],[do not use the Jack sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_jack_jack_h=no; fi])
@@ -742,13 +744,14 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
 	                            fi],
 				    $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib)],
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-
-	        dnl Check for GLU32 library.
-		AC_CHECK_LIB(GLU,gluLookAt,
-			     [OPENGL_LIBS="$OPENGL_LIBS -lGLU"
-			     GLU32FILES='$(GLU32FILES)']
-			     ,,
-			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+                 if test "$ac_cv_header_GL_glu_h" = "yes"
+                 then
+                    WINE_CHECK_SONAME(GLU,gluLookAt,[OPENGL_LIBS="$OPENGL_LIBS -lGLU"
+                                                     GLU32FILES='$(GLU32FILES)'],,
+                                      [$OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS])
+                 fi
+                 WINE_NOTICE_WITH(glu,[test "x$ac_cv_lib_soname_GLU" = "x"],
+                                 [libGLU development files not found, GLU won't be supported.])
              else
                  opengl_msg="Old Mesa headers detected. Consider upgrading your Mesa libraries."
 	     fi
