@@ -127,6 +127,9 @@ static BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
  */
 static BOOL is_window_rect_mapped( const RECT *rect )
 {
+    /* don't map if rect is empty */
+    if (IsRectEmpty( rect )) return FALSE;
+
     /* don't map if rect is off-screen */
     if (rect->left >= virtual_screen_rect.right ||
         rect->top >= virtual_screen_rect.bottom ||
@@ -149,6 +152,19 @@ static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD styl
     /* Metacity needs the window to be resizable to make it fullscreen */
     return (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
             data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height);
+}
+
+
+/***********************************************************************
+ *              get_window_owner
+ */
+static HWND get_window_owner( HWND hwnd )
+{
+    RECT rect;
+    HWND owner = GetWindow( hwnd, GW_OWNER );
+    /* ignore the zero-size owners used by Delphi apps */
+    if (owner && GetWindowRect( owner, &rect ) && IsRectEmpty( &rect )) owner = 0;
+    return owner;
 }
 
 
@@ -869,7 +885,7 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
     {
         style = GetWindowLongW( data->hwnd, GWL_STYLE );
         ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
-        owner = GetWindow( data->hwnd, GW_OWNER );
+        owner = get_window_owner( data->hwnd );
     }
 
     /* transient for hint */
@@ -964,7 +980,7 @@ void update_net_wm_states( Display *display, struct x11drv_win_data *data )
         new_state |= (1 << NET_WM_STATE_ABOVE);
     if (ex_style & WS_EX_TOOLWINDOW)
         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER);
-    if (!(ex_style & WS_EX_APPWINDOW) && GetWindow( data->hwnd, GW_OWNER ))
+    if (!(ex_style & WS_EX_APPWINDOW) && get_window_owner( data->hwnd ))
         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR);
 
     if (!data->mapped)  /* set the _NET_WM_STATE atom directly */
