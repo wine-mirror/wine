@@ -178,6 +178,13 @@ static void test_create_env(void)
         { "ProgramFiles", { 1, 1, 0, 0 } },
         { 0, { 0, 0, 0, 0 } }
     };
+    static const struct profile_item htok_vars[] = {
+        { "PATH", { 1, 1, 0, 0 } },
+        { "TEMP", { 1, 1, 0, 0 } },
+        { "TMP", { 1, 1, 0, 0 } },
+        { "USERPROFILE", { 1, 1, 0, 0 } },
+        { 0, { 0, 0, 0, 0 } }
+    };
 
     r = CreateEnvironmentBlock(NULL, NULL, FALSE);
     expect(FALSE, r);
@@ -228,6 +235,37 @@ static void test_create_env(void)
             todo_wine expect_env(TRUE, r, common_vars[i].name);
         else
             expect_env(TRUE, r, common_vars[i].name);
+        i++;
+    }
+
+    /* Test for environment variables with values that depends on htok */
+    i = 0;
+    while (htok_vars[i].name)
+    {
+        j = 0;
+        r = get_env(env1, htok_vars[i].name, &st);
+        if (htok_vars[i].todo[j])
+            todo_wine expect_env(TRUE, r, htok_vars[i].name);
+        else
+            expect_env(TRUE, r, htok_vars[i].name);
+        j++;
+        r = get_env(env2, htok_vars[i].name, &st);
+        if (htok_vars[i].todo[j])
+            todo_wine expect_env(TRUE, r, htok_vars[i].name);
+        else
+            expect_env(TRUE, r, htok_vars[i].name);
+        j++;
+        r = get_env(env3, htok_vars[i].name, &st);
+        if (htok_vars[i].todo[j])
+            todo_wine expect_env(TRUE, r, htok_vars[i].name);
+        else
+            expect_env(TRUE, r, htok_vars[i].name);
+        j++;
+        r = get_env(env4, htok_vars[i].name, &st);
+        if (htok_vars[i].todo[j])
+            todo_wine expect_env(TRUE, r, htok_vars[i].name);
+        else
+            expect_env(TRUE, r, htok_vars[i].name);
         i++;
     }
 }
