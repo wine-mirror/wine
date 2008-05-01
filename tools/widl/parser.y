@@ -904,7 +904,7 @@ dispinterfacedef: dispinterfacehdr '{'
 	  '}'					{ $$ = $1;
 						  $$->fields_or_args = $3;
 						  $$->funcs = $4;
-						  if (!parse_only && do_header) write_dispinterface($$);
+						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_diid($$);
 						  is_in_interface = FALSE;
 						}
@@ -912,7 +912,7 @@ dispinterfacedef: dispinterfacehdr '{'
 	 '{' interface ';' '}' 			{ $$ = $1;
 						  $$->fields_or_args = $3->fields_or_args;
 						  $$->funcs = $3->funcs;
-						  if (!parse_only && do_header) write_dispinterface($$);
+						  if (!parse_only && do_header) write_interface($$);
 						  if (!parse_only && do_idfile) write_diid($$);
 						  is_in_interface = FALSE;
 						}
