@@ -727,9 +727,10 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
      * do it twice to make the intended change). So skip parts of the tests on
      * those platforms */
     if( !iswin9x) {
-        test_setborder(1,  1, dpi);
-        test_setborder(0,  1, dpi);
+        /* win2k3 fails if you set the same border twice, or if size is 0 */
         test_setborder(2,  1, dpi);
+        test_setborder(1,  1, dpi);
+        test_setborder(3,  1, dpi);
     }
     test_setborder(1, 0, dpi);
     test_setborder(0, 0, dpi);
