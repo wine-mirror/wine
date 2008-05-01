@@ -93,6 +93,7 @@ int copy_default_colors = 128;
 int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 int xrender_error_base = 0;
+HMODULE x11drv_module = 0;
 
 static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
@@ -582,6 +583,7 @@ static void process_detach(void)
     /* cleanup GDI */
     X11DRV_GDI_Finalize();
 
+    IME_UnregisterClasses();
     DeleteCriticalSection( &X11DRV_CritSection );
     TlsFree( thread_data_tls_index );
 }
@@ -674,15 +676,14 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        x11drv_module = hinst;
         ret = process_attach();
-        IME_RegisterClasses(hinst);
         break;
     case DLL_THREAD_DETACH:
         thread_detach();
         break;
     case DLL_PROCESS_DETACH:
         process_detach();
-        IME_UnregisterClasses(hinst);
         break;
     }
     return ret;

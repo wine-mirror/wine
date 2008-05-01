@@ -123,6 +123,42 @@ static BOOL UnlockRealIMC(HIMC hIMC)
         return FALSE;
 }
 
+static void IME_RegisterClasses(void)
+{
+    static int done;
+    WNDCLASSW wndClass;
+
+    if (done) return;
+    done = 1;
+
+    ZeroMemory(&wndClass, sizeof(WNDCLASSW));
+    wndClass.style = CS_GLOBALCLASS | CS_IME | CS_HREDRAW | CS_VREDRAW;
+    wndClass.lpfnWndProc = IME_WindowProc;
+    wndClass.cbClsExtra = 0;
+    wndClass.cbWndExtra = 2 * sizeof(LONG);
+    wndClass.hInstance = x11drv_module;
+    wndClass.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_ARROW);
+    wndClass.hIcon = LoadIconW(NULL, (LPWSTR)IDI_APPLICATION);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW +1);
+    wndClass.lpszMenuName   = 0;
+    wndClass.lpszClassName = UI_CLASS_NAME;
+
+    RegisterClassW(&wndClass);
+
+    WM_MSIME_SERVICE = RegisterWindowMessageA("MSIMEService");
+    WM_MSIME_RECONVERTOPTIONS = RegisterWindowMessageA("MSIMEReconvertOptions");
+    WM_MSIME_MOUSE = RegisterWindowMessageA("MSIMEMouseOperation");
+    WM_MSIME_RECONVERTREQUEST = RegisterWindowMessageA("MSIMEReconvertRequest");
+    WM_MSIME_RECONVERT = RegisterWindowMessageA("MSIMEReconvert");
+    WM_MSIME_QUERYPOSITION = RegisterWindowMessageA("MSIMEQueryPosition");
+    WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
+}
+
+void IME_UnregisterClasses(void)
+{
+    UnregisterClassW(UI_CLASS_NAME, x11drv_module);
+}
+
 static HIMCC ImeCreateBlankCompStr(void)
 {
     HIMCC rc;
@@ -520,6 +556,7 @@ BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass,
                        LPCWSTR lpszOption)
 {
     TRACE("\n");
+    IME_RegisterClasses();
     lpIMEInfo->dwPrivateDataSize = sizeof (IMEPRIVATE);
     lpIMEInfo->fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET;
     lpIMEInfo->fdwConversionCaps = IME_CMODE_NATIVE;
@@ -906,37 +943,6 @@ DWORD WINAPI ImeGetImeMenuItems(HIMC hIMC,  DWORD dwFlags,  DWORD dwType,
 }
 
 /* Interfaces to XIM and other parts of winex11drv */
-
-void IME_RegisterClasses(HINSTANCE hImeInst)
-{
-    WNDCLASSW wndClass;
-    ZeroMemory(&wndClass, sizeof(WNDCLASSW));
-    wndClass.style = CS_GLOBALCLASS | CS_IME | CS_HREDRAW | CS_VREDRAW;
-    wndClass.lpfnWndProc = (WNDPROC) IME_WindowProc;
-    wndClass.cbClsExtra = 0;
-    wndClass.cbWndExtra = 2 * sizeof(LONG);
-    wndClass.hInstance = hImeInst;
-    wndClass.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_ARROW);
-    wndClass.hIcon = LoadIconW(NULL, (LPWSTR)IDI_APPLICATION);
-    wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW +1);
-    wndClass.lpszMenuName   = 0;
-    wndClass.lpszClassName = UI_CLASS_NAME;
-
-    RegisterClassW(&wndClass);
-
-    WM_MSIME_SERVICE = RegisterWindowMessageA("MSIMEService");
-    WM_MSIME_RECONVERTOPTIONS = RegisterWindowMessageA("MSIMEReconvertOptions");
-    WM_MSIME_MOUSE = RegisterWindowMessageA("MSIMEMouseOperation");
-    WM_MSIME_RECONVERTREQUEST = RegisterWindowMessageA("MSIMEReconvertRequest");
-    WM_MSIME_RECONVERT = RegisterWindowMessageA("MSIMEReconvert");
-    WM_MSIME_QUERYPOSITION = RegisterWindowMessageA("MSIMEQueryPosition");
-    WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
-}
-
-void IME_UnregisterClasses(HINSTANCE hImeInst)
-{
-    UnregisterClassW(UI_CLASS_NAME, hImeInst);
-}
 
 void IME_SetOpenStatus(BOOL fOpen)
 {

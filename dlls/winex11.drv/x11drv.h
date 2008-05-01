@@ -274,8 +274,7 @@ extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev);
 extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap);
 
 /* IME support */
-extern void IME_RegisterClasses(HINSTANCE hImeInst);
-extern void IME_UnregisterClasses(HINSTANCE hImeInst);
+extern void IME_UnregisterClasses(void);
 extern void IME_SetOpenStatus(BOOL fOpen);
 extern LRESULT IME_SendMessageToSelectedHWND(UINT msg, WPARAM wParam, LPARAM lParam);
 extern INT IME_GetCursorPos();
@@ -555,6 +554,7 @@ extern int primary_monitor;
 extern int copy_default_colors;
 extern int alloc_system_colors;
 extern int xrender_error_base;
+extern HMODULE x11drv_module;
 
 extern BYTE key_state_table[256];
 extern POINT cursor_pos;
