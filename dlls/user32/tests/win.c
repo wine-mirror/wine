@@ -4585,7 +4585,7 @@ static LRESULT CALLBACK TestExposedRegion_WndProc(HWND hwnd, UINT msg, WPARAM wP
                              10,10,50,50, NULL, NULL, 0, NULL);
         DestroyWindow(win);
 
-        waitResult = MsgWaitForMultipleObjectsEx( 0, NULL, waitTime, QS_PAINT, 0 );
+        waitResult = MsgWaitForMultipleObjects( 0, NULL, FALSE, waitTime, QS_PAINT );
 
         ValidateRect(hwnd, NULL);
         EndPaint(hwnd, &ps);
