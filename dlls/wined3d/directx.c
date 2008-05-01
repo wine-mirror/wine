@@ -3949,7 +3949,7 @@ BOOL InitAdapters(void) {
                 }
             }
 
-            TRACE("iPixelFormat=%d, iPixelType=%#x, RGBA=%d/%d/%d/%d, doubleBuffer=%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
+            TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
             cfgs++;
         }
 
