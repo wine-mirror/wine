@@ -148,8 +148,8 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         if(auxBuffers && !cfgs->auxBuffers)
             continue;
 
-        /* In pbuffer-mode we need a pbuffer-capable format */
-        if(pbuffer && !cfgs->pbufferDrawable)
+        /* In pbuffer-mode we need a pbuffer-capable format but we don't want double buffering */
+        if(pbuffer && (!cfgs->pbufferDrawable || cfgs->doubleBuffer))
             continue;
 
         if(cfgs->redSize != redBits)
