@@ -1039,7 +1039,8 @@ unsigned HLPFILE_HalfPointsToTwips(unsigned pts)
  *
  *           HLPFILE_BrowseParagraph
  */
-static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE *buf, BYTE* end)
+static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
+                                    BYTE *buf, BYTE* end, unsigned* parlen)
 {
     UINT               textsize;
     BYTE              *format, *format_end;
@@ -1054,6 +1055,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
 
     if (buf + 0x19 > end) {WINE_WARN("header too small\n"); return FALSE;};
 
+    *parlen = 0;
     blocksize = GET_UINT(buf, 0);
     size = GET_UINT(buf, 0x4);
     datalen = GET_UINT(buf, 0x10);
@@ -1084,7 +1086,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
     if (buf[0x14] == 0x20 || buf[0x14] == 0x23)
     {
         fetch_long(&format);
-        fetch_ushort(&format);
+        *parlen = fetch_ushort(&format);
     }
 
     if (buf[0x14] == 0x23)
@@ -1505,12 +1507,14 @@ done:
  *		HLPFILE_BrowsePage
  *
  */
-BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd, unsigned font_scale)
+BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd,
+                           unsigned font_scale, unsigned relative)
 {
     HLPFILE     *hlpfile = page->file;
     BYTE        *buf, *end;
     DWORD       ref = page->reference;
-    unsigned    index, old_index = -1, offset, count = 0, cpg;
+    unsigned    index, old_index = -1, offset, count = 0, offs = 0;
+    unsigned    cpg, parlen;
     char        tmp[1024];
     const char* ck = NULL;
 
@@ -1520,6 +1524,8 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd, unsigned font
     rd->first_link = rd->current_link = NULL;
     rd->force_color = FALSE;
     rd->font_scale = font_scale;
+    rd->relative = relative;
+    rd->char_pos_rel = 0;
 
     switch (hlpfile->charset)
     {
@@ -1623,7 +1629,7 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd, unsigned font
         buf = hlpfile->topic_map[index] + offset;
         if (buf + 0x15 >= hlpfile->topic_end) {WINE_WARN("extra\n"); break;}
         end = min(buf + GET_UINT(buf, 0), hlpfile->topic_end);
-        if (index != old_index) {old_index = index;}
+        if (index != old_index) {offs = 0; old_index = index;}
 
         switch (buf[0x14])
         {
@@ -1633,7 +1639,10 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd, unsigned font
         case 0x01:
         case 0x20:
         case 0x23:
-            if (!HLPFILE_BrowseParagraph(page, rd, buf, end)) return FALSE;
+            if (!HLPFILE_BrowseParagraph(page, rd, buf, end, &parlen)) return FALSE;
+            if (relative >= index * 0x8000 + offs)
+                rd->char_pos_rel = rd->char_pos;
+            offs += parlen;
             break;
         default:
             WINE_ERR("buf[0x14] = %x\n", buf[0x14]);

@@ -1068,8 +1068,12 @@ static void WINHELP_SetupText(HWND hTextWnd, WINHELP_WINDOW* win, ULONG relative
     {
         struct RtfData  rd;
         EDITSTREAM      es;
+        unsigned        cp = 0;
+        POINTL          ptl;
+        POINT           pt;
 
-        if (HLPFILE_BrowsePage(win->page, &rd, win->font_scale))
+
+        if (HLPFILE_BrowsePage(win->page, &rd, win->font_scale, relative))
         {
             rd.where = rd.data;
             es.dwCookie = (DWORD_PTR)&rd;
@@ -1077,17 +1081,19 @@ static void WINHELP_SetupText(HWND hTextWnd, WINHELP_WINDOW* win, ULONG relative
             es.pfnCallback = WINHELP_RtfStreamIn;
 
             SendMessageW(hTextWnd, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+            cp = rd.char_pos_rel;
         }
         /* FIXME: else leaking potentially the rd.first_link chain */
         HeapFree(GetProcessHeap(), 0, rd.data);
+        SendMessage(hTextWnd, EM_POSFROMCHAR, (WPARAM)&ptl, cp ? cp - 1 : 0);
+        pt.x = 0; pt.y = ptl.y;
+        SendMessage(hTextWnd, EM_SETSCROLLPOS, 0, (LPARAM)&pt);
     }
     else
     {
         SendMessage(hTextWnd, WM_SETTEXT, 0, (LPARAM)"");
     }
     SendMessage(hTextWnd, WM_SETREDRAW, TRUE, 0);
-    SendMessage(hTextWnd, EM_SETSEL, 0, 0);
-    SendMessage(hTextWnd, EM_SCROLLCARET, 0, 0);
     InvalidateRect(hTextWnd, NULL, TRUE);
 }
 
