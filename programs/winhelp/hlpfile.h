@@ -40,48 +40,12 @@ typedef struct tagHlpFileLink
     enum {hlp_link_link, hlp_link_popup, hlp_link_macro} cookie;
     LPCSTR      string;         /* name of the file to for the link (NULL if same file) */
     LONG        hash;           /* topic index */
-    unsigned    bClrChange : 1, /* true if the link is green & underlined */
-                wRefCount;      /* number of internal references to this object */
+    unsigned    bClrChange : 1; /* true if the link is green & underlined */
     unsigned    window;         /* window number for displaying the link (-1 is current) */
     DWORD       cpMin;
     DWORD       cpMax;
     struct tagHlpFileLink* next;
 } HLPFILE_LINK;
-
-enum para_type {para_normal_text, para_debug_text, para_bitmap, para_metafile};
-
-typedef struct tagHlpFileParagraph
-{
-    enum para_type              cookie;
-
-    union
-    {
-        struct
-        {
-            LPSTR                       lpszText;
-            unsigned                    wFont;
-            unsigned                    wIndent;
-            unsigned                    wHSpace;
-            unsigned                    wVSpace;
-        } text;
-        struct
-        {
-            unsigned                    pos;    /* 0: center, 1: left, 2: right */
-            union 
-            {
-                struct 
-                {
-                    HBITMAP             hBitmap;
-                } bmp;
-                METAFILEPICT            mfp;
-            } u;
-        } gfx; /* for bitmaps and metafiles */
-    } u;
-
-    HLPFILE_LINK*               link;
-
-    struct tagHlpFileParagraph* next;
-} HLPFILE_PARAGRAPH;
 
 typedef struct tagHlpFileMacro
 {
@@ -92,7 +56,6 @@ typedef struct tagHlpFileMacro
 typedef struct tagHlpFilePage
 {
     LPSTR                       lpszTitle;
-    HLPFILE_PARAGRAPH*          first_paragraph;
     HLPFILE_MACRO*              first_macro;
 
     HLPFILE_LINK*               first_link;
@@ -199,7 +162,6 @@ HLPFILE_PAGE* HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative);
 HLPFILE_PAGE* HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap, ULONG* relative);
 HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relative);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
-void          HLPFILE_FreeLink(HLPFILE_LINK* link);
 void          HLPFILE_FreeHlpFile(HLPFILE*);
 unsigned      HLPFILE_HalfPointsToTwips(unsigned pts);
 
