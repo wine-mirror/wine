@@ -746,8 +746,7 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
                  if test "$ac_cv_header_GL_glu_h" = "yes"
                  then
-                    WINE_CHECK_SONAME(GLU,gluLookAt,[OPENGL_LIBS="$OPENGL_LIBS -lGLU"
-                                                     GLU32FILES='$(GLU32FILES)'],,
+                    WINE_CHECK_SONAME(GLU,gluLookAt,[GLU32FILES='$(GLU32FILES)'],,
                                       [$OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS])
                  fi
                  WINE_NOTICE_WITH(glu,[test "x$ac_cv_lib_soname_GLU" = "x"],

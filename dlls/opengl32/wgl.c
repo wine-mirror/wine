@@ -56,6 +56,19 @@ typedef struct wine_wgl_s {
 /** global wgl object */
 static wine_wgl_t wine_wgl;
 
+#ifdef SONAME_LIBGLU
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f;
+MAKE_FUNCPTR(gluNewTess)
+MAKE_FUNCPTR(gluDeleteTess)
+MAKE_FUNCPTR(gluTessBeginContour)
+MAKE_FUNCPTR(gluTessBeginPolygon)
+MAKE_FUNCPTR(gluTessCallback)
+MAKE_FUNCPTR(gluTessEndContour)
+MAKE_FUNCPTR(gluTessEndPolygon)
+MAKE_FUNCPTR(gluTessVertex)
+#undef MAKE_FUNCPTR
+#endif /* SONAME_LIBGLU */
+
 /* x11drv GDI escapes */
 #define X11DRV_ESCAPE 6789
 enum x11drv_escape_codes
@@ -76,6 +89,7 @@ void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 static HMODULE opengl32_handle;
+static void* libglu_handle = NULL;
 
 static char* internal_gl_disabled_extensions = NULL;
 static char* internal_gl_extensions = NULL;
@@ -315,6 +329,42 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 
 #ifdef SONAME_LIBGLU
 
+static void *load_libglu(void)
+{
+    static int already_loaded;
+    void *handle;
+
+    if (already_loaded) return libglu_handle;
+    already_loaded = 1;
+
+    TRACE("Trying to load GLU library: %s\n", SONAME_LIBGLU);
+    handle = wine_dlopen(SONAME_LIBGLU, RTLD_NOW, NULL, 0);
+    if (!handle)
+    {
+        WARN("Failed to load %s\n", SONAME_LIBGLU);
+        return NULL;
+    }
+
+#define LOAD_FUNCPTR(f) if((p##f = (void*)wine_dlsym(handle, #f, NULL, 0)) == NULL) goto sym_not_found;
+LOAD_FUNCPTR(gluNewTess)
+LOAD_FUNCPTR(gluDeleteTess)
+LOAD_FUNCPTR(gluTessBeginContour)
+LOAD_FUNCPTR(gluTessBeginPolygon)
+LOAD_FUNCPTR(gluTessCallback)
+LOAD_FUNCPTR(gluTessEndContour)
+LOAD_FUNCPTR(gluTessEndPolygon)
+LOAD_FUNCPTR(gluTessVertex)
+#undef LOAD_FUNCPTR
+    libglu_handle = handle;
+    return handle;
+
+sym_not_found:
+    WARN("Unable to load function ptrs from libGLU\n");
+    /* Close the library as we won't use it */
+    wine_dlclose(handle, NULL, 0);
+    return NULL;
+}
+
 static void fixed_to_double(POINTFX fixed, UINT em_size, GLdouble vertex[3])
 {
     vertex[0] = (fixed.x.value + (GLdouble)fixed.x.fract / (1 << 16)) / em_size;  
@@ -365,14 +415,19 @@ static BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
     TRACE("(%p, %d, %d, %d, %f, %f, %d, %p, %s)\n", hdc, first, count,
           listBase, deviation, extrusion, format, lpgmf, unicode ? "W" : "A");
 
+    if (!load_libglu())
+    {
+        ERR("libGLU is required for this function but isn't loaded\n");
+        return FALSE;
+    }
 
     ENTER_GL();
-    tess = gluNewTess();
+    tess = pgluNewTess();
     if(tess)
     {
-        gluTessCallback(tess, GLU_TESS_VERTEX, (_GLUfuncptr)tess_callback_vertex);
-        gluTessCallback(tess, GLU_TESS_BEGIN, (_GLUfuncptr)tess_callback_begin);
-        gluTessCallback(tess, GLU_TESS_END, tess_callback_end);
+        pgluTessCallback(tess, GLU_TESS_VERTEX, (_GLUfuncptr)tess_callback_vertex);
+        pgluTessCallback(tess, GLU_TESS_BEGIN, (_GLUfuncptr)tess_callback_begin);
+        pgluTessCallback(tess, GLU_TESS_END, tess_callback_end);
     }
     LEAVE_GL();
 
@@ -430,17 +485,17 @@ static BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
 
 	ENTER_GL();
 	glNewList(listBase++, GL_COMPILE);
-        gluTessBeginPolygon(tess, NULL);
+        pgluTessBeginPolygon(tess, NULL);
 
         pph = (TTPOLYGONHEADER*)buf;
         while((BYTE*)pph < buf + needed)
         {
             TRACE("\tstart %d, %d\n", pph->pfxStart.x.value, pph->pfxStart.y.value);
 
-            gluTessBeginContour(tess);
+            pgluTessBeginContour(tess);
 
             fixed_to_double(pph->pfxStart, em_size, vertices);
-            gluTessVertex(tess, vertices, vertices);
+            pgluTessVertex(tess, vertices, vertices);
             vertices += 3;
 
             ppc = (TTPOLYCURVE*)((char*)pph + sizeof(*pph));
@@ -454,7 +509,7 @@ static BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
                     {
                         TRACE("\t\tline to %d, %d\n", ppc->apfx[i].x.value, ppc->apfx[i].y.value);
                         fixed_to_double(ppc->apfx[i], em_size, vertices); 
-                        gluTessVertex(tess, vertices, vertices);
+                        pgluTessVertex(tess, vertices, vertices);
                         vertices += 3;
                     }
                     break;
@@ -467,28 +522,28 @@ static BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
                               ppc->apfx[i * 2].x.value,     ppc->apfx[i * 3].y.value,
                               ppc->apfx[i * 2 + 1].x.value, ppc->apfx[i * 3 + 1].y.value);
                         fixed_to_double(ppc->apfx[i * 2], em_size, vertices); 
-                        gluTessVertex(tess, vertices, vertices);
+                        pgluTessVertex(tess, vertices, vertices);
                         vertices += 3;
                         fixed_to_double(ppc->apfx[i * 2 + 1], em_size, vertices); 
-                        gluTessVertex(tess, vertices, vertices);
+                        pgluTessVertex(tess, vertices, vertices);
                         vertices += 3;
                     }
                     break;
                 default:
                     ERR("\t\tcurve type = %d\n", ppc->wType);
-                    gluTessEndContour(tess);
+                    pgluTessEndContour(tess);
                     goto error_in_list;
                 }
 
                 ppc = (TTPOLYCURVE*)((char*)ppc + sizeof(*ppc) +
                                      (ppc->cpfx - 1) * sizeof(POINTFX));
             }
-            gluTessEndContour(tess);
+            pgluTessEndContour(tess);
             pph = (TTPOLYGONHEADER*)((char*)pph + pph->cb);
         }
 
 error_in_list:
-        gluTessEndPolygon(tess);
+        pgluTessEndPolygon(tess);
         glTranslated((GLdouble)gm.gmCellIncX / em_size, (GLdouble)gm.gmCellIncY / em_size, 0.0);
         glEndList();
         LEAVE_GL();
@@ -498,7 +553,7 @@ error_in_list:
 
  error:
     DeleteObject(SelectObject(hdc, old_font));
-    gluDeleteTess(tess);
+    pgluDeleteTess(tess);
     return TRUE;
 
 }
@@ -676,6 +731,7 @@ static BOOL process_attach(void)
 
 static void process_detach(void)
 {
+  if (libglu_handle) wine_dlclose(libglu_handle, NULL, 0);
   HeapFree(GetProcessHeap(), 0, internal_gl_extensions);
   HeapFree(GetProcessHeap(), 0, internal_gl_disabled_extensions);
 }

@@ -11173,8 +11173,7 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBGLU "$ac_cv_lib_soname_GLU"
 _ACEOF
 
-       OPENGL_LIBS="$OPENGL_LIBS -lGLU"
-                                                     GLU32FILES='$(GLU32FILES)'
+       GLU32FILES='$(GLU32FILES)'
 fi
 
                  fi
