@@ -526,6 +526,20 @@ static const NodeImplVtbl HTMLImgElementImplVtbl = {
     HTMLImgElement_destructor
 };
 
+static dispex_static_data_t HTMLImgElement_dispex = {
+    NULL,
+    DispHTMLImg_tid,
+    NULL,
+    {
+        IHTMLDOMNode_tid,
+        IHTMLDOMNode2_tid,
+        IHTMLElement_tid,
+        IHTMLElement2_tid,
+        IHTMLImgElement_tid,
+        0
+    }
+};
+
 HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLImgElement *ret = heap_alloc_zero(sizeof(HTMLImgElement));
@@ -533,6 +547,7 @@ HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement *nselem)
     ret->lpHTMLImgElementVtbl = &HTMLImgElementVtbl;
     ret->element.node.vtbl = &HTMLImgElementImplVtbl;
 
+    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLIMG(ret), &HTMLImgElement_dispex);
     HTMLElement_Init(&ret->element);
 
     return &ret->element;
