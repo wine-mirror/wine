@@ -26,12 +26,17 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/debug.h"
-
-#include "winreg.h"
+#include "richedit.h"
+#include "imm.h"
 #include "shlwapi.h"
+#include "oleidl.h"
+#include "initguid.h"
+#include "textserv.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msftedit);
 
