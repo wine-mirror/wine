@@ -95,20 +95,9 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 		       UINT count, BOOL bDrawBackground, const INT *lpDx)
 {
     WORD *glyphs = NULL;
-    double cosEsc, sinEsc;
-    LOGFONTW lf;
 
     if (!count)
 	return TRUE;
-
-    GetObjectW(GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf);
-    if(lf.lfEscapement != 0) {
-        cosEsc = cos(lf.lfEscapement * M_PI / 1800);
-        sinEsc = sin(lf.lfEscapement * M_PI / 1800);
-    } else {
-        cosEsc = 1;
-        sinEsc = 0;
-    }
 
     if(physDev->font.fontloc == Download)
         glyphs = (LPWORD)str;

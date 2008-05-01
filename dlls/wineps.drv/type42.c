@@ -285,8 +285,6 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     DWORD start, end, i;
     char *buf;
     TYPE42 *t42;
-    WORD awidth;
-    short lsb;
 
     const char glyph_def[] = 
       "/%s findfont exch 1 index\n"
@@ -316,9 +314,6 @@ BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 
     if(!get_glyf_pos(t42, index, &start, &end)) return FALSE;
     TRACE("start = %x end = %x\n", start, end);
-
-    awidth = GET_BE_WORD(t42->tables[t42->hmtx_tab].data + index * 4);
-    lsb = GET_BE_WORD(t42->tables[t42->hmtx_tab].data + index * 4 + 2);
 
     if(GET_BE_WORD(t42->tables[t42->glyf_tab].data + start) == 0xffff) {
       /* Composite glyph */
