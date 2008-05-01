@@ -96,7 +96,6 @@
          } else { \
              __f.frame.Handler = __wine_exception_handler; \
              __f.u.filter = (func); \
-             __wine_push_frame( &__f.frame ); \
              if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
@@ -108,7 +107,6 @@
              break; \
          } else { \
              __f.frame.Handler = __wine_exception_handler_page_fault; \
-             __wine_push_frame( &__f.frame ); \
              if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
@@ -120,7 +118,6 @@
              break; \
          } else { \
              __f.frame.Handler = __wine_exception_handler_all; \
-             __wine_push_frame( &__f.frame ); \
              if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
@@ -129,6 +126,7 @@
                  } while (0); \
                  break; \
              } \
+             __wine_push_frame( &__f.frame ); \
              __first = 0; \
          } \
     } while (0);
