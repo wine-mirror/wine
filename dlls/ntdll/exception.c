@@ -565,69 +565,6 @@ ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
 
 
 /*************************************************************
- *            __wine_exception_handler (NTDLL.@)
- *
- * Exception handler for exception blocks declared in Wine code.
- */
-DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
-                                CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher )
-{
-    __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
-
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
-        return ExceptionContinueSearch;
-
-    if (wine_frame->u.filter == (void *)1)  /* special hack for page faults */
-    {
-        if (record->ExceptionCode != STATUS_ACCESS_VIOLATION)
-            return ExceptionContinueSearch;
-    }
-    else if (wine_frame->u.filter)
-    {
-        EXCEPTION_POINTERS ptrs;
-        ptrs.ExceptionRecord = record;
-        ptrs.ContextRecord = context;
-        switch(wine_frame->u.filter( &ptrs ))
-        {
-        case EXCEPTION_CONTINUE_SEARCH:
-            return ExceptionContinueSearch;
-        case EXCEPTION_CONTINUE_EXECUTION:
-            return ExceptionContinueExecution;
-        case EXCEPTION_EXECUTE_HANDLER:
-            break;
-        default:
-            MESSAGE( "Invalid return value from exception filter\n" );
-            assert( FALSE );
-        }
-    }
-    /* hack to make GetExceptionCode() work in handler */
-    wine_frame->ExceptionCode   = record->ExceptionCode;
-    wine_frame->ExceptionRecord = wine_frame;
-
-    RtlUnwind( frame, 0, record, 0 );
-    __wine_pop_frame( frame );
-    siglongjmp( wine_frame->jmp, 1 );
-}
-
-
-/*************************************************************
- *            __wine_finally_handler (NTDLL.@)
- *
- * Exception handler for try/finally blocks declared in Wine code.
- */
-DWORD __wine_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
-                              CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher )
-{
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
-    {
-        __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
-        wine_frame->u.finally_func( FALSE );
-    }
-    return ExceptionContinueSearch;
-}
-
-
-/*************************************************************
  *            __wine_spec_unimplemented_stub
  *
  * ntdll-specific implementation to avoid depending on kernel functions.

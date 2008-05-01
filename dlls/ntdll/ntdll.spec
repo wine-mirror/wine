@@ -1366,10 +1366,6 @@
 # All functions must be prefixed with '__wine_' (for internal functions)
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
-# Exception handling
-@ cdecl -norelay __wine_exception_handler(ptr ptr ptr ptr)
-@ cdecl -norelay __wine_finally_handler(ptr ptr ptr ptr)
-
 # Relays
 @ cdecl -norelay -i386 __wine_call_from_32_regs()
 @ cdecl -i386 __wine_enter_vm86(ptr)
