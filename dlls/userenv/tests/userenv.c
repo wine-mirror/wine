@@ -186,6 +186,9 @@ static void test_create_env(void)
         { 0, { 0, 0, 0, 0 } }
     };
 
+    r = SetEnvironmentVariableA("WINE_XYZZY", "ZZYZX");
+    expect(TRUE, r);
+
     r = CreateEnvironmentBlock(NULL, NULL, FALSE);
     expect(FALSE, r);
 
@@ -268,6 +271,15 @@ static void test_create_env(void)
             expect_env(TRUE, r, htok_vars[i].name);
         i++;
     }
+
+    r = get_env(env1, "WINE_XYZZY", &st);
+    expect(FALSE, r);
+    r = get_env(env2, "WINE_XYZZY", &st);
+    expect(FALSE, r);
+    r = get_env(env3, "WINE_XYZZY", &st);
+    expect(TRUE, r);
+    r = get_env(env4, "WINE_XYZZY", &st);
+    expect(TRUE, r);
 }
 
 START_TEST(userenv)
