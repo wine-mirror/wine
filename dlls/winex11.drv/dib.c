@@ -4874,7 +4874,8 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc)
 {
     HDC hdcMem;
     X_PHYSBITMAP *physBitmap;
-    HBITMAP hBmp = 0, old;
+    Pixmap orig_pixmap;
+    HBITMAP hBmp = 0;
     HGLOBAL hPackedDIB = 0;
     Window root;
     int x,y;               /* Unused */
@@ -4899,17 +4900,14 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc)
 
     /* force bitmap to be owned by a screen DC */
     hdcMem = CreateCompatibleDC( hdc );
-    old = SelectObject( hdcMem, hBmp );
+    SelectObject( hdcMem, SelectObject( hdcMem, hBmp ));
+    DeleteDC( hdcMem );
 
     physBitmap = X11DRV_get_phys_bitmap( hBmp );
 
-    wine_tsx11_lock();
-    if (physBitmap->pixmap) XFreePixmap( gdi_display, physBitmap->pixmap );
+    /* swap the new pixmap in */
+    orig_pixmap = physBitmap->pixmap;
     physBitmap->pixmap = pixmap;
-    wine_tsx11_unlock();
-
-    SelectObject( hdcMem, old );
-    DeleteDC( hdcMem );
 
     /*
      * Create a packed DIB from the Pixmap wrapper bitmap created above.
@@ -4918,9 +4916,8 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc)
      */
     hPackedDIB = X11DRV_DIB_CreateDIBFromBitmap(hdc, hBmp);
 
-    /* We can now get rid of the HBITMAP wrapper we created earlier.
-     * Note: Simply calling DeleteObject will free the embedded Pixmap as well.
-     */
+    /* we can now get rid of the HBITMAP and its original pixmap */
+    physBitmap->pixmap = orig_pixmap;
     DeleteObject(hBmp);
 
     TRACE("\tReturning packed DIB %p\n", hPackedDIB);
@@ -4956,6 +4953,6 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
     /* Delete the DDB we created earlier now that we have stolen its pixmap */
     DeleteObject(hBmp);
 
-    TRACE("Returning Pixmap %ld\n", pixmap);
+    TRACE("Returning Pixmap %lx\n", pixmap);
     return pixmap;
 }
