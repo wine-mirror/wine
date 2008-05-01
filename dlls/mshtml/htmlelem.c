@@ -1361,6 +1361,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
 
     static const WCHAR wszA[]        = {'A',0};
     static const WCHAR wszBODY[]     = {'B','O','D','Y',0};
+    static const WCHAR wszIMG[]      = {'I','M','G',0};
     static const WCHAR wszINPUT[]    = {'I','N','P','U','T',0};
     static const WCHAR wszOPTION[]   = {'O','P','T','I','O','N',0};
     static const WCHAR wszSCRIPT[]   = {'S','C','R','I','P','T',0};
@@ -1381,6 +1382,8 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret = HTMLAnchorElement_Create(nselem);
     else if(!strcmpW(class_name, wszBODY))
         ret = HTMLBodyElement_Create(nselem);
+    else if(!strcmpW(class_name, wszIMG))
+        ret = HTMLImgElement_Create(nselem);
     else if(!strcmpW(class_name, wszINPUT))
         ret = HTMLInputElement_Create(nselem);
     else if(!strcmpW(class_name, wszOPTION))

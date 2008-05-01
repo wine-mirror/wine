@@ -519,6 +519,7 @@ HTMLElement *HTMLElement_Create(nsIDOMNode*);
 HTMLElement *HTMLCommentElement_Create(nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
+HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLScriptElement_Create(nsIDOMHTMLElement*);
