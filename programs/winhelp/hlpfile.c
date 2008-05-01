@@ -609,7 +609,6 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
 
 static BOOL HLPFILE_RtfAddRawString(struct RtfData* rd, const char* str, size_t sz)
 {
-    if (!rd) return TRUE; /* FIXME: TEMP */
     if (rd->ptr + sz >= rd->data + rd->allocated)
     {
         char*   new = HeapReAlloc(GetProcessHeap(), 0, rd->data, rd->allocated *= 2);
@@ -625,7 +624,6 @@ static BOOL HLPFILE_RtfAddRawString(struct RtfData* rd, const char* str, size_t 
 
 static BOOL HLPFILE_RtfAddControl(struct RtfData* rd, const char* str)
 {
-    if (!rd) return TRUE; /* FIXME: TEMP */
     if (*str == '\\' || *str == '{') rd->in_text = FALSE;
     else if (*str == '}') rd->in_text = TRUE;
     return HLPFILE_RtfAddRawString(rd, str, strlen(str));
@@ -638,7 +636,6 @@ static BOOL HLPFILE_RtfAddText(struct RtfData* rd, const char* str)
     const char* replace;
     unsigned    rlen;
 
-    if (!rd) return TRUE; /* FIXME: TEMP */
     if (!rd->in_text)
     {
         if (!HLPFILE_RtfAddRawString(rd, " ", 1)) return FALSE;
@@ -677,7 +674,6 @@ static BOOL HLPFILE_RtfAddHexBytes(struct RtfData* rd, const void* _ptr, unsigne
     const BYTE* ptr = _ptr;
     static const char* _2hex = "0123456789abcdef";
 
-    if (!rd) return TRUE; /* FIXME: TEMP */
     if (!rd->in_text)
     {
         if (!HLPFILE_RtfAddRawString(rd, " ", 1)) return FALSE;
@@ -1399,14 +1395,14 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
             case 0x8B:
                 if (!HLPFILE_RtfAddControl(rd, "\\~")) goto done;
                 format += 1;
-                if (rd) /* FIXME: TEMP */ rd->char_pos++;
+                rd->char_pos++;
                 break;
 
             case 0x8C:
                 if (!HLPFILE_RtfAddControl(rd, "\\_")) goto done;
                 /* FIXME: it could be that hypen is also in input stream !! */
                 format += 1;
-                if (rd) /* FIXME: TEMP */ rd->char_pos++;
+                rd->char_pos++;
                 break;
 
 #if 0
@@ -1512,13 +1508,11 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
     char        tmp[1024];
     const char* ck = NULL;
 
-    if (rd) { /* FIXME: TEMP */
     rd->in_text = TRUE;
     rd->data = rd->ptr = HeapAlloc(GetProcessHeap(), 0, rd->allocated = 32768);
     rd->char_pos = 0;
     rd->first_link = rd->current_link = NULL;
     rd->force_color = FALSE;
-    }
 
     switch (hlpfile->charset)
     {
@@ -1647,7 +1641,6 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
             ref = GET_UINT(buf, 0xc);
     } while (ref != 0xffffffff);
 done:
-    if (rd)
     page->first_link = rd->first_link;
     return HLPFILE_RtfAddControl(rd, "}");
 }
