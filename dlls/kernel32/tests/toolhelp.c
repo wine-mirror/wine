@@ -63,7 +63,7 @@ static int     init(void)
     int                 argc;
     char**              argv;
     HANDLE              ev1, ev2, ev3, hThread;
-    DWORD               w;
+    DWORD               w, tid;
 
     argc = winetest_get_mainargs( &argv );
     strcpy(selfname, argv[0]);
@@ -78,7 +78,7 @@ static int     init(void)
         ev3 = CreateEvent(NULL, FALSE, FALSE, NULL);
 
         if (ev3 == NULL) ExitProcess(WAIT_ABANDONED);
-        hThread = CreateThread(NULL, 0, sub_thread, ev3, 0, NULL);
+        hThread = CreateThread(NULL, 0, sub_thread, ev3, 0, &tid);
         if (hThread == NULL) ExitProcess(WAIT_ABANDONED);
         if (!LoadLibraryA("shell32.dll")) ExitProcess(WAIT_ABANDONED);
     
