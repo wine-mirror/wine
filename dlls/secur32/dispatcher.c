@@ -272,8 +272,6 @@ void cleanup_helper(PNegoHelper helper)
     close(helper->pipe_out);
     close(helper->pipe_in);
 
-    waitpid(helper->helper_pid, NULL, 0);
-
     helper->helper_pid = 0;
     HeapFree(GetProcessHeap(), 0, helper);
 }
