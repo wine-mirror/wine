@@ -591,6 +591,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         win->lpszName = name;
         win->hHandCur = LoadCursorW(0, (LPWSTR)IDC_HAND);
         win->back.index = 0;
+        win->font_scale = 1;
     }
     win->page = wpage->page;
     win->info = wpage->wininfo;
@@ -665,6 +666,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         DWORD   mask = SendMessage(hTextWnd, EM_GETEVENTMASK, 0, 0);
         RECT    rect;
 
+        win->font_scale = Globals.active_win->font_scale;
         WINHELP_SetupText(hTextWnd, win, wpage->relative);
 
         /* we need the window to be shown for richedit to compute the size */
@@ -862,6 +864,40 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 	case MNID_HELP_ABOUT:	MACRO_About();          break;
 	case MNID_HELP_WINE:    ShellAbout(hWnd, "WINE", "Help", 0); break;
 
+            /* Context help */
+        case MNID_CTXT_ANNOTATE:MACRO_Annotate();       break;
+        case MNID_CTXT_COPY:    MACRO_CopyDialog();     break;
+        case MNID_CTXT_PRINT:   MACRO_Print();          break;
+        case MNID_CTXT_FONTS_SMALL:
+            win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
+            if (win->font_scale != 0)
+            {
+                win->font_scale = 0;
+                WINHELP_SetupText(GetDlgItem(hWnd, CTL_ID_TEXT), win, 0 /* FIXME */);
+            }
+            break;
+        case MNID_CTXT_FONTS_NORMAL:
+            win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+            if (win->font_scale != 1)
+            {
+                win->font_scale = 1;
+                WINHELP_SetupText(GetDlgItem(hWnd, CTL_ID_TEXT), win, 0 /* FIXME */);
+            }
+            break;
+        case MNID_CTXT_FONTS_LARGE:
+            win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+            if (win->font_scale != 2)
+            {
+                win->font_scale = 2;
+                WINHELP_SetupText(GetDlgItem(hWnd, CTL_ID_TEXT), win, 0 /* FIXME */);
+            }
+            break;
+        case MNID_CTXT_HELP_DEFAULT:
+        case MNID_CTXT_HELP_VISIBLE:
+        case MNID_CTXT_HELP_NONVISIBLE:
+        case MNID_CTXT_SYSTEM_COLORS:
+            /* FIXME: NIY */
+
 	default:
             /* Buttons */
             for (button = win->first_button; button; button = button->next)
@@ -934,8 +970,47 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             case EN_MSGFILTER:
                 {
                     const MSGFILTER*    msgf = (const MSGFILTER*)lParam;
-                    return WINHELP_HandleTextMouse((WINHELP_WINDOW*)GetWindowLong(hWnd, 0),
-                                                   msgf->msg, msgf->lParam);
+                    switch (msgf->msg)
+                    {
+                    case WM_KEYUP:
+                        if (msgf->wParam == VK_ESCAPE) DestroyWindow(hWnd);
+                        break;
+                    case WM_RBUTTONDOWN:
+                    {
+                        HMENU       hMenu;
+                        POINT       pt;
+
+                        win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+                        hMenu = LoadMenu(Globals.hInstance, (LPSTR)CONTEXT_MENU);
+                        switch (win->font_scale)
+                        {
+                        case 0:
+                            CheckMenuItem(hMenu, MNID_CTXT_FONTS_SMALL,
+                                          MF_BYCOMMAND|MF_CHECKED);
+                            break;
+                        default:
+                            WINE_FIXME("Unsupported %d\n", win->font_scale);
+                        case 1:
+                            CheckMenuItem(hMenu, MNID_CTXT_FONTS_NORMAL,
+                                          MF_BYCOMMAND|MF_CHECKED);
+                            break;
+                        case 2:
+                            CheckMenuItem(hMenu, MNID_CTXT_FONTS_LARGE,
+                                          MF_BYCOMMAND|MF_CHECKED);
+                            break;
+                        }
+                        pt.x = (int)(short)LOWORD(msgf->lParam);
+                        pt.y = (int)(short)HIWORD(msgf->lParam);
+                        ClientToScreen(hWnd, &pt);
+                        TrackPopupMenu(GetSubMenu(hMenu, 0), TPM_LEFTALIGN|TPM_TOPALIGN,
+                                       pt.x, pt.y, 0, hWnd, NULL);
+                        DestroyMenu(hMenu);
+                    }
+                    break;
+                    default:
+                        return WINHELP_HandleTextMouse((WINHELP_WINDOW*)GetWindowLongPtr(hWnd, 0),
+                                                       msgf->msg, msgf->lParam);
+                    }
                 }
                 break;
 
@@ -994,7 +1069,7 @@ static void WINHELP_SetupText(HWND hTextWnd, WINHELP_WINDOW* win, ULONG relative
         struct RtfData  rd;
         EDITSTREAM      es;
 
-        if (HLPFILE_BrowsePage(win->page, &rd))
+        if (HLPFILE_BrowsePage(win->page, &rd, win->font_scale))
         {
             rd.where = rd.data;
             es.dwCookie = (DWORD_PTR)&rd;

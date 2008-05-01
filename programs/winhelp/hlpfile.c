@@ -1289,7 +1289,13 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd, BYTE
 
                     WINE_TRACE("Changing font to %d\n", font);
                     format += 3;
-                    fs = (4 * page->file->fonts[font].LogFont.lfHeight - 3) / 5;
+                    switch (rd->font_scale)
+                    {
+                    case 0: fs = (4 * page->file->fonts[font].LogFont.lfHeight - 13) / 5; break;
+                    default:
+                    case 1: fs = (4 * page->file->fonts[font].LogFont.lfHeight - 3) / 5; break;
+                    case 2: fs = (4 * page->file->fonts[font].LogFont.lfHeight + 17) / 5; break;
+                    }
                     /* FIXME: missing at least colors, also bold attribute looses information */
 
                     sprintf(tmp, "\\f%d\\cf%d\\fs%d%s%s%s%s",
@@ -1499,7 +1505,7 @@ done:
  *		HLPFILE_BrowsePage
  *
  */
-BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
+BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd, unsigned font_scale)
 {
     HLPFILE     *hlpfile = page->file;
     BYTE        *buf, *end;
@@ -1513,6 +1519,7 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd)
     rd->char_pos = 0;
     rd->first_link = rd->current_link = NULL;
     rd->force_color = FALSE;
+    rd->font_scale = font_scale;
 
     switch (hlpfile->charset)
     {

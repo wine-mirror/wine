@@ -180,9 +180,10 @@ struct RtfData {
     unsigned    allocated;      /* overall allocated size */
     unsigned    char_pos;       /* current char position (in richedit) */
     char*       where;          /* pointer to feed back richedit */
+    unsigned    font_scale;     /* how to scale fonts */
     HLPFILE_LINK*first_link;
     HLPFILE_LINK*current_link;
     BOOL        force_color;
 };
 
-BOOL          HLPFILE_BrowsePage(HLPFILE_PAGE*, struct RtfData* rd);
+BOOL          HLPFILE_BrowsePage(HLPFILE_PAGE*, struct RtfData* rd, unsigned font_scale);

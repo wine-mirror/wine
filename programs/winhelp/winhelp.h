@@ -91,6 +91,7 @@ typedef struct tagWinHelp
     HLPFILE_LINK*       current_link;
 
     WINHELP_PAGESET     back;
+    unsigned            font_scale; /* 0 = small, 1 = normal, 2 = large */
 
     struct tagWinHelp*  next;
 } WINHELP_WINDOW;
