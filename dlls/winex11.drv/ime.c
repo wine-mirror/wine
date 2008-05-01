@@ -684,7 +684,6 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
         case NI_SETCANDIDATE_PAGESTART: FIXME("NI_SETCANDIDATE_PAGESTART\n"); break;
         case NI_SETCANDIDATE_PAGESIZE: FIXME("NI_SETCANDIDATE_PAGESIZE\n"); break;
         case NI_CONTEXTUPDATED:
-            FIXME("NI_CONTEXTUPDATED:");
             switch (dwValue)
             {
                 case IMC_SETCOMPOSITIONWINDOW: FIXME("IMC_SETCOMPOSITIONWINDOW\n"); break;
@@ -735,7 +734,6 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
             }
             break;
         case NI_COMPOSITIONSTR:
-            TRACE("NI_COMPOSITIONSTR:");
             switch (dwIndex)
             {
                 case CPS_COMPLETE:
