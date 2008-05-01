@@ -40,42 +40,6 @@
 #include "macro.h"
 #include "winhelp_res.h"
 
-typedef struct tagHelpLinePart
-{
-    RECT      rect;
-    enum {hlp_line_part_text, hlp_line_part_bitmap, hlp_line_part_metafile} cookie;
-    union
-    {
-        struct
-        {
-            LPCSTR      lpsText;
-            HFONT       hFont;
-            COLORREF    color;
-            WORD        wTextLen;
-            WORD        wUnderline; /* 0 None, 1 simple, 2 double, 3 dotted */
-        } text;
-        struct
-        {
-            HBITMAP     hBitmap;
-        } bitmap;
-        struct
-        {
-            HMETAFILE   hMetaFile;
-            INT         mm;
-        } metafile;
-    } u;
-    HLPFILE_LINK*       link;
-
-    struct tagHelpLinePart *next;
-} WINHELP_LINE_PART;
-
-typedef struct tagHelpLine
-{
-    RECT                rect;
-    WINHELP_LINE_PART   first_part;
-    struct tagHelpLine* next;
-} WINHELP_LINE;
-
 typedef struct tagHelpButton
 {
     HWND                hWnd;
@@ -111,7 +75,6 @@ typedef struct tagWinHelp
 
     WINHELP_BUTTON*     first_button;
     HLPFILE_PAGE*       page;
-    WINHELP_LINE*       first_line;
 
     HWND                hMainWnd;
     HWND                hShadowWnd;
@@ -120,7 +83,6 @@ typedef struct tagWinHelp
     HFONT*              fonts;
     UINT                fonts_len;
 
-    HCURSOR             hArrowCur;
     HCURSOR             hHandCur;
 
     HBRUSH              hBrush;
