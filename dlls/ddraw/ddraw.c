@@ -3108,7 +3108,7 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
     localParameters.SwapEffect                      = WINED3DSWAPEFFECT_COPY;
     localParameters.hDeviceWindow                   = window;
     localParameters.Windowed                        = !(This->cooperative_level & DDSCL_FULLSCREEN);
-    localParameters.EnableAutoDepthStencil          = FALSE;
+    localParameters.EnableAutoDepthStencil          = TRUE;
     localParameters.AutoDepthStencilFormat          = WINED3DFMT_D16;
     localParameters.Flags                           = 0;
     localParameters.FullScreen_RefreshRateInHz      = WINED3DPRESENT_RATE_DEFAULT; /* Default rate: It's already set */
