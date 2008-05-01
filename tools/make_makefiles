@@ -539,11 +539,18 @@ sub update_dlls(@)
         my $lib = $importlibs{$mod};
         my $spec = $mod;
         $spec =~ s/\.dll$//;
-        $text .= sprintf "%s/lib%s.\$(IMPLIBEXT): %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
-        $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(IMPLIBEXT)\n\n", $dir, $lib;
-        next unless $static_implibs{$mod};
-        $text .= sprintf "%s/lib%s.\$(STATIC_IMPLIBEXT): dummy\n", $dir, $lib, $dir, $spec;
-        $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(STATIC_IMPLIBEXT)\n\n", $dir, $lib;
+        if (defined($static_implibs{$mod}))
+        {
+            $text .= sprintf "%s/lib%s.def: %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
+            $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.def\n\n", $dir, $lib;
+            $text .= sprintf "%s/lib%s.\$(STATIC_IMPLIBEXT): dummy\n", $dir, $lib, $dir, $spec;
+            $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(STATIC_IMPLIBEXT)\n\n", $dir, $lib;
+        }
+        else
+        {
+            $text .= sprintf "%s/lib%s.\$(IMPLIBEXT): %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
+            $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(IMPLIBEXT)\n\n", $dir, $lib;
+        }
     }
     foreach my $mod (sort @lib_symlinks)
     {

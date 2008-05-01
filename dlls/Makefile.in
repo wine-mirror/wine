@@ -766,8 +766,8 @@ dciman32/libdciman32.$(IMPLIBEXT): dciman32/dciman32.spec $(WINEBUILD)
 ddraw/libddraw.$(IMPLIBEXT): ddraw/ddraw.spec $(WINEBUILD)
 	@cd ddraw && $(MAKE) libddraw.$(IMPLIBEXT)
 
-dinput/libdinput.$(IMPLIBEXT): dinput/dinput.spec $(WINEBUILD)
-	@cd dinput && $(MAKE) libdinput.$(IMPLIBEXT)
+dinput/libdinput.def: dinput/dinput.spec $(WINEBUILD)
+	@cd dinput && $(MAKE) libdinput.def
 
 dinput/libdinput.$(STATIC_IMPLIBEXT): dummy
 	@cd dinput && $(MAKE) libdinput.$(STATIC_IMPLIBEXT)
