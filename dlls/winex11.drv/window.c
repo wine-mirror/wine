@@ -2011,9 +2011,12 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     if (event_type != ConfigureNotify && event_type != PropertyNotify)
         event_type = 0;  /* ignore other events */
 
-    if (data->mapped && (!(new_style & WS_VISIBLE) ||
-                         (!event_type && !is_window_rect_mapped( rectWindow ))))
-        unmap_window( display, data );
+    if (data->mapped)
+    {
+        if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
+            (!event_type && !is_window_rect_mapped( rectWindow )))
+            unmap_window( display, data );
+    }
 
     /* don't change position if we are about to minimize or maximize a managed window */
     if (!event_type &&
