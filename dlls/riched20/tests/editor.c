@@ -829,8 +829,7 @@ static void test_EM_GETTEXTRANGE(void)
     textRange.chrg.cpMin = 4;
     textRange.chrg.cpMax = 11;
     result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
-    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
-        result, strlen(expect));
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld\n", result);
     ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
@@ -839,8 +838,7 @@ static void test_EM_GETTEXTRANGE(void)
     textRange.chrg.cpMin = 4;
     textRange.chrg.cpMax = 11;
     result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
-    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
-        result, strlen(expect));
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld\n", result);
     ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
 
     DestroyWindow(hwndRichEdit);
@@ -859,16 +857,14 @@ static void test_EM_GETSELTEXT(void)
 
     SendMessage(hwndRichEdit, EM_SETSEL, 4, 11);
     result = SendMessage(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
-    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
-        result, strlen(expect));
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld\n", result);
     ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
 
     SendMessage(hwndRichEdit, EM_SETSEL, 4, 11);
     result = SendMessage(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
-    ok(result == 7, "EM_GETTEXTRANGE returned %ld, expected %d\n",
-        result, strlen(expect));
+    ok(result == 7, "EM_GETTEXTRANGE returned %ld\n", result);
     ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
 
     DestroyWindow(hwndRichEdit);
