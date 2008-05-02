@@ -1965,20 +1965,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
         HTTP_DealWithProxy( hIC, lpwhs, lpwhr );
 
-    if (hIC->lpszAgent)
-    {
-        WCHAR *agent_header;
-        static const WCHAR user_agent[] = {'U','s','e','r','-','A','g','e','n','t',':',' ','%','s','\r','\n',0 };
-
-        len = strlenW(hIC->lpszAgent) + strlenW(user_agent);
-        agent_header = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-        sprintfW(agent_header, user_agent, hIC->lpszAgent );
-
-        HTTP_HttpAddRequestHeadersW(lpwhr, agent_header, strlenW(agent_header),
-                               HTTP_ADDREQ_FLAG_ADD);
-        HeapFree(GetProcessHeap(), 0, agent_header);
-    }
-
     Host = HTTP_GetHeader(lpwhr,szHost);
 
     len = lstrlenW(Host->lpszValue) + strlenW(szUrlForm);
@@ -3174,6 +3160,19 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     {
         sprintfW(contentLengthStr, szContentLength, dwContentLength);
         HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
+    }
+    if (lpwhr->lpHttpSession->lpAppInfo->lpszAgent)
+    {
+        WCHAR *agent_header;
+        static const WCHAR user_agent[] = {'U','s','e','r','-','A','g','e','n','t',':',' ','%','s','\r','\n',0};
+        int len;
+
+        len = strlenW(lpwhr->lpHttpSession->lpAppInfo->lpszAgent) + strlenW(user_agent);
+        agent_header = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        sprintfW(agent_header, user_agent, lpwhr->lpHttpSession->lpAppInfo->lpszAgent);
+
+        HTTP_HttpAddRequestHeadersW(lpwhr, agent_header, strlenW(agent_header), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        HeapFree(GetProcessHeap(), 0, agent_header);
     }
 
     do
