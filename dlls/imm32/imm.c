@@ -135,6 +135,84 @@ static inline CHAR *strdupWtoA( const WCHAR *str )
     return ret;
 }
 
+static DWORD convert_candidatelist_WtoA(
+        LPCANDIDATELIST lpSrc, LPCANDIDATELIST lpDst, DWORD dwBufLen)
+{
+    DWORD ret, i, len;
+
+    ret = FIELD_OFFSET( CANDIDATELIST, dwOffset[lpSrc->dwCount] );
+    if ( lpDst && dwBufLen > 0 )
+    {
+        *lpDst = *lpSrc;
+        lpDst->dwOffset[0] = ret;
+    }
+
+    for ( i = 0; i < lpSrc->dwCount; i++)
+    {
+        LPBYTE src = (LPBYTE)lpSrc + lpSrc->dwOffset[i];
+
+        if ( lpDst && dwBufLen > 0 )
+        {
+            LPBYTE dest = (LPBYTE)lpDst + lpDst->dwOffset[i];
+
+            len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)src, -1,
+                                      (LPSTR)dest, dwBufLen, NULL, NULL);
+
+            if ( i + 1 < lpSrc->dwCount )
+                lpDst->dwOffset[i+1] = lpDst->dwOffset[i] + len * sizeof(char);
+            dwBufLen -= len * sizeof(char);
+        }
+        else
+            len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)src, -1, NULL, 0, NULL, NULL);
+
+        ret += len * sizeof(char);
+    }
+
+    if ( lpDst )
+        lpDst->dwSize = ret;
+
+    return ret;
+}
+
+static DWORD convert_candidatelist_AtoW(
+        LPCANDIDATELIST lpSrc, LPCANDIDATELIST lpDst, DWORD dwBufLen)
+{
+    DWORD ret, i, len;
+
+    ret = FIELD_OFFSET( CANDIDATELIST, dwOffset[lpSrc->dwCount] );
+    if ( lpDst && dwBufLen > 0 )
+    {
+        *lpDst = *lpSrc;
+        lpDst->dwOffset[0] = ret;
+    }
+
+    for ( i = 0; i < lpSrc->dwCount; i++)
+    {
+        LPBYTE src = (LPBYTE)lpSrc + lpSrc->dwOffset[i];
+
+        if ( lpDst && dwBufLen > 0 )
+        {
+            LPBYTE dest = (LPBYTE)lpDst + lpDst->dwOffset[i];
+
+            len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1,
+                                      (LPWSTR)dest, dwBufLen);
+
+            if ( i + 1 < lpSrc->dwCount )
+                lpDst->dwOffset[i+1] = lpDst->dwOffset[i] + len * sizeof(WCHAR);
+            dwBufLen -= len * sizeof(WCHAR);
+        }
+        else
+            len = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)src, -1, NULL, 0);
+
+        ret += len * sizeof(WCHAR);
+    }
+
+    if ( lpDst )
+        lpDst->dwSize = ret;
+
+    return ret;
+}
+
 static IMMThreadData* IMM_GetThreadData(void)
 {
     return (IMMThreadData*)TlsGetValue(tlsIndex);
@@ -709,15 +787,40 @@ LRESULT WINAPI ImmEscapeW(
  *		ImmGetCandidateListA (IMM32.@)
  */
 DWORD WINAPI ImmGetCandidateListA(
-  HIMC hIMC, DWORD deIndex,
+  HIMC hIMC, DWORD dwIndex,
   LPCANDIDATELIST lpCandList, DWORD dwBufLen)
 {
-  FIXME("(%p, %d, %p, %d): stub\n",
-    hIMC, deIndex,
-    lpCandList, dwBufLen
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    InputContextData *data = (InputContextData *)hIMC;
+    LPCANDIDATEINFO candinfo;
+    LPCANDIDATELIST candlist;
+    DWORD ret = 0;
+
+    TRACE("%p, %d, %p, %d\n", hIMC, dwIndex, lpCandList, dwBufLen);
+
+    if (!data || !data->IMC.hCandInfo)
+       return 0;
+
+    candinfo = ImmLockIMCC(data->IMC.hCandInfo);
+    if ( dwIndex >= candinfo->dwCount ||
+         dwIndex >= (sizeof(candinfo->dwOffset) / sizeof(DWORD)) )
+        goto done;
+
+    candlist = (LPCANDIDATELIST)((LPBYTE)candinfo + candinfo->dwOffset[dwIndex]);
+    if ( !candlist->dwSize || !candlist->dwCount )
+        goto done;
+
+    if ( !is_himc_ime_unicode(data) )
+    {
+        ret = candlist->dwSize;
+        if ( lpCandList && dwBufLen >= ret )
+            memcpy(lpCandList, candlist, ret);
+    }
+    else
+        ret = convert_candidatelist_WtoA( candlist, lpCandList, dwBufLen);
+
+done:
+    ImmUnlockIMCC(data->IMC.hCandInfo);
+    return ret;
 }
 
 /***********************************************************************
@@ -746,15 +849,40 @@ DWORD WINAPI ImmGetCandidateListCountW(
  *		ImmGetCandidateListW (IMM32.@)
  */
 DWORD WINAPI ImmGetCandidateListW(
-  HIMC hIMC, DWORD deIndex,
+  HIMC hIMC, DWORD dwIndex,
   LPCANDIDATELIST lpCandList, DWORD dwBufLen)
 {
-  FIXME("(%p, %d, %p, %d): stub\n",
-    hIMC, deIndex,
-    lpCandList, dwBufLen
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    InputContextData *data = (InputContextData *)hIMC;
+    LPCANDIDATEINFO candinfo;
+    LPCANDIDATELIST candlist;
+    DWORD ret = 0;
+
+    TRACE("%p, %d, %p, %d\n", hIMC, dwIndex, lpCandList, dwBufLen);
+
+    if (!data || !data->IMC.hCandInfo)
+       return 0;
+
+    candinfo = ImmLockIMCC(data->IMC.hCandInfo);
+    if ( dwIndex >= candinfo->dwCount ||
+         dwIndex >= (sizeof(candinfo->dwOffset) / sizeof(DWORD)) )
+        goto done;
+
+    candlist = (LPCANDIDATELIST)((LPBYTE)candinfo + candinfo->dwOffset[dwIndex]);
+    if ( !candlist->dwSize || !candlist->dwCount )
+        goto done;
+
+    if ( is_himc_ime_unicode(data) )
+    {
+        ret = candlist->dwSize;
+        if ( lpCandList && dwBufLen >= ret )
+            memcpy(lpCandList, candlist, ret);
+    }
+    else
+        ret = convert_candidatelist_AtoW( candlist, lpCandList, dwBufLen);
+
+done:
+    ImmUnlockIMCC(data->IMC.hCandInfo);
+    return ret;
 }
 
 /***********************************************************************
