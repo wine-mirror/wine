@@ -618,7 +618,14 @@ static void testScreenBuffer(HANDLE hConOut)
 
     /* In the beginning set output codepage to 866 */
     oldcp = GetConsoleOutputCP();
-    ok(SetConsoleOutputCP(866), "Cannot set output codepage to 866\n");
+    SetLastError(0xdeadbeef);
+    ret = SetConsoleOutputCP(866);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("SetConsoleOutputCP is not implemented\n");
+        return;
+    }
+    ok(ret, "Cannot set output codepage to 866\n");
 
     hConOutRW = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
                          FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
