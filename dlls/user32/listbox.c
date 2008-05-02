@@ -43,6 +43,7 @@
 #include "wine/unicode.h"
 #include "user_private.h"
 #include "controls.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(listbox);
@@ -799,6 +800,8 @@ static BOOL LISTBOX_SetTabStops( LB_DESCR *descr, INT count, LPINT tabs, BOOL sh
  */
 static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL unicode )
 {
+    DWORD len;
+
     if ((index < 0) || (index >= descr->nb_items))
     {
         SetLastError(ERROR_INVALID_INDEX);
@@ -808,7 +811,7 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
     {
         if (!buffer)
         {
-            DWORD len = strlenW(descr->items[index].str);
+            len = strlenW(descr->items[index].str);
             if( unicode )
                 return len;
             return WideCharToMultiByte( CP_ACP, 0, descr->items[index].str, len,
@@ -817,20 +820,32 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
 
 	TRACE("index %d (0x%04x) %s\n", index, index, debugstr_w(descr->items[index].str));
 
-        if(unicode)
+        __TRY  /* hide a Delphi bug that passes a read-only buffer */
         {
-            strcpyW( buffer, descr->items[index].str );
-            return strlenW(buffer);
+            if(unicode)
+            {
+                strcpyW( buffer, descr->items[index].str );
+                len = strlenW(buffer);
+            }
+            else
+            {
+                len = WideCharToMultiByte(CP_ACP, 0, descr->items[index].str, -1,
+                                          (LPSTR)buffer, 0x7FFFFFFF, NULL, NULL) - 1;
+            }
         }
-        else
+        __EXCEPT_PAGE_FAULT
         {
-            return WideCharToMultiByte(CP_ACP, 0, descr->items[index].str, -1, (LPSTR)buffer, 0x7FFFFFFF, NULL, NULL) - 1;
+            WARN( "got an invalid buffer (Delphi bug?)\n" );
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return LB_ERR;
         }
+        __ENDTRY
     } else {
         if (buffer)
             *((LPDWORD)buffer)=*(LPDWORD)(&descr->items[index].data);
-        return sizeof(DWORD);
+        len = sizeof(DWORD);
     }
+    return len;
 }
 
 static inline INT LISTBOX_lstrcmpiW( LCID lcid, LPCWSTR str1, LPCWSTR str2 )
