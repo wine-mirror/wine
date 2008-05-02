@@ -419,12 +419,11 @@ BOOL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
 {
     BOOL ret = FALSE;
     struct tray_icon *icon;
-    Window owner;
 
     switch (msg)
     {
     case NIM_ADD:
-        if ((owner = get_systray_selection_owner( thread_display() ))) ret = add_icon( data );
+        if (get_systray_selection_owner( thread_display() )) ret = add_icon( data );
         break;
     case NIM_DELETE:
         if ((icon = get_icon( data->hWnd, data->uID ))) ret = delete_icon( icon );

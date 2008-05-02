@@ -2899,7 +2899,6 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
                                        DWORD linebytes)
 {
     DWORD x;
-    const DWORD *ptr;
     int h, width = min(srcwidth, dstwidth);
     const dib_conversions *convs = (bmpImage->byte_order == LSBFirst) ? &dib_normal : &dib_dst_byteswap;
 
@@ -2909,8 +2908,6 @@ static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
        srcbits = srcbits + ( linebytes * (lines-1) );
        linebytes = -linebytes;
     }
-
-    ptr = (const DWORD *) srcbits + left;
 
     switch (bmpImage->depth)
     {

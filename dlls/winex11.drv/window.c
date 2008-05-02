@@ -1564,12 +1564,8 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
 static struct x11drv_win_data *create_desktop_win_data( Display *display, HWND hwnd )
 {
     struct x11drv_win_data *data;
-    VisualID visualid;
 
     if (!(data = alloc_win_data( display, hwnd ))) return NULL;
-    wine_tsx11_lock();
-    visualid = XVisualIDFromVisual(visual);
-    wine_tsx11_unlock();
     data->whole_window = data->client_window = root_window;
     data->managed = TRUE;
     SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
@@ -1926,7 +1922,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     Display *display = thread_data->display;
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
-    RECT old_window_rect, old_whole_rect, old_client_rect;
+    RECT old_whole_rect, old_client_rect;
     int event_type;
 
     if (!data)
@@ -1945,7 +1941,6 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
         SetPropA( hwnd, managed_prop, (HANDLE)1 );
     }
 
-    old_window_rect = data->window_rect;
     old_whole_rect  = data->whole_rect;
     old_client_rect = data->client_rect;
     data->window_rect = *rectWindow;

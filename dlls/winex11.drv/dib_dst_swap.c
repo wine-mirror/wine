@@ -1369,9 +1369,7 @@ static void convert_0888_to_888_asis_dst_byteswap(int width, int height,
     const DWORD* srcpixel;
     DWORD* dstpixel;
     int x,y;
-    int oddwidth;
 
-    oddwidth=width & 3;
     width=width/4;
     for (y=0; y<height; y++) {
         srcpixel=srcbits;
@@ -1423,9 +1421,7 @@ static void convert_0888_to_888_reverse_dst_byteswap(int width, int height,
     const DWORD* srcpixel;
     DWORD* dstpixel;
     int x,y;
-    int oddwidth;
 
-    oddwidth=width & 3;
     width=width/4;
     for (y=0; y<height; y++) {
         srcpixel=srcbits;

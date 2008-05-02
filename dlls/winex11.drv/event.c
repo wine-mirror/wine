@@ -1012,7 +1012,6 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     int			x, y, dummy;
     BOOL	        bAccept;
     Window		win, w_aux_root, w_aux_child;
-    HWND		hScope = hWnd;
 
     win = X11DRV_get_whole_window(hWnd);
     wine_tsx11_lock();
@@ -1041,7 +1040,6 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 	{
 	    x = pt.x;
 	    y = pt.y;
-	    hScope = hwndDrop;
 	    bAccept = TRUE;
 	}
 	else

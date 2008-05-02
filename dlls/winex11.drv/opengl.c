@@ -1047,7 +1047,6 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     int bestDepth = -1;
     int bestStencil = -1;
     int bestAux = -1;
-    int score;
 
     if (!has_opengl()) {
         ERR("No libGL on this box - disabling OpenGL support !\n");
@@ -1069,7 +1068,6 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         int alpha=0, color=0, depth=0, stencil=0, aux=0;
 
         fmt = ConvertPixelFormatWGLtoGLX(gdi_display, i+1 /* 1-based index */, FALSE /* offscreen */, &value);
-        score = 0;
 
         /* Pixel type */
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_RENDER_TYPE, &value);

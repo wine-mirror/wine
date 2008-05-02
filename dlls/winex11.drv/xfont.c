@@ -1366,7 +1366,6 @@ static void XFONT_WindowsNames(void)
     for( fr = fontList; fr ; fr = fr->next )
     {
 	fontResource* pfr;
-	char* 	      lpch;
 
 	if( fr->fr_flags & FR_NAMESET ) continue;     /* skip already assigned */
 
@@ -1377,7 +1376,6 @@ static void XFONT_WindowsNames(void)
 		    break;
 	    }
 
-	lpch = fr->lfFaceName;
 	snprintf( fr->lfFaceName, sizeof(fr->lfFaceName), "%s %s",
 					  /* prepend vendor name */
 					  (pfr==fr) ? "" : fr->resource->foundry,
