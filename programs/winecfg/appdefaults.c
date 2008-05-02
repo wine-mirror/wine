@@ -70,7 +70,7 @@ static const char szKeyNT[] = "Software\\Microsoft\\Windows NT\\CurrentVersion";
 
 static int get_registry_version(void)
 {
-    int i, best = -1, platform, major, minor, build = 0;
+    int i, best = -1, platform, major, minor = 0, build = 0;
     char *p, *ver;
 
     if ((ver = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL )))
