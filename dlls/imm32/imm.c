@@ -1815,9 +1815,14 @@ BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 */
 LRESULT WINAPI ImmRequestMessageA(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 {
-    FIXME("(%p %ld %ld): stub\n", hIMC, wParam, wParam);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("%p %ld %ld\n", hIMC, wParam, wParam);
+
+    if (data && IsWindow(data->IMC.hWnd))
+        return SendMessageA(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
+
+     return 0;
 }
 
 /***********************************************************************
@@ -1825,9 +1830,14 @@ LRESULT WINAPI ImmRequestMessageA(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 */
 LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 {
-    FIXME("(%p %ld %ld): stub\n", hIMC, wParam, wParam);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    InputContextData *data = (InputContextData*)hIMC;
+
+    TRACE("%p %ld %ld\n", hIMC, wParam, wParam);
+
+    if (data && IsWindow(data->IMC.hWnd))
+        return SendMessageW(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
+
+     return 0;
 }
 
 /***********************************************************************
