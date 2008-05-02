@@ -307,7 +307,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 		  bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
 						info->bmiHeader.biHeight,
 						info->bmiHeader.biBitCount);
-	      biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush.lbColor));
+	      biSize = bitmap_info_size(info, LOWORD(logbrush.lbColor));
 	      size = sizeof(METARECORD) + biSize + bmSize + 2;
 	      mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	      if(!mr) goto done;

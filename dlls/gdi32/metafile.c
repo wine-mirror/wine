@@ -889,7 +889,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
     case META_STRETCHDIB:
       {
         LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[11]);
-        LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
+        LPSTR bits = (LPSTR)info + bitmap_info_size( info, mr->rdParm[2] );
         StretchDIBits( hdc, (SHORT)mr->rdParm[10], (SHORT)mr->rdParm[9], (SHORT)mr->rdParm[8],
                        (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5],
                        (SHORT)mr->rdParm[4], (SHORT)mr->rdParm[3], bits, info,
@@ -900,7 +900,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
     case META_DIBSTRETCHBLT:
       {
         LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[10]);
-        LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
+        LPSTR bits = (LPSTR)info + bitmap_info_size( info, mr->rdParm[2] );
         StretchDIBits( hdc, (SHORT)mr->rdParm[9], (SHORT)mr->rdParm[8], (SHORT)mr->rdParm[7],
                        (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5], (SHORT)mr->rdParm[4],
                        (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2], bits, info,
@@ -997,7 +997,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
 
         if (mr->rdSize > 12) {
             LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[8]);
-            LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize(info, mr->rdParm[0]);
+            LPSTR bits = (LPSTR)info + bitmap_info_size(info, mr->rdParm[0]);
 
             StretchDIBits(hdc, (SHORT)mr->rdParm[7], (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5],
                           (SHORT)mr->rdParm[4], (SHORT)mr->rdParm[3], (SHORT)mr->rdParm[2],
@@ -1027,7 +1027,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
     case META_SETDIBTODEV:
         {
             BITMAPINFO *info = (BITMAPINFO *) &(mr->rdParm[9]);
-            char *bits = (char *)info + DIB_BitmapInfoSize( info, mr->rdParm[0] );
+            char *bits = (char *)info + bitmap_info_size( info, mr->rdParm[0] );
             SetDIBitsToDevice(hdc, (SHORT)mr->rdParm[8], (SHORT)mr->rdParm[7],
                               (SHORT)mr->rdParm[6], (SHORT)mr->rdParm[5],
                               (SHORT)mr->rdParm[4], (SHORT)mr->rdParm[3],

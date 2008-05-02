@@ -408,7 +408,7 @@ extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
 /* dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth ) DECLSPEC_HIDDEN;
 extern int DIB_GetDIBImageBytes( int width, int height, int depth ) DECLSPEC_HIDDEN;
-extern int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
+extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
 
 /* driver.c */
 extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;

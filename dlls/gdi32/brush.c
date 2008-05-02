@@ -67,7 +67,7 @@ static HGLOBAL16 dib_copy(const BITMAPINFO *info, UINT coloruse)
         size = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
                                     info->bmiHeader.biHeight,
                                     info->bmiHeader.biBitCount);
-    size += DIB_BitmapInfoSize( info, coloruse );
+    size += bitmap_info_size( info, coloruse );
 
     if (!(hmem = GlobalAlloc16( GMEM_MOVEABLE, size )))
     {

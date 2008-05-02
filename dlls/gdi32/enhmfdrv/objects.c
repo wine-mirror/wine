@@ -174,7 +174,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	    bmSize = DIB_GetDIBImageBytes(info->bmiHeader.biWidth,
 					  info->bmiHeader.biHeight,
 					  info->bmiHeader.biBitCount);
-	biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush.lbColor));
+	biSize = bitmap_info_size(info, LOWORD(logbrush.lbColor));
 	size = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize + bmSize;
 	emr = HeapAlloc( GetProcessHeap(), 0, size );
 	if(!emr) break;
