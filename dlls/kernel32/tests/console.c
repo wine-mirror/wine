@@ -380,6 +380,7 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     SMALL_RECT  scroll, clip;
     COORD       dst, c, tc;
     CHAR_INFO   ci;
+    BOOL ret;
 
 #define W 11
 #define H 7
@@ -473,22 +474,31 @@ static void testScroll(HANDLE hCon, COORD sbSize)
     clip.Top = H / 2;
     clip.Bottom = min(H + H / 2, sbSize.Y - 1);
 
-    ok(ScrollConsoleScreenBuffer(hCon, &scroll, &clip, dst, &ci), "Scrolling SB\n");
-
-    for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
+    SetLastError(0xdeadbeef);
+    ret = ScrollConsoleScreenBuffer(hCon, &scroll, &clip, dst, &ci);
+    if (ret)
     {
-        for (c.X = 0; c.X < sbSize.X; c.X++)
+        for (c.Y = 0; c.Y < sbSize.Y; c.Y++)
         {
-            if (IN_SRECT2(scroll, dst, c) && IN_SRECT(clip, c))
+            for (c.X = 0; c.X < sbSize.X; c.X++)
             {
-                tc.X = c.X - dst.X;
-                tc.Y = c.Y - dst.Y;
-                okCHAR(hCon, c, CONTENT(tc), DEFAULT_ATTRIB);
+                if (IN_SRECT2(scroll, dst, c) && IN_SRECT(clip, c))
+                {
+                    tc.X = c.X - dst.X;
+                    tc.Y = c.Y - dst.Y;
+                    okCHAR(hCon, c, CONTENT(tc), DEFAULT_ATTRIB);
+                }
+                else if (IN_SRECT(scroll, c) && IN_SRECT(clip, c))
+                    okCHAR(hCon, c, '#', TEST_ATTRIB);
+                else okCHAR(hCon, c, CONTENT(c), DEFAULT_ATTRIB);
             }
-            else if (IN_SRECT(scroll, c) && IN_SRECT(clip, c))
-                okCHAR(hCon, c, '#', TEST_ATTRIB);
-            else okCHAR(hCon, c, CONTENT(c), DEFAULT_ATTRIB);
         }
+    }
+    else
+    {
+        /* Win9x will fail, Only accept ERROR_NOT_ENOUGH_MEMORY */
+        ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
+            "Expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
     }
 
     /* clipping, src & dst rect do overlap */
