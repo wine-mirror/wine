@@ -234,7 +234,7 @@ extern void X11DRV_Xcursor_Init(void);
 extern void X11DRV_BITMAP_Init(void);
 extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y );
 
-extern int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
+extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse );
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
 extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc);

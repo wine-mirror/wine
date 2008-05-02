@@ -186,13 +186,13 @@ static int X11DRV_DIB_GetDIBImageBytes( int width, int height, int depth )
 
 
 /***********************************************************************
- *           X11DRV_DIB_BitmapInfoSize
+ *           bitmap_info_size
  *
  * Return the size of the bitmap info structure including color table.
  */
-int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
+int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
 {
-    unsigned int colors;
+    unsigned int colors, masks = 0;
 
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
@@ -206,7 +206,8 @@ int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
         colors = info->bmiHeader.biClrUsed;
         if (!colors && (info->bmiHeader.biBitCount <= 8))
             colors = 1 << info->bmiHeader.biBitCount;
-        return sizeof(BITMAPINFOHEADER) + colors *
+        if (info->bmiHeader.biCompression == BI_BITFIELDS) masks = 3;
+        return sizeof(BITMAPINFOHEADER) + masks * sizeof(DWORD) + colors *
                ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
     }
 }
@@ -4941,7 +4942,7 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
 
     pbmi = GlobalLock(hPackedDIB);
     hBmp = CreateDIBitmap(hdc, &pbmi->bmiHeader, CBM_INIT,
-                          (LPBYTE)pbmi + X11DRV_DIB_BitmapInfoSize( pbmi, DIB_RGB_COLORS ),
+                          (LPBYTE)pbmi + bitmap_info_size( pbmi, DIB_RGB_COLORS ),
                           pbmi, DIB_RGB_COLORS);
     GlobalUnlock(hPackedDIB);
 
