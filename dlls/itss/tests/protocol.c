@@ -303,7 +303,6 @@ static HRESULT _protocol_start(unsigned line, IInternetProtocol *protocol, LPCWS
     expect_hrResult = S_OK;
 
     hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
-    ok_(__FILE__,line) (hres == S_OK, "Start failed: %08x\n", hres);
 
     if(FAILED(hres)) {
         SET_CALLED(GetBindInfo);
