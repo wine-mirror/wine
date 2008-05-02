@@ -747,6 +747,7 @@ field:	  m_attributes decl_spec declarator_list ';'
 ne_union_field:
 	  s_field ';'				{ $$ = $1; }
 	| attributes ';'			{ $$ = make_var(NULL); $$->attrs = $1; }
+        ;
 
 ne_union_fields:				{ $$ = NULL; }
 	| ne_union_fields ne_union_field	{ $$ = append_var( $1, $2 ); }
@@ -755,6 +756,7 @@ ne_union_fields:				{ $$ = NULL; }
 union_field:
 	  s_field ';'				{ $$ = $1; }
 	| ';'					{ $$ = NULL; }
+        ;
 
 s_field:  m_attributes decl_spec declarator	{ $$ = $3->var;
 						  $$->attrs = check_field_attrs($$->name, $1);
