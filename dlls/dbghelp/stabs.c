@@ -30,6 +30,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <sys/types.h>
 #include <fcntl.h>
