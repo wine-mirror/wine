@@ -1249,9 +1249,21 @@ DWORD WINAPI ImmGetConversionListA(
             return immHkl->pImeConversionList(hIMC,(LPCWSTR)pSrc,lpDst,dwBufLen,uFlag);
         else
         {
-            FIXME("A procedure called with W ime back end\n");
-            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-            return 0;
+            LPCANDIDATELIST lpwDst;
+            DWORD ret = 0, len;
+            LPWSTR pwSrc = strdupAtoW(pSrc);
+
+            len = immHkl->pImeConversionList(hIMC, pwSrc, NULL, 0, uFlag);
+            lpwDst = HeapAlloc(GetProcessHeap(), 0, len);
+            if ( lpwDst )
+            {
+                immHkl->pImeConversionList(hIMC, pwSrc, lpwDst, len, uFlag);
+                ret = convert_candidatelist_WtoA( lpwDst, lpDst, dwBufLen);
+                HeapFree(GetProcessHeap(), 0, lpwDst);
+            }
+            HeapFree(GetProcessHeap(), 0, pwSrc);
+
+            return ret;
         }
     }
     else
@@ -1275,9 +1287,21 @@ DWORD WINAPI ImmGetConversionListW(
             return immHkl->pImeConversionList(hIMC,pSrc,lpDst,dwBufLen,uFlag);
         else
         {
-            FIXME("W procedure called with A ime back end\n");
-            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-            return 0;
+            LPCANDIDATELIST lpaDst;
+            DWORD ret = 0, len;
+            LPSTR paSrc = strdupWtoA(pSrc);
+
+            len = immHkl->pImeConversionList(hIMC, (LPCWSTR)paSrc, NULL, 0, uFlag);
+            lpaDst = HeapAlloc(GetProcessHeap(), 0, len);
+            if ( lpaDst )
+            {
+                immHkl->pImeConversionList(hIMC, (LPCWSTR)paSrc, lpaDst, len, uFlag);
+                ret = convert_candidatelist_AtoW( lpaDst, lpDst, dwBufLen);
+                HeapFree(GetProcessHeap(), 0, lpaDst);
+            }
+            HeapFree(GetProcessHeap(), 0, paSrc);
+
+            return ret;
         }
     }
     else
