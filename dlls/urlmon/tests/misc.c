@@ -793,7 +793,7 @@ static void test_SecurityManager(void)
     ok(hres == S_OK, "GetSecurityId failed: %08x, expected S_OK\n", hres);
     ok(size == sizeof(secid10) ||
        size == sizeof(secid10_2), /* win2k3 */
-       "size=%d, expected %d or %d\n", size, sizeof(secid10), sizeof(secid10_2));
+       "size=%d\n", size);
     ok(!memcmp(buf, secid10, size) ||
        !memcmp(buf, secid10_2, size), /* win2k3 */
        "wrong secid\n");
