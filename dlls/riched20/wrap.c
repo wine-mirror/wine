@@ -473,8 +473,6 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   int yStart = -1;
 
   ME_InitContext(&c, editor, GetDC(editor->hWnd));
-  c.pt.x = 0;
-  c.pt.y = 0;
   editor->nHeight = 0;
   item = editor->pBuffer->pFirst->next;
   while(item != editor->pBuffer->pLast) {

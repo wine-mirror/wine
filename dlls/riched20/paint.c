@@ -43,8 +43,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
     {
       BOOL bPaint = (rcUpdate == NULL);
       if (rcUpdate)
-        bPaint = c.pt.y<rcUpdate->bottom && 
-          c.pt.y+item->member.para.nHeight>rcUpdate->top;
+        bPaint = c.pt.y<rcUpdate->bottom && ye>rcUpdate->top;
       if (bPaint)
       {
         ME_DrawParagraph(&c, item);
@@ -85,8 +84,6 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
       rc.bottom = ye;
       FillRect(hDC, &rc, c.editor->hbrBackground);
     }
-    if (ys == c.pt.y) /* don't overwrite the top bar */
-      ys++;
   }
   if (editor->nTotalLength != editor->nLastTotalLength)
     ME_SendRequestResize(editor, FALSE);
