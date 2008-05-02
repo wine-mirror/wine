@@ -829,9 +829,30 @@ done:
 DWORD WINAPI ImmGetCandidateListCountA(
   HIMC hIMC, LPDWORD lpdwListCount)
 {
-  FIXME("(%p, %p): stub\n", hIMC, lpdwListCount);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    InputContextData *data = (InputContextData *)hIMC;
+    LPCANDIDATEINFO candinfo;
+    DWORD ret, count;
+
+    TRACE("%p, %p\n", hIMC, lpdwListCount);
+
+    if (!data || !lpdwListCount || !data->IMC.hCandInfo)
+       return 0;
+
+    candinfo = ImmLockIMCC(data->IMC.hCandInfo);
+
+    *lpdwListCount = count = candinfo->dwCount;
+
+    if ( !is_himc_ime_unicode(data) )
+        ret = candinfo->dwSize;
+    else
+    {
+        ret = sizeof(CANDIDATEINFO);
+        while ( count-- )
+            ret += ImmGetCandidateListA(hIMC, count, NULL, 0);
+    }
+
+    ImmUnlockIMCC(data->IMC.hCandInfo);
+    return ret;
 }
 
 /***********************************************************************
@@ -840,9 +861,30 @@ DWORD WINAPI ImmGetCandidateListCountA(
 DWORD WINAPI ImmGetCandidateListCountW(
   HIMC hIMC, LPDWORD lpdwListCount)
 {
-  FIXME("(%p, %p): stub\n", hIMC, lpdwListCount);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return 0;
+    InputContextData *data = (InputContextData *)hIMC;
+    LPCANDIDATEINFO candinfo;
+    DWORD ret, count;
+
+    TRACE("%p, %p\n", hIMC, lpdwListCount);
+
+    if (!data || !lpdwListCount || !data->IMC.hCandInfo)
+       return 0;
+
+    candinfo = ImmLockIMCC(data->IMC.hCandInfo);
+
+    *lpdwListCount = count = candinfo->dwCount;
+
+    if ( is_himc_ime_unicode(data) )
+        ret = candinfo->dwSize;
+    else
+    {
+        ret = sizeof(CANDIDATEINFO);
+        while ( count-- )
+            ret += ImmGetCandidateListW(hIMC, count, NULL, 0);
+    }
+
+    ImmUnlockIMCC(data->IMC.hCandInfo);
+    return ret;
 }
 
 /***********************************************************************
