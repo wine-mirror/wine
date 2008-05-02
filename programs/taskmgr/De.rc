@@ -69,7 +69,7 @@ BEGIN
             MENUITEM "Ein Graph &pro CPU",          ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
             , CHECKED
         END
-        MENUITEM "&Zeige Kernel Zeiten an",          ID_VIEW_SHOWKERNELTIMES
+        MENUITEM "&Zeige Kernelzeiten an",          ID_VIEW_SHOWKERNELTIMES
     END
     POPUP "&Fenster"
     BEGIN
@@ -124,7 +124,7 @@ BEGIN
         MENUITEM "Hinter&einander",                    ID_WINDOWS_CASCADE
         MENUITEM SEPARATOR
         MENUITEM "Task &beenden",                   ID_APPLICATION_PAGE_ENDTASK
-        MENUITEM "&Gehe zu Prozeﬂ",              ID_APPLICATION_PAGE_GOTOPROCESS
+        MENUITEM "&Gehe zu Prozess",              ID_APPLICATION_PAGE_GOTOPROCESS
     END
 END
 
@@ -143,8 +143,8 @@ IDR_PROCESS_PAGE_CONTEXT MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "Prozeﬂ &beenden",                ID_PROCESS_PAGE_ENDPROCESS
-        MENUITEM "Beende Prozeﬂ&baum",           ID_PROCESS_PAGE_ENDPROCESSTREE
+        MENUITEM "Prozess &beenden",                ID_PROCESS_PAGE_ENDPROCESS
+        MENUITEM "Beende Prozess&baum",           ID_PROCESS_PAGE_ENDPROCESSTREE
 
         MENUITEM "&Debuggen",                      ID_PROCESS_PAGE_DEBUG
         MENUITEM SEPARATOR
@@ -224,7 +224,7 @@ BEGIN
     GROUPBOX        "Insgesamt",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Commit Charge (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Physikalischer Speicher (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "Kernel Speicher (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Kernelspeicher (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
     LTEXT           "Handles",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
     LTEXT           "Threads",IDS_TOTALS_THREAD_COUNT,12,140,27,8
     LTEXT           "Prozesse",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
@@ -245,7 +245,7 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "Insgesamt",IDS_PHYSICAL_MEMORY_TOTAL,137,131,37,8
     LTEXT           "Durchschnittlich",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,60,8
-    LTEXT           "System Cache",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,46,8
+    LTEXT           "Systemcache",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,46,8
     EDITTEXT        IDC_PHYSICAL_MEMORY_TOTAL,185,131,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_PHYSICAL_MEMORY_AVAILABLE,205,140,28,8,ES_RIGHT |
@@ -253,7 +253,7 @@ BEGIN
     EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,185,149,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "Insgesamt",IDS_KERNEL_MEMORY_TOTAL,137,174,37,8
-    LTEXT           "Ausgelagert",IDS_KERNEL_MEMORY_PAGED,137,184,21,8
+    LTEXT           "Ausgelagert",IDS_KERNEL_MEMORY_PAGED,137,184,64,8
     LTEXT           "Nichtausgelagert",IDS_KERNEL_MEMORY_NONPAGED,137,193,64,8
     EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
@@ -263,9 +263,9 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     GROUPBOX        "Verlauf der CPU-Auslastung",IDC_CPU_USAGE_HISTORY_FRAME,74,5,168,54,0,WS_EX_TRANSPARENT
     GROUPBOX        "Verlauf der Speicherauslastung",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
-    PUSHBUTTON      "CPU-Auslastung Anzeige",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
+    PUSHBUTTON      "CPU-Auslastungsanzeige",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
 		    WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Speicherauslastung Anzeige",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
+    PUSHBUTTON      "Speicherauslastunganzeige",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
                     WS_EX_CLIENTEDGE
     PUSHBUTTON      "CPU-Auslastungsverlauf",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
                     153,37,0,WS_EX_CLIENTEDGE
@@ -275,7 +275,7 @@ END
 
 IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Debug Kan‰le"
+CAPTION "Debugkan‰le"
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
@@ -286,12 +286,12 @@ END
 
 IDD_AFFINITY_DIALOG DIALOG DISCARDABLE  0, 0, 231, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Prozessor Affinit‰t"
+CAPTION "Prozessoraffinit‰t"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,120,133,50,14
     PUSHBUTTON      "Abbrechen",IDCANCEL,174,133,50,14
-    LTEXT           "Die Prozessor Affinit‰t Einstellung kontrolliert, auf welchen CPU's der Prozeﬂ, die Erlaubnis hat, ausgef¸hrt werden zu kˆnnen.",
+    LTEXT           "Die Prozessoraffinit‰tseinstellung kontrolliert, auf welchen CPUs der Prozess die Erlaubnis hat, ausgef¸hrt werden zu kˆnnen.",
                     IDC_STATIC,5,5,220,16
     CONTROL         "CPU 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     11,28,37,10
@@ -370,7 +370,7 @@ BEGIN
                     IDC_STATIC,7,7,181,17
     CONTROL         "&Name",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
-    CONTROL         "&PID (Prozeﬂ-ID)",IDC_PID,"Button",
+    CONTROL         "&PID (Prozess-ID)",IDC_PID,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
     CONTROL         "&CPU-Auslastung",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,50,90,10
@@ -468,12 +468,12 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_ENDTASK                              "Weist die ausgew‰hlten Tasks an, sich zu beenden"
-    ID_GOTOPROCESS                          "Wechselt den Fokus zu dem Prozeﬂ des ausgew‰hlten Tasks"
+    ID_GOTOPROCESS                          "Wechselt den Fokus zu dem Prozess des ausgew‰hlten Tasks"
     ID_RESTORE                              "Stellt den Task Manager von seiner versteckten Status wieder her"
-    ID_PROCESS_PAGE_ENDPROCESS              "Entfernt den Prozeﬂ vom System"
-    ID_PROCESS_PAGE_ENDPROCESSTREE          "Entfernt den Prozeﬂ und all seine Kindprozesse vom System"
-    ID_PROCESS_PAGE_DEBUG                   "Heftet den Debugger an diesen Prozeﬂ an"
-    ID_PROCESS_PAGE_SETAFFINITY             "Kontrolliert, auf welche Prozessoren ein Prozeﬂ ausgef¸hrt werden darf"
+    ID_PROCESS_PAGE_ENDPROCESS              "Entfernt den Prozess vom System"
+    ID_PROCESS_PAGE_ENDPROCESSTREE          "Entfernt den Prozess und all seine Kindprozesse vom System"
+    ID_PROCESS_PAGE_DEBUG                   "Heftet den Debugger an diesen Prozess an"
+    ID_PROCESS_PAGE_SETAFFINITY             "Kontrolliert, auf welche Prozessoren ein Prozess ausgef¸hrt werden darf"
     ID_PROCESS_PAGE_SETPRIORITY_REALTIME    "Setzt den Prozeﬂ in die ECHTZEIT-Priorit‰tsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_HIGH        "Setzt den Prozeﬂ in die HOCH-Priorit‰tsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL "Setzt den Prozeﬂ in die H÷HER ALS NORMAL-Priorit‰tsklasse"
