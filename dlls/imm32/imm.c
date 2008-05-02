@@ -604,9 +604,17 @@ UINT WINAPI ImmEnumRegisterWordA(
                 (LPCWSTR)lpszReading, dwStyle, (LPCWSTR)lpszRegister, lpData);
         else
         {
-            FIXME("A procedure called with W ime back end\n");
-            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-            return 0;
+            LPWSTR lpszwReading = strdupAtoW(lpszReading);
+            LPWSTR lpszwRegister = strdupAtoW(lpszRegister);
+            BOOL rc;
+
+            rc = immHkl->pImeEnumRegisterWord((REGISTERWORDENUMPROCW)lpfnEnumProc,
+                                              lpszwReading, dwStyle, lpszwRegister,
+                                              lpData);
+
+            HeapFree(GetProcessHeap(),0,lpszwReading);
+            HeapFree(GetProcessHeap(),0,lpszwRegister);
+            return rc;
         }
     }
     else
@@ -631,9 +639,16 @@ UINT WINAPI ImmEnumRegisterWordW(
                                             lpszRegister, lpData);
         else
         {
-            FIXME("W procedure called with A ime back end\n");
-            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-            return 0;
+            LPSTR lpszaReading = strdupWtoA(lpszReading);
+            LPSTR lpszaRegister = strdupWtoA(lpszRegister);
+            BOOL rc;
+
+            rc = immHkl->pImeEnumRegisterWord(lpfnEnumProc, (LPCWSTR)lpszaReading,
+                                              dwStyle, (LPCWSTR)lpszaRegister, lpData);
+
+            HeapFree(GetProcessHeap(),0,lpszaReading);
+            HeapFree(GetProcessHeap(),0,lpszaRegister);
+            return rc;
         }
     }
     else
