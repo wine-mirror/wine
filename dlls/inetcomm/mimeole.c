@@ -1510,7 +1510,6 @@ static HRESULT create_body_offset_list(IStream *stm, const char *boundary, struc
     DWORD read;
     int boundary_len = strlen(boundary);
     char *buf, *nl_boundary, *ptr, *overlap;
-    DWORD total_read = 0;
     DWORD start = 0, overlap_no;
     offset_entry_t *cur_body = NULL;
     ULARGE_INTEGER cur;
@@ -1533,7 +1532,6 @@ static HRESULT create_body_offset_list(IStream *stm, const char *boundary, struc
         hr = IStream_Read(stm, overlap, PARSER_BUF_SIZE, &read);
         if(FAILED(hr)) goto end;
         if(read == 0) break;
-        total_read += read;
         overlap[read] = '\0';
 
         ptr = buf;

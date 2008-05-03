@@ -324,7 +324,6 @@ static LRESULT CALLBACK InternetTransport_WndProc(HWND hwnd, UINT uMsg, WPARAM w
 
         while (This->iCurrentBufferOffset < This->cbBuffer - 1)
         {
-            struct timeval tv;
             fd_set infd;
 
             if (recv(This->Socket, &This->pBuffer[This->iCurrentBufferOffset], 1, 0) <= 0)
@@ -358,8 +357,6 @@ static LRESULT CALLBACK InternetTransport_WndProc(HWND hwnd, UINT uMsg, WPARAM w
 
             FD_ZERO(&infd);
             FD_SET(This->Socket, &infd);
-            tv.tv_sec = 0;
-            tv.tv_usec = 0;
         }
         if (This->iCurrentBufferOffset == This->cbBuffer - 1)
             return 0;
