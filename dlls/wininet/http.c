@@ -1375,7 +1375,6 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
 {
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
     LPWININETHTTPSESSIONW lpwhs = NULL;
-    LPWININETAPPINFOW hIC = NULL;
 
     TRACE("%p\n",lpwhr);
 
@@ -1408,7 +1407,6 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
     }
 
     lpwhs = lpwhr->lpHttpSession;
-    hIC = lpwhs->lpAppInfo;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
@@ -3463,7 +3461,6 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags)
 {
-    BOOL bSuccess = FALSE;
     LPWININETHTTPSESSIONW lpwhs = NULL;
     HINTERNET handle = NULL;
 
@@ -3533,8 +3530,6 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
                               INTERNET_STATUS_HANDLE_CREATED, &handle,
                               sizeof(handle));
     }
-
-    bSuccess = TRUE;
 
 lerror:
     if( lpwhs )

@@ -2547,11 +2547,9 @@ INT FTP_ReceiveResponse(LPWININETFTPSESSIONW lpwfs, DWORD_PTR dwContext)
     INT rc = 0;
     char firstprefix[5];
     BOOL multiline = FALSE;
-    LPWININETAPPINFOW hIC = NULL;
 
     TRACE("socket(%d)\n", lpwfs->sndSocket);
 
-    hIC = lpwfs->lpAppInfo;
     SendAsyncCallback(&lpwfs->hdr, dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
     while(1)
@@ -3168,7 +3166,6 @@ lend:
 static BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile)
 {
     DWORD nBytesWritten;
-    DWORD nBytesReceived = 0;
     INT nRC = 0;
     CHAR *lpszBuffer;
 
@@ -3190,7 +3187,6 @@ static BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HA
             if (nRC == 0)
                 goto recv_end;
             WriteFile(hFile, lpszBuffer, nRC, &nBytesWritten, NULL);
-            nBytesReceived += nRC;
         }
     }
 
