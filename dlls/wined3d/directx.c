@@ -1706,7 +1706,9 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_Pixel
     if(!(cfg->depthSize == depthSize || (!lockable && cfg->depthSize > depthSize)))
         return FALSE;
 
-    if(cfg->stencilSize != stencilSize)
+    /* Some cards like Intel i915 ones only offer D24S8 but lots of games also need a format without stencil, so
+     * allow more stencil bits than requested. */
+    if(cfg->stencilSize < stencilSize)
         return FALSE;
 
     return TRUE;
@@ -3839,6 +3841,7 @@ BOOL InitAdapters(void) {
         int values[10];
         int nAttribs = 0;
         int res;
+        int i;
         WineD3D_PixelFormat *cfgs;
         int attribute;
         DISPLAY_DEVICEW DisplayDevice;
@@ -3951,6 +3954,24 @@ BOOL InitAdapters(void) {
 
             TRACE("iPixelFormat=%d, iPixelType=%#x, doubleBuffer=%d, RGBA=%d/%d/%d/%d, depth=%d, stencil=%d, windowDrawable=%d, pbufferDrawable=%d\n", cfgs->iPixelFormat, cfgs->iPixelType, cfgs->doubleBuffer, cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize, cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable, cfgs->pbufferDrawable);
             cfgs++;
+        }
+
+        /* D16, D24X8 and D24S8 are common depth / depth+stencil formats. All drivers support them though this doesn't
+         * mean that the format is offered in hardware. For instance Geforce8 cards don't have offer D16 in hardware
+         * but just fake it using D24(X8?) which is fine. D3D also allows that.
+         * Some display drivers (i915 on Linux) only report mixed depth+stencil formats like D24S8. MSDN clearly mentions
+         * that only on lockable formats (e.g. D16_locked) the bit order is guaranteed and that on other formats the
+         * driver is allowed to consume more bits EXCEPT for stencil bits.
+         *
+         * Mark an adapter with this broken stencil behavior.
+         */
+        Adapters[0].brokenStencil = TRUE;
+        for(i=0, cfgs=Adapters[0].cfgs; i<Adapters[0].nCfgs; i++) {
+            /* Nearly all drivers offer depth formats without stencil, only on i915 this if-statement won't be entered. */
+            if(cfgs[i].depthSize && !cfgs[i].stencilSize) {
+                Adapters[0].brokenStencil = FALSE;
+                break;
+            }
         }
 
         fixup_extensions(&Adapters[0].gl_info);

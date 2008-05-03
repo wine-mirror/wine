@@ -702,6 +702,7 @@ struct WineD3DAdapter
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
     int                     nCfgs;
     WineD3D_PixelFormat     *cfgs;
+    BOOL                    brokenStencil; /* Set on cards which only offer mixed depth+stencil */
     unsigned int            TextureRam; /* Amount of texture memory both video ram + AGP/TurboCache/HyperMemory/.. */
     unsigned int            UsedTextureRam;
 };
