@@ -93,7 +93,6 @@ struct JoystickImpl
 	LONG				deadzone;
 	int				*axis_map;
 	int				axes;
-	int				buttons;
         POINTL                          povs[4];
 };
 
@@ -428,9 +427,9 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     }
 #endif
 #ifdef JSIOCGBUTTONS
-    if (ioctl(newDevice->joyfd,JSIOCGBUTTONS,&newDevice->buttons) < 0) {
+    if (ioctl(newDevice->joyfd, JSIOCGBUTTONS, &newDevice->devcaps.dwButtons) < 0) {
         WARN("ioctl(%s,JSIOCGBUTTONS) failed: %s, defauting to 2\n", newDevice->dev, strerror(errno));
-        newDevice->buttons = 2;
+        newDevice->devcaps.dwButtons = 2;
     }
 #endif
 
@@ -441,10 +440,10 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         newDevice->axes = 16;
     }
 
-    if (newDevice->buttons > 128)
+    if (newDevice->devcaps.dwButtons > 128)
     {
-        WARN("Can't support %d buttons. Clamping down to 128\n", newDevice->buttons);
-        newDevice->buttons = 128;
+        WARN("Can't support %d buttons. Clamping down to 128\n", newDevice->devcaps.dwButtons);
+        newDevice->devcaps.dwButtons = 128;
     }
 
     newDevice->base.lpVtbl = jvt;
@@ -456,7 +455,6 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     /* setup_dinput_options may change these */
     newDevice->deadzone = 0;
-    newDevice->devcaps.dwButtons = newDevice->buttons;
 
     /* do any user specified configuration */
     hr = setup_dinput_options(newDevice);
@@ -467,7 +465,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto FAILED;
     memcpy(df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
 
-    df->dwNumObjs = newDevice->devcaps.dwAxes + newDevice->devcaps.dwPOVs + newDevice->buttons;
+    df->dwNumObjs = newDevice->devcaps.dwAxes + newDevice->devcaps.dwPOVs + newDevice->devcaps.dwButtons;
     if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto FAILED;
 
     for (i = 0; i < newDevice->axes; i++)
@@ -483,7 +481,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
             i++; /* POV takes 2 axes */
         }
     }
-    for (i = 0; i < newDevice->buttons; i++)
+    for (i = 0; i < newDevice->devcaps.dwButtons; i++)
     {
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + 12], df->dwObjSize);
         df->rgodf[idx  ].pguid = &GUID_Button;
