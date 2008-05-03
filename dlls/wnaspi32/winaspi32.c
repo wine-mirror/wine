@@ -140,7 +140,6 @@ ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
 static void
 ASPI_DebugPrintCmd(SRB_ExecSCSICmd *prb)
 {
-  BYTE	cmd;
   int	i;
   BYTE *cdb;
 
@@ -185,7 +184,6 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd *prb)
   TRACE("CDB Length: %d\n", prb->SRB_CDBLen);
   TRACE("POST Proc: %p\n", prb->SRB_PostProc);
   cdb = &prb->CDBByte[0];
-  cmd = prb->CDBByte[0];
   if (TRACE_ON(aspi)) {
       TRACE("CDB buffer[");
       for (i = 0; i < prb->SRB_CDBLen; i++) {
