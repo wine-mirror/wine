@@ -546,7 +546,8 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
             ERR("Cannot allocate a new context array, PANIC!!!\n");
         }
         t = 0;
-        for(s = 0; s < This->numContexts; s++) {
+        /* Note that we decreased numContexts a few lines up, so use '<=' instead of '<' */
+        for(s = 0; s <= This->numContexts; s++) {
             if(oldArray[s] == context) continue;
             This->contexts[t] = oldArray[s];
             t++;
