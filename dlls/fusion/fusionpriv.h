@@ -79,7 +79,7 @@ typedef struct
 
 typedef struct
 {
-    DWORD ResolutionScope;
+    WORD ResolutionScope;
     WORD Name;
     WORD Namespace;
 } TYPEREFTABLE;
