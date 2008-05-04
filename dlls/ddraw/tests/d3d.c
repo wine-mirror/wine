@@ -1590,6 +1590,32 @@ out:
     IDirect3DVertexBuffer7_Release(lpVBufSrc);
 }
 
+static void D3D7_OldRenderStateTest(void)
+{
+    HRESULT rc;
+    DWORD val;
+
+    /* Test reaction to some deprecated states in D3D7.
+
+     * IDirect3DDevice7 in Wine currently relays such states to wined3d where they are do-nothing and return 0, instead
+     * of INVALIDPARAMS. Unless an app is found which cares this is probably ok. What this test shows is that these states
+     * need not to be handled in D3D7.
+     */
+    todo_wine {
+        rc = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_TEXTUREHANDLE, 0);
+        ok(rc == DDERR_INVALIDPARAMS, "IDirect3DDevice7_SetRenderState returned %08x\n", rc);
+
+        rc = IDirect3DDevice7_GetRenderState(lpD3DDevice, D3DRENDERSTATE_TEXTUREHANDLE, &val);
+        ok(rc == DDERR_INVALIDPARAMS, "IDirect3DDevice7_GetRenderState returned %08x\n", rc);
+
+        rc = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
+        ok(rc == DDERR_INVALIDPARAMS, "IDirect3DDevice7_SetRenderState returned %08x\n", rc);
+
+        rc = IDirect3DDevice7_GetRenderState(lpD3DDevice, D3DRENDERSTATE_TEXTUREMAPBLEND, &val);
+        ok(rc == DDERR_INVALIDPARAMS, "IDirect3DDevice7_GetRenderState returned %08x\n", rc);
+    }
+}
+
 
 START_TEST(d3d)
 {
@@ -1610,6 +1636,7 @@ START_TEST(d3d)
         D3D7EnumTest();
         CapsTest();
         VertexBufferDescTest();
+        D3D7_OldRenderStateTest();
         ReleaseDirect3D();
     }
 
