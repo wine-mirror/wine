@@ -34,6 +34,7 @@
  */
 #include "wps_Bg.rc"
 #include "wps_Cs.rc"
+#include "wps_Da.rc"
 #include "wps_De.rc"
 #include "wps_En.rc"
 #include "wps_Es.rc"
