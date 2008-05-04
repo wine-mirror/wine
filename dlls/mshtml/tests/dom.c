@@ -48,6 +48,7 @@ static const char elem_test_str[] =
     "<table><tbody></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"></script>"
     "<test />"
+    "<img /"
     "</body></html>";
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
@@ -81,7 +82,8 @@ typedef enum {
     ET_TBODY,
     ET_SCRIPT,
     ET_TEST,
-    ET_COMMENT
+    ET_COMMENT,
+    ET_IMG
 } elem_type_t;
 
 static REFIID const none_iids[] = {
@@ -221,6 +223,17 @@ static REFIID const comment_iids[] = {
     NULL
 };
 
+static REFIID const img_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IDispatchEx,
+    &IID_IHTMLImgElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -246,7 +259,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"TBODY",     elem_iids,        NULL},
     {"SCRIPT",    script_iids,      NULL},
     {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement},
-    {"!",         comment_iids,     &DIID_DispHTMLCommentElement}
+    {"!",         comment_iids,     &DIID_DispHTMLCommentElement},
+    {"IMG",       img_iids,         &DIID_DispHTMLImg}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -1524,6 +1538,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TBODY,
         ET_SCRIPT,
         ET_TEST,
+        ET_IMG
     };
 
     static const elem_type_t item_types[] = {
