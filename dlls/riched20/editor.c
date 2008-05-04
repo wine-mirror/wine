@@ -2181,6 +2181,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
           ME_StreamInRTFString(editor, 0, (char *)lParam);
       else ME_InsertTextFromCursor(editor, 0, wszText, len, style);
       ME_ReleaseStyle(style);
+
+      if (editor->AutoURLDetect_bEnable) ME_UpdateSelectionLinkAttribute(editor);
     }
     else {
       ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
@@ -2188,6 +2190,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
           ME_StreamInRTFString(editor, 0, (char *)lParam);
       else ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
       len = 1;
+
+      if (editor->AutoURLDetect_bEnable) ME_UpdateLinkAttribute(editor, 0, -1);
     }
     ME_CommitUndo(editor);
     if (!(pStruct->flags & ST_KEEPUNDO))
