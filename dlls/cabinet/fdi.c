@@ -160,21 +160,21 @@ void QTMupdatemodel(struct QTMmodel *model, int sym) {
   if (model->syms[0].cumfreq > 3800) {
     if (--model->shiftsleft) {
       for (i = model->entries - 1; i >= 0; i--) {
-    /* -1, not -2; the 0 entry saves this */
-    model->syms[i].cumfreq >>= 1;
-    if (model->syms[i].cumfreq <= model->syms[i+1].cumfreq) {
-      model->syms[i].cumfreq = model->syms[i+1].cumfreq + 1;
-    }
+        /* -1, not -2; the 0 entry saves this */
+        model->syms[i].cumfreq >>= 1;
+        if (model->syms[i].cumfreq <= model->syms[i+1].cumfreq) {
+          model->syms[i].cumfreq = model->syms[i+1].cumfreq + 1;
+        }
       }
     }
     else {
       model->shiftsleft = 50;
       for (i = 0; i < model->entries ; i++) {
-    /* no -1, want to include the 0 entry */
-    /* this converts cumfreqs into frequencies, then shifts right */
-    model->syms[i].cumfreq -= model->syms[i+1].cumfreq;
-    model->syms[i].cumfreq++; /* avoid losing things entirely */
-    model->syms[i].cumfreq >>= 1;
+        /* no -1, want to include the 0 entry */
+        /* this converts cumfreqs into frequencies, then shifts right */
+        model->syms[i].cumfreq -= model->syms[i+1].cumfreq;
+        model->syms[i].cumfreq++; /* avoid losing things entirely */
+        model->syms[i].cumfreq >>= 1;
       }
 
       /* now sort by frequencies, decreasing order -- this must be an
@@ -182,22 +182,22 @@ void QTMupdatemodel(struct QTMmodel *model, int sym) {
        * characteristics
        */
       for (i = 0; i < model->entries - 1; i++) {
-    for (j = i + 1; j < model->entries; j++) {
-      if (model->syms[i].cumfreq < model->syms[j].cumfreq) {
-        temp = model->syms[i];
-        model->syms[i] = model->syms[j];
-        model->syms[j] = temp;
+        for (j = i + 1; j < model->entries; j++) {
+          if (model->syms[i].cumfreq < model->syms[j].cumfreq) {
+            temp = model->syms[i];
+            model->syms[i] = model->syms[j];
+            model->syms[j] = temp;
+          }
+        }
       }
-    }
-      }
-    
+
       /* then convert frequencies back to cumfreq */
       for (i = model->entries - 1; i >= 0; i--) {
-    model->syms[i].cumfreq += model->syms[i+1].cumfreq;
+        model->syms[i].cumfreq += model->syms[i+1].cumfreq;
       }
       /* then update the other part of the table */
       for (i = 0; i < model->entries; i++) {
-    model->tabloc[model->syms[i].sym] = i;
+        model->tabloc[model->syms[i].sym] = i;
       }
     }
   }
@@ -882,7 +882,7 @@ static int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
   memcpy(CAB(lzx_position_base), base, sizeof(base));
 
   /* calculate required position slots */
-       if (window == 20) posn_slots = 42;
+  if (window == 20) posn_slots = 42;
   else if (window == 21) posn_slots = 50;
   else posn_slots = window << 1;
 
