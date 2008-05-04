@@ -25,6 +25,7 @@
 
 #include "version.rc"
 
+#include "shlwapi_Da.rc"
 #include "shlwapi_De.rc"
 #include "shlwapi_En.rc"
 #include "shlwapi_Eo.rc"
