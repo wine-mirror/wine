@@ -1098,7 +1098,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         if (lstrcmpW(f->File, data->file->File))
             return 0;
 
-        size = lstrlenW(data->destination) + lstrlenW(file) + 2;
+        size = lstrlenW(data->destination) + lstrlenW(data->file->FileName) + 2;
         path = msi_alloc(size * sizeof(WCHAR));
         lstrcpyW(path, data->destination);
         PathAddBackslashW(path);
