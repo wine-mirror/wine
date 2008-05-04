@@ -2380,6 +2380,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       ME_ClearTempStyle(editor);
     ME_EndToUnicode(unicode, wszText);
     ME_CommitUndo(editor);
+    if (editor->AutoURLDetect_bEnable) ME_UpdateSelectionLinkAttribute(editor);
     if (!wParam)
       ME_EmptyUndoStack(editor);
     ME_UpdateRepaint(editor);

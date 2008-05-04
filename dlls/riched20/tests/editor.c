@@ -1685,6 +1685,121 @@ static void test_EM_AUTOURLDETECT(void)
     hwndRichEdit = NULL;
   }
 
+  /* Test detection of URLs within normal text - EM_REPLACESEL case. */
+  for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
+    hwndRichEdit = new_richedit(parent);
+
+    /* Set selection with X to the URL */
+    for (j = 0; j < sizeof(templates_delim) / sizeof(const char *); j++) {
+      char * at_pos;
+      int at_offset;
+      int end_offset;
+
+      at_pos = strchr(templates_delim[j], 'X');
+      at_offset = at_pos - templates_delim[j];
+      end_offset = at_offset + strlen(urls[i].text);
+
+      SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+      SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) templates_delim[j]);
+      SendMessage(hwndRichEdit, EM_SETSEL, at_offset, at_offset+1);
+      SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) urls[i].text);
+      SendMessage(hwndRichEdit, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+
+      /* This assumes no templates start with the URL itself, and that they
+         have at least two characters before the URL text */
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      if (urls[i].is_url)
+      {
+        ok(check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK not set in (%d-%d), text: %s\n", at_offset, at_offset +1, buffer);
+        ok(check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK not set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      else
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset, at_offset + 1, buffer);
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      if (buffer[end_offset] != '\0')
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset + 1, buffer);
+        if (buffer[end_offset +1] != '\0')
+        {
+          ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +1, end_offset +2),
+            "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +1, end_offset +2, buffer);
+        }
+      }
+    }
+
+    /* Set selection with X to the first character of the URL, then the rest */
+    for (j = 0; j < sizeof(templates_delim) / sizeof(const char *); j++) {
+      char * at_pos;
+      int at_offset;
+      int end_offset;
+
+      at_pos = strchr(templates_delim[j], 'X');
+      at_offset = at_pos - templates_delim[j];
+      end_offset = at_offset + strlen(urls[i].text);
+
+      strcpy(buffer, "YY");
+      buffer[0] = urls[i].text[0];
+
+      SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+      SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) templates_delim[j]);
+      SendMessage(hwndRichEdit, EM_SETSEL, at_offset, at_offset+1);
+      SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) buffer);
+      SendMessage(hwndRichEdit, EM_SETSEL, at_offset+1, at_offset+2);
+      SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)(urls[i].text + 1));
+      SendMessage(hwndRichEdit, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+
+      /* This assumes no templates start with the URL itself, and that they
+         have at least two characters before the URL text */
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      if (urls[i].is_url)
+      {
+        ok(check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK not set in (%d-%d), text: %s\n", at_offset, at_offset +1, buffer);
+        ok(check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK not set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      else
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset, at_offset + 1, buffer);
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      if (buffer[end_offset] != '\0')
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset + 1, buffer);
+        if (buffer[end_offset +1] != '\0')
+        {
+          ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +1, end_offset +2),
+            "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +1, end_offset +2, buffer);
+        }
+      }
+    }
+
+    DestroyWindow(hwndRichEdit);
+    hwndRichEdit = NULL;
+  }
+
   DestroyWindow(parent);
 }
 
