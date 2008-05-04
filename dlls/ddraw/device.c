@@ -2265,39 +2265,6 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
     EnterCriticalSection(&ddraw_cs);
     switch(RenderStateType)
     {
-        case D3DRENDERSTATE_TEXTUREHANDLE:
-        {
-            /* This state is wrapped to SetTexture in SetRenderState, so
-             * it has to be wrapped to GetTexture here
-             */
-            IWineD3DBaseTexture *tex = NULL;
-            *Value = 0;
-
-            hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
-                                           0,
-                                           &tex);
-
-            if(hr == WINED3D_OK && tex)
-            {
-                IDirectDrawSurface7 *parent = NULL;
-                hr = IWineD3DBaseTexture_GetParent(tex,
-                                                   (IUnknown **) &parent);
-                if(parent)
-                {
-                    /* The parent of the texture is the IDirectDrawSurface7 interface
-                     * of the ddraw surface
-                     */
-                    IDirectDrawSurfaceImpl *texImpl = ICOM_OBJECT(IDirectDrawSurfaceImpl,
-                                                                  IDirectDrawSurface7,
-                                                                  parent);
-                    *Value = texImpl->Handle;
-                    IDirectDrawSurface7_Release(parent);
-                }
-                IWineD3DBaseTexture_Release(tex);
-            }
-            break;
-        }
-
         case D3DRENDERSTATE_TEXTUREMAG:
         {
             WINED3DTEXTUREFILTERTYPE tex_mag;
@@ -2367,15 +2334,55 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
 }
 
 static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
-                                           D3DRENDERSTATETYPE dwRenderStateType,
-                                           DWORD *lpdwRenderState)
+IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
+                                     D3DRENDERSTATETYPE dwRenderStateType,
+                                     DWORD *lpdwRenderState)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    TRACE_(ddraw_thunk)("(%p)->(%08x,%p) thunking to IDirect3DDevice7 interface.\n", This, dwRenderStateType, lpdwRenderState);
-    return IDirect3DDevice7_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
+    HRESULT hr;
+    TRACE("(%p)->(%08x,%p)\n", This, dwRenderStateType, lpdwRenderState);
+
+    switch(dwRenderStateType)
+    {
+        case D3DRENDERSTATE_TEXTUREHANDLE:
+        {
+            /* This state is wrapped to SetTexture in SetRenderState, so
+             * it has to be wrapped to GetTexture here
+             */
+            IWineD3DBaseTexture *tex = NULL;
+            *lpdwRenderState = 0;
+
+            hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
+                                           0,
+                                           &tex);
+
+            if(hr == WINED3D_OK && tex)
+            {
+                IDirectDrawSurface7 *parent = NULL;
+                hr = IWineD3DBaseTexture_GetParent(tex,
+                                                   (IUnknown **) &parent);
+                if(parent)
+                {
+                    /* The parent of the texture is the IDirectDrawSurface7 interface
+                     * of the ddraw surface
+                     */
+                    IDirectDrawSurfaceImpl *texImpl = ICOM_OBJECT(IDirectDrawSurfaceImpl,
+                                                                  IDirectDrawSurface7,
+                                                                  parent);
+                    *lpdwRenderState = texImpl->Handle;
+                    IDirectDrawSurface7_Release(parent);
+                }
+                IWineD3DBaseTexture_Release(tex);
+            }
+
+            return hr;
+        }
+
+        default:
+            return IDirect3DDevice7_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
                                            dwRenderStateType,
                                            lpdwRenderState);
+    }
 }
 
 static HRESULT WINAPI
@@ -2462,7 +2469,7 @@ IDirect3DDeviceImpl_2_GetRenderState(IDirect3DDevice2 *iface,
         }
 
         default:
-            return IDirect3DDevice7_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
+            return IDirect3DDevice3_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice3),
                                            dwRenderStateType,
                                            lpdwRenderState);
     }
@@ -2498,38 +2505,6 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
     /* Some render states need special care */
     switch(RenderStateType)
     {
-        case D3DRENDERSTATE_TEXTUREHANDLE:
-        {
-            if(Value == 0)
-            {
-                hr = IWineD3DDevice_SetTexture(This->wineD3DDevice,
-                                               0,
-                                               NULL);
-                break;
-            }
-
-            if(Value > This->numHandles)
-            {
-                FIXME("Specified handle %d out of range\n", Value);
-                hr = DDERR_INVALIDPARAMS;
-                break;
-            }
-            if(This->Handles[Value - 1].type != DDrawHandle_Texture)
-            {
-                FIXME("Handle %d isn't a texture handle\n", Value);
-                hr = DDERR_INVALIDPARAMS;
-                break;
-            }
-            else
-            {
-                IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *) This->Handles[Value - 1].ptr;
-                hr = IWineD3DDevice_SetTexture(This->wineD3DDevice,
-                                               0,
-                                               surf->wineD3DTexture);
-                break;
-            }
-        }
-
         case D3DRENDERSTATE_TEXTUREMAG:
         {
             WINED3DTEXTUREFILTERTYPE tex_mag = WINED3DTEXF_NONE;
@@ -2627,15 +2602,54 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
 }
 
 static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
-                                           D3DRENDERSTATETYPE RenderStateType,
-                                           DWORD Value)
+IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
+                                     D3DRENDERSTATETYPE RenderStateType,
+                                     DWORD Value)
 {
+    HRESULT hr;
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    TRACE_(ddraw_thunk)("(%p)->(%08x,%08x) thunking to IDirect3DDevice7 interface.\n", This, RenderStateType, Value);
-    return IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
+    TRACE("(%p)->(%08x,%d)\n", This, RenderStateType, Value);
+
+    switch(RenderStateType)
+    {
+        case D3DRENDERSTATE_TEXTUREHANDLE:
+        {
+            if(Value == 0)
+            {
+                hr = IWineD3DDevice_SetTexture(This->wineD3DDevice,
+                                               0,
+                                               NULL);
+                break;
+            }
+
+            if(Value > This->numHandles)
+            {
+                FIXME("Specified handle %d out of range\n", Value);
+                hr = DDERR_INVALIDPARAMS;
+                break;
+            }
+            if(This->Handles[Value - 1].type != DDrawHandle_Texture)
+            {
+                FIXME("Handle %d isn't a texture handle\n", Value);
+                hr = DDERR_INVALIDPARAMS;
+                break;
+            }
+            else
+            {
+                IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *) This->Handles[Value - 1].ptr;
+                hr = IDirect3DDevice3_SetTexture(iface, 0, ICOM_INTERFACE(surf, IDirect3DTexture2));
+                break;
+            }
+        }
+
+        default:
+            hr = IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
                                            RenderStateType,
                                            Value);
+            break;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -2749,7 +2763,7 @@ IDirect3DDeviceImpl_2_SetRenderState(IDirect3DDevice2 *iface,
 
             IDirect3DDevice2_GetRenderState(iface, D3DRENDERSTATE_TEXTUREMAPBLEND, &texmapblend);
 
-            hr = IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
+            hr = IDirect3DDevice3_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice3),
                                            D3DRENDERSTATE_TEXTUREHANDLE,
                                            Value);
 
@@ -2799,7 +2813,7 @@ IDirect3DDeviceImpl_2_SetRenderState(IDirect3DDevice2 *iface,
         }
 
         default:
-            hr = IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
+            hr = IDirect3DDevice3_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice3),
                                            RenderStateType,
                                            Value);
             break;
@@ -5592,8 +5606,8 @@ const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl =
     IDirect3DDeviceImpl_3_Vertex,
     IDirect3DDeviceImpl_3_Index,
     IDirect3DDeviceImpl_3_End,
-    Thunk_IDirect3DDeviceImpl_3_GetRenderState,
-    Thunk_IDirect3DDeviceImpl_3_SetRenderState,
+    IDirect3DDeviceImpl_3_GetRenderState,
+    IDirect3DDeviceImpl_3_SetRenderState,
     IDirect3DDeviceImpl_3_GetLightState,
     IDirect3DDeviceImpl_3_SetLightState,
     Thunk_IDirect3DDeviceImpl_3_SetTransform,
