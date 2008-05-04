@@ -2710,6 +2710,14 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     break;
                 }
 
+                case D3DTBLEND_ADD:
+                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, WINED3DTOP_ADD);
+                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                    break;
+
                 case D3DTBLEND_MODULATEALPHA:
                     IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
                     IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
@@ -2719,6 +2727,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_MODULATE);
                     break;
 
+                case D3DTBLEND_COPY:
                 case D3DTBLEND_DECAL:
                     IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
                     IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
@@ -2727,11 +2736,11 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     break;
 
                 case D3DTBLEND_DECALALPHA:
+                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, WINED3DTOP_BLENDTEXTUREALPHA);
                     IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
+                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
                     IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, WINED3DTOP_SELECTARG1);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_MODULATE);
                     break;
 
                 default:
