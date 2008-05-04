@@ -3929,13 +3929,8 @@ BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max)
       /* CFE_LINK effect should be consistently unset */
       link.cbSize = sizeof(link);
       ME_GetCharFormat(editor, beforeURL[0], beforeURL[1], &link);
-      /* FIXME: Workaround for what looks like a bug - ME_GetCharFormat does not
-         clear the CFM_LINK flag when selection spans text without CFE_LINK,
-         followed by CFE_LINK set. This needs a test for EM_GETCHARFORMAT */
-#if 0
       if (!(link.dwMask & CFM_LINK) || (link.dwEffects & CFE_LINK))
       {
-#endif
         /* CFE_LINK must be unset from this range */
         memset(&link, 0, sizeof(CHARFORMAT2W));
         link.cbSize = sizeof(link);
@@ -3943,9 +3938,7 @@ BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max)
         link.dwEffects = 0;
         ME_SetCharFormat(editor, beforeURL[0], beforeURL[1] - beforeURL[0], &link);
         modified = TRUE;
-#if 0
       }
-#endif
     }
     if (inURL[0] < inURL[1])
     {

@@ -402,6 +402,18 @@ static void test_EM_SETCHARFORMAT(void)
   HWND hwndRichEdit = new_richedit(NULL);
   CHARFORMAT2 cf2;
   int rc = 0;
+  int tested_effects[] = {
+    CFE_BOLD,
+    CFE_ITALIC,
+    CFE_UNDERLINE,
+    CFE_STRIKEOUT,
+    CFE_PROTECTED,
+    CFE_LINK,
+    CFE_SUBSCRIPT,
+    CFE_SUPERSCRIPT,
+    0
+  };
+  int i;
 
   /* Invalid flags, CHARFORMAT2 structure blanked out */
   memset(&cf2, 0, sizeof(cf2));
@@ -520,6 +532,113 @@ static void test_EM_SETCHARFORMAT(void)
   ok(rc == -1, "Text not marked as modified, expected modified! (%d)\n", rc);
 
   DestroyWindow(hwndRichEdit);
+
+  /* EM_GETCHARFORMAT tests */
+  for (i = 0; tested_effects[i]; i++)
+  {
+    hwndRichEdit = new_richedit(NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    cf2.dwMask = tested_effects[i];
+    if (cf2.dwMask == CFE_SUBSCRIPT || cf2.dwMask == CFE_SUPERSCRIPT)
+      cf2.dwMask = CFM_SUPERSCRIPT;
+    cf2.dwEffects = tested_effects[i];
+    SendMessage(hwndRichEdit, EM_SETSEL, 0, 2);
+    SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    SendMessage(hwndRichEdit, EM_SETSEL, 0, 2);
+    SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+    ok ((((tested_effects[i] == CFE_SUBSCRIPT || tested_effects[i] == CFE_SUPERSCRIPT) &&
+          (cf2.dwMask & CFM_SUPERSCRIPT) == CFM_SUPERSCRIPT)
+          ||
+          (cf2.dwMask & tested_effects[i]) == tested_effects[i]),
+        "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, tested_effects[i]);
+    ok((cf2.dwEffects & tested_effects[i]) == tested_effects[i],
+        "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x\n", i, cf2.dwEffects, tested_effects[i]);
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    SendMessage(hwndRichEdit, EM_SETSEL, 2, 4);
+    SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+    ok ((((tested_effects[i] == CFE_SUBSCRIPT || tested_effects[i] == CFE_SUPERSCRIPT) &&
+          (cf2.dwMask & CFM_SUPERSCRIPT) == CFM_SUPERSCRIPT)
+          ||
+          (cf2.dwMask & tested_effects[i]) == tested_effects[i]),
+        "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, tested_effects[i]);
+    ok((cf2.dwEffects & tested_effects[i]) == 0,
+        "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x clear\n", i, cf2.dwEffects, tested_effects[i]);
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    SendMessage(hwndRichEdit, EM_SETSEL, 1, 3);
+    SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+    ok ((((tested_effects[i] == CFE_SUBSCRIPT || tested_effects[i] == CFE_SUPERSCRIPT) &&
+          (cf2.dwMask & CFM_SUPERSCRIPT) == 0)
+          ||
+          (cf2.dwMask & tested_effects[i]) == 0),
+        "%d, cf2.dwMask == 0x%08x expected mask 0x%08x clear\n", i, cf2.dwMask, tested_effects[i]);
+    ok((cf2.dwEffects & tested_effects[i]) == 0,
+        "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x clear\n", i, cf2.dwEffects, tested_effects[i]);
+
+    DestroyWindow(hwndRichEdit);
+  }
+
+  for (i = 0; tested_effects[i]; i++)
+  {
+    hwndRichEdit = new_richedit(NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    cf2.dwMask = tested_effects[i];
+    if (cf2.dwMask == CFE_SUBSCRIPT || cf2.dwMask == CFE_SUPERSCRIPT)
+      cf2.dwMask = CFM_SUPERSCRIPT;
+    cf2.dwEffects = tested_effects[i];
+    SendMessage(hwndRichEdit, EM_SETSEL, 2, 4);
+    SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    SendMessage(hwndRichEdit, EM_SETSEL, 0, 2);
+    SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+    ok ((((tested_effects[i] == CFE_SUBSCRIPT || tested_effects[i] == CFE_SUPERSCRIPT) &&
+          (cf2.dwMask & CFM_SUPERSCRIPT) == CFM_SUPERSCRIPT)
+          ||
+          (cf2.dwMask & tested_effects[i]) == tested_effects[i]),
+        "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, tested_effects[i]);
+    ok((cf2.dwEffects & tested_effects[i]) == 0,
+        "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x clear\n", i, cf2.dwEffects, tested_effects[i]);
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    SendMessage(hwndRichEdit, EM_SETSEL, 2, 4);
+    SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+    ok ((((tested_effects[i] == CFE_SUBSCRIPT || tested_effects[i] == CFE_SUPERSCRIPT) &&
+          (cf2.dwMask & CFM_SUPERSCRIPT) == CFM_SUPERSCRIPT)
+          ||
+          (cf2.dwMask & tested_effects[i]) == tested_effects[i]),
+        "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, tested_effects[i]);
+    ok((cf2.dwEffects & tested_effects[i]) == tested_effects[i],
+        "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x\n", i, cf2.dwEffects, tested_effects[i]);
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    SendMessage(hwndRichEdit, EM_SETSEL, 1, 3);
+    SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+    ok ((((tested_effects[i] == CFE_SUBSCRIPT || tested_effects[i] == CFE_SUPERSCRIPT) &&
+          (cf2.dwMask & CFM_SUPERSCRIPT) == 0)
+          ||
+          (cf2.dwMask & tested_effects[i]) == 0),
+        "%d, cf2.dwMask == 0x%08x expected mask 0x%08x clear\n", i, cf2.dwMask, tested_effects[i]);
+    ok((cf2.dwEffects & tested_effects[i]) == tested_effects[i],
+        "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x set\n", i, cf2.dwEffects, tested_effects[i]);
+
+    DestroyWindow(hwndRichEdit);
+  }
 }
 
 static void test_EM_SETTEXTMODE(void)

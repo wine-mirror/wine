@@ -857,6 +857,16 @@ void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod)
 static void ME_GetRunCharFormat(ME_TextEditor *editor, ME_DisplayItem *run, CHARFORMAT2W *pFmt)
 {
   ME_CopyCharFormat(pFmt, &run->member.run.style->fmt);
+  if ((pFmt->dwMask & CFM_UNDERLINETYPE) && (pFmt->bUnderlineType == CFU_CF1UNDERLINE))
+  {
+    pFmt->dwMask |= CFM_UNDERLINE;
+    pFmt->dwEffects |= CFE_UNDERLINE;
+  }
+  if ((pFmt->dwMask & CFM_UNDERLINETYPE) && (pFmt->bUnderlineType == CFU_UNDERLINENONE))
+  {
+    pFmt->dwMask |= CFM_UNDERLINE;
+    pFmt->dwEffects &= ~CFE_UNDERLINE;
+  }
 }
 
 /******************************************************************************
@@ -928,7 +938,7 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
   do {
     /* FIXME add more style feature comparisons */
     int nAttribs = CFM_SIZE | CFM_FACE | CFM_COLOR | CFM_UNDERLINETYPE;
-    int nEffects = CFM_BOLD | CFM_ITALIC;
+    int nEffects = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE | CFM_STRIKEOUT | CFM_PROTECTED | CFM_LINK | CFM_SUPERSCRIPT;
 
     run = ME_FindItemFwd(run, diRun);
 
@@ -937,7 +947,6 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
     ME_GetRunCharFormat(editor, run, &tmp);
 
     assert((tmp.dwMask & nAttribs) == nAttribs);
-    assert((tmp.dwMask & nEffects) == nEffects);
     /* reset flags that differ */
 
     if (pFmt->yHeight != tmp.yHeight)
@@ -964,6 +973,7 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
     }
 
     pFmt->dwMask &= ~((pFmt->dwEffects ^ tmp.dwEffects) & nEffects);
+    pFmt->dwEffects = tmp.dwEffects;
 
   } while(run != run_end);
 }
