@@ -27,6 +27,7 @@
 /* @makedep: banner.bmp */
 IDB_BANNER BITMAP LOADONCALL DISCARDABLE banner.bmp
 
+#include "credui_Da.rc"
 #include "credui_De.rc"
 #include "credui_En.rc"
 #include "credui_Es.rc"
