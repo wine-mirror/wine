@@ -280,8 +280,14 @@ static void testInstallClass(void)
      '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
+    static const CHAR classKey_win9x[] =
+     "System\\CurrentControlSet\\Services\\Class\\"
+     "{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+    static const CHAR bogus_win9x[] =
+     "System\\CurrentControlSet\\Services\\Class\\Bogus";
     char tmpfile[MAX_PATH];
     BOOL ret;
+    HKEY hkey;
 
     if (!pSetupDiInstallClassA)
     {
@@ -305,9 +311,26 @@ static void testInstallClass(void)
     ret = pSetupDiInstallClassA(NULL, tmpfile + 2, 0, NULL);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    /* The next call will succeed. Information is put into the registry but the
+     * location(s) is/are depending on the Windows version.
+     */
     ret = pSetupDiInstallClassA(NULL, tmpfile, 0, NULL);
     ok(ret, "SetupDiInstallClassA failed: %08x\n", GetLastError());
-    RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey);
+    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, classKey_win9x, &hkey))
+    {
+        /* We are on win9x */
+        RegCloseKey(hkey);
+        ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE, classKey_win9x),
+         "Couldn't delete win9x classkey\n");
+        ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE, bogus_win9x),
+         "Couldn't delete win9x bogus services class\n");
+    }
+    else
+    {
+        /* NT4 and above */
+        ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey),
+         "Couldn't delete NT classkey\n");
+    }
     DeleteFile(tmpfile);
 }
 
