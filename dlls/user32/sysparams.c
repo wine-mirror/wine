@@ -3074,7 +3074,7 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
     ret = EnumDisplaySettingsExW(nameW.Buffer,iModeNum,&devmodeW,dwFlags);
     if (ret)
     {
-        lpDevMode->dmSize = sizeof(*lpDevMode);
+        lpDevMode->dmSize = FIELD_OFFSET(DEVMODEA, dmICMMethod);
         lpDevMode->dmSpecVersion = devmodeW.dmSpecVersion;
         lpDevMode->dmDriverVersion = devmodeW.dmDriverVersion;
         WideCharToMultiByte(CP_ACP, 0, devmodeW.dmDeviceName, -1,
