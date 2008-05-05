@@ -2,6 +2,7 @@
  * Copyright (c) 1998-2004 Lionel Ulmer
  * Copyright (c) 2002-2005 Christian Costa
  * Copyright (c) 2006 Stefan Dösinger
+ * Copyright (c) 2008 Alexander Dorofeyev
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -5313,6 +5314,150 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
     return hr_ddraw_from_wined3d(hr);
 }
 
+/* Helper function for IDirect3DDeviceImpl_7_Load. */
+static BOOL is_mip_level_subset(IDirectDrawSurfaceImpl *dest,
+                                IDirectDrawSurfaceImpl *src)
+{
+    IDirectDrawSurfaceImpl *src_level, *dest_level;
+    IDirectDrawSurface7 *temp;
+    DDSURFACEDESC2 ddsd;
+    BOOL levelFound; /* at least one suitable sublevel in dest found */
+
+    /* To satisfy "destination is mip level subset of source" criteria (regular texture counts as 1 level),
+     * 1) there must be at least one mip level in destination that matched dimensions of some mip level in source and
+     * 2) there must be no destination levels that don't match any levels in source. Otherwise it's INVALIDPARAMS.
+     */
+    levelFound = FALSE;
+
+    src_level = src;
+    dest_level = dest;
+
+    for (;src_level && dest_level;)
+    {
+        if (src_level->surface_desc.dwWidth == dest_level->surface_desc.dwWidth &&
+            src_level->surface_desc.dwHeight == dest_level->surface_desc.dwHeight)
+        {
+            levelFound = TRUE;
+
+            ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+            ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
+            IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(dest_level, IDirectDrawSurface7), &ddsd.ddsCaps, &temp);
+
+            if (dest_level != dest) IDirectDrawSurface7_Release(ICOM_INTERFACE(dest_level, IDirectDrawSurface7));
+
+            dest_level = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, temp);
+        }
+
+        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
+        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(src_level, IDirectDrawSurface7), &ddsd.ddsCaps, &temp);
+
+        if (src_level != src) IDirectDrawSurface7_Release(ICOM_INTERFACE(src_level, IDirectDrawSurface7));
+
+        src_level = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, temp);
+    }
+
+    if (src_level && src_level != src) IDirectDrawSurface7_Release(ICOM_INTERFACE(src_level, IDirectDrawSurface7));
+    if (dest_level && dest_level != dest) IDirectDrawSurface7_Release(ICOM_INTERFACE(dest_level, IDirectDrawSurface7));
+
+    return !dest_level && levelFound;
+}
+
+/* Helper function for IDirect3DDeviceImpl_7_Load. */
+static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
+                              IDirectDrawSurfaceImpl *dest,
+                              IDirectDrawSurfaceImpl *src,
+                              POINT *DestPoint,
+                              RECT *SrcRect)
+{
+    IDirectDrawSurfaceImpl *src_level, *dest_level;
+    IDirectDrawSurface7 *temp;
+    DDSURFACEDESC2 ddsd;
+    POINT point;
+    RECT rect;
+    HRESULT hr;
+    IDirectDrawPalette *pal = NULL, *pal_src = NULL;
+    DWORD ckeyflag;
+    DDCOLORKEY ddckey;
+
+    src_level = src;
+    dest_level = dest;
+
+    point = *DestPoint;
+    rect = *SrcRect;
+
+    for (;src_level && dest_level;)
+    {
+        if (src_level->surface_desc.dwWidth == dest_level->surface_desc.dwWidth &&
+            src_level->surface_desc.dwHeight == dest_level->surface_desc.dwHeight)
+        {
+            /* Try UpdateSurface that may perform a more direct opengl loading. */
+            hr = IWineD3DDevice_UpdateSurface(device->wineD3DDevice, src_level->WineD3DSurface, &rect, dest_level->WineD3DSurface,
+                                &point);
+            if (FAILED(hr))
+            {
+                /* UpdateSurface may fail e.g. if dest is in system memory. Fall back to BltFast that is less strict. */
+                IWineD3DSurface_BltFast(dest_level->WineD3DSurface,
+                                        point.x, point.y,
+                                        src_level->WineD3DSurface, &rect, 0);
+            }
+
+            ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+            ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
+            IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(dest_level, IDirectDrawSurface7), &ddsd.ddsCaps, &temp);
+
+            if (dest_level != dest) IDirectDrawSurface7_Release(ICOM_INTERFACE(dest_level, IDirectDrawSurface7));
+
+            dest_level = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, temp);
+        }
+
+        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
+        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(src_level, IDirectDrawSurface7), &ddsd.ddsCaps, &temp);
+
+        if (src_level != src) IDirectDrawSurface7_Release(ICOM_INTERFACE(src_level, IDirectDrawSurface7));
+
+        src_level = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, temp);
+
+        point.x /= 2;
+        point.y /= 2;
+
+        rect.top /= 2;
+        rect.left /= 2;
+        rect.right = (rect.right + 1) / 2;
+        rect.bottom = (rect.bottom + 1) / 2;
+    }
+
+    if (src_level && src_level != src) IDirectDrawSurface7_Release(ICOM_INTERFACE(src_level, IDirectDrawSurface7));
+    if (dest_level && dest_level != dest) IDirectDrawSurface7_Release(ICOM_INTERFACE(dest_level, IDirectDrawSurface7));
+
+    /* Copy palette, if possible. */
+    IDirectDrawSurface7_GetPalette(ICOM_INTERFACE(src, IDirectDrawSurface7), &pal_src);
+    IDirectDrawSurface7_GetPalette(ICOM_INTERFACE(dest, IDirectDrawSurface7), &pal);
+
+    if (pal_src != NULL && pal != NULL)
+    {
+        PALETTEENTRY palent[256];
+
+        IDirectDrawPalette_GetEntries(pal_src, 0, 0, 256, palent);
+        IDirectDrawPalette_SetEntries(pal, 0, 0, 256, palent);
+    }
+
+    if (pal) IDirectDrawPalette_Release(pal);
+    if (pal_src) IDirectDrawPalette_Release(pal_src);
+
+    /* Copy colorkeys, if present. */
+    for (ckeyflag = DDCKEY_DESTBLT; ckeyflag <= DDCKEY_SRCOVERLAY; ckeyflag <<= 1)
+    {
+        hr = IDirectDrawSurface7_GetColorKey(ICOM_INTERFACE(src, IDirectDrawSurface7), ckeyflag, &ddckey);
+
+        if (SUCCEEDED(hr))
+        {
+            IDirectDrawSurface7_SetColorKey(ICOM_INTERFACE(dest, IDirectDrawSurface7), ckeyflag, &ddckey);
+        }
+    }
+}
+
 /*****************************************************************************
  * IDirect3DDevice7::Load
  *
@@ -5327,14 +5472,17 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
  *             written to
  *  SrcTex: Source texture
  *  SrcRect: Source rectangle
- *  Flags: Some flags
+ *  Flags: Cubemap faces to load (DDSCAPS2_CUBEMAP_ALLFACES, DDSCAPS2_CUBEMAP_POSITIVEX,
+ *          DDSCAPS2_CUBEMAP_NEGATIVEX, DDSCAPS2_CUBEMAP_POSITIVEY, DDSCAPS2_CUBEMAP_NEGATIVEY,
+ *          DDSCAPS2_CUBEMAP_POSITIVEZ, DDSCAPS2_CUBEMAP_NEGATIVEZ)
  *
  * Returns:
  *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if DestTex or SrcTex are NULL
- *  See IDirect3DTexture2::Load for details
+ *  DDERR_INVALIDPARAMS if DestTex or SrcTex are NULL, broken coordinates or anything unexpected.
+ *
  *
  *****************************************************************************/
+
 static HRESULT WINAPI
 IDirect3DDeviceImpl_7_Load(IDirect3DDevice7 *iface,
                            IDirectDrawSurface7 *DestTex,
@@ -5346,13 +5494,163 @@ IDirect3DDeviceImpl_7_Load(IDirect3DDevice7 *iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     IDirectDrawSurfaceImpl *dest = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, DestTex);
     IDirectDrawSurfaceImpl *src = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, SrcTex);
-    FIXME("(%p)->(%p,%p,%p,%p,%08x): Partially Implemented!\n", This, dest, DestPoint, src, SrcRect, Flags);
+    POINT destpoint;
+    RECT srcrect;
+    TRACE("(%p)->(%p,%p,%p,%p,%08x)\n", This, dest, DestPoint, src, SrcRect, Flags);
 
     if( (!src) || (!dest) )
         return DDERR_INVALIDPARAMS;
 
-    IDirect3DTexture2_Load(ICOM_INTERFACE(dest, IDirect3DTexture2),
-                           ICOM_INTERFACE(src, IDirect3DTexture2));
+    EnterCriticalSection(&ddraw_cs);
+
+    if (SrcRect) srcrect = *SrcRect;
+    else
+    {
+        srcrect.left = srcrect.top = 0;
+        srcrect.right = src->surface_desc.dwWidth;
+        srcrect.bottom = src->surface_desc.dwHeight;
+    }
+
+    if (DestPoint) destpoint = *DestPoint;
+    else
+    {
+        destpoint.x = destpoint.y = 0;
+    }
+    /* Check bad dimensions. DestPoint is validated against src, not dest, because
+     * destination can be a subset of mip levels, in which case actual coordinates used
+     * for it may be divided. If any dimension of dest is larger than source, it can't be
+     * mip level subset, so an error can be returned early.
+     */
+    if (srcrect.left >= srcrect.right || srcrect.top >= srcrect.bottom ||
+        srcrect.right > src->surface_desc.dwWidth ||
+        srcrect.bottom > src->surface_desc.dwHeight ||
+        destpoint.x + srcrect.right - srcrect.left > src->surface_desc.dwWidth ||
+        destpoint.y + srcrect.bottom - srcrect.top > src->surface_desc.dwHeight ||
+        dest->surface_desc.dwWidth > src->surface_desc.dwWidth ||
+        dest->surface_desc.dwHeight > src->surface_desc.dwHeight)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    /* Must be top level surfaces. */
+    if (src->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL ||
+        dest->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    if (src->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+    {
+        DWORD src_face_flag, dest_face_flag;
+        IDirectDrawSurfaceImpl *src_face, *dest_face;
+        IDirectDrawSurface7 *temp;
+        DDSURFACEDESC2 ddsd;
+        int i;
+
+        if (!(dest->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
+        {
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_INVALIDPARAMS;
+        }
+
+        /* Iterate through cube faces 2 times. First time is just to check INVALIDPARAMS conditions, second
+         * time it's actual surface loading. */
+        for (i = 0; i < 2; i++)
+        {
+            dest_face = dest;
+            src_face = src;
+
+            for (;dest_face && src_face;)
+            {
+                src_face_flag = src_face->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES;
+                dest_face_flag = dest_face->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES;
+
+                if (src_face_flag == dest_face_flag)
+                {
+                    if (i == 0)
+                    {
+                        /* Destination mip levels must be subset of source mip levels. */
+                        if (!is_mip_level_subset(dest_face, src_face))
+                        {
+                            LeaveCriticalSection(&ddraw_cs);
+                            return DDERR_INVALIDPARAMS;
+                        }
+                    }
+                    else if (Flags & dest_face_flag)
+                    {
+                        copy_mipmap_chain(This, dest_face, src_face, &destpoint, &srcrect);
+                    }
+
+                    if (src_face_flag < DDSCAPS2_CUBEMAP_NEGATIVEZ)
+                    {
+                        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+                        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | (src_face_flag << 1);
+                        IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(src, IDirectDrawSurface7), &ddsd.ddsCaps, &temp);
+
+                        if (src_face != src) IDirectDrawSurface7_Release(ICOM_INTERFACE(src_face, IDirectDrawSurface7));
+
+                        src_face = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, temp);
+                    }
+                    else
+                    {
+                        if (src_face != src) IDirectDrawSurface7_Release(ICOM_INTERFACE(src_face, IDirectDrawSurface7));
+
+                        src_face = NULL;
+                    }
+                }
+
+                if (dest_face_flag < DDSCAPS2_CUBEMAP_NEGATIVEZ)
+                {
+                    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+                    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | (dest_face_flag << 1);
+                    IDirectDrawSurface7_GetAttachedSurface(ICOM_INTERFACE(dest, IDirectDrawSurface7), &ddsd.ddsCaps, &temp);
+
+                    if (dest_face != dest) IDirectDrawSurface7_Release(ICOM_INTERFACE(dest_face, IDirectDrawSurface7));
+
+                    dest_face = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, temp);
+                }
+                else
+                {
+                    if (dest_face != dest) IDirectDrawSurface7_Release(ICOM_INTERFACE(dest_face, IDirectDrawSurface7));
+
+                    dest_face = NULL;
+                }
+            }
+
+            if (i == 0)
+            {
+                /* Native returns error if src faces are not subset of dest faces. */
+                if (src_face)
+                {
+                    LeaveCriticalSection(&ddraw_cs);
+                    return DDERR_INVALIDPARAMS;
+                }
+            }
+        }
+
+        LeaveCriticalSection(&ddraw_cs);
+        return D3D_OK;
+    }
+    else if (dest->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    /* Handle non cube map textures. */
+
+    /* Destination mip levels must be subset of source mip levels. */
+    if (!is_mip_level_subset(dest, src))
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    copy_mipmap_chain(This, dest, src, &destpoint, &srcrect);
+
+    LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
 
