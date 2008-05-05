@@ -24,6 +24,7 @@
 #include "wineacm.h"
 
 #include "msacm_Cs.rc"
+#include "msacm_Da.rc"
 #include "msacm_De.rc"
 #include "msacm_En.rc"
 #include "msacm_Es.rc"
