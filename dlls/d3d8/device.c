@@ -472,9 +472,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface
         IUnknown_AddRef(iface);
         object->parentDevice = iface;
         *ppTexture = (LPDIRECT3DTEXTURE8) object;
+        TRACE("(%p) Created Texture %p, %p\n",This,object,object->wineD3DTexture);
    }
 
-   TRACE("(%p) Created Texture %p, %p\n",This,object,object->wineD3DTexture);
    return hrc;
 }
 
@@ -1184,8 +1184,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 if
        *pToken = 0;
    } else {
        *pToken = (DWORD)object;
+       TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);
    }
-   TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);
 
    return hrc;
 }
@@ -1584,10 +1584,10 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
             *ppShader = (handle - This->shader_handles) + VS_HIGHESTFIXEDFXF + 1;
 
             load_local_constants(pDeclaration, object->wineD3DVertexShader);
+            TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
         }
     }
     LeaveCriticalSection(&d3d8_cs);
-    TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
 
     return hrc;
 }
@@ -1890,12 +1890,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 i
                 object->handle = handle;
                 *handle = object;
                 *ppShader = (handle - This->shader_handles) + VS_HIGHESTFIXEDFXF + 1;
+                TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
             }
         }
         LeaveCriticalSection(&d3d8_cs);
     }
 
-    TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
     return hrc;
 }
 
