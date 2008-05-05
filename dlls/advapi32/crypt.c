@@ -1196,23 +1196,23 @@ BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 		DWORD dwFlags, DWORD *pdwProvType, LPSTR pszProvName, DWORD *pcbProvName)
 {
 	PWSTR str = NULL;
-	DWORD strlen;
+	DWORD bufsize;
 	BOOL ret; /* = FALSE; */
 
 	TRACE("(%d, %p, %08x, %p, %p, %p)\n", dwIndex, pdwReserved, dwFlags,
 			pdwProvType, pszProvName, pcbProvName);
 
-	if(!CryptEnumProvidersW(dwIndex, pdwReserved, dwFlags, pdwProvType, NULL, &strlen))
+	if(!CryptEnumProvidersW(dwIndex, pdwReserved, dwFlags, pdwProvType, NULL, &bufsize))
 		return FALSE;
-	if ( pszProvName && !(str = CRYPT_Alloc(strlen)) )
+	if ( pszProvName && !(str = CRYPT_Alloc(bufsize)) )
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}
-	ret = CryptEnumProvidersW(dwIndex, pdwReserved, dwFlags, pdwProvType, str, &strlen);
+	ret = CryptEnumProvidersW(dwIndex, pdwReserved, dwFlags, pdwProvType, str, &bufsize);
 	if (str)
 		CRYPT_UnicodeToANSI(str, &pszProvName, *pcbProvName);
-	*pcbProvName = strlen / sizeof(WCHAR);  /* FIXME: not correct */
+	*pcbProvName = bufsize / sizeof(WCHAR);  /* FIXME: not correct */
 	if (str)
 	{
 		CRYPT_Free(str);
@@ -1325,23 +1325,23 @@ BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 		DWORD dwFlags, DWORD *pdwProvType, LPSTR pszTypeName, DWORD *pcbTypeName)
 {
 	PWSTR str = NULL;
-	DWORD strlen;
+	DWORD bufsize;
 	BOOL ret;
 
 	TRACE("(%d, %p, %08x, %p, %p, %p)\n", dwIndex, pdwReserved, dwFlags,
 			pdwProvType, pszTypeName, pcbTypeName);
 
-	if(!CryptEnumProviderTypesW(dwIndex, pdwReserved, dwFlags, pdwProvType, NULL, &strlen))
+	if(!CryptEnumProviderTypesW(dwIndex, pdwReserved, dwFlags, pdwProvType, NULL, &bufsize))
 		return FALSE;
-	if ( pszTypeName && !(str = CRYPT_Alloc(strlen)) )
+	if ( pszTypeName && !(str = CRYPT_Alloc(bufsize)) )
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}
-	ret = CryptEnumProviderTypesW(dwIndex, pdwReserved, dwFlags, pdwProvType, str, &strlen);
+	ret = CryptEnumProviderTypesW(dwIndex, pdwReserved, dwFlags, pdwProvType, str, &bufsize);
 	if (str)
 		CRYPT_UnicodeToANSI(str, &pszTypeName, *pcbTypeName);
-	*pcbTypeName = strlen / sizeof(WCHAR);
+	*pcbTypeName = bufsize / sizeof(WCHAR);
 	if (str)
 	{
 		CRYPT_Free(str);
@@ -1525,21 +1525,21 @@ BOOL WINAPI CryptGetDefaultProviderA (DWORD dwProvType, DWORD *pdwReserved,
 		DWORD dwFlags, LPSTR pszProvName, DWORD *pcbProvName)
 {
 	PWSTR str = NULL;
-	DWORD strlen;
+	DWORD bufsize;
 	BOOL ret = FALSE;
 
 	TRACE("(%d, %p, %08x, %p, %p)\n", dwProvType, pdwReserved, dwFlags, pszProvName, pcbProvName);
 
-	CryptGetDefaultProviderW(dwProvType, pdwReserved, dwFlags, NULL, &strlen);
-	if ( pszProvName && !(str = CRYPT_Alloc(strlen)) )
+	CryptGetDefaultProviderW(dwProvType, pdwReserved, dwFlags, NULL, &bufsize);
+	if ( pszProvName && !(str = CRYPT_Alloc(bufsize)) )
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}
-	ret = CryptGetDefaultProviderW(dwProvType, pdwReserved, dwFlags, str, &strlen);
+	ret = CryptGetDefaultProviderW(dwProvType, pdwReserved, dwFlags, str, &bufsize);
 	if (str)
 		CRYPT_UnicodeToANSI(str, &pszProvName, *pcbProvName);
-	*pcbProvName = strlen / sizeof(WCHAR);
+	*pcbProvName = bufsize / sizeof(WCHAR);
 	if (str)
 	{
 		CRYPT_Free(str);
