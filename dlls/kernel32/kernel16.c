@@ -28,6 +28,7 @@
 #include "toolhelp.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
@@ -134,6 +135,31 @@ HANDLE WINAPI CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
     return CreateThread( sa, stack, start_thread16, args, flags, id );
 }
 
+
+/***********************************************************************
+ *           wait_input_idle
+ *
+ * user32.WaitForInputIdle releases the win16 lock, so here is a replacement.
+ */
+static DWORD wait_input_idle( HANDLE process, DWORD timeout )
+{
+    DWORD ret;
+    HANDLE handles[2];
+
+    handles[0] = process;
+    SERVER_START_REQ( get_process_idle_event )
+    {
+        req->handle = process;
+        if (!(ret = wine_server_call_err( req ))) handles[1] = reply->event;
+    }
+    SERVER_END_REQ;
+    if (ret) return WAIT_FAILED;  /* error */
+    if (!handles[1]) return 0;  /* no event to wait on */
+
+    return WaitForMultipleObjects( 2, handles, FALSE, timeout );
+}
+
+
 /**************************************************************************
  *           WINOLDAP entry point
  */
@@ -157,20 +183,26 @@ void WINAPI WINOLDAP_EntryPoint( CONTEXT86 *context )
     cmdline = HeapAlloc( GetProcessHeap(), 0, len + 1 );
     memcpy( cmdline, psp->cmdLine + 1, len );
     cmdline[len] = 0;
-    ReleaseThunkLock( &count );
 
     memset( &startup, 0, sizeof(startup) );
     startup.cb = sizeof(startup);
 
-    /* FIXME: Should this be WinExec instead of CreateProcess? */
     if (CreateProcessA( NULL, cmdline, NULL, NULL, FALSE,
                         0, NULL, NULL, &startup, &info ))
     {
+        /* Give 10 seconds to the app to come up */
+        if (wait_input_idle( info.hProcess, 10000 ) == WAIT_FAILED)
+            WARN("WaitForInputIdle failed: Error %d\n", GetLastError() );
+        ReleaseThunkLock( &count );
+
         WaitForSingleObject( info.hProcess, INFINITE );
         GetExitCodeProcess( info.hProcess, &exit_code );
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }
+    else
+        ReleaseThunkLock( &count );
+
     HeapFree( GetProcessHeap(), 0, cmdline );
     ExitThread( exit_code );
 }
