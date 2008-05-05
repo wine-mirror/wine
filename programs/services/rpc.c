@@ -833,7 +833,7 @@ DWORD svcctl_ControlService(
     service_unlock(service->service_entry);
 
     ret = WaitForSingleObject(control_mutex, 30000);
-    if (ret)
+    if (ret == WAIT_OBJECT_0)
     {
         DWORD result = ERROR_SUCCESS;
 
