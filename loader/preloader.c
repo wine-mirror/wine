@@ -1084,8 +1084,10 @@ void* wld_start( void **stack )
         if (wld_mmap( preload_info[i].addr, preload_info[i].size, PROT_NONE,
                       MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 ) == (void *)-1)
         {
-            wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
-                        preload_info[i].addr, (char *)preload_info[i].addr + preload_info[i].size );
+            /* don't warn for low 64k */
+            if (preload_info[i].addr >= (void *)0x10000)
+                wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
+                            preload_info[i].addr, (char *)preload_info[i].addr + preload_info[i].size );
             remove_preload_range( i );
             i--;
         }
