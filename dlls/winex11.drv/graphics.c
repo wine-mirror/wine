@@ -1491,9 +1491,9 @@ static unsigned char *get_icm_profile( unsigned long *size )
     XGetWindowProperty( gdi_display, DefaultRootWindow(gdi_display),
                         x11drv_atom(_ICC_PROFILE), 0, ~0UL, False, AnyPropertyType,
                         &type, &format, &count, &remaining, &profile );
+    *size = get_property_size( format, count );
     if (format && count)
     {
-        *size = get_property_size( format, count );
         if ((ret = HeapAlloc( GetProcessHeap(), 0, *size ))) memcpy( ret, profile, *size );
         XFree( profile );
     }
