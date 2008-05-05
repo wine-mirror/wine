@@ -25,8 +25,8 @@
 #include "version.rc"
 
 #include "oleaut32_Bg.rc"
+#include "oleaut32_Da.rc"
 #include "oleaut32_De.rc"
-#include "oleaut32_Dk.rc"
 #include "oleaut32_El.rc"
 #include "oleaut32_En.rc"
 #include "oleaut32_Eo.rc"
