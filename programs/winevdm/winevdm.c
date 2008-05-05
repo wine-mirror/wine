@@ -409,11 +409,6 @@ int main( int argc, char *argv[] )
         WINE_MESSAGE( "winevdm: unable to exec '%s': DOS support unavailable\n", appname );
         ExitProcess(1);
     }
-    if (!VirtualQuery( NULL, &mem_info, sizeof(mem_info) ) || mem_info.State == MEM_FREE)
-    {
-        WINE_MESSAGE( "winevdm: unable to exec '%s': DOS memory range unavailable\n", appname );
-        ExitProcess(1);
-    }
 
     if (*first_arg) first_arg++;  /* skip program name */
     cmdline = build_command_line( first_arg );
@@ -457,10 +452,18 @@ int main( int argc, char *argv[] )
             /* first see if it is a .pif file */
             if( ( p = strrchr( appname, '.' )) && !strcasecmp( p, ".pif"))
                 pif_cmd( appname, cmdline + 1);
-            else 
+            else
+            {
+                if (!VirtualQuery( NULL, &mem_info, sizeof(mem_info) ) || mem_info.State == MEM_FREE)
+                {
+                    WINE_MESSAGE( "winevdm: unable to exec '%s': DOS memory range unavailable\n", appname );
+                    ExitProcess(1);
+                }
+
                 /* try DOS format */
                 /* loader expects arguments to be regular C strings */
                 wine_load_dos_exe( appname, cmdline + 1 );
+            }
             /* if we get back here it failed */
             instance = GetLastError();
         }
