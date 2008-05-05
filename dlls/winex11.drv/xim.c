@@ -374,8 +374,10 @@ static void X11DRV_DestroyIM(XIM xim, XPointer p, XPointer data)
 }
 
 /***********************************************************************
-*           X11DRV Ime creation
-*/
+ *           X11DRV Ime creation
+ *
+ * Should always be called with the x11 lock held
+ */
 static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
@@ -385,13 +387,10 @@ static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
     XIM xim;
     XIMCallback destroy;
 
-    wine_tsx11_lock();
-
     xim = XOpenIM(display, NULL, NULL, NULL);
     if (xim == NULL)
     {
         WARN("Could not open input method.\n");
-        wine_tsx11_unlock();
         return;
     }
 
@@ -411,7 +410,6 @@ static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
     {
         WARN("Could not find supported input style.\n");
         XCloseIM(xim);
-        wine_tsx11_unlock();
         return;
     }
     else
@@ -474,8 +472,10 @@ static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
 
     thread_data->xim = xim;
     XUnregisterIMInstantiateCallback(display, NULL, NULL, NULL, X11DRV_OpenIM, NULL);
+
     wine_tsx11_unlock();
     IME_UpdateAssociation(NULL);
+    wine_tsx11_lock();
 }
 
 
