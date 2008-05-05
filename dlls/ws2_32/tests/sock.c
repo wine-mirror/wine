@@ -1664,7 +1664,7 @@ static void test_extendedSocketOptions(void)
 
     ok(ret == 0, "getsockopt failed to query SO_MAX_MSG_SIZE, return value is 0x%08x\n", ret);
     ok((optval == 65507) || (optval == 65527),
-            "SO_MAX_MSG_SIZE reported %d, expected 65507 or 65507\n", optval);
+            "SO_MAX_MSG_SIZE reported %d, expected 65507 or 65527\n", optval);
 
     optlen = sizeof(LINGER);
     ret = getsockopt(sock, SOL_SOCKET, SO_LINGER, (char *)&linger_val, &optlen);
