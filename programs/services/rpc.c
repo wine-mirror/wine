@@ -827,7 +827,7 @@ DWORD svcctl_ControlService(
     if (dwControl == SERVICE_CONTROL_STOP)
     {
         service->service_entry->control_mutex = NULL;
-        service->service_entry->control_pipe = NULL;
+        service->service_entry->control_pipe = INVALID_HANDLE_VALUE;
     }
 
     service_unlock(service->service_entry);
