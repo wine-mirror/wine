@@ -336,6 +336,9 @@ struct IDirect3DDeviceImpl
     IDirect3DViewportImpl *current_viewport;
     D3DVIEWPORT7 active_viewport;
 
+    /* Required to keep track which of two available texture blending modes in d3ddevice3 is used */
+    BOOL legacyTextureBlending;
+
     /* Light state */
     DWORD material;
 

@@ -820,6 +820,8 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     object->Handles = NULL;
     object->numHandles = 0;
 
+    object->legacyTextureBlending = FALSE;
+
     /* This is for convenience */
     object->wineD3DDevice = This->wineD3DDevice;
 

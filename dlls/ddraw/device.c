@@ -2342,6 +2342,8 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
     HRESULT hr;
     TRACE("(%p)->(%08x,%p)\n", This, dwRenderStateType, lpdwRenderState);
 
+    /* D3DRENDERSTATE_TEXTUREMAPBLEND is mapped to texture state stages in SetRenderState; reverse
+       the mapping to get the value. */
     switch(dwRenderStateType)
     {
         case D3DRENDERSTATE_TEXTUREHANDLE:
@@ -2378,31 +2380,14 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
             return hr;
         }
 
-        default:
-            return IDirect3DDevice7_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
-                                           dwRenderStateType,
-                                           lpdwRenderState);
-    }
-}
-
-static HRESULT WINAPI
-IDirect3DDeviceImpl_2_GetRenderState(IDirect3DDevice2 *iface,
-                                           D3DRENDERSTATETYPE dwRenderStateType,
-                                           DWORD *lpdwRenderState)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
-    TRACE("(%p)->(%08x,%p): Relay\n", This, dwRenderStateType, lpdwRenderState);
-
-    /* D3DRENDERSTATE_TEXTUREMAPBLEND is mapped to texture state stages in SetRenderState; reverse
-       the mapping to get the value; other states relayed to IDirect3DDevice7::GetRenderState */
-    switch(dwRenderStateType)
-    {
         case D3DRENDERSTATE_TEXTUREMAPBLEND:
         {
             DWORD colorop, colorarg1, colorarg2;
             DWORD alphaop, alphaarg1, alphaarg2;
 
             EnterCriticalSection(&ddraw_cs);
+
+            This->legacyTextureBlending = TRUE;
 
             IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, &colorop);
             IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, &colorarg1);
@@ -2469,10 +2454,22 @@ IDirect3DDeviceImpl_2_GetRenderState(IDirect3DDevice2 *iface,
         }
 
         default:
-            return IDirect3DDevice3_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice3),
+            return IDirect3DDevice7_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
                                            dwRenderStateType,
                                            lpdwRenderState);
     }
+}
+
+static HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_2_GetRenderState(IDirect3DDevice2 *iface,
+                                           D3DRENDERSTATETYPE dwRenderStateType,
+                                           DWORD *lpdwRenderState)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
+    TRACE_(ddraw_thunk)("(%p)->(%08x,%p) thunking to IDirect3DDevice3 interface.\n", This, dwRenderStateType, lpdwRenderState);
+    return IDirect3DDevice3_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice3),
+                                           dwRenderStateType,
+                                           lpdwRenderState);
 }
 
 /*****************************************************************************
@@ -2606,6 +2603,25 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                                      D3DRENDERSTATETYPE RenderStateType,
                                      DWORD Value)
 {
+    /* Note about D3DRENDERSTATE_TEXTUREMAPBLEND implementation: most of values
+    for this state can be directly mapped to texture stage colorop and alphaop, but
+    D3DTBLEND_MODULATE is tricky: it uses alpha from texture when available and alpha
+    from diffuse otherwise. So changing the texture must be monitored in SetTexture to modify
+    alphaarg when needed.
+
+    Aliens vs Predator 1 depends on accurate D3DTBLEND_MODULATE emulation
+
+    Legacy texture blending (TEXTUREMAPBLEND) and texture stage states: directx6 docs state that
+    TEXTUREMAPBLEND is deprecated, yet can still be used. Games must not use both or results
+    are undefined. D3DTBLEND_MODULATE mode in particular is dependent on texture pixel format and
+    requires fixup of stage 0 texture states when texture changes, but this fixup can interfere
+    with games not using this deprecated state. So a flag 'legacyTextureBlending' has to be kept
+    in device - TRUE if the app is using TEXTUREMAPBLEND.
+
+    Tests show that setting TEXTUREMAPBLEND on native doesn't seem to change values returned by
+    GetTextureStageState and vice versa. Not so on Wine, but it is 'undefined' anyway so, probably, ok,
+    unless some broken game will be found that cares. */
+
     HRESULT hr;
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
     TRACE("(%p)->(%08x,%d)\n", This, RenderStateType, Value);
@@ -2642,40 +2658,11 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
             }
         }
 
-        default:
-            hr = IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
-                                           RenderStateType,
-                                           Value);
-            break;
-    }
-
-    return hr;
-}
-
-static HRESULT WINAPI
-IDirect3DDeviceImpl_2_SetRenderState(IDirect3DDevice2 *iface,
-                                           D3DRENDERSTATETYPE RenderStateType,
-                                           DWORD Value)
-{
-    /* Note about D3DRENDERSTATE_TEXTUREMAPBLEND implementation: most of values
-    for this state can be directly mapped to texture stage colorop and alphaop, but
-    D3DTBLEND_MODULATE is tricky: it uses alpha from texture when available and alpha
-    from diffuse otherwise. So changing the texture is monitored here to modify
-    alphaarg when needed.
-
-    Other states are relayed to IDirect3DDevice7
-
-    Aliens vs Predator 1 depends on accurate D3DTBLEND_MODULATE emulation */
-
-    HRESULT hr;
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
-    TRACE("(%p)->(%08x,%d): Relay\n", This, RenderStateType, Value);
-
-    switch(RenderStateType)
-    {
         case D3DRENDERSTATE_TEXTUREMAPBLEND:
         {
             EnterCriticalSection(&ddraw_cs);
+
+            This->legacyTextureBlending = TRUE;
 
             switch ( (D3DTEXTUREBLEND) Value)
             {
@@ -2757,69 +2744,24 @@ IDirect3DDeviceImpl_2_SetRenderState(IDirect3DDevice2 *iface,
             break;
         }
 
-        case D3DRENDERSTATE_TEXTUREHANDLE:
-        {
-            DWORD texmapblend;
-
-            IDirect3DDevice2_GetRenderState(iface, D3DRENDERSTATE_TEXTUREMAPBLEND, &texmapblend);
-
-            hr = IDirect3DDevice3_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice3),
-                                           D3DRENDERSTATE_TEXTUREHANDLE,
-                                           Value);
-
-            if (texmapblend == D3DTBLEND_MODULATE)
-            {
-                BOOL tex_alpha = FALSE;
-                IWineD3DBaseTexture *tex = NULL;
-                WINED3DSURFACE_DESC desc;
-                WINED3DFORMAT fmt;
-                DDPIXELFORMAT ddfmt;
-
-                EnterCriticalSection(&ddraw_cs);
-
-                hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
-                                            0,
-                                            &tex);
-
-                if(hr == WINED3D_OK && tex)
-                {
-                    memset(&desc, 0, sizeof(desc));
-                    desc.Format = &fmt;
-                    hr = IWineD3DTexture_GetLevelDesc((IWineD3DTexture*) tex, 0, &desc);
-                    if (SUCCEEDED(hr))
-                    {
-                        ddfmt.dwSize = sizeof(ddfmt);
-                        PixelFormat_WineD3DtoDD(&ddfmt, fmt);
-                        if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
-                    }
-
-                    IWineD3DBaseTexture_Release(tex);
-                }
-
-                /* alphaop is WINED3DTOP_SELECTARG1 if it's D3DTBLEND_MODULATE, so only modify alphaarg1 */
-                if (tex_alpha)
-                {
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
-                }
-                else
-                {
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_CURRENT);
-                }
-
-                LeaveCriticalSection(&ddraw_cs);
-            }
-
-            break;
-        }
-
         default:
-            hr = IDirect3DDevice3_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice3),
+            hr = IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
                                            RenderStateType,
                                            Value);
             break;
     }
 
     return hr;
+}
+
+static HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_2_SetRenderState(IDirect3DDevice2 *iface,
+                                           D3DRENDERSTATETYPE RenderStateType,
+                                           DWORD Value)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
+    TRACE_(ddraw_thunk)("(%p)->(%08x,%d) thunking to IDirect3DDevice3 interface.\n", This, RenderStateType, Value);
+    return IDirect3DDevice3_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice3), RenderStateType, Value);
 }
 
 /*****************************************************************************
@@ -4467,16 +4409,69 @@ IDirect3DDeviceImpl_7_SetTexture(IDirect3DDevice7 *iface,
 }
 
 static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
-                                       DWORD Stage,
-                                       IDirect3DTexture2 *Texture2)
+IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
+                                 DWORD Stage,
+                                 IDirect3DTexture2 *Texture2)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
     IDirectDrawSurfaceImpl *tex = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, Texture2);
-    TRACE_(ddraw_thunk)("(%p)->(%d,%p) thunking to IDirect3DDevice7 interface.\n", This, Stage, tex);
-    return IDirect3DDevice7_SetTexture(ICOM_INTERFACE(This, IDirect3DDevice7),
+    DWORD texmapblend;
+    HRESULT hr;
+    TRACE("(%p)->(%d,%p)\n", This, Stage, tex);
+
+    if (This->legacyTextureBlending)
+        IDirect3DDevice3_GetRenderState(iface, D3DRENDERSTATE_TEXTUREMAPBLEND, &texmapblend);
+
+    hr = IDirect3DDevice7_SetTexture(ICOM_INTERFACE(This, IDirect3DDevice7),
                                        Stage,
                                        ICOM_INTERFACE(tex, IDirectDrawSurface7));
+
+    if (This->legacyTextureBlending && texmapblend == D3DTBLEND_MODULATE)
+    {
+        /* This fixup is required by the way D3DTBLEND_MODULATE maps to texture stage states.
+           See IDirect3DDeviceImpl_3_SetRenderState for details. */
+        BOOL tex_alpha = FALSE;
+        IWineD3DBaseTexture *tex = NULL;
+        WINED3DSURFACE_DESC desc;
+        WINED3DFORMAT fmt;
+        DDPIXELFORMAT ddfmt;
+        HRESULT result;
+
+        EnterCriticalSection(&ddraw_cs);
+
+        result = IWineD3DDevice_GetTexture(This->wineD3DDevice,
+                                    0,
+                                    &tex);
+
+        if(result == WINED3D_OK && tex)
+        {
+            memset(&desc, 0, sizeof(desc));
+            desc.Format = &fmt;
+            result = IWineD3DTexture_GetLevelDesc((IWineD3DTexture*) tex, 0, &desc);
+            if (SUCCEEDED(result))
+            {
+                ddfmt.dwSize = sizeof(ddfmt);
+                PixelFormat_WineD3DtoDD(&ddfmt, fmt);
+                if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
+            }
+
+            IWineD3DBaseTexture_Release(tex);
+        }
+
+        /* alphaop is WINED3DTOP_SELECTARG1 if it's D3DTBLEND_MODULATE, so only modify alphaarg1 */
+        if (tex_alpha)
+        {
+            IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
+        }
+        else
+        {
+            IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_CURRENT);
+        }
+
+        LeaveCriticalSection(&ddraw_cs);
+    }
+
+    return hr;
 }
 
 /*****************************************************************************
@@ -5623,7 +5618,7 @@ const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl =
     Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB,
     Thunk_IDirect3DDeviceImpl_3_ComputeSphereVisibility,
     Thunk_IDirect3DDeviceImpl_3_GetTexture,
-    Thunk_IDirect3DDeviceImpl_3_SetTexture,
+    IDirect3DDeviceImpl_3_SetTexture,
     Thunk_IDirect3DDeviceImpl_3_GetTextureStageState,
     Thunk_IDirect3DDeviceImpl_3_SetTextureStageState,
     Thunk_IDirect3DDeviceImpl_3_ValidateDevice
@@ -5655,8 +5650,8 @@ const IDirect3DDevice2Vtbl IDirect3DDevice2_Vtbl =
     Thunk_IDirect3DDeviceImpl_2_Vertex,
     Thunk_IDirect3DDeviceImpl_2_Index,
     Thunk_IDirect3DDeviceImpl_2_End,
-    IDirect3DDeviceImpl_2_GetRenderState,
-    IDirect3DDeviceImpl_2_SetRenderState,
+    Thunk_IDirect3DDeviceImpl_2_GetRenderState,
+    Thunk_IDirect3DDeviceImpl_2_SetRenderState,
     Thunk_IDirect3DDeviceImpl_2_GetLightState,
     Thunk_IDirect3DDeviceImpl_2_SetLightState,
     Thunk_IDirect3DDeviceImpl_2_SetTransform,
