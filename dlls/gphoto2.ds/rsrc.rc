@@ -26,6 +26,7 @@
 
 #include "resource.h"
 
+#include "gphoto2_Da.rc"
 #include "gphoto2_De.rc"
 #include "gphoto2_En.rc"
 #include "gphoto2_Es.rc"
