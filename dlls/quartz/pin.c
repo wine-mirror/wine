@@ -1233,7 +1233,6 @@ static HRESULT PullPin_Init(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinI
     pPinImpl->rtStop = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
     pPinImpl->dRate = 1.0;
     pPinImpl->state = Req_Die;
-    assert(pCustomRequest);
     pPinImpl->fnCustomRequest = pCustomRequest;
     pPinImpl->stop_playback = 1;
 
@@ -1400,6 +1399,44 @@ ULONG WINAPI PullPin_Release(IPin *iface)
     return refCount;
 }
 
+static HRESULT PullPin_Standard_Request(PullPin *This, BOOL start)
+{
+    REFERENCE_TIME rtSampleStart;
+    REFERENCE_TIME rtSampleStop;
+    IMediaSample *sample = NULL;
+    HRESULT hr;
+
+    TRACE("Requesting sample!\n");
+
+    if (start)
+        This->rtNext = This->rtCurrent;
+
+    if (This->rtNext >= This->rtStop)
+        /* Last sample has already been queued, request nothing more */
+        return S_OK;
+
+    hr = IMemAllocator_GetBuffer(This->pAlloc, &sample, NULL, NULL, 0);
+
+    if (SUCCEEDED(hr))
+    {
+        rtSampleStart = This->rtNext;
+        rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(IMediaSample_GetSize(sample));
+        if (rtSampleStop > This->rtStop)
+            rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(This->rtStop), This->cbAlign));
+        hr = IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
+
+        This->rtCurrent = This->rtNext;
+        This->rtNext = rtSampleStop;
+
+        if (SUCCEEDED(hr))
+            hr = IAsyncReader_Request(This->pReader, sample, 0);
+    }
+    if (FAILED(hr))
+        FIXME("Failed to queue sample : %08x\n", hr);
+
+    return hr;
+}
+
 static void CALLBACK PullPin_Flush(PullPin *This)
 {
     IMediaSample *pSample;
@@ -1408,8 +1445,6 @@ static void CALLBACK PullPin_Flush(PullPin *This)
     EnterCriticalSection(This->pin.pCritSec);
     if (This->pReader)
     {
-        SendFurther((IPin *)This, deliver_beginflush, NULL, NULL );
-
         /* Flush outstanding samples */
         IAsyncReader_BeginFlush(This->pReader);
         for (;;)
@@ -1422,12 +1457,13 @@ static void CALLBACK PullPin_Flush(PullPin *This)
                 break;
 
             assert(!IMediaSample_GetActualDataLength(pSample));
+            if (This->fnCustomRequest)
+                This->fnSampleProc(This->pin.pUserData, pSample, dwUser);
+
             IMediaSample_Release(pSample);
         }
 
         IAsyncReader_EndFlush(This->pReader);
-        SendFurther((IPin *)This, deliver_endflush, NULL, NULL );
-        This->fnCleanProc(This->pin.pUserData);
     }
     LeaveCriticalSection(This->pin.pCritSec);
 }
@@ -1454,7 +1490,10 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
     }
 
     /* There is no sample in our buffer */
-    hr = This->fnCustomRequest(This->pin.pUserData);
+    if (!This->fnCustomRequest)
+        hr = PullPin_Standard_Request(This, TRUE);
+    else
+        hr = This->fnCustomRequest(This->pin.pUserData);
 
     if (FAILED(hr))
         ERR("Request error: %x\n", hr);
@@ -1471,18 +1510,46 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
 
         hr = IAsyncReader_WaitForNext(This->pReader, 10000, &pSample, &dwUser);
 
-        if (SUCCEEDED(hr))
+        /* Calling fnCustomRequest is not specifically useful here: It can be handled inside fnSampleProc */
+        if (pSample && !This->fnCustomRequest)
+            hr = PullPin_Standard_Request(This, FALSE);
+
+        /* Return an empty sample on error to the implementation in case it does custom parsing, so it knows it's gone */
+        if (SUCCEEDED(hr) || (This->fnCustomRequest && pSample))
         {
             REFERENCE_TIME rtStart, rtStop;
+            BOOL rejected;
 
             IMediaSample_GetTime(pSample, &rtStart, &rtStop);
 
-            hr = This->fnSampleProc(This->pin.pUserData, pSample, dwUser);
+            do
+            {
+                hr = This->fnSampleProc(This->pin.pUserData, pSample, dwUser);
+
+                if (This->fnCustomRequest)
+                    break;
+
+                rejected = FALSE;
+                if (This->rtCurrent == rtStart)
+                {
+                    rejected = TRUE;
+                    TRACE("DENIED!\n");
+                    Sleep(10);
+                    /* Maybe it's transient? */
+                }
+                /* rtNext = rtCurrent, because the next sample is already queued */
+                else if (rtStop != This->rtCurrent && rtStop < This->rtStop)
+                {
+                    WARN("Position changed! rtStop: %u, rtCurrent: %u\n", (DWORD)BYTES_FROM_MEDIATIME(rtStop), (DWORD)BYTES_FROM_MEDIATIME(This->rtCurrent));
+                    PullPin_Flush(This);
+                    hr = PullPin_Standard_Request(This, TRUE);
+                }
+            } while (rejected && (This->rtCurrent < This->rtStop && hr == S_OK && !This->stop_playback));
         }
         else
         {
             /* FIXME: This is not well handled yet! */
-            ERR("Processing/wait error: %x\n", hr);
+            ERR("Processing error: %x\n", hr);
         }
 
         if (pSample)
@@ -1697,6 +1764,12 @@ HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
     PullPin *This = (PullPin *)iface;
     TRACE("(%p)->()\n", This);
 
+    EnterCriticalSection(This->pin.pCritSec);
+    {
+        SendFurther( iface, deliver_beginflush, NULL, NULL );
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+
     EnterCriticalSection(&This->thread_lock);
     {
         PullPin_WaitForStateChange(This, INFINITE);
@@ -1706,13 +1779,14 @@ HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
             PullPin_PauseProcessing(This);
             PullPin_WaitForStateChange(This, INFINITE);
         }
-
-        EnterCriticalSection(This->pin.pCritSec);
-        SendFurther( iface, deliver_beginflush, NULL, NULL );
-        LeaveCriticalSection(This->pin.pCritSec);
     }
-
     LeaveCriticalSection(&This->thread_lock);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    {
+        This->fnCleanProc(This->pin.pUserData);
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
 
     return S_OK;
 }
@@ -1728,17 +1802,16 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
         FILTER_STATE state;
         IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
 
-        EnterCriticalSection(This->pin.pCritSec);
-        SendFurther( iface, deliver_endflush, NULL, NULL );
-        LeaveCriticalSection(This->pin.pCritSec);
-
         if (This->stop_playback && state == State_Running)
-        {
             PullPin_StartProcessing(This);
-            PullPin_WaitForStateChange(This, INFINITE);
-        }
+
+        PullPin_WaitForStateChange(This, INFINITE);
     }
     LeaveCriticalSection(&This->thread_lock);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    SendFurther( iface, deliver_endflush, NULL, NULL );
+    LeaveCriticalSection(This->pin.pCritSec);
 
     return S_OK;
 }
