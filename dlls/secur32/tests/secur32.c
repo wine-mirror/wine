@@ -101,7 +101,6 @@ static void test_InitSecurityInterface(void)
     ok(sftA->Reserved3 != NULL, "Reserved3 should not be NULL in security function table\n");
     todo_wine
     ok(sftA->Reserved4 != NULL, "Reserved4 should not be NULL in security function table\n");
-    ok(!sftA->Reserved8, "Reserved8 should be NULL instead of %p in security function table\n", sftA->Reserved8);
 
     if (!pInitSecurityInterfaceW)
     {
@@ -117,7 +116,6 @@ static void test_InitSecurityInterface(void)
     ok(sftW->Reserved3 != NULL, "Reserved3 should note be NULL in security function table\n");
     todo_wine
     ok(sftW->Reserved4 != NULL, "Reserved4 should not be NULL in security function table\n");
-    ok(!sftW->Reserved8, "Reserved8 should be NULL instead of %p in security function table\n", sftW->Reserved8);
 }
 
 START_TEST(secur32)
