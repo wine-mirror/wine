@@ -28,6 +28,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #include "version.rc"
 
 #include "msi_Bg.rc"
+#include "msi_Da.rc"
 #include "msi_De.rc"
 #include "msi_En.rc"
 #include "msi_Eo.rc"
