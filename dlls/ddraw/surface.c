@@ -1490,9 +1490,6 @@ IDirectDrawSurfaceImpl_GetColorKey(IDirectDrawSurface7 *iface,
                                    DWORD Flags,
                                    DDCOLORKEY *CKey)
 {
-    /* There is a DDERR_NOCOLORKEY error, but how do we know if a color key
-     * isn't there? That's like saying that an int isn't there. (Which MS
-     * has done in other docs.) */
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
     TRACE("(%p)->(%08x,%p)\n", This, Flags, CKey);
 
@@ -1500,21 +1497,42 @@ IDirectDrawSurfaceImpl_GetColorKey(IDirectDrawSurface7 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
+
     switch (Flags)
     {
     case DDCKEY_DESTBLT:
+        if (!(This->surface_desc.dwFlags & DDSD_CKDESTBLT))
+        {
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_NOCOLORKEY;
+        }
         *CKey = This->surface_desc.ddckCKDestBlt;
         break;
 
     case DDCKEY_DESTOVERLAY:
+        if (!(This->surface_desc.dwFlags & DDSD_CKDESTOVERLAY))
+            {
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_NOCOLORKEY;
+            }
         *CKey = This->surface_desc.u3.ddckCKDestOverlay;
         break;
 
     case DDCKEY_SRCBLT:
+        if (!(This->surface_desc.dwFlags & DDSD_CKSRCBLT))
+        {
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_NOCOLORKEY;
+        }
         *CKey = This->surface_desc.ddckCKSrcBlt;
         break;
 
     case DDCKEY_SRCOVERLAY:
+        if (!(This->surface_desc.dwFlags & DDSD_CKSRCOVERLAY))
+        {
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_NOCOLORKEY;
+        }
         *CKey = This->surface_desc.ddckCKSrcOverlay;
         break;
 
