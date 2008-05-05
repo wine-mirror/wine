@@ -620,31 +620,31 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   case rtfBorderSingle:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
-    fmt.wBorders &= ~0x70;
+    fmt.wBorders &= ~0x700;
     fmt.wBorders |= 1 << 8;
     break;
   case rtfBorderThick:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
-    fmt.wBorders &= ~0x70;
+    fmt.wBorders &= ~0x700;
     fmt.wBorders |= 2 << 8;
     break;
   case rtfBorderShadow:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
-    fmt.wBorders &= ~0x70;
+    fmt.wBorders &= ~0x700;
     fmt.wBorders |= 10 << 8;
     break;
   case rtfBorderDouble:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
-    fmt.wBorders &= ~0x70;
+    fmt.wBorders &= ~0x700;
     fmt.wBorders |= 7 << 8;
     break;
   case rtfBorderDot:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
-    fmt.wBorders &= ~0x70;
+    fmt.wBorders &= ~0x700;
     fmt.wBorders |= 11 << 8;
     break;
   case rtfBorderWidth:
