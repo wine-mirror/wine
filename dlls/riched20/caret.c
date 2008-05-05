@@ -1316,8 +1316,6 @@ void ME_SendSelChange(ME_TextEditor *editor)
 {
   SELCHANGE sc;
 
-  ME_ClearTempStyle(editor);
-  
   if (!(editor->nEventMask & ENM_SELCHANGE))
     return;
   
@@ -1336,6 +1334,8 @@ void ME_SendSelChange(ME_TextEditor *editor)
     (sc.seltyp & SEL_MULTICHAR) ? "SEL_MULTICHAR" : "");
   if (sc.chrg.cpMin != editor->notified_cr.cpMin || sc.chrg.cpMax != editor->notified_cr.cpMax)
   {
+    ME_ClearTempStyle(editor);
+
     editor->notified_cr = sc.chrg;
     SendMessageW(GetParent(editor->hWnd), WM_NOTIFY, sc.nmhdr.idFrom, (LPARAM)&sc);
   }

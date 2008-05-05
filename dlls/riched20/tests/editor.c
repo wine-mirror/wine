@@ -414,6 +414,7 @@ static void test_EM_SETCHARFORMAT(void)
     0
   };
   int i;
+  CHARRANGE cr;
 
   /* Invalid flags, CHARFORMAT2 structure blanked out */
   memset(&cf2, 0, sizeof(cf2));
@@ -639,6 +640,116 @@ static void test_EM_SETCHARFORMAT(void)
 
     DestroyWindow(hwndRichEdit);
   }
+
+  /* Effects applied on an empty selection should take effect when selection is
+     replaced with text */
+  hwndRichEdit = new_richedit(NULL);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
+  SendMessage(hwndRichEdit, EM_SETSEL, 2, 2); /* Empty selection */
+
+  memset(&cf2, 0, sizeof(CHARFORMAT2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  cf2.dwMask = CFM_BOLD;
+  cf2.dwEffects = CFE_BOLD;
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  /* Selection is now nonempty */
+  SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)"newi");
+
+  memset(&cf2, 0, sizeof(CHARFORMAT2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_SETSEL, 2, 6);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  ok (((cf2.dwMask & CFM_BOLD) == CFM_BOLD),
+      "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, CFM_BOLD);
+  ok((cf2.dwEffects & CFE_BOLD) == CFE_BOLD,
+      "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x\n", i, cf2.dwEffects, CFE_BOLD);
+
+
+  /* Set two effects on an empty selection */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
+  SendMessage(hwndRichEdit, EM_SETSEL, 2, 2); /* Empty selection */
+
+  memset(&cf2, 0, sizeof(CHARFORMAT2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  cf2.dwMask = CFM_BOLD;
+  cf2.dwEffects = CFE_BOLD;
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+  cf2.dwMask = CFM_ITALIC;
+  cf2.dwEffects = CFE_ITALIC;
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  /* Selection is now nonempty */
+  SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)"newi");
+
+  memset(&cf2, 0, sizeof(CHARFORMAT2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_SETSEL, 2, 6);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  ok (((cf2.dwMask & (CFM_BOLD|CFM_ITALIC)) == (CFM_BOLD|CFM_ITALIC)),
+      "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, (CFM_BOLD|CFM_ITALIC));
+  ok((cf2.dwEffects & (CFE_BOLD|CFE_ITALIC)) == (CFE_BOLD|CFE_ITALIC),
+      "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x\n", i, cf2.dwEffects, (CFE_BOLD|CFE_ITALIC));
+
+  /* Setting the (empty) selection to exactly the same place as before should
+     NOT clear the insertion style! */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
+  SendMessage(hwndRichEdit, EM_SETSEL, 2, 2); /* Empty selection */
+
+  memset(&cf2, 0, sizeof(CHARFORMAT2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  cf2.dwMask = CFM_BOLD;
+  cf2.dwEffects = CFE_BOLD;
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  /* Empty selection in same place, insert style should NOT be forgotten here. */
+  SendMessage(hwndRichEdit, EM_SETSEL, 2, 2);
+
+  /* Selection is now nonempty */
+  SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)"newi");
+
+  memset(&cf2, 0, sizeof(CHARFORMAT2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  SendMessage(hwndRichEdit, EM_SETSEL, 2, 6);
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  ok (((cf2.dwMask & CFM_BOLD) == CFM_BOLD),
+      "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, CFM_BOLD);
+  ok((cf2.dwEffects & CFE_BOLD) == CFE_BOLD,
+      "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x\n", i, cf2.dwEffects, CFE_BOLD);
+
+  /* Ditto with EM_EXSETSEL */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
+  cr.cpMin = 2; cr.cpMax = 2;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr); /* Empty selection */
+
+  memset(&cf2, 0, sizeof(CHARFORMAT2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  cf2.dwMask = CFM_BOLD;
+  cf2.dwEffects = CFE_BOLD;
+  SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  /* Empty selection in same place, insert style should NOT be forgotten here. */
+  cr.cpMin = 2; cr.cpMax = 2;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr); /* Empty selection */
+
+  /* Selection is now nonempty */
+  SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)"newi");
+
+  memset(&cf2, 0, sizeof(CHARFORMAT2));
+  cf2.cbSize = sizeof(CHARFORMAT2);
+  cr.cpMin = 2; cr.cpMax = 6;
+  SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr); /* Empty selection */
+  SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+
+  ok (((cf2.dwMask & CFM_BOLD) == CFM_BOLD),
+      "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, CFM_BOLD);
+  ok((cf2.dwEffects & CFE_BOLD) == CFE_BOLD,
+      "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x\n", i, cf2.dwEffects, CFE_BOLD);
+
+  DestroyWindow(hwndRichEdit);
 }
 
 static void test_EM_SETTEXTMODE(void)
