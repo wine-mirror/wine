@@ -38,6 +38,7 @@
 #include "wine/wine_common_ver.rc"
 
 
+#include "ui_Da.rc"
 #include "ui_De.rc"
 #include "ui_En.rc"
 #include "ui_Fr.rc"
