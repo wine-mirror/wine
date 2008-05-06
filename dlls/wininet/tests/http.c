@@ -192,6 +192,8 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CREATED %p %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(HINTERNET *)lpvStatusInformation,dwStatusInformationLength);
+            CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
+            SET_EXPECT(INTERNET_STATUS_DETECTING_PROXY);
             break;
         case INTERNET_STATUS_HANDLE_CLOSING:
             ok(dwStatusInformationLength == sizeof(HINTERNET),
@@ -218,6 +220,8 @@ static VOID WINAPI callback(
                 GetCurrentThreadId(), hInternet, dwContext,
                 (LPCSTR)lpvStatusInformation, dwStatusInformationLength);
             *(LPSTR)lpvStatusInformation = '\0';
+            CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
+            SET_EXPECT(INTERNET_STATUS_DETECTING_PROXY);
             break;
         case INTERNET_STATUS_INTERMEDIATE_RESPONSE:
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_INTERMEDIATE_RESPONSE %p %d\n",
@@ -1767,6 +1771,7 @@ static void init_status_tests(void)
     STATUS_STRING(INTERNET_STATUS_CONNECTION_CLOSED);
     STATUS_STRING(INTERNET_STATUS_HANDLE_CREATED);
     STATUS_STRING(INTERNET_STATUS_HANDLE_CLOSING);
+    STATUS_STRING(INTERNET_STATUS_DETECTING_PROXY);
     STATUS_STRING(INTERNET_STATUS_REQUEST_COMPLETE);
     STATUS_STRING(INTERNET_STATUS_REDIRECT);
     STATUS_STRING(INTERNET_STATUS_INTERMEDIATE_RESPONSE);
