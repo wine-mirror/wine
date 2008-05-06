@@ -23,6 +23,7 @@
 #include "shdoclc.h"
 
 #include "Bg.rc"
+#include "Da.rc"
 #include "De.rc"
 #include "En.rc"
 #include "Es.rc"
