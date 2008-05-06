@@ -50,7 +50,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /***********************************************************************
  *		GetFriendlyNameOfCertA (CRYPTDLG.@)
  */
-DWORD GetFriendlyNameOfCertA(PCCERT_CONTEXT pccert, LPSTR pchBuffer,
+DWORD WINAPI GetFriendlyNameOfCertA(PCCERT_CONTEXT pccert, LPSTR pchBuffer,
                              DWORD cchBuffer)
 {
     return CertGetNameStringA(pccert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
@@ -60,7 +60,7 @@ DWORD GetFriendlyNameOfCertA(PCCERT_CONTEXT pccert, LPSTR pchBuffer,
 /***********************************************************************
  *		GetFriendlyNameOfCertW (CRYPTDLG.@)
  */
-DWORD GetFriendlyNameOfCertW(PCCERT_CONTEXT pccert, LPWSTR pchBuffer,
+DWORD WINAPI GetFriendlyNameOfCertW(PCCERT_CONTEXT pccert, LPWSTR pchBuffer,
                              DWORD cchBuffer)
 {
     return CertGetNameStringW(pccert, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL,
