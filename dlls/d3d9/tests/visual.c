@@ -170,8 +170,8 @@ static IDirect3DDevice9 *init_d3d9(void)
     trace("Description string: \"%s\"\n", identifier.Description);
     trace("Device name string: \"%s\"\n", identifier.DeviceName);
     trace("Driver version %d.%d.%d.%d\n",
-          HIWORD(identifier.DriverVersion.HighPart), LOWORD(identifier.DriverVersion.HighPart),
-          HIWORD(identifier.DriverVersion.LowPart), LOWORD(identifier.DriverVersion.LowPart));
+          HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
+          HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
     if(FAILED(hr)) {
