@@ -3,6 +3,7 @@
  *
  * Copyright 1998 Henrik Olsen <henrik@iaeste.dk>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ * Copyright 2008 Jens Albretsen <jens@albretsen.dk>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,7 +28,7 @@ MAIN_MENU MENU LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
   MENUITEM SEPARATOR
   MENUITEM "&Skrifttype...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "Skjul Titel&linje", IDM_NOTITLE
+  MENUITEM "Skjul Titel&linie", IDM_NOTITLE
   MENUITEM SEPARATOR
   MENUITEM "Se&kunder", IDM_SECONDS
   MENUITEM "Da&to", IDM_DATE
@@ -36,7 +37,7 @@ MAIN_MENU MENU LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
  }
  POPUP "Inf&o" {
   MENUITEM "&Licens...", IDM_LICENSE
-  MENUITEM "&Ingen Garenti...", IDM_NOWARRANTY
+  MENUITEM "&Ingen Garanti...", IDM_NOWARRANTY
   MENUITEM "&Om Ur...", IDM_ABOUT
  }
 }
