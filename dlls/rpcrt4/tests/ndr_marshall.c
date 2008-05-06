@@ -514,7 +514,9 @@ static void test_nontrivial_pointer_types(void)
     NdrPointerBufferSize( &StubMsg,
                           (unsigned char *)p1,
                           &fmtstr_ref_unique_out[4] );
-    ok(StubMsg.BufferLength == 5, "length %d\n", StubMsg.BufferLength);
+
+    /* Windows overestimates the buffer size */
+    ok(StubMsg.BufferLength >= 5, "length %d\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
@@ -1706,7 +1708,7 @@ static void test_nonconformant_string(void)
 static void test_ndr_buffer(void)
 {
     static unsigned char ncalrpc[] = "ncalrpc";
-    static unsigned char endpoint[] = "winetest:" __FILE__;
+    static unsigned char endpoint[] = "winetest:test_ndr_buffer";
     RPC_MESSAGE RpcMessage;
     MIDL_STUB_MESSAGE StubMsg;
     MIDL_STUB_DESC StubDesc = Object_StubDesc;
@@ -1717,9 +1719,17 @@ static void test_ndr_buffer(void)
 
     StubDesc.RpcInterfaceInformation = (void *)&IFoo___RpcServerInterface;
 
-    ok(RPC_S_OK == RpcServerUseProtseqEp(ncalrpc, 20, endpoint, NULL), "RpcServerUseProtseqEp\n");
-    ok(RPC_S_OK == RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL), "RpcServerRegisterIf\n");
-    ok(RPC_S_OK == RpcServerListen(1, 20, TRUE), "RpcServerListen\n");
+    status = RpcServerUseProtseqEp(ncalrpc, 20, endpoint, NULL);
+    ok(RPC_S_OK == status, "RpcServerUseProtseqEp failed with status %lu\n", status);
+    status = RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL);
+    ok(RPC_S_OK == status, "RpcServerRegisterIf failed with status %lu\n", status);
+    status = RpcServerListen(1, 20, TRUE);
+    ok(RPC_S_OK == status, "RpcServerListen failed with status %lu\n", status);
+    if (status != RPC_S_OK)
+    {
+        /* Failed to create a server, running client tests is useless */
+        return;
+    }
 
     status = RpcStringBindingCompose(NULL, ncalrpc, NULL, endpoint, NULL, &binding);
     ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
