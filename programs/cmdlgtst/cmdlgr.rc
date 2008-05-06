@@ -25,6 +25,7 @@
 #include "cmdlgtst.h"
 
 #include "Cs.rc"
+#include "Da.rc"
 #include "De.rc"
 #include "En.rc"
 #include "Es.rc"
