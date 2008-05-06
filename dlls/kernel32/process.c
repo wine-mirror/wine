@@ -1785,6 +1785,8 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     if (tidy_cmdline != cmd_line) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
     if (envW != env) HeapFree( GetProcessHeap(), 0, envW );
     HeapFree( GetProcessHeap(), 0, unixdir );
+    if (retv)
+        TRACE( "started process pid %04x tid %04x\n", info->dwProcessId, info->dwThreadId );
     return retv;
 }
 
