@@ -187,6 +187,12 @@ static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                         'P','o','r','t','s',0};
 
+static const WCHAR WinNT_CV_PrinterPortsW[] = { 'S','o','f','t','w','a','r','e','\\',
+                                                'M','i','c','r','o','s','o','f','t','\\',
+                                                'W','i','n','d','o','w','s',' ','N','T','\\',
+                                                'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                                'P','r','i','n','t','e','r','P','o','r','t','s',0};
+
 static const WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
 static const WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
 static const WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
@@ -225,6 +231,7 @@ static const WCHAR Previous_NamesW[] = {'P','r','e','v','i','o','u','s',' ','N',
 static const WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i','v','e','r',0};
 static const WCHAR PrinterDriverDataW[] = {'P','r','i','n','t','e','r','D','r','i','v','e','r','D','a','t','a',0};
+static const WCHAR PrinterPortsW[] = {'P','r','i','n','t','e','r','P','o','r','t','s',0};
 static const WCHAR ProviderW[] = {'P','r','o','v','i','d','e','r',0};
 static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F','i','l','e',0};
 static const WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
@@ -489,16 +496,26 @@ static BOOL CUPS_LoadPrinters(void)
     nrofdests = pcupsGetDests(&dests);
     TRACE("Found %d CUPS %s:\n", nrofdests, (nrofdests == 1) ? "printer" : "printers");
     for (i=0;i<nrofdests;i++) {
-        port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(dests[i].name)+1);
-        sprintf(port,"LPR:%s",dests[i].name);
-	devline=HeapAlloc(GetProcessHeap(),0,sizeof("WINEPS.DRV,")+strlen(port));
-	sprintf(devline,"WINEPS.DRV,%s",port);
-	WriteProfileStringA("devices",dests[i].name,devline);
+        /* FIXME: replace "LPR:" with "CUPS:". Fix printing output first */
+        port = HeapAlloc(GetProcessHeap(), 0, strlen("LPR:") + strlen(dests[i].name)+1);
+        sprintf(port,"LPR:%s", dests[i].name);
+        /* FIXME: remove extension. Fix gdi32/drivers and comdlg32/printdlg first */
+        devline = HeapAlloc(GetProcessHeap(), 0, sizeof("WINEPS.DRV,,15,45") + strlen(port));
+        sprintf(devline, "WINEPS.DRV,%s", port);
+        WriteProfileStringA("devices", dests[i].name, devline);
         if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
             RegSetValueExA(hkey, dests[i].name, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
             RegCloseKey(hkey);
         }
-	HeapFree(GetProcessHeap(),0,devline);
+
+        lstrcatA(devline, ",15,45");
+        WriteProfileStringA("PrinterPorts", dests[i].name, devline);
+        if(RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey) == ERROR_SUCCESS) {
+            RegSetValueExA(hkey, dests[i].name, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
+            RegCloseKey(hkey);
+        }
+
+        HeapFree(GetProcessHeap(), 0, devline);
 
         TRACE("Printer %d: %s\n", i, dests[i].name);
         if(RegOpenKeyA(hkeyPrinters, dests[i].name, &hkeyPrinter) == ERROR_SUCCESS) {
@@ -614,13 +631,22 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(name)+1);
     sprintf(port,"LPR:%s",name);
 
-    devline=HeapAlloc(GetProcessHeap(),0,sizeof("WINEPS.DRV,")+strlen(port));
-    sprintf(devline,"WINEPS.DRV,%s",port);
-    WriteProfileStringA("devices",devname,devline);
+    /* FIXME: remove extension. Fix gdi32/drivers and comdlg32/printdlg first */
+    devline = HeapAlloc(GetProcessHeap(), 0, sizeof("WINEPS.DRV,,15,45") + strlen(port));
+    sprintf(devline, "WINEPS.DRV,%s", port);
+    WriteProfileStringA("devices", devname, devline);
     if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
         RegSetValueExA(hkey, devname, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
         RegCloseKey(hkey);
     }
+
+    lstrcatA(devline, ",15,45");
+    WriteProfileStringA("PrinterPorts", devname, devline);
+    if(RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey) == ERROR_SUCCESS) {
+        RegSetValueExA(hkey, devname, 0, REG_SZ, (LPBYTE)devline, strlen(devline) + 1);
+        RegCloseKey(hkey);
+    }
+
     HeapFree(GetProcessHeap(),0,devline);
     
     if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) !=
@@ -3259,7 +3285,14 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
         RegCloseKey(hkeyPrinters);
     }
     WriteProfileStringW(devicesW, lpNameW, NULL);
+    WriteProfileStringW(PrinterPortsW, lpNameW, NULL);
+
     if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
+        RegDeleteValueW(hkey, lpNameW);
+        RegCloseKey(hkey);
+    }
+
+    if(RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey) == ERROR_SUCCESS) {
         RegDeleteValueW(hkey, lpNameW);
         RegCloseKey(hkey);
     }
