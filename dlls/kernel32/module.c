@@ -361,7 +361,7 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **re
  *  FALSE, if the file is not an executable or if the function fails.
  *
  * NOTES
- *  The type of executable is a property that determines which subsytem an
+ *  The type of executable is a property that determines which subsystem an
  *  executable file runs under. lpBinaryType can be set to one of the following
  *  values:
  *   SCS_32BIT_BINARY: A Win32 based application

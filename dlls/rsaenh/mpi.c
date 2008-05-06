@@ -231,7 +231,7 @@ fast_mp_montgomery_reduce (mp_int * x, const mp_int * n, mp_digit rho)
     /* a = a + mu * m * b**i
      *
      * This is computed in place and on the fly.  The multiplication
-     * by b**i is handled by offseting which columns the results
+     * by b**i is handled by offsetting which columns the results
      * are added to.
      *
      * Note the comba method normally doesn't handle carries in the

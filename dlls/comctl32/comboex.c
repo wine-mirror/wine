@@ -1635,7 +1635,7 @@ static LRESULT COMBOEX_NCCreate (HWND hwnd)
     oldstyle = (DWORD)GetWindowLongW (hwnd, GWL_STYLE);
     newstyle = oldstyle & ~(WS_VSCROLL | WS_HSCROLL | WS_BORDER);
     if (newstyle != oldstyle) {
-	TRACE("req style %08x, reseting style %08x\n",
+	TRACE("req style %08x, resetting style %08x\n",
 	      oldstyle, newstyle);
 	SetWindowLongW (hwnd, GWL_STYLE, newstyle);
     }

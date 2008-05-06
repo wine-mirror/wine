@@ -1,7 +1,7 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
 
 /*
- * MMSYTEM low level drivers handling functions
+ * MMSYSTEM low level drivers handling functions
  *
  * Copyright 1999 Eric Pouech
  *

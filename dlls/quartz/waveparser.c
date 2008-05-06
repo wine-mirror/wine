@@ -87,7 +87,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
-    /* Flush occuring */
+    /* Flush occurring */
     if (cbSrcStream == 0)
     {
         TRACE(".. Why do I need you?\n");

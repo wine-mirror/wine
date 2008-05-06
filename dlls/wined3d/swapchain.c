@@ -183,7 +183,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     if (pSourceRect || pDestRect) FIXME("Unhandled present options %p/%p\n", pSourceRect, pDestRect);
     /* TODO: If only source rect or dest rect are supplied then clip the window to match */
-    TRACE("preseting HDC %p\n", This->context[0]->hdc);
+    TRACE("presetting HDC %p\n", This->context[0]->hdc);
 
     /* Don't call checkGLcall, as glGetError is not applicable here */
     if (hDestWindowOverride && This->win_handle != hDestWindowOverride) {

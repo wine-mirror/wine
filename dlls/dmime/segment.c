@@ -844,7 +844,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
     
     switch (Chunk.fccID) {
     case DMUS_FOURCC_TRACK_CHUNK: {
-      TRACE_(dmfile)(": track chunck\n");
+      TRACE_(dmfile)(": track chunk\n");
       IStream_Read (pStm, &track_hdr, sizeof(DMUS_IO_TRACK_HEADER), NULL);
       TRACE_(dmfile)(" - class: %s\n", debugstr_guid (&track_hdr.guidClassID));
       TRACE_(dmfile)(" - dwGroup: %d\n", track_hdr.dwGroup);
@@ -853,7 +853,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
       break;
     }
     case DMUS_FOURCC_TRACK_EXTRAS_CHUNK: {
-      TRACE_(dmfile)(": track extras chunck\n");
+      TRACE_(dmfile)(": track extras chunk\n");
       IStream_Read (pStm, &track_xhdr, sizeof(DMUS_IO_TRACK_EXTRAS_HEADER), NULL);
       break;
     }

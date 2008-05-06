@@ -2538,7 +2538,7 @@ static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     } else if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
         /* Direct3D sets the matrix in the stage reading the perturbation map. The result is used to
          * offset the destination stage(always stage + 1 in d3d). In GL_NV_texture_shader, the bump
-         * map offseting is done in the stage reading the bump mapped texture, and the perturbation
+         * map offsetting is done in the stage reading the bump mapped texture, and the perturbation
          * map is read from a specified source stage(always stage - 1 for d3d). Thus set the matrix
          * for stage + 1. Keep the nvrc tex unit mapping in mind too
          */

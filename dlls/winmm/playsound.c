@@ -1,7 +1,7 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
 
 /*
- * MMSYTEM functions
+ * MMSYSTEM functions
  *
  * Copyright 1993      Martin Ayotte
  *           1998-2002 Eric Pouech

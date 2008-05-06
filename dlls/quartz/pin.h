@@ -51,7 +51,7 @@ typedef HRESULT (* CLEANUPPROC) (LPVOID userdata);
 /* This function is called whenever a request for a new sample is made,
  * If you implement it (it can be NULL for default behavior), you have to
  * call IMemAllocator_GetBuffer and IMemAllocator_RequestBuffer
- * This is useful if you want to request more then 1 buffer at simultaneously
+ * This is useful if you want to request more than 1 buffer at simultaneously
  * If PullPin->flushed is set, it means that all buffers queued previously are gone
  *
  * This will also cause the Sample Proc to be called with empty buffers to indicate

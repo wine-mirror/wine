@@ -1992,7 +1992,7 @@ static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
         if (MSI_EvaluateConditionW(package,Condition) == MSICONDITION_TRUE)
         {
             int level = MSI_RecordGetInteger(row,2);
-            TRACE("Reseting feature %s to level %i\n", debugstr_w(name), level);
+            TRACE("Resetting feature %s to level %i\n", debugstr_w(name), level);
             feature->Level = level;
         }
     }

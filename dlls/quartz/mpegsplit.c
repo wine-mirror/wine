@@ -259,7 +259,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample,
         hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     }
 
-    /* Flush occuring */
+    /* Flush occurring */
     if (cbSrcStream == 0)
     {
         FIXME(".. Why do I need you?\n");

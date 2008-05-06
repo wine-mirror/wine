@@ -202,7 +202,7 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	TRACE("DG_CONTROL/DAT_IDENTITY/MSG_OPENDS\n");
         TRACE("pIdentity is %s\n", pIdentity->ProductName);
 	if (DSM_currentState != 3) {
-		FIXME("seq errror\n");
+		FIXME("seq error\n");
 		DSM_twCC = TWCC_SEQERROR;
 		return TWRC_FAILURE;
 	}

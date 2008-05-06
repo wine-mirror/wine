@@ -8506,7 +8506,7 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     /* set window focus flag */
     infoPtr->bFocus = FALSE;
 
-    /* invalidate the selected items before reseting focus flag */
+    /* invalidate the selected items before resetting focus flag */
     LISTVIEW_InvalidateSelectedItems(infoPtr);
     
     return 0;
