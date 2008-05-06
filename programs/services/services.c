@@ -714,8 +714,6 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
             err = ERROR_SERVICE_REQUEST_TIMEOUT;
     }
 
-    WINE_TRACE("returning %d\n", err);
-
     if (err == ERROR_SUCCESS)
         err = service_wait_for_startup(service, process_handle);
 
@@ -724,6 +722,8 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
 
     ReleaseMutex(service->control_mutex);
     scmdatabase_unlock_startup(service->db);
+
+    WINE_TRACE("returning %d\n", err);
 
     return err;
 }
