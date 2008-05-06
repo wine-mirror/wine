@@ -509,7 +509,7 @@ resource
 		 * However, we can test the lookahead-token for
 		 * being "non-expression" type, in which case we
 		 * continue. Fortunately, tNL is the only token that
-		 * will break expression parsing and is implicitely
+		 * will break expression parsing and is implicitly
 		 * void, so we just remove it. This scheme makes it
 		 * possible to do some (not all) fancy preprocessor
 		 * stuff.

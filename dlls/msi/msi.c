@@ -1796,7 +1796,7 @@ end:
  *   szFeature     [I]  Feature's GUID string
  *
  * RETURNS
- *   INSTALLSTATE_LOCAL        Feature is installed and useable
+ *   INSTALLSTATE_LOCAL        Feature is installed and usable
  *   INSTALLSTATE_ABSENT       Feature is absent
  *   INSTALLSTATE_ADVERTISED   Feature should be installed on demand
  *   INSTALLSTATE_UNKNOWN      An error occurred

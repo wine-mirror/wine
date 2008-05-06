@@ -2298,14 +2298,14 @@ typedef struct IWineD3DVertexShaderImpl {
     attrib_declaration          swizzled_attribs [MAX_ATTRIBS];
     UINT                        num_swizzled_attribs;
 
-    /* run time datas...  */
+    /* run time data...  */
     VSHADERDATA                *data;
     UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;
 
     UINT                       recompile_count;
 #if 0 /* needs reworking */
-    /* run time datas */
+    /* run time data */
     VSHADERINPUTDATA input;
     VSHADEROUTPUTDATA output;
 #endif

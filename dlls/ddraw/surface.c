@@ -1707,7 +1707,7 @@ IDirectDrawSurfaceImpl_Initialize(IDirectDrawSurface7 *iface,
  * Checks if the surface is lost
  *
  * Returns:
- *  DD_OK, if the surface is useable
+ *  DD_OK, if the surface is usable
  *  DDERR_ISLOST if the surface is lost
  *  See IWineD3DSurface::IsLost for more details
  *

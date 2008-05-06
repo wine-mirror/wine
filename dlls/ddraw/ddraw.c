@@ -2034,7 +2034,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
 
     /* Anno 1602 stores the pitch right after surface creation, so make sure it's there.
      * I can't LockRect() the surface here because if OpenGL surfaces are in use, the
-     * WineD3DDevice might not be useable for 3D yet, so an extra method was created.
+     * WineD3DDevice might not be usable for 3D yet, so an extra method was created.
      * TODO: Test other fourcc formats
      */
     if(Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||

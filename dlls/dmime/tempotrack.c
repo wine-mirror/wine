@@ -117,7 +117,7 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_InitPlay (LPDIREC
     ERR(": no more memory\n");
     return E_OUTOFMEMORY;
   }
-  /** TODO real fill useful datas */
+  /** TODO real fill useful data */
   pState->dummy = 0;
   *ppStateData = pState;
   return S_OK;

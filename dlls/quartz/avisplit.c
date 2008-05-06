@@ -624,7 +624,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
 
             if (nstdindex > 0)
             {
-                ERR("Stream %d got more then 1 superindex?\n", This->Parser.cStreams);
+                ERR("Stream %d got more than 1 superindex?\n", This->Parser.cStreams);
                 break;
             }
 

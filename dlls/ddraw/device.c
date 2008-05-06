@@ -335,7 +335,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         /* Release the WineD3DDevice. This won't destroy it */
         if(IWineD3DDevice_Release(This->wineD3DDevice) <= 0)
         {
-            ERR(" (%p) The wineD3D device %p was destroyed unexpectadely. Prepare for trouble\n", This, This->wineD3DDevice);
+            ERR(" (%p) The wineD3D device %p was destroyed unexpectedly. Prepare for trouble\n", This, This->wineD3DDevice);
         }
 
         /* The texture handles should be unset by now, but there might be some bits

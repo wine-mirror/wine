@@ -222,7 +222,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         return WINED3DERR_INVALIDCALL;
     } else if(Pool == WINED3DPOOL_SCRATCH) {
         /* The d3d9 testsuit shows that this is not allowed. It doesn't make much sense
-         * anyway, SCRATCH vertex buffers aren't useable anywhere
+         * anyway, SCRATCH vertex buffers aren't usable anywhere
          */
         WARN("Vertex buffer in D3DPOOL_SCRATCH requested, returning WINED3DERR_INVALIDCALL\n");
         *ppVertexBuffer = NULL;

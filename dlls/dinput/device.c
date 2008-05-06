@@ -546,7 +546,7 @@ BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA lpddi, LPVOID lpvRef) 
     if (lpddi->dwSize == sizeof(DIDEVICEINSTANCEA)) {
 	/**
 	 * if dwSize < sizeof(DIDEVICEINSTANCEA of DInput version >= 5)
-	 *  force feedback and other newer datas aren't available
+	 *  force feedback and other newer data aren't available
 	 */
 	ddtmp.dwFFMaxForce        = lpddi->dwFFMaxForce;
 	ddtmp.dwFFForceResolution = lpddi->dwFFForceResolution;

@@ -1313,7 +1313,7 @@ sub fix_file($$$)
       # by a reference to an array containing:
       # - "push" for pack(push,...) directives, "" otherwise
       # - the directive's identifier at index 1
-      # - the directive's alignement value at index 2
+      # - the directive's alignment value at index 2
       #
       # Don't believe a word of what the documentation says: it's all wrong.
       # The code below is based on the actual behavior of Visual C/C++ 6.

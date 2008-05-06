@@ -124,7 +124,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 CRITICAL_SECTION csWSgetXXXbyYYY = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-/* protoptypes of some functions in socket.c
+/* prototypes of some functions in socket.c
  */
 UINT wsaErrno(void);
 UINT wsaHerrno(int errnr);

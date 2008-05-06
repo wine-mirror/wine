@@ -267,7 +267,7 @@ static DWORD WINAPI NPMainWorkThread(LPVOID ignored)
         }
 
         if (wait_result == WAIT_FAILED) {
-          WINE_ERR("Couldn't enter master mutex.  Expect prolems.\n");
+          WINE_ERR("Couldn't enter master mutex.  Expect problems.\n");
         } else {
 	  /* now create a new named pipe instance to listen on */
           np_server_end = CreateNamedPipe(

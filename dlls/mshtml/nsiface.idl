@@ -18,9 +18,9 @@
 
 /* 
  * NOTE:
- * This file is not an usual idl file. Interfaces in this file are XPCOM interfaces
- * (NOT MSCOM!), but we generate the header file with WIDL compatibile with XPCOM,
- * useable in C code.
+ * This file is not a typical idl file. Interfaces in this file are XPCOM
+ * interfaces (NOT MSCOM!), but we generate the header file with WIDL
+ * compatible with XPCOM, usable in C code.
  */
 
 cpp_quote("#define GECKO_VERSION \"0.1.0\"")

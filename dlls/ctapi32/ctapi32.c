@@ -77,7 +77,7 @@ static int load_functions(void) {
 		TRACE("Successfully loaded '%s'\n", soname);
 	}
 	else {
-		MESSAGE("Wine cannot find any useable hardware library, ctapi32.dll not working.\n");
+		MESSAGE("Wine cannot find any usable hardware library, ctapi32.dll not working.\n");
 		MESSAGE("Please create the key \"HKEY_CURRENT_USER\\Software\\Wine\\ctapi32\" in your registry\n");
 		MESSAGE("and set the value \"library\" to your library name (e.g. \"libctapi-cyberjack.so.1\" or \"/usr/lib/readers/libctapi.so\").\n");
 		return 1;
