@@ -53,6 +53,8 @@ static void test_modify_world_transform(void)
     ReleaseDC(0, hdc);
 }
 
+#define rough_match(got, expected) ((got >= expected - 2) && (got <= expected + 2))
+
 static void test_SetWindowExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LONG expected_vp_cy)
 {
     SIZE windowExt, viewportExt;
@@ -68,7 +70,7 @@ static void test_SetWindowExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LO
        cx, cy, windowExt.cx, windowExt.cy);
 
     GetViewportExtEx(hdc, &viewportExt);
-    ok(viewportExt.cx == expected_vp_cx && viewportExt.cy == expected_vp_cy,
+    ok(rough_match(viewportExt.cx, expected_vp_cx) && rough_match(viewportExt.cy, expected_vp_cy),
         "Viewport extents have not been properly adjusted: Expected %dx%d, got %dx%d\n",
         expected_vp_cx, expected_vp_cy, viewportExt.cx, viewportExt.cy);
 
@@ -94,7 +96,7 @@ static void test_SetViewportExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, 
 
     SetViewportExtEx(hdc, cx, cy, NULL);
     GetViewportExtEx(hdc, &viewportExt);
-    ok(viewportExt.cx == expected_vp_cx && viewportExt.cy == expected_vp_cy,
+    ok(rough_match(viewportExt.cx, expected_vp_cx) && rough_match(viewportExt.cy, expected_vp_cy),
         "Viewport extents have not been properly adjusted: Expected %dx%d, got %dx%d\n",
         expected_vp_cx, expected_vp_cy, viewportExt.cx, viewportExt.cy);
 
