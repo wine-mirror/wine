@@ -417,6 +417,50 @@ static BOOL set_registry_environment(void)
     return ret;
 }
 
+
+/***********************************************************************
+ *           get_reg_value
+ */
+static WCHAR *get_reg_value( HKEY hkey, const WCHAR *name )
+{
+    char buffer[1024 * sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    DWORD len, size = sizeof(buffer);
+    WCHAR *ret = NULL;
+    UNICODE_STRING nameW;
+
+    RtlInitUnicodeString( &nameW, name );
+    if (NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, buffer, size, &size ))
+        return NULL;
+
+    if (size <= FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data )) return NULL;
+    len = (size - FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data )) / sizeof(WCHAR);
+
+    if (info->Type == REG_EXPAND_SZ)
+    {
+        UNICODE_STRING value, expanded;
+
+        value.MaximumLength = len * sizeof(WCHAR);
+        value.Buffer = (WCHAR *)info->Data;
+        if (!value.Buffer[len - 1]) len--;  /* don't count terminating null if any */
+        value.Length = len * sizeof(WCHAR);
+        expanded.Length = expanded.MaximumLength = 1024 * sizeof(WCHAR);
+        if (!(expanded.Buffer = HeapAlloc( GetProcessHeap(), 0, expanded.MaximumLength ))) return NULL;
+        if (!RtlExpandEnvironmentStrings_U( NULL, &value, &expanded, NULL )) ret = expanded.Buffer;
+        else RtlFreeUnicodeString( &expanded );
+    }
+    else if (info->Type == REG_SZ)
+    {
+        if ((ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+        {
+            memcpy( ret, info->Data, len * sizeof(WCHAR) );
+            ret[len] = 0;
+        }
+    }
+    return ret;
+}
+
+
 /***********************************************************************
  *           set_additional_environment
  *
@@ -424,16 +468,73 @@ static BOOL set_registry_environment(void)
  */
 static void set_additional_environment(void)
 {
+    static const WCHAR profile_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                         'S','o','f','t','w','a','r','e','\\',
+                                         'M','i','c','r','o','s','o','f','t','\\',
+                                         'W','i','n','d','o','w','s',' ','N','T','\\',
+                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                         'P','r','o','f','i','l','e','L','i','s','t',0};
+    static const WCHAR profiles_valueW[] = {'P','r','o','f','i','l','e','s','D','i','r','e','c','t','o','r','y',0};
+    static const WCHAR all_users_valueW[] = {'A','l','l','U','s','e','r','s','P','r','o','f','i','l','e','\0'};
     static const WCHAR usernameW[] = {'U','S','E','R','N','A','M','E',0};
+    static const WCHAR userprofileW[] = {'U','S','E','R','P','R','O','F','I','L','E',0};
+    static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    WCHAR *user_name = NULL, *profile_dir = NULL, *all_users_dir = NULL;
+    HANDLE hkey;
     const char *name = wine_get_user_name();
-    DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, name, -1, NULL, 0 );
+    DWORD len;
+
+    /* set the USERNAME variable */
+
+    len = MultiByteToWideChar( CP_UNIXCP, 0, name, -1, NULL, 0 );
     if (len)
     {
-        LPWSTR nameW = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-        MultiByteToWideChar( CP_UNIXCP, 0, name, -1, nameW, len );
-        SetEnvironmentVariableW( usernameW, nameW );
-        HeapFree( GetProcessHeap(), 0, nameW );
+        user_name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_UNIXCP, 0, name, -1, user_name, len );
+        SetEnvironmentVariableW( usernameW, user_name );
     }
+
+    /* set the USERPROFILE and ALLUSERSPROFILE variables */
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, profile_keyW );
+    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+    {
+        profile_dir = get_reg_value( hkey, profiles_valueW );
+        all_users_dir = get_reg_value( hkey, all_users_valueW );
+        NtClose( hkey );
+    }
+
+    if (profile_dir)
+    {
+        WCHAR *value, *p;
+
+        if (all_users_dir) len = max( len, strlenW(all_users_dir) + 1 );
+        len += strlenW(profile_dir) + 1;
+        value = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        strcpyW( value, profile_dir );
+        p = value + strlenW(value);
+        if (p > value && p[-1] != '\\') *p++ = '\\';
+        strcpyW( p, user_name );
+        SetEnvironmentVariableW( userprofileW, value );
+        if (all_users_dir)
+        {
+            strcpyW( p, all_users_dir );
+            SetEnvironmentVariableW( allusersW, value );
+        }
+        HeapFree( GetProcessHeap(), 0, value );
+    }
+
+    HeapFree( GetProcessHeap(), 0, all_users_dir );
+    HeapFree( GetProcessHeap(), 0, profile_dir );
+    HeapFree( GetProcessHeap(), 0, user_name );
 }
 
 /***********************************************************************
@@ -945,7 +1046,11 @@ void __wine_kernel_init(void)
         if (WaitForSingleObject( boot_event, 30000 )) WARN( "boot event wait timed out\n" );
         CloseHandle( boot_event );
         /* if we didn't find environment section, try again now that wineboot has run */
-        if (!got_environment) set_registry_environment();
+        if (!got_environment)
+        {
+            set_registry_environment();
+            set_additional_environment();
+        }
     }
 
     LdrInitializeThunk( 0, 0, 0, 0 );

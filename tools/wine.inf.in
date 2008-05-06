@@ -271,7 +271,6 @@ HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SystemDrive",
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SYSTEMROOT",,"%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TEMP",0x00020000,"%10%\temp"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TMP",0x00020000,"%10%\temp"
-HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"USERPROFILE",,"%53%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"windir",0x00020000,"%10%"
 HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"winsysdir",,"%11%"
 

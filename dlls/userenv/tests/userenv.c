@@ -162,7 +162,7 @@ static void test_create_env(void)
     int i, j;
 
     static const struct profile_item common_vars[] = {
-        { "ALLUSERSPROFILE", { 1, 1, 1, 1 } },
+        { "ALLUSERSPROFILE", { 1, 1, 0, 0 } },
         { "CommonProgramFiles", { 1, 1, 1, 1 } },
         { "ComSpec", { 1, 1, 0, 0 } },
         { "COMPUTERNAME", { 1, 1, 1, 1 } },
