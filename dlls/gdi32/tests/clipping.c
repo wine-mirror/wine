@@ -155,7 +155,7 @@ static void verify_region(HRGN hrgn, const RECT *rc)
         ok(EqualRect(rect, rc), "rects don't match\n");
     }
 
-    ok(rgn.data.rdh.dwSize == sizeof(rgn.data.rdh), "expected sizeof(rdh), got %u", rgn.data.rdh.dwSize);
+    ok(rgn.data.rdh.dwSize == sizeof(rgn.data.rdh), "expected sizeof(rdh), got %u\n", rgn.data.rdh.dwSize);
     ok(rgn.data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn.data.rdh.iType);
     if (IsRectEmpty(rc))
     {

@@ -1441,7 +1441,7 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         trace("rect (%d,%d-%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom);
         ok(EqualRect(&rect, rc), "rects don't match\n");
 
-        ok(rgn1->data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u", rgn1->data.rdh.dwSize);
+        ok(rgn1->data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn1->data.rdh.dwSize);
         ok(rgn1->data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn1->data.rdh.iType);
         ok(rgn1->data.rdh.nCount == 1, "expected 1, got %u\n", rgn1->data.rdh.nCount);
         ok(rgn1->data.rdh.nRgnSize == sizeof(RECT),  "expected sizeof(RECT), got %u\n", rgn1->data.rdh.nRgnSize);
@@ -1494,7 +1494,7 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
               rc_transformed.right, rc_transformed.bottom);
         ok(EqualRect(&rect, &rc_transformed), "rects don't match\n");
 
-        ok(rgn2.data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u", rgn2.data.rdh.dwSize);
+        ok(rgn2.data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn2.data.rdh.dwSize);
         ok(rgn2.data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn2.data.rdh.iType);
         ok(rgn2.data.rdh.nCount == 1, "expected 1, got %u\n", rgn2.data.rdh.nCount);
         ok(rgn2.data.rdh.nRgnSize == sizeof(RECT),  "expected sizeof(RECT), got %u\n", rgn2.data.rdh.nRgnSize);
