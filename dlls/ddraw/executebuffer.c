@@ -241,48 +241,49 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 	    } break;
 
 	    case D3DOP_STATELIGHT: {
-	        int i;
+		int i;
 		TRACE("STATELIGHT       (%d)\n", count);
-		
+
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 
-                    TRACE("(%08x,%08x)\n",ci->u1.dlstLightStateType, ci->u2.dwArg[0]);
+		    TRACE("(%08x,%08x)\n", ci->u1.dlstLightStateType, ci->u2.dwArg[0]);
 
 		    if (!ci->u1.dlstLightStateType && (ci->u1.dlstLightStateType > D3DLIGHTSTATE_COLORVERTEX))
 			ERR("Unexpected Light State Type\n");
 		    else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */) {
-            DWORD matHandle = ci->u2.dwArg[0];
+			DWORD matHandle = ci->u2.dwArg[0];
 
-            if(!matHandle) {
-                FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
-            } else if(matHandle >= lpDevice->numHandles) {
-                WARN("Material handle %d is invalid\n", matHandle);
-            } else if(lpDevice->Handles[matHandle - 1].type != DDrawHandle_Material) {
-                WARN("Handle %d is not a material handle\n", matHandle);
-            } else {
-                IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) lpDevice->Handles[matHandle - 1].ptr;
-                mat->activate(mat);
-		    }
-            }
-		   else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
+			if (!matHandle) {
+			    FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
+			} else if (matHandle >= lpDevice->numHandles) {
+			    WARN("Material handle %d is invalid\n", matHandle);
+			} else if (lpDevice->Handles[matHandle - 1].type != DDrawHandle_Material) {
+			    WARN("Handle %d is not a material handle\n", matHandle);
+			} else {
+			    IDirect3DMaterialImpl *mat =
+				(IDirect3DMaterialImpl *)lpDevice->Handles[matHandle - 1].ptr;
+
+			    mat->activate(mat);
+			}
+		    } else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
 			switch (ci->u2.dwArg[0]) {
 			    case D3DCOLOR_MONO:
-			       ERR("DDCOLOR_MONO should not happen!\n");
-			       break;
+				ERR("DDCOLOR_MONO should not happen!\n");
+				break;
 			    case D3DCOLOR_RGB:
-			       /* We are already in this mode */
-			       break;
+				/* We are already in this mode */
+				break;
 			    default:
-		               ERR("Unknown color model!\n");
+				ERR("Unknown color model!\n");
 			}
 		    } else {
-		    	D3DRENDERSTATETYPE rs = 0;
-		    	switch (ci->u1.dlstLightStateType) {
+			D3DRENDERSTATETYPE rs = 0;
+			switch (ci->u1.dlstLightStateType) {
 
-		    	    case D3DLIGHTSTATE_AMBIENT:       /* 2 */
+			    case D3DLIGHTSTATE_AMBIENT:       /* 2 */
 				rs = D3DRENDERSTATE_AMBIENT;
-				break;		
+				break;
 			    case D3DLIGHTSTATE_FOGMODE:       /* 4 */
 				rs = D3DRENDERSTATE_FOGVERTEXMODE;
 				break;
@@ -301,12 +302,12 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			    default:
 				break;
 			}
-			
-		        IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
-	                                		rs,ci->u2.dwArg[0]);
-		   }
 
-		   instr += size;
+			IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice7), rs,
+							ci->u2.dwArg[0]);
+		    }
+
+		    instr += size;
 		}
 	    } break;
 
