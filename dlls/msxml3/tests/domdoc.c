@@ -3277,7 +3277,7 @@ static void test_Namespaces(void)
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szNamespacesXML), &bSucc);
     ok(hr == S_OK, "ret %08x\n", hr );
-    ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE");
+    ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
 
     hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root"), &pNode );
     ok(hr == S_OK, "ret %08x\n", hr );
