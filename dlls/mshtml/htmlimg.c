@@ -526,18 +526,19 @@ static const NodeImplVtbl HTMLImgElementImplVtbl = {
     HTMLImgElement_destructor
 };
 
+static const tid_t HTMLImgElement_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    IHTMLImgElement_tid,
+    0
+};
 static dispex_static_data_t HTMLImgElement_dispex = {
     NULL,
     DispHTMLImg_tid,
     NULL,
-    {
-        IHTMLDOMNode_tid,
-        IHTMLDOMNode2_tid,
-        IHTMLElement_tid,
-        IHTMLElement2_tid,
-        IHTMLImgElement_tid,
-        0
-    }
+    HTMLImgElement_iface_tids
 };
 
 HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement *nselem)

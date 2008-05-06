@@ -1845,14 +1845,15 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
     HTMLStyle_toString
 };
 
+static const tid_t HTMLStyle_iface_tids[] = {
+    IHTMLStyle_tid,
+    0
+};
 static dispex_static_data_t HTMLStyle_dispex = {
     NULL,
     DispHTMLStyle_tid,
     NULL,
-    {
-        IHTMLStyle_tid,
-        0
-    }
+    HTMLStyle_iface_tids
 };
 
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle)

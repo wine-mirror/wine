@@ -300,14 +300,15 @@ static const IOmNavigatorVtbl OmNavigatorVtbl = {
     OmNavigator_get_userProfile
 };
 
+static const tid_t OmNavigator_iface_tids[] = {
+    IOmNavigator_tid,
+    0
+};
 static dispex_static_data_t OmNavigator_dispex = {
     NULL,
     IOmNavigator_tid,
     NULL,
-    {
-        IOmNavigator_tid,
-        0
-    }
+    OmNavigator_iface_tids
 };
 
 IOmNavigator *OmNavigator_Create(void)

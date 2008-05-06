@@ -1107,15 +1107,16 @@ static const IDispatchExVtbl WindowDispExVtbl = {
     WindowDispEx_GetNameSpaceParent
 };
 
+static const tid_t HTMLWindow_iface_tids[] = {
+    IHTMLWindow2_tid,
+    IHTMLWindow3_tid,
+    0
+};
 static dispex_static_data_t HTMLWindow_dispex = {
     NULL,
     DispHTMLWindow2_tid,
     NULL,
-    {
-        IHTMLWindow2_tid,
-        IHTMLWindow3_tid,
-        0
-    }
+    HTMLWindow_iface_tids
 };
 
 static const char wineConfig_func[] =

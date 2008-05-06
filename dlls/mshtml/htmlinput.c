@@ -1059,18 +1059,19 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_destructor
 };
 
+static const tid_t HTMLInputElement_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    IHTMLInputElement_tid,
+    0
+};
 static dispex_static_data_t HTMLInputElement_dispex = {
     NULL,
     DispHTMLInputElement_tid,
     NULL,
-    {
-        IHTMLDOMNode_tid,
-        IHTMLDOMNode2_tid,
-        IHTMLElement_tid,
-        IHTMLElement2_tid,
-        IHTMLInputElement_tid,
-        0
-    }
+    HTMLInputElement_iface_tids
 };
 
 HTMLElement *HTMLInputElement_Create(nsIDOMHTMLElement *nselem)

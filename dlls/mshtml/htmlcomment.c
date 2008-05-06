@@ -175,14 +175,15 @@ static const NodeImplVtbl HTMLCommentElementImplVtbl = {
     HTMLCommentElement_destructor
 };
 
+static const tid_t HTMLCommentElement_iface_tids[] = {
+    IHTMLCommentElement_tid,
+    0
+};
 static dispex_static_data_t HTMLCommentElement_dispex = {
     NULL,
     DispHTMLCommentElement_tid,
     NULL,
-    {
-        IHTMLCommentElement_tid,
-        0
-    }
+    HTMLCommentElement_iface_tids
 };
 
 HTMLElement *HTMLCommentElement_Create(nsIDOMNode *nsnode)

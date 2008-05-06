@@ -1326,17 +1326,18 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
     HTMLElement_destructor
 };
 
+static const tid_t HTMLElement_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    0
+};
 static dispex_static_data_t HTMLElement_dispex = {
     NULL,
     DispHTMLUnknownElement_tid,
     NULL,
-    {
-        IHTMLDOMNode_tid,
-        IHTMLDOMNode2_tid,
-        IHTMLElement_tid,
-        IHTMLElement2_tid,
-        0
-    }
+    HTMLElement_iface_tids
 };
 
 void HTMLElement_Init(HTMLElement *This)
@@ -1769,14 +1770,15 @@ static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
     HTMLElementCollection_invoke
 };
 
+static const tid_t HTMLElementCollection_iface_tids[] = {
+    IHTMLElementCollection_tid,
+    0
+};
 static dispex_static_data_t HTMLElementCollection_dispex = {
     &HTMLElementColection_dispex_vtbl,
     DispHTMLElementCollection_tid,
     NULL,
-    {
-        IHTMLElementCollection_tid,
-        0
-    }
+    HTMLElementCollection_iface_tids
 };
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode *node)

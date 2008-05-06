@@ -185,16 +185,17 @@ static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     HTMLDOMTextNode_destructor
 };
 
+static const tid_t HTMLDOMTextNode_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLDOMTextNode_tid,
+    0
+};
 static dispex_static_data_t HTMLDOMTextNode_dispex = {
     NULL,
     DispHTMLDOMTextNode_tid,
     0,
-    {
-        IHTMLDOMNode_tid,
-        IHTMLDOMNode2_tid,
-        IHTMLDOMTextNode_tid,
-        0
-    }
+    HTMLDOMTextNode_iface_tids
 };
 
 HTMLDOMNode *HTMLDOMTextNode_Create(nsIDOMNode *nsnode)

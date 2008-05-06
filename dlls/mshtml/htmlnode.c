@@ -193,14 +193,15 @@ static const IHTMLDOMChildrenCollectionVtbl HTMLDOMChildrenCollectionVtbl = {
     HTMLDOMChildrenCollection_item
 };
 
+static const tid_t HTMLDOMChildrenCollection_iface_tids[] = {
+    IHTMLDOMChildrenCollection_tid,
+    0
+};
 static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {
     NULL,
     DispDOMChildrenCollection_tid,
     NULL,
-    {
-        IHTMLDOMChildrenCollection_tid,
-        0
-    }
+    HTMLDOMChildrenCollection_iface_tids
 };
 
 static IHTMLDOMChildrenCollection *create_child_collection(HTMLDocument *doc, nsIDOMNodeList *nslist)

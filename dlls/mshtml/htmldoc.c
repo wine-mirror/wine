@@ -1490,17 +1490,18 @@ static const IDispatchExVtbl DocDispatchExVtbl = {
     DocDispatchEx_GetNameSpaceParent
 };
 
+static const tid_t HTMLDocument_iface_tids[] = {
+    IHTMLDocument2_tid,
+    IHTMLDocument3_tid,
+    IHTMLDocument4_tid,
+    IHTMLDocument5_tid,
+    0
+};
 static dispex_static_data_t HTMLDocument_dispex = {
     NULL,
     DispHTMLDocument_tid,
     NULL,
-    {
-        IHTMLDocument2_tid,
-        IHTMLDocument3_tid,
-        IHTMLDocument4_tid,
-        IHTMLDocument5_tid,
-        0
-    }
+    HTMLDocument_iface_tids
 };
 
 HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)

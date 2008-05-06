@@ -331,18 +331,19 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     HTMLOptionElement_destructor
 };
 
+static const tid_t HTMLOptionElement_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    IHTMLOptionElement_tid,
+    0
+};
 static dispex_static_data_t HTMLOptionElement_dispex = {
     NULL,
     DispHTMLOptionElement_tid,
     NULL,
-    {
-        IHTMLDOMNode_tid,
-        IHTMLDOMNode2_tid,
-        IHTMLElement_tid,
-        IHTMLElement2_tid,
-        IHTMLOptionElement_tid,
-        0
-    }
+    HTMLOptionElement_iface_tids
 };
 
 HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement *nselem)
