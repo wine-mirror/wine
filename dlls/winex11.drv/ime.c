@@ -651,7 +651,7 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
 
 BOOL WINAPI ImeSetActiveContext(HIMC hIMC,BOOL fFlag)
 {
-    FIXME("Stub");
+    FIXME("(%p, %x): stub\n", hIMC, fFlag);
     return TRUE;
 }
 
