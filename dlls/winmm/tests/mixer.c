@@ -549,8 +549,8 @@ static void mixer_test_deviceA(int device)
             }
         }
         rc=mixerClose(mix);
-        ok(rc==MMSYSERR_NOERROR,
-           "mixerClose: MMSYSERR_BADDEVICEID expected, got %s\n",
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALHANDLE,
+           "mixerClose: MMSYSERR_NOERROR or MMSYSERR_INVALHANDLE expected, got %s\n",
            mmsys_error(rc));
     }
 }
@@ -954,8 +954,8 @@ static void mixer_test_deviceW(int device)
             }
         }
         rc=mixerClose(mix);
-        ok(rc==MMSYSERR_NOERROR,
-           "mixerClose: MMSYSERR_BADDEVICEID expected, got %s\n",
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALHANDLE,
+           "mixerClose: MMSYSERR_NOERROR or MMSYSERR_INVALHANDLE expected, got %s\n",
            mmsys_error(rc));
     }
 }
