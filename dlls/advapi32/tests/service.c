@@ -94,6 +94,8 @@ static void test_open_scm(void)
 static void test_open_svc(void)
 {
     SC_HANDLE scm_handle, svc_handle;
+    CHAR displayname[4096];
+    DWORD displaysize;
 
     /* All NULL (invalid access rights) */
     SetLastError(0xdeadbeef);
@@ -135,6 +137,21 @@ static void test_open_svc(void)
            "Expected ERROR_SUCCESS or 0xdeadbeef, got %d\n", GetLastError());
         CloseServiceHandle(svc_handle);
     }
+
+    /* Test to show we can't open a service with the displayname */
+
+    /* Retrieve the needed size for the buffer */
+    displaysize = 0;
+    GetServiceDisplayNameA(scm_handle, spooler, NULL, &displaysize);
+    /* Get the displayname */
+    GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
+    /* Try to open the service with this displayname */
+    svc_handle = OpenServiceA(scm_handle, displayname, GENERIC_READ);
+    ok(!svc_handle, "Expected failure\n");
+    ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST, "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
+    /* Just in case */
+    CloseServiceHandle(svc_handle);
+
     CloseServiceHandle(scm_handle);
 }
 
