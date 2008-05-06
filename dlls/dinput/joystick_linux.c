@@ -698,6 +698,8 @@ static void joy_polldev(JoystickImpl *This) {
               jse.type,jse.number,jse.value);
         if (jse.type & JS_EVENT_BUTTON)
         {
+            if (jse.number >= This->devcaps.dwButtons) return;
+
             inst_id = DIDFT_MAKEINSTANCE(jse.number) | DIDFT_PSHBUTTON;
             This->js.rgbButtons[jse.number] = value = jse.value ? 0x80 : 0x00;
         }
