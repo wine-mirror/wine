@@ -1925,7 +1925,15 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
             else if (CSIDL_Data[folders[i]].type == CSIDL_Type_AllUsers)
                 _SHGetAllUsersProfilePath(SHGFP_TYPE_DEFAULT, folders[i], path);
             else if (CSIDL_Data[folders[i]].type == CSIDL_Type_WindowsPath)
+            {
                 GetWindowsDirectoryW(path, MAX_PATH);
+                if (CSIDL_Data[folders[i]].szDefaultPath &&
+                    !IS_INTRESOURCE(CSIDL_Data[folders[i]].szDefaultPath))
+                {
+                    PathAddBackslashW(path);
+                    strcatW(path, CSIDL_Data[folders[i]].szDefaultPath);
+                }
+            }
             else
                 hr = E_FAIL;
             if (*path)
