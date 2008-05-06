@@ -325,7 +325,7 @@ run_ex (char *cmd, const char *out, const char *tempdir, DWORD ms)
         close (fd);
     }
 
-    if (!CreateProcessA (NULL, cmd, NULL, NULL, TRUE, CREATE_NEW_PROCESS_GROUP,
+    if (!CreateProcessA (NULL, cmd, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
                          NULL, tempdir, &si, &pi)) {
         status = -2;
     } else {
