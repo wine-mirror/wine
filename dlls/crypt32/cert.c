@@ -2574,3 +2574,15 @@ PCCERT_CONTEXT WINAPI CertCreateSelfSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HAN
         CryptReleaseContext(hProv, 0);
     return context;
 }
+
+BOOL WINAPI CertVerifyCTLUsage(DWORD dwEncodingType, DWORD dwSubjectType,
+                               void *pvSubject, PCTL_USAGE pSubjectUsage, DWORD dwFlags,
+                               PCTL_VERIFY_USAGE_PARA pVerifyUsagePara,
+                               PCTL_VERIFY_USAGE_STATUS pVerifyUsageStatus)
+{
+    FIXME("(0x%x, %d, %p, %p, 0x%x, %p, %p): stub\n", dwEncodingType,
+          dwSubjectType, pvSubject, pSubjectUsage, dwFlags, pVerifyUsagePara,
+          pVerifyUsageStatus);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
