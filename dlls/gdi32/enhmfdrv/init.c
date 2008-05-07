@@ -457,7 +457,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     emr.emr.iType = EMR_EOF;
     emr.emr.nSize = sizeof(emr);
     emr.nPalEntries = 0;
-    emr.offPalEntries = 0;
+    emr.offPalEntries = FIELD_OFFSET(EMREOF, nSizeLast);
     emr.nSizeLast = emr.emr.nSize;
     EMFDRV_WriteRecord( dc->physDev, &emr.emr );
 
