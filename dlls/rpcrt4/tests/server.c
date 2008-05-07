@@ -1239,22 +1239,38 @@ server(void)
   static unsigned char port[] = PORT;
   static unsigned char np[] = "ncacn_np";
   static unsigned char pipe[] = PIPE;
+  RPC_STATUS status, iptcp_status, np_status;
 
-  ok(RPC_S_OK == RpcServerUseProtseqEp(iptcp, 20, port, NULL), "RpcServerUseProtseqEp\n");
-  ok(RPC_S_OK == RpcServerRegisterIf(s_IServer_v0_0_s_ifspec, NULL, NULL), "RpcServerRegisterIf\n");
-  ok(RPC_S_OK == RpcServerListen(1, 20, TRUE), "RpcServerListen\n");
+  iptcp_status = RpcServerUseProtseqEp(iptcp, 20, port, NULL);
+  ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %ld\n", iptcp_status);
+  np_status = RpcServerUseProtseqEp(np, 0, pipe, NULL);
+  ok(np_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_np) failed with status %ld\n", np_status);
 
+  status = RpcServerRegisterIf(s_IServer_v0_0_s_ifspec, NULL, NULL);
+  ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %ld\n", status);
+  status = RpcServerListen(1, 20, TRUE);
+  ok(status == RPC_S_OK, "RpcServerListen failed with status %ld\n", status);
   stop_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-  ok(stop_event != NULL, "CreateEvent failed\n");
+  ok(stop_event != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
-  run_client("tcp_basic");
+  if (iptcp_status == RPC_S_OK)
+    run_client("tcp_basic");
+  else
+    skip("tcp_basic tests skipped due to earlier failure\n");
 
-  ok(RPC_S_OK == RpcServerUseProtseqEp(np, 0, pipe, NULL), "RpcServerUseProtseqEp\n");
-  run_client("np_basic");
+  if (np_status == RPC_S_OK)
+    run_client("np_basic");
+  else
+  {
+    skip("np_basic tests skipped due to earlier failure\n");
+    /* np client is what signals stop_event, so bail out if we didn't run do it */
+    return;
+  }
 
   ok(WAIT_OBJECT_0 == WaitForSingleObject(stop_event, 60000), "WaitForSingleObject\n");
+  status = RpcMgmtWaitServerListen();
   todo_wine {
-    ok(RPC_S_OK == RpcMgmtWaitServerListen(), "RpcMgmtWaitServerListening\n");
+    ok(status == RPC_S_OK, "RpcMgmtWaitServerListening failed with status %ld\n", status);
   }
 }
 
