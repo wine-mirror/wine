@@ -35,6 +35,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#ifdef HAVE_POLL_H
+# include <poll.h>
+#endif
 #ifdef HAVE_NCURSES_H
 # include <ncurses.h>
 #elif defined(HAVE_CURSES_H)
@@ -53,7 +56,6 @@
 #include "winecon_private.h"
 
 #include "wine/library.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(curses);
@@ -71,7 +73,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(curses);
 struct inner_data_curse 
 {
     unsigned long       initial_mouse_mask;
-    HANDLE              hInput;
+    int                 sync_pipe[2];
+    HANDLE              input_thread;
     WINDOW*             pad;
     chtype*             line;
     int                 allow_scroll;
@@ -846,31 +849,43 @@ static unsigned WCCURSES_FillCode(struct inner_data* data, INPUT_RECORD* ir, int
 }
 
 /******************************************************************
- *		WCCURSES_GetEvents
- *
- *
+ *		input_thread
  */
-static void WCCURSES_GetEvents(struct inner_data* data)
+static DWORD CALLBACK input_thread( void *arg )
 {
+    struct inner_data* data = arg;
     int		        inchar;
     INPUT_RECORD        ir[8];
     unsigned		numEvent;
     DWORD               n;
-    
-    if ((inchar = wgetch(stdscr)) == ERR) {WINE_FIXME("Ooch. somebody beat us\n");return;}
-    
-    WINE_TRACE("Got o%o (0x%x)\n", inchar,inchar);
-    
-    if (inchar >= KEY_MIN && inchar <= KEY_MAX)
+    struct pollfd pfd[2];
+
+    pfd[0].fd = 0;
+    pfd[0].events = POLLIN;
+    pfd[1].fd = PRIVATE(data)->sync_pipe[0];
+    pfd[1].events = POLLHUP;
+
+    for (;;)
     {
-        numEvent = WCCURSES_FillCode(data, ir, inchar);
+        pfd[0].revents = pfd[1].revents = 0;
+        if (poll( pfd, 2, -1 ) == -1) break;
+        if (pfd[0].revents & (POLLHUP|POLLERR)) break;
+        if (pfd[1].revents & (POLLHUP|POLLERR)) break;
+        if (!(pfd[0].revents & POLLIN)) continue;
+
+        if ((inchar = wgetch(stdscr)) == ERR) continue;
+
+        WINE_TRACE("Got o%o (0x%x)\n", inchar,inchar);
+
+        if (inchar >= KEY_MIN && inchar <= KEY_MAX)
+            numEvent = WCCURSES_FillCode(data, ir, inchar);
+        else
+            numEvent = WCCURSES_FillSimpleChar(ir, inchar);
+
+        if (numEvent) WriteConsoleInput(data->hConIn, ir, numEvent, &n);
     }
-    else
-    {
-        numEvent = WCCURSES_FillSimpleChar(ir, inchar);
-    }
-    if (numEvent)
-        WriteConsoleInput(data->hConIn, ir, numEvent, &n);
+    close( PRIVATE(data)->sync_pipe[0] );
+    return 0;
 }
 
 /******************************************************************
@@ -882,7 +897,12 @@ static void WCCURSES_DeleteBackend(struct inner_data* data)
 {
     if (!PRIVATE(data)) return;
 
-    CloseHandle(PRIVATE(data)->hInput);
+    if (PRIVATE(data)->input_thread)
+    {
+        close( PRIVATE(data)->sync_pipe[1] );
+        WaitForSingleObject( PRIVATE(data)->input_thread, INFINITE );
+        CloseHandle( PRIVATE(data)->input_thread );
+    }
 
     delwin(PRIVATE(data)->pad);
 #ifdef HAVE_MOUSEMASK
@@ -905,28 +925,21 @@ static void WCCURSES_DeleteBackend(struct inner_data* data)
  */
 static int WCCURSES_MainLoop(struct inner_data* data)
 {
-    HANDLE hin[2];
+    DWORD id;
 
-    hin[0] = PRIVATE(data)->hInput;
-    hin[1] = data->hSynchro;
+    if (pipe( PRIVATE(data)->sync_pipe ) == -1) return 0;
+    PRIVATE(data)->input_thread = CreateThread( NULL, 0, input_thread, data, 0, &id );
 
-    for (;;) 
+    while (WaitForSingleObject(data->hSynchro, INFINITE) == WAIT_OBJECT_0)
     {
-        unsigned ret = WaitForMultipleObjects(2, hin, FALSE, INFINITE);
-        switch (ret)
-        {
-        case WAIT_OBJECT_0:
-            WCCURSES_GetEvents(data);
-            break;
-        case WAIT_OBJECT_0+1:
-            if (!WINECON_GrabChanges(data)) return 0;
-            break;
-	default:
-	    WINE_ERR("got pb\n");
-	    /* err */
-	    break;
-        }
+        if (!WINECON_GrabChanges(data)) break;
     }
+
+    close( PRIVATE(data)->sync_pipe[1] );
+    WaitForSingleObject( PRIVATE(data)->input_thread, INFINITE );
+    CloseHandle( PRIVATE(data)->input_thread );
+    PRIVATE(data)->input_thread = 0;
+    return 0;
 }
 
 /******************************************************************
@@ -954,13 +967,6 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
     data->fnSetFont            = WCCURSES_SetFont;
     data->fnDeleteBackend      = WCCURSES_DeleteBackend;
     data->hWnd                 = NULL;
-
-    if (wine_server_fd_to_handle(0, GENERIC_READ|SYNCHRONIZE, 0,
-                                 (obj_handle_t*)&PRIVATE(data)->hInput))
-    {
-        WINE_FIXME("Cannot open 0\n");
-        return init_failed;
-    }
 
     /* FIXME: should find a good way to enable buffer scrolling
      * For the time being, setting this to 1 will allow scrolling up/down 
