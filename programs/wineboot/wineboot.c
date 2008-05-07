@@ -798,7 +798,7 @@ static void usage(void)
     WINE_MESSAGE( "    -u,--update       Update the wineprefix directory\n" );
 }
 
-static const char short_options[] = "efhikrs";
+static const char short_options[] = "efhikrsu";
 
 static const struct option long_options[] =
 {
