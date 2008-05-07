@@ -1746,6 +1746,31 @@ static void test_user_agent_header(void)
     InternetCloseHandle(ses);
 }
 
+static void test_bogus_accept_types_array(void)
+{
+    HINTERNET ses, con, req;
+    static const char *types[] = { (const char *)6240, "*/*", "%p", "", "*/*", NULL };
+    DWORD size;
+    char buffer[32];
+    BOOL ret;
+
+    ses = InternetOpen("MERONG(0.9/;p)", INTERNET_OPEN_TYPE_DIRECT, "", "", 0);
+    con = InternetConnect(ses, "www.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    req = HttpOpenRequest(con, "POST", "/post/post_action.php", "HTTP/1.0", "", types, INTERNET_FLAG_FORMS_SUBMIT, 0);
+
+    ok(req != NULL, "HttpOpenRequest failed: %u\n", GetLastError());
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(req, HTTP_QUERY_ACCEPT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    ok(ret, "HttpQueryInfo failed: %u\n", GetLastError());
+    ok(!strcmp(buffer, "*/*, %p, */*"), "got '%s' expected '*/*, %%p, */*'\n", buffer);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
 #define STATUS_STRING(status) \
     memcpy(status_string[status], #status, sizeof(CHAR) * \
            (strlen(#status) < MAX_STATUS_NAME ? \
@@ -1821,4 +1846,5 @@ START_TEST(http)
     HttpHeaders_test();
     test_http_connection();
     test_user_agent_header();
+    test_bogus_accept_types_array();
 }

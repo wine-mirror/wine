@@ -964,9 +964,10 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 {
     LPWSTR szVerb = NULL, szObjectName = NULL;
     LPWSTR szVersion = NULL, szReferrer = NULL, *szAcceptTypes = NULL;
-    INT len;
-    INT acceptTypesCount;
+    INT len, acceptTypesCount;
     HINTERNET rc = FALSE;
+    LPCSTR *types;
+
     TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
           debugstr_a(lpszVerb), debugstr_a(lpszObjectName),
           debugstr_a(lpszVersion), debugstr_a(lpszReferrer), lpszAcceptTypes,
@@ -1008,24 +1009,37 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
         MultiByteToWideChar(CP_ACP, 0, lpszReferrer, -1, szReferrer, len );
     }
 
-    acceptTypesCount = 0;
     if (lpszAcceptTypes)
     {
-        /* find out how many there are */
-        while (lpszAcceptTypes[acceptTypesCount] && *lpszAcceptTypes[acceptTypesCount])
-            acceptTypesCount++;
-        szAcceptTypes = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *) * (acceptTypesCount+1));
         acceptTypesCount = 0;
-        while (lpszAcceptTypes[acceptTypesCount] && *lpszAcceptTypes[acceptTypesCount])
+        types = lpszAcceptTypes;
+        while (*types)
         {
-            len = MultiByteToWideChar(CP_ACP, 0, lpszAcceptTypes[acceptTypesCount],
-                                -1, NULL, 0 );
-            szAcceptTypes[acceptTypesCount] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            if (!szAcceptTypes[acceptTypesCount] )
-                goto end;
-            MultiByteToWideChar(CP_ACP, 0, lpszAcceptTypes[acceptTypesCount],
-                                -1, szAcceptTypes[acceptTypesCount], len );
-            acceptTypesCount++;
+            /* find out how many there are */
+            if (((ULONG_PTR)*types >> 16) && **types)
+            {
+                TRACE("accept type: %s\n", debugstr_a(*types));
+                acceptTypesCount++;
+            }
+            types++;
+        }
+        szAcceptTypes = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *) * (acceptTypesCount+1));
+        if (!szAcceptTypes) goto end;
+
+        acceptTypesCount = 0;
+        types = lpszAcceptTypes;
+        while (*types)
+        {
+            if (((ULONG_PTR)*types >> 16) && **types)
+            {
+                len = MultiByteToWideChar(CP_ACP, 0, *types, -1, NULL, 0 );
+                szAcceptTypes[acceptTypesCount] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+                if (!szAcceptTypes[acceptTypesCount]) goto end;
+
+                MultiByteToWideChar(CP_ACP, 0, *types, -1, szAcceptTypes[acceptTypesCount], len);
+                acceptTypesCount++;
+            }
+            types++;
         }
         szAcceptTypes[acceptTypesCount] = NULL;
     }
