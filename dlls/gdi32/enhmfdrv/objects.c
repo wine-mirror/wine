@@ -465,6 +465,61 @@ HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
 
 
 /******************************************************************
+ *         EMFDRV_CreatePalette
+ */
+static DWORD EMFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPal)
+{
+    WORD i;
+    struct {
+        EMRCREATEPALETTE hdr;
+        PALETTEENTRY entry[255];
+    } pal;
+
+    memset( &pal, 0, sizeof(pal) );
+
+    if (!GetObjectW( hPal, sizeof(pal.hdr.lgpl) + sizeof(pal.entry), &pal.hdr.lgpl ))
+        return 0;
+
+    for (i = 0; i < pal.hdr.lgpl.palNumEntries; i++)
+        pal.hdr.lgpl.palPalEntry[i].peFlags = 0;
+
+    pal.hdr.emr.iType = EMR_CREATEPALETTE;
+    pal.hdr.emr.nSize = sizeof(pal.hdr) + pal.hdr.lgpl.palNumEntries * sizeof(PALETTEENTRY);
+    pal.hdr.ihPal = EMFDRV_AddHandle( dev, hPal );
+
+    if (!EMFDRV_WriteRecord( dev, &pal.hdr.emr ))
+        pal.hdr.ihPal = 0;
+    return pal.hdr.ihPal;
+}
+
+/******************************************************************
+ *         EMFDRV_SelectPalette
+ */
+HPALETTE EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
+{
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMRSELECTPALETTE emr;
+    DWORD index;
+
+    if (hPal == GetStockObject( DEFAULT_PALETTE ))
+        index = DEFAULT_PALETTE | 0x80000000;
+        goto found;
+
+    if ((index = EMFDRV_FindObject( dev, hPal )) != 0)
+        goto found;
+
+    if (!(index = EMFDRV_CreatePalette( dev, hPal ))) return 0;
+    GDI_hdc_using_object( hPal, physDev->hdc );
+
+found:
+    emr.emr.iType = EMR_SELECTPALETTE;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihPal = index;
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? hPal : 0;
+}
+
+
+/******************************************************************
  *         EMFDRV_GdiComment
  */
 BOOL EMFDRV_GdiComment(PHYSDEV dev, UINT bytes, CONST BYTE *buffer)

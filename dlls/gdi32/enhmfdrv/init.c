@@ -114,7 +114,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_SelectBrush,              /* pSelectBrush */
     EMFDRV_SelectClipPath,           /* pSelectClipPath */
     EMFDRV_SelectFont,               /* pSelectFont */
-    NULL,                            /* pSelectPalette */
+    EMFDRV_SelectPalette,            /* pSelectPalette */
     EMFDRV_SelectPen,                /* pSelectPen */
     EMFDRV_SetArcDirection,          /* pSetArcDirection */
     NULL,                            /* pSetBitmapBits */
