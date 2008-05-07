@@ -655,6 +655,7 @@ static void MZ_Launch( LPCSTR cmdtail, int length )
   BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
   DWORD rv;
   SYSLEVEL *lock;
+  MSG msg;
 
   MZ_FillPSP(psp_start, cmdtail, length);
   pTask->flags |= TDBF_WINOLDAP;
@@ -664,6 +665,9 @@ static void MZ_Launch( LPCSTR cmdtail, int length )
 
   GetpWin16Lock( &lock );
   _LeaveSysLevel( lock );
+
+  /* force the message queue to be created */
+  PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
   ResumeThread(dosvm_thread);
   rv = DOSVM_Loop(dosvm_thread);
