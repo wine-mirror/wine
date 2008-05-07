@@ -433,7 +433,7 @@ static NTSTATUS get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG 
                         timeouts->total += count * st.ReadTotalTimeoutMultiplier;
                 }
                 else if (st.ReadIntervalTimeout == MAXDWORD)
-                    timeouts->interval = 0;
+                    timeouts->interval = timeouts->total = 0;
             }
             else  /* write */
             {
