@@ -39,7 +39,6 @@
 #endif
 
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
-static VOID     (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 static NTSTATUS (WINAPI *pNtCreateMailslotFile)( PHANDLE, ULONG, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK,
                                        ULONG, ULONG, ULONG, PLARGE_INTEGER );
 static NTSTATUS (WINAPI *pNtReadFile)(HANDLE hFile, HANDLE hEvent,
@@ -467,8 +466,6 @@ static void nt_mailslot_test(void)
 
     rc = pNtClose(hslot);
     ok( rc == STATUS_SUCCESS, "NtClose failed\n");
-
-    pRtlFreeUnicodeString(&str);
 }
 
 static void test_iocp_setcompletion(HANDLE h)
@@ -611,7 +608,6 @@ START_TEST(file)
         return;
     }
 
-    pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
     pNtCreateMailslotFile   = (void *)GetProcAddress(hntdll, "NtCreateMailslotFile");
     pNtReadFile             = (void *)GetProcAddress(hntdll, "NtReadFile");
