@@ -1202,13 +1202,14 @@ static void test_drive_letter_case(void)
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
     ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
 
+    /* TEMP is an environment variable, so it can't be tested for case-sensitivity */
     memset(buf, 0, sizeof(buf));
     SetLastError(0xdeadbeef);
     ret = GetTempPath(sizeof(buf), buf);
     ok(ret, "GetTempPath error %u\n", GetLastError());
     ok(ret < sizeof(buf), "buffer should be %u bytes\n", ret);
     ok(buf[1] == ':', "expected buf[1] == ':' got %c\n", buf[1]);
-    ok(is_upper_case_letter(buf[0]), "expected buf[0] upper case letter got %c\n", buf[0]);
+    ok(buf[strlen(buf)-1] == '\\', "Temporary path (%s) doesn't end in a slash\n", buf);
 
     memset(buf, 0, sizeof(buf));
     SetLastError(0xdeadbeef);
