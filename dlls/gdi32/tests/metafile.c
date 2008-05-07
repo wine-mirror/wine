@@ -953,6 +953,81 @@ static void dump_emf_records(const HENHMETAFILE mf, const char *desc)
     }
 }
 
+static void dump_emf_record(const ENHMETARECORD *emr, const char *desc)
+{
+    const BYTE *buf;
+    DWORD i;
+
+    if (!winetest_debug) return;
+
+    printf ("%s: EMF record %u has bits:\n{\n", desc, emr->iType);
+    buf = (const BYTE *)emr;
+    for (i = 0; i < emr->nSize; i++)
+    {
+        printf ("0x%02x", buf[i]);
+        if (i == emr->nSize - 1)
+            printf ("\n");
+        else if (i % 8 == 7)
+            printf (",\n");
+        else
+            printf (", ");
+    }
+    printf ("};\n");
+}
+
+static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr2,
+                             const char *desc, BOOL todo)
+{
+    int diff;
+
+    if (emr1->iType != emr2->iType && todo)
+    {
+        todo_wine
+        {
+            ok(emr1->iType == emr2->iType, "%s: emr->iType %u != %u\n",
+               desc, emr1->iType, emr2->iType);
+        }
+    }
+    else
+        ok(emr1->iType == emr2->iType, "%s: emr->iType %u != %u\n",
+           desc, emr1->iType, emr2->iType);
+
+    if (emr1->nSize != emr2->nSize && todo)
+    {
+        todo_wine
+        {
+            ok(emr1->nSize == emr2->nSize, "%s: emr->nSize %u != %u\n",
+               desc, emr1->nSize, emr2->nSize);
+        }
+    }
+    else
+        ok(emr1->nSize == emr2->nSize, "%s: emr->nSize %u != %u\n",
+           desc, emr1->nSize, emr2->nSize);
+
+    /* iType and nSize mismatches are fatal */
+    if (emr1->iType != emr2->iType || emr1->nSize != emr2->nSize) return FALSE;
+
+    /* contents of EMR_GDICOMMENT are not interesting */
+    if (emr1->iType == EMR_GDICOMMENT) return TRUE;
+
+    diff = memcmp(emr1->dParm, emr2->dParm, emr1->nSize - sizeof(EMR));
+    if (diff && todo)
+    {
+        todo_wine
+            ok(diff == 0, "%s: contents of record %u don't match\n", desc, emr1->iType);
+    }
+    else
+        ok(diff == 0, "%s: contents of record %u don't match\n", desc, emr1->iType);
+
+    if (diff)
+    {
+        dump_emf_record(emr1, "expected bits");
+        dump_emf_record(emr2, "actual bits");
+    }
+
+    return diff == 0 || todo; /* report all non-fatal record mismatches */
+}
+
 /* Compare the EMF produced by a test function with the
  * expected raw EMF data in "bits".
  * Return value is 0 for a perfect match,
@@ -963,8 +1038,8 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
                             UINT bsize, const char *desc, BOOL todo)
 {
     unsigned char buf[MF_BUFSIZE];
-    UINT mfsize, i;
-    int diff;
+    UINT mfsize, offset;
+    const ENHMETAHEADER *emh1, *emh2;
 
     mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
     ok (mfsize > 0, "%s: GetEnhMetaFileBits error %d\n", desc, GetLastError());
@@ -983,31 +1058,46 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
         ok(bsize >= MF_BUFSIZE, "%s: mfsize > bufsize (%d bytes), bsize=%d\n",
            desc, mfsize, bsize);
 
-    if (mfsize != bsize)
-        return -1;
+    /* basic things must match */
+    emh1 = (const ENHMETAHEADER *)bits;
+    emh2 = (const ENHMETAHEADER *)buf;
+    ok(emh1->iType == EMR_HEADER, "expected EMR_HEADER, got %u\n", emh1->iType);
+    ok(emh1->nSize == sizeof(ENHMETAHEADER), "expected sizeof(ENHMETAHEADER), got %u\n", emh1->nSize);
+    ok(emh2->nBytes == mfsize, "expected emh->nBytes %u, got %u\n", mfsize, emh2->nBytes);
+    ok(emh1->dSignature == ENHMETA_SIGNATURE, "expected ENHMETA_SIGNATURE, got %u\n", emh1->dSignature);
 
-    diff = 0;
-    for (i = 0; i < bsize; i++)
-    {
-       if (buf[i] != bits[i])
-           diff++;
-    }
-    if (diff != 0 && todo)
+    ok(emh1->iType == emh2->iType, "expected EMR_HEADER, got %u\n", emh2->iType);
+    ok(emh1->nSize == emh2->nSize, "expected nSize %u, got %u\n", emh1->nSize, emh2->nSize);
+    ok(emh1->dSignature == emh2->dSignature, "expected dSignature %u, got %u\n", emh1->dSignature, emh2->dSignature);
+    if (todo && emh1->nBytes != emh2->nBytes)
     {
         todo_wine
-        {
-            ok(diff == 0, "%s: mfsize=%d, bsize=%d, diff=%d\n",
-               desc, mfsize, bsize, diff);
-        }
-        return diff;
+            ok(emh1->nBytes == emh2->nBytes, "expected nBytes %u, got %u\n", emh1->nBytes, emh2->nBytes);
     }
     else
+        ok(emh1->nBytes == emh2->nBytes, "expected nBytes %u, got %u\n", emh1->nBytes, emh2->nBytes);
+    if (todo && emh1->nRecords != emh2->nRecords)
     {
-        ok(diff == 0, "%s: mfsize=%d, bsize=%d, diff=%d\n",
-           desc, mfsize, bsize, diff);
-
-        return diff;
+        todo_wine
+            ok(emh1->nRecords == emh2->nRecords, "expected nBytes %u, got %u\n", emh1->nRecords, emh2->nRecords);
     }
+    else
+        ok(emh1->nRecords == emh2->nRecords, "expected nBytes %u, got %u\n", emh1->nRecords, emh2->nRecords);
+
+    offset = emh1->nSize;
+    while (offset < emh1->nBytes)
+    {
+	const ENHMETARECORD *emr1 = (const ENHMETARECORD *)(bits + offset);
+	const ENHMETARECORD *emr2 = (const ENHMETARECORD *)(buf + offset);
+
+	trace("EMF record %u, size %u/record %u, size %u\n",
+              emr1->iType, emr1->nSize, emr2->iType, emr2->nSize);
+
+        if (!match_emf_record(emr1, emr2, desc, todo)) return -1;
+
+	offset += emr1->nSize;
+    }
+    return 0;
 }
 
 /* Test a blank metafile.  May be used as a template for new tests. */
@@ -1561,7 +1651,7 @@ static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETAREC
      * until a record is played which actually outputs something */
     PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
     LPtoDP(hdc, mapping, 2);
-    trace("Meta record: iType %d, nSize %d, (%d,%d)-(%d,%d)\n",
+    trace("EMF record: iType %d, nSize %d, (%d,%d)-(%d,%d)\n",
            lpEMFR->iType, lpEMFR->nSize,
            mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y);
 
