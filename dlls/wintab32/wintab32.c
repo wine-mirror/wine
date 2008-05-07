@@ -136,15 +136,11 @@ static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             {
                 WTPACKET packet;
                 LPOPENCONTEXT handler;
-                LPARAM prox;
                 pGetCurrentPacket(&packet);
-                handler = AddPacketToContextQueue(&packet,(HWND)lParam);
+                handler = AddPacketToContextQueue(&packet,(HWND)wParam);
                 if (handler)
-                {
-                    prox = MAKELPARAM( wParam, 1 );
                     TABLET_PostTabletMessage(handler, WT_PROXIMITY,
-                                        (WPARAM)handler->handle, prox, TRUE);
-                }
+                                            (WPARAM)handler->handle, lParam, TRUE);
                 break;
             }
     }

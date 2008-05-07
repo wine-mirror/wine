@@ -879,12 +879,15 @@ static void proximity_event( HWND hwnd, XEvent *event )
     XProximityNotifyEvent *proximity = (XProximityNotifyEvent *) event;
     LPWTI_CURSORS_INFO cursor;
     int curnum = cursor_from_device(proximity->deviceid, &cursor);
+    LPARAM proximity_info;
+
+    TRACE("hwnd=%p\n", hwnd);
+
     if (curnum < 0)
         return;
 
     memset(&gMsgPacket,0,sizeof(WTPACKET));
 
-    TRACE("Received tablet proximity event\n");
     /* Set cursor to inverted if cursor is the eraser */
     gMsgPacket.pkStatus = (cursor->TYPE == CSR_TYPE_ERASER ? TPS_INVERT:0);
     gMsgPacket.pkStatus |= (event->type==proximity_out_type)?TPS_PROXIMITY:0;
@@ -900,7 +903,16 @@ static void proximity_event( HWND hwnd, XEvent *event )
     gMsgPacket.pkNormalPressure = proximity->axis_data[2];
     gMsgPacket.pkButtons = get_button_state(curnum);
 
-    SendMessageW(hwndTabletDefault, WT_PROXIMITY, (event->type == proximity_in_type), (LPARAM)hwnd);
+    /* FIXME: LPARAM loword is true when cursor entering context, false when leaving context
+     * This needs to be handled here or in wintab32.  Using the proximity_in_type is not correct
+     * but kept for now.
+     * LPARAM hiword is "non-zero when the cursor is leaving or entering hardware proximity"
+     * WPARAM contains context handle.
+     * HWND to HCTX is handled by wintab32.
+     */
+    proximity_info = MAKELPARAM((event->type == proximity_in_type),
+                     (event->type == proximity_in_type) || (event->type == proximity_out_type));
+    SendMessageW(hwndTabletDefault, WT_PROXIMITY, (WPARAM)hwnd, proximity_info);
 }
 
 /***********************************************************************
