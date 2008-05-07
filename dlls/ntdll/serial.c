@@ -664,6 +664,10 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
     port.c_cflag &= ~(PARENB | PARODD);
 #endif
 
+    /* make sure that reads don't block */
+    port.c_cc[VMIN] = 0;
+    port.c_cc[VTIME] = 0;
+
     switch (slc->Parity)
     {
     case NOPARITY:      port.c_iflag &= ~INPCK;                         break;
@@ -751,9 +755,6 @@ static NTSTATUS set_special_chars(int fd, const SERIAL_CHARS* sc)
         return FILE_GetNtStatus();
     }
     
-    port.c_cc[VMIN  ] = 0;
-    port.c_cc[VTIME ] = 1;
-    
     port.c_cc[VEOF  ] = sc->EofChar;
     /* FIXME: sc->ErrorChar is not supported */
     /* FIXME: sc->BreakChar is not supported */
@@ -769,11 +770,9 @@ static NTSTATUS set_special_chars(int fd, const SERIAL_CHARS* sc)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS set_timeouts(HANDLE handle, int fd, const SERIAL_TIMEOUTS* st)
+static NTSTATUS set_timeouts(HANDLE handle, const SERIAL_TIMEOUTS* st)
 {
     NTSTATUS            status;
-    struct termios      port;
-    unsigned int        ux_timeout;
 
     SERVER_START_REQ( set_serial_info )
     {
@@ -787,31 +786,7 @@ static NTSTATUS set_timeouts(HANDLE handle, int fd, const SERIAL_TIMEOUTS* st)
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
-    if (status) return status;
-
-    if (tcgetattr(fd, &port) == -1)
-    {
-        FIXME("tcgetattr on fd %d failed (%s)!\n", fd, strerror(errno));
-        return FILE_GetNtStatus();
-    }
-
-    /* VTIME is in 1/10 seconds */
-    if (st->ReadIntervalTimeout == 0) /* 0 means no timeout */
-        ux_timeout = 0;
-    else
-    {
-        ux_timeout = (st->ReadIntervalTimeout + 99) / 100;
-        if (ux_timeout == 0)
-            ux_timeout = 1; /* must be at least some timeout */
-    }
-    port.c_cc[VTIME] = ux_timeout;
-
-    if (tcsetattr(fd, 0, &port) == -1)
-    {
-        FIXME("tcsetattr on fd %d failed (%s)!\n", fd, strerror(errno));
-        return FILE_GetNtStatus();
-    }
-    return STATUS_SUCCESS;
+    return status;
 }
 
 static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
@@ -1132,7 +1107,8 @@ static inline NTSTATUS io_control(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if (dwIoControlCode != IOCTL_SERIAL_GET_TIMEOUTS)
+    if (dwIoControlCode != IOCTL_SERIAL_GET_TIMEOUTS &&
+        dwIoControlCode != IOCTL_SERIAL_SET_TIMEOUTS)
         if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, NULL, NULL )))
             goto error;
 
@@ -1307,7 +1283,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
         break;
     case IOCTL_SERIAL_SET_TIMEOUTS:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_TIMEOUTS))
-            status = set_timeouts(hDevice, fd, (const SERIAL_TIMEOUTS*)lpInBuffer);
+            status = set_timeouts(hDevice, (const SERIAL_TIMEOUTS*)lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;
