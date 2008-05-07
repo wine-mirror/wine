@@ -352,10 +352,18 @@ void winetest_wait_child_process( HANDLE process )
 
     if (exit_code)
     {
-        fprintf( stdout, "%s: %u failures in child process\n",
-                 current_test->name, exit_code );
-        while (exit_code-- > 0)
-            InterlockedIncrement(&failures);
+        if (exit_code > 255)
+        {
+            fprintf( stdout, "%s: exception 0x%08x in child process\n", current_test->name, exit_code );
+            InterlockedIncrement( &failures );
+        }
+        else
+        {
+            fprintf( stdout, "%s: %u failures in child process\n",
+                     current_test->name, exit_code );
+            while (exit_code-- > 0)
+                InterlockedIncrement(&failures);
+        }
     }
 }
 
