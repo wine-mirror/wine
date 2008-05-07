@@ -834,7 +834,7 @@ static void motion_event( HWND hwnd, XEvent *event )
                                            * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
     gMsgPacket.pkNormalPressure = motion->axis_data[2];
     gMsgPacket.pkButtons = get_button_state(curnum);
-    SendMessageW(hwndTabletDefault,WT_PACKET,0,(LPARAM)hwnd);
+    SendMessageW(hwndTabletDefault,WT_PACKET,gMsgPacket.pkSerialNumber,(LPARAM)hwnd);
 }
 
 static void button_event( HWND hwnd, XEvent *event )
@@ -863,7 +863,7 @@ static void button_event( HWND hwnd, XEvent *event )
                                            * (gMsgPacket.pkStatus & TPS_INVERT?-1:1));
     gMsgPacket.pkNormalPressure = button->axis_data[2];
     gMsgPacket.pkButtons = get_button_state(curnum);
-    SendMessageW(hwndTabletDefault,WT_PACKET,0,(LPARAM)hwnd);
+    SendMessageW(hwndTabletDefault,WT_PACKET,gMsgPacket.pkSerialNumber,(LPARAM)hwnd);
 }
 
 static void key_event( HWND hwnd, XEvent *event )
