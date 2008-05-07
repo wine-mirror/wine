@@ -287,18 +287,13 @@ static NTSTATUS get_line_control(int fd, SERIAL_LINE_CONTROL* slc)
 
 static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
 {
-    NTSTATUS    status = STATUS_SUCCESS;
+    NTSTATUS    status = STATUS_NOT_SUPPORTED;
     int         mstat;
 
+    *lpModemStat = 0;
 #ifdef TIOCMGET
-    if (ioctl(fd, TIOCMGET, &mstat) == -1)
+    if (!ioctl(fd, TIOCMGET, &mstat))
     {
-        WARN("ioctl failed\n");
-        status = FILE_GetNtStatus();
-    }
-    else
-    {
-        *lpModemStat = 0;
 #ifdef TIOCM_CTS
         if (mstat & TIOCM_CTS)  *lpModemStat |= MS_CTS_ON;
 #endif
@@ -317,9 +312,10 @@ static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
               (*lpModemStat & MS_RING_ON) ? "MS_RING_ON " : "",
               (*lpModemStat & MS_DSR_ON)  ? "MS_DSR_ON  " : "",
               (*lpModemStat & MS_CTS_ON)  ? "MS_CTS_ON  " : "");
+        return STATUS_SUCCESS;
     }
-#else
-    status = STATUS_NOT_SUPPORTED;
+    WARN("ioctl failed\n");
+    status = FILE_GetNtStatus();
 #endif
     return status;
 }
@@ -873,6 +869,7 @@ typedef struct async_commio
  */
 static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
 {
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
 #ifdef TIOCGICOUNT
     struct serial_icounter_struct einfo;
     if (!ioctl(fd, TIOCGICOUNT, &einfo))
@@ -887,11 +884,10 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
         return STATUS_SUCCESS;
     }
     TRACE("TIOCGICOUNT err %s\n", strerror(errno));
-    return FILE_GetNtStatus();
-#else
-    memset(irq_info,0, sizeof(serial_irq_info));
-    return STATUS_NOT_IMPLEMENTED;
+    status = FILE_GetNtStatus();
 #endif
+    memset(irq_info,0, sizeof(serial_irq_info));
+    return status;
 }
 
 
@@ -1050,15 +1046,24 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, DWORD* events)
 #endif
     if (commio->evtmask & EV_RXFLAG)
 	FIXME("EV_RXFLAG not handled\n");
-    if ((status = get_irq_info(fd, &commio->irq_info)) ||
-        (status = get_modem_status(fd, &commio->mstat)))
-        goto out_now;
+
+    if ((status = get_irq_info(fd, &commio->irq_info)) &&
+        (commio->evtmask & (EV_BREAK | EV_ERR)))
+	goto out_now;
+
+    if ((status = get_modem_status(fd, &commio->mstat)) &&
+        (commio->evtmask & (EV_CTS | EV_DSR| EV_RING| EV_RLSD)))
+	goto out_now;
 
     /* We might have received something or the TX buffer is delivered */
     *events = check_events(fd, commio->evtmask,
                                &commio->irq_info, &commio->irq_info,
                                commio->mstat, commio->mstat);
-    if (*events) goto out_now;
+    if (*events)
+    {
+        status = STATUS_SUCCESS;
+        goto out_now;
+    }
 
     /* create the worker for the task */
     status = RtlQueueWorkItem(wait_for_event, commio, 0 /* FIXME */);
