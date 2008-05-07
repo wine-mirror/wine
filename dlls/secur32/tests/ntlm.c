@@ -869,8 +869,8 @@ static void testAuth(ULONG data_rep, BOOL fake)
     ok(sec_status == SEC_E_OK,
             "pQueryContextAttributesA(SECPKG_ATTR_SIZES) returned %s\n",
             getSecError(sec_status));
-    ok(ctxt_sizes.cbMaxToken == 1904,
-            "cbMaxToken should be 1904 but is %lu\n",
+    ok((ctxt_sizes.cbMaxToken == 1904) || (ctxt_sizes.cbMaxToken == 2888),
+            "cbMaxToken should be 1904 or 2888 but is %lu\n",
             ctxt_sizes.cbMaxToken);
     ok(ctxt_sizes.cbMaxSignature == 16,
             "cbMaxSignature should be 16 but is %lu\n",
@@ -1039,6 +1039,12 @@ static void testSignSeal(void)
             getSecError(sec_status));
 
     sec_status = pEncryptMessage(client.ctxt, 0, &crypt, 0);
+    if (sec_status == SEC_E_UNSUPPORTED_FUNCTION)
+    {
+        skip("Encrypt message returned SEC_E_UNSUPPORTED_FUNCTION. "
+             "Expected on Vista.\n");
+        goto end;
+    }
     ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
 
