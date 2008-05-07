@@ -105,7 +105,7 @@ static const struct exception
 
     /* test loading an invalid selector */
     { { 0xb8, 0xef, 0xbe, 0x00, 0x00, 0x8e, 0xe8, 0xc3 },  /* mov $beef,%ax; mov %ax,%gs; ret */
-      5, 2, STATUS_ACCESS_VIOLATION, 2, { 0, 0xbee8 } },
+      5, 2, STATUS_ACCESS_VIOLATION, 2, { 0, 0xbee8 } }, /* 0xbee8 or 0xffffffff */
 
     /* test accessing a zero selector */
     { { 0x06, 0x31, 0xc0, 0x8e, 0xc0, 0x26, 0xa1, 0, 0, 0, 0, 0x07, 0xc3 },
@@ -358,6 +358,14 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
             goto skip_params;
     }
 
+    /* Seems that both 0xbee8 and 0xfffffffff can be returned in windows */
+    if (except->nb_params == 2 && rec->NumberParameters == 2
+        && except->params[1] == 0xbee8 && rec->ExceptionInformation[1] == 0xffffffff
+        && except->params[0] == rec->ExceptionInformation[0])
+    {
+        goto skip_params;
+    }
+
     for (i = 0; i < rec->NumberParameters; i++)
         ok( rec->ExceptionInformation[i] == except->params[i],
             "%u: Wrong parameter %d: %lx/%x\n",
@@ -485,7 +493,8 @@ static DWORD direction_flag_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATI
 #ifdef __GNUC__
     unsigned int flags;
     __asm__("pushfl; popl %0" : "=r" (flags) );
-    ok( !(flags & 0x400), "eflags has DF bit set\n" );
+    /* older windows versions don't clear DF properly so don't test */
+    if (flags & 0x400) trace( "eflags has DF bit set\n" );
 #endif
     ok( context->EFlags & 0x400, "context eflags has DF bit cleared\n" );
     got_exception++;
