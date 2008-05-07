@@ -464,19 +464,18 @@ void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
 DWORD WINAPI DOSVM_Loop( HANDLE hThread )
 {
   HANDLE objs[2];
+  int count = 0;
   MSG msg;
   DWORD waitret;
 
-  objs[0] = GetStdHandle(STD_INPUT_HANDLE);
-  objs[1] = hThread;
+  objs[count++] = hThread;
+  if (GetConsoleMode( GetStdHandle(STD_INPUT_HANDLE), NULL ))
+      objs[count++] = GetStdHandle(STD_INPUT_HANDLE);
 
   for(;;) {
       TRACE_(int)("waiting for action\n");
-      waitret = MsgWaitForMultipleObjects(2, objs, FALSE, INFINITE, QS_ALLINPUT);
+      waitret = MsgWaitForMultipleObjects(count, objs, FALSE, INFINITE, QS_ALLINPUT);
       if (waitret == WAIT_OBJECT_0) {
-          DOSVM_ProcessConsole();
-      }
-      else if (waitret == WAIT_OBJECT_0 + 1) {
          DWORD rv;
          if(!GetExitCodeThread(hThread, &rv)) {
              ERR("Failed to get thread exit code!\n");
@@ -484,7 +483,7 @@ DWORD WINAPI DOSVM_Loop( HANDLE hThread )
          }
          return rv;
       }
-      else if (waitret == WAIT_OBJECT_0 + 2) {
+      else if (waitret == WAIT_OBJECT_0 + count) {
           while (PeekMessageA(&msg,0,0,0,PM_REMOVE)) {
               if (msg.hwnd) {
                   /* it's a window message */
@@ -512,6 +511,10 @@ DWORD WINAPI DOSVM_Loop( HANDLE hThread )
                   }
               }
           }
+      }
+      else if (waitret == WAIT_OBJECT_0 + 1)
+      {
+          DOSVM_ProcessConsole();
       }
       else
       {
