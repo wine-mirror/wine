@@ -569,15 +569,16 @@ static LONG WINAPI exception_handler(EXCEPTION_POINTERS *eptr)
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
-int WINAPI DOSVM_Enter( CONTEXT86 *context )
+INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
+  INT ret = 0;
   if (!ISV86(context))
       ERR( "Called with protected mode context!\n" );
 
   __TRY
   {
-      WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)context );
-      TRACE_(module)( "vm86 returned: %s\n", strerror(errno) );
+      if (!WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)context )) ret = -1;
+      TRACE_(module)( "ret %d err %u\n", ret, GetLastError() );
   }
   __EXCEPT(exception_handler)
   {
@@ -585,7 +586,7 @@ int WINAPI DOSVM_Enter( CONTEXT86 *context )
   }
   __ENDTRY
 
-  return 0;
+  return ret;
 }
 
 /***********************************************************************
@@ -645,8 +646,8 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
  */
 INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
- ERR_(module)("DOS realmode not supported on this architecture!\n");
- return -1;
+    SetLastError( ERROR_NOT_SUPPORTED );
+    return -1;
 }
 
 /***********************************************************************

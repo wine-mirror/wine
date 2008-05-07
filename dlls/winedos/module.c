@@ -614,7 +614,7 @@ void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
 static DWORD WINAPI MZ_DOSVM( LPVOID lpExtra )
 {
   CONTEXT context;
-  DWORD ret;
+  INT ret;
 
   dosvm_pid = getpid();
 
@@ -628,9 +628,23 @@ static DWORD WINAPI MZ_DOSVM( LPVOID lpExtra )
   context.EFlags = V86_FLAG | VIF_MASK;
   DOSVM_SetTimer(0x10000);
   ret = DOSVM_Enter( &context );
+  if (ret == -1)
+  {
+      /* fetch the app name from the environment */
+      PDB16 *psp = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
+      char *env = PTR_REAL_TO_LIN( psp->environment, 0 );
+      while (*env) env += strlen(env) + 1;
+      env += 1 + sizeof(WORD);
 
+      if (GetLastError() == ERROR_NOT_SUPPORTED)
+          MESSAGE( "wine: Cannot start DOS application %s\n"
+                   "      because vm86 mode is not supported on this platform.\n",
+                   debugstr_a(env) );
+      else
+          FIXME( "vm86 mode failed error %u\n", GetLastError() );
+  }
   dosvm_pid = 0;
-  return ret;
+  return ret != 0;
 }
 
 static BOOL MZ_InitTask(void)
