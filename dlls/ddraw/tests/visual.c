@@ -2314,6 +2314,31 @@ static void p8_primary_test()
             "got R %02X G %02X B %02X, expected R 00 G 00 B FF\n",
             GetRValue(color), GetGValue(color), GetBValue(color));
 
+    rect.left = 100;
+    rect.top = 200;
+    rect.right = 116;
+    rect.bottom = 216;
+
+    memset(&ddbltfx, 0, sizeof(ddbltfx));
+    ddbltfx.dwSize = sizeof(ddbltfx);
+    ddbltfx.ddckSrcColorkey.dwColorSpaceLowValue = ddbltfx.ddckSrcColorkey.dwColorSpaceHighValue = 2;
+    hr = IDirectDrawSurface_Blt(Surface1, &rect, offscreen, NULL,
+        DDBLT_WAIT | DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE, &ddbltfx);
+    ok(hr==DDERR_INVALIDPARAMS, "IDirectDrawSurface_Blt returned: %x\n", hr);
+    hr = IDirectDrawSurface_Blt(Surface1, &rect, offscreen, NULL,
+        DDBLT_WAIT | DDBLT_KEYSRCOVERRIDE, &ddbltfx);
+    ok(hr==DD_OK, "IDirectDrawSurface_Blt returned: %x\n", hr);
+
+    color = getPixelColor_GDI(Surface1, 105, 205);
+    ok(GetRValue(color) == 0x80 && GetGValue(color) == 0 && GetBValue(color) == 0,
+            "got R %02X G %02X B %02X, expected R 80 G 00 B 00\n",
+            GetRValue(color), GetGValue(color), GetBValue(color));
+
+    color = getPixelColor_GDI(Surface1, 112, 212);
+    ok(GetRValue(color) == 0 && GetGValue(color) == 0xFF && GetBValue(color) == 0,
+            "got R %02X G %02X B %02X, expected R 00 G FF B 00\n",
+            GetRValue(color), GetGValue(color), GetBValue(color));
+
     /* Test blitting and locking patterns that are likely to trigger bugs in opengl renderer (p8
        surface conversion and uploading/downloading to/from opengl texture). Similar patterns (
        blitting front buffer areas to/from an offscreen surface mixed with locking) are used by C&C
