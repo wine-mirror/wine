@@ -856,6 +856,9 @@ static void test_icon_spacing(void)
     hwnd = create_custom_listview_control(LVS_ICON);
     ok(hwnd != NULL, "failed to create a listview window\n");
 
+    r = SendMessage(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwndparent, (LPARAM)NF_REQUERY);
+    expect(NFR_ANSI, r);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     trace("test icon spacing\n");
