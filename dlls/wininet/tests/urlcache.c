@@ -166,7 +166,18 @@ static void test_urlcacheA(void)
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "local file should no longer exist\n");
 }
 
+static void test_FindCloseUrlCache(void)
+{
+    BOOL r;
+    DWORD err;
+    r = FindCloseUrlCache(NULL);
+    err = GetLastError();
+    ok(0 == r, "expected 0, got %d\n", r);
+    ok(ERROR_INVALID_HANDLE == err, "expected %d, got %d\n", ERROR_INVALID_HANDLE, err);
+}
+
 START_TEST(urlcache)
 {
     test_urlcacheA();
+    test_FindCloseUrlCache();
 }

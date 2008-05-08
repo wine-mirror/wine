@@ -3127,7 +3127,7 @@ BOOL WINAPI FindCloseUrlCache(HANDLE hEnumHandle)
 
     TRACE("(%p)\n", hEnumHandle);
 
-    if (pEntryHandle->dwMagic != URLCACHE_FIND_ENTRY_HANDLE_MAGIC)
+    if (!pEntryHandle || pEntryHandle->dwMagic != URLCACHE_FIND_ENTRY_HANDLE_MAGIC)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
