@@ -274,7 +274,7 @@ BOOL validate_service_config(struct service_entry *entry)
 {
     if (entry->config.dwServiceType & SERVICE_WIN32 && (entry->config.lpBinaryPathName == NULL || !entry->config.lpBinaryPathName[0]))
     {
-        WINE_ERR("Service %s is Win32 but have no image path set\n", wine_dbgstr_w(entry->name));
+        WINE_ERR("Service %s is Win32 but has no image path set\n", wine_dbgstr_w(entry->name));
         return FALSE;
     }
 
@@ -296,18 +296,18 @@ BOOL validate_service_config(struct service_entry *entry)
         }
         break;
     default:
-        WINE_ERR("Service %s have unknown service type\n", wine_dbgstr_w(entry->name));
+        WINE_ERR("Service %s has an unknown service type\n", wine_dbgstr_w(entry->name));
         return FALSE;
     }
 
     /* StartType can only be a single value (if several values are mixed the result is probably not what was intended) */
     if (entry->config.dwStartType > SERVICE_DISABLED)
     {
-        WINE_ERR("Service %s have unknown start type\n", wine_dbgstr_w(entry->name));
+        WINE_ERR("Service %s has an unknown start type\n", wine_dbgstr_w(entry->name));
         return FALSE;
     }
 
-    /* SERVICE_BOOT_START and SERVICE_SYSTEM_START or only allowed for driver services */
+    /* SERVICE_BOOT_START and SERVICE_SYSTEM_START are only allowed for driver services */
     if (((entry->config.dwStartType == SERVICE_BOOT_START) || (entry->config.dwStartType == SERVICE_SYSTEM_START)) &&
         ((entry->config.dwServiceType & SERVICE_WIN32_OWN_PROCESS) || (entry->config.dwServiceType & SERVICE_WIN32_SHARE_PROCESS)))
     {
