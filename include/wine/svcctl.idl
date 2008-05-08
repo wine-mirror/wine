@@ -32,15 +32,20 @@ cpp_quote("#define SVCCTL_ENDPOINT {'\\\\','p','i','p','e','\\\\','s','v','c','c
 cpp_quote("#define SVCCTL_STARTED_EVENT {'_','_','w','i','n','e','_','S','v','c','c','t','l','S','t','a','r','t','e','d',0}")
 
 /* Service startup protocol over control pipe - not compatible with Windows */
-cpp_quote("typedef struct service_start_info_t")
-cpp_quote("{")
-cpp_quote("    DWORD cmd;")
-cpp_quote("    DWORD size;")
-cpp_quote("    WCHAR str[1];")
-cpp_quote("} service_start_info;")
+enum service_pipe_command
+{
+    WINESERV_STARTINFO = 1,
+    WINESERV_SENDCONTROL = 2
+};
 
-cpp_quote("#define WINESERV_STARTINFO   1")
-cpp_quote("#define WINESERV_SENDCONTROL 2")
+typedef struct service_start_info_t
+{
+    enum service_pipe_command cmd;        /* request code */
+    DWORD                     total_size; /* total request size */
+    DWORD                     name_size;  /* size of name in data buffer */
+    DWORD                     control;    /* control code */
+    WCHAR                     data[1];
+} service_start_info;
 
 [
     uuid(367abb81-9844-35f1-ad32-98f038001003),

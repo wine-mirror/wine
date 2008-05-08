@@ -81,6 +81,7 @@ typedef struct service_data_t
     LPHANDLER_FUNCTION_EX handler;
     LPVOID context;
     HANDLE thread;
+    SC_HANDLE handle;
     BOOL unicode : 1;
     union {
         LPSERVICE_MAIN_FUNCTIONA a;
@@ -356,6 +357,17 @@ static HANDLE service_open_pipe(void)
     return handle;
 }
 
+static service_data *find_service_by_name( const WCHAR *name )
+{
+    unsigned int i;
+
+    if (nb_services == 1)  /* only one service (FIXME: should depend on OWN_PROCESS etc.) */
+        return services[0];
+    for (i = 0; i < nb_services; i++)
+        if (!strcmpiW( name, services[i]->name )) return services[i];
+    return NULL;
+}
+
 /******************************************************************************
  * service_thread
  *
@@ -420,57 +432,37 @@ static DWORD WINAPI service_thread(LPVOID arg)
 /******************************************************************************
  * service_handle_start
  */
-static BOOL service_handle_start(HANDLE pipe, service_data *service, DWORD count)
+static DWORD service_handle_start(service_data *service, const WCHAR *data, DWORD count)
 {
-    DWORD read = 0, result = 0;
-    LPWSTR args;
-    BOOL r;
-
-    TRACE("%p %p %d\n", pipe, service, count);
-
-    args = HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
-    r = ReadFile(pipe, args, count*sizeof(WCHAR), &read, NULL);
-    if (!r || count!=read/sizeof(WCHAR) || args[count-1])
-    {
-        ERR("pipe read failed r = %d count = %d read = %d args[n-1]=%s\n",
-            r, count, read, debugstr_wn(args, count));
-        goto end;
-    }
+    TRACE("%s argsize %u\n", debugstr_w(service->name), count);
 
     if (service->thread)
     {
         WARN("service is not stopped\n");
-        result = ERROR_SERVICE_ALREADY_RUNNING;
-        goto end;
+        return ERROR_SERVICE_ALREADY_RUNNING;
     }
 
     HeapFree(GetProcessHeap(), 0, service->args);
-    service->args = args;
-    args = NULL;
+    service->args = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
+    memcpy( service->args, data, count * sizeof(WCHAR) );
     service->thread = CreateThread( NULL, 0, service_thread,
                                     service, 0, NULL );
     SetEvent( service_event );  /* notify the main loop */
-
-end:
-    HeapFree(GetProcessHeap(), 0, args);
-    WriteFile( pipe, &result, sizeof result, &read, NULL );
-
-    return TRUE;
+    return 0;
 }
 
 /******************************************************************************
  * service_handle_control
  */
-static BOOL service_handle_control(HANDLE pipe, service_data *service,
-                                   DWORD dwControl)
+static DWORD service_handle_control(service_data *service, DWORD dwControl)
 {
-    DWORD count, ret = ERROR_INVALID_SERVICE_CONTROL;
+    DWORD ret = ERROR_INVALID_SERVICE_CONTROL;
 
-    TRACE("received control %d\n", dwControl);
-    
+    TRACE("%s control %u\n", debugstr_w(service->name), dwControl);
+
     if (service->handler)
         ret = service->handler(dwControl, 0, NULL, service->context);
-    return WriteFile(pipe, &ret, sizeof ret, &count, NULL);
+    return ret;
 }
 
 /******************************************************************************
@@ -478,61 +470,108 @@ static BOOL service_handle_control(HANDLE pipe, service_data *service,
  */
 static DWORD WINAPI service_control_dispatcher(LPVOID arg)
 {
-    service_data *service = arg;
+    SC_HANDLE manager;
     HANDLE pipe;
 
-    TRACE("%p %s\n", service, debugstr_w(service->name));
+    if (!(manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT )))
+    {
+        ERR("failed to open service manager error %u\n", GetLastError());
+        return 0;
+    }
 
     pipe = service_open_pipe();
 
     if (pipe==INVALID_HANDLE_VALUE)
     {
-        ERR("failed to create pipe for %s, error = %d\n",
-            debugstr_w(service->name), GetLastError());
+        ERR("failed to create control pipe error = %d\n", GetLastError());
         return 0;
     }
 
     /* dispatcher loop */
     while (1)
     {
+        service_data *service;
+        service_start_info info;
+        WCHAR *data = NULL;
         BOOL r;
-        DWORD count, req[2] = {0,0};
+        DWORD data_size = 0, count, result;
 
-        r = ReadFile( pipe, &req, sizeof req, &count, NULL );
+        r = ReadFile( pipe, &info, FIELD_OFFSET(service_start_info,data), &count, NULL );
         if (!r)
         {
             if (GetLastError() != ERROR_BROKEN_PIPE)
                 ERR( "pipe read failed error %u\n", GetLastError() );
             break;
         }
-        if (count != sizeof(req))
+        if (count != FIELD_OFFSET(service_start_info,data))
         {
             ERR( "partial pipe read %u\n", count );
             break;
         }
+        if (count < info.total_size)
+        {
+            data_size = info.total_size - FIELD_OFFSET(service_start_info,data);
+            data = HeapAlloc( GetProcessHeap(), 0, data_size );
+            r = ReadFile( pipe, data, data_size, &count, NULL );
+            if (!r)
+            {
+                if (GetLastError() != ERROR_BROKEN_PIPE)
+                    ERR( "pipe read failed error %u\n", GetLastError() );
+                break;
+            }
+            if (count != data_size)
+            {
+                ERR( "partial pipe read %u/%u\n", count, data_size );
+                break;
+            }
+        }
+
+        /* find the service */
+
+        if (!(service = find_service_by_name( data )))
+        {
+            FIXME( "got request %u for unknown service %s\n", info.cmd, debugstr_w(data));
+            result = ERROR_INVALID_PARAMETER;
+            goto done;
+        }
+
+        TRACE( "got request %u for service %s\n", info.cmd, debugstr_w(data) );
 
         /* handle the request */
-        switch (req[0])
+        switch (info.cmd)
         {
         case WINESERV_STARTINFO:
-            service_handle_start(pipe, service, req[1]);
+            if (!service->handle)
+            {
+                if (!(service->handle = OpenServiceW( manager, data, SERVICE_SET_STATUS )))
+                    FIXME( "failed to open service %s\n", debugstr_w(data) );
+            }
+            result = service_handle_start(service, data + info.name_size,
+                                          data_size / sizeof(WCHAR) - info.name_size );
             break;
         case WINESERV_SENDCONTROL:
-            service_handle_control(pipe, service, req[1]);
+            result = service_handle_control(service, info.control);
             break;
         default:
-            ERR("received invalid command %d length %d\n", req[0], req[1]);
+            ERR("received invalid command %u\n", info.cmd);
+            result = ERROR_INVALID_PARAMETER;
+            break;
         }
+
+    done:
+        WriteFile(pipe, &result, sizeof(result), &count, NULL);
+        HeapFree( GetProcessHeap(), 0, data );
     }
 
     CloseHandle(pipe);
+    CloseServiceHandle( manager );
     return 1;
 }
 
 /******************************************************************************
- * service_run_threads
+ * service_run_main_thread
  */
-static BOOL service_run_threads(void)
+static BOOL service_run_main_thread(void)
 {
     DWORD i, n, ret;
     HANDLE wait_handles[MAXIMUM_WAIT_OBJECTS];
@@ -540,22 +579,19 @@ static BOOL service_run_threads(void)
 
     service_event = CreateEventW( NULL, FALSE, FALSE, NULL );
 
+    /* FIXME: service_control_dispatcher should be merged into the main thread */
     wait_handles[0] = __wine_make_process_system();
-    wait_handles[1] = service_event;
+    wait_handles[1] = CreateThread( NULL, 0, service_control_dispatcher, NULL, 0, NULL );
+    wait_handles[2] = service_event;
 
-    TRACE("Starting %d pipe listener threads. Services running as process %d\n",
+    TRACE("Starting %d services running as process %d\n",
           nb_services, GetCurrentProcessId());
-
-    EnterCriticalSection( &service_cs );
-    for (i = 0; i < nb_services; i++)
-        CloseHandle( CreateThread( NULL, 0, service_control_dispatcher, services[i], 0, NULL ));
-    LeaveCriticalSection( &service_cs );
 
     /* wait for all the threads to pack up and exit */
     for (;;)
     {
         EnterCriticalSection( &service_cs );
-        for (i = 0, n = 2; i < nb_services && n < MAXIMUM_WAIT_OBJECTS; i++)
+        for (i = 0, n = 3; i < nb_services && n < MAXIMUM_WAIT_OBJECTS; i++)
         {
             if (!services[i]->thread) continue;
             wait_services[n] = i;
@@ -572,13 +608,19 @@ static BOOL service_run_threads(void)
         }
         else if (ret == 1)
         {
+            TRACE( "control dispatcher exited, shutting down\n" );
+            /* FIXME: we should maybe send a shutdown control to running services */
+            ExitProcess(0);
+        }
+        else if (ret == 2)
+        {
             continue;  /* rebuild the list */
         }
         else if (ret < n)
         {
             services[wait_services[ret]]->thread = 0;
             CloseHandle( wait_handles[ret] );
-            if (n == 3) return TRUE; /* it was the last running thread */
+            if (n == 4) return TRUE; /* it was the last running thread */
         }
         else return FALSE;
     }
@@ -616,7 +658,7 @@ BOOL WINAPI StartServiceCtrlDispatcherA( const SERVICE_TABLE_ENTRYA *servent )
         services[i] = info;
     }
 
-    service_run_threads();
+    service_run_main_thread();
 
     return ret;
 }
@@ -661,7 +703,7 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
         services[i] = info;
     }
 
-    service_run_threads();
+    service_run_main_thread();
 
     return ret;
 }
@@ -2214,40 +2256,23 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA( LPCSTR name, LPHANDL
 SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceName,
         LPHANDLER_FUNCTION_EX lpHandlerProc, LPVOID lpContext )
 {
-    SC_HANDLE hService;
-    SC_HANDLE hSCM;
-    unsigned int i;
+    service_data *service;
+    SC_HANDLE hService = 0;
     BOOL found = FALSE;
 
     TRACE("%s %p %p\n", debugstr_w(lpServiceName), lpHandlerProc, lpContext);
 
-    hSCM = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
-    if (!hSCM)
-        return NULL;
-    hService = OpenServiceW( hSCM, lpServiceName, SERVICE_SET_STATUS );
-    CloseServiceHandle(hSCM);
-    if (!hService)
-        return NULL;
-
     EnterCriticalSection( &service_cs );
-    for (i = 0; i < nb_services; i++)
+    if ((service = find_service_by_name( lpServiceName )))
     {
-        if(!strcmpW(lpServiceName, services[i]->name))
-        {
-            services[i]->handler = lpHandlerProc;
-            services[i]->context = lpContext;
-            found = TRUE;
-            break;
-        }
+        service->handler = lpHandlerProc;
+        service->context = lpContext;
+        hService = service->handle;
+        found = TRUE;
     }
     LeaveCriticalSection( &service_cs );
 
-    if (!found)
-    {
-        CloseServiceHandle(hService);
-        SetLastError(ERROR_SERVICE_DOES_NOT_EXIST);
-        return NULL;
-    }
+    if (!found) SetLastError(ERROR_SERVICE_DOES_NOT_EXIST);
 
     return (SERVICE_STATUS_HANDLE)hService;
 }

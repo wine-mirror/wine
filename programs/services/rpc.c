@@ -708,15 +708,24 @@ static BOOL service_accepts_control(const struct service_entry *service, DWORD d
 /******************************************************************************
  * service_send_control
  */
-static BOOL service_send_control(HANDLE pipe, DWORD dwControl, DWORD *result)
+static BOOL service_send_control(struct service_entry *service, HANDLE pipe, DWORD dwControl, DWORD *result)
 {
-    DWORD cmd[2], count = 0;
+    service_start_info *ssi;
+    DWORD len, count = 0;
     BOOL r;
 
-    cmd[0] = WINESERV_SENDCONTROL;
-    cmd[1] = dwControl;
-    r = WriteFile(pipe, cmd, sizeof cmd, &count, NULL);
-    if (!r || count != sizeof cmd)
+    /* calculate how much space we need to send the startup info */
+    len = strlenW(service->name) + 1;
+
+    ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, data[len]));
+    ssi->cmd = WINESERV_SENDCONTROL;
+    ssi->control = dwControl;
+    ssi->total_size = FIELD_OFFSET(service_start_info, data[len]);
+    ssi->name_size = strlenW(service->name) + 1;
+    strcpyW( ssi->data, service->name );
+
+    r = WriteFile(pipe, ssi, ssi->total_size, &count, NULL);
+    if (!r || count != ssi->total_size)
     {
         WINE_ERR("service protocol error - failed to write pipe!\n");
         return r;
@@ -837,7 +846,7 @@ DWORD svcctl_ControlService(
     {
         DWORD result = ERROR_SUCCESS;
 
-        ret = service_send_control(control_pipe, dwControl, &result);
+        ret = service_send_control(service->service_entry, control_pipe, dwControl, &result);
 
         if (dwControl == SERVICE_CONTROL_STOP)
         {
