@@ -2088,17 +2088,21 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
         /* In DirectDraw the palette is a property of the surface, there are no such things as device palettes. */
         if(dxVersion <= 7) {
             ERR("This code should never get entered for DirectDraw!, expect problems\n");
-            return;
-        }
-
-        /*  Direct3D >= 8 palette usage style: P8 textures use device palettes, palette entry format is A8R8G8B8,
-            alpha is stored in peFlags and may be used by the app if D3DPTEXTURECAPS_ALPHAPALETTE device
-            capability flag is present (wine does advertise this capability) */
-        for (i = 0; i < 256; i++) {
-            table[i][0] = device->palettes[device->currentPalette][i].peRed;
-            table[i][1] = device->palettes[device->currentPalette][i].peGreen;
-            table[i][2] = device->palettes[device->currentPalette][i].peBlue;
-            table[i][3] = device->palettes[device->currentPalette][i].peFlags;
+            if(index_in_alpha) {
+                /* Guarantees that memory representation remains correct after sysmem<->texture transfers even if
+                   there's no palette at this time. */
+                for (i = 0; i < 256; i++) table[i][3] = i;
+            }
+        } else {
+            /*  Direct3D >= 8 palette usage style: P8 textures use device palettes, palette entry format is A8R8G8B8,
+                alpha is stored in peFlags and may be used by the app if D3DPTEXTURECAPS_ALPHAPALETTE device
+                capability flag is present (wine does advertise this capability) */
+            for (i = 0; i < 256; i++) {
+                table[i][0] = device->palettes[device->currentPalette][i].peRed;
+                table[i][1] = device->palettes[device->currentPalette][i].peGreen;
+                table[i][2] = device->palettes[device->currentPalette][i].peBlue;
+                table[i][3] = device->palettes[device->currentPalette][i].peFlags;
+            }
         }
     } else {
         TRACE("Using surface palette %p\n", pal);
