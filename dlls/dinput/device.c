@@ -452,9 +452,12 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format)
 		dt[index].size = sizeof(DWORD);
 	    dt[index].offset_in  = -1;
 	    dt[index].offset_out = asked_format->rgodf[j].dwOfs;
-	    dt[index].value = 0;
+            if (asked_format->rgodf[j].dwType & DIDFT_POV)
+                dt[index].value = -1;
+            else
+                dt[index].value = 0;
 	    index++;
-	    
+
 	    same = 0;
 	}
     }

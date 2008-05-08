@@ -324,6 +324,13 @@ static BOOL CALLBACK EnumJoysticks(
     ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have returned S_FALSE, got: %s\n",
        DXGetErrorString8(hr));
 
+    if (info.pov < 4)
+    {
+        hr = IDirectInputDevice_GetDeviceState(pJoystick, sizeof(DIJOYSTATE2), &js);
+        ok(hr == DI_OK, "IDirectInputDevice_GetDeviceState() failed: %s\n", DXGetErrorString8(hr));
+        ok(js.rgdwPOV[3] == -1, "Default for unassigned POV should be -1 not: %d\n", js.rgdwPOV[3]);
+    }
+
     if (winetest_interactive) {
         trace("You have 30 seconds to test all axes, sliders, POVs and buttons\n");
         count = 300;
