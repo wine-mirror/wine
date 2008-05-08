@@ -310,16 +310,32 @@ static void test_registerOIDFunction(void)
     ret = CryptUnregisterOIDFunction(X509_ASN_ENCODING, "bogus",
      "1.2.3.4.5.6.7.8.9.10");
     ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
-    /* This has no effect */
+    /* Unwanted Cryptography\OID\EncodingType 1\bogus\ will still be there */
+    ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE,
+     "SOFTWARE\\Microsoft\\Cryptography\\OID\\EncodingType 1\\bogus"),
+     "Could not delete bogus key\n");
+    /* Shouldn't have effect but registry keys are created */
     ret = CryptRegisterOIDFunction(PKCS_7_ASN_ENCODING, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
     ok(ret, "CryptRegisterOIDFunction failed: %d\n", GetLastError());
-    /* Check with bogus encoding type: */
+    ret = CryptUnregisterOIDFunction(PKCS_7_ASN_ENCODING, "CryptDllEncodeObject",
+     "1.2.3.4.5.6.7.8.9.10");
+    ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
+    /* Check with bogus encoding type. Registry keys are still created */
     ret = CryptRegisterOIDFunction(0, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
     ok(ret, "CryptRegisterOIDFunction failed: %d\n", GetLastError());
+    ret = CryptUnregisterOIDFunction(0, "CryptDllEncodeObject",
+     "1.2.3.4.5.6.7.8.9.10");
+    ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
+    /* Unwanted Cryptography\OID\EncodingType 0\CryptDllEncodeObject\
+     * will still be there
+     */
+    ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE,
+     "SOFTWARE\\Microsoft\\Cryptography\\OID\\EncodingType 0\\CryptDllEncodeObject"),
+     "Could not delete CryptDllEncodeObject key\n");
     /* This is written with value 3 verbatim.  Thus, the encoding type isn't
-     * (for now) treated as a mask.
+     * (for now) treated as a mask. Registry keys are created.
      */
     ret = CryptRegisterOIDFunction(3, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10", bogusDll, NULL);
@@ -327,6 +343,15 @@ static void test_registerOIDFunction(void)
     ret = CryptUnregisterOIDFunction(3, "CryptDllEncodeObject",
      "1.2.3.4.5.6.7.8.9.10");
     ok(ret, "CryptUnregisterOIDFunction failed: %d\n", GetLastError());
+    /* Unwanted Cryptography\OID\EncodingType 3\CryptDllEncodeObject
+     * will still be there.
+     */
+    ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE,
+     "SOFTWARE\\Microsoft\\Cryptography\\OID\\EncodingType 3\\CryptDllEncodeObject"),
+     "Could not delete CryptDllEncodeObject key\n");
+    ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE,
+     "SOFTWARE\\Microsoft\\Cryptography\\OID\\EncodingType 3"),
+     "Could not delete 'EncodingType 3' key\n");
 }
 
 static void test_registerDefaultOIDFunction(void)
