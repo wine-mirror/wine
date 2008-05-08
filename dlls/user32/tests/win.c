@@ -3929,6 +3929,15 @@ static LRESULT CALLBACK winsizes_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
             expected_rect.left, expected_rect.top, expected_rect.right, expected_rect.bottom );
         return DefWindowProc(hwnd, msg, wp, lp);
     }
+    case WM_NCCALCSIZE:
+    {
+        RECT rect, *r = (RECT *)lp;
+        GetWindowRect( hwnd, &rect );
+        ok( !memcmp( &rect, r, sizeof(rect) ),
+            "passed rect %d,%d-%d,%d doesn't match window rect %d,%d-%d,%d\n",
+            r->left, r->top, r->right, r->bottom, rect.left, rect.top, rect.right, rect.bottom );
+        return DefWindowProc(hwnd, msg, wp, lp);
+    }
     default:
         return DefWindowProc(hwnd, msg, wp, lp);
     }

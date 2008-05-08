@@ -1139,11 +1139,18 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
     if ((wndPtr = WIN_GetPtr(hwnd)))
     {
         /* yes, even if the CBT hook was called with HWND_TOP */
+        POINT pt;
         HWND insert_after = (wndPtr->dwStyle & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
         RECT window_rect = wndPtr->rectWindow;
         RECT client_rect = window_rect;
         WIN_ReleasePtr( wndPtr );
+
+        /* the rectangle is in screen coords for WM_NCCALCSIZE when wparam is FALSE */
+        pt.x = pt.y = 0;
+        MapWindowPoints( parent, 0, &pt, 1 );
+        OffsetRect( &client_rect, pt.x, pt.y );
         SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&client_rect );
+        OffsetRect( &client_rect, -pt.x, -pt.y );
         set_window_pos( hwnd, insert_after, SWP_NOACTIVATE, &window_rect, &client_rect, NULL );
     }
     else return 0;
