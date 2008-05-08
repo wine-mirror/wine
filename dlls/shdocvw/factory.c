@@ -26,6 +26,8 @@
 #include "advpub.h"
 #include "isguids.h"
 
+#include "winver.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
@@ -287,8 +289,39 @@ HRESULT WINAPI DllUnregisterServer(void)
     return UnRegisterTypeLib(&LIBID_SHDocVw, 1, 1, LOCALE_SYSTEM_DEFAULT, SYS_WIN32);
 }
 
+static BOOL check_native_ie(void)
+{
+    static const WCHAR cszPath[] = {'b','r','o','w','s','e','u','i','.','d','l','l',0};
+    DWORD handle,size;
+
+    size = GetFileVersionInfoSizeW(cszPath,&handle);
+    if (size)
+    {
+        LPVOID buf;
+        LPWSTR lpFileDescription;
+        UINT dwBytes;
+        static const WCHAR cszFD[] = {'\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o','\\','0','4','0','9','0','4','e','4','\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n',0};
+        static const WCHAR cszWine[] = {'W','i','n','e',0};
+
+        buf = HeapAlloc(GetProcessHeap(),0,size);
+        GetFileVersionInfoW(cszPath,0,size,buf);
+
+        if (VerQueryValueW(buf, cszFD, (LPVOID*)&lpFileDescription, &dwBytes) &&
+            strstrW(lpFileDescription,cszWine))
+                return FALSE;
+    }
+
+    return TRUE;
+}
+
 DWORD register_iexplore(BOOL doregister)
 {
-    HRESULT hres = reg_install(doregister ? "RegisterIE" : "UnregisterIE", NULL);
+    HRESULT hres;
+    if (check_native_ie())
+    {
+        TRACE("Native IE detected, not doing registration\n");
+        return S_OK;
+    }
+    hres = reg_install(doregister ? "RegisterIE" : "UnregisterIE", NULL);
     return !SUCCEEDED(hres);
 }

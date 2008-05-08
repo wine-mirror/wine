@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = shdocvw.dll
 IMPORTLIB = shdocvw
 IMPORTS   = uuid shell32 shlwapi user32 advapi32 kernel32
-DELAYIMPORTS = urlmon ole32 oleaut32
+DELAYIMPORTS = version urlmon ole32 oleaut32
 
 C_SRCS = \
 	classinfo.c \
