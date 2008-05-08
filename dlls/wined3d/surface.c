@@ -3242,7 +3242,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Blit from offscreen surface to render target */
         float glTexCoord[4];
         DWORD oldCKeyFlags = Src->CKeyFlags;
-        WINEDDCOLORKEY oldBltCKey = This->SrcBltCKey;
+        WINEDDCOLORKEY oldBltCKey = Src->SrcBltCKey;
         RECT SourceRectangle;
         BOOL paletteOverride = FALSE;
 
@@ -3290,7 +3290,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         } else if(Flags & WINEDDBLT_KEYSRCOVERRIDE) {
             /* Use color key from DDBltFx */
             Src->CKeyFlags |= WINEDDSD_CKSRCBLT;
-            This->SrcBltCKey = DDBltFx->ddckSrcColorkey;
+            Src->SrcBltCKey = DDBltFx->ddckSrcColorkey;
         } else {
             /* Do not use color key */
             Src->CKeyFlags &= ~WINEDDSD_CKSRCBLT;
@@ -3353,7 +3353,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
              * Which means that the colorkey is one of the palette entries. In other cases pixels that
              * should be masked away have alpha set to 0. */
             if(primary_render_target_is_p8(myDevice))
-                glAlphaFunc(GL_NOTEQUAL, (float)This->SrcBltCKey.dwColorSpaceLowValue / 256.0);
+                glAlphaFunc(GL_NOTEQUAL, (float)Src->SrcBltCKey.dwColorSpaceLowValue / 256.0);
             else
                 glAlphaFunc(GL_NOTEQUAL, 0.0);
             checkGLcall("glAlphaFunc\n");
@@ -3411,7 +3411,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;
-        This->SrcBltCKey = oldBltCKey;
+        Src->SrcBltCKey = oldBltCKey;
 
         /* Clear the palette as the surface didn't have a palette attached, it would confuse GetPalette and other calls */
         if(paletteOverride)
