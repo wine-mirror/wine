@@ -2135,7 +2135,7 @@ static void test_EnumUILanguageA(void)
 {
   BOOL ret;
   if (!pEnumUILanguagesA) {
-    trace("EnumUILanguagesA is not available on Win9x\n");
+    skip("EnumUILanguagesA is not available on Win9x or NT4\n");
     return;
   }
 
@@ -2280,21 +2280,35 @@ static void test_GetCPInfo(void)
 
     SetLastError(0xdeadbeef);
     ret = GetCPInfo(CP_UTF7, &cpinfo);
-    ok(ret, "GetCPInfo(CP_UTF7) error %u\n", GetLastError());
-    ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
-    ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
-    ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
-    ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
-    ok(cpinfo.MaxCharSize == 5, "expected 5, got 0x%x\n", cpinfo.MaxCharSize);
+    if (!ret && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        skip("Codepage CP_UTF7 is not installed/available\n");
+    }
+    else
+    {
+        ok(ret, "GetCPInfo(CP_UTF7) error %u\n", GetLastError());
+        ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
+        ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
+        ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
+        ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
+        ok(cpinfo.MaxCharSize == 5, "expected 5, got 0x%x\n", cpinfo.MaxCharSize);
+    }
 
     SetLastError(0xdeadbeef);
     ret = GetCPInfo(CP_UTF8, &cpinfo);
-    ok(ret, "GetCPInfo(CP_UTF8) error %u\n", GetLastError());
-    ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
-    ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
-    ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
-    ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
-    ok(cpinfo.MaxCharSize == 4, "expected 5, got 0x%x\n", cpinfo.MaxCharSize);
+    if (!ret && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        skip("Codepage CP_UTF8 is not installed/available\n");
+    }
+    else
+    {
+        ok(ret, "GetCPInfo(CP_UTF8) error %u\n", GetLastError());
+        ok(cpinfo.DefaultChar[0] == 0x3f, "expected 0x3f, got 0x%x\n", cpinfo.DefaultChar[0]);
+        ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
+        ok(cpinfo.LeadByte[0] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[0]);
+        ok(cpinfo.LeadByte[1] == 0, "expected 0, got 0x%x\n", cpinfo.LeadByte[1]);
+        ok(cpinfo.MaxCharSize == 4, "expected 4, got 0x%x\n", cpinfo.MaxCharSize);
+    }
 }
 
 START_TEST(locale)
