@@ -529,7 +529,7 @@ static HRESULT AsyncReader_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWO
     /* Our pins are almost static, not changing so setting static tick count is ok */
     *lastsynctick = This->lastpinchange;
 
-    if (pos >= 1)
+    if (pos >= 1 || !This->pOutputPin)
         return S_FALSE;
 
     *pin = (IPin *)This->pOutputPin;
