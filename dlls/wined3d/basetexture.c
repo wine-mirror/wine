@@ -433,7 +433,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
     if(samplerStates[WINED3DSAMP_MAGFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MAGFILTER]) {
         GLint glValue;
         state = samplerStates[WINED3DSAMP_MAGFILTER];
-        if (state < WINED3DTEXF_NONE || state > WINED3DTEXF_ANISOTROPIC) {
+        if (state > WINED3DTEXF_ANISOTROPIC) {
             FIXME("Unrecognized or unsupported MAGFILTER* value %d\n", state);
         } else {
             glValue = (*This->baseTexture.magLookup)[state - WINED3DTEXF_NONE];
