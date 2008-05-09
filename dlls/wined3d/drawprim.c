@@ -207,8 +207,12 @@ void primitiveDeclarationConvertToStridedData(
                 else if(*fixup && !useVertexShaderFunction &&
                        (element->Usage == WINED3DDECLUSAGE_COLOR ||
                         element->Usage == WINED3DDECLUSAGE_POSITIONT)) {
-                    /* This may be bad with the fixed function pipeline */
-                    FIXME("Missing vbo streams with unfixed colors or transformed position, expect problems\n");
+                    static BOOL warned = FALSE;
+                    if(!warned) {
+			/* This may be bad with the fixed function pipeline */
+			FIXME("Missing vbo streams with unfixed colors or transformed position, expect problems\n");
+                        warned = TRUE;
+                    }
                 }
             }
         }
