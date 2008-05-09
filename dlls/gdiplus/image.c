@@ -384,6 +384,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     }
 
     (*bitmap)->image.type = ImageTypeBitmap;
+    (*bitmap)->image.flags = ImageFlagsNone;
     (*bitmap)->width = width;
     (*bitmap)->height = height;
     (*bitmap)->format = format;
@@ -789,6 +790,7 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
     }
 
     (*image)->picture = pic;
+    (*image)->flags   = ImageFlagsNone;
 
     return Ok;
 }
@@ -1107,4 +1109,14 @@ GpStatus WINGDIPAPI GdipSetEffectParameters(CGpEffect *effect,
         FIXME("not implemented\n");
 
     return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipGetImageFlags(GpImage *image, UINT *flags)
+{
+    if(!image || !flags)
+        return InvalidParameter;
+
+    *flags = image->flags;
+
+    return Ok;
 }

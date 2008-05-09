@@ -286,7 +286,7 @@
 @ stdcall GdipGetImageDimension(ptr ptr ptr)
 @ stdcall GdipGetImageEncoders(long long ptr)
 @ stdcall GdipGetImageEncodersSize(ptr ptr)
-@ stub GdipGetImageFlags
+@ stdcall GdipGetImageFlags(ptr ptr)
 @ stdcall GdipGetImageGraphicsContext(ptr ptr)
 @ stdcall GdipGetImageHeight(ptr ptr)
 @ stdcall GdipGetImageHorizontalResolution(ptr ptr)

@@ -417,6 +417,24 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     GlobalFree(hbm);
 }
 
+static void test_GdipGetImageFlags(void)
+{
+    GpImage *img;
+    GpStatus stat;
+    UINT flags;
+
+    img = (GpImage*)0xdeadbeef;
+
+    stat = GdipGetImageFlags(NULL, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageFlags(NULL, &flags);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageFlags(img, NULL);
+    expect(InvalidParameter, stat);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -436,6 +454,7 @@ START_TEST(image)
     test_encoders();
     test_LockBits();
     test_GdipCreateBitmapFromHBITMAP();
+    test_GdipGetImageFlags();
 
     GdiplusShutdown(gdiplusToken);
 }
