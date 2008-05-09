@@ -1,3 +1,737 @@
+2008-05-09  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/gdi32/enhmfdrv/objects.c:
+	gdi32: Add missing braces in EMFDRV_SelectPalette.
+
+2008-05-09  Kusanagi Kouichi <slash@ma.neweb.ne.jp>
+
+	* dlls/imm32/imm.c:
+	imm32: Avoid false FIXMEs.
+
+2008-05-09  Alexander Dorofeyev <alexd4@inbox.lv>
+
+	* dlls/wined3d/surface.c:
+	wined3d: Set alpha to index even when there is no palette.
+	Fixes a failure in p8_primary_test when running with opengl ddraw renderer.
+
+	* dlls/ddraw/tests/visual.c:
+	ddraw/tests: Add KEYSRCOVERRIDE test in p8_primary_test.
+
+	* dlls/wined3d/surface.c:
+	wined3d: Use source colorkey when passed KEYSRC or KEYSRCOVERRIDE.
+	Fixes failure in p8_primary_test when using opengl ddraw renderer.
+
+2008-05-09  Alexandre Julliard <julliard@winehq.org>
+
+	* programs/winefile/winefile.c:
+	winefile: Fix the printf formats for file sizes.
+
+2008-05-08  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/winealsa.drv/alsa.c, dlls/winealsa.drv/dscapture.c,
+	  dlls/winealsa.drv/dsoutput.c, dlls/winealsa.drv/wavein.c,
+	  dlls/winealsa.drv/waveout.c:
+	winealsa: Remove calls to deprecated functions.
+
+2008-05-08  Aric Stewart <aric@codeweavers.com>
+
+	* dlls/shdocvw/Makefile.in, dlls/shdocvw/factory.c:
+	shdocvw: Do not do our iexplore.exe registration if native Internet Explorer
+	is detected to be present.
+
+2008-05-08  Lei Zhang <thestig@google.com>
+
+	* dlls/wininet/tests/urlcache.c, dlls/wininet/urlcache.c:
+	wininet: Handle NULL input for FindCloseUrlCache.
+
+2008-05-08  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/dinput/device.c, dlls/dinput/tests/joystick.c:
+	dinput: Default value for unassigned POVs should be -1.
+
+2008-05-08  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/crypt32/tests/oid.c:
+	crypt32/tests: Cleanup registry after tests.
+
+2008-05-08  Kirill K. Smirnov <lich@math.spbu.ru>
+
+	* programs/winhelp/winhelp.c:
+	winhelp: Pointer coordinates are relative to richedit text window, not the
+	main window.
+
+	* programs/winhelp/Ru.rc:
+	winhelp: Updated Russian translation.
+
+2008-05-08  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/advapi32/service.c, include/wine/svcctl.idl,
+	  programs/services/rpc.c, programs/services/services.c:
+	services: Send the service name in the control requests.
+	Only start a single dispatcher thread for all services.
+
+2008-05-07  John Klehm <xixsimplicityxix@gmail.com>
+
+	* dlls/winex11.drv/wintab.c, dlls/wintab32/wintab32.c:
+	winex11.drv: Move hardware tablet proximity into x11 layer.
+
+2008-05-08  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* programs/services/services.c:
+	services.exe: Spelling fixes.
+
+2008-05-08  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user32/tests/win.c, dlls/user32/win.c:
+	user32: The client rectangle is in screen coordinates for the initial
+	WM_NCCALCSIZE.
+
+2008-05-08  Guy Albertelli <galberte@neo.rr.com>
+
+	* dlls/comctl32/listview.c, dlls/comctl32/tests/listview.c:
+	listview: Return correct value from WM_NOTIFYFORMAT with test.
+
+2008-05-08  Dylan Smith <dylan.ah.smith@gmail.com>
+
+	* programs/wordpad/wordpad.c:
+	wordpad: Empty the richedit undo buffer on creation.
+
+2008-05-07  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/kernel32/tests/path.c:
+	kernel32: Fix temporary path test.
+
+	* dlls/kernel32/tests/process.c:
+	kernel32: Fix process tests to pass in Windows.
+
+2008-05-07  Frans Kool <Frans.Kool@gmail.com>
+
+	* programs/winhelp/Nl.rc:
+	winhelp: Added missing Dutch translations.
+
+2008-05-08  Nikolay Sivov <bunglehead@gmail.com>
+
+	* dlls/gdiplus/graphics.c:
+	gdiplus: Let GdipDrawArcI use float args version.
+
+2008-05-07  Vitaly Lipatov <lav@etersoft.ru>
+
+	* programs/wineboot/wineboot.c:
+	wineboot: Add missed short option -u.
+
+2008-05-07  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/serial.c:
+	ntdll: Ignore failures to retrieve serial status for events we are not
+	interested in.
+	Based on a patch by Valentine Sinitsyn.
+
+2008-05-07  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/ntdll/tests/file.c:
+	ntdll: Fix file test to not free memory allocated on the stack.
+
+	* dlls/ntdll/tests/exception.c:
+	ntdll: Fix some exception tests to pass on Windows.
+
+2008-05-06  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/rpcrt4/tests/ndr_marshall.c:
+	rpcrt4: Fix ndr_marshall test failures.
+	Created with help from Robert Shearman.
+
+2008-05-07  Rob Shearman <rob@codeweavers.com>
+
+	* dlls/crypt32/cert.c, dlls/crypt32/crypt32.spec:
+	crypt32: Add stub for CertVerifyCTLUsage.
+
+2008-05-07  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/ntdll/file.c:
+	ntdll: Don't consider a 0-byte read from a serial port as a broken pipe.
+
+	* dlls/ntdll/serial.c:
+	ntdll: Always set VTIME to 0 to avoid blocking, don't try to set it from the
+	comm timeouts.
+
+2008-05-07  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/gdi32/enhmfdrv/enhmetafiledrv.h, dlls/gdi32/enhmfdrv/init.c,
+	  dlls/gdi32/enhmfdrv/objects.c:
+	gdi32: Implement EMFDRV_SelectPalette.
+
+	* dlls/gdi32/tests/metafile.c:
+	gdi32: More carefully compare EMF records in tests.
+
+	* dlls/gdi32/enhmfdrv/init.c:
+	gdi32: Set offPalEntries member of EMREOF to what XP sets it to.
+
+2008-05-06  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/dinput/joystick_linux.c:
+	dinput: Ignore events from extra joystick buttons.
+
+2008-05-03  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/dinput/joystick_linux.c:
+	dinput: Limit number of axes in a different way - map all extra axes to -1.
+	We can't stop device from sending us extra axes so have to keep axes mapping
+	around for them.
+
+	* dlls/dinput/joystick_linux.c:
+	dinput: Remove redundant variable.
+
+2008-05-07  Hans Leidekker <hans@it.vu.nl>
+
+	* dlls/wininet/http.c, dlls/wininet/tests/http.c:
+	wininet: Deal with bogus accept types array passed into HttpOpenRequestA.
+
+2008-05-07  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/secur32/tests/ntlm.c:
+	secur32: Fix ntlm tests on Vista.
+
+2008-05-07  Rob Shearman <rob@codeweavers.com>
+
+	* dlls/rpcrt4/tests/server.c:
+	rpcrt4: Add better traces for the server test.
+	Handle failure to use one or more protocol sequences more gracefully, as
+	ncacn_np servers aren't support on Win9x and ncacn_ip_tcp fails on some
+	machines.
+
+	* include/wine/test.h:
+	winetest: Detect if an unhandled exception occurred in a child process and
+	print an appropriate message.
+	Avoid getting caught incrementing the failure count in this case, as it
+	could take a very long time to complete.
+
+2008-05-07  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel32/wowthunk.c, dlls/winedos/dosmem.c, dlls/winedos/dosvm.c,
+	  dlls/winedos/module.c:
+	winedos: Print better diagnostics when a DOS app fails to start.
+
+	* dlls/winedos/module.c:
+	winedos: Make sure that the main message queue exists before the DOS thread
+	starts.
+
+	* dlls/winedos/dosvm.c:
+	winedos: Only read input from the stdin handle if it is a console.
+
+	* programs/wineconsole/curses.c:
+	wineconsole: Don't use a Win32 wait on a Unix file descriptor.
+
+	* dlls/ntdll/file.c:
+	ntdll: Serial with ReadIntervalTimeout set to MAXDWORD should return immediately
+	even if nothing was read.
+
+2008-05-06  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/comdlg32/tests/printdlg.c, dlls/winspool.drv/info.c:
+	winspool: Set PrinterPorts for win3.x/win9.x compatibility.
+
+2008-05-07  Andrew Talbot <andrew.talbot@talbotville.com>
+
+	* dlls/ddraw/executebuffer.c:
+	ddraw: Indentation fix.
+
+2008-05-06  John Klehm <xixsimplicityxix@gmail.com>
+
+	* dlls/winex11.drv/wintab.c:
+	winex11.drv: Wintab packet serial numbers are passed via WPARAM.
+
+2008-05-06  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/wininet/tests/http.c, include/wininet.h:
+	wininet: Ignore INTERNET_STATUS_DETECTING_PROXY messages in the http test.
+
+	* programs/winetest/main.c:
+	winetest: Fix CreateProcess so that debugger tests run without timing out.
+
+2008-05-05  Jens Albretsen <jens@albretsen.dk>
+
+	* dlls/serialui/Da.rc, dlls/serialui/serialui_rc.rc:
+	serialui: Danish translation.
+
+	* dlls/setupapi/Da.rc, dlls/setupapi/setupapi.rc:
+	setupapi: Danish translation.
+
+	* dlls/msvfw32/msvfw32_Da.rc, dlls/msvfw32/rsrc.rc:
+	msvfw32: Danish translation.
+
+2008-05-06  Jens Albretsen <jens@albretsen.dk>
+
+	* programs/reg/Da.rc, programs/reg/rsrc.rc:
+	reg: Danish translation.
+
+	* programs/oleview/Da.rc, programs/oleview/rsrc.rc:
+	oleview: Danish translation.
+
+	* dlls/wininet/rsrc.rc, dlls/wininet/wininet_Da.rc:
+	wininet: Danish translation.
+
+	* dlls/shdoclc/Da.rc, dlls/shdoclc/rsrc.rc:
+	shdoclc: Danish translation.
+
+	* dlls/winmm/winmm_Da.rc, dlls/winmm/winmm_res.rc:
+	winmm: Danish translation.
+
+	* dlls/wldap32/wldap32.rc, dlls/wldap32/wldap32_Da.rc:
+	wldap32: Danish translation.
+
+	* programs/notepad/Da.rc:
+	notepad: Danish spelling fixes.
+
+	* programs/clock/Da.rc:
+	clock: Danish spelling fixes.
+
+	* dlls/winspool.drv/Da.rc, dlls/winspool.drv/winspool.rc:
+	winspool.drv: Danish translation.
+
+	* programs/progman/Da.rc, programs/progman/rsrc.rc:
+	progman: Danish translation.
+
+	* programs/cmdlgtst/Da.rc, programs/cmdlgtst/cmdlgr.rc:
+	cmdlgtst: Danish translation.
+
+	* programs/regedit/Da.rc, programs/regedit/rsrc.rc:
+	regedit: Danish translation.
+
+2008-05-05  Jens Albretsen <jens@albretsen.dk>
+
+	* dlls/oledlg/oledlg_Da.rc, dlls/oledlg/rsrc.rc:
+	oledlg: Danish translation.
+
+	* dlls/sane.ds/rsrc.rc, dlls/sane.ds/sane_Da.rc:
+	sane.ds: Danish translation.
+
+	* dlls/msvidc32/msvidc32_Da.rc, dlls/msvidc32/rsrc.rc:
+	msvidc32: Danish translation.
+
+	* dlls/localspl/localspl.rc, dlls/localspl/spl_Da.rc:
+	localspl: Danish translation.
+
+	* dlls/hhctrl.ocx/Da.rc, dlls/hhctrl.ocx/hhctrl.rc:
+	hhctrl.ocx: Danish translation.
+
+	* dlls/msacm32/msacm.rc, dlls/msacm32/msacm_Da.rc:
+	msacm: Danish translation.
+
+	* dlls/msi/msi.rc, dlls/msi/msi_Da.rc:
+	msi: Danish translation.
+
+	* dlls/msrle32/msrle_Da.rc, dlls/msrle32/rsrc.rc:
+	msrle: Danish translation.
+
+	* dlls/mshtml/Da.rc, dlls/mshtml/rsrc.rc:
+	mshtml: Danish translation.
+
+	* dlls/mpr/mpr.rc, dlls/mpr/mpr_Da.rc:
+	mpr: Danish translation.
+
+	* dlls/gphoto2.ds/gphoto2_Da.rc, dlls/gphoto2.ds/rsrc.rc:
+	gphoto2: Danish translation.
+
+	* dlls/localui/localui.rc, dlls/localui/ui_Da.rc:
+	localui: Danish translation.
+
+	* dlls/iccvid/iccvid_Da.rc, dlls/iccvid/rsrc.rc:
+	iccvid: Danish translation.
+
+	* dlls/oleaut32/oleaut32.rc, dlls/oleaut32/oleaut32_Da.rc,
+	  dlls/oleaut32/oleaut32_Dk.rc:
+	oleaut32: Renamed oleaut32_Dk.rc to oleaut32_Da.rc.
+
+2008-05-06  Marcus Meissner <marcus@jet.franken.de>
+
+	* tools/widl/utils.c, tools/widl/utils.h:
+	widl: Mark non-returning functions as noreturn.
+
+2008-05-06  Aleksey Bragin <aleksey@reactos.org>
+
+	* dlls/atl/registrar.c:
+	atl: Remove freeing of an invalid pointer.
+
+2008-05-06  Francois Gouget <fgouget@free.fr>
+
+	* dlls/comctl32/comboex.c, dlls/comctl32/listview.c, dlls/dmime/segment.c,
+	  dlls/dmstyle/styletrack.c, dlls/kernel32/module.c, dlls/msi/action.c,
+	  dlls/quartz/mpegsplit.c, dlls/quartz/pin.h, dlls/quartz/waveparser.c,
+	  dlls/rsaenh/mpi.c, dlls/shell32/tests/shelllink.c,
+	  dlls/shell32/tests/shellpath.c, dlls/twain_32/dsm_ctrl.c,
+	  dlls/wined3d/state.c, dlls/wined3d/swapchain.c,
+	  dlls/winmm/lolvldrv.c, dlls/winmm/mmsystem.c, dlls/winmm/playsound.c,
+	  tools/widl/parser.y:
+	Assorted spelling fixes.
+
+	* dlls/winex11.drv/ime.c:
+	winex11: Standardize a stub trace and add a trailing '\n'.
+
+2008-05-06  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/advapi32/tests/service.c:
+	advapi32/tests: Add another test.
+
+2008-05-06  Francois Gouget <fgouget@free.fr>
+
+	* dlls/msi/tokenize.c, dlls/opengl32/opengl_ext.c, tools/widl/parser.l,
+	  tools/widl/typelib.c:
+	Add a comment warning when a table must be kept sorted for later use with
+	bsearch().
+
+	* dlls/comctl32/tests/header.c, dlls/ctapi32/ctapi32.c,
+	  dlls/ddraw/ddraw.c, dlls/ddraw/device.c, dlls/ddraw/surface.c,
+	  dlls/dinput/device.c, dlls/dmime/tempotrack.c,
+	  dlls/mshtml/nsiface.idl, dlls/msi/msi.c, dlls/ole32/moniker.c,
+	  dlls/quartz/avisplit.c, dlls/riched20/tests/editor.c,
+	  dlls/rpcrt4/tests/ndr_marshall.c, dlls/wined3d/device.c,
+	  dlls/wined3d/wined3d_private.h, dlls/ws2_32/async.c,
+	  programs/rpcss/np_server.c, tools/winemaker, tools/wrc/parser.y:
+	Assorted spelling fixes.
+
+	* dlls/mshtml/htmlcomment.c, dlls/mshtml/htmldoc.c,
+	  dlls/mshtml/htmlelem.c, dlls/mshtml/htmlimg.c,
+	  dlls/mshtml/htmlinput.c, dlls/mshtml/htmlnode.c,
+	  dlls/mshtml/htmloption.c, dlls/mshtml/htmlstyle.c,
+	  dlls/mshtml/htmltextnode.c, dlls/mshtml/htmlwindow.c,
+	  dlls/mshtml/mshtml_private.h, dlls/mshtml/omnavigator.c:
+	mshtml: gcc 2.95 does not allow an array of undefined dimension in a struct. So
+	fix dispex_static_data_t accordingly.
+
+	* dlls/cryptdlg/main.c:
+	cryptdlg: Fix the GetFriendlyNameOfCert[AW] call convention.
+
+	* dlls/d3d9/tests/visual.c:
+	d3d9/tests: Fix compilation on systems that don't support nameless unions.
+
+	* dlls/msxml3/tests/domdoc.c:
+	msxml3/tests: Add a trailing '\n' to an ok() call.
+
+	* dlls/gdi32/tests/clipping.c, dlls/gdi32/tests/metafile.c:
+	gdi32/tests: Add a trailing '\n' to a couple of ok() calls.
+
+	* dlls/fusion/assembly.c:
+	fusion: Fix compilation on systems that don't support nameless unions.
+
+	* include/objbase.h:
+	ole32: Fix spelling of pCapabilities.
+
+2008-05-06  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel32/process.c, dlls/userenv/tests/userenv.c,
+	  tools/wine.inf.in:
+	kernel32: Set the USERPROFILE and ALLUSERSPROFILE environment variables based
+	on the ProfileList registry keys.
+
+	* dlls/shell32/shellpath.c:
+	shell32: Set the correct default for shell folders relative to the windows
+	directory.
+
+2008-05-06  Alexander Dorofeyev <alexd4@inbox.lv>
+
+	* dlls/ddraw/tests/d3d.c:
+	ddraw/tests: Add tests for IDirect3DDevice7_Load.
+
+	* dlls/ddraw/surface.c:
+	ddraw: Return DDERR_NOCOLORKEY when there is no colorkey.
+
+	* dlls/ddraw/device.c:
+	ddraw: Add full implementation of IDirect3DDevice7_Load.
+
+2008-05-06  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/kernel32/process.c:
+	kernel32: Print in the trace pid and tid of the created process.
+
+2008-05-06  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* programs/services/services.c:
+	services.exe: Move a trace to a more appropriate place.
+
+2008-05-05  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* programs/winetest/main.c:
+	winetest: Fix CreateProcess so that debugger tests run without timing out.
+
+	* dlls/netapi32/tests/wksta.c:
+	netapi32: Fix test crash occuring when NetWkstaUserGetInfo fails.
+
+	* dlls/winmm/tests/mixer.c:
+	winmm: Make mixer test less strict so it passes with SoundMAX drivers on XP.
+
+	* dlls/gdi32/tests/mapping.c:
+	gdi32: Make mapping test slightly less strict so it passes on windows XP.
+
+2008-05-06  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/comctl32/tab.c:
+	comctl32: tab: Fix drawing of the icons.
+	This patch partially reverts aa57ad37. It's not correct. The top/left
+	is added later on.
+
+2008-05-05  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/ws2_32/tests/sock.c:
+	ws2_32: Fix test output string to match the test.
+
+2008-05-05  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/netapi32/tests/access.c:
+	netapi32: Make the tests pass under XP that enforces a strict password policy.
+
+2008-05-05  Dylan Smith <dylan.ah.smith@gmail.com>
+
+	* dlls/riched20/editor.c:
+	richedit: The wrong bits were cleared from wBorders in PARAFORMAT2.
+
+2008-05-02  Dylan Smith <dylan.ah.smith@gmail.com>
+
+	* dlls/riched20/paint.c, dlls/riched20/wrap.c:
+	richedit: Removed useless code.
+
+2008-05-03  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/wined3d/context.c, dlls/wined3d/directx.c,
+	  dlls/wined3d/wined3d_private.h:
+	wined3d: Allow stencil support when it wasn't requested on broken drivers.
+
+2008-05-05  Alexandre Julliard <julliard@winehq.org>
+
+	* server/winstation.c:
+	server: Don't touch the users count when a system process switches desktops.
+
+2008-05-05  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/ws2_32/tests/sock.c:
+	ws2_32: On Win98, SO_MAX_MSG_SIZE is 65527, not 65507.
+
+	* dlls/secur32/tests/secur32.c:
+	secur32: Remove test for sft->Reserved8 field.
+	This seems to be set on Win98.
+
+2008-05-05  Maarten Lankhorst <crumb@virgo23.smo.corp.google.com>
+
+	* dlls/winex11.drv/graphics.c:
+	winex11.drv: Fix a compiler warning.
+
+2008-05-05  Alexander Dorofeyev <alexd4@inbox.lv>
+
+	* dlls/ddraw/device.c:
+	ddraw: Fix some texture blending modes.
+
+	* dlls/ddraw/ddraw_private.h, dlls/ddraw/device.c, dlls/ddraw/direct3d.c:
+	ddraw: Move handling of D3DRENDERSTATE_TEXTUREMAPBLEND from d3ddevice2 to
+	d3ddevice3.
+
+2008-05-04  Alexander Dorofeyev <alexd4@inbox.lv>
+
+	* dlls/ddraw/device.c:
+	ddraw: Move handling of D3DRENDERSTATE_TEXTUREHANDLE from d3ddevice7 to
+	d3ddevice3.
+	As supported by tests, there is no reason for this state to be handled by
+	d3ddevice7, and moving it to d3ddevice3 prepares for the changes in next patch
+	(setting TEXTUREHANDLE state can then go through SetTexture of d3ddevice3).
+
+	* dlls/ddraw/tests/d3d.c:
+	ddraw/tests: Add test for deprecated render states in d3d7.
+
+2008-05-06  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/kernel32/kernel16.c:
+	winoldap.mod: Wait until the 32-bit process starts up.
+
+2008-05-05  Hwang YunSong(황윤성 <hys545@dreamwiz.com>
+
+	* programs/winecfg/Ko.rc:
+	winecfg: Updated Korean resource.
+
+	* programs/winhelp/Ko.rc:
+	winhelp: Updated Korean resource.
+
+2008-05-05  Andrew Talbot <andrew.talbot@talbotville.com>
+
+	* dlls/d3d8/device.c:
+	d3d8: Dangling pointers fix.
+
+	* dlls/hlink/hlink_main.c:
+	hlink: Remove unneeded address-of operators from function names.
+
+	* dlls/advapi32/crypt.c:
+	advapi32: Avoid giving variables same name as library functions.
+
+2008-05-05  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/quartz/pin.c:
+	Revert "quartz: Clean up pullpin code."
+	This reverts commit 3066116f76c0c44950fde3552485b37dce24d1f8.
+
+	* loader/preloader.c:
+	preloader: Silence the warning for the low 64k.
+
+	* dlls/winex11.drv/xim.c:
+	winex11: The XIM callback is called with the X11 lock held.
+
+2008-05-04  Jens Albretsen <jens@albretsen.dk>
+
+	* dlls/shell32/shell32_Da.rc:
+	shell32: Added missing Danish translations.
+
+	* programs/wordpad/Da.rc, programs/wordpad/rsrc.rc:
+	wordpad: Added Danish translation.
+
+	* dlls/shlwapi/shlwapi.rc, dlls/shlwapi/shlwapi_Da.rc:
+	shlwapi: Added Danish translation.
+
+	* dlls/comdlg32/cdlg_Da.rc:
+	comdlg: Added missing Danish translations.
+
+	* dlls/wineps.drv/rsrc.rc, dlls/wineps.drv/wps_Da.rc:
+	wineps.drv: Added Danish translation.
+
+	* dlls/credui/credui.rc, dlls/credui/credui_Da.rc:
+	credui: Added Danish translation.
+
+	* dlls/avifil32/avifile_Da.rc, dlls/avifil32/rsrc.rc:
+	avifil32: Added Danish translation.
+
+	* programs/net/Da.rc, programs/net/rsrc.rc:
+	net: Added Danish translation.
+
+	* programs/cmd/Da.rc, programs/cmd/wcmdrc.rc:
+	cmd: Added Danish translation.
+
+	* programs/winecfg/Da.rc, programs/winecfg/winecfg.rc:
+	winecfg: Added Danish translation.
+
+	* programs/xcopy/Da.rc, programs/xcopy/rsrc.rc:
+	xcopy: Added Danish translation.
+
+2008-05-04  Andrew Talbot <andrew.talbot@talbotville.com>
+
+	* dlls/cabinet/fdi.c:
+	cabinet: Indentation fix.
+
+2008-05-02  Gerald Pfeifer <gerald@pfeifer.com>
+
+	* programs/winecfg/appdefaults.c:
+	winecfg: Add variable initialization in get_registry_version().
+
+2008-05-03  Gerald Pfeifer <gerald@pfeifer.com>
+
+	* programs/winhelp/winhelp.c:
+	winhelp: Remove extraneous positiveness check for unsigned variable in
+	WINHELP_HandleTextMouse().
+
+2008-05-04  James Hawkins <jhawkins@codeweavers.com>
+
+	* dlls/msi/dialog.c:
+	msi: Use the handle to the treeview item if the item text is not returned.
+
+2008-05-03  James Hawkins <jhawkins@codeweavers.com>
+
+	* dlls/fusion/assembly.c:
+	fusion: The Strings stream can be without a #.
+
+	* dlls/fusion/assembly.c, dlls/fusion/fusionpriv.h:
+	fusion: Add the missing assembly table structs.
+
+	* dlls/fusion/fusionpriv.h:
+	fusion: Fix the type of an assembly struct member.
+
+2008-05-05  Alexandre Julliard <julliard@winehq.org>
+
+	* programs/winevdm/winevdm.c:
+	winevdm: Move the DOS memory range check to not trigger for Win16 apps.
+
+	* programs/services/rpc.c:
+	services: Fixed the result check for the control mutex wait.
+
+	* programs/services/rpc.c:
+	services: Use the correct invalid handle value for the control pipe.
+
+2008-05-04  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/tests/dom.c:
+	mshtml: Added IMG element tests.
+
+	* dlls/mshtml/tests/script.c:
+	mshtml: Added more script tests.
+
+	* include/mshtmdid.h, include/mshtml.idl:
+	mshtml: Added DispHTMLSelectElement declaration.
+
+2008-05-05  Alexandre Julliard <julliard@winehq.org>
+
+	* programs/spoolsv/main.c:
+	spoolsv: Improve the service stub so that it can be started and stopped.
+
+2008-05-05  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* programs/winecfg/Fr.rc:
+	winecfg: Fix coordinates and sizes of controls in French Graphics dialog.
+
+2008-05-04  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/mshtml/mshtml.inf:
+	mshtml: Don't overwrite file types that could be changed by user.
+
+2008-05-04  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/user32/sysparams.c:
+	user32: Set the size of returned DEVMODE to least common one as XP does.
+
+	* dlls/winex11.drv/settings.c:
+	winex11.drv: Set the size of returned DEVMODE to least common one as XP does.
+
+2008-05-03  James Hawkins <jhawkins@codeweavers.com>
+
+	* dlls/msi/helpers.c:
+	msi: Fix a typo.
+
+2008-05-03  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/wined3d/context.c:
+	wined3d: At the start of RemoveContextFromArray numContexts is decreased by 1,
+	the loop which loops through the whole array doesn't take this into account.
+	Discovered by Peter Oberndorfer.
+
+2008-05-04  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Clean up properly on win9x.
+
+2008-05-03  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Skip some tests on win9x.
+
+2008-05-03  Andrew Talbot <andrew.talbot@talbotville.com>
+
+	* dlls/wnaspi32/winaspi16.c, dlls/wnaspi32/winaspi32.c:
+	wnaspi32: Remove unused variables.
+
+	* dlls/inetcomm/internettransport.c, dlls/inetcomm/mimeole.c:
+	inetcomm: Remove unused variables.
+
+	* dlls/wininet/ftp.c, dlls/wininet/http.c, dlls/wininet/urlcache.c:
+	wininet: Remove unused variables.
+
+2008-05-02  Andrew Talbot <andrew.talbot@talbotville.com>
+
+	* dlls/dbghelp/stabs.c:
+	dbghelp: Include port.h for possible alternative to strtoull().
+
+2008-05-02  Hans Leidekker <hans@it.vu.nl>
+
+	* dlls/wininet/http.c, dlls/wininet/tests/http.c:
+	wininet: Don't add the user agent header until HttpSendRequest is called.
+
+2008-05-02  Alexandre Julliard <julliard@winehq.org>
+
+	* ANNOUNCE, ChangeLog, VERSION, configure:
+	Release 0.9.61.
+
+----------------------------------------------------------------
 2008-05-02  Alexandre Julliard <julliard@winehq.org>
 
 	* AUTHORS:
