@@ -246,7 +246,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample,
     MPEGSplitterImpl *This = (MPEGSplitterImpl*)iface;
     BYTE *pbSrcStream;
     DWORD cbSrcStream = 0;
-    REFERENCE_TIME tStart, tStop;
+    REFERENCE_TIME tStart, tStop, tAviStart = This->position;
     Parser_OutputPin * pOutputPin;
     HRESULT hr;
 
@@ -280,6 +280,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample,
         {
             memcpy(This->header, pbSrcStream, 4);
             This->Parser.pInputPin->rtCurrent = tStart;
+            This->position = tAviStart;
         }
     }
 
