@@ -1008,81 +1008,86 @@ LONG WINAPI ImmGetCompositionStringA(
     compdata = ImmLockIMCC(data->IMC.hCompStr);
     compstr = (LPCOMPOSITIONSTRING)compdata;
 
-    if (dwIndex == GCS_RESULTSTR && compstr->dwResultStrLen > 0 &&
-        compstr->dwResultStrOffset > 0)
+    switch (dwIndex)
     {
-        LPWSTR ResultStr = (LPWSTR)(compdata + compstr->dwResultStrOffset);
+    case GCS_RESULTSTR:
+        if (compstr->dwResultStrLen > 0 && compstr->dwResultStrOffset > 0)
+        {
+            LPWSTR ResultStr = (LPWSTR)(compdata + compstr->dwResultStrOffset);
 
-        TRACE("GCS_RESULTSTR %p %i\n",ResultStr,
-                                    compstr->dwResultStrLen);
+            TRACE("GCS_RESULTSTR %p %i\n",ResultStr,
+                                        compstr->dwResultStrLen);
 
-        buf = HeapAlloc( GetProcessHeap(), 0, compstr->dwResultStrLen * 3 );
-        rc = WideCharToMultiByte(CP_ACP, 0, ResultStr,
-                                 compstr->dwResultStrLen , buf,
-                                 compstr->dwResultStrLen * 3, NULL, NULL);
-        if (dwBufLen >= rc)
-            memcpy(lpBuf,buf,rc);
+            buf = HeapAlloc( GetProcessHeap(), 0, compstr->dwResultStrLen * 3 );
+            rc = WideCharToMultiByte(CP_ACP, 0, ResultStr,
+                                     compstr->dwResultStrLen , buf,
+                                     compstr->dwResultStrLen * 3, NULL, NULL);
+            if (dwBufLen >= rc)
+                memcpy(lpBuf,buf,rc);
 
-        HeapFree( GetProcessHeap(), 0, buf );
-    }
-    else if (dwIndex == GCS_COMPSTR && compstr->dwCompStrLen > 0 &&
-              compstr->dwCompStrOffset > 0)
-    {
-        LPWSTR CompString = (LPWSTR)(compdata + compstr->dwCompStrOffset);
+            HeapFree( GetProcessHeap(), 0, buf );
+        }
+        break;
+    case GCS_COMPSTR:
+        if (compstr->dwCompStrLen > 0 && compstr->dwCompStrOffset > 0)
+        {
+            LPWSTR CompString = (LPWSTR)(compdata + compstr->dwCompStrOffset);
 
-        TRACE("GCS_COMPSTR %p %i\n", CompString, compstr->dwCompStrLen);
+            TRACE("GCS_COMPSTR %p %i\n", CompString, compstr->dwCompStrLen);
 
-        buf = HeapAlloc( GetProcessHeap(), 0, compstr->dwCompStrLen * 3 );
-        rc = WideCharToMultiByte(CP_ACP, 0, CompString,
-                                 compstr->dwCompStrLen, buf,
-                                 compstr->dwCompStrLen * 3, NULL, NULL);
-        if (dwBufLen >= rc)
-            memcpy(lpBuf,buf,rc);
-        HeapFree( GetProcessHeap(), 0, buf );
-    }
-    else if (dwIndex == GCS_COMPATTR && compstr->dwCompAttrLen > 0 &&
-             compstr->dwCompAttrOffset > 0)
-    {
-        LPWSTR Compattr = (LPWSTR)(compdata + compstr->dwCompAttrOffset);
-        TRACE("GCS_COMPATTR %p %i\n", Compattr , compstr->dwCompAttrLen);
+            buf = HeapAlloc( GetProcessHeap(), 0, compstr->dwCompStrLen * 3 );
+            rc = WideCharToMultiByte(CP_ACP, 0, CompString,
+                                     compstr->dwCompStrLen, buf,
+                                     compstr->dwCompStrLen * 3, NULL, NULL);
+            if (dwBufLen >= rc)
+                memcpy(lpBuf,buf,rc);
+            HeapFree( GetProcessHeap(), 0, buf );
+        }
+        break;
+    case GCS_COMPATTR:
+        if (compstr->dwCompAttrLen > 0 && compstr->dwCompAttrOffset > 0)
+        {
+            LPWSTR Compattr = (LPWSTR)(compdata + compstr->dwCompAttrOffset);
+            TRACE("GCS_COMPATTR %p %i\n", Compattr , compstr->dwCompAttrLen);
 
-        rc = compstr->dwCompAttrLen;
-        if (dwBufLen >= rc)
-            memcpy(lpBuf,Compattr,rc);
-    }
-    else if (dwIndex == GCS_COMPCLAUSE && compstr->dwCompClauseLen > 0 &&
-             compstr->dwCompClauseOffset > 0)
-    {
-        LPWSTR Compclause = (LPWSTR)(compdata + compstr->dwCompClauseOffset);
-        TRACE("GCS_COMPCLAUSE %p %i\n", Compclause, compstr->dwCompClauseLen);
+            rc = compstr->dwCompAttrLen;
+            if (dwBufLen >= rc)
+                memcpy(lpBuf,Compattr,rc);
+        }
+        break;
+    case GCS_COMPCLAUSE:
+        if (compstr->dwCompClauseLen > 0 && compstr->dwCompClauseOffset > 0)
+        {
+            LPWSTR Compclause = (LPWSTR)(compdata + compstr->dwCompClauseOffset);
+            TRACE("GCS_COMPCLAUSE %p %i\n", Compclause, compstr->dwCompClauseLen);
 
-        rc = compstr->dwCompClauseLen;
-        if (dwBufLen >= compstr->dwCompClauseLen)
-            memcpy(lpBuf,Compclause,rc);
-    }
-    else if (dwIndex == GCS_RESULTCLAUSE && compstr->dwResultClauseLen > 0 &&
-             compstr->dwResultClauseOffset > 0)
-    {
-        LPWSTR Resultclause = (LPWSTR)(compdata + compstr->dwResultClauseOffset);
-        TRACE("GCS_RESULTCLAUSE %p %i\n", Resultclause, compstr->dwResultClauseLen);
+            rc = compstr->dwCompClauseLen;
+            if (dwBufLen >= compstr->dwCompClauseLen)
+                memcpy(lpBuf,Compclause,rc);
+        }
+        break;
+    case GCS_RESULTCLAUSE:
+        if (compstr->dwResultClauseLen > 0 && compstr->dwResultClauseOffset > 0)
+        {
+            LPWSTR Resultclause = (LPWSTR)(compdata + compstr->dwResultClauseOffset);
+            TRACE("GCS_RESULTCLAUSE %p %i\n", Resultclause, compstr->dwResultClauseLen);
 
-        rc = compstr->dwResultClauseLen;
-        if (dwBufLen >= compstr->dwResultClauseLen)
-            memcpy(lpBuf,Resultclause,rc);
-    }
-    else if (dwIndex == GCS_CURSORPOS)
-    {
+            rc = compstr->dwResultClauseLen;
+            if (dwBufLen >= compstr->dwResultClauseLen)
+                memcpy(lpBuf,Resultclause,rc);
+        }
+        break;
+    case GCS_CURSORPOS:
         TRACE("GCS_CURSORPOS\n");
         rc = compstr->dwCursorPos;
-    }
-    else if (dwIndex == GCS_DELTASTART)
-    {
+        break;
+    case GCS_DELTASTART:
         TRACE("GCS_DELTASTART\n");
         rc = compstr->dwDeltaStart;
-    }
-    else
-    {
+        break;
+    default:
         FIXME("Unhandled index 0x%x\n",dwIndex);
+        break;
     }
 
     ImmUnlockIMCC(data->IMC.hCompStr);
@@ -1113,74 +1118,80 @@ LONG WINAPI ImmGetCompositionStringW(
     compdata = ImmLockIMCC(data->IMC.hCompStr);
     compstr = (LPCOMPOSITIONSTRING)compdata;
 
-    if (dwIndex == GCS_RESULTSTR && compstr->dwResultStrLen > 0 &&
-        compstr->dwResultStrOffset > 0)
+    switch (dwIndex)
     {
-        LPWSTR ResultStr = (LPWSTR)(compdata + compstr->dwResultStrOffset);
-        rc =  compstr->dwResultStrLen * sizeof(WCHAR);
+    case GCS_RESULTSTR:
+        if (compstr->dwResultStrLen > 0 && compstr->dwResultStrOffset > 0)
+        {
+            LPWSTR ResultStr = (LPWSTR)(compdata + compstr->dwResultStrOffset);
+            rc =  compstr->dwResultStrLen * sizeof(WCHAR);
 
-        if (dwBufLen >= rc)
-            memcpy(lpBuf,ResultStr,rc);
-    }
-    else if (dwIndex == GCS_RESULTREADSTR && compstr->dwResultReadStrLen > 0 &&
-             compstr->dwResultReadStrOffset > 0)
-    {
-        LPWSTR ResultReadString = (LPWSTR)(compdata + compstr->dwResultReadStrOffset);
+            if (dwBufLen >= rc)
+                memcpy(lpBuf,ResultStr,rc);
+        }
+        break;
+    case GCS_RESULTREADSTR:
+        if (compstr->dwResultReadStrLen > 0 && compstr->dwResultReadStrOffset > 0)
+        {
+            LPWSTR ResultReadString = (LPWSTR)(compdata + compstr->dwResultReadStrOffset);
 
-        rc = compstr->dwResultReadStrLen * sizeof(WCHAR);
-        if (dwBufLen >= rc)
-            memcpy(lpBuf,ResultReadString,rc);
-    }
-    else if (dwIndex == GCS_COMPSTR && compstr->dwCompStrLen > 0 &&
-              compstr->dwCompStrOffset > 0)
-    {
-        LPWSTR CompString = (LPWSTR)(compdata + compstr->dwCompStrOffset);
-        rc = compstr->dwCompStrLen * sizeof(WCHAR);
-        if (dwBufLen >= rc)
-            memcpy(lpBuf,CompString,rc);
-    }
-    else if (dwIndex == GCS_COMPATTR && compstr->dwCompAttrLen > 0 &&
-             compstr->dwCompAttrOffset > 0)
-    {
+            rc = compstr->dwResultReadStrLen * sizeof(WCHAR);
+            if (dwBufLen >= rc)
+                memcpy(lpBuf,ResultReadString,rc);
+        }
+        break;
+    case GCS_COMPSTR:
+        if (compstr->dwCompStrLen > 0 && compstr->dwCompStrOffset > 0)
+        {
+            LPWSTR CompString = (LPWSTR)(compdata + compstr->dwCompStrOffset);
+            rc = compstr->dwCompStrLen * sizeof(WCHAR);
+            if (dwBufLen >= rc)
+                memcpy(lpBuf,CompString,rc);
+        }
+        break;
+    case GCS_COMPATTR:
+        if (compstr->dwCompAttrLen > 0 && compstr->dwCompAttrOffset > 0)
+        {
 
-        LPWSTR Compattr = (LPWSTR)(compdata + compstr->dwCompAttrOffset);
+            LPWSTR Compattr = (LPWSTR)(compdata + compstr->dwCompAttrOffset);
 
-        rc = compstr->dwCompAttrLen;
-        if (dwBufLen >= rc)
-            memcpy(lpBuf,Compattr,rc);
-    }
-    else if (dwIndex == GCS_COMPCLAUSE && compstr->dwCompClauseLen > 0 &&
-             compstr->dwCompClauseOffset > 0)
-    {
-        LPWSTR Compclause = (LPWSTR)(compdata + compstr->dwCompClauseOffset);
+            rc = compstr->dwCompAttrLen;
+            if (dwBufLen >= rc)
+                memcpy(lpBuf,Compattr,rc);
+        }
+        break;
+    case GCS_COMPCLAUSE:
+        if (compstr->dwCompClauseLen > 0 && compstr->dwCompClauseOffset > 0)
+        {
+            LPWSTR Compclause = (LPWSTR)(compdata + compstr->dwCompClauseOffset);
 
-        rc = compstr->dwCompClauseLen;
-        if (dwBufLen >= compstr->dwCompClauseLen)
-            memcpy(lpBuf,Compclause,rc);
-    }
-    else if (dwIndex == GCS_COMPREADSTR && compstr->dwCompReadStrLen > 0 &&
-              compstr->dwCompReadStrOffset > 0)
-    {
-        LPWSTR CompReadString = (LPWSTR)(compdata + compstr->dwCompReadStrOffset);
+            rc = compstr->dwCompClauseLen;
+            if (dwBufLen >= compstr->dwCompClauseLen)
+                memcpy(lpBuf,Compclause,rc);
+        }
+        break;
+    case GCS_COMPREADSTR:
+        if (compstr->dwCompReadStrLen > 0 && compstr->dwCompReadStrOffset > 0)
+        {
+            LPWSTR CompReadString = (LPWSTR)(compdata + compstr->dwCompReadStrOffset);
 
-        rc = compstr->dwCompReadStrLen * sizeof(WCHAR);
+            rc = compstr->dwCompReadStrLen * sizeof(WCHAR);
 
-        if (dwBufLen >= rc)
-            memcpy(lpBuf,CompReadString,rc);
-    }
-    else if (dwIndex == GCS_CURSORPOS)
-    {
+            if (dwBufLen >= rc)
+                memcpy(lpBuf,CompReadString,rc);
+        }
+        break;
+    case GCS_CURSORPOS:
         TRACE("GCS_CURSORPOS\n");
         rc = compstr->dwCursorPos;
-    }
-    else if (dwIndex == GCS_DELTASTART)
-    {
+        break;
+    case GCS_DELTASTART:
         TRACE("GCS_DELTASTART\n");
         rc = compstr->dwDeltaStart;
-    }
-    else
-    {
+        break;
+    default:
         FIXME("Unhandled index 0x%x\n",dwIndex);
+        break;
     }
 
     ImmUnlockIMCC(data->IMC.hCompStr);
