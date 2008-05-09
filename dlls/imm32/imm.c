@@ -1054,6 +1054,48 @@ LONG WINAPI ImmGetCompositionStringA(
             TRACE("GCS_RESULTCLAUSE %p %i\n", buffer, rc);
         }
         break;
+    case GCS_RESULTREADSTR:
+        if (compstr->dwResultReadStrLen > 0 && compstr->dwResultReadStrOffset > 0)
+        {
+            isString = TRUE;
+            buffer = compdata + compstr->dwResultReadStrOffset;
+            rc =  compstr->dwResultReadStrLen;
+            TRACE("GCS_RESULTREADSTR %p %i\n",buffer, rc);
+        }
+        break;
+    case GCS_RESULTREADCLAUSE:
+        if (compstr->dwResultReadClauseLen > 0 && compstr->dwResultReadClauseOffset > 0)
+        {
+            buffer = compdata + compstr->dwResultReadClauseOffset;
+            rc = compstr->dwResultReadClauseLen;
+            TRACE("GCS_RESULTREADCLAUSE %p %i\n", buffer, rc);
+        }
+        break;
+    case GCS_COMPREADSTR:
+        if (compstr->dwCompReadStrLen > 0 && compstr->dwCompReadStrOffset > 0)
+        {
+            isString = TRUE;
+            buffer = compdata + compstr->dwCompReadStrOffset;
+            rc = compstr->dwCompReadStrLen;
+            TRACE("GCS_COMPREADSTR %p %i\n", buffer, rc);
+        }
+        break;
+    case GCS_COMPREADATTR:
+        if (compstr->dwCompReadAttrLen > 0 && compstr->dwCompReadAttrOffset > 0)
+        {
+            buffer = compdata + compstr->dwCompReadAttrOffset;
+            rc = compstr->dwCompReadAttrLen;
+            TRACE("GCS_COMPREADATTR %p %i\n", buffer, rc);
+        }
+        break;
+    case GCS_COMPREADCLAUSE:
+        if (compstr->dwCompReadClauseLen > 0 && compstr->dwCompReadClauseOffset > 0)
+        {
+            buffer = compdata + compstr->dwCompReadClauseOffset;
+            rc = compstr->dwCompReadClauseLen;
+            TRACE("GCS_COMPREADCLAUSE %p %i\n", buffer, rc);
+        }
+        break;
     case GCS_CURSORPOS:
         TRACE("GCS_CURSORPOS\n");
         rc = compstr->dwCursorPos;
@@ -1163,6 +1205,38 @@ LONG WINAPI ImmGetCompositionStringW(
             buffer = compdata + compstr->dwCompReadStrOffset;
             rc = compstr->dwCompReadStrLen;
             TRACE("GCS_COMPREADSTR %p %i\n", buffer, rc);
+        }
+        break;
+    case GCS_COMPREADATTR:
+        if (compstr->dwCompReadAttrLen > 0 && compstr->dwCompReadAttrOffset > 0)
+        {
+            buffer = compdata + compstr->dwCompReadAttrOffset;
+            rc = compstr->dwCompReadAttrLen;
+            TRACE("GCS_COMPREADATTR %p %i\n", buffer, rc);
+        }
+        break;
+    case GCS_COMPREADCLAUSE:
+        if (compstr->dwCompReadClauseLen > 0 && compstr->dwCompReadClauseOffset > 0)
+        {
+            buffer = compdata + compstr->dwCompReadClauseOffset;
+            rc = compstr->dwCompReadClauseLen;
+            TRACE("GCS_COMPREADCLAUSE %p %i\n", buffer, rc);
+        }
+        break;
+    case GCS_RESULTREADCLAUSE:
+        if (compstr->dwResultReadClauseLen > 0 && compstr->dwResultReadClauseOffset > 0)
+        {
+            buffer = compdata + compstr->dwResultReadClauseOffset;
+            rc = compstr->dwResultReadClauseLen;
+            TRACE("GCS_RESULTREADCLAUSE %p %i\n", buffer, rc);
+        }
+        break;
+    case GCS_RESULTCLAUSE:
+        if (compstr->dwResultClauseLen > 0 && compstr->dwResultClauseOffset > 0)
+        {
+            buffer = compdata + compstr->dwResultClauseOffset;
+            rc = compstr->dwResultClauseLen;
+            TRACE("GCS_RESULTCLAUSE %p %i\n", buffer, rc);
         }
         break;
     case GCS_CURSORPOS:
