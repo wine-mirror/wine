@@ -1201,7 +1201,7 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
 }
 
 /***********************************************************************
- *  HTTP_InsertAuthorizationForHeader
+ *  HTTP_InsertAuthorization
  *
  *   Insert or delete the authorization field in the request header.
  */
@@ -1268,7 +1268,7 @@ static WCHAR *HTTP_BuildProxyRequestUrl(WININETHTTPREQW *req)
         size = 15; /* "http://" + sizeof(port#) + ":/\0" */
         size += strlenW( session->lpszHostName ) + strlenW( req->lpszPath );
 
-        if (!(url = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return FALSE;
+        if (!(url = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return NULL;
 
         sprintfW( url, format, session->lpszHostName, session->nHostPort );
         if (req->lpszPath[0] != '/') strcatW( url, slash );
