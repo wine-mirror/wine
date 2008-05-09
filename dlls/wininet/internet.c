@@ -1895,9 +1895,42 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
         }
 
         case INTERNET_OPTION_USER_AGENT:
-            FIXME("INTERNET_OPTION_USER_AGENT\n");
-            break;
+        {
+            DWORD required;
+            LPWININETAPPINFOW ai = (LPWININETAPPINFOW)lpwhh;
 
+            TRACE("INTERNET_OPTION_USER_AGENT\n");
+
+            if (lpwhh->htype != INTERNET_HANDLE_TYPE_INTERNET)
+            {
+                INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+                return FALSE;
+            }
+            if (bIsUnicode)
+            {
+                required = (strlenW(ai->lpszAgent) + 1) * sizeof(WCHAR);
+                if (*lpdwBufferLength < required)
+                    INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                else if (lpBuffer)
+                {
+                    strcpyW(lpBuffer, ai->lpszAgent);
+                    bSuccess = TRUE;
+                }
+            }
+            else
+            {
+                required = WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, NULL, 0, NULL, NULL);
+                if (*lpdwBufferLength < required)
+                    INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                else if (lpBuffer)
+                {
+                    WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, lpBuffer, required, NULL, NULL);
+                    bSuccess = TRUE;
+                }
+            }
+            *lpdwBufferLength = required;
+            break;
+        }
         case INTERNET_OPTION_HTTP_VERSION:
         {
             if (*lpdwBufferLength < sizeof(HTTP_VERSION_INFO))
