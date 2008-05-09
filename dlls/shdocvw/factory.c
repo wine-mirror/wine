@@ -293,6 +293,7 @@ static BOOL check_native_ie(void)
 {
     static const WCHAR cszPath[] = {'b','r','o','w','s','e','u','i','.','d','l','l',0};
     DWORD handle,size;
+    BOOL ret = TRUE;
 
     size = GetFileVersionInfoSizeW(cszPath,&handle);
     if (size)
@@ -308,10 +309,12 @@ static BOOL check_native_ie(void)
 
         if (VerQueryValueW(buf, cszFD, (LPVOID*)&lpFileDescription, &dwBytes) &&
             strstrW(lpFileDescription,cszWine))
-                return FALSE;
+                ret = FALSE;
+
+        HeapFree(GetProcessHeap(), 0, buf);
     }
 
-    return TRUE;
+    return ret;
 }
 
 DWORD register_iexplore(BOOL doregister)
