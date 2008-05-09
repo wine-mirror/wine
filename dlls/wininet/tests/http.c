@@ -1792,7 +1792,9 @@ static void test_bogus_accept_types_array(void)
     size = sizeof(buffer);
     ret = HttpQueryInfo(req, HTTP_QUERY_ACCEPT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
     ok(ret, "HttpQueryInfo failed: %u\n", GetLastError());
-    ok(!strcmp(buffer, "*/*, %p, */*"), "got '%s' expected '*/*, %%p, */*'\n", buffer);
+    ok(!strcmp(buffer, ", */*, %p, , */*") || /* IE6 */
+       !strcmp(buffer, "*/*, %p, */*"),
+       "got '%s' expected '*/*, %%p, */*' or ', */*, %%p, , */*'\n", buffer);
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
