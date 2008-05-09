@@ -727,6 +727,12 @@ GpStatus WINGDIPAPI GdipLoadImageFromFile(GDIPCONST WCHAR* filename,
     return stat;
 }
 
+/* FIXME: no icm handling */
+GpStatus WINGDIPAPI GdipLoadImageFromFileICM(GDIPCONST WCHAR* filename,GpImage **image)
+{
+    return GdipLoadImageFromFile(filename, image);
+}
+
 GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
 {
     IPicture *pic;

@@ -121,6 +121,12 @@ static void test_LoadingImages(void)
 
     stat = GdipLoadImageFromFile(0, (GpImage**)0xdeadbeef);
     expect(InvalidParameter, stat);
+
+    stat = GdipLoadImageFromFileICM(0, 0);
+    expect(InvalidParameter, stat);
+
+    stat = GdipLoadImageFromFileICM(0, (GpImage**)0xdeadbeef);
+    expect(InvalidParameter, stat);
 }
 
 static void test_SavingImages(void)
