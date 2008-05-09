@@ -47,6 +47,11 @@ static void test_constructor_destructor(void)
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
 
+    stat = GdipCreateFromHWNDICM(NULL, &graphics);
+    expect(Ok, stat);
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
     stat = GdipDeleteGraphics(NULL);
     expect(InvalidParameter, stat);
     ReleaseDC(0, hdc);

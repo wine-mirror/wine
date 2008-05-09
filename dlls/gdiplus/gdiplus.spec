@@ -92,7 +92,7 @@
 @ stdcall GdipCreateFromHDC2(long long ptr)
 @ stdcall GdipCreateFromHDC(long ptr)
 @ stdcall GdipCreateFromHWND(long ptr)
-@ stub GdipCreateFromHWNDICM
+@ stdcall GdipCreateFromHWNDICM(long ptr)
 @ stdcall GdipCreateHBITMAPFromBitmap(ptr ptr long)
 @ stub GdipCreateHICONFromBitmap
 @ stub GdipCreateHalftonePalette
