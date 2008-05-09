@@ -1452,6 +1452,17 @@ static DWORD CALLBACK server_thread(LPVOID param)
             send(c, page1, sizeof page1-1, 0);
         }
 
+        if (strstr(buffer, "POST /test7"))
+        {
+            if (strstr(buffer, "Content-Length: 100"))
+            {
+                send(c, okmsg, sizeof okmsg-1, 0);
+                send(c, page1, sizeof page1-1, 0);
+            }
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
+
         if (strstr(buffer, "GET /quit"))
         {
             send(c, okmsg, sizeof okmsg-1, 0);
@@ -1643,6 +1654,23 @@ static void test_header_handling_order(int port)
 
     request = HttpOpenRequest(connect, NULL, "/test4", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
     ok(request != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(request, connection, ~0UL, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(status == 200, "request failed with status %u\n", status);
+
+    InternetCloseHandle(request);
+
+    request = HttpOpenRequest(connect, "POST", "/test7", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpAddRequestHeaders(request, "Content-Length: 100\r\n", ~0UL, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    ok(ret, "HttpAddRequestHeaders failed\n");
 
     ret = HttpSendRequest(request, connection, ~0UL, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
