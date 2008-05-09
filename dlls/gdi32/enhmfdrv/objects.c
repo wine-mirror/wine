@@ -502,8 +502,10 @@ HPALETTE EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
     DWORD index;
 
     if (hPal == GetStockObject( DEFAULT_PALETTE ))
+    {
         index = DEFAULT_PALETTE | 0x80000000;
         goto found;
+    }
 
     if ((index = EMFDRV_FindObject( dev, hPal )) != 0)
         goto found;
