@@ -2343,8 +2343,6 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
     HRESULT hr;
     TRACE("(%p)->(%08x,%p)\n", This, dwRenderStateType, lpdwRenderState);
 
-    /* D3DRENDERSTATE_TEXTUREMAPBLEND is mapped to texture state stages in SetRenderState; reverse
-       the mapping to get the value. */
     switch(dwRenderStateType)
     {
         case D3DRENDERSTATE_TEXTUREHANDLE:
@@ -2354,6 +2352,8 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
              */
             IWineD3DBaseTexture *tex = NULL;
             *lpdwRenderState = 0;
+
+            EnterCriticalSection(&ddraw_cs);
 
             hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
                                            0,
@@ -2378,11 +2378,15 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
                 IWineD3DBaseTexture_Release(tex);
             }
 
+            LeaveCriticalSection(&ddraw_cs);
+
             return hr;
         }
 
         case D3DRENDERSTATE_TEXTUREMAPBLEND:
         {
+            /* D3DRENDERSTATE_TEXTUREMAPBLEND is mapped to texture state stages in SetRenderState; reverse
+               the mapping to get the value. */
             DWORD colorop, colorarg1, colorarg2;
             DWORD alphaop, alphaarg1, alphaarg2;
 
@@ -2627,6 +2631,8 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
     TRACE("(%p)->(%08x,%d)\n", This, RenderStateType, Value);
 
+    EnterCriticalSection(&ddraw_cs);
+
     switch(RenderStateType)
     {
         case D3DRENDERSTATE_TEXTUREHANDLE:
@@ -2661,8 +2667,6 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
 
         case D3DRENDERSTATE_TEXTUREMAPBLEND:
         {
-            EnterCriticalSection(&ddraw_cs);
-
             This->legacyTextureBlending = TRUE;
 
             switch ( (D3DTEXTUREBLEND) Value)
@@ -2748,8 +2752,6 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     ERR("Unhandled texture environment %d !\n",Value);
             }
 
-            LeaveCriticalSection(&ddraw_cs);
-
             hr = D3D_OK;
             break;
         }
@@ -2760,6 +2762,8 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                                            Value);
             break;
     }
+
+    LeaveCriticalSection(&ddraw_cs);
 
     return hr;
 }
@@ -4429,6 +4433,8 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
     HRESULT hr;
     TRACE("(%p)->(%d,%p)\n", This, Stage, tex);
 
+    EnterCriticalSection(&ddraw_cs);
+
     if (This->legacyTextureBlending)
         IDirect3DDevice3_GetRenderState(iface, D3DRENDERSTATE_TEXTUREMAPBLEND, &texmapblend);
 
@@ -4446,8 +4452,6 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
         WINED3DFORMAT fmt;
         DDPIXELFORMAT ddfmt;
         HRESULT result;
-
-        EnterCriticalSection(&ddraw_cs);
 
         result = IWineD3DDevice_GetTexture(This->wineD3DDevice,
                                     0,
@@ -4477,9 +4481,9 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
         {
             IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_CURRENT);
         }
-
-        LeaveCriticalSection(&ddraw_cs);
     }
+
+    LeaveCriticalSection(&ddraw_cs);
 
     return hr;
 }
