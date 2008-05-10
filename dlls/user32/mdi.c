@@ -570,7 +570,8 @@ static LRESULT MDIDestroyChild( HWND client, MDICLIENTINFO *ci,
                 ci->hwndChildMaximized = 0;
                 MDI_UpdateFrameText(frame, client, TRUE, NULL);
             }
-            if (flagDestroy) ci->hwndActiveChild = 0;
+            if (flagDestroy)
+                MDI_ChildActivate(client, 0);
         }
     }
 
