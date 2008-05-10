@@ -49,7 +49,7 @@ typedef struct
 	UINT uFlags ;
     } RUNFILEDLGPARAMS ;
 
-typedef BOOL (*LPFNOFN) (OPENFILENAMEA *) ;
+typedef BOOL (*WINAPI LPFNOFN) (OPENFILENAMEA *) ;
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 static INT_PTR CALLBACK RunDlgProc (HWND, UINT, WPARAM, LPARAM) ;
@@ -178,8 +178,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     {
                     HMODULE hComdlg = NULL ;
                     LPFNOFN ofnProc = NULL ;
-                    static char szFName[1024] = "", szFileTitle[256] = "", szInitDir[768] = "" ;
-                    static OPENFILENAMEA ofn =
+                    char szFName[1024] = "", szFileTitle[256] = "", szInitDir[768] = "" ;
+                    OPENFILENAMEA ofn =
                         {
                         sizeof (OPENFILENAMEA),
                         NULL,
@@ -211,7 +211,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         return TRUE ;
                         }
 
-                    if ((LPFNOFN)NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameA")))
+                    if (NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameA")))
                         {
                         MessageBoxA (hwnd, "Unable to display dialog box (GetProcAddress) !", "Nix", MB_OK | MB_ICONEXCLAMATION) ;
                         return TRUE ;
