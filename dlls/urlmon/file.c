@@ -154,6 +154,9 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
             }
         }
 
+        if(file_name[1] == '|')
+            file_name[1] = ':';
+
         This->file = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL,
                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
