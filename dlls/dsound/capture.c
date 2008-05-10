@@ -748,7 +748,7 @@ static HRESULT IDirectSoundCaptureNotifyImpl_Create(
     IDirectSoundCaptureNotifyImpl * dscn;
     TRACE("(%p,%p)\n",dscb,pdscn);
 
-    dscn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscn));
+    dscn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dscn));
 
     if (dscn == NULL) {
 	WARN("out of memory\n");

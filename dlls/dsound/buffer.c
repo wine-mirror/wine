@@ -154,7 +154,7 @@ static HRESULT IDirectSoundNotifyImpl_Create(
     IDirectSoundNotifyImpl * dsn;
     TRACE("(%p,%p)\n",dsb,pdsn);
 
-    dsn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dsn));
+    dsn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dsn));
 
     if (dsn == NULL) {
         WARN("out of memory\n");
