@@ -1384,6 +1384,16 @@ static void test_file_protocol_fail(void)
     CHECK_CALLED(ReportProgress_SENDINGREQUEST);
     CHECK_CALLED(ReportResult);
 
+    SET_EXPECT(GetBindInfo);
+    hres = IInternetProtocol_Start(protocol, NULL, &protocol_sink, &bind_info, 0, 0);
+    ok(hres == E_INVALIDARG, "Start failed: %08x, expected E_INVALIDARG\n", hres);
+    CHECK_CALLED(GetBindInfo);
+
+    SET_EXPECT(GetBindInfo);
+    hres = IInternetProtocol_Start(protocol, emptyW, &protocol_sink, &bind_info, 0, 0);
+    ok(hres == E_INVALIDARG, "Start failed: %08x, expected E_INVALIDARG\n", hres);
+    CHECK_CALLED(GetBindInfo);
+
     IInternetProtocol_Release(protocol);
 }
 

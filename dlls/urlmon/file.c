@@ -119,6 +119,9 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     ReleaseBindInfo(&bindinfo);
 
+    if(!szUrl || !*szUrl)
+        return E_INVALIDARG;
+
     if(lstrlenW(szUrl) < sizeof(wszFile)/sizeof(WCHAR)
             || memcmp(szUrl, wszFile, sizeof(wszFile)))
         return MK_E_SYNTAX;
