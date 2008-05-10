@@ -1239,7 +1239,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Create(
     IDsCaptureDriverPropertySetImpl * dscdps;
     TRACE("(%p,%p)\n",dscdb,pdscdps);
 
-    dscdps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscdps));
+    dscdps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dscdps));
     if (dscdps == NULL) {
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
@@ -1262,7 +1262,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_Create(
     IDsCaptureDriverNotifyImpl * dscdn;
     TRACE("(%p,%p)\n",dscdb,pdscdn);
 
-    dscdn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscdn));
+    dscdn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dscdn));
     if (dscdn == NULL) {
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
