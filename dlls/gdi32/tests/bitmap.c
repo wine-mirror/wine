@@ -416,6 +416,13 @@ static void test_dibsections(void)
     pbmi->bmiHeader.biCompression = BI_RGB;
 
     SetLastError(0xdeadbeef);
+
+    /* invalid pointer for BITMAPINFO
+       (*bits should be NULL on error) */
+    bits = (BYTE*)0xdeadbeef;
+    hdib = CreateDIBSection(hdc, NULL, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib == NULL && bits == NULL, "CreateDIBSection failed for invalid parameter: bmi == 0x0\n");
+
     hdib = CreateDIBSection(hdc, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hdib != NULL, "CreateDIBSection error %d\n", GetLastError());
     ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIBSection\n");

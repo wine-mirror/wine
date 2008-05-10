@@ -1258,6 +1258,11 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     DWORD compression, sizeImage;
     void *mapBits = NULL;
 
+    if(!bmi){
+        if(bits) *bits = NULL;
+        return NULL;
+    }
+
     if (((bitmap_type = DIB_GetBitmapInfo( &bmi->bmiHeader, &width, &height,
                                            &planes, &bpp, &compression, &sizeImage )) == -1))
         return 0;
