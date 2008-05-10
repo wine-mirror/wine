@@ -355,7 +355,7 @@ static const IBindStatusCallbackVtbl DLBindStatusCallback_Vtbl =
 static DLBindStatusCallback *DLBindStatusCallbackConstructor(
     BackgroundCopyFileImpl *file)
 {
-    DLBindStatusCallback *This = HeapAlloc(GetProcessHeap(), 0, sizeof This);
+    DLBindStatusCallback *This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
     if (!This)
         return NULL;
 
