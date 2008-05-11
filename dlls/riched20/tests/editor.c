@@ -1921,6 +1921,16 @@ static void test_EM_SCROLL(void)
   int expr; /* expected return value */
   HWND hwndRichEdit = new_richedit(NULL);
   int y_before, y_after; /* units of lines of text */
+  SCROLLINFO si;
+
+  /* Empty richedit should have scroll range of 0 */
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok(si.nMin == 0, "si.nMin == %d, expected 0\n", si.nMin);
+  ok(si.nMax == 0, "si.nMax == %d, expected 0\n", si.nMax);
+  ok(si.nPos == 0, "si.nPos == %d, expected 0\n", si.nPos);
+  ok(si.nPage == 0, "si.nPage == %d, expected 0\n", si.nPage);
 
   /* test a richedit box containing a single line of text */
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "a");/* one line of text */
@@ -4181,7 +4191,6 @@ START_TEST( editor )
   test_EM_GETMODIFY();
   test_EM_EXSETSEL();
   test_WM_PASTE();
-  test_EM_AUTOURLDETECT();
   test_EM_STREAMIN();
   test_EM_STREAMOUT();
   test_EM_StreamIn_Undo();
@@ -4191,6 +4200,7 @@ START_TEST( editor )
   test_EM_REPLACESEL(1);
   test_EM_REPLACESEL(0);
   test_WM_NOTIFY();
+  test_EM_AUTOURLDETECT();
   test_eventMask();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
