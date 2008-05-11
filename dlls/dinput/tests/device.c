@@ -124,10 +124,13 @@ static BOOL CALLBACK enum_devices(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
     LPDIRECTINPUTDEVICE device;
     HRESULT hr;
 
-    hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, &device, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
-    if (SUCCEEDED(hr))
+    hr = IDirectInput_GetDeviceStatus(data->pDI, &lpddi->guidInstance);
+    ok(hr == DI_OK, "IDirectInput_GetDeviceStatus() failed: %s\n", DXGetErrorString8(hr));
+
+    if (hr == DI_OK)
     {
+        hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, &device, NULL);
+        ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
         trace("Testing device \"%s\"\n", lpddi->tszInstanceName);
         test_object_info(device, data->hwnd);
         IUnknown_Release(device);
@@ -163,6 +166,18 @@ static void device_tests(void)
         data.hwnd = hwnd;
         hr = IDirectInput_EnumDevices(pDI, 0, enum_devices, &data, DIEDFL_ALLDEVICES);
         ok(SUCCEEDED(hr), "IDirectInput_EnumDevices() failed: %s\n", DXGetErrorString8(hr));
+
+
+        /* If GetDeviceStatus returns DI_OK the device must exist */
+        hr = IDirectInput_GetDeviceStatus(pDI, &GUID_Joystick);
+        if (hr == DI_OK)
+        {
+            LPDIRECTINPUTDEVICE device = NULL;
+
+            hr = IDirectInput_CreateDevice(pDI, &GUID_Joystick, &device, NULL);
+            ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
+            if (device) IUnknown_Release(device);
+        }
 
         DestroyWindow(hwnd);
     }

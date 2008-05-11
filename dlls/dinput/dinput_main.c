@@ -417,8 +417,15 @@ static HRESULT WINAPI IDirectInputWImpl_Initialize(LPDIRECTINPUT7W iface, HINSTA
 static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUT7A iface, REFGUID rguid)
 {
     IDirectInputImpl *This = (IDirectInputImpl *)iface;
+    HRESULT hr;
+    LPDIRECTINPUTDEVICEA device;
 
-    FIXME( "(%p)->(%s): stub\n", This, debugstr_guid(rguid) );
+    TRACE( "(%p)->(%s)\n", This, debugstr_guid(rguid) );
+
+    hr = IDirectInput_CreateDevice( iface, rguid, &device, NULL );
+    if (hr != DI_OK) return DI_NOTATTACHED;
+
+    IUnknown_Release( device );
 
     return DI_OK;
 }
