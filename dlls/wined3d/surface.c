@@ -3878,7 +3878,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         rect.bottom = This->currentDesc.Height;
     }
 
-    ActivateContext(device, device->render_targets[0], CTXUSAGE_BLIT);
+    ActivateContext(device, (IWineD3DSurface*)This, CTXUSAGE_BLIT);
     ENTER_GL();
 
     if(This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB) {
