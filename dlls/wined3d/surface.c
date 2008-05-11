@@ -3397,7 +3397,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
 
         /* Flush in case the drawable is used by multiple GL contexts */
-        if(dstSwapchain && (dstSwapchain->num_contexts >= 2))
+        if(dstSwapchain && (This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer || dstSwapchain->num_contexts >= 2))
             glFlush();
 
         glBindTexture(Src->glDescription.target, 0);
@@ -4020,7 +4020,8 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     hr = IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain);
     if(hr == WINED3D_OK && swapchain) {
         /* Make sure to flush the buffers. This is needed in apps like Red Alert II and Tiberian SUN that use multiple WGL contexts. */
-        if(((IWineD3DSwapChainImpl*)swapchain)->num_contexts >= 2)
+        if(((IWineD3DSwapChainImpl*)swapchain)->frontBuffer == (IWineD3DSurface*)This ||
+           ((IWineD3DSwapChainImpl*)swapchain)->num_contexts >= 2)
             glFlush();
 
         IWineD3DSwapChain_Release(swapchain);
