@@ -127,9 +127,8 @@ static BOOL     source_locate_file(const char* srcfile, char* path)
         spath = srcfile;
         while (!found)
         {
-            spath = strchr(spath, '\\');
-            if (!spath) spath = strchr(spath, '/');
-            if (!spath) break;
+            while (*spath && *spath != '/' && *spath != '\\') spath++;
+            if (!*spath) break;
             spath++;
             found = SearchPathA(dbg_curr_process->search_path, spath, NULL, MAX_PATH, path, NULL);
         }
