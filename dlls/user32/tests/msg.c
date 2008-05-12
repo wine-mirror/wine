@@ -5783,6 +5783,38 @@ static void test_paint_messages(void)
     DestroyWindow( hparent );
     ok(!IsWindow(hchild), "child must be destroyed with its parent\n");
 
+    /* tests for moving windows off-screen (needs simple WS_POPUP windows) */
+
+    hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_POPUP | WS_VISIBLE,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hparent != 0, "Failed to create parent window\n");
+
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_VISIBLE,
+                           10, 10, 100, 100, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+
+    ShowWindow( hparent, SW_SHOW );
+    UpdateWindow( hparent );
+    UpdateWindow( hchild );
+    flush_events();
+    flush_sequence();
+
+    /* moving child outside of parent boundaries changes update region */
+    SetRect( &rect, 0, 0, 40, 40 );
+    RedrawWindow( hchild, &rect, 0, RDW_INVALIDATE | RDW_ERASE );
+    SetRectRgn( hrgn, 0, 0, 40, 40 );
+    check_update_rgn( hchild, hrgn );
+    MoveWindow( hchild, -10, 10, 100, 100, FALSE );
+    SetRectRgn( hrgn, 10, 0, 40, 40 );
+    check_update_rgn( hchild, hrgn );
+    MoveWindow( hchild, -10, -10, 100, 100, FALSE );
+    SetRectRgn( hrgn, 10, 10, 40, 40 );
+    check_update_rgn( hchild, hrgn );
+
+    DestroyWindow( hparent );
+    ok(!IsWindow(hchild), "child must be destroyed with its parent\n");
+    flush_sequence();
+
     DeleteObject( hrgn );
     DeleteObject( hrgn2 );
 }
