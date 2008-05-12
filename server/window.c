@@ -1097,6 +1097,45 @@ static int add_update_region( struct window *win, struct region *region )
 }
 
 
+/* crop the update region of children to the specified rectangle, in client coords */
+static void crop_children_update_region( struct window *win, rectangle_t *rect )
+{
+    struct window *child;
+    struct region *tmp = create_empty_region();
+    rectangle_t child_rect;
+
+    LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
+    {
+        if (!(child->style & WS_VISIBLE)) continue;
+        if (!rect)  /* crop everything out */
+        {
+            crop_children_update_region( child, NULL );
+            set_update_region( child, NULL );
+            continue;
+        }
+
+        /* nothing to do if child is completely inside rect */
+        if (child->window_rect.left >= rect->left &&
+            child->window_rect.top >= rect->top &&
+            child->window_rect.right <= rect->right &&
+            child->window_rect.bottom <= rect->bottom) continue;
+
+        /* map to child client coords and crop grand-children */
+        child_rect = *rect;
+        offset_rect( &child_rect, -child->client_rect.left, -child->client_rect.top );
+        crop_children_update_region( child, &child_rect );
+
+        /* now crop the child itself */
+        if (!child->update_region) continue;
+        if (!(tmp = create_empty_region())) continue;
+        set_region_rect( tmp, rect );
+        offset_region( tmp, -child->window_rect.left, -child->window_rect.top );
+        if (intersect_region( tmp, child->update_region, tmp )) set_update_region( child, tmp );
+        else free_region( tmp );
+    }
+}
+
+
 /* validate the non client area of a window */
 static void validate_non_client( struct window *win )
 {
@@ -1520,6 +1559,17 @@ static void set_window_pos( struct window *win, struct window *previous,
         }
         else set_update_region( win, NULL ); /* visible rect is empty */
     }
+
+    /* crop children regions to the new window rect */
+
+    if (get_window_visible_rect( win, &rect, 0 ))
+    {
+        /* map to client coords */
+        offset_rect( &rect, win->window_rect.left - win->client_rect.left,
+                     win->window_rect.top - win->client_rect.top );
+        crop_children_update_region( win, &rect );
+    }
+    else crop_children_update_region( win, NULL );
 
     if (swp_flags & SWP_NOREDRAW) goto done;  /* do not repaint anything */
 

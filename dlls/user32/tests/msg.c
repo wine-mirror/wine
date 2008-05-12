@@ -5811,6 +5811,19 @@ static void test_paint_messages(void)
     SetRectRgn( hrgn, 10, 10, 40, 40 );
     check_update_rgn( hchild, hrgn );
 
+    /* moving parent off-screen does too */
+    SetRect( &rect, 0, 0, 100, 100 );
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
+    SetRectRgn( hrgn, 0, 0, 100, 100 );
+    check_update_rgn( hparent, hrgn );
+    SetRectRgn( hrgn, 10, 10, 40, 40 );
+    check_update_rgn( hchild, hrgn );
+    MoveWindow( hparent, -20, -20, 200, 200, FALSE );
+    SetRectRgn( hrgn, 20, 20, 100, 100 );
+    check_update_rgn( hparent, hrgn );
+    SetRectRgn( hrgn, 30, 30, 40, 40 );
+    check_update_rgn( hchild, hrgn );
+
     DestroyWindow( hparent );
     ok(!IsWindow(hchild), "child must be destroyed with its parent\n");
     flush_sequence();
