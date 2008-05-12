@@ -1904,12 +1904,13 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     if (ret)
     {
-        USER_Driver->pSetWindowPos( hwnd, insert_after, swp_flags, window_rect,
-                                    client_rect, &visible_rect, valid_rects );
-
+        /* FIXME: should update visible rect before invalidating DCE */
         if (((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
             (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED)))
             invalidate_dce( hwnd, &old_window_rect );
+
+        USER_Driver->pSetWindowPos( hwnd, insert_after, swp_flags, window_rect,
+                                    client_rect, &visible_rect, valid_rects );
     }
     return ret;
 }
