@@ -1425,10 +1425,11 @@ int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
   int tmp;
   TRACE("(%p)\n", physDev);
 
+  if (!physDev->current_pf) return 0;  /* not set yet */
+
   fmt = ConvertPixelFormatWGLtoGLX(gdi_display, physDev->current_pf, TRUE, &tmp);
   if(!fmt)
   {
-    /* This happens on HDCs on which SetPixelFormat wasn't called yet */
     ERR("Unable to find a WineGLPixelFormat for iPixelFormat=%d\n", physDev->current_pf);
     return 0;
   }
