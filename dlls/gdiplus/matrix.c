@@ -317,7 +317,7 @@ GpStatus WINGDIPAPI GdipVectorTransformMatrixPoints(GpMatrix *matrix, GpPointF *
     REAL x, y;
     INT i;
 
-    if(!matrix || !pts)
+    if(!matrix || !pts || count <= 0)
         return InvalidParameter;
 
     for(i = 0; i < count; i++)
@@ -337,6 +337,9 @@ GpStatus WINGDIPAPI GdipVectorTransformMatrixPointsI(GpMatrix *matrix, GpPoint *
     GpPointF *ptsF;
     GpStatus ret;
     INT i;
+
+    if(count <= 0)
+        return InvalidParameter;
 
     ptsF = GdipAlloc(sizeof(GpPointF) * count);
     if(!ptsF)
