@@ -735,6 +735,7 @@ if (err<0) { \
     } while(0);
 
     X(period_time);
+    X(tick_time);
 #undef X
 
     if (!sw)

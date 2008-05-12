@@ -448,6 +448,7 @@ static int CreateMMAP(IDsCaptureDriverBufferImpl* pdbi)
     snd_pcm_sw_params_set_silence_threshold(pcm, sw_params, INT_MAX);
     snd_pcm_sw_params_set_silence_size(pcm, sw_params, 0);
     snd_pcm_sw_params_set_avail_min(pcm, sw_params, 0);
+    snd_pcm_sw_params_set_xrun_mode(pcm, sw_params, SND_PCM_XRUN_NONE);
     err = snd_pcm_sw_params(pcm, sw_params);
 
     avail = snd_pcm_avail_update(pcm);
