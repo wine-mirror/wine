@@ -202,7 +202,7 @@ static BOOL install_from_unix_file(const char *file_name)
     }
 
     dos_file_name = wine_get_dos_file_name(file_name);
-    if(!file_name) {
+    if(!dos_file_name) {
         ERR("Could not get dos file name of %s\n", debugstr_a(file_name));
         return FALSE;
     }
