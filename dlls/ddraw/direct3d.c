@@ -826,7 +826,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     object->wineD3DDevice = This->wineD3DDevice;
 
     /* Create an index buffer, it's needed for indexed drawing */
-    IndexBufferParent = HeapAlloc(GetProcessHeap(), 0, sizeof(IParentImpl *));
+    IndexBufferParent = HeapAlloc(GetProcessHeap(), 0, sizeof(IParentImpl));
     if(!IndexBufferParent)
     {
         ERR("Allocating memory for an index buffer parent failed\n");
