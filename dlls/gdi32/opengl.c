@@ -253,6 +253,7 @@ static BOOL WINAPI wglSetPixelFormatWINE(HDC hdc, int iPixelFormat, const PIXELF
 
     if (!dc) return 0;
 
+    update_dc( dc );
     if (!dc->funcs->pwglSetPixelFormatWINE) FIXME(" :stub\n");
     else bRet = dc->funcs->pwglSetPixelFormatWINE(dc->physDev, iPixelFormat, ppfd);
 

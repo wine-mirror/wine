@@ -372,6 +372,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
 
     if (!dc) return 0;
 
+    update_dc( dc );
     if (!dc->funcs->pSetPixelFormat) FIXME(" :stub\n");
     else bRet = dc->funcs->pSetPixelFormat(dc->physDev,iPixelFormat,ppfd);
 
@@ -433,6 +434,7 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
 
     if (!dc) return 0;
 
+    update_dc( dc );
     if (!dc->funcs->pDescribePixelFormat)
     {
         FIXME(" :stub\n");
