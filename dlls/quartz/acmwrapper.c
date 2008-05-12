@@ -210,9 +210,6 @@ error:
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
-    if (hr != S_OK)
-        FIXME("FATALITY: %08x\n", hr);
-
     return hr;
 }
 
