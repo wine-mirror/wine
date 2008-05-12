@@ -255,7 +255,7 @@
 @ stub GdipGetCustomLineCapStrokeJoin
 @ stub GdipGetCustomLineCapType
 @ stub GdipGetCustomLineCapWidthScale
-@ stub GdipGetDC
+@ stdcall GdipGetDC(ptr ptr)
 @ stdcall GdipGetDpiX(ptr ptr)
 @ stdcall GdipGetDpiY(ptr ptr)
 @ stub GdipGetEffectParameterSize
@@ -472,7 +472,7 @@
 @ stub GdipRecordMetafileI
 @ stub GdipRecordMetafileStream
 @ stub GdipRecordMetafileStreamI
-@ stub GdipReleaseDC
+@ stdcall GdipReleaseDC(ptr ptr)
 @ stdcall GdipRemovePropertyItem(ptr long)
 @ stub GdipResetClip
 @ stub GdipResetImageAttributes

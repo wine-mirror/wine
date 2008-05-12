@@ -2427,3 +2427,18 @@ GpStatus WINGDIPAPI GdipMultiplyWorldTransform(GpGraphics *graphics, GDIPCONST G
 
     return ret;
 }
+
+GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
+{
+    FIXME("(%p, %p): stub\n", graphics, hdc);
+
+    *hdc = NULL;
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
+{
+    FIXME("(%p, %p): stub\n", graphics, hdc);
+
+    return NotImplemented;
+}
