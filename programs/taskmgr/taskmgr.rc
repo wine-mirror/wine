@@ -27,6 +27,7 @@
 
 /* Language resources */
 
+#include "Da.rc"
 #include "De.rc"
 #include "En.rc"
 #include "Fr.rc"
