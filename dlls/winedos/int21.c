@@ -3055,14 +3055,6 @@ static void INT21_LongFilename( CONTEXT86 *context )
     WCHAR pathW[MAX_PATH];
     char* pathA;
 
-    if (HIBYTE(HIWORD(GetVersion16())) < 0x07)
-    {
-        TRACE( "LONG FILENAME - functions supported only under DOS7\n" );
-        SET_CFLAG( context );
-        SET_AL( context, 0 );
-        return;
-    }
-
     switch (AL_reg(context))
     {
     case 0x0d: /* RESET DRIVE */
