@@ -2442,3 +2442,10 @@ GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
+{
+   FIXME("(%p, %p): stub\n", graphics, region);
+
+   return NotImplemented;
+}

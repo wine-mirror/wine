@@ -244,7 +244,7 @@
 @ stdcall GdipGetBrushType(ptr ptr)
 @ stub GdipGetCellAscent
 @ stub GdipGetCellDescent
-@ stub GdipGetClip
+@ stdcall GdipGetClip(ptr ptr)
 @ stub GdipGetClipBounds
 @ stub GdipGetClipBoundsI
 @ stdcall GdipGetCompositingMode(ptr ptr)
