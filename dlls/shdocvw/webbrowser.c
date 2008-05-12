@@ -790,16 +790,22 @@ static HRESULT WINAPI WebBrowser_get_RegisterAsBrowser(IWebBrowser2 *iface,
         VARIANT_BOOL *pbRegister)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
+
     FIXME("(%p)->(%p)\n", This, pbRegister);
-    return E_NOTIMPL;
+
+    *pbRegister = This->register_browser;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_RegisterAsBrowser(IWebBrowser2 *iface,
         VARIANT_BOOL bRegister)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
+
     FIXME("(%p)->(%x)\n", This, bRegister);
-    return E_NOTIMPL;
+
+    This->register_browser = bRegister ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_RegisterAsDropTarget(IWebBrowser2 *iface,
@@ -999,6 +1005,7 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
 
     DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret));
 
+    ret->register_browser = VARIANT_FALSE;
     ret->visible = VARIANT_TRUE;
     ret->menu_bar = VARIANT_TRUE;
     ret->address_bar = VARIANT_TRUE;

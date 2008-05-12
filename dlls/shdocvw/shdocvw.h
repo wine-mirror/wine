@@ -139,6 +139,7 @@ struct WebBrowser {
 
     HWND shell_embedding_hwnd;
 
+    VARIANT_BOOL register_browser;
     VARIANT_BOOL visible;
     VARIANT_BOOL menu_bar;
     VARIANT_BOOL address_bar;
