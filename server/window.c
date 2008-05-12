@@ -1036,23 +1036,27 @@ static int get_window_visible_rect( struct window *win, rectangle_t *rect, int f
 /* and converted from client to window coordinates. Helper for (in)validate_window. */
 static struct region *crop_region_to_win_rect( struct window *win, struct region *region, int frame )
 {
-    struct region *tmp = create_empty_region();
+    rectangle_t rect;
+    struct region *tmp;
 
-    if (!tmp) return NULL;
+    if (!get_window_visible_rect( win, &rect, frame )) return NULL;
+    if (!(tmp = create_empty_region())) return NULL;
+    set_region_rect( tmp, &rect );
 
-    /* get bounding rect in client coords */
-    if (frame) set_region_rect( tmp, &win->window_rect );
-    else set_region_client_rect( tmp, win );
-    if (!is_desktop_window(win))
-        offset_region( tmp, -win->client_rect.left, -win->client_rect.top );
+    if (region)
+    {
+        /* map it to client coords */
+        offset_region( tmp, win->window_rect.left - win->client_rect.left,
+                       win->window_rect.top - win->client_rect.top );
 
-    /* intersect specified region with bounding rect */
-    if (region && !intersect_region( tmp, region, tmp )) goto done;
-    if (is_region_empty( tmp )) goto done;
+        /* intersect specified region with bounding rect */
+        if (!intersect_region( tmp, region, tmp )) goto done;
+        if (is_region_empty( tmp )) goto done;
 
-    /* map it to window coords */
-    offset_region( tmp, win->client_rect.left - win->window_rect.left,
-                   win->client_rect.top - win->window_rect.top );
+        /* map it back to window coords */
+        offset_region( tmp, win->client_rect.left - win->window_rect.left,
+                       win->client_rect.top - win->window_rect.top );
+    }
     return tmp;
 
 done:

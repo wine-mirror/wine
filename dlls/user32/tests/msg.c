@@ -5824,6 +5824,12 @@ static void test_paint_messages(void)
     SetRectRgn( hrgn, 30, 30, 40, 40 );
     check_update_rgn( hchild, hrgn );
 
+    /* invalidated region is cropped by the parent rects */
+    SetRect( &rect, 0, 0, 50, 50 );
+    RedrawWindow( hchild, &rect, 0, RDW_INVALIDATE | RDW_ERASE );
+    SetRectRgn( hrgn, 30, 30, 50, 50 );
+    check_update_rgn( hchild, hrgn );
+
     DestroyWindow( hparent );
     ok(!IsWindow(hchild), "child must be destroyed with its parent\n");
     flush_sequence();
