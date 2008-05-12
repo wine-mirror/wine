@@ -545,6 +545,34 @@ static void test_linei(void)
     GdipDeletePath(path);
 }
 
+static path_test_t rect_path[] = {
+    {5.0, 5.0,       PathPointTypeStart, 0, 0}, /*0*/
+    {105.0, 5.0,     PathPointTypeLine,  0, 0}, /*1*/
+    {105.0, 55.0,    PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 55.0,      PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}, /*3*/
+
+    {100.0, 50.0,    PathPointTypeStart, 0, 0}, /*4*/
+    {220.0, 50.0,    PathPointTypeLine,  0, 0}, /*5*/
+    {220.0, 80.0,    PathPointTypeLine,  0, 0}, /*6*/
+    {100.0, 80.0,    PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}  /*7*/
+    };
+
+static void test_rect(void)
+{
+    GpStatus status;
+    GpPath *path;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    status = GdipAddPathRectangle(path, 5.0, 5.0, 100.0, 50.0);
+    expect(Ok, status);
+    status = GdipAddPathRectangle(path, 100.0, 50.0, 120.0, 30.0);
+    expect(Ok, status);
+
+    ok_path(path, rect_path, sizeof(rect_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -564,6 +592,7 @@ START_TEST(graphicspath)
     test_pathpath();
     test_ellipse();
     test_linei();
+    test_rect();
 
     GdiplusShutdown(gdiplusToken);
 }
