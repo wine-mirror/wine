@@ -30,6 +30,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **region)
+{
+    FIXME("(%p): stub\n", region);
+
+    *region = NULL;
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
+{
+    FIXME("(%p, %p): stub\n", path, region);
+
+    *region = NULL;
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipDeleteRegion(GpRegion *region)
+{
+    FIXME("(%p): stub\n", region);
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *region, GpGraphics *graphics, HRGN *hrgn)
+{
+    FIXME("(%p, %p, %p): stub\n", region, graphics, hrgn);
+
+    *hrgn = NULL;
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *region)
 {
     static int calls;

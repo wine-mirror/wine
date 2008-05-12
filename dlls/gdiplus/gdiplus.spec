@@ -122,9 +122,9 @@
 @ stdcall GdipCreatePathIter(ptr ptr)
 @ stdcall GdipCreatePen1(long long long ptr)
 @ stdcall GdipCreatePen2(ptr long long ptr)
-@ stub GdipCreateRegion
+@ stdcall GdipCreateRegion(ptr)
 @ stub GdipCreateRegionHrgn
-@ stub GdipCreateRegionPath
+@ stdcall GdipCreateRegionPath(ptr ptr)
 @ stub GdipCreateRegionRect
 @ stub GdipCreateRegionRectI
 @ stub GdipCreateRegionRgnData
@@ -148,7 +148,7 @@
 @ stdcall GdipDeletePathIter(ptr)
 @ stdcall GdipDeletePen(ptr)
 @ stub GdipDeletePrivateFontCollection
-@ stub GdipDeleteRegion
+@ stdcall GdipDeleteRegion(ptr)
 @ stdcall GdipDeleteStringFormat(ptr)
 @ stdcall GdipDisposeImage(ptr)
 @ stdcall GdipDisposeImageAttributes(ptr)
@@ -379,7 +379,7 @@
 @ stub GdipGetRegionBoundsI
 @ stub GdipGetRegionData
 @ stub GdipGetRegionDataSize
-@ stub GdipGetRegionHRgn
+@ stdcall GdipGetRegionHRgn(ptr ptr ptr)
 @ stub GdipGetRegionScans
 @ stub GdipGetRegionScansCount
 @ stub GdipGetRegionScansI

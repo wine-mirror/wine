@@ -354,6 +354,14 @@ GpStatus WINGDIPAPI GdipCloneStringFormat(GDIPCONST GpStringFormat*,GpStringForm
 GpStatus WINGDIPAPI GdipGetDpiX(GpGraphics*,REAL*);
 GpStatus WINGDIPAPI GdipGetDpiY(GpGraphics*,REAL*);
 
+GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **);
+GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *, GpRegion **);
+GpStatus WINGDIPAPI GdipDeleteRegion(GpRegion *);
+GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *, GpGraphics *, HRGN *);
+GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *);
+GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *);
+
+
 #ifdef __cplusplus
 }
 #endif
