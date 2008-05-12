@@ -454,21 +454,26 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
     if(usexcomposite)
     {
         XSetWindowAttributes attrib;
-        Window parent = X11DRV_get_whole_window( GetAncestor( hwnd, GA_ROOT ));
+        static Window dummy_parent;
 
-        if (!parent) parent = root_window;
         wine_tsx11_lock();
-        data->colormap = XCreateColormap(gdi_display, parent, vis->visual,
+        attrib.override_redirect = True;
+        if (!dummy_parent)
+        {
+            dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, screen_depth,
+                                         InputOutput, visual, CWOverrideRedirect, &attrib );
+            XMapWindow( gdi_display, dummy_parent );
+        }
+        data->colormap = XCreateColormap(gdi_display, dummy_parent, vis->visual,
                                          (vis->class == PseudoColor ||
                                           vis->class == GrayScale ||
                                           vis->class == DirectColor) ?
                                          AllocAll : AllocNone);
-        attrib.override_redirect = True;
         attrib.colormap = data->colormap;
         XInstallColormap(gdi_display, attrib.colormap);
 
         if(data->gl_drawable) XDestroyWindow(gdi_display, data->gl_drawable);
-        data->gl_drawable = XCreateWindow(gdi_display, parent, -w, 0, w, h, 0,
+        data->gl_drawable = XCreateWindow(gdi_display, dummy_parent, -w, 0, w, h, 0,
                                           vis->depth, InputOutput, vis->visual,
                                           CWColormap | CWOverrideRedirect,
                                           &attrib);
