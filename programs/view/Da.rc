@@ -1,0 +1,70 @@
+/*
+ * View
+ * Danish Language Support
+ *
+ * Copyright 2008 Jens Albretsen <jens@albretsen.dk>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
+
+/*
+ *
+ * Menu
+ *
+ */
+
+VIEW MENU
+BEGIN
+    POPUP "&Fil"
+    BEGIN
+	MENUITEM "&Åben",			IDM_OPEN
+        MENUITEM "&Afslut",                     IDM_EXIT
+    END
+    POPUP "&Panorér"
+    BEGIN
+      MENUITEM "&Skalér til vindue",            IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
+      MENUITEM "&Venstre",			IDM_LEFT
+      MENUITEM "Høj&re",			IDM_RIGHT
+      MENUITEM "&Op",				IDM_UP
+      MENUITEM "Ne&d",				IDM_DOWN
+    END
+END
+
+
+/*
+ *
+ * Accelerator
+ *
+ */
+
+VIEW ACCELERATORS
+BEGIN
+    "Q", IDM_EXIT, VIRTKEY, CONTROL
+END
+
+
+/*
+ *
+ * String Table
+ *
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DESCRIPTION         "Normal metafil-fremviser"
+END
