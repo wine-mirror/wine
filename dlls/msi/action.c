@@ -5659,15 +5659,30 @@ static UINT ITERATE_PublishAssembly( MSIRECORD *rec, LPVOID param )
     file = msi_find_file(package, comp->KeyPath);
 
     GetTempPathW(MAX_PATH, path);
-    r = msi_extract_file(package, file, path);
-    if (r != ERROR_SUCCESS)
-    {
-        ERR("Failed to extract temporary assembly\n");
-        return r;
-    }
 
-    PathAddBackslashW(path);
-    lstrcatW(path, file->FileName);
+    if (file->IsCompressed)
+    {
+        r = msi_extract_file(package, file, path);
+        if (r != ERROR_SUCCESS)
+        {
+            ERR("Failed to extract temporary assembly\n");
+            return r;
+        }
+
+        PathAddBackslashW(path);
+        lstrcatW(path, file->FileName);
+    }
+    else
+    {
+        PathAddBackslashW(path);
+        lstrcatW(path, file->FileName);
+
+        if (!CopyFileW(file->SourcePath, path, FALSE))
+        {
+            ERR("Failed to copy temporary assembly: %d\n", GetLastError());
+            return ERROR_FUNCTION_FAILED;
+        }
+    }
 
     r = install_assembly(path);
     if (r != ERROR_SUCCESS)
