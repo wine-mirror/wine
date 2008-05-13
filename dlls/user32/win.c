@@ -3162,21 +3162,45 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 /******************************************************************************
  *		GetWindowModuleFileNameA (USER32.@)
  */
-UINT WINAPI GetWindowModuleFileNameA( HWND hwnd, LPSTR lpszFileName, UINT cchFileNameMax)
+UINT WINAPI GetWindowModuleFileNameA( HWND hwnd, LPSTR module, UINT size )
 {
-    FIXME("GetWindowModuleFileNameA(hwnd %p, lpszFileName %p, cchFileNameMax %u) stub!\n",
-          hwnd, lpszFileName, cchFileNameMax);
-    return 0;
+    WND *win;
+    HINSTANCE hinst;
+
+    TRACE( "%p, %p, %u\n", hwnd, module, size );
+
+    win = WIN_GetPtr( hwnd );
+    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    hinst = win->hInstance;
+    WIN_ReleasePtr( win );
+
+    return GetModuleFileNameA( hinst, module, size );
 }
 
 /******************************************************************************
  *		GetWindowModuleFileNameW (USER32.@)
  */
-UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR lpszFileName, UINT cchFileNameMax)
+UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR module, UINT size )
 {
-    FIXME("GetWindowModuleFileNameW(hwnd %p, lpszFileName %p, cchFileNameMax %u) stub!\n",
-          hwnd, lpszFileName, cchFileNameMax);
-    return 0;
+    WND *win;
+    HINSTANCE hinst;
+
+    TRACE( "%p, %p, %u\n", hwnd, module, size );
+
+    win = WIN_GetPtr( hwnd );
+    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    hinst = win->hInstance;
+    WIN_ReleasePtr( win );
+
+    return GetModuleFileNameW( hinst, module, size );
 }
 
 /******************************************************************************

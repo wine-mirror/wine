@@ -378,7 +378,7 @@
 @ stdcall GetWindowLongPtrA(long long)
 @ stdcall GetWindowLongPtrW(long long)
 @ stdcall GetWindowLongW(long long)
-# @ stub GetWindowModuleFileName
+@ stdcall GetWindowModuleFileName(long ptr long) GetWindowModuleFileNameA
 @ stdcall GetWindowModuleFileNameA(long ptr long)
 @ stdcall GetWindowModuleFileNameW(long ptr long)
 @ stdcall GetWindowPlacement(long ptr)
