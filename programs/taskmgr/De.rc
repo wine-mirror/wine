@@ -30,25 +30,25 @@ IDR_TASKMANAGER MENU DISCARDABLE
 BEGIN
     POPUP "&Datei"
     BEGIN
-        MENUITEM "&Neuen Task (Ausführen...)",          ID_FILE_NEW
+        MENUITEM "&Neuer Task (Ausführen...)",          ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "B&eende Task Manager",          ID_FILE_EXIT
+        MENUITEM "Task-Manager &Beenden",          ID_FILE_EXIT
     END
     POPUP "&Optionen"
     BEGIN
         MENUITEM "&Immer im Vordergrund",              ID_OPTIONS_ALWAYSONTOP
         , CHECKED
-        MENUITEM "&Minimieren nach Start",            ID_OPTIONS_MINIMIZEONUSE
+        MENUITEM "Nach Programmstart &minimieren",            ID_OPTIONS_MINIMIZEONUSE
         , CHECKED
         MENUITEM "&Verstecken, wenn minimiert",        ID_OPTIONS_HIDEWHENMINIMIZED
         , CHECKED
-        MENUITEM "&Zeige 16-bit Tasks an",          ID_OPTIONS_SHOW16BITTASKS
+        MENUITEM "&16-bit-Tasks anzeigen",          ID_OPTIONS_SHOW16BITTASKS
         , CHECKED
     END
     POPUP "&Ansicht"
     BEGIN
-        MENUITEM "Aktualisiere &jetzt",                ID_VIEW_REFRESH
-        POPUP "&Aktualisierungsgeschwindigkeite"
+        MENUITEM "&Aktualisieren",                ID_VIEW_REFRESH
+        POPUP "A&ktualisierungsgeschwindigkeit"
         BEGIN
             MENUITEM "&Hoch",                       ID_VIEW_UPDATESPEED_HIGH
             MENUITEM "&Normal",                     ID_VIEW_UPDATESPEED_NORMAL
@@ -61,7 +61,7 @@ BEGIN
         MENUITEM "&Große Symbole",                ID_VIEW_LARGE
         MENUITEM "&Kleine Symbole",                ID_VIEW_SMALL
         MENUITEM "&Details",                    ID_VIEW_DETAILS, CHECKED
-        MENUITEM "&Wähle Spalten...",          ID_VIEW_SELECTCOLUMNS
+        MENUITEM "&Spalten auswählen...",          ID_VIEW_SELECTCOLUMNS
         POPUP "&CPU Verlauf"
         BEGIN
             MENUITEM "&Ein Graph, Alle CPUs",        ID_VIEW_CPUHISTORY_ONEGRAPHALL
@@ -69,7 +69,7 @@ BEGIN
             MENUITEM "Ein Graph &pro CPU",          ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
             , CHECKED
         END
-        MENUITEM "&Zeige Kernelzeiten an",          ID_VIEW_SHOWKERNELTIMES
+        MENUITEM "K&ernelzeiten anzeigen",          ID_VIEW_SHOWKERNELTIMES
     END
     POPUP "&Fenster"
     BEGIN
@@ -78,13 +78,13 @@ BEGIN
         MENUITEM "&Minimieren",                   ID_WINDOWS_MINIMIZE
         MENUITEM "Ma&ximieren",                   ID_WINDOWS_MAXIMIZE
         MENUITEM "Hinter&einander",                    ID_WINDOWS_CASCADE
-        MENUITEM "&In der Vordergrund holen",             ID_WINDOWS_BRINGTOFRONT
+        MENUITEM "&In den Vordergrund holen",             ID_WINDOWS_BRINGTOFRONT
     END
     POPUP "&Hilfe"
     BEGIN
-        MENUITEM "Task Manager &Hilfe Themen",   ID_HELP_TOPICS
+        MENUITEM "Task-Manager &Hilfethemen",   ID_HELP_TOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&Über Task Manager",         ID_HELP_ABOUT
+        MENUITEM "&Über Task-Manager",         ID_HELP_ABOUT
     END
 END
 
@@ -114,8 +114,8 @@ IDR_APPLICATION_PAGE_CONTEXT2 MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "&Wechsle zu",                  ID_APPLICATION_PAGE_SWITCHTO
-        MENUITEM "&In den Vordergrund bringen",             ID_WINDOWS_BRINGTOFRONT
+        MENUITEM "&Wechseln zu",                  ID_APPLICATION_PAGE_SWITCHTO
+        MENUITEM "&In den Vordergrund holen",             ID_WINDOWS_BRINGTOFRONT
         MENUITEM SEPARATOR
         MENUITEM "&Übereinander",          ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "&Nebeneinander",            ID_WINDOWS_TILEVERTICALLY
@@ -158,7 +158,7 @@ BEGIN
             MENUITEM "Nie&drig",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
         END
         MENUITEM "Setze Affinität...",            ID_PROCESS_PAGE_SETAFFINITY
-	      MENUITEM "Editiere Debug &Kanäle...",	ID_PROCESS_PAGE_DEBUGCHANNELS
+	      MENUITEM "Editiere Debug&kanäle...",	ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -168,10 +168,10 @@ END
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 259, 210
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Über Task Manager"
+CAPTION "Über Task-Manager"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    CONTROL         "Task Manager v1.0\nCopyright (C) 1999 - 2001\nby Brian Palmer (brianp@reactos.org)",
+    CONTROL         "Task-Manager v1.0\nCopyright (C) 1999 - 2001\nby Brian Palmer (brianp@reactos.org)",
                     IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,53,28,
                     122,26
     DEFPUSHBUTTON   "OK",IDOK,183,189,44,14,WS_GROUP
@@ -198,8 +198,8 @@ BEGIN
     CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
                     LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
     PUSHBUTTON      "&Neuer Task...",IDC_NEWTASK,187,189,53,14
-    PUSHBUTTON      "&Wechsle zu",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
-    PUSHBUTTON      "&Beende Task",IDC_ENDTASK,75,189,53,14,WS_DISABLED
+    PUSHBUTTON      "&Wechseln zu",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
+    PUSHBUTTON      "&Task beenden",IDC_ENDTASK,75,189,53,14,WS_DISABLED
 END
 
 IDD_PROCESS_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
@@ -209,8 +209,8 @@ BEGIN
     CONTROL         "List2",IDC_PROCESSLIST,"SysListView32",LVS_REPORT |
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
                     WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Beende Prozess",IDC_ENDPROCESS,171,189,69,14
-    CONTROL         "&Zeige Prozesse aller Benutzern an",IDC_SHOWALLPROCESSES,
+    PUSHBUTTON      "&Prozess beenden",IDC_ENDPROCESS,171,189,69,14
+    CONTROL         "P&rozesse aller Benutzern anzeigen",IDC_SHOWALLPROCESSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,121,10
 END
 
@@ -222,7 +222,7 @@ BEGIN
     GROUPBOX        "CPU-Auslastung",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
     GROUPBOX        "Speicherausl.",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
     GROUPBOX        "Insgesamt",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "Commit Charge (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Zugesicherter Speicher (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Physikalischer Speicher (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Kernelspeicher (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
     LTEXT           "Handles",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
@@ -235,8 +235,8 @@ BEGIN
     EDITTEXT        IDC_TOTALS_PROCESS_COUNT,65,149,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "Insgesamt",IDS_COMMIT_CHARGE_TOTAL,12,175,37,8
-    LTEXT           "Limit",IDS_COMMIT_CHARGE_LIMIT,12,184,15,8
-    LTEXT           "Spitze",IDS_COMMIT_CHARGE_PEAK,12,193,34,8
+    LTEXT           "Grenzwert",IDS_COMMIT_CHARGE_LIMIT,12,184,37,8
+    LTEXT           "Maximalwert",IDS_COMMIT_CHARGE_PEAK,12,193,45,8
     EDITTEXT        IDC_COMMIT_CHARGE_TOTAL,65,174,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_COMMIT_CHARGE_LIMIT,65,184,45,8,ES_RIGHT |
@@ -254,7 +254,7 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "Insgesamt",IDS_KERNEL_MEMORY_TOTAL,137,174,37,8
     LTEXT           "Ausgelagert",IDS_KERNEL_MEMORY_PAGED,137,184,64,8
-    LTEXT           "Nichtausgelagert",IDS_KERNEL_MEMORY_NONPAGED,137,193,64,8
+    LTEXT           "Nicht ausgelagert",IDS_KERNEL_MEMORY_NONPAGED,137,193,68,8
     EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_KERNEL_MEMORY_PAGED,185,184,48,8,ES_RIGHT |
@@ -361,12 +361,12 @@ END
 
 IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 245, 199
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Wähle Spalten"
+CAPTION "Spalten auswählen"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,84,178,50,14
     PUSHBUTTON      "Abbrechen",IDCANCEL,138,178,50,14
-    LTEXT           "Wähle die Spalten aus, die auf der Prozeß-Seite des Task Managers erscheinen sollen",     
+    LTEXT           "Wählen Sie die Spalten aus, die auf der Prozess-Seite des Task-Managers erscheinen sollen",
                     IDC_STATIC,7,7,181,17
     CONTROL         "&Name",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
@@ -374,7 +374,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
     CONTROL         "&CPU-Auslastung",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,50,90,10
-    CONTROL         "CPU Z&eit",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "CPU-Z&eit",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,61,48,10
     CONTROL         "S&peicherauslastung",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,72,95,10
@@ -386,9 +386,9 @@ BEGIN
                     WS_TABSTOP,7,105,53,10
     CONTROL         "&Benutzer-Objekte",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,116,90,10
-    CONTROL         "I/O (Lesen)",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "E/A (Lesen)",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,127,49,10
-    CONTROL         "I/O - Bytes (Lesen)",IDC_IOREADBYTES,"Button",
+    CONTROL         "E/A - Bytes (Lesen)",IDC_IOREADBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,75,10
     CONTROL         "&Sitzungs-ID",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,50,10
@@ -410,13 +410,13 @@ BEGIN
                     WS_TABSTOP,132,94,59,10
     CONTROL         "GDI-Objekte",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,132,105,90,10
-    CONTROL         "I/O (Schreiben)",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "E/A (Schreiben)",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,132,116,90,10
-    CONTROL         "I/O - Bytes (Schreiben)",IDC_IOWRITEBYTES,"Button",
+    CONTROL         "E/A - Bytes (Schreiben)",IDC_IOWRITEBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,127,105,10
-    CONTROL         "I/O (Andere)",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "E/A (Andere)",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,132,138,90,10
-    CONTROL         "I/O - Bytes (Andere)",IDC_IOOTHERBYTES,"Button",
+    CONTROL         "E/A - Bytes (Andere)",IDC_IOOTHERBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,149,105,10
 END
 
@@ -426,40 +426,40 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APP_TITLE           "Task Manager"
-    IDC_TASKMGR             "Task Manager"
+    IDS_APP_TITLE           "Task-Manager"
+    IDC_TASKMGR             "Task-Manager"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_FILE_NEW                   "Starte ein neues Programm"
-    ID_OPTIONS_ALWAYSONTOP        "Der Task Manager bleibt immer mit seinen gesamten Fenstern im Vordergrund, bis er minimiert wird"
-    ID_OPTIONS_MINIMIZEONUSE      "Der Task Manager minimiert sich, wenn eine 'Wechsle zu' Operation ausgeführt wird"
-    ID_OPTIONS_HIDEWHENMINIMIZED  "Verstecke den Task Manager, wenn er minimiert ist"
-    ID_VIEW_REFRESH               "Zwinge den Task Manager zu einer Aktualisierung, unabhänig von der Aktualisierungsgeschwindigkeit"
-    ID_VIEW_LARGE                 "Zeige Tasks mit großen Symbolen an"
-    ID_VIEW_SMALL                 "Zeige Tasks mit kleinen Symbolen an"
-    ID_VIEW_DETAILS               "Zeige detailierte Informationen über jeden einzelnen Task an"
+    ID_FILE_NEW                   "Startet ein neues Programm"
+    ID_OPTIONS_ALWAYSONTOP        "Der Task-Manager bleibt immer mit seinen gesamten Fenstern im Vordergrund, bis er minimiert wird"
+    ID_OPTIONS_MINIMIZEONUSE      "Der Task-Manager minimiert sich, wenn eine 'Wechseln zu' Operation ausgeführt wird"
+    ID_OPTIONS_HIDEWHENMINIMIZED  "Versteckt den Task-Manager, wenn er minimiert ist"
+    ID_VIEW_REFRESH               "Zwingt den Task Manager zu einer Aktualisierung, unabhänig von der Aktualisierungsgeschwindigkeit"
+    ID_VIEW_LARGE                 "Zeigt Tasks mit großen Symbolen an"
+    ID_VIEW_SMALL                 "Zeigt Tasks mit kleinen Symbolen an"
+    ID_VIEW_DETAILS               "Zeigt detailierte Informationen über jeden einzelnen Task an"
     ID_VIEW_UPDATESPEED_HIGH      "Aktualisiert die Anzeige zweimal pro Sekunde"
-    ID_VIEW_UPDATESPEED_NORMAL    "Aktualisiert die Anzeige aller 2 Sekunden"
-    ID_VIEW_UPDATESPEED_LOW       "Aktualisiert die Anzeige aller 4 Sekunden"
+    ID_VIEW_UPDATESPEED_NORMAL    "Aktualisiert die Anzeige alle 2 Sekunden"
+    ID_VIEW_UPDATESPEED_LOW       "Aktualisiert die Anzeige alle 4 Sekunden"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_VIEW_UPDATESPEED_PAUSED        "Nicht automatisch Aktualisieren"
-    ID_WINDOWS_TILEHORIZONTALLY       "Stelle die Fenster übereinander auf dem Desktop dar"
-    ID_WINDOWS_TILEVERTICALLY         "Stelle die Fenster nebeneinander auf dem Desktop dar"
-    ID_WINDOWS_MINIMIZE               "Minimiere die Fenster"
-    ID_WINDOWS_MAXIMIZE               "Maximiere die Fenster"
-    ID_WINDOWS_CASCADE                "Stelle die Fenster hintereinander auf dem Desktop dar"
-    ID_WINDOWS_BRINGTOFRONT           "Hole das Fenster in den Vordergrund, aber wechsle nicht zu diesem"
-    ID_HELP_TOPICS                    "Zeige die Hilfethemen des Task Managers an"
-    ID_HELP_ABOUT                     "Zeige Programminformationen, Versionsnummer und Copyright an"
-    ID_FILE_EXIT                      "Beende die Task Manager Anwendung"   
-    ID_OPTIONS_SHOW16BITTASKS         "Zeige 16-bit Tasks under der Verwendung von ntvdm.exe an"
-    ID_VIEW_SELECTCOLUMNS             "Wähle, welche Spalten auf der Prozeß-Seite sichtbar sein sollen"
-    ID_VIEW_SHOWKERNELTIMES           "Zeige die Kernel-Zeiten im Leistungsgraphen an"
+    ID_VIEW_UPDATESPEED_PAUSED        "Nicht automatisch aktualisieren"
+    ID_WINDOWS_TILEHORIZONTALLY       "Stellt die Fenster übereinander auf dem Desktop dar"
+    ID_WINDOWS_TILEVERTICALLY         "Stellt die Fenster nebeneinander auf dem Desktop dar"
+    ID_WINDOWS_MINIMIZE               "Minimiert die Fenster"
+    ID_WINDOWS_MAXIMIZE               "Maximiert die Fenster"
+    ID_WINDOWS_CASCADE                "Stellt die Fenster hintereinander auf dem Desktop dar"
+    ID_WINDOWS_BRINGTOFRONT           "Holt das Fenster in den Vordergrund, aber wechslt nicht zu diesem"
+    ID_HELP_TOPICS                    "Zeigt die Hilfethemen des Task-Managers an"
+    ID_HELP_ABOUT                     "Zeigt Programminformationen, Versionsnummer und Copyright an"
+    ID_FILE_EXIT                      "Beendet den Task-Manager"
+    ID_OPTIONS_SHOW16BITTASKS         "Zeigt 16-bit-Tasks under der Verwendung von ntvdm.exe an"
+    ID_VIEW_SELECTCOLUMNS             "Legt fest, welche Spalten auf der Prozess-Seite sichtbar sein sollen"
+    ID_VIEW_SHOWKERNELTIMES           "Zeigt die Kernel-Zeiten im Leistungsgraphen an"
     ID_VIEW_CPUHISTORY_ONEGRAPHALL    "Ein einzelner Verlaufsgraph zeigt die gesamte CPU-Auslastung an"
     ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Jede CPU hat ihren eigenen Verlaufsgraphen"
     ID_APPLICATION_PAGE_SWITCHTO      "Holt den Task in den Vordergrund und wechselt den Fokus auf den Task"
@@ -469,16 +469,16 @@ STRINGTABLE DISCARDABLE
 BEGIN
     ID_ENDTASK                              "Weist die ausgewählten Tasks an, sich zu beenden"
     ID_GOTOPROCESS                          "Wechselt den Fokus zu dem Prozess des ausgewählten Tasks"
-    ID_RESTORE                              "Stellt den Task Manager von seiner versteckten Status wieder her"
+    ID_RESTORE                              "Stellt den Task-Manager von seiner versteckten Status wieder her"
     ID_PROCESS_PAGE_ENDPROCESS              "Entfernt den Prozess vom System"
-    ID_PROCESS_PAGE_ENDPROCESSTREE          "Entfernt den Prozess und all seine Kindprozesse vom System"
+    ID_PROCESS_PAGE_ENDPROCESSTREE          "Entfernt den Prozess und alle seine Kindprozesse vom System"
     ID_PROCESS_PAGE_DEBUG                   "Heftet den Debugger an diesen Prozess an"
-    ID_PROCESS_PAGE_SETAFFINITY             "Kontrolliert, auf welche Prozessoren ein Prozess ausgeführt werden darf"
-    ID_PROCESS_PAGE_SETPRIORITY_REALTIME    "Setzt den Prozeß in die ECHTZEIT-Prioritätsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_HIGH        "Setzt den Prozeß in die HOCH-Prioritätsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL "Setzt den Prozeß in die HÖHER ALS NORMAL-Prioritätsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "Setzt den Prozeß in die NORMAL-Prioritätsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "Setzt den Prozeß in die NIEDRIGER ALS NORMAL-Prioritätsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_LOW         "Setzt den Prozeß in die NIEDRIG-Prioritätsklasse"
+    ID_PROCESS_PAGE_SETAFFINITY             "Kontrolliert, auf welchen Prozessoren ein Prozess ausgeführt werden darf"
+    ID_PROCESS_PAGE_SETPRIORITY_REALTIME    "Setzt den Prozess in die ECHTZEIT-Prioritätsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH        "Setzt den Prozess in die HOCH-Prioritätsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL "Setzt den Prozess in die HÖHER ALS NORMAL-Prioritätsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "Setzt den Prozess in die NORMAL-Prioritätsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "Setzt den Prozess in die NIEDRIGER ALS NORMAL-Prioritätsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW         "Setzt den Prozess in die NIEDRIG-Prioritätsklasse"
     IDS_LICENSE                             "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.\r\n\r\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.\r\n\r\nYou should have received a copy of the GNU Lesser General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 END
