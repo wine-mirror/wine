@@ -257,6 +257,7 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
     int cx, cy, mask;
     XSetWindowAttributes attr;
     Window client;
+    Visual *client_visual = vis ? vis->visual : visual;
 
     attr.bit_gravity = NorthWestGravity;
     attr.win_gravity = NorthWestGravity;
@@ -282,7 +283,7 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
                             data->client_rect.left - data->whole_rect.left,
                             data->client_rect.top - data->whole_rect.top,
                             cx, cy, 0, screen_depth, InputOutput,
-                            vis ? vis->visual : visual, mask, &attr );
+                            client_visual, mask, &attr );
     if (!client)
     {
         wine_tsx11_unlock();
@@ -297,6 +298,7 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
         XDestroyWindow( display, data->client_window );
     }
     data->client_window = client;
+    data->visualid = XVisualIDFromVisual( client_visual );
 
     if (data->colormap) XFreeColormap( display, data->colormap );
     data->colormap = vis ? attr.colormap : 0;
@@ -431,7 +433,7 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
         Display *display = thread_display();
         Window client = data->client_window;
 
-        if (vis->visualid != XVisualIDFromVisual(visual))
+        if (vis->visualid != data->visualid)
         {
             client = create_client_window( display, data, vis );
             TRACE( "re-created client window %lx for %p fbconfig %lx\n", client, data->hwnd, fbconfig_id );
