@@ -46,7 +46,7 @@ SUBDIRS = \
 	winepath \
 	winetest \
 	winevdm \
-	winhelp \
+	winhlp32 \
 	winver \
 	wordpad \
 	write \
@@ -91,7 +91,7 @@ INSTALLSUBDIRS = \
 	winemine \
 	winepath \
 	winevdm \
-	winhelp \
+	winhlp32 \
 	winver \
 	wordpad \
 	write \
@@ -112,8 +112,7 @@ INSTALLPROGS = \
 	winedbg \
 	winefile \
 	winemine \
-	winepath \
-	winhelp
+	winepath
 
 INSTALLDIRS = $(DESTDIR)$(bindir)
 

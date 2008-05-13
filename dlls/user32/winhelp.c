@@ -85,9 +85,9 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand, ULONG_PTR dwD
     if (!hDest) 
     {
         if (wCommand == HELP_QUIT) return TRUE;
-        if (WinExec("winhelp.exe -x", SW_SHOWNORMAL) < 32) 
+        if (WinExec("winhlp32.exe -x", SW_SHOWNORMAL) < 32) 
         {
-            ERR("can't start winhelp.exe -x ?\n");
+            ERR("can't start winhlp32.exe -x ?\n");
             return FALSE;
         }
         if (!(hDest = FindWindowA("MS_WINHELP", NULL))) 

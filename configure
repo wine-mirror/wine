@@ -22371,7 +22371,7 @@ ac_config_files="$ac_config_files programs/winetest/Makefile"
 
 ac_config_files="$ac_config_files programs/winevdm/Makefile"
 
-ac_config_files="$ac_config_files programs/winhelp/Makefile"
+ac_config_files="$ac_config_files programs/winhlp32/Makefile"
 
 ac_config_files="$ac_config_files programs/winver/Makefile"
 
@@ -23365,7 +23365,7 @@ do
     "programs/winepath/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winepath/Makefile" ;;
     "programs/winetest/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winetest/Makefile" ;;
     "programs/winevdm/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winevdm/Makefile" ;;
-    "programs/winhelp/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winhelp/Makefile" ;;
+    "programs/winhlp32/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winhlp32/Makefile" ;;
     "programs/winver/Makefile") CONFIG_FILES="$CONFIG_FILES programs/winver/Makefile" ;;
     "programs/wordpad/Makefile") CONFIG_FILES="$CONFIG_FILES programs/wordpad/Makefile" ;;
     "programs/write/Makefile") CONFIG_FILES="$CONFIG_FILES programs/write/Makefile" ;;

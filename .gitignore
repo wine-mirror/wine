@@ -696,8 +696,8 @@ programs/winetest/winspool.drv_test.exe
 programs/winetest/wintrust_test.exe
 programs/winetest/ws2_32_test.exe
 programs/winevdm/winevdm
-programs/winhelp/macro.lex.yy.c
-programs/winhelp/winhelp
+programs/winhlp32/macro.lex.yy.c
+programs/winhlp32/winhlp32
 programs/winver/winver
 programs/wordpad/wordpad
 programs/write/write

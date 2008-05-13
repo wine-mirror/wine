@@ -46,7 +46,6 @@ my %bin_install =
   "winefile" => 1,
   "winemine" => 1,
   "winepath" => 1,
-  "winhelp" => 1,
 );
 
 # Programs that we don't want to install at all

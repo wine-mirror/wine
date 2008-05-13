@@ -560,7 +560,7 @@ ALL_MAKEFILES = \
 	programs/winepath/Makefile \
 	programs/winetest/Makefile \
 	programs/winevdm/Makefile \
-	programs/winhelp/Makefile \
+	programs/winhlp32/Makefile \
 	programs/winver/Makefile \
 	programs/wordpad/Makefile \
 	programs/write/Makefile \
@@ -986,7 +986,7 @@ programs/winemine/Makefile: programs/winemine/Makefile.in programs/Makeprog.rule
 programs/winepath/Makefile: programs/winepath/Makefile.in programs/Makeprog.rules
 programs/winetest/Makefile: programs/winetest/Makefile.in programs/Makeprog.rules
 programs/winevdm/Makefile: programs/winevdm/Makefile.in programs/Makeprog.rules
-programs/winhelp/Makefile: programs/winhelp/Makefile.in programs/Makeprog.rules
+programs/winhlp32/Makefile: programs/winhlp32/Makefile.in programs/Makeprog.rules
 programs/winver/Makefile: programs/winver/Makefile.in programs/Makeprog.rules
 programs/wordpad/Makefile: programs/wordpad/Makefile.in programs/Makeprog.rules
 programs/write/Makefile: programs/write/Makefile.in programs/Makeprog.rules

@@ -123,7 +123,7 @@ HKCR,exefile\shell\open\command,,2,"""%1"" %*"
 HKCR,folder\shell\open\ddeexec,,2,"[ViewFolder("%l", %I, %S)]"
 HKCR,folder\shell\open\ddeexec,"NoActivateHandler",2,""
 HKCR,folder\shell\open\ddeexec\application,,2,"Folders"
-HKCR,hlpfile\shell\open\command,,2,"%10%\winhelp.exe %1"
+HKCR,hlpfile\shell\open\command,,2,"%11%\winhlp32.exe %1"
 HKCR,htmlfile\shell\open\command,,2,"%11%\winebrowser.exe -nohome"
 HKCR,htmlfile\shell\open\ddeexec,,2,"""%1"",,-1,0,,,,"
 HKCR,htmlfile\shell\open\ddeexec,"NoActivateHandler",2,""
@@ -2225,6 +2225,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,,regedit.exe
 10,,twain_32.dll
 10,,winhelp.exe
+10,,winhlp32.exe
 10,command,start.exe
 11,,actxprxy.dll
 11,,advapi32.dll
@@ -2284,6 +2285,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,user32.dll
 11,,version.dll
 11,,winebrowser.exe
+11,,winhlp32.exe
 11,,wininet.dll
 11,,winmm.dll
 11,,winspool.drv
