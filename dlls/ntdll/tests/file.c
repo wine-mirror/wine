@@ -402,7 +402,8 @@ static void nt_mailslot_test(void)
 
     pRtlInitUnicodeString(&str, buffer1);
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
-    DesiredAccess = CreateOptions = MailslotQuota = MaxMessageSize = 0;
+    CreateOptions = MailslotQuota = MaxMessageSize = 0;
+    DesiredAccess = GENERIC_READ;
 
     /*
      * Check for NULL pointer handling
@@ -410,15 +411,20 @@ static void nt_mailslot_test(void)
     rc = pNtCreateMailslotFile(NULL, DesiredAccess,
          &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
          &TimeOut);
-    ok( rc == STATUS_ACCESS_VIOLATION, "rc = %x not c0000005 STATUS_ACCESS_VIOLATION\n", rc);
+    ok( rc == STATUS_ACCESS_VIOLATION ||
+        rc == STATUS_INVALID_PARAMETER, /* win2k3 */
+        "rc = %x not STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER\n", rc);
 
     /*
      * Test to see if the Timeout can be NULL
      */
+    hslot = (HANDLE)0xdeadbeef;
     rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
          &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
          NULL);
-    ok( rc == STATUS_SUCCESS, "rc = %x not STATUS_SUCCESS\n", rc);
+    ok( rc == STATUS_SUCCESS ||
+        rc == STATUS_INVALID_PARAMETER, /* win2k3 */
+        "rc = %x not STATUS_SUCCESS or STATUS_INVALID_PARAMETER\n", rc);
     ok( hslot != 0, "Handle is invalid\n");
 
     if  ( rc == STATUS_SUCCESS ) rc = pNtClose(hslot);
@@ -450,7 +456,9 @@ static void nt_mailslot_test(void)
     rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
          &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
          &TimeOut);
-    ok( rc == STATUS_OBJECT_PATH_SYNTAX_BAD, "rc = %x not c000003b STATUS_OBJECT_PATH_SYNTAX_BAD\n", rc);
+    ok( rc == STATUS_OBJECT_PATH_SYNTAX_BAD ||
+        rc == STATUS_INVALID_PARAMETER,
+        "rc = %x not STATUS_OBJECT_PATH_SYNTAX_BAD or STATUS_INVALID_PARAMETER\n", rc);
 
     if  (rc == STATUS_SUCCESS) pNtClose(hslot);
 
@@ -461,7 +469,7 @@ static void nt_mailslot_test(void)
     rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
          &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
          &TimeOut);
-    ok( rc == STATUS_SUCCESS, "Create MailslotFile failed rc = %x %u\n", rc, GetLastError());
+    ok( rc == STATUS_SUCCESS, "Create MailslotFile failed rc = %x\n", rc);
     ok( hslot != 0, "Handle is invalid\n");
 
     rc = pNtClose(hslot);
