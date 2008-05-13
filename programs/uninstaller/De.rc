@@ -39,5 +39,5 @@ STRINGTABLE DISCARDABLE {
      IDS_ABOUT, "Wine Anwendungsentferner (C) 2005 durch Andreas Mohr, Hannu Valtonen und Jonathan Ernst."
      IDS_ABOUTTITLE, "Über den Anwendungsentferner"
      IDS_REGISTRYKEYNOTAVAILABLE, "Der Registry-Schlüssel für zu entfernende Anwendung(en) ist (noch) nicht verfügbar, es kann nichts gemacht werden."
-     IDS_UNINSTALLFAILED, "Die Ausführung des Entfernungsbefehls '%s' ist fehlgeschlagen, wahrscheinlich durch eine fehlende, ausführbare Datei.\r\nMöchten Sie, dass der Anwendungseintrag aus der Registry entfernt wird ?"
+     IDS_UNINSTALLFAILED, "Die Ausführung des Entfernungsbefehls '%s' ist fehlgeschlagen, wahrscheinlich durch eine fehlende, ausführbare Datei.\r\nMöchten Sie, dass der Anwendungseintrag aus der Registry entfernt wird?"
 }
