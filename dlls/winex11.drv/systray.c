@@ -415,7 +415,7 @@ static BOOL delete_icon( struct tray_icon *icon )
  *
  * Driver-side implementation of Shell_NotifyIcon.
  */
-BOOL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
+int wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
 {
     BOOL ret = FALSE;
     struct tray_icon *icon;
@@ -423,7 +423,9 @@ BOOL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
     switch (msg)
     {
     case NIM_ADD:
-        if (get_systray_selection_owner( thread_display() )) ret = add_icon( data );
+        if (!get_systray_selection_owner( thread_display() ))
+            return -1;  /* fall back to default handling */
+        ret = add_icon( data );
         break;
     case NIM_DELETE:
         if ((icon = get_icon( data->hWnd, data->uID ))) ret = delete_icon( icon );

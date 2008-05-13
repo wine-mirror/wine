@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(systray);
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
-static BOOL (*wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
+static int (*wine_notify_icon)(DWORD,NOTIFYICONDATAW *);
 
 /* an individual systray icon, unpacked from the NOTIFYICONDATA and always in unicode */
 struct icon
@@ -348,7 +348,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     struct icon *icon = NULL;
     NOTIFYICONDATAW nid;
     DWORD cbSize;
-    BOOL ret = FALSE;
+    int ret = FALSE;
 
     if (cds->cbData < NOTIFYICONDATAW_V1_SIZE) return FALSE;
     cbSize = ((PNOTIFYICONDATA)cds->lpData)->cbSize;
@@ -398,11 +398,12 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     /* try forward to x11drv first */
     if (cds->dwData == NIM_ADD || !(icon = get_icon( nid.hWnd, nid.uID )))
     {
-        if (wine_notify_icon && wine_notify_icon( cds->dwData, &nid ))
+        if (wine_notify_icon && ((ret = wine_notify_icon( cds->dwData, &nid )) != -1))
         {
             if (nid.uFlags & NIF_ICON) DestroyIcon( nid.hIcon );
-            return TRUE;
+            return ret;
         }
+        ret = FALSE;
     }
 
     switch (cds->dwData)
