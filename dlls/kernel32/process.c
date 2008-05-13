@@ -1022,6 +1022,18 @@ void __wine_kernel_init(void)
     RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath,
                           MODULE_get_dll_load_path(main_exe_name) );
 
+    if (boot_event)
+    {
+        if (WaitForSingleObject( boot_event, 30000 )) WARN( "boot event wait timed out\n" );
+        CloseHandle( boot_event );
+        /* if we didn't find environment section, try again now that wineboot has run */
+        if (!got_environment)
+        {
+            set_registry_environment();
+            set_additional_environment();
+        }
+    }
+
     if (!(peb->ImageBaseAddress = LoadLibraryExW( main_exe_name, 0, DONT_RESOLVE_DLL_REFERENCES )))
     {
         char msg[1024];
@@ -1039,18 +1051,6 @@ void __wine_kernel_init(void)
         FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM, NULL, error, 0, msg, sizeof(msg), NULL );
         MESSAGE( "wine: could not load %s: %s", debugstr_w(main_exe_name), msg );
         ExitProcess( error );
-    }
-
-    if (boot_event)
-    {
-        if (WaitForSingleObject( boot_event, 30000 )) WARN( "boot event wait timed out\n" );
-        CloseHandle( boot_event );
-        /* if we didn't find environment section, try again now that wineboot has run */
-        if (!got_environment)
-        {
-            set_registry_environment();
-            set_additional_environment();
-        }
     }
 
     LdrInitializeThunk( 0, 0, 0, 0 );
