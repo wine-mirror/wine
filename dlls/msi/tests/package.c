@@ -1631,6 +1631,46 @@ static void test_condition(void)
     r = MsiEvaluateCondition(hpkg, "&nofeature");
     ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
+    MsiSetProperty(hpkg, "A", "2");
+    MsiSetProperty(hpkg, "X", "50");
+
+    r = MsiEvaluateCondition(hpkg, "2 <= X");
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateCondition(hpkg, "A <= X");
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateCondition(hpkg, "A <= 50");
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+
+    MsiSetProperty(hpkg, "X", "50val");
+
+    r = MsiEvaluateCondition(hpkg, "2 <= X");
+    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateCondition(hpkg, "A <= X");
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+
+    MsiSetProperty(hpkg, "A", "7");
+    MsiSetProperty(hpkg, "X", "50");
+
+    r = MsiEvaluateCondition(hpkg, "7 <= X");
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateCondition(hpkg, "A <= X");
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateCondition(hpkg, "A <= 50");
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+
+    MsiSetProperty(hpkg, "X", "50val");
+
+    r = MsiEvaluateCondition(hpkg, "2 <= X");
+    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+
+    r = MsiEvaluateCondition(hpkg, "A <= X");
+    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);
 }
