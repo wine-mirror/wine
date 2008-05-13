@@ -2965,7 +2965,7 @@ static void calc_hash(FONT_DESC *pfd)
     return;
 }
 
-static GdiFont *find_in_cache(HFONT hfont, LOGFONTW *plf, XFORM *pxf, BOOL can_use_bitmap)
+static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const XFORM *pxf, BOOL can_use_bitmap)
 {
     GdiFont *ret;
     FONT_DESC fd;
@@ -3288,7 +3288,8 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     /* If requested charset was DEFAULT_CHARSET then try using charset
        corresponding to the current ansi codepage */
-    if(!csi.fs.fsCsb[0]) {
+    if (!csi.fs.fsCsb[0] || lf.lfWeight == FW_DONTCARE)
+    {
         INT acp = GetACP();
         if(!TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE)) {
             FIXME("TCI failed on codepage %d\n", acp);
