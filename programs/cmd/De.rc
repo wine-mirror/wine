@@ -126,10 +126,10 @@ modifizieren. Zum Beispiel:\n\
 
   WCMD_PAUSE,
 "PAUSE lässt eine Meldung auf dem Bildschirm erscheinen\n\
-'Press Return key to continue' und wartet darauf, dass der Nutzer die\n\
-Return/Enter-Taste drückt. Es wird hauptsächlich in Batchdateien genutzt,\n\
-um dem Nutzer zu erlauben, die Ausgabe eines vorherigen Befehls zu lesen,\n\
-bevor es durch Scrollen vom Bildschirm verschwindet.\n"
+'Drücken Sie die Eingabetaste um fortzufahren' und wartet darauf, dass der\n\
+Benutzer die Eingabetaste/Enter-Taste drückt. Es wird hauptsächlich in\n\
+Batchdateien genutzt, um dem Beutzer zu erlauben, die Ausgabe eines vorherigen\n\
+Befehls zu lesen, bevor es durch Scrollen vom Bildschirm verschwindet.\n"
 
   WCMD_PROMPT,
 "PROMPT setzt den Befehlszeilenprompt.\n\
@@ -242,7 +242,7 @@ DIR\t\tListet den Inhalt eines Verzeichnisses\n\
 ECHO\t\tKopiert den Text direkt zur Konsolenausgabe\n\
 HELP\t\tZeigt detalierte Informationen zu einen Thema\n\
 MD (MKDIR)\tErzeugt ein Unterverzeichnis\n\
-MORE\t\tDisplay output in pages\n\
+MORE\t\tZeigt die Ausgabe seitenweise an\n\
 MOVE\t\tBewegt eine oder mehrere Dateien oder einen Verzeichnisbaum\n\
 PATH\t\tSetzt oder zeigt den Suchpfad an\n\
 PROMPT\t\tÄndert den Befehlszeilenprompt\n\
@@ -263,33 +263,33 @@ obigen Befehle erhalten.\n"
   WCMD_NO, "N"
   WCMD_NOASSOC, "Verknüpfung für Dateiendung %s fehlt\n"
   WCMD_NOFTYPE, "Kein Befehl zum Öffnen für Dateityp '%s'\n"
-  WCMD_OVERWRITE, "Overwrite %s"
-  WCMD_MORESTR, "More..."
-  WCMD_TRUNCATEDLINE, "Line in Batch processing possibly truncated. Using:\n"
-  WCMD_NYI, "Not Yet Implemented\n\n"
-  WCMD_NOARG, "Argument missing\n"
-  WCMD_SYNTAXERR, "Syntax error\n"
-  WCMD_FILENOTFOUND, "%s : File Not Found\n"
-  WCMD_NOCMDHELP, "No help available for %s\n"
-  WCMD_NOTARGET, "Target to GOTO not found\n"
-  WCMD_CURRENTDATE, "Current Date is %s\n"
-  WCMD_CURRENTTIME, "Current Time is %s\n"
-  WCMD_NEWDATE, "Enter new date: "
-  WCMD_NEWTIME, "Enter new time: "
-  WCMD_MISSINGENV, "Environment variable %s not defined\n"
-  WCMD_READFAIL, "Failed to open '%s'\n"
+  WCMD_OVERWRITE, "%s überschreiben"
+  WCMD_MORESTR, "Mehr..."
+  WCMD_TRUNCATEDLINE, "Die Zeile bei der Batchverarbeitung ist möglicherweise abgeschnitten. Benutze:\n"
+  WCMD_NYI, "Noch nicht implementiert\n\n"
+  WCMD_NOARG, "Argument fehlt\n"
+  WCMD_SYNTAXERR, "Syntaxfehler\n"
+  WCMD_FILENOTFOUND, "%s : Datei nicht gefunden\n"
+  WCMD_NOCMDHELP, "Hilfe für %s ist nicht verfügbar\n"
+  WCMD_NOTARGET, "Das Sprungziel von GOTO wurde nicht gefunden\n"
+  WCMD_CURRENTDATE, "Aktuelles Datum ist %s\n"
+  WCMD_CURRENTTIME, "Aktuelle Zeit ist %s\n"
+  WCMD_NEWDATE, "Geben Sie das neue Datum ein: "
+  WCMD_NEWTIME, "Geben Sie die neue Zeit ein: "
+  WCMD_MISSINGENV, "Die Umgebungsvariable %s ist nicht definiert\n"
+  WCMD_READFAIL, "'%s' konnte nicht geöffnet werden\n"
   WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
   WCMD_ALL, "A"
-  WCMD_DELPROMPT, "%s, Delete"
-  WCMD_ECHOPROMPT, "Echo is %s\n"
-  WCMD_VERIFYPROMPT, "Verify is %s\n"
-  WCMD_VERIFYERR, "Verify must be ON or OFF\n";
-  WCMD_ARGERR, "Parameter error\n"
-  WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
-  WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"
-  WCMD_NOPATH, "PATH not found\n"
-  WCMD_ANYKEY,"Press Return key to continue: "
-  WCMD_CONSTITLE,"Wine Command Prompt"
+  WCMD_DELPROMPT, "%s, löschen"
+  WCMD_ECHOPROMPT, "Echo ist %s\n"
+  WCMD_VERIFYPROMPT, "Verify ist %s\n"
+  WCMD_VERIFYERR, "Verify muß ON oder OFF sein\n";
+  WCMD_ARGERR, "Parameterfehler\n"
+  WCMD_VOLUMEDETAIL, "Volume in Laufwerk %c ist %s\nVolumeseriennummer ist %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "Volumebezeichnung (11 Zeichen, EINGABETASTE für keine)?"
+  WCMD_NOPATH, "PATH nicht gefunden\n"
+  WCMD_ANYKEY,"Drücken Sie die Eingabetaste um fortzufahren: "
+  WCMD_CONSTITLE,"Wine Befehlsprozessor"
   WCMD_VERSION,"CMD Version %s\n\n"
-  WCMD_MOREPROMPT, "More? "
+  WCMD_MOREPROMPT, "Mehr? "
 }
