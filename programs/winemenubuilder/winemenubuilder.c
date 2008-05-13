@@ -201,8 +201,8 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
     png_infop info_ptr;
     png_text comment;
     int nXORWidthBytes, nANDWidthBytes, color_type = 0, i, j;
-    BYTE *pXOR, *row;
-    const BYTE *pAND = NULL;
+    BYTE *row, *copy = NULL;
+    const BYTE *pXOR, *pAND = NULL;
     int nWidth  = pIcon->bmiHeader.biWidth;
     int nHeight = pIcon->bmiHeader.biHeight;
     int nBpp    = pIcon->bmiHeader.biBitCount;
@@ -233,20 +233,25 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
 
     nXORWidthBytes = 4 * ((nWidth * nBpp + 31) / 32);
     nANDWidthBytes = 4 * ((nWidth + 31 ) / 32);
-    pXOR = (BYTE*) pIcon + sizeof(BITMAPINFOHEADER) + pIcon->bmiHeader.biClrUsed * sizeof(RGBQUAD);
+    pXOR = (const BYTE*) pIcon + sizeof(BITMAPINFOHEADER) + pIcon->bmiHeader.biClrUsed * sizeof(RGBQUAD);
     if (nHeight > nWidth)
     {
         nHeight /= 2;
         pAND = pXOR + nHeight * nXORWidthBytes;
     }
 
-    /* image and mask are upside down reversed */
-    row = pXOR + (nHeight - 1) * nXORWidthBytes;
-
     /* Apply mask if present */
     if (pAND)
     {
         RGBQUAD bgColor;
+
+        /* copy bytes before modifying them */
+        copy = HeapAlloc( GetProcessHeap(), 0, nHeight * nXORWidthBytes );
+        memcpy( copy, pXOR, nHeight * nXORWidthBytes );
+        pXOR = copy;
+
+        /* image and mask are upside down reversed */
+        row = copy + (nHeight - 1) * nXORWidthBytes;
 
         /* top left corner */
         bgColor.rgbRed   = row[0];
@@ -306,6 +311,7 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
     ppng_destroy_write_struct(&png_ptr, &info_ptr);
     if (png_ptr) ppng_destroy_write_struct(&png_ptr, NULL);
     fclose(fp);
+    HeapFree(GetProcessHeap(), 0, copy);
     HeapFree(GetProcessHeap(), 0, comment.text);
     return TRUE;
 
@@ -313,6 +319,7 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
     if (png_ptr) ppng_destroy_write_struct(&png_ptr, NULL);
     fclose(fp);
     unlink(png_filename);
+    HeapFree(GetProcessHeap(), 0, copy);
     HeapFree(GetProcessHeap(), 0, comment.text);
     return FALSE;
 }
