@@ -224,7 +224,7 @@ static LPTSTR read_value(HWND hwnd, HKEY hKey, LPCTSTR valueName, DWORD *lpType,
         goto done;
     }
     if ( *lpType == REG_DWORD ) valueDataLen = sizeof(DWORD);
-    if (!(buffer = HeapAlloc(GetProcessHeap(), 0, valueDataLen))) {
+    if (!(buffer = HeapAlloc(GetProcessHeap(), 0, valueDataLen+1))) {
         error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
         goto done;
     }
@@ -233,7 +233,7 @@ static LPTSTR read_value(HWND hwnd, HKEY hKey, LPCTSTR valueName, DWORD *lpType,
         error(hwnd, IDS_BAD_VALUE, valueName);
         goto done;
     }
-
+    buffer[valueDataLen] = 0;
     if(len) *len = valueDataLen;
     return buffer;
 

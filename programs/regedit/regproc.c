@@ -764,7 +764,7 @@ static void export_hkey(FILE *file, HKEY key,
             case REG_SZ:
             case REG_EXPAND_SZ:
                 fputs("\"", file);
-                REGPROC_export_string(file, (char*) *val_buf);
+                if (val_size1) REGPROC_export_string(file, (char*) *val_buf);
                 fputs("\"\n", file);
                 break;
 
