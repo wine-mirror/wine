@@ -1701,6 +1701,9 @@ static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface,
 
     TRACE("(%p/%p)->(%d, %p): semi-stub !!!\n", This, iface, msTimeout, pfs);
 
+    if (!pfs)
+        return E_POINTER;
+
     EnterCriticalSection(&This->cs);
 
     *pfs = This->state;

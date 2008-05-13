@@ -232,6 +232,7 @@ static void test_mediacontrol(void)
     LONGLONG pos = 0xdeadbeef;
     IMediaSeeking *seeking = NULL;
     IMediaFilter *filter = NULL;
+    IMediaControl *control = NULL;
 
     IFilterGraph2_SetDefaultSyncSource(pgraph);
     hr = IFilterGraph2_QueryInterface(pgraph, &IID_IMediaSeeking, (void**) &seeking);
@@ -247,6 +248,15 @@ static void test_mediacontrol(void)
         return;
     }
 
+    hr = IFilterGraph2_QueryInterface(pgraph, &IID_IMediaControl, (void**) &control);
+    ok(hr == S_OK, "QueryInterface IMediaControl failed: %08x\n", hr);
+    if (FAILED(hr))
+    {
+        IUnknown_Release(seeking);
+        IUnknown_Release(filter);
+        return;
+    }
+
     hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
     ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
     ok(pos == 0, "Position != 0 (%x%08x)\n", (DWORD)(pos >> 32), (DWORD)pos);
@@ -257,6 +267,10 @@ static void test_mediacontrol(void)
     ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
     ok(pos == 0, "Position != 0 (%x%08x)\n", (DWORD)(pos >> 32), (DWORD)pos);
 
+    hr = IMediaControl_GetState(control, 1000, NULL);
+    ok(hr == E_POINTER, "GetState expected %08x, got %08x\n", E_POINTER, hr);
+
+    IUnknown_Release(control);
     IUnknown_Release(seeking);
     IUnknown_Release(filter);
     releasefiltergraph();
