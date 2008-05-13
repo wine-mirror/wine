@@ -110,6 +110,10 @@ LONG joystick_map_axis(ObjProps *props, int val)
     ret = MulDiv( val, props->lMax - props->lMin, dev_range ) +
           (props->lMin + props->lMax) / 2;
 
+    /* Clamp in case or rounding errors */
+    if      (ret > props->lMax) ret = props->lMax;
+    else if (ret < props->lMin) ret = props->lMin;
+
     TRACE( "(%d <%d> %d) -> (%d <%d> %d): val=%d ret=%d\n",
            props->lDevMin, dead_zone, props->lDevMax,
            props->lMin, props->lDeadZone, props->lMax,
