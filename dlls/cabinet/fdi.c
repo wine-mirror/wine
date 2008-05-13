@@ -1034,7 +1034,8 @@ struct Ziphuft **t, cab_LONG *m, fdi_decomp_state *decomp_state)
         w += l[h++];            /* add bits already decoded */
 
         /* compute minimum size table less than or equal to *m bits */
-        z = (z = g - w) > (cab_ULONG)*m ? *m : z;        /* upper limit */
+        if ((z = g - w) > (cab_ULONG)*m)    /* upper limit */
+          z = *m;
         if ((f = 1 << (j = k - w)) > a + 1)     /* try a k-w bit table */
         {                       /* too few codes for k-w bit table */
           f -= a + 1;           /* deduct codes from patterns left */
@@ -1177,7 +1178,9 @@ static cab_LONG fdi_Zipinflate_codes(const struct Ziphuft *tl, const struct Ziph
       ZIPDUMPBITS(e)
       do
       {
-        n -= (e = (e = ZIPWSIZE - ((d &= ZIPWSIZE-1) > w ? d : w)) > n ?n:e);
+        d = max(d & (ZIPWSIZE - 1), w);
+        e = min(ZIPWSIZE - d, n);
+        n -= e;
         do
         {
           CAB(outbuf)[w++] = CAB(outbuf)[d++];
