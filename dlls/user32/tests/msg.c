@@ -5779,6 +5779,35 @@ static void test_paint_messages(void)
     flush_events();
     ok_sequence(WmSWP_FrameChangedDeferErase, "SetWindowPos:FrameChangedDeferErase", FALSE );
 
+    ok(GetWindowLong( hparent, GWL_STYLE ) & WS_VISIBLE, "parent should be visible\n");
+    ok(GetWindowLong( hchild, GWL_STYLE ) & WS_VISIBLE, "child should be visible\n");
+
+    UpdateWindow( hparent );
+    flush_events();
+    flush_sequence();
+    trace("testing SetWindowPos(-10000, -10000) on child\n");
+    SetWindowPos( hchild, 0, -10000, -10000, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER );
+    check_update_rgn( hchild, 0 );
+    flush_events();
+
+#if 0 /* this one doesn't pass under Wine yet */
+    UpdateWindow( hparent );
+    flush_events();
+    flush_sequence();
+    trace("testing ShowWindow(SW_MINIMIZE) on child\n");
+    ShowWindow( hchild, SW_MINIMIZE );
+    check_update_rgn( hchild, 0 );
+    flush_events();
+#endif
+
+    UpdateWindow( hparent );
+    flush_events();
+    flush_sequence();
+    trace("testing SetWindowPos(-10000, -10000) on parent\n");
+    SetWindowPos( hparent, 0, -10000, -10000, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER );
+    check_update_rgn( hparent, 0 );
+    flush_events();
+
     log_all_parent_messages--;
     DestroyWindow( hparent );
     ok(!IsWindow(hchild), "child must be destroyed with its parent\n");
