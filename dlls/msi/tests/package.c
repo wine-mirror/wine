@@ -4708,6 +4708,7 @@ static void test_installprops(void)
     DWORD size, type;
     LANGID langid;
     HKEY hkey1, hkey2;
+    int res;
     UINT r;
 
     GetCurrentDirectory(MAX_PATH, path);
@@ -4800,6 +4801,16 @@ static void test_installprops(void)
     r = MsiGetProperty(hpkg, "UserLanguageID", buf, &size);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS< got %d\n", r);
     ok( !lstrcmpA(buf, path), "Expected \"%s\", got \"%s\"\n", path, buf);
+
+    res = GetSystemMetrics(SM_CXSCREEN);
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "ScreenX", buf, &size);
+    ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
+
+    res = GetSystemMetrics(SM_CYSCREEN);
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "ScreenY", buf, &size);
+    ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
 
     CloseHandle(hkey1);
     CloseHandle(hkey2);
