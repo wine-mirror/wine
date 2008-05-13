@@ -119,7 +119,7 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
     connection->socketFD = -1;
     if (useSSL)
     {
-#ifdef SONAME_LIBSSL
+#if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
         TRACE("using SSL connection\n");
 	if (OpenSSL_ssl_handle) /* already initialized everything */
             return TRUE;

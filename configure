@@ -15818,7 +15818,7 @@ _ACEOF
 fi
 
 fi
-if test "x$ac_cv_lib_soname_ssl" = "x"; then
+if test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"; then
   case "x$with_openssl" in
   x)   wine_notices="$wine_notices|OpenSSL development files not found, SSL won't be supported." ;;
   xno) ;;

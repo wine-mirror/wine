@@ -1171,7 +1171,7 @@ then
     WINE_CHECK_SONAME(ssl,SSL_library_init)
     WINE_CHECK_SONAME(crypto,BIO_new_socket)
 fi
-WINE_NOTICE_WITH(openssl,[test "x$ac_cv_lib_soname_ssl" = "x"],
+WINE_NOTICE_WITH(openssl,[test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"],
                  [OpenSSL development files not found, SSL won't be supported.])
 
 dnl **** Check for libjpeg ****
