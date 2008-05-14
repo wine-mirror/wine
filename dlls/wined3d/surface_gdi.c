@@ -650,7 +650,7 @@ HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
 
     /* Update the image because of the palette change. Some games like e.g Red Alert
        call SetEntries a lot to implement fading. */
-    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+    if(This == (IWineD3DSurfaceImpl *) This->resource.wineD3DDevice->ddraw_primary)
         x11_copy_to_screen(This, NULL);
 
     return WINED3D_OK;
