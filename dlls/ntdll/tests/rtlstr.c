@@ -233,15 +233,18 @@ static void test_RtlInitUnicodeStringEx(void)
     ok(result == STATUS_NAME_TOO_LONG,
        "pRtlInitUnicodeStringEx(&uni, 0) returns %x, expected %x\n",
        result, STATUS_NAME_TOO_LONG);
-    ok(uni.Length == 12345,
-       "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u\n",
-       uni.Length, 12345);
-    ok(uni.MaximumLength == 12345,
-       "pRtlInitUnicodeStringEx(&uni, 0) sets MaximumLength to %u, expected %u\n",
-       uni.MaximumLength, 12345);
-    ok(uni.Buffer == (void *) 0xdeadbeef,
-       "pRtlInitUnicodeStringEx(&uni, 0) sets Buffer to %p, expected %x\n",
-       uni.Buffer, 0xdeadbeef);
+    ok(uni.Length == 12345 ||
+       uni.Length == 0, /* win2k3 */
+       "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected 12345 or 0\n",
+       uni.Length);
+    ok(uni.MaximumLength == 12345 ||
+       uni.MaximumLength == 0, /* win2k3 */
+       "pRtlInitUnicodeStringEx(&uni, 0) sets MaximumLength to %u, expected 12345 or 0\n",
+       uni.MaximumLength);
+    ok(uni.Buffer == (void *) 0xdeadbeef ||
+       uni.Buffer == teststring2, /* win2k3 */
+       "pRtlInitUnicodeStringEx(&uni, 0) sets Buffer to %p, expected %x or %p\n",
+       uni.Buffer, 0xdeadbeef, teststring2);
 
     uni.Length = 12345;
     uni.MaximumLength = 12345;
@@ -1477,8 +1480,8 @@ static const int2str_t int2str[] = {
     { 2,         1000, 10, 33, "1111101000\0------------------------", STATUS_SUCCESS},
     { 2,        10000, 14, 33, "10011100010000\0--------------------", STATUS_SUCCESS},
     { 2,        32767, 15, 33, "111111111111111\0-------------------", STATUS_SUCCESS},
-    { 2,        32768, 16, 33, "1000000000000000\0------------------", STATUS_SUCCESS},
-    { 2,        65535, 16, 33, "1111111111111111\0------------------", STATUS_SUCCESS},
+/*  { 2,        32768, 16, 33, "1000000000000000\0------------------", STATUS_SUCCESS}, broken on windows */
+/*  { 2,        65535, 16, 33, "1111111111111111\0------------------", STATUS_SUCCESS}, broken on windows */
     { 2,        65536, 17, 33, "10000000000000000\0-----------------", STATUS_SUCCESS},
     { 2,       100000, 17, 33, "11000011010100000\0-----------------", STATUS_SUCCESS},
     { 2,      1000000, 20, 33, "11110100001001000000\0--------------", STATUS_SUCCESS},
@@ -1532,8 +1535,8 @@ static const int2str_t int2str[] = {
     {16,  4294967294U,  8,  9, "FFFFFFFE\0--------------------------", STATUS_SUCCESS},
     {16,  4294967295U,  8,  9, "FFFFFFFF\0--------------------------", STATUS_SUCCESS}, /* max unsigned int */
 
-    { 2,        32768, 16, 17, "1000000000000000\0------------------", STATUS_SUCCESS},
-    { 2,        32768, 16, 16, "1000000000000000-------------------",  STATUS_SUCCESS},
+/*  { 2,        32768, 16, 17, "1000000000000000\0------------------", STATUS_SUCCESS}, broken on windows */
+/*  { 2,        32768, 16, 16, "1000000000000000-------------------",  STATUS_SUCCESS}, broken on windows */
     { 2,        65536, 17, 18, "10000000000000000\0-----------------", STATUS_SUCCESS},
     { 2,        65536, 17, 17, "10000000000000000------------------",  STATUS_SUCCESS},
     { 2,       131072, 18, 19, "100000000000000000\0----------------", STATUS_SUCCESS},
