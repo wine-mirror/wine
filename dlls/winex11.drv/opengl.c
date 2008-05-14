@@ -2136,7 +2136,7 @@ static void WINAPI X11DRV_wglFinish(void)
     sync_context(ctx);
     pglFinish();
     wine_tsx11_unlock();
-    ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+    if (ctx) ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 }
 
 static void WINAPI X11DRV_wglFlush(void)
@@ -2148,7 +2148,7 @@ static void WINAPI X11DRV_wglFlush(void)
     sync_context(ctx);
     pglFlush();
     wine_tsx11_unlock();
-    ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+    if (ctx) ExtEscape(ctx->hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 }
 
 /**
