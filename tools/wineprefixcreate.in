@@ -122,7 +122,12 @@ fi
 WINEPREFIX=`cd "$WINEPREFIX" && pwd`
 export WINEPREFIX
 
-"${WINELOADER:-$bindir/wine}" wineboot.exe --update
+if [ -d "$WINEPREFIX/dosdevices" ]
+then
+    "${WINELOADER:-$bindir/wine}" wineboot.exe --update
+else
+    "${WINELOADER:-$bindir/wine}" wineboot.exe
+fi
 
 # Wait for the wineserver to finish
 
