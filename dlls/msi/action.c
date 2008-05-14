@@ -2125,7 +2125,10 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szlevel[] =
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
+    static const WCHAR szOutOfDiskSpace[] =
+        {'O','u','t','O','f','D','i','s','k','S','p','a','c','e',0};
     static const WCHAR szOne[] = { '1', 0 };
+    static const WCHAR szZero[] = { '0', 0 };
     MSICOMPONENT *comp;
     UINT rc;
     MSIQUERY * view;
@@ -2176,6 +2179,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     if (!level)
         MSI_SetPropertyW(package,szlevel, szOne);
     msi_free(level);
+
+    /* FIXME: check volume disk space */
+    MSI_SetPropertyW(package, szOutOfDiskSpace, szZero);
 
     ACTION_UpdateFeatureInstallStates(package);
 
