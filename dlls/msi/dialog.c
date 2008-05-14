@@ -3482,6 +3482,9 @@ msi_dialog *msi_dialog_create( MSIPACKAGE* package,
 
     TRACE("%p %s\n", package, debugstr_w(szDialogName));
 
+    if (!hMsiHiddenWindow)
+        msi_dialog_register_class();
+
     /* allocate the structure for the dialog to use */
     dialog = msi_alloc_zero( sizeof *dialog + sizeof(WCHAR)*strlenW(szDialogName) );
     if( !dialog )
