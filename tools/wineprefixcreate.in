@@ -111,6 +111,10 @@ do
   esac
 done
 
+echo "Note: wineprefixcreate is deprecated and shouldn't be needed anymore." 1>&2
+echo "      WINEPREFIX creation and updates now happen automatically when needed." 1>&2
+echo 1>&2
+
 WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
 
 if [ -d "$WINEPREFIX" ] || mkdir "$WINEPREFIX"; then :
