@@ -1828,9 +1828,14 @@ static void test_gethostbyname_hack(void)
         }
     }
 
+#if 0
+    /* Can't expect ISPs to behave anymore; many send you to spam sites
+     * if you type in a bogus URL nowadays.
+     */
     he = NULL;
     he = gethostbyname("someweirdandbogusname");
     ok(he == NULL, "gethostbyname(\"someweirdandbogusname\") succeeded.\n");
+#endif
 }
 
 static void test_inet_addr(void)
