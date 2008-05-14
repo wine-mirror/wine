@@ -1105,7 +1105,7 @@ static int add_update_region( struct window *win, struct region *region )
 static void crop_children_update_region( struct window *win, rectangle_t *rect )
 {
     struct window *child;
-    struct region *tmp = create_empty_region();
+    struct region *tmp;
     rectangle_t child_rect;
 
     LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
