@@ -1468,8 +1468,24 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
 static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
 {
   static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',',','$',0,'.',',' };
+  static CRITICAL_SECTION csLastChars = { NULL, -1, 0, 0, 0, 0 };
+  static VARIANT_NUMBER_CHARS lastChars;
+  static LCID lastLcid = -1;
+  static DWORD lastFlags = 0;
   LCTYPE lctype = dwFlags & LOCALE_NOUSEROVERRIDE;
   WCHAR buff[4];
+
+  /* To make caching thread-safe, a critical section is needed */
+  EnterCriticalSection(&csLastChars);
+
+  /* Asking for default locale entries is very expensive: It is a registry
+     server call. So cache one locally, as Microsoft does it too */
+  if(lcid == lastLcid && dwFlags == lastFlags)
+  {
+    memcpy(lpChars, &lastChars, sizeof(defaultChars));
+    LeaveCriticalSection(&csLastChars);
+    return;
+  }
 
   memcpy(lpChars, &defaultChars, sizeof(defaultChars));
   GET_NUMBER_TEXT(LOCALE_SNEGATIVESIGN, cNegativeSymbol);
@@ -1490,6 +1506,11 @@ static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID 
   }
   TRACE("lcid 0x%x, cCurrencyLocal =%d,%d '%c','%c'\n", lcid, lpChars->cCurrencyLocal,
         lpChars->cCurrencyLocal2, lpChars->cCurrencyLocal, lpChars->cCurrencyLocal2);
+
+  memcpy(&lastChars, lpChars, sizeof(defaultChars));
+  lastLcid = lcid;
+  lastFlags = dwFlags;
+  LeaveCriticalSection(&csLastChars);
 }
 
 /* Number Parsing States */
