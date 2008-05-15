@@ -1178,8 +1178,9 @@ static cab_LONG fdi_Zipinflate_codes(const struct Ziphuft *tl, const struct Ziph
       ZIPDUMPBITS(e)
       do
       {
-        d = max(d & (ZIPWSIZE - 1), w);
-        e = min(ZIPWSIZE - d, n);
+        d &= ZIPWSIZE - 1;
+        e = ZIPWSIZE - max(d, w);
+        e = min(e, n);
         n -= e;
         do
         {
