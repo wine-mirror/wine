@@ -62,4 +62,6 @@ See the COPYING.LIB file for license information. \n\
 "
 
 STRING_EXECFAIL "Nie uda³o siê uruchomiæ aplikacji lub nie ma aplikacji skojarzonej z danym plikiem.\nShellExecuteEx nie powiod³o siê"
+
+STRING_UNIXFAIL "Nie da siê przet³umaczyæ danej œcie¿ki Unix na œcie¿kê DOS."
 }
