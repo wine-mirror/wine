@@ -394,7 +394,7 @@ static inline BOOL is_basic_auth_value( LPCWSTR pszAuthValue )
 {
     static const WCHAR szBasic[] = {'B','a','s','i','c'}; /* Note: not nul-terminated */
     return !strncmpiW(pszAuthValue, szBasic, ARRAYSIZE(szBasic)) &&
-        ((pszAuthValue[ARRAYSIZE(szBasic)] != ' ') || !pszAuthValue[ARRAYSIZE(szBasic)]);
+        ((pszAuthValue[ARRAYSIZE(szBasic)] == ' ') || !pszAuthValue[ARRAYSIZE(szBasic)]);
 }
 
 static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
