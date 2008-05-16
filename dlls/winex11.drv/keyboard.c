@@ -2082,19 +2082,25 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
         case MAPVK_VSC_TO_VK_EX:
         {
             int keyc;
-            UINT vkey;
+            UINT vkey = 0;
 
             /* let's do scan -> keycode -> vkey */
             for (keyc = min_keycode; keyc <= max_keycode; keyc++)
-                if ((keyc2scan[keyc] & 0xFF) == (wCode & 0xFF)) break;
+                if ((keyc2scan[keyc] & 0xFF) == (wCode & 0xFF))
+                {
+                    vkey = keyc2vkey[keyc] & 0xFF;
+                    /* Only stop if it's not a numpad vkey; otherwise keep
+                       looking for a potential better vkey. */
+                    if (vkey && (vkey < VK_NUMPAD0 || VK_DIVIDE < vkey))
+                        break;
+                }
 
-            if (keyc > max_keycode)
+            if (vkey == 0)
             {
                 TRACE("returning no vkey-code.\n");
                 return 0;
             }
 
-            vkey = keyc2vkey[keyc] & 0xFF;
             if (wMapType == MAPVK_VSC_TO_VK)
                 switch (vkey)
                 {

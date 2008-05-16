@@ -1115,6 +1115,18 @@ static void test_key_map(void)
 {
     HKL kl = GetKeyboardLayout(0);
     UINT kL, kR, s, sL;
+    int i;
+    static const UINT numpad_collisions[][2] = {
+        { VK_NUMPAD0, VK_INSERT },
+        { VK_NUMPAD1, VK_END },
+        { VK_NUMPAD2, VK_DOWN },
+        { VK_NUMPAD3, VK_NEXT },
+        { VK_NUMPAD4, VK_LEFT },
+        { VK_NUMPAD6, VK_RIGHT },
+        { VK_NUMPAD7, VK_HOME },
+        { VK_NUMPAD8, VK_UP },
+        { VK_NUMPAD9, VK_PRIOR },
+    };
 
     s  = MapVirtualKeyEx(VK_SHIFT,  MAPVK_VK_TO_VSC, kl);
     ok(s != 0, "MapVirtualKeyEx(VK_SHIFT) should return non-zero\n");
@@ -1130,6 +1142,22 @@ static void test_key_map(void)
     ok(kL == VK_LSHIFT, "Scan code -> vKey = %x (not VK_LSHIFT)\n", kL);
     kR = MapVirtualKeyEx(0x36, MAPVK_VSC_TO_VK_EX, kl);
     ok(kR == VK_RSHIFT, "Scan code -> vKey = %x (not VK_RSHIFT)\n", kR);
+
+    /* test that MAPVK_VSC_TO_VK prefers the non-numpad vkey if there's ambiguity */
+    for (i = 0; i < sizeof(numpad_collisions)/sizeof(numpad_collisions[0]); i++)
+    {
+        UINT numpad_scan = MapVirtualKeyEx(numpad_collisions[i][0],  MAPVK_VK_TO_VSC, kl);
+        UINT other_scan  = MapVirtualKeyEx(numpad_collisions[i][1],  MAPVK_VK_TO_VSC, kl);
+
+        /* do they really collide for this layout? */
+        if (numpad_scan && other_scan == numpad_scan)
+        {
+            UINT vkey = MapVirtualKeyEx(numpad_scan, MAPVK_VSC_TO_VK, kl);
+            ok(vkey != numpad_collisions[i][0],
+               "Got numpad vKey %x for scan code %x when there was another choice\n",
+               vkey, numpad_scan);
+        }
+    }
 }
 
 START_TEST(input)
