@@ -9117,7 +9117,7 @@ START_TEST(visual)
     hr = IDirect3DDevice9_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
     if(FAILED(hr))
     {
-        trace("Clear failed, can't assure correctness of the test results, skipping\n");
+        skip("Clear failed, can't assure correctness of the test results, skipping\n");
         goto cleanup;
     }
     IDirect3DDevice9_Present(device_ptr, NULL, NULL, NULL, NULL);
@@ -9125,14 +9125,14 @@ START_TEST(visual)
     color = getPixelColor(device_ptr, 1, 1);
     if(color !=0x00ff0000)
     {
-        trace("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
+        skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
         goto cleanup;
     }
 
     hr = IDirect3DDevice9_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xff00ddee, 0.0, 0);
     if(FAILED(hr))
     {
-        trace("Clear failed, can't assure correctness of the test results, skipping\n");
+        skip("Clear failed, can't assure correctness of the test results, skipping\n");
         goto cleanup;
     }
     IDirect3DDevice9_Present(device_ptr, NULL, NULL, NULL, NULL);
@@ -9140,7 +9140,7 @@ START_TEST(visual)
     color = getPixelColor(device_ptr, 639, 479);
     if(color != 0x0000ddee)
     {
-        trace("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
+        skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
         goto cleanup;
     }
 
