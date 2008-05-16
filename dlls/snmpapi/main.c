@@ -356,6 +356,7 @@ INT WINAPI SnmpUtilOidNCmp(AsnObjectIdentifier *oid1, AsnObjectIdentifier *oid2,
         if (oid1->ids[i] > oid2->ids[i]) return 1;
         if (oid1->ids[i] < oid2->ids[i]) return -1;
     }
+    if (i == count) return 0;
     if (oid1->idLength < oid2->idLength) return -1;
     if (oid1->idLength > oid2->idLength) return 1;
     return 0;

@@ -330,6 +330,11 @@ static void test_SnmpUtilOidNCmp(void)
     ok(ret == 1, "SnmpUtilOidNCmp failed: %d\n", ret);
     ret = SnmpUtilOidNCmp(&oid1, &oid2, 4);
     ok(ret == -1, "SnmpUtilOidNCmp failed: %d\n", ret);
+
+    ret = SnmpUtilOidNCmp(&oid1, &oid2, 2);
+    ok(!ret, "SnmpUtilOidNCmp failed: %d\n", ret);
+    ret = SnmpUtilOidNCmp(&oid2, &oid1, 2);
+    ok(!ret, "SnmpUtilOidNCmp failed: %d\n", ret);
 }
 
 static void test_SnmpUtilOidCmp(void)
