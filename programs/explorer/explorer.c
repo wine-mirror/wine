@@ -184,7 +184,7 @@ int WINAPI wWinMain(HINSTANCE hinstance,
     }
 
     rc = CreateProcessW(NULL, winefile_commandline, NULL, NULL, FALSE, 0, NULL,
-                        parameters.root, &si, &info);
+                        parameters.root[0] ? parameters.root:NULL, &si, &info);
 
     HeapFree(GetProcessHeap(),0,winefile_commandline);
 
