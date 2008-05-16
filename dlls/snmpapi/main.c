@@ -343,17 +343,21 @@ VOID WINAPI SnmpUtilOidFree(AsnObjectIdentifier *oid)
  */
 INT WINAPI SnmpUtilOidNCmp(AsnObjectIdentifier *oid1, AsnObjectIdentifier *oid2, UINT count)
 {
-    unsigned int i;
+    unsigned int i, len;
 
     TRACE("(%p, %p, %d)\n", oid1, oid2, count);
 
     if (!oid1 || !oid2) return 0;
 
-    for (i = 0; i < count; i++)
+    len = min(count, oid1->idLength);
+    len = min(len, oid2->idLength);
+    for (i = 0; i < len; i++)
     {
         if (oid1->ids[i] > oid2->ids[i]) return 1;
         if (oid1->ids[i] < oid2->ids[i]) return -1;
     }
+    if (oid1->idLength < oid2->idLength) return -1;
+    if (oid1->idLength > oid2->idLength) return 1;
     return 0;
 }
 

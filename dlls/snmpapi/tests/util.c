@@ -321,6 +321,15 @@ static void test_SnmpUtilOidNCmp(void)
 
     ret = SnmpUtilOidNCmp(&oid2, &oid1, 4);
     ok(ret == 1, "SnmpUtilOidNCmp failed: %d\n", ret);
+
+    oid1.idLength = 3;
+    memcpy(oid1.ids, oid2.ids, sizeof(UINT) * 4);
+    ret = SnmpUtilOidNCmp(&oid1, &oid1, 4);
+    ok(!ret, "SnmpUtilOidNCmp failed: %d\n", ret);
+    ret = SnmpUtilOidNCmp(&oid2, &oid1, 4);
+    ok(ret == 1, "SnmpUtilOidNCmp failed: %d\n", ret);
+    ret = SnmpUtilOidNCmp(&oid1, &oid2, 4);
+    ok(ret == -1, "SnmpUtilOidNCmp failed: %d\n", ret);
 }
 
 static void test_SnmpUtilOidCmp(void)
