@@ -3397,7 +3397,7 @@ lend:
 
     /* TODO: send notification for P3P header */
 
-    iar.dwResult = (DWORD)bSuccess;
+    iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
     iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,

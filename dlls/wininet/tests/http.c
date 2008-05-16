@@ -1801,6 +1801,62 @@ static void test_bogus_accept_types_array(void)
     InternetCloseHandle(ses);
 }
 
+struct context
+{
+    HANDLE event;
+    HINTERNET req;
+};
+
+static void WINAPI cb(HINTERNET handle, DWORD_PTR context, DWORD status, LPVOID info, DWORD size)
+{
+    trace("%p 0x%08lx %u %p 0x%08x\n", handle, context, status, info, size);
+
+    if (status == INTERNET_STATUS_REQUEST_COMPLETE)
+    {
+        INTERNET_ASYNC_RESULT *result = info;
+        struct context *ctx = (struct context *)context;
+
+        trace("request handle: 0x%08lx\n", result->dwResult);
+
+        ctx->req = (HINTERNET)result->dwResult;
+        SetEvent(ctx->event);
+    }
+}
+
+static void test_open_url_async(void)
+{
+    BOOL ret;
+    HINTERNET ses, req;
+    DWORD size;
+    struct context ctx;
+    ULONG type;
+
+    ctx.req = NULL;
+    ctx.event = CreateEvent(NULL, TRUE, FALSE, "Z:_home_hans_jaman-installer.exe_ev1");
+
+    ses = InternetOpen("AdvancedInstaller", 0, NULL, NULL, INTERNET_FLAG_ASYNC);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    InternetSetStatusCallback(ses, cb);
+    ResetEvent(ctx.event);
+
+    req = InternetOpenUrl(ses, "http://www.winehq.org", NULL, 0, 0, (DWORD_PTR)&ctx);
+    ok(!req && GetLastError() == ERROR_IO_PENDING, "InternetOpenUrl failed\n");
+
+    WaitForSingleObject(ctx.event, INFINITE);
+
+    type = 0;
+    size = sizeof(type);
+    ret = InternetQueryOption(ctx.req, INTERNET_OPTION_HANDLE_TYPE, &type, &size);
+    ok(ret, "HttpQueryInfo failed: %u\n", GetLastError());
+    ok(type == INTERNET_HANDLE_TYPE_HTTP_REQUEST,
+       "expected INTERNET_HANDLE_TYPE_HTTP_REQUEST, got %u\n", type);
+
+    CloseHandle(ctx.event);
+    InternetCloseHandle(ctx.req);
+    InternetCloseHandle(ses);
+}
+
 #define STATUS_STRING(status) \
     memcpy(status_string[status], #status, sizeof(CHAR) * \
            (strlen(#status) < MAX_STATUS_NAME ? \
@@ -1877,4 +1933,5 @@ START_TEST(http)
     test_http_connection();
     test_user_agent_header();
     test_bogus_accept_types_array();
+    test_open_url_async();
 }
