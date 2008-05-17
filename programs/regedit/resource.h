@@ -133,6 +133,7 @@
 #define ID_FAVORITE_FIRST               33000
 #define ID_FAVORITE_LAST                33099
 #define ID_EDIT_NEW_MULTI_STRINGVALUE   33100
+#define ID_EDIT_EXPORT                  33101
 
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001
