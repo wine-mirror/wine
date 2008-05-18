@@ -126,6 +126,22 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         return 0;
     }
 
+    /* In WGL both color, depth and stencil are features of a pixel format. In case of D3D they are separate.
+     * You are able to add a depth + stencil surface at a later stage when you need it.
+     * In order to support this properly in WineD3D we need the ability to recreate the opengl context and
+     * drawable when this is required. This is very tricky as we need to reapply ALL opengl states for the new
+     * context, need torecreate shaders, textures and other resources.
+     *
+     * The context manager already takes care of the state problem and for the other tasks code from Reset
+     * can be used. These changes are way to risky during the 1.0 code freeze which is taking place right now.
+     * Likely a lot of other new bugs will be exposed. For that reason request a depth stencil surface all the
+     * time. It can cause a slight performance hit but fixes a lot of regressions. A fixme reminds of that this
+     * issue needs to be fixed. */
+    if(DepthStencilFormat != WINED3DFMT_D24S8)
+        FIXME("Add OpenGL context recreation support to SetDepthStencilSurface\n");
+
+    DepthStencilFormat = WINED3DFMT_D24S8;
+
     if(DepthStencilFormat) {
         getDepthStencilBits(DepthStencilFormat, &depthBits, &stencilBits);
     }
