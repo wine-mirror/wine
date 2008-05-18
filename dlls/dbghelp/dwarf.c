@@ -1571,7 +1571,11 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name))
+    {
+        WARN("No name for function... dropping function\n");
+        return NULL;
+    }
     /* if it's an abstract representation of an inline function, there should be
      * a concrete object that we'll handle
      */
