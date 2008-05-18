@@ -2197,27 +2197,26 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
         {
             LPWSTR headers;
             DWORD len;
-            BOOL ret;
+            BOOL ret = FALSE;
 
             if (request_only)
                 headers = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, lpwhr->lpszVersion);
             else
                 headers = lpwhr->lpszRawHeaders;
 
-	    len = strlenW(headers);
-            if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
+            len = (strlenW(headers) + 1) * sizeof(WCHAR);
+            if (len > *lpdwBufferLength)
             {
-                *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 ret = FALSE;
-            } else
+            }
+            else if (lpBuffer)
             {
-                memcpy(lpBuffer, headers, (len+1)*sizeof(WCHAR));
-                *lpdwBufferLength = len * sizeof(WCHAR);
-
-                TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, len));
+                memcpy(lpBuffer, headers, len);
+                TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len / sizeof(WCHAR)));
                 ret = TRUE;
             }
+            *lpdwBufferLength = len;
 
             if (request_only)
                 HeapFree(GetProcessHeap(), 0, headers);

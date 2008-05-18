@@ -1848,9 +1848,14 @@ static void test_open_url_async(void)
     type = 0;
     size = sizeof(type);
     ret = InternetQueryOption(ctx.req, INTERNET_OPTION_HANDLE_TYPE, &type, &size);
-    ok(ret, "HttpQueryInfo failed: %u\n", GetLastError());
+    ok(ret, "InternetQueryOption failed: %u\n", GetLastError());
     ok(type == INTERNET_HANDLE_TYPE_HTTP_REQUEST,
        "expected INTERNET_HANDLE_TYPE_HTTP_REQUEST, got %u\n", type);
+
+    size = 0;
+    ret = HttpQueryInfo(ctx.req, HTTP_QUERY_RAW_HEADERS_CRLF, NULL, &size, NULL);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "HttpQueryInfo failed\n");
+    ok(size > 0, "expected size > 0\n");
 
     CloseHandle(ctx.event);
     InternetCloseHandle(ctx.req);
