@@ -2975,6 +2975,8 @@ HPEN SYSCOLOR_GetPen( INT index )
  */
 LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 {
+    if (devmode) devmode->dmDriverExtra = 0;
+
     return ChangeDisplaySettingsExA(NULL,devmode,NULL,flags,NULL);
 }
 
@@ -2984,6 +2986,8 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
  */
 LONG WINAPI ChangeDisplaySettingsW( LPDEVMODEW devmode, DWORD flags )
 {
+    if (devmode) devmode->dmDriverExtra = 0;
+
     return ChangeDisplaySettingsExW(NULL,devmode,NULL,flags,NULL);
 }
 

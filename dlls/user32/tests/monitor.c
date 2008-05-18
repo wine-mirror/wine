@@ -131,7 +131,9 @@ static const struct vid_mode vid_modes_test[] = {
     {  0, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, 0},
     {640,   0, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, 0},
 
-    {0, 0, 0, 0, DM_DISPLAYFREQUENCY, 0},
+    /* the following test succeeds under XP SP3
+    {0, 0, 0, 0, DM_DISPLAYFREQUENCY, 0}
+    */
 };
 #define vid_modes_cnt (sizeof(vid_modes_test) / sizeof(vid_modes_test[0]))
 
@@ -155,6 +157,44 @@ static void test_ChangeDisplaySettingsEx(void)
 
     width = dm.dmPelsWidth;
 
+    dm.dmDriverExtra = 1;
+    res = ChangeDisplaySettingsA(&dm, CDS_TEST);
+    ok(res == DISP_CHANGE_SUCCESSFUL,
+       "ChangeDisplaySettingsA returned %d, expected DISP_CHANGE_SUCCESSFUL\n", res);
+    ok(dm.dmDriverExtra == 0, "ChangeDisplaySettingsA didn't reset dmDriverExtra to 0\n");
+
+    /* crashes under XP SP3 for large dmDriverExtra values */
+    dm.dmDriverExtra = 1;
+    res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_TEST, NULL);
+    ok(res == DISP_CHANGE_SUCCESSFUL,
+       "ChangeDisplaySettingsExW returned %d, expected DISP_CHANGE_BADMODE\n", res);
+    ok(dm.dmDriverExtra == 1, "ChangeDisplaySettingsExA shouldn't reset dmDriverExtra to 0\n");
+
+    memset(&dmW, 0, sizeof(dmW));
+    dmW.dmSize = sizeof(dmW);
+    dmW.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+    dmW.dmPelsWidth = dm.dmPelsWidth;
+    dmW.dmPelsHeight = dm.dmPelsHeight;
+    dmW.dmDriverExtra = 1;
+    SetLastError(0xdeadbeef);
+    res = ChangeDisplaySettingsW(&dmW, CDS_TEST);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        ok(res == DISP_CHANGE_SUCCESSFUL,
+           "ChangeDisplaySettingsW returned %d, expected DISP_CHANGE_SUCCESSFUL\n", res);
+        ok(dmW.dmDriverExtra == 0, "ChangeDisplaySettingsW didn't reset dmDriverExtra to 0\n");
+    }
+
+    /* Apparently XP treats dmDriverExtra being != 0 as an error */
+    dmW.dmDriverExtra = 1;
+    res = pChangeDisplaySettingsExW(NULL, &dmW, NULL, CDS_TEST, NULL);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        ok(res == DISP_CHANGE_SUCCESSFUL,
+           "ChangeDisplaySettingsExW returned %d, expected DISP_CHANGE_BADMODE\n", res);
+        ok(dmW.dmDriverExtra == 1, "ChangeDisplaySettingsExW shouldn't reset dmDriverExtra to 0\n");
+    }
+
     /* the following 2 tests show that dm.dmSize being 0 is invalid, but
      * ChangeDisplaySettingsExA still reports success.
      */
@@ -171,8 +211,9 @@ static void test_ChangeDisplaySettingsEx(void)
     SetLastError(0xdeadbeef);
     res = pChangeDisplaySettingsExW(NULL, &dmW, NULL, CDS_TEST, NULL);
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
-        ok(res == DISP_CHANGE_FAILED,
-           "ChangeDisplaySettingsExW returned %d, expected DISP_CHANGE_FAILED\n", res);
+        ok(res == DISP_CHANGE_FAILED ||
+           res == DISP_CHANGE_BADMODE /* XP SP3 */,
+           "ChangeDisplaySettingsExW returned %d, expected DISP_CHANGE_FAILED or DISP_CHANGE_BADMODE\n", res);
 
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
@@ -184,7 +225,7 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmBitsPerPel       = vid_modes_test[i].bpp;
         dm.dmDisplayFrequency = vid_modes_test[i].freq;
         dm.dmFields           = vid_modes_test[i].fields;
-        res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_FULLSCREEN, NULL);
+        res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_TEST, NULL);
         ok(vid_modes_test[i].success ?
            (res == DISP_CHANGE_SUCCESSFUL) :
            (res == DISP_CHANGE_BADMODE || res == DISP_CHANGE_BADPARAM),
@@ -243,8 +284,8 @@ START_TEST(monitor)
 {
     init_function_pointers();
     test_enumdisplaydevices();
-    if (winetest_interactive)
-        test_ChangeDisplaySettingsEx();
+    test_ChangeDisplaySettingsEx();
+
     if (pMonitorFromPoint && pMonitorFromWindow)
         test_monitors();
     else
