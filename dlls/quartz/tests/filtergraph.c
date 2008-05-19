@@ -298,4 +298,5 @@ START_TEST(filtergraph)
     test_graph_builder_addfilter();
     test_mediacontrol();
     test_filter_graph2();
+    CoUninitialize();
 }

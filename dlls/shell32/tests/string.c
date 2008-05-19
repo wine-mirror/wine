@@ -110,4 +110,6 @@ START_TEST(string)
         else
             test_StrRetToStringNA();
     }
+
+    CoUninitialize();
 }

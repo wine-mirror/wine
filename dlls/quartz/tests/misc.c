@@ -173,4 +173,6 @@ START_TEST(misc)
 
     test_video_renderer_aggregations();
     test_filter_graph_aggregations();
+
+    CoUninitialize();
 }

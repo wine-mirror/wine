@@ -110,4 +110,6 @@ START_TEST(referenceclock)
     CoInitialize(NULL);
 
     test_IReferenceClock_SystemClock();
+
+    CoUninitialize();
 }

@@ -160,4 +160,6 @@ START_TEST(videorenderer)
     test_basefilter();
 
     release_video_renderer();
+
+    CoUninitialize();
 }

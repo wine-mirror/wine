@@ -87,4 +87,6 @@ START_TEST(memallocator)
     CoInitialize(NULL);
 
     CommitDecommitTest();
+
+    CoUninitialize();
 }
