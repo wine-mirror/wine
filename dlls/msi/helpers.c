@@ -921,6 +921,8 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
             ComponentList *clist;
             MSIFEATURE *f;
 
+            component->hasLocalFeature = FALSE;
+
             msi_component_set_state( component, newstate );
 
             /*if any other feature wants is local we need to set it local*/
@@ -939,6 +941,7 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
                           f->ActionRequest == INSTALLSTATE_SOURCE) )
                     {
                         TRACE("Saved by %s\n", debugstr_w(f->Feature));
+                        component->hasLocalFeature = TRUE;
 
                         if (component->Attributes & msidbComponentAttributesOptional)
                         {
