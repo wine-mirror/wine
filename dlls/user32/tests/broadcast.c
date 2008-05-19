@@ -264,6 +264,10 @@ static void test_noprivileges(void)
     DWORD recips;
     BOOL ret;
 
+    static const DWORD BSM_ALL_RECIPS = BSM_VXDS | BSM_NETDRIVER |
+                                        BSM_INSTALLABLEDRIVERS |
+                                        BSM_APPLICATIONS | BSM_ALLDESKTOPS;
+
     pOpenProcessToken = (void *)GetProcAddress(advapi32, "OpenProcessToken");
     pAdjustTokenPrivileges = (void *)GetProcAddress(advapi32, "AdjustTokenPrivileges");
     if (!pOpenProcessToken || !pAdjustTokenPrivileges || !pOpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &token))
@@ -285,7 +289,9 @@ static void test_noprivileges(void)
     todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "Last error: %08x\n", GetLastError());
     ok(ret==1, "Returned: %d\n", ret);
     ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
-    ok(recips == BSM_ALLDESKTOPS, "Received by: %08x\n", recips);
+    ok(recips == BSM_ALLDESKTOPS ||
+       recips == BSM_ALL_RECIPS, /* win2k3 */
+       "Received by: %08x\n", recips);
     PulseEvent(hevent);
 
     /* Wine sets last error to 0, so just use that one as token here so it doesn't fail */
@@ -296,7 +302,9 @@ static void test_noprivileges(void)
     ok(!GetLastError(), "Last error: %08x\n", GetLastError());
     ok(ret==1, "Returned: %d\n", ret);
     ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
-    ok(recips == BSM_ALLCOMPONENTS, "Received by: %08x\n", recips);
+    ok(recips == BSM_ALLCOMPONENTS ||
+       recips == BSM_ALL_RECIPS, /* win2k3 */
+       "Received by: %08x\n", recips);
     PulseEvent(hevent);
 
     SetLastError(0xcafebabe);
@@ -306,7 +314,9 @@ static void test_noprivileges(void)
     todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "Last error: %08x\n", GetLastError());
     ok(ret==1, "Returned: %d\n", ret);
     ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
-    ok(recips == (BSM_ALLDESKTOPS|BSM_APPLICATIONS), "Received by: %08x\n", recips);
+    ok(recips == (BSM_ALLDESKTOPS|BSM_APPLICATIONS) ||
+       recips == BSM_APPLICATIONS, /* win2k3 */
+       "Received by: %08x\n", recips);
     PulseEvent(hevent);
 
     SetLastError(0xcafebabe);
@@ -316,7 +326,9 @@ static void test_noprivileges(void)
     todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "Last error: %08x\n", GetLastError());
     ok(!ret, "Returned: %d\n", ret);
     ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
-    ok(recips == (BSM_ALLDESKTOPS|BSM_APPLICATIONS), "Received by: %08x\n", recips);
+    ok(recips == (BSM_ALLDESKTOPS|BSM_APPLICATIONS) ||
+       recips == BSM_APPLICATIONS, /* win2k3 */
+       "Received by: %08x\n", recips);
     PulseEvent(hevent);
 }
 
