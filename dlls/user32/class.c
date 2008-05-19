@@ -338,11 +338,6 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, HINSTANCE hInstance, BOOL local
 
     /* Fix the extra bytes value */
 
-    if (classExtra < 0 || winExtra < 0)
-    {
-         SetLastError( ERROR_INVALID_PARAMETER );
-         return NULL;
-    }
     if (classExtra > 40)  /* Extra bytes are limited to 40 in Win32 */
         WARN("Class extra bytes %d is > 40\n", classExtra);
     if (winExtra > 40)    /* Extra bytes are limited to 40 in Win32 */
@@ -526,11 +521,11 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     CLASS *classPtr;
     HINSTANCE instance;
 
-    if (wc->hInstance == user32_module)
+    if (wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
+        wc->hInstance == user32_module)  /* we can't register a class for user32 */
     {
-        /* we can't register a class for user32 */
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
+         SetLastError( ERROR_INVALID_PARAMETER );
+         return 0;
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
@@ -575,11 +570,11 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     CLASS *classPtr;
     HINSTANCE instance;
 
-    if (wc->hInstance == user32_module)
+    if (wc->cbClsExtra < 0 || wc->cbWndExtra < 0 ||
+        wc->hInstance == user32_module)  /* we can't register a class for user32 */
     {
-        /* we can't register a class for user32 */
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
+         SetLastError( ERROR_INVALID_PARAMETER );
+         return 0;
     }
     if (!(instance = wc->hInstance)) instance = GetModuleHandleW( NULL );
 
