@@ -118,26 +118,27 @@ static BOOL init_function_ptrs(void)
 {
     hntdll = LoadLibraryA("ntdll.dll");
 
-    if (hntdll)
-    {
-        pNtCompleteConnectPort = (void *)GetProcAddress(hntdll, "NtCompleteConnectPort");
-        pNtAcceptConnectPort = (void *)GetProcAddress(hntdll, "NtAcceptConnectPort");
-        pNtReplyPort = (void *)GetProcAddress(hntdll, "NtReplyPort");
-        pNtReplyWaitReceivePort = (void *)GetProcAddress(hntdll, "NtReplyWaitReceivePort");
-        pNtCreatePort = (void *)GetProcAddress(hntdll, "NtCreatePort");
-        pNtRequestWaitReplyPort = (void *)GetProcAddress(hntdll, "NtRequestWaitReplyPort");
-        pNtRequestPort = (void *)GetProcAddress(hntdll, "NtRequestPort");
-        pNtRegisterThreadTerminatePort = (void *)GetProcAddress(hntdll, "NtRegisterThreadTerminatePort");
-        pNtConnectPort = (void *)GetProcAddress(hntdll, "NtConnectPort");
-        pRtlInitUnicodeString = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
-        pNtWaitForSingleObject = (void *)GetProcAddress(hntdll, "NtWaitForSingleObject");
-    }
+    if (!hntdll)
+        return FALSE;
+
+    pNtCompleteConnectPort = (void *)GetProcAddress(hntdll, "NtCompleteConnectPort");
+    pNtAcceptConnectPort = (void *)GetProcAddress(hntdll, "NtAcceptConnectPort");
+    pNtReplyPort = (void *)GetProcAddress(hntdll, "NtReplyPort");
+    pNtReplyWaitReceivePort = (void *)GetProcAddress(hntdll, "NtReplyWaitReceivePort");
+    pNtCreatePort = (void *)GetProcAddress(hntdll, "NtCreatePort");
+    pNtRequestWaitReplyPort = (void *)GetProcAddress(hntdll, "NtRequestWaitReplyPort");
+    pNtRequestPort = (void *)GetProcAddress(hntdll, "NtRequestPort");
+    pNtRegisterThreadTerminatePort = (void *)GetProcAddress(hntdll, "NtRegisterThreadTerminatePort");
+    pNtConnectPort = (void *)GetProcAddress(hntdll, "NtConnectPort");
+    pRtlInitUnicodeString = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
+    pNtWaitForSingleObject = (void *)GetProcAddress(hntdll, "NtWaitForSingleObject");
 
     if (!pNtCompleteConnectPort || !pNtAcceptConnectPort ||
         !pNtReplyWaitReceivePort || !pNtCreatePort || !pNtRequestWaitReplyPort ||
         !pNtRequestPort || !pNtRegisterThreadTerminatePort ||
         !pNtConnectPort || !pRtlInitUnicodeString)
     {
+        FreeLibrary(hntdll);
         return FALSE;
     }
 
@@ -309,4 +310,6 @@ START_TEST(port)
 
     test_ports_server();
     CloseHandle(thread);
+
+    FreeLibrary(hntdll);
 }
