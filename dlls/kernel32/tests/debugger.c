@@ -241,7 +241,9 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
            "wrong exit code : %08x\n", exit_code);
     }
     else
-        ok(exit_code == STATUS_ACCESS_VIOLATION, "exit code = %08x instead of STATUS_ACCESS_VIOLATION\n", exit_code);
+         ok(exit_code == STATUS_ACCESS_VIOLATION ||
+            exit_code == WAIT_ABANDONED, /* win2k3 */
+            "exit code = %08x instead of STATUS_ACCESS_VIOLATION or WAIT_ABANDONED\n", exit_code);
     CloseHandle(info.hProcess);
 
     /* ...before the debugger */
