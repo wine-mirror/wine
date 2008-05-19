@@ -503,6 +503,7 @@ static DWORD direction_flag_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATI
     ok( context->EFlags & 0x400, "context eflags has DF bit cleared\n" );
     got_exception++;
     context->Eip++;  /* skip cli */
+    context->EFlags &= ~0x400;  /* make sure it is cleared on return */
     return ExceptionContinueExecution;
 }
 
