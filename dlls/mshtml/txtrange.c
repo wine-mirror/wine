@@ -202,11 +202,6 @@ static void wstrbuf_append_len(wstrbuf_t *buf, LPCWSTR str, int len)
     buf->buf[buf->len] = 0;
 }
 
-static inline void wstrbuf_append(wstrbuf_t *buf, LPCWSTR str)
-{
-    wstrbuf_append_len(buf, str, strlenW(str));
-}
-
 static void wstrbuf_append_nodetxt(wstrbuf_t *buf, LPCWSTR str, int len)
 {
     const WCHAR *s = str;
