@@ -245,6 +245,11 @@ static void test_ports_server(void)
     obj.ObjectName = &port;
 
     status = pNtCreatePort(&PortHandle, &obj, 100, 100, 0);
+    if (status == STATUS_ACCESS_DENIED)
+    {
+        skip("Not enough rights\n");
+        return;
+    }
     todo_wine
     {
         ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %d\n", status);
