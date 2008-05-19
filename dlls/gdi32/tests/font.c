@@ -1823,7 +1823,9 @@ static void test_nonexistent_font(void)
     GetTextFaceA(hdc, sizeof(buf), buf);
 todo_wine /* Wine uses Arial for all substitutions */
     ok(!lstrcmpiA(buf, "Nonexistent font") /* XP, Vista */ ||
-       !lstrcmpiA(buf, "MS Serif") /* Win9x */, "Got %s\n", buf);
+       !lstrcmpiA(buf, "MS Serif") || /* Win9x */
+       !lstrcmpiA(buf, "MS Sans Serif"), /* win2k3 */
+       "Got %s\n", buf);
     cs = GetTextCharset(hdc);
     ok(cs == expected_cs, "expected %d, got %d\n", expected_cs, cs);
     DeleteObject(SelectObject(hdc, hfont));
@@ -1850,7 +1852,9 @@ todo_wine /* Wine uses Arial for all substitutions */
     GetTextFaceA(hdc, sizeof(buf), buf);
 todo_wine /* Wine uses Arial for all substitutions */
     ok(!lstrcmpiA(buf, "Times New Roman CE") /* XP, Vista */ ||
-       !lstrcmpiA(buf, "MS Serif") /* Win9x */, "Got %s\n", buf);
+       !lstrcmpiA(buf, "MS Serif") /* Win9x */ ||
+       !lstrcmpiA(buf, "MS Sans Serif"), /* win2k3 */
+       "Got %s\n", buf);
     cs = GetTextCharset(hdc);
     ok(cs == expected_cs, "expected %d, got %d\n", expected_cs, cs);
     DeleteObject(SelectObject(hdc, hfont));
