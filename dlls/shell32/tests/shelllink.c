@@ -86,9 +86,7 @@ static LPITEMIDLIST path_to_pidl(const char* path)
         MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, len);
 
         r=pSHILCreateFromPath(pathW, &pidl, NULL);
-        todo_wine {
         ok(SUCCEEDED(r), "SHILCreateFromPath failed (0x%08x)\n", r);
-        }
         HeapFree(GetProcessHeap(), 0, pathW);
     }
     return pidl;
@@ -170,9 +168,9 @@ static void test_get_set(void)
     ok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
     ok(lstrcmpi(buffer,str)==0, "GetPath returned '%s'\n", buffer);
 
-    /* Get some a real path to play with */
-    r=GetModuleFileName(NULL, mypath, sizeof(mypath));
-    ok(r>=0 && r<sizeof(mypath), "GetModuleFileName failed (%d)\n", r);
+    /* Get some real path to play with */
+    GetWindowsDirectoryA( mypath, sizeof(mypath)-12 );
+    strcat(mypath, "\\regedit.exe");
 
     /* Test the interaction of SetPath and SetIDList */
     tmp_pidl=NULL;
@@ -190,9 +188,7 @@ static void test_get_set(void)
     }
 
     pidl=path_to_pidl(mypath);
-    todo_wine {
     ok(pidl!=NULL, "path_to_pidl returned a NULL pidl\n");
-    }
 
     if (pidl)
     {
@@ -211,7 +207,9 @@ static void test_get_set(void)
         strcpy(buffer,"garbage");
         r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
         ok(SUCCEEDED(r), "GetPath failed (0x%08x)\n", r);
+        todo_wine
         ok(lstrcmpi(buffer, mypath)==0, "GetPath returned '%s'\n", buffer);
+
     }
 
     /* test path with quotes (Win98 IShellLinkA_SetPath returns S_FALSE, WinXP returns S_OK) */
