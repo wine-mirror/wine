@@ -1780,9 +1780,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
      * 9) FILEADDLOCAL
      * 10) FILEADDSOURCE
      * 11) FILEADDDEFAULT
-     * I have confirmed that if ADDLOCAL is stated then the INSTALLLEVEL is
-     * ignored for all the features. seems strange, especially since it is not
-     * documented anywhere, but it is how it works.
      *
      * I am still ignoring a lot of these. But that is ok for now, ADDLOCAL and
      * REMOVE are the big ones, since we don't handle administrative installs
@@ -1840,8 +1837,11 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
     {
         ComponentList *cl;
 
-        TRACE("Examining Feature %s (Installed %i, Action %i)\n",
-              debugstr_w(feature->Feature), feature->Installed, feature->Action);
+        TRACE("Examining Feature %s (Level %i, Installed %i, Action %i)\n",
+              debugstr_w(feature->Feature), feature->Level, feature->Installed, feature->Action);
+
+        if (!feature->Level)
+            continue;
 
         /* features with components that have compressed files are made local */
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )

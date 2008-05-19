@@ -630,6 +630,67 @@ static const CHAR ca51_custom_action_dat[] = "Action\tType\tSource\tTarget\n"
                                              "GoodSetProperty\t51\tMYPROP\t42\n"
                                              "BadSetProperty\t51\t\tMYPROP\n";
 
+static const CHAR is_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                     "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                     "Feature\tFeature\n"
+                                     "one\t\t\t\t2\t1\t\t0\n" /* favorLocal */
+                                     "two\t\t\t\t2\t1\t\t1\n" /* favorSource */
+                                     "three\t\t\t\t2\t1\t\t4\n" /* favorAdvertise */
+                                     "four\t\t\t\t2\t0\t\t0"; /* disabled */
+
+static const CHAR is_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "alpha\t\tMSITESTDIR\t0\t\talpha_file\n" /* favorLocal:Local */
+                                       "beta\t\tMSITESTDIR\t1\t\tbeta_file\n" /* favorLocal:Source */
+                                       "gamma\t\tMSITESTDIR\t2\t\tgamma_file\n" /* favorLocal:Optional */
+                                       "theta\t\tMSITESTDIR\t0\t\ttheta_file\n" /* favorSource:Local */
+                                       "delta\t\tMSITESTDIR\t1\t\tdelta_file\n" /* favorSource:Source */
+                                       "epsilon\t\tMSITESTDIR\t2\t\tepsilon_file\n" /* favorSource:Optional */
+                                       "zeta\t\tMSITESTDIR\t0\t\tzeta_file\n" /* favorAdvertise:Local */
+                                       "iota\t\tMSITESTDIR\t1\t\tiota_file\n" /* favorAdvertise:Source */
+                                       "eta\t\tMSITESTDIR\t2\t\teta_file\n" /* favorAdvertise:Optional */
+                                       "kappa\t\tMSITESTDIR\t0\t\tkappa_file\n" /* disabled:Local */
+                                       "lambda\t\tMSITESTDIR\t1\t\tlambda_file\n" /* disabled:Source */
+                                       "mu\t\tMSITESTDIR\t2\t\tmu_file\n"; /* disabled:Optional */
+
+static const CHAR is_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                          "s38\ts72\n"
+                                          "FeatureComponents\tFeature_\tComponent_\n"
+                                          "one\talpha\n"
+                                          "one\tbeta\n"
+                                          "one\tgamma\n"
+                                          "two\ttheta\n"
+                                          "two\tdelta\n"
+                                          "two\tepsilon\n"
+                                          "three\tzeta\n"
+                                          "three\tiota\n"
+                                          "three\teta\n"
+                                          "four\tkappa\n"
+                                          "four\tlambda\n"
+                                          "four\tmu";
+
+static const CHAR is_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "alpha_file\talpha\talpha\t500\t\t\t8192\t1\n"
+                                  "beta_file\tbeta\tbeta\t500\t\t\t8291\t2\n"
+                                  "gamma_file\tgamma\tgamma\t500\t\t\t8192\t3\n"
+                                  "theta_file\ttheta\ttheta\t500\t\t\t8192\t4\n"
+                                  "delta_file\tdelta\tdelta\t500\t\t\t8192\t5\n"
+                                  "epsilon_file\tepsilon\tepsilon\t500\t\t\t8192\t6\n"
+                                  "zeta_file\tzeta\tzeta\t500\t\t\t8192\t7\n"
+                                  "iota_file\tiota\tiota\t500\t\t\t8192\t8\n"
+                                  "eta_file\teta\teta\t500\t\t\t8192\t9\n"
+                                  "kappa_file\tkappa\tkappa\t500\t\t\t8192\t10\n"
+                                  "lambda_file\tlambda\tlambda\t500\t\t\t8192\t11\n"
+                                  "mu_file\tmu\tmu\t500\t\t\t8192\t12";
+
+static const CHAR is_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                   "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                   "Media\tDiskId\n"
+                                   "1\t12\t\t\tDISK1\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -966,6 +1027,18 @@ static const msi_table ca51_tables[] =
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
     ADD_TABLE(ca51_custom_action),
+};
+
+static const msi_table is_tables[] =
+{
+    ADD_TABLE(is_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(is_feature),
+    ADD_TABLE(is_feature_comp),
+    ADD_TABLE(is_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(is_media),
+    ADD_TABLE(property),
 };
 
 /* cabinet definitions */
@@ -4289,6 +4362,108 @@ static void test_customaction51(void)
     RemoveDirectory("msitest");
 }
 
+static void test_installstate(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\alpha", 500);
+    create_file("msitest\\beta", 500);
+    create_file("msitest\\gamma", 500);
+    create_file("msitest\\theta", 500);
+    create_file("msitest\\delta", 500);
+    create_file("msitest\\epsilon", 500);
+    create_file("msitest\\zeta", 500);
+    create_file("msitest\\iota", 500);
+    create_file("msitest\\eta", 500);
+    create_file("msitest\\kappa", 500);
+    create_file("msitest\\lambda", 500);
+    create_file("msitest\\mu", 500);
+
+    create_database(msifile, is_tables, sizeof(is_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\alpha", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\beta", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\gamma", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\theta", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\delta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\epsilon", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\zeta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\iota", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\eta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\kappa", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\lambda", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\mu", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    r = MsiInstallProductA(msifile, "ADDLOCAL=\"one,two,three,four\"");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\alpha", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\beta", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\gamma", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\theta", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\delta", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\epsilon", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\zeta", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\iota", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\eta", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\kappa", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\lambda", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\mu", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    r = MsiInstallProductA(msifile, "ADDSOURCE=\"one,two,three,four\"");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\alpha", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\beta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\gamma", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\theta", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\delta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\epsilon", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\zeta", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\iota", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\eta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\kappa", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\lambda", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\mu", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=\"one,two,three,four\"");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!delete_pf("msitest\\alpha", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\beta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\gamma", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\theta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\delta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\epsilon", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\zeta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\iota", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\eta", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\kappa", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\lambda", TRUE), "File installed\n");
+    ok(!delete_pf("msitest\\mu", TRUE), "File installed\n");
+    ok(!delete_pf("msitest", FALSE), "File installed\n");
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\alpha");
+    DeleteFile("msitest\\beta");
+    DeleteFile("msitest\\gamma");
+    DeleteFile("msitest\\theta");
+    DeleteFile("msitest\\delta");
+    DeleteFile("msitest\\epsilon");
+    DeleteFile("msitest\\zeta");
+    DeleteFile("msitest\\iota");
+    DeleteFile("msitest\\eta");
+    DeleteFile("msitest\\kappa");
+    DeleteFile("msitest\\lambda");
+    DeleteFile("msitest\\mu");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -4339,6 +4514,7 @@ START_TEST(install)
     test_writeregistryvalues();
     test_sourcefolder();
     test_customaction51();
+    test_installstate();
 
     SetCurrentDirectoryA(prev_path);
 }
