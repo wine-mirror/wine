@@ -45,12 +45,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
-static const WCHAR szLocalSystem[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
 static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
       'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
       'S','e','r','v','i','c','e','s',0 };
-static const WCHAR  szSCMLock[] = {'A','D','V','A','P','I','_','S','C','M',
-                                   'L','O','C','K',0};
 
 void  __RPC_FAR * __RPC_USER MIDL_user_allocate(size_t len)
 {
