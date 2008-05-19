@@ -31,7 +31,6 @@
 #include <objbase.h>
 #include <wine/debug.h>
 
-#include "properties.h"
 #include "resource.h"
 #include "winecfg.h"
 

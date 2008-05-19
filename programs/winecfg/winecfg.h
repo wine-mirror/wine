@@ -31,7 +31,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "properties.h"
+#include "commctrl.h"
 
 #define IS_OPTION_TRUE(ch) \
     ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')

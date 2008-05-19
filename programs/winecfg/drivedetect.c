@@ -43,6 +43,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 BOOL gui_mode = TRUE;
 static long working_mask = 0;
 
+typedef struct
+{
+  const char *szNode;
+  int nType;
+} DEV_NODES;
+
 #ifdef HAVE_MNTENT_H
 
 static const DEV_NODES sDeviceNodes[] = {

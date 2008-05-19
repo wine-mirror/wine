@@ -49,6 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define DRIVER_MASK 0x80000000
 #define DEVICE_MASK 0x40000000
+#define MAX_NAME_LENGTH 64
 
 typedef DWORD (WINAPI * MessagePtr)(UINT, UINT, DWORD, DWORD, DWORD);
 
@@ -79,6 +80,12 @@ static const char* DSound_Bits[] = {
   "16",
   NULL
 };
+
+typedef struct
+{
+  UINT nameID;
+  const char *szDriver;
+} AUDIO_DRIVER;
 
 static const AUDIO_DRIVER sAudioDrivers[] = {
   {IDS_DRIVER_ALSA,      "alsa"},
