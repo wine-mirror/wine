@@ -244,14 +244,6 @@ static inline void push_string( struct packed_message *data, LPCWSTR str )
     push_data( data, str, (strlenW(str) + 1) * sizeof(WCHAR) );
 }
 
-/* retrieve a pointer to data from a packed message and increment the buffer pointer */
-static inline void *get_data( void **buffer, size_t size )
-{
-    void *ret = *buffer;
-    *buffer = (char *)*buffer + size;
-    return ret;
-}
-
 /* make sure that the buffer contains a valid null-terminated Unicode string */
 static inline BOOL check_string( LPCWSTR str, size_t size )
 {
