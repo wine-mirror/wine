@@ -5663,6 +5663,11 @@ static UINT ITERATE_PublishAssembly( MSIRECORD *rec, LPVOID param )
 
     /* FIXME: extract all files belonging to this component */
     file = msi_find_file(package, comp->KeyPath);
+    if (!file)
+    {
+        ERR("File %s not found\n", debugstr_w(comp->KeyPath));
+        return ERROR_FUNCTION_FAILED;
+    }
 
     GetTempPathW(MAX_PATH, path);
 
