@@ -2360,6 +2360,8 @@ static NTSTATUS attach_process_dlls( void *wm )
 {
     NTSTATUS status;
 
+    pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
+
     RtlEnterCriticalSection( &loader_section );
     if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS)
     {
@@ -2417,8 +2419,6 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS) goto error;
     if ((status = alloc_process_tls()) != STATUS_SUCCESS) goto error;
     if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto error;
-
-    pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
 
     status = wine_call_on_stack( attach_process_dlls, wm, NtCurrentTeb()->Tib.StackBase );
     if (status != STATUS_SUCCESS) goto error;
