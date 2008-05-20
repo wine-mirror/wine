@@ -738,6 +738,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
 
               /* on Win98 this is left empty, but whatever */
               getInterfaceNameByIndex(table->indexes[ndx], ptr->AdapterName);
+              getInterfaceNameByIndex(table->indexes[ndx], ptr->Description);
               ptr->AddressLength = sizeof(ptr->Address);
               getInterfacePhysicalByIndex(table->indexes[ndx],
                &ptr->AddressLength, ptr->Address, &ptr->Type);
