@@ -208,7 +208,7 @@ static void test_CoCreateInstance(void)
     OleInitialize(NULL);
     hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
     ok_ole_success(hr, "CoCreateInstance");
-    IUnknown_Release(pUnk);
+    if(pUnk) IUnknown_Release(pUnk);
     OleUninitialize();
 
     hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
