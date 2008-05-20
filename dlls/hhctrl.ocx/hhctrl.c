@@ -108,6 +108,9 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
 
         FIXME("Not all HH cases handled correctly\n");
 
+        if (!filename)
+            return NULL;
+
         index = strstrW(filename, delimW);
         if (index)
         {
@@ -140,6 +143,9 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
     case HH_HELP_CONTEXT: {
         HHInfo *info;
         LPWSTR url;
+
+        if (!filename)
+            return NULL;
 
         info = CreateHelpViewer(filename);
         if(!info)
