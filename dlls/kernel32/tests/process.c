@@ -470,8 +470,6 @@ static void test_Startup(void)
     GetStartupInfoA(&si);
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", si.lpDesktop);
-    ok (si.lpTitle == NULL || !strncmp(si.lpTitle, selfname, strlen(selfname)),
-        "StartupInfoA:lpTitle expected something starting with '%s' or null, got '%s'\n", selfname, si.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
