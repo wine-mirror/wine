@@ -197,6 +197,27 @@ static void test_CLSIDFromString(void)
     ok(IsEqualCLSID(&clsid, &CLSID_NULL), "clsid wasn't equal to CLSID_NULL\n");
 }
 
+static void test_StringFromGUID2(void)
+{
+  WCHAR str[50];
+  int len;
+  /* Test corner cases for buffer size */
+  len = StringFromGUID2(&CLSID_CDeviceMoniker,str,50);
+  ok(len == 39, "len: %d (expected 39)",len);
+  ok(!lstrcmpiW(str, wszCLSID_CDeviceMoniker),"string wan't equal for CLSID_CDeviceMoniker\n");
+
+  memset(str,0,sizeof str);
+  len = StringFromGUID2(&CLSID_CDeviceMoniker,str,39);
+  ok(len == 39, "len: %d (expected 39)",len);
+  ok(!lstrcmpiW(str, wszCLSID_CDeviceMoniker),"string wan't equal for CLSID_CDeviceMoniker\n");
+
+  len = StringFromGUID2(&CLSID_CDeviceMoniker,str,38);
+  ok(len == 0, "len: %d (expected 0)",len);
+
+  len = StringFromGUID2(&CLSID_CDeviceMoniker,str,30);
+  ok(len == 0, "len: %d (expected 0)",len);
+}
+
 static void test_CoCreateInstance(void)
 {
     REFCLSID rclsid = &CLSID_MyComputer;
@@ -1008,6 +1029,7 @@ START_TEST(compobj)
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
     test_CLSIDFromString();
+    test_StringFromGUID2();
     test_CoCreateInstance();
     test_ole_menu();
     test_CoGetClassObject();
