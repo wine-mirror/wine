@@ -1687,7 +1687,7 @@ static void DeviceLoadTest()
 
         for (y = 0 ; y < ddsd.dwHeight; y++)
         {
-            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
             for (x = 0; x < ddsd.dwWidth;  x++)
             {
@@ -1750,7 +1750,7 @@ static void DeviceLoadTest()
 
         for (y = 0 ; y < ddsd.dwHeight; y++)
         {
-            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
             for (x = 0; x < ddsd.dwWidth;  x++)
             {
@@ -1905,7 +1905,7 @@ static void DeviceLoadTest()
 
             for (y = 0 ; y < ddsd.dwHeight; y++)
             {
-                DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+                DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
                 for (x = 0; x < ddsd.dwWidth;  x++)
                 {
@@ -1960,7 +1960,7 @@ static void DeviceLoadTest()
 
             for (y = 0 ; y < ddsd.dwHeight; y++)
             {
-                DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+                DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
                 for (x = 0; x < ddsd.dwWidth;  x++)
                 {
@@ -2117,7 +2117,7 @@ static void DeviceLoadTest()
         ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
         ddsd.dwWidth = 128;
         ddsd.dwHeight = 128;
-        ddsd.dwMipMapCount = i ? 4 : 8;
+        U2(ddsd).dwMipMapCount = i ? 4 : 8;
         U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
         U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
         U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
@@ -2154,7 +2154,7 @@ static void DeviceLoadTest()
 
         for (y = 0 ; y < ddsd.dwHeight; y++)
         {
-            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
             for (x = 0; x < ddsd.dwWidth;  x++)
             {
@@ -2200,7 +2200,7 @@ static void DeviceLoadTest()
 
         for (y = 0 ; y < ddsd.dwHeight; y++)
         {
-            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
             for (x = 0; x < ddsd.dwWidth;  x++)
             {
@@ -2317,7 +2317,7 @@ static void DeviceLoadTest()
 
         for (y = 0 ; y < ddsd.dwHeight; y++)
         {
-            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
             for (x = 0; x < ddsd.dwWidth;  x++)
             {
@@ -2371,7 +2371,7 @@ static void DeviceLoadTest()
 
     for (y = 0 ; y < ddsd.dwHeight; y++)
     {
-        DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+        DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
         for (x = 0; x < ddsd.dwWidth;  x++)
         {
@@ -2400,7 +2400,7 @@ static void DeviceLoadTest()
 
         for (y = 0 ; y < ddsd.dwHeight; y++)
         {
-            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+            DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
             for (x = 0; x < ddsd.dwWidth;  x++)
             {
@@ -2452,7 +2452,7 @@ static void DeviceLoadTest()
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
             ddsd.dwWidth = i ? 32 : 128;
             ddsd.dwHeight = i ? 32 : 128;
-            if (i) ddsd.dwMipMapCount = 4;
+            if (i) U2(ddsd).dwMipMapCount = 4;
             U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
             U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
             U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
@@ -2489,7 +2489,7 @@ static void DeviceLoadTest()
 
             for (y = 0 ; y < ddsd.dwHeight; y++)
             {
-                DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+                DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
                 for (x = 0; x < ddsd.dwWidth;  x++)
                 {
@@ -2546,7 +2546,7 @@ static void DeviceLoadTest()
 
                 for (y = 0 ; y < ddsd.dwHeight; y++)
                 {
-                    DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * ddsd.lPitch);
+                    DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
                     for (x = 0; x < ddsd.dwWidth;  x++)
                     {
