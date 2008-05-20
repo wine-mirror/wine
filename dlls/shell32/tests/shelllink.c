@@ -178,12 +178,14 @@ static void test_get_set(void)
     ok(SUCCEEDED(r), "GetIDList failed (0x%08x)\n", r);
     if (SUCCEEDED(r))
     {
+        BOOL ret;
+
         strcpy(buffer,"garbage");
-        r=SHGetPathFromIDListA(tmp_pidl, buffer);
+        ret = SHGetPathFromIDListA(tmp_pidl, buffer);
         todo_wine {
-        ok(r, "SHGetPathFromIDListA failed\n");
+        ok(ret, "SHGetPathFromIDListA failed\n");
         }
-        if (r)
+        if (ret)
             ok(lstrcmpi(buffer,str)==0, "GetIDList returned '%s'\n", buffer);
     }
 
