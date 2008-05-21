@@ -179,7 +179,7 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
     if (modstr)
     {
         memcpy (modstr, str, *len_str * sizeof(WCHAR));
-        *(str+*len_str) = '\0';
+        modstr[*len_str] = '\0';
     }
 }
 
