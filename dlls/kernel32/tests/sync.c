@@ -148,7 +148,30 @@ static void test_mutex(void)
     todo_wine ok(!ret && (GetLastError() == ERROR_NOT_OWNER),
         "ReleaseMutex should have failed with ERROR_NOT_OWNER instead of %d\n", GetLastError());
 
+    /* test case sensitivity */
+
+    SetLastError(0xdeadbeef);
+    hOpened = OpenMutex(READ_CONTROL, FALSE, "WINETESTMUTEX");
+    ok(!hOpened, "OpenMutex succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hOpened = OpenMutex(READ_CONTROL, FALSE, "winetestmutex");
+    ok(!hOpened, "OpenMutex succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hOpened = CreateMutex(NULL, FALSE, "WineTestMutex");
+    ok(hOpened != NULL, "CreateMutex failed with error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
     CloseHandle(hOpened);
+
+    SetLastError(0xdeadbeef);
+    hOpened = CreateMutex(NULL, FALSE, "WINETESTMUTEX");
+    ok(hOpened != NULL, "CreateMutex failed with error %d\n", GetLastError());
+    ok(GetLastError() == 0, "wrong error %u\n", GetLastError());
+    CloseHandle(hOpened);
+
     CloseHandle(hCreated);
 }
 
