@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "snmp.h"
+#include "iphlpapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetmib1);
@@ -56,7 +57,23 @@ struct mibImplementation
     void              (*init)(void);
 };
 
+static UINT mib2IfNumber[] = { 1,3,6,1,2,1,2,1 };
+static PMIB_IFTABLE ifTable;
+
+static void mib2IfNumberInit(void)
+{
+    DWORD size = 0, ret = GetIfTable(NULL, &size, FALSE);
+
+    if (ret == ERROR_INSUFFICIENT_BUFFER)
+    {
+        ifTable = HeapAlloc(GetProcessHeap(), 0, size);
+        if (ifTable)
+            GetIfTable(ifTable, &size, FALSE);
+    }
+}
+
 static struct mibImplementation supportedIDs[] = {
+    { DEFINE_OID(mib2IfNumber), mib2IfNumberInit },
 };
 
 BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,

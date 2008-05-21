@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = inetmib1.dll
 IMPORTS   = snmpapi kernel32
+DELAYIMPORTS = iphlpapi
 
 C_SRCS = \
 	main.c
