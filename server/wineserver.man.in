@@ -16,7 +16,7 @@ useful to start \fBwineserver\fR explicitly with different options, as
 explained below.
 .SH OPTIONS
 .TP
-.BI \-d [n]
+.BI \-d [n] ,\ --debug [=n]
 Set the debug level to
 .I n.
 0 means no debugging information, 1 is the normal level, and 2 is for
@@ -27,14 +27,14 @@ stderr. \fBwine(1)\fR will automatically set the debug level when
 starting \fBwineserver\fR if the +server option is set in the
 WINEDEBUG variable.
 .TP
-.B \-f
+.B \-f, --foreground
 Make the server remain in the foreground for easier debugging, for
 instance when running it under a debugger.
 .TP
-.B \-h
+.B \-h, --help
 Display a help message.
 .TP
-.BI \-k [n]
+.BI \-k [n] ,\ --kill [=n]
 Kill the currently running
 .B wineserver,
 optionally by sending signal \fIn\fR. If no signal is specified, sends
@@ -42,7 +42,7 @@ a SIGINT first and then a SIGKILL.  The instance of \fBwineserver\fR
 that is killed is selected based on the WINEPREFIX environment
 variable.
 .TP
-.BI \-p [n]
+.BI \-p [n] ,\ --persistent [=n]
 Specify the \fBwineserver\fR persistence delay, i.e. the amount of
 time that the server will keep running when all client processes have
 terminated. This avoids the cost of shutting down and starting again
@@ -50,10 +50,10 @@ when programs are launched in quick succession. The timeout \fIn\fR is
 in seconds, the default value is 3 seconds. If \fIn\fR is not
 specified, the server stays around forever.
 .TP
-.B \-v
+.B \-v, --version
 Display version information and exit.
 .TP
-.B \-w
+.B \-w, --wait
 Wait until the currently running
 .B wineserver
 terminates.

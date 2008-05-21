@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
 
 #include "object.h"
 #include "file.h"
@@ -41,36 +44,48 @@ timeout_t master_socket_timeout = 3 * -TICKS_PER_SEC;  /* master socket timeout,
 const char *server_argv0;
 
 /* parse-line args */
-/* FIXME: should probably use getopt, and add a (more complete?) help option */
 
 static void usage(void)
 {
-    fprintf(stderr, "\nusage: %s [options]\n\n", server_argv0);
-    fprintf(stderr, "options:\n");
-    fprintf(stderr, "   -d<n>  set debug level to <n>\n");
-    fprintf(stderr, "   -f     remain in the foreground for debugging\n");
-    fprintf(stderr, "   -h     display this help message\n");
-    fprintf(stderr, "   -k[n]  kill the current wineserver, optionally with signal n\n");
-    fprintf(stderr, "   -p[n]  make server persistent, optionally for n seconds\n");
-    fprintf(stderr, "   -v     display version information and exit\n");
-    fprintf(stderr, "   -w     wait until the current wineserver terminates\n");
+    fprintf(stderr, "Usage: %s [options]\n\n", server_argv0);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "   -d[n], --debug[=n]       set debug level to n or +1 if n not specified\n");
+    fprintf(stderr, "   -f,    --foreground      remain in the foreground for debugging\n");
+    fprintf(stderr, "   -h,    --help            display this help message\n");
+    fprintf(stderr, "   -k[n], --kill[=n]        kill the current wineserver, optionally with signal n\n");
+    fprintf(stderr, "   -p[n], --persistent[=n]  make server persistent, optionally for n seconds\n");
+    fprintf(stderr, "   -v,    --version         display version information and exit\n");
+    fprintf(stderr, "   -w,    --wait            wait until the current wineserver terminates\n");
     fprintf(stderr, "\n");
 }
 
 static void parse_args( int argc, char *argv[] )
 {
-    int i, ret;
+    int ret, optc;
+
+    static struct option long_options[] =
+    {
+        {"debug",       2, 0, 'd'},
+        {"foreground",  0, 0, 'f'},
+        {"help",        0, 0, 'h'},
+        {"kill",        2, 0, 'k'},
+        {"persistent",  2, 0, 'p'},
+        {"version",     0, 0, 'v'},
+        {"wait",        0, 0, 'w'},
+        { NULL,         0, 0, 0}
+    };
 
     server_argv0 = argv[0];
-    for (i = 1; i < argc; i++)
+
+    while ((optc = getopt_long( argc, argv, "d::fhk::p::vw", long_options, NULL )) != -1)
     {
-        if (argv[i][0] == '-')
+        switch(optc)
         {
-            switch(argv[i][1])
-            {
             case 'd':
-                if (isdigit(argv[i][2])) debug_level = atoi( argv[i] + 2 );
-                else debug_level++;
+                if (optarg && isdigit(*optarg))
+                    debug_level = atoi( optarg );
+                else
+                    debug_level++;
                 break;
             case 'f':
                 foreground = 1;
@@ -80,12 +95,14 @@ static void parse_args( int argc, char *argv[] )
                 exit(0);
                 break;
             case 'k':
-                if (isdigit(argv[i][2])) ret = kill_lock_owner( atoi(argv[i] + 2) );
-                else ret = kill_lock_owner(-1);
+                if (optarg && isdigit(*optarg))
+                    ret = kill_lock_owner( atoi( optarg ) );
+                else
+                    ret = kill_lock_owner(-1);
                 exit( !ret );
             case 'p':
-                if (isdigit(argv[i][2]))
-                    master_socket_timeout = (timeout_t)atoi( argv[i] + 2 ) * -TICKS_PER_SEC;
+                if (optarg && isdigit(*optarg))
+                    master_socket_timeout = (timeout_t)atoi( optarg ) * -TICKS_PER_SEC;
                 else
                     master_socket_timeout = TIMEOUT_INFINITE;
                 break;
@@ -96,16 +113,8 @@ static void parse_args( int argc, char *argv[] )
                 wait_for_lock();
                 exit(0);
             default:
-                fprintf( stderr, "wineserver: unknown option '%s'\n", argv[i] );
                 usage();
                 exit(1);
-            }
-        }
-        else
-        {
-            fprintf( stderr, "wineserver: unknown argument '%s'.\n", argv[i] );
-            usage();
-            exit(1);
         }
     }
 }
