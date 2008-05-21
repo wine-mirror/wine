@@ -47,12 +47,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	return TRUE;
 }
 
+static UINT mib2System[] = { 1,3,6,1,2,1,1 };
+
 BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
     HANDLE *phSubagentTrapEvent, AsnObjectIdentifier *pFirstSupportedRegion)
 {
+    AsnObjectIdentifier myOid = DEFINE_OID(mib2System);
+
     FIXME("(%d, %p, %p): stub\n", dwUptimeReference, phSubagentTrapEvent,
         pFirstSupportedRegion);
+
     *phSubagentTrapEvent = NULL;
+    SnmpUtilOidCpy(pFirstSupportedRegion, &myOid);
     return TRUE;
 }
 

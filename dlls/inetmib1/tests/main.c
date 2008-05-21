@@ -45,7 +45,6 @@ static void testInit(void)
      */
     ret = pInit(0, &event, &oid);
     ok(ret, "SnmpExtensionInit failed: %d\n", GetLastError());
-    todo_wine
     ok(!strcmp("1.3.6.1.2.1.1", SnmpUtilOidToA(&oid)),
         "Expected 1.3.6.1.2.1.1, got %s\n", SnmpUtilOidToA(&oid));
 }
