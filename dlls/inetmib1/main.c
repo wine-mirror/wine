@@ -408,11 +408,107 @@ static BOOL mib2IpStatsQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return TRUE;
 }
 
+static UINT mib2Icmp[] = { 1,3,6,1,2,1,5 };
+static MIB_ICMP icmpStats;
+
+static void mib2IcmpInit(void)
+{
+    GetIcmpStatistics(&icmpStats);
+}
+
+static struct structToAsnValue mib2IcmpMap[] = {
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwMsgs), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwErrors), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwDestUnreachs), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwTimeExcds), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwParmProbs), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwSrcQuenchs), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwRedirects), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwEchos), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwEchoReps), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwTimestamps), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwTimestampReps), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwAddrMasks), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpInStats.dwAddrMaskReps), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwMsgs), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwErrors), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwDestUnreachs), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwTimeExcds), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwParmProbs), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwSrcQuenchs), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwRedirects), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwEchos), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwEchoReps), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwTimestamps), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwTimestampReps), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwAddrMasks), copyInt },
+    { FIELD_OFFSET(MIBICMPINFO, icmpOutStats.dwAddrMaskReps), copyInt },
+};
+
+static BOOL mib2IcmpQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier myOid = DEFINE_OID(mib2Icmp);
+    UINT item = 0;
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+        if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
+            pVarBind->name.idLength == myOid.idLength + 1)
+        {
+            item = pVarBind->name.ids[pVarBind->name.idLength - 1];
+            *pErrorStatus = mapStructEntryToValue(mib2IcmpMap,
+                DEFINE_SIZEOF(mib2IcmpMap), &icmpStats, item, bPduType,
+                pVarBind);
+        }
+        else
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        break;
+    case SNMP_PDU_GETNEXT:
+        if (!SnmpUtilOidCmp(&pVarBind->name, &myOid) ||
+            SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) < 0)
+            item = 1;
+        else if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
+            pVarBind->name.idLength == myOid.idLength + 1)
+            item = pVarBind->name.ids[pVarBind->name.idLength - 1] + 1;
+        else
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        if (item)
+        {
+            *pErrorStatus = mapStructEntryToValue(mib2IcmpMap,
+                DEFINE_SIZEOF(mib2IcmpMap), &icmpStats, item, bPduType,
+                pVarBind);
+            if (!*pErrorStatus)
+            {
+                AsnObjectIdentifier oid;
+
+                SnmpUtilOidCpy(&pVarBind->name, &myOid);
+                oid.idLength = 1;
+                oid.ids = &item;
+                SnmpUtilOidAppend(&pVarBind->name, &oid);
+            }
+        }
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 /* This list MUST BE lexicographically sorted */
 static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery },
     { DEFINE_OID(mib2IfEntry), NULL, mib2IfEntryQuery },
     { DEFINE_OID(mib2Ip), mib2IpStatsInit, mib2IpStatsQuery },
+    { DEFINE_OID(mib2Icmp), mib2IcmpInit, mib2IcmpQuery },
 };
 static UINT minSupportedIDLength;
 
