@@ -221,8 +221,8 @@ static void testAcquireSecurityContext(void)
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
      NULL, NULL, NULL, NULL, &cred, &exp);
     ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", st);
-    ok(exp.HighPart == 0 && exp.LowPart == 0,
-     "Expected 0 expiry, got %08lx%08lx\n", exp.HighPart, exp.LowPart);
+    /* expriy is indeterminate in win2k3 */
+    trace("expiry: %08lx%08lx\n", exp.HighPart, exp.LowPart);
     pFreeCredentialsHandle(&cred);
 
     /* Bad version in SCHANNEL_CRED */
@@ -351,7 +351,9 @@ static void testAcquireSecurityContext(void)
         pFreeCredentialsHandle(&cred);
         st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND,
          NULL, &schanCred, NULL, NULL, &cred, NULL);
-        ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", st);
+        ok(st == SEC_E_OK ||
+           st == SEC_E_UNKNOWN_CREDENTIALS, /* win2k3 */
+           "AcquireCredentialsHandleA failed: %08x\n", st);
         pFreeCredentialsHandle(&cred);
         schanCred.dwVersion = SCHANNEL_CRED_VERSION;
         st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
@@ -360,8 +362,10 @@ static void testAcquireSecurityContext(void)
         pFreeCredentialsHandle(&cred);
         st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND,
          NULL, &schanCred, NULL, NULL, &cred, NULL);
-        ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", st);
-        test_strength(&cred);
+        ok(st == SEC_E_OK ||
+           st == SEC_E_UNKNOWN_CREDENTIALS, /* win2k3 */
+           "AcquireCredentialsHandleA failed: %08x\n", st);
+        if (st == SEC_E_OK) test_strength(&cred);
         pFreeCredentialsHandle(&cred);
 
         /* How about more than one cert? */
