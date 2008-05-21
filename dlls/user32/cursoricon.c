@@ -1790,9 +1790,10 @@ BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
  */
 HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 {
-    BITMAP bmpXor,bmpAnd;
+    DIBSECTION bmpXor;
+    BITMAP bmpAnd;
     HICON16 hObj;
-    int	sizeXor,sizeAnd;
+    int xor_objsize = 0, sizeXor = 0, sizeAnd, planes, bpp;
 
     TRACE("color %p, mask %p, hotspot %ux%u, fIcon %d\n",
            iconinfo->hbmColor, iconinfo->hbmMask,
@@ -1800,19 +1801,24 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 
     if (!iconinfo->hbmMask) return 0;
 
+    planes = GetDeviceCaps( screen_dc, PLANES );
+    bpp = GetDeviceCaps( screen_dc, BITSPIXEL );
+
     if (iconinfo->hbmColor)
     {
-        GetObjectW( iconinfo->hbmColor, sizeof(bmpXor), &bmpXor );
+        xor_objsize = GetObjectW( iconinfo->hbmColor, sizeof(bmpXor), &bmpXor );
         TRACE("color: width %d, height %d, width bytes %d, planes %u, bpp %u\n",
-               bmpXor.bmWidth, bmpXor.bmHeight, bmpXor.bmWidthBytes,
-               bmpXor.bmPlanes, bmpXor.bmBitsPixel);
+               bmpXor.dsBm.bmWidth, bmpXor.dsBm.bmHeight, bmpXor.dsBm.bmWidthBytes,
+               bmpXor.dsBm.bmPlanes, bmpXor.dsBm.bmBitsPixel);
+        /* we can use either depth 1 or screen depth for xor bitmap */
+        if (bmpXor.dsBm.bmPlanes == 1 && bmpXor.dsBm.bmBitsPixel == 1) planes = bpp = 1;
+        sizeXor = bmpXor.dsBm.bmHeight * planes * get_bitmap_width_bytes( bmpXor.dsBm.bmWidth, bpp );
     }
     GetObjectW( iconinfo->hbmMask, sizeof(bmpAnd), &bmpAnd );
     TRACE("mask: width %d, height %d, width bytes %d, planes %u, bpp %u\n",
            bmpAnd.bmWidth, bmpAnd.bmHeight, bmpAnd.bmWidthBytes,
            bmpAnd.bmPlanes, bmpAnd.bmBitsPixel);
 
-    sizeXor = iconinfo->hbmColor ? (bmpXor.bmHeight * bmpXor.bmWidthBytes) : 0;
     sizeAnd = bmpAnd.bmHeight * get_bitmap_width_bytes(bmpAnd.bmWidth, 1);
 
     hObj = GlobalAlloc16( GMEM_MOVEABLE,
@@ -1837,11 +1843,11 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 
         if (iconinfo->hbmColor)
         {
-            info->nWidth        = bmpXor.bmWidth;
-            info->nHeight       = bmpXor.bmHeight;
-            info->nWidthBytes   = bmpXor.bmWidthBytes;
-            info->bPlanes       = bmpXor.bmPlanes;
-            info->bBitsPerPixel = bmpXor.bmBitsPixel;
+            info->nWidth        = bmpXor.dsBm.bmWidth;
+            info->nHeight       = bmpXor.dsBm.bmHeight;
+            info->nWidthBytes   = bmpXor.dsBm.bmWidthBytes;
+            info->bPlanes       = planes;
+            info->bBitsPerPixel = bpp;
         }
         else
         {
@@ -1883,7 +1889,53 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
             GetBitmapBits( hbmp_mono, sizeAnd, (char*)(info + 1) );
             DeleteObject( hbmp_mono );
         }
-        if (iconinfo->hbmColor) GetBitmapBits( iconinfo->hbmColor, sizeXor, (char*)(info + 1) + sizeAnd );
+
+        if (iconinfo->hbmColor)
+        {
+            char *dst_bits = (char*)(info + 1) + sizeAnd;
+
+            if (bmpXor.dsBm.bmPlanes == planes && bmpXor.dsBm.bmBitsPixel == bpp)
+                GetBitmapBits( iconinfo->hbmColor, sizeXor, dst_bits );
+            else
+            {
+                BITMAPINFO bminfo;
+                int dib_width = get_dib_width_bytes( info->nWidth, info->bBitsPerPixel );
+                int bitmap_width = get_bitmap_width_bytes( info->nWidth, info->bBitsPerPixel );
+
+                bminfo.bmiHeader.biSize = sizeof(bminfo);
+                bminfo.bmiHeader.biWidth = info->nWidth;
+                bminfo.bmiHeader.biHeight = info->nHeight;
+                bminfo.bmiHeader.biPlanes = info->bPlanes;
+                bminfo.bmiHeader.biBitCount = info->bBitsPerPixel;
+                bminfo.bmiHeader.biCompression = BI_RGB;
+                bminfo.bmiHeader.biSizeImage = info->nHeight * dib_width;
+                bminfo.bmiHeader.biXPelsPerMeter = 0;
+                bminfo.bmiHeader.biYPelsPerMeter = 0;
+                bminfo.bmiHeader.biClrUsed = 0;
+                bminfo.bmiHeader.biClrImportant = 0;
+
+                /* swap lines for dib sections */
+                if (xor_objsize == sizeof(DIBSECTION))
+                    bminfo.bmiHeader.biHeight = -bminfo.bmiHeader.biHeight;
+
+                if (dib_width != bitmap_width)  /* need to fixup alignment */
+                {
+                    char *src_bits = HeapAlloc( GetProcessHeap(), 0, bminfo.bmiHeader.biSizeImage );
+
+                    if (src_bits && GetDIBits( screen_dc, iconinfo->hbmColor, 0, info->nHeight,
+                                               src_bits, &bminfo, DIB_RGB_COLORS ))
+                    {
+                        int y;
+                        for (y = 0; y < info->nHeight; y++)
+                            memcpy( dst_bits + y * bitmap_width, src_bits + y * dib_width, bitmap_width );
+                    }
+                    HeapFree( GetProcessHeap(), 0, src_bits );
+                }
+                else
+                    GetDIBits( screen_dc, iconinfo->hbmColor, 0, info->nHeight,
+                               dst_bits, &bminfo, DIB_RGB_COLORS );
+            }
+        }
         GlobalUnlock16( hObj );
     }
     return HICON_32(hObj);

@@ -504,13 +504,14 @@ static void test_CreateIcon(void)
     static const BYTE bmp_bits[1024];
     HICON hIcon;
     HBITMAP hbmMask, hbmColor;
+    BITMAPINFO bmpinfo;
     ICONINFO info;
     HDC hdc;
+    void *bits;
     UINT display_bpp;
 
     hdc = GetDC(0);
     display_bpp = GetDeviceCaps(hdc, BITSPIXEL);
-    ReleaseDC(0, hdc);
 
     /* these crash under XP
     hIcon = CreateIcon(0, 16, 16, 1, 1, bmp_bits, NULL);
@@ -581,6 +582,69 @@ static void test_CreateIcon(void)
 
     DeleteObject(hbmMask);
     DeleteObject(hbmColor);
+
+    /* test creating an icon from a DIB section */
+
+    memset( &bmpinfo, 0, sizeof(bmpinfo) );
+    bmpinfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmpinfo.bmiHeader.biWidth = 32;
+    bmpinfo.bmiHeader.biHeight = 32;
+    bmpinfo.bmiHeader.biPlanes = 1;
+    bmpinfo.bmiHeader.biBitCount = 8;
+    bmpinfo.bmiHeader.biCompression = BI_RGB;
+    hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+    bmpinfo.bmiHeader.biBitCount = 1;
+    hbmMask = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = hbmColor;
+    info.hbmColor = hbmMask;
+    SetLastError(0xdeadbeaf);
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    test_icon_info(hIcon, 32, 32, 8);
+    DestroyIcon(hIcon);
+    DeleteObject(hbmColor);
+
+    bmpinfo.bmiHeader.biBitCount = 16;
+    hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = hbmColor;
+    info.hbmColor = hbmMask;
+    SetLastError(0xdeadbeaf);
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    test_icon_info(hIcon, 32, 32, 8);
+    DestroyIcon(hIcon);
+    DeleteObject(hbmColor);
+
+    bmpinfo.bmiHeader.biBitCount = 32;
+    hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = hbmColor;
+    info.hbmColor = hbmMask;
+    SetLastError(0xdeadbeaf);
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    test_icon_info(hIcon, 32, 32, 8);
+    DestroyIcon(hIcon);
+
+    DeleteObject(hbmMask);
+    DeleteObject(hbmColor);
+
+    ReleaseDC(0, hdc);
 }
 
 /* Shamelessly ripped from dlls/oleaut32/tests/olepicture.c */
