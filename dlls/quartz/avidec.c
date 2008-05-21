@@ -78,12 +78,13 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
     LPBYTE pbDstStream;
     DWORD cbSrcStream;
     LPBYTE pbSrcStream;
+    LONGLONG tStart, tStop;
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-	return hr;
+        return hr;
     }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
@@ -92,8 +93,8 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
 
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
     if (FAILED(hr)) {
-	ERR("Unable to retrieve media type\n");
-	goto error;
+        ERR("Unable to retrieve media type\n");
+        goto error;
     }
 
     /* Update input size to match sample size */
@@ -123,6 +124,16 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
     res = ICDecompress(This->hvid, 0, This->pBihIn, pbSrcStream, This->pBihOut, pbDstStream);
     if (res != ICERR_OK)
         ERR("Error occurred during the decompression (%x)\n", res);
+
+
+    IMediaSample_SetPreroll(pOutSample, (IMediaSample_IsPreroll(pSample) == S_OK));
+    IMediaSample_SetDiscontinuity(pOutSample, (IMediaSample_IsDiscontinuity(pSample) == S_OK));
+    IMediaSample_SetSyncPoint(pOutSample, (IMediaSample_IsSyncPoint(pSample) == S_OK));
+
+    if (IMediaSample_GetTime(pSample, &tStart, &tStop) == S_OK)
+        IMediaSample_SetTime(pOutSample, &tStart, &tStop);
+    else
+        IMediaSample_SetTime(pOutSample, NULL, NULL);
 
     hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
