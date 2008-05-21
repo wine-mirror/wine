@@ -100,18 +100,18 @@ static void OnExitMenuLoop(HWND hWnd)
 
 static void UpdateMenuItems(HMENU hMenu) {
     HWND hwndTV = g_pChildWnd->hTreeWnd;
-    BOOL bIsKeySelected = FALSE;
+    BOOL bAllowEdit = FALSE;
     HKEY hRootKey = NULL;
     LPCTSTR keyName;
     keyName = GetItemPath(hwndTV, TreeView_GetSelection(hwndTV), &hRootKey);
-    if (keyName && *keyName) { /* can't modify root keys */
-        bIsKeySelected = TRUE;
+    if (GetFocus() != hwndTV || (keyName && *keyName)) { /* can't modify root keys, but allow for their values */
+        bAllowEdit = TRUE;
     }
     EnableMenuItem(hMenu, ID_EDIT_FIND, MF_ENABLED | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_EDIT_FINDNEXT, MF_ENABLED | MF_BYCOMMAND);
-    EnableMenuItem(hMenu, ID_EDIT_MODIFY, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
-    EnableMenuItem(hMenu, ID_EDIT_DELETE, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
-    EnableMenuItem(hMenu, ID_EDIT_RENAME, (bIsKeySelected ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_EDIT_MODIFY, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_EDIT_DELETE, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_EDIT_RENAME, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_FAVORITES_ADDTOFAVORITES, (hRootKey ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_FAVORITES_REMOVEFAVORITE, 
         (GetMenuItemCount(hMenu)>2 ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
