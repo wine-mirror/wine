@@ -17,6 +17,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* All definitions here are packed structures of on-disk formats */
+#include <pshpack2.h>
+
 typedef struct _riffchunk
 {
     FOURCC fcc;
@@ -317,3 +320,5 @@ typedef struct _avifieldindex_chunk {
         DWORD dwOffsetField2;
     } aIndex[ANYSIZE_ARRAY];
 } AVIFIELDINDEX, * PAVIFIELDINDEX;
+
+#include <poppack.h>
