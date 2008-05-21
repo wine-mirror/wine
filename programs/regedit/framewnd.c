@@ -506,9 +506,17 @@ static INT_PTR CALLBACK addtofavorites_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
             
     switch(uMsg) {
         case WM_INITDIALOG:
+        {
+            HKEY hKeyRoot = NULL;
+            LPSTR ItemPath = GetItemPath(g_pChildWnd->hTreeWnd, NULL, &hKeyRoot);
+
+            if(!ItemPath || !*ItemPath)
+                ItemPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
             EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
+            SetWindowText(hwndValue, ItemPath);
             SendMessage(hwndValue, EM_SETLIMITTEXT, 127, 0);
             return TRUE;
+        }
         case WM_COMMAND:
             switch(LOWORD(wParam)) {
             case IDC_VALUE_NAME:
