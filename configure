@@ -1387,6 +1387,7 @@ Optional Packages:
   --without-curses        do not use (n)curses
   --without-esd           do not use the EsounD sound support
   --without-fontconfig    do not use fontconfig
+  --without-freetype      do not use the FreeType library
   --without-gphoto        do not use gphoto (Digital Camera support)
   --without-glu           do not use the GLU library
   --without-hal           do not use HAL (dynamic device support)
@@ -1964,6 +1965,12 @@ fi
 # Check whether --with-fontconfig was given.
 if test "${with_fontconfig+set}" = set; then
   withval=$with_fontconfig; if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi
+fi
+
+
+# Check whether --with-freetype was given.
+if test "${with_freetype+set}" = set; then
+  withval=$with_freetype;
 fi
 
 
@@ -13866,7 +13873,7 @@ fi
 done
 test -n "$ft_devel" || ft_devel="false"
 
-if test "$ft_devel" != "false"
+if test "$ft_devel" != "false" -a "x$with_freetype" != "xno"
 then
     ac_freetype_libs=`$ft_devel --libs`
     ac_freetype_incl=`$ft_devel --cflags`
@@ -14245,18 +14252,24 @@ _ACEOF
 
             FREETYPEINCL="$ac_freetype_incl"
 
+            FONTSSUBDIRS="fonts"
+
 	fi
     fi
 fi
-
-if test "x$FREETYPELIBS" = "x"
-then
-    wine_warnings="$wine_warnings|FreeType development files not found.
-Fonts will not be built. Dialog text may be invisible or unaligned."
-else
-  FONTSSUBDIRS="fonts"
-
+if test "x$FREETYPELIBS" = "x"; then
+  case "x$with_freetype" in
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: FreeType development files not found.
+Fonts will not be built. Dialog text may be invisible or unaligned.
+Use the --without-freetype option if you really want this." >&5
+echo "$as_me: error: FreeType development files not found.
+Fonts will not be built. Dialog text may be invisible or unaligned.
+Use the --without-freetype option if you really want this." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
 fi
+
 
 { echo "$as_me:$LINENO: checking for parport header/ppdev.h" >&5
 echo $ECHO_N "checking for parport header/ppdev.h... $ECHO_C" >&6; }

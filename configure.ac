@@ -34,6 +34,7 @@ AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses])
 AC_ARG_WITH(esd,       AS_HELP_STRING([--without-esd],[do not use the EsounD sound support]))
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]),
             [if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi])
+AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
 AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Digital Camera support)]))
 AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]),
             [if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi])
@@ -974,7 +975,7 @@ WINE_NOTICE_WITH(ldap,[test "x$LDAPLIBS" = "x"],
 
 dnl **** Check for FreeType 2 ****
 AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],false)
-if test "$ft_devel" != "false"
+if test "$ft_devel" != "false" -a "x$with_freetype" != "xno"
 then
     ac_freetype_libs=`$ft_devel --libs`
     ac_freetype_incl=`$ft_devel --cflags`
@@ -1014,18 +1015,12 @@ then
 	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
             AC_SUBST(FREETYPELIBS,"$ac_freetype_libs")
             AC_SUBST(FREETYPEINCL,"$ac_freetype_incl")
+            AC_SUBST(FONTSSUBDIRS,"fonts")
 	fi
     fi
 fi
-
-dnl Only build the fonts dir if we have freetype
-if test "x$FREETYPELIBS" = "x"
-then
-    WINE_WARNING([FreeType development files not found.
+WINE_ERROR_WITH(freetype,[test "x$FREETYPELIBS" = "x"],[FreeType development files not found.
 Fonts will not be built. Dialog text may be invisible or unaligned.])
-else
-  AC_SUBST(FONTSSUBDIRS,"fonts")
-fi
 
 dnl **** Check for parport (currently Linux only) ****
 AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,
