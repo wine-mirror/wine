@@ -1280,16 +1280,16 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     flags |= heapPtr->flags;
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
 
-    /* Some sanity checks */
+    /* Inform valgrind we are trying to free memory, so it can throw up an error message */
+    notify_free( ptr );
 
+    /* Some sanity checks */
     pInUse  = (ARENA_INUSE *)ptr - 1;
     if (!(subheap = HEAP_FindSubHeap( heapPtr, pInUse ))) goto error;
     if ((char *)pInUse < (char *)subheap->base + subheap->headerSize) goto error;
     if (!HEAP_ValidateInUseArena( subheap, pInUse, QUIET )) goto error;
 
     /* Turn the block into a free block */
-
-    notify_free( ptr );
 
     HEAP_MakeInUseBlockFree( subheap, pInUse );
 
