@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "snmp.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetmib1);
@@ -44,4 +45,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	}
 
 	return TRUE;
+}
+
+BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
+    HANDLE *phSubagentTrapEvent, AsnObjectIdentifier *pFirstSupportedRegion)
+{
+    FIXME("(%d, %p, %p): stub\n", dwUptimeReference, phSubagentTrapEvent,
+        pFirstSupportedRegion);
+    *phSubagentTrapEvent = NULL;
+    return TRUE;
 }
