@@ -113,6 +113,7 @@ BASEDIRS = \
 	imagehlp \
 	imm32 \
 	inetcomm \
+	inetmib1 \
 	infosoft \
 	initpki \
 	inkobj \
