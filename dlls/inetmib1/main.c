@@ -48,6 +48,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	return TRUE;
 }
 
+/**
+ * Utility functions
+ */
+static void copyInt(AsnAny *value, void *src)
+{
+    value->asnType = ASN_INTEGER;
+    value->asnValue.number = *(DWORD *)src;
+}
+
 static UINT mib2[] = { 1,3,6,1,2,1 };
 static UINT mib2System[] = { 1,3,6,1,2,1,1 };
 
@@ -76,9 +85,51 @@ static void mib2IfNumberInit(void)
     }
 }
 
+static BOOL mib2IfNumberQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier numberOid = DEFINE_OID(mib2IfNumber);
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+    case SNMP_PDU_GETNEXT:
+        if ((bPduType == SNMP_PDU_GET &&
+            !SnmpUtilOidNCmp(&pVarBind->name, &numberOid, numberOid.idLength))
+            || SnmpUtilOidNCmp(&pVarBind->name, &numberOid, numberOid.idLength)
+            < 0)
+        {
+            DWORD numIfs = ifTable ? ifTable->dwNumEntries : 0;
+
+            copyInt(&pVarBind->value, &numIfs);
+            if (bPduType == SNMP_PDU_GETNEXT)
+                SnmpUtilOidCpy(&pVarBind->name, &numberOid);
+            *pErrorStatus = SNMP_ERRORSTATUS_NOERROR;
+        }
+        else
+        {
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+            /* Caller deals with OID if bPduType == SNMP_PDU_GETNEXT, so don't
+             * need to set it here.
+             */
+        }
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 /* This list MUST BE lexicographically sorted */
 static struct mibImplementation supportedIDs[] = {
-    { DEFINE_OID(mib2IfNumber), mib2IfNumberInit },
+    { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery },
 };
 static UINT minSupportedIDLength;
 

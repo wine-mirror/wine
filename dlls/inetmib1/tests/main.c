@@ -132,11 +132,9 @@ static void testQuery(void)
     moreData = TRUE;
     ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
     ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
-    todo_wine {
     ok(error == SNMP_ERRORSTATUS_NOERROR,
         "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
     ok(index == 0, "expected index 0, got %d\n", index);
-    }
     vars[0].name.idLength = sizeof(mib2If) / sizeof(mib2If[0]);
     vars[0].name.ids = mib2If;
     ok(!SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name, vars[0].name.idLength),
