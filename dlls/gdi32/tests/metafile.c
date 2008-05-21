@@ -976,7 +976,7 @@ static void dump_emf_record(const ENHMETARECORD *emr, const char *desc)
 }
 
 static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr2,
-                             const char *desc, BOOL todo)
+                             const char *desc, BOOL ignore_scaling, BOOL todo)
 {
     int diff;
 
@@ -1010,6 +1010,13 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
     /* contents of EMR_GDICOMMENT are not interesting */
     if (emr1->iType == EMR_GDICOMMENT) return TRUE;
 
+    /* different Windows versions setup DC scaling differently when
+     * converting an old style metafile to an EMF.
+     */
+    if (ignore_scaling && (emr1->iType == EMR_SETWINDOWEXTEX ||
+                           emr1->iType == EMR_SETVIEWPORTEXTEX))
+        return TRUE;
+
     diff = memcmp(emr1->dParm, emr2->dParm, emr1->nSize - sizeof(EMR));
     if (diff && todo)
     {
@@ -1035,7 +1042,8 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
  * otherwise returns the number of non-matching bytes.
  */
 static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
-                            UINT bsize, const char *desc, BOOL todo)
+                            UINT bsize, const char *desc,
+                            BOOL ignore_scaling, BOOL todo)
 {
     unsigned char buf[MF_BUFSIZE];
     UINT mfsize, offset;
@@ -1093,7 +1101,7 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
 	trace("EMF record %u, size %u/record %u, size %u\n",
               emr1->iType, emr1->nSize, emr2->iType, emr2->nSize);
 
-        if (!match_emf_record(emr1, emr2, desc, todo)) return -1;
+        if (!match_emf_record(emr1, emr2, desc, ignore_scaling, todo)) return -1;
 
 	offset += emr1->nSize;
     }
@@ -1433,7 +1441,7 @@ static void test_emf_ExtTextOut_on_path(void)
      * are there, but their contents don't match for different reasons.
      */
     if (compare_emf_bits(hMetafile, EMF_TEXTOUT_ON_PATH_BITS, sizeof(EMF_TEXTOUT_ON_PATH_BITS),
-        "emf_TextOut_on_path", TRUE) != 0)
+        "emf_TextOut_on_path", FALSE, TRUE) != 0)
     {
         dump_emf_bits(hMetafile, "emf_TextOut_on_path");
         dump_emf_records(hMetafile, "emf_TextOut_on_path");
@@ -1486,6 +1494,15 @@ static void translate( POINT *pt, UINT count, const XFORM *xform )
         pt->y = (LONG)floor( x * xform->eM12 + y * xform->eM22 + xform->eDy + 0.5 );
         pt++;
     }
+}
+
+/* Compare rectangles allowing rounding errors */
+static BOOL is_equal_rect(const RECT *rc1, const RECT *rc2)
+{
+    return abs(rc1->left - rc2->left) <= 1 &&
+           abs(rc1->top - rc2->top) <= 1 &&
+           abs(rc1->right - rc2->right) <= 1 &&
+           abs(rc1->bottom - rc2->bottom) <= 1;
 }
 
 static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
@@ -1574,7 +1591,7 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         translate((POINT *)&rc_transformed, 2, &xform);
         trace("transformed (%d,%d-%d,%d)\n", rc_transformed.left, rc_transformed.top,
               rc_transformed.right, rc_transformed.bottom);
-        ok(EqualRect(&rect, &rc_transformed), "rects don't match\n");
+        ok(is_equal_rect(&rect, &rc_transformed), "rects don't match\n");
 
         rect = *(const RECT *)rgn2.data.Buffer;
         trace("rect (%d,%d-%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom);
@@ -1582,7 +1599,7 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         translate((POINT *)&rc_transformed, 2, &xform);
         trace("transformed (%d,%d-%d,%d)\n", rc_transformed.left, rc_transformed.top,
               rc_transformed.right, rc_transformed.bottom);
-        ok(EqualRect(&rect, &rc_transformed), "rects don't match\n");
+        ok(is_equal_rect(&rect, &rc_transformed), "rects don't match\n");
 
         ok(rgn2.data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn2.data.rdh.dwSize);
         ok(rgn2.data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn2.data.rdh.iType);
@@ -1620,7 +1637,7 @@ static void test_emf_clipping(void)
     ok(hemf != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
     if (compare_emf_bits(hemf, EMF_CLIPPING, sizeof(EMF_CLIPPING),
-        "emf_clipping", TRUE) != 0)
+        "emf_clipping", FALSE, TRUE) != 0)
     {
         dump_emf_bits(hemf, "emf_clipping");
         dump_emf_records(hemf, "emf_clipping");
@@ -1686,6 +1703,7 @@ static HENHMETAFILE create_converted_emf(const METAFILEPICT *mfp)
 {
     HDC hdcMf;
     HMETAFILE hmf;
+    HENHMETAFILE hemf;
     BOOL ret;
     UINT size;
     LPBYTE pBits;
@@ -1708,7 +1726,9 @@ static HENHMETAFILE create_converted_emf(const METAFILEPICT *mfp)
     pBits = HeapAlloc(GetProcessHeap(), 0, size);
     GetMetaFileBitsEx(hmf, size, pBits);
     DeleteMetaFile(hmf);
-    return SetWinMetaFileBits(size, pBits, NULL, mfp);
+    hemf = SetWinMetaFileBits(size, pBits, NULL, mfp);
+    HeapFree(GetProcessHeap(), 0, pBits);
+    return hemf;
 }
 
 static void test_mf_conversions(void)
@@ -1726,7 +1746,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(&mfp);
 
         if (compare_emf_bits(hemf, EMF_LINETO_MM_ANISOTROPIC_BITS, sizeof(EMF_LINETO_MM_ANISOTROPIC_BITS),
-                             "emf_LineTo MM_ANISOTROPIC", TRUE) != 0)
+                             "emf_LineTo MM_ANISOTROPIC", TRUE, TRUE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo MM_ANISOTROPIC");
             dump_emf_records(hemf, "emf_LineTo MM_ANISOTROPIC");
@@ -1751,7 +1771,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(&mfp);
 
         if (compare_emf_bits(hemf, EMF_LINETO_MM_TEXT_BITS, sizeof(EMF_LINETO_MM_TEXT_BITS),
-                             "emf_LineTo MM_TEXT", TRUE) != 0)
+                             "emf_LineTo MM_TEXT", TRUE, TRUE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo MM_TEXT");
             dump_emf_records(hemf, "emf_LineTo MM_TEXT");
@@ -1771,7 +1791,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(NULL);
 
         if (compare_emf_bits(hemf, EMF_LINETO_BITS, sizeof(EMF_LINETO_BITS),
-                             "emf_LineTo NULL", TRUE) != 0)
+                             "emf_LineTo NULL", TRUE, TRUE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo NULL");
             dump_emf_records(hemf, "emf_LineTo NULL");
@@ -1920,12 +1940,17 @@ static void test_SetWinMetaFileBits(void)
   ok(diffx <= 1, "SetWinMetaFileBits (MM_ISOTROPIC): Reference bounds are not isotropic\n");
 
   dc = CreateCompatibleDC(NULL);
+
+  /* Allow 1 mm difference (rounding errors) */
+  diffx = rclBoundsAnisotropic.right - GetDeviceCaps(dc, HORZRES) / 2;
+  diffy = rclBoundsAnisotropic.bottom - GetDeviceCaps(dc, VERTRES) / 2;
+  if (diffx < 0) diffx = -diffx;
+  if (diffy < 0) diffy = -diffy;
   todo_wine
   {
-  ok(rclBoundsAnisotropic.right == GetDeviceCaps(dc, HORZRES) / 2 - 1 &&
-     rclBoundsAnisotropic.bottom == GetDeviceCaps(dc, VERTRES) / 2 - 1,
+  ok(diffx <= 1 && diffy <= 1,
      "SetWinMetaFileBits (MM_ANISOTROPIC): Reference bounds: The whole device surface must be used (%dx%d), but got (%dx%d)\n",
-     GetDeviceCaps(dc, HORZRES) / 2 - 1, GetDeviceCaps(dc, VERTRES) / 2 - 1, rclBoundsAnisotropic.right, rclBoundsAnisotropic.bottom);
+     GetDeviceCaps(dc, HORZRES) / 2, GetDeviceCaps(dc, VERTRES) / 2, rclBoundsAnisotropic.right, rclBoundsAnisotropic.bottom);
   }
 
   /* Allow 1 mm difference (rounding errors) */
