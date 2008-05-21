@@ -670,7 +670,7 @@ then
                 [$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])],,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
 
         fi
-        WINE_NOTICE_WITH(xrender,[test "x$ac_cv_lib_soname_Xrender" = "x"],
+        WINE_WARNING_WITH(xrender,[test "x$ac_cv_lib_soname_Xrender" = "x"],
                          [libxrender development files not found, XRender won't be supported.])
 
         dnl *** Check for X RandR extension
@@ -816,7 +816,7 @@ then
         ])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
-WINE_NOTICE_WITH(xml,[test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"],
+WINE_WARNING_WITH(xml,[test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"],
                  [libxml2 development files not found, XML won't be supported.])
 
 if test "x$with_xslt" != "xno"
@@ -848,7 +848,7 @@ then
              LIBS="$ac_save_LIBS"],,$ac_xslt_libs)
     fi
 fi
-WINE_NOTICE_WITH(xslt,[test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"],
+WINE_WARNING_WITH(xslt,[test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"],
                  [libxslt development files not found, xslt won't be supported.])
 
 dnl **** Check for libhal ****
@@ -1166,7 +1166,7 @@ then
     WINE_CHECK_SONAME(ssl,SSL_library_init)
     WINE_CHECK_SONAME(crypto,BIO_new_socket)
 fi
-WINE_NOTICE_WITH(openssl,[test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"],
+WINE_WARNING_WITH(openssl,[test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"],
                  [OpenSSL development files not found, SSL won't be supported.])
 
 dnl **** Check for libjpeg ****
@@ -1174,7 +1174,7 @@ if test "$ac_cv_header_jpeglib_h" = "yes"
 then
     WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
 fi
-WINE_NOTICE_WITH(jpeg,[test "x$ac_cv_lib_soname_jpeg" = "x"],
+WINE_WARNING_WITH(jpeg,[test "x$ac_cv_lib_soname_jpeg" = "x"],
                  [libjpeg development files not found, JPEG won't be supported.])
 
 dnl **** Check for libpng ****
@@ -1182,7 +1182,7 @@ if test "$ac_cv_header_png_h" = "yes"
 then
     WINE_CHECK_SONAME(png,png_create_read_struct,,,,[[libpng[[0-9]]*]])
 fi
-WINE_NOTICE_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
+WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
                  [libpng development files not found, PNG won't be supported.])
 
 dnl **** Check for libodbc ****

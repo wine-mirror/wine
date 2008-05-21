@@ -10325,7 +10325,7 @@ fi
         fi
         if test "x$ac_cv_lib_soname_Xrender" = "x"; then
   case "x$with_xrender" in
-  x)   wine_notices="$wine_notices|libxrender development files not found, XRender won't be supported." ;;
+  x)   wine_warnings="$wine_warnings|libxrender development files not found, XRender won't be supported." ;;
   xno) ;;
   *)   { { echo "$as_me:$LINENO: error: libxrender development files not found, XRender won't be supported.
 This is an error since --with-xrender was requested." >&5
@@ -11963,7 +11963,7 @@ done
 fi
 if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then
   case "x$with_xml" in
-  x)   wine_notices="$wine_notices|libxml2 development files not found, XML won't be supported." ;;
+  x)   wine_warnings="$wine_warnings|libxml2 development files not found, XML won't be supported." ;;
   xno) ;;
   *)   { { echo "$as_me:$LINENO: error: libxml2 development files not found, XML won't be supported.
 This is an error since --with-xml was requested." >&5
@@ -12222,7 +12222,7 @@ fi
 fi
 if test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"; then
   case "x$with_xslt" in
-  x)   wine_notices="$wine_notices|libxslt development files not found, xslt won't be supported." ;;
+  x)   wine_warnings="$wine_warnings|libxslt development files not found, xslt won't be supported." ;;
   xno) ;;
   *)   { { echo "$as_me:$LINENO: error: libxslt development files not found, xslt won't be supported.
 This is an error since --with-xslt was requested." >&5
@@ -15830,7 +15830,7 @@ fi
 fi
 if test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"; then
   case "x$with_openssl" in
-  x)   wine_notices="$wine_notices|OpenSSL development files not found, SSL won't be supported." ;;
+  x)   wine_warnings="$wine_warnings|OpenSSL development files not found, SSL won't be supported." ;;
   xno) ;;
   *)   { { echo "$as_me:$LINENO: error: OpenSSL development files not found, SSL won't be supported.
 This is an error since --with-openssl was requested." >&5
@@ -15924,7 +15924,7 @@ fi
 fi
 if test "x$ac_cv_lib_soname_jpeg" = "x"; then
   case "x$with_jpeg" in
-  x)   wine_notices="$wine_notices|libjpeg development files not found, JPEG won't be supported." ;;
+  x)   wine_warnings="$wine_warnings|libjpeg development files not found, JPEG won't be supported." ;;
   xno) ;;
   *)   { { echo "$as_me:$LINENO: error: libjpeg development files not found, JPEG won't be supported.
 This is an error since --with-jpeg was requested." >&5
@@ -16018,7 +16018,7 @@ fi
 fi
 if test "x$ac_cv_lib_soname_png" = "x"; then
   case "x$with_png" in
-  x)   wine_notices="$wine_notices|libpng development files not found, PNG won't be supported." ;;
+  x)   wine_warnings="$wine_warnings|libpng development files not found, PNG won't be supported." ;;
   xno) ;;
   *)   { { echo "$as_me:$LINENO: error: libpng development files not found, PNG won't be supported.
 This is an error since --with-png was requested." >&5
