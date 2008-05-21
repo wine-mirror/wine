@@ -7521,10 +7521,9 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
      */
 
     if (bResult && (lvItem.state & lvItem.stateMask & LVIS_SELECTED) &&
-        ((infoPtr->nSelectionMark == -1) || (lvItem.iItem <= infoPtr->nSelectionMark)))
+        (infoPtr->nSelectionMark == -1))
     {
         int i;
-        infoPtr->nSelectionMark = -1;
         for (i = 0; i < infoPtr->nItemCount; i++)
         {
             if (infoPtr->uCallbackMask & LVIS_SELECTED)
