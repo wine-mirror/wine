@@ -247,7 +247,7 @@ static void test_LockBits(void)
     GpBitmap *bm;
     GpRect rect;
     BitmapData bd;
-    const REAL WIDTH = 10.0, HEIGHT = 20.0;
+    const INT WIDTH = 10, HEIGHT = 20;
 
     bm = NULL;
     stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
@@ -261,6 +261,17 @@ static void test_LockBits(void)
     /* read-only */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
     expect(Ok, stat);
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    /* read-only, with NULL rect -> whole bitmap lock */
+    stat = GdipBitmapLockBits(bm, NULL, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+    expect(bd.Width,  WIDTH);
+    expect(bd.Height, HEIGHT);
 
     if (stat == Ok) {
         stat = GdipBitmapUnlockBits(bm, &bd);
