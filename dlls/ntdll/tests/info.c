@@ -819,7 +819,8 @@ static void test_readvirtualmemory(void)
     todo_wine{
     status = pNtReadVirtualMemory(process, (void *) 0x1234, buffer, 12, &readcount);
     ok( status == STATUS_PARTIAL_COPY, "Expected STATUS_PARTIAL_COPY, got %08x\n", status);
-    ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
+    if (status == STATUS_PARTIAL_COPY)
+        ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
     }
 
     /* 0 handle */
