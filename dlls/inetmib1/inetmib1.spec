@@ -1,4 +1,4 @@
 @ stdcall SnmpExtensionInit(long ptr ptr)
 @ stub SnmpExtensionInitEx
-@ stub SnmpExtensionQuery
+@ stdcall SnmpExtensionQuery(long ptr ptr ptr)
 @ stub SnmpExtensionTrap

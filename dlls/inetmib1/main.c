@@ -55,3 +55,11 @@ BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
     *phSubagentTrapEvent = NULL;
     return TRUE;
 }
+
+BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
+    AsnInteger32 *pErrorStatus, AsnInteger32 *pErrorIndex)
+{
+    FIXME("(0x%02x, %p, %p, %p): stub\n", bPduType, pVarBindList,
+        pErrorStatus, pErrorIndex);
+    return FALSE;
+}
