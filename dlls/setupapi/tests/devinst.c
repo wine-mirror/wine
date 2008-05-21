@@ -492,7 +492,6 @@ static void testRegisterDeviceInfo(void)
     ret = pSetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
      "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-    ret = pSetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
     set = pSetupDiCreateDeviceInfoList(&guid, NULL);
     ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
     if (set)
