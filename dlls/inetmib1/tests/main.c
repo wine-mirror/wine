@@ -117,7 +117,6 @@ static void testQuery(void)
     ok(error == SNMP_ERRORSTATUS_NOSUCHNAME,
         "expected SNMP_ERRORSTATUS_NOSUCHNAME, got %d\n", error);
     /* The index is 1-based rather than 0-based */
-    todo_wine
     ok(index == 1, "expected index 1, got %d\n", index);
 
     /* Even though SnmpExtensionInit says this DLL supports the MIB2 system
@@ -133,13 +132,13 @@ static void testQuery(void)
     moreData = TRUE;
     ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
     ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
-    todo_wine
+    todo_wine {
     ok(error == SNMP_ERRORSTATUS_NOERROR,
         "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
     ok(index == 0, "expected index 0, got %d\n", index);
+    }
     vars[0].name.idLength = sizeof(mib2If) / sizeof(mib2If[0]);
     vars[0].name.ids = mib2If;
-    todo_wine
     ok(!SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name, vars[0].name.idLength),
         "expected 1.3.6.1.2.1.2, got %s\n", SnmpUtilOidToA(&vars2[0].name));
     SnmpUtilVarBindFree(&vars2[0]);

@@ -19,7 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
-
+#include <limits.h>
 #include "windef.h"
 #include "winbase.h"
 #include "snmp.h"
@@ -51,10 +51,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 static UINT mib2[] = { 1,3,6,1,2,1 };
 static UINT mib2System[] = { 1,3,6,1,2,1,1 };
 
+typedef BOOL (*varqueryfunc)(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus);
+
 struct mibImplementation
 {
     AsnObjectIdentifier name;
     void              (*init)(void);
+    varqueryfunc        query;
 };
 
 static UINT mib2IfNumber[] = { 1,3,6,1,2,1,2,1 };
@@ -72,9 +76,11 @@ static void mib2IfNumberInit(void)
     }
 }
 
+/* This list MUST BE lexicographically sorted */
 static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IfNumber), mib2IfNumberInit },
 };
+static UINT minSupportedIDLength;
 
 BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
     HANDLE *phSubagentTrapEvent, AsnObjectIdentifier *pFirstSupportedRegion)
@@ -85,12 +91,45 @@ BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
     TRACE("(%d, %p, %p)\n", dwUptimeReference, phSubagentTrapEvent,
         pFirstSupportedRegion);
 
+    minSupportedIDLength = UINT_MAX;
     for (i = 0; i < sizeof(supportedIDs) / sizeof(supportedIDs[0]); i++)
+    {
         if (supportedIDs[i].init)
             supportedIDs[i].init();
+        if (supportedIDs[i].name.idLength < minSupportedIDLength)
+            minSupportedIDLength = supportedIDs[i].name.idLength;
+    }
     *phSubagentTrapEvent = NULL;
     SnmpUtilOidCpy(pFirstSupportedRegion, &myOid);
     return TRUE;
+}
+
+static struct mibImplementation *findSupportedQuery(UINT *ids, UINT idLength,
+    UINT *matchingIndex)
+{
+    int indexHigh = DEFINE_SIZEOF(supportedIDs) - 1, indexLow = 0, i;
+    struct mibImplementation *impl = NULL;
+    AsnObjectIdentifier oid1 = { idLength, ids};
+
+    if (!idLength)
+        return NULL;
+    for (i = (indexLow + indexHigh) / 2; !impl && indexLow <= indexHigh;
+         i = (indexLow + indexHigh) / 2)
+    {
+        INT cmp;
+
+        cmp = SnmpUtilOidNCmp(&oid1, &supportedIDs[i].name, idLength);
+        if (!cmp)
+        {
+            impl = &supportedIDs[i];
+            *matchingIndex = i;
+        }
+        else if (cmp > 0)
+            indexLow = i + 1;
+        else
+            indexHigh = i - 1;
+    }
+    return impl;
 }
 
 BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
@@ -109,8 +148,52 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
         if (!SnmpUtilOidNCmp(&pVarBindList->list[i].name, &mib2oid,
             mib2oid.idLength))
         {
-            FIXME("%s: stub\n", SnmpUtilOidToA(&pVarBindList->list[i].name));
-            error = SNMP_ERRORSTATUS_NOSUCHNAME;
+            struct mibImplementation *impl = NULL;
+            UINT len, matchingIndex = 0;
+
+            TRACE("%s\n", SnmpUtilOidToA(&pVarBindList->list[i].name));
+            /* Search for an implementation matching as many octets as possible
+             */
+            for (len = pVarBindList->list[i].name.idLength;
+                len >= minSupportedIDLength && !impl; len--)
+                impl = findSupportedQuery(pVarBindList->list[i].name.ids, len,
+                    &matchingIndex);
+            if (impl && impl->query)
+                impl->query(bPduType, &pVarBindList->list[i], &error);
+            else
+                error = SNMP_ERRORSTATUS_NOSUCHNAME;
+            if (error == SNMP_ERRORSTATUS_NOSUCHNAME &&
+                bPduType == SNMP_PDU_GETNEXT)
+            {
+                /* GetNext is special: it finds the successor to the given OID,
+                 * so we have to continue until an implementation handles the
+                 * query or we exhaust the table of supported OIDs.
+                 */
+                for (; error == SNMP_ERRORSTATUS_NOSUCHNAME &&
+                    matchingIndex < DEFINE_SIZEOF(supportedIDs);
+                    matchingIndex++)
+                {
+                    error = SNMP_ERRORSTATUS_NOERROR;
+                    impl = &supportedIDs[matchingIndex];
+                    if (impl->query)
+                        impl->query(bPduType, &pVarBindList->list[i], &error);
+                    else
+                        error = SNMP_ERRORSTATUS_NOSUCHNAME;
+                }
+                /* If the query still isn't resolved, set the OID to the
+                 * successor to the last entry in the table.
+                 */
+                if (error == SNMP_ERRORSTATUS_NOSUCHNAME)
+                {
+                    SnmpUtilOidFree(&pVarBindList->list[i].name);
+                    SnmpUtilOidCpy(&pVarBindList->list[i].name,
+                        &supportedIDs[matchingIndex - 1].name);
+                    pVarBindList->list[i].name.ids[
+                        pVarBindList->list[i].name.idLength - 1] += 1;
+                }
+            }
+            if (error)
+                errorIndex = i + 1;
         }
     }
     *pErrorStatus = error;
