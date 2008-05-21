@@ -471,7 +471,6 @@ static BOOL DP_DestroyDirectPlay4( LPVOID lpDP )
 
 
 /* Create a new interface */
-extern
 HRESULT DP_CreateInterface
          ( REFIID riid, LPVOID* ppvObj )
 {
@@ -5139,7 +5138,6 @@ static const IDirectPlay4Vtbl directPlay4AVT =
 };
 #undef XCAST
 
-extern
 HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP,
                             DPID idPlayer,
                             LPVOID* lplpData )
@@ -5156,7 +5154,6 @@ HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP,
   return DP_OK;
 }
 
-extern
 HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP,
                             DPID idPlayer,
                             LPVOID lpData )

@@ -270,7 +270,6 @@ static BOOL DPL_DestroyLobby3( LPVOID lpDPL )
  *    successfully for a third interface, a query for the first interface
  *    through the pointer for the third interface must succeed.
  */
-extern
 HRESULT DPL_CreateInterface
          ( REFIID riid, LPVOID* ppvObj )
 {
@@ -679,8 +678,8 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_EnumAddress
   return DPL_EnumAddress( lpEnumAddressCallback, lpAddress, dwAddressSize, lpContext );
 }
 
-extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress,
-                                DWORD dwAddressSize, LPVOID lpContext )
+HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress,
+                         DWORD dwAddressSize, LPVOID lpContext )
 {
   DWORD dwTotalSizeEnumerated = 0;
 
