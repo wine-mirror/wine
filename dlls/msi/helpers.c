@@ -1163,6 +1163,16 @@ UINT msi_extract_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR destdir)
     if (r != ERROR_SUCCESS)
         goto done;
 
+    if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
+    {
+        r = find_published_source(package, mi);
+        if (r != ERROR_SUCCESS)
+        {
+            ERR("Cabinet not found: %s\n", debugstr_w(mi->source));
+            return ERROR_INSTALL_FAILURE;
+        }
+    }
+
     data.package = package;
     data.mi = mi;
     data.file = file;

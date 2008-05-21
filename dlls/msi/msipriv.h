@@ -908,6 +908,7 @@ extern UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO
 extern void msi_free_media_info(MSIMEDIAINFO *mi);
 extern BOOL msi_cabextract(MSIPACKAGE* package, MSIMEDIAINFO *mi, PFNFDINOTIFY notify, LPVOID data);
 extern UINT msi_extract_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR destdir);
+extern UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi);
 
 /* control event stuff */
 extern VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,

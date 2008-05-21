@@ -577,7 +577,7 @@ UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
 }
 
 /* FIXME: search NETWORK and URL sources as well */
-static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
+UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 {
     WCHAR source[MAX_PATH];
     WCHAR volume[MAX_PATH];
@@ -586,6 +586,7 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     DWORD index, size, id;
     UINT r;
 
+    size = MAX_PATH;
     r = MsiSourceListGetInfoW(package->ProductCode, NULL,
                               package->Context, MSICODE_PRODUCT,
                               INSTALLPROPERTY_LASTUSEDSOURCEW, source, &size);
