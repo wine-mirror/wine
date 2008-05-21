@@ -265,8 +265,7 @@ static void test_noprivileges(void)
     BOOL ret;
 
     static const DWORD BSM_ALL_RECIPS = BSM_VXDS | BSM_NETDRIVER |
-                                        BSM_INSTALLABLEDRIVERS |
-                                        BSM_APPLICATIONS | BSM_ALLDESKTOPS;
+                                        BSM_INSTALLABLEDRIVERS | BSM_APPLICATIONS;
 
     pOpenProcessToken = (void *)GetProcAddress(advapi32, "OpenProcessToken");
     pAdjustTokenPrivileges = (void *)GetProcAddress(advapi32, "AdjustTokenPrivileges");
