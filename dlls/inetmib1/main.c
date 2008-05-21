@@ -98,6 +98,11 @@ static AsnInteger32 mapStructEntryToValue(struct structToAsnValue *map,
     return SNMP_ERRORSTATUS_NOERROR;
 }
 
+static void copyIpAddr(AsnAny *value, void *src)
+{
+    setStringValue(value, ASN_IPADDRESS, sizeof(DWORD), src);
+}
+
 static UINT mib2[] = { 1,3,6,1,2,1 };
 static UINT mib2System[] = { 1,3,6,1,2,1,1 };
 
@@ -408,6 +413,166 @@ static BOOL mib2IpStatsQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return TRUE;
 }
 
+static UINT mib2IpAddr[] = { 1,3,6,1,2,1,4,20,1 };
+static PMIB_IPADDRTABLE ipAddrTable;
+
+static struct structToAsnValue mib2IpAddrMap[] = {
+    { FIELD_OFFSET(MIB_IPADDRROW, dwAddr), copyIpAddr },
+    { FIELD_OFFSET(MIB_IPADDRROW, dwIndex), copyInt },
+    { FIELD_OFFSET(MIB_IPADDRROW, dwMask), copyIpAddr },
+    { FIELD_OFFSET(MIB_IPADDRROW, dwBCastAddr), copyInt },
+    { FIELD_OFFSET(MIB_IPADDRROW, dwReasmSize), copyInt },
+};
+
+static void mib2IpAddrInit(void)
+{
+    DWORD size = 0, ret = GetIpAddrTable(NULL, &size, FALSE);
+
+    if (ret == ERROR_INSUFFICIENT_BUFFER)
+    {
+        ipAddrTable = HeapAlloc(GetProcessHeap(), 0, size);
+        if (ipAddrTable)
+            GetIpAddrTable(ipAddrTable, &size, FALSE);
+    }
+}
+
+static BOOL mib2IpAddrQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier myOid = DEFINE_OID(mib2IpAddr);
+    UINT tableIndex = 0, item = 0;
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+    case SNMP_PDU_GETNEXT:
+        *pErrorStatus = 0;
+        if (!ipAddrTable)
+        {
+            /* There is no address present, so let the caller deal with
+             * finding the successor.
+             */
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        }
+        else if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
+            pVarBind->name.idLength < myOid.idLength + 5)
+        {
+            /* Either the table or an element within the table is specified,
+             * but the instance is not.
+             */
+            if (bPduType == SNMP_PDU_GET)
+            {
+                /* Can't get an interface entry without specifying the
+                 * instance.
+                 */
+                *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+            }
+            else
+            {
+                /* Get the first address */
+                tableIndex = 1;
+                if (pVarBind->name.idLength == myOid.idLength + 1)
+                    item = pVarBind->name.ids[myOid.idLength];
+                else
+                    item = 1;
+            }
+        }
+        else if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
+            pVarBind->name.idLength == myOid.idLength + 5)
+        {
+            item = pVarBind->name.ids[myOid.idLength];
+            if (!item)
+            {
+                if (bPduType == SNMP_PDU_GET)
+                    *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+                else
+                {
+                    tableIndex = 1;
+                    item = 1;
+                }
+            }
+            else if (item - 1 >= DEFINE_SIZEOF(mib2IpAddrMap))
+                *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+            else
+            {
+                DWORD addr;
+                UINT i;
+
+                /* Map the IDs to an IP address in little-endian order */
+                addr =
+                    (BYTE)pVarBind->name.ids[myOid.idLength + 4] << 24 |
+                    (BYTE)pVarBind->name.ids[myOid.idLength + 3] << 16 |
+                    (BYTE)pVarBind->name.ids[myOid.idLength + 2] << 8 |
+                    (BYTE)pVarBind->name.ids[myOid.idLength + 1];
+                /* Find the item whose address matches */
+                for (i = 0; !tableIndex && i < ipAddrTable->dwNumEntries; i++)
+                    if (addr == ipAddrTable->table[i].dwAddr)
+                        tableIndex = i + 1;
+                if (bPduType == SNMP_PDU_GETNEXT)
+                {
+                    if (!tableIndex)
+                    {
+                        /* No address matched, so let caller find successor */
+                        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+                    }
+                    else
+                    {
+                        /* We want the successor to the matching address */
+                        tableIndex++;
+                    }
+                }
+                if (tableIndex > ipAddrTable->dwNumEntries)
+                    *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+            }
+        }
+        else
+        {
+            /* Some item after the address table was requested, so let the
+             * caller deal with finding a successor.
+             */
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        }
+        if (!*pErrorStatus)
+        {
+            assert(tableIndex);
+            assert(item);
+            *pErrorStatus = mapStructEntryToValue(mib2IpAddrMap,
+                DEFINE_SIZEOF(mib2IpAddrMap),
+                &ipAddrTable->table[tableIndex - 1], item, bPduType, pVarBind);
+            if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
+            {
+                UINT id;
+                BYTE *ptr;
+                AsnObjectIdentifier oid;
+
+                SnmpUtilOidCpy(&pVarBind->name, &myOid);
+                oid.idLength = 1;
+                oid.ids = &id;
+                id = item;
+                SnmpUtilOidAppend(&pVarBind->name, &oid);
+                for (ptr = (BYTE *)&ipAddrTable->table[tableIndex - 1].dwAddr;
+                    ptr < (BYTE *)&ipAddrTable->table[tableIndex - 1].dwAddr +
+                    sizeof(DWORD); ptr++)
+                {
+                    id = *ptr;
+                    SnmpUtilOidAppend(&pVarBind->name, &oid);
+                }
+            }
+        }
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 static UINT mib2Icmp[] = { 1,3,6,1,2,1,5 };
 static MIB_ICMP icmpStats;
 
@@ -508,6 +673,7 @@ static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery },
     { DEFINE_OID(mib2IfEntry), NULL, mib2IfEntryQuery },
     { DEFINE_OID(mib2Ip), mib2IpStatsInit, mib2IpStatsQuery },
+    { DEFINE_OID(mib2IpAddr), mib2IpAddrInit, mib2IpAddrQuery },
     { DEFINE_OID(mib2Icmp), mib2IcmpInit, mib2IcmpQuery },
 };
 static UINT minSupportedIDLength;
