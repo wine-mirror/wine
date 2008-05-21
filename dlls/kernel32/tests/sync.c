@@ -268,9 +268,9 @@ static void test_slist(void)
     ok(((struct item*)entry->Next)->value == 1, "item 1 not at the back of list\n");
 }
 
-static void test_event_security(void)
+static void test_event(void)
 {
-    HANDLE handle;
+    HANDLE handle, handle2;
     SECURITY_ATTRIBUTES sa;
     SECURITY_DESCRIPTOR sd;
     ACL acl;
@@ -303,6 +303,37 @@ static void test_event_security(void)
     handle = CreateEventA(&sa, FALSE, FALSE, __FILE__ ": Test Event");
     ok(handle != NULL, "CreateEventW with blank sd failed with error %d\n", GetLastError());
     CloseHandle(handle);
+
+    /* test case sensitivity */
+
+    SetLastError(0xdeadbeef);
+    handle = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
+    ok( handle != NULL, "CreateEvent failed with error %u\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle2 = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": Test Event");
+    ok( handle2 != NULL, "CreateEvent failed with error %d\n", GetLastError());
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = CreateEventA(NULL, FALSE, FALSE, __FILE__ ": TEST EVENT");
+    ok( handle2 != NULL, "CreateEvent failed with error %d\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenEventA( EVENT_ALL_ACCESS, FALSE, __FILE__ ": Test Event");
+    ok( handle2 != NULL, "OpenEvent failed with error %d\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenEventA( EVENT_ALL_ACCESS, FALSE, __FILE__ ": TEST EVENT");
+    ok( !handle2, "OpenEvent succeeded\n");
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    CloseHandle( handle );
 }
 
 static HANDLE sem = 0;
@@ -419,6 +450,6 @@ START_TEST(sync)
     test_signalandwait();
     test_mutex();
     test_slist();
-    test_event_security();
+    test_event();
     test_iocp_callback();
 }
