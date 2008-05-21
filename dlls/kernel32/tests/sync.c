@@ -336,6 +336,42 @@ static void test_event(void)
     CloseHandle( handle );
 }
 
+static void test_semaphore(void)
+{
+    HANDLE handle, handle2;
+
+    /* test case sensitivity */
+
+    SetLastError(0xdeadbeef);
+    handle = CreateSemaphoreA(NULL, 0, 1, __FILE__ ": Test Semaphore");
+    ok(handle != NULL, "CreateSemaphore failed with error %u\n", GetLastError());
+    ok(GetLastError() == 0, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle2 = CreateSemaphoreA(NULL, 0, 1, __FILE__ ": Test Semaphore");
+    ok( handle2 != NULL, "CreateSemaphore failed with error %d\n", GetLastError());
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = CreateSemaphoreA(NULL, 0, 1, __FILE__ ": TEST SEMAPHORE");
+    ok( handle2 != NULL, "CreateSemaphore failed with error %d\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenSemaphoreA( SEMAPHORE_ALL_ACCESS, FALSE, __FILE__ ": Test Semaphore");
+    ok( handle2 != NULL, "OpenSemaphore failed with error %d\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenSemaphoreA( SEMAPHORE_ALL_ACCESS, FALSE, __FILE__ ": TEST SEMAPHORE");
+    ok( !handle2, "OpenSemaphore succeeded\n");
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    CloseHandle( handle );
+}
+
 static HANDLE sem = 0;
 
 static void CALLBACK iocp_callback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransferred, LPOVERLAPPED lpOverlapped)
@@ -451,5 +487,6 @@ START_TEST(sync)
     test_mutex();
     test_slist();
     test_event();
+    test_semaphore();
     test_iocp_callback();
 }
