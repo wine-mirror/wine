@@ -622,6 +622,45 @@ static void test_NtMapViewOfSection(void)
     CloseHandle(hProcess);
 }
 
+static void test_CreateFileMapping(void)
+{
+    HANDLE handle, handle2;
+
+    /* test case sensitivity */
+
+    SetLastError(0xdeadbeef);
+    handle = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE, 0, 0x1000,
+                                 __FILE__ ": Test Mapping");
+    ok( handle != NULL, "CreateFileMapping failed with error %u\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle2 = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE, 0, 0x1000,
+                                  __FILE__ ": Test Mapping");
+    ok( handle2 != NULL, "CreateFileMapping failed with error %d\n", GetLastError());
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE, 0, 0x1000,
+                                 __FILE__ ": TEST MAPPING");
+    ok( handle2 != NULL, "CreateFileMapping failed with error %d\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenFileMappingA( FILE_MAP_ALL_ACCESS, FALSE, __FILE__ ": Test Mapping");
+    ok( handle2 != NULL, "OpenFileMapping failed with error %d\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenFileMappingA( FILE_MAP_ALL_ACCESS, FALSE, __FILE__ ": TEST MAPPING");
+    ok( !handle2, "OpenFileMapping succeeded\n");
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    CloseHandle( handle );
+}
+
 static void test_BadPtr(void)
 {
     void *ptr = (void*)1;
@@ -667,5 +706,6 @@ START_TEST(virtual)
     test_VirtualAlloc();
     test_MapViewOfFile();
     test_NtMapViewOfSection();
+    test_CreateFileMapping();
     test_BadPtr();
 }

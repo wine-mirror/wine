@@ -347,8 +347,7 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
-                                    ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
+    attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
     attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
     attr.SecurityQualityOfService = NULL;
 
@@ -451,7 +450,7 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
     attr.Length = sizeof(attr);
     attr.RootDirectory = get_BaseNamedObjects_handle();
     attr.ObjectName = &nameW;
-    attr.Attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
+    attr.Attributes = inherit ? OBJ_INHERIT : 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, name );
