@@ -579,17 +579,6 @@ static int convert_sockopt(INT *level, INT *optname)
   return 0;
 }
 
-static inline BOOL is_timeout_option( int optname )
-{
-#ifdef SO_RCVTIMEO
-    if (optname == SO_RCVTIMEO) return TRUE;
-#endif
-#ifdef SO_SNDTIMEO
-    if (optname == SO_SNDTIMEO) return TRUE;
-#endif
-    return FALSE;
-}
-
 /* ----------------------------------- Per-thread info (or per-process?) */
 
 static char *strdup_lower(const char *str)
