@@ -100,11 +100,16 @@ static int launch_app( WCHAR *candidates, const WCHAR *argv1 )
 
 static int open_http_url( const WCHAR *url )
 {
+#ifdef __APPLE__
+    static const WCHAR defaultbrowsers[] =
+        { '/', 'u', 's', 'r', '/', 'b', 'i', 'n', '/', 'o', 'p', 'e', 'n', 0 };
+#else
     static const WCHAR defaultbrowsers[] =
         {'x','d','g','-','o','p','e','n',',','f','i','r','e','f','o','x',',',
          'k','o','n','q','u','e','r','o','r',',','m','o','z','i','l','l','a',',',
          'n','e','t','s','c','a','p','e',',','g','a','l','e','o','n',',',
          'o','p','e','r','a',',','d','i','l','l','o',0};
+#endif
     static const WCHAR browsersW[] =
         {'B','r','o','w','s','e','r','s',0};
 
@@ -128,11 +133,16 @@ static int open_http_url( const WCHAR *url )
 
 static int open_mailto_url( const WCHAR *url )
 {
+#ifdef __APPLE__
+    static const WCHAR defaultmailers[] =
+        { '/', 'u', 's', 'r', '/', 'b', 'i', 'n', '/', 'o', 'p', 'e', 'n', 0 };
+#else
     static const WCHAR defaultmailers[] =
         {'x','d','g','-','e','m','a','i','l',',',
          'm','o','z','i','l','l','a','-','t','h','u','n','d','e','r','b','i','r','d',',',
          't','h','u','n','d','e','r','b','i','r','d',',',
          'e','v','o','l','u','t','i','o','n',0};
+#endif
     static const WCHAR mailersW[] =
         {'M','a','i','l','e','r','s',0};
 
