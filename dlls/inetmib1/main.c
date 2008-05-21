@@ -17,7 +17,7 @@
  */
 
 #include "config.h"
-
+#include <assert.h>
 #include <stdarg.h>
 #include <limits.h>
 #include "windef.h"
@@ -55,6 +55,47 @@ static void copyInt(AsnAny *value, void *src)
 {
     value->asnType = ASN_INTEGER;
     value->asnValue.number = *(DWORD *)src;
+}
+
+static void setStringValue(AsnAny *value, BYTE type, DWORD len, BYTE *str)
+{
+    AsnAny strValue;
+
+    strValue.asnType = type;
+    strValue.asnValue.string.stream = str;
+    strValue.asnValue.string.length = len;
+    strValue.asnValue.string.dynamic = TRUE;
+    SnmpUtilAsnAnyCpy(value, &strValue);
+}
+
+static void copyLengthPrecededString(AsnAny *value, void *src)
+{
+    DWORD len = *(DWORD *)src;
+
+    setStringValue(value, ASN_OCTETSTRING, len, (BYTE *)src + sizeof(DWORD));
+}
+
+typedef void (*copyValueFunc)(AsnAny *value, void *src);
+
+struct structToAsnValue
+{
+    size_t        offset;
+    copyValueFunc copy;
+};
+
+static AsnInteger32 mapStructEntryToValue(struct structToAsnValue *map,
+    UINT mapLen, void *record, UINT id, BYTE bPduType, SnmpVarBind *pVarBind)
+{
+    /* OIDs are 1-based */
+    if (!id)
+        return SNMP_ERRORSTATUS_NOSUCHNAME;
+    --id;
+    if (id >= mapLen)
+        return SNMP_ERRORSTATUS_NOSUCHNAME;
+    if (!map[id].copy)
+        return SNMP_ERRORSTATUS_NOSUCHNAME;
+    map[id].copy(&pVarBind->value, (BYTE *)record + map[id].offset);
+    return SNMP_ERRORSTATUS_NOERROR;
 }
 
 static UINT mib2[] = { 1,3,6,1,2,1 };
@@ -127,9 +168,158 @@ static BOOL mib2IfNumberQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return TRUE;
 }
 
+static void copyOperStatus(AsnAny *value, void *src)
+{
+    value->asnType = ASN_INTEGER;
+    /* The IPHlpApi definition of operational status differs from the MIB2 one,
+     * so map it to the MIB2 value.
+     */
+    switch (*(DWORD *)src)
+    {
+    case MIB_IF_OPER_STATUS_OPERATIONAL:
+        value->asnValue.number = MIB_IF_ADMIN_STATUS_UP;
+        break;
+    case MIB_IF_OPER_STATUS_CONNECTING:
+    case MIB_IF_OPER_STATUS_CONNECTED:
+        value->asnValue.number = MIB_IF_ADMIN_STATUS_TESTING;
+        break;
+    default:
+        value->asnValue.number = MIB_IF_ADMIN_STATUS_DOWN;
+    };
+}
+
+static struct structToAsnValue mib2IfEntryMap[] = {
+    { FIELD_OFFSET(MIB_IFROW, dwIndex), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyLengthPrecededString },
+    { FIELD_OFFSET(MIB_IFROW, dwType), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwMtu), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwSpeed), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwPhysAddrLen), copyLengthPrecededString },
+    { FIELD_OFFSET(MIB_IFROW, dwAdminStatus), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwOperStatus), copyOperStatus },
+    { FIELD_OFFSET(MIB_IFROW, dwLastChange), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwInOctets), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwInUcastPkts), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwInNUcastPkts), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwInDiscards), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwInErrors), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwInUnknownProtos), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwOutOctets), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwOutUcastPkts), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwOutNUcastPkts), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwOutDiscards), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwOutErrors), copyInt },
+    { FIELD_OFFSET(MIB_IFROW, dwOutQLen), copyInt },
+};
+
+static UINT mib2IfEntry[] = { 1,3,6,1,2,1,2,2,1 };
+
+static BOOL mib2IfEntryQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier entryOid = DEFINE_OID(mib2IfEntry);
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+    case SNMP_PDU_GETNEXT:
+        if (!ifTable)
+        {
+            /* There is no interface present, so let the caller deal
+             * with finding the successor.
+             */
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        }
+        else if (!SnmpUtilOidNCmp(&pVarBind->name, &entryOid, entryOid.idLength))
+        {
+            UINT tableIndex = 0, item = 0;
+
+            *pErrorStatus = 0;
+            if (pVarBind->name.idLength == entryOid.idLength ||
+                pVarBind->name.idLength == entryOid.idLength + 1)
+            {
+                /* Either the table or an element within the table is specified,
+                 * but the instance is not.
+                 */
+                if (bPduType == SNMP_PDU_GET)
+                {
+                    /* Can't get an interface entry without specifying the
+                     * instance.
+                     */
+                    *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+                }
+                else
+                {
+                    /* Get the first interface */
+                    tableIndex = 1;
+                    if (pVarBind->name.idLength == entryOid.idLength + 1)
+                        item = pVarBind->name.ids[entryOid.idLength];
+                    else
+                        item = 1;
+                }
+            }
+            else
+            {
+                tableIndex = pVarBind->name.ids[entryOid.idLength + 1];
+                item = pVarBind->name.ids[entryOid.idLength];
+                if (bPduType == SNMP_PDU_GETNEXT)
+                {
+                    tableIndex++;
+                    item = 1;
+                }
+            }
+            if (!*pErrorStatus)
+            {
+                assert(tableIndex);
+                assert(item);
+                if (tableIndex > ifTable->dwNumEntries)
+                    *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+                else
+                {
+                    *pErrorStatus = mapStructEntryToValue(mib2IfEntryMap,
+                        DEFINE_SIZEOF(mib2IfEntryMap),
+                        &ifTable->table[tableIndex - 1], item, bPduType,
+                        pVarBind);
+                    if (bPduType == SNMP_PDU_GETNEXT)
+                    {
+                        AsnObjectIdentifier oid;
+
+                        SnmpUtilOidCpy(&pVarBind->name, &entryOid);
+                        oid.idLength = 1;
+                        oid.ids = &item;
+                        SnmpUtilOidAppend(&pVarBind->name, &oid);
+                        oid.idLength = 1;
+                        oid.ids = &ifTable->table[tableIndex - 1].dwIndex;
+                        SnmpUtilOidAppend(&pVarBind->name, &oid);
+                    }
+                }
+            }
+        }
+        else
+        {
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+            /* Caller deals with OID if bPduType == SNMP_PDU_GETNEXT, so don't
+             * need to set it here.
+             */
+        }
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 /* This list MUST BE lexicographically sorted */
 static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery },
+    { DEFINE_OID(mib2IfEntry), NULL, mib2IfEntryQuery },
 };
 static UINT minSupportedIDLength;
 
