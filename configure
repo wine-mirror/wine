@@ -21782,6 +21782,8 @@ ac_config_files="$ac_config_files dlls/inetcomm/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/inetmib1/Makefile"
 
+ac_config_files="$ac_config_files dlls/inetmib1/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/infosoft/Makefile"
 
 ac_config_files="$ac_config_files dlls/infosoft/tests/Makefile"
@@ -23046,6 +23048,7 @@ do
     "dlls/inetcomm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetcomm/Makefile" ;;
     "dlls/inetcomm/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetcomm/tests/Makefile" ;;
     "dlls/inetmib1/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetmib1/Makefile" ;;
+    "dlls/inetmib1/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetmib1/tests/Makefile" ;;
     "dlls/infosoft/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/infosoft/Makefile" ;;
     "dlls/infosoft/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/infosoft/tests/Makefile" ;;
     "dlls/initpki/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/initpki/Makefile" ;;

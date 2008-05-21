@@ -292,6 +292,7 @@ ALL_MAKEFILES = \
 	dlls/inetcomm/Makefile \
 	dlls/inetcomm/tests/Makefile \
 	dlls/inetmib1/Makefile \
+	dlls/inetmib1/tests/Makefile \
 	dlls/infosoft/Makefile \
 	dlls/infosoft/tests/Makefile \
 	dlls/initpki/Makefile \
@@ -719,6 +720,7 @@ dlls/imm32/tests/Makefile: dlls/imm32/tests/Makefile.in dlls/Maketest.rules
 dlls/inetcomm/Makefile: dlls/inetcomm/Makefile.in dlls/Makedll.rules
 dlls/inetcomm/tests/Makefile: dlls/inetcomm/tests/Makefile.in dlls/Maketest.rules
 dlls/inetmib1/Makefile: dlls/inetmib1/Makefile.in dlls/Makedll.rules
+dlls/inetmib1/tests/Makefile: dlls/inetmib1/tests/Makefile.in dlls/Maketest.rules
 dlls/infosoft/Makefile: dlls/infosoft/Makefile.in dlls/Makedll.rules
 dlls/infosoft/tests/Makefile: dlls/infosoft/tests/Makefile.in dlls/Maketest.rules
 dlls/initpki/Makefile: dlls/initpki/Makefile.in dlls/Makedll.rules
