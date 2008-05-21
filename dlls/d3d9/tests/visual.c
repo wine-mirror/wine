@@ -6370,7 +6370,7 @@ out:
 /* Return true if color is near the expected value */
 static int color_near(DWORD color, DWORD expected)
 {
-    const BYTE slop = 1;
+    const BYTE slop = 2;
 
     BYTE r, g, b;
     BYTE rx, gx, bx;
