@@ -372,6 +372,42 @@ static void test_semaphore(void)
     CloseHandle( handle );
 }
 
+static void test_waitable_timer(void)
+{
+    HANDLE handle, handle2;
+
+    /* test case sensitivity */
+
+    SetLastError(0xdeadbeef);
+    handle = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": Test WaitableTimer");
+    ok(handle != NULL, "CreateWaitableTimer failed with error %u\n", GetLastError());
+    ok(GetLastError() == 0, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    handle2 = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": Test WaitableTimer");
+    ok( handle2 != NULL, "CreateWaitableTimer failed with error %d\n", GetLastError());
+    ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": TEST WAITABLETIMER");
+    ok( handle2 != NULL, "CreateWaitableTimer failed with error %d\n", GetLastError());
+    ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": Test WaitableTimer");
+    ok( handle2 != NULL, "OpenWaitableTimer failed with error %d\n", GetLastError());
+    CloseHandle( handle2 );
+
+    SetLastError(0xdeadbeef);
+    handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": TEST WAITABLETIMER");
+    ok( !handle2, "OpenWaitableTimer succeeded\n");
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    CloseHandle( handle );
+}
+
 static HANDLE sem = 0;
 
 static void CALLBACK iocp_callback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransferred, LPOVERLAPPED lpOverlapped)
@@ -488,5 +524,6 @@ START_TEST(sync)
     test_slist();
     test_event();
     test_semaphore();
+    test_waitable_timer();
     test_iocp_callback();
 }
