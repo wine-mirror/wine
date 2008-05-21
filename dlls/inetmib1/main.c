@@ -47,6 +47,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	return TRUE;
 }
 
+static UINT mib2[] = { 1,3,6,1,2,1 };
 static UINT mib2System[] = { 1,3,6,1,2,1,1 };
 
 BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
@@ -65,7 +66,24 @@ BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
 BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
     AsnInteger32 *pErrorStatus, AsnInteger32 *pErrorIndex)
 {
-    FIXME("(0x%02x, %p, %p, %p): stub\n", bPduType, pVarBindList,
+    AsnObjectIdentifier mib2oid = DEFINE_OID(mib2);
+    AsnInteger32 error = SNMP_ERRORSTATUS_NOERROR, errorIndex = 0;
+    UINT i;
+
+    TRACE("(0x%02x, %p, %p, %p)\n", bPduType, pVarBindList,
         pErrorStatus, pErrorIndex);
-    return FALSE;
+
+    for (i = 0; !error && i < pVarBindList->len; i++)
+    {
+        /* Ignore any OIDs not in MIB2 */
+        if (!SnmpUtilOidNCmp(&pVarBindList->list[i].name, &mib2oid,
+            mib2oid.idLength))
+        {
+            FIXME("%s: stub\n", SnmpUtilOidToA(&pVarBindList->list[i].name));
+            error = SNMP_ERRORSTATUS_NOSUCHNAME;
+        }
+    }
+    *pErrorStatus = error;
+    *pErrorIndex = errorIndex;
+    return TRUE;
 }

@@ -81,12 +81,10 @@ static void testQuery(void)
     error = 0xdeadbeef;
     index = 0xdeadbeef;
     ret = pQuery(SNMP_PDU_GET, &list, &error, &index);
-    todo_wine {
     ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
     ok(error == SNMP_ERRORSTATUS_NOERROR,
         "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
     ok(index == 0, "expected index 0, got %d\n", index);
-    }
 
     /* Oddly enough, this "succeeds," even though the OID is clearly
      * unsupported.
@@ -100,12 +98,10 @@ static void testQuery(void)
     error = 0xdeadbeef;
     index = 0xdeadbeef;
     ret = pQuery(SNMP_PDU_GET, &list, &error, &index);
-    todo_wine {
     ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
     ok(error == SNMP_ERRORSTATUS_NOERROR,
         "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
     ok(index == 0, "expected index 0, got %d\n", index);
-    }
     /* The OID isn't changed either: */
     ok(!strcmp("1.2.3.4", SnmpUtilOidToA(&vars[0].name)),
         "expected 1.2.3.4, got %s\n", SnmpUtilOidToA(&vars[0].name));
@@ -117,13 +113,12 @@ static void testQuery(void)
     error = 0xdeadbeef;
     index = 0xdeadbeef;
     ret = pQuery(SNMP_PDU_GET, &list, &error, &index);
-    todo_wine {
     ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
     ok(error == SNMP_ERRORSTATUS_NOSUCHNAME,
         "expected SNMP_ERRORSTATUS_NOSUCHNAME, got %d\n", error);
     /* The index is 1-based rather than 0-based */
+    todo_wine
     ok(index == 1, "expected index 1, got %d\n", index);
-    }
 
     /* Even though SnmpExtensionInit says this DLL supports the MIB2 system
      * variables, the first variable it returns a value for is the first
@@ -137,12 +132,11 @@ static void testQuery(void)
     list.list = vars2;
     moreData = TRUE;
     ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
-    todo_wine {
     ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
+    todo_wine
     ok(error == SNMP_ERRORSTATUS_NOERROR,
         "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
     ok(index == 0, "expected index 0, got %d\n", index);
-    }
     vars[0].name.idLength = sizeof(mib2If) / sizeof(mib2If[0]);
     vars[0].name.ids = mib2If;
     todo_wine
