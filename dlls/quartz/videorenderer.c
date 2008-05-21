@@ -511,6 +511,10 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pVideoRenderer->AutoShow = 1;
     pVideoRenderer->rtLastStop = -1;
     ZeroMemory(&pVideoRenderer->filterInfo, sizeof(FILTER_INFO));
+    ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
+    ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
+    ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
+    pVideoRenderer->hWndMsgDrain = NULL;
 
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
