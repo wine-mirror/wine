@@ -435,11 +435,11 @@ static void testGetDeviceInstanceId(void)
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceInstanceIdA(NULL, NULL, NULL, 0, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
+     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceInstanceIdA(NULL, &devInfo, NULL, 0, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-     "Expected ERROR_INVALID_HANDLEHANDLE, got %08x\n", GetLastError());
+     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
     set = pSetupDiCreateDeviceInfoList(&guid, NULL);
     ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %08x\n",
      GetLastError());
