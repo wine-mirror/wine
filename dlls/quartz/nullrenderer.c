@@ -282,7 +282,6 @@ static ULONG WINAPI NullRendererInner_Release(IUnknown * iface)
         IPin_Disconnect((IPin *)This->pInputPin);
         IPin_Release((IPin *)This->pInputPin);
 
-        CoTaskMemFree((IPin *)This->pInputPin);
         This->lpVtbl = NULL;
 
         This->csFilter.DebugInfo->Spare[0] = 0;
