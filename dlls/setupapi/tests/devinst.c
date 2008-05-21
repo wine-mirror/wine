@@ -386,7 +386,7 @@ static void testCreateDeviceInfo(void)
         /* Finally, with all three required parameters, this succeeds: */
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
          NULL, NULL, 0, NULL);
-        ok(ret, "pSetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
+        ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         /* This fails because the device ID already exists.. */
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
