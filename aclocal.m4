@@ -178,6 +178,12 @@ AC_DEFUN([WINE_WARNING_WITH],[AS_IF([$2],[case "x$with_$1" in
 This is an error since --with-$1 was requested.]) ;;
 esac])])
 
+AC_DEFUN([WINE_ERROR_WITH],[AS_IF([$2],[case "x$with_$1" in
+  xno) ;;
+  *)   AC_MSG_ERROR([$3
+Use the --without-$1 option if you really want this.]) ;;
+esac])])
+
 AC_DEFUN([WINE_PRINT_MESSAGES],[ac_save_IFS="$IFS"
 IFS="|"
 if test "x$wine_notices != "x; then

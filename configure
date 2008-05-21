@@ -11563,18 +11563,15 @@ else
 fi
 if test "x$XLIB" = "x"; then
   case "x$with_x" in
-  x)   wine_warnings="$wine_warnings|X development files not found. Wine will be built
-without X support, which probably isn't what you want. You will need to install
-development packages of Xlib/Xfree86 at the very least." ;;
   xno) ;;
   *)   { { echo "$as_me:$LINENO: error: X development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need to install
 development packages of Xlib/Xfree86 at the very least.
-This is an error since --with-x was requested." >&5
+Use the --without-x option if you really want this." >&5
 echo "$as_me: error: X development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need to install
 development packages of Xlib/Xfree86 at the very least.
-This is an error since --with-x was requested." >&2;}
+Use the --without-x option if you really want this." >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 fi

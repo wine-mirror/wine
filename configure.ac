@@ -781,7 +781,7 @@ else
     X_CFLAGS=""
     X_LIBS=""
 fi
-WINE_WARNING_WITH(x,[test "x$XLIB" = "x"],[X development files not found. Wine will be built
+WINE_ERROR_WITH(x,[test "x$XLIB" = "x"],[X development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need to install
 development packages of Xlib/Xfree86 at the very least.])
 
