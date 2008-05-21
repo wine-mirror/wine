@@ -349,8 +349,22 @@ static void testCreateDeviceInfo(void)
     }
     SetLastError(0xdeadbeef);
     ret = pSetupDiCreateDeviceInfoA(NULL, NULL, NULL, NULL, NULL, 0, NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_DEVINST_NAME,
-     "Expected ERROR_INVALID_DEVINST_NAME, got %08x\n", GetLastError());
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_DEVINST_NAME ||
+      GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */ ||
+      GetLastError() == ERROR_INVALID_HANDLE /* Win9x */,
+     "Unexpected last error, got %08x\n", GetLastError());
+
+    /* If we are running on win9x we should skip these tests. Win95
+     * fails most tests anyway and win98 pops up the "Add New Hardware
+     * Wizard".
+     */
+    if (GetLastError() == ERROR_INVALID_HANDLE)
+    {
+        skip("We are on win9x where the tests introduce issues\n");
+        return;
+    }
+
     SetLastError(0xdeadbeef);
     ret = pSetupDiCreateDeviceInfoA(NULL, "Root\\LEGACY_BOGUS\\0000", NULL,
      NULL, NULL, 0, NULL);
