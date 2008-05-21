@@ -316,10 +316,103 @@ static BOOL mib2IfEntryQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return TRUE;
 }
 
+static UINT mib2Ip[] = { 1,3,6,1,2,1,4 };
+static MIB_IPSTATS ipStats;
+
+static void mib2IpStatsInit(void)
+{
+    GetIpStatistics(&ipStats);
+}
+
+static struct structToAsnValue mib2IpMap[] = {
+    { FIELD_OFFSET(MIB_IPSTATS, dwForwarding), copyInt }, /* 1 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwDefaultTTL), copyInt }, /* 2 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwInReceives), copyInt }, /* 3 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwInHdrErrors), copyInt }, /* 4 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwInAddrErrors), copyInt }, /* 5 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwForwDatagrams), copyInt }, /* 6 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwInUnknownProtos), copyInt }, /* 7 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwInDiscards), copyInt }, /* 8 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwInDelivers), copyInt }, /* 9 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwOutRequests), copyInt }, /* 10 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwOutDiscards), copyInt }, /* 11 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwOutNoRoutes), copyInt }, /* 12 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwReasmTimeout), copyInt }, /* 13 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwReasmReqds), copyInt }, /* 14 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwReasmOks), copyInt }, /* 15 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwReasmFails), copyInt }, /* 16 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwFragOks), copyInt }, /* 17 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwFragFails), copyInt }, /* 18 */
+    { FIELD_OFFSET(MIB_IPSTATS, dwFragCreates), copyInt }, /* 19 */
+    { 0, NULL }, /* 20: not used, IP addr table */
+    { 0, NULL }, /* 21: not used, route table */
+    { 0, NULL }, /* 22: not used, net to media (ARP) table */
+    { FIELD_OFFSET(MIB_IPSTATS, dwRoutingDiscards), copyInt }, /* 23 */
+};
+
+static BOOL mib2IpStatsQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier myOid = DEFINE_OID(mib2Ip);
+    UINT item = 0;
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+        if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
+            pVarBind->name.idLength == myOid.idLength + 1)
+        {
+            item = pVarBind->name.ids[pVarBind->name.idLength - 1];
+            *pErrorStatus = mapStructEntryToValue(mib2IpMap,
+                DEFINE_SIZEOF(mib2IpMap), &ipStats, item, bPduType, pVarBind);
+        }
+        else
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        break;
+    case SNMP_PDU_GETNEXT:
+        if (!SnmpUtilOidCmp(&pVarBind->name, &myOid) ||
+            SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) < 0)
+            item = 1;
+        else if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
+            pVarBind->name.idLength == myOid.idLength + 1)
+            item = pVarBind->name.ids[pVarBind->name.idLength - 1] + 1;
+        else
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        if (item)
+        {
+            *pErrorStatus = mapStructEntryToValue(mib2IpMap,
+                DEFINE_SIZEOF(mib2IpMap), &ipStats, item, bPduType, pVarBind);
+            if (!*pErrorStatus)
+            {
+                AsnObjectIdentifier oid;
+
+                SnmpUtilOidCpy(&pVarBind->name, &myOid);
+                oid.idLength = 1;
+                oid.ids = &item;
+                SnmpUtilOidAppend(&pVarBind->name, &oid);
+            }
+        }
+        else
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 /* This list MUST BE lexicographically sorted */
 static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery },
     { DEFINE_OID(mib2IfEntry), NULL, mib2IfEntryQuery },
+    { DEFINE_OID(mib2Ip), mib2IpStatsInit, mib2IpStatsQuery },
 };
 static UINT minSupportedIDLength;
 
