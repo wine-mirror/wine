@@ -50,14 +50,27 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 static UINT mib2[] = { 1,3,6,1,2,1 };
 static UINT mib2System[] = { 1,3,6,1,2,1,1 };
 
+struct mibImplementation
+{
+    AsnObjectIdentifier name;
+    void              (*init)(void);
+};
+
+static struct mibImplementation supportedIDs[] = {
+};
+
 BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
     HANDLE *phSubagentTrapEvent, AsnObjectIdentifier *pFirstSupportedRegion)
 {
     AsnObjectIdentifier myOid = DEFINE_OID(mib2System);
+    UINT i;
 
-    FIXME("(%d, %p, %p): stub\n", dwUptimeReference, phSubagentTrapEvent,
+    TRACE("(%d, %p, %p)\n", dwUptimeReference, phSubagentTrapEvent,
         pFirstSupportedRegion);
 
+    for (i = 0; i < sizeof(supportedIDs) / sizeof(supportedIDs[0]); i++)
+        if (supportedIDs[i].init)
+            supportedIDs[i].init();
     *phSubagentTrapEvent = NULL;
     SnmpUtilOidCpy(pFirstSupportedRegion, &myOid);
     return TRUE;
