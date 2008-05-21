@@ -108,7 +108,8 @@ static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
 				    INT thumbSize, INT thumbPos,
 				    UINT flags, BOOL vertical,
 				    BOOL top_selected, BOOL bottom_selected );
-static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 
 /*********************************************************************
@@ -119,8 +120,8 @@ const struct builtin_class_descr SCROLL_builtin_class =
 {
     scrollbarW,             /* name */
     CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC, /* style  */
-    NULL,                   /* procA (winproc is Unicode only) */
-    ScrollBarWndProc,       /* procW */
+    ScrollBarWndProcA,      /* procA */
+    ScrollBarWndProcW,      /* procW */
     sizeof(SCROLLBAR_INFO), /* extra */
     IDC_ARROW,              /* cursor */
     0                       /* brush */
@@ -1371,7 +1372,7 @@ static BOOL SCROLL_SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal)
 /***********************************************************************
  *           ScrollBarWndProc
  */
-static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+static LRESULT ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     if (!IsWindow( hwnd )) return 0;
 
@@ -1550,9 +1551,30 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         if (message >= WM_USER)
             WARN("unknown msg %04x wp=%04lx lp=%08lx\n",
 			 message, wParam, lParam );
-        return DefWindowProcW( hwnd, message, wParam, lParam );
+        if (unicode)
+            return DefWindowProcW( hwnd, message, wParam, lParam );
+        else
+            return DefWindowProcA( hwnd, message, wParam, lParam );
     }
     return 0;
+}
+
+
+/***********************************************************************
+ *           ScrollBarWndProcA
+ */
+static LRESULT WINAPI ScrollBarWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+{
+    return ScrollBarWndProc( hwnd, message, wParam, lParam, FALSE );
+}
+
+
+/***********************************************************************
+ *           ScrollBarWndProcW
+ */
+static LRESULT WINAPI ScrollBarWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+{
+    return ScrollBarWndProc( hwnd, message, wParam, lParam, TRUE );
 }
 
 

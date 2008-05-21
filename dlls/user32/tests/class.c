@@ -570,13 +570,14 @@ static void test_instances(void)
 
 static void test_builtinproc(void)
 {
-    /* Edit behaves differently. ScrollBar have currently only a Unicode winproc */
+    /* Edit behaves differently */
     static const CHAR NORMAL_CLASSES[][10] = {
         "Button",
         "Static",
         "ComboBox",
         "ComboLBox",
         "ListBox",
+        "ScrollBar",
         "#32770",  /* dialog */
     };
     static const int NUM_NORMAL_CLASSES = (sizeof(NORMAL_CLASSES)/sizeof(NORMAL_CLASSES[0]));
