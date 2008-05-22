@@ -57,7 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 #define Button7Mask (1<<14)
 #endif
 
-#define NB_BUTTONS   7     /* Windows can handle 5 buttons and the wheel too */
+#define NB_BUTTONS   9     /* Windows can handle 5 buttons and the wheel too */
 
 static const UINT button_down_flags[NB_BUTTONS] =
 {
@@ -66,6 +66,8 @@ static const UINT button_down_flags[NB_BUTTONS] =
     MOUSEEVENTF_RIGHTDOWN,
     MOUSEEVENTF_WHEEL,
     MOUSEEVENTF_WHEEL,
+    MOUSEEVENTF_XDOWN,  /* FIXME: horizontal wheel */
+    MOUSEEVENTF_XDOWN,
     MOUSEEVENTF_XDOWN,
     MOUSEEVENTF_XDOWN
 };
@@ -77,6 +79,8 @@ static const UINT button_up_flags[NB_BUTTONS] =
     MOUSEEVENTF_RIGHTUP,
     0,
     0,
+    MOUSEEVENTF_XUP,
+    MOUSEEVENTF_XUP,
     MOUSEEVENTF_XUP,
     MOUSEEVENTF_XUP
 };
@@ -1038,6 +1042,12 @@ void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     case 6:
         wData = XBUTTON2;
         break;
+    case 7:
+        wData = XBUTTON1;
+        break;
+    case 8:
+        wData = XBUTTON2;
+        break;
     }
 
     update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
@@ -1066,6 +1076,12 @@ void X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
         wData = XBUTTON1;
         break;
     case 6:
+        wData = XBUTTON2;
+        break;
+    case 7:
+        wData = XBUTTON1;
+        break;
+    case 8:
         wData = XBUTTON2;
         break;
     }
