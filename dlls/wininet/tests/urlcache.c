@@ -30,6 +30,9 @@
 
 #define TEST_URL    "http://urlcachetest.winehq.org/index.html"
 
+static BOOL (WINAPI *pDeleteUrlCacheEntryA)(LPCSTR);
+static BOOL (WINAPI *pUnlockUrlCacheEntryFileA)(LPCSTR,DWORD);
+
 static char filenameA[MAX_PATH + 1];
 
 static void check_cache_entry_infoA(const char *returnedfrom, LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo)
@@ -150,16 +153,22 @@ static void test_urlcacheA(void)
 
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
-    ret = UnlockUrlCacheEntryFile(TEST_URL, 0);
-    ok(ret, "UnlockUrlCacheEntryFile failed with error %d\n", GetLastError());
+    if (pUnlockUrlCacheEntryFileA)
+    {
+        ret = pUnlockUrlCacheEntryFileA(TEST_URL, 0);
+        ok(ret, "UnlockUrlCacheEntryFileA failed with error %d\n", GetLastError());
+    }
 
     /* test Find*UrlCacheEntry functions */
     test_find_url_cache_entriesA();
 
     test_GetUrlCacheEntryInfoExA();
 
-    ret = DeleteUrlCacheEntry(TEST_URL);
-    ok(ret, "DeleteUrlCacheEntry failed with error %d\n", GetLastError());
+    if (pDeleteUrlCacheEntryA)
+    {
+        ret = pDeleteUrlCacheEntryA(TEST_URL);
+        ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
+    }
 
     ret = DeleteFile(filenameA);
     todo_wine
@@ -178,6 +187,10 @@ static void test_FindCloseUrlCache(void)
 
 START_TEST(urlcache)
 {
+    HMODULE hdll;
+    hdll = GetModuleHandleA("wininet.dll");
+    pDeleteUrlCacheEntryA = (void*)GetProcAddress(hdll, "DeleteUrlCacheEntryA");
+    pUnlockUrlCacheEntryFileA = (void*)GetProcAddress(hdll, "UnlockUrlCacheEntryFileA");
     test_urlcacheA();
     test_FindCloseUrlCache();
 }
