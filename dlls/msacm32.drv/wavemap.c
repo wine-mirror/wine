@@ -88,7 +88,7 @@ static void CALLBACK wodCallback(HWAVEOUT hWave, UINT uMsg, DWORD_PTR dwInstance
 	return;
     }
 
-    if (hWave != wom->u.out.hInnerWave && uMsg != WOM_OPEN)
+    if (uMsg != WOM_OPEN && hWave != wom->u.out.hInnerWave)
 	ERR("Shouldn't happen (%p %p)\n", hWave, wom->u.out.hInnerWave);
 
     switch (uMsg) {
