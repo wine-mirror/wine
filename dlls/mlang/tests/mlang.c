@@ -44,6 +44,17 @@
 
 #define TRACE_2 OutputDebugStringA
 
+static CHAR string1[MAX_PATH], string2[MAX_PATH];
+
+#define ok_w2(format, szString1, szString2) \
+\
+    if (lstrcmpW(szString1, szString2) != 0) \
+    { \
+        WideCharToMultiByte(CP_ACP, 0, szString1, -1, string1, MAX_PATH, NULL, NULL); \
+        WideCharToMultiByte(CP_ACP, 0, szString2, -1, string2, MAX_PATH, NULL, NULL); \
+        ok(0, format, string1, string2); \
+    }
+
 static BOOL (WINAPI *pGetCPInfoExA)(UINT,DWORD,LPCPINFOEXA);
 
 static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
@@ -734,6 +745,24 @@ static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
     ok(lcid == 0x409, "got wrong lcid: %04x\n", lcid);
 }
 
+static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
+{
+    HRESULT hr;
+    BSTR rfcstr;
+    LCID lcid;
+
+    static WCHAR kok[] = {'k','o','k',0};
+
+    hr = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, kok);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IMultiLanguage2_GetRfc1766FromLcid(iML2, lcid, &rfcstr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok_w2("Expected \"%s\",  got \"%s\"n", kok, rfcstr);
+
+    SysFreeString(rfcstr);
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage2 *iML2 = NULL;
@@ -752,6 +781,7 @@ START_TEST(mlang)
 
     test_rfc1766(iML2);
     test_GetLcidFromRfc1766(iML2);
+    test_GetRfc1766FromLcid(iML2);
 
     test_EnumCodePages(iML2, 0);
     test_EnumCodePages(iML2, MIMECONTF_MIME_LATEST);
