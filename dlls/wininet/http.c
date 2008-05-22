@@ -1263,14 +1263,18 @@ static WCHAR *HTTP_BuildProxyRequestUrl(WININETHTTPREQW *req)
     {
         static const WCHAR slash[] = { '/',0 };
         static const WCHAR format[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
+        static const WCHAR formatSSL[] = { 'h','t','t','p','s',':','/','/','%','s',':','%','d',0 };
         WININETHTTPSESSIONW *session = req->lpHttpSession;
 
-        size = 15; /* "http://" + sizeof(port#) + ":/\0" */
+        size = 16; /* "https://" + sizeof(port#) + ":/\0" */
         size += strlenW( session->lpszHostName ) + strlenW( req->lpszPath );
 
         if (!(url = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return NULL;
 
-        sprintfW( url, format, session->lpszHostName, session->nHostPort );
+        if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
+            sprintfW( url, formatSSL, session->lpszHostName, session->nHostPort );
+        else
+            sprintfW( url, format, session->lpszHostName, session->nHostPort );
         if (req->lpszPath[0] != '/') strcatW( url, slash );
         strcatW( url, req->lpszPath );
     }
