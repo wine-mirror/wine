@@ -1967,9 +1967,8 @@ static BOOL PATH_WidenPath(DC *dc)
             /* Beginning or end of the path if not closed */
             if((!(pStrokes[i]->pFlags[pStrokes[i]->numEntriesUsed - 1] & PT_CLOSEFIGURE)) && (j == 0 || j == pStrokes[i]->numEntriesUsed - 1) ) {
                 /* Compute segment angle */
-                double xo, yo, xa, ya;
+                double xo, yo, xa, ya, theta;
                 POINT pt;
-                double theta, scalarProduct;
                 FLOAT_POINT corners[2];
                 if(j == 0) {
                     xo = pStrokes[i]->pPoints[j].x;
@@ -1983,11 +1982,7 @@ static BOOL PATH_WidenPath(DC *dc)
                     xo = pStrokes[i]->pPoints[j].x;
                     yo = pStrokes[i]->pPoints[j].y;
                 }
-                scalarProduct = (xa - xo) /sqrt(pow((xa - xo), 2) + pow((ya - yo), 2));
-                theta = acos(scalarProduct);
-                if( (ya - yo) < 0) {
-                    theta = -theta;
-                }
+                theta = atan2( ya - yo, xa - xo );
                 switch(endcap) {
                     case PS_ENDCAP_SQUARE :
                         pt.x = xo + round(sqrt(2) * penWidthOut * cos(M_PI_4 + theta));
@@ -2023,8 +2018,7 @@ static BOOL PATH_WidenPath(DC *dc)
                 /* Compute angle */
                 INT previous, next;
                 double xa, ya, xb, yb, xo, yo;
-                double alpha, theta;
-                double scalarProduct, oa, ob, miterWidth;
+                double alpha, theta, miterWidth;
                 DWORD _joint = joint;
                 POINT pt;
 		GdiPath *pInsidePath, *pOutsidePath;
@@ -2046,18 +2040,10 @@ static BOOL PATH_WidenPath(DC *dc)
                 ya = pStrokes[i]->pPoints[previous].y;
                 xb = pStrokes[i]->pPoints[next].x;
                 yb = pStrokes[i]->pPoints[next].y;
-                oa = sqrt(pow((xa - xo), 2) + pow((ya - yo), 2));
-                ob = sqrt(pow((xb - xo), 2) + pow((yb - yo), 2));
-                scalarProduct = ((xa - xo) * (xb - xo) + (ya - yo) * (yb - yo))/ (oa * ob);
-                alpha = acos(scalarProduct);
-                if(( (xa - xo) * (yb - yo) - (ya - yo) * (xb - xo) ) < 0) {
-                    alpha = -alpha;
-                }
-                scalarProduct = (xo - xa) / oa;
-                theta = acos(scalarProduct);
-                if( (yo - ya) < 0) {
-                    theta = -theta;
-                }
+                theta = atan2( yo - ya, xo - xa );
+                alpha = atan2( yb - yo, xb - xo ) - theta;
+                if (alpha > 0) alpha -= M_PI;
+                else alpha += M_PI;
                 if(_joint == PS_JOIN_MITER && dc->miterLimit < fabs(1 / sin(alpha/2))) {
                     _joint = PS_JOIN_BEVEL;
                 }
