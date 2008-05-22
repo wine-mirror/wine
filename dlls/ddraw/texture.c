@@ -301,6 +301,11 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture2, iface);
     IDirectDrawSurfaceImpl *src_ptr = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirect3DTexture2, D3DTexture2);
     HRESULT ret_value = D3D_OK;
+    if(src_ptr == This)
+    {
+        TRACE(" copying surface %p to surface %p, why? \n", src_ptr, This);
+        return ret_value;
+    }
 
     TRACE("(%p)->(%p)\n", This, src_ptr);
     EnterCriticalSection(&ddraw_cs);
