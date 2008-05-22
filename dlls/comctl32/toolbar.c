@@ -2405,8 +2405,8 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETCURSEL, index, 0);
 		SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETTOPINDEX, index, 0);
 
-        MakeDragList(GetDlgItem(hwnd, IDC_TOOLBARBTN_LBOX));
-        MakeDragList(GetDlgItem(hwnd, IDC_AVAILBTN_LBOX));
+		MakeDragList(GetDlgItem(hwnd, IDC_TOOLBARBTN_LBOX));
+		MakeDragList(GetDlgItem(hwnd, IDC_AVAILBTN_LBOX));
 
 		/* set focus and disable buttons */
 		PostMessageW (hwnd, WM_USER, 0, 0);
@@ -6071,7 +6071,7 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
             /* call TRACKMOUSEEVENT so we receive a WM_MOUSELEAVE message */
             /* and can properly deactivate the hot toolbar button */
             _TrackMouseEvent(&trackinfo);
-       }
+        }
     }
 
     if (infoPtr->hwndToolTip)

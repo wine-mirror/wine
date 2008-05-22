@@ -3339,26 +3339,26 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
     else
         infoPtr->bLButtonDown = FALSE;
 
-  /* see if we are supposed to be tracking mouse hovering */
-  if(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT) {
-     /* fill in the trackinfo struct */
-     trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
-     trackinfo.dwFlags = TME_QUERY;
-     trackinfo.hwndTrack = infoPtr->hwndSelf;
-     trackinfo.dwHoverTime = infoPtr->dwHoverTime;
+    /* see if we are supposed to be tracking mouse hovering */
+    if(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT) {
+        /* fill in the trackinfo struct */
+        trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
+        trackinfo.dwFlags = TME_QUERY;
+        trackinfo.hwndTrack = infoPtr->hwndSelf;
+        trackinfo.dwHoverTime = infoPtr->dwHoverTime;
 
-     /* see if we are already tracking this hwnd */
-     _TrackMouseEvent(&trackinfo);
+        /* see if we are already tracking this hwnd */
+        _TrackMouseEvent(&trackinfo);
 
-     if(!(trackinfo.dwFlags & TME_HOVER)) {
-       trackinfo.dwFlags = TME_HOVER;
+        if(!(trackinfo.dwFlags & TME_HOVER)) {
+            trackinfo.dwFlags = TME_HOVER;
 
-       /* call TRACKMOUSEEVENT so we receive WM_MOUSEHOVER messages */
-       _TrackMouseEvent(&trackinfo);
+            /* call TRACKMOUSEEVENT so we receive WM_MOUSEHOVER messages */
+            _TrackMouseEvent(&trackinfo);
+        }
     }
-  }
 
-  return 0;
+    return 0;
 }
 
 
