@@ -885,7 +885,8 @@ static void wave_out_test_device(int device)
         HeapFree(GetProcessHeap(), 0, nameW);
     }
     else if (rc==MMSYSERR_NOTSUPPORTED) {
-        nameA=strdup("not supported");
+        nameA=HeapAlloc(GetProcessHeap(), 0, sizeof("not supported"));
+        strcpy(nameA, "not supported");
     }
 
     rc=waveOutGetDevCapsA(device,&capsA,sizeof(capsA));
