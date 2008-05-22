@@ -525,16 +525,16 @@ typedef struct enum_emh_data
 static void EMF_Update_MF_Xform(HDC hdc, const enum_emh_data *info)
 {
     XFORM mapping_mode_trans, final_trans;
-    FLOAT scaleX, scaleY;
+    double scaleX, scaleY;
 
-    scaleX = (FLOAT)info->state.vportExtX / (FLOAT)info->state.wndExtX;
-    scaleY = (FLOAT)info->state.vportExtY / (FLOAT)info->state.wndExtY;
+    scaleX = (double)info->state.vportExtX / (double)info->state.wndExtX;
+    scaleY = (double)info->state.vportExtY / (double)info->state.wndExtY;
     mapping_mode_trans.eM11 = scaleX;
     mapping_mode_trans.eM12 = 0.0;
     mapping_mode_trans.eM21 = 0.0;
     mapping_mode_trans.eM22 = scaleY;
-    mapping_mode_trans.eDx  = (FLOAT)info->state.vportOrgX - scaleX * (FLOAT)info->state.wndOrgX;
-    mapping_mode_trans.eDy  = (FLOAT)info->state.vportOrgY - scaleY * (FLOAT)info->state.wndOrgY;
+    mapping_mode_trans.eDx  = (double)info->state.vportOrgX - scaleX * (double)info->state.wndOrgX;
+    mapping_mode_trans.eDy  = (double)info->state.vportOrgY - scaleY * (double)info->state.wndOrgY;
 
     CombineTransform(&final_trans, &info->state.world_transform, &mapping_mode_trans);
     CombineTransform(&final_trans, &final_trans, &info->init_transform);
@@ -2340,22 +2340,22 @@ BOOL WINAPI EnumEnhMetaFile(
     else
     {
         /* WinNT combines the vp/win ext/org info into a transform */
-        FLOAT xscale, yscale;
-        xscale = (FLOAT)vp_size.cx / (FLOAT)win_size.cx;
-        yscale = (FLOAT)vp_size.cy / (FLOAT)win_size.cy;
+        double xscale, yscale;
+        xscale = (double)vp_size.cx / (double)win_size.cx;
+        yscale = (double)vp_size.cy / (double)win_size.cy;
         info->init_transform.eM11 = xscale;
         info->init_transform.eM12 = 0.0;
         info->init_transform.eM21 = 0.0;
         info->init_transform.eM22 = yscale;
-        info->init_transform.eDx  = (FLOAT)vp_org.x - xscale * (FLOAT)win_org.x;
-        info->init_transform.eDy  = (FLOAT)vp_org.y - yscale * (FLOAT)win_org.y; 
+        info->init_transform.eDx  = (double)vp_org.x - xscale * (double)win_org.x;
+        info->init_transform.eDy  = (double)vp_org.y - yscale * (double)win_org.y;
 
         CombineTransform(&info->init_transform, &savedXform, &info->init_transform);
     }
 
     if ( lpRect && WIDTH(emh->rclFrame) && HEIGHT(emh->rclFrame) )
     {
-        FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
+        double xSrcPixSize, ySrcPixSize, xscale, yscale;
         XFORM xform;
 
         TRACE("rect: %d,%d - %d,%d. rclFrame: %d,%d - %d,%d\n",
@@ -2363,11 +2363,11 @@ BOOL WINAPI EnumEnhMetaFile(
            emh->rclFrame.left, emh->rclFrame.top, emh->rclFrame.right,
            emh->rclFrame.bottom);
 
-        xSrcPixSize = (FLOAT) emh->szlMillimeters.cx / emh->szlDevice.cx;
-        ySrcPixSize = (FLOAT) emh->szlMillimeters.cy / emh->szlDevice.cy;
-        xscale = (FLOAT) WIDTH(*lpRect) * 100.0 /
+        xSrcPixSize = (double) emh->szlMillimeters.cx / emh->szlDevice.cx;
+        ySrcPixSize = (double) emh->szlMillimeters.cy / emh->szlDevice.cy;
+        xscale = (double) WIDTH(*lpRect) * 100.0 /
                  WIDTH(emh->rclFrame) * xSrcPixSize;
-        yscale = (FLOAT) HEIGHT(*lpRect) * 100.0 /
+        yscale = (double) HEIGHT(*lpRect) * 100.0 /
                  HEIGHT(emh->rclFrame) * ySrcPixSize;
         TRACE("xscale = %f, yscale = %f\n", xscale, yscale);
 
@@ -2375,8 +2375,8 @@ BOOL WINAPI EnumEnhMetaFile(
         xform.eM12 = 0;
         xform.eM21 = 0;
         xform.eM22 = yscale;
-        xform.eDx = (FLOAT) lpRect->left - (FLOAT) WIDTH(*lpRect) / WIDTH(emh->rclFrame) * emh->rclFrame.left;
-        xform.eDy = (FLOAT) lpRect->top - (FLOAT) HEIGHT(*lpRect) / HEIGHT(emh->rclFrame) * emh->rclFrame.top;
+        xform.eDx = (double) lpRect->left - (double) WIDTH(*lpRect) / WIDTH(emh->rclFrame) * emh->rclFrame.left;
+        xform.eDy = (double) lpRect->top - (double) HEIGHT(*lpRect) / HEIGHT(emh->rclFrame) * emh->rclFrame.top;
 
         CombineTransform(&info->init_transform, &xform, &info->init_transform);
     }

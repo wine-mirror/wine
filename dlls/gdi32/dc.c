@@ -257,7 +257,7 @@ void DC_InitDC( DC* dc )
  */
 static BOOL DC_InvertXform( const XFORM *xformSrc, XFORM *xformDest )
 {
-    FLOAT determinant;
+    double determinant;
 
     determinant = xformSrc->eM11*xformSrc->eM22 -
         xformSrc->eM12*xformSrc->eM21;
@@ -290,19 +290,19 @@ static BOOL DC_InvertXform( const XFORM *xformSrc, XFORM *xformDest )
 void DC_UpdateXforms( DC *dc )
 {
     XFORM xformWnd2Vport, oldworld2vport;
-    FLOAT scaleX, scaleY;
+    double scaleX, scaleY;
 
     /* Construct a transformation to do the window-to-viewport conversion */
-    scaleX = (FLOAT)dc->vportExtX / (FLOAT)dc->wndExtX;
-    scaleY = (FLOAT)dc->vportExtY / (FLOAT)dc->wndExtY;
+    scaleX = (double)dc->vportExtX / (double)dc->wndExtX;
+    scaleY = (double)dc->vportExtY / (double)dc->wndExtY;
     xformWnd2Vport.eM11 = scaleX;
     xformWnd2Vport.eM12 = 0.0;
     xformWnd2Vport.eM21 = 0.0;
     xformWnd2Vport.eM22 = scaleY;
-    xformWnd2Vport.eDx  = (FLOAT)dc->vportOrgX -
-        scaleX * (FLOAT)dc->wndOrgX;
-    xformWnd2Vport.eDy  = (FLOAT)dc->vportOrgY -
-        scaleY * (FLOAT)dc->wndOrgY;
+    xformWnd2Vport.eDx  = (double)dc->vportOrgX -
+        scaleX * (double)dc->wndOrgX;
+    xformWnd2Vport.eDy  = (double)dc->vportOrgY -
+        scaleY * (double)dc->wndOrgY;
 
     oldworld2vport = dc->xformWorld2Vport;
     /* Combine with the world transformation */

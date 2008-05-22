@@ -88,8 +88,8 @@ BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
     {
         while (count--)
         {
-            FLOAT x = points->x;
-            FLOAT y = points->y;
+            double x = points->x;
+            double y = points->y;
             points->x = floor( x * dc->xformVport2World.eM11 +
                                y * dc->xformVport2World.eM21 +
                                dc->xformVport2World.eDx + 0.5 );
@@ -133,8 +133,8 @@ BOOL WINAPI LPtoDP( HDC hdc, LPPOINT points, INT count )
 
     while (count--)
     {
-        FLOAT x = points->x;
-        FLOAT y = points->y;
+        double x = points->x;
+        double y = points->y;
         points->x = floor( x * dc->xformWorld2Vport.eM11 +
                            y * dc->xformWorld2Vport.eM21 +
                            dc->xformWorld2Vport.eDx + 0.5 );

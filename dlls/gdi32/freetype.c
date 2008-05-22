@@ -3370,7 +3370,7 @@ found:
     it = lf.lfItalic ? 1 : 0;
     bd = lf.lfWeight > 550 ? 1 : 0;
 
-    height = GDI_ROUND( (FLOAT)lf.lfHeight * dc->xformWorld2Vport.eM22 );
+    height = GDI_ROUND( (double)lf.lfHeight * dc->xformWorld2Vport.eM22 );
     height = lf.lfHeight < 0 ? -abs(height) : abs(height);
 
     face = best = best_bitmap = NULL;

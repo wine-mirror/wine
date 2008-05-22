@@ -989,8 +989,8 @@ static void translate( POINT *pt, UINT count, const XFORM *xform )
 {
     while (count--)
     {
-        FLOAT x = pt->x;
-        FLOAT y = pt->y;
+        double x = pt->x;
+        double y = pt->y;
         pt->x = floor( x * xform->eM11 + y * xform->eM21 + xform->eDx + 0.5 );
         pt->y = floor( x * xform->eM12 + y * xform->eM22 + xform->eDy + 0.5 );
         pt++;

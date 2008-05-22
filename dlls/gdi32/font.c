@@ -45,10 +45,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
  */
 static inline INT INTERNAL_XDSTOWS(DC *dc, INT width)
 {
-    FLOAT floatWidth;
+    double floatWidth;
 
     /* Perform operation with floating point */
-    floatWidth = (FLOAT)width * dc->xformVport2World.eM11;
+    floatWidth = (double)width * dc->xformVport2World.eM11;
     /* Round to integers */
     return GDI_ROUND(floatWidth);
 }
@@ -58,10 +58,10 @@ static inline INT INTERNAL_XDSTOWS(DC *dc, INT width)
  */
 static inline INT INTERNAL_YDSTOWS(DC *dc, INT height)
 {
-    FLOAT floatHeight;
+    double floatHeight;
 
     /* Perform operation with floating point */
-    floatHeight = (FLOAT)height * dc->xformVport2World.eM22;
+    floatHeight = (double)height * dc->xformVport2World.eM22;
     /* Round to integers */
     return GDI_ROUND(floatHeight);
 }

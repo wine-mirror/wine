@@ -351,7 +351,7 @@ typedef struct tagDC
  * transformation process is done in floating point internally. This function
  * is then used to round these coordinates to integer values.
  */
-static inline INT GDI_ROUND(FLOAT val)
+static inline INT GDI_ROUND(double val)
 {
    return (int)floor(val + 0.5);
 }

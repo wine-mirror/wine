@@ -88,7 +88,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 /* A floating point version of the POINT structure */
 typedef struct tagFLOAT_POINT
 {
-   FLOAT x, y;
+   double x, y;
 } FLOAT_POINT;
 
 
@@ -109,7 +109,7 @@ static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, I
  */
 static inline void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
-    FLOAT x, y;
+    double x, y;
 
     /* Perform the transformation */
     x = point->x;
@@ -754,14 +754,14 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       return TRUE;
 
    /* Convert points to device coordinates */
-   corners[0].x=(FLOAT)x1;
-   corners[0].y=(FLOAT)y1;
-   corners[1].x=(FLOAT)x2;
-   corners[1].y=(FLOAT)y2;
-   pointStart.x=(FLOAT)xStart;
-   pointStart.y=(FLOAT)yStart;
-   pointEnd.x=(FLOAT)xEnd;
-   pointEnd.y=(FLOAT)yEnd;
+   corners[0].x = x1;
+   corners[0].y = y1;
+   corners[1].x = x2;
+   corners[1].y = y2;
+   pointStart.x = xStart;
+   pointStart.y = yStart;
+   pointEnd.x = xEnd;
+   pointEnd.y = yEnd;
    INTERNAL_LPTODP_FLOAT(dc, corners);
    INTERNAL_LPTODP_FLOAT(dc, corners+1);
    INTERNAL_LPTODP_FLOAT(dc, &pointStart);
@@ -1967,9 +1967,9 @@ static BOOL PATH_WidenPath(DC *dc)
             /* Beginning or end of the path if not closed */
             if((!(pStrokes[i]->pFlags[pStrokes[i]->numEntriesUsed - 1] & PT_CLOSEFIGURE)) && (j == 0 || j == pStrokes[i]->numEntriesUsed - 1) ) {
                 /* Compute segment angle */
-                FLOAT xo, yo, xa, ya;
+                double xo, yo, xa, ya;
                 POINT pt;
-                FLOAT theta, scalarProduct;
+                double theta, scalarProduct;
                 FLOAT_POINT corners[2];
                 if(j == 0) {
                     xo = pStrokes[i]->pPoints[j].x;
@@ -2022,9 +2022,9 @@ static BOOL PATH_WidenPath(DC *dc)
             else {
                 /* Compute angle */
                 INT previous, next;
-                FLOAT xa, ya, xb, yb, xo, yo;
-                FLOAT alpha, theta;
-                FLOAT scalarProduct, oa, ob, miterWidth;
+                double xa, ya, xb, yb, xo, yo;
+                double alpha, theta;
+                double scalarProduct, oa, ob, miterWidth;
                 DWORD _joint = joint;
                 POINT pt;
 		GdiPath *pInsidePath, *pOutsidePath;

@@ -540,7 +540,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
     XFORM xf;
     XFORM SrcXf;
     XFORM oldDestXf;
-    FLOAT det;
+    double det;
 
     /* save actual mode, set GM_ADVANCED */
     oldgMode = SetGraphicsMode(hdcDest,GM_ADVANCED);
@@ -556,7 +556,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
     rect[2].y = nYSrc + nHeight;
     /* calc XFORM matrix to transform hdcDest -> hdcSrc (parallelogram to rectangle) */
     /* determinant */
-    det = (FLOAT)(rect[1].x*(rect[2].y - rect[0].y) - rect[2].x*(rect[1].y - rect[0].y) - rect[0].x*(rect[2].y - rect[1].y));
+    det = rect[1].x*(rect[2].y - rect[0].y) - rect[2].x*(rect[1].y - rect[0].y) - rect[0].x*(rect[2].y - rect[1].y);
 
     if (fabs(det) < 1e-5)
     {
