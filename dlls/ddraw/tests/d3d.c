@@ -1445,6 +1445,10 @@ static void TextureLoadTest(void)
         goto cleanup;
     }
 
+    /* test load of Texture to Texture */
+    hr = IDirect3DTexture_Load(Texture, Texture);
+    ok(hr == DD_OK, "IDirect3DTexture_Load returned %08x\n", hr);
+
     /* test Load when both textures have no palette */
     hr = IDirect3DTexture_Load(Texture2, Texture);
     ok(hr == DD_OK, "IDirect3DTexture_Load returned %08x\n", hr);
