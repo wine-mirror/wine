@@ -1837,7 +1837,7 @@ static void test_open_url_async(void)
     ses = InternetOpen("AdvancedInstaller", 0, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(ses != NULL, "InternetOpen failed\n");
 
-    InternetSetStatusCallback(ses, cb);
+    pInternetSetStatusCallbackA(ses, cb);
     ResetEvent(ctx.event);
 
     req = InternetOpenUrl(ses, "http://www.winehq.org", NULL, 0, 0, (DWORD_PTR)&ctx);
@@ -1920,6 +1920,7 @@ START_TEST(http)
         InternetReadFile_test(INTERNET_FLAG_ASYNC);
         InternetReadFile_test(0);
         InternetReadFileExA_test(INTERNET_FLAG_ASYNC);
+        test_open_url_async();
     }
     InternetOpenRequest_test();
     test_http_cache();
@@ -1938,5 +1939,4 @@ START_TEST(http)
     test_http_connection();
     test_user_agent_header();
     test_bogus_accept_types_array();
-    test_open_url_async();
 }
