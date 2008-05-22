@@ -203,19 +203,19 @@ static void test_StringFromGUID2(void)
   int len;
   /* Test corner cases for buffer size */
   len = StringFromGUID2(&CLSID_CDeviceMoniker,str,50);
-  ok(len == 39, "len: %d (expected 39)",len);
+  ok(len == 39, "len: %d (expected 39)\n", len);
   ok(!lstrcmpiW(str, wszCLSID_CDeviceMoniker),"string wan't equal for CLSID_CDeviceMoniker\n");
 
   memset(str,0,sizeof str);
   len = StringFromGUID2(&CLSID_CDeviceMoniker,str,39);
-  ok(len == 39, "len: %d (expected 39)",len);
+  ok(len == 39, "len: %d (expected 39)\n", len);
   ok(!lstrcmpiW(str, wszCLSID_CDeviceMoniker),"string wan't equal for CLSID_CDeviceMoniker\n");
 
   len = StringFromGUID2(&CLSID_CDeviceMoniker,str,38);
-  ok(len == 0, "len: %d (expected 0)",len);
+  ok(len == 0, "len: %d (expected 0)\n", len);
 
   len = StringFromGUID2(&CLSID_CDeviceMoniker,str,30);
-  ok(len == 0, "len: %d (expected 0)",len);
+  ok(len == 0, "len: %d (expected 0)\n", len);
 }
 
 static void test_CoCreateInstance(void)
