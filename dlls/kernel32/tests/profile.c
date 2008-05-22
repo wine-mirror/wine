@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include "windef.h"
@@ -29,7 +30,6 @@
 #define SECTION  "Test"
 #define TESTFILE ".\\testwine.ini"
 #define TESTFILE2 ".\\testwine2.ini"
-#define TESTFILE3 ".\\testwine3.ini"
 
 struct _profileInt { 
     LPCSTR section;
@@ -270,21 +270,25 @@ static void test_profile_sections_names(void)
 /* If the ini-file has already been opened with CreateFile, WritePrivateProfileString failed in wine with an error ERROR_SHARING_VIOLATION,  some testing here */
 static void test_profile_existing(void)
 {
+    static const char *testfile1 = ".\\winesharing1.ini";
+    static const char *testfile2 = ".\\winesharing2.ini";
+
     static const struct {
         DWORD dwDesiredAccess;
         DWORD dwShareMode;
-        DWORD error;
+        DWORD write_error;
+        BOOL read_error;
     } pe[] = {
-        {GENERIC_READ,  FILE_SHARE_READ,  ERROR_SHARING_VIOLATION},
-        {GENERIC_READ,  FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION},
-        {GENERIC_WRITE, FILE_SHARE_READ,  ERROR_SHARING_VIOLATION},
-        {GENERIC_WRITE, FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION},
-        {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,  ERROR_SHARING_VIOLATION},
-        {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION},
-        {GENERIC_READ,  FILE_SHARE_READ|FILE_SHARE_WRITE, 0},
-        {GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0},
+        {GENERIC_READ,  FILE_SHARE_READ,  ERROR_SHARING_VIOLATION, FALSE },
+        {GENERIC_READ,  FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION, TRUE },
+        {GENERIC_WRITE, FILE_SHARE_READ,  ERROR_SHARING_VIOLATION, FALSE },
+        {GENERIC_WRITE, FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION, TRUE },
+        {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,  ERROR_SHARING_VIOLATION, FALSE },
+        {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION, TRUE },
+        {GENERIC_READ,  FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE },
+        {GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE },
         /*Thief demo (bug 5024) opens .ini file like this*/
-        {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0},
+        {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE }
     };
 
     int i;
@@ -295,28 +299,53 @@ static void test_profile_existing(void)
 
     for (i=0; i < sizeof(pe)/sizeof(pe[0]); i++)
     {
-        h = CreateFile(TESTFILE3, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        h = CreateFile(testfile1, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL,
+                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         ok(INVALID_HANDLE_VALUE != h, "%d: CreateFile failed\n",i);
         SetLastError(0xdeadbeef);
-        ret = WritePrivateProfileString(SECTION, KEY, "12345", TESTFILE3);
-        if (!pe[i].error)
+
+        ret = WritePrivateProfileString(SECTION, KEY, "12345", testfile1);
+        if (!pe[i].write_error)
         {
             ok( ret, "%d: WritePrivateProfileString failed with error %u\n", i, GetLastError() );
             CloseHandle(h);
-            size = GetPrivateProfileString(SECTION, KEY, 0, buffer, MAX_PATH, TESTFILE3);
+            size = GetPrivateProfileString(SECTION, KEY, 0, buffer, MAX_PATH, testfile1);
             ok( size == 5, "%d: test failed, number of characters copied: %d instead of 5\n", i, size );
         }
         else
         {
             DWORD err = GetLastError();
             ok( !ret, "%d: WritePrivateProfileString succeeded\n", i );
-            if (!ret) ok( err == pe[i].error, "%d: WritePrivateProfileString failed with error %u/%u\n", i, err, pe[i].error );
+            if (!ret)
+                ok( err == pe[i].write_error, "%d: WritePrivateProfileString failed with error %u/%u\n",
+                    i, err, pe[i].write_error );
             CloseHandle(h);
-            size = GetPrivateProfileString(SECTION, KEY, 0, buffer, MAX_PATH, TESTFILE3);
+            size = GetPrivateProfileString(SECTION, KEY, 0, buffer, MAX_PATH, testfile1);
             ok( !size, "%d: test failed, number of characters copied: %d instead of 0\n", i, size );
         }
-        ok( DeleteFile(TESTFILE3), "delete failed\n" );
+
+        ok( DeleteFile(testfile1), "delete failed\n" );
     }
+
+    h = CreateFile(testfile2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    sprintf( buffer, "[%s]\r\n%s=123\r\n", SECTION, KEY );
+    ok( WriteFile( h, buffer, strlen(buffer), &size, NULL ), "failed to write\n" );
+    CloseHandle( h );
+
+    for (i=0; i < sizeof(pe)/sizeof(pe[0]); i++)
+    {
+        h = CreateFile(testfile2, pe[i].dwDesiredAccess, pe[i].dwShareMode, NULL,
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        ok(INVALID_HANDLE_VALUE != h, "%d: CreateFile failed\n",i);
+        SetLastError(0xdeadbeef);
+        ret = GetPrivateProfileStringA(SECTION, KEY, NULL, buffer, MAX_PATH, testfile2);
+        if (!pe[i].read_error)
+            ok( ret, "%d: GetPrivateProfileString failed with error %u\n", i, GetLastError() );
+        else
+            ok( !ret, "%d: GetPrivateProfileString succeeded\n", i );
+        CloseHandle(h);
+    }
+    ok( DeleteFile(testfile2), "delete failed\n" );
 }
 
 START_TEST(profile)

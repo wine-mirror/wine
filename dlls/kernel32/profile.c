@@ -708,7 +708,7 @@ static void PROFILE_ReleaseFile(void)
  *
  * Open a profile file, checking the cached file first.
  */
-static BOOL PROFILE_Open( LPCWSTR filename )
+static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
 {
     WCHAR windirW[MAX_PATH];
     WCHAR buffer[MAX_PATH];
@@ -754,8 +754,9 @@ static BOOL PROFILE_Open( LPCWSTR filename )
         
     TRACE("path: %s\n", debugstr_w(buffer));
 
-    hFile = CreateFileW(buffer, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFileW(buffer, GENERIC_READ | (write_access ? GENERIC_WRITE : 0),
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if ((hFile == INVALID_HANDLE_VALUE) && (GetLastError() != ERROR_FILE_NOT_FOUND))
     {
@@ -1104,7 +1105,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
-    if (PROFILE_Open( filename )) {
+    if (PROFILE_Open( filename, FALSE )) {
 	if (win32 && (section == NULL))
             ret = PROFILE_GetSectionNames(buffer, len);
 	else 
@@ -1336,7 +1337,7 @@ INT WINAPI GetPrivateProfileSectionW( LPCWSTR section, LPWSTR buffer,
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
-    if (PROFILE_Open( filename ))
+    if (PROFILE_Open( filename, FALSE ))
         ret = PROFILE_GetSection(CurProfile->section, section, buffer, len, TRUE, FALSE);
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
@@ -1419,12 +1420,12 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 
     if (!section && !entry && !string) /* documented "file flush" case */
     {
-        if (!filename || PROFILE_Open( filename ))
+        if (!filename || PROFILE_Open( filename, TRUE ))
         {
             if (CurProfile) PROFILE_ReleaseFile();  /* always return FALSE in this case */
         }
     }
-    else if (PROFILE_Open( filename ))
+    else if (PROFILE_Open( filename, TRUE ))
     {
         if (!section) {
             FIXME("(NULL?,%s,%s,%s)?\n",
@@ -1479,12 +1480,12 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
 
     if (!section && !string)
     {
-        if (!filename || PROFILE_Open( filename ))
+        if (!filename || PROFILE_Open( filename, TRUE ))
         {
             if (CurProfile) PROFILE_ReleaseFile();  /* always return FALSE in this case */
         }
     }
-    else if (PROFILE_Open( filename )) {
+    else if (PROFILE_Open( filename, TRUE )) {
         if (!string) {/* delete the named section*/
 	    ret = PROFILE_SetString(section,NULL,NULL, FALSE);
 	    PROFILE_FlushFile();
@@ -1607,7 +1608,7 @@ DWORD WINAPI GetPrivateProfileSectionNamesW( LPWSTR buffer, DWORD size,
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
-    if (PROFILE_Open( filename ))
+    if (PROFILE_Open( filename, FALSE ))
         ret = PROFILE_GetSectionNames(buffer, size);
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
@@ -1662,7 +1663,7 @@ BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
-    if (PROFILE_Open( filename )) {
+    if (PROFILE_Open( filename, FALSE )) {
         PROFILEKEY *k = PROFILE_Find ( &CurProfile->section, section, key, FALSE, FALSE);
 	if (k) {
 	    TRACE("value (at %p): %s\n", k->value, debugstr_w(k->value));
@@ -1782,7 +1783,7 @@ BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
-    if (PROFILE_Open( filename )) {
+    if (PROFILE_Open( filename, TRUE )) {
         ret = PROFILE_SetString( section, key, outstring, FALSE);
         PROFILE_FlushFile();
     }
