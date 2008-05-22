@@ -254,7 +254,9 @@ static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
                rc_client.left, rc_client.top, rc_client.right, rc_client.bottom);
         GetClipBox(dis->hDC, &rc_clip);
         trace("clip rect (%d,%d-%d,%d)\n", rc_clip.left, rc_clip.top, rc_clip.right, rc_clip.bottom);
-        ok(EqualRect(&rc_client, &rc_clip), "client rect of the listbox should be equal to the clip box\n");
+        ok(EqualRect(&rc_client, &rc_clip) || IsRectEmpty(&rc_clip),
+           "client rect of the listbox should be equal to the clip box,"
+           "or the clip box should be empty\n");
 
         trace("rcItem (%d,%d-%d,%d)\n", dis->rcItem.left, dis->rcItem.top,
                dis->rcItem.right, dis->rcItem.bottom);
