@@ -21,36 +21,11 @@
 
 #--- defaults (change these if you are a packager)
 CONFARGS=""                   # configure args, e.g. --prefix=/usr
-prefix=/usr/local             # installation prefix
-bindir=$prefix/bin            # where winelib apps will be (or are) installed
-libdir=$prefix/lib            # where libwine.so will be (or is) installed
-BINDIST=no                    # whether called from a binary package config script
 
 # functions
 
 function std_sleep {
   sleep 1
-}
-
-function conf_question {
-  # parameters: $1 = importance, $2 = question-id, $3+ = message lines
-  # the first two parameters can be used by e.g. debconf in debian packages
-  # but here we just print the message
-  shift 2
-  echo
-  local LINE="$1"
-  while [ $# -gt 0 ] && shift
-  do {
-    echo "$LINE"
-    LINE="$1"
-  }
-  done
-}
-
-function conf_reset_question {
-  # parameters: $1 = question-id
-  # this is used to flush any cached answers and "already-displayed" flags
-  shift # dummy command
 }
 
 function conf_yesno_answer {
@@ -63,24 +38,16 @@ function conf_yesno_answer {
   done
 }
 
-function conf_string_answer {
-  echo -n "$1"
-  read ANSWER
-}
-
 # startup...
 
-echo "WINE Installer v0.75"
+echo "Wine Installer v1.0"
 echo
 
-if [ "$BINDIST" = 'no' ]
-then {
-
-  if ! [ -f configure ]
-  then {
+if ! [ -f configure ]
+then
     if [ -f ../configure ]
     then {
-      pushd ..
+      cd ..
     }
     else {
       echo "You're running this from the wrong directory."
@@ -88,29 +55,26 @@ then {
       exit 1
     }
     fi
-  }
-  fi
+fi
 
-  if [ `whoami` = 'root' ]
-  then {
+if [ `whoami` = 'root' ]
+then
     echo "You are running wineinstall as root, this is not advisable. Please rerun as a user."
     echo "Aborting."
     exit 1
-  }
-  fi
+fi
 
-  if [ ! -w . ]
-  then {
+if [ ! -w . ]
+then
     echo "The source directory is not writable. You probably extracted the sources as root."
     echo "You should remove the source tree and extract it again as a normal user."
     exit 1
-  }
-  fi
+fi
 
-  # check whether RPM installed, and if it is, remove any old wine rpm.
-  hash rpm &>/dev/null
-  RET=$?
-  if [ $RET -eq 0 ]; then
+# check whether RPM installed, and if it is, remove any old wine rpm.
+hash rpm &>/dev/null
+RET=$?
+if [ $RET -eq 0 ]; then
     if [ -n "`rpm -qi wine 2>/dev/null|grep "^Name"`" ]; then
       echo "Warning: Old Wine RPM install detected. Do you want to remove it first?"
       conf_yesno_answer "(yes/no) "
@@ -133,175 +97,99 @@ then {
         exit 1
       fi
     fi
-  fi
+fi
 
-  # check whether wine binary still available
-  if [ -n "`wine --version 2>/dev/null`" ]
-  then
+# check whether wine binary still available
+if [ -n "`wine --version 2>/dev/null`" ]
+then
     echo "Warning !! wine binary (still) found, which may indicate"
     echo "a (conflicting) previous installation."
     echo "You might want to abort and uninstall Wine first."
     echo "(If you previously tried to install from source manually, "
     echo "run 'make uninstall' from the wine root directory)"
     std_sleep
-  fi
+fi
 
-  # run the configure script, if necessary
+# run the configure script, if necessary
 
-  if [ -f config.cache ] && [ -f Makefile ] && [ Makefile -nt configure ]
-  then {
-    echo
-    echo "I see that WINE has already been configured, so I'll skip that."
+if [ -f Makefile ]
+then
+    echo "I see that Wine has already been configured, so I'll skip that."
     std_sleep
-    # load configure results
-    . ./config.cache
-  }
-  else {
+else
     echo "Running configure..."
     echo
-    if ! ./configure -C $CONFARGS --prefix=$prefix
+    if ! ./configure $CONFARGS
     then {
       echo
       echo "Configure failed, aborting install."
-      rm -f config.cache
       exit 1
     }
     fi
-    # load configure results
-    . ./config.cache
-    # make sure X was found
-    eval "$ac_cv_have_x"
-    if [ "$have_x" != "yes" ]
-    then {
-      echo "Install the X development headers and try again."
-      rm -f config.cache
-      exit 1
-    }
-    fi
-  }
-  fi
-
-  # now do the compilation and install, we need to always do this because we
-  # don't want the 'make install' command we might run to run 'make' as root
-  if [ `whoami` != 'root' ]
-  then {
-    # ask the user if they want to build and install wine
-    echo
-    echo "We need to install wine as root user, do you want us to build wine,"
-    echo "'su root' and install Wine?  Enter 'no' to continue without installing"
-    conf_yesno_answer "(yes/no) "
-    ROOTINSTALL="$ANSWER"
-
-    if [ "$ROOTINSTALL" = "yes" ]
-    then {
-      # start out with the basic command
-      sucommand="make install"
-
-      # if the user doesn't have $libdir in their ld.so.conf add this
-      # to our sucommand string
-      if [ -f /etc/ld.so.conf ]
-      then
-        if ! grep -s "$libdir" /etc/ld.so.conf >/dev/null 2>&1
-        then {
-          echo
-          echo "$libdir doesn't exist in your /etc/ld.so.conf, it will be added"
-          echo "when we perform the install..."
-          sucommand="$sucommand;echo $libdir>>/etc/ld.so.conf"
-        }
-        fi
-        # run ldconfig always just in case some updated files don't get linked
-        sucommand="$sucommand;$ac_cv_path_LDCONFIG"
-      fi
-    }
-    fi # [ "$ROOTINSTALL" = "yes" ]
-
-    echo
-
-    echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever,"
-    echo "in the meantime..."
-    echo
-    std_sleep
-
-    # try to just make wine, if this fails 'make depend' and try to remake
-    if ! { make; }
-    then {
-      if ! { make depend && make; }
-      then {
-        echo
-        echo "Compilation failed, aborting install."
-        exit 1
-      }
-      fi
-    }
-    fi
-
-    if [ "$ROOTINSTALL" = "yes" ]
-    then {
-      echo
-
-      echo "Performing 'make install' as root to install binaries, enter root password"
-
-      std_sleep
-
-      if ! su root -c "$sucommand"
-      then {
-	echo
-	echo "Incorrect root password. If you are running Ubuntu or a similar distribution,"
-	echo "'make install' needs to be run via the sudo wrapper, so trying that one now"
-	if ! sudo su root -c "$sucommand"
-        then {
-	     echo
-             echo "Either you entered an incorrect password or we failed to"
-             echo "run '$sucommand' correctly."
-             echo "If you didn't enter an incorrect password then please"
-             echo "report this error and any steps to possibly reproduce it to"
-             echo "http://bugs.winehq.org/"
-             echo
-             echo "Installation failed, aborting."
-             exit 1
-         }
-         fi
-       }
-      fi
-
-      echo
-
-      # see if wine is installed on the users system, if not prompt them
-      # and then exit
-      if [ -z "`wine --version 2>/dev/null`" ]
-      then
-        echo "Could not find wine on your system.  Run wineinstall as root to install wine"
-        echo "before re-running wineinstall as a user."
-        echo
-        echo "Exiting wineinstall"
-        exit 1;
-      fi
-
-      WINEINSTALLED=yes
-    }
-    else {
-      WINEINSTALLED=no
-    }
-    fi # [ "$ROOTINSTALL" = "yes" ]
-  }
-  fi # [ `whoami` != 'root' ]
-
-}
-fi # BINDIST
-
-if [ "$WINEINSTALLED" = 'no' ]
-then
-    tools/wineprefixcreate --use-wine-tree .
-else
-    wineprefixcreate
 fi
-echo
 
+# now do the compilation and install, we need to always do this because we
+# don't want the 'make install' command we might run to run 'make' as root
+
+# ask the user if they want to build and install wine
+echo
+echo "We need to install wine as root user, do you want us to build wine,"
+echo "'su root' and install Wine?  Enter 'no' to continue without installing"
+conf_yesno_answer "(yes/no) "
+ROOTINSTALL="$ANSWER"
+
+if [ "$ROOTINSTALL" = "yes" ]
+then sucommand="make install"
+fi
+
+echo
+echo "Compiling Wine. Grab a lunch or two, rent a video, or whatever,"
+echo "in the meantime..."
+echo
+std_sleep
+
+# try to just make wine, if this fails 'make depend' and try to remake
+if ! { make; }
+then
+    if ! { make depend && make; }
+    then
+      echo
+      echo "Compilation failed, aborting install."
+      exit 1
+    fi
+fi
+
+if [ "$ROOTINSTALL" = "no" ]
+then
+    exit 0
+fi
+
+echo
+echo "Performing 'make install' as root to install binaries, enter root password"
+
+if ! su root -c "$sucommand"
+then
+    echo
+    echo "Incorrect root password. If you are running Ubuntu or a similar distribution,"
+    echo "'make install' needs to be run via the sudo wrapper, so trying that one now"
+    if ! sudo su root -c "$sucommand"
+    then
+         echo
+         echo "Either you entered an incorrect password or we failed to"
+         echo "run '$sucommand' correctly."
+         echo "If you didn't enter an incorrect password then please"
+         echo "report this error and any steps to possibly reproduce it to"
+         echo "http://bugs.winehq.org/"
+         echo
+         echo "Installation failed, aborting."
+         exit 1
+    fi
+fi
 
 # it's a wrap
 echo
-echo "Installation complete for now. Good luck (this is still beta software)."
-echo "If you have problems with WINE, please read the documentation first,"
+echo "Installation complete."
+echo "If you have problems with Wine, please read the documentation first,"
 echo "as many kinds of potential problems are explained there."
 
 exit 0
