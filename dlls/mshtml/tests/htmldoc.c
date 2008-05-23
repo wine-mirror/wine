@@ -356,7 +356,9 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(bindinfo.dwBindVerb == 0, "bindinfo.dwBindVerb=%d\n", bindinfo.dwBindVerb);
     ok(bindinfo.szCustomVerb == 0, "bindinfo.szCustomVerb=%p\n", bindinfo.szCustomVerb);
     ok(bindinfo.cbstgmedData == 0, "bindinfo.cbstgmedData=%d\n", bindinfo.cbstgmedData);
-    ok(bindinfo.dwOptions == 0x80000, "bindinfo.dwOptions=%x\n", bindinfo.dwOptions);
+    ok(bindinfo.dwOptions == 0x80000 ||
+       bindinfo.dwOptions == 0x4080000, /* win2k3 */
+       "bindinfo.dwOptions=%x\n", bindinfo.dwOptions);
     ok(bindinfo.dwOptionsFlags == 0, "bindinfo.dwOptionsFlags=%d\n", bindinfo.dwOptionsFlags);
     /* TODO: test dwCodePage */
     /* TODO: test securityAttributes */
