@@ -2056,6 +2056,10 @@ static BOOL CALLBACK lgrplocale_procA(LGRPID lgrpid, LCID lcid, LPSTR lpszNum,
 {
   trace("%08x, %08x, %s, %08lx\n", lgrpid, lcid, lpszNum, lParam);
 
+  /* invalid locale enumerated on some platforms */
+  if (lcid == 0)
+      return TRUE;
+
   ok(pIsValidLanguageGroup(lgrpid, LGRPID_SUPPORTED) == TRUE,
      "Enumerated grp %d not valid\n", lgrpid);
   ok(IsValidLocale(lcid, LCID_SUPPORTED) == TRUE,
