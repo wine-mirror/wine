@@ -259,7 +259,6 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
 }
 
 static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) {
-  HRESULT hr = S_OK;
   static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
   static const WCHAR dwDirectXVersionMinor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','i','n','o','r',0};
   static const WCHAR szDirectXVersionLetter[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','e','t','t','e','r',0};
@@ -273,40 +272,52 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   /*static const WCHAR szDxDiagVersion[] = {'s','z','D','x','D','i','a','g','V','e','r','s','i','o','n',0};*/
   /*szWindowsDir*/
   /*szWindowsDir*/
-  /*"dwOSMajorVersion"*/
-  /*"dwOSMinorVersion"*/
-  /*"dwOSBuildNumber"*/
-  /*"dwOSPlatformID"*/
+  static const WCHAR dwOSMajorVersion[] = {'d','w','O','S','M','a','j','o','r','V','e','r','s','i','o','n',0};
+  static const WCHAR dwOSMinorVersion[] = {'d','w','O','S','M','i','n','o','r','V','e','r','s','i','o','n',0};
+  static const WCHAR dwOSBuildNumber[] = {'d','w','O','S','B','u','i','l','d','N','u','m','b','e','r',0};
+  static const WCHAR dwOSPlatformID[] = {'d','w','O','S','P','l','a','t','f','o','r','m','I','D',0};
   MEMORYSTATUSEX msex;
+  OSVERSIONINFOW info;
   VARIANT v;
 
   V_VT(&v) = VT_UI4; V_UI4(&v) = 9;
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMajor, &v);
-  VariantClear(&v);
+  IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMajor, &v);
   V_VT(&v) = VT_UI4; V_UI4(&v) = 0;
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMinor, &v);
-  VariantClear(&v);
+  IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMinor, &v);
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionLetter_v);
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLetter, &v);
+  IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLetter, &v);
   VariantClear(&v);
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionEnglish_v);
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionEnglish, &v);
+  IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionEnglish, &v);
   VariantClear(&v);
   V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionLongEnglish_v);
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLongEnglish, &v);
+  IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLongEnglish, &v);
   VariantClear(&v);
   V_VT(&v) = VT_BOOL; V_BOOL(&v) = FALSE;
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, bDebug, &v);
-  VariantClear(&v);
+  IDxDiagContainerImpl_AddProp(pSubCont, bDebug, &v);
 
   msex.dwLength = sizeof(msex);
   GlobalMemoryStatusEx( &msex );
   V_VT(&v) = VT_UI8;
   V_UI8(&v) = msex.ullTotalPhys;
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, ullPhysicalMemory, &v);
-  VariantClear(&v);
+  IDxDiagContainerImpl_AddProp(pSubCont, ullPhysicalMemory, &v);
 
-  return hr;
+  info.dwOSVersionInfoSize = sizeof(info);
+  GetVersionExW( &info );
+  V_VT(&v) = VT_UI4;
+  V_UI4(&v) = info.dwMajorVersion;
+  IDxDiagContainerImpl_AddProp(pSubCont, dwOSMajorVersion, &v);
+  V_VT(&v) = VT_UI4;
+  V_UI4(&v) = info.dwMinorVersion;
+  IDxDiagContainerImpl_AddProp(pSubCont, dwOSMinorVersion, &v);
+  V_VT(&v) = VT_UI4;
+  V_UI4(&v) = info.dwBuildNumber;
+  IDxDiagContainerImpl_AddProp(pSubCont, dwOSBuildNumber, &v);
+  V_VT(&v) = VT_UI4;
+  V_UI4(&v) = info.dwPlatformId;
+  IDxDiagContainerImpl_AddProp(pSubCont, dwOSPlatformID, &v);
+
+  return S_OK;
 }
 
 static HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCont) {
