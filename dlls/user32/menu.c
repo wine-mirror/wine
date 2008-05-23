@@ -2472,7 +2472,10 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
 				  MAKELPARAM((INT16)pmt->pt.x, (INT16)pmt->pt.y) );
 		else
 		{
-                    if (menu->dwStyle & MNS_NOTIFYBYPOS)
+                    POPUPMENU *topmenu = MENU_GetMenu( pmt->hTopMenu );
+                    DWORD dwStyle = menu->dwStyle | (topmenu ? topmenu->dwStyle : 0);
+
+                    if (dwStyle & MNS_NOTIFYBYPOS)
                         PostMessageW( pmt->hOwnerWnd, WM_MENUCOMMAND, menu->FocusedItem,
                                       (LPARAM)hMenu);
                     else
