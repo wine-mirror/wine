@@ -1171,7 +1171,7 @@ static void test_multiselect(void)
 	SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
 
 	/* set initial position */
-	SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, (task.initPos == -1 ? item_count : task.initPos));
+	SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, (task.initPos == -1 ? item_count -1 : task.initPos));
 	ListView_SetItemState(hwnd,(task.initPos == -1 ? item_count -1 : task.initPos),LVIS_SELECTED ,LVIS_SELECTED);
 
 	selected_count = (int)SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
