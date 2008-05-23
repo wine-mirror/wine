@@ -464,7 +464,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
  *
  * Implementation of the 'print' command.
  */
-void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
+void print_basic(const struct dbg_lvalue* lvalue, char format)
 {
     if (lvalue->type.id == dbg_itype_none)
     {

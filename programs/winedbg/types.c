@@ -457,7 +457,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         /* FIXME: this in not 100% optimal (as we're going through the typedef handling
          * stuff again
          */
-        print_basic(lvalue, 1, format);
+        print_basic(lvalue, format);
         break;
     case SymTagUDT:
         if (types_get_info(&type, TI_GET_CHILDRENCOUNT, &count))

@@ -367,7 +367,7 @@ extern BOOL             memory_disasm_one_insn(ADDRESS64* addr);
 extern char*            memory_offset_to_string(char *str, DWORD64 offset, unsigned mode);
 extern void             print_bare_address(const ADDRESS64* addr);
 extern void             print_address(const ADDRESS64* addr, BOOLEAN with_line);
-extern void             print_basic(const struct dbg_lvalue* value, int count, char format);
+extern void             print_basic(const struct dbg_lvalue* value, char format);
 
   /* source.c */
 extern void             source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta);
