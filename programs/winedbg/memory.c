@@ -474,14 +474,20 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
 
     if (format != 0)
     {
-        LONGLONG res = types_extract_as_longlong(lvalue);
+        unsigned size;
+        LONGLONG res = types_extract_as_longlong(lvalue, &size);
+        DWORD hi;
         WCHAR wch;
 
         /* FIXME: this implies i386 byte ordering */
         switch (format)
         {
         case 'x':
-            dbg_printf("0x%x", (DWORD)(ULONG64)res);
+            hi = (ULONG64)res >> 32;
+            if (size == 8 && hi)
+                dbg_printf("0x%x%08x", hi, (DWORD)res);
+            else
+                dbg_printf("0x%x", (DWORD)res);
             return;
 
         case 'd':
@@ -509,7 +515,7 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
     }
     if (lvalue->type.id == dbg_itype_segptr)
     {
-        dbg_print_longlong(types_extract_as_longlong(lvalue), TRUE);
+        dbg_print_longlong(types_extract_as_longlong(lvalue, NULL), TRUE);
         dbg_printf("\n");
     }
     else print_typed_basic(lvalue);

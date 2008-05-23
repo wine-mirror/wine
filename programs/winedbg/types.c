@@ -53,7 +53,7 @@ BOOL types_get_real_type(struct dbg_type* type, DWORD* tag)
  * Given a lvalue, try to get an integral (or pointer/address) value
  * out of it
  */
-LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue)
+LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue, unsigned* psize)
 {
     LONGLONG            rtn;
     DWORD               tag, bt;
@@ -68,6 +68,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue)
         return (long int)memory_to_linear_addr(&lvalue->addr);
     }
 
+    if (psize) *psize = 0;
     switch (tag)
     {
     case SymTagBaseType:
@@ -96,6 +97,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue)
         case btFloat:
             RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
         }
+        if (psize) *psize = (unsigned)size;
         break;
     case SymTagPointerType:
         if (!be_cpu->fetch_integer(lvalue, sizeof(void*), FALSE, &rtn))
@@ -131,7 +133,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue)
  */
 long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
-    return types_extract_as_longlong(lvalue);
+    return types_extract_as_longlong(lvalue, NULL);
 }
 
 /******************************************************************
@@ -148,7 +150,7 @@ void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS64* addr)
     else
     {
         addr->Mode = AddrModeFlat;
-        addr->Offset = types_extract_as_longlong( lvalue );
+        addr->Offset = types_extract_as_longlong(lvalue, NULL);
     }
 }
 
