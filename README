@@ -66,30 +66,28 @@ Mac OS X info:
 
 
 Supported file systems:
-  Wine should run on most file systems. However, Wine will fail to start
-  if umsdos is used for the /tmp directory. A few compatibility problems have
-  also been reported using files accessed through Samba. Also, NTFS does not
-  provide all the file system features needed by some applications.
-  Using a native Linux file system such as ext3 is recommended.
+  Wine should run on most file systems. A few compatibility problems
+  have also been reported using files accessed through Samba. Also,
+  NTFS does not provide all the file system features needed by some
+  applications.  Using a native Linux file system such as ext3 is
+  recommended.
 
 Basic requirements:
   You need to have the X11 development include files installed
   (called xlib6g-dev in Debian and XFree86-devel in Red Hat).
-
-Build tool requirements:
-  On x86 Systems gcc >= 2.7.2 is required.
-  Versions earlier than 2.7.2.3 may have problems when certain files
-  are compiled with optimization, often due to problems with header file
-  management.
 
   Of course you also need "make" (most likely GNU make).
 
   You also need flex version 2.5 or later and bison.
 
 Optional support libraries:
-  Run ./configure --verbose to see the optional libraries that could
-  be used but aren't found on your system.
+  Configure will display notices when optional libraries are not found
+  on your system. See http://wiki.winehq.org/Recommended_Packages for
+  hints about the packages you should install.
 
+  On 64-bit platforms you have to make sure to install the 32-bit
+  versions of these libraries; see http://wiki.winehq.org/WineOn64bit
+  for details.
 
 4. COMPILATION
 
@@ -128,12 +126,8 @@ Don't forget to uninstall any conflicting previous Wine installation
 first.  Try either "dpkg -r wine" or "rpm -e wine" or "make uninstall"
 before installing.
 
-See the Support area at http://www.winehq.org/ for configuration
-hints.
-
-In case of library loading errors
-(e.g. "Error while loading shared libraries: libntdll.so"), make sure
-to add the library path to /etc/ld.so.conf and run ldconfig as root.
+Once installed, you can run the "winecfg" configuration tool. See the
+Support area at http://www.winehq.org/ for configuration hints.
 
 
 6. RUNNING PROGRAMS
@@ -148,7 +142,7 @@ For example: to run Solitaire:
 
 	wine c:\\windows\\sol.exe  (using DOS filename syntax)
 
-	wine /usr/windows/sol.exe  (using Unix filename syntax)
+	wine ~/.wine/drive_c/windows/sol.exe  (using Unix filename syntax)
 
         wine sol.exe /parameter1 -parameter2 parameter3
 				   (calling program with parameters)
