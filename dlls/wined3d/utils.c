@@ -1446,15 +1446,15 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
             break;
 
         case WINED3DTOP_MULTIPLYADD:
-            /* Input, arg1*1+arg2*arg3 */
+            /* Input, arg3*1+arg1*arg2 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
-                    tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
+                    tex_op_args.input[2], tex_op_args.mapping[2], tex_op_args.component_usage[2]));
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
                     GL_ZERO, GL_UNSIGNED_INVERT_NV, portion));
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_C_NV,
-                    tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
+                    tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_D_NV,
-                    tex_op_args.input[2], tex_op_args.mapping[2], tex_op_args.component_usage[2]));
+                    tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
 
             /* Output */
             GL_EXTCALL(glCombinerOutputNV(target, portion, GL_DISCARD_NV, GL_DISCARD_NV,
@@ -1462,15 +1462,15 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
             break;
 
         case WINED3DTOP_LERP:
-            /* Input, arg1*arg2+(1-arg1)*arg3 */
+            /* Input, arg3*arg1+(1-arg3)*arg2 */
             GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_A_NV,
-                    tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
-            GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
-                    tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
-            GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_C_NV,
-                    tex_op_args.input[0], invert_mapping(tex_op_args.mapping[0]), tex_op_args.component_usage[0]));
-            GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_D_NV,
                     tex_op_args.input[2], tex_op_args.mapping[2], tex_op_args.component_usage[2]));
+            GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_B_NV,
+                    tex_op_args.input[0], tex_op_args.mapping[0], tex_op_args.component_usage[0]));
+            GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_C_NV,
+                    tex_op_args.input[2], invert_mapping(tex_op_args.mapping[2]), tex_op_args.component_usage[2]));
+            GL_EXTCALL(glCombinerInputNV(target, portion, GL_VARIABLE_D_NV,
+                    tex_op_args.input[1], tex_op_args.mapping[1], tex_op_args.component_usage[1]));
 
             /* Output */
             GL_EXTCALL(glCombinerOutputNV(target, portion, GL_DISCARD_NV, GL_DISCARD_NV,
