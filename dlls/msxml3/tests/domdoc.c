@@ -477,10 +477,6 @@ static void test_domdoc( void )
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    /* try with a null out pointer */
-    r = IXMLDOMDocument_get_documentElement( doc, NULL );
-    ok( r == E_INVALIDARG, "should be no document element\n");
-
     /* check if nodename is correct */
     r = IXMLDOMDocument_get_nodeName( doc, NULL );
     ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
@@ -937,7 +933,7 @@ static void test_domnode( void )
         V_I4(&var) = 0x1234;
         r = IXMLDOMElement_getAttribute( element, str, &var );
         ok( r == E_FAIL, "getAttribute ret %08x\n", r );
-        ok( V_VT(&var) == VT_NULL, "vt = %x\n", V_VT(&var));
+        ok( V_VT(&var) == VT_NULL || V_VT(&var) == VT_EMPTY, "vt = %x\n", V_VT(&var));
         VariantClear(&var);
         SysFreeString( str );
 
