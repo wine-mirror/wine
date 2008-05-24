@@ -56,12 +56,12 @@ BEGIN
 	  MENUITEM "Aktualisieren",		FCIDM_SHVIEW_REFRESH
 	  MENUITEM SEPARATOR
 	  MENUITEM "Einfügen",		FCIDM_SHVIEW_INSERT
-	  MENUITEM "Einfügen als Verweis",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM "Einfügen als Verknüpfung",	FCIDM_SHVIEW_INSERTLINK
 	  MENUITEM SEPARATOR
 	  POPUP "Neu"
 	  BEGIN
 	    MENUITEM "Neues Ver&zeichnis",	FCIDM_SHVIEW_NEWFOLDER
-	    MENUITEM "Neuer Ver&weis",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM "Neue Ver&knüpfung",	FCIDM_SHVIEW_NEWLINK
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
@@ -76,14 +76,14 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Öffnen"		FCIDM_SHVIEW_OPEN
 	  MENUITEM "E&rkunden",		FCIDM_SHVIEW_EXPLORE
-	  MENUITEM "&Öffnen",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
 	  MENUITEM "&Ausschneiden",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Kopieren",		FCIDM_SHVIEW_COPY
+	  MENUITEM "&Einfügen",		FCIDM_SHVIEW_INSERT
 	  MENUITEM SEPARATOR
-	  MENUITEM "Erstelle Ver&weis",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Ver&knüpfung erzeugen",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "&Löschen",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Umbenennen",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
@@ -186,7 +186,7 @@ STRINGTABLE
         /* special folders */
 	IDS_DESKTOP		"Desktop"
 	IDS_MYCOMPUTER		"Arbeitsplatz"
-	IDS_RECYCLEBIN_FOLDER_NAME      "Müll"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Papierkorb"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Große Symbole"
@@ -203,22 +203,21 @@ STRINGTABLE
 	IDS_DELETEITEM_TEXT "Sind Sie sich sicher, dass Sie '%1' löschen möchten?"
 	IDS_DELETEMULTIPLE_TEXT "Sind Sie sich sicher, dass Sie diese %1 Objekte löschen möchten?"
 	IDS_DELETESELECTED_TEXT "Sind Sie sich sicher, dass Sie die ausgewählten Objekte löschen möchten?"
-	IDS_TRASHITEM_TEXT "Sind Sie sich sicher, dass Sie '%1' in Müll verschieben möchten?"
-	IDS_TRASHFOLDER_TEXT "Sind Sie sich sicher, dass Sie '%1' und seinen Inhalt in den Müll verschieben möchten?"
-	IDS_TRASHMULTIPLE_TEXT "Sind Sie sich sicher, dass Sie diese %1 Dateien in den Müll verschieben möchten?"
-	IDS_CANTTRASH_TEXT "Das Objekt '%1' kann nicht in den Müll verschoben werden. Möchten Sie es stattdessen löschen?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_TRASHITEM_TEXT "Sind Sie sich sicher, dass Sie '%1' in den Papierkorb verschieben möchten?"
+	IDS_TRASHFOLDER_TEXT "Sind Sie sich sicher, dass Sie '%1' und seinen Inhalt in den Papierkorb verschieben möchten?"
+	IDS_TRASHMULTIPLE_TEXT "Sind Sie sich sicher, dass Sie diese %1 Dateien in den Papierkorb verschieben möchten?"
+	IDS_CANTTRASH_TEXT "Das Objekt '%1' kann nicht in den Papierkorb verschoben werden.\n\n Möchten Sie es stattdessen löschen?"
+	IDS_OVERWRITEFILE_TEXT "Der Ordner enthält bereits eine Datei namens '%1'.\n\n Wollen Sie die Datei ersetzen?"
 	IDS_OVERWRITEFILE_CAPTION "Bestätigung: Datei überschreiben"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+	IDS_OVERWRITEFOLDER_TEXT "Im Verzeichnis befindet sich bereits ein Ordner namens '%1'.\n\n"\
+	"Wenn die Dateien im Zielordner die gleichen Namen haben, wie die im ausgewählten Ordner, werden sie ersetzt.\n\n\
+	Möchten sie trotzdem fortfahren?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "Neustarten"
-        IDS_RESTART_PROMPT      "Möchten Sie, dass ein simulierter Windows Neustart durchgeführt wird ?"
-        IDS_SHUTDOWN_TITLE      "Anhalten"
-        IDS_SHUTDOWN_PROMPT     "Möchten Sie die aktuelle Wine Sitzung beenden ?"
+        IDS_RESTART_PROMPT      "Möchten Sie, dass ein simulierter Windows Neustart durchgeführt wird?"
+        IDS_SHUTDOWN_TITLE      "Beenden"
+        IDS_SHUTDOWN_PROMPT     "Möchten Sie die aktuelle Wine Sitzung beenden?"
 
         /* shell folder path default values */
 	IDS_PROGRAMS		"Startmenü\\Programme"
@@ -249,5 +248,25 @@ STRINGTABLE
 	IDS_COMMON_VIDEO	"Dokumente\\Eigene Videos"
 	IDS_CDBURN_AREA		"Lokale Einstellungen\\Anwendungsdaten\\Microsoft\\CD Burning"
 
-	IDS_NEWFOLDER		"New Folder"
+	IDS_NEWFOLDER		"Neuer Ordner"
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Wine License"
+IDS_LICENSE,
+"Wine ist freie Software; Sie dürfen sie unter den Bedingungen \
+der GNU Lesser General Public License, welche von der \
+Free Software Foundation veröffentlicht wurde; weiter verteilen \
+und/oder modifizieren gemäß Version 2.1 der Lizenz, oder \
+(nach ihren Ermessen) jeder späteren Version.\n\n\
+Wine wird mit der Hoffnung verteilt das es sich als nützlich erweist. \
+Wine kommt aber OHNE JEGLICHE GARANTIE daher; sogar ohne einer \
+angedeuteten Garantie der MARKTGÄNGIGKEIT oder der EIGNUNG FÜR EINEN \
+BESTIMMTEN NUTZEN. Sehen Sie sich die GNU Lesser General Public License \
+an für mehr Details.\n\n\
+Sie sollten mit dieser Bibliothek auch eine Kopie der \
+GNU Lesser General Public License erhalten haben; wenn nicht schreiben \
+Sie der Free Software Foundation, \
+Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 }
