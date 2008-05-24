@@ -39,6 +39,18 @@ static HWND create_window(void)
     return ret;
 }
 
+static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
+{
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    return TRUE;
+}
+
 static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
 {
     DWORD ret;
@@ -1147,6 +1159,126 @@ out:
     IDirect3D8_Release(d3d);
 }
 
+static void texop_test(IDirect3DDevice8 *device)
+{
+    IDirect3DTexture8 *texture = NULL;
+    D3DLOCKED_RECT locked_rect;
+    D3DCOLOR color;
+    D3DCAPS8 caps;
+    HRESULT hr;
+    int i;
+
+    static const struct {
+        float x, y, z;
+        D3DCOLOR diffuse;
+        float s, t;
+    } quad[] = {
+        {-1.0f, -1.0f, 0.1f, D3DCOLOR_ARGB(0x55, 0xff, 0x00, 0x00), -1.0f, -1.0f},
+        {-1.0f,  1.0f, 0.1f, D3DCOLOR_ARGB(0x55, 0xff, 0x00, 0x00), -1.0f,  1.0f},
+        { 1.0f, -1.0f, 0.1f, D3DCOLOR_ARGB(0x55, 0xff, 0x00, 0x00),  1.0f, -1.0f},
+        { 1.0f,  1.0f, 0.1f, D3DCOLOR_ARGB(0x55, 0xff, 0x00, 0x00),  1.0f,  1.0f}
+    };
+
+    static const struct {
+        D3DTEXTUREOP op;
+        const char *name;
+        DWORD caps_flag;
+        D3DCOLOR result;
+    } test_data[] = {
+        {D3DTOP_SELECTARG1,                "SELECTARG1",                D3DTEXOPCAPS_SELECTARG1,                D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00)},
+        {D3DTOP_SELECTARG2,                "SELECTARG2",                D3DTEXOPCAPS_SELECTARG2,                D3DCOLOR_ARGB(0x00, 0x33, 0x33, 0x33)},
+        {D3DTOP_MODULATE,                  "MODULATE",                  D3DTEXOPCAPS_MODULATE,                  D3DCOLOR_ARGB(0x00, 0x00, 0x33, 0x00)},
+        {D3DTOP_MODULATE2X,                "MODULATE2X",                D3DTEXOPCAPS_MODULATE2X,                D3DCOLOR_ARGB(0x00, 0x00, 0x66, 0x00)},
+        {D3DTOP_MODULATE4X,                "MODULATE4X",                D3DTEXOPCAPS_MODULATE4X,                D3DCOLOR_ARGB(0x00, 0x00, 0xcc, 0x00)},
+        {D3DTOP_ADD,                       "ADD",                       D3DTEXOPCAPS_ADD,                       D3DCOLOR_ARGB(0x00, 0x33, 0xff, 0x33)},
+        {D3DTOP_ADDSIGNED,                 "ADDSIGNED",                 D3DTEXOPCAPS_ADDSIGNED,                 D3DCOLOR_ARGB(0x00, 0x00, 0xb2, 0x00)},
+        {D3DTOP_ADDSIGNED2X,               "ADDSIGNED2X",               D3DTEXOPCAPS_ADDSIGNED2X,               D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00)},
+        {D3DTOP_SUBTRACT,                  "SUBTRACT",                  D3DTEXOPCAPS_SUBTRACT,                  D3DCOLOR_ARGB(0x00, 0x00, 0xcc, 0x00)},
+        {D3DTOP_ADDSMOOTH,                 "ADDSMOOTH",                 D3DTEXOPCAPS_ADDSMOOTH,                 D3DCOLOR_ARGB(0x00, 0x33, 0xff, 0x33)},
+        {D3DTOP_BLENDDIFFUSEALPHA,         "BLENDDIFFUSEALPHA",         D3DTEXOPCAPS_BLENDDIFFUSEALPHA,         D3DCOLOR_ARGB(0x00, 0x22, 0x77, 0x22)},
+        {D3DTOP_BLENDTEXTUREALPHA,         "BLENDTEXTUREALPHA",         D3DTEXOPCAPS_BLENDTEXTUREALPHA,         D3DCOLOR_ARGB(0x00, 0x14, 0xad, 0x14)},
+        {D3DTOP_BLENDFACTORALPHA,          "BLENDFACTORALPHA",          D3DTEXOPCAPS_BLENDFACTORALPHA,          D3DCOLOR_ARGB(0x00, 0x07, 0xe4, 0x07)},
+        {D3DTOP_BLENDTEXTUREALPHAPM,       "BLENDTEXTUREALPHAPM",       D3DTEXOPCAPS_BLENDTEXTUREALPHAPM,       D3DCOLOR_ARGB(0x00, 0x14, 0xff, 0x14)},
+        {D3DTOP_BLENDCURRENTALPHA,         "BLENDCURRENTALPHA",         D3DTEXOPCAPS_BLENDCURRENTALPHA,         D3DCOLOR_ARGB(0x00, 0x22, 0x77, 0x22)},
+        {D3DTOP_MODULATEALPHA_ADDCOLOR,    "MODULATEALPHA_ADDCOLOR",    D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR,    D3DCOLOR_ARGB(0x00, 0x1f, 0xff, 0x1f)},
+        {D3DTOP_MODULATECOLOR_ADDALPHA,    "MODULATECOLOR_ADDALPHA",    D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA,    D3DCOLOR_ARGB(0x00, 0x99, 0xcc, 0x99)},
+        {D3DTOP_MODULATEINVALPHA_ADDCOLOR, "MODULATEINVALPHA_ADDCOLOR", D3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR, D3DCOLOR_ARGB(0x00, 0x14, 0xff, 0x14)},
+        {D3DTOP_MODULATEINVCOLOR_ADDALPHA, "MODULATEINVCOLOR_ADDALPHA", D3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA, D3DCOLOR_ARGB(0x00, 0xcc, 0x99, 0xcc)},
+        /* BUMPENVMAP & BUMPENVMAPLUMINANCE have their own tests */
+        {D3DTOP_DOTPRODUCT3,               "DOTPRODUCT2",               D3DTEXOPCAPS_DOTPRODUCT3,               D3DCOLOR_ARGB(0x00, 0x99, 0x99, 0x99)},
+        {D3DTOP_MULTIPLYADD,               "MULTIPLYADD",               D3DTEXOPCAPS_MULTIPLYADD,               D3DCOLOR_ARGB(0x00, 0xff, 0x33, 0x00)},
+        {D3DTOP_LERP,                      "LERP",                      D3DTEXOPCAPS_LERP,                      D3DCOLOR_ARGB(0x00, 0x00, 0x33, 0x33)},
+    };
+
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX0);
+    ok(SUCCEEDED(hr), "SetVertexShader failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+    hr = IDirect3DDevice8_CreateTexture(device, 1, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateTexture failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+    hr = IDirect3DTexture8_LockRect(texture, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+    *((DWORD *)locked_rect.pBits) = D3DCOLOR_ARGB(0x99, 0x00, 0xff, 0x00);
+    hr = IDirect3DTexture8_UnlockRect(texture, 0);
+    ok(SUCCEEDED(hr), "LockRect failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)texture);
+    ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLORARG0, D3DTA_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+    hr = IDirect3DDevice8_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0xdd333333);
+    ok(SUCCEEDED(hr), "SetRenderState failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_ALPHA);
+    ok(SUCCEEDED(hr), "SetRenderState failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        if (!(caps.TextureOpCaps & test_data[i].caps_flag))
+        {
+            skip("tex operation %s not supported\n", test_data[i].name);
+            continue;
+        }
+
+        hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLOROP, test_data[i].op);
+        ok(SUCCEEDED(hr), "SetTextureStageState (%s) failed with 0x%08x (%s)\n",
+                test_data[i].name, hr, DXGetErrorString8(hr));
+
+        hr = IDirect3DDevice8_BeginScene(device);
+        ok(SUCCEEDED(hr), "BeginScene failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(SUCCEEDED(hr), "EndScene failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+        hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Present failed with 0x%08x (%s)\n", hr, DXGetErrorString8(hr));
+
+        color = getPixelColor(device, 320, 240);
+        ok(color_match(color, test_data[i].result, 1), "Operation %s returned color 0x%08x, expected 0x%08x\n",
+                test_data[i].name, color, test_data[i].result);
+    }
+
+    if (texture) IDirect3DTexture8_Release(texture);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice8 *device_ptr;
@@ -1219,6 +1351,7 @@ START_TEST(visual)
     }
 
     p8_texture_test(device_ptr);
+    texop_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
