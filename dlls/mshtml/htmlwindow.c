@@ -963,7 +963,7 @@ static ULONG WINAPI WindowDispEx_Release(IDispatchEx *iface)
 {
     HTMLWindow *This = DISPEX_THIS(iface);
 
-    return IHTMLWindow2_AddRef(HTMLWINDOW2(This));
+    return IHTMLWindow2_Release(HTMLWINDOW2(This));
 }
 
 static HRESULT WINAPI WindowDispEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
