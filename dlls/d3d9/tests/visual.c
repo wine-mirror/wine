@@ -159,7 +159,7 @@ static IDirect3DDevice9 *init_d3d9(void)
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
     present_parameters.BackBufferWidth = 640;
     present_parameters.BackBufferHeight = 480;
-    present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
@@ -6671,7 +6671,7 @@ static void alpha_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80ff0000, 0.0, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
-    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
     ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
@@ -6704,13 +6704,7 @@ static void alpha_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
     if(IDirect3DDevice9_BeginScene(device) == D3D_OK) {
 
-        /* Draw two quads, one with src alpha blending, one with dest alpha blending. The
-         * SRCALPHA / INVSRCALPHA blend doesn't give any surprises. Colors are blended based on
-         * the input alpha
-         *
-         * The DESTALPHA / INVDESTALPHA do not "work" on the regular buffer because there is no alpha.
-         * They give essentially ZERO and ONE blend factors
-         */
+        /* Draw two quads, one with src alpha blending, one with dest alpha blending. */
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
@@ -6725,12 +6719,9 @@ static void alpha_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(quad2[0]));
         ok(hr == D3D_OK, "DrawPrimitiveUP failed, hr = %#08x\n", hr);
 
-        /* Switch to the offscreen buffer, and redo the testing. SRCALPHA and DESTALPHA. The offscreen buffer
-         * has a alpha channel on its own. Clear the offscreen buffer with alpha = 0.5 again, then draw the
-         * quads again. The SRCALPHA/INVSRCALPHA doesn't give any surprises, but the DESTALPHA/INVDESTALPHA
-         * blending works as supposed now - blend factor is 0.5 in both cases, not 0.75 as from the input
-         * vertices
-         */
+        /* Switch to the offscreen buffer, and redo the testing. The offscreen render target
+         * doesn't have an alpha channel. DESTALPHA and INVDESTALPHA "don't work" on render
+         * targets without alpha channel, they give essentially ZERO and ONE blend factors. */
         hr = IDirect3DDevice9_SetRenderTarget(device, 0, offscreen);
         ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80ff0000, 0.0, 0);
@@ -6785,7 +6776,7 @@ static void alpha_test(IDirect3DDevice9 *device)
     red =   (color & 0x00ff0000) >> 16;
     green = (color & 0x0000ff00) >>  8;
     blue =  (color & 0x000000ff);
-    ok(red == 0x00 && green == 0x00 && blue >= 0xfe && blue <= 0xff ,
+    ok(red >= 0x7e && red <= 0x81 && green == 0x00 && blue >= 0x7e && blue <= 0x81,
        "DSTALPHA on frame buffer returned color %08x, expected 0x00ff0000\n", color);
 
     color = getPixelColor(device, 480, 360);
@@ -6799,7 +6790,7 @@ static void alpha_test(IDirect3DDevice9 *device)
     red =   (color & 0x00ff0000) >> 16;
     green = (color & 0x0000ff00) >>  8;
     blue =  (color & 0x000000ff);
-    ok(red >= 0x7e && red <= 0x81 && green == 0x00 && blue >= 0x7e && blue <= 0x81,
+    ok(red == 0x00 && green == 0x00 && blue >= 0xfe && blue <= 0xff ,
        "DSTALPHA on texture returned color %08x, expected 0x00800080\n", color);
 
     out:
