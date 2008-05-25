@@ -26,6 +26,9 @@
 
 #include "wine/test.h"
 
+static HANDLE (WINAPI *pCreateWaitableTimerA)(SECURITY_ATTRIBUTES*,BOOL,LPCSTR);
+static HANDLE (WINAPI *pOpenWaitableTimerA)(DWORD,BOOL,LPCSTR);
+
 static void test_signalandwait(void)
 {
     DWORD (WINAPI *pSignalObjectAndWait)(HANDLE, HANDLE, DWORD, BOOL);
@@ -376,32 +379,38 @@ static void test_waitable_timer(void)
 {
     HANDLE handle, handle2;
 
+    if (!pCreateWaitableTimerA || !pOpenWaitableTimerA)
+    {
+        skip("{Create,Open}WaitableTimerA() is not available\n");
+        return;
+    }
+
     /* test case sensitivity */
 
     SetLastError(0xdeadbeef);
-    handle = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": Test WaitableTimer");
+    handle = pCreateWaitableTimerA(NULL, FALSE, __FILE__ ": Test WaitableTimer");
     ok(handle != NULL, "CreateWaitableTimer failed with error %u\n", GetLastError());
     ok(GetLastError() == 0, "wrong error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    handle2 = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": Test WaitableTimer");
+    handle2 = pCreateWaitableTimerA(NULL, FALSE, __FILE__ ": Test WaitableTimer");
     ok( handle2 != NULL, "CreateWaitableTimer failed with error %d\n", GetLastError());
     ok( GetLastError() == ERROR_ALREADY_EXISTS, "wrong error %u\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
-    handle2 = CreateWaitableTimerA(NULL, FALSE, __FILE__ ": TEST WAITABLETIMER");
+    handle2 = pCreateWaitableTimerA(NULL, FALSE, __FILE__ ": TEST WAITABLETIMER");
     ok( handle2 != NULL, "CreateWaitableTimer failed with error %d\n", GetLastError());
     ok( GetLastError() == 0, "wrong error %u\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
-    handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": Test WaitableTimer");
+    handle2 = pOpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": Test WaitableTimer");
     ok( handle2 != NULL, "OpenWaitableTimer failed with error %d\n", GetLastError());
     CloseHandle( handle2 );
 
     SetLastError(0xdeadbeef);
-    handle2 = OpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": TEST WAITABLETIMER");
+    handle2 = pOpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": TEST WAITABLETIMER");
     ok( !handle2, "OpenWaitableTimer succeeded\n");
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
@@ -519,6 +528,10 @@ static void test_iocp_callback(void)
 
 START_TEST(sync)
 {
+    HMODULE hdll = GetModuleHandle("kernel32");
+    pCreateWaitableTimerA = (void*)GetProcAddress(hdll, "CreateWaitableTimerA");
+    pOpenWaitableTimerA = (void*)GetProcAddress(hdll, "OpenWaitableTimerA");
+
     test_signalandwait();
     test_mutex();
     test_slist();
