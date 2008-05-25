@@ -346,8 +346,8 @@ static BOOL WINAPI CRYPT_AsnEncodeValidity(DWORD dwCertEncodingType,
     /* This has two filetimes in a row, a NotBefore and a NotAfter */
     const FILETIME *timePtr = (const FILETIME *)pvStructInfo;
     struct AsnEncodeSequenceItem items[] = {
-     { timePtr++, CRYPT_AsnEncodeChoiceOfTime, 0 },
-     { timePtr,   CRYPT_AsnEncodeChoiceOfTime, 0 },
+     { timePtr,     CRYPT_AsnEncodeChoiceOfTime, 0 },
+     { timePtr + 1, CRYPT_AsnEncodeChoiceOfTime, 0 },
     };
 
     ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, 
