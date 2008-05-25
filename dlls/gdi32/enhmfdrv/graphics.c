@@ -775,6 +775,13 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         }
     }
 
+    if (!lprect)
+    {
+        pemr->rclBounds.left = pemr->rclBounds.top = 0;
+        pemr->rclBounds.right = pemr->rclBounds.bottom = -1;
+        goto no_bounds;
+    }
+
     switch (textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER)) {
     case TA_CENTER: {
         pemr->rclBounds.left  = x - (textWidth / 2) - 1;
@@ -814,6 +821,7 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     }
     }
 
+no_bounds:
     ret = EMFDRV_WriteRecord( dev, &pemr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dev, &pemr->rclBounds );
