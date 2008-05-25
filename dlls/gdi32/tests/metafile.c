@@ -975,6 +975,22 @@ static void dump_emf_record(const ENHMETARECORD *emr, const char *desc)
     printf ("};\n");
 }
 
+static void dump_EMREXTTEXTOUT(const EMREXTTEXTOUTW *eto)
+{
+    trace("rclBounds %d,%d - %d,%d\n", eto->rclBounds.left, eto->rclBounds.top,
+          eto->rclBounds.right, eto->rclBounds.bottom);
+    trace("iGraphicsMode %u\n", eto->iGraphicsMode);
+    trace("exScale: %f\n", eto->exScale);
+    trace("eyScale: %f\n", eto->eyScale);
+    trace("emrtext.ptlReference %d,%d\n", eto->emrtext.ptlReference.x, eto->emrtext.ptlReference.y);
+    trace("emrtext.nChars %u\n", eto->emrtext.nChars);
+    trace("emrtext.offString %#x\n", eto->emrtext.offString);
+    trace("emrtext.fOptions %#x\n", eto->emrtext.fOptions);
+    trace("emrtext.rcl %d,%d - %d,%d\n", eto->emrtext.rcl.left, eto->emrtext.rcl.top,
+          eto->emrtext.rcl.right, eto->emrtext.rcl.bottom);
+    trace("emrtext.offDx %#x\n", eto->emrtext.offDx);
+}
+
 static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr2,
                              const char *desc, BOOL ignore_scaling, BOOL todo)
 {
@@ -1017,7 +1033,30 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
                            emr1->iType == EMR_SETVIEWPORTEXTEX))
         return TRUE;
 
-    diff = memcmp(emr1->dParm, emr2->dParm, emr1->nSize - sizeof(EMR));
+    if (emr1->iType == EMR_EXTTEXTOUTW || emr1->iType == EMR_EXTTEXTOUTA)
+    {
+        EMREXTTEXTOUTW *eto1, *eto2;
+
+        eto1 = HeapAlloc(GetProcessHeap(), 0, emr1->nSize);
+        memcpy(eto1, emr1, emr1->nSize);
+        eto2 = HeapAlloc(GetProcessHeap(), 0, emr2->nSize);
+        memcpy(eto2, emr2, emr2->nSize);
+
+        /* different Windows versions setup DC scaling differently */
+        eto1->exScale = eto1->eyScale = 0.0;
+        eto2->exScale = eto2->eyScale = 0.0;
+
+        diff = memcmp(eto1, eto2, emr1->nSize);
+        if (diff)
+        {
+            dump_EMREXTTEXTOUT(eto1);
+            dump_EMREXTTEXTOUT(eto2);
+        }
+        HeapFree(GetProcessHeap(), 0, eto1);
+        HeapFree(GetProcessHeap(), 0, eto2);
+    }
+    else
+        diff = memcmp(emr1, emr2, emr1->nSize);
     if (diff && todo)
     {
         todo_wine
