@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "mshtmcid.h"
+#include "shlguid.h"
 
 #include "wine/debug.h"
 
@@ -196,6 +197,27 @@ static void set_downloading(HTMLDocument *doc)
     }
 }
 
+/* Calls undocumented 69 cmd of CGID_Explorer */
+static void call_explorer_69(HTMLDocument *doc)
+{
+    IOleCommandTarget *olecmd;
+    VARIANT var;
+    HRESULT hres;
+
+    if(!doc->client)
+        return;
+
+    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+    if(FAILED(hres))
+        return;
+
+    VariantInit(&var);
+    hres = IOleCommandTarget_Exec(olecmd, &CGID_Explorer, 69, 0, NULL, &var);
+    IOleCommandTarget_Release(olecmd);
+    if(SUCCEEDED(hres) && V_VT(&var) != VT_NULL)
+        FIXME("handle result\n");
+}
+
 static void set_parsecomplete(HTMLDocument *doc)
 {
     IOleCommandTarget *olecmd = NULL;
@@ -205,7 +227,9 @@ static void set_parsecomplete(HTMLDocument *doc)
     if(doc->usermode == EDITMODE)
         init_editor(doc);
 
+    call_explorer_69(doc);
     call_property_onchanged(&doc->cp_propnotif, 1005);
+    call_explorer_69(doc);
 
     doc->readystate = READYSTATE_INTERACTIVE;
     call_property_onchanged(&doc->cp_propnotif, DISPID_READYSTATE);
