@@ -103,6 +103,7 @@ DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(Exec_HTTPEQUIV);
 DEFINE_EXPECT(Exec_MSHTML_PARSECOMPLETE);
+DEFINE_EXPECT(Exec_Explorer_69);
 DEFINE_EXPECT(Invoke_AMBIENT_USERMODE);
 DEFINE_EXPECT(Invoke_AMBIENT_DLCONTROL);
 DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -2069,7 +2070,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
 static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
         DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    test_readyState(NULL);
+    if(!pguidCmdGroup || !IsEqualGUID(pguidCmdGroup, &CGID_Explorer))
+        test_readyState(NULL);
 
     if(!pguidCmdGroup) {
         switch(nCmdID) {
@@ -2198,7 +2200,17 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         return E_FAIL; /* TODO */
 
     if(IsEqualGUID(&CGID_Explorer, pguidCmdGroup)) {
-        ok(0, "unexpected cmd %d of CGID_Explorer\n", nCmdID);
+        ok(nCmdexecopt == 0, "nCmdexecopts=%08x\n", nCmdexecopt);
+
+        switch(nCmdID) {
+        case 69:
+            CHECK_EXPECT2(Exec_Explorer_69);
+            ok(pvaIn == NULL, "pvaIn != NULL\n");
+            ok(pvaOut != NULL, "pvaOut == NULL\n");
+            return E_NOTIMPL;
+        default:
+            ok(0, "unexpected cmd %d of CGID_Explorer\n", nCmdID);
+        }
         return E_NOTIMPL;
     }
 
@@ -2688,6 +2700,7 @@ static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
         SET_EXPECT(Protocol_Read);
         SET_EXPECT(UnlockRequest);
     }
+    SET_EXPECT(Exec_Explorer_69);
     SET_EXPECT(OnChanged_1005);
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -2733,6 +2746,7 @@ static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
             nogecko = TRUE;
         }
     }
+    SET_CALLED(Exec_Explorer_69);
     CHECK_CALLED(OnChanged_1005);
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
