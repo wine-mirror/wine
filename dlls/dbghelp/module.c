@@ -895,7 +895,12 @@ BOOL  WINAPI SymGetModuleInfo64(HANDLE hProcess, DWORD64 dwAddr,
     IMAGEHLP_MODULE64   mi64;
     IMAGEHLP_MODULEW64  miw64;
 
-    if (sizeof(mi64) < ModuleInfo->SizeOfStruct) FIXME("Wrong size\n");
+    if (sizeof(mi64) < ModuleInfo->SizeOfStruct)
+    {
+        SetLastError(ERROR_MOD_NOT_FOUND); /* NOTE: native returns this error */
+        WARN("Wrong size %u\n", ModuleInfo->SizeOfStruct);
+        return FALSE;
+    }
 
     miw64.SizeOfStruct = sizeof(miw64);
     if (!SymGetModuleInfoW64(hProcess, dwAddr, &miw64)) return FALSE;
