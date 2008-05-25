@@ -1480,7 +1480,7 @@ static void test_emf_ExtTextOut_on_path(void)
      * are there, but their contents don't match for different reasons.
      */
     if (compare_emf_bits(hMetafile, EMF_TEXTOUT_ON_PATH_BITS, sizeof(EMF_TEXTOUT_ON_PATH_BITS),
-        "emf_TextOut_on_path", FALSE, TRUE) != 0)
+        "emf_TextOut_on_path", FALSE, FALSE) != 0)
     {
         dump_emf_bits(hMetafile, "emf_TextOut_on_path");
         dump_emf_records(hMetafile, "emf_TextOut_on_path");
@@ -1676,7 +1676,7 @@ static void test_emf_clipping(void)
     ok(hemf != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
     if (compare_emf_bits(hemf, EMF_CLIPPING, sizeof(EMF_CLIPPING),
-        "emf_clipping", FALSE, TRUE) != 0)
+        "emf_clipping", FALSE, FALSE) != 0)
     {
         dump_emf_bits(hemf, "emf_clipping");
         dump_emf_records(hemf, "emf_clipping");
@@ -1785,7 +1785,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(&mfp);
 
         if (compare_emf_bits(hemf, EMF_LINETO_MM_ANISOTROPIC_BITS, sizeof(EMF_LINETO_MM_ANISOTROPIC_BITS),
-                             "emf_LineTo MM_ANISOTROPIC", TRUE, TRUE) != 0)
+                             "emf_LineTo MM_ANISOTROPIC", TRUE, FALSE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo MM_ANISOTROPIC");
             dump_emf_records(hemf, "emf_LineTo MM_ANISOTROPIC");
@@ -1810,7 +1810,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(&mfp);
 
         if (compare_emf_bits(hemf, EMF_LINETO_MM_TEXT_BITS, sizeof(EMF_LINETO_MM_TEXT_BITS),
-                             "emf_LineTo MM_TEXT", TRUE, TRUE) != 0)
+                             "emf_LineTo MM_TEXT", TRUE, FALSE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo MM_TEXT");
             dump_emf_records(hemf, "emf_LineTo MM_TEXT");
@@ -1830,7 +1830,7 @@ static void test_mf_conversions(void)
         hemf = create_converted_emf(NULL);
 
         if (compare_emf_bits(hemf, EMF_LINETO_BITS, sizeof(EMF_LINETO_BITS),
-                             "emf_LineTo NULL", TRUE, TRUE) != 0)
+                             "emf_LineTo NULL", TRUE, FALSE) != 0)
         {
             dump_emf_bits(hemf, "emf_LineTo NULL");
             dump_emf_records(hemf, "emf_LineTo NULL");

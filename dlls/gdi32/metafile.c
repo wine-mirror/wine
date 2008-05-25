@@ -396,6 +396,8 @@ BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     HPEN hPen;
     HBRUSH hBrush;
     HFONT hFont;
+    HPALETTE hPal;
+    HRGN hRgn;
     BOOL loaded = FALSE;
 
     if (!mh) return FALSE;
@@ -405,10 +407,18 @@ BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 	loaded = TRUE;
     }
 
-    /* save the current pen, brush and font */
+    /* save DC */
     hPen = GetCurrentObject(hdc, OBJ_PEN);
     hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
     hFont = GetCurrentObject(hdc, OBJ_FONT);
+    hPal = GetCurrentObject(hdc, OBJ_PAL);
+
+    hRgn = CreateRectRgn(0, 0, 0, 0);
+    if (!GetClipRgn(hdc, hRgn))
+    {
+        DeleteObject(hRgn);
+        hRgn = 0;
+    }
 
     /* create the handle table */
     ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -436,9 +446,12 @@ BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
 	PlayMetaFileRecord( hdc, ht, mr, mh->mtNoObjects );
     }
 
-    SelectObject(hdc, hBrush);
+    /* restore DC */
     SelectObject(hdc, hPen);
-    SelectObject(hdc, hFont);
+    SelectObject(hdc, hBrush);
+    SelectPalette(hdc, hPal, FALSE);
+    ExtSelectClipRgn(hdc, hRgn, RGN_COPY);
+    DeleteObject(hRgn);
 
     /* free objects in handle table */
     for(i = 0; i < mh->mtNoObjects; i++)

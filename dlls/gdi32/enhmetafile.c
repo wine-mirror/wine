@@ -2257,6 +2257,7 @@ BOOL WINAPI EnumEnhMetaFile(
     HPEN hPen = NULL;
     HBRUSH hBrush = NULL;
     HFONT hFont = NULL;
+    HRGN hRgn = NULL;
     enum_emh_data *info;
     SIZE vp_size, win_size;
     POINT vp_org, win_org;
@@ -2311,10 +2312,17 @@ BOOL WINAPI EnumEnhMetaFile(
         GetWindowOrgEx(hdc, &win_org);
         mapMode = GetMapMode(hdc);
 
-	/* save the current pen, brush and font */
+	/* save DC */
 	hPen = GetCurrentObject(hdc, OBJ_PEN);
 	hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
 	hFont = GetCurrentObject(hdc, OBJ_FONT);
+
+        hRgn = CreateRectRgn(0, 0, 0, 0);
+        if (!GetClipRgn(hdc, hRgn))
+        {
+            DeleteObject(hRgn);
+            hRgn = 0;
+        }
 
         old_text_color = SetTextColor(hdc, RGB(0,0,0));
         old_bk_color = SetBkColor(hdc, RGB(0xff, 0xff, 0xff));
@@ -2410,10 +2418,12 @@ BOOL WINAPI EnumEnhMetaFile(
         SetBkColor(hdc, old_bk_color);
         SetTextColor(hdc, old_text_color);
 
-	/* restore pen, brush and font */
+	/* restore DC */
 	SelectObject(hdc, hBrush);
 	SelectObject(hdc, hPen);
 	SelectObject(hdc, hFont);
+        ExtSelectClipRgn(hdc, hRgn, RGN_COPY);
+        DeleteObject(hRgn);
 
 	SetWorldTransform(hdc, &savedXform);
 	if (savedMode)
@@ -2673,9 +2683,8 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
     HENHMETAFILE ret = NULL;
     HDC hdc = NULL, hdcdisp = NULL;
     RECT rc, *prcFrame = NULL;
-    gdi_mf_comment *mfcomment;
-    UINT mfcomment_size;
     LONG mm, xExt, yExt;
+    INT horzsize, vertsize, horzres, vertres;
 
     TRACE("(%d, %p, %p, %p)\n", cbBuffer, lpbBuffer, hdcRef, lpmfp);
 
@@ -2736,49 +2745,49 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
      * Write the original METAFILE into the enhanced metafile.
      * It is encapsulated in a GDICOMMENT_WINDOWS_METAFILE record.
      */
-    mfcomment_size = sizeof (gdi_mf_comment) + cbBuffer;
-    mfcomment = HeapAlloc(GetProcessHeap(), 0, mfcomment_size);
-    if(mfcomment)
-    {
-        mfcomment->ident = GDICOMMENT_IDENTIFIER;
-        mfcomment->iComment = GDICOMMENT_WINDOWS_METAFILE;
-        mfcomment->nVersion = 0x00000300;
-        mfcomment->nChecksum = 0; /* FIXME */
-        mfcomment->fFlags = 0;
-        mfcomment->cbWinMetaFile = cbBuffer;
-        memcpy(&mfcomment[1], lpbBuffer, cbBuffer);
-        GdiComment(hdc, mfcomment_size, (BYTE*) mfcomment);
-        HeapFree(GetProcessHeap(), 0, mfcomment);
-    }
-
     if (mm != MM_TEXT)
-        SetMapMode(hdc, mm);
-
-    if (mm == MM_ISOTROPIC || mm == MM_ANISOTROPIC)
     {
-        INT horzsize, vertsize, horzres, vertres;
+        gdi_mf_comment *mfcomment;
+        UINT mfcomment_size;
 
-        horzsize = GetDeviceCaps(hdcRef, HORZSIZE);
-        vertsize = GetDeviceCaps(hdcRef, VERTSIZE);
-        horzres = GetDeviceCaps(hdcRef, HORZRES);
-        vertres = GetDeviceCaps(hdcRef, VERTRES);
-
-        if (!xExt || !yExt)
+        mfcomment_size = sizeof (gdi_mf_comment) + cbBuffer;
+        mfcomment = HeapAlloc(GetProcessHeap(), 0, mfcomment_size);
+        if (mfcomment)
         {
-            /* Use the whole device surface */
-           xExt = horzres;
-           yExt = vertres;
+            mfcomment->ident = GDICOMMENT_IDENTIFIER;
+            mfcomment->iComment = GDICOMMENT_WINDOWS_METAFILE;
+            mfcomment->nVersion = 0x00000300;
+            mfcomment->nChecksum = 0; /* FIXME */
+            mfcomment->fFlags = 0;
+            mfcomment->cbWinMetaFile = cbBuffer;
+            memcpy(&mfcomment[1], lpbBuffer, cbBuffer);
+            GdiComment(hdc, mfcomment_size, (BYTE*) mfcomment);
+            HeapFree(GetProcessHeap(), 0, mfcomment);
         }
-        else
-        {
-            xExt = MulDiv(xExt, horzres, 100 * horzsize);
-            yExt = MulDiv(yExt, vertres, 100 * vertsize);
-        }
-
-        /* set the initial viewport:window ratio as 1:1 */
-        SetViewportExtEx(hdc, xExt, yExt, NULL);
-        SetWindowExtEx(hdc,   xExt, yExt, NULL);
+        SetMapMode(hdc, mm);
     }
+
+
+    horzsize = GetDeviceCaps(hdcRef, HORZSIZE);
+    vertsize = GetDeviceCaps(hdcRef, VERTSIZE);
+    horzres = GetDeviceCaps(hdcRef, HORZRES);
+    vertres = GetDeviceCaps(hdcRef, VERTRES);
+
+    if (!xExt || !yExt)
+    {
+        /* Use the whole device surface */
+       xExt = horzres;
+       yExt = vertres;
+    }
+    else
+    {
+        xExt = MulDiv(xExt, horzres, 100 * horzsize);
+        yExt = MulDiv(yExt, vertres, 100 * vertsize);
+    }
+
+    /* set the initial viewport:window ratio as 1:1 */
+    SetViewportExtEx(hdc, xExt, yExt, NULL);
+    SetWindowExtEx(hdc,   xExt, yExt, NULL);
 
     PlayMetaFile(hdc, hmf);
 
