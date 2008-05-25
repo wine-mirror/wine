@@ -41,50 +41,50 @@ BEGIN
                                                 ID_REGISTRY_DISCONNECTNETWORKREGISTRY
         , GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "&Drucken\tStrg+P",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM "&Drucken\tStrg+P",               ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Beenden",                       ID_REGISTRY_EXIT
     END
     POPUP "&Bearbeiten"
     BEGIN
-        MENUITEM "&Ändern",                     ID_EDIT_MODIFY
+        MENUITEM "&Ändern",                        ID_EDIT_MODIFY
         MENUITEM SEPARATOR
         POPUP "&Neu"
         BEGIN
-            MENUITEM "&Schlüssel",                        ID_EDIT_NEW_KEY
+            MENUITEM "&Schlüssel",                 ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
             MENUITEM "&Zeichenfolge",              ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binärwert",                 ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "&DWORD Wert",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&DWORD-Wert",                ID_EDIT_NEW_DWORDVALUE
             MENUITEM "&Mehrteilige Zeichenfolge",  ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Löschen\tEntf",                ID_EDIT_DELETE
-        MENUITEM "&Umbenennen",                     ID_EDIT_RENAME
+        MENUITEM "&Löschen\tEntf",                 ID_EDIT_DELETE
+        MENUITEM "&Umbenennen",                    ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "Schlüsselname &kopieren",              ID_EDIT_COPYKEYNAME
+        MENUITEM "Schlüsselnamen &kopieren",       ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Suchen\tStrg+F",               ID_EDIT_FIND, GRAYED
-        MENUITEM "&Nächstes finden\tF3",              ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "&Suchen\tStrg+F",                ID_EDIT_FIND, GRAYED
+        MENUITEM "&Weitersuchen\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&Ansicht"
     BEGIN
-        MENUITEM "Status&leiste",                 ID_VIEW_STATUSBAR
+        MENUITEM "Status&leiste",                  ID_VIEW_STATUSBAR
         MENUITEM SEPARATOR
-        MENUITEM "&Trennen",                      ID_VIEW_SPLIT
+        MENUITEM "&Trennen",                       ID_VIEW_SPLIT
         MENUITEM SEPARATOR
-        MENUITEM "&Aktualisieren\tF5",                ID_VIEW_REFRESH
+        MENUITEM "&Aktualisieren\tF5",             ID_VIEW_REFRESH
     END
     POPUP "&Favoriten"
     BEGIN
-        MENUITEM "Zu den Favoriten &hinzufügen",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "Von den Favoriten &löschen",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "Zu den Favoriten &hinzufügen",   ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Von den Favoriten &löschen",     ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Hilfe"
     BEGIN
-        MENUITEM "&Hilfethemen\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM "&Hilfethemen\tF1",               ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&Über Registry Editor",      ID_HELP_ABOUT
+        MENUITEM "&Über Registry Editor",          ID_HELP_ABOUT
     END
 END
 
@@ -92,30 +92,31 @@ IDR_POPUP_MENUS MENU DISCARDABLE
 BEGIN
   POPUP ""
   BEGIN
-	MENUITEM "&Ändern",                     ID_EDIT_MODIFY
-	MENUITEM "Binäre Daten ändern",          ID_EDIT_MODIFY_BIN
+	MENUITEM "&Ändern",                        ID_EDIT_MODIFY
+	MENUITEM "Binäre Daten ändern",            ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
-	MENUITEM "&Löschen\tEntf",                ID_EDIT_DELETE
-	MENUITEM "&Umbennenen",                     ID_EDIT_RENAME
+	MENUITEM "&Löschen\tEntf",                 ID_EDIT_DELETE
+	MENUITEM "&Umbennenen",                    ID_EDIT_RENAME
   END
   POPUP ""
   BEGIN
         POPUP "&Neu"
         BEGIN
-            MENUITEM "&Schlüssel",                  ID_EDIT_NEW_KEY
+            MENUITEM "&Schlüssel",                 ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "&Zeichenfolge",               ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Binärwert",                  ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "&DWORD Wert",                 ID_EDIT_NEW_DWORDVALUE
-            MENUITEM "&Mehrteilige Zeichenfolge",   ID_EDIT_NEW_MULTI_STRINGVALUE
+            MENUITEM "&Zeichenfolge",              ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binärwert",                 ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD Wert",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Mehrteilige Zeichenfolge",  ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Löschen\tEntf",                ID_EDIT_DELETE
-        MENUITEM "&Umbenennen",                     ID_EDIT_RENAME
+        MENUITEM "&Löschen\tEntf",                 ID_EDIT_DELETE
+        MENUITEM "&Umbenennen",                    ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "Schlüsselname &kopieren",              ID_EDIT_COPYKEYNAME
+        MENUITEM "&Exportieren...",                ID_EDIT_EXPORT
+        MENUITEM "Schlüsselnamen &kopieren",       ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Suchen\tStrg+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "&Suchen\tStrg+F",                ID_EDIT_FIND, GRAYED
   END
 END
 
@@ -188,7 +189,7 @@ END
 
 IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "DWORD Wert editieren"
+CAPTION "DWORD-Wert editieren"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Name:",IDC_STATIC,5,5,119,8
@@ -241,17 +242,17 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APP_TITLE           "Registry Editor"
+    IDS_APP_TITLE           "Registry-Editor"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_REGISTRY_MENU        "Befehle für das Bearbeiten der ganzen Registry"
-    ID_EDIT_MENU            "Befehle für um Schlüssel oder Werte zu ändern"
-    ID_VIEW_MENU            "Befehle um das Fenster anzupassen"
+    ID_REGISTRY_MENU        "Befehle zum Bearbeiten der ganzen Registry"
+    ID_EDIT_MENU            "Befehle zum Ändern von Schlüsseln oder Werten"
+    ID_VIEW_MENU            "Befehle zum Anpassen des Fensters"
     ID_FAVORITES_MENU       "Befehle für die Favoriten"
-    ID_HELP_MENU            "Befehle um die Hilfe oder Informationen über das Programm anzuzeigen"
-    ID_EDIT_NEW_MENU        "Befehle für das Erstellen von neuen Schlüsseln oder Daten"
+    ID_HELP_MENU            "Befehle zum Anzeigen von Hilfe oder Informationen über das Programm"
+    ID_EDIT_NEW_MENU        "Befehle zum Erstellen von neuen Schlüsseln oder Daten"
 END
 
 STRINGTABLE DISCARDABLE
@@ -260,13 +261,13 @@ BEGIN
     ID_EDIT_NEW_KEY         "Fügt einen neuen Schlüssel hinzu"
     ID_EDIT_NEW_STRINGVALUE "Fügt eine neue Zeichenfolge hinzu "
     ID_EDIT_NEW_BINARYVALUE "Fügt einen neuen Binärwert hinzu"
-    ID_EDIT_NEW_DWORDVALUE  "Fügt einen neuen DWORD Wert hinzu"
+    ID_EDIT_NEW_DWORDVALUE  "Fügt einen neuen DWORD-Wert hinzu"
     ID_EDIT_NEW_MULTI_STRINGVALUE "Fügt eine neue mehrteilige Zeichenfolge hinzu"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importiert eine Textdatei in die Registry"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exportiert Teile oder die ganze Registry in eine Textdatei"
     ID_REGISTRY_CONNECTNETWORKREGISTRY
-                            "Verbindet zu einer Registry eines Fremdcomputers"
+                            "Verbindet zu der Registry eines Fremdcomputers"
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
                             "Trennt die Verbindung zu der Registry eines Fremdcomputers"
     ID_REGISTRY_PRINT       "Druckt Teile oder die gesamte Registry aus"
@@ -276,7 +277,7 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_REGISTRY_EXIT        "Beendet den Registry Editor"
+    ID_REGISTRY_EXIT        "Beendet den Registry-Editor"
     ID_FAVORITES_ADDTOFAVORITES "Fügt Schlüssel zu den Favoriten hinzu"
     ID_FAVORITES_REMOVEFAVORITE "Löscht Schlüssel von den Favoriten"
     ID_VIEW_STATUSBAR       "Zeigt oder versteckt die Statusleiste"
