@@ -5802,6 +5802,8 @@ static void testImportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO info)
     BOOL ret;
     HCRYPTKEY key;
     PCCERT_CONTEXT context;
+    DWORD dwSize;
+    ALG_ID ai;
 
     /* These crash
     ret = CryptImportPublicKeyInfoEx(0, 0, NULL, 0, 0, NULL, NULL);
@@ -5820,9 +5822,37 @@ static void testImportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO info)
      &key);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+
+    /* Export key with standard algorithm (CALG_RSA_KEYX) */
     ret = CryptImportPublicKeyInfoEx(csp, X509_ASN_ENCODING, info, 0, 0, NULL,
      &key);
     ok(ret, "CryptImportPublicKeyInfoEx failed: %08x\n", GetLastError());
+
+    dwSize = sizeof(ai);
+    CryptGetKeyParam(key, KP_ALGID, (LPVOID)&ai, &dwSize, 0);
+    ok(ret, "CryptGetKeyParam failed: %08x\n", GetLastError());
+    if(ret)
+    {
+      ok(dwSize == sizeof(ai), "CryptGetKeyParam returned size %d\n",dwSize);
+      ok(ai == CALG_RSA_KEYX, "Default ALG_ID is %04x (expected CALG_RSA_KEYX)\n", ai);
+    }
+
+    CryptDestroyKey(key);
+
+    /* Repeat with forced algorithm */
+    ret = CryptImportPublicKeyInfoEx(csp, X509_ASN_ENCODING, info, CALG_RSA_SIGN, 0, NULL,
+     &key);
+    ok(ret, "CryptImportPublicKeyInfoEx failed: %08x\n", GetLastError());
+
+    dwSize = sizeof(ai);
+    CryptGetKeyParam(key, KP_ALGID, (LPVOID)&ai, &dwSize, 0);
+    ok(ret, "CryptGetKeyParam failed: %08x\n", GetLastError());
+    if(ret)
+    {
+      ok(dwSize == sizeof(ai), "CryptGetKeyParam returned size %d\n",dwSize);
+      ok(ai == CALG_RSA_SIGN, "ALG_ID is %04x (expected CALG_RSA_SIGN)\n", ai);
+    }
+
     CryptDestroyKey(key);
 
     /* Test importing a public key from a certificate context */

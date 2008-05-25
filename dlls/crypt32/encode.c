@@ -3918,8 +3918,12 @@ static BOOL WINAPI CRYPT_ImportRsaPublicKeyInfoEx(HCRYPTPROV hCryptProv,
              pInfo->PublicKey.pbData, pInfo->PublicKey.cbData, 0, pubKey,
              &pubKeySize);
             if (ret)
+            {
+                if(aiKeyAlg)
+                  ((BLOBHEADER*)pubKey)->aiKeyAlg = aiKeyAlg;
                 ret = CryptImportKey(hCryptProv, pubKey, pubKeySize, 0, 0,
                  phKey);
+            }
             CryptMemFree(pubKey);
         }
         else
