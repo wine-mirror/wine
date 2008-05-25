@@ -99,6 +99,7 @@ DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_0);
 DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_1);
 DEFINE_EXPECT(Exec_ShellDocView_37);
 DEFINE_EXPECT(Exec_ShellDocView_84);
+DEFINE_EXPECT(Exec_ShellDocView_103);
 DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(Exec_HTTPEQUIV);
@@ -2170,12 +2171,21 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 84:
             CHECK_EXPECT2(Exec_ShellDocView_84);
 
-            ok(pvaIn == NULL, "pvaIn == NULL\n");
-            ok(pvaOut != NULL, "pvaOut=%p, expected NULL\n", pvaOut);
+            ok(pvaIn == NULL, "pvaIn != NULL\n");
+            ok(pvaOut != NULL, "pvaOut == NULL\n");
             if(pvaIn)
                 ok(V_VT(pvaOut) == VT_EMPTY, "V_VT(pvaOut)=%d\n", V_VT(pvaOut));
 
             return E_NOTIMPL;
+
+        case 103:
+            CHECK_EXPECT2(Exec_ShellDocView_103);
+
+            ok(pvaIn == NULL, "pvaIn != NULL\n");
+            ok(pvaOut == NULL, "pvaOut != NULL\n");
+
+            return E_NOTIMPL;
+
         default:
             ok(0, "unexpected command %d\n", nCmdID);
             return E_FAIL;
@@ -2705,6 +2715,7 @@ static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_SETPROGRESSPOS);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
+    SET_EXPECT(Exec_ShellDocView_103);
     SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
     SET_EXPECT(Exec_HTTPEQUIV_DONE);
     expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
@@ -2751,6 +2762,7 @@ static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+    SET_CALLED(Exec_ShellDocView_103);
     CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
     CHECK_CALLED(Exec_HTTPEQUIV_DONE);
 
