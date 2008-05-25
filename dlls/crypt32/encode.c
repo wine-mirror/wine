@@ -2540,8 +2540,8 @@ static BOOL WINAPI CRYPT_AsnEncodeInteger(DWORD dwCertEncodingType,
 
     __TRY
     {
-        DWORD significantBytes, lenBytes;
-        BYTE padByte = 0, bytesNeeded;
+        DWORD significantBytes, lenBytes, bytesNeeded;
+        BYTE padByte = 0;
         BOOL pad = FALSE;
         const CRYPT_INTEGER_BLOB *blob =
          (const CRYPT_INTEGER_BLOB *)pvStructInfo;
@@ -2629,8 +2629,7 @@ static BOOL WINAPI CRYPT_AsnEncodeUnsignedInteger(DWORD dwCertEncodingType,
 
     __TRY
     {
-        DWORD significantBytes, lenBytes;
-        BYTE bytesNeeded;
+        DWORD significantBytes, lenBytes, bytesNeeded;
         BOOL pad = FALSE;
         const CRYPT_INTEGER_BLOB *blob =
          (const CRYPT_INTEGER_BLOB *)pvStructInfo;
