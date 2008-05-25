@@ -1679,7 +1679,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
         symt_add_function_point(ctx->module, subpgm.func, SymTagCustom,
                                 &subpgm.frame, NULL);
     }
-    symt_normalize_function(subpgm.ctx->module, subpgm.func);
+    if (subpgm.func) symt_normalize_function(subpgm.ctx->module, subpgm.func);
 
     return di->symt;
 }
