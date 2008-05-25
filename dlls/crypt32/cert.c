@@ -809,7 +809,7 @@ DWORD WINAPI CertGetPublicKeyLength(DWORD dwCertEncodingType,
 
     TRACE("(%08x, %p)\n", dwCertEncodingType, pPublicKey);
 
-    if (dwCertEncodingType != X509_ASN_ENCODING)
+    if (GET_CERT_ENCODING_TYPE(dwCertEncodingType) != X509_ASN_ENCODING)
     {
         SetLastError(ERROR_FILE_NOT_FOUND);
         return 0;

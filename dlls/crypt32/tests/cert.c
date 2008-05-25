@@ -2958,6 +2958,11 @@ static void testGetPublicKeyLength(void)
     SetLastError(0xdeadbeef);
     ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
     ok(ret == 56, "Expected length 56, got %d\n", ret);
+    /* With the RSA OID and a message encoding */
+    info.Algorithm.pszObjId = oid_rsa_rsa;
+    SetLastError(0xdeadbeef);
+    ret = CertGetPublicKeyLength(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, &info);
+    ok(ret == 56, "Expected length 56, got %d\n", ret);
 }
 
 START_TEST(cert)
