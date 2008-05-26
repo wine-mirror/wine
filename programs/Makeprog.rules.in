@@ -31,7 +31,7 @@ $(BASEMODULE): $(WINEWRAPPER)
 # Rules for .exe main module
 
 $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
-	$(CC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ $(LIBWINE) $(ALL_LIBS)
+	$(CC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-L$(DLLDIR)/%) $(DELAYIMPORTS:%=-L$(DLLDIR)/%) $(LIBWINE) $(ALL_LIBS)
 
 # Rules for testing
 
