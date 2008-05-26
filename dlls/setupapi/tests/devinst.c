@@ -884,10 +884,12 @@ static void testDevRegKey(void)
          DIREG_DRV, KEY_READ);
         ok(key != INVALID_HANDLE_VALUE, "SetupDiOpenDevRegKey failed: %08x\n",
          GetLastError());
+        pSetupDiDestroyDeviceInfoList(set);
+
+        /* Cleanup */
         ret = remove_device();
         todo_wine
         ok(ret, "Expected the device to be removed: %08x\n", GetLastError());
-        pSetupDiDestroyDeviceInfoList(set);
 
         /* FIXME: Only do the RegDeleteKey, once Wine is fixed */
         if (!ret)
@@ -918,6 +920,16 @@ static void testRegisterAndGetDetail(void)
     SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
     SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData), { 0 } };
     DWORD dwSize = 0;
+    static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'E','n','u','m','\\','R','o','o','t','\\',
+     'L','E','G','A','C','Y','_','B','O','G','U','S',0};
+    static const WCHAR devclass[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'C','o','n','t','r','o','l','\\','D','e','v','i','c','e','C','l','a','s','s','e','s','\\',
+     '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
+     '1','1','d','b','-','b','7','0','4','-',
+     '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
 
     SetLastError(0xdeadbeef);
     set = pSetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_ALLCLASSES);
@@ -974,6 +986,28 @@ static void testRegisterAndGetDetail(void)
     }
 
     pSetupDiDestroyDeviceInfoList(set);
+
+    /* Cleanup */
+    ret = remove_device();
+    todo_wine
+    ok(ret, "Expected the device to be removed: %08x\n", GetLastError());
+
+    /* FIXME: Only do the RegDeleteKey, once Wine is fixed */
+    if (!ret)
+    {
+        /* Wine doesn't delete the information currently */
+        trace("We are most likely on Wine\n");
+        devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
+        devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, devclass);
+    }
+    else
+    {
+        /* There should only be a class key entry, so a simple
+         * RegDeleteKey should work
+         */
+        ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, devclass),
+         "Couldn't delete classkey\n");
+    }
 }
 
 static void testDeviceRegistryPropertyA()
