@@ -57,6 +57,9 @@ static BOOL     (WINAPI *pSetupDiSetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVIN
 static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyA)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
 
+/* This is a unique guid for testing purposes */
+static GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
+
 static void init_function_pointers(void)
 {
     hSetupAPI = GetModuleHandleA("setupapi.dll");
@@ -194,9 +197,6 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
 
 static void test_SetupDiOpenClassRegKeyExA(void)
 {
-    /* This is a unique guid for testing purposes */
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     static const CHAR guidString[] = "{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
     HKEY hkey;
 
@@ -340,8 +340,6 @@ static void testCreateDeviceInfo(void)
 {
     BOOL ret;
     HDEVINFO set;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiEnumDeviceInfo ||
      !pSetupDiDestroyDeviceInfoList || !pSetupDiCreateDeviceInfoA)
@@ -424,8 +422,6 @@ static void testGetDeviceInstanceId(void)
 {
     BOOL ret;
     HDEVINFO set;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     SP_DEVINFO_DATA devInfo = { 0 };
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
@@ -494,8 +490,6 @@ static void testGetDeviceInstanceId(void)
 static void testRegisterDeviceInfo(void)
 {
     BOOL ret;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     HDEVINFO set;
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
@@ -550,8 +544,6 @@ static void testRegisterDeviceInfo(void)
 static void testCreateDeviceInterface(void)
 {
     BOOL ret;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     HDEVINFO set;
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
@@ -623,8 +615,6 @@ static void testCreateDeviceInterface(void)
 static void testGetDeviceInterfaceDetail(void)
 {
     BOOL ret;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     HDEVINFO set;
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
@@ -736,8 +726,6 @@ static void testDevRegKey(void)
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
     BOOL ret;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     HDEVINFO set;
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
@@ -837,8 +825,6 @@ static void testRegisterAndGetDetail(void)
 {
     HDEVINFO set;
     BOOL ret;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
     SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData), { 0 } };
     DWORD dwSize = 0;
@@ -899,8 +885,6 @@ static void testRegisterAndGetDetail(void)
 static void testDeviceRegistryPropertyA()
 {
     HDEVINFO set;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
     CHAR devName[] = "LEGACY_BOGUS";
     CHAR friendlyName[] = "Bogus";
@@ -990,8 +974,6 @@ static void testDeviceRegistryPropertyA()
 static void testDeviceRegistryPropertyW()
 {
     HDEVINFO set;
-    GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,
-        0x00,0x11,0x95,0x5c,0x2b,0xdb}};
     SP_DEVINFO_DATA devInfo = { sizeof(SP_DEVINFO_DATA), { 0 } };
     WCHAR devName[] = {'L','E','G','A','C','Y','_','B','O','G','U','S',0};
     WCHAR friendlyName[] = {'B','o','g','u','s',0};
