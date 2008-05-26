@@ -75,6 +75,8 @@ extern "C" {
 
 /* protocol types */
 
+#define FROM_PROTOCOL_INFO       (-1)
+
 #ifndef USE_WS_PREFIX
 #define SOCK_STREAM                1
 #define SOCK_DGRAM                 2

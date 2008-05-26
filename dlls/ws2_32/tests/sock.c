@@ -1115,6 +1115,47 @@ static void test_getservbyname(void)
     }
 }
 
+static void test_WSASocket(void)
+{
+    SOCKET sock = INVALID_SOCKET;
+    WSAPROTOCOL_INFOA *pi;
+    int providers[] = {6, 0};
+    int ret, err;
+    UINT pi_size;
+
+    ret = WSAEnumProtocolsA(providers, NULL, &pi_size);
+    ok(ret == SOCKET_ERROR, "WSAEnumProtocolsA({6,0}, NULL, 0) returned %d\n",
+            ret);
+    err = WSAGetLastError();
+    ok(err == WSAENOBUFS, "WSAEnumProtocolsA error is %d, not WSAENOBUFS(%d)\n",
+            err, WSAENOBUFS);
+
+    pi = HeapAlloc(GetProcessHeap(), 0, pi_size);
+    ok(pi != NULL, "Failed to allocate memory\n");
+    if (pi == NULL) {
+        skip("Can't continue without memory.\n");
+        return;
+    }
+
+    ret = WSAEnumProtocolsA(providers, pi, &pi_size);
+    ok(ret != SOCKET_ERROR, "WSAEnumProtocolsA failed, last error is %d\n",
+            WSAGetLastError());
+
+    if (ret == 0) {
+        skip("No protocols enumerated.\n");
+        HeapFree(GetProcessHeap(), 0, pi);
+        return;
+    }
+
+    sock = WSASocketA(FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO,
+                      FROM_PROTOCOL_INFO, &pi[0], 0, 0);
+    ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
+            WSAGetLastError());
+
+    closesocket(sock);
+    HeapFree(GetProcessHeap(), 0, pi);
+}
+
 static void test_WSAAddressToStringA(void)
 {
     INT ret;
@@ -2054,6 +2095,7 @@ START_TEST( sock )
     test_UDP();
 
     test_getservbyname();
+    test_WSASocket();
 
     test_WSAAddressToStringA();
     test_WSAAddressToStringW();
