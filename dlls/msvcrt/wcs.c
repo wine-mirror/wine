@@ -979,27 +979,21 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
 {
     INT size = 0;
 
-    if(!wcDest)
+    if(!wcDest || !numElement)
         return MSVCRT_EINVAL;
+
+    wcDest[0] = 0;
 
     if(!wcSrc)
     {
-        wcDest[0] = 0;
         return MSVCRT_EINVAL;
-    }
-
-    if(numElement == 0)
-    {
-        wcDest[0] = 0;
-        return MSVCRT_ERANGE;
     }
 
     size = strlenW(wcSrc) + 1;
 
     if(size > numElement)
     {
-        wcDest[0] = 0;
-        return MSVCRT_EINVAL;
+        return MSVCRT_ERANGE;
     }
 
     if(size > numElement)
