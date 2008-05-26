@@ -1046,6 +1046,10 @@ static void testDeviceRegistryPropertyA()
     DWORD size;
     DWORD regType;
     BOOL ret;
+    LONG res;
+    HKEY key;
+    static const CHAR bogus[] =
+     "System\\CurrentControlSet\\Enum\\Root\\LEGACY_BOGUS";
 
     SetLastError(0xdeadbeef);
     set = pSetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
@@ -1122,6 +1126,17 @@ static void testDeviceRegistryPropertyA()
     ok(!ret && GetLastError() == ERROR_INVALID_DATA,
      "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
     pSetupDiDestroyDeviceInfoList(set);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, bogus, &key);
+    todo_wine
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
+    /* FIXME: Remove when Wine is fixed */
+    if (res == ERROR_SUCCESS)
+    {
+        /* Wine doesn't delete the information currently */
+        trace("We are most likely on Wine\n");
+        RegDeleteKeyA(HKEY_LOCAL_MACHINE, bogus);
+    }
 }
 
 static void testDeviceRegistryPropertyW()
@@ -1135,6 +1150,12 @@ static void testDeviceRegistryPropertyW()
     DWORD size;
     DWORD regType;
     BOOL ret;
+    LONG res;
+    HKEY key;
+    static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'E','n','u','m','\\','R','o','o','t','\\',
+     'L','E','G','A','C','Y','_','B','O','G','U','S',0};
 
     SetLastError(0xdeadbeef);
     set = pSetupDiGetClassDevsW(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
@@ -1216,6 +1237,17 @@ static void testDeviceRegistryPropertyW()
     ok(!ret && GetLastError() == ERROR_INVALID_DATA,
      "Expected ERROR_INVALID_DATA, got %08x\n", GetLastError());
     pSetupDiDestroyDeviceInfoList(set);
+
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
+    todo_wine
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
+    /* FIXME: Remove when Wine is fixed */
+    if (res == ERROR_SUCCESS)
+    {
+        /* Wine doesn't delete the information currently */
+        trace("We are most likely on Wine\n");
+        RegDeleteKeyW(HKEY_LOCAL_MACHINE, bogus);
+    }
 }
 
 START_TEST(devinst)
