@@ -2003,7 +2003,7 @@ static LPWSTR msi_get_disk_file_version( LPCWSTR filename )
 {
     static const WCHAR name_fmt[] =
         {'%','u','.','%','u','.','%','u','.','%','u',0};
-    static WCHAR name[] = {'\\',0};
+    static const WCHAR name[] = {'\\',0};
     VS_FIXEDFILEINFO *lpVer;
     WCHAR filever[0x100];
     LPVOID version;
