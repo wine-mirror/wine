@@ -2225,8 +2225,16 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     }
 
     if(IsEqualGUID(&CGID_DocHostCommandHandler, pguidCmdGroup)) {
-        ok(0, "unexpected cmd %d of CGID_DocHostCommandHandler\n", nCmdID);
-        return E_NOTIMPL;
+        switch (nCmdID) {
+        case OLECMDID_PAGEACTIONBLOCKED: /* win2k3 */
+            SET_EXPECT(SetStatusText);
+            ok(pvaIn == NULL, "pvaIn != NULL\n");
+            ok(pvaOut == NULL, "pvaOut != NULL\n");
+            return S_OK;
+        default:
+            ok(0, "unexpected command %d\n", nCmdID);
+            return E_FAIL;
+        }
     }
 
     ok(0, "unexpected pguidCmdGroup: %s\n", debugstr_guid(pguidCmdGroup));
