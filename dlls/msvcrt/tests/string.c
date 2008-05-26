@@ -589,8 +589,11 @@ static void test_wcscpy_s(void)
     /* Test invalid size */
     szDest[0] = 'A';
     ret = p_wcscpy_s(szDest, 0, szLongText);
-    ok(ret == ERANGE, "expected ERANGE got %d\n", ret);
-    ok(szDest[0] == 0, "szDest[0] not 0\n");
+    /* Later versions changed the return value for this case to EINVAL,
+     * and don't modify the result if the dest size is 0.
+     */
+    ok(ret == ERANGE || ret == EINVAL, "expected ERANGE/EINVAL got %d\n", ret);
+    ok(szDest[0] == 0 || ret == EINVAL, "szDest[0] not 0\n");
 
     /* Copy same buffer size */
     ret = p_wcscpy_s(szDest, 18, szLongText);
@@ -600,7 +603,7 @@ static void test_wcscpy_s(void)
     /* Copy smaller buffer size */
     szDest[0] = 'A';
     ret = p_wcscpy_s(szDestShort, 8, szLongText);
-    ok(ret == EINVAL, "expected EINVAL got %d\n", ret);
+    ok(ret == ERANGE || ret == EINVAL, "expected ERANGE/EINVAL got %d\n", ret);
     ok(szDestShort[0] == 0, "szDestShort[0] not 0\n");
 }
 
