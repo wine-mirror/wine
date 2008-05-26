@@ -643,6 +643,10 @@ static void test_I_RpcExceptionFilter(void)
             ok(retval == EXCEPTION_CONTINUE_SEARCH, "I_RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
                exception, EXCEPTION_CONTINUE_SEARCH, retval);
             break;
+        case STATUS_IN_PAGE_ERROR:
+        case STATUS_HANDLE_NOT_CLOSABLE:
+            trace("I_RpcExceptionFilter(0x%x) returned %d\n", exception, retval);
+            break;
         default:
             ok(retval == EXCEPTION_EXECUTE_HANDLER, "I_RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
                exception, EXCEPTION_EXECUTE_HANDLER, retval);
