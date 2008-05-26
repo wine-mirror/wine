@@ -727,6 +727,7 @@ static void testDevRegKey(void)
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
     BOOL ret;
     HDEVINFO set;
+    HKEY key = NULL;
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
      !pSetupDiCreateDeviceInfoA || !pSetupDiOpenDevRegKey ||
@@ -736,12 +737,25 @@ static void testDevRegKey(void)
         skip("No SetupDiOpenDevRegKey\n");
         return;
     }
+
+    /* Check if we are on win9x */
+    SetLastError(0xdeadbeef);
+    key = pSetupDiCreateDevRegKeyW(NULL, NULL, 0, 0, 0, NULL, NULL);
+    if (key == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("We are on win9x where the tests introduce issues\n");
+        return;
+    }
+    ok(key == INVALID_HANDLE_VALUE,
+     "Expected INVALID_HANDLE_VALUE, got %p\n", key);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+     "Expected ERROR_INVALID_HANDLE, got %08x\n", GetLastError());
+
     set = pSetupDiCreateDeviceInfoList(&guid, NULL);
     ok(set != NULL, "SetupDiCreateDeviceInfoList failed: %d\n", GetLastError());
     if (set)
     {
         SP_DEVINFO_DATA devInfo = { sizeof(devInfo), { 0 } };
-        HKEY key = INVALID_HANDLE_VALUE;
 
         ret = pSetupDiCreateDeviceInfoA(set, "ROOT\\LEGACY_BOGUS\\0000", &guid,
                 NULL, NULL, 0, &devInfo);
