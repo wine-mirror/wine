@@ -395,7 +395,7 @@ typedef UINT_PTR SOCKET;
  * This is used instead of -1, since the
  * SOCKET type is unsigned.
  */
-#define INVALID_SOCKET             (~0)
+#define INVALID_SOCKET             (SOCKET)(~0)
 #define SOCKET_ERROR               (-1)
 
 typedef struct WS(sockaddr)
