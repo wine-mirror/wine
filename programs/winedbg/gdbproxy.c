@@ -111,7 +111,12 @@ struct gdb_context
     unsigned long               wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
 };
 
-static struct be_process_io be_process_gdbproxy_io;
+static struct be_process_io be_process_gdbproxy_io =
+{
+    NULL, /* we shouldn't use close_process() in gdbproxy */
+    ReadProcessMemory,
+    WriteProcessMemory
+};
 
 /* =============================================== *
  *       B A S I C   M A N I P U L A T I O N S     *
@@ -2352,10 +2357,3 @@ int gdb_main(int argc, char* argv[])
 #endif
     return -1;
 }
-
-static struct be_process_io be_process_gdbproxy_io =
-{
-    NULL, /* we shouldn't use close_process() in gdbproxy */
-    ReadProcessMemory,
-    WriteProcessMemory
-};
