@@ -276,24 +276,30 @@ extract_test (struct wine_test *test, const char *dir, LPTSTR res_name)
 {
     BYTE* code;
     DWORD size;
-    FILE* fout;
     char *exepos;
+    HANDLE hfile;
+    DWORD written;
 
     code = extract_rcdata (res_name, TESTRES, &size);
     if (!code) report (R_FATAL, "Can't find test resource %s: %d",
                        res_name, GetLastError ());
     test->name = xstrdup( res_name );
-    test->exename = strmake (NULL, "%s/%s", dir, test->name);
+    test->exename = strmake (NULL, "%s\\%s", dir, test->name);
     exepos = strstr (test->name, testexe);
     if (!exepos) report (R_FATAL, "Not an .exe file: %s", test->name);
     *exepos = 0;
     test->name = xrealloc (test->name, exepos - test->name + 1);
     report (R_STEP, "Extracting: %s", test->name);
 
-    if (!(fout = fopen (test->exename, "wb")) ||
-        (fwrite (code, size, 1, fout) != 1) ||
-        fclose (fout)) report (R_FATAL, "Failed to write file %s.",
-                               test->exename);
+    hfile = CreateFileA(test->exename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hfile == INVALID_HANDLE_VALUE)
+        report (R_FATAL, "Failed to open file %s.", test->exename);
+
+    if (!WriteFile(hfile, code, size, &written, NULL))
+        report (R_FATAL, "Failed to write file %s.", test->exename);
+
+    CloseHandle(hfile);
 }
 
 /* Run a command for MS milliseconds.  If OUT != NULL, also redirect
