@@ -226,6 +226,8 @@ static void test_SetupDiOpenClassRegKeyExA(void)
         }
         else
             trace("failed to create registry key for test\n");
+
+        RegCloseKey(hkey);
     }
     else
         trace("failed to open classes key\n");
