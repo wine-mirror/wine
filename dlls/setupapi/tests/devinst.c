@@ -760,8 +760,9 @@ static void testDevRegKey(void)
         ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(NULL, NULL, 0, 0, 0, 0);
-        ok(key == INVALID_HANDLE_VALUE &&
-         GetLastError() == ERROR_INVALID_HANDLE,
+        ok(!key || key == INVALID_HANDLE_VALUE,
+         "Expected INVALID_HANDLE_VALUE or a NULL key (NT4)\n");
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
          "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(set, NULL, 0, 0, 0, 0);
