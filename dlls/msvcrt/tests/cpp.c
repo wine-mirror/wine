@@ -301,6 +301,7 @@ static void test_exception(void)
 
   /* Operator equals */
   memset(&e2, 0, sizeof(e2));
+  call_func1(pexception_default_ctor, &e2);
   pe = call_func2(pexception_opequals, &e2, &e);
   ok(e2.vtable != NULL, "Null exception vtable for e2\n");
   ok(e2.name && e2.name != e.name && !strcmp(e2.name, "An exception name"), "Bad exception name for e2\n");
@@ -425,6 +426,7 @@ static void test_bad_typeid(void)
 
   /* Operator equals */
   memset(&e2, 1, sizeof(e2));
+  call_func1(pexception_default_ctor, &e2);
   pe = call_func2(pbad_typeid_opequals, &e2, &e);
   ok(e2.vtable != NULL, "Null bad_typeid vtable for e2\n");
   ok(e2.name && e2.name != e.name && !strcmp(e2.name, "A bad_typeid name"), "Bad bad_typeid name for e2\n");
@@ -552,6 +554,7 @@ static void test_bad_cast(void)
 
   /* Operator equals */
   memset(&e2, 1, sizeof(e2));
+  call_func1(pexception_default_ctor, &e2);
   pe = call_func2(pbad_cast_opequals, &e2, &e);
   ok(e2.vtable != NULL, "Null bad_cast vtable for e2\n");
   ok(e2.name && e2.name != e.name && !strcmp(e2.name, "A bad_cast name"), "Bad bad_cast name for e2\n");
@@ -653,6 +656,7 @@ static void test___non_rtti_object(void)
 
   /* Operator equals */
   memset(&e2, 1, sizeof(e2));
+  call_func1(pexception_default_ctor, &e2);
   pe = call_func2(p__non_rtti_object_opequals, &e2, &e);
   ok(e2.vtable != NULL, "Null __non_rtti_object vtable for e2\n");
   ok(e2.name && e2.name != e.name && !strcmp(e2.name, "A __non_rtti_object name"), "Bad __non_rtti_object name for e2\n");
