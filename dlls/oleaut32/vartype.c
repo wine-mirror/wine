@@ -6529,7 +6529,7 @@ HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut)
     *pbstrOut = SysAllocString(cybuff);
   }
   else
-    *pbstrOut = SysAllocString(buff);
+    *pbstrOut = VARIANT_BstrReplaceDecimal(buff,lcid,dwFlags);
 
   return *pbstrOut ? S_OK : E_OUTOFMEMORY;
 }

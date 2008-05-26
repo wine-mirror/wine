@@ -498,6 +498,7 @@ static HRESULT (WINAPI *pVarBoolFromUI8)(ULONG64,VARIANT_BOOL*);
 
 static HRESULT (WINAPI *pVarBstrFromR4)(FLOAT,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDate)(DATE,LCID,ULONG,BSTR*);
+static HRESULT (WINAPI *pVarBstrFromCy)(CY,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDec)(DECIMAL*,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrCmp)(BSTR,BSTR,LCID,ULONG);
 
@@ -4800,6 +4801,68 @@ static void test_VarBstrFromDate(void)
   BSTR_DATE(2958465.0, "12/31/9999");
 }
 
+#define BSTR_CY(l, a, b, e) \
+  S(l).Lo = b; S(l).Hi = a; \
+  hres = VarBstrFromCy(l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
+  ok(hres == S_OK, "got hres 0x%08x\n", hres);\
+  if (hres== S_OK && bstr)\
+  {\
+    ok(lstrcmpW(bstr, e) == 0, "invalid number (got %s)\n", wtoascii(bstr));\
+  }
+
+static void test_VarBstrFromCy(void)
+{
+  LCID lcid;
+  HRESULT hres;
+  BSTR bstr = NULL;
+  CY l;
+
+  static const WCHAR szZero[] = {'0', '\0'};
+  static const WCHAR szOne[] = {'1', '\0'};
+  static const WCHAR szOnePointFive[] = {'1','.','5','\0'};
+  static const WCHAR szMinusOnePointFive[] = {'-','1','.','5','\0'};
+  static const WCHAR szBigNum1[] = {'4','2','9','4','9','6','.','7','2','9','5','\0'};    /* (1 << 32) - 1 / 1000 */
+  static const WCHAR szBigNum2[] = {'4','2','9','4','9','6','.','7','2','9','6','\0'};    /* (1 << 32) / 1000 */
+  static const WCHAR szBigNum3[] = {'9','2','2','3','3','7','2','0','3','6','8','5','4','7','7','.','5','8','0','7','\0'};    /* ((1 << 63) - 1)/10000 */
+
+  static const WCHAR szSmallNumber_English[] = {'0','.','0','0','0','9','\0'};
+  static const WCHAR szSmallNumber_Spanish[] = {'0',',','0','0','0','9','\0'};
+
+  CHECKPTR(VarBstrFromCy);
+  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+
+  /* check zero */
+  BSTR_CY(l, 0,0, szZero);
+
+  /* check one */
+  BSTR_CY(l, 0, 10000, szOne);
+
+  /* check one point five */
+  BSTR_CY(l, 0, 15000, szOnePointFive);
+
+  /* check minus one point five */
+  BSTR_CY(l, 0xffffffff, ((15000)^0xffffffff)+1, szMinusOnePointFive);
+
+  /* check bignum (1) */
+  BSTR_CY(l, 0, 0xffffffff, szBigNum1);
+
+  /* check bignum (2) */
+  BSTR_CY(l, 1,0, szBigNum2);
+
+  /* check bignum (3) */
+  BSTR_CY(l, 0x7fffffff,0xffffffff, szBigNum3);
+
+  /* check leading zeros and decimal sep. for English locale */
+  BSTR_CY(l, 0,9, szSmallNumber_English);
+
+  lcid = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT), SORT_DEFAULT);
+
+  /* check leading zeros and decimal sep. for Spanish locale */
+  BSTR_CY(l, 0,9, szSmallNumber_Spanish);
+}
+
+#undef BSTR_CY
+
 #define BSTR_DEC(l, a, b, c, d, e) \
   SETDEC(l, a,b,c,d);\
   hres = VarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
@@ -6042,6 +6105,7 @@ START_TEST(vartype)
 
   test_VarBstrFromR4();
   test_VarBstrFromDate();
+  test_VarBstrFromCy();
   test_VarBstrFromDec();
   test_VarBstrCmp();
   test_SysStringLen();
