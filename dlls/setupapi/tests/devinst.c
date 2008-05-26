@@ -643,6 +643,16 @@ static void testGetDeviceInterfaceDetail(void)
 {
     BOOL ret;
     HDEVINFO set;
+    static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'E','n','u','m','\\','R','o','o','t','\\',
+     'L','E','G','A','C','Y','_','B','O','G','U','S',0};
+    static const WCHAR devclass[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'C','o','n','t','r','o','l','\\','D','e','v','i','c','e','C','l','a','s','s','e','s','\\',
+     '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
+     '1','1','d','b','-','b','7','0','4','-',
+     '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
      !pSetupDiCreateDeviceInfoA || !pSetupDiCreateDeviceInterfaceA ||
@@ -663,6 +673,7 @@ static void testGetDeviceInterfaceDetail(void)
         SP_DEVICE_INTERFACE_DATA interfaceData = { sizeof(interfaceData),
             { 0 } };
         DWORD size = 0;
+        HKEY key;
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDeviceInterfaceDetailA(set, NULL, NULL, 0, NULL,
@@ -741,6 +752,24 @@ static void testGetDeviceInterfaceDetail(void)
             HeapFree(GetProcessHeap(), 0, buf);
         }
         pSetupDiDestroyDeviceInfoList(set);
+
+        /* Cleanup */
+        /* FIXME: On Wine we still have the bogus entry in Enum\Root and
+         * subkeys, as well as the deviceclass key with subkeys.
+         * Only do the RegDeleteKey, once Wine is fixed.
+         */
+        if (!RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key))
+        {
+            /* Wine doesn't delete the information currently */
+            trace("We are most likely on Wine\n");
+            devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, bogus);
+            devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, devclass);
+        }
+        else
+        {
+            ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, devclass),
+             "Couldn't delete deviceclass key\n");
+        }
     }
 }
 
@@ -791,10 +820,6 @@ static void testDevRegKey(void)
 
         /* The device info key shouldn't be there */
         res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
-        /* Due to old winetests we could have leftovers and hence the
-         * todo_wine.
-         */
-        todo_wine
         ok(res != ERROR_SUCCESS, "Expected key to not exist\n");
         RegCloseKey(key);
         /* Create the device information */
