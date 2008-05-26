@@ -23,7 +23,6 @@ C_SRCS = \
 	pread.c \
 	pwrite.c \
 	readlink.c \
-	sigsetjmp.c \
 	spawn.c \
 	statvfs.c \
 	strcasecmp.c \

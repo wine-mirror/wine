@@ -1049,17 +1049,6 @@ then
     AC_DEFINE(HAVE___VA_COPY, 1, [Define if we have __va_copy])
 fi
 
-dnl **** Check for sigsetjmp ****
-AC_CACHE_CHECK([for sigsetjmp], ac_cv_c_sigsetjmp,
- AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <setjmp.h>]], [[sigjmp_buf buf;
-    sigsetjmp( buf, 1 );
-    siglongjmp( buf, 1 );]])],[ac_cv_c_sigsetjmp="yes"],[ac_cv_c_sigsetjmp="no"])
- )
-if test "$ac_cv_c_sigsetjmp" = "yes"
-then
-    AC_DEFINE(HAVE_SIGSETJMP, 1, [Define to 1 if you have the sigsetjmp (and siglongjmp) function])
-fi
-
 dnl **** Check for pthread_rwlock_t ****
 AC_CHECK_TYPES([pthread_rwlock_t, pthread_rwlockattr_t],,,[#define _GNU_SOURCE
 #include <pthread.h>])

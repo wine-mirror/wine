@@ -323,13 +323,6 @@ ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset );
 int readlink( const char *path, char *buf, size_t size );
 #endif /* HAVE_READLINK */
 
-#ifndef HAVE_SIGSETJMP
-# include <setjmp.h>
-typedef jmp_buf sigjmp_buf;
-int sigsetjmp( sigjmp_buf buf, int savesigs );
-void siglongjmp( sigjmp_buf buf, int val );
-#endif /* HAVE_SIGSETJMP */
-
 #ifndef HAVE_STATVFS
 int statvfs( const char *path, struct statvfs *buf );
 #endif

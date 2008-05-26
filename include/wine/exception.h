@@ -82,6 +82,12 @@
 #define __attribute__(x) /* nothing */
 #endif
 
+#if defined(__MINGW32__) || defined(__CYGWIN__)
+#define sigjmp_buf jmp_buf
+#define sigsetjmp(buf,sigs) setjmp(buf)
+#define siglongjmp(buf,val) longjmp(buf,val)
+#endif
+
 #define __TRY \
     do { __WINE_FRAME __f; \
          int __first = 1; \

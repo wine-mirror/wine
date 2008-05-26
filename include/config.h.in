@@ -615,9 +615,6 @@
 /* Define to 1 if you have the `sigprocmask' function. */
 #undef HAVE_SIGPROCMASK
 
-/* Define to 1 if you have the sigsetjmp (and siglongjmp) function */
-#undef HAVE_SIGSETJMP
-
 /* Define to 1 if the system has the type `sigset_t'. */
 #undef HAVE_SIGSET_T
 
