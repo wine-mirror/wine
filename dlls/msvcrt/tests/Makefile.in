@@ -3,7 +3,8 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msvcrt.dll
-IMPORTS   = msvcrt kernel32
+APPMODE   = -mno-cygwin
+IMPORTS   = kernel32
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt -I$(SRCDIR)/..
 
