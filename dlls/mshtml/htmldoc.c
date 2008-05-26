@@ -1347,21 +1347,21 @@ static HRESULT WINAPI DocDispatchEx_QueryInterface(IDispatchEx *iface, REFIID ri
 {
     HTMLDocument *This = DISPEX_THIS(iface);
 
-    return IHTMLWindow2_QueryInterface(HTMLDOC(This), riid, ppv);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
 }
 
 static ULONG WINAPI DocDispatchEx_AddRef(IDispatchEx *iface)
 {
     HTMLDocument *This = DISPEX_THIS(iface);
 
-    return IHTMLWindow2_AddRef(HTMLDOC(This));
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
 }
 
 static ULONG WINAPI DocDispatchEx_Release(IDispatchEx *iface)
 {
     HTMLDocument *This = DISPEX_THIS(iface);
 
-    return IHTMLWindow2_Release(HTMLDOC(This));
+    return IHTMLDocument2_Release(HTMLDOC(This));
 }
 
 static HRESULT WINAPI DocDispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
