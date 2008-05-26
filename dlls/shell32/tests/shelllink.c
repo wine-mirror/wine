@@ -533,10 +533,13 @@ static void test_load_save(void)
     if (p)
         *p='\0';
 
+    /* IShellLink returns path in long form */
+    GetLongPathNameA(mypath, realpath, MAX_PATH);
+
     /* Overwrite the existing lnk file and point it to existing files */
     desc.description="test 2";
     desc.workdir=mydir;
-    desc.path=mypath;
+    desc.path=realpath;
     desc.pidl=NULL;
     desc.arguments="/option1 /option2 \"Some string\"";
     desc.showcmd=SW_SHOWNORMAL;
