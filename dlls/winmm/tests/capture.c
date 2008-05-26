@@ -385,7 +385,8 @@ static void wave_in_test_device(int device)
         }
         HeapFree(GetProcessHeap(), 0, nameW);
     } else if (rc==MMSYSERR_NOTSUPPORTED) {
-        nameA=strdup("not supported");
+        nameA=HeapAlloc(GetProcessHeap(), 0, sizeof("not supported"));
+        strcpy(nameA, "not supported");
     }
 
     trace("  %s: \"%s\" (%s) %d.%d (%d:%d)\n",dev_name(device),capsA.szPname,
