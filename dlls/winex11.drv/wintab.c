@@ -418,6 +418,7 @@ static BOOL is_stylus(const char *name, const char *type)
     static const char* tablet_stylus_whitelist[] = {
         "stylus",
         "wizardpen",
+        "acecad",
         NULL
     };
 
