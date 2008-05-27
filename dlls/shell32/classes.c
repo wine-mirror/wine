@@ -54,7 +54,7 @@ BOOL HCR_MapTypeToValueW(LPCWSTR szExtension, LPWSTR szFileType, LONG len, BOOL 
 	HKEY	hkey;
 	WCHAR	szTemp[MAX_EXTENSION_LENGTH + 2];
 
-	TRACE("%s %p\n", debugstr_w(szExtension), debugstr_w(szFileType));
+	TRACE("%s %p\n", debugstr_w(szExtension), szFileType);
 
     /* added because we do not want to have double dots */
     if (szExtension[0] == '.')
