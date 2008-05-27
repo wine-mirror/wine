@@ -77,6 +77,7 @@ enum spi_index
     SPI_SETMENUSHOWDELAY_IDX,
     SPI_SETICONTITLELOGFONT_IDX,
     SPI_SETLOWPOWERACTIVE_IDX,
+    SPI_SETSNAPTODEFBUTTON_IDX,
     SPI_SETPOWEROFFACTIVE_IDX,
     SPI_USERPREFERENCEMASK_IDX,
     SPI_NONCLIENTMETRICS_IDX,
@@ -166,6 +167,8 @@ static const WCHAR SPI_SETMENUDROPALIGNMENT_REGKEY1[]=        {'S','o','f','t','
                                                                'W','i','n','d','o','w','s',0};
 static const WCHAR SPI_SETMENUDROPALIGNMENT_REGKEY2[]=        {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETMENUDROPALIGNMENT_VALNAME[]=        {'M','e','n','u','D','r','o','p','A','l','i','g','n','m','e','n','t',0};
+static const WCHAR SPI_SETSNAPTODEFBUTTON_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
+static const WCHAR SPI_SETSNAPTODEFBUTTON_VALNAME[]=          {'S','n','a','p','T','o','D','e','f','a','u','l','t','B','u','t','t','o','n',0};
 static const WCHAR SPI_SETDOUBLECLKWIDTH_REGKEY1[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
 static const WCHAR SPI_SETDOUBLECLKWIDTH_REGKEY2[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETDOUBLECLKWIDTH_VALNAME[]=           {'D','o','u','b','l','e','C','l','i','c','k','W','i','d','t','h',0};
@@ -298,6 +301,7 @@ static UINT font_smoothing = 0;  /* 0x01 for 95/98/NT, 0x02 for 98/ME/2k/XP */
 static BOOL lowpoweractive = FALSE;
 static BOOL poweroffactive = FALSE;
 static BOOL show_sounds = FALSE;
+static BOOL snap_to_default_button = FALSE;
 static BOOL swap_buttons = FALSE;
 static UINT caret_width = 1;
 static BYTE user_prefs[4];
@@ -2016,8 +2020,20 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     WINE_SPI_FIXME(SPI_SETMOUSETRAILS);		/*     93  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_GETMOUSETRAILS);		/*     94  WINVER >= 0x400 */
-    WINE_SPI_FIXME(SPI_GETSNAPTODEFBUTTON);	/*     95  WINVER >= 0x400 */
-    WINE_SPI_FIXME(SPI_SETSNAPTODEFBUTTON);	/*     96  WINVER >= 0x400 */
+
+    case SPI_GETSNAPTODEFBUTTON:		/*     95  WINVER >= 0x400 */
+        ret = get_bool_param( SPI_SETSNAPTODEFBUTTON_IDX,
+                              SPI_SETSNAPTODEFBUTTON_REGKEY,
+                              SPI_SETSNAPTODEFBUTTON_VALNAME,
+                              &snap_to_default_button, pvParam );
+        break;
+
+    case SPI_SETSNAPTODEFBUTTON:		/*     96  WINVER >= 0x400 */
+        ret = set_bool_param( SPI_SETSNAPTODEFBUTTON_IDX,
+                              SPI_SETSNAPTODEFBUTTON_REGKEY,
+                              SPI_SETSNAPTODEFBUTTON_VALNAME,
+                              &snap_to_default_button, uiParam, fWinIni );
+        break;
 
     case SPI_SETSCREENSAVERRUNNING:
         ret = set_bool_param( SPI_SETSCREENSAVERRUNNING_IDX,

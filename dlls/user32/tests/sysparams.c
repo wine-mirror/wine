@@ -129,6 +129,8 @@ static HDC hdc;
 #define SPI_SETPOWEROFFACTIVE_VALNAME           "PowerOffActive"
 #define SPI_SETDRAGFULLWINDOWS_REGKEY           "Control Panel\\Desktop"
 #define SPI_SETDRAGFULLWINDOWS_VALNAME          "DragFullWindows"
+#define SPI_SETSNAPTODEFBUTTON_REGKEY           "Control Panel\\Mouse"
+#define SPI_SETSNAPTODEFBUTTON_VALNAME          "SnapToDefaultButton"
 #define SPI_SETMOUSEHOVERWIDTH_REGKEY           "Control Panel\\Mouse"
 #define SPI_SETMOUSEHOVERWIDTH_VALNAME          "MouseHoverWidth"
 #define SPI_SETMOUSEHOVERHEIGHT_REGKEY          "Control Panel\\Mouse"
@@ -1966,6 +1968,40 @@ static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%d\n",rc,GetLastError());
 }
 
+static void test_SPI_SETSNAPTODEFBUTTON( void )         /*     95 */
+{
+    BOOL rc;
+    BOOL old_b;
+    const UINT vals[]={TRUE,FALSE};
+    unsigned int i;
+
+    trace("testing SPI_{GET,SET}SNAPTODEFBUTTON\n");
+    SetLastError(0xdeadbeef);
+    rc=SystemParametersInfoA( SPI_GETSNAPTODEFBUTTON, 0, &old_b, 0 );
+    if (!test_error_msg(rc,"SPI_GETSNAPTODEFBUTTON"))
+        return;
+
+    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    {
+        UINT v;
+
+        rc=SystemParametersInfoA( SPI_SETSNAPTODEFBUTTON, vals[i], 0,
+                                  SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        ok(rc!=0,"%d: rc=%d err=%d\n",i,rc,GetLastError());
+        test_change_message( SPI_SETSNAPTODEFBUTTON, 0 );
+        test_reg_key( SPI_SETSNAPTODEFBUTTON_REGKEY,
+                      SPI_SETSNAPTODEFBUTTON_VALNAME,
+                      vals[i] ? "1" : "0" );
+
+        rc=SystemParametersInfoA( SPI_GETSNAPTODEFBUTTON, 0, &v, 0 );
+        ok(rc!=0,"%d: rc=%d err=%d\n",i,rc,GetLastError());
+        eq( v, vals[i], "SPI_GETSNAPTODEFBUTTON", "%d" );
+    }
+
+    rc=SystemParametersInfoA( SPI_SETSNAPTODEFBUTTON, old_b, 0, SPIF_UPDATEINIFILE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%d\n",rc,GetLastError());
+}
+
 static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
 {
     BOOL rc;
@@ -2300,6 +2336,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETFONTSMOOTHING();                /*     75 */
     test_SPI_SETLOWPOWERACTIVE();               /*     85 */
     test_SPI_SETPOWEROFFACTIVE();               /*     86 */
+    test_SPI_SETSNAPTODEFBUTTON();              /*     95 */
     test_SPI_SETMOUSEHOVERWIDTH();              /*     99 */
     test_SPI_SETMOUSEHOVERHEIGHT();             /*    101 */
     test_SPI_SETMOUSEHOVERTIME();               /*    103 */
