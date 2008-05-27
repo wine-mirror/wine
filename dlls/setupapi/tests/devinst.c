@@ -367,6 +367,12 @@ static void testCreateDeviceInfo(void)
 {
     BOOL ret;
     HDEVINFO set;
+    HKEY key;
+    LONG res;
+    static const WCHAR bogus[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'E','n','u','m','\\','R','o','o','t','\\',
+     'L','E','G','A','C','Y','_','B','O','G','U','S',0};
 
     if (!pSetupDiCreateDeviceInfoList || !pSetupDiEnumDeviceInfo ||
      !pSetupDiDestroyDeviceInfoList || !pSetupDiCreateDeviceInfoA)
@@ -451,6 +457,17 @@ static void testCreateDeviceInfo(void)
         ok(GetLastError() == ERROR_NO_MORE_ITEMS,
          "SetupDiEnumDeviceInfo failed: %08x\n", GetLastError());
         pSetupDiDestroyDeviceInfoList(set);
+    }
+
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
+    todo_wine
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
+    /* FIXME: Remove when Wine is fixed */
+    if (res == ERROR_SUCCESS)
+    {
+        /* Wine doesn't delete the information currently */
+        trace("We are most likely on Wine\n");
+        RegDeleteKeyW(HKEY_LOCAL_MACHINE, bogus);
     }
 }
 
