@@ -1811,7 +1811,7 @@ BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
     sizeW = *lpcchBuffer;
     if (!GetServiceKeyNameW(hSCManager, lpDisplayNameW, lpServiceNameW, &sizeW))
     {
-        if (*lpcchBuffer && lpServiceName)
+        if (lpServiceName && *lpcchBuffer)
             lpServiceName[0] = 0;
         *lpcchBuffer = sizeW*2;  /* we can only provide an upper estimation of string length */
         goto cleanup;
@@ -1922,7 +1922,7 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     sizeW = *lpcchBuffer;
     if (!GetServiceDisplayNameW(hSCManager, lpServiceNameW, lpDisplayNameW, &sizeW))
     {
-        if (*lpcchBuffer && lpDisplayName)
+        if (lpDisplayName && *lpcchBuffer)
             lpDisplayName[0] = 0;
         *lpcchBuffer = sizeW*2;  /* we can only provide an upper estimation of string length */
         goto cleanup;
