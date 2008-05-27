@@ -535,7 +535,7 @@ static BOOL IME_RemoveFromSelected(HIMC hIMC)
         if (hSelectedFrom[i] == hIMC)
         {
             if (i < hSelectedCount - 1)
-                memcpy(&hSelectedFrom[i], &hSelectedFrom[i+1], (hSelectedCount - i - 1)*sizeof(HIMC));
+                memmove(&hSelectedFrom[i], &hSelectedFrom[i+1], (hSelectedCount - i - 1)*sizeof(HIMC));
             hSelectedCount --;
             return TRUE;
         }
