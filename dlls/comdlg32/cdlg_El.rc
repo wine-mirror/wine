@@ -277,6 +277,7 @@ BEGIN
     LTEXT           "Κατάσταση:",     stc8,  16, 36,  36,10, SS_NOPREFIX
     LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Τύπος:",         stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Που:",           stc10, 16, 60,  36,10, SS_NOPREFIX
     LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Σχόλιο:",        stc9,  16, 72,  36,10, SS_NOPREFIX
