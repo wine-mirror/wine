@@ -1189,13 +1189,19 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             break;
         case S_MSTOOL_V3:    /* info about tool used to create CU */
             {
-                const unsigned short*     ptr = ((const unsigned short*)sym) + 2;
-
+                const unsigned short*   ptr = ((const unsigned short*)sym) + 2;
+                const char*             x1;
+                const char*             x2 = (const char*)&ptr[9];
                 /* FIXME: what are all those values for ? */
                 printf("\tTool V3 ??? %x-%x-%x-%x-%x-%x-%x-%x-%x %s\n",
                        ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7],
-                       ptr[8], (const char*)(&ptr[9]));
-                dump_data((const void*)sym, sym->generic.len + 2, "\t\t");
+                       ptr[8], x2);
+                while (*(x1 = x2 + strlen(x2) + 1))
+                {
+                    x2 = x1 + strlen(x1) + 1;
+                    if (!*x2) break;
+                    printf("\t\t%s: %s\n", x1, x2);
+                }
             }
             break;
 
