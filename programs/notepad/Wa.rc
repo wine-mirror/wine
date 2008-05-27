@@ -31,6 +31,7 @@ MAIN_MENU MENU
   MENUITEM "&Drovî...\tCtrl+O",            CMD_OPEN
   MENUITEM "&Schaper\tCtrl+S",          CMD_SAVE
   MENUITEM "Schaper èt r&lomer...",     CMD_SAVE_AS
+  MENUITEM SEPARATOR
   MENUITEM "&Rexhe...\tCtrl+P",            CMD_PRINT
   MENUITEM "Arrandjmint del &Pådje...", CMD_PAGE_SETUP
   MENUITEM "&Apontiaedje del scrirece...",      CMD_PRINTER_SETUP
@@ -49,6 +50,7 @@ POPUP "&Candjî" {
   MENUITEM "&Eure/Date\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "Côper les ro&yes",  CMD_WRAP
+  MENUITEM "&Font...",          CMD_FONT
  }
 POPUP "C&werî" {
   MENUITEM "Cwerî...",          CMD_SEARCH
