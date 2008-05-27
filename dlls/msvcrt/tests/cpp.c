@@ -817,7 +817,11 @@ static void test_rtti(void)
   bti = p__RTtypeid(&b);
 
   casted = p__RTDynamicCast(&b, 0, NULL, ti, 0);
-  ok (casted == (void*)&b, "failed cast from bad_cast to exception\n");
+  if (casted)
+  {
+    /* New versions do not allow this conversion due to compiler changes */
+    ok (casted == (void*)&b, "failed cast from bad_typeid to exception\n");
+  }
 
   /* dynamic_cast down */
   casted = p__RTDynamicCast(&e, 0, NULL, bti, 0);
