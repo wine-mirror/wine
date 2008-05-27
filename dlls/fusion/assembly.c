@@ -406,7 +406,11 @@ HRESULT assembly_release(ASSEMBLY *assembly)
 
 static LPSTR assembly_dup_str(ASSEMBLY *assembly, WORD index)
 {
-    return strdup((LPSTR)&assembly->strings[index]);
+    LPSTR str = (LPSTR)&assembly->strings[index];
+    LPSTR cpy = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
+    if (cpy)
+       strcpy(cpy, str);
+    return cpy;
 }
 
 HRESULT assembly_get_name(ASSEMBLY *assembly, LPSTR *name)
@@ -431,8 +435,11 @@ HRESULT assembly_get_name(ASSEMBLY *assembly, LPSTR *name)
 
 HRESULT assembly_get_path(ASSEMBLY *assembly, LPSTR *path)
 {
-    *path = strdup(assembly->path);
-    if (!*path)
+    LPSTR cpy = HeapAlloc(GetProcessHeap(), 0, strlen(assembly->path)+1);
+    *path = cpy;
+    if (cpy)
+        strcpy(cpy, assembly->path);
+    else
         return E_OUTOFMEMORY;
 
     return S_OK;
