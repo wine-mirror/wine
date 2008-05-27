@@ -1098,7 +1098,7 @@ static void test_VarUI1FromDisp(void)
   dispatch.vt = VT_UI1;
   dispatch.bFailInvoke = FALSE;
 
-  hres = VarUI1FromDisp((IDispatch*)&dispatch, in, &out);
+  hres = pVarUI1FromDisp((IDispatch*)&dispatch, in, &out);
   trace("0x%08x\n", hres);
 
   hres = VariantChangeTypeEx(&vDst, &vSrc, in, 0, VT_UI1);
@@ -1106,7 +1106,7 @@ static void test_VarUI1FromDisp(void)
 
   dispatch.bFailInvoke = TRUE;
 
-  hres = VarUI1FromDisp((IDispatch*)&dispatch, in, &out);
+  hres = pVarUI1FromDisp((IDispatch*)&dispatch, in, &out);
   trace("0x%08x\n", hres);
 
   hres = VariantChangeTypeEx(&vDst, &vSrc, in, 0, VT_UI1);
@@ -4803,7 +4803,7 @@ static void test_VarBstrFromDate(void)
 
 #define BSTR_CY(l, a, b, e) \
   S(l).Lo = b; S(l).Hi = a; \
-  hres = VarBstrFromCy(l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
+  hres = pVarBstrFromCy(l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
   ok(hres == S_OK, "got hres 0x%08x\n", hres);\
   if (hres== S_OK && bstr)\
   {\
@@ -4865,7 +4865,7 @@ static void test_VarBstrFromCy(void)
 
 #define BSTR_DEC(l, a, b, c, d, e) \
   SETDEC(l, a,b,c,d);\
-  hres = VarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
+  hres = pVarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
   ok(hres == S_OK, "got hres 0x%08x\n", hres);\
   if (hres== S_OK && bstr)\
   {\
@@ -4874,7 +4874,7 @@ static void test_VarBstrFromCy(void)
 
 #define BSTR_DEC64(l, a, b, c, x, d, e) \
   SETDEC64(l, a,b,c,x,d);\
-  hres = VarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
+  hres = pVarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
   ok(hres == S_OK, "got hres 0x%08x\n", hres);\
   if (hres== S_OK && bstr)\
   {\
