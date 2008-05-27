@@ -404,12 +404,21 @@ static void testCreateDeviceInfo(void)
     {
         SP_DEVINFO_DATA devInfo = { 0 };
         DWORD i;
+        static GUID deadbeef =
+         {0xdeadbeef, 0xdead, 0xbeef, {0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
 
+        /* No GUID given */
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL,
          NULL, NULL, 0, NULL);
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
             "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+        /* We can't add device information to the set with a different GUID */
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000",
+         &deadbeef, NULL, NULL, 0, NULL);
+        ok(!ret && GetLastError() == ERROR_CLASS_MISMATCH,
+         "Expected ERROR_CLASS_MISMATCH, got %08x\n", GetLastError());
         /* Finally, with all three required parameters, this succeeds: */
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
          NULL, NULL, 0, NULL);
@@ -426,10 +435,10 @@ static void testCreateDeviceInfo(void)
          DICD_GENERATE_ID, &devInfo);
         ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
          "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
+        /* and this finally succeeds. */
         devInfo.cbSize = sizeof(devInfo);
         ret = pSetupDiCreateDeviceInfoA(set, "LEGACY_BOGUS", &guid, NULL, NULL,
          DICD_GENERATE_ID, &devInfo);
-        /* and this finally succeeds. */
         ok(ret, "SetupDiCreateDeviceInfoA failed: %08x\n", GetLastError());
         /* There were three devices added, however - the second failure just
          * resulted in the SP_DEVINFO_DATA not getting copied.
