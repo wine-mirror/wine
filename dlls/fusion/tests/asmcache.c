@@ -918,10 +918,11 @@ static void test_InstallAssembly(void)
     ok(attr != INVALID_FILE_ATTRIBUTES, "Expected assembly to exist\n");
 
     /* uninstall the assembly from the GAC */
+    disp = 0xf00dbad;
     hr = IAssemblyCache_UninstallAssembly(cache, 0, wine, NULL, &disp);
     todo_wine
     {
-        ok(hr == S_OK, "Expected S_OK, got %d\n", S_OK);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
         ok(disp == IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED,
            "Expected IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED, got %d\n", disp);
     }
