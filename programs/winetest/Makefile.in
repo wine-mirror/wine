@@ -271,7 +271,7 @@ ws2_32_test.exe: $(DLLDIR)/ws2_32/tests/ws2_32_test.exe$(DLLEXT)
 winetest.res: $(TESTBINS)
 
 clean::
-	$(RM) tests.rc dist.res winetest-dist winetest-dist.exe $(TESTBINS)
+	$(RM) dist.res winetest-dist winetest-dist.exe $(TESTBINS)
 
 # Rules for building distributable executable
 
@@ -288,9 +288,6 @@ winetest-dist: $(WINEWRAPPER)
 winetest-dist.exe: $(OBJS) dist.res.o Makefile.in
 	$(CC) $(APPMODE) $(OBJS) dist.res.o -o $@ $(DELAYIMPORTS:%=-l%) $(ALL_LIBS)
 
-tests.rc: maketest Makefile.in
-	$(SRCDIR)/maketest $(TOPSRCDIR) > $@ || ($(RM) $@ && exit 1)
-
-dist.res: winetest.rc tests.rc build.id build.nfo tests.url winetest.ico $(TESTBINS)
+dist.res: winetest.rc build.nfo tests.url winetest.ico $(TESTBINS)
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

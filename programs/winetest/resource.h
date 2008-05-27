@@ -51,9 +51,5 @@
 
 /* String resources */
 
-#define WINE_BUILD 10000
 #define BUILD_INFO 10001
 #define TESTS_URL  10002
-
-/* Revision info strings start from this index: */
-#define REV_INFO 30000

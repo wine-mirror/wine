@@ -49,16 +49,9 @@ struct wine_test
     char *exename;
 };
 
-struct rev_info
-{
-    const char* file;
-    const char* rev;
-};
-
 char *tag = NULL;
 static struct wine_test *wine_tests;
 static int nr_of_files, nr_of_tests;
-static struct rev_info *rev_infos = NULL;
 static const char whitespace[] = " \t\r\n";
 static const char testexe[] = "_test.exe";
 
@@ -217,43 +210,6 @@ static const char* get_test_source_file(const char* test, const char* subtest)
 
     snprintf(buffer, sizeof(buffer), "dlls/%s/tests/%s.c", test, subtest);
     return buffer;
-}
-
-static const char* get_file_rev(const char* file)
-{
-    const struct rev_info* rev;
- 
-    for(rev = rev_infos; rev->file; rev++) {
-	if (strcmp(rev->file, file) == 0) return rev->rev;
-    }
-
-    return "-";
-}
-
-static void extract_rev_infos (void)
-{
-    char revinfo[256], *p;
-    int size = 0, i;
-    unsigned int len;
-    HMODULE module = GetModuleHandle (NULL);
-
-    for (i = 0; TRUE; i++) {
-	if (i >= size) {
-	    size += 100;
-	    rev_infos = xrealloc (rev_infos, size * sizeof (*rev_infos));
-	}
-	memset(rev_infos + i, 0, sizeof(rev_infos[i]));
-
-        len = LoadStringA (module, REV_INFO+i, revinfo, sizeof(revinfo));
-        if (len == 0) break; /* end of revision info */
-	if (len >= sizeof(revinfo) - 1) 
-	    report (R_FATAL, "Revision info too long.");
-	if(!(p = strrchr(revinfo, ':')))
-	    report (R_FATAL, "Revision info malformed (i=%d)", i);
-	*p = 0;
-	rev_infos[i].file = strdup(revinfo);
-	rev_infos[i].rev = strdup(p + 1);
-    }
 }
 
 static void* extract_rcdata (LPTSTR name, int type, DWORD* size)
@@ -454,10 +410,9 @@ run_test (struct wine_test* test, const char* subtest, const char *tempdir)
 {
     int status;
     const char* file = get_test_source_file(test->name, subtest);
-    const char* rev = get_file_rev(file);
     char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
 
-    xprintf ("%s:%s start %s %s\n", test->name, subtest, file, rev);
+    xprintf ("%s:%s start %s -\n", test->name, subtest, file);
     status = run_ex (cmd, NULL, tempdir, 120000);
     free (cmd);
     xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
@@ -544,10 +499,8 @@ run_tests (char *logname)
     report (R_DIR, tempdir);
 
     xprintf ("Version 4\n");
-    strres = extract_rcdata (MAKEINTRESOURCE(WINE_BUILD), STRINGRES, &strsize);
     xprintf ("Tests from build ");
     if (LoadStringA( 0, IDS_BUILD_ID, build, sizeof(build) )) xprintf( "%s\n", build );
-    else if (strres) xprintf ("%.*s", strsize, strres);
     else xprintf ("-\n");
     strres = extract_rcdata (MAKEINTRESOURCE(TESTS_URL), STRINGRES, &strsize);
     xprintf ("Archive: ");
@@ -639,9 +592,6 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     int reset_env = 1;
     int poweroff = 0;
     int interactive = 1;
-
-    /* initialize the revision information first */
-    extract_rev_infos();
 
     cmdLine = strtok (cmdLine, whitespace);
     while (cmdLine) {
