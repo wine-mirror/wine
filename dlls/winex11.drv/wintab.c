@@ -536,7 +536,10 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
 #ifdef IsXExtensionPointer
         case IsXExtensionPointer:
 #endif
-            TRACE("Is XExtension%s\n", (devices[loop].use == IsXExtensionDevice)? "Device":"Pointer");
+#ifdef IsXExtensionKeyboard
+	case IsXExtensionKeyboard:
+#endif
+            TRACE("Is XExtension: Device, Keyboard, or Pointer\n");
             cursor_target++;
             target = &devices[loop];
             cursor = &gSysCursor[cursor_target];
