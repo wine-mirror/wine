@@ -635,54 +635,74 @@ static void test_ScriptXtoX(void)
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-    ok(piCP == -1, "Negative iX should return piCP=-1 not %d\n", piCP);
-    ok(piTrailing == TRUE, "Negative iX should return piTrailing=TRUE not %d\n", piTrailing);
+    if (piTrailing)
+        ok(piCP == -1, "Negative iX should return piCP=-1 not %d\n", piCP);
+    else /* win2k3 */
+        ok(piCP == 10, "Negative iX should return piCP=10 not %d\n", piCP);
+
     iX = 1954;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-    ok(piCP == 10, "Excessive iX should return piCP=10 not %d\n", piCP);
-    ok(piTrailing == FALSE, "Excessive iX should return piTrailing=FALSE not %d\n", piTrailing);
+    if (piTrailing) /* win2k3 */
+        ok(piCP == -1, "Negative iX should return piCP=-1 not %d\n", piCP);
+    else
+        ok(piCP == 10, "Negative iX should return piCP=10 not %d\n", piCP);
+
     iX = 779;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-    ok(piCP == 3, "iX=%d should return piCP=3 not %d\n", iX, piCP);
+    ok(piCP == 3 ||
+       piCP == -1, /* win2k3 */
+       "iX=%d should return piCP=3 or piCP=-1 not %d\n", iX, piCP);
     ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
+
     iX = 780;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-    ok(piCP == 3, "iX=%d should return piCP=3 not %d\n", iX, piCP);
+    ok(piCP == 3 ||
+       piCP == -1, /* win2k3 */
+       "iX=%d should return piCP=3 or piCP=-1 not %d\n", iX, piCP);
     ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
+
     iX = 868;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-    ok(piCP == 4, "iX=%d should return piCP=4 not %d\n", iX, piCP);
+    ok(piCP == 4 ||
+       piCP == -1, /* win2k3 */
+       "iX=%d should return piCP=4 or piCP=-1 not %d\n", iX, piCP);
 
     iX = 0;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-    ok(piCP == 0, "iX=%d should return piCP=0 not %d\n", iX, piCP);
+    ok(piCP == 0 ||
+       piCP == 10, /* win2k3 */
+       "iX=%d should return piCP=0 piCP=10 not %d\n", iX, piCP);
+
     iX = 195;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == 0, "iX=%d should return piCP=0 not %d\n", iX, piCP);
+
     iX = 196;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
-    ok(piCP == 1, "iX=%d should return piCP=1 not %d\n", iX, piCP);
+    ok(piCP == 1 ||
+       piCP == 0, /* win2k3 */
+       "iX=%d should return piCP=1 or piCP=0 not %d\n", iX, piCP);
 
     iCP=5;
     fTrailing = FALSE;
@@ -690,36 +710,49 @@ static void test_ScriptXtoX(void)
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
     ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-    ok(piX == 976, "iCP=%d should return piX=976 not %d\n", iCP, piX);
+    ok(piX == 976 ||
+       piX == 100, /* win2k3 */
+       "iCP=%d should return piX=976 or piX=100 not %d\n", iCP, piX);
+
     iCP=5;
     fTrailing = TRUE;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
     ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-    ok(piX == 1171, "iCP=%d should return piX=1171 not %d\n", iCP, piX);   
+    ok(piX == 1171 ||
+       piX == 80, /* win2k3 */
+       "iCP=%d should return piX=1171 or piX=80 not %d\n", iCP, piX);
+
     iCP=6;
     fTrailing = FALSE;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
     ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-    ok(piX == 1171, "iCP=%d should return piX=1171 not %d\n", iCP, piX);
+    ok(piX == 1171 ||
+       piX == 80, /* win2k3 */
+       "iCP=%d should return piX=1171 or piX=80 not %d\n", iCP, piX);
+
     iCP=11;
     fTrailing = FALSE;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
     ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-    ok(piX == 1953, "iCP=%d should return piX=1953 not %d\n", iCP, piX);
+    ok(piX == 1953 ||
+       piX == 0, /* win2k3 */
+       "iCP=%d should return piX=1953 or piX=0 not %d\n", iCP, piX);
+
     iCP=11;
     fTrailing = TRUE;
     cChars = 10;
     cGlyphs = 10;
     hr = ScriptCPtoX(iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piX);
     ok(hr == S_OK, "ScriptCPtoX should return S_OK not %08x\n", hr);
-    ok(piX == 1953, "iCP=%d should return piX=1953 not %d\n", iCP, piX); 
-
+    ok(piX == 1953 ||
+       piX == 0, /* win2k3 */
+       "iCP=%d should return piX=1953 or piX=0 not %d\n", iCP, piX);
 }
 
 static void test_ScriptString(HDC hdc)
@@ -838,10 +871,14 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
                               ReqWidth, &Control, &State, NULL, &Tabdef,
                               &InClass, &ssa);
-    ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
-    ok(ssa != NULL, "ScriptStringAnalyse ssa should not be NULL\n");
-    if  (hr == 0)
+    ok(hr == S_OK ||
+       hr == E_INVALIDARG, /* NT */
+       "ScriptStringAnalyse should return S_OK or E_INVALIDARG not %08x\n", hr);
+
+    if  (hr == S_OK)
     {
+        ok(ssa != NULL, "ScriptStringAnalyse ssa should not be NULL\n");
+
         /*
          * Loop to generate character positions to provide starting positions for the
          * ScriptStringCPtoX and ScriptStringXtoCP functions
