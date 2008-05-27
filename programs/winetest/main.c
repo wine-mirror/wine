@@ -54,6 +54,7 @@ static struct wine_test *wine_tests;
 static int nr_of_files, nr_of_tests;
 static const char whitespace[] = " \t\r\n";
 static const char testexe[] = "_test.exe";
+static char build_id[64];
 
 static char * get_file_version(char * file_name)
 {
@@ -462,7 +463,6 @@ run_tests (char *logname)
     int logfile;
     char *strres, *eol, *nextline;
     DWORD strsize;
-    char build[64];
 
     SetErrorMode (SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
@@ -499,9 +499,7 @@ run_tests (char *logname)
     report (R_DIR, tempdir);
 
     xprintf ("Version 4\n");
-    xprintf ("Tests from build ");
-    if (LoadStringA( 0, IDS_BUILD_ID, build, sizeof(build) )) xprintf( "%s\n", build );
-    else xprintf ("-\n");
+    xprintf ("Tests from build %s\n", build_id[0] ? build_id : "-" );
     strres = extract_rcdata (MAKEINTRESOURCE(TESTS_URL), STRINGRES, &strsize);
     xprintf ("Archive: ");
     if (strres) xprintf ("%.*s", strsize, strres);
@@ -593,6 +591,8 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     int poweroff = 0;
     int interactive = 1;
 
+    if (!LoadStringA( 0, IDS_BUILD_ID, build_id, sizeof(build_id) )) build_id[0] = 0;
+
     cmdLine = strtok (cmdLine, whitespace);
     while (cmdLine) {
         if (cmdLine[0] != '-' || cmdLine[2]) {
@@ -676,10 +676,14 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
         }
         report (R_TAG);
 
+        if (!build_id[0])
+            report( R_WARNING, "You won't be able to submit results without a valid build id.\n"
+                    "To submit results, winetest needs to be built from a git checkout." );
+
         if (!logname) {
             logname = run_tests (NULL);
-            if (report (R_ASK, MB_YESNO, "Do you want to submit the "
-                        "test results?") == IDYES)
+            if (build_id[0] &&
+                report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
                 if (!send_file (logname) && remove (logname))
                     report (R_WARNING, "Can't remove logfile: %d.", errno);
             free (logname);
