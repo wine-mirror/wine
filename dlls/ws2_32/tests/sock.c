@@ -1123,6 +1123,10 @@ static void test_WSASocket(void)
     int ret, err;
     UINT pi_size;
 
+    /* Set pi_size explicitly to a value below 2*sizeof(WSAPROTOCOL_INFOA)
+     * to avoid a crash on win98.
+     */
+    pi_size = 0;
     ret = WSAEnumProtocolsA(providers, NULL, &pi_size);
     ok(ret == SOCKET_ERROR, "WSAEnumProtocolsA({6,0}, NULL, 0) returned %d\n",
             ret);
