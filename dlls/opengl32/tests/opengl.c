@@ -182,6 +182,7 @@ static void test_setpixelformat(HDC winhdc)
     int nCfgs;
     int pf;
     int i;
+    HWND hwnd;
     PIXELFORMATDESCRIPTOR pfd = {
         sizeof(PIXELFORMATDESCRIPTOR),
         1,                     /* version */
@@ -225,6 +226,42 @@ static void test_setpixelformat(HDC winhdc)
         int res = SetPixelFormat(winhdc, i, NULL);
         if(i == pf) ok(res, "Failed to set the same pixel format\n");
         else ok(!res, "Unexpectedly set an alternate pixel format\n");
+    }
+
+    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
+                        10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "err: %d\n", GetLastError());
+    if (hwnd)
+    {
+        HDC hdc = GetDC( hwnd );
+        pf = ChoosePixelFormat( hdc, &pfd );
+        ok( pf != 0, "ChoosePixelFormat failed\n" );
+        res = SetPixelFormat( hdc, pf, &pfd );
+        ok( res != 0, "SetPixelFormat failed\n" );
+        i = GetPixelFormat( hdc );
+        ok( i == pf, "GetPixelFormat returned wrong format %d/%d\n", i, pf );
+        ReleaseDC( hwnd, hdc );
+        hdc = GetWindowDC( hwnd );
+        i = GetPixelFormat( hdc );
+        ok( i == pf, "GetPixelFormat returned wrong format %d/%d\n", i, pf );
+        ReleaseDC( hwnd, hdc );
+        DestroyWindow( hwnd );
+    }
+
+    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
+                        10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "err: %d\n", GetLastError());
+    if (hwnd)
+    {
+        HDC hdc = GetWindowDC( hwnd );
+        pf = ChoosePixelFormat( hdc, &pfd );
+        ok( pf != 0, "ChoosePixelFormat failed\n" );
+        res = SetPixelFormat( hdc, pf, &pfd );
+        ok( res != 0, "SetPixelFormat failed\n" );
+        i = GetPixelFormat( hdc );
+        ok( i == pf, "GetPixelFormat returned wrong format %d/%d\n", i, pf );
+        ReleaseDC( hwnd, hdc );
+        DestroyWindow( hwnd );
     }
 }
 
