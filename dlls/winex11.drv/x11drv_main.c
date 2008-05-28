@@ -484,16 +484,12 @@ sym_not_found:
 static BOOL process_attach(void)
 {
     Display *display;
-    const char *env;
 
     setup_options();
 
     if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
 
     /* Open display */
-
-    if (!(env = getenv("XMODIFIERS")) || !*env)  /* try to avoid the Xlib XIM locking bug */
-        if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
 
     if (!(display = XOpenDisplay( NULL ))) return FALSE;
 
