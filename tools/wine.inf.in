@@ -2251,6 +2251,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dsound.dll
 11,,dsound.vxd
 11,,gdi32.dll
+11,,glu32.dll
 11,,hhctrl.ocx
 11,,imaadp32.acm
 11,,imagehlp.dll
