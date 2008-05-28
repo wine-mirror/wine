@@ -423,10 +423,7 @@ BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
     if (!(data = X11DRV_get_win_data(hwnd)) &&
         !(data = X11DRV_create_win_data(hwnd))) return FALSE;
 
-    wine_tsx11_lock();
-    vis = visual_from_fbconfig_id(fbconfig_id);
-    wine_tsx11_unlock();
-    if (!vis) return FALSE;
+    if (!(vis = visual_from_fbconfig_id(fbconfig_id))) return FALSE;
 
     if (data->whole_window)
     {
@@ -559,15 +556,9 @@ static void sync_gl_drawable(struct x11drv_win_data *data)
     }
 #endif
 
+    if (!(vis = visual_from_fbconfig_id(data->fbconfig_id))) return;
+
     wine_tsx11_lock();
-
-    vis = visual_from_fbconfig_id(data->fbconfig_id);
-    if(!vis)
-    {
-        wine_tsx11_unlock();
-        return;
-    }
-
     pix = XCreatePixmap(gdi_display, root_window, w, h, vis->depth);
     if(!pix)
     {
