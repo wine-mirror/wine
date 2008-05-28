@@ -221,8 +221,15 @@ static void test_sprintf( void )
 
     format = "%I32d";
     r = sprintf(buffer,format,1);
-    ok(!strcmp(buffer,"1"),"I32d failed\n");
-    ok( r==1, "return count wrong\n");
+    if (r == 1)
+    {
+        ok(!strcmp(buffer,"1"),"I32d failed, got '%s'\n",buffer);
+    }
+    else
+    {
+        /* Older versions don't grok I32 format */
+        ok(r == 4 && !strcmp(buffer,"I32d"),"I32d failed, got '%s',%d\n",buffer,r);
+    }
 
     format = "%I64D";
     r = sprintf(buffer,format,(LONGLONG)-1);
