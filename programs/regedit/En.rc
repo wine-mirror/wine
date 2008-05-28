@@ -26,6 +26,16 @@ STRINGTABLE DISCARDABLE
 BEGIN
     ID_FAVORITES_ADDTOFAVORITES "Adds keys to the favourites list"
     ID_FAVORITES_REMOVEFAVORITE "Removes keys from the favourites list"
+    /* Just a copy of the English (DEFAULT) strings. */
+    ID_REGISTRY_EXIT        "Quits the registry editor"
+    ID_VIEW_STATUSBAR       "Shows or hides the status bar"
+    ID_VIEW_SPLIT           "Change position of split between two panes"
+    ID_VIEW_REFRESH         "Refreshes the window"
+    ID_EDIT_DELETE          "Deletes the selection"
+    ID_EDIT_RENAME          "Renames the selection"
+    ID_EDIT_COPYKEYNAME     "Copies the name of the selected key to the clipboard"
+    ID_EDIT_FIND            "Finds a text string in a key, value or data"
+    ID_EDIT_FINDNEXT        "Finds next occurrence of text specified in previous search"
 END
 
 IDR_REGEDIT_MENU MENU DISCARDABLE
@@ -85,9 +95,9 @@ BEGIN
     END
 END
 
-/* US English Resources */
+/* English Default (US) Resources */
 
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 /*
  * Menu
