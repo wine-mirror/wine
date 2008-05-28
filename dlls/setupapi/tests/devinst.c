@@ -459,15 +459,41 @@ static void testCreateDeviceInfo(void)
         pSetupDiDestroyDeviceInfoList(set);
     }
 
+    /* The bogus registry key shouldn't be there after this test. The only
+     * reasons this key would still be present:
+     *
+     * - We are running on Wine which has to be fixed
+     * - We have leftovers from old tests
+     */
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
     todo_wine
     ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
-    /* FIXME: Remove when Wine is fixed */
     if (res == ERROR_SUCCESS)
     {
-        /* Wine doesn't delete the information currently */
-        trace("We are most likely on Wine\n");
-        RegDeleteKeyW(HKEY_LOCAL_MACHINE, bogus);
+        DWORD subkeys;
+
+        /* Check if we have subkeys */
+        RegQueryInfoKey(key, NULL, NULL, NULL, &subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        if (subkeys > 0)
+        {
+            int i;
+
+            /* Leftovers from old tests */
+            trace("Going to remove %d devices\n", subkeys);
+            for (i = 0; i < subkeys; i++)
+            {
+                BOOL ret;
+
+                ret = remove_device();
+                ok(ret, "Expected a device to be removed\n");
+            }
+        }
+        else
+        {
+            /* Wine doesn't delete the bogus key itself currently */
+            trace("We are most likely on Wine\n");
+            RegDeleteKeyW(HKEY_LOCAL_MACHINE, bogus);
+        }
     }
 }
 
