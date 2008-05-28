@@ -286,7 +286,7 @@ static void testcooperativelevels_normal(void)
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
     ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08x\n", rc);
     ok(surface == NULL, "Returned surface pointer is %p\n", surface);
-    if(surface) IDirectDrawSurface_Release(surface);
+    if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
 
     /* Set the focus window */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
