@@ -144,10 +144,6 @@ static int swap_interval = 1;
 static const WineGLExtension *WineGLExtensionList[MAX_EXTENSIONS];
 static int WineGLExtensionListSize;
 
-static WineGLPixelFormat *WineGLPixelFormatList;
-static int WineGLPixelFormatListSize = 0;
-static int WineGLPixelFormatOnScreenSize = 0;
-
 static void X11DRV_WineGL_LoadExtensions(void);
 static BOOL glxRequireVersion(int requiredVersion);
 static BOOL glxRequireExtension(const char *requiredExtension);
@@ -841,20 +837,27 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
     return render_type;
 }
 
-static BOOL init_formats(Display *display, int screen, Visual *visual)
+static WineGLPixelFormat *get_formats(Display *display, int *size_ret, int *onscreen_size_ret)
 {
+    static WineGLPixelFormat *list;
+    static int size, onscreen_size;
+
     int fmt_id, nCfgs, i, run;
     GLXFBConfig* cfgs;
     XVisualInfo *visinfo;
 
+    wine_tsx11_lock();
+    if (list) goto done;
+
     cfgs = pglXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
     if (NULL == cfgs || 0 == nCfgs) {
-        ERR("glXChooseFBConfig returns NULL\n");
         if(cfgs != NULL) XFree(cfgs);
-        return FALSE;
+        wine_tsx11_unlock();
+        ERR("glXChooseFBConfig returns NULL\n");
+        return NULL;
     }
 
-    WineGLPixelFormatList = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nCfgs*sizeof(WineGLPixelFormat));
+    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nCfgs*sizeof(WineGLPixelFormat));
 
     /* Fill the pixel format list. Put onscreen formats at the top and offscreen ones at the bottom.
      * Do this as GLX doesn't guarantee that the list is sorted */
@@ -878,32 +881,34 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
                 if(visinfo->depth != screen_depth)
                     continue;
 
-                TRACE("Found onscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, WineGLPixelFormatListSize+1, i);
-                WineGLPixelFormatList[WineGLPixelFormatListSize].iPixelFormat = WineGLPixelFormatListSize+1; /* The index starts at 1 */
-                WineGLPixelFormatList[WineGLPixelFormatListSize].fbconfig = cfgs[i];
-                WineGLPixelFormatList[WineGLPixelFormatListSize].fmt_id = fmt_id;
-                WineGLPixelFormatList[WineGLPixelFormatListSize].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
-
-                WineGLPixelFormatList[WineGLPixelFormatListSize].offscreenOnly = FALSE;
-                WineGLPixelFormatListSize++;
-                WineGLPixelFormatOnScreenSize++;
+                TRACE("Found onscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
+                list[size].iPixelFormat = size+1; /* The index starts at 1 */
+                list[size].fbconfig = cfgs[i];
+                list[size].fmt_id = fmt_id;
+                list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
+                list[size].offscreenOnly = FALSE;
+                size++;
+                onscreen_size++;
                 XFree(visinfo);
             } else if(run && !visinfo) {
-                TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, WineGLPixelFormatListSize+1, i);
-                WineGLPixelFormatList[WineGLPixelFormatListSize].iPixelFormat = WineGLPixelFormatListSize+1; /* The index starts at 1 */
-                WineGLPixelFormatList[WineGLPixelFormatListSize].fbconfig = cfgs[i];
-                WineGLPixelFormatList[WineGLPixelFormatListSize].fmt_id = fmt_id;
-                WineGLPixelFormatList[WineGLPixelFormatListSize].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
-
-                WineGLPixelFormatList[WineGLPixelFormatListSize].offscreenOnly = TRUE;
-                WineGLPixelFormatListSize++;
+                TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
+                list[size].iPixelFormat = size+1; /* The index starts at 1 */
+                list[size].fbconfig = cfgs[i];
+                list[size].fmt_id = fmt_id;
+                list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
+                list[size].offscreenOnly = TRUE;
+                size++;
             }
         }
     }
 
     if(cfgs != NULL) XFree(cfgs);
 
-    return TRUE;
+done:
+    if (size_ret) *size_ret = size;
+    if (onscreen_size_ret) *onscreen_size_ret = onscreen_size;
+    wine_tsx11_unlock();
+    return list;
 }
 
 /* GLX can advertise dozens of different pixelformats including offscreen and onscreen ones.
@@ -914,26 +919,24 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
  */
 static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, BOOL AllowOffscreen, int *fmt_count)
 {
-    WineGLPixelFormat *res = NULL;
+    WineGLPixelFormat *list, *res = NULL;
+    int size, onscreen_size;
 
-    /* Init the list of pixel formats when we need it */
-    if(!WineGLPixelFormatListSize)
-        init_formats(display, DefaultScreen(display), visual);
+    if (!(list = get_formats(display, &size, &onscreen_size ))) return NULL;
 
     /* Check if the pixelformat is valid. Note that it is legal to pass an invalid
      * iPixelFormat in case of probing the number of pixelformats.
      */
-    if((iPixelFormat > 0) && (iPixelFormat <= WineGLPixelFormatListSize) &&
-       ((WineGLPixelFormatList[iPixelFormat-1].offscreenOnly == FALSE) ||
-        AllowOffscreen)) {
-        res = &WineGLPixelFormatList[iPixelFormat-1];
+    if((iPixelFormat > 0) && (iPixelFormat <= size) &&
+       (!list[iPixelFormat-1].offscreenOnly || AllowOffscreen)) {
+        res = &list[iPixelFormat-1];
         TRACE("Returning FBConfig=%p for iPixelFormat=%d\n", res->fbconfig, iPixelFormat);
     }
 
     if(AllowOffscreen)
-        *fmt_count = WineGLPixelFormatListSize;
+        *fmt_count = size;
     else
-        *fmt_count = WineGLPixelFormatOnScreenSize;
+        *fmt_count = onscreen_size;
 
     TRACE("Number of returned pixelformats=%d\n", *fmt_count);
 
@@ -943,16 +946,15 @@ static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixe
 /* Search our internal pixelformat list for the WGL format corresponding to the given fbconfig */
 static WineGLPixelFormat* ConvertPixelFormatGLXtoWGL(Display *display, int fmt_id)
 {
-    int i;
+    WineGLPixelFormat *list;
+    int i, size;
 
-    /* Init the list of pixel formats when we need it */
-    if(!WineGLPixelFormatListSize)
-        init_formats(display, DefaultScreen(display), visual);
+    if (!(list = get_formats(display, &size, NULL ))) return NULL;
 
-    for(i=0; i<WineGLPixelFormatListSize; i++) {
-        if(WineGLPixelFormatList[i].fmt_id == fmt_id) {
-            TRACE("Returning iPixelFormat %d for fmt_id 0x%x\n", WineGLPixelFormatList[i].iPixelFormat, fmt_id);
-            return &WineGLPixelFormatList[i];
+    for(i=0; i<size; i++) {
+        if(list[i].fmt_id == fmt_id) {
+            TRACE("Returning iPixelFormat %d for fmt_id 0x%x\n", list[i].iPixelFormat, fmt_id);
+            return &list[i];
         }
     }
     TRACE("No compatible format found for fmt_id 0x%x\n", fmt_id);
@@ -1034,9 +1036,9 @@ static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev, WineGLPixelFormat *f
  */
 int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev, 
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
-    WineGLPixelFormat *fmt = NULL;
+    WineGLPixelFormat *list;
+    int onscreen_size;
     int ret = 0;
-    int nPixelFormats;
     int value = 0;
     int i = 0;
     int bestFormat = -1;
@@ -1059,15 +1061,15 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
         dump_PIXELFORMATDESCRIPTOR(ppfd);
     }
 
+    if (!(list = get_formats(gdi_display, NULL, &onscreen_size ))) return 0;
+
     wine_tsx11_lock();
-    ConvertPixelFormatWGLtoGLX(gdi_display, 0, FALSE /* offscreen */, &nPixelFormats);
-    for(i=0; i<nPixelFormats; i++)
+    for(i=0; i<onscreen_size; i++)
     {
         int dwFlags = 0;
         int iPixelType = 0;
         int alpha=0, color=0, depth=0, stencil=0, aux=0;
-
-        fmt = ConvertPixelFormatWGLtoGLX(gdi_display, i+1 /* 1-based index */, FALSE /* offscreen */, &value);
+        WineGLPixelFormat *fmt = &list[i];
 
         /* Pixel type */
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_RENDER_TYPE, &value);
@@ -1264,7 +1266,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     }
     else {
         ret = bestFormat+1; /* the return value should be a 1-based index */
-        TRACE("Successfully found a matching mode, returning index: %d %x\n", ret, WineGLPixelFormatList[bestFormat].fmt_id);
+        TRACE("Successfully found a matching mode, returning index: %d %x\n", ret, list[bestFormat].fmt_id);
     }
 
     wine_tsx11_unlock();
