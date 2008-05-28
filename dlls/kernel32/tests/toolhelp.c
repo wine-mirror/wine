@@ -102,7 +102,6 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
 {
     HANDLE              hSnapshot;
     PROCESSENTRY32      pe;
-    THREADENTRY32       te;
     MODULEENTRY32       me;
     unsigned            found = 0;
     int                 num = 0;
@@ -144,9 +143,6 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
      * interesting to be there, especially not the just forked off child */
     ok (childpos !=0, "child is not expected to be at position 0.\n");
 
-    te.dwSize = sizeof(te);
-    ok(!pThread32First( hSnapshot, &te ), "shouldn't return a thread\n");
-
     me.dwSize = sizeof(me);
     ok(!pModule32First( hSnapshot, &me ), "shouldn't return a module\n");
 
@@ -157,7 +153,6 @@ static void test_process(DWORD curr_pid, DWORD sub_pcs_pid)
 static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
 {
     HANDLE              hSnapshot;
-    PROCESSENTRY32      pe;
     THREADENTRY32       te;
     MODULEENTRY32       me;
     int                 num = 0;
@@ -197,9 +192,6 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
     }
     ok(curr_found == 1, "couldn't find self in thread list\n");
     ok(sub_found == 2, "couldn't find sub-process thread's in thread list\n");
-
-    pe.dwSize = sizeof(pe);
-    ok(!pProcess32First( hSnapshot, &pe ), "shouldn't return a process\n");
 
     me.dwSize = sizeof(me);
     ok(!pModule32First( hSnapshot, &me ), "shouldn't return a module\n");
