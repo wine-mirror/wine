@@ -1243,6 +1243,8 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
     WINED3DFORMAT pixelformat = WINED3DFMT_UNKNOWN;
     WINED3DDISPLAYMODE mode;
     DDSURFACEDESC2 callback_sd;
+    WINED3DDISPLAYMODE *enum_modes = NULL;
+    unsigned enum_mode_count = 0, enum_mode_array_size = 0;
 
     WINED3DFORMAT checkFormatList[] =
     {
@@ -1280,6 +1282,18 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
             pixelformat = PixelFormat_DD2WineD3D(&DDSD->u4.ddpfPixelFormat);
     }
 
+    if(!(Flags & DDEDM_REFRESHRATES))
+    {
+        enum_mode_array_size = 16;
+        enum_modes = HeapAlloc(GetProcessHeap(), 0, sizeof(WINED3DDISPLAYMODE) * enum_mode_array_size);
+        if (!enum_modes)
+        {
+            ERR("Out of memory\n");
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_OUTOFMEMORY;
+        }
+    }
+
     for(fmt = 0; fmt < (sizeof(checkFormatList) / sizeof(checkFormatList[0])); fmt++)
     {
         if(pixelformat != WINED3DFMT_UNKNOWN && checkFormatList[fmt] != pixelformat)
@@ -1298,6 +1312,28 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
             {
                 if(DDSD->dwFlags & DDSD_WIDTH && mode.Width != DDSD->dwWidth) continue;
                 if(DDSD->dwFlags & DDSD_HEIGHT && mode.Height != DDSD->dwHeight) continue;
+            }
+
+            if(!(Flags & DDEDM_REFRESHRATES))
+            {
+                /* DX docs state EnumDisplayMode should return only unique modes. If DDEDM_REFRESHRATES is not set, refresh
+                 * rate doesn't matter when determining if the mode is unique. So modes only differing in refresh rate have
+                 * to be reduced to a single unique result in such case.
+                 */
+                BOOL found = FALSE;
+                unsigned i;
+
+                for (i = 0; i < enum_mode_count; i++)
+                {
+                    if(enum_modes[i].Width == mode.Width && enum_modes[i].Height == mode.Height &&
+                       enum_modes[i].Format == mode.Format)
+                    {
+                        found = TRUE;
+                        break;
+                    }
+                }
+
+                if(found) continue;
             }
 
             memset(&callback_sd, 0, sizeof(callback_sd));
@@ -1326,13 +1362,38 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
             if(cb(&callback_sd, Context) == DDENUMRET_CANCEL)
             {
                 TRACE("Application asked to terminate the enumeration\n");
+                HeapFree(GetProcessHeap(), 0, enum_modes);
                 LeaveCriticalSection(&ddraw_cs);
                 return DD_OK;
+            }
+
+            if(!(Flags & DDEDM_REFRESHRATES))
+            {
+                if (enum_mode_count == enum_mode_array_size)
+                {
+                    WINED3DDISPLAYMODE *new_enum_modes;
+
+                    enum_mode_array_size *= 2;
+                    new_enum_modes = HeapReAlloc(GetProcessHeap(), 0, enum_modes, sizeof(WINED3DDISPLAYMODE) * enum_mode_array_size);
+
+                    if (!new_enum_modes)
+                    {
+                        ERR("Out of memory\n");
+                        HeapFree(GetProcessHeap(), 0, enum_modes);
+                        LeaveCriticalSection(&ddraw_cs);
+                        return DDERR_OUTOFMEMORY;
+                    }
+
+                    enum_modes = new_enum_modes;
+                }
+
+                enum_modes[enum_mode_count++] = mode;
             }
         }
     }
 
     TRACE("End of enumeration\n");
+    HeapFree(GetProcessHeap(), 0, enum_modes);
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
