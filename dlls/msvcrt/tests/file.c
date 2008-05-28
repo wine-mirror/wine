@@ -783,8 +783,8 @@ static void test_fopen_fclose_fcloseall( void )
     ok(stream3 != NULL, "The file '%s' should be opened now\n", fname3 );
     errno = 0xfaceabad;
     stream4 = fopen("", "w+");
-    ok(stream4 == NULL && errno == ENOENT, 
-       "filename is empty, errno = %d (expected 2)\n", errno);
+    ok(stream4 == NULL && (errno == EINVAL || errno == ENOENT),
+       "filename is empty, errno = %d (expected 2 or 22)\n", errno);
     errno = 0xfaceabad;
     stream4 = fopen(NULL, "w+");
     ok(stream4 == NULL && (errno == EINVAL || errno == ENOENT), 
