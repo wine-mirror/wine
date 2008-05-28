@@ -729,6 +729,7 @@ static void test_reset(void)
     IDirect3DVertexShader9       *shader;
     BOOL                         support_800x600 = FALSE;
     UINT                         i;
+    D3DLOCKED_RECT               lockrect;
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
@@ -921,6 +922,29 @@ static void test_reset(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
+    IDirect3DSurface9_Release(surface);
+
+    /* Will a sysmem or scratch survive while locked */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DSurface9_LockRect(surface, &lockrect, NULL, D3DLOCK_DISCARD);
+    ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
+    IDirect3DSurface9_UnlockRect(surface);
+    IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DSurface9_LockRect(surface, &lockrect, NULL, D3DLOCK_DISCARD);
+    ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
+    IDirect3DSurface9_UnlockRect(surface);
     IDirect3DSurface9_Release(surface);
 
     hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 0, 0, D3DFMT_R5G6B5, D3DPOOL_MANAGED, &texture, NULL);
