@@ -4230,6 +4230,31 @@ static void test_CreateWindow(void)
     ok( rc.bottom == 0, "invalid rect bottom %u\n", rc.bottom );
     DestroyWindow(hwnd);
 
+    /* we need a parent at 0,0 so that child coordinates match */
+    DestroyWindow(parent);
+    parent = CreateWindowEx(0, "MinMax_WndClass", NULL, WS_POPUP, 0, 0, 100, 100, 0, 0, 0, NULL);
+    ok(parent != 0, "CreateWindowEx error %d\n", GetLastError());
+
+    expected_cx = 100;
+    expected_cy = 0x7fffffff;
+    SetRect( &expected_rect, 10, 10, 110, 0x7fffffff );
+    hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, 10, 10, 100, 0x7fffffff, parent, 0, 0, NULL);
+    ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+    GetClientRect( hwnd, &rc );
+    ok( rc.right == 100, "invalid rect right %u\n", rc.right );
+    ok( rc.bottom == 0x7fffffff - 10, "invalid rect bottom %u\n", rc.bottom );
+    DestroyWindow(hwnd);
+
+    expected_cx = 0x7fffffff;
+    expected_cy = 0x7fffffff;
+    SetRect( &expected_rect, 20, 10, 0x7fffffff, 0x7fffffff );
+    hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, 20, 10, 0x7fffffff, 0x7fffffff, parent, 0, 0, NULL);
+    ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+    GetClientRect( hwnd, &rc );
+    ok( rc.right == 0x7fffffff - 20, "invalid rect right %u\n", rc.right );
+    ok( rc.bottom == 0x7fffffff - 10, "invalid rect bottom %u\n", rc.bottom );
+    DestroyWindow(hwnd);
+
     /* top level window */
     expected_cx = expected_cy = 200000;
     SetRect( &expected_rect, 0, 0, GetSystemMetrics(SM_CXMAXTRACK), GetSystemMetrics(SM_CYMAXTRACK) );
