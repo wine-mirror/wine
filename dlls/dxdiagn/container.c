@@ -133,7 +133,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER if
   WCHAR* cur;
   HRESULT hr = E_INVALIDARG;
 
-  FIXME("(%p, %s, %p)\n", iface, debugstr_w(pwszContainer), ppInstance);
+  TRACE("(%p, %s, %p)\n", iface, debugstr_w(pwszContainer), ppInstance);
 
   if (NULL == ppInstance || NULL == pwszContainer) {
     return E_INVALIDARG;
@@ -182,7 +182,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface,
   IDxDiagContainerImpl_Property* p = NULL;
   DWORD i = 0;
   
-  FIXME("(%p, %u, %s, %u)\n", iface, dwIndex, debugstr_w(pwszPropName), cchPropName);
+  TRACE("(%p, %u, %s, %u)\n", iface, dwIndex, debugstr_w(pwszPropName), cchPropName);
 
   if (NULL == pwszPropName) {
     return E_INVALIDARG;
@@ -209,7 +209,8 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface,
 static HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pvarProp) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
   IDxDiagContainerImpl_Property* p = NULL;
-  FIXME("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pvarProp);
+
+  TRACE("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pvarProp);
 
   if (NULL == pvarProp || NULL == pwszPropName) {
     return E_INVALIDARG;
@@ -231,7 +232,7 @@ HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwsz
   IDxDiagContainerImpl_Property* p = NULL;
   IDxDiagContainerImpl_Property* pNew = NULL;
 
-  FIXME("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pVarProp);
+  TRACE("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pVarProp);
 
   if (NULL == pVarProp || NULL == pwszPropName) {
     return E_INVALIDARG;
@@ -265,7 +266,7 @@ HRESULT WINAPI IDxDiagContainerImpl_AddChildContainer(PDXDIAGCONTAINER iface, LP
   IDxDiagContainerImpl_SubContainer* p = NULL;
   IDxDiagContainerImpl_SubContainer* pNew = NULL;
 
-  FIXME("(%p, %s, %p)\n", iface, debugstr_w(pszContName), pSubCont);
+  TRACE("(%p, %s, %p)\n", iface, debugstr_w(pszContName), pSubCont);
 
   if (NULL == pSubCont || NULL == pszContName) {
     return E_INVALIDARG;
