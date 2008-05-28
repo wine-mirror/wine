@@ -981,7 +981,8 @@ static void test_bitmap(void)
     hbmp = CreateBitmap(0x7ffffff, 1, 1, 1, NULL);
     if (!hbmp)
     {
-        ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY,
+        ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY /* XP */ ||
+           GetLastError() == ERROR_INVALID_PARAMETER /* Win2k */,
            "expected ERROR_NOT_ENOUGH_MEMORY, got %u\n", GetLastError());
     }
     else
