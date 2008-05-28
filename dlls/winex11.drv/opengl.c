@@ -2112,7 +2112,7 @@ void flush_gl_drawable(X11DRV_PDEVICE *physDev)
 {
     int w, h;
 
-    if(!physDev->gl_drawable)
+    if (!physDev->gl_copy)
         return;
 
     w = physDev->dc_rect.right - physDev->dc_rect.left;

@@ -139,6 +139,7 @@ typedef struct
     int           current_pf;
     Drawable      gl_drawable;
     Pixmap        pixmap;      /* Pixmap for a GLXPixmap gl_drawable */
+    int           gl_copy;
     XRENDERINFO   xrender;
 } X11DRV_PDEVICE;
 
@@ -497,6 +498,7 @@ struct x11drv_escape_set_drawable
     XID                      fbconfig_id;  /* fbconfig id used by the GL drawable */
     Drawable                 gl_drawable;  /* GL drawable */
     Pixmap                   pixmap;       /* Pixmap for a GLXPixmap gl_drawable */
+    int                      gl_copy;      /* whether the GL contents need explicit copying */
 };
 
 /**************************************************************************
