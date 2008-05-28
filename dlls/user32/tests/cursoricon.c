@@ -593,10 +593,14 @@ static void test_CreateIcon(void)
     bmpinfo.bmiHeader.biBitCount = 8;
     bmpinfo.bmiHeader.biCompression = BI_RGB;
     hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
-    memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+    ok(hbmColor != NULL, "Expected a handle to the DIB\n");
+    if (bits)
+        memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
     bmpinfo.bmiHeader.biBitCount = 1;
     hbmMask = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
-    memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+    ok(hbmMask != NULL, "Expected a handle to the DIB\n");
+    if (bits)
+        memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
 
     info.fIcon = TRUE;
     info.xHotspot = 8;
@@ -612,7 +616,9 @@ static void test_CreateIcon(void)
 
     bmpinfo.bmiHeader.biBitCount = 16;
     hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
-    memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+    ok(hbmColor != NULL, "Expected a handle to the DIB\n");
+    if (bits)
+        memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
 
     info.fIcon = TRUE;
     info.xHotspot = 8;
@@ -628,7 +634,9 @@ static void test_CreateIcon(void)
 
     bmpinfo.bmiHeader.biBitCount = 32;
     hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
-    memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+    ok(hbmColor != NULL, "Expected a handle to the DIB\n");
+    if (bits)
+        memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
 
     info.fIcon = TRUE;
     info.xHotspot = 8;
