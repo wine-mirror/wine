@@ -296,7 +296,8 @@ static void run_userhandling_tests(void)
 
     ret = pNetUserChangePassword(NULL, sNonexistentUser, sTestUserOldPass,
             sTestUserNewPass);
-    ok(ret == NERR_UserNotFound || ret == ERROR_INVALID_PASSWORD,
+    ok(ret == NERR_UserNotFound || ret == ERROR_INVALID_PASSWORD ||
+       ret == ERROR_CANT_ACCESS_DOMAIN_INFO,
             "Changing password for nonexistent user returned 0x%08x.\n", ret);
 
     ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
@@ -304,12 +305,13 @@ static void run_userhandling_tests(void)
     /* Apparently NERR_PasswordTooShort can be returned on windows xp if a
      * strict password policy is enforced
      */
-    ok(ret == NERR_Success || ret == NERR_PasswordTooShort,
+    ok(ret == NERR_Success || ret == NERR_PasswordTooShort ||
+       ret == ERROR_CANT_ACCESS_DOMAIN_INFO || ret == ERROR_INVALID_PASSWORD,
             "Changing old password to old password returned 0x%08x.\n", ret);
 
     ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserNewPass,
             sTestUserOldPass);
-    ok(ret == ERROR_INVALID_PASSWORD,
+    ok(ret == ERROR_INVALID_PASSWORD || ret == ERROR_CANT_ACCESS_DOMAIN_INFO,
             "Trying to change password giving an invalid password returned 0x%08x.\n", ret);
 
     ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
@@ -319,7 +321,8 @@ static void run_userhandling_tests(void)
 
     ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
             sTestUserNewPass);
-    ok(ret == NERR_Success, "Changing the password correctly returned 0x%08x.\n", ret);
+    ok(ret == NERR_Success || ret == ERROR_CANT_ACCESS_DOMAIN_INFO ||
+       ret == ERROR_INVALID_PASSWORD, "Changing the password correctly returned 0x%08x.\n", ret);
 
     ret = pNetUserDel(NULL, sTestUserName);
     ok(ret == NERR_Success, "Deleting the user failed.\n");
