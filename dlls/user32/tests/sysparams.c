@@ -1917,9 +1917,12 @@ static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
                       SPI_SETLOWPOWERACTIVE_VALNAME,
                       vals[i] ? "1" : "0" );
 
+        /* SPI_SETLOWPOWERACTIVE is not persistent in win2k3 and above */
         rc=SystemParametersInfoA( SPI_GETLOWPOWERACTIVE, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%d\n",i,rc,GetLastError());
-        eq( v, vals[i], "SPI_GETLOWPOWERACTIVE", "%d" );
+        ok(v == vals[i] ||
+           v == 0, /* win2k3 */
+           "SPI_GETLOWPOWERACTIVE: got %d instead of 0 or %d\n", v, vals[i]);
     }
 
     rc=SystemParametersInfoA( SPI_SETLOWPOWERACTIVE, old_b, 0, SPIF_UPDATEINIFILE );
@@ -1951,9 +1954,12 @@ static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
                       SPI_SETPOWEROFFACTIVE_VALNAME,
                       vals[i] ? "1" : "0" );
 
+        /* SPI_SETPOWEROFFACTIVE is not persistent in win2k3 and above */
         rc=SystemParametersInfoA( SPI_GETPOWEROFFACTIVE, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%d\n",i,rc,GetLastError());
-        eq( v, vals[i], "SPI_GETPOWEROFFACTIVE", "%d" );
+        ok(v == vals[i] ||
+           v == 0, /* win2k3 */
+           "SPI_GETPOWEROFFACTIVE: got %d instead of 0 or %d\n", v, vals[i]);
     }
 
     rc=SystemParametersInfoA( SPI_SETPOWEROFFACTIVE, old_b, 0, SPIF_UPDATEINIFILE );
