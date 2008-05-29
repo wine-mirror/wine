@@ -4695,22 +4695,30 @@ static void test_GetWindowModuleFileName(void)
     SetLastError(0xdeadbeef);
     ret2 = GetModuleFileName(hinst, buf2, ret1 - 2);
     ok(ret2 == ret1 - 2, "expected %u, got %u\n", ret1 - 2, ret2);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3 */
+       "expected 0xdeadbeef or ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret2 = GetModuleFileName(hinst, buf2, 0);
     ok(!ret2, "GetModuleFileName should return 0\n");
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3 */
+       "expected 0xdeadbeef or ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret2 = pGetWindowModuleFileNameA(hwnd, buf2, ret1 - 2);
     ok(ret2 == ret1 - 2, "expected %u, got %u\n", ret1 - 2, ret2);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3 */
+       "expected 0xdeadbeef or ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret2 = pGetWindowModuleFileNameA(hwnd, buf2, 0);
     ok(!ret2, "expected 0, got %u\n", ret2);
-    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_INSUFFICIENT_BUFFER, /* win2k3 */
+       "expected 0xdeadbeef or ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
 
     DestroyWindow(hwnd);
 
