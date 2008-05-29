@@ -185,7 +185,7 @@ BEGIN
         MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
         MENUITEM "&Rename\tF2",                 ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Export . . .",               ID_EDIT_EXPORT
+        MENUITEM "&Export...",                  ID_EDIT_EXPORT
         MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND, GRAYED
