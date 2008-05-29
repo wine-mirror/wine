@@ -68,6 +68,8 @@ extern void winetest_wait_child_process( HANDLE process );
 #define START_TEST(name) void func_##name(void)
 #endif
 
+extern int broken( int condition );
+
 #ifdef __GNUC__
 
 extern int winetest_ok( int condition, const char *msg, ... ) __attribute__((format (printf,2,3) ));
@@ -222,6 +224,11 @@ void winetest_set_location( const char* file, int line )
     else
         data->current_file++;
     data->current_line=line;
+}
+
+int broken( int condition )
+{
+    return (strcmp(winetest_platform, "windows") == 0) && condition;
 }
 
 /*
