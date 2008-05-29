@@ -29,8 +29,8 @@ MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
   MENUITEM "&Mentés\tCtrl+S",             CMD_SAVE
   MENUITEM "Mentés má&sként...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Oldalbeállítás...",    CMD_PAGE_SETUP
   MENUITEM "Nyom&tatás...\tCtrl+P",            CMD_PRINT
+  MENUITEM "&Oldalbeállítás...",    CMD_PAGE_SETUP
   MENUITEM "Nyomtató &beállítás...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "&Kilépés",             CMD_EXIT
@@ -47,6 +47,7 @@ POPUP "S&zerkesztés" {
   MENUITEM "&Idõ/dátum\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "&Hosszú sorok tördelése",  CMD_WRAP
+  MENUITEM "&Font...",          CMD_FONT
  }
 POPUP "&Keresés" {
   MENUITEM "&Keresés...",           CMD_SEARCH
