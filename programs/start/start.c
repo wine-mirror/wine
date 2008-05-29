@@ -311,11 +311,14 @@ int wmain (int argc, WCHAR *argv[])
 			fatal_string_error(STRING_EXECFAIL, GetLastError());
                     }
                     sei.hProcess = process_information.hProcess;
+                    goto done;
                 }
 	}
-	else if (!ShellExecuteExW(&sei))
-	    	fatal_string_error(STRING_EXECFAIL, GetLastError());
 
+        if (!ShellExecuteExW(&sei))
+            fatal_string_error(STRING_EXECFAIL, GetLastError());
+
+done:
 	HeapFree( GetProcessHeap(), 0, args );
 	HeapFree( GetProcessHeap(), 0, dos_filename );
 	HeapFree( GetProcessHeap(), 0, parent_directory );
