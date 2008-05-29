@@ -303,7 +303,7 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
     HRESULT ret_value = D3D_OK;
     if(src_ptr == This)
     {
-        TRACE(" copying surface %p to surface %p, why? \n", src_ptr, This);
+        TRACE("copying surface %p to surface %p, why?\n", src_ptr, This);
         return ret_value;
     }
 
