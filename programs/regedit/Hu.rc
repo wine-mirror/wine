@@ -47,6 +47,7 @@ BEGIN
             MENUITEM "&Sztring érték",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Bináris érték",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD érték",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Törlés\tDel",                ID_EDIT_DELETE
