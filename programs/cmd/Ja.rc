@@ -199,6 +199,12 @@ Wine環境ではverifyフラグは意味を持ちません。\n"
 
   WCMD_VOL,    "VOLのヘルプ\n"
 
+  WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
+stack, and then changes the current directory to the supplied one.\n"
+
+  WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
+PUSHD.\n"
+
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_EXIT,
@@ -220,7 +226,9 @@ MD (MKDIR)\tサブディレクトリを作成\n\
 MORE\t\tDisplay output in pages\n\
 MOVE\t\tファイルまたはディレクトリツリーを移動\n\
 PATH\t\tパスを表示又は設定\n\
+POPD\t\tRestores the directory to the last one saved with PUSHD\n\
 PROMPT\t\tコマンドプロンプトを変更\n\
+PUSHD\t\tChanges to a new directory, saving the current one\n\
 REN (RENAME)\tファイルをリネーム\n\
 RD (RMDIR)\tサブディレクトリを削除\n\
 SET\t\t環境変数を設定又は表示\n\
