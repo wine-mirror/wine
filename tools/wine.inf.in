@@ -2225,6 +2225,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,system,
 10,temp,
 11,spool\drivers\color,
+11,spool\printers,
 10,,explorer.exe
 10,,hh.exe
 10,,notepad.exe
