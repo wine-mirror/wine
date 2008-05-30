@@ -67,7 +67,7 @@ typedef struct IDxDiagContainer *LPDXDIAGCONTAINER,  *PDXDIAGCONTAINER;
 /*****************************************************************************
  * IDxDiagContainer interface
  */
-#ifdef __WINESRC__
+#ifdef WINE_NO_UNICODE_MACROS
 #undef GetProp
 #endif
 

@@ -385,7 +385,7 @@ typedef const WCHAR    *PCWSTR,     *LPCWSTR;
  * the emulator. The reason is they depend on the UNICODE
  * macro which only exists in the user's code.
  */
-#ifndef __WINESRC__
+#ifndef WINE_NO_UNICODE_MACROS
 # ifdef UNICODE
 # ifndef _TCHAR_DEFINED
 typedef WCHAR           TCHAR,      *PTCHAR;
@@ -404,7 +404,7 @@ typedef LPCSTR          PCTSTR,      LPCTSTR;
 #  define __TEXT(string) string
 # endif /* UNICODE */
 # define TEXT(quote) __TEXT(quote)
-#endif   /* __WINESRC__ */
+#endif   /* WINE_NO_UNICODE_MACROS */
 
 /* Misc common WIN32 types */
 typedef char            CCHAR;

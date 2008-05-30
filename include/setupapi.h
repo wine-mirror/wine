@@ -27,11 +27,11 @@ extern "C" {
 #endif
 
 /* setupapi doesn't use the normal convention, it adds an underscore before A/W */
-#ifdef __WINESRC__
+#ifdef WINE_NO_UNICODE_MACROS
 # define DECL_WINELIB_SETUPAPI_TYPE_AW(type)  /* nothing */
-#else   /* __WINESRC__ */
+#else
 # define DECL_WINELIB_SETUPAPI_TYPE_AW(type)  typedef WINELIB_NAME_AW(type##_) type;
-#endif  /* __WINESRC__ */
+#endif
 
 #ifdef __cplusplus
 extern "C" {

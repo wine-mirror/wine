@@ -467,8 +467,7 @@ typedef struct _PROCESS_HEAP_ENTRY
 
 #define INVALID_ATOM        ((ATOM)0)
 #define MAXINTATOM          0xc000
-#ifdef __WINESRC__
-/* force using a cast when inside Wine */
+#ifdef WINE_NO_UNICODE_MACROS /* force using a cast */
 #define MAKEINTATOM(atom)   ((ULONG_PTR)((WORD)(atom)))
 #else
 #define MAKEINTATOM(atom)   ((LPTSTR)((ULONG_PTR)((WORD)(atom))))

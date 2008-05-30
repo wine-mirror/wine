@@ -218,7 +218,7 @@ typedef struct _MAPIUID
 #define MVI_FLAG    (MV_FLAG|MV_INSTANCE)
 #define MVI_PROP(t) ((t)|MVI_FLAG)
 
-#ifndef __WINESRC__
+#ifndef WINE_NO_UNICODE_MACROS
 # ifdef UNICODE
 # define PT_TSTRING      PT_UNICODE
 # define PT_MV_TSTRING   (MV_FLAG|PT_UNICODE)

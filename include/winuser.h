@@ -652,8 +652,7 @@ typedef struct tagWINDOWPLACEMENT
 #define MAKEINTRESOURCEA(i) (LPSTR)((ULONG_PTR)((WORD)(i)))
 #define MAKEINTRESOURCEW(i) (LPWSTR)((ULONG_PTR)((WORD)(i)))
 
-#ifdef __WINESRC__
-/* force using a cast when inside Wine */
+#ifdef WINE_NO_UNICODE_MACROS /* force using a cast */
 #define MAKEINTRESOURCE(i) ((ULONG_PTR)((WORD)(i)))
 #else
 #define MAKEINTRESOURCE WINELIB_NAME_AW(MAKEINTRESOURCE)
