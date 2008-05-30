@@ -1179,5 +1179,8 @@ START_TEST(tmarshal)
     test_typelibmarshal();
     test_DispCallFunc();
 
+    hr = UnRegisterTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, 1);
+    ok_ole_success(hr, UnRegisterTypeLib);
+
     CoUninitialize();
 }
