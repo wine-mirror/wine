@@ -944,7 +944,9 @@ static void test_CoFreeUnusedLibraries(void)
 
     ok(is_module_loaded("urlmon.dll"), "urlmon.dll should be loaded\n");
 
-    IUnknown_Release(pUnk);
+    ok(pUnk != NULL, "Expected a valid pointer\n");
+    if (pUnk)
+        IUnknown_Release(pUnk);
 
     ok(is_module_loaded("urlmon.dll"), "urlmon.dll should be loaded\n");
 
