@@ -331,8 +331,9 @@ static void translateinfstringex_test(void)
 
     /* try an empty filename */
     hr = pOpenINFEngine("", "Options.NTx86", 0, &hinf, NULL);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
-        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* NT+ */ ||
+       hr == HRESULT_FROM_WIN32(E_UNEXPECTED) /* 9x */,
+        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND or E_UNEXPECTED), got %08x\n", hr);
 
     /* try a NULL hinf */
     hr = pOpenINFEngine(inf_file, "Options.NTx86", 0, NULL, NULL);
