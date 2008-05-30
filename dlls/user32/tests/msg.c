@@ -316,12 +316,12 @@ static const struct message WmSwitchNotMaximizedChild[] = {
     /* Activate 2nd MDI child */
     { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE}, /* in the 2nd MDI child */
     { WM_NCACTIVATE, sent|wparam|defwinproc, 1 }, /* in the 2nd MDI child */
-    { WM_SETVISIBLE, hook }, /* in the 1st MDI child */
+    { HCBT_SETFOCUS, hook }, /* in the 1st MDI child */
     { WM_KILLFOCUS, sent|defwinproc }, /* in the 1st MDI child */
     { WM_IME_SETCONTEXT, sent|defwinproc|optional }, /* in the 1st MDI child */
     { WM_IME_SETCONTEXT, sent|optional }, /* in the  MDI client */
     { WM_SETFOCUS, sent, 0 }, /* in the  MDI client */
-    { WM_SETVISIBLE, hook },
+    { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent }, /* in the  MDI client */
     { WM_IME_SETCONTEXT, sent|optional }, /* in the  MDI client */
     { WM_IME_SETCONTEXT, sent|defwinproc|optional  }, /* in the 1st MDI child */
