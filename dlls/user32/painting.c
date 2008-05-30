@@ -859,19 +859,10 @@ static HWND fix_caret(HWND hWnd, const RECT *scroll_rect, INT dx, INT dy,
  */
 HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 {
-    HWND full_handle;
     HRGN hrgn;
     UINT flags = UPDATE_NONCLIENT | UPDATE_ERASE | UPDATE_PAINT | UPDATE_INTERNALPAINT | UPDATE_NOCHILDREN;
 
     if (!lps) return 0;
-
-    if (!(full_handle = WIN_IsCurrentThread( hwnd )))
-    {
-        if (IsWindow(hwnd))
-            FIXME( "window %p belongs to other thread\n", hwnd );
-        return 0;
-    }
-    hwnd = full_handle;
 
     HideCaret( hwnd );
 
