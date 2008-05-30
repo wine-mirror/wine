@@ -29,8 +29,8 @@ especially the wealth of information found at http://www.winehq.org.
 To compile and run Wine, you must have one of the following:
 
   Linux version 2.0.36 or above
-  FreeBSD 6.2 or later
-  Solaris x86 2.5 or later
+  FreeBSD 7.0 or later
+  Solaris x86 9 or later
   NetBSD-current
   Mac OS X 10.4 or later
 
@@ -44,12 +44,9 @@ Linux info:
   it's best to have a current kernel such as 2.4.x or 2.6.x.
 
 FreeBSD info:
-  Wine should build on FreeBSD 5.x, but versions before FreeBSD 7.0 will
-  generally not work properly. FreeBSD 6.3 has patches available to allow
-  Wine to run. See <http://wiki.freebsd.org/Wine> for more information.
- 
-  More information can be found in the FreeBSD ports tree at
-  <ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/>.
+  Wine will generally not work properly on versions before FreeBSD
+  7.0. FreeBSD 6.3 has patches available to allow Wine to run. See
+  <http://wiki.freebsd.org/Wine> for more information.
 
 Solaris info:
   You will most likely need to build Wine with the GNU toolchain
@@ -112,7 +109,7 @@ file). Then do a "make clean", and patch the release with:
     bunzip2 -c patch-file | patch -p1
 
 where "patch-file" is the name of the patch file (something like
-wine-0.9.x.diff.bz2). You can then re-run "./configure", and then
+wine-1.0.x.diff.bz2). You can then re-run "./configure", and then
 run "make depend && make".
 
 
@@ -135,16 +132,16 @@ Support area at http://www.winehq.org/ for configuration hints.
 When invoking Wine, you may specify the entire path to the executable,
 or a filename only.
 
-For example: to run Solitaire:
+For example: to run Notepad:
 
-	wine sol		   (using the search Path as specified in
-	wine sol.exe		    the config file to locate the file)
+	wine notepad		   (using the search Path as specified in
+	wine notepad.exe	    the config file to locate the file)
 
-	wine c:\\windows\\sol.exe  (using DOS filename syntax)
+	wine c:\\windows\\notepad.exe  (using DOS filename syntax)
 
-	wine ~/.wine/drive_c/windows/sol.exe  (using Unix filename syntax)
+	wine ~/.wine/drive_c/windows/notepad.exe  (using Unix filename syntax)
 
-        wine sol.exe /parameter1 -parameter2 parameter3
+        wine notepad.exe /parameter1 -parameter2 parameter3
 				   (calling program with parameters)
 
 Wine is not yet complete, so several programs may crash. In that crash
