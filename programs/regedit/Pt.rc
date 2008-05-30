@@ -50,6 +50,7 @@ BEGIN
             MENUITEM "Valor &Texto",                 ID_EDIT_NEW_STRINGVALUE
             MENUITEM "Valor &Binário",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "Valor &DWORD",                 ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valor de palavras &múltiplas", ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Excluir\tDel",                    ID_EDIT_DELETE
@@ -108,6 +109,7 @@ BEGIN
             MENUITEM "Valor &Texto",                 ID_EDIT_NEW_STRINGVALUE
             MENUITEM "Valor &Binário",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "Valor &DWORD",                 ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valor de palavras &múltiplas", ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Excluir\tDel",                    ID_EDIT_DELETE
@@ -161,11 +163,13 @@ BEGIN
             MENUITEM "Valor &Texto",                 ID_EDIT_NEW_STRINGVALUE
             MENUITEM "Valor &Binário",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "Valor &DWORD",                 ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valor de palavras &múltiplas", ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Excluir\tDel",                    ID_EDIT_DELETE
         MENUITEM "&Renomear\tF2",                    ID_EDIT_RENAME
         MENUITEM SEPARATOR
+        MENUITEM "E&xportar..."                      ID_EDIT_EXPORT
         MENUITEM "&Copiar nome da chave",            ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Localizar\tCtrl+F",               ID_EDIT_FIND, GRAYED
@@ -238,8 +242,6 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Editor de Registo"
-    IDC_REGEDIT             "REGEDIT"
-    IDC_REGEDIT_FRAME       "REGEDIT_FRAME"
 END
 
 
@@ -359,6 +361,7 @@ BEGIN
     IDS_DELETE_BOX_TEXT     "Tem certeza que deseja excluir o valor '%s'?"
     IDS_NEWKEY              "Nova chave #%d"
     IDS_NEWVALUE            "Novo valor #%d"
+    IDS_NOTFOUND            "Chave de busca '%s' não encontrada"
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -374,6 +377,7 @@ BEGIN
     IDS_DELETE_BOX_TEXT     "Tem certeza que deseja excluir o valor '%s'?"
     IDS_NEWKEY              "Nova chave #%d"
     IDS_NEWVALUE            "Novo valor #%d"
+    IDS_NOTFOUND            "Chave de busca '%s' não encontrada"
 END
 
 /*****************************************************************/
