@@ -860,6 +860,12 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
         if (This->notify)
 	    IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
 
+        /* If driver manages its own buffer, IDsCaptureDriverBuffer_Release
+           should have freed the buffer. Prevent freeing it again in
+           IDirectSoundCaptureBufferImpl_Create */
+        if (!(This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY))
+	    This->device->buffer = NULL;
+
 	HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree( GetProcessHeap(), 0, This );
 	TRACE("(%p) released\n", This);
