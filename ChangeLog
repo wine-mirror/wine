@@ -1,3 +1,680 @@
+2008-05-30  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/ole32/tests/compobj.c:
+	ole32/tests: Prevent a crash.
+
+2008-05-30  Michael Karcher <wine@mkarcher.dialup.fu-berlin.de>
+
+	* dlls/dsound/capture.c:
+	dsound: Fix double free in dsound capture.
+
+2008-05-29  Vitaly Lipatov <lav@etersoft.ru>
+
+	* tools/wine.inf.in:
+	wine.inf: Create default spool dir.
+
+2008-05-30  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/user32/tests/msg.c:
+	user32: CBT hook doesn't send window messages.
+
+2008-05-30  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user32/painting.c:
+	user32: We no longer need to ensure that the BeginPaint window belongs to the
+	current thread.
+
+	* include/dbt.h, include/dxdiag.h, include/mapidefs.h, include/msiquery.h,
+	  include/setupapi.h, include/shlwapi.h, include/winbase.h,
+	  include/winnt.h, include/winuser.h:
+	include: Use WINE_NO_UNICODE_MACROS instead of __WINESRC__ where appropriate.
+
+2008-05-30  Michael Stefaniuc <mstefani@redhat.de>
+
+	* programs/notepad/Hu.rc:
+	notepad: Fix the Hungarian translation.
+
+	* dlls/shell32/shell32_Hu.rc:
+	shell32: Fix the Hungarian translation.
+
+	* dlls/mshtml/Hu.rc:
+	mshtml: Fix the Hungarian translation.
+
+	* dlls/comdlg32/cdlg_En.rc:
+	comdlg32: Fix some control sizes in the default English resource.
+
+	* dlls/comdlg32/cdlg_Hu.rc:
+	comdlg32: Fix the Hungarian translation.
+
+	* programs/cmd/Ja.rc:
+	cmd: Fix the Japanese translation.
+
+	* programs/winecfg/Ja.rc:
+	winecfg: Fix the placement of a checkbox in the Japanese translation.
+
+	* programs/winecfg/Bg.rc:
+	winecfg: Fix the Bulgarian translation.
+
+	* programs/winecfg/Hu.rc:
+	winecfg: Fix the Hungarian translation.
+
+	* programs/regedit/Hu.rc:
+	regedit: Fix the Hungarian translation.
+
+	* programs/regedit/Ja.rc:
+	regedit: Fix the Japanese translation.
+
+	* programs/regedit/Bg.rc:
+	regedit: Fix the Bulgarian translation.
+
+2008-05-29  Francois Gouget <fgouget@free.fr>
+
+	* programs/regedit/En.rc:
+	regedit: Remove extraneous spaces in '...'.
+
+	* include/wine/test.h:
+	tests: Add a broken() function to make it possible to handle Windows misbehaviors
+	that we don't want to reproduce in Wine.
+
+	* dlls/ddraw/texture.c:
+	ddraw: Remove trailing spaces in Wine traces.
+
+	* dlls/shell32/shell32_En.rc:
+	shell32: s/library/Wine/ for consistency in the license message.
+
+2008-05-29  Michael Karcher <wine@mkarcher.dialup.fu-berlin.de>
+
+	* dlls/advpack/advpack.c, dlls/advpack/tests/advpack.c:
+	advpack: Fix buffer sizes for possibly quoted strings.
+
+2008-05-29  James Hawkins <jhawkins@codeweavers.com>
+
+	* dlls/user32/tests/win.c:
+	user32: win2k3's GetWindowModuleFileName does return ERROR_INSUFFICIENT_BUFFER.
+
+2008-05-28  James Hawkins <jhawkins@codeweavers.com>
+
+	* dlls/oleaut32/tests/olefont.c:
+	oleaut32: Disable olefont tests that fail on all platforms.
+
+	* dlls/user32/tests/sysparams.c:
+	user32: Fix two tests that fail in win2k3 and above.
+
+	* dlls/kernel32/tests/toolhelp.c:
+	kernel32: Remove two tests that produce different results for win9x and NT
+	platforms.
+
+2008-05-29  Alexandre Julliard <julliard@winehq.org>
+
+	* programs/start/start.c:
+	start: Fall back to ShellExecute for unknown binaries in /unix mode.
+
+2008-05-29  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/mshtml/Fi.rc:
+	mshtml: Fix the Finnish translation.
+
+	* dlls/comdlg32/cdlg_Eo.rc:
+	comdlg32: Fix the Esperanto translation.
+
+	* dlls/comdlg32/cdlg_Ja.rc:
+	comdlg32: Fix the Japanese translation.
+
+	* programs/winhlp32/Sk.rc:
+	winhlp32: Fix the Slovak translation.
+
+	* programs/notepad/Fi.rc:
+	notepad: Fix the Finnish translation.
+
+	* programs/notepad/Sk.rc, programs/notepad/rsrc.rc:
+	notepad: Remove the Slovak "translation" as it is basically only a stale copy
+	of the English resource.
+
+	* dlls/shell32/shell32_Ja.rc:
+	shell32: Fix the Japanese translation.
+
+	* dlls/shell32/shell32_Bg.rc:
+	shell32: Fix the Bulgarian translation.
+
+	* dlls/shell32/shell32_Fi.rc:
+	shell32: Fix the Finnish translation.
+
+	* dlls/shell32/shell32_Eo.rc:
+	shell32: Fix the Esperanto translation.
+
+	* dlls/shell32/shell32_Sk.rc:
+	shell32: Fix the Slovak translation.
+
+	* programs/regedit/En.rc:
+	regedit: Fix the English (NEUTRAL) translation. Rename SUBLANG_ENGLISH_US
+	to SUBLANG_DEFAULT.
+
+2008-05-29  Alexander Dorofeyev <alexd4@inbox.lv>
+
+	* dlls/ddraw/ddraw.c:
+	ddraw: Do not return modes differing only by refresh rate without
+	DDEDM_REFRESHRATES.
+
+2008-05-28  Austin English <austinenglish@gmail.com>
+
+	* dlls/gdi32/tests/bitmap.c:
+	gdi32: Fix a test failure in 2k.
+
+2008-05-28  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* dlls/d3d9/tests/device.c:
+	d3d9: Add a test to see whether offscreen surfaces can be locked while a
+	reset occurs.
+
+2008-05-28  Louis Lenders <xerox_xerox2000@yahoo.co.uk>
+
+	* tools/wine.inf.in:
+	wine.inf: Add fake glu32.
+
+2008-05-28  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user32/tests/win.c, dlls/user32/win.c:
+	user32: Check for wraparound in the initial window coordinates.
+
+	* dlls/winex11.drv/x11drv_main.c:
+	winex11: XInitThreads is hopeless, remove it again.
+
+	* dlls/msftedit/msftedit_main.c:
+	msftedit: Explicitly load riched20 to make sure the window classes are created.
+
+2008-05-28  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Remove leftovers from old tests.
+
+2008-05-28  Jon Griffiths <jon_p_griffiths@yahoo.com>
+
+	* dlls/msvcrt/tests/printf.c:
+	msvcrt: Fix a test that fails on win95.
+
+2008-05-27  Jon Griffiths <jon_p_griffiths@yahoo.com>
+
+	* dlls/msvcrt/tests/file.c:
+	msvcrt: Fix file test which fails on Vista.
+
+2008-05-28  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/user32/tests/cursoricon.c:
+	user32/tests: Prevent writing to not allocated memory.
+
+	* dlls/user32/tests/win.c:
+	user32/tests: Run tests on win95 again.
+
+2008-05-28  Igor Tarasov <tarasov.igor@gmail.com>
+
+	* fonts/tahomabd.sfd, fonts/tahomabd.ttf:
+	fonts: Tahoma Bold Cyrillic glyphs added.
+
+2008-04-24  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/dinput/keyboard.c, dlls/dinput/tests/keyboard.c:
+	dinput: Convert keyboard buffer from internal data format to user data format.
+
+2008-05-27  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/dxdiagn/container.c:
+	dxdiagn: A number of FIXMEs can be replaced with TRACEs.
+
+2008-05-22  Jens Albretsen <jens@albretsen.dk>
+
+	* dlls/ddraw/tests/d3d.c:
+	ddraw: Test for IDirect3DTexture_Load of Texture into itself.
+
+	* dlls/ddraw/texture.c:
+	ddraw: IDirect3DTextureImpl_Load failed when texture was loading onto itself.
+
+2008-05-28  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/opengl32/tests/opengl.c:
+	opengl32/tests: Add a couple of test cases for pixel format handle on window DCs.
+
+	* dlls/winex11.drv/init.c, dlls/winex11.drv/opengl.c,
+	  dlls/winex11.drv/window.c, dlls/winex11.drv/x11drv.h:
+	winex11: Add support for performing GL calls on a top-level window DC.
+
+	* dlls/winex11.drv/opengl.c, dlls/winex11.drv/window.c:
+	winex11: Make sure that all glX functions are called under the X11 lock.
+
+	* dlls/winex11.drv/opengl.c:
+	winex11: Change the pixel format initialisation to make sure it happens under
+	the X11 lock.
+
+2008-05-28  Alistair Leslie-Hughes <leslie_alistair@hotmail.com>
+
+	* dlls/netapi32/tests/access.c:
+	netapi32: Fix tests when the machine is on DOMAIN.
+
+2008-05-27  Eric Pouech <eric.pouech@orange.fr>
+
+	* tools/winedump/msc.c:
+	winedump: Fully dump the compiland (V3) structure out of .pdb files.
+
+2008-05-28  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/ddraw/tests/ddrawmodes.c:
+	ddraw/tests: Don't crash on win9x.
+
+2008-05-28  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/ws2_32/socket.c:
+	ws2_32: Change back magic 127.12.34.56 to loopback on connect().
+
+2008-05-28  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/ws2_32/tests/sock.c:
+	ws2_32/tests: Fix crash on win98.
+
+2008-05-28  Michael Stefaniuc <mstefani@redhat.de>
+
+	* programs/notepad/Zh.rc:
+	notepad: Fix the Chinese (Simplified) translation.
+
+	* programs/winecfg/Zh.rc:
+	winecfg: Fix the Chinese (Traditional) translation.
+
+	* programs/notepad/Wa.rc:
+	notepad: Fix the Walon translation.
+
+	* dlls/user32/resources/user32_Zh.rc:
+	user32: Fix the Chinese translations.
+
+	* dlls/shell32/shell32_Cn.rc, dlls/shell32/shell32_Zh.rc:
+	shell32: Fix the Chinese translations.
+
+2008-05-27  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/shell32/shell32_Uk.rc:
+	shell32: Fix the Ukrainian translation.
+
+	* dlls/comdlg32/cdlg_Uk.rc:
+	comdlg32: Fix the Ukrainian translation.
+
+	* dlls/comdlg32/cdlg_El.rc:
+	comdlg32: Fix the Greek translation.
+
+	* dlls/comdlg32/cdlg_Th.rc:
+	comdlg32: Fix the Thai translation.
+
+	* dlls/shell32/shell32_Wa.rc:
+	shell32: Fix the Walon translation.
+
+	* dlls/comdlg32/cdlg_Wa.rc:
+	comdlg32: Fix the Walon translation.
+
+2008-05-27  Jon Griffiths <jon_p_griffiths@yahoo.com>
+
+	* dlls/msvcrt/tests/cpp.c:
+	msvcrt: Fix an RTTI test Failure on Vista.
+
+2008-05-27  Dylan Smith <dylan.ah.smith@gmail.com>
+
+	* programs/wordpad/wordpad.c:
+	wordpad: Added a null terminator needed for a unicode string.
+
+2008-05-23  Dylan Smith <dylan.ah.smith@gmail.com>
+
+	* programs/wordpad/En.rc:
+	wordpad: Removed spaces between dots in ellipses for english menu text.
+
+2008-05-23  Igor Tarasov <tarasov.igor@gmail.com>
+
+	* dlls/user32/menu.c:
+	user32: Further implementation of MNS_NOTIFYBYPOS.
+
+2008-05-26  Dan Kegel <dank@kegel.com>
+
+	* dlls/advapi32/service.c:
+	advapi32: Don't test buffer length if buffer is null.
+
+2008-05-27  James Hawkins <jhawkins@codeweavers.com>
+
+	* dlls/usp10/tests/usp10.c:
+	usp10: Fix several failing test in win2k3.
+
+2008-05-26  Jon Griffiths <jon_p_griffiths@yahoo.com>
+
+	* dlls/msvcrt/wcs.c:
+	msvcrt: Follow Vista behaviour in wcscpy_s.
+
+	* dlls/msvcrt/tests/string.c:
+	msvcrt/tests: Fix 3 tests that always fail on Vista.
+
+2008-05-26  Dan Kegel <dank@kegel.com>
+
+	* dlls/fusion/assembly.c:
+	fusion: Use HeapAlloc, not strdup, to avoid malloc/HeapFree mismatch.
+
+2008-05-27  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/shell32/tests/shelllink.c:
+	shell32/tests: Run tests again on win95.
+
+2008-05-27  Dan Kegel <dank@kegel.com>
+
+	* dlls/fusion/tests/asmcache.c:
+	fusion: UninstallAssembly test: Fix typo, avoid undefined value.
+
+2008-05-27  Michael Karcher <wine@mkarcher.dialup.fu-berlin.de>
+
+	* dlls/oleaut32/tests/vartype.c:
+	oleaut32/tests: Call functions via manually obtained pointers.
+
+2008-05-27  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Test to show cleanup should not be needed.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Add another test.
+
+2008-05-27  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/msvcrt/console.c:
+	msvcrt: Mark some data as constant.
+
+2008-05-23  Tomasz Jezierski - Tefnet <developers@tefnet.pl>
+
+	* dlls/comctl32/tests/listview.c:
+	comctl32/tests: Fix for setting wrong initial position in listbox.
+
+2008-05-26  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/user32/tests/win.c:
+	user32: Add the tests for GetWindowModuleFileName.
+
+2008-05-13  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/user32/user32.spec, dlls/user32/win.c:
+	user32: Implement GetWindowModuleFileName.
+
+2008-05-26  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Cleanup after testCreateDeviceInterface.
+
+2008-05-26  Vitaliy Margolen <wine-patches@kievinfo.com>
+
+	* dlls/winex11.drv/ime.c:
+	winex11: Use memmove for possibly overlapping memory areas.
+
+	* dlls/shell32/classes.c:
+	shell32: Don't print not initialized value.
+
+2008-05-27  John Klehm <xixsimplicityxix@gmail.com>
+
+	* dlls/winex11.drv/wintab.c:
+	winex11: Support detection of tablet devices from XExtensionKeyboard type.
+
+2008-05-26  John Klehm <xixsimplicityxix@gmail.com>
+
+	* dlls/winex11.drv/wintab.c:
+	winex11: Detect acecad tablet as stylus device.
+
+2008-05-27  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/shell32/shell32_Ca.rc:
+	shell32: Fix the Catalan translation.
+
+	* dlls/comdlg32/cdlg_Ca.rc:
+	comdlg32: Fix the Catalan translation including some size fixes too.
+
+2008-05-26  Jon Griffiths <jon_p_griffiths@yahoo.com>
+
+	* dlls/msvcrt/tests/cpp.c:
+	msvcrt/tests: Fix 4 tests that always fail on Vista.
+
+2008-05-26  Michael Karcher <wine@mkarcher.dialup.fu-berlin.de>
+
+	* dlls/oleaut32/tests/vartype.c, dlls/oleaut32/vartype.c:
+	oleaut32: Currency to BSTR must use local decimal separator.
+
+2008-05-25  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/gdi32/enhmetafile.c, dlls/gdi32/metafile.c,
+	  dlls/gdi32/tests/metafile.c:
+	gdi32: Make generated EMFs fully match Windows ones.
+
+	* dlls/gdi32/enhmfdrv/graphics.c:
+	gdi32: If there is no clipping rect, EMREXTTEXTOUT shouldn't have a bounding
+	rect.
+
+	* dlls/gdi32/tests/metafile.c:
+	gdi32: Ignore exScale/eyScale when comparing EMREXTTEXTOUT EMF records.
+
+2008-05-24  H. Verbeet <hverbeet@gmail.com>
+
+	* dlls/d3d9/tests/visual.c:
+	d3d9: Test our texop implementation.
+
+	* dlls/d3d8/tests/visual.c:
+	d3d8: Test our texop implementation.
+
+	* dlls/wined3d/utils.c:
+	wined3d: Fix the nvrc implementation of WINED3DTOP_MULTIPLYADD and
+	WINED3DTOP_LERP.
+
+	* dlls/wined3d/utils.c:
+	wined3d: Add WINED3DTOP_ADDSIGNED2X to debug_d3dtop().
+
+	* dlls/d3d8/tests/visual.c, dlls/d3d9/tests/visual.c:
+	d3d: Use an alpha capable backbuffer format in the visual tests.
+
+2008-05-23  Detlef Riekenberg <wine.dev@web.de>
+
+	* dlls/avifil32/avifile_Cs.rc, dlls/avifil32/avifile_Da.rc,
+	  dlls/avifil32/avifile_De.rc, dlls/avifil32/avifile_En.rc,
+	  dlls/avifil32/avifile_Es.rc, dlls/avifil32/avifile_Fr.rc,
+	  dlls/avifil32/avifile_Hu.rc, dlls/avifil32/avifile_It.rc,
+	  dlls/avifil32/avifile_Ja.rc, dlls/avifil32/avifile_Ko.rc,
+	  dlls/avifil32/avifile_Nl.rc, dlls/avifil32/avifile_No.rc,
+	  dlls/avifil32/avifile_Pl.rc, dlls/avifil32/avifile_Pt.rc,
+	  dlls/avifil32/avifile_Ru.rc, dlls/avifil32/avifile_Si.rc,
+	  dlls/avifil32/avifile_Sv.rc, dlls/avifil32/avifile_Tr.rc:
+	avifil32: Resize the dialog to avoid truncated texts.
+
+2008-05-23  Eric Pouech <eric.pouech@orange.fr>
+
+	* programs/winedbg/debugger.h, programs/winedbg/memory.c,
+	  programs/winedbg/types.c:
+	winedbg: Fixed the print_basic command when dealing with long long values.
+
+	* programs/winedbg/debugger.h, programs/winedbg/memory.c,
+	  programs/winedbg/types.c:
+	winedbg: Removed unneeded variable from print_basic.
+
+	* dlls/msvcrt/console.c:
+	msvcrt: Properly handle the extended keys in getch().
+
+2008-05-27  Alexandre Julliard <julliard@winehq.org>
+
+	* programs/winetest/main.c:
+	winetest: Don't submit test results if we don't have a valid git build id.
+
+	* programs/winetest/Makefile.in, programs/winetest/dist.rc,
+	  programs/winetest/main.c, programs/winetest/maketest,
+	  programs/winetest/resource.h:
+	winetest: Remove the per-file revision info, we now use the global commit id.
+
+2008-05-26  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Test registry after testDeviceRegistryProperty.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Cleanup after testGetDeviceInterfaceDetail.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Cleanup after testRegisterAndGetDetail.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Cleanup after testDevRegKey.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Skip tests on win9x.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Turn guid into a global variable.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Fix a test on NT4.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Close registry key after use.
+
+2008-05-26  Dan Kegel <dank@kegel.com>
+
+	* dlls/winmm/tests/capture.c:
+	winmm: Use HeapAlloc in the capture test instead of using strdup.
+
+2008-05-26  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/htmldoc.c:
+	mshtml: Fixed copy&paste typo.
+
+2008-05-26  Francois Gouget <fgouget@free.fr>
+
+	* include/winsock.h:
+	ws2_32: Make sure INVALID_SOCKET is correctly typed.
+
+2008-05-26  Dmitry Timoshkov <dmitry@codeweavers.com>
+
+	* dlls/msi/action.c, dlls/msi/automation.c, dlls/msi/database.c:
+	msi: Mark some data as constant.
+
+	* dlls/wininet/internet.c:
+	wininet: INTERNET_InternetOpenUrlW is an internal helper.
+
+2008-05-26  Hwang YunSong(황윤성) <hys545@dreamwiz.com>
+
+	* programs/winecfg/Ko.rc:
+	winecfg: Updated Korean resource.
+
+2008-05-25  Eric Pouech <eric.pouech@orange.fr>
+
+	* dlls/dbghelp/module.c:
+	dbghelp: Fix for SymGetModuleInfo().
+
+2008-05-25  Kirill K. Smirnov <lich@math.spbu.ru>
+
+	* dlls/mshtml/htmlwindow.c:
+	mshtml: Fix copy/paste error.
+
+2008-05-24  Gregor Münch <greg87@online.de>
+
+	* programs/winhlp32/De.rc:
+	winhlp32: Update German translation.
+
+	* dlls/shell32/shell32_De.rc:
+	shell32: Update German translation.
+
+2008-05-26  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/Maketest.rules.in, dlls/msvcrt/tests/Makefile.in,
+	  dlls/msvcrtd/tests/Makefile.in:
+	tests: Use the Wine import libraries when compiling with MinGW.
+
+	* programs/Makeprog.rules.in, programs/notepad/Makefile.in,
+	  programs/regedit/Makefile.in, programs/taskmgr/Makefile.in,
+	  programs/wordpad/Makefile.in, programs/xcopy/Makefile.in:
+	programs: Use the Wine import libraries when compiling with MinGW.
+
+	* programs/winedbg/gdbproxy.c:
+	winedbg: Fix compile when poll() is not available.
+
+	* configure, configure.ac, include/config.h.in, include/wine/exception.h,
+	  include/wine/port.h, libs/port/Makefile.in, libs/port/sigsetjmp.c:
+	libport: Move the sigsetjmp replacement to exception.h to make it available
+	for Winelib too.
+
+2008-05-25  Francois Gouget <fgouget@free.fr>
+
+	* dlls/kernel32/tests/sync.c:
+	kernel32/tests: Get the tests running again on Win95.
+
+2008-05-23  Maarten Lankhorst <m.b.lankhorst@gmail.com>
+
+	* include/rpcdce.h:
+	include: Add missing RpcMgmtIsServerListening declaration.
+
+2008-05-26  Kai Blin <kai.blin@gmail.com>
+
+	* dlls/ws2_32/socket.c, dlls/ws2_32/tests/sock.c, include/winsock2.h:
+	ws2_32: Add support for FROM_PROTOCOL_INFO to WSASocket().
+
+2008-05-26  James Hawkins <jhawkins@codeweavers.com>
+
+	* dlls/rpcrt4/tests/rpc.c:
+	rpcrt4: Trace the results of two statuses that return different results across
+	platforms.
+
+	* dlls/shell32/tests/shelllink.c:
+	shell32: Test against the long form of the path.
+
+	* programs/winetest/main.c:
+	winetest: Use the win32 API to extract the tests.
+
+	* dlls/mshtml/tests/htmldoc.c:
+	mshtml: Fix a test failure in win2k3.
+
+	* include/docobj.idl:
+	mshtml: Add missing OLECMDID definitions.
+
+2008-05-25  Eric Pouech <eric.pouech@orange.fr>
+
+	* dlls/dbghelp/dwarf.c:
+	dbghelp: Don't crash when parsing the forward declaration of a function.
+
+2008-05-25  Andrej Sinicyn <Andrej.Sinicyn@gmx.de>
+
+	* programs/regedit/De.rc:
+	regedit: Update the German translation.
+
+2008-05-25  Michael Karcher <wine@mkarcher.dialup.fu-berlin.de>
+
+	* dlls/crypt32/cert.c, dlls/crypt32/tests/cert.c:
+	crypt32: CertGetPublicKeyLength should check only cert encoding type.
+	pktextract calls CertGetPublicKeyLength with dwCertEncodingType
+	of X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, MSDN explicitly
+	allows it.
+
+	* dlls/crypt32/encode.c, dlls/crypt32/tests/encode.c:
+	crypt32: Pass on aiKeyAlg on RSA key import.
+
+	* dlls/crypt32/encode.c:
+	crypt32: Fix order-of-evaluation dependence.
+
+2008-05-25  Michael Karcher <karcher@physik.fu-berlin.de>
+
+	* dlls/crypt32/encode.c:
+	crypt32: Fix integer overflow.
+
+2008-05-25  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/mshtml/task.c, dlls/mshtml/tests/htmldoc.c:
+	mshtml: Fixed more tests on IE 7.
+
+	* dlls/mshtml/task.c:
+	mshtml: Make Wine behave like IE 7.
+
+	* dlls/mshtml/tests/htmldoc.c:
+	mshtml: Fixed some tests on IE 7.
+
+2008-05-24  Alistair Leslie-Hughes <leslie_alistair@hotmail.com>
+
+	* dlls/msxml3/tests/domdoc.c:
+	msxml3: Stopped tests from crashing and a Win98 fix.
+
+2008-05-23  Alexandre Julliard <julliard@winehq.org>
+
+	* ANNOUNCE, ChangeLog, VERSION, configure:
+	Release 1.0-rc2.
+
+----------------------------------------------------------------
 2008-05-23  Alexandre Julliard <julliard@winehq.org>
 
 	* README:
