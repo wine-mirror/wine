@@ -160,32 +160,36 @@ FONT 8, "MS Shell Dlg"
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
-SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
+SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Sobre %s"
 FONT 10, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "OK", IDOK, 153, 133, 50, 12, WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ PUSHBUTTON "&Licença do Wine", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
- LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 137, 10
- LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 137, 10
- LTEXT "Wine foi disponibilizado por:", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 170, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 170, 10
+ LTEXT "Executando em %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine foi disponibilizado por:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
-SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
+SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Acerca do %s"
 FONT 10, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "OK", IDOK, 153, 133, 50, 12, WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ PUSHBUTTON "&Licença do Wine", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
- LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 137, 10
- LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 137, 10
- LTEXT "Wine disponibilizado por:", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 170, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 170, 10
+ LTEXT "Executando em %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine disponibilizado por:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 
@@ -238,6 +242,8 @@ STRINGTABLE
 	IDS_SHV_COLUMN9		"Comentários"
 	IDS_SHV_COLUMN10	"Dono"
 	IDS_SHV_COLUMN11	"Grupo"
+	IDS_SHV_COLUMN_DELFROM	"Localização original"
+	IDS_SHV_COLUMN_DELDATE	"Data de exclusão"
 
         /* special folders */
 	IDS_DESKTOP		"Área de trabalho"
@@ -258,6 +264,11 @@ STRINGTABLE
 	IDS_DELETEITEM_TEXT "Você tem certeza que deseja excluir '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Você tem certeza que deseja excluir estes %1 itens?"
 	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_DELETESELECTED_TEXT "Are you sure you want to delete the selected item(s)?"
+	IDS_TRASHITEM_TEXT "Are you sure that you want to send '%1' to the Trash?"
+	IDS_TRASHFOLDER_TEXT "Are you sure that you want to send '%1' and all its content to the Trash?"
+	IDS_TRASHMULTIPLE_TEXT "Are you sure that you want to send these %1 items to the Trash?"
+	IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 	IDS_OVERWRITEFILE_CAPTION "Confirmar sobreescrever arquivo"
 	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
 	    "If the files in the destination folder have the same names as files in the\n"\
@@ -298,6 +309,8 @@ STRINGTABLE
 	IDS_COMMON_PICTURES         "Documentos\\Minhas Imagens"
 	IDS_COMMON_VIDEO            "Documentos\\Meus Vídeos"
 	IDS_CDBURN_AREA             "Configurações locais\\Dados de aplicativos\\Microsoft\\CD Burning"
+
+	IDS_NEWFOLDER               "Nova Pasta"
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -316,6 +329,8 @@ STRINGTABLE
 	IDS_SHV_COLUMN9		"Comentários"
 	IDS_SHV_COLUMN10	"Dono"
 	IDS_SHV_COLUMN11	"Grupo"
+	IDS_SHV_COLUMN_DELFROM	"Localização original"
+	IDS_SHV_COLUMN_DELDATE	"Data de exclusão"
 
         /* special folders */
 	IDS_DESKTOP		"Ambiente de trabalho"
@@ -335,8 +350,17 @@ STRINGTABLE
 	IDS_DELETEFOLDER_CAPTION "Confirmar exclusão da pasta"
 	IDS_DELETEITEM_TEXT "Tem certeza que deseja excluir '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Tem certeza que deseja excluir estes %1 itens?"
+	IDS_DELETESELECTED_TEXT "Are you sure you want to delete the selected item(s)?"
+	IDS_TRASHITEM_TEXT "Are you sure that you want to send '%1' to the Trash?"
+	IDS_TRASHFOLDER_TEXT "Are you sure that you want to send '%1' and all its content to the Trash?"
+	IDS_TRASHMULTIPLE_TEXT "Are you sure that you want to send these %1 items to the Trash?"
+	IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 	IDS_OVERWRITEFILE_TEXT "Substituir ficheiro %1?"
 	IDS_OVERWRITEFILE_CAPTION "Confirmar substituição de ficheiro"
+	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 
         /* message box strings */
 	IDS_RESTART_TITLE       "Reiniciar"
@@ -373,5 +397,5 @@ STRINGTABLE
 	IDS_COMMON_VIDEO            "Os Meus Documentos\\Os Meus Vídeos"
 	IDS_CDBURN_AREA             "Definições locais\\Application Data\\Microsoft\\CD Burning"
 
-	IDS_NEWFOLDER		"New Folder"
+	IDS_NEWFOLDER               "Nova Pasta"
 }
