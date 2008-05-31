@@ -307,7 +307,7 @@ static INT           button_state[10];
 static LOGCONTEXTW      gSysContext;
 static WTI_DEVICES_INFO gSysDevice;
 static WTI_CURSORS_INFO gSysCursor[CURSORMAX];
-static INT              gNumCursors;
+static INT              gNumCursors; /* do NOT use this to iterate through gSysCursor slots */
 
 
 /* XInput stuff */
@@ -493,6 +493,18 @@ static BOOL is_eraser(const char *name, const char *type)
     return FALSE;
 }
 
+static void disable_system_cursors(void)
+{
+    UINT i;
+
+    for (i = 0; i < CURSORMAX; ++i)
+    {
+        gSysCursor[i].ACTIVE = 0;
+    }
+
+    gNumCursors = 0;
+}
+
 
 /***********************************************************************
  *             X11DRV_LoadTabletInfo (X11DRV.@)
@@ -551,6 +563,9 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     gSysContext.lcSensZ = 65536;
     gSysContext.lcSysSensX= 65536;
     gSysContext.lcSysSensY= 65536;
+
+    /* initialize cursors */
+    disable_system_cursors();
 
     /* Device Defaults */
     gSysDevice.HARDWARE = HWC_HARDPROX|HWC_PHYSID_CURSORS;
@@ -856,8 +871,8 @@ static void set_button_state(int curnum, XID deviceid)
 static int cursor_from_device(DWORD deviceid, LPWTI_CURSORS_INFO *cursorp)
 {
     int i;
-    for (i = 0; i < gNumCursors; i++)
-        if (gSysCursor[i].PHYSID == deviceid)
+    for (i = 0; i < CURSORMAX; i++)
+        if (gSysCursor[i].ACTIVE && gSysCursor[i].PHYSID == deviceid)
         {
             *cursorp = &gSysCursor[i];
             return i;
@@ -997,10 +1012,12 @@ int X11DRV_AttachEventQueueToTablet(HWND hOwner)
     devices = pXListInputDevices(data->display, &num_devices);
 
     X11DRV_expect_error(data->display,Tablet_ErrorHandler,NULL);
-    for (cur_loop=0; cur_loop < gNumCursors; cur_loop++)
+    for (cur_loop=0; cur_loop < CURSORMAX; cur_loop++)
     {
         char   cursorNameA[WT_MAX_NAME_LEN];
         int    event_number=0;
+
+        if (!gSysCursor[cur_loop].ACTIVE) continue;
 
         /* the cursor name fits in the buffer because too long names are skipped */
         WideCharToMultiByte(CP_UNIXCP, 0, gSysCursor[cur_loop].NAME, -1, cursorNameA, WT_MAX_NAME_LEN, NULL, NULL);
@@ -1295,12 +1312,10 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
         case WTI_CURSORS+7:
         case WTI_CURSORS+8:
         case WTI_CURSORS+9:
-            if (wCategory - WTI_CURSORS >= gNumCursors)
-            {
+            /* Apps will poll different slots to detect what cursors are available
+             * if there isn't a cursor for this slot return 0 */
+            if (!gSysCursor[wCategory - WTI_CURSORS].ACTIVE)
                 rc = 0;
-                WARN("Requested cursor information for nonexistent cursor %d; only %d cursors\n",
-                        wCategory - WTI_CURSORS, gNumCursors);
-            }
             else
             {
                 tgtcursor = &gSysCursor[wCategory - WTI_CURSORS];
