@@ -1346,6 +1346,8 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_NAME_RESOLVED,
                           szaddr, strlen(szaddr)+1);
+
+    TRACE("resolved %s to %s\n", debugstr_w(lpwhs->lpszServerName), szaddr);
     return TRUE;
 }
 
@@ -3607,7 +3609,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     if (!NETCON_create(&lpwhr->netConnection, lpwhs->socketAddress.sin_family,
                          SOCK_STREAM, 0))
     {
-	WARN("Socket creation failed\n");
+        WARN("Socket creation failed: %u\n", INTERNET_GetLastError());
         goto lend;
     }
 
