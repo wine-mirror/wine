@@ -196,6 +196,12 @@ O flag de verificação não tem função no Wine.\n"
 
   WCMD_VOL,    "Ajuda do comando VOL\n"
 
+  WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
+stack, and then changes the current directory to the supplied one.\n"
+
+  WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
+PUSHD.\n"
+
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_EXIT,
@@ -218,7 +224,9 @@ MD (MKDIR)\tCria um subdiretório\n\
 MORE\t\tDisplay output in pages\n\
 MOVE\t\tMove um arquivo, conjunto de arquivos ou uma árvore de diretórios\n\
 PATH\t\tConfigira o caminho de procura\n\
+POPD\t\tRestores the directory to the last one saved with PUSHD\n\
 PROMPT\t\tMuda o 'prompt' de comando\n\
+PUSHD\t\tChanges to a new directory, saving the current one\n\
 REN (RENAME)\tRenomeia um arquivo\n\
 RD (RMDIR)\tApaga um subdiretório\n\
 SET\t\tConfigura ou mostra variáveis de ambiente\n\
@@ -229,6 +237,14 @@ VER\t\tMostra a versão atual do CMD\n\
 VOL\t\tMostra o rótulo do volume de uma unidade de disco\n\
 EXIT\t\tFecha o CMD\n\n\
 Entre HELP <comando> para maiores informações sobre alguns dos comandos acima\n"
+
+  WCMD_CONFIRM, "Are you sure"
+  WCMD_YES, "Y"
+  WCMD_NO, "N"
+  WCMD_NOASSOC, "File association missing for extension %s\n"
+  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
+  WCMD_OVERWRITE, "Overwrite %s"
+  WCMD_MORESTR, "More..."
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -407,6 +423,12 @@ O flag de verificação não tem função no Wine.\n"
 
   WCMD_VOL,    "Ajuda do comando VOL\n"
 
+  WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
+stack, and then changes the current directory to the supplied one.\n"
+
+  WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
+PUSHD.\n"
+
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_EXIT,
@@ -429,7 +451,9 @@ MD (MKDIR)\tCria um subdirectório\n\
 MORE\t\tDisplay output in pages\n\
 MOVE\t\tMove um ficheiro, conjunto de ficheiros ou uma árvore de directórios\n\
 PATH\t\tConfigura o caminho de procura\n\
+POPD\t\tRestores the directory to the last one saved with PUSHD\n\
 PROMPT\t\tMuda a 'prompt' de comando\n\
+PUSHD\t\tChanges to a new directory, saving the current one\n\
 REN (RENAME)\tRenomeia um ficheiro\n\
 RD (RMDIR)\tApaga um subdirectório\n\
 SET\t\tConfigura ou mostra variáveis de ambiente\n\
