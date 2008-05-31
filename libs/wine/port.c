@@ -179,6 +179,23 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "popq %rbx\n\t"
                    "popq %rbp\n\t"
                    "ret")
+#elif defined(__powerpc__) && defined(__GNUC__)
+__ASM_GLOBAL_FUNC( wine_call_on_stack,
+                   "mflr 0\n\t"         /* get return address */
+                   "stw 0, 4(1)\n\t"    /* save return address */
+                   "subi 5, 5, 16\n\t" /* reserve space on new stack */
+                   "stw 1, 12(5)\n\t"   /* store old sp */
+                   "mtctr 3\n\t"        /* func -> ctr */
+                   "mr 3,4\n\t"         /* args -> function param 1 (r3) */
+                   "mr 1,5\n\t"         /* stack */
+                   "li 0, 0\n\t"        /* zero */
+                   "stw 0, 0(1)\n\t"    /* bottom of stack */
+                   "stwu 1, -16(1)\n\t" /* create a frame for this function */
+                   "bctrl\n\t"          /* call ctr */
+                   "lwz 1, 28(1)\n\t"   /* fetch old sp */
+                   "lwz 0, 4(1)\n\t"    /* fetch return address */
+                   "mtlr 0\n\t"         /* return address -> lr */
+                   "blr")               /* return */
 #else
 #error You must implement wine_switch_to_stack for your platform
 #endif
