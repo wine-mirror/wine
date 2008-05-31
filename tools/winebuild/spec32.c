@@ -368,7 +368,18 @@ void BuildSpec32File( DLLSPEC *spec )
     else
     {
         output( "\n\t.section \".init\",\"ax\"\n" );
-        output( "\tjmp 1f\n" );
+        switch(target_cpu)
+        {
+        case CPU_x86:
+        case CPU_x86_64:
+        case CPU_ALPHA:
+        case CPU_SPARC:
+            output( "\tjmp 1f\n" );
+            break;
+        case CPU_POWERPC:
+            output( "\tb 1f\n" );
+            break;
+        }
         output( "__wine_spec_pe_header:\n" );
         output( "\t.skip %u\n", 65536 + page_size );
         output( "1:\n" );
