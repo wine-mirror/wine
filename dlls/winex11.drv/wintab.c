@@ -212,8 +212,17 @@ typedef struct tagWTI_DEVICES_INFO
  *   the type here.  (This is unfortunate, the kernel module has
  *   the exact type, but we have no way of getting that module to
  *   pass us that type).
+ *
+ *   Reference linuxwacom driver project wcmCommon.c function
+ *   idtotype for a much larger list of CSR_TYPE.
+ *
+ *   http://linuxwacom.cvs.sourceforge.net/linuxwacom/linuxwacom-prod/src/xdrv/wcmCommon.c?view=markup
+ *
+ *   The WTI_CURSORS_INFO.TYPE data is supposed to be used like this:
+ *   (cursor.TYPE & 0x0F06) == target_cursor_type
+ *   Reference: Section Unique ID
+ *   http://www.wacomeng.com/devsupport/ibmpc/gddevpc.html
  */
-
 #define CSR_TYPE_PEN        0x822
 #define CSR_TYPE_ERASER     0x82a
 #define CSR_TYPE_MOUSE_2D   0x007
@@ -256,6 +265,39 @@ static WTPACKET      gMsgPacket;
 static DWORD         gSerial;
 static INT           button_state[10];
 
+/* Reference: http://www.wacomeng.com/devsupport/ibmpc/gddevpc.html
+ *
+ * Cursors come in sets of 3 normally
+ * Cursor #0 = puck   device 1
+ * Cursor #1 = stylus device 1
+ * Cursor #2 = eraser device 1
+ * Cursor #3 = puck   device 2
+ * Cursor #4 = stylus device 2
+ * Cursor #5 = eraser device 2
+ * etc....
+ *
+ * A dual tracking/multimode tablet is one
+ * that supports 2 independent cursors of the same or
+ * different types simultaneously on a single tablet.
+ * This makes our cursor layout potentially like this
+ * Cursor #0 = puck   1 device 1
+ * Cursor #1 = stylus 1 device 1
+ * Cursor #2 = eraser 1 device 1
+ * Cursor #3 = puck   2 device 1
+ * Cursor #4 = stylus 2 device 1
+ * Cursor #5 = eraser 2 device 1
+ * Cursor #6 = puck   1 device 2
+ * etc.....
+ *
+ * So with multimode tablets we could potentially need
+ * 2 slots of the same type per tablet ie.
+ * you are usuing 2 styluses at once so they would
+ * get placed in Cursors #1 and Cursor #4
+ *
+ * Now say someone has 2 multimode tablets with 2 erasers each
+ * now we would need Cursor #2, #5, #8, #11
+ * So to support that we need CURSORMAX of 12 (0 to 11)
+ * FIXME: we dont support more than 4 regular tablets or 2 multimode tablets */
 #define             CURSORMAX 10
 
 static LOGCONTEXTW      gSysContext;
@@ -386,6 +428,12 @@ BOOL match_token(const char *haystack, const char *needle)
 /*    Determining if an X device is a Tablet style device is an imperfect science.
 **  We rely on common conventions around device names as well as the type reported
 **  by Wacom tablets.  This code will likely need to be expanded for alternate tablet types
+**
+**    Wintab refers to any device that interacts with the tablet as a cursor,
+**  (stylus, eraser, tablet mouse, airbrush, etc)
+**  this is not to be confused with wacom x11 configuration "cursor" device.
+**  Wacoms x11 config "cursor" refers to its device slot (which we mirror with
+**  our gSysCursors) for puck like devices (tablet mice essentially).
 */
 
 static BOOL is_tablet_cursor(const char *name, const char *type)
