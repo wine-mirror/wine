@@ -1809,16 +1809,23 @@ struct context
 
 static void WINAPI cb(HINTERNET handle, DWORD_PTR context, DWORD status, LPVOID info, DWORD size)
 {
+    INTERNET_ASYNC_RESULT *result = info;
+    struct context *ctx = (struct context *)context;
+
     trace("%p 0x%08lx %u %p 0x%08x\n", handle, context, status, info, size);
 
     if (status == INTERNET_STATUS_REQUEST_COMPLETE)
     {
-        INTERNET_ASYNC_RESULT *result = info;
-        struct context *ctx = (struct context *)context;
-
         trace("request handle: 0x%08lx\n", result->dwResult);
-
         ctx->req = (HINTERNET)result->dwResult;
+        SetEvent(ctx->event);
+    }
+    if (status == INTERNET_STATUS_HANDLE_CLOSING)
+    {
+        DWORD type = INTERNET_HANDLE_TYPE_CONNECT_HTTP, size = sizeof(type);
+
+        if (InternetQueryOption(handle, INTERNET_OPTION_HANDLE_TYPE, &type, &size))
+            ok(type != INTERNET_HANDLE_TYPE_CONNECT_HTTP, "unexpected callback\n");
         SetEvent(ctx->event);
     }
 }
@@ -1857,9 +1864,12 @@ static void test_open_url_async(void)
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "HttpQueryInfo failed\n");
     ok(size > 0, "expected size > 0\n");
 
-    CloseHandle(ctx.event);
+    ResetEvent(ctx.event);
     InternetCloseHandle(ctx.req);
+    WaitForSingleObject(ctx.event, INFINITE);
+
     InternetCloseHandle(ses);
+    CloseHandle(ctx.event);
 }
 
 #define STATUS_STRING(status) \

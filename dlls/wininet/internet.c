@@ -181,9 +181,13 @@ BOOL WININET_Release( LPWININETHANDLEHEADER info )
             TRACE( "closing connection %p\n", info);
             info->vtbl->CloseConnection( info );
         }
-        INTERNET_SendCallback(info, info->dwContext,
-                              INTERNET_STATUS_HANDLE_CLOSING, &info->hInternet,
-                              sizeof(HINTERNET));
+        /* Don't send a callback if this is a session handle created with InternetOpenUrl */
+        if (info->htype != WH_HHTTPSESSION || !(info->dwInternalFlags & INET_OPENURL))
+        {
+            INTERNET_SendCallback(info, info->dwContext,
+                                  INTERNET_STATUS_HANDLE_CLOSING, &info->hInternet,
+                                  sizeof(HINTERNET));
+        }
         TRACE( "destroying object %p\n", info);
         if ( info->htype != WH_HINIT )
             list_remove( &info->entry );
