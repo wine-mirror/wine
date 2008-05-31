@@ -41,6 +41,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Substituir texto", CM_U_REPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir", CM_U_PRINT
+  MENUITEM "Pa&ge Setup", CM_U_PAGESETUP
  }
 
  POPUP "F&lags"
@@ -53,6 +54,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Localizar/Substituir", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir", CM_F_PRINT
+  MENUITEM "Pa&ge Setup", CM_F_PAGESETUP
  }
 
  POPUP "Aj&uda"
@@ -84,6 +86,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Substituir texto", CM_U_REPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir", CM_U_PRINT
+  MENUITEM "Pa&ge Setup", CM_U_PAGESETUP
  }
 
  POPUP "F&lags"
@@ -96,6 +99,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Localizar/Substituir", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir", CM_F_PRINT
+  MENUITEM "Pa&ge Setup", CM_F_PAGESETUP
  }
 
  POPUP "Aj&uda"
