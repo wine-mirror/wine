@@ -61,6 +61,8 @@ Veja o arquivo COPYING.LIB para informação sobre a licença. \n\
 "
 
 STRING_EXECFAIL "Aplicação não pode ser iniciada, ou não existe aplicação associada com o arquivo especificado.\nShellExecuteEx falhou"
+
+STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -104,4 +106,6 @@ Veja o ficheiro COPYING.LIB para informação sobre a licença. \n\
 "
 
 STRING_EXECFAIL "A aplicação não pode ser iniciada, ou não existe aplicação associada com o ficheiro especificado.\nShellExecuteEx falhado"
+
+STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
 }
