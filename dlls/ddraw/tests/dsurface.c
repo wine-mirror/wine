@@ -1271,7 +1271,10 @@ static void AttachmentTest(void)
     ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
 
     if (SUCCEEDED(IDirectDrawSurface7_AddAttachedSurface(surface1, surface4)))
+    {
+        IDirectDrawSurface7_DeleteAttachedSurface(surface1, 0, surface4);
         refrast = TRUE;
+    }
 
     hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface4); /* Succeeds on refrast */
     if (refrast)
