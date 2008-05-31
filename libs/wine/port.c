@@ -90,14 +90,17 @@ __ASM_GLOBAL_FUNC( wine_switch_to_stack,
                    "mr r3,r4\n\t" /* args -> function param 1 (r3) */
                    "mr r1,r5\n\t" /* stack */
                    "subi r1,r1,0x100\n\t" /* adjust stack pointer */
-                   "bctr\n" /* call ctr */
+                   "bctrl\n" /* call ctr */
                    "1:\tb 1b") /* loop */
 #elif defined(__powerpc__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( wine_switch_to_stack,
                    "mtctr 3\n\t" /* func -> ctr */
                    "mr 3,4\n\t" /* args -> function param 1 (r3) */
                    "mr 1,5\n\t" /* stack */
-                   "bctr\n\t" /* call ctr */
+                   "subi 1, 1, 16\n\t" /* allocate space for the callee */
+                   "li 0, 0\n\t" /* load zero */
+                   "stw 0, 0(1)\n\t" /* create a bottom stack frame */
+                   "bctrl\n\t" /* call ctr */
                    "1:\tb 1b") /* loop */
 #elif defined(__ALPHA__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( wine_switch_to_stack,
