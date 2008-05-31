@@ -1,7 +1,7 @@
 /*
  * Program Manager
  *
- * Copyright 2004 José Manuel Ferrer Ortiz
+ * Copyright 2004, 2008 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,7 @@ MAIN_MENU MENU
    MENUITEM "A&brir\tEnter",			PM_OPEN
    MENUITEM "&Mover...\tF7",			PM_MOVE,      GRAYED
    MENUITEM "&Copiar...\tF8",			PM_COPY,      GRAYED
-   MENUITEM "&Eliminar\tEntf",			PM_DELETE
+   MENUITEM "&Eliminar\tSupr",			PM_DELETE
    MENUITEM "&Atributos...\tAlt+Enter",		PM_ATTRIBUTES
    MENUITEM SEPARATOR
    MENUITEM "&Ejecutar...",			PM_EXECUTE
@@ -75,7 +75,7 @@ RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
 LTEXT         "&Programa", PM_NEW_PROGRAM,  20, 38,  80, 15
 DEFPUSHBUTTON "Aceptar",          IDOK,           105,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Cancelar",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Ayuda",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "A&yuda",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Move' */
@@ -84,32 +84,32 @@ DIALOG_MOVE DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Mover programa"
 {
-LTEXT         "Mover programa:",    IDIGNORE,            5,  5,  90, 15
-LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "&Desde el grupo:", IDIGNORE,            5, 13,  90, 15
-LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Hasta el grupo:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
-COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
-DEFPUSHBUTTON "Aceptar",              IDOK,              185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cancelar",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Ayuda",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+LTEXT         "Mover programa:",  IDIGNORE,           5,  5,  90, 15
+LTEXT         "",                 PM_PROGRAM,        95,  5,  90, 15
+LTEXT         "&Del grupo:",      IDIGNORE,           5, 13,  90, 15
+LTEXT         "",                 PM_FROM_GROUP,     95, 13,  90, 15
+LTEXT         "&Al grupo:",       PM_TO_GROUP_TXT,    5, 28, 140, 15
+COMBOBOX                          PM_TO_GROUP,        5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "Aceptar",          IDOK,             185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",         IDCANCEL,         185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "A&yuda",           PM_HELP,          185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Copy' */
 
 DIALOG_COPY DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Copar programa"
+CAPTION "Copiar programa"
 {
-LTEXT         "Copiar programa:",    IDIGNORE,            5,  5,  90, 15
-LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "&Desde el grupo:", IDIGNORE,            5, 13,  90, 15
-LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Hasta el grupo:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
-COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
-DEFPUSHBUTTON "Aceptar",              IDOK,              185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cancelar",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Ayudar",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+LTEXT         "Copiar programa:",  IDIGNORE,          5,  5,  90, 15
+LTEXT         "",                  PM_PROGRAM,       95,  5,  90, 15
+LTEXT         "&Del grupo:",       IDIGNORE,          5, 13,  90, 15
+LTEXT         "",                  PM_FROM_GROUP,    95, 13,  90, 15
+LTEXT         "&Al grupo:",        PM_TO_GROUP_TXT,   5, 28, 140, 15
+COMBOBOX                           PM_TO_GROUP,       5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "Aceptar",           IDOK,            185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",          IDCANCEL,        185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "A&yuda",            PM_HELP,         185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Group attributes' */
@@ -118,13 +118,13 @@ DIALOG_GROUP DIALOG 0, 0, 230, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos del grupo de programa"
 {
-LTEXT     "&Descripción:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
-EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
-LTEXT     "&Archivo de grupo:",        PM_FILE_TXT,          05, 38,  50, 10
-EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
-DEFPUSHBUTTON "Aceptar",            IDOK,                155,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cancelar",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Ayuda",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+LTEXT         "&Descripción:",  PM_DESCRIPTION_TXT,   05, 18, 50, 10
+EDITTEXT                        PM_DESCRIPTION,       60, 18, 90, 15, WS_TABSTOP
+LTEXT    "&Archivo de grupo:",  PM_FILE_TXT,          05, 38, 50, 10
+EDITTEXT                        PM_FILE,              60, 38, 90, 15, WS_TABSTOP
+DEFPUSHBUTTON "Aceptar",        IDOK,                155,  5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",       IDCANCEL,            155, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&yuda",         PM_HELP,             155, 45, 60, 15, WS_TABSTOP
 }
 
 /* Dialog `Program attributes' */
@@ -133,22 +133,22 @@ DIALOG_PROGRAM DIALOG 0, 0, 250, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos del programa"
 {
-LTEXT         "&Descripción:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
-EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
-LTEXT         "&Línea de comandos:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
-EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
-LTEXT         "&Directorio de trabajo:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
-EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
-LTEXT         "&Combinación de teclas:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
-EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
-ICON          "",                          PM_ICON,              20, 70
-CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "&Minimizar al lanzarse",       IDIGNORE,             95, 75,  75, 10
-DEFPUSHBUTTON "Aceptar",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cancelar",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Explorar...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cambiar &icono...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Ayuda",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+LTEXT         "&Descripción:",  PM_DESCRIPTION_TXT,   05, 10, 60, 10
+EDITTEXT                        PM_DESCRIPTION,       80, 10, 90, 15, WS_TABSTOP
+LTEXT   "&Línea de comandos:",  PM_COMMAND_LINE_TXT,  05, 25, 60, 10
+EDITTEXT                        PM_COMMAND_LINE,      80, 25, 90, 15, WS_TABSTOP
+LTEXT "Directorio de &trabajo:",PM_DIRECTORY_TXT,     05, 40, 60, 10
+EDITTEXT                        PM_DIRECTORY,         80, 40, 90, 15, WS_TABSTOP
+LTEXT "&Combinación de teclas:",PM_HOT_KEY_TXT,       05, 55, 60, 10
+EDITTEXT                        PM_HOT_KEY,           80, 55, 90, 15, WS_TABSTOP
+ICON          "",               PM_ICON,              20, 70
+CHECKBOX      "",               PM_SYMBOL,            80, 75, 10, 10, WS_TABSTOP
+LTEXT "&Minimizar al lanzarse", IDIGNORE,             95, 75, 75, 10
+DEFPUSHBUTTON "Aceptar",        IDOK,                185,  5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",       IDCANCEL,            185, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "&Explorar...",   PM_BROWSE,           185, 45, 60, 15, WS_TABSTOP
+PUSHBUTTON "Cambiar &icono...", PM_OTHER_SYMBOL,     185, 65, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&yuda",         PM_HELP,             185, 85, 60, 15, WS_TABSTOP
 }
 
 /* Dialog `Symbol' */
@@ -157,15 +157,15 @@ DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Cambiar icono"
 {
-LTEXT     "&Nombre de archivo:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+LTEXT     "&Nombre de archivo:", PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
-LTEXT     "&Icono actual:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+LTEXT         "&Icono actual:",  PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
 COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
 DEFPUSHBUTTON "Aceptar",         IDOK,              135,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cancelar",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",        IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "&Explorar...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Ayuda",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "A&yuda",          PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Execute' */
@@ -174,14 +174,14 @@ DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Ejecutar programa"
 {
-LTEXT     "Línea de &comandos:", IDIGNORE,   05, 15, 120, 10
-EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
-CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "&Minimizar al lanzarse",   IDIGNORE,   20, 45, 120, 10
-DEFPUSHBUTTON "Aceptar",               IDOK,      135,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cancelar",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Explorar...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Ayuda",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+LTEXT         "Línea de &comandos:",     IDIGNORE,   05, 15, 120, 10
+EDITTEXT                                 PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                        PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "&Minimizar al lanzarse",  IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "Aceptar",                 IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",                IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Explorar...",            PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "A&yuda",                  PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Strings */
@@ -212,4 +212,28 @@ IDS_PROGRAMS,			"Programas"
 IDS_LIBRARIES_DLL,		"Librarías (*.dll)"
 IDS_SYMBOL_FILES,		"Archivos de iconos"
 IDS_SYMBOLS_ICO,		"Iconos (*.ico)"
+}
+
+STRINGTABLE DISCARDABLE
+{
+IDS_LICENSE_CAPTION,            "LICENCIA"
+IDS_LICENSE,
+"This library is free software; you can redistribute it and/or \
+modify it under the terms of the GNU Lesser General Public \
+License as published by the Free Software Foundation; either \
+version 2.1 of the License, or (at your option) any later version.\n\
+This library is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details.\n\
+You should have received a copy of the GNU Lesser General Public \
+License along with this library; if not, write to the Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
+
+IDS_WARRANTY_CAPTION,           "SIN GARANTÍA"
+IDS_WARRANTY,
+"This library is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details."
 }

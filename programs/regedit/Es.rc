@@ -1,7 +1,7 @@
 /*
  * Regedit resources
  *
- * Copyright 2003,2004,2007 José Manuel Ferrer Ortiz
+ * Copyright 2003,2004,2007,2008 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,7 +55,7 @@ BEGIN
         MENUITEM "&Eliminar\tDel",              ID_EDIT_DELETE
         MENUITEM "&Renombrar\tF2",              ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Copiar nombre de la clave",  ID_EDIT_COPYKEYNAME
+        MENUITEM "&Copiar nombre de clave",     ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Buscar\tCtrl+F",             ID_EDIT_FIND, GRAYED
         MENUITEM "Buscar &siguiente\tF3",       ID_EDIT_FINDNEXT, GRAYED
@@ -106,7 +106,8 @@ BEGIN
         MENUITEM "&Eliminar\tDel",              ID_EDIT_DELETE
         MENUITEM "&Renombrar\tF2",              ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Copiar nombre de la clave",  ID_EDIT_COPYKEYNAME
+        MENUITEM "&Exportar...",                ID_EDIT_EXPORT
+        MENUITEM "&Copiar nombre de clave",     ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Buscar\tCtrl+F",             ID_EDIT_FIND, GRAYED
   END

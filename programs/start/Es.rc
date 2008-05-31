@@ -2,7 +2,7 @@
  * Start
  * Spanish Language Support
  *
- * Copyright 2003 José Manuel Ferrer Ortiz
+ * Copyright 2003,2008 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+STRINGTABLE DISCARDABLE
 {
 STRING_USAGE,                                   "Inicia un programa, o abre un documento con el programa que se suele utilizar para archivos con esa extensión. \n\
 Uso: \n\
@@ -33,6 +33,7 @@ Opciones: \n\
 /MAX[imized] Inicia el programa maximizado. \n\
 /R[estored]  Inicia el programa normalmente (ni minimizado ni maximizado). \n\
 /W[ait]      Espera que termine el programa iniciado y después sale con su código de salida. \n\
+/Unix        Usa un nombre de archivo de Unix e inicia el archivo como en el explorador de windows. \n\
 /L           Muestra la licencia para el usuario final. \n\
  \n\
 start.exe versión 0.2 Copyright (C) 2003, Dan Kegel \n\
