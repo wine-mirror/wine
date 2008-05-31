@@ -302,7 +302,7 @@ static INT           button_state[10];
  * now we would need Cursor #2, #5, #8, #11
  * So to support that we need CURSORMAX of 12 (0 to 11)
  * FIXME: we dont support more than 4 regular tablets or 2 multimode tablets */
-#define             CURSORMAX 10
+#define             CURSORMAX 12
 
 static LOGCONTEXTW      gSysContext;
 static WTI_DEVICES_INFO gSysDevice;
@@ -348,55 +348,6 @@ sym_not_found:
 static int Tablet_ErrorHandler(Display *dpy, XErrorEvent *event, void* arg)
 {
     return 1;
-}
-
-static int find_cursor_by_type(int cursor_type, int exclude)
-{
-    int i;
-    for (i = 0; i < gNumCursors; i++)
-        if (i != exclude)
-            if (gSysCursor[i].TYPE == cursor_type)
-                return i;
-
-    return -1;
-}
-
-static void swap_cursors(int a, int b)
-{
-    WTI_CURSORS_INFO temp;
-    temp = gSysCursor[a];
-    gSysCursor[a] = gSysCursor[b];
-    gSysCursor[b] = temp;
-}
-
-/* Adobe Photoshop 7.0 relies on the eraser being cursor #2 or #5, and it assumes the stylus is 1.
-**   If the X configuration is not set up that way, make it
-*/
-static void Tablet_FixupCursors(void)
-{
-    if (gNumCursors >= 1)
-        if (gSysCursor[1].TYPE != CSR_TYPE_PEN)
-        {
-            int stylus;
-            stylus = find_cursor_by_type(CSR_TYPE_PEN, 1);
-            if (stylus >= 0)
-            {
-                swap_cursors(1, stylus);
-                TRACE("Swapped cursor %d with stylus slot (1) for compatibility with older programs\n", stylus);
-            }
-        }
-
-    if (gNumCursors >= 2)
-        if (gSysCursor[2].TYPE != CSR_TYPE_ERASER)
-        {
-            int eraser;
-            eraser = find_cursor_by_type(CSR_TYPE_ERASER, 2);
-            if (eraser >= 0)
-            {
-                swap_cursors(2, eraser);
-                TRACE("Swapped cursor %d with eraser slot (2) for compatibility with older programs\n", eraser);
-            }
-        }
 }
 
 static void trace_axes(XValuatorInfoPtr val)
@@ -493,6 +444,30 @@ static BOOL is_eraser(const char *name, const char *type)
     return FALSE;
 }
 
+/* cursors are placed in gSysCursor rows depending on their type
+ * see CURSORMAX comments for more detail */
+static BOOL add_system_cursor(LPWTI_CURSORS_INFO cursor)
+{
+    UINT offset = 0;
+
+    if (cursor->TYPE == CSR_TYPE_PEN)
+        offset = 1;
+    else if (cursor->TYPE == CSR_TYPE_ERASER)
+        offset = 2;
+
+    for (; offset < CURSORMAX; offset += 3)
+    {
+        if (!gSysCursor[offset].ACTIVE)
+        {
+            gSysCursor[offset] = *cursor;
+            ++gNumCursors;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static void disable_system_cursors(void)
 {
     UINT i;
@@ -518,7 +493,6 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     struct x11drv_thread_data *data = x11drv_thread_data();
     int num_devices;
     int loop;
-    int cursor_target;
     XDeviceInfo *devices;
     XDeviceInfo *target = NULL;
     BOOL    axis_read_complete= FALSE;
@@ -578,7 +552,6 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
 
     wine_tsx11_lock();
 
-    cursor_target = -1;
     devices = pXListInputDevices(data->display, &num_devices);
     if (!devices)
     {
@@ -591,7 +564,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     {
         int class_loop;
         char *device_type = devices[loop].type ? XGetAtomName(data->display, devices[loop].type) : NULL;
-        LPWTI_CURSORS_INFO cursor;
+        WTI_CURSORS_INFO cursor;
 
         TRACE("Device %i:  [id %d|name %s|type %s|num_classes %d|use %d]\n",
                 loop, (int) devices[loop].id, devices[loop].name, device_type ? device_type : "",
@@ -607,14 +580,11 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
 	case IsXExtensionKeyboard:
 #endif
             TRACE("Is XExtension: Device, Keyboard, or Pointer\n");
-            cursor_target++;
             target = &devices[loop];
-            cursor = &gSysCursor[cursor_target];
 
             if (strlen(target->name) >= WT_MAX_NAME_LEN)
             {
                 ERR("Input device '%s' name too long - skipping\n", wine_dbgstr_a(target->name));
-                cursor_target--;
                 break;
             }
 
@@ -627,56 +597,53 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                 int shft = 0;
 
                 X11DRV_expect_error(data->display,Tablet_ErrorHandler,NULL);
-                cursor->BUTTONS = pXGetDeviceButtonMapping(data->display, opendevice, map, 32);
-                if (X11DRV_check_error() || cursor->BUTTONS <= 0)
+                cursor.BUTTONS = pXGetDeviceButtonMapping(data->display, opendevice, map, 32);
+                if (X11DRV_check_error() || cursor.BUTTONS <= 0)
                 {
                     TRACE("No buttons, Non Tablet Device\n");
                     pXCloseDevice(data->display, opendevice);
-                    cursor_target --;
                     break;
                 }
 
-                for (i=0; i< cursor->BUTTONS; i++,shft++)
+                for (i=0; i< cursor.BUTTONS; i++,shft++)
                 {
-                    cursor->BUTTONMAP[i] = map[i];
-                    cursor->SYSBTNMAP[i] = (1<<shft);
+                    cursor.BUTTONMAP[i] = map[i];
+                    cursor.SYSBTNMAP[i] = (1<<shft);
                 }
                 pXCloseDevice(data->display, opendevice);
             }
             else
             {
                 WARN("Unable to open device %s\n",target->name);
-                cursor_target --;
                 break;
             }
-            MultiByteToWideChar(CP_UNIXCP, 0, target->name, -1, cursor->NAME, WT_MAX_NAME_LEN);
+            MultiByteToWideChar(CP_UNIXCP, 0, target->name, -1, cursor.NAME, WT_MAX_NAME_LEN);
 
             if (! is_tablet_cursor(target->name, device_type))
             {
                 WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device.  If this is wrong, please report it to wine-devel@winehq.org\n",
                      loop, devices[loop].name, device_type ? device_type : "");
-                cursor_target --;
                 break;
             }
 
-            cursor->ACTIVE = 1;
-            cursor->PKTDATA = PK_TIME | PK_CURSOR | PK_BUTTONS |  PK_X | PK_Y |
+            cursor.ACTIVE = 1;
+            cursor.PKTDATA = PK_TIME | PK_CURSOR | PK_BUTTONS |  PK_X | PK_Y |
                               PK_NORMAL_PRESSURE | PK_TANGENT_PRESSURE |
                               PK_ORIENTATION;
 
-            cursor->PHYSID = target->id;
-            cursor->NPBUTTON = 1;
-            cursor->NPBTNMARKS[0] = 0 ;
-            cursor->NPBTNMARKS[1] = 1 ;
-            cursor->CAPABILITIES = CRC_MULTIMODE;
+            cursor.PHYSID = target->id;
+            cursor.NPBUTTON = 1;
+            cursor.NPBTNMARKS[0] = 0 ;
+            cursor.NPBTNMARKS[1] = 1 ;
+            cursor.CAPABILITIES = CRC_MULTIMODE;
 
             /* prefer finding TYPE_PEN(most capable) */
             if (is_stylus(target->name, device_type))
-                cursor->TYPE = CSR_TYPE_PEN;
+                cursor.TYPE = CSR_TYPE_PEN;
             else if (is_eraser(target->name, device_type))
-                cursor->TYPE = CSR_TYPE_ERASER;
+                cursor.TYPE = CSR_TYPE_ERASER;
             else
-                cursor->TYPE = CSR_TYPE_OTHER;
+                cursor.TYPE = CSR_TYPE_OTHER;
 
             any = target->inputclassinfo;
 
@@ -698,7 +665,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                         **         the various inputs to see what the values are.  Odds are that a
                         **         more 'correct' algorithm would condense to this one anyway.
                         */
-                        if (!axis_read_complete && cursor->TYPE == CSR_TYPE_PEN)
+                        if (!axis_read_complete && cursor.TYPE == CSR_TYPE_PEN)
                         {
                             Axis = (XAxisInfoPtr) ((char *) Val + sizeof
                                 (XValuatorInfo));
@@ -772,43 +739,43 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                         Button = (XButtonInfoPtr) any;
                         TRACE("    ButtonInput %d: [class %d|length %d|num_buttons %d]\n",
                                 class_loop, (int) Button->class, Button->length, Button->num_buttons);
-                        cursor->BTNNAMES = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*cchBuf);
-                        for (i = 0; i < cursor->BUTTONS; i++)
+                        cursor.BTNNAMES = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*cchBuf);
+                        for (i = 0; i < cursor.BUTTONS; i++)
                         {
                             /* FIXME - these names are probably incorrect */
-                            int cch = strlenW(cursor->NAME) + 1;
+                            int cch = strlenW(cursor.NAME) + 1;
                             while (cch > cchBuf - cchPos - 1) /* we want one extra byte for the last NUL */
                             {
                                 cchBuf *= 2;
-                                cursor->BTNNAMES = HeapReAlloc(GetProcessHeap(), 0, cursor->BTNNAMES, sizeof(WCHAR)*cchBuf);
+                                cursor.BTNNAMES = HeapReAlloc(GetProcessHeap(), 0, cursor.BTNNAMES, sizeof(WCHAR)*cchBuf);
                             }
 
-                            strcpyW(cursor->BTNNAMES + cchPos, cursor->NAME);
+                            strcpyW(cursor.BTNNAMES + cchPos, cursor.NAME);
                             cchPos += cch;
                         }
-                        cursor->BTNNAMES[cchPos++] = 0;
-                        cursor->BTNNAMES = HeapReAlloc(GetProcessHeap(), 0, cursor->BTNNAMES, sizeof(WCHAR)*cchPos);
-                        cursor->cchBTNNAMES = cchPos;
+                        cursor.BTNNAMES[cchPos++] = 0;
+                        cursor.BTNNAMES = HeapReAlloc(GetProcessHeap(), 0, cursor.BTNNAMES, sizeof(WCHAR)*cchPos);
+                        cursor.cchBTNNAMES = cchPos;
                     }
                     break;
-                }
+                } /* switch any->class */
                 any = (XAnyClassPtr) ((char*) any + any->length);
-            }
+            } /* for class_loop */
+            if (!add_system_cursor(&cursor))
+                FIXME("Skipping this cursor due to lack of system cursor slots.\n");
             break;
-        }
-
+        } /* switch devices.use */
         XFree(device_type);
-    }
+    } /* for XListInputDevices */
     pXFreeDeviceList(devices);
 
     if (axis_read_complete)
-    {
-        gSysDevice.NCSRTYPES = cursor_target+1;
-        gNumCursors = cursor_target+1;
-        Tablet_FixupCursors();
-    }
+        gSysDevice.NCSRTYPES = gNumCursors;
     else
-        WARN("Did not find a valid stylus cursor with >= 5 axes, returning 0 valid devices.\n");
+    {
+        disable_system_cursors();
+        WARN("Did not find a valid stylus, unable to determine system context parameters. Wintab is disabled.\n");
+    }
 
     wine_tsx11_unlock();
 }
@@ -1312,6 +1279,10 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
         case WTI_CURSORS+7:
         case WTI_CURSORS+8:
         case WTI_CURSORS+9:
+        case WTI_CURSORS+10:
+        case WTI_CURSORS+11:
+        /* CURSORMAX == 12 */
+        /* FIXME: dynamic cursor support */
             /* Apps will poll different slots to detect what cursors are available
              * if there isn't a cursor for this slot return 0 */
             if (!gSysCursor[wCategory - WTI_CURSORS].ACTIVE)
