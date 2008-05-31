@@ -3156,7 +3156,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     INT responseLen;
     BOOL loop_next;
     INTERNET_ASYNC_RESULT iar;
-    static const WCHAR szClose[] = { 'C','l','o','s','e',0 };
     static const WCHAR szPost[] = { 'P','O','S','T',0 };
     static const WCHAR szContentLength[] =
         { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0 };
@@ -3211,10 +3210,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         }
 
         HTTP_FixURL(lpwhr);
-        HTTP_ProcessHeader(lpwhr, szConnection,
-                           lpwhr->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION ? szKeepAlive : szClose,
-                           HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
-
+        if (lpwhr->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION)
+        {
+            HTTP_ProcessHeader(lpwhr, szConnection, szKeepAlive, HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
+        }
         HTTP_InsertAuthorization(lpwhr, lpwhr->pAuthInfo, szAuthorization);
         HTTP_InsertAuthorization(lpwhr, lpwhr->pProxyAuthInfo, szProxy_Authorization);
 
