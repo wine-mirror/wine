@@ -2323,6 +2323,9 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_SECURITY_FLAGS:
 	 FIXME("Option INTERNET_OPTION_SECURITY_FLAGS; STUB\n");
 	 break;
+    case INTERNET_OPTION_DISABLE_AUTODIAL:
+	 FIXME("Option INTERNET_OPTION_DISABLE_AUTODIAL; STUB\n");
+	 break;
     case 86:
         FIXME("86\n");
         break;
