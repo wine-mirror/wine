@@ -227,7 +227,11 @@ typedef struct tagWTI_DEVICES_INFO
 #define CSR_TYPE_ERASER     0x82a
 #define CSR_TYPE_MOUSE_2D   0x007
 #define CSR_TYPE_MOUSE_4D   0x094
-
+/* CSR_TYPE_OTHER is a special value! assumed no real world signifigance
+ * if a stylus type or eraser type eventually have this value
+ * it'll be a bug.  As of 2008 05 21 we can be sure because
+ * linux wacom lists all the known values and this isn't one of them */
+#define CSR_TYPE_OTHER      0x000
 
 typedef struct tagWTPACKET {
         HCTX pkContext;
@@ -650,11 +654,14 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             cursor->NPBTNMARKS[0] = 0 ;
             cursor->NPBTNMARKS[1] = 1 ;
             cursor->CAPABILITIES = CRC_MULTIMODE;
+
+            /* prefer finding TYPE_PEN(most capable) */
             if (is_stylus(target->name, device_type))
                 cursor->TYPE = CSR_TYPE_PEN;
-            if (is_eraser(target->name, device_type))
+            else if (is_eraser(target->name, device_type))
                 cursor->TYPE = CSR_TYPE_ERASER;
-
+            else
+                cursor->TYPE = CSR_TYPE_OTHER;
 
             any = target->inputclassinfo;
 
