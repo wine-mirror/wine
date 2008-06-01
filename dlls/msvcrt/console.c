@@ -139,11 +139,11 @@ int CDECL _getch(void)
             {
                 unsigned idx;
 
-                if (ir.Event.KeyEvent.wVirtualScanCode & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED))
+                if (ir.Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED))
                     idx = ALT_CHAR;
-                else if (ir.Event.KeyEvent.wVirtualScanCode & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED) )
+                else if (ir.Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED) )
                     idx = CTRL_CHAR;
-                else if (ir.Event.KeyEvent.wVirtualScanCode & SHIFT_PRESSED)
+                else if (ir.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED)
                     idx = SHIFT_CHAR;
                 else
                     idx = NORMAL_CHAR;
