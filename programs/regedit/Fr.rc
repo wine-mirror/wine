@@ -108,6 +108,7 @@ BEGIN
         MENUITEM "&Supprimer\tDel",                ID_EDIT_DELETE
         MENUITEM "Ren&ommer\tF2",                  ID_EDIT_RENAME
         MENUITEM SEPARATOR
+        MENUITEM "&Exporter...",                   ID_EDIT_EXPORT
         MENUITEM "&Copier le nom de la clé",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Rechercher\tCtrl+F",               ID_EDIT_FIND, GRAYED
