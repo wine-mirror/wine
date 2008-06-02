@@ -703,7 +703,7 @@ void shader_generate_glsl_declarations(
     if(!This->baseShader.load_local_constsF) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
             float *value = (float *) lconst->value;
-            shader_addline(buffer, "const vec4 LC%u = vec4(%f, %f, %f, %f);\n", lconst->idx,
+            shader_addline(buffer, "const vec4 %cLC%u = vec4(%f, %f, %f, %f);\n", prefix, lconst->idx,
                            value[0], value[1], value[2], value[3]);
         }
     }
@@ -878,7 +878,7 @@ static void shader_glsl_get_register_name(
         break;
     case WINED3DSPR_CONST:
     {
-        const char* prefix = pshader? "PC":"VC";
+        const char prefix = pshader? 'P':'V';
 
         /* Relative addressing */
         if (param & WINED3DSHADER_ADDRMODE_RELATIVE) {
@@ -889,23 +889,23 @@ static void shader_glsl_get_register_name(
                glsl_src_param_t rel_param;
                shader_glsl_add_src_param(arg, addr_token, 0, WINED3DSP_WRITEMASK_0, &rel_param);
                if(reg) {
-                   sprintf(tmpStr, "%s[%s + %u]", prefix, rel_param.param_str, reg);
+                   sprintf(tmpStr, "%cC[%s + %u]", prefix, rel_param.param_str, reg);
                } else {
-                   sprintf(tmpStr, "%s[%s]", prefix, rel_param.param_str);
+                   sprintf(tmpStr, "%cC[%s]", prefix, rel_param.param_str);
                }
            } else {
                if(reg) {
-                   sprintf(tmpStr, "%s[A0.x + %u]", prefix, reg);
+                   sprintf(tmpStr, "%cC[A0.x + %u]", prefix, reg);
                } else {
-                   sprintf(tmpStr, "%s[A0.x]", prefix);
+                   sprintf(tmpStr, "%cC[A0.x]", prefix);
                }
            }
 
         } else {
             if(shader_constant_is_local(This, reg)) {
-                sprintf(tmpStr, "LC%u", reg);
+                sprintf(tmpStr, "%cLC%u", prefix, reg);
             } else {
-                sprintf(tmpStr, "%s[%u]", prefix, reg);
+                sprintf(tmpStr, "%cC[%u]", prefix, reg);
             }
         }
 
