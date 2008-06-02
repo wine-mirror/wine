@@ -2516,14 +2516,14 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
                 if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3)) {
                   glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI);
                   checkGLcall("GL_TEXTURE_ENV, comb_target, GL_MODULATE_ADD_ATI");
-                  glTexEnvi(GL_TEXTURE_ENV, src0_target, src3);
-                  checkGLcall("GL_TEXTURE_ENV, src0_target, src3");
-                  glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr3);
-                  checkGLcall("GL_TEXTURE_ENV, opr0_target, opr3");
-                  glTexEnvi(GL_TEXTURE_ENV, src1_target, src1);
-                  checkGLcall("GL_TEXTURE_ENV, src1_target, src1");
-                  glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr1);
-                  checkGLcall("GL_TEXTURE_ENV, opr1_target, opr1");
+                  glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
+                  checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
+                  glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
+                  checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
+                  glTexEnvi(GL_TEXTURE_ENV, src1_target, src3);
+                  checkGLcall("GL_TEXTURE_ENV, src1_target, src3");
+                  glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr3);
+                  checkGLcall("GL_TEXTURE_ENV, opr1_target, opr3");
                   glTexEnvi(GL_TEXTURE_ENV, src2_target, src2);
                   checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
                   glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr2);
