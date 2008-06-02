@@ -65,6 +65,7 @@ static inline BOOL is_signaled( HANDLE obj )
 }
 
 #define PIPENAME "\\\\.\\pipe\\ntdll_tests_file.c"
+#define TEST_BUF_LEN 3
 
 static BOOL create_pipe( HANDLE *read, HANDLE *write, ULONG flags, ULONG size )
 {
@@ -533,7 +534,7 @@ static void test_iocp_fileio(HANDLE h)
     if (hPipeClt != INVALID_HANDLE_VALUE)
     {
         OVERLAPPED o = {0,};
-        BYTE buf[3];
+        BYTE send_buf[TEST_BUF_LEN], recv_buf[TEST_BUF_LEN];
         DWORD read;
         long count;
 
@@ -541,12 +542,14 @@ static void test_iocp_fileio(HANDLE h)
         ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );
         ok( U(iosb).Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", U(iosb).Status );
 
+        memset( send_buf, 0, TEST_BUF_LEN );
+        memset( recv_buf, 0xde, TEST_BUF_LEN );
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
-        ReadFile( hPipeSrv, buf, 3, &read, &o);
+        ReadFile( hPipeSrv, recv_buf, TEST_BUF_LEN, &read, &o);
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
-        WriteFile( hPipeClt, buf, 3, &read, NULL );
+        WriteFile( hPipeClt, send_buf, TEST_BUF_LEN, &read, NULL );
 
         if (get_msg(h))
         {
@@ -554,14 +557,17 @@ static void test_iocp_fileio(HANDLE h)
             ok( ioSb.Information == 3, "Invalid ioSb.Information: %ld\n", ioSb.Information );
             ok( U(ioSb).Status == STATUS_SUCCESS, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
             ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
+            ok( !memcmp( send_buf, recv_buf, TEST_BUF_LEN ), "Receive buffer (%x %x %x) did not match send buffer (%x %x %x)\n", recv_buf[0], recv_buf[1], recv_buf[2], send_buf[0], send_buf[1], send_buf[2] );
         }
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
 
-        WriteFile( hPipeClt, buf, 2, &read, NULL );
+        memset( send_buf, 0, TEST_BUF_LEN );
+        memset( recv_buf, 0xde, TEST_BUF_LEN );
+        WriteFile( hPipeClt, send_buf, 2, &read, NULL );
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
-        ReadFile( hPipeSrv, buf, 2, &read, &o);
+        ReadFile( hPipeSrv, recv_buf, 2, &read, &o);
         count = get_pending_msgs(h);
         ok( count == 1, "Unexpected msg count: %ld\n", count );
         if (get_msg(h))
@@ -570,9 +576,10 @@ static void test_iocp_fileio(HANDLE h)
             ok( ioSb.Information == 2, "Invalid ioSb.Information: %ld\n", ioSb.Information );
             ok( U(ioSb).Status == STATUS_SUCCESS, "Invalid ioSb.Status: %x\n", U(ioSb).Status);
             ok( completionValue == (ULONG_PTR)&o, "Invalid completion value: %lx\n", completionValue );
+            ok( !memcmp( send_buf, recv_buf, 2 ), "Receive buffer (%x %x) did not match send buffer (%x %x)\n", recv_buf[0], recv_buf[1], send_buf[0], send_buf[1] );
         }
 
-        ReadFile( hPipeSrv, buf, sizeof(buf), &read, &o);
+        ReadFile( hPipeSrv, recv_buf, TEST_BUF_LEN, &read, &o);
         CloseHandle( hPipeSrv );
         count = get_pending_msgs(h);
         ok( count == 1, "Unexpected msg count: %ld\n", count );
