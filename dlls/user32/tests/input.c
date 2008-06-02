@@ -473,23 +473,28 @@ struct sendinput_test_s {
         {{VK_SHIFT, 0x80}, {VK_RSHIFT, 0x80}, {0}},
         {{WM_KEYUP, hook|wparam|lparam, VK_RSHIFT, LLKHF_UP|LLKHF_EXTENDED},
         {WM_KEYUP, wparam|lparam, VK_SHIFT, KF_UP}, {0}}},
+
+    /* Note about wparam for hook with generic key (VK_SHIFT, VK_CONTROL, VK_MENU):
+       win2k  - sends to hook whatever we generated here
+       winXP+ - Attempts to convert key to L/R key but not always correct
+    */
     /* SHIFT == LSHIFT */
     {VK_SHIFT, 0, 0,
         {{VK_SHIFT, 0x00}, {VK_LSHIFT, 0x00}, {0}},
-        {{WM_KEYDOWN, hook|wparam|lparam, VK_SHIFT, 0},
+        {{WM_KEYDOWN, hook/* |wparam */|lparam, VK_SHIFT, 0},
         {WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0}, {0}}},
     {VK_SHIFT, KEYEVENTF_KEYUP, 0,
         {{VK_SHIFT, 0x80}, {VK_LSHIFT, 0x80}, {0}},
-        {{WM_KEYUP, hook|wparam|lparam, VK_SHIFT, LLKHF_UP},
+        {{WM_KEYUP, hook/*|wparam*/|lparam, VK_SHIFT, LLKHF_UP},
         {WM_KEYUP, wparam|lparam, VK_SHIFT, KF_UP}, {0}}},
     /* SHIFT | KEYEVENTF_EXTENDEDKEY == RSHIFT */
     {VK_SHIFT, KEYEVENTF_EXTENDEDKEY, 0,
         {{VK_SHIFT, 0x00}, {VK_RSHIFT, 0x00}, {0}},
-        {{WM_KEYDOWN, hook|wparam|lparam, VK_SHIFT, LLKHF_EXTENDED},
+        {{WM_KEYDOWN, hook/*|wparam*/|lparam, VK_SHIFT, LLKHF_EXTENDED},
         {WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0}, {0}}},
     {VK_SHIFT, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
         {{VK_SHIFT, 0x80}, {VK_RSHIFT, 0x80}, {0}},
-        {{WM_KEYUP, hook|wparam|lparam, VK_SHIFT, LLKHF_UP|LLKHF_EXTENDED},
+        {{WM_KEYUP, hook/*|wparam*/|lparam, VK_SHIFT, LLKHF_UP|LLKHF_EXTENDED},
         {WM_KEYUP, wparam|lparam, VK_SHIFT, KF_UP}, {0}}},
 
     /* test L-CONTROL & R-CONTROL: */
@@ -523,20 +528,20 @@ struct sendinput_test_s {
     /* CONTROL == LCONTROL */
     {VK_CONTROL, 0, 0,
         {{VK_CONTROL, 0x00}, {VK_LCONTROL, 0x00}, {0}},
-        {{WM_KEYDOWN, hook|wparam, VK_CONTROL},
+        {{WM_KEYDOWN, hook/*|wparam, VK_CONTROL*/},
         {WM_KEYDOWN, wparam|lparam, VK_CONTROL, 0}, {0}}},
     {VK_CONTROL, KEYEVENTF_KEYUP, 0,
         {{VK_CONTROL, 0x80}, {VK_LCONTROL, 0x80}, {0}},
-        {{WM_KEYUP, hook|wparam, VK_CONTROL},
+        {{WM_KEYUP, hook/*|wparam, VK_CONTROL*/},
         {WM_KEYUP, wparam|lparam, VK_CONTROL, KF_UP}, {0}}},
     /* CONTROL | KEYEVENTF_EXTENDEDKEY == RCONTROL */
     {VK_CONTROL, KEYEVENTF_EXTENDEDKEY, 0,
         {{VK_CONTROL, 0x00}, {VK_RCONTROL, 0x00}, {0}},
-        {{WM_KEYDOWN, hook|wparam|lparam, VK_CONTROL, LLKHF_EXTENDED},
+        {{WM_KEYDOWN, hook/*|wparam*/|lparam, VK_CONTROL, LLKHF_EXTENDED},
         {WM_KEYDOWN, wparam|lparam, VK_CONTROL, KF_EXTENDED}, {0}}},
     {VK_CONTROL, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0,
         {{VK_CONTROL, 0x80}, {VK_RCONTROL, 0x80}, {0}},
-        {{WM_KEYUP, hook|wparam|lparam, VK_CONTROL, LLKHF_UP|LLKHF_EXTENDED},
+        {{WM_KEYUP, hook/*|wparam*/|lparam, VK_CONTROL, LLKHF_UP|LLKHF_EXTENDED},
         {WM_KEYUP, wparam|lparam, VK_CONTROL, KF_UP|KF_EXTENDED}, {0}}},
 
     /* test L-MENU & R-MENU: */
@@ -573,21 +578,21 @@ struct sendinput_test_s {
     /* MENU == LMENU */
     {VK_MENU, 0, 0,
         {{VK_MENU, 0x00}, {VK_LMENU, 0x00}, {0}},
-        {{WM_SYSKEYDOWN, hook|wparam, VK_MENU},
+        {{WM_SYSKEYDOWN, hook/*|wparam, VK_MENU*/},
         {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0}, {0}}},
     {VK_MENU, KEYEVENTF_KEYUP, 1,
         {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {0}},
-        {{WM_KEYUP, hook|wparam, VK_MENU},
+        {{WM_KEYUP, hook/*|wparam, VK_MENU*/},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP},
         {WM_SYSCOMMAND}, {0}}},
     /* MENU | KEYEVENTF_EXTENDEDKEY == RMENU */
     {VK_MENU, KEYEVENTF_EXTENDEDKEY, 0,
         {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {0}},
-        {{WM_SYSKEYDOWN, hook|wparam|lparam, VK_MENU, LLKHF_EXTENDED},
+        {{WM_SYSKEYDOWN, hook/*|wparam*/|lparam, VK_MENU, LLKHF_EXTENDED},
         {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, KF_EXTENDED}, {0}}},
     {VK_MENU, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 1,
         {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {0}},
-        {{WM_KEYUP, hook|wparam|lparam, VK_MENU, LLKHF_UP|LLKHF_EXTENDED},
+        {{WM_KEYUP, hook/*|wparam*/|lparam, VK_MENU, LLKHF_UP|LLKHF_EXTENDED},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP|KF_EXTENDED},
         {WM_SYSCOMMAND}, {0}}},
 
