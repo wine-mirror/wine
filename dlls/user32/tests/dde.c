@@ -227,12 +227,13 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
-static void test_msg_server(HANDLE hproc)
+static void test_msg_server(HANDLE hproc, HANDLE hthread)
 {
     MSG msg;
     HWND hwnd;
     DWORD res;
 
+    ResumeThread( hthread );
     create_dde_window(&hwnd, "dde_server", dde_server_wndproc);
 
     while (MsgWaitForMultipleObjects( 1, &hproc, FALSE, INFINITE, QS_ALLINPUT ) != 0)
@@ -2091,9 +2092,9 @@ START_TEST(dde)
     startup.wShowWindow = SW_SHOWNORMAL;
 
     CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
-                   0, NULL, NULL, &startup, &proc);
+                   CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
 
-    test_msg_server(proc.hProcess);
+    test_msg_server(proc.hProcess, proc.hThread);
 
     sprintf(buffer, "%s dde msg", argv[0]);
     CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
