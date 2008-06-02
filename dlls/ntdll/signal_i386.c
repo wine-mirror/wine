@@ -127,6 +127,8 @@ typedef ucontext_t SIGCONTEXT;
 #define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpregs->status >> 16) ? (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1) : NULL)
 
 #define VM86_EAX 0 /* the %eax value while vm86_enter is executing */
+#define VIF_FLAG 0x00080000
+#define VIP_FLAG 0x00100000
 
 int vm86_enter( void **vm86_ptr );
 void vm86_return(void);
@@ -541,7 +543,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
          * Note that SIGUSR2 may turn VIF flag off so
          * VIF check must occur only when TEB.vm86_ptr is NULL.
          */
-        if (vm86->regs.eflags & VIF_MASK)
+        if (vm86->regs.eflags & VIF_FLAG)
         {
             CONTEXT vcontext;
             save_vm86_context( &vcontext, vm86 );
@@ -552,7 +554,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
             rec->NumberParameters = 0;
             rec->ExceptionAddress = (LPVOID)vcontext.Eip;
 
-            vcontext.EFlags &= ~VIP_MASK;
+            vcontext.EFlags &= ~VIP_FLAG;
             get_vm86_teb_info()->vm86_pending = 0;
             __regs_RtlRaiseException( rec, &vcontext );
 
@@ -1239,7 +1241,7 @@ static void WINAPI raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     /* merge_vm86_pending_flags merges the vm86_pending flag in safely */
-    get_vm86_teb_info()->vm86_pending |= VIP_MASK;
+    get_vm86_teb_info()->vm86_pending |= VIP_FLAG;
 
     if (ntdll_get_thread_data()->vm86_ptr)
     {
@@ -1269,7 +1271,7 @@ done:
  *
  * Handler for SIGUSR2.
  * We use it to signal that the running __wine_enter_vm86() should
- * immediately set VIP_MASK, causing pending events to be handled
+ * immediately set VIP_FLAG, causing pending events to be handled
  * as early as possible.
  */
 static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
@@ -1659,8 +1661,8 @@ void __wine_enter_vm86( CONTEXT *context )
             rec.ExceptionInformation[0] = VM86_ARG(res);
             break;
         case VM86_STI: /* sti/popf/iret instruction enabled virtual interrupts */
-            context->EFlags |= VIF_MASK;
-            context->EFlags &= ~VIP_MASK;
+            context->EFlags |= VIF_FLAG;
+            context->EFlags &= ~VIP_FLAG;
             get_vm86_teb_info()->vm86_pending = 0;
             rec.ExceptionCode = EXCEPTION_VM86_STI;
             break;
