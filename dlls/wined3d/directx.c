@@ -1775,6 +1775,12 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
 
     if (WINED3DMULTISAMPLE_NONE == MultiSampleType) return WINED3D_OK;
 
+    /* By default multisampling is disabled right now as it causes issues
+     * on some Nvidia driver versions and it doesn't work well in combination
+     * with FBOs yet. */
+    if(!wined3d_settings.allow_multisampling)
+        return WINED3DERR_NOTAVAILABLE;
+
     desc = getFormatDescEntry(SurfaceFormat, &Adapters[Adapter].gl_info, &glDesc);
     if(!desc || !glDesc) {
         return WINED3DERR_INVALIDCALL;

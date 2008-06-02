@@ -248,6 +248,7 @@ typedef struct wined3d_settings_s {
 /* Memory tracking and object counting */
   unsigned int emulated_textureram;
   char *logo;
+  int allow_multisampling;
 } wined3d_settings_t;
 
 extern wined3d_settings_t wined3d_settings;
