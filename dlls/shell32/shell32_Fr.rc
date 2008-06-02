@@ -3,7 +3,7 @@
  * French language support
  *
  * Copyright 1998 Juergen Schmied
- * Copyright 2006-2007 Jonathan Ernst
+ * Copyright 2006-2008 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,12 +22,14 @@
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
+#pragma code_page(65001) /* UTF-8 */
+
 MENU_001 MENU DISCARDABLE
 BEGIN
-	MENUITEM "&Grandes icônes",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "&Petites icônes",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Grandes icÃ´nes",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "&Petites icÃ´nes",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
-	MENUITEM "&Détails",		FCIDM_SHVIEW_REPORTVIEW
+	MENUITEM "&DÃ©tails",		FCIDM_SHVIEW_REPORTVIEW
 END
 
 /*
@@ -39,13 +41,13 @@ BEGIN
 	BEGIN
 	  POPUP "&Affichage"
 	  BEGIN
-	    MENUITEM "&Grandes icônes",	FCIDM_SHVIEW_BIGICON
-	    MENUITEM "&Petites icônes",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Grandes icÃ´nes",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "&Petites icÃ´nes",	FCIDM_SHVIEW_SMALLICON
 	    MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
-	    MENUITEM "&Détails",	FCIDM_SHVIEW_REPORTVIEW
+	    MENUITEM "&DÃ©tails",	FCIDM_SHVIEW_REPORTVIEW
 	  END
 	  MENUITEM SEPARATOR
-	  POPUP "Trier les &icônes"
+	  POPUP "Trier les &icÃ´nes"
 	  BEGIN
 	    MENUITEM "Par &nom",	0x30	/* column 0 */
 	    MENUITEM "Par &type",	0x32	/* column 2 */
@@ -54,7 +56,7 @@ BEGIN
 	    MENUITEM SEPARATOR
 	    MENUITEM "T&ri automatique",	FCIDM_SHVIEW_AUTOARRANGE
 	  END
-	  MENUITEM "Aligner les icônes",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM "Aligner les icÃ´nes",	FCIDM_SHVIEW_SNAPTOGRID
 	  MENUITEM SEPARATOR
 	  MENUITEM "Actualiser",		FCIDM_SHVIEW_REFRESH
 	  MENUITEM SEPARATOR
@@ -68,7 +70,7 @@ BEGIN
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
-	  MENUITEM "Propriétés",		FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "PropriÃ©tÃ©s",		FCIDM_SHVIEW_PROPERTIES
 	END
 END
 
@@ -79,18 +81,18 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Sélectionner"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&SÃ©lectionner"		FCIDM_SHVIEW_OPEN
 	  MENUITEM "E&xplorer",		FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "&Ouvrir",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
 	  MENUITEM "C&ouper",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Copier",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Créer un &lien",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "CrÃ©er un &lien",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "&Supprimer",	FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Renommer",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
-	  MENUITEM "&Propriétés",	FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "&PropriÃ©tÃ©s",	FCIDM_SHVIEW_PROPERTIES
 	END
 END
 
@@ -116,13 +118,13 @@ FONT 8, "MS Shell Dlg"
 {
  LTEXT "", IDD_TITLE, 10, 8, 198, 24
  LTEXT "", IDD_STATUS, 10, 25, 198, 12
- LTEXT "Dossier :", IDD_FOLDER, 10, 156, 40, 12
+ LTEXT "DossierÂ :", IDD_FOLDER, 10, 156, 40, 12
  CONTROL "", IDD_TREEVIEW, "SysTreeView32",
 	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
 	WS_BORDER | WS_TABSTOP,
 	12, 38, 194, 105
  EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "&Créer un nouveau dossier", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&CrÃ©er un nouveau dossier", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
  DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annuler", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
 }
@@ -142,7 +144,7 @@ FONT 8, "MS Shell Dlg"
 
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "À propos de %s"
+CAPTION "Ã€ propos de %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 50, 12, WS_TABSTOP
@@ -150,7 +152,7 @@ FONT 10, "MS Shell Dlg"
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 137, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 137, 10
- LTEXT "Wine est une réalisation de :", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
+ LTEXT "Wine est une rÃ©alisation deÂ :", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -160,7 +162,7 @@ FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
  LTEXT "Entrez le nom d'un programme, d'un dossier, d'un document ou d'une ressource Internet, et Wine l'ouvrira pour vous.", 12289, 36, 11, 182, 18
- LTEXT "&Ouvrir :", 12305, 7, 39, 24, 10
+ LTEXT "&OuvrirÂ :", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Annuler", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
@@ -173,13 +175,13 @@ STRINGTABLE
 	IDS_SHV_COLUMN1		"Fichier"
 	IDS_SHV_COLUMN2		"Taille"
 	IDS_SHV_COLUMN3		"Type"
-	IDS_SHV_COLUMN4		"Modifié"
+	IDS_SHV_COLUMN4		"ModifiÃ©"
 	IDS_SHV_COLUMN5		"Attributs"
-	IDS_SHV_COLUMN6		"Capacité"
+	IDS_SHV_COLUMN6		"CapacitÃ©"
 	IDS_SHV_COLUMN7		"Espace disponible"
 	IDS_SHV_COLUMN8		"Nom"
 	IDS_SHV_COLUMN9		"Commentaires"
-	IDS_SHV_COLUMN10	"Propriétaire"
+	IDS_SHV_COLUMN10	"PropriÃ©taire"
 	IDS_SHV_COLUMN11	"Groupe"
 	IDS_SHV_COLUMN_DELFROM	"Emplacement d'origine"
 	IDS_SHV_COLUMN_DELDATE	"Date de suppression"
@@ -190,50 +192,50 @@ STRINGTABLE
 	IDS_RECYCLEBIN_FOLDER_NAME      "Corbeille"
 
         /* context menus */
-	IDS_VIEW_LARGE		"&Grandes icônes"
-	IDS_VIEW_SMALL		"&Petites icônes"
+	IDS_VIEW_LARGE		"&Grandes icÃ´nes"
+	IDS_VIEW_SMALL		"&Petites icÃ´nes"
 	IDS_VIEW_LIST		"&Liste"
-	IDS_VIEW_DETAILS	"&Détails"
-	IDS_SELECT		"Sélectionner"
+	IDS_VIEW_DETAILS	"&DÃ©tails"
+	IDS_SELECT		"SÃ©lectionner"
 	IDS_OPEN		"Ouvrir"
 
-	IDS_CREATEFOLDER_DENIED "Impossible de créer le nouveau dossier : permission refusée."
-	IDS_CREATEFOLDER_CAPTION "Erreur lors de la création du nouveau dossier"
+	IDS_CREATEFOLDER_DENIED "Impossible de crÃ©er le nouveau dossierÂ : permission refusÃ©e."
+	IDS_CREATEFOLDER_CAPTION "Erreur lors de la crÃ©ation du nouveau dossier"
 	IDS_DELETEITEM_CAPTION "Confirmer la suppression du fichier"
 	IDS_DELETEFOLDER_CAPTION "Confirmer la suppression du dossier"
-	IDS_DELETEITEM_TEXT "Êtes-vous sûr de vouloir supprimer '%1'?"
-	IDS_DELETEMULTIPLE_TEXT "Êtes-vous sûr de vouloir supprimer ces %1 éléments ?"
-	IDS_DELETESELECTED_TEXT "Êtes-vous sûr de vouloir supprimer le(les) élément(s) séléectionné(s) ?"
-	IDS_TRASHITEM_TEXT "Êtes-vous sûr de vouloir mettre « %1 » dans la corbeille ?"
-	IDS_TRASHFOLDER_TEXT "Êtes-vous sûr de vouloir mettre « %1 » et tout ce qu'il contient dans la corbeille ?"
-	IDS_TRASHMULTIPLE_TEXT "Êtes-vous sûr de vouloir mettre ces %1 éléments dans la corbeille ?"
-	IDS_CANTTRASH_TEXT "L'élément « %1 » ne peut pas être mis dans la corbeille. Souhaitez-vous le supprimer à la place ?"
-	IDS_OVERWRITEFILE_TEXT "Ce dossier contient déjà un fichier nommé « %1 ».\n\nVoulez-vous le remplacer ?"
-	IDS_OVERWRITEFILE_CAPTION "Confirmer l'écrasement du fichier"
-	IDS_OVERWRITEFOLDER_TEXT "Ce dossier contient déjà un dossier nommé « %1 ».\n\n"\
-	    "Si des fichiers dans le dossier de destination ont le même nom que ceux dans le dossier\n"\
-	    "sélectionné, ils seront remplacés. Voulez-vous quand même déplacer ou copier\n"\
-	    "le dossier ?"
+	IDS_DELETEITEM_TEXT "ÃŠtes-vous sÃ»r de vouloir supprimer '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "ÃŠtes-vous sÃ»r de vouloir supprimer ces %1 Ã©lÃ©ments ?"
+	IDS_DELETESELECTED_TEXT "ÃŠtes-vous sÃ»r de vouloir supprimer le(les) Ã©lÃ©ment(s) sÃ©lÃ©ectionnÃ©(s)Â ?"
+	IDS_TRASHITEM_TEXT "ÃŠtes-vous sÃ»r de vouloir mettre Â«Â %1Â Â» dans la corbeilleÂ ?"
+	IDS_TRASHFOLDER_TEXT "ÃŠtes-vous sÃ»r de vouloir mettre Â«Â %1Â Â» et tout ce qu'il contient dans la corbeilleÂ ?"
+	IDS_TRASHMULTIPLE_TEXT "ÃŠtes-vous sÃ»r de vouloir mettre ces %1 Ã©lÃ©ments dans la corbeilleÂ ?"
+	IDS_CANTTRASH_TEXT "L'Ã©lÃ©ment Â«Â %1Â Â» ne peut pas Ãªtre mis dans la corbeille. Souhaitez-vous le supprimer Ã  la placeÂ ?"
+	IDS_OVERWRITEFILE_TEXT "Ce dossier contient dÃ©jÃ  un fichier nommÃ© Â«Â %1Â Â».\n\nVoulez-vous le remplacerÂ ?"
+	IDS_OVERWRITEFILE_CAPTION "Confirmer l'Ã©crasement du fichier"
+	IDS_OVERWRITEFOLDER_TEXT "Ce dossier contient dÃ©jÃ  un dossier nommÃ© Â«Â %1Â Â».\n\n"\
+	    "Si des fichiers dans le dossier de destination ont le mÃªme nom que ceux dans le dossier\n"\
+	    "sÃ©lectionnÃ©, ils seront remplacÃ©s. Voulez-vous quand mÃªme dÃ©placer ou copier\n"\
+	    "le dossierÂ ?"
 
         /* message box strings */
-       IDS_RESTART_TITLE       "Redémarrer"
-       IDS_RESTART_PROMPT      "Voulez-vous simuler le redémarrage de Windows ?"
-       IDS_SHUTDOWN_TITLE      "Arrêter"
-       IDS_SHUTDOWN_PROMPT     "Voulez-vous fermer la session Wine ?"
+       IDS_RESTART_TITLE       "RedÃ©marrer"
+       IDS_RESTART_PROMPT      "Voulez-vous simuler le redÃ©marrage de WindowsÂ ?"
+       IDS_SHUTDOWN_TITLE      "ArrÃªter"
+       IDS_SHUTDOWN_PROMPT     "Voulez-vous fermer la session WineÂ ?"
 
 /* shell folder path default values */
- IDS_PROGRAMS                "Menu Démarrer\\Programmes"
+ IDS_PROGRAMS                "Menu DÃ©marrer\\Programmes"
  IDS_PERSONAL                "Mes documents"
  IDS_FAVORITES               "Favoris"
- IDS_STARTUP                 "Menu Démarrer\\Programmes\\Démarrage"
+ IDS_STARTUP                 "Menu DÃ©marrer\\Programmes\\DÃ©marrage"
  IDS_RECENT                  "Recent"
  IDS_SENDTO                  "SendTo"
- IDS_STARTMENU               "Menu Démarrer"
+ IDS_STARTMENU               "Menu DÃ©marrer"
  IDS_MYMUSIC                 "Ma musique"
- IDS_MYVIDEO                 "Mes vidéos"
+ IDS_MYVIDEO                 "Mes vidÃ©os"
  IDS_DESKTOPDIRECTORY        "Bureau"
- IDS_NETHOOD                 "Voisinage Réseau"
- IDS_TEMPLATES               "Modèles"
+ IDS_NETHOOD                 "Voisinage RÃ©seau"
+ IDS_TEMPLATES               "ModÃ¨les"
  IDS_APPDATA                 "Application Data"
  IDS_PRINTHOOD               "Voisinage d'impression"
  IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
@@ -244,11 +246,31 @@ STRINGTABLE
  IDS_MYPICTURES              "Mes images"
  IDS_PROGRAM_FILES_COMMON    "Program Files\\Fichiers communs"
  IDS_COMMON_DOCUMENTS        "Documents"
- IDS_ADMINTOOLS              "Menu Démarrer\\Programmes\\Outils d'administration"
+ IDS_ADMINTOOLS              "Menu DÃ©marrer\\Programmes\\Outils d'administration"
  IDS_COMMON_MUSIC            "Documents\\Ma musique"
  IDS_COMMON_PICTURES         "Documents\\Mes images"
- IDS_COMMON_VIDEO            "Documents\\Mes vidéos"
+ IDS_COMMON_VIDEO            "Documents\\Mes vidÃ©os"
  IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
  IDS_NEWFOLDER		"Nouveau dossier"
 }
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Licence de Wine"
+IDS_LICENSE,
+"Wine est un logiciel libreÂ ; vous pouvez le redistribuer et/ou \
+le modifier suivant les termes de la Licence GÃ©nÃ©rale Publique LimitÃ©e GNU \
+telle que publiÃ©e par la Free Software FoundationÂ ; soit la version 2.1\
+de la License, soit (Ã  votre grÃ©) toute version ultÃ©rieure.\n\n\
+Wine est distribuÃ© dans lâ€™espoir qu'il sera utile, mais  \
+SANS AUCUNE GARANTIEÂ : sans mÃªme la garantie implicite de \
+COMMERCIALISABILITÃ‰ ou dâ€™ADÃ‰QUATION Ã€ UN OBJECTIF PARTICULIER. Consultez \
+la Licence GÃ©nÃ©rale Publique LimitÃ©e pour plus de dÃ©tails.\n\n\
+Vous devriez avoir reÃ§u une copie de la Licence GÃ©nÃ©rale Publique LimitÃ©e\
+GNU avec cette bibliothÃ¨que ; si ce nâ€™est pas le cas, Ã©crivez Ã  laÂ :\
+Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,\
+MA 02110-1301, USA."
+}
+
+#pragma code_page(default) /* Return to default encoding */
