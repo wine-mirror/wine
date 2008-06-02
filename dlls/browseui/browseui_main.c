@@ -33,8 +33,6 @@
 #include "shlwapi.h"
 #include "shlguid.h"
 
-#include "initguid.h"
-
 #include "browseui.h"
 
 #include "initguid.h"
