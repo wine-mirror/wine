@@ -54,6 +54,7 @@ BEGIN
             MENUITEM "Ø&etìzcová položka",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binární položka",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD položka",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi String Value",     ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Smazat\tDel",                ID_EDIT_DELETE
@@ -104,11 +105,13 @@ BEGIN
             MENUITEM "Ø&etìzcová položka",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Binarní položka",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD položka",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi String Value",     ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Smazat\tDel",                ID_EDIT_DELETE
         MENUITEM "Pøe&jmenovat\tF2",                 ID_EDIT_RENAME
         MENUITEM SEPARATOR
+        MENUITEM "&Export...",                  ID_EDIT_EXPORT
         MENUITEM "&Kopírovat název klíèe",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Najít\tCtrl+F",               ID_EDIT_FIND, GRAYED
@@ -220,6 +223,7 @@ BEGIN
     IDS_DELETE_BOX_TEXT     "Opravdu chcete smazat položku '%s'?"
     IDS_NEWKEY              "Nový klíè #%d"
     IDS_NEWVALUE            "Nová položka #%d"
+    IDS_NOTFOUND            "Search string '%s' not found"
 END
 
 /*****************************************************************/
