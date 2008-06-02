@@ -1478,7 +1478,7 @@ static nsrefcnt NSAPI nsTooltipListener_AddRef(nsITooltipListener *iface)
 static nsrefcnt NSAPI nsTooltipListener_Release(nsITooltipListener *iface)
 {
     NSContainer *This = NSTOOLTIP_THIS(iface);
-    return nsIWebBrowserChrome_AddRef(NSWBCHROME(This));
+    return nsIWebBrowserChrome_Release(NSWBCHROME(This));
 }
 
 static nsresult NSAPI nsTooltipListener_OnShowTooltip(nsITooltipListener *iface,
