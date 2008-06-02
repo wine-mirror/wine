@@ -572,7 +572,11 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
          * uninitialized drawable. That's pointless and we'd have to allocate the texture /
          * sysmem copy here.
          */
-        IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, TRUE);
+        if (This->resource.usage & WINED3DUSAGE_DEPTHSTENCIL) {
+            IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
+        } else {
+            IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, TRUE);
+        }
     } else {
         /* Load the surface into system memory */
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);

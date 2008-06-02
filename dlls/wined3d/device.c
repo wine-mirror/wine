@@ -7048,8 +7048,12 @@ static void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAM
     surface->resource.allocatedMemory = NULL;
     surface->resource.heapMemory = NULL;
     surface->resource.size = IWineD3DSurface_GetPitch((IWineD3DSurface *) surface) * surface->pow2Width;
-    /* INDRAWABLE is a sane place for implicit targets / depth stencil after the reset */
-    IWineD3DSurface_ModifyLocation((IWineD3DSurface *) surface, SFLAG_INDRAWABLE, TRUE);
+    /* INDRAWABLE is a sane place for implicit targets after the reset, INSYSMEM is more appropriate for depth stencils. */
+    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL) {
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *) surface, SFLAG_INSYSMEM, TRUE);
+    } else {
+        IWineD3DSurface_ModifyLocation((IWineD3DSurface *) surface, SFLAG_INDRAWABLE, TRUE);
+    }
 }
 
 static HRESULT WINAPI reset_unload_resources(IWineD3DResource *resource, void *data) {
