@@ -29,6 +29,7 @@ MAIN_MENU MENU
   MENUITEM "Ö&ppna...\tCtrl+O",            CMD_OPEN
   MENUITEM "&Spara\tCtrl+S",            CMD_SAVE
   MENUITEM "Spara s&om...",     CMD_SAVE_AS
+  MENUITEM SEPARATOR
   MENUITEM "&Skriv ut...\tCtrl+P",         CMD_PRINT
   MENUITEM "Sidla&yout...",    CMD_PAGE_SETUP
   MENUITEM "Skrivar&konfiguration...", CMD_PRINTER_SETUP
@@ -47,6 +48,7 @@ POPUP "&Redigera" {
   MENUITEM "&Tid/Datum\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "&Dela långa meningar",      CMD_WRAP
+  MENUITEM "&Font...",          CMD_FONT
  }
 POPUP "&Sök" {
   MENUITEM "Sök...",            CMD_SEARCH
