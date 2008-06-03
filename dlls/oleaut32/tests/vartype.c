@@ -5792,8 +5792,8 @@ static void test_NullByRef(void)
   VARIANT v1, v2;
   HRESULT hRes;
 
-  VariantClear(&v1);
-  VariantClear(&v2);
+  VariantInit(&v1);
+  VariantInit(&v2);
   V_VT(&v1) = VT_BYREF|VT_VARIANT;
   V_BYREF(&v1) = 0;
 
@@ -5826,8 +5826,8 @@ static void test_ChangeType_keep_dst(void)
      HRESULT hres;
 
      bstr = SysAllocString(testW);
-     VariantClear(&v1);
-     VariantClear(&v2);
+     VariantInit(&v1);
+     VariantInit(&v2);
      V_VT(&v1) = VT_BSTR;
      V_BSTR(&v1) = bstr;
      hres = VariantChangeTypeEx(&v1, &v1, 0, 0, VT_INT);
