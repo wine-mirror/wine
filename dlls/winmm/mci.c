@@ -1443,7 +1443,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 
 errCleanUp:
     HeapFree(GetProcessHeap(), 0, verb);
-    HeapFree(GetProcessHeap(), 0, devAlias);
     return dwRet;
 }
 
