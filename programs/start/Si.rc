@@ -62,6 +62,8 @@ See the COPYING.LIB file for license information. \n\
 "
 
 STRING_EXECFAIL "Programa ni mogoče zagnati ali pa z datoteko te vrste ni povezan noben program.\nUkaz ShellExecuteEx ni uspel"
+
+STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
 }
 
 #pragma code_page(default)

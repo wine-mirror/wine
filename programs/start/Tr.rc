@@ -60,4 +60,6 @@ See the COPYING.LIB file for license information. \n\
 "
 
 STRING_EXECFAIL "Uygulama baþlatýlamadý veya belirtilen dosya ile iliþkili bir uygulama yok.\nShellExecuteEx baþarýsýz"
+
+STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
 }

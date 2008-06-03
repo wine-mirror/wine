@@ -64,4 +64,6 @@ Pøeètìte si soubor COPYING.LIB pro získání informací o licenci. \n\
 "
 
 STRING_EXECFAIL "Aplikace nemohla být spuštìna nebo není žádná aplikace asociována s daným souborem.\nShellExecuteEx selhal"
+
+STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
 }

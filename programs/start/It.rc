@@ -62,4 +62,6 @@ Vedere il file COPYING.LIB per informazioni sulla licenza. \n\
 "
 
 STRING_EXECFAIL "Non è stato possibile eseguire l'applicazione, o nessuna applicazione è associata con il file specificato.\nShellExecuteEx fallito"
+
+STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
 }
