@@ -46,6 +46,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Sostituisci Testo", CM_U_REPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Stampa", CM_U_PRINT
+  MENUITEM "Pa&ge Setup", CM_U_PAGESETUP
  }
 
  POPUP "F&lags"
@@ -58,6 +59,7 @@ CmdlgtstMenu MENU
   MENUITEM "Trova/&Sostituisci", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Stampa", CM_F_PRINT
+  MENUITEM "Pa&ge Setup", CM_F_PAGESETUP
  }
 
  POPUP "&Aiuto"
@@ -149,7 +151,7 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Marca flags che sono settati dal sistema e devono essere confermati dall'utente.", -1, "statico", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "Marca flags che sono settati dal sistema e devono essere confermati dall'utente.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
