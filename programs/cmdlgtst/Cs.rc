@@ -44,6 +44,7 @@ CmdlgtstMenu MENU
   MENUITEM "Nah&radit text", CM_U_REPLACE
   MENUITEM SEPARATOR
   MENUITEM "T&isk", CM_U_PRINT
+  MENUITEM "Pa&ge Setup", CM_U_PAGESETUP
  }
 
  POPUP "&Pøíznaky"
@@ -56,6 +57,7 @@ CmdlgtstMenu MENU
   MENUITEM "Najít/Nah&radit", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
   MENUITEM "T&isk", CM_F_PRINT
+  MENUITEM "Pa&ge Setup", CM_F_PAGESETUP
  }
 
  POPUP "&Nápovìda"
