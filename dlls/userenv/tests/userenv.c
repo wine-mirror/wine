@@ -137,7 +137,7 @@ static BOOL get_env(const WCHAR * env, const char * var, char ** result)
     {
         envlen = lstrlenW(p);
         sprintf(buf, "%s", userenv_dbgstr_w(p));
-        if (CompareStringA(GetThreadLocale(), NORM_IGNORECASE|LOCALE_USE_CP_ACP, buf, varlen, var, varlen) == CSTR_EQUAL)
+        if (CompareStringA(GetThreadLocale(), NORM_IGNORECASE|LOCALE_USE_CP_ACP, buf, min(envlen, varlen), var, varlen) == CSTR_EQUAL)
         {
             if (buf[varlen] == '=')
             {
