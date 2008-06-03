@@ -210,13 +210,12 @@ static void testQuerySecurityPackageInfo(void)
         /* there is no point in testing pkg_info->cbMaxToken since it varies
          * between implementations.
          */
+
+        sec_status = pFreeContextBuffer(pkg_info);
+        ok( sec_status == SEC_E_OK,
+            "Return value of FreeContextBuffer() shouldn't be %s\n",
+            getSecError(sec_status) );
     }
-
-    sec_status = pFreeContextBuffer(pkg_info);
-
-    ok( sec_status == SEC_E_OK,
-        "Return value of FreeContextBuffer() shouldn't be %s\n",
-        getSecError(sec_status) );
 
     /* Test with a nonexistent package, test should fail */
 
@@ -228,12 +227,6 @@ static void testQuerySecurityPackageInfo(void)
         getSecError(SEC_E_SECPKG_NOT_FOUND));
 
     ok(pkg_info == (void *)0xdeadbeef, "wrong pkg_info address %p\n", pkg_info);
-
-    sec_status = pFreeContextBuffer(pkg_info);
-
-    ok( sec_status == SEC_E_OK,
-        "Return value of FreeContextBuffer() shouldn't be %s\n",
-        getSecError(sec_status) );
 }
 
 START_TEST(main)
