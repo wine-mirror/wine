@@ -34,7 +34,7 @@ static HWND create_window(void)
 {
     WNDCLASS wc = {0};
     HWND ret;
-    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpfnWndProc = DefWindowProc;
     wc.lpszClassName = "d3d9_test_wc";
     RegisterClass(&wc);
 
