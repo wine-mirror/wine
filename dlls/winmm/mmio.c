@@ -585,7 +585,7 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     wm->info.pchNext = wm->info.pchBuffer;
     wm->info.pchEndRead = wm->info.pchBuffer;
     wm->info.pchEndWrite = wm->info.pchBuffer + cchBuffer;
-    wm->info.lBufOffset = 0;
+    wm->info.lBufOffset = wm->info.lDiskOffset;
     wm->bBufferLoaded = FALSE;
 
     return MMSYSERR_NOERROR;
