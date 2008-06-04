@@ -350,7 +350,6 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 
     for (i = 0; i < n; i++)
     {
-	CPINFOEXA cpinfoex;
 	CHARSETINFO csi;
 	MIMECSETINFO mcsi;
         BOOL convertible;
@@ -388,17 +387,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	else
 	    trace("TranslateCharsetInfo failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
 
-        if (pGetCPInfoExA)
-        {
-            if (pGetCPInfoExA(cpinfo[i].uiCodePage, 0, &cpinfoex))
-                trace("CodePage %u name: %s\n", cpinfo[i].uiCodePage, cpinfoex.CodePageName);
-            else
-                trace("GetCPInfoExA failed for cp %u\n", cpinfo[i].uiCodePage);
-            if (pGetCPInfoExA(cpinfo[i].uiFamilyCodePage, 0, &cpinfoex))
-                trace("CodePage %u name: %s\n", cpinfo[i].uiFamilyCodePage, cpinfoex.CodePageName);
-            else
-                trace("GetCPInfoExA failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
-        }
+        trace("%u: codepage %u family %u\n", i, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
 
         /* Win95 does not support UTF-7 */
         if (cpinfo[i].uiCodePage == CP_UTF7) continue;
@@ -442,7 +431,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
                 "%s != %s\n",
 		wine_dbgstr_w(cpinfo[i].wszWebCharset), wine_dbgstr_w(mcsi.wszCharset));
 #else
-                "wszWebCharset mismatch");
+                "wszWebCharset mismatch\n");
 #endif
 
 	if (0)
@@ -468,7 +457,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
                 "%s != %s\n",
 		wine_dbgstr_w(cpinfo[i].wszHeaderCharset), wine_dbgstr_w(mcsi.wszCharset));
 #else
-                "wszHeaderCharset mismatch");
+                "wszHeaderCharset mismatch\n");
 #endif
 
 	if (0)
@@ -494,7 +483,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
                 "%s != %s\n",
 		wine_dbgstr_w(cpinfo[i].wszBodyCharset), wine_dbgstr_w(mcsi.wszCharset));
 #else
-                "wszBodyCharset mismatch");
+                "wszBodyCharset mismatch\n");
 #endif
 
 	if (0)
@@ -506,8 +495,6 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 		"%u != %u || %u\n", mcsi.uiCodePage, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
 	}
 	}
-
-	trace("---\n");
     }
 
     /* now IEnumCodePage_Next should fail, since pointer is at the end */
@@ -622,12 +609,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 	      wine_dbgstr_w(sinfo[i].wszFixedWidthFont),
 	      wine_dbgstr_w(sinfo[i].wszProportionalFont));
 #endif
-	if (pGetCPInfoExA(sinfo[i].uiCodePage, 0, &cpinfoex))
-	    trace("CodePage %u name: %s\n", sinfo[i].uiCodePage, cpinfoex.CodePageName);
-	else
-	    trace("GetCPInfoExA failed for cp %u\n", sinfo[i].uiCodePage);
-
-	trace("---\n");
+        trace("%u codepage %u\n", i, sinfo[i].uiCodePage);
     }
 
     /* now IEnumScript_Next should fail, since pointer is at the end */
