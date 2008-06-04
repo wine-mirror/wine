@@ -594,7 +594,6 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 
     for (i = 0; pGetCPInfoExA && i < n; i++)
     {
-	CPINFOEXA cpinfoex;
 #ifdef DUMP_SCRIPT_INFO
 	trace("SCRIPTINFO #%u:\n"
 	      "ScriptId %08x\n"
