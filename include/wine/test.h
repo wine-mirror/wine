@@ -298,7 +298,7 @@ void winetest_trace( const char *msg, ... )
 
     if (winetest_debug > 0)
     {
-        fprintf( stdout, "%s:%d:", data->current_file, data->current_line );
+        fprintf( stdout, "%s:%d: ", data->current_file, data->current_line );
         va_start(valist, msg);
         vfprintf(stdout, msg, valist);
         va_end(valist);
