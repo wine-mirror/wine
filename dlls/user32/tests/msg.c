@@ -2789,7 +2789,7 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
                 WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
                 trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
                       winpos->hwnd, winpos->hwndInsertAfter,
                       winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
                 dump_winpos_flags(winpos->flags);
@@ -2840,7 +2840,7 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
                 WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
                 trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
                       winpos->hwnd, winpos->hwndInsertAfter,
                       winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
                 dump_winpos_flags(winpos->flags);
@@ -2909,7 +2909,7 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
                 WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
                 trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
                       winpos->hwnd, winpos->hwndInsertAfter,
                       winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
                 dump_winpos_flags(winpos->flags);
@@ -3554,7 +3554,7 @@ static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam
             WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
             trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
                   winpos->hwnd, winpos->hwndInsertAfter,
                   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
             dump_winpos_flags(winpos->flags);
@@ -6516,7 +6516,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
             WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
             trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
                   winpos->hwnd, winpos->hwndInsertAfter,
                   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
             dump_winpos_flags(winpos->flags);
@@ -6670,7 +6670,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
                 WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
                 trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
                       winpos->hwnd, winpos->hwndInsertAfter,
                       winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
                 dump_winpos_flags(winpos->flags);
@@ -6759,7 +6759,7 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
             WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
             trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+            trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
                   winpos->hwnd, winpos->hwndInsertAfter,
                   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
             dump_winpos_flags(winpos->flags);
@@ -9738,7 +9738,7 @@ static INT_PTR WINAPI test_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPAR
         WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
         trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
-        trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+        trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x ",
               winpos->hwnd, winpos->hwndInsertAfter,
               winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
         dump_winpos_flags(winpos->flags);
