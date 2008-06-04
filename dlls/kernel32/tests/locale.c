@@ -1620,7 +1620,7 @@ static void test_FoldStringA(void)
 static void test_FoldStringW(void)
 {
   int ret;
-  unsigned int i, j;
+  unsigned int i, j, failures;
   WCHAR src[256], dst[256], ch, prev_ch = 1;
   static const DWORD badFlags[] =
   {
@@ -1907,7 +1907,7 @@ static void test_FoldStringW(void)
   }
 
   /* MAP_FOLDCZONE */
-  for (ch = 1; ch <0xffff; ch++)
+  for (ch = 1, failures = 0; ch <0xffff; ch++)
   {
     WCHAR expected = 0;
 
@@ -1939,6 +1939,11 @@ static void test_FoldStringW(void)
        ch == 0xff9e || ch == 0xff9f,
        "MAP_FOLDCZONE: ch %d 0x%04x Expected 0x%04x got 0x%04x\n",
        ch, ch, expected, dst[0]);
+    if (dst[0] != expected && ch < 0xf000 && ++failures > 50)
+    {
+        trace( "MAP_FOLDCZONE: Too many failures, giving up\n" );
+        break;
+    }
   }
 
   /* MAP_EXPAND_LIGATURES */
