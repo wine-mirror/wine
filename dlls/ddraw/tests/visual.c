@@ -55,7 +55,7 @@ static BOOL createObjects(void)
     ok(hr==DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", hr);
     if(!DirectDraw) goto err;
 
-    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpfnWndProc = DefWindowProc;
     wc.lpszClassName = "d3d7_test_wc";
     RegisterClass(&wc);
     window = CreateWindow("d3d7_test_wc", "d3d7_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
@@ -824,7 +824,7 @@ static BOOL D3D1_createObjects(void)
         return FALSE;
     }
 
-    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpfnWndProc = DefWindowProc;
     wc.lpszClassName = "texturemapblend_test_wc";
     RegisterClass(&wc);
     window = CreateWindow("texturemapblend_test_wc", "texturemapblend_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
@@ -1910,7 +1910,7 @@ static void D3D3_ViewportClearTest(void)
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
     DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
 
-    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpfnWndProc = DefWindowProc;
     wc.lpszClassName = "D3D3_ViewportClearTest_wc";
     RegisterClass(&wc);
     window = CreateWindow("D3D3_ViewportClearTest_wc", "D3D3_ViewportClearTest",
@@ -2176,7 +2176,7 @@ static void p8_primary_test()
         goto out;
     }
 
-    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpfnWndProc = DefWindowProc;
     wc.lpszClassName = "p8_primary_test_wc";
     RegisterClass(&wc);
     window = CreateWindow("p8_primary_test_wc", "p8_primary_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
