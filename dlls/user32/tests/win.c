@@ -59,6 +59,16 @@ static DWORD our_pid;
 
 #define COUNTOF(arr) (sizeof(arr)/sizeof(arr[0]))
 
+static void dump_minmax_info( const MINMAXINFO *minmax )
+{
+    trace("Reserved=%d,%d MaxSize=%d,%d MaxPos=%d,%d MinTrack=%d,%d MaxTrack=%d,%d\n",
+          minmax->ptReserved.x, minmax->ptReserved.y,
+          minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+          minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+          minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+          minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+}
+
 /* try to make sure pending X events have been processed before continuing */
 static void flush_events( BOOL remove_messages )
 {
@@ -552,13 +562,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
 
 	    trace("hwnd %p, WM_GETMINMAXINFO, %08lx, %08lx\n", hwnd, wparam, lparam);
-            trace("ptReserved (%d,%d), ptMaxSize (%d,%d), ptMaxPosition (%d,%d)\n"
-                  "	  ptMinTrackSize (%d,%d), ptMaxTrackSize (%d,%d)\n",
-		  minmax->ptReserved.x, minmax->ptReserved.y,
-		  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
-		  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
-		  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
-		  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+            dump_minmax_info( minmax );
 	    SetWindowLongPtrA(hwnd, GWLP_USERDATA, 0x20031021);
 	    break;
 	}
@@ -652,13 +656,7 @@ static LRESULT WINAPI tool_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
 
 	    trace("hwnd %p, WM_GETMINMAXINFO, %08lx, %08lx\n", hwnd, wparam, lparam);
-            trace("ptReserved (%d,%d), ptMaxSize (%d,%d), ptMaxPosition (%d,%d)\n"
-                  "	  ptMinTrackSize (%d,%d), ptMaxTrackSize (%d,%d)\n",
-		  minmax->ptReserved.x, minmax->ptReserved.y,
-		  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
-		  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
-		  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
-		  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+            dump_minmax_info( minmax );
 	    SetWindowLongPtrA(hwnd, GWLP_USERDATA, 0x20031021);
 	    break;
 	}
@@ -740,9 +738,6 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info)
     status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
     ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x\n",
        info->dwWindowStatus, status);
-
-    trace("rcWindow: %d,%d - %d,%d\n", rcWindow.left, rcWindow.top, rcWindow.right, rcWindow.bottom);
-    trace("rcClient: %d,%d - %d,%d\n", rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
 
     /* win2k and XP return broken border info in GetWindowInfo most of
      * the time, so there is no point in testing it.
@@ -1422,17 +1417,7 @@ static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, L
                 style &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
             AdjustWindowRectEx(&rc, style, 0, exstyle);
             trace("MDI child: calculated max window size = (%d x %d)\n", rc.right-rc.left, rc.bottom-rc.top);
-
-            trace("ptReserved = (%d,%d)\n"
-                  "ptMaxSize = (%d,%d)\n"
-                  "ptMaxPosition = (%d,%d)\n"
-                  "ptMinTrackSize = (%d,%d)\n"
-                  "ptMaxTrackSize = (%d,%d)\n",
-                  minmax->ptReserved.x, minmax->ptReserved.y,
-                  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
-                  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
-                  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
-                  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+            dump_minmax_info( minmax );
 
             ok(minmax->ptMaxSize.x == rc.right - rc.left, "default width of maximized child %d != %d\n",
                minmax->ptMaxSize.x, rc.right - rc.left);
@@ -1441,17 +1426,8 @@ static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, L
 
             DefMDIChildProcA(hwnd, msg, wparam, lparam);
 
-            trace("DefMDIChildProc returned:\n"
-                  "ptReserved = (%d,%d)\n"
-                  "ptMaxSize = (%d,%d)\n"
-                  "ptMaxPosition = (%d,%d)\n"
-                  "ptMinTrackSize = (%d,%d)\n"
-                  "ptMaxTrackSize = (%d,%d)\n",
-                  minmax->ptReserved.x, minmax->ptReserved.y,
-                  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
-                  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
-                  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
-                  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+            trace("DefMDIChildProc returned:\n");
+            dump_minmax_info( minmax );
 
             MDI_ChildGetMinMaxInfo(client, hwnd, &my_minmax);
             ok(minmax->ptMaxSize.x == my_minmax.ptMaxSize.x, "default width of maximized child %d != %d\n",
@@ -1529,17 +1505,7 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
                 style &= ~WS_BORDER; /* WS_CAPTION = WS_DLGFRAME | WS_BORDER */
             AdjustWindowRectEx(&rc, style, 0, exstyle);
             trace("calculated max child window size = (%d x %d)\n", rc.right-rc.left, rc.bottom-rc.top);
-
-            trace("ptReserved = (%d,%d)\n"
-                  "ptMaxSize = (%d,%d)\n"
-                  "ptMaxPosition = (%d,%d)\n"
-                  "ptMinTrackSize = (%d,%d)\n"
-                  "ptMaxTrackSize = (%d,%d)\n",
-                  minmax->ptReserved.x, minmax->ptReserved.y,
-                  minmax->ptMaxSize.x, minmax->ptMaxSize.y,
-                  minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
-                  minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
-                  minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+            dump_minmax_info( minmax );
 
             ok(minmax->ptMaxSize.x == rc.right - rc.left, "default width of maximized child %d != %d\n",
                minmax->ptMaxSize.x, rc.right - rc.left);
