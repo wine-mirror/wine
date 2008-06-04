@@ -1633,8 +1633,6 @@ static void test_text_metrics(const LOGFONTA *lf)
     LONG size, ret;
     const char *font_name = lf->lfFaceName;
 
-    trace("Testing font metrics for %s, charset %d\n", font_name, lf->lfCharSet);
-
     hdc = GetDC(0);
 
     SetLastError(0xdeadbeef);
@@ -1660,21 +1658,19 @@ static void test_text_metrics(const LOGFONTA *lf)
     ok(ret == size, "GetFontData should return %u not %u\n", size, ret);
 
     version = GET_BE_WORD(tt_os2.version);
-    trace("OS/2 chunk version %u, vendor %4.4s\n", version, (LPCSTR)&tt_os2.achVendID);
 
     first_unicode_char = GET_BE_WORD(tt_os2.usFirstCharIndex);
     last_unicode_char = GET_BE_WORD(tt_os2.usLastCharIndex);
     default_char = GET_BE_WORD(tt_os2.usDefaultChar);
     break_char = GET_BE_WORD(tt_os2.usBreakChar);
 
-    trace("for %s first %x, last %x, default %x, break %x\n", font_name,
-           first_unicode_char, last_unicode_char, default_char, break_char);
+    trace("font %s charset %u: %x-%x default %x break %x OS/2 version %u vendor %4.4s\n",
+          font_name, lf->lfCharSet, first_unicode_char, last_unicode_char, default_char, break_char,
+          version, (LPCSTR)&tt_os2.achVendID);
 
     SetLastError(0xdeadbeef);
     ret = GetTextMetricsA(hdc, &tmA);
     ok(ret, "GetTextMetricsA error %u\n", GetLastError());
-    trace("A: first %x, last %x, default %x, break %x\n",
-          tmA.tmFirstChar, tmA.tmLastChar, tmA.tmDefaultChar, tmA.tmBreakChar);
 
 #if 0 /* FIXME: This doesn't appear to be what Windows does */
     test_char = min(first_unicode_char - 1, 255);
@@ -1700,9 +1696,9 @@ static void test_text_metrics(const LOGFONTA *lf)
        "GetTextMetricsW error %u\n", GetLastError());
     if (ret)
     {
-        trace("W: first %x, last %x, default %x, break %x\n",
-              tmW.tmFirstChar, tmW.tmLastChar, tmW.tmDefaultChar,
-              tmW.tmBreakChar);
+        trace("%04x-%04x (%02x-%02x) default %x (%x) break %x (%x)\n",
+              tmW.tmFirstChar, tmW.tmLastChar, tmA.tmFirstChar, tmA.tmLastChar,
+              tmW.tmDefaultChar, tmA.tmDefaultChar, tmW.tmBreakChar, tmA.tmBreakChar);
 
         if (lf->lfCharSet == SYMBOL_CHARSET)
         {
