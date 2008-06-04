@@ -122,7 +122,7 @@ static void test_cryptunprotectdata(void)
     /* fails in win2k */
     if (!protected)
     {
-        skip("CryptProtectData failed to run\\n");
+        skip("CryptProtectData failed to run\n");
         return;
     }
 
