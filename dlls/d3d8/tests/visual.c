@@ -30,7 +30,7 @@ static HWND create_window(void)
 {
     WNDCLASS wc = {0};
     HWND ret;
-    wc.lpfnWndProc = &DefWindowProc;
+    wc.lpfnWndProc = DefWindowProc;
     wc.lpszClassName = "d3d8_test_wc";
     RegisterClass(&wc);
 
