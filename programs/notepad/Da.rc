@@ -29,6 +29,7 @@ MAIN_MENU MENU
   MENUITEM "Å&bn...\tCtrl+O",       CMD_OPEN
   MENUITEM "&Gem\tCtrl+S",              CMD_SAVE
   MENUITEM "Gem so&m...",       CMD_SAVE_AS
+  MENUITEM SEPARATOR
   MENUITEM "&Udskriv...\tCtrl+P",          CMD_PRINT
   MENUITEM "Side&opsætning...", CMD_PAGE_SETUP
   MENUITEM "&Indstil printer...",       CMD_PRINTER_SETUP
@@ -47,6 +48,7 @@ POPUP "&Rediger" {
   MENUITEM "&Dato/tid\tF5",     CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "Automatisk &linjeskift",    CMD_WRAP
+  MENUITEM "&Font...",          CMD_FONT
  }
 POPUP "&Søg" {
   MENUITEM "&Søg...",           CMD_SEARCH
