@@ -27,6 +27,7 @@
 #include <softpub.h>
 #include <mssip.h>
 #include <winuser.h>
+#include "winnls.h"
 
 #include "wine/test.h"
 
@@ -250,9 +251,9 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
      funcs->pfnAlloc(TRUSTERROR_MAX_STEPS * sizeof(DWORD));
     if (data.padwTrustStepErrors)
     {
-        static const WCHAR notepad[] = { '\\','n','o','t','e','p','a','d','.',
-         'e','x','e',0 };
-        WCHAR notepadPath[MAX_PATH];
+        static const CHAR notepad[] = "\\notepad.exe";
+        CHAR notepadPath[MAX_PATH];
+        WCHAR notepadPathW[MAX_PATH];
         PROVDATA_SIP provDataSIP = { 0 };
         static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
          0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
@@ -285,9 +286,11 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         /* Crashes
         ret = funcs->pfnObjectTrust(&data);
          */
-        GetWindowsDirectoryW(notepadPath, MAX_PATH);
-        lstrcatW(notepadPath, notepad);
-        fileInfo.pcwszFilePath = notepadPath;
+        /* Workaround missing W-functions for win9x */
+        GetWindowsDirectoryA(notepadPath, MAX_PATH);
+        lstrcatA(notepadPath, notepad);
+        MultiByteToWideChar(0, 0, notepadPath, -1, notepadPathW, MAX_PATH);
+        fileInfo.pcwszFilePath = notepadPathW;
         /* pfnObjectTrust now crashes unless both pPDSip and psPfns are set */
         U(data).pPDSip = &provDataSIP;
         data.psPfns = (CRYPT_PROVIDER_FUNCTIONS *)funcs;
