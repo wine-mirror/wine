@@ -23,7 +23,7 @@ LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-    STRING_USAGE, "Gebruik van dit commando is:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_USAGE, "Gebruik van dit commando is:\n\nNET [ HELP | START | STOP | USE ]\n"
     STRING_START_USAGE, "Specificeer de te starten service naam.\n"
     STRING_STOP_USAGE, "Specificeer de te stoppen service naam.\n"
     STRING_STOP_DEP, "Stoppen van afhankelijke service: %s\n"
@@ -36,7 +36,7 @@ STRINGTABLE
     STRING_STOP_SVC, "De %s service is aan het stoppen.\n"
     STRING_STOP_SVC_SUCCESS, "De %s service was succesvol gestopt.\n"
     STRING_STOP_SVC_FAIL, "De %s service wilde niet stoppen.\n"
-    STRING_HELP_USAGE, "Gebruik van dit commando is:\n\nNET HELP commando\n    -of-\nNET commando /HELP\n\n   Beschikbare commando's zijn:\n   NET HELP    NET START     NET STOP\n"
+    STRING_HELP_USAGE, "Gebruik van dit commando is:\n\nNET HELP commando\n    -of-\nNET commando /HELP\n\n   Beschikbare commando's zijn:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "De opgegeven lijst is leeg.\n"
     STRING_USE_HEADER, "\nStatus    Lokaal  Op afstand\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY, "%s      %S      %S      Open resources: %lu\n"

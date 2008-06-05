@@ -23,7 +23,7 @@ LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 STRINGTABLE
 {
-    STRING_USAGE, "Programmet brukes som følger:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_USAGE, "Programmet brukes som følger:\n\nNET [ HELP | START | STOP  USE ]\n"
     STRING_START_USAGE, "Oppgi navnet på tjeneren soms skal startes.\n"
     STRING_STOP_USAGE, "Oppgi navnet på tjeneren som skal stoppes.\n"
     STRING_STOP_DEP, "Stopper avhengig tjeneste: %s\n"
@@ -36,7 +36,7 @@ STRINGTABLE
     STRING_STOP_SVC, "Tjenesten «%s» stopper.\n"
     STRING_STOP_SVC_SUCCESS, "Tjenesten «%s» ble stoppet vellykket.\n"
     STRING_STOP_SVC_FAIL, "Klarte ikke stoppe tjenesten «%s».\n"
-    STRING_HELP_USAGE, "Hjelp brukes som følgende:\n\nNET HELP kommando\n    -eller-\nNET kommando /HELP\n\n   Tilgjengelige kommandoer:\n   NET HELP    NET START     NET STOP\n"
+    STRING_HELP_USAGE, "Hjelp brukes som følgende:\n\nNET HELP kommando\n    -eller-\nNET kommando /HELP\n\n   Tilgjengelige kommandoer:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "Det er ingen oppføringer på listen.\n"
     STRING_USE_HEADER, "\nStatus    Lokal   Remote\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY, "%s      %S      %S      Åpne ressurser: %lu\n"

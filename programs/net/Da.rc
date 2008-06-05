@@ -23,7 +23,7 @@ LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "Sådan bruges programmet:\n\nNET [ HELP | START | STOP ]\n"
+    STRING_USAGE, "Sådan bruges programmet:\n\nNET [ HELP | START | STOP | USE ]\n"
     STRING_START_USAGE, "Angiv navnet på servicen som skal startes.\n"
     STRING_STOP_USAGE, "Angiv navnet på servicen som skal stoppes.\n"
     STRING_STOP_DEP, "Stopper afhængig tjeneste: %s\n"
@@ -36,7 +36,7 @@ STRINGTABLE
     STRING_STOP_SVC, "Tjenesten «%s» stopper.\n"
     STRING_STOP_SVC_SUCCESS, "Tjenesten «%s» stoppede vellykket.\n"
     STRING_STOP_SVC_FAIL, "Kunne ikke stoppe tjenesten «%s».\n"
-    STRING_HELP_USAGE, "Sådan for du hjælp:\n\nNET HELP kommando\n    -eller-\nNET kommando /HELP\n\n   Tilgængelige kommandoer:\n   NET HELP    NET START     NET STOP\n"
+    STRING_HELP_USAGE, "Sådan for du hjælp:\n\nNET HELP kommando\n    -eller-\nNET kommando /HELP\n\n   Tilgængelige kommandoer:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "Det er ingen indskrivning i listen.\n"
     STRING_USE_HEADER, "\nStatus    Lokal   Remote\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY, "%s      %S      %S      Åbne resourser: %lu\n"
