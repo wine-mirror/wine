@@ -68,8 +68,8 @@ BEGIN
     END
     POPUP "Ked&vencek"
     BEGIN
-        MENUITEM "Hozzá&adás a kedvencekhez",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "Tö&rlés a kedvencekbõl",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "Hozzá&adás a kedvencekhez...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Tö&rlés a kedvencekbõl...",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Súgó"
     BEGIN

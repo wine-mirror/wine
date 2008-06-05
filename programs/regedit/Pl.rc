@@ -70,8 +70,8 @@ BEGIN
     END
     POPUP "&Ulubione"
     BEGIN
-        MENUITEM "&Dodaj do ulubionych",        ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Usuñ ulubiony",              ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Dodaj do ulubionych...",        ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Usuñ ulubiony...",              ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "Pomo&c"
     BEGIN

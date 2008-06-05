@@ -70,8 +70,8 @@ BEGIN
     END
     POPUP "お気に入り(&F)"
     BEGIN
-        MENUITEM "お気に入りに追加(&A)",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "お気に入りから削除(&R)",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "お気に入りに追加(&A)...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "お気に入りから削除(&R)...",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "ヘルプ(&H)"
     BEGIN

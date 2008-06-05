@@ -71,8 +71,8 @@ BEGIN
     END
     POPUP "&Favoritos"
     BEGIN
-        MENUITEM "&Adicionar aos Favoritos",     ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Remover Favorito",            ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Adicionar aos Favoritos...",     ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Remover Favorito...",            ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "Aj&uda"
     BEGIN

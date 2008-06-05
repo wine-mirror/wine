@@ -69,8 +69,8 @@ BEGIN
     END
     POPUP "&Sýk Kullanýlanlar"
     BEGIN
-        MENUITEM "Sýk Kullanýlanlara Ekle",     ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "Sýk Kullanýlanlardan Sil",    ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "Sýk Kullanýlanlara Ekle...",     ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Sýk Kullanýlanlardan Sil...",    ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Yardým"
     BEGIN

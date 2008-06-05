@@ -72,8 +72,8 @@ BEGIN
     END
     POPUP "Pri&ljubljene"
     BEGIN
-        MENUITEM "&Dodaj med Priljubljene",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Odstrani iz Priljubljenih",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Dodaj med Priljubljene...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Odstrani iz Priljubljenih...",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Pomoč"
     BEGIN

@@ -249,8 +249,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Излиза от редактора на системния регистър"
-    ID_FAVORITES_ADDTOFAVORITES "Добавя ключове към списъка с отметките"
-    ID_FAVORITES_REMOVEFAVORITE "Премахва ключове от списъка с отметките"
+    ID_FAVORITES_ADDTOFAVORITES "Добавя ключове към списъка с отметките..."
+    ID_FAVORITES_REMOVEFAVORITE "Премахва ключове от списъка с отметките..."
     ID_VIEW_STATUSBAR       "Показва или скрива лентата на състоянието"
     ID_VIEW_SPLIT           "Променя местоположението на разделителя между двете половини на редактора"
     ID_VIEW_REFRESH         "Обновява съдържанието на прозореца"

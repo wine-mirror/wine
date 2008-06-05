@@ -84,8 +84,8 @@ BEGIN
     END
     POPUP "&Favourites"
     BEGIN
-        MENUITEM "&Add to Favourites",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Remove Favourite",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Add to Favourites...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Remove Favourite...",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Help"
     BEGIN
@@ -149,8 +149,8 @@ BEGIN
     END
     POPUP "&Favorites"
     BEGIN
-        MENUITEM "&Add to Favorites",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Remove Favorite",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Add to Favorites...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Remove Favorite...",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Help"
     BEGIN

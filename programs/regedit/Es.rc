@@ -273,8 +273,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Sale del editor de registro"
-    ID_FAVORITES_ADDTOFAVORITES "Añade claves a la lista de favoritos"
-    ID_FAVORITES_REMOVEFAVORITE "Elimina claves de la lista de favoritos"
+    ID_FAVORITES_ADDTOFAVORITES "Añade claves a la lista de favoritos..."
+    ID_FAVORITES_REMOVEFAVORITE "Elimina claves de la lista de favoritos..."
     ID_VIEW_STATUSBAR       "Muestra u oculta la barra de estado"
     ID_VIEW_SPLIT           "Cambia la posición del separador entre dos paneles"
     ID_VIEW_REFRESH         "Actualiza la ventana"

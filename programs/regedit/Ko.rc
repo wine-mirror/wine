@@ -74,8 +74,8 @@ BEGIN
     END
     POPUP "즐겨 찾기(&F)"
     BEGIN
-        MENUITEM "즐겨 찾기 추가(&A)",           ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "즐겨 찾기 제거(&R)",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "즐겨 찾기 추가(&A)...",           ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "즐겨 찾기 제거(&R)...",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "도움말(&H)"
     BEGIN

@@ -70,8 +70,8 @@ BEGIN
     END
     POPUP "&Избранное"
     BEGIN
-        MENUITEM "&Добавить в избранное",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Удалить из избранного",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Добавить в избранное...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Удалить из избранного...",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Справка"
     BEGIN

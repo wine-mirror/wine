@@ -70,8 +70,8 @@ BEGIN
     END
     POPUP "&Favoritter"
     BEGIN
-        MENUITEM "Tilføj til f&avoritter",              ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "Fje&rn favorit",                      ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "Tilføj til f&avoritter...",              ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Fje&rn favorit...",                      ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Hjælp"
     BEGIN

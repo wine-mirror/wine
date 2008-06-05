@@ -72,8 +72,8 @@ BEGIN
     END
     POPUP "&Signets"
     BEGIN
-        MENUITEM "&Ajouter aux signets",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "&Supprimer des signets",        ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "&Ajouter aux signets...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Supprimer des signets...",        ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "Aid&e"
     BEGIN

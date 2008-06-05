@@ -75,8 +75,8 @@ BEGIN
     END
     POPUP "&Oblíbené"
     BEGIN
-        MENUITEM "Pøid&at k oblíbeným",          ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "Odeb&rat oblíbené",           ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "Pøid&at k oblíbeným...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Odeb&rat oblíbené...",           ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Nápovìda"
     BEGIN
