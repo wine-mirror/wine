@@ -169,7 +169,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "По&кажи изображението",            IDM_SHOWPICTURE
         MENUITEM "&Съхрани изображението като...",      IDM_SAVEPICTURE
         MENUITEM "Постави като &фон",       IDM_SETWALLPAPER
-        MENUITEM "Постави като елемент на &работния плот......",  IDM_SETDESKTOPITEM
+        MENUITEM "Постави като елемент на &работния плот...",  IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "&Изрежи",                     IDM_CUT
         MENUITEM "&Копирай",                    IDM_COPY
