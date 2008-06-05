@@ -3487,6 +3487,7 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNPROGRAMSTRINGARBPROC,                          glProgramStringARB,                         ARB_VERTEX_PROGRAM,     NULL );\
     USE_GL_FUNC(PGLFNDELETEPROGRAMSARBPROC,                         glDeleteProgramsARB,                        ARB_VERTEX_PROGRAM,     NULL );\
     USE_GL_FUNC(PGLFNPROGRAMENVPARAMETER4FVARBPROC,                 glProgramEnvParameter4fvARB,                ARB_VERTEX_PROGRAM,     NULL );\
+    USE_GL_FUNC(PGLFNPROGRAMLOCALPARAMETER4FVARBPROC,               glProgramLocalParameter4fvARB,                ARB_VERTEX_PROGRAM,     NULL );\
     USE_GL_FUNC(PGLFNVERTEXATTRIBPOINTERARBPROC,                    glVertexAttribPointerARB,                   ARB_VERTEX_PROGRAM,     NULL );\
     USE_GL_FUNC(PGLFNENABLEVERTEXATTRIBARRAYARBPROC,                glEnableVertexAttribArrayARB,               ARB_VERTEX_PROGRAM,     NULL );\
     USE_GL_FUNC(PGLFNDISABLEVERTEXATTRIBARRAYARBPROC,               glDisableVertexAttribArrayARB,              ARB_VERTEX_PROGRAM,     NULL );\

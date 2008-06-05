@@ -354,12 +354,13 @@ void shader_generate_arb_declarations(
         ps_impl->srgb_mode_hardcoded = 1;
     }
 
-    /* Hardcodable local constants */
+    /* Load local constants using the program-local space,
+     * this avoids reloading them each time the shader is used
+     */
     if(!This->baseShader.load_local_constsF) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
-            float *value = (float *) lconst->value;
-            shader_addline(buffer, "PARAM C%u = {%f, %f, %f, %f};\n", lconst->idx,
-                           value[0], value[1], value[2], value[3]);
+            shader_addline(buffer, "PARAM C%u = program.local[%u];\n", lconst->idx,
+                           lconst->idx);
         }
     }
 
@@ -1873,6 +1874,7 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
     CONST DWORD *function = This->baseShader.function;
     const char *fragcolor;
     WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+    local_constant* lconst;
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBfp1.0\n");
@@ -1954,6 +1956,15 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         This->baseShader.prgId = -1;
     }
+
+    /* Load immediate constants */
+    if(!This->baseShader.load_local_constsF) {
+        LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+            float *value = (float *) lconst->value;
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, lconst->idx, value));
+            checkGLcall("glProgramLocalParameter4fvARB");
+        }
+    }
 }
 
 static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
@@ -1961,6 +1972,7 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
     shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+    local_constant* lconst;
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
@@ -2048,6 +2060,14 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
         FIXME("HW VertexShader Error at position %d: %s\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         This->baseShader.prgId = -1;
+    }
+
+    /* Load immediate constants */
+    if(!This->baseShader.load_local_constsF) {
+        LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+            float *value = (float *) lconst->value;
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, lconst->idx, value));
+        }
     }
 }
 
