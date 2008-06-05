@@ -70,13 +70,15 @@ static INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
 static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHEADER *bmih)
 {
     BITMAP bm;
+    BITMAP bma[2];
     INT ret, width_bytes;
     char buf[512], buf_cmp[512];
+    DWORD gle;
 
     ret = GetObject(hbm, sizeof(bm), &bm);
     ok(ret == sizeof(bm), "GetObject returned %d\n", ret);
 
-    ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
+    ok(bm.bmType == 0 || broken(bm.bmType == 21072 /* Win9x */), "wrong bm.bmType %d\n", bm.bmType);
     ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
     ok(bm.bmHeight == bmih->biHeight, "wrong bm.bmHeight %d\n", bm.bmHeight);
     width_bytes = BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel);
@@ -88,8 +90,10 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     assert(sizeof(buf) >= bm.bmWidthBytes * bm.bmHeight);
     assert(sizeof(buf) == sizeof(buf_cmp));
 
+    SetLastError(0xdeadbeef);
     ret = GetBitmapBits(hbm, 0, NULL);
-    ok(ret == bm.bmWidthBytes * bm.bmHeight, "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
+    gle=GetLastError();
+    ok(ret == bm.bmWidthBytes * bm.bmHeight || (ret == 0 && gle == ERROR_INVALID_PARAMETER /* Win9x */), "%d != %d\n", ret, bm.bmWidthBytes * bm.bmHeight);
 
     memset(buf_cmp, 0xAA, sizeof(buf_cmp));
     memset(buf_cmp, 0, bm.bmWidthBytes * bm.bmHeight);
@@ -100,20 +104,24 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     ok(!memcmp(buf, buf_cmp, sizeof(buf)), "buffers do not match\n");
 
     /* test various buffer sizes for GetObject */
-    ret = GetObject(hbm, 0, NULL);
-    ok(ret == sizeof(bm), "wrong size %d\n", ret);
-
-    ret = GetObject(hbm, sizeof(bm) * 2, &bm);
-    ok(ret == sizeof(bm), "wrong size %d\n", ret);
+    ret = GetObject(hbm, sizeof(*bma) * 2, bma);
+    ok(ret == sizeof(*bma) || broken(ret == sizeof(*bma) * 2 /* Win9x */), "wrong size %d\n", ret);
 
     ret = GetObject(hbm, sizeof(bm) / 2, &bm);
-    ok(ret == 0, "%d != 0\n", ret);
+    ok(ret == 0 || broken(ret == sizeof(bm) / 2 /* Win9x */), "%d != 0\n", ret);
 
     ret = GetObject(hbm, 0, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
     ret = GetObject(hbm, 1, &bm);
-    ok(ret == 0, "%d != 0\n", ret);
+    ok(ret == 0 || broken(ret == 1 /* Win9x */), "%d != 0\n", ret);
+
+    /* Don't trust Win9x not to try to write to NULL */
+    if (ret == 0)
+    {
+        ret = GetObject(hbm, 0, NULL);
+        ok(ret == sizeof(bm), "wrong size %d\n", ret);
+    }
 }
 
 static void test_createdibitmap(void)
@@ -275,7 +283,9 @@ static INT DIB_GetWidthBytes( int width, int bpp )
 static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER *bmih)
 {
     BITMAP bm;
+    BITMAP bma[2];
     DIBSECTION ds;
+    DIBSECTION dsa[2];
     INT ret, bm_width_bytes, dib_width_bytes;
     BYTE *buf;
 
@@ -309,27 +319,30 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
 
     /* test various buffer sizes for GetObject */
     memset(&ds, 0xAA, sizeof(ds));
-    ret = GetObject(hbm, sizeof(bm) * 2, &bm);
-    ok(ret == sizeof(bm), "wrong size %d\n", ret);
+    ret = GetObject(hbm, sizeof(*bma) * 2, bma);
+    ok(ret == sizeof(*bma) || broken(ret == sizeof(*bma) * 2 /* Win9x */), "wrong size %d\n", ret);
     ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
     ok(bm.bmHeight == bmih->biHeight, "wrong bm.bmHeight %d\n", bm.bmHeight);
     ok(bm.bmBits == bits, "wrong bm.bmBits %p != %p\n", bm.bmBits, bits);
 
     ret = GetObject(hbm, sizeof(bm) / 2, &bm);
-    ok(ret == 0, "%d != 0\n", ret);
+    ok(ret == 0 || broken(ret == sizeof(bm) / 2 /* Win9x */), "%d != 0\n", ret);
 
     ret = GetObject(hbm, 0, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
     ret = GetObject(hbm, 1, &bm);
-    ok(ret == 0, "%d != 0\n", ret);
+    ok(ret == 0 || broken(ret ==  1 /* Win9x */), "%d != 0\n", ret);
 
     /* test various buffer sizes for GetObject */
     ret = GetObject(hbm, 0, NULL);
     ok(ret == sizeof(bm), "wrong size %d\n", ret);
 
+    ret = GetObject(hbm, sizeof(*dsa) * 2, dsa);
+    ok(ret == sizeof(*dsa) || broken(ret == sizeof(*dsa) * 2 /* Win9x */), "wrong size %d\n", ret);
+
     memset(&ds, 0xAA, sizeof(ds));
-    ret = GetObject(hbm, sizeof(ds) * 2, &ds);
+    ret = GetObject(hbm, sizeof(ds), &ds);
     ok(ret == sizeof(ds), "wrong size %d\n", ret);
 
     ok(ds.dsBm.bmBits == bits, "wrong bm.bmBits %p != %p\n", ds.dsBm.bmBits, bits);
@@ -972,6 +985,7 @@ static void test_bitmap(void)
     HBITMAP hbmp, hbmp_old;
     HDC hdc;
     BITMAP bm;
+    BITMAP bma[2];
     INT ret;
 
     hdc = CreateCompatibleDC(0);
@@ -1055,17 +1069,17 @@ static void test_bitmap(void)
     ok(hbmp_old == hbmp, "wrong old bitmap %p\n", hbmp_old);
 
     /* test various buffer sizes for GetObject */
-    ret = GetObject(hbmp, sizeof(bm) * 2, &bm);
-    ok(ret == sizeof(bm), "wrong size %d\n", ret);
+    ret = GetObject(hbmp, sizeof(*bma) * 2, bma);
+    ok(ret == sizeof(*bma) || broken(ret == sizeof(*bma) * 2 /* Win9x */), "wrong size %d\n", ret);
 
     ret = GetObject(hbmp, sizeof(bm) / 2, &bm);
-    ok(ret == 0, "%d != 0\n", ret);
+    ok(ret == 0 || broken(ret == sizeof(bm) / 2 /* Win9x */), "%d != 0\n", ret);
 
     ret = GetObject(hbmp, 0, &bm);
     ok(ret == 0, "%d != 0\n", ret);
 
     ret = GetObject(hbmp, 1, &bm);
-    ok(ret == 0, "%d != 0\n", ret);
+    ok(ret == 0 || broken(ret == 1 /* Win9x */), "%d != 0\n", ret);
 
     DeleteObject(hbmp);
     DeleteDC(hdc);
