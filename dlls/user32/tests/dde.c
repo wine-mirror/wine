@@ -233,8 +233,8 @@ static void test_msg_server(HANDLE hproc, HANDLE hthread)
     HWND hwnd;
     DWORD res;
 
-    ResumeThread( hthread );
     create_dde_window(&hwnd, "dde_server", dde_server_wndproc);
+    ResumeThread( hthread );
 
     while (MsgWaitForMultipleObjects( 1, &hproc, FALSE, INFINITE, QS_ALLINPUT ) != 0)
     {
