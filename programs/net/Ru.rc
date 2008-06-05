@@ -37,7 +37,7 @@ STRINGTABLE
     STRING_STOP_SVC_SUCCESS, "Служба %s успешно остановлена.\n"
     STRING_STOP_SVC_FAIL, "Ошибка при остановке службы %s.\n"
     STRING_HELP_USAGE, "Использование:\n\nNET HELP команда\n    -или-\nNET команда /HELP\n\n"\
-                       "   Доступные команды:\n   NET HELP    NET START     NET STOP     NET USE\n"
+                       "   Доступные команды:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "Список пуст.\n"
     STRING_USE_HEADER, "\nСтатус  Локальный  Удалённый\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY,  "%s      %S         %S      Открытых ресурсов: %lu\n"

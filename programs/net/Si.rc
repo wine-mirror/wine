@@ -25,7 +25,7 @@ LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "Sintaksa ukaza:\n\nNET [ HELP | START | STOP | USE]\n"
+    STRING_USAGE, "Sintaksa ukaza:\n\nNET [ HELP | START | STOP | USE ]\n"
     STRING_START_USAGE, "Navedite ime storitve, ki naj jo zaženem.\n"
     STRING_STOP_USAGE, "Navedite ime storitve, ki naj jo ustavim.\n"
     STRING_STOP_DEP, "Ustavljam odvisno storitev: %s\n"
@@ -39,7 +39,7 @@ STRINGTABLE
     STRING_STOP_SVC_SUCCESS, "Ustavljanje storitve %s je uspelo.\n"
     STRING_STOP_SVC_FAIL, "Ustavljanje storitve %s ni uspelo.\n"
     STRING_HELP_USAGE, "Sintaksa ukaza je:\n\nNET HELP ukaz\n    -ali-\nNET ukaz /HELP\n\n"\
-                       "   Razpoložljivi ukazi:\n   NET HELP    NET START     NET STOP     NET USE\n"
+                       "   Razpoložljivi ukazi:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "Na seznamu ni vnosov.\n"
     STRING_USE_HEADER, "\nStanje  Lokalno   Oddaljeno\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY,  "%s      %S      %S      Porabljena sredstva: %lu\n"
