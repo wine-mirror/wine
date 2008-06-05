@@ -24,13 +24,13 @@ MAIN_MENU MENU
 {
  POPUP "&Fil" {
   MENUITEM "&Ny\tCtrl+N",           CMD_NEW
-  MENUITEM "&Åpne . . .\tCtrl+O",     CMD_OPEN
+  MENUITEM "&Åpne...\tCtrl+O",     CMD_OPEN
   MENUITEM "&Lagre\tCtrl+S",     CMD_SAVE
-  MENUITEM "Lagr&e som . . .",       CMD_SAVE_AS
+  MENUITEM "Lagr&e som...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Skriv ut . . .\tCtrl+P",            CMD_PRINT
-  MENUITEM "Sideoppse&tt . . .",    CMD_PAGE_SETUP
-  MENUITEM "Sk&riveroppsett . . .", CMD_PRINTER_SETUP
+  MENUITEM "&Skriv ut...\tCtrl+P",            CMD_PRINT
+  MENUITEM "Sideoppse&tt...",    CMD_PAGE_SETUP
+  MENUITEM "Sk&riveroppsett...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "&Avslutt",             CMD_EXIT
  }
@@ -46,15 +46,15 @@ POPUP "R&ediger" {
   MENUITEM "&Tid/Dato\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "Tekstbrytin&g",  CMD_WRAP
-  MENUITEM "Skr&ift . . .",          CMD_FONT
+  MENUITEM "Skr&ift...",          CMD_FONT
  }
 POPUP "&Søk" {
-  MENUITEM "&Søk . . .\tCtrl+F",   CMD_SEARCH
+  MENUITEM "&Søk...\tCtrl+F",   CMD_SEARCH
   MENUITEM "&Søk etter nest&e\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "&Hjelp" {
   MENUITEM "&Innhold",         CMD_HELP_CONTENTS
-  MENUITEM "&Søk . . .",        CMD_HELP_SEARCH
+  MENUITEM "&Søk...",        CMD_HELP_SEARCH
   MENUITEM "&Hjelp om hjelp",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD

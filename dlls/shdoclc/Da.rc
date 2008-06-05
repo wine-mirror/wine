@@ -37,7 +37,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Til&bage",                  IDM_GOBACKWARD
         MENUITEM "&Frem",               IDM_GOFORWARD
         MENUITEM SEPARATOR
-        MENUITEM "Gem baggrund &som . . .", IDM_SAVEBACKGROUND
+        MENUITEM "Gem baggrund &som...",   IDM_SAVEBACKGROUND
         MENUITEM "Brug som bag&grund",     IDM_SETWALLPAPER
         MENUITEM "&Kopier baggrund",       IDM_COPYBACKGROUND
         MENUITEM "Brug som skrivebor&dsobjekt",   IDM_SETDESKTOPITEM

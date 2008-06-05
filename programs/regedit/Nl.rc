@@ -107,7 +107,7 @@ BEGIN
         MENUITEM "&Verwijderen\tDel",          ID_EDIT_DELETE
         MENUITEM "&Naam wijzigen\tF2",         ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Exporteren . . .",          ID_EDIT_EXPORT
+        MENUITEM "&Exporteren...",             ID_EDIT_EXPORT
         MENUITEM "&Sleutelnaam kopiëren",      ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Zoeken\tCtrl+F",            ID_EDIT_FIND, GRAYED

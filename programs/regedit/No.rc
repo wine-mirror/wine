@@ -28,11 +28,11 @@ IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Register"
     BEGIN
-        MENUITEM "&Importer registerfil . . .",    ID_REGISTRY_IMPORTREGISTRYFILE
-        MENUITEM "&Eksporter registerfil . . .",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM "&Importer registerfil...",    ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&Eksporter registerfil...",    ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
-        MENUITEM "Koble &til nettverksregister . . .", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
-        MENUITEM "Koble &fra nettverksregister . . .", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "Koble &til nettverksregister...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "Koble &fra nettverksregister...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Skriv ut\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
@@ -106,7 +106,7 @@ BEGIN
         MENUITEM "&Slett\tDel",                ID_EDIT_DELETE
         MENUITEM "&Gi nytt navn\tF2",                 ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Eksporter . . .",                ID_EDIT_EXPORT
+        MENUITEM "&Eksporter...",                ID_EDIT_EXPORT
         MENUITEM "&Kopier nøkkelnavn",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Finn\tCtrl+F",               ID_EDIT_FIND, GRAYED

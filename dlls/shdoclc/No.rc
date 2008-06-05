@@ -37,7 +37,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Til&bake",                  IDM_GOBACKWARD
         MENUITEM "&Fram",               IDM_GOFORWARD
         MENUITEM SEPARATOR
-        MENUITEM "Lagre bakgrunn &som . . .", IDM_SAVEBACKGROUND
+        MENUITEM "Lagre bakgrunn &som...", IDM_SAVEBACKGROUND
         MENUITEM "Bruk som bak&grunn",     IDM_SETWALLPAPER
         MENUITEM "&Kopier bakgrunn",       IDM_COPYBACKGROUND
         MENUITEM "Bruk som skrivebor&dsobjekt",   IDM_SETDESKTOPITEM
@@ -62,23 +62,23 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "Åpne k&obling",               IDM_FOLLOWLINKC
         MENUITEM "Åpne kobling i &nytt vindu", IDM_FOLLOWLINKN
-        MENUITEM "L&agre mål som . . .",       IDM_SAVETARGET
+        MENUITEM "L&agre mål som...",          IDM_SAVETARGET
         MENUITEM "Skriv &ut mål",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "&Vis bilde",            IDM_SHOWPICTURE
-        MENUITEM "Lagre bilde &som . . .",      IDM_SAVEPICTURE
-        MENUITEM "Send bilde via &e-post . . .",       IDM_MP_EMAILPICTURE
-        MENUITEM "Skr&iv ut bilde . . .",        IDM_MP_PRINTPICTURE
+        MENUITEM "Lagre bilde &som...",        IDM_SAVEPICTURE
+        MENUITEM "Send bilde via &e-post...",  IDM_MP_EMAILPICTURE
+        MENUITEM "Skr&iv ut bilde...",        IDM_MP_PRINTPICTURE
         MENUITEM "&Gå til mine bilder",       IDM_MP_MYPICS
         MENUITEM "Bruk som bak&grunn",       IDM_SETWALLPAPER
-        MENUITEM "Bruk som skrivebor&dsobjekt . . .",  IDM_SETDESKTOPITEM
+        MENUITEM "Bruk som skrivebor&dsobjekt...", IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "Klipp u&t",                     IDM_CUT
         MENUITEM "&Kopier",                    IDM_COPY
         MENUITEM "Kopier snar&veiCopy Shor&tcut",           IDM_COPYSHORTCUT
         MENUITEM "&Lim inn",                   IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "Legg til i &favoritter . . .",     IDM_ADDFAVORITES
+        MENUITEM "Legg til i &favoritter...",  IDM_ADDFAVORITES
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Egenskape&r",              IDM_PROPERTIES
@@ -126,7 +126,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "&Åpne",                IDM_FOLLOWLINKC
         MENUITEM "Åpne i &nytt vindu",  IDM_FOLLOWLINKN
-        MENUITEM "L&agre mål som . . .",   IDM_SAVETARGET
+        MENUITEM "L&agre mål som...",   IDM_SAVETARGET
         MENUITEM "&Skriv ut mål",        IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "Klipp ut",                  IDM_CUT
@@ -134,7 +134,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Kopier snarve&i",       IDM_COPYSHORTCUT
         MENUITEM "&Lim inn",               IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "Legg til i &favoritter . . .", IDM_ADDFAVORITES
+        MENUITEM "Legg til i &favoritter...", IDM_ADDFAVORITES
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Egenskape&r",          IDM_PROPERTIES
@@ -149,20 +149,20 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "Åpne k&obling",               IDM_FOLLOWLINKC
         MENUITEM "Åpne kobling i &nytt vindu", IDM_FOLLOWLINKN
-        MENUITEM "L&agre mål som . . .",       IDM_SAVETARGET
+        MENUITEM "L&agre mål som...",       IDM_SAVETARGET
         MENUITEM "Skriv &ut mål",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "&Vis bilde",            IDM_SHOWPICTURE
-        MENUITEM "Lagre video &som . . .",        IDM_SAVEPICTURE
+        MENUITEM "Lagre video &som...",        IDM_SAVEPICTURE
         MENUITEM "Bruk som bakgrunn",       IDM_SETWALLPAPER
-        MENUITEM "Bruk som skrivebor&dselement . . .",  IDM_SETDESKTOPITEM
+        MENUITEM "Bruk som skrivebor&dselement...",  IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "Klipp u&t",                     IDM_CUT
         MENUITEM "&Kopier",                    IDM_COPY
         MENUITEM "Kopier snar&vei",           IDM_COPYSHORTCUT
         MENUITEM "&Lim inn",                   IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "Legg til i &favoritter . . .",     IDM_ADDFAVORITES
+        MENUITEM "Legg til i &favoritter...",     IDM_ADDFAVORITES
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Spill av",                     IDM_DYNSRCPLAY
@@ -174,20 +174,20 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "&Åpne kobling",               IDM_FOLLOWLINKC
         MENUITEM "Åpne kobling i &nytt vindu", IDM_FOLLOWLINKN
-        MENUITEM "L&agre mål som . . .",       IDM_SAVETARGET
+        MENUITEM "L&agre mål som...",       IDM_SAVETARGET
         MENUITEM "Skriv &ut mål",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "&Vis bilde",            IDM_SHOWPICTURE
-        MENUITEM "Lagre bilde &som . . .",      IDM_SAVEPICTURE
+        MENUITEM "Lagre bilde &som...",      IDM_SAVEPICTURE
         MENUITEM "Bruk som bak&grunn",       IDM_SETWALLPAPER
-        MENUITEM "Bruk som skrivebor&dobjekt . . .",  IDM_SETDESKTOPITEM
+        MENUITEM "Bruk som skrivebor&dobjekt...",  IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "Klipp u&t",                     IDM_CUT
         MENUITEM "&Kopier",                    IDM_COPY
         MENUITEM "Kopier s&narvei",           IDM_COPYSHORTCUT
         MENUITEM "&Lim inn",                   IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "Legg til i &Favoritter . . .",     IDM_ADDFAVORITES
+        MENUITEM "Legg til i &Favoritter...",     IDM_ADDFAVORITES
         MENUITEM SEPARATOR
         MENUITEM "Spill av",                     IDM_IMGARTPLAY
         MENUITEM "Stopp",                     IDM_IMGARTSTOP

@@ -110,7 +110,7 @@ BEGIN
         MENUITEM "삭제(&D)\tDel",                ID_EDIT_DELETE
         MENUITEM "이름 바꾸기(&R)\tF2",          ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "내보내기(&E) . . .",           ID_EDIT_EXPORT
+        MENUITEM "내보내기(&E)...",           ID_EDIT_EXPORT
         MENUITEM "키 이름 복사(&C)",             ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "찾기(&F)\tCtrl+F",             ID_EDIT_FIND, GRAYED
