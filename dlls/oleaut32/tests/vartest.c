@@ -5318,18 +5318,27 @@ static void test_VarCat(void)
             V_VT(&left) = leftvt;
             V_VT(&right) = rightvt;
 
-            if (leftvt == VT_BSTR)
-                V_BSTR(&left) = SysAllocString(sz_empty);
-            if (rightvt == VT_BSTR)
-                V_BSTR(&right) = SysAllocString(sz_empty);
-            if (leftvt == VT_DATE)
-                V_DATE(&left) = 0.0;
-            if (rightvt == VT_DATE)
-                V_DATE(&right) = 0.0;
-            if (leftvt == VT_DECIMAL)
-                VarDecFromR8(0.0, &V_DECIMAL(&left));
-            if (rightvt == VT_DECIMAL)
-                VarDecFromR8(0.0, &V_DECIMAL(&right));
+            switch (leftvt) {
+            case VT_BSTR:
+                V_BSTR(&left) = SysAllocString(sz_empty); break;
+            case VT_DATE:
+                V_DATE(&left) = 0.0; break;
+            case VT_DECIMAL:
+                VarDecFromR8(0.0, &V_DECIMAL(&left)); break;
+            default:
+                V_I8(&left) = 0;
+            }
+
+            switch (rightvt) {
+            case VT_BSTR:
+                V_BSTR(&right) = SysAllocString(sz_empty); break;
+            case VT_DATE:
+                V_DATE(&right) = 0.0; break;
+            case VT_DECIMAL:
+                VarDecFromR8(0.0, &V_DECIMAL(&right)); break;
+            default:
+                V_I8(&right) = 0;
+            }
 
             hres = VarCat(&left, &right, &result);
 
