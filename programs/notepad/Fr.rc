@@ -59,7 +59,7 @@ POPUP "Aid&e" {
   MENUITEM "&Rechercher...",    CMD_HELP_SEARCH
   MENUITEM "&Utiliser l'aide",  CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "À &propos de Bloc-notes...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
