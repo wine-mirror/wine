@@ -447,6 +447,7 @@ static void test_pSetupGetField(void)
     LPCWSTR field;
     INFCONTEXT context;
     int i;
+    int len;
 
     hinf = test_file_contents( contents, &err );
     ok( hinf != NULL, "Expected valid INF file\n" );
@@ -465,7 +466,11 @@ static void test_pSetupGetField(void)
 
     field = pSetupGetField( &context, 3 );
     ok( field != NULL, "Failed to get field 3\n" );
-    ok( lstrlenW( field ) == 511, "Expected 511, got %d\n", lstrlenW( field ) );
+    len = lstrlenW( field );
+    ok( len == 511 /* NT4, W2K, XP and W2K3 */ ||
+        len == 4096 /* Vista */ ||
+        len == 256 /* Win9x and WinME */,
+        "Unexpected length, got %d\n", len );
 
     field = pSetupGetField( &context, 4 );
     ok( field == NULL, "Expected NULL, got %p\n", field );
