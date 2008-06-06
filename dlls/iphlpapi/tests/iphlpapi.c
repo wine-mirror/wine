@@ -190,8 +190,9 @@ static void testGetIfEntry(DWORD index)
      apiReturn);
     row.dwIndex = -1; /* hope that's always bogus! */
     apiReturn = gGetIfEntry(&row);
-    ok(apiReturn == ERROR_INVALID_DATA,
-     "GetIfEntry(bogus row) returned %d, expected ERROR_INVALID_DATA\n",
+    ok(apiReturn == ERROR_INVALID_DATA ||
+     apiReturn == ERROR_FILE_NOT_FOUND /* Vista */,
+     "GetIfEntry(bogus row) returned %d, expected ERROR_INVALID_DATA or ERROR_FILE_NOT_FOUND\n",
      apiReturn);
     row.dwIndex = index;
     apiReturn = gGetIfEntry(&row);
