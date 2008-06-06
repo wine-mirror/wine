@@ -1,4 +1,4 @@
-This is release 1.0-rc3 of Wine, a free implementation of Windows on Unix.
+This is release 1.0-rc4 of Wine, a free implementation of Windows on Unix.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
@@ -7,8 +7,8 @@ Because of lags created by using mirrors, this message may reach you
 before the release is available at the public sites. The sources will
 be available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.0-rc3.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.0-rc3.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.0-rc4.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.0-rc4.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -30,266 +30,242 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.0-rc3:
+Bugs fixed in 1.0-rc4:
 
-   2368  Wine loses its X-Window when switching to another virt. desktop in Fvwm
-   4468  advapi32: Fulltilt Poker hangs  (GetCurrentHwProfileA is a stub)
-   4652  Adobe Dreamweaver MX 2004 installs well but does not run.
-   6206  riched20:Live Person crashes
-   7214  wine_dbg_vprintf: debugstr buffer overflow (contents: 'err:msvcrt:demangle_datatype Unknown type ')
-   7318  supertux 0.3 freezes (dsound bug)
-   7904  C&C 3 setup displays empty window
-   7979  S.t.a.l.k.e.r. - some objects appear over-bright or too dark
-   8043  Dreamfall: speech gets skipped in dialogues
-   8129  Acomba: Freezes after closing an unsaved invoice
-   8408  unimplemented function ntoskrnl.exe.memset
-   9799  Textures on vehicles are too dark in GTA Vice City!
-  10025  Cyrillic glyphs are missing in built-in Tahoma Bold
-  11248  fixme:winsock:WSASocketW Unsupported socket family -1!
-  11389  ABBYY FineReader 7.0 Professional Edition crashes at start
-  11822  All applications over VNC: Applications freeze for any letters input
-  11914  DestroyContext in dlls/wined3d/device.c causes regression in Everquest2
-  11929  Audiosurf: Questviewer.exe crashes with page fault.
-  11989  Arindal.exe Text-Windows not displayed correctly
-  11991  OpenGL regression in Hitman 2 and Hitman 3
-  12192  SupCom Addon: No units visible
-  12322  Sacrifice game crashes in full screen mode
-  12455  Warcraft III 1.21b - Crashes with Fatal Error on Switch Desktop
-  12540  Favourites menu doesn't work as expected
-  13102  WinterMute Engine drawing window bug
-  13120  dzh2 crashes on startup
-  13148  Guitar Pro 5 Crashes (maybe audio problem)
-  13154  Jedi Academy: launcher freezes when button clicked
-  13277  Return to Mysterious Island crashes
-  13342  Winedbg doesn't handle longlong's well
-  13372  Adobe Acrobat Pro 8 / Acrobat Reader 8 -- install fails
-  13395  Guild wars not start
-  13403  fcc hangs , unless using native dbghelp
-  13420  Hang on first keypress
-  13475  Sytray icon totally transparent
-  13476  SQLyog community edition : Cannot connect to a remote DB through gSTM tunnel
+   2280  BACKSPACE and LEFT ARROW not responding with FirstClass v7.112
+   2891  Tooltip window steals focus and creates a "normal" window
+   4923  Race condition in keyboard code
+   6404  Tooltips shown as windows "blocking" cursor in IE
+   6674  Czech keyboard doen't work in 0.9.25
+   7092  Windows Genuine Advantage Tool times out while connecting
+   7759  Print Preview of Lotus Notes shows strange squared display
+   7995  Problem Installing Star Wars: Galactic Battlegrounds
+   8110  Pyscripter crashes on exit
+   8168  Wine does not terminate at end of Adobe Dreamweaver 8 install
+   8189  CoVUpdater.exe and CoHUpdater.exe both crash at the loading screen
+   8342  wineserver crashed when running emule plus
+   8385  Battle for Middle-Earth crashes
+   8464  Chessmaster 10th Edition demo 1.02 fais to install
+   8519  BFME II installer crashes with unhandled exception
+   9022  America's Army locks up when/after checking for updates
+   9329  XFCE specific systray problems
+   9433  Problem through the registration of C++ 2005
+   9469  Adobe Photoshop Elements 1 welcome dialog options don't work
+   9497  Fonts missing in visio 2003, present in Word, Excel 2003
+   9843  Gothic crashes when entering old mine
+  10099  Symphonic Rain crashes when starting story mode
+  10185  crash on installation of Age of Empires III
+  10359  Steam with incorrect cursor position.
+  10404  Wineconsole fails to display text or change color for Renegade FDS
+  10442  Cannot switch back to Half Life 2 after alt-tabbing with managed windows
+  10524  The Chronicles of RiddicK check boxes not visible
+  10554  Maya 8.5 Personal Learning Edition doesn't start
+  10580  S.T.A.L.K.E.R. shadow corruption with ARB shaders
+  10584  Last developments of Wine broke the setup of Trados
+  10652  ./tools/wineinstall adds /usr/local/lib to /etc/ld.so.conf
+  10653  Word 2003 crashes when loading file
+  10938  Application Melty Blood act candeza does not start
+  11141  Trados - problem of creation of temp? function only working at the second try
+  11509  Wordviewer 2003 is unable to open documents encrypted with AES
+  11622  DejaVu X installation failing at start because of component not found
+  11652  New Venezuela Time Zone.
+  11659  acmStreamConvert inconsistencies (Windows Vs Wine for mp3 -> pcm)
+  11683  Assemblies not loading
+  11732  Mudbox can't find application paths, crashes
+  11756  Pirates of the burning sea doesnt start anymore
+  11791  BiblePro installer crashes
+  12190  objects ghosting in everquest 2
+  12246  "make test" gives different results with and without warn+heap
+  12274  Need for Speed: Hot Pursuit 2 demo refuses to install
+  12375  Flash 8 crashes when closing last open document
+  12382  Touhou games don't show backgrounds at startup
+  12396  opas: window not fully repainted after move
+  12459  VeohTV beta client fails with bug report send dialog
+  12794  S.T.A.L.K.E.R. Screen is black
+  12819  Wine breaks pressure sensitivity in Photoshop after upgrading toHardy.
+  13098  The Bat! (v3.99.24): Selected address from adressbook don't appear in 'To:' line
+  13101  GLXBadDrawable when antialias ON (Nvidia driver bug?)
+  13110  Half-Life 2 doesn't start
+  13280  Klipfolio 4 hangs on startup
+  13541  Fantamorph: crashes when opening a file browser
+  13549  Impossible to install VB6 and using programmes who are generated on it.
+  13561  wine fails to build with openssl-0.9.8h
+  13669  DCArt32: a bug in mmio breaks audio filters
+  13731  Unbreakable spaces are not rendered correctly
 
 ----------------------------------------------------------------
 
-Changes since 1.0-rc2:
+Changes since 1.0-rc3:
 
-Alexander Dorofeyev (1):
-      ddraw: Do not return modes differing only by refresh rate without DDEDM_REFRESHRATES.
+Alexandre Julliard (14):
+      ntdll: Add local defines for VIF and VIP flags.
+      wininet: Include openssl/ssl.h before Windows headers.
+      user32/tests: Fix race condition in DDE server startup.
+      test.h: Add a space after the file name prefix.
+      crypt32/tests: Fix an end of line character.
+      kernel32/tests: Don't check every single Unicode char if the tables are clearly not compatible.
+      user32/tests: Don't add a newline before dumping the flag values.
+      user32/tests: Abstract the printing of minmax info and do it all on one line.
+      mlang/tests: Reduce the size of the test output a little.
+      gdi32/tests: Reduce the size of the test output a little.
+      user32/tests: Fix the dde test race correctly this time.
+      shell32: Fixed the French about box.
+      ChangeLog: Moved to documentation/ChangeLog.BETA.
+      fonts: Add a non-breaking space glyph to the Tahoma fonts.
 
-Alexandre Julliard (16):
-      libport: Move the sigsetjmp replacement to exception.h to make it available for Winelib too.
-      winedbg: Fix compile when poll() is not available.
-      programs: Use the Wine import libraries when compiling with MinGW.
-      tests: Use the Wine import libraries when compiling with MinGW.
-      winetest: Remove the per-file revision info, we now use the global commit id.
-      winetest: Don't submit test results if we don't have a valid git build id.
-      winex11: Change the pixel format initialisation to make sure it happens under the X11 lock.
-      winex11: Make sure that all glX functions are called under the X11 lock.
-      winex11: Add support for performing GL calls on a top-level window DC.
-      opengl32/tests: Add a couple of test cases for pixel format handle on window DCs.
-      msftedit: Explicitly load riched20 to make sure the window classes are created.
-      winex11: XInitThreads is hopeless, remove it again.
-      user32: Check for wraparound in the initial window coordinates.
-      start: Fall back to ShellExecute for unknown binaries in /unix mode.
-      include: Use WINE_NO_UNICODE_MACROS instead of __WINESRC__ where appropriate.
-      user32: We no longer need to ensure that the BeginPaint window belongs to the current thread.
+Alistair Leslie-Hughes (1):
+      snmpapi: Correct snmpapi tests under win98.
 
-Alistair Leslie-Hughes (2):
-      msxml3: Stopped tests from crashing and a Win98 fix.
-      netapi32: Fix tests when the machine is on DOMAIN.
+Austin English (2):
+      README: A few more updates.
+      advpack: Fix a test failure on 9x.
 
-Andrej Sinicyn (1):
-      regedit: Update the German translation.
+Dan Kegel (7):
+      userenv/tests: Fix buffer overrun.
+      msi: MsiSourceListEnumMediaDisksW: free original string, not substring.
+      oleaut32/tests: Use VariantInit, not VariantClear, to initialize new variants.
+      secur32/tests: Don't free if not allocated.
+      msi/tests: Initialize buffer lengths before calling MsiSourceListEnumMediaDisks.
+      msxml/tests: Use VariantInit, not VariantClear, to initialize new variants.
+      oleaut32/tests: VariantInit() isn't enough, you have to give a value, too.
 
-Austin English (1):
-      gdi32: Fix a test failure in 2k.
+Dmitry Timoshkov (3):
+      ddraw: Avoid a not needed address-of operator.
+      d3d8: Avoid a not needed address-of operator.
+      d3d9: Avoid a not needed address-of operator.
 
-Dan Kegel (4):
-      winmm: Use HeapAlloc in the capture test instead of using strdup.
-      fusion: UninstallAssembly test: Fix typo, avoid undefined value.
-      fusion: Use HeapAlloc, not strdup, to avoid malloc/HeapFree mismatch.
-      advapi32: Don't test buffer length if buffer is null.
+Eric Pouech (1):
+      msvcrt: Fix for getch() and special characters.
 
-Detlef Riekenberg (1):
-      avifil32: Resize the dialog to avoid truncated texts.
+Francois Gouget (8):
+      reg: Add French resources.
+      regedit: Update the French translation.
+      winefile: Fix the French translation (with some help from Michael Stefaniuc).
+      wordpad: Remove extraneous spaces in '...'.
+      Fix the resources to remove extraneous spaces in '...'.
+      start: Some updates and fixes to the French translation.
+      resources: Fix some overly long '...' instances.
+      gdi32/tests: Take into account several Win9x bugs in GetObject().
 
-Dmitry Timoshkov (9):
-      wininet: INTERNET_InternetOpenUrlW is an internal helper.
-      msi: Mark some data as constant.
-      gdi32: Ignore exScale/eyScale when comparing EMREXTTEXTOUT EMF records.
-      gdi32: If there is no clipping rect, EMREXTTEXTOUT shouldn't have a bounding rect.
-      gdi32: Make generated EMFs fully match Windows ones.
-      user32: Implement GetWindowModuleFileName.
-      user32: Add the tests for GetWindowModuleFileName.
-      msvcrt: Mark some data as constant.
-      user32: CBT hook doesn't send window messages.
+H. Verbeet (2):
+      wined3d: Fix WINED3DTOP_MULTIPLYADD for ATI cards.
+      wined3d: Set the surface location to SFLAG_INSYSMEM for depth stencils on Reset.
 
-Dylan Smith (2):
-      wordpad: Removed spaces between dots in ellipses for english menu text.
-      wordpad: Added a null terminator needed for a unicode string.
-
-Eric Pouech (6):
-      dbghelp: Don't crash when parsing the forward declaration of a function.
-      dbghelp: Fix for SymGetModuleInfo().
-      msvcrt: Properly handle the extended keys in getch().
-      winedbg: Removed unneeded variable from print_basic.
-      winedbg: Fixed the print_basic command when dealing with long long values.
-      winedump: Fully dump the compiland (V3) structure out of .pdb files.
-
-Francois Gouget (6):
-      kernel32/tests: Get the tests running again on Win95.
-      ws2_32: Make sure INVALID_SOCKET is correctly typed.
-      shell32: s/library/Wine/ for consistency in the license message.
-      ddraw: Remove trailing spaces in Wine traces.
-      tests: Add a broken() function to make it possible to handle Windows misbehaviors that we don't want to reproduce in Wine.
-      regedit: Remove extraneous spaces in '...'.
-
-Gregor Münch (2):
-      shell32: Update German translation.
-      winhlp32: Update German translation.
-
-H. Verbeet (5):
-      d3d: Use an alpha capable backbuffer format in the visual tests.
-      wined3d: Add WINED3DTOP_ADDSIGNED2X to debug_d3dtop().
-      wined3d: Fix the nvrc implementation of WINED3DTOP_MULTIPLYADD and WINED3DTOP_LERP.
-      d3d8: Test our texop implementation.
-      d3d9: Test our texop implementation.
+Hans Leidekker (4):
+      wininet: Make resolving hostnames thread-safe.
+      wininet: Don't send a handle closing callback for session handles created with InternetOpenUrl.
+      wininet: Return success from the InternetSetOption(INTERNET_OPTION_DISABLE_AUTODIAL) stub.
+      wininet: Don't send a "Connection: Close" header.
 
 Hwang YunSong(황윤성) (1):
-      winecfg: Updated Korean resource.
+      shell32: Updated Korean resource.
 
-Igor Tarasov (2):
-      user32: Further implementation of MNS_NOTIFYBYPOS.
-      fonts: Tahoma Bold Cyrillic glyphs added.
+James Hawkins (2):
+      urlmon: Fix a few failing tests in win2k3.
+      ddraw: Delete the temporarily attached surface.
 
-Jacek Caban (4):
-      mshtml: Fixed some tests on IE 7.
-      mshtml: Make Wine behave like IE 7.
-      mshtml: Fixed more tests on IE 7.
-      mshtml: Fixed copy&paste typo.
+Jon Griffiths (1):
+      oleaut32/tests: Fix memory leaks reported by valgrind.
 
-James Hawkins (10):
-      mshtml: Add missing OLECMDID definitions.
-      mshtml: Fix a test failure in win2k3.
-      winetest: Use the win32 API to extract the tests.
-      shell32: Test against the long form of the path.
-      rpcrt4: Trace the results of two statuses that return different results across platforms.
-      usp10: Fix several failing test in win2k3.
-      kernel32: Remove two tests that produce different results for win9x and NT platforms.
-      user32: Fix two tests that fail in win2k3 and above.
-      oleaut32: Disable olefont tests that fail on all platforms.
-      user32: win2k3's GetWindowModuleFileName does return ERROR_INSUFFICIENT_BUFFER.
+Jonathan Ernst (5):
+      start.exe: Updated French translation.
+      shell32: Updated French translation.
+      reg: Updated French translation.
+      shell32: Updated French translation.
+      notepad: Updated French translation.
 
-Jens Albretsen (2):
-      ddraw: IDirect3DTextureImpl_Load failed when texture was loading onto itself.
-      ddraw: Test for IDirect3DTexture_Load of Texture into itself.
-
-John Klehm (2):
-      winex11: Detect acecad tablet as stylus device.
-      winex11: Support detection of tablet devices from XExtensionKeyboard type.
-
-Jon Griffiths (6):
-      msvcrt/tests: Fix 4 tests that always fail on Vista.
-      msvcrt/tests: Fix 3 tests that always fail on Vista.
-      msvcrt: Follow Vista behaviour in wcscpy_s.
-      msvcrt: Fix an RTTI test Failure on Vista.
-      msvcrt: Fix file test which fails on Vista.
-      msvcrt: Fix a test that fails on win95.
-
-Kai Blin (2):
-      ws2_32: Add support for FROM_PROTOCOL_INFO to WSASocket().
-      ws2_32: Change back magic 127.12.34.56 to loopback on connect().
+José Manuel Ferrer Ortiz (1):
+      Spanish translations updates.
 
 Kirill K. Smirnov (1):
-      mshtml: Fix copy/paste error.
+      mshtml: Fix yet another copy/paste typo.
 
-Louis Lenders (1):
-      wine.inf: Add fake glu32.
+Marcus Meissner (1):
+      include: Add winelib names for some dsound A/W function / types.
 
-Maarten Lankhorst (2):
-      include: Add missing RpcMgmtIsServerListening declaration.
-      d3d9: Add a test to see whether offscreen surfaces can be locked while a reset occurs.
+Matthew D'Asaro (1):
+      mmio: Do not zero current file position whenever mmioSetBuffer is called.
 
-Michael Karcher (8):
-      crypt32: Fix integer overflow.
-      crypt32: Fix order-of-evaluation dependence.
-      crypt32: Pass on aiKeyAlg on RSA key import.
-      crypt32: CertGetPublicKeyLength should check only cert encoding type.
-      oleaut32: Currency to BSTR must use local decimal separator.
-      oleaut32/tests: Call functions via manually obtained pointers.
-      advpack: Fix buffer sizes for possibly quoted strings.
-      dsound: Fix double free in dsound capture.
+Michael Karcher (1):
+      d3d9/tests: Keep swapchain while its backbuffer is in use.
 
-Michael Stefaniuc (37):
-      comdlg32: Fix the Catalan translation including some size fixes too.
-      shell32: Fix the Catalan translation.
-      comdlg32: Fix the Walon translation.
-      shell32: Fix the Walon translation.
-      comdlg32: Fix the Thai translation.
-      comdlg32: Fix the Greek translation.
-      comdlg32: Fix the Ukrainian translation.
-      shell32: Fix the Ukrainian translation.
-      shell32: Fix the Chinese translations.
-      user32: Fix the Chinese translations.
-      notepad: Fix the Walon translation.
-      winecfg: Fix the Chinese (Traditional) translation.
-      notepad: Fix the Chinese (Simplified) translation.
-      regedit: Fix the English (NEUTRAL) translation. Rename SUBLANG_ENGLISH_US to SUBLANG_DEFAULT.
-      shell32: Fix the Slovak translation.
-      shell32: Fix the Esperanto translation.
-      shell32: Fix the Finnish translation.
-      shell32: Fix the Bulgarian translation.
-      shell32: Fix the Japanese translation.
-      notepad: Remove the Slovak "translation" as it is basically only a stale copy of the English resource.
-      notepad: Fix the Finnish translation.
-      winhlp32: Fix the Slovak translation.
-      comdlg32: Fix the Japanese translation.
-      comdlg32: Fix the Esperanto translation.
-      mshtml: Fix the Finnish translation.
-      regedit: Fix the Bulgarian translation.
-      regedit: Fix the Japanese translation.
-      regedit: Fix the Hungarian translation.
-      winecfg: Fix the Hungarian translation.
-      winecfg: Fix the Bulgarian translation.
-      winecfg: Fix the placement of a checkbox in the Japanese translation.
-      cmd: Fix the Japanese translation.
-      comdlg32: Fix the Hungarian translation.
-      comdlg32: Fix some control sizes in the default English resource.
-      mshtml: Fix the Hungarian translation.
-      shell32: Fix the Hungarian translation.
-      notepad: Fix the Hungarian translation.
+Michael Stefaniuc (34):
+      shell32: Fix the Portugese translations.
+      regedit: Fix the Portugese translations.
+      cmd: Fix the Portuguese translations.
+      start: Fix the Portuguese translations.
+      winefile: Fix the Portuguese translations.
+      cmdlgtst: Fix the Portuguese translations.
+      winefile: Fix the Swedish translation.
+      winefile: Fix the Italian translation.
+      winefile: Fix the Czech translation.
+      winecfg: Fix the Portuguese translations and re-enable them.
+      winecfg: Fix the Czech and Swedish translations.
+      crypt32: Fix the Swedish translation.
+      shell32: Fix the Czech translation.
+      regedit: Fix the Czech translation.
+      shell32: Fix the Swedish translation.
+      regedit: Fix the Italian translation.
+      shell32: Fix the Italian translation.
+      notepad: Fix the Swedish translation.
+      cmdlgtst: Fix the Czech translation.
+      cmdlgtst: Fix the Italian translation.
+      cmd: Fix the Czech translation.
+      cmd: Fix the Turkish translation.
+      oledlg: Fix the Italian translation.
+      comdlg32: Fix the Czech translation.
+      start: Fix the Cs, Es, It, Si and Tr translations.
+      progman: Fix the Hungarian translation.
+      mlang: Fix compile warning introduced by a6cdd538.
+      wineps.drv: Fix the Dutch translation.
+      net: Add the USE subcommand to the translations that are missing it.
+      net: Use consistent whitespace placement in the usage and help strings.
+      shell32: Fix the Turkish translation.
+      wordpad: Fix the Turkish translation.
+      notepad: Fix the Danish translation.
+      browseui: Remove duplicate initguid.h include.
 
-Paul Vriens (18):
-      setupapi/tests: Close registry key after use.
-      setupapi/tests: Fix a test on NT4.
-      setupapi/tests: Turn guid into a global variable.
-      setupapi/tests: Skip tests on win9x.
-      setupapi/tests: Cleanup after testDevRegKey.
-      setupapi/tests: Cleanup after testRegisterAndGetDetail.
-      setupapi/tests: Cleanup after testGetDeviceInterfaceDetail.
-      setupapi/tests: Test registry after testDeviceRegistryProperty.
-      setupapi/tests: Cleanup after testCreateDeviceInterface.
-      setupapi/tests: Add another test.
-      setupapi/tests: Test to show cleanup should not be needed.
-      shell32/tests: Run tests again on win95.
-      ws2_32/tests: Fix crash on win98.
-      ddraw/tests: Don't crash on win9x.
-      user32/tests: Run tests on win95 again.
-      user32/tests: Prevent writing to not allocated memory.
-      setupapi/tests: Remove leftovers from old tests.
-      ole32/tests: Prevent a crash.
+Mikołaj Zalewski (2):
+      regedit: Update Polish translation.
+      regedit: Add/remove favorite opens a dialog, thus should have ellipsis.
 
-Tomasz Jezierski - Tefnet (1):
-      comctl32/tests: Fix for setting wrong initial position in listbox.
+Paul Vriens (5):
+      oleaut32/tests: Cleanup typelib after the test.
+      wintrust/tests: Fix test on win9x.
+      shlwapi/tests: Don't create testfile at a fixed location.
+      urlmon: Add new IE7 QUERYOPTION.
+      urlmon/tests: Fix test on IE7.
 
-Vitaliy Margolen (4):
-      shell32: Don't print not initialized value.
-      winex11: Use memmove for possibly overlapping memory areas.
-      dxdiagn: A number of FIXMEs can be replaced with TRACEs.
-      dinput: Convert keyboard buffer from internal data format to user data format.
+Rico Schüller (3):
+      winecfg: Update German translation.
+      shell32: Update German translation.
+      net: Add German translation.
 
-Vitaly Lipatov (1):
-      wine.inf: Create default spool dir.
+Roderick Colenbrander (2):
+      wined3d: Add a registry key to allow/disallow multisampling.
+      wined3d: Add a WineD3D_ChoosePixelFormat line.
+
+Simon Richter (4):
+      winebuild: Fix branch mnemonic on ppc.
+      winebuild: Fix import stub on ppc.
+      libwine: Implement wine_call_on_stack for ppc.
+      libwine: Fix wine_switch_to_stack on ppc.
+
+Stefan Dösinger (3):
+      wined3d: Give local constants a shader type prefix.
+      wined3d: Hardcode local constants with glUniform4fvARB.
+      wined3d: Avoid float->string conversion in arb shaders.
+
+Vijay Kiran Kamuju (1):
+      rsaenh: Fix AES provider keys for Windows XP.
+
+Vitaliy Margolen (2):
+      Update Russian translations.
+      user32: Fix input tests failing on WinXP+.
+
+Zac Brown (2):
+      ntdll/tests: Actually verify right bytes received in aio test.
+      winmm: msiSendStringW: Don't free substring after original string has already been freed.
 
 --
 Alexandre Julliard
