@@ -1725,13 +1725,18 @@ static void test_mk_protocol(void)
        hres == INET_E_INVALID_URL, /* win2k3 */
        "Start failed: %08x, expected INET_E_RESOURCE_NOT_FOUND or INET_E_INVALID_URL\n", hres);
 
-    if (hres == INET_E_RESOURCE_NOT_FOUND)
-    {
+    if (hres == INET_E_RESOURCE_NOT_FOUND) {
         CHECK_CALLED(GetBindInfo);
         CLEAR_CALLED(ReportProgress_DIRECTBIND);
         CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(ReportResult);
+    }else {
+        CLEAR_CALLED(GetBindInfo);
+        CLEAR_CALLED(ReportProgress_DIRECTBIND);
+        CLEAR_CALLED(ReportProgress_SENDINGREQUEST);
+        CLEAR_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        CLEAR_CALLED(ReportResult);
     }
 
     IInternetProtocol_Release(protocol);
