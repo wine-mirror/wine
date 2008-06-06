@@ -2205,6 +2205,14 @@ static const struct nls_update_font_list
     }
 };
 
+static inline BOOL is_dbcs_ansi_cp(UINT ansi_cp)
+{
+    return ( ansi_cp == 932       /* CP932 for Japanese */
+            || ansi_cp == 936     /* CP936 for Chinese Simplified */
+            || ansi_cp == 949     /* CP949 for Korean */
+            || ansi_cp == 950 );  /* CP950 for Chinese Traditional */
+}
+
 static inline HKEY create_fonts_NT_registry_key(void)
 {
     HKEY hkey = 0;
@@ -2256,8 +2264,8 @@ static void update_font_info(void)
                    (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR));
     sprintf( cpbuf, "%u,%u", ansi_cp, oem_cp );
 
-    /* Setup Default_Fallback usage */
-    if (ansi_cp == 932)
+    /* Setup Default_Fallback usage for DBCS ANSI codepages */
+    if (is_dbcs_ansi_cp(ansi_cp))
         use_default_fallback = TRUE;
 
     len = sizeof(buf);
