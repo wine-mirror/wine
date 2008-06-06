@@ -108,7 +108,7 @@ SnapStemV 9 [184 203]
 ExpansionFactor 4 0.06
 EndPrivate
 TeXData: 1 0 0 327680 163840 109226 571904 -1048576 109226 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65537 430
+BeginChars: 65537 431
 StartChar: .notdef
 Encoding: 0 0 0
 Width: 2048
@@ -9233,8 +9233,13 @@ Fore
 Refer: 425 806 S 1 0 0 1 -144 1 2
 Refer: 85 116 N 1 0 0 1 0 0 2
 EndChar
+StartChar: uni00A0
+Encoding: 160 160 430
+Width: 639
+Flags: W
+EndChar
 EndChars
-BitmapFont: 9 430 7 2 1
+BitmapFont: 9 431 7 2 1
 BDFChar: 0 0 9 1 7 0 6
 rdo`RJqEt%
 BDFChar: 1 32 3 0 0 0 0
@@ -10095,8 +10100,10 @@ BDFChar: 428 537 4 0 2 -2 4
 @":Kb^]6V"
 BDFChar: 429 539 3 0 1 -2 5
 JA?\cJ3X*b
+BDFChar: 430 160 3 0 0 0 0
+z
 EndBitmapFont
-BitmapFont: 11 430 9 2 1 FontForge
+BitmapFont: 11 431 9 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--11-80-96-96-P-62-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 11 0 -2"
@@ -10992,8 +10999,10 @@ BDFChar: 428 537 5 0 3 -3 5
 E.G_X&E!O25QCca
 BDFChar: 429 539 4 0 2 -3 7
 J:QR.J:N/X!'l&7
+BDFChar: 430 160 3 0 0 0 0
+z
 EndBitmapFont
-BitmapFont: 12 430 10 2 1 FontForge
+BitmapFont: 12 431 10 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--12-90-96-96-P-70-ISO10646-1"
 FONTBOUNDINGBOX 1 "16 12 0 -2"
@@ -11685,8 +11694,10 @@ BDFChar: 428 537 5 0 3 -3 6
 E.EIH&.mb"+@#o,
 BDFChar: 429 539 4 0 3 -3 8
 5X=g(5X7S"0E<4\
+BDFChar: 430 160 4 0 0 0 0
+z
 EndBitmapFont
-BitmapFont: 13 430 10 3 1 FontForge
+BitmapFont: 13 431 10 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--13-100-96-96-P-73-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 13 0 -3"
@@ -12378,8 +12389,10 @@ BDFChar: 428 537 6 0 4 -3 6
 E/9$`#`*F"+CG0L
 BDFChar: 429 539 4 0 3 -3 8
 5X=g(5X7S"0E<4\
+BDFChar: 430 160 4 0 0 0 0
+z
 EndBitmapFont
-BitmapFont: 15 430 12 3 1 FontForge
+BitmapFont: 15 431 12 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--15-110-96-96-P-85-ISO10646-1"
 FONTBOUNDINGBOX 1 "19 15 0 -3"
@@ -13071,8 +13084,10 @@ BDFChar: 428 537 7 0 5 -3 7
 G_CTT(^,M:!"^ga
 BDFChar: 429 539 5 0 4 -3 9
 5X>*05X7S"5WA`T0E;(Q
+BDFChar: 430 160 5 0 0 0 0
+z
 EndBitmapFont
-BitmapFont: 16 430 13 3 1 FontForge
+BitmapFont: 16 431 13 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--16-120-96-96-P-93-ISO10646-1"
 FONTBOUNDINGBOX 1 "21 16 0 -3"
@@ -13764,5 +13779,7 @@ BDFChar: 428 537 7 0 5 -3 8
 G_CTtGQ\/&GQ8:/
 BDFChar: 429 539 5 0 4 -3 11
 5X7U05X7S"5X7Ro!"^ga
+BDFChar: 430 160 0 0 0 0 0
+z
 EndBitmapFont
 EndSplineFont

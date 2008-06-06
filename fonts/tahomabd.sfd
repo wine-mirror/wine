@@ -107,7 +107,7 @@ SnapStemV 9 [184 203]
 ExpansionFactor 4 0.06
 EndPrivate
 TeXData: 1 0 0 327680 163840 109226 571904 -1048576 109226 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65537 409
+BeginChars: 65537 410
 StartChar: .notdef
 Encoding: 0 0 0
 Width: 2048
@@ -8347,6 +8347,11 @@ HStem: 0 152<92 280 478 670> 1337 152<92 280 478 670> 1677 203<76 279 489 692>
 VStem: 76 203<1677 1880> 280 198<152 1337> 489 203<1677 1880>
 Refer: 140 207 N 1 0 0 1 0 0 2
 EndChar
+StartChar: uni00A0
+Encoding: 160 160 409
+Width: 600
+Flags: W
+EndChar
 EndChars
 BitmapFont: 11 410 9 2 1 FontForge
 BDFStartProperties: 36
@@ -9202,6 +9207,8 @@ BDFChar: 407 1030 5 0 3 0 7
 n6fX3?smC3
 BDFChar: 408 1031 5 0 3 0 9
 n,Vrc?smAM@.4-r
+BDFChar: 409 160 3 0 0 0 0
+z
 EndBitmapFont
 BitmapFont: 12 410 10 2 1 FontForge
 BDFStartProperties: 36
@@ -9855,6 +9862,8 @@ BDFChar: 407 1030 5 0 3 0 8
 n6fX3?smAMn,NFg
 BDFChar: 408 1031 5 0 4 0 10
 fDtDK?smAM?srI(
+BDFChar: 409 160 4 0 0 0 0
+z
 EndBitmapFont
 BitmapFont: 13 410 10 3 1 FontForge
 BDFStartProperties: 36
@@ -10504,6 +10513,8 @@ BDFChar: 407 1030 4 0 2 0 8
 i'9Om5X7S"huE`W
 BDFChar: 408 1031 4 0 2 0 10
 TE*n85X7S"5X=6-
+BDFChar: 409 160 4 0 0 0 0
+z
 EndBitmapFont
 BitmapFont: 15 410 12 3 1 FontForge
 BDFStartProperties: 36
@@ -11153,6 +11164,8 @@ BDFChar: 407 1030 6 1 3 0 10
 i'9Om5X7S"5X=6-
 BDFChar: 408 1031 6 1 3 0 12
 TE*n85X7S"5X7S"huE`W
+BDFChar: 409 160 4 0 0 0 0
+z
 EndBitmapFont
 BitmapFont: 16 410 13 3 1 FontForge
 BDFStartProperties: 36
@@ -11802,5 +11815,7 @@ BDFChar: 407 1030 6 1 3 0 11
 i'9Om5X7S"5X7Tm
 BDFChar: 408 1031 6 0 4 0 14
 Lkl%M+<VdL+<VdL+<YV'
+BDFChar: 409 160 5 0 0 0 0
+z
 EndBitmapFont
 EndSplineFont
