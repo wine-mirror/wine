@@ -153,14 +153,23 @@ static void testWin98OnlyFunctions(void)
 static void testGetNumberOfInterfaces(void)
 {
   if (gGetNumberOfInterfaces) {
-    DWORD apiReturn = gGetNumberOfInterfaces(NULL), numInterfaces;
+    DWORD apiReturn, numInterfaces;
 
-    if (apiReturn == ERROR_NOT_SUPPORTED)
-      return;
-    ok(apiReturn == ERROR_INVALID_PARAMETER, 
-     "GetNumberOfInterfaces(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
-     apiReturn);
+    /* Crashes on Vista */
+    if (0) {
+      apiReturn = gGetNumberOfInterfaces(NULL), numInterfaces;
+      if (apiReturn == ERROR_NOT_SUPPORTED)
+        return;
+      ok(apiReturn == ERROR_INVALID_PARAMETER,
+       "GetNumberOfInterfaces(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
+       apiReturn);
+    }
+
     apiReturn = gGetNumberOfInterfaces(&numInterfaces);
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetNumberOfInterfaces is not supported\n");
+      return;
+    }
     ok(apiReturn == NO_ERROR,
      "GetNumberOfInterfaces returned %d, expected 0\n", apiReturn);
   }
@@ -313,13 +322,22 @@ static void testGetIcmpStatistics(void)
     DWORD apiReturn;
     MIB_ICMP stats;
 
-    apiReturn = gGetIcmpStatistics(NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
-      return;
-    ok(apiReturn == ERROR_INVALID_PARAMETER,
-     "GetIcmpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
-     apiReturn);
+    /* Crashes on Vista */
+    if (0) {
+      apiReturn = gGetIcmpStatistics(NULL);
+      if (apiReturn == ERROR_NOT_SUPPORTED)
+        return;
+      ok(apiReturn == ERROR_INVALID_PARAMETER,
+       "GetIcmpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
+       apiReturn);
+    }
+
     apiReturn = gGetIcmpStatistics(&stats);
+    if (apiReturn == ERROR_NOT_SUPPORTED)
+    {
+      skip("GetIcmpStatistics is not supported\n");
+      return;
+    }
     ok(apiReturn == NO_ERROR,
      "GetIcmpStatistics returned %d, expected NO_ERROR\n", apiReturn);
   }
