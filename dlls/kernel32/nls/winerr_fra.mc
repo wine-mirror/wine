@@ -71,12 +71,12 @@ Bloc invalide
 MessageId=10
 SymbolicName=ERROR_BAD_ENVIRONMENT
 Language=FRA
-Mauvais environnement
+Environnement incorrect
 .
 MessageId=11
 SymbolicName=ERROR_BAD_FORMAT
 Language=FRA
-Mauvais format
+Format incorrect
 .
 MessageId=12
 SymbolicName=ERROR_INVALID_ACCESS
@@ -121,7 +121,7 @@ Protégé contre l'écriture
 MessageId=20
 SymbolicName=ERROR_BAD_UNIT
 Language=FRA
-Mauvaise unité
+Unité incorrecte
 .
 MessageId=21
 SymbolicName=ERROR_NOT_READY
@@ -131,7 +131,7 @@ Non prêt
 MessageId=22
 SymbolicName=ERROR_BAD_COMMAND
 Language=FRA
-Mauvaise commande
+Commande incorrecte
 .
 MessageId=23
 SymbolicName=ERROR_CRC
@@ -141,7 +141,7 @@ Erreur CRC
 MessageId=24
 SymbolicName=ERROR_BAD_LENGTH
 Language=FRA
-Mauvaise taille
+Taille incorrecte
 .
 MessageId=25
 SymbolicName=ERROR_SEEK
@@ -191,7 +191,7 @@ Violation de verrou
 MessageId=34
 SymbolicName=ERROR_WRONG_DISK
 Language=FRA
-Wrong disk
+Mauvais disque
 .
 MessageId=36
 SymbolicName=ERROR_SHARING_BUFFER_EXCEEDED
@@ -226,277 +226,277 @@ Nom réseau dupliqué
 MessageId=53
 SymbolicName=ERROR_BAD_NETPATH
 Language=FRA
-Mauvais chemin réseau
+Chemin réseau incorrect
 .
 MessageId=54
 SymbolicName=ERROR_NETWORK_BUSY
 Language=FRA
-Network busy
+Réseau occupé
 .
 MessageId=55
 SymbolicName=ERROR_DEV_NOT_EXIST
 Language=FRA
-Device does not exist
+Le périphérique n'existe pas
 .
 MessageId=56
 SymbolicName=ERROR_TOO_MANY_CMDS
 Language=FRA
-Too many commands
+Trop de commandes
 .
 MessageId=57
 SymbolicName=ERROR_ADAP_HDW_ERR
 Language=FRA
-Adaptor hardware error
+Erreur matérielle de l'adaptateur
 .
 MessageId=58
 SymbolicName=ERROR_BAD_NET_RESP
 Language=FRA
-Bad network response
+Réponse du réseau incorrecte
 .
 MessageId=59
 SymbolicName=ERROR_UNEXP_NET_ERR
 Language=FRA
-Unexpected network error
+Erreur réseau inattendue
 .
 MessageId=60
 SymbolicName=ERROR_BAD_REM_ADAP
 Language=FRA
-Bad remote adaptor
+Adaptateur distant incorrect
 .
 MessageId=61
 SymbolicName=ERROR_PRINTQ_FULL
 Language=FRA
-Print queue full
+Queue d'impression pleine
 .
 MessageId=62
 SymbolicName=ERROR_NO_SPOOL_SPACE
 Language=FRA
-No spool space
+Pas d'espace de spool
 .
 MessageId=63
 SymbolicName=ERROR_PRINT_CANCELLED
 Language=FRA
-Print cancelled
+Impression annulée
 .
 MessageId=64
 SymbolicName=ERROR_NETNAME_DELETED
 Language=FRA
-Network name deleted
+Nom réseau supprimé
 .
 MessageId=65
 SymbolicName=ERROR_NETWORK_ACCESS_DENIED
 Language=FRA
-Network access denied
+Accès réseau refusé
 .
 MessageId=66
 SymbolicName=ERROR_BAD_DEV_TYPE
 Language=FRA
-Bad device type
+Type de périphérique incorrect
 .
 MessageId=67
 SymbolicName=ERROR_BAD_NET_NAME
 Language=FRA
-Bad network name
+Nom réseau incorrect
 .
 MessageId=68
 SymbolicName=ERROR_TOO_MANY_NAMES
 Language=FRA
-Too many network names
+Trop de noms réseau
 .
 MessageId=69
 SymbolicName=ERROR_TOO_MANY_SESS
 Language=FRA
-Too many network sessions
+Trop de sessions réseau
 .
 MessageId=70
 SymbolicName=ERROR_SHARING_PAUSED
 Language=FRA
-Sharing paused
+Partage en pause
 .
 MessageId=71
 SymbolicName=ERROR_REQ_NOT_ACCEP
 Language=FRA
-Request not accepted
+Requête non acceptée
 .
 MessageId=72
 SymbolicName=ERROR_REDIR_PAUSED
 Language=FRA
-Redirector paused
+Redirecteur en pause
 .
 MessageId=80
 SymbolicName=ERROR_FILE_EXISTS
 Language=FRA
-File exists
+Le fichier existe
 .
 MessageId=82
 SymbolicName=ERROR_CANNOT_MAKE
 Language=FRA
-Cannot create
+Impossible de créer
 .
 MessageId=83
 SymbolicName=ERROR_FAIL_I24
 Language=FRA
-Int24 failure
+Erreur Int24
 .
 MessageId=84
 SymbolicName=ERROR_OUT_OF_STRUCTURES
 Language=FRA
-Out of structures
+À cours de structures
 .
 MessageId=85
 SymbolicName=ERROR_ALREADY_ASSIGNED
 Language=FRA
-Already assigned
+Déjà assigné
 .
 MessageId=86
 SymbolicName=ERROR_INVALID_PASSWORD
 Language=FRA
-Invalid password
+Mot de passe non valide
 .
 MessageId=87
 SymbolicName=ERROR_INVALID_PARAMETER
 Language=FRA
-Invalid parameter
+Paramètre non valide
 .
 MessageId=88
 SymbolicName=ERROR_NET_WRITE_FAULT
 Language=FRA
-Net write fault
+Erreur d'écriture réseau
 .
 MessageId=89
 SymbolicName=ERROR_NO_PROC_SLOTS
 Language=FRA
-No process slots
+Plus d'emplacement pour processus
 .
 MessageId=100
 SymbolicName=ERROR_TOO_MANY_SEMAPHORES
 Language=FRA
-Too many semaphores
+Trop de sémaphores
 .
 MessageId=101
 SymbolicName=ERROR_EXCL_SEM_ALREADY_OWNED
 Language=FRA
-Exclusive semaphore already owned
+Sémaphore exclusif déjà acquis
 .
 MessageId=102
 SymbolicName=ERROR_SEM_IS_SET
 Language=FRA
-Semaphore is set
+Le sémaphore est actif
 .
 MessageId=103
 SymbolicName=ERROR_TOO_MANY_SEM_REQUESTS
 Language=FRA
-Too many semaphore requests
+Trop de requêtes de sémaphores
 .
 MessageId=104
 SymbolicName=ERROR_INVALID_AT_INTERRUPT_TIME
 Language=FRA
-Invalid at interrupt time
+Non valide au moment de l'interruption
 .
 MessageId=105
 SymbolicName=ERROR_SEM_OWNER_DIED
 Language=FRA
-Semaphore owner died
+L'acquéreur du sémaphore est mort
 .
 MessageId=106
 SymbolicName=ERROR_SEM_USER_LIMIT
 Language=FRA
-Semaphore user limit
+Limite utilisateur pour le sémaphore
 .
 MessageId=107
 SymbolicName=ERROR_DISK_CHANGE
 Language=FRA
-Insert disk for drive %1
+Insérez le disque pour le lecteur %1
 .
 MessageId=108
 SymbolicName=ERROR_DRIVE_LOCKED
 Language=FRA
-Drive locked
+Lecteur verrouillé
 .
 MessageId=109
 SymbolicName=ERROR_BROKEN_PIPE
 Language=FRA
-Broken pipe
+Tube interrompu
 .
 MessageId=110
 SymbolicName=ERROR_OPEN_FAILED
 Language=FRA
-Open failed
+Échec lors de l'ouverture
 .
 MessageId=111
 SymbolicName=ERROR_BUFFER_OVERFLOW
 Language=FRA
-Buffer overflow
+Dépassement de tampon
 .
 MessageId=112
 SymbolicName=ERROR_DISK_FULL
 Language=FRA
-Disk full
+Disque plein
 .
 MessageId=113
 SymbolicName=ERROR_NO_MORE_SEARCH_HANDLES
 Language=FRA
-No more search handles
+Plus d'attaches de recherche
 .
 MessageId=114
 SymbolicName=ERROR_INVALID_TARGET_HANDLE
 Language=FRA
-Invalid target handle
+Attache de destination non valide
 .
 MessageId=117
 SymbolicName=ERROR_INVALID_CATEGORY
 Language=FRA
-Invalid IOCTL
+IOCTL non valide
 .
 MessageId=118
 SymbolicName=ERROR_INVALID_VERIFY_SWITCH
 Language=FRA
-Invalid verify switch
+Bascule de vérification non valide
 .
 MessageId=119
 SymbolicName=ERROR_BAD_DRIVER_LEVEL
 Language=FRA
-Bad driver level
+Niveau de pilote incorrect
 .
 MessageId=120
 SymbolicName=ERROR_CALL_NOT_IMPLEMENTED
 Language=FRA
-Call not implemented
+Appel non implémenté
 .
 MessageId=121
 SymbolicName=ERROR_SEM_TIMEOUT
 Language=FRA
-Semaphore timeout
+Dépassement du délai du sémaphore
 .
 MessageId=122
 SymbolicName=ERROR_INSUFFICIENT_BUFFER
 Language=FRA
-Insufficient buffer
+Tampon insuffisant
 .
 MessageId=123
 SymbolicName=ERROR_INVALID_NAME
 Language=FRA
-Invalid name
+Nom non valide
 .
 MessageId=124
 SymbolicName=ERROR_INVALID_LEVEL
 Language=FRA
-Invalid level
+Niveau non valide
 .
 MessageId=125
 SymbolicName=ERROR_NO_VOLUME_LABEL
 Language=FRA
-No volume label
+Pas d'étiquette de volume
 .
 MessageId=126
 SymbolicName=ERROR_MOD_NOT_FOUND
 Language=FRA
-Module not found
+Module introuvable
 .
 MessageId=127
 SymbolicName=ERROR_PROC_NOT_FOUND
 Language=FRA
-Procedure not found
+Procédure introuvable
 .
 MessageId=128
 SymbolicName=ERROR_WAIT_NO_CHILDREN
@@ -571,7 +571,7 @@ Attempt to SUBST to a JOINed drive
 MessageId=142
 SymbolicName=ERROR_BUSY_DRIVE
 Language=FRA
-Drive is busy
+Le lecteur est occupé
 .
 MessageId=143
 SymbolicName=ERROR_SAME_DRIVE
@@ -586,7 +586,7 @@ Not toplevel directory
 MessageId=145
 SymbolicName=ERROR_DIR_NOT_EMPTY
 Language=FRA
-Directory is not empty
+Le répertoire n'est pas vide
 .
 MessageId=146
 SymbolicName=ERROR_IS_SUBST_PATH
@@ -3606,7 +3606,7 @@ Already awaiting printer handle
 MessageId=1905
 SymbolicName=ERROR_PRINTER_DELETED
 Language=FRA
-Printer deleted
+Imprimante supprimée
 .
 MessageId=1906
 SymbolicName=ERROR_INVALID_PRINTER_STATE
