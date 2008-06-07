@@ -55,7 +55,7 @@ POPUP "帮助（&H）" {
   MENUITEM "搜索（&S）...",        CMD_HELP_SEARCH
   MENUITEM "如何使用帮助（&H）",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

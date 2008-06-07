@@ -57,7 +57,7 @@ POPUP "&Helpo" {
   MENUITEM "Seræu...",        CMD_HELP_SEARCH
   MENUITEM "Pri Helpanto",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "Pri Notepad...",  CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "Pri Notepad",  CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

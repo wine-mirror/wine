@@ -61,7 +61,7 @@ POPUP "&Ajuda" {
   MENUITEM "&Procurar...",	CMD_HELP_SEARCH
   MENUITEM "&Ajuda na ajuda",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

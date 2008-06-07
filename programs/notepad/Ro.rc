@@ -59,7 +59,7 @@ POPUP "&Ajutor" {
   MENUITEM "&Caută...",                 CMD_HELP_SEARCH
   MENUITEM "&Ajutor la ajutor",         CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&Despre notepad...",        CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Despre notepad",        CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

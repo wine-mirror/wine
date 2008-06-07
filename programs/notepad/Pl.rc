@@ -60,7 +60,7 @@ POPUP "Pomo&c" {
   MENUITEM "&Szukaj...",        CMD_HELP_SEARCH
   MENUITEM "&Pomoc",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "Notepad - &informacje", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

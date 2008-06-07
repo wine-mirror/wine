@@ -59,7 +59,7 @@ POPUP "&Hjælp" {
   MENUITEM "&Søg efter hjælp om...",    CMD_HELP_SEARCH
   MENUITEM "&Brug af Hjælp",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&Om Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Om Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

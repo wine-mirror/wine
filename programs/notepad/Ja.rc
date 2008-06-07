@@ -59,7 +59,7 @@ POPUP "ƒwƒ‹ƒv(&H)" {
   MENUITEM "ŒŸõ(&S)...",        CMD_HELP_SEARCH
   MENUITEM "ƒwƒ‹ƒv‚ÌŽg‚¢•û(&H)",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

@@ -58,7 +58,7 @@ POPUP "&Apua" {
   MENUITEM "&Etsi...",		CMD_HELP_SEARCH
   MENUITEM "Apua &Opastuksesta",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

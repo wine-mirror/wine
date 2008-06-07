@@ -62,7 +62,7 @@ POPUP "&Aiuto" {
   MENUITEM "&Trova...",        CMD_HELP_SEARCH
   MENUITEM "&Aiuto sulla Guida",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&Informazioni sul Blocco Note...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Informazioni sul Blocco Note", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

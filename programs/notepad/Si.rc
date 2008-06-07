@@ -59,7 +59,7 @@ POPUP "&Pomoč" {
   MENUITEM "&Iskanje ...",        CMD_HELP_SEARCH
   MENUITEM "&O pomoči",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&O Beležnici ...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&O Beležnici", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 

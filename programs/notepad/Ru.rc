@@ -57,7 +57,7 @@ POPUP "&Справка" {
   MENUITEM "&Поиск...",        CMD_HELP_SEARCH
   MENUITEM "&Использование справки",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&О Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
