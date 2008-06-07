@@ -1315,6 +1315,28 @@ static void test_GetDIBits_selected_DDB(BOOL monochrome)
     }
     ok(equalContents, "GetDIBits with DDB selected in DC: Got different DIB bits\n");
 
+    /* Test the palette */
+    equalContents = TRUE;
+    if (info2->bmiHeader.biBitCount <= 8)
+    {
+        WORD *colors = (WORD*)info2->bmiColors;
+
+        /* Get the palette indices */
+        res = GetDIBits(dc, ddb, 0, 0, NULL, info2, DIB_PAL_COLORS);
+        ok(res, "GetDIBits failed\n");
+
+        for (i=0;i < 1 << info->bmiHeader.biSizeImage; i++)
+        {
+            if (colors[i] != i)
+            {
+                equalContents = FALSE;
+                break;
+            }
+        }
+    }
+
+    ok(equalContents, "GetDIBits with DDB selected in DC: non 1:1 palette indices\n");
+
     HeapFree(GetProcessHeap(), 0, bits2);
     HeapFree(GetProcessHeap(), 0, bits);
     DeleteDC(dc);
@@ -1496,6 +1518,16 @@ todo_wine
 todo_wine
     ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)), "DIB bits don't match\n");
 
+    /* Test the palette indices */
+    memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
+    SetLastError(0xdeadbeef);
+    lines = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_PAL_COLORS);
+
+    ok(((WORD*)bi->bmiColors)[0] == 0, "Color 0 is %d\n", ((WORD*)bi->bmiColors)[0]);
+    ok(((WORD*)bi->bmiColors)[1] == 1, "Color 1 is %d\n", ((WORD*)bi->bmiColors)[1]);
+    for (i = 2; i < 256; i++)
+        ok(((WORD*)bi->bmiColors)[i] == 0xAAAA, "Color %d is %d\n", i, ((WORD*)bi->bmiColors)[1]);
+
     /* retrieve 24-bit DIB data */
     memset(bi, 0, sizeof(*bi));
     bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -1595,6 +1627,16 @@ todo_wine
     /* returned bits are DWORD aligned and upside down */
 todo_wine
     ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)), "DIB bits don't match\n");
+
+    /* Test the palette indices */
+    memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
+    SetLastError(0xdeadbeef);
+    lines = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_PAL_COLORS);
+
+    ok(((WORD*)bi->bmiColors)[0] == 0, "Color 0 is %d\n", ((WORD*)bi->bmiColors)[0]);
+    ok(((WORD*)bi->bmiColors)[1] == 1, "Color 1 is %d\n", ((WORD*)bi->bmiColors)[1]);
+    for (i = 2; i < 256; i++)
+        ok(((WORD*)bi->bmiColors)[i] == 0xAAAA, "Color %d is %d\n", i, ((WORD*)bi->bmiColors)[i]);
 
     /* retrieve 24-bit DIB data */
     memset(bi, 0, sizeof(*bi));

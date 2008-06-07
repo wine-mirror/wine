@@ -701,7 +701,11 @@ INT WINAPI GetDIBits(
             }
         }
         else {
-            if(bpp >= bmp->bitmap.bmBitsPixel) {
+            if (coloruse == DIB_PAL_COLORS) {
+                for (i = 0; i < (1 << bpp); i++)
+                    ((WORD *)colorPtr)[i] = (WORD)i;
+            }
+            else if(bpp >= bmp->bitmap.bmBitsPixel) {
                 /* Generate the color map from the selected palette */
                 PALETTEENTRY palEntry[256];
 
@@ -713,22 +717,19 @@ INT WINAPI GetDIBits(
                     return 0;
                 }
                 for (i = 0; i < (1 << bmp->bitmap.bmBitsPixel); i++) {
-                    if (coloruse == DIB_RGB_COLORS) {
-                        if (core_header)
-                        {
-                            rgbTriples[i].rgbtRed   = palEntry[i].peRed;
-                            rgbTriples[i].rgbtGreen = palEntry[i].peGreen;
-                            rgbTriples[i].rgbtBlue  = palEntry[i].peBlue;
-                        }
-                        else
-                        {
-                            rgbQuads[i].rgbRed      = palEntry[i].peRed;
-                            rgbQuads[i].rgbGreen    = palEntry[i].peGreen;
-                            rgbQuads[i].rgbBlue     = palEntry[i].peBlue;
-                            rgbQuads[i].rgbReserved = 0;
-                        }
+                    if (core_header)
+                    {
+                        rgbTriples[i].rgbtRed   = palEntry[i].peRed;
+                        rgbTriples[i].rgbtGreen = palEntry[i].peGreen;
+                        rgbTriples[i].rgbtBlue  = palEntry[i].peBlue;
                     }
-                    else ((WORD *)colorPtr)[i] = (WORD)i;
+                    else
+                    {
+                        rgbQuads[i].rgbRed      = palEntry[i].peRed;
+                        rgbQuads[i].rgbGreen    = palEntry[i].peGreen;
+                        rgbQuads[i].rgbBlue     = palEntry[i].peBlue;
+                        rgbQuads[i].rgbReserved = 0;
+                    }
                 }
             } else {
                 switch (bpp) {
