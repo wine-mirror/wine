@@ -528,6 +528,13 @@ static void test_marshal_VARIANT(void)
     V_VT(&v) = VT_I1;
     V_I1(&v) = 0x12;
 
+    /* check_variant_header tests wReserved[123], so initialize to unique values.
+     * (Could probably also do this by setting the variant to a known DECIMAL.)
+     */
+    V_U2(&v).wReserved1 = 0x1234;
+    V_U2(&v).wReserved2 = 0x5678;
+    V_U2(&v).wReserved3 = 0x9abc;
+
     /* Variants have an alignment of 8 */
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 1, &v);
     ok(stubMsg.BufferLength == 29, "size %d\n", stubMsg.BufferLength);
@@ -849,6 +856,7 @@ static void test_marshal_VARIANT(void)
 
     /*** DECIMAL ***/
     VarDecFromI4(0x12345678, &dec);
+    dec.wReserved = 0xfedc;          /* Also initialize reserved field, as we check it later */
     VariantInit(&v);
     V_DECIMAL(&v) = dec;
     V_VT(&v) = VT_DECIMAL;
@@ -906,6 +914,13 @@ static void test_marshal_VARIANT(void)
     if (VARIANT_UNMARSHAL_WORKS)
     {
         VariantInit(&v2);
+        /* check_variant_header tests wReserved[123], so initialize to unique values.
+         * (Could probably also do this by setting the variant to a known DECIMAL.)
+         */
+        V_U2(&v2).wReserved1 = 0x0123;
+        V_U2(&v2).wReserved2 = 0x4567;
+        V_U2(&v2).wReserved3 = 0x89ab;
+
         stubMsg.Buffer = buffer;
         next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
         ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
