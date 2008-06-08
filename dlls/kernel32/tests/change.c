@@ -223,6 +223,7 @@ static void test_FindFirstChangeNotification(void)
     file = CreateFileA(filename2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
                        FILE_ATTRIBUTE_NORMAL, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %d\n", GetLastError());
+    memset(buffer, 0, sizeof(buffer));
     ret = WriteFile(file, buffer, sizeof(buffer), &count, NULL);
     ok(ret && count == sizeof(buffer), "WriteFile error: %d\n", GetLastError());
     ret = CloseHandle(file);
