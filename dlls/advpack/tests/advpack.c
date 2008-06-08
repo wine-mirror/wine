@@ -82,7 +82,11 @@ static BOOL init_function_pointers(void)
 
     if (!pCloseINFEngine || !pDelNode || !pGetVersionFromFile ||
         !pOpenINFEngine || !pSetPerUserSecValues || !pTranslateInfString)
+    {
+        skip("Needed functions are not available\n");
+        FreeLibrary(hAdvPack);
         return FALSE;
+    }
 
     return TRUE;
 }
