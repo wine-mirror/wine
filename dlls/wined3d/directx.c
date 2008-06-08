@@ -1069,6 +1069,16 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
              */
             if(WINE_D3D9_CAPABLE(gl_info) && (gl_info->vs_nv_version == VS_VERSION_30)) {
+                /* Geforce9 - highend */
+                if(strstr(gl_info->gl_renderer, "9800")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_9800GT;
+                    vidmem = 512;
+                }
+                /* Geforce9 - midend */
+                else if(strstr(gl_info->gl_renderer, "9600")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_9600GT;
+                    vidmem = 384; /* The 9600GSO has 384MB, the 9600GT has 512-1024MB */
+                }
                 /* Geforce8 - highend */
                 if (strstr(gl_info->gl_renderer, "8800")) {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_8800GTS;
