@@ -312,6 +312,12 @@ HRESULT WINAPI CorBindToRuntimeEx(LPWSTR szVersion, LPWSTR szBuildFlavor, DWORD 
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI CorBindToCurrentRuntime(LPCWSTR filename, REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    FIXME("(%s, %s, %s, %p): stub\n", debugstr_w(filename), debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 {
     FIXME("(%p, %p, %p): stub\n", rclsid, riid, ppv);

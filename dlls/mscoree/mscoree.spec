@@ -14,7 +14,7 @@
 @ stub CoUninitializeCor
 @ stub CoUninitializeEE
 @ stub CollectCtrs
-@ stub CorBindToCurrentRuntime
+@ stdcall CorBindToCurrentRuntime(wstr ptr ptr ptr)
 @ stub CorBindToRuntime
 @ stub CorBindToRuntimeByCfg
 @ stub CorBindToRuntimeByPath
