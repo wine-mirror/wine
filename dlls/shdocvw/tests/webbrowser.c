@@ -422,14 +422,18 @@ static HRESULT WINAPI WebBrowserEvents2_QueryInterface(IDispatch *iface, REFIID 
     return E_NOINTERFACE;
 }
 
-#define test_invoke_bool(p) _test_invoke_bool(__LINE__,p)
-static void _test_invoke_bool(unsigned line, const DISPPARAMS *params)
+#define test_invoke_bool(p,s) _test_invoke_bool(__LINE__,p,s)
+static void _test_invoke_bool(unsigned line, const DISPPARAMS *params, BOOL strict)
 {
     ok_(__FILE__,line) (params->rgvarg != NULL, "rgvarg == NULL\n");
     ok_(__FILE__,line) (params->cArgs == 1, "cArgs=%d, expected 1\n", params->cArgs);
     ok_(__FILE__,line) (V_VT(params->rgvarg) == VT_BOOL, "V_VT(arg)=%d\n", V_VT(params->rgvarg));
-    ok_(__FILE__,line) (V_BOOL(params->rgvarg) == exvb, "V_VT(arg)=%x, expected %x\n",
-                        V_BOOL(params->rgvarg), exvb);
+    if(strict)
+        ok_(__FILE__,line) (V_BOOL(params->rgvarg) == exvb, "V_VT(arg)=%x, expected %x\n",
+                            V_BOOL(params->rgvarg), exvb);
+    else
+        ok_(__FILE__,line) (!V_BOOL(params->rgvarg) == !exvb, "V_VT(arg)=%x, expected %x\n",
+                            V_BOOL(params->rgvarg), exvb);
 }
 
 static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const VARIANT *flags,
@@ -598,37 +602,37 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
     case DISPID_ONMENUBAR:
         CHECK_EXPECT(Invoke_ONMENUBAR);
-        test_invoke_bool(pDispParams);
+        test_invoke_bool(pDispParams, TRUE);
         break;
 
     case DISPID_ONADDRESSBAR:
         CHECK_EXPECT(Invoke_ONADDRESSBAR);
-        test_invoke_bool(pDispParams);
+        test_invoke_bool(pDispParams, TRUE);
         break;
 
     case DISPID_ONSTATUSBAR:
         CHECK_EXPECT(Invoke_ONSTATUSBAR);
-        test_invoke_bool(pDispParams);
+        test_invoke_bool(pDispParams, TRUE);
         break;
 
     case DISPID_ONTOOLBAR:
         CHECK_EXPECT(Invoke_ONTOOLBAR);
-        test_invoke_bool(pDispParams);
+        test_invoke_bool(pDispParams, FALSE);
         break;
 
     case DISPID_ONFULLSCREEN:
         CHECK_EXPECT(Invoke_ONFULLSCREEN);
-        test_invoke_bool(pDispParams);
+        test_invoke_bool(pDispParams, TRUE);
         break;
 
     case DISPID_ONTHEATERMODE:
         CHECK_EXPECT(Invoke_ONTHEATERMODE);
-        test_invoke_bool(pDispParams);
+        test_invoke_bool(pDispParams, TRUE);
         break;
 
     case DISPID_WINDOWSETRESIZABLE:
         CHECK_EXPECT(Invoke_WINDOWSETRESIZABLE);
-        test_invoke_bool(pDispParams);
+        test_invoke_bool(pDispParams, TRUE);
         break;
 
     default:

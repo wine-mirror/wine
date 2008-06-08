@@ -627,7 +627,7 @@ static HRESULT WINAPI WebBrowser_put_ToolBar(IWebBrowser2 *iface, int Value)
      * inform the embedder about the tool bar change. */
 
     V_VT(&arg) = VT_BOOL;
-    V_BOOL(&arg) = Value;
+    V_BOOL(&arg) = This->tool_bar;
     call_sink(This->doc_host.cps.wbe2, DISPID_ONTOOLBAR, &dispparams);
 
     return S_OK;
