@@ -1211,22 +1211,40 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             break;
         case VENDOR_ATI:
             if(WINE_D3D9_CAPABLE(gl_info)) {
-                /* Radeon R6xx HD2900 - highend */
-                if (strstr(gl_info->gl_renderer, "HD 2900")) {
+                /* Radeon R6xx HD2900/HD3800 - highend */
+                if (strstr(gl_info->gl_renderer, "HD 2900") ||
+                    strstr(gl_info->gl_renderer, "HD 3870") ||
+                    strstr(gl_info->gl_renderer, "HD 3850"))
+                {
                     gl_info->gl_card = CARD_ATI_RADEON_HD2900;
-                    vidmem = 512; /* HD2900 uses 512-1024MB */
+                    vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
                 }
-                /* Radeon R6xx HD2600- midend */
-                else if (strstr(gl_info->gl_renderer, "HD 2600")) {
+                /* Radeon R6xx HD2600/HD3600 - midend; HD3830 is China-only midend */
+                else if (strstr(gl_info->gl_renderer, "HD 2600") ||
+                         strstr(gl_info->gl_renderer, "HD 3830") ||
+                         strstr(gl_info->gl_renderer, "HD 3690") ||
+                         strstr(gl_info->gl_renderer, "HD 3650"))
+                {
                     gl_info->gl_card = CARD_ATI_RADEON_HD2600;
-                    vidmem = 256; /* HD2600 uses 256-512MB */
+                    vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
                 }
-                /* Radeon R6xx HD2300/HD2400 - lowend */
+                /* Radeon R6xx HD2300/HD2400/HD3400 - lowend */
                 else if (strstr(gl_info->gl_renderer, "HD 2300") ||
-                         strstr(gl_info->gl_renderer, "HD 2400"))
+                         strstr(gl_info->gl_renderer, "HD 2400") ||
+                         strstr(gl_info->gl_renderer, "HD 3470") ||
+                         strstr(gl_info->gl_renderer, "HD 3450") ||
+                         strstr(gl_info->gl_renderer, "HD 3430"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD2300;
                     vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
+                }
+                /* Radeon R6xx/R7xx integrated */
+                else if (strstr(gl_info->gl_renderer, "HD 3100") ||
+                         strstr(gl_info->gl_renderer, "HD 3200") ||
+                         strstr(gl_info->gl_renderer, "HD 3300"))
+                {
+                    gl_info->gl_card = CARD_ATI_RADEON_HD3200;
+                    vidmem = 128; /* 128MB */
                 }
                 /* Radeon R5xx */
                 else if (strstr(gl_info->gl_renderer, "X1600") ||
