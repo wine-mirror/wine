@@ -118,20 +118,29 @@ static RPC_STATUS rpcrt4_conn_listen_pipe(RpcConnection_np *npc)
     return RPC_S_OK;
 
   npc->listening = TRUE;
-  if (ConnectNamedPipe(npc->pipe, &npc->ovl))
-    return RPC_S_OK;
+  for (;;)
+  {
+      if (ConnectNamedPipe(npc->pipe, &npc->ovl))
+          return RPC_S_OK;
 
-  if (GetLastError() == ERROR_PIPE_CONNECTED) {
-    SetEvent(npc->ovl.hEvent);
-    return RPC_S_OK;
+      switch(GetLastError())
+      {
+      case ERROR_PIPE_CONNECTED:
+          SetEvent(npc->ovl.hEvent);
+          return RPC_S_OK;
+      case ERROR_IO_PENDING:
+          /* will be completed in rpcrt4_protseq_np_wait_for_new_connection */
+          return RPC_S_OK;
+      case ERROR_NO_DATA_DETECTED:
+          /* client has disconnected, retry */
+          DisconnectNamedPipe( npc->pipe );
+          break;
+      default:
+          npc->listening = FALSE;
+          WARN("Couldn't ConnectNamedPipe (error was %d)\n", GetLastError());
+          return RPC_S_OUT_OF_RESOURCES;
+      }
   }
-  if (GetLastError() == ERROR_IO_PENDING) {
-    /* will be completed in rpcrt4_protseq_np_wait_for_new_connection */
-    return RPC_S_OK;
-  }
-  npc->listening = FALSE;
-  WARN("Couldn't ConnectNamedPipe (error was %d)\n", GetLastError());
-  return RPC_S_OUT_OF_RESOURCES;
 }
 
 static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pname)
