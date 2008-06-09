@@ -698,12 +698,14 @@ static void testCreateDeviceInterface(void)
         ok(i == 2, "expected 2 interfaces, got %d\n", i);
         ok(GetLastError() == ERROR_NO_MORE_ITEMS,
          "SetupDiEnumDeviceInterfaces failed: %08x\n", GetLastError());
-        pSetupDiDestroyDeviceInfoList(set);
+        ret = pSetupDiDestroyDeviceInfoList(set);
+        ok(ret, "SetupDiDestroyDeviceInfoList failed: %08x\n", GetLastError());
 
         /* Cleanup */
         /* FIXME: On Wine we still have the bogus entry in Enum\Root and
          * subkeys, as well as the deviceclass key with subkeys.
-         * Only do the RegDeleteKey, once Wine is fixed.
+         * Only do the RegDeleteKey (and RegDeleteTree on Windows 2000),
+         * once Wine is fixed.
          */
         if (!RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key))
         {
@@ -714,8 +716,23 @@ static void testCreateDeviceInterface(void)
         }
         else
         {
-            ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, devclass),
-             "Couldn't delete deviceclass key\n");
+            DWORD subkeys;
+
+            /* Check if we have subkeys as Windows 2000 doesn't delete
+             * the keys under the DeviceClasses key
+             */
+            RegOpenKeyW(HKEY_LOCAL_MACHINE, devclass, &key);
+            RegQueryInfoKey(key, NULL, NULL, NULL, &subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+            if (subkeys > 0)
+            {
+                trace("We are most likely on Windows 2000\n");
+                devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, devclass);
+            }
+            else
+            {
+                ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, devclass),
+                 "Couldn't delete deviceclass key\n");
+            }
         }
     }
 }
