@@ -1619,8 +1619,8 @@ RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, UL
 /***********************************************************************
  *             RpcBindingSetOption (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Option, ULONG OptionValue)
+RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Option, ULONG_PTR OptionValue)
 {
-    FIXME("(%p, %d, %d): stub\n", BindingHandle, Option, OptionValue);
+    FIXME("(%p, %d, %ld): stub\n", BindingHandle, Option, OptionValue);
     return RPC_S_OK;
 }
