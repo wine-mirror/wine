@@ -1240,13 +1240,24 @@ server(void)
   static unsigned char np[] = "ncacn_np";
   static unsigned char pipe[] = PIPE;
   RPC_STATUS status, iptcp_status, np_status;
+  RPC_STATUS (RPC_ENTRY *pRpcServerRegisterIfEx)(RPC_IF_HANDLE,UUID*,
+    RPC_MGR_EPV*, unsigned int,unsigned int,RPC_IF_CALLBACK_FN*);
 
   iptcp_status = RpcServerUseProtseqEp(iptcp, 20, port, NULL);
   ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %ld\n", iptcp_status);
   np_status = RpcServerUseProtseqEp(np, 0, pipe, NULL);
   ok(np_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_np) failed with status %ld\n", np_status);
 
-  status = RpcServerRegisterIf(s_IServer_v0_0_s_ifspec, NULL, NULL);
+  pRpcServerRegisterIfEx = (void *)GetProcAddress(GetModuleHandle("rpcrt4.dll"), "RpcServerRegisterIfEx");
+  if (pRpcServerRegisterIfEx)
+  {
+    trace("Using RpcServerRegisterIfEx\n");
+    status = pRpcServerRegisterIfEx(s_IServer_v0_0_s_ifspec, NULL, NULL,
+                                    RPC_IF_ALLOW_CALLBACKS_WITH_NO_AUTH,
+                                    RPC_C_LISTEN_MAX_CALLS_DEFAULT, NULL);
+  }
+  else
+    status = RpcServerRegisterIf(s_IServer_v0_0_s_ifspec, NULL, NULL);
   ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %ld\n", status);
   status = RpcServerListen(1, 20, TRUE);
   ok(status == RPC_S_OK, "RpcServerListen failed with status %ld\n", status);
