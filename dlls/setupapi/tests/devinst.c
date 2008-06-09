@@ -183,6 +183,33 @@ cleanup:
     return ret;
 }
 
+static void clean_devclass_key(void)
+{
+    static const WCHAR devclass[] = {'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'C','o','n','t','r','o','l','\\','D','e','v','i','c','e','C','l','a','s','s','e','s','\\',
+     '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
+     '1','1','d','b','-','b','7','0','4','-',
+     '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
+    HKEY key;
+    DWORD subkeys;
+
+    /* Check if we have subkeys as Windows 2000 doesn't delete
+     * the keys under the DeviceClasses key after a SetupDiDestroyDeviceInfoList.
+     */
+    RegOpenKeyW(HKEY_LOCAL_MACHINE, devclass, &key);
+    RegQueryInfoKey(key, NULL, NULL, NULL, &subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (subkeys > 0)
+    {
+        trace("We are most likely on Windows 2000\n");
+        devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, devclass);
+    }
+    else
+    {
+        ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, devclass),
+         "Couldn't delete deviceclass key\n");
+    }
+}
 
 static void test_SetupDiCreateDeviceInfoListEx(void) 
 {
@@ -704,8 +731,7 @@ static void testCreateDeviceInterface(void)
         /* Cleanup */
         /* FIXME: On Wine we still have the bogus entry in Enum\Root and
          * subkeys, as well as the deviceclass key with subkeys.
-         * Only do the RegDeleteKey (and RegDeleteTree on Windows 2000),
-         * once Wine is fixed.
+         * Only clean the deviceclass key once Wine if fixed.
          */
         if (!RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key))
         {
@@ -716,23 +742,7 @@ static void testCreateDeviceInterface(void)
         }
         else
         {
-            DWORD subkeys;
-
-            /* Check if we have subkeys as Windows 2000 doesn't delete
-             * the keys under the DeviceClasses key
-             */
-            RegOpenKeyW(HKEY_LOCAL_MACHINE, devclass, &key);
-            RegQueryInfoKey(key, NULL, NULL, NULL, &subkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-            if (subkeys > 0)
-            {
-                trace("We are most likely on Windows 2000\n");
-                devinst_RegDeleteTreeW(HKEY_LOCAL_MACHINE, devclass);
-            }
-            else
-            {
-                ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, devclass),
-                 "Couldn't delete deviceclass key\n");
-            }
+            clean_devclass_key();
         }
     }
 }
@@ -865,8 +875,7 @@ static void testGetDeviceInterfaceDetail(void)
         }
         else
         {
-            ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, devclass),
-             "Couldn't delete deviceclass key\n");
+            clean_devclass_key();
         }
     }
 }
@@ -1125,11 +1134,7 @@ static void testRegisterAndGetDetail(void)
     }
     else
     {
-        /* There should only be a class key entry, so a simple
-         * RegDeleteKey should work
-         */
-        ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, devclass),
-         "Couldn't delete classkey\n");
+        clean_devclass_key();
     }
 }
 
