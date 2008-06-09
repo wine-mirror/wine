@@ -536,6 +536,9 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI NDR_SCONTEXT RPC_ENTRY
   NdrServerContextNewUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat );
 
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcSmDestroyClientContext( void **ContextHandle );
+
 RPCRTAPI void RPC_ENTRY
   RpcSsDestroyClientContext( void **ContextHandle );
 
