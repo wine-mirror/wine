@@ -2301,6 +2301,8 @@ BOOL WINAPI EnumEnhMetaFile(
 
     ht = (HANDLETABLE*) &info[1];
     ht->objectHandle[0] = hmf;
+    for(i = 1; i < emh->nHandles; i++)
+        ht->objectHandle[i] = NULL;
 
     if(hdc)
     {
