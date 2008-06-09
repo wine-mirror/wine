@@ -28,6 +28,9 @@
 
 #include "wine/test.h"
 
+/* Deprecated Error Code */
+#define XML_E_INVALIDATROOTLEVEL    0xc00ce556
+
 static void append_str(char **str, const char *data)
 {
     sprintf(*str, data);
@@ -113,7 +116,10 @@ static void test_xmldoc(void)
     ok(element == NULL, "Expected NULL element\n");
 
     hr = IPersistStreamInit_Load(psi, stream);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK || hr == XML_E_INVALIDATROOTLEVEL, "Expected S_OK, got %08x\n", hr);
+    if(hr == XML_E_INVALIDATROOTLEVEL)
+        goto cleanup;
+
     ok(stream != NULL, "Expected non-NULL stream\n");
 
     hr = IXMLDocument_get_root(doc, &element);
@@ -234,6 +240,7 @@ static void test_xmldoc(void)
     IXMLElement_Release(child);
     IXMLElementCollection_Release(collection);
     IXMLElement_Release(element);
+cleanup:
     IStream_Release(stream);
     IPersistStreamInit_Release(psi);
     IXMLDocument_Release(doc);

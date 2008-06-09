@@ -30,6 +30,8 @@
 
 #include "wine/test.h"
 
+#define ERROR_URL_NOT_FOUND 0x800c0006
+
 static void test_xmlelem(void)
 {
     HRESULT hr;
@@ -281,8 +283,12 @@ static void test_xmlelem_collection(void)
 
     url = SysAllocString(path);
     hr = IXMLDocument_put_URL(doc, url);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    /* Win98 returns ERROR_URL_NOT_FOUND */
+    ok(hr == S_OK || hr == ERROR_URL_NOT_FOUND, "Expected S_OK, got 0x%08x\n", hr);
     SysFreeString(url);
+
+    if(hr == ERROR_URL_NOT_FOUND)
+        goto cleanup;
 
     hr = IXMLDocument_get_root(doc, &element);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
@@ -434,6 +440,7 @@ static void test_xmlelem_collection(void)
     IEnumVARIANT_Release(enumVar);
     IXMLElement_Release(element);
     IXMLElementCollection_Release(collection);
+cleanup:
     IXMLDocument_Release(doc);
     DeleteFileA("bank.xml");
 }
