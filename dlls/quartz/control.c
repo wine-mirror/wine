@@ -782,11 +782,17 @@ static HRESULT WINAPI MediaSeekingPassThru_SetTimeFormat(IMediaSeeking * iface, 
 static HRESULT WINAPI MediaSeekingPassThru_GetDuration(IMediaSeeking * iface, LONGLONG * pDuration)
 {
     ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    PIN_INFO info;
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%p)\n", iface, This, pDuration);
 
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    IPin_QueryPinInfo(This->pin, &info);
+
+    hr = ForwardCmdSeek(NULL, info.pFilter, fwd_getduration, pDuration);
+    IBaseFilter_Release(info.pFilter);
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaSeekingPassThru_GetStopPosition(IMediaSeeking * iface, LONGLONG * pStop)
@@ -823,11 +829,21 @@ static HRESULT WINAPI MediaSeekingPassThru_ConvertTimeFormat(IMediaSeeking * ifa
 static HRESULT WINAPI MediaSeekingPassThru_SetPositions(IMediaSeeking * iface, LONGLONG * pCurrent, DWORD dwCurrentFlags, LONGLONG * pStop, DWORD dwStopFlags)
 {
     ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
+    struct pos_args args;
+    PIN_INFO info;
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%p, %p)\n", iface, This, pCurrent, pStop);
+    args.current = pCurrent;
+    args.stop = pStop;
+    args.curflags = dwCurrentFlags;
+    args.stopflags = dwStopFlags;
 
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    IPin_QueryPinInfo(This->pin, &info);
+
+    hr = ForwardCmdSeek(NULL, info.pFilter, fwd_setposition, &args);
+    IBaseFilter_Release(info.pFilter);
+    return hr;
 }
 
 static HRESULT WINAPI MediaSeekingPassThru_GetPositions(IMediaSeeking * iface, LONGLONG * pCurrent, LONGLONG * pStop)
