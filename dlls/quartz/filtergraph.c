@@ -1555,9 +1555,9 @@ static HRESULT WINAPI MediaControl_Invoke(IMediaControl *iface,
     return S_OK;
 }
 
-typedef HRESULT(WINAPI *fnFoundFilter)(IBaseFilter *);
+typedef HRESULT(WINAPI *fnFoundFilter)(IBaseFilter *, DWORD_PTR data);
 
-static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundFilter FoundFilter)
+static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundFilter FoundFilter, DWORD_PTR data)
 {
     HRESULT hr;
     IPin* pInputPin;
@@ -1594,7 +1594,7 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
                 /* Explore the graph downstream from this pin
 		 * FIXME: We should prevent exploring from a pin more than once. This can happens when
 		 * several input pins are connected to the same output (a MUX for instance). */
-                ExploreGraph(pGraph, ppPins[i], FoundFilter);
+                ExploreGraph(pGraph, ppPins[i], FoundFilter, data);
                 IPin_Release(ppPins[i]);
             }
 
@@ -1602,14 +1602,15 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundF
         }
         TRACE("Doing stuff with filter %p\n", PinInfo.pFilter);
 
-        FoundFilter(PinInfo.pFilter);
+        FoundFilter(PinInfo.pFilter, data);
     }
 
     if (PinInfo.pFilter) IBaseFilter_Release(PinInfo.pFilter);
     return hr;
 }
 
-static HRESULT WINAPI SendRun(IBaseFilter *pFilter) {
+static HRESULT WINAPI SendRun(IBaseFilter *pFilter, DWORD_PTR data)
+{
     LONGLONG time = 0;
     IReferenceClock *clock = NULL;
 
@@ -1628,15 +1629,39 @@ static HRESULT WINAPI SendRun(IBaseFilter *pFilter) {
     return IBaseFilter_Run(pFilter, time);
 }
 
-static HRESULT WINAPI SendPause(IBaseFilter *pFilter) {
+static HRESULT WINAPI SendPause(IBaseFilter *pFilter, DWORD_PTR data)
+{
     return IBaseFilter_Pause(pFilter);
 }
 
-static HRESULT WINAPI SendStop(IBaseFilter *pFilter) {
+static HRESULT WINAPI SendStop(IBaseFilter *pFilter, DWORD_PTR data)
+{
     return IBaseFilter_Stop(pFilter);
 }
 
-static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter) {
+static HRESULT WINAPI SendGetState(IBaseFilter *pFilter, DWORD_PTR data)
+{
+    FILTER_STATE state;
+    DWORD time_end = data;
+    DWORD time_now = GetTickCount();
+    LONG wait;
+
+    if (time_end == INFINITE)
+    {
+        wait = INFINITE;
+    }
+    else if (time_end > time_now)
+    {
+        wait = time_end - time_now;
+    }
+    else
+        wait = 0;
+
+    return IBaseFilter_GetState(pFilter, wait, &state);
+}
+
+
+static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter, DWORD_PTR data) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     int i;
     IBaseFilter* pfilter;
@@ -1680,10 +1705,10 @@ static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter
             while(IEnumPins_Next(pEnum, 1, &pPin, &dummy) == S_OK)
             {
                 /* Explore the graph downstream from this pin */
-                ExploreGraph(This, pPin, FoundFilter);
+                ExploreGraph(This, pPin, FoundFilter, data);
                 IPin_Release(pPin);
             }
-            FoundFilter(pfilter);
+            FoundFilter(pfilter, data);
         }
         IEnumPins_Release(pEnum);
     }
@@ -1709,7 +1734,7 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface) {
     }
     else This->position = This->start_time = 0;
 
-    SendFilterMessage(iface, SendRun);
+    SendFilterMessage(iface, SendRun, 0);
     This->state = State_Running;
     LeaveCriticalSection(&This->cs);
     return S_FALSE;
@@ -1732,7 +1757,7 @@ static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface) {
         This->position += time - This->start_time;
     }
 
-    SendFilterMessage(iface, SendPause);
+    SendFilterMessage(iface, SendPause, 0);
     This->state = State_Paused;
     LeaveCriticalSection(&This->cs);
     return S_FALSE;
@@ -1752,8 +1777,8 @@ static HRESULT WINAPI MediaControl_Stop(IMediaControl *iface) {
         This->position += time - This->start_time;
     }
 
-    if (This->state == State_Running) SendFilterMessage(iface, SendPause);
-    SendFilterMessage(iface, SendStop);
+    if (This->state == State_Running) SendFilterMessage(iface, SendPause, 0);
+    SendFilterMessage(iface, SendStop, 0);
     This->state = State_Stopped;
     LeaveCriticalSection(&This->cs);
     return S_OK;
@@ -1763,8 +1788,9 @@ static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface,
 					    LONG msTimeout,
 					    OAFilterState *pfs) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
+    DWORD end;
 
-    TRACE("(%p/%p)->(%d, %p): semi-stub !!!\n", This, iface, msTimeout, pfs);
+    TRACE("(%p/%p)->(%d, %p)\n", This, iface, msTimeout, pfs);
 
     if (!pfs)
         return E_POINTER;
@@ -1772,6 +1798,20 @@ static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface,
     EnterCriticalSection(&This->cs);
 
     *pfs = This->state;
+    if (msTimeout > 0)
+    {
+        end = GetTickCount() + msTimeout;
+    }
+    else if (msTimeout < 0)
+    {
+        end = INFINITE;
+    }
+    else
+    {
+        end = 0;
+    }
+    if (end)
+        SendFilterMessage(iface, SendGetState, end);
 
     LeaveCriticalSection(&This->cs);
 
