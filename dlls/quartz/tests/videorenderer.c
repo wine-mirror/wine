@@ -68,6 +68,8 @@ static void test_query_interface(void)
     RELEASE_EXPECT(pBaseFilter, 1);
     QI_SUCCEED(pVideoRenderer, IID_IBasicVideo, pBasicVideo);
     RELEASE_EXPECT(pBasicVideo, 1);
+    QI_SUCCEED(pVideoRenderer, IID_IMediaSeeking, pMediaSeeking);
+    RELEASE_EXPECT(pMediaSeeking, 1);
     todo_wine {
     QI_SUCCEED(pVideoRenderer, IID_IDirectDrawVideo, pDirectDrawVideo);
     RELEASE_EXPECT(pDirectDrawVideo, 1);
@@ -75,8 +77,6 @@ static void test_query_interface(void)
     RELEASE_EXPECT(pKsPropertySet, 1);
     QI_SUCCEED(pVideoRenderer, IID_IMediaPosition, pMediaPosition);
     RELEASE_EXPECT(pMediaPosition, 1);
-    QI_SUCCEED(pVideoRenderer, IID_IMediaSeeking, pMediaSeeking);
-    RELEASE_EXPECT(pMediaSeeking, 1);
     QI_SUCCEED(pVideoRenderer, IID_IQualityControl, pQualityControl);
     RELEASE_EXPECT(pQualityControl, 1);
     QI_SUCCEED(pVideoRenderer, IID_IQualProp, pQualProp);

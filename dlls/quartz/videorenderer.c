@@ -86,6 +86,7 @@ typedef struct VideoRendererImpl
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
     REFERENCE_TIME rtLastStop;
+    MediaSeekingImpl mediaSeeking;
 } VideoRendererImpl;
 
 static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -482,6 +483,62 @@ static HRESULT VideoRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt
     return S_FALSE;
 }
 
+static inline VideoRendererImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (VideoRendererImpl *)((char*)iface - FIELD_OFFSET(VideoRendererImpl, mediaSeeking.lpVtbl));
+}
+
+static HRESULT WINAPI VideoRendererImpl_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
+{
+    VideoRendererImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
+}
+
+static ULONG WINAPI VideoRendererImpl_Seeking_AddRef(IMediaSeeking * iface)
+{
+    VideoRendererImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_AddRef((IUnknown *)This);
+}
+
+static ULONG WINAPI VideoRendererImpl_Seeking_Release(IMediaSeeking * iface)
+{
+    VideoRendererImpl *This = impl_from_IMediaSeeking(iface);
+
+    return IUnknown_Release((IUnknown *)This);
+}
+
+static const IMediaSeekingVtbl VideoRendererImpl_Seeking_Vtbl =
+{
+    VideoRendererImpl_Seeking_QueryInterface,
+    VideoRendererImpl_Seeking_AddRef,
+    VideoRendererImpl_Seeking_Release,
+    MediaSeekingImpl_GetCapabilities,
+    MediaSeekingImpl_CheckCapabilities,
+    MediaSeekingImpl_IsFormatSupported,
+    MediaSeekingImpl_QueryPreferredFormat,
+    MediaSeekingImpl_GetTimeFormat,
+    MediaSeekingImpl_IsUsingTimeFormat,
+    MediaSeekingImpl_SetTimeFormat,
+    MediaSeekingImpl_GetDuration,
+    MediaSeekingImpl_GetStopPosition,
+    MediaSeekingImpl_GetCurrentPosition,
+    MediaSeekingImpl_ConvertTimeFormat,
+    MediaSeekingImpl_SetPositions,
+    MediaSeekingImpl_GetPositions,
+    MediaSeekingImpl_GetAvailable,
+    MediaSeekingImpl_SetRate,
+    MediaSeekingImpl_GetRate,
+    MediaSeekingImpl_GetPreroll
+};
+
+static HRESULT VideoRendererImpl_Change(IBaseFilter *iface)
+{
+    TRACE("(%p)\n", iface);
+    return S_OK;
+}
+
 HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -525,6 +582,9 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
+        MediaSeekingImpl_Init((IBaseFilter*)pVideoRenderer, VideoRendererImpl_Change, VideoRendererImpl_Change, VideoRendererImpl_Change, &pVideoRenderer->mediaSeeking, &pVideoRenderer->csFilter);
+        pVideoRenderer->mediaSeeking.lpVtbl = &VideoRendererImpl_Seeking_Vtbl;
+
         *ppv = (LPVOID)pVideoRenderer;
     }
     else
@@ -568,6 +628,8 @@ static HRESULT WINAPI VideoRendererInner_QueryInterface(IUnknown * iface, REFIID
         *ppv = (LPVOID)&(This->IBasicVideo_vtbl);
     else if (IsEqualIID(riid, &IID_IVideoWindow))
         *ppv = (LPVOID)&(This->IVideoWindow_vtbl);
+    else if (IsEqualIID(riid, &IID_IMediaSeeking))
+        *ppv = &This->mediaSeeking;
 
     if (*ppv)
     {
