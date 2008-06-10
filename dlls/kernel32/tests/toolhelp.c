@@ -170,7 +170,8 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
         {
             if (te.th32OwnerProcessID == curr_pid) curr_found++;
             if (te.th32OwnerProcessID == sub_pcs_pid) sub_found++;
-            trace("PID=%x TID=%x %d\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
+            if (winetest_debug > 1)
+                trace("PID=%x TID=%x %d\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
             num++;
         } while (pThread32Next( hSnapshot, &te ));
     }
@@ -186,7 +187,8 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
         {
             if (te.th32OwnerProcessID == curr_pid) curr_found++;
             if (te.th32OwnerProcessID == sub_pcs_pid) sub_found++;
-            trace("PID=%x TID=%x %d\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
+            if (winetest_debug > 1)
+                trace("PID=%x TID=%x %d\n", te.th32OwnerProcessID, te.th32ThreadID, te.tpBasePri);
             num--;
         } while (pThread32Next( hSnapshot, &te ));
     }
