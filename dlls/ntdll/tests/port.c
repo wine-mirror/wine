@@ -225,6 +225,9 @@ static DWORD WINAPI test_ports_client(LPVOID arg)
     ok(!lstrcmp((LPSTR)out->Data, REPLY), "Expected %s, got %s\n", REPLY, out->Data);
     ok(out->MessageType == LPC_REPLY, "Expected LPC_REPLY, got %d\n", out->MessageType);
 
+    HeapFree(GetProcessHeap(), 0, out);
+    HeapFree(GetProcessHeap(), 0, LpcMessage);
+
     return 0;
 }
 
@@ -290,6 +293,7 @@ static void test_ports_server(void)
 
             case LPC_CLIENT_DIED:
                 ok(done, "Expected LPC request to be completed!\n");
+                HeapFree(GetProcessHeap(), 0, LpcMessage);
                 return;
 
             default:
@@ -297,6 +301,8 @@ static void test_ports_server(void)
                 break;
         }
     }
+
+    HeapFree(GetProcessHeap(), 0, LpcMessage);
 }
 
 START_TEST(port)
