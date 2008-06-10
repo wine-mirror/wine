@@ -222,25 +222,23 @@ STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
 IDS_LICENSE_CAPTION,            "LICENCE"
 IDS_LICENSE,
-"Cette bibliothèque est libre, vous pouvez la redistribuer et/ou \
-la modifier selon les termes de la Licence Publique Générale GNU \
-Limitée publiée par la Free Software Foundation (version 2.1 ou \
-bien toute autre version ultérieure choisie par vous).\n\
-Cette bibliothèque est distribuée car potentiellement utile, \
-mais SANS AUCUNE GARANTIE, ni explicite ni implicite, y compris \
-les garanties de commercialisation ou d'adaptation dans un but \
-spécifique. Reportez-vous à la Licence Publique Générale GNU \
-Limitée pour plus de détails.\n\
-Vous devez avoir reçu une copie de la Licence Publique Générale \
-GNU Limitée en même temps que cette bibliothèque ; si ce n'est pas \
-le cas, écrivez à la Free Software Foundation, Inc., 51 Franklin St, \
-Fifth Floor, Boston, MA 02111-1301, États-Unis."
+"Ce programme est un logiciel libre ; vous pouvez le redistribuer et/ou \
+le modifier suivant les termes de la Licence Générale Publique Limitée GNU \
+telle que publiée par la Free Software Foundation ; soit la version 2.1 \
+de la License, soit (à votre gré) toute version ultérieure.\n\
+Ce programme est distribué dans l'espoir qu'il sera utile, mais \
+SANS AUCUNE GARANTIE : sans même la garantie implicite de \
+COMMERCIALISABILITÉ ou d'ADÉQUATION À UN OBJECTIF PARTICULIER. Consultez \
+la Licence Générale Publique Limitée pour plus de détails.\n\
+Vous devriez avoir reçu une copie de la Licence Générale Publique Limitée \
+GNU avec ce programme ; si ce n'est pas le cas, écrivez à la : \
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, \
+MA 02110-1301, USA."
 
 IDS_WARRANTY_CAPTION, "AUCUNE GARANTIE"
 IDS_WARRANTY,
-"Cette bibliothèque est distribuée car potentiellement utile, \
-mais SANS AUCUNE GARANTIE, ni explicite ni implicite, y compris \
-les garanties de commercialisation ou d'adaptation dans un but \
-spécifique. Reportez-vous à la Licence Publique Générale GNU \
-Limitée pour plus de détails."
+"Ce programme est distribué dans l'espoir qu'il sera utile, mais \
+SANS AUCUNE GARANTIE : sans même la garantie implicite de \
+COMMERCIALISABILITÉ ou d'ADÉQUATION À UN OBJECTIF PARTICULIER. Consultez \
+la Licence Générale Publique Limitée pour plus de détails."
 }
