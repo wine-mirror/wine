@@ -560,8 +560,8 @@ static void test_readdirectorychanges(void)
     pfni = (PFILE_NOTIFY_INFORMATION) buffer;
     ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
     ok( pfni->Action == FILE_ACTION_ADDED, "action wrong\n" );
-    ok( pfni->FileNameLength == 0x0c, "len wrong\n" );
-    ok( !memcmp(pfni->FileName,&szGa[1],6), "name wrong\n" );
+    ok( pfni->FileNameLength == 6*sizeof(WCHAR), "len wrong\n" );
+    ok( !memcmp(pfni->FileName,&szGa[1],6*sizeof(WCHAR)), "name wrong\n" );
 
     r = RemoveDirectoryW( subsubdir );
     ok( r == TRUE, "failed to remove directory\n");
@@ -578,13 +578,21 @@ static void test_readdirectorychanges(void)
     ok( r == WAIT_OBJECT_0, "should be ready\n" );
 
     pfni = (PFILE_NOTIFY_INFORMATION) buffer;
-    ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
-    ok( pfni->Action == FILE_ACTION_REMOVED, "action wrong\n" );
-    ok( pfni->FileNameLength == 0x0c, "len wrong\n" );
-    ok( !memcmp(pfni->FileName,&szGa[1],6), "name wrong\n" );
+    /* we may get a notification for the parent dir too */
+    if (pfni->Action == FILE_ACTION_MODIFIED && pfni->NextEntryOffset)
+    {
+        ok( pfni->FileNameLength == 3*sizeof(WCHAR), "len wrong %u\n", pfni->FileNameLength );
+        ok( !memcmp(pfni->FileName,&szGa[1],3*sizeof(WCHAR)), "name wrong\n" );
+        pfni = (PFILE_NOTIFY_INFORMATION)((char *)pfni + pfni->NextEntryOffset);
+    }
+    ok( pfni->NextEntryOffset == 0, "offset wrong %u\n", pfni->NextEntryOffset );
+    ok( pfni->Action == FILE_ACTION_REMOVED, "action wrong %u\n", pfni->Action );
+    ok( pfni->FileNameLength == 6*sizeof(WCHAR), "len wrong %u\n", pfni->FileNameLength );
+    ok( !memcmp(pfni->FileName,&szGa[1],6*sizeof(WCHAR)), "name wrong\n" );
 
     ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
-    ok( ov.InternalHigh == 0x18, "ov.InternalHigh wrong\n");
+    dwCount = (char *)&pfni->FileName[pfni->FileNameLength/sizeof(WCHAR)] - buffer;
+    ok( ov.InternalHigh == dwCount, "ov.InternalHigh wrong %lu/%u\n",ov.InternalHigh, dwCount );
 
     CloseHandle(hdir);
 
