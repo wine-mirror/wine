@@ -4304,6 +4304,9 @@ static void test_writeregistryvalues(void)
     DeleteFile(msifile);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
+
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine");
 }
 
 static void test_sourcefolder(void)
