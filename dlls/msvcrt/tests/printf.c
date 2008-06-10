@@ -206,8 +206,11 @@ static void test_sprintf( void )
 
     format = "%lld";
     r = sprintf(buffer,format,((ULONGLONG)0xffffffff)*0xffffffff);
-    ok(!strcmp(buffer, "1"), "Problem with \"ll\" interpretation\n");
-    ok( r==1, "return count wrong\n");
+    ok( r == 1 || r == 11, "return count wrong %d\n", r);
+    if (r == 11)  /* %ll works on Vista */
+        ok(!strcmp(buffer, "-8589934591"), "Problem with \"ll\" interpretation '%s'\n", buffer);
+    else
+        ok(!strcmp(buffer, "1"), "Problem with \"ll\" interpretation '%s'\n", buffer);
 
     format = "%I";
     r = sprintf(buffer,format,1);
@@ -516,16 +519,6 @@ static void test_swprintf( void )
    ok( wcscmp(string_w,buffer) == 0, "swprintf failed with %%hs\n");
 }
 
-static void test_fwprintf( void )
-{
-    const char *string="not a wide string";
-    todo_wine
-      {
-        ok(fwprintf(fopen("nul","r+"),(const wchar_t *)string) == -1,
-           "Non-wide string should not be printed by fwprintf\n");
-      }
-}
-
 static void test_snprintf (void)
 {
     struct snprintf_test {
@@ -655,7 +648,6 @@ START_TEST(printf)
 {
     test_sprintf();
     test_swprintf();
-    test_fwprintf();
     test_snprintf();
     test_fcvt();
 }
