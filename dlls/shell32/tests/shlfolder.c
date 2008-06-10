@@ -432,6 +432,12 @@ static void test_GetDisplayName(void)
     if (SUCCEEDED(hr)) {
         IShellFolder_Release(psfFile);
     }
+
+    if(!pSHBindToParent)
+    {
+        skip("SHBindToParent is missing\n");
+        return;
+    }
   
     /* Some tests for IShellFolder::SetNameOf */
     hr = pSHBindToParent(pidlTestFile, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast);
@@ -473,8 +479,6 @@ static void test_GetDisplayName(void)
         ok (result, "SHGetPathFromIDListW failed! Last error: %u\n", GetLastError());
         ok (!lstrcmpiW(wszTestFile, wszTestFile2), "SHGetPathFromIDListW returns incorrect path!\n");
     }
-
-    if(!pSHBindToParent) return;
 
     /* SHBindToParent fails, if called with a NULL PIDL. */
     hr = pSHBindToParent(NULL, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast);
