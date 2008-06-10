@@ -450,11 +450,11 @@ static void test_MapViewOfFile(void)
     DeleteFileA( testfile );
 
     SetLastError(0xdeadbeef);
-    file = CreateFileMapping( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "Global\\Foo");
+    file = CreateFileMapping( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "Local\\Foo");
     ok( file != 0, "CreateFileMapping PAGE_READWRITE error %u\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
-    mapping = OpenFileMapping( FILE_MAP_READ, FALSE, "Global\\Foo" );
+    mapping = OpenFileMapping( FILE_MAP_READ, FALSE, "Local\\Foo" );
     ok( mapping != 0, "OpenFileMapping FILE_MAP_READ error %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
@@ -476,7 +476,7 @@ todo_wine ok( info.Protect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.Prote
     CloseHandle( mapping );
 
     SetLastError(0xdeadbeef);
-    mapping = OpenFileMapping( FILE_MAP_WRITE, FALSE, "Global\\Foo" );
+    mapping = OpenFileMapping( FILE_MAP_WRITE, FALSE, "Local\\Foo" );
     ok( mapping != 0, "OpenFileMapping FILE_MAP_WRITE error %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
