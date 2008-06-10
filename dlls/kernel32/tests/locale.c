@@ -1954,7 +1954,7 @@ static void test_FoldStringW(void)
     EXPECT_LEN(sizeof(ligatures_dst)/sizeof(ligatures_dst[0])); EXPECT_VALID;
     ok(!memcmp(dst, ligatures_dst, sizeof(ligatures_dst)),
        "MAP_EXPAND_LIGATURES: Expanded incorrectly\n");
-    for (i = 1; i <= 0xffff; i++)
+    for (i = 1, failures = 0; i <= 0xffff; i++)
     {
       if (!strchrW(ligatures_src, i))
       {
@@ -1963,9 +1963,18 @@ static void test_FoldStringW(void)
         SetLastError(0);
         ret = pFoldStringW(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
         EXPECT_LEN(2); EXPECT_VALID;
-        ok(dst[0] == src[0],
-           "MAP_EXPAND_LIGATURES: 0x%02x : Expected 0x%02x, got 0x%02x\n",
-           i, src[0], dst[0]);
+        if (ret == 3)
+            ok(0, "MAP_EXPAND_LIGATURES: %04x : Expected %04x, got %04x %04x\n",
+               i, src[0], dst[0], dst[1]);
+        else
+            ok(dst[0] == src[0],
+               "MAP_EXPAND_LIGATURES: %04x : Expected %04x, got %04x\n",
+               i, src[0], dst[0]);
+        if (dst[0] != src[0] && ++failures > 50)
+        {
+            trace( "MAP_EXPAND_LIGATURES: Too many failures, giving up\n" );
+            break;
+        }
       }
     }
   }
