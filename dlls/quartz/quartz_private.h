@@ -33,6 +33,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "dshow.h"
+#include "wine/list.h"
 
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 #define SEC_FROM_MEDIATIME(time) ((time) / 10000000)
@@ -83,5 +84,50 @@ void DeleteMediaType(AM_MEDIA_TYPE * pmt);
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
 HRESULT updatehres( HRESULT original, HRESULT new );
+
+typedef struct StdMediaSample2
+{
+    const IMediaSample2Vtbl * lpvtbl;
+
+    LONG ref;
+    AM_SAMPLE2_PROPERTIES props;
+    IMemAllocator * pParent;
+    struct list listentry;
+    LONGLONG tMediaStart;
+    LONGLONG tMediaEnd;
+} StdMediaSample2;
+
+typedef struct BaseMemAllocator
+{
+    const IMemAllocatorVtbl * lpVtbl;
+
+    LONG ref;
+    ALLOCATOR_PROPERTIES props;
+    HRESULT (* fnAlloc) (IMemAllocator *);
+    HRESULT (* fnFree)(IMemAllocator *);
+    HRESULT (* fnVerify)(IMemAllocator *, ALLOCATOR_PROPERTIES *);
+    HRESULT (* fnBufferPrepare)(IMemAllocator *, StdMediaSample2 *, DWORD flags);
+    HRESULT (* fnBufferReleased)(IMemAllocator *, StdMediaSample2 *);
+    void (* fnDestroyed)(IMemAllocator *);
+    HANDLE hSemWaiting;
+    BOOL bDecommitQueued;
+    BOOL bCommitted;
+    LONG lWaiting;
+    struct list free_list;
+    struct list used_list;
+    CRITICAL_SECTION *pCritSect;
+} BaseMemAllocator;
+
+HRESULT BaseMemAllocator_Init(HRESULT (* fnAlloc)(IMemAllocator *),
+                              HRESULT (* fnFree)(IMemAllocator *),
+                              HRESULT (* fnVerify)(IMemAllocator *, ALLOCATOR_PROPERTIES *),
+                              HRESULT (* fnBufferPrepare)(IMemAllocator *, StdMediaSample2 *, DWORD),
+                              HRESULT (* fnBufferReleased)(IMemAllocator *, StdMediaSample2 *),
+                              void (* fnDestroyed)(IMemAllocator *),
+                              CRITICAL_SECTION *pCritSect,
+                              BaseMemAllocator * pMemAlloc);
+
+HRESULT StdMediaSample2_Construct(BYTE * pbBuffer, LONG cbBuffer, IMemAllocator * pParent, StdMediaSample2 ** ppSample);
+void StdMediaSample2_Delete(StdMediaSample2 * This);
 
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */
