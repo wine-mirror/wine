@@ -138,8 +138,8 @@ static void print_version (void)
 
     xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
     xprintf ("    bRunningOnVisibleDesktop=%d\n", running_on_visible_desktop ());
-    xprintf ("    dwMajorVersion=%ld\n    dwMinorVersion=%ld\n"
-             "    dwBuildNumber=%ld\n    PlatformId=%ld\n    szCSDVersion=%s\n",
+    xprintf ("    dwMajorVersion=%u\n    dwMinorVersion=%u\n"
+             "    dwBuildNumber=%u\n    PlatformId=%u\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
              ver.dwPlatformId, ver.szCSDVersion);
 
