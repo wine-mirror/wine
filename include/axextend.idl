@@ -993,3 +993,20 @@ interface ISeekingPassThru : IUnknown
 {
     HRESULT Init( [in] BOOL bSupportRendering, [in] IPin *pPin);
 }
+
+enum _AM_FILTER_MISC_FLAGS
+{
+    AM_FILTER_MISC_FLAGS_IS_RENDERER = 0x1,
+    AM_FILTER_MISC_FLAGS_IS_SOURCE = 0x2
+};
+
+[
+    local,
+    object,
+    uuid(2dd74950-a890-11d1-abe8-00a0c905f375),
+    pointer_default(unique)
+]
+interface IAMFilterMiscFlags : IUnknown
+{
+    ULONG GetMiscFlags();
+};
