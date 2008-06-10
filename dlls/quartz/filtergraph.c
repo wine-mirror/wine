@@ -928,6 +928,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface,
     GUID tab[2];
     ULONG nb;
     IMoniker* pMoniker;
+    INT x;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppinOut);
 
@@ -943,11 +944,75 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface,
         IBaseFilter_Release(PinInfo.pFilter);
     }
 
+    /* Try to find out if there is a renderer for the specified subtype already, and use that
+     */
+    EnterCriticalSection(&This->cs);
+    for (x = 0; x < This->nFilters; ++x)
+    {
+        BOOL renderer = TRUE;
+        IEnumPins *enumpins = NULL;
+        IPin *pin = NULL;
+
+        hr = IBaseFilter_EnumPins(This->ppFiltersInGraph[x], &enumpins);
+
+        if (FAILED(hr) || !enumpins)
+            continue;
+
+        IEnumPins_Reset(enumpins);
+        while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
+        {
+            PIN_DIRECTION dir = PINDIR_OUTPUT;
+
+            IPin_QueryDirection(pin, &dir);
+            IPin_Release(pin);
+            pin = NULL;
+            if (dir != PINDIR_INPUT)
+            {
+                renderer = FALSE;
+                break;
+            }
+        }
+
+        IEnumPins_Reset(enumpins);
+        if (renderer == TRUE)
+        {
+            while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
+            {
+                IPin *to = NULL;
+
+                IPin_ConnectedTo(pin, &to);
+
+                if (to == NULL)
+                {
+                    hr = IFilterGraph2_Connect(iface, ppinOut, pin);
+                    if (SUCCEEDED(hr))
+                    {
+                        IPin_Release(pin);
+                        IEnumPins_Release(enumpins);
+                        LeaveCriticalSection(&This->cs);
+                        ERR("Connected succesfully\n");
+                        return hr;
+                    }
+                }
+                else
+                    IPin_Release(to);
+
+                IPin_Release(pin);
+            }
+        }
+
+        IEnumPins_Release(enumpins);
+    }
+
+    LeaveCriticalSection(&This->cs);
+
     hr = IPin_EnumMediaTypes(ppinOut, &penummt);
     if (FAILED(hr)) {
         ERR("EnumMediaTypes (%x)\n", hr);
         return hr;
     }
+
+    IEnumMediaTypes_Reset(penummt);
 
     while(1)
     {
@@ -1016,7 +1081,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface,
                goto error;
             }
 
-	    /* Connect the pin to render to the renderer */
+            /* Connect the pin to render to the renderer */
             hr = IFilterGraph2_Connect(iface, ppinOut, ppinfilter);
             if (FAILED(hr)) {
                 TRACE("Unable to connect to renderer (%x)\n", hr);
@@ -1033,10 +1098,10 @@ error:
                 IFilterGraph2_RemoveFilter(iface, pfilter);
                 IBaseFilter_Release(pfilter);
             }
-	}
-       
+        }
+
         DeleteMediaType(mt);
-        break;	
+        break;
     }
 
     IEnumMediaTypes_Release(penummt);
