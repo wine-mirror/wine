@@ -885,6 +885,9 @@ static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)&elcol);
     IDispatch_Release(disp);
     ok(hres == S_OK, "Could not get IHTMLElementCollection interface: %08x\n", hres);
+    if(hres != S_OK)
+        goto cleanup;
+
     test_elem_collection(elcol, elem_types, len);
     IHTMLElementCollection_Release(elcol);
 
@@ -916,6 +919,7 @@ static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
     ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
     ok(disp == NULL, "disp != NULL\n");
 
+cleanup:
     SysFreeString(V_BSTR(&name));
 }
 
