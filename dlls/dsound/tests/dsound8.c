@@ -432,7 +432,10 @@ static HRESULT test_primary8(LPGUID lpGuid)
        "DSERR_INVALIDPARAM, returned: rc=%s,dsbo=%p\n",
        DXGetErrorString8(rc),primary);
 
-    /* DSOUND: Error: Invalid buffer description pointer */
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize = sizeof(DSBUFFERDESC);
+
+    /* DSOUND: Error: Invalid dsound buffer interface pointer */
     rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,0,NULL);
     ok(rc==DSERR_INVALIDPARAM && primary==0,
        "IDirectSound8_CreateSoundBuffer() should have failed: rc=%s,"
