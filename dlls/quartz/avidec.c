@@ -117,14 +117,15 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
     cbDstStream = IMediaSample_GetSize(pOutSample);
     if (cbDstStream < This->pBihOut->biSizeImage) {
         ERR("Sample size is too small %d < %d\n", cbDstStream, This->pBihOut->biSizeImage);
-	hr = E_FAIL;
-	goto error;
+        hr = E_FAIL;
+        goto error;
     }
 
     res = ICDecompress(This->hvid, 0, This->pBihIn, pbSrcStream, This->pBihOut, pbDstStream);
     if (res != ICERR_OK)
         ERR("Error occurred during the decompression (%x)\n", res);
 
+    IMediaSample_SetActualDataLength(pOutSample, This->pBihOut->biSizeImage);
 
     IMediaSample_SetPreroll(pOutSample, (IMediaSample_IsPreroll(pSample) == S_OK));
     IMediaSample_SetDiscontinuity(pOutSample, (IMediaSample_IsDiscontinuity(pSample) == S_OK));
