@@ -571,8 +571,13 @@ static void HandleCommandLine(LPWSTR cmdline)
 
         if (cmdline[0] == '"')
         {
+            WCHAR* wc;
             cmdline++;
-            cmdline[lstrlen(cmdline) - 1] = 0;
+            wc=cmdline;
+            /* Note: Double-quotes are not allowed in Windows filenames */
+            while (*wc && *wc != '"') wc++;
+            /* On Windows notepad ignores further arguments too */
+            *wc = 0;
         }
 
         if (FileExists(cmdline))
