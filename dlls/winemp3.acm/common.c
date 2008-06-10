@@ -71,7 +71,7 @@ int head_check(unsigned long head)
 
 
 /*
- * the code a header and write the information
+ * decode a header and write the information
  * into the frame structure
  */
 int decode_header(struct frame *fr,unsigned long newhead)
@@ -127,10 +127,11 @@ int decode_header(struct frame *fr,unsigned long newhead)
         fr->framesize  = (long) tabsel_123[fr->lsf][0][fr->bitrate_index] * 12000;
         fr->framesize /= freqs[fr->sampling_frequency];
         fr->framesize  = ((fr->framesize+fr->padding)<<2)-4;
+        break;
 #else
         FIXME("Layer 1 not supported!\n");
+        return 0;
 #endif
-        break;
       case 2:
 #ifdef LAYER2
 #if 0
@@ -140,10 +141,11 @@ int decode_header(struct frame *fr,unsigned long newhead)
         fr->framesize = (long) tabsel_123[fr->lsf][1][fr->bitrate_index] * 144000;
         fr->framesize /= freqs[fr->sampling_frequency];
         fr->framesize += fr->padding - 4;
+        break;
 #else
         FIXME("Layer 2 not supported!\n");
+        return 0;
 #endif
-        break;
       case 3:
 #if 0
         fr->do_layer = do_layer3;

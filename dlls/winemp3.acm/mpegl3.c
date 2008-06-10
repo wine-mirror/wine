@@ -167,6 +167,8 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
     buffered_during = get_num_buffered_bytes(&amd->mp);
     if (ret != MP3_OK)
     {
+        if (ret == MP3_ERR)
+            FIXME("Error occured during decoding!\n");
         *ndst = *nsrc = 0;
         return;
     }
@@ -394,7 +396,7 @@ static	LRESULT	MPEG3_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
  *           MPEG3_Reset
  *
  */
-static	void	MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
+static void MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
 {
     ClearMP3Buffer(&aad->mp);
     InitMP3(&aad->mp);
@@ -540,7 +542,7 @@ static LRESULT MPEG3_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
      */
     if ((adsh->fdwConvert & ACM_STREAMCONVERTF_START))
     {
-	MPEG3_Reset(adsi, aad);
+        MPEG3_Reset(adsi, aad);
     }
 
     aad->convert(adsi, adsh->pbSrc, &nsrc, adsh->pbDst, &ndst);

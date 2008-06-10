@@ -170,12 +170,19 @@ int decodeMP3(struct mpstr *mp,const unsigned char *in,int isize,unsigned char *
 
 	/* First decode header */
 	if(mp->framesize == 0) {
+		int ret;
 		if(mp->bsize < 4) {
 			return MP3_NEED_MORE;
 		}
 		read_head(mp);
-		if (decode_header(&mp->fr,mp->header) == 0) {
-			return MP3_ERR;
+		while (!(ret = decode_header(&mp->fr,mp->header)) && mp->bsize)
+		{
+			mp->header = mp->header << 8;
+			mp->header |= read_buf_byte(mp);
+		}
+
+		if (!ret) {
+			return MP3_NEED_MORE;
 		}
 		mp->framesize = mp->fr.framesize;
 	}
