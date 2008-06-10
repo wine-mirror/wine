@@ -106,6 +106,7 @@ BEGIN
         MENUITEM "&Slet\tDel",                          ID_EDIT_DELETE
         MENUITEM "&Omdøb\tF2",                          ID_EDIT_RENAME
         MENUITEM SEPARATOR
+        MENUITEM "&Export...",                          ID_EDIT_EXPORT
         MENUITEM "&Kopier nøglenavn",                   ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Find\tCtrl+F",                       ID_EDIT_FIND, GRAYED
