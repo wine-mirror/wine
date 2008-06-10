@@ -1601,10 +1601,10 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     MSI_SetPropertyW(package, szCosting, szZero);
     MSI_SetPropertyW(package, cszRootDrive, c_colon);
 
+    load_all_folders( package );
     load_all_components( package );
     load_all_features( package );
     load_all_files( package );
-    load_all_folders( package );
 
     return ERROR_SUCCESS;
 }
