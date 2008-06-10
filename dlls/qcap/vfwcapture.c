@@ -80,6 +80,7 @@ typedef struct VfwPinImpl
 {
     OutputPin pin;
     Capture *driver_info;
+    VfwCapture *parent;
     const IKsPropertySetVtbl * KSP_VT;
 } VfwPinImpl;
 
@@ -617,6 +618,7 @@ PPB_Load( IPersistPropertyBag * iface, IPropertyBag *pPropBag,
         {
             pin = (VfwPinImpl *)This->pOutputPin;
             pin->driver_info = This->driver_info;
+            pin->parent = This;
             This->init = TRUE;
             hr = S_OK;
         }
@@ -783,6 +785,8 @@ static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * 
         *ppv = (LPVOID)This;
     else if (IsEqualIID(riid, &IID_IKsPropertySet))
         *ppv = (LPVOID)&(This->KSP_VT);
+    else if (IsEqualIID(riid, &IID_IAMStreamConfig))
+        return IUnknown_QueryInterface((IUnknown *)This->parent, riid, ppv);
 
     if (*ppv)
     {
