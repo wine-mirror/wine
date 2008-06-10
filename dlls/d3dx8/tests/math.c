@@ -233,6 +233,7 @@ static void D3DXMatrixTest(void)
 
 /*____________D3DXMatrixIsIdentity______________*/
     expected = FALSE;
+    memset(&mat3, 0, sizeof(mat3));
     got = D3DXMatrixIsIdentity(&mat3);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
     D3DXMatrixIdentity(&mat3);
