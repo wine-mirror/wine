@@ -29,6 +29,8 @@
 #include "objbase.h"
 #include "oleauto.h"
 #include "olectl.h"
+#include "d3d9.h"
+
 #include "initguid.h"
 
 #include "uuids.h"
@@ -36,3 +38,4 @@
 #include "control.h"
 #include "amstream.h"
 #include "qedit.h"
+#include "vmr9.h"
