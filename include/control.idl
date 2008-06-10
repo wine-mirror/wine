@@ -173,6 +173,17 @@ interface IBasicVideo : IDispatch
     HRESULT IsUsingDefaultDestination();
 }
 
+[
+    uuid(329bb360-f6ea-11d1-9038-00a0c9697298),
+    helpstring("IBasicVideo2"),
+    odl
+]
+
+interface IBasicVideo2 : IBasicVideo
+{
+    HRESULT GetPreferredAspectRatio([out] LONG *plAspectX, [out] LONG *plAspectY);
+}
+
 
 /*****************************************************************************
  * IMediaEvent interface
