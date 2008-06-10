@@ -521,7 +521,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     piInput.pFilter = (IBaseFilter *)pVideoRenderer;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    hr = InputPin_Construct(&VideoRenderer_InputPin_Vtbl, &piInput, VideoRenderer_Sample, (LPVOID)pVideoRenderer, VideoRenderer_QueryAccept, NULL, &pVideoRenderer->csFilter, (IPin **)&pVideoRenderer->pInputPin);
+    hr = InputPin_Construct(&VideoRenderer_InputPin_Vtbl, &piInput, VideoRenderer_Sample, (LPVOID)pVideoRenderer, VideoRenderer_QueryAccept, NULL, &pVideoRenderer->csFilter, NULL, (IPin **)&pVideoRenderer->pInputPin);
 
     if (SUCCEEDED(hr))
     {

@@ -198,7 +198,7 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     piInput.pFilter = (IBaseFilter *)pNullRenderer;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    hr = InputPin_Construct(&NullRenderer_InputPin_Vtbl, &piInput, NullRenderer_Sample, (LPVOID)pNullRenderer, NullRenderer_QueryAccept, NULL, &pNullRenderer->csFilter, (IPin **)&pNullRenderer->pInputPin);
+    hr = InputPin_Construct(&NullRenderer_InputPin_Vtbl, &piInput, NullRenderer_Sample, (LPVOID)pNullRenderer, NullRenderer_QueryAccept, NULL, &pNullRenderer->csFilter, NULL, (IPin **)&pNullRenderer->pInputPin);
 
     if (SUCCEEDED(hr))
     {

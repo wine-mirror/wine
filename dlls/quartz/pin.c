@@ -236,7 +236,7 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
 }
 
 static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData,
-                             QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, InputPin * pPinImpl)
+                             QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IMemAllocator *allocator, InputPin * pPinImpl)
 {
     TRACE("\n");
 
@@ -252,7 +252,9 @@ static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPi
     /* Input pin attributes */
     pPinImpl->fnSampleProc = pSampleProc;
     pPinImpl->fnCleanProc = pCleanUp;
-    pPinImpl->pAllocator = NULL;
+    pPinImpl->pAllocator = pPinImpl->preferred_allocator = allocator;
+    if (pPinImpl->preferred_allocator)
+        IMemAllocator_AddRef(pPinImpl->preferred_allocator);
     pPinImpl->tStart = 0;
     pPinImpl->tStop = 0;
     pPinImpl->dRate = 1.0;
@@ -299,7 +301,7 @@ static HRESULT OutputPin_Init(const IPinVtbl *OutputPin_Vtbl, const PIN_INFO * p
     return S_OK;
 }
 
-HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IMemAllocator *allocator, IPin ** ppPin)
 {
     InputPin * pPinImpl;
 
@@ -316,7 +318,7 @@ HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinI
     if (!pPinImpl)
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(InputPin_Init(InputPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCritSec, pPinImpl)))
+    if (SUCCEEDED(InputPin_Init(InputPin_Vtbl, pPinInfo, pSampleProc, pUserData, pQueryAccept, pCleanUp, pCritSec, allocator, pPinImpl)))
     {
         *ppPin = (IPin *)pPinImpl;
         return S_OK;
@@ -552,6 +554,8 @@ ULONG WINAPI InputPin_Release(IPin * iface)
         FreeMediaType(&This->pin.mtCurrent);
         if (This->pAllocator)
             IMemAllocator_Release(This->pAllocator);
+        This->pAllocator = NULL;
+        This->pin.lpVtbl = NULL;
         CoTaskMemFree(This);
         return 0;
     }
@@ -766,6 +770,9 @@ HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllocator *
         return E_POINTER;
     }
 
+    if (This->preferred_allocator && pAllocator != This->preferred_allocator)
+        return E_FAIL;
+
     if (This->pAllocator)
         IMemAllocator_Release(This->pAllocator);
     This->pAllocator = pAllocator;
@@ -824,9 +831,7 @@ HRESULT WINAPI MemInputPin_ReceiveCanBlock(IMemInputPin * iface)
 {
     InputPin *This = impl_from_IMemInputPin(iface);
 
-    FIXME("(%p/%p)->()\n", This, iface);
-
-    /* FIXME: we should check whether any output pins will block */
+    TRACE("(%p/%p)->()\n", This, iface);
 
     return S_OK;
 }

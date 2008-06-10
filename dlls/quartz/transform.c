@@ -187,7 +187,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
     piOutput.pFilter = (IBaseFilter *)pTransformFilter;
     lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
 
-    hr = InputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, TransformFilter_Sample, pTransformFilter, TransformFilter_Input_QueryAccept, NULL, &pTransformFilter->csFilter, &pTransformFilter->ppPins[0]);
+    hr = InputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, TransformFilter_Sample, pTransformFilter, TransformFilter_Input_QueryAccept, NULL, &pTransformFilter->csFilter, NULL, &pTransformFilter->ppPins[0]);
 
     if (SUCCEEDED(hr))
     {

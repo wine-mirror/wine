@@ -93,6 +93,7 @@ typedef struct InputPin
 	REFERENCE_TIME tStop;
 	double dRate;
 	BOOL flushing, end_of_stream;
+	IMemAllocator *preferred_allocator;
 } InputPin;
 
 typedef struct OutputPin
@@ -142,7 +143,7 @@ typedef struct PullPin
 #define Req_Pause  3
 
 /*** Constructors ***/
-HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
 HRESULT OutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, long outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, STOPPROCESSPROC, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
