@@ -62,7 +62,7 @@ typedef struct DSoundRenderImpl
 
     InputPin * pInputPin;
 
-    LPDIRECTSOUND dsound;
+    IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
     DWORD buf_size;
     DWORD write_pos;
@@ -294,7 +294,13 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
 
 static HRESULT DSoundRender_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
-    WAVEFORMATEX* format = (WAVEFORMATEX*)pmt->pbFormat;
+    WAVEFORMATEX* format;
+
+    if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio))
+        return S_FALSE;
+
+    format =  (WAVEFORMATEX*)pmt->pbFormat;
+    TRACE("Format = %p\n", format);
     TRACE("wFormatTag = %x %x\n", format->wFormatTag, WAVE_FORMAT_PCM);
     TRACE("nChannels = %d\n", format->nChannels);
     TRACE("nSamplesPerSec = %d\n", format->nAvgBytesPerSec);
@@ -302,9 +308,10 @@ static HRESULT DSoundRender_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
     TRACE("nBlockAlign = %d\n", format->nBlockAlign);
     TRACE("wBitsPerSample = %d\n", format->wBitsPerSample);
 
-    if (IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio) && IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_PCM))
-        return S_OK;
-    return S_FALSE;
+    if (!IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_PCM))
+        return S_FALSE;
+
+    return S_OK;
 }
 
 HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
@@ -341,9 +348,11 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        hr = DirectSoundCreate(NULL, &pDSoundRender->dsound, NULL);
+        hr = DirectSoundCreate8(NULL, &pDSoundRender->dsound, NULL);
         if (FAILED(hr))
             ERR("Cannot create Direct Sound object (%x)\n", hr);
+        else
+            IDirectSound_SetCooperativeLevel(pDSoundRender->dsound, GetDesktopWindow(), DSSCL_PRIORITY);
     }
 
     if (SUCCEEDED(hr))
