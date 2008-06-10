@@ -87,6 +87,9 @@ typedef struct VideoRendererImpl
     BOOL bAggregatable;
     REFERENCE_TIME rtLastStop;
     MediaSeekingImpl mediaSeeking;
+
+    /* During pause we can hold a single sample, for use in GetCurrentImage */
+    IMediaSample *sample_held;
 } VideoRendererImpl;
 
 static LRESULT CALLBACK VideoWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -408,6 +411,15 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     }
 #endif
 
+    if (This->state == State_Paused)
+    {
+        if (This->sample_held)
+            IMediaSample_Release(This->sample_held);
+
+        This->sample_held = pSample;
+        IMediaSample_AddRef(pSample);
+    }
+
     if (This->pClock && This->state == State_Running)
     {
         REFERENCE_TIME time, trefstart, trefstop;
@@ -585,6 +597,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
         MediaSeekingImpl_Init((IBaseFilter*)pVideoRenderer, VideoRendererImpl_Change, VideoRendererImpl_Change, VideoRendererImpl_Change, &pVideoRenderer->mediaSeeking, &pVideoRenderer->csFilter);
         pVideoRenderer->mediaSeeking.lpVtbl = &VideoRendererImpl_Seeking_Vtbl;
 
+        pVideoRenderer->sample_held = NULL;
         *ppv = (LPVOID)pVideoRenderer;
     }
     else
@@ -774,9 +787,15 @@ static HRESULT WINAPI VideoRenderer_Stop(IBaseFilter * iface)
     EnterCriticalSection(&This->csFilter);
     {
         This->state = State_Stopped;
+
+        if (This->sample_held)
+        {
+            IMediaSample_Release(This->sample_held);
+            This->sample_held = NULL;
+        }
     }
     LeaveCriticalSection(&This->csFilter);
-    
+
     return S_OK;
 }
 
@@ -812,6 +831,12 @@ static HRESULT WINAPI VideoRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tSta
 
         This->rtStreamStart = tStart;
         This->state = State_Running;
+
+        if (This->sample_held)
+        {
+            IMediaSample_Release(This->sample_held);
+            This->sample_held = NULL;
+        }
     }
     LeaveCriticalSection(&This->csFilter);
 
@@ -1438,8 +1463,59 @@ static HRESULT WINAPI Basicvideo_GetCurrentImage(IBasicVideo *iface,
 						 long *pBufferSize,
 						 long *pDIBImage) {
     ICOM_THIS_MULTI(VideoRendererImpl, IBasicVideo_vtbl, iface);
+    BITMAPINFOHEADER *bmiHeader;
+    LONG needed_size;
+    AM_MEDIA_TYPE *amt = &This->pInputPin->pin.mtCurrent;
+    char *ptr;
 
-    FIXME("(%p/%p)->(%p, %p): stub !!!\n", This, iface, pBufferSize, pDIBImage);
+    EnterCriticalSection(&This->csFilter);
+
+    if (!This->sample_held)
+    {
+         LeaveCriticalSection(&This->csFilter);
+         return (This->state == State_Paused ? E_UNEXPECTED : VFW_E_NOT_PAUSED);
+    }
+
+    FIXME("(%p/%p)->(%p, %p): partial stub\n", This, iface, pBufferSize, pDIBImage);
+
+    if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo))
+    {
+        bmiHeader = &((VIDEOINFOHEADER *)amt->pbFormat)->bmiHeader;
+    }
+    else if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo2))
+    {
+        bmiHeader = &((VIDEOINFOHEADER2 *)amt->pbFormat)->bmiHeader;
+    }
+    else
+    {
+        FIXME("Unknown type %s\n", debugstr_guid(&amt->subtype));
+        LeaveCriticalSection(&This->csFilter);
+        return VFW_E_RUNTIME_ERROR;
+    }
+
+    needed_size = bmiHeader->biSize;
+    needed_size += IMediaSample_GetActualDataLength(This->sample_held);
+
+    if (!pDIBImage)
+    {
+        *pBufferSize = needed_size;
+        LeaveCriticalSection(&This->csFilter);
+        return S_OK;
+    }
+
+    if (needed_size < *pBufferSize)
+    {
+        ERR("Buffer too small %u/%lu\n", needed_size, *pBufferSize);
+        LeaveCriticalSection(&This->csFilter);
+        return E_FAIL;
+    }
+    *pBufferSize = needed_size;
+
+    memcpy(pDIBImage, bmiHeader, bmiHeader->biSize);
+    IMediaSample_GetPointer(This->sample_held, (BYTE **)&ptr);
+    memcpy((char *)pDIBImage + bmiHeader->biSize, ptr, IMediaSample_GetActualDataLength(This->sample_held));
+
+    LeaveCriticalSection(&This->csFilter);
 
     return S_OK;
 }
