@@ -783,7 +783,8 @@ static void test_OleCreate(IStorage *pStorage)
     trace("OleCreate with OLERENDER_FORMAT:\n");
     hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_FORMAT, &formatetc, (IOleClientSite *)0xdeadbeef, pStorage, (void **)&pObject);
     ok_ole_success(hr, "OleCreate");
-    IOleObject_Release(pObject);
+    if (pObject)
+        IOleObject_Release(pObject);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
     expected_method_list = methods_olerender_asis;
@@ -839,7 +840,8 @@ static void test_OleLoad(IStorage *pStorage)
     trace("OleLoad:\n");
     hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);
     ok_ole_success(hr, "OleLoad");
-    IOleObject_Release(pObject);
+    if (pObject)
+        IOleObject_Release(pObject);
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 }
 
