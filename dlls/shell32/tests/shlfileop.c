@@ -843,8 +843,9 @@ static void test_copy(void)
 
     createTestFile("one.txt");
 
-    /* no double-NULL terminator for pFrom */
-    memset(from, 'a', MAX_PATH);
+    /* pFrom contains bogus 2nd name longer than MAX_PATH */
+    memset(from, 'a', MAX_PATH*2);
+    memset(from+MAX_PATH*2, 0, 2);
     lstrcpyA(from, "one.txt");
     shfo.pFrom = from;
     shfo.pTo = "two.txt\0";
@@ -856,8 +857,9 @@ static void test_copy(void)
 
     createTestFile("one.txt");
 
-    /* no double-NULL terminator for pTo */
-    memset(to, 'a', MAX_PATH);
+    /* pTo contains bogus 2nd name longer than MAX_PATH */
+    memset(to, 'a', MAX_PATH*2);
+    memset(to+MAX_PATH*2, 0, 2);
     lstrcpyA(to, "two.txt");
     shfo.pFrom = "one.txt\0";
     shfo.pTo = to;
@@ -880,9 +882,11 @@ static void test_copy(void)
 
     createTestFile("one.txt");
 
-    /* no double-NULL terminator for pFrom and pTo */
-    memset(from, 'a', MAX_PATH);
-    memset(to, 'a', MAX_PATH);
+    /* both pFrom and pTo contain bogus 2nd names longer than MAX_PATH */
+    memset(from, 'a', MAX_PATH*2);
+    memset(from+MAX_PATH*2, 0, 2);
+    memset(to, 'a', MAX_PATH*2);
+    memset(to+MAX_PATH*2, 0, 2);
     lstrcpyA(from, "one.txt");
     lstrcpyA(to, "two.txt");
     shfo.pFrom = from;
@@ -895,8 +899,9 @@ static void test_copy(void)
 
     createTestFile("one.txt");
 
-    /* no double-NULL terminator for pTo, FOF_MULTIDESTFILES */
-    memset(to, 'a', MAX_PATH);
+    /* pTo contains bogus 2nd name longer than MAX_PATH, FOF_MULTIDESTFILES */
+    memset(to, 'a', MAX_PATH*2);
+    memset(to+MAX_PATH*2, 0, 2);
     lstrcpyA(to, "two.txt");
     shfo.pFrom = "one.txt\0";
     shfo.pTo = to;
@@ -910,11 +915,12 @@ static void test_copy(void)
     createTestFile("one.txt");
     createTestFile("two.txt");
 
-    /* no double-NULL terminator for pTo,
+    /* pTo contains bogus 2nd name longer than MAX_PATH,
      * multiple source files,
      * dest directory does not exist
      */
     memset(to, 'a', 2 * MAX_PATH);
+    memset(to+MAX_PATH*2, 0, 2);
     lstrcpyA(to, "threedir");
     shfo.pFrom = "one.txt\0two.txt\0";
     shfo.pTo = to;
@@ -932,11 +938,12 @@ static void test_copy(void)
     createTestFile("two.txt");
     CreateDirectoryA("threedir", NULL);
 
-    /* no double-NULL terminator for pTo,
+    /* pTo contains bogus 2nd name longer than MAX_PATH,
      * multiple source files,
      * dest directory does exist
      */
     memset(to, 'a', 2 * MAX_PATH);
+    memset(to+MAX_PATH*2, 0, 2);
     lstrcpyA(to, "threedir");
     shfo.pFrom = "one.txt\0two.txt\0";
     shfo.pTo = to;
@@ -952,11 +959,12 @@ static void test_copy(void)
     createTestFile("one.txt");
     createTestFile("two.txt");
 
-    /* no double-NULL terminator for pTo,
+    /* pTo contains bogus 2nd name longer than MAX_PATH,
      * multiple source files, FOF_MULTIDESTFILES
      * dest dir does not exist
      */
     memset(to, 'a', 2 * MAX_PATH);
+    memset(to+MAX_PATH*2, 0, 2);
     lstrcpyA(to, "threedir");
     shfo.pFrom = "one.txt\0two.txt\0";
     shfo.pTo = to;
@@ -979,11 +987,12 @@ static void test_copy(void)
     createTestFile("two.txt");
     CreateDirectoryA("threedir", NULL);
 
-    /* no double-NULL terminator for pTo,
+    /* pTo contains bogus 2nd name longer than MAX_PATH,
      * multiple source files, FOF_MULTIDESTFILES
      * dest dir does exist
      */
     memset(to, 'a', 2 * MAX_PATH);
+    memset(to+MAX_PATH*2, 0, 2);
     lstrcpyA(to, "threedir");
     ptr = to + lstrlenA(to) + 1;
     lstrcpyA(ptr, "fourdir");
