@@ -459,26 +459,6 @@ done:
     return ret;
 }
 
-static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, LPCWSTR path)
-{
-    if (!file->IsCompressed)
-    {
-        LPWSTR p, path;
-        p = resolve_folder(package, file->Component->Directory, TRUE, FALSE, TRUE, NULL);
-        path = build_directory_name(2, p, file->ShortName);
-        if (file->LongName &&
-            INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
-        {
-            msi_free(path);
-            path = build_directory_name(2, p, file->LongName);
-        }
-        file->SourcePath = path;
-        msi_free(p);
-    }
-    else
-        file->SourcePath = build_directory_name(2, path, file->File);
-}
-
 void msi_free_media_info( MSIMEDIAINFO *mi )
 {
     msi_free( mi->disk_prompt );
@@ -847,13 +827,11 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             }
         }
 
-        set_file_source(package, file, mi->source);
-
-        TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
-              debugstr_w(file->TargetPath));
-
         if (!file->IsCompressed)
         {
+            TRACE("file paths %s to %s\n", debugstr_w(file->SourcePath),
+                  debugstr_w(file->TargetPath));
+
             msi_file_update_ui(package, file, szInstallFiles);
             rc = copy_install_file(file);
             if (rc != ERROR_SUCCESS)

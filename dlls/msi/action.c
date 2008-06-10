@@ -1464,6 +1464,25 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
         file->IsCompressed = package->WordCount & MSIWORDCOUNT_COMPRESSED;
     }
 
+    if (!file->IsCompressed)
+    {
+        LPWSTR p, path;
+
+        p = resolve_folder(package, file->Component->Directory,
+                           TRUE, FALSE, TRUE, NULL);
+        path = build_directory_name(2, p, file->ShortName);
+
+        if (file->LongName &&
+            GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES)
+        {
+            msi_free(path);
+            path = build_directory_name(2, p, file->LongName);
+        }
+
+        file->SourcePath = path;
+        msi_free(p);
+    }
+
     load_file_hash(package, file);
 
     TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
