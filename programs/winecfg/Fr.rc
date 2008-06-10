@@ -37,7 +37,7 @@ BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    LTEXT           "Cette bibliothèque est un logiciel libre ; vous pouvez la redistribuer et/ou la modifier suivant les termes de la Licence Générale Publique Limitée, telle que publiée par la Free Software Foundation ; soit la version 2.1 de la License, soit (à votre gré) toute version ultérieure."
+    LTEXT           "Ce programme est un logiciel libre ; vous pouvez le redistribuer et/ou le modifier suivant les termes de la Licence Générale Publique Limitée, telle que publiée par la Free Software Foundation ; soit la version 2.1 de la License, soit (à votre gré) toute version ultérieure."
                     IDC_STATIC,119,44,124,72
 END
 
