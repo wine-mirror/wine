@@ -568,16 +568,21 @@ static HRESULT WINAPI NullRenderer_InputPin_EndOfStream(IPin * iface)
 {
     InputPin* This = (InputPin*)iface;
     IMediaEventSink* pEventSink;
-    HRESULT hr;
+    IFilterGraph *graph;
+    HRESULT hr = S_OK;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
     InputPin_EndOfStream(iface);
-    hr = IFilterGraph_QueryInterface(((NullRendererImpl*)This->pin.pinInfo.pFilter)->filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
-    if (SUCCEEDED(hr))
+    graph = ((NullRendererImpl*)This->pin.pinInfo.pFilter)->filterInfo.pGraph;
+    if (graph)
     {
-        hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
-        IMediaEventSink_Release(pEventSink);
+        hr = IFilterGraph_QueryInterface(((NullRendererImpl*)This->pin.pinInfo.pFilter)->filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
+        if (SUCCEEDED(hr))
+        {
+            hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
+            IMediaEventSink_Release(pEventSink);
+        }
     }
 
     return hr;
