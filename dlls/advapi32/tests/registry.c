@@ -263,7 +263,11 @@ static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string,
     ret = RegQueryValueExW(hkey_main, name, NULL, &type, NULL, &cbData);
     GLE = GetLastError();
     ok(ret == ERROR_SUCCESS, "RegQueryValueExW failed: %d, GLE=%d\n", ret, GLE);
-    if(GLE == ERROR_CALL_NOT_IMPLEMENTED) return;
+    if(GLE == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("RegQueryValueExW() is not implemented\n");
+        return;
+    }
 
     ok(type == REG_SZ, "RegQueryValueExW returned type %d\n", type);
     ok(cbData == full_byte_len,
@@ -556,7 +560,7 @@ static void test_enum_value(void)
     res = RegSetValueExW( test_key, testW, 0, REG_SZ, (const BYTE *)foobarW, 7*sizeof(WCHAR) );
     if (res==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("RegSetValueExW is not implemented\n");
+        win_skip("RegSetValueExW is not implemented\n");
         goto cleanup;
     }
     ok( res == 0, "RegSetValueExW failed error %d\n", res );
@@ -675,7 +679,7 @@ static void test_get_value(void)
    
     if(!pRegGetValueA)
     {
-        skip("RegGetValue not available on this platform\n");
+        win_skip("RegGetValue not available on this platform\n");
         return;
     }
 
@@ -1124,7 +1128,7 @@ static void test_regconnectregistry( void)
     schnd = OpenSCManagerA( compName, NULL, GENERIC_READ); 
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("OpenSCManagerA is not implemented\n");
+        win_skip("OpenSCManagerA is not implemented\n");
         return;
     }
 
@@ -1218,7 +1222,7 @@ static void test_reg_query_value(void)
     ret = RegQueryValueW(subkey, NULL, valW, &size);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        skip("RegQueryValueW is not implemented\n");
+        win_skip("RegQueryValueW is not implemented\n");
         goto cleanup;
     }
     ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
@@ -1266,7 +1270,7 @@ static void test_reg_delete_tree(void)
     LONG size, ret;
 
     if(!pRegDeleteTreeA) {
-        skip("Skipping RegDeleteTreeA tests, function not present\n");
+        win_skip("Skipping RegDeleteTreeA tests, function not present\n");
         return;
     }
 
