@@ -6547,17 +6547,12 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 
 	GetClientRect(parent, &rc);
 	trace("parent %p client size = (%d x %d)\n", parent, rc.right, rc.bottom);
-
-	trace("ptReserved = (%d,%d)\n"
-              "ptMaxSize = (%d,%d)\n"
-              "ptMaxPosition = (%d,%d)\n"
-              "ptMinTrackSize = (%d,%d)\n"
-              "ptMaxTrackSize = (%d,%d)\n",
-	      minmax->ptReserved.x, minmax->ptReserved.y,
-	      minmax->ptMaxSize.x, minmax->ptMaxSize.y,
-	      minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
-	      minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
-	      minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+        trace("Reserved=%d,%d MaxSize=%d,%d MaxPos=%d,%d MinTrack=%d,%d MaxTrack=%d,%d\n",
+              minmax->ptReserved.x, minmax->ptReserved.y,
+              minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+              minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+              minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+              minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
 
 	ok(minmax->ptMaxSize.x == rc.right, "default width of maximized child %d != %d\n",
 	   minmax->ptMaxSize.x, rc.right);
