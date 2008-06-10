@@ -22,45 +22,45 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 {
-STRING_USAGE,                                   "Запускает программы или открывает документы приложением, \n\
-обычно используемым для файлов с данным расширением. \n\n\
-Использование: \n\
-start [options] имя_файла_программы [...] \n\
-start [options] имя_файла_документа \n\
- \n\
-Опции: \n\
-/M[inimized] Запустить программу минимизированной. \n\
-/MAX[imized] Запустить программу максимизированной. \n\
-/R[estored]  Запустить программу нормально (не максимизированно и не минимизированно). \n\
-/W[ait]      Ожидать завершения запущенной программы и выйти с кодом её выхода. \n\
+STRING_USAGE,                                   "Запускает программы или открывает документы приложением,\n\
+обычно используемым для файлов с данным расширением.\n\n\
+Использование:\n\
+start [options] имя_файла_программы [...]\n\
+start [options] имя_файла_документа\n\
+\n\
+Опции:\n\
+/M[inimized] Запустить программу минимизированной.\n\
+/MAX[imized] Запустить программу максимизированной.\n\
+/R[estored]  Запустить программу нормально (не максимизированно и не минимизированно).\n\
+/W[ait]      Ожидать завершения запущенной программы и выйти с кодом её выхода.\n\
 /Unix        Использовать путь Unix для запуска програмы как виндовс проводник.\n\
-/L           Показать лицензию конечного пользователя. \n\
- \n\
-start.exe версия 0.2 Copyright (C) 2003, Dan Kegel \n\
-Start идет БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; подробности при запуске с опцией /L. \n\
-Это свободная программа, и вы можете её распространять на определённых \n\
-условиях; подробности при запуске с опцией /L. \n\
+/L           Показать лицензию конечного пользователя.\n\
+\n\
+start.exe версия 0.2 Copyright (C) 2003, Dan Kegel\n\
+Start идет БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; подробности при запуске с опцией /L.\n\
+Это свободная программа, и вы можете её распространять на определённых\n\
+условиях; подробности при запуске с опцией /L.\n\
 "
 
-STRING_LICENSE, "start.exe версия 0.2 Copyright (C) 2003, Dan Kegel \n\
-Это программа распространяется по лицензии GNU Lesser Public License \n\
-и является свободным программным продуктом. \n\
+STRING_LICENSE, "start.exe версия 0.2 Copyright (C) 2003, Dan Kegel\n\
+Это программа распространяется по лицензии GNU Lesser Public License\n\
+и является свободным программным продуктом.\n\
 \n\
-This program is free software; you can redistribute it and/or \n\
-modify it under the terms of the GNU Lesser Public License \n\
-as published by the Free Software Foundation; either version 2.1 \n\
-of the License, or (at your option) any later version. \n\
- \n\
-This program is distributed in the hope that it will be useful, \n\
-but WITHOUT ANY WARRANTY; without even the implied warranty of \n\
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the \n\
-GNU Lesser Public License for more details. \n\
- \n\
-You should have received a copy of the GNU Lesser Public License \n\
-along with this program; if not, write to the Free Software \n\
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. \n\
- \n\
-See the COPYING.LIB file for license information. \n\
+This program is free software; you can redistribute it and/or\n\
+modify it under the terms of the GNU Lesser Public License\n\
+as published by the Free Software Foundation; either version 2.1\n\
+of the License, or (at your option) any later version.\n\
+\n\
+This program is distributed in the hope that it will be useful,\n\
+but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n\
+GNU Lesser Public License for more details.\n\
+\n\
+You should have received a copy of the GNU Lesser Public License\n\
+along with this program; if not, write to the Free Software\n\
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
+\n\
+See the COPYING.LIB file for license information.\n\
 "
 
 STRING_EXECFAIL "Приложение не может быть запущено или не ассоциировано приложений с типом данного документа.\nВызов ShellExecuteEx провалился"

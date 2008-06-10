@@ -23,41 +23,41 @@ LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 {
-STRING_USAGE,                                   "Start een programma, of open een document met het programma dat normaal voor bestanden met die extensie gebruikt wordt. \n\
-Gebruik: \n\
-start [options] programma_naam [...] \n\
-start [options] document_naam \n\
- \n\
-Options: \n\
-/M[inimized] Start het programma geminimaliseerd. \n\
-/MAX[imized] Start het programma gemaximaliseerd. \n\
-/R[estored]  Start het programma normaal (noch geminimaliseerd noch gemaximaliseerd). \n\
-/W[ait]      Wacht totdat het gestarte programma is beëindigd, eindig dan met de exit code van dat programma. \n\
-/Unix        Gebruik een Unix bestandsnaam en start het bestand als de windows verkenner. \n\
-/L           Laat de gebruikerslicentie zien. \n\
- \n\
-start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
-Start wordt u ABSOLUUT ZONDER GARANTIE aangeboden; draai dit programma met de /L optie voor details. \n\
-Dit is vrije software, en u wordt uitgenodigd om het verder te verspreiden \n\
-onder bepaalde voorwaarden; draai 'start /L' voor details. \n\
+STRING_USAGE,                                   "Start een programma, of open een document met het programma dat normaal voor bestanden met die extensie gebruikt wordt.\n\
+Gebruik:\n\
+start [options] programma_naam [...]\n\
+start [options] document_naam\n\
+\n\
+Options:\n\
+/M[inimized] Start het programma geminimaliseerd.\n\
+/MAX[imized] Start het programma gemaximaliseerd.\n\
+/R[estored]  Start het programma normaal (noch geminimaliseerd noch gemaximaliseerd).\n\
+/W[ait]      Wacht totdat het gestarte programma is beëindigd, eindig dan met de exit code van dat programma.\n\
+/Unix        Gebruik een Unix bestandsnaam en start het bestand als de windows verkenner.\n\
+/L           Laat de gebruikerslicentie zien.\n\
+\n\
+start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
+Start wordt u ABSOLUUT ZONDER GARANTIE aangeboden; draai dit programma met de /L optie voor details.\n\
+Dit is vrije software, en u wordt uitgenodigd om het verder te verspreiden\n\
+onder bepaalde voorwaarden; draai 'start /L' voor details.\n\
 "
 
-STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
-This program is free software; you can redistribute it and/or \n\
-modify it under the terms of the GNU Lesser Public License \n\
-as published by the Free Software Foundation; either version 2.1 \n\
-of the License, or (at your option) any later version. \n\
- \n\
-This program is distributed in the hope that it will be useful, \n\
-but WITHOUT ANY WARRANTY; without even the implied warranty of \n\
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the \n\
-GNU Lesser Public License for more details. \n\
- \n\
-You should have received a copy of the GNU Lesser Public License \n\
-along with this program; if not, write to the Free Software \n\
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. \n\
- \n\
-See the COPYING.LIB file for license information. \n\
+STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
+This program is free software; you can redistribute it and/or\n\
+modify it under the terms of the GNU Lesser Public License\n\
+as published by the Free Software Foundation; either version 2.1\n\
+of the License, or (at your option) any later version.\n\
+\n\
+This program is distributed in the hope that it will be useful,\n\
+but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n\
+GNU Lesser Public License for more details.\n\
+\n\
+You should have received a copy of the GNU Lesser Public License\n\
+along with this program; if not, write to the Free Software\n\
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
+\n\
+See the COPYING.LIB file for license information.\n\
 "
 
 STRING_EXECFAIL "Programma kan niet worden gestart, of er is geen programma verbonden met het opgegeven bestand.\nShellExecuteEx is mislukt"

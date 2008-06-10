@@ -27,40 +27,40 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 {
-STRING_USAGE,                                   "Spustí program nebo otevøe dokument v programu, který je normálnì použit pro soubory s danou pøíponou. \n\
-Použití: \n\
-start [volby] jméno_programu [...] \n\
-start [volby] jméno_dokumentu \n\
- \n\
-Volby: \n\
-/M[inimalizovanì] Spustí program minimalizovanì. \n\
-/MAX[imalizovanì] Spustí program maximalizovanì. \n\
-/R Spustí program normálnì (ani minimalizovaný ani maximalizovaný). \n\
-/W Èeká na dokonèení spuštìného programu, vrací návratový kód. \n\
-/L Zobrazí licenci. \n\
- \n\
-start.exe verze 0.2 Copyright (C) 2003, Dan Kegel \n\
-Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option. \n\
-This is free software, and you are welcome to redistribute it \n\
-under certain conditions; run 'start /L' for details. \n\
+STRING_USAGE,                                   "Spustí program nebo otevøe dokument v programu, který je normálnì použit pro soubory s danou pøíponou.\n\
+Použití:\n\
+start [volby] jméno_programu [...]\n\
+start [volby] jméno_dokumentu\n\
+\n\
+Volby:\n\
+/M[inimalizovanì] Spustí program minimalizovanì.\n\
+/MAX[imalizovanì] Spustí program maximalizovanì.\n\
+/R Spustí program normálnì (ani minimalizovaný ani maximalizovaný).\n\
+/W Èeká na dokonèení spuštìného programu, vrací návratový kód.\n\
+/L Zobrazí licenci.\n\
+\n\
+start.exe verze 0.2 Copyright (C) 2003, Dan Kegel\n\
+Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n\
+This is free software, and you are welcome to redistribute it\n\
+under certain conditions; run 'start /L' for details.\n\
 "
 
-STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
-This program is free software; you can redistribute it and/or \n\
-modify it under the terms of the GNU Lesser Public License \n\
-as published by the Free Software Foundation; either version 2.1 \n\
-of the License, or (at your option) any later version. \n\
- \n\
-This program is distributed in the hope that it will be useful, \n\
-but WITHOUT ANY WARRANTY; without even the implied warranty of \n\
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the \n\
-GNU Lesser Public License for more details. \n\
- \n\
-You should have received a copy of the GNU Lesser Public License \n\
-along with this program; if not, write to the Free Software \n\
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. \n\
- \n\
-Pøeètìte si soubor COPYING.LIB pro získání informací o licenci. \n\
+STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
+This program is free software; you can redistribute it and/or\n\
+modify it under the terms of the GNU Lesser Public License\n\
+as published by the Free Software Foundation; either version 2.1\n\
+of the License, or (at your option) any later version.\n\
+\n\
+This program is distributed in the hope that it will be useful,\n\
+but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n\
+GNU Lesser Public License for more details.\n\
+\n\
+You should have received a copy of the GNU Lesser Public License\n\
+along with this program; if not, write to the Free Software\n\
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
+\n\
+Pøeètìte si soubor COPYING.LIB pro získání informací o licenci.\n\
 "
 
 STRING_EXECFAIL "Aplikace nemohla být spuštìna nebo není žádná aplikace asociována s daným souborem.\nShellExecuteEx selhal"
