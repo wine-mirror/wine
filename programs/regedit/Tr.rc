@@ -49,6 +49,7 @@ BEGIN
             MENUITEM "&Dizge Deðeri",           ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Ýkili Deðer",            ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&Çift Sözcük Deðeri",     ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi String Value",     ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Sil\tDel",                   ID_EDIT_DELETE
@@ -99,11 +100,13 @@ BEGIN
             MENUITEM "&Dizge Deðeri",               ID_EDIT_NEW_STRINGVALUE
             MENUITEM "&Ýkili Deðer",                ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&Çift Sözcük Deðeri",         ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Sil\tDel",                   ID_EDIT_DELETE
         MENUITEM "&Yeniden Adlandýr\tF2",       ID_EDIT_RENAME
         MENUITEM SEPARATOR
+        MENUITEM "&Export...",                  ID_EDIT_EXPORT
         MENUITEM "&Anahtar Adýný Kopyala",      ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Bul\tCtrl+F",                ID_EDIT_FIND, GRAYED
