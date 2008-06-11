@@ -26,7 +26,7 @@ LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 STRINGTABLE
 {
     STRING_INVPARMS, "Falsche Parameteranzahl -  xcopy /? zeigt Hilfe an\n"
-    STRING_INVPARM,  "Unbekannter Parameter '%s' -  Use xcopy /? for help\n"
+    STRING_INVPARM,  "Unbekannter Parameter '%s' - xcopy /? zeigt Hilfe an\n"
     STRING_PAUSE,    "Eingabetaste betätigen, um mit dem Kopieren zu beginnen\n"
     STRING_SIMCOPY,  "%d Datei(en) würden kopiert\n"
     STRING_COPY,     "%d Datei(en) kopiert\n"
