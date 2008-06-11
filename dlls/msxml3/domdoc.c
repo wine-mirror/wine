@@ -1048,7 +1048,7 @@ static HRESULT WINAPI domdoc_createCDATASection(
     xmlNodePtr xmlnode;
     xmlChar *xml_content;
 
-    TRACE("%p->(%s %p)\n", iface, debugstr_w(data), comment);
+    TRACE("%p->(%s %p)\n", iface, debugstr_w(data), cdata);
 
     if(!cdata)
         return E_INVALIDARG;
