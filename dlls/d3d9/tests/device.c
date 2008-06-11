@@ -787,11 +787,11 @@ static void test_reset(void)
     if(SUCCEEDED(hr))
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
-        ok(vp.Y == 0, "D3DVIEWPORT->X = %d\n", vp.Y);
-        ok(vp.Width == 800, "D3DVIEWPORT->X = %d\n", vp.Width);
-        ok(vp.Height == 600, "D3DVIEWPORT->X = %d\n", vp.Height);
-        ok(vp.MinZ == 0, "D3DVIEWPORT->X = %d\n", vp.Height);
-        ok(vp.MaxZ == 1, "D3DVIEWPORT->X = %d\n", vp.Height);
+        ok(vp.Y == 0, "D3DVIEWPORT->Y = %d\n", vp.Y);
+        ok(vp.Width == 800, "D3DVIEWPORT->Width = %d\n", vp.Width);
+        ok(vp.Height == 600, "D3DVIEWPORT->Height = %d\n", vp.Height);
+        ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %f\n", vp.MinZ);
+        ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
     vp.X = 10;
     vp.X = 20;
@@ -817,11 +817,11 @@ static void test_reset(void)
     if(SUCCEEDED(hr))
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
-        ok(vp.Y == 0, "D3DVIEWPORT->X = %d\n", vp.Y);
-        ok(vp.Width == 640, "D3DVIEWPORT->X = %d\n", vp.Width);
-        ok(vp.Height == 480, "D3DVIEWPORT->X = %d\n", vp.Height);
-        ok(vp.MinZ == 0, "D3DVIEWPORT->X = %d\n", vp.Height);
-        ok(vp.MaxZ == 1, "D3DVIEWPORT->X = %d\n", vp.Height);
+        ok(vp.Y == 0, "D3DVIEWPORT->Y = %d\n", vp.Y);
+        ok(vp.Width == 640, "D3DVIEWPORT->Width = %d\n", vp.Width);
+        ok(vp.Height == 480, "D3DVIEWPORT->Height = %d\n", vp.Height);
+        ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %f\n", vp.MinZ);
+        ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
 
     width = GetSystemMetrics(SM_CXSCREEN);
@@ -865,11 +865,11 @@ static void test_reset(void)
     if(SUCCEEDED(hr))
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
-        ok(vp.Y == 0, "D3DVIEWPORT->X = %d\n", vp.Y);
-        ok(vp.Width == 400, "D3DVIEWPORT->X = %d\n", vp.Width);
-        ok(vp.Height == 300, "D3DVIEWPORT->X = %d\n", vp.Height);
-        ok(vp.MinZ == 0, "D3DVIEWPORT->X = %d\n", vp.Height);
-        ok(vp.MaxZ == 1, "D3DVIEWPORT->X = %d\n", vp.Height);
+        ok(vp.Y == 0, "D3DVIEWPORT->Y = %d\n", vp.Y);
+        ok(vp.Width == 400, "D3DVIEWPORT->Width = %d\n", vp.Width);
+        ok(vp.Height == 300, "D3DVIEWPORT->Height = %d\n", vp.Height);
+        ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %f\n", vp.MinZ);
+        ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
 
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &pSwapchain);
