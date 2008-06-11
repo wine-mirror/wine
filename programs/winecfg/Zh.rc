@@ -252,7 +252,7 @@ BEGIN
     IDS_CONFIRM_DELETE_C        "你確定要刪除 C 槽嗎？\n\n大部分的 Windows 程式都假定 C 槽存在， 而沒有 C 槽時就會死得很嚴重。 如果你刪除了它， 請記得要重新建立一個！"
     IDS_COL_DRIVELETTER         "字母"
     IDS_COL_DRIVEMAPPING        "儲存槽對映"
-    IDS_NO_DRIVE_C              "你沒有 C 槽。 這不是件好事。 \n\n請記得點選「儲存槽」頁籤的「加入」來建立一個！\n"
+    IDS_NO_DRIVE_C              "你沒有 C 槽。 這不是件好事。\n\n請記得點選「儲存槽」頁籤的「加入」來建立一個！\n"
 END
 
 STRINGTABLE DISCARDABLE
