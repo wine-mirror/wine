@@ -370,7 +370,7 @@ STRINGTABLE DISCARDABLE
     IDS_CREATEFILE          "Файла не существует\nХотите ли Вы его создать?"
     IDS_OVERWRITEFILE       "Файл уже существует.\nЗаменить его?"
     IDS_INVALID_FILENAME_TITLE "Некорректный символ в записи пути"
-    IDS_INVALID_FILENAME    "Имя файла не может содержать следующие символы: \n                          / : < > |"
+    IDS_INVALID_FILENAME    "Имя файла не может содержать следующие символы:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Путь не существует"
     IDS_FILENOTEXISTING     "Файл не существует"
 }

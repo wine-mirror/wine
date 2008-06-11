@@ -371,7 +371,7 @@ STRINGTABLE DISCARDABLE
     IDS_CREATEFILE          "Dosya mevcut deðil\nDosyayý oluþturmak ister misiniz?"
     IDS_OVERWRITEFILE       "Dosya zaten var.\nDeðiþtirmek ister misiniz?"
     IDS_INVALID_FILENAME_TITLE "Dosya yolunda geçersiz karakter(ler)"
-    IDS_INVALID_FILENAME    "Bir dosya adý aþaðýdaki karakterleri içeremez: \n                          / : < > |"
+    IDS_INVALID_FILENAME    "Bir dosya adý aþaðýdaki karakterleri içeremez:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Dosya yolu mevcut deðil"
     IDS_FILENOTEXISTING     "Dosya mevcut deðil"
 }

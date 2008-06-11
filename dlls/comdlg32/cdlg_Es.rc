@@ -371,7 +371,7 @@ STRINGTABLE DISCARDABLE
     IDS_CREATEFILE          "El archivo no existe\n¿Desea crearlo?"
     IDS_OVERWRITEFILE       "El archivo ya existe.\n¿Desea reemplazarlo?"
     IDS_INVALID_FILENAME_TITLE "Caracter(es) inválidos en la ruta"
-    IDS_INVALID_FILENAME    "Un nombre de archivo no puede contener ninguno de los siguientes caracteres: \n                          / : < > |"
+    IDS_INVALID_FILENAME    "Un nombre de archivo no puede contener ninguno de los siguientes caracteres:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "La ruta no existe"
     IDS_FILENOTEXISTING     "El archivo no existe"
 }

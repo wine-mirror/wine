@@ -373,7 +373,7 @@ STRINGTABLE DISCARDABLE
     IDS_CREATEFILE          "Soubor neexistuje.\nChcete ho vytvoøit ?"
     IDS_OVERWRITEFILE       "Soubor již existuje.\nChcete ho pøepsat novým ?"
     IDS_INVALID_FILENAME_TITLE "Nedovolený(é) znak(y) v cestì k souboru."
-    IDS_INVALID_FILENAME    "Název souboru nesmí obsahovat žádný z následujících znakù: \n                          / : < > |"
+    IDS_INVALID_FILENAME    "Název souboru nesmí obsahovat žádný z následujících znakù:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Adresáø neexistuje"
     IDS_FILENOTEXISTING     "Soubor neexistuje"
 }

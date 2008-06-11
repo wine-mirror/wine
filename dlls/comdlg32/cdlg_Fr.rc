@@ -374,7 +374,7 @@ STRINGTABLE DISCARDABLE
     IDS_CREATEFILE          "Ce fichier n'existe pas.\nSouhaitez-vous le créer ?"
     IDS_OVERWRITEFILE       "Ce fichier existe déjà.\nVoulez-vous le remplacer ?"
     IDS_INVALID_FILENAME_TITLE "Le chemin d'accès contient des caractères invalides"
-    IDS_INVALID_FILENAME    "Un nom de fichier ne peut contenir un des caractères suivants : \n                          / : < > |"
+    IDS_INVALID_FILENAME    "Un nom de fichier ne peut contenir un des caractères suivants :\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Le chemin d'accès n'existe pas"
     IDS_FILENOTEXISTING     "Le fichier n'existe pas"
 }

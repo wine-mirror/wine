@@ -372,7 +372,7 @@ STRINGTABLE DISCARDABLE
     IDS_CREATEFILE          "Datoteka ne obstaja.\nAli jo želite ustvariti?"
     IDS_OVERWRITEFILE       "Datoteka že obstaja.\nAli jo želite zamenjati?"
     IDS_INVALID_FILENAME_TITLE "Neveljavni znaki v imenu"
-    IDS_INVALID_FILENAME    "Ime datoteke ne sme vsebovati naslednjih znakov: \n                          / : < > |"
+    IDS_INVALID_FILENAME    "Ime datoteke ne sme vsebovati naslednjih znakov:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Pot ne obstaja"
     IDS_FILENOTEXISTING     "Datoteka ne obstaja"
 }
