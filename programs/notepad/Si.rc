@@ -115,7 +115,7 @@ STRING_NOTSAVED,                                "Datoteka '%s'\nje bila spremenj
 Ali želite shraniti spremembe?"
 STRING_NOTFOUND,                                        "Niza '%s' ni mogoče najti."
 STRING_OUT_OF_MEMORY,                   "Za dokončanje operacije je na voljo premalo \
-pomnilnika. \nZaprite enega ali več programov in poskusite znova."
+pomnilnika.\nZaprite enega ali več programov in poskusite znova."
 
 }
 

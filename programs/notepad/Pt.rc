@@ -166,7 +166,7 @@ STRING_NOTSAVED,				"Arquivo '%s'\nfoi modificado\n\n \
 Gostaria de salvar as alteraçÕes?"
 STRING_NOTFOUND,					"'%s' não pode ser encontrado."
 STRING_OUT_OF_MEMORY,			"Não há memória suficiente para completar essa \
-tarefa. \nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
+tarefa.\nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -189,12 +189,12 @@ STRINGTABLE DISCARDABLE
  STRING_TOOLARGE,		"Ficheiros '%s' é muito longo para o notepad.\n \
  Por favor use um editor diferente."
  STRING_NOTEXT,			"Não digitou nenhum texto. \
- \nPor favor digite alguma coisa e tente novamente"
+\nPor favor digite alguma coisa e tente novamente"
  STRING_DOESNOTEXIST,		"Ficheiro '%s'\nnão existe\n\n \
 Deseja criar um novo ficheiro?"
  STRING_NOTSAVED,		"Ficheiro '%s'\nfoi modificado\n\n \
 Gostaria de gravar as alteraçÕes?"
  STRING_NOTFOUND,		"'%s' não pode ser encontrado."
  STRING_OUT_OF_MEMORY,		"Não há memória suficiente para completar esta \
-tarefa. \nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
+tarefa.\nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
 }

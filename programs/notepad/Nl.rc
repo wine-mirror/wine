@@ -113,5 +113,5 @@ STRING_NOTSAVED,                                "Het bestand '%s'\nis gewijzigd\
 Wilt u de wijzigingen opslaan?"
 STRING_NOTFOUND,                                "'%s' kan niet worden gevonden."
 STRING_OUT_OF_MEMORY,                           "Onvoldoende geheugen. \
-\nSluit een of meer applicaties om de hoeveelheid \nbeschikbaar geheugen te vergroten."
+\nSluit een of meer applicaties om de hoeveelheid\nbeschikbaar geheugen te vergroten."
 }

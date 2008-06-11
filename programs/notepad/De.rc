@@ -116,8 +116,8 @@ STRING_NOTSAVED,                                "Datei %s\n wurde geändert.\n\n 
 Möchten Sie die Änderungen speichern ?"
 STRING_NOTFOUND,                                        "'%s' kann nicht gefunden werden."
 STRING_OUT_OF_MEMORY,                   "Nicht genügend Arbeitsspeicher, \
-um diese Funktion \nabzuschließen. Beenden Sie eine oder mehrere \
-\nAnwendungen, um den verfügbaren Arbeitsspeicher zu \nerhöhen."
+um diese Funktion\nabzuschließen. Beenden Sie eine oder mehrere \
+\nAnwendungen, um den verfügbaren Arbeitsspeicher zu\nerhöhen."
 
 
 }

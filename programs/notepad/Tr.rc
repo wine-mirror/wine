@@ -113,7 +113,7 @@ STRING_NOTSAVED,                                "'%s' dosyasý\ndeðiþtirildi\n\n 
 Deðiþiklikleri kaydetmek ister misiniz?"
 STRING_NOTFOUND,                                        "'%s' bulunamýyor."
 STRING_OUT_OF_MEMORY,                   "Bu iþlemi tamamlamak için yeterli bellek\
-alaný yok. \nBir veya daha fazla uygulamayý kapatarak boþ bellek miktarýný\narttýrmayý \
+alaný yok.\nBir veya daha fazla uygulamayý kapatarak boþ bellek miktarýný\narttýrmayý \
 deneyin."
 
 }

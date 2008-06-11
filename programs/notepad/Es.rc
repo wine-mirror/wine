@@ -109,7 +109,7 @@ STRING_TEXT_FILES_TXT,          "Documentos de texto (*.txt)"
 
 STRING_TOOLARGE,                "El archivo '%s' es demasiado grande para el \
                                  bloc de notas.\n Use otro editor."
-STRING_NOTEXT,                  "No escribió nada. \nPor favor escriba algo e \
+STRING_NOTEXT,                  "No escribió nada.\nPor favor escriba algo e \
                                  inténtelo de nuevo"
 STRING_DOESNOTEXIST,            "El archivo '%s'\nno existe\n\n ¿Desea crear \
                                  un nuevo archivo?"
@@ -117,7 +117,7 @@ STRING_NOTSAVED,                "El texto en el archivo '%s' ha cambiado\n\n \
                                  ¿Desea guardar los cambios?"
 STRING_NOTFOUND,                "No se encontró '%s'."
 STRING_OUT_OF_MEMORY,           "No hay suficiente memoria para terminar esta \
-                                 tarea. \nCierre una o más aplicaciones para \
-                                 aumentar la cantidad \nde memoria libre."
+                                 tarea.\nCierre una o más aplicaciones para \
+                                 aumentar la cantidad\nde memoria libre."
 
 }

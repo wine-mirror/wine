@@ -113,7 +113,7 @@ STRING_NOTSAVED,                                "Filen «%s» er endret.\n\n \
 Lagre endringene?"
 STRING_NOTFOUND,                                        "Klarte ikke finne «%s»."
 STRING_OUT_OF_MEMORY,                   "Ikke nok minne for å fullføre \
-operasjonen. \nLukk et eller flere programmer for å frigjøre \nmer \
+operasjonen.\nLukk et eller flere programmer for å frigjøre\nmer \
 minne."
 
 }

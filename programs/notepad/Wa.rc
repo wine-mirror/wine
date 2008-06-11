@@ -116,7 +116,7 @@ Do you want to create a new file ?"
 STRING_NOTSAVED,                                "Li fitchî '%s'\na candjî\n\n \
 El voloz schaper ?"
 STRING_NOTFOUND,                                        "'%s' pout nén esse trové."
-STRING_OUT_OF_MEMORY,                   "Li memwere est plinne. \n\
+STRING_OUT_OF_MEMORY,                   "Li memwere est plinne.\n\
 Cloyoz on programe ou pus po monter li memwere libe."
 
 }

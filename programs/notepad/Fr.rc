@@ -115,7 +115,7 @@ STRING_NOTSAVED,                                "Le fichier '%s'\na été modifié\
 Voulez-vous enregistrer vos modifications ?"
 STRING_NOTFOUND,                                "'%s' non trouvé."
 STRING_OUT_OF_MEMORY,                           "Pas assez de mémoire pour compléter cette \
-tâche. \nFermez une ou plusieurs applications pour libérer\n\
+tâche.\nFermez une ou plusieurs applications pour libérer\n\
 de la mémoire."
 
 }

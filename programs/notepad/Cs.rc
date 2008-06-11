@@ -119,7 +119,7 @@ STRING_NOTSAVED,                                "Soubor '%s'\nbyl zmìnìn.\n\n \
 Chcete uložit zmìny ?"
 STRING_NOTFOUND,                                        "'%s' nebyl nalezen."
 STRING_OUT_OF_MEMORY,                   "Není dost pamìti na dokonèení této úlohy. \
-\nUzavøete jednu èi více aplikací abyste získali více  \nvolné \
+\nUzavøete jednu èi více aplikací abyste získali více\nvolné \
 pamìti."
 
 }

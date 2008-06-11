@@ -115,7 +115,7 @@ STRING_NOTSAVED,                                "Filen '%s'\ner blevet ændret\n\
 Vil du gemme ændringerne ?"
 STRING_NOTFOUND,                                        "Kan ikke finde '%s'."
 STRING_OUT_OF_MEMORY,                   "Der er ikke nok hukommelse til at udføre \
-denne operation. \nAfslut et eller flere aktive programmer for at frigøre \
+denne operation.\nAfslut et eller flere aktive programmer for at frigøre \
 hukommelse, og prøv igen."
 
 }

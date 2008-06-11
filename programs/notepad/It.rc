@@ -118,6 +118,6 @@ STRING_NOTSAVED,                                "Il file '%s'\ne' stato modifica
 Salvare le modifiche ?"
 STRING_NOTFOUND,                                        "'%s' non è stato trovato."
 STRING_OUT_OF_MEMORY,                   "Memoria insufficiente per completare questa operazione \
- \nChiudere una o più applicazioni per aumentare la quantita'\n di memoria libera."
+\nChiudere una o più applicazioni per aumentare la quantita'\n di memoria libera."
 
 }
