@@ -814,6 +814,8 @@ static void testGetDeviceInterfaceDetail(void)
         {
             static const char path[] =
              "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+            static const char path_w2k[] =
+             "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\";
             LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
             SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail =
                 (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buf;
@@ -845,14 +847,19 @@ static void testGetDeviceInterfaceDetail(void)
                     size, &size, NULL);
             ok(ret, "SetupDiGetDeviceInterfaceDetailA failed: %d\n",
                     GetLastError());
-            ok(!lstrcmpiA(path, detail->DevicePath), "Unexpected path %s\n",
-                    detail->DevicePath);
+            ok(!lstrcmpiA(path, detail->DevicePath) ||
+             !lstrcmpiA(path_w2k, detail->DevicePath), "Unexpected path %s\n",
+             detail->DevicePath);
             /* Check SetupDiGetDeviceInterfaceDetailW */
             if (pSetupDiGetDeviceInterfaceDetailW)
             {
                 ret = pSetupDiGetDeviceInterfaceDetailW(set, &interfaceData, NULL, 0, &size, NULL);
-                ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got error code: %d\n", GetLastError());
-                ok(expectedsize == size, "SetupDiGetDeviceInterfaceDetailW returned wrong reqsize: expected %d, got %d\n", expectedsize, size);
+                ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+                 "Expected ERROR_INSUFFICIENT_BUFFER, got error code: %d\n", GetLastError());
+                ok(expectedsize == size ||
+                 (expectedsize + sizeof(WCHAR)) == size /* W2K adds a backslash */,
+                 "SetupDiGetDeviceInterfaceDetailW returned wrong reqsize, got %d\n",
+                 size);
             }
             else
                 skip("SetupDiGetDeviceInterfaceDetailW is not available\n");
@@ -1097,6 +1104,8 @@ static void testRegisterAndGetDetail(void)
     {
         static const char path[] =
             "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+        static const char path_w2k[] =
+         "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\";
         PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail = NULL;
 
         detail = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)HeapAlloc(GetProcessHeap(), 0, dwSize);
@@ -1111,8 +1120,9 @@ static void testRegisterAndGetDetail(void)
              * as all the tests are cleaned up correctly this has to be (or should be) fixed
              */
             todo_wine
-            ok(!lstrcmpiA(path, detail->DevicePath), "Unexpected path %s\n",
-                    detail->DevicePath);
+            ok(!lstrcmpiA(path, detail->DevicePath) ||
+             !lstrcmpiA(path_w2k, detail->DevicePath), "Unexpected path %s\n",
+             detail->DevicePath);
             HeapFree(GetProcessHeap(), 0, detail);
         }
     }
