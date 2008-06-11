@@ -589,9 +589,9 @@ typedef struct linedevstatus_tag {
     DWORD dwOpenMediaModes;
     DWORD dwNumActiveCalls;
     DWORD dwNumOnHoldCalls;
-    DWORD dwNumOnHoldPendingCalls;
+    DWORD dwNumOnHoldPendCalls;
     DWORD dwLineFeatures;
-    DWORD dwNumCallCompletion;
+    DWORD dwNumCallCompletions;
     DWORD dwRingMode;
     DWORD dwSignalLevel;
     DWORD dwBatteryLevel;
