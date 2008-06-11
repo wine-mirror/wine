@@ -367,12 +367,13 @@ BEGIN
     IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
     IDS_TAB_AUDIO           "Audio"
     IDS_TAB_ABOUT           "About"
-    IDS_WINECFG_TITLE       "Wine configuration"
+    IDS_WINECFG_TITLE       "Configuração do Wine"
+    IDS_WINECFG_TITLE_APP   "Configuração do Wine para %s"
     IDS_THEMEFILE           "Theme files"
     IDS_THEMEFILE_SELECT    "Select a theme file"
     IDS_AUDIO_MISSING       "There is no audio driver currently specified in the registry.\n\nA recommended driver has been selected for you.\nYou can use this driver or select another driver if available.\n\nYou must click Apply for the selection to take effect."
-    IDS_SHELL_FOLDER        "Shell Folder"
-    IDS_LINKS_TO            "Links to"
+    IDS_SHELL_FOLDER        "Diretórios"
+    IDS_LINKS_TO            "Links para"
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
