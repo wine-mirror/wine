@@ -359,6 +359,10 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             else
                 dbg_printf("'%c'", (char)val_int);
             break;
+        case btBool:
+            if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            dbg_printf("%s", val_int ? "true" : "false");
+            break;
         default:
             WINE_FIXME("Unsupported basetype %u\n", bt);
             break;
