@@ -37,7 +37,7 @@ STRINGTABLE
     STRING_STOP_SVC, "%s  서비스 정지.\n"
     STRING_STOP_SVC_SUCCESS, "%s 서비스 정지 성공.\n"
     STRING_STOP_SVC_FAIL, "%s 서비스 정지 실패.\n"
-    STRING_HELP_USAGE, "명령어 문법:\n\nNET HELP 명령어 \n    -or-\nNET 명령어  /HELP\n\n"\
+    STRING_HELP_USAGE, "명령어 문법:\n\nNET HELP 명령어\n    -or-\nNET 명령어  /HELP\n\n"\
                        "    가능한 명령어:\n   NET HELP    NET START    NET STOP    NET USE\n"
     STRING_NO_ENTRIES, "리스트가 비어 있습니다.\n"
     STRING_USE_HEADER, "\n상태  로컬   원격\n---------------------------------------------------------------\n"
