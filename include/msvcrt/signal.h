@@ -33,6 +33,10 @@
 
 #define NSIG     (SIGABRT + 1)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*__sighandler_t)(int);
 
 #define SIG_DFL ((__sighandler_t)0)
@@ -41,5 +45,9 @@ typedef void (*__sighandler_t)(int);
 
 __sighandler_t signal(int sig, __sighandler_t func);
 int raise(int sig);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _WINE_SIGNAL_H */

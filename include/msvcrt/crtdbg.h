@@ -77,6 +77,10 @@ typedef struct _CrtMemState
 #define _CrtDbgBreak()                  ((void)0)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int _crtAssertBusy;
 extern int _crtBreakAlloc;
 extern int _crtDbgFlag;
@@ -89,6 +93,10 @@ int   _CrtSetBreakAlloc(int new);
 int   _CrtSetDbgFlag(int new);
 void *_CrtSetDumpClient(void *dumpClient);
 int   _CrtSetReportMode(int reportType, int reportMode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _DEBUG */
 
