@@ -53,7 +53,7 @@ MCIERR_UNRECOGNIZED_KEYWORD, 	"Driveren kunne ikke gjenkjenne den oppgitte komma
 MCIERR_UNRECOGNIZED_COMMAND,	"Driveren kunne ikke gjenkjenne den oppgitte kommandoen."
 MCIERR_HARDWARE, 		"Det er et problem med medieenheten. Sørg for at den virker ordentlig eller kontakt leverandøren."
 MCIERR_INVALID_DEVICE_NAME, 	"Den oppgitte enheten er ikke åpen, eller ikke gjenkjent av MCI."
-MCIERR_OUT_OF_MEMORY, 		"Ikke nok minne for denne operasjonen. \nAvslutt ett eller flere programmer for å frigjøre minne og prøv igjen."
+MCIERR_OUT_OF_MEMORY, 		"Ikke nok minne for denne operasjonen.\nAvslutt ett eller flere programmer for å frigjøre minne og prøv igjen."
 MCIERR_DEVICE_OPEN, 		"Enhetsnavnet brukes allerede som et alies av dette programmet. Bruk et unikt alias."
 MCIERR_CANNOT_LOAD_DRIVER, 	"Et uoppdagelig problem oppstod under lastingen av den oppgitte driveren."
 MCIERR_MISSING_COMMAND_STRING, 	"Ikke kommando ble oppgitt."

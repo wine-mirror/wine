@@ -53,7 +53,7 @@ MCIERR_UNRECOGNIZED_KEYWORD, 	"Driveren kunne ikke genkende den specificerede ko
 MCIERR_UNRECOGNIZED_COMMAND,	"Driveren kunne ikke genkende den specificerede kommando."
 MCIERR_HARDWARE, 		"Det er et problem med medieenheden. Sørg for at den virker ordentlig eller kontakt leverandøren."
 MCIERR_INVALID_DEVICE_NAME, 	"Den specificerede enhed er ikke åben, eller ikke genkendt af MCI."
-MCIERR_OUT_OF_MEMORY, 		"Ikke nok hukommelse til denne operation. \nAfslut et eller flere programmer for at frigøre hukommelse og prøv igen."
+MCIERR_OUT_OF_MEMORY, 		"Ikke nok hukommelse til denne operation.\nAfslut et eller flere programmer for at frigøre hukommelse og prøv igen."
 MCIERR_DEVICE_OPEN, 		"Enhedsnafnet bruges allerede som et alies af dette program. Brug et unikt alias."
 MCIERR_CANNOT_LOAD_DRIVER, 	"Et ukendt problem opstod under indlæsningen af den specificerede driver."
 MCIERR_MISSING_COMMAND_STRING, 	"Der blev ikke specificeret nogen kommando."

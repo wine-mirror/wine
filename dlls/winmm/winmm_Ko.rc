@@ -54,7 +54,7 @@ MCIERR_UNRECOGNIZED_KEYWORD, 	"이 드라이버는 지정된 명령 매개변수를 인식할 수 없
 MCIERR_UNRECOGNIZED_COMMAND,	"이 드라이버는 지정된 명령을 인식할 수 없습니다."
 MCIERR_HARDWARE, 		"이것은 당신의  미디어 장치 문제입니다. 반드시 올바르게 작동한다고 확신한다면 장치 제조자에게 연락하십시오"
 MCIERR_INVALID_DEVICE_NAME, 	"지정된 장치는 열수 없거나 MCI에서 인식 할 수 없습니다."
-MCIERR_OUT_OF_MEMORY, 		"이 작업을 위한 충분한 메모리가 없습니다. \n하나나 더 많은 풀그림을 종료시켜서 가능한 메모리를 증가시키시오, 그리고 다시 시도하시오."
+MCIERR_OUT_OF_MEMORY, 		"이 작업을 위한 충분한 메모리가 없습니다.\n하나나 더 많은 풀그림을 종료시켜서 가능한 메모리를 증가시키시오, 그리고 다시 시도하시오."
 MCIERR_DEVICE_OPEN, 		"이 장치 이름은 이미 다른 풀그림에서 별명으로 사용중입니다. 유일한 별명을 사용하십시오."
 MCIERR_CANNOT_LOAD_DRIVER, 	"이 지정된 장치 드라이버를 불러오는 중에 감지되지 않은 에러가 있습니다."
 MCIERR_MISSING_COMMAND_STRING, 	"어떤 명령도 정의되지 않았습니다."
