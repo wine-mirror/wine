@@ -363,4 +363,4 @@ RPCRTAPI HRESULT RPC_ENTRY
 }
 #endif
 
-#endif /*__WINE_RPCDCE_H */
+#endif /*__WINE_RPCPROXY_H */
