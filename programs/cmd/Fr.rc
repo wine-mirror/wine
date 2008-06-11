@@ -26,7 +26,7 @@ STRINGTABLE
 {
   WCMD_ATTRIB, "Aide d'ATTRIB\n"
   WCMD_CALL,
-"CALL <fichierbatch> sert à appeler un fichier batch \n\
+"CALL <fichierbatch> sert à appeler un fichier batch\n\
 depuis un autre fichier batch. Quand le fichier batch sort, le contrôle revient\n\
 au fichier qui l'a appelé. La commande CALL doit être suivie des paramètres\n\
 de la procédure appelée.\n\
@@ -63,16 +63,16 @@ précéder d'un signe @.\n"
 \n\
 Syntaxe : FOR %variable IN (groupe) DO commande\n\
 \n\
-La nécessité de doubler le signe '%' en utilisant FOR dans un fichier batch \n\
+La nécessité de doubler le signe '%' en utilisant FOR dans un fichier batch\n\
 n'existe pas dans cmd.\n"
 
   WCMD_GOTO,
-"La commande GOTO transfère l'exécution à un autre label dans un \n\
+"La commande GOTO transfère l'exécution à un autre label dans un\n\
 fichier batch.\n\
 \n\
 Le label cible de GOTO peut être long de 255 caractères\n\
 mais ne peut inclure d'espaces (ceci est différent d'autres systèmes\n\
-d'exploitation). Si deux ou plusieurs labels identiques sont dans le même fichier \n\
+d'exploitation). Si deux ou plusieurs labels identiques sont dans le même fichier\n\
 seul le premier sera exécuté. Essayer de sauter à un label non-existant\n\
 termine l'exécution du fichier batch .\n\
 \n\
@@ -87,10 +87,10 @@ Syntaxe :	IF [NOT] EXIST nomfichier commande\n\
 		IF [NOT] chaîne1==chaîne2 commande\n\
 		IF [NOT] ERRORLEVEL nombre commande\n\
 \n\
-Dans la deuxième forme de la commande, chaîne1 et chaîne2 doivent être \n\
+Dans la deuxième forme de la commande, chaîne1 et chaîne2 doivent être\n\
 entre guillemets doubles. La comparaison est insensible à la casse.\n"
 
-  WCMD_LABEL,  "LABEL sert à modifier le nom de volume d'un disque.  \n\
+  WCMD_LABEL,  "LABEL sert à modifier le nom de volume d'un disque.\n\
 \n\
 Syntaxe : LABEL [lecteur:]\n\
 La commnande demandera le nouveau nom de volume pour le lecteur donné.\n\
@@ -109,9 +109,9 @@ MOVE échoue si l'ancien et le nouvel emplacement sont sur des lecteurs DOS diffé
 Entrer PATH affichera le réglage courant de PATH (au départ\n\
 c'est la valeur donnée dans le fichier de configuration wine). Pour changer\n\
 le réglage, faites suivre la commande PATH de la nouvelle valeur.\n\
-Il est possible de modifier le PATH en utilisant la variable d'environment PATH, \n\
+Il est possible de modifier le PATH en utilisant la variable d'environment PATH,\n\
 par exemple :\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE affiche un message sur l'écran : 'Pressez Entrée pour continuer'\n\
@@ -141,7 +141,7 @@ L'invite peut aussi être modifiée en changeant la variable d'environment PROMPT,
 donc la commande 'SET PROMPT=texte' a le même effet que 'PROMPT texte'\n"
 
   WCMD_REM,
-"Une ligne de commande commençant par REM (suivi d'une espace) n'engendre \n\
+"Une ligne de commande commençant par REM (suivi d'une espace) n'engendre\n\
 aucune action, et peut donc servir de commentaire dans un fichier batch.\n"
 
   WCMD_REN,    "Aide de REN\n"
@@ -197,7 +197,7 @@ Le flag de verification n'a pas de fonction dans Wine.\n"
   WCMD_PUSHD,  "PUSHD <répertoire> enregistre le répertoire courant sur\n\
 une pile et change le répertoire courrant par le répertoire spécifié.\n"
 
-  WCMD_POPD,   "POPD change le répertoire courant par le dernier enregistré à l'aide de \n\
+  WCMD_POPD,   "POPD change le répertoire courant par le dernier enregistré à l'aide de\n\
 PUSHD.\n"
 
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"

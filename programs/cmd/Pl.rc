@@ -110,7 +110,7 @@ zmieniæ nale¿y wywo³aæ PATH za którym wystêpuje nowa œcie¿ka.\n\
 \n\
 Umieszczenie wyra¿enia %PATH% przy podawaniu nowej œcie¿ki\n\
 powoduje wstawienie starej œcie¿ki, na przyk³ad:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE wyœwietla informacje 'Naciœnij Enter aby kontynuowaæ' i czeka,\n\

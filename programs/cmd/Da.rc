@@ -105,7 +105,7 @@ kommandoen efterfølges med et nyt navn for at ændre indstillingen.\n\
 \n\
 Det er også muligt at ændre PATH ved at bruge miljøvariablen PATH, for\n\
 eksempel:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,  "PAUSE viser meldingen 'Tryk Enter for at fortsætte', og venter på at\n\ brugeren trykker Enter. Dette er hovedsageligt nyttigt i batchfiler,\n\
 for at lade brugeren læse uddata fra en tidligere kommando før den forsvinder ud\n\

@@ -62,7 +62,7 @@ símbolo @ precedendo o mesmo.\n"
 \n\
 Sintaxe: FOR %variável IN (conjunto) DO comando\n\
 \n\
-No cmd, não existe a necessidade de usar dois sinais % no \n\
+No cmd, não existe a necessidade de usar dois sinais % no\n\
 comando FOR nos arquivos de lote.\n"
 
   WCMD_GOTO,
@@ -89,7 +89,7 @@ Sintaxe:	IF [NOT] EXIST arquivo comando\n\
 Na segunda forma do comando, texto1 e texto2 devem estar usando aspas.\n\
 A comparação não diferencia maiúsculas de minusculas.\n"
 
-  WCMD_LABEL,  "LABEL é usado para rotular um volume do disco.  \n\
+  WCMD_LABEL,  "LABEL é usado para rotular um volume do disco.\n\
 \n\
 Sintaxe: LABEL [drive:]\n\
 O comando LABEL irá aguardar que vc informe o novo rótulo para o drive\n\
@@ -289,7 +289,7 @@ símbolo @ precedendo o mesmo.\n"
 \n\
 Sintaxe: FOR %variável IN (conjunto) DO comando\n\
 \n\
-No cmd, não existe a necessidade de usar dois sinais % no \n\
+No cmd, não existe a necessidade de usar dois sinais % no\n\
 comando FOR nos ficheiros de lote.\n"
 
   WCMD_GOTO,
@@ -316,7 +316,7 @@ Sintaxe:	IF [NOT] EXIST ficheiro comando\n\
 Na segunda forma do comando, texto1 e texto2 devem estar a usar aspas.\n\
 A comparação não diferencia maiúsculas de minusculas.\n"
 
-  WCMD_LABEL,  "LABEL é usado para rotular um volume do disco.  \n\
+  WCMD_LABEL,  "LABEL é usado para rotular um volume do disco.\n\
 \n\
 Sintaxe: LABEL [drive:]\n\
 O comando LABEL irá aguardar que informe o novo rótulo para o drive\n\

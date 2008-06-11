@@ -91,7 +91,7 @@ Syntaxe: IF [NOT] EXIST soubor pøíkaz\n\
 Ve druhé formì pøíkazu musí být øetìzec1 a øetìzec2 uzavøeny v dvojitých\n\
 uvozovkách. Srovnání není citlivé na velikost písmen.\n"
 
-  WCMD_LABEL,  "LABEL nastavuje jmenovku svazku-disku.  \n\
+  WCMD_LABEL,  "LABEL nastavuje jmenovku svazku-disku.\n\
 \n\
 Syntaxe: LABEL [disk:]\n\
 Budete vyzváni k zadání jmenovky.\n\
@@ -115,7 +115,7 @@ PATH novou cestu.\n\
 \n\
 Je taktéž možné zmìnit PATH použitím promìnné prostøedí PATH,\n\
 napøíklad:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE zobrazí na obrazovce text 'Press Return key to continue'\n\
@@ -161,11 +161,11 @@ SET bez argumentù ukáže souèasné nastavení prostøedí.\n\
 Syntaxe pro nastavení a zmìnu promìnné prostøedí je:\n\
 \n\
       SET <promìnná>=<hodnota>\n\
-      \n\
+\n\
       kde <promìnná> a <hodnota> musí být prosta mezer\n\
       a speciálních znakù a mezi <promìnná> rovnítko <hodnota>\n\
       nesmí být mezery.\n\
-      \n\
+\n\
       Ve Wine jsou viditelné promìnné prostøedí operaèního\n\
       systému, ve kterém je Wine spuštìn. Proto uvidíte mnohem víc promìnných\n\
       prostøedí, než u nativní Win32 implementace. Není možné\n\

@@ -115,7 +115,7 @@ wine.confファイル中で指定された物になっています)。設定を\n\
 \n\
 パスを変更するときにPATH環境変数を使用することも可能です。\n\
 例えば：\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE は画面に「続けるにはリターンキーを押して下さい」と\n\

@@ -122,7 +122,7 @@ werden\n\
 \n\
 Es ist auch möglich den PATH mit Hilfe der PATH Umgebungsvariable zu\n\
 modifizieren. Zum Beispiel:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE lässt eine Meldung auf dem Bildschirm erscheinen\n\

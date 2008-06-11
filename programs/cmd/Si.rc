@@ -27,7 +27,7 @@ STRINGTABLE
 {
   WCMD_ATTRIB, "Pomoč za ATTRIB\n"
   WCMD_CALL,
-"CALL <ime_paketne_datoteke> uporabimo znotraj paketne datoteke (batch file), \n\
+"CALL <ime_paketne_datoteke> uporabimo znotraj paketne datoteke (batch file),\n\
 kadar želimo izvršiti ukaze iz druge paketne datoteke. Ko klicana paketna\n\
 datoteka preneha z izvajanjem, vrne nadzor nadrejeni datoteki (klicatelju).\n\
 Ukazu CALL je možno posredovati tudi parametre, ki naj bodo posredovani klicani\n\
@@ -87,7 +87,7 @@ Sintaksa:	IF [NOT] EXIST ime_datoteke ukaz\n\
 V drugem primeru zgoraj morata biti niz1 in niz2 v dvojnih navednicah.\n\
 Primerjava razlikuje med malimi in velikimi črkami.\n"
 
-  WCMD_LABEL,  "LABEL uporabljamo za nastavljanje oznake pogona.  \n\
+  WCMD_LABEL,  "LABEL uporabljamo za nastavljanje oznake pogona.\n\
 \n\
 Sintaksa: LABEL [pogon:]\n\
 Ukaz povpraša po novi oznaki za želeni pogon.\n\
@@ -111,7 +111,7 @@ podajte novo vrednost kot parameter ukaza PATH.\n\
 \n\
 Nastavitev PATH je prav tako možno spremeniti z uporabo spremeljivke okolja\n\
 PATH:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE izpiše na zaslonu sporočilo 'Za nadaljevanje pritisnite Return'\n\

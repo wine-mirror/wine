@@ -119,7 +119,7 @@ cambiar la configuración acompañe al comando PATH con el nuevo valor.\n\
 \n\
 También es posible modificar el PATH usando la variable de entorno\n\
 PATH, por ejamplo:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE muestra un mensaje en la pantalla 'Pulse la tecla Return para\n\

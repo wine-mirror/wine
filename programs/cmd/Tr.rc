@@ -89,7 +89,7 @@ Sözdzimi:   IF [NOT] EXIST dosyaadý komut\n\
 Ýkinci biçimde dize1 ve dize2 çift týrnak içerisinde olmalýdýr.\n\
 Karþýlaþtýrma BÜYÜK/küçük harf duyarlý deðildir.\n"
 
-  WCMD_LABEL,  "LABEL bir disk bölümüne etiket verir.  \n\
+  WCMD_LABEL,  "LABEL bir disk bölümüne etiket verir.\n\
 \n\
 Sözdizimi: LABEL [sürücü:]\n\
 Komut sizden verilen sürücü için yeni bir etiket girmenizi bekleyecektir.\n\
@@ -115,7 +115,7 @@ PATH komutuna yeni deðeri ekleyin.\n\
 \n\
 Ayrýca PATH ayarýný düzenlemek için PATH çevre deðikenini de\n\
 kullanabilirsiniz, örneðin:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE 'Devam etmek için bir tuþa basýn' iletisini ekranda gösterip\n\

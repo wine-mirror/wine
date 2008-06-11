@@ -89,7 +89,7 @@ In de tweede vorm van de opdracht moeten tekenreeks1 en tekenreeks2 tussen dubbe
 aanhalingsteken staan. De vergelijking is niet gevoelig voor het onderscheid tussen\n\
 hoofd- en kleine letters.\n"
 
-  WCMD_LABEL,  "LABEL wordt gebruikt om een schijflabel te wijzigen.  \n\
+  WCMD_LABEL,  "LABEL wordt gebruikt om een schijflabel te wijzigen.\n\
 \n\
 Syntax: LABEL [schijf:]\n\
 De opdracht vraagt u om een nieuw label in te tikken voor de opgegeven schijf.\n\
@@ -114,7 +114,7 @@ opdracht volgen door de nieuwe waarde.\n\
 \n\
 Het is ook mogelijk om het zoekpad te wijzigen met behulp van de PATH omgevingsvariabele,\n\
 bij voorbeeld:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE toont een bericht op het scherm: 'Toets Enter om door te gaan'\n\

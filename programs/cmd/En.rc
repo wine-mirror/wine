@@ -88,7 +88,7 @@ Syntax:	IF [NOT] EXIST filename command\n\
 In the second form of the command, string1 and string2 must be in double\n\
 quotes. The comparison is not case-sensitive.\n"
 
-  WCMD_LABEL,  "LABEL is used to set a disk volume label.  \n\
+  WCMD_LABEL,  "LABEL is used to set a disk volume label.\n\
 \n\
 Syntax: LABEL [drive:]\n\
 The command will prompt you for the new volume label for the given drive.\n\
@@ -113,7 +113,7 @@ PATH command with the new value.\n\
 \n\
 It is also possible to modify the PATH by using the PATH environment\n\
 variable, for example:\n\
-		PATH %PATH%;c:\\temp \n"
+		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE displays a message on the screen 'Press Return key to continue'\n\
