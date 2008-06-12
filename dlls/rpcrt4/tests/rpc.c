@@ -399,7 +399,13 @@ static void test_I_RpcMapWin32Status(void)
 {
     LONG win32status;
     RPC_STATUS rpc_status;
+    BOOL on_win9x = FALSE;
     BOOL w2k3_up = FALSE;
+
+    /* Win9x always returns the given status */
+    win32status = I_RpcMapWin32Status(ERROR_ACCESS_DENIED);
+    if (win32status == ERROR_ACCESS_DENIED)
+        on_win9x = TRUE;
 
     /* Windows 2003 and Vista return STATUS_UNSUCCESSFUL if given an unknown status */
     win32status = I_RpcMapWin32Status(9999);
@@ -409,9 +415,14 @@ static void test_I_RpcMapWin32Status(void)
         w2k3_up = TRUE;
     }
 
+    /* On Windows XP-SP1 and below some statuses are not mapped and return
+     * the given status
+     */
     for (rpc_status = 0; rpc_status < 10000; rpc_status++)
     {
         LONG expected_win32status;
+        BOOL missing = FALSE;
+
         win32status = I_RpcMapWin32Status(rpc_status);
         switch (rpc_status)
         {
@@ -424,10 +435,10 @@ static void test_I_RpcMapWin32Status(void)
         case ERROR_MAX_THRDS_REACHED: expected_win32status = STATUS_NO_MEMORY; break;
         case ERROR_NOACCESS: expected_win32status = STATUS_ACCESS_VIOLATION; break;
         case ERROR_NOT_ENOUGH_SERVER_MEMORY: expected_win32status = STATUS_INSUFF_SERVER_RESOURCES; break;
-        case ERROR_WRONG_PASSWORD: expected_win32status = STATUS_WRONG_PASSWORD; break;
-        case ERROR_INVALID_LOGON_HOURS: expected_win32status = STATUS_INVALID_LOGON_HOURS; break;
-        case ERROR_PASSWORD_EXPIRED: expected_win32status = STATUS_PASSWORD_EXPIRED; break;
-        case ERROR_ACCOUNT_DISABLED: expected_win32status = STATUS_ACCOUNT_DISABLED; break;
+        case ERROR_WRONG_PASSWORD:  expected_win32status = STATUS_WRONG_PASSWORD; missing = TRUE; break;
+        case ERROR_INVALID_LOGON_HOURS: expected_win32status = STATUS_INVALID_LOGON_HOURS; missing = TRUE; break;
+        case ERROR_PASSWORD_EXPIRED: expected_win32status = STATUS_PASSWORD_EXPIRED; missing = TRUE; break;
+        case ERROR_ACCOUNT_DISABLED: expected_win32status = STATUS_ACCOUNT_DISABLED; missing = TRUE; break;
         case ERROR_INVALID_SECURITY_DESCR: expected_win32status = STATUS_INVALID_SECURITY_DESCR; break;
         case RPC_S_INVALID_STRING_BINDING: expected_win32status = RPC_NT_INVALID_STRING_BINDING; break;
         case RPC_S_WRONG_KIND_OF_BINDING: expected_win32status = RPC_NT_WRONG_KIND_OF_BINDING; break;
@@ -501,10 +512,10 @@ static void test_I_RpcMapWin32Status(void)
         case RPC_S_FP_OVERFLOW: expected_win32status = RPC_NT_FP_OVERFLOW; break;
         case RPC_S_CALL_IN_PROGRESS: expected_win32status = RPC_NT_CALL_IN_PROGRESS; break;
         case RPC_S_NO_MORE_BINDINGS: expected_win32status = RPC_NT_NO_MORE_BINDINGS; break;
-        case RPC_S_CALL_CANCELLED: expected_win32status = RPC_NT_CALL_CANCELLED; break;
+        case RPC_S_CALL_CANCELLED: expected_win32status = RPC_NT_CALL_CANCELLED; missing = TRUE; break;
         case RPC_S_INVALID_OBJECT: expected_win32status = RPC_NT_INVALID_OBJECT; break;
-        case RPC_S_INVALID_ASYNC_HANDLE: expected_win32status = RPC_NT_INVALID_ASYNC_HANDLE; break;
-        case RPC_S_INVALID_ASYNC_CALL: expected_win32status = RPC_NT_INVALID_ASYNC_CALL; break;
+        case RPC_S_INVALID_ASYNC_HANDLE: expected_win32status = RPC_NT_INVALID_ASYNC_HANDLE; missing = TRUE; break;
+        case RPC_S_INVALID_ASYNC_CALL: expected_win32status = RPC_NT_INVALID_ASYNC_CALL; missing = TRUE; break;
         case RPC_S_GROUP_MEMBER_NOT_FOUND: expected_win32status = RPC_NT_GROUP_MEMBER_NOT_FOUND; break;
         case RPC_X_NO_MORE_ENTRIES: expected_win32status = RPC_NT_NO_MORE_ENTRIES; break;
         case RPC_X_SS_CHAR_TRANS_OPEN_FAIL: expected_win32status = RPC_NT_SS_CHAR_TRANS_OPEN_FAIL; break;
@@ -517,19 +528,26 @@ static void test_I_RpcMapWin32Status(void)
         case RPC_X_ENUM_VALUE_OUT_OF_RANGE: expected_win32status = RPC_NT_ENUM_VALUE_OUT_OF_RANGE; break;
         case RPC_X_BYTE_COUNT_TOO_SMALL: expected_win32status = RPC_NT_BYTE_COUNT_TOO_SMALL; break;
         case RPC_X_BAD_STUB_DATA: expected_win32status = RPC_NT_BAD_STUB_DATA; break;
-        case RPC_X_PIPE_CLOSED: expected_win32status = RPC_NT_PIPE_CLOSED; break;
-        case RPC_X_PIPE_DISCIPLINE_ERROR: expected_win32status = RPC_NT_PIPE_DISCIPLINE_ERROR; break;
-        case RPC_X_PIPE_EMPTY: expected_win32status = RPC_NT_PIPE_EMPTY; break;
-        case ERROR_PASSWORD_MUST_CHANGE: expected_win32status = STATUS_PASSWORD_MUST_CHANGE; break;
-        case ERROR_ACCOUNT_LOCKED_OUT: expected_win32status = STATUS_ACCOUNT_LOCKED_OUT; break;
+        case RPC_X_PIPE_CLOSED: expected_win32status = RPC_NT_PIPE_CLOSED; missing = TRUE; break;
+        case RPC_X_PIPE_DISCIPLINE_ERROR: expected_win32status = RPC_NT_PIPE_DISCIPLINE_ERROR; missing = TRUE; break;
+        case RPC_X_PIPE_EMPTY: expected_win32status = RPC_NT_PIPE_EMPTY; missing = TRUE; break;
+        case ERROR_PASSWORD_MUST_CHANGE: expected_win32status = STATUS_PASSWORD_MUST_CHANGE; missing = TRUE; break;
+        case ERROR_ACCOUNT_LOCKED_OUT: expected_win32status = STATUS_ACCOUNT_LOCKED_OUT; missing = TRUE; break;
         default:
             if (w2k3_up)
                 expected_win32status = STATUS_UNSUCCESSFUL;
             else
                 expected_win32status = rpc_status;
         }
-        ok(win32status == expected_win32status, "I_RpcMapWin32Status(%ld) should have returned 0x%x instead of 0x%x\n",
-            rpc_status, expected_win32status, win32status);
+
+        if (on_win9x)
+            missing = TRUE;
+
+        ok(win32status == expected_win32status ||
+            broken(missing && win32status == rpc_status),
+            "I_RpcMapWin32Status(%ld) should have returned 0x%x instead of 0x%x%s\n",
+            rpc_status, expected_win32status, win32status,
+            broken(missing) ? " (or have returned with the given status)" : "");
     }
 }
 
