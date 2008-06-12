@@ -39,7 +39,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Naprej",                  IDM_GOBACKWARD
         MENUITEM "Na&zaj",               IDM_GOFORWARD
         MENUITEM SEPARATOR
-        MENUITEM "&Shrani ozadje kot ...", IDM_SAVEBACKGROUND
+        MENUITEM "&Shrani ozadje kot...", IDM_SAVEBACKGROUND
         MENUITEM "Nastavi kot oza&dje",     IDM_SETWALLPAPER
         MENUITEM "&Kopiraj ozadje",       IDM_COPYBACKGROUND
         MENUITEM "Nastavi kot p&redmet Namizja",   IDM_SETDESKTOPITEM
@@ -64,23 +64,23 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "&Odpri povezavo",               IDM_FOLLOWLINKC
         MENUITEM "Odpri povezavo v &novem oknu", IDM_FOLLOWLINKN
-        MENUITEM "Shrani cilj &kot ...",       IDM_SAVETARGET
+        MENUITEM "Shrani cilj &kot...",       IDM_SAVETARGET
         MENUITEM "Na&tisni cilj",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "P&okaži sliko",            IDM_SHOWPICTURE
-        MENUITEM "&Shrani sliko kot ...",      IDM_SAVEPICTURE
+        MENUITEM "&Shrani sliko kot...",      IDM_SAVEPICTURE
         MENUITEM "Po&šlji sliko...",       IDM_MP_EMAILPICTURE
-        MENUITEM "Natisni s&liko ...",        IDM_MP_PRINTPICTURE
+        MENUITEM "Natisni s&liko...",        IDM_MP_PRINTPICTURE
         MENUITEM "Po&jdi v mapo Slike",       IDM_MP_MYPICS
         MENUITEM "Nastavi kot oza&dje",       IDM_SETWALLPAPER
-        MENUITEM "Nastavi kot p&redmet Namizja ...",  IDM_SETDESKTOPITEM
+        MENUITEM "Nastavi kot p&redmet Namizja...",  IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "&Izreži",                     IDM_CUT
         MENUITEM "&Kopiraj",                    IDM_COPY
         MENUITEM "Kopiraj &bližnjico",           IDM_COPYSHORTCUT
         MENUITEM "&Prilepi",                   IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "Dodaj med Pri&ljubljene ...",     IDM_ADDFAVORITES
+        MENUITEM "Dodaj med Pri&ljubljene...",     IDM_ADDFAVORITES
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Lastnost&i",              IDM_PROPERTIES
@@ -128,7 +128,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "&Odpri",                IDM_FOLLOWLINKC
         MENUITEM "Odpri v &novem oknu",  IDM_FOLLOWLINKN
-        MENUITEM "Shrani colj &kot ...",   IDM_SAVETARGET
+        MENUITEM "Shrani colj &kot...",   IDM_SAVETARGET
         MENUITEM "Na&tisni cilj",        IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "Izreži",                  IDM_CUT
@@ -136,7 +136,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Kopiraj &bližnjico",       IDM_COPYSHORTCUT
         MENUITEM "&Prilepi",               IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "Dodaj med Pri&ljubljene ...", IDM_ADDFAVORITES
+        MENUITEM "Dodaj med Pri&ljubljene...", IDM_ADDFAVORITES
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Lastnost&i",          IDM_PROPERTIES
@@ -151,20 +151,20 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "&Odpri povezavo",               IDM_FOLLOWLINKC
         MENUITEM "Odpri povezavo v &novem oknu", IDM_FOLLOWLINKN
-        MENUITEM "Shrani cilj &kot ...",       IDM_SAVETARGET
+        MENUITEM "Shrani cilj &kot...",       IDM_SAVETARGET
         MENUITEM "Na&tisni cilj",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "&Pokaži sliko",            IDM_SHOWPICTURE
-        MENUITEM "Shrani &video kot ...",        IDM_SAVEPICTURE
+        MENUITEM "Shrani &video kot...",        IDM_SAVEPICTURE
         MENUITEM "Nastavi kot oza&dje",       IDM_SETWALLPAPER
-        MENUITEM "Nastavi kot p&redmet Namizja ...",  IDM_SETDESKTOPITEM
+        MENUITEM "Nastavi kot p&redmet Namizja...",  IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
         MENUITEM "&Izreži",                     IDM_CUT
         MENUITEM "&Kopiraj",                    IDM_COPY
         MENUITEM "Kopiraj &bližnjico",           IDM_COPYSHORTCUT
         MENUITEM "&Prilepi",                   IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "Dodaj med Pri&ljubljene ...",     IDM_ADDFAVORITES
+        MENUITEM "Dodaj med Pri&ljubljene...",     IDM_ADDFAVORITES
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Predvajaj",                     IDM_DYNSRCPLAY
@@ -176,11 +176,11 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "&Odpri povezavo",               IDM_FOLLOWLINKC
         MENUITEM "Odpri povezavo v &novem oknu", IDM_FOLLOWLINKN
-        MENUITEM "Shrani cilj &kot ...",       IDM_SAVETARGET
+        MENUITEM "Shrani cilj &kot...",       IDM_SAVETARGET
         MENUITEM "Na&tisni cilj",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "&Pokaži sliko",            IDM_SHOWPICTURE
-        MENUITEM "Shrani &sliko kot ...",      IDM_SAVEPICTURE
+        MENUITEM "Shrani &sliko kot...",      IDM_SAVEPICTURE
         MENUITEM "Nastavi kot oza&dje",       IDM_SETWALLPAPER
         MENUITEM "Nastavi kot p&redmet Namizja",  IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
@@ -189,7 +189,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Kopiraj &bližnjico",           IDM_COPYSHORTCUT
         MENUITEM "&Prilepi",                   IDM_PASTE
         MENUITEM SEPARATOR
-        MENUITEM "Dodaj med Pri&ljubljene ...",     IDM_ADDFAVORITES
+        MENUITEM "Dodaj med Pri&ljubljene...",     IDM_ADDFAVORITES
         MENUITEM SEPARATOR
         MENUITEM "Predvajaj",                     IDM_IMGARTPLAY
         MENUITEM "Ustavi",                     IDM_IMGARTSTOP
