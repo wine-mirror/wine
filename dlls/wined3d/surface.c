@@ -628,7 +628,16 @@ void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT te
     TRACE("(%p) : setting textureName %u, target %i\n", This, textureName, target);
     if (This->glDescription.textureName == 0 && textureName != 0) {
         IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
-        IWineD3DSurface_AddDirtyRect(iface, NULL);
+        if((This->Flags & SFLAG_LOCATIONS) == 0) {
+            /* In 1.0-rc4 and earlier, AddDirtyRect was called in the place of this if condition.
+             * This had the problem that a correctly set INDRAWABLE flag was removed if the PreLoad
+             * during the offscreen rendering readback triggered the creation of the GL texture.
+             * The change intended to keep the INDRAWABLE intact. To prevent unintended side effects
+             * before release, set the INSYSMEM flag like the old AddDirtyRect did.
+             */
+            WARN("Wine 1.0 safety path hit\n");
+            This->Flags |= SFLAG_INSYSMEM;
+        }
     }
     if(target == GL_TEXTURE_RECTANGLE_ARB && This->glDescription.target != target) {
         This->Flags &= ~SFLAG_NORMCOORD;
