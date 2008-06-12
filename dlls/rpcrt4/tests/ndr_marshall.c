@@ -896,6 +896,9 @@ static void test_simple_struct(void)
     test_pointer_marshal(fmtstr_simple_struct, &s1, 24, wiredata, 28, NULL, 0, "struct");
     }
 
+    /* zero the entire structure, including the hole */
+    memset(&ps1, 0, sizeof(&ps1));
+
     /* FC_PSTRUCT */
     ps1.l1 = 0xdeadbeef;
     l = 0xcafebabe;
