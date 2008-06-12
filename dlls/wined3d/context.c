@@ -951,7 +951,34 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
             Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
         }
     }
-    if (readTexture) {
+
+    /* When switching away from an offscreen render target, and we're not using FBOs,
+     * we have to read the drawable into the texture. This is done via PreLoad(and
+     * SFLAG_INDRAWABLE set on the surface). There are some things that need care though.
+     * PreLoad needs a GL context, and FindContext is called before the context is activated.
+     * It also has to be called with the old rendertarget active, otherwise a wrong drawable
+     * is read. This leads to these possible situations:
+     *
+     * 0) lastActiveRenderTarget == target && oldTid == newTid:
+     *    Nothing to do, we don't even reach this code in this case...
+     *
+     * 1) lastActiveRenderTarget != target && oldTid == newTid:
+     *    The currently active context is OK for readback. Call PreLoad, and it
+     *    performs the read
+     *
+     * 2) lastActiveRenderTarget == target && oldTid != newTid:
+     *    Nothing to do - the drawable is unchanged
+     *
+     * 3) lastActiveRenderTarget != target && oldTid != newTid:
+     *    This is tricky. We have to get a context with the old drawable from somewhere
+     *    before we can switch to the new context. In this case, PreLoad calls
+     *    ActivateContext(lastActiveRenderTarget) from the new(current) thread. This
+     *    is case (2) then. The old drawable is activated for the new thread, and the
+     *    readback can be done. The recursed ActivateContext does *not* call PreLoad again.
+     *    After that, the outer ActivateContext(which calls PreLoad) can activate the new
+     *    target for the new thread
+     */
+    if (readTexture && This->lastActiveRenderTarget != target) {
         BOOL oldInDraw = This->isInDraw;
 
         /* PreLoad requires a context to load the texture, thus it will call ActivateContext.
