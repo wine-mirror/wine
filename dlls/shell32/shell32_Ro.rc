@@ -1,0 +1,230 @@
+/*
+ * Copyright 1998 Juergen Schmied
+ * Copyright 2008 Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+MENU_001 MENU DISCARDABLE
+BEGIN
+        MENUITEM "Pictograme &mari",    FCIDM_SHVIEW_BIGICON
+        MENUITEM "Pictograme m&ici",    FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Listă",              FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&Detailii",           FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+        POPUP ""
+        BEGIN
+          POPUP "&Mod afișare"
+          BEGIN
+            MENUITEM "Pictograme &mari",        FCIDM_SHVIEW_BIGICON
+            MENUITEM "Pictograme m&ici",        FCIDM_SHVIEW_SMALLICON
+            MENUITEM "&Listă",                  FCIDM_SHVIEW_LISTVIEW
+            MENUITEM "&Detailii",               FCIDM_SHVIEW_REPORTVIEW
+          END
+          MENUITEM SEPARATOR
+          POPUP "Aranjează &pictogramele"
+          BEGIN
+            MENUITEM "După &nume",      0x30  /* column 0 */
+            MENUITEM "După &tip",       0x32  /* column 2 */
+            MENUITEM "După &mărime",    0x31  /* ... */
+            MENUITEM "După &dată",      0x33
+            MENUITEM SEPARATOR
+            MENUITEM "&Aranjează automat",      FCIDM_SHVIEW_AUTOARRANGE
+          END
+          MENUITEM "Alinează pictogramele",     FCIDM_SHVIEW_SNAPTOGRID
+          MENUITEM SEPARATOR
+          MENUITEM "Actualizează",              FCIDM_SHVIEW_REFRESH
+          MENUITEM SEPARATOR
+          MENUITEM "Inserează",                 FCIDM_SHVIEW_INSERT
+          MENUITEM "Inserează ca link",         FCIDM_SHVIEW_INSERTLINK
+          MENUITEM SEPARATOR
+          POPUP "Nou"
+          BEGIN
+            MENUITEM "&Dosar nou",              FCIDM_SHVIEW_NEWFOLDER
+            MENUITEM "&Link nou",               FCIDM_SHVIEW_NEWLINK
+            MENUITEM SEPARATOR
+          END
+          MENUITEM SEPARATOR
+          MENUITEM "Proprietăți",               FCIDM_SHVIEW_PROPERTIES
+        END
+END
+
+/*
+ shellview item menu
+*/
+MENU_SHV_FILE MENU DISCARDABLE
+BEGIN
+        POPUP ""
+        BEGIN
+          MENUITEM "&Selecție"          FCIDM_SHVIEW_OPEN
+          MENUITEM "E&xploreză",        FCIDM_SHVIEW_EXPLORE
+          MENUITEM "&Deschide",         FCIDM_SHVIEW_OPEN
+          MENUITEM SEPARATOR
+          MENUITEM "Dec&upează",        FCIDM_SHVIEW_CUT
+          MENUITEM "&Copiază",          FCIDM_SHVIEW_COPY
+          MENUITEM SEPARATOR
+          MENUITEM "Crează &link",      FCIDM_SHVIEW_CREATELINK
+          MENUITEM "&Șterge",           FCIDM_SHVIEW_DELETE
+          MENUITEM "&Redenumește",      FCIDM_SHVIEW_RENAME
+          MENUITEM SEPARATOR
+          MENUITEM "&Proprietăți",      FCIDM_SHVIEW_PROPERTIES
+        END
+END
+
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Selectare dosar"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Renunță", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+        TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+        WS_BORDER | WS_TABSTOP,
+        4, 40, 180, 120
+}
+
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Selectare dosar"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Dosar:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+        TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+        WS_BORDER | WS_TABSTOP,
+        12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Creează un dosar nou", IDD_MAKENEWFOLDER, 12, 174, 80, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Renunță", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Mesaj"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Da", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Da la &toate", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Nu", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Renunță", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
+SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Despre %s"
+FONT 10, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ PUSHBUTTON "&Licența Wine...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
+ ICON "", stc1, 10, 10, 30, 30
+ LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
+ LTEXT "Rulând pe %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine a fost vinificat de:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+}
+
+SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION ""
+FONT 8, "MS Shell Dlg"
+{
+ ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
+ LTEXT "Introduceți numele unui program, dosar, document sau resursă internet și Wine îl va deschide.", 12289, 36, 11, 182, 18
+ LTEXT "&Deschide:", 12305, 7, 39, 29, 10
+ CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 39, 37, 183, 100
+ DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Renunță", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Navigează...", 12288, 170, 63, 50, 14, WS_TABSTOP
+}
+
+STRINGTABLE
+{
+        /* columns in the shellview */
+        IDS_SHV_COLUMN1         "Fișier"
+        IDS_SHV_COLUMN2         "Mărime"
+        IDS_SHV_COLUMN3         "Tip"
+        IDS_SHV_COLUMN4         "Modificat"
+        IDS_SHV_COLUMN5         "Atributuri"
+        IDS_SHV_COLUMN6         "Mărime"
+        IDS_SHV_COLUMN7         "Spațiu disponibil"
+        IDS_SHV_COLUMN8         "Nume"
+        IDS_SHV_COLUMN9         "Comentarii"
+        IDS_SHV_COLUMN10        "Proprietar"
+        IDS_SHV_COLUMN11        "Grup"
+        IDS_SHV_COLUMN_DELFROM  "Locația originală"
+        IDS_SHV_COLUMN_DELDATE  "Data ștergerii"
+
+        /* special folders */
+        IDS_DESKTOP             "Birou"
+        IDS_MYCOMPUTER          "Computerul meu"
+        IDS_RECYCLEBIN_FOLDER_NAME      "Gunoi"
+
+        /* context menus */
+        IDS_VIEW_LARGE          "Pictograme &mari"
+        IDS_VIEW_SMALL          "Pictograme m&ici"
+        IDS_VIEW_LIST           "&Listă"
+        IDS_VIEW_DETAILS        "&Detailii"
+        IDS_SELECT              "Selectează"
+        IDS_OPEN                "Deschide"
+
+        /* message box strings */
+        IDS_RESTART_TITLE       "Repornire"
+        IDS_RESTART_PROMPT      "Vreți să simulați o repornire de Windows?"
+        IDS_SHUTDOWN_TITLE      "Oprire"
+        IDS_SHUTDOWN_PROMPT     "Vreți să opriți sesiunea de Wine?"
+
+        /* shell folder path default values */
+        IDS_PROGRAMS            "Meniu Start\\Programe"
+        IDS_PERSONAL            "Documentele mele"
+        IDS_FAVORITES           "Favorite"
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Licența Wine"
+IDS_LICENSE,
+"Wine is free software; you can redistribute it and/or \
+modify it under the terms of the GNU Lesser General Public \
+License as published by the Free Software Foundation; either \
+version 2.1 of the License, or (at your option) any later version.\n\n\
+Wine is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details.\n\n\
+You should have received a copy of the GNU Lesser General Public \
+License along with this library; if not, write to the Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+}
+
+#pragma code_page(default)
