@@ -1315,6 +1315,7 @@ static void test_conformant_array(void)
     void *ptr;
     unsigned char *mem, *mem_orig;
     unsigned char memsrc[20];
+    unsigned int i;
 
     static const unsigned char fmtstr_conf_array[] =
     {
@@ -1327,6 +1328,9 @@ static void test_conformant_array(void)
         0x1,               /* FC_BYTE */
         0x5b               /* FC_END */
     };
+
+    for (i = 0; i < sizeof(memsrc); i++)
+        memsrc[i] = i * i;
 
     StubDesc = Object_StubDesc;
     StubDesc.pFormatTypes = fmtstr_conf_array;
