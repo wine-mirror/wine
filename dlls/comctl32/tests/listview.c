@@ -1176,7 +1176,7 @@ static void test_multiselect(void)
 
 	selected_count = (int)SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
 
-	ok(selected_count == 1, "There should be only one selected item at the begining (is %d)\n",selected_count);
+	ok(selected_count == 1, "There should be only one selected item at the beginning (is %d)\n",selected_count);
 
 	/* Set SHIFT key pressed */
         GetKeyboardState(kstate);
