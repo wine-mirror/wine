@@ -1446,7 +1446,13 @@ static void test_FindFirstFileExA(void)
     _lclose(_lcreat("test-dir\\file2", 0));
     CreateDirectoryA("test-dir\\dir1", NULL);
     /* FindExLimitToDirectories is ignored */
+    SetLastError(0xdeadbeef);
     handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, FindExSearchLimitToDirectories, NULL, 0);
+    if (handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("FindFirstFileExA is not implemented\n");
+        goto cleanup;
+    }
     ok(handle != INVALID_HANDLE_VALUE, "FindFirstFile failed (err=%u)\n", GetLastError());
     ok(strcmp(search_results.cFileName, ".") == 0, "First entry should be '.', is %s\n", search_results.cFileName);
 
@@ -1467,6 +1473,8 @@ static void test_FindFirstFileExA(void)
 #undef CHECK_NAME
 
     ok(FindNextFile(handle, &search_results) == FALSE, "Fetching sixth file should failed\n");
+
+cleanup:
     DeleteFileA("test-dir\\file1");
     DeleteFileA("test-dir\\file2");
     RemoveDirectoryA("test-dir\\dir1");
