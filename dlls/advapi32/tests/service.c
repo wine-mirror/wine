@@ -145,7 +145,17 @@ static void test_open_svc(void)
     GetServiceDisplayNameA(scm_handle, spooler, NULL, &displaysize);
     /* Get the displayname */
     GetServiceDisplayNameA(scm_handle, spooler, displayname, &displaysize);
-    /* Try to open the service with this displayname */
+    /* Try to open the service with this displayname, unless the displayname equals
+     * the servicename as that would defeat the purpose of this test.
+     */
+    if (!lstrcmpi(spooler, displayname))
+    {
+        skip("displayname equals servicename\n");
+        CloseServiceHandle(scm_handle);
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
     svc_handle = OpenServiceA(scm_handle, displayname, GENERIC_READ);
     ok(!svc_handle, "Expected failure\n");
     ok(GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST, "Expected ERROR_SERVICE_DOES_NOT_EXIST, got %d\n", GetLastError());
