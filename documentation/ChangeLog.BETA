@@ -1,3 +1,539 @@
+2008-06-13  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/kernel32/tests/file.c:
+	kernel32/tests: Skip tests if function is not implemented.
+
+	* dlls/kernel32/tests/file.c:
+	kernel32/tests: Fix a few typos.
+
+	* dlls/credui/credui_Nl.rc:
+	credui: Typo and minor correction in Dutch resource.
+
+2008-06-13  Michael Stefaniuc <mstefani@redhat.de>
+
+	* dlls/wininet/rsrc.rc, dlls/wininet/wininet_Ro.rc:
+	wininet: Add the Romanian translation.
+
+	* dlls/shell32/shell32_Ro.rc, dlls/shell32/shres.rc:
+	shell32: Add initial Romanian translation.
+
+2008-06-13  Detlef Riekenberg <wine.dev@web.de>
+
+	* tools/makedep.c:
+	makedep: Fix a typo in the usage output.
+
+2008-06-12  Rob Shearman <robertshearman@gmail.com>
+
+	* dlls/rpcrt4/tests/ndr_marshall.c:
+	rpcrt4: Clear a hole in the ps1 structure in test_simple_struct.
+
+	* dlls/rpcrt4/tests/ndr_marshall.c:
+	rpcrt4: Initialise the array to be marshalled in test_conformant_array.
+
+2008-06-12  Stefan Dösinger <stefan@codeweavers.com>
+
+	* dlls/wined3d/context.c:
+	wined3d: Only read back offscreen targets on a target change.
+	This avoids calling PreLoad needlessly on a thread change during offscreen
+	rendering and breaks up the endless recursion due to lastTID != newTID.
+
+	* dlls/wined3d/context.c:
+	wined3d: Do not PreLoad the new render target.
+	There is no reason to do that, now that the SetGLTextureDesc bug is
+	fixed. This avoids an infinite recursion because PreLoad calls
+	ActivateContext at some point.
+
+	* dlls/wined3d/surface.c:
+	wined3d: Remove a broken AddDirtyRect call.
+
+2008-06-12  Francois Gouget <fgouget@free.fr>
+
+	* dlls/sane.ds/sane_Da.rc, dlls/sane.ds/sane_Ko.rc:
+	sane.ds: Remove spaces before '...'.
+
+	* dlls/shdoclc/Da.rc, dlls/shdoclc/Si.rc:
+	shdoclc: Remove spaces before '...'.
+
+	* dlls/user32/resources/user32_Bg.rc, dlls/user32/resources/user32_Da.rc,
+	  dlls/user32/resources/user32_De.rc,
+	  dlls/user32/resources/user32_En.rc,
+	  dlls/user32/resources/user32_Eo.rc,
+	  dlls/user32/resources/user32_Es.rc,
+	  dlls/user32/resources/user32_Fr.rc,
+	  dlls/user32/resources/user32_Hu.rc,
+	  dlls/user32/resources/user32_It.rc,
+	  dlls/user32/resources/user32_Ja.rc,
+	  dlls/user32/resources/user32_Ko.rc,
+	  dlls/user32/resources/user32_Nl.rc,
+	  dlls/user32/resources/user32_Pt.rc,
+	  dlls/user32/resources/user32_Ro.rc,
+	  dlls/user32/resources/user32_Ru.rc,
+	  dlls/user32/resources/user32_Si.rc,
+	  dlls/user32/resources/user32_Sv.rc,
+	  dlls/user32/resources/user32_Tr.rc,
+	  dlls/user32/resources/user32_Uk.rc,
+	  dlls/user32/resources/user32_Wa.rc,
+	  dlls/user32/resources/user32_Zh.rc:
+	user32: Remove spaces before '...'.
+
+	* dlls/browseui/rsrc_Si.rc:
+	browseui: Remove spaces before '...'.
+
+	* dlls/comdlg32/cdlg_Bg.rc, dlls/comdlg32/cdlg_Cn.rc,
+	  dlls/comdlg32/cdlg_Da.rc, dlls/comdlg32/cdlg_De.rc,
+	  dlls/comdlg32/cdlg_El.rc, dlls/comdlg32/cdlg_En.rc,
+	  dlls/comdlg32/cdlg_Fr.rc, dlls/comdlg32/cdlg_Hu.rc,
+	  dlls/comdlg32/cdlg_It.rc, dlls/comdlg32/cdlg_Ko.rc,
+	  dlls/comdlg32/cdlg_Nl.rc, dlls/comdlg32/cdlg_Pt.rc,
+	  dlls/comdlg32/cdlg_Ro.rc, dlls/comdlg32/cdlg_Ru.rc,
+	  dlls/comdlg32/cdlg_Si.rc, dlls/comdlg32/cdlg_Sv.rc,
+	  dlls/comdlg32/cdlg_Tr.rc, dlls/comdlg32/cdlg_Uk.rc:
+	comdlg32: Remove spaces before '...'.
+
+	* programs/xcopy/Da.rc, programs/xcopy/De.rc, programs/xcopy/En.rc,
+	  programs/xcopy/Fr.rc, programs/xcopy/Ko.rc, programs/xcopy/Nl.rc,
+	  programs/xcopy/No.rc, programs/xcopy/Pl.rc, programs/xcopy/Ru.rc,
+	  programs/xcopy/Si.rc:
+	xcopy: Remove spaces before '\n' in resource strings.
+
+2008-06-12  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/rpcrt4/tests/rpc.c:
+	rpcrt4/tests: Fix test failures for win9x, NT4, W2K and XP-SP1.
+
+2008-06-11  Michael Stefaniuc <mstefani@redhat.de>
+
+	* programs/winecfg/Pt.rc:
+	winecfg: Fix the Portuguese Brazilian translation.
+	Thanks to Mauricio Teixeira <mteixeira@webset.net> for the translation.
+
+2008-06-11  Alexandre Julliard <julliard@winehq.org>
+
+	* programs/net/De.rc:
+	net: Add missing #pragma codepage in utf-8 resources.
+
+2008-06-11  Michael Karcher <wine@mkarcher.dialup.fu-berlin.de>
+
+	* programs/xcopy/De.rc:
+	xcopy: Fix non-translation of a string.
+
+2008-06-11  Francois Gouget <fgouget@free.fr>
+
+	* programs/notepad/Bg.rc, programs/notepad/Cs.rc, programs/notepad/Da.rc,
+	  programs/notepad/De.rc, programs/notepad/En.rc,
+	  programs/notepad/Es.rc, programs/notepad/Fr.rc,
+	  programs/notepad/It.rc, programs/notepad/Ja.rc,
+	  programs/notepad/Nl.rc, programs/notepad/No.rc,
+	  programs/notepad/Pt.rc, programs/notepad/Si.rc,
+	  programs/notepad/Sv.rc, programs/notepad/Tr.rc,
+	  programs/notepad/Wa.rc:
+	notepad: Remove spaces before '\n' in resource strings.
+
+	* programs/cmd/Cs.rc, programs/cmd/Da.rc, programs/cmd/De.rc,
+	  programs/cmd/En.rc, programs/cmd/Es.rc, programs/cmd/Fr.rc,
+	  programs/cmd/Ja.rc, programs/cmd/Ko.rc, programs/cmd/Nl.rc,
+	  programs/cmd/No.rc, programs/cmd/Pl.rc, programs/cmd/Pt.rc,
+	  programs/cmd/Ru.rc, programs/cmd/Si.rc, programs/cmd/Tr.rc:
+	cmd: Remove spaces before '\n' in resource strings.
+
+	* dlls/winmm/winmm_Cs.rc, dlls/winmm/winmm_Da.rc, dlls/winmm/winmm_De.rc,
+	  dlls/winmm/winmm_En.rc, dlls/winmm/winmm_It.rc,
+	  dlls/winmm/winmm_Ko.rc, dlls/winmm/winmm_No.rc,
+	  dlls/winmm/winmm_Ru.rc, dlls/winmm/winmm_Si.rc,
+	  dlls/winmm/winmm_Sk.rc:
+	winmm: Remove spaces before '\n' in resource strings.
+
+	* programs/winecfg/Zh.rc:
+	winecfg: Remove spaces before '\n' in resource strings.
+
+	* programs/net/Ko.rc:
+	net: Remove spaces before '\n' in resource strings.
+
+	* dlls/credui/credui_Ko.rc:
+	credui: Remove spaces before '\n' in resource strings.
+
+	* dlls/comdlg32/cdlg_xx.rc:
+	comdlg32: Remove spaces before '\n' (and some after) in resource strings.
+
+	* dlls/comdlg32/cdlg_Bg.rc, dlls/comdlg32/cdlg_Cn.rc,
+	  dlls/comdlg32/cdlg_Cs.rc, dlls/comdlg32/cdlg_Da.rc,
+	  dlls/comdlg32/cdlg_El.rc, dlls/comdlg32/cdlg_En.rc,
+	  dlls/comdlg32/cdlg_Eo.rc, dlls/comdlg32/cdlg_Es.rc,
+	  dlls/comdlg32/cdlg_Fi.rc, dlls/comdlg32/cdlg_Fr.rc,
+	  dlls/comdlg32/cdlg_It.rc, dlls/comdlg32/cdlg_Ja.rc,
+	  dlls/comdlg32/cdlg_Ko.rc, dlls/comdlg32/cdlg_Pl.rc,
+	  dlls/comdlg32/cdlg_Pt.rc, dlls/comdlg32/cdlg_Ro.rc,
+	  dlls/comdlg32/cdlg_Ru.rc, dlls/comdlg32/cdlg_Si.rc,
+	  dlls/comdlg32/cdlg_Sk.rc, dlls/comdlg32/cdlg_Sv.rc,
+	  dlls/comdlg32/cdlg_Tr.rc, dlls/comdlg32/cdlg_Uk.rc,
+	  dlls/comdlg32/cdlg_Zh.rc:
+	comdlg32: Remove spaces before '\n' in resource strings.
+
+2008-06-11  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/msxml3/domdoc.c:
+	msxml3: Fix a compile error without xml headers.
+
+2008-06-11  Mikołaj Zalewski <mikolaj@zalewski.pl>
+
+	* programs/xcopy/De.rc:
+	xcopy: German should use SUBLANG_NEUTRAL.
+
+2008-06-11  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Fix some test failures on W2K.
+
+	* dlls/d3d9/tests/device.c:
+	d3d9/tests: Fix a few typos.
+
+	* dlls/shlwapi/tests/istream.c:
+	shlwapi/tests: Don't create testfile at a fixed location.
+
+2008-06-11  Michael Stefaniuc <mstefani@redhat.de>
+
+	* programs/regedit/Da.rc:
+	regedit: Fix the Danish translation.
+
+	* programs/winecfg/It.rc, programs/winecfg/winecfg.rc:
+	winecfg: Fix and re-enable the Italian translation.
+
+	* programs/regedit/Si.rc:
+	regedit: Fix the Slovenian translation.
+
+	* programs/regedit/Tr.rc:
+	regedit: Fix the Turkish translation.
+
+2008-06-10  Michael Karcher <karcher@physik.fu-berlin.de>
+
+	* programs/xcopy/De.rc, programs/xcopy/rsrc.rc:
+	xcopy: Add German translation.
+
+2008-06-10  James Hawkins <jhawkins@codeweavers.com>
+
+	* dlls/msi/action.c, dlls/msi/files.c:
+	msi: Set the source path for uncompressed files when loading the file.
+
+2008-06-10  James Hawkins <truiken@gmail.com>
+
+	* dlls/msi/action.c:
+	msi: Load folders first.
+
+2008-06-10  Zac Brown <zac@zacbrown.org>
+
+	* dlls/dsound/tests/dsound8.c:
+	dsound/tests: Improve test for IDirectSound8_CreateSoundBuffer.
+
+2008-06-10  Francois Gouget <fgouget@free.fr>
+
+	* dlls/advapi32/tests/registry.c:
+	advapi32/tests: Make sure Wine implements all tested APIs.
+
+	* include/wine/test.h:
+	tests: Add a win_skip() function to allow for missing Windows functionality
+	that must be present in Wine.
+
+2008-06-10  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/msi/tests/install.c:
+	msi/tests: Cleanup registry after test.
+
+2008-06-10  Vladimir Pankratov <scriptkid@mail.ru>
+
+	* dlls/shdoclc/Ru.rc:
+	shdoclc: Update Russian translation.
+
+2008-06-10  Francois Gouget <fgouget@codeweavers.com>
+
+	* programs/winecfg/Pt.rc:
+	winecfg: Update the Portuguese and Brazillian translations, based on a patch
+	by Americo Jose Melo.
+
+2008-06-10  Francois Gouget <fgouget@free.fr>
+
+	* dlls/comdlg32/cdlg_En.rc, dlls/credui/credui_En.rc,
+	  dlls/hhctrl.ocx/En.rc, programs/oleview/En.rc, programs/start/En.rc,
+	  programs/taskmgr/En.rc, programs/uninstaller/En.rc,
+	  programs/wineboot/wineboot_En.rc, programs/winecfg/En.rc,
+	  programs/winefile/En.rc, programs/winemine/En.rc:
+	Replace SUBLANG_ENGLISH_US with SUBLANG_DEFAULT.
+
+	* programs/progman/Fr.rc:
+	progman: Update the license and warranty French translation.
+
+	* programs/winecfg/Fr.rc:
+	winecfg: Update the license French translation.
+
+	* programs/clock/Fr.rc:
+	clock: Update the license and warranty French translation.
+
+	* programs/progman/En.rc, programs/progman/Es.rc, programs/progman/Ko.rc,
+	  programs/progman/Nl.rc, programs/progman/Pl.rc,
+	  programs/progman/Si.rc:
+	progman: Progman is a program, not a library. So tweak the license and warranty
+	messages accordingly.
+
+	* programs/winecfg/Bg.rc, programs/winecfg/Cs.rc, programs/winecfg/En.rc,
+	  programs/winecfg/Es.rc, programs/winecfg/Fi.rc,
+	  programs/winecfg/It.rc, programs/winecfg/Ja.rc,
+	  programs/winecfg/Nl.rc, programs/winecfg/Pt.rc,
+	  programs/winecfg/Ro.rc, programs/winecfg/Ru.rc,
+	  programs/winecfg/Si.rc, programs/winecfg/Tr.rc:
+	winecfg: Winecfg is a program, not a library. So tweak the license and warranty
+	messages accordingly.
+
+	* programs/clock/En.rc, programs/clock/Es.rc, programs/clock/Ko.rc,
+	  programs/clock/Pl.rc, programs/clock/Si.rc, programs/clock/Sv.rc,
+	  programs/clock/Tr.rc:
+	clock: Clock is a program, not a library. So tweak the license and warranty
+	messages accordingly.
+
+2008-06-10  Alexandre Julliard <julliard@winehq.org>
+
+	* programs/winetest/main.c:
+	winetest: Fix the printf format for the version numbers.
+
+	* dlls/msvcrt/tests/printf.c:
+	msvcrt/tests: Fix a couple of tests on Vista.
+
+	* dlls/kernel32/tests/virtual.c:
+	kernel32/tests: Use Local instead of Global prefix to avoid permission issues.
+
+	* dlls/kernel32/tests/change.c:
+	kernel32/tests: Fix the change notification test on Vista.
+
+2008-06-10  Dan Kegel <dank@kegel.com>
+
+	* dlls/d3dx8/tests/math.c:
+	d3dx8/tests: Initialize matrix before testing its value.
+
+	* dlls/shell32/tests/shlfileop.c:
+	shell32/tests: Avoid buffer overflow during test.
+
+2008-06-10  Alistair Leslie-Hughes <leslie_alistair@hotmail.com>
+
+	* dlls/mshtml/tests/dom.c:
+	mshtml: Stop test crash on error condition.
+
+	* dlls/shell32/tests/shlfolder.c:
+	shell32: Stop shlfolder tests crashing under win98.
+
+2008-06-10  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/ole32/tests/ole2.c:
+	ole32/tests: Only skip the tests if we are on NT4 or below.
+
+	* dlls/ntdll/tests/port.c:
+	ntdll/tests: Free memory after use.
+
+2008-06-10  Francois Gouget <fgouget@codeweavers.com>
+
+	* programs/notepad/main.c:
+	notepad: Improve handling of quoted filenames.
+
+2008-06-10  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user32/tests/win.c:
+	user32/tests: Fix a window style check on Vista.
+
+	* dlls/kernel32/tests/locale.c:
+	kernel32/tests: Limit the number of failures in the ligatures test.
+
+2008-06-10  Francois Gouget <fgouget@free.fr>
+
+	* programs/start/Cs.rc, programs/start/De.rc, programs/start/En.rc,
+	  programs/start/Es.rc, programs/start/Fr.rc, programs/start/It.rc,
+	  programs/start/Ko.rc, programs/start/Nl.rc, programs/start/No.rc,
+	  programs/start/Pl.rc, programs/start/Pt.rc, programs/start/Ru.rc,
+	  programs/start/Si.rc, programs/start/Tr.rc:
+	start: Remove spaces before '\n' in resource strings.
+
+	* dlls/advapi32/tests/registry.c:
+	advapi32/tests: Don't allow Wine to reproduce Windows' bugs.
+
+2008-06-10  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/user32/tests/msg.c:
+	user32/tests: Fix formatting of a trace.
+
+	* dlls/kernel32/tests/toolhelp.c:
+	kernel32/tests: Make the toolhelp test less verbose by default.
+
+	* dlls/ntdll/tests/error.c:
+	ntdll/tests: Fix a few tests on Vista.
+
+2008-06-10  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/ole32/tests/ole2.c:
+	ole32/tests: Fix crash on NT4 and below.
+
+	* dlls/ole32/tests/ole2.c:
+	ole32/tests: Fix crash on W2K and below.
+
+2008-06-08  Louis Lenders <xerox_xerox2000@yahoo.co.uk>
+
+	* dlls/mscoree/mscoree.spec, dlls/mscoree/mscoree_main.c:
+	mscoree: Add stub for CorBindToCurrentRuntime.
+
+2008-06-09  Rob Shearman <robertshearman@gmail.com>
+
+	* dlls/rpcrt4/tests/server.c:
+	rpcrt4: Use RpcServerRegisterIfEx with RPC_IF_ALLOW_CALLBACKS_WITH_NO_AUTH in
+	the server test.
+	This allows the test to run correctly on XP SP2 upwards instead of
+	failing with ERROR_ACCESS_DENIED.
+
+	* include/rpcndr.h:
+	include: Add declaration for RpcSmDestroyClientContext to rpcndr.h.
+
+	* dlls/rpcrt4/rpc_binding.c, include/rpcdce.h:
+	include: Add some missing defines and function declarations to rpcdce.h.
+
+2008-06-08  Dan Kegel <dank@kegel.com>
+
+	* dlls/oleaut32/tests/usrmarshal.c:
+	oleaut32/tests: Initialize reserved fields to unique values.
+
+	* dlls/kernel32/tests/change.c:
+	kernel32/tests: Initialize buffer.
+
+2008-06-09  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/kernel32/virtual.c:
+	kernel32: Add support for the execute protection values in CreateFileMappingW.
+
+2008-06-07  Zhangrong Huang <hzhrong@gmail.com>
+
+	* dlls/gdi32/freetype.c:
+	gdi32: Add more Asian codepages to get default fallback fonts.
+
+2008-06-09  Francois Gouget <fgouget@free.fr>
+
+	* dlls/shell32/shell32_Fr.rc:
+	shell32: Tweak the French license message to better match the English one.
+
+2008-06-09  Alistair Leslie-Hughes <leslie_alistair@hotmail.com>
+
+	* dlls/msxml3/tests/xmldoc.c, dlls/msxml3/tests/xmlelem.c:
+	msxml3: Stop tests crashing under windows 98.
+
+2008-06-09  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/winex11.drv/init.c:
+	winex11: Add a trace in ExtEscape to make wgl problems easier to diagnose.
+
+2008-06-09  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Fix two more tests on Windows 2000.
+
+	* dlls/setupapi/tests/devinst.c:
+	setupapi/tests: Fix a test on Windows 2000.
+
+	* dlls/comdlg32/tests/printdlg.c:
+	comdlg32/tests: Use GetModuleHandle instead of LoadLibrary.
+
+2008-06-09  Alexandre Julliard <julliard@winehq.org>
+
+	* dlls/rpcrt4/rpc_transport.c:
+	rpcrt4: Properly handle the case of a client having disconnected in
+	rpcrt4_conn_listen_pipe.
+
+2008-06-09  David Adam <david.adam.cnrs@gmail.com>
+
+	* dlls/amstream/mediastream.c:
+	Revert "amstream: Fix the condition of existence of the IMediaStream interface."
+	This reverts commit 653c7e7dcaf7ebee2cfc8a6e356779dc8974aac6.
+
+2008-06-08  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/shdocvw/tests/webbrowser.c, dlls/shdocvw/webbrowser.c:
+	shdocvw: Fixed DISPID_ONTOOLBAR test on IE7.
+
+2008-06-08  Michael Karcher <wine@mkarcher.dialup.fu-berlin.de>
+
+	* dlls/gdi32/dib.c, dlls/gdi32/tests/bitmap.c:
+	gdi32: Respect DIB_PAL_COLORS in every case.
+
+2008-06-08  Roderick Colenbrander <thunderbird2k@gmx.net>
+
+	* dlls/wined3d/directx.c, include/wine/wined3d_gl.h:
+	wined3d: Update ATI GPUs.
+
+	* dlls/wined3d/directx.c, include/wine/wined3d_gl.h:
+	wined3d: Update nvidia GPUs.
+
+2008-06-08  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/kernel32/tests/timer.c:
+	kernel32/tests: Add a skip message for win95.
+
+	* dlls/advpack/tests/advpack.c:
+	advpack/tests: Add a FreeLibrary and a skip message.
+
+2008-06-07  Hans Leidekker <hans@it.vu.nl>
+
+	* programs/winebrowser/main.c:
+	winebrowser: Convert URL obtained through DdeGetData to Unicode.
+
+2008-06-07  Jonathan Ernst <jonathan@ernstfamily.ch>
+
+	* dlls/kernel32/nls/winerr_fra.mc:
+	kernel: Updated French translation.
+
+	* programs/notepad/Bg.rc, programs/notepad/Da.rc, programs/notepad/De.rc,
+	  programs/notepad/En.rc, programs/notepad/Eo.rc,
+	  programs/notepad/Es.rc, programs/notepad/Fi.rc,
+	  programs/notepad/Fr.rc, programs/notepad/Hu.rc,
+	  programs/notepad/It.rc, programs/notepad/Ja.rc,
+	  programs/notepad/Nl.rc, programs/notepad/No.rc,
+	  programs/notepad/Pl.rc, programs/notepad/Pt.rc,
+	  programs/notepad/Ro.rc, programs/notepad/Ru.rc,
+	  programs/notepad/Si.rc, programs/notepad/Sv.rc,
+	  programs/notepad/Th.rc, programs/notepad/Tr.rc,
+	  programs/notepad/Wa.rc, programs/notepad/Zh.rc:
+	notepad: Updated About menu entry.
+
+2008-06-06  Rico Schüller <kgbricola@web.de>
+
+	* dlls/shell32/shell32_De.rc:
+	shell32: Fix German shortcuts in the menu.
+
+	* programs/winecfg/De.rc:
+	winecfg: Fix German translation.
+
+2008-06-06  Jacek Caban <jacek@codeweavers.com>
+
+	* dlls/urlmon/tests/protocol.c:
+	urlmon/tests: Always clear expect_* variables.
+
+	* dlls/mshtml/protocol.c:
+	mshtml: Added FIXME about QUERY_USES_HISTORYFOLDER in about protocol.
+
+2008-06-06  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/iphlpapi/tests/iphlpapi.c:
+	iphlpapi/tests: Fix test on Vista.
+
+	* dlls/iphlpapi/tests/iphlpapi.c:
+	iphlpapi/tests: Fix crash on Vista.
+
+2008-06-06  Austin English <austinenglish@gmail.com>
+
+	* dlls/rsaenh/tests/rsaenh.c:
+	rsaenh: Fix a couple failing tests on 2k.
+
+2008-06-06  Paul Vriens <paul.vriens.wine@gmail.com>
+
+	* dlls/setupapi/tests/parser.c:
+	setupapi/tests: Fix test for win9x and Vista.
+
+2008-06-06  Alexandre Julliard <julliard@winehq.org>
+
+	* ANNOUNCE, VERSION, configure, documentation/ChangeLog.BETA:
+	Release 1.0-rc4.
+
+----------------------------------------------------------------
 2008-06-06  Jonathan Ernst <jonathan@ernstfamily.ch>
 
 	* programs/notepad/Fr.rc:
