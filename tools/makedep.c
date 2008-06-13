@@ -75,7 +75,7 @@ static const char Usage[] =
     "   -Idir   Search for include files in directory 'dir'\n"
     "   -Cdir   Search for source files in directory 'dir'\n"
     "   -Sdir   Set the top source directory\n"
-    "   -Sdir   Set the top object directory\n"
+    "   -Tdir   Set the top object directory\n"
     "   -fxxx   Store output in file 'xxx' (default: Makefile)\n"
     "   -sxxx   Use 'xxx' as separator (default: \"### Dependencies\")\n";
 
