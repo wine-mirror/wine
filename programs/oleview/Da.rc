@@ -25,10 +25,10 @@ IDM_MENU MENU
 {
     POPUP "&Fil"
     {
-        MENUITEM "&Knyt til fil ...",    IDM_BIND
-        MENUITEM "&Vis TypeLib ...",    IDM_TYPELIB
+        MENUITEM "&Knyt til fil...",                       IDM_BIND
+        MENUITEM "&Vis TypeLib...",                        IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "&Systemopsætning ...",    IDM_SYSCONF
+        MENUITEM "&Systemopsætning...",                    IDM_SYSCONF
         MENUITEM "Kø&r registrering database editoren",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "&Afslut",    IDM_EXIT
@@ -46,13 +46,13 @@ IDM_MENU MENU
         MENUITEM "Vis &type-information",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Opret &instans",    IDM_CREATEINST, GRAYED
-        MENUITEM "&Opret instans på ...",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&Opret instans på...",     IDM_CREATEINSTON, GRAYED
         MENUITEM "&Frigiv instans",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Kopier C&LSID til klippebordet",    IDM_COPYCLSID, GRAYED
         MENUITEM "&Kopier &HTML objekt tag til klippebordet", IDM_HTMLTAG, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "&Vis ...",    IDM_VIEW, GRAYED
+        MENUITEM "&Vis...",    IDM_VIEW, GRAYED
     }
     POPUP "&Vis"
     {
@@ -75,7 +75,7 @@ IDM_TYPELIB MENU
 {
     POPUP "&Fil"
     {
-        MENUITEM "Gem &som ...",    IDM_SAVEAS
+        MENUITEM "Gem &som...",    IDM_SAVEAS
         MENUITEM "&Luk",  IDM_CLOSE
     }
     POPUP "&Vis"

@@ -29,7 +29,7 @@ IDR_TASKMANAGER MENU DISCARDABLE
 BEGIN
     POPUP "&Fil"
     BEGIN
-        MENUITEM "&Ny opgave (Kør ...)",        ID_FILE_NEW
+        MENUITEM "&Ny opgave (Kør...)",         ID_FILE_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Afslut opgavebehandleren",   ID_FILE_EXIT
     END
@@ -60,7 +60,7 @@ BEGIN
         MENUITEM "S&tore ikoner",               ID_VIEW_LARGE
         MENUITEM "S&må ikoner",                 ID_VIEW_SMALL
         MENUITEM "&Detaljer",                   ID_VIEW_DETAILS, CHECKED
-        MENUITEM "&Vælg kolonner ...",          ID_VIEW_SELECTCOLUMNS
+        MENUITEM "&Vælg kolonner...",           ID_VIEW_SELECTCOLUMNS
         POPUP "&Processorhistorik"
         BEGIN
             MENUITEM "En graf, alle pr&ocessorer",ID_VIEW_CPUHISTORY_ONEGRAPHALL
@@ -101,7 +101,7 @@ IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "&Ny opgave (Kør ...)",        ID_FILE_NEW
+        MENUITEM "&Ny opgave (Kør...)",         ID_FILE_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Store ikoner",               ID_VIEW_LARGE
         MENUITEM "S&må ikoner",                 ID_VIEW_SMALL
@@ -162,8 +162,8 @@ BEGIN
             MENUITEM "&Lav",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
 
         END
-        MENUITEM "&Angiv slægtskab ...",            ID_PROCESS_PAGE_SETAFFINITY
-	MENUITEM "&Rediger fejlsøgningskanaler ...",ID_PROCESS_PAGE_DEBUGCHANNELS
+        MENUITEM "&Angiv slægtskab...",             ID_PROCESS_PAGE_SETAFFINITY
+	MENUITEM "&Rediger fejlsøgningskanaler...", ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -202,7 +202,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
                     LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Ny opgave ...",IDC_NEWTASK,187,189,53,14
+    PUSHBUTTON      "&Ny opgave...",IDC_NEWTASK,187,189,53,14
     PUSHBUTTON      "&Skift til",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
     PUSHBUTTON      "Afslut opgav&e",IDC_ENDTASK,75,189,53,14,WS_DISABLED
 END
