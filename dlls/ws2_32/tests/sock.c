@@ -31,7 +31,7 @@
 #include <winerror.h>
 
 #define MAX_CLIENTS 4      /* Max number of clients */
-#define NUM_TESTS   3      /* Number of tests performed */
+#define NUM_TESTS   4      /* Number of tests performed */
 #define FIRST_CHAR 'A'     /* First character in transferred pattern */
 #define BIND_SLEEP 10      /* seconds to wait between attempts to bind() */
 #define BIND_TRIES 6       /* Number of bind() attempts */
@@ -265,6 +265,16 @@ static int do_synchronous_recv ( SOCKET s, char *buf, int buflen, int recvlen )
     int n = 1;
     for ( p = buf; n > 0 && p < last; p += n )
         n = recv ( s, p, min ( recvlen, last - p ), 0 );
+    wsa_ok ( n, 0 <=, "do_synchronous_recv (%x): error %d:\n" );
+    return p - buf;
+}
+
+static int do_synchronous_recvfrom ( SOCKET s, char *buf, int buflen,int flags,struct sockaddr *from, socklen_t *fromlen, int recvlen )
+{
+    char* last = buf + buflen, *p;
+    int n = 1;
+    for ( p = buf; n > 0 && p < last; p += n )
+      n = recvfrom ( s, p, min ( recvlen, last - p ), 0, from, fromlen );
     wsa_ok ( n, 0 <=, "do_synchronous_recv (%x): error %d:\n" );
     return p - buf;
 }
@@ -615,6 +625,76 @@ static VOID WINAPI simple_client ( client_params *par )
     n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, par->buflen );
     ok ( n_recvd == n_expected,
          "simple_client (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
+
+    /* check data */
+    p = test_buffer ( mem->recv_buf, gen->chunk_size, gen->n_chunks );
+    ok ( p == NULL, "simple_client (%x): test pattern error: %d\n", id, p - mem->recv_buf);
+
+    /* cleanup */
+    read_zero_bytes ( mem->s );
+    trace ( "simple_client (%x) exiting\n", id );
+    client_stop ();
+}
+
+/*
+ * simple_mixed_client: mixing send and recvfrom
+ */
+static VOID WINAPI simple_mixed_client ( client_params *par )
+{
+    test_params *gen = par->general;
+    client_memory *mem;
+    int n_sent, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, id;
+    char *p;
+    socklen_t fromLen = sizeof(mem->addr);
+    struct sockaddr test;
+
+    id = GetCurrentThreadId();
+    trace ( "simple_client (%x): starting\n", id );
+    /* wait here because we want to call set_so_opentype before creating a socket */
+    WaitForSingleObject ( server_ready, INFINITE );
+    trace ( "simple_client (%x): server ready\n", id );
+
+    check_so_opentype ();
+    set_so_opentype ( FALSE ); /* non-overlapped */
+    client_start ( par );
+    mem = TlsGetValue ( tls );
+
+    /* Connect */
+    wsa_ok ( connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) ),
+             0 ==, "simple_client (%x): connect error: %d\n" );
+    ok ( set_blocking ( mem->s, TRUE ) == 0,
+         "simple_client (%x): failed to set blocking mode\n", id );
+    trace ( "simple_client (%x) connected\n", id );
+
+    /* send data to server */
+    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, par->buflen );
+    ok ( n_sent == n_expected,
+         "simple_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
+
+    /* shutdown send direction */
+    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%x): shutdown failed: %d\n" );
+
+    /* this shouldn't change, since lpFrom, is not updated on
+       connection oriented sockets - exposed by bug 11640
+    */
+    ((struct sockaddr_in*)&test)->sin_addr.s_addr = inet_addr("0.0.0.0");
+
+    /* Receive data echoed back & check it */
+    n_recvd = do_synchronous_recvfrom ( mem->s,
+					mem->recv_buf,
+					n_expected,
+					0,
+					(struct sockaddr *)&test,
+					&fromLen,
+					par->buflen );
+    ok ( n_recvd == n_expected,
+         "simple_client (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
+
+    /* check that lpFrom was not updated */
+    ok(0 ==
+       strcmp(
+	      inet_ntoa(((struct sockaddr_in*)&test)->sin_addr),
+	      "0.0.0.0"), "lpFrom shouldn't be updated on connection oriented sockets\n");
 
     /* check data */
     p = test_buffer ( mem->recv_buf, gen->chunk_size, gen->n_chunks );
@@ -1008,6 +1088,27 @@ static test_setup tests [NUM_TESTS] =
             64
         },
         simple_client,
+        {
+            NULL,
+            0,
+            128
+        }
+    },
+        /* Test 3: synchronous mixed client and server */
+    {
+        {
+            STD_STREAM_SOCKET,
+            2048,
+            16,
+            2
+        },
+        simple_server,
+        {
+            NULL,
+            0,
+            64
+        },
+        simple_mixed_client,
         {
             NULL,
             0,

@@ -1103,7 +1103,17 @@ static int WS2_recv( int fd, struct iovec* iov, int count,
     if ( (n = recvmsg(fd, &hdr, *lpFlags)) == -1 )
         return -1;
 
-    if ( lpFrom &&
+    /* if this socket is connected and lpFrom is not NULL, Linux doesn't give us
+     * msg_name and msg_namelen from recvmsg, but it does set msg_namelen to zero.
+     *
+     * quoting linux 2.6 net/ipv4/tcp.c:
+     *  "According to UNIX98, msg_name/msg_namelen are ignored
+     *  on connected socket. I was just happy when found this 8) --ANK"
+     *
+     * likewise MSDN says that lpFrom and lpFromlen are ignored for
+     * connection-oriented sockets, so don't try to update lpFrom.
+     */
+    if ( lpFrom && hdr.msg_namelen &&
          ws_sockaddr_u2ws( &unix_sockaddr.addr, lpFrom, lpFromlen ) != 0 )
     {
         /* The from buffer was too small, but we read the data
