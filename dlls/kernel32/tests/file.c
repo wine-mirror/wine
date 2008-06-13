@@ -1456,7 +1456,7 @@ static void test_FindFirstFileExA(void)
     ok(strcmp(search_results.cFileName, "..") == 0, "Second entry should be '..' is %s\n", search_results.cFileName);
 
     ok(FindNextFile(handle, &search_results), "Fetching third file failed\n");
-    ok(CHECK_NAME(search_results.cFileName), "Invalid thrid entry - %s\n", search_results.cFileName);
+    ok(CHECK_NAME(search_results.cFileName), "Invalid third entry - %s\n", search_results.cFileName);
 
     ok(FindNextFile(handle, &search_results), "Fetching fourth file failed\n");
     ok(CHECK_NAME(search_results.cFileName), "Invalid fourth entry - %s\n", search_results.cFileName);
@@ -1840,14 +1840,14 @@ static void test_overlapped(void)
     memset( &ov, 0,  sizeof ov );
     result = 1;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok( r == TRUE, "should return false\n");
+    ok( r == TRUE, "should return true\n");
     ok( result == 0, "wrong result %u\n", result );
 
     result = 0;
     ov.Internal = 0;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok( r == TRUE, "should return false\n");
+    ok( r == TRUE, "should return true\n");
     ok( result == 0xabcd, "wrong result %u\n", result );
 
     SetLastError( 0xb00 );
