@@ -106,7 +106,7 @@ BEGIN
         MENUITEM "削除(&D)\tDel",                ID_EDIT_DELETE
         MENUITEM "名前の変更(&R)\tF2",                 ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Export ...",               ID_EDIT_EXPORT
+        MENUITEM "&Export...",               ID_EDIT_EXPORT
         MENUITEM "キー名をコピー(&C)",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "検索(&F)\tCtrl+F",               ID_EDIT_FIND, GRAYED
