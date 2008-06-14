@@ -1795,6 +1795,7 @@ static void test_ndr_buffer(void)
     unsigned char *binding;
     RPC_BINDING_HANDLE Handle;
     RPC_STATUS status;
+    ULONG prev_buffer_length;
 
     StubDesc.RpcInterfaceInformation = (void *)&IFoo___RpcServerInterface;
 
@@ -1832,11 +1833,12 @@ todo_wine
     ok(StubMsg.BufferLength == 0, "BufferLength should have left as 0 instead of being set to %d\n", StubMsg.BufferLength);
     ok(StubMsg.fBufferValid == TRUE, "fBufferValid should have been TRUE instead of 0x%x\n", StubMsg.fBufferValid);
 
+    prev_buffer_length = RpcMessage.BufferLength;
     StubMsg.BufferLength = 1;
     NdrFreeBuffer(&StubMsg);
     ok(RpcMessage.Handle != NULL, "RpcMessage.Handle should not have been NULL\n");
     ok(RpcMessage.Buffer != NULL, "RpcMessage.Buffer should not have been NULL\n");
-    ok(RpcMessage.BufferLength == 10, "RpcMessage.BufferLength should have been left as 10 instead of %d\n", RpcMessage.BufferLength);
+    ok(RpcMessage.BufferLength == prev_buffer_length, "RpcMessage.BufferLength should have been left as %d instead of %d\n", prev_buffer_length, RpcMessage.BufferLength);
     ok(StubMsg.Buffer != NULL, "Buffer should not have been NULL\n");
     ok(StubMsg.BufferLength == 1, "BufferLength should have left as 1 instead of being set to %d\n", StubMsg.BufferLength);
     ok(StubMsg.fBufferValid == FALSE, "fBufferValid should have been FALSE instead of 0x%x\n", StubMsg.fBufferValid);
