@@ -1011,6 +1011,19 @@ static void D3D1_releaseObjects(void)
     if (DirectDraw1) IDirectDraw_Release(DirectDraw1);
 }
 
+#define SET_VP_DATA(vp_data) \
+    vp_data.dwSize = sizeof(vp_data); \
+    vp_data.dwX = 0; \
+    vp_data.dwY = 0; \
+    vp_data.dwWidth = 256; \
+    vp_data.dwHeight = 256; \
+    vp_data.dvMaxX = 256; \
+    vp_data.dvMaxY = 256; \
+    vp_data.dvScaleX = 5; \
+    vp_data.dvScaleY = 5; \
+    vp_data.dvMinZ = -25; \
+    vp_data.dvMaxZ = 60;
+
 static void Direct3D1Test(void)
 {
     HRESULT hr;
@@ -1153,17 +1166,7 @@ static void Direct3D1Test(void)
         }
     }
 
-    vp_data.dwSize = sizeof(vp_data);
-    vp_data.dwX = 0;
-    vp_data.dwY = 0;
-    vp_data.dwWidth = 256;
-    vp_data.dwHeight = 256;
-    vp_data.dvMaxX = 256;
-    vp_data.dvMaxY = 256;
-    vp_data.dvScaleX = 5;
-    vp_data.dvScaleY = 5;
-    vp_data.dvMinZ = -25;
-    vp_data.dvMaxZ = 60;
+    SET_VP_DATA(vp_data);
     hr = IDirect3DViewport_SetViewport(Viewport, &vp_data);
     ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
     hr = IDirect3DViewport_TransformVertices(Viewport, sizeof(testverts) / sizeof(testverts[0]),
@@ -1184,6 +1187,7 @@ static void Direct3D1Test(void)
            cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
     }
 
+    SET_VP_DATA(vp_data);
     vp_data.dwX = 10;
     vp_data.dwY = 20;
     hr = IDirect3DViewport_SetViewport(Viewport, &vp_data);
@@ -1266,6 +1270,7 @@ static void Direct3D1Test(void)
            outH[i].dwFlags, Flags[i]);
     }
 
+    SET_VP_DATA(vp_data);
     vp_data.dwWidth = 10;
     vp_data.dwHeight = 1000;
     hr = IDirect3DViewport_SetViewport(Viewport, &vp_data);
@@ -1288,6 +1293,8 @@ static void Direct3D1Test(void)
            "Cliptest %d differs. Got %08x expexted %08x\n", i + 1,
            outH[i].dwFlags, Flags[i]);
     }
+
+    SET_VP_DATA(vp_data);
     vp_data.dwWidth = 256;
     vp_data.dwHeight = 256;
     vp_data.dvScaleX = 1;
@@ -1317,6 +1324,7 @@ static void Direct3D1Test(void)
      * and with clipping on the offscreen flag is set if only one vertex
      * is transformed, and this vertex is offscreen.
      */
+    SET_VP_DATA(vp_data);
     vp_data.dwWidth = 5;
     vp_data.dwHeight = 5;
     vp_data.dvScaleX = 10000;
@@ -1348,6 +1356,7 @@ static void Direct3D1Test(void)
 
     transformdata.lpIn = (void *) offscreentest;
     transformdata.dwInSize = sizeof(offscreentest[0]);
+    SET_VP_DATA(vp_data);
     vp_data.dwWidth = 257;
     vp_data.dwHeight = 257;
     vp_data.dvScaleX = 1;
