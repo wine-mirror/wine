@@ -1242,6 +1242,7 @@ server(void)
   RPC_STATUS status, iptcp_status, np_status;
   RPC_STATUS (RPC_ENTRY *pRpcServerRegisterIfEx)(RPC_IF_HANDLE,UUID*,
     RPC_MGR_EPV*, unsigned int,unsigned int,RPC_IF_CALLBACK_FN*);
+  DWORD ret;
 
   iptcp_status = RpcServerUseProtseqEp(iptcp, 20, port, NULL);
   ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %ld\n", iptcp_status);
@@ -1278,10 +1279,16 @@ server(void)
     return;
   }
 
-  ok(WAIT_OBJECT_0 == WaitForSingleObject(stop_event, 60000), "WaitForSingleObject\n");
-  status = RpcMgmtWaitServerListen();
-  todo_wine {
-    ok(status == RPC_S_OK, "RpcMgmtWaitServerListening failed with status %ld\n", status);
+  ret = WaitForSingleObject(stop_event, 1000);
+  ok(WAIT_OBJECT_0 == ret, "WaitForSingleObject\n");
+  /* if the stop event didn't fire then RpcMgmtWaitServerListen will wait
+   * forever, so don't bother calling it in this case */
+  if (ret == WAIT_OBJECT_0)
+  {
+    status = RpcMgmtWaitServerListen();
+    todo_wine {
+      ok(status == RPC_S_OK, "RpcMgmtWaitServerListening failed with status %ld\n", status);
+    }
   }
 }
 
