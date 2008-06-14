@@ -933,6 +933,9 @@ static void test_simple_struct(void)
 
     };
 
+    /* zero the entire structure, including the holes */
+    memset(&s1, 0, sizeof(s1));
+
     /* FC_STRUCT */
     s1.s = 0x1234;
     s1.c = 0xa5;
@@ -956,7 +959,7 @@ static void test_simple_struct(void)
     }
 
     /* zero the entire structure, including the hole */
-    memset(&ps1, 0, sizeof(&ps1));
+    memset(&ps1, 0, sizeof(ps1));
 
     /* FC_PSTRUCT */
     ps1.l1 = 0xdeadbeef;
