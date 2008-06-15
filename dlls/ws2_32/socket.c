@@ -3454,7 +3454,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     /* getaddrinfo(3) is thread safe, no need to wrap in CS */
     result = getaddrinfo(nodename, servname, punixhints, &unixaires);
 
-    TRACE("%s, %s %p -> %p %d\n", nodename, servname, hints, res, result);
+    TRACE("%s, %s %p -> %p %d\n", debugstr_a(nodename), debugstr_a(servname), hints, res, result);
 
     HeapFree(GetProcessHeap(), 0, node);
     HeapFree(GetProcessHeap(), 0, serv);
