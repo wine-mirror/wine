@@ -1619,8 +1619,9 @@ static DWORD HTTP_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *re
 
     if(req->lpszCacheFile) {
         BOOL res;
+        DWORD dwBytesWritten;
 
-        res = WriteFile(req->hCacheFile, buffer, bytes_read, NULL, NULL);
+        res = WriteFile(req->hCacheFile, buffer, bytes_read, &dwBytesWritten, NULL);
         if(!res)
             WARN("WriteFile failed: %u\n", GetLastError());
     }
@@ -1688,7 +1689,9 @@ static DWORD HTTP_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DW
 
         if (req->lpszCacheFile)
         {
-            if (!WriteFile(req->hCacheFile, p, bytes_read, NULL, NULL))
+            DWORD dwBytesWritten;
+
+            if (!WriteFile(req->hCacheFile, p, bytes_read, &dwBytesWritten, NULL))
                 WARN("WriteFile failed: %u\n", GetLastError());
         }
         p += bytes_read;
