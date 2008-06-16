@@ -6724,13 +6724,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
          * SetViewport may catch NOP viewport changes, which would occur when switching between equally sized targets
          */
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VIEWPORT);
-
-        /* Activate the new render target for now. This shouldn't stay here, but is needed until all methods using gl activate the
-         * ctx properly.
-         * Use resourceload usage, this will just set the drawables and context but not apply any states. The stateblock may be
-         * incomplete or incorrect when SetRenderTarget is called. DrawPrim() will apply the states when it is called.
-         */
-        ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
     }
     return WINED3D_OK;
 }
