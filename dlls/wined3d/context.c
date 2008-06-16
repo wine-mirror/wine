@@ -610,6 +610,17 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     RemoveContextFromArray(This, context);
 }
 
+static inline void set_blit_dimension(UINT width, UINT height) {
+    glMatrixMode(GL_PROJECTION);
+    checkGLcall("glMatrixMode(GL_PROJECTION)");
+    glLoadIdentity();
+    checkGLcall("glLoadIdentity()");
+    glOrtho(0, width, height, 0, 0.0, -1.0);
+    checkGLcall("glOrtho");
+    glViewport(0, 0, width, height);
+    checkGLcall("glViewport");
+}
+
 /*****************************************************************************
  * SetupForBlit
  *
@@ -634,6 +645,14 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
 
     TRACE("Setting up context %p for blitting\n", context);
     if(context->last_was_blit) {
+        if(context->blit_w != width || context->blit_h != height) {
+            set_blit_dimension(width, height);
+            context->blit_w = width; context->blit_h = height;
+            /* No need to dirtify here, the states are still dirtified because they weren't
+             * applied since the last SetupForBlit call. Otherwise last_was_blit would not
+             * be set
+             */
+        }
         TRACE("Context is already set up for blitting, nothing to do\n");
         return;
     }
@@ -756,14 +775,6 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     checkGLcall("glLoadIdentity()");
     Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), StateTable);
 
-    glMatrixMode(GL_PROJECTION);
-    checkGLcall("glMatrixMode(GL_PROJECTION)");
-    glLoadIdentity();
-    checkGLcall("glLoadIdentity()");
-    glOrtho(0, width, height, 0, 0.0, -1.0);
-    checkGLcall("glOrtho");
-    Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
-
     context->last_was_rhw = TRUE;
     Context_MarkStateDirty(context, STATE_VDECL, StateTable); /* because of last_was_rhw = TRUE */
 
@@ -775,9 +786,11 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPING), StateTable);
 
-    glViewport(0, 0, width, height);
-    checkGLcall("glViewport");
+    set_blit_dimension(width, height);
+    context->blit_w = width; context->blit_h = height;
     Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
+    Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
+
 
     This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, FALSE);
 }

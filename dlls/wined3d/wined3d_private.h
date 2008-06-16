@@ -616,6 +616,7 @@ struct WineD3DContext {
     unsigned char           num_untracked_materials;
     GLenum                  untracked_materials[2];
     BOOL                    last_was_blit, last_was_ckey;
+    UINT                    blit_w, blit_h;
     char                    texShaderBumpMap;
     BOOL                    fog_coord;
 
