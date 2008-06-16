@@ -886,12 +886,11 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
     d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
 
     IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
-     * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
-     * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
-     * context->last_was_blit set on the unlock.
+    /* Activate the surface to read from. In some situations it isn't the currently active target(e.g. backbuffer
+     * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
+     * states in the stateblock, and no driver was found yet that had bugs in that regard.
      */
-    ActivateContext(device, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
+    ActivateContext(device, (IWineD3DSurface *) This, CTXUSAGE_RESOURCELOAD);
     surface_bind_and_dirtify(This);
     ENTER_GL();
 
