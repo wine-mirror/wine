@@ -257,7 +257,8 @@ static HRESULT WINAPI BaseMemAllocator_Decommit(IMemAllocator * iface)
             }
             else
             {
-                assert(This->lWaiting == 0);
+                if (This->lWaiting != 0)
+                    ERR("Waiting: %d\n", This->lWaiting);
 
                 This->bCommitted = FALSE;
                 CloseHandle(This->hSemWaiting);
@@ -286,19 +287,24 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
 
     *pSample = NULL;
 
-    if (!This->bCommitted)
-        return VFW_E_NOT_COMMITTED;
+    EnterCriticalSection(This->pCritSect);
+    if (!This->bCommitted || This->bDecommitQueued)
+        hr = VFW_E_NOT_COMMITTED;
+    else
+        ++This->lWaiting;
+    LeaveCriticalSection(This->pCritSect);
+    if (FAILED(hr))
+        return hr;
 
-    This->lWaiting++;
     if (WaitForSingleObject(This->hSemWaiting, (dwFlags & AM_GBF_NOWAIT) ? 0 : INFINITE) != WAIT_OBJECT_0)
     {
-        This->lWaiting--;
+        InterlockedDecrement(&This->lWaiting);
         return VFW_E_TIMEOUT;
     }
-    This->lWaiting--;
 
     EnterCriticalSection(This->pCritSect);
     {
+        --This->lWaiting;
         if (!This->bCommitted)
             hr = VFW_E_NOT_COMMITTED;
         else if (This->bDecommitQueued)
@@ -347,7 +353,8 @@ static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMed
         {
             HRESULT hrfree;
 
-            assert(This->lWaiting == 0);
+            if (This->lWaiting != 0)
+                ERR("Waiting: %d\n", This->lWaiting);
 
             This->bCommitted = FALSE;
             This->bDecommitQueued = FALSE;
