@@ -464,7 +464,7 @@ sub output_header($$$) {
     my $test_dir = shift;
     my @tests = @{(shift)};
 
-    print OUT "/* File generated automatically from tools/winapi/test.dat; do not edit! */\n";
+    print OUT "/* File generated automatically from tools/winapi/tests.dat; do not edit! */\n";
     print OUT "/* This file can be copied, modified and distributed without restriction. */\n";
     print OUT "\n";
 
