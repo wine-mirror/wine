@@ -290,8 +290,23 @@ static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLElement_put_id(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString id_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->nselem) {
+        FIXME("nselem == NULL\n");
+        return S_OK;
+    }
+
+    nsAString_Init(&id_str, v);
+    nsres = nsIDOMHTMLElement_SetId(This->nselem, &id_str);
+    nsAString_Finish(&id_str);
+    if(NS_FAILED(nsres))
+        ERR("SetId failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_id(IHTMLElement *iface, BSTR *p)

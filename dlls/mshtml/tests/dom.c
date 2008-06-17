@@ -365,6 +365,17 @@ static void _test_disp(unsigned line, IUnknown *unk, const IID *diid)
     IDispatchEx_Release(dispex);
 }
 
+#define get_elem_iface(u) _get_elem_iface(__LINE__,u)
+static IHTMLElement *_get_elem_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLElement *elem;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement, (void**)&elem);
+    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement: %08x\n", hres);
+    return elem;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -386,12 +397,9 @@ static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 #define test_elem_tag(u,n) _test_elem_tag(__LINE__,u,n)
 static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
 {
-    IHTMLElement *elem;
+    IHTMLElement *elem = _get_elem_iface(line, unk);
     BSTR tag;
     HRESULT hres;
-
-    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement, (void**)&elem);
-    ok_(__FILE__, line) (hres == S_OK, "QueryInterface(IID_IHTMLElement) failed: %08x\n", hres);
 
     hres = IHTMLElement_get_tagName(elem, &tag);
     IHTMLElement_Release(elem);
@@ -869,12 +877,9 @@ static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *
 #define test_elem_id(e,i) _test_elem_id(__LINE__,e,i)
 static void _test_elem_id(unsigned line, IUnknown *unk, const char *exid)
 {
-    IHTMLElement *elem;
+    IHTMLElement *elem = _get_elem_iface(line, unk);
     BSTR id = (void*)0xdeadbeef;
     HRESULT hres;
-
-    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement, (void**)&elem);
-    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement: %08x\n", hres);
 
     hres = IHTMLElement_get_id(elem, &id);
     IHTMLElement_Release(elem);
@@ -886,6 +891,21 @@ static void _test_elem_id(unsigned line, IUnknown *unk, const char *exid)
         ok_(__FILE__,line) (!id, "id=%s\n", dbgstr_w(id));
 
     SysFreeString(id);
+}
+
+#define test_elem_put_id(u,i) _test_elem_put_id(__LINE__,u,i)
+static void _test_elem_put_id(unsigned line, IUnknown *unk, const char *new_id)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR tmp = a2bstr(new_id);
+    HRESULT hres;
+
+    hres = IHTMLElement_put_id(elem, tmp);
+    IHTMLElement_Release(elem);
+    SysFreeString(tmp);
+    ok_(__FILE__,line) (hres == S_OK, "put_id failed: %08x\n", hres);
+
+    _test_elem_id(line, unk, new_id);
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
@@ -976,9 +996,8 @@ static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id, BOOL expect
     if(!disp)
         return NULL;
 
-    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElement, (void**)&elem);
+    elem = get_elem_iface((IUnknown*)disp);
     IDispatch_Release(disp);
-    ok(hres == S_OK, "Could not get IHTMLElement interface: %08x\n", hres);
 
     return elem;
 }
@@ -1651,6 +1670,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(hres == S_OK, "Could not get IHTMLInputElement: %08x\n", hres);
 
         test_elem_id((IUnknown*)elem, "in");
+        test_elem_put_id((IUnknown*)elem, "newin");
         test_input_get_disabled(input, VARIANT_FALSE);
 
         IHTMLInputElement_Release(input);
