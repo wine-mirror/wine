@@ -31,6 +31,7 @@
 #include "activscp.h"
 #include "activdbg.h"
 #include "objsafe.h"
+#include "mshtmdid.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -79,6 +80,7 @@ DEFINE_EXPECT(SetScriptState_CONNECTED);
 DEFINE_EXPECT(SetScriptState_DISCONNECTED);
 DEFINE_EXPECT(AddNamedItem);
 DEFINE_EXPECT(ParseScriptText);
+DEFINE_EXPECT(GetScriptDispatch);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
 
@@ -86,6 +88,7 @@ static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
 
 static IHTMLDocument2 *notif_doc;
+static IDispatchEx *window_dispex;
 static BOOL doc_complete;
 
 static const char *debugstr_w(LPCWSTR str)
@@ -435,8 +438,79 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
         LPCOLESTR pstrDelimiter, DWORD dwSourceContextCookie, ULONG ulStartingLine,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
+    IDispatchEx *document;
+    VARIANT var;
+    DISPPARAMS dp;
+    EXCEPINFO ei;
+    DISPID id, named_arg = DISPID_PROPERTYPUT;
+    BSTR tmp;
+    HRESULT hres;
+
+    static const WCHAR documentW[] = {'d','o','c','u','m','e','n','t',0};
+    static const WCHAR testW[] = {'t','e','s','t',0};
+
     CHECK_EXPECT(ParseScriptText);
-    return E_NOTIMPL;
+
+    SET_EXPECT(GetScriptDispatch);
+
+    tmp = SysAllocString(documentW);
+    hres = IDispatchEx_GetDispID(window_dispex, tmp, fdexNameCaseSensitive, &id);
+    SysFreeString(tmp);
+    ok(hres == S_OK, "GetDispID(document) failed: %08x\n", hres);
+    ok(id == DISPID_IHTMLWINDOW2_DOCUMENT, "id=%x\n", id);
+
+    todo_wine CHECK_CALLED(GetScriptDispatch);
+
+    VariantInit(&var);
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+
+    hres = IDispatchEx_InvokeEx(window_dispex, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(&var) == NULL\n");
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IDispatchEx, (void**)&document);
+    VariantClear(&var);
+    ok(hres == S_OK, "Could not get DispatchEx: %08x\n", hres);
+
+    tmp = SysAllocString(testW);
+    hres = IDispatchEx_GetDispID(document, tmp, fdexNameCaseSensitive, &id);
+    SysFreeString(tmp);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(document) failed: %08x, expected DISP_E_UNKNOWNNAME\n", hres);
+
+    id = 0;
+    tmp = SysAllocString(testW);
+    hres = IDispatchEx_GetDispID(document, tmp, fdexNameCaseSensitive|fdexNameEnsure, &id);
+    SysFreeString(tmp);
+    ok(hres == S_OK, "GetDispID(document) failed: %08x\n", hres);
+    ok(id, "id == 0\n");
+
+    dp.cArgs = 1;
+    dp.rgvarg = &var;
+    dp.cNamedArgs = 1;
+    dp.rgdispidNamedArgs = &named_arg;
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 100;
+
+    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+
+    tmp = SysAllocString(testW);
+    hres = IDispatchEx_GetDispID(document, tmp, fdexNameCaseSensitive, &id);
+    SysFreeString(tmp);
+    ok(hres == S_OK, "GetDispID(document) failed: %08x\n", hres);
+
+    VariantInit(&var);
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_I4, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_I4(&var) == 100, "V_I4(&var) == NULL\n");
+
+    IDispatchEx_Release(document);
+    return S_OK;
 }
 
 static const IActiveScriptParseVtbl ActiveScriptParseVtbl = {
@@ -572,7 +646,6 @@ static HRESULT WINAPI ActiveScript_Close(IActiveScript *iface)
 static HRESULT WINAPI ActiveScript_AddNamedItem(IActiveScript *iface,
         LPCOLESTR pstrName, DWORD dwFlags)
 {
-    IDispatchEx *dispex;
     IDispatch *disp;
     IUnknown *unk = NULL, *unk2;
     HRESULT hres;
@@ -600,10 +673,8 @@ static HRESULT WINAPI ActiveScript_AddNamedItem(IActiveScript *iface,
     if(SUCCEEDED(hres))
         IUnknown_Release(unk2);
 
-    hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&window_dispex);
     ok(hres == S_OK, "Could not get IDispatchEx interface: %08x\n", hres);
-    if(SUCCEEDED(hres))
-        IDispatchEx_Release(dispex);
 
     IUnknown_Release(unk);
     return S_OK;
@@ -619,7 +690,7 @@ static HRESULT WINAPI ActiveScript_AddTypeLib(IActiveScript *iface, REFGUID rgui
 static HRESULT WINAPI ActiveScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR pstrItemName,
                                                 IDispatch **ppdisp)
 {
-    ok(0, "unexpected call\n");
+    CHECK_EXPECT(GetScriptDispatch);
     return E_NOTIMPL;
 }
 
@@ -770,6 +841,8 @@ static void test_simple_script(void)
 
     if(site)
         IActiveScriptSite_Release(site);
+    if(window_dispex)
+        IDispatchEx_Release(window_dispex);
 
     SET_EXPECT(SetScriptState_DISCONNECTED);
     SET_EXPECT(Close);
