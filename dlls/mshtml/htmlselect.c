@@ -420,16 +420,33 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLSelectElement_destructor
 };
 
+static const tid_t HTMLSelectElement_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    IHTMLSelectElement_tid,
+    0
+};
+
+static dispex_static_data_t HTMLSelectElement_dispex = {
+    NULL,
+    DispHTMLSelectElement_tid,
+    NULL,
+    HTMLSelectElement_tids
+};
+
 HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLSelectElement *ret = heap_alloc_zero(sizeof(HTMLSelectElement));
     nsresult nsres;
 
-    HTMLElement_Init(&ret->element);
-
     ret->lpHTMLSelectElementVtbl = &HTMLSelectElementVtbl;
     ret->element.node.vtbl = &HTMLSelectElementImplVtbl;
-    
+
+    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLSELECT(ret), &HTMLSelectElement_dispex);
+    HTMLElement_Init(&ret->element);
+
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLSelectElement,
                                              (void**)&ret->nsselect);
     if(NS_FAILED(nsres))
