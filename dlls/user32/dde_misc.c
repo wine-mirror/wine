@@ -515,7 +515,6 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	    ret = DMLERR_INVALIDPARAMETER;
 	    goto theError;
 	}
-	HeapFree(GetProcessHeap(), 0, pInstance); /* finished - release heap space used as work store */
 	/* can't reinitialise if we have initialised nothing !! */
 	reference_inst = WDML_InstanceList;
 	/* must first check if we have been given a valid instance to re-initialise !!  how do we do that ? */
@@ -571,6 +570,9 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	reference_inst->CBFflags = pInstance->CBFflags;
 	reference_inst->clientOnly = pInstance->clientOnly;
 	reference_inst->monitorFlags = pInstance->monitorFlags;
+
+	HeapFree(GetProcessHeap(), 0, pInstance); /* finished - release heap space used as work store */
+
 	LeaveCriticalSection(&WDML_CritSect);
     }
 
