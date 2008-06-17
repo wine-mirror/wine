@@ -43,6 +43,8 @@ typedef struct {
 
 #define HTMLSTYLE(x)  ((IHTMLStyle*) &(x)->lpHTMLStyleVtbl)
 
+static const WCHAR attrBackground[] =
+    {'b','a','c','k','g','r','o','u','n','d',0};
 static const WCHAR attrBackgroundColor[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
 static const WCHAR attrBackgroundImage[] =
@@ -435,8 +437,10 @@ static HRESULT WINAPI HTMLStyle_get_color(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_background(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, attrBackground, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_background(IHTMLStyle *iface, BSTR *p)
