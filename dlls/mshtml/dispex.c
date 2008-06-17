@@ -45,6 +45,20 @@ struct dispex_data_t {
     struct list entry;
 };
 
+typedef struct {
+    VARIANT var;
+    LPWSTR name;
+} dynamic_prop_t;
+
+struct dispex_dynamic_data_t {
+    DWORD buf_size;
+    DWORD prop_cnt;
+    dynamic_prop_t *props;
+};
+
+#define DISPID_DYNPROP_0    0x50000000
+#define DISPID_DYNPROP_MAX  0x5fffffff
+
 static ITypeLib *typelib;
 static ITypeInfo *typeinfos[LAST_tid];
 static struct list dispex_data_list = LIST_INIT(dispex_data_list);
@@ -296,6 +310,11 @@ static inline BOOL is_custom_dispid(DISPID id)
     return MSHTML_DISPID_CUSTOM_MIN <= id && id <= MSHTML_DISPID_CUSTOM_MAX;
 }
 
+static inline BOOL is_dynamic_dispid(DISPID id)
+{
+    return DISPID_DYNPROP_0 <= id && id <= DISPID_DYNPROP_MAX;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -386,7 +405,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
-    if(grfdex & (~fdexNameCaseSensitive))
+    if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure))
         FIXME("Unsupported grfdex %x\n", grfdex);
 
     data = get_dispex_data(This);
@@ -414,12 +433,40 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
             min = n+1;
     }
 
+    if(This->dynamic_data) {
+        unsigned i;
+
+        for(i=0; i < This->dynamic_data->prop_cnt; i++) {
+            if(!strcmpW(This->dynamic_data->props[i].name, bstrName)) {
+                *pid = DISPID_DYNPROP_0 + i;
+                return S_OK;
+            }
+        }
+    }
+
     if(This->data->vtbl && This->data->vtbl->get_dispid) {
         HRESULT hres;
 
         hres = This->data->vtbl->get_dispid(This->outer, bstrName, grfdex, pid);
         if(hres != DISP_E_UNKNOWNNAME)
             return hres;
+    }
+
+    if(grfdex & fdexNameEnsure) {
+        TRACE("creating dynamic prop %s\n", debugstr_w(bstrName));
+
+        if(!This->dynamic_data) {
+            This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t));
+            This->dynamic_data->props = heap_alloc(This->dynamic_data->buf_size = 4);
+        }else if(This->dynamic_data->buf_size == This->dynamic_data->prop_cnt) {
+            This->dynamic_data->props = heap_realloc(This->dynamic_data->props, This->dynamic_data->buf_size<<=1);
+        }
+
+        This->dynamic_data->props[This->dynamic_data->prop_cnt].name = heap_strdupW(bstrName);
+        VariantInit(&This->dynamic_data->props[This->dynamic_data->prop_cnt].var);
+        *pid = DISPID_DYNPROP_0 + This->dynamic_data->prop_cnt++;
+
+        return S_OK;
     }
 
     TRACE("not found %s\n", debugstr_w(bstrName));
@@ -445,6 +492,27 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if(wFlags == DISPATCH_CONSTRUCT) {
         FIXME("DISPATCH_CONSTRUCT not implemented\n");
         return E_NOTIMPL;
+    }
+
+    if(is_dynamic_dispid(id)) {
+        DWORD idx = id - DISPID_DYNPROP_0;
+        VARIANT *var;
+
+        if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
+            return DISP_E_UNKNOWNNAME;
+
+        var = &This->dynamic_data->props[idx].var;
+
+        switch(wFlags) {
+        case INVOKE_PROPERTYGET:
+            return VariantCopy(pvarRes, var);
+        case INVOKE_PROPERTYPUT:
+            VariantClear(var);
+            return VariantCopy(var, pdp->rgvarg);
+        default:
+            FIXME("unhandled wFlags %x\n", wFlags);
+            return E_NOTIMPL;
+        }
     }
 
     data = get_dispex_data(This);

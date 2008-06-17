@@ -97,6 +97,7 @@ typedef enum {
 } tid_t;
 
 typedef struct dispex_data_t dispex_data_t;
+typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 
 #define MSHTML_DISPID_CUSTOM_MIN 0x60000000
 #define MSHTML_DISPID_CUSTOM_MAX 0x6fffffff
@@ -119,6 +120,7 @@ typedef struct {
     IUnknown *outer;
 
     dispex_static_data_t *data;
+    dispex_dynamic_data_t *dynamic_data;
 } DispatchEx;
 
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
