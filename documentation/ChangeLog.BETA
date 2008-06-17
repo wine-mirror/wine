@@ -1,3 +1,38 @@
+2008-06-16  Alexandre Julliard <julliard@winehq.org>
+
+	* AUTHORS:
+	Updated the authors list.
+
+2008-06-13  Francois Gouget <fgouget@free.fr>
+
+	* programs/winecfg/Zh.rc:
+	winecfg: Remove spaces before '...'.
+
+	* programs/regedit/Bg.rc, programs/regedit/Ja.rc:
+	regedit: Remove spaces before '...'.
+
+	* dlls/oledlg/oledlg_Da.rc, dlls/setupapi/Da.rc, programs/cmdlgtst/Da.rc,
+	  programs/oleview/Da.rc, programs/progman/Da.rc,
+	  programs/taskmgr/Da.rc, programs/winefile/Da.rc,
+	  programs/wordpad/Da.rc:
+	Remove spaces before '...' in the Danish resources.
+
+2008-06-15  Jaime Rave <jaime@rave>
+
+	* programs/wineconsole/wineconsole_Es.rc:
+	wineconsole: Update Spanish translation.
+
+2008-06-13  Matthias Kupfer <matthias.kupfer@informatik.tu-chemnitz.de>
+
+	* programs/wordpad/De.rc:
+	wordpad: Small typo fix for German translation.
+
+2008-06-13  Alexandre Julliard <julliard@winehq.org>
+
+	* ANNOUNCE, VERSION, configure, documentation/ChangeLog.BETA:
+	Release 1.0-rc5.
+
+----------------------------------------------------------------
 2008-06-13  Paul Vriens <paul.vriens.wine@gmail.com>
 
 	* dlls/kernel32/tests/file.c:

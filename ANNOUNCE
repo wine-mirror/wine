@@ -1,15 +1,16 @@
-The Wine development release 1.0-rc5 is now available.
+The Wine team is proud to announce that Wine 1.0 is now available.
+This is the first stable release of Wine after 15 years of development
+and beta testing. Many thanks to everybody who helped us along that
+long road!
 
-This should be the last release candidate for Wine 1.0, please give it
-a good testing.
-
-What's new in this release (see below for details):
-  - Bug fixes only, we are in code freeze.
+While compatibility is not perfect yet, thousands of applications have
+been reported to work very well. Check http://appdb.winehq.org to see
+the details for your favorite applications.
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.0-rc5.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.0-rc5.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.0.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.0.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -25,203 +26,46 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.0-rc5:
+Bugs fixed in 1.0:
 
-   4373  Winamp Agent displays a size-zero window with decoration
-   5381  Unhandled exception FAME
-   6147  DC++, blank window after switching workspace in gnome
-   6384  frequent but unpredicable crashes in IE at specific homepage
-   6498  Window show slowly in Chinese language interface with SCIM input method
-   7201  Morrowind Pixel Shader water looks too "harsh" and generally wrong
-   7923  Game (Mount&Blade) crashes immediately when starting
-   8032  SCAR Divi - Mouse won't click
-   8340  fr-08 .the .product does not show some textures correctly due to lack of wrapping support
-   8772  Babylon-Pro-6/ Babylon-Pro-7 doesn't show main menu
-   8943  GunMetal crashs at start
-   8979  Call of Duty -> Jerky mouse / freelook problem
-   9561  huge bitmap creation solidworks
-  10373  BS Contact VRML/X3D 7.039: Direct3D 7/9 and texture problems
-  10441  Age of Empires III (3): freezes then dies after a couple of clicks
-  10610  Gothic II: D3D7 crash after playing several minutes
-  10667  Derive 6.10 - Input from keyboard
-  10673  Gnome panel bars overlap Halo in fullscreen mode
-  10967  Axis & Allies does not start
-  11214  configure does not recognise libncursesw
-  11540  Need for Speed III installer won't close
-  11552  Adobe Photoshop CS2 Open File Dialog looks different from windows
-  11584  Multiple games crash with stack overflow error
-  11730  REDCINE font rendering problem
-  11851  stack smashing attack in function wine_nt_to_unix_file_name
-  11888  gta2 unhandled exception
-  12011  Gothic 2 switches between fullscreen- and window-mode every time
-  12012  Gothic 2 graphic glitch
-  12097  Wine 1.0 should not ship out-of-sync resource translations
-  12537  .NET 2.0 Framework ESP Langpack can not be installed.
-  13038  Notes 7 database tiles are displayed incorrectly.
-  13139  Office 2003 install aborts in RC1
-  13151  Installation of MS Office 2000 hangs
-  13292  Crashday not starting anymore
-  13682  The babylon project crashes
-  13705  keyboard does not work in Trackmania Nations Forever
-  13709  data guardian refuses to install first time, works after a second attempt
-  13855  CVS head dlls/msxml3/domdoc.c doesn't compile
+   3838  The Punisher demo crashes after the introduction movies
+   3898  Counter-Strike 1.6 performance issue
+   4755  X Error of failed request:  BadDrawable (X_PolyFillRectangle) when switching to Virtual Desktop
+   6315  Starlancer draws ships as white when direct3d is enabled
+   7268  Oni not opening after install
+   8185  can't login in Skype 3.1 on wine/kubuntu 7
+   8634  antialiasing disabled in gtasa menu
+   9555  Wine crash when I click help in Stata 10
+   9589  Static / Scratchy Sound with OSS in Call of Duty
+   9903  WinRAR with NXServer  - black icons
+  10009  QIP: window z-order is still wrong
+  10268  Robot Wars: Arena of Destruction crashes while quitting (causing resolution to stay 640 x 480)
+  10322  Eve-online (video memory misaddressed?)
+  10700  Dragon Naturally Speaking 9 needs gdiplus.GdipDrawArcI, gdiplus.GdipCreatePen2, ...
+  11011  Call of Duty 1.0 doesn't run after install.
+  11104  Dance Praise 2: Does not respond to input
+  12415  Can not leave fullscreen Warcraft 3x (Regression)
+  12963  Moto Racer 2 works with wine 0.9.60 and crashes with wine 0.9.61
+  13271  The demo of the punisher fails to install
+  13740  winebrowser gets wrong URL, problem with unicode
 
 ----------------------------------------------------------------
 
-Changes since 1.0-rc4:
+Changes since 1.0-rc5:
 
-Alexandre Julliard (14):
-      rpcrt4: Properly handle the case of a client having disconnected in rpcrt4_conn_listen_pipe.
-      winex11: Add a trace in ExtEscape to make wgl problems easier to diagnose.
-      kernel32: Add support for the execute protection values in CreateFileMappingW.
-      ntdll/tests: Fix a few tests on Vista.
-      kernel32/tests: Make the toolhelp test less verbose by default.
-      user32/tests: Fix formatting of a trace.
-      kernel32/tests: Limit the number of failures in the ligatures test.
-      user32/tests: Fix a window style check on Vista.
-      kernel32/tests: Fix the change notification test on Vista.
-      kernel32/tests: Use Local instead of Global prefix to avoid permission issues.
-      msvcrt/tests: Fix a couple of tests on Vista.
-      winetest: Fix the printf format for the version numbers.
-      msxml3: Fix a compile error without xml headers.
-      net: Add missing #pragma codepage in utf-8 resources.
+Alexandre Julliard (1):
+      Updated the authors list.
 
-Alistair Leslie-Hughes (3):
-      msxml3: Stop tests crashing under windows 98.
-      shell32: Stop shlfolder tests crashing under win98.
-      mshtml: Stop test crash on error condition.
+Francois Gouget (3):
+      Remove spaces before '...' in the Danish resources.
+      regedit: Remove spaces before '...'.
+      winecfg: Remove spaces before '...'.
 
-Austin English (1):
-      rsaenh: Fix a couple failing tests on 2k.
+Jaime Rave (1):
+      wineconsole: Update Spanish translation.
 
-Dan Kegel (4):
-      kernel32/tests: Initialize buffer.
-      oleaut32/tests: Initialize reserved fields to unique values.
-      shell32/tests: Avoid buffer overflow during test.
-      d3dx8/tests: Initialize matrix before testing its value.
-
-David Adam (1):
-      Revert "amstream: Fix the condition of existence of the IMediaStream interface."
-
-Detlef Riekenberg (1):
-      makedep: Fix a typo in the usage output.
-
-Francois Gouget (28):
-      shell32: Tweak the French license message to better match the English one.
-      advapi32/tests: Don't allow Wine to reproduce Windows' bugs.
-      start: Remove spaces before '\n' in resource strings.
-      notepad: Improve handling of quoted filenames.
-      clock: Clock is a program, not a library. So tweak the license and warranty messages accordingly.
-      winecfg: Winecfg is a program, not a library. So tweak the license and warranty messages accordingly.
-      progman: Progman is a program, not a library. So tweak the license and warranty messages accordingly.
-      clock: Update the license and warranty French translation.
-      winecfg: Update the license French translation.
-      progman: Update the license and warranty French translation.
-      Replace SUBLANG_ENGLISH_US with SUBLANG_DEFAULT.
-      winecfg: Update the Portuguese and Brazillian translations, based on a patch by Americo Jose Melo.
-      tests: Add a win_skip() function to allow for missing Windows functionality that must be present in Wine.
-      advapi32/tests: Make sure Wine implements all tested APIs.
-      comdlg32: Remove spaces before '\n' in resource strings.
-      comdlg32: Remove spaces before '\n' (and some after) in resource strings.
-      credui: Remove spaces before '\n' in resource strings.
-      net: Remove spaces before '\n' in resource strings.
-      winecfg: Remove spaces before '\n' in resource strings.
-      winmm: Remove spaces before '\n' in resource strings.
-      cmd: Remove spaces before '\n' in resource strings.
-      notepad: Remove spaces before '\n' in resource strings.
-      xcopy: Remove spaces before '\n' in resource strings.
-      comdlg32: Remove spaces before '...'.
-      browseui: Remove spaces before '...'.
-      user32: Remove spaces before '...'.
-      shdoclc: Remove spaces before '...'.
-      sane.ds: Remove spaces before '...'.
-
-Hans Leidekker (1):
-      winebrowser: Convert URL obtained through DdeGetData to Unicode.
-
-Jacek Caban (3):
-      mshtml: Added FIXME about QUERY_USES_HISTORYFOLDER in about protocol.
-      urlmon/tests: Always clear expect_* variables.
-      shdocvw: Fixed DISPID_ONTOOLBAR test on IE7.
-
-James Hawkins (2):
-      msi: Load folders first.
-      msi: Set the source path for uncompressed files when loading the file.
-
-Jonathan Ernst (2):
-      notepad: Updated About menu entry.
-      kernel: Updated French translation.
-
-Louis Lenders (1):
-      mscoree: Add stub for CorBindToCurrentRuntime.
-
-Michael Karcher (3):
-      gdi32: Respect DIB_PAL_COLORS in every case.
-      xcopy: Add German translation.
-      xcopy: Fix non-translation of a string.
-
-Michael Stefaniuc (7):
-      regedit: Fix the Turkish translation.
-      regedit: Fix the Slovenian translation.
-      winecfg: Fix and re-enable the Italian translation.
-      regedit: Fix the Danish translation.
-      winecfg: Fix the Portuguese Brazilian translation.
-      shell32: Add initial Romanian translation.
-      wininet: Add the Romanian translation.
-
-Mikołaj Zalewski (1):
-      xcopy: German should use SUBLANG_NEUTRAL.
-
-Paul Vriens (20):
-      setupapi/tests: Fix test for win9x and Vista.
-      iphlpapi/tests: Fix crash on Vista.
-      iphlpapi/tests: Fix test on Vista.
-      advpack/tests: Add a FreeLibrary and a skip message.
-      kernel32/tests: Add a skip message for win95.
-      comdlg32/tests: Use GetModuleHandle instead of LoadLibrary.
-      setupapi/tests: Fix a test on Windows 2000.
-      setupapi/tests: Fix two more tests on Windows 2000.
-      ole32/tests: Fix crash on W2K and below.
-      ole32/tests: Fix crash on NT4 and below.
-      ntdll/tests: Free memory after use.
-      ole32/tests: Only skip the tests if we are on NT4 or below.
-      msi/tests: Cleanup registry after test.
-      shlwapi/tests: Don't create testfile at a fixed location.
-      d3d9/tests: Fix a few typos.
-      setupapi/tests: Fix some test failures on W2K.
-      rpcrt4/tests: Fix test failures for win9x, NT4, W2K and XP-SP1.
-      credui: Typo and minor correction in Dutch resource.
-      kernel32/tests: Fix a few typos.
-      kernel32/tests: Skip tests if function is not implemented.
-
-Rico Schüller (2):
-      winecfg: Fix German translation.
-      shell32: Fix German shortcuts in the menu.
-
-Rob Shearman (5):
-      include: Add some missing defines and function declarations to rpcdce.h.
-      include: Add declaration for RpcSmDestroyClientContext to rpcndr.h.
-      rpcrt4: Use RpcServerRegisterIfEx with RPC_IF_ALLOW_CALLBACKS_WITH_NO_AUTH in the server test.
-      rpcrt4: Initialise the array to be marshalled in test_conformant_array.
-      rpcrt4: Clear a hole in the ps1 structure in test_simple_struct.
-
-Roderick Colenbrander (2):
-      wined3d: Update nvidia GPUs.
-      wined3d: Update ATI GPUs.
-
-Stefan Dösinger (3):
-      wined3d: Remove a broken AddDirtyRect call.
-      wined3d: Do not PreLoad the new render target.
-      wined3d: Only read back offscreen targets on a target change.
-
-Vladimir Pankratov (1):
-      shdoclc: Update Russian translation.
-
-Zac Brown (1):
-      dsound/tests: Improve test for IDirectSound8_CreateSoundBuffer.
-
-Zhangrong Huang (1):
-      gdi32: Add more Asian codepages to get default fallback fonts.
+Matthias Kupfer (1):
+      wordpad: Small typo fix for German translation.
 
 --
 Alexandre Julliard
