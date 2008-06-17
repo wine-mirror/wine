@@ -116,7 +116,27 @@ static LPWSTR fix_px_value(LPCWSTR val)
     return NULL;
 }
 
+static LPWSTR fix_url_value(LPCWSTR val)
+{
+    WCHAR *ret, *ptr;
+
+    static const WCHAR urlW[] = {'u','r','l','('};
+
+    if(strncmpW(val, urlW, sizeof(urlW)/sizeof(WCHAR)) || !strchrW(val, '\\'))
+        return NULL;
+
+    ret = heap_strdupW(val);
+
+    for(ptr = ret; *ptr; ptr++) {
+        if(*ptr == '\\')
+            *ptr = '/';
+    }
+
+    return ret;
+}
+
 #define ATTR_FIX_PX  1
+#define ATTR_FIX_URL 2
 
 static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value, DWORD flags)
 {
@@ -130,6 +150,8 @@ static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value, DWOR
 
     if(flags & ATTR_FIX_PX)
         val = fix_px_value(value);
+    if(flags & ATTR_FIX_URL)
+        val = fix_url_value(value);
 
     nsAString_Init(&str_name, name);
     nsAString_Init(&str_value, val ? val : value);
@@ -460,7 +482,7 @@ static HRESULT WINAPI HTMLStyle_put_backgroundImage(IHTMLStyle *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return set_style_attr(This, attrBackgroundImage, v, 0);
+    return set_style_attr(This, attrBackgroundImage, v, ATTR_FIX_URL);
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundImage(IHTMLStyle *iface, BSTR *p)
