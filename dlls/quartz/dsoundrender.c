@@ -780,7 +780,7 @@ static HRESULT WINAPI DSoundRender_InputPin_ReceiveConnection(IPin * iface, IPin
             This->pin.pConnectedTo = pReceivePin;
             IPin_AddRef(pReceivePin);
         }
-        else
+        else if (hr != VFW_E_ALREADY_CONNECTED)
         {
             if (DSImpl->dsbuffer)
                 IDirectSoundBuffer_Release(DSImpl->dsbuffer);
