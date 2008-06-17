@@ -420,7 +420,18 @@ static HRESULT WINAPI HTMLStyle_get_font(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_color(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
+
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+
+    switch(V_VT(&v)) {
+    case VT_BSTR:
+        TRACE("%s\n", debugstr_w(V_BSTR(&v)));
+        return set_style_attr(This, attrColor, V_BSTR(&v), 0);
+
+    default:
+        FIXME("unsupported vt=%d\n", V_VT(&v));
+    }
+
     return E_NOTIMPL;
 }
 
