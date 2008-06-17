@@ -1832,7 +1832,7 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node)
 static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
             HTMLElement **elems, DWORD len)
 {
-    HTMLElementCollection *ret = heap_alloc(sizeof(HTMLElementCollection));
+    HTMLElementCollection *ret = heap_alloc_zero(sizeof(HTMLElementCollection));
 
     ret->lpHTMLElementCollectionVtbl = &HTMLElementCollectionVtbl;
     ret->ref = 1;
