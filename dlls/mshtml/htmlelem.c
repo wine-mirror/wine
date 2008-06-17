@@ -297,8 +297,28 @@ static HRESULT WINAPI HTMLElement_put_id(IHTMLElement *iface, BSTR v)
 static HRESULT WINAPI HTMLElement_get_id(IHTMLElement *iface, BSTR *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    const PRUnichar *id;
+    nsAString id_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = NULL;
+
+    if(!This->nselem)
+        return S_OK;
+
+    nsAString_Init(&id_str, NULL);
+    nsres = nsIDOMHTMLElement_GetId(This->nselem, &id_str);
+    nsAString_GetData(&id_str, &id);
+
+    if(NS_FAILED(nsres))
+        ERR("GetId failed: %08x\n", nsres);
+    else if(*id)
+        *p = SysAllocString(id);
+
+    nsAString_Finish(&id_str);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)

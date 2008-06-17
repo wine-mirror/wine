@@ -866,6 +866,28 @@ static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *
     return node;
 }
 
+#define test_elem_id(e,i) _test_elem_id(__LINE__,e,i)
+static void _test_elem_id(unsigned line, IUnknown *unk, const char *exid)
+{
+    IHTMLElement *elem;
+    BSTR id = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement, (void**)&elem);
+    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement: %08x\n", hres);
+
+    hres = IHTMLElement_get_id(elem, &id);
+    IHTMLElement_Release(elem);
+    ok_(__FILE__,line) (hres == S_OK, "get_id failed: %08x\n", hres);
+
+    if(exid)
+        ok_(__FILE__,line) (!strcmp_wa(id, exid), "unexpected id %s\n", dbgstr_w(id));
+    else
+        ok_(__FILE__,line) (!id, "id=%s\n", dbgstr_w(id));
+
+    SysFreeString(id);
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -1628,6 +1650,7 @@ static void test_elems(IHTMLDocument2 *doc)
         hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLInputElement, (void**)&input);
         ok(hres == S_OK, "Could not get IHTMLInputElement: %08x\n", hres);
 
+        test_elem_id((IUnknown*)elem, "in");
         test_input_get_disabled(input, VARIANT_FALSE);
 
         IHTMLInputElement_Release(input);
@@ -1676,6 +1699,8 @@ static void test_elems(IHTMLDocument2 *doc)
         if(node) {
             type = get_node_type((IUnknown*)node);
             ok(type == 8, "type=%ld\n", type);
+
+            test_elem_id((IUnknown*)node, NULL);
             IHTMLDOMNode_Release(node);
         }
 
