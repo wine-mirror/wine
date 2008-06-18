@@ -121,7 +121,7 @@ typedef struct {
 
 typedef struct fdi_cds_fwd {
   void *hfdi;                      /* the hfdi we are using                 */
-  int filehf, cabhf;               /* file handle we are using              */
+  INT_PTR filehf, cabhf;           /* file handle we are using              */
   struct fdi_folder *current;      /* current folder we're extracting from  */
   cab_ULONG offset;                /* uncompressed offset within folder     */
   cab_UBYTE *outpos;               /* (high level) start of data to use up  */
@@ -2051,7 +2051,8 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
       /* outlen=0 means this block was the last contiguous part
          of a split block, continued in the next cabinet */
       if (outlen == 0) {
-        int pathlen, filenamelen, idx, i, cabhf;
+        int pathlen, filenamelen, idx, i;
+        INT_PTR cabhf;
         char fullpath[MAX_PATH], userpath[256];
         FDINOTIFICATION fdin;
         FDICABINETINFO fdici;
@@ -2432,7 +2433,8 @@ BOOL __cdecl FDICopy(
 { 
   FDICABINETINFO    fdici;
   FDINOTIFICATION   fdin;
-  int               cabhf, filehf = 0, idx;
+  INT_PTR           cabhf, filehf = 0;
+  int               idx;
   unsigned int      i;
   char              fullpath[MAX_PATH];
   size_t            pathlen, filenamelen;
