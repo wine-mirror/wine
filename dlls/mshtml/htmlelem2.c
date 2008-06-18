@@ -507,8 +507,22 @@ static HRESULT WINAPI HTMLElement2_get_clientHeight(IHTMLElement2 *iface, long *
 static HRESULT WINAPI HTMLElement2_get_clientWidth(IHTMLElement2 *iface, long *p)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    PRInt32 width=0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    if(NS_SUCCEEDED(nsres)) {
+        nsIDOMNSHTMLElement_GetClientWidth(nselem, &width);
+        nsIDOMNSHTMLElement_Release(nselem);
+    }else {
+        ERR("Could not get nsIDOMHTMLNSElement: %08x\n", nsres);
+    }
+
+    *p = width;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_clientTop(IHTMLElement2 *iface, long *p)
