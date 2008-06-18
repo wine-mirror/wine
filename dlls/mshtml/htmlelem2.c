@@ -416,8 +416,15 @@ static HRESULT WINAPI HTMLElement2_focus(IHTMLElement2 *iface)
 static HRESULT WINAPI HTMLElement2_put_accessKey(IHTMLElement2 *iface, BSTR v)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    VARIANT var;
+
+    static WCHAR accessKeyW[] = {'a','c','c','e','s','s','K','e','y',0};
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = v;
+    return IHTMLElement_setAttribute(HTMLELEM(This), accessKeyW, var, 0);
 }
 
 static HRESULT WINAPI HTMLElement2_get_accessKey(IHTMLElement2 *iface, BSTR *p)
