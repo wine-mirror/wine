@@ -216,7 +216,8 @@ static void testAcquireSecurityContext(void)
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
      NULL, NULL, NULL, NULL, &cred, NULL);
     ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", st);
-    pFreeCredentialsHandle(&cred);
+    if(st == SEC_E_OK)
+        pFreeCredentialsHandle(&cred);
     memset(&cred, 0, sizeof(cred));
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
      NULL, NULL, NULL, NULL, &cred, &exp);
