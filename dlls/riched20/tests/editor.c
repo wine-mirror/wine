@@ -1040,6 +1040,7 @@ static void test_EM_AUTOURLDETECT(void)
     "This is some text with X\\ on it",
   };
   char buffer[1024];
+  MSG msg;
 
   parent = new_static_wnd(NULL);
   hwndRichEdit = new_richedit(parent);
@@ -1218,6 +1219,162 @@ static void test_EM_AUTOURLDETECT(void)
       }
     }
 
+    DestroyWindow(hwndRichEdit);
+    hwndRichEdit = NULL;
+  }
+
+#define INSERT_CR \
+  do { \
+    keybd_event('\r', 0x1c, 0, 0); \
+    keybd_event('\r', 0x1c, KEYEVENTF_KEYUP, 0); \
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { \
+      TranslateMessage(&msg); \
+      DispatchMessage(&msg); \
+    } \
+  } while (0)
+
+#define INSERT_BS \
+  do { \
+    keybd_event(0x08, 0x0e, 0, 0); \
+    keybd_event(0x08, 0x0e, KEYEVENTF_KEYUP, 0); \
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { \
+      TranslateMessage(&msg); \
+      DispatchMessage(&msg); \
+    } \
+  } while (0)
+
+  /* Test detection of URLs within normal text - WM_CHAR case. */
+  for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
+    hwndRichEdit = new_richedit(parent);
+
+    for (j = 0; j < sizeof(templates_delim) / sizeof(const char *); j++) {
+      char * at_pos;
+      int at_offset;
+      int end_offset;
+      int u, v;
+
+      at_pos = strchr(templates_delim[j], 'X');
+      at_offset = at_pos - templates_delim[j];
+      end_offset = at_offset + strlen(urls[i].text);
+
+      SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+      SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
+      for (u = 0; templates_delim[j][u]; u++) {
+        if (templates_delim[j][u] == '\r') {
+          INSERT_CR;
+        } else if (templates_delim[j][u] != 'X') {
+          SendMessage(hwndRichEdit, WM_CHAR, templates_delim[j][u], 1);
+        } else {
+          for (v = 0; urls[i].text[v]; v++) {
+            SendMessage(hwndRichEdit, WM_CHAR, urls[i].text[v], 1);
+          }
+        }
+      }
+      SendMessage(hwndRichEdit, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+      trace("Using template: %s\n", templates_delim[j]);
+
+      /* This assumes no templates start with the URL itself, and that they
+         have at least two characters before the URL text */
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      if (urls[i].is_url)
+      {
+        ok(check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK not set in (%d-%d), text: %s\n", at_offset, at_offset +1, buffer);
+        ok(check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK not set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      else
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset, at_offset + 1, buffer);
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      if (buffer[end_offset] != '\0')
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset + 1, buffer);
+        if (buffer[end_offset +1] != '\0')
+        {
+          ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +1, end_offset +2),
+            "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +1, end_offset +2, buffer);
+        }
+      }
+
+      /* The following will insert a paragraph break after the first character
+         of the URL candidate, thus breaking the URL. It is expected that the
+         CFE_LINK attribute should break across both pieces of the URL */
+      SendMessage(hwndRichEdit, EM_SETSEL, at_offset+1, at_offset+1);
+      INSERT_CR;
+      SendMessage(hwndRichEdit, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset, at_offset + 1, buffer);
+      /* end_offset moved because of paragraph break */
+      ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset+1, buffer);
+      if (buffer[end_offset+1] != '\0')
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset+1, end_offset +2),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset+1, end_offset +2, buffer);
+        if (buffer[end_offset +2] != '\0')
+        {
+          ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +2, end_offset +3),
+            "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +2, end_offset +3, buffer);
+        }
+      }
+
+      /* The following will remove the just-inserted paragraph break, thus
+         restoring the URL */
+      SendMessage(hwndRichEdit, EM_SETSEL, at_offset+2, at_offset+2);
+      INSERT_BS;
+      SendMessage(hwndRichEdit, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      if (urls[i].is_url)
+      {
+        ok(check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK not set in (%d-%d), text: %s\n", at_offset, at_offset +1, buffer);
+        ok(check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK not set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      else
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset, at_offset + 1, buffer);
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      if (buffer[end_offset] != '\0')
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset + 1, buffer);
+        if (buffer[end_offset +1] != '\0')
+        {
+          ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +1, end_offset +2),
+            "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +1, end_offset +2, buffer);
+        }
+      }
+    }
     DestroyWindow(hwndRichEdit);
     hwndRichEdit = NULL;
   }

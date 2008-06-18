@@ -1558,6 +1558,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       else
         return TRUE;
       ME_CommitUndo(editor);
+      ME_UpdateSelectionLinkAttribute(editor);
       ME_UpdateRepaint(editor);
       ME_SendRequestResize(editor, FALSE);
       return TRUE;
@@ -2456,19 +2457,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       TRACE("WM_SETTEXT - NULL\n");
     if (editor->AutoURLDetect_bEnable)
     {
-      int cMin = 0, cMax = -1;
-      while (ME_FindNextURLCandidate(editor, cMin, cMax, &cMin, &cMax))
-      {
-        if (ME_IsCandidateAnURL(editor, cMin, cMax)) {
-          CHARFORMAT2W link;
-          link.cbSize = sizeof(link);
-          link.dwMask = CFM_LINK;
-          link.dwEffects = CFE_LINK;
-          ME_SetCharFormat(editor, cMin, cMax - cMin, &link);
-        }
-        cMin = cMax;
-        cMax = -1;
-      }
+      ME_UpdateLinkAttribute(editor, 0, -1);
     }
     ME_SetSelection(editor, 0, 0);
     editor->nModifyStep = 0;
@@ -3052,9 +3041,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         CHAR charA = wParam;
         MultiByteToWideChar(CP_ACP, 0, &charA, 1, &wstr, 1);
     }
-    if (editor->AutoURLDetect_bEnable)
-      ME_AutoURLDetect(editor, wstr);
-        
+
     switch (wstr)
     {
     case 1: /* Ctrl-A */
@@ -3103,6 +3090,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         ME_ReleaseStyle(style);
         ME_CommitUndo(editor);
       }
+
+      if (editor->AutoURLDetect_bEnable) ME_UpdateSelectionLinkAttribute(editor);
+
       ME_UpdateRepaint(editor);
     }
     return 0;
@@ -3886,4 +3876,129 @@ BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
   }
   if (bufferW != NULL) heap_free(bufferW);
   return FALSE;
+}
+
+/**
+ * This proc walks through the indicated selection and evaluates whether each
+ * section identified by ME_FindNextURLCandidate and in-between sections have
+ * their proper CFE_LINK attributes set or unset. If the CFE_LINK attribute is
+ * not what it is supposed to be, this proc sets or unsets it as appropriate.
+ *
+ * Returns TRUE if at least one section was modified.
+ */
+BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max)
+{
+  BOOL modified = FALSE;
+  int cMin, cMax;
+
+  if (sel_max == -1) sel_max = ME_GetTextLength(editor);
+  do
+  {
+    int beforeURL[2];
+    int inURL[2];
+    CHARFORMAT2W link;
+
+    if (ME_FindNextURLCandidate(editor, sel_min, sel_max, &cMin, &cMax))
+    {
+      /* Section before candidate is not an URL */
+      beforeURL[0] = sel_min;
+      beforeURL[1] = cMin;
+
+      if (ME_IsCandidateAnURL(editor, cMin, cMax))
+      {
+        inURL[0] = cMin; inURL[1] = cMax;
+      }
+      else
+      {
+        beforeURL[1] = cMax;
+        inURL[0] = inURL[1] = -1;
+      }
+      sel_min = cMax;
+    }
+    else
+    {
+      /* No more candidates until end of selection */
+      beforeURL[0] = sel_min;
+      beforeURL[1] = sel_max;
+      inURL[0] = inURL[1] = -1;
+      sel_min = sel_max;
+    }
+
+    if (beforeURL[0] < beforeURL[1])
+    {
+      /* CFE_LINK effect should be consistently unset */
+      link.cbSize = sizeof(link);
+      ME_GetCharFormat(editor, beforeURL[0], beforeURL[1], &link);
+      /* FIXME: Workaround for what looks like a bug - ME_GetCharFormat does not
+         clear the CFM_LINK flag when selection spans text without CFE_LINK,
+         followed by CFE_LINK set. This needs a test for EM_GETCHARFORMAT */
+#if 0
+      if (!(link.dwMask & CFM_LINK) || (link.dwEffects & CFE_LINK))
+      {
+#endif
+        /* CFE_LINK must be unset from this range */
+        memset(&link, 0, sizeof(CHARFORMAT2W));
+        link.cbSize = sizeof(link);
+        link.dwMask = CFM_LINK;
+        link.dwEffects = 0;
+        ME_SetCharFormat(editor, beforeURL[0], beforeURL[1] - beforeURL[0], &link);
+        modified = TRUE;
+#if 0
+      }
+#endif
+    }
+    if (inURL[0] < inURL[1])
+    {
+      /* CFE_LINK effect should be consistently set */
+      link.cbSize = sizeof(link);
+      ME_GetCharFormat(editor, inURL[0], inURL[1], &link);
+      if (!(link.dwMask & CFM_LINK) || !(link.dwEffects & CFE_LINK))
+      {
+        /* CFE_LINK must be set on this range */
+        memset(&link, 0, sizeof(CHARFORMAT2W));
+        link.cbSize = sizeof(link);
+        link.dwMask = CFM_LINK;
+        link.dwEffects = CFE_LINK;
+        ME_SetCharFormat(editor, inURL[0], inURL[1] - inURL[0], &link);
+        modified = TRUE;
+      }
+    }
+  } while (sel_min < sel_max);
+  return modified;
+}
+
+void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
+{
+  ME_DisplayItem * startPara, * endPara;
+  ME_DisplayItem * item;
+  int dummy;
+  int from, to;
+
+  ME_GetSelection(editor, &from, &to);
+  if (from > to) from ^= to, to ^=from, from ^= to;
+  startPara = NULL; endPara = NULL;
+
+  /* Find paragraph previous to the one that contains start cursor */
+  item = ME_FindItemAtOffset(editor, diRun, from, &dummy);
+  if (item) {
+    startPara = ME_FindItemBack(item, diParagraph);
+    item = ME_FindItemBack(startPara, diParagraph);
+    if (item) startPara = item;
+  }
+
+  /* Find paragraph that contains end cursor */
+  item = ME_FindItemAtOffset(editor, diRun, to, &dummy);
+  if (item) {
+    endPara = ME_FindItemFwd(item, diParagraph);
+  }
+
+  if (startPara && endPara) {
+    ME_UpdateLinkAttribute(editor,
+      startPara->member.para.nCharOfs,
+      endPara->member.para.nCharOfs);
+  } else if (startPara) {
+    ME_UpdateLinkAttribute(editor,
+      startPara->member.para.nCharOfs,
+      -1);
+  }
 }
