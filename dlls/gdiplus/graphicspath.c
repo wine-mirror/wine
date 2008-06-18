@@ -758,3 +758,65 @@ GpStatus WINGDIPAPI GdipAddPathRectangleI(GpPath *path, INT x, INT y,
 {
     return GdipAddPathRectangle(path,(REAL)x,(REAL)y,(REAL)width,(REAL)height);
 }
+
+GpStatus WINGDIPAPI GdipAddPathRectangles(GpPath *path, GDIPCONST GpRectF *rects, INT count)
+{
+    GpPath *backup;
+    GpStatus retstat;
+    INT i;
+
+    /* count == 0 - verified condition  */
+    if(!path || !rects || count == 0)
+        return InvalidParameter;
+
+    if(count < 0)
+        return OutOfMemory;
+
+    /* make a backup copy */
+    if((retstat = GdipClonePath(path, &backup)) != Ok)
+        return retstat;
+
+    for(i = 0; i < count; i++){
+        if((retstat = GdipAddPathRectangle(path,rects[i].X,rects[i].Y,rects[i].Width,rects[i].Height)) != Ok)
+            goto fail;
+    }
+
+    /* free backup */
+    GdipDeletePath(backup);
+    return Ok;
+
+fail:
+    /* reverting */
+    GdipDeletePath(path);
+    GdipClonePath(backup, &path);
+    GdipDeletePath(backup);
+
+    return retstat;
+}
+
+GpStatus WINGDIPAPI GdipAddPathRectanglesI(GpPath *path, GDIPCONST GpRect *rects, INT count)
+{
+    GpRectF *rectsF;
+    GpStatus retstat;
+    INT i;
+
+    if(!rects || count == 0)
+        return InvalidParameter;
+
+    if(count < 0)
+        return OutOfMemory;
+
+    rectsF = GdipAlloc(sizeof(GpRectF)*count);
+
+    for(i = 0;i < count;i++){
+        rectsF[i].X      = (REAL)rects[i].X;
+        rectsF[i].Y      = (REAL)rects[i].Y;
+        rectsF[i].Width  = (REAL)rects[i].Width;
+        rectsF[i].Height = (REAL)rects[i].Height;
+    }
+
+    retstat = GdipAddPathRectangles(path, rectsF, count);
+    GdipFree(rectsF);
+
+    return retstat;
+}

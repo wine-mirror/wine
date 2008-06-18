@@ -561,11 +561,30 @@ static void test_rect(void)
 {
     GpStatus status;
     GpPath *path;
+    GpRectF rects[2];
 
     GdipCreatePath(FillModeAlternate, &path);
     status = GdipAddPathRectangle(path, 5.0, 5.0, 100.0, 50.0);
     expect(Ok, status);
     status = GdipAddPathRectangle(path, 100.0, 50.0, 120.0, 30.0);
+    expect(Ok, status);
+
+    ok_path(path, rect_path, sizeof(rect_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeletePath(path);
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    rects[0].X      = 5.0;
+    rects[0].Y      = 5.0;
+    rects[0].Width  = 100.0;
+    rects[0].Height = 50.0;
+    rects[1].X      = 100.0;
+    rects[1].Y      = 50.0;
+    rects[1].Width  = 120.0;
+    rects[1].Height = 30.0;
+
+    status = GdipAddPathRectangles(path, (GDIPCONST GpRectF*)&rects, 2);
     expect(Ok, status);
 
     ok_path(path, rect_path, sizeof(rect_path)/sizeof(path_test_t), FALSE);
