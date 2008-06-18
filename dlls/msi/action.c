@@ -648,6 +648,30 @@ static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
     return ERROR_SUCCESS;
 }
 
+static UINT msi_set_context(MSIPACKAGE *package)
+{
+    WCHAR val[10];
+    DWORD sz = 10;
+    DWORD num;
+    UINT r;
+
+    static const WCHAR szOne[] = {'1',0};
+    static const WCHAR szAllUsers[] = {'A','L','L','U','S','E','R','S',0};
+
+    package->Context = MSIINSTALLCONTEXT_USERUNMANAGED;
+
+    r = MSI_GetPropertyW(package, szAllUsers, val, &sz);
+    if (r == ERROR_SUCCESS)
+    {
+        num = atolW(val);
+        if (num == 1 || num == 2)
+            package->Context = MSIINSTALLCONTEXT_MACHINE;
+    }
+
+    MSI_SetPropertyW(package, szAllUsers, szOne);
+    return ERROR_SUCCESS;
+}
+
 /****************************************************
  * TOP level entry points 
  *****************************************************/
@@ -710,6 +734,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     /* properties may have been added by a transform */
     msi_clone_properties( package );
+    msi_set_context( package );
 
     if ( (msi_get_property_int(package, szUILevel, 0) & INSTALLUILEVEL_MASK) >= INSTALLUILEVEL_REDUCED )
     {
