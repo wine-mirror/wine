@@ -631,8 +631,8 @@ failed:
 /***********************************************************************
  *           RPCRT4_AuthorizeBinding (internal)
  */
-static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
-                                            BYTE *challenge, ULONG count)
+RPC_STATUS RPCRT4_AuthorizeConnection(RpcConnection* conn, BYTE *challenge,
+                                      ULONG count)
 {
   SecBuffer inp, out;
   RpcPktHdr *resp_hdr;
@@ -947,16 +947,6 @@ RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header,
     }
   }
   pMsg->BufferLength = buffer_length;
-
-  /* respond to authorization request */
-  if ((*Header)->common.ptype == PKT_BIND_ACK && auth_length > sizeof(RpcAuthVerifier))
-  {
-    status = RPCRT_AuthorizeConnection(Connection,
-                                       auth_data + sizeof(RpcAuthVerifier),
-                                       auth_length);
-    if (status)
-        goto fail;
-  }
 
   /* success */
   status = RPC_S_OK;
