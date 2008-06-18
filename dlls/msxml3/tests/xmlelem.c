@@ -287,7 +287,7 @@ static void test_xmlelem_collection(void)
     ok(hr == S_OK || hr == ERROR_URL_NOT_FOUND, "Expected S_OK, got 0x%08x\n", hr);
     SysFreeString(url);
 
-    if(hr == ERROR_URL_NOT_FOUND)
+    if(hr != S_OK)
         goto cleanup;
 
     hr = IXMLDocument_get_root(doc, &element);
