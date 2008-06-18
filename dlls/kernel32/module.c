@@ -608,7 +608,10 @@ DWORD WINAPI GetModuleFileNameA(
     if ((len = GetModuleFileNameW( hModule, filenameW, size )))
     {
     	len = FILE_name_WtoA( filenameW, len, lpFileName, size );
-        if (len < size) lpFileName[len] = '\0';
+        if (len < size)
+            lpFileName[len] = '\0';
+        else
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
     }
     HeapFree( GetProcessHeap(), 0, filenameW );
     return len;
@@ -642,7 +645,10 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
     {
         len = min(size, pldr->FullDllName.Length / sizeof(WCHAR));
         memcpy(lpFileName, pldr->FullDllName.Buffer, len * sizeof(WCHAR));
-        if (len < size) lpFileName[len] = '\0';
+        if (len < size)
+            lpFileName[len] = '\0';
+        else
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
     }
     else SetLastError( RtlNtStatusToDosError( nts ) );
 
