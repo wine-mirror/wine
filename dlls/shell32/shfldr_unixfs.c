@@ -834,7 +834,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *ifa
     } else if (IsEqualIID(&IID_IDropTarget, riid)) {
         *ppv = STATIC_CAST(IDropTarget, This);
         if (!cfShellIDList) 
-            cfShellIDList = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
+            cfShellIDList = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
     } else {
         *ppv = NULL;
         return E_NOINTERFACE;

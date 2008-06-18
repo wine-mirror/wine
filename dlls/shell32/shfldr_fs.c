@@ -128,7 +128,7 @@ static void SF_RegisterClipFmt (IGenericSFImpl * This)
     TRACE ("(%p)\n", This);
 
     if (!This->cfShellIDList) {
-        This->cfShellIDList = RegisterClipboardFormatA (CFSTR_SHELLIDLIST);
+        This->cfShellIDList = RegisterClipboardFormatW (CFSTR_SHELLIDLISTW);
     }
 }
 

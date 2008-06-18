@@ -234,7 +234,7 @@ static BOOL DoPaste(
 	  TRACE("pda=%p\n", pda);
 
 	  /* Set the FORMATETC structure*/
-	  InitFormatEtc(formatetc, RegisterClipboardFormatA(CFSTR_SHELLIDLIST), TYMED_HGLOBAL);
+	  InitFormatEtc(formatetc, RegisterClipboardFormatW(CFSTR_SHELLIDLISTW), TYMED_HGLOBAL);
 
 	  /* Get the pidls from IDataObject */
 	  if(SUCCEEDED(IDataObject_GetData(pda,&formatetc,&medium)))

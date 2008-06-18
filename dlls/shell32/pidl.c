@@ -712,7 +712,7 @@ HRESULT WINAPI SHGetRealIDL(LPSHELLFOLDER lpsf, LPCITEMIDLIST pidlSimple, LPITEM
         STGMEDIUM medium;
         FORMATETC fmt;
 
-        fmt.cfFormat = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
+        fmt.cfFormat = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
         fmt.ptd = NULL;
         fmt.dwAspect = DVASPECT_CONTENT;
         fmt.lindex = -1;

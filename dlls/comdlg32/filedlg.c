@@ -3268,7 +3268,7 @@ LPITEMIDLIST GetPidlFromDataObject ( IDataObject *doSelected, UINT nPidlIndex)
         return NULL;
 	
     /* Set the FORMATETC structure*/
-    SETDefFormatEtc(formatetc, RegisterClipboardFormatA(CFSTR_SHELLIDLIST), TYMED_HGLOBAL);
+    SETDefFormatEtc(formatetc, RegisterClipboardFormatA(CFSTR_SHELLIDLISTA), TYMED_HGLOBAL);
 
     /* Get the pidls from IDataObject */
     if(SUCCEEDED(IDataObject_GetData(doSelected,&formatetc,&medium)))
@@ -3300,7 +3300,7 @@ UINT GetNumSelected( IDataObject *doSelected )
     if (!doSelected) return 0;
 
     /* Set the FORMATETC structure*/
-    SETDefFormatEtc(formatetc, RegisterClipboardFormatA(CFSTR_SHELLIDLIST), TYMED_HGLOBAL);
+    SETDefFormatEtc(formatetc, RegisterClipboardFormatA(CFSTR_SHELLIDLISTA), TYMED_HGLOBAL);
 
     /* Get the pidls from IDataObject */
     if(SUCCEEDED(IDataObject_GetData(doSelected,&formatetc,&medium)))
