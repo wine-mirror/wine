@@ -1502,6 +1502,16 @@ BOOL    (WINAPI *pwglShareLists)(HGLRC,HGLRC);
  *     #defines and functions pointer
  ****************************************************/
 
+/* GL_ARB_color_buffer_float */
+#ifndef GL_ARB_color_buffer_float
+#define GL_RGBA_FLOAT_MODE_ARB            0x8820
+#define GL_CLAMP_VERTEX_COLOR_ARB         0x891A
+#define GL_CLAMP_FRAGMENT_COLOR_ARB       0x891B
+#define GL_CLAMP_READ_COLOR_ARB           0x891C
+#define GL_FIXED_ONLY_ARB                 0x891D
+#endif
+typedef void (WINE_GLAPI *PGLFNCLAMPCOLORARBPROC) (GLenum target, GLenum clamp);
+
 /* GL_ARB_depth_texture */
 #ifndef GL_ARB_depth_texture
 #define GL_ARB_depth_texture 1
@@ -3286,6 +3296,7 @@ typedef enum _GL_PSVersion {
 /* OpenGL Supported Extensions (ARB and EXT) */
 typedef enum _GL_SupportedExt {
   /* ARB */
+  ARB_COLOR_BUFFER_FLOAT,
   ARB_DRAW_BUFFERS,
   ARB_FRAGMENT_PROGRAM,
   ARB_FRAGMENT_SHADER,
@@ -3387,6 +3398,8 @@ typedef enum _GL_SupportedExt {
  ****************************************************/
 #define GL_EXT_FUNCS_GEN \
     /** ARB Extensions **/ \
+    /* GL_ARB_color_buffer_float */ \
+    USE_GL_FUNC(PGLFNCLAMPCOLORARBPROC,                             glClampColorARB,                            ARB_COLOR_BUFFER_FLOAT, NULL );\
     /* GL_ARB_draw_buffers */ \
     USE_GL_FUNC(PGLFNDRAWBUFFERSARBPROC,                            glDrawBuffersARB,                           ARB_DRAW_BUFFERS,       NULL );\
     /* GL_ARB_imaging, GL_EXT_blend_minmax */ \

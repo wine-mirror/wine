@@ -61,6 +61,7 @@ static const struct {
     {"GL_ATI_fragment_shader",              ATI_FRAGMENT_SHADER,            0                           },
 
     /* ARB */
+    {"GL_ARB_color_buffer_float",           ARB_COLOR_BUFFER_FLOAT,         0                           },
     {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS,               0                           },
     {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM,           0                           },
     {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER,            0                           },
