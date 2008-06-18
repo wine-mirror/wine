@@ -4934,11 +4934,16 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
      * symbol range to 0 - f0ff
      */
     if (font->charset == SYMBOL_CHARSET)
+    {
         TM.tmFirstChar = 0;
+        TM.tmDefaultChar = pOS2->usDefaultChar ? pOS2->usDefaultChar : 0x1f;
+    }
     else
+    {
         TM.tmFirstChar = pOS2->usFirstCharIndex;
+        TM.tmDefaultChar = pOS2->usDefaultChar ? pOS2->usDefaultChar : 0xffff;
+    }
     TM.tmLastChar = pOS2->usLastCharIndex;
-    TM.tmDefaultChar = pOS2->usDefaultChar ? pOS2->usDefaultChar : 0x1f;
     TM.tmBreakChar = pOS2->usBreakChar ? pOS2->usBreakChar : ' ';
     TM.tmItalic = font->fake_italic ? 255 : ((ft_face->style_flags & FT_STYLE_FLAG_ITALIC) ? 255 : 0);
     TM.tmUnderlined = font->underline;
