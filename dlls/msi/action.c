@@ -4348,7 +4348,11 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     if (!productid)
         return ERROR_SUCCESS;
 
-    rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &hkey, TRUE);
+    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+        rc = MSIREG_OpenLocalSystemInstallProps(package->ProductCode, &hkey, TRUE);
+    else
+        rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &hkey, TRUE);
+
     if (rc != ERROR_SUCCESS)
         goto end;
 

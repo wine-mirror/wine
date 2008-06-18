@@ -2719,6 +2719,27 @@ static void test_publish_registeruser(void)
     RegDeleteKeyA(props, "");
     RegCloseKey(props);
 
+    /* RegisterUser, machine */
+    r = MsiInstallProductA(msifile, "REGISTER_USER=1 ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    sprintf(keypath, keyfmt, "S-1-5-18");
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &props);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(props, "ProductID", "none");
+    CHECK_REG_STR(props, "RegCompany", company);
+    CHECK_REG_STR(props, "RegOwner", owner);
+
+    RegDeleteValueA(props, "ProductID");
+    RegDeleteValueA(props, "RegCompany");
+    RegDeleteValueA(props, "RegOwner");
+    RegDeleteKeyA(props, "");
+    RegCloseKey(props);
+
     HeapFree(GetProcessHeap(), 0, company);
     HeapFree(GetProcessHeap(), 0, owner);
 
