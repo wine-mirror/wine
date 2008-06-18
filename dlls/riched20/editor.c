@@ -2454,6 +2454,22 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     else
       TRACE("WM_SETTEXT - NULL\n");
+    if (editor->AutoURLDetect_bEnable)
+    {
+      int cMin = 0, cMax = -1;
+      while (ME_FindNextURLCandidate(editor, cMin, cMax, &cMin, &cMax))
+      {
+        if (ME_IsCandidateAnURL(editor, cMin, cMax)) {
+          CHARFORMAT2W link;
+          link.cbSize = sizeof(link);
+          link.dwMask = CFM_LINK;
+          link.dwEffects = CFE_LINK;
+          ME_SetCharFormat(editor, cMin, cMax - cMin, &link);
+        }
+        cMin = cMax;
+        cMax = -1;
+      }
+    }
     ME_SetSelection(editor, 0, 0);
     editor->nModifyStep = 0;
     ME_CommitUndo(editor);
@@ -3449,9 +3465,11 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
     CopyMemory(buffer, item->member.run.strText->szData + nStart, sizeof(WCHAR)*nLen);
     nChars -= nLen;
     nWritten += nLen;
-    if (!nChars)
-      return nWritten;
     buffer += nLen;
+    if (!nChars) {
+      *buffer = 0;
+      return nWritten;
+    }
     nStart = 0;
     item = ME_FindItemFwd(item, diRun);
   }
@@ -3712,4 +3730,160 @@ int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar)
     }
   }
   return 0;
+}
+
+
+static BOOL isurlspecial(WCHAR c)
+{
+  static const WCHAR special_chars[] = {'.','/','%','@','*','|','\\','+','#',0};
+  return strchrW( special_chars, c ) != NULL;
+}
+
+/**
+ * This proc takes a selection, and scans it forward in order to select the span
+ * of a possible URL candidate. A possible URL candidate must start with isalnum
+ * or one of the following special characters: *|/\+%#@ and must consist entirely
+ * of the characters allowed to start the URL, plus : (colon) which may occur
+ * at most once, and not at either end.
+ *
+ * sel_max == -1 indicates scan to end of text.
+ */
+BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_max,
+        int * candidate_min, int * candidate_max)
+{
+  ME_DisplayItem * item;
+  ME_DisplayItem * para;
+  int nStart;
+  BOOL foundColon = FALSE;
+  WCHAR lastAcceptedChar = '\0';
+
+  TRACE("sel_min = %d sel_max = %d\n", sel_min, sel_max);
+
+  *candidate_min = *candidate_max = -1;
+  item = ME_FindItemAtOffset(editor, diRun, sel_min, &nStart);
+  if (!item) return FALSE;
+  TRACE("nStart = %d\n", nStart);
+  para = ME_GetParagraph(item);
+  if (sel_max == -1) sel_max = ME_GetTextLength(editor);
+  while (item && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart < sel_max)
+  {
+    ME_DisplayItem * next_item;
+
+    if (!(item->member.run.nFlags & MERF_ENDPARA)) {
+      /* Find start of candidate */
+      if (*candidate_min == -1) {
+        while (nStart < ME_StrLen(item->member.run.strText) &&
+                !(isalnumW(item->member.run.strText->szData[nStart]) ||
+                  isurlspecial(item->member.run.strText->szData[nStart]))) {
+          nStart++;
+        }
+        if (nStart < ME_StrLen(item->member.run.strText) &&
+                (isalnumW(item->member.run.strText->szData[nStart]) ||
+                 isurlspecial(item->member.run.strText->szData[nStart]))) {
+          *candidate_min = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
+          lastAcceptedChar = item->member.run.strText->szData[nStart];
+          nStart++;
+        }
+      }
+
+      /* Find end of candidate */
+      if (*candidate_min >= 0) {
+        while (nStart < ME_StrLen(item->member.run.strText) &&
+                (isalnumW(item->member.run.strText->szData[nStart]) ||
+                 isurlspecial(item->member.run.strText->szData[nStart]) ||
+                 (!foundColon && item->member.run.strText->szData[nStart] == ':') )) {
+          if (item->member.run.strText->szData[nStart] == ':') foundColon = TRUE;
+          lastAcceptedChar = item->member.run.strText->szData[nStart];
+          nStart++;
+        }
+        if (nStart < ME_StrLen(item->member.run.strText) &&
+                !(isalnumW(item->member.run.strText->szData[nStart]) ||
+                 isurlspecial(item->member.run.strText->szData[nStart]) )) {
+          *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
+          nStart++;
+          if (lastAcceptedChar == ':') (*candidate_max)--;
+          return TRUE;
+        }
+      }
+    } else {
+      /* End of paragraph: skip it if before candidate span, or terminates
+         current active span */
+      if (*candidate_min >= 0) {
+        *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs;
+        if (lastAcceptedChar == ':') (*candidate_max)--;
+        return TRUE;
+      }
+    }
+
+    /* Reaching this point means no span was found, so get next span */
+    next_item = ME_FindItemFwd(item, diRun);
+    if (!next_item) {
+      if (*candidate_min >= 0) {
+        /* There are no further runs, so take end of text as end of candidate */
+        *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
+        if (lastAcceptedChar == ':') (*candidate_max)--;
+        return TRUE;
+      }
+    }
+    item = next_item;
+    para = ME_GetParagraph(item);
+    nStart = 0;
+  }
+
+  if (item) {
+    if (*candidate_min >= 0) {
+      /* There are no further runs, so take end of text as end of candidate */
+      *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
+      if (lastAcceptedChar == ':') (*candidate_max)--;
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * This proc evaluates the selection and returns TRUE if it can be considered an URL
+ */
+BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
+{
+  struct prefix_s {
+    const char *text;
+    int length;
+  } prefixes[12] = {
+    /* Code below depends on these being in decreasing length order! */
+    {"prospero:", 10},
+    {"telnet:", 8},
+    {"gopher:", 8},
+    {"mailto:", 8},
+    {"https:", 7},
+    {"file:", 6},
+    {"news:", 6},
+    {"wais:", 6},
+    {"nntp:", 6},
+    {"http:", 5},
+    {"www.", 5},
+    {"ftp:", 5},
+  };
+  LPWSTR bufferW = NULL;
+  WCHAR bufW[32];
+  int i;
+
+  if (sel_max == -1) sel_max = ME_GetTextLength(editor);
+  assert(sel_min <= sel_max);
+  for (i = 0; i < sizeof(prefixes) / sizeof(struct prefix_s); i++)
+  {
+    if (sel_max - sel_min < prefixes[i].length) continue;
+    if (bufferW == NULL) {
+      bufferW = (LPWSTR)heap_alloc((sel_max - sel_min + 1) * sizeof(WCHAR));
+    }
+    ME_GetTextW(editor, bufferW, sel_min, min(sel_max - sel_min, strlen(prefixes[i].text)), 0);
+    MultiByteToWideChar(CP_ACP, 0, prefixes[i].text, -1, bufW, 32);
+    if (!lstrcmpW(bufW, bufferW))
+    {
+      heap_free(bufferW);
+      return TRUE;
+    }
+  }
+  if (bufferW != NULL) heap_free(bufferW);
+  return FALSE;
 }

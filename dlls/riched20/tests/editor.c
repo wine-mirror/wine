@@ -929,14 +929,20 @@ static void test_EM_SETOPTIONS(void)
     DestroyWindow(hwndRichEdit);
 }
 
-static void check_CFE_LINK_rcvd(HWND hwnd, int is_url, const char * url)
+static int check_CFE_LINK_selection(HWND hwnd, int sel_start, int sel_end)
 {
   CHARFORMAT2W text_format;
-  int link_present = 0;
   text_format.cbSize = sizeof(text_format);
-  SendMessage(hwnd, EM_SETSEL, 0, 1);
+  SendMessage(hwnd, EM_SETSEL, sel_start, sel_end);
   SendMessage(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &text_format);
-  link_present = text_format.dwEffects & CFE_LINK;
+  return (text_format.dwEffects & CFE_LINK) ? 1 : 0;
+}
+
+static void check_CFE_LINK_rcvd(HWND hwnd, int is_url, const char * url)
+{
+  int link_present = 0;
+
+  link_present = check_CFE_LINK_selection(hwnd, 0, 1);
   if (is_url) 
   { /* control text is url; should get CFE_LINK */
 	ok(0 != link_present, "URL Case: CFE_LINK not set for [%s].\n", url);
@@ -971,9 +977,69 @@ static void test_EM_AUTOURLDETECT(void)
     {"wais:waisserver", 1}  
   };
 
-  int i;
+  int i, j;
   int urlRet=-1;
   HWND hwndRichEdit, parent;
+
+  /* All of the following should cause the URL to be detected  */
+  const char * templates_delim[] = {
+    "This is some text with X on it",
+    "This is some text with (X) on it",
+    "This is some text with X\r on it",
+    "This is some text with ---X--- on it",
+    "This is some text with \"X\" on it",
+    "This is some text with 'X' on it",
+    "This is some text with 'X' on it",
+    "This is some text with :X: on it",
+
+    "This text ends with X",
+
+    "This is some text with X) on it",
+    "This is some text with X--- on it",
+    "This is some text with X\" on it",
+    "This is some text with X' on it",
+    "This is some text with X: on it",
+
+    "This is some text with (X on it",
+    "This is some text with \rX on it",
+    "This is some text with ---X on it",
+    "This is some text with \"X on it",
+    "This is some text with 'X on it",
+    "This is some text with :X on it",
+  };
+  /* None of these should cause the URL to be detected */
+  const char * templates_non_delim[] = {
+    "This is some text with |X| on it",
+    "This is some text with *X* on it",
+    "This is some text with /X/ on it",
+    "This is some text with +X+ on it",
+    "This is some text with %X% on it",
+    "This is some text with #X# on it",
+    "This is some text with @X@ on it",
+    "This is some text with \\X\\ on it",
+    "This is some text with |X on it",
+    "This is some text with *X on it",
+    "This is some text with /X on it",
+    "This is some text with +X on it",
+    "This is some text with %X on it",
+    "This is some text with #X on it",
+    "This is some text with @X on it",
+    "This is some text with \\X on it",
+  };
+  /* All of these cause the URL detection to be extended by one more byte,
+     thus demonstrating that the tested character is considered as part
+     of the URL. */
+  const char * templates_xten_delim[] = {
+    "This is some text with X| on it",
+    "This is some text with X* on it",
+    "This is some text with X/ on it",
+    "This is some text with X+ on it",
+    "This is some text with X% on it",
+    "This is some text with X# on it",
+    "This is some text with X@ on it",
+    "This is some text with X\\ on it",
+  };
+  char buffer[1024];
 
   parent = new_static_wnd(NULL);
   hwndRichEdit = new_richedit(parent);
@@ -989,16 +1055,173 @@ static void test_EM_AUTOURLDETECT(void)
   ok(urlRet==E_INVALIDARG, "Bad wParam2: urlRet is: %d\n", urlRet);
   /* for each url, check the text to see if CFE_LINK effect is present */
   for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
+
     SendMessage(hwndRichEdit, EM_AUTOURLDETECT, FALSE, 0);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) urls[i].text);
-    SendMessage(hwndRichEdit, WM_CHAR, 0, 0);
     check_CFE_LINK_rcvd(hwndRichEdit, 0, urls[i].text);
+
+    /* Link detection should happen immediately upon WM_SETTEXT */
     SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) urls[i].text);
-    SendMessage(hwndRichEdit, WM_CHAR, 0, 0);
     check_CFE_LINK_rcvd(hwndRichEdit, urls[i].is_url, urls[i].text);
   }
   DestroyWindow(hwndRichEdit);
+
+  /* Test detection of URLs within normal text - WM_SETTEXT case. */
+  for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
+    hwndRichEdit = new_richedit(parent);
+
+    for (j = 0; j < sizeof(templates_delim) / sizeof(const char *); j++) {
+      char * at_pos;
+      int at_offset;
+      int end_offset;
+
+      at_pos = strchr(templates_delim[j], 'X');
+      at_offset = at_pos - templates_delim[j];
+      strncpy(buffer, templates_delim[j], at_offset);
+      buffer[at_offset] = '\0';
+      strcat(buffer, urls[i].text);
+      strcat(buffer, templates_delim[j] + at_offset + 1);
+      end_offset = at_offset + strlen(urls[i].text);
+
+      SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+      SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) buffer);
+
+      /* This assumes no templates start with the URL itself, and that they
+         have at least two characters before the URL text */
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      if (urls[i].is_url)
+      {
+        ok(check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK not set in (%d-%d), text: %s\n", at_offset, at_offset +1, buffer);
+        ok(check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK not set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      else
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset, at_offset + 1, buffer);
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      }
+      if (buffer[end_offset] != '\0')
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset + 1, buffer);
+        if (buffer[end_offset +1] != '\0')
+        {
+          ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +1, end_offset +2),
+            "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +1, end_offset +2, buffer);
+        }
+      }
+    }
+
+    for (j = 0; j < sizeof(templates_non_delim) / sizeof(const char *); j++) {
+      char * at_pos;
+      int at_offset;
+      int end_offset;
+
+      at_pos = strchr(templates_non_delim[j], 'X');
+      at_offset = at_pos - templates_non_delim[j];
+      strncpy(buffer, templates_non_delim[j], at_offset);
+      buffer[at_offset] = '\0';
+      strcat(buffer, urls[i].text);
+      strcat(buffer, templates_non_delim[j] + at_offset + 1);
+      end_offset = at_offset + strlen(urls[i].text);
+
+      SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+      SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) buffer);
+
+      /* This assumes no templates start with the URL itself, and that they
+         have at least two characters before the URL text */
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset, at_offset + 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      if (buffer[end_offset] != '\0')
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset + 1, buffer);
+        if (buffer[end_offset +1] != '\0')
+        {
+          ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +1, end_offset +2),
+            "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +1, end_offset +2, buffer);
+        }
+      }
+    }
+
+    for (j = 0; j < sizeof(templates_xten_delim) / sizeof(const char *); j++) {
+      char * at_pos;
+      int at_offset;
+      int end_offset;
+
+      at_pos = strchr(templates_xten_delim[j], 'X');
+      at_offset = at_pos - templates_xten_delim[j];
+      strncpy(buffer, templates_xten_delim[j], at_offset);
+      buffer[at_offset] = '\0';
+      strcat(buffer, urls[i].text);
+      strcat(buffer, templates_xten_delim[j] + at_offset + 1);
+      end_offset = at_offset + strlen(urls[i].text);
+
+      SendMessage(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+      SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) buffer);
+
+      /* This assumes no templates start with the URL itself, and that they
+         have at least two characters before the URL text */
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+        "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      if (urls[i].is_url)
+      {
+        ok(check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK not set in (%d-%d), text: %s\n", at_offset, at_offset +1, buffer);
+        ok(check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK not set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+        ok(check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+          "CFE_LINK not set in (%d-%d), text: %s\n", end_offset, end_offset +1, buffer);
+      }
+      else
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset, at_offset + 1, buffer);
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset +1, buffer);
+      }
+      if (buffer[end_offset +1] != '\0')
+      {
+        ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +1, end_offset +2),
+          "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +1, end_offset + 2, buffer);
+        if (buffer[end_offset +2] != '\0')
+        {
+          ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset +2, end_offset +3),
+            "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +2, end_offset +3, buffer);
+        }
+      }
+    }
+
+    DestroyWindow(hwndRichEdit);
+    hwndRichEdit = NULL;
+  }
+
   DestroyWindow(parent);
 }
 
@@ -3259,7 +3482,6 @@ START_TEST( editor )
   test_WM_GETTEXT();
   test_EM_GETTEXTRANGE();
   test_EM_GETSELTEXT();
-  test_EM_AUTOURLDETECT();
   test_EM_SETUNDOLIMIT();
   test_ES_PASSWORD();
   test_EM_SETTEXTEX();
@@ -3270,6 +3492,7 @@ START_TEST( editor )
   test_EM_GETMODIFY();
   test_EM_EXSETSEL();
   test_WM_PASTE();
+  test_EM_AUTOURLDETECT();
   test_EM_STREAMIN();
   test_EM_STREAMOUT();
   test_EM_StreamIn_Undo();

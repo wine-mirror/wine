@@ -279,6 +279,9 @@ void ME_StreamInFill(ME_InStream *stream);
 int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar);
 extern int me_debug;
 extern void DoWrap(ME_TextEditor *editor);
+extern BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_max,
+        int * candidate_min, int * candidate_max);
+extern BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max);
 
 /* undo.c */
 ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_DisplayItem *pdi);
