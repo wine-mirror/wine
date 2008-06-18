@@ -527,7 +527,7 @@ done:
     /* force DCE invalidation */
     SetWindowPos( hwnd, 0, 0, 0, 0, 0,
                   SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
-                  SWP_NOREDRAW | SWP_NOSENDCHANGING | SWP_STATECHANGED);
+                  SWP_NOREDRAW | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_STATECHANGED);
     return TRUE;
 }
 
