@@ -437,13 +437,13 @@ static RPC_STATUS RPCRT4_SecurePacket(RpcConnection *Connection,
 }
          
 /***********************************************************************
- *           RPCRT4_SendAuth (internal)
+ *           RPCRT4_SendWithAuth (internal)
  * 
  * Transmit a packet with authorization data over connection in acceptable fragments.
  */
-static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
-                                  void *Buffer, unsigned int BufferLength,
-                                  const void *Auth, unsigned int AuthLength)
+static RPC_STATUS RPCRT4_SendWithAuth(RpcConnection *Connection, RpcPktHdr *Header,
+                                      void *Buffer, unsigned int BufferLength,
+                                      const void *Auth, unsigned int AuthLength)
 {
   PUCHAR buffer_pos;
   DWORD hdr_size;
@@ -651,7 +651,7 @@ static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
   if (!resp_hdr)
     return E_OUTOFMEMORY;
 
-  status = RPCRT4_SendAuth(conn, resp_hdr, NULL, 0, out.pvBuffer, out.cbBuffer);
+  status = RPCRT4_SendWithAuth(conn, resp_hdr, NULL, 0, out.pvBuffer, out.cbBuffer);
 
   HeapFree(GetProcessHeap(), 0, out.pvBuffer);
   RPCRT4_FreeHeader(resp_hdr);
@@ -672,14 +672,14 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
 
   if (!Connection->AuthInfo || SecIsValidHandle(&Connection->ctx))
   {
-    return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
+    return RPCRT4_SendWithAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
   }
 
   /* tack on a negotiate packet */
   r = RPCRT4_ClientAuthorize(Connection, NULL, &out);
   if (r == RPC_S_OK)
   {
-    r = RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, out.pvBuffer, out.cbBuffer);
+    r = RPCRT4_SendWithAuth(Connection, Header, Buffer, BufferLength, out.pvBuffer, out.cbBuffer);
     HeapFree(GetProcessHeap(), 0, out.pvBuffer);
   }
 
