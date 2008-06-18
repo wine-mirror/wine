@@ -194,7 +194,8 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
 
     if(!This->nselem) {
         FIXME("NULL nselem\n");
-        return E_NOTIMPL;
+        V_VT(AttributeValue) = VT_NULL;
+        return S_OK;
     }
 
     V_VT(AttributeValue) = VT_NULL;
