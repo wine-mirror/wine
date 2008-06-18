@@ -1754,6 +1754,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     BOOL ret;
     HDC hdc = physDev->hdc;
     DWORD type = GetObjectType(hdc);
+    Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
 
     TRACE("(%p,%p)\n", hdc, hglrc);
 
@@ -1766,8 +1767,12 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     if (hglrc == NULL) {
         ret = pglXMakeCurrent(gdi_display, None, NULL);
         NtCurrentTeb()->glContext = NULL;
+    } else if (ctx->fmt->iPixelFormat != physDev->current_pf) {
+        WARN( "mismatched pixel format hdc %p %u ctx %p %u\n",
+              hdc, physDev->current_pf, ctx, ctx->fmt->iPixelFormat );
+        SetLastError( ERROR_INVALID_PIXEL_FORMAT );
+        ret = FALSE;
     } else {
-        Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
         Drawable drawable = get_glxdrawable(physDev);
         if (ctx->ctx == NULL) {
             /* The describe lines below are for debugging purposes only */
