@@ -1239,6 +1239,9 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
     /* Check that graphics mode is GM_ADVANCED */
     if (dc->GraphicsMode!=GM_ADVANCED) goto done;
 
+    TRACE("eM11 %f eM12 %f eM21 %f eM22 %f eDx %f eDy %f\n",
+        xform->eM11, xform->eM12, xform->eM21, xform->eM22, xform->eDx, xform->eDy);
+
     if (dc->funcs->pSetWorldTransform)
     {
         ret = dc->funcs->pSetWorldTransform(dc->physDev, xform);
