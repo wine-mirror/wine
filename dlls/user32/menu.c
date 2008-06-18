@@ -2267,7 +2267,7 @@ static HMENU MENU_GetSubPopup( HMENU hmenu )
  * Hide the sub-popup menus of this menu.
  */
 static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
-                                BOOL sendMenuSelect )
+                                BOOL sendMenuSelect, UINT wFlags )
 {
     POPUPMENU *menu = MENU_GetMenu( hmenu );
 
@@ -2289,10 +2289,14 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
 	} else return;
 
 	submenu = MENU_GetMenu( hsubmenu );
-	MENU_HideSubPopups( hwndOwner, hsubmenu, FALSE );
+	MENU_HideSubPopups( hwndOwner, hsubmenu, FALSE, wFlags );
 	MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM, sendMenuSelect, 0 );
         DestroyWindow( submenu->hWnd );
         submenu->hWnd = 0;
+
+        if (!(wFlags & TPM_NONOTIFY))
+           SendMessageW( hwndOwner, WM_UNINITMENUPOPUP, (WPARAM)hsubmenu,
+                         MAKELPARAM(0, IS_SYSTEM_MENU(submenu)) );
     }
 }
 
@@ -2499,7 +2503,7 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
  *
  * Helper function for menu navigation routines.
  */
-static void MENU_SwitchTracking( MTRACKER* pmt, HMENU hPtMenu, UINT id )
+static void MENU_SwitchTracking( MTRACKER* pmt, HMENU hPtMenu, UINT id, UINT wFlags )
 {
     POPUPMENU *ptmenu = MENU_GetMenu( hPtMenu );
     POPUPMENU *topmenu = MENU_GetMenu( pmt->hTopMenu );
@@ -2510,11 +2514,11 @@ static void MENU_SwitchTracking( MTRACKER* pmt, HMENU hPtMenu, UINT id )
 	!((ptmenu->wFlags | topmenu->wFlags) & MF_POPUP) )
     {
 	/* both are top level menus (system and menu-bar) */
-	MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE );
+	MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE, wFlags );
 	MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, NO_SELECTED_ITEM, FALSE, 0 );
         pmt->hTopMenu = hPtMenu;
     }
-    else MENU_HideSubPopups( pmt->hOwnerWnd, hPtMenu, FALSE );
+    else MENU_HideSubPopups( pmt->hOwnerWnd, hPtMenu, FALSE, wFlags );
     MENU_SelectItem( pmt->hOwnerWnd, hPtMenu, id, TRUE, 0 );
 }
 
@@ -2542,7 +2546,7 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 	if( item )
 	{
 	    if( ptmenu->FocusedItem != id )
-		MENU_SwitchTracking( pmt, hPtMenu, id );
+		MENU_SwitchTracking( pmt, hPtMenu, id, wFlags );
 
 	    /* If the popup menu is not already "popped" */
 	    if(!(item->fState & MF_MOUSESELECT ))
@@ -2630,7 +2634,7 @@ static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
     }
     else if( ptmenu->FocusedItem != id )
     {
-	    MENU_SwitchTracking( pmt, hPtMenu, id );
+	    MENU_SwitchTracking( pmt, hPtMenu, id, wFlags );
 	    pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, hPtMenu, FALSE, wFlags);
     }
     return TRUE;
@@ -2642,7 +2646,7 @@ static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
  *
  * NOTE: WM_NEXTMENU documented in Win32 is a bit different.
  */
-static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
+static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk, UINT wFlags )
 {
     POPUPMENU *menu = MENU_GetMenu( pmt->hTopMenu );
     BOOL atEnd = FALSE;
@@ -2753,7 +2757,7 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 	    MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, NO_SELECTED_ITEM,
                     FALSE, 0 );
 	    if( pmt->hCurrentMenu != pmt->hTopMenu )
-		MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE );
+		MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE, wFlags );
 	}
 
 	if( hNewWnd != pmt->hOwnerWnd )
@@ -2834,7 +2838,7 @@ static BOOL MENU_KeyEscape(MTRACKER* pmt, UINT wFlags)
                 hmenutmp = MENU_GetSubPopup( hmenuprev );
             }
 
-            MENU_HideSubPopups( pmt->hOwnerWnd, hmenuprev, TRUE );
+            MENU_HideSubPopups( pmt->hOwnerWnd, hmenuprev, TRUE, wFlags );
             pmt->hCurrentMenu = hmenuprev;
             bEndMenu = FALSE;
         }
@@ -2873,14 +2877,14 @@ static void MENU_KeyLeft( MTRACKER* pmt, UINT wFlags )
 	hmenutmp = MENU_GetSubPopup( hmenuprev );
     }
 
-    MENU_HideSubPopups( pmt->hOwnerWnd, hmenuprev, TRUE );
+    MENU_HideSubPopups( pmt->hOwnerWnd, hmenuprev, TRUE, wFlags );
     pmt->hCurrentMenu = hmenuprev;
 
     if ( (hmenuprev == pmt->hTopMenu) && !(menu->wFlags & MF_POPUP) )
     {
 	/* move menu bar selection if no more popups are left */
 
-	if( !MENU_DoNextMenu( pmt, VK_LEFT) )
+	if( !MENU_DoNextMenu( pmt, VK_LEFT, wFlags ) )
 	     MENU_MoveSelection( pmt->hOwnerWnd, pmt->hTopMenu, ITEM_PREV );
 
 	if ( hmenuprev != hmenutmp || pmt->trackFlags & TF_SUSPENDPOPUP )
@@ -2936,12 +2940,12 @@ static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags )
     {
 	if( pmt->hCurrentMenu != pmt->hTopMenu )
 	{
-	    MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE );
+	    MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE, wFlags );
 	    hmenutmp = pmt->hCurrentMenu = pmt->hTopMenu;
 	} else hmenutmp = 0;
 
 	/* try to move to the next item */
-	if( !MENU_DoNextMenu( pmt, VK_RIGHT) )
+	if( !MENU_DoNextMenu( pmt, VK_RIGHT, wFlags ) )
 	     MENU_MoveSelection( pmt->hOwnerWnd, pmt->hTopMenu, ITEM_NEXT );
 
 	if( hmenutmp || pmt->trackFlags & TF_SUSPENDPOPUP )
@@ -3232,12 +3236,16 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
         if( IsWindow( mt.hOwnerWnd ) )
         {
-	    MENU_HideSubPopups( mt.hOwnerWnd, mt.hTopMenu, FALSE );
+	    MENU_HideSubPopups( mt.hOwnerWnd, mt.hTopMenu, FALSE, wFlags );
 
 	    if (menu && (menu->wFlags & MF_POPUP))
 	    {
                 DestroyWindow( menu->hWnd );
                 menu->hWnd = 0;
+
+                if (!(wFlags & TPM_NONOTIFY))
+                   SendMessageW( mt.hOwnerWnd, WM_UNINITMENUPOPUP, (WPARAM)mt.hTopMenu,
+                                 MAKELPARAM(0, IS_SYSTEM_MENU(menu)) );
 	    }
 	    MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE, 0 );
 	    SendMessageW( mt.hOwnerWnd, WM_MENUSELECT, MAKELONG(0,0xffff), 0 );
@@ -3671,7 +3679,7 @@ BOOL WINAPI HiliteMenuItem( HWND hWnd, HMENU hMenu, UINT wItemID,
     if (!MENU_FindItem( &hMenu, &wItemID, wHilite )) return FALSE;
     if (!(menu = MENU_GetMenu(hMenu))) return FALSE;
     if (menu->FocusedItem == wItemID) return TRUE;
-    MENU_HideSubPopups( hWnd, hMenu, FALSE );
+    MENU_HideSubPopups( hWnd, hMenu, FALSE, 0 );
     MENU_SelectItem( hWnd, hMenu, wItemID, TRUE, 0 );
     return TRUE;
 }
@@ -4974,7 +4982,6 @@ BOOL WINAPI SetMenuInfo (HMENU hMenu, LPCMENUINFO lpmi)
 	    if (menu->dwStyle & MNS_AUTODISMISS) FIXME("MNS_AUTODISMISS unimplemented\n");
 	    if (menu->dwStyle & MNS_DRAGDROP) FIXME("MNS_DRAGDROP unimplemented\n");
 	    if (menu->dwStyle & MNS_MODELESS) FIXME("MNS_MODELESS unimplemented\n");
-	    if (menu->dwStyle & MNS_NOTIFYBYPOS) FIXME("MNS_NOTIFYBYPOS partially implemented\n");
 	}
 
 	return TRUE;
