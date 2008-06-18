@@ -1167,6 +1167,27 @@ static void init_functionpointers(void)
 #undef GET_PROC
 }
 
+static void get_user_sid(LPSTR *usersid)
+{
+    HANDLE token;
+    BYTE buf[1024];
+    DWORD size;
+    PTOKEN_USER user;
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+    static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+
+    *usersid = NULL;
+    pConvertSidToStringSidA = (void *)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
+    if (!pConvertSidToStringSidA)
+        return;
+
+    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    size = sizeof(buf);
+    GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
+    user = (PTOKEN_USER)buf;
+    pConvertSidToStringSidA(user->User.Sid, usersid);
+}
+
 static BOOL check_record(MSIHANDLE rec, UINT field, LPCSTR val)
 {
     CHAR buffer[0x20];
@@ -2589,24 +2610,86 @@ static void test_publish_publishfeatures(void)
     delete_pfmsitest_files();
 }
 
+static LPSTR reg_get_val_str(HKEY hkey, LPCSTR name)
+{
+    DWORD len = 0;
+    LPSTR val;
+    LONG r;
+
+    r = RegQueryValueExA(hkey, name, NULL, NULL, NULL, &len);
+    if (r != ERROR_SUCCESS)
+        return NULL;
+
+    len += sizeof (WCHAR);
+    val = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!val) return NULL;
+    val[0] = 0;
+    RegQueryValueExA(hkey, name, NULL, NULL, (LPBYTE)val, &len);
+    return val;
+}
+
+static void get_owner_company(LPSTR *owner, LPSTR *company)
+{
+    LONG res;
+    HKEY hkey;
+
+    *owner = *company = NULL;
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER,
+                      "Software\\Microsoft\\MS Setup (ACME)\\User Info", &hkey);
+    if (res == ERROR_SUCCESS)
+    {
+        *owner = reg_get_val_str(hkey, "DefName");
+        *company = reg_get_val_str(hkey, "DefCompany");
+        RegCloseKey(hkey);
+    }
+
+    if (!*owner || !*company)
+    {
+        res = RegOpenKeyA(HKEY_LOCAL_MACHINE,
+                          "Software\\Microsoft\\Windows\\CurrentVersion", &hkey);
+        if (res == ERROR_SUCCESS)
+        {
+            *owner = reg_get_val_str(hkey, "RegisteredOwner");
+            *company = reg_get_val_str(hkey, "RegisteredOrganization");
+            RegCloseKey(hkey);
+        }
+    }
+
+    if (!*owner || !*company)
+    {
+        res = RegOpenKeyA(HKEY_LOCAL_MACHINE,
+                          "Software\\Microsoft\\Windows NT\\CurrentVersion", &hkey);
+        if (res == ERROR_SUCCESS)
+        {
+            *owner = reg_get_val_str(hkey, "RegisteredOwner");
+            *company = reg_get_val_str(hkey, "RegisteredOrganization");
+            RegCloseKey(hkey);
+        }
+    }
+}
+
 static void test_publish_registeruser(void)
 {
     UINT r;
     LONG res;
-    HKEY uninstall, prodkey;
-    INSTALLSTATE state;
-    CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
+    HKEY props;
+    LPSTR usersid;
+    LPSTR owner, company;
+    CHAR keypath[MAX_PATH];
 
-    static const CHAR subkey[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+    static const CHAR keyfmt[] =
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
+        "UserData\\%s\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB\\InstallProperties";
 
-    if (!pMsiQueryComponentStateA)
+    get_user_sid(&usersid);
+    if (!usersid)
     {
-        skip("MsiQueryComponentStateA is not available\n");
+        skip("ConvertSidToStringSidA is not available\n");
         return;
     }
 
-    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, subkey, &uninstall);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    get_owner_company(&owner, &company);
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
@@ -2615,107 +2698,33 @@ static void test_publish_registeruser(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
-    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
-    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-
-    /* RegisterUser */
+    /* RegisterUser, per-user */
     r = MsiInstallProductA(msifile, "REGISTER_USER=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(pf_exists("msitest\\maximus"), "File not installed\n");
-    ok(pf_exists("msitest"), "File not installed\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
-    todo_wine
-    {
-        ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-    }
+    sprintf(keypath, keyfmt, usersid);
 
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &props);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    CHECK_REG_STR(props, "ProductID", "none");
+    CHECK_REG_STR(props, "RegCompany", company);
+    CHECK_REG_STR(props, "RegOwner", owner);
 
-    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
-    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    RegDeleteValueA(props, "ProductID");
+    RegDeleteValueA(props, "RegCompany");
+    RegDeleteValueA(props, "RegOwner");
+    RegDeleteKeyA(props, "");
+    RegCloseKey(props);
 
-    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    HeapFree(GetProcessHeap(), 0, company);
+    HeapFree(GetProcessHeap(), 0, owner);
 
-    /* try to uninstall after RegisterUser */
-    r = MsiInstallProductA(msifile, "REMOVE=ALL");
-    todo_wine
-    {
-        ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    }
-    ok(pf_exists("msitest\\maximus"), "File deleted\n");
-    ok(pf_exists("msitest"), "File deleted\n");
-
-    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
-    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-
-    /* full install to remove */
-    r = MsiInstallProductA(msifile, "FULL=1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-
-    RegCloseKey(uninstall);
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
-    delete_pfmsitest_files();
-}
-
-static void get_user_sid(LPSTR *usersid)
-{
-    HANDLE token;
-    BYTE buf[1024];
-    DWORD size;
-    PTOKEN_USER user;
-    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
-    static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
-
-    *usersid = NULL;
-    pConvertSidToStringSidA = (void *)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
-    if (!pConvertSidToStringSidA)
-        return;
-
-    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
-    size = sizeof(buf);
-    GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
-    user = (PTOKEN_USER)buf;
-    pConvertSidToStringSidA(user->User.Sid, usersid);
 }
 
 static void test_publish_processcomponents(void)
