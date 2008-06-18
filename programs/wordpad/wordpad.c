@@ -269,6 +269,32 @@ static void set_size(float size)
     SendMessageW(hEditorWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&fmt);
 }
 
+static void on_sizelist_modified(HWND hwndSizeList, LPWSTR wszNewFontSize)
+{
+    WCHAR sizeBuffer[MAX_STRING_LEN];
+    CHARFORMAT2W format;
+
+    ZeroMemory(&format, sizeof(format));
+    format.cbSize = sizeof(format);
+    SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
+
+    wsprintfW(sizeBuffer, stringFormat, format.yHeight / 20);
+    if(lstrcmpW(sizeBuffer, wszNewFontSize))
+    {
+        float size = 0;
+        if(number_from_string((LPCWSTR) wszNewFontSize, &size, FALSE)
+           && size > 0)
+        {
+            set_size(size);
+        } else
+        {
+            SetWindowTextW(hwndSizeList, sizeBuffer);
+            MessageBoxW(hMainWnd, MAKEINTRESOURCEW(STRING_INVALID_NUMBER),
+                        wszAppTitle, MB_OK | MB_ICONINFORMATION);
+        }
+    }
+}
+
 static void add_size(HWND hSizeListWnd, unsigned size)
 {
     WCHAR buffer[3];
@@ -439,6 +465,17 @@ static void set_default_font(void)
     lstrcpyW(fmt.szFaceName, font);
 
     SendMessageW(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
+}
+
+static void on_fontlist_modified(HWND hwndFontList, LPWSTR wszNewFaceName)
+{
+    CHARFORMAT2W format;
+    ZeroMemory(&format, sizeof(format));
+    format.cbSize = sizeof(format);
+    SendMessageW(hEditorWnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
+
+    if(lstrcmpW(format.szFaceName, wszNewFaceName))
+        set_font((LPCWSTR) wszNewFaceName);
 }
 
 static void add_font(LPCWSTR fontName, DWORD fontType, HWND hListWnd, NEWTEXTMETRICEXW *ntmc)
@@ -1217,6 +1254,45 @@ static void number_with_units(LPWSTR buffer, int number)
     MultiByteToWideChar(CP_ACP, 0, string, -1, buffer, MAX_STRING_LEN);
 }
 
+static BOOL get_comboexlist_selection(HWND hComboEx, LPWSTR wszBuffer, UINT bufferLength)
+{
+    HANDLE hHeap;
+    COMBOBOXEXITEM cbItem;
+    COMBOBOXINFO cbInfo;
+    HWND hCombo, hList;
+    int idx, result;
+    char *szBuffer;
+    hCombo = (HWND)SendMessage(hComboEx, CBEM_GETCOMBOCONTROL, 0, 0);
+    if (!hCombo)
+        return FALSE;
+    cbInfo.cbSize = sizeof(COMBOBOXINFO);
+    result = SendMessage(hCombo, CB_GETCOMBOBOXINFO, 0, (LPARAM)&cbInfo);
+    if (!result)
+        return FALSE;
+    hList = cbInfo.hwndList;
+    idx = SendMessage(hList, LB_GETCURSEL, 0, 0);
+    if (idx < 0)
+        return FALSE;
+
+    hHeap = GetProcessHeap();
+    szBuffer = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, bufferLength);
+    ZeroMemory(&cbItem, sizeof(cbItem));
+    cbItem.mask = CBEIF_TEXT;
+    cbItem.iItem = idx;
+    cbItem.pszText = szBuffer;
+    cbItem.cchTextMax = bufferLength-1;
+    result = SendMessage(hComboEx, CBEM_GETITEM, 0, (LPARAM)&cbItem);
+    if (!result)
+    {
+        HeapFree(hHeap, 0, szBuffer);
+        return FALSE;
+    }
+
+    result = MultiByteToWideChar(CP_ACP, 0, szBuffer, -1, wszBuffer, bufferLength);
+    HeapFree(hHeap, 0, szBuffer);
+    return result != 0;
+}
+
 static INT_PTR CALLBACK datetime_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch(message)
@@ -1774,39 +1850,18 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
     NMHDR *pHdr = (NMHDR *)lParam;
     HWND hwndFontList = GetDlgItem(hwndReBar, IDC_FONTLIST);
     HWND hwndSizeList = GetDlgItem(hwndReBar, IDC_SIZELIST);
-    WCHAR sizeBuffer[MAX_PATH];
 
     if (pHdr->hwndFrom == hwndFontList || pHdr->hwndFrom == hwndSizeList)
     {
         if (pHdr->code == CBEN_ENDEDITW)
         {
-            CHARFORMAT2W format;
             NMCBEENDEDIT *endEdit = (NMCBEENDEDIT *)lParam;
-
-            ZeroMemory(&format, sizeof(format));
-            format.cbSize = sizeof(format);
-            SendMessageW(hwndEditor, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
-
             if(pHdr->hwndFrom == hwndFontList)
             {
-                if(lstrcmpW(format.szFaceName, (LPWSTR)endEdit->szText))
-                    set_font((LPCWSTR) endEdit->szText);
+                on_fontlist_modified(hwndFontList, (LPWSTR)endEdit->szText);
             } else if (pHdr->hwndFrom == hwndSizeList)
             {
-                wsprintfW(sizeBuffer, stringFormat, format.yHeight / 20);
-                if(lstrcmpW(sizeBuffer, (LPWSTR)endEdit->szText))
-                {
-                    float size = 0;
-                    if(number_from_string((LPWSTR)endEdit->szText, &size, FALSE)
-                       && size > 0)
-                    {
-                        set_size(size);
-                    } else
-                    {
-                        SetWindowTextW(hwndSizeList, sizeBuffer);
-                        MessageBoxW(hMainWnd, MAKEINTRESOURCEW(STRING_INVALID_NUMBER), wszAppTitle, MB_OK | MB_ICONINFORMATION);
-                    }
-                }
+                on_sizelist_modified(hwndSizeList, (LPWSTR)endEdit->szText);
             }
         }
         return 0;
@@ -2192,6 +2247,26 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_VIEWPROPERTIES:
         dialog_viewproperties();
+        break;
+
+    case IDC_FONTLIST:
+        if (HIWORD(wParam) == CBN_SELENDOK)
+        {
+            WCHAR buffer[LF_FACESIZE];
+            HWND hwndFontList = (HWND)lParam;
+            get_comboexlist_selection(hwndFontList, buffer, LF_FACESIZE);
+            on_fontlist_modified(hwndFontList, buffer);
+        }
+        break;
+
+    case IDC_SIZELIST:
+        if (HIWORD(wParam) == CBN_SELENDOK)
+        {
+            WCHAR buffer[MAX_STRING_LEN+1];
+            HWND hwndSizeList = (HWND)lParam;
+            get_comboexlist_selection(hwndSizeList, buffer, MAX_STRING_LEN+1);
+            on_sizelist_modified(hwndSizeList, buffer);
+        }
         break;
 
     default:
