@@ -2767,13 +2767,7 @@ static void test_publish_processcomponents(void)
        "Expected \"%s\", got \"%s\"\n", "C:\\Program Files\\msitest\\maximus", val);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
-    todo_wine
-    {
-        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-    }
-
-    if (res == ERROR_SUCCESS)
-        RegCloseKey(hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     RegDeleteValueA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB");
     RegDeleteKeyA(comp, "");

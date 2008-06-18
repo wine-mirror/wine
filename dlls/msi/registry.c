@@ -645,11 +645,6 @@ UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     return rc;
 }
 
-UINT MSIREG_OpenComponents(HKEY* key)
-{
-    return RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller_Components,key);
-}
-
 UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
 {
     UINT rc;
@@ -1240,7 +1235,7 @@ UINT WINAPI MsiEnumComponentsW(DWORD index, LPWSTR lpguid)
 
     TRACE("%d %p\n", index, lpguid);
 
-    r = MSIREG_OpenComponents(&hkeyComponents);
+    r = RegCreateKeyW(HKEY_LOCAL_MACHINE, szInstaller_Components, &hkeyComponents);
     if( r != ERROR_SUCCESS )
         return ERROR_NO_MORE_ITEMS;
 

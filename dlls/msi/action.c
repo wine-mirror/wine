@@ -2822,15 +2822,11 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     WCHAR squished_cc[GUID_SIZE];
     UINT rc;
     MSICOMPONENT *comp;
-    HKEY hkey=0,hkey2=0;
+    HKEY hkey;
 
     TRACE("\n");
 
-    /* writes the Component and Features values to the registry */
-
-    rc = MSIREG_OpenComponents(&hkey);
-    if (rc != ERROR_SUCCESS)
-        return rc;
+    /* writes the Component values to the registry */
 
     squash_guid(package->ProductCode,squished_pc);
     ui_progress(package,1,COMPONENT_PROGRESS_VALUE,1,0);
@@ -2862,14 +2858,12 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
          */
         if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
         {
-            rc = RegCreateKeyW(hkey,squished_cc,&hkey2);
-            if (rc != ERROR_SUCCESS)
-                continue;
-
             if (!comp->FullKeypath)
                 continue;
 
-            msi_reg_set_val_str( hkey2, squished_pc, comp->FullKeypath );
+            rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, &hkey, TRUE);
+            if (rc != ERROR_SUCCESS)
+                continue;
 
             if (comp->Attributes & msidbComponentAttributesPermanent)
             {
@@ -2878,36 +2872,14 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                       '0','0','0','0','0','0','0','0','0','0','0','0',
                       '0','0','0','0','0','0','0','0',0 };
 
-                msi_reg_set_val_str( hkey2, szPermKey, comp->FullKeypath );
+                msi_reg_set_val_str(hkey, szPermKey, comp->FullKeypath);
             }
 
-            RegCloseKey(hkey2);
-
-            rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, &hkey2, TRUE);
-            if (rc != ERROR_SUCCESS)
-                continue;
-
-            msi_reg_set_val_str(hkey2, squished_pc, comp->FullKeypath);
-            RegCloseKey(hkey2);
+            msi_reg_set_val_str(hkey, squished_pc, comp->FullKeypath);
+            RegCloseKey(hkey);
         }
-        else if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT))
-        {
-            DWORD res;
-
-            rc = RegOpenKeyW(hkey,squished_cc,&hkey2);
-            if (rc != ERROR_SUCCESS)
-                continue;
-
-            RegDeleteValueW(hkey2,squished_pc);
-
-            /* if the key is empty delete it */
-            res = RegEnumKeyExW(hkey2,0,NULL,0,0,NULL,0,NULL);
-            RegCloseKey(hkey2);
-            if (res == ERROR_NO_MORE_ITEMS)
-                RegDeleteKeyW(hkey,squished_cc);
-
+        else if (ACTION_VerifyComponentForAction(comp, INSTALLSTATE_ABSENT))
             MSIREG_DeleteUserDataComponentKey(comp->ComponentId);
-        }
 
         /* UI stuff */
         uirow = MSI_CreateRecord(3);
@@ -2917,8 +2889,8 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         ui_actiondata(package,szProcessComponents,uirow);
         msiobj_release( &uirow->hdr );
     }
-    RegCloseKey(hkey);
-    return rc;
+
+    return ERROR_SUCCESS;
 }
 
 typedef struct {
