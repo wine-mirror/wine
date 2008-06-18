@@ -4457,7 +4457,7 @@ static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LP
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
+static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr, BOOL destroy)
 {
     NMLISTVIEW nmlv;
     HDPA hdpaSubItems = NULL;
@@ -4501,8 +4501,11 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 	infoPtr->nItemCount --;
     }
     
-    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
-    LISTVIEW_UpdateScroll(infoPtr);
+    if (!destroy)
+    {
+        LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
+        LISTVIEW_UpdateScroll(infoPtr);
+    }
     LISTVIEW_InvalidateList(infoPtr);
     
     return TRUE;
@@ -8729,7 +8732,7 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   TRACE("()\n");
 
   /* delete all items */
-  LISTVIEW_DeleteAllItems(infoPtr);
+  LISTVIEW_DeleteAllItems(infoPtr, TRUE);
 
   /* destroy data structure */
   DPA_Destroy(infoPtr->hdpaItems);
@@ -9510,7 +9513,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return (LRESULT)LISTVIEW_CreateDragImage(infoPtr, (INT)wParam, (LPPOINT)lParam);
 
   case LVM_DELETEALLITEMS:
-    return LISTVIEW_DeleteAllItems(infoPtr);
+    return LISTVIEW_DeleteAllItems(infoPtr, FALSE);
 
   case LVM_DELETECOLUMN:
     return LISTVIEW_DeleteColumn(infoPtr, (INT)wParam);
