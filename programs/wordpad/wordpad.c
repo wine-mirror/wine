@@ -1415,7 +1415,7 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
 
                 pf.cbSize = sizeof(pf);
                 pf.dwMask = PFM_ALIGNMENT | PFM_OFFSET | PFM_RIGHTINDENT |
-                            PFM_OFFSETINDENT;
+                            PFM_STARTINDENT;
                 SendMessageW(hEditorWnd, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
 
                 if(pf.wAlignment == PFA_RIGHT)
@@ -1425,11 +1425,11 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
 
                 SendMessageW(hListWnd, CB_SETCURSEL, index, 0);
 
-                number_with_units(buffer, pf.dxOffset);
+                number_with_units(buffer, pf.dxStartIndent + pf.dxOffset);
                 SetWindowTextW(hLeftWnd, buffer);
                 number_with_units(buffer, pf.dxRightIndent);
                 SetWindowTextW(hRightWnd, buffer);
-                number_with_units(buffer, pf.dxStartIndent - pf.dxOffset);
+                number_with_units(buffer, -pf.dxOffset);
                 SetWindowTextW(hFirstWnd, buffer);
             }
             break;
@@ -1467,9 +1467,30 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
                             return FALSE;
                         } else
                         {
+                            if (pf.dxOffset + pf.dxStartIndent < 0
+                                && pf.dxStartIndent < 0)
+                            {
+                                /* The first line is before the left edge, so
+                                 * make sure it is at the left edge. */
+                                pf.dxOffset = -pf.dxStartIndent;
+                            } else if (pf.dxOffset < 0) {
+                                /* The second and following lines are before
+                                 * the left edge, so set it to be at the left
+                                 * edge, and adjust the first line since it
+                                 * is relative to it. */
+                                pf.dxStartIndent = max(pf.dxStartIndent + pf.dxOffset, 0);
+                                pf.dxOffset = 0;
+                            }
+                            /* Internally the dxStartIndent is the absolute
+                             * offset for the first line and dxOffset is
+                             * to it value as opposed how it is displayed with
+                             * the first line being the relative value.
+                             * These two lines make the adjustments. */
                             pf.dxStartIndent = pf.dxStartIndent + pf.dxOffset;
+                            pf.dxOffset = pf.dxOffset - pf.dxStartIndent;
+
                             pf.cbSize = sizeof(pf);
-                            pf.dwMask = PFM_OFFSET | PFM_OFFSETINDENT | PFM_RIGHTINDENT;
+                            pf.dwMask = PFM_OFFSET | PFM_STARTINDENT | PFM_RIGHTINDENT;
                             SendMessageW(hEditorWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
                         }
                     }
