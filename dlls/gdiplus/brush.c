@@ -822,6 +822,9 @@ GpStatus WINGDIPAPI GdipGetLineRectI(GpLineGradient *brush, GpRect *rect)
     GpRectF  rectF;
     GpStatus ret;
 
+    if(!rect)
+        return InvalidParameter;
+
     ret = GdipGetLineRect(brush, &rectF);
 
     if(ret == Ok){
