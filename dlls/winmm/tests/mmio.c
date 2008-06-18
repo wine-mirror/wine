@@ -32,7 +32,7 @@ static DWORD RIFF_buf[] =
 {
     FOURCC_RIFF, 7*sizeof(DWORD)+sizeof(MainAVIHeader), mmioFOURCC('A','V','I',' '),
     FOURCC_LIST, sizeof(DWORD)+sizeof(MMCKINFO)+sizeof(MainAVIHeader), listtypeAVIHEADER,
-    ckidAVIMAINHDR, sizeof(MainAVIHeader),
+    ckidAVIMAINHDR, sizeof(MainAVIHeader), 0xdeadbeef, 0xdeadbeef,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

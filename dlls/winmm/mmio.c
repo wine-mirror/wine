@@ -1224,7 +1224,10 @@ MMRESULT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
     if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST)
 	mmioSeek(hmmio, lpck->dwDataOffset + sizeof(DWORD), SEEK_SET);
     else
+    {
 	mmioSeek(hmmio, lpck->dwDataOffset, SEEK_SET);
+	lpck->fccType = 0;
+    }
     TRACE("lpck: ckid=%.4s, cksize=%d, dwDataOffset=%d fccType=%08X (%.4s)!\n",
 	  (LPSTR)&lpck->ckid, lpck->cksize, lpck->dwDataOffset,
 	  lpck->fccType, srchType?(LPSTR)&lpck->fccType:"");
