@@ -219,20 +219,22 @@ static void set_caption(LPCWSTR wszNewFileName)
 
 static BOOL validate_endptr(LPCSTR endptr, BOOL units)
 {
-    if(!endptr || !*endptr)
+    if(!endptr)
+        return FALSE;
+    if(!*endptr)
         return TRUE;
 
     while(*endptr == ' ')
         endptr++;
 
     if(!units)
-        return *endptr != '\0';
+        return *endptr == '\0';
 
     /* FIXME: Allow other units and convert between them */
     if(!lstrcmpA(endptr, units_cmA))
         endptr += 2;
 
-    return *endptr != '\0';
+    return *endptr == '\0';
 }
 
 static BOOL number_from_string(LPCWSTR string, float *num, BOOL units)
@@ -246,7 +248,7 @@ static BOOL number_from_string(LPCWSTR string, float *num, BOOL units)
     errno = 0;
     ret = strtod(buffer, &endptr);
 
-    if((ret == 0 && errno != 0) || endptr == buffer || validate_endptr(endptr, units))
+    if((ret == 0 && errno != 0) || endptr == buffer || !validate_endptr(endptr, units))
     {
         return FALSE;
     } else
@@ -1795,7 +1797,8 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
                 if(lstrcmpW(sizeBuffer, (LPWSTR)endEdit->szText))
                 {
                     float size = 0;
-                    if(number_from_string((LPWSTR)endEdit->szText, &size, FALSE))
+                    if(number_from_string((LPWSTR)endEdit->szText, &size, FALSE)
+                       && size > 0)
                     {
                         set_size(size);
                     } else
