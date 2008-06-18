@@ -1389,6 +1389,8 @@ static INT_PTR CALLBACK newfile_proc(HWND hWnd, UINT message, WPARAM wParam, LPA
 
 static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static const WORD ALIGNMENT_VALUES[] = {PFA_LEFT, PFA_RIGHT, PFA_CENTER};
+
     switch(message)
     {
         case WM_INITDIALOG:
@@ -1439,13 +1441,18 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
             {
                 case IDOK:
                     {
+                        HWND hListWnd = GetDlgItem(hWnd, IDC_PARA_ALIGN);
                         HWND hLeftWnd = GetDlgItem(hWnd, IDC_PARA_LEFT);
                         HWND hRightWnd = GetDlgItem(hWnd, IDC_PARA_RIGHT);
                         HWND hFirstWnd = GetDlgItem(hWnd, IDC_PARA_FIRST);
                         WCHAR buffer[MAX_STRING_LEN];
+                        int index;
                         float num;
                         int ret = 0;
                         PARAFORMAT pf;
+
+                        index = SendMessageW(hListWnd, CB_GETCURSEL, 0, 0);
+                        pf.wAlignment = ALIGNMENT_VALUES[index];
 
                         GetWindowTextW(hLeftWnd, buffer, MAX_STRING_LEN);
                         if(number_from_string(buffer, &num, TRUE))
@@ -1490,7 +1497,8 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
                             pf.dxOffset = pf.dxOffset - pf.dxStartIndent;
 
                             pf.cbSize = sizeof(pf);
-                            pf.dwMask = PFM_OFFSET | PFM_STARTINDENT | PFM_RIGHTINDENT;
+                            pf.dwMask = PFM_ALIGNMENT | PFM_OFFSET | PFM_RIGHTINDENT |
+                                        PFM_STARTINDENT;
                             SendMessageW(hEditorWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
                         }
                     }
