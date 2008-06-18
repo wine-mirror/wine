@@ -315,7 +315,7 @@ IOmNavigator *OmNavigator_Create(void)
 {
     OmNavigator *ret;
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = heap_alloc_zero(sizeof(*ret));
     ret->lpIOmNavigatorVtbl = &OmNavigatorVtbl;
     ret->ref = 1;
 
