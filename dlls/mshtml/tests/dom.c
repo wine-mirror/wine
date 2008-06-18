@@ -843,6 +843,47 @@ static void _test_input_get_disabled(unsigned line, IHTMLInputElement *input, VA
     ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
 }
 
+#define test_input_value(o,t) _test_input_value(__LINE__,o,t)
+static void _test_input_value(unsigned line, IUnknown *unk, const char *exval)
+{
+    IHTMLInputElement *input;
+    BSTR bstr;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLInputElement, (void**)&input);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLInputElement: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLInputElement_get_value(input, &bstr);
+    ok_(__FILE__,line) (hres == S_OK, "get_value failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line) (!strcmp_wa(bstr, exval), "value=%s\n", dbgstr_w(bstr));
+    else
+        ok_(__FILE__,line) (!exval, "exval != NULL\n");
+    SysFreeString(bstr);
+    IHTMLInputElement_Release(input);
+}
+
+#define test_input_put_value(o,v) _test_input_put_value(__LINE__,o,v)
+static void _test_input_put_value(unsigned line, IUnknown *unk, const char *val)
+{
+    IHTMLInputElement *input;
+    BSTR bstr;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLInputElement, (void**)&input);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLInputElement: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    bstr = a2bstr(val);
+    hres = IHTMLInputElement_get_value(input, &bstr);
+    ok_(__FILE__,line) (hres == S_OK, "get_value failed: %08x\n", hres);
+    SysFreeString(bstr);
+    IHTMLInputElement_Release(input);
+}
+
 #define get_child_nodes(u) _get_child_nodes(__LINE__,u)
 static IHTMLDOMChildrenCollection *_get_child_nodes(unsigned line, IUnknown *unk)
 {
@@ -1735,6 +1776,9 @@ static void test_elems(IHTMLDocument2 *doc)
         test_node_get_value_str((IUnknown*)elem, NULL);
         test_node_put_value_str((IUnknown*)elem, "test");
         test_node_get_value_str((IUnknown*)elem, NULL);
+        test_input_value((IUnknown*)elem, NULL);
+        test_input_put_value((IUnknown*)elem, "test");
+        test_input_value((IUnknown*)elem, NULL);
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);

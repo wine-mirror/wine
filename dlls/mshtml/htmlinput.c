@@ -137,8 +137,18 @@ static HRESULT WINAPI HTMLInputElement_get_type(IHTMLInputElement *iface, BSTR *
 static HRESULT WINAPI HTMLInputElement_put_value(IHTMLInputElement *iface, BSTR v)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString val_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_Init(&val_str, v);
+    nsres = nsIDOMHTMLInputElement_SetValue(This->nsinput, &val_str);
+    nsAString_Finish(&val_str);
+    if(NS_FAILED(nsres))
+        ERR("SetValue failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR *p)
