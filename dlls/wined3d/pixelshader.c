@@ -359,6 +359,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
             for(i = 0; i < MAX_REG_INPUT; i++) {
                 This->input_reg_map[i] = i;
             }
+            This->declared_in_count = highest_reg_used + 1;
         } else {
             j = 0;
             for(i = 0; i < MAX_REG_INPUT; i++) {
@@ -369,6 +370,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
                     This->input_reg_map[i] = -1;
                 }
             }
+            This->declared_in_count = j;
         }
     }
     This->baseShader.load_local_constsF = FALSE;

@@ -1830,6 +1830,7 @@ struct glsl_shader_prog_link {
     GLhandleARB             srgb_comparison_location;
     GLhandleARB             srgb_mul_low_location;
     GLhandleARB             ycorrection_location;
+    GLenum                  vertex_color_clamp;
     GLhandleARB             vshader;
     GLhandleARB             pshader;
 };
@@ -2343,6 +2344,7 @@ typedef struct IWineD3DPixelShaderImpl {
     semantic semantics_in [MAX_REG_INPUT];
     DWORD                 input_reg_map[MAX_REG_INPUT];
     BOOL                  input_reg_used[MAX_REG_INPUT];
+    int                         declared_in_count;
 
     /* run time data */
     PSHADERDATA                *data;
