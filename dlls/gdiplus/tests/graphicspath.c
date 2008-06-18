@@ -149,6 +149,28 @@ static void test_constructor_destructor(void)
     expect(Ok, status);
 }
 
+static void test_getpathdata(void)
+{
+    GpPath *path;
+    GpPathData data;
+    GpStatus status;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    status = GdipAddPathLine(path, 5.0, 5.0, 100.0, 50.0);
+    expect(Ok, status);
+
+    status = GdipGetPathData(path, &data);
+    expect(Ok, status);
+    expect((data.Count == 2), TRUE);
+    expect((data.Points[0].X == 5.0) && (data.Points[0].Y == 5.0) &&
+           (data.Points[1].X == 100.0) && (data.Points[1].Y == 50.0), TRUE);
+    expect((data.Types[0] == PathPointTypeStart) && (data.Types[1] == PathPointTypeLine), TRUE);
+
+    GdipFree(data.Points);
+    GdipFree(data.Types);
+    GdipDeletePath(path);
+}
+
 static path_test_t line2_path[] = {
     {0.0, 50.0, PathPointTypeStart, 0, 0}, /*0*/
     {5.0, 45.0, PathPointTypeLine, 0, 0}, /*1*/
@@ -605,6 +627,7 @@ START_TEST(graphicspath)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor_destructor();
+    test_getpathdata();
     test_line2();
     test_arc();
     test_worldbounds();

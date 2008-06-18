@@ -479,6 +479,28 @@ GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathData(GpPath *path, GpPathData* pathData)
+{
+    if(!path || !pathData)
+        return InvalidParameter;
+
+    pathData->Count = path->pathdata.Count;
+
+    pathData->Points = GdipAlloc(sizeof(PointF) * pathData->Count);
+    if(!pathData->Points)
+        return OutOfMemory;
+
+    pathData->Types  = GdipAlloc(pathData->Count);
+    if(!pathData->Points)
+        return OutOfMemory;
+
+    /* copy data */
+    memcpy(pathData->Points, path->pathdata.Points, sizeof(PointF) * pathData->Count);
+    memcpy(pathData->Types , path->pathdata.Types , pathData->Count);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPathFillMode(GpPath *path, GpFillMode *fillmode)
 {
     if(!path || !fillmode)
