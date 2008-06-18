@@ -2886,7 +2886,11 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             if (!comp->FullKeypath)
                 continue;
 
-            rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, &hkey, TRUE);
+            if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+                rc = MSIREG_OpenLocalUserDataComponentKey(comp->ComponentId, &hkey, TRUE);
+            else
+                rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, &hkey, TRUE);
+
             if (rc != ERROR_SUCCESS)
                 continue;
 
@@ -2904,7 +2908,12 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             RegCloseKey(hkey);
         }
         else if (ACTION_VerifyComponentForAction(comp, INSTALLSTATE_ABSENT))
-            MSIREG_DeleteUserDataComponentKey(comp->ComponentId);
+        {
+            if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+                MSIREG_DeleteLocalUserDataComponentKey(comp->ComponentId);
+            else
+                MSIREG_DeleteUserDataComponentKey(comp->ComponentId);
+        }
 
         /* UI stuff */
         uirow = MSI_CreateRecord(3);

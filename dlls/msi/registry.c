@@ -214,6 +214,8 @@ static const WCHAR szInstaller_LocalManagedProd_fmt[] = {
 'I','n','s','t','a','l','l','e','r','\\',
 'P','r','o','d','u','c','t','s','\\','%','s',0};
 
+static const WCHAR localsid[] = {'S','-','1','-','5','-','1','8',0};
+
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out)
 {
     DWORD i,n=0;
@@ -666,6 +668,38 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_OpenLocalUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create)
+{
+    WCHAR comp[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n", debugstr_w(szComponent));
+    if (!squash_guid(szComponent, comp))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(comp));
+
+    sprintfW(keypath, szUserDataComp_fmt, localsid, comp);
+
+    if (create)
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+}
+
+UINT MSIREG_DeleteLocalUserDataComponentKey(LPCWSTR szComponent)
+{
+    WCHAR comp[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n", debugstr_w(szComponent));
+    if (!squash_guid(szComponent, comp))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(comp));
+
+    sprintfW(keypath, szUserDataComp_fmt, localsid, comp);
+    return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
+}
+
 UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create)
 {
     UINT rc;
@@ -795,8 +829,6 @@ UINT MSIREG_OpenCurrentUserInstallProps(LPCWSTR szProduct, HKEY *key,
 UINT MSIREG_OpenLocalSystemInstallProps(LPCWSTR szProduct, HKEY *key,
                                         BOOL create)
 {
-    static const WCHAR localsid[] = {'S','-','1','-','5','-','1','8',0};
-
     return MSIREG_OpenInstallProps(szProduct, localsid, key, create);
 }
 

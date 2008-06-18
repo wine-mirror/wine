@@ -2773,6 +2773,31 @@ static void test_publish_processcomponents(void)
     RegDeleteKeyA(comp, "");
     RegCloseKey(comp);
 
+    /* ProcessComponents, machine */
+    r = MsiInstallProductA(msifile, "PROCESS_COMPONENTS=1 ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    sprintf(keypath, keyfmt, "S-1-5-18");
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &comp);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB",
+                           NULL, NULL, (LPBYTE)val, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(val, "C:\\Program Files\\msitest\\maximus"),
+       "Expected \"%s\", got \"%s\"\n", "C:\\Program Files\\msitest\\maximus", val);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    RegDeleteValueA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB");
+    RegDeleteKeyA(comp, "");
+    RegCloseKey(comp);
+
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");

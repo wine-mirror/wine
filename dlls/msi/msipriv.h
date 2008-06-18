@@ -768,6 +768,7 @@ extern UINT MSIREG_OpenUserPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create);
 extern UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create);
+extern UINT MSIREG_OpenLocalUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create);
 extern UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, HKEY *key, BOOL create);
 extern UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create);
@@ -786,6 +787,7 @@ extern UINT MSIREG_OpenLocalSystemComponentKey(LPCWSTR szComponent, HKEY *key, B
 extern UINT MSIREG_OpenLocalClassesProductKey(LPCWSTR szProductCode, HKEY *key, BOOL create);
 extern UINT MSIREG_OpenLocalManagedProductKey(LPCWSTR szProductCode, HKEY *key, BOOL create);
 extern UINT MSIREG_DeleteUserFeaturesKey(LPCWSTR szProduct);
+extern UINT MSIREG_DeleteLocalUserDataComponentKey(LPCWSTR szComponent);
 extern UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent);
 
 extern LPWSTR msi_reg_get_val_str( HKEY hkey, LPCWSTR name );
