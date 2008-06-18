@@ -557,7 +557,6 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
 {
     TRACE("(%p %p %d %u)\n", wm, pchBuffer, cchBuffer, uFlags);
 
-    if (uFlags)			return MMSYSERR_INVALPARAM;
     if (cchBuffer > 0xFFFF)
 	WARN("Untested handling of huge mmio buffers (%d >= 64k)\n", cchBuffer);
 
@@ -571,8 +570,11 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
 	wm->info.dwFlags &= ~MMIO_ALLOCBUF;
     }
 
+    wm->bBufferLoaded = FALSE;
+
     if (pchBuffer) {
         wm->info.pchBuffer = pchBuffer;
+        wm->bBufferLoaded = TRUE;
     } else if (cchBuffer) {
 	if (!(wm->info.pchBuffer = HeapAlloc(GetProcessHeap(), 0, cchBuffer)))
 	    return MMIOERR_OUTOFMEMORY;
@@ -586,7 +588,6 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     wm->info.pchEndRead = wm->info.pchBuffer;
     wm->info.pchEndWrite = wm->info.pchBuffer + cchBuffer;
     wm->info.lBufOffset = wm->info.lDiskOffset;
-    wm->bBufferLoaded = FALSE;
 
     return MMSYSERR_NOERROR;
 }
@@ -656,22 +657,22 @@ HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
 	wm->bTmpIOProc = TRUE;
     }
 
-    wm->bBufferLoaded = FALSE;
     wm->ioProc->count++;
+    wm->info.dwFlags = dwOpenFlags;
 
     if (dwOpenFlags & MMIO_ALLOCBUF) {
-	if ((refmminfo->wErrorRet = MMIO_SetBuffer(wm, NULL, MMIO_DEFAULTBUFFER, 0)))
+	refmminfo->wErrorRet = MMIO_SetBuffer(wm, refmminfo->pchBuffer,
+	    refmminfo->cchBuffer ? refmminfo->cchBuffer : MMIO_DEFAULTBUFFER, 0);
+	if (refmminfo->wErrorRet != MMSYSERR_NOERROR)
 	    goto error1;
-    } else if (wm->info.fccIOProc == FOURCC_MEM) {
+    } else {
         refmminfo->wErrorRet = MMIO_SetBuffer(wm, refmminfo->pchBuffer, refmminfo->cchBuffer, 0);
 	if (refmminfo->wErrorRet != MMSYSERR_NOERROR)
 	    goto error1;
-	wm->bBufferLoaded = TRUE;
-    } /* else => unbuffered, wm->info.pchBuffer == NULL */
+    }
 
     /* see mmioDosIOProc for that one */
     wm->info.adwInfo[0] = refmminfo->adwInfo[0];
-    wm->info.dwFlags = dwOpenFlags;
 
     /* call IO proc to actually open file */
     refmminfo->wErrorRet = send_message(wm->ioProc, &wm->info, MMIOM_OPEN, 
