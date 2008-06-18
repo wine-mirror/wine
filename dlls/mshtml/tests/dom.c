@@ -376,6 +376,17 @@ static IHTMLElement *_get_elem_iface(unsigned line, IUnknown *unk)
     return elem;
 }
 
+#define get_elem2_iface(u) _get_elem2_iface(__LINE__,u)
+static IHTMLElement2 *_get_elem2_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLElement2 *elem;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement2, (void**)&elem);
+    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement2: %08x\n", hres);
+    return elem;
+}
+
 #define get_node_iface(u) _get_node_iface(__LINE__,u)
 static IHTMLDOMNode *_get_node_iface(unsigned line, IUnknown *unk)
 {
@@ -938,6 +949,21 @@ static void _test_node_put_value_str(unsigned line, IUnknown *unk, const char *v
     ok_(__FILE__,line) (hres == S_OK, "get_nodeValue failed: %08x, expected VT_BSTR\n", hres);
     IHTMLDOMNode_Release(node);
     VariantClear(&var);
+}
+
+#define test_elem_client_size(u) _test_elem_client_size(__LINE__,u)
+static void _test_elem_client_size(unsigned line, IUnknown *unk)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    long l;
+    HRESULT hres;
+
+    hres = IHTMLElement2_get_clientWidth(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_clientWidth failed: %08x\n", hres);
+    hres = IHTMLElement2_get_clientHeight(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_clientHeight failed: %08x\n", hres);
+
+    IHTMLElement2_Release(elem);
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
@@ -1704,6 +1730,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_id((IUnknown*)elem, "in");
         test_elem_put_id((IUnknown*)elem, "newin");
         test_input_get_disabled(input, VARIANT_FALSE);
+        test_elem_client_size((IUnknown*)elem);
 
         test_node_get_value_str((IUnknown*)elem, NULL);
         test_node_put_value_str((IUnknown*)elem, "test");

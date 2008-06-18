@@ -500,8 +500,22 @@ static HRESULT WINAPI HTMLElement2_removeFilter(IHTMLElement2 *iface, IUnknown *
 static HRESULT WINAPI HTMLElement2_get_clientHeight(IHTMLElement2 *iface, long *p)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    PRInt32 height=0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    if(NS_SUCCEEDED(nsres)) {
+        nsIDOMNSHTMLElement_GetClientHeight(nselem, &height);
+        nsIDOMNSHTMLElement_Release(nselem);
+    }else {
+        ERR("Could not get nsIDOMHTMLNSElement: %08x\n", nsres);
+    }
+
+    *p = height;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_clientWidth(IHTMLElement2 *iface, long *p)
