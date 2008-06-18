@@ -298,6 +298,12 @@ enum CombineMode
     CombineModeComplement
 };
 
+enum FlushIntention
+{
+    FlushIntentionFlush = 0,
+    FlushIntentionSync  = 1
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -329,6 +335,7 @@ typedef enum HotkeyPrefix HotkeyPrefix;
 typedef enum PenAlignment GpPenAlignment;
 typedef enum ImageCodecFlags ImageCodecFlags;
 typedef enum CombineMode CombineMode;
+typedef enum FlushIntention FlushIntention;
 
 #endif /* end of c typedefs */
 

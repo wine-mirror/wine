@@ -368,6 +368,7 @@ GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *, GpGraphics *, HRGN *);
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *);
 GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *);
 
+GpStatus WINGDIPAPI GdipFlush(GpGraphics*, GpFlushIntention);
 
 #ifdef __cplusplus
 }
