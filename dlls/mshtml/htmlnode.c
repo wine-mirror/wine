@@ -460,7 +460,26 @@ static HRESULT WINAPI HTMLDOMNode_get_nodeName(IHTMLDOMNode *iface, BSTR *p)
 static HRESULT WINAPI HTMLDOMNode_put_nodeValue(IHTMLDOMNode *iface, VARIANT v)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->()\n", This);
+
+    TRACE("(%p)->()\n", This);
+
+    switch(V_VT(&v)) {
+    case VT_BSTR: {
+        nsAString val_str;
+
+        TRACE("bstr %s\n", debugstr_w(V_BSTR(&v)));
+
+        nsAString_Init(&val_str, V_BSTR(&v));
+        nsIDOMNode_SetNodeValue(This->nsnode, &val_str);
+        nsAString_Finish(&val_str);
+
+        return S_OK;
+    }
+
+    default:
+        FIXME("unsupported vt %d\n", V_VT(&v));
+    }
+
     return E_NOTIMPL;
 }
 
