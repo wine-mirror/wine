@@ -1032,7 +1032,7 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, cons
 
 	    while (PeekMessageW(&msg, 0, WM_DDE_FIRST, WM_DDE_LAST, PM_REMOVE))
 	    {
-                HDDEDATA hdd;
+                HDDEDATA hdd = NULL;
 
                 pConv = WDML_GetConv(hConv, FALSE);
                 if (pConv == NULL)
