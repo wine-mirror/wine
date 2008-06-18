@@ -376,6 +376,17 @@ static IHTMLElement *_get_elem_iface(unsigned line, IUnknown *unk)
     return elem;
 }
 
+#define get_node_iface(u) _get_node_iface(__LINE__,u)
+static IHTMLDOMNode *_get_node_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode *node;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode, (void**)&node);
+    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLDOMNode: %08x\n", hres);
+    return node;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -906,6 +917,27 @@ static void _test_elem_put_id(unsigned line, IUnknown *unk, const char *new_id)
     ok_(__FILE__,line) (hres == S_OK, "put_id failed: %08x\n", hres);
 
     _test_elem_id(line, unk, new_id);
+}
+
+#define test_node_get_value_str(u,e) _test_node_get_value_str(__LINE__,u,e)
+static void _test_node_get_value_str(unsigned line, IUnknown *unk, const char *exval)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    VARIANT var;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_get_nodeValue(node, &var);
+    IHTMLDOMNode_Release(node);
+    ok_(__FILE__,line) (hres == S_OK, "get_nodeValue failed: %08x, expected VT_BSTR\n", hres);
+
+    if(exval) {
+        ok_(__FILE__,line) (V_VT(&var) == VT_BSTR, "vt=%d\n", V_VT(&var));
+        ok_(__FILE__,line) (!strcmp_wa(V_BSTR(&var), exval), "unexpected value %s\n", dbgstr_w(V_BSTR(&var)));
+    }else {
+        ok_(__FILE__,line) (V_VT(&var) == VT_NULL, "vt=%d, expected VT_NULL\n", V_VT(&var));
+    }
+
+    VariantClear(&var);
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
@@ -1673,6 +1705,8 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_put_id((IUnknown*)elem, "newin");
         test_input_get_disabled(input, VARIANT_FALSE);
 
+        test_node_get_value_str((IUnknown*)elem, NULL);
+
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);
     }
@@ -1691,6 +1725,8 @@ static void test_elems(IHTMLDocument2 *doc)
 
         type = get_node_type((IUnknown*)node);
         ok(type == 3, "type=%ld\n", type);
+
+        test_node_get_value_str((IUnknown*)node, "text test");
 
         IHTMLDOMNode_Release(node);
     }

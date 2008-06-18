@@ -467,8 +467,25 @@ static HRESULT WINAPI HTMLDOMNode_put_nodeValue(IHTMLDOMNode *iface, VARIANT v)
 static HRESULT WINAPI HTMLDOMNode_get_nodeValue(IHTMLDOMNode *iface, VARIANT *p)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    const PRUnichar *val;
+    nsAString val_str;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&val_str, NULL);
+    nsIDOMNode_GetNodeValue(This->nsnode, &val_str);
+    nsAString_GetData(&val_str, &val);
+
+    if(*val) {
+        V_VT(p) = VT_BSTR;
+        V_BSTR(p) = SysAllocString(val);
+    }else {
+        V_VT(p) = VT_NULL;
+    }
+
+    nsAString_Finish(&val_str);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_get_firstChild(IHTMLDOMNode *iface, IHTMLDOMNode **p)
