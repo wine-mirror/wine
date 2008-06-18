@@ -2522,13 +2522,7 @@ static void test_publish_publishfeatures(void)
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, featkey, &hkey);
-    todo_wine
-    {
-        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-    }
-
-    if (res == ERROR_SUCCESS)
-        RegCloseKey(hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, cupath, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
