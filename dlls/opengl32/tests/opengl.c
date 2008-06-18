@@ -265,6 +265,33 @@ static void test_setpixelformat(HDC winhdc)
     }
 }
 
+static void test_makecurrent(HDC winhdc)
+{
+    BOOL ret;
+    HGLRC hglrc;
+    HDC hdc;
+
+    hdc = GetDC(0);
+    ok( hdc != 0, "GetDC(0) failed\n" );
+
+    hglrc = wglCreateContext(winhdc);
+    ok( hglrc != 0, "wglCreateContext failed\n" );
+
+    ret = wglMakeCurrent( winhdc, hglrc );
+    ok( ret, "wglMakeCurrent failed\n" );
+
+    ok( wglGetCurrentContext() == hglrc, "wrong context\n" );
+
+    SetLastError( 0xdeadbeef );
+    ret = wglMakeCurrent( hdc, hglrc );
+    ok( !ret, "wglMakeCurrent succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PIXEL_FORMAT, "last error %u\n", GetLastError() );
+
+    ok( wglGetCurrentContext() == hglrc, "wrong context\n" );
+
+    ReleaseDC( 0, hdc );
+}
+
 static void test_colorbits(HDC hdc)
 {
     const int iAttribList[] = { WGL_COLOR_BITS_ARB, WGL_RED_BITS_ARB, WGL_GREEN_BITS_ARB,
@@ -437,6 +464,7 @@ START_TEST(opengl)
         ok(res, "wglMakeCurrent failed!\n");
         init_functions();
 
+        test_makecurrent(hdc);
         test_setpixelformat(hdc);
         test_colorbits(hdc);
         test_gdi_dbuf(hdc);
