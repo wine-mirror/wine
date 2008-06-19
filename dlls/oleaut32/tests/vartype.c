@@ -5780,7 +5780,7 @@ static void test_ClearCustData(void)
    * its memory, while Wine uses HeapAlloc(). Doing this ensures we allocate
    * using the correct function whether with native or builtin.
    */
-  ci.prgCustData = (LPCUSTDATAITEM)SysAllocStringByteLen((LPCSTR)buff, sizeof(buff));
+  ci.prgCustData = (LPCUSTDATAITEM)Get(SysAllocStringByteLen((LPCSTR)buff, sizeof(buff)));
   for (i = 0; i < NUM_CUST_ITEMS; i++)
     VariantInit(&ci.prgCustData[i].varValue);
   pClearCustData(&ci);
