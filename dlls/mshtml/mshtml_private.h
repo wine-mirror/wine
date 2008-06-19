@@ -521,7 +521,7 @@ void detach_ranges(HTMLDocument*);
 
 HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocument*,nsIDOMNode*);
 
-HTMLElement *HTMLElement_Create(HTMLDocument*,nsIDOMNode*);
+HTMLElement *HTMLElement_Create(HTMLDocument*,nsIDOMNode*,BOOL);
 HTMLElement *HTMLCommentElement_Create(HTMLDocument*,nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
@@ -532,6 +532,7 @@ HTMLElement *HTMLScriptElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTable_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
+HTMLElement *HTMLGenericElement_Create(nsIDOMHTMLElement*);
 
 void HTMLDOMNode_Init(HTMLDocument*,HTMLDOMNode*,nsIDOMNode*);
 void HTMLElement_Init(HTMLElement*);

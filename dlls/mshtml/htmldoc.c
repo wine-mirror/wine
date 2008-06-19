@@ -897,7 +897,7 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
         return E_FAIL;
     }
 
-    elem = HTMLElement_Create(This, (nsIDOMNode*)nselem);
+    elem = HTMLElement_Create(This, (nsIDOMNode*)nselem, TRUE);
     nsIDOMElement_Release(nselem);
 
     *newElem = HTMLELEM(elem);

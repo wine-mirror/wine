@@ -728,7 +728,7 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
 
     switch(node_type) {
     case ELEMENT_NODE:
-        ret = &HTMLElement_Create(doc, nsnode)->node;
+        ret = &HTMLElement_Create(doc, nsnode, FALSE)->node;
         break;
     case TEXT_NODE:
         ret = HTMLDOMTextNode_Create(doc, nsnode);

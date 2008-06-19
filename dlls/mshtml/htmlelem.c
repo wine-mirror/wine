@@ -1388,7 +1388,7 @@ void HTMLElement_Init(HTMLElement *This)
         init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), &HTMLElement_dispex);
 }
 
-HTMLElement *HTMLElement_Create(HTMLDocument *doc, nsIDOMNode *nsnode)
+HTMLElement *HTMLElement_Create(HTMLDocument *doc, nsIDOMNode *nsnode, BOOL use_generic)
 {
     nsIDOMHTMLElement *nselem;
     HTMLElement *ret = NULL;
@@ -1433,6 +1433,8 @@ HTMLElement *HTMLElement_Create(HTMLDocument *doc, nsIDOMNode *nsnode)
         ret = HTMLTable_Create(nselem);
     else if(!strcmpW(class_name, wszTEXTAREA))
         ret = HTMLTextAreaElement_Create(nselem);
+    else if(use_generic)
+        ret = HTMLGenericElement_Create(nselem);
 
     if(!ret) {
         ret = heap_alloc_zero(sizeof(HTMLElement));
