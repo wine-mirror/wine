@@ -2212,7 +2212,9 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
             TRACE_(d3d_caps)("[OK]\n");
             return TRUE;
 
-        /* Depth/stencil is handled using checkDepthStencilCapability, return FALSE here */
+        /*****
+         *  Supported: Depth/Stencil formats
+         */
         case WINED3DFMT_D16_LOCKABLE:
         case WINED3DFMT_D16:
         case WINED3DFMT_D15S1:
@@ -2222,7 +2224,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
         case WINED3DFMT_D24FS8:
         case WINED3DFMT_D32:
         case WINED3DFMT_D32F_LOCKABLE:
-            return FALSE;
+            return TRUE;
 
         /*****
          *  Not supported everywhere(depends on GL_ATI_envmap_bumpmap or
@@ -2669,9 +2671,15 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     return WINED3DERR_NOTAVAILABLE;
                 }
             }
-        } else if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
-            if(Usage & WINED3DUSAGE_DEPTHSTENCIL)
-                UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
+
+            if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
+                if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No depth stencil support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
         } else {
             TRACE_(d3d_caps)("[FAILED] - Texture format not supported\n");
             return WINED3DERR_NOTAVAILABLE;
