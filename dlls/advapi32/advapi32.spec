@@ -230,8 +230,8 @@
 # @ stub GetAccessPermissionsForObjectW
 @ stdcall GetAce(ptr long ptr)
 @ stdcall GetAclInformation(ptr ptr long long)
-# @ stub GetAuditedPermissionsFromAclA
-# @ stub GetAuditedPermissionsFromAclW
+@ stdcall GetAuditedPermissionsFromAclA(ptr ptr ptr ptr)
+@ stdcall GetAuditedPermissionsFromAclW(ptr ptr ptr ptr)
 @ stdcall GetCurrentHwProfileA(ptr)
 @ stdcall GetCurrentHwProfileW(ptr)
 @ stdcall GetEffectiveRightsFromAclA(ptr ptr ptr)

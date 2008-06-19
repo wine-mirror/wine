@@ -3442,6 +3442,27 @@ DWORD WINAPI GetExplicitEntriesFromAclW( PACL pacl, PULONG pcCountOfExplicitEntr
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+/******************************************************************************
+ * GetAuditedPermissionsFromAclA [ADVAPI32.@]
+ */
+DWORD WINAPI GetAuditedPermissionsFromAclA( PACL pacl, PTRUSTEEA pTrustee, PACCESS_MASK pSuccessfulAuditedRights,
+        PACCESS_MASK pFailedAuditRights)
+{
+    FIXME("%p %p %p %p\n",pacl, pTrustee, pSuccessfulAuditedRights, pFailedAuditRights);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+
+}
+
+/******************************************************************************
+ * GetAuditedPermissionsFromAclW [ADVAPI32.@]
+ */
+DWORD WINAPI GetAuditedPermissionsFromAclW( PACL pacl, PTRUSTEEW pTrustee, PACCESS_MASK pSuccessfulAuditedRights,
+        PACCESS_MASK pFailedAuditRights)
+{
+    FIXME("%p %p %p %p\n",pacl, pTrustee, pSuccessfulAuditedRights, pFailedAuditRights);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+
+}
 
 /******************************************************************************
  * ParseAclStringFlags
