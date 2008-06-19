@@ -492,7 +492,7 @@ static void test_safearray(void)
             ok(hres == S_OK, "SAGVT of arra y with vt %d failed with %x\n", vttypes[i].vt, hres);
             if (vttypes[i].vt == VT_DISPATCH) {
         		/* Special case. Checked against Windows. */
-		        ok(vt == VT_UNKNOWN, "SAGVT of a        rray with VT_DISPATCH returned not VT_UNKNOWN, but %d\n", vt);
+		        ok(vt == VT_UNKNOWN, "SAGVT of array with VT_DISPATCH returned not VT_UNKNOWN, but %d\n", vt);
             } else {
 		        ok(vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d\n", vttypes[i].vt, vt);
             }
