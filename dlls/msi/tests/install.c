@@ -2239,6 +2239,12 @@ static void test_publish_registerproduct(void)
                                     "\\51AAE0C44620A5E4788506E91F249BD2";
 
     get_user_sid(&usersid);
+    if (!usersid)
+    {
+        skip("ConvertSidToStringSidA is not available\n");
+        return;
+    }
+
     get_date_str(date);
     GetTempPath(MAX_PATH, temp);
 
@@ -2457,20 +2463,29 @@ static void test_publish_publishproduct(void)
 {
     UINT r;
     LONG res;
-    HKEY uninstall, prodkey;
-    INSTALLSTATE state;
-    CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
+    LPSTR usersid;
+    HKEY sourcelist, net;
+    HKEY hkey, patches, media;
+    CHAR keypath[MAX_PATH];
+    CHAR temp[MAX_PATH];
+    CHAR path[MAX_PATH];
 
-    static const CHAR subkey[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+    static const CHAR prodpath[] = "Software\\Microsoft\\Windows\\CurrentVersion"
+                                   "\\Installer\\UserData\\%s\\Products"
+                                   "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
+    static const CHAR cuprodpath[] = "Software\\Microsoft\\Installer\\Products"
+                                     "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
+    static const CHAR cuupgrades[] = "Software\\Microsoft\\Installer\\UpgradeCodes"
+                                     "\\51AAE0C44620A5E4788506E91F249BD2";
 
-    if (!pMsiQueryComponentStateA)
+    get_user_sid(&usersid);
+    if (!usersid)
     {
-        skip("MsiQueryComponentStateA is not available\n");
+        skip("ConvertSidToStringSidA is not available\n");
         return;
     }
 
-    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, subkey, &uninstall);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    GetTempPath(MAX_PATH, temp);
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
@@ -2479,80 +2494,91 @@ static void test_publish_publishproduct(void)
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
-    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
-    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
-
-    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-
-    /* PublishProduct */
+    /* PublishProduct, current user */
     r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(pf_exists("msitest\\maximus"), "File not installed\n");
-    ok(pf_exists("msitest"), "File not installed\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
-    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+    sprintf(keypath, prodpath, usersid);
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    res = RegOpenKeyA(hkey, "Patches", &patches);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+        CHECK_DEL_REG_STR(patches, "AllPatches", NULL);
+    }
 
-    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
-    ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    RegDeleteKeyA(patches, "");
+    RegCloseKey(patches);
+    RegDeleteKeyA(hkey, "");
+    RegCloseKey(hkey);
 
-    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    res = RegOpenKeyA(HKEY_CURRENT_USER, cuprodpath, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    /* try to uninstall after PublishProduct */
-    r = MsiInstallProductA(msifile, "REMOVE=ALL");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(pf_exists("msitest\\maximus"), "File deleted\n");
-    ok(pf_exists("msitest"), "File deleted\n");
+    CHECK_DEL_REG_STR(hkey, "ProductName", "MSITEST");
+    CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
+    CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
+    CHECK_DEL_REG_DWORD(hkey, "AuthorizedLUAApp", 0);
+    todo_wine
+    {
+        CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052c94DA02821EECD05F2F");
+        CHECK_DEL_REG_DWORD(hkey, "Assignment", 0);
+        CHECK_DEL_REG_DWORD(hkey, "AdvertiseFlags", 0x184);
+        CHECK_DEL_REG_DWORD(hkey, "InstanceType", 0);
+        CHECK_DEL_REG_STR(hkey, "Clients", ":");
+    }
 
-    state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    res = RegOpenKeyA(hkey, "SourceList", &sourcelist);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "feature");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    lstrcpyA(path, "n;1;");
+    lstrcatA(path, temp);
+    CHECK_DEL_REG_STR(sourcelist, "LastUsedSource", path);
+    CHECK_DEL_REG_STR(sourcelist, "PackageName", "msitest.msi");
 
-    state = MsiQueryFeatureState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}", "montecristo");
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    res = RegOpenKeyA(sourcelist, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    r = pMsiQueryComponentStateA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                "{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}", &state);
-    ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
-    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    CHECK_DEL_REG_STR(net, "1", temp);
 
-    res = RegOpenKeyA(uninstall, prodcode, &prodkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
 
-    /* full install to remove */
-    r = MsiInstallProductA(msifile, "FULL=1");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    res = RegOpenKeyA(sourcelist, "Media", &media);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    RegCloseKey(uninstall);
+    todo_wine
+    {
+        CHECK_DEL_REG_STR(media, "1", "DISK1;");
+    }
+
+    RegDeleteKeyA(media, "");
+    RegCloseKey(media);
+    RegDeleteKeyA(sourcelist, "");
+    RegCloseKey(sourcelist);
+    RegDeleteKeyA(hkey, "");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, cuupgrades, &hkey);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
+    }
+
+    RegDeleteKeyA(hkey, "");
+    RegCloseKey(hkey);
+
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
-    delete_pfmsitest_files();
+    HeapFree(GetProcessHeap(), 0, usersid);
 }
 
 static void test_publish_publishfeatures(void)
