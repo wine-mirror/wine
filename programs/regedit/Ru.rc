@@ -285,7 +285,7 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ERROR		    "Ошыбка"
+    IDS_ERROR		    "Ошибка"
     IDS_BAD_KEY		    "Невозможно запросить ключ '%s'"
     IDS_BAD_VALUE           "Невозможно запросить значение '%s'"
     IDS_UNSUPPORTED_TYPE    "Редактирование ключей типа (%ld) не поддерживается"
