@@ -201,7 +201,7 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
     BSTR sTarget;
-    static WCHAR szXML[] = {'x','m','l',0};
+    static const WCHAR szXML[] = {'x','m','l',0};
     HRESULT hr;
 
     TRACE("%p\n", This );
@@ -526,7 +526,7 @@ static HRESULT WINAPI dom_pi_put_data(
     HRESULT hr = E_FAIL;
     VARIANT val;
     BSTR sTarget;
-    static WCHAR szXML[] = {'x','m','l',0};
+    static const WCHAR szXML[] = {'x','m','l',0};
 
     TRACE("%p %s\n", This, debugstr_w(data) );
 
