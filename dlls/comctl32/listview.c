@@ -5223,6 +5223,9 @@ static BOOL LISTVIEW_GetColumnT(const LISTVIEW_INFO *infoPtr, INT nColumn, LPLVC
     if (lpColumn->mask & LVCF_ORDER)
         hdi.mask |= HDI_ORDER;
 
+    if (lpColumn->mask & LVCF_SUBITEM)
+        hdi.mask |= HDI_LPARAM;
+
     if (!SendMessageW(infoPtr->hwndHeader, isW ? HDM_GETITEMW : HDM_GETITEMA, nColumn, (LPARAM)&hdi)) return FALSE;
 
     if (lpColumn->mask & LVCF_FMT)
@@ -5236,6 +5239,9 @@ static BOOL LISTVIEW_GetColumnT(const LISTVIEW_INFO *infoPtr, INT nColumn, LPLVC
 
     if (lpColumn->mask & LVCF_ORDER)
 	lpColumn->iOrder = hdi.iOrder;
+
+    if (lpColumn->mask & LVCF_SUBITEM)
+	lpColumn->iSubItem = hdi.lParam;
 
     return TRUE;
 }
