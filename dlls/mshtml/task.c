@@ -81,7 +81,6 @@ static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
 {
     list_remove(&timer->entry);
 
-    KillTimer(thread_hwnd, timer->id);
     IDispatch_Release(timer->disp);
 
     heap_free(timer);
@@ -336,18 +335,25 @@ static void process_task(task_t *task)
 static LRESULT process_timer(void)
 {
     thread_data_t *thread_data = get_thread_data(TRUE);
-    DWORD tc = GetTickCount();
+    DWORD tc;
     task_timer_t *timer;
+
+    TRACE("\n");
 
     while(!list_empty(&thread_data->timer_list)) {
         timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
+
+        tc = GetTickCount();
         if(timer->time > tc) {
             SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time-tc, NULL);
             return 0;
         }
 
         list_remove(&timer->entry);
+        list_init(&timer->entry);
+
         call_disp_func(timer->doc, timer->disp);
+
         release_task_timer(thread_data->thread_hwnd, timer);
     }
 
