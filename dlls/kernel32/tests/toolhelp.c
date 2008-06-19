@@ -272,7 +272,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
     pe.dwSize = sizeof(pe);
     ok(!pProcess32First( hSnapshot, &pe ), "shouldn't return a process\n");
 
-    me.dwSize = sizeof(me);
+    te.dwSize = sizeof(te);
     ok(!pThread32First( hSnapshot, &te ), "shouldn't return a thread\n");
 
     CloseHandle(hSnapshot);
