@@ -688,6 +688,19 @@ GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipImageGetFrameDimensionsCount(GpImage *image,
+    UINT* count)
+{
+    if(!image || !count)
+        return InvalidParameter;
+
+    *count = 1;
+
+    FIXME("stub\n");
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipImageGetFrameDimensionsList(GpImage* image,
     GUID* dimensionIDs, UINT count)
 {

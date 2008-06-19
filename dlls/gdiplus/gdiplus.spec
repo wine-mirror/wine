@@ -407,7 +407,7 @@
 @ stub GdipGraphicsSetAbort
 @ stub GdipImageForceValidation
 @ stdcall GdipImageGetFrameCount(ptr ptr ptr)
-@ stub GdipImageGetFrameDimensionsCount
+@ stdcall GdipImageGetFrameDimensionsCount(ptr ptr)
 @ stdcall GdipImageGetFrameDimensionsList(ptr ptr long)
 @ stub GdipImageRotateFlip
 @ stdcall GdipImageSelectActiveFrame(ptr ptr long)

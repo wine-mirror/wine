@@ -106,6 +106,32 @@ static void test_GetImageDimension(void)
     GdipDisposeImage((GpImage*)bm);
 }
 
+static void test_GdipImageGetFrameDimensionsCount(void)
+{
+    GpBitmap *bm;
+    GpStatus stat;
+    const REAL WIDTH = 10.0, HEIGHT = 20.0;
+    UINT w;
+
+    bm = (GpBitmap*)0xdeadbeef;
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB,NULL, &bm);
+    expect(Ok,stat);
+    ok((GpBitmap*)0xdeadbeef != bm, "Expected bitmap to not be 0xdeadbeef\n");
+    ok(NULL != bm, "Expected bitmap to not be NULL\n");
+
+    stat = GdipImageGetFrameDimensionsCount(NULL,&w);
+    expect(InvalidParameter, stat);
+
+    stat = GdipImageGetFrameDimensionsCount((GpImage*)bm,NULL);
+    expect(InvalidParameter, stat);
+
+    w = -1;
+    stat = GdipImageGetFrameDimensionsCount((GpImage*)bm,&w);
+    expect(Ok, stat);
+    expect(1, w);
+    GdipDisposeImage((GpImage*)bm);
+}
+
 static void test_LoadingImages(void)
 {
     GpStatus stat;
@@ -466,6 +492,7 @@ START_TEST(image)
 
     test_Scan0();
     test_GetImageDimension();
+    test_GdipImageGetFrameDimensionsCount();
     test_LoadingImages();
     test_SavingImages();
     test_encoders();
