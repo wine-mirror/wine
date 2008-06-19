@@ -407,7 +407,6 @@ static void test_pack_MIDL_STUB_MESSAGE(void)
     TEST_FIELD(MIDL_STUB_MESSAGE, ULONG, BufferLength, 20, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, ULONG, MemorySize, 24, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, Memory, 28, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, int, IsClient, 32, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, int, ReuseBuffer, 36, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, struct NDR_ALLOC_ALL_NODES_CONTEXT *, pAllocAllNodesContext, 40, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, struct NDR_POINTER_QUEUE_STATE *, pPointerQueueState, 44, 4, 4);

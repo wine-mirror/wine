@@ -175,7 +175,9 @@ typedef struct _MIDL_STUB_MESSAGE
   ULONG BufferLength;
   ULONG MemorySize;
   unsigned char *Memory;
-  int IsClient;
+  unsigned char IsClient;
+  unsigned char Pad;
+  unsigned short uFlags2;
   int ReuseBuffer;
   struct NDR_ALLOC_ALL_NODES_CONTEXT *pAllocAllNodesContext;
   struct NDR_POINTER_QUEUE_STATE *pPointerQueueState;
