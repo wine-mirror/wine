@@ -77,8 +77,8 @@ STID_HISTORY, 		"&Historia"
 STID_TOPICS,		"&Tematy"
 STID_ALL_FILES, 	"Wszystkie pliki (*.*)"
 STID_HELP_FILES_HLP, 	"Pliki pomocy (*.hlp)"
-STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
-STID_NO_RICHEDIT	"Cannot find a richedit implementation... Aborting"
+STID_FILE_NOT_FOUND_s	"Nie znaleziono pliku '%s'. Czy chcesz poszukaæ tego pliku samodzielnie?"
+STID_NO_RICHEDIT	"Nie uda³o siê znaleŸæ modu³u richedit... Wyœwietlenie pomocy nie jest mo¿liwe"
 }
 
 
