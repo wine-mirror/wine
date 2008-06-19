@@ -82,6 +82,7 @@ typedef enum {
     ET_TBODY,
     ET_SCRIPT,
     ET_TEST,
+    ET_TESTG,
     ET_COMMENT,
     ET_IMG
 } elem_type_t;
@@ -234,6 +235,17 @@ static REFIID const img_iids[] = {
     NULL
 };
 
+static REFIID const generic_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLGenericElement,
+    &IID_IDispatchEx,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -259,6 +271,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"TBODY",     elem_iids,        NULL},
     {"SCRIPT",    script_iids,      NULL},
     {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement},
+    {"TEST",      generic_iids,     &DIID_DispHTMLGenericElement},
     {"!",         comment_iids,     &DIID_DispHTMLCommentElement},
     {"IMG",       img_iids,         &DIID_DispHTMLImg}
 };
@@ -1005,6 +1018,21 @@ static void _test_elem_client_size(unsigned line, IUnknown *unk)
     ok_(__FILE__,line) (hres == S_OK, "get_clientHeight failed: %08x\n", hres);
 
     IHTMLElement2_Release(elem);
+}
+
+#define test_create_elem(d,t) _test_create_elem(__LINE__,d,t)
+static IHTMLElement *_test_create_elem(unsigned line, IHTMLDocument2 *doc, const char *tag)
+{
+    IHTMLElement *elem = NULL;
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(tag);
+    hres = IHTMLDocument2_createElement(doc, tmp, &elem);
+    ok_(__FILE__,line) (hres == S_OK, "createElement failed: %08x\n", hres);
+    ok_(__FILE__,line) (elem != NULL, "elem == NULL\n");
+
+    return elem;
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
@@ -1849,6 +1877,21 @@ static void test_elems(IHTMLDocument2 *doc)
     test_create_option_elem(doc);
 }
 
+static void test_create_elems(IHTMLDocument2 *doc)
+{
+    IHTMLElement *elem;
+    long type;
+
+    elem = test_create_elem(doc, "TEST");
+    test_elem_tag((IUnknown*)elem, "TEST");
+    type = get_node_type((IUnknown*)elem);
+    ok(type == 1, "type=%ld\n", type);
+    test_ifaces((IUnknown*)elem, elem_iids);
+    test_disp((IUnknown*)elem, &DIID_DispHTMLGenericElement);
+
+    IHTMLElement_Release(elem);
+}
+
 static void test_exec(IUnknown *unk, const GUID *grpid, DWORD cmdid, VARIANT *in, VARIANT *out)
 {
     IOleCommandTarget *cmdtrg;
@@ -2082,6 +2125,7 @@ START_TEST(dom)
     run_domtest(range_test_str, test_txtrange);
     run_domtest(range_test2_str, test_txtrange2);
     run_domtest(elem_test_str, test_elems);
+    run_domtest(doc_blank, test_create_elems);
     run_domtest(doc_blank, test_defaults);
     run_domtest(indent_test_str, test_indent);
 
