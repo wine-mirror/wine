@@ -368,7 +368,7 @@ static DLBindStatusCallback *DLBindStatusCallbackConstructor(
 
 BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
 {
-    static WCHAR prefix[] = {'B','I','T', 0};
+    static const WCHAR prefix[] = {'B','I','T', 0};
     IBindStatusCallback *callbackObj;
     WCHAR tmpDir[MAX_PATH];
     WCHAR tmpName[MAX_PATH];

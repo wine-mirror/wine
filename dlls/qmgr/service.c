@@ -30,7 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
 HANDLE stop_event = NULL;
 
-static WCHAR qmgr_nameW[] = {'B','I','T','S',0};
 static SERVICE_STATUS_HANDLE status_handle;
 static SERVICE_STATUS status;
 
@@ -110,6 +109,7 @@ VOID WINAPI
 ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
 {
     HANDLE fileTxThread;
+    static const WCHAR qmgr_nameW[] = {'B','I','T','S',0};
     DWORD threadId;
     TRACE("\n");
 
