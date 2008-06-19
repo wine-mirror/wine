@@ -360,8 +360,6 @@ static const WCHAR defSerif[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o'
 static const WCHAR defSans[] = {'A','r','i','a','l','\0'};
 static const WCHAR defFixed[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
 
-static const WCHAR RegularW[] = {'R','e','g','u','l','a','r','\0'};
-
 static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\0'};
 static const WCHAR win9x_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                            'W','i','n','d','o','w','s','\\',
@@ -1945,7 +1943,7 @@ static void update_reg_entries(void)
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if(!face->external) continue;
             len = len_fam;
-            if(strcmpiW(face->StyleName, RegularW))
+            if (!(face->ntmFlags & NTM_REGULAR))
                 len = len_fam + strlenW(face->StyleName) + 1;
             valueW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
             strcpyW(valueW, family->FamilyName);
@@ -4849,7 +4847,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     needed += lenfam;
 
     /* length of otmpFaceName */
-    if(!strcasecmp(ft_face->style_name, "regular")) {
+    if ((ft_face->style_flags & (FT_STYLE_FLAG_ITALIC | FT_STYLE_FLAG_BOLD)) == 0) {
       needed += lenfam; /* just the family name */
     } else {
       needed += lenfam + lensty; /* family + " " + style */
@@ -5047,7 +5045,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     cp += lensty;
     font->potm->otmpFaceName = (LPSTR)(cp - (char*)font->potm);
     strcpyW((WCHAR*)cp, family_nameW);
-    if(strcasecmp(ft_face->style_name, "regular")) {
+    if (ft_face->style_flags & (FT_STYLE_FLAG_ITALIC | FT_STYLE_FLAG_BOLD)) {
         strcatW((WCHAR*)cp, spaceW);
 	strcatW((WCHAR*)cp, style_nameW);
 	cp += lenfam + lensty;
