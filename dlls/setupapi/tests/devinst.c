@@ -987,14 +987,14 @@ static void testDevRegKey(void)
         todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
-         "Expected ERROR_KEY_DOES_NOT_EXIST_EXIST, got %08x\n", GetLastError());
+         "Expected ERROR_KEY_DOES_NOT_EXIST, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         key = pSetupDiOpenDevRegKey(set, &devInfo, DICS_FLAG_GLOBAL, 0,
          DIREG_DEV, 0);
         todo_wine
         ok(key == INVALID_HANDLE_VALUE &&
          GetLastError() == ERROR_KEY_DOES_NOT_EXIST,
-         "Expected ERROR_KEY_DOES_NOT_EXIST_EXIST, got %08x\n", GetLastError());
+         "Expected ERROR_KEY_DOES_NOT_EXIST, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         /* The class key shouldn't be there */
         res = RegOpenKeyW(HKEY_LOCAL_MACHINE, classKey, &key);
