@@ -1073,6 +1073,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
             if (parent == GetDesktopWindow()) parent = 0;
             SetFocus(parent);
         }
+        return wasVisible;
     }
 
     if (IsIconic(hwnd)) WINPOS_ShowIconTitle( hwnd, TRUE );
