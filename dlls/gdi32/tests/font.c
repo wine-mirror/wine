@@ -1097,8 +1097,8 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     ok(cs == charset, "expected %d, got %d\n", charset, cs);
 
     SetLastError(0xdeadbeef);
-    ret = GetTextFace(hdc, sizeof(name), name);
-    ok(ret, "GetTextFace error %u\n", GetLastError());
+    ret = GetTextFaceA(hdc, sizeof(name), name);
+    ok(ret, "GetTextFaceA error %u\n", GetLastError());
 
     if (charset == SYMBOL_CHARSET)
     {
@@ -1930,6 +1930,94 @@ static void test_GdiRealizationInfo(void)
     ReleaseDC(0, hdc);
 }
 
+/* Tests on XP SP2 show that the ANSI version of GetTextFace does NOT include
+   the nul in the count of characters copied when the face name buffer is not
+   NULL, whereas it does if the buffer is NULL.  Further, the Unicode version
+   always includes it.  */
+static void test_GetTextFace(void)
+{
+    static const char faceA[] = "Tahoma";
+    static const WCHAR faceW[] = {'T','a','h','o','m','a', 0};
+    LOGFONTA fA = {0};
+    LOGFONTW fW = {0};
+    char bufA[LF_FACESIZE];
+    WCHAR bufW[LF_FACESIZE];
+    HFONT f, g;
+    HDC dc;
+    int n;
+
+    /* 'A' case.  */
+    memcpy(fA.lfFaceName, faceA, sizeof faceA);
+    f = CreateFontIndirectA(&fA);
+    ok(f != NULL, "CreateFontIndirectA failed\n");
+
+    dc = GetDC(NULL);
+    g = SelectObject(dc, f);
+    n = GetTextFaceA(dc, sizeof bufA, bufA);
+    ok(n == sizeof faceA - 1, "GetTextFaceA returned %d\n", n);
+    ok(lstrcmpA(faceA, bufA) == 0, "GetTextFaceA\n");
+
+    /* Play with the count arg.  */
+    bufA[0] = 'x';
+    n = GetTextFaceA(dc, 0, bufA);
+    todo_wine
+    ok(n == 0, "GetTextFaceA returned %d\n", n);
+    ok(bufA[0] == 'x', "GetTextFaceA buf[0] == %d\n", bufA[0]);
+
+    bufA[0] = 'x';
+    n = GetTextFaceA(dc, 1, bufA);
+    ok(n == 0, "GetTextFaceA returned %d\n", n);
+    ok(bufA[0] == '\0', "GetTextFaceA buf[0] == %d\n", bufA[0]);
+
+    bufA[0] = 'x'; bufA[1] = 'y';
+    n = GetTextFaceA(dc, 2, bufA);
+    ok(n == 1, "GetTextFaceA returned %d\n", n);
+    ok(bufA[0] == faceA[0] && bufA[1] == '\0', "GetTextFaceA didn't copy\n");
+
+    n = GetTextFaceA(dc, 0, NULL);
+    ok(n == sizeof faceA, "GetTextFaceA returned %d\n", n);
+
+    DeleteObject(SelectObject(dc, g));
+    ReleaseDC(NULL, dc);
+
+    /* 'W' case.  */
+    memcpy(fW.lfFaceName, faceW, sizeof faceW);
+    f = CreateFontIndirectW(&fW);
+    ok(f != NULL, "CreateFontIndirectW failed\n");
+
+    dc = GetDC(NULL);
+    g = SelectObject(dc, f);
+    n = GetTextFaceW(dc, sizeof bufW / sizeof bufW[0], bufW);
+    todo_wine
+    ok(n == sizeof faceW / sizeof faceW[0], "GetTextFaceW returned %d\n", n);
+    ok(lstrcmpW(faceW, bufW) == 0, "GetTextFaceW\n");
+
+    /* Play with the count arg.  */
+    bufW[0] = 'x';
+    n = GetTextFaceW(dc, 0, bufW);
+    todo_wine
+    ok(n == 0, "GetTextFaceW returned %d\n", n);
+    ok(bufW[0] == 'x', "GetTextFaceW buf[0] == %d\n", bufW[0]);
+
+    bufW[0] = 'x';
+    n = GetTextFaceW(dc, 1, bufW);
+    todo_wine
+    ok(n == 1, "GetTextFaceW returned %d\n", n);
+    ok(bufW[0] == '\0', "GetTextFaceW buf[0] == %d\n", bufW[0]);
+
+    bufW[0] = 'x'; bufW[1] = 'y';
+    n = GetTextFaceW(dc, 2, bufW);
+    todo_wine
+    ok(n == 2, "GetTextFaceW returned %d\n", n);
+    ok(bufW[0] == faceW[0] && bufW[1] == '\0', "GetTextFaceW didn't copy\n");
+
+    n = GetTextFaceW(dc, 0, NULL);
+    ok(n == sizeof faceW / sizeof faceW[0], "GetTextFaceW returned %d\n", n);
+
+    DeleteObject(SelectObject(dc, g));
+    ReleaseDC(NULL, dc);
+}
+
 START_TEST(font)
 {
     init();
@@ -1964,4 +2052,5 @@ START_TEST(font)
         skip("Arial Black or Symbol/Wingdings is not installed\n");
     test_GetTextMetrics();
     test_GdiRealizationInfo();
+    test_GetTextFace();
 }
