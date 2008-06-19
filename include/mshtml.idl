@@ -3358,6 +3358,27 @@ interface IHTMLElement2 : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLGenericElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4b7-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLGenericElement : IDispatch
+{
+    [propget, id(DISPID_IHTMLGENERICELEMENT_RECORDSET), hidden]
+    HRESULT recordset([out, retval] IDispatch **p);
+
+    [id(DISPID_IHTMLGENERICELEMENT_NAMEDRECORDSET)]
+    HRESULT namedRecordset(
+            [in] BSTR dataMember,
+            [in, optional] VARIANT *hierarchy,
+            [out, retval] IDispatch **ppRecordset);
+}
+
+/*****************************************************************************
  *    DispHTMLGenericElement dispinterface
  */
 [
