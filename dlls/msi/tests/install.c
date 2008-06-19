@@ -2303,26 +2303,26 @@ static void test_publish_registerproduct(void)
     CHECK_DEL_REG_STR(props, "DisplayVersion", "1.1.1");
     CHECK_DEL_REG_STR(props, "InstallDate", date);
     CHECK_DEL_REG_STR(props, "InstallSource", temp);
+    CHECK_DEL_REG_ISTR(props, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_DEL_REG_STR(props, "Publisher", "Wine");
+    CHECK_DEL_REG_STR(props, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
+    CHECK_DEL_REG_STR(props, "AuthorizedCDFPrefix", NULL);
+    CHECK_DEL_REG_STR(props, "Comments", NULL);
+    CHECK_DEL_REG_STR(props, "Contact", NULL);
+    CHECK_DEL_REG_STR(props, "HelpLink", NULL);
+    CHECK_DEL_REG_STR(props, "HelpTelephone", NULL);
+    CHECK_DEL_REG_STR(props, "InstallLocation", NULL);
+    CHECK_DEL_REG_STR(props, "Readme", NULL);
+    CHECK_DEL_REG_STR(props, "Size", NULL);
+    CHECK_DEL_REG_STR(props, "URLInfoAbout", NULL);
+    CHECK_DEL_REG_STR(props, "URLUpdateInfo", NULL);
+    CHECK_DEL_REG_DWORD(props, "Language", 1033);
+    CHECK_DEL_REG_DWORD(props, "Version", 0x1010001);
     CHECK_DEL_REG_DWORD(props, "VersionMajor", 1);
     CHECK_DEL_REG_DWORD(props, "VersionMinor", 1);
     CHECK_DEL_REG_DWORD(props, "WindowsInstaller", 1);
-    CHECK_DEL_REG_STR(props, "Publisher", "Wine");
-    CHECK_DEL_REG_DWORD(props, "Version", 0x1010001);
     todo_wine
     {
-        CHECK_DEL_REG_ISTR(props, "ModifyPath", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
-        CHECK_DEL_REG_STR(props, "UninstallString", "MsiExec.exe /I{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
-        CHECK_DEL_REG_STR(props, "AuthorizedCDFPrefix", NULL);
-        CHECK_DEL_REG_STR(props, "Comments", NULL);
-        CHECK_DEL_REG_STR(props, "Contact", NULL);
-        CHECK_DEL_REG_STR(props, "HelpLink", NULL);
-        CHECK_DEL_REG_STR(props, "HelpTelephone", NULL);
-        CHECK_DEL_REG_STR(props, "InstallLocation", NULL);
-        CHECK_DEL_REG_STR(props, "Readme", NULL);
-        CHECK_DEL_REG_STR(props, "Size", NULL);
-        CHECK_DEL_REG_STR(props, "URLInfoAbout", NULL);
-        CHECK_DEL_REG_STR(props, "URLUpdateInfo", NULL);
-        CHECK_DEL_REG_DWORD(props, "Language", 1033);
         CHECK_DEL_REG_DWORD(props, "EstimatedSize", 12);
     }
 

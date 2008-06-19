@@ -3939,7 +3939,6 @@ static UINT msi_get_local_package_name( LPWSTR path )
 static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
 {
     WCHAR packagefile[MAX_PATH];
-    HKEY props;
     UINT r;
 
     r = msi_get_local_package_name( packagefile );
@@ -3959,18 +3958,42 @@ static UINT msi_make_package_local( MSIPACKAGE *package, HKEY hkey )
 
     msi_reg_set_val_str( hkey, INSTALLPROPERTY_LOCALPACKAGEW, packagefile );
 
-    r = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &props, TRUE);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    msi_reg_set_val_str(props, INSTALLPROPERTY_LOCALPACKAGEW, packagefile);
-    RegCloseKey(props);
     return ERROR_SUCCESS;
 }
 
-static UINT msi_write_uninstall_property_vals( MSIPACKAGE *package, HKEY hkey )
+static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
 {
     LPWSTR prop, val, key;
+    SYSTEMTIME systime;
+    DWORD size, langid;
+    WCHAR date[9];
+    LPWSTR buffer;
+
+    static const WCHAR date_fmt[] = {'%','i','%','0','2','i','%','0','2','i',0};
+    static const WCHAR szWindowsInstaller[] =
+        {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
+    static const WCHAR modpath_fmt[] =
+        {'M','s','i','E','x','e','c','.','e','x','e',' ',
+         '/','I','[','P','r','o','d','u','c','t','C','o','d','e',']',0};
+    static const WCHAR szModifyPath[] =
+        {'M','o','d','i','f','y','P','a','t','h',0};
+    static const WCHAR szUninstallString[] =
+        {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
+    static const WCHAR szEstimatedSize[] =
+        {'E','s','t','i','m','a','t','e','d','S','i','z','e',0};
+    static const WCHAR szProductLanguage[] =
+        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
+    static const WCHAR szProductVersion[] =
+        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+    static const WCHAR szProductName[] =
+        {'P','r','o','d','u','c','t','N','a','m','e',0};
+    static const WCHAR szDisplayName[] =
+        {'D','i','s','p','l','a','y','N','a','m','e',0};
+    static const WCHAR szDisplayVersion[] =
+        {'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0};
+    static const WCHAR szManufacturer[] =
+        {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+
     static const LPCSTR propval[] = {
         "ARPAUTHORIZEDCDFPREFIX", "AuthorizedCDFPrefix",
         "ARPCONTACT",             "Contact",
@@ -3990,62 +4013,77 @@ static UINT msi_write_uninstall_property_vals( MSIPACKAGE *package, HKEY hkey )
     };
     const LPCSTR *p = propval;
 
-    while( *p )
+    while (*p)
     {
-        prop = strdupAtoW( *p++ );
-        key = strdupAtoW( *p++ );
-        val = msi_dup_property( package, prop );
-        msi_reg_set_val_str( hkey, key, val );
+        prop = strdupAtoW(*p++);
+        key = strdupAtoW(*p++);
+        val = msi_dup_property(package, prop);
+        msi_reg_set_val_str(hkey, key, val);
         msi_free(val);
         msi_free(key);
         msi_free(prop);
     }
+
+    msi_reg_set_val_dword(hkey, szWindowsInstaller, 1);
+
+    size = deformat_string(package, modpath_fmt, &buffer);
+    RegSetValueExW(hkey, szModifyPath, 0, REG_EXPAND_SZ, (LPBYTE)buffer, size);
+    RegSetValueExW(hkey, szUninstallString, 0, REG_EXPAND_SZ, (LPBYTE)buffer, size);
+    msi_free(buffer);
+
+    /* FIXME: Write real Estimated Size when we have it */
+    msi_reg_set_val_dword(hkey, szEstimatedSize, 0);
+
+    buffer = msi_dup_property(package, szProductName);
+    msi_reg_set_val_str(hkey, szDisplayName, buffer);
+    msi_free(buffer);
+
+    buffer = msi_dup_property(package, cszSourceDir);
+    msi_reg_set_val_str(hkey, INSTALLPROPERTY_INSTALLSOURCEW, buffer);
+    msi_free(buffer);
+
+    buffer = msi_dup_property(package, szManufacturer);
+    msi_reg_set_val_str(hkey, INSTALLPROPERTY_PUBLISHERW, buffer);
+    msi_free(buffer);
+
+    GetLocalTime(&systime);
+    sprintfW(date, date_fmt, systime.wYear, systime.wMonth, systime.wDay);
+    msi_reg_set_val_str(hkey, INSTALLPROPERTY_INSTALLDATEW, date);
+
+    langid = msi_get_property_int(package, szProductLanguage, 0);
+    msi_reg_set_val_dword(hkey, INSTALLPROPERTY_LANGUAGEW, langid);
+
+    buffer = msi_dup_property(package, szProductVersion);
+    msi_reg_set_val_str(hkey, szDisplayVersion, buffer);
+    if (buffer)
+    {
+        DWORD verdword = msi_version_str_to_dword(buffer);
+
+        msi_reg_set_val_dword(hkey, INSTALLPROPERTY_VERSIONW, verdword);
+        msi_reg_set_val_dword(hkey, INSTALLPROPERTY_VERSIONMAJORW, verdword >> 24);
+        msi_reg_set_val_dword(hkey, INSTALLPROPERTY_VERSIONMINORW, (verdword >> 16) & 0xFF);
+        msi_free(buffer);
+    }
+
     return ERROR_SUCCESS;
 }
 
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
-    HKEY hkey=0;
-    HKEY hudkey=0, props=0;
-    LPWSTR buffer = NULL;
-    UINT rc;
-    DWORD size, langid;
-    static const WCHAR szWindowsInstaller[] = 
-        {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
-    static const WCHAR szUpgradeCode[] = 
-        {'U','p','g','r','a','d','e','C','o','d','e',0};
-    static const WCHAR modpath_fmt[] = 
-        {'M','s','i','E','x','e','c','.','e','x','e',' ',
-         '/','I','[','P','r','o','d','u','c','t','C','o','d','e',']',0};
-    static const WCHAR szModifyPath[] = 
-        {'M','o','d','i','f','y','P','a','t','h',0};
-    static const WCHAR szUninstallString[] = 
-        {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
-    static const WCHAR szEstimatedSize[] = 
-        {'E','s','t','i','m','a','t','e','d','S','i','z','e',0};
-    static const WCHAR szProductLanguage[] =
-        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
-    static const WCHAR szProductVersion[] =
-        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
-    static const WCHAR szProductName[] =
-        {'P','r','o','d','u','c','t','N','a','m','e',0};
-    static const WCHAR szDisplayName[] =
-        {'D','i','s','p','l','a','y','N','a','m','e',0};
-    static const WCHAR szDisplayVersion[] =
-        {'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0};
-    static const WCHAR szManufacturer[] =
-        {'M','a','n','u','f','a','c','t','u','r','e','r',0};
-
-    SYSTEMTIME systime;
-    static const WCHAR date_fmt[] = {'%','i','%','0','2','i','%','0','2','i',0};
+    WCHAR squashed_pc[SQUISH_GUID_SIZE];
     LPWSTR upgrade_code;
-    WCHAR szDate[9];
+    HKEY hkey, props;
+    HKEY upgrade;
+    UINT rc;
+
+    static const WCHAR szUpgradeCode[] = {
+        'U','p','g','r','a','d','e','C','o','d','e',0};
 
     /* FIXME: also need to publish if the product is in advertise mode */
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
 
-    rc = MSIREG_OpenUninstallKey(package->ProductCode,&hkey,TRUE);
+    rc = MSIREG_OpenUninstallKey(package->ProductCode, &hkey, TRUE);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -4053,91 +4091,37 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     {
         rc = MSIREG_OpenLocalSystemInstallProps(package->ProductCode, &props, TRUE);
         if (rc != ERROR_SUCCESS)
-            return rc;
+            goto done;
     }
     else
     {
         rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &props, TRUE);
         if (rc != ERROR_SUCCESS)
-            return rc;
+            goto done;
     }
 
-    /* dump all the info i can grab */
-    /* FIXME: Flesh out more information */
+    msi_make_package_local(package, props);
 
-    msi_write_uninstall_property_vals( package, hkey );
+    rc = msi_publish_install_properties(package, hkey);
+    if (rc != ERROR_SUCCESS)
+        goto done;
 
-    msi_reg_set_val_dword( hkey, szWindowsInstaller, 1 );
-    
-    msi_make_package_local( package, hkey );
+    rc = msi_publish_install_properties(package, props);
+    if (rc != ERROR_SUCCESS)
+        goto done;
 
-    /* do ModifyPath and UninstallString */
-    size = deformat_string(package,modpath_fmt,&buffer);
-    RegSetValueExW(hkey,szModifyPath,0,REG_EXPAND_SZ,(LPBYTE)buffer,size);
-    RegSetValueExW(hkey,szUninstallString,0,REG_EXPAND_SZ,(LPBYTE)buffer,size);
-    msi_free(buffer);
-
-    /* FIXME: Write real Estimated Size when we have it */
-    msi_reg_set_val_dword( hkey, szEstimatedSize, 0 );
-
-    buffer = msi_dup_property( package, szProductName );
-    msi_reg_set_val_str( props, szDisplayName, buffer );
-    msi_free(buffer);
-
-    buffer = msi_dup_property( package, cszSourceDir );
-    msi_reg_set_val_str( props, INSTALLPROPERTY_INSTALLSOURCEW, buffer);
-    msi_free(buffer);
-
-    buffer = msi_dup_property( package, szManufacturer );
-    msi_reg_set_val_str( props, INSTALLPROPERTY_PUBLISHERW, buffer);
-    msi_free(buffer);
-   
-    GetLocalTime(&systime);
-    sprintfW(szDate,date_fmt,systime.wYear,systime.wMonth,systime.wDay);
-    msi_reg_set_val_str( hkey, INSTALLPROPERTY_INSTALLDATEW, szDate );
-    msi_reg_set_val_str( props, INSTALLPROPERTY_INSTALLDATEW, szDate );
-   
-    langid = msi_get_property_int( package, szProductLanguage, 0 );
-    msi_reg_set_val_dword( hkey, INSTALLPROPERTY_LANGUAGEW, langid );
-
-    buffer = msi_dup_property( package, szProductVersion );
-    msi_reg_set_val_str( props, szDisplayVersion, buffer );
-    if (buffer)
-    {
-        DWORD verdword = msi_version_str_to_dword(buffer);
-
-        msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONW, verdword );
-        msi_reg_set_val_dword( props, INSTALLPROPERTY_VERSIONW, verdword );
-        msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONMAJORW, verdword>>24 );
-        msi_reg_set_val_dword( props, INSTALLPROPERTY_VERSIONMAJORW, verdword>>24 );
-        msi_reg_set_val_dword( hkey, INSTALLPROPERTY_VERSIONMINORW, (verdword>>16)&0x00FF );
-        msi_reg_set_val_dword( props, INSTALLPROPERTY_VERSIONMINORW, (verdword>>16)&0x00FF );
-    }
-    msi_free(buffer);
-    
-    /* Handle Upgrade Codes */
-    upgrade_code = msi_dup_property( package, szUpgradeCode );
+    upgrade_code = msi_dup_property(package, szUpgradeCode);
     if (upgrade_code)
     {
-        HKEY hkey2;
-        WCHAR squashed[33];
-        MSIREG_OpenUpgradeCodesKey(upgrade_code, &hkey2, TRUE);
-        squash_guid(package->ProductCode,squashed);
-        msi_reg_set_val_str( hkey2, squashed, NULL );
-        RegCloseKey(hkey2);
+        MSIREG_OpenUpgradeCodesKey(upgrade_code, &upgrade, TRUE);
+        squash_guid(package->ProductCode, squashed_pc);
+        msi_reg_set_val_str(upgrade, squashed_pc, NULL);
+        RegCloseKey(upgrade);
         msi_free(upgrade_code);
     }
 
+done:
     RegCloseKey(hkey);
-
-    rc = MSIREG_OpenUserDataProductKey(package->ProductCode, &hudkey, TRUE);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    RegCloseKey(hudkey);
-
-    msi_reg_set_val_dword( props, szWindowsInstaller, 1 );
-    RegCloseKey(props);
 
     return ERROR_SUCCESS;
 }
