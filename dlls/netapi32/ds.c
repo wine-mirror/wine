@@ -99,6 +99,7 @@ DWORD WINAPI DsRoleGetPrimaryDomainInformation(
     if (!Buffer) return ERROR_INVALID_PARAMETER;
     if ((InfoLevel < DsRolePrimaryDomainInfoBasic) || (InfoLevel > DsRoleOperationState)) return ERROR_INVALID_PARAMETER;
 
+    *Buffer = NULL;
     switch (InfoLevel)
     {
         case DsRolePrimaryDomainInfoBasic:
