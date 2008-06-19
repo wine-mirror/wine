@@ -963,7 +963,7 @@ xdg_user_dir_lookup_error:
     if (FAILED(hr))
     {
         for (i = 0; i < num_dirs; i++) HeapFree(GetProcessHeap(), 0, out[i]);
-        HeapFree(GetProcessHeap(), 0, out_ptr);
+        HeapFree(GetProcessHeap(), 0, *out_ptr);
     }
     return hr;
 }
