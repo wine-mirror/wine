@@ -10726,7 +10726,7 @@ static void test_menu_messages(void)
 
     set_menu_style(hmenu, 0);
     style = get_menu_style(hmenu);
-    ok(style == 0, "expected MNS_NOTIFYBYPOS, got %u\n", style);
+    ok(style == 0, "expected 0, got %u\n", style);
 
     hmenu_popup = GetSubMenu(hmenu, 0);
     ok(hmenu_popup != 0, "GetSubMenu returned 0 for submenu 0\n");
