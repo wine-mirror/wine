@@ -2751,7 +2751,7 @@ BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD_PTR affmask )
 
     status = NtSetInformationProcess(hProcess, ProcessAffinityMask,
                                      &affmask, sizeof(DWORD_PTR));
-    if (!status)
+    if (status)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
