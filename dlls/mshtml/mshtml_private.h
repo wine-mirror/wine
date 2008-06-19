@@ -519,10 +519,10 @@ IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetLis
 void detach_selection(HTMLDocument*);
 void detach_ranges(HTMLDocument*);
 
-HTMLDOMNode *HTMLDOMTextNode_Create(nsIDOMNode*);
+HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocument*,nsIDOMNode*);
 
-HTMLElement *HTMLElement_Create(nsIDOMNode*);
-HTMLElement *HTMLCommentElement_Create(nsIDOMNode*);
+HTMLElement *HTMLElement_Create(HTMLDocument*,nsIDOMNode*);
+HTMLElement *HTMLCommentElement_Create(HTMLDocument*,nsIDOMNode*);
 HTMLElement *HTMLAnchorElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement*);
@@ -533,6 +533,7 @@ HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTable_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
 
+void HTMLDOMNode_Init(HTMLDocument*,HTMLDOMNode*,nsIDOMNode*);
 void HTMLElement_Init(HTMLElement*);
 void HTMLElement2_Init(HTMLElement*);
 void HTMLTextContainer_Init(HTMLTextContainer*);

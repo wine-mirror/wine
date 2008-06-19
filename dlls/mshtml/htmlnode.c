@@ -705,6 +705,20 @@ static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
     HTMLDOMNode_destructor
 };
 
+void HTMLDOMNode_Init(HTMLDocument *doc, HTMLDOMNode *node, nsIDOMNode *nsnode)
+{
+    node->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
+    node->lpHTMLDOMNode2Vtbl = &HTMLDOMNode2Vtbl;
+    node->ref = 1;
+    node->doc = doc;
+
+    nsIDOMNode_AddRef(nsnode);
+    node->nsnode = nsnode;
+
+    node->next = doc->nodes;
+    doc->nodes = node;
+}
+
 static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
 {
     HTMLDOMNode *ret;
@@ -714,26 +728,19 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
 
     switch(node_type) {
     case ELEMENT_NODE:
-        ret = &HTMLElement_Create(nsnode)->node;
+        ret = &HTMLElement_Create(doc, nsnode)->node;
         break;
     case TEXT_NODE:
-        ret = HTMLDOMTextNode_Create(nsnode);
+        ret = HTMLDOMTextNode_Create(doc, nsnode);
         break;
     case COMMENT_NODE:
-        ret = &HTMLCommentElement_Create(nsnode)->node;
+        ret = &HTMLCommentElement_Create(doc, nsnode)->node;
         break;
     default:
         ret = heap_alloc_zero(sizeof(HTMLDOMNode));
         ret->vtbl = &HTMLDOMNodeImplVtbl;
+        HTMLDOMNode_Init(doc, ret, nsnode);
     }
-
-    ret->lpHTMLDOMNodeVtbl = &HTMLDOMNodeVtbl;
-    ret->lpHTMLDOMNode2Vtbl = &HTMLDOMNode2Vtbl;
-    ret->ref = 1;
-    ret->doc = doc;
-
-    nsIDOMNode_AddRef(nsnode);
-    ret->nsnode = nsnode;
 
     TRACE("type %d ret %p\n", node_type, ret);
 
@@ -748,7 +755,7 @@ static HTMLDOMNode *create_node(HTMLDocument *doc, nsIDOMNode *nsnode)
 
 HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode, BOOL create)
 {
-    HTMLDOMNode *iter = This->nodes, *ret;
+    HTMLDOMNode *iter = This->nodes;
 
     while(iter) {
         if(iter->nsnode == nsnode)
@@ -759,12 +766,7 @@ HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode, BOOL create)
     if(iter || !create)
         return iter;
 
-    ret = create_node(This, nsnode);
-
-    ret->next = This->nodes;
-    This->nodes = ret;
-
-    return ret;
+    return create_node(This, nsnode);
 }
 
 void release_nodes(HTMLDocument *This)

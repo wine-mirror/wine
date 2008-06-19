@@ -1388,7 +1388,7 @@ void HTMLElement_Init(HTMLElement *This)
         init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), &HTMLElement_dispex);
 }
 
-HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
+HTMLElement *HTMLElement_Create(HTMLDocument *doc, nsIDOMNode *nsnode)
 {
     nsIDOMHTMLElement *nselem;
     HTMLElement *ret = NULL;
@@ -1438,11 +1438,14 @@ HTMLElement *HTMLElement_Create(nsIDOMNode *nsnode)
         ret = heap_alloc_zero(sizeof(HTMLElement));
         HTMLElement_Init(ret);
         ret->node.vtbl = &HTMLElementImplVtbl;
-   }
+    }
+
+    TRACE("%s ret %p\n", debugstr_w(class_name), ret);
 
     nsAString_Finish(&class_name_str);
 
     ret->nselem = nselem;
+    HTMLDOMNode_Init(doc, &ret->node, (nsIDOMNode*)nselem);
 
     return ret;
 }
