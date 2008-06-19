@@ -358,7 +358,8 @@ struct IDirect3DDeviceImpl
 };
 
 /* Vtables in various versions */
-const IDirect3DDevice7Vtbl IDirect3DDevice7_Vtbl;
+const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUSetup_Vtbl;
+const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUPreserve_Vtbl;
 const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl;
 const IDirect3DDevice2Vtbl IDirect3DDevice2_Vtbl;
 const IDirect3DDeviceVtbl  IDirect3DDevice1_Vtbl;

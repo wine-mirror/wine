@@ -805,7 +805,11 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
         return DDERR_OUTOFMEMORY;
     }
 
-    ICOM_INIT_INTERFACE(object, IDirect3DDevice7, IDirect3DDevice7_Vtbl);
+    if (This->cooperative_level & DDSCL_FPUPRESERVE)
+        ICOM_INIT_INTERFACE(object, IDirect3DDevice7, IDirect3DDevice7_FPUPreserve_Vtbl);
+    else
+        ICOM_INIT_INTERFACE(object, IDirect3DDevice7, IDirect3DDevice7_FPUSetup_Vtbl);
+
     ICOM_INIT_INTERFACE(object, IDirect3DDevice3, IDirect3DDevice3_Vtbl);
     ICOM_INIT_INTERFACE(object, IDirect3DDevice2, IDirect3DDevice2_Vtbl);
     ICOM_INIT_INTERFACE(object, IDirect3DDevice, IDirect3DDevice1_Vtbl);

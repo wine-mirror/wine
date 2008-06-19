@@ -524,8 +524,6 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         WARN("(%p) Unhandled flag DDSCL_ALLOWMODEX, harmless\n", This);
     if(cooplevel & DDSCL_FPUSETUP)
         WARN("(%p) Unhandled flag DDSCL_FPUSETUP, harmless\n", This);
-    if(cooplevel & DDSCL_FPUPRESERVE)
-        WARN("(%p) Unhandled flag DDSCL_FPUPRESERVE, harmless\n", This);
 
     /* Store the cooperative_level */
     This->cooperative_level |= cooplevel;
