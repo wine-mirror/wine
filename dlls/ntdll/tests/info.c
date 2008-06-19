@@ -243,20 +243,20 @@ static void test_query_process(void)
     } SYSTEM_PROCESS_INFORMATION_PRIVATE, *PSYSTEM_PROCESS_INFORMATION_PRIVATE;
 
     ULONG SystemInformationLength = sizeof(SYSTEM_PROCESS_INFORMATION_PRIVATE);
-    SYSTEM_PROCESS_INFORMATION_PRIVATE* spi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
+    SYSTEM_PROCESS_INFORMATION_PRIVATE *spi, *spi_buf = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
 
     /* Only W2K3 returns the needed length, the rest returns 0, so we have to loop */
 
     for (;;)
     {
-        status = pNtQuerySystemInformation(SystemProcessInformation, spi, SystemInformationLength, &ReturnLength);
+        status = pNtQuerySystemInformation(SystemProcessInformation, spi_buf, SystemInformationLength, &ReturnLength);
 
         if (status != STATUS_INFO_LENGTH_MISMATCH) break;
         
-        spi = HeapReAlloc(GetProcessHeap(), 0, spi , SystemInformationLength *= 2);
+        spi_buf = HeapReAlloc(GetProcessHeap(), 0, spi_buf , SystemInformationLength *= 2);
     }
-
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    spi = spi_buf;
 
     /* Get the first dwOffset, from this we can deduce the OS version we're running
      *
@@ -320,7 +320,7 @@ static void test_query_process(void)
 
     if (one_before_last_pid == 0) one_before_last_pid = last_pid;
 
-    HeapFree( GetProcessHeap(), 0, spi);
+    HeapFree( GetProcessHeap(), 0, spi_buf);
 }
 
 static void test_query_procperf(void)
