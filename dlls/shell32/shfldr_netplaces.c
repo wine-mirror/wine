@@ -73,7 +73,7 @@ static const IPersistFolder2Vtbl vt_NP_PersistFolder2;
 #define _IShellFolder_(This)	(IShellFolder*)&(This->lpVtbl)
 #define _IPersistFolder2_(This)	(IPersistFolder2*)&(This->lpVtblPersistFolder2)
 
-static shvheader NetworkPlacesSFHeader[] = {
+static const shvheader NetworkPlacesSFHeader[] = {
     {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
     {IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10}
 };
