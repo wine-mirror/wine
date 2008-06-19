@@ -4125,11 +4125,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         squash_guid(package->ProductCode,squashed);
         msi_reg_set_val_str( hkey2, squashed, NULL );
         RegCloseKey(hkey2);
-        MSIREG_OpenUserUpgradeCodesKey(upgrade_code, &hkey2, TRUE);
-        squash_guid(package->ProductCode,squashed);
-        msi_reg_set_val_str( hkey2, squashed, NULL );
-        RegCloseKey(hkey2);
-
         msi_free(upgrade_code);
     }
 

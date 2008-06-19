@@ -2235,6 +2235,8 @@ static void test_publish_registerproduct(void)
                                    "\\UserData\\%s\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB";
     static const CHAR ugkey[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Installer"
                                 "\\UpgradeCodes\\51AAE0C44620A5E4788506E91F249BD2";
+    static const CHAR userugkey[] = "Software\\Microsoft\\Installer\\UpgradeCodes"
+                                    "\\51AAE0C44620A5E4788506E91F249BD2";
 
     get_user_sid(&usersid);
     get_date_str(date);
@@ -2252,6 +2254,9 @@ static void test_publish_registerproduct(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, userugkey, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, uninstall, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
