@@ -3733,19 +3733,35 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
     UINT rc;
-    HKEY hukey=0;
-    HKEY userdata=0;
+    HKEY hkey;
+    HKEY userdata;
 
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
 
-    rc = MSIREG_OpenUserFeaturesKey(package->ProductCode,&hukey,TRUE);
-    if (rc != ERROR_SUCCESS)
-        goto end;
+    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        rc = MSIREG_OpenLocalClassesFeaturesKey(package->ProductCode,
+                                                &hkey, TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
 
-    rc = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, &userdata, TRUE);
-    if (rc != ERROR_SUCCESS)
-        goto end;
+        rc = MSIREG_OpenLocalUserDataFeaturesKey(package->ProductCode,
+                                                 &userdata, TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+    }
+    else
+    {
+        rc = MSIREG_OpenUserFeaturesKey(package->ProductCode, &hkey, TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+
+        rc = MSIREG_OpenUserDataFeaturesKey(package->ProductCode,
+                                            &userdata, TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+    }
 
     /* here the guids are base 85 encoded */
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
@@ -3806,7 +3822,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         {
             static const WCHAR emptyW[] = {0};
             size += sizeof(WCHAR);
-            RegSetValueExW(hukey,feature->Feature,0,REG_SZ,
+            RegSetValueExW(hkey,feature->Feature,0,REG_SZ,
                            (LPBYTE)(feature->Feature_Parent ? feature->Feature_Parent : emptyW),size);
         }
         else
@@ -3817,7 +3833,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             data[1] = 0;
             if (feature->Feature_Parent)
                 strcpyW( &data[1], feature->Feature_Parent );
-            RegSetValueExW(hukey,feature->Feature,0,REG_SZ,
+            RegSetValueExW(hkey,feature->Feature,0,REG_SZ,
                        (LPBYTE)data,size);
             msi_free(data);
         }
@@ -3831,7 +3847,8 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     }
 
 end:
-    RegCloseKey(hukey);
+    RegCloseKey(hkey);
+    RegCloseKey(userdata);
     return rc;
 }
 

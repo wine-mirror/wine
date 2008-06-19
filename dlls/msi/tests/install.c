@@ -2500,6 +2500,8 @@ static void test_publish_publishfeatures(void)
                                  "\\84A88FD7F6998CE40A22FB59F6B9C2BB\\Features";
     static const CHAR featkey[] = "Software\\Microsoft\\Windows\\CurrentVersion"
                                   "\\Installer\\Features";
+    static const CHAR classfeat[] = "Software\\Classes\\Installer\\Features"
+                                    "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
 
     get_user_sid(&usersid);
     if (!usersid)
@@ -2524,6 +2526,9 @@ static void test_publish_publishfeatures(void)
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, featkey, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, classfeat, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
     res = RegOpenKeyA(HKEY_CURRENT_USER, cupath, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
@@ -2536,6 +2541,41 @@ static void test_publish_publishfeatures(void)
     RegCloseKey(hkey);
 
     sprintf(keypath, udpath, usersid);
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(hkey, "feature", "VGtfp^p+,?82@JU1j_KE");
+    CHECK_REG_STR(hkey, "montecristo", "VGtfp^p+,?82@JU1j_KE");
+
+    RegDeleteValueA(hkey, "feature");
+    RegDeleteValueA(hkey, "montecristo");
+    RegDeleteKeyA(hkey, "");
+    RegCloseKey(hkey);
+
+    /* PublishFeatures, machine */
+    r = MsiInstallProductA(msifile, "PUBLISH_FEATURES=1 ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, featkey, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, cupath, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, classfeat, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_REG_STR(hkey, "feature", "");
+    CHECK_REG_STR(hkey, "montecristo", "");
+
+    RegDeleteValueA(hkey, "feature");
+    RegDeleteValueA(hkey, "montecristo");
+    RegDeleteKeyA(hkey, "");
+    RegCloseKey(hkey);
+
+    sprintf(keypath, udpath, "S-1-5-18");
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 

@@ -204,6 +204,12 @@ static const WCHAR szInstaller_LocalClassesProd_fmt[] = {
 'I','n','s','t','a','l','l','e','r','\\',
 'P','r','o','d','u','c','t','s','\\','%','s',0};
 
+static const WCHAR szInstaller_LocalClassesFeat_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'C','l','a','s','s','e','s','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'F','e','a','t','u','r','e','s','\\','%','s',0};
+
 static const WCHAR szInstaller_LocalManagedProd_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -647,6 +653,24 @@ UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_OpenLocalUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n", debugstr_w(szProduct));
+    if (!squash_guid(szProduct, squished_pc))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath, szUserDataFeatures_fmt, localsid, squished_pc);
+
+    if (create)
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+}
+
 UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
 {
     UINT rc;
@@ -1009,6 +1033,26 @@ UINT MSIREG_OpenLocalClassesProductKey(LPCWSTR szProductCode, HKEY *key, BOOL cr
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath, szInstaller_LocalClassesProd_fmt, squished_pc);
+
+    if (create)
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+}
+
+UINT MSIREG_OpenLocalClassesFeaturesKey(LPCWSTR szProductCode, HKEY *key, BOOL create)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n", debugstr_w(szProductCode));
+
+    if (!squash_guid(szProductCode, squished_pc))
+        return ERROR_FUNCTION_FAILED;
+
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath, szInstaller_LocalClassesFeat_fmt, squished_pc);
 
     if (create)
         return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
