@@ -435,7 +435,7 @@ static const WCHAR HELPMSGSTRINGW[] = { 'c','o','m','m','d','l','g','_',
 #define CDM_GETSPEC             (CDM_FIRST + 0x0000)
 #define CDM_GETFILEPATH         (CDM_FIRST + 0x0001)
 #define CDM_GETFOLDERPATH       (CDM_FIRST + 0x0002)
-#define CDM_GETFOLDERLIST       (CDM_FIRST + 0x0003)
+#define CDM_GETFOLDERIDLIST     (CDM_FIRST + 0x0003)
 #define CDM_SETCONTROLTEXT      (CDM_FIRST + 0x0004)
 #define CDM_HIDECONTROL         (CDM_FIRST + 0x0005)
 #define CDM_SETDEFEXT           (CDM_FIRST + 0x0006)

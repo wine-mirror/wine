@@ -928,6 +928,12 @@ static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM
             retval = lstrlenW(lpstrPath);
             break;
 
+        case CDM_GETFOLDERIDLIST:
+            retval = COMDLG32_PIDL_ILGetSize(fodInfos->ShellInfos.pidlAbsCurrent);
+            if (retval <= wParam)
+                memcpy((void*)lParam, fodInfos->ShellInfos.pidlAbsCurrent, retval);
+            break;
+
         case CDM_GETSPEC:
             TRACE("CDM_GETSPEC:\n");
             retval = SendMessageW(fodInfos->DlgInfos.hwndFileName, WM_GETTEXTLENGTH, 0, 0) + 1;

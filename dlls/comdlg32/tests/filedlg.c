@@ -35,6 +35,16 @@ static UINT CALLBACK OFNHookProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPa
         if( nmh->code == CDN_INITDONE)
         {
             PostMessage( GetParent(hDlg), WM_COMMAND, IDCANCEL, FALSE);
+        } else if (nmh->code == CDN_FOLDERCHANGE )
+        {
+            char buf[1024];
+            int ret;
+
+            memset(buf, 0x66, sizeof(buf));
+            ret = SendMessage( GetParent(hDlg), CDM_GETFOLDERIDLIST, 5, (LPARAM)buf);
+            ok(ret > 0, "CMD_GETFOLDERIDLIST not implemented\n");
+            if (ret > 5)
+                ok(buf[0] == 0x66 && buf[1] == 0x66, "CMD_GETFOLDERIDLIST: The buffer was touched on failure\n");
         }
     }
 
@@ -47,6 +57,9 @@ static void test_DialogCancel(void)
     OPENFILENAMEA ofn;
     BOOL result;
     char szFileName[MAX_PATH] = "";
+    char szInitialDir[MAX_PATH];
+
+    GetWindowsDirectory(szInitialDir, MAX_PATH);
 
     ZeroMemory(&ofn, sizeof(ofn));
 
@@ -58,6 +71,7 @@ static void test_DialogCancel(void)
     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLEHOOK;
     ofn.lpstrDefExt = "txt";
     ofn.lpfnHook = (LPOFNHOOKPROC) OFNHookProc;
+    ofn.lpstrInitialDir = szInitialDir;
 
     PrintDlgA(NULL);
     ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
