@@ -70,7 +70,7 @@ static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dw
     INFCONTEXT context;
     WCHAR key[MAX_PATH + 2], value[MAX_PATH + 2];
     WCHAR prefix[PREFIX_LEN + 2];
-    HKEY root, subkey;
+    HKEY root, subkey = 0;
     DWORD size;
 
     static const WCHAR hklm[] = {'H','K','L','M',0};
@@ -102,7 +102,7 @@ static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dw
         strip_quotes(pszBuffer, &size);
     }
 
-    RegCloseKey(subkey);
+    if (subkey) RegCloseKey(subkey);
 }
 
 /* loads the LDIDs specified in the install section of an INF */
