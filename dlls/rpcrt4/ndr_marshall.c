@@ -110,6 +110,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
         ERR("buffer overflow %d bytes\n", _Msg->Buffer - ((unsigned char *)_Msg->RpcMsg->Buffer + _Msg->BufferLength)); \
   } while (0)
 
+#define NDR_POINTER_ID_BASE 0x20000
+#define NDR_POINTER_ID(pStubMsg) (NDR_POINTER_ID_BASE + ((pStubMsg)->UniquePtrCount++) * 4)
 #define NDR_TABLE_SIZE 128
 #define NDR_TABLE_MASK 127
 
@@ -1221,7 +1223,7 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pointer_needs_marshaling = 1;
     else
       pointer_needs_marshaling = 0;
-    pointer_id = (ULONG)Pointer;
+    pointer_id = Pointer ? NDR_POINTER_ID(pStubMsg) : 0;
     TRACE("writing 0x%08x to buffer\n", pointer_id);
     NDR_LOCAL_UINT32_WRITE(Buffer, pointer_id);
     break;
