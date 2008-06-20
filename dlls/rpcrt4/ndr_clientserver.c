@@ -69,6 +69,7 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
   pStubMsg->PointerBufferMark = NULL;
   pStubMsg->fBufferValid = 0;
   pStubMsg->uFlags = 0;
+  pStubMsg->UniquePtrCount = 0;
   pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
   pStubMsg->pfnFree = pStubDesc->pfnFree;
   pStubMsg->StackTop = NULL;
