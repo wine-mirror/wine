@@ -903,23 +903,8 @@ static void testDevRegKey(void)
     HDEVINFO set;
     HKEY key = NULL;
 
-    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
-     !pSetupDiCreateDeviceInfoA || !pSetupDiOpenDevRegKey ||
-     !pSetupDiRegisterDeviceInfo || !pSetupDiCreateDevRegKeyW ||
-     !pSetupDiCallClassInstaller)
-    {
-        skip("No SetupDiOpenDevRegKey\n");
-        return;
-    }
-
-    /* Check if we are on win9x */
     SetLastError(0xdeadbeef);
     key = pSetupDiCreateDevRegKeyW(NULL, NULL, 0, 0, 0, NULL, NULL);
-    if (key == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        skip("We are on win9x where the tests introduce issues\n");
-        return;
-    }
     ok(key == INVALID_HANDLE_VALUE,
      "Expected INVALID_HANDLE_VALUE, got %p\n", key);
     ok(GetLastError() == ERROR_INVALID_HANDLE,
