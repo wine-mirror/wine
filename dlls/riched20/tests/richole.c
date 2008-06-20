@@ -29,7 +29,11 @@
 #include <ole2.h>
 #include <richedit.h>
 #include <richole.h>
+#include <tom.h>
 #include <wine/test.h>
+
+#include <initguid.h>
+DEFINE_GUID(IID_ITextDocument, 0x8cc497c0, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 
 static HMODULE hmoduleRichEdit;
 
@@ -52,6 +56,8 @@ static HWND new_richedit(HWND parent)
 START_TEST(richole)
 {
   IRichEditOle *reOle = NULL;
+  ITextDocument *txtDoc = NULL;
+  HRESULT hres;
   LRESULT res;
   HWND w;
 
@@ -70,6 +76,12 @@ START_TEST(richole)
   ok(res, "SendMessage\n");
   ok(reOle != NULL, "EM_GETOLEINTERFACE\n");
 
+  hres = IUnknown_QueryInterface(reOle, &IID_ITextDocument,
+                                 (void **) &txtDoc);
+  ok(hres == S_OK, "IRichEditOle_QueryInterface\n");
+  ok(txtDoc != NULL, "IRichEditOle_QueryInterface\n");
+
+  ITextDocument_Release(txtDoc);
   IUnknown_Release(reOle);
   DestroyWindow(w);
 }
