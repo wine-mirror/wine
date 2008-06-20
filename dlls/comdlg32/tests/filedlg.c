@@ -86,6 +86,24 @@ static void test_DialogCancel(void)
     ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
               CDERR_INITIALIZATION, CommDlgExtendedError());
 
+    result = GetSaveFileNameA(&ofn);
+    ok(0 == result, "expected %d, got %d\n", 0, result);
+    ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
+       CommDlgExtendedError());
+
+    PrintDlgA(NULL);
+    ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
+              CDERR_INITIALIZATION, CommDlgExtendedError());
+
+    /* Before passing the ofn to Unicode functions, remove the ANSI strings */
+    ofn.lpstrFilter = NULL;
+    ofn.lpstrInitialDir = NULL;
+    ofn.lpstrDefExt = NULL;
+
+    PrintDlgA(NULL);
+    ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
+              CDERR_INITIALIZATION, CommDlgExtendedError());
+
     SetLastError(0xdeadbeef);
     result = GetOpenFileNameW((LPOPENFILENAMEW) &ofn);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
@@ -96,19 +114,6 @@ static void test_DialogCancel(void)
         ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
            CommDlgExtendedError());
     }
-
-    PrintDlgA(NULL);
-    ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
-              CDERR_INITIALIZATION, CommDlgExtendedError());
-
-    result = GetSaveFileNameA(&ofn);
-    ok(0 == result, "expected %d, got %d\n", 0, result);
-    ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
-       CommDlgExtendedError());
-
-    PrintDlgA(NULL);
-    ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
-              CDERR_INITIALIZATION, CommDlgExtendedError());
 
     SetLastError(0xdeadbeef);
     result = GetSaveFileNameW((LPOPENFILENAMEW) &ofn);
