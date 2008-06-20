@@ -460,6 +460,48 @@ static const struct message WmShowMaxOverlappedSeq[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
+/* ShowWindow(SW_RESTORE) for a not visible maximized overlapped window */
+static const struct message WmShowRestoreMaxOverlappedSeq[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
+    { WM_GETTEXT, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
+    { 0 }
+};
+/* ShowWindow(SW_RESTORE) for a not visible minimized overlapped window */
+static const struct message WmShowRestoreMinOverlappedSeq[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
+    { WM_QUERYOPEN, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED|SWP_NOCOPYBITS },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_STATECHANGED|SWP_FRAMECHANGED|SWP_NOCOPYBITS },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { 0 }
+};
 /* ShowWindow(SW_SHOWMINIMIZED) for a not visible overlapped window */
 static const struct message WmShowMinOverlappedSeq[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
@@ -4124,7 +4166,7 @@ static void test_messages(void)
     ok_sequence(WmShowMaxOverlappedSeq, "ShowWindow(SW_SHOWMAXIMIZED):overlapped", TRUE);
 
     ShowWindow(hwnd, SW_RESTORE);
-    /* FIXME: add ok_sequence() here */
+    ok_sequence(WmShowRestoreMaxOverlappedSeq, "ShowWindow(SW_RESTORE):overlapped", FALSE);
     flush_sequence();
 
     ShowWindow(hwnd, SW_MINIMIZE);
@@ -4132,7 +4174,7 @@ static void test_messages(void)
     flush_sequence();
 
     ShowWindow(hwnd, SW_RESTORE);
-    /* FIXME: add ok_sequence() here */
+    ok_sequence(WmShowRestoreMinOverlappedSeq, "ShowWindow(SW_RESTORE):overlapped", TRUE);
     flush_sequence();
 
     ShowWindow(hwnd, SW_SHOW);
