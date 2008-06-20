@@ -1272,11 +1272,6 @@ static void testDeviceRegistryPropertyW()
 
     SetLastError(0xdeadbeef);
     set = pSetupDiGetClassDevsW(&guid, NULL, 0, DIGCF_DEVICEINTERFACE);
-    if (set == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        skip("W-functions are not implemented\n");
-        return;
-    }
     ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsW failed: %08x\n",
      GetLastError());
     SetLastError(0xdeadbeef);
