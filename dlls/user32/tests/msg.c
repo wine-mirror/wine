@@ -1521,7 +1521,9 @@ static int log_all_parent_messages;
 
 /* user32 functions */
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
+static BOOL (WINAPI *pGetMenuInfo)(HMENU,LPCMENUINFO);
 static void (WINAPI *pNotifyWinEvent)(DWORD, HWND, LONG, LONG);
+static BOOL (WINAPI *pSetMenuInfo)(HMENU,LPCMENUINFO);
 static HWINEVENTHOOK (WINAPI *pSetWinEventHook)(DWORD, DWORD, HMODULE, WINEVENTPROC, DWORD, DWORD, DWORD);
 static BOOL (WINAPI *pTrackMouseEvent)(TRACKMOUSEEVENT*);
 static BOOL (WINAPI *pUnhookWinEvent)(HWINEVENTHOOK);
@@ -1540,7 +1542,9 @@ static void init_procs(void)
     }
 
     GET_PROC(user32, GetAncestor)
+    GET_PROC(user32, GetMenuInfo)
     GET_PROC(user32, NotifyWinEvent)
+    GET_PROC(user32, SetMenuInfo)
     GET_PROC(user32, SetWinEventHook)
     GET_PROC(user32, TrackMouseEvent)
     GET_PROC(user32, UnhookWinEvent)
@@ -10574,7 +10578,7 @@ static void set_menu_style(HMENU hmenu, DWORD style)
     mi.fMask = MIM_STYLE;
     mi.dwStyle = style;
     SetLastError(0xdeadbeef);
-    ret = SetMenuInfo(hmenu, &mi);
+    ret = pSetMenuInfo(hmenu, &mi);
     ok(ret, "SetMenuInfo error %u\n", GetLastError());
 }
 
@@ -10587,7 +10591,7 @@ static DWORD get_menu_style(HMENU hmenu)
     mi.fMask = MIM_STYLE;
     mi.dwStyle = 0;
     SetLastError(0xdeadbeef);
-    ret = GetMenuInfo(hmenu, &mi);
+    ret = pGetMenuInfo(hmenu, &mi);
     ok(ret, "GetMenuInfo error %u\n", GetLastError());
 
     return mi.dwStyle;
@@ -10601,6 +10605,11 @@ static void test_menu_messages(void)
     HWND hwnd;
     DWORD style;
 
+    if (!pGetMenuInfo || !pSetMenuInfo)
+    {
+        skip("GetMenuInfo and/or SetMenuInfo are not available\n");
+        return;
+    }
     cls.style = 0;
     cls.lpfnWndProc = parent_menu_proc;
     cls.cbClsExtra = 0;
