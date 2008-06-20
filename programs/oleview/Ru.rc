@@ -1,0 +1,213 @@
+/*
+ * OleView (Ru.rc)
+ * Russian Language Support
+ *
+ * Copyright 2008 Vladimir Pankratov
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_RUSSIAN
+
+IDM_MENU MENU
+{
+    POPUP "&Файл"
+    {
+        MENUITEM "П&ривязать к файлу...",    IDM_BIND
+        MENUITEM "&Просмотр TypeLib...",    IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "&Конфигурация системы...",    IDM_SYSCONF
+        MENUITEM "&Запустить Редактор реестра",    IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Выход",    IDM_EXIT
+    }
+    POPUP "&Обьект"
+    {
+        POPUP "&CoCreateInstance Flag"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER",        IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "Просмотр &Type info",    IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Create &Instance",    IDM_CREATEINST, GRAYED
+        MENUITEM "Create Instance &On...",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&Release Instance",    IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Копировать C&LSID в буфер",    IDM_COPYCLSID, GRAYED
+        MENUITEM "Копировать &HTML object Tag в буфер", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Вид...",    IDM_VIEW, GRAYED
+    }
+    POPUP "&Вид"
+    {
+        MENUITEM "&Режим эксперта",    IDM_EXPERT,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Hidden component categories",    IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Панель инструментов",    IDM_TOOLBAR,CHECKED
+        MENUITEM "&Строка состояния",    IDM_STATUSBAR,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Обновить\tF5",    IDM_REFRESH
+    }
+    POPUP "&Помощь"
+    {
+        MENUITEM "&О программе...",    IDM_ABOUT
+    }
+}
+
+IDM_TYPELIB MENU
+{
+    POPUP "&Файл"
+    {
+        MENUITEM "&Сохранить как...",    IDM_SAVEAS
+        MENUITEM "&Закрыть",  IDM_CLOSE
+    }
+    POPUP "&Вид"
+    {
+        MENUITEM "&Group by type kind", IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "&Панель инструментов",    IDM_TOOLBAR
+        MENUITEM "&Строка состояния", IDM_STATUSBAR,CHECKED
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OleView"
+    IDS_APPTITLE           "OleView"
+    IDS_READY              "Готово"
+    IDS_ABOUT              "OleView - OLE/COM Object Viewer"
+    IDS_ABOUTVER           "версия 1.0"
+    IDS_TYPELIBTITLE       "ITypeLib viewer"
+    IDS_OPEN               "Открыть"
+    IDS_OPEN_TYPELIB_FILTER "Файлы TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
+
+    IDM_BIND,              "Bind to file via a File Moniker"
+    IDM_TYPELIB,           "Open a TypeLib file and view the contents"
+    IDM_SYSCONF,           "Change machine wide Distributed COM settings"
+    IDM_REGEDIT,           "Запустить Редактор реестра Wine"
+    IDM_EXIT,              "Выйти из приложения с предложением сохранить изменения"
+    IDM_CREATEINST,        "Create an instance of the selected object"
+    IDM_CREATEINSTON,      "Create an instance of the selected object on a specyfic machine"
+    IDM_RELEASEINST,       "Release the currently selected object instance"
+    IDM_COPYCLSID,         "Копировать GUID выделенного элемента в буфер"
+    IDM_VIEW,              "Display the viewer for the selected item"
+    IDM_FLAG_INSERV,       "Использовать CLSCTX_INPROC_SERVER при вызове CoGetClassObject"
+    IDM_FLAG_INHANDL,      "Использовать CLSCTX_INPROC_HANDLER при вызове CoGetClassObject"
+    IDM_FLAG_LOCSERV,      "Использовать CLSCTX_LOCAL_SERVER при вызове CoGetClassObject"
+    IDM_FLAG_REMSERV,      "Использовать CLSCTX_REMOTE_SERVER при вызове CoGetClassObject"
+    IDM_EXPERT,            "Переключиться между режимом эксперт/новичок"
+    IDM_HIDDEN,            "Toggle the display of component categories that are not meant to be visible"
+    IDM_TOOLBAR,           "Показать/скрыть панель инструментов"
+    IDM_STATUSBAR,         "Показать/скрыть строку состояния"
+    IDM_REFRESH,           "Обновить все списки"
+    IDM_ABOUT,             "Отобразить информацию о программе, номер версии и копирайт"
+
+    IDM_SAVEAS,            "Сохранить как .IDL или .H файл"
+    IDM_CLOSE,             "Закрыть окно"
+    IDM_GROUP,             "Group typeinfos by kind"
+
+    IDS_TREE_OC,           "ObjectClasses"
+    IDS_TREE_GBCC,         "Grouped by Component Category"
+    IDS_TREE_O1O,          "Объекты OLE 1.0"
+    IDS_TREE_CLO,          "Объекты библиотеки COM"
+    IDS_TREE_AO,           "Все объекты"
+    IDS_TREE_AID,          "ID приложения"
+    IDS_TREE_TL,           "Type Libraries"
+    IDS_TL_VER,            "вер."
+    IDS_TREE_I,            "Интерфейсы"
+
+    IDS_TAB_REG,           "Реестр"
+    IDS_TAB_IMPL,          "Implementation"
+    IDS_TAB_ACTIV,         "Activation"
+
+    IDS_CGCOFAIL,          "CoGetClassObject failed."
+    IDS_ERROR_UNKN,        "Неизвестная ошибка"
+    IDS_TRUE,              "True"
+    IDS_FALSE,             "False"
+    IDS_BYTES,             "байт"
+
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) failed ($%x)"
+    IDS_INHERITINTERFACES, "Inherited Interfaces"
+}
+
+DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Подключиться к другому компьютеру"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "&Имя компьютера:", IDIGNORE, 5, 6, 190, 8
+    EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&OK", IDOK, 200, 5, 45, 14
+    PUSHBUTTON  "&Отмена", IDCANCEL, 200, 22, 45, 14
+}
+
+DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Конфигурация системы"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Настройки системы", IDIGNORE, 5, 6, 160, 8
+    CHECKBOX    "&Разрешить распределенный COM", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "Разрешить &удаленные подключения (только Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "Эти настройки изменяют только значения реестра и не оказывают влияния на производительность Wine.", IDIGNORE, 5, 50, 160, 40
+    DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
+    PUSHBUTTON  "&Отмена", IDCANCEL, 120, 80, 45, 14
+}
+
+DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Default Interface Viewer"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Интерфейс", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Закрыть", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&View Type Info", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersist Interface Viewer"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Имя класса:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Закрыть", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersistStream Interface Viewer"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Имя класса:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Закрыть", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+    PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
+}
