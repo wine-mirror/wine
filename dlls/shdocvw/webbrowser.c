@@ -165,16 +165,29 @@ static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
 static HRESULT WINAPI WebBrowser_GetTypeInfoCount(IWebBrowser2 *iface, UINT *pctinfo)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pctinfo);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_GetTypeInfo(IWebBrowser2 *iface, UINT iTInfo, LCID lcid,
                                      LPTYPEINFO *ppTInfo)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    ITypeInfo *typeinfo;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %d %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hres = get_typeinfo(&typeinfo);
+    if(FAILED(hres))
+        return hres;
+
+    ITypeInfo_AddRef(typeinfo);
+    *ppTInfo = typeinfo;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_GetIDsOfNames(IWebBrowser2 *iface, REFIID riid,
@@ -182,9 +195,17 @@ static HRESULT WINAPI WebBrowser_GetIDsOfNames(IWebBrowser2 *iface, REFIID riid,
                                        LCID lcid, DISPID *rgDispId)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%s %p %d %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-            lcid, rgDispId);
-    return E_NOTIMPL;
+    ITypeInfo *typeinfo;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %d %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+
+    hres = get_typeinfo(&typeinfo);
+    if(FAILED(hres))
+        return hres;
+
+    return ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
 }
 
 static HRESULT WINAPI WebBrowser_Invoke(IWebBrowser2 *iface, DISPID dispIdMember,
