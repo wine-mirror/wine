@@ -664,6 +664,7 @@
 @ stub RtlInitializeContext
 @ stdcall RtlInitializeCriticalSection(ptr)
 @ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long)
+@ stdcall RtlInitializeCriticalSectionEx(ptr long long)
 @ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr)
 # @ stub RtlInitializeGenericTableAvl
 @ stdcall RtlInitializeHandleTable(long long ptr)

@@ -247,13 +247,14 @@ static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
  *  STATUS_SUCCESS.
  *
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSectionAndSpinCount(), RtlDeleteCriticalSection(),
  *  RtlEnterCriticalSection(), RtlLeaveCriticalSection(),
  *  RtlTryEnterCriticalSection(), RtlSetCriticalSectionSpinCount()
  */
 NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    return RtlInitializeCriticalSectionAndSpinCount( crit, 0 );
+    return RtlInitializeCriticalSectionEx( crit, 0, 0 );
 }
 
 /***********************************************************************
@@ -272,13 +273,53 @@ NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
  *  Available on NT4 SP3 or later.
  *
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSection(), RtlDeleteCriticalSection(),
  *  RtlEnterCriticalSection(), RtlLeaveCriticalSection(),
  *  RtlTryEnterCriticalSection(), RtlSetCriticalSectionSpinCount()
  */
 NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
 {
-    crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_CRITICAL_SECTION_DEBUG));
+    return RtlInitializeCriticalSectionEx( crit, spincount, 0 );
+}
+
+/***********************************************************************
+ *           RtlInitializeCriticalSectionEx   (NTDLL.@)
+ *
+ * Initialises a new critical section with a given spin count and flags.
+ *
+ * PARAMS
+ *   crit      [O] Critical section to initialise.
+ *   spincount [I] Number of times to spin upon contention.
+ *   flags     [I] RTL_CRITICAL_SECTION_FLAG_ flags from winnt.h.
+ *
+ * RETURNS
+ *  STATUS_SUCCESS.
+ *
+ * NOTES
+ *  Available on Vista or later.
+ *
+ * SEE
+ *  RtlInitializeCriticalSection(), RtlDeleteCriticalSection(),
+ *  RtlEnterCriticalSection(), RtlLeaveCriticalSection(),
+ *  RtlTryEnterCriticalSection(), RtlSetCriticalSectionSpinCount()
+ */
+NTSTATUS WINAPI RtlInitializeCriticalSectionEx( RTL_CRITICAL_SECTION *crit, ULONG spincount, ULONG flags )
+{
+    if (flags & (RTL_CRITICAL_SECTION_FLAG_DYNAMIC_SPIN|RTL_CRITICAL_SECTION_FLAG_STATIC_INIT))
+        FIXME("(%p,%u,0x%08x) semi-stub\n", crit, spincount, flags);
+
+    /* FIXME: if RTL_CRITICAL_SECTION_FLAG_STATIC_INIT is given, we should use
+     * memory from a static pool to hold the debug info. Then heap.c could pass
+     * this flag rather than initialising the process heap CS by hand. If this
+     * is done, then debug info should be managed through Rtlp[Allocate|Free]DebugInfo
+     * so (e.g.) MakeCriticalSectionGlobal() doesn't free it using HeapFree().
+     */
+    if (flags & RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO)
+        crit->DebugInfo = NULL;
+    else
+        crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_CRITICAL_SECTION_DEBUG));
+
     if (crit->DebugInfo)
     {
         crit->DebugInfo->Type = 0;
@@ -315,6 +356,7 @@ NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *
  *  If the system is not SMP, spincount is ignored and set to 0.
  *
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
  *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
  *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
@@ -339,6 +381,7 @@ ULONG WINAPI RtlSetCriticalSectionSpinCount( RTL_CRITICAL_SECTION *crit, ULONG s
  *  STATUS_SUCCESS.
  *
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
  *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
  *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
@@ -380,6 +423,7 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
  *  faster.
  *
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
  *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
  *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
@@ -442,6 +486,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
  *  faster.
  *
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
  *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
  *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
@@ -473,6 +518,7 @@ NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
  *  STATUS_SUCCESS. The critical section is held by the caller.
  *  
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
  *  RtlDeleteCriticalSection(), RtlSetCriticalSectionSpinCount(),
  *  RtlLeaveCriticalSection(), RtlTryEnterCriticalSection()
@@ -526,6 +572,7 @@ done:
  *  Failure: FALSE. The critical section is currently held by another thread.
  *
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
  *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
  *  RtlLeaveCriticalSection(), RtlSetCriticalSectionSpinCount()
@@ -561,6 +608,7 @@ BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
  *  STATUS_SUCCESS.
  *
  * SEE
+ *  RtlInitializeCriticalSectionEx(),
  *  RtlInitializeCriticalSection(), RtlInitializeCriticalSectionAndSpinCount(),
  *  RtlDeleteCriticalSection(), RtlEnterCriticalSection(),
  *  RtlSetCriticalSectionSpinCount(), RtlTryEnterCriticalSection()
