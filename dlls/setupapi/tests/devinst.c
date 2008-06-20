@@ -598,12 +598,6 @@ static void testRegisterDeviceInfo(void)
     BOOL ret;
     HDEVINFO set;
 
-    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
-     !pSetupDiRegisterDeviceInfo)
-    {
-        skip("No SetupDiRegisterDeviceInfo\n");
-        return;
-    }
     SetLastError(0xdeadbeef);
     ret = pSetupDiRegisterDeviceInfo(NULL, NULL, 0, NULL, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
