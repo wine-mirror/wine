@@ -4141,6 +4141,9 @@ static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
         return FALSE;
     lpwhr->nCustHeaders--;
 
+    HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[index].lpszField);
+    HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders[index].lpszValue);
+
     memmove( &lpwhr->pCustHeaders[index], &lpwhr->pCustHeaders[index+1],
              (lpwhr->nCustHeaders - index)* sizeof(HTTPHEADERW) );
     memset( &lpwhr->pCustHeaders[lpwhr->nCustHeaders], 0, sizeof(HTTPHEADERW) );
