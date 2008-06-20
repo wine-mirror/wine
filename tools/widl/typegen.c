@@ -1140,7 +1140,8 @@ static int write_no_repeat_pointer_descriptions(
 
         align = 0;
         *offset_in_memory += type_memsize(type, &align);
-        /* FIXME: is there a case where these two are different? */
+        /* increment these separately as in the case of conformant (varying)
+         * structures these start at different values */
         align = 0;
         *offset_in_buffer += type_memsize(type, &align);
 
@@ -1159,7 +1160,8 @@ static int write_no_repeat_pointer_descriptions(
     {
         align = 0;
         *offset_in_memory += type_memsize(type, &align);
-        /* FIXME: is there a case where these two are different? */
+        /* increment these separately as in the case of conformant (varying)
+         * structures these start at different values */
         align = 0;
         *offset_in_buffer += type_memsize(type, &align);
     }
@@ -1224,7 +1226,8 @@ static int write_pointer_description_offsets(
         align = 0;
         if (offset_in_memory)
             *offset_in_memory += type_memsize(type, &align);
-        /* FIXME: is there a case where these two are different? */
+        /* increment these separately as in the case of conformant (varying)
+         * structures these start at different values */
         align = 0;
         if (offset_in_buffer)
             *offset_in_buffer += type_memsize(type, &align);
@@ -1287,7 +1290,8 @@ static int write_fixed_array_pointer_descriptions(
         align = 0;
         if (offset_in_memory)
             *offset_in_memory += type_memsize(type, &align);
-        /* FIXME: is there a case where these two are different? */
+        /* increment these separately as in the case of conformant (varying)
+         * structures these start at different values */
         align = 0;
         if (offset_in_buffer)
             *offset_in_buffer += type_memsize(type, &align);
@@ -1350,8 +1354,6 @@ static int write_varying_array_pointer_descriptions(
     unsigned int align;
     int pointer_count = 0;
 
-    /* FIXME: do varying array searching here, but pointer searching in write_pointer_description_offsets */
-
     if (is_array(type) && type->length_is)
     {
         unsigned int temp = 0;
@@ -1362,8 +1364,8 @@ static int write_varying_array_pointer_descriptions(
         if (pointer_count > 0)
         {
             unsigned int increment_size;
-            size_t offset_of_array_pointer_mem = 0;
-            size_t offset_of_array_pointer_buf = 0;
+            size_t offset_of_array_pointer_mem = *offset_in_memory;
+            size_t offset_of_array_pointer_buf = *offset_in_buffer;
 
             align = 0;
             increment_size = type_memsize(type->ref, &align);
@@ -1412,13 +1414,19 @@ static void write_pointer_description(FILE *file, type_t *type,
 {
     size_t offset_in_buffer;
     size_t offset_in_memory;
+    size_t conformance = 0;
+
+    if (type->type == RPC_FC_CVSTRUCT)
+        conformance = 8;
+    else if (type->type == RPC_FC_CSTRUCT || type->type == RPC_FC_CPSTRUCT)
+        conformance = 4;
 
     /* pass 1: search for single instance of a pointer (i.e. don't descend
      * into arrays) */
     if (!is_array(type))
     {
         offset_in_memory = 0;
-        offset_in_buffer = 0;
+        offset_in_buffer = conformance;
         write_no_repeat_pointer_descriptions(
             file, type,
             &offset_in_memory, &offset_in_buffer, typestring_offset);
@@ -1426,7 +1434,7 @@ static void write_pointer_description(FILE *file, type_t *type,
 
     /* pass 2: search for pointers in fixed arrays */
     offset_in_memory = 0;
-    offset_in_buffer = 0;
+    offset_in_buffer = conformance;
     write_fixed_array_pointer_descriptions(
         file, NULL, type,
         &offset_in_memory, &offset_in_buffer, typestring_offset);
@@ -1448,7 +1456,7 @@ static void write_pointer_description(FILE *file, type_t *type,
 
    /* pass 4: search for pointers in varying arrays */
     offset_in_memory = 0;
-    offset_in_buffer = 0;
+    offset_in_buffer = conformance;
     write_varying_array_pointer_descriptions(
             file, NULL, type,
             &offset_in_memory, &offset_in_buffer, typestring_offset);
