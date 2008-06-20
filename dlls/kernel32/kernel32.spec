@@ -415,9 +415,9 @@
 @ stdcall GetACP()
 @ stdcall GetAtomNameA(long ptr long)
 @ stdcall GetAtomNameW(long ptr long)
-@ stdcall GetBinaryType(ptr ptr) GetBinaryTypeA
-@ stdcall GetBinaryTypeA(ptr ptr)
-@ stdcall GetBinaryTypeW(ptr ptr)
+@ stdcall GetBinaryType(str ptr) GetBinaryTypeA
+@ stdcall GetBinaryTypeA(str ptr)
+@ stdcall GetBinaryTypeW(wstr ptr)
 # @ stub GetCPFileNameFromRegistry
 @ stdcall GetCPInfo(long ptr)
 @ stdcall GetCPInfoExA(long long ptr)
