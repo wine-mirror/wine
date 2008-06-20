@@ -48,7 +48,7 @@
 @ stdcall SymEnumerateModules64(long ptr ptr)
 @ stdcall SymEnumerateModulesW64(long ptr ptr)
 @ stdcall SymEnumerateSymbols(long long ptr ptr)
-@ stub SymEnumerateSymbols64
+@ stdcall SymEnumerateSymbols64(long double ptr ptr)
 @ stub SymEnumerateSymbolsW
 @ stub SymEnumerateSymbolsW64
 @ stub SymFindDebugInfoFile

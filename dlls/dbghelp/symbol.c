@@ -1055,6 +1055,33 @@ BOOL WINAPI SymEnumerateSymbols(HANDLE hProcess, DWORD BaseOfDll,
     return SymEnumSymbols(hProcess, BaseOfDll, NULL, sym_enumerate_cb, &se);
 }
 
+struct sym_enumerate64
+{
+    void*                       ctx;
+    PSYM_ENUMSYMBOLS_CALLBACK64 cb;
+};
+
+static BOOL CALLBACK sym_enumerate_cb64(PSYMBOL_INFO syminfo, ULONG size, void* ctx)
+{
+    struct sym_enumerate64*     se = (struct sym_enumerate64*)ctx;
+    return (se->cb)(syminfo->Name, syminfo->Address, syminfo->Size, se->ctx);
+}
+
+/***********************************************************************
+ *              SymEnumerateSymbols64 (DBGHELP.@)
+ */
+BOOL WINAPI SymEnumerateSymbols64(HANDLE hProcess, DWORD64 BaseOfDll,
+                                  PSYM_ENUMSYMBOLS_CALLBACK64 EnumSymbolsCallback,
+                                  PVOID UserContext)
+{
+    struct sym_enumerate64      se;
+
+    se.ctx = UserContext;
+    se.cb  = EnumSymbolsCallback;
+
+    return SymEnumSymbols(hProcess, BaseOfDll, NULL, sym_enumerate_cb64, &se);
+}
+
 /******************************************************************
  *		SymFromAddr (DBGHELP.@)
  *
