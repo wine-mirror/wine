@@ -3879,7 +3879,7 @@ BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
       return TRUE;
     }
   }
-  if (bufferW != NULL) heap_free(bufferW);
+  heap_free(bufferW);
   return FALSE;
 }
 
