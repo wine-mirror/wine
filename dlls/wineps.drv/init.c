@@ -538,7 +538,6 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     char* ppdFileName = NULL;
     HKEY hkey;
     BOOL using_default_devmode = FALSE;
-    static CHAR paper_size[] = "Paper Size";
 
     TRACE("'%s'\n", name);
 
@@ -606,12 +605,11 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     }
 #endif
     if (!ppdFileName) {
-        static CHAR ppd_file[] = "PPD File";
-
-        res = GetPrinterDataA(hPrinter, ppd_file, NULL, NULL, 0, &needed);
+        res = GetPrinterDataExA(hPrinter, "PrinterDriverData", "PPD File", NULL, NULL, 0, &needed);
         if ((res==ERROR_SUCCESS) || (res==ERROR_MORE_DATA)) {
             ppdFileName=HeapAlloc(PSDRV_Heap, 0, needed);
-            res = GetPrinterDataA(hPrinter, ppd_file, &ppdType, (LPBYTE)ppdFileName, needed, &needed);
+            res = GetPrinterDataExA(hPrinter, "PrinterDriverData", "PPD File", &ppdType,
+                                    (LPBYTE)ppdFileName, needed, &needed);
         }
     }
     /* Look for a ppd file for this printer in the config file.
@@ -706,8 +704,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
      *	the Devmode structure, but Wine doesn't currently provide a convenient
      *	way to configure printers.
      */
-    res = GetPrinterDataA (hPrinter, paper_size, NULL, (LPBYTE) &dwPaperSize,
-	    sizeof (DWORD), &needed);
+    res = GetPrinterDataExA(hPrinter, "PrinterDriverData", "Paper Size", NULL,
+                            (LPBYTE)&dwPaperSize, sizeof(DWORD), &needed);
     if (res == ERROR_SUCCESS)
 	pi->Devmode->dmPublic.u1.s1.dmPaperSize = (SHORT) dwPaperSize;
     else if (res == ERROR_FILE_NOT_FOUND)
