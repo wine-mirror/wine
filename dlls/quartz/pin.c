@@ -408,7 +408,10 @@ HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
             hr = S_OK;
         }
         else
+        {
             hr = VFW_E_NOT_CONNECTED;
+            *ppPin = NULL;
+        }
     }
     LeaveCriticalSection(This->pCritSec);
 
