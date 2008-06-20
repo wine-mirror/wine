@@ -1365,7 +1365,21 @@ static void testDeviceRegistryPropertyW()
 
 START_TEST(devinst)
 {
-    init_function_pointers();
+    HDEVINFO set;
+
+     init_function_pointers();
+
+    /* Win9x/WinMe does things totally different so we skip all the tests
+     *
+     * We don't want to exclude NT4 so hence this check.
+     */
+    SetLastError(0xdeadbeef);
+    set = pSetupDiGetClassDevsW(NULL, NULL, 0, 0);
+    if (set == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("Win9x/WinMe has totally different behavior\n");
+        return;
+    }
 
     if (pSetupDiCreateDeviceInfoListExW && pSetupDiDestroyDeviceInfoList)
         test_SetupDiCreateDeviceInfoListEx();
@@ -1376,6 +1390,7 @@ START_TEST(devinst)
         test_SetupDiOpenClassRegKeyExA();
     else
         skip("SetupDiOpenClassRegKeyExA is not available\n");
+
     testInstallClass();
     testCreateDeviceInfo();
     testGetDeviceInstanceId();
