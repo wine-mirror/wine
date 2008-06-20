@@ -459,18 +459,7 @@ static void process_poll_event( struct fd *fd, int event )
     struct process *process = get_fd_user( fd );
     assert( process->obj.ops == &process_ops );
 
-    if (event & (POLLERR | POLLHUP))
-    {
-        release_object( process->msg_fd );
-        process->msg_fd = NULL;
-        if (process->sigkill_timeout)  /* already waiting for it to die */
-        {
-            remove_timeout_user( process->sigkill_timeout );
-            process->sigkill_timeout = NULL;
-            process_died( process );
-        }
-        else kill_process( process, 0 );
-    }
+    if (event & (POLLERR | POLLHUP)) kill_process( process, 0 );
     else if (event & POLLIN) receive_fd( process );
 }
 
@@ -736,6 +725,20 @@ void resume_process( struct process *process )
 /* kill a process on the spot */
 void kill_process( struct process *process, int violent_death )
 {
+    if (!violent_death && process->msg_fd)  /* normal termination on pipe close */
+    {
+        release_object( process->msg_fd );
+        process->msg_fd = NULL;
+    }
+
+    if (process->sigkill_timeout)  /* already waiting for it to die */
+    {
+        remove_timeout_user( process->sigkill_timeout );
+        process->sigkill_timeout = NULL;
+        process_died( process );
+        return;
+    }
+
     if (violent_death) terminate_process( process, NULL, 1 );
     else
     {
