@@ -31,6 +31,13 @@ static const WCHAR MicrosoftSansSerif[] = {'M','i','c','r','o','s','o','f','t','
 static const WCHAR TimesNewRoman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
 static const WCHAR CourierNew[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
 
+static const char *debugstr_w(LPCWSTR str)
+{
+   static char buf[1024];
+   WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
+   return buf;
+}
+
 static void test_logfont(void)
 {
     LOGFONTW lfw, lfw2;
@@ -147,6 +154,47 @@ static void test_fontfamily (void)
 }
 
 
+static void test_getgenerics (void)
+{
+    GpStatus stat;
+    GpFontFamily** family;
+    WCHAR familyName[LF_FACESIZE];
+    ZeroMemory(familyName, sizeof(familyName)/sizeof(WCHAR));
+
+    family = GdipAlloc (sizeof (GpFontFamily*));
+
+    stat = GdipGetGenericFontFamilySansSerif (family);
+    expect (Ok, stat);
+    stat = GdipGetFamilyName (*family, familyName, LANG_NEUTRAL);
+    expect (Ok, stat);
+    ok ((lstrcmpiW(familyName, MicrosoftSansSerif) == 0) ||
+        (lstrcmpiW(familyName,MSSansSerif) == 0),
+        "Expected Microsoft Sans Serif or MS Sans Serif, got %s\n",
+        debugstr_w(familyName));
+    stat = GdipDeleteFontFamily (*family);
+    expect (Ok, stat);
+
+    stat = GdipGetGenericFontFamilySerif (family);
+    expect (Ok, stat);
+    stat = GdipGetFamilyName (*family, familyName, LANG_NEUTRAL);
+    expect (Ok, stat);
+    ok (lstrcmpiW(familyName, TimesNewRoman) == 0,
+        "Expected Times New Roman, got %s\n", debugstr_w(familyName));
+    stat = GdipDeleteFontFamily (*family);
+    expect (Ok, stat);
+
+    stat = GdipGetGenericFontFamilyMonospace (family);
+    expect (Ok, stat);
+    stat = GdipGetFamilyName (*family, familyName, LANG_NEUTRAL);
+    expect (Ok, stat);
+    ok (lstrcmpiW(familyName, CourierNew) == 0,
+        "Expected Courier New, got %s\n", debugstr_w(familyName));
+    stat = GdipDeleteFontFamily (*family);
+    expect (Ok, stat);
+
+    GdipFree (family);
+}
+
 START_TEST(font)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -161,6 +209,7 @@ START_TEST(font)
 
     test_logfont();
     test_fontfamily();
+    test_getgenerics();
 
     GdiplusShutdown(gdiplusToken);
 }
