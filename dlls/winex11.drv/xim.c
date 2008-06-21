@@ -359,7 +359,7 @@ BOOL X11DRV_InitXIM( const char *input_style )
 }
 
 
-static void X11DRV_OpenIM(Display *display, XPointer p, XPointer data);
+static void open_xim_callback( Display *display, XPointer ptr, XPointer data );
 
 static void X11DRV_DestroyIM(XIM xim, XPointer p, XPointer data)
 {
@@ -369,7 +369,7 @@ static void X11DRV_DestroyIM(XIM xim, XPointer p, XPointer data)
     thread_data->xim = NULL;
     ximStyle = 0;
     wine_tsx11_lock();
-    XRegisterIMInstantiateCallback( thread_data->display, NULL, NULL, NULL, X11DRV_OpenIM, NULL );
+    XRegisterIMInstantiateCallback( thread_data->display, NULL, NULL, NULL, open_xim_callback, NULL );
     wine_tsx11_unlock();
 }
 
@@ -378,7 +378,7 @@ static void X11DRV_DestroyIM(XIM xim, XPointer p, XPointer data)
  *
  * Should always be called with the x11 lock held
  */
-static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
+static BOOL open_xim( Display *display )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     XIMStyle ximStyleCallback, ximStyleNone;
@@ -391,7 +391,7 @@ static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
     if (xim == NULL)
     {
         WARN("Could not open input method.\n");
-        return;
+        return FALSE;
     }
 
     destroy.client_data = NULL;
@@ -410,7 +410,7 @@ static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
     {
         WARN("Could not find supported input style.\n");
         XCloseIM(xim);
-        return;
+        return FALSE;
     }
     else
     {
@@ -471,18 +471,26 @@ static void X11DRV_OpenIM(Display *display, XPointer ptr, XPointer data)
     }
 
     thread_data->xim = xim;
-    XUnregisterIMInstantiateCallback(display, NULL, NULL, NULL, X11DRV_OpenIM, NULL);
 
     wine_tsx11_unlock();
     IME_UpdateAssociation(NULL);
     wine_tsx11_lock();
+    return TRUE;
 }
 
+static void open_xim_callback( Display *display, XPointer ptr, XPointer data )
+{
+    if (open_xim( display ))
+        XUnregisterIMInstantiateCallback( display, NULL, NULL, NULL, open_xim_callback, NULL);
+}
 
 void X11DRV_SetupXIM(void)
 {
+    Display *display = thread_display();
+
     wine_tsx11_lock();
-    XRegisterIMInstantiateCallback(thread_display(), NULL, NULL, NULL, X11DRV_OpenIM, NULL);
+    if (!open_xim( display ))
+        XRegisterIMInstantiateCallback( display, NULL, NULL, NULL, open_xim_callback, NULL );
     wine_tsx11_unlock();
 }
 
