@@ -156,15 +156,20 @@ static inline HRESULT add_prop_str( IDxDiagContainer* cont, LPCWSTR prop, LPCWST
 
 static inline HRESULT add_prop_ui4( IDxDiagContainer* cont, LPCWSTR prop, DWORD data )
 {
-    HRESULT hr;
     VARIANT var;
 
     V_VT( &var ) = VT_UI4;
     V_UI4( &var ) = data;
-    hr = IDxDiagContainerImpl_AddProp( cont, prop, &var );
-    VariantClear( &var );
+    return IDxDiagContainerImpl_AddProp( cont, prop, &var );
+}
 
-    return hr;
+static inline HRESULT add_prop_bool( IDxDiagContainer* cont, LPCWSTR prop, BOOL data )
+{
+    VARIANT var;
+
+    V_VT( &var ) = VT_BOOL;
+    V_BOOL( &var ) = data;
+    return IDxDiagContainerImpl_AddProp( cont, prop, &var );
 }
 
 /**
@@ -189,7 +194,6 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
   static const WCHAR szFinal_Retail_v[] = {'F','i','n','a','l',' ','R','e','t','a','i','l',0};
   static const WCHAR szEnglish_v[] = {'E','n','g','l','i','s','h',0};
   static const WCHAR szVersionFormat[] = {'%','u','.','%','0','2','u','.','%','0','4','u','.','%','0','4','u',0};
-  VARIANT v;
 
   WCHAR szFile[512];
   WCHAR szVersion_v[1024];
@@ -210,15 +214,9 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
   boolret = GetFileVersionInfoW(szFile, 0, retval, pVersionInfo);
   boolret = VerQueryValueW(pVersionInfo, szSlashSep, (LPVOID) &pFileInfo, &uiLength);
 
-  V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szFile);
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, szPath, &v);
-  VariantClear(&v);
-  V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szFileName);
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, szName, &v);
-  VariantClear(&v);
-  V_VT(&v) = VT_BOOL; V_BOOL(&v) = boolret;
-  hr = IDxDiagContainerImpl_AddProp(pSubCont, bExists, &v);  
-  VariantClear(&v);
+  add_prop_str(pSubCont, szPath, szFile);
+  add_prop_str(pSubCont, szName, szFileName);
+  add_prop_bool(pSubCont, bExists, boolret);
 
   if (boolret) {
     snprintfW(szVersion_v, sizeof(szVersion_v)/sizeof(szVersion_v[0]),
@@ -230,27 +228,13 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
 
     TRACE("Found version as (%s)\n", debugstr_w(szVersion_v));
 
-    V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szVersion_v);
-    hr = IDxDiagContainerImpl_AddProp(pSubCont, szVersion, &v);
-    VariantClear(&v);
-    V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szFinal_Retail_v);
-    hr = IDxDiagContainerImpl_AddProp(pSubCont, szAttributes, &v);
-    VariantClear(&v);
-    V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szEnglish_v);
-    hr = IDxDiagContainerImpl_AddProp(pSubCont, szLanguageEnglish, &v);
-    VariantClear(&v);
-    V_VT(&v) = VT_UI4; V_UI4(&v) = pFileInfo->dwFileDateMS;
-    hr = IDxDiagContainerImpl_AddProp(pSubCont, dwFileTimeHigh, &v);
-    VariantClear(&v);
-    V_VT(&v) = VT_UI4; V_UI4(&v) = pFileInfo->dwFileDateLS;
-    hr = IDxDiagContainerImpl_AddProp(pSubCont, dwFileTimeLow, &v);
-    VariantClear(&v);
-    V_VT(&v) = VT_BOOL; V_BOOL(&v) = (0 != ((pFileInfo->dwFileFlags & pFileInfo->dwFileFlagsMask) & VS_FF_PRERELEASE));
-    hr = IDxDiagContainerImpl_AddProp(pSubCont, bBeta, &v);  
-    VariantClear(&v);
-    V_VT(&v) = VT_BOOL; V_BOOL(&v) = (0 != ((pFileInfo->dwFileFlags & pFileInfo->dwFileFlagsMask) & VS_FF_DEBUG));
-    hr = IDxDiagContainerImpl_AddProp(pSubCont, bDebug, &v);  
-    VariantClear(&v);
+    add_prop_str(pSubCont, szVersion,         szVersion_v);
+    add_prop_str(pSubCont, szAttributes,      szFinal_Retail_v);
+    add_prop_str(pSubCont, szLanguageEnglish, szEnglish_v);
+    add_prop_ui4(pSubCont, dwFileTimeHigh,    pFileInfo->dwFileDateMS);
+    add_prop_ui4(pSubCont, dwFileTimeLow,     pFileInfo->dwFileDateLS);
+    add_prop_bool(pSubCont, bBeta,  0 != ((pFileInfo->dwFileFlags & pFileInfo->dwFileFlagsMask) & VS_FF_PRERELEASE));
+    add_prop_bool(pSubCont, bDebug, 0 != ((pFileInfo->dwFileFlags & pFileInfo->dwFileFlagsMask) & VS_FF_DEBUG));
   }
 
   HeapFree(GetProcessHeap(), 0, pVersionInfo);
@@ -280,21 +264,12 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   OSVERSIONINFOW info;
   VARIANT v;
 
-  V_VT(&v) = VT_UI4; V_UI4(&v) = 9;
-  IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMajor, &v);
-  V_VT(&v) = VT_UI4; V_UI4(&v) = 0;
-  IDxDiagContainerImpl_AddProp(pSubCont, dwDirectXVersionMinor, &v);
-  V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionLetter_v);
-  IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLetter, &v);
-  VariantClear(&v);
-  V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionEnglish_v);
-  IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionEnglish, &v);
-  VariantClear(&v);
-  V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(szDirectXVersionLongEnglish_v);
-  IDxDiagContainerImpl_AddProp(pSubCont, szDirectXVersionLongEnglish, &v);
-  VariantClear(&v);
-  V_VT(&v) = VT_BOOL; V_BOOL(&v) = FALSE;
-  IDxDiagContainerImpl_AddProp(pSubCont, bDebug, &v);
+  add_prop_ui4(pSubCont, dwDirectXVersionMajor, 9);
+  add_prop_ui4(pSubCont, dwDirectXVersionMinor, 0);
+  add_prop_str(pSubCont, szDirectXVersionLetter, szDirectXVersionLetter_v);
+  add_prop_str(pSubCont, szDirectXVersionEnglish, szDirectXVersionEnglish_v);
+  add_prop_str(pSubCont, szDirectXVersionLongEnglish, szDirectXVersionLongEnglish_v);
+  add_prop_bool(pSubCont, bDebug, FALSE);
 
   msex.dwLength = sizeof(msex);
   GlobalMemoryStatusEx( &msex );
@@ -306,18 +281,10 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
 
   info.dwOSVersionInfoSize = sizeof(info);
   GetVersionExW( &info );
-  V_VT(&v) = VT_UI4;
-  V_UI4(&v) = info.dwMajorVersion;
-  IDxDiagContainerImpl_AddProp(pSubCont, dwOSMajorVersion, &v);
-  V_VT(&v) = VT_UI4;
-  V_UI4(&v) = info.dwMinorVersion;
-  IDxDiagContainerImpl_AddProp(pSubCont, dwOSMinorVersion, &v);
-  V_VT(&v) = VT_UI4;
-  V_UI4(&v) = info.dwBuildNumber;
-  IDxDiagContainerImpl_AddProp(pSubCont, dwOSBuildNumber, &v);
-  V_VT(&v) = VT_UI4;
-  V_UI4(&v) = info.dwPlatformId;
-  IDxDiagContainerImpl_AddProp(pSubCont, dwOSPlatformID, &v);
+  add_prop_ui4(pSubCont, dwOSMajorVersion, info.dwMajorVersion);
+  add_prop_ui4(pSubCont, dwOSMinorVersion, info.dwMinorVersion);
+  add_prop_ui4(pSubCont, dwOSBuildNumber,  info.dwBuildNumber);
+  add_prop_ui4(pSubCont, dwOSPlatformID,   info.dwPlatformId);
 
   return S_OK;
 }
@@ -643,18 +610,12 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	    LPBYTE pData = NULL;
 	    LPBYTE pCurrent = NULL;
 	    struct REG_RF* prrf = NULL;
-	    VARIANT v_data;
 	    DWORD it;
 	    DWORD dwNOutputs = 0;
 	    DWORD dwNInputs = 0;
-	    	    
-	    V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(wszCatName);
-	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szCatName, &v);
-	    VariantClear(&v);
 
-	    V_VT(&v) = VT_BSTR; V_BSTR(&v) = SysAllocString(wszCatClsid);
-	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szClsidCat, &v);
-	    VariantClear(&v);
+            add_prop_str(pSubCont, szCatName, wszCatName);
+            add_prop_str(pSubCont, szClsidCat, wszCatClsid);
 
 	    hr = IPropertyBag_Read(pPropFilterBag, wszFriendlyName, &v, 0);
 	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szName, &v);
@@ -670,14 +631,9 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	    hr = SafeArrayAccessData(V_UNION(&v, parray), (LPVOID*) &pData);	    
 	    prrf = (struct REG_RF*) pData;
 	    pCurrent = pData;
- 
-	    VariantInit(&v_data);
-	    V_VT(&v_data) = VT_UI4; V_UI4(&v_data) = prrf->dwVersion;
-	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szName, &v_data);
-	    VariantClear(&v_data);
-	    V_VT(&v_data) = VT_UI4; V_UI4(&v_data) = prrf->dwMerit;
-	    hr = IDxDiagContainerImpl_AddProp(pSubCont, dwMerit, &v_data);
-	    VariantClear(&v_data);
+
+            add_prop_ui4(pSubCont, szName, prrf->dwVersion);
+            add_prop_ui4(pSubCont, dwMerit, prrf->dwMerit);
 
 	    pCurrent += sizeof(struct REG_RF);
 	    for (it = 0; it < prrf->dwPins; ++it) {
@@ -701,12 +657,8 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	      }
 	    }
 
-	    V_VT(&v_data) = VT_UI4; V_UI4(&v_data) = dwNInputs;
-	    hr = IDxDiagContainerImpl_AddProp(pSubCont, dwInputs, &v_data);
-	    VariantClear(&v_data);
-	    V_VT(&v_data) = VT_UI4; V_UI4(&v_data) = dwNOutputs;
-	    hr = IDxDiagContainerImpl_AddProp(pSubCont, dwOutputs, &v_data);
-	    VariantClear(&v_data);
+            add_prop_ui4(pSubCont, dwInputs,  dwNInputs);
+            add_prop_ui4(pSubCont, dwOutputs, dwNOutputs);
 
 	    SafeArrayUnaccessData(V_UNION(&v, parray));
 	    VariantClear(&v);
