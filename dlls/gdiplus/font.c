@@ -278,3 +278,68 @@ GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
 
     return Ok;
 }
+
+/*****************************************************************************
+ * GdipGetGenericFontFamilyMonospace [GDIPLUS.@]
+ *
+ * Obtains a serif family (Courier New on Windows)
+ *
+ * PARAMS
+ *  **nativeFamily         [I] Where the font will be stored
+ *
+ * RETURNS
+ *  InvalidParameter if nativeFamily is NULL.
+ *  Ok otherwise.
+ */
+GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily **nativeFamily)
+{
+    static const WCHAR CourierNew[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
+
+    if (nativeFamily == NULL) return InvalidParameter;
+
+    return GdipCreateFontFamilyFromName(CourierNew, NULL, nativeFamily);
+}
+
+/*****************************************************************************
+ * GdipGetGenericFontFamilySerif [GDIPLUS.@]
+ *
+ * Obtains a serif family (Times New Roman on Windows)
+ *
+ * PARAMS
+ *  **nativeFamily         [I] Where the font will be stored
+ *
+ * RETURNS
+ *  InvalidParameter if nativeFamily is NULL.
+ *  Ok otherwise.
+ */
+GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily **nativeFamily)
+{
+    static const WCHAR TimesNewRoman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
+
+    if (nativeFamily == NULL) return InvalidParameter;
+
+    return GdipCreateFontFamilyFromName(TimesNewRoman, NULL, nativeFamily);
+}
+
+/*****************************************************************************
+ * GdipGetGenericFontFamilySansSerif [GDIPLUS.@]
+ *
+ * Obtains a serif family (Microsoft Sans Serif on Windows)
+ *
+ * PARAMS
+ *  **nativeFamily         [I] Where the font will be stored
+ *
+ * RETURNS
+ *  InvalidParameter if nativeFamily is NULL.
+ *  Ok otherwise.
+ */
+GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamily)
+{
+    /* FIXME: On Windows this is called Microsoft Sans Serif, this shouldn't
+     * affect anything */
+    static const WCHAR MSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+
+    if (nativeFamily == NULL) return InvalidParameter;
+
+    return GdipCreateFontFamilyFromName(MSSansSerif, NULL, nativeFamily);
+}

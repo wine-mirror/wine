@@ -353,6 +353,10 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR*,
 GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily*);
 GpStatus WINGDIPAPI GdipGetFamilyName(GDIPCONST GpFontFamily*, WCHAR*, LANGID);
 
+GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily**);
+GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily**);
+GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily**);
+
 GpStatus WINGDIPAPI GdipCreateStringFormat(INT,LANGID,GpStringFormat**);
 GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat*);
 GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat*,StringAlignment*);

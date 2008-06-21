@@ -272,9 +272,9 @@
 @ stub GdipGetFontSize
 @ stub GdipGetFontStyle
 @ stub GdipGetFontUnit
-@ stub GdipGetGenericFontFamilyMonospace
-@ stub GdipGetGenericFontFamilySansSerif
-@ stub GdipGetGenericFontFamilySerif
+@ stdcall GdipGetGenericFontFamilyMonospace(ptr)
+@ stdcall GdipGetGenericFontFamilySansSerif(ptr)
+@ stdcall GdipGetGenericFontFamilySerif(ptr)
 @ stub GdipGetHatchBackgroundColor
 @ stub GdipGetHatchForegroundColor
 @ stub GdipGetHatchStyle
