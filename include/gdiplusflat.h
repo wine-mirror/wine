@@ -350,6 +350,7 @@ GpStatus WINGDIPAPI GdipCloneFont(GpFont*,GpFont**);
 
 GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR*,
     GpFontCollection*, GpFontFamily**);
+GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily*);
 
 GpStatus WINGDIPAPI GdipCreateStringFormat(INT,LANGID,GpStringFormat**);
 GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat*);

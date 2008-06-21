@@ -141,7 +141,7 @@
 @ stdcall GdipDeleteCustomLineCap(ptr)
 @ stub GdipDeleteEffect
 @ stdcall GdipDeleteFont(ptr)
-@ stub GdipDeleteFontFamily
+@ stdcall GdipDeleteFontFamily(ptr)
 @ stdcall GdipDeleteGraphics(ptr)
 @ stdcall GdipDeleteMatrix(ptr)
 @ stdcall GdipDeletePath(ptr)

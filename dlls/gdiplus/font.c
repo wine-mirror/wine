@@ -218,3 +218,30 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
 
     return Ok;
 }
+
+
+/*****************************************************************************
+ * GdipDeleteFontFamily [GDIPLUS.@]
+ *
+ * Removes the specified FontFamily
+ *
+ * PARAMS
+ *  *FontFamily         [I] The family to delete
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter if FontFamily is NULL.
+ *
+ */
+GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
+{
+    if (!FontFamily)
+        return InvalidParameter;
+    TRACE("Deleting %p (%s)\n", FontFamily, debugstr_w(FontFamily->FamilyName));
+
+    if (FontFamily->FamilyName) GdipFree (FontFamily->FamilyName);
+    if (FontFamily->tmw) GdipFree (FontFamily->tmw);
+    GdipFree (FontFamily);
+
+    return Ok;
+}
