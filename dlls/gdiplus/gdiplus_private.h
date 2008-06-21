@@ -174,6 +174,8 @@ struct GpImageAttributes{
 
 struct GpFont{
     LOGFONTW lfw;
+    REAL emSize;
+    Unit unit;
 };
 
 struct GpStringFormat{

@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -31,6 +32,128 @@ WINE_DEFAULT_DEBUG_CHANNEL (gdiplus);
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"
+
+static const REAL mm_per_pixel = 25.4;
+
+static inline REAL get_dpi (void)
+{
+    REAL dpi;
+    GpGraphics *graphics;
+    HDC hdc = GetDC(0);
+    GdipCreateFromHDC (hdc, &graphics);
+    GdipGetDpiX(graphics, &dpi);
+    ReleaseDC (0, hdc);
+
+    return dpi;
+}
+
+static inline REAL point_to_pixel (REAL point)
+{
+    return point * 1.5;
+}
+
+static inline REAL inch_to_pixel (REAL inch)
+{
+    return inch * get_dpi();
+}
+
+static inline REAL document_to_pixel (REAL doc)
+{
+    return doc * (get_dpi() / 300.0); /* Per MSDN */
+}
+
+static inline REAL mm_to_pixel (REAL mm)
+{
+    return mm * (get_dpi() / mm_per_pixel);
+}
+
+/*******************************************************************************
+ * GdipCreateFont [GDIPLUS.@]
+ *
+ * Create a new font based off of a FontFamily
+ *
+ * PARAMS
+ *  *fontFamily     [I] Family to base the font off of
+ *  emSize          [I] Size of the font
+ *  style           [I] Bitwise OR of FontStyle enumeration
+ *  unit            [I] Unit emSize is measured in
+ *  **font          [I] the resulting Font object
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter if fontfamily or font is NULL.
+ *  FAILURE: FontFamilyNotFound if an invalid FontFamily is given
+ *
+ * NOTES
+ *  UnitDisplay is unsupported.
+ *  emSize is stored separately from lfHeight, to hold the fraction.
+ */
+GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
+                        REAL emSize, INT style, Unit unit, GpFont **font)
+{
+    WCHAR facename[LF_FACESIZE];
+    LOGFONTW* lfw;
+    TEXTMETRICW* tmw;
+    GpStatus stat;
+
+    if ((!fontFamily && fontFamily->FamilyName && font))
+        return InvalidParameter;
+
+    TRACE("%p (%s), %f, %d, %d, %p\n", fontFamily,
+            debugstr_w(fontFamily->FamilyName), emSize, style, unit, font);
+
+    stat = GdipGetFamilyName (fontFamily, facename, 0);
+    if (stat != Ok) return stat;
+    *font = GdipAlloc(sizeof(GpFont));
+
+    tmw = fontFamily->tmw;
+    lfw = &((*font)->lfw);
+    ZeroMemory(&(*lfw), sizeof(*lfw));
+
+    lfw->lfWeight = tmw->tmWeight;
+    lfw->lfItalic = tmw->tmItalic;
+    lfw->lfUnderline = tmw->tmUnderlined;
+    lfw->lfStrikeOut = tmw->tmStruckOut;
+    lfw->lfCharSet = tmw->tmCharSet;
+    lfw->lfPitchAndFamily = tmw->tmPitchAndFamily;
+    lstrcpynW((lfw->lfFaceName), facename, sizeof(WCHAR) * LF_FACESIZE);
+
+    switch (unit)
+    {
+        case UnitWorld:
+            /* FIXME: Figure out when World != Pixel */
+            lfw->lfHeight = emSize; break;
+        case UnitDisplay:
+            FIXME("Unknown behavior for UnitDisplay! Please report!\n");
+            /* FIXME: Figure out how this works...
+             * MSDN says that if "DISPLAY" is a monitor, then pixel should be
+             * used. That's not what I got. Tests on Windows revealed no output,
+             * and the tests in tests/font crash windows */
+            lfw->lfHeight = 0; break;
+        case UnitPixel:
+            lfw->lfHeight = emSize; break;
+        case UnitPoint:
+            lfw->lfHeight = point_to_pixel(emSize); break;
+        case UnitInch:
+            lfw->lfHeight = inch_to_pixel(emSize); break;
+        case UnitDocument:
+            lfw->lfHeight = document_to_pixel(emSize); break;
+        case UnitMillimeter:
+            lfw->lfHeight = mm_to_pixel(emSize); break;
+    }
+
+    lfw->lfHeight *= -1;
+
+    lfw->lfWeight = style & FontStyleBold ? 700 : 400;
+    lfw->lfItalic = style & FontStyleItalic;
+    lfw->lfUnderline = style & FontStyleUnderline;
+    lfw->lfStrikeOut = style & FontStyleStrikeout;
+
+    (*font)->unit = unit;
+    (*font)->emSize = emSize;
+
+    return Ok;
+}
 
 GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     GDIPCONST LOGFONTW *logfont, GpFont **font)
@@ -50,6 +173,9 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     (*font)->lfw.lfItalic = logfont->lfItalic;
     (*font)->lfw.lfUnderline = logfont->lfUnderline;
     (*font)->lfw.lfStrikeOut = logfont->lfStrikeOut;
+
+    (*font)->emSize = logfont->lfHeight;
+    (*font)->unit = UnitPixel;
 
     hfont = CreateFontIndirectW(&(*font)->lfw);
     oldfont = SelectObject(hdc, hfont);

@@ -341,6 +341,8 @@ GpStatus WINGDIPAPI GdipSetImageAttributesColorMatrix(GpImageAttributes*,
 GpStatus WINGDIPAPI GdipSetImageAttributesWrapMode(GpImageAttributes*,WrapMode,
     ARGB,BOOL);
 
+GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily*, REAL, INT, Unit,
+    GpFont**);
 GpStatus WINGDIPAPI GdipCreateFontFromDC(HDC,GpFont**);
 GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC,GDIPCONST LOGFONTA*,GpFont**);
 GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC,GDIPCONST LOGFONTW*,GpFont**);

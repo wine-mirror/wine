@@ -84,7 +84,7 @@
 @ stub GdipCreateCachedBitmap
 @ stdcall GdipCreateCustomLineCap(ptr ptr long long ptr)
 @ stub GdipCreateEffect
-@ stub GdipCreateFont
+@ stdcall GdipCreateFont(ptr long long long ptr)
 @ stdcall GdipCreateFontFamilyFromName(wstr ptr ptr)
 @ stdcall GdipCreateFontFromDC(long ptr)
 @ stdcall GdipCreateFontFromLogfontA(long ptr ptr)
