@@ -491,6 +491,8 @@ static void mixer_test_deviceA(int device)
                         array=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
                             mixerlineA.cControls*sizeof(MIXERCONTROLA));
                         if (array) {
+                            memset(&controls, 0, sizeof(controls));
+
                             rc=mixerGetLineControlsA((HMIXEROBJ)mix,0,
                                                       MIXER_GETLINECONTROLSF_ALL);
                             ok(rc==MMSYSERR_INVALPARAM,
