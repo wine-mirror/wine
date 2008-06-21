@@ -400,10 +400,19 @@ static void test_EM_SCROLLCARET(void)
 static void test_EM_POSFROMCHAR(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
-  unsigned int i;
+  int i;
   LRESULT result;
   unsigned int height = 0;
-  unsigned int xpos = 0;
+  int xpos = 0;
+  static const char text[] = "aa\n"
+      "this is a long line of text that should be longer than the "
+      "control's width\n"
+      "cc\n"
+      "dd\n"
+      "ee\n"
+      "ff\n"
+      "gg\n"
+      "hh\n";
 
   /* Fill the control to lines to ensure that most of them are offscreen */
   for (i = 0; i < 50; i++)
@@ -460,6 +469,48 @@ static void test_EM_POSFROMCHAR(void)
   ok(HIWORD(result) == 50 * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", HIWORD(result), 50 * height);
   ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
 
+  /* Testing that vertical scrolling does, in fact, have an effect on EM_POSFROMCHAR */
+  SendMessage(hwndRichEdit, EM_SCROLL, SB_LINEDOWN, 0); /* line down */
+  for (i = 0; i < 50; i++)
+  {
+    /* All the lines are 16 characters long */
+    result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, i * 16, 0);
+    ok((signed short)(HIWORD(result)) == (i - 1) * height,
+        "EM_POSFROMCHAR reports y=%hd, expected %d\n",
+        (signed short)(HIWORD(result)), (i - 1) * height);
+    ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+  }
+
+  /* Testing position at end of text */
+  result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 50 * 16, 0);
+  ok(HIWORD(result) == (50 - 1) * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", HIWORD(result), (50 - 1) * height);
+  ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+
+  /* Testing position way past end of text */
+  result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 55 * 16, 0);
+  ok(HIWORD(result) == (50 - 1) * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", HIWORD(result), (50 - 1) * height);
+  ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+
+  /* Testing that horizontal scrolling does, in fact, have an effect on EM_POSFROMCHAR */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+  SendMessage(hwndRichEdit, EM_SCROLL, SB_LINEUP, 0); /* line up */
+
+  result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 0, 0);
+  ok(HIWORD(result) == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", HIWORD(result));
+  todo_wine {
+  ok(LOWORD(result) == 1, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+  }
+  xpos = LOWORD(result);
+
+  SendMessage(hwndRichEdit, WM_HSCROLL, SB_LINERIGHT, 0);
+  result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 0, 0);
+  ok(HIWORD(result) == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", HIWORD(result));
+  todo_wine {
+  /* Fails on builtin because horizontal scrollbar is not being shown */
+  ok((signed short)(LOWORD(result)) < xpos,
+        "EM_POSFROMCHAR reports x=%hd, expected value less than %d\n",
+        (signed short)(LOWORD(result)), xpos);
+  }
   DestroyWindow(hwndRichEdit);
 }
 

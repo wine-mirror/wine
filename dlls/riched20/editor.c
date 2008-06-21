@@ -2899,6 +2899,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_DisplayItem *pRun;
     int nCharOfs, nOffset, nLength;
     POINTL pt = {0,0};
+    SCROLLINFO si;
     
     nCharOfs = wParam; 
     /* detect which API version we're dealing with */
@@ -2917,6 +2918,14 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         pt.y = editor->pBuffer->pLast->member.para.nYPos;
     }
     pt.x += editor->selofs;
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_POS;
+    if (GetScrollInfo(editor->hWnd, SB_VERT, &si)) pt.y -= si.nPos;
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_POS;
+    if (GetScrollInfo(editor->hWnd, SB_HORZ, &si)) pt.x -= si.nPos;
+
     if (wParam >= 0x40000) {
         *(POINTL *)wParam = pt;
     }
