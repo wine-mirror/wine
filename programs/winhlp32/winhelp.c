@@ -376,6 +376,13 @@ typedef struct
     WORD ofsData;
 } WINHELP,*LPWINHELP;
 
+static BOOL WINHELP_HasWorkingWindow(void)
+{
+    if (!Globals.active_win) return FALSE;
+    if (Globals.active_win->next || Globals.win_list != Globals.active_win) return TRUE;
+    return Globals.active_win->page != NULL && Globals.active_win->page->file != NULL;
+}
+
 /******************************************************************
  *		WINHELP_HandleCommand
  *
@@ -407,6 +414,7 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
             {
                 MACRO_JumpContext(ptr, "main", wh->data);
             }
+            if (!WINHELP_HasWorkingWindow()) MACRO_Exit();
             break;
         case HELP_QUIT:
             MACRO_Exit();
@@ -416,9 +424,11 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
             {
                 MACRO_JumpContents(ptr, "main");
             }
+            if (!WINHELP_HasWorkingWindow()) MACRO_Exit();
             break;
         case HELP_HELPONHELP:
             MACRO_HelpOn();
+            if (!WINHELP_HasWorkingWindow()) MACRO_Exit();
             break;
         /* case HELP_SETINDEX: */
         case HELP_SETCONTENTS:
