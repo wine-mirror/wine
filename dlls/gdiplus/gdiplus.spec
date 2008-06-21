@@ -85,7 +85,7 @@
 @ stdcall GdipCreateCustomLineCap(ptr ptr long long ptr)
 @ stub GdipCreateEffect
 @ stub GdipCreateFont
-@ stub GdipCreateFontFamilyFromName
+@ stdcall GdipCreateFontFamilyFromName(wstr ptr ptr)
 @ stdcall GdipCreateFontFromDC(long ptr)
 @ stdcall GdipCreateFontFromLogfontA(long ptr ptr)
 @ stdcall GdipCreateFontFromLogfontW(long ptr ptr)

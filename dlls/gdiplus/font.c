@@ -22,6 +22,10 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "wine/debug.h"
+#include "wine/unicode.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL (gdiplus);
 
 #include "objbase.h"
 
@@ -127,6 +131,90 @@ GpStatus WINGDIPAPI GdipCloneFont(GpFont *font, GpFont **cloneFont)
     if(!*cloneFont)    return OutOfMemory;
 
     **cloneFont = *font;
+
+    return Ok;
+}
+
+/* Borrowed from GDI32 */
+static INT CALLBACK is_font_installed_proc(const LOGFONTW *elf,
+                            const TEXTMETRICW *ntm, DWORD type, LPARAM lParam)
+{
+    return 0;
+}
+
+static BOOL is_font_installed(const WCHAR *name)
+{
+    HDC hdc = GetDC(0);
+    BOOL ret = FALSE;
+
+    if(!EnumFontFamiliesW(hdc, name, is_font_installed_proc, 0))
+        ret = TRUE;
+
+    ReleaseDC(0, hdc);
+    return ret;
+}
+
+/*******************************************************************************
+ * GdipCreateFontFamilyFromName [GDIPLUS.@]
+ *
+ * Creates a font family object based on a supplied name
+ *
+ * PARAMS
+ *  name               [I] Name of the font
+ *  fontCollection     [I] What font collection (if any) the font belongs to (may be NULL)
+ *  FontFamily         [O] Pointer to the resulting FontFamily object
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: FamilyNotFound if the requested FontFamily does not exist on the system
+ *  FAILURE: Invalid parameter if FontFamily or name is NULL
+ *
+ * NOTES
+ *   If fontCollection is NULL then the object is not part of any collection
+ *
+ */
+
+GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
+                                        GpFontCollection *fontCollection,
+                                        GpFontFamily **FontFamily)
+{
+    GpFontFamily* ffamily;
+    HDC hdc;
+    HFONT hFont;
+    LOGFONTW lfw;
+
+    TRACE("%s, %p %p\n", debugstr_w(name), fontCollection, FontFamily);
+
+    if (!(name && FontFamily))
+        return InvalidParameter;
+    if (fontCollection)
+        FIXME("No support for FontCollections yet!\n");
+    if (!is_font_installed(name))
+        return FontFamilyNotFound;
+
+    ffamily = GdipAlloc(sizeof (GpFontFamily));
+    if (!ffamily) return OutOfMemory;
+    ffamily->tmw = GdipAlloc(sizeof (TEXTMETRICW));
+    if (!ffamily->tmw) {GdipFree (ffamily); return OutOfMemory;}
+
+    hdc = GetDC(0);
+    lstrcpynW(lfw.lfFaceName, name, sizeof(WCHAR) * LF_FACESIZE);
+    hFont = CreateFontIndirectW (&lfw);
+    SelectObject(hdc, hFont);
+
+    GetTextMetricsW(hdc, ffamily->tmw);
+
+    ffamily->FamilyName = GdipAlloc(LF_FACESIZE * sizeof (WCHAR));
+    if (!ffamily->FamilyName)
+    {
+        GdipFree(ffamily);
+        return OutOfMemory;
+    }
+
+    lstrcpynW(ffamily->FamilyName, name, sizeof(WCHAR) * LF_FACESIZE);
+
+    *FontFamily = ffamily;
+    ReleaseDC(0, hdc);
 
     return Ok;
 }

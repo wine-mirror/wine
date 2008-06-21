@@ -185,4 +185,13 @@ struct GpStringFormat{
     StringAlignment vertalign;
 };
 
+struct GpFontCollection{
+    GpFontFamily* FontFamilies;
+};
+
+struct GpFontFamily{
+    TEXTMETRICW* tmw;
+    WCHAR* FamilyName;
+};
+
 #endif
