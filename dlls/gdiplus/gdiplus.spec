@@ -264,7 +264,7 @@
 @ stub GdipGetEncoderParameterList
 @ stub GdipGetEncoderParameterListSize
 @ stub GdipGetFamily
-@ stub GdipGetFamilyName
+@ stdcall GdipGetFamilyName(ptr ptr long)
 @ stub GdipGetFontCollectionFamilyCount
 @ stub GdipGetFontCollectionFamilyList
 @ stub GdipGetFontHeight

@@ -219,6 +219,39 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipGetFamilyName [GDIPLUS.@]
+ *
+ * Returns the family name into name
+ *
+ * PARAMS
+ *  *family     [I] Family to retrieve from
+ *  *name       [O] WCHARS of the family name
+ *  LANGID      [I] charset
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter if family is NULL
+ *
+ * NOTES
+ *   If name is a NULL ptr, then both XP and Vista will crash (so we do as well)
+ */
+GpStatus WINGDIPAPI GdipGetFamilyName (GDIPCONST GpFontFamily *family,
+                                       WCHAR *name, LANGID language)
+{
+    if (family == NULL)
+         return InvalidParameter;
+
+    TRACE("%p, %p, %d\n", family, name, language);
+
+    if (language != LANG_NEUTRAL)
+        FIXME("No support for handling of multiple languages!\n");
+
+    lstrcpynW (name, family->FamilyName, LF_FACESIZE);
+
+    return Ok;
+}
+
 
 /*****************************************************************************
  * GdipDeleteFontFamily [GDIPLUS.@]
