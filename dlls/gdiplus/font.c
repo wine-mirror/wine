@@ -236,6 +236,31 @@ GpStatus WINGDIPAPI GdipCreateFontFromDC(HDC hdc, GpFont **font)
     return GdipCreateFontFromLogfontW(hdc, &lfw, font);
 }
 
+/******************************************************************************
+ * GdipGetFontSize [GDIPLUS.@]
+ *
+ * Returns the size of the font in Units
+ *
+ * PARAMS
+ *  *font       [I] The font to retrieve size from
+ *  *size       [O] Pointer to hold retrieved value
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParamter (font or size was NULL)
+ *
+ * NOTES
+ *  Size returned is actually emSize -- not internal size used for drawing.
+ */
+GpStatus WINGDIPAPI GdipGetFontSize(GpFont *font, REAL *size)
+{
+    if (!(font && size)) return InvalidParameter;
+
+    *size = font->emSize;
+
+    return Ok;
+}
+
 /*******************************************************************************
  * GdipGetFontUnit  [GDIPLUS.@]
  *
