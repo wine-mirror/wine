@@ -878,6 +878,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         case MNID_CTXT_ANNOTATE:MACRO_Annotate();       break;
         case MNID_CTXT_COPY:    MACRO_CopyDialog();     break;
         case MNID_CTXT_PRINT:   MACRO_Print();          break;
+        case MNID_OPTS_FONTS_SMALL:
         case MNID_CTXT_FONTS_SMALL:
             win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
             if (win->font_scale != 0)
@@ -886,6 +887,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 WINHELP_SetupText(GetDlgItem(hWnd, CTL_ID_TEXT), win, 0 /* FIXME */);
             }
             break;
+        case MNID_OPTS_FONTS_NORMAL:
         case MNID_CTXT_FONTS_NORMAL:
             win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
             if (win->font_scale != 1)
@@ -894,6 +896,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 WINHELP_SetupText(GetDlgItem(hWnd, CTL_ID_TEXT), win, 0 /* FIXME */);
             }
             break;
+        case MNID_OPTS_FONTS_LARGE:
         case MNID_CTXT_FONTS_LARGE:
             win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
             if (win->font_scale != 2)
@@ -902,6 +905,10 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 WINHELP_SetupText(GetDlgItem(hWnd, CTL_ID_TEXT), win, 0 /* FIXME */);
             }
             break;
+        case MNID_OPTS_HELP_DEFAULT:
+        case MNID_OPTS_HELP_VISIBLE:
+        case MNID_OPTS_HELP_NONVISIBLE:
+        case MNID_OPTS_SYSTEM_COLORS:
         case MNID_CTXT_HELP_DEFAULT:
         case MNID_CTXT_HELP_VISIBLE:
         case MNID_CTXT_HELP_NONVISIBLE:
@@ -1036,6 +1043,16 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 break;
             }
         }
+        break;
+
+    case WM_INITMENUPOPUP:
+        win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
+        CheckMenuItem((HMENU)wParam, MNID_OPTS_FONTS_SMALL,
+                      MF_BYCOMMAND | (win->font_scale == 0) ? MF_CHECKED : 0);
+        CheckMenuItem((HMENU)wParam, MNID_OPTS_FONTS_NORMAL,
+                      MF_BYCOMMAND | (win->font_scale == 1) ? MF_CHECKED : 0);
+        CheckMenuItem((HMENU)wParam, MNID_OPTS_FONTS_LARGE,
+                      MF_BYCOMMAND | (win->font_scale == 2) ? MF_CHECKED : 0);
         break;
 
     case WM_NCDESTROY:
