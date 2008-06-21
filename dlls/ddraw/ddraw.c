@@ -3241,6 +3241,12 @@ DirectDrawCreateClipper(DWORD Flags,
         return CLASS_E_NOAGGREGATION;
     }
 
+    if (!LoadWineD3D())
+    {
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_NODIRECTDRAWSUPPORT;
+    }
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                      sizeof(IDirectDrawClipperImpl));
     if (object == NULL)

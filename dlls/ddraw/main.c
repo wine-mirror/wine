@@ -49,7 +49,6 @@
 
 typedef IWineD3D* (WINAPI *fnWineDirect3DCreate)(UINT, UINT, IUnknown *);
 
-static HMODULE hWineD3D = (HMODULE) -1;
 static fnWineDirect3DCreate pWineDirect3DCreate;
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
@@ -71,6 +70,31 @@ CRITICAL_SECTION ddraw_cs = { &ddraw_cs_debug, -1, 0, 0, 0, 0 };
 
 /* value of ForceRefreshRate */
 DWORD force_refresh_rate = 0;
+
+/*
+ * Helper Function for DDRAW_Create and DirectDrawCreateClipper for
+ * lazy loading of the Wine D3D driver.
+ *
+ * Returns
+ *  TRUE on success
+ *  FALSE on failure.
+ */
+
+BOOL LoadWineD3D(void)
+{
+    static HMODULE hWineD3D = (HMODULE) -1;
+    if (hWineD3D == (HMODULE) -1)
+    {
+        hWineD3D = LoadLibraryA("wined3d");
+        if (hWineD3D)
+        {
+            pWineDirect3DCreate = (fnWineDirect3DCreate) GetProcAddress(hWineD3D, "WineDirect3DCreate");
+            pWineDirect3DCreateClipper = (fnWineDirect3DCreateClipper) GetProcAddress(hWineD3D, "WineDirect3DCreateClipper");
+            return TRUE;
+        }
+    }
+    return hWineD3D != NULL;
+}
 
 /***********************************************************************
  *
@@ -171,17 +195,7 @@ DDRAW_Create(const GUID *guid,
     This->orig_width = GetSystemMetrics(SM_CXSCREEN);
     This->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
-    if (hWineD3D == (HMODULE) -1)
-    {
-        hWineD3D = LoadLibraryA("wined3d");
-        if (hWineD3D)
-        {
-            pWineDirect3DCreate = (fnWineDirect3DCreate) GetProcAddress(hWineD3D, "WineDirect3DCreate");
-            pWineDirect3DCreateClipper = (fnWineDirect3DCreateClipper) GetProcAddress(hWineD3D, "WineDirect3DCreateClipper");
-        }
-    }
-
-    if (!hWineD3D)
+    if (!LoadWineD3D())
     {
         ERR("Couldn't load WineD3D - OpenGL libs not present?\n");
         hr = DDERR_NODIRECTDRAWSUPPORT;

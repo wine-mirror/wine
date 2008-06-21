@@ -644,6 +644,9 @@ void DDRAW_dump_cooperativelevel(DWORD cooplevel);
  * IDirect3DExecuteBuffer isn't in WineD3D */
 void multiply_matrix(LPD3DMATRIX dest, const D3DMATRIX *src1, const D3DMATRIX *src2);
 
+/* Helper function in main.c */
+BOOL LoadWineD3D(void);
+
 /* Used for generic dumping */
 typedef struct
 {
