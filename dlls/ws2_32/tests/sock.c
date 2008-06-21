@@ -2021,7 +2021,7 @@ static void test_send(void)
         goto end;
     }
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, buflen);
+    buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
     if (buffer == NULL)
     {
         ok(0, "HeapAlloc failed, error %d\n", GetLastError());
