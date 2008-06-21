@@ -24,7 +24,12 @@
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
-static WCHAR arial[] = {'A','r','i','a','l','\0'};
+static const WCHAR arial[] = {'A','r','i','a','l','\0'};
+static const WCHAR nonexistant[] = {'T','h','i','s','F','o','n','t','s','h','o','u','l','d','N','o','t','E','x','i','s','t','\0'};
+static const WCHAR MSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+static const WCHAR MicrosoftSansSerif[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+static const WCHAR TimesNewRoman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
+static const WCHAR CourierNew[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
 
 static void test_logfont(void)
 {
@@ -94,6 +99,54 @@ static void test_logfont(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_fontfamily (void)
+{
+    GpFontFamily** family = NULL;
+    WCHAR itsName[LF_FACESIZE];
+    GpStatus stat;
+
+    /* FontFamily can not be NULL */
+    stat = GdipCreateFontFamilyFromName (arial , NULL, family);
+    expect (InvalidParameter, stat);
+
+    family = GdipAlloc (sizeof (GpFontFamily*));
+
+    /* FontFamily must be able to actually find the family.
+     * If it can't, any subsequent calls should fail
+     *
+     * We currently fail (meaning we don't) because we don't actually
+     * test to see if we can successfully get a family
+     */
+    stat = GdipCreateFontFamilyFromName (nonexistant, NULL, family);
+    expect (FontFamilyNotFound, stat);
+    stat = GdipGetFamilyName (*family,itsName, LANG_NEUTRAL);
+    expect (InvalidParameter, stat);
+    ok ((lstrcmpiW(itsName,nonexistant) != 0),
+        "Expected a non-zero value for nonexistant font!\n");
+    stat = GdipDeleteFontFamily(*family);
+    expect (InvalidParameter, stat);
+
+    stat = GdipCreateFontFamilyFromName (arial, NULL, family);
+    expect (Ok, stat);
+
+    stat = GdipGetFamilyName (*family, itsName, LANG_NEUTRAL);
+    expect (Ok, stat);
+    expect (0, lstrcmpiW(itsName,arial));
+
+    if (0)
+    {
+        /* Crashes on Windows XP SP2, Vista, and so Wine as well */
+        stat = GdipGetFamilyName (*family, NULL, LANG_NEUTRAL);
+        expect (Ok, stat);
+    }
+
+    stat = GdipDeleteFontFamily(*family);
+    expect (Ok, stat);
+
+    if (family) GdipFree (family);
+}
+
+
 START_TEST(font)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -107,6 +160,7 @@ START_TEST(font)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_logfont();
+    test_fontfamily();
 
     GdiplusShutdown(gdiplusToken);
 }
