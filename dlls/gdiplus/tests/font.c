@@ -38,6 +38,46 @@ static const char *debugstr_w(LPCWSTR str)
    return buf;
 }
 
+
+static void test_createfont(void)
+{
+    GpFontFamily* fontfamily = NULL;
+    GpFont* font = NULL;
+    GpStatus stat;
+    Unit unit;
+    UINT i;
+    REAL size;
+
+    stat = GdipCreateFontFamilyFromName(nonexistant, NULL, &fontfamily);
+    expect (FontFamilyNotFound, stat);
+    stat = GdipDeleteFont(font);
+    expect (InvalidParameter, stat);
+    stat = GdipCreateFontFamilyFromName(arial, NULL, &fontfamily);
+    expect (Ok, stat);
+    stat = GdipCreateFont(fontfamily, 12, FontStyleRegular, UnitPoint, &font);
+    expect (Ok, stat);
+    stat = GdipGetFontUnit (font, &unit);
+    expect (Ok, stat);
+    expect (UnitPoint, unit);
+
+    /* Test to see if returned size is based on unit (its not) */
+    GdipGetFontSize(font, &size);
+    ok (size == 12, "Expected 12, got %f\n", size);
+    GdipDeleteFont(font);
+
+    /* Make sure everything is converted correctly for all Units */
+    for (i = UnitWorld; i <=UnitMillimeter; i++)
+    {
+        if (i == UnitDisplay) continue; /* Crashes WindowsXP, wtf? */
+        GdipCreateFont(fontfamily, 24, FontStyleRegular, i, &font);
+        GdipGetFontSize (font, &size);
+        ok (size == 24, "Expected 24, got %f (with unit: %d)\n", size, i);
+        GdipGetFontUnit (font, &unit);
+        expect (i, unit);
+        GdipDeleteFont(font);
+    }
+}
+
 static void test_logfont(void)
 {
     LOGFONTW lfw, lfw2;
@@ -207,6 +247,7 @@ START_TEST(font)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_createfont();
     test_logfont();
     test_fontfamily();
     test_getgenerics();
