@@ -236,6 +236,26 @@ GpStatus WINGDIPAPI GdipCreateFontFromDC(HDC hdc, GpFont **font)
     return GdipCreateFontFromLogfontW(hdc, &lfw, font);
 }
 
+/*******************************************************************************
+ * GdipGetFontUnit  [GDIPLUS.@]
+ *
+ * PARAMS
+ *  font    [I] Font to retrieve from
+ *  unit    [O] Return value
+ *
+ * RETURNS
+ *  FAILURE: font or unit was NULL
+ *  OK: otherwise
+ */
+GpStatus WINGDIPAPI GdipGetFontUnit(GpFont *font, Unit *unit)
+{
+    if (!(font && unit)) return InvalidParameter;
+
+    *unit = font->unit;
+
+    return Ok;
+}
+
 /* FIXME: use graphics */
 GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
     LOGFONTW *lfw)
