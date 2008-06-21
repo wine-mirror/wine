@@ -3597,22 +3597,23 @@ struct driver_version_information {
 };
 
 static const struct driver_version_information driver_version_table[] = {
-    /* Nvidia drivers. Geforce FX and newer cards are supported by the current driver */
+    /* Nvidia drivers. Geforce6 and newer cards are supported by the current driver (177.x)*/
+    /* GeforceFX support is up to 173.x, Geforce2MX/3/4 upto 96.x, TNT/Geforce1/2 upto 71.x */
     /* Note that version numbers >100 lets say 123.45 use >= x.y.11.2345 and not x.y.10.12345 */
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    7,  15, 10, 16921   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    7,  15, 10, 16921   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    7,  15, 11, 7341   },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     7,  15, 11, 7341    },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     7,  15, 11, 7341    },
 
