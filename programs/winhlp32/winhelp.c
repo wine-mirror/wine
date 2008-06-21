@@ -628,8 +628,6 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         LoadString(Globals.hInstance, STID_BACK, buffer, sizeof(buffer));
         MACRO_CreateButton("BTN_BACK", buffer, "Back()");
         if (win->back.index <= 1) MACRO_DisableButton("BTN_BACK");
-        LoadString(Globals.hInstance, STID_HISTORY, buffer, sizeof(buffer));
-        MACRO_CreateButton("BTN_HISTORY", buffer, "History()");
         LoadString(Globals.hInstance, STID_TOPICS, buffer, sizeof(buffer));
         MACRO_CreateButton("BTN_TOPICS", buffer, "Finder()");
     }
@@ -878,6 +876,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         case MNID_CTXT_ANNOTATE:MACRO_Annotate();       break;
         case MNID_CTXT_COPY:    MACRO_CopyDialog();     break;
         case MNID_CTXT_PRINT:   MACRO_Print();          break;
+        case MNID_OPTS_HISTORY: MACRO_History();        break;
         case MNID_OPTS_FONTS_SMALL:
         case MNID_CTXT_FONTS_SMALL:
             win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);

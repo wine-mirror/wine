@@ -45,7 +45,6 @@
 #define STID_CONTENTS 		0x126
 #define STID_SEARCH	 	0x127
 #define STID_BACK 		0x128
-#define STID_HISTORY 		0x129
 #define STID_TOPICS 		0x12A
 #define STID_ALL_FILES 		0x12B
 #define STID_HELP_FILES_HLP	0x12C
