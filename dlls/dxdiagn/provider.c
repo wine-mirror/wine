@@ -300,7 +300,9 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   GlobalMemoryStatusEx( &msex );
   V_VT(&v) = VT_UI8;
   V_UI8(&v) = msex.ullTotalPhys;
+  VariantChangeType(&v, &v, 0, VT_BSTR);
   IDxDiagContainerImpl_AddProp(pSubCont, ullPhysicalMemory, &v);
+  VariantClear(&v);
 
   info.dwOSVersionInfoSize = sizeof(info);
   GetVersionExW( &info );
