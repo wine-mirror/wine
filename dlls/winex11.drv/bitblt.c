@@ -909,7 +909,7 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
  * pixels to Windows colors.
  */
 static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
-                              Pixmap pixmap, GC gc, INT xSrc, INT ySrc, RECT *visRectSrc )
+                              Pixmap pixmap, GC gc, RECT *visRectSrc )
 {
     XImage *imageSrc, *imageDst;
     register INT x, y;
@@ -1443,7 +1443,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
                                       &visRectSrc, &visRectDst );
         else
             BITBLT_GetSrcArea( physDevSrc, physDevDst, pixmaps[SRC], tmpGC,
-                               xSrc, ySrc, &visRectSrc );
+                               &visRectSrc );
     }
 
     if (useDst) BITBLT_GetDstArea( physDevDst, pixmaps[DST], tmpGC, &visRectDst );
