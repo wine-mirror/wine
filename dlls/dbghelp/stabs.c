@@ -1003,7 +1003,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
 
     *stabs_find_ref(filenr1, subnr1) = *ret_dt = new_dt;
 
-    TRACE("Adding (%ld,%ld) %s\n", filenr1, subnr1, typename);
+    TRACE("Adding (%ld,%ld) %s\n", filenr1, subnr1, debugstr_a(typename));
 
     return 0;
 }
