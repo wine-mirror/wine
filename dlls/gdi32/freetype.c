@@ -1006,7 +1006,7 @@ static void LoadSubstList(void)
 
 	    /* Win 2000 doesn't allow mapping between different charsets
 	       or mapping of DEFAULT_CHARSET */
-	    if((psub->to.charset != psub->from.charset) ||
+	    if ((psub->from.charset && psub->to.charset != psub->from.charset) ||
 	       psub->to.charset == DEFAULT_CHARSET) {
 	        HeapFree(GetProcessHeap(), 0, psub->to.name);
 		HeapFree(GetProcessHeap(), 0, psub->from.name);
@@ -2122,84 +2122,144 @@ static const struct nls_update_font_list
     UINT ansi_cp, oem_cp;
     const char *oem, *fixed, *system;
     const char *courier, *serif, *small, *sserif;
-   /* these are for font substitute */
+    /* these are for font substitutes */
     const char *shelldlg, *tmsrmn;
+    const char *fixed_0, *system_0, *courier_0, *serif_0, *small_0, *sserif_0,
+               *helv_0, *tmsrmn_0;
+    const struct subst
+    {
+        const char *from, *to;
+    } arial_0, courier_new_0, times_new_roman_0;
 } nls_update_font_list[] =
 {
     /* Latin 1 (United States) */
     { 1252, 437, "vgaoem.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
       "Tahoma","Times New Roman",
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      { 0 }, { 0 }, { 0 }
     },
     /* Latin 1 (Multilingual) */
     { 1252, 850, "vga850.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
       "Tahoma","Times New Roman",  /* FIXME unverified */
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      { 0 }, { 0 }, { 0 }
     },
     /* Eastern Europe */
     { 1250, 852, "vga852.fon", "vgafixe.fon", "vgasyse.fon",
       "couree.fon", "serifee.fon", "smallee.fon", "sserifee.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,238", "System,238",
+      "Courier New,238", "MS Serif,238", "Small Fonts,238",
+      "MS Sans Serif,238", "MS Sans Serif,238", "MS Serif,238",
+      { "Arial CE,0", "Arial,238" },
+      { "Courier New CE,0", "Courier New,238" },
+      { "Times New Roman CE,0", "Times New Roman,238" }
     },
     /* Cyrillic */
     { 1251, 866, "vga866.fon", "vgafixr.fon", "vgasysr.fon",
       "courer.fon", "serifer.fon", "smaller.fon", "sserifer.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,204", "System,204",
+      "Courier New,204", "MS Serif,204", "Small Fonts,204",
+      "MS Sans Serif,204", "MS Sans Serif,204", "MS Serif,204",
+      { "Arial Cyr,0", "Arial,204" },
+      { "Courier New Cyr,0", "Courier New,204" },
+      { "Times New Roman Cyr,0", "Times New Roman,204" }
     },
     /* Greek */
     { 1253, 737, "vga869.fon", "vgafixg.fon", "vgasysg.fon",
       "coureg.fon", "serifeg.fon", "smalleg.fon", "sserifeg.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,161", "System,161",
+      "Courier New,161", "MS Serif,161", "Small Fonts,161",
+      "MS Sans Serif,161", "MS Sans Serif,161", "MS Serif,161",
+      { "Arial Greek,0", "Arial,161" },
+      { "Courier New Greek,0", "Courier New,161" },
+      { "Times New Roman Greek,0", "Times New Roman,161" }
     },
     /* Turkish */
     { 1254, 857, "vga857.fon", "vgafixt.fon", "vgasyst.fon",
       "couret.fon", "serifet.fon", "smallet.fon", "sserifet.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,162", "System,162",
+      "Courier New,162", "MS Serif,162", "Small Fonts,162",
+      "MS Sans Serif,162", "MS Sans Serif,162", "MS Serif,162",
+      { "Arial Tur,0", "Arial,162" },
+      { "Courier New Tur,0", "Courier New,162" },
+      { "Times New Roman Tur,0", "Times New Roman,162" }
     },
     /* Hebrew */
     { 1255, 862, "vgaoem.fon", "vgaf1255.fon", "vgas1255.fon",
       "coue1255.fon", "sere1255.fon", "smae1255.fon", "ssee1255.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,177", "System,177",
+      "Courier New,177", "MS Serif,177", "Small Fonts,177",
+      "MS Sans Serif,177", "MS Sans Serif,177", "MS Serif,177",
+      { 0 }, { 0 }, { 0 }
     },
     /* Arabic */
     { 1256, 720, "vgaoem.fon", "vgaf1256.fon", "vgas1256.fon",
       "coue1256.fon", "sere1256.fon", "smae1256.fon", "ssee1256.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,178", "System,178",
+      "Courier New,178", "MS Serif,178", "Small Fonts,178",
+      "MS Sans Serif,178", "MS Sans Serif,178", "MS Serif,178",
+      { 0 }, { 0 }, { 0 }
     },
     /* Baltic */
     { 1257, 775, "vga775.fon", "vgaf1257.fon", "vgas1257.fon",
       "coue1257.fon", "sere1257.fon", "smae1257.fon", "ssee1257.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,186", "System,186",
+      "Courier New,186", "MS Serif,186", "Small Fonts,186",
+      "MS Sans Serif,186", "MS Sans Serif,186", "MS Serif,186",
+      { "Arial Baltic,0", "Arial,186" },
+      { "Courier New Baltic,0", "Courier New,186" },
+      { "Times New Roman Baltic,0", "Times New Roman,186" }
     },
     /* Vietnamese */
     { 1258, 1258, "vga850.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      { 0 }, { 0 }, { 0 }
     },
     /* Thai */
     { 874, 874, "vga850.fon", "vgaf874.fon", "vgas874.fon",
       "coure.fon", "serife.fon", "smalle.fon", "ssee874.fon",
       "Tahoma","Times New Roman", /* FIXME unverified */
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      { 0 }, { 0 }, { 0 }
     },
     /* Japanese */
     { 932, 932, "vga932.fon", "jvgafix.fon", "jvgasys.fon",
       "coure.fon", "serife.fon", "jsmalle.fon", "sserife.fon",
       "MS UI Gothic","MS Serif",
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      { 0 }, { 0 }, { 0 }
     },
     /* Chinese Simplified */
     { 936, 936, "vga936.fon", "svgafix.fon", "svgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
       "Tahoma", "Times New Roman", /* FIXME unverified */
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      { 0 }, { 0 }, { 0 }
     },
     /* Korean */
     { 949, 949, "vga949.fon", "hvgafix.fon", "hvgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
       "Gulim",  "Batang",
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      { 0 }, { 0 }, { 0 }
     },
     /* Chinese Traditional */
     { 950, 950, "vga950.fon", "cvgafix.fon", "cvgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
       "PMingLiU",  "MingLiU",
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      { 0 }, { 0 }, { 0 }
     }
 };
 
@@ -2246,12 +2306,21 @@ static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl)
     RegSetValueExA(hkey, "Small Fonts", 0, REG_SZ, (const BYTE *)fl->small, strlen(fl->small)+1);
 }
 
+static void set_value_key(HKEY hkey, const char *name, const char *value)
+{
+    if (value)
+        RegSetValueExA(hkey, name, 0, REG_SZ, (const BYTE *)value, strlen(value) + 1);
+    else if (name)
+        RegDeleteValueA(hkey, name);
+}
+
 static void update_font_info(void)
 {
     char buf[40], cpbuf[40];
     DWORD len, type;
     HKEY hkey = 0;
     UINT i, ansi_cp = 0, oem_cp = 0;
+    BOOL done = FALSE;
 
     if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL) != ERROR_SUCCESS)
         return;
@@ -2283,11 +2352,11 @@ static void update_font_info(void)
 
     for (i = 0; i < sizeof(nls_update_font_list)/sizeof(nls_update_font_list[0]); i++)
     {
+        HKEY hkey;
+
         if (nls_update_font_list[i].ansi_cp == ansi_cp &&
             nls_update_font_list[i].oem_cp == oem_cp)
         {
-            HKEY hkey;
-
             hkey = create_config_fonts_registry_key();
             RegSetValueExA(hkey, "OEMFONT.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].oem, strlen(nls_update_font_list[i].oem)+1);
             RegSetValueExA(hkey, "FIXEDFON.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].fixed, strlen(nls_update_font_list[i].fixed)+1);
@@ -2308,12 +2377,38 @@ static void update_font_info(void)
                                strlen(nls_update_font_list[i].shelldlg)+1);
                 RegSetValueExA(hkey, "Tms Rmn", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].tmsrmn,
                                strlen(nls_update_font_list[i].tmsrmn)+1);
+
+                set_value_key(hkey, "Fixedsys,0", nls_update_font_list[i].fixed_0);
+                set_value_key(hkey, "System,0", nls_update_font_list[i].system_0);
+                set_value_key(hkey, "Courier,0", nls_update_font_list[i].courier_0);
+                set_value_key(hkey, "MS Serif,0", nls_update_font_list[i].serif_0);
+                set_value_key(hkey, "Small Fonts,0", nls_update_font_list[i].small_0);
+                set_value_key(hkey, "MS Sans Serif,0", nls_update_font_list[i].sserif_0);
+                set_value_key(hkey, "Helv,0", nls_update_font_list[i].helv_0);
+                set_value_key(hkey, "Tms Rmn,0", nls_update_font_list[i].tmsrmn_0);
+
+                set_value_key(hkey, nls_update_font_list[i].arial_0.from, nls_update_font_list[i].arial_0.to);
+                set_value_key(hkey, nls_update_font_list[i].courier_new_0.from, nls_update_font_list[i].courier_new_0.to);
+                set_value_key(hkey, nls_update_font_list[i].times_new_roman_0.from, nls_update_font_list[i].times_new_roman_0.to);
+
                 RegCloseKey(hkey);
             }
-            return;
+            done = TRUE;
+        }
+        else
+        {
+            /* Delete the FontSubstitutes from other locales */
+            if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
+            {
+                set_value_key(hkey, nls_update_font_list[i].arial_0.from, NULL);
+                set_value_key(hkey, nls_update_font_list[i].courier_new_0.from, NULL);
+                set_value_key(hkey, nls_update_font_list[i].times_new_roman_0.from, NULL);
+                RegCloseKey(hkey);
+            }
         }
     }
-    FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
+    if (!done)
+        FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
 }
 
 
@@ -3147,6 +3242,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     LOGFONTW lf;
     CHARSETINFO csi;
     HFONTLIST *hflist;
+    FontSubst *psub = NULL;
 
     EnterCriticalSection( &freetype_cs );
 
@@ -3229,7 +3325,6 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     family = NULL;
     if(lf.lfFaceName[0] != '\0') {
-        FontSubst *psub;
         SYSTEM_LINKS *font_link;
         CHILD_FONT *font_link_entry;
         LPWSTR FaceName = lf.lfFaceName;
@@ -3245,9 +3340,10 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
         psub = get_font_subst(&font_subst_list, FaceName, lf.lfCharSet);
 
 	if(psub) {
-	    TRACE("substituting %s -> %s\n", debugstr_w(FaceName),
-		  debugstr_w(psub->to.name));
-	    strcpyW(FaceName, psub->to.name);
+	    TRACE("substituting %s,%d -> %s,%d\n", debugstr_w(FaceName), lf.lfCharSet,
+		  debugstr_w(psub->to.name), (psub->to.charset != -1) ? psub->to.charset : lf.lfCharSet);
+	    if (psub->to.charset != -1)
+		lf.lfCharSet = psub->to.charset;
 	}
 
 	/* We want a match on name and charset or just name if
@@ -3258,7 +3354,9 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 	*/
         LIST_FOR_EACH(family_elem_ptr, &font_list) {
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
-	    if(!strcmpiW(family->FamilyName, FaceName)) {
+            if (!strcmpiW(family->FamilyName, FaceName) ||
+                (psub && !strcmpiW(family->FamilyName, psub->to.name)))
+            {
                 LIST_FOR_EACH(face_elem_ptr, &family->faces) { 
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
                     if((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0])
@@ -3291,6 +3389,8 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
             }
         }
     }
+
+    psub = NULL; /* substitution is no more relevant */
 
     /* If requested charset was DEFAULT_CHARSET then try using charset
        corresponding to the current ansi codepage */
@@ -3476,7 +3576,7 @@ found:
     }
 
     ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
-    ret->name = strdupW(family->FamilyName);
+    ret->name = psub ? strdupW(psub->from.name) : strdupW(family->FamilyName);
     ret->underline = lf.lfUnderline ? 0xff : 0;
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
     create_child_font_list(ret);
