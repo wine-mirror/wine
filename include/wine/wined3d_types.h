@@ -1343,7 +1343,7 @@ typedef enum {
 #define WINED3DUSAGE_QUERY_SRGBWRITE                0x00040000L
 #define WINED3DUSAGE_QUERY_VERTEXTEXTURE            0x00100000L
 #define WINED3DUSAGE_QUERY_WRAPANDMIP               0x00200000L
-#define WINED3DUSAGE_QUERY_MASK                     0x002F8000L
+#define WINED3DUSAGE_QUERY_MASK                     0x003F8000L
 
 typedef enum _WINED3DSURFTYPE {
     SURFACE_UNKNOWN    = 0,   /* Default / Unknown surface type */
