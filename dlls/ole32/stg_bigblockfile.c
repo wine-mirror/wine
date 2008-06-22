@@ -412,17 +412,6 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
 }
 
 /******************************************************************************
- *      BIGBLOCKFILE_GetSize
- *
- * Returns the size of the file.
- *
- */
-ULARGE_INTEGER BIGBLOCKFILE_GetSize(LPBIGBLOCKFILE This)
-{
-  return This->filesize;
-}
-
-/******************************************************************************
  *      BIGBLOCKFILE_FindPageInList      [PRIVATE]
  *
  */
