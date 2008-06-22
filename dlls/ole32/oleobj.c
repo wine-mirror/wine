@@ -32,6 +32,8 @@
 #include "wine/debug.h"
 #include "ole2.h"
 
+#include "compobj_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define INITIAL_SINKS 10
