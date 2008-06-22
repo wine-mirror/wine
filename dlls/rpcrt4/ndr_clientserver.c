@@ -121,6 +121,7 @@ unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_M
   pStubMsg->IgnoreEmbeddedPointers = 0;
   pStubMsg->PointerBufferMark = NULL;
   pStubMsg->uFlags = 0;
+  pStubMsg->UniquePtrCount = 0;
   pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
   pStubMsg->pfnFree = pStubDesc->pfnFree;
   pStubMsg->StackTop = NULL;
