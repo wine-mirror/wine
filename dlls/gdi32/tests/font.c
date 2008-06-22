@@ -1771,11 +1771,23 @@ static void test_GetTextMetrics(void)
 
 static void test_nonexistent_font(void)
 {
+    static const struct
+    {
+        const char *name;
+        int charset;
+    } font_subst[] =
+    {
+        { "Times New Roman Baltic", 186 },
+        { "Times New Roman CE", 238 },
+        { "Times New Roman CYR", 204 },
+        { "Times New Roman Greek", 161 },
+        { "Times New Roman TUR", 162 }
+    };
     LOGFONTA lf;
     HDC hdc;
     HFONT hfont;
     CHARSETINFO csi;
-    INT cs, expected_cs;
+    INT cs, expected_cs, i;
     char buf[LF_FACESIZE];
 
     if (!is_truetype_font_installed("Arial") ||
@@ -1842,22 +1854,6 @@ todo_wine /* Wine uses Arial for all substitutions */
     memset(&lf, 0, sizeof(lf));
     lf.lfHeight = -13;
     lf.lfWeight = FW_DONTCARE;
-    strcpy(lf.lfFaceName, "Times New Roman CE");
-    hfont = CreateFontIndirectA(&lf);
-    hfont = SelectObject(hdc, hfont);
-    GetTextFaceA(hdc, sizeof(buf), buf);
-todo_wine /* Wine uses Arial for all substitutions */
-    ok(!lstrcmpiA(buf, "Times New Roman CE") /* XP, Vista */ ||
-       !lstrcmpiA(buf, "MS Serif") /* Win9x */ ||
-       !lstrcmpiA(buf, "MS Sans Serif"), /* win2k3 */
-       "Got %s\n", buf);
-    cs = GetTextCharset(hdc);
-    ok(cs == expected_cs, "expected %d, got %d\n", expected_cs, cs);
-    DeleteObject(SelectObject(hdc, hfont));
-
-    memset(&lf, 0, sizeof(lf));
-    lf.lfHeight = -13;
-    lf.lfWeight = FW_DONTCARE;
     strcpy(lf.lfFaceName, "Times New Roman");
     hfont = CreateFontIndirectA(&lf);
     hfont = SelectObject(hdc, hfont);
@@ -1867,18 +1863,46 @@ todo_wine /* Wine uses Arial for all substitutions */
     ok(cs == ANSI_CHARSET, "expected ANSI_CHARSET, got %d\n", cs);
     DeleteObject(SelectObject(hdc, hfont));
 
-    memset(&lf, 0, sizeof(lf));
-    lf.lfHeight = -13;
-    lf.lfWeight = FW_REGULAR;
-    strcpy(lf.lfFaceName, "Times New Roman CE");
-    hfont = CreateFontIndirectA(&lf);
-    hfont = SelectObject(hdc, hfont);
-    GetTextFaceA(hdc, sizeof(buf), buf);
-    ok(!lstrcmpiA(buf, "Arial") /* XP, Vista */ ||
-       !lstrcmpiA(buf, "Times New Roman") /* Win9x */, "Got %s\n", buf);
-    cs = GetTextCharset(hdc);
-    ok(cs == ANSI_CHARSET, "expected ANSI_CHARSET, got %d\n", cs);
-    DeleteObject(SelectObject(hdc, hfont));
+    for (i = 0; i < sizeof(font_subst)/sizeof(font_subst[0]); i++)
+    {
+        memset(&lf, 0, sizeof(lf));
+        lf.lfHeight = -13;
+        lf.lfWeight = FW_REGULAR;
+        strcpy(lf.lfFaceName, font_subst[i].name);
+        hfont = CreateFontIndirectA(&lf);
+        hfont = SelectObject(hdc, hfont);
+        cs = GetTextCharset(hdc);
+        if (font_subst[i].charset == expected_cs)
+        {
+            ok(cs == expected_cs, "expected %d, got %d\n", expected_cs, cs);
+            GetTextFaceA(hdc, sizeof(buf), buf);
+            ok(!lstrcmpiA(buf, font_subst[i].name), "expected %s, got %s\n", font_subst[i].name, buf);
+        }
+        else
+        {
+            ok(cs == ANSI_CHARSET, "expected ANSI_CHARSET, got %d\n", cs);
+            GetTextFaceA(hdc, sizeof(buf), buf);
+            ok(!lstrcmpiA(buf, "Arial") /* XP, Vista */ ||
+               !lstrcmpiA(buf, "Times New Roman") /* Win9x */, "got %s\n", buf);
+        }
+        DeleteObject(SelectObject(hdc, hfont));
+
+        memset(&lf, 0, sizeof(lf));
+        lf.lfHeight = -13;
+        lf.lfWeight = FW_DONTCARE;
+        strcpy(lf.lfFaceName, font_subst[i].name);
+        hfont = CreateFontIndirectA(&lf);
+        hfont = SelectObject(hdc, hfont);
+        GetTextFaceA(hdc, sizeof(buf), buf);
+        ok(!lstrcmpiA(buf, "Arial") /* Wine */ ||
+           !lstrcmpiA(buf, font_subst[i].name) /* XP, Vista */ ||
+           !lstrcmpiA(buf, "MS Serif") /* Win9x */ ||
+           !lstrcmpiA(buf, "MS Sans Serif"), /* win2k3 */
+           "got %s\n", buf);
+        cs = GetTextCharset(hdc);
+        ok(cs == expected_cs, "expected %d, got %d\n", expected_cs, cs);
+        DeleteObject(SelectObject(hdc, hfont));
+    }
 
     ReleaseDC(0, hdc);
 }
