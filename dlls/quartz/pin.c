@@ -1287,6 +1287,7 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
     dump_AM_MEDIA_TYPE(pmt);
 
     EnterCriticalSection(This->pin.pCritSec);
+    if (!This->pin.pConnectedTo)
     {
         ALLOCATOR_PROPERTIES props;
 
@@ -1294,9 +1295,6 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
         props.cbBuffer = 64 * 1024; /* 64k bytes */
         props.cbAlign = 1;
         props.cbPrefix = 0;
-
-        if (This->pin.pConnectedTo)
-            hr = VFW_E_ALREADY_CONNECTED;
 
         if (SUCCEEDED(hr) && (This->pin.fnQueryAccept(This->pin.pUserData, pmt) != S_OK))
             hr = VFW_E_TYPE_NOT_ACCEPTED; /* FIXME: shouldn't we just map common errors onto 
@@ -1349,6 +1347,8 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
              This->pAlloc = NULL;
         }
     }
+    else
+        hr = VFW_E_ALREADY_CONNECTED;
     LeaveCriticalSection(This->pin.pCritSec);
     return hr;
 }
