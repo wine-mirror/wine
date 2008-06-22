@@ -1334,7 +1334,7 @@ typedef enum {
 #define WINED3DUSAGE_AUTOGENMIPMAP                    0x00000400L 
 #define WINED3DUSAGE_DMAP                             0x00004000L
 #define WINED3DUSAGE_MASK                             0x00004FFFL
-#define WINED3DUSAGE_OVERLAY                          0x00010000L
+#define WINED3DUSAGE_OVERLAY                          0x80000000L
 
 #define WINED3DUSAGE_QUERY_LEGACYBUMPMAP            0x00008000L
 #define WINED3DUSAGE_QUERY_FILTER                   0x00020000L
