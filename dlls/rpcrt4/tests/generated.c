@@ -412,7 +412,7 @@ static void test_pack_MIDL_STUB_MESSAGE(void)
     TEST_FIELD(MIDL_STUB_MESSAGE, struct NDR_POINTER_QUEUE_STATE *, pPointerQueueState, 44, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, int, IgnoreEmbeddedPointers, 48, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, PointerBufferMark, 52, 4, 4);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char, fBufferValid, 56, 1, 1);
+    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char, CorrDespIncrement, 56, 1, 1);
     TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char, uFlags, 57, 1, 1);
     TEST_FIELD(MIDL_STUB_MESSAGE, ULONG_PTR, MaxCount, 60, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, ULONG, Offset, 64, 4, 4);

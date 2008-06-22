@@ -1164,7 +1164,7 @@ static void test_client_init(void)
     TEST_ZERO(pPointerQueueState, "%p");
     TEST_ZERO(IgnoreEmbeddedPointers, "%d");
     TEST_ZERO(PointerBufferMark, "%p");
-    TEST_ZERO(fBufferValid, "%d");
+    TEST_ZERO(CorrDespIncrement, "%d");
     TEST_ZERO(uFlags, "%d");
     /* FIXME: UniquePtrCount */
     TEST_ULONG_PTR_UNSET(MaxCount);
@@ -1186,8 +1186,15 @@ static void test_client_init(void)
     TEST_ZERO(fHasReturn, "%d");
     TEST_ZERO(fHasExtensions, "%d");
     TEST_ZERO(fHasNewCorrDesc, "%d");
-    TEST_ZERO(fUnused, "%d");
-    ok(stubMsg.fUnused2 == 0xffffcccc, "stubMsg.fUnused2 should have been 0xcccc instead of 0x%x\n", stubMsg.fUnused2);
+    TEST_ZERO(fIsIn, "%d");
+    TEST_ZERO(fIsOut, "%d");
+    TEST_ZERO(fIsOicf, "%d");
+    TEST_ZERO(fBufferValid, "%d");
+    TEST_ZERO(fHasMemoryValidateCallback, "%d");
+    TEST_ZERO(fInFree, "%d");
+    TEST_ZERO(fNeedMCCP, "%d");
+    TEST_ZERO(fUnused, "0x%x");
+    ok(stubMsg.fUnused2 == 0xffffcccc, "stubMsg.fUnused2 should have been 0xffffcccc instead of 0x%x\n", stubMsg.fUnused2);
     ok(stubMsg.dwDestContext == MSHCTX_DIFFERENTMACHINE, "stubMsg.dwDestContext should have been MSHCTX_DIFFERENTMACHINE instead of %d\n", stubMsg.dwDestContext);
     TEST_ZERO(pvDestContext, "%p");
     TEST_POINTER_UNSET(SavedContextHandles);
@@ -1258,7 +1265,7 @@ todo_wine
     TEST_ZERO(pPointerQueueState, "%p");
     TEST_ZERO(IgnoreEmbeddedPointers, "%d");
     TEST_ZERO(PointerBufferMark, "%p");
-    ok(stubMsg.fBufferValid == 0xcc, "fBufferValid should have been unset instead of 0x%x\n", stubMsg.fBufferValid);
+    ok(stubMsg.CorrDespIncrement == 0xcc, "CorrDespIncrement should have been unset instead of 0x%x\n", stubMsg.CorrDespIncrement);
     TEST_ZERO(uFlags, "%d");
     /* FIXME: UniquePtrCount */
     TEST_ULONG_PTR_UNSET(MaxCount);
@@ -1280,8 +1287,15 @@ todo_wine
     TEST_ZERO(fHasReturn, "%d");
     TEST_ZERO(fHasExtensions, "%d");
     TEST_ZERO(fHasNewCorrDesc, "%d");
-    TEST_ZERO(fUnused, "%d");
-    ok(stubMsg.fUnused2 == 0xffffcccc, "stubMsg.fUnused2 should have been 0xcccc instead of 0x%x\n", stubMsg.fUnused2);
+    TEST_ZERO(fIsIn, "%d");
+    TEST_ZERO(fIsOut, "%d");
+    TEST_ZERO(fIsOicf, "%d");
+    trace("fBufferValid = %d\n", stubMsg.fBufferValid);
+    TEST_ZERO(fHasMemoryValidateCallback, "%d");
+    TEST_ZERO(fInFree, "%d");
+    TEST_ZERO(fNeedMCCP, "%d");
+    TEST_ZERO(fUnused, "0x%x");
+    ok(stubMsg.fUnused2 == 0xffffcccc, "stubMsg.fUnused2 should have been 0xffffcccc instead of 0x%x\n", stubMsg.fUnused2);
     ok(stubMsg.dwDestContext == MSHCTX_DIFFERENTMACHINE, "stubMsg.dwDestContext should have been MSHCTX_DIFFERENTMACHINE instead of %d\n", stubMsg.dwDestContext);
     TEST_ZERO(pvDestContext, "%p");
     TEST_POINTER_UNSET(SavedContextHandles);
@@ -1799,6 +1813,7 @@ static void test_ndr_buffer(void)
     RPC_BINDING_HANDLE Handle;
     RPC_STATUS status;
     ULONG prev_buffer_length;
+    BOOL old_buffer_valid_location;
 
     StubDesc.RpcInterfaceInformation = (void *)&IFoo___RpcServerInterface;
 
@@ -1834,7 +1849,11 @@ static void test_ndr_buffer(void)
     ok(!StubMsg.BufferEnd, "BufferEnd should have been NULL instead of %p\n", StubMsg.BufferEnd);
 todo_wine
     ok(StubMsg.BufferLength == 0, "BufferLength should have left as 0 instead of being set to %d\n", StubMsg.BufferLength);
-    ok(StubMsg.fBufferValid == TRUE, "fBufferValid should have been TRUE instead of 0x%x\n", StubMsg.fBufferValid);
+    old_buffer_valid_location = !StubMsg.fBufferValid;
+    if (old_buffer_valid_location)
+        ok(broken(StubMsg.CorrDespIncrement == TRUE), "fBufferValid should have been TRUE instead of 0x%x\n", StubMsg.CorrDespIncrement);
+    else
+        ok(StubMsg.fBufferValid, "fBufferValid should have been non-zero instead of 0x%x\n", StubMsg.fBufferValid);
 
     prev_buffer_length = RpcMessage.BufferLength;
     StubMsg.BufferLength = 1;
@@ -1844,7 +1863,10 @@ todo_wine
     ok(RpcMessage.BufferLength == prev_buffer_length, "RpcMessage.BufferLength should have been left as %d instead of %d\n", prev_buffer_length, RpcMessage.BufferLength);
     ok(StubMsg.Buffer != NULL, "Buffer should not have been NULL\n");
     ok(StubMsg.BufferLength == 1, "BufferLength should have left as 1 instead of being set to %d\n", StubMsg.BufferLength);
-    ok(StubMsg.fBufferValid == FALSE, "fBufferValid should have been FALSE instead of 0x%x\n", StubMsg.fBufferValid);
+    if (old_buffer_valid_location)
+        ok(broken(StubMsg.CorrDespIncrement == FALSE), "fBufferValid should have been FALSE instead of 0x%x\n", StubMsg.CorrDespIncrement);
+    else
+        ok(!StubMsg.fBufferValid, "fBufferValid should have been FALSE instead of %d\n", StubMsg.fBufferValid);
 
     /* attempt double-free */
     NdrFreeBuffer(&StubMsg);

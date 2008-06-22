@@ -183,7 +183,7 @@ typedef struct _MIDL_STUB_MESSAGE
   struct NDR_POINTER_QUEUE_STATE *pPointerQueueState;
   int IgnoreEmbeddedPointers;
   unsigned char *PointerBufferMark;
-  unsigned char fBufferValid;
+  unsigned char CorrDespIncrement;
   unsigned char uFlags;
   unsigned short UniquePtrCount;
   ULONG_PTR MaxCount;
@@ -205,7 +205,14 @@ typedef struct _MIDL_STUB_MESSAGE
   int fHasReturn:1;
   int fHasExtensions:1;
   int fHasNewCorrDesc:1;
-  int fUnused:10;
+  int fIsIn:1;
+  int fIsOut:1;
+  int fIsOicf:1;
+  int fBufferValid:1;
+  int fHasMemoryValidateCallback:1;
+  int fInFree:1;
+  int fNeedMCCP:1;
+  int fUnused:3;
   int fUnused2:16;
   DWORD dwDestContext;
   void *pvDestContext;

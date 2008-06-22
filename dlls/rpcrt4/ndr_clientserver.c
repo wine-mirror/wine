@@ -67,7 +67,7 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
   pStubMsg->pPointerQueueState = NULL;
   pStubMsg->IgnoreEmbeddedPointers = 0;
   pStubMsg->PointerBufferMark = NULL;
-  pStubMsg->fBufferValid = 0;
+  pStubMsg->CorrDespIncrement = 0;
   pStubMsg->uFlags = 0;
   pStubMsg->UniquePtrCount = 0;
   pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
@@ -82,6 +82,13 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
   pStubMsg->fHasReturn = 0;
   pStubMsg->fHasExtensions = 0;
   pStubMsg->fHasNewCorrDesc = 0;
+  pStubMsg->fIsIn = 0;
+  pStubMsg->fIsOut = 0;
+  pStubMsg->fIsOicf = 0;
+  pStubMsg->fBufferValid = 0;
+  pStubMsg->fHasMemoryValidateCallback = 0;
+  pStubMsg->fInFree = 0;
+  pStubMsg->fNeedMCCP = 0;
   pStubMsg->fUnused = 0;
   pStubMsg->dwDestContext = MSHCTX_DIFFERENTMACHINE;
   pStubMsg->pvDestContext = NULL;
@@ -127,6 +134,12 @@ unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_M
   pStubMsg->fHasReturn = 0;
   pStubMsg->fHasExtensions = 0;
   pStubMsg->fHasNewCorrDesc = 0;
+  pStubMsg->fIsIn = 0;
+  pStubMsg->fIsOut = 0;
+  pStubMsg->fIsOicf = 0;
+  pStubMsg->fHasMemoryValidateCallback = 0;
+  pStubMsg->fInFree = 0;
+  pStubMsg->fNeedMCCP = 0;
   pStubMsg->fUnused = 0;
   pStubMsg->dwDestContext = MSHCTX_DIFFERENTMACHINE;
   pStubMsg->pvDestContext = NULL;
