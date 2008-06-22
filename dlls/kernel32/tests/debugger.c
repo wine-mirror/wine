@@ -137,6 +137,7 @@ static void doDebugger(int argc, char** argv)
     logfile=(argc >= 4 ? argv[3] : NULL);
     blackbox.pid=(argc >= 5 ? atol(argv[4]) : 0);
 
+    blackbox.attach_err=0;
     if (strstr(myARGV[2], "attach"))
     {
         blackbox.attach_rc=DebugActiveProcess(blackbox.pid);
@@ -147,6 +148,7 @@ static void doDebugger(int argc, char** argv)
         blackbox.attach_rc=TRUE;
 
     debug_event=(argc >= 6 ? (HANDLE)atol(argv[5]) : NULL);
+    blackbox.debug_err=0;
     if (debug_event && strstr(myARGV[2], "event"))
     {
         blackbox.debug_rc=SetEvent(debug_event);
@@ -163,6 +165,7 @@ static void doDebugger(int argc, char** argv)
         WaitForSingleObject(start_event, INFINITE);
     }
 
+    blackbox.nokill_err=0;
     if (strstr(myARGV[2], "nokill"))
     {
         blackbox.nokill_rc=pDebugSetProcessKillOnExit(FALSE);
@@ -172,6 +175,7 @@ static void doDebugger(int argc, char** argv)
     else
         blackbox.nokill_rc=TRUE;
 
+    blackbox.detach_err=0;
     if (strstr(myARGV[2], "detach"))
     {
         blackbox.detach_rc=pDebugActiveProcessStop(blackbox.pid);
