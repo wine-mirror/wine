@@ -2321,7 +2321,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
             /* Floating point formats */
         case WINED3DFMT_R16F:
         case WINED3DFMT_A16B16G16R16F:
-            if(GL_SUPPORT(ARB_HALF_FLOAT_PIXEL)) {
+            if(GL_SUPPORT(ARB_TEXTURE_FLOAT) && GL_SUPPORT(ARB_HALF_FLOAT_PIXEL)) {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
             }
