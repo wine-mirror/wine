@@ -874,8 +874,8 @@ coclass_int:
 	  m_attributes interfacedec		{ $$ = make_ifref($2); $$->attrs = $1; }
 	;
 
-dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); $$->kind = TKIND_DISPATCH; }
-	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(0, $2, 0); $$->kind = TKIND_DISPATCH; }
+dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_DISPATCH; }
+	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(RPC_FC_IP, $2, 0); $$->kind = TKIND_DISPATCH; }
 	;
 
 dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
