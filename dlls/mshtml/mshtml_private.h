@@ -98,6 +98,12 @@ typedef enum {
     LAST_tid
 } tid_t;
 
+typedef enum {
+    EVENTID_CLICK,
+    EVENTID_LOAD,
+    EVENTID_LAST
+} eventid_t;
+
 typedef struct dispex_data_t dispex_data_t;
 typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 
@@ -491,11 +497,6 @@ void nsnode_to_nsstring(nsIDOMNode*,nsAString*);
 void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
-
-typedef enum {
-    EVENTID_LOAD,
-    EVENTID_LAST
-} eventid_t;
 
 void check_event_attr(HTMLDocument*,nsIDOMElement*);
 void release_event_target(event_target_t*);
