@@ -252,8 +252,23 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
 static HRESULT WINAPI HTMLElement_put_className(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString classname_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->nselem) {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
+
+    nsAString_Init(&classname_str, v);
+    nsres = nsIDOMHTMLElement_SetClassName(This->nselem, &classname_str);
+    nsAString_Finish(&classname_str);
+    if(NS_FAILED(nsres))
+        ERR("SetClassName failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)

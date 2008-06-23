@@ -935,6 +935,22 @@ static void _test_elem_class(unsigned line, IUnknown *unk, const char *exclass)
     SysFreeString(class);
 }
 
+#define test_elem_set_class(u,c) _test_elem_set_class(__LINE__,u,c)
+static void _test_elem_set_class(unsigned line, IUnknown *unk, const char *class)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = class ? a2bstr(class) : NULL;
+    hres = IHTMLElement_put_className(elem, tmp);
+    IHTMLElement_Release(elem);
+    ok_(__FILE__,line) (hres == S_OK, "put_className failed: %08x\n", hres);
+    SysFreeString(tmp);
+
+    _test_elem_class(line, unk, class);
+}
+
 #define get_child_item(c,i) _get_child_item(__LINE__,c,i)
 static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *col, long idx)
 {
@@ -1804,6 +1820,8 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_attr(elem, xxxW, NULL);
         test_elem_attr(elem, idW, sW);
         test_elem_class((IUnknown*)elem, NULL);
+        test_elem_set_class((IUnknown*)elem, "cl");
+        test_elem_set_class((IUnknown*)elem, NULL);
         IHTMLElement_Release(elem);
     }
 
