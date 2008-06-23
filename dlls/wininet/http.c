@@ -1329,6 +1329,8 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
     char szaddr[32];
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
 
+    if (lpwhs->socketAddress.sin_addr.s_addr) return TRUE;
+
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RESOLVING_NAME,
                           lpwhs->lpszServerName,
@@ -2015,16 +2017,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     INTERNET_SendCallback(&lpwhs->hdr, dwContext,
                           INTERNET_STATUS_HANDLE_CREATED, &handle,
                           sizeof(handle));
-
-    /*
-     * A STATUS_REQUEST_COMPLETE is NOT sent here as per my tests on windows
-     */
-
-    if (!HTTP_ResolveName(lpwhr))
-    {
-        InternetCloseHandle( handle );
-        handle = NULL;
-    }
 
 lend:
     if( lpwhr )
@@ -3600,6 +3592,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
         bSuccess = TRUE;
         goto lend;
     }
+    if (!HTTP_ResolveName(lpwhr)) goto lend;
 
     lpwhs = lpwhr->lpHttpSession;
 
