@@ -380,10 +380,10 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
             dbg_printf("invalid float operation");
             break;
 	case EXCEPTION_FLT_OVERFLOW:
-            dbg_printf("floating pointer overflow");
+            dbg_printf("floating point overflow");
             break;
 	case EXCEPTION_FLT_UNDERFLOW:
-            dbg_printf("floating pointer underflow");
+            dbg_printf("floating point underflow");
             break;
 	case EXCEPTION_FLT_STACK_CHECK:
             dbg_printf("floating point stack check");
