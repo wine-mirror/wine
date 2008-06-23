@@ -44,12 +44,28 @@ static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 typedef struct {
     LPCWSTR name;
     LPCWSTR attr_name;
+    DWORD flags;
 } event_info_t;
 
+#define EVENT_DEFAULTLISTENER    0x0001
+
 static const event_info_t event_info[] = {
-    {clickW, onclickW},
-    {loadW, onloadW}
+    {clickW,    onclickW,    EVENT_DEFAULTLISTENER},
+    {loadW,     onloadW,     0}
 };
+
+eventid_t str_to_eid(LPCWSTR str)
+{
+    int i;
+
+    for(i=0; i < sizeof(event_info)/sizeof(event_info[0]); i++) {
+        if(!strcmpW(event_info[i].name, str))
+            return i;
+    }
+
+    ERR("unknown type %s\n", debugstr_w(str));
+    return EVENTID_LAST;
+}
 
 typedef struct {
     const IHTMLEventObjVtbl  *lpIHTMLEventObjVtbl;
@@ -385,6 +401,24 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     }
 }
 
+static HRESULT set_node_event_disp(HTMLDOMNode *node, eventid_t eid, IDispatch *disp)
+{
+    if(!node->event_target)
+        node->event_target = heap_alloc_zero(sizeof(event_target_t));
+    else if(node->event_target->event_table[eid])
+        IDispatch_Release(node->event_target->event_table[eid]);
+
+    IDispatch_AddRef(disp);
+    node->event_target->event_table[eid] = disp;
+
+    if((event_info[eid].flags & EVENT_DEFAULTLISTENER) && !node->doc->nscontainer->event_vector[eid]) {
+        node->doc->nscontainer->event_vector[eid] = TRUE;
+        add_nsevent_listener(node->doc->nscontainer, event_info[eid].name);
+    }
+
+    return S_OK;
+}
+
 void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
 {
     const PRUnichar *attr_value;
@@ -410,9 +444,8 @@ void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
             disp = script_parse_event(doc, attr_value);
             if(disp) {
                 node = get_node(doc, (nsIDOMNode*)nselem, TRUE);
-                if(!node->event_target)
-                    node->event_target = heap_alloc_zero(sizeof(event_target_t));
-                node->event_target->event_table[i] = disp;
+                set_node_event_disp(node, i, disp);
+                IDispatch_Release(disp);
             }
         }
     }

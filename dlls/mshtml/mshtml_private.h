@@ -289,6 +289,7 @@ struct NSContainer {
     nsEventListener keypress_listener;
     nsEventListener load_listener;
     nsEventListener node_insert_listener;
+    nsEventListener htmlevent_listener;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -309,6 +310,8 @@ struct NSContainer {
 
     nsChannelBSC *bscallback; /* hack */
     HWND reset_focus; /* hack */
+
+    BOOL event_vector[EVENTID_LAST];
 };
 
 typedef struct {
@@ -496,11 +499,13 @@ nsIWritableVariant *create_nsvariant(void);
 void nsnode_to_nsstring(nsIDOMNode*,nsAString*);
 void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
+void add_nsevent_listener(NSContainer*,LPCWSTR);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 
 void check_event_attr(HTMLDocument*,nsIDOMElement*);
 void release_event_target(event_target_t*);
 void fire_event(HTMLDocument*,eventid_t,nsIDOMNode*);
+eventid_t str_to_eid(LPCWSTR);
 
 void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);
