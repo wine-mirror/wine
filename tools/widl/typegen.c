@@ -41,6 +41,11 @@
 #include "typegen.h"
 #include "expr.h"
 
+/* round size up to multiple of alignment */
+#define ROUND_SIZE(size, alignment) (((size) + ((alignment) - 1)) & ~((alignment) - 1))
+/* value to add on to round size up to a multiple of alignment */
+#define ROUNDING(size, alignment) (((alignment) - 1) - (((size) + ((alignment) - 1)) & ((alignment) - 1)))
+
 static const func_t *current_func;
 static const type_t *current_structure;
 static const type_t *current_iface;
@@ -754,11 +759,11 @@ static size_t fields_memsize(const var_list_t *fields, unsigned int *align)
             *align = falign;
             have_align = TRUE;
         }
-        size = (size + (falign - 1)) & ~(falign - 1);
+        size = ROUND_SIZE(size, falign);
         size += fsize;
     }
 
-    size = (size + (*align - 1)) & ~(*align - 1);
+    size = ROUND_SIZE(size, *align);
     return size;
 }
 
@@ -798,11 +803,11 @@ int get_padding(const var_list_t *fields)
         size_t size = type_memsize(ft, &align);
         if (salign == -1)
             salign = align;
-        offset = (offset + (align - 1)) & ~(align - 1);
+        offset = ROUND_SIZE(offset, align);
         offset += size;
     }
 
-    return ((offset + (salign - 1)) & ~(salign - 1)) - offset;
+    return ROUNDING(offset, salign);
 }
 
 size_t type_memsize(const type_t *t, unsigned int *align)
@@ -1711,7 +1716,7 @@ static void write_struct_members(FILE *file, const type_t *type,
                     error("write_struct_members: cannot align type %d\n", ft->type);
                 }
                 print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
-                offset = (offset + (align - 1)) & ~(align - 1);
+                offset = ROUND_SIZE(offset, align);
                 *typestring_offset += 1;
             }
             write_member_type(file, type, field->attrs, field->type, corroff,
@@ -1720,7 +1725,7 @@ static void write_struct_members(FILE *file, const type_t *type,
         }
     }
 
-    padding = ((offset + (salign - 1)) & ~(salign - 1)) - offset;
+    padding = ROUNDING(offset, salign);
     if (padding)
     {
         print_file(file, 2, "0x%x,\t/* FC_STRUCTPAD%d */\n",
