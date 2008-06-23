@@ -356,6 +356,7 @@ static BOOL has_opengl(void)
     static int init_done;
     static void *opengl_handle;
 
+    char buffer[200];
     int error_base, event_base;
 
     if (init_done) return (opengl_handle != NULL);
@@ -363,86 +364,93 @@ static BOOL has_opengl(void)
 
     /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
        and include all dependencies */
-    opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
-    if (opengl_handle == NULL) return FALSE;
-
-    pglXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
-    if (pglXGetProcAddressARB == NULL) {
-        ERR("could not find glXGetProcAddressARB in libGL.\n");
+    opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, buffer, sizeof(buffer));
+    if (opengl_handle == NULL)
+    {
+        ERR( "Failed to load libGL: %s\n", buffer );
+        ERR( "OpenGL support is disabled.\n");
         return FALSE;
     }
 
-#define LOAD_FUNCPTR(f) if((p##f = (void*)pglXGetProcAddressARB((const unsigned char*)#f)) == NULL) goto sym_not_found;
-/* GLX 1.0 */
-LOAD_FUNCPTR(glXChooseVisual)
-LOAD_FUNCPTR(glXCopyContext)
-LOAD_FUNCPTR(glXCreateContext)
-LOAD_FUNCPTR(glXCreateGLXPixmap)
-LOAD_FUNCPTR(glXGetCurrentContext)
-LOAD_FUNCPTR(glXGetCurrentDrawable)
-LOAD_FUNCPTR(glXDestroyContext)
-LOAD_FUNCPTR(glXDestroyGLXPixmap)
-LOAD_FUNCPTR(glXGetConfig)
-LOAD_FUNCPTR(glXIsDirect)
-LOAD_FUNCPTR(glXMakeCurrent)
-LOAD_FUNCPTR(glXSwapBuffers)
-LOAD_FUNCPTR(glXQueryExtension)
-LOAD_FUNCPTR(glXQueryVersion)
-LOAD_FUNCPTR(glXUseXFont)
+    pglXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
+    if (pglXGetProcAddressARB == NULL) {
+        ERR("Could not find glXGetProcAddressARB in libGL, disabling OpenGL.\n");
+        goto failed;
+    }
 
-/* GLX 1.1 */
-LOAD_FUNCPTR(glXGetClientString)
-LOAD_FUNCPTR(glXQueryExtensionsString)
-LOAD_FUNCPTR(glXQueryServerString)
+#define LOAD_FUNCPTR(f) do if((p##f = (void*)pglXGetProcAddressARB((const unsigned char*)#f)) == NULL) \
+    { \
+        ERR( "%s not found in libGL, disabling OpenGL.\n", #f ); \
+        goto failed; \
+    } while(0)
 
-/* GLX 1.3 */
-LOAD_FUNCPTR(glXCreatePbuffer)
-LOAD_FUNCPTR(glXCreateNewContext)
-LOAD_FUNCPTR(glXDestroyPbuffer)
-LOAD_FUNCPTR(glXMakeContextCurrent)
-LOAD_FUNCPTR(glXGetCurrentReadDrawable)
-LOAD_FUNCPTR(glXGetFBConfigs)
+    /* GLX 1.0 */
+    LOAD_FUNCPTR(glXChooseVisual);
+    LOAD_FUNCPTR(glXCopyContext);
+    LOAD_FUNCPTR(glXCreateContext);
+    LOAD_FUNCPTR(glXCreateGLXPixmap);
+    LOAD_FUNCPTR(glXGetCurrentContext);
+    LOAD_FUNCPTR(glXGetCurrentDrawable);
+    LOAD_FUNCPTR(glXDestroyContext);
+    LOAD_FUNCPTR(glXDestroyGLXPixmap);
+    LOAD_FUNCPTR(glXGetConfig);
+    LOAD_FUNCPTR(glXIsDirect);
+    LOAD_FUNCPTR(glXMakeCurrent);
+    LOAD_FUNCPTR(glXSwapBuffers);
+    LOAD_FUNCPTR(glXQueryExtension);
+    LOAD_FUNCPTR(glXQueryVersion);
+    LOAD_FUNCPTR(glXUseXFont);
 
-/* Standard OpenGL calls */
-LOAD_FUNCPTR(glBindTexture)
-LOAD_FUNCPTR(glBitmap)
-LOAD_FUNCPTR(glCopyTexSubImage1D)
-LOAD_FUNCPTR(glCopyTexImage2D)
-LOAD_FUNCPTR(glCopyTexSubImage2D)
-LOAD_FUNCPTR(glDrawBuffer)
-LOAD_FUNCPTR(glEndList)
-LOAD_FUNCPTR(glGetError)
-LOAD_FUNCPTR(glGetIntegerv)
-LOAD_FUNCPTR(glGetString)
-LOAD_FUNCPTR(glNewList)
-LOAD_FUNCPTR(glPixelStorei)
-LOAD_FUNCPTR(glReadPixels)
-LOAD_FUNCPTR(glTexImage2D)
-LOAD_FUNCPTR(glFinish)
-LOAD_FUNCPTR(glFlush)
+    /* GLX 1.1 */
+    LOAD_FUNCPTR(glXGetClientString);
+    LOAD_FUNCPTR(glXQueryExtensionsString);
+    LOAD_FUNCPTR(glXQueryServerString);
+
+    /* GLX 1.3 */
+    LOAD_FUNCPTR(glXCreatePbuffer);
+    LOAD_FUNCPTR(glXCreateNewContext);
+    LOAD_FUNCPTR(glXDestroyPbuffer);
+    LOAD_FUNCPTR(glXMakeContextCurrent);
+    LOAD_FUNCPTR(glXGetCurrentReadDrawable);
+    LOAD_FUNCPTR(glXGetFBConfigs);
+
+    /* Standard OpenGL calls */
+    LOAD_FUNCPTR(glBindTexture);
+    LOAD_FUNCPTR(glBitmap);
+    LOAD_FUNCPTR(glCopyTexSubImage1D);
+    LOAD_FUNCPTR(glCopyTexImage2D);
+    LOAD_FUNCPTR(glCopyTexSubImage2D);
+    LOAD_FUNCPTR(glDrawBuffer);
+    LOAD_FUNCPTR(glEndList);
+    LOAD_FUNCPTR(glGetError);
+    LOAD_FUNCPTR(glGetIntegerv);
+    LOAD_FUNCPTR(glGetString);
+    LOAD_FUNCPTR(glNewList);
+    LOAD_FUNCPTR(glPixelStorei);
+    LOAD_FUNCPTR(glReadPixels);
+    LOAD_FUNCPTR(glTexImage2D);
+    LOAD_FUNCPTR(glFinish);
+    LOAD_FUNCPTR(glFlush);
 #undef LOAD_FUNCPTR
 
 /* It doesn't matter if these fail. They'll only be used if the driver reports
    the associated extension is available (and if a driver reports the extension
    is available but fails to provide the functions, it's quite broken) */
-#define LOAD_FUNCPTR(f) p##f = (void*)pglXGetProcAddressARB((const unsigned char*)#f);
-/* NV GLX Extension */
-LOAD_FUNCPTR(glXAllocateMemoryNV)
-LOAD_FUNCPTR(glXFreeMemoryNV)
+#define LOAD_FUNCPTR(f) p##f = (void*)pglXGetProcAddressARB((const unsigned char*)#f)
+    /* NV GLX Extension */
+    LOAD_FUNCPTR(glXAllocateMemoryNV);
+    LOAD_FUNCPTR(glXFreeMemoryNV);
 #undef LOAD_FUNCPTR
 
-    if(!X11DRV_WineGL_InitOpenglInfo()) {
-        wine_dlclose(opengl_handle, NULL, 0);
-        opengl_handle = NULL;
-        return FALSE;
-    }
+    if(!X11DRV_WineGL_InitOpenglInfo()) goto failed;
 
     wine_tsx11_lock();
-    if (pglXQueryExtension(gdi_display, &error_base, &event_base) == True) {
+    if (pglXQueryExtension(gdi_display, &error_base, &event_base)) {
         TRACE("GLX is up and running error_base = %d\n", error_base);
     } else {
-        wine_dlclose(opengl_handle, NULL, 0);
-        opengl_handle = NULL;
+        wine_tsx11_unlock();
+        ERR( "GLX extension is missing, disabling OpenGL.\n" );
+        goto failed;
     }
 
     /* In case of GLX you have direct and indirect rendering. Most of the time direct rendering is used
@@ -514,9 +522,9 @@ LOAD_FUNCPTR(glXFreeMemoryNV)
     X11DRV_WineGL_LoadExtensions();
 
     wine_tsx11_unlock();
-    return (opengl_handle != NULL);
+    return TRUE;
 
-sym_not_found:
+failed:
     wine_dlclose(opengl_handle, NULL, 0);
     opengl_handle = NULL;
     return FALSE;
@@ -1050,10 +1058,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     int bestStencil = -1;
     int bestAux = -1;
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
-    }
+    if (!has_opengl()) return 0;
 
     if (TRACE_ON(wgl)) {
         TRACE("(%p,%p)\n", physDev, ppfd);
@@ -1289,11 +1294,8 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   int ret = 0;
   int fmt_count = 0;
 
-  if (!has_opengl()) {
-    ERR("No libGL on this box - disabling OpenGL support !\n");
-    return 0;
-  }
-  
+  if (!has_opengl()) return 0;
+
   TRACE("(%p,%d,%d,%p)\n", physDev, iPixelFormat, nBytes, ppfd);
 
   /* Look for the iPixelFormat in our list of supported formats. If it is supported we get the index in the FBConfig table and the number of supported formats back */
@@ -1536,10 +1538,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
     TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return FALSE;
-    }
+    if (!has_opengl()) return FALSE;
 
     if(physDev->current_pf)  /* cannot change it if already set */
         return (physDev->current_pf == iPixelFormat);
@@ -1623,10 +1622,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
 
     TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
-    }
+    if (!has_opengl()) return 0;
 
     fmt = ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, TRUE /* Offscreen */, &fmt_count);
     /* We can render using the iPixelFormat (1) of Wine's Main visual AND using some offscreen formats.
@@ -1665,10 +1661,7 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
 
     TRACE("(%p)\n", hglrc);
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
-    }
+    if (!has_opengl()) return 0;
 
     wine_tsx11_lock();
     /* A game (Half Life not to name it) deletes twice the same context,
@@ -1719,10 +1712,7 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
     if (padding < 0)
         padding = 0;
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
-    }
+    if (!has_opengl()) return NULL;
 
     /* Check the table of WGL extensions to see if we need to return a WGL extension
      * or a function pointer to a native OpenGL function. */
@@ -1758,10 +1748,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
 
     TRACE("(%p,%p)\n", hdc, hglrc);
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return FALSE;
-    }
+    if (!has_opengl()) return FALSE;
 
     wine_tsx11_lock();
     if (hglrc == NULL) {
@@ -1827,10 +1814,7 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEVICE* p
 
     TRACE("(%p,%p,%p)\n", pDrawDev, pReadDev, hglrc);
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
-    }
+    if (!has_opengl()) return 0;
 
     wine_tsx11_lock();
     if (hglrc == NULL) {
@@ -1874,10 +1858,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
 
     TRACE("(%p, %p)\n", org, dest);
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
-    }
+    if (!has_opengl()) return FALSE;
 
     if (NULL != dest && dest->ctx != NULL) {
         ERR("Could not share display lists, context already created !\n");
@@ -2031,10 +2012,7 @@ BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
 
      TRACE("(%p, %d, %d, %d) using font %ld\n", physDev->hdc, first, count, listBase, fid);
 
-     if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
-     }
+     if (!has_opengl()) return FALSE;
 
      if (fid == 0) {
          return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineA);
@@ -2058,10 +2036,7 @@ BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
 
      TRACE("(%p, %d, %d, %d) using font %ld\n", physDev->hdc, first, count, listBase, fid);
 
-     if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return 0;
-     }
+     if (!has_opengl()) return FALSE;
 
      if (fid == 0) {
          return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineW);
@@ -3206,10 +3181,7 @@ BOOL X11DRV_wglSetPixelFormatWINE(X11DRV_PDEVICE *physDev, int iPixelFormat, con
 {
     TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
-    if (!has_opengl()) {
-        ERR("No libGL on this box - disabling OpenGL support !\n");
-        return FALSE;
-    }
+    if (!has_opengl()) return FALSE;
 
     if (physDev->current_pf == iPixelFormat) return TRUE;
 
@@ -3482,11 +3454,8 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
   GLXDrawable drawable;
   Wine_GLContext *ctx = NtCurrentTeb()->glContext;
 
-  if (!has_opengl()) {
-    ERR("No libGL on this box - disabling OpenGL support !\n");
-    return 0;
-  }
-  
+  if (!has_opengl()) return FALSE;
+
   TRACE("(%p)\n", physDev);
 
   drawable = get_glxdrawable(physDev);
@@ -3549,6 +3518,12 @@ XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
 
 #else  /* no OpenGL includes */
 
+static inline void opengl_error(void)
+{
+    static int warned;
+    if (!warned++) ERR("No OpenGL support compiled in.\n");
+}
+
 int pixelformat_from_fbconfig_id(XID fbconfig_id)
 {
     return 0;
@@ -3572,8 +3547,7 @@ Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
  */
 int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
-  ERR("No OpenGL support compiled in.\n");
-
+  opengl_error();
   return 0;
 }
 
@@ -3584,8 +3558,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 			       int iPixelFormat,
 			       UINT nBytes,
 			       PIXELFORMATDESCRIPTOR *ppfd) {
-  ERR("No OpenGL support compiled in.\n");
-
+  opengl_error();
   return 0;
 }
 
@@ -3593,8 +3566,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
  *		GetPixelFormat (X11DRV.@)
  */
 int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
-  ERR("No OpenGL support compiled in.\n");
-
+  opengl_error();
   return 0;
 }
 
@@ -3604,8 +3576,7 @@ int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
 BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   int iPixelFormat,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
-  ERR("No OpenGL support compiled in.\n");
-
+  opengl_error();
   return FALSE;
 }
 
@@ -3613,8 +3584,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
  *		SwapBuffers (X11DRV.@)
  */
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
-  ERR("No OpenGL support compiled in.\n");
-
+  opengl_error();
   return FALSE;
 }
 
@@ -3624,7 +3594,7 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
  * For OpenGL32 wglCopyContext.
  */
 BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return FALSE;
 }
 
@@ -3634,7 +3604,7 @@ BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
  * For OpenGL32 wglCreateContext.
  */
 HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev) {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return NULL;
 }
 
@@ -3644,7 +3614,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev) {
  * For OpenGL32 wglDeleteContext.
  */
 BOOL X11DRV_wglDeleteContext(HGLRC hglrc) {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return FALSE;
 }
 
@@ -3654,18 +3624,18 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc) {
  * For OpenGL32 wglGetProcAddress.
  */
 PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc) {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return NULL;
 }
 
 HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *hDevice, void *hPbuffer)
 {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return NULL;
 }
 
 BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* hReadDev, HGLRC hglrc) {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return FALSE;
 }
 
@@ -3675,7 +3645,7 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* h
  * For OpenGL32 wglMakeCurrent.
  */
 BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return FALSE;
 }
 
@@ -3685,7 +3655,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
  * For OpenGL32 wglShaderLists.
  */
 BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return FALSE;
 }
 
@@ -3696,7 +3666,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
  */
 BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return FALSE;
 }
 
@@ -3707,7 +3677,7 @@ BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
  */
 BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return FALSE;
 }
 
@@ -3719,7 +3689,7 @@ BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
  */
 BOOL X11DRV_wglSetPixelFormatWINE(X11DRV_PDEVICE *physDev, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd)
 {
-    ERR("No OpenGL support compiled in.\n");
+    opengl_error();
     return FALSE;
 }
 
