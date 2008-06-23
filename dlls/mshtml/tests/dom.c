@@ -1035,6 +1035,26 @@ static IHTMLElement *_test_create_elem(unsigned line, IHTMLDocument2 *doc, const
     return elem;
 }
 
+#define test_create_text(d,t) _test_create_text(__LINE__,d,t)
+static IHTMLDOMNode *_test_create_text(unsigned line, IHTMLDocument2 *doc, const char *text)
+{
+    IHTMLDocument3 *doc3;
+    IHTMLDOMNode *node = NULL;
+    BSTR tmp;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDocument3: %08x\n", hres);
+
+    tmp = a2bstr(text);
+    hres = IHTMLDocument3_createTextNode(doc3, tmp, &node);
+    IHTMLDocument3_Release(doc3);
+    ok_(__FILE__,line) (hres == S_OK, "createElement failed: %08x\n", hres);
+    ok_(__FILE__,line) (node != NULL, "node == NULL\n");
+
+    return node;
+}
+
 #define test_node_append_child(n,c) _test_node_append_child(__LINE__,n,c)
 static IHTMLDOMNode *_test_node_append_child(unsigned line, IUnknown *node_unk, IUnknown *child_unk)
 {
@@ -1932,6 +1952,11 @@ static void test_create_elems(IHTMLDocument2 *doc)
     IHTMLElement_Release(elem2);
     IHTMLElement_Release(body);
     IHTMLElement_Release(elem);
+
+    node = test_create_text(doc, "test");
+    test_ifaces((IUnknown*)node, text_iids);
+    test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode);
+    IHTMLDOMNode_Release(node);
 }
 
 static void test_exec(IUnknown *unk, const GUID *grpid, DWORD cmdid, VARIANT *in, VARIANT *out)

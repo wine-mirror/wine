@@ -108,8 +108,31 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
                                                    IHTMLDOMNode **newTextNode)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(text), newTextNode);
-    return E_NOTIMPL;
+    nsIDOMDocument *nsdoc;
+    nsIDOMText *nstext;
+    HTMLDOMNode *node;
+    nsAString text_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(text), newTextNode);
+
+    nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+
+    nsAString_Init(&text_str, text);
+    nsres = nsIDOMDocument_CreateTextNode(nsdoc, &text_str, &nstext);
+    nsAString_Finish(&text_str);
+    nsIDOMDocument_Release(nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateTextNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    node = HTMLDOMTextNode_Create(This, (nsIDOMNode*)nstext);
+    nsIDOMElement_Release(nstext);
+
+    *newTextNode = HTMLDOMNODE(node);
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(node));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, IHTMLElement **p)
