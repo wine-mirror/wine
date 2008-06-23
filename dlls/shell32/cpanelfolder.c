@@ -111,7 +111,7 @@ static inline ICPanelImpl *impl_from_IShellExecuteHookA( IShellExecuteHookA *ifa
 
 static const shvheader ControlPanelSFHeader[] = {
     {IDS_SHV_COLUMN8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},/*FIXME*/
-    {IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 200},/*FIXME*/
+    {IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 80},/*FIXME*/
 };
 
 #define CONROLPANELSHELLVIEWCOLUMNS 2
@@ -764,6 +764,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsEx(IShellFolder2 * iface, LPC
 static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 * iface, LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS * psd)
 {
     ICPanelImpl *This = (ICPanelImpl *)iface;
+    PIDLCPanelStruct* pcpanel;
     HRESULT hr;
 
     TRACE("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
@@ -785,7 +786,13 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDetailsOf(IShellFolder2 * iface, LPC
 	    hr = IShellFolder_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL | SHGDN_INFOLDER, &psd->str);
 	    break;
 	case 1:		/* comment */
-	    _ILGetFileType(pidl, psd->str.u.cStr, MAX_PATH);
+            pcpanel = _ILGetCPanelPointer(pidl);
+
+            if (pcpanel)
+                lstrcpyA(psd->str.u.cStr, pcpanel->szName+pcpanel->offsComment);
+            else
+                _ILGetFileType(pidl, psd->str.u.cStr, MAX_PATH);
+
 	    break;
 	}
 	hr = S_OK;
