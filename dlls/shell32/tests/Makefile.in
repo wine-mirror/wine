@@ -9,7 +9,7 @@ CTESTS = \
 	generated.c \
 	shelllink.c \
 	shellpath.c \
-	shfldr_netplaces.c \
+	shfldr_special.c \
 	shlexec.c \
 	shlfileop.c \
 	shlfolder.c \

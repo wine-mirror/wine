@@ -1,5 +1,5 @@
 /*
- * Tests for My Network Places shell folder
+ * Tests for special shell folders
  *
  * Copyright 2008 Robert Shearman for CodeWeavers
  *
@@ -29,6 +29,7 @@
 
 #include "wine/test.h"
 
+/* Tests for My Network Places */
 static void test_parse_for_entire_network(void)
 {
     static const WCHAR entire_network_path[] = {
@@ -57,7 +58,7 @@ static void test_parse_for_entire_network(void)
 }
 
 
-START_TEST(shfldr_netplaces)
+START_TEST(shfldr_special)
 {
     test_parse_for_entire_network();
 }
