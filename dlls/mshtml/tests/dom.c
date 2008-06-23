@@ -1035,6 +1035,25 @@ static IHTMLElement *_test_create_elem(unsigned line, IHTMLDocument2 *doc, const
     return elem;
 }
 
+#define test_node_append_child(n,c) _test_node_append_child(__LINE__,n,c)
+static IHTMLDOMNode *_test_node_append_child(unsigned line, IUnknown *node_unk, IUnknown *child_unk)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, node_unk);
+    IHTMLDOMNode *child = _get_node_iface(line, child_unk);
+    IHTMLDOMNode *new_child = NULL;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_appendChild(node, child, &new_child);
+    ok_(__FILE__,line) (hres == S_OK, "appendChild failed: %08x\n", hres);
+    ok_(__FILE__,line) (new_child != NULL, "new_child == NULL\n");
+    /* TODO  ok_(__FILE__,line) (new_child != child, "new_child == child\n"); */
+
+    IHTMLDOMNode_Release(node);
+    IHTMLDOMNode_Release(child);
+
+    return new_child;
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -1879,8 +1898,14 @@ static void test_elems(IHTMLDocument2 *doc)
 
 static void test_create_elems(IHTMLDocument2 *doc)
 {
-    IHTMLElement *elem;
+    IHTMLElementCollection *col;
+    IHTMLElement *elem, *body, *elem2;
+    IHTMLDOMNode *node;
+    IDispatch *disp;
     long type;
+    HRESULT hres;
+
+    static const elem_type_t types1[] = { ET_TESTG };
 
     elem = test_create_elem(doc, "TEST");
     test_elem_tag((IUnknown*)elem, "TEST");
@@ -1889,6 +1914,23 @@ static void test_create_elems(IHTMLDocument2 *doc)
     test_ifaces((IUnknown*)elem, elem_iids);
     test_disp((IUnknown*)elem, &DIID_DispHTMLGenericElement);
 
+    hres = IHTMLDocument2_get_body(doc, &body);
+    ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    node = test_node_append_child((IUnknown*)body, (IUnknown*)elem);
+    elem2 = get_elem_iface((IUnknown*)node);
+    IHTMLDOMNode_Release(node);
+
+    hres = IHTMLElement_get_all(body, &disp);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)&col);
+    ok(hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
+    IDispatch_Release(disp);
+
+    test_elem_collection(col, types1, sizeof(types1)/sizeof(types1[0]));
+
+    IHTMLElement_Release(elem2);
+    IHTMLElement_Release(body);
     IHTMLElement_Release(elem);
 }
 

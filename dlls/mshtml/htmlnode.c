@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static HTMLDOMNode *get_node_obj(HTMLDocument*,IUnknown*);
+
 typedef struct {
     DispatchEx dispex;
     const IHTMLDOMChildrenCollectionVtbl  *lpIHTMLDOMChildrenCollectionVtbl;
@@ -424,8 +426,26 @@ static HRESULT WINAPI HTMLDOMNode_appendChild(IHTMLDOMNode *iface, IHTMLDOMNode 
                                               IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, newChild, node);
-    return E_NOTIMPL;
+    HTMLDOMNode *node_obj;
+    nsIDOMNode *nsnode;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p %p)\n", This, newChild, node);
+
+    node_obj = get_node_obj(This->doc, (IUnknown*)newChild);
+    if(!node_obj)
+        return E_FAIL;
+
+    nsres = nsIDOMNode_AppendChild(This->nsnode, node_obj->nsnode, &nsnode);
+    if(NS_FAILED(nsres)) {
+        ERR("AppendChild failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    /* FIXME: Make sure that node != newChild */
+    *node = HTMLDOMNODE(get_node(This->doc, nsnode, TRUE));
+    IHTMLDOMNode_AddRef(*node);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_get_nodeName(IHTMLDOMNode *iface, BSTR *p)
@@ -767,6 +787,29 @@ HTMLDOMNode *get_node(HTMLDocument *This, nsIDOMNode *nsnode, BOOL create)
         return iter;
 
     return create_node(This, nsnode);
+}
+
+/*
+ * FIXME
+ * We should use better way for getting node object (like private interface)
+ * or avoid it at all.
+ */
+static HTMLDOMNode *get_node_obj(HTMLDocument *This, IUnknown *iface)
+{
+    HTMLDOMNode *iter = This->nodes;
+    IHTMLDOMNode *node;
+
+    IUnknown_QueryInterface(iface, &IID_IHTMLDOMNode, (void**)&node);
+    IHTMLDOMNode_Release(node);
+
+    while(iter) {
+        if(HTMLDOMNODE(iter) == node)
+            return iter;
+        iter = iter->next;
+    }
+
+    FIXME("Not found %p\n", iface);
+    return NULL;
 }
 
 void release_nodes(HTMLDocument *This)
