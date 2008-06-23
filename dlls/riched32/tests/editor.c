@@ -696,6 +696,75 @@ static void test_EM_FINDTEXT(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_POSFROMCHAR(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  unsigned int i;
+  POINTL pl;
+  LRESULT result;
+  unsigned int height = 0;
+  unsigned int xpos = 0;
+
+  /* Fill the control to lines to ensure that most of them are offscreen */
+  for (i = 0; i < 50; i++)
+  {
+    /* Do not modify the string; it is exactly 16 characters long. */
+    SendMessage(hwndRichEdit, EM_SETSEL, 0, 0);
+    SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)"0123456789ABCD\r\n");
+  }
+
+  /*
+   Richedit 1.0 receives a POINTL* on wParam and character offset on lParam, returns void.
+   Richedit 2.0 receives character offset on wParam, ignores lParam, returns MAKELONG(x,y)
+   Richedit 3.0 accepts either of the above API conventions.
+   */
+
+  /* Testing Richedit 1.0 API format */
+
+  /* Testing start of lines. X-offset should be constant on all cases (native is 1).
+     Since all lines are identical and drawn with the same font,
+     they should have the same height... right?
+   */
+  for (i = 0; i < 50; i++)
+  {
+    /* All the lines are 16 characters long */
+    result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pl, i * 16);
+    ok(result == 0, "EM_POSFROMCHAR returned %ld, expected 0\n", result);
+    if (i == 0)
+    {
+      ok(pl.y == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", pl.y);
+      todo_wine {
+      ok(pl.x == 1, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+      }
+      xpos = pl.x;
+    }
+    else if (i == 1)
+    {
+      ok(pl.y > 0, "EM_POSFROMCHAR reports y=%d, expected > 0\n", pl.y);
+      ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+      height = pl.y;
+    }
+    else
+    {
+      ok(pl.y == i * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", pl.y, i * height);
+      ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+    }
+  }
+
+  /* Testing position at end of text */
+  result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pl, 50 * 16);
+  ok(result == 0, "EM_POSFROMCHAR returned %ld, expected 0\n", result);
+  ok(pl.y == 50 * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", pl.y, 50 * height);
+  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+
+  /* Testing position way past end of text */
+  result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pl, 55 * 16);
+  ok(result == 0, "EM_POSFROMCHAR returned %ld, expected 0\n", result);
+  ok(pl.y == 50 * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", pl.y, 50 * height);
+  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+
+  DestroyWindow(hwndRichEdit);
+}
 
 
 START_TEST( editor )
@@ -717,6 +786,7 @@ START_TEST( editor )
   test_EM_GETLINE();
   test_EM_LINELENGTH();
   test_EM_FINDTEXT();
+  test_EM_POSFROMCHAR();
 
   /* Set the environment variable WINETEST_RICHED32 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

@@ -397,6 +397,72 @@ static void test_EM_SCROLLCARET(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_POSFROMCHAR(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  unsigned int i;
+  LRESULT result;
+  unsigned int height = 0;
+  unsigned int xpos = 0;
+
+  /* Fill the control to lines to ensure that most of them are offscreen */
+  for (i = 0; i < 50; i++)
+  {
+    /* Do not modify the string; it is exactly 16 characters long. */
+    SendMessage(hwndRichEdit, EM_SETSEL, 0, 0);
+    SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)"0123456789ABCDE\n");
+  }
+
+  /*
+   Richedit 1.0 receives a POINTL* on wParam and character offset on lParam, returns void.
+   Richedit 2.0 receives character offset on wParam, ignores lParam, returns MAKELONG(x,y)
+   Richedit 3.0 accepts either of the above API conventions.
+   */
+
+  /* Testing Richedit 2.0 API format */
+
+  /* Testing start of lines. X-offset should be constant on all cases (native is 1).
+     Since all lines are identical and drawn with the same font,
+     they should have the same height... right?
+   */
+  for (i = 0; i < 50; i++)
+  {
+    /* All the lines are 16 characters long */
+    result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, i * 16, 0);
+    if (i == 0)
+    {
+      ok(HIWORD(result) == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", HIWORD(result));
+      todo_wine {
+      ok(LOWORD(result) == 1, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+      }
+      xpos = LOWORD(result);
+    }
+    else if (i == 1)
+    {
+      ok(HIWORD(result) > 0, "EM_POSFROMCHAR reports y=%d, expected > 0\n", HIWORD(result));
+      ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+      height = HIWORD(result);
+    }
+    else
+    {
+      ok(HIWORD(result) == i * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", HIWORD(result), i * height);
+      ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+    }
+  }
+
+  /* Testing position at end of text */
+  result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 50 * 16, 0);
+  ok(HIWORD(result) == 50 * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", HIWORD(result), 50 * height);
+  ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+
+  /* Testing position way past end of text */
+  result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 55 * 16, 0);
+  ok(HIWORD(result) == 50 * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", HIWORD(result), 50 * height);
+  ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+
+  DestroyWindow(hwndRichEdit);
+}
+
 static void test_EM_SETCHARFORMAT(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
@@ -4170,6 +4236,7 @@ START_TEST( editor )
   test_WM_CHAR();
   test_EM_FINDTEXT();
   test_EM_GETLINE();
+  test_EM_POSFROMCHAR();
   test_EM_SCROLLCARET();
   test_EM_SCROLL();
   test_WM_SETTEXT();

@@ -2920,7 +2920,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (wParam >= 0x40000) {
         *(POINTL *)wParam = pt;
     }
-    return MAKELONG( pt.x, pt.y );
+    return (wParam >= 0x40000) ? 0 : MAKELONG( pt.x, pt.y );
   }
   case WM_CREATE:
     if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)

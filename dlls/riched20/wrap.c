@@ -471,6 +471,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   ME_Context c;
   BOOL bModified = FALSE;
   int yStart = -1;
+  int yLastPos = 0;
 
   ME_InitContext(&c, editor, GetDC(editor->hWnd));
   editor->nHeight = 0;
@@ -496,6 +497,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
 
     bModified = bModified | bRedraw;
 
+    yLastPos = c.pt.y;
     c.pt.y += item->member.para.nHeight;
     item = item->member.para.next_para;
   }
@@ -503,6 +505,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   editor->sizeWindow.cy = c.rcView.bottom-c.rcView.top;
   
   editor->nTotalLength = c.pt.y;
+  editor->pBuffer->pLast->member.para.nYPos = yLastPos;
 
   ME_DestroyContext(&c, editor->hWnd);
 
