@@ -104,6 +104,7 @@ STRINGTABLE
 	/* special folders */
 	IDS_DESKTOP		"ÃÞ½¸Ä¯Ìß"
 	IDS_MYCOMPUTER		"Ï²ºÝËß­°À"
+	IDS_CONTROLPANEL	"Control Panel"
 
 	/* context menus */
 	IDS_VIEW_LARGE		"‘å‚«‚¢ƒAƒCƒRƒ“(&G)"

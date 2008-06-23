@@ -188,6 +188,7 @@ STRINGTABLE
 	IDS_DESKTOP		"Namizje"
 	IDS_MYCOMPUTER		"Moj računalnik"
 	IDS_RECYCLEBIN_FOLDER_NAME      "Smeti"
+	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
 	IDS_VIEW_LARGE		"Ve&like ikone"

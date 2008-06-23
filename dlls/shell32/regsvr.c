@@ -657,6 +657,15 @@ static struct regsvr_coclass const coclass_list[] = {
 	"shell32.dll",
 	"Apartment"
     },
+    {   &CLSID_ControlPanel,
+        "Control Panel",
+        IDS_CONTROLPANEL,
+        NULL,
+        "shell32.dll",
+        "Apartment",
+	SHELLFOLDER_WANTSFORDISPLAY|SHELLFOLDER_ATTRIBUTES|SHELLFOLDER_HIDEASDELETE,
+        SFGAO_FOLDER|SFGAO_HASSUBFOLDER,
+    },
     { NULL }			/* list terminator */
 };
 
@@ -675,6 +684,8 @@ static const WCHAR wszDesktop[] = { 'D','e','s','k','t','o','p',0 };
 static const WCHAR wszSlash[] = { '/', 0 };
 static const WCHAR wszMyDocuments[] = { 'M','y',' ','D','o','c','u','m','e','n','t','s', 0 };
 static const WCHAR wszRecycleBin[] = { 'T','r','a','s','h', 0 };
+static const WCHAR wszMyComputer[] = { 'M','y','C','o','m','p','u','t','e','r', 0 };
+static const WCHAR wszControlPanel[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l', 0 };
 
 static struct regsvr_namespace const namespace_extensions_list[] = {
     {   
@@ -691,6 +702,11 @@ static struct regsvr_namespace const namespace_extensions_list[] = {
         &CLSID_RecycleBin,
         wszDesktop,
         wszRecycleBin
+    },
+    {
+        &CLSID_ControlPanel,
+        wszMyComputer,
+        wszControlPanel
     },
     { NULL }
 };

@@ -187,6 +187,7 @@ STRINGTABLE
 	IDS_DESKTOP		"Escritorio"
 	IDS_MYCOMPUTER		"Mi PC"
         IDS_RECYCLEBIN_FOLDER_NAME "Papelera de reciclaje"
+	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
 	IDS_VIEW_LARGE		"Iconos &grandes"

@@ -141,6 +141,7 @@ STRINGTABLE
 {
 	IDS_DESKTOP		"Стільниця"
 	IDS_MYCOMPUTER		"Мій Комп'ютер"
+	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Великі Іконки"

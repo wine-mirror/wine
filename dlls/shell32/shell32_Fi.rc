@@ -154,6 +154,7 @@ STRINGTABLE
         /* special folders */
 	IDS_DESKTOP		"Työpöytä"
 	IDS_MYCOMPUTER		"Oma tietokone"
+	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Suuret kuvakkeet"

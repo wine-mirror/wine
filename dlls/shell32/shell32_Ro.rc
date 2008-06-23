@@ -189,6 +189,7 @@ STRINGTABLE
         IDS_DESKTOP             "Birou"
         IDS_MYCOMPUTER          "Computerul meu"
         IDS_RECYCLEBIN_FOLDER_NAME      "Gunoi"
+	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
         IDS_VIEW_LARGE          "Pictograme &mari"

@@ -38,13 +38,14 @@
 
 #define IDS_DESKTOP		20
 #define IDS_MYCOMPUTER		21
+#define IDS_CONTROLPANEL        22
 
-#define IDS_SELECT		22
-#define IDS_OPEN		23
-#define IDS_VIEW_LARGE		24
-#define IDS_VIEW_SMALL		25
-#define IDS_VIEW_LIST		26
-#define IDS_VIEW_DETAILS	27
+#define IDS_SELECT		23
+#define IDS_OPEN		24
+#define IDS_VIEW_LARGE		25
+#define IDS_VIEW_SMALL		26
+#define IDS_VIEW_LIST		27
+#define IDS_VIEW_DETAILS	28
 
 #define IDS_RESTART_TITLE      40
 #define IDS_RESTART_PROMPT     41

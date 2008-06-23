@@ -148,6 +148,7 @@ STRINGTABLE
 	/* special folders */
 	IDS_DESKTOP		"Desktop"
 	IDS_MYCOMPUTER		"Mea Komputero"
+	IDS_CONTROLPANEL	"Control Panel"
 
 	/* context menus */
 	IDS_VIEW_LARGE		"&Grandaj Ikonoj"

@@ -187,6 +187,7 @@ STRINGTABLE
         IDS_DESKTOP             "Skrivebord"
         IDS_MYCOMPUTER          "Min Computer"
         IDS_RECYCLEBIN_FOLDER_NAME "Skraldespand"
+	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
         IDS_VIEW_LARGE          "Store Ikoner"

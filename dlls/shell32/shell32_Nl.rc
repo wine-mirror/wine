@@ -188,6 +188,7 @@ STRINGTABLE
 	IDS_DESKTOP		"Bureaublad"
 	IDS_MYCOMPUTER		"Mijn Computer"
 	IDS_RECYCLEBIN_FOLDER_NAME      "Vuilnisbak"
+	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
 	IDS_VIEW_LARGE		"Grote Icons"

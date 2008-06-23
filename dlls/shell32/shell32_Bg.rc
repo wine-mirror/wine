@@ -154,6 +154,7 @@ STRINGTABLE
         /* special folders */
 	IDS_DESKTOP		"Работен плот"
 	IDS_MYCOMPUTER		"Моят компютър"
+	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Големи икони"
