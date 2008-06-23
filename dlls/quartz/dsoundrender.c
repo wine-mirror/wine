@@ -42,7 +42,6 @@ static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 
 static const IBaseFilterVtbl DSoundRender_Vtbl;
 static const IPinVtbl DSoundRender_InputPin_Vtbl;
-static const IMemInputPinVtbl MemInputPin_Vtbl; 
 static const IBasicAudioVtbl IBasicAudio_Vtbl;
 static const IReferenceClockVtbl IReferenceClock_Vtbl;
 static const IMediaSeekingVtbl IMediaSeeking_Vtbl;
@@ -892,19 +891,6 @@ static const IPinVtbl DSoundRender_InputPin_Vtbl =
     DSoundRender_InputPin_BeginFlush,
     InputPin_EndFlush,
     InputPin_NewSegment
-};
-
-static const IMemInputPinVtbl MemInputPin_Vtbl = 
-{
-    MemInputPin_QueryInterface,
-    MemInputPin_AddRef,
-    MemInputPin_Release,
-    MemInputPin_GetAllocator,
-    MemInputPin_NotifyAllocator,
-    MemInputPin_GetAllocatorRequirements,
-    MemInputPin_Receive,
-    MemInputPin_ReceiveMultiple,
-    MemInputPin_ReceiveCanBlock
 };
 
 /*** IUnknown methods ***/
