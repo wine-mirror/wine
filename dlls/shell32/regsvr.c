@@ -80,8 +80,10 @@ struct regsvr_coclass
 /* flags for regsvr_coclass.flags */
 #define SHELLEX_MAYCHANGEDEFAULTMENU  0x00000001
 #define SHELLFOLDER_WANTSFORPARSING   0x00000002
-#define SHELLFOLDER_ATTRIBUTES        0x00000004
-#define SHELLFOLDER_CALLFORATTRIBUTES 0x00000008
+#define SHELLFOLDER_WANTSFORDISPLAY   0x00000004
+#define SHELLFOLDER_ATTRIBUTES        0x00000008
+#define SHELLFOLDER_CALLFORATTRIBUTES 0x00000010
+#define SHELLFOLDER_HIDEASDELETE      0x00000020
 
 static HRESULT register_coclasses(struct regsvr_coclass const *list);
 static HRESULT unregister_coclasses(struct regsvr_coclass const *list);
@@ -133,9 +135,11 @@ static WCHAR const defaulticon_keyname[] = {
     'D','e','f','a','u','l','t','I','c','o','n',0};
 static char const tmodel_valuename[] = "ThreadingModel";
 static char const wfparsing_valuename[] = "WantsFORPARSING";
+static char const wfdisplay_valuename[] = "WantsFORDISPLAY";
 static char const attributes_valuename[] = "Attributes";
 static char const cfattributes_valuename[] = "CallForAttributes";
 static char const localized_valuename[] = "LocalizedString";
+static char const hideasdelete_valuename[] = "HideAsDeletePerUser";
 
 /***********************************************************************
  *		static helper functions
@@ -333,7 +337,7 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 	}
 
 	if (list->flags & 
-		(SHELLFOLDER_WANTSFORPARSING|SHELLFOLDER_ATTRIBUTES|SHELLFOLDER_CALLFORATTRIBUTES))
+		(SHELLFOLDER_WANTSFORPARSING|SHELLFOLDER_WANTSFORDISPLAY|SHELLFOLDER_ATTRIBUTES|SHELLFOLDER_CALLFORATTRIBUTES|SHELLFOLDER_HIDEASDELETE))
 	{
 	    HKEY shellfolder_key;
 
@@ -343,6 +347,10 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 	    if (list->flags & SHELLFOLDER_WANTSFORPARSING)
 		res = RegSetValueExA(shellfolder_key, wfparsing_valuename, 0, REG_SZ, (const BYTE *)"", 1);
+	    if (list->flags & SHELLFOLDER_WANTSFORDISPLAY)
+		res = RegSetValueExA(shellfolder_key, wfdisplay_valuename, 0, REG_SZ, (const BYTE *)"", 1);
+            if (list->flags & SHELLFOLDER_HIDEASDELETE)
+                res = RegSetValueExA(shellfolder_key, hideasdelete_valuename, 0, REG_SZ, (const BYTE *)"", 1);
 	    if (list->flags & SHELLFOLDER_ATTRIBUTES) 
 		res = RegSetValueExA(shellfolder_key, attributes_valuename, 0, REG_DWORD, 
 				     (const BYTE *)&list->dwAttributes, sizeof(DWORD));
