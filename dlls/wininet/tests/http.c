@@ -1677,7 +1677,7 @@ static void test_header_handling_order(int port)
     size = sizeof(status);
     ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
     ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200, "request failed with status %u\n", status);
+    ok(status == 200 || status == 400 /* IE6 */, "request failed with status %u\n", status);
 
     InternetCloseHandle(request);
     InternetCloseHandle(connect);
