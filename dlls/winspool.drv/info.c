@@ -524,6 +524,7 @@ static BOOL CUPS_LoadPrinters(void)
             TRACE("Printer already exists\n");
             RegDeleteValueW(hkeyPrinter, May_Delete_Value);
             RegCloseKey(hkeyPrinter);
+            add_printer_driver(dests[i].name);
         } else {
             static CHAR data_type[] = "RAW",
                     print_proc[]    = "WinPrint",
@@ -661,6 +662,7 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
         TRACE("Printer already exists\n");
         RegDeleteValueW(hkeyPrinter, May_Delete_Value);
         RegCloseKey(hkeyPrinter);
+        add_printer_driver(devname);
     } else {
         static CHAR data_type[]   = "RAW",
                     print_proc[]  = "WinPrint",
