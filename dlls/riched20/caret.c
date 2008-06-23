@@ -164,7 +164,6 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
   ME_DisplayItem *pCursorRun = pCursor->pRun;
   ME_DisplayItem *pSizeRun = pCursor->pRun;
 
-  assert(!pCursor->nOffset || !editor->bCaretAtEnd);
   assert(height && x && y);
   assert(!(ME_GetParagraph(pCursorRun)->member.para.nFlags & MEPF_REWRAP));
   assert(pCursor->pRun);
@@ -1179,9 +1178,6 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
 static void ME_ArrowHome(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
   ME_DisplayItem *pRow = ME_FindItemBack(pCursor->pRun, diStartRow);
-  /* bCaretAtEnd doesn't make sense if the cursor isn't set at the
-  first character of the next row */
-  assert(!editor->bCaretAtEnd || !pCursor->nOffset);
   ME_WrapMarkedParagraphs(editor);
   if (pRow) {
     ME_DisplayItem *pRun;

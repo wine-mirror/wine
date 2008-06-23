@@ -241,11 +241,7 @@ void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
   assert(p->member.run.nCharOfs != -1);
   ME_GetParagraph(p)->member.para.nFlags |= MEPF_REWRAP;
 
-  /* if we were at the end of screen line, and the next run is in the new
-	 * line, then it's not the end of the line anymore */  
-	if (editor->bCaretAtEnd && editor->pCursors[0].pRun == pNext)
-    editor->bCaretAtEnd = FALSE;
-	/* Update all cursors so that they don't contain the soon deleted run */
+  /* Update all cursors so that they don't contain the soon deleted run */
   for (i=0; i<editor->nCursors; i++) {
     if (editor->pCursors[i].pRun == pNext) {
       editor->pCursors[i].pRun = p;
