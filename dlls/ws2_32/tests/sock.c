@@ -1127,6 +1127,7 @@ static void test_UDP(void)
     char buf[16];
     int ss, i, n_recv, n_sent;
 
+    memset (buf,0,sizeof(buf));
     for ( i = NUM_UDP_PEERS - 1; i >= 0; i-- ) {
         ok ( ( peer[i].s = socket ( AF_INET, SOCK_DGRAM, 0 ) ) != INVALID_SOCKET, "UDP: socket failed\n" );
 
