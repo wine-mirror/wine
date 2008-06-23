@@ -209,7 +209,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
                              row->member.row.nLMargin);
         }
       }
-      if (pCursor->nOffset && !(run->member.run.nFlags & MERF_SKIPPED)) {
+      if (pCursor->nOffset) {
         sz = ME_GetRunSize(&c, &para->member.para, &run->member.run, pCursor->nOffset,
                            row->member.row.nLMargin);
       }
