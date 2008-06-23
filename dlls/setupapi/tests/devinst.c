@@ -602,7 +602,8 @@ static void testGetDeviceInstanceId(void)
         ret = pSetupDiGetDeviceInstanceIdA(set, &devInfo, instanceID,
          sizeof(instanceID), NULL);
         ok(ret, "SetupDiGetDeviceInstanceIdA failed: %08x\n", GetLastError());
-        ok(!lstrcmpA(instanceID, "ROOT\\LEGACY_BOGUS\\0001"),
+        /* NT4 returns 'Root' and W2K and above 'ROOT' */
+        ok(!lstrcmpiA(instanceID, "ROOT\\LEGACY_BOGUS\\0001"),
          "Unexpected instance ID %s\n", instanceID);
         pSetupDiDestroyDeviceInfoList(set);
     }
