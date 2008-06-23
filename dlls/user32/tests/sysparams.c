@@ -137,6 +137,8 @@ static HDC hdc;
 #define SPI_SETMOUSEHOVERHEIGHT_VALNAME         "MouseHoverHeight"
 #define SPI_SETMOUSEHOVERTIME_REGKEY            "Control Panel\\Mouse"
 #define SPI_SETMOUSEHOVERTIME_VALNAME           "MouseHoverTime"
+#define SPI_SETMOUSESCROLLCHARS_REGKEY          "Control Panel\\Desktop"
+#define SPI_SETMOUSESCROLLCHARS_VALNAME         "WheelScrollChars"
 #define SPI_SETMOUSESCROLLLINES_REGKEY          "Control Panel\\Desktop"
 #define SPI_SETMOUSESCROLLLINES_VALNAME         "WheelScrollLines"
 #define SPI_SETMENUSHOWDELAY_REGKEY             "Control Panel\\Desktop"
@@ -2199,6 +2201,44 @@ static void test_SPI_SETMENUSHOWDELAY( void )      /*     107 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%d\n",rc,GetLastError());
 }
 
+static void test_SPI_SETWHEELSCROLLCHARS( void )      /*     108 */
+{
+    BOOL rc;
+    UINT old_chars;
+    const UINT vals[]={0,32767};
+    unsigned int i;
+
+    trace("testing SPI_{GET,SET}WHEELSCROLLCHARS\n");
+    SetLastError(0xdeadbeef);
+    rc=SystemParametersInfoA( SPI_GETWHEELSCROLLCHARS, 0, &old_chars, 0 );
+
+    /* SPI_{GET,SET}WHEELSCROLLCHARS not supported on Windows 95 */
+    if (!test_error_msg(rc,"SPI_{GET,SET}WHEELSCROLLCHARS"))
+        return;
+
+    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    {
+        UINT v;
+        char buf[10];
+
+        rc=SystemParametersInfoA( SPI_SETWHEELSCROLLCHARS, vals[i], 0,
+                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        ok(rc!=0,"%d: rc=%d err=%d\n",i,rc,GetLastError());
+        test_change_message( SPI_SETWHEELSCROLLCHARS, 0 );
+        sprintf( buf, "%d", vals[i] );
+        test_reg_key( SPI_SETMOUSESCROLLCHARS_REGKEY,
+                      SPI_SETMOUSESCROLLCHARS_VALNAME, buf );
+
+        SystemParametersInfoA( SPI_GETWHEELSCROLLCHARS, 0, &v, 0 );
+        ok(rc!=0,"%d: rc=%d err=%d\n",i,rc,GetLastError());
+        eq( v, vals[i], "SPI_{GET,SET}WHEELSCROLLCHARS", "%d" );
+    }
+
+    rc=SystemParametersInfoA( SPI_SETWHEELSCROLLCHARS, old_chars, 0,
+                              SPIF_UPDATEINIFILE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%d\n",rc,GetLastError());
+}
+
 static void test_SPI_SETWALLPAPER( void )              /*   115 */
 {
     BOOL rc;
@@ -2342,6 +2382,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETMOUSEHOVERTIME();               /*    103 */
     test_SPI_SETWHEELSCROLLLINES();             /*    105 */
     test_SPI_SETMENUSHOWDELAY();                /*    107 */
+    test_SPI_SETWHEELSCROLLCHARS();             /*    108 */
     test_SPI_SETWALLPAPER();                    /*    115 */
 
     test_WM_DISPLAYCHANGE();
