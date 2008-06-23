@@ -1117,6 +1117,8 @@ static int write_no_repeat_pointer_descriptions(
 
     if (is_ptr(type) || (!type->declarray && is_conformant_array(type)))
     {
+        size_t memsize;
+
         print_file(file, 2, "0x%02x, /* FC_NO_REPEAT */\n", RPC_FC_NO_REPEAT);
         print_file(file, 2, "0x%02x, /* FC_PAD */\n", RPC_FC_PAD);
 
@@ -1144,11 +1146,11 @@ static int write_no_repeat_pointer_descriptions(
         }
 
         align = 0;
-        *offset_in_memory += type_memsize(type, &align);
+        memsize = type_memsize(type, &align);
+        *offset_in_memory += memsize;
         /* increment these separately as in the case of conformant (varying)
          * structures these start at different values */
-        align = 0;
-        *offset_in_buffer += type_memsize(type, &align);
+        *offset_in_buffer += memsize;
 
         return 1;
     }
@@ -1157,18 +1159,30 @@ static int write_no_repeat_pointer_descriptions(
     {
         const var_t *v;
         LIST_FOR_EACH_ENTRY( v, type->fields_or_args, const var_t, entry )
+        {
+            if (offset_in_memory && offset_in_buffer)
+            {
+                size_t padding;
+                align = 0;
+                type_memsize(v->type, &align);
+                padding = ROUNDING(*offset_in_memory, align);
+                *offset_in_memory += padding;
+                *offset_in_buffer += padding;
+            }
             written += write_no_repeat_pointer_descriptions(
                 file, v->type,
                 offset_in_memory, offset_in_buffer, typestring_offset);
+        }
     }
     else
     {
+        size_t memsize;
         align = 0;
-        *offset_in_memory += type_memsize(type, &align);
+        memsize = type_memsize(type, &align);
+        *offset_in_memory += memsize;
         /* increment these separately as in the case of conformant (varying)
          * structures these start at different values */
-        align = 0;
-        *offset_in_buffer += type_memsize(type, &align);
+        *offset_in_buffer += memsize;
     }
 
     return written;
@@ -1186,16 +1200,19 @@ static int write_pointer_description_offsets(
     {
         if (offset_in_memory && offset_in_buffer)
         {
+            size_t memsize;
+
             /* pointer instance */
             /* FIXME: sometimes from end of structure, sometimes from beginning */
             print_file(file, 2, "NdrFcShort(0x%x), /* Memory offset = %d */\n", *offset_in_memory, *offset_in_memory);
             print_file(file, 2, "NdrFcShort(0x%x), /* Buffer offset = %d */\n", *offset_in_buffer, *offset_in_buffer);
 
             align = 0;
-            *offset_in_memory += type_memsize(type, &align);
-            /* FIXME: is there a case where these two are different? */
-            align = 0;
-            *offset_in_buffer += type_memsize(type, &align);
+            memsize = type_memsize(type, &align);
+            *offset_in_memory += memsize;
+            /* increment these separately as in the case of conformant (varying)
+             * structures these start at different values */
+            *offset_in_buffer += memsize;
         }
         *typestring_offset += 4;
 
@@ -1213,7 +1230,7 @@ static int write_pointer_description_offsets(
     {
         return write_pointer_description_offsets(
             file, attrs, type->ref, offset_in_memory, offset_in_buffer,
-                                                 typestring_offset);
+            typestring_offset);
     }
     else if (is_non_complex_struct(type))
     {
@@ -1221,6 +1238,15 @@ static int write_pointer_description_offsets(
         const var_t *v;
         LIST_FOR_EACH_ENTRY( v, type->fields_or_args, const var_t, entry )
         {
+            if (offset_in_memory && offset_in_buffer)
+            {
+                size_t padding;
+                align = 0;
+                type_memsize(v->type, &align);
+                padding = ROUNDING(*offset_in_memory, align);
+                *offset_in_memory += padding;
+                *offset_in_buffer += padding;
+            }
             written += write_pointer_description_offsets(
                 file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
                 typestring_offset);
@@ -1228,14 +1254,16 @@ static int write_pointer_description_offsets(
     }
     else
     {
-        align = 0;
-        if (offset_in_memory)
-            *offset_in_memory += type_memsize(type, &align);
-        /* increment these separately as in the case of conformant (varying)
-         * structures these start at different values */
-        align = 0;
-        if (offset_in_buffer)
-            *offset_in_buffer += type_memsize(type, &align);
+        if (offset_in_memory && offset_in_buffer)
+        {
+            size_t memsize;
+            align = 0;
+            memsize = type_memsize(type, &align);
+            *offset_in_memory += memsize;
+            /* increment these separately as in the case of conformant (varying)
+             * structures these start at different values */
+            *offset_in_buffer += memsize;
+        }
     }
 
     return written;
@@ -1285,6 +1313,15 @@ static int write_fixed_array_pointer_descriptions(
         const var_t *v;
         LIST_FOR_EACH_ENTRY( v, type->fields_or_args, const var_t, entry )
         {
+            if (offset_in_memory && offset_in_buffer)
+            {
+                size_t padding;
+                align = 0;
+                type_memsize(v->type, &align);
+                padding = ROUNDING(*offset_in_memory, align);
+                *offset_in_memory += padding;
+                *offset_in_buffer += padding;
+            }
             pointer_count += write_fixed_array_pointer_descriptions(
                 file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
                 typestring_offset);
@@ -1292,14 +1329,16 @@ static int write_fixed_array_pointer_descriptions(
     }
     else
     {
-        align = 0;
-        if (offset_in_memory)
-            *offset_in_memory += type_memsize(type, &align);
-        /* increment these separately as in the case of conformant (varying)
-         * structures these start at different values */
-        align = 0;
-        if (offset_in_buffer)
-            *offset_in_buffer += type_memsize(type, &align);
+        if (offset_in_memory && offset_in_buffer)
+        {
+            size_t memsize;
+            align = 0;
+            memsize = type_memsize(type, &align);
+            *offset_in_memory += memsize;
+            /* increment these separately as in the case of conformant (varying)
+             * structures these start at different values */
+            *offset_in_buffer += memsize;
+        }
     }
 
     return pointer_count;
@@ -1369,8 +1408,6 @@ static int write_varying_array_pointer_descriptions(
         if (pointer_count > 0)
         {
             unsigned int increment_size;
-            size_t offset_of_array_pointer_mem = *offset_in_memory;
-            size_t offset_of_array_pointer_buf = *offset_in_buffer;
 
             align = 0;
             increment_size = type_memsize(type->ref, &align);
@@ -1386,8 +1423,8 @@ static int write_varying_array_pointer_descriptions(
             *typestring_offset += 8;
 
             pointer_count = write_pointer_description_offsets(
-                file, attrs, type, &offset_of_array_pointer_mem,
-                &offset_of_array_pointer_buf, typestring_offset);
+                file, attrs, type, offset_in_memory,
+                offset_in_buffer, typestring_offset);
         }
     }
     else if (is_struct(type->type))
@@ -1395,6 +1432,15 @@ static int write_varying_array_pointer_descriptions(
         const var_t *v;
         LIST_FOR_EACH_ENTRY( v, type->fields_or_args, const var_t, entry )
         {
+            if (offset_in_memory && offset_in_buffer)
+            {
+                size_t padding;
+                align = 0;
+                type_memsize(v->type, &align);
+                padding = ROUNDING(*offset_in_memory, align);
+                *offset_in_memory += padding;
+                *offset_in_buffer += padding;
+            }
             pointer_count += write_varying_array_pointer_descriptions(
                 file, v->attrs, v->type, offset_in_memory, offset_in_buffer,
                 typestring_offset);
@@ -1402,13 +1448,16 @@ static int write_varying_array_pointer_descriptions(
     }
     else
     {
-        align = 0;
-        if (offset_in_memory)
-            *offset_in_memory += type_memsize(type, &align);
-        /* FIXME: is there a case where these two are different? */
-        align = 0;
-        if (offset_in_buffer)
-            *offset_in_buffer += type_memsize(type, &align);
+        if (offset_in_memory && offset_in_buffer)
+        {
+            size_t memsize;
+            align = 0;
+            memsize = type_memsize(type, &align);
+            *offset_in_memory += memsize;
+            /* increment these separately as in the case of conformant (varying)
+             * structures these start at different values */
+            *offset_in_buffer += memsize;
+        }
     }
 
     return pointer_count;
@@ -1459,7 +1508,7 @@ static void write_pointer_description(FILE *file, type_t *type,
             typestring_offset);
     }
 
-   /* pass 4: search for pointers in varying arrays */
+    /* pass 4: search for pointers in varying arrays */
     offset_in_memory = 0;
     offset_in_buffer = conformance;
     write_varying_array_pointer_descriptions(
