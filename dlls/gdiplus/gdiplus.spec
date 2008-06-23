@@ -561,7 +561,7 @@
 @ stdcall GdipSetPathGradientSurroundColorsWithCount(ptr ptr ptr)
 @ stub GdipSetPathGradientTransform
 @ stdcall GdipSetPathGradientWrapMode(ptr long)
-@ stub GdipSetPathMarker
+@ stdcall GdipSetPathMarker(ptr)
 @ stdcall GdipSetPenBrushFill(ptr ptr)
 @ stdcall GdipSetPenColor(ptr long)
 @ stub GdipSetPenCompoundArray

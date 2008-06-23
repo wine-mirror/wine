@@ -833,3 +833,19 @@ GpStatus WINGDIPAPI GdipAddPathRectanglesI(GpPath *path, GDIPCONST GpRect *rects
 
     return retstat;
 }
+
+GpStatus WINGDIPAPI GdipSetPathMarker(GpPath* path)
+{
+    INT count;
+
+    if(!path)
+        return InvalidParameter;
+
+    count = path->pathdata.Count;
+
+    /* set marker flag */
+    if(count > 0)
+        path->pathdata.Types[count-1] |= PathPointTypePathMarker;
+
+    return Ok;
+}
