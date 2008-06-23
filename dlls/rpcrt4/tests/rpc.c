@@ -260,6 +260,10 @@ todo_wine {
     ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n",
        status);
 
+    status = RpcBindingSetAuthInfo(IFoo_IfHandle, NULL, RPC_C_AUTHN_LEVEL_NONE,
+                                   RPC_C_AUTHN_WINNT, NULL, RPC_C_AUTHZ_NAME);
+    ok(status == RPC_S_OK, "RpcBindingSetAuthInfo failed (%lu)\n", status);
+
     status = RpcMgmtStopServerListening(NULL);
     ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%lu)\n",
        status);

@@ -1404,7 +1404,8 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
     return RPC_S_UNKNOWN_AUTHN_LEVEL;
   }
 
-  if (AuthzSvr)
+  /* RPC_C_AUTHN_WINNT ignores the AuthzSvr parameter */
+  if (AuthzSvr && AuthnSvc != RPC_C_AUTHN_WINNT)
   {
     FIXME("unsupported AuthzSvr %u\n", AuthzSvr);
     return RPC_S_UNKNOWN_AUTHZ_SERVICE;
@@ -1533,7 +1534,8 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
     return RPC_S_UNKNOWN_AUTHN_LEVEL;
   }
 
-  if (AuthzSvr)
+  /* RPC_C_AUTHN_WINNT ignores the AuthzSvr parameter */
+  if (AuthzSvr && AuthnSvc != RPC_C_AUTHN_WINNT)
   {
     FIXME("unsupported AuthzSvr %u\n", AuthzSvr);
     return RPC_S_UNKNOWN_AUTHZ_SERVICE;

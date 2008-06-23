@@ -139,6 +139,11 @@ typedef I_RPC_HANDLE *RPC_EP_INQ_HANDLE;
 #define RPC_C_AUTHN_MQ 100
 #define RPC_C_AUTHN_DEFAULT 0xffffffff
 
+#define RPC_C_AUTHZ_NONE 0
+#define RPC_C_AUTHZ_NAME 1
+#define RPC_C_AUTHZ_DCE  2
+#define RPC_C_AUTHZ_DEFAULT 0xffffffff
+
 /* values for RPC_SECURITY_QOS*::ImpersonationType */
 #define RPC_C_IMP_LEVEL_DEFAULT     0
 #define RPC_C_IMP_LEVEL_ANONYMOUS   1
