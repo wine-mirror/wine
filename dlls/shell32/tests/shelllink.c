@@ -540,7 +540,7 @@ static void test_load_save(void)
         *p='\0';
 
     /* IShellLink returns path in long form */
-    pGetLongPathNameA(mypath, realpath, MAX_PATH);
+    if (!pGetLongPathNameA(mypath, realpath, MAX_PATH)) strcpy( realpath, mypath );
 
     /* Overwrite the existing lnk file and point it to existing files */
     desc.description="test 2";
