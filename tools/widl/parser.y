@@ -1479,6 +1479,14 @@ static void set_type(var_t *v, decl_spec_t *decl_spec, const declarator_t *decl,
     error_loc("'%s': [string] attribute applied to non-pointer, non-array type\n",
               v->name);
 
+  if (is_attr(v->attrs, ATTR_V1ENUM))
+  {
+    if (v->type->type == RPC_FC_ENUM16)
+      v->type->type = RPC_FC_ENUM32;
+    else
+      error_loc("'%s': [v1_enum] attribute applied to non-enum type\n", v->name);
+  }
+
   sizeless = FALSE;
   if (arr) LIST_FOR_EACH_ENTRY_REV(dim, arr, expr_t, entry)
   {
