@@ -2,6 +2,7 @@
  * Tests for special shell folders
  *
  * Copyright 2008 Robert Shearman for CodeWeavers
+ * Copyright 2008 Owen Rudge
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -57,8 +58,36 @@ static void test_parse_for_entire_network(void)
     ILFree(pidl);
 }
 
+/* Tests for Control Panel */
+static void test_parse_for_control_panel(void)
+{
+    /* path of My Computer\Control Panel */
+    static const WCHAR control_panel_path[] = {
+        ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}','\\',
+        ':',':','{','2','1','E','C','2','0','2','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','D','-','0','8','0','0','2','B','3','0','3','0','9','D','}', 0 };
+    IShellFolder *psfDesktop;
+    HRESULT hr;
+    DWORD eaten = 0xdeadbeef;
+    LPITEMIDLIST pidl;
+    DWORD attr = ~0;
+    DWORD expected_attr;
+
+    hr = SHGetDesktopFolder(&psfDesktop);
+    ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%x\n", hr);
+
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, (LPWSTR)control_panel_path, &eaten, &pidl, &attr);
+    ok(hr == S_OK, "IShellFolder_ParseDisplayName failed with error 0x%x\n", hr);
+    todo_wine ok(eaten == 0xdeadbeef, "eaten should not have been set to %u\n", eaten);
+
+    expected_attr = SFGAO_CANLINK | SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
+    todo_wine ok(attr == expected_attr, "attr should be 0x%x, not 0x%x\n", expected_attr, attr);
+
+    ILFree(pidl);
+}
+
 
 START_TEST(shfldr_special)
 {
     test_parse_for_entire_network();
+    test_parse_for_control_panel();
 }
