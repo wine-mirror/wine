@@ -814,7 +814,9 @@ size_t type_memsize(const type_t *t, unsigned int *align)
 {
     size_t size = 0;
 
-    if (t->declarray && is_conformant_array(t))
+    if (t->kind == TKIND_ALIAS)
+        size = type_memsize(t->orig, align);
+    else if (t->declarray && is_conformant_array(t))
     {
         type_memsize(t->ref, align);
         size = 0;
