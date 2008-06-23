@@ -4265,6 +4265,137 @@ static void test_WM_NOTIFY(void)
     DestroyWindow(parent);
 }
 
+static void simulate_typing_characters(HWND hwnd, const char* szChars)
+{
+    int ret;
+
+    while (*szChars != '\0') {
+        SendMessageA(hwnd, WM_KEYDOWN, *szChars, 1);
+        ret = SendMessageA(hwnd, WM_CHAR, *szChars, 1);
+        ok(ret == 0, "WM_CHAR('%c') ret=%d\n", *szChars, ret);
+        SendMessageA(hwnd, WM_KEYUP, *szChars, 1);
+        szChars++;
+    }
+}
+
+static void test_undo_coalescing(void)
+{
+    HWND hwnd;
+    int result;
+    char buffer[64] = {0};
+
+    /* multi-line control inserts CR normally */
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP|ES_MULTILINE,
+                           0, 0, 200, 60, 0, 0, 0, 0);
+    ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+
+    result = SendMessage(hwnd, EM_CANUNDO, 0, 0);
+    ok (result == FALSE, "Can undo after window creation.\n");
+    result = SendMessage(hwnd, EM_UNDO, 0, 0);
+    ok (result == FALSE, "Undo operation successful with nothing to undo.\n");
+    result = SendMessage(hwnd, EM_CANREDO, 0, 0);
+    ok (result == FALSE, "Can redo after window creation.\n");
+    result = SendMessage(hwnd, EM_REDO, 0, 0);
+    ok (result == FALSE, "Redo operation successful with nothing undone.\n");
+
+    /* Test the effect of arrows keys during typing on undo transactions*/
+    simulate_typing_characters(hwnd, "one two three");
+    SendMessage(hwnd, WM_KEYDOWN, VK_RIGHT, 1);
+    SendMessage(hwnd, WM_KEYUP, VK_RIGHT, 1);
+    simulate_typing_characters(hwnd, " four five six");
+
+    result = SendMessage(hwnd, EM_CANREDO, 0, 0);
+    ok (result == FALSE, "Can redo before anything is undone.\n");
+    result = SendMessage(hwnd, EM_CANUNDO, 0, 0);
+    ok (result == TRUE, "Cannot undo typed characters.\n");
+    result = SendMessage(hwnd, EM_UNDO, 0, 0);
+    todo_wine ok (result == TRUE, "EM_UNDO Failed to undo typed characters.\n");
+    result = SendMessage(hwnd, EM_CANREDO, 0, 0);
+    ok (result == TRUE, "Cannot redo after undo.\n");
+    SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    result = strcmp(buffer, "one two three");
+    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
+
+    result = SendMessage(hwnd, EM_CANUNDO, 0, 0);
+    ok (result == TRUE, "Cannot undo typed characters.\n");
+    result = SendMessage(hwnd, WM_UNDO, 0, 0);
+    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    result = strcmp(buffer, "");
+    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
+
+    /* Test the effect of focus changes during typing on undo transactions*/
+    simulate_typing_characters(hwnd, "one two three");
+    result = SendMessage(hwnd, EM_CANREDO, 0, 0);
+    ok (result == FALSE, "Redo buffer should have been cleared by typing.\n");
+    SendMessage(hwnd, WM_KILLFOCUS, (WPARAM)NULL, 0);
+    SendMessage(hwnd, WM_SETFOCUS, (WPARAM)NULL, 0);
+    simulate_typing_characters(hwnd, " four five six");
+    result = SendMessage(hwnd, EM_UNDO, 0, 0);
+    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    result = strcmp(buffer, "one two three");
+    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
+
+    /* Test the effect of the back key during typing on undo transactions */
+    SendMessage(hwnd, EM_EMPTYUNDOBUFFER, 0, 0);
+    result = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
+    ok (result == TRUE, "Failed to clear the text.\n");
+    simulate_typing_characters(hwnd, "one two threa");
+    result = SendMessage(hwnd, EM_CANREDO, 0, 0);
+    ok (result == FALSE, "Redo buffer should have been cleared by typing.\n");
+    SendMessage(hwnd, WM_KEYDOWN, VK_BACK, 1);
+    SendMessage(hwnd, WM_KEYUP, VK_BACK, 1);
+    simulate_typing_characters(hwnd, "e four five six");
+    result = SendMessage(hwnd, EM_UNDO, 0, 0);
+    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    result = strcmp(buffer, "");
+    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
+
+    /* Test the effect of the delete key during typing on undo transactions */
+    SendMessage(hwnd, EM_EMPTYUNDOBUFFER, 0, 0);
+    result = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"abcd");
+    ok(result == TRUE, "Failed to set the text.\n");
+    SendMessage(hwnd, EM_SETSEL, (WPARAM)1, (LPARAM)1);
+    SendMessage(hwnd, WM_KEYDOWN, VK_DELETE, 1);
+    SendMessage(hwnd, WM_KEYUP, VK_DELETE, 1);
+    SendMessage(hwnd, WM_KEYDOWN, VK_DELETE, 1);
+    SendMessage(hwnd, WM_KEYUP, VK_DELETE, 1);
+    result = SendMessage(hwnd, EM_UNDO, 0, 0);
+    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    result = strcmp(buffer, "acd");
+    ok (result == 0, "expected '%s' but got '%s'\n", "acd", buffer);
+    result = SendMessage(hwnd, EM_UNDO, 0, 0);
+    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    result = strcmp(buffer, "abcd");
+    ok (result == 0, "expected '%s' but got '%s'\n", "abcd", buffer);
+
+    /* Test the effect of EM_STOPGROUPTYPING on undo transactions*/
+    SendMessage(hwnd, EM_EMPTYUNDOBUFFER, 0, 0);
+    result = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
+    ok (result == TRUE, "Failed to clear the text.\n");
+    simulate_typing_characters(hwnd, "one two three");
+    result = SendMessage(hwnd, EM_STOPGROUPTYPING, 0, 0);
+    ok (result == 0, "expected %d but got %d\n", 0, result);
+    simulate_typing_characters(hwnd, " four five six");
+    result = SendMessage(hwnd, EM_UNDO, 0, 0);
+    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    result = strcmp(buffer, "one two three");
+    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
+    result = SendMessage(hwnd, EM_UNDO, 0, 0);
+    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
+    result = strcmp(buffer, "");
+    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -4310,6 +4441,7 @@ START_TEST( editor )
   test_WM_NOTIFY();
   test_EM_AUTOURLDETECT();
   test_eventMask();
+  test_undo_coalescing();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
