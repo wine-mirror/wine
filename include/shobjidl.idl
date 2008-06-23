@@ -1120,7 +1120,8 @@ interface IContextMenu3 : IContextMenu2
 [
     object,
     uuid(000214f5-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IShellExecuteHookA : IUnknown
 {
@@ -1136,7 +1137,8 @@ interface IShellExecuteHookA : IUnknown
 [
     object,
     uuid(000214fb-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IShellExecuteHookW : IUnknown
 {
