@@ -73,6 +73,7 @@ enum spi_index
     SPI_SETMOUSEHOVERWIDTH_IDX,
     SPI_SETMOUSEHOVERHEIGHT_IDX,
     SPI_SETMOUSEHOVERTIME_IDX,
+    SPI_SETMOUSESCROLLCHARS_IDX,
     SPI_SETMOUSESCROLLLINES_IDX,
     SPI_SETMENUSHOWDELAY_IDX,
     SPI_SETICONTITLELOGFONT_IDX,
@@ -209,6 +210,8 @@ static const WCHAR SPI_SETMOUSEHOVERHEIGHT_REGKEY[]=          {'C','o','n','t','
 static const WCHAR SPI_SETMOUSEHOVERHEIGHT_VALNAME[]=         {'M','o','u','s','e','H','o','v','e','r','H','e','i','g','h','t',0};
 static const WCHAR SPI_SETMOUSEHOVERTIME_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','M','o','u','s','e',0};
 static const WCHAR SPI_SETMOUSEHOVERTIME_VALNAME[]=           {'M','o','u','s','e','H','o','v','e','r','T','i','m','e',0};
+static const WCHAR SPI_SETMOUSESCROLLCHARS_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETMOUSESCROLLCHARS_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','C','h','a','r','s',0};
 static const WCHAR SPI_SETMOUSESCROLLLINES_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETMOUSESCROLLLINES_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','L','i','n','e','s',0};
 static const WCHAR SPI_SETMENUSHOWDELAY_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -293,6 +296,7 @@ static BOOL screen_reader = FALSE;
 static UINT mouse_hover_width = 4;
 static UINT mouse_hover_height = 4;
 static UINT mouse_hover_time = 400;
+static UINT mouse_scroll_chars = 3;
 static UINT mouse_scroll_lines = 3;
 static UINT menu_show_delay = 400;
 static UINT menu_drop_alignment = 0;
@@ -2110,6 +2114,20 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                               SPI_SETMENUSHOWDELAY_REGKEY,
                               SPI_SETMENUSHOWDELAY_VALNAME,
                               &menu_show_delay, uiParam, fWinIni );
+        break;
+
+    case SPI_GETWHEELSCROLLCHARS:			/*    108  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        ret = get_uint_param( SPI_SETMOUSESCROLLCHARS_IDX,
+                              SPI_SETMOUSESCROLLCHARS_REGKEY,
+                              SPI_SETMOUSESCROLLCHARS_VALNAME,
+                              &mouse_scroll_chars, pvParam );
+        break;
+
+    case SPI_SETWHEELSCROLLCHARS:			/*    109  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        ret = set_uint_param( SPI_SETMOUSESCROLLCHARS_IDX,
+                              SPI_SETMOUSESCROLLCHARS_REGKEY,
+                              SPI_SETMOUSESCROLLCHARS_VALNAME,
+                              &mouse_scroll_chars, uiParam, fWinIni );
         break;
 
     WINE_SPI_FIXME(SPI_GETSHOWIMEUI);		/*    110  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
