@@ -2623,7 +2623,7 @@ static void check_remoting_fields(const var_t *var, type_t *type)
             fields = type->fields_or_args;
     }
 
-    if (fields) LIST_FOR_EACH_ENTRY( field, type->fields_or_args, const var_t, entry )
+    if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
         if (field->type) check_field_common(type, type->name, field);
 }
 
