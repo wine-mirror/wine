@@ -276,7 +276,7 @@ static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *class;
         nsAString_GetData(&class_str, &class);
-        *p = SysAllocString(class);
+        *p = *class ? SysAllocString(class) : NULL;
     }else {
         ERR("GetClassName failed: %08x\n", nsres);
         hres = E_FAIL;

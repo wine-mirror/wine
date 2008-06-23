@@ -42,7 +42,7 @@ static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
     "<body>text test<!-- a comment -->"
     "<a href=\"http://test\" name=\"x\">link</a>"
-    "<input id=\"in\" />"
+    "<input id=\"in\" class=\"testclass\"/>"
     "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
@@ -918,6 +918,23 @@ static IHTMLDOMChildrenCollection *_get_child_nodes(unsigned line, IUnknown *unk
     return col;
 }
 
+#define test_elem_class(u,c) _test_elem_class(__LINE__,u,c)
+static void _test_elem_class(unsigned line, IUnknown *unk, const char *exclass)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR class = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_className(elem, &class);
+    IHTMLElement_Release(elem);
+    ok_(__FILE__,line) (hres == S_OK, "get_className failed: %08x\n", hres);
+    if(exclass)
+        ok_(__FILE__,line) (!strcmp_wa(class, exclass), "unexpected className %s\n", dbgstr_w(class));
+    else
+        ok_(__FILE__,line) (!class, "class != NULL\n");
+    SysFreeString(class);
+}
+
 #define get_child_item(c,i) _get_child_item(__LINE__,c,i)
 static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *col, long idx)
 {
@@ -1786,6 +1803,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_type((IUnknown*)elem, ET_SELECT);
         test_elem_attr(elem, xxxW, NULL);
         test_elem_attr(elem, idW, sW);
+        test_elem_class((IUnknown*)elem, NULL);
         IHTMLElement_Release(elem);
     }
 
@@ -1846,6 +1864,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_value((IUnknown*)elem, NULL);
         test_input_put_value((IUnknown*)elem, "test");
         test_input_value((IUnknown*)elem, NULL);
+        test_elem_class((IUnknown*)elem, "testclass");
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);
