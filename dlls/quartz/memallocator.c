@@ -289,7 +289,10 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
 
     EnterCriticalSection(This->pCritSect);
     if (!This->bCommitted || This->bDecommitQueued)
+    {
+        WARN("Not committed\n");
         hr = VFW_E_NOT_COMMITTED;
+    }
     else
         ++This->lWaiting;
     LeaveCriticalSection(This->pCritSect);
@@ -298,7 +301,10 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
 
     if (WaitForSingleObject(This->hSemWaiting, (dwFlags & AM_GBF_NOWAIT) ? 0 : INFINITE) != WAIT_OBJECT_0)
     {
-        InterlockedDecrement(&This->lWaiting);
+        EnterCriticalSection(This->pCritSect);
+        --This->lWaiting;
+        LeaveCriticalSection(This->pCritSect);
+        WARN("Timed out\n");
         return VFW_E_TIMEOUT;
     }
 
@@ -324,6 +330,8 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
     }
     LeaveCriticalSection(This->pCritSect);
 
+    if (hr != S_OK)
+        WARN("%08x\n", hr);
     return hr;
 }
 
@@ -614,7 +622,10 @@ static HRESULT WINAPI StdMediaSample2_SetActualDataLength(IMediaSample2 * iface,
     TRACE("(%d)\n", len);
 
     if ((len > This->props.cbBuffer) || (len < 0))
+    {
+        WARN("Tried to set length to %d, while max is %d\n", len, This->props.cbBuffer);
         return VFW_E_BUFFER_OVERFLOW;
+    }
     else
     {
         This->props.lActual = len;
