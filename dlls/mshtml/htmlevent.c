@@ -419,6 +419,19 @@ static HRESULT set_node_event_disp(HTMLDOMNode *node, eventid_t eid, IDispatch *
     return S_OK;
 }
 
+HRESULT set_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
+{
+    switch(V_VT(var)) {
+    case VT_DISPATCH:
+        return set_node_event_disp(node, eid, V_DISPATCH(var));
+
+    default:
+        FIXME("not supported vt=%d\n", V_VT(var));
+    }
+
+    return E_NOTIMPL;
+}
+
 void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
 {
     const PRUnichar *attr_value;

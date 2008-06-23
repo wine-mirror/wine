@@ -443,8 +443,10 @@ static HRESULT WINAPI HTMLElement_get_onhelp(IHTMLElement *iface, VARIANT *p)
 static HRESULT WINAPI HTMLElement_put_onclick(IHTMLElement *iface, VARIANT v)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->()\n", This);
+
+    return set_node_event(&This->node, EVENTID_CLICK, &v);
 }
 
 static HRESULT WINAPI HTMLElement_get_onclick(IHTMLElement *iface, VARIANT *p)

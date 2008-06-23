@@ -505,6 +505,7 @@ nsresult get_nsinterface(nsISupports*,REFIID,void**);
 void check_event_attr(HTMLDocument*,nsIDOMElement*);
 void release_event_target(event_target_t*);
 void fire_event(HTMLDocument*,eventid_t,nsIDOMNode*);
+HRESULT set_node_event(HTMLDOMNode*,eventid_t,VARIANT*);
 eventid_t str_to_eid(LPCWSTR);
 
 void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
