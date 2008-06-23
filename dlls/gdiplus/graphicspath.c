@@ -849,3 +849,20 @@ GpStatus WINGDIPAPI GdipSetPathMarker(GpPath* path)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipClearPathMarkers(GpPath* path)
+{
+    INT count;
+    INT i;
+
+    if(!path)
+        return InvalidParameter;
+
+    count = path->pathdata.Count;
+
+    for(i = 0; i < count - 1; i++){
+        path->pathdata.Types[i] &= ~PathPointTypePathMarker;
+    }
+
+    return Ok;
+}

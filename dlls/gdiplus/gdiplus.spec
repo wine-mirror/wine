@@ -45,7 +45,7 @@
 @ stub GdipBitmapSetPixel
 @ stub GdipBitmapSetResolution
 @ stdcall GdipBitmapUnlockBits(ptr ptr)
-@ stub GdipClearPathMarkers
+@ stdcall GdipClearPathMarkers(ptr)
 @ stub GdipCloneBitmapArea
 @ stub GdipCloneBitmapAreaI
 @ stdcall GdipCloneBrush(ptr ptr)
