@@ -336,20 +336,9 @@ static void testInstallClass(void)
      '{','6','a','5','5','b','5','a','4','-','3','f','6','5','-',
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
-    static const CHAR classKey_win9x[] =
-     "System\\CurrentControlSet\\Services\\Class\\"
-     "{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
-    static const CHAR bogus_win9x[] =
-     "System\\CurrentControlSet\\Services\\Class\\Bogus";
     char tmpfile[MAX_PATH];
     BOOL ret;
-    HKEY hkey;
 
-    if (!pSetupDiInstallClassA)
-    {
-        skip("No SetupDiInstallClassA\n");
-        return;
-    }
     tmpfile[0] = '.';
     tmpfile[1] = '\\';
     get_temp_filename(tmpfile + 2);
@@ -372,21 +361,10 @@ static void testInstallClass(void)
      */
     ret = pSetupDiInstallClassA(NULL, tmpfile, 0, NULL);
     ok(ret, "SetupDiInstallClassA failed: %08x\n", GetLastError());
-    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, classKey_win9x, &hkey))
-    {
-        /* We are on win9x */
-        RegCloseKey(hkey);
-        ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE, classKey_win9x),
-         "Couldn't delete win9x classkey\n");
-        ok(!RegDeleteKeyA(HKEY_LOCAL_MACHINE, bogus_win9x),
-         "Couldn't delete win9x bogus services class\n");
-    }
-    else
-    {
-        /* NT4 and above */
-        ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey),
-         "Couldn't delete NT classkey\n");
-    }
+
+    ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey),
+     "Couldn't delete classkey\n");
+
     DeleteFile(tmpfile);
 }
 
