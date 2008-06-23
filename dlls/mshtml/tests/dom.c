@@ -48,7 +48,7 @@ static const char elem_test_str[] =
     "<table><tbody></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"></script>"
     "<test />"
-    "<img /"
+    "<img id=\"imgid\"/>"
     "</body></html>";
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
@@ -843,6 +843,23 @@ static long _get_node_type(unsigned line, IUnknown *unk)
     IHTMLDOMNode_Release(node);
 
     return type;
+}
+
+#define test_img_set_src(u,s) _test_img_set_src(__LINE__,u,s)
+static void _test_img_set_src(unsigned line, IUnknown *unk, const char *src)
+{
+    IHTMLImgElement *img;
+    BSTR tmp;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLImgElement, (void**)&img);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLImgElement: %08x\n", hres);
+
+    tmp = a2bstr(src);
+    hres = IHTMLImgElement_put_src(img, tmp);
+    IHTMLImgElement_Release(img);
+    SysFreeString(tmp);
+    ok_(__FILE__,line) (hres == S_OK, "put_src failed: %08x\n", hres);
 }
 
 #define test_input_get_disabled(i,b) _test_input_get_disabled(__LINE__,i,b)
@@ -1759,6 +1776,7 @@ static void test_elems(IHTMLDocument2 *doc)
     long type;
     HRESULT hres;
 
+    static const WCHAR imgidW[] = {'i','m','g','i','d',0};
     static const WCHAR inW[] = {'i','n',0};
     static const WCHAR xW[] = {'x',0};
     static const WCHAR sW[] = {'s',0};
@@ -1885,6 +1903,12 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_class((IUnknown*)elem, "testclass");
 
         IHTMLInputElement_Release(input);
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_elem_by_id(doc, imgidW, TRUE);
+    if(elem) {
+        test_img_set_src((IUnknown*)elem, "about:blank");
         IHTMLElement_Release(elem);
     }
 

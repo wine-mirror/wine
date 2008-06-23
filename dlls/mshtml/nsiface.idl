@@ -1297,6 +1297,39 @@ interface nsIDOMHTMLScriptElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf90ab-15b3-11d2-932e-00805f8add32),
+    local
+]
+interface nsIDOMHTMLImageElement : nsIDOMHTMLElement
+{
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetAlign(nsAString *aAlign);
+    nsresult SetAlign(const nsAString *aAlign);
+    nsresult GetAlt(nsAString *aAlt);
+    nsresult SetAlt(const nsAString *aAlt);
+    nsresult GetBorder(nsAString *aBorder);
+    nsresult SetBorder(const nsAString *aBorder);
+    nsresult GetHeight(PRInt32 *aHeight);
+    nsresult SetHeight(PRInt32 aHeight);
+    nsresult GetHspace(PRInt32 *aHspace);
+    nsresult SetHspace(PRInt32 aHspace);
+    nsresult GetIsMap(PRBool *aIsMap);
+    nsresult SetIsMap(PRBool aIsMap);
+    nsresult GetLongDesc(nsAString *aLongDesc);
+    nsresult SetLongDesc(const nsAString *aLongDesc);
+    nsresult GetSrc(nsAString *aSrc);
+    nsresult SetSrc(const nsAString *aSrc);
+    nsresult GetUseMap(nsAString *aUseMap);
+    nsresult SetUseMap(const nsAString *aUseMap);
+    nsresult GetVspace(PRInt32 *aVspace);
+    nsresult SetVspace(PRInt32 aVspace);
+    nsresult GetWidth(PRInt32 *aWidth);
+    nsresult SetWidth(PRInt32 aWidth);
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
     /* FROZEN */

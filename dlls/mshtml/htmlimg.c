@@ -35,6 +35,8 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLImgElementVtbl *lpHTMLImgElementVtbl;
+
+    nsIDOMHTMLImageElement *nsimg;
 } HTMLImgElement;
 
 #define HTMLIMG(x)  ((IHTMLImgElement*)  &(x)->lpHTMLImgElementVtbl)
@@ -240,8 +242,18 @@ static HRESULT WINAPI HTMLImgElement_get_alt(IHTMLImgElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLImgElement_put_src(IHTMLImgElement *iface, BSTR v)
 {
     HTMLImgElement *This = HTMLIMG_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString src_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_Init(&src_str, v);
+    nsres = nsIDOMHTMLImageElement_SetSrc(This->nsimg, &src_str);
+    nsAString_Finish(&src_str);
+    if(NS_FAILED(nsres))
+        ERR("SetSrc failed: %08x\n", nsres);
+
+    return NS_OK;
 }
 
 static HRESULT WINAPI HTMLImgElement_get_src(IHTMLImgElement *iface, BSTR *p)
@@ -516,6 +528,9 @@ static void HTMLImgElement_destructor(HTMLDOMNode *iface)
 {
     HTMLImgElement *This = HTMLIMG_NODE_THIS(iface);
 
+    if(This->nsimg)
+        nsIDOMHTMLImageElement_Release(This->nsimg);
+
     HTMLElement_destructor(&This->element.node);
 }
 
@@ -544,9 +559,14 @@ static dispex_static_data_t HTMLImgElement_dispex = {
 HTMLElement *HTMLImgElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLImgElement *ret = heap_alloc_zero(sizeof(HTMLImgElement));
+    nsresult nsres;
 
     ret->lpHTMLImgElementVtbl = &HTMLImgElementVtbl;
     ret->element.node.vtbl = &HTMLImgElementImplVtbl;
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLImageElement, (void**)&ret->nsimg);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIDOMHTMLImageElement: %08x\n", nsres);
 
     init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLIMG(ret), &HTMLImgElement_dispex);
     HTMLElement_Init(&ret->element);
