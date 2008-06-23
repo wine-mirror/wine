@@ -3165,9 +3165,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
     assert(lpwhr->hdr.htype == WH_HHTTPREQ);
 
-    /* Clear any error information */
-    INTERNET_SetLastError(0);
-
     /* if the verb is NULL default to GET */
     if (!lpwhr->lpszVerb)
         lpwhr->lpszVerb = WININET_strdupW(szGET);
@@ -3409,6 +3406,7 @@ lend:
                           sizeof(INTERNET_ASYNC_RESULT));
 
     TRACE("<--\n");
+    if (bSuccess) INTERNET_SetLastError(ERROR_SUCCESS);
     return bSuccess;
 }
 
