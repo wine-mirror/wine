@@ -1900,16 +1900,22 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
   return type;
 }
 
-type_t *find_type(const char *name, int t)
+static type_t *find_type_helper(const char *name, int t)
 {
   struct rtype *cur = type_hash[hash_ident(name)];
   while (cur && (cur->t != t || strcmp(cur->name, name)))
     cur = cur->next;
-  if (!cur) {
+  return cur ? cur->type : NULL;
+}
+
+type_t *find_type(const char *name, int t)
+{
+  type_t *type = find_type_helper(name, t);
+  if (!type) {
     error_loc("type '%s' not found\n", name);
     return NULL;
   }
-  return cur->type;
+  return type;
 }
 
 static type_t *find_type2(char *name, int t)
@@ -1921,25 +1927,18 @@ static type_t *find_type2(char *name, int t)
 
 int is_type(const char *name)
 {
-  struct rtype *cur = type_hash[hash_ident(name)];
-  while (cur && (cur->t || strcmp(cur->name, name)))
-    cur = cur->next;
-  if (cur) return TRUE;
-  return FALSE;
+  return find_type_helper(name, 0) != NULL;
 }
 
 static type_t *get_type(unsigned char type, char *name, int t)
 {
-  struct rtype *cur = NULL;
   type_t *tp;
   if (name) {
-    cur = type_hash[hash_ident(name)];
-    while (cur && (cur->t != t || strcmp(cur->name, name)))
-      cur = cur->next;
-  }
-  if (cur) {
-    free(name);
-    return cur->type;
+    tp = find_type_helper(name, t);
+    if (tp) {
+      free(name);
+      return tp;
+    }
   }
   tp = make_type(type, NULL);
   tp->name = name;
