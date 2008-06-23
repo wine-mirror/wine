@@ -654,6 +654,24 @@ s_get_numbers(int length, int size, pints_t n[])
 }
 
 void
+s_get_numbers_struct(numbers_struct_t **ns)
+{
+    int i;
+    *ns = midl_user_allocate(FIELD_OFFSET(numbers_struct_t, numbers[5]));
+    if (!*ns) return;
+    (*ns)->length = 5;
+    (*ns)->size = 5;
+    for (i = 0; i < (*ns)->length; i++)
+    {
+        (*ns)->numbers[i].pi = NULL;
+        (*ns)->numbers[i].ppi = NULL;
+        (*ns)->numbers[i].pppi = NULL;
+    }
+    (*ns)->numbers[0].pi = midl_user_allocate(sizeof(*(*ns)->numbers[i].pi));
+    *(*ns)->numbers[0].pi = 5;
+}
+
+void
 s_stop(void)
 {
   ok(RPC_S_OK == RpcMgmtStopServerListening(NULL), "RpcMgmtStopServerListening\n");
@@ -1096,6 +1114,7 @@ array_tests(void)
   doub_carr_t *dc;
   int *pi;
   pints_t api[5];
+  numbers_struct_t *ns;
 
   ok(cstr_length(str1, sizeof str1) == strlen(str1), "RPC cstr_length\n");
 
@@ -1177,12 +1196,24 @@ array_tests(void)
   api[0].pi = pi;
   get_5numbers(1, api);
   ok(api[0].pi == pi, "RPC varying array [out] pointer changed from %p to %p\n", pi, api[0].pi);
-  ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *pi);
+  ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *api[0].pi);
 
   api[0].pi = pi;
   get_numbers(1, 1, api);
   ok(api[0].pi == pi, "RPC conformant varying array [out] pointer changed from %p to %p\n", pi, api[0].pi);
-  ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *pi);
+  ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *api[0].pi);
+
+  ns = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(numbers_struct_t, numbers[5]));
+  ns->length = 5;
+  ns->size = 5;
+  ns->numbers[0].pi = pi;
+  get_numbers_struct(&ns);
+  todo_wine {
+  ok(ns->numbers[0].pi == pi, "RPC conformant varying struct embedded pointer changed from %p to %p\n", pi, ns->numbers[0].pi);
+  }
+  ok(*ns->numbers[0].pi == 5, "pi unmarshalled incorrectly %d\n", *ns->numbers[0].pi);
+
+  HeapFree(GetProcessHeap(), 0, ns);
   HeapFree(GetProcessHeap(), 0, pi);
 }
 
