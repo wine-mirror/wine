@@ -2258,44 +2258,44 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
       break;
     case INTERNET_OPTION_ERROR_MASK:
       {
-        unsigned long flags=*(unsigned long*)lpBuffer;
-        FIXME("Option INTERNET_OPTION_ERROR_MASK(%ld): STUB\n",flags);
+        ULONG flags = *(ULONG *)lpBuffer;
+        FIXME("Option INTERNET_OPTION_ERROR_MASK(%d): STUB\n", flags);
       }
       break;
     case INTERNET_OPTION_CODEPAGE:
       {
-        unsigned long codepage=*(unsigned long*)lpBuffer;
-        FIXME("Option INTERNET_OPTION_CODEPAGE (%ld): STUB\n",codepage);
+        ULONG codepage = *(ULONG *)lpBuffer;
+        FIXME("Option INTERNET_OPTION_CODEPAGE (%d): STUB\n", codepage);
       }
       break;
     case INTERNET_OPTION_REQUEST_PRIORITY:
       {
-        unsigned long priority=*(unsigned long*)lpBuffer;
-        FIXME("Option INTERNET_OPTION_REQUEST_PRIORITY (%ld): STUB\n",priority);
+        ULONG priority = *(ULONG *)lpBuffer;
+        FIXME("Option INTERNET_OPTION_REQUEST_PRIORITY (%d): STUB\n", priority);
       }
       break;
     case INTERNET_OPTION_CONNECT_TIMEOUT:
       {
-        unsigned long connecttimeout=*(unsigned long*)lpBuffer;
-        FIXME("Option INTERNET_OPTION_CONNECT_TIMEOUT (%ld): STUB\n",connecttimeout);
+        ULONG connecttimeout = *(ULONG *)lpBuffer;
+        FIXME("Option INTERNET_OPTION_CONNECT_TIMEOUT (%d): STUB\n", connecttimeout);
       }
       break;
     case INTERNET_OPTION_DATA_RECEIVE_TIMEOUT:
       {
-        unsigned long receivetimeout=*(unsigned long*)lpBuffer;
-        FIXME("Option INTERNET_OPTION_DATA_RECEIVE_TIMEOUT (%ld): STUB\n",receivetimeout);
+        ULONG receivetimeout = *(ULONG *)lpBuffer;
+        FIXME("Option INTERNET_OPTION_DATA_RECEIVE_TIMEOUT (%d): STUB\n", receivetimeout);
       }
       break;
     case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
       {
-        unsigned long conns=*(unsigned long*)lpBuffer;
-        FIXME("Option INTERNET_OPTION_MAX_CONNS_PER_SERVER (%ld): STUB\n",conns);
+        ULONG conns = *(ULONG *)lpBuffer;
+        FIXME("Option INTERNET_OPTION_MAX_CONNS_PER_SERVER (%d): STUB\n", conns);
       }
       break;
     case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
       {
-        unsigned long conns=*(unsigned long*)lpBuffer;
-        FIXME("Option INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER (%ld): STUB\n",conns);
+        ULONG conns = *(ULONG *)lpBuffer;
+        FIXME("Option INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER (%d): STUB\n", conns);
       }
       break;
     case INTERNET_OPTION_RESET_URLCACHE_SESSION:
