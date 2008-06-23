@@ -5569,11 +5569,12 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
  */
 INT WineEngGetTextFace(GdiFont *font, INT count, LPWSTR str)
 {
+    INT n = strlenW(font->name) + 1;
     if(str) {
         lstrcpynW(str, font->name, count);
-	return strlenW(font->name);
+        return min(count, n);
     } else
-        return strlenW(font->name) + 1;
+        return n;
 }
 
 UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags)

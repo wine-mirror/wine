@@ -800,9 +800,17 @@ INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
 
     if (name)
     {
-        if (count && !WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, count, NULL, NULL))
+        if (count)
+        {
+            res = WideCharToMultiByte(CP_ACP, 0, nameW, -1, name, count, NULL, NULL);
+            if (res == 0)
+                res = count;
             name[count-1] = 0;
-        res = strlen(name);
+            /* GetTextFaceA does NOT include the nul byte in the return count.  */
+            res--;
+        }
+        else
+            res = 0;
     }
     else
         res = WideCharToMultiByte( CP_ACP, 0, nameW, -1, NULL, 0, NULL, NULL);
@@ -825,12 +833,13 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
         ret = WineEngGetTextFace(dc->gdiFont, count, name);
     else if ((font = (FONTOBJ *) GDI_GetObjPtr( dc->hFont, FONT_MAGIC )))
     {
+        INT n = strlenW(font->logfont.lfFaceName) + 1;
         if (name)
         {
             lstrcpynW( name, font->logfont.lfFaceName, count );
-            ret = strlenW(name);
+            ret = min(count, n);
         }
-        else ret = strlenW(font->logfont.lfFaceName) + 1;
+        else ret = n;
         GDI_ReleaseObj( dc->hFont );
     }
     release_dc_ptr( dc );
