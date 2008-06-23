@@ -5032,10 +5032,20 @@ static HRESULT WINAPI GraphConfig_Reconfigure(IGraphConfig *iface,
 					      HANDLE hAbortEvent)
 {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphConfig_vtbl, iface);
+    HRESULT hr;
 
-    FIXME("(%p)->(%p, %p, %x, %p): stub!\n", This, pCallback, pvContext, dwFlags, hAbortEvent);
-    
-    return E_NOTIMPL;
+    WARN("(%p)->(%p, %p, %x, %p): partial stub!\n", This, pCallback, pvContext, dwFlags, hAbortEvent);
+
+    if (hAbortEvent)
+        FIXME("The parameter hAbortEvent is not handled!\n");
+
+    EnterCriticalSection(&This->cs);
+
+    hr = IGraphConfigCallback_Reconfigure(pCallback, pvContext, dwFlags);
+
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI GraphConfig_AddFilterToCache(IGraphConfig *iface,
