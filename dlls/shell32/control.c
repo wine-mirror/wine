@@ -358,7 +358,8 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
     LPWSTR	end;
     WCHAR	ch;
     LPWSTR       ptr;
-    unsigned 	sp = 0;
+    signed 	sp = -1;
+    LPWSTR	extraPmtsBuf = NULL;
     LPWSTR	extraPmts = NULL;
     int        quoted = 0;
 
@@ -368,46 +369,92 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
     end = lstrcpyW(buffer, wszCmd);
 
     for (;;) {
-	ch = *end;
+        ch = *end;
         if (ch == '"') quoted = !quoted;
-	if (!quoted && (ch == ' ' || ch == ',' || ch == '\0')) {
-	    *end = '\0';
-	    if (beg) {
-	        if (*beg == '@') {
-		    sp = atoiW(beg + 1);
-		} else if (*beg == '\0') {
-		    sp = 0;
-		} else {
-		    extraPmts = beg;
-		}
-	    }
-	    if (ch == '\0') break;
-	    beg = end + 1;
-	    if (ch == ' ') while (end[1] == ' ') end++;
-	}
-	end++;
+        if (!quoted && (ch == ' ' || ch == ',' || ch == '\0')) {
+            *end = '\0';
+            if (beg) {
+                if (*beg == '@') {
+                    sp = atoiW(beg + 1);
+                } else if (*beg == '\0') {
+                    sp = -1;
+                } else {
+                    extraPmtsBuf = beg;
+                }
+            }
+            if (ch == '\0') break;
+            beg = end + 1;
+            if (ch == ' ') while (end[1] == ' ') end++;
+        }
+        end++;
     }
     while ((ptr = StrChrW(buffer, '"')))
 	memmove(ptr, ptr+1, lstrlenW(ptr)*sizeof(WCHAR));
+
+    /* now check for any quotes in extraPmtsBuf and remove */
+    if (extraPmtsBuf != NULL)
+    {
+        beg = end = extraPmtsBuf;
+        quoted = 0;
+
+        for (;;) {
+            ch = *end;
+            if (ch == '"') quoted = !quoted;
+            if (!quoted && (ch == ' ' || ch == ',' || ch == '\0')) {
+                *end = '\0';
+                if (beg) {
+                    if (*beg != '\0') {
+                        extraPmts = beg;
+                    }
+                }
+                if (ch == '\0') break;
+		    beg = end + 1;
+                if (ch == ' ') while (end[1] == ' ') end++;
+            }
+            end++;
+        }
+
+        while ((ptr = StrChrW(extraPmts, '"')))
+            memmove(ptr, ptr+1, lstrlenW(ptr)*sizeof(WCHAR));
+
+        if (extraPmts == NULL)
+            extraPmts = extraPmtsBuf;
+    }
 
     TRACE("cmd %s, extra %s, sp %d\n", debugstr_w(buffer), debugstr_w(extraPmts), sp);
 
     Control_LoadApplet(hWnd, buffer, panel);
 
     if (panel->first) {
-       CPlApplet* applet = panel->first;
+        CPlApplet* applet = panel->first;
 
-       assert(applet && applet->next == NULL);
-       if (sp >= applet->count) {
-	  WARN("Out of bounds (%u >= %u), setting to 0\n", sp, applet->count);
-	  sp = 0;
-       }
-       if (applet->info[sp].dwSize) {
-	  if (!applet->proc(applet->hWnd, CPL_STARTWPARMSA, sp, (LPARAM)extraPmts))
-	     applet->proc(applet->hWnd, CPL_DBLCLK, sp, applet->info[sp].lData);
-       }
-       Control_UnloadApplet(applet);
+        assert(applet && applet->next == NULL);
+
+        /* we've been given a textual parameter (or none at all) */
+        if (sp == -1) {
+            while ((++sp) != applet->count) {
+                if (applet->info[sp].dwSize) {
+                    TRACE("sp %d, name %s\n", sp, debugstr_w(applet->info[sp].szName));
+
+                    if (StrCmpIW(extraPmts, applet->info[sp].szName) == 0)
+                        break;
+                }
+            }
+        }
+
+        if (sp >= applet->count) {
+            WARN("Out of bounds (%u >= %u), setting to 0\n", sp, applet->count);
+            sp = 0;
+        }
+
+        if (applet->info[sp].dwSize) {
+            if (!applet->proc(applet->hWnd, CPL_STARTWPARMSA, sp, (LPARAM)extraPmts))
+                applet->proc(applet->hWnd, CPL_DBLCLK, sp, applet->info[sp].lData);
+        }
+
+        Control_UnloadApplet(applet);
     }
+
     HeapFree(GetProcessHeap(), 0, buffer);
 }
 
