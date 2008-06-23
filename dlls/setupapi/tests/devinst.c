@@ -89,6 +89,39 @@ static void init_function_pointers(void)
     pSetupDiGetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyW");
 }
 
+static void change_reg_permissions(const WCHAR *regkey)
+{
+    HKEY hkey;
+    SID_IDENTIFIER_AUTHORITY ident = { SECURITY_WORLD_SID_AUTHORITY };
+    SECURITY_DESCRIPTOR sd;
+    PSID EveryoneSid;
+    PACL pacl = NULL;
+
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, regkey, 0, WRITE_DAC, &hkey);
+
+    /* Initialize the 'Everyone' sid */
+    AllocateAndInitializeSid(&ident, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &EveryoneSid);
+
+    pacl = HeapAlloc(GetProcessHeap(), 0, 256);
+    InitializeAcl(pacl, 256, ACL_REVISION);
+
+    /* Add 'Full Control' for 'Everyone' */
+    AddAccessAllowedAce(pacl, ACL_REVISION, KEY_ALL_ACCESS, EveryoneSid);
+
+    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+
+    SetSecurityDescriptorDacl(&sd, TRUE, pacl, FALSE);
+
+    /* Set the new security on the registry key */
+    RegSetKeySecurity(hkey, DACL_SECURITY_INFORMATION, &sd);
+
+    RegCloseKey(hkey);
+
+    HeapFree(GetProcessHeap(), 0, pacl);
+    if (EveryoneSid)
+        FreeSid(EveryoneSid);
+}
+
 static BOOL remove_device(void)
 {
     HDEVINFO set;
@@ -400,19 +433,46 @@ static void testCreateDeviceInfo(void)
         DWORD i;
         static GUID deadbeef =
          {0xdeadbeef, 0xdead, 0xbeef, {0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
+        LONG res;
+        HKEY key;
+        static const WCHAR bogus0000[] = {'S','y','s','t','e','m','\\',
+         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+         'E','n','u','m','\\','R','o','o','t','\\',
+         'L','E','G','A','C','Y','_','B','O','G','U','S','\\','0','0','0','0',0};
 
+        /* So we know we have a clean start */
+        res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus0000, &key);
+        ok(res != ERROR_SUCCESS, "Expected key to not exist\n");
         /* No GUID given */
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL,
          NULL, NULL, 0, NULL);
         ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
             "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+        /* Even though NT4 fails it still adds some stuff to the registry that
+         * can't be deleted via normal setupapi functions. As the registry is written
+         * by a different user (SYSTEM) we have to do some magic to get rid of the key
+         */
+        if (!RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus0000, &key))
+        {
+            trace("NT4 created a bogus key on failure, will be removed now\n");
+            change_reg_permissions(bogus0000);
+            ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, bogus0000),
+             "Could not delete LEGACY_BOGUS\\0000 key\n");
+        }
         /* We can't add device information to the set with a different GUID */
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000",
          &deadbeef, NULL, NULL, 0, NULL);
         ok(!ret && GetLastError() == ERROR_CLASS_MISMATCH,
          "Expected ERROR_CLASS_MISMATCH, got %08x\n", GetLastError());
+        if (!RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus0000, &key))
+        {
+            trace("NT4 created a bogus key on failure, will be removed now\n");
+            change_reg_permissions(bogus0000);
+            ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, bogus0000),
+             "Could not delete LEGACY_BOGUS\\0000 key\n");
+        }
         /* Finally, with all three required parameters, this succeeds: */
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", &guid,
          NULL, NULL, 0, NULL);
