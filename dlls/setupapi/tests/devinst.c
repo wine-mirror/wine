@@ -491,12 +491,6 @@ static void testGetDeviceInstanceId(void)
     HDEVINFO set;
     SP_DEVINFO_DATA devInfo = { 0 };
 
-    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
-     !pSetupDiCreateDeviceInfoA || !pSetupDiGetDeviceInstanceIdA)
-    {
-        skip("No SetupDiGetDeviceInstanceIdA\n");
-        return;
-    }
     SetLastError(0xdeadbeef);
     ret = pSetupDiGetDeviceInstanceIdA(NULL, NULL, NULL, 0, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
@@ -594,8 +588,7 @@ static void testRegisterDeviceInfo(void)
             ok(ret, "SetupDiCreateDeviceInfoA failed: %d\n", GetLastError());
         }
         /* FIXME: On Win2K+ systems, this is now persisted to registry in
-         * HKLM\System\CCS\Enum\USB\Bogus\0000.  I don't check because the
-         * Win9x location is different.
+         * HKLM\System\CCS\Enum\USB\Bogus\0000.
          * FIXME: the key also becomes undeletable.  How to get rid of it?
          */
         pSetupDiDestroyDeviceInfoList(set);
@@ -618,11 +611,9 @@ static void testCreateDeviceInterface(void)
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
 
-    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
-     !pSetupDiCreateDeviceInfoA || !pSetupDiCreateDeviceInterfaceA ||
-     !pSetupDiEnumDeviceInterfaces)
+    if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiEnumDeviceInterfaces)
     {
-        skip("No SetupDiCreateDeviceInterfaceA\n");
+        skip("SetupDiCreateDeviceInterfaceA and/or SetupDiEnumDeviceInterfaces are not available\n");
         return;
     }
     SetLastError(0xdeadbeef);
@@ -717,11 +708,9 @@ static void testGetDeviceInterfaceDetail(void)
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
 
-    if (!pSetupDiCreateDeviceInfoList || !pSetupDiDestroyDeviceInfoList ||
-     !pSetupDiCreateDeviceInfoA || !pSetupDiCreateDeviceInterfaceA ||
-     !pSetupDiGetDeviceInterfaceDetailA)
+    if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiGetDeviceInterfaceDetailA)
     {
-        skip("No SetupDiGetDeviceInterfaceDetailA\n");
+        skip("SetupDiCreateDeviceInterfaceA and/or SetupDiGetDeviceInterfaceDetailA are not available\n");
         return;
     }
     SetLastError(0xdeadbeef);
@@ -794,9 +783,7 @@ static void testGetDeviceInterfaceDetail(void)
                     size, &size, NULL);
             ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER,
              "Expected ERROR_INVALID_USER_BUFFER, got %08x\n", GetLastError());
-            /* Windows 2000 and up check for the exact size. Win9x returns ERROR_INVALID_PARAMETER
-             * on every call (so doesn't get here) and NT4 doesn't have this function.
-             */
+            /* Windows 2000 and up check for the exact size */
             detail->cbSize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath[1]);
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData, detail,
                     size, &size, NULL);
@@ -806,18 +793,13 @@ static void testGetDeviceInterfaceDetail(void)
              !lstrcmpiA(path_w2k, detail->DevicePath), "Unexpected path %s\n",
              detail->DevicePath);
             /* Check SetupDiGetDeviceInterfaceDetailW */
-            if (pSetupDiGetDeviceInterfaceDetailW)
-            {
-                ret = pSetupDiGetDeviceInterfaceDetailW(set, &interfaceData, NULL, 0, &size, NULL);
-                ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-                 "Expected ERROR_INSUFFICIENT_BUFFER, got error code: %d\n", GetLastError());
-                ok(expectedsize == size ||
-                 (expectedsize + sizeof(WCHAR)) == size /* W2K adds a backslash */,
-                 "SetupDiGetDeviceInterfaceDetailW returned wrong reqsize, got %d\n",
-                 size);
-            }
-            else
-                skip("SetupDiGetDeviceInterfaceDetailW is not available\n");
+            ret = pSetupDiGetDeviceInterfaceDetailW(set, &interfaceData, NULL, 0, &size, NULL);
+            ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+             "Expected ERROR_INSUFFICIENT_BUFFER, got error code: %d\n", GetLastError());
+            ok(expectedsize == size ||
+             (expectedsize + sizeof(WCHAR)) == size /* W2K adds a backslash */,
+             "SetupDiGetDeviceInterfaceDetailW returned wrong reqsize, got %d\n",
+             size);
 
             HeapFree(GetProcessHeap(), 0, buf);
         }
@@ -1316,10 +1298,10 @@ START_TEST(devinst)
         return;
     }
 
-    if (pSetupDiCreateDeviceInfoListExW && pSetupDiDestroyDeviceInfoList)
+    if (pSetupDiCreateDeviceInfoListExW)
         test_SetupDiCreateDeviceInfoListEx();
     else
-        skip("SetupDiCreateDeviceInfoListExW and/or SetupDiDestroyDeviceInfoList not available\n");
+        skip("SetupDiCreateDeviceInfoListExW is not available\n");
 
     if (pSetupDiOpenClassRegKeyExA)
         test_SetupDiOpenClassRegKeyExA();
