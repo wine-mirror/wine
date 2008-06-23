@@ -269,6 +269,7 @@ GpStatus WINGDIPAPI GdipPathIterCopyData(GpPathIterator*,INT*,GpPointF*,BYTE*,
     INT,INT);
 GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator*,INT*,INT*,INT*,BOOL*);
 GpStatus WINGDIPAPI GdipPathIterRewind(GpPathIterator*);
+GpStatus WINGDIPAPI GdipPathIterGetCount(GpPathIterator*,INT*);
 
 GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap*,GpCustomLineCap**);
 GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath*,GpPath*,GpLineCap,REAL,
