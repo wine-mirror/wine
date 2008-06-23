@@ -80,7 +80,7 @@ static void test_xmlelem(void)
     hr = IXMLElement_getAttribute(element, str, &vValue);
     ok(hr == S_FALSE, "Expected S_FALSE, got %d\n", hr);
     ok(V_VT(&vValue) == VT_EMPTY, "Expected VT_EMPTY, got %d\n", V_VT(&vValue));
-    ok(lstrlenW(V_BSTR(&vValue)) == 0, "Expected empty value\n");
+    ok(V_BSTR(&vValue) == NULL, "Expected null value\n");
     VariantClear(&vValue);
     SysFreeString(str);
 
@@ -125,7 +125,7 @@ static void test_xmlelem(void)
     hr = IXMLElement_getAttribute(element, str, &vValue);
     ok(hr == 1, "Expected 1, got %d\n", hr);
     ok(V_VT(&vValue) == VT_EMPTY, "Expected VT_EMPTY, got %d\n", V_VT(&vValue));
-    ok(!lstrlenW(V_BSTR(&vValue)), "Expected empty value\n");
+    ok(V_BSTR(&vValue) == NULL, "Expected null value\n");
     SysFreeString(str);
     VariantClear(&vValue);
 
