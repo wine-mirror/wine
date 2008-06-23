@@ -992,6 +992,13 @@ static void testRegisterAndGetDetail(void)
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
 
+    if (!pSetupDiCreateDeviceInterfaceA || !pSetupDiEnumDeviceInterfaces ||
+        !pSetupDiGetDeviceInterfaceDetailA)
+    {
+        skip("Needed functions are not available\n");
+        return;
+    }
+
     SetLastError(0xdeadbeef);
     set = pSetupDiGetClassDevsA(&guid, NULL, 0, DIGCF_ALLCLASSES);
     ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsA failed: %08x\n",
