@@ -1643,7 +1643,7 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     if(!load_gecko(FALSE))
         return NULL;
 
-    ret = heap_alloc(sizeof(NSContainer));
+    ret = heap_alloc_zero(sizeof(NSContainer));
 
     ret->lpWebBrowserChromeVtbl      = &nsWebBrowserChromeVtbl;
     ret->lpContextMenuListenerVtbl   = &nsContextMenuListenerVtbl;
@@ -1656,11 +1656,6 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
 
     ret->doc = doc;
     ret->ref = 1;
-    ret->bscallback = NULL;
-    ret->content_listener = NULL;
-    ret->editor_controller = NULL;
-    ret->editor = NULL;
-    ret->reset_focus = NULL;
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_WEBBROWSER_CONTRACTID,
             NULL, &IID_nsIWebBrowser, (void**)&ret->webbrowser);
