@@ -576,7 +576,7 @@ static	HGLOBAL	WDML_BuildExecuteCommand(WDML_CONV* pConv, LPCVOID pData, DWORD c
     {
 	if (clientUnicode)
 	{
-	    memSize = WideCharToMultiByte( CP_ACP, 0, pData, cbData, NULL, 0, NULL, NULL);
+	    memSize = WideCharToMultiByte( CP_ACP, 0, pData, cbData / sizeof(WCHAR), NULL, 0, NULL, NULL);
 	}
 	else
 	{
@@ -601,7 +601,7 @@ static	HGLOBAL	WDML_BuildExecuteCommand(WDML_CONV* pConv, LPCVOID pData, DWORD c
 	    {
 		if (clientUnicode)
 		{
-		    WideCharToMultiByte( CP_ACP, 0, pData, cbData, pDst, memSize, NULL, NULL);
+		    WideCharToMultiByte( CP_ACP, 0, pData, cbData / sizeof(WCHAR), pDst, memSize, NULL, NULL);
 		}
 		else
 		{
