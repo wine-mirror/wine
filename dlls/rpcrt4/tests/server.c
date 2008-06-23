@@ -1208,9 +1208,7 @@ array_tests(void)
   ns->size = 5;
   ns->numbers[0].pi = pi;
   get_numbers_struct(&ns);
-  todo_wine {
   ok(ns->numbers[0].pi == pi, "RPC conformant varying struct embedded pointer changed from %p to %p\n", pi, ns->numbers[0].pi);
-  }
   ok(*ns->numbers[0].pi == 5, "pi unmarshalled incorrectly %d\n", *ns->numbers[0].pi);
 
   HeapFree(GetProcessHeap(), 0, ns);
