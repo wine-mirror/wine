@@ -2312,11 +2312,17 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 	break;
     case INTERNET_OPTION_SEND_TIMEOUT:
     case INTERNET_OPTION_RECEIVE_TIMEOUT:
-        FIXME("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT\n");
+    {
+        ULONG timeout = *(ULONG *)lpBuffer;
+        FIXME("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT %d\n", timeout);
         break;
+    }
     case INTERNET_OPTION_CONNECT_RETRIES:
-        FIXME("Option INTERNET_OPTION_CONNECT_RETRIES: STUB\n");
+    {
+        ULONG retries = *(ULONG *)lpBuffer;
+        FIXME("INTERNET_OPTION_CONNECT_RETRIES %d\n", retries);
         break;
+    }
     case INTERNET_OPTION_CONTEXT_VALUE:
 	 FIXME("Option INTERNET_OPTION_CONTEXT_VALUE; STUB\n");
 	 break;
