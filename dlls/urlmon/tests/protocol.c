@@ -1342,8 +1342,10 @@ static void test_file_protocol_fail(void)
     SET_EXPECT(GetBindInfo);
     expect_hrResult = MK_E_SYNTAX;
     hres = IInternetProtocol_Start(protocol, wszIndexHtml, &protocol_sink, &bind_info, 0, 0);
-    ok(hres == MK_E_SYNTAX, "Start failed: %08x, expected MK_E_SYNTAX\n", hres);
-    CHECK_CALLED(GetBindInfo);
+    ok(hres == MK_E_SYNTAX ||
+       hres == E_INVALIDARG,
+       "Start failed: %08x, expected MK_E_SYNTAX or E_INVALIDARG\n", hres);
+    CLEAR_CALLED(GetBindInfo); /* GetBindInfo not called in IE7 */
 
     SET_EXPECT(GetBindInfo);
     if(!(bindf & BINDF_FROMURLMON))
@@ -1387,12 +1389,12 @@ static void test_file_protocol_fail(void)
     SET_EXPECT(GetBindInfo);
     hres = IInternetProtocol_Start(protocol, NULL, &protocol_sink, &bind_info, 0, 0);
     ok(hres == E_INVALIDARG, "Start failed: %08x, expected E_INVALIDARG\n", hres);
-    CHECK_CALLED(GetBindInfo);
+    CLEAR_CALLED(GetBindInfo); /* GetBindInfo not called in IE7 */
 
     SET_EXPECT(GetBindInfo);
     hres = IInternetProtocol_Start(protocol, emptyW, &protocol_sink, &bind_info, 0, 0);
     ok(hres == E_INVALIDARG, "Start failed: %08x, expected E_INVALIDARG\n", hres);
-    CHECK_CALLED(GetBindInfo);
+    CLEAR_CALLED(GetBindInfo); /* GetBindInfo not called in IE7 */
 
     IInternetProtocol_Release(protocol);
 }
