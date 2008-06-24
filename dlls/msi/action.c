@@ -3392,6 +3392,7 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
 {
     MSIHANDLE hdb, suminfo;
     WCHAR guids[MAX_PATH];
+    WCHAR packcode[SQUISH_GUID_SIZE];
     LPWSTR buffer;
     LPWSTR ptr;
     DWORD langid;
@@ -3452,7 +3453,8 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
 
     ptr = strchrW(guids, ';');
     if (ptr) *ptr = 0;
-    msi_reg_set_val_str(hkey, INSTALLPROPERTY_PACKAGECODEW, guids);
+    squash_guid(guids, packcode);
+    msi_reg_set_val_str(hkey, INSTALLPROPERTY_PACKAGECODEW, packcode);
 
 done:
     MsiCloseHandle(suminfo);

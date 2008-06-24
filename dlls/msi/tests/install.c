@@ -2530,12 +2530,12 @@ static void test_publish_publishproduct(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(hkey, "ProductName", "MSITEST");
+    CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052c94DA02821EECD05F2F");
     CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
     CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
     CHECK_DEL_REG_DWORD(hkey, "AuthorizedLUAApp", 0);
     todo_wine
     {
-        CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052c94DA02821EECD05F2F");
         CHECK_DEL_REG_DWORD(hkey, "Assignment", 0);
         CHECK_DEL_REG_DWORD(hkey, "AdvertiseFlags", 0x184);
         CHECK_DEL_REG_DWORD(hkey, "InstanceType", 0);
