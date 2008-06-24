@@ -2154,7 +2154,8 @@ static void check_reg_str(HKEY prodkey, LPCSTR name, LPCSTR expected, BOOL bcase
     val[0] = '\0';
     res = RegQueryValueExA(prodkey, name, NULL, &type, (LPBYTE)val, &size);
 
-    if (res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ))
+    if (res != ERROR_SUCCESS ||
+        (type != REG_SZ && type != REG_EXPAND_SZ && type != REG_MULTI_SZ))
     {
         ok_(__FILE__, line)(FALSE, "Key doesn't exist or wrong type\n");
         return;
