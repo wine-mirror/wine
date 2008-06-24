@@ -487,8 +487,10 @@ static HRESULT WINAPI HTMLElement_get_onkeydown(IHTMLElement *iface, VARIANT *p)
 static HRESULT WINAPI HTMLElement_put_onkeyup(IHTMLElement *iface, VARIANT v)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->()\n", This);
+
+    return set_node_event(&This->node, EVENTID_KEYUP, &v);
 }
 
 static HRESULT WINAPI HTMLElement_get_onkeyup(IHTMLElement *iface, VARIANT *p)
