@@ -1040,7 +1040,6 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
 
                     if (SUCCEEDED(hrSub))
                     {
-                        V_VT(&var) = VT_ARRAY | VT_UI1;
                         hrSub = IPropertyBag_Read(pPropBag, wszFilterDataName, &var, NULL);
                     }
 
