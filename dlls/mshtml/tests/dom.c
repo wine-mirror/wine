@@ -919,6 +919,17 @@ static void _test_input_get_disabled(unsigned line, IHTMLInputElement *input, VA
     ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
 }
 
+#define test_input_set_disabled(i,b) _test_input_set_disabled(__LINE__,i,b)
+static void _test_input_set_disabled(unsigned line, IHTMLInputElement *input, VARIANT_BOOL b)
+{
+    HRESULT hres;
+
+    hres = IHTMLInputElement_put_disabled(input, b);
+    ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
+
+    _test_input_get_disabled(line, input, b);
+}
+
 #define test_input_value(o,t) _test_input_value(__LINE__,o,t)
 static void _test_input_value(unsigned line, IUnknown *unk, const char *exval)
 {
@@ -2062,6 +2073,8 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_id((IUnknown*)elem, "in");
         test_elem_put_id((IUnknown*)elem, "newin");
         test_input_get_disabled(input, VARIANT_FALSE);
+        test_input_set_disabled(input, VARIANT_TRUE);
+        test_input_set_disabled(input, VARIANT_FALSE);
         test_elem_client_size((IUnknown*)elem);
 
         test_node_get_value_str((IUnknown*)elem, NULL);
