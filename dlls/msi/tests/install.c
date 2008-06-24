@@ -2464,7 +2464,7 @@ static void test_publish_publishproduct(void)
     UINT r;
     LONG res;
     LPSTR usersid;
-    HKEY sourcelist, net;
+    HKEY sourcelist, net, props;
     HKEY hkey, patches, media;
     CHAR keypath[MAX_PATH];
     CHAR temp[MAX_PATH];
@@ -2503,6 +2503,9 @@ static void test_publish_publishproduct(void)
     sprintf(keypath, prodpath, usersid);
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegOpenKeyA(hkey, "InstallProperties", &props);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     res = RegOpenKeyA(hkey, "Patches", &patches);
     todo_wine

@@ -3413,7 +3413,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     LPWSTR packname;
     HKEY hkey=0;
     HKEY hukey=0;
-    HKEY hudkey=0, props=0;
+    HKEY hudkey=0;
     HKEY source;
     static const WCHAR szProductLanguage[] =
         {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
@@ -3439,10 +3439,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         rc = MSIREG_OpenLocalClassesProductKey(package->ProductCode, &hukey, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
-
-        rc = MSIREG_OpenLocalSystemInstallProps(package->ProductCode, &props, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
     }
     else
     {
@@ -3451,10 +3447,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
             goto end;
 
         rc = MSIREG_OpenUserProductsKey(package->ProductCode,&hukey,TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-
-        rc = MSIREG_OpenCurrentUserInstallProps(package->ProductCode, &props, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
     }
@@ -3481,7 +3473,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
     /* FIXME */
     msi_reg_set_val_dword( hukey, INSTALLPROPERTY_AUTHORIZED_LUA_APPW, 0 );
-    msi_reg_set_val_dword( props, INSTALLPROPERTY_INSTANCETYPEW, 0 );
 
     buffer = msi_dup_property( package, szARPProductIcon );
     if (buffer)
@@ -3545,7 +3536,6 @@ end:
     RegCloseKey(hkey);
     RegCloseKey(hukey);
     RegCloseKey(hudkey);
-    RegCloseKey(props);
 
     return rc;
 }
