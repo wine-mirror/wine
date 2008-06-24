@@ -52,6 +52,7 @@ static WCHAR sTooLongPassword[] = {'a','b','c','d','e','f','g','h','a','b','c','
 static WCHAR sTestUserName[] = {'t', 'e', 's', 't', 'u', 's', 'e', 'r', 0};
 static WCHAR sTestUserOldPass[] = {'O', 'l', 'd', 'P', 'a', 's', 's', 'W', '0', 'r', 'd', 'S', 'e', 't', '!', '~', 0};
 static WCHAR sTestUserNewPass[] = {'N', 'e', 'w', 'P', 'a', 's', 's', 'W', '0', 'r', 'd', 'S', 'e', 't', '!', '~', 0};
+static const WCHAR sLoopbackPath[] = {'\\','\\','1','2','7','.','0','.','0','.','1', 0};
 static const WCHAR sBadNetPath[] = {'\\','\\','B','a',' ',' ','p','a','t','h',0};
 static const WCHAR sInvalidName[] = {'\\',0};
 static const WCHAR sInvalidName2[] = {'\\','\\',0};
@@ -294,13 +295,21 @@ static void run_userhandling_tests(void)
     if(ret != NERR_Success)
         return;
 
-    ret = pNetUserChangePassword(NULL, sNonexistentUser, sTestUserOldPass,
-            sTestUserNewPass);
+    /* On Windows XP (and newer), calling NetUserChangePassword with a NULL
+     * domainname parameter creates a user home directory, iff the machine is
+     * not member of a domain.
+     * As we don't want to clutter up the folder containing the home
+     * directories, specify \\127.0.0.1 as domainname to access the local samdb.
+     * Note that \\localhost does not work.
+     */
+
+    ret = pNetUserChangePassword(sLoopbackPath, sNonexistentUser,
+            sTestUserOldPass, sTestUserNewPass);
     ok(ret == NERR_UserNotFound || ret == ERROR_INVALID_PASSWORD ||
        ret == ERROR_CANT_ACCESS_DOMAIN_INFO,
             "Changing password for nonexistent user returned 0x%08x.\n", ret);
 
-    ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
+    ret = pNetUserChangePassword(sLoopbackPath, sTestUserName, sTestUserOldPass,
             sTestUserOldPass);
     /* Apparently NERR_PasswordTooShort can be returned on windows xp if a
      * strict password policy is enforced
@@ -309,7 +318,7 @@ static void run_userhandling_tests(void)
        ret == ERROR_CANT_ACCESS_DOMAIN_INFO || ret == ERROR_INVALID_PASSWORD,
             "Changing old password to old password returned 0x%08x.\n", ret);
 
-    ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserNewPass,
+    ret = pNetUserChangePassword(sLoopbackPath, sTestUserName, sTestUserNewPass,
             sTestUserOldPass);
     ok(ret == ERROR_INVALID_PASSWORD || ret == ERROR_CANT_ACCESS_DOMAIN_INFO,
             "Trying to change password giving an invalid password returned 0x%08x.\n", ret);
@@ -319,7 +328,7 @@ static void run_userhandling_tests(void)
     ok(ret == ERROR_PASSWORD_RESTRICTION,
             "Changing to a password that's too long returned 0x%08x.\n", ret);
 
-    ret = pNetUserChangePassword(NULL, sTestUserName, sTestUserOldPass,
+    ret = pNetUserChangePassword(sLoopbackPath, sTestUserName, sTestUserOldPass,
             sTestUserNewPass);
     ok(ret == NERR_Success || ret == ERROR_CANT_ACCESS_DOMAIN_INFO ||
        ret == ERROR_INVALID_PASSWORD, "Changing the password correctly returned 0x%08x.\n", ret);
