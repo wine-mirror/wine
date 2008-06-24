@@ -611,6 +611,7 @@ static WCHAR next_char(const dompos_t *pos, dompos_t *new_pos)
         case TEXT_NODE:
             tmp_pos.node = iter;
             tmp_pos.type = TEXT_NODE;
+            tmp_pos.off = 0;
             dompos_addref(&tmp_pos);
 
             p = tmp_pos.p;
@@ -726,6 +727,7 @@ static WCHAR prev_char(HTMLTxtRange *This, const dompos_t *pos, dompos_t *new_po
 
             tmp_pos.node = iter;
             tmp_pos.type = TEXT_NODE;
+            tmp_pos.off = 0;
             dompos_addref(&tmp_pos);
 
             p = tmp_pos.p + strlenW(tmp_pos.p)-1;
