@@ -43,7 +43,7 @@ static const char elem_test_str[] =
     "<body>text test<!-- a comment -->"
     "<a href=\"http://test\" name=\"x\">link</a>"
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" />"
-    "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
+    "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"></script>"
@@ -628,6 +628,32 @@ static void _test_select_put_selidx(unsigned line, IHTMLSelectElement *select, l
     hres = IHTMLSelectElement_put_selectedIndex(select, index);
     ok_(__FILE__,line) (hres == S_OK, "get_selectedIndex failed: %08x\n", hres);
     _test_select_selidx(line, select, index);
+}
+
+#define test_select_value(s,v) _test_select_value(__LINE__,s,v)
+static void _test_select_value(unsigned line, IHTMLSelectElement *select, const char *exval)
+{
+    BSTR val;
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_get_value(select, &val);
+    ok_(__FILE__,line) (hres == S_OK, "get_value failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line) (!strcmp_wa(val, exval), "unexpected value %s\n", dbgstr_w(val));
+    else
+        ok_(__FILE__,line) (val == NULL, "val=%s, expected NULL\n", dbgstr_w(val));
+}
+
+#define test_select_set_value(s,v) _test_select_set_value(__LINE__,s,v)
+static void _test_select_set_value(unsigned line, IHTMLSelectElement *select, const char *val)
+{
+    BSTR bstr;
+    HRESULT hres;
+
+    bstr = a2bstr(val);
+    hres = IHTMLSelectElement_put_value(select, bstr);
+    SysFreeString(bstr);
+    ok_(__FILE__,line) (hres == S_OK, "put_value failed: %08x\n", hres);
 }
 
 #define test_range_text(r,t) _test_range_text(__LINE__,r,t)
@@ -1301,6 +1327,9 @@ static void test_select_elem(IHTMLSelectElement *select)
     test_select_length(select, 2);
     test_select_selidx(select, 0);
     test_select_put_selidx(select, 1);
+
+    test_select_set_value(select, "val1");
+    test_select_value(select, "val1");
 }
 
 static void test_create_option_elem(IHTMLDocument2 *doc)
