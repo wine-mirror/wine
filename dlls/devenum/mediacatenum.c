@@ -173,10 +173,13 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
                 switch (V_VT(pVar))
                 {
                 case VT_EMPTY:
+                    V_VT(pVar) = VT_ARRAY | VT_UI1;
+                    /* fall through */
                 case VT_ARRAY | VT_UI1:
                     if (!(V_UNION(pVar, parray) = SafeArrayCreate(VT_UI1, 1, &bound)))
                         res = E_OUTOFMEMORY;
-                    res = S_OK;
+                    else
+                        res = S_OK;
                     break;
                 }
 
