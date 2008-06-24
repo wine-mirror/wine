@@ -4265,6 +4265,12 @@ static inline BOOL is_identity_FMAT2(const FMAT2 *matrix)
     return !memcmp(matrix, &identity, sizeof(FMAT2));
 }
 
+static inline BOOL is_identity_MAT2(const MAT2 *matrix)
+{
+    static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
+    return !memcmp(matrix, &identity, sizeof(MAT2));
+}
+
 /*************************************************************
  * WineEngGetGlyphOutline
  *
@@ -4411,7 +4417,8 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     }
 
     /* Extra transformation specified by caller */
-    if (lpmat) {
+    if (lpmat && !is_identity_MAT2(lpmat))
+    {
         FT_Matrix extraMat;
         extraMat.xx = FT_FixedFromFIXED(lpmat->eM11);
         extraMat.xy = FT_FixedFromFIXED(lpmat->eM21);
