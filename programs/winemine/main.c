@@ -704,11 +704,6 @@ void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y )
             led[i] = 10;
     }
 
-    /* use unlit led if not playing */
-    if( p_board->status == WAITING )
-        for( i = 0; i < 3; i++ )
-            led[i] = 11;
-
     hOldObj = SelectObject (hMemDC, p_board->hLedsBMP);
 
     for( i = 0; i < 3; i++ ) {
