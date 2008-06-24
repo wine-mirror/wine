@@ -2042,6 +2042,11 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
         ok(disp == (void*)0xdeadbeef, "disp=%p\n", disp);
 
+        disp = (void*)0xdeadbeef;
+        hres = IHTMLDOMChildrenCollection_item(child_col, length, &disp);
+        ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
+        ok(disp == (void*)0xdeadbeef, "disp=%p\n", disp);
+
         test_child_col_disp(child_col);
 
         IHTMLDOMChildrenCollection_Release(child_col);
