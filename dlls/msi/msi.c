@@ -1812,6 +1812,7 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     HKEY hkey;
     INSTALLSTATE r;
     BOOL missing = FALSE;
+    BOOL machine = FALSE;
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
 
@@ -1824,7 +1825,11 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     if (MSIREG_OpenManagedFeaturesKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS &&
         MSIREG_OpenUserFeaturesKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS)
     {
-        return INSTALLSTATE_UNKNOWN;
+        rc = MSIREG_OpenLocalClassesFeaturesKey(szProduct, &hkey, FALSE);
+        if (rc != ERROR_SUCCESS)
+            return INSTALLSTATE_UNKNOWN;
+
+        machine = TRUE;
     }
 
     parent_feature = msi_reg_get_val_str( hkey, szFeature );
@@ -1838,8 +1843,11 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     if (r == INSTALLSTATE_ABSENT)
         return r;
 
-    /* now check if it's complete or advertised */
-    rc = MSIREG_OpenUserDataFeaturesKey(szProduct, &hkey, FALSE);
+    if (machine)
+        rc = MSIREG_OpenLocalUserDataFeaturesKey(szProduct, &hkey, FALSE);
+    else
+        rc = MSIREG_OpenUserDataFeaturesKey(szProduct, &hkey, FALSE);
+
     if (rc != ERROR_SUCCESS)
         return INSTALLSTATE_ADVERTISED;
 
@@ -1863,7 +1871,12 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         }
 
         StringFromGUID2(&guid, comp, GUID_SIZE);
-        rc = MSIREG_OpenUserDataComponentKey(comp, &hkey, FALSE);
+
+        if (machine)
+            rc = MSIREG_OpenLocalUserDataComponentKey(comp, &hkey, FALSE);
+        else
+            rc = MSIREG_OpenUserDataComponentKey(comp, &hkey, FALSE);
+
         if (rc != ERROR_SUCCESS)
         {
             msi_free(components);
