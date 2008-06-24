@@ -544,10 +544,9 @@ UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
         options |= MSISOURCETYPE_NETWORK;
     }
 
-    if (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE)
-        msi_package_add_media_disk(package, package->Context,
-                                   MSICODE_PRODUCT, mi->disk_id,
-                                   mi->volume_label, mi->disk_prompt);
+    msi_package_add_media_disk(package, package->Context,
+                               MSICODE_PRODUCT, mi->disk_id,
+                               mi->volume_label, mi->disk_prompt);
 
     msi_package_add_info(package, package->Context,
                          options, INSTALLPROPERTY_LASTUSEDSOURCEW, source);

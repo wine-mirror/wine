@@ -2559,10 +2559,7 @@ static void test_publish_publishproduct(void)
     res = RegOpenKeyA(sourcelist, "Media", &media);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    todo_wine
-    {
-        CHECK_DEL_REG_STR(media, "1", "DISK1;");
-    }
+    CHECK_DEL_REG_STR(media, "1", "DISK1;");
 
     RegDeleteKeyA(media, "");
     RegCloseKey(media);
