@@ -42,7 +42,7 @@ static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
     "<body>text test<!-- a comment -->"
     "<a href=\"http://test\" name=\"x\">link</a>"
-    "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" />"
+    "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
@@ -1090,6 +1090,24 @@ static void _test_elem_put_id(unsigned line, IUnknown *unk, const char *new_id)
     _test_elem_id(line, unk, new_id);
 }
 
+#define test_elem_title(u,t) _test_elem_title(__LINE__,u,t)
+static void _test_elem_title(unsigned line, IUnknown *unk, const char *extitle)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR title;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_title(elem, &title);
+    IHTMLElement_Release(elem);
+    ok_(__FILE__,line) (hres == S_OK, "get_title failed: %08x\n", hres);
+    if(extitle)
+        ok_(__FILE__,line) (!strcmp_wa(title, extitle), "unexpected title %s\n", dbgstr_w(title));
+    else
+        ok_(__FILE__,line) (!title, "title=%s, expected NULL\n", dbgstr_w(title));
+
+    SysFreeString(title);
+}
+
 #define test_node_get_value_str(u,e) _test_node_get_value_str(__LINE__,u,e)
 static void _test_node_get_value_str(unsigned line, IUnknown *unk, const char *exval)
 {
@@ -1985,6 +2003,8 @@ static void test_elems(IHTMLDocument2 *doc)
 
         test_select_elem(select);
 
+        test_elem_title((IUnknown*)select, NULL);
+
         node = get_first_child((IUnknown*)select);
         ok(node != NULL, "node == NULL\n");
         if(node) {
@@ -2036,6 +2056,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_class((IUnknown*)elem, "testclass");
         test_elem_tabindex((IUnknown*)elem, 2);
         test_elem_set_tabindex((IUnknown*)elem, 3);
+        test_elem_title((IUnknown*)elem, "test title");
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);

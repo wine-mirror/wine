@@ -601,8 +601,24 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
 static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString title_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&title_str, NULL);
+    nsres = nsIDOMHTMLElement_GetTitle(This->nselem, &title_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *title;
+
+        nsAString_GetData(&title_str, &title);
+        *p = *title ? SysAllocString(title) : NULL;
+    }else {
+        ERR("GetTitle failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_put_language(IHTMLElement *iface, BSTR v)
