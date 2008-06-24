@@ -4346,15 +4346,16 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     else
         widthRatio = font->scale_y;
 
-    left = (INT)(ft_face->glyph->metrics.horiBearingX * widthRatio) & -64;
-    right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) * widthRatio + 63) & -64;
+    left = (INT)(ft_face->glyph->metrics.horiBearingX) & -64;
+    right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) + 63) & -64;
 
-    adv = (INT)((ft_face->glyph->metrics.horiAdvance * widthRatio) + 63) >> 6;
+    adv = (INT)((ft_face->glyph->metrics.horiAdvance) + 63) >> 6;
     lsb = left >> 6;
     bbx = (right - left) >> 6;
 
     /* Scaling transform */
-    if(font->aveWidth) {
+    if (widthRatio != 1.0 || font->scale_y != 1.0)
+    {
         FT_Matrix scaleMat;
         scaleMat.xx = FT_FixedFromFloat(widthRatio);
         scaleMat.xy = 0;
