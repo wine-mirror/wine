@@ -1678,7 +1678,11 @@ static void test_RtlIsTextUnicode(void)
 {
     char ascii[] = "A simple string";
     WCHAR unicode[] = {'A',' ','U','n','i','c','o','d','e',' ','s','t','r','i','n','g',0};
+    WCHAR unicode_no_controls[] = {'A','U','n','i','c','o','d','e','s','t','r','i','n','g',0};
+    /* String with both byte-reversed and standard Unicode control characters. */
+    WCHAR mixed_controls[] = {'\t',0x9000,0x0d00,'\n',0};
     WCHAR *be_unicode;
+    WCHAR *be_unicode_no_controls;
     int flags;
     int i;
 
@@ -1721,7 +1725,81 @@ static void test_RtlIsTextUnicode(void)
     todo_wine
     ok(flags == (IS_TEXT_UNICODE_REVERSE_CONTROLS | IS_TEXT_UNICODE_REVERSE_SIGNATURE),
        "Expected flags 0xc0, obtained %x\n", flags);
+
+    /* build byte reversed unicode string with no control chars */
+    be_unicode_no_controls = HeapAlloc(GetProcessHeap(), 0, sizeof(unicode) + sizeof(WCHAR));
+    ok(be_unicode_no_controls != NULL, "Expeced HeapAlloc to succeed.\n");
+    be_unicode_no_controls[0] = 0xfffe;
+    for (i = 0; i < sizeof(unicode_no_controls)/sizeof(unicode_no_controls[0]); i++)
+        be_unicode_no_controls[i + 1] = (unicode_no_controls[i] >> 8) | ((unicode_no_controls[i] & 0xff) << 8);
+
+
+    /* The following tests verify that the tests for */
+    /* IS_TEXT_UNICODE_CONTROLS and IS_TEXT_UNICODE_REVERSE_CONTROLS */
+    /* are not mutually exclusive. Regardless of whether the strings */
+    /* contain an indication of endianness, the tests are still */
+    /* run if the flag is passed to (Rtl)IsTextUnicode. */
+
+    /* Test IS_TEXT_UNICODE_CONTROLS flag */
+    flags = IS_TEXT_UNICODE_CONTROLS;
+    ok(!pRtlIsTextUnicode(unicode_no_controls, sizeof(unicode_no_controls), &flags), "Test should not pass on Unicode string lacking control characters.\n");
+    ok(flags == 0, "Expected flags 0x0, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_CONTROLS;
+    ok(!pRtlIsTextUnicode(be_unicode_no_controls, sizeof(unicode_no_controls), &flags), "Test should not pass on byte-reversed Unicode string lacking control characters.\n");
+    ok(flags == 0, "Expected flags 0x0, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_CONTROLS;
+    todo_wine
+    {
+        ok(pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Test should pass on Unicode string lacking control characters.\n");
+        ok(flags == IS_TEXT_UNICODE_CONTROLS, "Expected flags 0x04, obtained %x\n", flags);
+    }
+
+    flags = IS_TEXT_UNICODE_CONTROLS;
+    ok(!pRtlIsTextUnicode(be_unicode_no_controls, sizeof(unicode_no_controls) + 2, &flags),
+            "Test should not pass with standard Unicode string.\n");
+    ok(flags == 0, "Expected flags 0x0, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_CONTROLS;
+    todo_wine
+    {
+        ok(pRtlIsTextUnicode(mixed_controls, sizeof(mixed_controls), &flags), "Test should pass on a string containing control characters.\n");
+        ok(flags == IS_TEXT_UNICODE_CONTROLS, "Expected flags 0x04, obtained %x\n", flags);
+    }
+
+    /* Test IS_TEXT_UNICODE_REVERSE_CONTROLS flag */
+    flags = IS_TEXT_UNICODE_REVERSE_CONTROLS;
+    ok(!pRtlIsTextUnicode(be_unicode_no_controls, sizeof(unicode_no_controls), &flags), "Test should not pass on Unicode string lacking control characters.\n");
+    ok(flags == 0, "Expected flags 0x0, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_REVERSE_CONTROLS;
+    ok(!pRtlIsTextUnicode(unicode_no_controls, sizeof(unicode_no_controls), &flags), "Test should not pass on Unicode string lacking control characters.\n");
+    ok(flags == 0, "Expected flags 0x0, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_REVERSE_CONTROLS;
+    ok(!pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Test should not pass on Unicode string lacking control characters.\n");
+    ok(flags == 0, "Expected flags 0x0, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_REVERSE_CONTROLS;
+    ok(!pRtlIsTextUnicode(be_unicode, sizeof(unicode) + 2, &flags),
+        "Test should pass with byte-reversed Unicode string containing control characters.\n");
+    todo_wine
+    ok(flags == IS_TEXT_UNICODE_REVERSE_CONTROLS, "Expected flags 0x40, obtained %x\n", flags);
+
+    flags = IS_TEXT_UNICODE_REVERSE_CONTROLS;
+    ok(!pRtlIsTextUnicode(mixed_controls, sizeof(mixed_controls), &flags), "Test should pass on a string containing byte-reversed control characters.\n");
+    todo_wine
+    ok(flags == IS_TEXT_UNICODE_REVERSE_CONTROLS, "Expected flags 0x40, obtained %x\n", flags);
+
+    /* Test with flags for both byte-reverse and standard Unicode characters */
+    flags = IS_TEXT_UNICODE_CONTROLS | IS_TEXT_UNICODE_REVERSE_CONTROLS;
+    ok(!pRtlIsTextUnicode(mixed_controls, sizeof(mixed_controls), &flags), "Test should pass on string containing both byte-reversed and standard control characters.\n");
+    todo_wine
+    ok(flags == (IS_TEXT_UNICODE_CONTROLS | IS_TEXT_UNICODE_REVERSE_CONTROLS), "Expected flags 0x44, obtained %x\n", flags);
+
     HeapFree(GetProcessHeap(), 0, be_unicode);
+    HeapFree(GetProcessHeap(), 0, be_unicode_no_controls);
 }
 
 static const WCHAR szGuid[] = { '{','0','1','0','2','0','3','0','4','-',
