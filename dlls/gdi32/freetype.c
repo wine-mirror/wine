@@ -4327,8 +4327,13 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 	font->gm = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, font->gm,
 			       font->gmsize * sizeof(GM*));
     } else {
-        if(format == GGO_METRICS && font->gm[original_index / GM_BLOCK_SIZE] != NULL && FONT_GM(font,original_index)->init ) {
+        if (format == GGO_METRICS && font->gm[original_index / GM_BLOCK_SIZE] != NULL &&
+            FONT_GM(font,original_index)->init && (!lpmat || is_identity_MAT2(lpmat)))
+        {
             *lpgm = FONT_GM(font,original_index)->gm;
+            TRACE("cached: %u,%u,%s,%d,%d\n", lpgm->gmBlackBoxX, lpgm->gmBlackBoxY,
+                  wine_dbgstr_point(&lpgm->gmptGlyphOrigin),
+                  lpgm->gmCellIncX, lpgm->gmCellIncY);
             LeaveCriticalSection( &freetype_cs );
 	    return 1; /* FIXME */
 	}
