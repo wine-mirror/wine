@@ -381,7 +381,7 @@ static HRESULT WAVEParser_first_request(LPVOID iface)
         hr = IAsyncReader_Request(pin->pReader, sample, 0);
     }
     if (FAILED(hr))
-        ERR("Horsemen of the apocalypse came to bring error 0x%08x\n", hr);
+        ERR("Horsemen of the apocalypse came to bring error 0x%08x %p\n", hr, sample);
 
     return hr;
 }

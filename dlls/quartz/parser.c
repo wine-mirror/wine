@@ -217,7 +217,6 @@ HRESULT WINAPI Parser_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 
 HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
 {
-    HRESULT hr;
     ParserImpl *This = (ParserImpl *)iface;
     PullPin *pin = (PullPin *)This->ppPins[0];
 
@@ -226,19 +225,11 @@ HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
     EnterCriticalSection(&pin->thread_lock);
     EnterCriticalSection(&This->csFilter);
     {
-        if (This->state == State_Stopped)
-        {
-            LeaveCriticalSection(&This->csFilter);
-            LeaveCriticalSection(&pin->thread_lock);
-            return S_OK;
-        }
         This->state = State_Stopped;
     }
     LeaveCriticalSection(&This->csFilter);
-
-    hr = PullPin_StopProcessing(This->pInputPin);
     LeaveCriticalSection(&pin->thread_lock);
-    return hr;
+    return S_OK;
 }
 
 HRESULT WINAPI Parser_Pause(IBaseFilter * iface)
@@ -300,16 +291,9 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 
         if (SUCCEEDED(hr) && (This->state == State_Stopped))
         {
-            LeaveCriticalSection(&This->csFilter);
-            hr = PullPin_InitProcessing(This->pInputPin);
-            EnterCriticalSection(&This->csFilter);
-
-            if (SUCCEEDED(hr))
-            { 
-                for (i = 1; i < (This->cStreams + 1); i++)
-                {
-                    OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
-                }
+            for (i = 1; i < (This->cStreams + 1); i++)
+            {
+                OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
             }
         }
 
@@ -714,7 +698,6 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
     {
         if (This->pin.pConnectedTo)
         {
-            PullPin *ppin = (PullPin *)This;
             FILTER_STATE state;
             ParserImpl *Parser = (ParserImpl *)This->pin.pinInfo.pFilter;
 
@@ -724,11 +707,9 @@ static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
 
             if (SUCCEEDED(hr) && (state == State_Stopped) && SUCCEEDED(Parser->fnDisconnect(Parser)))
             {
-                IPin_Release(This->pin.pConnectedTo);
-                This->pin.pConnectedTo = NULL;
-
-                if (FAILED(hr = IMemAllocator_Decommit(ppin->pAlloc)))
-                    ERR("Allocator decommit failed with error %x. Possible memory leak\n", hr);
+                LeaveCriticalSection(This->pin.pCritSec);
+                PullPin_Disconnect(iface);
+                EnterCriticalSection(This->pin.pCritSec);
                 hr = Parser_RemoveOutputPins((ParserImpl *)This->pin.pinInfo.pFilter);
             }
             else
