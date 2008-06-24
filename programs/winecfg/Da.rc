@@ -39,6 +39,11 @@ BEGIN
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
     LTEXT           "Dette bibliotek er fri software; du må re-distribuere det og/eller modificere det under betingelserne givet i GNU Lesser General Public License som  publiceret af Free Software Foundation; enten version 2.1, eller (efter dit valg) en senere version.",
                     IDC_STATIC,119,44,124,72
+    GROUPBOX        " Windows registreringsoplysninger ", IDC_STATIC, 15, 110, 230, 55
+    LTEXT           "Ejer:", IDC_STATIC, 22, 126, 40, 20
+    LTEXT           "Organisationen:", IDC_STATIC, 22, 140, 50, 20
+    EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
 IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250

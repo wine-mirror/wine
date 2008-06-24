@@ -39,6 +39,11 @@ BEGIN
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
     LTEXT           "這一函式庫是自由軟體， 你可以遵照自由軟體基金會出版的 GNU 較寬鬆通用公共許\可證條款 來修改和重新發佈這一程式， 或者是許\可證的2.1版， 或是 (根據你的選擇) 任何更新的版本。",
                     IDC_STATIC,119,44,124,72
+    GROUPBOX        " Windows Registration Information ", IDC_STATIC, 15, 110, 230, 55
+    LTEXT           "Owner:", IDC_STATIC, 22, 126, 40, 20
+    LTEXT           "Organization:", IDC_STATIC, 22, 140, 50, 20
+    EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
 IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250

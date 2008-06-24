@@ -249,3 +249,7 @@
 #define IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT 8429
 #define IDC_SYSPARAMS_MENU_HILIGHT      8430
 #define IDC_SYSPARAMS_MENUBAR           8431
+
+/* About tab */
+#define IDC_ABT_OWNER                8432
+#define IDC_ABT_ORG                  8433
