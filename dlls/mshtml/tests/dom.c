@@ -965,6 +965,19 @@ static void _test_elem_tabindex(unsigned line, IUnknown *unk, short exindex)
     ok_(__FILE__,line) (index == exindex, "unexpected index %d\n", index);
 }
 
+#define test_elem_set_tabindex(u,i) _test_elem_set_tabindex(__LINE__,u,i)
+static void _test_elem_set_tabindex(unsigned line, IUnknown *unk, short index)
+{
+    IHTMLElement2 *elem2 = _get_elem2_iface(line, unk);
+    HRESULT hres;
+
+    hres = IHTMLElement2_put_tabIndex(elem2, index);
+    IHTMLElement2_Release(elem2);
+    ok_(__FILE__,line) (hres == S_OK, "get_tabIndex failed: %08x\n", hres);
+
+    _test_elem_tabindex(line, unk, index);
+}
+
 #define test_elem_set_class(u,c) _test_elem_set_class(__LINE__,u,c)
 static void _test_elem_set_class(unsigned line, IUnknown *unk, const char *class)
 {
@@ -1854,6 +1867,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_set_class((IUnknown*)elem, "cl");
         test_elem_set_class((IUnknown*)elem, NULL);
         test_elem_tabindex((IUnknown*)elem, 0);
+        test_elem_set_tabindex((IUnknown*)elem, 1);
         IHTMLElement_Release(elem);
     }
 
@@ -1916,6 +1930,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_value((IUnknown*)elem, NULL);
         test_elem_class((IUnknown*)elem, "testclass");
         test_elem_tabindex((IUnknown*)elem, 2);
+        test_elem_set_tabindex((IUnknown*)elem, 3);
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);

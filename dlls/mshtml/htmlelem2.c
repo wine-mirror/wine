@@ -383,8 +383,23 @@ static HRESULT WINAPI HTMLElement2_removeExpression(IHTMLElement2 *iface, BSTR p
 static HRESULT WINAPI HTMLElement2_put_tabIndex(IHTMLElement2 *iface, short v)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%d)\n", This, v);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, v);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLNSElement: %08x\n", nsres);
+        return S_OK;
+    }
+
+    nsres = nsIDOMNSHTMLElement_SetTabIndex(nselem, v);
+    nsIDOMNSHTMLElement_Release(nselem);
+    if(NS_FAILED(nsres))
+        ERR("GetTabIndex failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_tabIndex(IHTMLElement2 *iface, short *p)
