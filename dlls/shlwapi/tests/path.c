@@ -810,10 +810,8 @@ static void test_PathCanonicalizeA(void)
     ok(!res, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, 
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    todo_wine
-    {
-        ok(!lstrcmp(dest, "test"), "Expected test, got %s\n", dest);
-    }
+    ok(dest[0] == 0 || !lstrcmp(dest, "test"),
+       "Expected either an empty string (Vista) or test, got %s\n", dest);
 
     /* try an empty source */
     lstrcpy(dest, "test");
