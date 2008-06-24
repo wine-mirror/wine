@@ -1821,10 +1821,11 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     if (!squash_guid( szProduct, squishProduct ))
         return INSTALLSTATE_INVALIDARG;
 
-    /* check that it's installed at all */
-    rc = MSIREG_OpenUserFeaturesKey(szProduct, &hkey, FALSE);
-    if (rc != ERROR_SUCCESS)
+    if (MSIREG_OpenManagedFeaturesKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS &&
+        MSIREG_OpenUserFeaturesKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS)
+    {
         return INSTALLSTATE_UNKNOWN;
+    }
 
     parent_feature = msi_reg_get_val_str( hkey, szFeature );
     RegCloseKey(hkey);

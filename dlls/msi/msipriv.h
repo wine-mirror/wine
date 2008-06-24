@@ -788,6 +788,7 @@ extern UINT MSIREG_OpenLocalSystemComponentKey(LPCWSTR szComponent, HKEY *key, B
 extern UINT MSIREG_OpenLocalClassesProductKey(LPCWSTR szProductCode, HKEY *key, BOOL create);
 extern UINT MSIREG_OpenLocalClassesFeaturesKey(LPCWSTR szProductCode, HKEY *key, BOOL create);
 extern UINT MSIREG_OpenLocalManagedProductKey(LPCWSTR szProductCode, HKEY *key, BOOL create);
+extern UINT MSIREG_OpenManagedFeaturesKey(LPCWSTR szProductCode, HKEY *key, BOOL create);
 extern UINT MSIREG_OpenLocalUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create);
 extern UINT MSIREG_DeleteUserFeaturesKey(LPCWSTR szProduct);
 extern UINT MSIREG_DeleteLocalUserDataComponentKey(LPCWSTR szComponent);
