@@ -478,11 +478,14 @@ static void testShellValues(const struct shellExpectedValues testEntries[],
     {
         BYTE type;
 
-        type = testSHGetFolderLocation(optional, testEntries[i].folder);
-        ok(type == testEntries[i].pidlType || optional,
-         "%s has type %d (0x%02x), expected %d (0x%02x)\n",
-         getFolderName(testEntries[i].folder), type, type,
-         testEntries[i].pidlType, testEntries[i].pidlType);
+        if (pSHGetFolderLocation)
+        {
+            type = testSHGetFolderLocation(optional, testEntries[i].folder);
+            ok(type == testEntries[i].pidlType || optional,
+             "%s has type %d (0x%02x), expected %d (0x%02x)\n",
+             getFolderName(testEntries[i].folder), type, type,
+             testEntries[i].pidlType, testEntries[i].pidlType);
+        }
         type = testSHGetSpecialFolderLocation(optional, testEntries[i].folder);
         ok(type == testEntries[i].pidlType || optional,
          "%s has type %d (0x%02x), expected %d (0x%02x)\n",
@@ -576,12 +579,15 @@ static void testPersonal(void)
     /* The pidl may be a real folder, or a virtual directory, or a drive if the
      * home directory is set to the root directory of a drive.
      */
-    type = testSHGetFolderLocation(FALSE, CSIDL_PERSONAL);
-    ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE,
-     "CSIDL_PERSONAL returned invalid type 0x%02x, "
-     "expected PT_FOLDER or PT_GUID\n", type);
-    if (type == PT_FOLDER)
-        testSHGetFolderPath(FALSE, CSIDL_PERSONAL);
+    if (pSHGetFolderLocation)
+    {
+        type = testSHGetFolderLocation(FALSE, CSIDL_PERSONAL);
+        ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE,
+         "CSIDL_PERSONAL returned invalid type 0x%02x, "
+         "expected PT_FOLDER or PT_GUID\n", type);
+        if (type == PT_FOLDER)
+            testSHGetFolderPath(FALSE, CSIDL_PERSONAL);
+    }
     type = testSHGetSpecialFolderLocation(FALSE, CSIDL_PERSONAL);
     ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE,
      "CSIDL_PERSONAL returned invalid type 0x%02x, "
@@ -898,6 +904,10 @@ START_TEST(shellpath)
         doChild(myARGV[2]);
     else
     {
+        /* Report missing functions once */
+        if (!pSHGetFolderLocation)
+            skip("SHGetFolderLocation is not available\n");
+
         /* first test various combinations of parameters: */
         testApiParameters();
 
