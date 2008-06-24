@@ -980,6 +980,21 @@ UINT MSIREG_OpenUserUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL creat
     return rc;
 }
 
+UINT MSIREG_DeleteUserUpgradeCodesKey(LPCWSTR szUpgradeCode)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n",debugstr_w(szUpgradeCode));
+    if (!squash_guid(szUpgradeCode,squished_pc))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath,szInstaller_UserUpgradeCodes_fmt,squished_pc);
+
+    return RegDeleteTreeW(HKEY_CURRENT_USER, keypath);
+}
+
 UINT MSIREG_OpenLocalSystemProductKey(LPCWSTR szProductCode, HKEY *key, BOOL create)
 {
     WCHAR squished_pc[GUID_SIZE];

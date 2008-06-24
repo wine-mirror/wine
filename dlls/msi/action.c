@@ -3473,6 +3473,34 @@ done:
     return ERROR_SUCCESS;
 }
 
+static UINT msi_publish_upgrade_code(MSIPACKAGE *package)
+{
+    UINT r;
+    HKEY hkey;
+    LPWSTR upgrade;
+    WCHAR squashed_pc[SQUISH_GUID_SIZE];
+
+    static const WCHAR szUpgradeCode[] =
+        {'U','p','g','r','a','d','e','C','o','d','e',0};
+
+    upgrade = msi_dup_property(package, szUpgradeCode);
+    if (!upgrade)
+        return ERROR_SUCCESS;
+
+    r = MSIREG_OpenUserUpgradeCodesKey(upgrade, &hkey, TRUE);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    squash_guid(package->ProductCode, squashed_pc);
+    msi_reg_set_val_str(hkey, squashed_pc, NULL);
+
+    RegCloseKey(hkey);
+
+done:
+    msi_free(upgrade);
+    return r;
+}
+
 static BOOL msi_check_publish(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
@@ -3484,6 +3512,19 @@ static BOOL msi_check_publish(MSIPACKAGE *package)
     }
 
     return FALSE;
+}
+
+static BOOL msi_check_unpublish(MSIPACKAGE *package)
+{
+    MSIFEATURE *feature;
+
+    LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
+    {
+        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
+            return FALSE;
+    }
+
+    return TRUE;
 }
 
 /*
@@ -3531,7 +3572,9 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    /* FIXME: Need to write more keys to the user registry */
+    rc = msi_publish_upgrade_code(package);
+    if (rc != ERROR_SUCCESS)
+        goto end;
 
     rc = msi_publish_product_properties(package, hukey);
     if (rc != ERROR_SUCCESS)
@@ -3895,19 +3938,6 @@ static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
     return ERROR_SUCCESS;
 }
 
-static BOOL msi_check_unpublish(MSIPACKAGE *package)
-{
-    MSIFEATURE *feature;
-
-    LIST_FOR_EACH_ENTRY(feature, &package->features, MSIFEATURE, entry)
-    {
-        if (feature->ActionRequest != INSTALLSTATE_ABSENT)
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
 static UINT ACTION_UnpublishFeatures(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
@@ -4152,6 +4182,7 @@ static UINT ACTION_InstallExecute(MSIPACKAGE *package)
 
 static UINT msi_unpublish_product(MSIPACKAGE *package)
 {
+    LPWSTR upgrade;
     LPWSTR remove = NULL;
     LPWSTR *features = NULL;
     BOOL full_uninstall = TRUE;
@@ -4159,6 +4190,8 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
 
     static const WCHAR szRemove[] = {'R','E','M','O','V','E',0};
     static const WCHAR szAll[] = {'A','L','L',0};
+    static const WCHAR szUpgradeCode[] =
+        {'U','p','g','r','a','d','e','C','o','d','e',0};
 
     remove = msi_dup_property(package, szRemove);
     if (!remove)
@@ -4191,6 +4224,13 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
     MSIREG_DeleteUserDataProductKey(package->ProductCode);
     MSIREG_DeleteUserFeaturesKey(package->ProductCode);
     MSIREG_DeleteUninstallKey(package->ProductCode);
+
+    upgrade = msi_dup_property(package, szUpgradeCode);
+    if (upgrade)
+    {
+        MSIREG_DeleteUserUpgradeCodesKey(upgrade);
+        msi_free(upgrade);
+    }
 
 done:
     msi_free(remove);
