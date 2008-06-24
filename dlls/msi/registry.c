@@ -809,6 +809,24 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
     return rc;
 }
 
+UINT MSIREG_OpenLocalUserDataProductKey(LPCWSTR szProduct, HKEY *key, BOOL create)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n", debugstr_w(szProduct));
+    if (!squash_guid(szProduct, squished_pc))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath, szUserDataProd_fmt, localsid, squished_pc);
+
+    if (create)
+        return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+
+    return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+}
+
 static UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, LPCWSTR szUserSID,
                                     HKEY *key, BOOL create)
 {

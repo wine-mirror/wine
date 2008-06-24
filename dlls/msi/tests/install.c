@@ -2589,16 +2589,10 @@ static void test_publish_publishproduct(void)
 
     sprintf(keypath, prodpath, "S-1-5-18");
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    }
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegOpenKeyA(hkey, "InstallProperties", &props);
-    todo_wine
-    {
-        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-    }
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     res = RegOpenKeyA(hkey, "Patches", &patches);
     todo_wine

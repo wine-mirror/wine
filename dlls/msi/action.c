@@ -3547,17 +3547,23 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
 
-    /* ok there is a lot more done here but i need to figure out what */
-
     if (package->Context == MSIINSTALLCONTEXT_MACHINE)
     {
         rc = MSIREG_OpenLocalClassesProductKey(package->ProductCode, &hukey, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
+
+        rc = MSIREG_OpenLocalUserDataProductKey(package->ProductCode, &hudkey, TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
     }
     else
     {
-        rc = MSIREG_OpenUserProductsKey(package->ProductCode,&hukey,TRUE);
+        rc = MSIREG_OpenUserProductsKey(package->ProductCode, &hukey, TRUE);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+
+        rc = MSIREG_OpenUserDataProductKey(package->ProductCode, &hudkey, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
     }
@@ -3567,10 +3573,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         goto end;
 
     RegCloseKey(source);
-
-    rc = MSIREG_OpenUserDataProductKey(package->ProductCode,&hudkey,TRUE);
-    if (rc != ERROR_SUCCESS)
-        goto end;
 
     rc = msi_publish_upgrade_code(package);
     if (rc != ERROR_SUCCESS)
