@@ -8,9 +8,6 @@ This is minesweeper for wine...
 Enjoy. I wrote it because it rhymes ;).
 
 KNOWN BUGS:
-    Chokes on fastest times names greater than 16 characters long, must have
-    something to do with GetDlgItemText.
-  
     No help file.
 
     Starting a new game causes the window to drop one pixel (Peter Hunnisett)

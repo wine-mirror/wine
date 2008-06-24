@@ -45,6 +45,8 @@
 #define FACE_WIDTH       24
 #define FACE_HEIGHT      24
 
+#define MAX_PLAYER_NAME_SIZE 31
+
 typedef enum { SPRESS_BMP, COOL_BMP, DEAD_BMP, OOH_BMP, SMILE_BMP } FACE_BMP;
 
 typedef enum { WAITING, PLAYING, GAMEOVER, WON } GAME_STATUS;
@@ -84,7 +86,7 @@ typedef struct tagBOARD
     unsigned rows;
     unsigned cols;
     unsigned mines;
-    char best_name [3][16];
+    char best_name [3][MAX_PLAYER_NAME_SIZE+1];
     DWORD best_time [3];
     DIFFICULTY difficulty;
 

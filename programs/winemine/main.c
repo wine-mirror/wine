@@ -277,7 +277,7 @@ void LoadBoard( BOARD *p_board )
     DWORD size;
     DWORD type;
     HKEY hkey;
-    char data[16];
+    char data[MAX_PLAYER_NAME_SIZE+1];
     char key_name[8];
     unsigned i;
 
@@ -327,7 +327,7 @@ void LoadBoard( BOARD *p_board )
                 (LPDWORD) &size ) == ERROR_SUCCESS )
                     lstrcpynA( p_board->best_name[i], data, sizeof(p_board->best_name[i]) );
         else
-            LoadString( p_board->hInst, IDS_NOBODY, p_board->best_name[i], 16 );
+            LoadString( p_board->hInst, IDS_NOBODY, p_board->best_name[i], MAX_PLAYER_NAME_SIZE+1 );
     }
 
     for( i = 0; i < 3; i++ ) {
@@ -345,7 +345,7 @@ void SaveBoard( BOARD *p_board )
 {
     HKEY hkey;
     unsigned i;
-    char data[16];
+    char data[MAX_PLAYER_NAME_SIZE+1];
     char key_name[8];
 
     if( RegCreateKeyEx( HKEY_CURRENT_USER, registry_key,
