@@ -3388,6 +3388,77 @@ static UINT msi_publish_sourcelist(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
+{
+    MSIHANDLE hdb, suminfo;
+    WCHAR guids[MAX_PATH];
+    LPWSTR buffer;
+    LPWSTR ptr;
+    DWORD langid;
+    DWORD size;
+    UINT r;
+
+    static const WCHAR szProductLanguage[] =
+        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
+    static const WCHAR szARPProductIcon[] =
+        {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
+    static const WCHAR szProductVersion[] =
+        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+
+    buffer = msi_dup_property(package, INSTALLPROPERTY_PRODUCTNAMEW);
+    msi_reg_set_val_str(hkey, INSTALLPROPERTY_PRODUCTNAMEW, buffer);
+    msi_free(buffer);
+
+    langid = msi_get_property_int(package, szProductLanguage, 0);
+    msi_reg_set_val_dword(hkey, INSTALLPROPERTY_LANGUAGEW, langid);
+
+    ptr = strrchrW(package->PackagePath, '\\' ) + 1;
+    msi_reg_set_val_str(hkey, INSTALLPROPERTY_PACKAGENAMEW, ptr);
+
+    /* FIXME */
+    msi_reg_set_val_dword(hkey, INSTALLPROPERTY_AUTHORIZED_LUA_APPW, 0);
+
+    buffer = msi_dup_property(package, szARPProductIcon);
+    if (buffer)
+    {
+        LPWSTR path = build_icon_path(package,buffer);
+        msi_reg_set_val_str(hkey, INSTALLPROPERTY_PRODUCTICONW, path);
+        msi_free(path);
+        msi_free(buffer);
+    }
+
+    buffer = msi_dup_property(package, szProductVersion);
+    if (buffer)
+    {
+        DWORD verdword = msi_version_str_to_dword(buffer);
+        msi_reg_set_val_dword(hkey, INSTALLPROPERTY_VERSIONW, verdword);
+        msi_free(buffer);
+    }
+
+    hdb = alloc_msihandle(&package->db->hdr);
+    if (!hdb)
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    r = MsiGetSummaryInformationW(hdb, NULL, 0, &suminfo);
+    MsiCloseHandle(hdb);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    size = MAX_PATH;
+    r = MsiSummaryInfoGetPropertyW(suminfo, PID_REVNUMBER, NULL, NULL,
+                                   NULL, guids, &size);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    ptr = strchrW(guids, ';');
+    if (ptr) *ptr = 0;
+    msi_reg_set_val_str(hkey, INSTALLPROPERTY_PACKAGECODEW, guids);
+
+done:
+    MsiCloseHandle(suminfo);
+    return ERROR_SUCCESS;
+}
+
 static BOOL msi_check_publish(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
@@ -3410,22 +3481,12 @@ static BOOL msi_check_publish(MSIPACKAGE *package)
 static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 {
     UINT rc;
-    LPWSTR packname;
     HKEY hukey=0;
     HKEY hudkey=0;
     HKEY source;
-    static const WCHAR szProductLanguage[] =
-        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
-    static const WCHAR szARPProductIcon[] =
-        {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
-    static const WCHAR szProductVersion[] =
-        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+
     static const WCHAR szSourceList[] =
         {'S','o','u','r','c','e','L','i','s','t',0};
-    DWORD langid;
-    LPWSTR buffer;
-    DWORD size;
-    MSIHANDLE hDb, hSumInfo;
 
     /* FIXME: also need to publish if the product is in advertise mode */
     if (!msi_check_publish(package))
@@ -3456,70 +3517,11 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    buffer = msi_dup_property( package, INSTALLPROPERTY_PRODUCTNAMEW );
-    msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTNAMEW, buffer );
-    msi_free(buffer);
-
-    langid = msi_get_property_int( package, szProductLanguage, 0 );
-    msi_reg_set_val_dword( hukey, INSTALLPROPERTY_LANGUAGEW, langid );
-
-    packname = strrchrW( package->PackagePath, '\\' ) + 1;
-    msi_reg_set_val_str( hukey, INSTALLPROPERTY_PACKAGENAMEW, packname );
-
-    /* FIXME */
-    msi_reg_set_val_dword( hukey, INSTALLPROPERTY_AUTHORIZED_LUA_APPW, 0 );
-
-    buffer = msi_dup_property( package, szARPProductIcon );
-    if (buffer)
-    {
-        LPWSTR path = build_icon_path(package,buffer);
-        msi_reg_set_val_str( hukey, INSTALLPROPERTY_PRODUCTICONW, path );
-        msi_free( path );
-    }
-    msi_free(buffer);
-
-    buffer = msi_dup_property( package, szProductVersion );
-    if (buffer)
-    {
-        DWORD verdword = msi_version_str_to_dword(buffer);
-        msi_reg_set_val_dword( hukey, INSTALLPROPERTY_VERSIONW, verdword );
-    }
-    msi_free(buffer);
-
     /* FIXME: Need to write more keys to the user registry */
-  
-    hDb= alloc_msihandle( &package->db->hdr );
-    if (!hDb) {
-        rc = ERROR_NOT_ENOUGH_MEMORY;
+
+    rc = msi_publish_product_properties(package, hukey);
+    if (rc != ERROR_SUCCESS)
         goto end;
-    }
-    rc = MsiGetSummaryInformationW(hDb, NULL, 0, &hSumInfo); 
-    MsiCloseHandle(hDb);
-    if (rc == ERROR_SUCCESS)
-    {
-        WCHAR guidbuffer[0x200];
-        size = 0x200;
-        rc = MsiSummaryInfoGetPropertyW(hSumInfo, 9, NULL, NULL, NULL,
-                                        guidbuffer, &size);
-        if (rc == ERROR_SUCCESS)
-        {
-            /* for now we only care about the first guid */
-            LPWSTR ptr = strchrW(guidbuffer,';');
-            if (ptr) *ptr = 0;
-            msi_reg_set_val_str( hukey, INSTALLPROPERTY_PACKAGECODEW, guidbuffer );
-        }
-        else
-        {
-            ERR("Unable to query Revision_Number...\n");
-            rc = ERROR_SUCCESS;
-        }
-        MsiCloseHandle(hSumInfo);
-    }
-    else
-    {
-        ERR("Unable to open Summary Information\n");
-        rc = ERROR_SUCCESS;
-    }
 
     rc = msi_publish_sourcelist(package);
     if (rc != ERROR_SUCCESS)
