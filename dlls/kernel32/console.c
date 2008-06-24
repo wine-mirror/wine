@@ -2239,7 +2239,15 @@ BOOL WINAPI GetConsoleCursorInfo(HANDLE hCon, LPCONSOLE_CURSOR_INFO cinfo)
     }
     SERVER_END_REQ;
 
-    TRACE("(%p) returning (%d,%d)\n", hCon, cinfo->dwSize, cinfo->bVisible);
+    if (!ret) return FALSE;
+
+    if (!cinfo)
+    {
+        SetLastError(ERROR_INVALID_ACCESS);
+        ret = FALSE;
+    }
+    else TRACE("(%p) returning (%d,%d)\n", hCon, cinfo->dwSize, cinfo->bVisible);
+
     return ret;
 }
 

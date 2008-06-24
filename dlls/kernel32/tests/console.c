@@ -168,12 +168,9 @@ static void testCursorInfo(HANDLE hCon)
 
     SetLastError(0xdeadbeef);
     ret = GetConsoleCursorInfo(hCon, NULL);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_ACCESS, "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_ACCESS, GetLastError());
-    }
 }
 
 static void testWriteSimple(HANDLE hCon, COORD sbSize)
