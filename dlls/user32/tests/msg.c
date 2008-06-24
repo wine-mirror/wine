@@ -10840,9 +10840,12 @@ START_TEST(msg)
     test_sys_menu();
     test_dialog_messages();
     test_nullCallback();
-    test_SetForegroundWindow();
     test_dbcs_wm_char();
     test_menu_messages();
+    /* keep it the last test, under Windows it tends to break the tests
+     * which rely on active/foreground windows being correct.
+     */
+    test_SetForegroundWindow();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
