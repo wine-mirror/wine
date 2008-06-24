@@ -569,7 +569,7 @@ static void check_registry(BOOL *has_space_rgb)
         dwNameLen = sizeof(szName);
         dwDataLen = sizeof(szData);
         res = RegEnumValueA( hkIcmKey, i, szName, &dwNameLen, NULL, &dwType, (LPBYTE)szData, &dwDataLen );
-        if (strcmp(szName, "RGB") == 0)
+        if (!strncmp(szName, "RGB", 3))
             *has_space_rgb = TRUE;
         if (res != ERROR_SUCCESS) 
         {
