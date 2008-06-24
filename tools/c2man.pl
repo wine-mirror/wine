@@ -90,14 +90,15 @@ sub process_extra_comment($);
 sub process_spec_file($)
 {
   my $spec_name = shift;
-  my $dll_name  = $spec_name;
-  $dll_name =~ s/\..*//;       # Strip the file extension
+  my ($dll_name, $dll_ext)  = split(/\./, $spec_name);
+  $dll_ext = "dll" if ( $dll_ext eq "spec" );
   my $uc_dll_name  = uc $dll_name;
 
   my $spec_details =
   {
     NAME => $spec_name,
     DLL_NAME => $dll_name,
+    DLL_EXT => $dll_ext,
     NUM_EXPORTS => 0,
     NUM_STUBS => 0,
     NUM_FUNCS => 0,
@@ -227,6 +228,7 @@ sub process_source_file($)
     COMMENT_NAME => "",
     ALT_NAME => "",
     DLL_NAME => "",
+    DLL_EXT => "",
     ORDINAL => "",
     RETURNS => "",
     PROTOTYPE => [],
@@ -1095,7 +1097,7 @@ sub output_spec($)
   my $comment =
   {
     FILE => $spec_details->{DLL_NAME},
-    COMMENT_NAME => $spec_details->{DLL_NAME}.".dll",
+    COMMENT_NAME => $spec_details->{DLL_NAME}.".".$spec_details->{DLL_EXT},
     ALT_NAME => $spec_details->{DLL_NAME},
     DLL_NAME => "",
     ORDINAL => "",
