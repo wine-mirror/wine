@@ -4473,7 +4473,12 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     lpgm->gmptGlyphOrigin.x = left >> 6;
     lpgm->gmptGlyphOrigin.y = top >> 6;
 
-    if(format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP)
+    TRACE("%u,%u,%s,%d,%d\n", lpgm->gmBlackBoxX, lpgm->gmBlackBoxY,
+          wine_dbgstr_point(&lpgm->gmptGlyphOrigin),
+          lpgm->gmCellIncX, lpgm->gmCellIncY);
+
+    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) &&
+        (!lpmat || is_identity_MAT2(lpmat))) /* don't cache custom transforms */
     {
         FONT_GM(font,original_index)->gm = *lpgm;
         FONT_GM(font,original_index)->adv = adv;
