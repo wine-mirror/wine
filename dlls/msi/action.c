@@ -3411,7 +3411,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 {
     UINT rc;
     LPWSTR packname;
-    HKEY hkey=0;
     HKEY hukey=0;
     HKEY hudkey=0;
     HKEY source;
@@ -3442,10 +3441,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     }
     else
     {
-        rc = MSIREG_OpenProductsKey(package->ProductCode,&hkey,TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-
         rc = MSIREG_OpenUserProductsKey(package->ProductCode,&hukey,TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
@@ -3533,7 +3528,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     rc = msi_publish_icons(package);
 
 end:
-    RegCloseKey(hkey);
     RegCloseKey(hukey);
     RegCloseKey(hudkey);
 

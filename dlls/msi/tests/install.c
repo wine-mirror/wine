@@ -2477,6 +2477,9 @@ static void test_publish_publishproduct(void)
                                      "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
     static const CHAR cuupgrades[] = "Software\\Microsoft\\Installer\\UpgradeCodes"
                                      "\\51AAE0C44620A5E4788506E91F249BD2";
+    static const CHAR badprod[] = "Software\\Microsoft\\Windows\\CurrentVersion"
+                                  "\\Installer\\Products"
+                                  "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
 
     get_user_sid(&usersid);
     if (!usersid)
@@ -2499,6 +2502,9 @@ static void test_publish_publishproduct(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, badprod, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     sprintf(keypath, prodpath, usersid);
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);

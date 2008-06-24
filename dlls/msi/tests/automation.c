@@ -2009,9 +2009,12 @@ static void test_Installer_Products(BOOL bProductInstalled)
             }
         }
 
-        ok(bProductInstalled == bProductFound, "Product expected to %s installed but product code was %s\n",
-           bProductInstalled ? "be" : "not be",
-           bProductFound ? "found" : "not found");
+        if (bProductInstalled) todo_wine
+        {
+            ok(bProductInstalled == bProductFound, "Product expected to %s installed but product code was %s\n",
+               bProductInstalled ? "be" : "not be",
+               bProductFound ? "found" : "not found");
+        }
 
         if (pEnum)
         {
@@ -2306,7 +2309,7 @@ static void test_Installer_InstallProduct(void)
     RegCloseKey(hkey);
 
     res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\05FA3C1F65B896A40AC00077F34EF203");
-    todo_wine ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     /* Delete installation files we installed */
     delete_test_files();
