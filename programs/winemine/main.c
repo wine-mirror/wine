@@ -452,13 +452,24 @@ static void MoveOnScreen(RECT* rect)
 void CreateBoard( BOARD *p_board )
 {
     int left, top, bottom, right;
+    unsigned col, row;
     RECT wnd_rect;
 
     p_board->mb = MB_NONE;
     p_board->boxes_left = p_board->cols * p_board->rows - p_board->mines;
     p_board->num_flags = 0;
 
-    CreateBoxes( p_board );
+    /* Create the boxes...
+     * We actually create them with an empty border,
+     * so special care doesn't have to be taken on the edges
+     */
+    for( col = 0; col <= p_board->cols + 1; col++ )
+      for( row = 0; row <= p_board->rows + 1; row++ ) {
+        p_board->box[col][row].IsPressed = FALSE;
+        p_board->box[col][row].IsMine = FALSE;
+        p_board->box[col][row].FlagType = NORMAL;
+        p_board->box[col][row].NumMines = 0;
+      }
 
     p_board->width = p_board->cols * MINE_WIDTH + BOARD_WMARGIN * 2;
 
@@ -531,30 +542,21 @@ void CheckLevel( BOARD *p_board )
     if( p_board->mines < BEGINNER_MINES )
         p_board->mines = BEGINNER_MINES;
 
-    if( p_board->mines > p_board->cols * p_board->rows - 1 )
-        p_board->mines = p_board->cols * p_board->rows - 1;
+    if( p_board->mines > p_board->cols * p_board->rows - 2 )
+        p_board->mines = p_board->cols * p_board->rows - 2;
 }
 
-
-void CreateBoxes( BOARD *p_board )
+/* Randomly places mines everywhere except the selected box. */
+void PlaceMines ( BOARD *p_board, int selected_col, int selected_row )
 {
     int i, j;
     unsigned col, row;
 
     srand( (unsigned) time( NULL ) );
 
-    /* Create the boxes...
-     * We actually create them with an empty border,
-     * so special care doesn't have to be taken on the edges
-     */
-
-    for( col = 0; col <= p_board->cols + 1; col++ )
-      for( row = 0; row <= p_board->rows + 1; row++ ) {
-        p_board->box[col][row].IsPressed = FALSE;
-        p_board->box[col][row].IsMine = FALSE;
-        p_board->box[col][row].FlagType = NORMAL;
-        p_board->box[col][row].NumMines = 0;
-      }
+    /* Temporarily place a mine at the selected box until all the other
+     * mines are placed, this avoids checking in the mine creation loop. */
+    p_board->box[selected_col][selected_row].IsMine = TRUE;
 
     /* create mines */
     i = 0;
@@ -568,11 +570,13 @@ void CreateBoxes( BOARD *p_board )
         }
     }
 
+    /* Remove temporarily placed mine for selected box */
+    p_board->box[selected_col][selected_row].IsMine = FALSE;
+
     /*
      * Now we label the remaining boxes with the
      * number of mines surrounding them.
      */
-
     for( col = 1; col < p_board->cols + 1; col++ )
     for( row = 1; row < p_board->rows + 1; row++ ) {
         for( i = -1; i <= 1; i++ )
@@ -838,8 +842,12 @@ void TestMines( BOARD *p_board, POINT pt, int msg )
                     p_board->press.x, p_board->press.y );
         p_board->press.x = 0;
         p_board->press.y = 0;
-        if( p_board->box[col][row].FlagType != FLAG )
+        if( p_board->box[col][row].FlagType != FLAG
+            && p_board->status != PLAYING )
+        {
             p_board->status = PLAYING;
+            PlaceMines( p_board, col, row );
+        }
         CompleteBox( p_board, col, row );
         break;
 

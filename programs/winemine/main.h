@@ -134,7 +134,7 @@ void CheckLevel( BOARD *p_board );
 
 void CreateBoard( BOARD *p_board );
 
-void CreateBoxes( BOARD *p_board );
+void PlaceMines ( BOARD *p_board, int selected_col, int selected_row );
 
 void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg );
 
