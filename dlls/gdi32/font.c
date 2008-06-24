@@ -1410,6 +1410,9 @@ UINT WINAPI GetOutlineTextMetricsW(
                 WineEngGetOutlineTextMetrics(dc->gdiFont, ret, output);
             }
 
+        output->otmTextMetrics.tmDigitizedAspectX = GetDeviceCaps(hdc, LOGPIXELSX);
+        output->otmTextMetrics.tmDigitizedAspectY = GetDeviceCaps(hdc, LOGPIXELSY);
+
 #define WDPTOLP(x) ((x<0)?					\
 		(-abs(INTERNAL_XDSTOWS(dc, (x)))):		\
 		(abs(INTERNAL_XDSTOWS(dc, (x)))))
