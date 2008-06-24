@@ -3482,8 +3482,7 @@ found:
     it = lf.lfItalic ? 1 : 0;
     bd = lf.lfWeight > 550 ? 1 : 0;
 
-    height = GDI_ROUND( (double)lf.lfHeight * dc->xformWorld2Vport.eM22 );
-    height = lf.lfHeight < 0 ? -abs(height) : abs(height);
+    height = lf.lfHeight;
 
     face = best = best_bitmap = NULL;
     LIST_FOR_EACH_ENTRY(face, &family->faces, Face, entry)
@@ -4260,6 +4259,12 @@ DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
     return count;
 }
 
+static inline BOOL is_identity_FMAT2(const FMAT2 *matrix)
+{
+    static const FMAT2 identity = { 1.0, 0.0, 0.0, 1.0 };
+    return !memcmp(matrix, &identity, sizeof(FMAT2));
+}
+
 /*************************************************************
  * WineEngGetGlyphOutline
  *
@@ -4340,7 +4345,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     /* Scaling factor */
     if (font->aveWidth && font->potm)
     {
-        widthRatio = (double)font->aveWidth * font->font_desc.matrix.eM11;
+        widthRatio = (double)font->aveWidth;
         widthRatio /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
     }
     else
@@ -4390,6 +4395,18 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         rotationMat.yy = rotationMat.xx;
         
         pFT_Matrix_Multiply(&rotationMat, &transMat);
+        needsTransform = TRUE;
+    }
+
+    /* World transform */
+    if (!is_identity_FMAT2(&font->font_desc.matrix))
+    {
+        FT_Matrix worldMat;
+        worldMat.xx = FT_FixedFromFloat(font->font_desc.matrix.eM11);
+        worldMat.xy = FT_FixedFromFloat(font->font_desc.matrix.eM21);
+        worldMat.yx = FT_FixedFromFloat(font->font_desc.matrix.eM12);
+        worldMat.yy = FT_FixedFromFloat(font->font_desc.matrix.eM22);
+        pFT_Matrix_Multiply(&worldMat, &transMat);
         needsTransform = TRUE;
     }
 
@@ -4857,24 +4874,34 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
 
 static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
 {
-    double scale_x;
+    double scale_x, scale_y;
 
     if (font->aveWidth)
     {
-        scale_x = (double)font->aveWidth * font->font_desc.matrix.eM11;
+        scale_x = (double)font->aveWidth;
         scale_x /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
     }
     else
         scale_x = font->scale_y;
 
-    ptm->tmHeight = (double)ptm->tmHeight * font->scale_y;
-    ptm->tmAscent = (double)ptm->tmAscent * font->scale_y;
-    ptm->tmDescent = (double)ptm->tmDescent * font->scale_y;
-    ptm->tmInternalLeading = (double)ptm->tmInternalLeading * font->scale_y;
-    ptm->tmExternalLeading = (double)ptm->tmExternalLeading * font->scale_y;
+    scale_x *= fabs(font->font_desc.matrix.eM11);
+    scale_y = font->scale_y * fabs(font->font_desc.matrix.eM22);
 
-    ptm->tmAveCharWidth = (double)ptm->tmAveCharWidth * scale_x;
-    ptm->tmMaxCharWidth = (double)ptm->tmMaxCharWidth * scale_x;
+#define SCALE_X(x) (x) = GDI_ROUND((double)(x) * (scale_x))
+#define SCALE_Y(y) (y) = GDI_ROUND((double)(y) * (scale_y))
+
+    SCALE_Y(ptm->tmHeight);
+    SCALE_Y(ptm->tmAscent);
+    SCALE_Y(ptm->tmDescent);
+    SCALE_Y(ptm->tmInternalLeading);
+    SCALE_Y(ptm->tmExternalLeading);
+    SCALE_Y(ptm->tmOverhang);
+
+    SCALE_X(ptm->tmAveCharWidth);
+    SCALE_X(ptm->tmMaxCharWidth);
+
+#undef SCALE_X
+#undef SCALE_Y
 }
 
 /*************************************************************
