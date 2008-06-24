@@ -1273,14 +1273,14 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
 
         if (SUCCEEDED(hrSub))
         {
-            len = (strlenW((WCHAR*)&V_UNION(&var, bstrVal))+1) * sizeof(WCHAR);
+            len = (strlenW((WCHAR*)V_UNION(&var, bstrVal))+1) * sizeof(WCHAR);
             if (!(regfilters[idx].Name = CoTaskMemAlloc(len*2)))
                 hr = E_OUTOFMEMORY;
         }
 
         if (SUCCEEDED(hrSub))
         {
-            memcpy(regfilters[idx].Name, &V_UNION(&var, bstrVal), len);
+            memcpy(regfilters[idx].Name, V_UNION(&var, bstrVal), len);
             regfilters[idx].Clsid = clsid;
             idx++;
         }
