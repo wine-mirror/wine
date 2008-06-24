@@ -594,8 +594,18 @@ static HRESULT WINAPI HTMLElement_get_document(IHTMLElement *iface, IDispatch **
 static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString title_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_Init(&title_str, v);
+    nsres = nsIDOMHTMLElement_SetTitle(This->nselem, &title_str);
+    nsAString_Finish(&title_str);
+    if(NS_FAILED(nsres))
+        ERR("SetTitle failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)

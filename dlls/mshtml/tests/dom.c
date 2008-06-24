@@ -1108,6 +1108,21 @@ static void _test_elem_title(unsigned line, IUnknown *unk, const char *extitle)
     SysFreeString(title);
 }
 
+#define test_elem_set_title(u,t) _test_elem_set_title(__LINE__,u,t)
+static void _test_elem_set_title(unsigned line, IUnknown *unk, const char *title)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(title);
+    hres = IHTMLElement_put_title(elem, tmp);
+    ok_(__FILE__,line) (hres == S_OK, "get_title failed: %08x\n", hres);
+
+    IHTMLElement_Release(elem);
+    SysFreeString(tmp);
+}
+
 #define test_node_get_value_str(u,e) _test_node_get_value_str(__LINE__,u,e)
 static void _test_node_get_value_str(unsigned line, IUnknown *unk, const char *exval)
 {
@@ -2004,6 +2019,8 @@ static void test_elems(IHTMLDocument2 *doc)
         test_select_elem(select);
 
         test_elem_title((IUnknown*)select, NULL);
+        test_elem_set_title((IUnknown*)select, "Title");
+        test_elem_title((IUnknown*)select, "Title");
 
         node = get_first_child((IUnknown*)select);
         ok(node != NULL, "node == NULL\n");
