@@ -674,14 +674,9 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
     si.fMask |= SIF_DISABLENOSCROLL;
   
   si.nMin = 0;  
+  si.nMax = editor->nTotalLength;
 
-  if (ME_GetTextLength(editor) > 0)
-  {
-    si.nMax = editor->nTotalLength;
-    si.nPage = editor->sizeWindow.cy;
-  } else {
-    si.nMax = si.nPage = 0;
-  }
+  si.nPage = editor->sizeWindow.cy;
      
   TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
   SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
