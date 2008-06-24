@@ -142,4 +142,6 @@ typedef struct _DEV_BROADCAST_HANDLE
     BYTE        dbch_data[1];
 } DEV_BROADCAST_HANDLE, *PDEV_BROADCAST_HANDLE;
 
+#undef DECL_WINELIB_DBT_TYPE_AW
+
 #endif /* __WINE_DBT_H */
