@@ -261,7 +261,7 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
         ERR("Cannot get sample time (%x)\n", hr);
 
     if (This->rtLastStop != tStart && (IMediaSample_IsDiscontinuity(pSample) == S_FALSE))
-        FIXME("Unexpected discontinuity: Last: %u.%03u, tStart: %u.%03u\n",
+        WARN("Unexpected discontinuity: Last: %u.%03u, tStart: %u.%03u\n",
             (DWORD)(This->rtLastStop / 10000000), (DWORD)((This->rtLastStop / 10000)%1000),
             (DWORD)(tStart / 10000000), (DWORD)((tStart / 10000)%1000));
     This->rtLastStop = tStop;
