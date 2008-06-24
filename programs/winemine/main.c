@@ -176,7 +176,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOUSEMOVE:
     {
-        if( (wParam & MK_LBUTTON) && (wParam & MK_RBUTTON) ) {
+        if( wParam & MK_MBUTTON ) {
             msg = WM_MBUTTONDOWN;
         }
         else if( wParam & MK_LBUTTON ) {
