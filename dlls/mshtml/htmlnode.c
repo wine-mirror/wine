@@ -393,8 +393,17 @@ static HRESULT WINAPI HTMLDOMNode_get_parentNode(IHTMLDOMNode *iface, IHTMLDOMNo
 static HRESULT WINAPI HTMLDOMNode_hasChildNodes(IHTMLDOMNode *iface, VARIANT_BOOL *fChildren)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, fChildren);
-    return E_NOTIMPL;
+    PRBool has_child = FALSE;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, fChildren);
+
+    nsres = nsIDOMNode_HasChildNodes(This->nsnode, &has_child);
+    if(NS_FAILED(nsres))
+        ERR("HasChildNodes failed: %08x\n", nsres);
+
+    *fChildren = has_child ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_get_childNodes(IHTMLDOMNode *iface, IDispatch **p)

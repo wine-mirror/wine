@@ -836,6 +836,20 @@ static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
     return child;
 }
 
+#define test_node_has_child(u,b) _test_node_has_child(__LINE__,u,b)
+static void _test_node_has_child(unsigned line, IUnknown *unk, VARIANT_BOOL exb)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    VARIANT_BOOL b = 0xdead;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_hasChildNodes(node, &b);
+    ok_(__FILE__,line) (hres == S_OK, "hasChildNodes failed: %08x\n", hres);
+    ok_(__FILE__,line) (b == exb, "hasChildNodes=%x, expected %x\n", b, exb);
+
+    IHTMLDOMNode_Release(node);
+}
+
 #define get_node_type(n) _get_node_type(__LINE__,n)
 static long _get_node_type(unsigned line, IUnknown *unk)
 {
@@ -2095,8 +2109,10 @@ static void test_create_elems(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_body(doc, &body);
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
+    test_node_has_child((IUnknown*)body, VARIANT_FALSE);
 
     node = test_node_append_child((IUnknown*)body, (IUnknown*)elem);
+    test_node_has_child((IUnknown*)body, VARIANT_TRUE);
     elem2 = get_elem_iface((IUnknown*)node);
     IHTMLElement_Release(elem2);
 
@@ -2111,6 +2127,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
     test_elem_collection((IUnknown*)disp, NULL, 0);
     IDispatch_Release(disp);
+    test_node_has_child((IUnknown*)body, VARIANT_FALSE);
 
     IHTMLElement_Release(body);
     IHTMLElement_Release(elem);
