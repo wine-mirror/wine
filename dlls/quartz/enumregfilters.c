@@ -152,7 +152,7 @@ static HRESULT WINAPI IEnumRegFiltersImpl_Next(IEnumRegFilters * iface, ULONG cF
         for(i = 0; i < cFetched; i++)
         {
             /* The string in the REGFILTER structure must be allocated in the same block as the REGFILTER structure itself */
-            ppRegFilter[i] = CoTaskMemAlloc(sizeof(REGFILTER)+(strlenW(This->RegFilters[i].Name)+1)*sizeof(WCHAR));
+            ppRegFilter[i] = CoTaskMemAlloc(sizeof(REGFILTER)+(strlenW(This->RegFilters[This->uIndex + i].Name)+1)*sizeof(WCHAR));
             if (!ppRegFilter[i])
             {
                 while(i)
@@ -162,9 +162,10 @@ static HRESULT WINAPI IEnumRegFiltersImpl_Next(IEnumRegFilters * iface, ULONG cF
                 }
                 return E_OUTOFMEMORY;
         }
-            ppRegFilter[i]->Clsid = This->RegFilters[i].Clsid;
+            ppRegFilter[i]->Clsid = This->RegFilters[This->uIndex + i].Clsid;
             ppRegFilter[i]->Name = (WCHAR*)((char*)ppRegFilter[i]+sizeof(REGFILTER));
-            CopyMemory(ppRegFilter[i]->Name, This->RegFilters[i].Name, (strlenW(This->RegFilters[i].Name)+1)*sizeof(WCHAR));
+            CopyMemory(ppRegFilter[i]->Name, This->RegFilters[This->uIndex + i].Name,
+                            (strlenW(This->RegFilters[This->uIndex + i].Name)+1)*sizeof(WCHAR));
         }
 
         This->uIndex += cFetched;
