@@ -3487,9 +3487,18 @@ static UINT msi_publish_upgrade_code(MSIPACKAGE *package)
     if (!upgrade)
         return ERROR_SUCCESS;
 
-    r = MSIREG_OpenUserUpgradeCodesKey(upgrade, &hkey, TRUE);
-    if (r != ERROR_SUCCESS)
-        goto done;
+    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        r = MSIREG_OpenClassesUpgradeCodesKey(upgrade, &hkey, TRUE);
+        if (r != ERROR_SUCCESS)
+            goto done;
+    }
+    else
+    {
+        r = MSIREG_OpenUserUpgradeCodesKey(upgrade, &hkey, TRUE);
+        if (r != ERROR_SUCCESS)
+            goto done;
+    }
 
     squash_guid(package->ProductCode, squashed_pc);
     msi_reg_set_val_str(hkey, squashed_pc, NULL);

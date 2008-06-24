@@ -2649,12 +2649,9 @@ static void test_publish_publishproduct(void)
     RegCloseKey(hkey);
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, machup, &hkey);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-        CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
-    }
+    CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
 
     RegDeleteKeyA(hkey, "");
     RegCloseKey(hkey);

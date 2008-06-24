@@ -220,6 +220,11 @@ static const WCHAR szInstaller_LocalManagedProd_fmt[] = {
 'I','n','s','t','a','l','l','e','r','\\',
 'P','r','o','d','u','c','t','s','\\','%','s',0};
 
+static const WCHAR szInstaller_ClassesUpgrade_fmt[] = {
+'I','n','s','t','a','l','l','e','r','\\',
+'U','p','g','r','a','d','e','C','o','d','e','s','\\',
+'%','s',0};
+
 static const WCHAR localsid[] = {'S','-','1','-','5','-','1','8',0};
 
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out)
@@ -1121,6 +1126,24 @@ UINT MSIREG_OpenLocalManagedProductKey(LPCWSTR szProductCode, HKEY *key, BOOL cr
         return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
 
     return RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
+}
+
+UINT MSIREG_OpenClassesUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL create)
+{
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n", debugstr_w(szUpgradeCode));
+    if (!squash_guid(szUpgradeCode, squished_pc))
+        return ERROR_FUNCTION_FAILED;
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath, szInstaller_ClassesUpgrade_fmt, squished_pc);
+
+    if (create)
+        return RegCreateKeyW(HKEY_CLASSES_ROOT, keypath, key);
+
+    return RegOpenKeyW(HKEY_CLASSES_ROOT, keypath, key);
 }
 
 /*************************************************************************
