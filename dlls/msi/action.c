@@ -3339,6 +3339,55 @@ static UINT msi_publish_icons(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT msi_publish_sourcelist(MSIPACKAGE *package)
+{
+    UINT r;
+    LPWSTR buffer;
+    MSIMEDIADISK *disk;
+    MSISOURCELISTINFO *info;
+
+    static const WCHAR szEmpty[] = {0};
+
+    buffer = strrchrW(package->PackagePath, '\\') + 1;
+    r = MsiSourceListSetInfoW(package->ProductCode, NULL,
+                              package->Context, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_PACKAGENAMEW, buffer);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MsiSourceListSetInfoW(package->ProductCode, NULL,
+                              package->Context, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_MEDIAPACKAGEPATHW, szEmpty);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MsiSourceListSetInfoW(package->ProductCode, NULL,
+                              package->Context, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_DISKPROMPTW, szEmpty);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    LIST_FOR_EACH_ENTRY(info, &package->sourcelist_info, MSISOURCELISTINFO, entry)
+    {
+        if (!lstrcmpW(info->property, INSTALLPROPERTY_LASTUSEDSOURCEW))
+            msi_set_last_used_source(package->ProductCode, NULL, info->context,
+                                     info->options, info->value);
+        else
+            MsiSourceListSetInfoW(package->ProductCode, NULL,
+                                  info->context, info->options,
+                                  info->property, info->value);
+    }
+
+    LIST_FOR_EACH_ENTRY(disk, &package->sourcelist_media, MSIMEDIADISK, entry)
+    {
+        MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
+                                   disk->context, disk->options,
+                                   disk->disk_id, disk->volume_label, disk->disk_prompt);
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static BOOL msi_check_publish(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
@@ -3362,8 +3411,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 {
     UINT rc;
     LPWSTR packname;
-    MSISOURCELISTINFO *info;
-    MSIMEDIADISK *disk;
     HKEY hkey=0;
     HKEY hukey=0;
     HKEY hudkey=0, props=0;
@@ -3376,7 +3423,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
     static const WCHAR szSourceList[] =
         {'S','o','u','r','c','e','L','i','s','t',0};
-    static const WCHAR szEmpty[] = {0};
     DWORD langid;
     LPWSTR buffer;
     DWORD size;
@@ -3454,25 +3500,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     }
     msi_free(buffer);
 
-    buffer = strrchrW( package->PackagePath, '\\') + 1;
-    rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
-                                package->Context, MSICODE_PRODUCT,
-                                INSTALLPROPERTY_PACKAGENAMEW, buffer );
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
-                                package->Context, MSICODE_PRODUCT,
-                                INSTALLPROPERTY_MEDIAPACKAGEPATHW, szEmpty );
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = MsiSourceListSetInfoW( package->ProductCode, NULL,
-                                package->Context, MSICODE_PRODUCT,
-                                INSTALLPROPERTY_DISKPROMPTW, szEmpty );
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
     /* FIXME: Need to write more keys to the user registry */
   
     hDb= alloc_msihandle( &package->db->hdr );
@@ -3508,26 +3535,11 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         rc = ERROR_SUCCESS;
     }
 
-    /* publish the SourceList info */
-    LIST_FOR_EACH_ENTRY(info, &package->sourcelist_info, MSISOURCELISTINFO, entry)
-    {
-        if (!lstrcmpW(info->property, INSTALLPROPERTY_LASTUSEDSOURCEW))
-            msi_set_last_used_source(package->ProductCode, NULL, info->context,
-                                     info->options, info->value);
-        else
-            MsiSourceListSetInfoW(package->ProductCode, NULL,
-                                  info->context, info->options,
-                                  info->property, info->value);
-    }
+    rc = msi_publish_sourcelist(package);
+    if (rc != ERROR_SUCCESS)
+        goto end;
 
-    LIST_FOR_EACH_ENTRY(disk, &package->sourcelist_media, MSIMEDIADISK, entry)
-    {
-        MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
-                                   disk->context, disk->options,
-                                   disk->disk_id, disk->volume_label, disk->disk_prompt);
-    }
-
-    msi_publish_icons(package);
+    rc = msi_publish_icons(package);
 
 end:
     RegCloseKey(hkey);
