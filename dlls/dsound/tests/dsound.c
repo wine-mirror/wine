@@ -407,12 +407,6 @@ static HRESULT test_primary(LPGUID lpGuid)
        "IDirectSound_CreateSoundBuffer() should have failed: rc=%s,"
        "dsbo=%p\n",DXGetErrorString8(rc),primary);
 
-    /* DSOUND: Error: Invalid buffer description pointer */
-    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,0,NULL);
-    ok(rc==DSERR_INVALIDPARAM && primary==0,
-       "IDirectSound_CreateSoundBuffer() should have failed: rc=%s,"
-       "dsbo=0x%p\n",DXGetErrorString8(rc),primary);
-
     ZeroMemory(&bufdesc, sizeof(bufdesc));
 
     /* DSOUND: Error: Invalid size */
