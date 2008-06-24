@@ -58,6 +58,9 @@ static void test_qi_base_to_ex(void)
     HWND window = create_window();
     D3DPRESENT_PARAMETERS present_parameters;
 
+    ok( d3d9 != NULL, "Failed to create D3D9 object\n" );
+    if (!d3d9) return;
+
     hr = IDirect3D9_QueryInterface(d3d9, &IID_IDirect3D9Ex, (void **) &d3d9ex);
     ok(hr == E_NOINTERFACE,
        "IDirect3D9::QueryInterface for IID_IDirect3D9Ex returned %s, expected E_NOINTERFACE\n",
