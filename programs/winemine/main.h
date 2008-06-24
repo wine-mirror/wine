@@ -19,8 +19,8 @@
 #include <windows.h>
 
 #define BEGINNER_MINES        10
-#define BEGINNER_COLS         8
-#define BEGINNER_ROWS         8
+#define BEGINNER_COLS         9
+#define BEGINNER_ROWS         9
 
 #define ADVANCED_MINES        40
 #define ADVANCED_COLS         16
