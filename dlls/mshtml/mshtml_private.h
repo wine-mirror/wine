@@ -99,6 +99,7 @@ typedef enum {
 } tid_t;
 
 typedef enum {
+    EVENTID_CHANGE,
     EVENTID_CLICK,
     EVENTID_KEYUP,
     EVENTID_LOAD,

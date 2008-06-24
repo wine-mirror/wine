@@ -35,6 +35,9 @@ struct event_target_t {
     IDispatch *event_table[EVENTID_LAST];
 };
 
+static const WCHAR changeW[] = {'c','h','a','n','g','e',0};
+static const WCHAR onchangeW[] = {'o','n','c','h','a','n','g','e',0};
+
 static const WCHAR clickW[] = {'c','l','i','c','k',0};
 static const WCHAR onclickW[] = {'o','n','c','l','i','c','k',0};
 
@@ -53,6 +56,7 @@ typedef struct {
 #define EVENT_DEFAULTLISTENER    0x0001
 
 static const event_info_t event_info[] = {
+    {changeW,   onchangeW,   EVENT_DEFAULTLISTENER},
     {clickW,    onclickW,    EVENT_DEFAULTLISTENER},
     {keyupW,    onkeyupW,    EVENT_DEFAULTLISTENER},
     {loadW,     onloadW,     0}
