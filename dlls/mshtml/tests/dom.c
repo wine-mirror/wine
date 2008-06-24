@@ -42,7 +42,7 @@ static const char elem_test_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
     "<body>text test<!-- a comment -->"
     "<a href=\"http://test\" name=\"x\">link</a>"
-    "<input id=\"in\" class=\"testclass\"/>"
+    "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" />"
     "<select id=\"s\"><option id=\"x\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
     "<table><tbody></tbody></table>"
@@ -952,6 +952,19 @@ static void _test_elem_class(unsigned line, IUnknown *unk, const char *exclass)
     SysFreeString(class);
 }
 
+#define test_elem_tabindex(u,i) _test_elem_tabindex(__LINE__,u,i)
+static void _test_elem_tabindex(unsigned line, IUnknown *unk, short exindex)
+{
+    IHTMLElement2 *elem2 = _get_elem2_iface(line, unk);
+    short index = -3;
+    HRESULT hres;
+
+    hres = IHTMLElement2_get_tabIndex(elem2, &index);
+    IHTMLElement2_Release(elem2);
+    ok_(__FILE__,line) (hres == S_OK, "get_tabIndex failed: %08x\n", hres);
+    ok_(__FILE__,line) (index == exindex, "unexpected index %d\n", index);
+}
+
 #define test_elem_set_class(u,c) _test_elem_set_class(__LINE__,u,c)
 static void _test_elem_set_class(unsigned line, IUnknown *unk, const char *class)
 {
@@ -1840,6 +1853,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_class((IUnknown*)elem, NULL);
         test_elem_set_class((IUnknown*)elem, "cl");
         test_elem_set_class((IUnknown*)elem, NULL);
+        test_elem_tabindex((IUnknown*)elem, 0);
         IHTMLElement_Release(elem);
     }
 
@@ -1901,6 +1915,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_put_value((IUnknown*)elem, "test");
         test_input_value((IUnknown*)elem, NULL);
         test_elem_class((IUnknown*)elem, "testclass");
+        test_elem_tabindex((IUnknown*)elem, 2);
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);
