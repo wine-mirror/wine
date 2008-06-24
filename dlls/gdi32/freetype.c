@@ -4921,6 +4921,55 @@ static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
 #undef SCALE_Y
 }
 
+static void scale_outline_font_metrics(const GdiFont *font, OUTLINETEXTMETRICW *potm)
+{
+    double scale_x, scale_y;
+
+    if (font->aveWidth)
+    {
+        scale_x = (double)font->aveWidth;
+        scale_x /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
+    }
+    else
+        scale_x = font->scale_y;
+
+    scale_x *= fabs(font->font_desc.matrix.eM11);
+    scale_y = font->scale_y * fabs(font->font_desc.matrix.eM22);
+
+    scale_font_metrics(font, &potm->otmTextMetrics);
+
+#define SCALE_X(x) (x) = GDI_ROUND((double)(x) * (scale_x))
+#define SCALE_Y(y) (y) = GDI_ROUND((double)(y) * (scale_y))
+
+    SCALE_Y(potm->otmAscent);
+    SCALE_Y(potm->otmDescent);
+    SCALE_Y(potm->otmLineGap);
+    SCALE_Y(potm->otmsCapEmHeight);
+    SCALE_Y(potm->otmsXHeight);
+    SCALE_Y(potm->otmrcFontBox.top);
+    SCALE_Y(potm->otmrcFontBox.bottom);
+    SCALE_X(potm->otmrcFontBox.left);
+    SCALE_X(potm->otmrcFontBox.right);
+    SCALE_Y(potm->otmMacAscent);
+    SCALE_Y(potm->otmMacDescent);
+    SCALE_Y(potm->otmMacLineGap);
+    SCALE_X(potm->otmptSubscriptSize.x);
+    SCALE_Y(potm->otmptSubscriptSize.y);
+    SCALE_X(potm->otmptSubscriptOffset.x);
+    SCALE_Y(potm->otmptSubscriptOffset.y);
+    SCALE_X(potm->otmptSuperscriptSize.x);
+    SCALE_Y(potm->otmptSuperscriptSize.y);
+    SCALE_X(potm->otmptSuperscriptOffset.x);
+    SCALE_Y(potm->otmptSuperscriptOffset.y);
+    SCALE_Y(potm->otmsStrikeoutSize);
+    SCALE_Y(potm->otmsStrikeoutPosition);
+    SCALE_Y(potm->otmsUnderscoreSize);
+    SCALE_Y(potm->otmsUnderscorePosition);
+
+#undef SCALE_X
+#undef SCALE_Y
+}
+
 /*************************************************************
  * WineEngGetTextMetrics
  *
@@ -4977,7 +5026,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
         if(cbSize >= font->potm->otmSize)
         {
 	    memcpy(potm, font->potm, font->potm->otmSize);
-            scale_font_metrics(font, &potm->otmTextMetrics);
+            scale_outline_font_metrics(font, potm);
         }
         LeaveCriticalSection( &freetype_cs );
 	return font->potm->otmSize;
@@ -5214,7 +5263,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     if(potm && needed <= cbSize)
     {
         memcpy(potm, font->potm, font->potm->otmSize);
-        scale_font_metrics(font, &potm->otmTextMetrics);
+        scale_outline_font_metrics(font, potm);
     }
 
 end:
