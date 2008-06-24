@@ -656,6 +656,17 @@ static void _test_select_set_value(unsigned line, IHTMLSelectElement *select, co
     ok_(__FILE__,line) (hres == S_OK, "put_value failed: %08x\n", hres);
 }
 
+#define test_select_type(s,t) _test_select_type(__LINE__,s,t)
+static void _test_select_type(unsigned line, IHTMLSelectElement *select, const char *extype)
+{
+    BSTR type;
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_get_type(select, &type);
+    ok_(__FILE__,line) (hres == S_OK, "get_type failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa(type, extype), "type=%s, expected %s\n", dbgstr_w(type), extype);
+}
+
 #define test_range_text(r,t) _test_range_text(__LINE__,r,t)
 static void _test_range_text(unsigned line, IHTMLTxtRange *range, const char *extext)
 {
@@ -1368,6 +1379,7 @@ static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, LPCWSTR id)
 
 static void test_select_elem(IHTMLSelectElement *select)
 {
+    test_select_type(select, "select-one");
     test_select_length(select, 2);
     test_select_selidx(select, 0);
     test_select_put_selidx(select, 1);

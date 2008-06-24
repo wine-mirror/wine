@@ -223,8 +223,26 @@ static HRESULT WINAPI HTMLSelectElement_get_selectedIndex(IHTMLSelectElement *if
 static HRESULT WINAPI HTMLSelectElement_get_type(IHTMLSelectElement *iface, BSTR *p)
 {
     HTMLSelectElement *This = HTMLSELECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    const PRUnichar *type;
+    nsAString type_str;
+    nsresult nsres;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&type_str, NULL);
+    nsres = nsIDOMHTMLSelectElement_GetType(This->nsselect, &type_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&type_str, &type);
+        *p = *type ? SysAllocString(type) : NULL;
+    }else {
+        ERR("GetType failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsAString_Finish(&type_str);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLSelectElement_put_value(IHTMLSelectElement *iface, BSTR v)
