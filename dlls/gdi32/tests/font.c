@@ -30,6 +30,7 @@
 
 #include "wine/test.h"
 
+#define near_match(a, b) (abs((a) - (b)) <= 4)
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
 LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
@@ -781,6 +782,8 @@ static void test_GetKerningPairs(void)
            kd[i].otmDescent, otm.otmDescent);
         ok(kd[i].otmLineGap == otm.otmLineGap, "expected %u, got %u\n",
            kd[i].otmLineGap, otm.otmLineGap);
+        ok(near_match(kd[i].otmMacDescent, otm.otmMacDescent), "expected %d, got %d\n",
+           kd[i].otmMacDescent, otm.otmMacDescent);
 todo_wine {
         ok(kd[i].otmsCapEmHeight == otm.otmsCapEmHeight, "expected %u, got %u\n",
            kd[i].otmsCapEmHeight, otm.otmsCapEmHeight);
@@ -788,8 +791,6 @@ todo_wine {
            kd[i].otmsXHeight, otm.otmsXHeight);
         ok(kd[i].otmMacAscent == otm.otmMacAscent, "expected %d, got %d\n",
            kd[i].otmMacAscent, otm.otmMacAscent);
-        ok(kd[i].otmMacDescent == otm.otmMacDescent, "expected %d, got %d\n",
-           kd[i].otmMacDescent, otm.otmMacDescent);
         /* FIXME: this one sometimes succeeds due to expected 0, enable it when removing todo */
         if (0) ok(kd[i].otmMacLineGap == otm.otmMacLineGap, "expected %u, got %u\n",
            kd[i].otmMacLineGap, otm.otmMacLineGap);

@@ -5103,7 +5103,6 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     }
 
     TM.tmCharSet = font->charset;
-#undef TM
 
     font->potm->otmFiller = 0;
     memcpy(&font->potm->otmPanoseNumber, pOS2->panose, PANOSE_COUNT);
@@ -5122,9 +5121,9 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
     font->potm->otmrcFontBox.right = (pFT_MulFix(ft_face->bbox.xMax, x_scale) + 32) >> 6;
     font->potm->otmrcFontBox.top = (pFT_MulFix(ft_face->bbox.yMax, y_scale) + 32) >> 6;
     font->potm->otmrcFontBox.bottom = (pFT_MulFix(ft_face->bbox.yMin, y_scale) + 32) >> 6;
-    font->potm->otmMacAscent = 0; /* where do these come from ? */
-    font->potm->otmMacDescent = 0;
-    font->potm->otmMacLineGap = 0;
+    font->potm->otmMacAscent = TM.tmAscent;
+    font->potm->otmMacDescent = -TM.tmDescent;
+    font->potm->otmMacLineGap = font->potm->otmLineGap;
     font->potm->otmusMinimumPPEM = 0; /* TT Header */
     font->potm->otmptSubscriptSize.x = (pFT_MulFix(pOS2->ySubscriptXSize, x_scale) + 32) >> 6;
     font->potm->otmptSubscriptSize.y = (pFT_MulFix(pOS2->ySubscriptYSize, y_scale) + 32) >> 6;
@@ -5143,6 +5142,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
         font->potm->otmsUnderscoreSize = (pFT_MulFix(pPost->underlineThickness, y_scale) + 32) >> 6;
 	font->potm->otmsUnderscorePosition = (pFT_MulFix(pPost->underlinePosition, y_scale) + 32) >> 6;
     }
+#undef TM
 
     /* otmp* members should clearly have type ptrdiff_t, but M$ knows best */
     cp = (char*)font->potm + sizeof(*font->potm);
