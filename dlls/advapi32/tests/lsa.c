@@ -95,7 +95,6 @@ static void test_lsa(void)
         status = pLsaQueryInformationPolicy(handle, PolicyPrimaryDomainInformation, (PVOID*)&primary_domain_info);
         ok(status == STATUS_SUCCESS, "LsaQueryInformationPolicy(PolicyPrimaryDomainInformation) failed, returned 0x%08x\n", status);
         if (status == STATUS_SUCCESS) {
-            ok(primary_domain_info->Sid==0,"Sid should be NULL on the local computer\n");
             if (primary_domain_info->Sid) {
                 LPSTR strsid;
                 if (pConvertSidToStringSidA(primary_domain_info->Sid, &strsid))
@@ -115,6 +114,8 @@ static void test_lsa(void)
                 else
                     trace("invalid sid\n");
             }
+            else
+                trace("Running on a standalone system.\n");
             pLsaFreeMemory((LPVOID)primary_domain_info);
         }
 
@@ -129,8 +130,6 @@ static void test_lsa(void)
         ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER,
            "LsaQueryInformationPolicy(PolicyDnsDomainInformation) failed, returned 0x%08x\n", status);
         if (status == STATUS_SUCCESS) {
-            ok(IsEqualGUID(&dns_domain_info->DomainGuid, &GUID_NULL), "DomainGUID should be GUID_NULL on local computer\n");
-            ok(dns_domain_info->Sid==0,"Sid should be NULL on the local computer\n");
             if (dns_domain_info->Sid || !IsEqualGUID(&dns_domain_info->DomainGuid, &GUID_NULL)) {
                 LPSTR strsid = NULL;
                 LPSTR name = NULL;
@@ -169,6 +168,8 @@ static void test_lsa(void)
                 LocalFree( guidstr );
                 LocalFree( strsid );
             }
+            else
+                trace("Running on a standalone system.\n");
             pLsaFreeMemory((LPVOID)dns_domain_info);
         }
 
