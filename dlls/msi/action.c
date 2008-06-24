@@ -3339,14 +3339,22 @@ static UINT msi_publish_icons(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-static UINT msi_publish_sourcelist(MSIPACKAGE *package)
+static UINT msi_publish_sourcelist(MSIPACKAGE *package, HKEY hkey)
 {
     UINT r;
+    HKEY source;
     LPWSTR buffer;
     MSIMEDIADISK *disk;
     MSISOURCELISTINFO *info;
 
     static const WCHAR szEmpty[] = {0};
+    static const WCHAR szSourceList[] = {'S','o','u','r','c','e','L','i','s','t',0};
+
+    r = RegCreateKeyW(hkey, szSourceList, &source);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    RegCloseKey(source);
 
     buffer = strrchrW(package->PackagePath, '\\') + 1;
     r = MsiSourceListSetInfoW(package->ProductCode, NULL,
@@ -3547,10 +3555,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     UINT rc;
     HKEY hukey=0;
     HKEY hudkey=0;
-    HKEY source;
-
-    static const WCHAR szSourceList[] =
-        {'S','o','u','r','c','e','L','i','s','t',0};
 
     /* FIXME: also need to publish if the product is in advertise mode */
     if (!msi_check_publish(package))
@@ -3577,12 +3581,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
             goto end;
     }
 
-    rc = RegCreateKeyW(hukey, szSourceList, &source);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    RegCloseKey(source);
-
     rc = msi_publish_upgrade_code(package);
     if (rc != ERROR_SUCCESS)
         goto end;
@@ -3591,7 +3589,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    rc = msi_publish_sourcelist(package);
+    rc = msi_publish_sourcelist(package, hukey);
     if (rc != ERROR_SUCCESS)
         goto end;
 
