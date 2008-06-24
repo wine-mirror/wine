@@ -328,7 +328,7 @@ struct tagGdiFont {
     INT orientation;
     FONT_DESC font_desc;
     LONG aveWidth, ppem;
-    float scale_y;
+    double scale_y;
     SHORT yMax;
     SHORT yMin;
     DWORD ntmFlags;
@@ -807,7 +807,7 @@ static inline BOOL is_win9x(void)
    in the highest 16 bits and the decimal part in the lowest 16 bits of the FT_Fixed.
    It fails if the integer part of the float number is greater than SHORT_MAX.
 */
-static inline FT_Fixed FT_FixedFromFloat(float f)
+static inline FT_Fixed FT_FixedFromFloat(double f)
 {
 	short value = f;
 	unsigned short fract = (f - value) * 0xFFFF;
@@ -2681,11 +2681,11 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
 
     if(height > 0) {
         if(pOS2->usWinAscent + pOS2->usWinDescent == 0)
-            ppem = ft_face->units_per_EM * height /
-                (pHori->Ascender - pHori->Descender);
+            ppem = MulDiv(ft_face->units_per_EM, height,
+                          pHori->Ascender - pHori->Descender);
         else
-            ppem = ft_face->units_per_EM * height /
-                (pOS2->usWinAscent + pOS2->usWinDescent);
+            ppem = MulDiv(ft_face->units_per_EM, height,
+                          pOS2->usWinAscent + pOS2->usWinDescent);
     }
     else
         ppem = -height;
@@ -2785,6 +2785,7 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
         font->ppem = load_VDMX(font, height);
         if(font->ppem == 0)
             font->ppem = calc_ppem_for_height(ft_face, height);
+        TRACE("height %d => ppem %d\n", height, font->ppem);
 
         if((err = pFT_Set_Pixel_Sizes(ft_face, 0, font->ppem)) != 0)
             WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", 0, font->ppem, err);
@@ -3270,6 +3271,11 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
 	  lf.lfWeight, lf.lfPitchAndFamily, lf.lfCharSet, lf.lfOrientation,
 	  lf.lfEscapement);
+
+    TRACE("DC transform %f %f %f %f %f %f\n",
+          dc->xformWorld2Vport.eM11, dc->xformWorld2Vport.eM12,
+          dc->xformWorld2Vport.eM21, dc->xformWorld2Vport.eM22,
+          dc->xformWorld2Vport.eDx, dc->xformWorld2Vport.eDy);
 
     /* check the cache first */
     if((ret = find_in_cache(hfont, &lf, &dc->xformWorld2Vport, can_use_bitmap)) != NULL) {
@@ -4276,15 +4282,18 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     INT left, right, top = 0, bottom = 0, adv, lsb, bbx;
     FT_Angle angle = 0;
     FT_Int load_flags = FT_LOAD_DEFAULT | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
-    float widthRatio = 1.0;
+    double widthRatio = 1.0;
     FT_Matrix transMat = identityMat;
     BOOL needsTransform = FALSE;
     BOOL tategaki = (font->GSUB_Table != NULL);
     UINT original_index;
 
-
     TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
 	  buflen, buf, lpmat);
+
+    TRACE("font transform %f %f %f %f\n",
+          font->font_desc.matrix.eM11, font->font_desc.matrix.eM12,
+          font->font_desc.matrix.eM21, font->font_desc.matrix.eM22);
 
     EnterCriticalSection( &freetype_cs );
 
@@ -4331,8 +4340,8 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     /* Scaling factor */
     if (font->aveWidth && font->potm)
     {
-        widthRatio = (float)font->aveWidth * font->font_desc.matrix.eM11;
-        widthRatio /= (float)font->potm->otmTextMetrics.tmAveCharWidth;
+        widthRatio = (double)font->aveWidth * font->font_desc.matrix.eM11;
+        widthRatio /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
     }
     else
         widthRatio = font->scale_y;
@@ -4372,7 +4381,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     if(font->orientation && !tategaki) {
         FT_Matrix rotationMat;
         FT_Vector vecAngle;
-        angle = FT_FixedFromFloat((float)font->orientation / 10.0);
+        angle = FT_FixedFromFloat((double)font->orientation / 10.0);
         pFT_Vector_Unit(&vecAngle, angle);
         rotationMat.xx = vecAngle.x;
         rotationMat.xy = -vecAngle.y;
@@ -4847,24 +4856,24 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
 
 static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
 {
-    float scale_x;
+    double scale_x;
 
     if (font->aveWidth)
     {
-        scale_x = (float)font->aveWidth * font->font_desc.matrix.eM11;
-        scale_x /= (float)font->potm->otmTextMetrics.tmAveCharWidth;
+        scale_x = (double)font->aveWidth * font->font_desc.matrix.eM11;
+        scale_x /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
     }
     else
         scale_x = font->scale_y;
 
-    ptm->tmHeight = (float)ptm->tmHeight * font->scale_y;
-    ptm->tmAscent = (float)ptm->tmAscent * font->scale_y;
-    ptm->tmDescent = (float)ptm->tmDescent * font->scale_y;
-    ptm->tmInternalLeading = (float)ptm->tmInternalLeading * font->scale_y;
-    ptm->tmExternalLeading = (float)ptm->tmExternalLeading * font->scale_y;
+    ptm->tmHeight = (double)ptm->tmHeight * font->scale_y;
+    ptm->tmAscent = (double)ptm->tmAscent * font->scale_y;
+    ptm->tmDescent = (double)ptm->tmDescent * font->scale_y;
+    ptm->tmInternalLeading = (double)ptm->tmInternalLeading * font->scale_y;
+    ptm->tmExternalLeading = (double)ptm->tmExternalLeading * font->scale_y;
 
-    ptm->tmAveCharWidth = (float)ptm->tmAveCharWidth * scale_x;
-    ptm->tmMaxCharWidth = (float)ptm->tmMaxCharWidth * scale_x;
+    ptm->tmAveCharWidth = (double)ptm->tmAveCharWidth * scale_x;
+    ptm->tmMaxCharWidth = (double)ptm->tmMaxCharWidth * scale_x;
 }
 
 /*************************************************************
