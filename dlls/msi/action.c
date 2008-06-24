@@ -3261,7 +3261,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
     return rc;
 }
 
-static UINT ITERATE_PublishProduct(MSIRECORD *row, LPVOID param)
+static UINT ITERATE_PublishIcon(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
     HANDLE the_file;
@@ -3320,6 +3320,25 @@ static UINT ITERATE_PublishProduct(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
+static UINT msi_publish_icons(MSIPACKAGE *package)
+{
+    UINT r;
+    MSIQUERY *view;
+
+    static const WCHAR query[]= {
+        'S','E','L','E','C','T',' ','*',' ',
+        'F','R','O','M',' ','`','I','c','o','n','`',0};
+
+    r = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (r == ERROR_SUCCESS)
+    {
+        MSI_IterateRecords(view, NULL, ITERATE_PublishIcon, package);
+        msiobj_release(&view->hdr);
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static BOOL msi_check_publish(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
@@ -3343,13 +3362,8 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 {
     UINT rc;
     LPWSTR packname;
-    MSIQUERY * view;
     MSISOURCELISTINFO *info;
     MSIMEDIADISK *disk;
-    static const WCHAR Query[]=
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','I','c','o','n','`',0};
-    /* for registry stuff */
     HKEY hkey=0;
     HKEY hukey=0;
     HKEY hudkey=0, props=0;
@@ -3371,15 +3385,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     /* FIXME: also need to publish if the product is in advertise mode */
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
-
-    /* write out icon files */
-
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
-    if (rc == ERROR_SUCCESS)
-    {
-        MSI_IterateRecords(view, NULL, ITERATE_PublishProduct, package);
-        msiobj_release(&view->hdr);
-    }
 
     /* ok there is a lot more done here but i need to figure out what */
 
@@ -3521,6 +3526,8 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
                                    disk->context, disk->options,
                                    disk->disk_id, disk->volume_label, disk->disk_prompt);
     }
+
+    msi_publish_icons(package);
 
 end:
     RegCloseKey(hkey);
