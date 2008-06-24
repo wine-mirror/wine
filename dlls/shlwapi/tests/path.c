@@ -537,9 +537,13 @@ static void test_PathCombineA(void)
     SetLastError(0xdeadbeef);
     lstrcpyA(dest, "control");
     str = PathCombineA(dest, "relative\\dir", "\\one\\two\\three\\");
-    ok(str == dest, "Expected str == dest, got %p\n", str);
-    ok(!lstrcmp(str, "one\\two\\three\\"), "Expected one\\two\\three\\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    /* Vista fails which probably makes sense as PathCombineA expects an absolute dir */
+    if (str)
+    {
+        ok(str == dest, "Expected str == dest, got %p\n", str);
+        ok(!lstrcmp(str, "one\\two\\three\\"), "Expected one\\two\\three\\, got %s\n", str);
+    }
 
     /* try forward slashes */
     SetLastError(0xdeadbeef);
