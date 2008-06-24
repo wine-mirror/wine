@@ -268,6 +268,7 @@ static void InternetCrackUrlW_test(void)
         '=','I','D','E','&','A','C','T','I','O','N','=','I','D','E','_','D','E','F','A',
         'U','L','T', 0 };
     static const WCHAR url2[] = { '.','.','/','R','i','t','z','.','x','m','l',0 };
+    static const WCHAR url3[] = { 'h','t','t','p',':','/','/','x','.','o','r','g',0 };
     URL_COMPONENTSW comp;
     WCHAR scheme[20], host[20], user[20], pwd[20], urlpart[50], extra[50];
     DWORD error;
@@ -389,6 +390,32 @@ static void InternetCrackUrlW_test(void)
         "InternetCrackUrl should have failed with error ERROR_INTERNET_UNRECOGNIZED_SCHEME instead of error %d\n",
         GetLastError());
     }
+
+    /* Test to see whether cracking a URL without a filename initializes urlpart */
+    urlpart[0]=0xba;
+    scheme[0]=0;
+    extra[0]=0;
+    host[0]=0;
+    user[0]=0;
+    pwd[0]=0;
+    memset(&comp, 0, sizeof comp);
+    comp.dwStructSize = sizeof comp;
+    comp.lpszScheme = scheme;
+    comp.dwSchemeLength = sizeof scheme;
+    comp.lpszHostName = host;
+    comp.dwHostNameLength = sizeof host;
+    comp.lpszUserName = user;
+    comp.dwUserNameLength = sizeof user;
+    comp.lpszPassword = pwd;
+    comp.dwPasswordLength = sizeof pwd;
+    comp.lpszUrlPath = urlpart;
+    comp.dwUrlPathLength = sizeof urlpart;
+    comp.lpszExtraInfo = extra;
+    comp.dwExtraInfoLength = sizeof extra;
+    r = InternetCrackUrlW(url3, 0, 0, &comp );
+    ok( r, "InternetCrackUrlW failed unexpectedly\n");
+    ok( host[0] == 'x', "host should be x.org\n");
+    ok( urlpart[0] == 0, "urlpart should be empty\n");
 }
 
 static void fill_url_components(LPURL_COMPONENTS lpUrlComponents)

@@ -1490,6 +1490,8 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
     }
     else
     {
+        if (lpUC->lpszUrlPath && (lpUC->dwUrlPathLength > 0))
+            lpUC->lpszUrlPath[0] = 0;
         lpUC->dwUrlPathLength = 0;
     }
 
