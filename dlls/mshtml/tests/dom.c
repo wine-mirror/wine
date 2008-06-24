@@ -1792,6 +1792,50 @@ static void test_stylesheets(IHTMLDocument2 *doc)
     IHTMLStyleSheetsCollection_Release(col);
 }
 
+static void test_child_col_disp(IHTMLDOMChildrenCollection *col)
+{
+    IDispatchEx *dispex;
+    IHTMLDOMNode *node;
+    DISPPARAMS dp = {NULL, NULL, 0, 0};
+    VARIANT var;
+    EXCEPINFO ei;
+    long type;
+    DISPID id;
+    BSTR bstr;
+    HRESULT hres;
+
+    static const WCHAR w0[] = {'0',0};
+    static const WCHAR w100[] = {'1','0','0',0};
+
+    hres = IHTMLDOMChildrenCollection_QueryInterface(col, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx: %08x\n", hres);
+
+    bstr = SysAllocString(w0);
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+    SysFreeString(bstr);
+
+    VariantInit(&var);
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
+    node = get_node_iface((IUnknown*)V_DISPATCH(&var));
+    type = get_node_type((IUnknown*)node);
+    ok(type == 3, "type=%ld\n", type);
+    IHTMLDOMNode_Release(node);
+    VariantClear(&var);
+
+    bstr = SysAllocString(w100);
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &id);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID failed: %08x, expected DISP_E_UNKNOWNNAME\n", hres);
+    SysFreeString(bstr);
+
+    IDispatchEx_Release(dispex);
+}
+
+
+
 static void test_elems(IHTMLDocument2 *doc)
 {
     IHTMLElementCollection *col;
@@ -1997,6 +2041,8 @@ static void test_elems(IHTMLDocument2 *doc)
         hres = IHTMLDOMChildrenCollection_item(child_col, 6000, &disp);
         ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
         ok(disp == (void*)0xdeadbeef, "disp=%p\n", disp);
+
+        test_child_col_disp(child_col);
 
         IHTMLDOMChildrenCollection_Release(child_col);
     }

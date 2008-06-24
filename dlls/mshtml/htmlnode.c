@@ -180,6 +180,58 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_item(IHTMLDOMChildrenCollection 
     return S_OK;
 }
 
+#define DISPID_CHILDCOL_0 MSHTML_DISPID_CUSTOM_MIN
+
+static HRESULT HTMLDOMChildrenCollection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+{
+    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+    WCHAR *ptr;
+    DWORD idx=0;
+    PRUint32 len = 0;
+
+    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+        idx = idx*10 + (*ptr-'0');
+    if(*ptr)
+        return DISP_E_UNKNOWNNAME;
+
+    nsIDOMNodeList_GetLength(This->nslist, &len);
+    if(idx >= len)
+        return DISP_E_UNKNOWNNAME;
+
+    *dispid = DISPID_CHILDCOL_0 + idx;
+    TRACE("ret %x\n", *dispid);
+    return S_OK;
+}
+
+static HRESULT HTMLDOMChildrenCollection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLDOMChildrenCollection *This = HTMLCHILDCOL_THIS(iface);
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
+
+    switch(flags) {
+    case INVOKE_PROPERTYGET: {
+        IDispatch *disp = NULL;
+        HRESULT hres;
+
+        hres = IHTMLDOMChildrenCollection_item(HTMLCHILDCOL(This), id - DISPID_CHILDCOL_0, &disp);
+        if(0&&FAILED(hres))
+            return hres;
+
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = disp;
+        break;
+    }
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 #undef HTMLCHILDCOL_THIS
 
 static const IHTMLDOMChildrenCollectionVtbl HTMLDOMChildrenCollectionVtbl = {
@@ -199,8 +251,14 @@ static const tid_t HTMLDOMChildrenCollection_iface_tids[] = {
     IHTMLDOMChildrenCollection_tid,
     0
 };
+
+static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
+    HTMLDOMChildrenCollection_get_dispid,
+    HTMLDOMChildrenCollection_invoke
+};
+
 static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {
-    NULL,
+    &HTMLDOMChildrenCollection_dispex_vtbl,
     DispDOMChildrenCollection_tid,
     NULL,
     HTMLDOMChildrenCollection_iface_tids
@@ -374,11 +432,11 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode *newChild,
+static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode *oldChild,
                                               IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, newChild, node);
+    FIXME("(%p)->(%p %p)\n", This, oldChild, node);
     return E_NOTIMPL;
 }
 
@@ -548,8 +606,19 @@ static HRESULT WINAPI HTMLDOMNode_get_firstChild(IHTMLDOMNode *iface, IHTMLDOMNo
 static HRESULT WINAPI HTMLDOMNode_get_lastChild(IHTMLDOMNode *iface, IHTMLDOMNode **p)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNode *nschild = NULL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsIDOMNode_GetLastChild(This->nsnode, &nschild);
+    if(nschild) {
+        *p = HTMLDOMNODE(get_node(This->doc, nschild, TRUE));
+        IHTMLDOMNode_AddRef(*p);
+    }else {
+        *p = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_get_previousSibling(IHTMLDOMNode *iface, IHTMLDOMNode **p)
