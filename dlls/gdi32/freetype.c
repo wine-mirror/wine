@@ -4440,7 +4440,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 	vec.x = ft_face->glyph->metrics.horiAdvance;
 	vec.y = 0;
 	pFT_Vector_Transform(&vec, &transMat);
-	lpgm->gmCellIncX = (vec.x+63) >> 6;
+	adv = lpgm->gmCellIncX = (vec.x+63) >> 6;
 	lpgm->gmCellIncY = -((vec.y+63) >> 6);
     }
     lpgm->gmBlackBoxX = (right - left) >> 6;
