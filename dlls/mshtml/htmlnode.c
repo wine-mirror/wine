@@ -436,8 +436,26 @@ static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode 
                                               IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p %p)\n", This, oldChild, node);
-    return E_NOTIMPL;
+    HTMLDOMNode *node_obj;
+    nsIDOMNode *nsnode;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p %p)\n", This, oldChild, node);
+
+    node_obj = get_node_obj(This->doc, (IUnknown*)oldChild);
+    if(!node_obj)
+        return E_FAIL;
+
+    nsres = nsIDOMNode_RemoveChild(This->nsnode, node_obj->nsnode, &nsnode);
+    if(NS_FAILED(nsres)) {
+        ERR("RemoveChild failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    /* FIXME: Make sure that node != newChild */
+    *node = HTMLDOMNODE(get_node(This->doc, nsnode, TRUE));
+    IHTMLDOMNode_AddRef(*node);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_replaceChild(IHTMLDOMNode *iface, IHTMLDOMNode *newChild,

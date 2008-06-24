@@ -769,14 +769,18 @@ static void _test_range_parent(unsigned line, IHTMLTxtRange *range, elem_type_t 
 }
 
 #define test_elem_collection(c,t,l) _test_elem_collection(__LINE__,c,t,l)
-static void _test_elem_collection(unsigned line, IHTMLElementCollection *col,
+static void _test_elem_collection(unsigned line, IUnknown *unk,
         const elem_type_t *elem_types, long exlen)
 {
+    IHTMLElementCollection *col;
     long len;
     DWORD i;
     VARIANT name, index;
     IDispatch *disp;
     HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElementCollection, (void**)&col);
+    ok(hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
 
     test_disp((IUnknown*)col, &DIID_DispHTMLElementCollection);
 
@@ -814,6 +818,8 @@ static void _test_elem_collection(unsigned line, IHTMLElementCollection *col,
     hres = IHTMLElementCollection_item(col, name, index, &disp);
     ok_(__FILE__,line) (hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
     ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
+
+    IHTMLElementCollection_Release(col);
 }
 
 #define get_first_child(n) _get_first_child(__LINE__,n)
@@ -1150,10 +1156,25 @@ static IHTMLDOMNode *_test_node_append_child(unsigned line, IUnknown *node_unk, 
     return new_child;
 }
 
+#define test_node_remove_child(n,c) _test_node_remove_child(__LINE__,n,c)
+static void _test_node_remove_child(unsigned line, IUnknown *unk, IHTMLDOMNode *child)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    IHTMLDOMNode *new_node = NULL;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_removeChild(node, child, &new_node);
+    ok_(__FILE__,line) (hres == S_OK, "appendChild failed: %08x\n", hres);
+    ok_(__FILE__,line) (new_node != NULL, "new_node == NULL\n");
+    /* TODO ok_(__FILE__,line) (new_node != child, "new_node == child\n"); */
+
+    IHTMLDOMNode_Release(node);
+    IHTMLDOMNode_Release(new_node);
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
-    IHTMLElementCollection *elcol;
     IDispatch *disp;
     VARIANT name, index;
     DWORD i;
@@ -1166,14 +1187,11 @@ static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
     hres = IHTMLElementCollection_item(col, name, index, &disp);
     ok(hres == S_OK, "item failed: %08x\n", hres);
 
-    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)&elcol);
+    test_elem_collection((IUnknown*)disp, elem_types, len);
     IDispatch_Release(disp);
     ok(hres == S_OK, "Could not get IHTMLElementCollection interface: %08x\n", hres);
     if(hres != S_OK)
         goto cleanup;
-
-    test_elem_collection(elcol, elem_types, len);
-    IHTMLElementCollection_Release(elcol);
 
     V_VT(&index) = VT_I4;
 
@@ -1881,7 +1899,7 @@ static void test_elems(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection(col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
     test_elem_col_item(col, xW, item_types, sizeof(item_types)/sizeof(item_types[0]));
     IHTMLElementCollection_Release(col);
 
@@ -1894,7 +1912,7 @@ static void test_elems(IHTMLDocument2 *doc)
     hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)&col);
     IDispatch_Release(disp);
     ok(hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
-    test_elem_collection(col, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);
+    test_elem_collection((IUnknown*)col, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);
     IHTMLElementCollection_Release(col);
 
     get_elem_by_id(doc, xxxW, FALSE);
@@ -2060,7 +2078,6 @@ static void test_elems(IHTMLDocument2 *doc)
 
 static void test_create_elems(IHTMLDocument2 *doc)
 {
-    IHTMLElementCollection *col;
     IHTMLElement *elem, *body, *elem2;
     IHTMLDOMNode *node;
     IDispatch *disp;
@@ -2081,19 +2098,23 @@ static void test_create_elems(IHTMLDocument2 *doc)
 
     node = test_node_append_child((IUnknown*)body, (IUnknown*)elem);
     elem2 = get_elem_iface((IUnknown*)node);
-    IHTMLDOMNode_Release(node);
+    IHTMLElement_Release(elem2);
 
     hres = IHTMLElement_get_all(body, &disp);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    hres = IDispatch_QueryInterface(disp, &IID_IHTMLElementCollection, (void**)&col);
-    ok(hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
+    test_elem_collection((IUnknown*)disp, types1, sizeof(types1)/sizeof(types1[0]));
     IDispatch_Release(disp);
 
-    test_elem_collection(col, types1, sizeof(types1)/sizeof(types1[0]));
+    test_node_remove_child((IUnknown*)body, node);
 
-    IHTMLElement_Release(elem2);
+    hres = IHTMLElement_get_all(body, &disp);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    test_elem_collection((IUnknown*)disp, NULL, 0);
+    IDispatch_Release(disp);
+
     IHTMLElement_Release(body);
     IHTMLElement_Release(elem);
+    IHTMLDOMNode_Release(node);
 
     node = test_create_text(doc, "test");
     test_ifaces((IUnknown*)node, text_iids);
@@ -2143,7 +2164,7 @@ static void test_indent(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection(col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
     IHTMLElementCollection_Release(col);
 
     range = test_create_body_range(doc);
@@ -2152,7 +2173,7 @@ static void test_indent(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
-    test_elem_collection(col, indent_types, sizeof(indent_types)/sizeof(indent_types[0]));
+    test_elem_collection((IUnknown*)col, indent_types, sizeof(indent_types)/sizeof(indent_types[0]));
     IHTMLElementCollection_Release(col);
 }
 
