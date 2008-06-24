@@ -3300,14 +3300,13 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     ret = alloc_font();
 
-     memcpy(&ret->font_desc.matrix, &dc->xformWorld2Vport, sizeof(FMAT2));
-     ret->font_desc.lf = lf;
-     ret->font_desc.can_use_bitmap = can_use_bitmap;
-     calc_hash(&ret->font_desc);
-     hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
-     hflist->hfont = hfont;
-     list_add_head(&ret->hfontlist, &hflist->entry);
-
+    memcpy(&ret->font_desc.matrix, &dc->xformWorld2Vport, sizeof(FMAT2));
+    ret->font_desc.lf = lf;
+    ret->font_desc.can_use_bitmap = can_use_bitmap;
+    calc_hash(&ret->font_desc);
+    hflist = HeapAlloc(GetProcessHeap(), 0, sizeof(*hflist));
+    hflist->hfont = hfont;
+    list_add_head(&ret->hfontlist, &hflist->entry);
 
     /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
