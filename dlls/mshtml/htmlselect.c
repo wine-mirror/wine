@@ -256,7 +256,7 @@ static HRESULT WINAPI HTMLSelectElement_get_value(IHTMLSelectElement *iface, BST
     nsres = nsIDOMHTMLSelectElement_GetValue(This->nsselect, &value_str);
     if(NS_SUCCEEDED(nsres)) {
         nsAString_GetData(&value_str, &value);
-        *p = SysAllocString(value);
+        *p = *value ? SysAllocString(value) : NULL;
     }else {
         ERR("GetValue failed: %08x\n", nsres);
     }
