@@ -53,6 +53,11 @@ IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion) {
 
     TRACE("SDKVersion = %x, Created Direct3D object @ %p, WineObj @ %p\n", SDKVersion, object, object->WineD3D);
 
+    if (!object->WineD3D)
+    {
+        HeapFree( GetProcessHeap(), 0, object );
+        object = NULL;
+    }
     return (IDirect3D9*) object;
 }
 
