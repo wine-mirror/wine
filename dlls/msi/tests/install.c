@@ -2481,6 +2481,8 @@ static void test_publish_publishproduct(void)
     static const CHAR badprod[] = "Software\\Microsoft\\Windows\\CurrentVersion"
                                   "\\Installer\\Products"
                                   "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
+    static const CHAR machprod[] = "Installer\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB";
+    static const CHAR machup[] = "Installer\\UpgradeCodes\\51AAE0C44620A5E4788506E91F249BD2";
 
     get_user_sid(&usersid);
     if (!usersid)
@@ -2572,6 +2574,93 @@ static void test_publish_publishproduct(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
+
+    RegDeleteKeyA(hkey, "");
+    RegCloseKey(hkey);
+
+    /* PublishProduct, machine */
+    r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1 ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, badprod, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    sprintf(keypath, prodpath, "S-1-5-18");
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+
+    res = RegOpenKeyA(hkey, "InstallProperties", &props);
+    todo_wine
+    {
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    }
+
+    res = RegOpenKeyA(hkey, "Patches", &patches);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        CHECK_DEL_REG_STR(patches, "AllPatches", NULL);
+    }
+
+    RegDeleteKeyA(patches, "");
+    RegCloseKey(patches);
+    RegDeleteKeyA(hkey, "");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, machprod, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_DEL_REG_STR(hkey, "ProductName", "MSITEST");
+    CHECK_DEL_REG_STR(hkey, "PackageCode", "AC75740029052c94DA02821EECD05F2F");
+    CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
+    CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
+    CHECK_DEL_REG_DWORD(hkey, "AuthorizedLUAApp", 0);
+    todo_wine CHECK_DEL_REG_DWORD(hkey, "Assignment", 1);
+    CHECK_DEL_REG_DWORD(hkey, "AdvertiseFlags", 0x184);
+    CHECK_DEL_REG_DWORD(hkey, "InstanceType", 0);
+    CHECK_DEL_REG_STR(hkey, "Clients", ":");
+
+    res = RegOpenKeyA(hkey, "SourceList", &sourcelist);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    lstrcpyA(path, "n;1;");
+    lstrcatA(path, temp);
+    CHECK_DEL_REG_STR(sourcelist, "LastUsedSource", path);
+    CHECK_DEL_REG_STR(sourcelist, "PackageName", "msitest.msi");
+
+    res = RegOpenKeyA(sourcelist, "Net", &net);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_DEL_REG_STR(net, "1", temp);
+
+    RegDeleteKeyA(net, "");
+    RegCloseKey(net);
+
+    res = RegOpenKeyA(sourcelist, "Media", &media);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    CHECK_DEL_REG_STR(media, "1", "DISK1;");
+
+    RegDeleteKeyA(media, "");
+    RegCloseKey(media);
+    RegDeleteKeyA(sourcelist, "");
+    RegCloseKey(sourcelist);
+    RegDeleteKeyA(hkey, "");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, machup, &hkey);
+    todo_wine
+    {
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+        CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
+    }
 
     RegDeleteKeyA(hkey, "");
     RegCloseKey(hkey);
