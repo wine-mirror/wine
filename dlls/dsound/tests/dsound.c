@@ -401,16 +401,42 @@ static HRESULT test_primary(LPGUID lpGuid)
        "IDirectSound_CreateSoundBuffer() should have failed: %s\n",
        DXGetErrorString8(rc));
 
+    /* DSOUND: Error: NULL pointer is invalid */
     /* DSOUND: Error: Invalid buffer description pointer */
     rc=IDirectSound_CreateSoundBuffer(dso,0,&primary,NULL);
     ok(rc==DSERR_INVALIDPARAM && primary==0,
        "IDirectSound_CreateSoundBuffer() should have failed: rc=%s,"
        "dsbo=%p\n",DXGetErrorString8(rc),primary);
 
-    ZeroMemory(&bufdesc, sizeof(bufdesc));
-
     /* DSOUND: Error: Invalid size */
     /* DSOUND: Error: Invalid buffer description */
+    primary=NULL;
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc)-1;
+    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
+    ok(rc==DSERR_INVALIDPARAM && primary==0,
+       "IDirectSound_CreateSoundBuffer() should have failed: rc=%s,"
+       "primary=%p\n",DXGetErrorString8(rc),primary);
+
+    /* DSOUND: Error: DSBCAPS_PRIMARYBUFFER flag with non-NULL lpwfxFormat */
+    /* DSOUND: Error: Invalid buffer description pointer */
+    primary=NULL;
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER;
+    bufdesc.lpwfxFormat=&wfx;
+    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
+    ok(rc==DSERR_INVALIDPARAM && primary==0,
+       "IDirectSound_CreateSoundBuffer() should have failed: rc=%s,"
+       "primary=%p\n",DXGetErrorString8(rc),primary);
+
+    /* DSOUND: Error: No DSBCAPS_PRIMARYBUFFER flag with NULL lpwfxFormat */
+    /* DSOUND: Error: Invalid buffer description pointer */
+    primary=NULL;
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=0;
+    bufdesc.lpwfxFormat=NULL;
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
     ok(rc==DSERR_INVALIDPARAM && primary==0,
        "IDirectSound_CreateSoundBuffer() should have failed: rc=%s,"
