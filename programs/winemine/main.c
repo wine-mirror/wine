@@ -859,7 +859,6 @@ void TestMines( BOARD *p_board, POINT pt, int msg )
 
     case WM_RBUTTONDOWN:
         AddFlag( p_board, col, row );
-        p_board->status = PLAYING;
         break;
     default:
         WINE_TRACE("Unknown message type received in TestMines\n");
