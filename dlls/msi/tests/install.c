@@ -2535,13 +2535,10 @@ static void test_publish_publishproduct(void)
     CHECK_DEL_REG_DWORD(hkey, "Language", 1033);
     CHECK_DEL_REG_DWORD(hkey, "Version", 0x1010001);
     CHECK_DEL_REG_DWORD(hkey, "AuthorizedLUAApp", 0);
-    todo_wine
-    {
-        CHECK_DEL_REG_DWORD(hkey, "Assignment", 0);
-        CHECK_DEL_REG_DWORD(hkey, "AdvertiseFlags", 0x184);
-        CHECK_DEL_REG_DWORD(hkey, "InstanceType", 0);
-        CHECK_DEL_REG_STR(hkey, "Clients", ":");
-    }
+    CHECK_DEL_REG_DWORD(hkey, "Assignment", 0);
+    CHECK_DEL_REG_DWORD(hkey, "AdvertiseFlags", 0x184);
+    CHECK_DEL_REG_DWORD(hkey, "InstanceType", 0);
+    CHECK_DEL_REG_STR(hkey, "Clients", ":");
 
     res = RegOpenKeyA(hkey, "SourceList", &sourcelist);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);

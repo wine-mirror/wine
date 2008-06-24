@@ -3405,6 +3405,13 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
         {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
     static const WCHAR szProductVersion[] =
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+    static const WCHAR szAssignment[] =
+        {'A','s','s','i','g','n','m','e','n','t',0};
+    static const WCHAR szAdvertiseFlags[] =
+        {'A','d','v','e','r','t','i','s','e','F','l','a','g','s',0};
+    static const WCHAR szClients[] =
+        {'C','l','i','e','n','t','s',0};
+    static const WCHAR szColon[] = {':',0};
 
     buffer = msi_dup_property(package, INSTALLPROPERTY_PRODUCTNAMEW);
     msi_reg_set_val_str(hkey, INSTALLPROPERTY_PRODUCTNAMEW, buffer);
@@ -3435,6 +3442,11 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
         msi_reg_set_val_dword(hkey, INSTALLPROPERTY_VERSIONW, verdword);
         msi_free(buffer);
     }
+
+    msi_reg_set_val_dword(hkey, szAssignment, 0);
+    msi_reg_set_val_dword(hkey, szAdvertiseFlags, 0x184);
+    msi_reg_set_val_dword(hkey, INSTALLPROPERTY_INSTANCETYPEW, 0);
+    msi_reg_set_val_str(hkey, szClients, szColon);
 
     hdb = alloc_msihandle(&package->db->hdr);
     if (!hdb)
