@@ -100,6 +100,7 @@ typedef enum {
 
 typedef enum {
     EVENTID_CLICK,
+    EVENTID_KEYUP,
     EVENTID_LOAD,
     EVENTID_LAST
 } eventid_t;

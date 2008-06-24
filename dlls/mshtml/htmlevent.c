@@ -38,6 +38,9 @@ struct event_target_t {
 static const WCHAR clickW[] = {'c','l','i','c','k',0};
 static const WCHAR onclickW[] = {'o','n','c','l','i','c','k',0};
 
+static const WCHAR keyupW[] = {'k','e','y','u','p',0};
+static const WCHAR onkeyupW[] = {'o','n','k','e','y','u','p',0};
+
 static const WCHAR loadW[] = {'l','o','a','d',0};
 static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 
@@ -51,6 +54,7 @@ typedef struct {
 
 static const event_info_t event_info[] = {
     {clickW,    onclickW,    EVENT_DEFAULTLISTENER},
+    {keyupW,    onkeyupW,    EVENT_DEFAULTLISTENER},
     {loadW,     onloadW,     0}
 };
 
