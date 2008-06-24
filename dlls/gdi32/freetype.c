@@ -4353,8 +4353,12 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     }
 	
     /* Scaling factor */
-    if (font->aveWidth && font->potm)
+    if (font->aveWidth)
     {
+        TEXTMETRICW tm;
+
+        WineEngGetTextMetrics(font, &tm);
+
         widthRatio = (double)font->aveWidth;
         widthRatio /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
     }
