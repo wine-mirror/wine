@@ -657,6 +657,27 @@ static void test_EM_SETCHARFORMAT(void)
     hwndRichEdit = new_richedit(NULL);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
 
+    /* Need to set a TrueType font to get consistent CFM_BOLD results */
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    cf2.dwMask = CFM_FACE|CFM_WEIGHT;
+    cf2.dwEffects = 0;
+    strcpy(cf2.szFaceName, "Courier New");
+    cf2.wWeight = FW_DONTCARE;
+    SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM) &cf2);
+
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    SendMessage(hwndRichEdit, EM_SETSEL, 0, 4);
+    SendMessage(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
+    ok ((((tested_effects[i] == CFE_SUBSCRIPT || tested_effects[i] == CFE_SUPERSCRIPT) &&
+          (cf2.dwMask & CFM_SUPERSCRIPT) == CFM_SUPERSCRIPT)
+          ||
+          (cf2.dwMask & tested_effects[i]) == tested_effects[i]),
+        "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, tested_effects[i]);
+    ok((cf2.dwEffects & tested_effects[i]) == 0,
+        "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x clear\n", i, cf2.dwEffects, tested_effects[i]);
+
     memset(&cf2, 0, sizeof(CHARFORMAT2));
     cf2.cbSize = sizeof(CHARFORMAT2);
     cf2.dwMask = tested_effects[i];
@@ -699,8 +720,6 @@ static void test_EM_SETCHARFORMAT(void)
           ||
           (cf2.dwMask & tested_effects[i]) == 0),
         "%d, cf2.dwMask == 0x%08x expected mask 0x%08x clear\n", i, cf2.dwMask, tested_effects[i]);
-    ok((cf2.dwEffects & tested_effects[i]) == 0,
-        "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x clear\n", i, cf2.dwEffects, tested_effects[i]);
 
     DestroyWindow(hwndRichEdit);
   }
@@ -709,6 +728,15 @@ static void test_EM_SETCHARFORMAT(void)
   {
     hwndRichEdit = new_richedit(NULL);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
+
+    /* Need to set a TrueType font to get consistent CFM_BOLD results */
+    memset(&cf2, 0, sizeof(CHARFORMAT2));
+    cf2.cbSize = sizeof(CHARFORMAT2);
+    cf2.dwMask = CFM_FACE|CFM_WEIGHT;
+    cf2.dwEffects = 0;
+    strcpy(cf2.szFaceName, "Courier New");
+    cf2.wWeight = FW_DONTCARE;
+    SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_ALL, (LPARAM) &cf2);
 
     memset(&cf2, 0, sizeof(CHARFORMAT2));
     cf2.cbSize = sizeof(CHARFORMAT2);
