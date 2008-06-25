@@ -765,6 +765,85 @@ static BOOL mib2IpRouteQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return TRUE;
 }
 
+static UINT mib2IpNet[] = { 1,3,6,1,2,1,4,22,1 };
+static PMIB_IPNETTABLE ipNetTable;
+
+static struct structToAsnValue mib2IpNetMap[] = {
+    { FIELD_OFFSET(MIB_IPNETROW, dwIndex), copyInt },
+    { FIELD_OFFSET(MIB_IPNETROW, dwPhysAddrLen), copyLengthPrecededString },
+    { FIELD_OFFSET(MIB_IPNETROW, dwAddr), copyIpAddr },
+    { FIELD_OFFSET(MIB_IPNETROW, dwType), copyInt },
+};
+
+static void mib2IpNetInit(void)
+{
+    DWORD size = 0, ret = GetIpNetTable(NULL, &size, FALSE);
+
+    if (ret == ERROR_INSUFFICIENT_BUFFER)
+    {
+        ipNetTable = HeapAlloc(GetProcessHeap(), 0, size);
+        if (ipNetTable)
+            GetIpNetTable(ipNetTable, &size, FALSE);
+    }
+}
+
+static BOOL mib2IpNetQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier myOid = DEFINE_OID(mib2IpNet);
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+    case SNMP_PDU_GETNEXT:
+        if (!ipNetTable)
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        else
+        {
+            UINT tableIndex = 0, item = 0;
+
+            *pErrorStatus = getItemAndIntegerInstanceFromOid(&pVarBind->name,
+                &myOid, bPduType, &item, &tableIndex);
+            if (!*pErrorStatus)
+            {
+                assert(tableIndex);
+                assert(item);
+                if (tableIndex > ipNetTable->dwNumEntries)
+                    *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+                else
+                {
+                    *pErrorStatus = mapStructEntryToValue(mib2IpNetMap,
+                        DEFINE_SIZEOF(mib2IpNetMap),
+                        &ipNetTable[tableIndex - 1], item, bPduType, pVarBind);
+                    if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
+                    {
+                        AsnObjectIdentifier oid;
+
+                        SnmpUtilOidCpy(&pVarBind->name, &myOid);
+                        oid.idLength = 1;
+                        oid.ids = &item;
+                        SnmpUtilOidAppend(&pVarBind->name, &oid);
+                        oid.idLength = 1;
+                        oid.ids = &tableIndex;
+                        SnmpUtilOidAppend(&pVarBind->name, &oid);
+                    }
+                }
+            }
+        }
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 static UINT mib2Icmp[] = { 1,3,6,1,2,1,5 };
 static MIB_ICMP icmpStats;
 
@@ -916,6 +995,7 @@ static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2Ip), mib2IpStatsInit, mib2IpStatsQuery },
     { DEFINE_OID(mib2IpAddr), mib2IpAddrInit, mib2IpAddrQuery },
     { DEFINE_OID(mib2IpRoute), mib2IpRouteInit, mib2IpRouteQuery },
+    { DEFINE_OID(mib2IpNet), mib2IpNetInit, mib2IpNetQuery },
     { DEFINE_OID(mib2Icmp), mib2IcmpInit, mib2IcmpQuery },
     { DEFINE_OID(mib2Tcp), mib2TcpInit, mib2TcpQuery },
 };
