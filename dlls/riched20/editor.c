@@ -1666,7 +1666,6 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->mode = TM_RICHTEXT | TM_MULTILEVELUNDO | TM_MULTICODEPAGE;
   ed->AutoURLDetect_bEnable = FALSE;
   ed->bHaveFocus = FALSE;
-  GetClientRect(hWnd, &ed->rcFormat);
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
     ed->pFontCache[i].nRefs = 0;
@@ -2934,6 +2933,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return (wParam >= 0x40000) ? 0 : MAKELONG( pt.x, pt.y );
   }
   case WM_CREATE:
+    GetClientRect(hWnd, &editor->rcFormat);
     if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)
     { /* Squelch the default horizontal scrollbar it would make */
       ShowScrollBar(editor->hWnd, SB_HORZ, FALSE);
