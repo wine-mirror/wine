@@ -19,6 +19,7 @@
 #include "config.h"
 #include <assert.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <limits.h>
 #include "windef.h"
 #include "winbase.h"
@@ -317,26 +318,35 @@ struct GenericTable
     BYTE  entries[1];
 };
 
-/* Finds the index in table whose IP address (at offset addressOffset within the
- * entry) matches that given the OID, which is assumed to have at least 4 IDs.
- */
-static UINT findOIDIPAddressInTable(AsnObjectIdentifier *oid,
-    struct GenericTable *table, size_t tableEntrySize, size_t addressOffset)
+static DWORD oidToIpAddr(AsnObjectIdentifier *oid)
 {
-    DWORD addr;
-    UINT i, index = 0;
-
+    assert(oid && oid->idLength >= 4);
     /* Map the IDs to an IP address in little-endian order */
-    addr = (BYTE)oid->ids[3] << 24 | (BYTE)oid->ids[2] << 16 |
+    return (BYTE)oid->ids[3] << 24 | (BYTE)oid->ids[2] << 16 |
         (BYTE)oid->ids[1] << 8 | (BYTE)oid->ids[0];
-    /* Find the item whose address matches */
-    for (i = 0; !index && i < table->numEntries; i++)
-    {
-        DWORD tableAddr =
-            *(DWORD *)(table->entries + i * tableEntrySize + addressOffset);
+}
 
-        if (addr == tableAddr)
-            index = i + 1;
+typedef void (*oidToKeyFunc)(AsnObjectIdentifier *oid, void *dst);
+typedef int (*compareFunc)(const void *key, const void *value);
+
+static UINT findValueInTable(AsnObjectIdentifier *oid,
+    struct GenericTable *table, size_t tableEntrySize, oidToKeyFunc makeKey,
+    compareFunc compare)
+{
+    UINT index = 0;
+    void *key = HeapAlloc(GetProcessHeap(), 0, tableEntrySize);
+
+    if (key)
+    {
+        void *value;
+
+        makeKey(oid, key);
+        value = bsearch(key, table->entries, table->numEntries, tableEntrySize,
+            compare);
+        if (value)
+            index = ((BYTE *)value - (BYTE *)table->entries) / tableEntrySize
+                + 1;
+        HeapFree(GetProcessHeap(), 0, key);
     }
     return index;
 }
@@ -352,7 +362,8 @@ static UINT findOIDIPAddressInTable(AsnObjectIdentifier *oid,
  */
 static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
     AsnObjectIdentifier *base, BYTE bPduType, struct GenericTable *table,
-    size_t tableEntrySize, size_t addressOffset, UINT *item, UINT *instance)
+    size_t tableEntrySize, oidToKeyFunc makeKey, compareFunc compare,
+    UINT *item, UINT *instance)
 {
     AsnInteger32 ret = SNMP_ERRORSTATUS_NOERROR;
 
@@ -398,8 +409,8 @@ static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
                 AsnObjectIdentifier ipOid = { 4, oid->ids + base->idLength + 1
                     };
 
-                *instance = findOIDIPAddressInTable(&ipOid, table,
-                    tableEntrySize, addressOffset) + 1;
+                *instance = findValueInTable(&ipOid, table, tableEntrySize,
+                    makeKey, compare) + 1;
                 if (*instance > table->numEntries)
                     ret = SNMP_ERRORSTATUS_NOSUCHNAME;
             }
@@ -419,8 +430,8 @@ static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
                 AsnObjectIdentifier ipOid = { 4, oid->ids + base->idLength + 1
                     };
 
-                *instance = findOIDIPAddressInTable(&ipOid, table,
-                    tableEntrySize, addressOffset);
+                *instance = findValueInTable(&ipOid, table, tableEntrySize,
+                    makeKey, compare);
                 if (!*instance)
                     ret = SNMP_ERRORSTATUS_NOSUCHNAME;
             }
@@ -632,14 +643,28 @@ static struct structToAsnValue mib2IpAddrMap[] = {
 
 static void mib2IpAddrInit(void)
 {
-    DWORD size = 0, ret = GetIpAddrTable(NULL, &size, FALSE);
+    DWORD size = 0, ret = GetIpAddrTable(NULL, &size, TRUE);
 
     if (ret == ERROR_INSUFFICIENT_BUFFER)
     {
         ipAddrTable = HeapAlloc(GetProcessHeap(), 0, size);
         if (ipAddrTable)
-            GetIpAddrTable(ipAddrTable, &size, FALSE);
+            GetIpAddrTable(ipAddrTable, &size, TRUE);
     }
+}
+
+static void oidToIpAddrRow(AsnObjectIdentifier *oid, void *dst)
+{
+    MIB_IPADDRROW *row = dst;
+
+    row->dwAddr = oidToIpAddr(oid);
+}
+
+static int compareIpAddrRow(const void *a, const void *b)
+{
+    const MIB_IPADDRROW *key = a, *value = b;
+
+    return key->dwAddr - value->dwAddr;
 }
 
 static BOOL mib2IpAddrQuery(BYTE bPduType, SnmpVarBind *pVarBind,
@@ -657,7 +682,7 @@ static BOOL mib2IpAddrQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     case SNMP_PDU_GETNEXT:
         *pErrorStatus = getItemAndIpAddressInstanceFromOid(&pVarBind->name,
             &myOid, bPduType, (struct GenericTable *)ipAddrTable,
-            sizeof(MIB_IPADDRROW), FIELD_OFFSET(MIB_IPADDRROW, dwAddr), &item,
+            sizeof(MIB_IPADDRROW), oidToIpAddrRow, compareIpAddrRow, &item,
             &tableIndex);
         if (!*pErrorStatus)
         {
@@ -701,14 +726,28 @@ static struct structToAsnValue mib2IpRouteMap[] = {
 
 static void mib2IpRouteInit(void)
 {
-    DWORD size = 0, ret = GetIpForwardTable(NULL, &size, FALSE);
+    DWORD size = 0, ret = GetIpForwardTable(NULL, &size, TRUE);
 
     if (ret == ERROR_INSUFFICIENT_BUFFER)
     {
         ipRouteTable = HeapAlloc(GetProcessHeap(), 0, size);
         if (ipRouteTable)
-            GetIpForwardTable(ipRouteTable, &size, FALSE);
+            GetIpForwardTable(ipRouteTable, &size, TRUE);
     }
+}
+
+static void oidToIpForwardRow(AsnObjectIdentifier *oid, void *dst)
+{
+    MIB_IPFORWARDROW *row = dst;
+
+    row->dwForwardDest = oidToIpAddr(oid);
+}
+
+static int compareIpForwardRow(const void *a, const void *b)
+{
+    const MIB_IPFORWARDROW *key = a, *value = b;
+
+    return key->dwForwardDest - value->dwForwardDest;
 }
 
 static BOOL mib2IpRouteQuery(BYTE bPduType, SnmpVarBind *pVarBind,
@@ -726,8 +765,8 @@ static BOOL mib2IpRouteQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     case SNMP_PDU_GETNEXT:
         *pErrorStatus = getItemAndIpAddressInstanceFromOid(&pVarBind->name,
             &myOid, bPduType, (struct GenericTable *)ipRouteTable,
-            sizeof(MIB_IPFORWARDROW),
-            FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardDest), &item, &tableIndex);
+            sizeof(MIB_IPFORWARDROW), oidToIpForwardRow, compareIpForwardRow,
+            &item, &tableIndex);
         if (!*pErrorStatus)
         {
             assert(tableIndex);
