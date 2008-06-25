@@ -128,6 +128,14 @@ int is_desktop_class( struct window_class *class )
     return (class->atom == DESKTOP_ATOM && !class->local);
 }
 
+int is_hwnd_message_class( struct window_class *class )
+{
+    static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
+    static const struct unicode_str name = { messageW, sizeof(messageW) };
+
+    return (!class->local && class->atom == find_global_atom( NULL, &name ));
+}
+
 atom_t get_class_atom( struct window_class *class )
 {
     return class->atom;

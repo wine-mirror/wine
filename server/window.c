@@ -393,8 +393,10 @@ void destroy_window( struct window *win )
     list_remove( &win->entry );
     if (is_desktop_window(win))
     {
-        assert( win->desktop->top_window == win );
-        win->desktop->top_window = NULL;
+        struct desktop *desktop = win->desktop;
+        assert( desktop->top_window == win || desktop->msg_window == win );
+        if (desktop->top_window == win) desktop->top_window = NULL;
+        else desktop->msg_window = NULL;
     }
     detach_window_thread( win );
     if (win->win_region) free_region( win->win_region );
@@ -426,7 +428,7 @@ static struct window *create_window( struct window *parent, struct window *owner
 {
     static const rectangle_t empty_rect;
     int extra_bytes;
-    struct window *win;
+    struct window *win = NULL;
     struct desktop *desktop;
     struct window_class *class;
 
@@ -436,6 +438,27 @@ static struct window *create_window( struct window *parent, struct window *owner
     {
         release_object( desktop );
         return NULL;
+    }
+
+    if (!parent)  /* null parent is only allowed for desktop or HWND_MESSAGE top window */
+    {
+        if (is_desktop_class( class ))
+            parent = desktop->top_window;  /* use existing desktop if any */
+        else if (is_hwnd_message_class( class ))
+            /* use desktop window if message window is already created */
+            parent = desktop->msg_window ? desktop->top_window : NULL;
+        else if (!(parent = desktop->top_window))  /* must already have a desktop then */
+        {
+            set_error( STATUS_ACCESS_DENIED );
+            goto failed;
+        }
+    }
+
+    /* parent must be on the same desktop */
+    if (parent && parent->desktop != desktop)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        goto failed;
     }
 
     if (!(win = mem_alloc( sizeof(*win) + extra_bytes - 1 ))) goto failed;
@@ -468,20 +491,6 @@ static struct window *create_window( struct window *parent, struct window *owner
     list_init( &win->children );
     list_init( &win->unlinked );
 
-    /* parent must be on the same desktop */
-    if (parent && parent->desktop != desktop)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        goto failed;
-    }
-
-    /* if no parent, class must be the desktop */
-    if (!parent && !is_desktop_class( class ))
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        goto failed;
-    }
-
     /* if parent belongs to a different thread and the window isn't */
     /* top-level, attach the two threads */
     if (parent && parent->thread && parent->thread != current && !is_desktop_window(parent))
@@ -498,9 +507,17 @@ static struct window *create_window( struct window *parent, struct window *owner
     else
     {
         list_init( &win->entry );
-        assert( !desktop->top_window );
-        desktop->top_window = win;
-        set_process_default_desktop( current->process, desktop, current->desktop );
+        if (is_desktop_class( class ))
+        {
+            assert( !desktop->top_window );
+            desktop->top_window = win;
+            set_process_default_desktop( current->process, desktop, current->desktop );
+        }
+        else
+        {
+            assert( !desktop->msg_window );
+            desktop->msg_window = win;
+        }
     }
 
     current->desktop_users++;
@@ -1708,20 +1725,18 @@ static void set_window_region( struct window *win, struct region *region, int re
 /* create a window */
 DECL_HANDLER(create_window)
 {
-    struct window *win, *parent, *owner = NULL;
+    struct window *win, *parent = NULL, *owner = NULL;
     struct unicode_str cls_name;
     atom_t atom;
 
     reply->handle = 0;
-
-    if (!req->parent) parent = get_desktop_window( current, 0 );
-    else if (!(parent = get_window( req->parent ))) return;
+    if (req->parent && !(parent = get_window( req->parent ))) return;
 
     if (req->owner)
     {
         if (!(owner = get_window( req->owner ))) return;
         if (is_desktop_window(owner)) owner = NULL;
-        else if (!is_desktop_window(parent))
+        else if (parent && !is_desktop_window(parent))
         {
             /* an owned window must be created as top-level */
             set_error( STATUS_ACCESS_DENIED );

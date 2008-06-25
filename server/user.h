@@ -57,6 +57,7 @@ struct desktop
     struct winstation   *winstation;     /* winstation this desktop belongs to */
     struct list          entry;          /* entry in winstation list of desktops */
     struct window       *top_window;     /* desktop window for this desktop */
+    struct window       *msg_window;     /* HWND_MESSAGE top window */
     struct hook_table   *global_hooks;   /* table of global hooks on this desktop */
     struct timeout_user *close_timeout;  /* timeout before closing the desktop */
     unsigned int         users;          /* processes and threads using this desktop */
@@ -145,6 +146,7 @@ extern struct window_class *grab_class( struct process *process, atom_t atom,
                                         void *instance, int *extra_bytes );
 extern void release_class( struct window_class *class );
 extern int is_desktop_class( struct window_class *class );
+extern int is_hwnd_message_class( struct window_class *class );
 extern atom_t get_class_atom( struct window_class *class );
 extern void *get_class_client_ptr( struct window_class *class );
 
