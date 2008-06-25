@@ -651,7 +651,7 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
           ptr = endPtr;
         }
         if (ptr && *ptr) {
-          stats->dwRtoMin = strtoul(ptr, &endPtr, 10);
+          stats->dwRtoMax = strtoul(ptr, &endPtr, 10);
           ptr = endPtr;
         }
         if (ptr && *ptr) {
