@@ -950,6 +950,54 @@ static BOOL mib2TcpQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return TRUE;
 }
 
+static UINT mib2Udp[] = { 1,3,6,1,2,1,7 };
+static MIB_UDPSTATS udpStats;
+
+static void mib2UdpInit(void)
+{
+    GetUdpStatistics(&udpStats);
+}
+
+static struct structToAsnValue mib2UdpMap[] = {
+    { FIELD_OFFSET(MIB_UDPSTATS, dwInDatagrams), copyInt },
+    { FIELD_OFFSET(MIB_UDPSTATS, dwNoPorts), copyInt },
+    { FIELD_OFFSET(MIB_UDPSTATS, dwInErrors), copyInt },
+    { FIELD_OFFSET(MIB_UDPSTATS, dwOutDatagrams), copyInt },
+};
+
+static BOOL mib2UdpQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier myOid = DEFINE_OID(mib2Udp);
+    UINT item;
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+    case SNMP_PDU_GETNEXT:
+        *pErrorStatus = getItemFromOid(&pVarBind->name, &myOid, bPduType,
+            &item);
+        if (!*pErrorStatus)
+        {
+            *pErrorStatus = mapStructEntryToValue(mib2UdpMap,
+                DEFINE_SIZEOF(mib2UdpMap), &udpStats, item, bPduType, pVarBind);
+            if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
+                setOidWithItem(&pVarBind->name, &myOid, item);
+        }
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 /* This list MUST BE lexicographically sorted */
 static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery },
@@ -960,6 +1008,7 @@ static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IpNet), mib2IpNetInit, mib2IpNetQuery },
     { DEFINE_OID(mib2Icmp), mib2IcmpInit, mib2IcmpQuery },
     { DEFINE_OID(mib2Tcp), mib2TcpInit, mib2TcpQuery },
+    { DEFINE_OID(mib2Udp), mib2UdpInit, mib2UdpQuery },
 };
 static UINT minSupportedIDLength;
 
