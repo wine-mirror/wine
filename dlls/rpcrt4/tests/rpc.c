@@ -676,6 +676,52 @@ static void test_I_RpcExceptionFilter(void)
     }
 }
 
+static void test_endpoint_mapper(void)
+{
+    static unsigned char annotation[] = "Test annotation string.";
+    static unsigned char ncacn_ip_tcp[] = "ncacn_np";
+    static unsigned char address[] = ".";
+    static unsigned char endpoint[] = "\\pipe\\wine_rpc_test";
+    RPC_STATUS status;
+    RPC_BINDING_VECTOR *binding_vector;
+    handle_t handle;
+    unsigned char *binding;
+
+    status = RpcServerUseProtseqEp(ncacn_ip_tcp, 20, endpoint, NULL);
+    ok(status == RPC_S_OK, "RpcServerUseProtseqEp failed (%lu)\n", status);
+
+    status = RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL);
+    ok(status == RPC_S_OK, "RpcServerRegisterIf failed (%lu)\n", status);
+
+    status = RpcServerInqBindings(&binding_vector);
+    ok(status == RPC_S_OK, "RpcServerInqBindings failed with error %lu\n", status);
+
+    status = RpcEpRegisterA(IFoo_v0_0_s_ifspec, binding_vector, NULL, annotation);
+    ok(status == RPC_S_OK, "RpcEpRegisterA failed with error %lu\n", status);
+
+    status = RpcStringBindingCompose(NULL, ncacn_ip_tcp, address,
+                                     NULL, NULL, &binding);
+    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
+
+    status = RpcBindingFromStringBinding(binding, &handle);
+    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n", status);
+
+    status = RpcEpResolveBinding(handle, IFoo_v0_0_s_ifspec);
+    ok(status == RPC_S_OK, "RpcEpResolveBinding failed with error %lu\n", status);
+
+    status = RpcBindingFree(&handle);
+    ok(status == RPC_S_OK, "RpcBindingFree failed with error %lu\n", status);
+
+    status = RpcServerUnregisterIf(NULL, NULL, FALSE);
+    ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%lu)\n", status);
+
+    status = RpcEpUnregister(IFoo_v0_0_s_ifspec, binding_vector, NULL);
+    ok(status == RPC_S_OK, "RpcEpUnregisterA failed with error %lu\n", status);
+
+    status = RpcBindingVectorFree(&binding_vector);
+    ok(status == RPC_S_OK, "RpcBindingVectorFree failed with error %lu\n", status);
+}
+
 START_TEST( rpc )
 {
     trace ( " ** Uuid Conversion and Comparison Tests **\n" );
@@ -687,4 +733,5 @@ START_TEST( rpc )
     test_I_RpcMapWin32Status();
     test_RpcStringBindingParseA();
     test_I_RpcExceptionFilter();
+    test_endpoint_mapper();
 }
