@@ -214,8 +214,6 @@ void ME_DestroyContext(ME_Context *c, HWND release);
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor);
 void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor);
 void ME_SendRequestResize(ME_TextEditor *editor, BOOL force);
-int  ME_twips2pointsX(ME_Context *c, int x);
-int  ME_twips2pointsY(ME_Context *c, int y);
 
 /* para.c */
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run); 
@@ -244,6 +242,8 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 void ME_InvalidateSelection(ME_TextEditor *editor);
 void ME_QueueInvalidateFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);
+int  ME_twips2pointsX(ME_Context *c, int x);
+int  ME_twips2pointsY(ME_Context *c, int y);
 
 /* scroll functions in paint.c */
 
