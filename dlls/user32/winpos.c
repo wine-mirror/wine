@@ -2100,7 +2100,7 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
           hdwp, hwnd, hwndAfter, x, y, cx, cy, flags);
 
     hwnd = WIN_GetFullHandle( hwnd );
-    if (hwnd == GetDesktopWindow()) return 0;
+    if (is_desktop_window( hwnd )) return 0;
 
     if (!(pDWP = USER_HEAP_LIN_ADDR( hdwp ))) return 0;
 

@@ -264,6 +264,7 @@ HWND WINAPI SetFocus( HWND hwnd )
             if (style & (WS_MINIMIZE | WS_DISABLED)) return 0;
             parent = GetAncestor( hwndTop, GA_PARENT );
             if (!parent || parent == GetDesktopWindow()) break;
+            if (parent == get_hwnd_message_parent()) return 0;
             hwndTop = parent;
         }
 

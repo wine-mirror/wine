@@ -362,12 +362,34 @@ static void get_server_window_text( HWND hwnd, LPWSTR text, INT count )
  *
  * Return the parent for HWND_MESSAGE windows.
  */
-static HWND get_hwnd_message_parent(void)
+HWND get_hwnd_message_parent(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 
     if (!thread_info->msg_window) GetDesktopWindow();  /* trigger creation */
     return thread_info->msg_window;
+}
+
+
+/*******************************************************************
+ *           is_desktop_window
+ *
+ * Check if window is the desktop or the HWND_MESSAGE top parent.
+ */
+BOOL is_desktop_window( HWND hwnd )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+
+    if (!hwnd) return FALSE;
+    if (hwnd == thread_info->top_window) return TRUE;
+    if (hwnd == thread_info->msg_window) return TRUE;
+
+    if (!HIWORD(hwnd) || HIWORD(hwnd) == 0xffff)
+    {
+        if (LOWORD(thread_info->top_window) == LOWORD(hwnd)) return TRUE;
+        if (LOWORD(thread_info->msg_window) == LOWORD(hwnd)) return TRUE;
+    }
+    return FALSE;
 }
 
 
@@ -393,11 +415,7 @@ WND *WIN_GetPtr( HWND hwnd )
             return ptr;
         ptr = NULL;
     }
-    else if (index == USER_HANDLE_TO_INDEX(GetDesktopWindow()))
-    {
-        if (hwnd == GetDesktopWindow() || !HIWORD(hwnd) || HIWORD(hwnd) == 0xffff) ptr = WND_DESKTOP;
-        else ptr = NULL;
-    }
+    else if (is_desktop_window( hwnd )) ptr = WND_DESKTOP;
     else ptr = WND_OTHER_PROCESS;
     USER_Unlock();
     return ptr;
@@ -454,7 +472,11 @@ HWND WIN_Handle32( HWND16 hwnd16 )
 
     if (!(ptr = WIN_GetPtr( hwnd ))) return hwnd;
 
-    if (ptr == WND_DESKTOP) return GetDesktopWindow();
+    if (ptr == WND_DESKTOP)
+    {
+        if (LOWORD(hwnd) == LOWORD(GetDesktopWindow())) return GetDesktopWindow();
+        else return get_hwnd_message_parent();
+    }
 
     if (ptr != WND_OTHER_PROCESS)
     {
@@ -569,8 +591,16 @@ BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
     {
         RECT rect;
         rect.left = rect.top = 0;
-        rect.right  = GetSystemMetrics(SM_CXSCREEN);
-        rect.bottom = GetSystemMetrics(SM_CYSCREEN);
+        if (hwnd == get_hwnd_message_parent())
+        {
+            rect.right  = 100;
+            rect.bottom = 100;
+        }
+        else
+        {
+            rect.right  = GetSystemMetrics(SM_CXSCREEN);
+            rect.bottom = GetSystemMetrics(SM_CYSCREEN);
+        }
         if (rectWindow) *rectWindow = rect;
         if (rectClient) *rectClient = rect;
     }
@@ -1431,7 +1461,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 {
     BOOL is_child;
 
-    if (!(hwnd = WIN_IsCurrentThread( hwnd )) || (hwnd == GetDesktopWindow()))
+    if (!(hwnd = WIN_IsCurrentThread( hwnd )) || is_desktop_window( hwnd ))
     {
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
@@ -2609,7 +2639,8 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
         break;
 
     case GA_ROOTOWNER:
-        if ((ret = WIN_GetFullHandle( hwnd )) == GetDesktopWindow()) return 0;
+        if (is_desktop_window( hwnd )) return 0;
+        ret = WIN_GetFullHandle( hwnd );
         for (;;)
         {
             HWND parent = GetParent( ret );

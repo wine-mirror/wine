@@ -76,6 +76,8 @@ typedef struct tagWND
 #define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0080 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
 
   /* Window functions */
+extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
+extern BOOL is_desktop_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern WND *WIN_GetPtr( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_Handle32( HWND16 hwnd16 ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentProcess( HWND hwnd ) DECLSPEC_HIDDEN;

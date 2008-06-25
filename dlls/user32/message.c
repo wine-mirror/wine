@@ -1281,21 +1281,21 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     case WM_WINE_DESTROYWINDOW:
         return WIN_DestroyWindow( hwnd );
     case WM_WINE_SETWINDOWPOS:
-        if (hwnd == GetDesktopWindow()) return 0;
+        if (is_desktop_window( hwnd )) return 0;
         return USER_SetWindowPos( (WINDOWPOS *)lparam );
     case WM_WINE_SHOWWINDOW:
-        if (hwnd == GetDesktopWindow()) return 0;
+        if (is_desktop_window( hwnd )) return 0;
         return ShowWindow( hwnd, wparam );
     case WM_WINE_SETPARENT:
-        if (hwnd == GetDesktopWindow()) return 0;
+        if (is_desktop_window( hwnd )) return 0;
         return (LRESULT)SetParent( hwnd, (HWND)wparam );
     case WM_WINE_SETWINDOWLONG:
         return WIN_SetWindowLong( hwnd, (short)LOWORD(wparam), HIWORD(wparam), lparam, TRUE );
     case WM_WINE_ENABLEWINDOW:
-        if (hwnd == GetDesktopWindow()) return 0;
+        if (is_desktop_window( hwnd )) return 0;
         return EnableWindow( hwnd, wparam );
     case WM_WINE_SETACTIVEWINDOW:
-        if (hwnd == GetDesktopWindow()) return 0;
+        if (is_desktop_window( hwnd )) return 0;
         return (LRESULT)SetActiveWindow( (HWND)wparam );
     case WM_WINE_KEYBOARD_LL_HOOK:
     case WM_WINE_MOUSE_LL_HOOK:
