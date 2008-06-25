@@ -154,14 +154,22 @@ static void test_getpathdata(void)
     GpPath *path;
     GpPathData data;
     GpStatus status;
+    INT count;
 
     GdipCreatePath(FillModeAlternate, &path);
     status = GdipAddPathLine(path, 5.0, 5.0, 100.0, 50.0);
     expect(Ok, status);
 
+    /* Prepare storage. Made by wrapper class. */
+    status = GdipGetPointCount(path, &count);
+    expect(Ok, status);
+
+    data.Count  = 2;
+    data.Types  = GdipAlloc(sizeof(BYTE) * count);
+    data.Points = GdipAlloc(sizeof(PointF) * count);
+
     status = GdipGetPathData(path, &data);
     expect(Ok, status);
-    expect((data.Count == 2), TRUE);
     expect((data.Points[0].X == 5.0) && (data.Points[0].Y == 5.0) &&
            (data.Points[1].X == 100.0) && (data.Points[1].Y == 50.0), TRUE);
     expect((data.Types[0] == PathPointTypeStart) && (data.Types[1] == PathPointTypeLine), TRUE);
