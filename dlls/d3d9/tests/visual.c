@@ -9202,7 +9202,7 @@ static void texop_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Present failed with 0x%08x (%s)\n", hr, DXGetErrorString9(hr));
 
         color = getPixelColor(device, 320, 240);
-        ok(color_match(color, test_data[i].result, 1), "Operation %s returned color 0x%08x, expected 0x%08x\n",
+        ok(color_match(color, test_data[i].result, 3), "Operation %s returned color 0x%08x, expected 0x%08x\n",
                 test_data[i].name, color, test_data[i].result);
     }
 
