@@ -104,7 +104,7 @@ void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, const ME_D
 
 void ME_MarkForPainting(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last)
 {
-  while(first != last)
+  while(first != last && first)
   {
     first->member.para.nFlags |= MEPF_REPAINT;
     first = first->member.para.next_para;
