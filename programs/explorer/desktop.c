@@ -230,8 +230,9 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
 void manage_desktop( WCHAR *arg )
 {
     static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
+    static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
     MSG msg;
-    HWND hwnd;
+    HWND hwnd, msg_hwnd;
     unsigned long xwin = 0;
     unsigned int width, height;
     WCHAR *cmdline = NULL;
@@ -293,6 +294,11 @@ void manage_desktop( WCHAR *arg )
                             GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
                             GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN),
                             0, 0, 0, NULL );
+
+    /* create the HWND_MESSAGE parent */
+    msg_hwnd = CreateWindowExW( 0, messageW, NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                                0, 0, 100, 100, 0, 0, 0, NULL );
+
     if (hwnd == GetDesktopWindow())
     {
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
@@ -308,6 +314,8 @@ void manage_desktop( WCHAR *arg )
         DestroyWindow( hwnd );  /* someone beat us to it */
         hwnd = 0;
     }
+
+    if (GetAncestor( msg_hwnd, GA_PARENT )) DestroyWindow( msg_hwnd );  /* someone beat us to it */
 
     /* if we have a command line, execute it */
     if (cmdline)
