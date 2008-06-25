@@ -34,6 +34,8 @@
 
 #include <initguid.h>
 DEFINE_GUID(IID_ITextDocument, 0x8cc497c0, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
+DEFINE_GUID(IID_ITextRange, 0x8cc497c2, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
+DEFINE_GUID(IID_ITextSelection, 0x8cc497c1, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 
 static HMODULE hmoduleRichEdit;
 
@@ -57,6 +59,8 @@ START_TEST(richole)
 {
   IRichEditOle *reOle = NULL;
   ITextDocument *txtDoc = NULL;
+  ITextSelection *txtSel = NULL;
+  IUnknown *punk;
   HRESULT hres;
   LRESULT res;
   HWND w;
@@ -81,7 +85,36 @@ START_TEST(richole)
   ok(hres == S_OK, "IRichEditOle_QueryInterface\n");
   ok(txtDoc != NULL, "IRichEditOle_QueryInterface\n");
 
+  hres = ITextDocument_GetSelection(txtDoc, &txtSel);
+  ok(hres == S_OK, "ITextDocument_GetSelection\n");
+  ok(txtSel != NULL, "ITextDocument_GetSelection\n");
+
+  punk = NULL;
+  hres = ITextSelection_QueryInterface(txtSel, &IID_ITextSelection, (void **) &punk);
+  ok(hres == S_OK, "ITextSelection_QueryInterface\n");
+  ok(punk != NULL, "ITextSelection_QueryInterface\n");
+  IUnknown_Release(punk);
+
+  punk = NULL;
+  hres = ITextSelection_QueryInterface(txtSel, &IID_ITextRange, (void **) &punk);
+  ok(hres == S_OK, "ITextSelection_QueryInterface\n");
+  ok(punk != NULL, "ITextSelection_QueryInterface\n");
+  IUnknown_Release(punk);
+
+  punk = NULL;
+  hres = ITextSelection_QueryInterface(txtSel, &IID_IDispatch, (void **) &punk);
+  ok(hres == S_OK, "ITextSelection_QueryInterface\n");
+  ok(punk != NULL, "ITextSelection_QueryInterface\n");
+  IUnknown_Release(punk);
+
   ITextDocument_Release(txtDoc);
   IUnknown_Release(reOle);
   DestroyWindow(w);
+
+  /* Methods should return CO_E_RELEASED if the backing document has
+     been released.  One test should suffice.  */
+  hres = ITextSelection_CanEdit(txtSel, NULL);
+  ok(hres == CO_E_RELEASED, "ITextSelection after ITextDocument destroyed\n");
+
+  ITextSelection_Release(txtSel);
 }
