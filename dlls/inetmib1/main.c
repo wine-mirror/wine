@@ -431,6 +431,25 @@ static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
     return ret;
 }
 
+static void setOidWithItemAndIpAddr(AsnObjectIdentifier *dst,
+    AsnObjectIdentifier *base, UINT item, DWORD addr)
+{
+    UINT id;
+    BYTE *ptr;
+    AsnObjectIdentifier oid;
+
+    SnmpUtilOidCpy(dst, base);
+    oid.idLength = 1;
+    oid.ids = &id;
+    id = item;
+    SnmpUtilOidAppend(dst, &oid);
+    for (ptr = (BYTE *)&addr; ptr < (BYTE *)&addr + sizeof(DWORD); ptr++)
+    {
+        id = *ptr;
+        SnmpUtilOidAppend(dst, &oid);
+    }
+}
+
 static struct structToAsnValue mib2IfEntryMap[] = {
     { FIELD_OFFSET(MIB_IFROW, dwIndex), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyLengthPrecededString },
@@ -648,24 +667,8 @@ static BOOL mib2IpAddrQuery(BYTE bPduType, SnmpVarBind *pVarBind,
                 DEFINE_SIZEOF(mib2IpAddrMap),
                 &ipAddrTable->table[tableIndex - 1], item, bPduType, pVarBind);
             if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
-            {
-                UINT id;
-                BYTE *ptr;
-                AsnObjectIdentifier oid;
-
-                SnmpUtilOidCpy(&pVarBind->name, &myOid);
-                oid.idLength = 1;
-                oid.ids = &id;
-                id = item;
-                SnmpUtilOidAppend(&pVarBind->name, &oid);
-                for (ptr = (BYTE *)&ipAddrTable->table[tableIndex - 1].dwAddr;
-                    ptr < (BYTE *)&ipAddrTable->table[tableIndex - 1].dwAddr +
-                    sizeof(DWORD); ptr++)
-                {
-                    id = *ptr;
-                    SnmpUtilOidAppend(&pVarBind->name, &oid);
-                }
-            }
+                setOidWithItemAndIpAddr(&pVarBind->name, &myOid, item,
+                    ipAddrTable->table[tableIndex - 1].dwAddr);
         }
         break;
     case SNMP_PDU_SET:
@@ -733,26 +736,8 @@ static BOOL mib2IpRouteQuery(BYTE bPduType, SnmpVarBind *pVarBind,
                 DEFINE_SIZEOF(mib2IpRouteMap),
                 &ipRouteTable->table[tableIndex - 1], item, bPduType, pVarBind);
             if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
-            {
-                UINT id;
-                BYTE *ptr;
-                AsnObjectIdentifier oid;
-
-                SnmpUtilOidCpy(&pVarBind->name, &myOid);
-                oid.idLength = 1;
-                oid.ids = &id;
-                id = item;
-                SnmpUtilOidAppend(&pVarBind->name, &oid);
-                for (ptr =
-                    (BYTE *)&ipRouteTable->table[tableIndex - 1].dwForwardDest;
-                    ptr <
-                    (BYTE *)&ipRouteTable->table[tableIndex - 1].dwForwardDest
-                    + sizeof(DWORD); ptr++)
-                {
-                    id = *ptr;
-                    SnmpUtilOidAppend(&pVarBind->name, &oid);
-                }
-            }
+                setOidWithItemAndIpAddr(&pVarBind->name, &myOid, item,
+                    ipRouteTable->table[tableIndex - 1].dwForwardDest);
         }
         break;
     case SNMP_PDU_SET:
