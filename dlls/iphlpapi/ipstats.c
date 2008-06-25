@@ -1145,7 +1145,11 @@ DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
 
 DWORD getNumUdpEntries(void)
 {
+#if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_NETINET_IN_PCB_H)
+   return getNumWithOneHeader ("net.inet.udp.pcblist");
+#else
   return getNumWithOneHeader("/proc/net/udp");
+#endif
 }
 
 DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
