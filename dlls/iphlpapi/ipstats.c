@@ -68,6 +68,12 @@
 #ifdef HAVE_NETINET_IP_VAR_H
 #include <netinet/ip_var.h>
 #endif
+#ifdef HAVE_NETINET_UDP_H
+#include <netinet/udp.h>
+#endif
+#ifdef HAVE_NETINET_UDP_VAR_H
+#include <netinet/udp_var.h>
+#endif
 
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
@@ -587,6 +593,30 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
 
 DWORD getUDPStats(MIB_UDPSTATS *stats)
 {
+#if defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
+  int mib[] = {CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS};
+#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
+  struct udpstat udp_stat;
+  size_t needed;
+  if (!stats)
+      return ERROR_INVALID_PARAMETER;
+
+  needed = sizeof(udp_stat);
+
+  if(sysctl(mib, MIB_LEN, &udp_stat, &needed, NULL, 0) == -1)
+  {
+      ERR ("failed to get udpstat\n");
+      return ERROR_NOT_SUPPORTED;
+  }
+
+  stats->dwInDatagrams = udp_stat.udps_ipackets;
+  stats->dwOutDatagrams = udp_stat.udps_opackets;
+  stats->dwNoPorts = udp_stat.udps_noport;
+  stats->dwInErrors = udp_stat.udps_hdrops + udp_stat.udps_badsum + udp_stat.udps_fullsock + udp_stat.udps_badlen;
+  stats->dwNumAddrs = getNumUdpEntries();
+
+  return NO_ERROR;
+#else
   FILE *fp;
 
   if (!stats)
@@ -642,6 +672,7 @@ DWORD getUDPStats(MIB_UDPSTATS *stats)
   }
 
   return NO_ERROR;
+#endif
 }
 
 static DWORD getNumWithOneHeader(const char *filename)

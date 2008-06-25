@@ -276,6 +276,7 @@ AC_CHECK_HEADERS(\
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
+	netinet/udp.h \
 	openssl/err.h \
 	openssl/ssl.h \
 	png.h \
@@ -359,7 +360,7 @@ AC_CHECK_HEADERS([netinet/in_pcb.h netinet/ip_var.h net/if.h net/if_arp.h net/if
      # include <netinet/in.h>
      #endif])
 
-AC_CHECK_HEADERS([netinet/tcp_var.h],,,
+AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h],,,
     [#include <sys/types.h>
      #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
@@ -369,6 +370,12 @@ AC_CHECK_HEADERS([netinet/tcp_var.h],,,
      #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_VAR_H
+     # include <netinet/ip_var.h>
+     #endif
+     #ifdef HAVE_NETINET_UDP_H
+     # include <netinet/udp.h>
      #endif
      #ifdef HAVE_NETINET_TCP_H
      # include <netinet/tcp.h>

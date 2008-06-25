@@ -456,6 +456,12 @@
 /* Define to 1 if you have the <netinet/tcp_var.h> header file. */
 #undef HAVE_NETINET_TCP_VAR_H
 
+/* Define to 1 if you have the <netinet/udp.h> header file. */
+#undef HAVE_NETINET_UDP_H
+
+/* Define to 1 if you have the <netinet/udp_var.h> header file. */
+#undef HAVE_NETINET_UDP_VAR_H
+
 /* Define to 1 if you have the <netipx/ipx.h> header file. */
 #undef HAVE_NETIPX_IPX_H
 
