@@ -260,6 +260,57 @@ static AsnInteger32 getItemAndIntegerInstanceFromOid(AsnObjectIdentifier *oid,
     return ret;
 }
 
+/* Given an OID and a base OID that it must begin with, finds the item from the
+ * OID.  E.g., given an OID foo.1 and a base OID foo, returns item 1.
+ * If bPduType is not SNMP_PDU_GETNEXT and the item is missing, returns
+ * SNMP_ERRORSTATUS_NOSUCHNAME.
+ * If bPduType is SNMP_PDU_GETNEXT, returns the successor to the item, or item
+ * 1 if the item is missing.
+ */
+static AsnInteger32 getItemFromOid(AsnObjectIdentifier *oid,
+    AsnObjectIdentifier *base, BYTE bPduType, UINT *item)
+{
+    AsnInteger32 ret = SNMP_ERRORSTATUS_NOERROR;
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GETNEXT:
+        if (SnmpUtilOidNCmp(oid, base, base->idLength) < 0)
+            *item = 1;
+        else if (!SnmpUtilOidNCmp(oid, base, base->idLength))
+        {
+            if (oid->idLength == base->idLength)
+            {
+                /* The item is missing, assume the first item */
+                *item = 1;
+            }
+            else
+                *item = oid->ids[base->idLength] + 1;
+        }
+        else
+            ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+        break;
+    default:
+        if (!SnmpUtilOidNCmp(oid, base, base->idLength))
+        {
+            if (oid->idLength == base->idLength)
+            {
+                /* The item is missing */
+                ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+            }
+            else
+            {
+                *item = oid->ids[base->idLength];
+                if (!*item)
+                    ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+            }
+        }
+        else
+            ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return ret;
+}
+
 static struct structToAsnValue mib2IfEntryMap[] = {
     { FIELD_OFFSET(MIB_IFROW, dwIndex), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyLengthPrecededString },
@@ -401,30 +452,14 @@ static BOOL mib2IpStatsQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     switch (bPduType)
     {
     case SNMP_PDU_GET:
-        if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
-            pVarBind->name.idLength == myOid.idLength + 1)
-        {
-            item = pVarBind->name.ids[pVarBind->name.idLength - 1];
-            *pErrorStatus = mapStructEntryToValue(mib2IpMap,
-                DEFINE_SIZEOF(mib2IpMap), &ipStats, item, bPduType, pVarBind);
-        }
-        else
-            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-        break;
     case SNMP_PDU_GETNEXT:
-        if (!SnmpUtilOidCmp(&pVarBind->name, &myOid) ||
-            SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) < 0)
-            item = 1;
-        else if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
-            pVarBind->name.idLength == myOid.idLength + 1)
-            item = pVarBind->name.ids[pVarBind->name.idLength - 1] + 1;
-        else
-            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-        if (item)
+        *pErrorStatus = getItemFromOid(&pVarBind->name, &myOid, bPduType,
+            &item);
+        if (!*pErrorStatus)
         {
             *pErrorStatus = mapStructEntryToValue(mib2IpMap,
                 DEFINE_SIZEOF(mib2IpMap), &ipStats, item, bPduType, pVarBind);
-            if (!*pErrorStatus)
+            if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
             {
                 AsnObjectIdentifier oid;
 
@@ -434,8 +469,6 @@ static BOOL mib2IpStatsQuery(BYTE bPduType, SnmpVarBind *pVarBind,
                 SnmpUtilOidAppend(&pVarBind->name, &oid);
             }
         }
-        else
-            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
         break;
     case SNMP_PDU_SET:
         *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
@@ -656,27 +689,10 @@ static BOOL mib2IcmpQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     switch (bPduType)
     {
     case SNMP_PDU_GET:
-        if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
-            pVarBind->name.idLength == myOid.idLength + 1)
-        {
-            item = pVarBind->name.ids[pVarBind->name.idLength - 1];
-            *pErrorStatus = mapStructEntryToValue(mib2IcmpMap,
-                DEFINE_SIZEOF(mib2IcmpMap), &icmpStats, item, bPduType,
-                pVarBind);
-        }
-        else
-            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-        break;
     case SNMP_PDU_GETNEXT:
-        if (!SnmpUtilOidCmp(&pVarBind->name, &myOid) ||
-            SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) < 0)
-            item = 1;
-        else if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
-            pVarBind->name.idLength == myOid.idLength + 1)
-            item = pVarBind->name.ids[pVarBind->name.idLength - 1] + 1;
-        else
-            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-        if (item)
+        *pErrorStatus = getItemFromOid(&pVarBind->name, &myOid, bPduType,
+            &item);
+        if (!*pErrorStatus)
         {
             *pErrorStatus = mapStructEntryToValue(mib2IcmpMap,
                 DEFINE_SIZEOF(mib2IcmpMap), &icmpStats, item, bPduType,
