@@ -53,6 +53,7 @@ extern const struct builtin_class_descr ICONTITLE_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr LISTBOX_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr MDICLIENT_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr MENU_builtin_class DECLSPEC_HIDDEN;
+extern const struct builtin_class_descr MESSAGE_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr SCROLL_builtin_class DECLSPEC_HIDDEN;
 extern const struct builtin_class_descr STATIC_builtin_class DECLSPEC_HIDDEN;
 

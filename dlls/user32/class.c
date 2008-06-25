@@ -421,6 +421,7 @@ void CLASS_RegisterBuiltinClasses(void)
     register_builtin( &LISTBOX_builtin_class );
     register_builtin( &MDICLIENT_builtin_class );
     register_builtin( &MENU_builtin_class );
+    register_builtin( &MESSAGE_builtin_class );
     register_builtin( &SCROLL_builtin_class );
     register_builtin( &STATIC_builtin_class );
 
