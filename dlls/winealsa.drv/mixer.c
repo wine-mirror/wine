@@ -762,7 +762,7 @@ static DWORD MIX_Open(UINT wDevID, LPMIXEROPENDESC desc, DWORD_PTR flags)
 
 static DWORD MIX_Close(UINT wDevID)
 {
-    int x;
+    int x = 0;
     mixer *mmixer = MIX_GetMix(wDevID);
     if (!mmixer)
         return MMSYSERR_BADDEVICEID;
