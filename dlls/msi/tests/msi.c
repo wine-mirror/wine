@@ -2290,6 +2290,10 @@ static void test_MsiGetFileVersion(void)
     ok(!lstrcmpA(lang, langcheck), "Expected %s, got %s\n", langcheck, lang);
     ok(langsz == langchecksz, "Expected %d, got %d\n", langchecksz, langsz);
 
+    /* check neither version nor language */
+    r = MsiGetFileVersionA(path, NULL, NULL, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     /* get pcchVersionBuf */
     versz = MAX_PATH;
     r = MsiGetFileVersionA(path, NULL, &versz, NULL, NULL);
