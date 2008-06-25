@@ -8,11 +8,13 @@ IMPORTS   = rpcrt4 kernel32 ntdll
 
 C_SRCS = \
        epmap_server.c \
+	epmp.c \
        irotp.c \
        np_server.c \
        rpcss_main.c
 
 IDL_S_SRCS = \
+	epm.idl \
 	irot.idl
 
 @MAKE_PROG_RULES@
