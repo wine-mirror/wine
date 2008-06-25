@@ -2796,7 +2796,8 @@ struct get_desktop_window_request
 struct get_desktop_window_reply
 {
     struct reply_header __header;
-    user_handle_t  handle;
+    user_handle_t  top_window;
+    user_handle_t  msg_window;
 };
 
 
@@ -4996,6 +4997,6 @@ union generic_reply
     struct add_fd_completion_reply add_fd_completion_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 339
+#define SERVER_PROTOCOL_VERSION 340
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

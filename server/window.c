@@ -549,21 +549,13 @@ void destroy_thread_windows( struct thread *thread )
 }
 
 /* get the desktop window */
-static struct window *get_desktop_window( struct thread *thread, int create )
+static struct window *get_desktop_window( struct thread *thread )
 {
     struct window *top_window;
     struct desktop *desktop = get_thread_desktop( thread, 0 );
 
     if (!desktop) return NULL;
-
-    if (!(top_window = desktop->top_window) && create)
-    {
-        if ((top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
-        {
-            detach_window_thread( top_window );
-            top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-        }
-    }
+    top_window = desktop->top_window;
     release_object( desktop );
     return top_window;
 }
@@ -786,7 +778,7 @@ static struct window *find_child_to_repaint( struct window *parent, struct threa
 /* find a window that needs to receive a WM_PAINT; also clear its internal paint flag */
 user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread )
 {
-    struct window *ptr, *win, *top_window = get_desktop_window( thread, 0 );
+    struct window *ptr, *win, *top_window = get_desktop_window( thread );
 
     if (!top_window) return 0;
 
@@ -1794,9 +1786,34 @@ DECL_HANDLER(destroy_window)
 /* retrieve the desktop window for the current thread */
 DECL_HANDLER(get_desktop_window)
 {
-    struct window *win = get_desktop_window( current, req->force );
+    struct desktop *desktop = get_thread_desktop( current, 0 );
 
-    if (win) reply->handle = win->handle;
+    if (!desktop) return;
+
+    if (!desktop->top_window && req->force)  /* create it */
+    {
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
+        {
+            detach_window_thread( desktop->top_window );
+            desktop->top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+        }
+    }
+
+    if (!desktop->msg_window && req->force)  /* create it */
+    {
+        static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
+        static const struct unicode_str name = { messageW, sizeof(messageW) };
+        atom_t atom = add_global_atom( NULL, &name );
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0 )))
+        {
+            detach_window_thread( desktop->msg_window );
+            desktop->msg_window->style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+        }
+    }
+
+    reply->top_window = desktop->top_window ? desktop->top_window->handle : 0;
+    reply->msg_window = desktop->msg_window ? desktop->msg_window->handle : 0;
+    release_object( desktop );
 }
 
 

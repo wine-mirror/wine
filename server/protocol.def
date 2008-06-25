@@ -2061,7 +2061,8 @@ enum message_type
 @REQ(get_desktop_window)
     int            force;       /* force creation if it doesn't exist */
 @REPLY
-    user_handle_t  handle;      /* handle to the desktop window */
+    user_handle_t  top_window;  /* handle to the desktop window */
+    user_handle_t  msg_window;  /* handle to the top-level HWND_MESSAGE parent */
 @END
 
 

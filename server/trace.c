@@ -2575,7 +2575,8 @@ static void dump_get_desktop_window_request( const struct get_desktop_window_req
 
 static void dump_get_desktop_window_reply( const struct get_desktop_window_reply *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " top_window=%p,", req->top_window );
+    fprintf( stderr, " msg_window=%p", req->msg_window );
 }
 
 static void dump_set_window_owner_request( const struct set_window_owner_request *req )

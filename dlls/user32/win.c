@@ -1636,7 +1636,11 @@ HWND WINAPI GetDesktopWindow(void)
     SERVER_START_REQ( get_desktop_window )
     {
         req->force = 0;
-        if (!wine_server_call( req )) thread_info->top_window = reply->handle;
+        if (!wine_server_call( req ))
+        {
+            thread_info->top_window = reply->top_window;
+            thread_info->msg_window = reply->msg_window;
+        }
     }
     SERVER_END_REQ;
 
@@ -1675,7 +1679,11 @@ HWND WINAPI GetDesktopWindow(void)
         SERVER_START_REQ( get_desktop_window )
         {
             req->force = 1;
-            if (!wine_server_call( req )) thread_info->top_window = reply->handle;
+            if (!wine_server_call( req ))
+            {
+                thread_info->top_window = reply->top_window;
+                thread_info->msg_window = reply->msg_window;
+            }
         }
         SERVER_END_REQ;
     }
