@@ -28,8 +28,6 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 {
     MMCKINFO	mmckInfo;
 
-    mmioRead(wma->hFile, (LPSTR)&wma->ash_audio, sizeof(wma->ash_audio));
-
     TRACE("ash.fccType='%c%c%c%c'\n", 		LOBYTE(LOWORD(wma->ash_audio.fccType)),
 	                                        HIBYTE(LOWORD(wma->ash_audio.fccType)),
 	                                        LOBYTE(HIWORD(wma->ash_audio.fccType)),
@@ -90,8 +88,6 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 static BOOL MCIAVI_GetInfoVideo(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCKINFO* mmckStream)
 {
     MMCKINFO	mmckInfo;
-
-    mmioRead(wma->hFile, (LPSTR)&wma->ash_video, sizeof(wma->ash_video));
 
     TRACE("ash.fccType='%c%c%c%c'\n", 		LOBYTE(LOWORD(wma->ash_video.fccType)),
 	                                        HIBYTE(LOWORD(wma->ash_video.fccType)),
@@ -261,6 +257,7 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
     MMCKINFO		mmckHead;
     MMCKINFO		mmckList;
     MMCKINFO		mmckInfo;
+    AVIStreamHeader strh;
     struct AviListBuild alb;
     DWORD stream_n;
 
@@ -320,34 +317,40 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
             continue;
         }
 
-        TRACE("Stream #%d fccType %4.4s\n", stream_n, (LPSTR)&mmckStream.fccType);
+        mmioRead(wma->hFile, (LPSTR)&strh, sizeof(strh));
 
-        if (mmckStream.fccType == streamtypeVIDEO)
+        TRACE("Stream #%d fccType %4.4s\n", stream_n, (LPSTR)&strh.fccType);
+
+        if (strh.fccType == streamtypeVIDEO)
         {
             TRACE("found video stream\n");
             if (wma->inbih)
                 WARN("ignoring another video stream\n");
             else
             {
+                wma->ash_audio = strh;
+
                 if (!MCIAVI_GetInfoVideo(wma, &mmckList, &mmckStream))
                     return FALSE;
                 wma->video_stream_n = stream_n;
             }
         }
-        else if (mmckStream.fccType == streamtypeAUDIO)
+        else if (strh.fccType == streamtypeAUDIO)
         {
             TRACE("found audio stream\n");
             if (wma->lpWaveFormat)
                 WARN("ignoring another audio stream\n");
             else
             {
+                wma->ash_video = strh;
+
                 if (!MCIAVI_GetInfoAudio(wma, &mmckList, &mmckStream))
                     return FALSE;
                 wma->audio_stream_n = stream_n;
             }
         }
         else
-            TRACE("Unsupported stream type %4.4s\n", (LPSTR)&mmckStream.fccType);
+            TRACE("Unsupported stream type %4.4s\n", (LPSTR)&strh.fccType);
 
         mmioAscend(wma->hFile, &mmckList, 0);
     }
