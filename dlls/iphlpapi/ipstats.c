@@ -43,6 +43,9 @@
 #ifdef HAVE_NET_IF_H
 #include <net/if.h>
 #endif
+#ifdef HAVE_NET_IF_TYPES_H
+#include <net/if_types.h>
+#endif
 #ifdef HAVE_NET_ROUTE_H
 #include <net/route.h>
 #endif
@@ -102,15 +105,60 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 {
-  FILE *fp;
+#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_IFLIST)
+  int mib[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_IFLIST, if_nametoindex(name)};
+#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
 
-  if (!name)
-    return ERROR_INVALID_PARAMETER;
-  if (!entry)
+  size_t needed;
+  char *buf, *end;
+  struct if_msghdr *ifm;
+  struct if_data ifdata;
+  if (!name || !entry)
     return ERROR_INVALID_PARAMETER;
 
+  if(sysctl(mib, MIB_LEN, NULL, &needed, NULL, 0) == -1)
+  {
+      ERR ("failed to get size of iflist\n");
+      return ERROR_NOT_SUPPORTED;
+  }
+  buf = HeapAlloc (GetProcessHeap (), 0, needed);
+  if (!buf) return ERROR_NOT_SUPPORTED;
+  if(sysctl(mib, MIB_LEN, buf, &needed, NULL, 0) == -1)
+  {
+      ERR ("failed to get iflist\n");
+      HeapFree (GetProcessHeap (), 0, buf);
+      return ERROR_NOT_SUPPORTED;
+  }
+  else
+      for ( end = buf + needed; buf < end; buf += ifm->ifm_msglen)
+      {
+          ifm = (struct if_msghdr *) buf;
+          if(ifm->ifm_type == RTM_IFINFO && ifm->ifm_data.ifi_type == IFT_ETHER)
+          {
+              ifdata = ifm->ifm_data;
+              entry->dwMtu = ifdata.ifi_mtu;
+              entry->dwSpeed = ifdata.ifi_baudrate;
+              entry->dwInOctets = ifdata.ifi_ibytes;
+              entry->dwInErrors = ifdata.ifi_ierrors;
+              entry->dwInDiscards = ifdata.ifi_iqdrops;
+              entry->dwInUcastPkts = ifdata.ifi_ipackets;
+              entry->dwInNUcastPkts = ifdata.ifi_imcasts;
+              entry->dwOutOctets = ifdata.ifi_obytes;
+              entry->dwOutUcastPkts = ifdata.ifi_opackets;
+              entry->dwOutErrors = ifdata.ifi_oerrors;
+              HeapFree (GetProcessHeap (), 0, buf);
+              return NO_ERROR;
+          }
+      }
+      HeapFree (GetProcessHeap (), 0, buf);
+      return ERROR_NOT_SUPPORTED;
+#else
   /* get interface stats from /proc/net/dev, no error if can't
      no inUnknownProtos, outNUcastPkts, outQLen */
+  FILE *fp;
+
+  if (!name || !entry)
+    return ERROR_INVALID_PARAMETER;
   fp = fopen("/proc/net/dev", "r");
   if (fp) {
     char buf[512] = { 0 }, *ptr;
@@ -188,6 +236,7 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
   }
 
   return NO_ERROR;
+#endif
 }
 
 DWORD getICMPStats(MIB_ICMP *stats)
