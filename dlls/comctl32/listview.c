@@ -9420,6 +9420,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
 {
     UINT uNewView = lpss->styleNew & LVS_TYPEMASK;
     UINT uOldView = lpss->styleOld & LVS_TYPEMASK;
+    UINT style;
 
     TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
           wStyleType, lpss->styleOld, lpss->styleNew);
@@ -9481,8 +9482,26 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
     }
 
     if (uNewView == LVS_REPORT)
-	ShowWindow(infoPtr->hwndHeader, (lpss->styleNew & LVS_NOCOLUMNHEADER) ? SW_HIDE : SW_SHOWNORMAL);
-     
+    {
+        if ((lpss->styleOld ^ lpss->styleNew) & LVS_NOCOLUMNHEADER)
+        {
+            if (lpss->styleNew & LVS_NOCOLUMNHEADER)
+            {
+                /* Turn off the header control */
+                style = GetWindowLongW(infoPtr->hwndHeader, GWL_STYLE);
+                TRACE("Hide header control, was 0x%08x\n", style);
+                SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE, style | HDS_HIDDEN);
+            } else {
+                /* Turn on the header control */
+                if ((style = GetWindowLongW(infoPtr->hwndHeader, GWL_STYLE)) & HDS_HIDDEN)
+                {
+                    TRACE("Show header control, was 0x%08x\n", style);
+                    SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE, (style & ~HDS_HIDDEN) | WS_VISIBLE);
+                }
+            }
+        }
+    }
+
     if ( (uNewView == LVS_ICON || uNewView == LVS_SMALLICON) &&
 	 (uNewView != uOldView || ((lpss->styleNew ^ lpss->styleOld) & LVS_ALIGNMASK)) )
 	 LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
