@@ -7086,12 +7086,15 @@ done
 
 
 
+
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
 	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
+	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -7135,6 +7138,7 @@ for ac_header in \
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \
+	netinet/ip_icmp.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
 	netinet/udp.h \
@@ -7554,7 +7558,8 @@ done
 
 
 
-for ac_header in netinet/tcp_var.h netinet/udp_var.h
+
+for ac_header in netinet/tcp_var.h netinet/udp_var.h netinet/icmp_var.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 { echo "$as_me:$LINENO: checking for $ac_header" >&5
@@ -7569,6 +7574,9 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <sys/types.h>
+     #ifdef HAVE_ALIAS_H
+     # include <alias.h>
+     #endif
      #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
@@ -7580,6 +7588,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #endif
      #ifdef HAVE_NETINET_IP_VAR_H
      # include <netinet/ip_var.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_ICMP_H
+     # include <netinet/ip_icmp.h>
      #endif
      #ifdef HAVE_NETINET_UDP_H
      # include <netinet/udp.h>

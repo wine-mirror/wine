@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef HAVE_ALIAS_H
+#include <alias.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -64,6 +67,12 @@
 #endif
 #ifdef HAVE_NETINET_TCP_VAR_H
 #include <netinet/tcp_var.h>
+#endif
+#ifdef HAVE_NETINET_IP_ICMP_H
+#include <netinet/ip_icmp.h>
+#endif
+#ifdef HAVE_NETINET_ICMP_VAR_H
+#include <netinet/icmp_var.h>
 #endif
 #ifdef HAVE_NETINET_IP_VAR_H
 #include <netinet/ip_var.h>
@@ -247,6 +256,65 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 
 DWORD getICMPStats(MIB_ICMP *stats)
 {
+#if defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS)
+  int mib[] = {CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS};
+#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
+  size_t needed;
+  struct icmpstat icmp_stat;
+  int i;
+
+  if (!stats)
+    return ERROR_INVALID_PARAMETER;
+
+  needed = sizeof(icmp_stat);
+  if(sysctl(mib, MIB_LEN, &icmp_stat, &needed, NULL, 0) == -1)
+  {
+      ERR ("failed to get icmpstat\n");
+      return ERROR_NOT_SUPPORTED;
+  }
+
+
+  /*in stats */
+  stats->stats.icmpInStats.dwMsgs = icmp_stat.icps_badcode + icmp_stat.icps_checksum + icmp_stat.icps_tooshort + icmp_stat.icps_badlen;
+  for(i = 0; i <= ICMP_MAXTYPE; i++)
+      stats->stats.icmpInStats.dwMsgs += icmp_stat.icps_inhist[i];
+
+  stats->stats.icmpInStats.dwErrors = icmp_stat.icps_badcode + icmp_stat.icps_tooshort + icmp_stat.icps_checksum + icmp_stat.icps_badlen;
+
+  stats->stats.icmpInStats.dwDestUnreachs = icmp_stat.icps_inhist[ICMP_UNREACH];
+  stats->stats.icmpInStats.dwTimeExcds = icmp_stat.icps_inhist[ICMP_TIMXCEED];
+  stats->stats.icmpInStats.dwParmProbs = icmp_stat.icps_inhist[ICMP_PARAMPROB];
+  stats->stats.icmpInStats.dwSrcQuenchs = icmp_stat.icps_inhist[ICMP_SOURCEQUENCH];
+  stats->stats.icmpInStats.dwRedirects = icmp_stat.icps_inhist[ICMP_REDIRECT];
+  stats->stats.icmpInStats.dwEchos = icmp_stat.icps_inhist[ICMP_ECHO];
+  stats->stats.icmpInStats.dwEchoReps = icmp_stat.icps_inhist[ICMP_ECHOREPLY];
+  stats->stats.icmpInStats.dwTimestamps = icmp_stat.icps_inhist[ICMP_TSTAMP];
+  stats->stats.icmpInStats.dwTimestampReps = icmp_stat.icps_inhist[ICMP_TSTAMPREPLY];
+  stats->stats.icmpInStats.dwAddrMasks = icmp_stat.icps_inhist[ICMP_MASKREQ];
+  stats->stats.icmpInStats.dwAddrMaskReps = icmp_stat.icps_inhist[ICMP_MASKREPLY];
+
+
+  /* out stats */
+  stats->stats.icmpOutStats.dwMsgs = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
+  for(i = 0; i <= ICMP_MAXTYPE; i++)
+  stats->stats.icmpOutStats.dwMsgs += icmp_stat.icps_outhist[i];
+
+  stats->stats.icmpOutStats.dwErrors = icmp_stat.icps_oldshort + icmp_stat.icps_oldicmp;
+
+  stats->stats.icmpOutStats.dwDestUnreachs = icmp_stat.icps_outhist[ICMP_UNREACH];
+  stats->stats.icmpOutStats.dwTimeExcds = icmp_stat.icps_outhist[ICMP_TIMXCEED];
+  stats->stats.icmpOutStats.dwParmProbs = icmp_stat.icps_outhist[ICMP_PARAMPROB];
+  stats->stats.icmpOutStats.dwSrcQuenchs = icmp_stat.icps_outhist[ICMP_SOURCEQUENCH];
+  stats->stats.icmpOutStats.dwRedirects = icmp_stat.icps_outhist[ICMP_REDIRECT];
+  stats->stats.icmpOutStats.dwEchos = icmp_stat.icps_outhist[ICMP_ECHO];
+  stats->stats.icmpOutStats.dwEchoReps = icmp_stat.icps_outhist[ICMP_ECHOREPLY];
+  stats->stats.icmpOutStats.dwTimestamps = icmp_stat.icps_outhist[ICMP_TSTAMP];
+  stats->stats.icmpOutStats.dwTimestampReps = icmp_stat.icps_outhist[ICMP_TSTAMPREPLY];
+  stats->stats.icmpOutStats.dwAddrMasks = icmp_stat.icps_outhist[ICMP_MASKREQ];
+  stats->stats.icmpOutStats.dwAddrMaskReps = icmp_stat.icps_outhist[ICMP_MASKREPLY];
+
+  return NO_ERROR;
+#else
   FILE *fp;
 
   if (!stats)
@@ -376,6 +444,7 @@ DWORD getICMPStats(MIB_ICMP *stats)
   }
 
   return NO_ERROR;
+#endif
 }
 
 DWORD getIPStats(PMIB_IPSTATS stats)

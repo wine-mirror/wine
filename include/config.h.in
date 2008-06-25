@@ -5,6 +5,9 @@
 /* Specifies the compiler flag that forces a short wchar_t */
 #undef CC_FLAG_SHORT_WCHAR
 
+/* Define to 1 if you have the <alias.h> header file. */
+#undef HAVE_ALIAS_H
+
 /* Define if you have ALSA 1.x including devel headers */
 #undef HAVE_ALSA
 
@@ -435,6 +438,9 @@
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
+/* Define to 1 if you have the <netinet/icmp_var.h> header file. */
+#undef HAVE_NETINET_ICMP_VAR_H
+
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
@@ -443,6 +449,9 @@
 
 /* Define to 1 if you have the <netinet/in_systm.h> header file. */
 #undef HAVE_NETINET_IN_SYSTM_H
+
+/* Define to 1 if you have the <netinet/ip_icmp.h> header file. */
+#undef HAVE_NETINET_IP_ICMP_H
 
 /* Define to 1 if you have the <netinet/ip_var.h> header file. */
 #undef HAVE_NETINET_IP_VAR_H

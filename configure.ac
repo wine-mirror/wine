@@ -231,6 +231,7 @@ AC_CHECK_HEADERS(\
 	CoreAudio/CoreAudio.h \
 	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
+	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -274,6 +275,7 @@ AC_CHECK_HEADERS(\
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \
+	netinet/ip_icmp.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
 	netinet/udp.h \
@@ -360,8 +362,11 @@ AC_CHECK_HEADERS([netinet/in_pcb.h netinet/ip_var.h net/if.h net/if_arp.h net/if
      # include <netinet/in.h>
      #endif])
 
-AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h],,,
+AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h netinet/icmp_var.h],,,
     [#include <sys/types.h>
+     #ifdef HAVE_ALIAS_H
+     # include <alias.h>
+     #endif
      #ifdef HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif
@@ -373,6 +378,9 @@ AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h],,,
      #endif
      #ifdef HAVE_NETINET_IP_VAR_H
      # include <netinet/ip_var.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_ICMP_H
+     # include <netinet/ip_icmp.h>
      #endif
      #ifdef HAVE_NETINET_UDP_H
      # include <netinet/udp.h>
