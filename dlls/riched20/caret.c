@@ -975,13 +975,13 @@ static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pR
   pNext = ME_FindItemFwd(pRow, diRunOrStartRow);
   assert(pNext->type == diRun);
   pLastRun = pNext;
-  *pbCaretAtEnd = FALSE;
+  if (pbCaretAtEnd) *pbCaretAtEnd = FALSE;
+  if (pOffset) *pOffset = 0;
   do {
     int run_x = pNext->member.run.pt.x;
     int width = pNext->member.run.nWidth;
     if (x < run_x)
     {
-      if (pOffset) *pOffset = 0;
       return pNext;
     }
     if (x >= run_x && x < run_x+width)
@@ -1001,12 +1001,9 @@ static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pR
   if ((pLastRun->member.run.nFlags & MERF_ENDPARA) == 0)
   {
     pNext = ME_FindItemFwd(pNext, diRun);
-    if (pbCaretAtEnd) *pbCaretAtEnd = 1;
-    if (pOffset) *pOffset = 0;
+    if (pbCaretAtEnd) *pbCaretAtEnd = TRUE;
     return pNext;
   } else {
-    if (pbCaretAtEnd) *pbCaretAtEnd = 0;
-    if (pOffset) *pOffset = 0;
     return pLastRun;
   }
 }
