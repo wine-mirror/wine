@@ -966,6 +966,7 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
   ME_InvalidateSelection(editor);
   ShowCaret(editor->hWnd);
   ME_SendSelChange(editor);
+  SendMessageW(editor->hWnd, EM_SCROLLCARET, 0, 0);
 }
 
 static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow, 
