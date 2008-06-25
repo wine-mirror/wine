@@ -2758,11 +2758,11 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
 
     if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) return FALSE;
     if (!(list = list_window_parents( hwnd ))) return TRUE;
-    if (list[0] && list[1])  /* desktop window is considered always visible so we don't check it */
+    if (list[0])
     {
         for (i = 0; list[i+1]; i++)
             if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)) break;
-        retval = !list[i+1];
+        retval = !list[i+1] && (list[i] == GetDesktopWindow());  /* top message window isn't visible */
     }
     HeapFree( GetProcessHeap(), 0, list );
     return retval;
@@ -2787,12 +2787,12 @@ BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL icon )
     if ((style & WS_MINIMIZE) && icon && GetClassLongPtrW( hwnd, GCLP_HICON ))  return FALSE;
 
     if (!(list = list_window_parents( hwnd ))) return TRUE;
-    if (list[0] && list[1])  /* desktop window is considered always visible so we don't check it */
+    if (list[0])
     {
         for (i = 0; list[i+1]; i++)
             if ((GetWindowLongW( list[i], GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != WS_VISIBLE)
                 break;
-        retval = !list[i+1];
+        retval = !list[i+1] && (list[i] == GetDesktopWindow());  /* top message window isn't visible */
     }
     HeapFree( GetProcessHeap(), 0, list );
     return retval;

@@ -604,7 +604,7 @@ static inline void inc_window_paint_count( struct window *win, int incr )
 /* check if window and all its ancestors are visible */
 static int is_visible( const struct window *win )
 {
-    while (win && win->parent)
+    while (win)
     {
         if (!(win->style & WS_VISIBLE)) return 0;
         win = win->parent;

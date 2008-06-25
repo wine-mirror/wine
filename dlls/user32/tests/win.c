@@ -4755,6 +4755,15 @@ static void test_hwnd_message(void)
         ok( found == hwnd, "didn't find message window %p/%p\n", found, hwnd );
     }
 
+    /* test IsChild behavior */
+
+    if (parent) ok( !IsChild( parent, hwnd ), "HWND_MESSAGE is child of top window\n" );
+
+    /* test IsWindowVisible behavior */
+
+    ok( !IsWindowVisible( hwnd ), "HWND_MESSAGE window is visible\n" );
+    if (parent) ok( !IsWindowVisible( parent ), "HWND_MESSAGE parent is visible\n" );
+
     DestroyWindow(hwnd);
 }
 
