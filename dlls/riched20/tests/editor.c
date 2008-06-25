@@ -4424,6 +4424,77 @@ static void test_undo_coalescing(void)
     DestroyWindow(hwnd);
 }
 
+/* Used to simulate a Ctrl-Arrow Key press. */
+#define SEND_CTRL_EXT_KEY(hwnd, vk, scancode) \
+    keybd_event(VK_CONTROL, 0x1d, 0, 0);\
+    keybd_event(vk, scancode, KEYEVENTF_EXTENDEDKEY, 0);\
+    keybd_event(vk, scancode | 0x80, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0);\
+    keybd_event(VK_CONTROL, 0x1d | 0x80, KEYEVENTF_KEYUP, 0); \
+    while (PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE)) { \
+        TranslateMessage(&msg); \
+        DispatchMessage(&msg); \
+    }
+#define SEND_CTRL_LEFT(hwnd) SEND_CTRL_EXT_KEY(hwnd, VK_LEFT, 0x4b)
+#define SEND_CTRL_RIGHT(hwnd) SEND_CTRL_EXT_KEY(hwnd, VK_RIGHT, 0x4d)
+
+static void test_word_movement(){
+    HWND hwnd;
+    int result;
+    int sel_start, sel_end;
+    MSG msg;
+
+    /* multi-line control inserts CR normally */
+    hwnd = new_richedit(NULL);
+
+    SendMessage(hwnd, WM_SETFOCUS, (WPARAM)hwnd, 0);
+    result = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"one two  three");
+    ok (result == TRUE, "Failed to clear the text.\n");
+    SendMessage(hwnd, EM_SETSEL, 0, 0);
+    /* |one two three */
+
+    SEND_CTRL_RIGHT(hwnd)
+    /* one |two  three */
+    SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "Selection should be empty\n");
+    ok(sel_start == 4, "Cursur is at %d instead of %d\n", sel_start, 4);
+
+    SEND_CTRL_RIGHT(hwnd)
+    /* one two  |three */
+    SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "Selection should be empty\n");
+    ok(sel_start == 9, "Cursur is at %d instead of %d\n", sel_start, 9);
+
+    SEND_CTRL_LEFT(hwnd)
+    /* one |two  three */
+    SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "Selection should be empty\n");
+    ok(sel_start == 4, "Cursur is at %d instead of %d\n", sel_start, 4);
+
+    SEND_CTRL_LEFT(hwnd)
+    /* |one two  three */
+    SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "Selection should be empty\n");
+    ok(sel_start == 0, "Cursur is at %d instead of %d\n", sel_start, 0);
+
+    SendMessage(hwnd, EM_SETSEL, 8, 8);
+    /* one two | three */
+    SEND_CTRL_RIGHT(hwnd)
+    /* one two  |three */
+    SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "Selection should be empty\n");
+    ok(sel_start == 9, "Cursur is at %d instead of %d\n", sel_start, 9);
+
+    SendMessage(hwnd, EM_SETSEL, 11, 11);
+    /* one two  th|ree */
+    SEND_CTRL_LEFT(hwnd)
+    /* one two  |three */
+    SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "Selection should be empty\n");
+    ok(sel_start == 9, "Cursur is at %d instead of %d\n", sel_start, 9);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -4470,6 +4541,7 @@ START_TEST( editor )
   test_EM_AUTOURLDETECT();
   test_eventMask();
   test_undo_coalescing();
+  test_word_movement();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

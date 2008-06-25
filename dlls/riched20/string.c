@@ -317,18 +317,10 @@ ME_WordBreakProc(LPWSTR s, INT start, INT len, INT code)
       return start;
     case WB_RIGHT:
     case WB_MOVEWORDRIGHT:
-      if (start && ME_IsWSpace(s[start - 1]))
-      {
-        while (start < len && ME_IsWSpace(s[start]))
-          start++;
-      }
-      else
-      {
-        while (start < len && !ME_IsWSpace(s[start]))
-          start++;
-        while (start < len && ME_IsWSpace(s[start]))
-          start++;
-      }
+      while (start < len && !ME_IsWSpace(s[start]))
+        start++;
+      while (start < len && ME_IsWSpace(s[start]))
+        start++;
       return start;
   }
   return 0;
