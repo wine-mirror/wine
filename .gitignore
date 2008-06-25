@@ -346,6 +346,8 @@ dlls/riched20/tests/testlist.c
 dlls/riched32/tests/*.ok
 dlls/riched32/tests/riched32_crosstest.exe
 dlls/riched32/tests/testlist.c
+dlls/rpcrt4/epm.h
+dlls/rpcrt4/epm_c.c
 dlls/rpcrt4/librpcrt4.def
 dlls/rpcrt4/tests/*.ok
 dlls/rpcrt4/tests/rpcrt4_crosstest.exe
