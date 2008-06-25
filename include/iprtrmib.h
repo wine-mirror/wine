@@ -261,6 +261,10 @@ typedef struct _MIB_IPNETROW
     DWORD dwType;
 } MIB_IPNETROW, *PMIB_IPNETROW;
 
+#define MIB_TCP_RTO_OTHER               1
+#define MIB_TCP_RTO_CONSTANT            2
+#define MIB_TCP_RTO_RSRE                3
+#define MIB_TCP_RTO_VANJ                4
 #define    MIB_IPNET_TYPE_OTHER        1
 #define    MIB_IPNET_TYPE_INVALID        2
 #define    MIB_IPNET_TYPE_DYNAMIC        3

@@ -362,7 +362,7 @@ AC_CHECK_HEADERS([netinet/in_pcb.h netinet/ip_var.h net/if.h net/if_arp.h net/if
      # include <netinet/in.h>
      #endif])
 
-AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h netinet/icmp_var.h],,,
+AC_CHECK_HEADERS([netinet/tcp_var.h netinet/udp_var.h netinet/icmp_var.h netinet/tcp_timer.h ],,,
     [#include <sys/types.h>
      #ifdef HAVE_ALIAS_H
      # include <alias.h>

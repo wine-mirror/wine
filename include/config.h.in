@@ -462,6 +462,9 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
 
+/* Define to 1 if you have the <netinet/tcp_timer.h> header file. */
+#undef HAVE_NETINET_TCP_TIMER_H
+
 /* Define to 1 if you have the <netinet/tcp_var.h> header file. */
 #undef HAVE_NETINET_TCP_VAR_H
 

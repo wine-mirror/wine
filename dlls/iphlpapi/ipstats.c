@@ -68,6 +68,9 @@
 #ifdef HAVE_NETINET_TCP_VAR_H
 #include <netinet/tcp_var.h>
 #endif
+#ifdef HAVE_NETINET_TCP_TIMER_H
+#include <netinet/tcp_timer.h>
+#endif
 #ifdef HAVE_NETINET_IP_ICMP_H
 #include <netinet/ip_icmp.h>
 #endif
@@ -618,6 +621,42 @@ DWORD getIPStats(PMIB_IPSTATS stats)
 
 DWORD getTCPStats(MIB_TCPSTATS *stats)
 {
+#if defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
+  int mib[] = {CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS};
+#define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
+#define hz 1000
+  struct tcpstat tcp_stat;
+  size_t needed;
+
+  if (!stats)
+    return ERROR_INVALID_PARAMETER;
+  needed = sizeof(tcp_stat);
+
+  if(sysctl(mib, MIB_LEN, &tcp_stat, &needed, NULL, 0) == -1)
+  {
+      ERR ("failed to get tcpstat\n");
+      return ERROR_NOT_SUPPORTED;
+  }
+
+  stats->dwRtoAlgorithm = MIB_TCP_RTO_VANJ;
+  stats->dwRtoMin = TCPTV_MIN;
+  stats->dwRtoMax = TCPTV_REXMTMAX;
+  stats->dwMaxConn = -1;
+  stats->dwActiveOpens = tcp_stat.tcps_connattempt;
+  stats->dwPassiveOpens = tcp_stat.tcps_accepts;
+  stats->dwAttemptFails = tcp_stat.tcps_conndrops;
+  stats->dwEstabResets = tcp_stat.tcps_drops;
+  stats->dwCurrEstab = 0;
+  stats->dwInSegs = tcp_stat.tcps_rcvtotal;
+  stats->dwOutSegs = tcp_stat.tcps_sndtotal - tcp_stat.tcps_sndrexmitpack;
+  stats->dwRetransSegs = tcp_stat.tcps_sndrexmitpack;
+  stats->dwInErrs = tcp_stat.tcps_rcvbadsum + tcp_stat.tcps_rcvbadoff + tcp_stat.tcps_rcvmemdrop + tcp_stat.tcps_rcvshort;
+  stats->dwOutRsts = tcp_stat.tcps_sndctrl - tcp_stat.tcps_closed;
+  stats->dwNumConns = tcp_stat.tcps_connects;
+
+  return NO_ERROR;
+
+#else
   FILE *fp;
 
   if (!stats)
@@ -710,6 +749,7 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
   }
 
   return NO_ERROR;
+#endif
 }
 
 DWORD getUDPStats(MIB_UDPSTATS *stats)
