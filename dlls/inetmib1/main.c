@@ -431,11 +431,10 @@ static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
     return ret;
 }
 
-static void setOidWithItemAndIpAddr(AsnObjectIdentifier *dst,
-    AsnObjectIdentifier *base, UINT item, DWORD addr)
+static void setOidWithItem(AsnObjectIdentifier *dst, AsnObjectIdentifier *base,
+    UINT item)
 {
     UINT id;
-    BYTE *ptr;
     AsnObjectIdentifier oid;
 
     SnmpUtilOidCpy(dst, base);
@@ -443,6 +442,18 @@ static void setOidWithItemAndIpAddr(AsnObjectIdentifier *dst,
     oid.ids = &id;
     id = item;
     SnmpUtilOidAppend(dst, &oid);
+}
+
+static void setOidWithItemAndIpAddr(AsnObjectIdentifier *dst,
+    AsnObjectIdentifier *base, UINT item, DWORD addr)
+{
+    UINT id;
+    BYTE *ptr;
+    AsnObjectIdentifier oid;
+
+    setOidWithItem(dst, base, item);
+    oid.idLength = 1;
+    oid.ids = &id;
     for (ptr = (BYTE *)&addr; ptr < (BYTE *)&addr + sizeof(DWORD); ptr++)
     {
         id = *ptr;
@@ -455,10 +466,8 @@ static void setOidWithItemAndInteger(AsnObjectIdentifier *dst,
 {
     AsnObjectIdentifier oid;
 
-    SnmpUtilOidCpy(dst, base);
+    setOidWithItem(dst, base, item);
     oid.idLength = 1;
-    oid.ids = &item;
-    SnmpUtilOidAppend(dst, &oid);
     oid.ids = &instance;
     SnmpUtilOidAppend(dst, &oid);
 }
@@ -597,14 +606,7 @@ static BOOL mib2IpStatsQuery(BYTE bPduType, SnmpVarBind *pVarBind,
             *pErrorStatus = mapStructEntryToValue(mib2IpMap,
                 DEFINE_SIZEOF(mib2IpMap), &ipStats, item, bPduType, pVarBind);
             if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
-            {
-                AsnObjectIdentifier oid;
-
-                SnmpUtilOidCpy(&pVarBind->name, &myOid);
-                oid.idLength = 1;
-                oid.ids = &item;
-                SnmpUtilOidAppend(&pVarBind->name, &oid);
-            }
+                setOidWithItem(&pVarBind->name, &myOid, item);
         }
         break;
     case SNMP_PDU_SET:
@@ -875,15 +877,8 @@ static BOOL mib2IcmpQuery(BYTE bPduType, SnmpVarBind *pVarBind,
             *pErrorStatus = mapStructEntryToValue(mib2IcmpMap,
                 DEFINE_SIZEOF(mib2IcmpMap), &icmpStats, item, bPduType,
                 pVarBind);
-            if (!*pErrorStatus)
-            {
-                AsnObjectIdentifier oid;
-
-                SnmpUtilOidCpy(&pVarBind->name, &myOid);
-                oid.idLength = 1;
-                oid.ids = &item;
-                SnmpUtilOidAppend(&pVarBind->name, &oid);
-            }
+            if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
+                setOidWithItem(&pVarBind->name, &myOid, item);
         }
         break;
     case SNMP_PDU_SET:
@@ -942,14 +937,7 @@ static BOOL mib2TcpQuery(BYTE bPduType, SnmpVarBind *pVarBind,
             *pErrorStatus = mapStructEntryToValue(mib2TcpMap,
                 DEFINE_SIZEOF(mib2TcpMap), &tcpStats, item, bPduType, pVarBind);
             if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
-            {
-                AsnObjectIdentifier oid;
-
-                SnmpUtilOidCpy(&pVarBind->name, &myOid);
-                oid.idLength = 1;
-                oid.ids = &item;
-                SnmpUtilOidAppend(&pVarBind->name, &oid);
-            }
+                setOidWithItem(&pVarBind->name, &myOid, item);
         }
         break;
     case SNMP_PDU_SET:
