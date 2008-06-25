@@ -569,6 +569,9 @@ static void test_EM_SETCHARFORMAT(void)
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) 0xfffffff0,
              (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
+  ok(rc == FALSE, "Should not be able to undo here.\n");
+  SendMessage(hwndRichEdit, EM_EMPTYUNDOBUFFER, 0, 0);
 
   /* A valid flag, CHARFORMAT2 structure minimally filled */
   memset(&cf2, 0, sizeof(cf2));
@@ -576,6 +579,9 @@ static void test_EM_SETCHARFORMAT(void)
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_DEFAULT,
              (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
+  todo_wine ok(rc == FALSE, "Should not be able to undo here.\n");
+  SendMessage(hwndRichEdit, EM_EMPTYUNDOBUFFER, 0, 0);
 
   /* A valid flag, CHARFORMAT2 structure minimally filled */
   memset(&cf2, 0, sizeof(cf2));
@@ -583,6 +589,9 @@ static void test_EM_SETCHARFORMAT(void)
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_SELECTION,
              (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
+  ok(rc == FALSE, "Should not be able to undo here.\n");
+  SendMessage(hwndRichEdit, EM_EMPTYUNDOBUFFER, 0, 0);
 
   /* A valid flag, CHARFORMAT2 structure minimally filled */
   memset(&cf2, 0, sizeof(cf2));
@@ -590,6 +599,9 @@ static void test_EM_SETCHARFORMAT(void)
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_WORD,
              (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
+  todo_wine ok(rc == TRUE, "Should not be able to undo here.\n");
+  SendMessage(hwndRichEdit, EM_EMPTYUNDOBUFFER, 0, 0);
 
   /* A valid flag, CHARFORMAT2 structure minimally filled */
   memset(&cf2, 0, sizeof(cf2));
@@ -597,6 +609,9 @@ static void test_EM_SETCHARFORMAT(void)
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL,
              (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
+  rc = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
+  todo_wine ok(rc == TRUE, "Should not be able to undo here.\n");
+  SendMessage(hwndRichEdit, EM_EMPTYUNDOBUFFER, 0, 0);
 
   cf2.cbSize = sizeof(CHARFORMAT2);
   SendMessage(hwndRichEdit, EM_GETCHARFORMAT, (WPARAM) SCF_DEFAULT,

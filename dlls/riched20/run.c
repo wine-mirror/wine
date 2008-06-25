@@ -834,6 +834,7 @@ void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod)
   ME_Style *style;
   ME_UndoItem *undo;
 
+  /* FIXME: Should this be removed? It breaks a test. */
   assert(mod->cbSize == sizeof(CHARFORMAT2W));
   undo = ME_AddUndoItem(editor, diUndoSetDefaultCharFormat, NULL);
   if (undo) {
