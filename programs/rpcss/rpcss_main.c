@@ -58,20 +58,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-static HANDLE master_mutex;
 static HANDLE exit_event;
 
 extern HANDLE __wine_make_process_system(void);
-
-HANDLE RPCSS_GetMasterMutex(void)
-{
-  return master_mutex;
-}
-
-static BOOL RPCSS_work(HANDLE exit_event)
-{
-  return RPCSS_NPDoWork(exit_event);
-}
 
 static BOOL RPCSS_Initialize(void)
 {
@@ -82,21 +71,6 @@ static BOOL RPCSS_Initialize(void)
   RPC_STATUS status;
 
   WINE_TRACE("\n");
-
-  master_mutex = CreateMutexA( NULL, FALSE, RPCSS_MASTER_MUTEX_NAME);
-  if (!master_mutex) {
-    WINE_ERR("Failed to create master mutex\n");
-    return FALSE;
-  }
-
-  if (!RPCSS_BecomePipeServer()) {
-    WINE_WARN("Server already running: exiting.\n");
-
-    CloseHandle(master_mutex);
-    master_mutex = NULL;
-
-    return FALSE;
-  }
 
   status = RpcServerRegisterIf(epm_v3_0_s_ifspec, NULL, NULL);
   if (status != RPC_S_OK)
@@ -136,14 +110,6 @@ fail:
    aren't ready to terminate */
 static BOOL RPCSS_Shutdown(void)
 {
-  if (!RPCSS_UnBecomePipeServer())
-    return FALSE;
-   
-  if (!CloseHandle(master_mutex))
-    WINE_WARN("Failed to release master mutex\n");
-
-  master_mutex = NULL;
-
   RpcMgmtStopServerListening(NULL);
   RpcServerUnregisterIf(epm_v3_0_s_ifspec, NULL, TRUE);
   RpcServerUnregisterIf(Irot_v0_2_s_ifspec, NULL, TRUE);
@@ -153,24 +119,16 @@ static BOOL RPCSS_Shutdown(void)
   return TRUE;
 }
 
-static void RPCSS_MainLoop(void)
-{
-  WINE_TRACE("\n");
-
-  while ( RPCSS_work(exit_event) )
-      ;
-}
-
 int main( int argc, char **argv )
 {
   /* 
    * We are invoked as a standard executable; we act in a
-   * "lazy" manner.  We open up our pipe, and hang around until we all
-   * user processes exit, and then silently terminate.
+   * "lazy" manner.  We register our interfaces and endpoints, and hang around
+   * until we all user processes exit, and then silently terminate.
    */
 
   if (RPCSS_Initialize()) {
-    RPCSS_MainLoop();
+    WaitForSingleObject(exit_event, INFINITE);
     RPCSS_Shutdown();
   }
 
