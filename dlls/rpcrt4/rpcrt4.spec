@@ -31,7 +31,7 @@
 @ stub I_RpcBindingInqDynamicEndPointW
 @ stub I_RpcBindingInqLocalClientPID # wxp
 @ stub I_RpcBindingInqSecurityContext
-@ stub I_RpcBindingInqTransportType
+@ stdcall I_RpcBindingInqTransportType(ptr ptr)
 @ stub I_RpcBindingInqWireIdForSnego
 @ stub I_RpcBindingIsClientLocal
 # 9x version of I_RpcBindingSetAsync has 3 arguments, not 2
