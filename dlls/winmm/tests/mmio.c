@@ -30,9 +30,15 @@
 
 static DWORD RIFF_buf[] =
 {
-    FOURCC_RIFF, 7*sizeof(DWORD)+sizeof(MainAVIHeader), mmioFOURCC('A','V','I',' '),
-    FOURCC_LIST, sizeof(DWORD)+sizeof(MMCKINFO)+sizeof(MainAVIHeader), listtypeAVIHEADER,
-    ckidAVIMAINHDR, sizeof(MainAVIHeader), 0xdeadbeef, 0xdeadbeef,
+    FOURCC_RIFF, 32*sizeof(DWORD), mmioFOURCC('A','V','I',' '),
+    FOURCC_LIST, 29*sizeof(DWORD), listtypeAVIHEADER, ckidAVIMAINHDR,
+    sizeof(MainAVIHeader), 0xdeadbeef, 0xdeadbeef, 0xdeadbeef,
+    0xdeadbeef, 0xdeadbeef, 0xdeadbeef,0xdeadbeef,
+    0xdeadbeef, 0xdeadbeef, 0xdeadbeef,0xdeadbeef,
+    0xdeadbeef, 0xdeadbeef, 0xdeadbeef,
+    FOURCC_LIST, 10*sizeof(DWORD),listtypeSTREAMHEADER, ckidSTREAMHEADER,
+    7*sizeof(DWORD), streamtypeVIDEO, 0xdeadbeef, 0xdeadbeef,
+    0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -78,6 +84,25 @@ static void test_mmioDescend(char *fname)
     ret = mmioDescend(hmmio, &ck, &ckList, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
     ok(ck.ckid == ckidAVIMAINHDR, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType == 0, "wrong fccType: %04x\n", ck.fccType);
+    trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
+          (LPCSTR)&ck.ckid, ck.cksize, (LPCSTR)&ck.fccType,
+          ck.dwDataOffset, ck.dwFlags);
+
+    /* Skip chunk data */
+    mmioSeek(hmmio, ck.cksize, SEEK_CUR);
+
+    ret = mmioDescend(hmmio, &ckList, &ckList, 0);
+    ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
+    ok(ckList.ckid == FOURCC_LIST, "wrong ckid: %04x\n", ckList.ckid);
+    ok(ckList.fccType == listtypeSTREAMHEADER, "wrong fccType: %04x\n", ckList.fccType);
+    trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
+          (LPCSTR)&ckList.ckid, ckList.cksize, (LPCSTR)&ckList.fccType,
+          ckList.dwDataOffset, ckList.dwFlags);
+
+    ret = mmioDescend(hmmio, &ck, &ckList, 0);
+    ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
+    ok(ck.ckid == ckidSTREAMHEADER, "wrong ckid: %04x\n", ck.ckid);
     ok(ck.fccType == 0, "wrong fccType: %04x\n", ck.fccType);
     trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
           (LPCSTR)&ck.ckid, ck.cksize, (LPCSTR)&ck.fccType,
