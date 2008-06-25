@@ -197,8 +197,8 @@ extern void init_signals(void);
 
 /* atom functions */
 
-extern atom_t add_global_atom( struct winstation *winstation, const WCHAR *str, data_size_t len );
-extern atom_t find_global_atom( struct winstation *winstation, const WCHAR *str, data_size_t len );
+extern atom_t add_global_atom( struct winstation *winstation, const struct unicode_str *str );
+extern atom_t find_global_atom( struct winstation *winstation, const struct unicode_str *str );
 extern int grab_global_atom( struct winstation *winstation, atom_t atom );
 extern void release_global_atom( struct winstation *winstation, atom_t atom );
 
