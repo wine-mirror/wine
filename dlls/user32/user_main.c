@@ -312,13 +312,16 @@ BOOL USER_IsExitingThread( DWORD tid )
  */
 static void thread_detach(void)
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
+
     exiting_thread_id = GetCurrentThreadId();
 
     WDML_NotifyThreadDetach();
 
-    WIN_DestroyThreadWindows( get_user_thread_info()->desktop );
-    CloseHandle( get_user_thread_info()->server_queue );
-    HeapFree( GetProcessHeap(), 0, get_user_thread_info()->wmchar_data );
+    if (thread_info->top_window) WIN_DestroyThreadWindows( thread_info->top_window );
+    if (thread_info->msg_window) WIN_DestroyThreadWindows( thread_info->msg_window );
+    CloseHandle( thread_info->server_queue );
+    HeapFree( GetProcessHeap(), 0, thread_info->wmchar_data );
 
     exiting_thread_id = 0;
 }

@@ -150,10 +150,17 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
     {
         struct user_thread_info *thread_info = get_user_thread_info();
 
-        if (!thread_info->desktop) thread_info->desktop = full_parent ? full_parent : handle;
-        else assert( full_parent == thread_info->desktop );
-        if (full_parent && !USER_Driver->pCreateDesktopWindow( thread_info->desktop ))
-            ERR( "failed to create desktop window\n" );
+        if (name == (LPCWSTR)DESKTOP_CLASS_ATOM)
+        {
+            if (!thread_info->top_window) thread_info->top_window = full_parent ? full_parent : handle;
+            else assert( full_parent == thread_info->top_window );
+            if (full_parent && !USER_Driver->pCreateDesktopWindow( thread_info->top_window ))
+                ERR( "failed to create desktop window\n" );
+        }
+        else  /* HWND_MESSAGE parent */
+        {
+            if (!thread_info->msg_window && !full_parent) thread_info->msg_window = handle;
+        }
     }
 
     USER_Lock();
@@ -978,13 +985,17 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
     }
     else
     {
+        static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
+
         if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
         {
             WARN("No parent for child window\n" );
             SetLastError(ERROR_TLW_WITH_WSCHILD);
             return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
         }
-        if (className != (LPCWSTR)DESKTOP_CLASS_ATOM)  /* are we creating the desktop itself? */
+        /* are we creating the desktop or HWND_MESSAGE parent itself? */
+        if (className != (LPCWSTR)DESKTOP_CLASS_ATOM &&
+            (IS_INTRESOURCE(className) || strcmpiW( className, messageW )))
             parent = GetDesktopWindow();
     }
 
@@ -1620,16 +1631,16 @@ HWND WINAPI GetDesktopWindow(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 
-    if (thread_info->desktop) return thread_info->desktop;
+    if (thread_info->top_window) return thread_info->top_window;
 
     SERVER_START_REQ( get_desktop_window )
     {
         req->force = 0;
-        if (!wine_server_call( req )) thread_info->desktop = reply->handle;
+        if (!wine_server_call( req )) thread_info->top_window = reply->handle;
     }
     SERVER_END_REQ;
 
-    if (!thread_info->desktop)
+    if (!thread_info->top_window)
     {
         USEROBJECTFLAGS flags;
         if (!GetUserObjectInformationW( GetProcessWindowStation(), UOI_FLAGS, &flags,
@@ -1664,15 +1675,15 @@ HWND WINAPI GetDesktopWindow(void)
         SERVER_START_REQ( get_desktop_window )
         {
             req->force = 1;
-            if (!wine_server_call( req )) thread_info->desktop = reply->handle;
+            if (!wine_server_call( req )) thread_info->top_window = reply->handle;
         }
         SERVER_END_REQ;
     }
 
-    if (!thread_info->desktop || !USER_Driver->pCreateDesktopWindow( thread_info->desktop ))
+    if (!thread_info->top_window || !USER_Driver->pCreateDesktopWindow( thread_info->top_window ))
         ERR( "failed to create desktop window\n" );
 
-    return thread_info->desktop;
+    return thread_info->top_window;
 }
 
 

@@ -204,9 +204,10 @@ struct user_thread_info
     HCURSOR                       cursor;                 /* Current cursor */
     INT                           cursor_count;           /* Cursor show count */
     UINT                          active_hooks;           /* Bitmap of active hooks */
-    HWND                          desktop;                /* Desktop window */
+    HWND                          top_window;             /* Desktop window */
+    HWND                          msg_window;             /* HWND_MESSAGE parent window */
 
-    ULONG                         pad[10];                /* Available for more data */
+    ULONG                         pad[9];                 /* Available for more data */
 };
 
 struct hook_extra_info
