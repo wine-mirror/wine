@@ -128,7 +128,7 @@ ME_String *ME_VSplitString(ME_String *orig, int charidx)
   assert(charidx>=0);
   assert(charidx<=orig->nLen);
 
-  s = ME_MakeString(orig->szData+charidx);
+  s = ME_MakeStringN(orig->szData+charidx, orig->nLen-charidx);
   orig->nLen = charidx;
   orig->szData[charidx] = '\0';
   return s;

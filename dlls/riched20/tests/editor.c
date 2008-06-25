@@ -3616,6 +3616,30 @@ static DWORD CALLBACK test_EM_STREAMIN_esCallback(DWORD_PTR dwCookie,
   return 0;
 }
 
+struct StringWithLength {
+    int length;
+    char *buffer;
+};
+
+/* This callback is used to handled the null characters in a string. */
+static DWORD CALLBACK test_EM_STREAMIN_esCallback2(DWORD_PTR dwCookie,
+                                                   LPBYTE pbBuff,
+                                                   LONG cb,
+                                                   LONG *pcb)
+{
+    struct StringWithLength* str = (struct StringWithLength*)dwCookie;
+    int size = str->length;
+    *pcb = cb;
+    if (*pcb > size) {
+      *pcb = size;
+    }
+    if (*pcb > 0) {
+      memcpy(pbBuff, str->buffer, *pcb);
+      str->buffer += *pcb;
+      str->length -= *pcb;
+    }
+    return 0;
+}
 
 static void test_EM_STREAMIN(void)
 {
@@ -3644,6 +3668,15 @@ static void test_EM_STREAMIN(void)
     "\\tx11448 \\tx11872 \\tx12296 \\tx12720 \\tx13144 \\cf2 RichEdit1\\line }";
 
   const char * streamText3 = "RichEdit1";
+
+  struct StringWithLength cookieForStream4;
+  const char * streamText4 =
+      "This text just needs to be long enough to cause run to be split onto "\
+      "two seperate lines and make sure the null terminating character is "\
+      "handled properly.\0";
+  int length4 = strlen(streamText4) + 1;
+  cookieForStream4.buffer = (char *)streamText4;
+  cookieForStream4.length = length4;
 
   /* Minimal test without \par at the end */
   es.dwCookie = (DWORD_PTR)&streamText0;
@@ -3727,6 +3760,17 @@ static void test_EM_STREAMIN(void)
   ok (strlen(buffer)  == 0,
       "EM_STREAMIN: Test 3 set wrong text: Result: %s\n",buffer);
   ok(es.dwError == -16, "EM_STREAMIN: Test 3 set error %d, expected %d\n", es.dwError, -16);
+
+  es.dwCookie = (DWORD_PTR)&cookieForStream4;
+  es.dwError = 0;
+  es.pfnCallback = test_EM_STREAMIN_esCallback2;
+  SendMessage(hwndRichEdit, EM_STREAMIN,
+              (WPARAM)(SF_TEXT), (LPARAM)&es);
+
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  ok (result  == length4,
+      "EM_STREAMIN: Test 4 returned %ld, expected %d\n", result, length4);
+  ok(es.dwError == 0, "EM_STREAMIN: Test 4 set error %d, expected %d\n", es.dwError, 0);
 
   DestroyWindow(hwndRichEdit);
 }
