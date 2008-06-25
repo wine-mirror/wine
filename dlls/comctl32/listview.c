@@ -1638,6 +1638,7 @@ static void LISTVIEW_UpdateHeaderSize(const LISTVIEW_INFO *infoPtr, INT nNewScro
 
     SetWindowPos(infoPtr->hwndHeader,0,
         point[0].x,point[0].y,point[1].x,point[1].y,
+        (infoPtr->dwStyle & LVS_NOCOLUMNHEADER) ? SWP_HIDEWINDOW : SWP_SHOWWINDOW |
         SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
@@ -9266,7 +9267,11 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
     LISTVIEW_SaveTextMetrics(infoPtr);
 
     if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT)
+    {
 	SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(fRedraw, 0));
+        LISTVIEW_UpdateSize(infoPtr);
+        LISTVIEW_UpdateScroll(infoPtr);
+    }
 
     if (fRedraw) LISTVIEW_InvalidateList(infoPtr);
 
@@ -9377,7 +9382,7 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 	    infoPtr->rcList.bottom -= GetSystemMetrics(SM_CYHSCROLL);
         infoPtr->rcList.bottom = max (infoPtr->rcList.bottom - 2, 0);
     }
-    else if (uView == LVS_REPORT && !(infoPtr->dwStyle & LVS_NOCOLUMNHEADER))
+    else if (uView == LVS_REPORT)
     {
 	HDLAYOUT hl;
 	WINDOWPOS wp;
@@ -9386,7 +9391,9 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 	hl.pwpos = &wp;
 	SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
         TRACE("  wp.flags=0x%08x, wp=%d,%d (%dx%d)\n", wp.flags, wp.x, wp.y, wp.cx, wp.cy);
-	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
+	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy,
+                    wp.flags | ((infoPtr->dwStyle & LVS_NOCOLUMNHEADER)
+                        ? SWP_HIDEWINDOW : SWP_SHOWWINDOW));
         TRACE("  after SWP wp=%d,%d (%dx%d)\n", wp.x, wp.y, wp.cx, wp.cy);
 
 	infoPtr->rcList.top = max(wp.cy, 0);
@@ -9465,7 +9472,9 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
             hl.prc = &infoPtr->rcList;
             hl.pwpos = &wp;
             SendMessageW( infoPtr->hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hl );
-            SetWindowPos(infoPtr->hwndHeader, infoPtr->hwndSelf, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
+            SetWindowPos(infoPtr->hwndHeader, infoPtr->hwndSelf, wp.x, wp.y, wp.cx, wp.cy,
+                    wp.flags | ((infoPtr->dwStyle & LVS_NOCOLUMNHEADER)
+                        ? SWP_HIDEWINDOW : SWP_SHOWWINDOW));
         }
 
 	LISTVIEW_UpdateItemSize(infoPtr);
