@@ -193,6 +193,73 @@ static void copyOperStatus(AsnAny *value, void *src)
     };
 }
 
+/* Given an OID and a base OID that it must begin with, finds the item and
+ * integer instance from the OID.  E.g., given an OID foo.1.2 and a base OID
+ * foo, returns item 1 and instance 2.
+ * If bPduType is not SNMP_PDU_GETNEXT and either the item or instance is
+ * missing, returns SNMP_ERRORSTATUS_NOSUCHNAME.
+ * If bPduType is SNMP_PDU_GETNEXT, returns the successor to the item and
+ * instance, or item 1, instance 1 if either is missing.
+ */
+static AsnInteger32 getItemAndIntegerInstanceFromOid(AsnObjectIdentifier *oid,
+    AsnObjectIdentifier *base, BYTE bPduType, UINT *item, UINT *instance)
+{
+    AsnInteger32 ret = SNMP_ERRORSTATUS_NOERROR;
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GETNEXT:
+        if (SnmpUtilOidNCmp(oid, base, base->idLength) < 0)
+        {
+            *item = 1;
+            *instance = 1;
+        }
+        else if (!SnmpUtilOidNCmp(oid, base, base->idLength))
+        {
+            if (oid->idLength == base->idLength ||
+                oid->idLength == base->idLength + 1)
+            {
+                /* Either the table or an item within the table is specified,
+                 * but the instance is not.  Get the first instance.
+                 */
+                *instance = 1;
+                if (oid->idLength == base->idLength + 1)
+                    *item = oid->ids[base->idLength];
+                else
+                    *item = 1;
+            }
+            else
+            {
+                *item = oid->ids[base->idLength];
+                *instance = oid->ids[base->idLength + 1] + 1;
+            }
+        }
+        else
+            ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+        break;
+    default:
+        if (!SnmpUtilOidNCmp(oid, base, base->idLength))
+        {
+            if (oid->idLength == base->idLength ||
+                oid->idLength == base->idLength + 1)
+            {
+                /* Either the table or an item within the table is specified,
+                 * but the instance is not.
+                 */
+                ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+            }
+            else
+            {
+                *item = oid->ids[base->idLength];
+                *instance = oid->ids[base->idLength + 1];
+            }
+        }
+        else
+            ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return ret;
+}
+
 static struct structToAsnValue mib2IfEntryMap[] = {
     { FIELD_OFFSET(MIB_IFROW, dwIndex), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyLengthPrecededString },
@@ -238,44 +305,12 @@ static BOOL mib2IfEntryQuery(BYTE bPduType, SnmpVarBind *pVarBind,
              */
             *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
         }
-        else if (!SnmpUtilOidNCmp(&pVarBind->name, &entryOid, entryOid.idLength))
+        else
         {
             UINT tableIndex = 0, item = 0;
 
-            *pErrorStatus = 0;
-            if (pVarBind->name.idLength == entryOid.idLength ||
-                pVarBind->name.idLength == entryOid.idLength + 1)
-            {
-                /* Either the table or an element within the table is specified,
-                 * but the instance is not.
-                 */
-                if (bPduType == SNMP_PDU_GET)
-                {
-                    /* Can't get an interface entry without specifying the
-                     * instance.
-                     */
-                    *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-                }
-                else
-                {
-                    /* Get the first interface */
-                    tableIndex = 1;
-                    if (pVarBind->name.idLength == entryOid.idLength + 1)
-                        item = pVarBind->name.ids[entryOid.idLength];
-                    else
-                        item = 1;
-                }
-            }
-            else
-            {
-                tableIndex = pVarBind->name.ids[entryOid.idLength + 1];
-                item = pVarBind->name.ids[entryOid.idLength];
-                if (bPduType == SNMP_PDU_GETNEXT)
-                {
-                    tableIndex++;
-                    item = 1;
-                }
-            }
+            *pErrorStatus = getItemAndIntegerInstanceFromOid(&pVarBind->name,
+                &entryOid, bPduType, &item, &tableIndex);
             if (!*pErrorStatus)
             {
                 assert(tableIndex);
@@ -296,19 +331,18 @@ static BOOL mib2IfEntryQuery(BYTE bPduType, SnmpVarBind *pVarBind,
                         oid.idLength = 1;
                         oid.ids = &item;
                         SnmpUtilOidAppend(&pVarBind->name, &oid);
+                        /* According to RFC1158, the value of the interface
+                         * index must vary between 1 and ifNumber (the number
+                         * of interfaces), so use the 1-based table index
+                         * directly, rather than assuming that IPHlpApi's
+                         * dwIndex will have the correct range.
+                         */
                         oid.idLength = 1;
-                        oid.ids = &ifTable->table[tableIndex - 1].dwIndex;
+                        oid.ids = &tableIndex;
                         SnmpUtilOidAppend(&pVarBind->name, &oid);
                     }
                 }
             }
-        }
-        else
-        {
-            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-            /* Caller deals with OID if bPduType == SNMP_PDU_GETNEXT, so don't
-             * need to set it here.
-             */
         }
         break;
     case SNMP_PDU_SET:
