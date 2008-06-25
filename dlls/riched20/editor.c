@@ -124,7 +124,7 @@
   - EM_SETWORDWRAPMODE 1.0asian
   + EM_SETZOOM 3.0
   + EM_SHOWSCROLLBAR 2.0
-  - EM_STOPGROUPTYPING 2.0
+  + EM_STOPGROUPTYPING 2.0
   + EM_STREAMIN
   + EM_STREAMOUT
   + EM_UNDO
@@ -190,7 +190,6 @@
  * RICHED20 TODO (incomplete):
  *
  * - messages/styles/notifications listed above 
- * - Undo coalescing 
  * - add remaining CHARFORMAT/PARAFORMAT fields
  * - right/center align should strip spaces from the beginning
  * - pictures/OLE objects (not just smiling faces that lack API support ;-) )
@@ -1546,6 +1545,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
     case VK_END:
     case VK_PRIOR:
     case VK_NEXT:
+      ME_CommitUndo(editor); /* End coalesced undos for typed characters */
       ME_ArrowKey(editor, nKey, shift_is_down, ctrl_is_down);
       return TRUE;
     case VK_BACK:
@@ -1554,12 +1554,26 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_READONLY)
         return FALSE;
       if (ME_IsSelection(editor))
+      {
         ME_DeleteSelection(editor);
-      else if (nKey == VK_DELETE || ME_ArrowKey(editor, VK_LEFT, FALSE, FALSE))
+        ME_CommitUndo(editor);
+      }
+      else if (nKey == VK_DELETE)
+      {
+        /* Delete stops group typing.
+         * (See MSDN remarks on EM_STOPGROUPTYPING message) */
         ME_DeleteTextAtCursor(editor, 1, 1);
+        ME_CommitUndo(editor);
+      }
+      else if (ME_ArrowKey(editor, VK_LEFT, FALSE, FALSE))
+      {
+          /* Backspace can be grouped for a single undo */
+          ME_ContinueCoalescingTransaction(editor);
+          ME_DeleteTextAtCursor(editor, 1, 1);
+          ME_CommitCoalescingUndo(editor);
+      }
       else
         return TRUE;
-      ME_CommitUndo(editor);
       ME_UpdateSelectionLinkAttribute(editor);
       ME_UpdateRepaint(editor);
       ME_SendRequestResize(editor, FALSE);
@@ -2047,11 +2061,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return editor->pRedoStack != NULL;
   case WM_UNDO: /* FIXME: actually not the same */
   case EM_UNDO:
-    ME_Undo(editor);
-    return 0;
+    return ME_Undo(editor);
   case EM_REDO:
-    ME_Redo(editor);
-    return 0;
+    return ME_Redo(editor);
   case EM_GETOPTIONS:
   {
     /* these flags are equivalent to the ES_* counterparts */
@@ -2947,6 +2959,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     SetWindowLongPtrW(hWnd, 0, 0);
     return 0;
   case WM_LBUTTONDOWN:
+    ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
@@ -2989,6 +3002,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     break;
   case WM_RBUTTONUP:
   case WM_RBUTTONDOWN:
+    ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
@@ -3014,6 +3028,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_SendOldNotify(editor, EN_SETFOCUS);
     return 0;
   case WM_KILLFOCUS:
+    ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     ME_HideCaret(editor);
     editor->bHaveFocus = FALSE;
     ME_SendOldNotify(editor, EN_KILLFOCUS);
@@ -3099,12 +3114,13 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       {
         ME_Style *style = ME_GetInsertStyle(editor, 0);
         ME_SaveTempStyle(editor);
+        ME_ContinueCoalescingTransaction(editor);
         if (wstr == '\r' && (GetKeyState(VK_SHIFT) & 0x8000))
           ME_InsertEndRowFromCursor(editor, 0);
         else
           ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
         ME_ReleaseStyle(style);
-        ME_CommitUndo(editor);
+        ME_CommitCoalescingUndo(editor);
       }
 
       if (editor->AutoURLDetect_bEnable) ME_UpdateSelectionLinkAttribute(editor);
@@ -3113,6 +3129,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     return 0;
   }
+  case EM_STOPGROUPTYPING:
+    ME_CommitUndo(editor); /* End coalesced undos for typed characters */
+    return 0;
   case EM_SCROLL: /* fall through */
   case WM_VSCROLL: 
   {

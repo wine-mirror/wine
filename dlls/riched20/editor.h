@@ -288,8 +288,10 @@ void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor);
 /* undo.c */
 ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_DisplayItem *pdi);
 void ME_CommitUndo(ME_TextEditor *editor);
-void ME_Undo(ME_TextEditor *editor);
-void ME_Redo(ME_TextEditor *editor);
+void ME_ContinueCoalescingTransaction(ME_TextEditor *editor);
+void ME_CommitCoalescingUndo(ME_TextEditor *editor);
+BOOL ME_Undo(ME_TextEditor *editor);
+BOOL ME_Redo(ME_TextEditor *editor);
 void ME_EmptyUndoStack(ME_TextEditor *editor);
 
 /* writer.c */

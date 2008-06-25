@@ -55,10 +55,20 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
     return NULL;
   else
   {
-    ME_DisplayItem *pItem = (ME_DisplayItem *)ALLOC_OBJ(ME_UndoItem);
+    ME_DisplayItem *pItem;
+    if (editor->pUndoStack
+        && editor->pUndoStack->type == diUndoPotentialEndTransaction)
+    {
+        editor->pUndoStack->type = diUndoEndTransaction;
+    }
+    pItem = (ME_DisplayItem *)ALLOC_OBJ(ME_UndoItem);
     ((ME_UndoItem *)pItem)->nCR = ((ME_UndoItem *)pItem)->nLF = -1;
     switch(type)
     {
+    case diUndoPotentialEndTransaction:
+        /* only should be added for manually typed chars, not undos or redos */
+        assert(editor->nUndoMode == umAddToUndo);
+        /* intentional fall-through to next case */
     case diUndoEndTransaction:
       break;
     case diUndoSetParagraphFormat:
@@ -105,7 +115,7 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
         TRACE("Pushing id=%s to undo stack\n", ME_GetDITypeName(type));
 
       pItem->next = editor->pUndoStack;
-      if (type == diUndoEndTransaction)
+      if (type == diUndoEndTransaction || type == diUndoPotentialEndTransaction)
         editor->nUndoStackSize++;
       if (editor->pUndoStack)
         editor->pUndoStack->prev = pItem;
@@ -154,6 +164,18 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
   }
 }
 
+/**
+ * Commits preceding changes into a transaction that can be undone together.
+ *
+ * This should be called after all the changes occur associated with an event
+ * so that the group of changes can be undone atomically as a transaction.
+ *
+ * This will have no effect the undo mode is set to ignore changes, or if no
+ * changes preceded calling this function before the last time it was called.
+ *
+ * This can also be used to conclude a coalescing transaction (used for grouping
+ * typed characters).
+ */
 void ME_CommitUndo(ME_TextEditor *editor) {
   if (editor->nUndoMode == umIgnore)
     return;
@@ -168,7 +190,81 @@ void ME_CommitUndo(ME_TextEditor *editor) {
   if (editor->pUndoStack->type == diUndoEndTransaction)
     return;
     
+  if (editor->pUndoStack->type == diUndoPotentialEndTransaction)
+  {
+      /* Previous transaction was as a result of characters typed,
+       * so the end of this transaction is confirmed. */
+      editor->pUndoStack->type = diUndoEndTransaction;
+      return;
+  }
+
   ME_AddUndoItem(editor, diUndoEndTransaction, NULL);
+  ME_SendSelChange(editor);
+}
+
+/**
+ * Groups supsequent changes with previous ones for an undo if coalescing.
+ *
+ * Has no effect if the previous changes were followed by a ME_CommitUndo. This
+ * function will only have an affect if the previous changes were followed by
+ * a call to ME_CommitCoalescingUndo, which allows the transaction to be
+ * continued.
+ *
+ * This allows multiple consecutively typed characters to be grouped together
+ * to be undone by a single undo operation.
+ */
+void ME_ContinueCoalescingTransaction(ME_TextEditor *editor)
+{
+  ME_DisplayItem* p;
+
+  if (editor->nUndoMode == umIgnore)
+    return;
+
+  assert(editor->nUndoMode == umAddToUndo);
+
+  p = editor->pUndoStack;
+
+  if (p && p->type == diUndoPotentialEndTransaction) {
+    assert(p->next); /* EndTransactions shouldn't be at bottom of undo stack */
+    editor->pUndoStack = p->next;
+    editor->pUndoStack->prev = NULL;
+    editor->nUndoStackSize--;
+    ME_DestroyDisplayItem(p);
+  }
+}
+
+/**
+ * Commits preceding changes into a undo transaction that can be expanded.
+ *
+ * This function allows the transaction to be reopened with
+ * ME_ContinueCoalescingTransaction in order to continue the transaction.  If an
+ * undo item is added to the undo stack as a result of a change without the
+ * transaction being reopened, then the transaction will be ended, and the
+ * changes will become a part of the next transaction.
+ *
+ * This is used to allow typed characters to be grouped together since each
+ * typed character results in a single event, and each event adding undo items
+ * must be committed.  Using this function as opposed to ME_CommitUndo allows
+ * multiple events to be grouped, and undone together.
+ */
+void ME_CommitCoalescingUndo(ME_TextEditor *editor)
+{
+  if (editor->nUndoMode == umIgnore)
+    return;
+
+  assert(editor->nUndoMode == umAddToUndo);
+
+  /* no transactions, no need to commit */
+  if (!editor->pUndoStack)
+    return;
+
+  /* no need to commit empty transactions */
+  if (editor->pUndoStack->type == diUndoEndTransaction)
+    return;
+  if (editor->pUndoStack->type == diUndoPotentialEndTransaction)
+    return;
+
+  ME_AddUndoItem(editor, diUndoPotentialEndTransaction, NULL);
   ME_SendSelChange(editor);
 }
 
@@ -182,6 +278,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
 
   switch(pItem->type)
   {
+  case diUndoPotentialEndTransaction:
   case diUndoEndTransaction:
     assert(0);
   case diUndoSetParagraphFormat:
@@ -239,20 +336,21 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
   }
 }
 
-void ME_Undo(ME_TextEditor *editor) {
+BOOL ME_Undo(ME_TextEditor *editor) {
   ME_DisplayItem *p;
   ME_UndoMode nMode = editor->nUndoMode;
   
   if (editor->nUndoMode == umIgnore)
-    return;
+    return FALSE;
   assert(nMode == umAddToUndo || nMode == umIgnore);
   
   /* no undo items ? */
   if (!editor->pUndoStack)
-    return;
+    return FALSE;
     
   /* watch out for uncommitted transactions ! */
-  assert(editor->pUndoStack->type == diUndoEndTransaction);
+  assert(editor->pUndoStack->type == diUndoEndTransaction
+        || editor->pUndoStack->type == diUndoPotentialEndTransaction);
   
   editor->nUndoMode = umAddToRedo;
   p = editor->pUndoStack->next;
@@ -270,19 +368,20 @@ void ME_Undo(ME_TextEditor *editor) {
     p->prev = NULL;
   editor->nUndoMode = nMode;
   ME_UpdateRepaint(editor);
+  return TRUE;
 }
 
-void ME_Redo(ME_TextEditor *editor) {
+BOOL ME_Redo(ME_TextEditor *editor) {
   ME_DisplayItem *p;
   ME_UndoMode nMode = editor->nUndoMode;
   
   assert(nMode == umAddToUndo || nMode == umIgnore);
   
   if (editor->nUndoMode == umIgnore)
-    return;
+    return FALSE;
   /* no redo items ? */
   if (!editor->pRedoStack)
-    return;
+    return FALSE;
     
   /* watch out for uncommitted transactions ! */
   assert(editor->pRedoStack->type == diUndoEndTransaction);
@@ -302,4 +401,5 @@ void ME_Redo(ME_TextEditor *editor) {
     p->prev = NULL;
   editor->nUndoMode = nMode;
   ME_UpdateRepaint(editor);
+  return TRUE;
 }

@@ -4396,20 +4396,20 @@ static void test_undo_coalescing(void)
     result = SendMessage(hwnd, EM_CANUNDO, 0, 0);
     ok (result == TRUE, "Cannot undo typed characters.\n");
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
-    todo_wine ok (result == TRUE, "EM_UNDO Failed to undo typed characters.\n");
+    ok (result == TRUE, "EM_UNDO Failed to undo typed characters.\n");
     result = SendMessage(hwnd, EM_CANREDO, 0, 0);
     ok (result == TRUE, "Cannot redo after undo.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "one two three");
-    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
+    ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
 
     result = SendMessage(hwnd, EM_CANUNDO, 0, 0);
     ok (result == TRUE, "Cannot undo typed characters.\n");
     result = SendMessage(hwnd, WM_UNDO, 0, 0);
-    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    ok (result == TRUE, "Failed to undo typed characters.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "");
-    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
+    ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
 
     /* Test the effect of focus changes during typing on undo transactions*/
     simulate_typing_characters(hwnd, "one two three");
@@ -4419,10 +4419,10 @@ static void test_undo_coalescing(void)
     SendMessage(hwnd, WM_SETFOCUS, (WPARAM)NULL, 0);
     simulate_typing_characters(hwnd, " four five six");
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
-    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    ok (result == TRUE, "Failed to undo typed characters.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "one two three");
-    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
+    ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
 
     /* Test the effect of the back key during typing on undo transactions */
     SendMessage(hwnd, EM_EMPTYUNDOBUFFER, 0, 0);
@@ -4435,10 +4435,10 @@ static void test_undo_coalescing(void)
     SendMessage(hwnd, WM_KEYUP, VK_BACK, 1);
     simulate_typing_characters(hwnd, "e four five six");
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
-    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    ok (result == TRUE, "Failed to undo typed characters.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "");
-    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
+    ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
 
     /* Test the effect of the delete key during typing on undo transactions */
     SendMessage(hwnd, EM_EMPTYUNDOBUFFER, 0, 0);
@@ -4450,12 +4450,12 @@ static void test_undo_coalescing(void)
     SendMessage(hwnd, WM_KEYDOWN, VK_DELETE, 1);
     SendMessage(hwnd, WM_KEYUP, VK_DELETE, 1);
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
-    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    ok (result == TRUE, "Failed to undo typed characters.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "acd");
     ok (result == 0, "expected '%s' but got '%s'\n", "acd", buffer);
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
-    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    ok (result == TRUE, "Failed to undo typed characters.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "abcd");
     ok (result == 0, "expected '%s' but got '%s'\n", "abcd", buffer);
@@ -4469,16 +4469,16 @@ static void test_undo_coalescing(void)
     ok (result == 0, "expected %d but got %d\n", 0, result);
     simulate_typing_characters(hwnd, " four five six");
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
-    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    ok (result == TRUE, "Failed to undo typed characters.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "one two three");
-    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
+    ok (result == 0, "expected '%s' but got '%s'\n", "one two three", buffer);
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
-    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
-    todo_wine ok (result == TRUE, "Failed to undo typed characters.\n");
+    ok (result == TRUE, "Failed to undo typed characters.\n");
+    ok (result == TRUE, "Failed to undo typed characters.\n");
     SendMessageA(hwnd, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
     result = strcmp(buffer, "");
-    todo_wine ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
+    ok (result == 0, "expected '%s' but got '%s'\n", "", buffer);
 
     DestroyWindow(hwnd);
 }

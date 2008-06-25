@@ -85,8 +85,9 @@ typedef enum {
   diUndoSplitParagraph, /* 14 */
   diUndoSetParagraphFormat, /* 15 */
   diUndoSetCharFormat, /* 16 */
-  diUndoEndTransaction, /* 17 */
+  diUndoEndTransaction, /* 17 - marks the end of a group of changes for undo */
   diUndoSetDefaultCharFormat, /* 18 */
+  diUndoPotentialEndTransaction, /* 19 - allows grouping typed chars for undo */
 } ME_DIType;
 
 /******************************** run flags *************************/
