@@ -995,7 +995,7 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
                 addr = 0;
              else if (sa->sa_family != AF_INET)
              {
-                ERR ("Received unsupported sockaddr family 0x%x\n",
+                WARN ("Received unsupported sockaddr family 0x%x\n",
                      sa->sa_family);
                 addr = 0;
              }
@@ -1021,7 +1021,7 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
                    break;
 
                 default:
-                   ERR ("Unexpected address type 0x%x\n", i);
+                   WARN ("Unexpected address type 0x%x\n", i);
              }
           }
 
