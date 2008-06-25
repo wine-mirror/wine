@@ -1356,6 +1356,7 @@ START_TEST(localmon)
     DWORD   numentries;
     DWORD   res;
 
+    LoadLibraryA("winspool.drv");
     /* This DLL does not exist on Win9x */
     hdll = LoadLibraryA("localspl.dll");
     if (!hdll) {
