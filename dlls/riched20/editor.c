@@ -1148,7 +1148,9 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   if (!(format & SFF_SELECTION)) {
     ME_ClearTempStyle(editor);
   }
+  HideCaret(editor->hWnd);
   ME_MoveCaret(editor);
+  ShowCaret(editor->hWnd);
   ME_SendSelChange(editor);
   ME_SendRequestResize(editor, FALSE);
 
