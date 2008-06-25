@@ -678,6 +678,93 @@ static BOOL mib2IpAddrQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return TRUE;
 }
 
+static UINT mib2IpRoute[] = { 1,3,6,1,2,1,4,21,1 };
+static PMIB_IPFORWARDTABLE ipRouteTable;
+
+static struct structToAsnValue mib2IpRouteMap[] = {
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardDest), copyIpAddr },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardIfIndex), copyInt },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardMetric1), copyInt },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardMetric2), copyInt },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardMetric3), copyInt },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardMetric4), copyInt },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardNextHop), copyIpAddr },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardType), copyInt },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardProto), copyInt },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardAge), copyInt },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardMask), copyIpAddr },
+    { FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardMetric5), copyInt },
+};
+
+static void mib2IpRouteInit(void)
+{
+    DWORD size = 0, ret = GetIpForwardTable(NULL, &size, FALSE);
+
+    if (ret == ERROR_INSUFFICIENT_BUFFER)
+    {
+        ipRouteTable = HeapAlloc(GetProcessHeap(), 0, size);
+        if (ipRouteTable)
+            GetIpForwardTable(ipRouteTable, &size, FALSE);
+    }
+}
+
+static BOOL mib2IpRouteQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier myOid = DEFINE_OID(mib2IpRoute);
+    UINT tableIndex = 0, item = 0;
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+    case SNMP_PDU_GETNEXT:
+        *pErrorStatus = getItemAndIpAddressInstanceFromOid(&pVarBind->name,
+            &myOid, bPduType, (struct GenericTable *)ipRouteTable,
+            sizeof(MIB_IPFORWARDROW),
+            FIELD_OFFSET(MIB_IPFORWARDROW, dwForwardDest), &item, &tableIndex);
+        if (!*pErrorStatus)
+        {
+            assert(tableIndex);
+            assert(item);
+            *pErrorStatus = mapStructEntryToValue(mib2IpRouteMap,
+                DEFINE_SIZEOF(mib2IpRouteMap),
+                &ipRouteTable->table[tableIndex - 1], item, bPduType, pVarBind);
+            if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
+            {
+                UINT id;
+                BYTE *ptr;
+                AsnObjectIdentifier oid;
+
+                SnmpUtilOidCpy(&pVarBind->name, &myOid);
+                oid.idLength = 1;
+                oid.ids = &id;
+                id = item;
+                SnmpUtilOidAppend(&pVarBind->name, &oid);
+                for (ptr =
+                    (BYTE *)&ipRouteTable->table[tableIndex - 1].dwForwardDest;
+                    ptr <
+                    (BYTE *)&ipRouteTable->table[tableIndex - 1].dwForwardDest
+                    + sizeof(DWORD); ptr++)
+                {
+                    id = *ptr;
+                    SnmpUtilOidAppend(&pVarBind->name, &oid);
+                }
+            }
+        }
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 static UINT mib2Icmp[] = { 1,3,6,1,2,1,5 };
 static MIB_ICMP icmpStats;
 
@@ -828,6 +915,7 @@ static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IfEntry), NULL, mib2IfEntryQuery },
     { DEFINE_OID(mib2Ip), mib2IpStatsInit, mib2IpStatsQuery },
     { DEFINE_OID(mib2IpAddr), mib2IpAddrInit, mib2IpAddrQuery },
+    { DEFINE_OID(mib2IpRoute), mib2IpRouteInit, mib2IpRouteQuery },
     { DEFINE_OID(mib2Icmp), mib2IcmpInit, mib2IcmpQuery },
     { DEFINE_OID(mib2Tcp), mib2TcpInit, mib2TcpQuery },
 };

@@ -64,6 +64,7 @@ static void testQuery(void)
     UINT mib2IfAdminStatus[] = { 1,3,6,1,2,1,2,2,1,7 };
     UINT mib2IfOperStatus[] = { 1,3,6,1,2,1,2,2,1,8 };
     UINT mib2IpAddr[] = { 1,3,6,1,2,1,4,20,1,1 };
+    UINT mib2IpRouteTable[] = { 1,3,6,1,2,1,4,21,1,1 };
     SnmpVarBind vars[3], vars2[3];
     UINT entry;
 
@@ -286,6 +287,62 @@ static void testQuery(void)
                  * address, 1.3.6.1.2.1.4.20.1.1, is appended with the IP
                  * address of the entry.  So e.g. the loopback address is
                  * identified in MIB2 as 1.3.6.1.2.1.4.20.1.1.127.0.0.1
+                 */
+                for (i = 0; i < vars2[0].value.asnValue.address.length; i++)
+                {
+                    ok(vars2[0].value.asnValue.address.stream[i] ==
+                        vars2[0].name.ids[vars2[0].name.idLength - 4 + i],
+                        "expected ident byte %d to be %d, got %d\n", i,
+                        vars2[0].value.asnValue.address.stream[i],
+                        vars2[0].name.ids[vars2[0].name.idLength - 4 + i]);
+                }
+            }
+        }
+    } while (moreData);
+    SnmpUtilVarBindFree(&vars2[0]);
+
+    /* Check the type and OIDs of the IP route table */
+    vars[0].name.idLength = DEFINE_SIZEOF(mib2IpRouteTable);
+    vars[0].name.ids = mib2IpRouteTable;
+    SnmpUtilOidCpy(&vars2[0].name, &vars[0].name);
+    vars2[0].value.asnType = 0;
+    list.len = 1;
+    list.list = vars2;
+    moreData = TRUE;
+    do {
+        ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
+        ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
+        ok(error == SNMP_ERRORSTATUS_NOERROR,
+            "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
+        ok(index == 0, "expected index 0, got %d\n", index);
+        if (!ret)
+            moreData = FALSE;
+        else if (error)
+            moreData = FALSE;
+        else if (SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name,
+            vars[0].name.idLength))
+            moreData = FALSE;
+        if (moreData)
+        {
+            /* Make sure the size of the OID is right.
+             * FIXME: don't know if IPv6 addrs are shared with this table.
+             * Don't think so, but I'm not certain.
+             */
+            ok(vars2[0].name.idLength = vars[0].name.idLength + 4,
+                "expected length %d, got %d\n", vars[0].name.idLength + 4,
+                vars2[0].name.idLength);
+            /* Make sure the type is right */
+            ok(vars2[0].value.asnType == ASN_IPADDRESS,
+                "expected type ASN_IPADDRESS, got %02x\n",
+                vars2[0].value.asnType);
+            if (vars2[0].value.asnType == ASN_IPADDRESS)
+            {
+                UINT i;
+
+                /* The base OID for the route table, 1.3.6.1.2.1.4.21.1.1, is
+                 * appended with the dest IP address of the entry.  So e.g. a
+                 * route entry for 224.0.0.0 is identified in MIB2 as
+                 * 1.3.6.1.2.1.4.21.1.1.224.0.0.0
                  */
                 for (i = 0; i < vars2[0].value.asnValue.address.length; i++)
                 {
