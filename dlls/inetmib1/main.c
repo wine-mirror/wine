@@ -450,6 +450,19 @@ static void setOidWithItemAndIpAddr(AsnObjectIdentifier *dst,
     }
 }
 
+static void setOidWithItemAndInteger(AsnObjectIdentifier *dst,
+    AsnObjectIdentifier *base, UINT item, UINT instance)
+{
+    AsnObjectIdentifier oid;
+
+    SnmpUtilOidCpy(dst, base);
+    oid.idLength = 1;
+    oid.ids = &item;
+    SnmpUtilOidAppend(dst, &oid);
+    oid.ids = &instance;
+    SnmpUtilOidAppend(dst, &oid);
+}
+
 static struct structToAsnValue mib2IfEntryMap[] = {
     { FIELD_OFFSET(MIB_IFROW, dwIndex), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyLengthPrecededString },
@@ -514,23 +527,8 @@ static BOOL mib2IfEntryQuery(BYTE bPduType, SnmpVarBind *pVarBind,
                         &ifTable->table[tableIndex - 1], item, bPduType,
                         pVarBind);
                     if (bPduType == SNMP_PDU_GETNEXT)
-                    {
-                        AsnObjectIdentifier oid;
-
-                        SnmpUtilOidCpy(&pVarBind->name, &entryOid);
-                        oid.idLength = 1;
-                        oid.ids = &item;
-                        SnmpUtilOidAppend(&pVarBind->name, &oid);
-                        /* According to RFC1158, the value of the interface
-                         * index must vary between 1 and ifNumber (the number
-                         * of interfaces), so use the 1-based table index
-                         * directly, rather than assuming that IPHlpApi's
-                         * dwIndex will have the correct range.
-                         */
-                        oid.idLength = 1;
-                        oid.ids = &tableIndex;
-                        SnmpUtilOidAppend(&pVarBind->name, &oid);
-                    }
+                        setOidWithItemAndInteger(&pVarBind->name, &entryOid,
+                            item, tableIndex);
                 }
             }
         }
@@ -804,17 +802,8 @@ static BOOL mib2IpNetQuery(BYTE bPduType, SnmpVarBind *pVarBind,
                         DEFINE_SIZEOF(mib2IpNetMap),
                         &ipNetTable[tableIndex - 1], item, bPduType, pVarBind);
                     if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
-                    {
-                        AsnObjectIdentifier oid;
-
-                        SnmpUtilOidCpy(&pVarBind->name, &myOid);
-                        oid.idLength = 1;
-                        oid.ids = &item;
-                        SnmpUtilOidAppend(&pVarBind->name, &oid);
-                        oid.idLength = 1;
-                        oid.ids = &tableIndex;
-                        SnmpUtilOidAppend(&pVarBind->name, &oid);
-                    }
+                        setOidWithItemAndInteger(&pVarBind->name, &myOid, item,
+                            tableIndex);
                 }
             }
         }
