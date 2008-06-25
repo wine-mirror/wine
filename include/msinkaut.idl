@@ -28,6 +28,86 @@ library MSINKAUTLib
 
     typedef float single;
 
+    typedef enum InkBoundingBoxMode {
+        IBBM_Default = 0,
+        IBBM_NoCurveFit = 1,
+        IBBM_CurveFit = 2,
+        IBBM_PointsOnly = 3,
+        IBBM_Union = 4
+    } InkBoundingBoxMode;
+
+    typedef enum InkExtractFlags {
+        IEF_CopyFromOriginal = 0x0,
+        IEF_RemoveFromOriginal = 0x1,
+        IEF_Default = IEF_RemoveFromOriginal
+    } InkExtractFlags;
+
+    typedef enum InkPersistenceFormat {
+        IPF_InkSerializeFormat = 0,
+        IPF_Base64InkSerializedFormat = 1,
+        IPF_GIF = 2,
+        IPF_Base64GIF = 3
+    } InkPersistenceFormat;
+
+    typedef enum InkPersistenceCompressionMode
+    {
+        IPCM_Default = 0,
+        IPCM_MaximumCompression = 1,
+        IPCM_NoCompression = 2
+    } InkPersistenceCompressionMode;
+
+    typedef enum InkPenTip {
+        IPT_Ball = 0,
+        IPT_Rectangle = 1
+    } InkPenTip;
+
+    typedef enum InkRasterOperation {
+        IRO_Black = 1,
+        IRO_NotMergePen,
+        IRO_MaskNotPen,
+        IRO_NotCopyPen,
+        IRO_MaskPenNot,
+        IRO_Not,
+        IRO_XOrPen,
+        IRO_NotMaskPen,
+        IRO_MaskPen,
+        IRO_NotXOrPen,
+        IRO_NoOperation,
+        IRO_MergeNotPen,
+        IRO_CopyPen,
+        IRO_MergePenNot,
+        IRO_MergePen,
+        IRO_White
+    } InkRasterOperation;
+
+    typedef enum InkClipboardModes {
+        ICB_Copy = 0,
+        ICB_Cut = 0x1,
+        ICB_DelayedCopy = 0x20,
+        ICB_ExtractOnly = 0x30,
+        ICB_Default = ICB_Copy
+    } InkClipboardModes;
+
+    typedef enum InkClipboardFormats {
+        ICF_None = 0,
+        ICF_InkSerializedFormat = 0x1,
+        ICF_SketchInk = 0x2,
+        ICF_TextInk = 0x6,
+        ICF_EnhancedMetafile = 0x8,
+        ICF_Metafile = 0x20,
+        ICF_Bitmap = 0x40,
+        ICF_PasteMask = 0x7,
+        ICF_CopyMask = 0x7f,
+        ICF_Default = ICF_CopyMask
+    } InkClipboardFormats;
+
+    typedef enum InkRecognitionConfidence
+    {
+        IRC_Strong = 0,
+        IRC_Intermediate = 1,
+        IRC_Poor = 2
+    } InkRecognitionConfidence;
+
     [
         odl,
         uuid(DB489209-B7C3-411D-90F6-1548CFFF271E),
@@ -62,30 +142,6 @@ library MSINKAUTLib
             [in] BSTR Guid,
             [out, retval] VARIANT_BOOL* DoesPropertyExist);
     };
-
-    typedef enum {
-        IRO_Black = 1,
-        IRO_NotMergePen,
-        IRO_MaskNotPen,
-        IRO_NotCopyPen,
-        IRO_MaskPenNot,
-        IRO_Not,
-        IRO_XOrPen,
-        IRO_NotMaskPen,
-        IRO_MaskPen,
-        IRO_NotXOrPen,
-        IRO_NoOperation,
-        IRO_MergeNotPen,
-        IRO_CopyPen,
-        IRO_MergePenNot,
-        IRO_MergePen,
-        IRO_White
-    } InkRasterOperation;
-
-    typedef enum {
-        IPT_Ball,
-        IPT_Rectangle
-    } InkPenTip;
 
     [
         odl,
@@ -204,14 +260,6 @@ cpp_quote("#endif /* _WINGDI_ */")
     };
 
     interface IInkDisp;
-
-    typedef enum {
-        IBBM_Default,
-        IBBM_NoCurveFit,
-        IBBM_CurveFit,
-        IBBM_PointsOnly,
-        IBBM_Union
-    } InkBoundingBoxMode;
 
     [
         odl,
@@ -362,6 +410,270 @@ cpp_quote("#endif /* _WINGDI_ */")
         [id(0x00000021)]             HRESULT ScaleTransform(
             [in] single HorizontalMultiplier,
             [in] single VerticalMultiplier);
+    };
+
+    interface IInkRecognitionResult;
+
+    [
+        odl,
+        uuid(F1F4C9D8-590A-4963-B3AE-1935671BB6F3),
+        dual,
+        oleautomation
+    ]
+    interface IInkStrokes : IDispatch {
+        [propget]                   HRESULT Count(
+            [out, retval] long *Count);
+        [propget, restricted]       HRESULT _NewEnum(
+            [out, retval] IUnknown **_NewEnum);
+        [propget]                   HRESULT Ink(
+            [out, retval] IInkDisp **Ink);
+        [propget]                   HRESULT RecognitionResult(
+            [out, retval] IInkRecognitionResult **RecognitionResult);
+        HRESULT ToString(
+            [out, retval] BSTR *ToString);
+        HRESULT Item(
+            [in] long Index,
+            [out, retval] IInkStrokeDisp **Stroke);
+        HRESULT Add(
+            [in] IInkStrokeDisp *InkStroke);
+        HRESULT AddStrokes(
+            [in] IInkStrokes *InkStrokes);
+        HRESULT Remove(
+            [in] IInkStrokeDisp *InkStroke);
+        HRESULT RemoveStrokes(
+            [in] IInkStrokes *InkStrokes);
+        HRESULT ModifyDrawingAttributes(
+            [in] IInkDrawingAttributes *DrawAttrs);
+        HRESULT GetBoundingBox(
+            [in] InkBoundingBoxMode BoundingBoxMode,
+            [out, retval] IInkRectangle **BoundingBox);
+        HRESULT Transform(
+            [in] IInkTransform *Transform,
+            [in] VARIANT_BOOL ApplyOnPenWidth);
+        HRESULT ScaleToRectangle(
+            [in] IInkRectangle *Rectangle);
+        HRESULT Move(
+            [in] float HorizontalComponent,
+            [in] float VerticalComponent);
+        HRESULT Rotate(
+            [in] float Degrees,
+            [in] float x,
+            [in] float y);
+        HRESULT Shear(
+            [in] float HorizontalMultiplier,
+            [in] float VerticalMultiplier);
+        HRESULT ScaleTransform(
+            [in] float HorizontalMultiplier,
+            [in] float VerticalMultiplier);
+        HRESULT Clip(
+            [in] IInkRectangle *Rectangle);
+        HRESULT RemoveRecognitionResult();
+    };
+
+    [
+        odl,
+        uuid(7E23A88F-C30E-420f-9BDB-28902543F0C1),
+        dual,
+        oleautomation
+    ]
+    interface IInkCustomStrokes : IDispatch {
+        [propget]               HRESULT Count(
+            [out, retval] long *Count);
+        [propget]               HRESULT _NewEnum(
+            [out, retval] IUnknown **_NewEnum);
+        HRESULT Item(
+            [in] VARIANT Identifier,
+            [out, retval] IInkStrokes **Strokes);
+        HRESULT Add(
+            [in] BSTR Name,
+            [in] IInkStrokes *Strokes);
+        HRESULT Remove(
+            [in] VARIANT Identifier);
+        HRESULT Clear();
+    };
+
+    interface IInkRecognitionAlternate;
+    interface IInkRecognitionAlternates;
+
+    [
+        odl,
+        uuid(3BC129A8-86CD-45ad-BDE8-E0D32D61C16D),
+        dual,
+        oleautomation
+    ]
+    interface IInkRecognitionResult : IDispatch {
+        [propget]               HRESULT TopString(
+            [out, retval] BSTR *TopString);
+        [propget]               HRESULT TopAlternate(
+            [out, retval] IInkRecognitionAlternate **TopAlternate);
+        [propget]               HRESULT TopConfidence(
+            [out, retval] InkRecognitionConfidence *TopConfidence);
+        [propget]               HRESULT Strokes(
+            [out, retval] IInkStrokes **Strokes);
+        HRESULT AlternatesFromSelection(
+            [in] long selectionStart,
+            [in] long selectionLength,
+            [in] long maximumAlternates,
+            [out, retval] IInkRecognitionAlternates **AlternatesFromSelection);
+        HRESULT ModifyTopAlternate(
+            [in] IInkRecognitionAlternate *Alternate);
+        HRESULT SetResultOnStrokes();
+    };
+
+    [
+        odl,
+        uuid(B7E660AD-77E4-429b-ADDA-873780D1FC4A),
+        dual,
+        oleautomation
+    ]
+    interface IInkRecognitionAlternate : IDispatch {
+        [propget]               HRESULT String(
+            [out, retval] BSTR *RecoString);
+        [propget]               HRESULT Confidence(
+            [out, retval] InkRecognitionConfidence *Confidence);
+        [propget]               HRESULT Baseline(
+            [out, retval] VARIANT *Baseline);
+        [propget]               HRESULT Midline(
+            [out, retval] VARIANT *Midline);
+        [propget]               HRESULT Ascender(
+            [out, retval] VARIANT *Ascender);
+        [propget]               HRESULT Descender(
+            [out, retval] VARIANT *Descender);
+        [propget]               HRESULT LineNumber(
+            [out, retval] long *LineNumber);
+        [propget]               HRESULT Strokes(
+            [out, retval] IInkStrokes **Strokes);
+        [propget]               HRESULT LineAlternates(
+            [out, retval] IInkRecognitionAlternates **LineAlternates);
+        [propget]               HRESULT ConfidenceAlternates(
+            [out, retval] IInkRecognitionAlternates **ConfidenceAlternates);
+        HRESULT GetStrokesFromStrokeRanges(
+            [in] IInkStrokes *Stroke,
+            [out, retval] IInkStrokes **GetStrokesFromTextRange);
+        HRESULT GetStrokesFromTextRange(
+            [in, out] long *selectionStart,
+            [in, out] long *selectionLength,
+            [out, retval] IInkStrokes **GetStrokesFromTextRange);
+        HRESULT GetTextRangeFromStrokes(
+            [in] IInkStrokes *Strokes,
+            [in, out] long *selectionStart,
+            [in, out] long *selectionLength);
+        HRESULT AlternatesWithConstantPropertyValues(
+            [in] BSTR PropertyType,
+            [out, retval] IInkRecognitionAlternates **AlternatesWithConstantPropertyValues);
+        HRESULT GetPropertyValue(
+            [in] BSTR PropertyType,
+            [out, retval] VARIANT *PropertyValue);
+    };
+
+    [
+        odl,
+        uuid(286A167F-9F19-4c61-9D53-4F07BE622B84),
+        dual,
+        oleautomation
+    ]
+    interface IInkRecognitionAlternates : IDispatch {
+    [propget]                   HRESULT Count(
+        [out, retval] long *Count);
+    [propget, restricted]       HRESULT _NewEnum(
+        [out, retval] IUnknown **_NewEnum);
+    [propget]                   HRESULT Strokes(
+        [out, retval] IInkStrokes **Strokes);
+    HRESULT Item(
+        [in] long Index,
+        [out, retval] IInkRecognitionAlternate **InkRecoAlternate);
+    };
+
+    [
+        odl,
+        uuid(9D398FA0-C4E2-4fcd-9973-975CAAF47EA6),
+        dual,
+        oleautomation
+    ]
+    interface IInkDisp : IDispatch {
+        [propget]               HRESULT Strokes(
+            [out, retval] IInkStrokes **Strokes);
+        [propget]               HRESULT ExtendedProperties(
+            [out, retval] IInkExtendedProperties **Properties);
+        [propget]               HRESULT Dirty(
+            [out, retval] VARIANT_BOOL *Dirty);
+        [propput]               HRESULT Dirty(
+            [in] VARIANT_BOOL Dirty);
+        [propget]               HRESULT CustomStrokes(
+            [out, retval] IInkCustomStrokes **CustomStrokes);
+        HRESULT GetBoundingBox(
+            [in] InkBoundingBoxMode BoundingBoxMode,
+            [out] IInkRectangle **Rectangle);
+        HRESULT DeleteStrokes(
+            [in, unique] IInkStrokes *Strokes);
+        HRESULT DeleteStroke(
+            [in] IInkStrokeDisp *Stroke);
+        HRESULT ExtractStrokes(
+            [in] IInkStrokes *Strokes,
+            [in] InkExtractFlags ExtractFlags,
+            [out, retval] IInkDisp **ExtractedInk);
+        HRESULT ExtractWithRectangle(
+            [in] IInkRectangle *Rectangle,
+            [in] InkExtractFlags ExtractFlags,
+            [out, retval] IInkDisp **ExtractedInk);
+        HRESULT Clip(
+            [in] IInkRectangle *Rectangle);
+        HRESULT Clone(
+            [out, retval] IInkDisp **NewInk);
+        HRESULT HitTestCircle(
+            [in] long X,
+            [in] long Y,
+            [in] float radius,
+            [out, retval] IInkStrokes **Strokes);
+        HRESULT HitTestWithRectangle(
+            [in] IInkRectangle *SelectionRectangle,
+            [in] float IntersectPercent,
+            [out, retval] IInkStrokes **Strokes);
+        HRESULT HitTestWithLasso(
+            [in] VARIANT Points,
+            [in] float IntersectPercent,
+            [in, out, unique] VARIANT *LassoPoints,
+            [out, retval] IInkStrokes **Strokes);
+        HRESULT NearestPoint(
+            [in] long X,
+            [in] long Y,
+            [in, out] float PointOnStroke,
+            [in, out] float DistanceFromPacket,
+            [out, retval] IInkStrokeDisp **Stroke);
+        HRESULT CreateStrokes(
+            [in] VARIANT StrokeIds,
+            [out, retval] IInkStrokes **Strokes);
+        HRESULT AddStrokesAtRectangle(
+            [in] IInkStrokes *SourceStrokes,
+            [in] IInkRectangle *TargetRectangle);
+        HRESULT Save(
+            [in] InkPersistenceFormat PersistenceFormat,
+            [in] InkPersistenceCompressionMode CompressionMode,
+            [out, retval] VARIANT *Data);
+        HRESULT Load(
+            [in] VARIANT Data);
+        HRESULT CreateStroke(
+            [in] VARIANT PacketData,
+            [in] VARIANT PacketDescription,
+            [out, retval] IInkStrokeDisp **Stroke);
+        HRESULT ClipboardCopyWithRectangle(
+            [in] IInkRectangle *Rectangle,
+            [in] InkClipboardFormats ClipboardFormats,
+            [in] InkClipboardModes ClipboardModes,
+            [out, retval] IDataObject **DataObject);
+        HRESULT ClipboardCopy(
+            [in] IInkStrokes *strokes,
+            [in] InkClipboardFormats ClipboardFormats,
+            [in] InkClipboardModes ClipboardModes,
+            [out, retval] IDataObject **DataObject);
+        HRESULT CanPaste(
+            [in] IDataObject *DataObject,
+            [out, retval] VARIANT_BOOL *CanPaste);
+        HRESULT ClipboardPaste(
+            [in] long x,
+            [in] long y,
+            [in, unique] IDataObject *DataObject,
+            [out, retval] IInkStrokes **Strokes);
     };
 
     [
