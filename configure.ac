@@ -273,6 +273,7 @@ AC_CHECK_HEADERS(\
 	mntent.h \
 	ncurses.h \
 	netdb.h \
+	netinet/if_ether.h \
 	netinet/in.h \
 	netinet/in_systm.h \
 	netinet/ip_icmp.h \

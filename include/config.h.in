@@ -441,6 +441,9 @@
 /* Define to 1 if you have the <netinet/icmp_var.h> header file. */
 #undef HAVE_NETINET_ICMP_VAR_H
 
+/* Define to 1 if you have the <netinet/if_ether.h> header file. */
+#undef HAVE_NETINET_IF_ETHER_H
+
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 

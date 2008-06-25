@@ -7088,6 +7088,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7136,6 +7137,7 @@ for ac_header in \
 	mntent.h \
 	ncurses.h \
 	netdb.h \
+	netinet/if_ether.h \
 	netinet/in.h \
 	netinet/in_systm.h \
 	netinet/ip_icmp.h \
