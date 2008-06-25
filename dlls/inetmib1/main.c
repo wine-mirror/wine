@@ -311,6 +311,126 @@ static AsnInteger32 getItemFromOid(AsnObjectIdentifier *oid,
     return ret;
 }
 
+struct GenericTable
+{
+    DWORD numEntries;
+    BYTE  entries[1];
+};
+
+/* Finds the index in table whose IP address (at offset addressOffset within the
+ * entry) matches that given the OID, which is assumed to have at least 4 IDs.
+ */
+static UINT findOIDIPAddressInTable(AsnObjectIdentifier *oid,
+    struct GenericTable *table, size_t tableEntrySize, size_t addressOffset)
+{
+    DWORD addr;
+    UINT i, index = 0;
+
+    /* Map the IDs to an IP address in little-endian order */
+    addr = (BYTE)oid->ids[3] << 24 | (BYTE)oid->ids[2] << 16 |
+        (BYTE)oid->ids[1] << 8 | (BYTE)oid->ids[0];
+    /* Find the item whose address matches */
+    for (i = 0; !index && i < table->numEntries; i++)
+    {
+        DWORD tableAddr =
+            *(DWORD *)(table->entries + i * tableEntrySize + addressOffset);
+
+        if (addr == tableAddr)
+            index = i + 1;
+    }
+    return index;
+}
+
+/* Given an OID and a base OID that it must begin with, finds the item and
+ * element of the table whose IP address matches the instance from the OID.
+ * E.g., given an OID foo.1.2.3.4.5 and a base OID foo, returns item 1 and the
+ * index of the entry in the table whose IP address is 2.3.4.5.
+ * If bPduType is not SNMP_PDU_GETNEXT and either the item or instance is
+ * missing, returns SNMP_ERRORSTATUS_NOSUCHNAME.
+ * If bPduType is SNMP_PDU_GETNEXT, returns the successor to the item and
+ * instance, or item 1, instance 1 if either is missing.
+ */
+static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
+    AsnObjectIdentifier *base, BYTE bPduType, struct GenericTable *table,
+    size_t tableEntrySize, size_t addressOffset, UINT *item, UINT *instance)
+{
+    AsnInteger32 ret = SNMP_ERRORSTATUS_NOERROR;
+
+    if (!table)
+        return SNMP_ERRORSTATUS_NOSUCHNAME;
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GETNEXT:
+        if (SnmpUtilOidNCmp(oid, base, base->idLength) < 0)
+        {
+            /* Return the first item and instance from the table */
+            *item = 1;
+            *instance = 1;
+        }
+        else if (!SnmpUtilOidNCmp(oid, base, base->idLength) &&
+            oid->idLength < base->idLength + 5)
+        {
+            /* Either the table or an item is specified, but the instance is
+             * not.
+             */
+            *instance = 1;
+            if (oid->idLength >= base->idLength + 1)
+            {
+                *item = oid->ids[base->idLength];
+                if (!*item)
+                    *item = 1;
+            }
+            else
+                *item = 1;
+        }
+        else if (!SnmpUtilOidNCmp(oid, base, base->idLength) &&
+            oid->idLength == base->idLength + 5)
+        {
+            *item = oid->ids[base->idLength];
+            if (!*item)
+            {
+                *instance = 1;
+                *item = 1;
+            }
+            else
+            {
+                AsnObjectIdentifier ipOid = { 4, oid->ids + base->idLength + 1
+                    };
+
+                *instance = findOIDIPAddressInTable(&ipOid, table,
+                    tableEntrySize, addressOffset) + 1;
+                if (*instance > table->numEntries)
+                    ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+            }
+        }
+        else
+            ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+        break;
+    default:
+        if (!SnmpUtilOidNCmp(oid, base, base->idLength) &&
+            oid->idLength == base->idLength + 5)
+        {
+            *item = oid->ids[base->idLength];
+            if (!*item)
+                ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+            else
+            {
+                AsnObjectIdentifier ipOid = { 4, oid->ids + base->idLength + 1
+                    };
+
+                *instance = findOIDIPAddressInTable(&ipOid, table,
+                    tableEntrySize, addressOffset);
+                if (!*instance)
+                    ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+            }
+        }
+        else
+            ret = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return ret;
+}
+
 static struct structToAsnValue mib2IfEntryMap[] = {
     { FIELD_OFFSET(MIB_IFROW, dwIndex), copyInt },
     { FIELD_OFFSET(MIB_IFROW, dwDescrLen), copyLengthPrecededString },
@@ -516,92 +636,10 @@ static BOOL mib2IpAddrQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     {
     case SNMP_PDU_GET:
     case SNMP_PDU_GETNEXT:
-        *pErrorStatus = 0;
-        if (!ipAddrTable)
-        {
-            /* There is no address present, so let the caller deal with
-             * finding the successor.
-             */
-            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-        }
-        else if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
-            pVarBind->name.idLength < myOid.idLength + 5)
-        {
-            /* Either the table or an element within the table is specified,
-             * but the instance is not.
-             */
-            if (bPduType == SNMP_PDU_GET)
-            {
-                /* Can't get an interface entry without specifying the
-                 * instance.
-                 */
-                *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-            }
-            else
-            {
-                /* Get the first address */
-                tableIndex = 1;
-                if (pVarBind->name.idLength == myOid.idLength + 1)
-                    item = pVarBind->name.ids[myOid.idLength];
-                else
-                    item = 1;
-            }
-        }
-        else if (!SnmpUtilOidNCmp(&pVarBind->name, &myOid, myOid.idLength) &&
-            pVarBind->name.idLength == myOid.idLength + 5)
-        {
-            item = pVarBind->name.ids[myOid.idLength];
-            if (!item)
-            {
-                if (bPduType == SNMP_PDU_GET)
-                    *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-                else
-                {
-                    tableIndex = 1;
-                    item = 1;
-                }
-            }
-            else if (item - 1 >= DEFINE_SIZEOF(mib2IpAddrMap))
-                *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-            else
-            {
-                DWORD addr;
-                UINT i;
-
-                /* Map the IDs to an IP address in little-endian order */
-                addr =
-                    (BYTE)pVarBind->name.ids[myOid.idLength + 4] << 24 |
-                    (BYTE)pVarBind->name.ids[myOid.idLength + 3] << 16 |
-                    (BYTE)pVarBind->name.ids[myOid.idLength + 2] << 8 |
-                    (BYTE)pVarBind->name.ids[myOid.idLength + 1];
-                /* Find the item whose address matches */
-                for (i = 0; !tableIndex && i < ipAddrTable->dwNumEntries; i++)
-                    if (addr == ipAddrTable->table[i].dwAddr)
-                        tableIndex = i + 1;
-                if (bPduType == SNMP_PDU_GETNEXT)
-                {
-                    if (!tableIndex)
-                    {
-                        /* No address matched, so let caller find successor */
-                        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-                    }
-                    else
-                    {
-                        /* We want the successor to the matching address */
-                        tableIndex++;
-                    }
-                }
-                if (tableIndex > ipAddrTable->dwNumEntries)
-                    *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-            }
-        }
-        else
-        {
-            /* Some item after the address table was requested, so let the
-             * caller deal with finding a successor.
-             */
-            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
-        }
+        *pErrorStatus = getItemAndIpAddressInstanceFromOid(&pVarBind->name,
+            &myOid, bPduType, (struct GenericTable *)ipAddrTable,
+            sizeof(MIB_IPADDRROW), FIELD_OFFSET(MIB_IPADDRROW, dwAddr), &item,
+            &tableIndex);
         if (!*pErrorStatus)
         {
             assert(tableIndex);
