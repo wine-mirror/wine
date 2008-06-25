@@ -9981,6 +9981,158 @@ static void test_nullCallback(void)
     DestroyWindow(hwnd);
 }
 
+/* SetActiveWindow( 0 ) hwnd visible */
+static const struct message SetActiveWindowSeq0[] =
+{
+    { HCBT_ACTIVATE, hook },
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|defwinproc },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { WM_SETFOCUS, sent|defwinproc },
+    { 0 }
+};
+/* SetActiveWindow( hwnd ) hwnd visible */
+static const struct message SetActiveWindowSeq1[] =
+{
+    { 0 }
+};
+/* SetActiveWindow( popup ) hwnd visible, popup visible */
+static const struct message SetActiveWindowSeq2[] =
+{
+    { HCBT_ACTIVATE, hook },
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|defwinproc },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { WM_SETFOCUS, sent|defwinproc },
+    { 0 }
+};
+
+/* SetActiveWindow( hwnd ) hwnd not visible */
+static const struct message SetActiveWindowSeq3[] =
+{
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW|SWP_NOACTIVATE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_ACTIVATEAPP, sent|wparam, 1 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { WM_SETFOCUS, sent|defwinproc },
+    { 0 }
+};
+/* SetActiveWindow( popup ) hwnd not visible, popup not visible */
+static const struct message SetActiveWindowSeq4[] =
+{
+    { HCBT_ACTIVATE, hook },
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|defwinproc },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { WM_SETFOCUS, sent|defwinproc },
+    { 0 }
+};
+
+
+static void test_SetActiveWindow(void)
+{
+    HWND hwnd, popup, ret;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test SetActiveWindow",
+                           WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+
+    popup = CreateWindowExA(0, "TestWindowClass", "Test SetActiveWindow",
+                           WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_POPUP,
+                           100, 100, 200, 200, hwnd, 0, 0, NULL);
+
+    ok(hwnd != 0, "Failed to create overlapped window\n");
+    flush_sequence();
+
+    ok(popup != 0, "Failed to create popup window\n");
+    flush_sequence();
+
+    trace("SetActiveWindow(0)\n");
+    ret = SetActiveWindow(0);
+    ok( ret == popup, "Failed to SetActiveWindow(0)\n");
+    ok_sequence(SetActiveWindowSeq0, "SetActiveWindow(0)", TRUE);
+    flush_sequence();
+
+    trace("SetActiveWindow(hwnd), hwnd visible\n");
+    ret = SetActiveWindow(hwnd);
+    todo_wine
+    {
+        ok( ret == hwnd, "Failed to SetActiveWindow(hwnd), hwnd visible\n");
+    }
+    ok_sequence(SetActiveWindowSeq1, "SetActiveWindow(hwnd), hwnd visible", TRUE);
+    flush_sequence();
+
+    trace("SetActiveWindow(popup), hwnd visible, popup visble\n");
+    ret = SetActiveWindow(popup);
+    ok( ret == hwnd, "Failed to SetActiveWindow(popup), popup visble\n");
+    ok_sequence(SetActiveWindowSeq2, "SetActiveWindow(popup), hwnd visible, popup visble", TRUE);
+    flush_sequence();
+
+    ShowWindow(hwnd, SW_HIDE);
+    ShowWindow(popup, SW_HIDE);
+    flush_sequence();
+
+    trace("SetActiveWindow(hwnd), hwnd not visible\n");
+    ret = SetActiveWindow(hwnd);
+    ok( ret == NULL, "Failed to SetActiveWindow(hwnd), hwnd not visible\n");
+    ok_sequence(SetActiveWindowSeq3, "SetActiveWindow(hwnd), hwnd not visible", TRUE);
+    flush_sequence();
+
+    trace("SetActiveWindow(popup), hwnd not visible, popup not visble\n");
+    ret = SetActiveWindow(popup);
+    ok( ret == hwnd, "Failed to SetActiveWindow(popup)\n");
+    ok_sequence(SetActiveWindowSeq4, "SetActiveWindow(popup), hwnd not visible, popup not visble", TRUE);
+    flush_sequence();
+
+    trace("done\n");
+
+    DestroyWindow(hwnd);
+}
+
 static const struct message SetForegroundWindowSeq[] =
 {
     { WM_NCACTIVATE, sent|wparam, 0 },
@@ -10830,6 +10982,7 @@ START_TEST(msg)
     test_SendMessageTimeout();
     test_edit_messages();
     test_quit_message();
+    test_SetActiveWindow();
 
     if (!pTrackMouseEvent)
         skip("TrackMouseEvent is not available\n");
