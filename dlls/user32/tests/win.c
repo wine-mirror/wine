@@ -4709,7 +4709,7 @@ static void test_GetWindowModuleFileName(void)
 
 static void test_hwnd_message(void)
 {
-    HWND parent = 0, hwnd;
+    HWND parent = 0, hwnd, found;
     RECT rect;
 
     hwnd = CreateWindowExA(0, "MainWindowClass", "message window", WS_CAPTION | WS_VISIBLE,
@@ -4742,6 +4742,18 @@ static void test_hwnd_message(void)
     GetWindowRect( hwnd, &rect );
     ok( rect.left == 100 && rect.right == 300 && rect.top == 100 && rect.bottom == 300,
         "wrong window rect %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
+
+    /* test FindWindow behavior */
+
+    found = FindWindowExA( 0, 0, 0, "message window" );
+    ok( found == hwnd, "didn't find message window %p/%p\n", found, hwnd );
+    found = FindWindowExA( GetDesktopWindow(), 0, 0, "message window" );
+    ok( found == 0, "found message window %p/%p\n", found, hwnd );
+    if (parent)
+    {
+        found = FindWindowExA( parent, 0, 0, "message window" );
+        ok( found == hwnd, "didn't find message window %p/%p\n", found, hwnd );
+    }
 
     DestroyWindow(hwnd);
 }

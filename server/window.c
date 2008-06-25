@@ -639,6 +639,29 @@ static inline int is_point_in_window( struct window *win, int x, int y )
     return 1;
 }
 
+/* fill an array with the handles of the children of a specified window */
+static unsigned int get_children_windows( struct window *parent, atom_t atom, thread_id_t tid,
+                                          user_handle_t *handles, unsigned int max_count )
+{
+    struct window *ptr;
+    unsigned int count = 0;
+
+    if (!parent) return 0;
+
+    LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
+    {
+        if (atom && get_class_atom(ptr->class) != atom) continue;
+        if (tid && get_thread_id(ptr->thread) != tid) continue;
+        if (handles)
+        {
+            if (count >= max_count) break;
+            handles[count] = ptr->handle;
+        }
+        count++;
+    }
+    return count;
+}
+
 /* find child of 'parent' that contains the given point (in parent-relative coords) */
 static struct window *child_window_from_point( struct window *parent, int x, int y )
 {
@@ -1932,46 +1955,51 @@ DECL_HANDLER(get_window_parents)
 /* get a list of the window children */
 DECL_HANDLER(get_window_children)
 {
-    struct window *ptr, *parent;
-    int total = 0;
+    struct window *parent = NULL;
+    unsigned int total;
     user_handle_t *data;
     data_size_t len;
     struct unicode_str cls_name;
     atom_t atom = req->atom;
+    struct desktop *desktop = NULL;
 
     if (req->desktop)
     {
-        struct desktop *desktop = get_desktop_obj( current->process, req->desktop, DESKTOP_ENUMERATE );
-        if (!desktop) return;
+        if (!(desktop = get_desktop_obj( current->process, req->desktop, DESKTOP_ENUMERATE ))) return;
         parent = desktop->top_window;
-        release_object( desktop );
     }
-    else parent = get_window( req->parent );
-
-    if (!parent) return;
+    else
+    {
+        if (req->parent && !(parent = get_window( req->parent ))) return;
+        if (!parent && !(desktop = get_thread_desktop( current, 0 ))) return;
+    }
 
     get_req_unicode_str( &cls_name );
     if (cls_name.len && !(atom = find_global_atom( NULL, &cls_name ))) return;
 
-    LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
-    {
-        if (atom && get_class_atom(ptr->class) != atom) continue;
-        if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
-        total++;
-    }
+    if (parent)
+        total = get_children_windows( parent, atom, req->tid, NULL, 0 );
+    else
+        total = get_children_windows( desktop->top_window, atom, req->tid, NULL, 0 ) +
+                get_children_windows( desktop->msg_window, atom, req->tid, NULL, 0 );
+
     reply->count = total;
     len = min( get_reply_max_size(), total * sizeof(user_handle_t) );
     if (len && ((data = set_reply_data_size( len ))))
     {
-        LIST_FOR_EACH_ENTRY( ptr, &parent->children, struct window, entry )
+        if (parent) get_children_windows( parent, atom, req->tid, data, len / sizeof(user_handle_t) );
+        else
         {
-            if (len < sizeof(*data)) break;
-            if (atom && get_class_atom(ptr->class) != atom) continue;
-            if (req->tid && get_thread_id(ptr->thread) != req->tid) continue;
-            *data++ = ptr->handle;
-            len -= sizeof(*data);
+            total = get_children_windows( desktop->top_window, atom, req->tid,
+                                          data, len / sizeof(user_handle_t) );
+            data += total;
+            len -= total * sizeof(user_handle_t);
+            if (len >= sizeof(user_handle_t))
+                get_children_windows( desktop->msg_window, atom, req->tid,
+                                      data, len / sizeof(user_handle_t) );
         }
     }
+    if (desktop) release_object( desktop );
 }
 
 

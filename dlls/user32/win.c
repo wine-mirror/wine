@@ -1578,7 +1578,9 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR t
     int i = 0, len = 0;
     WCHAR *buffer = NULL;
 
-    if (!parent) parent = GetDesktopWindow();
+    if (!parent && child) parent = GetDesktopWindow();
+    else if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
+
     if (title)
     {
         len = strlenW(title) + 1;  /* one extra char to check for chars beyond the end */
@@ -2940,6 +2942,11 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  */
 HWND *WIN_ListChildren( HWND hwnd )
 {
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return NULL;
+    }
     return list_window_children( 0, hwnd, NULL, 0 );
 }
 
