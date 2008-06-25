@@ -7998,6 +7998,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(hwnd, 0);
   UINT uView = lpcs->style & LVS_TYPEMASK;
+  DWORD dFlags = WS_CHILD | HDS_HORZ | HDS_FULLDRAG | HDS_DRAGDROP;
 
   TRACE("(lpcs=%p)\n", lpcs);
 
@@ -8005,9 +8006,12 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->notifyFormat = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT,
                                        (WPARAM)infoPtr->hwndSelf, (LPARAM)NF_QUERY);
 
+  /* setup creation flags */
+  dFlags |= (LVS_NOSORTHEADER & lpcs->style) ? 0 : HDS_BUTTONS;
+  dFlags |= (LVS_NOCOLUMNHEADER & lpcs->style) ? HDS_HIDDEN : 0;
+
   /* create header */
-  infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, NULL,
-    WS_CHILD | HDS_HORZ | HDS_FULLDRAG | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS),
+  infoPtr->hwndHeader = CreateWindowW(WC_HEADERW, NULL, dFlags,
     0, 0, 0, 0, hwnd, NULL,
     lpcs->hInstance, NULL);
   if (!infoPtr->hwndHeader) return -1;
@@ -8027,12 +8031,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     {
       ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
     }
-    else
-    {
-      /* set HDS_HIDDEN flag to hide the header bar */
-      SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE,
-                    GetWindowLongW(infoPtr->hwndHeader, GWL_STYLE) | HDS_HIDDEN);
-    }
+    LISTVIEW_UpdateSize(infoPtr);
+    LISTVIEW_UpdateScroll(infoPtr);
   }
 
   OpenThemeData(hwnd, themeClass);
