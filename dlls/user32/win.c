@@ -357,6 +357,20 @@ static void get_server_window_text( HWND hwnd, LPWSTR text, INT count )
 }
 
 
+/*******************************************************************
+ *           get_hwnd_message_parent
+ *
+ * Return the parent for HWND_MESSAGE windows.
+ */
+static HWND get_hwnd_message_parent(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+
+    if (!thread_info->msg_window) GetDesktopWindow();  /* trigger creation */
+    return thread_info->msg_window;
+}
+
+
 /***********************************************************************
  *           WIN_GetPtr
  *
@@ -969,11 +983,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
 
     if (cs->hwndParent == HWND_MESSAGE)
     {
-      /* native ole32.OleInitialize uses HWND_MESSAGE to create the
-       * message window (style: WS_POPUP|WS_DISABLED)
-       */
-      FIXME("Parent is HWND_MESSAGE\n");
-      parent = GetDesktopWindow();
+        cs->hwndParent = parent = get_hwnd_message_parent();
     }
     else if (cs->hwndParent)
     {
@@ -2630,6 +2640,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     }
 
     if (!parent) parent = GetDesktopWindow();
+    else if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
     else parent = WIN_GetFullHandle( parent );
 
     if (!IsWindow( parent ))
