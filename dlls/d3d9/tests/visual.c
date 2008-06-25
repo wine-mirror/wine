@@ -4891,6 +4891,9 @@ static void cnd_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %s\n", DXGetErrorString9(hr));
 
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %s\n", DXGetErrorString9(hr));
+
     /* This is the 1.4 test. The coissue doesn't change the behavior here, but keep in mind
      * that we swapped the values in c1 and c2 to make the other tests return some color
      */
