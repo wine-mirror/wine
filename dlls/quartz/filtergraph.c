@@ -279,21 +279,23 @@ static ULONG WINAPI FilterGraphInner_AddRef(IUnknown * iface) {
     return ref;
 }
 
-static ULONG WINAPI FilterGraphInner_Release(IUnknown * iface) {
+static ULONG WINAPI FilterGraphInner_Release(IUnknown * iface)
+{
     ICOM_THIS_MULTI(IFilterGraphImpl, IInner_vtbl, iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    
+
     TRACE("(%p)->(): new ref = %d\n", This, ref);
-    
+
     if (ref == 0) {
         int i;
 
         IMediaControl_Stop((IMediaControl*)&(This->IMediaControl_vtbl));
-        if (This->refClock)
-            IReferenceClock_Release(This->refClock);
 
         while (This->nFilters)
             IFilterGraph2_RemoveFilter((IFilterGraph2*)This, This->ppFiltersInGraph[0]);
+
+        if (This->refClock)
+            IReferenceClock_Release(This->refClock);
 
         for (i = 0; i < This->nItfCacheEntries; i++)
         {
@@ -439,8 +441,8 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
     return hr;
 }
 
-static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface,
-						IBaseFilter *pFilter) {
+static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilter *pFilter)
+{
     ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     int i;
     HRESULT hr = E_FAIL;
@@ -453,12 +455,21 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface,
     {
         if (This->ppFiltersInGraph[i] == pFilter)
         {
-            IEnumPins *penumpins;
-            IBaseFilter_Stop(pFilter);
+            IEnumPins *penumpins = NULL;
+            FILTER_STATE state;
+
+            TRACE("Removing filter %s\n", debugstr_w(This->pFilterNames[i]));
+            IBaseFilter_GetState(pFilter, 0, &state);
+            if (state == State_Running)
+                IBaseFilter_Pause(pFilter);
+            if (state != State_Stopped)
+                IBaseFilter_Stop(pFilter);
+
             hr = IBaseFilter_EnumPins(pFilter, &penumpins);
             if (SUCCEEDED(hr)) {
                 IPin *ppin;
-                while(IEnumPins_Next(penumpins, 1, &ppin, NULL) == S_OK) {
+                while(IEnumPins_Next(penumpins, 1, &ppin, NULL) == S_OK)
+                {
                     IPin *victim = NULL;
                     HRESULT h;
                     IPin_ConnectedTo(ppin, &victim);
@@ -470,6 +481,10 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface,
                         {
                             PIN_INFO pinfo;
                             IPin_QueryPinInfo(victim, &pinfo);
+
+                            IBaseFilter_GetState(pinfo.pFilter, 0, &state);
+                            if (state == State_Running)
+                                IBaseFilter_Pause(pinfo.pFilter);
                             IBaseFilter_Stop(pinfo.pFilter);
                             IBaseFilter_Release(pinfo.pFilter);
                             h = IPin_Disconnect(victim);
