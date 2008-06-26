@@ -2952,13 +2952,13 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                      WINED3DPMISCCAPS_CLIPTLVERTS           |
                                      WINED3DPMISCCAPS_CLIPPLANESCALEDPOINTS |
                                      WINED3DPMISCCAPS_MASKZ                 |
-                                     WINED3DPMISCCAPS_BLENDOP;
+                                     WINED3DPMISCCAPS_BLENDOP               |
+                                     WINED3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING;
                                     /* TODO:
                                         WINED3DPMISCCAPS_NULLREFERENCE
                                         WINED3DPMISCCAPS_INDEPENDENTWRITEMASKS
                                         WINED3DPMISCCAPS_FOGANDSPECULARALPHA
                                         WINED3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS
-                                        WINED3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING
                                         WINED3DPMISCCAPS_FOGVERTEXCLAMPED */
 
     if(GL_SUPPORT(EXT_BLEND_EQUATION_SEPARATE) && GL_SUPPORT(EXT_BLEND_FUNC_SEPARATE))
