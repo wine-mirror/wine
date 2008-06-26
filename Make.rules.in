@@ -46,6 +46,7 @@ LN_S      = @LN_S@
 TOOLSDIR  = @TOOLSDIR@
 AS        = @AS@
 LD        = @LD@
+NM        = @NM@
 LDFLAGS   = @LDFLAGS@
 PRELINK   = @PRELINK@
 RM        = rm -f

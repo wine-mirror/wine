@@ -161,8 +161,9 @@ then
 fi
 
 AC_CHECK_TOOLS(AS,[gas as],as)
-AC_CHECK_TOOL(LD,ld,ld)
-AC_CHECK_TOOL(AR,ar,ar)
+AC_CHECK_TOOLS(LD,[ld gld],ld)
+AC_CHECK_TOOLS(NM,[nm gnm],nm)
+AC_CHECK_TOOLS(AR,[ar gar],ar)
 AC_SUBST(ARFLAGS,rc)
 AC_PROG_RANLIB
 AC_CHECK_TOOL(STRIP,strip,strip)

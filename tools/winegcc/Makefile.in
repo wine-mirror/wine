@@ -9,6 +9,7 @@ DEFS = \
 	-DCPP="\"@CPPBIN@\"" \
 	-DCXX="\"@CXX@\"" \
 	-DLD="\"$(LD)\"" \
+	-DNM="\"$(NM)\"" \
 	-DPRELINK="\"$(PRELINK)\""
 
 TOPSRCDIR = @top_srcdir@

@@ -572,6 +572,8 @@ static void build(struct options* opts)
     strarray_add(spec_args, AS);
     strarray_add(spec_args, "--ld-cmd");
     strarray_add(spec_args, LD);
+    strarray_add(spec_args, "--nm-cmd");
+    strarray_add(spec_args, NM);
     strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
     strarray_add(spec_args, "-o");
