@@ -2285,6 +2285,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     /* Destroy the depth blt resources, they will be invalid after the reset. Also free shader
      * private data, it might contain opengl pointers
      */
+    if(This->depth_blt_texture) {
+        glDeleteTextures(1, &This->depth_blt_texture);
+        This->depth_blt_texture = 0;
+    }
     This->shader_backend->shader_destroy_depth_blt(iface);
     This->shader_backend->shader_free_private(iface);
 
