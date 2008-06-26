@@ -366,7 +366,7 @@
 @ stub GdipGetPenMode
 @ stdcall GdipGetPenStartCap(ptr ptr)
 @ stub GdipGetPenTransform
-@ stub GdipGetPenUnit
+@ stdcall GdipGetPenUnit(ptr ptr)
 @ stub GdipGetPenWidth
 @ stdcall GdipGetPixelOffsetMode(ptr ptr)
 @ stdcall GdipGetPointCount(ptr ptr)

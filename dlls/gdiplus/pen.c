@@ -237,6 +237,16 @@ GpStatus WINGDIPAPI GdipGetPenStartCap(GpPen *pen, GpLineCap *startCap)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenUnit(GpPen *pen, GpUnit *unit)
+{
+    if(!pen || !unit)
+        return InvalidParameter;
+
+    *unit = pen->unit;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
 {
     if(!pen || !brush)
