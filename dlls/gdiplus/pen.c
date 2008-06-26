@@ -247,6 +247,16 @@ GpStatus WINGDIPAPI GdipGetPenUnit(GpPen *pen, GpUnit *unit)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenWidth(GpPen *pen, REAL *width)
+{
+    if(!pen || !width)
+        return InvalidParameter;
+
+    *width = pen->width;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
 {
     if(!pen || !brush)
