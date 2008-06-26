@@ -2910,13 +2910,13 @@ BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT a
  */
 BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT abcf )
 {
-    ABC *abc;
+    ABC *abc, *abc_base;
     unsigned int i, size = sizeof(ABC) * (last - first + 1);
     BOOL ret;
 
     TRACE("%p, %d, %d, %p - partial stub\n", hdc, first, last, abcf);
 
-    abc = HeapAlloc( GetProcessHeap(), 0, size );
+    abc = abc_base = HeapAlloc( GetProcessHeap(), 0, size );
     if (!abc) return FALSE;
 
     ret = GetCharABCWidthsW( hdc, first, last, abc );
@@ -2929,7 +2929,7 @@ BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT a
             abcf->abcfC = abc->abcC;
         }
     }
-    HeapFree( GetProcessHeap(), 0, abc );
+    HeapFree( GetProcessHeap(), 0, abc_base );
     return ret;
 }
 
