@@ -348,8 +348,8 @@
 @ stdcall SHGetFolderPathAndSubDirW(long long long long wstr ptr)
 @ stdcall SHGetFolderPathW(long long long long ptr)
 @ stub SHGetFreeDiskSpace
-@ stub SHGetIconOverlayIndexA
-@ stub SHGetIconOverlayIndexW
+@ stdcall SHGetIconOverlayIndexA(str long)
+@ stdcall SHGetIconOverlayIndexW(wstr long)
 @ stdcall SHGetInstanceExplorer(long)
 @ stdcall SHGetMalloc(ptr)
 @ stdcall SHGetNewLinkInfo(str str ptr long long) SHGetNewLinkInfoA
