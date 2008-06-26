@@ -1662,6 +1662,9 @@ struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
 
     if (!(parent = GetAncestor( hwnd, GA_PARENT ))) return NULL;  /* desktop */
 
+    /* don't create win data for HWND_MESSAGE windows */
+    if (parent != GetDesktopWindow() && !GetAncestor( parent, GA_PARENT )) return NULL;
+
     display = thread_init_display();
     if (!(data = alloc_win_data( display, hwnd ))) return NULL;
 
