@@ -192,7 +192,7 @@ struct GpFontCollection{
 };
 
 struct GpFontFamily{
-    TEXTMETRICW* tmw;
+    TEXTMETRICW tmw;
     WCHAR* FamilyName;
 };
 

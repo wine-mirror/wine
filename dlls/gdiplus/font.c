@@ -94,7 +94,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
 {
     WCHAR facename[LF_FACESIZE];
     LOGFONTW* lfw;
-    TEXTMETRICW* tmw;
+    const TEXTMETRICW* tmw;
     GpStatus stat;
 
     if ((!fontFamily && fontFamily->FamilyName && font))
@@ -107,7 +107,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     if (stat != Ok) return stat;
     *font = GdipAlloc(sizeof(GpFont));
 
-    tmw = fontFamily->tmw;
+    tmw = &fontFamily->tmw;
     lfw = &((*font)->lfw);
     ZeroMemory(&(*lfw), sizeof(*lfw));
 
@@ -366,21 +366,18 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
 
     ffamily = GdipAlloc(sizeof (GpFontFamily));
     if (!ffamily) return OutOfMemory;
-    ffamily->tmw = GdipAlloc(sizeof (TEXTMETRICW));
-    if (!ffamily->tmw) {GdipFree (ffamily); return OutOfMemory;}
 
     hdc = GetDC(0);
     lstrcpynW(lfw.lfFaceName, name, sizeof(WCHAR) * LF_FACESIZE);
     hFont = CreateFontIndirectW (&lfw);
     hfont_old = SelectObject(hdc, hFont);
 
-    GetTextMetricsW(hdc, ffamily->tmw);
+    GetTextMetricsW(hdc, &ffamily->tmw);
     DeleteObject(SelectObject(hdc, hfont_old));
 
     ffamily->FamilyName = GdipAlloc(LF_FACESIZE * sizeof (WCHAR));
     if (!ffamily->FamilyName)
     {
-        GdipFree(ffamily->tmw);
         GdipFree(ffamily);
         ReleaseDC(0, hdc);
         return OutOfMemory;
@@ -448,7 +445,6 @@ GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
     TRACE("Deleting %p (%s)\n", FontFamily, debugstr_w(FontFamily->FamilyName));
 
     if (FontFamily->FamilyName) GdipFree (FontFamily->FamilyName);
-    if (FontFamily->tmw) GdipFree (FontFamily->tmw);
     GdipFree (FontFamily);
 
     return Ok;
