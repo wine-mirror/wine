@@ -236,6 +236,10 @@ ME_MoveCaret(ME_TextEditor *editor)
   ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x, &y, &height);
   if(editor->bHaveFocus)
   {
+    RECT rect;
+
+    GetClientRect(editor->hWnd, &rect);
+    x = min(x, rect.right-2);
     CreateCaret(editor->hWnd, NULL, 0, height);
     SetCaretPos(x, y);
   }
