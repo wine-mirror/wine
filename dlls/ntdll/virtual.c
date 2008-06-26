@@ -1243,6 +1243,21 @@ done:
 
 
 /***********************************************************************
+ *           virtual_clear_thread_stack
+ *
+ * Clear the stack contents before calling the main entry point, some broken apps need that.
+ */
+void virtual_clear_thread_stack(void)
+{
+    void *stack = NtCurrentTeb()->Tib.StackLimit;
+    size_t size = (char *)NtCurrentTeb()->Tib.StackBase - (char *)NtCurrentTeb()->Tib.StackLimit;
+
+    wine_anon_mmap( stack, size, PROT_READ | PROT_WRITE, MAP_FIXED );
+    if (force_exec_prot) mprotect( stack, size, PROT_READ | PROT_WRITE | PROT_EXEC );
+}
+
+
+/***********************************************************************
  *           VIRTUAL_HandleFault
  */
 NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
