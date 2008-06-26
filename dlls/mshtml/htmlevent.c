@@ -402,7 +402,9 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     if(node->event_target && node->event_target->event_table[eid]) {
         doc->window->event = create_event();
 
+        TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
         call_disp_func(doc, node->event_target->event_table[eid]);
+        TRACE("%s <<<\n", debugstr_w(event_info[eid].name));
 
         IHTMLEventObj_Release(doc->window->event);
         doc->window->event = NULL;
