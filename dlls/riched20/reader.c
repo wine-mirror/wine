@@ -638,14 +638,16 @@ static void _RTFGetToken2(RTF_Info *info)
 		{
 		int	c2;
 
-			if ((c = GetChar (info)) != EOF && (c2 = GetChar (info)) != EOF)
+			if ((c = GetChar (info)) != EOF && (c2 = GetChar (info)) != EOF
+				&& isxdigit(c) && isxdigit(c2))
 			{
-				/* should do isxdigit check! */
 				info->rtfClass = rtfText;
 				info->rtfMajor = RTFCharToHex (c) * 16 + RTFCharToHex (c2);
 				return;
 			}
-			/* early eof, whoops (class is rtfUnknown) */
+			/* early eof, whoops */
+			info->rtfClass = rtfEOF;
+			info->stream->editstream->dwError = -14;
 			return;
 		}
 
