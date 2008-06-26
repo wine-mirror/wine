@@ -181,9 +181,9 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
     
       ME_InitContext(&c, editor, hDC);
       
-      if (!pCursor->nOffset && !editor->bCaretAtEnd)
+      if (!pCursor->nOffset)
       {
-        ME_DisplayItem *prev = ME_FindItemBack(pCursorRun, diRunOrStartRow);
+        ME_DisplayItem *prev = ME_FindItemBack(pCursorRun, diRunOrParagraph);
         assert(prev);
         if (prev->type == diRun)
           pSizeRun = prev;
@@ -215,8 +215,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
 
       *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
       *x = run->member.run.pt.x + sz.cx;
-      *y = para->member.para.nYPos + row->member.row.nBaseline + pSizeRun->member.run.pt.y - pSizeRun->member.run.nAscent - ME_GetYScrollPos(editor);
-
+      *y = para->member.para.nYPos + row->member.row.nBaseline + run->member.run.pt.y - pSizeRun->member.run.nAscent - ME_GetYScrollPos(editor);
       ME_DestroyContext(&c, editor->hWnd);
       return;
     }
