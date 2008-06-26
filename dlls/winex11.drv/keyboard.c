@@ -1937,7 +1937,7 @@ void X11DRV_MappingNotify( HWND dummy, XEvent *event )
     wine_tsx11_lock();
     XRefreshKeyboardMapping(&event->xmapping);
     wine_tsx11_unlock();
-    X11DRV_InitKeyboard( thread_display() );
+    X11DRV_InitKeyboard( event->xmapping.display );
 
     hwnd = GetFocus();
     if (!hwnd) hwnd = GetActiveWindow();

@@ -230,9 +230,8 @@ static Window get_systray_selection_owner( Display *display )
 
 
 /* dock the given X window with the NETWM system tray */
-static void dock_systray_window( HWND hwnd, Window systray_window )
+static void dock_systray_window( Display *display, HWND hwnd, Window systray_window )
 {
-    Display *display = thread_display();
     struct x11drv_win_data *data;
     XEvent ev;
     XSetWindowAttributes attr;
@@ -284,6 +283,7 @@ static BOOL show_icon( struct tray_icon *icon )
     RECT rect;
     static BOOL class_registered;
     Window systray_window;
+    Display *display = thread_display();
 
     TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
@@ -308,7 +308,7 @@ static BOOL show_icon( struct tray_icon *icon )
         class_registered = TRUE;
     }
 
-    if (!(systray_window = get_systray_selection_owner( thread_display() ))) return FALSE;
+    if (!(systray_window = get_systray_selection_owner( display ))) return FALSE;
 
     rect.left = 0;
     rect.top = 0;
@@ -320,7 +320,7 @@ static BOOL show_icon( struct tray_icon *icon )
                                     rect.right - rect.left, rect.bottom - rect.top,
                                     NULL, NULL, NULL, icon );
     create_tooltip( icon );
-    dock_systray_window( icon->window, systray_window );
+    dock_systray_window( display, icon->window, systray_window );
     SetTimer( icon->window, 1, 1000, NULL );
     ShowWindow( icon->window, SW_SHOWNA );
     return TRUE;

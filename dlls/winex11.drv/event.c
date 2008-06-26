@@ -441,7 +441,7 @@ static inline BOOL can_activate_window( HWND hwnd )
 /**********************************************************************
  *              set_focus
  */
-static void set_focus( HWND hwnd, Time time )
+static void set_focus( Display *display, HWND hwnd, Time time )
 {
     HWND focus;
     Window win;
@@ -457,7 +457,7 @@ static void set_focus( HWND hwnd, Time time )
     {
         TRACE( "setting focus to %p (%lx) time=%ld\n", focus, win, time );
         wine_tsx11_lock();
-        XSetInputFocus( thread_display(), win, RevertToParent, time );
+        XSetInputFocus( display, win, RevertToParent, time );
         wine_tsx11_unlock();
     }
 }
@@ -532,7 +532,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
                                        MAKELONG(HTCAPTION,WM_LBUTTONDOWN) );
             if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
             {
-                set_focus( hwnd, event_time );
+                set_focus( event->display, hwnd, event_time );
                 return;
             }
         }
@@ -541,7 +541,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
         if (hwnd) hwnd = GetAncestor( hwnd, GA_ROOT );
         if (!hwnd) hwnd = GetActiveWindow();
         if (!hwnd) hwnd = last_focus;
-        if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, event_time );
+        if (hwnd && can_activate_window(hwnd)) set_focus( event->display, hwnd, event_time );
     }
     else if (protocol == x11drv_atom(_NET_WM_PING))
     {
@@ -599,7 +599,7 @@ static void X11DRV_FocusIn( HWND hwnd, XEvent *xev )
         if (hwnd) hwnd = GetAncestor( hwnd, GA_ROOT );
         if (!hwnd) hwnd = GetActiveWindow();
         if (!hwnd) hwnd = x11drv_thread_data()->last_focus;
-        if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, CurrentTime );
+        if (hwnd && can_activate_window(hwnd)) set_focus( event->display, hwnd, CurrentTime );
     }
     else SetForegroundWindow( hwnd );
 }
@@ -639,10 +639,10 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
        getting the focus is a Wine window */
 
     wine_tsx11_lock();
-    XGetInputFocus( thread_display(), &focus_win, &revert );
+    XGetInputFocus( event->display, &focus_win, &revert );
     if (focus_win)
     {
-        if (XFindContext( thread_display(), focus_win, winContext, (char **)&hwnd_tmp ) != 0)
+        if (XFindContext( event->display, focus_win, winContext, (char **)&hwnd_tmp ) != 0)
             focus_win = 0;
     }
     wine_tsx11_unlock();
