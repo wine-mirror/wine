@@ -2544,6 +2544,33 @@ BOOL WINAPI AttachConsole(DWORD dwProcessId)
     return TRUE;
 }
 
+/******************************************************************
+ *              GetConsoleDisplayMode  (KERNEL32.@)
+ */
+BOOL WINAPI GetConsoleDisplayMode(LPDWORD lpModeFlags)
+{
+    TRACE("semi-stub: %p\n", lpModeFlags);
+    /* It is safe to successfully report windowed mode */
+    *lpModeFlags = 0;
+    return TRUE;
+}
+
+/******************************************************************
+ *              SetConsoleDisplayMode  (KERNEL32.@)
+ */
+BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags,
+                                  COORD *lpNewScreenBufferDimensions)
+{
+    TRACE("(%p, %x, (%d, %d))\n", hConsoleOutput, dwFlags,
+          lpNewScreenBufferDimensions->X, lpNewScreenBufferDimensions->Y);
+    if (dwFlags == 1)
+    {
+        /* We cannot switch to fullscreen */
+        return FALSE;
+    }
+    return TRUE;
+}
+
 
 /* ====================================================================
  *

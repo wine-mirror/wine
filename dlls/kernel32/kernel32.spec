@@ -457,7 +457,7 @@
 @ stub GetConsoleCommandHistoryW
 @ stdcall GetConsoleCursorInfo(long ptr)
 @ stub GetConsoleCursorMode
-@ stub GetConsoleDisplayMode
+@ stdcall GetConsoleDisplayMode(ptr)
 @ stub GetConsoleFontInfo
 @ stub GetConsoleFontSize
 @ stub GetConsoleHardwareState
@@ -964,7 +964,7 @@
 @ stdcall SetConsoleCursorInfo(long ptr)
 @ stub SetConsoleCursorMode
 @ stdcall SetConsoleCursorPosition(long long)
-@ stub SetConsoleDisplayMode
+@ stdcall SetConsoleDisplayMode(long long ptr)
 @ stub SetConsoleFont
 @ stub SetConsoleHardwareState
 @ stub SetConsoleIcon
