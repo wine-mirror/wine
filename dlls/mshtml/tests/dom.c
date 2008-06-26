@@ -900,6 +900,20 @@ static void _test_node_has_child(unsigned line, IUnknown *unk, VARIANT_BOOL exb)
     IHTMLDOMNode_Release(node);
 }
 
+#define test_node_get_parent(u) _test_node_get_parent(__LINE__,u)
+static IHTMLDOMNode *_test_node_get_parent(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    IHTMLDOMNode *parent;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_get_parentNode(node, &parent);
+    IHTMLDOMNode_Release(node);
+    ok_(__FILE__,line) (hres == S_OK, "get_parentNode failed: %08x\n", hres);
+
+    return parent;
+}
+
 #define get_node_type(n) _get_node_type(__LINE__,n)
 static long _get_node_type(unsigned line, IUnknown *unk)
 {
@@ -2042,6 +2056,22 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_set_class((IUnknown*)elem, NULL);
         test_elem_tabindex((IUnknown*)elem, 0);
         test_elem_set_tabindex((IUnknown*)elem, 1);
+
+        node = test_node_get_parent((IUnknown*)elem);
+        ok(node != NULL, "node == NULL\n");
+        test_node_name((IUnknown*)node, "BODY");
+        node2 = test_node_get_parent((IUnknown*)node);
+        IHTMLDOMNode_Release(node);
+        ok(node2 != NULL, "node == NULL\n");
+        test_node_name((IUnknown*)node2, "HTML");
+        node = test_node_get_parent((IUnknown*)node2);
+        IHTMLDOMNode_Release(node2);
+        ok(node != NULL, "node == NULL\n");
+        test_node_name((IUnknown*)node, "#document");
+        node2 = test_node_get_parent((IUnknown*)node);
+        IHTMLDOMNode_Release(node);
+        ok(node2 == NULL, "node != NULL\n");
+
         IHTMLElement_Release(elem);
     }
 
