@@ -2834,8 +2834,8 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, semantic *semantics_in, sema
 
     if (!semantics_out) {
         /* Save gl_FrontColor & gl_FrontSecondaryColor before overwriting them. */
-        shader_addline(buffer, "vec4 front_color = gl_FrontColor;");
-        shader_addline(buffer, "vec4 front_secondary_color = gl_FrontSecondaryColor;");
+        shader_addline(buffer, "vec4 front_color = gl_FrontColor;\n");
+        shader_addline(buffer, "vec4 front_secondary_color = gl_FrontSecondaryColor;\n");
     }
 
     for(i = 0; i < MAX_REG_INPUT; i++) {
