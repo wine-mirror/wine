@@ -42,6 +42,7 @@ static inline REAL get_dpi (void)
     HDC hdc = GetDC(0);
     GdipCreateFromHDC (hdc, &graphics);
     GdipGetDpiX(graphics, &dpi);
+    GdipDeleteGraphics(graphics);
     ReleaseDC (0, hdc);
 
     return dpi;
@@ -351,7 +352,7 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
 {
     GpFontFamily* ffamily;
     HDC hdc;
-    HFONT hFont;
+    HFONT hFont, hfont_old;
     LOGFONTW lfw;
 
     TRACE("%s, %p %p\n", debugstr_w(name), fontCollection, FontFamily);
@@ -371,14 +372,17 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
     hdc = GetDC(0);
     lstrcpynW(lfw.lfFaceName, name, sizeof(WCHAR) * LF_FACESIZE);
     hFont = CreateFontIndirectW (&lfw);
-    SelectObject(hdc, hFont);
+    hfont_old = SelectObject(hdc, hFont);
 
     GetTextMetricsW(hdc, ffamily->tmw);
+    DeleteObject(SelectObject(hdc, hfont_old));
 
     ffamily->FamilyName = GdipAlloc(LF_FACESIZE * sizeof (WCHAR));
     if (!ffamily->FamilyName)
     {
+        GdipFree(ffamily->tmw);
         GdipFree(ffamily);
+        ReleaseDC(0, hdc);
         return OutOfMemory;
     }
 
