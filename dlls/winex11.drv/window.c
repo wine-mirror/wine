@@ -1879,7 +1879,6 @@ void X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
  *		SetFocus   (X11DRV.@)
  *
  * Set the X focus.
- * Explicit colormap management seems to work only with OLVWM.
  */
 void X11DRV_SetFocus( HWND hwnd )
 {
@@ -1887,18 +1886,7 @@ void X11DRV_SetFocus( HWND hwnd )
     struct x11drv_win_data *data;
     XWindowChanges changes;
 
-    /* If setting the focus to 0, uninstall the colormap */
-    if (!hwnd && root_window == DefaultRootWindow(display))
-    {
-        wine_tsx11_lock();
-        if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
-            XUninstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
-        wine_tsx11_unlock();
-        return;
-    }
-
-    hwnd = GetAncestor( hwnd, GA_ROOT );
-
+    if (!(hwnd = GetAncestor( hwnd, GA_ROOT ))) return;
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
     if (data->managed || !data->whole_window) return;
 
@@ -1913,8 +1901,6 @@ void X11DRV_SetFocus( HWND hwnd )
         XSetInputFocus( display, data->whole_window, RevertToParent,
                         /* CurrentTime */
                         GetMessageTime() - EVENT_x11_time_to_win32_time(0));
-        if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
-            XInstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
     }
     wine_tsx11_unlock();
 }
