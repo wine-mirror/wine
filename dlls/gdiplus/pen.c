@@ -197,6 +197,16 @@ GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen *pen, GpDashStyle *dash)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenEndCap(GpPen *pen, GpLineCap *endCap)
+{
+    if(!pen || !endCap)
+        return InvalidParameter;
+
+    *endCap = pen->endcap;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
 {
     if(!pen || !brush)
