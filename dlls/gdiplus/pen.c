@@ -177,6 +177,16 @@ GpStatus WINGDIPAPI GdipGetPenDashArray(GpPen *pen, REAL *dash, INT count)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenDashCap197819(GpPen *pen, GpDashCap *dashCap)
+{
+    if(!pen || !dashCap)
+        return InvalidParameter;
+
+    *dashCap = pen->dashcap;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPenDashOffset(GpPen *pen, REAL *offset)
 {
     if(!pen || !offset)
