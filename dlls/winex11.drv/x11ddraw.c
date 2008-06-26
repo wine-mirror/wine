@@ -108,11 +108,12 @@ static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 static void GrabPointer(BOOL grab)
 {
   if(grab) {
+    Display *display = thread_display();
     Window window = X11DRV_get_whole_window(GetFocus());
-    if(window)
+    if(window && display)
     {
       wine_tsx11_lock();
-      XSetInputFocus(thread_display(), window, RevertToParent, CurrentTime);
+      XSetInputFocus(display, window, RevertToParent, CurrentTime);
       wine_tsx11_unlock();
     }
   }

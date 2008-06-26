@@ -1431,11 +1431,13 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
  */
 void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
 {
-    Display *display = thread_display();
     Window win;
 
-    if ((win = X11DRV_get_whole_window( hwnd )) && win != DefaultRootWindow(display))
+    if ((win = X11DRV_get_whole_window( hwnd )) && win != DefaultRootWindow(gdi_display))
+    {
+        Display *display = thread_init_display();
         sync_window_text( display, win, text );
+    }
 }
 
 
@@ -1446,7 +1448,6 @@ void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
  */
 void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 {
-    Display *display = thread_display();
     struct x11drv_win_data *data;
     DWORD new_style, changed;
 
@@ -1462,6 +1463,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 
         if (data->whole_window && is_window_rect_mapped( &data->window_rect ))
         {
+            Display *display = thread_display();
             set_wm_hints( display, data );
             if (!data->mapped) map_window( display, data, new_style );
         }
@@ -1474,7 +1476,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
         {
             wine_tsx11_lock();
             data->wm_hints->input = !(new_style & WS_DISABLED);
-            XSetWMHints( display, data->whole_window, data->wm_hints );
+            XSetWMHints( thread_display(), data->whole_window, data->wm_hints );
             wine_tsx11_unlock();
         }
     }
@@ -1619,10 +1621,10 @@ BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
  */
 BOOL X11DRV_CreateWindow( HWND hwnd )
 {
-    Display *display = thread_display();
-
-    if (hwnd == GetDesktopWindow() && root_window != DefaultRootWindow( display ))
+    if (hwnd == GetDesktopWindow() && root_window != DefaultRootWindow( gdi_display ))
     {
+        Display *display = thread_init_display();
+
         /* the desktop win data can't be created lazily */
         if (!create_desktop_win_data( display, hwnd )) return FALSE;
     }
@@ -1654,11 +1656,13 @@ struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd )
  */
 struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd )
 {
-    Display *display = thread_display();
+    Display *display;
     struct x11drv_win_data *data;
     HWND parent;
 
     if (!(parent = GetAncestor( hwnd, GA_PARENT ))) return NULL;  /* desktop */
+
+    display = thread_init_display();
     if (!(data = alloc_win_data( display, hwnd ))) return NULL;
 
     GetWindowRect( hwnd, &data->window_rect );
@@ -1913,8 +1917,8 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
                           const RECT *rectWindow, const RECT *rectClient,
                           const RECT *visible_rect, const RECT *valid_rects )
 {
-    struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
-    Display *display = thread_data->display;
+    struct x11drv_thread_data *thread_data;
+    Display *display;
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
     RECT old_whole_rect, old_client_rect;
@@ -1926,6 +1930,9 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
         if (!(new_style & WS_VISIBLE)) return;
         if (!(data = X11DRV_create_win_data( hwnd ))) return;
     }
+
+    thread_data = x11drv_thread_data();
+    display = thread_data->display;
 
     /* check if we need to switch the window to managed */
     if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, rectWindow ))

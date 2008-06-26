@@ -950,7 +950,7 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
  */
 BOOL X11DRV_SetCursorPos( INT x, INT y )
 {
-    Display *display = thread_display();
+    Display *display = thread_init_display();
     POINT pt;
 
     TRACE( "warping to (%d,%d)\n", x, y );
@@ -979,7 +979,7 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
  */
 BOOL X11DRV_GetCursorPos(LPPOINT pos)
 {
-    Display *display = thread_display();
+    Display *display = thread_init_display();
     Window root, child;
     int rootX, rootY, winX, winY;
     unsigned int xstate;

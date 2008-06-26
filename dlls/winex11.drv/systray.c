@@ -423,7 +423,7 @@ int wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
     switch (msg)
     {
     case NIM_ADD:
-        if (!get_systray_selection_owner( thread_display() ))
+        if (!get_systray_selection_owner( thread_init_display() ))
             return -1;  /* fall back to default handling */
         ret = add_icon( data );
         break;

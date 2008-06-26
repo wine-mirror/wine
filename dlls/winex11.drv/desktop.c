@@ -132,7 +132,7 @@ Window X11DRV_create_desktop( UINT width, UINT height )
 {
     XSetWindowAttributes win_attr;
     Window win;
-    Display *display = thread_display();
+    Display *display = thread_init_display();
 
     wine_tsx11_lock();
 

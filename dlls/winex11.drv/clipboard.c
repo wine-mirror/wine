@@ -365,10 +365,13 @@ static void intern_atoms(void)
     int i, count, len;
     char **names;
     Atom *atoms;
+    Display *display;
 
     for (format = ClipFormats, count = 0; format; format = format->NextFormat)
         if (!format->drvData) count++;
     if (!count) return;
+
+    display = thread_init_display();
 
     names = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*names) );
     atoms = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*atoms) );
@@ -382,7 +385,7 @@ static void intern_atoms(void)
     }
 
     wine_tsx11_lock();
-    XInternAtoms( thread_display(), names, count, False, atoms );
+    XInternAtoms( display, names, count, False, atoms );
     wine_tsx11_unlock();
 
     for (format = ClipFormats, i = 0; format; format = format->NextFormat) {
@@ -754,7 +757,7 @@ static BOOL X11DRV_CLIPBOARD_UpdateCache(LPCLIPBOARDINFO lpcbinfo)
         {
             X11DRV_EmptyClipboard(TRUE);
 
-            if (X11DRV_CLIPBOARD_QueryAvailableData(thread_display(), lpcbinfo) < 0)
+            if (X11DRV_CLIPBOARD_QueryAvailableData(thread_init_display(), lpcbinfo) < 0)
             {
                 ERR("Failed to cache clipboard data owned by another process.\n");
                 bret = FALSE;
@@ -2296,7 +2299,7 @@ int X11DRV_AcquireClipboard(HWND hWndClipWindow)
 {
     DWORD procid;
     Window owner;
-    Display *display = thread_display();
+    Display *display;
 
     TRACE(" %p\n", hWndClipWindow);
 
@@ -2325,6 +2328,7 @@ int X11DRV_AcquireClipboard(HWND hWndClipWindow)
     }
 
     owner = thread_selection_wnd();
+    display = thread_display();
 
     wine_tsx11_lock();
 
@@ -2508,7 +2512,7 @@ BOOL X11DRV_GetClipboardData(UINT wFormat, HANDLE16* phData16, HANDLE* phData32)
     if ((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)))
     {
         if ( !lpRender->hData32 )
-            X11DRV_CLIPBOARD_RenderFormat(thread_display(), lpRender);
+            X11DRV_CLIPBOARD_RenderFormat(thread_init_display(), lpRender);
 
         /* Convert between 32 -> 16 bit data, if necessary */
         if (lpRender->hData32 && !lpRender->hData16)

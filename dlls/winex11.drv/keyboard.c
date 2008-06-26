@@ -1953,7 +1953,7 @@ void X11DRV_MappingNotify( HWND dummy, XEvent *event )
  */
 SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
 {
-    Display *display = thread_display();
+    Display *display = thread_init_display();
     KeyCode keycode;
     KeySym keysym;
     int i, index;
@@ -2045,7 +2045,7 @@ SHORT X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
  */
 UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
-    Display *display = thread_display();
+    Display *display = thread_init_display();
 
 #define returnMVK(value) { TRACE("returning 0x%x.\n",value); return value; }
 
@@ -2188,6 +2188,7 @@ UINT X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
  */
 INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
+  Display *display = thread_init_display();
   int vkey, ansi, scanCode;
   KeyCode keyc;
   int keyi;
@@ -2260,7 +2261,7 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
   {
       wine_tsx11_lock();
       keyc = (KeyCode) keyi;
-      keys = XKeycodeToKeysym(thread_display(), keyc, 0);
+      keys = XKeycodeToKeysym(display, keyc, 0);
       name = XKeysymToString(keys);
       wine_tsx11_unlock();
       TRACE("found scan=%04x keyc=%04x keysym=%04x string=%s\n",
@@ -2380,7 +2381,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
 INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 		     LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
 {
-    Display *display = thread_display();
+    Display *display = thread_init_display();
     XKeyEvent e;
     KeySym keysym = 0;
     INT ret;
@@ -2638,6 +2639,6 @@ found:
 void X11DRV_Beep(void)
 {
     wine_tsx11_lock();
-    XBell(thread_display(), 0);
+    XBell(gdi_display, 0);
     wine_tsx11_unlock();
 }
