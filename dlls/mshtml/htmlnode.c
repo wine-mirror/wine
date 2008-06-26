@@ -370,6 +370,9 @@ static HRESULT WINAPI HTMLDOMNode_get_nodeType(IHTMLDOMNode *iface, long *p)
     case COMMENT_NODE:
         *p = 8;
         break;
+    case DOCUMENT_NODE:
+        *p = 9;
+        break;
     default:
         /*
          * FIXME:

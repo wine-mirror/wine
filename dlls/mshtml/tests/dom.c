@@ -2068,6 +2068,8 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLDOMNode_Release(node2);
         ok(node != NULL, "node == NULL\n");
         test_node_name((IUnknown*)node, "#document");
+        type = get_node_type((IUnknown*)node);
+        ok(type == 9, "type=%ld, expected 9\n", type);
         node2 = test_node_get_parent((IUnknown*)node);
         IHTMLDOMNode_Release(node);
         ok(node2 == NULL, "node != NULL\n");
