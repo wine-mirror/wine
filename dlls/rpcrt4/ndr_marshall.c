@@ -2331,7 +2331,8 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                          unsigned char *pMemory,
                                          PFORMAT_STRING pFormat,
-                                         PFORMAT_STRING pPointer)
+                                         PFORMAT_STRING pPointer,
+                                         unsigned char fMustAlloc)
 {
   PFORMAT_STRING desc;
   NDR_UNMARSHALL m;
@@ -2390,7 +2391,7 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       else
         safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
 
-      PointerUnmarshall(pStubMsg, saved_buffer, (unsigned char**)pMemory, *(unsigned char**)pMemory, pPointer, TRUE);
+      PointerUnmarshall(pStubMsg, saved_buffer, (unsigned char**)pMemory, *(unsigned char**)pMemory, pPointer, fMustAlloc);
       if (pointer_buffer_mark_set)
       {
         STD_OVERFLOW_CHECK(pStubMsg);
@@ -2430,7 +2431,6 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       size = EmbeddedComplexSize(pStubMsg, desc);
       TRACE("embedded complex (size=%ld) => %p\n", size, pMemory);
       m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
-      memset(pMemory, 0, size); /* just in case */
       if (m)
       {
         /* for some reason interface pointers aren't generated as
@@ -2884,10 +2884,7 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   ALIGN_POINTER(pStubMsg->Buffer, pFormat[1] + 1);
 
   if (fMustAlloc || !*ppMemory)
-  {
     *ppMemory = NdrAllocate(pStubMsg, size);
-    memset(*ppMemory, 0, size);
-  }
 
   pFormat += 4;
   if (*(const WORD*)pFormat) conf_array = pFormat + *(const WORD*)pFormat;
@@ -2895,7 +2892,7 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   if (*(const WORD*)pFormat) pointer_desc = pFormat + *(const WORD*)pFormat;
   pFormat += 2;
 
-  pMemory = ComplexUnmarshall(pStubMsg, *ppMemory, pFormat, pointer_desc);
+  pMemory = ComplexUnmarshall(pStubMsg, *ppMemory, pFormat, pointer_desc, fMustAlloc);
 
   if (conf_array)
     NdrConformantArrayUnmarshall(pStubMsg, &pMemory, conf_array, fMustAlloc);
@@ -3470,17 +3467,14 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pFormat = ReadVariance(pStubMsg, pFormat, pStubMsg->MaxCount);
 
   if (fMustAlloc || !*ppMemory)
-  {
     *ppMemory = NdrAllocate(pStubMsg, size);
-    memset(*ppMemory, 0, size);
-  }
 
   ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
   pMemory = *ppMemory;
   count = pStubMsg->ActualCount;
   for (i = 0; i < count; i++)
-    pMemory = ComplexUnmarshall(pStubMsg, pMemory, pFormat, NULL);
+    pMemory = ComplexUnmarshall(pStubMsg, pMemory, pFormat, NULL, fMustAlloc);
 
   if (pointer_buffer_mark_set)
   {
