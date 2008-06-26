@@ -490,7 +490,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     const WCHAR SZ_DEVICE_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','D','e','v','i','c','e',0};
     const WCHAR SZ_NON_PLUGINPLAY[] = {'n','o','n','-','p','l','u','g','i','n','p','l','a','y',0};
 
-    struct x11drv_thread_data *data = x11drv_thread_data();
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
     int num_devices;
     int loop;
     XDeviceInfo *devices;
@@ -961,7 +961,7 @@ static void proximity_event( HWND hwnd, XEvent *event )
  */
 int X11DRV_AttachEventQueueToTablet(HWND hOwner)
 {
-    struct x11drv_thread_data *data = x11drv_thread_data();
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
     int             num_devices;
     int             loop;
     int             cur_loop;

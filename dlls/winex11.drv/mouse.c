@@ -918,7 +918,7 @@ static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
  */
 void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 {
-    struct x11drv_thread_data *data = x11drv_thread_data();
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
     Cursor cursor;
 
     if (lpCursor)

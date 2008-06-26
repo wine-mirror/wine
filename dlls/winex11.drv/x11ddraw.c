@@ -77,6 +77,8 @@ static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
   TRACE("hwnd=%p, grab=%ld\n", hWnd, wParam);
 
+  if (!data) return 0;
+
   if (wParam)
   {
     /* find the X11 window that ddraw uses */

@@ -1487,7 +1487,6 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 void X11DRV_DestroyWindow( HWND hwnd )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
-    Display *display = thread_data->display;
     struct x11drv_win_data *data;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
@@ -1506,13 +1505,13 @@ void X11DRV_DestroyWindow( HWND hwnd )
         wine_tsx11_unlock();
     }
 
-    destroy_whole_window( display, data, FALSE );
-    destroy_icon_window( display, data );
+    destroy_whole_window( thread_data->display, data, FALSE );
+    destroy_icon_window( thread_data->display, data );
 
     if (data->colormap)
     {
         wine_tsx11_lock();
-        XFreeColormap( display, data->colormap );
+        XFreeColormap( thread_data->display, data->colormap );
         wine_tsx11_unlock();
     }
 
@@ -1520,7 +1519,7 @@ void X11DRV_DestroyWindow( HWND hwnd )
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
     wine_tsx11_lock();
-    XDeleteContext( display, (XID)hwnd, win_data_context );
+    XDeleteContext( thread_data->display, (XID)hwnd, win_data_context );
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
 }
@@ -1638,9 +1637,12 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
  */
 struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd )
 {
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
     char *data;
 
-    if (!hwnd || XFindContext( thread_display(), (XID)hwnd, win_data_context, &data )) data = NULL;
+    if (!thread_data) return NULL;
+    if (!hwnd) return NULL;
+    if (XFindContext( thread_data->display, (XID)hwnd, win_data_context, &data )) data = NULL;
     return (struct x11drv_win_data *)data;
 }
 
@@ -1813,6 +1815,7 @@ void X11DRV_SetCapture( HWND hwnd, UINT flags )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
 
+    if (!thread_data) return;
     if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
 
     if (hwnd)
@@ -1924,7 +1927,7 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
                           const RECT *rectWindow, const RECT *rectClient,
                           const RECT *visible_rect, const RECT *valid_rects )
 {
-    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
     Display *display = thread_data->display;
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );

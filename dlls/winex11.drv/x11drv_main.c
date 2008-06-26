@@ -616,7 +616,9 @@ static void set_queue_display_fd( Display *display )
  */
 struct x11drv_thread_data *x11drv_init_thread_data(void)
 {
-    struct x11drv_thread_data *data;
+    struct x11drv_thread_data *data = x11drv_thread_data();
+
+    if (data) return data;
 
     if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) )))
     {

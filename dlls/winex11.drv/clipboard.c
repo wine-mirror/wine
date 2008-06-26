@@ -317,7 +317,8 @@ static UINT wSeqNo = 0;
 
 static Window thread_selection_wnd(void)
 {
-    Window w = x11drv_thread_data()->selection_wnd;
+    struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
+    Window w = thread_data->selection_wnd;
 
     if (!w)
     {
@@ -327,12 +328,12 @@ static Window thread_selection_wnd(void)
                        ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
 
         wine_tsx11_lock();
-        w = XCreateWindow(thread_display(), root_window, 0, 0, 1, 1, 0, screen_depth,
+        w = XCreateWindow(thread_data->display, root_window, 0, 0, 1, 1, 0, screen_depth,
                           InputOutput, CopyFromParent, CWEventMask, &attr);
         wine_tsx11_unlock();
 
         if (w)
-            x11drv_thread_data()->selection_wnd = w;
+            thread_data->selection_wnd = w;
         else
             FIXME("Failed to create window. Fetching selection data will fail.\n");
     }
