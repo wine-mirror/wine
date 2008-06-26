@@ -346,6 +346,55 @@ GpStatus WINGDIPAPI GdipAddPathPath(GpPath *path, GDIPCONST GpPath* addingPath,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipAddPathPolygon(GpPath *path, GDIPCONST GpPointF *points, INT count)
+{
+    INT old_count;
+
+    if(!path || !points || count < 3)
+        return InvalidParameter;
+
+    if(!lengthen_path(path, count))
+        return OutOfMemory;
+
+    old_count = path->pathdata.Count;
+
+    memcpy(&path->pathdata.Points[old_count], points, count*sizeof(GpPointF));
+    memset(&path->pathdata.Types[old_count + 1], PathPointTypeLine, count - 1);
+
+    /* A polygon is an intrinsic figure */
+    path->pathdata.Types[old_count] = PathPointTypeStart;
+    path->pathdata.Types[old_count + count - 1] |= PathPointTypeCloseSubpath;
+    path->newfigure = TRUE;
+    path->pathdata.Count += count;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipAddPathPolygonI(GpPath *path, GDIPCONST GpPoint *points, INT count)
+{
+    GpPointF *ptf;
+    GpStatus status;
+    INT i;
+
+    if(!points || count < 3)
+        return InvalidParameter;
+
+    ptf = GdipAlloc(sizeof(GpPointF) * count);
+    if(!ptf)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        ptf[i].X = (REAL)points[i].X;
+        ptf[i].Y = (REAL)points[i].Y;
+    }
+
+    status = GdipAddPathPolygon(path, ptf, count);
+
+    GdipFree(ptf);
+
+    return status;
+}
+
 GpStatus WINGDIPAPI GdipClonePath(GpPath* path, GpPath **clone)
 {
     if(!path || !clone)

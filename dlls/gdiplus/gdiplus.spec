@@ -23,8 +23,8 @@
 @ stdcall GdipAddPathPath(ptr ptr long)
 @ stub GdipAddPathPie
 @ stub GdipAddPathPieI
-@ stub GdipAddPathPolygon
-@ stub GdipAddPathPolygonI
+@ stdcall GdipAddPathPolygon(ptr ptr long)
+@ stdcall GdipAddPathPolygonI(ptr ptr long)
 @ stdcall GdipAddPathRectangle(ptr long long long long)
 @ stdcall GdipAddPathRectangleI(ptr long long long long)
 @ stdcall GdipAddPathRectangles(ptr ptr long)

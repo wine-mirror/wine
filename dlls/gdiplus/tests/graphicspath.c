@@ -575,6 +575,52 @@ static void test_linei(void)
     GdipDeletePath(path);
 }
 
+static path_test_t poly_path[] = {
+    {5.00, 5.00, PathPointTypeStart, 0, 0},   /*1*/
+    {6.00, 8.00, PathPointTypeLine, 0, 0},    /*2*/
+    {0.00,  0.00,  PathPointTypeStart, 0, 0}, /*3*/
+    {10.00, 10.00, PathPointTypeLine, 0, 0},  /*4*/
+    {10.00, 20.00, PathPointTypeLine, 0, 0},  /*5*/
+    {30.00, 10.00, PathPointTypeLine, 0, 0},  /*6*/
+    {20.00, 0.00, PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}, /*7*/
+    };
+
+static void test_polygon(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPointF points[5];
+
+    points[0].X = 0.0;
+    points[0].Y = 0.0;
+    points[1].X = 10.0;
+    points[1].Y = 10.0;
+    points[2].X = 10.0;
+    points[2].Y = 20.0;
+    points[3].X = 30.0;
+    points[3].Y = 10.0;
+    points[4].X = 20.0;
+    points[4].Y = 0.0;
+
+    /* NULL args */
+    status = GdipAddPathPolygon(NULL, points, 5);
+    expect(InvalidParameter, status);
+    status = GdipAddPathPolygon(path, NULL, 5);
+    expect(InvalidParameter, status);
+    /* Polygon should have 3 points at least */
+    status = GdipAddPathPolygon(path, points, 2);
+    expect(InvalidParameter, status);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    /* to test how it prolongs not empty path */
+    status = GdipAddPathLine(path, 5.0, 5.0, 6.0, 8.0);
+    expect(Ok, status);
+    status = GdipAddPathPolygon(path, points, 5);
+    expect(Ok, status);
+    /* check resulting path */
+    ok_path(path, poly_path, sizeof(poly_path)/sizeof(path_test_t), FALSE);
+}
+
 static path_test_t rect_path[] = {
     {5.0, 5.0,       PathPointTypeStart, 0, 0}, /*0*/
     {105.0, 5.0,     PathPointTypeLine,  0, 0}, /*1*/
@@ -643,6 +689,7 @@ START_TEST(graphicspath)
     test_ellipse();
     test_linei();
     test_rect();
+    test_polygon();
 
     GdiplusShutdown(gdiplusToken);
 }
