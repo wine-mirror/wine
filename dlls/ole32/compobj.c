@@ -724,7 +724,7 @@ HRESULT apartment_createwindowifneeded(struct apartment *apt)
     {
         HWND hwnd = CreateWindowW(wszAptWinClass, NULL, 0,
                                   0, 0, 0, 0,
-                                  0, 0, OLE32_hInstance, NULL);
+                                  HWND_MESSAGE, 0, OLE32_hInstance, NULL);
         if (!hwnd)
         {
             ERR("CreateWindow failed with error %d\n", GetLastError());
