@@ -73,7 +73,7 @@ AC_ARG_WITH(xshape,    AS_HELP_STRING([--without-xshape],[do not use the Xshape 
 AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared memory extension)]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XShm_h=no; fi])
 AC_ARG_WITH(xslt,      AS_HELP_STRING([--without-xslt],[do not use XSLT]))
-AC_ARG_WITH(xvidmode,  AS_HELP_STRING([--without-xvidmode],[do not use XFree video mode extension]),
+AC_ARG_WITH(xxf86vm,   AS_HELP_STRING([--without-xxf86vm],[do not use XFree video mode extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; fi])
 
 AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools from directory DIR]))
@@ -683,13 +683,9 @@ then
         dnl *** Check for XFree86 VMODE extension
         if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
         then
-                AC_CHECK_LIB(Xxf86vm, XF86VidModeQueryExtension,
-                  [ AC_DEFINE(HAVE_LIBXXF86VM, 1, [Define if you have the Xxf86vm library])
-                     X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm"
-                  ],,
-                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+            WINE_CHECK_SONAME(Xxf86vm,XF86VidModeQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
         fi
-        WINE_NOTICE_WITH(xvidmode,[test "$ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" != "yes"],
+        WINE_NOTICE_WITH(xxf86vm,[test "x$ac_cv_lib_soname_Xxf86vm" = "x"],
                          [libXxf86vm development files not found, XFree86 Vidmode won't be supported.])
 
         dnl *** Check for Transform functions in Xrender

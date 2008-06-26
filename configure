@@ -1414,7 +1414,7 @@ Optional Packages:
   --without-xshape        do not use the Xshape extension
   --without-xshm          do not use XShm (shared memory extension)
   --without-xslt          do not use XSLT
-  --without-xvidmode      do not use XFree video mode extension
+  --without-xxf86vm       do not use XFree video mode extension
   --with-wine-tools=DIR   use Wine tools from directory DIR
   --with-x                use the X Window System
 
@@ -2110,9 +2110,9 @@ if test "${with_xslt+set}" = set; then
 fi
 
 
-# Check whether --with-xvidmode was given.
-if test "${with_xvidmode+set}" = set; then
-  withval=$with_xvidmode; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; fi
+# Check whether --with-xxf86vm was given.
+if test "${with_xxf86vm+set}" = set; then
+  withval=$with_xxf86vm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; fi
 fi
 
 
@@ -10252,14 +10252,14 @@ fi
 
                 if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
         then
-                { echo "$as_me:$LINENO: checking for XF86VidModeQueryExtension in -lXxf86vm" >&5
-echo $ECHO_N "checking for XF86VidModeQueryExtension in -lXxf86vm... $ECHO_C" >&6; }
-if test "${ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension+set}" = set; then
+            { echo "$as_me:$LINENO: checking for -lXxf86vm" >&5
+echo $ECHO_N "checking for -lXxf86vm... $ECHO_C" >&6; }
+if test "${ac_cv_lib_soname_Xxf86vm+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
+  ac_check_soname_save_LIBS=$LIBS
 LIBS="-lXxf86vm $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -10299,39 +10299,46 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension=yes
+  case "$LIBEXT" in
+    dll) ;;
+    dylib) ac_cv_lib_soname_Xxf86vm=`otool -L conftest$ac_exeext | grep "libXxf86vm\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libXxf86vm\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_Xxf86vm=`$ac_cv_path_LDD conftest$ac_exeext | grep "libXxf86vm\\.$LIBEXT" | sed -e "s/^.*\(libXxf86vm\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension=no
+
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+  LIBS=$ac_check_soname_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" >&5
-echo "${ECHO_T}$ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" >&6; }
-if test $ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension = yes; then
+if test "x$ac_cv_lib_soname_Xxf86vm" = "x"; then
+  { echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6; }
 
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LIBXXF86VM 1
+else
+  { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_Xxf86vm" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_Xxf86vm" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBXXF86VM "$ac_cv_lib_soname_Xxf86vm"
 _ACEOF
 
-                     X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm"
 
 fi
 
         fi
-        if test "$ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension" != "yes"; then
-  case "x$with_xvidmode" in
+        if test "x$ac_cv_lib_soname_Xxf86vm" = "x"; then
+  case "x$with_xxf86vm" in
   x)   wine_notices="$wine_notices|libXxf86vm development files not found, XFree86 Vidmode won't be supported." ;;
   xno) ;;
   *)   { { echo "$as_me:$LINENO: error: libXxf86vm development files not found, XFree86 Vidmode won't be supported.
-This is an error since --with-xvidmode was requested." >&5
+This is an error since --with-xxf86vm was requested." >&5
 echo "$as_me: error: libXxf86vm development files not found, XFree86 Vidmode won't be supported.
-This is an error since --with-xvidmode was requested." >&2;}
+This is an error since --with-xxf86vm was requested." >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 fi

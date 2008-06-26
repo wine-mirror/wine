@@ -525,7 +525,7 @@ static BOOL process_attach(void)
     xinerama_init( WidthOfScreen(screen), HeightOfScreen(screen) );
     X11DRV_Settings_Init();
 
-#ifdef HAVE_LIBXXF86VM
+#ifdef SONAME_LIBXXF86VM
     /* initialize XVidMode */
     X11DRV_XF86VM_Init();
 #endif
@@ -569,7 +569,7 @@ static void thread_detach(void)
  */
 static void process_detach(void)
 {
-#ifdef HAVE_LIBXXF86VM
+#ifdef SONAME_LIBXXF86VM
     /* cleanup XVidMode */
     X11DRV_XF86VM_Cleanup();
 #endif

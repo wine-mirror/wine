@@ -336,9 +336,6 @@
 /* Define to 1 if you have the <libxslt/transform.h> header file. */
 #undef HAVE_LIBXSLT_TRANSFORM_H
 
-/* Define if you have the Xxf86vm library */
-#undef HAVE_LIBXXF86VM
-
 /* Define if you have the X Shm extension */
 #undef HAVE_LIBXXSHM
 
@@ -1106,6 +1103,9 @@
 
 /* Define to the soname of the libXrender library. */
 #undef SONAME_LIBXRENDER
+
+/* Define to the soname of the libXxf86vm library. */
+#undef SONAME_LIBXXF86VM
 
 /* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
 #undef STAT_MACROS_BROKEN
