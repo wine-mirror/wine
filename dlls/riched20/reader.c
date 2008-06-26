@@ -2667,10 +2667,10 @@ RTFPutUnicodeString(RTF_Info *info, const WCHAR *string, int length)
 
                 memmove(info->OutputBuffer + info->dwOutputCount, string, fit * sizeof(WCHAR));
                 info->dwOutputCount += fit;
-                if (fit == sizeof(info->OutputBuffer) / sizeof(WCHAR) - info->dwOutputCount)
-                        RTFFlushUnicodeOutputBuffer(info);
                 length -= fit;
                 string += fit;
+                if (sizeof(info->OutputBuffer) / sizeof(WCHAR) == info->dwOutputCount)
+                        RTFFlushUnicodeOutputBuffer(info);
         }
 }
 
