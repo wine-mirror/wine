@@ -558,6 +558,83 @@ static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
     return VFW_E_NOT_FOUND;
 }
 
+/* Don't allow a circular connection to form, return VFW_E_CIRCULAR_GRAPH if this would be the case.
+ * A circular connection will be formed if from the filter of the output pin, the input pin can be reached
+ */
+static HRESULT WINAPI CheckCircularConnection(IFilterGraphImpl *This, IPin *out, IPin *in)
+{
+#if 1
+    HRESULT hr;
+    PIN_INFO info_out, info_in;
+
+    hr = IPin_QueryPinInfo(out, &info_out);
+    if (FAILED(hr))
+        return hr;
+    if (info_out.dir != PINDIR_OUTPUT)
+    {
+        IBaseFilter_Release(info_out.pFilter);
+        return E_UNEXPECTED;
+    }
+
+    hr = IPin_QueryPinInfo(in, &info_in);
+    if (SUCCEEDED(hr))
+        IBaseFilter_Release(info_in.pFilter);
+    if (FAILED(hr))
+        goto out;
+    if (info_in.dir != PINDIR_INPUT)
+    {
+        hr = E_UNEXPECTED;
+        goto out;
+    }
+
+    if (info_out.pFilter == info_in.pFilter)
+        hr = VFW_E_CIRCULAR_GRAPH;
+    else
+    {
+        IEnumPins *enumpins;
+        IPin *test;
+
+        hr = IBaseFilter_EnumPins(info_out.pFilter, &enumpins);
+        if (FAILED(hr))
+            goto out;
+
+        IEnumPins_Reset(enumpins);
+        while ((hr = IEnumPins_Next(enumpins, 1, &test, NULL)) == S_OK)
+        {
+            PIN_DIRECTION dir = PINDIR_OUTPUT;
+            IPin_QueryDirection(test, &dir);
+            if (dir == PINDIR_INPUT)
+            {
+                IPin *victim = NULL;
+                IPin_ConnectedTo(test, &victim);
+                if (victim)
+                {
+                    hr = CheckCircularConnection(This, victim, in);
+                    IPin_Release(victim);
+                    if (FAILED(hr))
+                    {
+                        IPin_Release(test);
+                        break;
+                    }
+                }
+            }
+            IPin_Release(test);
+        }
+        IEnumPins_Release(enumpins);
+    }
+
+out:
+    IBaseFilter_Release(info_out.pFilter);
+    if (FAILED(hr))
+        ERR("Checking filtergraph returned %08x, something's not right!\n", hr);
+    return hr;
+#else
+    /* Debugging filtergraphs not enabled */
+    return S_OK;
+#endif
+}
+
+
 /* NOTE: despite the implication, it doesn't matter which
  * way round you put in the input and output pins */
 static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface,
@@ -596,9 +673,17 @@ static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface,
     if (SUCCEEDED(hr))
     {
         if (dir == PINDIR_INPUT)
-            hr = IPin_Connect(ppinOut, ppinIn, pmt);
+        {
+            hr = CheckCircularConnection(This, ppinOut, ppinIn);
+            if (SUCCEEDED(hr))
+                hr = IPin_Connect(ppinOut, ppinIn, pmt);
+        }
         else
-            hr = IPin_Connect(ppinIn, ppinOut, pmt);
+        {
+            hr = CheckCircularConnection(This, ppinIn, ppinOut);
+            if (SUCCEEDED(hr))
+                hr = IPin_Connect(ppinIn, ppinOut, pmt);
+        }
     }
 
     return hr;
@@ -630,8 +715,8 @@ static HRESULT WINAPI FilterGraph2_Reconnect(IFilterGraph2 *iface,
     return hr;
 }
 
-static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface,
-					      IPin *ppin) {
+static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface, IPin *ppin)
+{
     ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppin);
@@ -750,9 +835,8 @@ static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* pinputpin, IPi
 }
 
 /*** IGraphBuilder methods ***/
-static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
-					   IPin *ppinOut,
-					   IPin *ppinIn) {
+static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, IPin *ppinIn)
+{
     ICOM_THIS_MULTI(IFilterGraphImpl, IFilterGraph2_vtbl, iface);
     HRESULT hr;
     AM_MEDIA_TYPE* mt;
@@ -766,12 +850,13 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
     ULONG pin;
     PIN_INFO PinInfo;
     CLSID FilterCLSID;
+    PIN_DIRECTION dir;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, ppinOut, ppinIn);
 
     if (TRACE_ON(quartz))
     {
-	hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
+        hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
         if (FAILED(hr))
             return hr;
 
@@ -786,12 +871,29 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
         IBaseFilter_Release(PinInfo.pFilter);
     }
 
+    hr = IPin_QueryDirection(ppinOut, &dir);
+    if (FAILED(hr))
+        return hr;
+
+    if (dir == PINDIR_INPUT)
+    {
+        IPin *temp;
+
+        temp = ppinIn;
+        ppinIn = ppinOut;
+        ppinOut = temp;
+    }
+
+    hr = CheckCircularConnection(This, ppinOut, ppinIn);
+    if (FAILED(hr))
+        return hr;
+
     /* Try direct connection first */
     hr = IPin_Connect(ppinOut, ppinIn, NULL);
     if (SUCCEEDED(hr)) {
         return S_OK;
     }
-    TRACE("Direct connection failed, trying to insert other filters\n");
+    TRACE("Direct connection failed, trying to render using extra filters\n");
 
     hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
     if (FAILED(hr))
@@ -806,18 +908,19 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
      * filter to the minor mediatype of input pin of the renderer */
     hr = IPin_EnumMediaTypes(ppinOut, &penummt);
     if (FAILED(hr)) {
-        ERR("EnumMediaTypes (%x)\n", hr);
+        WARN("EnumMediaTypes (%x)\n", hr);
         return hr;
     }
 
     hr = IEnumMediaTypes_Next(penummt, 1, &mt, &nbmt);
     if (FAILED(hr)) {
-        ERR("IEnumMediaTypes_Next (%x)\n", hr);
+        WARN("IEnumMediaTypes_Next (%x)\n", hr);
         return hr;
     }
 
-    if (!nbmt) {
-        ERR("No media type found!\n");
+    if (!nbmt)
+    {
+        WARN("No media type found!\n");
         return S_OK;
     }
     TRACE("MajorType %s\n", debugstr_guid(&mt->majortype));
@@ -828,10 +931,11 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
     tab[1] = mt->subtype;
     hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
     if (FAILED(hr)) {
-        ERR("Unable to enum filters (%x)\n", hr);
+        WARN("Unable to enum filters (%x)\n", hr);
         return hr;
     }
-    
+
+    hr = VFW_E_CANNOT_RENDER;
     while(IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, &nb) == S_OK)
     {
         VARIANT var;
@@ -843,7 +947,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
         hr = GetFilterInfo(pMoniker, &clsid, &var);
         IMoniker_Release(pMoniker);
         if (FAILED(hr)) {
-            ERR("Unable to retrieve filter info (%x)\n", hr);
+            WARN("Unable to retrieve filter info (%x)\n", hr);
             goto error;
         }
 
@@ -854,13 +958,13 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
 
         hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&pfilter);
         if (FAILED(hr)) {
-            ERR("Unable to create filter (%x), trying next one\n", hr);
+            WARN("Unable to create filter (%x), trying next one\n", hr);
             goto error;
         }
 
         hr = IFilterGraph2_AddFilter(iface, pfilter, V_UNION(&var, bstrVal));
         if (FAILED(hr)) {
-            ERR("Unable to add filter (%x)\n", hr);
+            WARN("Unable to add filter (%x)\n", hr);
             IBaseFilter_Release(pfilter);
             pfilter = NULL;
             goto error;
@@ -868,7 +972,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
 
         hr = IBaseFilter_EnumPins(pfilter, &penumpins);
         if (FAILED(hr)) {
-            ERR("Enumpins (%x)\n", hr);
+            WARN("Enumpins (%x)\n", hr);
             goto error;
         }
 
@@ -876,11 +980,11 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
         IEnumPins_Release(penumpins);
 
         if (FAILED(hr)) {
-            ERR("Next (%x)\n", hr);
+            WARN("Obtaining next pin: (%x)\n", hr);
             goto error;
         }
         if (pin == 0) {
-            ERR("No Pin\n");
+            WARN("Cannot use this filter: no pins\n");
             goto error;
         }
 
@@ -891,21 +995,38 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
         }
         TRACE("Successfully connected to filter, follow chain...\n");
 
-        /* Render all output pins of the filter by calling IFilterGraph2_Render on each of them */
+        /* Render all output pins of the filter by calling IFilterGraph2_Connect on each of them */
         hr = GetInternalConnections(pfilter, ppinfilter, &ppins, &nb);
 
         if (SUCCEEDED(hr)) {
             int i;
             if (nb == 0) {
+                IPin_Disconnect(ppinfilter);
                 IPin_Disconnect(ppinOut);
                 goto error;
             }
             TRACE("pins to consider: %d\n", nb);
-            for(i = 0; i < nb; i++) {
+            for(i = 0; i < nb; i++)
+            {
+                LPWSTR pinname = NULL;
+
                 TRACE("Processing pin %d\n", i);
-                hr = IFilterGraph2_Connect(iface, ppins[i], ppinIn);
+
+                hr = IPin_QueryId(ppins[i], &pinname);
+                if (SUCCEEDED(hr))
+                {
+                    if (pinname[0] == '~')
+                    {
+                        TRACE("Pinname=%s, skipping\n", debugstr_w(pinname));
+                        hr = E_FAIL;
+                    }
+                    else
+                        hr = IFilterGraph2_Connect(iface, ppins[i], ppinIn);
+                    CoTaskMemFree(pinname);
+                }
+
                 if (FAILED(hr)) {
-                   TRACE("Cannot render pin %p (%x)\n", ppinfilter, hr);
+                   TRACE("Cannot connect pin %p (%x)\n", ppinfilter, hr);
                 }
                 IPin_Release(ppins[i]);
                 if (SUCCEEDED(hr)) break;
@@ -914,6 +1035,13 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface,
             CoTaskMemFree(ppins);
             IPin_Release(ppinfilter);
             IBaseFilter_Release(pfilter);
+            if (FAILED(hr))
+            {
+                IPin_Disconnect(ppinfilter);
+                IPin_Disconnect(ppinOut);
+                IFilterGraph2_RemoveFilter(iface, pfilter);
+                continue;
+            }
             break;
         }
 
@@ -927,8 +1055,9 @@ error:
 
     IEnumMediaTypes_Release(penummt);
     DeleteMediaType(mt);
-    
-    return S_OK;
+
+    TRACE("--> %08x\n", hr);
+    return SUCCEEDED(hr) ? S_OK : hr;
 }
 
 static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface,
