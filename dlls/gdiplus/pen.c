@@ -227,6 +227,16 @@ GpStatus WINGDIPAPI GdipGetPenMiterLimit(GpPen *pen, REAL *miterLimit)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenStartCap(GpPen *pen, GpLineCap *startCap)
+{
+    if(!pen || !startCap)
+        return InvalidParameter;
+
+    *startCap = pen->startcap;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
 {
     if(!pen || !brush)

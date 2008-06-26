@@ -52,6 +52,7 @@ GpStatus WINGDIPAPI GdipSetPenWidth(GpPen*,REAL);
 GpStatus WINGDIPAPI GdipGetPenEndCap(GpPen*,GpLineCap*);
 GpStatus WINGDIPAPI GdipGetPenLineJoin(GpPen*,GpLineJoin*);
 GpStatus WINGDIPAPI GdipGetPenMiterLimit(GpPen*,REAL*);
+GpStatus WINGDIPAPI GdipGetPenStartCap(GpPen*,GpLineCap*);
 
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC,GpGraphics**);
 GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC,HANDLE,GpGraphics**);

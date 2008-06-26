@@ -364,7 +364,7 @@
 @ stdcall GdipGetPenLineJoin(ptr ptr)
 @ stdcall GdipGetPenMiterLimit(ptr ptr)
 @ stub GdipGetPenMode
-@ stub GdipGetPenStartCap
+@ stdcall GdipGetPenStartCap(ptr ptr)
 @ stub GdipGetPenTransform
 @ stub GdipGetPenUnit
 @ stub GdipGetPenWidth
