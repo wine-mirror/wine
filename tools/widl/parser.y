@@ -2260,7 +2260,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_CONST */            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "const" },
     /* ATTR_CONTEXTHANDLE */    { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, "context_handle" },
     /* ATTR_CONTROL */          { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, "control" },
-    /* ATTR_DEFAULT */          { 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, "default" },
+    /* ATTR_DEFAULT */          { 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, "default" },
     /* ATTR_DEFAULTCOLLELEM */  { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "defaultcollelem" },
     /* ATTR_DEFAULTVALUE */     { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "defaultvalue" },
     /* ATTR_DEFAULTVTABLE */    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "defaultvtable" },
