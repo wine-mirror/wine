@@ -712,8 +712,27 @@ static HRESULT WINAPI HTMLElement_get_offsetLeft(IHTMLElement *iface, long *p)
 static HRESULT WINAPI HTMLElement_get_offsetTop(IHTMLElement *iface, long *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    PRInt32 top = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSHTMLElement: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNSHTMLElement_GetOffsetTop(nselem, &top);
+    nsIDOMNSHTMLElement_Release(nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("GetOffsetTop failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = top;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_offsetWidth(IHTMLElement *iface, long *p)
@@ -1414,6 +1433,7 @@ static const tid_t HTMLElement_iface_tids[] = {
     IHTMLElement2_tid,
     0
 };
+
 static dispex_static_data_t HTMLElement_dispex = {
     NULL,
     DispHTMLUnknownElement_tid,

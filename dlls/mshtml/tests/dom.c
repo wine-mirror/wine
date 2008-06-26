@@ -475,6 +475,19 @@ static void _test_elem_attr(unsigned line, IHTMLElement *elem, LPCWSTR name, LPC
     VariantClear(&value);
 }
 
+#define test_elem_offset(u) _test_elem_offset(__LINE__,u)
+static void _test_elem_offset(unsigned line, IUnknown *unk)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    long l;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_offsetTop(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_offsetTop failed: %08x\n", hres);
+
+    IHTMLElement_Release(elem);
+}
+
 static void test_doc_elem(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem;
@@ -2044,6 +2057,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_title((IUnknown*)select, NULL);
         test_elem_set_title((IUnknown*)select, "Title");
         test_elem_title((IUnknown*)select, "Title");
+        test_elem_offset((IUnknown*)select);
 
         node = get_first_child((IUnknown*)select);
         ok(node != NULL, "node == NULL\n");
