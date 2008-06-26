@@ -1963,6 +1963,9 @@ DECL_HANDLER(get_window_children)
     atom_t atom = req->atom;
     struct desktop *desktop = NULL;
 
+    get_req_unicode_str( &cls_name );
+    if (cls_name.len && !(atom = find_global_atom( NULL, &cls_name ))) return;
+
     if (req->desktop)
     {
         if (!(desktop = get_desktop_obj( current->process, req->desktop, DESKTOP_ENUMERATE ))) return;
@@ -1973,9 +1976,6 @@ DECL_HANDLER(get_window_children)
         if (req->parent && !(parent = get_window( req->parent ))) return;
         if (!parent && !(desktop = get_thread_desktop( current, 0 ))) return;
     }
-
-    get_req_unicode_str( &cls_name );
-    if (cls_name.len && !(atom = find_global_atom( NULL, &cls_name ))) return;
 
     if (parent)
         total = get_children_windows( parent, atom, req->tid, NULL, 0 );
