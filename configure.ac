@@ -1612,7 +1612,7 @@ fi
 
 dnl Check for isinf
 AC_CACHE_CHECK([for isinf], ac_cv_have_isinf,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; isinf(f)]])],[ac_cv_have_isinf="yes"],[ac_cv_have_isinf="no"]))
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; int i=isinf(f)]])],[ac_cv_have_isinf="yes"],[ac_cv_have_isinf="no"]))
 if test "$ac_cv_have_isinf" = "yes"
 then
     AC_DEFINE(HAVE_ISINF, 1, [Define to 1 if you have the `isinf' function.])

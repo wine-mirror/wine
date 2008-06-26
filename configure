@@ -21374,7 +21374,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-float f = 0.0; isinf(f)
+float f = 0.0; int i=isinf(f)
   ;
   return 0;
 }
