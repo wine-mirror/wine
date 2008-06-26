@@ -207,6 +207,26 @@ GpStatus WINGDIPAPI GdipGetPenEndCap(GpPen *pen, GpLineCap *endCap)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenLineJoin(GpPen *pen, GpLineJoin *lineJoin)
+{
+    if(!pen || !lineJoin)
+        return InvalidParameter;
+
+    *lineJoin = pen->join;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPenMiterLimit(GpPen *pen, REAL *miterLimit)
+{
+    if(!pen || !miterLimit)
+        return InvalidParameter;
+
+    *miterLimit = pen->miterlimit;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen *pen, GpBrush *brush)
 {
     if(!pen || !brush)
