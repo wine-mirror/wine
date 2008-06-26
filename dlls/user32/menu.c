@@ -116,9 +116,9 @@ typedef struct {
 
 /* internal flags for menu tracking */
 
-#define TF_ENDMENU              0x0001
-#define TF_SUSPENDPOPUP         0x0002
-#define TF_SKIPREMOVE		0x0004
+#define TF_ENDMENU              0x10000
+#define TF_SUSPENDPOPUP         0x20000
+#define TF_SKIPREMOVE           0x40000
 
 typedef struct
 {
