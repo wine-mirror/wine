@@ -79,6 +79,9 @@
 #ifdef HAVE_NETINET_TCP_TIMER_H
 #include <netinet/tcp_timer.h>
 #endif
+#ifdef HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
 #ifdef HAVE_NETINET_IP_ICMP_H
 #include <netinet/ip_icmp.h>
 #endif
