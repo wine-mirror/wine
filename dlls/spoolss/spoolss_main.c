@@ -170,6 +170,15 @@ BOOL WINAPI ImpersonatePrinterClient(HANDLE hToken)
 }
 
 /******************************************************************
+ *   IsLocalCall    [SPOOLSS.@]
+ */
+BOOL WINAPI IsLocalCall(void)
+{
+    FIXME("() stub\n");
+    return TRUE;
+}
+
+/******************************************************************
  *   RevertToPrinterSelf   [SPOOLSS.@]
  */
 HANDLE WINAPI RevertToPrinterSelf(void)
