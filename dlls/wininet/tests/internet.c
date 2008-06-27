@@ -113,6 +113,12 @@ static void test_InternetCanonicalizeUrlA(void)
         "got %u and %u with size %u for '%s' (%d)\n",
         res, GetLastError(), dwSize, buffer, lstrlenA(buffer));
 
+    /* test with trailing space */
+    dwSize = 256;
+    res = InternetCanonicalizeUrlA("http://www.winehq.org/index.php?x= ", buffer, &dwSize, ICU_BROWSER_MODE);
+    ok(res == 1, "InternetCanonicalizeUrlA failed\n");
+    ok(!strcmp(buffer, "http://www.winehq.org/index.php?x="), "Trailing space should have been stripped even in ICU_BROWSER_MODE (%s)\n", buffer);
+
     res = InternetSetOptionA(NULL, 0xdeadbeef, buffer, sizeof(buffer));
     ok(!res, "InternetSetOptionA succeeded\n");
     ok(GetLastError() == ERROR_INTERNET_INVALID_OPTION,

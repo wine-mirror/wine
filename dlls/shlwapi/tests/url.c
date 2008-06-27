@@ -579,6 +579,7 @@ static void test_UrlCanonicalizeW(void)
     DWORD dwSize;
     DWORD urllen;
     HRESULT hr;
+    int i;
 
 
     if (!pUrlCanonicalizeW) {
@@ -628,6 +629,21 @@ static void test_UrlCanonicalizeW(void)
         "got 0x%x with %u and size %u for %u (expected 'S_OK' and size %u)\n",
         hr, GetLastError(), dwSize, lstrlenW(szReturnUrl), urllen);
 
+    /* check that the characters 1..32 are chopped from the end of the string */
+    for (i = 1; i < 65536; i++)
+    {
+        WCHAR szUrl[128];
+        BOOL choped;
+        int pos;
+
+        MultiByteToWideChar(CP_UTF8, 0, "http://www.winehq.org/X", -1, szUrl, 128);
+        pos = lstrlenW(szUrl) - 1;
+        szUrl[pos] = i;
+        urllen = INTERNET_MAX_URL_LENGTH;
+        pUrlCanonicalizeW(szUrl, szReturnUrl, &urllen, 0);
+        choped = lstrlenW(szReturnUrl) < lstrlenW(szUrl);
+        ok(choped == (i <= 32), "Incorrect char chopping for char %d\n", i);
+    }
 }
 
 /* ########################### */
