@@ -7210,9 +7210,6 @@ done
 
 
 
-
-
-
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7261,13 +7258,10 @@ for ac_header in \
 	mntent.h \
 	ncurses.h \
 	netdb.h \
-	netinet/if_ether.h \
 	netinet/in.h \
 	netinet/in_systm.h \
-	netinet/ip_icmp.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
-	netinet/udp.h \
 	openssl/err.h \
 	openssl/ssl.h \
 	png.h \
@@ -7615,7 +7609,24 @@ done
 
 
 
-for ac_header in netinet/in_pcb.h netinet/ip_var.h net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h netipx/ipx.h
+
+
+
+
+for ac_header in \
+	netinet/ip.h \
+	net/if.h \
+	net/if_arp.h \
+	net/if_dl.h \
+	net/if_types.h \
+	net/route.h \
+	netinet/if_ether.h \
+	netinet/in_pcb.h \
+	netinet/ip_icmp.h \
+	netinet/ip_var.h \
+	netinet/udp.h \
+	netipx/ipx.h \
+
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 { echo "$as_me:$LINENO: checking for $ac_header" >&5
@@ -7638,6 +7649,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_H
+     # include <netinet/ip.h>
      #endif
 
 #include <$ac_header>
@@ -7712,6 +7726,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #endif
      #ifdef HAVE_NETINET_IN_H
      # include <netinet/in.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_H
+     # include <netinet/ip.h>
      #endif
      #ifdef HAVE_NETINET_IP_VAR_H
      # include <netinet/ip_var.h>

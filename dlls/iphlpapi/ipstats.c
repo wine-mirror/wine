@@ -61,13 +61,15 @@
 #ifdef HAVE_NETINET_IF_ETHER_H
 #include <netinet/if_ether.h>
 #endif
+#ifdef HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
 #ifdef HAVE_NETINET_TCP_FSM_H
 #include <netinet/tcp_fsm.h>
 #endif
-
 #ifdef HAVE_NETINET_IN_PCB_H
 #include <netinet/in_pcb.h>
 #endif
@@ -628,6 +630,10 @@ DWORD getIPStats(PMIB_IPSTATS stats)
 DWORD getTCPStats(MIB_TCPSTATS *stats)
 {
 #if defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_STATS)
+#ifndef TCPTV_MIN  /* got removed in Mac OS X for some reason */
+#define TCPTV_MIN 2
+#define TCPTV_REXMTMAX 128
+#endif
   int mib[] = {CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_STATS};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
 #define hz 1000
