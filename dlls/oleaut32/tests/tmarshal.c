@@ -18,6 +18,7 @@
  */
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include <windows.h>
 #include <ocidl.h>
@@ -209,6 +210,72 @@ static void end_host_object(DWORD tid, HANDLE thread)
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
 }
+
+static ItestDual TestDual, TestDualDisp;
+
+static HRESULT WINAPI TestDual_QueryInterface(ItestDual *iface, REFIID riid, void **ppvObject)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch)) {
+        *ppvObject = &TestDualDisp;
+        return S_OK;
+    }else if(IsEqualGUID(riid, &IID_ItestDual)) {
+        *ppvObject = &TestDual;
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TestDual_AddRef(ItestDual *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI TestDual_Release(ItestDual *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI TestDual_GetTypeInfoCount(ItestDual *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TestDual_GetTypeInfo(ItestDual *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TestDual_GetIDsOfNames(ItestDual *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TestDual_Invoke(ItestDual *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
+        UINT *puArgErr)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ItestDualVtbl TestDualVtbl = {
+    TestDual_QueryInterface,
+    TestDual_AddRef,
+    TestDual_Release,
+    TestDual_GetTypeInfoCount,
+    TestDual_GetTypeInfo,
+    TestDual_GetIDsOfNames,
+    TestDual_Invoke
+};
+
+static ItestDual TestDual = { &TestDualVtbl };
+static ItestDual TestDualDisp = { &TestDualVtbl };
 
 typedef struct Widget
 {
@@ -553,6 +620,77 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_CloneInterface
 };
 
+static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
+{
+    if (IsEqualIID(riid, &IID_IStaticWidget) || IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch))
+    {
+        IStaticWidget_AddRef(iface);
+        *ppvObject = iface;
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI StaticWidget_AddRef(IStaticWidget *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI StaticWidget_Release(IStaticWidget *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI StaticWidget_GetTypeInfoCount(IStaticWidget *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI StaticWidget_GetTypeInfo(IStaticWidget *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI StaticWidget_GetIDsOfNames(IStaticWidget *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI StaticWidget_Invoke(IStaticWidget *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
+         UINT *puArgErr)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI StaticWidget_TestDual(IStaticWidget *iface, ItestDual *p)
+{
+    trace("TestDual()\n");
+    todo_wine
+    ok(p == &TestDual, "wrong ItestDual\n");
+    return S_OK;
+}
+
+static const IStaticWidgetVtbl StaticWidgetVtbl = {
+    StaticWidget_QueryInterface,
+    StaticWidget_AddRef,
+    StaticWidget_Release,
+    StaticWidget_GetTypeInfoCount,
+    StaticWidget_GetTypeInfo,
+    StaticWidget_GetIDsOfNames,
+    StaticWidget_Invoke,
+    StaticWidget_TestDual
+};
+
+static IStaticWidget StaticWidget = { &StaticWidgetVtbl };
 
 typedef struct KindaEnum
 {
@@ -577,31 +715,44 @@ static HRESULT register_current_module_typelib(void)
     return hr;
 }
 
-static IWidget *Widget_Create(void)
+static ITypeInfo *get_type_info(REFIID riid)
 {
-    Widget *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-    HRESULT hr;
+    ITypeInfo *pTypeInfo;
     ITypeLib *pTypeLib;
-
-    This->lpVtbl = &Widget_VTable;
-    This->refs = 1;
+    HRESULT hr;
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
     ok_ole_success(hr, LoadRegTypeLib);
-    if (SUCCEEDED(hr))
-    {
-        ITypeInfo *pTypeInfo;
-        hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IWidget, &pTypeInfo);
-        ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid);
-        if (SUCCEEDED(hr))
-        {
-            This->pDispatchUnknown = NULL;
-            hr = CreateStdDispatch((IUnknown *)&This->lpVtbl, This, pTypeInfo, &This->pDispatchUnknown);
-            ok_ole_success(hr, CreateStdDispatch);
-            ITypeInfo_Release(pTypeInfo);
-        }
-        ITypeLib_Release(pTypeLib);
-    }
+    if (FAILED(hr))
+        return NULL;
+
+    hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, riid, &pTypeInfo);
+    ITypeLib_Release(pTypeLib);
+    ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid);
+    if (FAILED(hr))
+        return NULL;
+
+    return pTypeInfo;
+}
+
+static IWidget *Widget_Create(void)
+{
+    Widget *This;
+    ITypeInfo *pTypeInfo;
+    HRESULT hr = E_FAIL;
+
+    pTypeInfo = get_type_info(&IID_IWidget);
+    if(!pTypeInfo)
+        return NULL;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This->lpVtbl = &Widget_VTable;
+    This->refs = 1;
+    This->pDispatchUnknown = NULL;
+
+    hr = CreateStdDispatch((IUnknown *)&This->lpVtbl, This, pTypeInfo, &This->pDispatchUnknown);
+    ok_ole_success(hr, CreateStdDispatch);
+    ITypeInfo_Release(pTypeInfo);
 
     if (SUCCEEDED(hr))
         return (IWidget *)&This->lpVtbl;
@@ -1167,6 +1318,34 @@ static void test_DispCallFunc(void)
     IWidget_Release(pWidget);
 }
 
+static void test_StaticWidget(void)
+{
+    ITypeInfo *type_info;
+    DISPPARAMS dispparams;
+    VARIANTARG vararg[4];
+    EXCEPINFO excepinfo;
+    VARIANT varresult;
+    HRESULT hr;
+
+    type_info = get_type_info(&IID_IStaticWidget);
+
+    /* call TestDual */
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 1;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = vararg;
+    V_VT(vararg) = VT_DISPATCH;
+    V_DISPATCH(vararg) = (IDispatch*)&TestDualDisp;
+    VariantInit(&varresult);
+    hr = ITypeInfo_Invoke(type_info, &StaticWidget, DISPID_TM_TESTDUAL, DISPATCH_METHOD,
+            &dispparams, &varresult, &excepinfo, NULL);
+    ok_ole_success(hr, IDispatch_Invoke);
+    ok(V_VT(&varresult) == VT_EMPTY, "vt %x\n", V_VT(&varresult));
+    VariantClear(&varresult);
+
+    ITypeInfo_Release(type_info);
+}
+
 START_TEST(tmarshal)
 {
     HRESULT hr;
@@ -1178,6 +1357,7 @@ START_TEST(tmarshal)
 
     test_typelibmarshal();
     test_DispCallFunc();
+    test_StaticWidget();
 
     hr = UnRegisterTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, 1);
     ok_ole_success(hr, UnRegisterTypeLib);

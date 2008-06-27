@@ -48,6 +48,17 @@ library TestTypelib
 
     [
         odl,
+        oleautomation,
+        dual,
+        uuid(3f7e06fe-0bce-46f0-8b7d-3a68393c7967)
+    ]
+    interface ItestDual : IDispatch
+    {
+        HRESULT test();
+    }
+
+    [
+        odl,
         uuid(a1f8cae3-c947-4c5f-b57d-c87b9b5f3586),
         oleautomation,
         dual
@@ -105,7 +116,18 @@ library TestTypelib
 
         [propget, id(DISPID_TM_CLONEINTERFACE)]
         HRESULT CloneInterface([out, retval] ISomethingFromDispatch **ppVal);
+    }
 
+    [
+        odl,
+        uuid(a1f8cae3-c947-3c5f-a57c-c88b9b6f3586),
+        oleautomation,
+        dual
+    ]
+    interface IStaticWidget : IDispatch
+    {
+        [id(DISPID_TM_TESTDUAL)]
+        HRESULT TestDual([in] ItestDual *p);
     }
 
     [
