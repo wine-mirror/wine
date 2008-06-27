@@ -1532,6 +1532,12 @@ struct enum_font_data
     LOGFONT lf[MAX_ENUM_FONTS];
 };
 
+struct enum_font_dataW
+{
+    int total;
+    LOGFONTW lf[MAX_ENUM_FONTS];
+};
+
 static INT CALLBACK arial_enum_proc(const LOGFONT *lf, const TEXTMETRIC *tm, DWORD type, LPARAM lParam)
 {
     struct enum_font_data *efd = (struct enum_font_data *)lParam;
@@ -1541,6 +1547,18 @@ static INT CALLBACK arial_enum_proc(const LOGFONT *lf, const TEXTMETRIC *tm, DWO
     trace("enumed font \"%s\", charset %d, weight %d, italic %d\n",
           lf->lfFaceName, lf->lfCharSet, lf->lfWeight, lf->lfItalic);
 #endif
+    if (efd->total < MAX_ENUM_FONTS)
+        efd->lf[efd->total++] = *lf;
+
+    return 1;
+}
+
+static INT CALLBACK arial_enum_procw(const LOGFONTW *lf, const TEXTMETRICW *tm, DWORD type, LPARAM lParam)
+{
+    struct enum_font_dataW *efd = (struct enum_font_dataW *)lParam;
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+
     if (efd->total < MAX_ENUM_FONTS)
         efd->lf[efd->total++] = *lf;
 
@@ -1574,9 +1592,37 @@ static void get_charset_stats(struct enum_font_data *efd,
     }
 }
 
+static void get_charset_statsW(struct enum_font_dataW *efd,
+                              int *ansi_charset, int *symbol_charset,
+                              int *russian_charset)
+{
+    int i;
+
+    *ansi_charset = 0;
+    *symbol_charset = 0;
+    *russian_charset = 0;
+
+    for (i = 0; i < efd->total; i++)
+    {
+        switch (efd->lf[i].lfCharSet)
+        {
+        case ANSI_CHARSET:
+            (*ansi_charset)++;
+            break;
+        case SYMBOL_CHARSET:
+            (*symbol_charset)++;
+            break;
+        case RUSSIAN_CHARSET:
+            (*russian_charset)++;
+            break;
+        }
+    }
+}
+
 static void test_EnumFontFamilies(const char *font_name, INT font_charset)
 {
     struct enum_font_data efd;
+    struct enum_font_dataW efdw;
     LOGFONT lf;
     HDC hdc;
     int i, ret, ansi_charset, symbol_charset, russian_charset;
@@ -1596,29 +1642,39 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
      */
     if (!*font_name && font_charset == DEFAULT_CHARSET) /* do it only once */
     {
+        /*
+         * Use EnumFontFamiliesW since win98 crashes when the
+         *    second parameter is NULL using EnumFontFamilies
+         */
         efd.total = 0;
         SetLastError(0xdeadbeef);
-        ret = EnumFontFamilies(hdc, NULL, arial_enum_proc, (LPARAM)&efd);
-        ok(ret, "EnumFontFamilies error %u\n", GetLastError());
-        get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
-        trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
-              ansi_charset, symbol_charset, russian_charset);
-        ok(efd.total > 0, "no fonts enumerated: NULL\n");
-        ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
-        ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
-        ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
+        ret = EnumFontFamiliesW(hdc, NULL, arial_enum_procw, (LPARAM)&efdw);
+        ok(ret || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED, "EnumFontFamiliesW error %u\n", GetLastError());
+        if(ret)
+        {
+            get_charset_statsW(&efdw, &ansi_charset, &symbol_charset, &russian_charset);
+            trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
+                  ansi_charset, symbol_charset, russian_charset);
+            ok(efd.total > 0, "no fonts enumerated: NULL\n");
+            ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
+            ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
+            ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
+        }
 
         efd.total = 0;
         SetLastError(0xdeadbeef);
-        ret = EnumFontFamiliesEx(hdc, NULL, arial_enum_proc, (LPARAM)&efd, 0);
-        ok(ret, "EnumFontFamiliesEx error %u\n", GetLastError());
-        get_charset_stats(&efd, &ansi_charset, &symbol_charset, &russian_charset);
-        trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
-              ansi_charset, symbol_charset, russian_charset);
-        ok(efd.total > 0, "no fonts enumerated: NULL\n");
-        ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
-        ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
-        ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
+        ret = EnumFontFamiliesExW(hdc, NULL, arial_enum_procw, (LPARAM)&efdw, 0);
+        ok(ret || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED, "EnumFontFamiliesExW error %u\n", GetLastError());
+        if(ret)
+        {
+            get_charset_statsW(&efdw, &ansi_charset, &symbol_charset, &russian_charset);
+            trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
+                  ansi_charset, symbol_charset, russian_charset);
+            ok(efd.total > 0, "no fonts enumerated: NULL\n");
+            ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
+            ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
+            ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
+        }
     }
 
     efd.total = 0;
@@ -1779,6 +1835,12 @@ static void test_negative_width(HDC hdc, const LOGFONTA *lf)
     LOGFONTA lf2 = *lf;
     WORD idx;
     MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
+
+    if(!pGetGlyphIndicesA)
+    {
+        skip("GetGlyphIndicesA is unavailable\n");
+        return;
+    }
 
     /* negative widths are handled just as positive ones */
     lf2.lfWidth = -lf->lfWidth;
