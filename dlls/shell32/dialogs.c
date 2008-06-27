@@ -100,16 +100,13 @@ void WINAPI RunFileDlgW(
     rfdp.lpstrDescription = lpstrDescription;
     rfdp.uFlags           = uFlags;
 
-    if(!(hRes = FindResourceW(shell32_hInstance, resnameW, (LPWSTR)RT_DIALOG)))
-        {
-        MessageBoxA (hwndOwner, "Couldn't find dialog.", "Nix", MB_OK) ;
+    if (!(hRes = FindResourceW(shell32_hInstance, resnameW, (LPWSTR)RT_DIALOG)) ||
+        !(template = LoadResource(shell32_hInstance, hRes)))
+    {
+        ERR("Couldn't load SHELL_RUN_DLG resource\n");
+        MessageBoxA(hwndOwner, "Unable to display Run File dialog box (internal error)", NULL, MB_OK | MB_ICONERROR);
         return;
-        }
-    if(!(template = LoadResource(shell32_hInstance, hRes)))
-        {
-        MessageBoxA (hwndOwner, "Couldn't load dialog.", "Nix", MB_OK) ;
-        return;
-        }
+    }
 
     DialogBoxIndirectParamW(shell32_hInstance,
 			    template, hwndOwner, RunDlgProc, (LPARAM)&rfdp);
@@ -184,6 +181,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     {
                     HMODULE hComdlg = NULL ;
                     LPFNOFN ofnProc = NULL ;
+                    static const WCHAR comdlg32W[] = {'c','o','m','d','l','g','3','2',0};
                     WCHAR szFName[1024] = {0};
                     WCHAR szFilter[MAX_PATH], szCaption[MAX_PATH];
                     static const char ansiFilter[] = "Executable Files\0*.exe\0All Files\0*.*\0\0\0\0";
@@ -200,17 +198,13 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     ofn.lpstrTitle = szCaption;
                     ofn.Flags = OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
 
-                    if (NULL == (hComdlg = LoadLibraryExA ("comdlg32", NULL, 0)))
-                        {
-                        MessageBoxA (hwnd, "Unable to display dialog box (LoadLibraryEx) !", "Nix", MB_OK | MB_ICONEXCLAMATION) ;
+                    if (NULL == (hComdlg = LoadLibraryExW (comdlg32W, NULL, 0)) ||
+                        NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameW")))
+                    {
+                        ERR("Couldn't get GetOpenFileName function entry (lib=%p, proc=%p)\n", hComdlg, ofnProc);
+                        MessageBoxA(hwnd, "Unable to display Browse dialog box (internal error)", NULL, MB_OK | MB_ICONERROR);
                         return TRUE ;
-                        }
-
-                    if (NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameW")))
-                        {
-                        MessageBoxA (hwnd, "Unable to display dialog box (GetProcAddress) !", "Nix", MB_OK | MB_ICONEXCLAMATION) ;
-                        return TRUE ;
-                        }
+                    }
 
                     if (ofnProc(&ofn))
                     {
