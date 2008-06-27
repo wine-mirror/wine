@@ -864,7 +864,9 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 	case MNID_FILE_EXIT:	MACRO_Exit();           break;
 
             /* Menu EDIT */
-	case MNID_EDIT_COPYDLG: MACRO_CopyDialog();     break;
+	case MNID_EDIT_COPYDLG:
+            SendMessage(GetDlgItem(hWnd, CTL_ID_TEXT), WM_COPY, 0, 0);
+            break;
 	case MNID_EDIT_ANNOTATE:MACRO_Annotate();       break;
 
             /* Menu Bookmark */
@@ -935,6 +937,14 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 /* EPP         break; */
     case WM_COPYDATA:
         return WINHELP_HandleCommand((HWND)wParam, lParam);
+
+    case WM_CHAR:
+        if (wParam == 3)
+        {
+            SendMessage(GetDlgItem(hWnd, CTL_ID_TEXT), WM_COPY, 0, 0);
+            return 0;
+        }
+        break;
 
     case WM_KEYDOWN:
         keyDelta = 0;
