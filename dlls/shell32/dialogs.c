@@ -184,36 +184,21 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     {
                     HMODULE hComdlg = NULL ;
                     LPFNOFN ofnProc = NULL ;
-                    WCHAR szFName[1024] = {0}, szFileTitle[256] = {0}, szInitDir[768] = {0} ;
+                    WCHAR szFName[1024] = {0};
                     WCHAR szFilter[MAX_PATH], szCaption[MAX_PATH];
                     static const char ansiFilter[] = "Executable Files\0*.exe\0All Files\0*.*\0\0\0\0";
-                    OPENFILENAMEW ofn =
-                        {
-                        sizeof (OPENFILENAMEW),
-                        NULL,
-                        NULL,
-                        szFilter,
-                        NULL,
-                        0,
-                        0,
-                        szFName,
-                        1023,
-                        szFileTitle,
-                        255,
-                        szInitDir,
-                        szCaption,
-                        OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST,
-                        0,
-                        0,
-                        NULL,
-                        0,
-                        (LPOFNHOOKPROC)NULL,
-                        NULL
-                        } ;
+                    OPENFILENAMEW ofn;
 
                     MultiByteToWideChar(CP_UTF8, 0, ansiFilter, sizeof(ansiFilter), szFilter, MAX_PATH);
                     MultiByteToWideChar(CP_UTF8, 0, "Browse", -1, szCaption, MAX_PATH);
-                    ofn.hwndOwner = hwnd ;
+                    ZeroMemory(&ofn, sizeof(ofn));
+                    ofn.lStructSize = sizeof(OPENFILENAMEW);
+                    ofn.hwndOwner = hwnd;
+                    ofn.lpstrFilter = szFilter;
+                    ofn.lpstrFile = szFName;
+                    ofn.nMaxFile = 1023;
+                    ofn.lpstrTitle = szCaption;
+                    ofn.Flags = OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
 
                     if (NULL == (hComdlg = LoadLibraryExA ("comdlg32", NULL, 0)))
                         {
@@ -227,12 +212,14 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         return TRUE ;
                         }
 
-                    ofnProc (&ofn) ;
+                    if (ofnProc(&ofn))
+                    {
 
-                    SetFocus (GetDlgItem (hwnd, IDOK)) ;
-                    SetWindowTextW (GetDlgItem (hwnd, 12298), szFName) ;
-                    SendMessageW (GetDlgItem (hwnd, 12298), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
-                    SetFocus (GetDlgItem (hwnd, IDOK)) ;
+                        SetFocus (GetDlgItem (hwnd, IDOK)) ;
+                        SetWindowTextW (GetDlgItem (hwnd, 12298), szFName) ;
+                        SendMessageW (GetDlgItem (hwnd, 12298), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
+                        SetFocus (GetDlgItem (hwnd, IDOK)) ;
+                    }
 
                     FreeLibrary (hComdlg) ;
 
