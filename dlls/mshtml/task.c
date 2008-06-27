@@ -43,6 +43,7 @@ typedef struct {
     HTMLDocument *doc;
     DWORD id;
     DWORD time;
+    DWORD interval;
     IDispatch *disp;
 
     struct list entry;
@@ -123,7 +124,29 @@ void remove_doc_tasks(const HTMLDocument *doc)
     }
 }
 
-DWORD set_task_timer(HTMLDocument *doc, DWORD msec, IDispatch *disp)
+static BOOL queue_timer(thread_data_t *thread_data, task_timer_t *timer)
+{
+    task_timer_t *iter;
+
+    if(list_empty(&thread_data->timer_list)
+       || LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry)->time > timer->time) {
+
+        list_add_head(&thread_data->timer_list, &timer->entry);
+        return TRUE;
+    }
+
+    LIST_FOR_EACH_ENTRY(iter, &thread_data->timer_list, task_timer_t, entry) {
+        if(iter->time > timer->time) {
+            list_add_tail(&iter->entry, &timer->entry);
+            return FALSE;
+        }
+    }
+
+    list_add_tail(&thread_data->timer_list, &timer->entry);
+    return FALSE;
+}
+
+DWORD set_task_timer(HTMLDocument *doc, DWORD msec, BOOL interval, IDispatch *disp)
 {
     thread_data_t *thread_data = get_thread_data(TRUE);
     task_timer_t *timer;
@@ -135,27 +158,13 @@ DWORD set_task_timer(HTMLDocument *doc, DWORD msec, IDispatch *disp)
     timer->id = id_cnt++;
     timer->doc = doc;
     timer->time = tc + msec;
+    timer->interval = interval ? msec : 0;
 
     IDispatch_AddRef(disp);
     timer->disp = disp;
 
-    if(list_empty(&thread_data->timer_list)
-       || LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry)->time > timer->time) {
-
-        list_add_head(&thread_data->timer_list, &timer->entry);
+    if(queue_timer(thread_data, timer))
         SetTimer(thread_data->thread_hwnd, TIMER_ID, msec, NULL);
-    }else {
-        task_timer_t *iter;
-
-        LIST_FOR_EACH_ENTRY(iter, &thread_data->timer_list, task_timer_t, entry) {
-            if(iter->time > timer->time) {
-                list_add_tail(&iter->entry, &timer->entry);
-                return timer->id;
-            }
-        }
-
-        list_add_tail(&thread_data->timer_list, &timer->entry);
-    }
 
     return timer->id;
 }
@@ -354,7 +363,12 @@ static LRESULT process_timer(void)
 
         call_disp_func(timer->doc, timer->disp);
 
-        release_task_timer(thread_data->thread_hwnd, timer);
+        if(timer->interval) {
+            timer->time += timer->interval;
+            queue_timer(thread_data, timer);
+        }else {
+            release_task_timer(thread_data->thread_hwnd, timer);
+        }
     }
 
     KillTimer(thread_data->thread_hwnd, TIMER_ID);

@@ -623,7 +623,7 @@ thread_data_t *get_thread_data(BOOL);
 HWND get_thread_hwnd(void);
 void push_task(task_t*);
 void remove_doc_tasks(const HTMLDocument*);
-DWORD set_task_timer(HTMLDocument*,DWORD,IDispatch*);
+DWORD set_task_timer(HTMLDocument*,DWORD,BOOL,IDispatch*);
 
 HRESULT get_typeinfo(tid_t,ITypeInfo**);
 void release_typelib(void);

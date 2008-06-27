@@ -846,7 +846,8 @@ static HRESULT WINAPI HTMLWindow3_detachEvent(IHTMLWindow3 *iface, BSTR event, I
     return E_NOTIMPL;
 }
 
-static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, long msec, VARIANT *language, long *timer_id)
+static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, long msec, VARIANT *language,
+        BOOL interval, long *timer_id)
 {
     IDispatch *disp = NULL;
 
@@ -868,7 +869,7 @@ static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, long msec, VARI
     if(!disp)
         return E_FAIL;
 
-    *timer_id = set_task_timer(This->doc, msec, disp);
+    *timer_id = set_task_timer(This->doc, msec, interval, disp);
     IDispatch_Release(disp);
 
     return S_OK;
@@ -881,15 +882,17 @@ static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expre
 
     TRACE("(%p)->(%p(%d) %ld %p %p)\n", This, expression, V_VT(expression), msec, language, timerID);
 
-    return window_set_timer(This, expression, msec, language, timerID);
+    return window_set_timer(This, expression, msec, language, FALSE, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow3_setInterval(IHTMLWindow3 *iface, VARIANT *expression, long msec,
         VARIANT *language, long *timerID)
 {
     HTMLWindow *This = HTMLWINDOW3_THIS(iface);
-    FIXME("(%p)->(%p %ld %p %p)\n", This, expression, msec, language, timerID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %ld %p %p)\n", This, expression, msec, language, timerID);
+
+    return window_set_timer(This, expression, msec, language, TRUE, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow3_print(IHTMLWindow3 *iface)
