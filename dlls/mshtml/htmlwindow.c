@@ -592,8 +592,10 @@ static HRESULT WINAPI HTMLWindow2_setInterval(IHTMLWindow2 *iface, BSTR expressi
 static HRESULT WINAPI HTMLWindow2_clearInterval(IHTMLWindow2 *iface, long timerID)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, timerID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%ld)\n", This, timerID);
+
+    return clear_task_timer(This->doc, TRUE, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow2_put_offscreenBuffering(IHTMLWindow2 *iface, VARIANT v)
