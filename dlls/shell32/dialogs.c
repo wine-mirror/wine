@@ -53,7 +53,7 @@ typedef BOOL (*WINAPI LPFNOFN) (OPENFILENAMEW *) ;
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 static INT_PTR CALLBACK RunDlgProc (HWND, UINT, WPARAM, LPARAM) ;
-static void FillList (HWND, char *) ;
+static void FillList (HWND, char *, BOOL) ;
 
 
 /*************************************************************************
@@ -116,17 +116,33 @@ void WINAPI RunFileDlgW(
 /* Dialog procedure for RunFileDlg */
 static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
-    static RUNFILEDLGPARAMS *prfdp = NULL ;
+    RUNFILEDLGPARAMS *prfdp = (RUNFILEDLGPARAMS *)GetWindowLongPtrW(hwnd, DWLP_USER);
 
     switch (message)
         {
         case WM_INITDIALOG :
             prfdp = (RUNFILEDLGPARAMS *)lParam ;
-            SetWindowTextW (hwnd, prfdp->lpstrTitle) ;
+            SetWindowLongPtrW(hwnd, DWLP_USER, (LONG_PTR)prfdp);
+
+            if (prfdp->lpstrTitle)
+                SetWindowTextW(hwnd, prfdp->lpstrTitle);
+            if (prfdp->lpstrDescription)
+                SetWindowTextW(GetDlgItem(hwnd, IDC_RUNDLG_DESCRIPTION), prfdp->lpstrDescription);
+            if (prfdp->uFlags & RFF_NOBROWSE)
+            {
+                HWND browse = GetDlgItem(hwnd, IDC_RUNDLG_BROWSE);
+                ShowWindow(browse, SW_HIDE);
+                EnableWindow(browse, FALSE);
+            }
+            if (prfdp->uFlags & RFF_NOLABEL)
+                ShowWindow(GetDlgItem(hwnd, IDC_RUNDLG_LABEL), SW_HIDE);
+            if (prfdp->uFlags & RFF_CALCDIRECTORY)
+                FIXME("RFF_CALCDIRECTORY not supported\n");
+
             SetClassLongPtrW (hwnd, GCLP_HICON, (LPARAM)prfdp->hIcon) ;
-            SendMessageW (GetDlgItem (hwnd, 12297), STM_SETICON,
+            SendMessageW (GetDlgItem (hwnd, IDC_RUNDLG_ICON), STM_SETICON,
                           (WPARAM)LoadIconW (NULL, (LPCWSTR)IDI_WINLOGO), 0);
-            FillList (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH), NULL) ;
+            FillList (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH), NULL, (prfdp->uFlags & RFF_NODEFAULT) == 0) ;
             SetFocus (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH)) ;
             return TRUE ;
 
@@ -143,7 +159,10 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         psz = HeapAlloc( GetProcessHeap(), 0, (ic + 1)*sizeof(WCHAR) );
                         GetWindowTextW (htxt, psz, ic + 1) ;
 
-                        if (ShellExecuteW(NULL, NULL, psz, NULL, NULL, SW_SHOWNORMAL) < (HINSTANCE)33)
+                        /* according to http://www.codeproject.com/KB/shell/runfiledlg.aspx we should send a
+                         * WM_NOTIFY before execution */
+
+                        if (ShellExecuteW(hwnd, NULL, psz, NULL, prfdp->lpstrDirectory, SW_SHOWNORMAL) < (HINSTANCE)33)
                             {
                             char *pszSysMsg = NULL ;
                             char szMsg[256];
@@ -166,7 +185,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                         /* FillList is still ANSI */
                         GetWindowTextA (htxt, (LPSTR)psz, ic + 1) ;
-                        FillList (htxt, (LPSTR)psz) ;
+                        FillList (htxt, (LPSTR)psz, FALSE) ;
 
                         HeapFree(GetProcessHeap(), 0, psz);
                         EndDialog (hwnd, 0) ;
@@ -197,6 +216,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     ofn.nMaxFile = 1023;
                     ofn.lpstrTitle = szCaption;
                     ofn.Flags = OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+                    ofn.lpstrInitialDir = prfdp->lpstrDirectory;
 
                     if (NULL == (hComdlg = LoadLibraryExW (comdlg32W, NULL, 0)) ||
                         NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameW")))
@@ -209,8 +229,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     if (ofnProc(&ofn))
                     {
                         SetFocus (GetDlgItem (hwnd, IDOK)) ;
-                        SetWindowTextW (GetDlgItem (hwnd, 12298), szFName) ;
-                        SendMessageW (GetDlgItem (hwnd, 12298), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
+                        SetWindowTextW (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH), szFName) ;
+                        SendMessageW (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                         SetFocus (GetDlgItem (hwnd, IDOK)) ;
                     }
 
@@ -225,7 +245,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
     }
 
 /* This grabs the MRU list from the registry and fills the combo for the "Run" dialog above */
-static void FillList (HWND hCb, char *pszLatest)
+/* fShowDefault ignored if pszLatest != NULL */
+static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
     {
     HKEY hkey ;
 /*    char szDbgMsg[256] = "" ; */
@@ -297,7 +318,7 @@ static void FillList (HWND hCb, char *pszLatest)
             MessageBoxA (hCb, szDbgMsg, "Nix", MB_OK) ;
             */
             SendMessageA (hCb, CB_ADDSTRING, 0, (LPARAM)pszCmd) ;
-            if (!Nix)
+            if (!Nix && fShowDefault)
                 {
                 SetWindowTextA (hCb, pszCmd) ;
                 SendMessageA (hCb, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
@@ -376,7 +397,11 @@ void WINAPI RunFileDlgA(
     if (!MultiByteToWideChar(CP_ACP, 0, lpstrDirectory, -1, directory, MAX_PATH))
         directory[0] = 0;
 
-    RunFileDlgW(hwndOwner, hIcon, directory, title, description, uFlags);
+    RunFileDlgW(hwndOwner, hIcon,
+        lpstrDirectory ? directory : NULL,
+        lpstrTitle ? title : NULL,
+        lpstrDescription ? description : NULL,
+        uFlags);
 }
 
 /*************************************************************************
