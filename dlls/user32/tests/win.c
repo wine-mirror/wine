@@ -2164,9 +2164,23 @@ static void test_vis_rgn( HWND hwnd )
     ReleaseDC( hwnd, hdc );
 }
 
+static LRESULT WINAPI set_focus_on_activate_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (msg == WM_ACTIVATE && LOWORD(wp) == WA_ACTIVE)
+    {
+        HWND child = GetWindow(hwnd, GW_CHILD);
+        ok(child != 0, "couldn't find child window\n");
+        SetFocus(child);
+        ok(GetFocus() == child, "Focus should be on child %p\n", child);
+        return 0;
+    }
+    return DefWindowProc(hwnd, msg, wp, lp);
+}
+
 static void test_SetFocus(HWND hwnd)
 {
     HWND child;
+    WNDPROC old_wnd_proc;
 
     /* check if we can set focus to non-visible windows */
 
@@ -2212,6 +2226,28 @@ static void test_SetFocus(HWND hwnd)
     EnableWindow(hwnd, FALSE);
     ok( GetFocus() == child, "Focus should still be on child %p\n", child );
     EnableWindow(hwnd, TRUE);
+
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+    ShowWindow(hwnd, SW_SHOWMINIMIZED);
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+todo_wine
+    ok( GetFocus() != child, "Focus should not be on child %p\n", child );
+    ok( GetFocus() != hwnd, "Focus should not be on parent %p\n", hwnd );
+    ShowWindow(hwnd, SW_RESTORE);
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+    ok( GetFocus() == hwnd, "Focus should be on parent %p\n", hwnd );
+    ShowWindow(hwnd, SW_SHOWMINIMIZED);
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+    ok( GetFocus() != child, "Focus should not be on child %p\n", child );
+todo_wine
+    ok( GetFocus() != hwnd, "Focus should not be on parent %p\n", hwnd );
+    old_wnd_proc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)set_focus_on_activate_proc);
+    ShowWindow(hwnd, SW_RESTORE);
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+todo_wine
+    ok( GetFocus() == child, "Focus should be on child %p, not %p\n", child, GetFocus() );
+
+    SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)old_wnd_proc);
 
     DestroyWindow( child );
 }
