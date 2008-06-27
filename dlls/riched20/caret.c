@@ -799,6 +799,20 @@ static void ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *resu
     }
     p = pp;
   }
+  if (p == editor->pBuffer->pLast)
+  {
+    /* The position is below the last paragraph, so the last row will be used
+     * rather than the end of the text, so the x position will be used to
+     * determine the offset closest to the pixel position. */
+    p = ME_FindItemBack(p, diStartRow);
+    if (p != NULL){
+      p = ME_FindItemFwd(p, diRun);
+    }
+    else
+    {
+      p = editor->pBuffer->pLast;
+    }
+  }
   for (; p != editor->pBuffer->pLast; p = p->next)
   {
     switch (p->type)

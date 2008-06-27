@@ -4496,7 +4496,8 @@ static void test_undo_coalescing(void)
 #define SEND_CTRL_LEFT(hwnd) SEND_CTRL_EXT_KEY(hwnd, VK_LEFT, 0x4b)
 #define SEND_CTRL_RIGHT(hwnd) SEND_CTRL_EXT_KEY(hwnd, VK_RIGHT, 0x4d)
 
-static void test_word_movement(){
+static void test_word_movement(void)
+{
     HWND hwnd;
     int result;
     int sel_start, sel_end;
@@ -4554,6 +4555,25 @@ static void test_word_movement(){
     DestroyWindow(hwnd);
 }
 
+static void test_EM_CHARFROMPOS(void)
+{
+    HWND hwnd;
+    int result;
+    POINTL point;
+    point.x = 0;
+    point.y = 50;
+
+    /* multi-line control inserts CR normally */
+    hwnd = new_richedit(NULL);
+    result = SendMessageA(hwnd, WM_SETTEXT, 0,
+                          (LPARAM)"one two three four five six seven");
+
+    result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
+    ok(result == 0, "expected character index of 0 but got %d\n", result);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -4601,6 +4621,7 @@ START_TEST( editor )
   test_eventMask();
   test_undo_coalescing();
   test_word_movement();
+  test_EM_CHARFROMPOS();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
