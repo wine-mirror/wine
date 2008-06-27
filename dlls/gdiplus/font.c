@@ -97,7 +97,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     const TEXTMETRICW* tmw;
     GpStatus stat;
 
-    if ((!fontFamily && fontFamily->FamilyName && font))
+    if (!fontFamily || !fontFamily->FamilyName || !font)
         return InvalidParameter;
 
     TRACE("%p (%s), %f, %d, %d, %p\n", fontFamily,
