@@ -624,6 +624,7 @@ HWND get_thread_hwnd(void);
 void push_task(task_t*);
 void remove_doc_tasks(const HTMLDocument*);
 DWORD set_task_timer(HTMLDocument*,DWORD,BOOL,IDispatch*);
+HRESULT clear_task_timer(HTMLDocument*,BOOL,DWORD);
 
 HRESULT get_typeinfo(tid_t,ITypeInfo**);
 void release_typelib(void);

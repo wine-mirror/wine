@@ -169,6 +169,25 @@ DWORD set_task_timer(HTMLDocument *doc, DWORD msec, BOOL interval, IDispatch *di
     return timer->id;
 }
 
+HRESULT clear_task_timer(HTMLDocument *doc, BOOL interval, DWORD id)
+{
+    thread_data_t *thread_data = get_thread_data(FALSE);
+    task_timer_t *iter;
+
+    if(!thread_data)
+        return S_OK;
+
+    LIST_FOR_EACH_ENTRY(iter, &thread_data->timer_list, task_timer_t, entry) {
+        if(iter->id == id && iter->doc == doc && (iter->interval == 0) == !interval) {
+            release_task_timer(thread_data->thread_hwnd, iter);
+            return S_OK;
+        }
+    }
+
+    WARN("timet not found\n");
+    return S_OK;
+}
+
 static void set_downloading(HTMLDocument *doc)
 {
     IOleCommandTarget *olecmd;

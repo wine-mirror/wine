@@ -197,8 +197,10 @@ static HRESULT WINAPI HTMLWindow2_setTimeout(IHTMLWindow2 *iface, BSTR expressio
 static HRESULT WINAPI HTMLWindow2_clearTimeout(IHTMLWindow2 *iface, long timerID)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%ld)\n", This, timerID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%ld)\n", This, timerID);
+
+    return clear_task_timer(This->doc, FALSE, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
