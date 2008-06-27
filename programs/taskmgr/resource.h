@@ -4,15 +4,17 @@
  * Used by taskmgr.rc
  *
  */
+#define IDS_APP_TITLE                   103
+#define IDC_TASKMGR                     109
+#define IDS_RUNDLG_CAPTION              110
+
 #define IDD_TASKMGR_DIALOG              102
 #define IDD_ABOUTBOX                    103
-#define IDS_APP_TITLE                   103
 #define IDM_ABOUT                       104
 #define IDM_EXIT                        105
 #define IDD_APPLICATION_PAGE            106
 #define IDI_TASKMGR                     107
 #define IDI_SMALL                       108
-#define IDC_TASKMGR                     109
 #define IDR_MAINFRAME                   128
 #define IDR_TASKMANAGER                 130
 #define IDD_PROCESS_PAGE                133

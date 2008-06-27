@@ -435,6 +435,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Upravitelj opravil"
     IDC_TASKMGR             "Upravitelj opravil"
+    IDS_RUNDLG_CAPTION      "Create New Task"
 END
 
 STRINGTABLE DISCARDABLE

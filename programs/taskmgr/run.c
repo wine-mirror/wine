@@ -54,10 +54,6 @@ void TaskManager_OnFileNew(void)
     HMODULE            hShell32;
     RUNFILEDLG        RunFileDlg;
     OSVERSIONINFO    versionInfo;
-    WCHAR            wTitle[40];
-    WCHAR            wText[256];
-    char            szTitle[40] = "Create New Task";
-    char            szText[256] = "Type the name of a program, folder, document, or Internet resource, and Task Manager will open it for you.";
 
     hShell32 = LoadLibrary(_T("SHELL32.DLL"));
     RunFileDlg = (RUNFILEDLG)(FARPROC)GetProcAddress(hShell32, (char*)((long)0x3D));
@@ -70,12 +66,16 @@ void TaskManager_OnFileNew(void)
 
         if (versionInfo.dwPlatformId == VER_PLATFORM_WIN32_NT)
         {
-            MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, szTitle, -1, wTitle, 40);
-            MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, szText, -1, wText, 256);
-            RunFileDlg(hMainWnd, 0, NULL, (LPCSTR)wTitle, (LPCSTR)wText, RFF_CALCDIRECTORY);
+            WCHAR wTitle[64];
+            LoadStringW(GetModuleHandleW(NULL), IDS_RUNDLG_CAPTION, wTitle, 64);
+            RunFileDlg(hMainWnd, 0, NULL, (LPCSTR)wTitle, NULL, RFF_CALCDIRECTORY);
         }
         else
-            RunFileDlg(hMainWnd, 0, NULL, szTitle, szText, RFF_CALCDIRECTORY);
+        {
+            char szTitle[64];
+            LoadStringA(GetModuleHandleW(NULL), IDS_RUNDLG_CAPTION, szTitle, 64);
+            RunFileDlg(hMainWnd, 0, NULL, szTitle, NULL, RFF_CALCDIRECTORY);
+        }
     }
 
     FreeLibrary(hShell32);

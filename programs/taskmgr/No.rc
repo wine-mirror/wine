@@ -433,6 +433,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Oppgavebehandler"
     IDC_TASKMGR             "Oppgavebehandler"
+    IDS_RUNDLG_CAPTION      "Create New Task"
 END
 
 STRINGTABLE DISCARDABLE

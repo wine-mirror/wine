@@ -434,6 +434,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "タスク マネージャ"
     IDC_TASKMGR             "タスク マネージャ"
+    IDS_RUNDLG_CAPTION      "Create New Task"
 END
 
 STRINGTABLE DISCARDABLE

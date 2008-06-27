@@ -433,6 +433,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Mened¿er zadañ"
     IDC_TASKMGR             "Mened¿er zadañ"
+    IDS_RUNDLG_CAPTION      "Utwórz nowe zadanie"
 END
 
 STRINGTABLE DISCARDABLE

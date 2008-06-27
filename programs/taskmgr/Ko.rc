@@ -433,6 +433,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "累诀 包府磊"
     IDC_TASKMGR             "累决 包府磊"
+    IDS_RUNDLG_CAPTION      "Create New Task"
 END
 
 STRINGTABLE DISCARDABLE
