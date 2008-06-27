@@ -841,6 +841,34 @@ static HRESULT WINAPI HTMLWindow3_detachEvent(IHTMLWindow3 *iface, BSTR event, I
     return E_NOTIMPL;
 }
 
+static HRESULT window_set_timer(HTMLWindow *This, VARIANT *expr, long msec, VARIANT *language, long *timer_id)
+{
+    IDispatch *disp = NULL;
+
+    switch(V_VT(expr)) {
+    case VT_DISPATCH:
+        disp = V_DISPATCH(expr);
+        IDispatch_AddRef(disp);
+        break;
+
+    case VT_BSTR:
+        disp = script_parse_event(This->doc, V_BSTR(expr));
+        break;
+
+    default:
+        FIXME("unimplemented vt=%d\n", V_VT(expr));
+        return E_NOTIMPL;
+    }
+
+    if(!disp)
+        return E_FAIL;
+
+    *timer_id = set_task_timer(This->doc, msec, disp);
+    IDispatch_Release(disp);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expression, long msec,
         VARIANT *language, long *timerID)
 {
@@ -848,16 +876,7 @@ static HRESULT WINAPI HTMLWindow3_setTimeout(IHTMLWindow3 *iface, VARIANT *expre
 
     TRACE("(%p)->(%p(%d) %ld %p %p)\n", This, expression, V_VT(expression), msec, language, timerID);
 
-    switch(V_VT(expression)) {
-    case VT_DISPATCH:
-        *timerID = set_task_timer(This->doc, msec, V_DISPATCH(expression));
-        break;
-
-    default:
-        FIXME("unimplemented vt=%d\n", V_VT(expression));
-    }
-
-    return S_OK;
+    return window_set_timer(This, expression, msec, language, timerID);
 }
 
 static HRESULT WINAPI HTMLWindow3_setInterval(IHTMLWindow3 *iface, VARIANT *expression, long msec,
