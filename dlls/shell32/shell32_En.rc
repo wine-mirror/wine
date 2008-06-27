@@ -220,6 +220,12 @@ STRINGTABLE
         IDS_SHUTDOWN_TITLE      "Shutdown"
         IDS_SHUTDOWN_PROMPT     "Do you want to shutdown your Wine session?"
 
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Unable to display Run File dialog box (internal error)"
+        IDS_RUNDLG_BROWSE_ERROR    "Unable to display Browse dialog box (internal error)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Browse"
+        IDS_RUNDLG_BROWSE_FILTER   "Executable Files\0*.exe\0All Files\0*.*\0\0"
+
         /* shell folder path default values */
 	IDS_PROGRAMS                "Start Menu\\Programs"
 	IDS_PERSONAL                "My Documents"

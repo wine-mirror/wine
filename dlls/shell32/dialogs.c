@@ -104,7 +104,7 @@ void WINAPI RunFileDlgW(
         !(template = LoadResource(shell32_hInstance, hRes)))
     {
         ERR("Couldn't load SHELL_RUN_DLG resource\n");
-        MessageBoxA(hwndOwner, "Unable to display Run File dialog box (internal error)", NULL, MB_OK | MB_ICONERROR);
+        ShellMessageBoxW(shell32_hInstance, hwndOwner, MAKEINTRESOURCEW(IDS_RUNDLG_ERROR), NULL, MB_OK | MB_ICONERROR);
         return;
     }
 
@@ -183,16 +183,16 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     LPFNOFN ofnProc = NULL ;
                     static const WCHAR comdlg32W[] = {'c','o','m','d','l','g','3','2',0};
                     WCHAR szFName[1024] = {0};
-                    WCHAR szFilter[MAX_PATH], szCaption[MAX_PATH];
-                    static const char ansiFilter[] = "Executable Files\0*.exe\0All Files\0*.*\0\0\0\0";
+                    WCHAR *pszFilter, szCaption[MAX_PATH];
                     OPENFILENAMEW ofn;
 
-                    MultiByteToWideChar(CP_UTF8, 0, ansiFilter, sizeof(ansiFilter), szFilter, MAX_PATH);
-                    MultiByteToWideChar(CP_UTF8, 0, "Browse", -1, szCaption, MAX_PATH);
+                    LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_FILTER, (LPWSTR)&pszFilter, 0);
+                    LoadStringW(shell32_hInstance, IDS_RUNDLG_BROWSE_CAPTION, szCaption, MAX_PATH);
+
                     ZeroMemory(&ofn, sizeof(ofn));
                     ofn.lStructSize = sizeof(OPENFILENAMEW);
                     ofn.hwndOwner = hwnd;
-                    ofn.lpstrFilter = szFilter;
+                    ofn.lpstrFilter = pszFilter;
                     ofn.lpstrFile = szFName;
                     ofn.nMaxFile = 1023;
                     ofn.lpstrTitle = szCaption;
@@ -202,13 +202,12 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameW")))
                     {
                         ERR("Couldn't get GetOpenFileName function entry (lib=%p, proc=%p)\n", hComdlg, ofnProc);
-                        MessageBoxA(hwnd, "Unable to display Browse dialog box (internal error)", NULL, MB_OK | MB_ICONERROR);
+                        ShellMessageBoxW(shell32_hInstance, hwnd, MAKEINTRESOURCEW(IDS_RUNDLG_BROWSE_ERROR), NULL, MB_OK | MB_ICONERROR);
                         return TRUE ;
                     }
 
                     if (ofnProc(&ofn))
                     {
-
                         SetFocus (GetDlgItem (hwnd, IDOK)) ;
                         SetWindowTextW (GetDlgItem (hwnd, 12298), szFName) ;
                         SendMessageW (GetDlgItem (hwnd, 12298), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
