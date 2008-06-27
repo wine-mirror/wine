@@ -56,7 +56,7 @@
   58 stdcall -noname ParseField(str long ptr long) ParseFieldAW
   59 stdcall -noname RestartDialog(long wstr long)
   60 stdcall -noname ExitWindowsDialog(long)
-  61 stdcall -noname RunFileDlg(long long long str str long)
+  61 stdcall -noname RunFileDlg(long long long str str long) RunFileDlgAW
   62 stdcall -noname PickIconDlg(long long long long)
   63 stdcall -noname GetFileNameFromBrowse(long long long long str str str)
   64 stdcall -noname DriveType(long)

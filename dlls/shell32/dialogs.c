@@ -43,13 +43,13 @@ typedef struct
     {
 	HWND hwndOwner ;
 	HICON hIcon ;
-	LPCSTR lpstrDirectory ;
-	LPCSTR lpstrTitle ;
-	LPCSTR lpstrDescription ;
+	LPCWSTR lpstrDirectory ;
+	LPCWSTR lpstrTitle ;
+	LPCWSTR lpstrDescription ;
 	UINT uFlags ;
     } RUNFILEDLGPARAMS ;
 
-typedef BOOL (*WINAPI LPFNOFN) (OPENFILENAMEA *) ;
+typedef BOOL (*WINAPI LPFNOFN) (OPENFILENAMEW *) ;
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 static INT_PTR CALLBACK RunDlgProc (HWND, UINT, WPARAM, LPARAM) ;
@@ -72,20 +72,22 @@ BOOL WINAPI PickIconDlg(
 }
 
 /*************************************************************************
- * RunFileDlg					[SHELL32.61]
+ * RunFileDlgW					[internal]
  *
- * NOTES
- *     Original name: RunFileDlg (exported by ordinal)
+ * The Unicode function that is available as ordinal 61 on Windows NT/2000/XP/...
+ *
+ * SEE ALSO
+ *   RunFileDlgAW
  */
-void WINAPI RunFileDlg(
+void WINAPI RunFileDlgW(
 	HWND hwndOwner,
 	HICON hIcon,
-	LPCSTR lpstrDirectory,
-	LPCSTR lpstrTitle,
-	LPCSTR lpstrDescription,
+	LPCWSTR lpstrDirectory,
+	LPCWSTR lpstrTitle,
+	LPCWSTR lpstrDescription,
 	UINT uFlags)
 {
-
+    static const WCHAR resnameW[] = {'S','H','E','L','L','_','R','U','N','_','D','L','G',0};
     RUNFILEDLGPARAMS rfdp;
     HRSRC hRes;
     LPVOID template;
@@ -98,7 +100,7 @@ void WINAPI RunFileDlg(
     rfdp.lpstrDescription = lpstrDescription;
     rfdp.uFlags           = uFlags;
 
-    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_RUN_DLG", (LPSTR)RT_DIALOG)))
+    if(!(hRes = FindResourceW(shell32_hInstance, resnameW, (LPWSTR)RT_DIALOG)))
         {
         MessageBoxA (hwndOwner, "Couldn't find dialog.", "Nix", MB_OK) ;
         return;
@@ -109,7 +111,7 @@ void WINAPI RunFileDlg(
         return;
         }
 
-    DialogBoxIndirectParamA((HINSTANCE)GetWindowLongPtrW( hwndOwner,
+    DialogBoxIndirectParamW((HINSTANCE)GetWindowLongPtrW( hwndOwner,
 						       GWLP_HINSTANCE ),
 			    template, hwndOwner, RunDlgProc, (LPARAM)&rfdp);
 
@@ -118,15 +120,13 @@ void WINAPI RunFileDlg(
 /* Dialog procedure for RunFileDlg */
 static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
-    int ic ;
-    char *psz, szMsg[256] ;
     static RUNFILEDLGPARAMS *prfdp = NULL ;
 
     switch (message)
         {
         case WM_INITDIALOG :
             prfdp = (RUNFILEDLGPARAMS *)lParam ;
-            SetWindowTextA (hwnd, prfdp->lpstrTitle) ;
+            SetWindowTextW (hwnd, prfdp->lpstrTitle) ;
             SetClassLongPtrW (hwnd, GCLP_HICON, (LPARAM)prfdp->hIcon) ;
             SendMessageW (GetDlgItem (hwnd, 12297), STM_SETICON,
                           (WPARAM)LoadIconW (NULL, (LPCWSTR)IDI_WINLOGO), 0);
@@ -139,15 +139,18 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                 {
                 case IDOK :
                     {
-                    HWND htxt = NULL ;
-                    if ((ic = GetWindowTextLengthA (htxt = GetDlgItem (hwnd, 12298))))
+                    int ic ;
+                    HWND htxt = GetDlgItem (hwnd, 12298); /* edit control */
+                    if ((ic = GetWindowTextLengthW (htxt)))
                         {
-                        psz = HeapAlloc( GetProcessHeap(), 0, (ic + 2) );
-                        GetWindowTextA (htxt, psz, ic + 1) ;
+                        WCHAR *psz ;
+                        psz = HeapAlloc( GetProcessHeap(), 0, (ic + 1)*sizeof(WCHAR) );
+                        GetWindowTextW (htxt, psz, ic + 1) ;
 
-                        if (ShellExecuteA(NULL, "open", psz, NULL, NULL, SW_SHOWNORMAL) < (HINSTANCE)33)
+                        if (ShellExecuteW(NULL, NULL, psz, NULL, NULL, SW_SHOWNORMAL) < (HINSTANCE)33)
                             {
                             char *pszSysMsg = NULL ;
+                            char szMsg[256];
                             FormatMessageA (
                                 FORMAT_MESSAGE_ALLOCATE_BUFFER |
                                 FORMAT_MESSAGE_FROM_SYSTEM |
@@ -164,7 +167,11 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                             SendMessageA (htxt, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                             return TRUE ;
                             }
-                        FillList (htxt, psz) ;
+
+                        /* FillList is still ANSI */
+                        GetWindowTextA (htxt, (LPSTR)psz, ic + 1) ;
+                        FillList (htxt, (LPSTR)psz) ;
+
                         HeapFree(GetProcessHeap(), 0, psz);
                         EndDialog (hwnd, 0) ;
                         }
@@ -178,13 +185,15 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     {
                     HMODULE hComdlg = NULL ;
                     LPFNOFN ofnProc = NULL ;
-                    char szFName[1024] = "", szFileTitle[256] = "", szInitDir[768] = "" ;
-                    OPENFILENAMEA ofn =
+                    WCHAR szFName[1024] = {0}, szFileTitle[256] = {0}, szInitDir[768] = {0} ;
+                    WCHAR szFilter[MAX_PATH], szCaption[MAX_PATH];
+                    static const char ansiFilter[] = "Executable Files\0*.exe\0All Files\0*.*\0\0\0\0";
+                    OPENFILENAMEW ofn =
                         {
-                        sizeof (OPENFILENAMEA),
+                        sizeof (OPENFILENAMEW),
                         NULL,
                         NULL,
-                        "Executable Files\0*.exe\0All Files\0*.*\0\0\0\0",
+                        szFilter,
                         NULL,
                         0,
                         0,
@@ -192,8 +201,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         1023,
                         szFileTitle,
                         255,
-                        (LPCSTR)szInitDir,
-                        "Browse",
+                        szInitDir,
+                        szCaption,
                         OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST,
                         0,
                         0,
@@ -203,6 +212,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         NULL
                         } ;
 
+                    MultiByteToWideChar(CP_UTF8, 0, ansiFilter, sizeof(ansiFilter), szFilter, MAX_PATH);
+                    MultiByteToWideChar(CP_UTF8, 0, "Browse", -1, szCaption, MAX_PATH);
                     ofn.hwndOwner = hwnd ;
 
                     if (NULL == (hComdlg = LoadLibraryExA ("comdlg32", NULL, 0)))
@@ -211,7 +222,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         return TRUE ;
                         }
 
-                    if (NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameA")))
+                    if (NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameW")))
                         {
                         MessageBoxA (hwnd, "Unable to display dialog box (GetProcAddress) !", "Nix", MB_OK | MB_ICONEXCLAMATION) ;
                         return TRUE ;
@@ -220,8 +231,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     ofnProc (&ofn) ;
 
                     SetFocus (GetDlgItem (hwnd, IDOK)) ;
-                    SetWindowTextA (GetDlgItem (hwnd, 12298), szFName) ;
-                    SendMessageA (GetDlgItem (hwnd, 12298), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
+                    SetWindowTextW (GetDlgItem (hwnd, 12298), szFName) ;
+                    SendMessageW (GetDlgItem (hwnd, 12298), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                     SetFocus (GetDlgItem (hwnd, IDOK)) ;
 
                     FreeLibrary (hComdlg) ;
@@ -358,6 +369,59 @@ static void FillList (HWND hCb, char *pszLatest)
     HeapFree( GetProcessHeap(), 0, pszCmd) ;
     HeapFree( GetProcessHeap(), 0, pszList) ;
     }
+
+/*************************************************************************
+ * RunFileDlgA					[internal]
+ *
+ * The ANSI function that is available as ordinal 61 on Windows 9x/Me
+ *
+ * SEE ALSO
+ *   RunFileDlgAW
+ */
+void WINAPI RunFileDlgA(
+	HWND hwndOwner,
+	HICON hIcon,
+	LPCSTR lpstrDirectory,
+	LPCSTR lpstrTitle,
+	LPCSTR lpstrDescription,
+	UINT uFlags)
+{
+    WCHAR title[MAX_PATH];       /* longer string wouldn't be visible in the dialog anyway */
+    WCHAR description[MAX_PATH];
+    WCHAR directory[MAX_PATH];
+
+    MultiByteToWideChar(CP_ACP, 0, lpstrTitle, -1, title, MAX_PATH);
+    title[MAX_PATH - 1] = 0;
+    MultiByteToWideChar(CP_ACP, 0, lpstrDescription, -1, description, MAX_PATH);
+    description[MAX_PATH - 1] = 0;
+    if (!MultiByteToWideChar(CP_ACP, 0, lpstrDirectory, -1, directory, MAX_PATH))
+        directory[0] = 0;
+
+    RunFileDlgW(hwndOwner, hIcon, directory, title, description, uFlags);
+}
+
+/*************************************************************************
+ * RunFileDlgAW					[SHELL32.61]
+ *
+ * An undocumented way to open the Run File dialog. A documented way is to use
+ * CLSID_Shell, IID_IShellDispatch (as of Wine 1.0, not implemented under Wine)
+ *
+ * Exported by ordinal. ANSI on Windows 9x and Unicode on Windows NT/2000/XP/etc
+ *
+ */
+void WINAPI RunFileDlgAW(
+	HWND hwndOwner,
+	HICON hIcon,
+	LPCVOID lpstrDirectory,
+	LPCVOID lpstrTitle,
+	LPCVOID lpstrDescription,
+	UINT uFlags)
+{
+    if (SHELL_OsIsUnicode())
+        RunFileDlgW(hwndOwner, hIcon, lpstrDirectory, lpstrTitle, lpstrDescription, uFlags);
+    else
+        RunFileDlgA(hwndOwner, hIcon, lpstrDirectory, lpstrTitle, lpstrDescription, uFlags);
+}
 
 
 /*************************************************************************
