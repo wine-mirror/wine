@@ -172,4 +172,8 @@ FIXME: Need to add them, but for now just let them use the same: searching.avi
 #define IDC_ABOUT_STATIC_TEXT2   101
 #define IDC_ABOUT_STATIC_TEXT3   102
 
+/* run dialog */
+#define IDC_RUNDLG_BROWSE       12288
+#define IDC_RUNDLG_EDITPATH     12298
+
 #endif

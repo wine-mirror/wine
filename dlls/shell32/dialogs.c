@@ -111,8 +111,7 @@ void WINAPI RunFileDlgW(
         return;
         }
 
-    DialogBoxIndirectParamW((HINSTANCE)GetWindowLongPtrW( hwndOwner,
-						       GWLP_HINSTANCE ),
+    DialogBoxIndirectParamW(shell32_hInstance,
 			    template, hwndOwner, RunDlgProc, (LPARAM)&rfdp);
 
 }
@@ -130,8 +129,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
             SetClassLongPtrW (hwnd, GCLP_HICON, (LPARAM)prfdp->hIcon) ;
             SendMessageW (GetDlgItem (hwnd, 12297), STM_SETICON,
                           (WPARAM)LoadIconW (NULL, (LPCWSTR)IDI_WINLOGO), 0);
-            FillList (GetDlgItem (hwnd, 12298), NULL) ;
-            SetFocus (GetDlgItem (hwnd, 12298)) ;
+            FillList (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH), NULL) ;
+            SetFocus (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH)) ;
             return TRUE ;
 
         case WM_COMMAND :
@@ -140,7 +139,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                 case IDOK :
                     {
                     int ic ;
-                    HWND htxt = GetDlgItem (hwnd, 12298); /* edit control */
+                    HWND htxt = GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH);
                     if ((ic = GetWindowTextLengthW (htxt)))
                         {
                         WCHAR *psz ;
@@ -181,7 +180,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     EndDialog (hwnd, 0) ;
                     return TRUE ;
 
-                case 12288 :
+                case IDC_RUNDLG_BROWSE :
                     {
                     HMODULE hComdlg = NULL ;
                     LPFNOFN ofnProc = NULL ;
