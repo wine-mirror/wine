@@ -678,9 +678,9 @@ static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run 
       }
       else
       {
-        pos += 720-(pos%720);
+        pos += lDefaultTab - (pos % lDefaultTab);
       }
-      ppos = ME_twips2pointsX(c, pos);
+      ppos = ME_twips2pointsX(c, pos) + c->editor->selofs;
       if (ppos > startx + run->pt.x) {
         size.cx = ppos - startx - run->pt.x;
         break;
