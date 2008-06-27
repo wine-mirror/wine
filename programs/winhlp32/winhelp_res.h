@@ -51,6 +51,7 @@
 #define STID_DIALOG_TEST	0x12D
 #define STID_FILE_NOT_FOUND_s	0x12E
 #define STID_NO_RICHEDIT        0x12F
+#define STID_PSH_INDEX          0x130
 
 #define IDD_INDEX               0x150
 #define IDC_INDEXLIST           0x151

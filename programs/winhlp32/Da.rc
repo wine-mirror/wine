@@ -94,4 +94,5 @@ STID_ALL_FILES, 	"Alle filer (*.*)"
 STID_HELP_FILES_HLP, 	"Hjælpe filer (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Kan ikke finde '%s'. Vil du selv finde filen?"
 STID_NO_RICHEDIT	"Kan ikke finde en 'richedit' implementering... Afbryder"
+STID_PSH_INDEX,		"Help topics: "
 }

@@ -87,4 +87,5 @@ STID_ALL_FILES, 	"Všechny soubory (*.*)"
 STID_HELP_FILES_HLP, 	"Soubory nápovìdy (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 STID_NO_RICHEDIT	"Cannot find a richedit implementation... Aborting"
+STID_PSH_INDEX,		"Help topics: "
 }

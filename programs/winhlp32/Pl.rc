@@ -94,6 +94,7 @@ STID_ALL_FILES, 	"Wszystkie pliki (*.*)"
 STID_HELP_FILES_HLP, 	"Pliki pomocy (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Nie znaleziono pliku '%s'. Czy chcesz poszukaæ tego pliku samodzielnie?"
 STID_NO_RICHEDIT	"Nie uda³o siê znaleŸæ modu³u richedit... Wyœwietlenie pomocy nie jest mo¿liwe"
+STID_PSH_INDEX,		"Help topics: "
 }
 
 

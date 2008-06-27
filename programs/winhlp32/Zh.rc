@@ -83,4 +83,5 @@ STID_ALL_FILES, 	"所有文件 (*.*)"
 STID_HELP_FILES_HLP, 	"帮助文件 (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 STID_NO_RICHEDIT	"Cannot find a richedit implementation... Aborting"
+STID_PSH_INDEX,		"Help topics: "
 }

@@ -85,4 +85,5 @@ STID_ALL_FILES, 	"Alla filer (*.*)"
 STID_HELP_FILES_HLP, 	"Hjälpfiler (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Kan inte hitta '%s'. Vill du söka efter denna fil?"
 STID_NO_RICHEDIT	"Cannot find a richedit implementation... Aborting"
+STID_PSH_INDEX,		"Help topics: "
 }

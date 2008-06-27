@@ -4,7 +4,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winhlp32.exe
 APPMODE   = -mwindows
-IMPORTS   = comdlg32 shell32 user32 gdi32 kernel32
+IMPORTS   = user32 gdi32 kernel32
+DELAYIMPORTS = shell32 comctl32 comdlg32
 
 C_SRCS = \
 	callback.c \

@@ -92,6 +92,7 @@ STID_ALL_FILES, 	"Все файлы (*.*)"
 STID_HELP_FILES_HLP, 	"Файлы справки (*.hlp)"
 STID_FILE_NOT_FOUND_s	"Не могу найти '%s'. Вы хотите найти этот файл самостоятельно?"
 STID_NO_RICHEDIT	"Не могу найти richedit"
+STID_PSH_INDEX,		"Help topics: "
 }
 
 CONTEXT_MENU MENU LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT

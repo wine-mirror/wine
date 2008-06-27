@@ -94,6 +94,7 @@ STID_ALL_FILES, 	"Alle Dateien (*.*)"
 STID_HELP_FILES_HLP, 	"Hilfe-Dateien (*.hlp)"
 STID_FILE_NOT_FOUND_s	"'%s' konnte nicht gefunden werden. Wollen Sie selber nach dieser Datei suchen?"
 STID_NO_RICHEDIT	"Die Richedit Implementation konnte nicht gefunden werden... Breche ab."
+STID_PSH_INDEX,		"Help topics: "
 }
 
 CONTEXT_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL

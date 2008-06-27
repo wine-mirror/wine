@@ -96,6 +96,7 @@ STID_ALL_FILES, 	"모든 파일 (*.*)"
 STID_HELP_FILES_HLP, 	"도움말 파일 (*.hlp)"
 STID_FILE_NOT_FOUND_s	"%s을 찾을 수 없습니다'. 이 파일을 직접 찾겠습니까?"
 STID_NO_RICHEDIT	"richedit  구현을 찾을수 업습니다.. 취소중"
+STID_PSH_INDEX,		"Help topics: "
 }
 
 CONTEXT_MENU MENU LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
