@@ -248,3 +248,12 @@ BOOL WINAPI SpoolerInit(void)
     FIXME("() stub\n");
     return TRUE;
 }
+
+/******************************************************************
+ *   WaitForSpoolerInitialization   [SPOOLSS.@]
+ */
+BOOL WINAPI WaitForSpoolerInitialization(void)
+{
+    FIXME("() stub\n");
+    return TRUE;
+}

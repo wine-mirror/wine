@@ -142,7 +142,7 @@
 @ stub UpdatePrinterRegAll
 @ stub UpdatePrinterRegUser
 @ stub WaitForPrinterChange
-@ stub WaitForSpoolerInitialization
+@ stdcall WaitForSpoolerInitialization()
 @ stub WritePrinter
 @ stub XcvDataW
 @ stub bGetDevModePerUser
