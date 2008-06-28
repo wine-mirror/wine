@@ -104,3 +104,59 @@ HRESULT WINAPI CertTrustFinalPolicy(CRYPT_PROVIDER_DATA *pProvData)
     FIXME("(%p)\n", pProvData);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *		DllRegisterServer (CRYPTDLG.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    static WCHAR cryptdlg[] = { 'c','r','y','p','t','d','l','g','.',
+     'd','l','l',0 };
+    static WCHAR wintrust[] = { 'w','i','n','t','r','u','s','t','.',
+     'd','l','l',0 };
+    static WCHAR certTrustInit[] = { 'C','e','r','t','T','r','u','s','t',
+     'I','n','i','t',0 };
+    static WCHAR wintrustCertificateTrust[] = { 'W','i','n','t','r','u','s','t',
+     'C','e','r','t','i','f','i','c','a','t','e','T','r','u','s','t',0 };
+    static WCHAR certTrustCertPolicy[] = { 'C','e','r','t','T','r','u','s','t',
+     'C','e','r','t','P','o','l','i','c','y',0 };
+    static WCHAR certTrustFinalPolicy[] = { 'C','e','r','t','T','r','u','s','t',
+     'F','i','n','a','l','P','o','l','i','c','y',0 };
+    static WCHAR certTrustCleanup[] = { 'C','e','r','t','T','r','u','s','t',
+     'C','l','e','a','n','u','p',0 };
+    CRYPT_REGISTER_ACTIONID reg;
+    GUID guid = CERT_CERTIFICATE_ACTION_VERIFY;
+    HRESULT hr = S_OK;
+
+    memset(&reg, 0, sizeof(reg));
+    reg.cbStruct = sizeof(reg);
+    reg.sInitProvider.cbStruct = sizeof(CRYPT_TRUST_REG_ENTRY);
+    reg.sInitProvider.pwszDLLName = cryptdlg;
+    reg.sInitProvider.pwszFunctionName = certTrustInit;
+    reg.sCertificateProvider.cbStruct = sizeof(CRYPT_TRUST_REG_ENTRY);
+    reg.sCertificateProvider.pwszDLLName = wintrust;
+    reg.sCertificateProvider.pwszFunctionName = wintrustCertificateTrust;
+    reg.sCertificatePolicyProvider.cbStruct = sizeof(CRYPT_TRUST_REG_ENTRY);
+    reg.sCertificatePolicyProvider.pwszDLLName = cryptdlg;
+    reg.sCertificatePolicyProvider.pwszFunctionName = certTrustCertPolicy;
+    reg.sFinalPolicyProvider.cbStruct = sizeof(CRYPT_TRUST_REG_ENTRY);
+    reg.sFinalPolicyProvider.pwszDLLName = cryptdlg;
+    reg.sFinalPolicyProvider.pwszFunctionName = certTrustFinalPolicy;
+    reg.sCleanupProvider.cbStruct = sizeof(CRYPT_TRUST_REG_ENTRY);
+    reg.sCleanupProvider.pwszDLLName = cryptdlg;
+    reg.sCleanupProvider.pwszFunctionName = certTrustCleanup;
+    if (!WintrustAddActionID(&guid, WT_ADD_ACTION_ID_RET_RESULT_FLAG, &reg))
+        hr = GetLastError();
+    return hr;
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (CRYPTDLG.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    GUID guid = CERT_CERTIFICATE_ACTION_VERIFY;
+
+    WintrustRemoveActionID(&guid);
+    return S_OK;
+}

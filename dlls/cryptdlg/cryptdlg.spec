@@ -15,7 +15,7 @@
 15 stub CertSelectCertificateW
 16 stub CertViewPropertiesA
 17 stub CertViewPropertiesW
-18 stub DllRegisterServer
-19 stub DllUnregisterServer
+18 stdcall -private DllRegisterServer()
+19 stdcall -private DllUnregisterServer()
 20 stdcall GetFriendlyNameOfCertA(ptr ptr long)
 21 stdcall GetFriendlyNameOfCertW(ptr ptr long)
