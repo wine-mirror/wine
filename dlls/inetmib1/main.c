@@ -29,24 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetmib1);
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-	TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-	switch (fdwReason)
-	{
-		case DLL_PROCESS_ATTACH:
-			DisableThreadLibraryCalls(hinstDLL);
-			break;
-		case DLL_PROCESS_DETACH:
-			break;
-		default:
-			break;
-	}
-
-	return TRUE;
-}
-
 /**
  * Utility functions
  */
@@ -113,6 +95,7 @@ struct mibImplementation
     AsnObjectIdentifier name;
     void              (*init)(void);
     varqueryfunc        query;
+    void              (*cleanup)(void);
 };
 
 static UINT mib2IfNumber[] = { 1,3,6,1,2,1,2,1 };
@@ -128,6 +111,11 @@ static void mib2IfNumberInit(void)
         if (ifTable)
             GetIfTable(ifTable, &size, FALSE);
     }
+}
+
+static void mib2IfNumberCleanup(void)
+{
+    HeapFree(GetProcessHeap(), 0, ifTable);
 }
 
 static BOOL mib2IfNumberQuery(BYTE bPduType, SnmpVarBind *pVarBind,
@@ -651,6 +639,11 @@ static void mib2IpAddrInit(void)
     }
 }
 
+static void mib2IpAddrCleanup(void)
+{
+    HeapFree(GetProcessHeap(), 0, ipAddrTable);
+}
+
 static void oidToIpAddrRow(AsnObjectIdentifier *oid, void *dst)
 {
     MIB_IPADDRROW *row = dst;
@@ -734,6 +727,11 @@ static void mib2IpRouteInit(void)
     }
 }
 
+static void mib2IpRouteCleanup(void)
+{
+    HeapFree(GetProcessHeap(), 0, ipRouteTable);
+}
+
 static void oidToIpForwardRow(AsnObjectIdentifier *oid, void *dst)
 {
     MIB_IPFORWARDROW *row = dst;
@@ -807,6 +805,11 @@ static void mib2IpNetInit(void)
         if (ipNetTable)
             GetIpNetTable(ipNetTable, &size, FALSE);
     }
+}
+
+static void mib2IpNetCleanup(void)
+{
+    HeapFree(GetProcessHeap(), 0, ipNetTable);
 }
 
 static BOOL mib2IpNetQuery(BYTE bPduType, SnmpVarBind *pVarBind,
@@ -1050,6 +1053,11 @@ static void mib2UdpEntryInit(void)
     }
 }
 
+static void mib2UdpEntryCleanup(void)
+{
+    HeapFree(GetProcessHeap(), 0, udpTable);
+}
+
 static struct structToAsnValue mib2UdpEntryMap[] = {
     { FIELD_OFFSET(MIB_UDPROW, dwLocalAddr), copyIpAddr },
     { FIELD_OFFSET(MIB_UDPROW, dwLocalPort), copyInt },
@@ -1129,16 +1137,20 @@ static BOOL mib2UdpEntryQuery(BYTE bPduType, SnmpVarBind *pVarBind,
 
 /* This list MUST BE lexicographically sorted */
 static struct mibImplementation supportedIDs[] = {
-    { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery },
-    { DEFINE_OID(mib2IfEntry), NULL, mib2IfEntryQuery },
-    { DEFINE_OID(mib2Ip), mib2IpStatsInit, mib2IpStatsQuery },
-    { DEFINE_OID(mib2IpAddr), mib2IpAddrInit, mib2IpAddrQuery },
-    { DEFINE_OID(mib2IpRoute), mib2IpRouteInit, mib2IpRouteQuery },
-    { DEFINE_OID(mib2IpNet), mib2IpNetInit, mib2IpNetQuery },
-    { DEFINE_OID(mib2Icmp), mib2IcmpInit, mib2IcmpQuery },
-    { DEFINE_OID(mib2Tcp), mib2TcpInit, mib2TcpQuery },
-    { DEFINE_OID(mib2Udp), mib2UdpInit, mib2UdpQuery },
-    { DEFINE_OID(mib2UdpEntry), mib2UdpEntryInit, mib2UdpEntryQuery },
+    { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery,
+      mib2IfNumberCleanup },
+    { DEFINE_OID(mib2IfEntry), NULL, mib2IfEntryQuery, NULL },
+    { DEFINE_OID(mib2Ip), mib2IpStatsInit, mib2IpStatsQuery, NULL },
+    { DEFINE_OID(mib2IpAddr), mib2IpAddrInit, mib2IpAddrQuery,
+      mib2IpAddrCleanup },
+    { DEFINE_OID(mib2IpRoute), mib2IpRouteInit, mib2IpRouteQuery,
+      mib2IpRouteCleanup },
+    { DEFINE_OID(mib2IpNet), mib2IpNetInit, mib2IpNetQuery, mib2IpNetCleanup },
+    { DEFINE_OID(mib2Icmp), mib2IcmpInit, mib2IcmpQuery, NULL },
+    { DEFINE_OID(mib2Tcp), mib2TcpInit, mib2TcpQuery, NULL },
+    { DEFINE_OID(mib2Udp), mib2UdpInit, mib2UdpQuery, NULL },
+    { DEFINE_OID(mib2UdpEntry), mib2UdpEntryInit, mib2UdpEntryQuery,
+      mib2UdpEntryCleanup },
 };
 static UINT minSupportedIDLength;
 
@@ -1162,6 +1174,15 @@ BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
     *phSubagentTrapEvent = NULL;
     SnmpUtilOidCpy(pFirstSupportedRegion, &myOid);
     return TRUE;
+}
+
+static void cleanup(void)
+{
+    UINT i;
+
+    for (i = 0; i < sizeof(supportedIDs) / sizeof(supportedIDs[0]); i++)
+        if (supportedIDs[i].cleanup)
+            supportedIDs[i].cleanup();
 }
 
 static struct mibImplementation *findSupportedQuery(UINT *ids, UINT idLength,
@@ -1258,5 +1279,24 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
     }
     *pErrorStatus = error;
     *pErrorIndex = errorIndex;
+    return TRUE;
+}
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+
+    switch (fdwReason)
+    {
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hinstDLL);
+            break;
+        case DLL_PROCESS_DETACH:
+            cleanup();
+            break;
+        default:
+            break;
+    }
+
     return TRUE;
 }
