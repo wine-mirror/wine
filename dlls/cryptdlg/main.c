@@ -24,6 +24,8 @@
 #include "winbase.h"
 #include "wincrypt.h"
 #include "wintrust.h"
+#include "winuser.h"
+#include "cryptdlg.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptdlg);
