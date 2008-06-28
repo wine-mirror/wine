@@ -33,7 +33,8 @@ WINE_DEFAULT_DEBUG_CHANNEL (gdiplus);
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 
-static const REAL mm_per_pixel = 25.4;
+static const REAL mm_per_inch = 25.4;
+static const REAL inch_per_point = 1.0/72.0;
 
 static inline REAL get_dpi (void)
 {
@@ -50,7 +51,7 @@ static inline REAL get_dpi (void)
 
 static inline REAL point_to_pixel (REAL point)
 {
-    return point * 1.5;
+    return point * get_dpi() * inch_per_point;
 }
 
 static inline REAL inch_to_pixel (REAL inch)
@@ -65,7 +66,7 @@ static inline REAL document_to_pixel (REAL doc)
 
 static inline REAL mm_to_pixel (REAL mm)
 {
-    return mm * (get_dpi() / mm_per_pixel);
+    return mm * (get_dpi() / mm_per_inch);
 }
 
 /*******************************************************************************
