@@ -1037,6 +1037,98 @@ static BOOL mib2UdpQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     return TRUE;
 }
 
+static UINT mib2UdpEntry[] = { 1,3,6,1,2,1,7,5,1 };
+static PMIB_UDPTABLE udpTable;
+
+static void mib2UdpEntryInit(void)
+{
+    DWORD size = 0, ret = GetUdpTable(NULL, &size, TRUE);
+
+    if (ret == ERROR_INSUFFICIENT_BUFFER)
+    {
+        udpTable = HeapAlloc(GetProcessHeap(), 0, size);
+        if (udpTable)
+            GetUdpTable(udpTable, &size, TRUE);
+    }
+}
+
+static struct structToAsnValue mib2UdpEntryMap[] = {
+    { FIELD_OFFSET(MIB_UDPROW, dwLocalAddr), copyIpAddr },
+    { FIELD_OFFSET(MIB_UDPROW, dwLocalPort), copyInt },
+};
+
+static void oidToUdpRow(AsnObjectIdentifier *oid, void *dst)
+{
+    MIB_UDPROW *row = dst;
+
+    assert(oid && oid->idLength >= 5);
+    row->dwLocalAddr = oidToIpAddr(oid);
+    row->dwLocalPort = oid->ids[4];
+}
+
+static int compareUdpRow(const void *a, const void *b)
+{
+    const MIB_UDPROW *key = a, *value = b;
+    int ret;
+
+    ret = key->dwLocalAddr - value->dwLocalAddr;
+    if (ret == 0)
+        ret = key->dwLocalPort - value->dwLocalPort;
+    return ret;
+}
+
+static BOOL mib2UdpEntryQuery(BYTE bPduType, SnmpVarBind *pVarBind,
+    AsnInteger32 *pErrorStatus)
+{
+    AsnObjectIdentifier myOid = DEFINE_OID(mib2UdpEntry);
+
+    TRACE("(0x%02x, %s, %p)\n", bPduType, SnmpUtilOidToA(&pVarBind->name),
+        pErrorStatus);
+
+    switch (bPduType)
+    {
+    case SNMP_PDU_GET:
+    case SNMP_PDU_GETNEXT:
+        if (!udpTable)
+            *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+        else
+        {
+            UINT tableIndex = 0, item = 0;
+
+            *pErrorStatus = getItemAndInstanceFromTable(&pVarBind->name, &myOid,
+                5, bPduType, (struct GenericTable *)udpTable,
+                sizeof(MIB_UDPROW), oidToUdpRow, compareUdpRow, &item,
+                &tableIndex);
+            if (!*pErrorStatus)
+            {
+                assert(tableIndex);
+                assert(item);
+                *pErrorStatus = mapStructEntryToValue(mib2UdpEntryMap,
+                    DEFINE_SIZEOF(mib2UdpEntryMap),
+                    &udpTable->table[tableIndex - 1], item, bPduType, pVarBind);
+                if (!*pErrorStatus && bPduType == SNMP_PDU_GETNEXT)
+                {
+                    AsnObjectIdentifier oid;
+
+                    setOidWithItemAndIpAddr(&pVarBind->name, &myOid, item,
+                        udpTable->table[tableIndex - 1].dwLocalAddr);
+                    oid.idLength = 1;
+                    oid.ids = &udpTable->table[tableIndex - 1].dwLocalPort;
+                    SnmpUtilOidAppend(&pVarBind->name, &oid);
+                }
+            }
+        }
+        break;
+    case SNMP_PDU_SET:
+        *pErrorStatus = SNMP_ERRORSTATUS_READONLY;
+        break;
+    default:
+        FIXME("0x%02x: unsupported PDU type\n", bPduType);
+        *pErrorStatus = SNMP_ERRORSTATUS_NOSUCHNAME;
+    }
+    return TRUE;
+}
+
 /* This list MUST BE lexicographically sorted */
 static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2IfNumber), mib2IfNumberInit, mib2IfNumberQuery },
@@ -1048,6 +1140,7 @@ static struct mibImplementation supportedIDs[] = {
     { DEFINE_OID(mib2Icmp), mib2IcmpInit, mib2IcmpQuery },
     { DEFINE_OID(mib2Tcp), mib2TcpInit, mib2TcpQuery },
     { DEFINE_OID(mib2Udp), mib2UdpInit, mib2UdpQuery },
+    { DEFINE_OID(mib2UdpEntry), mib2UdpEntryInit, mib2UdpEntryQuery },
 };
 static UINT minSupportedIDLength;
 

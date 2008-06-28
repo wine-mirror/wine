@@ -65,6 +65,7 @@ static void testQuery(void)
     UINT mib2IfOperStatus[] = { 1,3,6,1,2,1,2,2,1,8 };
     UINT mib2IpAddr[] = { 1,3,6,1,2,1,4,20,1,1 };
     UINT mib2IpRouteTable[] = { 1,3,6,1,2,1,4,21,1,1 };
+    UINT mib2UdpTable[] = { 1,3,6,1,2,1,7,5,1,1 };
     SnmpVarBind vars[3], vars2[3];
     UINT entry;
 
@@ -351,6 +352,68 @@ static void testQuery(void)
                         "expected ident byte %d to be %d, got %d\n", i,
                         vars2[0].value.asnValue.address.stream[i],
                         vars2[0].name.ids[vars2[0].name.idLength - 4 + i]);
+                }
+            }
+        }
+    } while (moreData);
+    SnmpUtilVarBindFree(&vars2[0]);
+
+    /* Check the type and OIDs of the UDP table */
+    vars[0].name.idLength = DEFINE_SIZEOF(mib2UdpTable);
+    vars[0].name.ids = mib2UdpTable;
+    SnmpUtilOidCpy(&vars2[0].name, &vars[0].name);
+    vars2[0].value.asnType = 0;
+    list.len = 1;
+    list.list = vars2;
+    moreData = TRUE;
+    do {
+        ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
+        ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
+        /* FIXME:  error and index aren't checked here because the UDP table is
+         * the last OID currently supported by Wine, so the last GetNext fails.
+         * todo_wine is also not effective because it will succeed for all but
+         * the last GetNext.  Remove the if (0) if any later OID is supported
+         * by Wine.
+         */
+        if (0) {
+        ok(error == SNMP_ERRORSTATUS_NOERROR,
+            "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
+        ok(index == 0, "expected index 0, got %d\n", index);
+        }
+        if (!ret)
+            moreData = FALSE;
+        else if (error)
+            moreData = FALSE;
+        else if (SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name,
+            vars[0].name.idLength))
+            moreData = FALSE;
+        if (moreData)
+        {
+            /* Make sure the size of the OID is right. */
+            ok(vars2[0].name.idLength == vars[0].name.idLength + 5,
+                "expected length %d, got %d\n", vars[0].name.idLength + 5,
+                vars2[0].name.idLength);
+            /* Make sure the type is right */
+            ok(vars2[0].value.asnType == ASN_IPADDRESS,
+                "expected type ASN_IPADDRESS, got %02x\n",
+                vars2[0].value.asnType);
+            if (vars2[0].value.asnType == ASN_IPADDRESS)
+            {
+                UINT i;
+
+                /* Again with the ugly:  the base OID for the UDP table,
+                 * 1.3.6.1.2.1.7.5.1, is appended with the local IP address and
+                 * port number of the entry.  So e.g. an entry for
+                 * 192.168.1.1:4000 is identified in MIB2 as
+                 * 1.3.6.1.2.1.7.5.1.192.168.1.1.4000
+                 */
+                for (i = 0; i < vars2[0].value.asnValue.address.length; i++)
+                {
+                    ok(vars2[0].value.asnValue.address.stream[i] ==
+                        vars2[0].name.ids[vars2[0].name.idLength - 5 + i],
+                        "expected ident byte %d to be %d, got %d\n", i,
+                        vars2[0].value.asnValue.address.stream[i],
+                        vars2[0].name.ids[vars2[0].name.idLength - 5 + i]);
                 }
             }
         }
