@@ -106,6 +106,7 @@ SRCDIR_INCLUDES = \
 	cor.h \
 	corerror.h \
 	cpl.h \
+	cryptuiapi.h \
 	custcntl.h \
 	cvconst.h \
 	d3d.h \
