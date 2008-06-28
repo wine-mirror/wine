@@ -352,18 +352,18 @@ static UINT findValueInTable(AsnObjectIdentifier *oid,
 }
 
 /* Given an OID and a base OID that it must begin with, finds the item and
- * element of the table whose IP address matches the instance from the OID.
- * E.g., given an OID foo.1.2.3.4.5 and a base OID foo, returns item 1 and the
- * index of the entry in the table whose IP address is 2.3.4.5.
+ * element of the table whose value matches the instance from the OID.
+ * The OID is converted to a key with the function makeKey, and compared
+ * against entries in the table with the function compare.
  * If bPduType is not SNMP_PDU_GETNEXT and either the item or instance is
  * missing, returns SNMP_ERRORSTATUS_NOSUCHNAME.
  * If bPduType is SNMP_PDU_GETNEXT, returns the successor to the item and
  * instance, or item 1, instance 1 if either is missing.
  */
-static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
-    AsnObjectIdentifier *base, BYTE bPduType, struct GenericTable *table,
-    size_t tableEntrySize, oidToKeyFunc makeKey, compareFunc compare,
-    UINT *item, UINT *instance)
+static AsnInteger32 getItemAndInstanceFromTable(AsnObjectIdentifier *oid,
+    AsnObjectIdentifier *base, UINT instanceLen, BYTE bPduType,
+    struct GenericTable *table, size_t tableEntrySize, oidToKeyFunc makeKey,
+    compareFunc compare, UINT *item, UINT *instance)
 {
     AsnInteger32 ret = SNMP_ERRORSTATUS_NOERROR;
 
@@ -380,7 +380,7 @@ static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
             *instance = 1;
         }
         else if (!SnmpUtilOidNCmp(oid, base, base->idLength) &&
-            oid->idLength < base->idLength + 5)
+            oid->idLength < base->idLength + instanceLen + 1)
         {
             /* Either the table or an item is specified, but the instance is
              * not.
@@ -396,7 +396,7 @@ static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
                 *item = 1;
         }
         else if (!SnmpUtilOidNCmp(oid, base, base->idLength) &&
-            oid->idLength == base->idLength + 5)
+            oid->idLength == base->idLength + instanceLen + 1)
         {
             *item = oid->ids[base->idLength];
             if (!*item)
@@ -406,8 +406,8 @@ static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
             }
             else
             {
-                AsnObjectIdentifier ipOid = { 4, oid->ids + base->idLength + 1
-                    };
+                AsnObjectIdentifier ipOid = { instanceLen,
+                    oid->ids + base->idLength + 1 };
 
                 *instance = findValueInTable(&ipOid, table, tableEntrySize,
                     makeKey, compare) + 1;
@@ -420,15 +420,15 @@ static AsnInteger32 getItemAndIpAddressInstanceFromOid(AsnObjectIdentifier *oid,
         break;
     default:
         if (!SnmpUtilOidNCmp(oid, base, base->idLength) &&
-            oid->idLength == base->idLength + 5)
+            oid->idLength == base->idLength + instanceLen + 1)
         {
             *item = oid->ids[base->idLength];
             if (!*item)
                 ret = SNMP_ERRORSTATUS_NOSUCHNAME;
             else
             {
-                AsnObjectIdentifier ipOid = { 4, oid->ids + base->idLength + 1
-                    };
+                AsnObjectIdentifier ipOid = { instanceLen,
+                    oid->ids + base->idLength + 1 };
 
                 *instance = findValueInTable(&ipOid, table, tableEntrySize,
                     makeKey, compare);
@@ -680,8 +680,8 @@ static BOOL mib2IpAddrQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     {
     case SNMP_PDU_GET:
     case SNMP_PDU_GETNEXT:
-        *pErrorStatus = getItemAndIpAddressInstanceFromOid(&pVarBind->name,
-            &myOid, bPduType, (struct GenericTable *)ipAddrTable,
+        *pErrorStatus = getItemAndInstanceFromTable(&pVarBind->name,
+            &myOid, 4, bPduType, (struct GenericTable *)ipAddrTable,
             sizeof(MIB_IPADDRROW), oidToIpAddrRow, compareIpAddrRow, &item,
             &tableIndex);
         if (!*pErrorStatus)
@@ -763,8 +763,8 @@ static BOOL mib2IpRouteQuery(BYTE bPduType, SnmpVarBind *pVarBind,
     {
     case SNMP_PDU_GET:
     case SNMP_PDU_GETNEXT:
-        *pErrorStatus = getItemAndIpAddressInstanceFromOid(&pVarBind->name,
-            &myOid, bPduType, (struct GenericTable *)ipRouteTable,
+        *pErrorStatus = getItemAndInstanceFromTable(&pVarBind->name,
+            &myOid, 4, bPduType, (struct GenericTable *)ipRouteTable,
             sizeof(MIB_IPFORWARDROW), oidToIpForwardRow, compareIpForwardRow,
             &item, &tableIndex);
         if (!*pErrorStatus)
