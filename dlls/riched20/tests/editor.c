@@ -3862,6 +3862,7 @@ static void test_EM_StreamIn_Undo(void)
       "EM_STREAMIN with SFF_SELECTION and selection set "
       "should create an undo\n");
 
+  DestroyWindow(hwndRichEdit);
 }
 
 static BOOL is_em_settextex_supported(HWND hwnd)
