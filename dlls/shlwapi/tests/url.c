@@ -801,8 +801,8 @@ static void test_UrlUnescape(void)
     DWORD dwEscaped;
     size_t i;
     static char inplace[] = "file:///C:/Program%20Files";
-    static WCHAR inplaceW[] = {'f','i','l','e',':','/','/','/','C',':','/',
-                               'P','r','o','g','r','a','m','%','2','0','F','i','l','e','s',0};
+    static const char expected[] = "file:///C:/Program Files";
+    static WCHAR inplaceW[] = {'f','i','l','e',':','/','/','/','C',':','/','P','r','o','g','r','a','m',' ','F','i','l','e','s',0};
 
     for(i=0; i<sizeof(TEST_URL_UNESCAPE)/sizeof(TEST_URL_UNESCAPE[0]); i++) {
         dwEscaped=INTERNET_MAX_URL_LENGTH;
@@ -821,9 +821,12 @@ static void test_UrlUnescape(void)
 
     dwEscaped = sizeof(inplace);
     ok(UrlUnescapeA(inplace, NULL, &dwEscaped, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeA failed unexpectedly\n");
+    ok(!strcmp(inplace, expected), "got %s expected %s\n", inplace, expected);
+    ok(dwEscaped == 27, "got %d expected 27\n", dwEscaped);
 
     dwEscaped = sizeof(inplaceW);
     ok(UrlUnescapeW(inplaceW, NULL, &dwEscaped, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeW failed unexpectedly\n");
+    ok(dwEscaped == 50, "got %d expected 50\n", dwEscaped);
 }
 
 /* ########################### */
