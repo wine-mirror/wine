@@ -2680,6 +2680,8 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     glBindTexture(This->glDescription.target, This->glDescription.textureName);
     checkGLcall("glBindTexture");
     if(!swapchain) {
+        TRACE("Reading from an offscreen target\n");
+        upsidedown = !upsidedown;
         glReadBuffer(myDevice->offscreenBuffer);
     } else {
         GLenum buffer = surface_get_gl_buffer(SrcSurface, (IWineD3DSwapChain *)swapchain);
@@ -2808,6 +2810,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     if(swapchain) {
         glReadBuffer(surface_get_gl_buffer(SrcSurface, (IWineD3DSwapChain *)swapchain));
     } else {
+        TRACE("Reading from an offscreen target\n");
+        upsidedown = !upsidedown;
         glReadBuffer(myDevice->offscreenBuffer);
     }
 
@@ -3190,10 +3194,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             UINT tmp = rect.x2;
             rect.x2 = rect.x1;
             rect.x1 = tmp;
-            upsideDown = !upsideDown;
-        }
-        if(!srcSwapchain) {
-            TRACE("Reading from an offscreen target\n");
             upsideDown = !upsideDown;
         }
 
