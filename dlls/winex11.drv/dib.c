@@ -4031,13 +4031,24 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   int bitmap_type;
   BOOL core_header;
   void* colorPtr;
-
-  GetPaletteEntries( GetCurrentObject( physDev->hdc, OBJ_PAL ), 0, 256, palette );
+  const PALETTEENTRY peBlack = {0,0,0,0};
+  const PALETTEENTRY peWhite = {255,255,255,0};
 
   if (!physBitmap) return 0;
   if (!(obj_size = GetObjectW( hbitmap, sizeof(dib), &dib ))) return 0;
 
   bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*)info, &width, &tempHeight, &descr.infoBpp, &descr.compression);
+
+  if (physDev->depth > 1)
+  {
+    GetPaletteEntries( GetCurrentObject( physDev->hdc, OBJ_PAL ), 0, 256, palette );
+  }
+  else
+  {
+    palette[0] = peBlack;
+    palette[1] = peWhite;
+  }
+
   if (bitmap_type == -1)
   {
       ERR("Invalid bitmap\n");
