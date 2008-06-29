@@ -661,6 +661,7 @@ IMPORT_LIBS = \
 	version/libversion.$(IMPLIBEXT) \
 	wined3d/libwined3d.$(IMPLIBEXT) \
 	winedos/libwinedos.$(IMPLIBEXT) \
+	winhttp/libwinhttp.$(IMPLIBEXT) \
 	wininet/libwininet.$(IMPLIBEXT) \
 	winmm/libwinmm.$(IMPLIBEXT) \
 	winnls32/libwinnls32.$(IMPLIBEXT) \
@@ -1038,6 +1039,9 @@ wined3d/libwined3d.$(IMPLIBEXT): wined3d/wined3d.spec $(WINEBUILD)
 
 winedos/libwinedos.$(IMPLIBEXT): winedos/winedos.spec $(WINEBUILD)
 	@cd winedos && $(MAKE) libwinedos.$(IMPLIBEXT)
+
+winhttp/libwinhttp.$(IMPLIBEXT): winhttp/winhttp.spec $(WINEBUILD)
+	@cd winhttp && $(MAKE) libwinhttp.$(IMPLIBEXT)
 
 wininet/libwininet.$(IMPLIBEXT): wininet/wininet.spec $(WINEBUILD)
 	@cd wininet && $(MAKE) libwininet.$(IMPLIBEXT)

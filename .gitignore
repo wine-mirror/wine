@@ -452,6 +452,7 @@ dlls/winedos/libwinedos.def
 dlls/wineps16.drv16
 dlls/wing.dll16
 dlls/winhelp.exe16
+dlls/winhttp/libwinhttp.def
 dlls/wininet/libwininet.def
 dlls/wininet/tests/*.ok
 dlls/wininet/tests/testlist.c
