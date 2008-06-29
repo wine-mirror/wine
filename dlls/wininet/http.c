@@ -1329,8 +1329,6 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
     char szaddr[32];
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
 
-    if (lpwhs->socketAddress.sin_addr.s_addr) return TRUE;
-
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RESOLVING_NAME,
                           lpwhs->lpszServerName,
@@ -3019,17 +3017,16 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
 
         if (!using_proxy)
         {
-            HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
-            lpwhs->lpszServerName = WININET_strdupW(hostName);
-            lpwhs->nServerPort = urlComponents.nPort;
+            if (strcmpiW(lpwhs->lpszServerName, hostName) || lpwhs->nServerPort != urlComponents.nPort)
+            {
+                HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
+                lpwhs->lpszServerName = WININET_strdupW(hostName);
+                lpwhs->nServerPort = urlComponents.nPort;
 
-            if (!HTTP_ResolveName(lpwhr))
-                return FALSE;
-
-            NETCON_close(&lpwhr->netConnection);
-
-            if (!NETCON_init(&lpwhr->netConnection,lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
-                return FALSE;
+                NETCON_close(&lpwhr->netConnection);
+                if (!HTTP_ResolveName(lpwhr)) return FALSE;
+                if (!NETCON_init(&lpwhr->netConnection, lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)) return FALSE;
+            }
         }
         else
             TRACE("Redirect through proxy\n");
