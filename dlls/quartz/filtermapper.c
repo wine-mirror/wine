@@ -1472,7 +1472,7 @@ static HRESULT WINAPI FilterMapper_RegisterPinType(
     LPWSTR wszClsidSubType = NULL;
     HKEY hKey = NULL;
     WCHAR * wszTypesKey;
-    WCHAR wszKeyName[strlenW(wszClsidSlash) + (CHARS_IN_GUID-1) + 1];
+    WCHAR wszKeyName[MAX_PATH];
 
     TRACE("(%p)->(%s, %s, %s, %s)\n", iface, debugstr_guid(&clsFilter), debugstr_w(szName),
                     debugstr_guid(&clsMajorType), debugstr_guid(&clsSubType));
