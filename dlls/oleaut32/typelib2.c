@@ -3203,7 +3203,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetLcid(ICreateTypeLib2 * iface, LCID lc
 
     TRACE("(%p,%d)\n", iface, lcid);
 
-    This->typelib_header.lcid2 = lcid;
+    This->typelib_header.lcid = This->typelib_header.lcid2 = lcid;
 
     return S_OK;
 }
