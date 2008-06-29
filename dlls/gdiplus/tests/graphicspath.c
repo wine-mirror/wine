@@ -671,6 +671,31 @@ static void test_rect(void)
     GdipDeletePath(path);
 }
 
+static void test_lastpoint(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPointF ptf;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    status = GdipAddPathRectangle(path, 5.0, 5.0, 100.0, 50.0);
+    expect(Ok, status);
+
+    /* invalid args */
+    status = GdipGetPathLastPoint(NULL, &ptf);
+    expect(InvalidParameter, status);
+    status = GdipGetPathLastPoint(path, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetPathLastPoint(NULL, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipGetPathLastPoint(path, &ptf);
+    expect(Ok, status);
+    expect(TRUE, (ptf.X == 5.0) && (ptf.Y == 55.0));
+
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -693,6 +718,7 @@ START_TEST(graphicspath)
     test_linei();
     test_rect();
     test_polygon();
+    test_lastpoint();
 
     GdiplusShutdown(gdiplusToken);
 }

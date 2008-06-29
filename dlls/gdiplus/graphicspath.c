@@ -551,6 +551,20 @@ GpStatus WINGDIPAPI GdipGetPathFillMode(GpPath *path, GpFillMode *fillmode)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathLastPoint(GpPath* path, GpPointF* lastPoint)
+{
+    INT count;
+
+    if(!path || !lastPoint)
+        return InvalidParameter;
+
+    count = path->pathdata.Count;
+    if(count > 0)
+        *lastPoint = path->pathdata.Points[count-1];
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPathPoints(GpPath *path, GpPointF* points, INT count)
 {
     if(!path)
