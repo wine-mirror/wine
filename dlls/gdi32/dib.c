@@ -705,8 +705,10 @@ INT WINAPI GetDIBits(
                 for (i = 0; i < (1 << bpp); i++)
                     ((WORD *)colorPtr)[i] = (WORD)i;
             }
-            else if(bpp >= bmp->bitmap.bmBitsPixel) {
-                /* Generate the color map from the selected palette */
+            else if(bpp > 1 && bpp == bmp->bitmap.bmBitsPixel) {
+                /* For color DDBs in native depth (mono DDBs always have
+                   a black/white palette):
+                   Generate the color map from the selected palette */
                 PALETTEENTRY palEntry[256];
 
                 memset( palEntry, 0, sizeof(palEntry) );
