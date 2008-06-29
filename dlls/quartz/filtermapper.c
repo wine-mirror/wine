@@ -1440,8 +1440,12 @@ static HRESULT WINAPI FilterMapper_RegisterPin(
 
     if (SUCCEEDED(hr))
     {
-        lRet = RegCreateKeyExW(hPinsKey, wszTypes, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, NULL, NULL);
+        HKEY hkeyDummy = NULL;
+
+        lRet = RegCreateKeyExW(hPinsKey, wszTypes, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkeyDummy, NULL);
         hr = HRESULT_FROM_WIN32(lRet);
+
+        if (hkeyDummy) RegCloseKey(hkeyDummy);
     }
 
     CoTaskMemFree(wszClsid);
@@ -1511,13 +1515,17 @@ static HRESULT WINAPI FilterMapper_RegisterPinType(
 
     if (SUCCEEDED(hr))
     {
+        HKEY hkeyDummy = NULL;
+
         strcpyW(wszKeyName, wszClsidMajorType);
         strcatW(wszKeyName, wszSlash);
         strcatW(wszKeyName, wszClsidSubType);
 
-        lRet = RegCreateKeyExW(hKey, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, NULL, NULL);
+        lRet = RegCreateKeyExW(hKey, wszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkeyDummy, NULL);
         hr = HRESULT_FROM_WIN32(lRet);
         CloseHandle(hKey);
+
+        if (hkeyDummy) RegCloseKey(hkeyDummy);
     }
 
     CoTaskMemFree(wszClsid);
