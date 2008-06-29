@@ -37,6 +37,11 @@ static void test_query_dos_deviceA(void)
     DWORD ret;
     BOOL found = FALSE;
 
+    if (!pFindFirstVolumeA) {
+        skip("On win9x, HARDDISK and RAMDISK not present\n");
+        return;
+    }
+
     for (;drivestr[0] <= 'z'; drivestr[0]++) {
         ret = QueryDosDeviceA( drivestr, buffer, sizeof(buffer));
         if(ret) {
