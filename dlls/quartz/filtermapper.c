@@ -1257,7 +1257,6 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         int len;
 
         VariantInit(&var);
-        V_VT(&var) = VT_BSTR;
 
         hrSub = IMoniker_BindToStorage(IMon, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
 
@@ -1266,6 +1265,8 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
 
         if (SUCCEEDED(hrSub))
             hrSub = CLSIDFromString(V_UNION(&var, bstrVal), &clsid);
+
+        VariantClear(&var);
 
         if (SUCCEEDED(hrSub))
             hrSub = IPropertyBag_Read(pPropBagCat, wszFriendlyName, &var, NULL);
@@ -1287,6 +1288,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         if (pPropBagCat)
             IPropertyBag_Release(pPropBagCat);
         IMoniker_Release(IMon);
+        VariantClear(&var);
     }
 
     /* In case of release all resources */
