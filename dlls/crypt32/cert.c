@@ -788,17 +788,62 @@ BOOL WINAPI CertComparePublicKeyInfo(DWORD dwCertEncodingType,
 
     TRACE("(%08x, %p, %p)\n", dwCertEncodingType, pPublicKey1, pPublicKey2);
 
-    if (pPublicKey1->PublicKey.cbData == pPublicKey2->PublicKey.cbData &&
-     pPublicKey1->PublicKey.cUnusedBits == pPublicKey2->PublicKey.cUnusedBits)
+    switch (GET_CERT_ENCODING_TYPE(dwCertEncodingType))
     {
-        if (pPublicKey2->PublicKey.cbData)
-            ret = !memcmp(pPublicKey1->PublicKey.pbData,
-             pPublicKey2->PublicKey.pbData, pPublicKey1->PublicKey.cbData);
+    case 0:	/* Seems to mean "raw binary bits" */
+        if (pPublicKey1->PublicKey.cbData == pPublicKey2->PublicKey.cbData &&
+         pPublicKey1->PublicKey.cUnusedBits == pPublicKey2->PublicKey.cUnusedBits)
+        {
+          if (pPublicKey2->PublicKey.cbData)
+              ret = !memcmp(pPublicKey1->PublicKey.pbData,
+               pPublicKey2->PublicKey.pbData, pPublicKey1->PublicKey.cbData);
+          else
+              ret = TRUE;
+        }
         else
-            ret = TRUE;
-    }
-    else
+            ret = FALSE;
+        break;
+    default:
+        WARN("Unknown encoding type %08x\n", dwCertEncodingType);
+        /* FALLTHROUGH */
+    case X509_ASN_ENCODING:
+    {
+        BLOBHEADER *pblob1, *pblob2;
+        DWORD length;
         ret = FALSE;
+        if (CryptDecodeObject(dwCertEncodingType, RSA_CSP_PUBLICKEYBLOB,
+                    pPublicKey1->PublicKey.pbData, pPublicKey1->PublicKey.cbData,
+                    0, NULL, &length))
+        {
+            pblob1 = CryptMemAlloc(length);
+            if (CryptDecodeObject(dwCertEncodingType, RSA_CSP_PUBLICKEYBLOB,
+                    pPublicKey1->PublicKey.pbData, pPublicKey1->PublicKey.cbData,
+                    0, pblob1, &length))
+            {
+                if (CryptDecodeObject(dwCertEncodingType, RSA_CSP_PUBLICKEYBLOB,
+                            pPublicKey2->PublicKey.pbData, pPublicKey2->PublicKey.cbData,
+                            0, NULL, &length))
+                {
+                    pblob2 = CryptMemAlloc(length);
+                    if (CryptDecodeObject(dwCertEncodingType, RSA_CSP_PUBLICKEYBLOB,
+                            pPublicKey2->PublicKey.pbData, pPublicKey2->PublicKey.cbData,
+                            0, pblob2, &length))
+                    {
+                        /* The RSAPUBKEY structure directly follows the BLOBHEADER */
+                        RSAPUBKEY *pk1 = (LPVOID)(pblob1 + 1),
+                                  *pk2 = (LPVOID)(pblob2 + 1);
+                        ret = (pk1->bitlen == pk2->bitlen) && (pk1->pubexp == pk2->pubexp)
+                                 && !memcmp(pk1 + 1, pk2 + 1, pk1->bitlen/8);
+                    }
+                    CryptMemFree(pblob2);
+                }
+            }
+            CryptMemFree(pblob1);
+        }
+
+        break;
+    }
+    }
     return ret;
 }
 
