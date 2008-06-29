@@ -150,6 +150,12 @@ static void test_InternetQueryOptionA(void)
   ok((hinet != 0x0),"InternetOpen Failed\n");
 
   SetLastError(0xdeadbeef);
+  retval=InternetQueryOptionA(NULL,INTERNET_OPTION_USER_AGENT,NULL,&len);
+  err=GetLastError();
+  ok(retval == 0,"Got wrong return value %d\n",retval);
+  ok(err == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "Got wrong error code%d\n",err);
+
+  SetLastError(0xdeadbeef);
   len=strlen(useragent)+1;
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,NULL,&len);
   err=GetLastError();

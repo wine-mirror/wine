@@ -1904,7 +1904,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
 
             TRACE("INTERNET_OPTION_USER_AGENT\n");
 
-            if (lpwhh->htype != INTERNET_HANDLE_TYPE_INTERNET)
+            if (!lpwhh || lpwhh->htype != INTERNET_HANDLE_TYPE_INTERNET)
             {
                 INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
                 return FALSE;
