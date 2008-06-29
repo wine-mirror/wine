@@ -170,11 +170,125 @@ static void test_fm2_enummatchingfilters(void)
     if (pMapper) IFilterMapper2_Release(pMapper);
 }
 
+static void test_legacy_filter_registration(void)
+{
+    IFilterMapper2 *pMapper2 = NULL;
+    IFilterMapper *pMapper = NULL;
+    HRESULT hr;
+    static const WCHAR wszFilterName[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', 0 };
+    static const WCHAR wszPinName[] = {'P', 'i', 'n', '1', 0 };
+    CLSID clsidFilter;
+    WCHAR wszRegKey[MAX_PATH];
+    static const WCHAR wszClsid[] = {'C','L','S','I','D', 0};
+    static const WCHAR wszSlash[] = {'\\', 0};
+    LONG lRet;
+    HKEY hKey = NULL;
+    IEnumMoniker *pEnum = NULL;
+    BOOL found;
+    IEnumRegFilters *pRegEnum = NULL;
+
+    /* Test if legacy filter registration scheme works (filter is added to HKCR\Filter). IFilterMapper_RegisterFilter
+     * registers in this way. Filters so registered must then be accessible through both IFilterMapper_EnumMatchingFilters
+     * and IFilterMapper2_EnumMatchingFilters. */
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterMapper2, (LPVOID*)&pMapper2);
+    ok(hr == S_OK, "CoCreateInstance failed with %x\n", hr);
+    if (FAILED(hr)) goto out;
+
+    hr = IFilterMapper2_QueryInterface(pMapper2, &IID_IFilterMapper, (LPVOID)&pMapper);
+    ok(hr == S_OK, "IFilterMapper2_QueryInterface failed with %x\n", hr);
+    if (FAILED(hr)) goto out;
+
+    /* Register a test filter. */
+    hr = CoCreateGuid(&clsidFilter);
+    ok(hr == S_OK, "CoCreateGuid failed with %x\n", hr);
+
+    lstrcpyW(wszRegKey, wszClsid);
+    lstrcatW(wszRegKey, wszSlash);
+    lRet = StringFromGUID2(&clsidFilter, wszRegKey + lstrlenW(wszRegKey), MAX_PATH - lstrlenW(wszRegKey));
+    ok(lRet > 0, "StringFromGUID2 failed\n");
+    if (!lRet) goto out;
+
+    /* Register---- functions need a filter class key to write pin and pin media type data to. Create a bogus
+     * class key for it. */
+    lRet = RegCreateKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+    ok(lRet == ERROR_SUCCESS, "RegCreateKeyExW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+
+    /* Set default value - this is interpreted as "friendly name" later. */
+    lRet = RegSetValueExW(hKey, NULL, 0, REG_SZ, (LPBYTE)wszFilterName, (lstrlenW(wszFilterName) + 1) * 2);
+    ok(lRet == ERROR_SUCCESS, "RegSetValueExW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+
+    if (hKey) RegCloseKey(hKey);
+    hKey = NULL;
+
+    hr = IFilterMapper_RegisterFilter(pMapper, clsidFilter, wszFilterName, MERIT_UNLIKELY);
+    ok(hr == S_OK, "IFilterMapper_RegisterFilter failed with %x\n", hr);
+
+    hr = IFilterMapper_RegisterPin(pMapper, clsidFilter, wszPinName, TRUE, FALSE, FALSE, FALSE, GUID_NULL, NULL);
+    ok(hr == S_OK, "IFilterMapper_RegisterPin failed with %x\n", hr);
+
+    hr = IFilterMapper_RegisterPinType(pMapper, clsidFilter, wszPinName, GUID_NULL, GUID_NULL);
+    ok(hr == S_OK, "IFilterMapper_RegisterPinType failed with %x\n", hr);
+
+    hr = IFilterMapper2_EnumMatchingFilters(pMapper2, &pEnum, 0, TRUE, MERIT_UNLIKELY, TRUE,
+                0, NULL, NULL, &GUID_NULL, FALSE, FALSE, 0, NULL, NULL, &GUID_NULL);
+    ok(hr == S_OK, "IFilterMapper2_EnumMatchingFilters failed with %x\n", hr);
+    if (SUCCEEDED(hr) && pEnum)
+    {
+        found = enum_find_filter(wszFilterName, pEnum);
+        ok(found, "IFilterMapper2_EnumMatchingFilters failed to return the test filter\n");
+    }
+
+    if (pEnum) IEnumMoniker_Release(pEnum);
+    pEnum = NULL;
+
+    found = FALSE;
+    hr = IFilterMapper_EnumMatchingFilters(pMapper, &pRegEnum, MERIT_UNLIKELY, TRUE, GUID_NULL, GUID_NULL,
+            FALSE, FALSE, GUID_NULL, GUID_NULL);
+    ok(hr == S_OK, "IFilterMapper_EnumMatchingFilters failed with %x\n", hr);
+    if (SUCCEEDED(hr) && pRegEnum)
+    {
+        ULONG cFetched;
+        REGFILTER *prgf;
+
+        while(!found && IEnumRegFilters_Next(pRegEnum, 1, &prgf, &cFetched) == S_OK)
+        {
+            if (!lstrcmpW(prgf->Name, wszFilterName)) found = TRUE;
+
+            CoTaskMemFree(prgf);
+        }
+
+        IEnumRegFilters_Release(pRegEnum);
+    }
+    ok(found, "IFilterMapper_EnumMatchingFilters failed to return the test filter\n");
+
+    hr = IFilterMapper_UnregisterFilter(pMapper, clsidFilter);
+    ok(hr == S_OK, "FilterMapper_UnregisterFilter failed with %x\n", hr);
+
+    lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszClsid, 0, KEY_WRITE | DELETE, &hKey);
+    ok(lRet == ERROR_SUCCESS, "RegOpenKeyExW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+
+    lRet = StringFromGUID2(&clsidFilter, wszRegKey, MAX_PATH);
+    ok(lRet > 0, "StringFromGUID2 failed\n");
+
+    lRet = RegDeleteTreeW(hKey, wszRegKey);
+    ok(lRet == ERROR_SUCCESS, "RegDeleteTreeW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+
+    if (hKey) RegCloseKey(hKey);
+    hKey = NULL;
+
+    out:
+
+    if (pMapper) IFilterMapper_Release(pMapper);
+    if (pMapper2) IFilterMapper2_Release(pMapper2);
+}
+
 START_TEST(filtermapper)
 {
     CoInitialize(NULL);
 
     test_fm2_enummatchingfilters();
+    test_legacy_filter_registration();
 
     CoUninitialize();
 }

@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = quartz.dll
-IMPORTS   = strmiids uuid oleaut32 ole32 kernel32
+IMPORTS   = strmiids uuid oleaut32 ole32 advapi32 kernel32
 
 CTESTS = \
 	filtergraph.c \
