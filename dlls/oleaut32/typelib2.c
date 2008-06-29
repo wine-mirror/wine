@@ -1275,6 +1275,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetDocString(
     int offset;
 
     TRACE("(%p,%s)\n", iface, debugstr_w(pStrDoc));
+    if (!pStrDoc)
+        return E_INVALIDARG;
 
     offset = ctl2_alloc_string(This->typelib, pStrDoc);
     if (offset == -1) return E_OUTOFMEMORY;
@@ -3154,6 +3156,8 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetDocString(ICreateTypeLib2 * iface, LP
     int offset;
 
     TRACE("(%p,%s)\n", iface, debugstr_w(szDoc));
+    if (!szDoc)
+        return E_INVALIDARG;
 
     offset = ctl2_alloc_string(This, szDoc);
     if (offset == -1) return E_OUTOFMEMORY;
