@@ -96,6 +96,35 @@ static ULONG WINAPI DEVENUM_ICreateDevEnum_Release(ICreateDevEnum * iface)
     return 1; /* non-heap based object */
 }
 
+HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR *wszRegKeyName, UINT maxLen)
+{
+    if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
+        IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
+        IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
+        IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
+    {
+        *pBaseKey = HKEY_CURRENT_USER;
+        strcpyW(wszRegKeyName, wszActiveMovieKey);
+
+        if (!StringFromGUID2(clsidDeviceClass, wszRegKeyName + strlenW(wszRegKeyName), maxLen - strlenW(wszRegKeyName)))
+            return E_OUTOFMEMORY;
+    }
+    else
+    {
+        *pBaseKey = HKEY_CLASSES_ROOT;
+        strcpyW(wszRegKeyName, clsid_keyname);
+        strcatW(wszRegKeyName, wszRegSeparator);
+
+        if (!StringFromGUID2(clsidDeviceClass, wszRegKeyName + CLSID_STR_LEN, maxLen - CLSID_STR_LEN))
+            return E_OUTOFMEMORY;
+
+        strcatW(wszRegKeyName, wszRegSeparator);
+        strcatW(wszRegKeyName, wszInstanceKeyName);
+    }
+
+    return S_OK;
+}
+
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
@@ -108,6 +137,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     WCHAR wszRegKey[MAX_PATH];
     HKEY hkey;
     HKEY hbasekey;
+    HRESULT hr;
     CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
 
     TRACE("(%p)->(%s, %p, %x)\n\tDeviceClass:\t%s\n", This, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags, debugstr_guid(clsidDeviceClass));
@@ -117,29 +147,9 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
 
     *ppEnumMoniker = NULL;
 
-    if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
-    {
-        hbasekey = HKEY_CURRENT_USER;
-        strcpyW(wszRegKey, wszActiveMovieKey);
-
-        if (!StringFromGUID2(clsidDeviceClass, wszRegKey + strlenW(wszRegKey), MAX_PATH - strlenW(wszRegKey)))
-            return E_OUTOFMEMORY;
-    }
-    else
-    {
-        hbasekey = HKEY_CLASSES_ROOT;
-        strcpyW(wszRegKey, clsid_keyname);
-        strcatW(wszRegKey, wszRegSeparator);
-
-        if (!StringFromGUID2(clsidDeviceClass, wszRegKey + CLSID_STR_LEN, MAX_PATH - CLSID_STR_LEN))
-            return E_OUTOFMEMORY;
-
-        strcatW(wszRegKey, wszRegSeparator);
-        strcatW(wszRegKey, wszInstanceKeyName);
-    }
+    hr = DEVENUM_GetCategoryKey(clsidDeviceClass, &hbasekey, wszRegKey, MAX_PATH);
+    if (FAILED(hr))
+        return hr;
 
     if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
     {
@@ -148,7 +158,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
             IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
             IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
         {
-             HRESULT hr = DEVENUM_CreateSpecialCategories();
+             hr = DEVENUM_CreateSpecialCategories();
              if (FAILED(hr))
                  return hr;
              if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)

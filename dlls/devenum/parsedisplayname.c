@@ -90,11 +90,13 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
 {
     LPOLESTR pszBetween = NULL;
     LPOLESTR pszClass = NULL;
-    IEnumMoniker * pEm = NULL;
     MediaCatMoniker * pMoniker = NULL;
     CLSID clsidDevice;
     HRESULT res = S_OK;
+    WCHAR wszRegKeyName[MAX_PATH];
+    HKEY hbasekey;
     int classlen;
+    static const WCHAR wszRegSeparator[] =   {'\\', 0 };
 
     TRACE("(%p, %s, %p, %p)\n", pbc, debugstr_w(pszDisplayName), pchEaten, ppmkOut);
 
@@ -122,9 +124,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
 
     if (SUCCEEDED(res))
     {
-        res = DEVENUM_ICreateDevEnum_CreateClassEnumerator((ICreateDevEnum *)(char*)&DEVENUM_CreateDevEnum, &clsidDevice, &pEm, 0);
-        if (res == S_FALSE) /* S_FALSE means no category */
-            res = MK_E_NOOBJECT;
+        res = DEVENUM_GetCategoryKey(&clsidDevice, &hbasekey, wszRegKeyName, MAX_PATH);
     }
 
     if (SUCCEEDED(res))
@@ -132,9 +132,10 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
         pMoniker = DEVENUM_IMediaCatMoniker_Construct();
         if (pMoniker)
         {
-            if (RegCreateKeyW(((EnumMonikerImpl *)pEm)->hkey,
-                               pszBetween,
-                               &pMoniker->hkey) == ERROR_SUCCESS)
+            strcatW(wszRegKeyName, wszRegSeparator);
+            strcatW(wszRegKeyName, pszBetween);
+
+            if (RegCreateKeyW(hbasekey, wszRegKeyName, &pMoniker->hkey) == ERROR_SUCCESS)
                 *ppmkOut = (LPMONIKER)pMoniker;
             else
             {
@@ -143,9 +144,6 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
             }
         }
     }
-
-    if (pEm)
-        IEnumMoniker_Release(pEm);
 
     CoTaskMemFree(pszClass);
 

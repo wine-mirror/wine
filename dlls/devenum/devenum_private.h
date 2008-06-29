@@ -93,6 +93,11 @@ extern CreateDevEnumImpl DEVENUM_CreateDevEnum;
 extern ParseDisplayNameImpl DEVENUM_ParseDisplayName;
 
 /**********************************************************************
+ * Private helper function to get AM filter category key location
+ */
+HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR *wszRegKeyName, UINT maxLen);
+
+/**********************************************************************
  * Global string constant declarations
  */
 extern const WCHAR clsid_keyname[6];
