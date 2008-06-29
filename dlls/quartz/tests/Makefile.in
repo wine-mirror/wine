@@ -3,10 +3,11 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = quartz.dll
-IMPORTS   = strmiids uuid ole32 kernel32
+IMPORTS   = strmiids uuid oleaut32 ole32 kernel32
 
 CTESTS = \
 	filtergraph.c \
+	filtermapper.c \
 	memallocator.c \
 	misc.c \
 	referenceclock.c \
