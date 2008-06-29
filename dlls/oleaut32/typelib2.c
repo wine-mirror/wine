@@ -3192,8 +3192,11 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetHelpFileName(ICreateTypeLib2 * iface,
  */
 static HRESULT WINAPI ICreateTypeLib2_fnSetHelpContext(ICreateTypeLib2 * iface, DWORD dwHelpContext)
 {
-    FIXME("(%p,%d), stub!\n", iface, dwHelpContext);
-    return E_OUTOFMEMORY;
+    ICreateTypeLib2Impl *This = (ICreateTypeLib2Impl *)iface;
+
+    TRACE("(%p,%d)\n", iface, dwHelpContext);
+    This->typelib_header.helpcontext = dwHelpContext;
+    return S_OK;
 }
 
 /******************************************************************************
