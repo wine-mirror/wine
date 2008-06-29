@@ -848,9 +848,9 @@ static void test_icon_spacing(void)
 {
     /* LVM_SETICONSPACING */
     /* note: LVM_SETICONSPACING returns the previous icon spacing if successful */
-    /* note: the first test will fail if the default icon spacing is not (43,43) */
 
     HWND hwnd;
+    WORD w, h;
     DWORD r;
 
     hwnd = create_custom_listview_control(LVS_ICON);
@@ -859,17 +859,22 @@ static void test_icon_spacing(void)
     r = SendMessage(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwndparent, (LPARAM)NF_REQUERY);
     expect(NFR_ANSI, r);
 
+    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1, -1));
+    w = LOWORD(r);
+    h = LOWORD(r);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     trace("test icon spacing\n");
-    todo_wine {
-        r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(20, 30));
-        expect(MAKELONG(43,43), r);
-    }
-        r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(25, 35));
-        expect(MAKELONG(20,30), r);
-        r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1,-1));
-        expect(MAKELONG(25,35), r);
+
+    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(20, 30));
+    expect(MAKELONG(w,h), r);
+
+    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(25, 35));
+    expect(MAKELONG(20,30), r);
+
+    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1,-1));
+    expect(MAKELONG(25,35), r);
 
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_icon_spacing_seq, "test icon spacing seq", FALSE);
 
