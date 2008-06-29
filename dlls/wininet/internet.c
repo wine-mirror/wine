@@ -1268,10 +1268,10 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
     LPCWSTR lpszcp = NULL;
     LPWSTR  lpszUrl_decode = NULL;
     DWORD dwUrlLength = dwUrlLength_orig;
-    const WCHAR lpszSeparators[3]={';','?',0};
-    const WCHAR lpszSlash[2]={'/',0};
 
-    TRACE("(%s %u %x %p)\n", debugstr_w(lpszUrl), dwUrlLength, dwFlags, lpUC);
+    TRACE("(%s %u %x %p)\n",
+          lpszUrl ? debugstr_wn(lpszUrl, dwUrlLength ? dwUrlLength : strlenW(lpszUrl)) : "(null)",
+          dwUrlLength, dwFlags, lpUC);
 
     if (!lpszUrl_orig || !*lpszUrl_orig || !lpUC)
     {
@@ -1282,16 +1282,33 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
 
     if (dwFlags & ICU_DECODE)
     {
-	lpszUrl_decode=HeapAlloc( GetProcessHeap(), 0,  dwUrlLength * sizeof (WCHAR) );
-	if( InternetCanonicalizeUrlW(lpszUrl_orig, lpszUrl_decode, &dwUrlLength, dwFlags))
-	{
-	    lpszUrl =  lpszUrl_decode;
-	}
+        WCHAR *url_tmp;
+        DWORD len = dwUrlLength + 1;
+
+        if (!(url_tmp = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        {
+            INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+        memcpy(url_tmp, lpszUrl_orig, dwUrlLength * sizeof(WCHAR));
+        url_tmp[dwUrlLength] = 0;
+        if (!(lpszUrl_decode = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        {
+            HeapFree(GetProcessHeap(), 0, url_tmp);
+            INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+        if (InternetCanonicalizeUrlW(url_tmp, lpszUrl_decode, &len, ICU_DECODE | ICU_NO_ENCODE))
+        {
+            dwUrlLength = len;
+            lpszUrl = lpszUrl_decode;
+        }
+        HeapFree(GetProcessHeap(), 0, url_tmp);
     }
     lpszap = lpszUrl;
     
     /* Determine if the URI is absolute. */
-    while (*lpszap != '\0')
+    while (lpszap - lpszUrl < dwUrlLength)
     {
         if (isalnumW(*lpszap))
         {
@@ -1315,7 +1332,9 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
     lpUC->nPort = INTERNET_INVALID_PORT_NUMBER;
 
     /* Parse <params> */
-    lpszParam = strpbrkW(lpszap, lpszSeparators);
+    if (!(lpszParam = memchrW(lpszap, ';', dwUrlLength - (lpszap - lpszUrl))))
+        lpszParam = memchrW(lpszap, '?', dwUrlLength - (lpszap - lpszUrl));
+
     SetUrlComponentValueW(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
                           lpszParam, lpszParam ? dwUrlLength-(lpszParam-lpszUrl) : 0);
 
@@ -1336,7 +1355,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
         {
             lpszcp += 2;
 
-            lpszNetLoc = strpbrkW(lpszcp, lpszSlash);
+            lpszNetLoc = memchrW(lpszcp, '/', dwUrlLength - (lpszcp - lpszUrl));
             if (lpszParam)
             {
                 if (lpszNetLoc)
@@ -1356,7 +1375,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
                 /* [<user>[<:password>]@]<host>[:<port>] */
                 /* First find the user and password if they exist */
 
-                lpszHost = strchrW(lpszcp, '@');
+                lpszHost = memchrW(lpszcp, '@', dwUrlLength - (lpszcp - lpszUrl));
                 if (lpszHost == NULL || lpszHost > lpszNetLoc)
                 {
                     /* username and password not specified. */
@@ -1465,7 +1484,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
      * <protocol>:[//<net_loc>][/path][;<params>][?<query>][#<fragment>]
      *                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      */
-    if (lpszcp != 0 && *lpszcp != '\0' && (!lpszParam || lpszcp < lpszParam))
+    if (lpszcp != 0 && lpszcp - lpszUrl < dwUrlLength && (!lpszParam || lpszcp < lpszParam))
     {
         INT len;
 
@@ -1479,7 +1498,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
             /* Leave the parameter list in lpszUrlPath.  Strip off any trailing
              * newlines if necessary.
              */
-            LPWSTR lpsznewline = strchrW(lpszcp, '\n');
+            LPWSTR lpsznewline = memchrW(lpszcp, '\n', dwUrlLength - (lpszcp - lpszUrl));
             if (lpsznewline != NULL)
                 len = lpsznewline - lpszcp;
             else
@@ -1592,7 +1611,7 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
     DWORD dwURLFlags = URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE;
 
     TRACE("(%s, %p, %p, 0x%08x) bufferlength: %d\n", debugstr_w(lpszUrl), lpszBuffer,
-        lpdwBufferLength, lpdwBufferLength ? *lpdwBufferLength : -1, dwFlags);
+          lpdwBufferLength, dwFlags, lpdwBufferLength ? *lpdwBufferLength : -1);
 
     if(dwFlags & ICU_DECODE)
     {
