@@ -1330,7 +1330,7 @@ static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface, CLSID c
 
     if (SUCCEEDED(hr))
     {
-        lRet = RegSetValueExW(hKey, NULL, 0, REG_SZ, (const BYTE*)szName, strlenW(szName) + 1);
+        lRet = RegSetValueExW(hKey, NULL, 0, REG_SZ, (const BYTE*)szName, (strlenW(szName) + 1) * sizeof(WCHAR));
         hr = HRESULT_FROM_WIN32(lRet);
         CloseHandle(hKey);
     }
