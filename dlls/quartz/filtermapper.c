@@ -1070,7 +1070,7 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
                             const REGFILTERPINS2 * rfp2 = rf2.u.s1.rgPins2 + i;
 
                             bInputMatch = bInputMatch || (!(rfp2->dwFlags & REG_PINFLAG_B_OUTPUT) &&
-                                (!bRender == !(rfp2->dwFlags & REG_PINFLAG_B_RENDERER)) &&
+                                (!bRender || (rfp2->dwFlags & REG_PINFLAG_B_RENDERER)) &&
                                 MatchTypes(bExactMatch, rfp2->nMediaTypes, rfp2->lpMediaType, cInputTypes, pInputTypes));
                             bOutputMatch = bOutputMatch || ((rfp2->dwFlags & REG_PINFLAG_B_OUTPUT) &&
                                 MatchTypes(bExactMatch, rfp2->nMediaTypes, rfp2->lpMediaType, cOutputTypes, pOutputTypes));
