@@ -66,19 +66,6 @@ HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum **pEnum, IUnknown *pUnkReserved,
 }
 
 /******************************************************************
- *  CreateAssemblyNameObject   (FUSION.@)
- */
-HRESULT WINAPI CreateAssemblyNameObject(LPASSEMBLYNAME *ppAssemblyNameObj,
-                                        LPCWSTR szAssemblyName, DWORD dwFlags,
-                                        LPVOID pvReserved)
-{
-    FIXME("(%p, %s, %08x, %p) stub!\n", ppAssemblyNameObj,
-          debugstr_w(szAssemblyName), dwFlags, pvReserved);
-
-    return E_NOTIMPL;
-}
-
-/******************************************************************
  *  CreateInstallReferenceEnum   (FUSION.@)
  */
 HRESULT WINAPI CreateInstallReferenceEnum(IInstallReferenceEnum **ppRefEnum,
