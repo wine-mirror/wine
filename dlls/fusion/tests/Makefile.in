@@ -7,6 +7,7 @@ IMPORTS   = kernel32
 
 CTESTS = \
 	asmcache.c \
+	asmname.c
 
 @MAKE_TEST_RULES@
 
