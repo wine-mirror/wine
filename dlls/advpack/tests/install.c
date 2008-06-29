@@ -266,14 +266,26 @@ static void test_LaunchINFSectionEx(void)
 
 START_TEST(install)
 {
+    DWORD len;
+    char temp_path[MAX_PATH], prev_path[MAX_PATH];
+
     if (!init_function_pointers())
         return;
 
-    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+    GetCurrentDirectoryA(MAX_PATH, prev_path);
+    GetTempPath(MAX_PATH, temp_path);
+    SetCurrentDirectoryA(temp_path);
+
+    lstrcpyA(CURR_DIR, temp_path);
+    len = lstrlenA(CURR_DIR);
+
+    if(len && (CURR_DIR[len - 1] == '\\'))
+        CURR_DIR[len - 1] = 0;
 
     test_RunSetupCommand();
     test_LaunchINFSection();
     test_LaunchINFSectionEx();
 
     FreeLibrary(hAdvPack);
+    SetCurrentDirectoryA(prev_path);
 }
