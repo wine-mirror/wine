@@ -44,6 +44,14 @@ static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
                                    'M','i','c','r','o','s','o','f','t','\\',
                                    'A','c','t','i','v','e','M','o','v','i','e','\\',
                                    'd','e','v','e','n','u','m','\\',0};
+static const WCHAR wszFilterKeyName[] = {'F','i','l','t','e','r',0};
+static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};
+static const WCHAR wszPins[] = {'P','i','n','s',0};
+static const WCHAR wszAllowedMany[] = {'A','l','l','o','w','e','d','M','a','n','y',0};
+static const WCHAR wszAllowedZero[] = {'A','l','l','o','w','e','d','Z','e','r','o',0};
+static const WCHAR wszDirection[] = {'D','i','r','e','c','t','i','o','n',0};
+static const WCHAR wszIsRendered[] = {'I','s','R','e','n','d','e','r','e','d',0};
+static const WCHAR wszTypes[] = {'T','y','p','e','s',0};
 
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface);
 static HRESULT DEVENUM_CreateSpecialCategories(void);
@@ -125,6 +133,323 @@ HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR 
     return S_OK;
 }
 
+static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS *rgPin)
+{
+    HKEY hkeyTypes = NULL;
+    DWORD dwMajorTypes, i;
+    REGPINTYPES *lpMediaType = NULL;
+    DWORD dwMediaTypeSize = 0;
+
+    if (RegOpenKeyExW(hkeyPinKey, wszTypes, 0, KEY_READ, &hkeyTypes) != ERROR_SUCCESS)
+        return ;
+
+    if (RegQueryInfoKeyW(hkeyTypes, NULL, NULL, NULL, &dwMajorTypes, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+                != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkeyTypes);
+        return ;
+    }
+
+    for (i = 0; i < dwMajorTypes; i++)
+    {
+        HKEY hkeyMajorType = NULL;
+        WCHAR wszMajorTypeName[64];
+        DWORD cName = sizeof(wszMajorTypeName) / sizeof(WCHAR);
+        DWORD dwMinorTypes, i1;
+
+        if (RegEnumKeyExW(hkeyTypes, i, wszMajorTypeName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
+
+        if (RegOpenKeyExW(hkeyTypes, wszMajorTypeName, 0, KEY_READ, &hkeyMajorType) != ERROR_SUCCESS) continue;
+
+        if (RegQueryInfoKeyW(hkeyMajorType, NULL, NULL, NULL, &dwMinorTypes, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+                    != ERROR_SUCCESS)
+        {
+            RegCloseKey(hkeyMajorType);
+            continue;
+        }
+
+        for (i1 = 0; i1 < dwMinorTypes; i1++)
+        {
+            WCHAR wszMinorTypeName[64];
+            DWORD cName = sizeof(wszMinorTypeName) / sizeof(WCHAR);
+            CLSID *clsMajorType = NULL, *clsMinorType = NULL;
+            HRESULT hr;
+
+            if (RegEnumKeyExW(hkeyMajorType, i1, wszMinorTypeName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
+
+            clsMinorType = CoTaskMemAlloc(sizeof(CLSID));
+            if (!clsMinorType) continue;
+
+            clsMajorType = CoTaskMemAlloc(sizeof(CLSID));
+            if (!clsMajorType) goto error_cleanup_types;
+
+            hr = CLSIDFromString(wszMinorTypeName, clsMinorType);
+            if (FAILED(hr)) goto error_cleanup_types;
+
+            hr = CLSIDFromString(wszMajorTypeName, clsMajorType);
+            if (FAILED(hr)) goto error_cleanup_types;
+
+            if (rgPin->nMediaTypes == dwMediaTypeSize)
+            {
+                DWORD dwNewSize = dwMediaTypeSize + (dwMediaTypeSize < 2) ? 1 : dwMediaTypeSize / 2;
+                REGPINTYPES *lpNewMediaType;
+
+                lpNewMediaType = CoTaskMemRealloc(lpMediaType, sizeof(REGPINTYPES) * dwNewSize);
+                if (!lpNewMediaType) goto error_cleanup_types;
+
+                lpMediaType = lpNewMediaType;
+                dwMediaTypeSize = dwNewSize;
+             }
+
+            lpMediaType[rgPin->nMediaTypes].clsMajorType = clsMajorType;
+            lpMediaType[rgPin->nMediaTypes].clsMinorType = clsMinorType;
+            rgPin->nMediaTypes++;
+            continue;
+
+            error_cleanup_types:
+
+            if (clsMajorType) CoTaskMemFree(clsMajorType);
+            if (clsMinorType) CoTaskMemFree(clsMinorType);
+        }
+
+        RegCloseKey(hkeyMajorType);
+    }
+
+    RegCloseKey(hkeyTypes);
+
+    if (lpMediaType && !rgPin->nMediaTypes)
+    {
+        CoTaskMemFree(lpMediaType);
+        lpMediaType = NULL;
+    }
+
+    rgPin->lpMediaType = lpMediaType;
+}
+
+static void DEVENUM_ReadPins(HKEY hkeyFilterClass, REGFILTER2 *rgf2)
+{
+    HKEY hkeyPins = NULL;
+    DWORD dwPinsSubkeys, i;
+    REGFILTERPINS *rgPins = NULL;
+
+    if (RegOpenKeyExW(hkeyFilterClass, wszPins, 0, KEY_READ, &hkeyPins) != ERROR_SUCCESS)
+        return ;
+
+    if (RegQueryInfoKeyW(hkeyPins, NULL, NULL, NULL, &dwPinsSubkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+                != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkeyPins);
+        return ;
+    }
+
+    if (dwPinsSubkeys)
+    {
+        rgPins = CoTaskMemAlloc(sizeof(REGFILTERPINS) * dwPinsSubkeys);
+        if (!rgPins)
+        {
+            RegCloseKey(hkeyPins);
+            return ;
+        }
+    }
+
+    for (i = 0; i < dwPinsSubkeys; i++)
+    {
+        HKEY hkeyPinKey = NULL;
+        WCHAR wszPinName[MAX_PATH];
+        DWORD cName = sizeof(wszPinName) / sizeof(WCHAR);
+        DWORD Type, cbData;
+        REGFILTERPINS *rgPin = &rgPins[rgf2->u.s.cPins];
+        LONG lRet;
+
+        rgPin->strName = NULL;
+        rgPin->clsConnectsToFilter = &GUID_NULL;
+        rgPin->strConnectsToPin = NULL;
+        rgPin->nMediaTypes = 0;
+        rgPin->lpMediaType = NULL;
+
+        if (RegEnumKeyExW(hkeyPins, i, wszPinName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
+
+        if (RegOpenKeyExW(hkeyPins, wszPinName, 0, KEY_READ, &hkeyPinKey) != ERROR_SUCCESS) continue;
+
+        rgPin->strName = CoTaskMemAlloc((strlenW(wszPinName) + 1) * sizeof(WCHAR));
+        if (!rgPin->strName) goto error_cleanup;
+
+        strcpyW(rgPin->strName, wszPinName);
+
+        cbData = sizeof(rgPin->bMany);
+        lRet = RegQueryValueExW(hkeyPinKey, wszAllowedMany, NULL, &Type, (LPBYTE)&rgPin->bMany, &cbData);
+        if (lRet != ERROR_SUCCESS || Type != REG_DWORD)
+            goto error_cleanup;
+
+        cbData = sizeof(rgPin->bZero);
+        lRet = RegQueryValueExW(hkeyPinKey, wszAllowedZero, NULL, &Type, (LPBYTE)&rgPin->bZero, &cbData);
+        if (lRet != ERROR_SUCCESS || Type != REG_DWORD)
+            goto error_cleanup;
+
+        cbData = sizeof(rgPin->bOutput);
+        lRet = RegQueryValueExW(hkeyPinKey, wszDirection, NULL, &Type, (LPBYTE)&rgPin->bOutput, &cbData);
+        if (lRet != ERROR_SUCCESS || Type != REG_DWORD)
+            goto error_cleanup;
+
+        cbData = sizeof(rgPin->bRendered);
+        lRet = RegQueryValueExW(hkeyPinKey, wszIsRendered, NULL, &Type, (LPBYTE)&rgPin->bRendered, &cbData);
+        if (lRet != ERROR_SUCCESS || Type != REG_DWORD)
+            goto error_cleanup;
+
+        DEVENUM_ReadPinTypes(hkeyPinKey, rgPin);
+
+        ++rgf2->u.s.cPins;
+        continue;
+
+        error_cleanup:
+
+        RegCloseKey(hkeyPinKey);
+        if (rgPin->strName) CoTaskMemFree(rgPin->strName);
+    }
+
+    RegCloseKey(hkeyPins);
+
+    if (rgPins && !rgf2->u.s.cPins)
+    {
+        CoTaskMemFree(rgPins);
+        rgPins = NULL;
+    }
+
+    rgf2->u.s.rgPins = rgPins;
+}
+
+static HRESULT DEVENUM_RegisterLegacyAmFilters()
+{
+    HKEY hkeyFilter = NULL;
+    DWORD dwFilterSubkeys, i;
+    LONG lRet;
+    IFilterMapper2 *pMapper = NULL;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC,
+                           &IID_IFilterMapper2, (void **) &pMapper);
+    if (SUCCEEDED(hr))
+    {
+        lRet = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszFilterKeyName, 0, KEY_READ, &hkeyFilter);
+        hr = HRESULT_FROM_WIN32(lRet);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        lRet = RegQueryInfoKeyW(hkeyFilter, NULL, NULL, NULL, &dwFilterSubkeys, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        hr = HRESULT_FROM_WIN32(lRet);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        for (i = 0; i < dwFilterSubkeys; i++)
+        {
+            WCHAR wszFilterSubkeyName[64];
+            DWORD cName = sizeof(wszFilterSubkeyName) / sizeof(WCHAR);
+            HKEY hkeyCategoryBaseKey;
+            WCHAR wszRegKey[MAX_PATH];
+            HKEY hkeyInstance = NULL;
+            HRESULT hr;
+
+            if (RegEnumKeyExW(hkeyFilter, i, wszFilterSubkeyName, &cName, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) continue;
+
+            hr = DEVENUM_GetCategoryKey(&CLSID_LegacyAmFilterCategory, &hkeyCategoryBaseKey, wszRegKey, MAX_PATH);
+            if (FAILED(hr)) continue;
+
+            strcatW(wszRegKey, wszRegSeparator);
+            strcatW(wszRegKey, wszFilterSubkeyName);
+
+            if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, KEY_READ, &hkeyInstance) == ERROR_SUCCESS)
+            {
+                RegCloseKey(hkeyInstance);
+            }
+            else
+            {
+                /* Filter is registered the IFilterMapper(1)-way in HKCR\Filter. Needs to be added to
+                 * legacy am filter category. */
+                HKEY hkeyFilterClass = NULL;
+                REGFILTER2 rgf2;
+                CLSID clsidFilter;
+                WCHAR wszFilterName[MAX_PATH];
+                DWORD Type;
+                DWORD cbData;
+                HRESULT res;
+                IMoniker *pMoniker = NULL;
+
+                TRACE("Registering %s\n", debugstr_w(wszFilterSubkeyName));
+
+                strcpyW(wszRegKey, clsid_keyname);
+                strcatW(wszRegKey, wszRegSeparator);
+                strcatW(wszRegKey, wszFilterSubkeyName);
+
+                if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszRegKey, 0, KEY_READ, &hkeyFilterClass) != ERROR_SUCCESS)
+                    continue;
+
+                rgf2.dwVersion = 1;
+                rgf2.dwMerit = 0;
+                rgf2.u.s.cPins = 0;
+                rgf2.u.s.rgPins = NULL;
+
+                cbData = sizeof(wszFilterName);
+                if (RegQueryValueExW(hkeyFilterClass, NULL, NULL, &Type, (LPBYTE)wszFilterName, &cbData) != ERROR_SUCCESS ||
+                    Type != REG_SZ)
+                    goto cleanup;
+
+                cbData = sizeof(rgf2.dwMerit);
+                if (RegQueryValueExW(hkeyFilterClass, wszMeritName, NULL, &Type, (LPBYTE)&rgf2.dwMerit, &cbData) != ERROR_SUCCESS ||
+                    Type != REG_DWORD)
+                    goto cleanup;
+
+                DEVENUM_ReadPins(hkeyFilterClass, &rgf2);
+
+                res = CLSIDFromString(wszFilterSubkeyName, &clsidFilter);
+                if (FAILED(res)) goto cleanup;
+
+                IFilterMapper2_RegisterFilter(pMapper, &clsidFilter, wszFilterName, &pMoniker, NULL, NULL, &rgf2);
+
+                if (pMoniker)
+                    IMoniker_Release(pMoniker);
+
+                cleanup:
+
+                if (hkeyFilterClass) RegCloseKey(hkeyFilterClass);
+
+                if (rgf2.u.s.rgPins)
+                {
+                    UINT iPin;
+
+                    for (iPin = 0; iPin < rgf2.u.s.cPins; iPin++)
+                    {
+                        CoTaskMemFree(rgf2.u.s.rgPins[iPin].strName);
+
+                        if (rgf2.u.s.rgPins[iPin].lpMediaType)
+                        {
+                            UINT iType;
+
+                            for (iType = 0; iType < rgf2.u.s.rgPins[iPin].nMediaTypes; iType++)
+                            {
+                                CoTaskMemFree((void*)rgf2.u.s.rgPins[iPin].lpMediaType[iType].clsMajorType);
+                                CoTaskMemFree((void*)rgf2.u.s.rgPins[iPin].lpMediaType[iType].clsMinorType);
+                            }
+
+                            CoTaskMemFree((void*)rgf2.u.s.rgPins[iPin].lpMediaType);
+                        }
+                    }
+
+                    CoTaskMemFree((void*)rgf2.u.s.rgPins);
+                }
+            }
+        }
+    }
+
+    if (hkeyFilter) RegCloseKey(hkeyFilter);
+
+    if (pMapper)
+        IFilterMapper2_Release(pMapper);
+
+    return S_OK;
+}
+
 /**********************************************************************
  * DEVENUM_ICreateDevEnum_CreateClassEnumerator
  */
@@ -146,6 +471,11 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
         return E_POINTER;
 
     *ppEnumMoniker = NULL;
+
+    if (IsEqualGUID(clsidDeviceClass, &CLSID_LegacyAmFilterCategory))
+    {
+        DEVENUM_RegisterLegacyAmFilters();
+    }
 
     hr = DEVENUM_GetCategoryKey(clsidDeviceClass, &hbasekey, wszRegKey, MAX_PATH);
     if (FAILED(hr))
