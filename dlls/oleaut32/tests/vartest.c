@@ -5411,8 +5411,8 @@ static void test_VarCat(void)
     V_BSTR(&expected) = SysAllocString(sz12_true);
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_INT concat with VT_BOOL (TRUE) returned incorrect result\n");
+    hres = VarCmp(&result,&expected,lcid,0);
+    ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08x\n", hres);
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5427,8 +5427,8 @@ static void test_VarCat(void)
     V_BSTR(&expected) = SysAllocString(sz12_false);
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_INT concat with VT_BOOL (FALSE) returned inncorrect result\n");
+    hres = VarCmp(&result,&expected,lcid,0);
+    ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08x\n", hres);
 
     VariantClear(&left);
     VariantClear(&right);
