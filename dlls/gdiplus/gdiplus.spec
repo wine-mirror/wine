@@ -341,7 +341,7 @@
 @ stub GdipGetPathGradientSurroundColorCount
 @ stdcall GdipGetPathGradientSurroundColorsWithCount(ptr ptr ptr)
 @ stub GdipGetPathGradientTransform
-@ stub GdipGetPathGradientWrapMode
+@ stdcall GdipGetPathGradientWrapMode(ptr ptr)
 @ stdcall GdipGetPathLastPoint(ptr ptr)
 @ stdcall GdipGetPathPoints(ptr ptr long)
 @ stdcall GdipGetPathPointsI(ptr ptr long)

@@ -555,6 +555,17 @@ GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetPathGradientWrapMode(GpPathGradient *brush,
+    GpWrapMode *wrapmode)
+{
+    if(!brush || !wrapmode)
+        return InvalidParameter;
+
+    *wrapmode = brush->wrap;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
 {
     if(!sf || !argb)
