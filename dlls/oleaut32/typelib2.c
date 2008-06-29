@@ -214,8 +214,7 @@ static void ctl2_init_header(
     This->typelib_header.magic1 = 0x5446534d;
     This->typelib_header.magic2 = 0x00010002;
     This->typelib_header.posguid = -1;
-    This->typelib_header.lcid = 0x0409; /* or do we use the current one? */
-    This->typelib_header.lcid2 = 0x0409;
+    This->typelib_header.lcid = This->typelib_header.lcid2 = GetUserDefaultLCID();
     This->typelib_header.varflags = 0x40;
     This->typelib_header.version = 0;
     This->typelib_header.flags = 0;
