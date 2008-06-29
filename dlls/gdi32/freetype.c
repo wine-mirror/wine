@@ -803,15 +803,12 @@ static inline BOOL is_win9x(void)
     return GetVersion() & 0x80000000;
 }
 /* 
-   This function builds an FT_Fixed from a float. It puts the integer part
-   in the highest 16 bits and the decimal part in the lowest 16 bits of the FT_Fixed.
-   It fails if the integer part of the float number is greater than SHORT_MAX.
+   This function builds an FT_Fixed from a double. It fails if the absolute
+   value of the float number is greater than 32768.
 */
 static inline FT_Fixed FT_FixedFromFloat(double f)
 {
-	short value = f;
-	unsigned short fract = (f - value) * 0xFFFF;
-	return (FT_Fixed)((long)value << 16 | (unsigned long)fract);
+	return f * 0x10000;
 }
 
 /* 
