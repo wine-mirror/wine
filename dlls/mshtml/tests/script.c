@@ -439,6 +439,7 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     IDispatchEx *document;
+    IUnknown *unk;
     VARIANT var;
     DISPPARAMS dp;
     EXCEPINFO ei;
@@ -510,6 +511,12 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(V_I4(&var) == 100, "V_I4(&var) == NULL\n");
 
     IDispatchEx_Release(document);
+
+    unk = (void*)0xdeadbeef;
+    hres = IDispatchEx_GetNameSpaceParent(window_dispex, &unk);
+    ok(hres == S_OK, "GetNameSpaceParent failed: %08x\n", hres);
+    ok(!unk, "unk=%p, expected NULL\n", unk);
+
     return S_OK;
 }
 

@@ -1127,7 +1127,8 @@ static HRESULT WINAPI WindowDispEx_GetNameSpaceParent(IDispatchEx *iface, IUnkno
 
     TRACE("(%p)->(%p)\n", This, ppunk);
 
-    return IDispatchEx_GetNameSpaceParent(DISPATCHEX(&This->dispex), ppunk);
+    *ppunk = NULL;
+    return S_OK;
 }
 
 #undef DISPEX_THIS
