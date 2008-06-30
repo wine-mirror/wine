@@ -1542,15 +1542,11 @@ static HRESULT WINAPI HTMLElementCollection_QueryInterface(IHTMLElementCollectio
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = HTMLELEMCOL(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLELEMCOL(This);
-    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
-        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
-        *ppv = DISPATCHEX(&This->dispex);
     }else if(IsEqualGUID(&IID_IHTMLElementCollection, riid)) {
         TRACE("(%p)->(IID_IHTMLElementCollection %p)\n", This, ppv);
         *ppv = HTMLELEMCOL(This);
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
     }
 
     if(*ppv) {

@@ -621,6 +621,23 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
+BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = DISPATCHEX(This);
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
+        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+        *ppv = DISPATCHEX(This);
+    }else {
+        return FALSE;
+    }
+
+    if(*ppv)
+        IUnknown_AddRef((IUnknown*)*ppv);
+    return TRUE;
+}
+
 void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data)
 {
     dispex->lpIDispatchExVtbl = &DispatchExVtbl;

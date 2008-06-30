@@ -134,6 +134,7 @@ typedef struct {
 } DispatchEx;
 
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
+BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 
 typedef struct {
     DispatchEx dispex;
