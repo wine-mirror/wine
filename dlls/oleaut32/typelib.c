@@ -1084,6 +1084,8 @@ static void dump_TypeDesc(const TYPEDESC *pTD,char *szVarType) {
     case VT_HRESULT: sprintf(szVarType, "VT_HRESULT"); break;
     case VT_USERDEFINED: sprintf(szVarType, "VT_USERDEFINED ref = %x",
 				 pTD->u.hreftype); break;
+    case VT_LPSTR: sprintf(szVarType, "VT_LPSTR"); break;
+    case VT_LPWSTR: sprintf(szVarType, "VT_LPWSTR"); break;
     case VT_PTR: sprintf(szVarType, "ptr to ");
       dump_TypeDesc(pTD->u.lptdesc, szVarType + 7);
       break;
