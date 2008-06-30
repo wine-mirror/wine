@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
+#include <shellapi.h>
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
@@ -31,38 +32,14 @@
     
 #include "taskmgr.h"
 
-static INT_PTR CALLBACK AboutDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    HWND    hLicenseEditWnd;
-    TCHAR    strLicense[0x1000];
-
-    switch (message)
-    {
-    case WM_INITDIALOG:
-
-        hLicenseEditWnd = GetDlgItem(hDlg, IDC_LICENSE_EDIT);
-
-        LoadString(hInst, IDS_LICENSE, strLicense, 0x1000);
-
-        SetWindowText(hLicenseEditWnd, strLicense);
-
-        return TRUE;
-
-    case WM_COMMAND:
-
-        if ((LOWORD(wParam) == IDOK) || (LOWORD(wParam) == IDCANCEL))
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return TRUE;
-        }
-
-        break;
-    }
-
-    return 0;
-}
 
 void OnAbout(void)
 {
-    DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hMainWnd, AboutDialogWndProc);
+            WCHAR appname[256];
+            WCHAR copy[] = {'B','r','i','a','n',' ',
+                            'P','a','l','m','e','r',' ',
+                            '<','b','r','i','a','n','p','@','r','e','a','c','t','o','s','.','o','r','g','>',0};
+            LoadStringW( hInst, IDC_TASKMGR, appname, sizeof(appname)/sizeof(WCHAR) );
+            ShellAboutW( hMainWnd, appname, copy,
+                         LoadImageA( hInst, (LPSTR)IDI_TASKMANAGER, IMAGE_ICON, 32, 32, LR_SHARED ));
 }
