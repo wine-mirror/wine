@@ -1693,7 +1693,6 @@ static void test_RtlIsTextUnicode(void)
 
     flags =  IS_TEXT_UNICODE_UNICODE_MASK;
     ok(pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Text should not pass a Unicode\n");
-    todo_wine
     ok(flags == (IS_TEXT_UNICODE_STATISTICS | IS_TEXT_UNICODE_CONTROLS),
        "Expected flags 0x6, obtained %x\n", flags);
 
@@ -1712,7 +1711,7 @@ static void test_RtlIsTextUnicode(void)
         be_unicode[i + 1] = (unicode[i] >> 8) | ((unicode[i] & 0xff) << 8);
     }
     ok(!pRtlIsTextUnicode(be_unicode, sizeof(unicode) + 2, NULL), "Reverse endian should not be Unicode\n");
-    todo_wine ok(!pRtlIsTextUnicode(&be_unicode[1], sizeof(unicode), NULL), "Reverse endian should not be Unicode\n");
+    ok(!pRtlIsTextUnicode(&be_unicode[1], sizeof(unicode), NULL), "Reverse endian should not be Unicode\n");
 
     flags = IS_TEXT_UNICODE_REVERSE_MASK;
     ok(!pRtlIsTextUnicode(&be_unicode[1], sizeof(unicode), &flags), "Reverse endian should be Unicode\n");
@@ -1722,7 +1721,6 @@ static void test_RtlIsTextUnicode(void)
 
     flags = IS_TEXT_UNICODE_REVERSE_MASK;
     ok(!pRtlIsTextUnicode(be_unicode, sizeof(unicode) + 2, &flags), "Reverse endian should be Unicode\n");
-    todo_wine
     ok(flags == (IS_TEXT_UNICODE_REVERSE_CONTROLS | IS_TEXT_UNICODE_REVERSE_SIGNATURE),
        "Expected flags 0xc0, obtained %x\n", flags);
 
@@ -1750,11 +1748,8 @@ static void test_RtlIsTextUnicode(void)
     ok(flags == 0, "Expected flags 0x0, obtained %x\n", flags);
 
     flags = IS_TEXT_UNICODE_CONTROLS;
-    todo_wine
-    {
-        ok(pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Test should pass on Unicode string lacking control characters.\n");
-        ok(flags == IS_TEXT_UNICODE_CONTROLS, "Expected flags 0x04, obtained %x\n", flags);
-    }
+    ok(pRtlIsTextUnicode(unicode, sizeof(unicode), &flags), "Test should pass on Unicode string lacking control characters.\n");
+    ok(flags == IS_TEXT_UNICODE_CONTROLS, "Expected flags 0x04, obtained %x\n", flags);
 
     flags = IS_TEXT_UNICODE_CONTROLS;
     ok(!pRtlIsTextUnicode(be_unicode_no_controls, sizeof(unicode_no_controls) + 2, &flags),
@@ -1762,11 +1757,8 @@ static void test_RtlIsTextUnicode(void)
     ok(flags == 0, "Expected flags 0x0, obtained %x\n", flags);
 
     flags = IS_TEXT_UNICODE_CONTROLS;
-    todo_wine
-    {
-        ok(pRtlIsTextUnicode(mixed_controls, sizeof(mixed_controls), &flags), "Test should pass on a string containing control characters.\n");
-        ok(flags == IS_TEXT_UNICODE_CONTROLS, "Expected flags 0x04, obtained %x\n", flags);
-    }
+    ok(pRtlIsTextUnicode(mixed_controls, sizeof(mixed_controls), &flags), "Test should pass on a string containing control characters.\n");
+    ok(flags == IS_TEXT_UNICODE_CONTROLS, "Expected flags 0x04, obtained %x\n", flags);
 
     /* Test IS_TEXT_UNICODE_REVERSE_CONTROLS flag */
     flags = IS_TEXT_UNICODE_REVERSE_CONTROLS;
@@ -1784,18 +1776,15 @@ static void test_RtlIsTextUnicode(void)
     flags = IS_TEXT_UNICODE_REVERSE_CONTROLS;
     ok(!pRtlIsTextUnicode(be_unicode, sizeof(unicode) + 2, &flags),
         "Test should pass with byte-reversed Unicode string containing control characters.\n");
-    todo_wine
     ok(flags == IS_TEXT_UNICODE_REVERSE_CONTROLS, "Expected flags 0x40, obtained %x\n", flags);
 
     flags = IS_TEXT_UNICODE_REVERSE_CONTROLS;
     ok(!pRtlIsTextUnicode(mixed_controls, sizeof(mixed_controls), &flags), "Test should pass on a string containing byte-reversed control characters.\n");
-    todo_wine
     ok(flags == IS_TEXT_UNICODE_REVERSE_CONTROLS, "Expected flags 0x40, obtained %x\n", flags);
 
     /* Test with flags for both byte-reverse and standard Unicode characters */
     flags = IS_TEXT_UNICODE_CONTROLS | IS_TEXT_UNICODE_REVERSE_CONTROLS;
     ok(!pRtlIsTextUnicode(mixed_controls, sizeof(mixed_controls), &flags), "Test should pass on string containing both byte-reversed and standard control characters.\n");
-    todo_wine
     ok(flags == (IS_TEXT_UNICODE_CONTROLS | IS_TEXT_UNICODE_REVERSE_CONTROLS), "Expected flags 0x44, obtained %x\n", flags);
 
     HeapFree(GetProcessHeap(), 0, be_unicode);
