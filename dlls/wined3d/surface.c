@@ -2281,7 +2281,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
         IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL);
         /* Make sure the texture is reloaded because of the color key change, this kills performance though :( */
         /* TODO: This is not necessarily needed with hw palettized texture support */
-        This->Flags &= ~SFLAG_INTEXTURE;
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INSYSMEM, TRUE);
     } else {
         TRACE("surface is already in texture\n");
         return WINED3D_OK;
