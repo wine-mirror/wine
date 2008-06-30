@@ -411,6 +411,17 @@ static IHTMLDOMNode *_get_node_iface(unsigned line, IUnknown *unk)
     return node;
 }
 
+#define get_img_iface(u) _get_img_iface(__LINE__,u)
+static IHTMLImgElement *_get_img_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLImgElement *img;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLImgElement, (void**)&img);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLImgElement: %08x\n", hres);
+    return img;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -932,18 +943,46 @@ static long _get_node_type(unsigned line, IUnknown *unk)
 #define test_img_set_src(u,s) _test_img_set_src(__LINE__,u,s)
 static void _test_img_set_src(unsigned line, IUnknown *unk, const char *src)
 {
-    IHTMLImgElement *img;
+    IHTMLImgElement *img = _get_img_iface(line, unk);
     BSTR tmp;
     HRESULT hres;
-
-    hres = IUnknown_QueryInterface(unk, &IID_IHTMLImgElement, (void**)&img);
-    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLImgElement: %08x\n", hres);
 
     tmp = a2bstr(src);
     hres = IHTMLImgElement_put_src(img, tmp);
     IHTMLImgElement_Release(img);
     SysFreeString(tmp);
     ok_(__FILE__,line) (hres == S_OK, "put_src failed: %08x\n", hres);
+}
+
+#define test_img_alt(u,a) _test_img_alt(__LINE__,u,a)
+static void _test_img_alt(unsigned line, IUnknown *unk, const char *exalt)
+{
+    IHTMLImgElement *img = _get_img_iface(line, unk);
+    BSTR alt;
+    HRESULT hres;
+
+    hres = IHTMLImgElement_get_alt(img, &alt);
+    ok_(__FILE__,line) (hres == S_OK, "get_alt failed: %08x\n", hres);
+    if(exalt)
+        ok_(__FILE__,line) (!strcmp_wa(alt, exalt), "inexopected alt %s\n", dbgstr_w(alt));
+    else
+        ok_(__FILE__,line) (!alt, "alt != NULL\n");
+    SysFreeString(alt);
+}
+
+#define test_img_set_alt(u,a) _test_img_set_alt(__LINE__,u,a)
+static void _test_img_set_alt(unsigned line, IUnknown *unk, const char *alt)
+{
+    IHTMLImgElement *img = _get_img_iface(line, unk);
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(alt);
+    hres = IHTMLImgElement_put_alt(img, tmp);
+    ok_(__FILE__,line) (hres == S_OK, "get_alt failed: %08x\n", hres);
+    SysFreeString(tmp);
+
+    _test_img_alt(line, unk, alt);
 }
 
 #define test_input_get_disabled(i,b) _test_input_get_disabled(__LINE__,i,b)
@@ -2167,6 +2206,8 @@ static void test_elems(IHTMLDocument2 *doc)
     elem = get_elem_by_id(doc, imgidW, TRUE);
     if(elem) {
         test_img_set_src((IUnknown*)elem, "about:blank");
+        test_img_alt((IUnknown*)elem, NULL);
+        test_img_set_alt((IUnknown*)elem, "alt test");
         IHTMLElement_Release(elem);
     }
 

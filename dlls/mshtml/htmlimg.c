@@ -228,15 +228,41 @@ static HRESULT WINAPI HTMLImgElement_get_hspace(IHTMLImgElement *iface, long *p)
 static HRESULT WINAPI HTMLImgElement_put_alt(IHTMLImgElement *iface, BSTR v)
 {
     HTMLImgElement *This = HTMLIMG_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString alt_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_Init(&alt_str, v);
+    nsres = nsIDOMHTMLImageElement_SetAlt(This->nsimg, &alt_str);
+    nsAString_Finish(&alt_str);
+    if(NS_FAILED(nsres))
+        ERR("SetAlt failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLImgElement_get_alt(IHTMLImgElement *iface, BSTR *p)
 {
     HTMLImgElement *This = HTMLIMG_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString alt_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&alt_str, NULL);
+    nsres = nsIDOMHTMLImageElement_GetAlt(This->nsimg, &alt_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *alt;
+
+        nsAString_GetData(&alt_str, &alt);
+        *p = *alt ? SysAllocString(alt) : NULL;
+    }else {
+        ERR("GetAlt failed: %08x\n", nsres);
+    }
+    nsAString_Finish(&alt_str);
+
+    return NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI HTMLImgElement_put_src(IHTMLImgElement *iface, BSTR v)
