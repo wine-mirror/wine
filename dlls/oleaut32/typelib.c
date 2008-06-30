@@ -3122,6 +3122,17 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
       TRACE_(typelib)("byte_offs = 0x%x\n", pItem->byte_offs);
       TRACE_(typelib)("memid = 0x%x\n", pItem->memid);
 
+      if(pItem->flags & 0x02)
+	  pType = &pItem->type;
+      else
+	  pType = (WORD*)(pBlk + pItem->type);
+
+      if (pItem->flags & ~0xda)
+        FIXME_(typelib)("unhandled flags = %02x\n", pItem->flags & ~0xda);
+
+      SLTG_DoElem(pType, pBlk,
+		  &(*ppVarDesc)->vardesc.elemdescVar, ref_lookup);
+
       if (pItem->flags & 0x40) {
         TRACE_(typelib)("VAR_DISPATCH\n");
         (*ppVarDesc)->vardesc.varkind = VAR_DISPATCH;
@@ -3134,9 +3145,32 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
         V_VT((*ppVarDesc)->vardesc.u.lpvarValue) = VT_INT;
         if (pItem->flags & 0x08)
           V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) = pItem->byte_offs;
-        else
-          V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) =
-            *(INT*)(pBlk + pItem->byte_offs);
+        else {
+          switch ((*ppVarDesc)->vardesc.elemdescVar.tdesc.vt)
+          {
+            case VT_LPSTR:
+            case VT_LPWSTR:
+            case VT_BSTR:
+            {
+              WORD len = *(WORD *)(pBlk + pItem->byte_offs);
+              INT alloc_len = MultiByteToWideChar(CP_ACP, 0, pBlk + pItem->byte_offs + 2, len, NULL, 0);
+              BSTR str = SysAllocStringLen(NULL, alloc_len);
+              MultiByteToWideChar(CP_ACP, 0, pBlk + pItem->byte_offs + 2, len, str, alloc_len);
+              V_VT((*ppVarDesc)->vardesc.u.lpvarValue) = VT_BSTR;
+              V_BSTR((*ppVarDesc)->vardesc.u.lpvarValue) = str;
+              break;
+            }
+            case VT_I2:
+            case VT_UI2:
+            case VT_I4:
+            case VT_UI4:
+              V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) =
+                *(INT*)(pBlk + pItem->byte_offs);
+              break;
+            default:
+              FIXME("VAR_CONST unimplemented for type %d\n", (*ppVarDesc)->vardesc.elemdescVar.tdesc.vt);
+          }
+        }
       }
       else {
         TRACE_(typelib)("VAR_PERINSTANCE\n");
@@ -3149,17 +3183,6 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
 
       if (pItem->flags & 0x80)
         (*ppVarDesc)->vardesc.wVarFlags |= VARFLAG_FREADONLY;
-
-      if(pItem->flags & 0x02)
-	  pType = &pItem->type;
-      else
-	  pType = (WORD*)(pBlk + pItem->type);
-
-      if (pItem->flags & ~0xda)
-        FIXME_(typelib)("unhandled flags = %02x\n", pItem->flags & ~0xda);
-
-      SLTG_DoElem(pType, pBlk,
-		  &(*ppVarDesc)->vardesc.elemdescVar, ref_lookup);
 
       if (TRACE_ON(typelib)) {
           char buf[300];
