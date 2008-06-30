@@ -1508,7 +1508,7 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
         ret = stat( unix_name, &st );
         if (!ret)
         {
-            FILE_BOTH_DIR_INFORMATION *info = append_entry( buffer, &io->Information, length, unix_name, NULL, mask );
+            FILE_BOTH_DIR_INFORMATION *info = append_entry( buffer, &io->Information, length, unix_name, NULL, NULL );
             if (info)
             {
                 info->NextEntryOffset = 0;
@@ -1517,6 +1517,7 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
                 else
                     lseek( fd, 1, SEEK_CUR );
             }
+            else io->u.Status = STATUS_NO_MORE_FILES;
         }
     }
     else ret = -1;
