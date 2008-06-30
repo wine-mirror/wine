@@ -150,7 +150,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT i
 	DWORD ListSize[4], ListCount[4];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
 	
-	TRACE("(%p, %p, offset = 0x%04llx)\n", This, pStm, This->liInstrumentPosition.QuadPart);
+	TRACE("(%p, %p, offset = %s)\n", This, pStm, wine_dbgstr_longlong(This->liInstrumentPosition.QuadPart));
 
 	/* goto the beginning of chunk */
 	IStream_Seek (pStm, This->liInstrumentPosition, STREAM_SEEK_SET, NULL);

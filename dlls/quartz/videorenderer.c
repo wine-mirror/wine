@@ -444,7 +444,9 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
         }
         else if (time > trefstop)
         {
-            TRACE("Dropping sample: Time: %lld ms trefstop: %lld ms!\n", time/10000, trefstop/10000);
+            TRACE("Dropping sample: Time: %u.%03u ms trefstop: %u.%03u ms!\n",
+                  (DWORD)(time / 10000000), (DWORD)((time / 10000)%1000),
+                  (DWORD)(trefstop / 10000000), (DWORD)((trefstop / 10000)%1000) );
             This->rtLastStop = tStop;
             return S_OK;
         }

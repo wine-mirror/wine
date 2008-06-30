@@ -147,9 +147,9 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Seek (LPSTREAM iface,
 	ICOM_THIS_MULTI(IDirectMusicLoaderFileStream, StreamVtbl, iface);
     LARGE_INTEGER liNewPos;
 	
-	TRACE_(dmfileraw)("(%p, 0x%08llX, %s, %p)\n", This, dlibMove.QuadPart, resolve_STREAM_SEEK(dwOrigin), plibNewPosition);
+    TRACE_(dmfileraw)("(%p, %s, %s, %p)\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), resolve_STREAM_SEEK(dwOrigin), plibNewPosition);
 
-	if (This->hFile == INVALID_HANDLE_VALUE) return E_FAIL;
+    if (This->hFile == INVALID_HANDLE_VALUE) return E_FAIL;
 
     liNewPos.u.HighPart = dlibMove.u.HighPart;
     liNewPos.u.LowPart = SetFilePointer (This->hFile, dlibMove.u.LowPart, &liNewPos.u.HighPart, dwOrigin);
@@ -314,7 +314,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID* ppobj) {
 HRESULT WINAPI IDirectMusicLoaderResourceStream_Attach (LPSTREAM iface, LPBYTE pbMemData, LONGLONG llMemLength, LONGLONG llPos, LPDIRECTMUSICLOADER8 pLoader) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderResourceStream, StreamVtbl, iface);
     
-	TRACE("(%p, %p, 0x%08llX, 0x%08llx, %p)\n", This, pbMemData, llMemLength, llPos, pLoader);
+	TRACE("(%p, %p, %s, %s, %p)\n", This, pbMemData, wine_dbgstr_longlong(llMemLength), wine_dbgstr_longlong(llPos), pLoader);
 	if (!pbMemData || !llMemLength) {
 		WARN(": invalid pbMemData or llMemLength\n");
 		return E_FAIL;
@@ -398,7 +398,7 @@ static HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Read (LPSTREAM if
 
 static HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Seek (LPSTREAM iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderResourceStream, StreamVtbl, iface);	
-	TRACE_(dmfileraw)("(%p, 0x%08llX, %s, %p)\n", This, dlibMove.QuadPart, resolve_STREAM_SEEK(dwOrigin), plibNewPosition);
+	TRACE_(dmfileraw)("(%p, %s, %s, %p)\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), resolve_STREAM_SEEK(dwOrigin), plibNewPosition);
 	
 	switch (dwOrigin) {
 		case STREAM_SEEK_CUR: {
@@ -647,7 +647,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Read (LPSTREAM ifa
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Seek (LPSTREAM iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE_(dmfileraw)("(%p, 0x%08llX, %s, %p): redirecting to low-level stream\n", This, dlibMove.QuadPart, resolve_STREAM_SEEK(dwOrigin), plibNewPosition);
+	TRACE_(dmfileraw)("(%p, %s, %s, %p): redirecting to low-level stream\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), resolve_STREAM_SEEK(dwOrigin), plibNewPosition);
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -685,7 +685,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Write (LPSTREAM if
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_SetSize (LPSTREAM iface, ULARGE_INTEGER libNewSize) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE("(%p, 0x%08llX): redirecting to low-level stream\n", This, libNewSize.QuadPart);
+	TRACE("(%p, %s): redirecting to low-level stream\n", This, wine_dbgstr_longlong(libNewSize.QuadPart));
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -694,7 +694,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_SetSize (LPSTREAM 
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_CopyTo (LPSTREAM iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE("(%p, %p, 0x%08llX, %p, %p): redirecting to low-level stream\n", This, pstm, cb.QuadPart, pcbRead, pcbWritten);
+	TRACE("(%p, %p, %s, %p, %p): redirecting to low-level stream\n", This, pstm, wine_dbgstr_longlong(cb.QuadPart), pcbRead, pcbWritten);
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -721,7 +721,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Revert (LPSTREAM i
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_LockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE("(%p, 0x%08llX, 0x%08llX, 0x%08X): redirecting to low-level stream\n", This, libOffset.QuadPart, cb.QuadPart, dwLockType);
+	TRACE("(%p, %s, %s, 0x%08X): redirecting to low-level stream\n", This, wine_dbgstr_longlong(libOffset.QuadPart), wine_dbgstr_longlong(cb.QuadPart), dwLockType);
 	if (!This->pStream)
 		return E_FAIL;
 
@@ -730,7 +730,7 @@ static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_LockRegion (LPSTRE
 
 static HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_UnlockRegion (LPSTREAM iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType) {
 	ICOM_THIS_MULTI(IDirectMusicLoaderGenericStream, StreamVtbl, iface);	
-	TRACE("(%p, 0x%08llX, 0x%08llX, 0x%08X): redirecting to low-level stream\n", This, libOffset.QuadPart, cb.QuadPart, dwLockType);
+	TRACE("(%p, %s, %s, 0x%08X): redirecting to low-level stream\n", This, wine_dbgstr_longlong(libOffset.QuadPart), wine_dbgstr_longlong(cb.QuadPart), dwLockType);
 	if (!This->pStream)
 		return E_FAIL;
 
