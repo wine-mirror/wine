@@ -61,6 +61,7 @@ void TaskManager_OnFileNew(void)
     /* Show "Run..." dialog */
     if (RunFileDlg)
     {
+        HICON hIcon = LoadIconW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDI_TASKMANAGER));
         versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
         GetVersionEx(&versionInfo);
 
@@ -68,13 +69,13 @@ void TaskManager_OnFileNew(void)
         {
             WCHAR wTitle[64];
             LoadStringW(GetModuleHandleW(NULL), IDS_RUNDLG_CAPTION, wTitle, 64);
-            RunFileDlg(hMainWnd, 0, NULL, (LPCSTR)wTitle, NULL, RFF_CALCDIRECTORY);
+            RunFileDlg(hMainWnd, hIcon, NULL, (LPCSTR)wTitle, NULL, RFF_CALCDIRECTORY);
         }
         else
         {
             char szTitle[64];
             LoadStringA(GetModuleHandleW(NULL), IDS_RUNDLG_CAPTION, szTitle, 64);
-            RunFileDlg(hMainWnd, 0, NULL, szTitle, NULL, RFF_CALCDIRECTORY);
+            RunFileDlg(hMainWnd, hIcon, NULL, szTitle, NULL, RFF_CALCDIRECTORY);
         }
     }
 
