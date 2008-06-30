@@ -42,9 +42,9 @@ BEGIN
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
     LTEXT           "이 라이브러리는 자유 소프트웨어입니다. 당신은 자유 소프트웨어 재단(Free Software Foundation)에서 만든 GNU LGPL(Lesser General Public License) 아래에서 이 프로그램을 재배포 또는 수정할 수 있습니다. 라이센스의 버전은 2.1 또는 (선택적으로) 그 이후 버전을 따르면 됩니다.",
                     IDC_STATIC,119,44,124,72
-    GROUPBOX        " Windows Registration Information ", IDC_STATIC, 15, 110, 230, 55
-    LTEXT           "Owner:", IDC_STATIC, 22, 126, 40, 20
-    LTEXT           "Organization:", IDC_STATIC, 22, 140, 50, 20
+    GROUPBOX        " 윈도우즈 등록 정보 ", IDC_STATIC, 15, 110, 230, 55
+    LTEXT           "소유자:", IDC_STATIC, 22, 126, 40, 20
+    LTEXT           "단체:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
