@@ -66,7 +66,8 @@ void __wine_init_codepages( const union cptable *ansi, const union cptable *oem,
 int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen)
 {
 #ifdef __APPLE__
-    flags |= MB_COMPOSITE;  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
+    /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
+    if (!unix_table) flags |= MB_COMPOSITE;
 #endif
     return (unix_table) ?
         wine_cp_mbstowcs( unix_table, flags, src, srclen, dst, dstlen ) :
