@@ -623,12 +623,18 @@ static IDispatchExVtbl DispatchExVtbl = {
 
 BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
 {
+    static const IID IID_UndocumentedScriptIface =
+        {0x719c3050,0xf9d3,0x11cf,{0xa4,0x93,0x00,0x40,0x05,0x23,0xa8,0xa0}};
+
     if(IsEqualGUID(&IID_IDispatch, riid)) {
         TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = DISPATCHEX(This);
     }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
         TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
         *ppv = DISPATCHEX(This);
+    }else if(IsEqualGUID(&IID_UndocumentedScriptIface, riid)) {
+        TRACE("(%p)->(IID_UndocumentedScriptIface %p) returning NULL\n", This, ppv);
+        *ppv = NULL;
     }else {
         return FALSE;
     }

@@ -61,6 +61,8 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IHTMLWindow3, riid)) {
         TRACE("(%p)->(IID_IHTMLWindow2 %p)\n", This, ppv);
         *ppv = HTMLWINDOW3(This);
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
     }
 
     if(*ppv) {
