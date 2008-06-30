@@ -477,8 +477,10 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
 
     tmp = SysAllocString(testW);
     hres = IDispatchEx_GetDispID(document, tmp, fdexNameCaseSensitive, &id);
-    SysFreeString(tmp);
     ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(document) failed: %08x, expected DISP_E_UNKNOWNNAME\n", hres);
+    hres = IDispatchEx_GetDispID(document, tmp, fdexNameCaseSensitive | fdexNameImplicit, &id);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(document) failed: %08x, expected DISP_E_UNKNOWNNAME\n", hres);
+    SysFreeString(tmp);
 
     id = 0;
     tmp = SysAllocString(testW);

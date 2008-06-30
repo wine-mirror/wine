@@ -407,7 +407,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
-    if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure))
+    if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure|fdexNameImplicit))
         FIXME("Unsupported grfdex %x\n", grfdex);
 
     data = get_dispex_data(This);
