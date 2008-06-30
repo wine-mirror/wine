@@ -2988,6 +2988,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     buffer.lineNo = 0;
     buffer.newline = TRUE;
 
+    shader_addline(&buffer, "#version 120\n");
+
     if(vs_major < 3 && ps_major < 3) {
         /* That one is easy: The vertex shader writes to the builtin varyings, the pixel shader reads from them.
          * Take care about the texcoord .w fixup though if we're using the fixed function fragment pipeline
@@ -3310,6 +3312,7 @@ static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
     GLhandleARB program_id;
     GLhandleARB vshader_id, pshader_id;
     const char *blt_vshader[] = {
+        "#version 120\n"
         "void main(void)\n"
         "{\n"
         "    gl_Position = gl_Vertex;\n"
@@ -3320,6 +3323,7 @@ static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
     };
 
     const char *blt_pshader[] = {
+        "#version 120\n"
         "uniform sampler2D sampler;\n"
         "void main(void)\n"
         "{\n"
@@ -3494,6 +3498,8 @@ static void shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFF
     /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
     GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
 
+    shader_addline(buffer, "#version 120\n");
+
     if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
         shader_addline(buffer, "#extension GL_ARB_draw_buffers : enable\n");
     }
@@ -3578,6 +3584,8 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
 
     /* Create the hw GLSL shader program and assign it as the baseShader.prgId */
     GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
+
+    shader_addline(buffer, "#version 120\n");
 
     /* Base Declarations */
     shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
