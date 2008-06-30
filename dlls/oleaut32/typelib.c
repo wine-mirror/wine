@@ -3099,7 +3099,6 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
   SLTG_Variable *pItem;
   unsigned short i;
   WORD *pType;
-  char buf[300];
 
   for(pItem = (SLTG_Variable *)pFirstItem, i = 0; i < cVars;
       pItem = (SLTG_Variable *)(pBlk + pItem->next), i++) {
@@ -3119,6 +3118,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
       else
         (*ppVarDesc)->Name = TLB_MultiByteToBSTR(pItem->name + pNameTable);
 
+      TRACE_(typelib)("name: %s\n", debugstr_w((*ppVarDesc)->Name));
       TRACE_(typelib)("byte_offs = 0x%x\n", pItem->byte_offs);
       TRACE_(typelib)("memid = 0x%x\n", pItem->memid);
 
@@ -3132,8 +3132,11 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
         (*ppVarDesc)->vardesc.u.lpvarValue = HeapAlloc(GetProcessHeap(), 0,
 						       sizeof(VARIANT));
         V_VT((*ppVarDesc)->vardesc.u.lpvarValue) = VT_INT;
-        V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) =
-	  *(INT*)(pBlk + pItem->byte_offs);
+        if (pItem->flags & 0x08)
+          V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) = pItem->byte_offs;
+        else
+          V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) =
+            *(INT*)(pBlk + pItem->byte_offs);
       }
       else {
         TRACE_(typelib)("VAR_PERINSTANCE\n");
@@ -3152,13 +3155,17 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
       else
 	  pType = (WORD*)(pBlk + pItem->type);
 
-      if (pItem->flags & ~0xd2)
-        FIXME_(typelib)("unhandled flags = %02x\n", pItem->flags & ~0xd2);
+      if (pItem->flags & ~0xda)
+        FIXME_(typelib)("unhandled flags = %02x\n", pItem->flags & ~0xda);
 
       SLTG_DoElem(pType, pBlk,
 		  &(*ppVarDesc)->vardesc.elemdescVar, ref_lookup);
 
-      dump_TypeDesc(&(*ppVarDesc)->vardesc.elemdescVar.tdesc, buf);
+      if (TRACE_ON(typelib)) {
+          char buf[300];
+          dump_TypeDesc(&(*ppVarDesc)->vardesc.elemdescVar.tdesc, buf);
+          TRACE_(typelib)("elemdescVar: %s\n", buf);
+      }
 
       bstrPrevName = (*ppVarDesc)->Name;
       ppVarDesc = &((*ppVarDesc)->next);
