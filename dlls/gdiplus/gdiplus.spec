@@ -62,9 +62,9 @@
 @ stdcall GdipClosePathFigure(ptr)
 @ stdcall GdipClosePathFigures(ptr)
 @ stub GdipCombineRegionPath
-@ stub GdipCombineRegionRect
-@ stub GdipCombineRegionRectI
-@ stub GdipCombineRegionRegion
+@ stdcall GdipCombineRegionRect(ptr ptr long)
+@ stdcall GdipCombineRegionRectI(ptr ptr long)
+@ stdcall GdipCombineRegionRegion(ptr ptr long)
 @ stub GdipComment
 @ stdcall GdipConvertToEmfPlus(ptr ptr ptr long ptr ptr)
 @ stub GdipConvertToEmfPlusToFile
@@ -125,8 +125,8 @@
 @ stdcall GdipCreateRegion(ptr)
 @ stub GdipCreateRegionHrgn
 @ stdcall GdipCreateRegionPath(ptr ptr)
-@ stub GdipCreateRegionRect
-@ stub GdipCreateRegionRectI
+@ stdcall GdipCreateRegionRect(ptr ptr)
+@ stdcall GdipCreateRegionRectI(ptr ptr)
 @ stub GdipCreateRegionRgnData
 @ stdcall GdipCreateSolidFill(long ptr)
 @ stdcall GdipCreateStreamOnFile(ptr long ptr)
@@ -377,8 +377,8 @@
 @ stub GdipGetPropertySize
 @ stub GdipGetRegionBounds
 @ stub GdipGetRegionBoundsI
-@ stub GdipGetRegionData
-@ stub GdipGetRegionDataSize
+@ stdcall GdipGetRegionData(ptr ptr long ptr)
+@ stdcall GdipGetRegionDataSize(ptr ptr)
 @ stdcall GdipGetRegionHRgn(ptr ptr ptr)
 @ stub GdipGetRegionScans
 @ stub GdipGetRegionScansCount
