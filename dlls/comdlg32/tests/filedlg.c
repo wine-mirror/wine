@@ -111,7 +111,9 @@ static void test_DialogCancel(void)
     else
     {
         ok(0 == result, "expected %d, got %d\n", 0, result);
-        ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
+        ok(0 == CommDlgExtendedError() ||
+           CDERR_INITIALIZATION == CommDlgExtendedError(), /* win9x */
+           "expected %d or %d, got %d\n", 0, CDERR_INITIALIZATION,
            CommDlgExtendedError());
     }
 
@@ -122,7 +124,9 @@ static void test_DialogCancel(void)
     else
     {
         ok(0 == result, "expected %d, got %d\n", 0, result);
-        ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
+        ok(0 == CommDlgExtendedError() ||
+           CDERR_INITIALIZATION == CommDlgExtendedError(), /* win9x */
+           "expected %d or %d, got %d\n", 0, CDERR_INITIALIZATION,
            CommDlgExtendedError());
     }
 }
