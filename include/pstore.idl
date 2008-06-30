@@ -77,6 +77,7 @@ typedef struct {
 
 [
   object,
+  uuid(5a6f1ec1-2db1-11d0-8c39-00c04fd9126b),
   pointer_default(unique)
 ]
 interface IEnumPStoreItems : IUnknown
@@ -97,6 +98,7 @@ interface IEnumPStoreItems : IUnknown
 
 [
   object,
+  uuid(789c1cbf-31ee-11d0-8c39-00c04fd9126b),
   pointer_default(unique)
 ]
 interface IEnumPStoreTypes : IUnknown
@@ -120,6 +122,7 @@ interface IEnumPStoreTypes : IUnknown
  */
 [
   object,
+  uuid(5a6f1ec0-2db1-11d0-8c39-00c04fd9126b),
   pointer_default(unique)
 ]
 interface IPStore : IUnknown
