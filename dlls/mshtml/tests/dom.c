@@ -1821,7 +1821,7 @@ static void test_default_body(IHTMLBodyElement *body)
 
 static void test_window(IHTMLDocument2 *doc)
 {
-    IHTMLWindow2 *window;
+    IHTMLWindow2 *window, *window2, *self;
     IHTMLDocument2 *doc2 = NULL;
     HRESULT hres;
 
@@ -1835,6 +1835,20 @@ static void test_window(IHTMLDocument2 *doc)
     ok(doc2 != NULL, "doc2 == NULL\n");
 
     IHTMLDocument_Release(doc2);
+
+    hres = IHTMLWindow2_get_window(window, &window2);
+    ok(hres == S_OK, "get_window failed: %08x\n", hres);
+    ok(window2 != NULL, "window2 == NULL\n");
+
+    hres = IHTMLWindow2_get_self(window, &self);
+    ok(hres == S_OK, "get_window failed: %08x\n", hres);
+    ok(window2 != NULL, "self == NULL\n");
+
+    ok(self == window2, "self != window2\n");
+
+    IHTMLWindow2_Release(window2);
+    IHTMLWindow2_Release(self);
+
     IHTMLWindow2_Release(window);
 }
 
