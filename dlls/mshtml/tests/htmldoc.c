@@ -3720,6 +3720,11 @@ static void test_QueryInterface(IUnknown *unk)
     ok(qi == NULL, "qi=%p, ezpected NULL\n", qi);
 
     qi = (void*)0xdeadbeef;
+    hres = IUnknown_QueryInterface(unk, &IID_IPersistPropertyBag, (void**)&qi);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(qi == NULL, "qi=%p, ezpected NULL\n", qi);
+
+    qi = (void*)0xdeadbeef;
     hres = IUnknown_QueryInterface(unk, &IID_UndocumentedScriptIface, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(qi == NULL, "qi=%p, ezpected NULL\n", qi);
