@@ -73,7 +73,7 @@
 @ stub GetPrinterDriverW
 @ stub GetPrinterW
 @ stdcall ImpersonatePrinterClient(long)
-@ stub InitializeRouter
+@ stdcall InitializeRouter()
 @ stdcall IsLocalCall()
 @ stub IsNamedPipeRpcCall
 @ stub LoadDriver
