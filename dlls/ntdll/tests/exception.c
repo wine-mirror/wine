@@ -169,6 +169,11 @@ static const struct exception
       0, 5, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffe } },
     { { 0xa3, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xffffffff; ret */
       0, 5, STATUS_ACCESS_VIOLATION, 2, { 1, 0xffffffff } },
+
+    /* test exception with cleared %ds and %es */
+    { { 0x1e, 0x06, 0x31, 0xc0, 0x8e, 0xd8, 0x8e, 0xc0, 0xfa, 0x07, 0x1f, 0xc3 },
+          /* push %ds; push %es; xorl %eax,%eax; mov %ax,%ds; mov %ax,%es; cli; pop %es; pop %ds; ret */
+      8, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 };
 
 static int got_exception;
@@ -216,7 +221,7 @@ LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *ExceptionIn
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
         ok(context->Eip == (DWORD)code_mem + 0xa ||
-           context->Eip == (DWORD)code_mem + 0xb, /* win2k3 */
+           broken(context->Eip == (DWORD)code_mem + 0xb), /* win2k3 */
            "Eip at %x instead of %x or %x\n", context->Eip,
            (DWORD)code_mem + 0xa, (DWORD)code_mem + 0xb);
     }
@@ -248,7 +253,7 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
         ok(context->Eip == (DWORD)code_mem + 0xa ||
-           context->Eip == (DWORD)code_mem + 0xb, /* win2k3 */
+           broken(context->Eip == (DWORD)code_mem + 0xb), /* win2k3 */
            "Eip at %x instead of %x or %x\n", context->Eip,
            (DWORD)code_mem + 0xa, (DWORD)code_mem + 0xb);
     }
