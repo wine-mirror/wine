@@ -385,6 +385,8 @@ void WINAPI NdrProxySendReceive(void *This,
   }
 
   pStubMsg->dwStubPhase = PROXY_SENDRECEIVE;
+  /* avoid sending uninitialised parts of the buffer on the wire */
+  pStubMsg->RpcMsg->BufferLength = pStubMsg->Buffer - (unsigned char *)pStubMsg->RpcMsg->Buffer;
   hr = IRpcChannelBuffer_SendReceive(pStubMsg->pRpcChannelBuffer,
                                     (RPCOLEMESSAGE*)pStubMsg->RpcMsg,
                                     &Status);
