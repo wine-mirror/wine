@@ -1161,7 +1161,9 @@ static void test_client_init(void)
     ok(stubMsg.IsClient == 1, "stubMsg.IsClient should have been 1 instead of %u\n", stubMsg.IsClient);
     TEST_ZERO(ReuseBuffer, "%d");
     TEST_ZERO(pAllocAllNodesContext, "%p");
-    TEST_ZERO(pPointerQueueState, "%p");
+    ok(stubMsg.pPointerQueueState == 0 ||
+       broken(stubMsg.pPointerQueueState == (void *)0xcccccccc), /* win2k */
+       "stubMsg.pPointerQueueState should have been unset instead of %p\n", stubMsg.pPointerQueueState);
     TEST_ZERO(IgnoreEmbeddedPointers, "%d");
     TEST_ZERO(PointerBufferMark, "%p");
     TEST_ZERO(CorrDespIncrement, "%d");
@@ -1260,9 +1262,13 @@ todo_wine
     TEST_ULONG_UNSET(MemorySize);
     TEST_POINTER_UNSET(Memory);
     ok(stubMsg.IsClient == 0, "stubMsg.IsClient should have been 0 instead of %u\n", stubMsg.IsClient);
-    TEST_ZERO(ReuseBuffer, "%d");
+    ok(stubMsg.ReuseBuffer == 0 ||
+       broken(stubMsg.ReuseBuffer == 1), /* win2k */
+       "stubMsg.ReuseBuffer should have been set to zero instead of %d\n", stubMsg.ReuseBuffer);
     TEST_ZERO(pAllocAllNodesContext, "%p");
-    TEST_ZERO(pPointerQueueState, "%p");
+    ok(stubMsg.pPointerQueueState == 0 ||
+       broken(stubMsg.pPointerQueueState == (void *)0xcccccccc), /* win2k */
+       "stubMsg.pPointerQueueState should have been unset instead of %p\n", stubMsg.pPointerQueueState);
     TEST_ZERO(IgnoreEmbeddedPointers, "%d");
     TEST_ZERO(PointerBufferMark, "%p");
     ok(stubMsg.CorrDespIncrement == 0xcc, "CorrDespIncrement should have been unset instead of 0x%x\n", stubMsg.CorrDespIncrement);
