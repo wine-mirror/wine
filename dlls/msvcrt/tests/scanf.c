@@ -41,7 +41,6 @@ static void test_sscanf( void )
     ok( ret == EOF,"sscanf returns %x instead of %x\n", ret, EOF );
 
     /* check %p */
-    todo_wine {
     ok( sscanf("000000000046F170", "%p", &ptr) == 1, "sscanf failed\n"  );
     ok( ptr == (void *)0x46F170,"sscanf reads %p instead of %x\n", ptr, 0x46F170 );
 
@@ -66,7 +65,6 @@ static void test_sscanf( void )
 
     ok( sscanf("1234", "%P", &ptr) == 1, "sscanf failed\n"  );
     ok( ptr == (void *)0x1234,"sscanf reads %p instead of %x\n", ptr, 0x1234 );
-    }
 
     /* check %x */
     strcpy(buffer,"0x519");
