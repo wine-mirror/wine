@@ -348,7 +348,7 @@ static void test_xmlelem_collection(void)
     hr = IEnumVARIANT_Next(enumVar, 1, &var, &num_vars);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&var) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var));
-    ok(num_vars == 1, "Expected 1, got %d\n", 1);
+    ok(num_vars == 1, "Expected 1, got %d\n", num_vars);
 
     hr = IUnknown_QueryInterface(V_DISPATCH(&var), &IID_IXMLElement, (LPVOID *)&child);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -370,7 +370,7 @@ static void test_xmlelem_collection(void)
     hr = IEnumVARIANT_Next(enumVar, 1, &var, &num_vars);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&var) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var));
-    ok(num_vars == 1, "Expected 1, got %d\n", 1);
+    ok(num_vars == 1, "Expected 1, got %d\n", num_vars);
 
     hr = IUnknown_QueryInterface(V_DISPATCH(&var), &IID_IXMLElement, (LPVOID *)&child);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
