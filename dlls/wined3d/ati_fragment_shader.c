@@ -850,19 +850,6 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     mat[1][1] = (mat[1][1] + 1.0) * 0.5;
     GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), (float *) mat));
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
-
-    /* FIXME: This should go away
-     * This is currently needed because atifs borrows a pixel shader implementation
-     * from somewhere else, but consumes bump map matrix change events. The other pixel
-     * shader implementation may need notification about the change to update the texbem
-     * constants. Once ATIFS supports real shaders on its own, and GLSL/ARB have a replacement
-     * pipeline this call can go away
-     *
-     * FIXME2: Even considering this workaround calling FFPStateTable directly isn't nice
-     * as well. Better would be to call the model's table we inherit from, but currently
-     * it is always the FFP table, and as soon as this changes we can remove the call anyway
-     */
-    FFPStateTable[state].apply(state, stateblock, context);
 }
 #undef GLINFO_LOCATION
 
