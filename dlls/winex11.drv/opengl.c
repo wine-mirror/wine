@@ -1850,7 +1850,7 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEVICE* p
 /**
  * X11DRV_wglShareLists
  *
- * For OpenGL32 wglShaderLists.
+ * For OpenGL32 wglShareLists.
  */
 BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
     Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
@@ -3652,7 +3652,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
 /**
  * X11DRV_wglShareLists
  *
- * For OpenGL32 wglShaderLists.
+ * For OpenGL32 wglShareLists.
  */
 BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
     opengl_error();
