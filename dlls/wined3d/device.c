@@ -6059,6 +6059,54 @@ static void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo) {
     checkGLcall("glBindFramebuffer()");
 }
 
+/* TODO: Handle stencil attachments */
+static void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer) {
+    IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
+
+    if (use_render_buffer && depth_stencil_impl->current_renderbuffer) {
+        GL_EXTCALL(glFramebufferRenderbufferEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depth_stencil_impl->current_renderbuffer->id));
+        checkGLcall("glFramebufferRenderbufferEXT()");
+    } else {
+        IWineD3DBaseTextureImpl *texture_impl;
+        GLenum texttarget, target;
+        GLint old_binding = 0;
+
+        texttarget = depth_stencil_impl->glDescription.target;
+        if(texttarget == GL_TEXTURE_2D) {
+            target = GL_TEXTURE_2D;
+            glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
+        } else if(texttarget == GL_TEXTURE_RECTANGLE_ARB) {
+            target = GL_TEXTURE_RECTANGLE_ARB;
+            glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
+        } else {
+            target = GL_TEXTURE_CUBE_MAP_ARB;
+            glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
+        }
+
+        IWineD3DSurface_PreLoad(depth_stencil);
+
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+        glBindTexture(target, old_binding);
+
+        /* Update base texture states array */
+        if (SUCCEEDED(IWineD3DSurface_GetContainer(depth_stencil, &IID_IWineD3DBaseTexture, (void **)&texture_impl))) {
+            texture_impl->baseTexture.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
+            texture_impl->baseTexture.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
+            if (texture_impl->baseTexture.bindCount) {
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(texture_impl->baseTexture.sampler));
+            }
+
+            IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture_impl);
+        }
+
+        GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, texttarget,
+                    depth_stencil_impl->glDescription.textureName, depth_stencil_impl->glDescription.level));
+        checkGLcall("glFramebufferTexture2DEXT()");
+    }
+}
+
 static void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) {
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
     IWineD3DBaseTextureImpl *texture_impl;
@@ -6409,53 +6457,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice
 /* TODO: Handle stencil attachments */
 static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_stencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
 
     TRACE("Set depth stencil to %p\n", depth_stencil);
 
-    if (depth_stencil_impl) {
-        if (depth_stencil_impl->current_renderbuffer) {
-            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depth_stencil_impl->current_renderbuffer->id));
-            checkGLcall("glFramebufferRenderbufferEXT()");
-        } else {
-            IWineD3DBaseTextureImpl *texture_impl;
-            GLenum texttarget, target;
-            GLint old_binding = 0;
-
-            texttarget = depth_stencil_impl->glDescription.target;
-            if(texttarget == GL_TEXTURE_2D) {
-                target = GL_TEXTURE_2D;
-                glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-            } else if(texttarget == GL_TEXTURE_RECTANGLE_ARB) {
-                target = GL_TEXTURE_RECTANGLE_ARB;
-                glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
-            } else {
-                target = GL_TEXTURE_CUBE_MAP_ARB;
-                glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
-            }
-
-            IWineD3DSurface_PreLoad(depth_stencil);
-
-            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-            glBindTexture(target, old_binding);
-
-            /* Update base texture states array */
-            if (SUCCEEDED(IWineD3DSurface_GetContainer(depth_stencil, &IID_IWineD3DBaseTexture, (void **)&texture_impl))) {
-                texture_impl->baseTexture.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
-                texture_impl->baseTexture.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
-                if (texture_impl->baseTexture.bindCount) {
-                    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(texture_impl->baseTexture.sampler));
-                }
-
-                IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture_impl);
-            }
-
-            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, texttarget,
-                    depth_stencil_impl->glDescription.textureName, depth_stencil_impl->glDescription.level));
-            checkGLcall("glFramebufferTexture2DEXT()");
-        }
+    if (depth_stencil) {
+        attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, depth_stencil, TRUE);
     } else {
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
