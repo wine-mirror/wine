@@ -136,9 +136,9 @@ static void test_cube_texture_mipmap_gen(IDirect3DDevice9 *device_ptr)
     /* testing shows that autogenmipmap and rendertarget are mutually exclusive options */
     hr = IDirect3DDevice9_CreateCubeTexture(device_ptr, 64, 0, (D3DUSAGE_RENDERTARGET |
                                             D3DUSAGE_AUTOGENMIPMAP), D3DFMT_X8R8G8B8,
-                                            D3DPOOL_MANAGED, &texture_ptr, 0);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_CreateTexture returned 0x%08x, expected 0x%08x\n",
-       hr, D3DERR_INVALIDCALL);
+                                            D3DPOOL_DEFAULT, &texture_ptr, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned 0x%08x, expected 0x%08x\n",
+       hr, D3D_OK);
     if (texture_ptr) IDirect3DCubeTexture9_Release(texture_ptr);
     texture_ptr = NULL;
 
@@ -185,9 +185,9 @@ static void test_mipmap_gen(IDirect3DDevice9 *device)
     /* testing shows that autogenmipmap and rendertarget are mutually exclusive options */
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, (D3DUSAGE_RENDERTARGET |
                                         D3DUSAGE_AUTOGENMIPMAP), D3DFMT_X8R8G8B8,
-                                        D3DPOOL_MANAGED, &texture, 0);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_CreateTexture returned 0x%08x, expected 0x%08x\n",
-       hr, D3DERR_INVALIDCALL);
+                                        D3DPOOL_DEFAULT, &texture, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned 0x%08x, expected 0x%08x\n",
+       hr, D3D_OK);
     if (texture) IDirect3DTexture9_Release(texture);
     texture = NULL;
 
