@@ -855,6 +855,7 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
     if (pPropBag)
         IPropertyBag_Release(pPropBag);
     CoTaskMemFree(szClsidTemp);
+    CoTaskMemFree(pwszParseName);
 
     if (SUCCEEDED(hr) && ppMoniker)
         *ppMoniker = pMoniker;
