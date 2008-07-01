@@ -853,6 +853,7 @@ static void test_domnode( void )
     IXMLDOMNamedNodeMap *map = NULL;
     IXMLDOMNode *node = NULL, *next = NULL;
     IXMLDOMNodeList *list = NULL;
+    IXMLDOMAttribute *attr = NULL;
     DOMNodeType type = NODE_INVALID;
     VARIANT_BOOL b;
     BSTR str;
@@ -935,6 +936,13 @@ static void test_domnode( void )
         ok( r == E_FAIL, "getAttribute ret %08x\n", r );
         ok( V_VT(&var) == VT_NULL || V_VT(&var) == VT_EMPTY, "vt = %x\n", V_VT(&var));
         VariantClear(&var);
+
+        attr = (IXMLDOMAttribute*)0xdeadbeef;
+        r = IXMLDOMElement_getAttributeNode( element, str, &attr);
+        todo_wine {
+        ok( r == E_FAIL, "getAttributeNode ret %08x\n", r );
+        ok( attr == NULL, "getAttributeNode ret %p, expected NULL\n", attr );
+        }
         SysFreeString( str );
 
         str = SysAllocString( szdl );	
@@ -951,6 +959,15 @@ static void test_domnode( void )
 
         r = IXMLDOMElement_getAttribute( element, str, NULL );
         ok( r == E_INVALIDARG, "getAttribute ret %08x\n", r );
+
+        attr = NULL;
+        r = IXMLDOMElement_getAttributeNode( element, str, &attr);
+        todo_wine {
+        ok( r == S_OK, "GetAttributeNode ret %08x\n", r );
+        ok( attr != NULL, "getAttributeNode returned NULL\n" );
+        }
+        if(attr)
+            IXMLDOMAttribute_Release(attr);
 
         SysFreeString( str );
 
