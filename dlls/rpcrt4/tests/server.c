@@ -333,6 +333,18 @@ s_square_encu(encu_t *eu)
   }
 }
 
+double
+s_square_unencu(int t, unencu_t *eu)
+{
+  switch (t)
+  {
+  case ENCU_I: return eu->i * eu->i;
+  case ENCU_F: return eu->f * eu->f;
+  default:
+    return 0.0;
+  }
+}
+
 void
 s_check_se2(se_t *s)
 {
@@ -844,6 +856,7 @@ union_tests(void)
 {
   encue_t eue;
   encu_t eu;
+  unencu_t uneu;
   sun_t su;
   int i;
 
@@ -871,6 +884,12 @@ union_tests(void)
   eu.t = ENCU_F;
   eu.tagged_union.f = 3.0;
   ok(square_encu(&eu) == 9.0, "RPC square_encu\n");
+
+  uneu.i = 4;
+  ok(square_unencu(ENCU_I, &uneu) == 16.0, "RPC square_unencu\n");
+
+  uneu.f = 5.0;
+  ok(square_unencu(ENCU_F, &uneu) == 25.0, "RPC square_unencu\n");
 
   eue.t = E1;
   eue.tagged_union.i1 = 8;
