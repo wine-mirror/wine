@@ -43,6 +43,7 @@ static void test_parse_for_entire_network(void)
     LPITEMIDLIST pidl;
     DWORD attr = ~0;
     DWORD expected_attr;
+    DWORD alter_attr;
 
     hr = SHGetDesktopFolder(&psfDesktop);
     ok(hr == S_OK, "SHGetDesktopFolder failed with error 0x%x\n", hr);
@@ -52,8 +53,11 @@ static void test_parse_for_entire_network(void)
     todo_wine
     ok(eaten == 0xdeadbeef, "eaten should not have been set to %u\n", eaten);
     expected_attr = SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_STORAGEANCESTOR|SFGAO_HASPROPSHEET|SFGAO_CANLINK;
+    alter_attr = (expected_attr & (~SFGAO_STORAGEANCESTOR)) | SFGAO_STREAM;
     todo_wine
-    ok(attr == expected_attr, "attr should be 0x%x, not 0x%x\n", expected_attr, attr);
+    ok(attr == expected_attr ||
+       attr == alter_attr, /* win2k */
+       "attr should be 0x%x or 0x%x, not 0x%x\n", expected_attr, alter_attr, attr);
 
     ILFree(pidl);
 }
