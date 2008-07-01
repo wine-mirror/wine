@@ -939,10 +939,8 @@ static void test_domnode( void )
 
         attr = (IXMLDOMAttribute*)0xdeadbeef;
         r = IXMLDOMElement_getAttributeNode( element, str, &attr);
-        todo_wine {
         ok( r == E_FAIL, "getAttributeNode ret %08x\n", r );
         ok( attr == NULL, "getAttributeNode ret %p, expected NULL\n", attr );
-        }
         SysFreeString( str );
 
         str = SysAllocString( szdl );	
@@ -962,10 +960,8 @@ static void test_domnode( void )
 
         attr = NULL;
         r = IXMLDOMElement_getAttributeNode( element, str, &attr);
-        todo_wine {
         ok( r == S_OK, "GetAttributeNode ret %08x\n", r );
         ok( attr != NULL, "getAttributeNode returned NULL\n" );
-        }
         if(attr)
             IXMLDOMAttribute_Release(attr);
 

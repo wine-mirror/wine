@@ -582,8 +582,33 @@ static HRESULT WINAPI domelem_getAttributeNode(
     IXMLDOMElement *iface,
     BSTR p, IXMLDOMAttribute** attributeNode )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domelem *This = impl_from_IXMLDOMElement( iface );
+    xmlChar *xml_name;
+    xmlNodePtr element;
+    xmlAttrPtr attr;
+    IUnknown *unk;
+    HRESULT hr = E_FAIL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), attributeNode);
+
+    element = get_element( This );
+    if ( !element )
+        return E_FAIL;
+
+    xml_name = xmlChar_from_wchar(p);
+
+    attr = xmlHasProp(element, xml_name);
+    if(attr) {
+        unk = create_attribute((xmlNodePtr)attr);
+        hr = IUnknown_QueryInterface(unk, &IID_IXMLDOMAttribute, (void**)attributeNode);
+        IUnknown_Release(unk);
+    }else {
+        *attributeNode = NULL;
+    }
+
+    HeapFree(GetProcessHeap(), 0, xml_name);
+
+    return hr;
 }
 
 static HRESULT WINAPI domelem_setAttributeNode(
