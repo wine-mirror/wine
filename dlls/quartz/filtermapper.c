@@ -1210,6 +1210,8 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
     OutputType[0] = clsOutMaj;
     OutputType[1] = clsOutSub;
 
+    *ppEnum = NULL;
+
     hr = IFilterMapper2_EnumMatchingFilters((IFilterMapper2*)This,
                                        &ppEnumMoniker,
                                        0,
@@ -1236,7 +1238,6 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         nb_mon++;
     }
 
-    *ppEnum = NULL;
     if (!nb_mon)
     {
         IEnumMoniker_Release(ppEnumMoniker);
@@ -1249,6 +1250,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         IEnumMoniker_Release(ppEnumMoniker);
         return E_OUTOFMEMORY;
     }
+    ZeroMemory(regfilters, nb_mon * sizeof(REGFILTER)); /* will prevent bad free of Name in case of error. */
     
     IEnumMoniker_Reset(ppEnumMoniker);
     while(IEnumMoniker_Next(ppEnumMoniker, 1, &IMon, &nb) == S_OK)
@@ -1281,7 +1283,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
                 hr = E_OUTOFMEMORY;
         }
 
-        if (SUCCEEDED(hrSub))
+        if (SUCCEEDED(hrSub) && regfilters[idx].Name)
         {
             memcpy(regfilters[idx].Name, V_UNION(&var, bstrVal), len);
             regfilters[idx].Clsid = clsid;
@@ -1294,17 +1296,13 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
         VariantClear(&var);
     }
 
-    /* In case of release all resources */
-    if (!SUCCEEDED(hr))
+    if (SUCCEEDED(hr))
     {
-        for (idx = 0; idx < nb_mon; idx++)
-            CoTaskMemFree(regfilters[idx].Name);
-        CoTaskMemFree(regfilters);
-        IEnumMoniker_Release(ppEnumMoniker);
-        return hr;
+        hr = IEnumRegFiltersImpl_Construct(regfilters, nb_mon, ppEnum);
     }
 
-    hr = IEnumRegFiltersImpl_Construct(regfilters, nb_mon, ppEnum);
+    for (idx = 0; idx < nb_mon; idx++)
+        CoTaskMemFree(regfilters[idx].Name);
     CoTaskMemFree(regfilters);
     IEnumMoniker_Release(ppEnumMoniker);
     
