@@ -209,6 +209,7 @@ unsigned char *WINAPI NdrSendReceive( PMIDL_STUB_MESSAGE stubmsg, unsigned char 
     return NULL;
   }
 
+  /* avoid sending uninitialised parts of the buffer on the wire */
   stubmsg->RpcMsg->BufferLength = buffer - (unsigned char *)stubmsg->RpcMsg->Buffer;
   status = I_RpcSendReceive(stubmsg->RpcMsg);
   if (status != RPC_S_OK)
