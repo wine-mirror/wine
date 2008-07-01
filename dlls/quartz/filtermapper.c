@@ -1356,6 +1356,8 @@ static HRESULT WINAPI FilterMapper_RegisterFilter(IFilterMapper * iface, CLSID c
         CloseHandle(hKey);
     }
     
+    CoTaskMemFree(wszClsid);
+
     return hr;
 }
 
