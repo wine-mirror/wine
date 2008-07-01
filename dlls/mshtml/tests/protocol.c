@@ -724,8 +724,9 @@ static void test_about_protocol(void)
 
         hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, QUERY_CAN_NAVIGATE, 0,
                                                buf, sizeof(buf), &size, 0);
-        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER,
-           "QueryInfo returned: %08x, expected INET_E_USE_DEFAULT_PROTOCOLHANDLER\n", hres);
+        ok(hres == INET_E_USE_DEFAULT_PROTOCOLHANDLER ||
+           hres == E_FAIL, /* win2k */
+           "QueryInfo returned: %08x, expected INET_E_USE_DEFAULT_PROTOCOLHANDLER or E_FAIL\n", hres);
 
         size = 0xdeadbeef;
         memset(buf, '?', sizeof(buf));
