@@ -131,6 +131,13 @@ static ULONG WINAPI IEnumRegFiltersImpl_Release(IEnumRegFilters * iface)
 
     if (!refCount)
     {
+        ULONG i;
+
+        for(i = 0; i < This->size; i++)
+        {
+            CoTaskMemFree(This->RegFilters[i].Name);
+        }
+        CoTaskMemFree(This->RegFilters);
         CoTaskMemFree(This);
         return 0;
     } else
