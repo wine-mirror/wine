@@ -6464,11 +6464,10 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
 
 static void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *rtimpl = (IWineD3DSurfaceImpl *)render_target;
 
     TRACE("Set render target %u to %p\n", idx, render_target);
 
-    if (rtimpl) {
+    if (render_target) {
         attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, idx, render_target);
         This->draw_buffers[idx] = GL_COLOR_ATTACHMENT0_EXT + idx;
     } else {
