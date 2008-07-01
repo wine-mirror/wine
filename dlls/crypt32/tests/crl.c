@@ -164,11 +164,13 @@ static void testAddCRL(void)
     /* Weird--bad add disposition leads to an access violation in Windows. */
     ret = CertAddEncodedCRLToStore(0, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), 0, NULL);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+                GetLastError() == E_INVALIDARG /* Vista */),
+     "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n", GetLastError());
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), 0, NULL);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+                GetLastError() == E_INVALIDARG /* Vista */),
      "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
 
     /* Weird--can add a CRL to the NULL store (does this have special meaning?)
