@@ -302,7 +302,7 @@ typedef struct {
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     void (*shader_dll_load_init)(void);
     void (*shader_fragment_enable)(IWineD3DDevice *iface, BOOL enable);
-    const struct StateEntry *StateTable;
+    const struct StateEntry *StateTable_remove; /* TODO: This has to go away */
 } shader_backend_t;
 
 extern const shader_backend_t atifs_shader_backend;
@@ -588,6 +588,7 @@ struct StateEntry
 
 /* "Base" state table */
 extern const struct StateEntry FFPStateTable[];
+void compile_state_table(struct StateEntry *StateTable, const struct StateEntry *temptable);
 
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext {
@@ -812,6 +813,7 @@ struct IWineD3DDeviceImpl
     const shader_backend_t *shader_backend;
     hash_table_t *glsl_program_lookup;
     void *shader_priv;
+    struct StateEntry StateTable[STATE_HIGHEST + 1];
 
     /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */

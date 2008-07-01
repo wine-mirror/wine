@@ -859,7 +859,7 @@ struct StateEntry ATIFSStateTable[STATE_HIGHEST + 1];
 static void init_state_table() {
     unsigned int i;
     const DWORD rep = STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP);
-    memcpy(ATIFSStateTable, arb_program_shader_backend.StateTable, sizeof(ATIFSStateTable));
+    memcpy(ATIFSStateTable, arb_program_shader_backend.StateTable_remove, sizeof(ATIFSStateTable));
 
     for(i = 0; i < MAX_TEXTURES; i++) {
         ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP)].apply = set_tex_op_atifs;

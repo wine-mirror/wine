@@ -102,7 +102,7 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_hand
     /* Mark all states dirty to force a proper initialization of the states on the first use of the context
      */
     for(state = 0; state <= STATE_HIGHEST; state++) {
-        Context_MarkStateDirty(This->contexts[This->numContexts], state, This->shader_backend->StateTable);
+        Context_MarkStateDirty(This->contexts[This->numContexts], state, This->StateTable);
     }
 
     This->numContexts++;
@@ -641,7 +641,7 @@ static inline void set_blit_dimension(UINT width, UINT height) {
  *****************************************************************************/
 static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *context, UINT width, UINT height) {
     int i;
-    const struct StateEntry *StateTable = This->shader_backend->StateTable;
+    const struct StateEntry *StateTable = This->StateTable;
 
     TRACE("Setting up context %p for blitting\n", context);
     if(context->last_was_blit) {
@@ -836,7 +836,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     BOOL oldRenderOffscreen = This->render_offscreen;
     const WINED3DFORMAT oldFmt = ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->resource.format;
     const WINED3DFORMAT newFmt = ((IWineD3DSurfaceImpl *) target)->resource.format;
-    const struct StateEntry *StateTable = This->shader_backend->StateTable;
+    const struct StateEntry *StateTable = This->StateTable;
 
     /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
      * the alpha blend state changes with different render target formats
@@ -1034,7 +1034,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     BYTE                          shift;
     WineD3DContext                *context;
     GLint                         drawBuffer=0;
-    const struct StateEntry       *StateTable = This->shader_backend->StateTable;
+    const struct StateEntry       *StateTable = This->StateTable;
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
     if(This->lastActiveRenderTarget != target || tid != This->lastThread) {

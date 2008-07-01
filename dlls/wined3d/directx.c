@@ -3446,6 +3446,8 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &object->ps_selected_mode, &object->vs_selected_mode);
     object->shader_backend = select_shader_backend(Adapter, DeviceType);
 
+    compile_state_table(object->StateTable, object->shader_backend->StateTable_remove);
+
     /* Prefer the vtable with functions optimized for single dirtifyable objects if the shader
      * model can deal with that. It is essentially the same, just with adjusted
      * Set*ShaderConstantF implementations

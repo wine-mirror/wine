@@ -446,7 +446,7 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     /* colorkey fixup for stage 0 alphaop depends on WINED3DRS_ALPHABLENDENABLE state,
         so it may need updating */
     if (stateblock->renderState[WINED3DRS_COLORKEYENABLE]) {
-        const struct StateEntry *StateTable = stateblock->wineD3DDevice->shader_backend->StateTable;
+        const struct StateEntry *StateTable = stateblock->wineD3DDevice->StateTable;
         StateTable[STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP)].apply(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
     }
 }
@@ -496,7 +496,7 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     }
 
     if(enable_ckey || context->last_was_ckey) {
-        const struct StateEntry *StateTable = stateblock->wineD3DDevice->shader_backend->StateTable;
+        const struct StateEntry *StateTable = stateblock->wineD3DDevice->StateTable;
         StateTable[STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP)].apply(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
     }
     context->last_was_ckey = enable_ckey;
@@ -4885,3 +4885,10 @@ const struct StateEntry FFPStateTable[] =
     { /* STATE_MATERIAL                             */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable},
     { /* STATE_FRONTFACE                            */      STATE_FRONTFACE,                                    frontface           },
 };
+
+/* Remove the temptable, but instead pass a fragment pipeline table, vertex pipeline and misc pipeline
+ * table in
+ */
+void compile_state_table(struct StateEntry *StateTable, const struct StateEntry *temptable) {
+    memcpy(StateTable, temptable, sizeof(*StateTable) * (STATE_HIGHEST + 1));
+}
