@@ -1698,6 +1698,7 @@ typedef struct IWineD3DSwapChainImpl
     WINED3DPRESENT_PARAMETERS presentParms;
     DWORD                     orig_width, orig_height;
     WINED3DFORMAT             orig_fmt;
+    WINED3DGAMMARAMP          orig_gamma;
 
     long prev_time, frames;   /* Performance tracking */
     unsigned int vSyncCounter;

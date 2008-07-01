@@ -88,6 +88,10 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
     WINED3DDISPLAYMODE mode;
     int i;
 
+    TRACE("Destroying swapchain %p\n", iface);
+
+    IWineD3DSwapChain_SetGammaRamp(iface, 0, &This->orig_gamma);
+
     /* release the ref to the front and back buffer parents */
     if(This->frontBuffer) {
         IWineD3DSurface_SetContainer(This->frontBuffer, 0);
