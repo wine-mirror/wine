@@ -63,22 +63,22 @@ static void test_xmlelem(void)
     V_I4(&vType) = XMLELEMTYPE_ELEMENT;
     V_VT(&vName) = VT_NULL;
     hr = IXMLDocument_createElement(doc, vType, vName, &element);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(element != NULL, "Expected non-NULL element\n");
 
     hr = IXMLElement_get_tagName(element, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(lstrlenW(str) == 0, "Expected empty tag name\n");
     SysFreeString(str);
 
     parent = (IXMLElement *)0xdeadbeef;
     hr = IXMLElement_get_parent(element, &parent);
-    ok(hr == 1, "Expected 1, got %d\n", hr);
+    ok(hr == 1, "Expected 1, got %08x\n", hr);
     ok(parent == NULL, "Expected NULL parent\n");
 
     str = SysAllocString(noexist);
     hr = IXMLElement_getAttribute(element, str, &vValue);
-    ok(hr == S_FALSE, "Expected S_FALSE, got %d\n", hr);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
     ok(V_VT(&vValue) == VT_EMPTY, "Expected VT_EMPTY, got %d\n", V_VT(&vValue));
     ok(V_BSTR(&vValue) == NULL, "Expected null value\n");
     VariantClear(&vValue);
@@ -89,13 +89,13 @@ static void test_xmlelem(void)
     V_VT(&vValue) = VT_BSTR;
     V_BSTR(&vValue) = val;
     hr = IXMLElement_setAttribute(element, str, vValue);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     SysFreeString(str);
     SysFreeString(val);
 
     str = SysAllocString(crazyCase2);
     hr = IXMLElement_getAttribute(element, str, &vValue);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&vValue) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&vValue));
     ok(!lstrcmpW(V_BSTR(&vValue), propVal), "Expected 'val'\n");
     VariantClear(&vValue);
@@ -106,24 +106,24 @@ static void test_xmlelem(void)
     V_VT(&vValue) = VT_BSTR;
     V_BSTR(&vValue) = val;
     hr = IXMLElement_setAttribute(element, str, vValue);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     SysFreeString(val);
 
     hr = IXMLElement_getAttribute(element, str, &vValue);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&vValue) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&vValue));
     ok(!lstrcmpW(V_BSTR(&vValue), propVal), "Expected 'val'\n");
     VariantClear(&vValue);
 
     hr = IXMLElement_removeAttribute(element, str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* remove now nonexistent attribute */
     hr = IXMLElement_removeAttribute(element, str);
-    ok(hr == S_FALSE, "Expected S_FALSE, got %d\n", hr);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
 
     hr = IXMLElement_getAttribute(element, str, &vValue);
-    ok(hr == 1, "Expected 1, got %d\n", hr);
+    ok(hr == 1, "Expected 1, got %08x\n", hr);
     ok(V_VT(&vValue) == VT_EMPTY, "Expected VT_EMPTY, got %d\n", V_VT(&vValue));
     ok(V_BSTR(&vValue) == NULL, "Expected null value\n");
     SysFreeString(str);
@@ -131,22 +131,22 @@ static void test_xmlelem(void)
 
     children = (IXMLElementCollection *)0xdeadbeef;
     hr = IXMLElement_get_children(element, &children);
-    ok(hr == 1, "Expected 1, got %d\n", hr);
+    ok(hr == 1, "Expected 1, got %08x\n", hr);
     ok(children == NULL, "Expected NULL collection\n");
 
     hr = IXMLElement_get_type(element, &type);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XMLELEMTYPE_ELEMENT, "Expected XMLELEMTYPE_ELEMENT, got %ld\n", type);
 
     hr = IXMLElement_get_text(element, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(lstrlenW(str) == 0, "Expected empty text\n");
     SysFreeString(str);
 
     /* put_text with an ELEMENT */
     str = SysAllocString(propVal);
     hr = IXMLElement_put_text(element, str);
-    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %d\n", hr);
+    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %08x\n", hr);
     SysFreeString(str);
 
     V_VT(&vType) = VT_I4;
@@ -157,29 +157,29 @@ static void test_xmlelem(void)
     ok(child != NULL, "Expected non-NULL child\n");
 
     hr = IXMLElement_addChild(element, child, 0, -1);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     str = SysAllocString(propVal);
     hr = IXMLElement_put_text(child, str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     SysFreeString(str);
 
     parent = (IXMLElement *)0xdeadbeef;
     hr = IXMLElement_get_parent(child, &parent);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(parent != element, "Expected parent != element\n");
 
     hr = IXMLElement_get_type(parent, &type);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XMLELEMTYPE_ELEMENT, "Expected XMLELEMTYPE_ELEMENT, got %ld\n", type);
 
     children = (IXMLElementCollection *)0xdeadbeef;
     hr = IXMLElement_get_children(element, &children);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(children != NULL, "Expected non-NULL collection\n");
 
     hr = IXMLElementCollection_get_length(children, &num_child);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(num_child == 1, "Expected 1, got %ld\n", num_child);
 
     V_VT(&vIndex) = VT_I4;
@@ -187,36 +187,36 @@ static void test_xmlelem(void)
     V_VT(&vName) = VT_ERROR;
     V_ERROR(&vName) = DISP_E_PARAMNOTFOUND;
     hr = IXMLElementCollection_item(children, vIndex, vName, (IDispatch **)&child2);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child2 != NULL, "Expected non-NULL child\n");
 
     hr = IXMLElement_get_type(child2, &type);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XMLELEMTYPE_TEXT, "Expected XMLELEMTYPE_TEXT, got %ld\n", type);
 
     hr = IXMLElement_get_text(element, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(str, propVal), "Expected 'val'\n");
     SysFreeString(str);
 
     hr = IXMLElement_get_text(child2, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(str, propVal), "Expected 'val'\n");
     SysFreeString(str);
 
     /* try put_text on ELEMENT again, now that it has a text child */
     str = SysAllocString(nextVal);
     hr = IXMLElement_put_text(element, str);
-    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %d\n", hr);
+    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %08x\n", hr);
     SysFreeString(str);
 
     str = SysAllocString(nextVal);
     hr = IXMLElement_put_text(child2, str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     SysFreeString(str);
 
     hr = IXMLElement_get_text(element, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(str, nextVal), "Expected 'val'\n");
     SysFreeString(str);
 
@@ -291,18 +291,18 @@ static void test_xmlelem_collection(void)
         goto cleanup;
 
     hr = IXMLDocument_get_root(doc, &element);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(element != NULL, "Expected non-NULL element\n");
 
     hr = IXMLElement_get_children(element, &collection);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(collection != NULL, "Expected non-NULL collection\n");
 
     hr = IXMLElementCollection_get_length(collection, NULL);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     hr = IXMLElementCollection_get_length(collection, &length);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(length == 2, "Expected 2, got %ld\n", length);
 
     /* IXMLElementCollection:put_length does nothing */
@@ -326,64 +326,64 @@ static void test_xmlelem_collection(void)
 
     /* make sure the length hasn't changed */
     hr = IXMLElementCollection_get_length(collection, &length);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(length == 2, "Expected 2, got %ld\n", length);
 
     /* IXMLElementCollection implements IEnumVARIANT */
     hr = IXMLElementCollection_QueryInterface(collection, &IID_IEnumVARIANT, (LPVOID *)&enumVar);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(enumVar != NULL, "Expected non-NULL enumVar\n");
     IEnumVARIANT_Release(enumVar);
 
     hr = IXMLElementCollection_get__newEnum(collection, &unk);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(unk != NULL, "Expected non-NULL unk\n");
 
     hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (LPVOID *)&enumVar);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(enumVar != NULL, "Expected non-NULL enumVar\n");
     IUnknown_Release(unk);
 
     /* <Number>1234</Number> */
     hr = IEnumVARIANT_Next(enumVar, 1, &var, &num_vars);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&var) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var));
     ok(num_vars == 1, "Expected 1, got %d\n", 1);
 
     hr = IUnknown_QueryInterface(V_DISPATCH(&var), &IID_IXMLElement, (LPVOID *)&child);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child != NULL, "Expected non-NULL child\n");
 
     VariantClear(&var);
 
     hr = IXMLElement_get_type(child, &type);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XMLELEMTYPE_ELEMENT, "Expected XMLELEMTYPE_ELEMENT, got %ld\n", type);
 
     hr = IXMLElement_get_tagName(child, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(str, szNumber), "Expected NUMBER\n");
     SysFreeString(str);
     IXMLElement_Release(child);
 
     /* <Name>Captain Ahab</Name> */
     hr = IEnumVARIANT_Next(enumVar, 1, &var, &num_vars);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&var) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var));
     ok(num_vars == 1, "Expected 1, got %d\n", 1);
 
     hr = IUnknown_QueryInterface(V_DISPATCH(&var), &IID_IXMLElement, (LPVOID *)&child);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child != NULL, "Expected non-NULL child\n");
 
     VariantClear(&var);
 
     hr = IXMLElement_get_type(child, &type);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XMLELEMTYPE_ELEMENT, "Expected XMLELEMTYPE_ELEMENT, got %ld\n", type);
 
     hr = IXMLElement_get_tagName(child, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(str, szName), "Expected NAME\n");
     SysFreeString(str);
     IXMLElement_Release(child);
@@ -394,15 +394,15 @@ static void test_xmlelem_collection(void)
     V_VT(&vName) = VT_ERROR;
     V_ERROR(&vName) = DISP_E_PARAMNOTFOUND;
     hr = IXMLElementCollection_item(collection, vIndex, vName, (IDispatch **)&child);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child != NULL, "Expected non-NULL child\n");
 
     hr = IXMLElement_get_type(child, &type);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XMLELEMTYPE_ELEMENT, "Expected XMLELEMTYPE_ELEMENT, got %ld\n", type);
 
     hr = IXMLElement_get_tagName(child, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(str, szNumber), "Expected NUMBER\n");
     SysFreeString(str);
     IXMLElement_Release(child);
@@ -413,15 +413,15 @@ static void test_xmlelem_collection(void)
     V_VT(&vName) = VT_ERROR;
     V_ERROR(&vName) = DISP_E_PARAMNOTFOUND;
     hr = IXMLElementCollection_item(collection, vIndex, vName, (IDispatch **)&child);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child != NULL, "Expected non-NULL child\n");
 
     hr = IXMLElement_get_type(child, &type);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(type == XMLELEMTYPE_ELEMENT, "Expected XMLELEMTYPE_ELEMENT, got %ld\n", type);
 
     hr = IXMLElement_get_tagName(child, &str);
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(str, szName), "Expected NAME\n");
     SysFreeString(str);
     IXMLElement_Release(child);
@@ -434,7 +434,7 @@ static void test_xmlelem_collection(void)
     V_I4(&vIndex) = -1;
     child = (IXMLElement *)0xdeadbeef;
     hr = IXMLElementCollection_item(collection, vIndex, vName, (IDispatch **)&child);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(child == NULL, "Expected NULL child\n");
 
     IEnumVARIANT_Release(enumVar);
