@@ -35,6 +35,15 @@ INT WINAPI VDMEnumTaskWOW(DWORD dwProcessId, TASKENUMPROC fp, LPARAM lparam)
 }
 
 /***********************************************************************
+ *      VDMEnumProcessWOW  (VDMDBG.@)
+ */
+INT WINAPI VDMEnumProcessWOW(PROCESSENUMPROC fp, LPARAM lparam)
+{
+    FIXME("%p: stub!\n", fp);
+    return 0;
+}
+
+/***********************************************************************
  *		DllMain  (VDMDBG.@)
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
