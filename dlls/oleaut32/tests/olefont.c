@@ -769,8 +769,9 @@ static void test_AddRefHfont(void)
 
     /* Decrement reference for destroyed hfnt1 */
     hres = IFont_ReleaseHfont(ifnt2,hfnt1);
-    ok(hres == S_OK,
-        "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
+    ok(hres == S_OK ||
+       hres == S_FALSE, /* <= win2k */
+        "IFont_AddRefHfont: (Release ref) Expected S_OK or S_FALSE but got 0x%08x\n",
         hres);
 
     /* Shows that releasing all IFONT's does clear the HFONT cache. */
