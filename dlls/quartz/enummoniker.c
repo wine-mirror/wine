@@ -123,6 +123,11 @@ static ULONG WINAPI EnumMonikerImpl_Release(LPENUMMONIKER iface)
 
     if (!ref)
     {
+        ULONG i;
+
+        for (i = 0; i < This->nMonikerCount; i++)
+            IMoniker_Release(This->ppMoniker[i]);
+
         CoTaskMemFree(This->ppMoniker);
         This->ppMoniker = NULL;
         CoTaskMemFree(This);
