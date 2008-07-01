@@ -661,8 +661,10 @@ static void FM2_DeleteRegFilter(REGFILTER2 * prf2)
             CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].lpMediaType[j].clsMajorType);
             CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].lpMediaType[j].clsMinorType);
         }
+        CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].lpMediaType);
         CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2[i].lpMedium);
     }
+    CoTaskMemFree((LPVOID)prf2->u.s1.rgPins2);
 }
 
 static HRESULT WINAPI FilterMapper2_RegisterFilter(
