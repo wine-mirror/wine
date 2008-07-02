@@ -1347,6 +1347,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     WSADATA wsaData;
     int last_request = 0;
     char host_header[22];
+    static int test_b = 0;
 
     WSAStartup(MAKEWORD(1,1), &wsaData);
 
@@ -1480,6 +1481,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 send(c, okmsg, sizeof okmsg-1, 0);
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
+        if (!test_b && strstr(buffer, "/testB HTTP/1.1"))
+        {
+            test_b = 1;
+            send(c, okmsg, sizeof okmsg-1, 0);
+            recvfrom(c, buffer, sizeof buffer, 0, NULL, NULL);
+            send(c, okmsg, sizeof okmsg-1, 0);
         }
         if (strstr(buffer, "GET /quit"))
         {
@@ -1779,6 +1787,38 @@ static void test_connection_header(int port)
     InternetCloseHandle(ses);
 }
 
+static void test_http1_1(int port)
+{
+    HINTERNET ses, con, req;
+    BOOL ret;
+
+    ses = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnect(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequest(con, NULL, "/testB", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    if (ret)
+    {
+        InternetCloseHandle(req);
+
+        req = HttpOpenRequest(con, NULL, "/testB", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+        ok(req != NULL, "HttpOpenRequest failed\n");
+
+        ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+        todo_wine
+        ok(ret, "HttpSendRequest failed\n");
+    }
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -1803,6 +1843,7 @@ static void test_http_connection(void)
     test_basic_request(si.port, "POST", "/test5");
     test_basic_request(si.port, "GET", "/test6");
     test_connection_header(si.port);
+    test_http1_1(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
