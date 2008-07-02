@@ -3831,6 +3831,130 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
+void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("(%p) New location %#x\n", This, location);
+
+    if (location & ~SFLAG_DS_LOCATIONS) {
+        FIXME("(%p) Invalid location (%#x) specified\n", This, location);
+    }
+
+    This->Flags &= ~SFLAG_DS_LOCATIONS;
+    This->Flags |= location;
+}
+
+void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+    TRACE("(%p) New location %#x\n", This, location);
+
+    /* TODO: Make this work for modes other than FBO */
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return;
+
+    if (This->Flags & location) {
+        TRACE("(%p) Location (%#x) is already up to date\n", This, location);
+        return;
+    }
+
+    if (This->current_renderbuffer) {
+        FIXME("(%p) Not supported with fixed up depth stencil\n", This);
+        return;
+    }
+
+    if (location == SFLAG_DS_OFFSCREEN) {
+        if (This->Flags & SFLAG_DS_ONSCREEN) {
+            GLint old_binding = 0;
+
+            TRACE("(%p) Copying onscreen depth buffer to depth texture\n", This);
+
+            ENTER_GL();
+
+            if (!device->depth_blt_texture) {
+                glGenTextures(1, &device->depth_blt_texture);
+            }
+
+            /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
+             * directly on the FBO texture. That's because we need to flip. */
+            GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+            glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
+            glBindTexture(GL_TEXTURE_2D, device->depth_blt_texture);
+            glCopyTexImage2D(This->glDescription.target,
+                    This->glDescription.level,
+                    This->glDescription.glFormatInternal,
+                    0,
+                    0,
+                    This->currentDesc.Width,
+                    This->currentDesc.Height,
+                    0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+            glBindTexture(GL_TEXTURE_2D, old_binding);
+
+            /* Setup the destination */
+            if (!device->depth_blt_rb) {
+                GL_EXTCALL(glGenRenderbuffersEXT(1, &device->depth_blt_rb));
+                checkGLcall("glGenRenderbuffersEXT");
+            }
+            if (device->depth_blt_rb_w != This->currentDesc.Width
+                    || device->depth_blt_rb_h != This->currentDesc.Height) {
+                GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, device->depth_blt_rb));
+                checkGLcall("glBindRenderbufferEXT");
+                GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGBA8, This->currentDesc.Width, This->currentDesc.Height));
+                checkGLcall("glRenderbufferStorageEXT");
+                device->depth_blt_rb_w = This->currentDesc.Width;
+                device->depth_blt_rb_h = This->currentDesc.Height;
+            }
+
+            bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->dst_fbo);
+            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, device->depth_blt_rb));
+            checkGLcall("glFramebufferRenderbufferEXT");
+            attach_depth_stencil_fbo(device, GL_FRAMEBUFFER_EXT, iface, FALSE);
+
+            /* Do the actual blit */
+            depth_blt((IWineD3DDevice *)device, device->depth_blt_texture);
+            checkGLcall("depth_blt");
+
+            if (device->render_offscreen) {
+                bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->fbo);
+            } else {
+                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+                checkGLcall("glBindFramebuffer()");
+            }
+
+            LEAVE_GL();
+        } else {
+            FIXME("No up to date depth stencil location\n");
+        }
+    } else if (location == SFLAG_DS_ONSCREEN) {
+        if (This->Flags & SFLAG_DS_OFFSCREEN) {
+            TRACE("(%p) Copying depth texture to onscreen depth buffer\n", This);
+
+            ENTER_GL();
+
+            GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+            checkGLcall("glBindFramebuffer()");
+            depth_blt((IWineD3DDevice *)device, This->glDescription.textureName);
+            checkGLcall("depth_blt");
+
+            if (device->render_offscreen) {
+                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, device->fbo));
+                checkGLcall("glBindFramebuffer()");
+            }
+
+            LEAVE_GL();
+        } else {
+            FIXME("No up to date depth stencil location\n");
+        }
+    } else {
+        ERR("(%p) Invalid location (%#x) specified\n", This, location);
+    }
+
+    This->Flags |= location;
+}
+
 static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DWORD flag, BOOL persistent) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DBaseTexture *texture;

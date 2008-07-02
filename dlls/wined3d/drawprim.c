@@ -719,7 +719,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
     glEnd();
 }
 
-static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
+void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLint old_binding = 0;
 
@@ -758,83 +758,6 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
      * storage to read and restore the old shader settings
      */
     This->shader_backend->shader_select(iface, use_ps(This), use_vs(This));
-}
-
-void depth_copy(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *)This->auto_depth_stencil_buffer;
-
-    /* Only copy the depth buffer if there is one. */
-    if (!depth_stencil) return;
-
-    /* TODO: Make this work for modes other than FBO */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return;
-
-    if (depth_stencil->current_renderbuffer) {
-        FIXME("Not supported with fixed up depth stencil\n");
-        return;
-    }
-
-    if (This->render_offscreen) {
-        GLint old_binding = 0;
-
-        TRACE("Copying onscreen depth buffer to offscreen surface\n");
-
-        if (!This->depth_blt_texture) {
-            glGenTextures(1, &This->depth_blt_texture);
-        }
-
-        /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
-         * directly on the FBO texture. That's because we need to flip. */
-        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-        glBindTexture(GL_TEXTURE_2D, This->depth_blt_texture);
-        glCopyTexImage2D(depth_stencil->glDescription.target,
-                depth_stencil->glDescription.level,
-                depth_stencil->glDescription.glFormatInternal,
-                0,
-                0,
-                depth_stencil->currentDesc.Width,
-                depth_stencil->currentDesc.Height,
-                0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-        glBindTexture(GL_TEXTURE_2D, old_binding);
-
-        /* Setup the destination */
-        if (!This->depth_blt_rb) {
-            GL_EXTCALL(glGenRenderbuffersEXT(1, &This->depth_blt_rb));
-            checkGLcall("glGenRenderbuffersEXT");
-        }
-        if (This->depth_blt_rb_w != depth_stencil->currentDesc.Width
-                || This->depth_blt_rb_h != depth_stencil->currentDesc.Height) {
-            GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, This->depth_blt_rb));
-            checkGLcall("glBindRenderbufferEXT");
-            GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGBA8, depth_stencil->currentDesc.Width, depth_stencil->currentDesc.Height));
-            checkGLcall("glRenderbufferStorageEXT");
-            This->depth_blt_rb_w = depth_stencil->currentDesc.Width;
-            This->depth_blt_rb_h = depth_stencil->currentDesc.Height;
-        }
-
-        bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->dst_fbo);
-        GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, This->depth_blt_rb));
-        checkGLcall("glFramebufferRenderbufferEXT");
-        attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, (IWineD3DSurface *)depth_stencil, FALSE);
-
-        /* Do the actual blit */
-        depth_blt(iface, This->depth_blt_texture);
-        checkGLcall("depth_blt");
-
-        bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
-    } else {
-        TRACE("Copying offscreen surface to onscreen depth buffer\n");
-
-        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-        checkGLcall("glBindFramebuffer()");
-        depth_blt(iface, depth_stencil->glDescription.textureName);
-        checkGLcall("depth_blt");
-    }
 }
 
 static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, UINT numberOfVertices,
@@ -1067,10 +990,11 @@ void drawPrimitive(IWineD3DDevice *iface,
     ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
     ENTER_GL();
 
-    if (This->depth_copy_state == WINED3D_DCS_COPY) {
-        depth_copy(iface);
+    if (This->stencilBufferTarget) {
+        DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+        surface_load_ds_location(This->stencilBufferTarget, location);
+        surface_modify_ds_location(This->stencilBufferTarget, location);
     }
-    This->depth_copy_state = WINED3D_DCS_INITIAL;
 
     {
         GLenum glPrimType;

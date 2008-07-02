@@ -1011,9 +1011,6 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         This->isInDraw = oldInDraw;
     }
 
-    if(oldRenderOffscreen != This->render_offscreen && This->depth_copy_state != WINED3D_DCS_NO_COPY) {
-        This->depth_copy_state = WINED3D_DCS_COPY;
-    }
     return context;
 }
 

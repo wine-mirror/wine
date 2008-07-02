@@ -857,7 +857,6 @@ struct IWineD3DDeviceImpl
 
     /* For rendering to a texture using glCopyTexImage */
     BOOL                    render_offscreen;
-    WINED3D_DEPTHCOPYSTATE  depth_copy_state;
     GLuint                  fbo;
     GLuint                  src_fbo;
     GLuint                  dst_fbo;
@@ -1355,26 +1354,28 @@ void get_drawable_size_pbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *hei
 void get_drawable_size_fbo(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
 
 /* Surface flags: */
-#define SFLAG_OVERSIZE    0x00000001 /* Surface is bigger than gl size, blts only */
-#define SFLAG_CONVERTED   0x00000002 /* Converted for color keying or Palettized */
-#define SFLAG_DIBSECTION  0x00000004 /* Has a DIB section attached for GetDC */
-#define SFLAG_LOCKABLE    0x00000008 /* Surface can be locked */
-#define SFLAG_DISCARD     0x00000010 /* ??? */
-#define SFLAG_LOCKED      0x00000020 /* Surface is locked atm */
-#define SFLAG_INTEXTURE   0x00000040 /* The GL texture contains the newest surface content */
-#define SFLAG_INDRAWABLE  0x00000080 /* The gl drawable contains the most up to date data */
-#define SFLAG_INSYSMEM    0x00000100 /* The system memory copy is most up to date */
-#define SFLAG_NONPOW2     0x00000200 /* Surface sizes are not a power of 2 */
-#define SFLAG_DYNLOCK     0x00000400 /* Surface is often locked by the app */
-#define SFLAG_DYNCHANGE   0x00000C00 /* Surface contents are changed very often, implies DYNLOCK */
-#define SFLAG_DCINUSE     0x00001000 /* Set between GetDC and ReleaseDC calls */
-#define SFLAG_LOST        0x00002000 /* Surface lost flag for DDraw */
-#define SFLAG_USERPTR     0x00004000 /* The application allocated the memory for this surface */
-#define SFLAG_GLCKEY      0x00008000 /* The gl texture was created with a color key */
-#define SFLAG_CLIENT      0x00010000 /* GL_APPLE_client_storage is used on that texture */
-#define SFLAG_ALLOCATED   0x00020000 /* A gl texture is allocated for this surface */
-#define SFLAG_PBO         0x00040000 /* Has a PBO attached for speeding up data transfers for dynamically locked surfaces */
-#define SFLAG_NORMCOORD   0x00080000   /* Set if the GL texture coords are normalized(non-texture rectangle) */
+#define SFLAG_OVERSIZE      0x00000001 /* Surface is bigger than gl size, blts only */
+#define SFLAG_CONVERTED     0x00000002 /* Converted for color keying or Palettized */
+#define SFLAG_DIBSECTION    0x00000004 /* Has a DIB section attached for GetDC */
+#define SFLAG_LOCKABLE      0x00000008 /* Surface can be locked */
+#define SFLAG_DISCARD       0x00000010 /* ??? */
+#define SFLAG_LOCKED        0x00000020 /* Surface is locked atm */
+#define SFLAG_INTEXTURE     0x00000040 /* The GL texture contains the newest surface content */
+#define SFLAG_INDRAWABLE    0x00000080 /* The gl drawable contains the most up to date data */
+#define SFLAG_INSYSMEM      0x00000100 /* The system memory copy is most up to date */
+#define SFLAG_NONPOW2       0x00000200 /* Surface sizes are not a power of 2 */
+#define SFLAG_DYNLOCK       0x00000400 /* Surface is often locked by the app */
+#define SFLAG_DYNCHANGE     0x00000C00 /* Surface contents are changed very often, implies DYNLOCK */
+#define SFLAG_DCINUSE       0x00001000 /* Set between GetDC and ReleaseDC calls */
+#define SFLAG_LOST          0x00002000 /* Surface lost flag for DDraw */
+#define SFLAG_USERPTR       0x00004000 /* The application allocated the memory for this surface */
+#define SFLAG_GLCKEY        0x00008000 /* The gl texture was created with a color key */
+#define SFLAG_CLIENT        0x00010000 /* GL_APPLE_client_storage is used on that texture */
+#define SFLAG_ALLOCATED     0x00020000 /* A gl texture is allocated for this surface */
+#define SFLAG_PBO           0x00040000 /* Has a PBO attached for speeding up data transfers for dynamically locked surfaces */
+#define SFLAG_NORMCOORD     0x00080000 /* Set if the GL texture coords are normalized(non-texture rectangle) */
+#define SFLAG_DS_ONSCREEN   0x00100000 /* Is a depth stencil, last modified onscreen */
+#define SFLAG_DS_OFFSCREEN  0x00200000 /* Is a depth stencil, last modified offscreen */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
@@ -1386,19 +1387,23 @@ void get_drawable_size_fbo(IWineD3DSurfaceImpl *This, UINT *width, UINT *height)
  * SFLAG_PBO: PBOs don't use 'normal' memory. It is either allocated by the driver or must be NULL.
  * SFLAG_CLIENT: OpenGL uses our memory as backup
  */
-#define SFLAG_DONOTFREE  (SFLAG_OVERSIZE   | \
-                          SFLAG_CONVERTED  | \
-                          SFLAG_DIBSECTION | \
-                          SFLAG_LOCKED     | \
-                          SFLAG_DYNLOCK    | \
-                          SFLAG_DYNCHANGE  | \
-                          SFLAG_USERPTR    | \
-                          SFLAG_PBO        | \
-                          SFLAG_CLIENT)
+#define SFLAG_DONOTFREE     (SFLAG_OVERSIZE   | \
+                             SFLAG_CONVERTED  | \
+                             SFLAG_DIBSECTION | \
+                             SFLAG_LOCKED     | \
+                             SFLAG_DYNLOCK    | \
+                             SFLAG_DYNCHANGE  | \
+                             SFLAG_USERPTR    | \
+                             SFLAG_PBO        | \
+                             SFLAG_CLIENT)
 
-#define SFLAG_LOCATIONS  (SFLAG_INSYSMEM   | \
-                          SFLAG_INTEXTURE  | \
-                          SFLAG_INDRAWABLE)
+#define SFLAG_LOCATIONS     (SFLAG_INSYSMEM   | \
+                             SFLAG_INTEXTURE  | \
+                             SFLAG_INDRAWABLE)
+
+#define SFLAG_DS_LOCATIONS  (SFLAG_DS_ONSCREEN | \
+                             SFLAG_DS_OFFSCREEN)
+
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
 
 typedef enum {
@@ -1751,6 +1756,8 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
 
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);
+void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location);
+void surface_load_ds_location(IWineD3DSurface *iface, DWORD location);
 
 BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize);
 BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize);
@@ -2442,5 +2449,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         IWineD3DSurface *dst_surface, WINED3DRECT *dst_rect, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip);
 void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo);
 void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
+void depth_blt(IWineD3DDevice *iface, GLuint texture);
 
 #endif

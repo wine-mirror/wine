@@ -5019,31 +5019,29 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     }
 
     if (Flags & WINED3DCLEAR_ZBUFFER) {
+        DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         glDepthMask(GL_TRUE);
         glClearDepth(Z);
         checkGLcall("glClearDepth");
         glMask = glMask | GL_DEPTH_BUFFER_BIT;
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
 
-        if(This->depth_copy_state == WINED3D_DCS_COPY) {
-            if(vp->X != 0 || vp->Y != 0 ||
-               vp->Width < depth_stencil->currentDesc.Width || vp->Height < depth_stencil->currentDesc.Height) {
-                depth_copy((IWineD3DDevice *) This);
-            }
-            else if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE] && (
-               This->stateBlock->scissorRect.left > 0 || This->stateBlock->scissorRect.top > 0 ||
-               This->stateBlock->scissorRect.right < depth_stencil->currentDesc.Width ||
-               This->stateBlock->scissorRect.bottom < depth_stencil->currentDesc.Height)) {
-                depth_copy((IWineD3DDevice *) This);
-            }
-            else if(Count > 0 && pRects && (
-               pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
-               pRects[0].x2 < depth_stencil->currentDesc.Width ||
-               pRects[0].y2 < depth_stencil->currentDesc.Height)) {
-                depth_copy((IWineD3DDevice *) This);
-            }
+        if (vp->X != 0 || vp->Y != 0 ||
+                vp->Width < depth_stencil->currentDesc.Width || vp->Height < depth_stencil->currentDesc.Height) {
+            surface_load_ds_location(This->stencilBufferTarget, location);
         }
-        This->depth_copy_state = WINED3D_DCS_INITIAL;
+        else if (This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE] && (
+                This->stateBlock->scissorRect.left > 0 || This->stateBlock->scissorRect.top > 0 ||
+                This->stateBlock->scissorRect.right < depth_stencil->currentDesc.Width ||
+                This->stateBlock->scissorRect.bottom < depth_stencil->currentDesc.Height)) {
+            surface_load_ds_location(This->stencilBufferTarget, location);
+        }
+        else if (Count > 0 && pRects && (
+                pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
+                pRects[0].x2 < depth_stencil->currentDesc.Width ||
+                pRects[0].y2 < depth_stencil->currentDesc.Height)) {
+            surface_load_ds_location(This->stencilBufferTarget, location);
+        }
     }
 
     if (Flags & WINED3DCLEAR_TARGET) {
@@ -5133,6 +5131,12 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
             target->Flags |= SFLAG_INTEXTURE;
         }
     }
+    if (Flags & WINED3DCLEAR_ZBUFFER) {
+        /* Note that WINED3DCLEAR_ZBUFFER implies a depth stencil exists on the device */
+        DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+        surface_modify_ds_location(This->stencilBufferTarget, location);
+    }
+
     LEAVE_GL();
 
     return WINED3D_OK;
@@ -6759,9 +6763,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
         * stencil buffer and incur an extra memory overhead
          ******************************************************/
 
+        if (This->stencilBufferTarget) {
+            ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
+            surface_load_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
+            surface_modify_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
+        }
+
         tmp = This->stencilBufferTarget;
         This->stencilBufferTarget = pNewZStencil;
-        This->depth_copy_state = WINED3D_DCS_NO_COPY;
         /* should we be calling the parent or the wined3d surface? */
         if (NULL != This->stencilBufferTarget) IWineD3DSurface_AddRef(This->stencilBufferTarget);
         if (NULL != tmp) IWineD3DSurface_Release(tmp);
