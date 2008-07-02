@@ -4838,7 +4838,7 @@ const struct StateEntry FFPStateTable[] =
     { /*511, WINED3DTS_WORLDMATRIX(255)             */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)),        transform_worldex   },
       /* Various Vertex states follow */
     { /*   , STATE_STREAMSRC                        */      STATE_VDECL,                                        NULL                },
-    { /*   , STATE_INDEXBUFFER                      */      STATE_INDEXBUFFER,                                  indexbuffer         },
+    { /*   , STATE_INDEXBUFFER                      */      STATE_INDEXBUFFER,                                  NULL                },
     { /*   , STATE_VDECL                            */      STATE_VDECL,                                        NULL                },
     { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        NULL                },
     { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     NULL                },
@@ -4913,8 +4913,9 @@ const struct StateEntryTemplate misc_state_template[] = {
      */
     { STATE_VERTEXSHADERCONSTANT,                         { STATE_VERTEXSHADERCONSTANT,                         shaderconstant      }},
     { STATE_PIXELSHADERCONSTANT,                          { STATE_VERTEXSHADERCONSTANT,                         shaderconstant      }},
-    /* Viewport */
+
     { STATE_VIEWPORT,                                     { STATE_VIEWPORT,                                     viewport_miscpart   }},
+    { STATE_INDEXBUFFER,                                  { STATE_INDEXBUFFER,                                  indexbuffer         }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
