@@ -660,8 +660,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIREC
         FIXME("Attempting to create a managed offscreen plain surface\n");
         return D3DERR_INVALIDCALL;
     }    
-        /*MSDN: D3DPOOL_SCRATCH will return a surface that has identical characteristics to a surface created by the Microsoft DirectX 8.x method CreateImageSurface.
-        
+        /*
         'Off-screen plain surfaces are always lockable, regardless of their pool types.'
         but then...
         D3DPOOL_DEFAULT is the appropriate pool for use with the IDirect3DDevice9::StretchRect and IDirect3DDevice9::ColorFill.
