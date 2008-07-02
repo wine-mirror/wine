@@ -1642,7 +1642,8 @@ static void test_LookupAccountName(void)
     ok(!ret, "Expected 0, got %d\n", ret);
     todo_wine
     {
-        ok(GetLastError() == ERROR_NONE_MAPPED,
+        ok(GetLastError() == ERROR_NONE_MAPPED ||
+           broken(GetLastError() == ERROR_TRUSTED_RELATIONSHIP_FAILURE),
            "Expected ERROR_NONE_MAPPED, got %d\n", GetLastError());
         ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
         ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
