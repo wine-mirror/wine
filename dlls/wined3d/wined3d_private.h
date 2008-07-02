@@ -593,6 +593,7 @@ struct StateEntryTemplate
 };
 
 extern const struct StateEntryTemplate misc_state_template[];
+extern const struct StateEntryTemplate ffp_vertexstate_template[];
 
 /* "Base" state table */
 extern const struct StateEntry FFPStateTable[];

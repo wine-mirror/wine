@@ -3447,7 +3447,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->shader_backend = select_shader_backend(Adapter, DeviceType);
 
     compile_state_table(object->StateTable, object->multistate_funcs,
-                        NULL, NULL, misc_state_template,
+                        ffp_vertexstate_template, NULL, misc_state_template,
                         object->shader_backend->StateTable_remove);
 
     /* Prefer the vtable with functions optimized for single dirtifyable objects if the shader

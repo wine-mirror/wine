@@ -3381,7 +3381,7 @@ static inline void drawPrimitiveTraceDataLocations(
     return;
 }
 
-static void handleStreams(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL fixup = FALSE;
     WineDirect3DVertexStridedData *dataLocations = &device->strided_streams;
@@ -3477,8 +3477,6 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL wasrhw = context->last_was_rhw;
-
-    handleStreams(state, stateblock, context);
 
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
      * here simply check whether a shader was set, or the user disabled shaders
@@ -4837,10 +4835,10 @@ const struct StateEntry FFPStateTable[] =
     { /*510, WINED3DTS_WORLDMATRIX(254)             */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(254)),        transform_worldex   },
     { /*511, WINED3DTS_WORLDMATRIX(255)             */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)),        transform_worldex   },
       /* Various Vertex states follow */
-    { /*   , STATE_STREAMSRC                        */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*   , STATE_STREAMSRC                        */      STATE_VDECL,                                        NULL                },
     { /*   , STATE_INDEXBUFFER                      */      STATE_INDEXBUFFER,                                  indexbuffer         },
-    { /*   , STATE_VDECL                            */      STATE_VDECL,                                        vertexdeclaration   },
-    { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*   , STATE_VDECL                            */      STATE_VDECL,                                        NULL                },
+    { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        NULL                },
     { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     viewport            },
     { /*   , STATE_VERTEXSHADERCONSTANT             */      STATE_VERTEXSHADERCONSTANT,                         shaderconstant      },
     { /*   , STATE_PIXELSHADERCONSTANT              */      STATE_VERTEXSHADERCONSTANT,                         shaderconstant      },
@@ -4904,6 +4902,14 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_DESTBLENDALPHA),             { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
     { STATE_RENDER(WINED3DRS_DESTBLENDALPHA),             { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
     { STATE_RENDER(WINED3DRS_BLENDOPALPHA),               { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_STREAMSRC,                                    { STATE_VDECL,                                        streamsrc           }},
+    { STATE_VDECL,                                        { STATE_VDECL,                                        streamsrc           }},
+    {0 /* Terminate */,                                   { 0,                                                  0                   }},
+};
+
+const struct StateEntryTemplate ffp_vertexstate_template[] = {
+    { STATE_VDECL,                                        { STATE_VDECL,                                        vertexdeclaration   }},
+    { STATE_VSHADER,                                      { STATE_VDECL,                                        vertexdeclaration   }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
