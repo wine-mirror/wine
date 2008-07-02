@@ -5418,6 +5418,11 @@ void compile_state_table(struct StateEntry *StateTable,
 
     memset(multistate_funcs, 0, sizeof(multistate_funcs));
 
+    for(i = 0; i < STATE_HIGHEST + 1; i++) {
+        StateTable[i].representative = 0;
+        StateTable[i].apply = state_undefined;
+    }
+
     for(type = 0; type < 3; type++) {
         /* This switch decides the order in which the states are applied */
         switch(type) {
