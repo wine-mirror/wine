@@ -94,6 +94,6 @@ HRESULT WINAPI GetAssemblyIdentityFromFile(LPCWSTR pwzFilePath, REFIID riid,
 HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
                             PDWORD pcchPath)
 {
-    FIXME("(%08x, %s, %p) stub!\n", dwCacheFlags, debugstr_w(pwzCachePath), pcchPath);
+    FIXME("(%08x, %p, %p) stub!\n", dwCacheFlags, pwzCachePath, pcchPath);
     return E_NOTIMPL;
 }
