@@ -1491,6 +1491,24 @@ static void test_create(void)
     VariantClear(&var);
     SysFreeString(name);
 
+    /* Create an Attribute */
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = NODE_ATTRIBUTE;
+    str = SysAllocString( szAttribute );
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+    ok( node != NULL, "node was null\n");
+    SysFreeString(str);
+
+    if(r == S_OK)
+    {
+        r = IXMLDOMNode_get_nodeTypeString(node, &str);
+        ok( r == S_OK, "returns %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("attribute") ), "incorrect nodeTypeString string\n");
+        SysFreeString(str);
+        IXMLDOMNode_Release( node );
+    }
+
     IXMLDOMElement_Release( element );
     IXMLDOMNode_Release( root );
     IXMLDOMDocument_Release( doc );

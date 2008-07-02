@@ -1224,6 +1224,17 @@ static HRESULT WINAPI domdoc_createNode(
         *node = create_node(xmlnode);
         TRACE("created %p\n", xmlnode);
         break;
+    case NODE_ATTRIBUTE:
+        xmlnode = (xmlNode *)xmlNewProp(NULL, xml_name, NULL);
+        if(xmlnode)
+        {
+            xmlnode->doc = get_doc( This );
+
+            *node = (IXMLDOMNode*)create_attribute(xmlnode);
+        }
+
+        TRACE("created %p\n", xmlnode);
+        break;
 
     default:
         FIXME("unhandled node type %d\n", node_type);
