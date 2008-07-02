@@ -234,7 +234,7 @@
 @ stdcall GdipFindFirstImageItem(ptr ptr)
 @ stub GdipFindNextImageItem
 @ stub GdipFlattenPath
-@ stdcall GdipFlush(long)
+@ stdcall GdipFlush(ptr long)
 @ stdcall GdipFree(ptr)
 @ stub GdipGetAdjustableArrowCapFillState
 @ stub GdipGetAdjustableArrowCapHeight
