@@ -66,6 +66,9 @@ static HRESULT WINAPI xmlnodelist_QueryInterface(
 {
     TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
 
+    if(!ppvObject)
+        return E_INVALIDARG;
+
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IXMLDOMNodeList ) )
@@ -203,7 +206,10 @@ static HRESULT WINAPI xmlnodelist_get_item(
     long nodeIndex = 0;
 
     TRACE("%p %ld\n", This, index);
- 
+
+    if(!listItem)
+        return E_INVALIDARG;
+
     *listItem = NULL;
 
     if (index < 0)
@@ -234,6 +240,9 @@ static HRESULT WINAPI xmlnodelist_get_length(
 
     TRACE("%p\n", This);
 
+    if(!listLength)
+        return E_INVALIDARG;
+
     curr = This->parent->children;
     while (curr)
     {
@@ -252,6 +261,9 @@ static HRESULT WINAPI xmlnodelist_nextNode(
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
 
     TRACE("%p %p\n", This, nextItem );
+
+    if(!nextItem)
+        return E_INVALIDARG;
 
     *nextItem = NULL;
 
