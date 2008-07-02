@@ -47,6 +47,40 @@ static HWND new_richedit(HWND parent) {
   return new_window(RICHEDIT_CLASS, ES_MULTILINE, parent);
 }
 
+static void processPendingMessages(void)
+{
+    MSG msg;
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+static void pressKeyWithModifier(HWND hwnd, BYTE mod_vk, BYTE vk)
+{
+    BYTE mod_scan_code = MapVirtualKey(mod_vk, MAPVK_VK_TO_VSC);
+    BYTE scan_code = MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+    SetFocus(hwnd);
+    keybd_event(mod_vk, mod_scan_code, 0, 0);
+    keybd_event(vk, scan_code, 0, 0);
+    keybd_event(vk, scan_code, KEYEVENTF_KEYUP, 0);
+    keybd_event(mod_vk, mod_scan_code, KEYEVENTF_KEYUP, 0);
+    processPendingMessages();
+}
+
+static void simulate_typing_characters(HWND hwnd, const char* szChars)
+{
+    int ret;
+
+    while (*szChars != '\0') {
+        SendMessageA(hwnd, WM_KEYDOWN, *szChars, 1);
+        ret = SendMessageA(hwnd, WM_CHAR, *szChars, 1);
+        ok(ret == 0, "WM_CHAR('%c') ret=%d\n", *szChars, ret);
+        SendMessageA(hwnd, WM_KEYUP, *szChars, 1);
+        szChars++;
+    }
+}
+
 static const char haystack[] = "WINEWine wineWine wine WineWine";
                              /* ^0        ^10       ^20       ^30 */
 
@@ -1430,7 +1464,6 @@ static void test_EM_AUTOURLDETECT(void)
     "This is some text with X\\ on it",
   };
   char buffer[1024];
-  MSG msg;
 
   parent = new_static_wnd(NULL);
   hwndRichEdit = new_richedit(parent);
@@ -1613,26 +1646,6 @@ static void test_EM_AUTOURLDETECT(void)
     hwndRichEdit = NULL;
   }
 
-#define INSERT_CR \
-  do { \
-    keybd_event('\r', 0x1c, 0, 0); \
-    keybd_event('\r', 0x1c, KEYEVENTF_KEYUP, 0); \
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { \
-      TranslateMessage(&msg); \
-      DispatchMessage(&msg); \
-    } \
-  } while (0)
-
-#define INSERT_BS \
-  do { \
-    keybd_event(0x08, 0x0e, 0, 0); \
-    keybd_event(0x08, 0x0e, KEYEVENTF_KEYUP, 0); \
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { \
-      TranslateMessage(&msg); \
-      DispatchMessage(&msg); \
-    } \
-  } while (0)
-
   /* Test detection of URLs within normal text - WM_CHAR case. */
   for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
     hwndRichEdit = new_richedit(parent);
@@ -1651,7 +1664,7 @@ static void test_EM_AUTOURLDETECT(void)
       SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
       for (u = 0; templates_delim[j][u]; u++) {
         if (templates_delim[j][u] == '\r') {
-          INSERT_CR;
+          simulate_typing_characters(hwndRichEdit, "\r");
         } else if (templates_delim[j][u] != 'X') {
           SendMessage(hwndRichEdit, WM_CHAR, templates_delim[j][u], 1);
         } else {
@@ -1701,7 +1714,7 @@ static void test_EM_AUTOURLDETECT(void)
          of the URL candidate, thus breaking the URL. It is expected that the
          CFE_LINK attribute should break across both pieces of the URL */
       SendMessage(hwndRichEdit, EM_SETSEL, at_offset+1, at_offset+1);
-      INSERT_CR;
+      simulate_typing_characters(hwndRichEdit, "\r");
       SendMessage(hwndRichEdit, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
 
       ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
@@ -1716,7 +1729,8 @@ static void test_EM_AUTOURLDETECT(void)
       /* end_offset moved because of paragraph break */
       ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
         "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset, end_offset+1, buffer);
-      if (buffer[end_offset+1] != '\0')
+      ok(buffer[end_offset], "buffer \"%s\" ended prematurely. Is it missing a newline character?\n", buffer);
+      if (buffer[end_offset] != 0  && buffer[end_offset+1] != '\0')
       {
         ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset+1, end_offset +2),
           "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset+1, end_offset +2, buffer);
@@ -1730,7 +1744,7 @@ static void test_EM_AUTOURLDETECT(void)
       /* The following will remove the just-inserted paragraph break, thus
          restoring the URL */
       SendMessage(hwndRichEdit, EM_SETSEL, at_offset+2, at_offset+2);
-      INSERT_BS;
+      simulate_typing_characters(hwndRichEdit, "\b");
       SendMessage(hwndRichEdit, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
 
       ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
@@ -3453,23 +3467,18 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 7, "EM_GETLINECOUNT returned %d, expected 7\n", r);
 
+    if (!redraw)
+        /* This is needed to avoid interferring with keybd_event calls
+         * on other tests that simulate keyboard events. */
+        SendMessage(hwndRichEdit, WM_SETREDRAW, TRUE, 0);
+
     DestroyWindow(hwndRichEdit);
 }
 
 static void test_WM_PASTE(void)
 {
-    MSG msg;
     int result;
     char buffer[1024] = {0};
-    char key_info[][3] =
-    {
-        /* VirtualKey, ScanCode, WM_CHAR code */
-        {'C', 0x2e,  3},	/* Ctrl-C */
-        {'X', 0x2d, 24},	/* Ctrl-X */
-        {'V', 0x2f, 22},	/* Ctrl-V */
-        {'Z', 0x2c, 26},	/* Ctrl-Z */
-        {'Y', 0x15, 25},	/* Ctrl-Y */
-    };
     const char* text1 = "testing paste\r";
     const char* text1_step1 = "testing paste\r\ntesting paste\r\n";
     const char* text1_after = "testing paste\r\n";
@@ -3482,34 +3491,25 @@ static void test_WM_PASTE(void)
        messages, probably because it inspects the keyboard state itself.
        Therefore, native requires this in order to obey Ctrl-<key> keystrokes.
      */
-#define SEND_CTRL_KEY(hwnd, k) \
-    keybd_event(VK_CONTROL, 0x1d, 0, 0);\
-    keybd_event(k[0], k[1], 0, 0);\
-    keybd_event(k[0], k[1], KEYEVENTF_KEYUP, 0);\
-    keybd_event(VK_CONTROL, 0x1d, KEYEVENTF_KEYUP, 0); \
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { \
-        TranslateMessage(&msg); \
-        DispatchMessage(&msg); \
-    }
 
-#define SEND_CTRL_C(hwnd) SEND_CTRL_KEY(hwnd, key_info[0])
-#define SEND_CTRL_X(hwnd) SEND_CTRL_KEY(hwnd, key_info[1])
-#define SEND_CTRL_V(hwnd) SEND_CTRL_KEY(hwnd, key_info[2])
-#define SEND_CTRL_Z(hwnd) SEND_CTRL_KEY(hwnd, key_info[3])
-#define SEND_CTRL_Y(hwnd) SEND_CTRL_KEY(hwnd, key_info[4])
+#define SEND_CTRL_C(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'C')
+#define SEND_CTRL_X(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'X')
+#define SEND_CTRL_V(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'V')
+#define SEND_CTRL_Z(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'Z')
+#define SEND_CTRL_Y(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'Y')
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text1);
     SendMessage(hwndRichEdit, EM_SETSEL, 0, 14);
 
-    SEND_CTRL_C(hwndRichEdit)   /* Copy */
+    SEND_CTRL_C(hwndRichEdit);   /* Copy */
     SendMessage(hwndRichEdit, EM_SETSEL, 14, 14);
-    SEND_CTRL_V(hwndRichEdit)   /* Paste */
+    SEND_CTRL_V(hwndRichEdit);   /* Paste */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Pasted text should be visible at this step */
     result = strcmp(text1_step1, buffer);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
-    SEND_CTRL_Z(hwndRichEdit)   /* Undo */
+    SEND_CTRL_Z(hwndRichEdit);   /* Undo */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Text should be the same as before (except for \r -> \r\n conversion) */
     result = strcmp(text1_after, buffer);
@@ -3518,21 +3518,21 @@ static void test_WM_PASTE(void)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text2);
     SendMessage(hwndRichEdit, EM_SETSEL, 8, 13);
-    SEND_CTRL_C(hwndRichEdit)   /* Copy */
+    SEND_CTRL_C(hwndRichEdit);   /* Copy */
     SendMessage(hwndRichEdit, EM_SETSEL, 14, 14);
-    SEND_CTRL_V(hwndRichEdit)   /* Paste */
+    SEND_CTRL_V(hwndRichEdit);   /* Paste */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Pasted text should be visible at this step */
     result = strcmp(text3, buffer);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
-    SEND_CTRL_Z(hwndRichEdit)   /* Undo */
+    SEND_CTRL_Z(hwndRichEdit);   /* Undo */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Text should be the same as before (except for \r -> \r\n conversion) */
     result = strcmp(text2_after, buffer);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
-    SEND_CTRL_Y(hwndRichEdit)   /* Redo */
+    SEND_CTRL_Y(hwndRichEdit);   /* Redo */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Text should revert to post-paste state */
     result = strcmp(buffer,text3);
@@ -4353,19 +4353,6 @@ static void test_WM_NOTIFY(void)
     DestroyWindow(parent);
 }
 
-static void simulate_typing_characters(HWND hwnd, const char* szChars)
-{
-    int ret;
-
-    while (*szChars != '\0') {
-        SendMessageA(hwnd, WM_KEYDOWN, *szChars, 1);
-        ret = SendMessageA(hwnd, WM_CHAR, *szChars, 1);
-        ok(ret == 0, "WM_CHAR('%c') ret=%d\n", *szChars, ret);
-        SendMessageA(hwnd, WM_KEYUP, *szChars, 1);
-        szChars++;
-    }
-}
-
 static void test_undo_coalescing(void)
 {
     HWND hwnd;
@@ -4484,54 +4471,42 @@ static void test_undo_coalescing(void)
     DestroyWindow(hwnd);
 }
 
-/* Used to simulate a Ctrl-Arrow Key press. */
-#define SEND_CTRL_EXT_KEY(hwnd, vk, scancode) \
-    keybd_event(VK_CONTROL, 0x1d, 0, 0);\
-    keybd_event(vk, scancode, KEYEVENTF_EXTENDEDKEY, 0);\
-    keybd_event(vk, scancode | 0x80, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 0);\
-    keybd_event(VK_CONTROL, 0x1d | 0x80, KEYEVENTF_KEYUP, 0); \
-    while (PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE)) { \
-        TranslateMessage(&msg); \
-        DispatchMessage(&msg); \
-    }
-#define SEND_CTRL_LEFT(hwnd) SEND_CTRL_EXT_KEY(hwnd, VK_LEFT, 0x4b)
-#define SEND_CTRL_RIGHT(hwnd) SEND_CTRL_EXT_KEY(hwnd, VK_RIGHT, 0x4d)
+#define SEND_CTRL_LEFT(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, VK_LEFT)
+#define SEND_CTRL_RIGHT(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, VK_RIGHT)
 
 static void test_word_movement(void)
 {
     HWND hwnd;
     int result;
     int sel_start, sel_end;
-    MSG msg;
 
     /* multi-line control inserts CR normally */
     hwnd = new_richedit(NULL);
 
-    SendMessage(hwnd, WM_SETFOCUS, (WPARAM)hwnd, 0);
     result = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"one two  three");
     ok (result == TRUE, "Failed to clear the text.\n");
     SendMessage(hwnd, EM_SETSEL, 0, 0);
     /* |one two three */
 
-    SEND_CTRL_RIGHT(hwnd)
+    SEND_CTRL_RIGHT(hwnd);
     /* one |two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
     ok(sel_start == 4, "Cursur is at %d instead of %d\n", sel_start, 4);
 
-    SEND_CTRL_RIGHT(hwnd)
+    SEND_CTRL_RIGHT(hwnd);
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
     ok(sel_start == 9, "Cursur is at %d instead of %d\n", sel_start, 9);
 
-    SEND_CTRL_LEFT(hwnd)
+    SEND_CTRL_LEFT(hwnd);
     /* one |two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
     ok(sel_start == 4, "Cursur is at %d instead of %d\n", sel_start, 4);
 
-    SEND_CTRL_LEFT(hwnd)
+    SEND_CTRL_LEFT(hwnd);
     /* |one two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
@@ -4539,7 +4514,7 @@ static void test_word_movement(void)
 
     SendMessage(hwnd, EM_SETSEL, 8, 8);
     /* one two | three */
-    SEND_CTRL_RIGHT(hwnd)
+    SEND_CTRL_RIGHT(hwnd);
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
@@ -4547,7 +4522,7 @@ static void test_word_movement(void)
 
     SendMessage(hwnd, EM_SETSEL, 11, 11);
     /* one two  th|ree */
-    SEND_CTRL_LEFT(hwnd)
+    SEND_CTRL_LEFT(hwnd);
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
