@@ -391,6 +391,8 @@ GpStatus WINGDIPAPI GdipCloneStringFormat(GDIPCONST GpStringFormat*,GpStringForm
 GpStatus WINGDIPAPI GdipGetDpiX(GpGraphics*,REAL*);
 GpStatus WINGDIPAPI GdipGetDpiY(GpGraphics*,REAL*);
 
+GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *, GpRegion **);
+GpStatus WINGDIPAPI GdipCombineRegionPath(GpRegion *, GpPath *, CombineMode);
 GpStatus WINGDIPAPI GdipCombineRegionRect(GpRegion *, GDIPCONST GpRectF *, CombineMode);
 GpStatus WINGDIPAPI GdipCombineRegionRectI(GpRegion *, GDIPCONST GpRect *, CombineMode);
 GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *, GpRegion *, CombineMode);
@@ -398,12 +400,22 @@ GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **);
 GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *, GpRegion **);
 GpStatus WINGDIPAPI GdipCreateRegionRect(GDIPCONST GpRectF *, GpRegion **);
 GpStatus WINGDIPAPI GdipCreateRegionRectI(GDIPCONST GpRect *, GpRegion **);
+GpStatus WINGDIPAPI GdipCreateRegionRgnData(GDIPCONST BYTE *, INT, GpRegion **);
+GpStatus WINGDIPAPI GdipCreateRegionHrgn(HRGN, GpRegion **);
 GpStatus WINGDIPAPI GdipDeleteRegion(GpRegion *);
+GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *, GpGraphics *, GpRectF *);
+GpStatus WINGDIPAPI GdipGetRegionBoundsI(GpRegion *, GpGraphics *, GpRect *);
 GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *, BYTE *, UINT, UINT *);
 GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *, UINT *);
 GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *, GpGraphics *, HRGN *);
+GpStatus WINGDIPAPI GdipIsEmptyRegion(GpRegion *, GpGraphics *, BOOL *);
+GpStatus WINGDIPAPI GdipIsEqualRegion(GpRegion *, GpRegion *, GpGraphics *, BOOL *);
+GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *, GpGraphics *, BOOL *);
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *);
 GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *);
+GpStatus WINGDIPAPI GdipTransformRegion(GpRegion *, GpMatrix *);
+GpStatus WINGDIPAPI GdipTranslateRegion(GpRegion *, REAL, REAL);
+GpStatus WINGDIPAPI GdipTranslateRegionI(GpRegion *, INT, INT);
 
 GpStatus WINGDIPAPI GdipFlush(GpGraphics*, GpFlushIntention);
 
