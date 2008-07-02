@@ -3689,8 +3689,6 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_inf
     TRACE_(d3d_caps)("Hardware pixel shader version %d.%d enabled (GLSL)\n", (pCaps->PixelShaderVersion >> 8) & 0xff, pCaps->PixelShaderVersion & 0xff);
 }
 
-static void shader_glsl_load_init(void) {}
-
 static void shader_glsl_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
     none_shader_backend.shader_fragment_enable(iface, enable);
 }
@@ -3709,7 +3707,6 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_generate_pshader,
     shader_glsl_generate_vshader,
     shader_glsl_get_caps,
-    shader_glsl_load_init,
     shader_glsl_fragment_enable,
     FFPStateTable
 };

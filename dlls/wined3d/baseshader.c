@@ -1105,7 +1105,6 @@ static void shader_none_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFF
 static void shader_none_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
     FIXME("NONE shader backend asked to generate a vertex shader\n");
 }
-static void shader_none_load_init(void) {}
 
 #define GLINFO_LOCATION      (*gl_info)
 static void shader_none_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {
@@ -1214,7 +1213,6 @@ const shader_backend_t none_shader_backend = {
     shader_none_generate_pshader,
     shader_none_generate_vshader,
     shader_none_get_caps,
-    shader_none_load_init,
     shader_none_fragment_enable,
     FFPStateTable
 };

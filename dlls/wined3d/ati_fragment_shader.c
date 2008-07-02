@@ -856,44 +856,6 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 /* our state table. Borrows lots of stuff from the base implementation */
 struct StateEntry ATIFSStateTable[STATE_HIGHEST + 1];
 
-static void init_state_table() {
-    unsigned int i;
-    const DWORD rep = STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP);
-    memcpy(ATIFSStateTable, arb_program_shader_backend.StateTable_remove, sizeof(ATIFSStateTable));
-
-    for(i = 0; i < MAX_TEXTURES; i++) {
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP)].representative = rep;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLORARG1)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLORARG1)].representative = rep;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLORARG2)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLORARG2)].representative = rep;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLORARG0)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLORARG0)].representative = rep;
-
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAOP)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAOP)].representative = rep;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG1)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG1)].representative = rep;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG2)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG2)].representative = rep;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG0)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_ALPHAARG0)].representative = rep;
-
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_RESULTARG)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_RESULTARG)].representative = rep;
-
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT01)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT10)].apply = NULL;
-        ATIFSStateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT11)].apply = NULL;
-    }
-
-    ATIFSStateTable[STATE_RENDER(WINED3DRS_TEXTUREFACTOR)].apply = NULL;
-    ATIFSStateTable[STATE_RENDER(WINED3DRS_TEXTUREFACTOR)].representative = STATE_RENDER(WINED3DRS_TEXTUREFACTOR);
-
-}
-
 const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {STATE_RENDER(WINED3DRS_TEXTUREFACTOR),               { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor_atifs   }},
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),           { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          set_tex_op_atifs        }},
@@ -1079,11 +1041,6 @@ static BOOL shader_atifs_dirty_const(IWineD3DDevice *iface) {
     return arb_program_shader_backend.shader_dirtifyable_constants(iface);
 }
 
-static void shader_atifs_load_init(void) {
-    arb_program_shader_backend.shader_dll_load_init();
-    init_state_table();
-}
-
 static void shader_atifs_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps) {
     arb_program_shader_backend.shader_get_caps(devtype, gl_info, caps);
 
@@ -1168,7 +1125,6 @@ const shader_backend_t atifs_shader_backend = {
     shader_atifs_generate_pshader,
     shader_atifs_generate_vshader,
     shader_atifs_get_caps,
-    shader_atifs_load_init,
     shader_atifs_fragment_enable,
     ATIFSStateTable
 };
