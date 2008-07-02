@@ -157,7 +157,7 @@ static void testQuery(void)
     SnmpUtilOidCpy(&vars2[2].name, &vars[2].name);
     list.list = vars2;
     moreData = TRUE;
-    entry = 1;
+    entry = 0;
     do {
         SetLastError(0xdeadbeef);
         error = 0xdeadbeef;
@@ -182,28 +182,33 @@ static void testQuery(void)
             moreData = FALSE;
         if (moreData)
         {
+            UINT lastID;
+
             /* Check the OIDs.  For these types of values (display strings and
-             * integers) they increase by 1 for each element of the table.
+             * integers) they should increase by 1 for each element of the table
+             * according to RFC 1158.  Windows sometimes has a weird value in the
+             * table, so allow any value as long as it's greater than the previous
+             * value on Windows.
              */
             ok(vars2[0].name.idLength == vars[0].name.idLength + 1,
                 "expected length %d, got %d\n", vars[0].name.idLength + 1,
                 vars2[0].name.idLength);
-            ok(vars2[0].name.ids[vars2[0].name.idLength - 1] == entry,
-                "expected %d, got %d\n", entry,
-                vars2[0].name.ids[vars2[0].name.idLength - 1]);
+            lastID = vars2[0].name.ids[vars2[0].name.idLength - 1];
+            ok(lastID == entry + 1 || broken(lastID > entry),
+                "expected %d, got %d\n", entry + 1, lastID);
             ok(vars2[1].name.idLength == vars[1].name.idLength + 1,
                 "expected length %d, got %d\n", vars[1].name.idLength + 1,
                 vars2[1].name.idLength);
-            ok(vars2[1].name.ids[vars2[1].name.idLength - 1] == entry,
-                "expected %d, got %d\n", entry,
-                vars2[1].name.ids[vars2[1].name.idLength - 1]);
+            lastID = vars2[1].name.ids[vars2[1].name.idLength - 1];
+            ok(lastID == entry + 1 || broken(lastID > entry),
+                "expected %d, got %d\n", entry + 1, lastID);
             ok(vars2[2].name.idLength == vars[2].name.idLength + 1,
                 "expected length %d, got %d\n", vars[2].name.idLength + 1,
                 vars2[2].name.idLength);
-            ok(vars2[2].name.ids[vars2[2].name.idLength - 1] == entry,
-                "expected %d, got %d\n", entry,
-                vars2[2].name.ids[vars2[2].name.idLength - 1]);
-            ++entry;
+            lastID = vars2[2].name.ids[vars2[2].name.idLength - 1];
+            ok(lastID == entry + 1 || broken(lastID > entry),
+                "expected %d, got %d\n", entry + 1, lastID);
+            entry = lastID;
             /* Check the types while we're at it */
             ok(vars2[0].value.asnType == ASN_OCTETSTRING,
                 "expected ASN_OCTETSTRING, got %02x\n", vars2[0].value.asnType);
