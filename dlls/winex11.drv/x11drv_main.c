@@ -637,18 +637,8 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */
 
 #ifdef HAVE_XKB
-    if (use_xkb)
-    {
-        use_xkb = XkbUseExtension( data->display, NULL, NULL );
-        if (use_xkb)
-        {
-            /* Hack: dummy call to XkbKeysymToModifiers to force initialisation of Xkb internals */
-            /* This works around an Xlib bug where it tries to get the display lock */
-            /* twice during XFilterEvents if Xkb hasn't been initialised yet. */
-            XkbKeysymToModifiers( data->display, 'A' );
-            XkbSetDetectableAutoRepeat( data->display, True, NULL );
-        }
-    }
+    if (use_xkb && XkbUseExtension( data->display, NULL, NULL ))
+        XkbSetDetectableAutoRepeat( data->display, True, NULL );
 #endif
 
     if (TRACE_ON(synchronous)) XSynchronize( data->display, True );
