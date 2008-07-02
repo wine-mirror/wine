@@ -4888,7 +4888,7 @@ const struct StateEntry FFPStateTable[] =
     { /* STATE_CLIPPLANE(31)                        */      STATE_CLIPPLANE(31),                                clipplane           },
 
     { /* STATE_MATERIAL                             */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             NULL                },
-    { /* STATE_FRONTFACE                            */      STATE_FRONTFACE,                                    frontface           },
+    { /* STATE_FRONTFACE                            */      STATE_FRONTFACE,                                    NULL                },
 };
 
 const struct StateEntryTemplate misc_state_template[] = {
@@ -4904,6 +4904,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_BLENDOPALPHA),               { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
     { STATE_STREAMSRC,                                    { STATE_VDECL,                                        streamsrc           }},
     { STATE_VDECL,                                        { STATE_VDECL,                                        streamsrc           }},
+    { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface           }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
