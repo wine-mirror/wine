@@ -61,6 +61,7 @@ typedef DWORD (WINAPI *GetTcpStatisticsFunc)(PMIB_TCPSTATS);
 typedef DWORD (WINAPI *GetUdpStatisticsFunc)(PMIB_UDPSTATS);
 typedef DWORD (WINAPI *GetTcpTableFunc)(PMIB_TCPTABLE,PDWORD,BOOL);
 typedef DWORD (WINAPI *GetUdpTableFunc)(PMIB_UDPTABLE,PDWORD,BOOL);
+typedef DWORD (WINAPI *GetPerAdapterInfoFunc)(ULONG,PIP_PER_ADAPTER_INFO,PULONG);
 
 static GetNumberOfInterfacesFunc gGetNumberOfInterfaces = NULL;
 static GetIpAddrTableFunc gGetIpAddrTable = NULL;
@@ -78,6 +79,7 @@ static GetTcpStatisticsFunc gGetTcpStatistics = NULL;
 static GetUdpStatisticsFunc gGetUdpStatistics = NULL;
 static GetTcpTableFunc gGetTcpTable = NULL;
 static GetUdpTableFunc gGetUdpTable = NULL;
+static GetPerAdapterInfoFunc gGetPerAdapterInfo = NULL;
 
 static void loadIPHlpApi(void)
 {
@@ -115,6 +117,7 @@ static void loadIPHlpApi(void)
      hLibrary, "GetTcpTable");
     gGetUdpTable = (GetUdpTableFunc)GetProcAddress(
      hLibrary, "GetUdpTable");
+    gGetPerAdapterInfo = (GetPerAdapterInfoFunc)GetProcAddress(hLibrary, "GetPerAdapterInfo");
   }
 }
 
@@ -584,6 +587,25 @@ static void testWin98Functions(void)
   testGetNetworkParams();
 }
 
+static void testGetPerAdapterInfo(void)
+{
+    DWORD ret, needed;
+    void *buffer;
+
+    if (!gGetPerAdapterInfo) return;
+    ret = gGetPerAdapterInfo(1, NULL, NULL);
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u instead of ERROR_INVALID_PARAMETER\n", ret );
+    needed = 0xdeadbeef;
+    ret = gGetPerAdapterInfo(1, NULL, &needed);
+    if (ret == ERROR_NO_DATA) return;  /* no such adapter */
+    ok( ret == ERROR_BUFFER_OVERFLOW, "got %u instead of ERROR_BUFFER_OVERFLOW\n", ret );
+    ok( needed != 0xdeadbeef, "needed not set\n" );
+    buffer = HeapAlloc( GetProcessHeap(), 0, needed );
+    ret = gGetPerAdapterInfo(1, buffer, &needed);
+    ok( ret == NO_ERROR, "got %u instead of NO_ERROR\n", ret );
+    HeapFree( GetProcessHeap(), 0, buffer );
+}
+
 /*
 still-to-be-tested 2K-onward functions:
 AddIPAddress
@@ -593,7 +615,6 @@ DeleteProxyArpEntry
 EnableRouter
 FlushIpNetTable
 GetAdapterIndex
-GetPerAdapterInfo
 NotifyAddrChange
 NotifyRouteChange
 SendARP
@@ -601,6 +622,7 @@ UnenableRouter
 */
 static void testWin2KFunctions(void)
 {
+    testGetPerAdapterInfo();
 }
 
 START_TEST(iphlpapi)

@@ -1513,28 +1513,19 @@ DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
 DWORD WINAPI GetPerAdapterInfo(ULONG IfIndex, PIP_PER_ADAPTER_INFO pPerAdapterInfo, PULONG pOutBufLen)
 {
   ULONG bytesNeeded = sizeof(IP_PER_ADAPTER_INFO);
-  DWORD ret;
 
-  TRACE("(IfIndex %d, pPerAdapterInfo %p, pOutBufLen %p)\n", IfIndex,
-   pPerAdapterInfo, pOutBufLen);
-  if (!pOutBufLen)
-    ret = ERROR_INVALID_PARAMETER;
-  else if (!pPerAdapterInfo)
+  TRACE("(IfIndex %d, pPerAdapterInfo %p, pOutBufLen %p)\n", IfIndex, pPerAdapterInfo, pOutBufLen);
+
+  if (!pOutBufLen) return ERROR_INVALID_PARAMETER;
+
+  if (!pPerAdapterInfo || *pOutBufLen < bytesNeeded)
   {
     *pOutBufLen = bytesNeeded;
-    ret = NO_ERROR;
+    return ERROR_BUFFER_OVERFLOW;
   }
-  else if (*pOutBufLen < bytesNeeded)
-  {
-    *pOutBufLen = bytesNeeded;
-    ret = ERROR_BUFFER_OVERFLOW;
-  }
-  else
-  {
-    memset(pPerAdapterInfo, 0, bytesNeeded);
-    ret = NO_ERROR;
-  }
-  return ret;
+
+  memset(pPerAdapterInfo, 0, bytesNeeded);
+  return NO_ERROR;
 }
 
 
