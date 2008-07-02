@@ -537,6 +537,9 @@ static BOOL process_attach(void)
     X11DRV_XComposite_Init();
 #endif
 
+#ifdef HAVE_XKB
+    if (use_xkb) use_xkb = XkbUseExtension( gdi_display, NULL, NULL );
+#endif
     X11DRV_InitKeyboard( gdi_display );
     X11DRV_InitClipboard();
     if (use_xim) use_xim = X11DRV_InitXIM( input_style );
