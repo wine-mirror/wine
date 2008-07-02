@@ -433,12 +433,12 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "작업 관리자"
     IDC_TASKMGR             "작엄 관리자"
-    IDS_RUNDLG_CAPTION      "Create New Task"
+    IDS_RUNDLG_CAPTION      "새 작업 만들기"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_FILE_NEW             "새 풀그림 실행"
+    ID_FILE_NEW             "새 프로그램 실행"
     ID_OPTIONS_ALWAYSONTOP  "작업관리자는 최소화 되지 않는 한 다른 창 앞에 있게 됩니다"
     ID_OPTIONS_MINIMIZEONUSE
                             "작엄관리자는 전환 작업이 완료될 때 최소화됩니다"
