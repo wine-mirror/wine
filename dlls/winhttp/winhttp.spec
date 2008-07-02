@@ -13,7 +13,7 @@
 @ stdcall WinHttpGetIEProxyConfigForCurrentUser(ptr)
 @ stub WinHttpGetProxyForUrl
 @ stdcall WinHttpOpen(wstr long wstr wstr long)
-@ stub WinHttpOpenRequest
+@ stdcall WinHttpOpenRequest(ptr wstr wstr wstr wstr ptr long)
 @ stub WinHttpQueryAuthSchemes
 @ stub WinHttpQueryDataAvailable
 @ stub WinHttpQueryHeaders
