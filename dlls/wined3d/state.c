@@ -3627,7 +3627,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     }
 }
 
-static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     UINT width, height;
     IWineD3DSurfaceImpl *target;
 
@@ -3649,7 +3649,9 @@ static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
     }
 
     checkGLcall("glViewport");
+}
 
+static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     stateblock->wineD3DDevice->posFixup[2] = 1.0 / stateblock->viewport.Width;
     stateblock->wineD3DDevice->posFixup[3] = -stateblock->wineD3DDevice->posFixup[1] / stateblock->viewport.Height;
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
@@ -4839,7 +4841,7 @@ const struct StateEntry FFPStateTable[] =
     { /*   , STATE_INDEXBUFFER                      */      STATE_INDEXBUFFER,                                  indexbuffer         },
     { /*   , STATE_VDECL                            */      STATE_VDECL,                                        NULL                },
     { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        NULL                },
-    { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     viewport            },
+    { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     NULL                },
     { /*   , STATE_VERTEXSHADERCONSTANT             */      STATE_VERTEXSHADERCONSTANT,                         NULL                },
     { /*   , STATE_PIXELSHADERCONSTANT              */      STATE_VERTEXSHADERCONSTANT,                         NULL                },
       /* Lights */
@@ -4911,6 +4913,8 @@ const struct StateEntryTemplate misc_state_template[] = {
      */
     { STATE_VERTEXSHADERCONSTANT,                         { STATE_VERTEXSHADERCONSTANT,                         shaderconstant      }},
     { STATE_PIXELSHADERCONSTANT,                          { STATE_VERTEXSHADERCONSTANT,                         shaderconstant      }},
+    /* Viewport */
+    { STATE_VIEWPORT,                                     { STATE_VIEWPORT,                                     viewport_miscpart   }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
@@ -4961,6 +4965,8 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_ACTIVELIGHT(5),                               { STATE_ACTIVELIGHT(5),                               light               }},
     { STATE_ACTIVELIGHT(6),                               { STATE_ACTIVELIGHT(6),                               light               }},
     { STATE_ACTIVELIGHT(7),                               { STATE_ACTIVELIGHT(7),                               light               }},
+    /* Viewport */
+    { STATE_VIEWPORT,                                     { STATE_VIEWPORT,                                     viewport_vertexpart }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
