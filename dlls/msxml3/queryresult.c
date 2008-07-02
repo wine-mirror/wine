@@ -118,6 +118,9 @@ static HRESULT WINAPI queryresult_QueryInterface(
 {
     TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
 
+    if(!ppvObject)
+        return E_INVALIDARG;
+
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IXMLDOMNodeList ) )
@@ -255,6 +258,9 @@ static HRESULT WINAPI queryresult_get_item(
 
     TRACE("%p %ld\n", This, index);
 
+    if(!listItem)
+        return E_INVALIDARG;
+
     *listItem = NULL;
 
     if (index < 0 || index >= xmlXPathNodeSetGetLength(This->result->nodesetval))
@@ -274,6 +280,9 @@ static HRESULT WINAPI queryresult_get_length(
 
     TRACE("%p\n", This);
 
+    if(!listLength)
+        return E_INVALIDARG;
+
     *listLength = xmlXPathNodeSetGetLength(This->result->nodesetval);
     return S_OK;
 }
@@ -285,6 +294,9 @@ static HRESULT WINAPI queryresult_nextNode(
     queryresult *This = impl_from_IXMLDOMNodeList( iface );
 
     TRACE("%p %p\n", This, nextItem );
+
+    if(!nextItem)
+        return E_INVALIDARG;
 
     *nextItem = NULL;
 
