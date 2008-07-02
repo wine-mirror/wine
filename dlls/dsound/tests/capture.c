@@ -631,7 +631,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	    bufdesc1.lpwfxFormat=&wfx;
 	    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,
                 (DSCBUFFERDESC*)&bufdesc1,&dscbo,NULL);
-	    ok(rc==DS_OK,
+	    ok(rc==DS_OK || broken(rc==E_INVALIDARG),
                "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
                "%s capture buffer: %s\n",format_string(&wfx),
                DXGetErrorString8(rc));
