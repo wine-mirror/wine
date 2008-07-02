@@ -582,13 +582,26 @@ typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 
 struct StateEntry
 {
-    DWORD           representative;
-    APPLYSTATEFUNC  apply;
+    DWORD               representative;
+    APPLYSTATEFUNC      apply;
 };
+
+struct StateEntryTemplate
+{
+    DWORD               state;
+    struct StateEntry   content;
+};
+
+extern const struct StateEntryTemplate misc_state_template[];
 
 /* "Base" state table */
 extern const struct StateEntry FFPStateTable[];
-void compile_state_table(struct StateEntry *StateTable, const struct StateEntry *temptable);
+void compile_state_table(struct StateEntry *StateTable,
+                         APPLYSTATEFUNC **dev_multistate_funcs,
+                         const struct StateEntryTemplate *vertex,
+                         const struct StateEntryTemplate *fragment,
+                         const struct StateEntryTemplate *misc,
+                         const struct StateEntry *temptable /* TODO: Remove this */);
 
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext {
@@ -814,6 +827,8 @@ struct IWineD3DDeviceImpl
     hash_table_t *glsl_program_lookup;
     void *shader_priv;
     struct StateEntry StateTable[STATE_HIGHEST + 1];
+    /* Array of functions for states which are handled by more than one pipeline part */
+    APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
 
     /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */

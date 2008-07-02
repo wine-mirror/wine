@@ -3834,15 +3834,15 @@ const struct StateEntry FFPStateTable[] =
     { /* 16, WINED3DRS_LASTPIXEL                    */      STATE_RENDER(WINED3DRS_LASTPIXEL),                  state_lastpixel     },
     { /* 17, WINED3DRS_TEXTUREMAG                   */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 18, WINED3DRS_TEXTUREMIN                   */      0 /* Handled in ddraw */,                           state_undefined     },
-    { /* 19, WINED3DRS_SRCBLEND                     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
-    { /* 20, WINED3DRS_DESTBLEND                    */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
+    { /* 19, WINED3DRS_SRCBLEND                     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
+    { /* 20, WINED3DRS_DESTBLEND                    */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
     { /* 21, WINED3DRS_TEXTUREMAPBLEND              */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 22, WINED3DRS_CULLMODE                     */      STATE_RENDER(WINED3DRS_CULLMODE),                   state_cullmode      },
     { /* 23, WINED3DRS_ZFUNC                        */      STATE_RENDER(WINED3DRS_ZFUNC),                      state_zfunc         },
     { /* 24, WINED3DRS_ALPHAREF                     */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 25, WINED3DRS_ALPHAFUNC                    */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 26, WINED3DRS_DITHERENABLE                 */      STATE_RENDER(WINED3DRS_DITHERENABLE),               state_ditherenable  },
-    { /* 27, WINED3DRS_ALPHABLENDENABLE             */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
+    { /* 27, WINED3DRS_ALPHABLENDENABLE             */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
     { /* 28, WINED3DRS_FOGENABLE                    */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /* 29, WINED3DRS_SPECULARENABLE               */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable},
     { /* 30, WINED3DRS_ZVISIBLE                     */      0 /* Not supported according to the msdn */,        state_nogl          },
@@ -3855,7 +3855,7 @@ const struct StateEntry FFPStateTable[] =
     { /* 37, WINED3DRS_FOGEND                       */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /* 38, WINED3DRS_FOGDENSITY                   */      STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_fogdensity    },
     { /* 39, WINED3DRS_STIPPLEENABLE                */      STATE_RENDER(WINED3DRS_STIPPLEENABLE),              state_stippleenable },
-    { /* 40, WINED3DRS_EDGEANTIALIAS                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
+    { /* 40, WINED3DRS_EDGEANTIALIAS                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
     { /* 41, WINED3DRS_COLORKEYENABLE               */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 42, undefined                              */      0,                                                  state_undefined     },
     { /* 43, WINED3DRS_BORDERCOLOR                  */      STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_bordercolor   },
@@ -3994,7 +3994,7 @@ const struct StateEntry FFPStateTable[] =
       /*173, WINED3DRS_NORMALORDER                  */      /* Value assigned to 2 state names */
     { /*174, WINED3DRS_SCISSORTESTENABLE            */      STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          state_scissor       },
     { /*175, WINED3DRS_SLOPESCALEDEPTHBIAS          */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     },
-    { /*176, WINED3DRS_ANTIALIASEDLINEENABLE        */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
+    { /*176, WINED3DRS_ANTIALIASEDLINEENABLE        */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
     { /*177, undefined                              */      0,                                                  state_undefined     },
     { /*178, WINED3DRS_MINTESSELLATIONLEVEL         */      STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_tessellation  },
     { /*179, WINED3DRS_MAXTESSELLATIONLEVEL         */      STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_tessellation  },
@@ -4024,10 +4024,10 @@ const struct StateEntry FFPStateTable[] =
     { /*203, WINED3DRS_WRAP13                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*204, WINED3DRS_WRAP14                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*205, WINED3DRS_WRAP15                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
-    { /*206, WINED3DRS_SEPARATEALPHABLENDENABLE     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend },
-    { /*207, WINED3DRS_SRCBLENDALPHA                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend },
-    { /*208, WINED3DRS_DESTBLENDALPHA               */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend },
-    { /*209, WINED3DRS_BLENDOPALPHA                 */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blendop },
+    { /*206, WINED3DRS_SEPARATEALPHABLENDENABLE     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
+    { /*207, WINED3DRS_SRCBLENDALPHA                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
+    { /*208, WINED3DRS_DESTBLENDALPHA               */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
+    { /*209, WINED3DRS_BLENDOPALPHA                 */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
     /* Texture stage states */
     { /*0, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*0, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -4886,9 +4886,106 @@ const struct StateEntry FFPStateTable[] =
     { /* STATE_FRONTFACE                            */      STATE_FRONTFACE,                                    frontface           },
 };
 
-/* Remove the temptable, but instead pass a fragment pipeline table, vertex pipeline and misc pipeline
- * table in
- */
-void compile_state_table(struct StateEntry *StateTable, const struct StateEntry *temptable) {
-    memcpy(StateTable, temptable, sizeof(*StateTable) * (STATE_HIGHEST + 1));
+const struct StateEntryTemplate misc_state_template[] = {
+    { STATE_RENDER(WINED3DRS_SRCBLEND),                   { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_DESTBLEND),                  { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_EDGEANTIALIAS),              { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_ANTIALIASEDLINEENABLE),      { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_SRCBLENDALPHA),              { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_DESTBLENDALPHA),             { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_DESTBLENDALPHA),             { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    { STATE_RENDER(WINED3DRS_BLENDOPALPHA),               { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }},
+    {0 /* Terminate */,                                   { 0,                                                  0                   }},
+};
+
+static int num_handlers(APPLYSTATEFUNC *funcs) {
+    unsigned int i;
+    for(i = 0; funcs[i]; i++);
+    return i;
+}
+
+static void multistate_apply_2(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    stateblock->wineD3DDevice->multistate_funcs[state][0](state, stateblock, context);
+    stateblock->wineD3DDevice->multistate_funcs[state][1](state, stateblock, context);
+}
+
+static void multistate_apply_3(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    stateblock->wineD3DDevice->multistate_funcs[state][0](state, stateblock, context);
+    stateblock->wineD3DDevice->multistate_funcs[state][1](state, stateblock, context);
+    stateblock->wineD3DDevice->multistate_funcs[state][2](state, stateblock, context);
+}
+
+void compile_state_table(struct StateEntry *StateTable,
+                         APPLYSTATEFUNC **dev_multistate_funcs,
+                         const struct StateEntryTemplate *vertex,
+                         const struct StateEntryTemplate *fragment,
+                         const struct StateEntryTemplate *misc,
+                         const struct StateEntry *temptable /* TODO: Remove this */) {
+    unsigned int i, type, handlers;
+    APPLYSTATEFUNC multistate_funcs[STATE_HIGHEST + 1][3];
+    const struct StateEntryTemplate *cur;
+
+    /* TODO: Remove this once all states are provided by templates */
+    BOOL set[STATE_HIGHEST + 1];
+    memset(set, 0, sizeof(set));
+
+    memset(multistate_funcs, 0, sizeof(multistate_funcs));
+
+    for(type = 0; type < 3; type++) {
+        /* This switch decides the order in which the states are applied */
+        switch(type) {
+            case 0: cur = misc; break;
+            case 1: cur = fragment; break;
+            case 2: cur = vertex; break;
+            default: cur = NULL; /* Stupid compiler */
+        }
+        if(!cur) continue;
+
+        for(i = 0; cur[i].state; i++) {
+            set[cur[i].state] = TRUE; /* TODO: Remove when done with the move */
+            handlers = num_handlers(multistate_funcs[cur[i].state]);
+            multistate_funcs[cur[i].state][handlers] = cur[i].content.apply;
+            switch(handlers) {
+                case 0:
+                    StateTable[cur[i].state].apply = cur[i].content.apply;
+                    break;
+                case 1:
+                    StateTable[cur[i].state].apply = multistate_apply_2;
+                    dev_multistate_funcs[cur[i].state] = HeapAlloc(GetProcessHeap(),
+                                                                   0,
+                                                                   sizeof(**dev_multistate_funcs) * 2);
+                    dev_multistate_funcs[cur[i].state][0] = multistate_funcs[cur[i].state][0];
+                    dev_multistate_funcs[cur[i].state][1] = multistate_funcs[cur[i].state][1];
+                    break;
+                case 2:
+                    StateTable[cur[i].state].apply = multistate_apply_3;
+                    HeapFree(GetProcessHeap(), 0, multistate_funcs[cur[i].state]);
+                    dev_multistate_funcs[cur[i].state] = HeapAlloc(GetProcessHeap(),
+                                                                   0,
+                                                                   sizeof(**dev_multistate_funcs) * 3);
+                    dev_multistate_funcs[cur[i].state][0] = multistate_funcs[cur[i].state][0];
+                    dev_multistate_funcs[cur[i].state][1] = multistate_funcs[cur[i].state][1];
+                    dev_multistate_funcs[cur[i].state][2] = multistate_funcs[cur[i].state][2];
+                    break;
+                default:
+                    ERR("Unexpected amount of state handlers for state %u: %u\n",
+                        cur[i].state, handlers + 1);
+            }
+
+            if(StateTable[cur[i].state].representative &&
+            StateTable[cur[i].state].representative != cur[i].content.representative) {
+                FIXME("State %u has different representatives in different pipeline parts\n",
+                    cur[i].state);
+            }
+            StateTable[cur[i].state].representative = cur[i].content.representative;
+        }
+    }
+
+    /* TODO Remove this after the state move is done */
+    for(i = 0; i < STATE_HIGHEST + 1; i++) {
+        if(set[i]) continue;
+        StateTable[i] = temptable[i];
+    }
 }
