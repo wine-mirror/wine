@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "wine/winbase16.h"
 #include "wownt32.h"
 #include "wine/debug.h"
@@ -319,14 +320,42 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     }
 }
 
+static void Control_RegisterRegistryApplets(HWND hWnd, CPanel *panel, HKEY hkey_root, LPCWSTR szRepPath)
+{
+    WCHAR name[MAX_PATH];
+    WCHAR value[MAX_PATH];
+    HKEY hkey;
+
+    if (RegOpenKeyW(hkey_root, szRepPath, &hkey) == ERROR_SUCCESS)
+    {
+        int idx = 0;
+
+        for(;; ++idx)
+        {
+            DWORD nameLen = MAX_PATH;
+            DWORD valueLen = MAX_PATH;
+
+            if (RegEnumValueW(hkey, idx, name, &nameLen, NULL, NULL, (LPBYTE)&value, &valueLen) != ERROR_SUCCESS)
+                break;
+
+            Control_LoadApplet(hWnd, value, panel);
+        }
+        RegCloseKey(hkey);
+    }
+}
+
 static	void	Control_DoWindow(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 {
     HANDLE		h;
     WIN32_FIND_DATAW	fd;
     WCHAR		buffer[MAX_PATH];
     static const WCHAR wszAllCpl[] = {'*','.','c','p','l',0};
+    static const WCHAR wszRegPath[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t',
+            '\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+            '\\','C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','C','p','l','s',0};
     WCHAR *p;
 
+    /* first add .cpl files in the system directory */
     GetSystemDirectoryW( buffer, MAX_PATH );
     p = buffer + strlenW(buffer);
     *p++ = '\\';
@@ -339,6 +368,10 @@ static	void	Control_DoWindow(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 	} while (FindNextFileW(h, &fd));
 	FindClose(h);
     }
+
+    /* now check for cpls in the registry */
+    Control_RegisterRegistryApplets(hWnd, panel, HKEY_LOCAL_MACHINE, wszRegPath);
+    Control_RegisterRegistryApplets(hWnd, panel, HKEY_CURRENT_USER, wszRegPath);
 
     Control_DoInterface(panel, hWnd, hInst);
 }
