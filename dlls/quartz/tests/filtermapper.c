@@ -271,8 +271,8 @@ static void test_legacy_filter_registration(void)
     lRet = StringFromGUID2(&clsidFilter, wszRegKey, MAX_PATH);
     ok(lRet > 0, "StringFromGUID2 failed\n");
 
-    lRet = RegDeleteTreeW(hKey, wszRegKey);
-    ok(lRet == ERROR_SUCCESS, "RegDeleteTreeW failed with %x\n", HRESULT_FROM_WIN32(lRet));
+    lRet = RegDeleteKeyW(hKey, wszRegKey);
+    ok(lRet == ERROR_SUCCESS, "RegDeleteKeyW failed with %x\n", HRESULT_FROM_WIN32(lRet));
 
     if (hKey) RegCloseKey(hKey);
     hKey = NULL;
