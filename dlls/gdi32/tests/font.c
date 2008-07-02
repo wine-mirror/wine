@@ -1655,7 +1655,7 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
             get_charset_statsW(&efdw, &ansi_charset, &symbol_charset, &russian_charset);
             trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
                   ansi_charset, symbol_charset, russian_charset);
-            ok(efd.total > 0, "no fonts enumerated: NULL\n");
+            ok(efd.total == 0, "fonts enumerated: NULL\n");
             ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
             ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
             ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
@@ -1670,7 +1670,7 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
             get_charset_statsW(&efdw, &ansi_charset, &symbol_charset, &russian_charset);
             trace("enumerated ansi %d, symbol %d, russian %d fonts for NULL\n",
                   ansi_charset, symbol_charset, russian_charset);
-            ok(efd.total > 0, "no fonts enumerated: NULL\n");
+            ok(efd.total == 0, "fonts enumerated: NULL\n");
             ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
             ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
             ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
