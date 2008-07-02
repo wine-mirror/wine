@@ -2074,7 +2074,8 @@ static void test_ReplaceFileA(void)
     ok(ret != ERROR_UNABLE_TO_REMOVE_REPLACED, "ReplaceFileA: unexpected error %d\n", GetLastError());
     /* make sure that the replacement file still exists */
     hReplacementFile = CreateFileA(replacement, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
-    ok(hReplacementFile != INVALID_HANDLE_VALUE,
+    ok(hReplacementFile != INVALID_HANDLE_VALUE ||
+       broken(GetLastError() == ERROR_FILE_NOT_FOUND), /* win2k */
        "unexpected error, replacement file should still exist %d\n", GetLastError());
     CloseHandle(hReplacementFile);
     ret = SetFileAttributesA(replaced, FILE_ATTRIBUTE_NORMAL);
@@ -2107,7 +2108,9 @@ static void test_ReplaceFileA(void)
 
     /* delete temporary files, replacement and replaced are already deleted */
     ret = DeleteFileA(backup);
-    ok(ret, "DeleteFileA: error (backup) %d\n", GetLastError());
+    ok(ret ||
+       broken(GetLastError() == ERROR_ACCESS_DENIED), /* win2k */
+       "DeleteFileA: error (backup) %d\n", GetLastError());
 }
 
 /*
@@ -2178,7 +2181,9 @@ static void test_ReplaceFileW(void)
         "ReplaceFileW: unexpected error %d\n", GetLastError());
 
     ret = DeleteFileW(backup);
-    ok(ret, "DeleteFileW: error %d\n", GetLastError());
+    ok(ret ||
+       broken(GetLastError() == ERROR_ACCESS_DENIED), /* win2k */
+       "DeleteFileW: error (backup) %d\n", GetLastError());
 }
 
 START_TEST(file)
