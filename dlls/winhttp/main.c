@@ -140,3 +140,16 @@ HINTERNET WINAPI WinHttpOpen(LPCWSTR pwszUserAgent, DWORD dwAccessType,
     SetLastError(ERROR_NOT_SUPPORTED);
     return NULL;
 }
+
+/***********************************************************************
+ *          WinHttpConnect (winhttp.@)
+ */
+
+HINTERNET WINAPI WinHttpConnect (HINTERNET hSession, LPCWSTR pwszServerName,
+                                 INTERNET_PORT nServerPort, DWORD dwReserved)
+{
+    FIXME("(%s, %d, 0x%x): stub\n", debugstr_w(pwszServerName), nServerPort, dwReserved);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return NULL;
+}

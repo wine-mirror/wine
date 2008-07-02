@@ -5,7 +5,7 @@
 @ stub WinHttpAddRequestHeaders
 @ stdcall WinHttpCheckPlatform()
 @ stub WinHttpCloseHandle
-@ stub WinHttpConnect
+@ stdcall WinHttpConnect(ptr wstr long long)
 @ stub WinHttpCrackUrl
 @ stub WinHttpCreateUrl
 @ stdcall WinHttpDetectAutoProxyConfigUrl(long ptr)
