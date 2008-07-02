@@ -1748,6 +1748,8 @@ void NSContainer_Release(NSContainer *This)
 {
     TRACE("(%p)\n", This);
 
+    This->doc = NULL;
+
     ShowWindow(This->hwnd, SW_HIDE);
     SetParent(This->hwnd, NULL);
 
