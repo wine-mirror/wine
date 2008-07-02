@@ -2494,7 +2494,7 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
             update_fog = TRUE;
     }
 
-    if(!isStateDirty(context, FFPStateTable[STATE_VSHADER].representative)) {
+    if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
         device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_pshader, use_vshader);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader)) {
@@ -5271,8 +5271,7 @@ void compile_state_table(struct StateEntry *StateTable,
                          APPLYSTATEFUNC **dev_multistate_funcs,
                          const struct StateEntryTemplate *vertex,
                          const struct StateEntryTemplate *fragment,
-                         const struct StateEntryTemplate *misc,
-                         const struct StateEntry *temptable /* TODO: Remove this */) {
+                         const struct StateEntryTemplate *misc) {
     unsigned int i, type, handlers;
     APPLYSTATEFUNC multistate_funcs[STATE_HIGHEST + 1][3];
     const struct StateEntryTemplate *cur;
@@ -5336,6 +5335,6 @@ void compile_state_table(struct StateEntry *StateTable,
     /* TODO Remove this after the state move is done */
     for(i = 0; i < STATE_HIGHEST + 1; i++) {
         if(set[i]) continue;
-        StateTable[i] = temptable[i];
+        StateTable[i] = FFPStateTable[i];
     }
 }

@@ -301,7 +301,6 @@ typedef struct {
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     void (*shader_fragment_enable)(IWineD3DDevice *iface, BOOL enable);
-    const struct StateEntry *StateTable_remove; /* TODO: This has to go away */
 } shader_backend_t;
 
 extern const shader_backend_t atifs_shader_backend;
@@ -598,13 +597,11 @@ extern const struct StateEntryTemplate ffp_fragmentstate_template[];
 extern const struct StateEntryTemplate atifs_fragmentstate_template[];
 
 /* "Base" state table */
-extern const struct StateEntry FFPStateTable[];
 void compile_state_table(struct StateEntry *StateTable,
                          APPLYSTATEFUNC **dev_multistate_funcs,
                          const struct StateEntryTemplate *vertex,
                          const struct StateEntryTemplate *fragment,
-                         const struct StateEntryTemplate *misc,
-                         const struct StateEntry *temptable /* TODO: Remove this */);
+                         const struct StateEntryTemplate *misc);
 
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext {

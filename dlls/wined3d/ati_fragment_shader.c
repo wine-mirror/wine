@@ -853,9 +853,6 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 }
 #undef GLINFO_LOCATION
 
-/* our state table. Borrows lots of stuff from the base implementation */
-struct StateEntry ATIFSStateTable[STATE_HIGHEST + 1];
-
 const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {STATE_RENDER(WINED3DRS_TEXTUREFACTOR),               { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor_atifs   }},
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),           { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          set_tex_op_atifs        }},
@@ -1126,5 +1123,4 @@ const shader_backend_t atifs_shader_backend = {
     shader_atifs_generate_vshader,
     shader_atifs_get_caps,
     shader_atifs_fragment_enable,
-    ATIFSStateTable
 };

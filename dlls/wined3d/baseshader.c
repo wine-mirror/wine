@@ -1214,7 +1214,6 @@ const shader_backend_t none_shader_backend = {
     shader_none_generate_vshader,
     shader_none_get_caps,
     shader_none_fragment_enable,
-    FFPStateTable
 };
 
 /* *******************************************

@@ -3708,5 +3708,4 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_generate_vshader,
     shader_glsl_get_caps,
     shader_glsl_fragment_enable,
-    FFPStateTable
 };

@@ -2109,5 +2109,4 @@ const shader_backend_t arb_program_shader_backend = {
     shader_arb_generate_vshader,
     shader_arb_get_caps,
     shader_arb_fragment_enable,
-    FFPStateTable
 };
