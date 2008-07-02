@@ -142,6 +142,11 @@ static void run_usergetinfo_tests(void)
     pNetApiBufferFree(ui0);
     pNetApiBufferFree(ui10);
 
+    /* NetUserGetInfo should always work for the current user. */
+    rc=pNetUserGetInfo(NULL, user_name, 0, (LPBYTE*)&ui0);
+    ok(rc == NERR_Success, "NetUsetGetInfo for current user failed: 0x%08x.\n", rc);
+    pNetApiBufferFree(ui0);
+
     /* errors handling */
     rc=pNetUserGetInfo(NULL, sTestUserName, 10000, (LPBYTE *)&ui0);
     ok(rc == ERROR_INVALID_LEVEL,"Invalid Level: rc=%d\n",rc);
