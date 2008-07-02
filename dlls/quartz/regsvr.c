@@ -855,6 +855,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
+    {   &CLSID_AudioRender,
+	"Wave Audio Renderer",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
     {   &CLSID_NullRenderer,
         "Null Renderer",
         NULL,
@@ -1112,6 +1118,19 @@ static struct regsvr_filter const filter_list[] = {
         }
     },
     {   &CLSID_DSoundRender,
+        &CLSID_LegacyAmFilterCategory,
+        {'A','u','d','i','o',' ','R','e','n','d','e','r','e','r',0},
+        0x800000,
+        {   {   REG_PINFLAG_B_RENDERER,
+                {   { &MEDIATYPE_Audio, &MEDIASUBTYPE_PCM },
+/*                  { &MEDIATYPE_Audio, &MEDIASUBTYPE_IEEE_FLOAT }, */
+                    { NULL }
+                },
+            },
+            { 0xFFFFFFFF },
+        }
+    },
+    {   &CLSID_AudioRender,
         &CLSID_LegacyAmFilterCategory,
         {'A','u','d','i','o',' ','R','e','n','d','e','r','e','r',0},
         0x800000,
