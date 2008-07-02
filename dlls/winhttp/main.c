@@ -167,3 +167,16 @@ HINTERNET WINAPI WinHttpOpenRequest (HINTERNET hConnect, LPCWSTR pwszVerb, LPCWS
     SetLastError(ERROR_NOT_SUPPORTED);
     return NULL;
 }
+
+/***********************************************************************
+ *          WinHttpSendRequest (winhttp.@)
+ */
+BOOL WINAPI WinHttpSendRequest (HINTERNET hRequest, LPCWSTR pwszHeaders, DWORD dwHeadersLength,
+                                LPVOID lpOptional, DWORD dwOptionalLength, DWORD dwTotalLength,
+                                DWORD_PTR dwContext)
+{
+    FIXME("(%s, %d, %d, %d): stub\n", debugstr_w(pwszHeaders), dwHeadersLength, dwOptionalLength, dwTotalLength);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
