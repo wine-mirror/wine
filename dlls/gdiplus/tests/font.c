@@ -190,7 +190,7 @@ static void test_fontfamily (void)
     stat = GdipDeleteFontFamily(*family);
     expect (Ok, stat);
 
-    if (family) GdipFree (family);
+    GdipFree (family);
 }
 
 
