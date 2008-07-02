@@ -4031,8 +4031,8 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   int bitmap_type;
   BOOL core_header;
   void* colorPtr;
-  const PALETTEENTRY peBlack = {0,0,0,0};
-  const PALETTEENTRY peWhite = {255,255,255,0};
+  static const PALETTEENTRY peBlack = {0,0,0,0};
+  static const PALETTEENTRY peWhite = {255,255,255,0};
 
   if (!physBitmap) return 0;
   if (!(obj_size = GetObjectW( hbitmap, sizeof(dib), &dib ))) return 0;
