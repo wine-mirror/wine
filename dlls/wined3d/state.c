@@ -4321,7 +4321,7 @@ const struct StateEntry FFPStateTable[] =
     { /*18, Vertex sampler 2                        */      STATE_SAMPLER(18),                                  sampler             },
     { /*19, Vertex sampler 3                        */      STATE_SAMPLER(19),                                  sampler             },
     /* Pixel shader */
-    { /*  , Pixel Shader                            */      STATE_PIXELSHADER,                                  pixelshader         },
+    { /*  , Pixel Shader                            */      STATE_PIXELSHADER,                                  NULL                },
       /* Transform states follow                    */
     { /*  1, undefined                              */      0,                                                  state_undefined     },
     { /*  2, WINED3DTS_VIEW                         */      STATE_TRANSFORM(WINED3DTS_VIEW),                    NULL                },
@@ -5383,6 +5383,7 @@ const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(7, WINED3DTSS_ALPHAARG0),        { STATE_TEXTURESTAGE(7, WINED3DTSS_ALPHAOP),          tex_alphaop         }},
     { STATE_TEXTURESTAGE(7, WINED3DTSS_RESULTARG),        { STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         }},
     { STATE_TEXTURESTAGE(7, WINED3DTSS_CONSTANT),         { 0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          }},
+    { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  pixelshader         }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
