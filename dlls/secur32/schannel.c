@@ -358,11 +358,12 @@ static const SecurityFunctionTableW schanTableW = {
 
 static const WCHAR schannelComment[] = { 'S','c','h','a','n','n','e','l',' ',
  'S','e','c','u','r','i','t','y',' ','P','a','c','k','a','g','e',0 };
+static const WCHAR schannelDllName[] = { 's','c','h','a','n','n','e','l','.','d','l','l',0 };
 
 void SECUR32_initSchannelSP(void)
 {
     SecureProvider *provider = SECUR32_addProvider(&schanTableA, &schanTableW,
-     NULL);
+     schannelDllName);
 
     if (provider)
     {

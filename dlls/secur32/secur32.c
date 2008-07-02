@@ -419,10 +419,10 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
 
     if (fnTableA || fnTableW)
     {
-        ret->moduleName = NULL;
+        ret->moduleName = moduleName ? SECUR32_strdupW(moduleName) : NULL;
         _makeFnTableA(&ret->fnTableA, fnTableA, fnTableW);
         _makeFnTableW(&ret->fnTableW, fnTableA, fnTableW);
-        ret->loaded = TRUE;
+        ret->loaded = moduleName ? FALSE : TRUE;
     }
     else
     {
@@ -505,9 +505,19 @@ static void _tryLoadProvider(PWSTR moduleName)
             if (pInitSecurityInterfaceW)
                 fnTableW = pInitSecurityInterfaceW();
             if (fnTableW && fnTableW->EnumerateSecurityPackagesW)
-                ret = fnTableW->EnumerateSecurityPackagesW(&toAdd, &infoW);
+            {
+                if (fnTableW != &securityFunctionTableW)
+                    ret = fnTableW->EnumerateSecurityPackagesW(&toAdd, &infoW);
+                else
+                    TRACE("%s has built-in providers, skip adding\n", debugstr_w(moduleName));
+            }
             else if (fnTableA && fnTableA->EnumerateSecurityPackagesA)
-                ret = fnTableA->EnumerateSecurityPackagesA(&toAdd, &infoA);
+            {
+                if (fnTableA != &securityFunctionTableA)
+                    ret = fnTableA->EnumerateSecurityPackagesA(&toAdd, &infoA);
+                else
+                    TRACE("%s has built-in providers, skip adding\n", debugstr_w(moduleName));
+            }
             if (ret == SEC_E_OK && toAdd > 0 && (infoW || infoA))
             {
                 SecureProvider *provider = SECUR32_addProvider(NULL, NULL,
@@ -624,8 +634,11 @@ SecurePackage *SECUR32_findPackageW(PCWSTR packageName)
                     fnTableA = pInitSecurityInterfaceA();
                 if (pInitSecurityInterfaceW)
                     fnTableW = pInitSecurityInterfaceW();
-                _makeFnTableA(&ret->provider->fnTableA, fnTableA, fnTableW);
-                _makeFnTableW(&ret->provider->fnTableW, fnTableA, fnTableW);
+                /* dont't update built-in SecurityFunctionTable */
+                if (fnTableA != &securityFunctionTableA)
+                    _makeFnTableA(&ret->provider->fnTableA, fnTableA, fnTableW);
+                if (fnTableW != &securityFunctionTableW)
+                    _makeFnTableW(&ret->provider->fnTableW, fnTableA, fnTableW);
                 ret->provider->loaded = TRUE;
             }
             else

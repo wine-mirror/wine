@@ -89,7 +89,8 @@ typedef enum _sign_direction {
 } SignDirection;
 
 /* Allocates space for and initializes a new provider.  If fnTableA or fnTableW
- * is non-NULL, assumes the provider is built-in (and is thus already loaded.)
+ * is non-NULL, assumes the provider is built-in, and if moduleName is non-NULL,
+ * means must load the LSA/user mode functions tables from external SSP/AP module.
  * Otherwise moduleName must not be NULL.
  * Returns a pointer to the stored provider entry, for use adding packages.
  */
