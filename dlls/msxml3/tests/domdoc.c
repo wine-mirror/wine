@@ -1171,9 +1171,21 @@ todo_wine
 
     if (list)
     {
+        r = IXMLDOMNodeList_QueryInterface(list, &IID_IDispatch, NULL);
+        ok( r == E_INVALIDARG, "ret %08x\n", r );
+
+        r = IXMLDOMNodeList_get_item(list, 0, NULL);
+        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x", r);
+
+        r = IXMLDOMNodeList_get_length(list, NULL);
+        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x", r);
+
         r = IXMLDOMNodeList_get_length( list, &count );
         ok( r == S_OK, "get_length returns %08x\n", r );
         ok( count == 4, "get_length got %ld\n", count );
+
+        r = IXMLDOMNodeList_nextNode(list, NULL);
+        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x", r);
 
         r = IXMLDOMNodeList_nextNode( list, &node );
         ok( r == S_OK, "nextNode returned wrong code\n");
@@ -1582,6 +1594,7 @@ static void test_get_text(void)
     IXMLDOMNode *node, *node2, *node3;
     IXMLDOMNodeList *node_list;
     IXMLDOMNamedNodeMap *node_map;
+    long len;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -1599,6 +1612,22 @@ static void test_get_text(void)
     ok( r == S_OK, "ret %08x\n", r );
     SysFreeString(str);
     
+    r = IXMLDOMNodeList_QueryInterface(node_list, &IID_IDispatch, NULL);
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+
+    r = IXMLDOMNodeList_get_length( node_list, NULL );
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+
+    r = IXMLDOMNodeList_get_length( node_list, &len );
+    ok( r == S_OK, "ret %08x\n", r );
+    ok( len == 1, "expect 1 got %ld\n", len );
+
+    r = IXMLDOMNodeList_get_item( node_list, 0, NULL );
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+
+    r = IXMLDOMNodeList_nextNode( node_list, NULL );
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+
     r = IXMLDOMNodeList_get_item( node_list, 0, &node );
     ok( r == S_OK, "ret %08x\n", r ); 
     IXMLDOMNodeList_Release( node_list );
