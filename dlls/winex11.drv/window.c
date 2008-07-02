@@ -1914,11 +1914,41 @@ void X11DRV_SetFocus( HWND hwnd )
 
 
 /***********************************************************************
- *		SetWindowPos   (X11DRV.@)
+ *		WindowPosChanging   (X11DRV.@)
  */
-void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
-                          const RECT *rectWindow, const RECT *rectClient,
-                          const RECT *visible_rect, const RECT *valid_rects )
+void X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+                               const RECT *window_rect, const RECT *client_rect, RECT *visible_rect )
+{
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
+
+    if (!data)
+    {
+        /* create the win data if the window is being made visible */
+        if (!(style & WS_VISIBLE) && !(swp_flags & SWP_SHOWWINDOW)) return;
+        if (!(data = X11DRV_create_win_data( hwnd ))) return;
+    }
+
+    /* check if we need to switch the window to managed */
+    if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, window_rect ))
+    {
+        TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
+        if (data->mapped) unmap_window( thread_display(), data );
+        data->managed = TRUE;
+        SetPropA( hwnd, managed_prop, (HANDLE)1 );
+    }
+
+    *visible_rect = *window_rect;
+    X11DRV_window_to_X_rect( data, visible_rect );
+}
+
+
+/***********************************************************************
+ *		WindowPosChanged   (X11DRV.@)
+ */
+void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+                              const RECT *rectWindow, const RECT *rectClient,
+                              const RECT *visible_rect, const RECT *valid_rects )
 {
     struct x11drv_thread_data *thread_data;
     Display *display;
@@ -1927,47 +1957,16 @@ void X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
     RECT old_whole_rect, old_client_rect;
     int event_type;
 
-    if (!data)
-    {
-        /* create the win data if the window is being made visible */
-        if (!(new_style & WS_VISIBLE)) return;
-        if (!(data = X11DRV_create_win_data( hwnd ))) return;
-    }
+    if (!data) return;
 
     thread_data = x11drv_thread_data();
     display = thread_data->display;
 
-    /* check if we need to switch the window to managed */
-    if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, rectWindow ))
-    {
-        TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
-        if (data->mapped) unmap_window( display, data );
-        data->managed = TRUE;
-        SetPropA( hwnd, managed_prop, (HANDLE)1 );
-    }
-
     old_whole_rect  = data->whole_rect;
     old_client_rect = data->client_rect;
     data->window_rect = *rectWindow;
-    data->whole_rect  = *rectWindow;
+    data->whole_rect  = *visible_rect;
     data->client_rect = *rectClient;
-    X11DRV_window_to_X_rect( data, &data->whole_rect );
-    if (memcmp( visible_rect, &data->whole_rect, sizeof(RECT) ))
-    {
-        TRACE( "%p: need to update visible rect %s -> %s\n", hwnd,
-               wine_dbgstr_rect(visible_rect), wine_dbgstr_rect(&data->whole_rect) );
-        SERVER_START_REQ( set_window_visible_rect )
-        {
-            req->handle         = hwnd;
-            req->flags          = swp_flags;
-            req->visible.left   = data->whole_rect.left;
-            req->visible.top    = data->whole_rect.top;
-            req->visible.right  = data->whole_rect.right;
-            req->visible.bottom = data->whole_rect.bottom;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-    }
 
     TRACE( "win %p window %s client %s style %08x flags %08x\n",
            hwnd, wine_dbgstr_rect(rectWindow), wine_dbgstr_rect(rectClient), new_style, swp_flags );

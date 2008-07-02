@@ -115,13 +115,14 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SetCapture);
         GET_USER_FUNC(SetFocus);
         GET_USER_FUNC(SetParent);
-        GET_USER_FUNC(SetWindowPos);
         GET_USER_FUNC(SetWindowRgn);
         GET_USER_FUNC(SetWindowIcon);
         GET_USER_FUNC(SetWindowStyle);
         GET_USER_FUNC(SetWindowText);
         GET_USER_FUNC(SysCommand);
         GET_USER_FUNC(WindowMessage);
+        GET_USER_FUNC(WindowPosChanging);
+        GET_USER_FUNC(WindowPosChanged);
 #undef GET_USER_FUNC
     }
 
@@ -377,12 +378,6 @@ static void nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
 }
 
-static void nulldrv_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                  const RECT *window_rect, const RECT *client_rect,
-                                  const RECT *visible_rect, const RECT *valid_rects )
-{
-}
-
 static int nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     return 1;
@@ -408,6 +403,18 @@ static LRESULT nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 static LRESULT nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return 0;
+}
+
+static void nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                       const RECT *window_rect, const RECT *client_rect,
+                                       RECT *visible_rect )
+{
+}
+
+static void nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                      const RECT *window_rect, const RECT *client_rect,
+                                      const RECT *visible_rect, const RECT *valid_rects )
+{
 }
 
 static USER_DRIVER null_driver =
@@ -461,13 +468,14 @@ static USER_DRIVER null_driver =
     nulldrv_SetCapture,
     nulldrv_SetFocus,
     nulldrv_SetParent,
-    nulldrv_SetWindowPos,
     nulldrv_SetWindowRgn,
     nulldrv_SetWindowIcon,
     nulldrv_SetWindowStyle,
     nulldrv_SetWindowText,
     nulldrv_SysCommand,
-    nulldrv_WindowMessage
+    nulldrv_WindowMessage,
+    nulldrv_WindowPosChanging,
+    nulldrv_WindowPosChanged
 };
 
 
@@ -698,14 +706,6 @@ static void loaderdrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
     load_driver()->pSetParent( hwnd, parent, old_parent );
 }
 
-static void loaderdrv_SetWindowPos( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                    const RECT *window_rect, const RECT *client_rect,
-                                    const RECT *visible_rect, const RECT *valid_rects )
-{
-    load_driver()->pSetWindowPos( hwnd, insert_after, swp_flags, window_rect,
-                                  client_rect, visible_rect, valid_rects );
-}
-
 static int loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     return load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
@@ -734,6 +734,22 @@ static LRESULT loaderdrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 static LRESULT loaderdrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     return load_driver()->pWindowMessage( hwnd, msg, wparam, lparam );
+}
+
+static void loaderdrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                         const RECT *window_rect, const RECT *client_rect,
+                                         RECT *visible_rect )
+{
+    load_driver()->pWindowPosChanging( hwnd, insert_after, swp_flags,
+                                       window_rect, client_rect, visible_rect );
+}
+
+static void loaderdrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                        const RECT *window_rect, const RECT *client_rect,
+                                        const RECT *visible_rect, const RECT *valid_rects )
+{
+    load_driver()->pWindowPosChanged( hwnd, insert_after, swp_flags, window_rect,
+                                      client_rect, visible_rect, valid_rects );
 }
 
 static USER_DRIVER lazy_load_driver =
@@ -787,11 +803,12 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_SetCapture,
     loaderdrv_SetFocus,
     loaderdrv_SetParent,
-    loaderdrv_SetWindowPos,
     loaderdrv_SetWindowRgn,
     loaderdrv_SetWindowIcon,
     loaderdrv_SetWindowStyle,
     loaderdrv_SetWindowText,
     loaderdrv_SysCommand,
-    loaderdrv_WindowMessage
+    loaderdrv_WindowMessage,
+    loaderdrv_WindowPosChanging,
+    loaderdrv_WindowPosChanged
 };

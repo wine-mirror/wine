@@ -108,12 +108,13 @@
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long long) X11DRV_SetParent
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
-@ cdecl SetWindowPos(long long long ptr ptr ptr ptr) X11DRV_SetWindowPos
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long) X11DRV_SetWindowStyle
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
 @ cdecl SysCommand(long long) X11DRV_SysCommand
 @ cdecl WindowMessage(long long long long) X11DRV_WindowMessage
+@ cdecl WindowPosChanging(long long long ptr ptr ptr) X11DRV_WindowPosChanging
+@ cdecl WindowPosChanged(long long long ptr ptr ptr ptr) X11DRV_WindowPosChanged
 
 # WinTab32
 @ cdecl AttachEventQueueToTablet(long) X11DRV_AttachEventQueueToTablet

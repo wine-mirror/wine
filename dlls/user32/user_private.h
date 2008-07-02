@@ -151,13 +151,14 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetCapture)(HWND,UINT);
     void   (*pSetFocus)(HWND);
     void   (*pSetParent)(HWND,HWND,HWND);
-    void   (*pSetWindowPos)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *);
     int    (*pSetWindowRgn)(HWND,HRGN,BOOL);
     void   (*pSetWindowIcon)(HWND,UINT,HICON);
     void   (*pSetWindowStyle)(HWND,DWORD);
     void   (*pSetWindowText)(HWND,LPCWSTR);
     LRESULT (*pSysCommand)(HWND,WPARAM,LPARAM);
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
+    void   (*pWindowPosChanging)(HWND,HWND,UINT,const RECT *,const RECT *,RECT *);
+    void   (*pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *);
 } USER_DRIVER;
 
 extern const USER_DRIVER *USER_Driver DECLSPEC_HIDDEN;
