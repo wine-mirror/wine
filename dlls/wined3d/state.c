@@ -3381,11 +3381,19 @@ static inline void drawPrimitiveTraceDataLocations(
     return;
 }
 
-/* Helper for vertexdeclaration() */
-static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVertexShaderFunction, WineD3DContext *context) {
+static void handleStreams(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL fixup = FALSE;
     WineDirect3DVertexStridedData *dataLocations = &device->strided_streams;
+    BOOL useVertexShaderFunction;
+
+    if (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader &&
+        ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
+        useVertexShaderFunction = TRUE;
+    } else {
+        useVertexShaderFunction = FALSE;
+    }
+
 
     if(device->up_strided) {
         /* Note: this is a ddraw fixed-function code path */
@@ -3470,11 +3478,12 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL wasrhw = context->last_was_rhw;
 
+    handleStreams(state, stateblock, context);
+
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
      * here simply check whether a shader was set, or the user disabled shaders
      */
-    if (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader &&
-       ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
+    if (use_vs(device)) {
         useVertexShaderFunction = TRUE;
 
         if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.fog != context->last_was_foggy_shader) {
@@ -3483,8 +3492,6 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     } else if(context->last_was_foggy_shader) {
         updateFog = TRUE;
     }
-
-    handleStreams(stateblock, useVertexShaderFunction, context);
 
     transformed = device->strided_streams.u.s.position_transformed;
     if (transformed) useVertexShaderFunction = FALSE;
