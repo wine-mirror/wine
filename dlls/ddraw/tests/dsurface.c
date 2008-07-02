@@ -1873,8 +1873,8 @@ static void CompressedTest(void)
     U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','1');
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
-    ok(hr == DD_OK || hr == DDERR_NOTEXTUREHW || hr == DDERR_INVALIDPARAMS,
-       "CreateSurface returned %08x\n", hr);
+    ok(hr == DD_OK || hr == DDERR_NOTEXTUREHW || hr == DDERR_INVALIDPARAMS ||
+       broken(hr == DDERR_NODIRECTDRAWHW), "CreateSurface returned %08x\n", hr);
 
     /* Not supported everywhere */
     if(SUCCEEDED(hr))
