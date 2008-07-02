@@ -3849,7 +3849,7 @@ const struct StateEntry FFPStateTable[] =
     { /* 26, WINED3DRS_DITHERENABLE                 */      STATE_RENDER(WINED3DRS_DITHERENABLE),               state_ditherenable  },
     { /* 27, WINED3DRS_ALPHABLENDENABLE             */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
     { /* 28, WINED3DRS_FOGENABLE                    */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
-    { /* 29, WINED3DRS_SPECULARENABLE               */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable},
+    { /* 29, WINED3DRS_SPECULARENABLE               */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             NULL                },
     { /* 30, WINED3DRS_ZVISIBLE                     */      0 /* Not supported according to the msdn */,        state_nogl          },
     { /* 31, WINED3DRS_SUBPIXEL                     */      STATE_RENDER(WINED3DRS_SUBPIXEL),                   state_subpixel      },
     { /* 32, WINED3DRS_SUBPIXELX                    */      STATE_RENDER(WINED3DRS_SUBPIXELX),                  state_subpixelx     },
@@ -4887,7 +4887,7 @@ const struct StateEntry FFPStateTable[] =
     { /* STATE_CLIPPLANE(30)                        */      STATE_CLIPPLANE(30),                                clipplane           },
     { /* STATE_CLIPPLANE(31)                        */      STATE_CLIPPLANE(31),                                clipplane           },
 
-    { /* STATE_MATERIAL                             */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable},
+    { /* STATE_MATERIAL                             */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             NULL                },
     { /* STATE_FRONTFACE                            */      STATE_FRONTFACE,                                    frontface           },
 };
 
@@ -4910,6 +4910,8 @@ const struct StateEntryTemplate misc_state_template[] = {
 const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_VDECL,                                        { STATE_VDECL,                                        vertexdeclaration   }},
     { STATE_VSHADER,                                      { STATE_VDECL,                                        vertexdeclaration   }},
+    { STATE_MATERIAL,                                     { STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable}},
+    { STATE_RENDER(WINED3DRS_SPECULARENABLE),             { STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable}},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
