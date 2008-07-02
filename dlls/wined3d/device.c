@@ -6156,6 +6156,8 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONS
         TRACE("Surface %p is offscreen\n", surface);
         bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->dst_fbo);
         attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, surface);
+        GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
+        checkGLcall("glFramebufferRenderbufferEXT");
     }
 
     if (rect) {
@@ -6611,6 +6613,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         attach_surface_fbo(This, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
         glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
         checkGLcall("glReadBuffer()");
+        GL_EXTCALL(glFramebufferRenderbufferEXT(GL_READ_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
+        checkGLcall("glFramebufferRenderbufferEXT");
     }
     LEAVE_GL();
 
@@ -6646,6 +6650,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
         glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
         checkGLcall("glDrawBuffer()");
+        GL_EXTCALL(glFramebufferRenderbufferEXT(GL_DRAW_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
+        checkGLcall("glFramebufferRenderbufferEXT");
     }
     glDisable(GL_SCISSOR_TEST);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
