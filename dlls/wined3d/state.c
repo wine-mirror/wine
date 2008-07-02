@@ -4840,8 +4840,8 @@ const struct StateEntry FFPStateTable[] =
     { /*   , STATE_VDECL                            */      STATE_VDECL,                                        NULL                },
     { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        NULL                },
     { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     viewport            },
-    { /*   , STATE_VERTEXSHADERCONSTANT             */      STATE_VERTEXSHADERCONSTANT,                         shaderconstant      },
-    { /*   , STATE_PIXELSHADERCONSTANT              */      STATE_VERTEXSHADERCONSTANT,                         shaderconstant      },
+    { /*   , STATE_VERTEXSHADERCONSTANT             */      STATE_VERTEXSHADERCONSTANT,                         NULL                },
+    { /*   , STATE_PIXELSHADERCONSTANT              */      STATE_VERTEXSHADERCONSTANT,                         NULL                },
       /* Lights */
     { /*   , STATE_ACTIVELIGHT(0)                   */      STATE_ACTIVELIGHT(0),                               NULL                },
     { /*   , STATE_ACTIVELIGHT(1)                   */      STATE_ACTIVELIGHT(1),                               NULL                },
@@ -4906,6 +4906,11 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_VDECL,                                        { STATE_VDECL,                                        streamsrc           }},
     { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface           }},
     { STATE_SCISSORRECT,                                  { STATE_SCISSORRECT,                                  scissorrect         }},
+    /* TODO: Move shader constant loading to vertex and fragment pipeline repectively, as soon as the pshader and
+     * vshader loadings are untied from each other
+     */
+    { STATE_VERTEXSHADERCONSTANT,                         { STATE_VERTEXSHADERCONSTANT,                         shaderconstant      }},
+    { STATE_PIXELSHADERCONSTANT,                          { STATE_VERTEXSHADERCONSTANT,                         shaderconstant      }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
