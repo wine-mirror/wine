@@ -4852,7 +4852,7 @@ const struct StateEntry FFPStateTable[] =
     { /*   , STATE_ACTIVELIGHT(6)                   */      STATE_ACTIVELIGHT(6),                               light               },
     { /*   , STATE_ACTIVELIGHT(7)                   */      STATE_ACTIVELIGHT(7),                               light               },
 
-    { /* Scissor rect                               */      STATE_SCISSORRECT,                                  scissorrect         },
+    { /* Scissor rect                               */      STATE_SCISSORRECT,                                  NULL                },
       /* Clip planes */
     { /* STATE_CLIPPLANE(0)                         */      STATE_CLIPPLANE(0),                                 NULL                },
     { /* STATE_CLIPPLANE(1)                         */      STATE_CLIPPLANE(1),                                 NULL                },
@@ -4905,6 +4905,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_STREAMSRC,                                    { STATE_VDECL,                                        streamsrc           }},
     { STATE_VDECL,                                        { STATE_VDECL,                                        streamsrc           }},
     { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface           }},
+    { STATE_SCISSORRECT,                                  { STATE_SCISSORRECT,                                  scissorrect         }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
