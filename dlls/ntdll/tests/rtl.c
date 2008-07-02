@@ -264,6 +264,12 @@ static void test_RtlUlonglongByteSwap(void)
 {
     ULONGLONG result;
 
+    if ( pRtlUlonglongByteSwap( 0 ) != 0 )
+    {
+        win_skip("Broken RtlUlonglongByteSwap in win2k\n");
+        return;
+    }
+
     result = pRtlUlonglongByteSwap( ((ULONGLONG)0x76543210 << 32) | 0x87654321 );
     ok( (((ULONGLONG)0x21436587 << 32) | 0x10325476) == result,
        "RtlUlonglongByteSwap(0x7654321087654321) returns 0x%x%08x, expected 0x2143658710325476\n",
