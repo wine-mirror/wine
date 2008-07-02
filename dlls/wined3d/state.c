@@ -3826,7 +3826,7 @@ const struct StateEntry FFPStateTable[] =
     { /* 1,  WINED3DRS_TEXTUREHANDLE                */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 2,  WINED3DRS_ANTIALIAS                    */      STATE_RENDER(WINED3DRS_ANTIALIAS),                  NULL                },
     { /* 3,  WINED3DRS_TEXTUREADDRESS               */      0 /* Handled in ddraw */,                           state_undefined     },
-    { /* 4,  WINED3DRS_TEXTUREPERSPECTIVE           */      STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         state_perspective   },
+    { /* 4,  WINED3DRS_TEXTUREPERSPECTIVE           */      STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         NULL                },
     { /* 5,  WINED3DRS_WRAPU                        */      STATE_RENDER(WINED3DRS_WRAPU),                      state_wrapu         },
     { /* 6,  WINED3DRS_WRAPV                        */      STATE_RENDER(WINED3DRS_WRAPV),                      state_wrapv         },
     { /* 7,  WINED3DRS_ZENABLE                      */      STATE_RENDER(WINED3DRS_ZENABLE),                    state_zenable       },
@@ -4917,6 +4917,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_VIEWPORT,                                     { STATE_VIEWPORT,                                     viewport_miscpart   }},
     { STATE_INDEXBUFFER,                                  { STATE_INDEXBUFFER,                                  indexbuffer         }},
     { STATE_RENDER(WINED3DRS_ANTIALIAS),                  { STATE_RENDER(WINED3DRS_ANTIALIAS),                  state_antialias     }},
+    { STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         { STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         state_perspective   }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
