@@ -391,7 +391,9 @@ static void test_towers(void)
     ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_np", "\\pipe\\test", NULL, &tower);
     ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
     ret = TowerExplode(tower, NULL, NULL, NULL, NULL, &address);
-    ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
+    ok(ret == RPC_S_OK ||
+       broken(ret != RPC_S_OK), /* win2k, indeterminate */
+       "TowerExplode failed with error %ld\n", ret);
     /* Windows XP SP3 sets address to NULL */
     ok(!address || !strcmp(address, ""), "address was \"%s\" instead of \"\"\n or NULL (XP SP3)", address);
 
