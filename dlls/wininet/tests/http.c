@@ -1346,6 +1346,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     char buffer[0x100];
     WSADATA wsaData;
     int last_request = 0;
+    char host_header[22];
 
     WSAStartup(MAKEWORD(1,1), &wsaData);
 
@@ -1368,6 +1369,8 @@ static DWORD CALLBACK server_thread(LPVOID param)
     listen(s, 0);
 
     SetEvent(si->hEvent);
+
+    sprintf(host_header, "Host: localhost:%d", si->port);
 
     do
     {
@@ -1448,7 +1451,10 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "/test8"))
         {
             if (!strstr(buffer, "Connection: Close") &&
-                 strstr(buffer, "Connection: Keep-Alive"))
+                 strstr(buffer, "Connection: Keep-Alive") &&
+                !strstr(buffer, "Cache-Control: no-cache") &&
+                !strstr(buffer, "Pragma: no-cache") &&
+                 strstr(buffer, host_header))
                 send(c, okmsg, sizeof okmsg-1, 0);
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
@@ -1456,7 +1462,21 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "/test9"))
         {
             if (!strstr(buffer, "Connection: Close") &&
-                !strstr(buffer, "Connection: Keep-Alive"))
+                !strstr(buffer, "Connection: Keep-Alive") &&
+                !strstr(buffer, "Cache-Control: no-cache") &&
+                !strstr(buffer, "Pragma: no-cache") &&
+                 strstr(buffer, host_header))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
+        if (strstr(buffer, "/testA"))
+        {
+            if (!strstr(buffer, "Connection: Close") &&
+                !strstr(buffer, "Connection: Keep-Alive") &&
+                (strstr(buffer, "Cache-Control: no-cache") ||
+                 strstr(buffer, "Pragma: no-cache")) &&
+                 strstr(buffer, host_header))
                 send(c, okmsg, sizeof okmsg-1, 0);
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
@@ -1706,6 +1726,7 @@ static void test_connection_header(int port)
     size = sizeof(status);
     ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
     ok(ret, "HttpQueryInfo failed\n");
+    todo_wine
     ok(status == 200, "request failed with status %u\n", status);
 
     InternetCloseHandle(req);
@@ -1720,6 +1741,37 @@ static void test_connection_header(int port)
     size = sizeof(status);
     ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
     ok(ret, "HttpQueryInfo failed\n");
+    todo_wine
+    ok(status == 200, "request failed with status %u\n", status);
+
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequest(con, NULL, "/test9", NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
+    ok(ret, "HttpQueryInfo failed\n");
+    todo_wine
+    ok(status == 200, "request failed with status %u\n", status);
+
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequest(con, "POST", "/testA", NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
+    ok(ret, "HttpQueryInfo failed\n");
+    todo_wine
     ok(status == 200, "request failed with status %u\n", status);
 
     InternetCloseHandle(req);
