@@ -642,8 +642,8 @@ static HRESULT WINAPI HTMLWindow2_toString(IHTMLWindow2 *iface, BSTR *String)
 static HRESULT WINAPI HTMLWindow2_scrollBy(IHTMLWindow2 *iface, long x, long y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%ld %ld)\n", This, x, y);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%ld %ld)\n", This, x, y);
+    return nsIDOMWindow_ScrollBy(This->nswindow, x, y);
 }
 
 static HRESULT WINAPI HTMLWindow2_scrollTo(IHTMLWindow2 *iface, long x, long y)
