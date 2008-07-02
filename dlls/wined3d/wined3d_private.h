@@ -863,6 +863,9 @@ struct IWineD3DDeviceImpl
     GLuint                  dst_fbo;
     GLenum                  *draw_buffers;
     GLuint                  depth_blt_texture;
+    GLuint                  depth_blt_rb;
+    UINT                    depth_blt_rb_w;
+    UINT                    depth_blt_rb_h;
 
     /* Cursor management */
     BOOL                    bCursorVisible;
@@ -2437,4 +2440,7 @@ static inline BOOL use_ps(IWineD3DDeviceImpl *device) {
 
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED3DRECT *src_rect,
         IWineD3DSurface *dst_surface, WINED3DRECT *dst_rect, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip);
+void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo);
+void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
+
 #endif

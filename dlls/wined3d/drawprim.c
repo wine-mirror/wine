@@ -802,10 +802,31 @@ void depth_copy(IWineD3DDevice *iface) {
         glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
         glBindTexture(GL_TEXTURE_2D, old_binding);
 
-        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, This->fbo));
-        checkGLcall("glBindFramebuffer()");
+        /* Setup the destination */
+        if (!This->depth_blt_rb) {
+            GL_EXTCALL(glGenRenderbuffersEXT(1, &This->depth_blt_rb));
+            checkGLcall("glGenRenderbuffersEXT");
+        }
+        if (This->depth_blt_rb_w != depth_stencil->currentDesc.Width
+                || This->depth_blt_rb_h != depth_stencil->currentDesc.Height) {
+            GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, This->depth_blt_rb));
+            checkGLcall("glBindRenderbufferEXT");
+            GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGBA8, depth_stencil->currentDesc.Width, depth_stencil->currentDesc.Height));
+            checkGLcall("glRenderbufferStorageEXT");
+            This->depth_blt_rb_w = depth_stencil->currentDesc.Width;
+            This->depth_blt_rb_h = depth_stencil->currentDesc.Height;
+        }
+
+        bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->dst_fbo);
+        GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, This->depth_blt_rb));
+        checkGLcall("glFramebufferRenderbufferEXT");
+        attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, (IWineD3DSurface *)depth_stencil, FALSE);
+
+        /* Do the actual blit */
         depth_blt(iface, This->depth_blt_texture);
         checkGLcall("depth_blt");
+
+        bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->fbo);
     } else {
         TRACE("Copying offscreen surface to onscreen depth buffer\n");
 

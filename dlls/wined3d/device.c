@@ -2279,6 +2279,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
         glDeleteTextures(1, &This->depth_blt_texture);
         This->depth_blt_texture = 0;
     }
+    if (This->depth_blt_rb) {
+        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &This->depth_blt_rb));
+        This->depth_blt_rb = 0;
+        This->depth_blt_rb_w = 0;
+        This->depth_blt_rb_h = 0;
+    }
     This->shader_backend->shader_destroy_depth_blt(iface);
     This->shader_backend->shader_free_private(iface);
 
@@ -6038,7 +6044,7 @@ static IWineD3DSwapChain *get_swapchain(IWineD3DSurface *target) {
     return NULL;
 }
 
-static void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo) {
+void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     if (!*fbo) {
@@ -6050,7 +6056,7 @@ static void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo) {
 }
 
 /* TODO: Handle stencil attachments */
-static void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer) {
+void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer) {
     IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
 
     if (use_render_buffer && depth_stencil_impl->current_renderbuffer) {
@@ -7198,6 +7204,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     if(This->depth_blt_texture) {
         glDeleteTextures(1, &This->depth_blt_texture);
         This->depth_blt_texture = 0;
+    }
+    if (This->depth_blt_rb) {
+        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &This->depth_blt_rb));
+        This->depth_blt_rb = 0;
+        This->depth_blt_rb_w = 0;
+        This->depth_blt_rb_h = 0;
     }
     This->shader_backend->shader_destroy_depth_blt(iface);
     This->shader_backend->shader_free_private(iface);
