@@ -632,6 +632,11 @@ const GLubyte * WINAPI wine_glGetString( GLenum name )
   const GLubyte *ret;
   const char* GL_Extensions = NULL;
 
+  /* this is for buggy nvidia driver, crashing if called from a different
+     thread with no context */
+  if(wglGetCurrentContext() == NULL)
+    return NULL;
+
   if (GL_EXTENSIONS != name) {
     ENTER_GL();
     ret = glGetString(name);
