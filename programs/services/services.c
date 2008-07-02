@@ -256,8 +256,11 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     for (i = 0; i < size; i++)
     {
         DWORD err;
+        const WCHAR *argv[2];
         service = services_list[i];
-        err = service_start(service, 0, NULL);
+        argv[0] = service->name;
+        argv[1] = NULL;
+        err = service_start(service, 1, argv);
         /* FIXME: do something if the service failed to start */
         release_service(service);
     }
