@@ -332,7 +332,7 @@ static void node_to_string(IXMLDOMNode *node, char *buf)
             /* currently wine doesn't create a node for the <?xml ... ?>. To be able to test query
              * results we "fix" it */
             if (r == S_OK)
-                ole_check(IXMLDOMNode_get_nodeType(node, &parent_type));
+                ole_check(IXMLDOMNode_get_nodeType(new_node, &parent_type));
             /* we need also to workaround the no document node problem - see below */
             if (((r == S_FALSE && type != NODE_DOCUMENT) || parent_type == NODE_DOCUMENT) && type != NODE_PROCESSING_INSTRUCTION && pos==1)
             {
