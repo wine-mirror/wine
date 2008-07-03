@@ -1453,14 +1453,20 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
         WCHAR url[INTERNET_MAX_URL_LENGTH];
         HTTPHEADERW *host;
         DWORD len;
+        WCHAR *pch;
 
-        static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+        static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
         static const WCHAR hostW[] = {'H','o','s','t',0};
 
         TRACE("INTERNET_OPTION_URL\n");
 
         host = HTTP_GetHeader(req, hostW);
-        sprintfW(url, formatW, host->lpszValue, req->lpszPath);
+        strcpyW(url, httpW);
+        strcatW(url, host->lpszValue);
+        if (NULL != (pch = strchrW(url + strlenW(httpW), ':')))
+            *pch = 0;
+        strcatW(url, req->lpszPath);
+
         TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
 
         if(unicode) {
@@ -1885,9 +1891,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     LPWININETHTTPREQW lpwhr;
     LPWSTR lpszCookies;
     LPWSTR lpszUrl = NULL;
+    LPWSTR lpszHostName = NULL;
     DWORD nCookieSize;
     HINTERNET handle = NULL;
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
+    static const WCHAR szHostForm[] = {'%','s',':','%','u',0};
     DWORD len;
     LPHTTPHEADERW Host;
 
@@ -1913,6 +1921,14 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     WININET_AddRef( &lpwhs->hdr );
     lpwhr->lpHttpSession = lpwhs;
     list_add_head( &lpwhs->hdr.children, &lpwhr->hdr.entry );
+
+    lpszHostName = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) *
+            (strlenW(lpwhs->lpszHostName) + 7 /* length of ":65535" + 1 */));
+    if (NULL == lpszHostName)
+    {
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        goto lend;
+    }
 
     handle = WININET_AllocHandle( &lpwhr->hdr );
     if (NULL == handle)
@@ -1968,7 +1984,17 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     else
         lpwhr->lpszVersion = WININET_strdupW(g_szHttp1_1);
 
-    HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
+    if (lpwhs->nHostPort != INTERNET_INVALID_PORT_NUMBER &&
+        lpwhs->nHostPort != INTERNET_DEFAULT_HTTP_PORT &&
+        lpwhs->nHostPort != INTERNET_DEFAULT_HTTPS_PORT)
+    {
+        sprintfW(lpszHostName, szHostForm, lpwhs->lpszHostName, lpwhs->nHostPort);
+        HTTP_ProcessHeader(lpwhr, szHost, lpszHostName,
+                HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
+    }
+    else
+        HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName,
+                HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (lpwhs->nServerPort == INTERNET_INVALID_PORT_NUMBER)
         lpwhs->nServerPort = (dwFlags & INTERNET_FLAG_SECURE ?
@@ -2014,6 +2040,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
                           sizeof(handle));
 
 lend:
+    HeapFree(GetProcessHeap(), 0, lpszHostName);
     if( lpwhr )
         WININET_Release( &lpwhr->hdr );
 

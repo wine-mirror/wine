@@ -1734,7 +1734,6 @@ static void test_connection_header(int port)
     size = sizeof(status);
     ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
     ok(ret, "HttpQueryInfo failed\n");
-    todo_wine
     ok(status == 200, "request failed with status %u\n", status);
 
     InternetCloseHandle(req);
@@ -1749,7 +1748,6 @@ static void test_connection_header(int port)
     size = sizeof(status);
     ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
     ok(ret, "HttpQueryInfo failed\n");
-    todo_wine
     ok(status == 200, "request failed with status %u\n", status);
 
     InternetCloseHandle(req);
@@ -1764,7 +1762,6 @@ static void test_connection_header(int port)
     size = sizeof(status);
     ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
     ok(ret, "HttpQueryInfo failed\n");
-    todo_wine
     ok(status == 200, "request failed with status %u\n", status);
 
     InternetCloseHandle(req);
@@ -1779,7 +1776,6 @@ static void test_connection_header(int port)
     size = sizeof(status);
     ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
     ok(ret, "HttpQueryInfo failed\n");
-    todo_wine
     ok(status == 200, "request failed with status %u\n", status);
 
     InternetCloseHandle(req);
