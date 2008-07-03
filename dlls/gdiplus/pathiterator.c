@@ -141,3 +141,17 @@ GpStatus WINGDIPAPI GdipPathIterGetCount(GpPathIterator* iterator, INT* count)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipPathIterEnumerate(GpPathIterator* iterator, INT* resultCount,
+    GpPointF *points, BYTE *types, INT count)
+{
+    if((count < 0) || !resultCount)
+        return InvalidParameter;
+
+    if(count == 0){
+        *resultCount = 0;
+        return Ok;
+    }
+
+    return GdipPathIterCopyData(iterator, resultCount, points, types, 0, count-1);
+}

@@ -451,7 +451,7 @@
 @ stub GdipNewInstalledFontCollection
 @ stub GdipNewPrivateFontCollection
 @ stdcall GdipPathIterCopyData(ptr ptr ptr ptr long long)
-@ stub GdipPathIterEnumerate
+@ stdcall GdipPathIterEnumerate(ptr ptr ptr ptr long)
 @ stdcall GdipPathIterGetCount(ptr ptr)
 @ stub GdipPathIterGetSubpathCount
 @ stub GdipPathIterHasCurve
