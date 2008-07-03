@@ -526,13 +526,14 @@ GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily *family,
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipGetCellDescent(GDIPCONST GpFontFamily *family, INT style, UINT16 * CellDescent)
+GpStatus WINGDIPAPI GdipGetCellDescent(GDIPCONST GpFontFamily *family,
+        INT style, UINT16* CellDescent)
 {
     if (!(family && CellDescent)) return InvalidParameter;
 
-    FIXME("stub!\n");
+    *CellDescent = family->tmw.tmDescent;
 
-    return NotImplemented;
+    return Ok;
 }
 
 /*******************************************************************************

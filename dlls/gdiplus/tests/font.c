@@ -214,11 +214,8 @@ todo_wine
     expect(Ok, stat);
     ok(result == 1854, "Expected 1854, got %d\n", result);
     result = 0;
-todo_wine
-{
     stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
     ok(result == 434, "Expected 434, got %d\n", result);
-}
     GdipDeleteFontFamily(FontFamily);
 
     GdipCreateFontFamilyFromName(TimesNewRoman, NULL, &FontFamily);
@@ -238,11 +235,8 @@ todo_wine
     expect(Ok, stat);
     ok(result == 1825, "Expected 1825, got %d\n", result);
     result = 0;
-todo_wine
-{
     stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
     ok(result == 443, "Expected 443 got %d\n", result);
-}
     GdipDeleteFontFamily(FontFamily);
 }
 
