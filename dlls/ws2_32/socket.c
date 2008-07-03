@@ -4522,8 +4522,8 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
     INT res=0;
     LPSTR workBuffer=NULL,ptrPort;
 
-    TRACE( "(%s, %x, %p, %p, %p)\n", AddressString, AddressFamily, lpProtocolInfo,
-           lpAddress, lpAddressLength );
+    TRACE( "(%s, %x, %p, %p, %p)\n", debugstr_a(AddressString), AddressFamily,
+           lpProtocolInfo, lpAddress, lpAddressLength );
 
     if (!lpAddressLength || !lpAddress) return SOCKET_ERROR;
 
