@@ -308,6 +308,31 @@ GpStatus WINGDIPAPI GdipCloneFont(GpFont *font, GpFont **cloneFont)
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipGetFontHeightGivenDPI [GDIPLUS.@]
+ * PARAMS
+ *  font        [I] Font to retrieve DPI from
+ *  dpi         [I] DPI to assume
+ *  height      [O] Return value
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter if font or height is NULL
+ *
+ * NOTES
+ *  According to MSDN, the result is (lineSpacing)*(fontSize / emHeight)*dpi
+ *  (for anything other than unit Pixel)
+ */
+GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, REAL *height)
+{
+    if (!(font && height)) return InvalidParameter;
+
+    FIXME("%p (%s), %f, %p\n)", font,
+            debugstr_w(font->lfw.lfFaceName), dpi, height);
+
+    return NotImplemented;
+}
+
 /* Borrowed from GDI32 */
 static INT CALLBACK is_font_installed_proc(const LOGFONTW *elf,
                             const TEXTMETRICW *ntm, DWORD type, LPARAM lParam)
