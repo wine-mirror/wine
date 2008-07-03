@@ -328,16 +328,25 @@ static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT *rect,
 static BOOL SCROLL_PtInRectEx( LPRECT lpRect, POINT pt, BOOL vertical )
 {
     RECT rect = *lpRect;
+    int scrollbarWidth;
 
+    /* Pad hit rect to allow mouse to be dragged outside of scrollbar and
+     * still be considered in the scrollbar. */
     if (vertical)
     {
-	rect.left -= lpRect->right - lpRect->left;
-	rect.right += lpRect->right - lpRect->left;
+        scrollbarWidth = lpRect->right - lpRect->left;
+        rect.left -= scrollbarWidth*8;
+        rect.right += scrollbarWidth*8;
+        rect.top -= scrollbarWidth*2;
+        rect.bottom += scrollbarWidth*2;
     }
     else
     {
-	rect.top -= lpRect->bottom - lpRect->top;
-	rect.bottom += lpRect->bottom - lpRect->top;
+        scrollbarWidth = lpRect->bottom - lpRect->top;
+        rect.left -= scrollbarWidth*2;
+        rect.right += scrollbarWidth*2;
+        rect.top -= scrollbarWidth*8;
+        rect.bottom += scrollbarWidth*8;
     }
     return PtInRect( &rect, pt );
 }
